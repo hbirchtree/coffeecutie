@@ -5,7 +5,10 @@
 namespace blam {
 namespace hsc {
 
-constexpr u16 variable_length_params = 0xFF;
+constexpr bool exceptional_missing_signature = true;
+
+constexpr u16 variable_length_params   = 0xFF;
+constexpr u16 unknown_opcode_signature = 0xFF - 1;
 
 namespace signatures {
 
@@ -79,14 +82,35 @@ inline typename Getter::return_type opcode_signature(
     case o::game_save_no_timeout:
     case o::garbage_collect_now:
         return Getter::template get<sig_t<t::void_>>();
+
     case o::cinematic_set_title:
         return Getter::template get<sig_t<t::void_, t::cutscene_title>>();
+    case o::cinematic_screen_effect_set_filter_desaturation_tint:
+        return Getter::template get<
+            sig_t<t::void_, t::real_, t::real_, t::real_>>();
+    case o::cinematic_screen_effect_set_filter:
+        return Getter::template get<sig_t<
+            t::void_,
+            t::real_,
+            t::real_,
+            t::real_,
+            t::real_,
+            t::bool_,
+            t::real_>>();
 
+    case o::game_all_quiet:
     case o::game_is_cooperative:
     case o::game_saving:
     case o::game_reverted:
     case o::game_won:
+    case o::game_safe_to_speak:
         return Getter::template get<sig_t<t::bool_>>();
+
+    case o::game_safe_to_save:
+        return Getter::template get<sig_t<t::bool_, t::short_>>();
+
+    case o::game_skip_ticks:
+        return Getter::template get<sig_t<t::void_, t::short_>>();
 
     case o::game_difficulty_get:
         return Getter::template get<sig_t<t::game_difficulty>>();
@@ -166,6 +190,8 @@ inline typename Getter::return_type opcode_signature(
         return Getter::template get<sig_t<t::void_, t::string_>>();
     case o::object_beautify:
         return Getter::template get<sig_t<t::void_, t::object, t::bool_>>();
+    case o::object_can_take_damage:
+        return Getter::template get<sig_t<t::void_, t::obj_list>>();
     case o::object_destroy_all:
         return Getter::template get<sig_t<t::void_>>();
     case o::object_teleport:
@@ -183,7 +209,13 @@ inline typename Getter::return_type opcode_signature(
         return Getter::template get<
             sig_t<t::void_, t::object_name, t::object_name>>();
     case o::object_pvs_activate:
-        return Getter::template get<sig_t<t::void_, t::object_name>>();
+        return Getter::template get<sig_t<t::void_, t::object>>();
+    case o::object_pvs_set_camera:
+        return Getter::template get<sig_t<t::void_, t::cutscene_camera_pnt>>();
+    case o::object_pvs_set_object:
+        return Getter::template get<sig_t<t::void_, t::object>>();
+    case o::object_pvs_clear:
+        return Getter::template get<sig_t<t::void_>>();
 
     case o::object_set_scale:
         return Getter::template get<
@@ -211,6 +243,12 @@ inline typename Getter::return_type opcode_signature(
     case o::camera_set:
         return Getter::template get<
             sig_t<t::void_, t::cutscene_camera_pnt, t::short_>>();
+    case o::camera_set_relative:
+        return Getter::template get<sig_t<
+            t::void_,
+            t::cutscene_camera_pnt,
+            t::short_,
+            t::object_name>>();
     case o::camera_time:
         return Getter::template get<sig_t<t::short_>>();
     case o::camera_set_first_person:
@@ -281,8 +319,14 @@ inline typename Getter::return_type opcode_signature(
     case o::effect_new:
         return Getter::template get<sig_t<t::effect, t::cutscene_flag>>();
 
+    case o::damage_new:
+        return Getter::template get<
+            sig_t<t::void_, t::damage, t::cutscene_flag>>();
+
         /* Device controls */
     case o::device_set_position:
+        return Getter::template get<
+            sig_t<t::bool_, t::device_name, t::real_>>();
     case o::device_set_position_immediate:
         return Getter::template get<
             sig_t<t::void_, t::device_name, t::real_>>();
@@ -293,6 +337,14 @@ inline typename Getter::return_type opcode_signature(
     case o::device_get_position:
         return Getter::template get<sig_t<t::real_, t::device_name>>();
     case o::device_one_sided_set:
+        return Getter::template get<
+            sig_t<t::void_, t::device_name, t::bool_>>();
+    case o::device_group_get:
+        return Getter::template get<sig_t<t::real_, t::device_group>>();
+    case o::device_group_set:
+        return Getter::template get<
+            sig_t<t::void_, t::device_group, t::real_>>();
+    case o::device_operates_automatically_set:
         return Getter::template get<
             sig_t<t::void_, t::device_name, t::bool_>>();
 
@@ -321,18 +373,15 @@ inline typename Getter::return_type opcode_signature(
         return Getter::template get<sig_t<t::void_, t::nothing, t::any>>();
 
         /* AI operators */
-    case o::ai_status:
-        return Getter::template get<sig_t<t::short_, t::ai>>();
     case o::ai_dialogue_triggers:
     case o::ai_grenades:
         return Getter::template get<sig_t<t::void_, t::bool_>>();
-    case o::ai_braindead:
-        return Getter::template get<sig_t<t::void_, t::ai, t::bool_>>();
     case o::ai_attach_free:
         return Getter::template get<
             sig_t<t::void_, t::unit_name, t::actor_variant>>();
     case o::ai_attach:
         return Getter::template get<sig_t<t::void_, t::unit_name, t::ai>>();
+    case o::ai_detach:
     case o::ai_erase:
         return Getter::template get<sig_t<t::void_, t::unit_name>>();
     case o::ai_erase_all:
@@ -340,22 +389,54 @@ inline typename Getter::return_type opcode_signature(
         return Getter::template get<sig_t<>>();
     case o::ai_prefer_target:
         return Getter::template get<sig_t<t::void_, t::obj_list, t::bool_>>();
+    case o::ai_conversation_advance:
     case o::ai_conversation_stop:
         return Getter::template get<sig_t<t::void_, t::conversation>>();
     case o::ai_place:
-    case o::ai_actors:
+    case o::ai_kill:
+    case o::ai_free:
     case o::ai_magically_see_players:
-    case o::ai_maneuver:
-    case o::ai_follow_target_unit:
-    case o::ai_try_to_fight_player:
     case o::ai_attack:
-    case o::ai_spawn_actor:
-    case o::ai_follow_target_players:
-    case o::ai_exit_vehicle:
+    case o::ai_maneuver:
     case o::ai_defend:
+    case o::ai_retreat:
+    case o::ai_follow_target_unit:
+    case o::ai_follow_target_players:
+    case o::ai_follow_target_disable:
+    case o::ai_try_to_fight_player:
+    case o::ai_try_to_fight_nothing:
+    case o::ai_maneuver_enable:
+    case o::ai_spawn_actor:
+    case o::ai_exit_vehicle:
     case o::ai_teleport_to_starting_location:
+    case o::ai_magically_see_encounter:
+    case o::ai_command_list_advance:
         return Getter::template get<sig_t<t::void_, t::ai>>();
+    case o::ai_free_units:
+        return Getter::template get<sig_t<t::void_, t::obj_list>>();
+    case o::ai_strength:
+        return Getter::template get<sig_t<t::real_, t::ai>>();
+    case o::ai_status:
+    case o::ai_living_count:
+    case o::ai_nonswarm_count:
+        return Getter::template get<sig_t<t::short_, t::ai>>();
+    case o::ai_living_fraction:
+        return Getter::template get<sig_t<t::real_, t::ai>>();
+    case o::ai_actors:
+        return Getter::template get<sig_t<t::obj_list, t::ai>>();
+    case o::ai_set_blind:
+    case o::ai_playfight:
+    case o::ai_set_deaf:
+    case o::ai_set_respawn:
+    case o::ai_berserk:
+    case o::ai_braindead:
+    case o::ai_force_active:
+    case o::ai_migrate_and_speak:
+        return Getter::template get<sig_t<t::void_, t::ai, t::bool_>>();
+    case o::ai_migrate:
+    case o::ai_try_to_fight:
     case o::ai_follow_target_ai:
+    case o::ai_link_activation:
         return Getter::template get<sig_t<t::void_, t::ai, t::ai>>();
     case o::ai_vehicle_encounter:
         return Getter::template get<sig_t<t::void_, t::unit, t::ai>>();
@@ -369,14 +450,6 @@ inline typename Getter::return_type opcode_signature(
     case o::ai_go_to_vehicle:
         return Getter::template get<
             sig_t<t::void_, t::ai, t::unit, t::string_>>();
-    case o::ai_set_blind:
-    case o::ai_playfight:
-    case o::ai_set_deaf:
-    case o::ai_set_respawn:
-        return Getter::template get<sig_t<t::void_, t::ai, t::bool_>>();
-    case o::ai_living_count:
-    case o::ai_magically_see_encounter:
-        return Getter::template get<sig_t<t::short_, t::ai>>();
     case o::ai_command_list:
         return Getter::template get<sig_t<t::void_, t::ai, t::ai_cmd_list>>();
     case o::ai_command_list_by_unit:
@@ -384,9 +457,6 @@ inline typename Getter::return_type opcode_signature(
             sig_t<t::void_, t::unit_name, t::ai_cmd_list>>();
     case o::ai_command_list_status:
         return Getter::template get<sig_t<t::short_, t::obj_list>>();
-    case o::ai_migrate:
-    case o::ai_try_to_fight:
-        return Getter::template get<sig_t<t::void_, t::ai, t::ai>>();
     case o::ai_allegiance:
     case o::ai_allegiance_remove:
         return Getter::template get<sig_t<t::void_, t::team, t::team>>();
@@ -423,6 +493,8 @@ inline typename Getter::return_type opcode_signature(
     case o::vehicle_unload:
         return Getter::template get<
             sig_t<t::void_, t::unit_name, t::string_>>();
+    case o::vehicle_riders:
+        return Getter::template get<sig_t<t::obj_list, t::unit_name>>();
 
     case o::unit_set_seat:
         return Getter::template get<
@@ -439,13 +511,20 @@ inline typename Getter::return_type opcode_signature(
     case o::unit_set_current_vitality:
         return Getter::template get<
             sig_t<t::void_, t::unit_name, t::real_, t::real_>>();
+    case o::units_set_desired_flashlight_state:
+        return Getter::template get<sig_t<t::bool_, t::short_>>();
     case o::units_set_current_vitality:
         return Getter::template get<
             sig_t<t::void_, t::obj_list, t::real_, t::real_>>();
     case o::unit_get_health:
         return Getter::template get<sig_t<t::real_, t::unit_name>>();
     case o::unit_close:
+    case o::unit_open:
         return Getter::template get<sig_t<t::void_, t::unit_name>>();
+    case o::unit_set_emotion:
+        return Getter::template get<sig_t<t::void_, t::unit_name, t::short_>>();
+    case o::unit_solo_player_integrated_night_vision_is_active:
+        return Getter::template get<sig_t<t::void_>>();
 
         /* Trigger volume controls */
     case o::volume_test_object:
@@ -464,13 +543,45 @@ inline typename Getter::return_type opcode_signature(
         /* Player controls */
     case o::show_hud:
     case o::show_hud_help_text:
+    case o::hud_show_crosshair:
+    case o::hud_show_health:
+    case o::hud_show_shield:
+    case o::hud_show_motion_sensor:
+    case o::hud_blink_health:
+    case o::hud_blink_shield:
+    case o::hud_blink_motion_sensor:
+    case o::enable_hud_help_flash:
         return Getter::template get<sig_t<t::void_, t::bool_>>();
     case o::hud_set_help_text:
         return Getter::template get<sig_t<t::void_, t::hud_msg>>();
     case o::hud_set_objective_text:
         return Getter::template get<sig_t<t::void_, t::hud_msg>>();
+    case o::display_scenario_help:
+        return Getter::template get<sig_t<t::void_, t::short_>>();
 
     case o::player_enable_input:
+        return Getter::template get<sig_t<t::void_, t::bool_>>();
+    case o::player_action_test_reset:
+        return Getter::template get<sig_t<t::void_>>();
+    case o::player_action_test_back:
+    case o::player_action_test_look_relative_left:
+    case o::player_action_test_look_relative_right:
+    case o::player_action_test_look_relative_down:
+    case o::player_action_test_look_relative_up:
+        return Getter::template get<sig_t<t::bool_>>();
+    case o::player_action_test_move_relative_all_directions:
+    case o::player_action_test_look_relative_all_directions:
+    case o::player_action_test_accept:
+    case o::player_action_test_zoom:
+    case o::player_action_test_grenade_trigger:
+        return Getter::template get<sig_t<t::bool_, t::short_>>();
+    case o::player_camera_control:
+        return Getter::template get<sig_t<t::void_, t::bool_>>();
+
+    case o::player0_joystick_set_is_normal:
+    case o::player0_look_pitch_is_inverted:
+        return Getter::template get<sig_t<t::bool_>>();
+    case o::player0_look_invert_pitch:
         return Getter::template get<sig_t<t::void_, t::bool_>>();
 
     case o::cls:
@@ -480,23 +591,26 @@ inline typename Getter::return_type opcode_signature(
     case o::inspect:
         return Getter::template get<sig_t<t::void_, t::any>>();
 
-    case o::display_scenario_help:
-        return Getter::template get<sig_t<t::void_, t::short_>>();
+    case o::rasterizer_lights_reset_for_new_map:
+        return Getter::template get<sig_t<t::void_>>();
 
-    case o::player0_joystick_set_is_normal:
-        return Getter::template get<sig_t<t::bool_>>();
+    case o::deactivate_team_nav_point_flag:
+        return Getter::template get<
+            sig_t<t::void_, t::team, t::cutscene_flag>>();
+    case o::activate_team_nav_point_flag:
+        return Getter::template get<sig_t<
+            t::void_,
+            t::navpoint,
+            t::team,
+            t::cutscene_flag,
+            t::real_>>();
 
     default:
         break;
     }
 
-    auto        name = magic_enum::enum_name(op.opcode);
-    std::string name_s(name.begin(), name.end());
-    fprintf(stderr, "MISSING SIGNATURE: %s\n", name_s.c_str());
-
-    return Getter::template get<sig_t<t::void_>>();
-
-    //    Throw(undefined_behavior("signature not implemented"));
+    auto op_name = magic_enum::enum_name(op.opcode);
+    Throw(missing_signature(std::string(op_name.begin(), op_name.end())));
 }
 
 template<typename BC>
@@ -514,7 +628,12 @@ inline u16 param_count(opcode_layout<BC> const& op)
         break;
     }
 
-    return opcode_signature(op).num_params;
+    auto out = opcode_signature(op);
+
+    if(out.return_type == type_t::unevaluated)
+        return unknown_opcode_signature;
+
+    return out.num_params;
 }
 
 } // namespace hsc

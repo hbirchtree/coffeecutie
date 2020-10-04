@@ -393,7 +393,9 @@ struct BitmapCache
         auto size = img.image.mip->isize.convert<u32>();
         size.w >>= mipmap;
         size.h >>= mipmap;
-        GFX::ERROR ec;
+
+        if(size.w % 4 != 0 || size.h % 4 != 0)
+            return;
 
         i32 mip_pad = bucket.surface->m_pixfmt != PixFmt::RGB565
                           ? 2 << (mips - mipmap)
@@ -403,9 +405,10 @@ struct BitmapCache
             (C_CAST<i32>(img.image.offset.x()) >> mipmap) - mip_pad,
             (C_CAST<i32>(img.image.offset.y()) >> mipmap) - mip_pad};
 
+        GFX::ERROR ec;
         bucket.surface->upload(
             img.image.fmt,
-            Size3(size.w, size.h, 1),
+            size_3d<i32>(size.w, size.h, 1),
             img.image.mip->data(magic, mipmap),
             ec,
             Point3(
@@ -439,7 +442,7 @@ struct BitmapCache
 
         bucket.surface->upload(
             img.image.fmt,
-            Size3(size.w, 4, 1),
+            size_3d<i32>(size.w, 4, 1),
             *img.image.mip->data(magic, mipmap)
                  .at(PixDescSize(img.image.fmt, {size.w, size.h - 4}),
                      PixDescSize(img.image.fmt, {size.w, 4})),
@@ -452,7 +455,7 @@ struct BitmapCache
 
         bucket.surface->upload(
             img.image.fmt,
-            Size3(size.w, 4, 1),
+            size_3d<i32>(size.w, 4, 1),
             *img.image.mip->data(magic, mipmap)
                  .at(0, PixDescSize(img.image.fmt, {size.w, 4})),
             ec,
@@ -466,7 +469,7 @@ struct BitmapCache
 
         bucket.surface->upload(
             img.image.fmt,
-            Size3(4, size.h, 1),
+            size_3d<i32>(4, size.h, 1),
             *img.image.mip->data(magic, mipmap)
                  .at_lazy(
                      PixDescSize(img.image.fmt, {size.w - 4, 1}),
@@ -481,7 +484,7 @@ struct BitmapCache
 
         bucket.surface->upload(
             img.image.fmt,
-            Size3(4, size.h, 1),
+            size_3d<i32>(4, size.h, 1),
             *img.image.mip->data(magic, mipmap)
                  .at_lazy(0, PixDescSize(img.image.fmt, size)),
             ec,
@@ -512,6 +515,10 @@ struct BitmapCache
         for(auto i : Range<u16>(img.image.mip->mipmaps))
         {
             if((img.image.mip->isize.w >> i) < 4)
+                break;
+            auto offset =
+                point_2d<i32>(img.image.offset.x(), img.image.offset.y());
+            if(offset.x % 4 != 0 || offset.y % 4 != 0)
                 break;
 
             upload_mipmap(bucket, img, bmagic, i);
@@ -613,23 +620,22 @@ struct BitmapCache
                 img->image.layer  = layer;
                 img->image.offset = Vecf2(
                     img_offset.w + max_pad / 2, img_offset.h + max_pad / 2);
-                img->image.scale = {
-                    C_CAST<f32>(imsize.w - max_pad), 
-                    C_CAST<f32>(imsize.h - max_pad)
-                };
+                img->image.scale = {C_CAST<f32>(imsize.w - max_pad),
+                                    C_CAST<f32>(imsize.h - max_pad)};
 
                 img->image.scale.x() /= pool.max.w;
                 img->image.scale.y() /= pool.max.h;
 
                 cDebug(
-                    "{0}x{1} - {2}x{3} @ {4} ({5},{6})",
+                    "{0}x{1} - {2}x{3} @ {4} ({5},{6}) padding of {7}",
                     img_offset.w,
                     img_offset.h,
                     offset.w,
                     offset.h,
                     img_layer,
                     imsize.w,
-                    imsize.h);
+                    imsize.h,
+                    max_pad);
             }
 
             pool.layers = layer + 1;
@@ -640,7 +646,8 @@ struct BitmapCache
             auto& props = bucket.second;
             auto& pool  = fmt_count[bucket.first];
             props.surface->allocate(
-                Size3(pool.max.w, pool.max.h, pool.layers), props.fmt.comp);
+                size_3d<i32>(pool.max.w, pool.max.h, pool.layers),
+                props.fmt.comp);
         }
 
         for(auto& bitm : m_cache)
@@ -1038,7 +1045,8 @@ struct BSPCache
                     mesh_data.draw.m_insts = 1;
 
                     MemCpy(
-                        vertices, (*vert_buffer.at(vert_ptr)).as<vertex_type>());
+                        vertices,
+                        (*vert_buffer.at(vert_ptr)).as<vertex_type>());
                     MemCpy(
                         indices,
                         (*element_buffer.at(element_ptr)).as<element_type>());
@@ -1071,7 +1079,8 @@ struct BSPCache
                     mesh_data.draw.m_insts = 1;
 
                     MemCpy(
-                        vertices, (*vert_buffer.at(vert_ptr)).as<vertex_type>());
+                        vertices,
+                        (*vert_buffer.at(vert_ptr)).as<vertex_type>());
                     MemCpy(
                         indices,
                         (*element_buffer.at(element_ptr)).as<element_type>());

@@ -19,6 +19,43 @@ inline bool is_any(type_t t)
     return t == type_t::any;
 }
 
+template<typename Opcode>
+inline bool is_operator(Opcode op)
+{
+    switch(op)
+    {
+    case Opcode::equal:
+    case Opcode::nequal:
+    case Opcode::less:
+    case Opcode::greater:
+    case Opcode::lequals:
+    case Opcode::gequals:
+    case Opcode::add_:
+    case Opcode::sub_:
+    case Opcode::mul_:
+    case Opcode::div_:
+        return true;
+    default:
+        return false;
+    }
+}
+
+inline bool is_value(type_t t)
+{
+    switch(t)
+    {
+    case type_t::void_:
+    case type_t::unevaluated:
+    case type_t::branch_val:
+    case type_t::passthrough:
+    case type_t::any:
+    case type_t::func_name:
+        return false;
+    default:
+        return true;
+    }
+}
+
 inline bool match_type(type_t t1, type_t t2)
 {
     using t = type_t;
@@ -86,7 +123,10 @@ inline opcode_layout<BC> get_as(T const& src, type_t from, type_t t)
             break;
         }
     default:
-        Throw(script_error("invalid conversion for global"));
+        if(from != t)
+            Throw(script_error("invalid conversion for global"));
+        out.set_ptr(src.to_ptr());
+        break;
     }
     return out;
 }
@@ -241,6 +281,7 @@ struct global_value
     {
         f32           real;
         i32           long_;
+        u32           ptr;
         Array<i16, 2> shorts;
         Array<u8, 4>  bytes;
     };
@@ -265,7 +306,8 @@ struct global_value
             real = op.to_real();
             break;
         default:
-            Throw(script_error("unhandled global type"));
+            ptr = op.to_ptr();
+            break;
         }
     }
 
@@ -273,6 +315,11 @@ struct global_value
     auto get_as(type_t to)
     {
         return hsc::get_as<BC>(*this, type, to);
+    }
+
+    u32 to_ptr() const
+    {
+        return ptr;
     }
 };
 
@@ -590,7 +637,16 @@ struct bytecode_pointer
         auto out = &value_stack.at(value_stack.size() - i - 1);
 
         if(!match_type(type, out->ret_type))
-            Throw(script_error("param has wrong type"));
+        {
+            auto type1 = magic_enum::enum_name(type);
+            auto type2 = magic_enum::enum_name(out->ret_type);
+
+            auto type1_ = std::string(type1.begin(), type1.end());
+            auto type2_ = std::string(type2.begin(), type2.end());
+
+            Throw(mismatch_param_type(
+                "param has wrong type: " + type1_ + " != " + type2_));
+        }
 
         return *out;
     }
@@ -624,14 +680,21 @@ struct bytecode_pointer
     inline result_t evaluate_params(
         opcode_handlers const& handler, opcode_layout_t const& op)
     {
-        auto num = param_count(op);
+        u16 num = 0;
+
+        try
+        {
+            num = param_count(op);
+        } catch(missing_signature const& e)
+        {
+            num = unknown_opcode_signature;
+        }
 
         if(num == 0)
             return result_t::return_({}).end_at(current_ip + 1);
 
-        auto param_types = opcode_signature<BC, signatures::param_getter>(op);
-        u16  param_i     = 0;
-        u16  last_op     = terminator;
+        u16 param_i = 0;
+        u16 last_op = terminator;
 
         u32 start_param = value_stack.size();
 
@@ -639,7 +702,7 @@ struct bytecode_pointer
             return (value_stack.size() - start_param) < num;
         };
 
-        if(num == variable_length_params)
+        if(num == variable_length_params || num == unknown_opcode_signature)
         {
             /* Functions like sleep_until() may take an arbitrary amount of
              * parameters, but points to the last parameter */
@@ -668,7 +731,9 @@ struct bytecode_pointer
                 continue;
             }
 
+            jump(current_ip);
             auto val = evaluate(*current, handler);
+            return_();
 
             if(val.state != eval::running)
             {
@@ -684,6 +749,23 @@ struct bytecode_pointer
         } while(condition());
 
         current_params = 0;
+
+        if(num == unknown_opcode_signature)
+        {
+            auto               opname      = magic_enum::enum_name(op.opcode);
+            auto               ret_type    = magic_enum::enum_name(op.ret_type);
+            stl_types::CString param_types = {};
+            for(auto it = value_stack.end() - param_i; it != value_stack.end();
+                ++it)
+            {
+                param_types.append(magic_enum::enum_name(it->ret_type));
+                param_types.append(" ");
+            }
+            stl_types::CString signature;
+            ((((signature += opname) += " ") += ret_type) += ": ") +=
+                param_types;
+            Throw(missing_signature(signature));
+        }
 
         return_();
         return result_t::return_({}).end_at(last_op);
@@ -738,11 +820,10 @@ struct bytecode_pointer
     inline void advance()
     {
         if(current->branching())
-        {
             current_ip = current->next_op.ip + 1;
-            update_opcode();
-        } else
+        else
             current_ip = current->next_op.ip;
+        update_opcode();
     }
     NO_DISCARD inline bool update_opcode()
     {
@@ -941,7 +1022,7 @@ struct bytecode_pointer
                 run_state = result.state;
                 if(run_state == eval::running)
                     advance();
-                if(result.result.ret_type != type_t::func_name)
+                if(is_value(result.result.ret_type))
                 {
                     value_stack.push_back(result.result);
                     value_ptr.push_back(current_ip);
@@ -958,12 +1039,6 @@ struct bytecode_pointer
                 state.status    = script_status::sleeping;
                 state.condition = result.condition;
                 break;
-            } else if(
-                run_state == eval::running && current_ip == terminator &&
-                !link_register.empty())
-            {
-                return_();
-                advance();
             } else if(
                 state.function->schedule == script_type_t::startup &&
                 current_ip == terminator)
@@ -985,6 +1060,12 @@ struct bytecode_pointer
                 current_ip = state.script_start;
                 update_opcode();
                 break;
+            } else if(
+                run_state == eval::running && current_ip == terminator &&
+                !link_register.empty())
+            {
+                return_();
+                advance();
             } else
             {
                 /* Reset bytecode pointer */

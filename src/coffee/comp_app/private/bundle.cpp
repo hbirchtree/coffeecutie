@@ -405,14 +405,6 @@ void PerformanceMonitor::start_restricted(Proxy& p, time_point const& time)
     auto battery  = p.service<BatteryProvider>();
     auto network  = p.service<NetworkStatProvider>();
 
-//    u32 i = 0;
-//    for(auto freq : platform::SysInfo::ProcessorFrequencies(
-//#if defined(COFFEE_LINUX) || defined(COFFEE_ANDROID)
-//            true
-//#endif
-//            ))
-//        json::CaptureMetrics(
-//            "CPU frequency", MetricVariant::Value, freq, timestamp, i++);
     if(clock)
         for(auto i : Range<u32>(clock->threads()))
         {

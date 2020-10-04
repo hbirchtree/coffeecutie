@@ -101,18 +101,28 @@ using bl_footer = char[4];
 template<size_t Size>
 struct unicode_var
 {
-    using wide_string = std::basic_string<u16>;
+    using wide_string               = std::basic_string<u16>;
+    using string_span               = semantic::mem_chunk<u16>;
+    static constexpr u16 terminator = 0;
 
     u16 data[Size];
 
-    inline wide_string str() const
+    inline string_span view(u32 len, u16 off = 0) const
     {
-        constexpr u16 terminator = 0;
+        string_span string_data = string_span::From(data + off, len);
 
-        auto out = wide_string(data, Size);
-        auto end = out.find(terminator);
-        if(end != wide_string::npos)
-            out.resize(end);
+        auto end = string_data.find(string_span::From(terminator)).value();
+
+        return string_data.at(0, end.offset).value();
+    }
+
+    inline wide_string str(u16 off = 0) const
+    {
+        string_span string_data = string_span::From(data + off, 256);
+
+        auto res = string_data.find(string_span::From(terminator));
+
+        auto out = wide_string(data + off, res ? (*res).offset : 0);
         return out;
     }
 
@@ -149,7 +159,7 @@ struct bounding_box
  * \brief Function pointers for blam bitmap processing, raw function pointer is
  * much faster than Function
  */
-using BitmProcess = u32 (*)(u32, uint16, byte_t);
+using BitmProcess = u32 (*)(u32, u16, byte_t);
 
 using bl_rgba_t = typing::pixels::rgba_t;
 
@@ -157,7 +167,7 @@ using bl_rgba_t = typing::pixels::rgba_t;
  * \brief Blam maptypes. Names being obvious, the UI type does not give a
  * playable map.
  */
-enum class maptype_t : int32
+enum class maptype_t : i32
 {
     singleplayer =
         0,           /*!< A single-player map, typically with cutscenes and AI*/
@@ -179,7 +189,7 @@ enum class game_difficulty_t : u16
  * single file while PC spreads it across "bitmaps.map" and "sounds.map". Both
  * ways are necessary for parsing to happen correctly.
  */
-enum class version_t : int32
+enum class version_t : i32
 {
     xbox = 5, /*!< The 2001 version of Halo: Combat Evolved for Xbox*/
     pc   = 7, /*!< The 2004 version of Halo: Combat Evolved for PC*/

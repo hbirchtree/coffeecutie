@@ -1,0 +1,601 @@
+[1m[44m[0m[32m18:54:10.394:Blam Graphics:V[0m: Verbosity level: 1
+[1m[44m[0m[32m18:54:10.394:Blam Graphics!:D[0m: Buffer budget: 127926272 / 122 MB
+[1m[44m[0m[32m18:54:11.035:Blam Graphics!:D[0m: Currently loaded with Desktop GL 4.6
+[1m[44m[0m[32m18:54:11.056:Blam Graphics!:D[0m: unimplemented texture type: tex_cube
+[1m[44m[0m[32m18:54:11.059:Blam Graphics!:D[0m: unimplemented texture type: tex_cube
+[1m[44m[0m[32m18:54:11.059:Blam Graphics!:D[0m: unimplemented texture type: tex_cube
+[1m[44m[0m[32m18:54:11.059:Blam Graphics!:D[0m: unimplemented texture type: tex_cube
+[1m[44m[0m[32m18:54:11.060:Blam Graphics!:D[0m: unimplemented texture type: tex_cube
+[1m[44m[0m[32m18:54:11.060:Blam Graphics!:D[0m: unimplemented texture type: tex_cube
+[1m[44m[0m[32m18:54:11.060:Blam Graphics!:D[0m: unimplemented texture type: tex_cube
+[1m[44m[0m[32m18:54:11.060:Blam Graphics!:D[0m: unimplemented texture type: tex_cube
+[1m[44m[0m[32m18:54:11.060:Blam Graphics!:D[0m: unimplemented texture type: tex_cube
+[1m[44m[0m[32m18:54:11.060:Blam Graphics!:D[0m: unimplemented texture type: tex_cube
+[1m[44m[0m[32m18:54:11.060:Blam Graphics!:D[0m: unimplemented texture type: tex_cube
+[1m[44m[0m[32m18:54:11.060:Blam Graphics!:D[0m: unimplemented texture type: tex_cube
+[1m[44m[0m[32m18:54:11.061:Blam Graphics!:D[0m: unimplemented texture type: tex_cube
+[1m[44m[0m[32m18:54:11.061:Blam Graphics!:D[0m: unimplemented texture type: tex_cube
+[1m[44m[0m[32m18:54:11.061:Blam Graphics!:D[0m: unimplemented texture type: tex_cube
+[1m[44m[0m[32m18:54:11.063:Blam Graphics!:D[0m: unimplemented texture type: tex_cube
+[1m[44m[0m[32m18:54:11.065:Blam Graphics!:D[0m: unimplemented texture type: tex_cube
+[1m[44m[0m[32m18:54:11.070:Blam Graphics!:D[0m: unimplemented texture type: tex_cube
+[1m[44m[0m[32m18:54:11.090:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.090:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.090:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.090:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.091:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.091:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.091:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.091:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.091:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.091:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.091:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.091:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.091:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.092:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.092:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.092:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.092:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.092:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.092:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.092:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.092:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.092:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.092:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.092:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.093:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.093:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.093:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.094:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.094:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.094:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.094:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.094:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.094:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.094:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.094:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.094:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.094:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.094:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.094:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.095:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.095:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.095:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.096:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.096:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.096:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.096:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.096:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.096:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.096:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.096:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.096:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.097:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.097:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.097:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.097:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.097:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.097:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.097:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.097:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.097:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.097:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.097:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.097:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.097:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.098:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.098:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.098:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.098:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.098:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.098:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.098:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.098:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.098:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.098:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.099:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.099:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.099:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.099:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.099:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.099:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.099:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.099:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.099:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.100:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.100:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.100:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.100:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.100:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.100:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.100:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.100:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.100:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.100:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.100:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.101:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.101:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.101:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.101:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.101:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.101:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.101:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.101:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.101:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.101:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.101:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.102:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.102:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.102:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.102:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.102:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.102:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.102:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.102:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.102:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.102:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.102:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.103:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.103:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.103:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.103:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.103:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.103:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.103:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.103:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.103:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.103:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.103:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.103:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.103:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.103:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.104:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.104:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.104:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.104:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.104:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.104:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.104:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.104:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.105:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.105:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.105:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.105:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.105:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.105:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.105:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.105:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.105:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.105:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.105:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.105:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.105:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.105:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.105:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.105:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.105:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.106:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.106:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.106:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.106:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.106:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.106:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.106:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.106:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.106:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.106:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.106:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.106:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.106:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.106:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.106:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.107:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.107:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.107:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.107:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.107:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.107:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.107:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.107:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.107:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.107:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.107:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.107:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.107:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.107:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.107:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.107:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.107:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.107:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.107:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.107:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.108:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.108:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.108:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.108:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.108:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.108:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.108:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.108:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.108:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.108:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.108:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.108:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.108:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.108:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.108:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.108:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.108:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.109:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.109:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.109:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.109:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.109:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.109:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.109:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.109:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.109:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.109:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.109:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.109:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.109:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.109:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.109:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.109:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.109:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.110:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.110:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.110:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.110:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.110:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.110:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.110:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.110:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.110:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.110:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.110:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.110:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.110:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.110:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.110:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.110:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.110:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.110:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.110:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.111:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.111:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.111:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.111:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.111:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.111:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.111:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.111:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.111:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.111:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.111:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.111:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.111:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.111:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.111:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.111:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.111:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.111:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.111:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.111:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.111:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.111:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.111:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.111:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.111:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.112:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.112:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.112:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.112:Blam Graphics!:D[0m: Failed to find shader: bitm levels\a50\a50_control
+[1m[44m[0m[32m18:54:11.157:Blam Graphics!:D[0m: Skybox
+[1m[44m[0m[32m18:54:11.157:Blam Graphics!:D[0m: Skybox
+[1m[44m[0m[32m18:54:11.158:Blam Graphics!:D[0m: 0x0 - 512x512 @ 0 (512,512) padding of 0
+[1m[44m[0m[32m18:54:11.158:Blam Graphics!:D[0m: 0x0 - 256x256 @ 1 (256,256) padding of 0
+[1m[44m[0m[32m18:54:11.158:Blam Graphics!:D[0m: 256x0 - 512x256 @ 1 (256,256) padding of 0
+[1m[44m[0m[32m18:54:11.158:Blam Graphics!:D[0m: 0x0 - 256x256 @ 2 (256,256) padding of 0
+[1m[44m[0m[32m18:54:11.158:Blam Graphics!:D[0m: 256x0 - 512x256 @ 2 (256,256) padding of 0
+[1m[44m[0m[32m18:54:11.158:Blam Graphics!:D[0m: 0x0 - 256x256 @ 3 (256,256) padding of 0
+[1m[44m[0m[32m18:54:11.158:Blam Graphics!:D[0m: 256x0 - 512x256 @ 3 (256,256) padding of 0
+[1m[44m[0m[32m18:54:11.158:Blam Graphics!:D[0m: 0x0 - 256x256 @ 4 (256,256) padding of 0
+[1m[44m[0m[32m18:54:11.158:Blam Graphics!:D[0m: 256x0 - 512x256 @ 4 (256,256) padding of 0
+[1m[44m[0m[32m18:54:11.158:Blam Graphics!:D[0m: 0x0 - 256x256 @ 5 (256,256) padding of 0
+[1m[44m[0m[32m18:54:11.158:Blam Graphics!:D[0m: 256x0 - 512x256 @ 5 (256,256) padding of 0
+[1m[44m[0m[32m18:54:11.158:Blam Graphics!:D[0m: 0x0 - 256x256 @ 6 (256,256) padding of 0
+[1m[44m[0m[32m18:54:11.158:Blam Graphics!:D[0m: 256x0 - 512x256 @ 6 (256,256) padding of 0
+[1m[44m[0m[32m18:54:11.158:Blam Graphics!:D[0m: 0x0 - 256x256 @ 7 (256,256) padding of 0
+[1m[44m[0m[32m18:54:11.158:Blam Graphics!:D[0m: 256x0 - 512x256 @ 7 (256,256) padding of 0
+[1m[44m[0m[32m18:54:11.158:Blam Graphics!:D[0m: 0x0 - 256x256 @ 8 (256,256) padding of 0
+[1m[44m[0m[32m18:54:11.158:Blam Graphics!:D[0m: 256x0 - 512x256 @ 8 (256,256) padding of 0
+[1m[44m[0m[32m18:54:11.158:Blam Graphics!:D[0m: 0x0 - 256x256 @ 9 (256,256) padding of 0
+[1m[44m[0m[32m18:54:11.158:Blam Graphics!:D[0m: 256x0 - 512x256 @ 9 (256,256) padding of 0
+[1m[44m[0m[32m18:54:11.158:Blam Graphics!:D[0m: 0x0 - 256x256 @ 10 (256,256) padding of 0
+[1m[44m[0m[32m18:54:11.159:Blam Graphics!:D[0m: 256x0 - 512x256 @ 10 (256,256) padding of 0
+[1m[44m[0m[32m18:54:11.159:Blam Graphics!:D[0m: 0x0 - 256x256 @ 11 (256,256) padding of 0
+[1m[44m[0m[32m18:54:11.159:Blam Graphics!:D[0m: 256x128 - 512x256 @ 11 (256,128) padding of 0
+[1m[44m[0m[32m18:54:11.159:Blam Graphics!:D[0m: 0x0 - 256x128 @ 12 (256,128) padding of 0
+[1m[44m[0m[32m18:54:11.159:Blam Graphics!:D[0m: 256x0 - 512x128 @ 12 (256,128) padding of 0
+[1m[44m[0m[32m18:54:11.159:Blam Graphics!:D[0m: 0x0 - 256x128 @ 13 (256,128) padding of 0
+[1m[44m[0m[32m18:54:11.159:Blam Graphics!:D[0m: 256x0 - 512x128 @ 13 (256,128) padding of 0
+[1m[44m[0m[32m18:54:11.159:Blam Graphics!:D[0m: 0x0 - 256x128 @ 14 (256,128) padding of 0
+[1m[44m[0m[32m18:54:11.159:Blam Graphics!:D[0m: 256x0 - 512x128 @ 14 (256,128) padding of 0
+[1m[44m[0m[32m18:54:11.159:Blam Graphics!:D[0m: 0x0 - 256x128 @ 15 (256,128) padding of 0
+[1m[44m[0m[32m18:54:11.159:Blam Graphics!:D[0m: 256x0 - 512x128 @ 15 (256,128) padding of 0
+[1m[44m[0m[32m18:54:11.159:Blam Graphics!:D[0m: 0x0 - 256x128 @ 16 (256,128) padding of 0
+[1m[44m[0m[32m18:54:11.159:Blam Graphics!:D[0m: 256x0 - 512x128 @ 16 (256,128) padding of 0
+[1m[44m[0m[32m18:54:11.159:Blam Graphics!:D[0m: 0x0 - 256x128 @ 17 (256,128) padding of 0
+[1m[44m[0m[32m18:54:11.159:Blam Graphics!:D[0m: 256x0 - 512x128 @ 17 (256,128) padding of 0
+[1m[44m[0m[32m18:54:11.159:Blam Graphics!:D[0m: 0x0 - 128x256 @ 18 (128,256) padding of 0
+[1m[44m[0m[32m18:54:11.159:Blam Graphics!:D[0m: 128x0 - 256x256 @ 18 (128,256) padding of 0
+[1m[44m[0m[32m18:54:11.159:Blam Graphics!:D[0m: 256x0 - 384x256 @ 18 (128,256) padding of 0
+[1m[44m[0m[32m18:54:11.159:Blam Graphics!:D[0m: 384x128 - 512x256 @ 18 (128,128) padding of 0
+[1m[44m[0m[32m18:54:11.159:Blam Graphics!:D[0m: 0x0 - 128x128 @ 19 (128,128) padding of 0
+[1m[44m[0m[32m18:54:11.159:Blam Graphics!:D[0m: 128x0 - 256x128 @ 19 (128,128) padding of 0
+[1m[44m[0m[32m18:54:11.159:Blam Graphics!:D[0m: 256x0 - 384x128 @ 19 (128,128) padding of 0
+[1m[44m[0m[32m18:54:11.159:Blam Graphics!:D[0m: 384x0 - 512x128 @ 19 (128,128) padding of 0
+[1m[44m[0m[32m18:54:11.159:Blam Graphics!:D[0m: 0x0 - 128x128 @ 20 (128,128) padding of 0
+[1m[44m[0m[32m18:54:11.159:Blam Graphics!:D[0m: 128x0 - 256x128 @ 20 (128,128) padding of 0
+[1m[44m[0m[32m18:54:11.159:Blam Graphics!:D[0m: 256x0 - 384x128 @ 20 (128,128) padding of 0
+[1m[44m[0m[32m18:54:11.159:Blam Graphics!:D[0m: 384x0 - 512x128 @ 20 (128,128) padding of 0
+[1m[44m[0m[32m18:54:11.159:Blam Graphics!:D[0m: 0x0 - 128x128 @ 21 (128,128) padding of 0
+[1m[44m[0m[32m18:54:11.159:Blam Graphics!:D[0m: 128x0 - 256x128 @ 21 (128,128) padding of 0
+[1m[44m[0m[32m18:54:11.159:Blam Graphics!:D[0m: 256x0 - 384x128 @ 21 (128,128) padding of 0
+[1m[44m[0m[32m18:54:11.159:Blam Graphics!:D[0m: 384x0 - 512x128 @ 21 (128,128) padding of 0
+[1m[44m[0m[32m18:54:11.159:Blam Graphics!:D[0m: 0x0 - 128x128 @ 22 (128,128) padding of 0
+[1m[44m[0m[32m18:54:11.159:Blam Graphics!:D[0m: 128x64 - 256x128 @ 22 (128,64) padding of 0
+[1m[44m[0m[32m18:54:11.159:Blam Graphics!:D[0m: 256x64 - 384x128 @ 22 (128,64) padding of 0
+[1m[44m[0m[32m18:54:11.159:Blam Graphics!:D[0m: 384x64 - 512x128 @ 22 (128,64) padding of 0
+[1m[44m[0m[32m18:54:11.159:Blam Graphics!:D[0m: 0x0 - 128x64 @ 23 (128,64) padding of 0
+[1m[44m[0m[32m18:54:11.159:Blam Graphics!:D[0m: 128x0 - 256x64 @ 23 (128,64) padding of 0
+[1m[44m[0m[32m18:54:11.159:Blam Graphics!:D[0m: 256x0 - 384x64 @ 23 (128,64) padding of 0
+[1m[44m[0m[32m18:54:11.160:Blam Graphics!:D[0m: 384x0 - 512x64 @ 23 (128,64) padding of 0
+[1m[44m[0m[32m18:54:11.160:Blam Graphics!:D[0m: 0x0 - 128x64 @ 24 (128,64) padding of 0
+[1m[44m[0m[32m18:54:11.160:Blam Graphics!:D[0m: 128x0 - 256x64 @ 24 (128,64) padding of 0
+[1m[44m[0m[32m18:54:11.160:Blam Graphics!:D[0m: 256x0 - 384x64 @ 24 (128,64) padding of 0
+[1m[44m[0m[32m18:54:11.160:Blam Graphics!:D[0m: 384x0 - 512x64 @ 24 (128,64) padding of 0
+[1m[44m[0m[32m18:54:11.160:Blam Graphics!:D[0m: 0x0 - 128x64 @ 25 (128,64) padding of 0
+[1m[44m[0m[32m18:54:11.160:Blam Graphics!:D[0m: 128x0 - 256x64 @ 25 (128,64) padding of 0
+[1m[44m[0m[32m18:54:11.160:Blam Graphics!:D[0m: 256x0 - 384x64 @ 25 (128,64) padding of 0
+[1m[44m[0m[32m18:54:11.160:Blam Graphics!:D[0m: 384x0 - 512x64 @ 25 (128,64) padding of 0
+[1m[44m[0m[32m18:54:11.160:Blam Graphics!:D[0m: 0x0 - 128x64 @ 26 (128,64) padding of 0
+[1m[44m[0m[32m18:54:11.160:Blam Graphics!:D[0m: 128x0 - 256x64 @ 26 (128,64) padding of 0
+[1m[44m[0m[32m18:54:11.160:Blam Graphics!:D[0m: 256x0 - 384x64 @ 26 (128,64) padding of 0
+[1m[44m[0m[32m18:54:11.160:Blam Graphics!:D[0m: 384x0 - 512x64 @ 26 (128,64) padding of 0
+[1m[44m[0m[32m18:54:11.160:Blam Graphics!:D[0m: 0x0 - 128x64 @ 27 (128,64) padding of 0
+[1m[44m[0m[32m18:54:11.160:Blam Graphics!:D[0m: 128x0 - 256x64 @ 27 (128,64) padding of 0
+[1m[44m[0m[32m18:54:11.160:Blam Graphics!:D[0m: 256x0 - 384x64 @ 27 (128,64) padding of 0
+[1m[44m[0m[32m18:54:11.160:Blam Graphics!:D[0m: 384x0 - 512x64 @ 27 (128,64) padding of 0
+[1m[44m[0m[32m18:54:11.160:Blam Graphics!:D[0m: 0x0 - 128x8 @ 28 (128,8) padding of 0
+[1m[44m[0m[32m18:54:11.160:Blam Graphics!:D[0m: 128x0 - 192x128 @ 28 (64,128) padding of 0
+[1m[44m[0m[32m18:54:11.160:Blam Graphics!:D[0m: 192x64 - 256x128 @ 28 (64,64) padding of 0
+[1m[44m[0m[32m18:54:11.160:Blam Graphics!:D[0m: 256x64 - 320x128 @ 28 (64,64) padding of 0
+[1m[44m[0m[32m18:54:11.160:Blam Graphics!:D[0m: 320x64 - 384x128 @ 28 (64,64) padding of 0
+[1m[44m[0m[32m18:54:11.160:Blam Graphics!:D[0m: 384x64 - 448x128 @ 28 (64,64) padding of 0
+[1m[44m[0m[32m18:54:11.160:Blam Graphics!:D[0m: 448x64 - 512x128 @ 28 (64,64) padding of 0
+[1m[44m[0m[32m18:54:11.160:Blam Graphics!:D[0m: 0x0 - 64x64 @ 29 (64,64) padding of 0
+[1m[44m[0m[32m18:54:11.160:Blam Graphics!:D[0m: 64x0 - 128x64 @ 29 (64,64) padding of 0
+[1m[44m[0m[32m18:54:11.160:Blam Graphics!:D[0m: 128x0 - 192x64 @ 29 (64,64) padding of 0
+[1m[44m[0m[32m18:54:11.160:Blam Graphics!:D[0m: 192x32 - 256x64 @ 29 (64,32) padding of 0
+[1m[44m[0m[32m18:54:11.160:Blam Graphics!:D[0m: 256x32 - 320x64 @ 29 (64,32) padding of 0
+[1m[44m[0m[32m18:54:11.160:Blam Graphics!:D[0m: 320x32 - 384x64 @ 29 (64,32) padding of 0
+[1m[44m[0m[32m18:54:11.160:Blam Graphics!:D[0m: 384x32 - 448x64 @ 29 (64,32) padding of 0
+[1m[44m[0m[32m18:54:11.160:Blam Graphics!:D[0m: 448x32 - 512x64 @ 29 (64,32) padding of 0
+[1m[44m[0m[32m18:54:11.160:Blam Graphics!:D[0m: 0x0 - 64x32 @ 30 (64,32) padding of 0
+[1m[44m[0m[32m18:54:11.160:Blam Graphics!:D[0m: 64x0 - 128x32 @ 30 (64,32) padding of 0
+[1m[44m[0m[32m18:54:11.160:Blam Graphics!:D[0m: 128x0 - 192x32 @ 30 (64,32) padding of 0
+[1m[44m[0m[32m18:54:11.160:Blam Graphics!:D[0m: 192x0 - 256x32 @ 30 (64,32) padding of 0
+[1m[44m[0m[32m18:54:11.160:Blam Graphics!:D[0m: 256x0 - 320x32 @ 30 (64,32) padding of 0
+[1m[44m[0m[32m18:54:11.160:Blam Graphics!:D[0m: 320x0 - 384x32 @ 30 (64,32) padding of 0
+[1m[44m[0m[32m18:54:11.161:Blam Graphics!:D[0m: 384x0 - 448x32 @ 30 (64,32) padding of 0
+[1m[44m[0m[32m18:54:11.161:Blam Graphics!:D[0m: 448x0 - 480x32 @ 30 (32,32) padding of 0
+[1m[44m[0m[32m18:54:11.161:Blam Graphics!:D[0m: 480x16 - 512x32 @ 30 (32,16) padding of 0
+[1m[44m[0m[32m18:54:11.161:Blam Graphics!:D[0m: 0x0 - 32x16 @ 31 (32,16) padding of 0
+[1m[44m[0m[32m18:54:11.161:Blam Graphics!:D[0m: 32x8 - 64x16 @ 31 (32,8) padding of 0
+[1m[44m[0m[32m18:54:11.161:Blam Graphics!:D[0m: 64x0 - 80x32 @ 31 (16,32) padding of 0
+[1m[44m[0m[32m18:54:11.161:Blam Graphics!:D[0m: 0x0 - 1152x384 @ 0 (1152,384) padding of 128
+[1m[44m[0m[32m18:54:11.161:Blam Graphics!:D[0m: 0x0 - 640x640 @ 1 (640,640) padding of 128
+[1m[44m[0m[32m18:54:11.161:Blam Graphics!:D[0m: 0x0 - 640x640 @ 2 (640,640) padding of 128
+[1m[44m[0m[32m18:54:11.161:Blam Graphics!:D[0m: 0x0 - 640x384 @ 3 (640,384) padding of 128
+[1m[44m[0m[32m18:54:11.161:Blam Graphics!:D[0m: 640x0 - 1024x384 @ 3 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.161:Blam Graphics!:D[0m: 0x0 - 384x384 @ 4 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.161:Blam Graphics!:D[0m: 384x0 - 768x384 @ 4 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.161:Blam Graphics!:D[0m: 768x0 - 1152x384 @ 4 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.161:Blam Graphics!:D[0m: 0x0 - 384x384 @ 5 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.161:Blam Graphics!:D[0m: 384x0 - 768x384 @ 5 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.161:Blam Graphics!:D[0m: 768x0 - 1152x384 @ 5 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.161:Blam Graphics!:D[0m: 0x0 - 384x384 @ 6 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.161:Blam Graphics!:D[0m: 384x0 - 768x384 @ 6 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.161:Blam Graphics!:D[0m: 768x128 - 1024x384 @ 6 (256,256) padding of 128
+[1m[44m[0m[32m18:54:11.161:Blam Graphics!:D[0m: 0x0 - 256x256 @ 7 (256,256) padding of 128
+[1m[44m[0m[32m18:54:11.161:Blam Graphics!:D[0m: 256x0 - 512x256 @ 7 (256,256) padding of 128
+[1m[44m[0m[32m18:54:11.161:Blam Graphics!:D[0m: 512x0 - 768x256 @ 7 (256,256) padding of 128
+[1m[44m[0m[32m18:54:11.161:Blam Graphics!:D[0m: 768x0 - 1024x256 @ 7 (256,256) padding of 128
+[1m[44m[0m[32m18:54:11.161:Blam Graphics!:D[0m: 0x0 - 256x256 @ 8 (256,256) padding of 128
+[1m[44m[0m[32m18:54:11.161:Blam Graphics!:D[0m: 256x0 - 512x256 @ 8 (256,256) padding of 128
+[1m[44m[0m[32m18:54:11.161:Blam Graphics!:D[0m: 512x64 - 704x256 @ 8 (192,192) padding of 128
+[1m[44m[0m[32m18:54:11.161:Blam Graphics!:D[0m: 0x0 - 1152x384 @ 0 (1152,384) padding of 128
+[1m[44m[0m[32m18:54:11.161:Blam Graphics!:D[0m: 0x0 - 1152x384 @ 1 (1152,384) padding of 128
+[1m[44m[0m[32m18:54:11.161:Blam Graphics!:D[0m: 0x0 - 1152x384 @ 2 (1152,384) padding of 128
+[1m[44m[0m[32m18:54:11.161:Blam Graphics!:D[0m: 0x0 - 640x640 @ 3 (640,640) padding of 128
+[1m[44m[0m[32m18:54:11.161:Blam Graphics!:D[0m: 0x0 - 640x640 @ 4 (640,640) padding of 128
+[1m[44m[0m[32m18:54:11.161:Blam Graphics!:D[0m: 0x0 - 640x640 @ 5 (640,640) padding of 128
+[1m[44m[0m[32m18:54:11.161:Blam Graphics!:D[0m: 0x0 - 640x640 @ 6 (640,640) padding of 128
+[1m[44m[0m[32m18:54:11.161:Blam Graphics!:D[0m: 0x0 - 640x640 @ 7 (640,640) padding of 128
+[1m[44m[0m[32m18:54:11.161:Blam Graphics!:D[0m: 0x0 - 640x640 @ 8 (640,640) padding of 128
+[1m[44m[0m[32m18:54:11.161:Blam Graphics!:D[0m: 0x0 - 640x640 @ 9 (640,640) padding of 128
+[1m[44m[0m[32m18:54:11.162:Blam Graphics!:D[0m: 0x0 - 640x640 @ 10 (640,640) padding of 128
+[1m[44m[0m[32m18:54:11.162:Blam Graphics!:D[0m: 0x0 - 640x640 @ 11 (640,640) padding of 128
+[1m[44m[0m[32m18:54:11.162:Blam Graphics!:D[0m: 0x0 - 640x640 @ 12 (640,640) padding of 128
+[1m[44m[0m[32m18:54:11.162:Blam Graphics!:D[0m: 0x0 - 640x640 @ 13 (640,640) padding of 128
+[1m[44m[0m[32m18:54:11.162:Blam Graphics!:D[0m: 0x0 - 640x640 @ 14 (640,640) padding of 128
+[1m[44m[0m[32m18:54:11.162:Blam Graphics!:D[0m: 0x0 - 640x640 @ 15 (640,640) padding of 128
+[1m[44m[0m[32m18:54:11.162:Blam Graphics!:D[0m: 0x0 - 640x640 @ 16 (640,640) padding of 128
+[1m[44m[0m[32m18:54:11.162:Blam Graphics!:D[0m: 0x0 - 640x640 @ 17 (640,640) padding of 128
+[1m[44m[0m[32m18:54:11.162:Blam Graphics!:D[0m: 0x0 - 640x384 @ 18 (640,384) padding of 128
+[1m[44m[0m[32m18:54:11.162:Blam Graphics!:D[0m: 0x0 - 640x384 @ 19 (640,384) padding of 128
+[1m[44m[0m[32m18:54:11.162:Blam Graphics!:D[0m: 0x0 - 640x384 @ 20 (640,384) padding of 128
+[1m[44m[0m[32m18:54:11.162:Blam Graphics!:D[0m: 0x0 - 640x384 @ 21 (640,384) padding of 128
+[1m[44m[0m[32m18:54:11.162:Blam Graphics!:D[0m: 0x0 - 640x384 @ 22 (640,384) padding of 128
+[1m[44m[0m[32m18:54:11.162:Blam Graphics!:D[0m: 0x0 - 640x384 @ 23 (640,384) padding of 128
+[1m[44m[0m[32m18:54:11.162:Blam Graphics!:D[0m: 0x0 - 640x384 @ 24 (640,384) padding of 128
+[1m[44m[0m[32m18:54:11.162:Blam Graphics!:D[0m: 0x0 - 640x384 @ 25 (640,384) padding of 128
+[1m[44m[0m[32m18:54:11.162:Blam Graphics!:D[0m: 0x0 - 640x384 @ 26 (640,384) padding of 128
+[1m[44m[0m[32m18:54:11.162:Blam Graphics!:D[0m: 640x0 - 1024x640 @ 26 (384,640) padding of 128
+[1m[44m[0m[32m18:54:11.162:Blam Graphics!:D[0m: 0x0 - 384x640 @ 27 (384,640) padding of 128
+[1m[44m[0m[32m18:54:11.162:Blam Graphics!:D[0m: 384x0 - 768x640 @ 27 (384,640) padding of 128
+[1m[44m[0m[32m18:54:11.162:Blam Graphics!:D[0m: 768x0 - 1152x640 @ 27 (384,640) padding of 128
+[1m[44m[0m[32m18:54:11.162:Blam Graphics!:D[0m: 0x0 - 384x384 @ 28 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.162:Blam Graphics!:D[0m: 384x0 - 768x384 @ 28 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.162:Blam Graphics!:D[0m: 768x0 - 1152x384 @ 28 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.162:Blam Graphics!:D[0m: 0x0 - 384x384 @ 29 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.162:Blam Graphics!:D[0m: 384x0 - 768x384 @ 29 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.162:Blam Graphics!:D[0m: 768x0 - 1152x384 @ 29 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.162:Blam Graphics!:D[0m: 0x0 - 384x384 @ 30 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.162:Blam Graphics!:D[0m: 384x0 - 768x384 @ 30 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.162:Blam Graphics!:D[0m: 768x0 - 1152x384 @ 30 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.162:Blam Graphics!:D[0m: 0x0 - 384x384 @ 31 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.162:Blam Graphics!:D[0m: 384x0 - 768x384 @ 31 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.162:Blam Graphics!:D[0m: 768x0 - 1152x384 @ 31 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.162:Blam Graphics!:D[0m: 0x0 - 384x384 @ 32 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.162:Blam Graphics!:D[0m: 384x0 - 768x384 @ 32 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.162:Blam Graphics!:D[0m: 768x0 - 1152x384 @ 32 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.162:Blam Graphics!:D[0m: 0x0 - 384x384 @ 33 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.162:Blam Graphics!:D[0m: 384x0 - 768x384 @ 33 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.163:Blam Graphics!:D[0m: 768x0 - 1152x384 @ 33 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.163:Blam Graphics!:D[0m: 0x0 - 384x384 @ 34 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.163:Blam Graphics!:D[0m: 384x0 - 768x384 @ 34 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.163:Blam Graphics!:D[0m: 768x0 - 1152x384 @ 34 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.163:Blam Graphics!:D[0m: 0x0 - 384x384 @ 35 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.163:Blam Graphics!:D[0m: 384x0 - 768x384 @ 35 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.163:Blam Graphics!:D[0m: 768x0 - 1152x384 @ 35 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.163:Blam Graphics!:D[0m: 0x0 - 384x384 @ 36 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.163:Blam Graphics!:D[0m: 384x0 - 768x384 @ 36 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.163:Blam Graphics!:D[0m: 768x0 - 1152x384 @ 36 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.163:Blam Graphics!:D[0m: 0x0 - 384x384 @ 37 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.163:Blam Graphics!:D[0m: 384x0 - 768x384 @ 37 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.163:Blam Graphics!:D[0m: 768x0 - 1152x384 @ 37 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.163:Blam Graphics!:D[0m: 0x0 - 384x384 @ 38 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.163:Blam Graphics!:D[0m: 384x0 - 768x384 @ 38 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.163:Blam Graphics!:D[0m: 768x0 - 1152x384 @ 38 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.163:Blam Graphics!:D[0m: 0x0 - 384x384 @ 39 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.163:Blam Graphics!:D[0m: 384x0 - 768x384 @ 39 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.163:Blam Graphics!:D[0m: 768x0 - 1152x384 @ 39 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.163:Blam Graphics!:D[0m: 0x0 - 384x384 @ 40 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.163:Blam Graphics!:D[0m: 384x128 - 768x384 @ 40 (384,256) padding of 128
+[1m[44m[0m[32m18:54:11.163:Blam Graphics!:D[0m: 768x128 - 1152x384 @ 40 (384,256) padding of 128
+[1m[44m[0m[32m18:54:11.163:Blam Graphics!:D[0m: 0x0 - 384x256 @ 41 (384,256) padding of 128
+[1m[44m[0m[32m18:54:11.163:Blam Graphics!:D[0m: 384x0 - 640x384 @ 41 (256,384) padding of 128
+[1m[44m[0m[32m18:54:11.163:Blam Graphics!:D[0m: 640x0 - 896x384 @ 41 (256,384) padding of 128
+[1m[44m[0m[32m18:54:11.163:Blam Graphics!:D[0m: 896x0 - 1152x384 @ 41 (256,384) padding of 128
+[1m[44m[0m[32m18:54:11.163:Blam Graphics!:D[0m: 0x0 - 256x384 @ 42 (256,384) padding of 128
+[1m[44m[0m[32m18:54:11.163:Blam Graphics!:D[0m: 256x0 - 512x384 @ 42 (256,384) padding of 128
+[1m[44m[0m[32m18:54:11.163:Blam Graphics!:D[0m: 512x128 - 768x384 @ 42 (256,256) padding of 128
+[1m[44m[0m[32m18:54:11.163:Blam Graphics!:D[0m: 768x128 - 1024x384 @ 42 (256,256) padding of 128
+[1m[44m[0m[32m18:54:11.163:Blam Graphics!:D[0m: 0x0 - 256x256 @ 43 (256,256) padding of 128
+[1m[44m[0m[32m18:54:11.163:Blam Graphics!:D[0m: 256x0 - 512x256 @ 43 (256,256) padding of 128
+[1m[44m[0m[32m18:54:11.163:Blam Graphics!:D[0m: 512x0 - 768x256 @ 43 (256,256) padding of 128
+[1m[44m[0m[32m18:54:11.163:Blam Graphics!:D[0m: 768x0 - 1024x256 @ 43 (256,256) padding of 128
+[1m[44m[0m[32m18:54:11.163:Blam Graphics!:D[0m: 0x0 - 256x256 @ 44 (256,256) padding of 128
+[1m[44m[0m[32m18:54:11.163:Blam Graphics!:D[0m: 256x0 - 512x256 @ 44 (256,256) padding of 128
+[1m[44m[0m[32m18:54:11.163:Blam Graphics!:D[0m: 512x0 - 768x256 @ 44 (256,256) padding of 128
+[1m[44m[0m[32m18:54:11.163:Blam Graphics!:D[0m: 768x0 - 1024x256 @ 44 (256,256) padding of 128
+[1m[44m[0m[32m18:54:11.163:Blam Graphics!:D[0m: 0x0 - 256x256 @ 45 (256,256) padding of 128
+[1m[44m[0m[32m18:54:11.163:Blam Graphics!:D[0m: 256x0 - 512x256 @ 45 (256,256) padding of 128
+[1m[44m[0m[32m18:54:11.163:Blam Graphics!:D[0m: 512x0 - 768x256 @ 45 (256,256) padding of 128
+[1m[44m[0m[32m18:54:11.164:Blam Graphics!:D[0m: 768x0 - 1024x256 @ 45 (256,256) padding of 128
+[1m[44m[0m[32m18:54:11.164:Blam Graphics!:D[0m: 0x0 - 256x256 @ 46 (256,256) padding of 128
+[1m[44m[0m[32m18:54:11.164:Blam Graphics!:D[0m: 256x0 - 512x256 @ 46 (256,256) padding of 128
+[1m[44m[0m[32m18:54:11.164:Blam Graphics!:D[0m: 512x0 - 768x256 @ 46 (256,256) padding of 128
+[1m[44m[0m[32m18:54:11.164:Blam Graphics!:D[0m: 768x0 - 1024x256 @ 46 (256,256) padding of 128
+[1m[44m[0m[32m18:54:11.164:Blam Graphics!:D[0m: 0x0 - 256x256 @ 47 (256,256) padding of 128
+[1m[44m[0m[32m18:54:11.164:Blam Graphics!:D[0m: 256x0 - 512x256 @ 47 (256,256) padding of 128
+[1m[44m[0m[32m18:54:11.164:Blam Graphics!:D[0m: 512x0 - 768x256 @ 47 (256,256) padding of 128
+[1m[44m[0m[32m18:54:11.164:Blam Graphics!:D[0m: 768x120 - 1024x256 @ 47 (256,136) padding of 128
+[1m[44m[0m[32m18:54:11.164:Blam Graphics!:D[0m: 0x0 - 192x384 @ 48 (192,384) padding of 128
+[1m[44m[0m[32m18:54:11.164:Blam Graphics!:D[0m: 192x192 - 384x384 @ 48 (192,192) padding of 128
+[1m[44m[0m[32m18:54:11.164:Blam Graphics!:D[0m: 384x192 - 576x384 @ 48 (192,192) padding of 128
+[1m[44m[0m[32m18:54:11.164:Blam Graphics!:D[0m: 576x192 - 768x384 @ 48 (192,192) padding of 128
+[1m[44m[0m[32m18:54:11.164:Blam Graphics!:D[0m: 768x192 - 960x384 @ 48 (192,192) padding of 128
+[1m[44m[0m[32m18:54:11.164:Blam Graphics!:D[0m: 960x192 - 1152x384 @ 48 (192,192) padding of 128
+[1m[44m[0m[32m18:54:11.164:Blam Graphics!:D[0m: 0x0 - 192x192 @ 49 (192,192) padding of 128
+[1m[44m[0m[32m18:54:11.164:Blam Graphics!:D[0m: 192x0 - 384x192 @ 49 (192,192) padding of 128
+[1m[44m[0m[32m18:54:11.164:Blam Graphics!:D[0m: 384x32 - 544x192 @ 49 (160,160) padding of 128
+[1m[44m[0m[32m18:54:11.164:Blam Graphics!:D[0m: 544x32 - 704x192 @ 49 (160,160) padding of 128
+[1m[44m[0m[32m18:54:11.164:Blam Graphics!:D[0m: 704x56 - 840x192 @ 49 (136,136) padding of 128
+[1m[44m[0m[32m18:54:11.164:Blam Graphics!:D[0m: 0x0 - 1152x384 @ 0 (1152,384) padding of 128
+[1m[44m[0m[32m18:54:11.164:Blam Graphics!:D[0m: 0x0 - 640x640 @ 1 (640,640) padding of 128
+[1m[44m[0m[32m18:54:11.164:Blam Graphics!:D[0m: 0x0 - 640x640 @ 2 (640,640) padding of 128
+[1m[44m[0m[32m18:54:11.164:Blam Graphics!:D[0m: 0x0 - 640x640 @ 3 (640,640) padding of 128
+[1m[44m[0m[32m18:54:11.164:Blam Graphics!:D[0m: 0x0 - 640x640 @ 4 (640,640) padding of 128
+[1m[44m[0m[32m18:54:11.164:Blam Graphics!:D[0m: 0x0 - 640x640 @ 5 (640,640) padding of 128
+[1m[44m[0m[32m18:54:11.164:Blam Graphics!:D[0m: 0x0 - 640x640 @ 6 (640,640) padding of 128
+[1m[44m[0m[32m18:54:11.164:Blam Graphics!:D[0m: 0x0 - 640x640 @ 7 (640,640) padding of 128
+[1m[44m[0m[32m18:54:11.164:Blam Graphics!:D[0m: 0x0 - 640x384 @ 8 (640,384) padding of 128
+[1m[44m[0m[32m18:54:11.164:Blam Graphics!:D[0m: 0x0 - 640x384 @ 9 (640,384) padding of 128
+[1m[44m[0m[32m18:54:11.164:Blam Graphics!:D[0m: 0x0 - 640x384 @ 10 (640,384) padding of 128
+[1m[44m[0m[32m18:54:11.164:Blam Graphics!:D[0m: 0x0 - 640x384 @ 11 (640,384) padding of 128
+[1m[44m[0m[32m18:54:11.164:Blam Graphics!:D[0m: 640x0 - 1024x384 @ 11 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.164:Blam Graphics!:D[0m: 0x0 - 384x384 @ 12 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.164:Blam Graphics!:D[0m: 384x0 - 768x384 @ 12 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.164:Blam Graphics!:D[0m: 768x0 - 1152x384 @ 12 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.164:Blam Graphics!:D[0m: 0x0 - 384x384 @ 13 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.164:Blam Graphics!:D[0m: 384x0 - 768x384 @ 13 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.164:Blam Graphics!:D[0m: 768x0 - 1152x384 @ 13 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.164:Blam Graphics!:D[0m: 0x0 - 384x384 @ 14 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.164:Blam Graphics!:D[0m: 384x0 - 768x384 @ 14 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.164:Blam Graphics!:D[0m: 768x0 - 1152x384 @ 14 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.164:Blam Graphics!:D[0m: 0x0 - 384x384 @ 15 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.165:Blam Graphics!:D[0m: 384x0 - 768x384 @ 15 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.165:Blam Graphics!:D[0m: 768x0 - 1152x384 @ 15 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.165:Blam Graphics!:D[0m: 0x0 - 384x384 @ 16 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.165:Blam Graphics!:D[0m: 384x0 - 768x384 @ 16 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.165:Blam Graphics!:D[0m: 768x0 - 1152x384 @ 16 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.165:Blam Graphics!:D[0m: 0x0 - 384x384 @ 17 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.165:Blam Graphics!:D[0m: 384x0 - 768x384 @ 17 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.165:Blam Graphics!:D[0m: 768x0 - 1152x384 @ 17 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.165:Blam Graphics!:D[0m: 0x0 - 384x384 @ 18 (384,384) padding of 128
+[1m[44m[0m[32m18:54:11.165:Blam Graphics!:D[0m: 384x0 - 640x384 @ 18 (256,384) padding of 128
+[1m[44m[0m[32m18:54:11.165:Blam Graphics!:D[0m: 640x128 - 896x384 @ 18 (256,256) padding of 128
+[1m[44m[0m[32m18:54:11.165:Blam Graphics!:D[0m: 896x128 - 1152x384 @ 18 (256,256) padding of 128
+[1m[44m[0m[32m18:54:11.165:Blam Graphics!:D[0m: 0x0 - 256x256 @ 19 (256,256) padding of 128
+[1m[44m[0m[32m18:54:11.165:Blam Graphics!:D[0m: 256x0 - 512x256 @ 19 (256,256) padding of 128
+[1m[44m[0m[32m18:54:11.165:Blam Graphics!:D[0m: 512x0 - 768x256 @ 19 (256,256) padding of 128
+[1m[44m[0m[32m18:54:11.165:Blam Graphics!:D[0m: 768x0 - 1024x256 @ 19 (256,256) padding of 128
+[1m[44m[0m[32m18:54:11.165:Blam Graphics!:D[0m: 0x0 - 256x256 @ 20 (256,256) padding of 128
+[1m[44m[0m[32m18:54:11.165:Blam Graphics!:D[0m: 256x0 - 512x256 @ 20 (256,256) padding of 128
+[1m[44m[0m[32m18:54:11.165:Blam Graphics!:D[0m: 512x0 - 768x256 @ 20 (256,256) padding of 128
+[1m[44m[0m[32m18:54:11.165:Blam Graphics!:D[0m: 768x0 - 1024x256 @ 20 (256,256) padding of 128
+[1m[44m[0m[32m18:54:11.165:Blam Graphics!:D[0m: 0x0 - 256x256 @ 21 (256,256) padding of 128
+[1m[44m[0m[32m18:54:11.165:Blam Graphics!:D[0m: 256x0 - 512x256 @ 21 (256,256) padding of 128
+[1m[44m[0m[32m18:54:11.165:Blam Graphics!:D[0m: 512x64 - 768x256 @ 21 (256,192) padding of 128
+[1m[44m[0m[32m18:54:11.165:Blam Graphics!:D[0m: 768x96 - 1024x256 @ 21 (256,160) padding of 128
+[1m[44m[0m[32m18:54:11.165:Blam Graphics!:D[0m: 0x0 - 192x256 @ 22 (192,256) padding of 128
+[1m[44m[0m[32m18:54:11.165:Blam Graphics!:D[0m: 192x64 - 384x256 @ 22 (192,192) padding of 128
+[1m[44m[0m[32m18:54:11.165:Blam Graphics!:D[0m: 384x64 - 544x256 @ 22 (160,192) padding of 128
+[1m[44m[0m[32m18:54:11.165:Blam Graphics!:D[0m: 544x96 - 704x256 @ 22 (160,160) padding of 128
+[1m[44m[0m[32m18:54:11.165:Blam Graphics!:D[0m: 704x96 - 864x256 @ 22 (160,160) padding of 128
+[1m[44m[0m[32m18:54:11.165:Blam Graphics!:D[0m: 864x96 - 1024x256 @ 22 (160,160) padding of 128
+[1m[44m[0m[32m18:54:11.165:Blam Graphics!:D[0m: 0x0 - 160x160 @ 23 (160,160) padding of 128
+[1m[44m[0m[32m18:54:11.165:Blam Graphics!:D[0m: 160x0 - 320x160 @ 23 (160,160) padding of 128
+[1m[44m[0m[32m18:54:11.165:Blam Graphics!:D[0m: 320x0 - 480x160 @ 23 (160,160) padding of 128
+[1m[44m[0m[32m18:54:11.165:Blam Graphics!:D[0m: 480x0 - 640x160 @ 23 (160,160) padding of 128
+signal encountered:
+ >> SIGSEGV
+dumping stacktrace:
+ >> exec(Coffee::generic_stacktrace(int) + 0) [0x0x0xa27513]
+ >> exec(killpg + 0) [0x0x0x7f5ea7459f20]
+ >> exec(__nss_passwd_lookup + 0) [0x0x0x7f5ea75a95a1]
+ >> exec(std::char_traits<char>::length(char const*) + 0) [0x0x0x7e0ad1]
+ >> exec(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::compare(char const*) const + 0) [0x0x0x8224cd]
+ >> exec(bool std::operator==<char, std::char_traits<char>, std::allocator<char> >(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, char const*) + 0) [0x0x0x82248d]
+ >> exec(bool std::operator!=<char, std::char_traits<char>, std::allocator<char> >(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, char const*) + 0) [0x0x0x81ed8d]
+ >> exec(comp_app::ExecLoop<comp_app::BundleData>::exec(Coffee::Components::EntityContainer&) + 0) [0x0x0x7f00cf]
+ >> exec(blam_main(int, char**) + 0) [0x0x0x7e364e]
+ >> exec(Coffee::CoffeeMain(int (*)(int, char**), int, char**, unsigned int) + 0) [0x0x0xa2459e]
+ >> exec(deref_main(int (*)(int, char**), int, char**, unsigned int) + 0) [0x0x0xa22a59]
+ >> exec(main + 0) [0x0x0x7e372e]
+ >> exec(__libc_start_main + 0) [0x0x0x7f5ea743cb97]
+ >> exec(_start + 0) [0x0x0x7dfcfa]

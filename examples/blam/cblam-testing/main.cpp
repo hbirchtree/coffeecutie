@@ -322,12 +322,12 @@ void examine_map(Resource&& mapfile, T version)
             C_OCAST<u32>(tag->tagclass[0]),
             map.get_name(tag),
             4,
-            tag->tagclass[0].data,
+            tag->tagclass[0].data.data(),
             C_OCAST<u32>(tag->tagclass[0]),
             4,
-            tag->tagclass[1].data,
+            tag->tagclass[1].data.data(),
             4,
-            tag->tagclass[2].data);
+            tag->tagclass[2].data.data());
 
         if(tag->matches(blam::tag_class_t::bitm))
         {
@@ -544,10 +544,10 @@ void examine_map(Resource&& mapfile, T version)
                     break;
 
                 if(opcode.opcode == blam::hsc::bc::v2::begin &&
-                   opcode.ret_type == blam::hsc::type_t::immediate_val)
+                   opcode.ret_type == blam::hsc::type_t::branch_val)
                     fprintf(dism_file, "\n");
 
-                if(opcode.ret_type == type_t::immediate_val &&
+                if(opcode.ret_type == type_t::branch_val &&
                    opcode.to_ptr() && opcode.to_ptr() < string_seg.data.size)
                 {
                     auto ename = magic_enum::enum_name(opcode.opcode);
@@ -569,7 +569,7 @@ void examine_map(Resource&& mapfile, T version)
                     " as param:{15},"
                     " String ref:\"{12}\"",
                     (opcode.exp_type == expression_t::group ||
-                     opcode.ret_type == type_t::immediate_val)
+                     opcode.ret_type == type_t::branch_val)
                         ? Strings::to_string(opcode.opcode)
                         : (opcode.exp_type == expression_t::expression)
                               ? Strings::to_string(opcode.param_type)

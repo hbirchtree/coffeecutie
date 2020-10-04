@@ -1,6 +1,8 @@
 #include <blam/cblam.h>
 #include <coffee/core/CApplication>
 #include <coffee/core/CFiles>
+#include <coffee/core/argument_handling.h>
+#include <coffee/core/coffee_args.h>
 #include <coffee/strings/libc_types.h>
 
 #include <coffee/core/CDebug>
@@ -10,7 +12,15 @@ using namespace std::literals;
 
 i32 coffee_main(i32, cstring_w*)
 {
-    auto                 map_file = "a10.map"_rsc;
+    platform::args::ArgumentParser parser = BaseArgParser::GetBase();
+    parser.addPositionalArgument("map_name", "Name of map to open");
+
+    auto result = parser.parseArguments(GetInitArgs());
+    if(auto res = BaseArgParser::PerformDefaults(parser, result); res != -1)
+        return res;
+
+    auto map_file =
+        Resource(MkUrl(result.pos("map_name") + ".map", RSCA::AssetFile));
     blam::map_container  map(map_file, blam::pc_version);
     blam::tag_index_view tags(map);
 
@@ -20,6 +30,8 @@ i32 coffee_main(i32, cstring_w*)
         map.tags->scenario(map.map)
             .to_reflexive<blam::scn::scenario<script_types::opcode_t>>()
             .data(map.magic);
+
+    cDebug("Opened map {0}", map.name());
 
     auto const& bytecode_start = scenario[0].bytecode(map.magic);
     auto        string_seg     = scenario[0].string_segment(map.magic);
@@ -52,10 +64,32 @@ i32 coffee_main(i32, cstring_w*)
     };
 
     script_types::opcode_handler pre_op =
-        [&val_to_string](
+        [&val_to_string, &string_seg](
             script_types::bytecode_ptr&   ptr,
             script_types::layout_t const& curr) {
             using blam::hsc::expression_t;
+
+            if(curr.exp_type == expression_t::group &&
+               magic_enum::enum_name(curr.opcode).size())
+            {
+                auto prg_name = magic_enum::enum_name(curr.opcode);
+                auto map_name = string_seg.at(((&curr) + 1)->to_ptr());
+
+                if(prg_name.at(prg_name.size() - 1) == '_')
+                    prg_name = prg_name.substr(0, prg_name.find('_'));
+
+                CString comp;
+                comp.append(prg_name);
+                (comp += " ?= ") += map_name.str();
+                comp += " = ";
+                comp += std::to_string(C_CAST<u32>(curr.opcode));
+
+                if(std::string(prg_name.begin(), prg_name.end()) !=
+                       map_name.str() &&
+                   !blam::hsc::is_operator(curr.opcode) &&
+                   curr.opcode != script_types::opcode_t::if_)
+                    Throw(blam::hsc::script_error(comp));
+            }
 
             switch(curr.exp_type)
             {
@@ -98,7 +132,7 @@ i32 coffee_main(i32, cstring_w*)
                 break;
             }
             case opc::game_is_cooperative:
-                out.set(0);
+                out.set(false);
                 break;
             case opc::unit:
             {
@@ -140,8 +174,7 @@ i32 coffee_main(i32, cstring_w*)
                 out.set(0.f);
                 break;
             case opc::game_difficulty_get:
-                out = script_types::layout_t::typed_(t::game_difficulty);
-                out.set(1);
+                out.set(C_CAST<i32>(blam::game_difficulty_t::easy));
                 break;
             default:
                 break;
@@ -188,13 +221,12 @@ i32 coffee_main(i32, cstring_w*)
             script.execute_state(s.second, {opcode_executor, pre_op, post_op});
 
             cBasicPrint("");
-            cDebug(
-                " >> End state {0} at {1} ( ",
-                s.second.status,
-                str::print::pointerify(s.second.ip));
+            cDebug(" >> End state {0}", s.second.status);
+            cBasicPrintNoNL(
+                "ip={0}, lr=[ ", str::print::pointerify(s.second.ip));
             for(auto ip : s.second.link_register)
-                cBasicPrint("{0} ", str::print::pointerify(ip));
-            cBasicPrint(")");
+                cBasicPrintNoNL("{0} ", str::print::pointerify(ip));
+            cBasicPrint("]");
         }
         script.update_sleepers(15ms, {opcode_executor, pre_op, post_op});
         CurrentThread::sleep_for(15ms);
@@ -203,4 +235,4 @@ i32 coffee_main(i32, cstring_w*)
     return 0;
 }
 
-COFFEE_APPLICATION_MAIN(coffee_main)
+COFFEE_APPLICATION_MAIN_CUSTOM_ARG(coffee_main)

@@ -25,7 +25,7 @@ using CDRenderer = CSDL2Renderer;
 
 struct SharedData
 {
-    uint16    frame_count;
+    u16       frame_count;
     Timestamp frame_ts;
 
     void* ptr;

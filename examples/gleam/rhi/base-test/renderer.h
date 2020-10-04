@@ -21,6 +21,7 @@
 #endif
 
 #if defined(FEATURE_ENABLE_ASIO)
+#include <coffee/asio/asio_network_stats.h>
 #include <coffee/asio/asio_system.h>
 #include <coffee/asio/net_resource.h>
 #endif
@@ -29,6 +30,7 @@
 #include <coffee/discord/discord_system.h>
 #endif
 
+#include <coffee/comp_app/bundle.h>
 #include <coffee/interfaces/graphics_subsystem.h>
 
 #include <coffee/strings/info.h>
@@ -384,6 +386,10 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
 #endif
 #if defined(FEATURE_ENABLE_ASIO)
     entities.register_subsystem<ASIO::Tag>(MkUq<ASIO::Subsystem>());
+    auto asio_context = entities.subsystem_cast<ASIO::Subsystem>().context();
+
+    comp_app::NetworkStatProvider::register_service<ASIO::NetStats>(
+        comp_app::createContainer(), std::ref(*asio_context));
 #endif
     entities.register_subsystem<IMG::ImageCoderTag>(
         MkUq<IMG::ImageCoderSubsystem>("stb::DecoderQueue"));
@@ -499,7 +505,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     {
         ProfContext _("Downloading meme");
         auto rsc = "http://i.imgur.com/nQdOmCJ.png"_http.rsc<Net::Resource>(
-            entities.subsystem_cast<ASIO::Subsystem>().context());
+            asio_context);
 
         if(rsc.fetch())
         {
@@ -512,7 +518,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
             GLM::ERROR ec;
             mainSurface.upload(
                 PixDesc(PixFmt::RGBA8, BitFmt::UByte, PixCmp::RGBA),
-                {img.size.w, img.size.h, 1},
+                size_3d<i32>(img.size.w, img.size.h, 1),
                 img.data_owner,
                 ec,
                 {0, 0, 0});
@@ -559,7 +565,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
                                         mainSurface.m_pixfmt,
                                         BitFmt::UByte,
                                         PixCmp::RGBA),
-                                    {img.size.w, img.size.h, 1},
+                                    size_3d<i32>(img.size.w, img.size.h, 1),
                                     C_OCAST<Bytes>(img),
                                     ec,
                                     {});

@@ -15,7 +15,7 @@ bool basic_tests()
     /* Verify storage sizes */
     if(sizeof(u8) != 1)
         return false;
-    if(sizeof(uint16) != 2)
+    if(sizeof(u16) != 2)
         return false;
     if(sizeof(u32) != 4)
         return false;
@@ -71,7 +71,7 @@ bool wrapping_tests()
             return false;
     }
     {
-        uint16 v = UInt16_Max;
+        u16 v = UInt16_Max;
         v++;
         if(v != 0)
             return false;

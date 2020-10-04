@@ -250,8 +250,8 @@ struct multiplayer_flag
 {
     Vecf3  pos;
     scalar yaw;
-    uint16 index1;
-    uint16 index2;
+    u16    index1;
+    u16    index2;
     bl_tag tag;
     u32    unk2[31];
 };
@@ -259,7 +259,7 @@ struct multiplayer_flag
 struct item_permutation
 {
     u32      padding_[8];
-    scalar   weight;
+    f32      weight;
     tagref_t item;
 };
 
@@ -318,7 +318,7 @@ struct player_starting_profile
 {
     u32      unk1_offset;
     byte_t   name[28];
-    uint16   padding1;
+    u16      padding1;
     u32      unk2_offset;
     tagref_t weapon1;
     u32      unk3;
@@ -888,7 +888,7 @@ struct scenario
             terminator.data(), terminator.size());
 
         auto string_base = script_string_segment.data(magic);
-        auto end         = (*string_base.find(terminator_data)).chunk;
+        auto end = *string_base.at(string_base.find(terminator_data)->offset);
 
         u32  num_strings = 0;
         auto start_ptr   = *string_base.at(0, end.size);
@@ -904,7 +904,7 @@ struct scenario
             if(!start_ptr_)
                 break;
 
-            start_ptr = std::move((*start_ptr_).chunk);
+            start_ptr = *start_ptr.at(start_ptr_->offset);
 
             if((*start_ptr.find(terminator_data)).offset == 0)
                 break;
@@ -957,9 +957,9 @@ struct scenario
 
     struct
     {
-        tagref_t custom_object_names;
-        tagref_t cutscene_titles;
-        tagref_t hud_text;
+        tagref_t custom_object_names; /*!< Points to ui::unicode_ref */
+        tagref_t cutscene_titles;     /*!< Points to ui::unicode_ref*/
+        tagref_t hud_text;            /*!< Points to ui::hud_message */
     } ui_text;
 
     reflexive_t<bsp::info> bsp_info;
@@ -990,7 +990,7 @@ struct unicode_ref
     inline wide_string str(magic_data_t const& magic, u16 off = 0) const
     {
         auto str_data = data.data(magic);
-        return str_data[0].str();
+        return str_data[0].str(off);
     }
 };
 
@@ -1002,7 +1002,9 @@ struct unicode_string
 struct hud_symbol
 {
     bl_string symbol;
-    u32       padding[8];
+    u16       offset;
+    u16       unknown;
+    u32       padding[7];
 };
 
 struct hud_message
@@ -1028,6 +1030,20 @@ struct hud_message
             out += offset_data[i].size;
         }
         return out;
+    }
+
+    inline stl_types::Optional<unicode_var<1>::string_span> symbol_find(
+        magic_data_t const& magic, stl_types::String const& sym) const
+    {
+        for(hud_symbol const& s : symbols.data(magic))
+        {
+            if(s.symbol.str() != sym)
+                continue;
+
+            return text.data.data(magic)[0].view(text.length, s.offset);
+        }
+
+        return {};
     }
 };
 

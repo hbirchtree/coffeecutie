@@ -7,12 +7,18 @@ coffee_application (
     DropinRenderer GLeamRHI
     )
 
+add_gitproject (
+    imgui
+    https://github.com/hbirchtree/coffeecutie-imgui.git
+    TAG fetchcontent-master
+    )
+
 coffee_application (
     TARGET BlamGraphics
     TITLE "Blam Graphics"
     SOURCES graphics.cpp
     LIBRARIES
-    Blam Core Image DropinRenderer GLeamRHI
+    Blam Core Image DropinRenderer GLeamRHI ImGui
 
     RESOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/graphics_data

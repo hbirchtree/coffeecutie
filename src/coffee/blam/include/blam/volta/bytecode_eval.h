@@ -147,7 +147,7 @@ inline typename bytecode_pointer<BC>::result_t bytecode_pointer<BC>::evaluate(
             case 3:
                 cond_idx  = 2;
                 tick_rate = param(type_t::short_, 1).to_u16();
-                timeout   = param(type_t::long_).to_u32();
+                timeout   = param(type_t::number).to_u32();
                 break;
             }
 
@@ -271,8 +271,16 @@ inline typename bytecode_pointer<BC>::result_t bytecode_pointer<BC>::evaluate(
             auto left  = *evaluate(param(type_t::any, 1), handler);
             auto right = *evaluate(param(type_t::any, 0), handler);
 
-            if(left.ret_type != right.ret_type)
-                Throw(script_error("mismatching types for comparison"));
+            if(left.ret_type != right.ret_type &&
+               !(is_number(left.ret_type) && is_number(right.ret_type)))
+            {
+                stl_types::CString mismatch;
+                mismatch.append(magic_enum::enum_name(left.ret_type));
+                mismatch.append(" != ");
+                mismatch.append(magic_enum::enum_name(right.ret_type));
+                Throw(script_error(
+                    "mismatching types for comparison: " + mismatch));
+            }
 
             out = opcode_layout_t::typed_(type_t::bool_);
             out.set(true);
@@ -399,10 +407,12 @@ inline typename bytecode_pointer<BC>::result_t bytecode_pointer<BC>::evaluate(
         if(!externally_handled)
             handler.cmd(*this, op);
 
-        if(param_count(op) == variable_length_params)
+        auto pcount = param_count(op);
+        if(pcount == variable_length_params ||
+           pcount == unknown_opcode_signature)
             pop_params(op_params);
         else
-            pop_params(param_count(op));
+            pop_params(pcount);
 
         out_ = out_.end_at(param_state.end_addr);
         if(out_.state != eval::running || out_.next != terminator)

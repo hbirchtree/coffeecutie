@@ -19,6 +19,9 @@ struct map_container
     {
         static_assert(sizeof(tag_index_t) == 40, "Invalid tag index size");
 
+        if(map.size < sizeof(file_header_t))
+            Throw(map_load_error("map file too small"));
+
         this->map = file_header_t::from_data(map, ver);
 
         if(this->map->version == version_t::xbox)
@@ -69,9 +72,14 @@ struct map_container
 
     semantic::Bytes decompressed_store;
 
-    operator cstring()
+    inline cstring name() const
     {
         return map->full_mapname();
+    }
+
+    operator cstring() const
+    {
+        return name();
     }
 
     template<typename T>

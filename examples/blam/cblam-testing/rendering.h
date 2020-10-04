@@ -573,6 +573,9 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             auto          ref     = p.template ref<Proxy>(ent);
             BspReference& bsp_ref = ref.template get<BspTag>();
 
+            if(!bsp_ref.visible)
+                continue;
+
             auto& draw_data =
                 bsp[bsp_ref.current_pass].draws().at(bsp_ref.draw_idx).d_data;
 

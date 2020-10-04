@@ -22,6 +22,16 @@ struct script_error : undefined_behavior
     using undefined_behavior::undefined_behavior;
 };
 
+struct missing_signature : script_error
+{
+    using script_error::script_error;
+};
+
+struct mismatch_param_type : script_error
+{
+    using script_error::script_error;
+};
+
 template<typename BC>
 struct script_ref;
 
@@ -85,14 +95,14 @@ enum class type_t : i16
     any         = -2,
     nothing     = -1,
     func_name,
-    immediate_val = 2,
-    passthrough   = 3,
-    void_         = 4,
-    bool_         = 5,
-    real_         = 6,
-    short_        = 7,
-    long_         = 8,
-    string_       = 9,
+    branch_val  = 2,
+    passthrough = 3,
+    void_       = 4,
+    bool_       = 5,
+    real_       = 6,
+    short_      = 7,
+    long_       = 8,
+    string_     = 9,
 
     script = 10, /* Used by (wake [script]) */
 
@@ -263,7 +273,7 @@ struct opcode_layout
     {
         verify_expression();
 
-        if(param_type != type_t::long_)
+        if(param_type != type_t::long_ && param_type != type_t::short_)
             Throw(undefined_behavior("invalid u32"));
 
         return long_;

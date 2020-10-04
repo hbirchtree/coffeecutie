@@ -6,6 +6,13 @@
 #include <coffee/asio/net_profiling.h>
 #endif
 
+#if defined(FEATURE_ENABLE_ImGui)
+#include "bsp_component.h"
+#include "debug_ui_system.h"
+#include "script_component.h"
+#include <coffee/imgui/imgui_binding.h>
+#endif
+
 using halo_version = blam::pc_version_t;
 
 template<typename Version>
@@ -38,7 +45,7 @@ void load_scenario_bsp(EntityContainer& e, BlamData<Version>& data)
     bsp.components = {type_hash_v<BspTag>(), type_hash_v<ShaderTag>()};
     bsp.tags       = ObjectBsp;
 
-    for(auto const &mesh_id : bsp_meshes)
+    for(auto const& mesh_id : bsp_meshes)
     {
         if(!mesh_id.valid())
             continue;
@@ -215,7 +222,7 @@ void load_multiplayer_equipment(
                 spawn.spawn      = &equipment_ref;
                 spawn.collection = &item_coll;
                 model_.initialize(&equipment_ref);
-                model_.tag = *index.find(item.model.to_plain());
+                model_.tag = *index.find(item.model);
 
                 ModelAssembly models =
                     data.model_cache.predict_regions(item.model.to_plain());
@@ -342,7 +349,7 @@ i32 blam_main(i32, cstring_w*)
 {
     RuntimeQueue::CreateNewQueue("Blam Graphics!");
 #if defined(FEATURE_ENABLE_ASIO)
-    auto _ = Net::RegisterProfiling();
+    C_UNUSED(auto _ = Net::RegisterProfiling());
 #endif
 
     comp_app::app_error app_ec;
@@ -353,6 +360,8 @@ i32 blam_main(i32, cstring_w*)
     auto& glConfig =
         e.service<comp_app::AppLoader>()->config<comp_app::GLConfig>();
     glConfig.swapInterval = 1;
+    if constexpr(compile_info::debug_mode)
+        glConfig.profile |= comp_app::GLConfig::Debug;
 #endif
 
     cDebug(
@@ -375,6 +384,16 @@ i32 blam_main(i32, cstring_w*)
             e.register_component_inplace<MultiplayerSpawnStore>();
             e.register_component_inplace<ShaderDataStore>();
 
+            auto& imgui = e.register_subsystem_inplace<CImGui::ImGuiTag>();
+            e.register_subsystem_inplace<BlamDebugUiTag>();
+            e.register_subsystem_inplace<BlamBspWidgetTag<halo_version>>(
+                std::ref(data));
+
+            {
+                comp_app::app_error ec;
+                imgui.load(e, ec);
+            }
+
             blam::tag_index_view index(data.map_container);
 
             auto& magic = data.map_container.magic;
@@ -384,6 +403,9 @@ i32 blam_main(i32, cstring_w*)
                     .to_reflexive<blam::scn::scenario<blam::hsc::bc::v2>>()
                     .data(magic)
                     .data;
+
+            e.register_subsystem_inplace<BlamScriptTag<blam::hsc::bc::v2>>(
+                std::ref(data.map_container), data.scenario, magic);
 
             if(e.service<comp_app::WindowInfo>())
             {
@@ -489,9 +511,8 @@ i32 blam_main(i32, cstring_w*)
                 pipeline->get_state();
             }
 
-            e.register_subsystem_inplace<
-                MeshRenderer<halo_version>::tag_type,
-                MeshRenderer<halo_version>>(std::ref(data));
+            e.register_subsystem_inplace<MeshRenderer<halo_version>::tag_type>(
+                std::ref(data));
 
             GFX::RASTSTATE cull_disable;
             cull_disable.m_doCull  = true;
@@ -533,8 +554,6 @@ i32 blam_main(i32, cstring_w*)
                 data.camera_matrix = GenPerspective(data.camera) *
                                      GenTransform(data.camera) *
                                      typing::vectors::scale(Matf4(), Vecf3(10));
-
-                cDebug("Camera pos: {0}", data.camera.position);
             }
         },
         [](EntityContainer&, BlamData<halo_version>&, time_point const&) {
