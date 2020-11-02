@@ -11,7 +11,10 @@
 #endif
 
 #include <peripherals/libc/types.h>
+#include <peripherals/semantic/chunk.h>
 #include <peripherals/stl/types.h>
+
+#include <cppcodec/base64_default_rfc4648.hpp>
 
 namespace stl_types {
 namespace str {
@@ -563,46 +566,11 @@ constexpr const char* b64_char =
 /* Reference:
  * https://en.wikibooks.org/wiki/Algorithm_Implementation/Miscellaneous/Base64
  */
-template<typename CharType = char>
-FORCEDINLINE std::basic_string<CharType> encode(c_cptr ptr, szptr len)
+template<typename T>
+FORCEDINLINE std::string encode(semantic::Span<T> const& data_)
 {
-    std::basic_string<CharType> out;
-    out.reserve(len / 3 + len % 3 > 0);
-
-    char const* data = C_CAST<char const*>(ptr);
-
-    u32    temp;
-    size_t j = 0;
-    for(szptr i = 0; i < len / 3; i++)
-    {
-        temp = C_CAST<u32>((data[j++]) << 16);
-        temp += C_CAST<u32>((data[j++]) << 8);
-        temp += (data[j++]);
-        out.append(1, b64_char[(temp & 0x00FC0000) >> 18]);
-        out.append(1, b64_char[(temp & 0x0003F000) >> 12]);
-        out.append(1, b64_char[(temp & 0x00000FC0) >> 6]);
-        out.append(1, b64_char[(temp & 0x0000003F)]);
-    }
-
-    switch(len % 3)
-    {
-    case 1:
-        temp = (data[len - (len % 3) + 1]);
-        out.append(1, b64_char[(temp & 0x00FC0000) >> 18]);
-        out.append(1, b64_char[(temp & 0x0003F000) >> 12]);
-        out.append(1, '=');
-        out.append(1, '=');
-        break;
-    case 2:
-        temp = (data[len - (len % 3) + 1]);
-        out.append(1, b64_char[(temp & 0x00FC0000) >> 18]);
-        out.append(1, b64_char[(temp & 0x0003F000) >> 12]);
-        out.append(1, b64_char[(temp & 0x00000FC0) >> 6]);
-        out.append(1, '=');
-        break;
-    }
-
-    return out;
+    auto converted = C_OCAST<semantic::Span<u8 const>>(data_);
+    return base64::encode(converted.data, converted.size);
 }
 
 } // namespace b64

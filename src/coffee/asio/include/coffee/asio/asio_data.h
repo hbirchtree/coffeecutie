@@ -47,6 +47,7 @@ struct Service
         u32 received = 0;
         u32 transmitted = 0;
         u32 sockets_created = 0;
+        u32 sockets_closed = 0;
     };
 
     ShPtr<stats> statistics;

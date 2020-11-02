@@ -18,34 +18,19 @@
 
 #if defined(COFFEE_SDL_MAIN)
 #define main SDL_main
-#elif defined(COFFEE_CUSTOM_MAIN)
-#include <coffee/foreign/foreign.h>
-
-#define main Coffee_main
-
-/* bootstrapping class, for handing main function pointer over to loader */
-struct app_main_init
-{
-    app_main_init(CoffeeMainWithArgs main_)
-    {
-        coffee_main_function_ptr = main_;
-    }
-};
-
-#if defined(COFFEE_ANDROID)
-extern CoffeeMainWithArgs android_entry_point;
-#endif
-
 #endif
 
 namespace Coffee {
 
 COFFEE_APP_FUNC void SetPlatformState();
+COFFEE_APP_FUNC i32 ApplicationMain();
 
-}
+COFFEE_APP_FUNC int MainSetup(
+    MainWithArgs mainfun, int argc, char** argv, u32 flags = 0);
+COFFEE_APP_FUNC int MainSetup(
+    MainNoArgs mainfun, int argc, char** argv, u32 flags = 0);
 
-extern int deref_main(
-    CoffeeMainWithArgs mainfun, int argc, char** argv, Coffee::u32 flags = 0);
+} // namespace Coffee
 
 // This is a cheeky little macro that allows us to wrap the main function.
 #if defined(COFFEE_LOWFAT)
@@ -80,7 +65,7 @@ extern int deref_main(
 #define COFFEE_APPLICATION_MAIN(mainfun)        \
     extern "C" int main(int argv, char** argc)  \
     {                                           \
-        return deref_main(mainfun, argv, argc); \
+        return Coffee::MainSetup(mainfun, argv, argc); \
     }
 
 #define COFFEE_APPLICATION_MAIN_CUSTOM_ARG(mainfun) \
@@ -94,11 +79,11 @@ extern int deref_main(
 #if defined(COFFEE_APPLE_MOBILE)
 // This is loaded from AppDelegate.m in CoffeeWindow_GLKit
 #define COFFEE_APPLICATION_MAIN(mainfun) \
-    static app_main_init _coffee_application_main_init(mainfun);
+    static Coffee::MainCapture _coffee_application_main_init(mainfun);
 
 #elif defined(COFFEE_ANDROID)
 #define COFFEE_APPLICATION_MAIN(mainfun) \
-    CoffeeMainWithArgs android_entry_point = mainfun;
+    static Coffee::MainCapture _coffee_application_main_init(mainfun);
 
 #endif
 
@@ -114,31 +99,31 @@ extern int deref_main(
 #define COFFEE_APPLICATION_MAIN(mainfun)        \
     int main(int argv, char** argc)             \
     {                                           \
-        return deref_main(mainfun, argv, argc); \
+        return Coffee::MainSetup(mainfun, argv, argc); \
     }
 
 #define COFFEE_APPLICATION_MAIN_CUSTOM_ARG(mainfun)  \
     int main(int argv, char** argc)                  \
     {                                                \
-        return deref_main(mainfun, argv, argc, 0x1); \
+        return Coffee::MainSetup(mainfun, argv, argc, 0x1); \
     }
 
 #define COFFEE_APPLICATION_MAIN_CUSTOM(mainfun, flags) \
     int main(int argv, char** argc)                    \
     {                                                  \
-        return deref_main(mainfun, argv, argc, flags); \
+        return Coffee::MainSetup(mainfun, argv, argc, flags); \
     }
 
 #define COFFEE_SIMPLE_MAIN(mainfun)                       \
     namespace {                                           \
     int simplified_main(int, char**)                      \
     {                                                     \
-        mainfun(0, nullptr);                              \
+        return mainfun(0, nullptr);                       \
     }                                                     \
     }                                                     \
     int main(int argv, char** argc)                       \
     {                                                     \
-        return deref_main(::simplified_main, argv, argc); \
+        return Coffee::MainSetup(::simplified_main, argv, argc); \
     }
 
 #endif

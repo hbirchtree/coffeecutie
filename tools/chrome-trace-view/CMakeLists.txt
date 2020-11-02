@@ -15,6 +15,7 @@ find_package(Threads REQUIRED)
 add_executable(${PROJECT_NAME}
     src/main.cpp
     src/tracemodel.cpp
+    src/screenshotprovider.cpp
 
     qml/qml.qrc
     )

@@ -157,10 +157,23 @@ function( APPIMAGE_PACKAGE
             )
     endforeach()
 
+    # If we are building CrashRecovery, include it
+    if ( TARGET CrashRecovery )
+        add_dependencies ( ${TARGET}.AppImage CrashRecovery )
+        add_custom_command ( TARGET ${TARGET}.AppImage
+            POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy
+                "$<TARGET_FILE:CrashRecovery>"
+                "${APPIMAGE_BINARY_DIR}"
+            )
+    endif()
+
     foreach ( LIB ${LIBRARIES} )
         add_custom_command ( TARGET ${TARGET}.AppImage
             POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:${LIB}>" "${APPIMAGE_LIBRARY_DIR}"
+            COMMAND ${CMAKE_COMMAND} -E copy
+                "$<TARGET_FILE:${LIB}>"
+                "${APPIMAGE_LIBRARY_DIR}"
             )
     endforeach()
 
@@ -175,13 +188,17 @@ function( APPIMAGE_PACKAGE
     # Copy the binary to AppDir
     add_custom_command ( TARGET ${TARGET}.AppImage
         POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:${TARGET}>" "${APPIMAGE_BINARY_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E copy
+            "$<TARGET_FILE:${TARGET}>"
+            "${APPIMAGE_BINARY_DIR}"
         )
 
     if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
         add_custom_command ( TARGET ${TARGET}.AppImage
             POST_BUILD
-            COMMAND strip "${APPIMAGE_BINARY_DIR}/${TARGET}"
+            COMMAND ${CMAKE_STRIP}
+                "${APPIMAGE_BINARY_DIR}/${TARGET}"
+                "${APPIMAGE_BINARY_DIR}/CrashRecovery"
             )
     endif()
 

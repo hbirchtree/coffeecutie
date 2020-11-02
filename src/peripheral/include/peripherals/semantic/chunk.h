@@ -129,21 +129,21 @@ struct mem_chunk
     using iterator       = iterator_base<>;
     using const_iterator = iterator_base<const T>;
 
-    using value_type = T;
+    using value_type       = T;
+    using const_value_type = std::remove_const<T>;
 
     FORCEDINLINE
-    mem_chunk(mem_chunk<T>&& other) :
-        data(other.data), size(other.size), elements(other.elements),
-        m_destr(other.m_destr)
+    mem_chunk(mem_chunk<T>&& other)
     {
-        other.data     = nullptr;
-        other.size     = 0;
-        other.elements = 0;
-        other.m_destr  = nullptr;
+        std::swap(data, other.data);
+        std::swap(elements, other.elements);
+        std::swap(size, other.size);
+        std::swap(m_destr, other.m_destr);
+        std::swap(m_access, other.m_access);
     }
 
     FORCEDINLINE
-    mem_chunk() : data(nullptr), size(0), elements(0)
+    mem_chunk() : data(nullptr), size(0), elements(0), m_destr(nullptr)
     {
     }
 
@@ -154,7 +154,7 @@ struct mem_chunk
         size_type elements,
         RSCA      access = RSCA::ReadOnly) :
         data(data),
-        size(size), elements(elements), m_access(access)
+        size(size), elements(elements), m_access(access), m_destr(nullptr)
     {
 #if MODE_DEBUG
         if((size && !data) || (size && !elements) || (!size && data))
@@ -168,14 +168,16 @@ struct mem_chunk
             !std::is_void<typename std::remove_cv<T>::type>::value,
             Dummy>::type* = nullptr>
     FORCEDINLINE mem_chunk(T& value) :
-        data(&value), size(sizeof(T)), elements(1), m_access(RSCA::ReadWrite)
+        data(&value), size(sizeof(T)), elements(1), m_access(RSCA::ReadWrite),
+        m_destr(nullptr)
     {
     }
 
     FORCEDINLINE
     mem_chunk(stl_types::Vector<T>& array) :
         data(array.data()), size(sizeof(T) * array.size()),
-        elements(array.size()), m_access(RSCA::ReadWrite | RSCA::Immutable)
+        elements(array.size()), m_access(RSCA::ReadWrite | RSCA::Immutable),
+        m_destr(nullptr)
     {
     }
 
@@ -186,7 +188,7 @@ struct mem_chunk
             nullptr>
     FORCEDINLINE mem_chunk(mem_chunk<T2> const& other) :
         data(C_RCAST<T*>(other.data)), size(other.size),
-        elements(other.elements), m_access(other.access())
+        elements(other.elements), m_access(other.access()), m_destr(nullptr)
     {
     }
 
@@ -203,7 +205,21 @@ struct mem_chunk
 
         out.data     = C_RCAST<T2*>(this->data);
         out.size     = this->size;
-        out.elements = this->elements;
+        out.elements = (this->elements * sizeof(T)) / sizeof(T2);
+
+        return out;
+    }
+
+    template<typename T2>
+    NO_DISCARD explicit operator mem_chunk<T2 const>() const
+    {
+        using const_type = typename std::remove_const<T2>::type const;
+
+        mem_chunk<const_type> out;
+
+        out.data     = C_RCAST<const_type*>(this->data);
+        out.size     = this->size;
+        out.elements = (this->elements * sizeof(T)) / sizeof(T2);
 
         return out;
     }
@@ -217,17 +233,11 @@ struct mem_chunk
             m_destr(*this);
         }
 
-        data     = other.data;
-        elements = other.elements;
-        size     = other.size;
-        m_destr  = other.m_destr;
-        m_access = other.m_access;
-
-        other.data     = nullptr;
-        other.elements = 0;
-        other.size     = 0;
-        other.m_destr  = nullptr;
-        other.m_access = RSCA::None;
+        std::swap(data, other.data);
+        std::swap(elements, other.elements);
+        std::swap(size, other.size);
+        std::swap(m_destr, other.m_destr);
+        std::swap(m_access, other.m_access);
 
         return *this;
     }
@@ -244,17 +254,11 @@ struct mem_chunk
     template<typename T2>
     FORCEDINLINE void transfer(mem_chunk<T2>&& other)
     {
-        data     = other.data;
-        size     = other.size;
-        elements = other.elements;
-        m_destr  = other.m_destr;
-        m_access = other.m_access;
-
-        other.data     = nullptr;
-        other.size     = 0;
-        other.elements = 0;
-        other.m_destr  = nullptr;
-        other.m_access = RSCA::None;
+        std::swap(data, other.data);
+        std::swap(elements, other.elements);
+        std::swap(size, other.size);
+        std::swap(m_destr, other.m_destr);
+        std::swap(m_access, other.m_access);
     }
 
     template<
@@ -582,10 +586,10 @@ struct mem_chunk
         using namespace ::libc_types;
 
         if(offset > this->elements || offset + elements > this->elements)
-            return {};
+            return std::nullopt;
 
         if(!data)
-            return {};
+            return std::nullopt;
 
         u8 const* basePtr = C_RCAST<u8 const*>(data);
 
@@ -598,9 +602,9 @@ struct mem_chunk
         if(auto out = From(&basePtr[offset], elements); out)
         {
             out.m_access = m_access;
-            return out;
+            return std::make_optional(std::move(out));
         } else
-            return {};
+            return std::nullopt;
     }
 
     NO_DISCARD FORCEDINLINE stl_types::Optional<mem_chunk<T const>> at(
@@ -609,10 +613,10 @@ struct mem_chunk
         using namespace ::libc_types;
 
         if(offset > this->elements || offset + elements > this->elements)
-            return {};
+            return std::nullopt;
 
         if(!data)
-            return {};
+            return std::nullopt;
 
         u8 const* basePtr = C_RCAST<u8 const*>(data);
 
@@ -625,9 +629,9 @@ struct mem_chunk
         if(auto out = From(&basePtr[offset], elements); out)
         {
             out.m_access = m_access;
-            return out;
+            return std::make_optional(std::move(out));
         } else
-            return {};
+            return std::nullopt;
     }
 
     NO_DISCARD FORCEDINLINE stl_types::Optional<mem_chunk<T const>> at_lazy(
@@ -638,10 +642,10 @@ struct mem_chunk
         elements = std::min(offset + elements, this->elements - offset);
 
         if(offset > this->elements)
-            return {};
+            return std::nullopt;
 
         if(!data)
-            return {};
+            return std::nullopt;
 
         u8 const* basePtr = C_RCAST<u8 const*>(data);
 
@@ -652,9 +656,9 @@ struct mem_chunk
         elements *= sizeof(value_type);
 
         if(auto out = From(&basePtr[offset], elements); out)
-            return out;
+            return std::make_optional(std::move(out));
         else
-            return {};
+            return std::nullopt;
     }
 
     template<typename T2>
@@ -680,12 +684,13 @@ struct mem_chunk
         if(enum_helpers::feval(m_access & RSCA::Immutable))
             Throw(undefined_behavior(BYTE_API "cannot resize immutable chunk"));
 
-        data = C_RCAST<T*>(realloc(data, newSize));
+        data = C_RCAST<T*>(realloc(data, newSize * sizeof(T)));
 
         if(!data)
             Throw(undefined_behavior(BYTE_API "reallocation failed"));
 
-        size = newSize;
+        size     = newSize * sizeof(T);
+        elements = newSize;
 
         return *this;
     }
@@ -788,7 +793,7 @@ struct mem_chunk
         stl_types::Optional<find_result> out;
 
         if(needle.empty())
-            return {};
+            return std::nullopt;
 
         size_type needle_idx = 0;
 
@@ -802,13 +807,13 @@ struct mem_chunk
                     auto offset = i - (needle_idx - 1);
                     auto chunk =
                         at((i - (needle_idx - 1)) * sizeof(value_type)).value();
-                    return find_result(offset);
+                    return std::make_optional(find_result(offset));
                 }
             } else
                 needle_idx = 0;
         }
 
-        return {};
+        return std::nullopt;
     }
 
     FORCEDINLINE bool empty() const

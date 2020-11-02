@@ -38,7 +38,6 @@ struct AppContainer : AppService<AppContainer<DataType>>, AppMain
         e.register_subsystem_services<AppServiceTraits<AppMain>>(
             e.service<AppContainer<DataType>>());
     }
-
     static void exec(entity_container& e)
     {
     }

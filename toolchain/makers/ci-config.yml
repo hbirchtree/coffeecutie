@@ -1,0 +1,3 @@
++cmake-opts:
+  - -DCMAKE_INSTALL_PREFIX=$(env:CMAKE_INSTALL_DIR)
+

@@ -51,6 +51,8 @@ if(BUILD_COMPONENT_APP)
             add_subdirectory(graphics/egl_comp)
             target_link_libraries ( ComponentBundle INTERFACE EGLComponent )
         endif()
+
+        target_link_libraries ( ComponentBundle INTERFACE GLScreenshot )
     endif()
     if(BUILD_X11)
         add_subdirectory(windowing/x11_comp)

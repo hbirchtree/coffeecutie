@@ -1,8 +1,10 @@
 #include <QApplication>
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
+#include <QQmlContext>
 #include <QQuickStyle>
 
+#include "screenshotprovider.h"
 #include "tracemodel.h"
 
 int main(int argc, char* argv[])
@@ -13,12 +15,22 @@ int main(int argc, char* argv[])
     QApplication app(argc, argv);
 
     QQmlApplicationEngine engine;
-    qmlRegisterType<TraceModel>("me.birchtrees.ctf", 1, 0, "TraceModel");
+
+    auto context    = engine.rootContext();
+    auto traceModel = new TraceModel(&app);
+
+    context->setContextProperty("processes", traceModel);
+    //    qmlRegisterType<TraceModel>("dev.birchy.ctf", 1, 0, "TraceModel");
+    engine.addImageProvider(
+        "screenshot", new ScreenshotProvider(traceModel, &app));
 
     QUrl const url(QStringLiteral("qrc:/main.qml"));
 
 #if !defined(__EMSCRIPTEN__)
-//    QQuickStyle::setStyle("Material.Dark");
+    QQuickStyle::setStyle("Material.Dark");
+    context->setContextProperty("isEmscripten", false);
+#else
+    context->setContextProperty("isEmscripten", true);
 #endif
 
     QObject::connect(

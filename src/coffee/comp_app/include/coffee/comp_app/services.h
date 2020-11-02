@@ -8,6 +8,8 @@
 #include <peripherals/typing/enum/pixels/format.h>
 #include <peripherals/typing/geometry/point.h>
 #include <peripherals/typing/geometry/size.h>
+#include <peripherals/semantic/chunk.h>
+#include <peripherals/typing/pixels/rgba.h>
 
 #include "app_error.h"
 
@@ -592,6 +594,12 @@ struct BatteryProvider : AppService<BatteryProvider>
 
     virtual PowerSource source() = 0;
     virtual libc_types::u16 percentage() = 0;
+};
+
+struct ScreenshotProvider : AppService<ScreenshotProvider>
+{
+    virtual size_2d_t size() const = 0;
+    virtual semantic::Span<typing::pixels::rgb_t> pixels() const = 0;
 };
 
 } // namespace comp_app

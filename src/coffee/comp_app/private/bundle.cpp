@@ -10,9 +10,16 @@
 #include <coffee/core/types/display/event.h>
 #include <coffee/core/types/input/event_types.h>
 #include <coffee/foreign/foreign.h>
+#include <coffee/image/cimage.h>
+#include <peripherals/libc/signals.h>
+#include <peripherals/stl/string_ops.h>
 #include <platforms/environment.h>
 
 #include <coffee/comp_app/stat_providers.h>
+
+#include <coffee/strings/libc_types.h>
+
+#include <coffee/strings/format.h>
 
 #if defined(COFFEE_EMSCRIPTEN)
 #include <emscripten/emscripten.h>
@@ -48,6 +55,10 @@
 
 #if defined(FEATURE_ENABLE_UIKitGestures)
 #include <coffee/uikit/uikit_comp.h>
+#endif
+
+#if defined(FEATURE_ENABLE_GLScreenshot)
+#include <glscreenshot/screenshot.h>
 #endif
 
 #if defined(FEATURE_ENABLE_GLKitComponent) || \
@@ -137,6 +148,8 @@ detail::EntityContainer& createContainer()
         {
         case CoffeeHandle_Setup:
         {
+            DProfContext _("Bundle::Setup");
+
             app_error ec;
             for(auto& service : container->services_with<AppLoadableService>())
             {
@@ -147,13 +160,16 @@ detail::EntityContainer& createContainer()
             }
 
             auto eventMain = container->service<AppMain>();
-            C_PTR_CHECK(eventMain)
+            if(!eventMain)
+                break;
             eventMain->load(*container, ec);
             C_ERROR_CHECK(ec)
             break;
         }
         case CoffeeHandle_Loop:
         {
+            DProfContext _("Bundle::Loop");
+
             container->exec();
 
             auto queue = RuntimeQueue::GetCurrentQueue(ec);
@@ -163,6 +179,8 @@ detail::EntityContainer& createContainer()
         }
         case CoffeeHandle_Cleanup:
         {
+            DProfContext _("Bundle::Cleanup");
+
             app_error appec;
             auto      services = container->services_with<AppLoadableService>(
                 Components::reverse_query);
@@ -173,7 +191,12 @@ detail::EntityContainer& createContainer()
         }
         default:
         {
-            auto&    app_bus = *container->service<EventBus<AppEvent>>();
+            DProfContext _("Bundle::AppEvent");
+            auto         app_bus = container->service<EventBus<AppEvent>>();
+
+            if(!app_bus)
+                break;
+
             AppEvent appevent;
             appevent.type = AppEvent::None;
             union
@@ -222,22 +245,33 @@ detail::EntityContainer& createContainer()
             case CoffeeHandle_IsForeground:
             case CoffeeHandle_TransBackground:
             case CoffeeHandle_TransForeground:
-                app_bus.process(appevent, &lifecycle);
+                app_bus->process(appevent, &lifecycle);
                 break;
             }
         }
         }
     };
-    CoffeeEventHandleNA = [](void*, int event, void*, void*, void*) {
+    CoffeeEventHandleNA = [](void*, int, void*, void*, void*) {};
 
-    };
+    if constexpr(compile_info::platform::is_unix)
+        libc::signal::install(libc::signal::sig::interrupt, [](int) {
+            if(!container)
+                return;
+
+            auto windowing = container->service<Windowing>();
+
+            if(!windowing)
+                return;
+
+            windowing->close();
+        });
 
     return *container;
 }
 
 void configureDefaults(AppLoader& loader)
 {
-    Coffee::ProfContext _("comp_app::configureDefaults");
+    Coffee::DProfContext _("comp_app::configureDefaults");
 
     loader.addConfigs<
         detail::
@@ -375,8 +409,13 @@ void addDefaults(
         comp_app::SysCPUTemp,
         comp_app::SysGPUTemp,
         comp_app::SysCPUClock,
-        comp_app::SysMemoryStats
-        >>(container, ec);
+        comp_app::SysMemoryStats>>(container, ec);
+
+#if defined(FEATURE_ENABLE_GLScreenshot)
+    if constexpr(compile_info::debug_mode)
+        loader.loadAll<detail::TypeList<glscreenshot::ScreenshotProvider>>(
+            container, ec);
+#endif
 }
 
 } // namespace comp_app
@@ -388,22 +427,31 @@ namespace comp_app {
 
 void PerformanceMonitor::start_restricted(Proxy& p, time_point const& time)
 {
-    if(time < m_nextTime)
-        return;
-
-    m_nextTime = time + Coffee::Chrono::seconds(5);
-
     using namespace platform::profiling;
 
     auto timestamp =
         Chrono::duration_cast<Chrono::microseconds>(time.time_since_epoch());
 
-    auto clock    = p.service<CPUClockProvider>();
-    auto cpu_temp = p.service<CPUTempProvider>();
-    auto gpu_temp = p.service<GPUTempProvider>();
-    auto mem      = p.service<MemoryStatProvider>();
-    auto battery  = p.service<BatteryProvider>();
-    auto network  = p.service<NetworkStatProvider>();
+    json::CaptureMetrics(
+        "Frametime",
+        MetricVariant::Value,
+        Chrono::duration_cast<Chrono::seconds_float>(time - m_prevFrame)
+                .count() *
+            1000.f,
+        timestamp);
+    m_prevFrame = time;
+
+    if(time < m_nextTime)
+        return;
+
+    m_nextTime = time + Coffee::Chrono::seconds(5);
+
+    auto clock      = p.service<CPUClockProvider>();
+    auto cpu_temp   = p.service<CPUTempProvider>();
+    auto gpu_temp   = p.service<GPUTempProvider>();
+    auto mem        = p.service<MemoryStatProvider>();
+    auto battery    = p.service<BatteryProvider>();
+    auto network    = p.service<NetworkStatProvider>();
 
     if(clock)
         for(auto i : Range<u32>(clock->threads()))
@@ -458,10 +506,7 @@ void PerformanceMonitor::start_restricted(Proxy& p, time_point const& time)
     if(network)
     {
         json::CaptureMetrics(
-            "Network RX",
-            MetricVariant::Value,
-            network->received(),
-            timestamp);
+            "Network RX", MetricVariant::Value, network->received(), timestamp);
         json::CaptureMetrics(
             "Network TX",
             MetricVariant::Value,
@@ -476,9 +521,43 @@ void PerformanceMonitor::start_restricted(Proxy& p, time_point const& time)
     }
 }
 
-void PerformanceMonitor::end_restricted(Proxy&, time_point const& time)
+void PerformanceMonitor::end_restricted(Proxy& p, time_point const& time)
 {
     using namespace platform::profiling;
+
+    auto timestamp =
+        Chrono::duration_cast<Chrono::microseconds>(time.time_since_epoch());
+
+    auto screenshot = p.service<ScreenshotProvider>();
+
+    if(screenshot && time > m_nextScreenshot)
+    {
+        using namespace Coffee;
+
+        m_nextScreenshot        = time + Chrono::seconds(10);
+        auto             pixels = screenshot->pixels();
+        Bytes            encoded;
+        stb::stb_error   ec;
+        stb::image_const source = stb::image_const::From(
+            C_OCAST<Bytes>(pixels), screenshot->size(), 3);
+
+        stb::SaveJPG(encoded, source, ec, 50);
+        auto screenshot_file = "screenshot.jpg"_tmpfile;
+
+        FileOpenMap(
+            screenshot_file,
+            encoded.size,
+            RSCA::ReadWrite | RSCA::Persistent);
+        if(encoded.size == screenshot_file.size)
+            memcpy(screenshot_file.data, encoded.data, screenshot_file.size);
+        FileUnmap(screenshot_file);
+
+        json::CaptureMetrics(
+            "Screenshots",
+            MetricVariant::Image,
+            b64::encode(encoded),
+            timestamp);
+    }
 
     json::CaptureMetrics(
         "VSYNC",
@@ -486,6 +565,16 @@ void PerformanceMonitor::end_restricted(Proxy&, time_point const& time)
         0,
         Chrono::duration_cast<Chrono::microseconds>(
             Profiler::clock::now().time_since_epoch()));
+}
+
+void PerformanceMonitor::load(AppLoadableService::entity_container&, app_error&)
+{
+    m_prevFrame = platform::profiling::Profiler::clock::now();
+}
+
+void PerformanceMonitor::unload(
+    AppLoadableService::entity_container&, app_error&)
+{
 }
 
 } // namespace comp_app

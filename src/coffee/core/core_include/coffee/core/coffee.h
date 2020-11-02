@@ -11,7 +11,7 @@ namespace Coffee {
  * \brief This function handles initial program startup
  */
 COFFEE_APP_FUNC i32 CoffeeMain(
-    CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags = 0);
+    MainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags = 0);
 
 /*!
  * \brief Initializes process state before running. Mainly core dumping.
@@ -28,11 +28,14 @@ COFFEE_APP_FUNC void InstallStacktraceWriter();
 
 COFFEE_APP_FUNC void SetPrintingVerbosity(u8 level);
 
-C_DEPRECATED_S("use GetCurrentApp()")
-COFFEE_APP_FUNC platform::info::AppData const& ApplicationData();
-
 extern void SetCurrentApp(platform::info::AppData const& app);
 
 extern platform::info::AppData const& GetCurrentApp();
+
+C_DEPRECATED_S("use GetCurrentApp()")
+FORCEDINLINE platform::info::AppData const& ApplicationData()
+{
+    return GetCurrentApp();
+}
 
 } // namespace Coffee

@@ -5,7 +5,7 @@ import QtQuick.Controls.Material 2.12
 import QtQuick.Layouts 1.12
 import QtQuick.Shapes 1.12
 
-import me.birchtrees.ctf 1.0
+//import dev.birchy.ctf 1.0
 
 ApplicationWindow {
     id: root
@@ -89,8 +89,10 @@ ApplicationWindow {
     }
 
     Component.onCompleted: {
-        //processes.emscriptenAuto();
-        processes.source = "/tmp/GLeam Basic RHI/profile.json";
+        if(isEmscripten)
+            processes.emscriptenAuto();
+//        else
+//            processes.source = "/tmp/GLeam Basic RHI/profile.json";
     }
 
     DropArea {
@@ -138,22 +140,26 @@ ApplicationWindow {
         }
     }
 
-    TraceModel {
-        id: processes
+    Connections {
+        target: processes
 
-        onTraceParsed: {
+        function onTraceParsed() {
             busy.close();
             console.log("Parsed!");
         }
 
-        onTotalDurationChanged: {
+        function onTotalDurationChanged(totalDuration) {
             console.log("Duration", totalDuration);
         }
 
-        onParseError: console.log(error)
-        onParseUpdate: console.log(message)
+        function onParseError(error) {
+            console.log(error);
+        }
+        function onParseUpdate(message) {
+            console.log(message);
+        }
 
-        onStartingParse: {
+        function onStartingParse(ss) {
             busy.open();
             console.log("Starting parse");
         }
@@ -196,8 +202,12 @@ ApplicationWindow {
 
                 Connections {
                     target: processes
-                    onParseUpdate: busyText.text = message
-                    onParseError: busyText.text = error
+                    function onParseUpdate(message) {
+                        busyText.text = message;
+                    }
+                    function onParseError(error) {
+                        busyText.text = error;
+                    }
                 }
             }
         }
@@ -298,10 +308,10 @@ ApplicationWindow {
 
                         Connections {
                             target: root
-                            onZoomIn: {
+                            function onZoomIn() {
                                 updateTimescale(10);
                             }
-                            onZoomOut: {
+                            function onZoomOut() {
                                 updateTimescale(0.1);
                             }
                         }

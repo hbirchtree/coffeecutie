@@ -14,6 +14,10 @@
 #include <android/ndk-version.h>
 #endif
 
+#if C_HAS_INCLUDE(<__config>)
+#include <__config>
+#endif
+
 namespace compile_info {
 
 using libc_types::cstring;
@@ -39,7 +43,7 @@ constexpr u32 api =
 
 constexpr u32 ndk_ver =
 #if defined(__NDK_MAJOR__)
-    __NDK_MAJOR__
+    __NDK_MAJOR__ * 100 + __NDK_MINOR__
 #else
     0
 #endif

@@ -220,7 +220,8 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
     struct BlendState
     {
         BlendState() :
-            m_doBlend(false), m_additive(false), m_alphaCoverage(false)
+            m_doBlend(false), m_additive(false), m_lighten(false),
+            m_alphaCoverage(false)
         {
         }
 
@@ -696,6 +697,10 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
             return true;
         }
         void attach(Shader&, ShaderStage)
+        {
+        }
+
+        void dealloc()
         {
         }
 

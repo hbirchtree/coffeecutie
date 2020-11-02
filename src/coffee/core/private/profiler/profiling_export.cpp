@@ -189,18 +189,10 @@ STATICINLINE void PutRuntimeInfo(
             "androidTarget",
             FromString(cast_pod(compile_info::android::api), alloc),
             alloc);
-
-#if defined(COFFEE_ANDROID)
-        AndroidForeignCommand cmd;
-        cmd.type = Android_QueryAPI;
-        CoffeeForeignSignalHandleNA(
-            CoffeeForeign_RequestPlatformData, &cmd, nullptr, nullptr);
-
         build.AddMember(
-            "androidSdkTarget",
-            FromString(cast_pod(cmd.data.scalarI64), alloc),
+            "androidNdk",
+            FromString(cast_pod(compile_info::android::ndk_ver), alloc),
             alloc);
-#endif
     }
 
     if constexpr(compile_info::platform::is_windows)
@@ -303,6 +295,18 @@ STATICINLINE void PutRuntimeInfo(
         FromString(platform::info::device::system::runtime_libc_version(),
                    alloc),
         alloc);
+
+#if defined(COFFEE_ANDROID)
+    AndroidForeignCommand cmd;
+    cmd.type = Android_QueryAPI;
+    CoffeeForeignSignalHandleNA(
+        CoffeeForeign_RequestPlatformData, &cmd, nullptr, nullptr);
+
+    runtime.AddMember(
+        "androidLevel",
+        FromString(cast_pod(cmd.data.scalarI64), alloc),
+        alloc);
+#endif
 
     auto cwd = Env::CurrentDir();
     runtime.AddMember("cwd", FromString(AnonymizePath(cwd), alloc), alloc);

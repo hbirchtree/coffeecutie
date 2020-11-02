@@ -183,4 +183,10 @@ FORCEDINLINE Resource operator"" _sysfile(const char* fn, size_t)
 {
     return Resource(fn, RSCA::SystemFile);
 }
+
+FORCEDINLINE Resource operator"" _tmpfile(const char* fn, size_t)
+{
+    return Resource(fn, RSCA::TempFile);
+}
+
 } // namespace Coffee

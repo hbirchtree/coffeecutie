@@ -254,15 +254,20 @@ class ExtraInfo : public QAbstractListModel
 };
 
 class Metrics;
+class ScreenshotProvider;
 
 class MetricValues : public QAbstractListModel
 {
+    friend class ScreenshotProvider;
+
   public:
     enum MetricType
     {
         MetricValue,
         MetricSymbolic,
         MetricMarker,
+
+        MetricImage,
     };
 
     Q_ENUM(MetricType)
@@ -288,8 +293,9 @@ class MetricValues : public QAbstractListModel
 
     struct Value
     {
-        double ts;
-        float  value;
+        double  ts;
+        float   value;
+        quint64 i;
     };
 
     TraceModel*          m_trace;
@@ -313,6 +319,7 @@ class MetricValues : public QAbstractListModel
     enum FieldNames
     {
         FieldValue,
+        FieldIndex,
         FieldValueScaled,
         FieldPreviousValue,
         FieldPreviousValueScaled,
@@ -352,6 +359,7 @@ class Metrics : public QAbstractListModel
     std::vector<std::shared_ptr<MetricValues>>       m_metricList;
 
     friend class MetricValues;
+    friend class ScreenshotProvider;
 
   public:
     Metrics(
@@ -371,7 +379,7 @@ class Metrics : public QAbstractListModel
     QVariant               data(const QModelIndex& index, int role) const final;
     QHash<int, QByteArray> roleNames() const final;
 
-    void insertValue(QJsonObject const& data);
+    void insertValue(QJsonObject const& data, quint64 i);
     void populate(QJsonObject const& meta);
     void optimize();
   public slots:
@@ -403,6 +411,7 @@ class TraceModel : public QAbstractListModel
 
     std::unique_ptr<QFile>                           m_traceFile;
     QJsonObject                                      m_trace;
+    const char*                                      m_traceSource;
     std::map<quint64, std::shared_ptr<ProcessModel>> m_processes;
     std::vector<std::shared_ptr<ProcessModel>>       m_processList;
 
@@ -422,6 +431,10 @@ class TraceModel : public QAbstractListModel
     QJsonObject traceObject() const
     {
         return m_trace;
+    }
+    QJsonArray traceEvents() const
+    {
+        return m_trace.find("traceEvents").value().toArray();
     }
 
     void resetData();
@@ -451,6 +464,8 @@ class TraceModel : public QAbstractListModel
     QHash<int, QByteArray> roleNames() const;
 
     void parseAccountingInfo(QByteArray const& profile, uchar* ptr = nullptr);
+
+    const char* traceSource() const;
 
     enum ProcessField
     {

@@ -34,3 +34,6 @@
 [submodule "src/libs/tiny-utf8"]
 	path = src/libs/tiny-utf8
 	url = https://github.com/DuffsDevice/tiny-utf8.git
+[submodule "src/libs/cppcodec"]
+	path = src/libs/cppcodec
+	url = https://github.com/tplgy/cppcodec.git

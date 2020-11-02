@@ -4,7 +4,15 @@
 ICON_DIR="$HOME/.local/share/icons/hicolor/scalable/apps"
 ICON_NAME="@APPIMAGE_INTERNALNAME@.svg"
 
-if [ ! -f "${ICON_DIR}/${ICON_NAME}" ]; then
+if [ -z $(which python3) ]; then
+    PYTHON_EXEC=python3
+elif [ -z $(which python2) ]; then
+    PYTHON_EXEC=python2
+elif [ -z $(which python) ]; then
+    PYTHON_EXEC=python
+fi
+
+if [ ! -f "${ICON_DIR}/${ICON_NAME}" ] && [ -n "${PYTHON_EXEC}" ]; then
     mkdir -p "${ICON_DIR}"
     cp "${APPDIR}/${ICON_NAME}" "${ICON_DIR}/${ICON_NAME}"
     python "${APPDIR}/set_icon.py" "${APPIMAGE}" "${ICON_DIR}/${ICON_NAME}"
@@ -21,5 +29,11 @@ export XDG_DATA_DIRS="$XDG_DATA_DIRS:${APPDIR}/share"
 # Coffee-specific
 export COFFEE_NO_PROFILER_EXPORT="1"
 
+CRASH="${APPDIR}/CrashRecovery"
+
 # Executing application, we might as well destroy the current bash shell
-exec "${APPDIR}/@APPIMAGE_EXEC@" $@
+if [ -f "$CRASH" ]; then
+    exec "$CRASH" "${APPDIR}/@APPIMAGE_EXEC@" $@
+else
+    exec "${APPDIR}/@APPIMAGE_EXEC@" $@
+fi

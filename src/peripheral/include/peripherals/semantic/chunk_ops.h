@@ -46,22 +46,24 @@ template<
         is_specialized<T2, ::semantic::mem_chunk>::value>::type* = nullptr>
 FORCEDINLINE bool MemCmp(T1 const& a1, T2 const& a2)
 {
+    return std::equal(a1.begin(), a1.end(), a2.begin());
+
     /* TODO: Replace with std::equal() for C++14 and up */
 
-    auto it_a1 = a1.begin();
-    auto it_a2 = a2.begin();
+    //    auto it_a1 = a1.begin();
+    //    auto it_a2 = a2.begin();
 
-    while(it_a1 != a1.end() && it_a2 != a2.end())
-    {
-        /* First case of being different: different value */
-        if(*it_a1 != *it_a2)
-            return false;
+    //    while(it_a1 != a1.end() && it_a2 != a2.end())
+    //    {
+    //        /* First case of being different: different value */
+    //        if(*it_a1 != *it_a2)
+    //            return false;
 
-        ++it_a1, ++it_a2;
-    }
+    //        ++it_a1, ++it_a2;
+    //    }
 
-    /* Second case: one container is shorter */
-    return it_a1 == a1.end() && it_a2 == a2.end();
+    //    /* Second case: one container is shorter */
+    //    return it_a1 == a1.end() && it_a2 == a2.end();
 }
 
 template<typename T>

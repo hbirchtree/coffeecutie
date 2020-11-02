@@ -17,11 +17,11 @@ struct BlamDebugUi : Components::RestrictedSubsystem<
     {
     }
 
-    BlamDebugUi& get()
+    BlamDebugUi& get() override
     {
         return *this;
     }
-    BlamDebugUi const& get() const
+    BlamDebugUi const& get() const override
     {
         return *this;
     }

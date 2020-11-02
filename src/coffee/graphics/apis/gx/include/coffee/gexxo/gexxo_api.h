@@ -161,7 +161,7 @@ struct GXAPI : Coffee::RHI::GraphicsAPI
     };
 
     static gexxo::RenderTarget* DefaultFramebuffer();
-    static API_CONTEXT          GetLoadAPI(OPTS const&);
+    static API_CONTEXT          GetLoadAPI(OPTS const& = {});
 
     using RBUF = RenderDummy;
 

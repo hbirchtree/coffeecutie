@@ -53,29 +53,29 @@ CString SysInfoDef::HostName()
 #if !defined(COFFEE_LINUX) || !defined(COFFEE_WINDOWS)
 info::HardwareDevice SysInfoDef::Processor(C_UNUSED(u32 i))
 {
-    return info::HardwareDevice("Generic Processor", "0x0");
+    return info::HardwareDevice(COFFEE_ARCH, "0x0");
 }
 #endif
 
 #if !defined(COFFEE_LINUX) || !defined(COFFEE_ANDROID)
 info::HardwareDevice SysInfoDef::DeviceName()
 {
-    return info::HardwareDevice("Generic", "Device", "0x0");
+    return info::HardwareDevice(C_SYSTEM_STRING, "0x0");
 }
 
 info::HardwareDevice SysInfoDef::Motherboard()
 {
-    return info::HardwareDevice("Generic", "Motherboard", "0x0");
+    return info::HardwareDevice(C_SYSTEM_STRING, "0x0");
 }
 
 info::HardwareDevice SysInfoDef::Chassis()
 {
-    return info::HardwareDevice("Generic", "Chassis", "0x0");
+    return info::HardwareDevice(C_SYSTEM_STRING, "0x0");
 }
 
 info::HardwareDevice SysInfoDef::BIOS()
 {
-    return info::HardwareDevice("Generic", "BIOS", "0x0");
+    return info::HardwareDevice(C_SYSTEM_STRING, "0x0");
 }
 #endif
 

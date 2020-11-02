@@ -22,6 +22,8 @@ void _stbi_write_data(void* ctxt, void* data, int size)
     auto   offset = target->size;
     target->size += C_FCAST<szptr>(size);
 
+//    target->size += 8 - (size % 8);
+
     if(!target->data)
         *target = Bytes::Alloc(target->size);
     else

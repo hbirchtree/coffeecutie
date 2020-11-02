@@ -40,6 +40,8 @@ Item {
             valueLoader.active = true;
         else if(metric.type == 2)
             markerLoader.active = true;
+        else if(metric.type == 3)
+            screenshotLoader.active = true;
     }
 
     Loader {
@@ -116,6 +118,7 @@ Item {
                 anchors.fill: parent
                 anchors.topMargin: spacing
                 anchors.leftMargin: threadWidth
+                z: -1
 
                 ShapePath {
                     strokeColor: "yellow"
@@ -129,6 +132,50 @@ Item {
                     PathLine {
                         x: ts / timePerPixel
                         y: -container.contentHeight
+                    }
+                }
+            }
+        }
+    }
+
+    Loader {
+        id: screenshotLoader
+        active: false
+        anchors.fill: parent
+
+        sourceComponent: Repeater {
+            model: metric
+            HoverImage {
+                x: ts / timePerPixel + threadWidth
+                width: 100
+                height: metricHeight
+                source: "image://screenshot/" + eventId
+                onClicked: {
+                    if(isEmscripten)
+                        return;
+
+                    var window = imageViewer.createObject(root, {
+                        source: "image://screenshot/" + eventId,
+                    });
+                    window.show();
+                }
+
+                Component {
+                    id: imageViewer
+
+                    ApplicationWindow {
+                        property string source
+
+                        id: root
+                        title: metric.name + " Preview"
+                        width: 800
+                        height: 600
+
+                        Image {
+                            anchors.fill: parent
+                            source: root.source
+                            fillMode: Image.PreserveAspectFit
+                        }
                     }
                 }
             }
@@ -155,6 +202,7 @@ Item {
     MouseArea {
         anchors.fill: parent
         hoverEnabled: valueLoader.active
+        enabled: !screenshotLoader.active
         onPositionChanged: {
             if(!hoverEnabled)
                 return;

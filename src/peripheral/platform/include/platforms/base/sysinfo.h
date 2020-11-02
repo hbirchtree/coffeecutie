@@ -82,7 +82,7 @@ struct SysInfoDef
      */
     CoreCnt CoreCount(C_UNUSED(u32 i) = 0)
     {
-        return 0;
+        return 1;
     }
 
     STATICINLINE

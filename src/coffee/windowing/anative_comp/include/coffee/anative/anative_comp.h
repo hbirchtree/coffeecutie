@@ -49,7 +49,6 @@ struct AndroidEventBus : comp_app::AppService<AndroidEventBus>,
 
 using Services = comp_app::detail::TypeList<
     Windowing,
-    comp_app::PtrNativeWindowInfo,
     ControllerInput,
     AndroidEventBus>;
 

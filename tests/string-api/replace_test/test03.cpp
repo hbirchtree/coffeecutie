@@ -12,7 +12,7 @@ const constexpr cstring original = "Hello World!";
 
 bool encode_test()
 {
-    CString b64_data = b64::encode(original, libc::str::len(original));
+    CString b64_data = b64::encode(semantic::Bytes::CreateString(original));
 
     if(b64_data != complete)
         cDebug("Wrong data: {0} != {1}", b64_data, complete);

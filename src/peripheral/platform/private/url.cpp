@@ -290,7 +290,7 @@ CString GetSystemDirectedPath(cstring suffix, RSCA storage)
         auto fileInstance = File[createTempFile](
             filePath.removeExt().internUrl, "." + filePath.extension());
 
-        auto tempFile = File(fileInstance.l)[getCanonicalPath]();
+        auto tempFile = File(fileInstance)[getCanonicalPath]();
 
         return jnipp::java::type_unwrapper<std::string>(tempFile);
     }

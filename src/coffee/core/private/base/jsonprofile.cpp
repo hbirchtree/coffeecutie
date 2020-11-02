@@ -13,6 +13,10 @@
 
 #include <coffee/core/formatting.h>
 
+#if defined(COFFEE_ANDROID)
+#include <android/trace.h>
+#endif
+
 namespace platform {
 namespace profiling {
 namespace json {
@@ -149,6 +153,24 @@ ShPtr<Coffee::State::GlobalState> CreateProfiler()
     return MkShared<ProfileWriter>(profile);
 }
 
+static void platform_trace_begin(
+    UNUSED_PARAM(profiling::DataPoint const&, point))
+{
+#if defined(COFFEE_ANDROID)
+    if constexpr(compile_info::android::api >= 23)
+        ATrace_beginSection(point.name.c_str());
+#endif
+}
+
+static void platform_trace_end(
+    UNUSED_PARAM(profiling::DataPoint const&, point))
+{
+#if defined(COFFEE_ANDROID)
+    if constexpr(compile_info::android::api >= 23)
+        ATrace_endSection();
+#endif
+}
+
 void Push(profiling::ThreadState& tdata, profiling::DataPoint const& point)
 {
     if constexpr(!compile_info::profiler::enabled)
@@ -161,21 +183,27 @@ void Push(profiling::ThreadState& tdata, profiling::DataPoint const& point)
     if(!profileData)
         return;
 
-    const char* eventType = "i";
+    const char* eventType   = "i";
+    bool        is_async    = point.flags.attrs & DataPoint::Async;
+    bool is_explicit_thread = point.flags.attrs & DataPoint::ExplicitThread;
 
     switch(point.flags.type)
     {
     case DataPoint::Push:
-        eventType = point.flags.attrs & DataPoint::Async ? "b" : "B";
+        if(!is_async && !is_explicit_thread)
+            platform_trace_begin(point);
+        eventType = is_async ? "b" : "B";
         break;
     case DataPoint::Pop:
-        eventType = point.flags.attrs & DataPoint::Async ? "e" : "E";
+        if(!is_async && !is_explicit_thread)
+            platform_trace_end(point);
+        eventType = is_async ? "e" : "E";
         break;
     default:
         break;
     }
 
-    auto thread_name = point.flags.attrs & DataPoint::ExplicitThread
+    auto thread_name = is_explicit_thread
                            ? ThreadGetName(point.tid)
                            : point.thread_name;
 
@@ -196,11 +224,11 @@ void Push(profiling::ThreadState& tdata, profiling::DataPoint const& point)
     profileData->event_count++;
 }
 
-void CaptureMetrics(
+extern void CaptureMetrics(
     profiling::ThreadState& tdata,
     cstring                 name,
     MetricVariant           variant,
-    f32                     value,
+    CString const&          value,
     Chrono::microseconds    ts,
     u32                     index)
 {
@@ -217,11 +245,11 @@ void CaptureMetrics(
         data.variant = variant;
     }
 
-    auto const& data     = it->second;
+        auto const& data     = it->second;
     auto&       profiler = *C_DCAST<ProfileWriter>(tdata.writer);
 
-    constexpr auto metric_format =
-        R"({"ts":{2},"ph":"m","i":{3},"id":{0},"v":"{1}"},
+        constexpr auto metric_format =
+            R"({"ts":{2},"ph":"m","i":{3},"id":{0},"v":"{1}"},
 )";
 
     using namespace Chrono;
@@ -230,6 +258,17 @@ void CaptureMetrics(
         Coffee::Strings::fmt(metric_format, data.id, value, ts.count(), index);
 
     profiler.write(Bytes::CreateString(out.c_str()));
+}
+
+void CaptureMetrics(
+    profiling::ThreadState& tdata,
+    cstring                 name,
+    MetricVariant           variant,
+    f32                     value,
+    Chrono::microseconds    ts,
+    u32                     index)
+{
+    CaptureMetrics(tdata, name, variant, cast_pod(value), ts, index);
 }
 
 } // namespace json

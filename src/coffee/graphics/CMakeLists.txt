@@ -12,6 +12,8 @@ if(BUILD_OPENGL)
     if(BUILD_GLEAM)
         add_subdirectory(apis/gleam)
     endif()
+
+    add_subdirectory(glscreenshot)
 endif()
 
 if(BUILD_GX)

@@ -10303,6 +10303,8 @@ STATICINLINE void ShaderSpecialize(glhnd const& shader, const GLchar * pEntryPoi
 #endif
 
 };
+template<typename Ver>
+using baseline = v10<Ver>;
 #endif
 template<typename ReqVer>
 struct v20es
@@ -15934,6 +15936,10 @@ STATICINLINE void TexStorage3DMultisample(TexComp::tex_flag const& target, libc_
 #endif
 
 };
+#if GL_VERSION_VERIFY(GL_VERSION_NONE, 0x200)
+template<typename Ver>
+using baseline = v20es<Ver>;
+#endif
 
 namespace ext {
 #if defined(GL_ARB_ES3_2_compatibility) && GL_ARB_ES3_2_compatibility

@@ -3,6 +3,8 @@ find_package ( TinyXML2 REQUIRED )
 
 add_library ( CoreCommon INTERFACE )
 
+set ( CPPCODEC_INCLUDE_DIR ${COFFEE_EXT_LIBRARY_DIR}/cppcodec )
+
 target_include_directories ( CoreCommon INTERFACE
     $<BUILD_INTERFACE:${RAPIDJSON_INCLUDE_DIR}>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/interface_include>
@@ -323,7 +325,7 @@ coffee_library (
 #
 coffee_library (
     TARGET EntComp
-    LIBRARIES CoreCommon
+    LIBRARIES CoreCommon CoreProfiling
     SOURCES private/components/allocators.cpp
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/components>
@@ -352,6 +354,7 @@ if(LOWFAT_BUILD)
         )
 endif()
 
+add_library ( CppCodec INTERFACE )
 add_library ( RapidJSON  INTERFACE )
 add_library ( Core INTERFACE )
 

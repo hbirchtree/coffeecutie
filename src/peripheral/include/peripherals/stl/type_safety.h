@@ -348,6 +348,7 @@ static inline constexpr D C_OCAST(T& from)
 {
     return static_cast<D>(from);
 }
+
 template<typename D, typename T>
 /*!
  * \brief For dynamic casts. This function, as specified by the standard,

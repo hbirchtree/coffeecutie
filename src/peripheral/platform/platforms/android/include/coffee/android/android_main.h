@@ -91,7 +91,8 @@ struct app_info
 {
     std::string package_name();
 
-    stl_types::Optional<::jobject> get_service(std::string const& service);
+    stl_types::Optional<::jnipp::java::object> get_service(
+        std::string const& service);
 };
 
 struct network_stats
@@ -113,6 +114,33 @@ struct network_stats
     };
 
     stl_types::Optional<result_t> query();
+};
+
+struct activity_manager
+{
+    struct memory_info
+    {
+        libc_types::u64 available, threshold, low_mem, total;
+    };
+
+    struct config_info
+    {
+        struct
+        {
+            libc_types::i32 gles_version, input_features, keyboard_type,
+                touchscreen;
+        } req;
+    };
+
+    stl_types::Optional<memory_info> get_mem_info();
+    stl_types::Optional<config_info> get_config_info();
+
+    bool clear_app_data();
+
+    bool is_low_ram_device();
+    bool is_test_harness();
+    bool is_user_harness();
+    bool is_monkey();
 };
 
 extern std::vector<std::string> cpu_abis();

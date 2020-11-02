@@ -57,7 +57,7 @@ enum AndroidAppState
     AndroidApp_Initialized = 0x4,
 };
 
-C_FLAGS(AndroidAppState, Coffee::u32);
+C_FLAGS(AndroidAppState, libc_types::u32);
 
 struct AndroidSensorData
 {
@@ -106,11 +106,12 @@ std::string jni_error_category::message(int error_code) const
 
 } // namespace android
 
-extern CoffeeMainWithArgs android_entry_point;
-extern void*              coffee_event_handling_data;
-extern "C" int deref_main_c(int (*mainfun)(int, char**), int argc, char** argv);
+extern void* coffee_event_handling_data;
 
 namespace Coffee {
+
+int MainSetup(::MainWithArgs mainfun, int argc, char** argv, u32 flags = 0);
+int MainSetup(::MainNoArgs mainfun, int argc, char** argv, u32 flags = 0);
 
 using namespace android;
 
@@ -171,7 +172,12 @@ void AndroidHandleAppCmd(struct android_app* app, int32_t event)
     {
         if(!(app_internal_state->currentState & AndroidApp_Initialized))
         {
-            deref_main_c(android_entry_point, 0, nullptr);
+            auto& entrypoints = Coffee::main_functions;
+
+            if(entrypoints.is_no_args)
+                MainSetup(entrypoints.no_args, 0, nullptr);
+            else
+                MainSetup(entrypoints.with_args, 0, nullptr);
 
             auto extras = android::intent().extras();
             if(auto it = extras.find("COFFEE_VERBOSITY"); it != extras.end())
@@ -258,204 +264,20 @@ void AndroidHandleAppCmd(struct android_app* app, int32_t event)
     }
 }
 
-inline void AndroidForwardInputEvent(AInputEvent* event)
-{
-    auto& entities    = comp_app::createContainer();
-    auto  android_bus = entities.service<anative::AndroidEventBus>();
-
-    if(!android_bus)
-        return;
-
-    android_bus->handleInputEvent(event);
-}
-
 int32_t AndroidHandleInputCmd(
     struct android_app* app, struct AInputEvent* event)
 {
     pthread_mutex_lock(&app->mutex);
 
-    AndroidForwardInputEvent(event);
+    auto& entities    = comp_app::createContainer();
+    auto  android_bus = entities.service<anative::AndroidEventBus>();
 
-    switch(AInputEvent_getType(event))
-    {
-    case AINPUT_EVENT_TYPE_KEY:
-    {
-        auto action  = AKeyEvent_getAction(event);
-        auto keyCode = AKeyEvent_getKeyCode(event);
-
-        auto flags = AKeyEvent_getFlags(event);
-
-        /* Just drop fake inputs, what use could they be? */
-        if(!(flags & AKEY_EVENT_FLAG_FROM_SYSTEM))
-            break;
-
-        /* TODO: Handle soft keyboard inputs specifically */
-        if(flags & AKEY_EVENT_FLAG_SOFT_KEYBOARD)
-        {
-            break;
-        }
-
-        if(flags & AKEY_EVENT_FLAG_VIRTUAL_HARD_KEY)
-            cDebug("Virtual hard key");
-
-        cDebug("Key event action: {0}:{1}:{2}", action, keyCode, flags);
-
-        break;
-    }
-    case AINPUT_EVENT_TYPE_MOTION:
-    {
-        int32_t actionPointerIndex = AMotionEvent_getAction(event);
-
-        uint8_t action = actionPointerIndex & AMOTION_EVENT_ACTION_MASK;
-        uint8_t pointerIdx =
-            (actionPointerIndex & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> 8;
-
-        auto& input_data = app_internal_state->input;
-
-        auto& tap    = input_data.tap;
-        auto& dubtap = input_data.double_tap;
-        auto& drag   = input_data.drag;
-        auto& pinch  = input_data.pinch;
-
-        auto flag = ndk_helper::GESTURE_STATE_START;
-        u32  dflg;
-
-        CfGeneralEvent gev = {};
-        gev.type           = CfTouchEvent;
-
-        CfTouchEventData tev = {};
-        tev.type             = CfTouch_None;
-
-        auto tapCoord = PtF{AMotionEvent_getX(event, pointerIdx),
-                            AMotionEvent_getY(event, pointerIdx)}
-                            .convert<u32>();
-
-        if(dubtap.Detect(event) & flag)
-        {
-            cVerbose(INPUT_VERB, "Double tap: {0}", tapCoord);
-
-            tev.type = CfTouchType::CfTouchTap;
-
-            tev.event.tap.x         = tapCoord.x;
-            tev.event.tap.y         = tapCoord.y;
-            tev.event.tap.doubleTap = 1;
-        } else if(tap.Detect(event) & flag)
-        {
-            cVerbose(
-                INPUT_VERB,
-                "Tap: {0},{1}",
-                AMotionEvent_getX(event, pointerIdx),
-                AMotionEvent_getY(event, pointerIdx));
-
-            tev.type = CfTouchType::CfTouchTap;
-
-            tev.event.tap.x         = tapCoord.x;
-            tev.event.tap.y         = tapCoord.y;
-            tev.event.tap.doubleTap = 0;
-        } else if((dflg =
-                       (pinch.Detect(event) &
-                        (flag | ndk_helper::GESTURE_STATE_MOVE))))
-        {
-            ndk_helper::Vec2 p1, p2;
-
-            static Vecf4 initial_points;
-
-            Vecf4 points;
-
-            if(!pinch.GetPointers(p1, p2))
-                break;
-
-            p1.Value(points.x(), points.y());
-            p2.Value(points.z(), points.w());
-
-            if(dflg == ndk_helper::GESTURE_STATE_START)
-                initial_points = points;
-
-            cVerbose(
-                INPUT_VERB,
-                "Pinch: {0} ({1})",
-                points,
-                AMotionEvent_getHistorySize(event));
-
-            PtF pinch_point = {(points.x() + points.z()) / 2.f,
-                               (points.y() + points.w()) / 2.f};
-
-            tev.type          = CfTouchType::CfTouchPinch;
-            tev.event.pinch.x = C_CAST<u32>(pinch_point.x);
-            tev.event.pinch.y = C_CAST<u32>(pinch_point.y);
-
-            if(dflg == ndk_helper::GESTURE_STATE_START)
-                tev.event.pinch.factor = 1.f;
-            else
-            {
-                Vecf2 v1 = {points.x(), points.y()};
-                Vecf2 v2 = {points.z(), points.w()};
-
-                Vecf2 v1_i = {initial_points.x(), initial_points.y()};
-                Vecf2 v2_i = {initial_points.z(), initial_points.w()};
-
-                auto dist1 = length(v1 - v2);
-                auto dist2 = length(v1_i - v2_i);
-
-                if(dist2 == 0.f)
-                    dist2 = 0.01f;
-
-                tev.event.pinch.factor = {dist1 / dist2};
-
-                /* TODO: Allow this process to emit rotation gestures */
-                /* TODO: Allow this to fall over into a drag gesture? */
-            }
-
-        } else if((dflg =
-                       (drag.Detect(event) &
-                        (flag | ndk_helper::GESTURE_STATE_MOVE))))
-        {
-            ndk_helper::Vec2 p;
-            Vecf2            point;
-
-            static Vecf2 initial_point;
-
-            drag.GetPointer(p);
-            p.Value(point.x(), point.y());
-
-            if(dflg == ndk_helper::GESTURE_STATE_START)
-                initial_point = {};
-
-            cVerbose(INPUT_VERB, "Drag: {0} -> {1}", initial_point, point);
-
-            tev.type         = CfTouchType::CfTouchPan;
-            tev.event.pan.ox = C_CAST<u32>(point.x());
-            tev.event.pan.oy = C_CAST<u32>(point.y());
-            tev.event.pan.dx = C_CAST<i32>(initial_point.x() - point.x());
-            tev.event.pan.dy = C_CAST<i32>(initial_point.y() - point.y());
-            tev.event.pan.fingerCount = 1;
-
-            initial_point = point;
-        } else
-        {
-            cVerbose(
-                INPUT_VERB, "Motion event: {0},{1}", tapCoord.x, tapCoord.y);
-        }
-
-        if(tev.type != CfTouch_None)
-        {
-            CoffeeEventHandleNACall(
-                CoffeeHandle_GeneralEvent, &gev, &tev, nullptr);
-        }
-
-        //        cDebug("Motion event: {0}:{1} @ {2},{3}", pointerIdx, action,
-        //        0, 0);
-        break;
-    }
-    default:
-    {
-        pthread_mutex_unlock(&app->mutex);
+    if(!android_bus)
         return 0;
-    }
-    }
+
+    android_bus->handleInputEvent(event);
 
     pthread_mutex_unlock(&app->mutex);
-
     return 1;
 }
 
@@ -477,23 +299,23 @@ static void AndroidForeignSignalHandle(int evtype)
     }
 }
 
-template<typename T>
+template<jnipp::return_type T>
 static std::string GetBuildField(wrapping::jfield<T>&& field)
 {
     using namespace ::jnipp_operators;
 
-    jvalue fieldValue =
+    java::object fieldValue =
         *"android.os.Build"_jclass[field.as("java.lang.String")];
 
     return java::type_unwrapper<std::string>(fieldValue);
 }
 
-template<typename T>
+template<jnipp::return_type T>
 static std::string GetBuildVersionField(wrapping::jfield<T>&& field)
 {
     using namespace ::jnipp_operators;
 
-    jvalue fieldValue =
+    java::object fieldValue =
         *"android.os.Build$VERSION"_jclass[field.as("java.lang.String")];
 
     return java::type_unwrapper<std::string>(fieldValue);
@@ -600,8 +422,8 @@ static void AndroidForeignSignalHandleNA(int evtype, void* p1, void*, void*)
             break;
 
         case Android_QueryStartActivity:
-            out->store_string =
-                jnipp::java::objects::get_class(coffee_app->activity->clazz);
+            out->store_string = jnipp::java::objects::get_class(
+                {{}, coffee_app->activity->clazz});
 
         default:
             break;
@@ -701,11 +523,15 @@ STATICINLINE void InitializeState(struct android_app* state)
 
     Coffee::SetPrintingVerbosity(15);
 
-    auto activityName = jnipp::java::objects::get_class(state->activity->clazz);
+    auto activityName = jnipp::java::objects::get_class(
+        jnipp::java::object({}, state->activity->clazz));
 
     cDebug("State:       {0}", str::print::pointerify(state));
     cDebug("Activity:    {0}", activityName);
     cDebug("Android API: {0}", state->activity->sdkVersion);
+
+    auto memory = *android::activity_manager().get_mem_info();
+    cDebug("System memory: {0}", memory.total);
 
     auto stats = android::network_stats().query();
 
@@ -774,8 +600,9 @@ namespace android {
 
 using namespace Coffee;
 using namespace jnipp_operators;
+using re = jnipp::return_type;
 
-intent::intent() : m_intent(nullptr, nullptr)
+intent::intent() : m_intent({{}, {}})
 {
     auto activity =
         "android.app.NativeActivity"_jclass(coffee_app->activity->clazz);
@@ -795,9 +622,6 @@ std::string intent::action()
 
     auto out = m_intent[getAction]();
 
-    if(!java::objects::not_null(out))
-        return {};
-
     return jnipp::java::type_unwrapper<std::string>(out);
 }
 
@@ -813,7 +637,7 @@ std::string intent::data()
 
     auto intentData = m_intent[getData]();
 
-    if(!java::objects::not_null(intentData))
+    if(!intentData)
         return {};
 
     auto intentUri = Uri(intentData);
@@ -829,16 +653,16 @@ std::set<std::string> intent::categories()
     auto Set = "java.util.Set"_jclass;
 
     auto getCategories = "getCategories"_jmethod.ret("java.util.Set");
-    auto toArray = "toArray"_jmethod.ret<jobjectArray>("java.lang.Object");
+    auto toArray = "toArray"_jmethod.ret<re::object_array_>("java.lang.Object");
 
     auto categories = m_intent[getCategories]();
 
-    if(!java::objects::not_null(categories))
+    if(!categories)
         return {};
 
     auto categorySet = Set(categories);
     auto categoryArray =
-        jnipp::java::array_type_unwrapper<jobjectArray>(categorySet[toArray]());
+        jnipp::java::array_type_unwrapper<re::object_>(categorySet[toArray]());
 
     std::set<std::string> outCategories;
 
@@ -862,17 +686,18 @@ std::map<std::string, std::string> intent::extras()
     auto getExtras      = "getExtras"_jmethod.ret("android.os.Bundle");
     auto getStringExtra = "getStringExtra"_jmethod.ret("java.lang.String")
                               .arg<std::string>("java.lang.String");
-    auto keySet   = "keySet"_jmethod.ret("java.util.Set");
-    auto setArray = "toArray"_jmethod.ret<jobjectArray>("java.lang.Object");
+    auto keySet = "keySet"_jmethod.ret("java.util.Set");
+    auto setArray =
+        "toArray"_jmethod.ret<re::object_array_>("java.lang.Object");
 
-    auto extrasRef = m_intent[getExtras]().l;
+    auto extrasRef = m_intent[getExtras]();
 
     if(jnipp::java::objects::not_null(extrasRef))
     {
         auto extras       = Bundle(extrasRef);
-        auto extrasKeySet = Set(extras[keySet]().l);
+        auto extrasKeySet = Set(extras[keySet]());
 
-        auto extraKeys = jnipp::java::array_type_unwrapper<jobjectArray>(
+        auto extraKeys = jnipp::java::array_type_unwrapper<re::object_>(
             extrasKeySet[setArray]());
 
         for(auto key : *extraKeys)
@@ -901,9 +726,9 @@ int intent::flags()
     if(!java::objects::not_null(m_intent))
         return {};
 
-    auto getFlags = "getFlags"_jmethod.ret<jint>();
+    auto getFlags = "getFlags"_jmethod.ret<re::int_>();
 
-    return jnipp::java::type_unwrapper<jint>(m_intent[getFlags]());
+    return m_intent[getFlags]();
 }
 
 std::string app_info::package_name()
@@ -916,7 +741,8 @@ std::string app_info::package_name()
     return jnipp::java::type_unwrapper<std::string>(context[getPackageName]());
 }
 
-stl_types::Optional<::jobject> app_info::get_service(std::string const& service)
+stl_types::Optional<::jnipp::java::object> app_info::get_service(
+    std::string const& service)
 {
     auto Context          = "android.content.Context"_jclass;
     auto getSystemService = "getSystemService"_jmethod.arg("java.lang.String")
@@ -925,18 +751,15 @@ stl_types::Optional<::jobject> app_info::get_service(std::string const& service)
     auto instance = Context(coffee_app->activity->clazz)[getSystemService](
         jnipp::java::type_wrapper(service));
 
-    if(!java::objects::not_null(instance))
-        return {};
+    auto class_type = jnipp::java::objects::get_class(instance);
 
-    auto class_type = jnipp::java::objects::get_class(instance.l);
-
-    return instance.l;
+    return jnipp::java::object{Context.clazz, instance};
 }
 
 stl_types::Optional<network_stats::result_t> network_stats::query()
 {
-    auto System = "java.lang.System"_jclass;
-    auto currentTimeMillis = "currentTimeMillis"_jmethod.ret<jlong>();
+    auto System            = "java.lang.System"_jclass;
+    auto currentTimeMillis = "currentTimeMillis"_jmethod.ret<re::long_>();
 
     auto NetStats     = "android.app.usage.NetworkStatsManager"_jclass;
     auto querySummary = "querySummary"_jmethod.arg<jint>()
@@ -948,42 +771,83 @@ stl_types::Optional<network_stats::result_t> network_stats::query()
     auto NetworkStats = "android.app.usage.NetworkStats"_jclass;
     auto getNextBucket =
         "getNextBucket"_jmethod.arg("android.app.usage.NetworkStats$Bucket")
-            .ret<jboolean>();
-    auto hasNextBucket = "hasNextBucket"_jmethod.ret<jboolean>();
+            .ret<re::bool_>();
+    auto hasNextBucket = "hasNextBucket"_jmethod.ret<re::bool_>();
 
     auto Bucket          = "android.app.usage.NetworkStats$Bucket"_jclass;
     auto bucketConstruct = "<init>"_jmethod;
 
-    auto getRxBytes = "getRxBytes"_jmethod.ret<jlong>();
-    auto getTxBytes = "getTxBytes"_jmethod.ret<jlong>();
+    auto getRxBytes = "getRxBytes"_jmethod.ret<re::long_>();
+    auto getTxBytes = "getTxBytes"_jmethod.ret<re::long_>();
 
     auto net_stats = NetStats(*app_info().get_service("netstats"));
 
-    ::jvalue subId;
-    subId.l = 0;
+    java::value sub_id = ::jvalue();
+    sub_id->l          = 0;
 
     auto now = System[currentTimeMillis]();
 
     auto stats = NetworkStats(
-        net_stats[querySummary](network_class_mobile, subId, 0, now.j));
+        net_stats[querySummary](network_class_mobile, *sub_id, 0, now));
 
     auto bucket = Bucket.construct(bucketConstruct);
 
     result_t out;
 
-    while(stats[hasNextBucket]().z)
+    while(stats[hasNextBucket]())
     {
-        if(!stats[getNextBucket](bucket).z)
+        if(!stats[getNextBucket](bucket))
             break;
 
         auto rx = bucket[getRxBytes]();
         auto tx = bucket[getTxBytes]();
 
-        out.rx += rx.j;
-        out.tx += tx.j;
+        out.rx += rx;
+        out.tx += tx;
     }
 
     return out;
+}
+
+stl_types::Optional<activity_manager::memory_info> activity_manager::
+    get_mem_info()
+{
+    auto Activity      = "android.app.ActivityManager"_jclass;
+    auto MemoryInfo    = "android.app.ActivityManager$MemoryInfo"_jclass;
+    auto getMemoryInfo = "getMemoryInfo"_jmethod.arg(MemoryInfo);
+
+    auto memoryInfoConstruct = "<init>"_jmethod;
+
+    auto mem_info         = MemoryInfo.construct(memoryInfoConstruct);
+    auto activity_manager = Activity(*app_info().get_service("activity"));
+
+    if(!C_OCAST<::jvalue>(mem_info).z || !C_OCAST<::jvalue>(activity_manager).z)
+        return {};
+
+    auto avail      = "availMem"_jfield.as<re::long_>();
+    auto threshold  = "threshold"_jfield.as<re::long_>();
+    auto total      = "totalMem"_jfield.as<re::long_>();
+    auto is_low_mem = "lowMemory"_jfield.as<re::bool_>();
+
+    activity_manager[getMemoryInfo](mem_info);
+
+    memory_info out;
+    out.available = *mem_info[avail];
+    out.total     = *mem_info[total];
+
+    return out;
+}
+
+stl_types::Optional<activity_manager::config_info> activity_manager::
+    get_config_info()
+{
+    auto Activity   = "android.app.ActivityManager"_jclass;
+    auto ConfigInfo = "android.app.ActivityManager$ConfigurationInfo"_jclass;
+
+    auto getDeviceConfigurationInfo =
+        "getDeviceConfigurationInfo"_jmethod.arg(ConfigInfo);
+
+    return {};
 }
 
 std::vector<std::string> cpu_abis()
@@ -994,10 +858,9 @@ std::vector<std::string> cpu_abis()
 
     try
     {
-        auto SUPPORTED_ABIS =
-            "SUPPORTED_ABIS"_jfield.as<jobjectArray>("java.lang.String");
+        auto SUPPORTED_ABIS = "SUPPORTED_ABIS"_jfield.as("java.lang.String");
 
-        auto abis = jnipp::java::array_type_unwrapper<jobjectArray>(
+        auto abis = jnipp::java::array_type_unwrapper<re::object_>(
             *Build[SUPPORTED_ABIS]);
 
         for(auto abi : *abis)
@@ -1029,11 +892,10 @@ int app_dpi()
     auto getDisplayMetrics =
         "getDisplayMetrics"_jmethod.ret("android.util.DisplayMetrics");
 
-    auto resourceObject = Resources(activityObject[getResources]().l);
-    auto displayMetrics = DisplayMetrics(resourceObject[getDisplayMetrics]().l);
+    auto resourceObject = Resources(activityObject[getResources]());
+    auto displayMetrics = DisplayMetrics(resourceObject[getDisplayMetrics]());
 
-    auto displayDpi = C_CAST<jint>(jnipp::java::type_unwrapper<jint>(
-        *displayMetrics["densityDpi"_jfield.as<jint>()]));
+    auto displayDpi = *displayMetrics["densityDpi"_jfield.as<re::int_>()];
 
     return displayDpi;
 }

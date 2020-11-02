@@ -248,7 +248,6 @@ void TraceModel::parseAccountingInfo(QByteArray const& profile, uchar* ptr)
     } else
         m_trace = trace.object();
 
-    qDebug() << m_trace.keys();
     emit traceReceived();
 
     auto eventIt = m_trace.find("traceEvents");
@@ -328,14 +327,16 @@ void TraceModel::parseAccountingInfo(QByteArray const& profile, uchar* ptr)
     }
 
     /* Insert metric events */
+    quint64 i = 0;
     for(auto event : eventIt->toArray())
     {
         auto ev = event.toObject().toVariantMap();
 
         if(ev["ph"] == "m")
         {
-            m_metrics->insertValue(event.toObject());
+            m_metrics->insertValue(event.toObject(), i);
         }
+        i++;
     }
 
     m_metrics->optimize();
@@ -351,6 +352,11 @@ void TraceModel::parseAccountingInfo(QByteArray const& profile, uchar* ptr)
                      << thread.second->m_name;
 
     emit traceParsed();
+}
+
+const char *TraceModel::traceSource() const
+{
+    return m_traceSource;
 }
 
 ProcessModel::ProcessModel(
@@ -625,10 +631,6 @@ ThreadModel::ThreadModel(
                 m_visibleEvents.insert(it, idx);
                 endInsertRows();
             }
-
-            //            qDebug() << "Sort" << m_visibleEvents.size() <<
-            //            added.size()
-            //                     << remvd.size();
         },
         Qt::DirectConnection);
 }
@@ -948,7 +950,7 @@ QHash<int, QByteArray> Metrics::roleNames() const
     };
 }
 
-void Metrics::insertValue(const QJsonObject& data)
+void Metrics::insertValue(const QJsonObject& data, quint64 i)
 {
     auto id_it    = data.find("id");
     auto value_it = data.find("v");
@@ -970,7 +972,7 @@ void Metrics::insertValue(const QJsonObject& data)
         (ts_it->toVariant().toString().toULongLong() - m_props.startTimestamp) /
         m_props.timestampBase;
 
-    metric->m_values.push_back({ts, value_it->toString().toFloat()});
+    metric->m_values.push_back({ts, value_it->toString().toFloat(), i});
 
     auto& newValue     = metric->m_values.back();
     metric->m_minValue = std::min(metric->m_minValue, newValue.value);
@@ -1006,6 +1008,9 @@ void Metrics::populate(const QJsonObject& meta)
         break;
     case 2:
         metric->m_type = MetricValues::MetricMarker;
+        break;
+    case 3:
+        metric->m_type = MetricValues::MetricImage;
         break;
     default:
         metric->m_type = MetricValues::MetricValue;
@@ -1182,6 +1187,8 @@ QVariant MetricValues::data(const QModelIndex& index, int role) const
     {
     case FieldValue:
         return m_values.at(idx).value;
+    case FieldIndex:
+        return m_values.at(idx).i;
     case FieldValueScaled:
         return metric_value_scale(
             m_values.at(idx).value, m_minValue, m_maxValue);
@@ -1208,6 +1215,7 @@ QHash<int, QByteArray> MetricValues::roleNames() const
 {
     return {
         {FieldValue, "value"},
+        {FieldIndex, "eventId"},
         {FieldValueScaled, "valueScaled"},
         {FieldTimestamp, "ts"},
         {FieldPreviousValue, "previousValue"},

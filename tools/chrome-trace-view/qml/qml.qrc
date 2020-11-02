@@ -7,5 +7,6 @@
         <file>InspectorDrawer.qml</file>
         <file>KeyValueProperty.qml</file>
         <file>MetricView.qml</file>
+        <file>HoverImage.qml</file>
     </qresource>
 </RCC>

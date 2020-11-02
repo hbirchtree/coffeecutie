@@ -315,19 +315,23 @@ void Resource::readResponsePayload(net_buffer& buffer)
         if(content_len == buffer.size())
             return;
 
-        auto view = *Bytes::CreateFrom(m_response.payload).at(buffer.size());
-
-        szptr read;
-#if defined(ASIO_USE_SSL)
-        if(secure())
+        if(auto view = Bytes::CreateFrom(m_response.payload).at(buffer.size()))
         {
-            read = ssl->read(view, ec);
-        } else
+            szptr read;
+#if defined(ASIO_USE_SSL)
+            if(secure())
+            {
+                read = ssl->read(*view, ec);
+            } else
 #endif
-            read = normal->read(view, ec);
-        C_ERROR_CHECK(ec)
+                read = normal->read(*view, ec);
+            C_ERROR_CHECK(ec)
 
-        cVerbose(12, NETRSC_TAG "Read complete");
+            cVerbose(12, NETRSC_TAG "Read complete");
+        } else
+        {
+            cVerbose(12, NETRSC_TAG "Failed to read response");
+        }
     }
 
     cVerbose(10, NETRSC_TAG "Payload size: {0}", m_response.payload.size());
@@ -407,14 +411,16 @@ bool Resource::push(http::method_t method, Bytes const& data)
                 cVerbose(
                     12, NETRSC_TAG "{0}: {1}", header.first, header.second);
 
+            recv_buf.erase(
+                recv_buf.begin(), recv_buf.begin() + C_FCAST<ptroff>(consumed));
+
             readResponsePayload(recv_buf);
 
             auto type = http::header::from_string::content_type(
                 head.standard_fields[header_field::content_type]);
             if(type == content_type::json || type == content_type::text)
             {
-                cWarning(
-                    NETRSC_TAG "Payload:\n{0}", m_response.payload.data());
+                cWarning(NETRSC_TAG "Payload:\n{0}", m_response.payload.data());
             }
 
             close();

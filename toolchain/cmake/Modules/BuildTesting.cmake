@@ -143,7 +143,7 @@ function(COFFEE_TEST)
         add_test (
             NAME "${TEST_TITLE}"
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-            COMMAND $<TARGET_FILE:${TEST_TITLE}>
+            COMMAND $<TARGET_FILE:${TEST_TITLE}> -vvvvvvvvvvvvvv
             )
     endif()
 

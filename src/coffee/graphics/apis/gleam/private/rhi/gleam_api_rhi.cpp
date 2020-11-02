@@ -411,10 +411,17 @@ bool GLEAM_API::LoadAPI(
     store->inst_data = MkUqDST<GLEAM_Instance_Data, InstanceDataDeleter>();
 
     store->options = options;
-#if MODE_DEBUG && defined(GL_KHR_debug)
+#if MODE_DEBUG && defined(GL_KHR_debug) && \
+    GL_VERSION_VERIFY(0x430, GL_VERSION_NONE)
     store->DEBUG_MODE = debug;
     if(debug)
     {
+#if GL_VERSION_VERIFY(GL_VERSION_NONE, 0x310)
+        using KHR_debug = glwrap::ext::KHR_debug<GLESVER_31>;
+#else
+        using KHR_debug = gl::v43;
+#endif
+
         gl::vlow::Enable(Feature::DebugOutputSync);
         gl::v43::DebugMessageControl(
             GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, {}, true);
@@ -620,12 +627,10 @@ void GLEAM_API::SetViewportState(const VIEWSTATE& vstate, C_UNUSED(u32 i))
             }
 
             gl::v41::DepthRangeArrayv(
-                i,
-                Span<f64>::From(&vstate.depth(i), vstate.viewCount()));
+                i, Span<f64>::From(&vstate.depth(i), vstate.viewCount()));
             gl::v41::ScissorArrayv(
                 i, Span<i32>::From(&vstate.scissor(i), vstate.viewCount()));
-            gl::v41::ViewportArrayv(
-                i, Span<f32>::CreateFrom(varr));
+            gl::v41::ViewportArrayv(i, Span<f32>::CreateFrom(varr));
 
             gl::vlow::Enablei(Feature::ClipDist, 0);
             gl::vlow::Enablei(Feature::ClipDist, 1);
@@ -655,7 +660,8 @@ void GLEAM_API::SetViewportState(const VIEWSTATE& vstate, C_UNUSED(u32 i))
         if(vstate.m_view.size() > 0)
         {
             auto sview = vstate.view(0);
-            gl::vlow::Viewport(sview.bottomleft().toVector<i32>(), sview.size());
+            gl::vlow::Viewport(
+                sview.bottomleft().toVector<i32>(), sview.size());
         }
         if(vstate.m_depth.size() > 0)
 #if GL_VERSION_VERIFY(0x100, GL_VERSION_NONE)

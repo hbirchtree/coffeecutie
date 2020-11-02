@@ -10,6 +10,8 @@ enum class MetricVariant
     Value,    /*!< Value is a continuous value */
     Symbolic, /*!< Values are only symbolic, not continuous */
     Marker,   /*!< Marker for eg. VSYNC or other events */
+
+    Image, /*!< Captured framebuffer or other image */
 };
 
 namespace json {
@@ -23,14 +25,23 @@ extern void CaptureMetrics(
     profiling::ThreadState& tdata,
     cstring                 name,
     MetricVariant           variant,
+    CString const&          value,
+    Chrono::microseconds    ts,
+    u32                     index = 0);
+
+extern void CaptureMetrics(
+    profiling::ThreadState& tdata,
+    cstring                 name,
+    MetricVariant           variant,
     f32                     value,
     Chrono::microseconds    ts,
     u32                     index = 0);
 
+template<typename T>
 FORCEDINLINE void CaptureMetrics(
     cstring              name,
     MetricVariant        variant,
-    f32                  value,
+    T                    value,
     Chrono::microseconds ts,
     u32                  index = 0)
 {

@@ -179,8 +179,3 @@ struct CfMessageDisplay
 }
 #endif
 
-#ifdef __cplusplus
-#include <coffee/core/types/application_main.h>
-
-extern CoffeeMainWithArgs coffee_main_function_ptr;
-#endif

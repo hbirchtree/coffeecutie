@@ -8,7 +8,7 @@ QMAKE_LFLAGS += -std=c++14 -s "BINARYEN_TRAP_MODE='clamp'" -s ASSERTIONS=1 -mnon
 
 DEFINES += QT_DEPRECATED_WARNINGS
 
-SOURCES += src/main.cpp src/tracemodel.cpp
+SOURCES += src/main.cpp src/tracemodel.cpp src/screenshotprovider.cpp
 HEADERS += src/tracemodel.h
 
 RESOURCES += qml/qml.qrc

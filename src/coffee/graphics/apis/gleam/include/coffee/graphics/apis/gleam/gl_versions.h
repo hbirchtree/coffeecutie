@@ -22,7 +22,8 @@ using v44 = glwrap::v44<GLVER_44>;
 using v45 = glwrap::v45<GLVER_45>;
 using v46 = glwrap::v46<GLVER_46>;
 #else
-using v33 = glwrap::v20es<GLESVER_20>;
+using v33 = glwrap::v30es<GLESVER_30>;
+using v41 = glwrap::v31es<GLESVER_31>;
 using v43 = glwrap::v32es<GLESVER_32>;
 #endif
 
@@ -34,7 +35,7 @@ using v32es = glwrap::v32es<GLESVER_32>;
 #if GL_VERSION_VERIFY(0x330, GL_VERSION_NONE)
 using vlow = v33;
 #elif GL_VERSION_VERIFY(GL_VERSION_NONE, 0x200)
-using vlow                = v20es;
+using vlow                = v30es;
 #endif
 
 struct common

@@ -309,3 +309,34 @@ C_FLAGS(Face, u32);
 
 } // namespace CGL
 } // namespace Coffee
+
+namespace glwrap {
+namespace v {
+
+using Coffee::CGL::gl_ver_t;
+
+#if GL_VERSION_VERIFY(0x300, GL_VERSION_NONE)
+
+using core33 = gl_ver_t<3, 3>;
+using core40 = gl_ver_t<4, 0>;
+using core41 = gl_ver_t<4, 1>;
+using core42 = gl_ver_t<4, 2>;
+using core43 = gl_ver_t<4, 3>;
+using core44 = gl_ver_t<4, 4>;
+using core45 = gl_ver_t<4, 5>;
+
+using baseline = core33;
+
+#elif GL_VERSION_VERIFY(GL_VERSION_NONE, 0x200)
+
+using es20 = gl_ver_t<2, 0>;
+using es30 = gl_ver_t<3, 0>;
+using es31 = gl_ver_t<3, 1>;
+using es32 = gl_ver_t<3, 2>;
+
+using baseline = es20;
+
+#endif
+
+}
+}

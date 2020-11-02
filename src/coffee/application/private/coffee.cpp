@@ -38,6 +38,18 @@
 #include <peripherals/posix/process.h>
 #endif
 
+#if defined(COFFEE_WINDOWS) && !defined(__MINGW64__)
+#if !defined(COFFEE_WINDOWS_UWP)
+extern bool WMI_Query(
+    const char* query, const wchar_t* property, std::string& target);
+#endif
+extern int InitCOMInterface();
+#endif
+
+#if defined(COFFEE_GEKKO)
+#include <coffee/gexxo/gexxo_api.h>
+#endif
+
 using namespace ::platform;
 
 namespace platform {
@@ -57,6 +69,69 @@ enum StartFlags
     DiscardArgumentHandler = 0x1,
     SilentInit             = 0x2,
 };
+
+MainStorage main_functions;
+
+void CaptureMainFunction(MainWithArgs mainfun)
+{
+    main_functions.with_args  = mainfun;
+    main_functions.is_no_args = false;
+}
+
+void CaptureMainFunction(MainNoArgs mainfun)
+{
+    main_functions.no_args    = mainfun;
+    main_functions.is_no_args = true;
+}
+
+int MainSetup(MainWithArgs mainfun, int argc, char** argv, u32 flags)
+{
+#if !defined(COFFEE_LOWFAT) && 0
+    cDebug("Entering MainSetup() at {0}", str::print::pointerify(MainSetup));
+#endif
+
+#if defined(COFFEE_WINDOWS) && !defined(COFFEE_WINDOWS_UWP) && \
+    !defined(__MINGW64__)
+#if MODE_RELEASE
+    ShowWindow(GetConsoleWindow(), SW_HIDE);
+#else
+    if(platform::Env::GetVar("VisualStudioVersion").size())
+        ShowWindow(GetConsoleWindow(), SW_HIDE);
+#endif
+    InitCOMInterface();
+#elif defined(COFFEE_WINDOWS_UWP)
+    InitCOMInterface();
+#elif defined(COFFEE_GEKKO)
+    gexxo::initialize();
+    printf("- Gamecube video initialized\n");
+#endif
+
+    int stat = Coffee::CoffeeMain(mainfun, argc, argv, flags);
+
+#if defined(COFFEE_GEKKO)
+    gexxo::infiniteLoop();
+#endif
+
+#ifndef COFFEE_CUSTOM_EXIT_HANDLING
+#if MODE_DEBUG
+    platform::profiling::PContext::ProfilerStore()->disable();
+#endif
+    exit(stat);
+#else
+    return stat;
+#endif
+}
+
+int MainSetup(MainNoArgs mainfun, int argc, char** argv, u32 flags)
+{
+    static MainNoArgs main_storage = mainfun;
+
+    return MainSetup(
+        [](libc_types::i32, char**) { return main_storage(); },
+        argc,
+        argv,
+        flags);
+}
 
 /*!
  * \brief We use this internally to apply compiler-provided info
@@ -181,7 +256,7 @@ void CoffeeInit(bool)
     CoffeeInit_Internal(0x0);
 }
 
-i32 CoffeeMain(CoffeeMainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
+i32 CoffeeMain(MainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
 {
     auto start_time = Chrono::high_resolution_clock::now();
 
@@ -422,7 +497,8 @@ void generic_stacktrace(int sig)
 }
 
 static FileFun::FileHandle stack_file;
-void                       stack_writer(CString const& frame, CString const& ip)
+
+static void stack_writer(CString const& frame, CString const& ip)
 {
     auto out = Strings::fmt(R"({"frame": "{0}", "ip": "{1}"},)", frame, ip);
     file_error ec;
@@ -434,29 +510,27 @@ void                       stack_writer(CString const& frame, CString const& ip)
 
 void InstallDefaultSigHandlers()
 {
+#if COFFEE_GLIBC_STACKTRACE || COFFEE_UNWIND_STACKTRACE
 #if !defined(COFFEE_CUSTOM_STACKTRACE)
     std::set_terminate([]() {
         platform::env::Stacktracer::ExceptionStacktrace(
             std::current_exception(),
             typing::logging::fprintf_logger,
             stack_writer);
-        libc::signal::exit(libc::signal::sig::abort);
+        abort();
     });
 
-#if COFFEE_GLIBC_STACKTRACE || COFFEE_UNWIND_STACKTRACE
     platform::env::Stacktracer::Backtrace();
 
-    libc::signal::install(libc::signal::sig::abort, generic_stacktrace);
     libc::signal::install(libc::signal::sig::fpe, generic_stacktrace);
     libc::signal::install(libc::signal::sig::ill_op, generic_stacktrace);
     libc::signal::install(libc::signal::sig::bus_error, generic_stacktrace);
     libc::signal::install(libc::signal::sig::segfault, generic_stacktrace);
 
-    libc::signal::install(libc::signal::sig::interrupt, [](i32)
-                          {
-                              CoffeeTerminate();
-                              libc::signal::exit(libc::signal::sig::interrupt);
-                          });
+    libc::signal::install(libc::signal::sig::interrupt, [](i32) {
+        CoffeeTerminate();
+        libc::signal::exit(libc::signal::sig::interrupt);
+    });
 #endif
 #endif
 }

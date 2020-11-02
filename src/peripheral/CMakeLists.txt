@@ -9,6 +9,7 @@ coffee_library (
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<BUILD_INTERFACE:${COFFEE_EXT_LIBRARY_DIR}/tiny-utf8>
+    $<BUILD_INTERFACE:${COFFEE_EXT_LIBRARY_DIR}/cppcodec>
     $<INSTALL_INTERFACE:include>
     )
 
@@ -28,6 +29,13 @@ target_precompile_headers ( PeripheralLib PUBLIC
 #    $<$<COMPILE_LANGUAGE:CXX>:peripherals/stl/threads/job_system.h>
 #    $<$<COMPILE_LANGUAGE:CXX>:peripherals/stl/types.h>
 #    $<$<COMPILE_LANGUAGE:CXX>:peripherals/stl/type_list.h>
+    )
+
+coffee_bundle (
+    DESTINATION libs
+
+    HEADER_DIRECTORIES
+    ${COFFEE_EXT_LIBRARY_DIR}/cppcodec
     )
 
 if(BUILD_ASAN)

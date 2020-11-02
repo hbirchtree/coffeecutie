@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from os.path import dirname
 from collections import defaultdict
 from collections import namedtuple
 import xml.etree.ElementTree as etree
@@ -19,7 +20,7 @@ from versioning import is_accepted_api
 from versioning import EXTENSION_BLACKLIST
 
 # Parse the Khronos Registry
-registry = etree.parse('gl.xml').getroot()
+registry = etree.parse('%s/gl.xml' % dirname(__file__)).getroot()
 #
 
 extensions = {} # accepted extensions, str type
@@ -143,6 +144,8 @@ def get_cmd_deref(cmd):
 def gen_feature_bucket(bucket):
     added_commands = []
     prev_version = None
+
+    first_version = None
     
     for b in sorted(list(bucket)):
         if b == 'GLVER_99':
@@ -150,6 +153,9 @@ def gen_feature_bucket(bucket):
 
         is_es = 'GLESVER_' in b
         version_name = 'v' + b.replace('GLVER_', '').replace('GLESVER_', '') + ('es' if is_es else '')
+
+        if first_version is None:
+            first_version = version_name
 
         print('template<typename ReqVer>')
         print('struct %s' % version_name)
@@ -178,6 +184,15 @@ def gen_feature_bucket(bucket):
 
         print('};')
         prev_version = version_name
+
+    is_es = first_version.endswith("es")
+    
+    if is_es:
+        print("#if GL_VERSION_VERIFY(GL_VERSION_NONE, 0x200)")
+    print("template<typename Ver>")
+    print("using baseline = %s<Ver>;" % first_version)
+    if is_es:
+        print("#endif")
 
 print('#pragma once')
 
