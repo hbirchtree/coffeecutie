@@ -170,12 +170,13 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
     if(NOT DEFINED LIBUNWIND_INCLUDE_DIR)
         find_package( Unwind QUIET )
     endif()
-    if (LIBUNWIND_FOUND)
+    if (DEFINED LIBUNWIND_INCLUDE_DIR)
         target_include_directories ( PeripheralLib PUBLIC
             $<BUILD_INTERFACE:${LIBUNWIND_INCLUDE_DIR}>
             )
         target_link_libraries ( PeripheralLib PUBLIC 
-            $<BUILD_INTERFACE:${LIBUNWIND_LIBRARIES}>
+            $<BUILD_INTERFACE:${LIBUNWIND_GENERIC_LIBRARY}>
+            $<BUILD_INTERFACE:${LIBUNWIND_SPECIFIC_LIBRARY}>
             )
     endif()
 

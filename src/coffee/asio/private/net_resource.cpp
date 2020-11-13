@@ -83,14 +83,14 @@ void Resource::initRsc(const Url& url)
         {
             ssl = MkUq<net::tcp::ssl_socket>(std::ref(*m_ctxt));
 
-            m_error = ssl->connect(m_request.host, cast_pod(m_request.port));
+            m_error = ssl->connect(m_request.host, m_request.port);
 
         } else
 #endif
         {
             normal = MkUq<net::tcp::raw_socket>(std::ref(*m_ctxt));
 
-            m_error = normal->connect(m_request.host, cast_pod(m_request.port));
+            m_error = normal->connect(m_request.host, m_request.port);
         }
         C_ERROR_CHECK_TYPED(m_error, net_error)
     }

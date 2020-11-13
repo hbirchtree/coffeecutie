@@ -3,6 +3,7 @@
 #include <coffee/core/CProfiling>
 #include <peripherals/semantic/chunk.h>
 #include <peripherals/stl/functional_types.h>
+#include <peripherals/stl/string_casting.h>
 
 #include "asio_data.h"
 
@@ -93,11 +94,18 @@ struct socket_base
     {
     }
 
-    asio::error_code connect(host_t const& host, service_t const& port)
+    ~socket_base()
+    {
+        if(m_socket.lowest_layer().is_open())
+            disconnect();
+    }
+
+    template<typename T>
+    asio::error_code connect(host_t const& host, T port)
     {
         asio::error_code ec;
 
-        auto it = m_resolver.resolve(host, port, ec);
+        auto it = m_resolver.resolve(host, stl_types::cast_pod(port), ec);
         VALIDATE();
         asio::connect(m_socket.lowest_layer(), it, ec);
         VALIDATE();
@@ -168,6 +176,11 @@ struct socket_base
         return ec;
     }
 
+    auto& socket()
+    {
+        return m_socket;
+    }
+
   protected:
     asio::ip::tcp::resolver& m_resolver;
     socket_type              m_socket;
@@ -186,6 +199,31 @@ struct raw_socket : socket_base<socket_types::raw>
 {
     using lowest_layer = typename socket_type::lowest_layer_type;
     using socket_base<socket_type>::socket_base;
+};
+
+struct server
+{
+    server(net::context& service, host_t const& host, service_t const& port) :
+        m_host(host), m_port(port), m_resolver(service.resolver)
+    {
+    }
+
+    asio::error_code start()
+    {
+        asio::error_code ec;
+
+        auto it = m_resolver.resolve(m_host, m_port, ec);
+        VALIDATE();
+        m_endpoint = *it;
+        m_endpoint.port(stl_types::cast_string<u16>(m_port));
+    }
+
+  private:
+    host_t    m_host;
+    service_t m_port;
+
+    asio::ip::tcp::resolver& m_resolver;
+    asio::ip::tcp::endpoint  m_endpoint;
 };
 
 } // namespace tcp
@@ -210,21 +248,29 @@ struct socket_base
     using socket_type = SocketType;
 
     socket_base(net::context& service) :
-        m_resolver(service.resolver_udp), m_socket(service.service),
-        m_stats(service.statistics.get())
+        m_service(service.service), m_resolver(service.resolver_udp),
+        m_socket(service.service), m_stats(service.statistics.get())
     {
     }
 
-    asio::error_code connect(
-        host_t const&    host,
-        service_t const& port,
-        protocol         proto = protocol::v4)
+    ~socket_base()
     {
+        if(m_socket.lowest_layer().is_open())
+            close();
+    }
+
+    template<typename T>
+    asio::error_code connect(
+        host_t const& host, T port, protocol proto = protocol::v4)
+    {
+        using asio::ip::udp;
+
         asio::error_code ec;
 
-        auto it = m_resolver.resolve(host, port, ec);
+        auto it = m_resolver.resolve(host, stl_types::cast_pod(port), ec);
         VALIDATE();
         m_endpoint = *it;
+        m_endpoint.port(port);
         m_stats->sockets_created += 1;
         m_socket.open(
             proto == protocol::v4 ? socket_type::protocol_type::v4()
@@ -235,24 +281,30 @@ struct socket_base
         return ec;
     }
 
-    asio::error_code connect_broadcast(
-        service_t const& port, protocol proto = protocol::v4)
+    template<typename T>
+    asio::error_code connect_broadcast(T port, protocol proto = protocol::v4)
     {
-        asio::error_code ec = connect("192.168.50.255", port, proto);
+        asio::error_code ec =
+            connect(asio::ip::address_v4::broadcast().to_string(), port, proto);
         VALIDATE();
         m_socket.set_option(asio::socket_base::broadcast(true), ec);
         m_socket.set_option(asio::socket_base::reuse_address(true), ec);
-
-        m_endpoint = asio::ip::address_v4::broadcast();
 
         return ec;
     }
 
     template<typename T>
+    asio::error_code listen_on(T port, asio::ip::udp const& flags)
+    {
+        m_socket = socket_type(m_service, asio::ip::udp::endpoint(flags, port));
+        return asio::error_code();
+    }
+
+    template<typename T>
     auto read(
-        semantic::mem_chunk<T>&  data,
-        asio::ip::udp::endpoint& from,
-        asio::error_code&        ec)
+        semantic::mem_chunk<T> const& data,
+        asio::ip::udp::endpoint&      from,
+        asio::error_code&             ec)
     {
         size_t read = 0;
         do
@@ -299,6 +351,16 @@ struct socket_base
         return written;
     }
 
+    auto& socket()
+    {
+        return m_socket;
+    }
+
+    auto const& endpoint() const
+    {
+        return m_endpoint;
+    }
+
     asio::error_code close()
     {
         asio::error_code ec;
@@ -307,6 +369,7 @@ struct socket_base
     }
 
   protected:
+    asio::io_service&        m_service;
     asio::ip::udp::resolver& m_resolver;
     socket_type              m_socket;
     asio::ip::udp::endpoint  m_endpoint;
@@ -316,24 +379,21 @@ struct socket_base
 struct raw_socket : socket_base<socket_types::udp_raw>
 {
     using socket_base<socket_type>::socket_base;
-
-    asio::error_code connect(host_t const& host, service_t const& port)
-    {
-        asio::error_code ec;
-
-        auto it = m_resolver.resolve(host, port, ec);
-        VALIDATE();
-        m_endpoint = *it;
-        m_stats->sockets_created += 1;
-        VALIDATE();
-
-        return ec;
-    }
 };
 
 struct ssl_socket : socket_base<socket_types::udp_ssl>
 {
     using socket_base<socket_type>::socket_base;
+};
+
+struct server
+{
+    server(net::context& service, host_t const& address, service_t const& port)
+    {
+    }
+
+  private:
+    asio::ip::udp::endpoint m_endpoint; /*!< Endpoint to listen to */
 };
 
 } // namespace udp

@@ -385,9 +385,9 @@ if(TARGET SDLPowerInfo)
 
         find_package ( SDL2 CONFIG QUIET )
     endif()
-    target_link_libraries ( CoreCommon INTERFACE
-        SDLPowerInfo
-        )
+#    target_link_libraries ( CoreCommon INTERFACE
+#        SDLPowerInfo
+#        )
 endif()
 
 coffee_bundle (

@@ -47,4 +47,4 @@ i32 systeminfo_main(i32, cstring_w*)
     return 0;
 }
 
-COFFEE_APPLICATION_MAIN(systeminfo_main)
+COFFEE_APPLICATION_MAIN_CUSTOM(systeminfo_main, 0x2)

@@ -5,3 +5,12 @@ coffee_application (
     SOURCES natty_puncher.cpp
     LIBRARIES Core ASIO
     )
+
+coffee_application (
+    TARGET NattyTester
+    USE_CMD
+    TITLE "Natty Tester"
+    SOURCES natty_tester.cpp
+    LIBRARIES Core ASIO
+    )
+
