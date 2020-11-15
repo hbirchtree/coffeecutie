@@ -173,6 +173,16 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
 
         platforms/linux/file.cpp
         )
+
+    coffee_library (
+        TARGET EmbedFileStub
+        LIBRARIES PeripheralLib
+        SOURCES private/embed_files_stub.cpp
+
+        HEADER_DIRS
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+        )
 endif()
 
 #

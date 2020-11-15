@@ -1,5 +1,6 @@
 include ( AndroidApkBuild )
 include ( LinuxAppImageBuild )
+include ( LinuxRWImageBuild )
 include ( LinuxFlatpakBuild )
 include ( LinuxSnappyBuild )
 include ( MacAppBuild )
@@ -145,6 +146,22 @@ function(COFFEE_APPLICATION)
     elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
         add_executable( ${APP_TARGET} ${SOURCES_MOD} )
 
+        if(NOT "${APP_RESOURCES}" STREQUAL "" AND ${EMBED_RESOURCES})
+            set ( EMBED_SRC ${CMAKE_CURRENT_BINARY_DIR}/${APP_TARGET}_files.cpp )
+            add_custom_command ( OUTPUT ${EMBED_SRC}
+                COMMAND python3.8 ${CMAKE_SOURCE_DIR}/toolchain/create-header.py
+                    --output=${EMBED_SRC}
+                    ${APP_RESOURCES}
+                DEPENDS ${APP_RESOURCES}
+                )
+            add_custom_command ( TARGET ${APP_TARGET}
+                PRE_BUILD
+                COMMAND ${CMAKE_COMMAND} -E remove ${EMBED_SRC} )
+            target_sources ( ${APP_TARGET} PUBLIC ${EMBED_SRC} )
+        else()
+            target_link_libraries ( ${APP_TARGET} PUBLIC EmbedFileStub )
+        endif()
+
         # We still install a basic binary executable
         install(
             FILES
@@ -213,6 +230,14 @@ StartupWMClass=${APP_TARGET}
                 "${APP_BUNDLE_BINARIES}"
                 "${ICON_ASSET}"
                 "${APP_PERMISSIONS}"
+                )
+        endif()
+        if(GENERATE_RWIMAGE)
+            RWIMAGE_PACKAGE (
+                TARGET "${APP_TARGET}"
+                RESOURCES "${APP_RESOURCES}"
+                ICON "${ICON_ASSET}"
+                BUNDLE_LIBRARIES "${APP_BUNDLE_LIBRARIES}"
                 )
         endif()
     elseif(GAMECUBE OR WII)

@@ -154,7 +154,7 @@ struct mem_chunk
         size_type elements,
         RSCA      access = RSCA::ReadOnly) :
         data(data),
-        size(size), elements(elements), m_access(access), m_destr(nullptr)
+        size(size), elements(elements), m_destr(nullptr), m_access(access)
     {
 #if MODE_DEBUG
         if((size && !data) || (size && !elements) || (!size && data))

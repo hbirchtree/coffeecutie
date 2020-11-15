@@ -1,0 +1,39 @@
+#!/bin/sh
+
+RWIMAGE_ROOT=$(dirname $0)
+
+
+if [ -z $(which python3) ]; then
+    PYTHON_EXEC=python3
+elif [ -z $(which python2) ]; then
+    PYTHON_EXEC=python2
+elif [ -z $(which python) ]; then
+    PYTHON_EXEC=python
+fi
+
+# Add icon for the file
+ICON_DIR="$HOME/.local/share/icons/hicolor/scalable/apps"
+if [ ! -f "${ICON_DIR}/${ICON_NAME}" ] && [ -n "${PYTHON_EXEC}" ]; then
+    mkdir -p "${ICON_DIR}"
+    cp "${RWIMAGE_ROOT}/icon.svg" "${ICON_DIR}/${RWI_TARGET}.svg"
+    python "${RWIMAGE_ROOT}/set_icon.py" "${RWIMAGE}" "${ICON_DIR}/${RWI_TARGET}.svg"
+fi
+
+# This is used by the application
+export RWIMAGE_DATA_DIR="${RWIMAGE_ROOT}/assets"
+
+# Set up environment
+export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:${RWIMAGE_ROOT}/lib"
+export XDG_DATA_HOME="${RWIMAGE_ROOT}/share"
+export XDG_DATA_DIRS="$XDG_DATA_DIRS:${RWIMAGE_ROOT}/share"
+
+# Coffee-specific
+export COFFEE_NO_PROFILER_EXPORT="${COFFEE_NO_PROFILER_EXPORT:-1}"
+
+CRASH="${RWIMAGE_ROOT}/CrashRecovery"
+# Executing application, we might as well destroy the current bash shell
+if [ -f "$CRASH" ]; then
+    exec "$CRASH" "${RWIMAGE_ROOT}/@RWI_TARGET@" $@
+else
+    exec "${RWIMAGE_ROOT}/@RWI_TARGET@" $@
+fi

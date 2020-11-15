@@ -173,7 +173,10 @@ macro( INIT_SUBPROJECT )
         option ( GENERATE_APPIMAGE "Generate AppImage binaries" OFF )
         option ( GENERATE_SNAPPY   "Generate Snap packages"     OFF )
         option ( GENERATE_FLATPAK  "Generate Flatpaks"          OFF )
+        option ( GENERATE_RWIMAGE  "Generate read/write images" OFF )
+        option ( EMBED_RESOURCES   "Embed resources in ELF"     OFF )
     endif()
+
 
     # When building for Emscripten, we output HTML targets
     if(EMSCRIPTEN)

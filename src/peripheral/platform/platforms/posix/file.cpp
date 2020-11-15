@@ -150,6 +150,13 @@ bool PosixFileMod_def::Ln(Url const& src, Url const& target, file_error& ec)
 
 szptr PosixFileMod_def::Size(Url const& fn, file_error& ec)
 {
+    if(embed::embeds_enabled)
+    {
+        Bytes data;
+        if(embed::file_lookup(fn.internUrl.c_str(), data))
+            return data.size;
+    }
+
     auto        url = *fn;
     struct stat st  = {};
 
@@ -166,6 +173,13 @@ szptr PosixFileMod_def::Size(Url const& fn, file_error& ec)
 
 bool PosixFileMod_def::Exists(Url const& fn, file_error&)
 {
+    if(embed::embeds_enabled)
+    {
+        Bytes data;
+        if(embed::file_lookup(fn.internUrl.c_str(), data))
+            return true;
+    }
+
     auto        url = *fn;
     struct stat st;
 #if !defined(COFFEE_NO_MMAN)
