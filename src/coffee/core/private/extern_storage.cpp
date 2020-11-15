@@ -379,7 +379,7 @@ CString const& ResourcePrefix(bool fallback)
  * This storage is for non-standard platforms
  */
 #if defined(COFFEE_CUSTOM_MAIN)
-CoffeeMainWithArgs coffee_main_function_ptr = nullptr;
+MainWithArgs coffee_main_function_ptr = nullptr;
 #endif
 
 #if defined(COFFEE_APPLE_MOBILE)

@@ -110,8 +110,8 @@ extern void* coffee_event_handling_data;
 
 namespace Coffee {
 
-int MainSetup(::MainWithArgs mainfun, int argc, char** argv, u32 flags = 0);
-int MainSetup(::MainNoArgs mainfun, int argc, char** argv, u32 flags = 0);
+int MainSetup(::MainWithArgs mainfun, int argc, char** argv, u32 flags);
+int MainSetup(::MainNoArgs mainfun, int argc, char** argv, u32 flags);
 
 using namespace android;
 

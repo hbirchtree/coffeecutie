@@ -45,6 +45,13 @@ void DispatchGeneralEvent(uint32_t type, void* data)
     CoffeeEventHandleNACall(CoffeeHandle_GeneralEvent, &ev, data, NULL);
 }
 
+namespace Coffee {
+
+extern int MainSetup(MainWithArgs mainfun, int argc, char** argv, u32 flags);
+extern int MainSetup(MainNoArgs mainfun, int argc, char** argv, u32 flags);
+
+}
+
 namespace libc {
 namespace signal {
 
@@ -81,7 +88,10 @@ static inline void DispatchAppEvent(comp_app::AppEvent::Type type, void* event)
     
     Coffee::SetPrintingVerbosity(10);
     // Call the Coffee entrypoint, it will set up a bunch of things
-    Coffee::CoffeeMain(coffee_main_function_ptr, 0, NULL);
+    if(Coffee::main_functions.is_no_args)
+        Coffee::MainSetup(Coffee::main_functions.no_args);
+    else
+        Coffee::MainSetup(Coffee::main_functions.with_args, 0, nullptr);
     Coffee::SetPrintingVerbosity(10);
     
     self.hasInitialized = FALSE;
