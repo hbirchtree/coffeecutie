@@ -218,6 +218,11 @@ class ExtraInfoGroup : public QAbstractListModel
         return m_name;
     }
 
+    QJsonObject extraData() const
+    {
+        return m_data;
+    }
+
     enum FieldNames
     {
         FieldName,
@@ -249,6 +254,8 @@ class ExtraInfo : public QAbstractListModel
     QVariant               data(const QModelIndex& index, int role) const;
     QHash<int, QByteArray> roleNames() const;
 
+    QJsonObject value(QString const& name) const;
+
   public slots:
     void updateData();
 };
@@ -260,23 +267,7 @@ class MetricValues : public QAbstractListModel
 {
     friend class ScreenshotProvider;
 
-  public:
-    enum MetricType
-    {
-        MetricValue,
-        MetricSymbolic,
-        MetricMarker,
-
-        MetricImage,
-    };
-
-    Q_ENUM(MetricType)
-
-    Q_PROPERTY(QString unit MEMBER m_unit)
-    Q_PROPERTY(MetricType type MEMBER m_type)
-
-    Q_PROPERTY(QString name MEMBER m_name)
-    Q_PROPERTY(QString category READ category)
+    Q_OBJECT
 
     Q_PROPERTY(double timestamp READ timestamp)
     Q_PROPERTY(double duration READ duration)
@@ -285,9 +276,6 @@ class MetricValues : public QAbstractListModel
     Q_PROPERTY(float max MEMBER m_maxValue)
     Q_PROPERTY(float min MEMBER m_minValue)
     Q_PROPERTY(quint64 numEvents MEMBER m_numEvents)
-
-  private:
-    Q_OBJECT
 
     friend class Metrics;
 
@@ -301,11 +289,6 @@ class MetricValues : public QAbstractListModel
     TraceModel*          m_trace;
     std::vector<Value>   m_values;
     std::vector<quint64> m_visible;
-
-    QString    m_name;
-    quint64    m_id;
-    MetricType m_type;
-    QString    m_unit;
 
     quint64 m_numEvents = 0;
     float   m_minValue  = std::numeric_limits<float>::max(),
@@ -334,10 +317,6 @@ class MetricValues : public QAbstractListModel
     QVariant               data(const QModelIndex& index, int role) const final;
     QHash<int, QByteArray> roleNames() const final;
 
-    QString category() const
-    {
-        return "Metric";
-    }
     double timestamp() const
     {
         return 0.0;
@@ -348,6 +327,65 @@ class MetricValues : public QAbstractListModel
     }
 };
 
+class MetricPhase : public QAbstractListModel
+{
+  public:
+    enum MetricType
+    {
+        MetricValue,
+        MetricSymbolic,
+        MetricMarker,
+
+        MetricImage,
+    };
+
+    Q_ENUM(MetricType)
+
+  private:
+
+    Q_OBJECT
+
+    Q_PROPERTY(QString unit MEMBER m_unit)
+    Q_PROPERTY(MetricType type MEMBER m_type)
+
+    Q_PROPERTY(QString name MEMBER m_name)
+    Q_PROPERTY(QString category READ category)
+
+    std::shared_ptr<MetricValues> m_template;
+
+    std::map<quint64, std::shared_ptr<MetricValues>> m_values;
+    std::vector<std::shared_ptr<MetricValues>>       m_list;
+
+    quint64    m_id;
+    QString    m_name;
+    MetricType m_type;
+    QString    m_unit;
+
+  public:
+
+    MetricPhase(QObject* parent = nullptr);
+
+    friend class Metrics;
+
+    enum FieldNames
+    {
+        FieldPhase,
+        FieldIndex,
+        FieldColor,
+    };
+
+    int                    rowCount(const QModelIndex& parent) const final;
+    QVariant               data(const QModelIndex& index, int role) const final;
+    QHash<int, QByteArray> roleNames() const final;
+
+    QString category() const
+    {
+        return "Metric";
+    }
+
+    Q_INVOKABLE QVariantList sampleValue(double x);
+};
+
 class Metrics : public QAbstractListModel
 {
     Q_OBJECT
@@ -355,9 +393,10 @@ class Metrics : public QAbstractListModel
     TraceModel*     m_trace;
     TraceProperties m_props;
 
-    std::map<quint64, std::shared_ptr<MetricValues>> m_metric;
-    std::vector<std::shared_ptr<MetricValues>>       m_metricList;
+    std::map<quint64, std::shared_ptr<MetricPhase>> m_metric;
+    std::vector<std::shared_ptr<MetricPhase>>       m_metricList;
 
+    friend class MetricPhase;
     friend class MetricValues;
     friend class ScreenshotProvider;
 
@@ -373,6 +412,7 @@ class Metrics : public QAbstractListModel
         FieldMetricType,
         FieldName,
         FieldId,
+        FieldNumPhases,
     };
 
     int                    rowCount(const QModelIndex& parent) const final;
@@ -384,6 +424,23 @@ class Metrics : public QAbstractListModel
     void optimize();
   public slots:
     void updateView();
+};
+
+class MetaData : public QObject
+{
+    Q_OBJECT
+
+    Q_PROPERTY(QString graphicsApi READ graphicsApi)
+
+    ExtraInfo* m_extra;
+
+  public:
+    MetaData(ExtraInfo* extra, QObject* parent = nullptr) :
+        QObject(parent), m_extra(extra)
+    {
+    }
+
+    QString graphicsApi() const;
 };
 
 class TraceModel : public QAbstractListModel
@@ -403,19 +460,21 @@ class TraceModel : public QAbstractListModel
     Q_PROPERTY(bool parsing MEMBER m_parsing)
 
     Q_PROPERTY(QObject* extraInfo READ extraInfo NOTIFY extraInfoChanged)
-
     Q_PROPERTY(QObject* metrics READ metrics NOTIFY metricsChanged)
+    Q_PROPERTY(QObject* meta READ meta NOTIFY metaChanged)
 
-    QString    m_source;
-    ExtraInfo* m_extraInfo;
+    std::unique_ptr<QFile> m_traceFile;
+    QJsonObject            m_trace;
+    const char*            m_traceSource;
 
-    std::unique_ptr<QFile>                           m_traceFile;
-    QJsonObject                                      m_trace;
-    const char*                                      m_traceSource;
     std::map<quint64, std::shared_ptr<ProcessModel>> m_processes;
     std::vector<std::shared_ptr<ProcessModel>>       m_processList;
 
-    std::unique_ptr<Metrics> m_metrics;
+    QString m_source;
+
+    std::unique_ptr<ExtraInfo> m_extraInfo;
+    std::unique_ptr<Metrics>   m_metrics;
+    std::unique_ptr<MetaData>  m_meta;
 
     std::future<void> m_parseTask;
 
@@ -452,7 +511,11 @@ class TraceModel : public QAbstractListModel
     }
     QObject* extraInfo() const
     {
-        return m_extraInfo;
+        return m_extraInfo.get();
+    }
+    QObject* meta() const
+    {
+        return m_meta.get();
     }
     QObject* metrics() const
     {
@@ -482,6 +545,7 @@ class TraceModel : public QAbstractListModel
 
     void extraInfoChanged(QObject* extra);
     void metricsChanged(QObject* metrics);
+    void metaChanged(QObject* meta);
 
     void totalDurationChanged(double totalDuration);
 

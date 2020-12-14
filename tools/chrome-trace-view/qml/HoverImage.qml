@@ -2,6 +2,7 @@ import QtQuick 2.12
 
 MouseArea {
     property string source
+    property int imageRotation
 
     id: root
     hoverEnabled: true
@@ -21,5 +22,6 @@ MouseArea {
         fillMode: Image.PreserveAspectFit
         width: 800
         height: 480
+        rotation: imageRotation
     }
 }

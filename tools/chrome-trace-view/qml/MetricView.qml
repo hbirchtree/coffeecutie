@@ -1,5 +1,6 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
+import QtQuick.Layouts 1.12
 import QtQuick.Shapes 1.12
 
 Item {
@@ -8,15 +9,17 @@ Item {
     property var source
 
     property color threadColor
-    property int spacing
-    property int rowHeight
-    property int threadWidth
+    property int spacing: 8
+    property int rowHeight: 0
+    property int threadWidth: 0
     property Item container
     property bool highlighted: false
-
-    property real timePerPixel
-
+    property real timePerPixel: 1.0
     property real metricHeight: height - spacing * 2
+
+    readonly property bool isScreenshots: screenshotLoader.active
+    readonly property bool isValues: valueLoader.active
+    readonly property bool isMarkers: markerLoader.active
 
     signal clicked(var model, Item item)
 
@@ -51,55 +54,60 @@ Item {
         z: -1
         sourceComponent: Repeater {
             model: metric
-            Shape {
-                anchors.fill: parent
-                anchors.topMargin: spacing
-                anchors.bottomMargin: spacing
-                anchors.leftMargin: threadWidth
+            Repeater {
+                model: phase
+                Shape {
+                    anchors.fill: parent
+                    anchors.topMargin: spacing
+                    anchors.bottomMargin: spacing
+                    anchors.leftMargin: threadWidth
+                    opacity: 1 / numPhases
 
-                clip: true
+                    clip: true
 
-                property real vertX1: previousTs / timePerPixel
-                property real vertX2: ts / timePerPixel
+                    property real vertX1: previousTs / timePerPixel
+                    property real vertX2: ts / timePerPixel
 
-                property real vertY1: (1.0 - previousValueScaled) * metricHeight * 0.8 + 0.2
-                property real vertY2: (1.0 - valueScaled) * metricHeight * 0.8 + 0.2
+//                    property real vertY1: (1.0 - previousValueScaled) * metricHeight * 0.8 + 0.2
+                    property real vertY1: (1.0 - valueScaled) * metricHeight * 0.8 + 0.2
+                    property real vertY2: (1.0 - valueScaled) * metricHeight * 0.8 + 0.2
 
-                ShapePath {
-                    strokeColor: "transparent"
-                    fillColor: "#005000"
-                    fillRule: ShapePath.WindingFill
+                    ShapePath {
+                        strokeColor: "transparent"
+                        fillColor: "#005000"
+                        fillRule: ShapePath.WindingFill
 
-                    startX: vertX1
-                    startY: vertY1
-                    PathLine {
-                        x: vertX2
-                        y: vertY2
+                        startX: vertX1
+                        startY: vertY1
+                        PathLine {
+                            x: vertX2
+                            y: vertY2
+                        }
+                        PathLine {
+                            x: vertX2
+                            y: metricHeight
+                        }
+                        PathLine {
+                            x: vertX1
+                            y: metricHeight
+                        }
+                        PathLine {
+                            x: vertX1
+                            y: vertY1
+                        }
                     }
-                    PathLine {
-                        x: vertX2
-                        y: metricHeight
-                    }
-                    PathLine {
-                        x: vertX1
-                        y: metricHeight
-                    }
-                    PathLine {
-                        x: vertX1
-                        y: vertY1
-                    }
-                }
-                ShapePath {
-                    strokeColor: "green"
-                    strokeWidth: highlighted ? 4 : 2
-                    fillColor: "transparent"
-                    capStyle: ShapePath.RoundCap
+                    ShapePath {
+                        strokeColor: "green"
+                        strokeWidth: highlighted ? 4 : 2
+                        fillColor: "transparent"
+                        capStyle: ShapePath.RoundCap
 
-                    startX: vertX1
-                    startY: vertY1
-                    PathLine {
-                        x: vertX2
-                        y: vertY2
+                        startX: vertX1
+                        startY: vertY1
+                        PathLine {
+                            x: vertX2
+                            y: vertY2
+                        }
                     }
                 }
             }
@@ -114,24 +122,27 @@ Item {
 
         sourceComponent: Repeater {
             model: metric
-            Shape {
-                anchors.fill: parent
-                anchors.topMargin: spacing
-                anchors.leftMargin: threadWidth
-                z: -1
+            Repeater {
+                model: phase
+                Shape {
+                    anchors.fill: parent
+                    anchors.topMargin: spacing
+                    anchors.leftMargin: threadWidth
+                    z: -1
 
-                ShapePath {
-                    strokeColor: "yellow"
-                    strokeWidth: highlighted ? 2 : 1
-                    fillColor: "transparent"
-                    capStyle: ShapePath.RoundCap
+                    ShapePath {
+                        strokeColor: "yellow"
+                        strokeWidth: highlighted ? 2 : 1
+                        fillColor: "transparent"
+                        capStyle: ShapePath.RoundCap
 
-                    startX: ts / timePerPixel
-                    startY: metricHeight
+                        startX: ts / timePerPixel
+                        startY: metricHeight
 
-                    PathLine {
-                        x: ts / timePerPixel
-                        y: -container.contentHeight
+                        PathLine {
+                            x: ts / timePerPixel
+                            y: -container.contentHeight
+                        }
                     }
                 }
             }
@@ -139,42 +150,50 @@ Item {
     }
 
     Loader {
+        property bool isOpenGL: traceMeta.graphicsApi.startsWith("OpenGL")
         id: screenshotLoader
         active: false
         anchors.fill: parent
 
         sourceComponent: Repeater {
             model: metric
-            HoverImage {
-                x: ts / timePerPixel + threadWidth
-                width: 100
-                height: metricHeight
-                source: "image://screenshot/" + eventId
-                onClicked: {
-                    if(isEmscripten)
-                        return;
+            Repeater {
+                model: phase
+                HoverImage {
+                    x: ts / timePerPixel + threadWidth
+                    width: 100
+                    height: metricHeight
+                    source: "image://screenshot/" + eventId
+                    imageRotation: isOpenGL ? 180 : 0
+                    onClicked: {
+                        if(isEmscripten)
+                            return;
 
-                    var window = imageViewer.createObject(root, {
-                        source: "image://screenshot/" + eventId,
-                    });
-                    window.show();
-                }
+                        var window = imageViewer.createObject(root, {
+                            source: "image://screenshot/" + eventId,
+                            isOpenGL: isOpenGL
+                        });
+                        window.show();
+                    }
 
-                Component {
-                    id: imageViewer
+                    Component {
+                        id: imageViewer
 
-                    ApplicationWindow {
-                        property string source
+                        ApplicationWindow {
+                            property string source
+                            property bool isOpenGL
 
-                        id: root
-                        title: metric.name + " Preview"
-                        width: 800
-                        height: 600
+                            id: root
+                            title: metric.name + " Preview"
+                            width: 800
+                            height: 600
 
-                        Image {
-                            anchors.fill: parent
-                            source: root.source
-                            fillMode: Image.PreserveAspectFit
+                            Image {
+                                anchors.fill: parent
+                                source: root.source
+                                fillMode: Image.PreserveAspectFit
+                                rotation: isOpenGL ? 180 : 0
+                            }
                         }
                     }
                 }
@@ -193,9 +212,22 @@ Item {
         visible: false
         enabled: valueLoader.active
 
-        Label {
-            id: markerText
-            color: "white"
+        Rectangle {
+            id: markerBox
+            color: "#00000030"
+            z: 1000
+            property var values
+
+            ColumnLayout {
+                spacing: 4
+                Repeater {
+                    model: markerBox.values
+                    Label {
+                        color: "white"
+                        text: modelData + metric.unit
+                    }
+                }
+            }
         }
     }
 
@@ -207,7 +239,8 @@ Item {
             if(!hoverEnabled)
                 return;
 
-            markerText.text = (metric.sampleValue((mouse.x - threadWidth) * timePerPixel)).toFixed(4) + metric.unit;
+            markerBox.values = metric.sampleValue((mouse.x - threadWidth) * timePerPixel)
+//            markerText.text = (metric.sampleValue((mouse.x - threadWidth) * timePerPixel)).toFixed(4) + metric.unit;
             markerLine.x = mouse.x;
         }
         onClicked: {

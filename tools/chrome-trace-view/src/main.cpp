@@ -20,7 +20,7 @@ int main(int argc, char* argv[])
     auto traceModel = new TraceModel(&app);
 
     context->setContextProperty("processes", traceModel);
-    //    qmlRegisterType<TraceModel>("dev.birchy.ctf", 1, 0, "TraceModel");
+    context->setContextProperty("traceMeta", traceModel->meta());
     engine.addImageProvider(
         "screenshot", new ScreenshotProvider(traceModel, &app));
 

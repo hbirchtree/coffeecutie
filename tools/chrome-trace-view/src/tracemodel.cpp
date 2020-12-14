@@ -25,7 +25,9 @@ EM_JS(char*, get_queries, (), {
 #include <QtDebug>
 
 TraceModel::TraceModel(QObject* parent) :
-    QAbstractListModel(parent), m_extraInfo(new ExtraInfo(this, this)),
+    QAbstractListModel(parent),
+    m_extraInfo(std::make_unique<ExtraInfo>(this, this)),
+    m_meta(std::make_unique<MetaData>(m_extraInfo.get(), this)),
     m_parsing(false)
 {
     connect(this, &TraceModel::sourceChanged, [this](QString const& newSource) {
@@ -89,7 +91,10 @@ TraceModel::TraceModel(QObject* parent) :
         [this](QString const&) { m_parsing = false; },
         Qt::QueuedConnection);
     connect(
-        this, &TraceModel::traceReceived, m_extraInfo, &ExtraInfo::updateData);
+        this,
+        &TraceModel::traceReceived,
+        m_extraInfo.get(),
+        &ExtraInfo::updateData);
 }
 
 void TraceModel::resetData()
@@ -354,7 +359,7 @@ void TraceModel::parseAccountingInfo(QByteArray const& profile, uchar* ptr)
     emit traceParsed();
 }
 
-const char *TraceModel::traceSource() const
+const char* TraceModel::traceSource() const
 {
     return m_traceSource;
 }
@@ -829,6 +834,21 @@ QHash<int, QByteArray> ExtraInfo::roleNames() const
     return {{FieldGroup, "group"}, {FieldGroupName, "groupName"}};
 }
 
+QJsonObject ExtraInfo::value(QString const& name) const
+{
+    auto it = std::find_if(
+        m_groups.begin(),
+        m_groups.end(),
+        [&name](std::unique_ptr<ExtraInfoGroup> const& g) {
+            return g->name() == name;
+        });
+
+    if(it == m_groups.end())
+        return {};
+
+    return (*it)->extraData();
+}
+
 static bool isProfileInfo(QString const& key)
 {
     static const std::array<const char*, 6> included_keys = {
@@ -906,239 +926,6 @@ QVariant ExtraInfoGroup::data(const QModelIndex& index, int role) const
 QHash<int, QByteArray> ExtraInfoGroup::roleNames() const
 {
     return {{FieldName, "infoKey"}, {FieldValue, "infoValue"}};
-}
-
-Metrics::Metrics(
-    TraceModel* trace, TraceProperties const& props, QObject* parent) :
-    QAbstractListModel(parent),
-    m_trace(trace), m_props(props)
-{
-}
-
-int Metrics::rowCount(const QModelIndex& parent) const
-{
-    return m_metric.size();
-}
-
-QVariant Metrics::data(const QModelIndex& index, int role) const
-{
-    if(index.row() >= m_metricList.size())
-        return {};
-
-    switch(role)
-    {
-    case FieldMetric:
-        return QVariant::fromValue(m_metricList.at(index.row()).get());
-    case FieldMetricType:
-        return m_metricList.at(index.row())->m_type;
-    case FieldName:
-        return m_metricList.at(index.row())->m_name;
-    case FieldId:
-        return m_metricList.at(index.row())->m_id;
-    default:
-        return {};
-    }
-}
-
-QHash<int, QByteArray> Metrics::roleNames() const
-{
-    return {
-        {FieldMetric, "metric"},
-        {FieldMetricType, "metricType"},
-        {FieldName, "metricName"},
-        {FieldId, "metricId"},
-    };
-}
-
-void Metrics::insertValue(const QJsonObject& data, quint64 i)
-{
-    auto id_it    = data.find("id");
-    auto value_it = data.find("v");
-    auto ts_it    = data.find("ts");
-
-    if(id_it == data.end() || value_it == data.end() || ts_it == data.end())
-        return;
-
-    auto id = (*id_it).toInt();
-
-    auto metric_it = m_metric.find(id);
-
-    if(metric_it == m_metric.end())
-        return;
-
-    auto metric = metric_it->second;
-
-    auto ts =
-        (ts_it->toVariant().toString().toULongLong() - m_props.startTimestamp) /
-        m_props.timestampBase;
-
-    metric->m_values.push_back({ts, value_it->toString().toFloat(), i});
-
-    auto& newValue     = metric->m_values.back();
-    metric->m_minValue = std::min(metric->m_minValue, newValue.value);
-    metric->m_maxValue = std::max(metric->m_maxValue, newValue.value);
-
-    metric->m_numEvents++;
-
-    auto diff = ts - metric->m_prevTime;
-    metric->m_average += diff;
-    metric->m_prevTime = ts;
-}
-
-void Metrics::populate(const QJsonObject& meta)
-{
-    auto args_it = meta.find("args");
-    auto id_it   = meta.find("id");
-
-    if(args_it == meta.end() || id_it == meta.end())
-        return;
-
-    auto args = args_it->toObject().toVariantHash();
-    auto id   = id_it->toInt();
-
-    auto metric = std::make_shared<MetricValues>(this, this);
-
-    metric->m_name = args["name"].toString();
-    metric->m_id   = id;
-
-    switch(args["type"].toInt())
-    {
-    case 1:
-        metric->m_type = MetricValues::MetricSymbolic;
-        break;
-    case 2:
-        metric->m_type = MetricValues::MetricMarker;
-        break;
-    case 3:
-        metric->m_type = MetricValues::MetricImage;
-        break;
-    default:
-        metric->m_type = MetricValues::MetricValue;
-        break;
-    }
-
-    m_metric.insert({id, metric});
-    m_metricList.push_back(metric);
-}
-
-void Metrics::optimize()
-{
-    for(auto& metric : m_metric)
-    {
-        auto& values = *metric.second;
-
-        values.m_average /= values.m_numEvents;
-
-        if(values.m_type != MetricValues::MetricValue)
-            continue;
-
-        if((values.m_maxValue - values.m_minValue) < 1.f / 1000000.f)
-        {
-            auto end_ts = values.m_values.back().ts;
-
-            values.m_values.clear();
-
-            values.m_values.push_back({0, values.m_maxValue});
-            values.m_values.push_back({end_ts, values.m_minValue});
-            continue;
-        }
-
-        if(values.m_values.size() < 1)
-            continue;
-
-        float               previous = values.m_values.front().value;
-        std::vector<size_t> to_remove;
-
-        for(size_t i = 0; i < values.m_values.size(); i++)
-        {
-            auto current = values.m_values.at(i).value;
-            if(previous == current)
-                to_remove.push_back(i);
-        }
-
-        for(auto it = to_remove.rbegin(); it != to_remove.rend(); ++it)
-        {
-            if(*it == (values.m_values.size() - 1) || *it == 0)
-                continue;
-
-            values.m_values.erase(values.m_values.begin() + *it);
-        }
-    }
-}
-
-void Metrics::updateView()
-{
-    auto start = m_trace->m_viewStart, end = m_trace->m_viewEnd;
-
-    for(auto const& metric_ : m_metricList)
-    {
-        auto& metric = *metric_;
-        auto& values = metric.m_values;
-
-        std::vector<quint64> visible;
-
-        quint64 i = 0;
-        for(auto const& v : values)
-        {
-            auto ev_start = i > 0 ? values[i - 1].ts : 0.0, ev_end = v.ts;
-
-            i++;
-
-            if(ev_end < start || ev_start > end)
-                continue;
-
-            visible.push_back(i - 1);
-        }
-
-        std::vector<quint64> diff, add, rem;
-
-        std::set_symmetric_difference(
-            metric.m_visible.begin(),
-            metric.m_visible.end(),
-            visible.begin(),
-            visible.end(),
-            std::back_inserter(diff));
-
-        std::set_intersection(
-            visible.begin(),
-            visible.end(),
-            diff.begin(),
-            diff.end(),
-            std::back_inserter(add));
-
-        std::set_intersection(
-            metric.m_visible.begin(),
-            metric.m_visible.end(),
-            diff.begin(),
-            diff.end(),
-            std::back_inserter(rem));
-
-        for(auto const& i : rem)
-        {
-            auto it =
-                std::find(metric.m_visible.begin(), metric.m_visible.end(), i);
-            metric.beginRemoveRows(
-                {},
-                it - metric.m_visible.begin(),
-                it - metric.m_visible.begin());
-            metric.m_visible.erase(it);
-            metric.endRemoveRows();
-        }
-
-        for(auto const& i : add)
-        {
-            auto it = std::find_if(
-                metric.m_visible.begin(),
-                metric.m_visible.end(),
-                [i](quint64 other) { return other > i; });
-            metric.beginInsertRows(
-                {},
-                it - metric.m_visible.begin(),
-                it - metric.m_visible.begin());
-            metric.m_visible.insert(it, i);
-            metric.endInsertRows();
-        }
-    }
 }
 
 MetricValues::MetricValues(Metrics* metrics, QObject* parent) :
@@ -1222,4 +1009,305 @@ QHash<int, QByteArray> MetricValues::roleNames() const
         {FieldPreviousValueScaled, "previousValueScaled"},
         {FieldPreviousTimestamp, "previousTs"},
     };
+}
+
+MetricPhase::MetricPhase(QObject* parent) : QAbstractListModel(parent)
+{
+}
+
+int MetricPhase::rowCount(const QModelIndex&) const
+{
+    return m_list.size();
+}
+
+QVariant MetricPhase::data(const QModelIndex& index, int role) const
+{
+    MetricValues* values = m_list.at(index.row()).get();
+
+    switch(role)
+    {
+    case FieldPhase:
+        return QVariant::fromValue(values);
+    case FieldColor:
+        return "green";
+    case FieldIndex:
+        return 0;
+    }
+
+    return {};
+}
+
+QHash<int, QByteArray> MetricPhase::roleNames() const
+{
+    return {
+        {FieldPhase, "phase"}, {FieldColor, "color"}, {FieldIndex, "index"}};
+}
+
+QVariantList MetricPhase::sampleValue(double x)
+{
+    QVariantList out;
+    for(auto const& phase : m_list)
+        out.push_back(phase->sampleValue(x));
+    return out;
+}
+
+Metrics::Metrics(
+    TraceModel* trace, TraceProperties const& props, QObject* parent) :
+    QAbstractListModel(parent),
+    m_trace(trace), m_props(props)
+{
+}
+
+int Metrics::rowCount(const QModelIndex& parent) const
+{
+    return m_metric.size();
+}
+
+QVariant Metrics::data(const QModelIndex& index, int role) const
+{
+    if(index.row() >= m_metricList.size())
+        return {};
+
+    switch(role)
+    {
+    case FieldMetric:
+        return QVariant::fromValue(m_metricList.at(index.row()).get());
+    case FieldMetricType:
+        return m_metricList.at(index.row())->m_type;
+    case FieldName:
+        return m_metricList.at(index.row())->m_name;
+    case FieldId:
+        return m_metricList.at(index.row())->m_id;
+    case FieldNumPhases:
+        return QVariant::fromValue(m_metricList.at(index.row())->m_list.size());
+    default:
+        return {};
+    }
+}
+
+QHash<int, QByteArray> Metrics::roleNames() const
+{
+    return {
+        {FieldMetric, "metric"},
+        {FieldMetricType, "metricType"},
+        {FieldName, "metricName"},
+        {FieldId, "metricId"},
+        {FieldNumPhases, "numPhases"},
+    };
+}
+
+void Metrics::insertValue(const QJsonObject& data, quint64 i)
+{
+    auto id_it    = data.find("id");
+    auto idx_it   = data.find("i");
+    auto value_it = data.find("v");
+    auto ts_it    = data.find("ts");
+
+    if(id_it == data.end() || value_it == data.end() || ts_it == data.end())
+        return;
+
+    auto id = (*id_it).toInt();
+
+    auto metric_it = m_metric.find(id);
+
+    if(metric_it == m_metric.end())
+        return;
+
+    auto metric = metric_it->second;
+
+    auto idx      = idx_it != data.end() ? idx_it->toInt() : 0;
+    auto phase_it = metric->m_values.find(idx);
+
+    if(phase_it == metric->m_values.end())
+    {
+        auto values = std::make_shared<MetricValues>(this, this);
+        auto new_it = metric->m_values.insert({idx, values});
+        metric->m_list.push_back(values);
+        phase_it = new_it.first;
+    }
+
+    auto phase = phase_it->second;
+
+    auto ts =
+        (ts_it->toVariant().toString().toULongLong() - m_props.startTimestamp) /
+        m_props.timestampBase;
+
+    phase->m_values.push_back({ts, value_it->toString().toFloat(), i});
+
+    auto& newValue    = phase->m_values.back();
+    phase->m_minValue = std::min(phase->m_minValue, newValue.value);
+    phase->m_maxValue = std::max(phase->m_maxValue, newValue.value);
+
+    phase->m_numEvents++;
+
+    auto diff = ts - phase->m_prevTime;
+    phase->m_average += diff;
+    phase->m_prevTime = ts;
+}
+
+void Metrics::populate(const QJsonObject& meta)
+{
+    auto args_it = meta.find("args");
+    auto id_it   = meta.find("id");
+
+    if(args_it == meta.end() || id_it == meta.end())
+        return;
+
+    auto args = args_it->toObject().toVariantHash();
+    auto id   = id_it->toInt();
+
+    auto metric = std::make_shared<MetricValues>(this, this);
+
+    auto phase        = std::make_shared<MetricPhase>(this);
+    phase->m_name = args["name"].toString();
+    phase->m_id   = id;
+
+    switch(args["type"].toInt())
+    {
+    case 1:
+        phase->m_type = MetricPhase::MetricSymbolic;
+        break;
+    case 2:
+        phase->m_type = MetricPhase::MetricMarker;
+        break;
+    case 3:
+        phase->m_type = MetricPhase::MetricImage;
+        break;
+    default:
+        phase->m_type = MetricPhase::MetricValue;
+        break;
+    }
+    phase->m_template = metric;
+
+    m_metric.insert({id, phase});
+    m_metricList.push_back(phase);
+}
+
+void Metrics::optimize()
+{
+    for(auto& metric : m_metric)
+        for(auto& phase : metric.second->m_values)
+        {
+            auto& values = *phase.second;
+
+            values.m_average /= values.m_numEvents;
+
+            if(metric.second->m_type != MetricPhase::MetricValue)
+                continue;
+
+            if((values.m_maxValue - values.m_minValue) < 1.f / 1000000.f)
+            {
+                auto end_ts = values.m_values.back().ts;
+
+                values.m_values.clear();
+
+                values.m_values.push_back({0, values.m_maxValue});
+                values.m_values.push_back({end_ts, values.m_minValue});
+                continue;
+            }
+
+            if(values.m_values.size() < 1)
+                continue;
+
+            float               previous = values.m_values.front().value;
+            std::vector<size_t> to_remove;
+
+            for(size_t i = 0; i < values.m_values.size(); i++)
+            {
+                auto current = values.m_values.at(i).value;
+                if(previous == current)
+                    to_remove.push_back(i);
+            }
+
+            for(auto it = to_remove.rbegin(); it != to_remove.rend(); ++it)
+            {
+                if(*it == (values.m_values.size() - 1) || *it == 0)
+                    continue;
+
+                values.m_values.erase(values.m_values.begin() + *it);
+            }
+        }
+}
+
+void Metrics::updateView()
+{
+    auto start = m_trace->m_viewStart, end = m_trace->m_viewEnd;
+
+    for(auto const& metric_ : m_metricList)
+    {
+        for(auto const& phase_ : metric_->m_list)
+        {
+            auto& metric = *phase_;
+            auto& values = metric.m_values;
+
+            std::vector<quint64> visible;
+
+            quint64 i = 0;
+            for(auto const& v : values)
+            {
+                auto ev_start = i > 0 ? values[i - 1].ts : 0.0, ev_end = v.ts;
+
+                i++;
+
+                if(ev_end < start || ev_start > end)
+                    continue;
+
+                visible.push_back(i - 1);
+            }
+
+            std::vector<quint64> diff, add, rem;
+
+            std::set_symmetric_difference(
+                metric.m_visible.begin(),
+                metric.m_visible.end(),
+                visible.begin(),
+                visible.end(),
+                std::back_inserter(diff));
+
+            std::set_intersection(
+                visible.begin(),
+                visible.end(),
+                diff.begin(),
+                diff.end(),
+                std::back_inserter(add));
+
+            std::set_intersection(
+                metric.m_visible.begin(),
+                metric.m_visible.end(),
+                diff.begin(),
+                diff.end(),
+                std::back_inserter(rem));
+
+            for(auto const& i : rem)
+            {
+                auto it = std::find(
+                    metric.m_visible.begin(), metric.m_visible.end(), i);
+                metric.beginRemoveRows(
+                    {},
+                    it - metric.m_visible.begin(),
+                    it - metric.m_visible.begin());
+                metric.m_visible.erase(it);
+                metric.endRemoveRows();
+            }
+
+            for(auto const& i : add)
+            {
+                auto it = std::find_if(
+                    metric.m_visible.begin(),
+                    metric.m_visible.end(),
+                    [i](quint64 other) { return other > i; });
+                metric.beginInsertRows(
+                    {},
+                    it - metric.m_visible.begin(),
+                    it - metric.m_visible.begin());
+                metric.m_visible.insert(it, i);
+                metric.endInsertRows();
+            }
+        }
+    }
+}
+
+QString MetaData::graphicsApi() const
+{
+    return m_extra->value("extra")["graphics:library"].toString();
 }

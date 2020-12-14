@@ -91,8 +91,8 @@ ApplicationWindow {
     Component.onCompleted: {
         if(isEmscripten)
             processes.emscriptenAuto();
-//        else
-//            processes.source = "/tmp/GLeam Basic RHI/profile.json";
+        else
+            processes.source = "/tmp/Blam Graphics/profile.json";
     }
 
     DropArea {
