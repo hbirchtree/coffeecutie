@@ -81,14 +81,14 @@ struct Resource : semantic::ByteProvider
     http::response_t const& response() const;
 
     bool fetch();
-    bool push(Bytes const& data);
-    bool push(http::method_t method, Bytes const& data);
+    bool push(BytesConst const& data);
+    bool push(http::method_t method, BytesConst const& data);
 
     CString mimeType() const;
     u32     responseCode() const;
-    Bytes   data() const;
+    BytesConst   data() const;
 
-    operator Bytes()
+    operator BytesConst()
     {
         if(!isResponseReady() && !fetch())
             return Bytes();

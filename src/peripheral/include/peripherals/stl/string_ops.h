@@ -313,16 +313,15 @@ FORCEDINLINE std::basic_string<CharType> pointerify(T ptr)
 
 template<typename CharType = char>
 FORCEDINLINE std::basic_string<CharType> hexdump(
-    c_cptr ptr, szptr len, bool spacing = true, szptr newline_freq = 0)
+    semantic::Bytes const& data, bool spacing = true, szptr newline_freq = 0)
 {
-    byte_t const*               data = C_RCAST<byte_t const*>(ptr);
     std::basic_string<CharType> out;
-    out.reserve(len * 2 /* Hexadec */ + len * spacing /* Space */);
+    out.reserve(data.size * 2 /* Hexadec */ + data.size * spacing /* Space */);
 
-    for(szptr i = 0; i < len; i++)
+    for(szptr i = 0; i < data.size; i++)
     {
-        out.append("  ");
-        sprintf(&out[i * 2 + i], "%02x", data[i]);
+        out.append("00");
+        sprintf(&out[out.size() - 2], "%02x", data[i]);
         if(newline_freq == 0 || (i + 1) % newline_freq != 0)
         {
             if(spacing)
@@ -574,3 +573,16 @@ FORCEDINLINE std::string encode(semantic::Span<T> const& data_)
 }
 
 } // namespace b64
+
+namespace hex {
+
+using namespace ::libc_types;
+using ::stl_types::String;
+
+FORCEDINLINE String encode(String const& from)
+{
+    return stl_types::str::print::hexdump(
+        semantic::Bytes::From(from.data(), from.size()), false);
+}
+
+} // namespace hex

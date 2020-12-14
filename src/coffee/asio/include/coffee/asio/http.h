@@ -91,6 +91,7 @@ enum class header_field : u8
 enum class content_type : u8
 {
     any,
+    multipart_form,
 
     /* text types */
     text,
@@ -302,6 +303,8 @@ inline plain_string content_type(http::content_type type)
     {
     case http::content_type::any:
         return "*/*";
+    case http::content_type::multipart_form:
+        return "multipart/form-data";
 
     case http::content_type::text:
         return "text/plain";
@@ -436,12 +439,18 @@ inline method_t method(string const& v)
     return method_t::get;
 }
 
-inline http::content_type content_type(string const& v)
+inline http::content_type content_type(string v)
 {
     using c = http::content_type;
 
+    auto v1 = v.find(";");
+    v = v.substr(0, v1);
+    v = stl_types::str::trim::both(v);
+
     if(v == "*/*")
         return c::any;
+    if(v == "multipart/form-data")
+        return c::multipart_form;
 
     if(v == "text/plain")
         return c::text;
@@ -636,12 +645,12 @@ inline header_t& request_line(header_t&, std::istream&)
 
     Throw(undefined_behavior("something's wrong here"));
 
-//    h.method   = from_string::method(read_value(s));
-//    h.resource = read_value(s);
-//    h.code     = read_int<u16>(s);
-//    h.message  = read_line(s);
+    //    h.method   = from_string::method(read_value(s));
+    //    h.resource = read_value(s);
+    //    h.code     = read_int<u16>(s);
+    //    h.message  = read_line(s);
 
-//    return h;
+    //    return h;
 }
 
 inline std::pair<string, string> field(string const& line)
@@ -1215,10 +1224,9 @@ struct builder
         semantic::Bytes const&                data,
         stl_types::Map<string, string> const& extra_headers)
     {
+        m_data += "--";
         m_data += m_terminator;
         m_data += line_separator;
-//        m_data +=
-//            header::serialize::field("Content-Length", cast_pod(data.size));
         m_data += header::serialize::field(
             "Content-Disposition", "form-data; name=\"" + (name + "\""));
         for(auto const& header : extra_headers)
@@ -1229,14 +1237,27 @@ struct builder
     }
     void finalize()
     {
+        m_data += "--";
         m_data += m_terminator;
         m_data += "--";
         m_data += line_separator;
         m_data += line_separator;
     }
 
-    cstring            m_terminator;
-    stl_types::CString m_data;
+    operator semantic::BytesConst() const
+    {
+        return semantic::BytesConst::From(m_data.data(), m_data.size());
+    }
+
+    string content_type() const
+    {
+        return header::to_string::content_type(
+                   http::content_type::multipart_form) +
+               string("; boundary=") + m_terminator;
+    }
+
+    plain_string m_terminator;
+    string       m_data;
 };
 
 } // namespace multipart

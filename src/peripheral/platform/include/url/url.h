@@ -57,6 +57,15 @@ struct Path
     }
     Path operator+(Path const& path) const;
 
+    FORCEDINLINE Path operator/(CString const& component) const
+    {
+        return *this + component;
+    }
+    FORCEDINLINE Path operator/(Path const& path) const
+    {
+        return *this + path;
+    }
+
     Path& operator=(Url const& url);
 
     FORCEDINLINE bool operator<(Path const& other) const

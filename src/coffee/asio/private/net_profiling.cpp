@@ -4,6 +4,7 @@
 #include <coffee/asio/net_resource.h>
 #include <coffee/core/CEnvironment>
 #include <coffee/core/CFiles>
+#include <coffee/ssl/hmac.h>
 #include <peripherals/libc/signals.h>
 
 #include <coffee/strings/libc_types.h>
@@ -61,28 +62,47 @@ void ProfilingExport()
             return;
         }
 
+        if(Env::ExistsVar("COFFEE_REPORT_ID"))
+            reportBinRsc.setHeaderField(
+                "X-Coffee-Token", "token " + Env::GetVar("COFFEE_REPORT_ID"));
         reportBinRsc.setHeaderField(
-            http::header_field::content_type,
-            http::header::to_string::content_type(http::content_type::json));
+            "X-Coffee-Signature",
+            "sha1=" + hex::encode(net::hmac::digest(
+                          C_OCAST<Bytes>(profile),
+                          Env::Var("COFFEE_HMAC_KEY").value_or("0000"))));
+
+        http::multipart::builder out("-----------NetProfile");
+
+        reportBinRsc.setHeaderField(
+            http::header_field::content_type, out.content_type());
         reportBinRsc.setHeaderField(
             http::header_field::accept,
             http::header::to_string::content_type(http::content_type::json));
 
-        reportBinRsc.setHeaderField(
-            "X-Coffee-Token", "token " + Env::GetVar("COFFEE_REPORT_ID"));
+        CString target_chrome;
+        Profiling::ExportChromeTracerData(target_chrome);
 
-        Bytes chromeData;
-
+        out.add(
+            "machineProfile",
+            Bytes::CreateString(target_chrome),
+            {{"Content-Type", "text/plain"}});
         if(FileExists(profile))
-            chromeData = C_OCAST<Bytes>(profile);
-        else
         {
-            CString target_chrome;
-            Profiling::ExportChromeTracerData(target_chrome);
-            chromeData = Bytes::CreateString(target_chrome.c_str());
+            out.add(
+                "profile",
+                C_OCAST<Bytes>(profile),
+                {{"Content-Type", "text/plain"}});
+        } else
+        {
+            out.add(
+                "profile",
+                Bytes::CreateString(target_chrome.c_str()),
+                {{"Content-Type", "text/plain"}});
         }
 
-        reportBinRsc.push(chromeData);
+        out.finalize();
+
+        reportBinRsc.push(out);
 
         auto response_status = classify_status(reportBinRsc.responseCode());
         if(response_status != response_class::success)

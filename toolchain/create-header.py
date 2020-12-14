@@ -13,7 +13,7 @@ if __name__ == '__main__':
         '--output', type=str,
         help='Output header file')
     args.add_argument(
-        'dirs', nargs='+')
+        'dirs', nargs='*')
 
     args = args.parse_args()
 

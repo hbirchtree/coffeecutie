@@ -171,7 +171,7 @@ static inline D C_FCAST(T from)
     const ::uint64_t T_max_val_u64 = static_cast<::uint64_t>(T_max_val);
     const ::uint64_t D_max_val_u64 = static_cast<::uint64_t>(max_val);
 
-    if(same_sign)
+    if constexpr(same_sign)
     {
         /* This part is quite simple, because comparisons
          *  with same sign is well-defined */

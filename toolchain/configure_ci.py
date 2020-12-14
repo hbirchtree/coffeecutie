@@ -102,11 +102,7 @@ jenkins_targets = []
 travis_targets = []
 
 
-CI_SERVICES = [ConfigCreator(travis_gen_config, 'Travis CI', travis_targets, '.travis.yml'),
-               #ConfigCreator(appveyor_gen_config, 'Appveyor CI', appveyor_targets, 'appveyor.yml'),
-               ConfigCreator(jenkins_gen_config, 'Jenkins CI', jenkins_targets, '.jenkins.groovy',
-                             data_format=DATAFORMAT_TEXT),
-               ConfigCreator(pipelines_gen_config, 'Azure Pipelines', jenkins_targets, 'azure-pipelines.yml'),
+CI_SERVICES = [
                ConfigCreator(github_gen_config, 'Github Actions', jenkins_targets, '.github/workflows/10-compile.yml')]
 
 

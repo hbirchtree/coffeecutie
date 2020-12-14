@@ -205,10 +205,10 @@ http::response_t const& Resource::response() const
 
 bool Resource::fetch()
 {
-    return push(http::method_t::get, Bytes());
+    return push(http::method_t::get, BytesConst());
 }
 
-bool Resource::push(const Bytes& data)
+bool Resource::push(const BytesConst& data)
 {
     using method_t = http::method_t;
 
@@ -337,7 +337,7 @@ void Resource::readResponsePayload(net_buffer& buffer)
     cVerbose(10, NETRSC_TAG "Payload size: {0}", m_response.payload.size());
 }
 
-bool Resource::push(http::method_t method, Bytes const& data)
+bool Resource::push(http::method_t method, BytesConst const& data)
 {
     using namespace http;
 
@@ -496,7 +496,7 @@ u32 Resource::responseCode() const
     return m_response.header.code;
 }
 
-Bytes Resource::data() const
+BytesConst Resource::data() const
 {
     Profiler::DeepProfile(NETRSC_TAG "Retrieving data");
 

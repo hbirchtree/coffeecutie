@@ -55,8 +55,10 @@ jobs:
     - name: Uploading artifacts
       uses: actions/upload-artifact@v2
       with:
-        name: '{{matrix.variant}}'
+        name: ${{matrix.variant}}
         path: '*.tar.bz2'
+    - name: Uploading assets
+      run: source/cb push-asset tar.bz2
   Coverage:
     runs-on: ubuntu-18.04
     strategy:
@@ -141,8 +143,10 @@ jobs:
     - name: Uploading artifacts
       uses: actions/upload-artifact@v2
       with:
-        name: '{{matrix.variant}}'
+        name: ${{matrix.variant}}
         path: '*.tar.bz2'
+    - name: Uploading assets
+      run: source/cb push-asset tar.bz2
   macOS:
     runs-on: macos-latest
     strategy:
@@ -186,8 +190,10 @@ jobs:
     - name: Uploading artifacts
       uses: actions/upload-artifact@v2
       with:
-        name: '{{matrix.variant}}'
+        name: ${{matrix.variant}}
         path: '*.tar.bz2'
+    - name: Uploading assets
+      run: source/cb push-asset tar.bz2
   Windows:
     runs-on: windows-2019
     strategy:
@@ -242,5 +248,5 @@ jobs:
     - name: Uploading artifacts
       uses: actions/upload-artifact@v2
       with:
-        name: '{{matrix.variant}}'
+        name: ${{matrix.variant}}
         path: build/*.7z

@@ -12,6 +12,7 @@
 #include <coffee/asio/asio_worker.h>
 #include <coffee/asio/http.h>
 #include <coffee/asio/net_resource.h>
+#include <coffee/ssl/hmac.h>
 #endif
 
 #include <coffee/strings/libc_types.h>
@@ -166,7 +167,7 @@ i32 crash_main(i32, cstring_w*)
 
     using Coffee::JSON;
 
-    http::multipart::builder multipart("-------CrashRecovery");
+    http::multipart::builder multipart("-----CrashRecovery");
 
     Url profileLocation, machineProfileLocation, stacktraceLocation;
 
@@ -178,15 +179,15 @@ i32 crash_main(i32, cstring_w*)
             auto appName = stdoutBuf.substr(0, appNameIdx);
 
             profileLocation = MkUrl(
-                platform::url::Path("..") + Path(appName) + "profile.json",
+                Path("..") / appName / "profile.json",
                 semantic::RSCA::TempFile);
             machineProfileLocation = MkUrl(
-                platform::url::Path("..") + Path(appName) +
+                Path("..") / appName /
                     (DirFun::Basename(args.at(0), fec).internUrl +
                      "-chrome.json"),
                 semantic::RSCA::TempFile);
             stacktraceLocation = MkUrl(
-                platform::url::Path("..") + Path(appName) + "stacktrace.json",
+                Path("..") / appName / "stacktrace.json",
                 semantic::RSCA::TempFile);
         }
     }
@@ -239,7 +240,10 @@ i32 crash_main(i32, cstring_w*)
 
     multipart.finalize();
 
-    cDebug("Payload: {0} bytes", multipart.m_data.size());
+    cDebug(
+        "Payload: {0} bytes ({1} MB)",
+        multipart.m_data.size(),
+        multipart.m_data.size() / 1_MB);
 
     auto worker = ASIO::GenWorker();
 
@@ -247,12 +251,15 @@ i32 crash_main(i32, cstring_w*)
         worker->context, Net::MkUrl(platform::Env::GetVar("CRASH_API")));
 
     crashPush.setHeaderField(
-        http::header_field::content_type,
-        "multipart/form-data; boundary=-----CrashRecovery");
+        http::header_field::content_type, multipart.content_type());
 
-    if(!crashPush.push(
-           http::method_t::post,
-           Bytes::From(multipart.m_data.data(), multipart.m_data.size())))
+    crashPush.setHeaderField(
+        "X-Coffee-Signature",
+        "sha1=" + hex::encode(net::hmac::digest(
+                      semantic::Bytes::CreateString(multipart.m_data),
+                      platform::Env::Var("COFFEE_HMAC_KEY").value_or("0000"))));
+
+    if(!crashPush.push(http::method_t::post, multipart))
     {
         auto responseData = crashPush.data();
         cWarning("Failed to push crash report: {0}", crashPush.responseCode());

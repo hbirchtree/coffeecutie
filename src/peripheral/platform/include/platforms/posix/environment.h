@@ -18,6 +18,13 @@ namespace posix {
 
 struct EnvironmentF : EnvInterface
 {
+    STATICINLINE Optional<String> Var(String var)
+    {
+        auto val = getenv(var.c_str());
+        if(val)
+            return std::make_optional<String>(var);
+        return std::nullopt;
+    }
     STATICINLINE bool ExistsVar(cstring var)
     {
         return getenv(var);

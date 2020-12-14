@@ -22,7 +22,7 @@ semantic::Span<typing::pixels::rgb_t> ScreenshotProvider::pixels() const
         {0, 0},
         size_,
         typing::PixCmp::RGB,
-        typing::pixels::BitFmt::UShort_565,
+        typing::pixels::BitFmt::UByte,
         out.data);
     return out;
 }
