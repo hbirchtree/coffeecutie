@@ -73,6 +73,9 @@
       +cmake-opts:
         - -DIOS_PLATFORM=SIMULATOR
 
+^(?!apple|osx|ios|win|uwp).*$:
+  =container-image: hbirch/coffeecutie:$(container)
+
 # For Ubuntu, Fedora, docs and coverage, specify generic preload
 (ubuntu|docs|coverage|testing.linux|fedora).*:
   (ubuntu.amd64.*|coverage|testing.linux|docs):
@@ -236,7 +239,10 @@ testing.linux.*:
     - -DANDROID_CPP_FEATURES=$(android.features)
     - -DANDROID_ARM_NEON=$(android.arm-neon)
     - -DCMAKE_TOOLCHAIN_FILE=$(android.ndk)/build/cmake/android.toolchain.cmake
+  =container-image: hbirch/android:r21
   =container: android
+  .*gingerbread:
+    =container-image: hbirch/android:r14b
 
 
 .*maemo.*:

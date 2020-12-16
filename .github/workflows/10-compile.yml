@@ -43,9 +43,6 @@ jobs:
       with:
         submodules: true
         path: source
-    - name: Select Docker container
-      run: sh ${{ github.workspace }}/source/.github/cmake/select/${{ matrix.variant
-        }}.sh
     - name: Building project
       run: source/cb docker-build -GNinja
     - name: Compress executables
@@ -88,9 +85,6 @@ jobs:
       with:
         submodules: true
         path: source
-    - name: Select Docker container
-      run: sh ${{ github.workspace }}/source/.github/cmake/select/${{ matrix.variant
-        }}.sh
     - name: Building project
       run: source/cb docker-build -GNinja
     - name: Running tests
@@ -132,8 +126,6 @@ jobs:
       with:
         submodules: true
         path: source
-    - name: Select Docker container
-      run: echo "::set-env name=CONTAINER::hbirch/android:r21"
     - name: Building project
       run: source/cb docker-build -GNinja
     - name: Compress executables

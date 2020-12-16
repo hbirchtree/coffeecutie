@@ -3,8 +3,8 @@ TEMPLATE = app
 QT += quick quickcontrols2 widgets network
 
 CONFIG += c++17
-QMAKE_CXXFLAGS += -std=c++14 -s "BINARYEN_TRAP_MODE='clamp'" -s ASSERTIONS=1 -mnontrapping-fptoint
-QMAKE_LFLAGS += -std=c++14 -s "BINARYEN_TRAP_MODE='clamp'" -s ASSERTIONS=1 -mnontrapping-fptoint
+QMAKE_CXXFLAGS += -std=c++14 -s "BINARYEN_TRAP_MODE='clamp'" -s ASSERTIONS=1 -mnontrapping-fptoint -s ALLOW_MEMORY_GROWTH=1
+QMAKE_LFLAGS += -std=c++14 -s "BINARYEN_TRAP_MODE='clamp'" -s ASSERTIONS=1 -mnontrapping-fptoint -s ALLOW_MEMORY_GROWTH=1
 
 DEFINES += QT_DEPRECATED_WARNINGS
 

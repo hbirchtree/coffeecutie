@@ -76,70 +76,74 @@ def create_target_definitions(precompiled_deps, base_config, targets, force_targ
     make_targets = []
 
     for target in targets:
-        # Create base environment
-        vars = yml.create_variable_template(toolchain_data, yml.deepcopy(base_config), target)
-        vars = yml.create_variable_template(coffee_data, vars, target)
-        vars['target-name'] = [target]
+        try:
+            # Create base environment
+            vars = yml.create_variable_template(toolchain_data, yml.deepcopy(base_config), target)
+            vars = yml.create_variable_template(coffee_data, vars, target)
+            vars['target-name'] = [target]
 
-        # Resolve all variables before creating Makefile entry
-        var_templates.resolve_variables(vars)
+            # Resolve all variables before creating Makefile entry
+            var_templates.resolve_variables(vars)
 
-        make_targets += [
-            Comment(var_templates.resolve_variable(vars, '$(description)')[0]),
-            Comment(var_templates.resolve_variable(vars, 'Compiler: $(compiler)')[0])
-        ]
+            make_targets += [
+                Comment(var_templates.resolve_variable(vars, '$(description)')[0]),
+                Comment(var_templates.resolve_variable(vars, 'Compiler: $(compiler)')[0])
+            ]
 
-        # Command to run the Makefile with CMake
-        cmd = Command()
-        cmd.command = var_templates.resolve_variable(
-            vars, "make -f $(env:ROOT_DIR)/$(runner-choice) $(target)")[0]
+            # Command to run the Makefile with CMake
+            cmd = Command()
+            cmd.command = var_templates.resolve_variable(
+                vars, "make -f $(env:ROOT_DIR)/$(runner-choice) $(target)")[0]
 
-        cmd.command += "\n-e EXTRA_OPTIONS=\""
-        for opt in sorted(list(vars['cmake-opts'])):
-            cmd.command += "\n" + opt
-        cmd.command += "\""
-
-        # Only include Docker options if an image is chosen
-        if 'container' in vars:
-            cmd.command += "\n-e DOCKER_EXTRA_OPTIONS=\""
-            for opt in vars['container-opts']:
-                cmd.command += "\n" + opt.replace('"', '\\"')
+            cmd.command += "\n-e EXTRA_OPTIONS=\""
+            for opt in sorted(list(vars['cmake-opts'])):
+                cmd.command += "\n" + opt
             cmd.command += "\""
 
-            # Container might be a separate image, or a tag on the hbirch/coffeecutie:... image
-            if sum([':' in cnt for cnt in vars['container']]) > 0:
-                cmd.command += "\n-e DOCKER_CONTAINER=$(container)"
-            else:
-                cmd.command += "\n-e DOCKER_CONFIG=$(container)"
+            # Only include Docker options if an image is chosen
+            if 'container' in vars:
+                cmd.command += "\n-e DOCKER_EXTRA_OPTIONS=\""
+                for opt in vars['container-opts']:
+                    cmd.command += "\n" + opt.replace('"', '\\"')
+                cmd.command += "\""
 
-        cmd.command += "\n-e CMAKE_BUILD_DIR=$(cmake.build)"
-        cmd.command += "\n-e OUTPUT_DIR=$(env:BUILD_DIR)"
-        cmd.command += "\n-e BUILD_NAME=$(target-name)"
+                # Container might be a separate image, or a tag on the hbirch/coffeecutie:... image
+                if sum([':' in cnt for cnt in vars['container']]) > 0:
+                    cmd.command += "\n-e DOCKER_CONTAINER=$(container)"
+                else:
+                    cmd.command += "\n-e DOCKER_CONFIG=$(container)"
 
-        if 'environment-vars' in vars:
-            for opt in vars['environment-vars']:
-                cmd.command += "\n" + opt.replace('"', '\\"')
+            cmd.command += "\n-e CMAKE_BUILD_DIR=$(cmake.build)"
+            cmd.command += "\n-e OUTPUT_DIR=$(env:BUILD_DIR)"
+            cmd.command += "\n-e BUILD_NAME=$(target-name)"
 
-        cmd.command = var_templates.resolve_variable(vars, cmd.command)[0].replace(';', '\\;')
+            if 'environment-vars' in vars:
+                for opt in vars['environment-vars']:
+                    cmd.command += "\n" + opt.replace('"', '\\"')
 
-        # Multiple targets means it runs in a two-phase process
-        for i, cmake_target in enumerate(vars['cmake-target']):
-            if i == 0:
-                if len(vars['cmake-target']) == 1:
-                    cmd.command += "\n-e CMAKE_TARGET=%s" % cmake_target
-            elif i == 1:
-                cmd.command += "\n-e CMAKE_SECOND_TARGET=%s" % cmake_target
-            else:
-                raise RuntimeError("don't know what to do with target: " + cmake_target)
+            cmd.command = var_templates.resolve_variable(vars, cmd.command)[0].replace(';', '\\;')
 
-        # Generate Makefile entry
-        compile_target = Target()
-        compile_target.target_name = target
-        compile_target.dependencies = [force_target]
-        compile_target.commands.append(cmd)
-        compile_target.source = vars
+            # Multiple targets means it runs in a two-phase process
+            for i, cmake_target in enumerate(vars['cmake-target']):
+                if i == 0:
+                    if len(vars['cmake-target']) == 1:
+                        cmd.command += "\n-e CMAKE_TARGET=%s" % cmake_target
+                elif i == 1:
+                    cmd.command += "\n-e CMAKE_SECOND_TARGET=%s" % cmake_target
+                else:
+                    raise RuntimeError("don't know what to do with target: " + cmake_target)
 
-        make_targets.append(compile_target)
+            # Generate Makefile entry
+            compile_target = Target()
+            compile_target.target_name = target
+            compile_target.dependencies = [force_target]
+            compile_target.commands.append(cmd)
+            compile_target.source = vars
+
+            make_targets.append(compile_target)
+        except Exception as e:
+            print('Error occurred for target %s' % target)
+            raise
 
     return make_targets
 
@@ -197,17 +201,14 @@ if __name__ == '__main__':
         if isinstance(target, Target) and target.source is not None:
             create_cmake_preload(target.source)
 
-            if 'container' not in target.source:
+            if 'container-image' not in target.source:
                 continue
 
-            if ':' not in target.source['container'][0]:
-                target.source['container'] = 'hbirch/coffeecutie:' + target.source['container'][0]
-            else:
-                target.source['container'] = target.source['container'][0]
+            target.source['container'] = target.source['container'][0]
 
             with open('../../.github/cmake/select/%s.sh' % target.target_name, 'w') as selector:
-                selector.write('echo "::set-env name=CONTAINER::%s"\n' % target.source['container'])
-                selector.write('CONTAINER=%s' % target.source['container'])
+                #selector.write('echo "::set-env name=CONTAINER::%s"\n' % target.source['container'])
+                selector.write('export CONTAINER=%s' % target.source['container-image'][0])
 
     with open('Makefile.linux', 'w') as mak:
         for block in blocks:

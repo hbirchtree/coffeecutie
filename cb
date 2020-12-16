@@ -35,6 +35,8 @@ case $1 in
     fi
 ;;
 "ci-build")
+    source ${BASE_DIR}/.github/cmake/select/${BUILDVARIANT}.sh
+
     INSTALL_DIR=/build/install
     BUILD_DIR=/build/build
 

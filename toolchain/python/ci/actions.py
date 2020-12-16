@@ -3,6 +3,9 @@ from python.common import try_get_key
 from collections import defaultdict
 from copy import deepcopy
 
+def merge(dict1, dict2):
+    return {**dict1, **dict2}
+
 def github_gen_config(build_info, repo_dir):
     script_loc = try_get_key(build_info, 'script_location', 'ci')
     make_loc = try_get_key(build_info, 'makefile_location', 'ci')
@@ -136,10 +139,6 @@ def github_gen_config(build_info, repo_dir):
                     'steps': [
                     deepcopy(checkout_step),
                     {
-                        'name': 'Select Docker container',
-                        'run': 'sh ${{ github.workspace }}/source/.github/cmake/select/${{ matrix.variant }}.sh'
-                    },
-                    {
                         'name': 'Building project',
                         'run': 'source/cb docker-build -GNinja'
                     }
@@ -154,10 +153,6 @@ def github_gen_config(build_info, repo_dir):
                     'env': linux_env.copy(),
                     'steps': [
                     deepcopy(checkout_step),
-                    {
-                        'name': 'Select Docker container',
-                        'run': 'sh ${{ github.workspace }}/source/.github/cmake/select/${{ matrix.variant }}.sh'
-                    },
                     {
                         'name': 'Building project',
                         'run': 'source/cb docker-build -GNinja'
@@ -182,10 +177,6 @@ def github_gen_config(build_info, repo_dir):
                     'env': linux_env.copy(),
                     'steps': [
                     deepcopy(checkout_step),
-                    {
-                        'name': 'Select Docker container',
-                        'run': 'echo "::set-env name=CONTAINER::hbirch/android:r21"'
-                    },
                     {
                         'name': 'Building project',
                         'run': 'source/cb docker-build -GNinja'
