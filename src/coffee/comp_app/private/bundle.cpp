@@ -334,11 +334,9 @@ void addDefaults(
 
     auto& appInfo = *container.service<AppInfo>();
 
-#if MODE_DEBUG
-    if constexpr(compile_info::profiler::enabled)
+    if constexpr(compile_info::debug_mode && compile_info::profiler::enabled)
         loader.loadAll<type_safety::type_list_t<PerformanceMonitor>>(
             container, ec);
-#endif
 
         /* Selection of window/event manager */
 #if defined(FEATURE_ENABLE_SDL2Components)
@@ -404,18 +402,21 @@ void addDefaults(
     loader.loadAll<uikit::Services>(container, ec);
 #endif
 
-    loader.loadAll<detail::TypeList<
-        comp_app::SysBattery,
-        comp_app::SysCPUTemp,
-        comp_app::SysGPUTemp,
-        comp_app::SysCPUClock,
-        comp_app::SysMemoryStats>>(container, ec);
+    if constexpr(compile_info::debug_mode)
+    {
+        loader.loadAll<detail::TypeList<
+            comp_app::SysBattery,
+            comp_app::SysCPUTemp,
+            comp_app::SysGPUTemp,
+            comp_app::SysCPUClock,
+            comp_app::SysMemoryStats>>(container, ec);
 
 #if defined(FEATURE_ENABLE_GLScreenshot)
-    if constexpr(compile_info::debug_mode)
-        loader.loadAll<detail::TypeList<glscreenshot::ScreenshotProvider>>(
-            container, ec);
+        if constexpr(compile_info::debug_mode)
+            loader.loadAll<detail::TypeList<glscreenshot::ScreenshotProvider>>(
+                container, ec);
 #endif
+    }
 }
 
 } // namespace comp_app
@@ -528,35 +529,39 @@ void PerformanceMonitor::end_restricted(Proxy& p, time_point const& time)
     auto timestamp =
         Chrono::duration_cast<Chrono::microseconds>(time.time_since_epoch());
 
-    auto screenshot = p.service<ScreenshotProvider>();
 
-    if(screenshot && time > m_nextScreenshot)
+    if constexpr(compile_info::debug_mode)
     {
-        using namespace Coffee;
+        auto screenshot = p.service<ScreenshotProvider>();
 
-        m_nextScreenshot        = time + Chrono::seconds(10);
-        auto             pixels = screenshot->pixels();
-        Bytes            encoded;
-        stb::stb_error   ec;
-        stb::image_const source = stb::image_const::From(
-            C_OCAST<Bytes>(pixels), screenshot->size(), 3);
+        if(screenshot && time > m_nextScreenshot)
+        {
+            using namespace Coffee;
 
-        stb::SaveJPG(encoded, source, ec, 50);
-        auto screenshot_file = "screenshot.jpg"_tmpfile;
+            m_nextScreenshot        = time + Chrono::seconds(10);
+            auto             pixels = screenshot->pixels();
+            Bytes            encoded;
+            stb::stb_error   ec;
+            stb::image_const source = stb::image_const::From(
+                C_OCAST<Bytes>(pixels), screenshot->size(), 3);
 
-        FileOpenMap(
-            screenshot_file,
-            encoded.size,
-            RSCA::ReadWrite | RSCA::Persistent);
-        if(encoded.size == screenshot_file.size)
-            memcpy(screenshot_file.data, encoded.data, screenshot_file.size);
-        FileUnmap(screenshot_file);
+            stb::SaveJPG(encoded, source, ec, 50);
+            auto screenshot_file = "screenshot.jpg"_tmpfile;
 
-        json::CaptureMetrics(
-            "Screenshots",
-            MetricVariant::Image,
-            b64::encode(encoded),
-            timestamp);
+            FileOpenMap(
+                screenshot_file,
+                encoded.size,
+                RSCA::ReadWrite | RSCA::Persistent);
+            if(encoded.size == screenshot_file.size)
+                memcpy(screenshot_file.data, encoded.data, screenshot_file.size);
+            FileUnmap(screenshot_file);
+
+            json::CaptureMetrics(
+                "Screenshots",
+                MetricVariant::Image,
+                b64::encode(encoded),
+                timestamp);
+        }
     }
 
     json::CaptureMetrics(
