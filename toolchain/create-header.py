@@ -24,7 +24,7 @@ if __name__ == '__main__':
 
     for dir in args.dirs:
         prefix_len = len(dir)
-        for file in glob(f'{dir}/**', recursive=True):
+        for file in glob(dir + '/**', recursive=True):
             if not isfile(file):
                 continue
 
@@ -36,14 +36,14 @@ if __name__ == '__main__':
 
     with open(args.output, 'w+') as output:
         output.write(
-f'''#include <array>
+'''#include <array>
 #if __cplusplus__ >= 201703L
 #include <string_view>
 #endif
 
 #include <platforms/embed/file.h>
 
-static const std::array<const unsigned char, {total_vfs_length}> embed_vfs_data = {{{{''')
+static const std::array<const unsigned char, %s> embed_vfs_data = {{''' % total_vfs_length)
         offset = 0
 
         descriptors = []
@@ -53,7 +53,7 @@ static const std::array<const unsigned char, {total_vfs_length}> embed_vfs_data 
             spacing = ''
             for i in range(max_vfs_name_length - len(vfs_path)):
                 spacing = spacing + ' '
-            print(f'Mapping {vfs_path}{spacing} -> {file_path}')
+            print('Mapping {}{} -> {}'.format(vfs_path, spacing, file_path))
 
             with open(file_path, 'rb') as file:
                 content = file.read()
@@ -68,7 +68,7 @@ static const std::array<const unsigned char, {total_vfs_length}> embed_vfs_data 
         output.write('''
 }};
 
-static const std::array<platform::file::embed::data_descriptor_t,''' f'{len(files)}' '''> embed_vfs_descriptors = {{
+static const std::array<platform::file::embed::data_descriptor_t,''' + '{}'.format(len(files)) + '''> embed_vfs_descriptors = {{
 ''')
         for desc in descriptors:
             output.write('    {"%s", %s, %s},\n' % desc)

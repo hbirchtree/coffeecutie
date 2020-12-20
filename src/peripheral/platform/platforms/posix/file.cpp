@@ -150,12 +150,14 @@ bool PosixFileMod_def::Ln(Url const& src, Url const& target, file_error& ec)
 
 szptr PosixFileMod_def::Size(Url const& fn, file_error& ec)
 {
+#if defined(EMBED_RESOURCES_ENABLED)
     if(embed::embeds_enabled)
     {
         Bytes data;
         if(embed::file_lookup(fn.internUrl.c_str(), data))
             return data.size;
     }
+#endif
 
     auto        url = *fn;
     struct stat st  = {};

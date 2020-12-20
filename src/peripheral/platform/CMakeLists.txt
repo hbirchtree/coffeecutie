@@ -183,6 +183,12 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
         )
+
+    if(EMBED_RESOURCES)
+        target_compile_definitions ( PeripheralPlatform PUBLIC
+            -DEMBED_RESOURCES_ENABLED=1
+            )
+    endif()
 endif()
 
 #

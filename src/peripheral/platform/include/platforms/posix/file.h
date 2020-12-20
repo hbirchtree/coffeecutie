@@ -5,7 +5,9 @@
 #include <peripherals/semantic/handle.h>
 #include <platforms/libc/file.h>
 
+#if defined(EMBED_RESOURCES_ENABLED)
 #include <platforms/embed/file.h>
+#endif
 
 #if defined(COFFEE_UNIXPLAT) || defined(COFFEE_GEKKO)
 
@@ -56,8 +58,11 @@ struct PosixApi
         {
         }
 
-        FileHandle(FileHandle&& f) :
-            fd(std::move(f.fd)), fname(std::move(f.fname))
+        FileHandle(FileHandle&& f) 
+            : fd(std::move(f.fd))
+#if defined(EMBED_RESOURCES_ENABLED)
+            , fname(std::move(f.fname))
+#endif
         {
             f.fd.release();
         }
@@ -65,14 +70,18 @@ struct PosixApi
         FileHandle& operator=(FileHandle&& other)
         {
             std::swap(fd, other.fd);
+#if defined(EMBED_RESOURCES_ENABLED)
             std::swap(fname, other.fname);
+#endif
             other.fd.release();
 
             return *this;
         }
 
         posix_fd fd;
+#if defined(EMBED_RESOURCES_ENABLED)
         Url      fname;
+#endif
     };
 
     using FileMapping = FileFunDef<>::FileMapping;
@@ -135,7 +144,9 @@ struct PosixFileFun_def : PosixFileMod_def
 
         FH fh;
         fh.fd    = std::move(fd);
+#if defined(EMBED_RESOURCES_ENABLED)
         fh.fname = fn;
+#endif
 
         fd.release();
 
@@ -155,12 +166,14 @@ struct PosixFileFun_def : PosixFileMod_def
     {
         Bytes data = {};
 
+#if defined(EMBED_RESOURCES_ENABLED)
         if(embed::embeds_enabled &&
            enum_helpers::feval(f_h.fname.flags & RSCA::AssetFile))
         {
             if(embed::file_lookup(f_h.fname.internUrl.c_str(), data))
                 return data;
         }
+#endif
 
         errno = 0;
 
@@ -224,6 +237,7 @@ struct PosixFileFun_def : PosixFileMod_def
     FM Map(
         Url const& filename, RSCA acc, szptr offset, szptr size, file_error& ec)
     {
+#if defined(EMBED_RESOURCES_ENABLED)
         if(embed::embeds_enabled &&
            enum_helpers::feval(filename.flags & RSCA::AssetFile))
         {
@@ -231,6 +245,7 @@ struct PosixFileFun_def : PosixFileMod_def
             if(embed::file_lookup(filename.internUrl.c_str(), data))
                 return data;
         }
+#endif
 
         auto url       = *filename;
         u64  pa_offset = offset & ~(PageSize());
@@ -385,12 +400,14 @@ struct PosixFileFun_def : PosixFileMod_def
 
     STATICINLINE szptr Size(FH const& fh, file_error& ec)
     {
+#if defined(EMBED_RESOURCES_ENABLED)
         if(embed::embeds_enabled)
         {
             Bytes data;
             if(embed::file_lookup(fh.fname.internUrl.c_str(), data))
                 return data.size;
         }
+#endif
 
         errno = 0;
 
@@ -410,12 +427,14 @@ struct PosixFileFun_def : PosixFileMod_def
 
     STATICINLINE bool Exists(FH const& fn, file_error&)
     {
+#if defined(EMBED_RESOURCES_ENABLED)
         if(embed::embeds_enabled)
         {
             Bytes data;
             if(embed::file_lookup(fn.fname.internUrl.c_str(), data))
                 return true;
         }
+#endif
 
         errno = 0;
 
