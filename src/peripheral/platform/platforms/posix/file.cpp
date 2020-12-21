@@ -151,7 +151,8 @@ bool PosixFileMod_def::Ln(Url const& src, Url const& target, file_error& ec)
 szptr PosixFileMod_def::Size(Url const& fn, file_error& ec)
 {
 #if defined(EMBED_RESOURCES_ENABLED)
-    if(embed::embeds_enabled)
+        if(embed::embeds_enabled &&
+           enum_helpers::feval(fn.flags & RSCA::AssetFile))
     {
         Bytes data;
         if(embed::file_lookup(fn.internUrl.c_str(), data))
@@ -175,12 +176,15 @@ szptr PosixFileMod_def::Size(Url const& fn, file_error& ec)
 
 bool PosixFileMod_def::Exists(Url const& fn, file_error&)
 {
-    if(embed::embeds_enabled)
+#if defined(EMBED_RESOURCES_ENABLED)
+        if(embed::embeds_enabled &&
+           enum_helpers::feval(fn.flags & RSCA::AssetFile))
     {
         Bytes data;
         if(embed::file_lookup(fn.internUrl.c_str(), data))
             return true;
     }
+#endif
 
     auto        url = *fn;
     struct stat st;

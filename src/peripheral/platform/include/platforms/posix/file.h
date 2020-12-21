@@ -401,7 +401,8 @@ struct PosixFileFun_def : PosixFileMod_def
     STATICINLINE szptr Size(FH const& fh, file_error& ec)
     {
 #if defined(EMBED_RESOURCES_ENABLED)
-        if(embed::embeds_enabled)
+        if(embed::embeds_enabled &&
+           enum_helpers::feval(fh.fname.flags & RSCA::AssetFile))
         {
             Bytes data;
             if(embed::file_lookup(fh.fname.internUrl.c_str(), data))
@@ -428,7 +429,8 @@ struct PosixFileFun_def : PosixFileMod_def
     STATICINLINE bool Exists(FH const& fn, file_error&)
     {
 #if defined(EMBED_RESOURCES_ENABLED)
-        if(embed::embeds_enabled)
+        if(embed::embeds_enabled &&
+           enum_helpers::feval(fn.fname.flags & RSCA::AssetFile))
         {
             Bytes data;
             if(embed::file_lookup(fn.fname.internUrl.c_str(), data))
