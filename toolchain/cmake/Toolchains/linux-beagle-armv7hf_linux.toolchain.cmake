@@ -1,6 +1,7 @@
 set ( CMAKE_SYSTEM_NAME Linux )
 set ( CMAKE_SYSTEM_PROCESSOR armv7l )
 
+set ( TOOLCHAIN_ROOT "/usr/local/gcc-arm" )
 set ( TOOLCHAIN_ARCH "arm-none-linux-gnueabihf" )
 set ( TOOLCHAIN_PREFIX "${TOOLCHAIN_ARCH}-" )
 
@@ -8,15 +9,15 @@ set ( BEAGLE TRUE )
 
 set ( LIBC_SYSROOT /usr/local/gcc-arm/${TOOLCHAIN_ARCH}/libc )
 
-set ( CMAKE_C_COMPILER   "${TOOLCHAIN_PREFIX}gcc" )
-set ( CMAKE_CXX_COMPILER "${TOOLCHAIN_PREFIX}g++" )
+set ( CMAKE_C_COMPILER   "${TOOLCHAIN_ROOT}/bin/${TOOLCHAIN_PREFIX}gcc" )
+set ( CMAKE_CXX_COMPILER "${TOOLCHAIN_ROOT}/bin/${TOOLCHAIN_PREFIX}g++" )
 
 set ( SHARED_FLAGS "-mtune=cortex-a8 -march=armv7-a+simd+vfpv3 -mfloat-abi=hard" )
 
 set ( CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} ${SHARED_FLAGS}" CACHE STRING "" )
 set ( CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} ${SHARED_FLAGS}" CACHE STRING "" )
 
-set ( SHARED_LINK_FLAGS "-static-libgcc -static-libstdc++ /usr/local/gcc-arm/${TOOLCHAIN_ARCH}/libc/usr/lib/libc.a" )
+set ( SHARED_LINK_FLAGS "-static-libgcc -static-libstdc++ ${TOOLCHAIN_ROOT}/${TOOLCHAIN_ARCH}/libc/usr/lib/libc.a" )
 
 set ( CMAKE_EXE_LINKER_FLAGS "${CMAKE_CXX_FLAGS} ${SHARED_FLAGS} ${SHARED_LINK_FLAGS}" CACHE STRING "" )
 set ( CMAKE_MODULE_LINKER_FLAGS "${CMAKE_CXX_FLAGS} ${SHARED_FLAGS} ${SHARED_LINK_FLAGS}" CACHE STRING "" )
