@@ -1,2 +1,1 @@
-echo "::set-env name=CONTAINER::hbirch/coffeecutie:mingw64"
-CONTAINER=hbirch/coffeecutie:mingw64
+export CONTAINER=hbirch/coffeecutie:mingw64
