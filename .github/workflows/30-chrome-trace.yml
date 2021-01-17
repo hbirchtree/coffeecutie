@@ -25,20 +25,9 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: ${{matrix.variant}}
-        path: '${{ github.workspace }}/build/*.wasm'
-    - name: Uploading artifacts
-      uses: actions/upload-artifact@v2
-      with:
-        name: ${{matrix.variant}}
-        path: '${{ github.workspace }}/build/*.js'
-    - name: Uploading artifacts
-      uses: actions/upload-artifact@v2
-      with:
-        name: ${{matrix.variant}}
-        path: '${{ github.workspace }}/build/*.svg'
-    - name: Uploading artifacts
-      uses: actions/upload-artifact@v2
-      with:
-        name: ${{matrix.variant}}
-        path: '${{ github.workspace }}/build/*.html'
+        path: |
+            '${{ github.workspace }}/build/*.wasm'
+            '${{ github.workspace }}/build/*.js'
+            '${{ github.workspace }}/build/*.svg'
+            '${{ github.workspace }}/build/*.html'
 
