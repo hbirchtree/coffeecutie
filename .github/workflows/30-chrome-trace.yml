@@ -21,6 +21,8 @@ jobs:
       run: docker run --rm -v ${{ github.workspace }}/source:/src -v ${{ github.workspace }}/build:/build --workdir /build madmanfred/qt-webassembly:qt5.14 qmake /src/tools/chrome-trace-view
     - name: Build
       run: docker run --rm -v ${{ github.workspace }}/source:/src -v ${{ github.workspace }}/build:/build --workdir /build madmanfred/qt-webassembly:qt5.14 make -j4
+    - name: List files
+      run: ls -R ${{ github.workspace }}
     - name: Uploading artifacts
       uses: actions/upload-artifact@v2
       with:
