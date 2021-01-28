@@ -28,8 +28,8 @@ jobs:
       with:
         name: ${{matrix.variant}}
         path: |
-            '${{ github.workspace }}/build/*.wasm'
-            '${{ github.workspace }}/build/*.js'
-            '${{ github.workspace }}/build/*.svg'
-            '${{ github.workspace }}/build/*.html'
+            ${{ github.workspace }}/build/*.wasm
+            ${{ github.workspace }}/build/*.js
+            ${{ github.workspace }}/build/*.svg
+            ${{ github.workspace }}/build/*.html
 
