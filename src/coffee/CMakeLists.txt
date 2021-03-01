@@ -107,6 +107,10 @@ if(BUILD_AUDIO)
     add_subdirectory(audio)
 endif()
 
+if(BUILD_MEDIA)
+    add_subdirectory(media/ffmpeg)
+endif()
+
 
 coffee_library (
     TARGET OnlineService

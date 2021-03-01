@@ -54,6 +54,9 @@ script_location: toolchain/ci
 secrets:
   appveyor: 6ME8msH/BDLiEde9wCb9+GQRN4rcAzyu1Vx/wP5yHejedO3vPlrOXHiWqhjNqXrQ
 template_location: toolchain/cmake/Templates
+toolchain:
+  source: hbirchtree/coffeecutie-automation-tools
+  version: v1.0.16
 version:
   hotfix: 5
   major: 4

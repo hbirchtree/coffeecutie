@@ -602,6 +602,11 @@ struct ScreenshotProvider : AppService<ScreenshotProvider>
     virtual semantic::Span<typing::pixels::rgb_t> pixels() const = 0;
 };
 
+struct StreamConfig : Config<StreamConfig>
+{
+    virtual libc_types::i32 framerate() const = 0;
+};
+
 } // namespace comp_app
 
 #include "services.inl"
