@@ -20,8 +20,8 @@ struct GLEAM_PboQueue
     /* TODO: Convert these to use handle semantics */
     struct Pbo
     {
-        CGhnd buf;
-        u32   flags;
+        u32 buf;
+        u32 flags;
     };
     Vector<Pbo> buffers;
     u32         idx = 0;
@@ -45,7 +45,7 @@ struct GLEAM_Instance_Data
     {
 #if GL_VERSION_VERIFY(0x300, 0x300)
         for(auto const& pbo : pboQueue.buffers)
-            gl::vlow::BufFree(pbo.buf);
+            gl::vlow::BufFree(SpanOne(pbo.buf));
 #endif
     }
 

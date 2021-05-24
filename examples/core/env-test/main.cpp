@@ -6,6 +6,8 @@
 #include <platforms/sensor.h>
 #include <platforms/sysinfo.h>
 
+#include <av/decode.h>
+
 #include <coffee/strings/info.h>
 #include <coffee/strings/libc_types.h>
 #include <coffee/strings/url_types.h>
@@ -21,13 +23,16 @@ using namespace Coffee;
 using namespace platform::file;
 using namespace platform::url::constructors;
 
+template<semantic::concepts::Resource T>
+void consume_bytes(T& resource)
+{
+}
+
 i32 coffee_main(i32, cstring_w*)
 {
 #if defined(FEATURE_ENABLE_ASIO)
     C_UNUSED(auto _) = Net::RegisterProfiling();
 #endif
-
-    file_error ec;
 
     Profiler::PushContext("Configuration data");
     {
@@ -38,23 +43,24 @@ i32 coffee_main(i32, cstring_w*)
 
         cDebug("Test directory: {0} '{1}'", test_dir, *test_dir);
 
-        Url     app_dir  = Env::ApplicationDir();
-        CString exe_name = Env::ExecutableName();
+        Url app_dir  = platform::path::app_dir().value();
+        Url exe_name = platform::path::executable().value();
         Profiler::Profile("Get application location");
 
-        cDebug("Settings directory: {0}", cfg_dir);
+        cDebug("Settings directory: {0}", *cfg_dir);
         cDebug("Program directory:  {0}", app_dir);
         cDebug("Launching from      {0}", exe_name);
-        cDebug("Current directory:  {0}", Env::CurrentDir());
+        cDebug("Current directory:  {0}", platform::path::current_dir());
 
         Profiler::Profile("Print some data");
 
-        if(!FileMkdir(cfg_dir, true))
-            cWarning("Failed to create settings directory");
-        else
         {
-            Url test_file = cfg_dir + Path{"test_file.sav"};
-            FileFun::Touch(FileType::File, test_file, ec);
+            platform::file::create(
+                cfg_dir / "test_file.sav",
+                {.mode = platform::file::mode_t::file});
+
+            Resource e(cfg_dir / "test_file.sav");
+            consume_bytes(e);
         }
         Profiler::Profile("Create directory recursively");
     }
@@ -69,50 +75,9 @@ i32 coffee_main(i32, cstring_w*)
     cDebug("Sensor acceleration: {0}", Sensor::Acceleration());
     cDebug("Sensor orientation: {0}", Sensor::Orientation());
 
+    cDebug("avcodec: {0}", av::init_codec());
+
     return 0;
 }
 
 COFFEE_APPLICATION_MAIN(coffee_main)
-
-//#include <gccore.h>
-
-//GXRModeObj* gamecube_rmode = NULL;
-//void*       gamecube_xfb   = NULL;
-
-//thread_local int dev;
-
-//int main(int, char**)
-//{
-//    VIDEO_Init();
-
-//    gamecube_rmode = VIDEO_GetPreferredMode(NULL);
-
-//    gamecube_xfb = MEM_K0_TO_K1(SYS_AllocateFramebuffer(gamecube_rmode));
-
-//    VIDEO_Configure(gamecube_rmode);
-//    VIDEO_SetNextFramebuffer(gamecube_xfb);
-//    VIDEO_SetBlack(FALSE);
-//    VIDEO_Flush();
-
-//    VIDEO_WaitVSync();
-//    if(gamecube_rmode->viTVMode & VI_NON_INTERLACE)
-//        VIDEO_WaitVSync();
-
-//    console_init(
-//        gamecube_xfb,
-//        60,
-//        60,
-//        gamecube_rmode->fbWidth,
-//        gamecube_rmode->xfbHeight,
-//        gamecube_rmode->fbWidth * 2);
-
-//    printf("- Gamecube video initialized\n");
-
-//    State::SetInternalState(State::CreateNewState());
-//    State::SetInternalThreadState(State::CreateNewThreadState());
-
-//    while(1)
-//    {
-//        VIDEO_WaitVSync();
-//    }
-//}

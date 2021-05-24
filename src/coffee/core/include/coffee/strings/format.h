@@ -2,9 +2,28 @@
 
 #include <coffee/core/libc_types.h>
 #include <coffee/core/stl_types.h>
+#include <peripherals/error/result.h>
 
 namespace Coffee {
 namespace Strings {
+
+template<typename T>
+CString to_string(Optional<T> const& opt)
+{
+    if(opt.has_value())
+        return "Optional(" + to_string(opt.value()) + ")";
+    else
+        return "Optional(nullptr)";
+}
+
+template<typename T, typename E>
+CString to_string(stl_types::result<T, E> const& opt)
+{
+    if(opt.has_value())
+        return "result(" + to_string(opt.value()) + ")";
+    else
+        return "result(nullptr)";
+}
 
 template<typename Dummy, typename std::enable_if<false, Dummy>::type* = nullptr>
 CString to_string(Dummy const&)

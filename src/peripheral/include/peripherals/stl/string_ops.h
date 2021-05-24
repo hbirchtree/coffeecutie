@@ -49,6 +49,28 @@ FORCEDINLINE std::basic_string<TargetCharT> to(
 }
 } // namespace encode
 
+namespace find {
+
+template<typename CharType>
+FORCEDINLINE bool starts_with(
+    std::basic_string_view<CharType> const& haystack,
+    std::basic_string_view<CharType> const& needle)
+{
+    return haystack.find(needle) == 0;
+}
+
+template<typename CharType>
+FORCEDINLINE bool ends_with(
+    std::basic_string_view<CharType> const& haystack,
+    std::basic_string_view<CharType> const& needle)
+{
+    if(haystack.size() < needle.size())
+        return false;
+    return haystack.find(needle) == (haystack.size() - needle.size());
+}
+
+}
+
 template<typename CharType>
 FORCEDINLINE std::basic_string<CharType> encapsulate(
     const CharType* src, size_t len)
@@ -313,7 +335,9 @@ FORCEDINLINE std::basic_string<CharType> pointerify(T ptr)
 
 template<typename CharType = char>
 FORCEDINLINE std::basic_string<CharType> hexdump(
-    semantic::Bytes const& data, bool spacing = true, szptr newline_freq = 0)
+    semantic::mem_chunk<const char> const& data,
+    bool spacing = true,
+    szptr newline_freq = 0)
 {
     std::basic_string<CharType> out;
     out.reserve(data.size * 2 /* Hexadec */ + data.size * spacing /* Space */);
@@ -471,7 +495,7 @@ namespace split {
 template<typename CharType>
 struct spliterator : Iterator<std::forward_iterator_tag, CharType>
 {
-    using string_type = std::basic_string<CharType>;
+    using string_type = std::basic_string_view<CharType>;
     using sep_type    = CharType;
 
     spliterator() : source(nullptr), sep(sep_type()), idx(string_type::npos)
@@ -569,7 +593,7 @@ template<typename T>
 FORCEDINLINE std::string encode(semantic::Span<T> const& data_)
 {
     auto converted = C_OCAST<semantic::Span<u8 const>>(data_);
-    return base64::encode(converted.data, converted.size);
+    return base64::encode(converted.data(), converted.size());
 }
 
 } // namespace b64
@@ -582,7 +606,7 @@ using ::stl_types::String;
 FORCEDINLINE String encode(String const& from)
 {
     return stl_types::str::print::hexdump(
-        semantic::Bytes::From(from.data(), from.size()), false);
+        semantic::mem_chunk<const char>::ofContainer(from), false);
 }
 
 } // namespace hex

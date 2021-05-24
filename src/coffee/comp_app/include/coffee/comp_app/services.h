@@ -599,7 +599,7 @@ struct BatteryProvider : AppService<BatteryProvider>
 struct ScreenshotProvider : AppService<ScreenshotProvider>
 {
     virtual size_2d_t size() const = 0;
-    virtual semantic::Span<typing::pixels::rgb_t> pixels() const = 0;
+    virtual semantic::mem_chunk<typing::pixels::rgb_t> pixels() const = 0;
 };
 
 struct StreamConfig : Config<StreamConfig>

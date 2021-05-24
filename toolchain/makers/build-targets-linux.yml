@@ -67,6 +67,7 @@ maemo:
 raspberry:
   - armhf
   - armhf$(shell)
+
 beaglebone:
   - black
   - black$(shell)
@@ -75,4 +76,12 @@ mingw:
 gamecube:
   - .
 gamecube$(shell):
+  - .
+desktop-x86_64-unknown-linux-gnu:
+  - .
+desktop-x86_64-buildroot-linux-gnu:
+  - .
+raspberry-arm-unknown-linux-gnueabihf:
+  - .
+beaglebone-arm-unknown-linux-gnueabihf:
   - .

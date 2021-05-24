@@ -55,7 +55,7 @@ struct model_settings_t : settings_visitor
     {
         return "mesh";
     }
-    virtual void visit(CString const& name, JSON::Value const& value)
+    virtual void visit(CString const& name, json::Value const& value)
     {
         if(name == "attributes")
         {

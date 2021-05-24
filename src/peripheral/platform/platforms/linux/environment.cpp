@@ -9,24 +9,24 @@ namespace env {
 namespace Linux {
 
 using namespace semantic;
+using url::constructors::MkSysUrl;
 
 CString EnvironmentF::ExecutableName(cstring_w)
 {
-    Ptr<char, ptr_opts::managed_ptr> p = realpath("/proc/self/exe", nullptr);
-
-    if(!p)
+    if(auto file = platform::path::canon(MkSysUrl("/proc/self/exe")); !file)
         return {};
-
-    CString v = p.get();
-    return v;
+    else
+        return file.value().internUrl;
 }
 
 Url EnvironmentF::ApplicationDir()
 {
-    file::file_error ec;
-
     CString execname = ExecutableName();
-    return file::DirFun::Dirname(execname.c_str(), ec);
+    if(auto path = platform::path::dir(MkSysUrl(execname));
+       !path)
+        return {};
+    else
+        return path.value();
 }
 
 } // namespace Linux

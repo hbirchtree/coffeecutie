@@ -364,7 +364,7 @@ bool InternalMultiDraw(
                 &data.indirectCalls);
 
         GLEAM_API_INSTANCE_DATA->indirectBuf->commit(
-            BytesConst::CreateFrom(indirectCalls));
+            BytesConst::ofContainer(indirectCalls));
 
         GLEAM_API_INSTANCE_DATA->indirectBuf->bind();
     }
@@ -449,12 +449,12 @@ static void SetInstanceUniform(
 
     if(!GLEAM_FEATURES.separable_programs)
     {
-        gl::v33::Unifiv(uloc, baseInstance_i);
+        gl::v33::Unifiv(uloc, SpanOne(baseInstance_i));
     }
 #if GL_VERSION_VERIFY(0x410, 0x310)
     else
     {
-        gl::v41::Unifiv(hnd, C_FCAST<i32>(uloc), baseInstance_i);
+        gl::v41::Unifiv(hnd, uloc, SpanOne(baseInstance_i));
     }
 #else
     else

@@ -53,16 +53,16 @@ struct Compressor : Compressor_def
     };
 
     static bool Compress(
-        Bytes const&     uncompressed,
-        Bytes*           target,
-        Opts const&      opts,
-        zlib_error_code& ec);
+        BytesConst const& uncompressed,
+        Bytes*            target,
+        Opts const&       opts,
+        zlib_error_code&  ec);
 
     static bool Decompress(
-        Bytes const&     compressed,
-        Bytes*           target,
-        Opts const&      opts,
-        zlib_error_code& ec);
+        BytesConst const& compressed,
+        Bytes*            target,
+        Opts const&       opts,
+        zlib_error_code&  ec);
 };
 
 using error_code = zlib_error_code;
@@ -85,13 +85,13 @@ struct Compressor : Compressor_def
     };
 
     static bool Compress(
-        Bytes const&        uncompressed,
+        BytesConst const&   uncompressed,
         Bytes*              target,
         Opts const&         opts,
         deflate_error_code& ec);
 
     static bool Decompress(
-        Bytes const&        compressed,
+        BytesConst const&   compressed,
         Bytes*              target,
         Opts const&         opts,
         deflate_error_code& ec);

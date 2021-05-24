@@ -103,7 +103,7 @@ STATICINLINE CString StringExtractLine(CString& shader, cstring query)
 }
 
 STATICINLINE void TransformShader(
-    Bytes const&                   inputShader,
+    BytesConst const&              inputShader,
     ShaderStage                    stage,
     Vector<CString>&               shaderStorage,
     Vector<cstring>&               shaderSrcVec,
@@ -322,10 +322,10 @@ STATICINLINE void ProgramInputGet(
 #endif
 
 bool GLEAM_Shader::compile(
-    ShaderStage      stage,
-    const Bytes&     data,
-    gleam_error&     ec,
-    Constants const& constants)
+    ShaderStage       stage,
+    BytesConst const& data,
+    gleam_error&      ec,
+    Constants const&  constants)
 {
     if(data.size == 0)
     {
@@ -383,7 +383,8 @@ bool GLEAM_Shader::compile(
                 gl::vlow::ShaderGetiv(m_handle, GL_INFO_LOG_LENGTH, &logLen);
                 logLen++;
                 infoLog.resize(C_FCAST<szptr>(logLen));
-                gl::vlow::ShaderGetInfoLog(m_handle, logLen, &dummy, &infoLog[0]);
+                gl::vlow::ShaderGetInfoLog(
+                    m_handle, logLen, &dummy, &infoLog[0]);
                 szptr idx = 0;
                 if((idx = infoLog.find('\0')) != CString::npos)
                 {
@@ -493,10 +494,10 @@ bool GLEAM_Pipeline::attach(
         {
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
             if(GLEAM_FEATURES.direct_state)
-                gl::v45::PipelineAllocEx(m_handle.hnd);
+                gl::v45::PipelineAllocEx(SpanOne(m_handle.hnd));
             else
 #endif
-                gl::v41::PipelineAlloc(m_handle.hnd);
+                gl::v41::PipelineAlloc(SpanOne(m_handle.hnd));
         }
         gl::v41::ProgramUseStages(
             m_handle, shader.m_stages & stages, shader.m_handle);
@@ -608,7 +609,7 @@ void GLEAM_Pipeline::dealloc(gleam_error& ec)
         gl::v33::ProgramFree(m_handle);
 #if GL_VERSION_VERIFY(0x410, 0x320)
     else if(GLEAM_FEATURES.separable_programs)
-        gl::v41::PipelineFree(m_handle.hnd);
+        gl::v41::PipelineFree(SpanOne(m_handle.hnd));
 #endif
     m_handle.release();
 }
@@ -808,8 +809,9 @@ void GetShaderUniforms(
                     GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES,
                     &unifIndices.at(0));
 
-//                Throw(implementation_error(
-//                    GLM_API "Uniform block handling not implemented"));
+                //                Throw(implementation_error(
+                //                    GLM_API "Uniform block handling not
+                //                    implemented"));
             }
         }
 #endif
@@ -873,7 +875,7 @@ void GetShaderUniforms(
 
         for(auto& p : pipeline.m_programs)
         {
-            i32        num_unifs;
+            i32          num_unifs;
             glhnd const& hnd = p.shader->m_handle;
 
             /* Get number of uniform variables */
@@ -983,49 +985,30 @@ void GLEAM_PipelineDumper::dump(C_UNUSED(cstring out))
     if(Extensions::GetProgramBinarySupported(CGL_DBG_CTXT) &&
        (!GLEAM_FEATURES.separable_programs))
     {
-        CGenum         t = GL_NONE;
-        Vector<byte_t> program_data;
-        i32            progLen = 0;
+        CGenum t = GL_NONE;
+        Bytes  program_data{};
+        i32    progLen = 0;
 
         /* Just dump the program binary, nothing else is needed */
         Resource output(out, RSCA::NewFile);
 
-        /* We'll fit the binary type in here */
-        program_data.resize(sizeof(GL_CURR_API) + sizeof(CGenum));
-        //        cVerbose(6, "About to get program binary");
         /* Append program data */
         gl::v41::ProgramGetiv(
             m_pipeline.m_handle, GL_PROGRAM_BINARY_LENGTH, &progLen);
 
-        program_data.resize(program_data.size() + C_FCAST<szptr>(progLen));
+        /* We'll fit the binary type in here */
+        program_data = Bytes::withSize(
+            sizeof(GL_CURR_API) + sizeof(u32) + C_FCAST<szptr>(progLen));
 
         gl::v41::ProgramGetBinary(
             m_pipeline.m_handle, &progLen, &t, program_data);
         if(!progLen)
             return;
 
-        //        cVerbose(6, "Acquired program binary");
-        /* Insert API version */
-        //        MemCpy(&program_data[0], &GL_CURR_API, sizeof(GL_CURR_API));
-        /* Put binary type in there */
-        //        MemCpy(&program_data[sizeof(GL_CURR_API)], &t, sizeof(t));
-
         /* Create the output resource */
-        output.size = program_data.size();
-        output.data = program_data.data();
+        output = program_data;
         if(!FileCommit(output, RSCA::Discard))
             return;
-        //            cVerbose(
-        //                5,
-        //                "Dumped program ({0}) into file {1}",
-        //                m_pipeline.m_handle.hnd,
-        //                output.resource());
-        //        else
-        //            cVerbose(
-        //                5,
-        //                "Dumping program ({0}) into file {1} failed",
-        //                m_pipeline.m_handle.hnd,
-        //                output.resource());
     } else if(GLEAM_FEATURES.separable_programs)
     {
         /* With pipeline objects we must fetch several

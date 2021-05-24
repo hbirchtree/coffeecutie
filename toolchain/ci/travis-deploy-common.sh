@@ -4,9 +4,6 @@ source $(dirname "$0")/travis-common.sh
 
 [ -z "${BUILDVARIANT}" ] && die "No BUILDVARIANT specified"
 
-#DEPLOY_ASSET="libraries_$BUILDVARIANT.tar.gz"
-#DEPLOY_BINS="binaries_$BUILDVARIANT.tar.gz"
-
 function github_api()
 {
     if [ -z "${GITHUB_TOKEN}" ]; then
@@ -14,28 +11,21 @@ function github_api()
         return
     fi
 
-    case ${TRAVIS_OS_NAME} in
-#    "osx")
-#        $GITHUBPY --api-token ${GITHUB_TOKEN} $@
-#    ;;
-    *)
-        python3 "${GITHUBPY}" --api-token "${GITHUB_TOKEN}" $@
-    ;;
-    esac
+    gh $@
 }
 
-function get_deploy_slug()
-{
-    TARGET_TAG=$(github_api list tag "$TRAVIS_REPO_SLUG" "^$TRAVIS_COMMIT$" | cut -d'|' -f 2)
-
-    [ -z "${TARGET_TAG}" ] && die " * Could not find tag, will not deploy"
-
-    TARGET_RELEASE=$(github_api list release "$TRAVIS_REPO_SLUG" "^$TARGET_TAG$" | cut -d'|' -f 1)
-
-    [ -z "${TARGET_RELEASE}" ] && github_api push release "$TRAVIS_REPO_SLUG" "$TARGET_TAG" "Autorelease" "Autorelease"
-
-    echo "${TRAVIS_REPO_SLUG}:${TARGET_TAG}"
-}
+#function get_deploy_slug()
+#{
+#    TARGET_TAG=$(github_api list tag "$TRAVIS_REPO_SLUG" "^$TRAVIS_COMMIT$" | cut -d'|' -f 2)
+#
+#    [ -z "${TARGET_TAG}" ] && die " * Could not find tag, will not deploy"
+#
+#    TARGET_RELEASE=$(github_api list release "$TRAVIS_REPO_SLUG" "^$TARGET_TAG$" | cut -d'|' -f 1)
+#
+#    [ -z "${TARGET_RELEASE}" ] && github_api push release "$TRAVIS_REPO_SLUG" "$TARGET_TAG" "Autorelease" "Autorelease"
+#
+#    echo "${TRAVIS_REPO_SLUG}:${TARGET_TAG}"
+#}
 
 function collect_coverage()
 {

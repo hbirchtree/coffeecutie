@@ -13,8 +13,6 @@ using semantic::BytesConst;
 using semantic::SerialArray;
 using semantic::Span;
 using semantic::mem_chunk;
-
-template<typename T>
-using _cbasic_data_chunk = semantic::mem_chunk<T>;
+using semantic::SpanOne;
 
 } // namespace Coffee

@@ -1,12 +1,12 @@
 #include <coffee/core/CApplication>
 #include <coffee/core/CFiles>
 #include <coffee/core/argument_handling.h>
-#include <coffee/core/datastorage/text/json/cjsonparser.h>
+#include <coffee/core/datastorage/text/json/json.h>
 #include <coffee/core/libc_types.h>
 #include <peripherals/libc/signals.h>
 #include <peripherals/posix/process.h>
 #include <platforms/environment.h>
-#include <platforms/posix/file.h>
+#include <platforms/file.h>
 
 #if defined(FEATURE_ENABLE_ASIO)
 #include <coffee/asio/asio_worker.h>
@@ -45,11 +45,11 @@ CString read_output(posix::fd_t stream)
 i32 crash_main(i32, cstring_w*)
 {
     using libc::signal::sig;
-    using platform::file::file_error;
     using platform::url::Url;
     using platform::url::constructors::MkUrl;
     using namespace libc;
     using namespace posix;
+    using namespace platform;
 
     CString stdoutBuf;
     CString stderrBuf;
@@ -72,21 +72,21 @@ i32 crash_main(i32, cstring_w*)
 
     Vector<CString> apitrace_args;
 
-    posix_ec   ec;
-    file_error fec;
-    Url        workingDir;
+    posix_ec ec;
+    Url      workingDir;
 
-    if(platform::Env::ExistsVar("CRASH_APITRACE"))
+    if(auto apitrace = env::var("CRASH_APITRACE"); apitrace.has_value())
     {
-        apitrace_args.push_back(platform::Env::GetVar("CRASH_APITRACE"));
+        apitrace_args.push_back(apitrace.value());
         apitrace_args.push_back("trace");
 
         for(auto it = apitrace_args.rbegin(); it != apitrace_args.rend(); ++it)
             args.insert(args.begin(), C_CCAST<cstring_w>(it->c_str()));
     }
 
-    if(platform::Env::ExistsVar("CRASH_WORKING_DIR"))
-        workingDir = MkUrl(platform::Env::GetVar("CRASH_WORKING_DIR"));
+    if(auto working_dir = env::var("CRASH_WORKING_DIR");
+       working_dir.has_value())
+        workingDir = MkUrl(working_dir.value());
 
 #if defined(COFFEE_APPLE)
     if(!workingDir.isLocal())
@@ -159,13 +159,11 @@ i32 crash_main(i32, cstring_w*)
     if(exitCode == 0)
         return 0;
 
-    if(!platform::Env::ExistsVar("CRASH_API"))
+    if(!platform::env::var("CRASH_API"))
     {
         cDebug("CRASH_API not set, nowhere to submit to");
         return 1;
     }
-
-    using Coffee::JSON;
 
     http::multipart::builder multipart("-----CrashRecovery");
 
@@ -183,7 +181,7 @@ i32 crash_main(i32, cstring_w*)
                 semantic::RSCA::TempFile);
             machineProfileLocation = MkUrl(
                 Path("..") / appName /
-                    (DirFun::Basename(args.at(0), fec).internUrl +
+                    (platform::path::base(MkUrl(args.at(0))).value().internUrl +
                      "-chrome.json"),
                 semantic::RSCA::TempFile);
             stacktraceLocation = MkUrl(
@@ -192,7 +190,7 @@ i32 crash_main(i32, cstring_w*)
         }
     }
 
-    if(platform::file::FileFun::Exists(profileLocation, fec))
+    if(platform::file::exists(profileLocation))
     {
         cDebug("Located profile: {0}", *profileLocation);
         auto profileResource = Resource(profileLocation);
@@ -203,7 +201,7 @@ i32 crash_main(i32, cstring_w*)
             {{"Content-Type", "text/plain"}});
     }
 
-    if(platform::file::FileFun::Exists(machineProfileLocation, fec))
+    if(platform::file::exists(machineProfileLocation))
     {
         cDebug("Located machine profile: {0}", *machineProfileLocation);
         auto machineProfile = Resource(machineProfileLocation);
@@ -214,7 +212,7 @@ i32 crash_main(i32, cstring_w*)
             {{"Content-Type", "text/plain"}});
     }
 
-    if(platform::file::FileFun::Exists(stacktraceLocation, fec))
+    if(platform::file::exists(stacktraceLocation))
     {
         cDebug("Located crash stacktrace: {0}", *stacktraceLocation);
         auto stacktrace = Resource(stacktraceLocation);
@@ -225,17 +223,18 @@ i32 crash_main(i32, cstring_w*)
             {{"Content-Type", "text/plain"}});
     }
 
+    auto exitCodeStr = stl_types::cast_pod(exitCode);
     multipart.add(
         "exitCode",
-        Bytes::CreateString(cast_pod(exitCode)),
+        BytesConst::ofString(exitCodeStr),
         {{"Content-Type", "text/plain"}});
     multipart.add(
         "stdout",
-        Bytes::CreateString(stdoutBuf),
+        BytesConst::ofString(stdoutBuf),
         {{"Content-Type", "text/plain"}});
     multipart.add(
         "stderr",
-        Bytes::CreateString(stderrBuf),
+        BytesConst::ofString(stderrBuf),
         {{"Content-Type", "text/plain"}});
 
     multipart.finalize();
@@ -248,7 +247,7 @@ i32 crash_main(i32, cstring_w*)
     auto worker = ASIO::GenWorker();
 
     Net::Resource crashPush(
-        worker->context, Net::MkUrl(platform::Env::GetVar("CRASH_API")));
+        worker->context, Net::MkUrl(platform::env::var("CRASH_API").value()));
 
     crashPush.setHeaderField(
         http::header_field::content_type, multipart.content_type());
@@ -256,8 +255,8 @@ i32 crash_main(i32, cstring_w*)
     crashPush.setHeaderField(
         "X-Coffee-Signature",
         "sha1=" + hex::encode(net::hmac::digest(
-                      semantic::Bytes::CreateString(multipart.m_data),
-                      platform::Env::Var("COFFEE_HMAC_KEY").value_or("0000"))));
+                      semantic::Span(multipart.m_data),
+                      platform::env::var("COFFEE_HMAC_KEY").value_or("0000"))));
 
     if(!crashPush.push(http::method_t::post, multipart))
     {

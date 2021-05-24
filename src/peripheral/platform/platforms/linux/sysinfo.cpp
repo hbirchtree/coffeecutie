@@ -11,13 +11,28 @@ namespace platform {
 namespace env {
 namespace Linux {
 
-CString SysInfo::cached_cpuinfo_string;
+Vector<String> SysInfo::cached_cpuinfo_string;
 
 #define DMI_PATH "/sys/class/dmi/id/"
 static const constexpr cstring invalid_info_string = "To Be Filled By O.E.M.";
 
-using DirFun   = file::DirFun;
-using LFileFun = file::Linux::FileFun;
+STATICINLINE auto sys_read(String const& file)
+{
+    using url::constructors::MkUrl;
+
+    if(auto res = platform::file::read_lines(MkUrl(file)); res.has_error())
+        return Vector<String>();
+    else
+        return res.value();
+}
+
+STATICINLINE Optional<String> sys_read_str(String const& file)
+{
+    if(auto lines = sys_read(file); lines.empty())
+        return std::nullopt;
+    else
+        return lines.at(0);
+}
 
 /* More paths to inspect:
  *
@@ -50,18 +65,25 @@ static void lsb_find_val(cstring& value, CString::size_type& len)
 lsb_data get_lsb_release()
 {
 #ifndef COFFEE_LOWFAT
-    CString version = LFileFun::sys_read("/etc/lsb-release");
+    auto const& lsb_strings = sys_read("/etc/lsb-release");
 
-    cstring distro  = libc::str::find(version.c_str(), "DISTRIB_ID");
-    cstring release = libc::str::find(version.c_str(), "DISTRIB_RELEASE");
+    auto dist =
+        std::find_if(lsb_strings.begin(), lsb_strings.end(), [](auto const& s) {
+            return stl_types::str::find::starts_with<char>(s, "DISTRIB_ID");
+        });
+    auto rel =
+        std::find_if(lsb_strings.begin(), lsb_strings.end(), [](auto const& s) {
+            return stl_types::str::find::starts_with<char>(
+                s, "DISTRIB_RELEASE");
+        });
 
-    CString::size_type distro_len = 0, release_len = 0;
+    lsb_data out = {
+        .distribution = dist != lsb_strings.end() ? *dist : String(),
+        .release      = rel != lsb_strings.end() ? *rel : String(),
+    };
 
-    lsb_find_val(distro, distro_len);
-    lsb_find_val(release, release_len);
-
-    if(distro && release)
-        return {CString(distro, distro_len), CString(release, release_len)};
+    if(!out.distribution.empty() && !out.release.empty())
+        return out;
 #endif
 
     return {};
@@ -80,18 +102,19 @@ CString get_kern_ver()
 #endif
 }
 
-static CString get_linux_property(CString const& source, cstring query)
+static String get_linux_property(Vector<String> const& source, cstring query)
 {
 #ifndef COFFEE_LOWFAT
-    auto res = source.find(query);
+    auto property =
+        std::find_if(source.begin(), source.end(), [query](auto const& s) {
+            return stl_types::str::find::starts_with<char>(s, query);
+        });
 
-    if(res == source.npos)
+    if(property == source.end())
         return {};
 
-    res      = source.find(":", res) + 1;
-    auto end = source.find_first_of("\n", res);
-
-    return source.substr(res, end - res);
+    auto out = property->substr(libc::str::len(query) + 2);
+    return str::trim::both(out);
 #else
     return {};
 #endif
@@ -119,9 +142,12 @@ info::DeviceType get_device_variant()
 {
     using namespace platform::info;
 
-    CString input = LFileFun::sys_read("/sys/class/dmi/id/chassis_type");
+    auto input = sys_read("/sys/class/dmi/id/chassis_type");
 
-    i32 chassis_type = cast_string<i32>(input);
+    if(input.empty())
+        return info::DeviceUnknown;
+
+    i32 chassis_type = cast_string<i32>(input[0]);
 
     switch(chassis_type)
     {
@@ -169,23 +195,15 @@ CString SysInfo::GetSystemVersion()
     return tmp;
 }
 
-void SysInfo::FreeCPUInfoString()
-{
-    cached_cpuinfo_string.resize(0);
-}
-
-CString SysInfo::CPUInfoString(bool force)
+Vector<String> SysInfo::CPUInfoString(bool force)
 {
     /* We don't want to read it tons of times */
     if(!cached_cpuinfo_string.empty() && !force)
         return cached_cpuinfo_string;
 
-    //        C_PERFWARN(__FILE__,__LINE__,"Reading from /proc/cpuinfo!");
-
-    CString data = LFileFun::sys_read("/proc/cpuinfo");
+    auto data = sys_read("/proc/cpuinfo");
 
     cached_cpuinfo_string = data;
-    atexit(FreeCPUInfoString);
 
     return data;
 }
@@ -231,30 +249,29 @@ Set<CString> SysInfo::CPUFlags()
 SysInfoDef::NetStatusFlags SysInfo::NetStatus()
 {
 #if !defined(COFFEE_LOWFAT) && defined(COFFEE_LINUX)
+    using semantic::RSCA;
+    using url::Path;
+    using url::constructors::MkUrl;
+
     static const constexpr cstring net_path = "/sys/class/net/";
 
-    DirFun::DirList list;
-
-    file::file_error ec;
-
-    DirFun::Ls(url::constructors::MkUrl(net_path, RSCA::SystemFile), list, ec);
-
     bool has_loopback = false;
-    for(DirFun::DirItem_t const& dir : list)
-    {
-        if(dir.name == "lo")
-            has_loopback = true;
-        else
+    if(auto listing = platform::file::list(MkUrl(net_path, RSCA::SystemFile));
+       listing.has_error())
+        return SysInfo::NetStatLocalOnly;
+    else
+        for(auto const& dir : listing.value())
         {
-            CString operstate_file =
-                Env::ConcatPath(net_path, dir.name.c_str());
-            operstate_file =
-                Env::ConcatPath(operstate_file.c_str(), "operstate");
-            CString state = LFileFun::sys_read(operstate_file.c_str());
-            if(state == "up")
-                return NetStatConnected;
+            if(dir.name == "lo")
+                has_loopback = true;
+            else
+            {
+                Path operstate_file = Path(net_path) / dir.name / "operstate";
+                auto state          = sys_read(operstate_file.internUrl)[0];
+                if(state == "up")
+                    return NetStatConnected;
+            }
         }
-    }
     if(has_loopback)
         return NetStatLocalOnly;
 #endif
@@ -264,27 +281,13 @@ SysInfoDef::NetStatusFlags SysInfo::NetStatus()
 u32 SysInfo::CpuCount()
 {
 #if !defined(COFFEE_LOWFAT) && defined(COFFEE_LINUX)
-    const cstring query = "physical id";
-
     CPUInfoString();
 
-    u32  count = 0;
-    auto res   = cached_cpuinfo_string.find(query);
-    while(res != cached_cpuinfo_string.npos)
-    {
-        res      = cached_cpuinfo_string.find(':', res) + 1;
-        auto end = cached_cpuinfo_string.find('\n', res);
+    auto res = get_linux_property(cached_cpuinfo_string, "physical id");
+    if(res.empty())
+        return 1;
 
-        CString result = cached_cpuinfo_string.substr(res, end - res);
-        str::trim::both(result);
-
-        u32 c = cast_string<u32>(result) + 1;
-        count = math::max(count, c);
-
-        res = cached_cpuinfo_string.find(query, end);
-    }
-
-    return count ? count : 1;
+    return cast_string<u32>(res);
 #else
     return ThreadCount();
 #endif
@@ -325,24 +328,19 @@ u32 SysInfo::CoreCount()
 u64 SysInfo::CachedMemory()
 {
 #if !defined(COFFEE_LOWFAT) && defined(COFFEE_LINUX)
-    CString data = LFileFun::sys_read("/proc/meminfo");
+    auto data = sys_read("/proc/meminfo");
+    auto it   = std::find_if(data.begin(), data.end(), [](auto const& s) {
+        return str::find::starts_with<char>(s, "Cached:");
+    });
 
-    auto idx = data.find("\nCached:");
-
-    if(idx != data.npos)
-    {
-        idx      = data.find(":", idx) + 1;
-        auto end = data.find("\n", idx);
-
-        auto mem = data.substr(idx, end - idx - 2);
-
-        u64 count = cast_string<u64>(str::trim::both(mem));
-
-        return count * 1000;
-    }
-#endif
-
+    if(it == data.end())
+        return 0;
+    auto mem = (*it).substr(it->find(':'));
+    str::trim::both(mem);
+    return cast_string<u64>(mem.substr(0, mem.size() - 2)) * 1000;
+#else
     return 0;
+#endif
 }
 
 info::HardwareDevice SysInfo::Processor()
@@ -385,10 +383,13 @@ info::HardwareDevice SysInfo::Processor()
 
 Vector<f64> SysInfo::ProcessorFrequencies(bool current)
 {
-    using namespace url::constructors;
-
 #if !defined(COFFEE_LOWFAT) && \
     (defined(COFFEE_LINUX) || defined(COFFEE_ANDROID))
+    using namespace url::constructors;
+    using semantic::RSCA;
+    using url::Path;
+    using url::Url;
+
     static const struct
     {
         cstring prefix;
@@ -404,11 +405,12 @@ Vector<f64> SysInfo::ProcessorFrequencies(bool current)
 
     for(size_t i = 0; i < 3; i++)
     {
-        file::file_error ec;
-        Url              p = MkUrl(root_paths[i].prefix, RSCA::SystemFile);
+        Path p           = Path(root_paths[i].prefix);
+        auto cpu_listing = platform::file::list(MkSysUrl(p));
 
-        DirFun::DirList cpus;
-        DirFun::Ls(p, cpus, ec);
+        if(cpu_listing.has_error())
+            continue;
+        auto cpus = std::move(cpu_listing.value());
 
         if(cpus.size() == 0)
             continue;
@@ -416,17 +418,15 @@ Vector<f64> SysInfo::ProcessorFrequencies(bool current)
         Vector<f64> freqs;
         freqs.reserve(cpus.size());
 
-        for(DirFun::DirItem_t const& e : cpus)
+        for(auto const& e : cpus)
         {
             if(e.name.substr(0, 3) != "cpu")
                 continue;
 
-            Url cpu =
-                p + Path::Mk(e.name.c_str()) + Path::Mk(root_paths[i].suffix);
-            CString tmp = LFileFun::sys_read((*cpu).c_str());
-            tmp         = tmp.substr(0, tmp.find('\n'));
-            if(tmp.size())
-                freqs.push_back(cast_string<f64>(tmp) / 1000000.0);
+            Url  cpu = MkSysUrl(p / e.name / root_paths[i].suffix);
+            auto tmp = sys_read_str((*cpu));
+            if(tmp)
+                freqs.push_back(cast_string<f64>(*tmp) / 1000000.0);
         }
 
         if(freqs.size() == 0)
@@ -571,35 +571,14 @@ info::HardwareDevice SysInfo::DeviceName()
 #else
     static const cstring prod_ver = DMI_PATH "/product_version";
     static const cstring prod_name = DMI_PATH "/product_name";
+    static const cstring manufacturer = DMI_PATH "/sys_vendor";
 
-    static const cstring str_gen = "Generic";
-    static const cstring str_lin = "Device";
-
-    /* Assumes the following format for lsb-release:
-     *
-     * DISTRIB_ID=Ubuntu
-     * DISTRIB_RELEASE=16.04
-     * DISTRIB_CODENAME=xenial
-     * DISTRIB_DESCRIPTION="Ubuntu 16.04.1 LTS"
-     *
-     */
-
-    cstring manf = str_gen;
-    cstring prod = str_lin;
-
-    CString manufac = LFileFun::sys_read(DMI_PATH "/sys_vendor");
-    cstring prod_src = prod_name;
-    if(manufac == "LENOVO")
-        prod_src = prod_ver;
-    CString product = LFileFun::sys_read(prod_ver);
-
-    if(manufac.size() > 0 && manufac != invalid_info_string)
-        manf = manufac.c_str();
-    if(product.size() > 0 && manufac != invalid_info_string)
-        prod = product.c_str();
+    auto manufac = sys_read_str(manufacturer).value_or("Generic");
+    auto product = sys_read_str(manufac == "LENOVO" ? prod_ver : prod_name)
+                       .value_or("Device");
 
     return info::HardwareDevice(
-        manf, prod, get_kern_name() + (" " + get_kern_ver()));
+        manufac, product, get_kern_name() + (" " + get_kern_ver()));
 #endif
 #else
     return {};
@@ -616,9 +595,9 @@ info::HardwareDevice SysInfo::Motherboard()
     static const cstring mb_model = DMI_PATH "/board_name";
     static const cstring mb_version = DMI_PATH "/bios_version";
 
-    CString manuf = LFileFun::sys_read(mb_manuf);
-    CString model = LFileFun::sys_read(mb_model);
-    CString version = LFileFun::sys_read(mb_version);
+    auto manuf = sys_read_str(mb_manuf).value_or("Generic");
+    auto model = sys_read_str(mb_model).value_or("Motherboard");
+    auto version = sys_read_str(mb_version).value_or("0x0");
 
     return info::HardwareDevice(manuf, model, version);
 #endif
@@ -634,25 +613,11 @@ info::HardwareDevice SysInfo::Chassis()
     static const cstring ch_model   = DMI_PATH "/chassis_name";
     static const cstring ch_version = DMI_PATH "/chassis_version";
 
-    CString manuf   = LFileFun::sys_read(ch_manuf);
-    CString model   = LFileFun::sys_read(ch_model);
-    CString version = LFileFun::sys_read(ch_version);
+    auto manuf   = sys_read_str(ch_manuf).value_or("Generic");
+    auto model   = sys_read_str(ch_model).value_or("Chassis");
+    auto version = sys_read_str(ch_version).value_or("0x0");
 
-    static const cstring str_gen = "Generic";
-    static const cstring str_lin = "Chassis";
-
-    cstring manuf_c = str_gen;
-    cstring model_c = str_lin;
-    cstring versn_c = "0x0";
-
-    if(manuf.size() && manuf != invalid_info_string)
-        manuf_c = manuf.c_str();
-    if(model.size() && model != invalid_info_string)
-        model_c = model.c_str();
-    if(version.size() && version != invalid_info_string)
-        versn_c = version.c_str();
-
-    return info::HardwareDevice(manuf_c, model_c, versn_c);
+    return info::HardwareDevice(manuf, model, version);
 #else
     return {};
 #endif
@@ -665,25 +630,11 @@ info::HardwareDevice SysInfo::BIOS()
     static const cstring bios_name    = DMI_PATH "/board_version";
     static const cstring bios_version = DMI_PATH "/bios_version";
 
-    CString manuf   = LFileFun::sys_read(bios_manuf);
-    CString name    = LFileFun::sys_read(bios_name);
-    CString version = LFileFun::sys_read(bios_version);
+    auto manuf   = sys_read_str(bios_manuf).value_or("Generic");
+    auto name    = sys_read_str(bios_name).value_or("BIOS");
+    auto version = sys_read_str(bios_version).value_or("0x0");
 
-    static const cstring str_gen = "Generic";
-    static const cstring str_lin = "BIOS";
-
-    cstring manuf_c = str_gen;
-    cstring name_c  = str_lin;
-    cstring versn_c = "0x0";
-
-    if(manuf.size() && manuf != invalid_info_string)
-        manuf_c = manuf.c_str();
-    if(name.size() && name != invalid_info_string)
-        name_c = name.c_str();
-    if(version.size() && version != invalid_info_string)
-        versn_c = version.c_str();
-
-    return info::HardwareDevice(manuf_c, name_c, versn_c);
+    return info::HardwareDevice(manuf, name, version);
 #else
     return {};
 #endif
@@ -692,69 +643,62 @@ info::HardwareDevice SysInfo::BIOS()
 #if !defined(COFFEE_ANDROID)
 PowerInfoDef::Temp PowerInfo::CpuTemperature()
 {
-    using namespace url::constructors;
-
 #ifndef COFFEE_LOWFAT
+    using namespace url::constructors;
+    using semantic::RSCA;
+    using url::Path;
+    using url::Url;
+
     static const constexpr cstring thermal_class = "/sys/class/thermal";
     static const constexpr cstring hwmon_class   = "/sys/class/hwmon";
     Temp                           out           = {};
 
     /* First, look for thermal_zone* units */
-    DirFun::DirList lst;
-    Path            tmp, tmp2;
-    Url             base = MkUrl("", RSCA::SystemFile);
-
-    file::file_error ec;
-
-    if(DirFun::Ls(MkUrl(thermal_class, RSCA::SystemFile), lst, ec))
+    if(auto listing = platform::file::list(MkSysUrl(thermal_class));
+       listing.has_error())
+        return {};
+    else
     {
-        for(auto e : lst)
+        for(auto e : listing.value())
             if(e.name != "." && e.name != "..")
             {
-                tmp = ((Path{} + thermal_class) + e.name.c_str()) + "temp";
+                Path tmp = Path(thermal_class) / e.name / "temp";
 
-                if(LFileFun::Exists(base + tmp, ec))
+                if(platform::file::exists(MkSysUrl(tmp)))
                 {
-                    CString temp =
-                        LFileFun::sys_read(tmp.internUrl.c_str(), ec);
+                    auto temp   = sys_read_str(tmp.internUrl).value_or("0");
                     out.current = cast_string<scalar>(temp) / 1000;
                     break;
                 }
             }
     }
 
-    lst  = {};
-    tmp  = Path::Mk("");
-    tmp2 = Path::Mk("");
-
     /* hwmon* units */
-    if(DirFun::Ls(MkUrl(hwmon_class, RSCA::SystemFile), lst, ec))
-    {
-        DirFun::DirList lst2;
-        Url             path = MkUrl("", RSCA::SystemFile);
-        for(auto e : lst)
+    if(auto listing = platform::file::list(MkSysUrl(hwmon_class));
+       listing.has_error())
+        return {};
+    else
+        for(auto e : listing.value())
         {
-            tmp       = Path{hwmon_class};
-            Url path2 = path + (tmp + e.name.c_str());
-            if(DirFun::Ls(path2, lst2, ec))
+            Url path = MkSysUrl(Path(e.name));
+            if(auto listing = platform::file::list(path); listing.has_error())
+                continue;
             {
-                for(auto e2 : lst2)
+                for(auto e2 : listing.value())
                 {
                     auto prefix = e2.name.substr(0, 4);
                     auto suffix = e2.name.substr(e2.name.size() - 5, 5);
                     if(prefix != "temp" && suffix != "input")
                         continue;
 
-                    Url path2 = path + Path{e2.name.c_str()};
+                    Url path2 = path / Path{e2.name};
 
-                    CString temp_s =
-                        LFileFun::sys_read(path2.internUrl.c_str(), ec);
+                    auto temp = sys_read_str(path2.internUrl).value_or("0");
 
-                    out.current = cast_string<scalar>(temp_s);
+                    out.current = cast_string<scalar>(temp);
                 }
             }
         }
-    }
 
     return out;
 #else

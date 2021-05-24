@@ -14,9 +14,11 @@
 #include <shaderc/shaderc.hpp>
 
 #if defined(HAVE_SPIRVCROSS)
-#include <libspirv.hpp>
-#include <optimizer.hpp>
+#include <spirv-tools/libspirv.hpp>
+#include <spirv-tools/optimizer.hpp>
+#if C_HAS_INCLUDE(<spirv-tools/opt/pass.h>)
 #include <spirv-tools/opt/pass.h>
+#endif
 #include <spirv_glsl.hpp>
 #endif
 
@@ -37,7 +39,7 @@ struct shader_settings_t : settings_visitor
     {
         return "shader";
     }
-    virtual void visit(CString const& member, JSON::Value const& value)
+    virtual void visit(CString const& member, json::Value const& value)
     {
         if(member == "versions")
         {
@@ -139,6 +141,7 @@ struct CoffeeIncluder : shaderc::CompileOptions::IncluderInterface
     }
 };
 
+#if C_HAS_INCLUDE(<spirv-tools/opt/pass.h>)
 struct LegacyTransform : Pass
 {
     struct LegacyOptions
@@ -457,6 +460,7 @@ struct LegacyTransform : Pass
         return Status::SuccessWithChange;
     }
 };
+#endif
 
 static Vector<u32> CompileSpirV(
     TerminalCursor&            cursor,
@@ -543,8 +547,11 @@ static Vector<u32> TransformToLegacy(Vector<u32> const& source)
         .RegisterPass(spvtools::CreateDeadBranchElimPass())
         .RegisterPass(spvtools::CreateLoopUnrollPass(true))
         .RegisterPass(spvtools::CreateMergeReturnPass())
+#if C_HAS_INCLUDE(<spirv-tools/opt/pass.h>)
         .RegisterPass(PassToken::CreateWrap(
-            UqPtr<Pass>(dynamic_cast<Pass*>(new LegacyTransform))));
+            UqPtr<Pass>(dynamic_cast<Pass*>(new LegacyTransform))))
+#endif
+        ;
 
     Vector<u32> output;
     if(!opt.Run(source.data(), source.size(), &output))

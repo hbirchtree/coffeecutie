@@ -13,7 +13,7 @@ struct CommonFileFun : FileFunDef<NestedError>
 {
 };
 
-using FILE_error_code = posix_error_code;
+using FILE_error_code = common::posix::posix_error_code;
 
 struct FILEApi
 {

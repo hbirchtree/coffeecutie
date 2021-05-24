@@ -31,10 +31,10 @@
 
 namespace posix {
 
-using posix_ec = platform::file::posix_error_code;
+using posix_ec = platform::common::posix::posix_error_code;
 using fd_t     = int;
 using ::pid_t;
-using platform::file::posix::collect_error;
+using platform::common::posix::collect_error;
 
 namespace fd {
 
@@ -180,7 +180,6 @@ template<typename ArgType>
 spawn_info spawn(exec_info<ArgType> const& exec)
 {
     using libc::signal::sig;
-    using platform::file::file_error;
     using platform::url::constructors::MkUrl;
 
     pid_t    childPid = 0;
@@ -200,12 +199,10 @@ spawn_info spawn(exec_info<ArgType> const& exec)
     {
         ec = 0;
 
-        platform::file::file_error fec;
         auto                       working_dir = exec.working_dir;
         if(!working_dir.isLocal())
             working_dir = MkUrl(".");
-        platform::file::DirFun::ChDir(working_dir, fec);
-        C_ERROR_CHECK(fec);
+        platform::path::change_dir(working_dir);
 
         fd::close(STDOUT_FILENO, ec);
         C_ERROR_CHECK(ec);

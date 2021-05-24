@@ -8,8 +8,8 @@
 
 namespace Coffee {
 
-struct _cbasic_mesh;
-using Mesh = _cbasic_mesh;
+struct memory_mesh;
+using Mesh = memory_mesh;
 
 namespace ASSIMP {
 

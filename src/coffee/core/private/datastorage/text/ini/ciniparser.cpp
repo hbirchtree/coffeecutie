@@ -12,6 +12,8 @@
 
 #include <coffee/strings/format.h>
 
+/* TODO: Rewrite with std::string_view */
+
 namespace Coffee {
 namespace DataStorage {
 namespace TextStorage {

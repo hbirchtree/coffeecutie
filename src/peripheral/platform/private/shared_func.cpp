@@ -1,9 +1,12 @@
 #include <platforms/base/sysinfo.h>
+#include <platforms/stacktrace.h>
 
 #include <platforms/pimpl_state.h>
 
 #include <peripherals/stl/functional_types.h>
 #include <peripherals/stl/stlstring_ops.h>
+
+#include <peripherals/stl/string_casting.h>
 
 #if defined(COFFEE_UNIXPLAT)
 #include <unistd.h>
@@ -81,3 +84,39 @@ info::HardwareDevice SysInfoDef::BIOS()
 
 } // namespace env
 } // namespace platform
+
+namespace platform::stacktrace {
+
+void print_frames(
+    stacktrace&&                       frames,
+    typing::logging::LogInterfaceBasic print,
+    typing::logging::StackWriterEx     stack_writer)
+{
+    detail::print(print, "dumping stacktrace:");
+    for(auto const& frame : frames)
+    {
+        // clang-format off
+        detail::print(
+            print,
+            stl_types::String(" >> ") +
+            "exec(" + frame.name() + ") [0x????] " +
+            (frame.source_file().empty() ?
+                stl_types::String() :
+                frame.source_file() + ":" + cast_pod(frame.source_line()))
+        );
+        // clang-format on
+    }
+}
+
+void print_exception(
+    stl_types::Pair<std::string, stacktrace>&& exception,
+    typing::logging::LogInterfaceBasic         print,
+    typing::logging::StackWriterEx             stack_writer)
+{
+    detail::print(print, "exception encountered:");
+    detail::print(print, " >> " + exception.first);
+
+    print_frames(std::move(exception.second), print, stack_writer);
+}
+
+} // namespace platform::stacktrace

@@ -543,7 +543,7 @@ void PerformanceMonitor::end_restricted(Proxy& p, time_point const& time)
             Bytes            encoded;
             stb::stb_error   ec;
             stb::image_const source = stb::image_const::From(
-                C_OCAST<Bytes>(pixels), screenshot->size(), 3);
+                pixels.as<Bytes::value_type>(), screenshot->size(), 3);
 
             stb::SaveJPG(encoded, source, ec, 50);
             auto screenshot_file = "screenshot.jpg"_tmpfile;
@@ -559,7 +559,7 @@ void PerformanceMonitor::end_restricted(Proxy& p, time_point const& time)
             json::CaptureMetrics(
                 "Screenshots",
                 MetricVariant::Image,
-                b64::encode(encoded),
+                b64::encode<byte_t>(encoded),
                 timestamp);
         }
     }

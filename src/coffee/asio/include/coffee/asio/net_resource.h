@@ -96,6 +96,14 @@ struct Resource : semantic::ByteProvider
         return data();
     }
 
+    operator BytesConst() const
+    {
+        if(!isResponseReady())
+            return BytesConst();
+
+        return data();
+    }
+
     operator Path() const
     {
         return Path(m_request.header.resource);

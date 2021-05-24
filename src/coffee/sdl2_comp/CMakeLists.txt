@@ -1,19 +1,7 @@
-if(NOT EMSCRIPTEN)
-    if(NOT TARGET SDL2)
-        dependency_get (
-            REQUIRED
-            SOURCE hbirchtree/native-library-bundle
-            TAG ${NATIVE_LIB_BUNDLE_TAG}
-            NAMES sdl2=SDL2
-            )
-
-        find_package ( SDL2 CONFIG REQUIRED )
-    endif()
-
-    set ( LIBS
-        SDL2::SDL2-static
-        )
-endif()
+find_package ( SDL2 CONFIG REQUIRED )
+set ( LIBS
+    SDL2::SDL2-static
+    )
 
 coffee_library (
     TARGET SDL2Components
@@ -32,12 +20,6 @@ if(NOT EMSCRIPTEN)
     target_include_directories ( SDL2Components PRIVATE
         $<BUILD_INTERFACE:${SDL2_INCLUDE_DIR}>
         $<BUILD_INTERFACE:${SDL2_INCLUDE_DIR}/SDL2>
-        )
-
-    dependency_link (
-        TARGET SDL2Components
-        DEPENDENCIES
-            sdl2=SDL2
         )
 else()
     target_compile_options ( SDL2Components PUBLIC

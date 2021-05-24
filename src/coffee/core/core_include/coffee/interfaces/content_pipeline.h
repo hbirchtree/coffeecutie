@@ -17,8 +17,9 @@ using namespace Coffee;
 
 struct FileProcessor
 {
-    Path cacheBaseDir;
-    u32  numWorkers;
+    stl_types::Map<Path, Resource> cachedFiles;
+    Url                            cacheBaseDir;
+    u32                            numWorkers;
 
     virtual ~FileProcessor()
     {
@@ -42,8 +43,8 @@ struct FileProcessor
         Vector<VirtFS::VirtDesc>& files, TerminalCursor& cursor) = 0;
 
     virtual void setInternalState(
-        ShPtr<State::InternalState>          state,
-        ShPtr<State::InternalThreadState>    tstate,
+        ShPtr<State::InternalState>                 state,
+        ShPtr<State::InternalThreadState>           tstate,
         UqPtr<platform::detail::state_pimpl> const& pimpl)
     {
         State::SetInternalState(state);
@@ -56,10 +57,10 @@ struct FileProcessor
 
     virtual void setCacheBaseDirectory(Path const& basedir)
     {
-        cacheBaseDir = basedir;
+        cacheBaseDir = MkUrl(basedir);
     }
 
-    virtual Path cacheTransform(Path const& f)
+    virtual Url cacheTransform(Path const& f)
     {
         return cacheBaseDir + Path(str::replace::str(f.internUrl, "/", "_"));
     }
@@ -72,8 +73,14 @@ struct FileProcessor
 
     virtual Bytes getCached(Path const& file)
     {
-        Resource cache(MkUrl(cacheTransform(file)));
-        return Bytes::Copy(C_OCAST<Bytes>(cache));
+        if(auto it = cachedFiles.find(file); it != cachedFiles.end())
+            return it->second;
+        else
+        {
+            auto out =
+                cachedFiles.insert({file, Resource(cacheTransform(file))});
+            return C_OCAST<Bytes>(out.first->second);
+        }
     }
 
     virtual void cacheFile(Path const& file, Bytes const& content)

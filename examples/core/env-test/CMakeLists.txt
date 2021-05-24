@@ -2,7 +2,7 @@ coffee_application (
     TARGET EnvTest
     TITLE "Environment Data"
     SOURCES main.cpp
-    LIBRARIES Core ComponentApp
+    LIBRARIES Core ComponentApp MediaFfmpeg
     )
 
 if(TARGET ASIO)

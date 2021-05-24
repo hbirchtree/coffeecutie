@@ -41,7 +41,7 @@ bool save_to_disk()
     TestStructure data = {};
 
     cVerbose(5, "Separate operation");
-    storeApi->save(Bytes::Create(data));
+    storeApi->save(Bytes::ofBytes(data));
 
     cDebug("On-disk: {0}", C_CAST<CString>(data));
 
@@ -52,13 +52,13 @@ bool save_to_disk()
     TestStructure data_cpy = data;
 
     cVerbose(5, "Separate operation");
-    if(storeApi->save(Bytes::Create(data)) != sizeof(data))
+    if(storeApi->save(Bytes::ofBytes(data)) != sizeof(data))
         return false;
 
     data = {};
 
     cVerbose(5, "Separate operation");
-    if(storeApi->restore(Bytes::Create(data)) != sizeof(data))
+    if(storeApi->restore(Bytes::ofBytes(data)) != sizeof(data))
         return false;
 
     cDebug("In-memory: {0}", C_CAST<CString>(data_cpy));

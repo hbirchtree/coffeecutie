@@ -1,5 +1,6 @@
 set ( GIT_DEP_BUILDVARIANT "beaglebone.black" CACHE STRING "" )
 set ( CMAKE_TOOLCHAIN_FILE "$ENV{CMAKE_SOURCE_DIR}/toolchain/cmake/Toolchains/linux-beagle-armv7hf_linux.toolchain.cmake" CACHE STRING "" )
+set ( BEAGLE "ON" CACHE STRING "" )
 set ( CMAKE_BUILD_TYPE "$ENV{CONFIGURATION}" CACHE STRING "" )
 set ( CMAKE_INSTALL_PREFIX "$ENV{CMAKE_INSTALL_DIR}/beaglebone.black" CACHE STRING "" )
 set ( BUILD_BINARIES "$ENV{GENERATE_PROGRAMS}" CACHE STRING "" )

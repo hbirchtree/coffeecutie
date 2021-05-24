@@ -261,7 +261,7 @@ struct directory_data_t
         {
             node.left  = 0;
             node.right = 0;
-            MemClear(Bytes::From(node.prefix, MaxPrefixLength));
+            MemClear(Bytes::ofBytes(node.prefix, MaxPrefixLength));
         }
 
         u32 flags;
@@ -388,7 +388,7 @@ struct VirtualIndex : non_copy
 
         mem_chunk<const u64> indices(VirtualIndex const& idx) const
         {
-            return mem_chunk<const u64>::From(
+            return mem_chunk<const u64>::of(
                 C_RCAST<const u64*>(idx.data()), num_files);
         }
     };
@@ -405,7 +405,7 @@ struct VirtualIndex : non_copy
 FORCEDINLINE mem_chunk<const directory_data_t::node_base_t> directory_data_t::
     nodes(const VirtualIndex& idx) const
 {
-    return mem_chunk<const node_base_t>::From(
+    return mem_chunk<const node_base_t>::of(
         C_RCAST<const node_base_t*>(idx.data()), num_nodes);
 }
 
@@ -450,7 +450,7 @@ struct VirtualFS
      * \return
      */
     static bool OpenVFS(
-        Bytes const& src, VirtualFS const** vfs, vfs_error_code& ec)
+        BytesConst const& src, VirtualFS const** vfs, vfs_error_code& ec)
     {
         static_assert(
             MagicLength == MagicLength_Encoded * sizeof(u32),
@@ -460,7 +460,7 @@ struct VirtualFS
             "Invalid magic length for data");
 
         using namespace libc;
-        using IntData = mem_chunk<u32>;
+        using IntData = mem_chunk<const u32>;
 
         *vfs = nullptr;
 
@@ -470,10 +470,10 @@ struct VirtualFS
             return false;
         }
 
-        VirtualFS* temp_vfs = C_RCAST<VirtualFS*>(src.data);
+        auto* temp_vfs = C_RCAST<const VirtualFS*>(src.data);
 
-        IntData magic     = IntData::From(VFSMagic_Encoded, 2);
-        IntData fileMagic = IntData::From(temp_vfs->vfs_header, MagicLength);
+        IntData magic     = IntData::of(VFSMagic_Encoded, 2);
+        IntData fileMagic = IntData::of(temp_vfs->vfs_header, MagicLength);
 
         if(magic[0] != fileMagic[0] || magic[1] != fileMagic[1])
         {
@@ -833,7 +833,7 @@ struct vfs_view
 {
     using iterator = vfs_linear_iterator;
 
-    vfs_view(Bytes const& base)
+    vfs_view(BytesConst const& base)
     {
         vfs_error_code ec;
         VFS::OpenVFS(base, &m_vfs, ec);

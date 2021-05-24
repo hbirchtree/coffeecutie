@@ -27,7 +27,7 @@ NodeType PosixFileMod_def::Stat(Url const& fn, file_error&)
     if(s != 0)
         return NodeType::None;
 
-    mode_t m = fs.st_mode;
+    ::mode_t m = fs.st_mode;
 
     if(S_ISDIR(m))
         return NodeType::Directory;

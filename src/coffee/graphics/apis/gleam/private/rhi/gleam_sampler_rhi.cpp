@@ -58,12 +58,12 @@ void GLEAM_Sampler::alloc()
 #if GL_VERSION_VERIFY(0x300, 0x300)
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
     if(GLEAM_FEATURES.direct_state)
-        gl::v45::SamplerAllocEx(m_handle.hnd);
+        gl::v45::SamplerAllocEx(SpanOne(m_handle.hnd));
     else
 #endif
         if(!GLEAM_FEATURES.gles20)
     {
-        gl::v33::SamplerAlloc(m_handle.hnd);
+        gl::v33::SamplerAlloc(SpanOne(m_handle.hnd));
     }
 #endif
 }
@@ -72,7 +72,7 @@ void GLEAM_Sampler::dealloc()
 {
 #if GL_VERSION_VERIFY(0x300, 0x300)
     if(!GLEAM_FEATURES.gles20)
-        gl::v33::SamplerFree(m_handle.hnd);
+        gl::v33::SamplerFree(SpanOne(m_handle.hnd));
     m_handle.release();
 #endif
 }

@@ -15,15 +15,9 @@ void InsertBytes(Vector<byte_t>& buf, T* s, szptr num)
 }
 
 FORCEDINLINE
-void SerializeMesh(_cbasic_mesh& mesh,
-                   cstring fn)
+bool DeserializeMesh(Resource const& source, memory_mesh* dest)
 {
-}
-
-FORCEDINLINE
-bool DeserializeMesh(Resource const& source, _cbasic_mesh* dest)
-{
-    return dest->attributes.size()>0;
+    return dest->attributes.size() > 0;
 }
 
 }

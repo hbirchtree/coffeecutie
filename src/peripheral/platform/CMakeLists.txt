@@ -1,8 +1,11 @@
+find_library ( BACKTRACE_LIBRARY backtrace )
+
 coffee_library (
     TARGET PeripheralPlatform
 
     LIBRARIES
     PeripheralLib
+    ${BACKTRACE_LIBRARY}
 
     SOURCES
     private/argument_parse.cpp
@@ -29,12 +32,6 @@ if(BUILD_SDL2 AND NOT POWERPC AND NOT IOS AND
         (${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE OR WIN32))
 
     if(NOT TARGET SDL2)
-        dependency_get (
-            SOURCE hbirchtree/native-library-bundle
-            TAG ${NATIVE_LIB_BUNDLE_TAG}
-            NAMES sdl2=SDL2
-            )
-
         find_package ( SDL2 CONFIG QUIET )
     endif()
 
@@ -64,10 +61,10 @@ if(ANDROID)
 
     target_sources ( PeripheralPlatform PRIVATE
         platforms/android/sensor.cpp
-        platforms/android/file.cpp
+#        platforms/android/file.cpp
         platforms/android/sysinfo.cpp
-        platforms/linux/file.cpp
-        platforms/linux/process.cpp
+#        platforms/linux/file.cpp
+#        platforms/linux/process.cpp
         platforms/linux/sysinfo.cpp
 
         platforms/android/jnipp.cpp
@@ -109,7 +106,7 @@ if(APPLE)
         # System information queries
         #
         platforms/osx/sysinfo.mm
-        platforms/osx/environment.cpp
+#        platforms/osx/environment.cpp
         # Some functions are exposed by Obj-C
         platforms/osx/system_interface.mm
         )
@@ -121,31 +118,31 @@ endif()
 #
 #
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE OR ANDROID)
-    target_sources ( PeripheralPlatform PRIVATE
+#    target_sources ( PeripheralPlatform PRIVATE
 
         #
         # POSIX environment functions
         #
-        platforms/posix/environment.cpp
+#        platforms/posix/environment.cpp
 
         #
         # Stacktrace using libunwind
         #
-        platforms/posix/stacktrace.cpp
+#        platforms/posix/stacktrace.cpp
 
         #
         # File management
         #
-        platforms/posix/file.cpp
-        )
+#        platforms/posix/file.cpp
+#        )
 
     if(NOT IOS)
-        target_sources ( PeripheralPlatform PRIVATE
+#        target_sources ( PeripheralPlatform PRIVATE
             #
             # Dynamic linking (libdl)
             #
-            platforms/posix/loader.cpp
-            )
+#            platforms/posix/loader.cpp
+#            )
     endif()
 
     find_package( Unwind QUIET )
@@ -153,6 +150,12 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE OR ANDROID)
         target_compile_definitions( PeripheralPlatform PUBLIC
             -DLIBUNWIND_ENABLED=1
             -DCOFFEE_UNWIND_STACKTRACE=1
+            )
+        target_link_libraries ( PeripheralPlatform PUBLIC
+            $<BUILD_INTERFACE:${LIBUNWIND_LIBRARIES}>
+            )
+        target_include_directories ( PeripheralPlatform PUBLIC
+            $<BUILD_INTERFACE:${LIBUNWIND_INCLUDE_DIR}>
             )
     endif()
 endif()
@@ -167,11 +170,11 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
         #
         # Linux-specific system calls and behavior all around
         #
-        platforms/linux/environment.cpp
-        platforms/linux/process.cpp
+#        platforms/linux/environment.cpp
+#        platforms/linux/process.cpp
         platforms/linux/sysinfo.cpp
 
-        platforms/linux/file.cpp
+#        platforms/linux/file.cpp
         )
 
     coffee_library (
@@ -201,8 +204,8 @@ if(EMSCRIPTEN)
         #
         # Like POSIX, but limited
         #
-        platforms/posix/environment.cpp
-        platforms/posix/file.cpp
+#        platforms/posix/environment.cpp
+#        platforms/posix/file.cpp
         platforms/emscripten/sysinfo.cpp
         )
 endif()
@@ -242,10 +245,10 @@ endif()
 #
 if(WIN32)
     target_sources ( PeripheralPlatform PRIVATE
-        platforms/win32/environment.cpp
+#        platforms/win32/environment.cpp
         platforms/win32/sysinfo.cpp
 
-        platforms/win32/file.cpp
+#        platforms/win32/file.cpp
         )
     if(WIN_UWP)
         target_sources ( PeripheralPlatform PRIVATE
@@ -265,8 +268,8 @@ endif()
 #
 if(GAMECUBE OR WII)
     target_sources ( PeripheralPlatform PRIVATE
-        platforms/posix/environment.cpp
-        platforms/posix/file.cpp
+#        platforms/posix/environment.cpp
+#        platforms/posix/file.cpp
         platforms/posix/stacktrace.cpp
         )
 endif()

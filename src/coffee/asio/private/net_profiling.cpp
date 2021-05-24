@@ -16,6 +16,7 @@ namespace Coffee {
 namespace Net {
 
 using namespace ::semantic;
+using namespace ::platform;
 
 void ProfilingExport()
 {
@@ -29,7 +30,7 @@ void ProfilingExport()
     cVerbose(10, "Checking for network profiling...");
 
     const constexpr cstring network_server = "COFFEE_REPORT_URL";
-    if(Env::ExistsVar(network_server))
+    if(auto server = env::var(network_server); server.has_value())
     {
         cVerbose(10, "Network export starting");
 
@@ -46,11 +47,8 @@ void ProfilingExport()
 
         Coffee::Resource profile("profile.json", RSCA::TempFile);
 
-        auto netServerUrl = Env::GetVar(network_server);
-
         auto reportBin = Net::MkUrl(
-            netServerUrl.c_str(),
-            HTTPAccess::DefaultPOST | HTTPAccess::NoVerify);
+            server.value(), HTTPAccess::DefaultPOST | HTTPAccess::NoVerify);
         Net::Resource reportBinRsc(ctxt, reportBin);
 
         if(!reportBinRsc.connected())
@@ -62,14 +60,15 @@ void ProfilingExport()
             return;
         }
 
-        if(Env::ExistsVar("COFFEE_REPORT_ID"))
+        if(auto report_id = env::var("COFFEE_REPORT_ID"); report_id.has_value())
             reportBinRsc.setHeaderField(
-                "X-Coffee-Token", "token " + Env::GetVar("COFFEE_REPORT_ID"));
+                "X-Coffee-Token",
+                "token " + env::var("COFFEE_REPORT_ID").value());
         reportBinRsc.setHeaderField(
             "X-Coffee-Signature",
             "sha1=" + hex::encode(net::hmac::digest(
-                          C_OCAST<Bytes>(profile),
-                          Env::Var("COFFEE_HMAC_KEY").value_or("0000"))));
+                          C_OCAST<BytesConst>(profile).view,
+                          env::var("COFFEE_HMAC_KEY").value_or("0000"))));
 
         http::multipart::builder out("-----------NetProfile");
 
@@ -84,7 +83,7 @@ void ProfilingExport()
 
         out.add(
             "machineProfile",
-            Bytes::CreateString(target_chrome),
+            BytesConst::ofContainer(target_chrome),
             {{"Content-Type", "text/plain"}});
         if(FileExists(profile))
         {
@@ -96,7 +95,7 @@ void ProfilingExport()
         {
             out.add(
                 "profile",
-                Bytes::CreateString(target_chrome.c_str()),
+                BytesConst::ofContainer(target_chrome),
                 {{"Content-Type", "text/plain"}});
         }
 

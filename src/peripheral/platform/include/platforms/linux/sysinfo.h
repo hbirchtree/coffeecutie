@@ -28,7 +28,7 @@ struct lsb_data
 
 struct SysInfo : SysInfoDef
 {
-    static CString CPUInfoString(bool force = false);
+    static Vector<String> CPUInfoString(bool force = false);
 
     static Set<CString> CPUFlags();
 
@@ -123,8 +123,8 @@ struct SysInfo : SysInfoDef
     static info::HardwareDevice BIOS();
 
   private:
-    static void    FreeCPUInfoString();
-    static CString cached_cpuinfo_string;
+    static void           FreeCPUInfoString();
+    static Vector<String> cached_cpuinfo_string;
 };
 
 struct PowerInfo :

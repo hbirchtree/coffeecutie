@@ -3,7 +3,11 @@
 #include <peripherals/error/regex.h>
 #include <peripherals/error/windows.h>
 
+#include <peripherals/error/posix.h>
 #include <peripherals/stl/string_ops.h>
+
+#include <cstring>
+#include <errno.h>
 
 namespace platform {
 namespace file {
@@ -60,12 +64,7 @@ std::string regex_error_category::message(int) const
 
 #if defined(COFFEE_POSIX_ERRNO)
 
-#include <cstring>
-#include <errno.h>
-
-namespace platform {
-namespace file {
-namespace posix {
+namespace platform::common::posix {
 
 bool collect_error(posix_error_code& ec)
 {
@@ -78,8 +77,6 @@ bool collect_error(posix_error_code& ec)
 
     return false;
 }
-
-} // namespace posix
 
 const char* posix_error_category::name() const noexcept
 {
@@ -96,8 +93,7 @@ std::string posix_error_category::message(int error_code) const
     return posix_error_msg;
 }
 
-} // namespace file
-} // namespace platform
+} // namespace platform::common::posix
 
 #endif
 
@@ -109,8 +105,8 @@ std::string posix_error_category::message(int error_code) const
 
 #if defined(COFFEE_WINDOWS)
 
-#include <peripherals/platform/windows.h>
 #include <peripherals/libc/string_ops.h>
+#include <peripherals/platform/windows.h>
 
 namespace platform {
 namespace win32 {

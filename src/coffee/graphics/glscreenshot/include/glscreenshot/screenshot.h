@@ -7,7 +7,7 @@ namespace glscreenshot {
 struct ScreenshotProvider : comp_app::ScreenshotProvider
 {
     comp_app::size_2d_t size() const;
-    semantic::Span<typing::pixels::rgb_t> pixels() const;
+    semantic::mem_chunk<typing::pixels::rgb_t> pixels() const;
 };
 
 }

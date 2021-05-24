@@ -6,6 +6,8 @@
 
 namespace natty {
 
+using semantic::mem_chunk;
+
 enum class opcode_t : libc_types::u16
 {
     submit_service, /*!< Peers submit their address to allow connecting */
@@ -489,7 +491,7 @@ FORCEDINLINE void peer_initiate_test(
 
     establish_test_connection(local_data, {}, server, member_t::peer);
 
-    socket.write_to(semantic::Bytes::From(cmd), server, ec);
+    socket.write_to(mem_chunk<const command_t>::of(cmd), server, ec);
 }
 
 FORCEDINLINE void peer_initiate_connection(
@@ -506,7 +508,7 @@ FORCEDINLINE void peer_initiate_connection(
 
     establish_peer_connection(local_data, cmd, server, member_t::peer);
 
-    socket.write_to(semantic::Bytes::From(cmd), server, ec);
+    socket.write_to(mem_chunk<const command_t>::of(cmd), server, ec);
     C_ERROR_CHECK(ec)
 }
 

@@ -8,20 +8,6 @@ source $(dirname "${BASH_SOURCE}")/travis-common.sh
 mkdir -p "$BUILD_DIR"
 cd "$BUILD_DIR" || exit
 
-function github_api()
-{
-    case "${TRAVIS_OS_NAME}" in
-    *)
-        # Python client
-        python3 "$GITHUBPY" --api-token "$GITHUB_TOKEN" $@
-    ;;
-    "linux")
-        # Qt/C++ client
-        docker run --rm -v "$PWD:/data" "${QTHUB_DOCKER}" --api-token "$GITHUB_TOKEN" $@
-    ;;
-    esac
-}
-
 function build_standalone()
 {
     mkdir -p "$SOURCE_DIR" "$COFFEE_DIR" "$BUILD_DIR"

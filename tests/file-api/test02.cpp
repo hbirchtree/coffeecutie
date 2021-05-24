@@ -12,7 +12,7 @@ bool filewrite_test()
 {
     Resource rsc(small_map_test);
 
-    rsc = Bytes::From(sample_storage, sizeof(sample_storage));
+    rsc = Bytes::ofBytes(sample_storage, sizeof(sample_storage));
 
     return FileCommit(rsc, RSCA::WriteOnly | RSCA::Discard | RSCA::NewFile);
 }
@@ -26,7 +26,7 @@ bool filemap_test()
     if(!rsc.data)
         return false;
     bool status = MemCmp(
-        Bytes::From(sample_storage, sizeof(sample_storage)),
+        Bytes::ofBytes(sample_storage, sizeof(sample_storage)),
         C_OCAST<Bytes>(rsc));
     FileUnmap(rsc);
 

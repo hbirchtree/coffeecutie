@@ -2,7 +2,6 @@
 
 from os.path import dirname
 from collections import defaultdict
-from collections import namedtuple
 import xml.etree.ElementTree as etree
 
 import re
@@ -198,14 +197,14 @@ print('#pragma once')
 
 print('#include "all_levels_include.h"')
 print()
-print('#if defined(COFFEE_GCC)')
-print('#pragma GCC diagnostic push')
-print('#pragma GCC diagnostic ignored "-Wpointer-bool-conversion"')
-print('#elif defined(COFFEE_CLANG)')
-print('#pragma clang diagnostic push')
-print('#pragma clang diagnostic ignored "-Wpointer-bool-conversion"')
-print('#endif')
-print()
+#print('#if defined(COFFEE_GCC)')
+#print('#pragma GCC diagnostic push')
+#print('#pragma GCC diagnostic ignored "-Wpointer-bool-conversion"')
+#print('#elif defined(COFFEE_CLANG)')
+#print('#pragma clang diagnostic push')
+#print('#pragma clang diagnostic ignored "-Wpointer-bool-conversion"')
+#print('#endif')
+#print()
 print('namespace glwrap {')
 print('using namespace Coffee::CGL;')
 print()
@@ -235,9 +234,9 @@ print("} // ext")
 
 print('} // glwrap')
 print()
-print('#if defined(COFFEE_GCC)')
-print('#pragma GCC diagnostic pop')
-print('#elif defined(COFFEE_CLANG)')
-print('#pragma clang diagnostic pop')
-print('#endif')
+#print('#if defined(COFFEE_GCC)')
+#print('#pragma GCC diagnostic pop')
+#print('#elif defined(COFFEE_CLANG)')
+#print('#pragma clang diagnostic pop')
+#print('#endif')
 

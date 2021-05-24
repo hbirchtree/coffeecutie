@@ -236,7 +236,7 @@ static void ImpCreateNewThreadQueue(
     } catch(std::exception const& e)
     {
         ec = RQE::UncaughtException;
-        ec = Stacktracer::DemangleSymbol(typeid(e).name()) + ": " + e.what();
+        ec = platform::stacktrace::demangle::type_name(e) + ": " + e.what();
     }
 #endif
 

@@ -32,7 +32,7 @@ template<
     void (*close_func)(hnd_type) = nullptr,
 
     typename std::enable_if<
-        std::is_pod<hnd_type>::value ||
+        type_safety::is_pod_v<hnd_type> ||
         std::is_pointer<hnd_type>::value>::type* = nullptr
 
     >

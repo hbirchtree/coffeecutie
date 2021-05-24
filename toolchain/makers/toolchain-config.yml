@@ -77,16 +77,22 @@
   =container-image: hbirch/coffeecutie:$(container)
 
 # For Ubuntu, Fedora, docs and coverage, specify generic preload
-(ubuntu|docs|coverage|testing.linux|fedora).*:
+(ubuntu|docs|coverage|testing.linux|fedora|desktop-).*:
   (ubuntu.amd64.*|coverage|testing.linux|docs):
     =container: ubuntu
   .*(amd64.*|docs|coverage|testing.linux|fedora):
     =toolchain: linux-generic_linux.toolchain.cmake
+  desktop-x86_64-buildroot-.*:
+    =toolchain: x86_64-buildroot-linux-gnu.toolchain.cmake
+  desktop-x86_64-unknown-.*:
+    =toolchain: x86_64-unknown-linux-gnu.toolchain.cmake
+  desktop-.*:
+    =container: none
   +build-deps:
     - appimg-runtime
     - SDL2
 
-(ubuntu|fedora|coverage|testing.linux|android|steam|beaglebone|raspberry|mingw).*:
+(ubuntu|fedora|coverage|testing.linux|android|steam|beaglebone|raspberry|mingw|desktop-).*:
   =generator: CodeBlocks - Ninja
 
 # Some parameters to make coverage testing work
@@ -135,7 +141,7 @@ testing.linux.*:
     - -DBUILD_LIBRARIES=OFF
     - -DBUILD_DOCS=ON
 
-.*ubuntu.*:
+(ubuntu|desktop-).*:
   =description: Ubuntu build in a Ubuntu Docker
   =compiler: GCC 7+
   +cmake-opts:
@@ -150,6 +156,9 @@ testing.linux.*:
     +cmake-opts:
       - -DBUILD_GLES=ON
       - -DBUILD_GLES_20=ON
+  desktop-.*:
+    =description: Ubuntu build
+    =compiler: GCC 10.x
 
 .*fedora.*:
   =description: Fedora build in a Fedora Docker
@@ -245,7 +254,7 @@ testing.linux.*:
     =container-image: hbirch/android:r14b
 
 
-.*maemo.*:
+maemo.*:
   =description: Maemo 5 builds, performed within a Maemo 5 armel chroot
   =compiler: GCC 6
   =toolchain: linux-maemo-armv7_linux.toolchain.cmake
@@ -265,24 +274,29 @@ testing.linux.*:
     - -DBUILD_SDL2=OFF
 
 
-.*raspberry.*:
+raspberry.*:
   =description: Raspberry Pi ARM 32-bit build
   =compiler: GCC 9.x
   =toolchain: linux-raspberry-armhf_linux.toolchain.cmake
   =container: raspberry
   +cmake-opts:
     - -DRASPBERRY_SDK=/pi-sysroot
+    - -DRASPBERRY=ON
     - -DBUILD_GLES=ON
     - -DBUILD_GLES_20=ON
     - -DBUILD_OPENSSL=ON
 
-.*beaglebone.*:
+beaglebone.*:
   =description: BeagleBone Black ARM 32-bit build
   =compiler: GCC 9.x
   =toolchain: linux-beagle-armv7hf_linux.toolchain.cmake
   =container: beaglebone
+  +cmake-opts:
+    - -DBEAGLE=ON
+  beaglebone-arm.*:
+    =toolchain: arm-unknown-linux-gnueabihf.toolchain.cmake
 
-.*mingw.*:
+mingw.*:
   =description: MinGW64 environment in Ubuntu Docker
   =compiler: GCC 5+
   =toolchain: windows-mingw64_linux.toolchain.cmake
@@ -291,9 +305,9 @@ testing.linux.*:
     - -DBUILD_AUDIO=OFF
     - -DBUILD_OPENSSL=OFF
 
-.*gamecube.*:
+gamecube.*:
   =description: Nintendo Gamecube through DevkitPPC
-  =compiler: GCC 6+
+  =compiler: GCC 9.x
   =toolchain: none-cube-powerpc-eabi_linux.toolchain.cmake
   =container: hbirch/devkit:ppc
   +cmake-opts:

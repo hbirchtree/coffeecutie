@@ -5,9 +5,9 @@
 #include <platforms/file.h>
 
 namespace Coffee {
-using ::platform::file::DirFun;
-using ::platform::file::FileFun;
-using ::platform::file::file_error;
+//using ::platform::file::DirFun;
+//using ::platform::file::FileFun;
+//using ::platform::file::file_error;
 
-using FileType = ::platform::file::NodeType;
+//using FileType = ::platform::file::NodeType;
 } // namespace Coffee

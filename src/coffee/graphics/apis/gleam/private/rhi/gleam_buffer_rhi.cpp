@@ -19,16 +19,16 @@ void GLEAM_VBuffer::alloc()
 {
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
     if(GLEAM_FEATURES.direct_state)
-        gl::v45::BufAllocEx(m_handle.hnd);
+        gl::v45::BufAllocEx(SpanOne(m_handle.hnd));
     else
 #endif
-        gl::v33::BufAlloc(m_handle.hnd);
+        gl::v33::BufAlloc(SpanOne(m_handle.hnd));
 }
 
 void GLEAM_VBuffer::dealloc()
 {
     VerifyBuffer(m_handle);
-    gl::v33::BufFree(m_handle.hnd);
+    gl::v33::BufFree(SpanOne(m_handle.hnd));
     m_handle.release();
 }
 
@@ -98,7 +98,7 @@ Bytes GLEAM_VBuffer::map(C_UNUSED(szptr offset), szptr size, gleam_error& ec)
     {
         // TODO: Fix cases where offset is used for something!!!
         m_mappedBufferFake.resize(size);
-        return m_mappedBufferFake;
+        return Bytes::ofContainer(m_mappedBufferFake);
     }
 
     if(!out_ptr)

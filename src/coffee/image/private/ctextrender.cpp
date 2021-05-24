@@ -75,7 +75,7 @@ Bytes& StbFontRenderer::RenderText(
     auto stb_data = &data->info;
     auto scale    = properties.scale;
 
-    Bytes stringData = Bytes::CreateString(text);
+    BytesConst stringData = BytesConst::ofString(text);
     szptr bit_w      = 0;
     int   x          = 0;
 
@@ -100,7 +100,7 @@ Bytes& StbFontRenderer::RenderText(
     }
 
     bit_w      = C_FCAST<szptr>(imageSize.w);
-    output     = Bytes::Alloc(imageSize.area());
+    output     = Bytes::withSize(imageSize.area());
     shadowChar = stringData.begin();
     x          = 0;
 

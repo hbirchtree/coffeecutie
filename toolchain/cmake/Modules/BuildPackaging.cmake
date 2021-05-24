@@ -153,7 +153,7 @@ function(COFFEE_APPLICATION)
         endif()
 
         add_custom_command ( OUTPUT ${EMBED_SRC}
-            COMMAND ${PYTHON_COMMAND} ${CMAKE_SOURCE_DIR}/toolchain/create-header.py
+            COMMAND ${PYTHON_COMMAND} ${CMAKE_SOURCE_DIR}/toolchain/resources-to-source.py
                 --output=${EMBED_SRC}
                 ${EMBEDDED_RESOURCES}
             )

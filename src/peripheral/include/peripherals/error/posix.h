@@ -2,10 +2,10 @@
 
 #include <peripherals/stl/types.h>
 
-namespace platform {
-namespace file {
+namespace platform::common::posix {
 
-using namespace ::stl_types;
+using ::stl_types::error_category;
+using ::stl_types::domain_error_code;
 
 struct posix_error_category : error_category
 {
@@ -13,11 +13,32 @@ struct posix_error_category : error_category
     virtual std::string message(int error_code) const;
 };
 
+using posix_error      = int;
 using posix_error_code = domain_error_code<int, posix_error_category>;
 
-namespace posix {
-
 extern bool collect_error(posix_error_code& ec);
+
+FORCEDINLINE bool collect_error(posix_error& ec)
+{
+    if(errno != 0)
+    {
+        ec    = errno;
+        errno = 0;
+        return true;
+    }
+    return false;
+}
+
+FORCEDINLINE posix_error get_error()
+{
+    if(errno != 0)
+    {
+        auto out = errno;
+        errno = 0;
+        return out;
+    }
+    return 0;
+}
 
 template<typename ErrorType>
 FORCEDINLINE bool collect_error_to(ErrorType& ec)
@@ -25,6 +46,4 @@ FORCEDINLINE bool collect_error_to(ErrorType& ec)
     return collect_error(ec.template as<posix_error_code>());
 }
 
-} // namespace posix
-} // namespace file
-} // namespace platform
+} // namespace platform::common::posix

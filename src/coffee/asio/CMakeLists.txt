@@ -2,13 +2,6 @@ option ( BUILD_OPENSSL "Build ASIO with OpenSSL support" ON )
 
 # OpenSSL used for ASIO networking
 if(BUILD_OPENSSL)
-    dependency_get (
-        REQUIRED
-        SOURCE hbirchtree/native-library-bundle
-        TAG ${NATIVE_LIB_BUNDLE_TAG}
-        NAMES openssl=OpenSSL
-        )
-
     set ( OPENSSL_ROOT_DIR "${OpenSSL_DIR}" )
     set ( ENV{OPENSSL_ROOT_DIR} "${OpenSSL_DIR}" )
 
@@ -81,12 +74,6 @@ if(BUILD_OPENSSL)
         )
     target_compile_definitions ( ASIO PUBLIC
         -DCOFFEE_ENABLE_SSL
-        )
-
-    dependency_link (
-        TARGET ASIO
-        DEPENDENCIES
-            openssl=OpenSSL
         )
 endif()
 

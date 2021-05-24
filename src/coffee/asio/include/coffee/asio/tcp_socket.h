@@ -29,7 +29,6 @@ using ssl     = ::asio::ssl::stream<asio::ip::tcp::socket>;
 using udp_ssl = ::asio::ssl::stream<asio::ip::udp::socket>;
 #endif
 using udp_raw = ::asio::ip::udp::socket;
-;
 using raw = ::asio::ip::tcp::socket;
 } // namespace socket_types
 
@@ -43,12 +42,14 @@ FORCEDINLINE auto socket_handshake(SocketType&, asio::error_code&)
 {
 }
 
+#if defined(ASIO_USE_SSL)
 template<>
 FORCEDINLINE auto socket_handshake(
     socket_types::ssl& socket, asio::error_code& ec)
 {
     socket.handshake(socket_types::ssl::handshake_type::client, ec);
 }
+#endif
 
 } // namespace detail
 
@@ -62,6 +63,7 @@ FORCEDINLINE auto construct_socket(net::context& service)
     return socket_types::raw(service.service);
 }
 
+#if defined(ASIO_USE_SSL)
 template<>
 FORCEDINLINE auto construct_socket<socket_types::ssl>(net::context& service)
 {
@@ -79,6 +81,7 @@ FORCEDINLINE auto socket_shutdown<socket_types::ssl>(
     socket_types::ssl&, asio::error_code&)
 {
 }
+#endif
 
 } // namespace detail
 
@@ -381,10 +384,12 @@ struct raw_socket : socket_base<socket_types::udp_raw>
     using socket_base<socket_type>::socket_base;
 };
 
+#if defined(ASIO_USE_SSL)
 struct ssl_socket : socket_base<socket_types::udp_ssl>
 {
     using socket_base<socket_type>::socket_base;
 };
+#endif
 
 struct server
 {

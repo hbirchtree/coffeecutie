@@ -444,8 +444,8 @@ inline http::content_type content_type(string v)
     using c = http::content_type;
 
     auto v1 = v.find(";");
-    v = v.substr(0, v1);
-    v = stl_types::str::trim::both(v);
+    v       = v.substr(0, v1);
+    v       = stl_types::str::trim::both(v);
 
     if(v == "*/*")
         return c::any;
@@ -1221,7 +1221,7 @@ struct builder
 
     void add(
         string const&                         name,
-        semantic::Bytes const&                data,
+        semantic::BytesConst const&           data,
         stl_types::Map<string, string> const& extra_headers)
     {
         m_data += "--";
@@ -1246,7 +1246,7 @@ struct builder
 
     operator semantic::BytesConst() const
     {
-        return semantic::BytesConst::From(m_data.data(), m_data.size());
+        return semantic::BytesConst::FromBytes(m_data.data(), m_data.size());
     }
 
     string content_type() const

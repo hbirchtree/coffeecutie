@@ -362,7 +362,7 @@ struct MaterialParser
                 {0},
             };
 
-            Bytes texDataRef = Bytes::Create(texData);
+            Bytes texDataRef = Bytes::ofBytes(texData);
 
             szptr dataStoreSize = textureMaterials.size();
 
@@ -419,7 +419,7 @@ struct MaterialParser
 
         properties.push_back({storage.size(), materialIdx, c, 0});
 
-        colorBytes = Bytes::Create(color);
+        colorBytes = Bytes::ofBytes(color);
         storage.insert(storage.end(), colorBytes.begin(), colorBytes.end());
     }
 
@@ -485,10 +485,10 @@ struct MaterialParser
         auto& data            = materialsData.data;
         szptr dataSegmentSize = data.size();
 
-        Bytes materialRef = Bytes::CreateFrom(materialStore);
-        Bytes meshRef     = Bytes::CreateFrom(materialMeshConnection);
-        Bytes propertyRef = Bytes::CreateFrom(properties);
-        Bytes headerRef   = Bytes::Create(materialsData.header);
+        auto materialRef = BytesConst::ofBytes(materialStore);
+        auto meshRef     = BytesConst::ofBytes(materialMeshConnection);
+        auto propertyRef = BytesConst::ofBytes(properties);
+        auto headerRef   = BytesConst::ofBytes(materialsData.header);
 
         data.insert(data.begin(), propertyRef.begin(), propertyRef.end());
         data.insert(data.begin(), meshRef.begin(), meshRef.end());
@@ -496,7 +496,7 @@ struct MaterialParser
 
         for(auto const& str : string_store)
         {
-            Bytes strData = Bytes::CreateString(str.c_str());
+            auto strData = BytesConst::ofContainer(str);
             data.insert(data.end(), strData.begin(), strData.end());
             data.insert(data.end(), 0);
         }

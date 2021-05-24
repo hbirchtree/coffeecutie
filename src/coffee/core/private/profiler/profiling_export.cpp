@@ -9,6 +9,7 @@
 #include <coffee/core/internal_state.h>
 #include <coffee/core/platform_data.h>
 #include <coffee/strings/info.h>
+#include <coffee/strings/url_types.h>
 #include <peripherals/stl/string_ops.h>
 #include <platforms/environment.h>
 #include <platforms/file.h>
@@ -37,19 +38,14 @@ namespace Profiling {
 
 using namespace ::platform::profiling;
 
-static Vector<DataPoint> GetSortedDataPoints()
-{
-    Vector<DataPoint> points;
-
-    return points;
-}
-
 static CString AnonymizePath(CString const& p)
 {
-    return str::replace::str<char>(
-        str::replace::str<char>(p, Env::GetUserHome().internUrl, "~"),
-        Env::ExistsVar("USER") ? Env::GetVar("USER") : "",
-        "user");
+    if(auto home = env::home_dir(); home.has_value())
+        return str::replace::str<char>(
+            str::replace::str<char>(p, home.value().internUrl, "~"),
+            env::var("USER").value_or(""),
+            "user");
+    return p;
 }
 
 static CString AnonymizePath(Url const& p)
@@ -57,244 +53,108 @@ static CString AnonymizePath(Url const& p)
     return AnonymizePath(p.internUrl);
 }
 
-void PrintProfilerData()
-{
-}
-
-void ExportProfilerData(CString&)
-{
-}
-
 namespace CT_Stuff {
 
-STATICINLINE JSON::Value FromString(
-    CString const& s, JSON::Document::AllocatorType& alloc)
+STATICINLINE void PutArgs(json::ArrayBuilder& target)
 {
-    JSON::Value j;
-    j.SetString(s.c_str(), alloc);
-
-    return j;
+    for(auto const& arg : GetInitArgs().originalArguments())
+        target.push_back(AnonymizePath(arg));
 }
 
-STATICINLINE void PutEvents(
-    JSON::Value& target, JSON::Document::AllocatorType& alloc)
-{
-    /* Some parsing information */
-    for(Profiling::DataPoint const& p : GetSortedDataPoints())
-    {
-        JSON::Value o;
-        o.SetObject();
-
-        CString tid = str::print::pointerify(p.tid);
-
-        if(ThreadGetName(p.tid).size())
-            tid = ThreadGetName(p.tid);
-
-        auto catVal  = FromString(p.component, alloc);
-        auto tidVal  = FromString(tid, alloc);
-        auto nameVal = FromString(p.name, alloc);
-
-        //        o.AddMember(
-        //            "ts",
-        //            JSON::Value(
-        //                Chrono::duration_cast<Chrono::microseconds>(p.ts).count()
-        //                - start),
-        //            alloc);
-
-        o.AddMember("name", nameVal, alloc);
-        o.AddMember("pid", JSON::Value(1), alloc);
-        o.AddMember("tid", tidVal, alloc);
-        o.AddMember("cat", catVal, alloc);
-
-        switch(p.flags.type)
-        {
-        case Profiling::DataPoint::Profile: {
-            //            if(feval(p.at & Profiling::DataPoint::Hot))
-            //                o.AddMember("ph", "P", alloc);
-            //            else
-            o.AddMember("ph", "i", alloc);
-
-            o.AddMember("s", "t", alloc);
-            break;
-        }
-        case Profiling::DataPoint::Push: {
-            o.AddMember("ph", "B", alloc);
-            break;
-        }
-        case Profiling::DataPoint::Pop: {
-            o.AddMember("ph", "E", alloc);
-            break;
-        }
-        case DataPoint::Complete: {
-            o.AddMember("ph", "X", alloc);
-            break;
-        }
-        }
-
-        target.PushBack(o, alloc);
-    }
-}
-
-STATICINLINE void PutArgs(
-    JSON::Value& target, JSON::Document::AllocatorType& alloc)
-{
-    auto args = GetInitArgs().originalArguments();
-
-    for(auto const& arg : args)
-    {
-        target.PushBack(FromString(AnonymizePath(arg), alloc), alloc);
-    }
-}
-
-STATICINLINE void PutExtraData(
-    JSON::Value& target, JSON::Document::AllocatorType& alloc)
+STATICINLINE void PutExtraData(json::ObjectBuilder& target)
 {
     for(auto info : ExtraData::Get())
-    {
-        target.AddMember(
-            FromString(info.first, alloc),
-            FromString(info.second, alloc),
-            alloc);
-    }
+        target.put(info.first, info.second);
 }
 
-STATICINLINE void PutRuntimeInfo(
-    JSON::Value& target, JSON::Document::AllocatorType& alloc)
+STATICINLINE void PutRuntimeInfo(json::ObjectBuilder& target)
 {
-    JSON::Object build;
+    json::ObjectBuilder build(target.allocator());
 
-    build.AddMember(
-        "version", FromString(compile_info::engine_version, alloc), alloc);
-    build.AddMember(
-        "compiler", FromString(compile_info::compiler::name, alloc), alloc);
-    build.AddMember(
-        "compilerVersion",
-        FromString(
-            cast_pod(compile_info::compiler::version.major) + "." +
-                cast_pod(compile_info::compiler::version.minor) + "." +
-                cast_pod(compile_info::compiler::version.rev),
-            alloc),
-        alloc);
-    build.AddMember(
-        "architecture", FromString(compile_info::architecture, alloc), alloc);
-    build.AddMember("target", FromString(compile_info::target, alloc), alloc);
-    build.AddMember(
-        "buildMode",
-        FromString(compile_info::debug_mode ? "DEBUG" : "RELEASE", alloc),
-        alloc);
+    build.put("version", compile_info::engine_version)
+        .put("compiler", compile_info::compiler::name)
+        .put(
+            "compilerVersion",
+            Strings::fmt(
+                "{0}.{1}.{2}",
+                compile_info::compiler::version.major,
+                compile_info::compiler::version.minor,
+                compile_info::compiler::version.rev))
+        .put("architecture", compile_info::architecture)
+        .put("target", compile_info::target)
+        .put("buildMode", compile_info::debug_mode ? "DEBUG" : "RELEASE");
 
     if constexpr(compile_info::platform::is_android)
     {
-        build.AddMember(
-            "androidTarget",
-            FromString(cast_pod(compile_info::android::api), alloc),
-            alloc);
-        build.AddMember(
-            "androidNdk",
-            FromString(cast_pod(compile_info::android::ndk_ver), alloc),
-            alloc);
+        build.put("androidTarget", cast_pod(compile_info::android::api))
+            .put("androidNdk", cast_pod(compile_info::android::ndk_ver));
     }
 
     if constexpr(compile_info::platform::is_windows)
     {
-        build.AddMember(
-            "windowsTarget",
-            FromString(
-                stl_types::str::convert::hexify(compile_info::windows::target), alloc),
-            alloc);
-        build.AddMember(
-            "windowsWdk",
-            FromString(
-                stl_types::str::convert::hexify(compile_info::windows::wdk),
-                alloc),
-            alloc);
+        build
+            .put(
+                "windowsTarget",
+                stl_types::str::convert::hexify(compile_info::windows::target))
+            .put(
+                "windowsWdk",
+                stl_types::str::convert::hexify(compile_info::windows::wdk))
 #if defined(COFFEE_WINDOWS) && !defined(COFFEE_MINGW64)
-        build.AddMember("windowsServer", IsWindowsServer() ? true : false, alloc);
+            .put("windowsServer", IsWindowsServer() ? true : false)
 #endif
+            ;
     }
-    
+
     if constexpr(compile_info::platform::is_macos)
     {
-        build.AddMember(
-            "macTarget",
-            FromString(cast_pod(compile_info::apple::macos::target), alloc),
-            alloc);
-        build.AddMember(
-            "macMinTarget",
-            FromString(cast_pod(compile_info::apple::macos::min_target), alloc),
-            alloc);
+        build.put("macTarget", cast_pod(compile_info::apple::macos::target))
+            .put(
+                "macMinTarget",
+                cast_pod(compile_info::apple::macos::min_target));
     }
 
     if constexpr(compile_info::platform::is_ios)
     {
-        build.AddMember(
-            "iosTarget",
-            FromString(cast_pod(compile_info::apple::ios::target), alloc),
-            alloc);
-        build.AddMember(
-            "iosMinTarget",
-            FromString(cast_pod(compile_info::apple::ios::min_target), alloc),
-            alloc);
+        build.put("iosTarget", cast_pod(compile_info::apple::ios::target))
+            .put(
+                "iosMinTarget", cast_pod(compile_info::apple::ios::min_target));
     }
 
     if constexpr(compile_info::platform::is_linux)
     {
-        build.AddMember(
-            "libcRuntime",
-            FromString(compile_info::linux_::libc_runtime, alloc),
-            alloc);
+        build.put("libcRuntime", compile_info::linux_::libc_runtime);
 
         if constexpr(compile_info::linux_::glibc::major != 0)
         {
-            build.AddMember(
+            build.put(
                 "libcVersion",
-                FromString(cast_pod(compile_info::linux_::glibc::major) +
-                               "." +
-                               cast_pod(compile_info::linux_::glibc::minor),
-                           alloc),
-                alloc);
+                cast_pod(compile_info::linux_::glibc::major) + "." +
+                    cast_pod(compile_info::linux_::glibc::minor));
         } else if constexpr(compile_info::linux_::libcpp::version != 0)
         {
-            build.AddMember(
-                "libcVersion",
-                FromString(cast_pod(compile_info::linux_::libcpp::version),
-                           alloc),
-                alloc);
+            build.put(
+                "libcVersion", cast_pod(compile_info::linux_::libcpp::version));
         }
     }
 
-    target.AddMember("build", build, alloc);
+    target.put("build", build.eject());
 
-    JSON::Object runtime;
+    auto cwd = path::current_dir();
 
-    runtime.AddMember(
-        "system",
-        FromString(PlatformData::SystemDisplayString(), alloc),
-        alloc);
-    runtime.AddMember(
-        "distro",
-        FromString(platform::info::device::system::runtime_distro(), alloc),
-        alloc);
-    runtime.AddMember(
-        "distroVersion", FromString(SysInfo::GetSystemVersion(), alloc), alloc);
-    runtime.AddMember(
-        "architecture",
-        FromString(platform::info::device::system::runtime_arch(), alloc),
-        alloc);
-    runtime.AddMember(
-        "kernel",
-        FromString(platform::info::device::system::runtime_kernel(), alloc),
-        alloc);
-    runtime.AddMember(
-        "kernelVersion",
-        FromString(
-            platform::info::device::system::runtime_kernel_version(), alloc),
-        alloc);
-    runtime.AddMember(
-        "libcVersion",
-        FromString(platform::info::device::system::runtime_libc_version(),
-                   alloc),
-        alloc);
+    json::ObjectBuilder runtime(target.allocator());
+
+    runtime.put("system", PlatformData::SystemDisplayString())
+        .put("distro", platform::info::device::system::runtime_distro())
+        .put("distroVersion", SysInfo::GetSystemVersion())
+        .put("architecture", platform::info::device::system::runtime_arch())
+        .put("kernel", platform::info::device::system::runtime_kernel())
+        .put(
+            "kernelVersion",
+            platform::info::device::system::runtime_kernel_version())
+        .put(
+            "libcVersion",
+            platform::info::device::system::runtime_libc_version())
+        .put("cwd", AnonymizePath(cwd.value()));
 
 #if defined(COFFEE_ANDROID)
     AndroidForeignCommand cmd;
@@ -302,112 +162,79 @@ STATICINLINE void PutRuntimeInfo(
     CoffeeForeignSignalHandleNA(
         CoffeeForeign_RequestPlatformData, &cmd, nullptr, nullptr);
 
-    runtime.AddMember(
-        "androidLevel",
-        FromString(cast_pod(cmd.data.scalarI64), alloc),
-        alloc);
+    runtime.put("androidLevel", cast_pod(cmd.data.scalarI64));
 #endif
 
-    auto cwd = Env::CurrentDir();
-    runtime.AddMember("cwd", FromString(AnonymizePath(cwd), alloc), alloc);
-
     {
-        JSON::Array args;
-        PutArgs(args, alloc);
+        json::ArrayBuilder args(target.allocator());
+        PutArgs(args);
 
-        runtime.AddMember("arguments", args, alloc);
+        runtime.put("arguments", args.eject());
     }
 
-    target.AddMember("runtime", runtime, alloc);
-
-    JSON::Object device;
-
-    device.AddMember(
-        "name",
-        FromString(Strings::to_string(SysInfo::DeviceName()), alloc),
-        alloc);
-    device.AddMember("dpi", PlatformData::DeviceDPI(), alloc);
-    device.AddMember("type", PlatformData::DeviceVariant(), alloc);
-    device.AddMember("platform", PlatformData::PlatformVariant(), alloc);
-
-    auto motherboard = SysInfo::Motherboard();
-
-    device.AddMember(
-        "motherboardVersion",
-        FromString(Strings::to_string(motherboard.firmware), alloc),
-        alloc);
-
-    device.AddMember(
-        "motherboard",
-        FromString(
-            Strings::to_string(platform::info::HardwareDevice(
-                motherboard.manufacturer, motherboard.model, {})),
-            alloc),
-        alloc);
-
-    device.AddMember(
-        "chassis",
-        FromString(Strings::to_string(SysInfo::Chassis()), alloc),
-        alloc);
-
-    if constexpr(compile_info::internal_build)
-        device.AddMember(
-            "hostname",
-            FromString(Strings::to_string(SysInfo::HostName()), alloc),
-            alloc);
-
-    auto deviceName = SysInfo::DeviceName();
-    device.AddMember(
-        "machineManufacturer",
-        FromString(deviceName.manufacturer, alloc),
-        alloc);
-    device.AddMember(
-        "machineModel", FromString(deviceName.model, alloc), alloc);
-
-    target.AddMember("device", device, alloc);
-
-    JSON::Object processor;
-
-    auto pinfo = SysInfo::Processor();
-    processor.AddMember(
-        "manufacturer", FromString(pinfo.manufacturer, alloc), alloc);
-    processor.AddMember("model", FromString(pinfo.model, alloc), alloc);
-    processor.AddMember("firmware", FromString(pinfo.firmware, alloc), alloc);
+    target.put("runtime", runtime.eject());
 
     {
+        json::ObjectBuilder device(target.allocator());
+
+        auto motherboard = SysInfo::Motherboard();
+        auto deviceName  = SysInfo::DeviceName();
+
+        device.put("name", Strings::to_string(SysInfo::DeviceName()))
+            .put("dpi", PlatformData::DeviceDPI())
+            .put("type", PlatformData::DeviceVariant())
+            .put("platform", PlatformData::PlatformVariant())
+            .put(
+                "motherboard",
+                Strings::to_string(platform::info::HardwareDevice(
+                    motherboard.manufacturer, motherboard.model, {})))
+            .put("motherboardVersion", Strings::to_string(motherboard.firmware))
+            .put("chassis", Strings::to_string(SysInfo::Chassis()))
+            .put("machineManufacturer", deviceName.manufacturer)
+            .put("machineModel", deviceName.model);
+
+        if constexpr(compile_info::internal_build)
+            device.put("hostname", Strings::to_string(SysInfo::HostName()));
+
+        target.put("device", device.eject());
+    }
+
+    {
+        json::ObjectBuilder processor(target.allocator());
+        json::ArrayBuilder  freq(target.allocator());
+
+        auto pinfo = SysInfo::Processor();
         auto freqs = SysInfo::ProcessorFrequencies();
 
-        JSON::Array freq_j;
         if(freqs.size())
             for(auto f : freqs)
-                freq_j.PushBack(f, alloc);
+                freq.push_back(f);
         else
-            freq_j.PushBack(SysInfo::ProcessorFrequency(), alloc);
+            freq.push_back(SysInfo::ProcessorFrequency());
 
-        processor.AddMember("frequencies", freq_j, alloc);
+        processor.put("frequencies", freq.eject())
+            .put("manufacturer", pinfo.manufacturer)
+            .put("model", pinfo.model)
+            .put("firmware", pinfo.firmware)
+            .put("cores", SysInfo::CoreCount())
+            .put("threads", SysInfo::ThreadCount())
+            .put("hyperthreading", SysInfo::HasHyperThreading())
+            .put("pae", SysInfo::HasPAE())
+            .put("fpu", SysInfo::HasFPU());
+
+        target.put("processor", processor.eject());
     }
 
-    processor.AddMember<u64>("cores", SysInfo::CoreCount(), alloc);
-    processor.AddMember("threads", SysInfo::ThreadCount(), alloc);
-
-    processor.AddMember("hyperthreading", SysInfo::HasHyperThreading(), alloc);
-    processor.AddMember("pae", SysInfo::HasPAE(), alloc);
-    processor.AddMember("fpu", SysInfo::HasFPU(), alloc);
-
-    target.AddMember("processor", processor, alloc);
-
     {
-        JSON::Object memory;
+        json::ObjectBuilder memory(target.allocator());
 
-        memory.AddMember("bank", SysInfo::MemTotal(), alloc);
+        json::ObjectBuilder virtmem(target.allocator());
+        virtmem.put("total", SysInfo::SwapTotal());
+        virtmem.put("available", SysInfo::SwapAvailable());
 
-        JSON::Object virtmem;
-        virtmem.AddMember("total", SysInfo::SwapTotal(), alloc);
-        virtmem.AddMember("available", SysInfo::SwapAvailable(), alloc);
+        memory.put("bank", SysInfo::MemTotal()).put("virtual", virtmem.eject());
 
-        memory.AddMember("virtual", virtmem, alloc);
-
-        target.AddMember("memory", memory, alloc);
+        target.put("memory", memory.eject());
     }
 }
 
@@ -417,32 +244,29 @@ void ExportChromeTracerData(CString& target)
 {
     using namespace CT_Stuff;
 
-    JSON::Document doc;
+    json::Document doc;
     doc.SetObject();
+    json::ObjectBuilder root(doc.GetAllocator());
 
-    auto& alloc = doc.GetAllocator();
+    json::ObjectBuilder extraData(root.allocator());
+    PutExtraData(extraData);
 
-    JSON::Array events;
-    PutEvents(events, doc.GetAllocator());
-
-    JSON::Object extraData;
-    PutExtraData(extraData, doc.GetAllocator());
-
-    JSON::Object application;
+    json::ObjectBuilder application(root.allocator());
 
     auto appd = GetCurrentApp();
-    application.AddMember(
-        "name", FromString(appd.application_name, alloc), alloc);
-    application.AddMember(
-        "organization", FromString(appd.organization_name, alloc), alloc);
-    application.AddMember<u64>("version", appd.version_code, alloc);
+    application.put("name", appd.application_name)
+        .put("organization", appd.organization_name)
+        .put("version", appd.version_code);
 
-    doc.AddMember("application", application, alloc);
-    PutRuntimeInfo(doc, alloc);
-    doc.AddMember("extra", extraData, alloc);
-    doc.AddMember("traceEvents", events, alloc);
+    root.put("application", application.eject())
+        .put("extra", extraData.eject());
+    PutRuntimeInfo(root);
 
-    target = JSON::Serialize(doc);
+    auto rootDoc = root.eject();
+    for(auto it = rootDoc.MemberBegin(); it != rootDoc.MemberEnd(); ++it)
+        doc.AddMember(it->name, it->value, doc.GetAllocator());
+
+    target = json::Serialize(doc);
 }
 
 void ExportStringToFile(const CString& data, const Url& outfile)
@@ -473,14 +297,13 @@ void ExitRoutine()
     if(profilerStore)
         profilerStore->disable();
 
-    file::file_error ec;
-
     /* Verify if we should export profiler data */
     {
         const constexpr cstring disable_flag = "COFFEE_NO_PROFILER_EXPORT";
-        if(!(Env::ExistsVar(disable_flag) && Env::GetVar(disable_flag) == "1"))
+        if(auto flag = env::var("COFFEE_NO_PROFILER_EXPORT");
+           flag.has_value() && flag.value() == "1")
         {
-            auto log_name = (Path{Env::ExecutableName()}.fileBasename());
+            auto log_name = Path(path::executable().value()).fileBasename();
 
             if constexpr(
                 compile_info::platform::is_android ||
@@ -497,10 +320,7 @@ void ExitRoutine()
             Profiling::ExportChromeTracerData(target_chrome);
             Profiling::ExportStringToFile(target_chrome + " ", log_url2);
 
-            cVerbose(
-                6,
-                "Saved profiler data to: {0}",
-                file::FileFun::CanonicalName(log_url2, ec));
+            cVerbose(6, "Saved profiler data to: {0}", path::canon(log_url2));
         }
     }
 }

@@ -118,8 +118,9 @@ ShPtr<online::Service> CreateService(
             options.appId.c_str(), options.steamId.c_str());
     else
     {
-        auto executable = Env::ExecutableName();
-        Discord_Register(options.appId.c_str(), executable.c_str());
+        auto executable = platform::path::executable();
+        Discord_Register(
+            options.appId.c_str(), C_OCAST<const char*>(executable.value()));
     }
 
     return std::move(discordService);
@@ -231,7 +232,7 @@ ShPtr<online::PresenceDelegate> DiscordService::getPresence()
 
 void DiscordService::poll()
 {
-    Discord_UpdateConnection();
+    //    Discord_UpdateConnection();
     Discord_RunCallbacks();
 }
 

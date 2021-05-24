@@ -267,8 +267,8 @@ i32 coffee_main(i32, cstring_w*)
      */
 
     /* AppImage, Snappy and Flatpak storage locations */
-    Env::UnsetVar("APPIMAGE_DATA_DIR");
-    Env::UnsetVar("SNAP");
+    env::set_var("APPIMAGE_DATA_DIR", std::nullopt);
+    env::set_var("SNAP", std::nullopt);
 
     /* End of messing with the environment */
 

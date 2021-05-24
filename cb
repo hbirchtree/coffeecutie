@@ -1,12 +1,14 @@
 #!/bin/bash
 
-[ -z $CI ] && set -xeuf -o pipefail
+[ -z $CI ] && set -euf -o pipefail
 
 BUILD_CI=${BUILD_CI:-}
 
-if [ $(uname) == 'Linux' ]; then
-    BASE_DIR=$(readlink -f $(dirname "${0}"))
+if [[ "$0" = /* ]]; then
+    SELF=$0
+    BASE_DIR=$(dirname $0)
 else
+    SELF=$PWD/$0
     BASE_DIR=${PWD}/$(dirname "${0}")
 fi
 TC_DIR=${BASE_DIR}/toolchain
@@ -21,24 +23,12 @@ function all_source_files()
     find "${SRC_BASE_DIR}"/src/coffee "${SRC_BASE_DIR}"/src/include -regex '.*\.\(cpp\|h\)' -type f $@      
 }
 
-function github_api() {
-    echo github_api $@ >&2
-    ${TC_DIR}/ci/github_api.py --verbose --api-token ${GITHUB_TOKEN} "$@"
-}
-
 case $1 in
-"quick-build")
-    if [ -z "$BUILD_CI" ]; then
-        "${TC_DIR}"/quick-build.sh ${@:2}
-    else
-        BUILDVARIANT=${@:2} "${TC_DIR}"/ci/travis-build.sh
-    fi
-;;
 "ci-build")
     source ${BASE_DIR}/.github/cmake/select/${BUILDVARIANT}.sh
 
-    INSTALL_DIR=/build/install
-    BUILD_DIR=/build/build
+    INSTALL_DIR=${INSTALL_DIR:-/build/install}
+    BUILD_DIR=${BUILD_DIR:-/build/build}
 
     if [ "$(uname)" = "Darwin" ]; then
         INSTALL_DIR="${BASE_DIR}/../install"
@@ -81,6 +71,102 @@ case $1 in
         -e BUILD_TARGET=${BUILD_TARGET:-all} \
         -u root \
         ${CONTAINER} /build/src/cb ci-build ${@:2}
+;;
+"native-build")
+    PLATFORM="${2%%:*}"
+    SYSROOT="${2##*:}"
+    ARCHITECTURE="${2#*:}"
+    ARCHITECTURE="${ARCHITECTURE%:*}"
+    TOOLCHAIN_DOWNLOAD="${PLATFORM}-${ARCHITECTURE}_${SYSROOT}"
+
+    mkdir -p $BASE_DIR/multi_build/$TOOLCHAIN_DOWNLOAD
+    pushd $BASE_DIR/multi_build/$TOOLCHAIN_DOWNLOAD
+    
+    TOOLCHAIN_VER=$($SELF build-info toolchain version)
+    if [[ -z "$TOOLCHAIN_VER" ]]; then
+        echo \
+"No compiler version found in .build.yml, add one with:
+toolchain:
+  source: <repo>
+  version: <version>
+
+Example:
+toolchain:
+  source: hbirchtree/coffeecutie-automation-tools
+  version: v1.0.18"
+        exit 1
+    fi
+
+    DEFAULT_ROOT="$PWD/compiler-$TOOLCHAIN_VER"
+    export TOOLCHAIN_ROOT="${TOOLCHAIN_ROOT:-$DEFAULT_ROOT}"
+    export TOOLCHAIN_PREFIX="${ARCHITECTURE}"
+
+    echo " * Selected platform ${PLATFORM}:${ARCHITECTURE}:${SYSROOT}"
+
+    if [[ "$DEFAULT_ROOT" = "$TOOLCHAIN_ROOT" ]] && [[ "$(cat compiler-ver)" != "$TOOLCHAIN_VER" ]]; then
+        echo ::group::Getting compiler
+        TOOLCHAIN_REPO=$($SELF build-info toolchain source)
+ 
+        rm $TOOLCHAIN_DOWNLOAD.tar.xz ${PLATFORM}-${ARCHITECTURE}.manifest || true
+        gh release download -R "$TOOLCHAIN_REPO" "$TOOLCHAIN_VER" -p "${TOOLCHAIN_DOWNLOAD}.*"
+        gh release download -R "$TOOLCHAIN_REPO" "$TOOLCHAIN_VER" -p "${PLATFORM}-${ARCHITECTURE}.manifest"
+        cat ${PLATFORM}-${ARCHITECTURE}.manifest
+
+        mkdir -p compiler-$TOOLCHAIN_VER
+        pushd compiler-$TOOLCHAIN_VER
+        umask 022
+        tar xf ../$TOOLCHAIN_DOWNLOAD.tar.xz --no-same-owner --no-same-permissions
+        chmod -R u+w $(realpath .)
+        popd
+
+        echo $TOOLCHAIN_VER > compiler-ver
+
+        echo ::endgroup::
+    fi
+
+    export GENERATE_PROGRAMS=${GENERATE_PROGRAMS:-ON}
+    export CONFIGURATION=${CONFIGURATION:-Debug}
+    export CMAKE_SOURCE_DIR=${BASE_DIR}
+    export CMAKE_INSTALL_DIR=${INSTALL_DIR:-$PWD/install}
+
+    export PATH=$PATH:$TOOLCHAIN_ROOT/bin
+    
+    export VCPKG_ROOT=$(dirname $(readlink -f $(which vcpkg)))
+    export VCPKG_CHAINLOAD_TOOLCHAIN_FILE=${BASE_DIR}/toolchain/cmake/Toolchains/${TOOLCHAIN_PREFIX}.toolchain.cmake
+
+    echo ::group::Installing dependencies
+    vcpkg install \
+        --x-manifest-root=${BASE_DIR} \
+        --feature-flags=versions \
+        --overlay-ports=${BASE_DIR}/toolchain/vcpkg/ports \
+        --overlay-triplets=${BASE_DIR}/toolchain/vcpkg/triplets \
+        --triplet=${TOOLCHAIN_PREFIX}
+    echo ::endgroup::
+
+    echo ::group::Configuring project
+    echo "::info::Set up for ${TOOLCHAIN_PREFIX} (${TOOLCHAIN_ROOT})"
+    cmake \
+        -GNinja \
+        -C${BASE_DIR}/.github/cmake/${PLATFORM}-${ARCHITECTURE}.preload.cmake \
+        -DCMAKE_C_COMPILER=${TOOLCHAIN_ROOT}/bin/${ARCHITECTURE}-gcc \
+        -DCMAKE_CXX_COMPILER=${TOOLCHAIN_ROOT}/bin/${ARCHITECTURE}-g++ \
+        -DCMAKE_INSTALL_PREFIX=$PWD/install \
+        -DCMAKE_MAKE_PROGRAM=$(which ninja) \
+        -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake \
+        -DTOOLCHAIN_ROOT="${TOOLCHAIN_ROOT}" \
+        -DTOOLCHAIN_PREFIX=${TOOLCHAIN_PREFIX} \
+        -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=${VCPKG_CHAINLOAD_TOOLCHAIN_FILE} \
+        -DVCPKG_OVERLAY_PORTS=${BASE_DIR}/toolchain/vcpkg/ports \
+        -DVCPKG_OVERLAY_TRIPLETS=${BASE_DIR}/toolchain/vcpkg/triplets \
+        -DVCPKG_TARGET_TRIPLET=${TOOLCHAIN_PREFIX} \
+        ${BASE_DIR} ${@:3}
+    echo ::endgroup::
+
+    echo ::group::Building project
+    cmake --build .
+    echo ::endgroup::
+
+    popd
 ;;
 "compress-usr-dir")
     echo "::group::Compressing install directory"
@@ -127,16 +213,16 @@ case $1 in
 ;;
 "push-asset")
     echo "::group::Pushing asset"
-    TAG_NAME=$(github_api list tag "$TRAVIS_REPO_SLUG" "^$TRAVIS_COMMIT$" | cut -d'|' -f 2)
+    TAG_NAME=$(git tag --points-at HEAD)
 
-    [ -z "$TAG_NAME" ] && exit 1
-
-    RELEASE_NAME=$(github_api list release "$TRAVIS_REPO_SLUG" "^$TRAVIS_COMMIT$" | cut -d'|' -f 1)
-
-    [ -z "$RELEASE_NAME" ] && github_api push release "$TRAVIS_REPO_SLUG" "$TAG_NAME" "Release $TAG_NAME" "Automated release"
+    if [ -z "$TAG_NAME" ]; then
+        echo "::debug::Tag not found, not pushing"
+        echo "::endgroup::"
+        exit 0
+    fi
 
     for FILE in $(find . -maxdepth 1 -type f -name '*.'$2); do
-        github_api push asset "$TRAVIS_REPO_SLUG:$TAG_NAME" "$(basename $FILE)"
+        gh release upload -R "$GITHUB_REPOSITORY" "$TAG_NAME" "$FILE" --clobber
     done
     echo "::endgroup::"
 ;;

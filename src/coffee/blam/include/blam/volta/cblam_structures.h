@@ -102,25 +102,26 @@ template<size_t Size>
 struct unicode_var
 {
     using wide_string               = std::basic_string<u16>;
-    using string_span               = semantic::mem_chunk<u16>;
+    using string_span               = semantic::mem_chunk<const u16>;
     static constexpr u16 terminator = 0;
 
     u16 data[Size];
 
     inline string_span view(u32 len, u16 off = 0) const
     {
-        string_span string_data = string_span::From(data + off, len);
+        string_span string_data = string_span::of(data + off, len);
 
-        auto end = string_data.find(string_span::From(terminator)).value();
-
-        return string_data.at(0, end.offset).value();
+        if(auto end = string_data.find(string_span::of(terminator)))
+            return string_data.at(0, end->offset).value();
+        else
+            return string_span{};
     }
 
     inline wide_string str(u16 off = 0) const
     {
-        string_span string_data = string_span::From(data + off, 256);
+        string_span string_data = string_span::of(data + off, 256);
 
-        auto res = string_data.find(string_span::From(terminator));
+        auto res = string_data.find(string_span::of(terminator));
 
         auto out = wide_string(data + off, res ? (*res).offset : 0);
         return out;
@@ -519,7 +520,7 @@ struct alignas(4) reflexive_t<T, RType, true>
         if((offset - magic.magic_offset) > magic.max_size)
             Throw(reflexive_error("reflexive pointer out of bounds"));
 
-        return Output::From(
+        return Output::of(
             C_RCAST<T const*>(magic.base_ptr + offset - magic.magic_offset),
             count);
     }

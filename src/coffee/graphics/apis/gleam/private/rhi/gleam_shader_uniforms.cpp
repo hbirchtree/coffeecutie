@@ -15,7 +15,7 @@ namespace GLEAM {
 template<typename T>
 STATICINLINE Span<T> get_uniform_span(const T* d, szptr size)
 {
-    return Span<T>::Unsafe(C_CCAST<T*>(d), size, size / sizeof(T));
+    return Span<T>(C_CCAST<T*>(d), size / sizeof(T));
 }
 
 template<typename T>
@@ -133,7 +133,7 @@ void GLEAM_API::SetShaderUniformState(
     {
         if(!feval(u.second.stages & stage))
             continue;
-        Bytes const* db = u.second.value->data;
+        auto db = u.second.value->data;
         if(!db)
             continue;
 
@@ -281,12 +281,12 @@ void GLEAM_API::SetShaderUniformState(
             if(GLEAM_FEATURES.separable_programs)
             {
                 /* Set texture handle in shader */
-                gl::v43::Unifiv(prog, s.first, handle->m_unit);
+                gl::v43::Unifiv(prog, s.first, SpanOne<const i32>(handle->m_unit));
             } else
 #endif
             {
                 /* Set texture handle in shader */
-                gl::v33::Unifiv(s.first, handle->m_unit);
+                gl::v33::Unifiv(s.first, SpanOne<const i32>(handle->m_unit));
             }
 #endif
         }

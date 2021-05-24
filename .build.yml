@@ -56,7 +56,7 @@ secrets:
 template_location: toolchain/cmake/Templates
 toolchain:
   source: hbirchtree/coffeecutie-automation-tools
-  version: v1.0.16
+  version: v1.0.24
 version:
   hotfix: 5
   major: 4

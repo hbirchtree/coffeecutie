@@ -13,6 +13,8 @@ add_gitproject (
     TAG fetchcontent-master
     )
 
+find_package ( ImGui CONFIG REQUIRED )
+
 coffee_application (
     TARGET BlamGraphics
     TITLE "Blam Graphics"

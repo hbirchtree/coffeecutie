@@ -540,7 +540,7 @@ struct shader_param_view
         }
     };
 
-    Map<const_desc_id, Bytes>         m_constant_data;
+    Map<const_desc_id, BytesConst>    m_constant_data;
     Map<const_desc_id, sampler_value> m_sampler_handles;
     Map<const_desc_id, const_value>   m_constant_values;
 

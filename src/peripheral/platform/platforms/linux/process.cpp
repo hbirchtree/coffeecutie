@@ -4,6 +4,7 @@
 #include <peripherals/semantic/enum/rsca.h>
 #include <peripherals/stl/string_casting.h>
 #include <platforms/file.h>
+#include <url/url.h>
 
 namespace platform {
 namespace env {
@@ -23,39 +24,42 @@ struct mem_usage
 ProcessProperty::MemUnit ProcessProperty::Mem(ProcessProperty::PID)
 {
 #ifndef COFFEE_LOWFAT
-    file::file_error ec;
-
-    CString mem_info = file::Linux::FileFun::sys_read("/proc/self/statm", ec);
-
-    mem_usage usage = {};
-
-    size_t spacer = 0;
-    int    steps  = 0;
-    while(true)
+    using namespace url::constructors;
+    if(auto result = platform::file::read_lines(MkSysUrl("/proc/self/statm"));
+       result.has_error())
+        return 0;
+    else
     {
-        size_t start = spacer;
-        spacer       = mem_info.find(' ', spacer);
+        auto const& mem_info = result.value().at(0);
+        mem_usage   usage    = {};
 
-        if(spacer > mem_info.size())
-            break;
+        size_t spacer = 0;
+        int    steps  = 0;
+        while(true)
+        {
+            size_t start = spacer;
+            spacer       = mem_info.find(' ', spacer);
 
-        u64 num = cast_string<u64>(
-            str::encapsulate(&mem_info[start], C_CAST<u32>(spacer - start)));
-        if(steps == 0)
-            usage.vmsize = num;
-        else if(steps == 1)
-            usage.vmrss = num;
-        else if(steps == 2)
-            usage.rss = num;
-        else if(steps == 3)
-            usage.text = num;
-        else if(steps == 5)
-            usage.data = num;
-        spacer++;
-        steps++;
+            if(spacer > mem_info.size())
+                break;
+
+            u64 num = cast_string<u64>(mem_info.substr(start, spacer - start));
+            if(steps == 0)
+                usage.vmsize = num;
+            else if(steps == 1)
+                usage.vmrss = num;
+            else if(steps == 2)
+                usage.rss = num;
+            else if(steps == 3)
+                usage.text = num;
+            else if(steps == 5)
+                usage.data = num;
+            spacer++;
+            steps++;
+        }
+
+        return usage.vmrss;
     }
-
-    return usage.vmrss;
 #else
     return 0;
 #endif
@@ -64,98 +68,80 @@ ProcessProperty::MemUnit ProcessProperty::Mem(ProcessProperty::PID)
 bool MemMap::GetProcMap(ProcessProperty::PID pid, MemMap::ProcMap& target)
 {
     using namespace ::semantic;
+    using namespace url::constructors;
 
 #ifndef COFFEE_LOWFAT
-    file::file_error ec;
-
     CString maps_file = "/proc/" + cast_pod(pid) + "/maps";
-    CString maps_info = file::Linux::FileFun::sys_read(maps_file.c_str(), ec);
+    auto    maps_info = platform::file::read_lines(MkUrl(maps_file));
 
-    szptr end       = maps_info.find('\n');
+    if(maps_info.has_error())
+        return false;
+
     szptr pos       = 0;
     bool  was_empty = false;
-    while(end < maps_info.size())
+    for(auto const& line : maps_info.value())
     {
         target.push_back({});
         Entry& file = target.back();
 
         szptr space            = 0;
         u32   filename_counter = 0;
-        while(space < end)
+        auto  it               = str::split::spliterator<char>(line, ' ');
+        while(it != str::split::spliterator<char>())
         {
-            space     = maps_info.find(' ', pos);
-            szptr len = space - pos;
-            if(space > end)
-                len = end - pos;
-            auto sec  = str::encapsulate(&maps_info[pos], len);
-            was_empty = sec.size() == 0;
-            if(!was_empty)
+            auto sec = *it;
+            filename_counter++;
+            switch(filename_counter)
             {
-                filename_counter++;
-                switch(filename_counter)
-                {
-                case 1:
-                {
-                    szptr   mid = sec.find('-');
-                    CString tmp = str::encapsulate(sec.data(), mid);
-                    file.start =
-                        libc::str::from_string<u64, libc::str::convert_base_16>(
-                            tmp.data());
-                    tmp = &sec[mid + 1];
-                    file.end =
-                        libc::str::from_string<u64, libc::str::convert_base_16>(
-                            tmp.data());
-                    break;
-                }
-                case 2:
-                {
-                    if(sec.find('r') < end)
-                        file.access |= RSCA::ReadOnly;
-                    if(sec.find('w') < end)
-                        file.access |= RSCA::WriteOnly;
-                    if(sec.find('x') < end)
-                        file.access |= RSCA::Executable;
-                    if(sec.find('s') < end)
-                        file.access |= RSCA::Shared;
-                    if(sec.find('p') < end)
-                        file.access |= RSCA::Private;
-                    break;
-                }
-                case 3:
-                {
-                    file.offset =
-                        libc::str::from_string<u64, libc::str::convert_base_16>(
-                            sec.c_str());
-                    break;
-                }
-                case 4:
-                {
-                    /* dev ?? */
-                    break;
-                }
-                case 5:
-                {
-                    file.inode = cast_string<u64>(sec);
-                    break;
-                }
-                case 6:
-                {
-                    file.name = sec;
-                    break;
-                }
-                default:
-                    //                    fprintf(stderr, "%s - ", sec.c_str());
-                    break;
-                }
+            case 1: {
+                szptr mid = sec.find('-');
+                auto  tmp = sec.substr(0, mid);
+                file.start =
+                    libc::str::from_string<u64, libc::str::convert_base_16>(
+                        tmp.data());
+                tmp = tmp.substr(mid + 1);
+                file.end =
+                    libc::str::from_string<u64, libc::str::convert_base_16>(
+                        tmp.data());
+                break;
             }
-            pos = space + 1;
-            if(space > end)
-            {
-                pos = end + 1;
+            case 2: {
+                if(sec.find('r') != std::string_view::npos)
+                    file.access |= RSCA::ReadOnly;
+                if(sec.find('w') != std::string_view::npos)
+                    file.access |= RSCA::WriteOnly;
+                if(sec.find('x') != std::string_view::npos)
+                    file.access |= RSCA::Executable;
+                if(sec.find('s') != std::string_view::npos)
+                    file.access |= RSCA::Shared;
+                if(sec.find('p') != std::string_view::npos)
+                    file.access |= RSCA::Private;
+                break;
+            }
+            case 3: {
+                auto tmp = String(sec.data(), sec.size());
+                file.offset =
+                    libc::str::from_string<u64, libc::str::convert_base_16>(
+                        tmp.c_str());
+                break;
+            }
+            case 4: {
+                /* dev ?? */
+                break;
+            }
+            case 5: {
+                file.inode = cast_string<u64>(String(sec.data(), sec.size()));
+                break;
+            }
+            case 6: {
+                file.name = sec;
+                break;
+            }
+            default:
+                //                    fprintf(stderr, "%s - ", sec.c_str());
                 break;
             }
         }
-        end = maps_info.find('\n', pos);
     }
 
     return true;

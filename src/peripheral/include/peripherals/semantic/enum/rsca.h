@@ -39,8 +39,9 @@ enum class RSCA : libc_types::u32
     Shared      = SharedLocking,
 
     /* File operations or policies */
-    NewFile = 0x1000, /*<! Don't overwrite files that exist */
-    Discard = 0x2000, /*<! Truncate data that exists in file */
+    NewFile  = 0x1000, /*<! Don't overwrite files that exist */
+    Discard  = 0x2000, /*<! Truncate data that exists in file */
+    Truncate = Discard,
 
     /* Tell function to be particular about where to store this file */
     //    SpecifyStorage = 0x4000,

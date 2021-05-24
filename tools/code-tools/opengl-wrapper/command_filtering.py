@@ -461,9 +461,9 @@ class ArgumentTransform:
                 span_type += unif_info[3]
                 span_type += unif_info[1].replace('x', '_')
                 
-            self.emit_command_input(arg1, InArgExp(arg1.name, arg1.atype, 'C_RCAST<%s*>(%s.data)' % (arg1.atype.base_type, arg1.name)))
-            self.emit_command_input(arg2, InArgExp(arg2.name, arg2.atype, 'C_FCAST<%s>(%s.elements)' % (arg2.atype, arg1.name)))
-            self.emit_function_param(arg1, InArgExp(arg1.name, GLBaseType('semantic::Span<%s> const&' % span_type)))
+            self.emit_command_input(arg1, InArgExp(arg1.name, arg1.atype, 'C_RCAST<%s*>(%s.data())' % (arg1.atype.base_type, arg1.name)))
+            self.emit_command_input(arg2, InArgExp(arg2.name, arg2.atype, 'C_FCAST<%s>(%s.size())' % (arg2.atype, arg1.name)))
+            self.emit_function_param(arg1, InArgExp(arg1.name, GLBaseType('semantic::Span<%s> const&' % (span_type, ))))
 
         arg1 = self.find_by_name('x') or self.find_by_name('v0')
         arg2 = self.find_by_name('y') or self.find_by_name('v1')
@@ -508,8 +508,8 @@ class ArgumentTransform:
                 self.consume(arg1)
                 self.consume(arg2)
 
-                self.emit_command_input(arg1, InArgExp(arg1.name, arg1.atype, 'C_FCAST<%s>(%s.elements)' % (arg1.atype, arg2.name)))
-                self.emit_command_input(arg2, InArgExp(arg2.name, arg2.atype, '%s.data' % arg2.name))
+                self.emit_command_input(arg1, InArgExp(arg1.name, arg1.atype, 'C_FCAST<%s>(%s.size())' % (arg1.atype, arg2.name)))
+                self.emit_command_input(arg2, InArgExp(arg2.name, arg2.atype, '%s.data()' % arg2.name))
                 self.emit_function_param(arg2, InArgExp(arg2.name, GLBaseType('semantic::Span<%s>&&' % arg2.atype.base_type)))
 
 
@@ -658,7 +658,7 @@ class ArgumentTransform:
                 self.remap_type(arg, GLBaseType('libc_types::uintptr'), 'C_RCAST<%s>(%s)' % (arg.atype, arg.name))
             elif arg.atype.is_ptr and arg.name == 'value' and not arg.atype.is_base():
                 # Use Span<T> on 'T* value' arguments
-                self.emit_command_input(arg, InArgExp(arg.name, arg.atype, '%s.data' % arg.name))
+                self.emit_command_input(arg, InArgExp(arg.name, arg.atype, '%s.data()' % arg.name))
                 self.emit_function_param(arg, InArgExp(arg.name, GLBaseType('semantic::Span<%s> const&' % (arg.atype.base_type,))))
                 self.consume(arg)
             elif arg.group == 'TextureTarget':

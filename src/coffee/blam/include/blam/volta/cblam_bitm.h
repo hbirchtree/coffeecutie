@@ -95,7 +95,7 @@ struct bitmap_header_t
     {
         auto base_ptr = C_RCAST<byte_t const*>(this);
 
-        return semantic::mem_chunk<locator_block const>::From(
+        return semantic::mem_chunk<locator_block const>::of(
             C_RCAST<locator_block const*>(base_ptr + locators_offset),
             locators_count);
     }

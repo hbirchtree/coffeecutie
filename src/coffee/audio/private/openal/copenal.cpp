@@ -323,17 +323,11 @@ void listener_set(const CALListener* listener)
     context_get_error();
     alListenerfv(AL_VELOCITY, C_RCAST<const scalar*>(&listener->velocity));
     context_get_error();
-    scalar* orient = new scalar[6];
+    Array<Vecf3, 2> orient = {{
+        listener->orientation_forward, listener->orientation_up
+    }};
 
-    MemCpy(
-        Bytes::Create(listener->orientation_forward),
-        Bytes::From(&orient[0], 3));
-    MemCpy(Bytes::Create(listener->orientation_up), Bytes::From(&orient[3], 3));
-
-    //    MemCpy(&orient[0],&listener->orientation_forward,sizeof(CVec3));
-    //    MemCpy(&orient[3],&listener->orientation_up,sizeof(CVec3));
-    alListenerfv(AL_ORIENTATION, orient);
-    delete[] orient;
+    alListenerfv(AL_ORIENTATION, C_RCAST<f32*>(orient.data()));
     context_get_error();
 }
 

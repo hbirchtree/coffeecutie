@@ -2,10 +2,8 @@
 
 #include <coffee/core/base_state.h>
 #include <coffee/core/coffee.h>
-#include <coffee/core/datastorage/text/json/cjsonparser.h>
 #include <peripherals/stl/string_ops.h>
 #include <platforms/file.h>
-#include <rapidjson/filewritestream.h>
 
 #include <coffee/core/profiler/profiling-export.h>
 
@@ -21,8 +19,9 @@ namespace platform {
 namespace profiling {
 namespace json {
 
-using namespace ::Coffee::DataStorage::TextStorage::RJSON;
 using namespace ::platform::file;
+using semantic::Bytes;
+using semantic::BytesConst;
 
 static constexpr cstring event_format =
     R"({"ts":{0},"name":"{1}","pid":1,"tid":{2},"cat":"{3}","ph":"{4}","s":"t"},
@@ -53,35 +52,31 @@ struct ProfileWriter : GlobalState
         if(!threadState)
             Throw(undefined_behavior("thread naming is not initialized!"));
 
-        FileFun::file_error ec;
-        logfile = FileFun::Open(
-            outputProfile,
-            RSCA::Append | RSCA::WriteOnly | RSCA::Discard | RSCA::NewFile,
-            ec);
+        if(auto fd = platform::file::open_file(
+               outputProfile,
+               RSCA::Append | RSCA::WriteOnly | RSCA::Discard | RSCA::NewFile);
+           fd.has_value())
+            logfile = std::move(fd.value());
 
-        C_ERROR_CHECK(ec)
-
-        FileFun::Write(
-            logfile,
-            Bytes::CreateString(R"({"displayTimeUnit": "ms","traceEvents":[)"),
-            ec);
-
-        C_ERROR_CHECK(ec)
+        if(auto error = platform::file::write(
+               logfile,
+               BytesConst::ofString(
+                   R"({"displayTimeUnit": "ms","traceEvents":[)"));
+           error.has_value())
+            return;
     }
 
-    FileFun::FileHandle            logfile;
+    declreturntype(platform::file::open_file)::value_type logfile;
     ShPtr<GlobalState>             threadState;
     ShPtr<platform::info::AppData> appData;
     AtomicUInt64                   event_count;
 
     virtual ~ProfileWriter();
 
-    FORCEDINLINE void write(Bytes&& data)
+    FORCEDINLINE void write(BytesConst&& data)
     {
-        file_error ec;
-        FileFun::Write(logfile, data, ec);
-
-        C_ERROR_CHECK(ec)
+        if(auto error = platform::file::write(logfile, data))
+            return;
     }
 };
 
@@ -93,7 +88,7 @@ ProfileWriter::~ProfileWriter()
     auto thread_name = Coffee::Strings::fmt(
         R"({"name":"process_name","ph":"M","pid":1,"args":{"name":"{0}"}},)",
         appData ? appData->application_name : "Coffee App");
-    write(Bytes::CreateString(thread_name.c_str()));
+    write(BytesConst::ofContainer(thread_name));
 
     for(auto const& thread : stl_types::Threads::GetNames(threadState.get()))
     {
@@ -101,7 +96,7 @@ ProfileWriter::~ProfileWriter()
             R"({"name":"thread_name","ph":"M","pid":1,"tid":{0},"args":{"name":"{1}"}},)",
             thread.first,
             thread.second);
-        write(Bytes::CreateString(thread_name.c_str()));
+        write(BytesConst::ofContainer(thread_name));
     }
 
     for(auto const& metric : metrics::data)
@@ -111,10 +106,10 @@ ProfileWriter::~ProfileWriter()
             metric.second.id,
             metric.first,
             C_CAST<int>(metric.second.variant));
-        write(Bytes::CreateString(out.c_str()));
+        write(BytesConst::ofContainer(out));
     }
 
-    write(Bytes::CreateString(R"({}],)"));
+    write(BytesConst::ofString(R"({}],)"));
 
     CString chromeInfo;
     Coffee::Profiling::ExportChromeTracerData(chromeInfo);
@@ -129,13 +124,11 @@ ProfileWriter::~ProfileWriter()
      * preceding object. This lets us plug it into the same model as before.
      *    This is also more compatible with the Chrome Trace Format.
      */
-    write(Bytes::CreateString(chromeInfo.c_str() + 1));
+    write(*BytesConst::ofContainer(chromeInfo).at(1));
 
-    write(Bytes::CreateString("}"));
+    write(BytesConst::ofString("}"));
 
-    FileFun::file_error ec;
-    FileFun::Close(std::move(logfile), ec);
-    C_ERROR_CHECK(ec)
+    logfile = {};
 }
 
 ShPtr<Coffee::State::GlobalState> CreateProfiler()
@@ -143,12 +136,9 @@ ShPtr<Coffee::State::GlobalState> CreateProfiler()
     if constexpr(!compile_info::profiler::enabled)
         return {};
 
-    auto profile = constructors::MkUrl("profile.json", RSCA::TempFile);
+    auto profile = url::constructors::MkUrl("profile.json", RSCA::TempFile);
 
-    FileFun::file_error ec;
-    FileFun::Truncate(profile, 0, ec);
-
-    C_ERROR_CHECK(ec)
+    /* TODO: Truncate? */
 
     return MkShared<ProfileWriter>(profile);
 }
@@ -162,8 +152,7 @@ static void platform_trace_begin(
 #endif
 }
 
-static void platform_trace_end(
-    UNUSED_PARAM(profiling::DataPoint const&, point))
+static void platform_trace_end(UNUSED_PARAM(profiling::DataPoint const&, point))
 {
 #if defined(COFFEE_ANDROID)
     if constexpr(compile_info::android::api >= 23)
@@ -203,9 +192,8 @@ void Push(profiling::ThreadState& tdata, profiling::DataPoint const& point)
         break;
     }
 
-    auto thread_name = is_explicit_thread
-                           ? ThreadGetName(point.tid)
-                           : point.thread_name;
+    auto thread_name =
+        is_explicit_thread ? ThreadGetName(point.tid) : point.thread_name;
 
     if(thread_name.empty())
         thread_name = str::print::pointerify(point.tid);
@@ -220,7 +208,7 @@ void Push(profiling::ThreadState& tdata, profiling::DataPoint const& point)
 
     event = str::transform::printclean(event);
 
-    profileData->write(Bytes::CreateString(event.c_str()));
+    profileData->write(Bytes::ofContainer(event));
     profileData->event_count++;
 }
 
@@ -245,11 +233,11 @@ extern void CaptureMetrics(
         data.variant = variant;
     }
 
-        auto const& data     = it->second;
+    auto const& data     = it->second;
     auto&       profiler = *C_DCAST<ProfileWriter>(tdata.writer);
 
-        constexpr auto metric_format =
-            R"({"ts":{2},"ph":"m","i":{3},"id":{0},"v":"{1}"},
+    constexpr auto metric_format =
+        R"({"ts":{2},"ph":"m","i":{3},"id":{0},"v":"{1}"},
 )";
 
     using namespace Chrono;
@@ -257,7 +245,7 @@ extern void CaptureMetrics(
     auto out =
         Coffee::Strings::fmt(metric_format, data.id, value, ts.count(), index);
 
-    profiler.write(Bytes::CreateString(out.c_str()));
+    profiler.write(Bytes::ofContainer(out));
 }
 
 void CaptureMetrics(

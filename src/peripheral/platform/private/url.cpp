@@ -116,47 +116,33 @@ STATICINLINE SystemPaths GetSystemPaths()
 #elif defined(COFFEE_LINUX)
 
     /* Asset directories may be in AppImages or Snaps */
-    /* TODO: Add the case for Flatpak */
-    const constexpr cstring var_appimg = "APPIMAGE_DATA_DIR";
-    const constexpr cstring var_snappy = "SNAP";
 
-    if(Env::ExistsVar(var_appimg))
-        paths.assetDir =
-            MkUrl(Env::GetVar(var_appimg).c_str(), RSCA::SystemFile);
-    else if(Env::ExistsVar(var_snappy))
-        paths.assetDir =
-            MkUrl(Env::GetVar(var_snappy).c_str(), RSCA::SystemFile) +
-            Path{"assets"};
+    /* TODO: Add the case for Flatpak */
+    if(auto appimg = env::var("APPIMAGE_DATA_DIR"); appimg.has_value())
+        paths.assetDir = MkSysUrl(appimg.value());
+    else if(auto snappy = env::var("SNAP"); snappy.has_value())
+        paths.assetDir = MkSysUrl(snappy.value()) / "assets";
     else if(_coffee_resource_prefix.size() > 0)
-        paths.assetDir =
-            MkUrl(_coffee_resource_prefix.c_str(), RSCA::SystemFile);
+        paths.assetDir = MkSysUrl(_coffee_resource_prefix);
     else
-        paths.assetDir = Env::CurrentDir();
+        paths.assetDir = path::current_dir().value();
 
     /* Cache goes in ~/.cache/ORGNAME/APPNAME */
-    paths.cacheDir = Env::GetUserHome() + Path{".cache"} +
-                     Path{appData.organization_name} +
-                     Path{appData.application_name};
+    paths.cacheDir = env::home_dir().value() / ".cache" /
+                     appData.organization_name / appData.application_name;
 
     /* Temporary files go in /tmp */
-    paths.tempDir =
-        MkUrl("/tmp", RSCA::SystemFile) + Path{appData.application_name};
+    paths.tempDir = MkSysUrl("/tmp") / appData.application_name;
 
-    /* TODO: Implement this here */
-    const constexpr cstring var_snappy_config = "SNAP_USER_COMMON";
-
-    if(Env::ExistsVar(var_snappy_config))
+    if(auto snappy = env::var("SNAP_USER_COMMON"); snappy.has_value())
+        paths.configDir = MkSysUrl(snappy.value());
+    else
     {
+        auto& orgname = appData.organization_name;
+        auto& appname = appData.application_name;
+
         paths.configDir =
-            MkUrl(Env::GetVar(var_snappy_config), RSCA::SystemFile);
-    } else
-    {
-        cstring orgname = appData.organization_name.c_str();
-        cstring appname = appData.application_name.c_str();
-
-        Path homedir =
-            ((Path(Env::GetUserHome()) + ".local/share") + orgname) + appname;
-        paths.configDir = MkUrl(homedir, RSCA::SystemFile);
+            env::home_dir().value() / ".local" / "share" / orgname / appname;
     }
 
 #elif defined(COFFEE_WINDOWS)
@@ -283,8 +269,7 @@ CString GetSystemDirectedPath(cstring suffix, RSCA storage)
 
     switch(storage & RSCA::StorageMask)
     {
-    case RSCA::TempFile:
-    {
+    case RSCA::TempFile: {
         Path filePath(suffix);
 
         auto fileInstance = File[createTempFile](
@@ -305,28 +290,23 @@ CString Url::operator*() const
 {
     switch(category)
     {
-    case Local:
-    {
-        file::file_error ec;
-
+    case Local: {
         if(cachedUrl.size())
             return cachedUrl;
 
-#if defined(COFFEE_UNIXPLAT)
         CString derefPath = DereferenceLocalPath();
-        derefPath         = str::replace::str(derefPath, "//", "/");
-#if !defined(COFFEE_EMSCRIPTEN)
-        if(!feval(flags & RSCA::NoDereference))
-            derefPath = file::FileFun::DereferenceLink(
-                MkUrl(derefPath.c_str(), RSCA::SystemFile), ec);
-#if MODE_DEBUG
-        C_ERROR_CHECK(ec);
-#endif
-#endif
-        return derefPath;
+#if defined(COFFEE_UNIXPLAT) && !defined(COFFEE_EMSCRIPTEN)
+        derefPath = str::replace::str(derefPath, "//", "/");
+        if(feval(flags, RSCA::NoDereference))
+            return derefPath;
+        if(auto path =
+               path::dereference(MkUrl(derefPath.c_str(), RSCA::SystemFile));
+           path.has_error())
+            return derefPath;
+        else
+            return path.value().internUrl;
 #else
-        CString derefPath = DereferenceLocalPath();
-        derefPath         = str::replace::str(derefPath, "\\", "/");
+        derefPath = str::replace::str(derefPath, "\\", "/");
         return derefPath;
 #endif
     }
@@ -354,8 +334,7 @@ Url Url::operator+(const Path& path) const
     Url cpy = *this;
 
     if(internUrl.size())
-        cpy.internUrl =
-            Env::ConcatPath(internUrl.c_str(), path.internUrl.c_str());
+        cpy.internUrl = internUrl + path::path_separator + path.internUrl;
     else
         cpy.internUrl = path.internUrl;
 
@@ -369,9 +348,7 @@ STATICINLINE CString DereferencePath(cstring suffix, RSCA storageMask)
         return suffix;
 
 #if !defined(COFFEE_GEKKO)
-
-    file::file_error ec;
-    auto             paths = GetSystemPaths();
+    auto paths = GetSystemPaths();
 
     auto urlPart = Path{suffix};
 
@@ -384,8 +361,7 @@ STATICINLINE CString DereferencePath(cstring suffix, RSCA storageMask)
 
     switch(storageMask & RSCA::StorageMask)
     {
-    case RSCA::AssetFile:
-    {
+    case RSCA::AssetFile: {
 #if defined(COFFEE_VIRTUAL_ASSETS)
         /* Because Android uses a virtual filesystem,
          *  we do not go deeper to find a RSCA::SystemFile URL */
@@ -395,43 +371,36 @@ STATICINLINE CString DereferencePath(cstring suffix, RSCA storageMask)
         break;
 #endif
     }
-    case RSCA::ConfigFile:
-    {
-        file::DirFun::MkDir(paths.configDir, true, ec);
+    case RSCA::ConfigFile: {
+        file::create_directory(paths.configDir, {.recursive = true});
         tempStore = paths.configDir + urlPart;
         break;
     }
-    case RSCA::TemporaryFile:
-    {
+    case RSCA::TemporaryFile: {
 #if defined(COFFEE_DYNAMIC_TEMPFILES)
         tempStore =
             MkUrl(GetSystemDirectedPath(suffix, storageMask), RSCA::SystemFile);
 #else
-        file::DirFun::MkDir(paths.tempDir, true, ec);
+        file::create_directory(paths.tempDir, {.recursive = true});
         tempStore = paths.tempDir + urlPart;
 #endif
         break;
     }
-    case RSCA::CachedFile:
-    {
+    case RSCA::CachedFile: {
 #if defined(COFFEE_DYNAMIC_TEMPFILES)
         tempStore =
             MkUrl(GetSystemDirectedPath(suffix, storageMask), RSCA::SystemFile);
 #else
-        file::DirFun::MkDir(paths.cacheDir, true, ec);
+        file::create_directory(paths.cacheDir, {.recursive = true});
         tempStore = paths.cacheDir + urlPart;
 #endif
         break;
     }
-    default:
-    {
+    default: {
         /* In this case, we have no preference. Default to asset. */
         return {};
     }
     }
-#if MODE_DEBUG
-    C_ERROR_CHECK(ec);
-#endif
     tempStore.flags |= storageMask & RSCA::NoDereference;
     return *tempStore;
 #else
@@ -465,18 +434,14 @@ Path Path::addExtension(cstring ext) const
 
 Path Path::fileBasename() const
 {
-    file::file_error ec;
-    Path             p(file::DirFun::Basename(internUrl, ec).internUrl);
-#if MODE_DEBUG
-    C_ERROR_CHECK(ec);
-#endif
+    Path p(path::base(MkUrl(internUrl)).value().internUrl);
     return p;
 }
 
 CString Path::extension() const
 {
     auto it     = internUrl.rfind(".");
-    auto sep_it = internUrl.rfind(file::DirFun::GetPathSep());
+    auto sep_it = internUrl.rfind(path::path_separator);
 
     if(it == CString::npos || (sep_it != CString::npos && sep_it > it))
         return {};
@@ -486,21 +451,7 @@ CString Path::extension() const
 
 Path Path::dirname() const
 {
-    file::file_error ec;
-    Path             p(file::DirFun::Dirname(internUrl.c_str(), ec).internUrl);
-#if MODE_DEBUG
-    C_ERROR_CHECK(ec);
-#endif
-    return p;
-}
-
-Path Path::canonical() const
-{
-    file::file_error ec;
-    Path             p(file::FileFun::CanonicalName(MkUrl(*this), ec));
-#if MODE_DEBUG
-    C_ERROR_CHECK(ec);
-#endif
+    Path p(path::dir({internUrl}).value().internUrl);
     return p;
 }
 
@@ -523,17 +474,16 @@ Path Path::operator+(cstring component) const
 {
     Path cpy = *this;
     if(cpy.internUrl.size())
-        cpy.internUrl = Env::ConcatPath(cpy.internUrl.c_str(), component);
+        cpy.internUrl = cpy.internUrl + path::path_separator + component;
     else
         cpy.internUrl = component;
-    //    cpy.internUrl += component;
     return cpy;
 }
 
 Path Path::operator+(const Path& path) const
 {
     if(internUrl.size())
-        return Path{Env::ConcatPath(internUrl.c_str(), path.internUrl.c_str())};
+        return Path{internUrl + path::path_separator + path.internUrl};
     else
         return path;
 }

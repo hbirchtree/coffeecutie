@@ -32,7 +32,8 @@ NO_DISCARD static u8 CharInsert(CString const& src, char* ptr, szptr size)
     if(src.size() > (size - 1))
         Throw(std::out_of_range("entry too long"));
 
-    MemCpy(Bytes::From(src.data(), src.size()), Bytes::From(ptr, size));
+    MemCpy(
+        BytesConst::ofBytes(src.data(), src.size()), Bytes::ofBytes(ptr, size));
     return C_FCAST<u8>(src.size());
 }
 
@@ -275,7 +276,7 @@ static void GenPrefixNodes(
 static void PrintDirIndex(
     Vector<VirtualIndex::directory_data_t::node_base_t>& nodes)
 {
-    if(!Env::ExistsVar("VIRTFS_GRAPH"))
+    if(auto toggle = platform::env::var("VIRTFS_GRAPH"); !toggle.has_value())
         return;
 
     Deque<Pair<VirtualIndex::directory_data_t::node_base_t*, Pair<u32, u32>>> q;
@@ -315,11 +316,13 @@ static void PrintDirIndex(
                                                                    : "white"));
 
         if(node.first->node.left != node_t::sentinel_value)
-            q.push_back({&nodes[node.first->node.left],
-                         {node.second.second, node.first->node.left}});
+            q.push_back(
+                {&nodes[node.first->node.left],
+                 {node.second.second, node.first->node.left}});
         if(node.first->node.right != node_t::sentinel_value)
-            q.push_back({&nodes[node.first->node.right],
-                         {node.second.second, node.first->node.right}});
+            q.push_back(
+                {&nodes[node.first->node.right],
+                 {node.second.second, node.first->node.right}});
     }
 
     cBasicPrint("}");
@@ -366,7 +369,7 @@ static bool NeedsOptimization(node_working_set_t& set, u32 idx = 0)
 
 } // namespace opt_detail
 
-static directory_index_t Generate(_cbasic_data_chunk<const VFile> const& files)
+static directory_index_t Generate(mem_chunk<const VFile> const& files)
 {
     DProfContext _(VIRTFS_API "Generating directory index");
 
@@ -479,12 +482,7 @@ namespace lookup {
 using node_base_t = VirtualIndex::directory_data_t::node_base_t;
 using node_t      = VirtualIndex::directory_data_t::node_t;
 
-using node_list_t = _cbasic_data_chunk<node_base_t const>;
-
-STATICINLINE CString FilterTreeName(cstring name)
-{
-    return name;
-}
+using node_list_t = mem_chunk<node_base_t const>;
 
 static node_base_t const* GetNode(u32 idx, node_list_t const& nodes)
 {
@@ -570,7 +568,7 @@ directory_data_t::result_t SearchFile(
         return {{}, {}, strat};
     }
 
-    CString prefix        = lookup::FilterTreeName(name);
+    CString prefix        = name;
     szptr   currentPrefix = 0;
     szptr   prefixLen     = prefix.size();
 

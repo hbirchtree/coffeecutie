@@ -26,7 +26,7 @@ struct JsonLogState : State::GlobalState
 {
     virtual ~JsonLogState();
 
-    FileFun::FileHandle handle;
+    platform::file::file_handle handle;
 };
 
 static const cstring JsonTaggedFormat =
@@ -79,8 +79,7 @@ static void JsonLogger(
         level,
         Time<>::Microsecond() / 1000);
 
-    file_error ec;
-    FileFun::Write(jsonLog, Bytes::CreateString(json_msg.c_str()), ec);
+    platform::file::write(jsonLog, BytesConst::ofContainer(json_msg));
 }
 
 static void JsonTagLogger(
@@ -103,16 +102,14 @@ static void JsonTagLogger(
         tag,
         Time<>::Microsecond() / 1000);
 
-    FileFun::file_error ec;
-    FileFun::Write(jsonLog, Bytes::CreateString(json_msg.c_str()), ec);
+    platform::file::write(jsonLog, Bytes::ofContainer(json_msg));
 }
 
 static void JsonLoggerExit()
 {
     auto jsonLog = std::move(GetLogState().handle);
 
-    file_error ec;
-    FileFun::Write(jsonLog, Bytes::CreateString("{}\n]\n"), ec);
+    platform::file::write(jsonLog, BytesConst::ofString("{}\n]\n"));
 
     DebugFun::SetLogInterface(
         {DebugFun::OutputPrinter::fprintf_platform,
@@ -125,20 +122,21 @@ JsonLogState::~JsonLogState()
 
 DebugFun::LogInterface SetupJsonLogger(platform::url::Url const& jsonFilename)
 {
-    file_error ec;
-    FileFun::Truncate(jsonFilename, 0, ec);
+//    FileFun::Truncate(jsonFilename, 0, ec);
 
-    auto jsonFile = FileFun::Open(
+    auto jsonFile = platform::file::open_file(
         jsonFilename,
-        RSCA::ReadWrite | RSCA::Append | RSCA::Discard | RSCA::NewFile,
-        ec);
+        RSCA::ReadWrite | RSCA::Append | RSCA::Discard | RSCA::NewFile);
 
-    FileFun::Write(jsonFile, Bytes::CreateString("[\n  "), ec);
+    if(jsonFile.has_error())
+        return {};
+
+    platform::file::write(jsonFile.value(), BytesConst::ofString("[\n  "));
 
     auto jsonState    = MkShared<JsonLogState>();
-    jsonState->handle = std::move(jsonFile);
+    jsonState->handle = std::move(jsonFile.value());
     State::SwapState("jsonLog", jsonState);
-    libc::signal::register_atexit(JsonLoggerExit);
+    ::libc::signal::register_atexit(JsonLoggerExit);
 
     return {JsonLogger, JsonTagLogger};
 }

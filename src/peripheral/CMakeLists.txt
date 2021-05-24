@@ -1,3 +1,5 @@
+find_package ( Microsoft.GSL CONFIG REQUIRED )
+
 coffee_library (
     TARGET PeripheralLib
     SOURCES
@@ -6,10 +8,10 @@ coffee_library (
     private/libc_functions.cpp
     private/pimpl_state.cpp
 
+    LIBRARIES Microsoft.GSL::GSL stdc++fs
+
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<BUILD_INTERFACE:${COFFEE_EXT_LIBRARY_DIR}/tiny-utf8>
-    $<BUILD_INTERFACE:${COFFEE_EXT_LIBRARY_DIR}/cppcodec>
     $<INSTALL_INTERFACE:include>
     )
 
@@ -29,13 +31,6 @@ target_precompile_headers ( PeripheralLib PUBLIC
 #    $<$<COMPILE_LANGUAGE:CXX>:peripherals/stl/threads/job_system.h>
 #    $<$<COMPILE_LANGUAGE:CXX>:peripherals/stl/types.h>
 #    $<$<COMPILE_LANGUAGE:CXX>:peripherals/stl/type_list.h>
-    )
-
-coffee_bundle (
-    DESTINATION libs
-
-    HEADER_DIRECTORIES
-    ${COFFEE_EXT_LIBRARY_DIR}/cppcodec
     )
 
 if(BUILD_ASAN)
@@ -167,18 +162,19 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
     # Libunwind is used to print function names at runtime
     # Windows does not support this library
     # Android's Bionic does not grant access to unwind, even though it is there. Bad Google, bad!
-    if(NOT DEFINED LIBUNWIND_INCLUDE_DIR)
-        find_package( Unwind QUIET )
-    endif()
-    if (DEFINED LIBUNWIND_INCLUDE_DIR)
-        target_include_directories ( PeripheralLib PUBLIC
-            $<BUILD_INTERFACE:${LIBUNWIND_INCLUDE_DIR}>
-            )
-        target_link_libraries ( PeripheralLib PUBLIC 
-            $<BUILD_INTERFACE:${LIBUNWIND_GENERIC_LIBRARY}>
-            $<BUILD_INTERFACE:${LIBUNWIND_SPECIFIC_LIBRARY}>
-            )
-    endif()
+    
+    #if(NOT DEFINED LIBUNWIND_INCLUDE_DIR)
+    #    find_package( Unwind QUIET )
+    #endif()
+    #if (DEFINED LIBUNWIND_INCLUDE_DIR)
+    #    target_include_directories ( PeripheralLib PUBLIC
+    #        $<BUILD_INTERFACE:${LIBUNWIND_INCLUDE_DIR}>
+    #        )
+    #    target_link_libraries ( PeripheralLib PUBLIC 
+    #        $<BUILD_INTERFACE:${LIBUNWIND_GENERIC_LIBRARY}>
+    #        $<BUILD_INTERFACE:${LIBUNWIND_SPECIFIC_LIBRARY}>
+    #        )
+    #endif()
 
     target_link_libraries ( PeripheralLib PUBLIC
         rt

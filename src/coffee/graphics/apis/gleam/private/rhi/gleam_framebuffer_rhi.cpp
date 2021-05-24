@@ -32,10 +32,10 @@ void GLEAM_RenderDummy::allocate(PixFmt fmt, DBuffers buf, u32 index, Size size)
 {
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
     if(GLEAM_FEATURES.direct_state)
-        gl::v45::RBufAllocEx(m_handle.hnd);
+        gl::v45::RBufAllocEx(SpanOne(m_handle.hnd));
     else
 #endif
-        gl::v33::RBufAlloc(m_handle.hnd);
+        gl::v33::RBufAlloc(SpanOne(m_handle.hnd));
 
     gl::vlow::RBufBind(GL_RENDERBUFFER, m_handle);
     gl::vlow::RBufStorage(GL_RENDERBUFFER, fmt, size);
@@ -47,7 +47,7 @@ void GLEAM_RenderDummy::allocate(PixFmt fmt, DBuffers buf, u32 index, Size size)
 
 void GLEAM_RenderDummy::deallocate()
 {
-    gl::vlow::RBufFree(m_handle.hnd);
+    gl::vlow::RBufFree(SpanOne(m_handle.hnd));
     m_handle.release();
 }
 
@@ -58,15 +58,15 @@ void GLEAM_RenderTarget::alloc()
 {
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
     if(GLEAM_FEATURES.direct_state)
-        gl::v45::FBAllocEx(m_handle.hnd);
+        gl::v45::FBAllocEx(SpanOne(m_handle.hnd));
     else
 #endif
-        gl::vlow::FBAlloc(m_handle.hnd);
+        gl::vlow::FBAlloc(SpanOne(m_handle.hnd));
 }
 
 void GLEAM_RenderTarget::dealloc()
 {
-    gl::vlow::FBFree(m_handle.hnd);
+    gl::vlow::FBFree(SpanOne(m_handle.hnd));
     m_handle.release();
 }
 
@@ -216,14 +216,14 @@ void GLEAM_RenderTarget::clear(C_UNUSED(u32 i), Vecf4 const& color)
 #if GL_VERSION_VERIFY(0x300, 0x300)
     else
         gl::v43::BufClearfv(
-            GL_COLOR, C_FCAST<i32>(i), Span<scalar>::Create(color));
+            GL_COLOR, C_FCAST<i32>(i), SpanOne<const f32>(color));
 #endif
 }
 
 void GLEAM_RenderTarget::clear(f64 depth)
 {
     fb_bind(FramebufferT::Draw, m_handle);
-    scalar tmp_dep = C_CAST<scalar>(depth);
+    f32 tmp_dep = C_CAST<f32>(depth);
     if(GLEAM_FEATURES.is_gles)
     {
 #if GL_VERSION_VERIFY(0x100, GL_VERSION_NONE)
@@ -235,7 +235,7 @@ void GLEAM_RenderTarget::clear(f64 depth)
     }
 #if GL_VERSION_VERIFY(0x300, 0x300)
     else
-        gl::v33::BufClearfv(GL_DEPTH, 0, tmp_dep);
+        gl::v33::BufClearfv(GL_DEPTH, 0, SpanOne(tmp_dep));
 #endif
 }
 

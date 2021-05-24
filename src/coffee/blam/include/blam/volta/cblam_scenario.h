@@ -884,8 +884,8 @@ struct scenario
     {
         constexpr Array<char, 4> terminator = {{0, 0, 0, 0}};
 
-        auto terminator_data = semantic::mem_chunk<char const>::From(
-            terminator.data(), terminator.size());
+        auto terminator_data =
+            semantic::mem_chunk<char const>::ofContainer(terminator);
 
         auto string_base = script_string_segment.data(magic);
         auto end = *string_base.at(string_base.find(terminator_data)->offset);
@@ -899,7 +899,7 @@ struct scenario
                 num_strings++;
 
             auto start_ptr_ = start_ptr.find(
-                semantic::mem_chunk<char const>::From(terminator[0]));
+                semantic::mem_chunk<char const>::of(terminator[0]));
 
             if(!start_ptr_)
                 break;
@@ -912,7 +912,7 @@ struct scenario
             start_ptr = *start_ptr.at(1); // Jump over null-terminator
         }
 
-        return {semantic::mem_chunk<const char>::From(
+        return {semantic::mem_chunk<const char>::of(
                     &string_base[0], end.size + 1),
                 num_strings};
     }

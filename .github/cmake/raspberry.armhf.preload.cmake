@@ -1,6 +1,7 @@
 set ( GIT_DEP_BUILDVARIANT "raspberry.armhf" CACHE STRING "" )
 set ( CMAKE_TOOLCHAIN_FILE "$ENV{CMAKE_SOURCE_DIR}/toolchain/cmake/Toolchains/linux-raspberry-armhf_linux.toolchain.cmake" CACHE STRING "" )
 set ( RASPBERRY_SDK "/pi-sysroot" CACHE STRING "" )
+set ( RASPBERRY "ON" CACHE STRING "" )
 set ( BUILD_GLES "ON" CACHE STRING "" )
 set ( BUILD_GLES_20 "ON" CACHE STRING "" )
 set ( BUILD_OPENSSL "ON" CACHE STRING "" )

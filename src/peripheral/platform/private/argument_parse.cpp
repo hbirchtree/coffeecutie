@@ -193,7 +193,7 @@ ArgumentResult ArgumentParser::parseArguments(AppArg& args)
 
 CString ArgumentParser::helpMessage() const
 {
-    auto out = Env::ExecutableName();
+    auto out = path::executable().value().internUrl;
 
     CString desc = {};
 

@@ -9,18 +9,17 @@ add_library ( GLVersion INTERFACE )
 
 if(BUILD_GLES_20 OR BUILD_ANGLE)
     target_compile_definitions ( GLVersion INTERFACE
-        -DCOFFEE_LINKED_GLES
-        -DCOFFEE_GLES20_MODE
+        -DGLEAM_USE_ES
+        -DGLEAM_USE_LINKED
         )
 elseif(BUILD_GLES)
     target_compile_definitions ( GLVersion INTERFACE
-        -DCOFFEE_LINKED_GLES
-        -DCOFFEE_LINKED_GLES31
-        -DCOFFEE_LINKED_GLES30
+        -DGLEAM_USE_ES
+        -DGLEAM_USE_LINKED
         )
 elseif(NOT BUILD_GLES)
     target_compile_definitions ( GLVersion INTERFACE
-        -DCOFFEE_GLEAM_DESKTOP
+        -DGLEAM_USE_CORE
         )
 endif()
 
@@ -116,7 +115,7 @@ elseif(BUILD_GLES AND NOT APPLE)
             IMGegl
             )
     endif()
-    if(BEAGLE)
+    if(BEAGLE AND FALSE)
         set ( BEAGLE_SUFFIXES
             lib
             lib/${CMAKE_LIBRARY_ARCHITECTURE}

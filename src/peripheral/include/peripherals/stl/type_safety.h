@@ -425,12 +425,12 @@ template<typename T>
  */
 struct is_pod
 {
-#if defined(COFFEE_WINDOWS)
-    typedef int type;
-#else
-    typedef typename std::enable_if<std::is_pod<T>::value, T>::type type;
-#endif
+    static constexpr auto value = std::is_standard_layout_v<T> && std::is_trivial_v<T>;
+    typedef typename std::enable_if<value, T>::type type;
 };
+
+template<typename T>
+constexpr auto is_pod_v = is_pod<T>::value;
 
 } // namespace type_safety
 

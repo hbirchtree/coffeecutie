@@ -89,7 +89,6 @@ export BUILDVARIANT
 export MANUAL_DEPLOY
 export MANUAL_CONTEXT
 
-QTHUB_DOCKER="hbirch/coffeecutie:qthub-client"
 MAKEFILE="Makefile.linux"
 
 INFOPY="$SOURCE_DIR/toolchain/buildinfo.py"
@@ -111,9 +110,5 @@ GITHUBPY="$SCRIPT_DIR/github_api.py"
 
 function matching_release_() {
     "$HELPER" $@
-}
-
-function github_py_() {
-    "$GITHUBPY" $@
 }
 

@@ -161,6 +161,7 @@ struct MeshLoader
      */
     static szptr jumping_memcpy(c_ptr target, c_cptr source, szptr size)
     {
+        /* TODO: Remove raw pointers */
         static_assert(
             Stride > Size,
             "Stride has to be larger than Size"
@@ -197,6 +198,7 @@ struct MeshLoader
     {
         static szptr default_transform(c_ptr dest, c_cptr src, szptr size)
         {
+            /* TODO: Purge the raw pointers34 */
             if(!dest || !src)
                 return size;
             memcpy(dest, src, size);
@@ -486,16 +488,14 @@ struct MeshLoader
             header.data_size = this->size() - sizeof(SerialHeader);
             header.rootNode  = this->rootNode;
 
-            byte_t* basePtr = C_RCAST<byte_t*>(target);
-            szptr   offset  = 0;
+            szptr offset   = 0;
+            Bytes baseView = Bytes::ofBytes(target, size);
 
-            Bytes baseView = Bytes::From(basePtr, size);
-
-            MemCpy(Bytes::Create(header), baseView);
-            //            MemCpy(basePtr, &header, sizeof(header));
+            MemCpy(Bytes::ofBytes(header), baseView);
             offset += sizeof(header);
-            SerialNodeData* nodeData =
-                C_RCAST<SerialNodeData*>(&basePtr[offset]);
+            auto nodeData =
+                baseView.at(offset).value().as<SerialNodeData>().view;
+
             for(auto const& node : nodes)
             {
                 SerialNodeData newNode;
@@ -504,7 +504,7 @@ struct MeshLoader
                 newNode.type       = node.type;
                 newNode.mesh       = node.mesh;
                 newNode.objectName = 0; /* Must be set later */
-                MemCpy(Bytes::Create(newNode), *baseView.at(offset));
+                MemCpy(Bytes::ofBytes(newNode), *baseView.at(offset));
                 offset += sizeof(SerialNodeData);
             }
             for(auto i : Range<>(stringStore.size()))
@@ -551,12 +551,13 @@ struct MeshLoader
 
         nodes.stringStore.push_back(current->objectName());
 
-        nodes.nodes.push_back({current->transform,
-                               parentIdx,
-                               C_FCAST<u32>(i),
-                               ObjectDesc::Mesh,
-                               current->mesh,
-                               0});
+        nodes.nodes.push_back(
+            {current->transform,
+             parentIdx,
+             C_FCAST<u32>(i),
+             ObjectDesc::Mesh,
+             current->mesh,
+             0});
 
         for(auto child : current->children())
         {

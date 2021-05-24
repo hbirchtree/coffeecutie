@@ -37,7 +37,7 @@ struct map_container
             decompressed_store = semantic::Bytes::Alloc(this->map->decomp_len);
 
             semantic::chunk_ops::MemCpy(
-                semantic::Bytes::From(*this->map),
+                semantic::BytesConst::ofBytes(*this->map),
                 *decompressed_store.at(0, sizeof(file_header_t)));
 
             auto decompressed_region =

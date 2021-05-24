@@ -1,7 +1,7 @@
 #include <coffee/core/CFiles>
 #include <coffee/core/CProfiling>
-#include <peripherals/stl/string_casting.h>
 #include <peripherals/stl/math.h>
+#include <peripherals/stl/string_casting.h>
 #include <platforms/environment.h>
 #include <url/url.h>
 
@@ -10,13 +10,14 @@
 namespace Coffee {
 
 using namespace ::platform::file;
+using ::platform::url::constructors::MkUrl;
 
 struct Resource::ResourceData
 {
-    FileFun::FileMapping       m_mapping;
-    UqPtr<FileFun::FileHandle> m_handle;
-    Bytes                      m_resourceBuffer;
-    Url                        m_url;
+    platform::file::map_handle         m_mapping;
+    UqPtr<platform::file::file_handle> m_handle;
+    Bytes                              m_resourceBuffer;
+    Url                                m_url;
 };
 
 void Resource::RscData_deleter::operator()(Resource::ResourceData* data)
@@ -25,7 +26,7 @@ void Resource::RscData_deleter::operator()(Resource::ResourceData* data)
 }
 
 Resource::Resource(cstring rsrc, RSCA acc) :
-    Resource(constructors::MkUrl(rsrc, acc & RSCA::StorageMask))
+    Resource(MkUrl(rsrc, acc & RSCA::StorageMask))
 {
 }
 
@@ -87,21 +88,29 @@ Resource::operator Bytes()
         return Bytes::FromBytes(data, size);
 
     if(flags == Undefined && FileMap(*this, RSCA::ReadOnly))
-        return FileGetDescriptor(*this);
+        return Bytes::ofBytes(data, size);
     else
         return Bytes();
 }
 
+Resource::operator BytesConst()
+{
+    if(data && size)
+        return BytesConst::ofBytes(data, size);
+
+    if(flags == Undefined && FileMap(*this, RSCA::ReadOnly))
+        return BytesConst::ofBytes(data, size);
+    else
+        return BytesConst();
+}
+
 bool FileExists(const Resource& resc)
 {
-    file_error ec;
-    return FileFun::Exists(resc.m_platform_data->m_url, ec);
+    return platform::file::exists(resc.m_platform_data->m_url).has_value();
 }
 
 bool FileMap(Resource& resc, RSCA acc, szptr size)
 {
-    file_error ec;
-
     if(resc.flags & Resource::Mapped)
     {
         Profiler::DeepProfile(CFILES_TAG "File already mapped");
@@ -110,30 +119,30 @@ bool FileMap(Resource& resc, RSCA acc, szptr size)
 
     Profiler::DeepPushContext(CFILES_TAG "File mapping");
 
-    resc.size = FileFun::Size(resc.m_platform_data->m_url, ec);
-    resc.size = math::max(resc.size, size);
+    resc.size = platform::file::size(resc.m_platform_data->m_url).value();
+    if(size != 0)
+        resc.size = math::min(resc.size, size);
 
     if(resc.size == 0)
     {
-        C_ERROR_CHECK(ec);
         Profiler::DeepProfile(CFILES_TAG "File not found");
         Profiler::DeepPopContext();
         return false;
     }
 
-    resc.m_platform_data->m_mapping =
-        FileFun::Map(resc.m_platform_data->m_url, acc, 0, resc.size, ec);
-
-    if(ec)
+    if(auto res = platform::file::map(
+           resc.m_platform_data->m_url,
+           {.access = acc, .offset = 0, .size = resc.size});
+       res.has_error())
     {
-        C_ERROR_CHECK(ec);
         resc.size = 0;
         Profiler::DeepProfile(CFILES_TAG "Mapping failed");
         Profiler::DeepPopContext();
         return false;
-    }
+    } else
+        resc.m_platform_data->m_mapping = res.value();
 
-    resc.data  = resc.m_platform_data->m_mapping.data;
+    resc.data  = resc.m_platform_data->m_mapping.view.data();
     resc.flags = resc.flags | Resource::Mapped;
 
     Profiler::DeepProfile(CFILES_TAG "File mapped");
@@ -145,23 +154,18 @@ bool FileMap(Resource& resc, RSCA acc, szptr size)
 
 bool FileUnmap(Resource& resc)
 {
-    file_error ec;
-
-    Profiler::DeepPushContext(CFILES_TAG "File mapping");
+    DProfContext a(CFILES_TAG "File mapping");
     if(!(resc.flags & Resource::Mapped))
     {
         Profiler::DeepProfile(CFILES_TAG "Non-mapped file called for unmap");
-        Profiler::DeepPopContext();
         return false;
     }
 
-    bool s = FileFun::Unmap(std::move(resc.m_platform_data->m_mapping), ec);
-
-    if(!s)
+    if(auto res =
+           platform::file::unmap(std::move(resc.m_platform_data->m_mapping));
+       res.has_value())
     {
-        C_ERROR_CHECK(ec);
         Profiler::DeepProfile(CFILES_TAG "Unmapping failed");
-        Profiler::DeepPopContext();
         return false;
     }
 
@@ -171,25 +175,26 @@ bool FileUnmap(Resource& resc)
 
     resc.flags ^= Resource::Mapped;
 
-    Profiler::DeepProfile(CFILES_TAG "File unmapped");
-    Profiler::DeepPopContext();
-
-    return s;
+    return true;
 }
 
 bool FileOpenMap(Resource& resc, szptr size, RSCA acc)
 {
-    file_error ec;
+    DProfContext a(CFILES_TAG "File mapping");
+    //    FileFun::Truncate(resc.m_platform_data->m_url, size, ec);
 
-    FileFun::Truncate(resc.m_platform_data->m_url, size, ec);
+    if(auto res = platform::file::map(
+           resc.m_platform_data->m_url,
+           {.access = acc, .offset = 0, .size = size});
+       res.has_error())
+    {
+        Profiler::DeepProfile(CFILES_TAG "Mapping failed");
+        return false;
+    } else
+        resc.m_platform_data->m_mapping = res.value();
 
-    resc.m_platform_data->m_mapping =
-        FileFun::Map(resc.m_platform_data->m_url, acc, 0, size, ec);
-
-    C_ERROR_CHECK(ec);
-
-    resc.data = resc.m_platform_data->m_mapping.data;
-    resc.size = resc.m_platform_data->m_mapping.size;
+    resc.data = resc.m_platform_data->m_mapping.view.data();
+    resc.size = resc.m_platform_data->m_mapping.view.size();
 
     resc.flags |= Resource::Mapped;
 
@@ -212,35 +217,24 @@ bool FilePull(Resource& resc)
 {
     DProfContext a(CFILES_TAG "File reading");
 
-    file_error ec;
+    auto& data = resc.m_platform_data->m_resourceBuffer;
 
-    auto fp = FileFun::Open(resc.m_platform_data->m_url, RSCA::ReadOnly, ec);
-
-    if(ec)
+    if(auto fd = platform::file::open_file(
+           resc.m_platform_data->m_url, RSCA::ReadOnly);
+       fd.has_error())
     {
-        C_ERROR_CHECK(ec);
         Profiler::DeepProfile(CFILES_TAG "File not found");
         return false;
-    }
+    } else if(auto rd = platform::file::read(fd.value()); rd.has_error())
+    {
+        Profiler::DeepProfile(CFILES_TAG "File read failed");
+        return false;
+    } else
+        data = rd.value();
 
-    auto& data = resc.m_platform_data->m_resourceBuffer;
-    data       = FileFun::Read(fp, -1, ec);
     resc.data  = data.data;
     resc.size  = data.size;
-
-    if(!FileFun::Close(std::move(fp), ec) || ec)
-        return false;
-
-    if(!resc.data)
-    {
-        C_ERROR_CHECK(ec);
-        Profiler::DeepProfile(CFILES_TAG "File read failure");
-        return false;
-    }
-
     resc.flags = resc.flags | Resource::FileIO;
-
-    Profiler::DeepProfile(CFILES_TAG "File read");
 
     return true;
 }
@@ -249,43 +243,33 @@ bool FileCommit(Resource& resc, RSCA acc)
 {
     DProfContext a(CFILES_TAG "File write");
 
-    file_error ec;
-
-    auto fp = FileFun::Open(resc.m_platform_data->m_url, acc, ec);
-
-    if(ec)
+    if(auto fd = platform::file::open_file(resc.m_platform_data->m_url, acc);
+       fd.has_error())
     {
-        C_ERROR_CHECK(ec);
         Profiler::DeepProfile(CFILES_TAG "File not created");
         return false;
-    }
-
-    bool stat = FileFun::Write(fp, resc, ec);
-
-    if(!FileFun::Close(std::move(fp), ec))
+    } else if(auto write =
+                  platform::file::write(fd.value(), C_OCAST<BytesConst>(resc));
+              write.has_value())
     {
-        C_ERROR_CHECK(ec);
-        Profiler::DeepProfile(CFILES_TAG "File failed to close");
+        Profiler::DeepProfile(CFILES_TAG "File write failed");
         return false;
-    }
-
-    return stat;
+    } else
+        return true;
 }
 
 bool FileMkdir(Url const& dirname, bool recursive)
 {
     Profiler::DeepProfile(CFILES_TAG "Directory creation");
-    file_error ec;
 
-    bool status = DirFun::MkDir(dirname, recursive, ec);
-
-    if(!status)
+    if(auto res =
+           platform::file::create_directory(dirname, {.recursive = recursive});
+       res.has_value())
     {
-        C_ERROR_CHECK(ec);
         Profiler::DeepProfile(CFILES_TAG "Directory creation failed");
-    }
-
-    return status;
+        return false;
+    } else
+        return true;
 }
 
 namespace Strings {

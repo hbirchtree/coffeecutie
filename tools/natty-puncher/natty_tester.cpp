@@ -20,7 +20,7 @@ i32 natty_main()
     cDebug("Set up socket");
 
     command_t               command;
-    auto                    cmd_ref = semantic::Bytes::From(command);
+    auto                    cmd_ref = mem_chunk<command_t>::of(command);
     asio::ip::udp::endpoint sender, server = test_listener.endpoint();
 
     cDebug("Server is: {0}:{1}", server.address().to_string(), server.port());
@@ -31,7 +31,7 @@ i32 natty_main()
 
     service_manifest_t manifest;
     {
-        auto man_ref = semantic::Bytes::From(manifest);
+        auto man_ref = mem_chunk<service_manifest_t>::of(manifest);
         cDebug("Detected {0} services:", command.op.list.count);
         for(C_UNUSED(auto i) : Range<>(command.op.list.count))
         {
@@ -78,7 +78,7 @@ i32 natty_main()
 
     while(test_listener.socket().is_open())
     {
-        test_listener.read(semantic::Bytes::From(command), sender, ec);
+        test_listener.read(mem_chunk<command_t>::of(command), sender, ec);
         C_ERROR_CHECK(ec)
         cDebug("Got message {0} from {1}", C_CAST<u32>(command.opcode),
                sender.address().to_string());

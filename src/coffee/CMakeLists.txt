@@ -1,6 +1,7 @@
 option ( BUILD_ASIO     "Build with ASIO networking"                ON  )
 option ( BUILD_ASSIMP   "Build with ASSIMP importer"                OFF )
 option ( BUILD_AUDIO    "Build with audio support"                  ON  )
+option ( BUILD_MEDIA    "Build with media decode/encode support"    ON  )
 option ( BUILD_BLAM     "Build Blam! data readers"                  ON  )
 option ( BUILD_CEF      "Build with Chromium Embedded Framework"    OFF )
 option ( BUILD_OPENVR   "Build with OpenVR integration"             OFF )

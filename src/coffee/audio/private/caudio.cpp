@@ -1,8 +1,6 @@
 #include <coffee/audio/caudio.h>
 
-#define STB_VORBIS_HEADER_ONLY
-#include <stb.h>
-#include <stb_vorbis.c>
+#include <ogg/ogg.h>
 
 #include <coffee/core/CMath>
 #include <coffee/core/CProfiling>
@@ -34,7 +32,7 @@ bool LoadVorbis(AudioSample* smp, Bytes const& src)
 
     smp->samples = C_FCAST<u32>(samples);
 
-    smp->container = audio_data::From(
+    smp->container = audio_data::of(
         smp->data, smp->samples * smp->fmt.channels * smp->fmt.samplerate);
 
     audio_data::SetDestr(smp->container, [](audio_data& data)

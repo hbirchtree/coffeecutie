@@ -6,8 +6,7 @@
 #include <peripherals/semantic/enum/rsca.h>
 #include <peripherals/stl/types.h>
 
-namespace platform {
-namespace url {
+namespace platform::url {
 
 using namespace ::libc_types;
 using namespace ::stl_types;
@@ -34,8 +33,8 @@ struct Path
 
     CString internUrl;
 
-    Path         removeExt() const;
-    Path         addExtension(cstring ext) const;
+    Path              removeExt() const;
+    Path              addExtension(cstring ext) const;
     FORCEDINLINE Path addExtension(CString const& ext) const
     {
         return addExtension(ext.c_str());
@@ -46,11 +45,9 @@ struct Path
 
     Path dirname() const;
 
-    Path canonical() const;
-
     Vector<Path> components() const;
 
-    Path         operator+(cstring component) const;
+    Path              operator+(cstring component) const;
     FORCEDINLINE Path operator+(CString const& component) const
     {
         return *this + component.c_str();
@@ -104,12 +101,12 @@ struct Url
         Memory,
     };
 
-    CString              internUrl;
-    StorageType          category;
-    semantic::RSCA       flags;
-    semantic::HTTPAccess netflags;
+    CString              internUrl{};
+    StorageType          category{Local};
+    semantic::RSCA       flags{RSCA::None};
+    semantic::HTTPAccess netflags{HTTPAccess::None};
 
-    CString cachedUrl;
+    CString cachedUrl{};
 
     FORCEDINLINE bool isLocal() const
     {
@@ -131,6 +128,16 @@ struct Url
 
     Url operator+(Path const& path) const;
 
+    FORCEDINLINE Url operator/(Path const& path) const
+    {
+        return *this + path;
+    }
+
+    FORCEDINLINE Url operator/(String const& path) const
+    {
+        return *this + Path(path);
+    }
+
     FORCEDINLINE Url& operator+=(Path const& path)
     {
         *this = *this + path;
@@ -140,6 +147,16 @@ struct Url
     operator Path() const
     {
         return Path(internUrl);
+    }
+
+    explicit operator const char*() const
+    {
+        return internUrl.c_str();
+    }
+
+    explicit operator String() const
+    {
+        return internUrl;
     }
 
     template<typename Resource, typename... Args>
@@ -195,27 +212,27 @@ FORCEDINLINE Url MkInvalidUrl()
     return {{}, Url::Undefined, RSCA::None, HTTPAccess::None, {}};
 }
 
-FORCEDINLINE Url MkUrl(cstring urlString)
-{
-    return {urlString, Url::Local, RSCA::AssetFile, HTTPAccess::None, {}};
-}
-
-FORCEDINLINE Url MkUrl(cstring urlString, RSCA access)
-{
-    return {urlString, Url::Local, access, HTTPAccess::None, {}};
-}
-
 FORCEDINLINE Url MkUrl(CString const& p, RSCA access = RSCA::SystemFile)
 {
     return {p, Url::Local, access, HTTPAccess::None, {}};
 }
 
-FORCEDINLINE Url MkSysUrl(cstring urlString)
+FORCEDINLINE Url MkSysUrl(CString const& urlString)
 {
     return {urlString, Url::Local, RSCA::SystemFile, HTTPAccess::None, {}};
 }
 
-FORCEDINLINE Url MkUrl(Path p, RSCA access = RSCA::SystemFile)
+FORCEDINLINE Url MkSysUrl(Path const& urlString)
+{
+    return {
+        urlString.internUrl,
+        Url::Local,
+        RSCA::SystemFile,
+        HTTPAccess::None,
+        {}};
+}
+
+FORCEDINLINE Url MkUrl(Path const& p, RSCA access = RSCA::SystemFile)
 {
     return {p.internUrl.c_str(), Url::Local, access, HTTPAccess::None, {}};
 }
@@ -244,6 +261,10 @@ FORCEDINLINE Url operator"" _cache(const char* url, size_t)
     return MkUrl(url, RSCA::CachedFile);
 }
 
+FORCEDINLINE Url operator"" _config(const char* url, size_t)
+{
+    return MkUrl(url, RSCA::ConfigFile);
+}
+
 } // namespace constructors
-} // namespace url
-} // namespace platform
+} // namespace platform::url

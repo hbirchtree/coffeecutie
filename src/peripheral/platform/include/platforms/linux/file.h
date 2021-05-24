@@ -18,17 +18,6 @@ struct FileFun : posix::FileFun
     }
 
     static CString sys_read(cstring fn, file_error& ec);
-
-#if !defined(COFFEE_ANDROID)
-    STATICINLINE bool SuperCache()
-    {
-        return mlockall(MCL_CURRENT) == 0;
-    }
-    STATICINLINE bool SuperUncache()
-    {
-        return munlockall() == 0;
-    }
-#endif
 };
 
 } // namespace Linux

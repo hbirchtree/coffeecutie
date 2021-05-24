@@ -1,14 +1,6 @@
 #pragma once
 #include "all_levels_include.h"
 
-#if defined(COFFEE_GCC)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wpointer-bool-conversion"
-#elif defined(COFFEE_CLANG)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wpointer-bool-conversion"
-#endif
-
 namespace glwrap {
 using namespace Coffee::CGL;
 
@@ -828,7 +820,7 @@ STATICINLINE void TexFree(semantic::Span<const libc_types::u32>&& textures)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteTextures(C_FCAST<libc_types::i32>(textures.elements), textures.data);
+    glDeleteTextures(C_FCAST<libc_types::i32>(textures.size()), textures.data());
 }
 #endif
 
@@ -873,7 +865,7 @@ STATICINLINE void TexAlloc(semantic::Span<libc_types::u32>&& textures)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenTextures(C_FCAST<libc_types::i32>(textures.elements), textures.data);
+    glGenTextures(C_FCAST<libc_types::i32>(textures.size()), textures.data());
 }
 #endif
 
@@ -1395,7 +1387,7 @@ STATICINLINE void BufFree(semantic::Span<const libc_types::u32>&& buffers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteBuffers(C_FCAST<libc_types::i32>(buffers.elements), buffers.data);
+    glDeleteBuffers(C_FCAST<libc_types::i32>(buffers.size()), buffers.data());
 }
 #endif
 
@@ -1413,7 +1405,7 @@ STATICINLINE void QueryFree(semantic::Span<const libc_types::u32>&& ids)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteQueries(C_FCAST<libc_types::i32>(ids.elements), ids.data);
+    glDeleteQueries(C_FCAST<libc_types::i32>(ids.size()), ids.data());
 }
 #endif
 
@@ -1446,7 +1438,7 @@ STATICINLINE void BufAlloc(semantic::Span<libc_types::u32>&& buffers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenBuffers(C_FCAST<libc_types::i32>(buffers.elements), buffers.data);
+    glGenBuffers(C_FCAST<libc_types::i32>(buffers.size()), buffers.data());
 }
 #endif
 
@@ -1464,7 +1456,7 @@ STATICINLINE void QueryAlloc(semantic::Span<libc_types::u32>&& ids)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenQueries(C_FCAST<libc_types::i32>(ids.elements), ids.data);
+    glGenQueries(C_FCAST<libc_types::i32>(ids.size()), ids.data());
 }
 #endif
 
@@ -2232,7 +2224,7 @@ STATICINLINE void Uniffv(libc_types::i32 location, semantic::Span<const libc_typ
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform1fv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f32*>(value.data));
+    glUniform1fv(location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -2268,7 +2260,7 @@ STATICINLINE void Unifiv(libc_types::i32 location, semantic::Span<const libc_typ
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform1iv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i32*>(value.data));
+    glUniform1iv(location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::i32*>(value.data()));
 }
 #endif
 
@@ -2304,7 +2296,7 @@ STATICINLINE void Uniffv(libc_types::i32 location, semantic::Span<typing::vector
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform2fv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f32*>(value.data));
+    glUniform2fv(location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -2340,7 +2332,7 @@ STATICINLINE void Unifiv(libc_types::i32 location, semantic::Span<typing::vector
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform2iv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i32*>(value.data));
+    glUniform2iv(location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::i32*>(value.data()));
 }
 #endif
 
@@ -2376,7 +2368,7 @@ STATICINLINE void Uniffv(libc_types::i32 location, semantic::Span<typing::vector
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform3fv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f32*>(value.data));
+    glUniform3fv(location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -2412,7 +2404,7 @@ STATICINLINE void Unifiv(libc_types::i32 location, semantic::Span<typing::vector
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform3iv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i32*>(value.data));
+    glUniform3iv(location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::i32*>(value.data()));
 }
 #endif
 
@@ -2448,7 +2440,7 @@ STATICINLINE void Uniffv(libc_types::i32 location, semantic::Span<typing::vector
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform4fv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f32*>(value.data));
+    glUniform4fv(location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -2484,7 +2476,7 @@ STATICINLINE void Unifiv(libc_types::i32 location, semantic::Span<typing::vector
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform4iv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i32*>(value.data));
+    glUniform4iv(location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::i32*>(value.data()));
 }
 #endif
 
@@ -2502,7 +2494,7 @@ STATICINLINE void Uniffv(libc_types::i32 location, libc_types::u8 transpose, sem
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix2fv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
+    glUniformMatrix2fv(location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -2520,7 +2512,7 @@ STATICINLINE void Uniffv(libc_types::i32 location, libc_types::u8 transpose, sem
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix3fv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
+    glUniformMatrix3fv(location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -2538,7 +2530,7 @@ STATICINLINE void Uniffv(libc_types::i32 location, libc_types::u8 transpose, sem
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix4fv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
+    glUniformMatrix4fv(location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -3151,7 +3143,7 @@ STATICINLINE void Uniffv(libc_types::i32 location, libc_types::u8 transpose, sem
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix2x3fv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
+    glUniformMatrix2x3fv(location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -3166,7 +3158,7 @@ STATICINLINE void Uniffv(libc_types::i32 location, libc_types::u8 transpose, sem
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix2x4fv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
+    glUniformMatrix2x4fv(location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -3181,7 +3173,7 @@ STATICINLINE void Uniffv(libc_types::i32 location, libc_types::u8 transpose, sem
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix3x2fv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
+    glUniformMatrix3x2fv(location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -3196,7 +3188,7 @@ STATICINLINE void Uniffv(libc_types::i32 location, libc_types::u8 transpose, sem
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix3x4fv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
+    glUniformMatrix3x4fv(location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -3211,7 +3203,7 @@ STATICINLINE void Uniffv(libc_types::i32 location, libc_types::u8 transpose, sem
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix4x2fv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
+    glUniformMatrix4x2fv(location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -3226,7 +3218,7 @@ STATICINLINE void Uniffv(libc_types::i32 location, libc_types::u8 transpose, sem
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix4x3fv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
+    glUniformMatrix4x3fv(location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -3427,7 +3419,7 @@ STATICINLINE void BufClearfv(GLenum buffer, libc_types::i32 drawbuffer, semantic
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glClearBufferfv(buffer, drawbuffer, value.data);
+    glClearBufferfv(buffer, drawbuffer, value.data());
 }
 #endif
 
@@ -3442,7 +3434,7 @@ STATICINLINE void BufCleariv(GLenum buffer, libc_types::i32 drawbuffer, semantic
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glClearBufferiv(buffer, drawbuffer, value.data);
+    glClearBufferiv(buffer, drawbuffer, value.data());
 }
 #endif
 
@@ -3457,7 +3449,7 @@ STATICINLINE void BufClearuiv(GLenum buffer, libc_types::i32 drawbuffer, semanti
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glClearBufferuiv(buffer, drawbuffer, value.data);
+    glClearBufferuiv(buffer, drawbuffer, value.data());
 }
 #endif
 
@@ -3487,7 +3479,7 @@ STATICINLINE void FBFree(semantic::Span<const libc_types::u32>&& framebuffers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteFramebuffers(C_FCAST<libc_types::i32>(framebuffers.elements), framebuffers.data);
+    glDeleteFramebuffers(C_FCAST<libc_types::i32>(framebuffers.size()), framebuffers.data());
 }
 #endif
 
@@ -3502,7 +3494,7 @@ STATICINLINE void RBufFree(semantic::Span<const libc_types::u32>&& renderbuffers
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteRenderbuffers(C_FCAST<libc_types::i32>(renderbuffers.elements), renderbuffers.data);
+    glDeleteRenderbuffers(C_FCAST<libc_types::i32>(renderbuffers.size()), renderbuffers.data());
 }
 #endif
 
@@ -3517,7 +3509,7 @@ STATICINLINE void VAOFree(semantic::Span<const libc_types::u32>&& arrays)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteVertexArrays(C_FCAST<libc_types::i32>(arrays.elements), arrays.data);
+    glDeleteVertexArrays(C_FCAST<libc_types::i32>(arrays.size()), arrays.data());
 }
 #endif
 
@@ -3685,7 +3677,7 @@ STATICINLINE void FBAlloc(semantic::Span<libc_types::u32>&& framebuffers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenFramebuffers(C_FCAST<libc_types::i32>(framebuffers.elements), framebuffers.data);
+    glGenFramebuffers(C_FCAST<libc_types::i32>(framebuffers.size()), framebuffers.data());
 }
 #endif
 
@@ -3700,7 +3692,7 @@ STATICINLINE void RBufAlloc(semantic::Span<libc_types::u32>&& renderbuffers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenRenderbuffers(C_FCAST<libc_types::i32>(renderbuffers.elements), renderbuffers.data);
+    glGenRenderbuffers(C_FCAST<libc_types::i32>(renderbuffers.size()), renderbuffers.data());
 }
 #endif
 
@@ -3715,7 +3707,7 @@ STATICINLINE void VAOAlloc(semantic::Span<libc_types::u32>&& arrays)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenVertexArrays(C_FCAST<libc_types::i32>(arrays.elements), arrays.data);
+    glGenVertexArrays(C_FCAST<libc_types::i32>(arrays.size()), arrays.data());
 }
 #endif
 
@@ -4090,7 +4082,7 @@ STATICINLINE void Unifuiv(libc_types::i32 location, semantic::Span<const libc_ty
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform1uiv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u32*>(value.data));
+    glUniform1uiv(location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::u32*>(value.data()));
 }
 #endif
 
@@ -4120,7 +4112,7 @@ STATICINLINE void Unifuiv(libc_types::i32 location, semantic::Span<typing::vecto
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform2uiv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u32*>(value.data));
+    glUniform2uiv(location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::u32*>(value.data()));
 }
 #endif
 
@@ -4150,7 +4142,7 @@ STATICINLINE void Unifuiv(libc_types::i32 location, semantic::Span<typing::vecto
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform3uiv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u32*>(value.data));
+    glUniform3uiv(location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::u32*>(value.data()));
 }
 #endif
 
@@ -4180,7 +4172,7 @@ STATICINLINE void Unifuiv(libc_types::i32 location, semantic::Span<typing::vecto
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform4uiv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u32*>(value.data));
+    glUniform4uiv(location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::u32*>(value.data()));
 }
 #endif
 
@@ -5035,7 +5027,7 @@ STATICINLINE void SamplerFree(semantic::Span<const libc_types::u32>&& samplers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteSamplers(C_FCAST<libc_types::i32>(samplers.elements), samplers.data);
+    glDeleteSamplers(C_FCAST<libc_types::i32>(samplers.size()), samplers.data());
 }
 #endif
 
@@ -5050,7 +5042,7 @@ STATICINLINE void SamplerAlloc(semantic::Span<libc_types::u32>&& samplers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenSamplers(C_FCAST<libc_types::i32>(samplers.elements), samplers.data);
+    glGenSamplers(C_FCAST<libc_types::i32>(samplers.size()), samplers.data());
 }
 #endif
 
@@ -5323,7 +5315,7 @@ STATICINLINE void VAOP1uiv(libc_types::u32 index, GLenum type, libc_types::u8 no
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glVertexAttribP1uiv(index, type, normalized, value.data);
+    glVertexAttribP1uiv(index, type, normalized, value.data());
 }
 #endif
 
@@ -5353,7 +5345,7 @@ STATICINLINE void VAOP2uiv(libc_types::u32 index, GLenum type, libc_types::u8 no
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glVertexAttribP2uiv(index, type, normalized, value.data);
+    glVertexAttribP2uiv(index, type, normalized, value.data());
 }
 #endif
 
@@ -5383,7 +5375,7 @@ STATICINLINE void VAOP3uiv(libc_types::u32 index, GLenum type, libc_types::u8 no
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glVertexAttribP3uiv(index, type, normalized, value.data);
+    glVertexAttribP3uiv(index, type, normalized, value.data());
 }
 #endif
 
@@ -5413,7 +5405,7 @@ STATICINLINE void VAOP4uiv(libc_types::u32 index, GLenum type, libc_types::u8 no
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glVertexAttribP4uiv(index, type, normalized, value.data);
+    glVertexAttribP4uiv(index, type, normalized, value.data());
 }
 #endif
 
@@ -5536,7 +5528,7 @@ STATICINLINE void XFFree(semantic::Span<const libc_types::u32>&& ids)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteTransformFeedbacks(C_FCAST<libc_types::i32>(ids.elements), ids.data);
+    glDeleteTransformFeedbacks(C_FCAST<libc_types::i32>(ids.size()), ids.data());
 }
 #endif
 
@@ -5626,7 +5618,7 @@ STATICINLINE void XFAlloc(semantic::Span<libc_types::u32>&& ids)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenTransformFeedbacks(C_FCAST<libc_types::i32>(ids.elements), ids.data);
+    glGenTransformFeedbacks(C_FCAST<libc_types::i32>(ids.size()), ids.data());
 }
 #endif
 
@@ -5881,7 +5873,7 @@ STATICINLINE void Unifdv(libc_types::i32 location, semantic::Span<const libc_typ
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform1dv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f64*>(value.data));
+    glUniform1dv(location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::f64*>(value.data()));
 }
 #endif
 
@@ -5911,7 +5903,7 @@ STATICINLINE void Unifdv(libc_types::i32 location, semantic::Span<typing::vector
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform2dv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f64*>(value.data));
+    glUniform2dv(location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::f64*>(value.data()));
 }
 #endif
 
@@ -5941,7 +5933,7 @@ STATICINLINE void Unifdv(libc_types::i32 location, semantic::Span<typing::vector
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform3dv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f64*>(value.data));
+    glUniform3dv(location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::f64*>(value.data()));
 }
 #endif
 
@@ -5971,7 +5963,7 @@ STATICINLINE void Unifdv(libc_types::i32 location, semantic::Span<typing::vector
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform4dv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f64*>(value.data));
+    glUniform4dv(location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::f64*>(value.data()));
 }
 #endif
 
@@ -5986,7 +5978,7 @@ STATICINLINE void Unifdv(libc_types::i32 location, libc_types::u8 transpose, sem
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix2dv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f64*>(value.data));
+    glUniformMatrix2dv(location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f64*>(value.data()));
 }
 #endif
 
@@ -6001,7 +5993,7 @@ STATICINLINE void Unifdv(libc_types::i32 location, libc_types::u8 transpose, sem
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix2x3dv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f64*>(value.data));
+    glUniformMatrix2x3dv(location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f64*>(value.data()));
 }
 #endif
 
@@ -6016,7 +6008,7 @@ STATICINLINE void Unifdv(libc_types::i32 location, libc_types::u8 transpose, sem
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix2x4dv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f64*>(value.data));
+    glUniformMatrix2x4dv(location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f64*>(value.data()));
 }
 #endif
 
@@ -6031,7 +6023,7 @@ STATICINLINE void Unifdv(libc_types::i32 location, libc_types::u8 transpose, sem
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix3dv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f64*>(value.data));
+    glUniformMatrix3dv(location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f64*>(value.data()));
 }
 #endif
 
@@ -6046,7 +6038,7 @@ STATICINLINE void Unifdv(libc_types::i32 location, libc_types::u8 transpose, sem
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix3x2dv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f64*>(value.data));
+    glUniformMatrix3x2dv(location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f64*>(value.data()));
 }
 #endif
 
@@ -6061,7 +6053,7 @@ STATICINLINE void Unifdv(libc_types::i32 location, libc_types::u8 transpose, sem
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix3x4dv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f64*>(value.data));
+    glUniformMatrix3x4dv(location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f64*>(value.data()));
 }
 #endif
 
@@ -6076,7 +6068,7 @@ STATICINLINE void Unifdv(libc_types::i32 location, libc_types::u8 transpose, sem
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix4dv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f64*>(value.data));
+    glUniformMatrix4dv(location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f64*>(value.data()));
 }
 #endif
 
@@ -6091,7 +6083,7 @@ STATICINLINE void Unifdv(libc_types::i32 location, libc_types::u8 transpose, sem
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix4x2dv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f64*>(value.data));
+    glUniformMatrix4x2dv(location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f64*>(value.data()));
 }
 #endif
 
@@ -6106,7 +6098,7 @@ STATICINLINE void Unifdv(libc_types::i32 location, libc_types::u8 transpose, sem
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix4x3dv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f64*>(value.data));
+    glUniformMatrix4x3dv(location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f64*>(value.data()));
 }
 #endif
 
@@ -6207,7 +6199,7 @@ STATICINLINE libc_types::u32 ShaderProgramvAllocEx(ShaderStage type, semantic::S
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return (libc_types::u32)glCreateShaderProgramv(to_enum1(type), C_FCAST<libc_types::i32>(strings.elements), strings.data);
+    return (libc_types::u32)glCreateShaderProgramv(to_enum1(type), C_FCAST<libc_types::i32>(strings.size()), strings.data());
 }
 #endif
 
@@ -6222,7 +6214,7 @@ STATICINLINE void PipelineFree(semantic::Span<const libc_types::u32>&& pipelines
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteProgramPipelines(C_FCAST<libc_types::i32>(pipelines.elements), pipelines.data);
+    glDeleteProgramPipelines(C_FCAST<libc_types::i32>(pipelines.size()), pipelines.data());
 }
 #endif
 
@@ -6237,7 +6229,7 @@ STATICINLINE void DepthRangeArrayv(libc_types::u32 first, semantic::Span<const l
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDepthRangeArrayv(first, C_FCAST<libc_types::i32>(v.elements), v.data);
+    glDepthRangeArrayv(first, C_FCAST<libc_types::i32>(v.size()), v.data());
 }
 #endif
 
@@ -6282,7 +6274,7 @@ STATICINLINE void PipelineAlloc(semantic::Span<libc_types::u32>&& pipelines)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenProgramPipelines(C_FCAST<libc_types::i32>(pipelines.elements), pipelines.data);
+    glGenProgramPipelines(C_FCAST<libc_types::i32>(pipelines.size()), pipelines.data());
 }
 #endif
 
@@ -6465,7 +6457,7 @@ STATICINLINE void Unifdv(glhnd const& program, libc_types::i32 location, semanti
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform1dv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f64*>(value.data));
+    glProgramUniform1dv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::f64*>(value.data()));
 }
 #endif
 
@@ -6495,7 +6487,7 @@ STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, semanti
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform1fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f32*>(value.data));
+    glProgramUniform1fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -6525,7 +6517,7 @@ STATICINLINE void Unifiv(glhnd const& program, libc_types::i32 location, semanti
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform1iv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i32*>(value.data));
+    glProgramUniform1iv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::i32*>(value.data()));
 }
 #endif
 
@@ -6555,7 +6547,7 @@ STATICINLINE void Unifuiv(glhnd const& program, libc_types::i32 location, semant
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform1uiv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u32*>(value.data));
+    glProgramUniform1uiv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::u32*>(value.data()));
 }
 #endif
 
@@ -6585,7 +6577,7 @@ STATICINLINE void Unifdv(glhnd const& program, libc_types::i32 location, semanti
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform2dv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f64*>(value.data));
+    glProgramUniform2dv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::f64*>(value.data()));
 }
 #endif
 
@@ -6615,7 +6607,7 @@ STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, semanti
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform2fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f32*>(value.data));
+    glProgramUniform2fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -6645,7 +6637,7 @@ STATICINLINE void Unifiv(glhnd const& program, libc_types::i32 location, semanti
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform2iv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i32*>(value.data));
+    glProgramUniform2iv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::i32*>(value.data()));
 }
 #endif
 
@@ -6675,7 +6667,7 @@ STATICINLINE void Unifuiv(glhnd const& program, libc_types::i32 location, semant
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform2uiv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u32*>(value.data));
+    glProgramUniform2uiv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::u32*>(value.data()));
 }
 #endif
 
@@ -6705,7 +6697,7 @@ STATICINLINE void Unifdv(glhnd const& program, libc_types::i32 location, semanti
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform3dv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f64*>(value.data));
+    glProgramUniform3dv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::f64*>(value.data()));
 }
 #endif
 
@@ -6735,7 +6727,7 @@ STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, semanti
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform3fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f32*>(value.data));
+    glProgramUniform3fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -6765,7 +6757,7 @@ STATICINLINE void Unifiv(glhnd const& program, libc_types::i32 location, semanti
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform3iv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i32*>(value.data));
+    glProgramUniform3iv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::i32*>(value.data()));
 }
 #endif
 
@@ -6795,7 +6787,7 @@ STATICINLINE void Unifuiv(glhnd const& program, libc_types::i32 location, semant
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform3uiv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u32*>(value.data));
+    glProgramUniform3uiv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::u32*>(value.data()));
 }
 #endif
 
@@ -6825,7 +6817,7 @@ STATICINLINE void Unifdv(glhnd const& program, libc_types::i32 location, semanti
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform4dv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f64*>(value.data));
+    glProgramUniform4dv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::f64*>(value.data()));
 }
 #endif
 
@@ -6855,7 +6847,7 @@ STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, semanti
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform4fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f32*>(value.data));
+    glProgramUniform4fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -6885,7 +6877,7 @@ STATICINLINE void Unifiv(glhnd const& program, libc_types::i32 location, semanti
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform4iv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i32*>(value.data));
+    glProgramUniform4iv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::i32*>(value.data()));
 }
 #endif
 
@@ -6915,7 +6907,7 @@ STATICINLINE void Unifuiv(glhnd const& program, libc_types::i32 location, semant
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform4uiv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u32*>(value.data));
+    glProgramUniform4uiv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::u32*>(value.data()));
 }
 #endif
 
@@ -6930,7 +6922,7 @@ STATICINLINE void Unifdv(glhnd const& program, libc_types::i32 location, libc_ty
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix2dv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f64*>(value.data));
+    glProgramUniformMatrix2dv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f64*>(value.data()));
 }
 #endif
 
@@ -6945,7 +6937,7 @@ STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, libc_ty
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix2fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
+    glProgramUniformMatrix2fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -6960,7 +6952,7 @@ STATICINLINE void Unifdv(glhnd const& program, libc_types::i32 location, libc_ty
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix2x3dv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f64*>(value.data));
+    glProgramUniformMatrix2x3dv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f64*>(value.data()));
 }
 #endif
 
@@ -6975,7 +6967,7 @@ STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, libc_ty
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix2x3fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
+    glProgramUniformMatrix2x3fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -6990,7 +6982,7 @@ STATICINLINE void Unifdv(glhnd const& program, libc_types::i32 location, libc_ty
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix2x4dv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f64*>(value.data));
+    glProgramUniformMatrix2x4dv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f64*>(value.data()));
 }
 #endif
 
@@ -7005,7 +6997,7 @@ STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, libc_ty
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix2x4fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
+    glProgramUniformMatrix2x4fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -7020,7 +7012,7 @@ STATICINLINE void Unifdv(glhnd const& program, libc_types::i32 location, libc_ty
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix3dv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f64*>(value.data));
+    glProgramUniformMatrix3dv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f64*>(value.data()));
 }
 #endif
 
@@ -7035,7 +7027,7 @@ STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, libc_ty
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix3fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
+    glProgramUniformMatrix3fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -7050,7 +7042,7 @@ STATICINLINE void Unifdv(glhnd const& program, libc_types::i32 location, libc_ty
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix3x2dv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f64*>(value.data));
+    glProgramUniformMatrix3x2dv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f64*>(value.data()));
 }
 #endif
 
@@ -7065,7 +7057,7 @@ STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, libc_ty
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix3x2fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
+    glProgramUniformMatrix3x2fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -7080,7 +7072,7 @@ STATICINLINE void Unifdv(glhnd const& program, libc_types::i32 location, libc_ty
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix3x4dv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f64*>(value.data));
+    glProgramUniformMatrix3x4dv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f64*>(value.data()));
 }
 #endif
 
@@ -7095,7 +7087,7 @@ STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, libc_ty
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix3x4fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
+    glProgramUniformMatrix3x4fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -7110,7 +7102,7 @@ STATICINLINE void Unifdv(glhnd const& program, libc_types::i32 location, libc_ty
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix4dv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f64*>(value.data));
+    glProgramUniformMatrix4dv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f64*>(value.data()));
 }
 #endif
 
@@ -7125,7 +7117,7 @@ STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, libc_ty
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix4fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
+    glProgramUniformMatrix4fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -7140,7 +7132,7 @@ STATICINLINE void Unifdv(glhnd const& program, libc_types::i32 location, libc_ty
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix4x2dv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f64*>(value.data));
+    glProgramUniformMatrix4x2dv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f64*>(value.data()));
 }
 #endif
 
@@ -7155,7 +7147,7 @@ STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, libc_ty
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix4x2fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
+    glProgramUniformMatrix4x2fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -7170,7 +7162,7 @@ STATICINLINE void Unifdv(glhnd const& program, libc_types::i32 location, libc_ty
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix4x3dv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f64*>(value.data));
+    glProgramUniformMatrix4x3dv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f64*>(value.data()));
 }
 #endif
 
@@ -7185,7 +7177,7 @@ STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, libc_ty
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix4x3fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
+    glProgramUniformMatrix4x3fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -7215,7 +7207,7 @@ STATICINLINE void ScissorArrayv(libc_types::u32 first, semantic::Span<const libc
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glScissorArrayv(first, C_FCAST<libc_types::i32>(v.elements), v.data);
+    glScissorArrayv(first, C_FCAST<libc_types::i32>(v.size()), v.data());
 }
 #endif
 
@@ -7440,7 +7432,7 @@ STATICINLINE void ViewportArrayv(libc_types::u32 first, semantic::Span<const lib
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glViewportArrayv(first, C_FCAST<libc_types::i32>(v.elements), v.data);
+    glViewportArrayv(first, C_FCAST<libc_types::i32>(v.size()), v.data());
 }
 #endif
 
@@ -7764,7 +7756,7 @@ STATICINLINE void DebugMessageControl(GLenum source, GLenum type, GLenum severit
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDebugMessageControl(source, type, severity, C_FCAST<libc_types::i32>(ids.elements), ids.data, enabled);
+    glDebugMessageControl(source, type, severity, C_FCAST<libc_types::i32>(ids.size()), ids.data(), enabled);
 }
 #endif
 
@@ -8660,7 +8652,7 @@ STATICINLINE void FBClearNamedfv(glhnd const& framebuffer, GLenum buffer, libc_t
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glClearNamedFramebufferfv(C_OCAST<libc_types::u32>(framebuffer), buffer, drawbuffer, value.data);
+    glClearNamedFramebufferfv(C_OCAST<libc_types::u32>(framebuffer), buffer, drawbuffer, value.data());
 }
 #endif
 
@@ -8675,7 +8667,7 @@ STATICINLINE void FBClearNamediv(glhnd const& framebuffer, GLenum buffer, libc_t
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glClearNamedFramebufferiv(C_OCAST<libc_types::u32>(framebuffer), buffer, drawbuffer, value.data);
+    glClearNamedFramebufferiv(C_OCAST<libc_types::u32>(framebuffer), buffer, drawbuffer, value.data());
 }
 #endif
 
@@ -8690,7 +8682,7 @@ STATICINLINE void FBClearNameduiv(glhnd const& framebuffer, GLenum buffer, libc_
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glClearNamedFramebufferuiv(C_OCAST<libc_types::u32>(framebuffer), buffer, drawbuffer, value.data);
+    glClearNamedFramebufferuiv(C_OCAST<libc_types::u32>(framebuffer), buffer, drawbuffer, value.data());
 }
 #endif
 
@@ -8825,7 +8817,7 @@ STATICINLINE void BufAllocEx(semantic::Span<libc_types::u32>&& buffers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCreateBuffers(C_FCAST<libc_types::i32>(buffers.elements), buffers.data);
+    glCreateBuffers(C_FCAST<libc_types::i32>(buffers.size()), buffers.data());
 }
 #endif
 
@@ -8840,7 +8832,7 @@ STATICINLINE void FBAllocEx(semantic::Span<libc_types::u32>&& framebuffers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCreateFramebuffers(C_FCAST<libc_types::i32>(framebuffers.elements), framebuffers.data);
+    glCreateFramebuffers(C_FCAST<libc_types::i32>(framebuffers.size()), framebuffers.data());
 }
 #endif
 
@@ -8855,7 +8847,7 @@ STATICINLINE void PipelineAllocEx(semantic::Span<libc_types::u32>&& pipelines)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCreateProgramPipelines(C_FCAST<libc_types::i32>(pipelines.elements), pipelines.data);
+    glCreateProgramPipelines(C_FCAST<libc_types::i32>(pipelines.size()), pipelines.data());
 }
 #endif
 
@@ -8870,7 +8862,7 @@ STATICINLINE void QueryAllocEx(QueryComp::query_flag const& target, semantic::Sp
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCreateQueries(query_to_enum(target), C_FCAST<libc_types::i32>(ids.elements), ids.data);
+    glCreateQueries(query_to_enum(target), C_FCAST<libc_types::i32>(ids.size()), ids.data());
 }
 #endif
 
@@ -8885,7 +8877,7 @@ STATICINLINE void RBufAllocEx(semantic::Span<libc_types::u32>&& renderbuffers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCreateRenderbuffers(C_FCAST<libc_types::i32>(renderbuffers.elements), renderbuffers.data);
+    glCreateRenderbuffers(C_FCAST<libc_types::i32>(renderbuffers.size()), renderbuffers.data());
 }
 #endif
 
@@ -8900,7 +8892,7 @@ STATICINLINE void SamplerAllocEx(semantic::Span<libc_types::u32>&& samplers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCreateSamplers(C_FCAST<libc_types::i32>(samplers.elements), samplers.data);
+    glCreateSamplers(C_FCAST<libc_types::i32>(samplers.size()), samplers.data());
 }
 #endif
 
@@ -8915,7 +8907,7 @@ STATICINLINE void TexAllocEx(TexComp::tex_flag const& target, semantic::Span<lib
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCreateTextures(texture_to_enum(target), C_FCAST<libc_types::i32>(textures.elements), textures.data);
+    glCreateTextures(texture_to_enum(target), C_FCAST<libc_types::i32>(textures.size()), textures.data());
 }
 #endif
 
@@ -8930,7 +8922,7 @@ STATICINLINE void XFAllocEx(semantic::Span<libc_types::u32>&& ids)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCreateTransformFeedbacks(C_FCAST<libc_types::i32>(ids.elements), ids.data);
+    glCreateTransformFeedbacks(C_FCAST<libc_types::i32>(ids.size()), ids.data());
 }
 #endif
 
@@ -8945,7 +8937,7 @@ STATICINLINE void VAOAllocEx(semantic::Span<libc_types::u32>&& arrays)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glCreateVertexArrays(C_FCAST<libc_types::i32>(arrays.elements), arrays.data);
+    glCreateVertexArrays(C_FCAST<libc_types::i32>(arrays.size()), arrays.data());
 }
 #endif
 
@@ -10758,7 +10750,7 @@ STATICINLINE void BufFree(semantic::Span<const libc_types::u32>&& buffers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteBuffers(C_FCAST<libc_types::i32>(buffers.elements), buffers.data);
+    glDeleteBuffers(C_FCAST<libc_types::i32>(buffers.size()), buffers.data());
 }
 #endif
 
@@ -10773,7 +10765,7 @@ STATICINLINE void FBFree(semantic::Span<const libc_types::u32>&& framebuffers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteFramebuffers(C_FCAST<libc_types::i32>(framebuffers.elements), framebuffers.data);
+    glDeleteFramebuffers(C_FCAST<libc_types::i32>(framebuffers.size()), framebuffers.data());
 }
 #endif
 
@@ -10803,7 +10795,7 @@ STATICINLINE void RBufFree(semantic::Span<const libc_types::u32>&& renderbuffers
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteRenderbuffers(C_FCAST<libc_types::i32>(renderbuffers.elements), renderbuffers.data);
+    glDeleteRenderbuffers(C_FCAST<libc_types::i32>(renderbuffers.size()), renderbuffers.data());
 }
 #endif
 
@@ -10833,7 +10825,7 @@ STATICINLINE void TexFree(semantic::Span<const libc_types::u32>&& textures)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteTextures(C_FCAST<libc_types::i32>(textures.elements), textures.data);
+    glDeleteTextures(C_FCAST<libc_types::i32>(textures.size()), textures.data());
 }
 #endif
 
@@ -11076,7 +11068,7 @@ STATICINLINE void BufAlloc(semantic::Span<libc_types::u32>&& buffers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenBuffers(C_FCAST<libc_types::i32>(buffers.elements), buffers.data);
+    glGenBuffers(C_FCAST<libc_types::i32>(buffers.size()), buffers.data());
 }
 #endif
 
@@ -11091,7 +11083,7 @@ STATICINLINE void FBAlloc(semantic::Span<libc_types::u32>&& framebuffers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenFramebuffers(C_FCAST<libc_types::i32>(framebuffers.elements), framebuffers.data);
+    glGenFramebuffers(C_FCAST<libc_types::i32>(framebuffers.size()), framebuffers.data());
 }
 #endif
 
@@ -11106,7 +11098,7 @@ STATICINLINE void RBufAlloc(semantic::Span<libc_types::u32>&& renderbuffers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenRenderbuffers(C_FCAST<libc_types::i32>(renderbuffers.elements), renderbuffers.data);
+    glGenRenderbuffers(C_FCAST<libc_types::i32>(renderbuffers.size()), renderbuffers.data());
 }
 #endif
 
@@ -11121,7 +11113,7 @@ STATICINLINE void TexAlloc(semantic::Span<libc_types::u32>&& textures)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenTextures(C_FCAST<libc_types::i32>(textures.elements), textures.data);
+    glGenTextures(C_FCAST<libc_types::i32>(textures.size()), textures.data());
 }
 #endif
 
@@ -12051,7 +12043,7 @@ STATICINLINE void Uniffv(libc_types::i32 location, semantic::Span<const libc_typ
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform1fv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f32*>(value.data));
+    glUniform1fv(location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -12087,7 +12079,7 @@ STATICINLINE void Unifiv(libc_types::i32 location, semantic::Span<const libc_typ
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform1iv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i32*>(value.data));
+    glUniform1iv(location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::i32*>(value.data()));
 }
 #endif
 
@@ -12123,7 +12115,7 @@ STATICINLINE void Uniffv(libc_types::i32 location, semantic::Span<typing::vector
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform2fv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f32*>(value.data));
+    glUniform2fv(location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -12159,7 +12151,7 @@ STATICINLINE void Unifiv(libc_types::i32 location, semantic::Span<typing::vector
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform2iv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i32*>(value.data));
+    glUniform2iv(location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::i32*>(value.data()));
 }
 #endif
 
@@ -12195,7 +12187,7 @@ STATICINLINE void Uniffv(libc_types::i32 location, semantic::Span<typing::vector
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform3fv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f32*>(value.data));
+    glUniform3fv(location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -12231,7 +12223,7 @@ STATICINLINE void Unifiv(libc_types::i32 location, semantic::Span<typing::vector
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform3iv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i32*>(value.data));
+    glUniform3iv(location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::i32*>(value.data()));
 }
 #endif
 
@@ -12267,7 +12259,7 @@ STATICINLINE void Uniffv(libc_types::i32 location, semantic::Span<typing::vector
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform4fv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f32*>(value.data));
+    glUniform4fv(location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -12303,7 +12295,7 @@ STATICINLINE void Unifiv(libc_types::i32 location, semantic::Span<typing::vector
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform4iv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i32*>(value.data));
+    glUniform4iv(location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::i32*>(value.data()));
 }
 #endif
 
@@ -12321,7 +12313,7 @@ STATICINLINE void Uniffv(libc_types::i32 location, libc_types::u8 transpose, sem
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix2fv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
+    glUniformMatrix2fv(location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -12339,7 +12331,7 @@ STATICINLINE void Uniffv(libc_types::i32 location, libc_types::u8 transpose, sem
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix3fv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
+    glUniformMatrix3fv(location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -12357,7 +12349,7 @@ STATICINLINE void Uniffv(libc_types::i32 location, libc_types::u8 transpose, sem
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix4fv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
+    glUniformMatrix4fv(location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -12703,7 +12695,7 @@ STATICINLINE void BufClearfv(GLenum buffer, libc_types::i32 drawbuffer, semantic
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glClearBufferfv(buffer, drawbuffer, value.data);
+    glClearBufferfv(buffer, drawbuffer, value.data());
 }
 #endif
 
@@ -12718,7 +12710,7 @@ STATICINLINE void BufCleariv(GLenum buffer, libc_types::i32 drawbuffer, semantic
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glClearBufferiv(buffer, drawbuffer, value.data);
+    glClearBufferiv(buffer, drawbuffer, value.data());
 }
 #endif
 
@@ -12733,7 +12725,7 @@ STATICINLINE void BufClearuiv(GLenum buffer, libc_types::i32 drawbuffer, semanti
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glClearBufferuiv(buffer, drawbuffer, value.data);
+    glClearBufferuiv(buffer, drawbuffer, value.data());
 }
 #endif
 
@@ -12832,7 +12824,7 @@ STATICINLINE void QueryFree(semantic::Span<const libc_types::u32>&& ids)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteQueries(C_FCAST<libc_types::i32>(ids.elements), ids.data);
+    glDeleteQueries(C_FCAST<libc_types::i32>(ids.size()), ids.data());
 }
 #endif
 
@@ -12847,7 +12839,7 @@ STATICINLINE void SamplerFree(semantic::Span<const libc_types::u32>&& samplers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteSamplers(C_FCAST<libc_types::i32>(samplers.elements), samplers.data);
+    glDeleteSamplers(C_FCAST<libc_types::i32>(samplers.size()), samplers.data());
 }
 #endif
 
@@ -12877,7 +12869,7 @@ STATICINLINE void XFFree(semantic::Span<const libc_types::u32>&& ids)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteTransformFeedbacks(C_FCAST<libc_types::i32>(ids.elements), ids.data);
+    glDeleteTransformFeedbacks(C_FCAST<libc_types::i32>(ids.size()), ids.data());
 }
 #endif
 
@@ -12892,7 +12884,7 @@ STATICINLINE void VAOFree(semantic::Span<const libc_types::u32>&& arrays)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteVertexArrays(C_FCAST<libc_types::i32>(arrays.elements), arrays.data);
+    glDeleteVertexArrays(C_FCAST<libc_types::i32>(arrays.size()), arrays.data());
 }
 #endif
 
@@ -13060,7 +13052,7 @@ STATICINLINE void QueryAlloc(semantic::Span<libc_types::u32>&& ids)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenQueries(C_FCAST<libc_types::i32>(ids.elements), ids.data);
+    glGenQueries(C_FCAST<libc_types::i32>(ids.size()), ids.data());
 }
 #endif
 
@@ -13075,7 +13067,7 @@ STATICINLINE void SamplerAlloc(semantic::Span<libc_types::u32>&& samplers)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenSamplers(C_FCAST<libc_types::i32>(samplers.elements), samplers.data);
+    glGenSamplers(C_FCAST<libc_types::i32>(samplers.size()), samplers.data());
 }
 #endif
 
@@ -13090,7 +13082,7 @@ STATICINLINE void XFAlloc(semantic::Span<libc_types::u32>&& ids)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenTransformFeedbacks(C_FCAST<libc_types::i32>(ids.elements), ids.data);
+    glGenTransformFeedbacks(C_FCAST<libc_types::i32>(ids.size()), ids.data());
 }
 #endif
 
@@ -13105,7 +13097,7 @@ STATICINLINE void VAOAlloc(semantic::Span<libc_types::u32>&& arrays)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenVertexArrays(C_FCAST<libc_types::i32>(arrays.elements), arrays.data);
+    glGenVertexArrays(C_FCAST<libc_types::i32>(arrays.size()), arrays.data());
 }
 #endif
 
@@ -13837,7 +13829,7 @@ STATICINLINE void Unifuiv(libc_types::i32 location, semantic::Span<const libc_ty
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform1uiv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u32*>(value.data));
+    glUniform1uiv(location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::u32*>(value.data()));
 }
 #endif
 
@@ -13867,7 +13859,7 @@ STATICINLINE void Unifuiv(libc_types::i32 location, semantic::Span<typing::vecto
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform2uiv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u32*>(value.data));
+    glUniform2uiv(location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::u32*>(value.data()));
 }
 #endif
 
@@ -13897,7 +13889,7 @@ STATICINLINE void Unifuiv(libc_types::i32 location, semantic::Span<typing::vecto
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform3uiv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u32*>(value.data));
+    glUniform3uiv(location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::u32*>(value.data()));
 }
 #endif
 
@@ -13927,7 +13919,7 @@ STATICINLINE void Unifuiv(libc_types::i32 location, semantic::Span<typing::vecto
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform4uiv(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u32*>(value.data));
+    glUniform4uiv(location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::u32*>(value.data()));
 }
 #endif
 
@@ -13957,7 +13949,7 @@ STATICINLINE void Uniffv(libc_types::i32 location, libc_types::u8 transpose, sem
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix2x3fv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
+    glUniformMatrix2x3fv(location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -13972,7 +13964,7 @@ STATICINLINE void Uniffv(libc_types::i32 location, libc_types::u8 transpose, sem
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix2x4fv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
+    glUniformMatrix2x4fv(location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -13987,7 +13979,7 @@ STATICINLINE void Uniffv(libc_types::i32 location, libc_types::u8 transpose, sem
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix3x2fv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
+    glUniformMatrix3x2fv(location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -14002,7 +13994,7 @@ STATICINLINE void Uniffv(libc_types::i32 location, libc_types::u8 transpose, sem
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix3x4fv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
+    glUniformMatrix3x4fv(location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -14017,7 +14009,7 @@ STATICINLINE void Uniffv(libc_types::i32 location, libc_types::u8 transpose, sem
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix4x2fv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
+    glUniformMatrix4x2fv(location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -14032,7 +14024,7 @@ STATICINLINE void Uniffv(libc_types::i32 location, libc_types::u8 transpose, sem
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix4x3fv(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
+    glUniformMatrix4x3fv(location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -14251,7 +14243,7 @@ STATICINLINE libc_types::u32 ShaderProgramvAllocEx(ShaderStage type, semantic::S
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    return (libc_types::u32)glCreateShaderProgramv(to_enum1(type), C_FCAST<libc_types::i32>(strings.elements), strings.data);
+    return (libc_types::u32)glCreateShaderProgramv(to_enum1(type), C_FCAST<libc_types::i32>(strings.size()), strings.data());
 }
 #endif
 
@@ -14266,7 +14258,7 @@ STATICINLINE void PipelineFree(semantic::Span<const libc_types::u32>&& pipelines
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDeleteProgramPipelines(C_FCAST<libc_types::i32>(pipelines.elements), pipelines.data);
+    glDeleteProgramPipelines(C_FCAST<libc_types::i32>(pipelines.size()), pipelines.data());
 }
 #endif
 
@@ -14356,7 +14348,7 @@ STATICINLINE void PipelineAlloc(semantic::Span<libc_types::u32>&& pipelines)
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glGenProgramPipelines(C_FCAST<libc_types::i32>(pipelines.elements), pipelines.data);
+    glGenProgramPipelines(C_FCAST<libc_types::i32>(pipelines.size()), pipelines.data());
 }
 #endif
 
@@ -14611,7 +14603,7 @@ STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, semanti
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform1fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f32*>(value.data));
+    glProgramUniform1fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -14641,7 +14633,7 @@ STATICINLINE void Unifiv(glhnd const& program, libc_types::i32 location, semanti
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform1iv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i32*>(value.data));
+    glProgramUniform1iv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::i32*>(value.data()));
 }
 #endif
 
@@ -14671,7 +14663,7 @@ STATICINLINE void Unifuiv(glhnd const& program, libc_types::i32 location, semant
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform1uiv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u32*>(value.data));
+    glProgramUniform1uiv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::u32*>(value.data()));
 }
 #endif
 
@@ -14701,7 +14693,7 @@ STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, semanti
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform2fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f32*>(value.data));
+    glProgramUniform2fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -14731,7 +14723,7 @@ STATICINLINE void Unifiv(glhnd const& program, libc_types::i32 location, semanti
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform2iv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i32*>(value.data));
+    glProgramUniform2iv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::i32*>(value.data()));
 }
 #endif
 
@@ -14761,7 +14753,7 @@ STATICINLINE void Unifuiv(glhnd const& program, libc_types::i32 location, semant
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform2uiv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u32*>(value.data));
+    glProgramUniform2uiv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::u32*>(value.data()));
 }
 #endif
 
@@ -14791,7 +14783,7 @@ STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, semanti
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform3fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f32*>(value.data));
+    glProgramUniform3fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -14821,7 +14813,7 @@ STATICINLINE void Unifiv(glhnd const& program, libc_types::i32 location, semanti
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform3iv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i32*>(value.data));
+    glProgramUniform3iv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::i32*>(value.data()));
 }
 #endif
 
@@ -14851,7 +14843,7 @@ STATICINLINE void Unifuiv(glhnd const& program, libc_types::i32 location, semant
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform3uiv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u32*>(value.data));
+    glProgramUniform3uiv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::u32*>(value.data()));
 }
 #endif
 
@@ -14881,7 +14873,7 @@ STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, semanti
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform4fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f32*>(value.data));
+    glProgramUniform4fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -14911,7 +14903,7 @@ STATICINLINE void Unifiv(glhnd const& program, libc_types::i32 location, semanti
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform4iv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i32*>(value.data));
+    glProgramUniform4iv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::i32*>(value.data()));
 }
 #endif
 
@@ -14941,7 +14933,7 @@ STATICINLINE void Unifuiv(glhnd const& program, libc_types::i32 location, semant
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform4uiv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u32*>(value.data));
+    glProgramUniform4uiv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::u32*>(value.data()));
 }
 #endif
 
@@ -14956,7 +14948,7 @@ STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, libc_ty
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix2fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
+    glProgramUniformMatrix2fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -14971,7 +14963,7 @@ STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, libc_ty
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix2x3fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
+    glProgramUniformMatrix2x3fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -14986,7 +14978,7 @@ STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, libc_ty
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix2x4fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
+    glProgramUniformMatrix2x4fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -15001,7 +14993,7 @@ STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, libc_ty
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix3fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
+    glProgramUniformMatrix3fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -15016,7 +15008,7 @@ STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, libc_ty
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix3x2fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
+    glProgramUniformMatrix3x2fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -15031,7 +15023,7 @@ STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, libc_ty
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix3x4fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
+    glProgramUniformMatrix3x4fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -15046,7 +15038,7 @@ STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, libc_ty
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix4fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
+    glProgramUniformMatrix4fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -15061,7 +15053,7 @@ STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, libc_ty
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix4x2fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
+    glProgramUniformMatrix4x2fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -15076,7 +15068,7 @@ STATICINLINE void Uniffv(glhnd const& program, libc_types::i32 location, libc_ty
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformMatrix4x3fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
+    glProgramUniformMatrix4x3fv(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -15364,7 +15356,7 @@ STATICINLINE void DebugMessageControl(GLenum source, GLenum type, GLenum severit
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDebugMessageControl(source, type, severity, C_FCAST<libc_types::i32>(ids.elements), ids.data, enabled);
+    glDebugMessageControl(source, type, severity, C_FCAST<libc_types::i32>(ids.size()), ids.data(), enabled);
 }
 #endif
 
@@ -16129,7 +16121,7 @@ STATICINLINE void UnifHandleui64vARB(glhnd const& program, libc_types::i32 locat
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniformHandleui64vARB(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(values.elements), C_RCAST<const libc_types::u64*>(values.data));
+    glProgramUniformHandleui64vARB(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(values.size()), C_RCAST<const libc_types::u64*>(values.data()));
 }
 #endif
 
@@ -16144,7 +16136,7 @@ STATICINLINE void UnifHandleui64vARB(libc_types::i32 location, semantic::Span<co
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformHandleui64vARB(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u64*>(value.data));
+    glUniformHandleui64vARB(location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::u64*>(value.data()));
 }
 #endif
 
@@ -16233,7 +16225,7 @@ STATICINLINE void DebugMessageControlARB(GLenum source, GLenum type, GLenum seve
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDebugMessageControlARB(source, type, severity, C_FCAST<libc_types::i32>(ids.elements), ids.data, enabled);
+    glDebugMessageControlARB(source, type, severity, C_FCAST<libc_types::i32>(ids.size()), ids.data(), enabled);
 }
 #endif
 
@@ -16560,7 +16552,7 @@ STATICINLINE void Unif1i64vARB(glhnd const& program, libc_types::i32 location, s
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform1i64vARB(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i64*>(value.data));
+    glProgramUniform1i64vARB(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::i64*>(value.data()));
 }
 #endif
 
@@ -16575,7 +16567,7 @@ STATICINLINE void Unif1ui64vARB(glhnd const& program, libc_types::i32 location, 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform1ui64vARB(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u64*>(value.data));
+    glProgramUniform1ui64vARB(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::u64*>(value.data()));
 }
 #endif
 
@@ -16590,7 +16582,7 @@ STATICINLINE void Unif2i64vARB(glhnd const& program, libc_types::i32 location, s
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform2i64vARB(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i64*>(value.data));
+    glProgramUniform2i64vARB(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::i64*>(value.data()));
 }
 #endif
 
@@ -16605,7 +16597,7 @@ STATICINLINE void Unif2ui64vARB(glhnd const& program, libc_types::i32 location, 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform2ui64vARB(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u64*>(value.data));
+    glProgramUniform2ui64vARB(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::u64*>(value.data()));
 }
 #endif
 
@@ -16620,7 +16612,7 @@ STATICINLINE void Unif3i64vARB(glhnd const& program, libc_types::i32 location, s
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform3i64vARB(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i64*>(value.data));
+    glProgramUniform3i64vARB(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::i64*>(value.data()));
 }
 #endif
 
@@ -16635,7 +16627,7 @@ STATICINLINE void Unif3ui64vARB(glhnd const& program, libc_types::i32 location, 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform3ui64vARB(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u64*>(value.data));
+    glProgramUniform3ui64vARB(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::u64*>(value.data()));
 }
 #endif
 
@@ -16650,7 +16642,7 @@ STATICINLINE void Unif4i64vARB(glhnd const& program, libc_types::i32 location, s
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform4i64vARB(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i64*>(value.data));
+    glProgramUniform4i64vARB(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::i64*>(value.data()));
 }
 #endif
 
@@ -16665,7 +16657,7 @@ STATICINLINE void Unif4ui64vARB(glhnd const& program, libc_types::i32 location, 
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glProgramUniform4ui64vARB(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u64*>(value.data));
+    glProgramUniform4ui64vARB(C_OCAST<libc_types::u32>(program), location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::u64*>(value.data()));
 }
 #endif
 
@@ -16680,7 +16672,7 @@ STATICINLINE void Unif1i64vARB(libc_types::i32 location, semantic::Span<const li
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform1i64vARB(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i64*>(value.data));
+    glUniform1i64vARB(location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::i64*>(value.data()));
 }
 #endif
 
@@ -16695,7 +16687,7 @@ STATICINLINE void Unif1ui64vARB(libc_types::i32 location, semantic::Span<const l
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform1ui64vARB(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u64*>(value.data));
+    glUniform1ui64vARB(location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::u64*>(value.data()));
 }
 #endif
 
@@ -16710,7 +16702,7 @@ STATICINLINE void Unif2i64vARB(libc_types::i32 location, semantic::Span<const li
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform2i64vARB(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i64*>(value.data));
+    glUniform2i64vARB(location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::i64*>(value.data()));
 }
 #endif
 
@@ -16725,7 +16717,7 @@ STATICINLINE void Unif2ui64vARB(libc_types::i32 location, semantic::Span<const l
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform2ui64vARB(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u64*>(value.data));
+    glUniform2ui64vARB(location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::u64*>(value.data()));
 }
 #endif
 
@@ -16740,7 +16732,7 @@ STATICINLINE void Unif3i64vARB(libc_types::i32 location, semantic::Span<const li
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform3i64vARB(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i64*>(value.data));
+    glUniform3i64vARB(location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::i64*>(value.data()));
 }
 #endif
 
@@ -16755,7 +16747,7 @@ STATICINLINE void Unif3ui64vARB(libc_types::i32 location, semantic::Span<const l
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform3ui64vARB(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u64*>(value.data));
+    glUniform3ui64vARB(location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::u64*>(value.data()));
 }
 #endif
 
@@ -16770,7 +16762,7 @@ STATICINLINE void Unif4i64vARB(libc_types::i32 location, semantic::Span<const li
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform4i64vARB(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i64*>(value.data));
+    glUniform4i64vARB(location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::i64*>(value.data()));
 }
 #endif
 
@@ -16785,7 +16777,7 @@ STATICINLINE void Unif4ui64vARB(libc_types::i32 location, semantic::Span<const l
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform4ui64vARB(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::u64*>(value.data));
+    glUniform4ui64vARB(location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::u64*>(value.data()));
 }
 #endif
 
@@ -17666,7 +17658,7 @@ STATICINLINE void Unif1fvARB(libc_types::i32 location, semantic::Span<const libc
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform1fvARB(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f32*>(value.data));
+    glUniform1fvARB(location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -17696,7 +17688,7 @@ STATICINLINE void Unif1ivARB(libc_types::i32 location, semantic::Span<const libc
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform1ivARB(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i32*>(value.data));
+    glUniform1ivARB(location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::i32*>(value.data()));
 }
 #endif
 
@@ -17726,7 +17718,7 @@ STATICINLINE void Unif2fvARB(libc_types::i32 location, semantic::Span<const libc
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform2fvARB(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f32*>(value.data));
+    glUniform2fvARB(location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -17756,7 +17748,7 @@ STATICINLINE void Unif2ivARB(libc_types::i32 location, semantic::Span<const libc
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform2ivARB(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i32*>(value.data));
+    glUniform2ivARB(location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::i32*>(value.data()));
 }
 #endif
 
@@ -17786,7 +17778,7 @@ STATICINLINE void Unif3fvARB(libc_types::i32 location, semantic::Span<const libc
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform3fvARB(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f32*>(value.data));
+    glUniform3fvARB(location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -17816,7 +17808,7 @@ STATICINLINE void Unif3ivARB(libc_types::i32 location, semantic::Span<const libc
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform3ivARB(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i32*>(value.data));
+    glUniform3ivARB(location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::i32*>(value.data()));
 }
 #endif
 
@@ -17846,7 +17838,7 @@ STATICINLINE void Unif4fvARB(libc_types::i32 location, semantic::Span<const libc
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform4fvARB(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::f32*>(value.data));
+    glUniform4fvARB(location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -17876,7 +17868,7 @@ STATICINLINE void Unif4ivARB(libc_types::i32 location, semantic::Span<const libc
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniform4ivARB(location, C_FCAST<libc_types::i32>(value.elements), C_RCAST<const libc_types::i32*>(value.data));
+    glUniform4ivARB(location, C_FCAST<libc_types::i32>(value.size()), C_RCAST<const libc_types::i32*>(value.data()));
 }
 #endif
 
@@ -17891,7 +17883,7 @@ STATICINLINE void UnifMatrix2fvARB(libc_types::i32 location, libc_types::u8 tran
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix2fvARB(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
+    glUniformMatrix2fvARB(location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -17906,7 +17898,7 @@ STATICINLINE void UnifMatrix3fvARB(libc_types::i32 location, libc_types::u8 tran
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix3fvARB(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
+    glUniformMatrix3fvARB(location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -17921,7 +17913,7 @@ STATICINLINE void UnifMatrix4fvARB(libc_types::i32 location, libc_types::u8 tran
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glUniformMatrix4fvARB(location, C_FCAST<libc_types::i32>(value.elements), transpose, C_RCAST<const libc_types::f32*>(value.data));
+    glUniformMatrix4fvARB(location, C_FCAST<libc_types::i32>(value.size()), transpose, C_RCAST<const libc_types::f32*>(value.data()));
 }
 #endif
 
@@ -18300,7 +18292,7 @@ STATICINLINE void DebugMessageControlKHR(GLenum source, GLenum type, GLenum seve
         Throw(undefined_behavior("function not loaded!"));
     }
 #endif
-    glDebugMessageControlKHR(source, type, severity, C_FCAST<libc_types::i32>(ids.elements), ids.data, enabled);
+    glDebugMessageControlKHR(source, type, severity, C_FCAST<libc_types::i32>(ids.size()), ids.data(), enabled);
 }
 #endif
 
@@ -18553,8 +18545,3 @@ STATICINLINE void ReadnPixelsKHR(typing::vectors::tvector<libc_types::i32, 2> x,
 } // ext
 } // glwrap
 
-#if defined(COFFEE_GCC)
-#pragma GCC diagnostic pop
-#elif defined(COFFEE_CLANG)
-#pragma clang diagnostic pop
-#endif

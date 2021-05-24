@@ -28,7 +28,7 @@ struct GLEAM_VBuffer : GraphicsAPI::VertexBuffer
     void commit(BytesConst const& data);
     void commit(szptr size, c_cptr data = nullptr)
     {
-        commit(BytesConst::Unsafe(data, size));
+        commit(BytesConst::ofBytes(data, size));
     }
 
     Bytes map(szptr offset, szptr size, gleam_error& ec);

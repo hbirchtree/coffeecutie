@@ -10,11 +10,11 @@ void GLEAM_Query::alloc()
 #if GL_VERSION_VERIFY(0x300, 0x300)
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
     if(GLEAM_FEATURES.direct_state)
-        gl::v45::QueryAllocEx(m_type, m_handle.hnd);
+        gl::v45::QueryAllocEx(m_type, SpanOne(m_handle.hnd));
     else
 #endif
         if(!GLEAM_FEATURES.gles20)
-        gl::v33::QueryAlloc(m_handle.hnd);
+        gl::v33::QueryAlloc(SpanOne(m_handle.hnd));
 #endif
 }
 
@@ -22,7 +22,7 @@ void GLEAM_Query::dealloc()
 {
 #if GL_VERSION_VERIFY(0x300, 0x300)
     if(!GLEAM_FEATURES.gles20)
-        gl::v33::QueryFree(m_handle.hnd);
+        gl::v33::QueryFree(SpanOne(m_handle.hnd));
     m_handle.release();
 #endif
 }

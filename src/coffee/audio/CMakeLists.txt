@@ -1,6 +1,6 @@
 option ( BUILD_OPENAL "Build with OpenAL audio backend" ON )
 
-find_package( stb REQUIRED )
+find_package( Ogg REQUIRED )
 
 coffee_library (
     TARGET Audio
@@ -11,26 +11,17 @@ coffee_library (
     # This is a collection of general audio functions
     private/caudio.cpp
 
-    LIBRARIES Core
+    LIBRARIES Core Ogg::ogg
 
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     )
 
 target_include_directories ( Audio SYSTEM PRIVATE
-    ${STB_INCLUDE_DIR}
+    $<BUILD_INTERFACE:${Stb_INCLUDE_DIR}>
     )
 
 if(BUILD_OPENAL)
-    if(NOT APPLE)
-        dependency_get (
-            REQUIRED
-            SOURCE hbirchtree/native-library-bundle
-            TAG ${NATIVE_LIB_BUNDLE_TAG}
-            NAMES openal
-            )
-    endif()
-
     find_package( OpenAL REQUIRED )
 
     coffee_library (
@@ -54,11 +45,6 @@ if(BUILD_OPENAL)
         target_link_libraries ( OpenALMix
             PUBLIC
             OpenAL
-            )
-        dependency_link (
-            TARGET OpenALMix
-            DEPENDENCIES
-                openal
             )
     elseif( WIN32 )
         target_link_libraries ( OpenALMix

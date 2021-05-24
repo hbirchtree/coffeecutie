@@ -55,13 +55,15 @@ struct GLEAM_Shader : GraphicsAPI::Shader
      * \return true upon success
      */
     bool compile(
-        ShaderStage      stage,
-        Bytes const&     data,
-        gleam_error&     ec,
-        Constants const& constants = {});
+        ShaderStage       stage,
+        BytesConst const& data,
+        gleam_error&      ec,
+        Constants const&  constants = {});
 
     bool compile(
-        ShaderStage stage, Bytes const& data, Constants const& constants = {})
+        ShaderStage       stage,
+        BytesConst const& data,
+        Constants const&  constants = {})
     {
         gleam_error ec;
         return compile(stage, data, ec, constants);

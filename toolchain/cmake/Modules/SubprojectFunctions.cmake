@@ -113,6 +113,7 @@ macro( INIT_SUBPROJECT )
 
     option ( BUILD_CPP11 "Build as C++11 code" OFF )
     option ( BUILD_CPP14 "Build as C++14 code" OFF )
+    option ( BUILD_CPP17 "Build as C++17 code" OFF )
 
     # Enable coverage when requested
     if(BUILD_COVERAGE)

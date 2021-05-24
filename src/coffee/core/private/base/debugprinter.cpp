@@ -79,11 +79,12 @@ static void AddContextString(CString& prefix, Severity sev)
         prefix.append(CurrentThread::GetName() + ":");
         prefix.push_back(severity_str[0]);
 
-        platform::ColorMap::ColorText(
-            prefix,
-            platform::ColorMap::CombineFormat(
-                platform::ColorMap::CmdColor::Green,
-                platform::ColorMap::CmdColor::Blue));
+        /* TODO: Re-enable colors */
+//        platform::ColorMap::ColorText(
+//            prefix,
+//            platform::ColorMap::CombineFormat(
+//                platform::ColorMap::CmdColor::Green,
+//                platform::ColorMap::CmdColor::Blue));
     }
 }
 

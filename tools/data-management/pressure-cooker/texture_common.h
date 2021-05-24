@@ -56,7 +56,7 @@ struct texture_settings_t : settings_visitor
     {
         return "texture";
     }
-    virtual void visit(CString const& member, JSON::Value const& value)
+    virtual void visit(CString const& member, json::Value const& value)
     {
         if(member == "max_size")
             max_size = value.GetInt();

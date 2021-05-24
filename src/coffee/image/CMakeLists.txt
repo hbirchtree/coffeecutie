@@ -1,4 +1,4 @@
-find_package ( stb REQUIRED )
+find_package ( Stb REQUIRED )
 
 coffee_library (
     TARGET Image
@@ -16,5 +16,5 @@ coffee_library (
     )
 
 target_include_directories ( Image SYSTEM PRIVATE
-    $<BUILD_INTERFACE:${STB_INCLUDE_DIR}>
+    $<BUILD_INTERFACE:${Stb_INCLUDE_DIR}>
     )

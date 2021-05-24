@@ -25,10 +25,10 @@ void surface_allocate(
 
 #if GL_VERSION_VERIFY(0x450, GL_VERSION_NONE)
     if(GLEAM_FEATURES.direct_state)
-        gl::v45::TexAllocEx(type, Span<CGhnd>::From(m_handle));
+        gl::v45::TexAllocEx(type, SpanOne<u32>(m_handle));
     else
 #endif
-        gl::v33::TexAlloc(Span<CGhnd>::From(m_handle));
+        gl::v33::TexAlloc(SpanOne<u32>(m_handle));
 
     if(!feval(m_flags & GLEAM_API::TextureImmutable) ||
        properties::get<properties::is_compressed>(fmt))
@@ -55,7 +55,7 @@ void surface_flag(u32& m_flags, PixFmt fmt)
 
 void surface_dealloc(glhnd& m_handle)
 {
-    gl::v33::TexFree(Span<CGhnd>::From(m_handle));
+    gl::v33::TexFree(SpanOne<u32>(m_handle));
     m_handle.release();
 }
 
@@ -453,7 +453,7 @@ STATICINLINE void texture_pbo_upload(
         gl::v33::BufBind(buf::pixel_unpack::value, hand);
         gl::v33::BufData(
             buf::pixel_unpack::value,
-            BytesConst::From(data.data, pixSize),
+            BytesConst::of(data.data, pixSize),
             RSCA::WriteOnly | RSCA::Persistent);
 
         hand.release();

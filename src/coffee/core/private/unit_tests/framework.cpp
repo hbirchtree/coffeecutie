@@ -57,12 +57,12 @@ static Vector<bool>    result;
 static Vector<bool>    required;
 
 void WriteJsonData(
-    JSON::WriteBuf& buf,
+    json::WriteBuf& buf,
     szptr const&    suc,
     u64 const&      total_time,
     Test const*     tests)
 {
-    JSON::Writer root(buf);
+    json::Writer root(buf);
 
     root.StartObject();
 
@@ -339,7 +339,7 @@ int run_tests(u32 num, Test const* tests, int argc, char** argv)
         PrintAsciiTable(time_accum, suc);
     } else
     {
-        JSON::WriteBuf buf;
+        json::WriteBuf buf;
         WriteJsonData(buf, suc, time_accum, tests);
 
         cOutputPrint("{0}", buf.GetString());

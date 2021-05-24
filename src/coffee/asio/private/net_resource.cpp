@@ -268,7 +268,7 @@ void Resource::readResponseHeader(net_buffer& buffer, szptr& consumed)
     {
         DProfContext __(NETRSC_TAG "Parsing response");
         consumed = http::buffer::read_response(
-            m_response.header, Bytes::CreateFrom(buffer));
+            m_response.header, Bytes::ofContainer(buffer));
     }
 
     if constexpr(compile_info::debug_mode)
@@ -315,7 +315,7 @@ void Resource::readResponsePayload(net_buffer& buffer)
         if(content_len == buffer.size())
             return;
 
-        if(auto view = Bytes::CreateFrom(m_response.payload).at(buffer.size()))
+        if(auto view = Bytes::ofContainer(m_response.payload).at(buffer.size()))
         {
             szptr read;
 #if defined(ASIO_USE_SSL)
@@ -381,10 +381,10 @@ bool Resource::push(http::method_t method, BytesConst const& data)
     szptr written = 0;
 #if defined(ASIO_USE_SSL)
     if(secure())
-        written = ssl->write(Bytes::From(header.data(), header.size()), ec);
+        written = ssl->write(BytesConst::ofContainer(header), ec);
     else
 #endif
-        written = normal->write(Bytes::From(header.data(), header.size()), ec);
+        written = normal->write(BytesConst::ofContainer(header), ec);
     C_ERROR_CHECK(ec)
 
     szptr      consumed = 0;
@@ -500,10 +500,7 @@ BytesConst Resource::data() const
 {
     Profiler::DeepProfile(NETRSC_TAG "Retrieving data");
 
-    return Bytes(
-        C_FCAST<byte_t*>(m_response.payload.data()),
-        m_response.payload.size(),
-        m_response.payload.size());
+    return BytesConst::ofContainer(m_response.payload);
 }
 
 } // namespace Net

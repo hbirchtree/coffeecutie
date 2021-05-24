@@ -167,14 +167,12 @@ static bool SetAPIVersion(
     /* Emulation mode; differs slightly from compiling against an API,
      *  such as when ES 2.0 excludes pixel formats and etc. */
     /* TODO: Document this feature */
-    if(Env::ExistsVar("GLEAM_API"))
+    if(auto api_ver = env::var("GLEAM_API"); api_ver.has_value())
     {
-        auto level = Env::GetVar("GLEAM_API");
-
-        store->CURR_API = gl_level_from_string(level);
+        store->CURR_API = gl_level_from_string(api_ver.value());
 
         if(store->CURR_API == GL_Nothing)
-            throw undefined_behavior("invalid GLEAM API: " + level);
+            throw undefined_behavior("invalid GLEAM API: " + api_ver.value());
     }
 
     /* If we are emulating ES 2.0, create a global vertex array.
@@ -184,7 +182,7 @@ static bool SetAPIVersion(
     if(prevApi != GLES_2_0 && store->CURR_API == GLES_2_0)
     {
         glhnd vao;
-        gl::vlow::VAOAlloc(vao.hnd);
+        gl::vlow::VAOAlloc(SpanOne(vao.hnd));
         gl::vlow::VAOBind(vao);
         vao.release();
     }
@@ -459,7 +457,8 @@ bool GLEAM_API::LoadAPI(
     ConstructContextObjects(store);
 
     /* First, check if an extension is available for behavior */
-    if(!Env::ExistsVar("GLEAM_DISABLE_EXTENSIONS"))
+    if(auto disable_exts = env::var("GLEAM_DISABLE_EXTENSIONS");
+       disable_exts.has_value() && disable_exts.value() == "1")
         SetExtensionFeatures(store);
     SetAPIFeatures(store);
 
@@ -627,10 +626,17 @@ void GLEAM_API::SetViewportState(const VIEWSTATE& vstate, C_UNUSED(u32 i))
             }
 
             gl::v41::DepthRangeArrayv(
-                i, Span<f64>::From(&vstate.depth(i), vstate.viewCount()));
+                i,
+                mem_chunk<const f64>::ofBytes(
+                    &vstate.depth(i), vstate.viewCount())
+                    .view);
             gl::v41::ScissorArrayv(
-                i, Span<i32>::From(&vstate.scissor(i), vstate.viewCount()));
-            gl::v41::ViewportArrayv(i, Span<f32>::CreateFrom(varr));
+                i,
+                mem_chunk<const i32>::ofBytes(
+                    &vstate.scissor(i), vstate.viewCount())
+                    .view);
+            gl::v41::ViewportArrayv(
+                i, mem_chunk<const f32>::ofContainer(varr).view);
 
             gl::vlow::Enablei(Feature::ClipDist, 0);
             gl::vlow::Enablei(Feature::ClipDist, 1);
@@ -870,7 +876,7 @@ void GLEAM_API::DisposePixelBuffers()
 
     auto& queue = GLEAM_API_INSTANCE_DATA->pboQueue;
     for(auto& buf : queue.buffers)
-        gl::v33::BufFree(buf.buf);
+        gl::v33::BufFree(SpanOne(buf.buf));
 
     queue.buffers.clear();
 #endif

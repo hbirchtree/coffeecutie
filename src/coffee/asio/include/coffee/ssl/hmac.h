@@ -16,8 +16,9 @@ enum class digest_type
     md5,
 };
 
+template<typename T>
 stl_types::String digest(
-    semantic::Bytes const&   data,
+    semantic::Span<T> const& data,
     stl_types::String const& key,
     digest_type              type = digest_type::sha256)
 {
@@ -48,8 +49,8 @@ stl_types::String digest(
            hashing,
            key.data(),
            static_cast<int>(key.size()),
-           data.data,
-           data.size,
+           C_RCAST<const unsigned char*>(data.data()),
+           data.size(),
            C_RCAST<unsigned char*>(out.data()),
            &md_size))
         return {};

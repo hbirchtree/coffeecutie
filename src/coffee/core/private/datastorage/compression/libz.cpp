@@ -57,7 +57,10 @@ template<
     process_fun      Proc  = nullptr,
     end_fun          End   = nullptr>
 bool compression_routine(
-    Bytes const& input, Bytes* output, Opts const& opts, zlib_error_code& ret)
+    BytesConst const& input,
+    Bytes*            output,
+    Opts const&       opts,
+    zlib_error_code&  ret)
 {
     DProfContext _("zlib::Compression routine");
 
@@ -81,7 +84,7 @@ bool compression_routine(
     strm.next_out = write_ptr;
 
     strm.avail_in = C_FCAST<u32>(input.size);
-    strm.next_in  = input.data;
+    strm.next_in  = C_CCAST<unsigned char*>(input.data);
 
     ret = Z_OK;
 
@@ -152,30 +155,37 @@ bool compression_routine(
     if(!direct_output)
     {
         DProfContext _("zlib::Copy to output");
-        MemCpy(*Bytes::CreateFrom(compress_store).at(0, output->size), *output);
+        MemCpy(
+            *Bytes::ofContainer(compress_store).at(0, output->size), *output);
     }
 
     return true;
 }
 
 bool Compressor::Compress(
-    Bytes const&     uncompressed,
-    Bytes*           target,
-    Opts const&      opts,
-    zlib_error_code& ec)
+    BytesConst const& uncompressed,
+    Bytes*            target,
+    Opts const&       opts,
+    zlib_error_code&  ec)
 {
-    return compression_routine<nullptr, ::deflateInit_, ::deflate, ::deflateEnd>(
-        uncompressed, target, opts, ec);
+    return compression_routine<
+        nullptr,
+        ::deflateInit_,
+        ::deflate,
+        ::deflateEnd>(uncompressed, target, opts, ec);
 }
 
 bool Compressor::Decompress(
-    Bytes const&     compressed,
-    Bytes*           target,
-    Opts const&      opts,
-    zlib_error_code& ec)
+    BytesConst const& compressed,
+    Bytes*            target,
+    Opts const&       opts,
+    zlib_error_code&  ec)
 {
-    return compression_routine<::inflateInit_, nullptr, ::inflate, ::inflateEnd>(
-        compressed, target, opts, ec);
+    return compression_routine<
+        ::inflateInit_,
+        nullptr,
+        ::inflate,
+        ::inflateEnd>(compressed, target, opts, ec);
 }
 
 } // namespace zlib
@@ -185,15 +195,15 @@ bool Compressor::Decompress(
 #endif
 #if defined(COFFEE_BUILD_WINDOWS_DEFLATE)
 
-#include <peripherals/platform/windows.h>
 #include <compressapi.h>
+#include <peripherals/platform/windows.h>
 
 namespace Coffee {
 namespace Compression {
 namespace deflate {
 
 bool Compressor::Compress(
-    Bytes const&        uncompressed,
+    BytesConst const&   uncompressed,
     Bytes*              target,
     Opts const&         opts,
     deflate_error_code& ec)
@@ -235,7 +245,7 @@ bool Compressor::Compress(
 }
 
 bool Compressor::Decompress(
-    Bytes const&        compressed,
+    BytesConst const&   compressed,
     Bytes*              target,
     Opts const&         opts,
     deflate_error_code& ec)

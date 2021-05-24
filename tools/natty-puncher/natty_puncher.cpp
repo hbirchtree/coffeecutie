@@ -41,14 +41,14 @@ void client_connector(ASIO::Service& service, String const& host)
         command_t cmd;
         cmd.opcode = opcode_t::list_services;
 
-        test_listener.write_to(semantic::Bytes::From(cmd), server, ec);
+        test_listener.write_to(mem_chunk<const command_t>::of(cmd), server, ec);
         C_ERROR_CHECK(ec)
-        test_listener.read(semantic::Bytes::From(cmd), sender, ec);
+        test_listener.read(mem_chunk<command_t>::of(cmd), sender, ec);
 
         for(C_UNUSED(auto i) : Range<>(cmd.op.list.count))
         {
             service_manifest_t manifest_;
-            test_listener.read(semantic::Bytes::From(manifest_), sender, ec);
+            test_listener.read(mem_chunk<decltype(manifest_)>::of(manifest_), sender, ec);
             C_ERROR_CHECK(ec)
             manifest = manifest_;
         }
@@ -60,8 +60,8 @@ void client_connector(ASIO::Service& service, String const& host)
         cmd.opcode = opcode_t::submit_service;
 
         assign_label(cmd.op.submit.label, CurrentThread::GetName());
-        test_listener.write_to(semantic::Bytes::From(cmd), server, ec);
-        test_listener.read(semantic::Bytes::From(cmd), sender, ec);
+        test_listener.write_to(mem_chunk<const command_t>::of(cmd), server, ec);
+        test_listener.read(mem_chunk<command_t>::of(cmd), sender, ec);
     }
 
     if(manifest.port == 0)
@@ -77,7 +77,7 @@ void client_connector(ASIO::Service& service, String const& host)
     command_t command;
     while(test_listener.socket().is_open())
     {
-        test_listener.read(semantic::Bytes::From(command), sender, ec);
+        test_listener.read(mem_chunk<command_t>::of(command), sender, ec);
         C_ERROR_CHECK(ec)
         cDebug(
             "Got message {0} from {1}:{2}",
@@ -146,7 +146,7 @@ i32 natty_main()
     std::vector<service_manifest_t> services;
 
     command_t command;
-    auto      command_ref = semantic::Bytes::From(command);
+    auto      command_ref = mem_chunk<const command_t>::of(command);
 
     natty::active_connections<natty::test_connect_data_t> test_connections;
     natty::active_connections<natty::peer_connect_data_t> peer_connections;

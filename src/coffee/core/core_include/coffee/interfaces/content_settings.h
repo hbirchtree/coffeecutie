@@ -1,7 +1,7 @@
 #pragma once
 
 #include <coffee/core/CFiles>
-#include <coffee/core/datastorage/text/json/cjsonparser.h>
+#include <coffee/core/datastorage/text/json/json.h>
 #include <coffee/core/types/chunk.h>
 
 namespace Coffee {
@@ -42,7 +42,7 @@ struct settings_visitor
         if(!data.data)
             return;
 
-        auto doc = JSON::Read(data.as<char>().data);
+        auto doc = json::Read(data);
 
         for(auto it = doc.MemberBegin(); it != doc.MemberEnd(); ++it)
             visit(it->name.GetString(), it->value);
@@ -59,7 +59,7 @@ struct settings_visitor
 
     virtual CString type() = 0;
 
-    virtual void visit(CString const& name, JSON::Value const& value) = 0;
+    virtual void visit(CString const& name, json::Value const& value) = 0;
 
   private:
     Path m_dirname;

@@ -102,8 +102,8 @@ bool GenVirtFS(
 
     /* Insert header, calculate file segment offset */
     MemCpy(
-        Bytes::From(VFSMagic_Encoded, 2),
-        Bytes::From(base_fs.vfs_header, MagicLength));
+        BytesConst::ofBytes(VFSMagic_Encoded, 2),
+        Bytes::ofBytes(base_fs.vfs_header, MagicLength));
 
     base_fs.num_files   = filenames.size();
     base_fs.data_offset = sizeof(VFS) + sizeof(VFile) * base_fs.num_files;
@@ -219,7 +219,7 @@ bool GenVirtFS(
             file.offset = data_size;
             file.rsize  = filenames[i].data.size;
 
-            MemCpy(fn, Bytes::From(file.name, fn.size()));
+            MemCpy(fn, Bytes::ofBytes(file.name, fn.size()));
             file.flags = filenames[i].flags;
 
             auto& arr = data_arrays[i];
@@ -243,13 +243,13 @@ bool GenVirtFS(
     {
         DProfContext _(VIRTFS_API "Copy VFS header");
         /* Header is copied straight into array */
-        MemCpy(Bytes::From(base_fs), *output);
+        MemCpy(Bytes::ofBytes(base_fs), *output);
     }
 
     {
         DProfContext _(VIRTFS_API "Copy file descriptors");
         /* Copy file descriptors to VFS */
-        MemCpy(Bytes::CreateFrom(files), *output);
+        MemCpy(Bytes::ofBytes(files), *output);
     }
 
     {
@@ -261,7 +261,7 @@ bool GenVirtFS(
         output->resize(output->capacity());
     }
 
-    Bytes outputView = Bytes::CreateFrom(*output);
+    Bytes outputView = Bytes::ofBytes(*output);
 
     for(auto i : Range<>(filenames.size()))
     {
@@ -313,7 +313,7 @@ bool GenVirtFS(
                                   index.second.size() * sizeof(index.second[0]);
 
             auto extensionData =
-                Bytes::From(outIndex.extension.ext, MaxExtensionLength);
+                Bytes::ofBytes(outIndex.extension.ext, MaxExtensionLength);
 
             MemClear(extensionData);
 
@@ -328,21 +328,21 @@ bool GenVirtFS(
                 index.second.size() * sizeof(index.second[0]));
 
             MemCpy(
-                Bytes::Create(outIndex), *Bytes::CreateFrom(*output).at(start));
+                Bytes::ofBytes(outIndex), *Bytes::ofBytes(*output).at(start));
 
             start += sizeof(VirtualIndex);
 
             MemCpy(
-                Bytes::CreateFrom(index.second),
-                *Bytes::CreateFrom(*output).at(start));
+                Bytes::ofBytes(index.second),
+                *Bytes::ofBytes(*output).at(start));
         }
 
-        outputView = Bytes::CreateFrom(*output);
+        outputView = Bytes::ofBytes(*output);
 
         outputView.as<VFS>()[0].ext_index.num += extension_buckets.size();
     }
 
-    outputView = Bytes::CreateFrom(*output);
+    outputView = Bytes::ofBytes(*output);
 
     /* Ensure that we can create a node hierarchy of n^2 size.
      * If this test fails, boy, you got a big filesystem on your hands.
@@ -353,22 +353,22 @@ bool GenVirtFS(
         DProfContext _(VIRTFS_API "Inserting directory index");
 
         auto vfsRef = outputView.as<VFS>().data;
-        auto files  = mem_chunk<const VFile>::FromBytes(
+        auto files  = mem_chunk<const VFile>::ofBytes(
             vfsRef->files(), vfsRef->num_files * sizeof(VFile));
 
         dir_index::directory_index_t dirIndex = dir_index::Generate(files);
 
         auto prevSize = output->size();
         output->resize(output->size() + dirIndex.totalSize);
-        outputView = Bytes::CreateFrom(*output);
+        outputView = Bytes::ofBytes(*output);
 
         auto index_ref = *outputView.at(prevSize);
         auto data_ref  = *outputView.at(prevSize + sizeof(VirtualIndex));
 
-        MemCpy(Bytes::From(dirIndex.baseIndex), index_ref);
-        MemCpy(Bytes::CreateFrom(dirIndex.nodes), data_ref);
+        MemCpy(Bytes::ofBytes(dirIndex.baseIndex), index_ref);
+        MemCpy(Bytes::ofBytes(dirIndex.nodes), data_ref);
 
-        outputView = Bytes::CreateFrom(*output);
+        outputView = Bytes::ofBytes(*output);
 
         outputView.as<VFS>()[0].ext_index.num++;
     }
@@ -418,7 +418,7 @@ Bytes Coffee::VirtFS::VirtualFS::GetData(
 #if defined(COFFEE_COMPRESS_LZ4)
                 lz4::error_code comp_ec;
                 lz4::compressor::Decompress(
-                    Bytes(srcPtr, srcSize, srcSize), &data, {}, comp_ec);
+                    Bytes::ofBytes(srcPtr, srcSize), &data, {}, comp_ec);
 
                 if(comp_ec)
                 {
@@ -439,7 +439,7 @@ Bytes Coffee::VirtFS::VirtualFS::GetData(
             {
                 Compression::zlib::error_code comp_ec;
                 Zlib::Decompress(
-                    Bytes(srcPtr, srcSize, srcSize), &data, {}, comp_ec);
+                    BytesConst::ofBytes(srcPtr, srcSize), &data, {}, comp_ec);
 
                 if(comp_ec)
                 {
@@ -517,7 +517,7 @@ ResourceResolver<Resource> VirtualFS::GetResolver(const VirtualFS* vfs)
                     }
                 } else
                 {
-                    vfs_view view(Bytes::From(*vfs));
+                    vfs_view view(BytesConst::ofBytes(*vfs));
 
                     auto it = view.begin();
                     while((it = view.starting_with(query, it)) != view.end())

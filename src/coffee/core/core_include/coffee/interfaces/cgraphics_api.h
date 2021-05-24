@@ -628,8 +628,8 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
         UniformValue()
         {
         }
-        Bytes const* data;
-        u32          flags;
+        BytesConst const* data;
+        u32               flags;
     };
 
     /*!
@@ -659,7 +659,7 @@ struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading
         {
         }
 
-        bool compile(ShaderStage, Bytes&)
+        bool compile(ShaderStage, BytesConst&)
         {
             return true;
         }

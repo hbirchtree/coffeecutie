@@ -3,6 +3,6 @@
 #include <platforms/environment.h>
 
 namespace Coffee {
-using Env      = platform::Env;
-using ColorMap = platform::ColorMap;
+//using Env      = platform::Env;
+//using ColorMap = platform::ColorMap;
 } // namespace Coffee

@@ -5,6 +5,10 @@
 #include <peripherals/semantic/handle.h>
 #include <platforms/libc/file.h>
 
+#include "fsio.h"
+#include "mmio.h"
+#include "rdwrio.h"
+
 #if defined(EMBED_RESOURCES_ENABLED)
 #include <platforms/embed/file.h>
 #endif
@@ -58,10 +62,11 @@ struct PosixApi
         {
         }
 
-        FileHandle(FileHandle&& f) 
-            : fd(std::move(f.fd))
+        FileHandle(FileHandle&& f) :
+            fd(std::move(f.fd))
 #if defined(EMBED_RESOURCES_ENABLED)
-            , fname(std::move(f.fname))
+            ,
+            fname(std::move(f.fname))
 #endif
         {
             f.fd.release();
@@ -80,7 +85,7 @@ struct PosixApi
 
         posix_fd fd;
 #if defined(EMBED_RESOURCES_ENABLED)
-        Url      fname;
+        Url fname;
 #endif
     };
 
@@ -143,7 +148,7 @@ struct PosixFileFun_def : PosixFileMod_def
         }
 
         FH fh;
-        fh.fd    = std::move(fd);
+        fh.fd = std::move(fd);
 #if defined(EMBED_RESOURCES_ENABLED)
         fh.fname = fn;
 #endif
@@ -197,7 +202,7 @@ struct PosixFileFun_def : PosixFileMod_def
         while(i < szp)
         {
             chnk = ((szp - i) < Int32_Max) ? (szp - i) : Int32_Max;
-            i += read(
+            i += ::read(
                 C_OCAST<int>(f_h.fd), &((C_CAST<byte_t*>(data.data))[i]), chnk);
             if(collect_error_to(ec))
                 break;
@@ -211,7 +216,7 @@ struct PosixFileFun_def : PosixFileMod_def
         return data;
     }
 
-    STATICINLINE bool Write(FH const& f_h, Bytes const& d, file_error& ec)
+    STATICINLINE bool Write(FH const& f_h, BytesConst const& d, file_error& ec)
     {
         difference_type i    = 0;
         size_type       it   = 0;
@@ -224,7 +229,7 @@ struct PosixFileFun_def : PosixFileMod_def
         while(i < d.size)
         {
             chnk = ((s_size - i) < Int32_Max) ? (s_size - i) : Int32_Max;
-            i += write(f_h.fd, &(C_CAST<byte_t*>(d.data)[i]), chnk);
+            i += ::write(f_h.fd, &(C_CAST<const byte_t*>(d.data)[i]), chnk);
             if(collect_error_to(ec) && it != 0)
                 break;
             it++;
@@ -241,7 +246,7 @@ struct PosixFileFun_def : PosixFileMod_def
         if(embed::embeds_enabled &&
            enum_helpers::feval(filename.flags & RSCA::AssetFile))
         {
-            Bytes                    data;
+            Bytes data;
             if(embed::file_lookup(filename.internUrl.c_str(), data))
                 return data;
         }
@@ -296,7 +301,7 @@ struct PosixFileFun_def : PosixFileMod_def
         if(::close(fd) != 0)
             collect_error_to(ec);
 
-        FM out(addr, size, size);
+        auto out = Bytes::of(addr, size);
         out.assignAccess(acc);
 
         /* Set up some semantics to automatically unmap it
@@ -357,7 +362,7 @@ struct PosixFileFun_def : PosixFileMod_def
     }
 
     STATICINLINE ScratchBuf
-                 ScratchBuffer(szptr size, RSCA access, file_error& ec)
+    ScratchBuffer(szptr size, RSCA access, file_error& ec)
     {
         int proto    = ProtFlags(access);
         int mapflags = MappingFlags(access);

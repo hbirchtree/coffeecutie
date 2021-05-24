@@ -1,22 +1,16 @@
 option ( PRESSURIZE_FIND_TIFF "Look for libtiff" OFF )
 
-dependency_get (
-    SOURCE hbirchtree/native-library-bundle
-    TAG ${NATIVE_LIB_BUNDLE_TAG}
-    NAMES
-        squish=SQUISH
-        shaderc=SHADERC
-        spirvcross=SPVCROSS
-        glslang=GLSLANG
-    )
-
 # SPIR-V Tools is built with Shaderc
 set ( SPVTOOLS_DIR "${SHADERC_DIR}" )
 
-find_package( Squish QUIET     )
-find_package( shaderc QUIET    )
-find_package( SPIRVCross QUIET )
-find_package( SPIRVTools QUIET )
+# TODO: Update these dependencies
+find_package( squish QUIET     )
+#find_package( shaderc QUIET    )
+find_package( spirv_cross_cpp QUIET )
+find_package( spirv_cross_glsl QUIET )
+find_package( spirv_cross_reflect QUIET )
+find_package( spirv_cross_util QUIET )
+find_package( SPIRV-Tools QUIET )
 
 if(PRESSURIZE_FIND_TIFF)
     find_package( TIFF QUIET )
@@ -32,7 +26,7 @@ if(BUILD_ASSIMP)
     list ( APPEND PRESSURIZERS "$<TARGET_FILE:PressurizeModels>" )
 endif()
 
-if(SQUISH_FOUND)
+if(SQUISH_FOUND OR BUILD_ETC2COMP)
     list ( APPEND PRESSURIZERS "$<TARGET_FILE:PressurizeTextures>" )
 endif()
 
@@ -80,7 +74,7 @@ if(BUILD_ASSIMP)
         )
 endif()
 
-if(SQUISH_FOUND)
+if(SQUISH_FOUND OR BUILD_ETC2COMP)
     coffee_library(
         TARGET PressurizeTextures
         LINKABLE
@@ -92,9 +86,15 @@ if(SQUISH_FOUND)
         texture_common.h
         tiff_decoder.h
 
-        LIBRARIES Image Core Squish
+        LIBRARIES Image Core squish::squish
         HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
         )
+
+    if(SQUISH_FOUND)
+        target_link_libraries ( PressurizeTextures PUBLIC
+            squish::squish
+            )
+    endif()
 
     if(NOT APPLE)
         set_property ( TARGET PressurizeTextures
@@ -177,21 +177,21 @@ else()
     message ( STATUS "Skipping PressurizeTextures" )
 endif()
 
-if(SHADERC_FOUND AND SPVTOOLS_FOUND)
+if(TARGET SPIRV-Tools)
     coffee_library (
         TARGET PressurizeShaders
         LINKABLE
         LINKAGE SHARED
         NO_EXPORT
         SOURCES shader_compress.cpp
-        LIBRARIES Core shaderc
+        LIBRARIES Core SPIRV-Tools
         HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
         )
 
-    target_include_directories( PressurizeShaders
-        PRIVATE
-        ${SPVTOOLS_INCLUDE_DIR_TMP}
-        )
+#    target_include_directories( PressurizeShaders
+#        PRIVATE
+#        ${SPVTOOLS_INCLUDE_DIR_TMP}
+#        )
 
     if(NOT APPLE)
         set_property ( TARGET PressurizeShaders
@@ -200,14 +200,17 @@ if(SHADERC_FOUND AND SPVTOOLS_FOUND)
             )
     endif()
 
-    if(SPVCROSS_FOUND)
+    if(TARGET spirv-cross-glsl)
         target_compile_definitions ( PressurizeShaders
             PUBLIC
             -DHAVE_SPIRVCROSS
             )
         target_link_libraries ( PressurizeShaders
             PUBLIC
-            spvcross
+            spirv-cross-cpp
+            spirv-cross-reflect
+            spirv-cross-util
+            spirv-cross-glsl
             )
     endif()
 

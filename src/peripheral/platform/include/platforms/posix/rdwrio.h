@@ -1,0 +1,91 @@
+#pragma once
+
+#include "detail.h"
+#include "fsio.h"
+
+#include <url/url.h>
+
+#include <sys/stat.h>
+
+namespace platform::file::posix {
+using url::Url;
+
+namespace detail {
+
+struct scoped_offset
+{
+    scoped_offset(posix_fd_t const& file, ptroff offset) : file(file)
+    {
+        detail::lseek_(file, offset, SEEK_SET);
+    }
+    ~scoped_offset()
+    {
+        detail::lseek_(file, 0, SEEK_SET);
+    }
+    posix_fd_t const& file;
+};
+
+} // namespace detail
+
+FORCEDINLINE result<mem_chunk<char>, posix_error> read(
+    posix_fd_t const& file, read_params_t const& params = {})
+{
+    auto [size, offset] = params;
+
+    if(size == 0)
+    {
+        if(auto info = file_info(file); info.has_value())
+            size = info.value().size;
+        else
+            return failure(info.error());
+    }
+
+    auto  output = mem_chunk<char>::withSize(size);
+    auto& view   = output.view;
+
+    detail::scoped_offset _(file, offset);
+
+    constexpr int read_max = std::numeric_limits<libc_types::i32>::max();
+    szptr         i        = 0;
+    szptr         chunk    = 0;
+    while(i < size)
+    {
+        chunk = std::max<szptr>(read_max, size - i);
+        if(auto read_count = ::read(file, view.data() + i, chunk);
+           read_count < 0)
+            return failure(common::posix::get_error());
+        else
+            i += C_CAST<szptr>(read_count);
+    }
+
+    return success(output);
+}
+
+FORCEDINLINE Optional<posix_error> write(
+    posix_fd_t const&            file,
+    mem_chunk<const char> const& data,
+    write_params_t const&        params = {})
+{
+    auto        view = data.view;
+    auto        size = view.size();
+
+    detail::scoped_offset _(file, params.offset);
+
+    constexpr int write_max = std::numeric_limits<libc_types::i32>::max();
+    szptr         i         = 0;
+    szptr         chunk     = 0;
+    while(i < size)
+    {
+        chunk = std::max<szptr>(write_max, size - i);
+        if(auto write_count = ::write(file, view.data() + i, chunk);
+           write_count < 0)
+        {
+            return std::make_optional(common::posix::get_error());
+        } else
+            i += C_CAST<szptr>(write_count);
+    }
+
+    return std::nullopt;
+}
+
+} // namespace platform::file::posix

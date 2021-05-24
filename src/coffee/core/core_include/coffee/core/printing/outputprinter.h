@@ -27,7 +27,8 @@ struct OutputPrinterImpl
         Flag_NoNewline = 0x2,
     };
 
-    using CmdColor = platform::ColorMap::CmdColor;
+    /* TODO: Reimplement colors */
+//    using CmdColor = platform::ColorMap::CmdColor;
 
     static Mutex PrinterLock;
 

@@ -19,7 +19,7 @@ bool readwrite_file()
 
     Resource testfile(testFile);
 
-    testfile = Bytes::CreateString(test_ini_doc);
+    testfile = BytesConst::ofString(test_ini_doc);
 
     FileCommit(testfile, RSCA::WriteOnly | RSCA::Discard | RSCA::NewFile);
 
@@ -31,7 +31,7 @@ bool readwrite_file()
 
     Resource rsc(testFileDupe);
     CString  docData = INI::Write(doc2);
-    rsc              = Bytes::CreateString(docData.c_str());
+    rsc              = BytesConst::ofString(docData.c_str());
 
     FileCommit(rsc, RSCA::Discard | RSCA::NewFile);
     Profiler::Profile("Write-back");
@@ -47,7 +47,6 @@ bool readwrite_file()
  */
 bool write_file()
 {
-    file_error ec;
     Url        testfile = MkUrl("testoutfile.ini", RSCA::TemporaryFile);
 
     INI::Document doc;
@@ -71,14 +70,12 @@ bool write_file()
     Resource rsc(testfile);
     Profiler::Profile("File object");
     CString docData = INI::Write(doc);
-    rsc             = Bytes::CreateString(docData.c_str());
+    rsc             = BytesConst::ofString(docData.c_str());
     Profiler::Profile("Writing object to file");
     FileCommit(rsc, RSCA::WriteOnly | RSCA::Discard | RSCA::NewFile);
     Profiler::Profile("Committing file");
 
-    auto res = FileFun::Exists(testfile, ec);
-
-    return res;
+    return file::exists(testfile).has_value();
 }
 
 COFFEE_TESTS_BEGIN(2)

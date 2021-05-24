@@ -1,15 +1,20 @@
-find_package ( RapidJson REQUIRED )
-find_package ( TinyXML2 REQUIRED )
+find_package ( RapidJSON CONFIG REQUIRED )
+find_package ( tinyxml2 CONFIG REQUIRED )
+find_package ( PkgConfig )
 
 add_library ( CoreCommon INTERFACE )
 
 set ( CPPCODEC_INCLUDE_DIR ${COFFEE_EXT_LIBRARY_DIR}/cppcodec )
 
 target_include_directories ( CoreCommon INTERFACE
-    $<BUILD_INTERFACE:${RAPIDJSON_INCLUDE_DIR}>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/interface_include>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/core_include>
+    )
+
+target_link_libraries ( CoreCommon INTERFACE
+#    rapidjson
+    tinyxml2::tinyxml2
     )
 
 header_install (
@@ -21,20 +26,6 @@ header_install (
 target_link_libraries ( CoreCommon INTERFACE
     PeripheralLib
     PeripheralPlatform
-    )
-
-coffee_library (
-    TARGET XML
-    SOURCES
-    # We slap tinyXML2 in here, just cause
-    ${COFFEE_EXT_LIBRARY_DIR}/tinyxml2/tinyxml2.cpp
-
-    HEADER_DIRS
-    $<INSTALL_INTERFACE:include/tinyxml2/>
-    )
-
-target_include_directories ( XML PUBLIC
-    $<BUILD_INTERFACE:${TINYXML2_INCLUDE_DIR}>
     )
 
 coffee_library (
@@ -141,22 +132,9 @@ coffee_library (
 # libz compression and whatever compression Windows has
 #
 if(NOT EMSCRIPTEN AND NOT APPLE)
-    dependency_get (
-        SOURCE hbirchtree/native-library-bundle
-        TAG ${NATIVE_LIB_BUNDLE_TAG}
-        NAMES
-            zlib
-        )
-    find_package ( zlib )
+    find_package ( ZLIB )
 endif()
 
-dependency_get (
-    SOURCE hbirchtree/native-library-bundle
-    TAG ${NATIVE_LIB_BUNDLE_TAG}
-    NAMES
-        zstd
-        lz4
-    )
 find_package ( lz4 CONFIG )
 find_package ( zstd CONFIG )
 
@@ -178,34 +156,25 @@ if(lz4_FOUND)
         private/datastorage/compression/lz4_codec.cpp
         )
     target_link_libraries ( CoreCompression PUBLIC
-        lz4::lz4 lz4::lz4hc
+        lz4::lz4
         )
     target_compile_definitions ( CoreCompression PUBLIC
         -DCOFFEE_COMPRESS_LZ4
         )
-    dependency_link (
-        TARGET CoreCompression
-        DEPENDENCIES lz4
-        )
-endif()
-if(zstd_FOUND)
-
 endif()
 
-if(TARGET zlib::zlibstatic AND NOT EMSCRIPTEN AND NOT APPLE)
+if(TARGET ZLIB::ZLIB AND NOT EMSCRIPTEN AND NOT APPLE)
     target_link_libraries ( CoreCompression PUBLIC
-        zlib::zlibstatic
+        ZLIB::ZLIB
         )
-    dependency_link (
-        TARGET CoreCompression
-        DEPENDENCIES
-            zlib
-        )
-elseif(ANDROID)
-    target_link_libraries ( CoreCompression PUBLIC
-        z
-        )
-elseif(APPLE OR ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux"))
+elseif(EMSCRIPTEN)
+    target_compile_options ( CoreCompression PUBLIC
+        "-s" USE_ZLIB=1
+       )
+   target_link_options ( CoreCompression PUBLIC
+        "-s" USE_ZLIB=1
+       )
+elseif(ANDROID OR APPLE)
     target_link_libraries ( CoreCompression PUBLIC
         z
         )
@@ -225,15 +194,6 @@ else()
     target_include_directories ( CoreCompression PRIVATE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/zlib/include>
         )
-endif()
-
-if(EMSCRIPTEN)
-    target_compile_options ( CoreCompression PUBLIC
-        "-s" USE_ZLIB=1
-       )
-   target_link_options ( CoreCompression PUBLIC
-        "-s" USE_ZLIB=1
-       )
 endif()
 
 #
@@ -373,29 +333,6 @@ target_link_libraries ( Core INTERFACE
     CoreJsonLogger
 
     PeripheralThreadNaming
-    )
-
-if(TARGET SDLPowerInfo)
-    if(NOT TARGET SDL2)
-        dependency_get (
-            SOURCE hbirchtree/native-library-bundle
-            TAG ${NATIVE_LIB_BUNDLE_TAG}
-            NAMES sdl2=SDL2
-            )
-
-        find_package ( SDL2 CONFIG QUIET )
-    endif()
-#    target_link_libraries ( CoreCommon INTERFACE
-#        SDLPowerInfo
-#        )
-endif()
-
-coffee_bundle (
-    DESTINATION libs
-
-    HEADER_DIRECTORIES
-    ${RAPIDJSON_INCLUDE_DIR}
-    ${TINYXML2_INCLUDE_DIR}
     )
 
 coffee_bundle (

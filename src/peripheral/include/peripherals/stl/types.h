@@ -591,13 +591,6 @@ struct domain_error_code : error_code
         assign(0, m_category);
     }
 
-    FORCEDINLINE domain_error_code(domain_error_code&& other) :
-        m_category(std::move(other.m_category))
-    {
-        error_message = std::move(other.error_message);
-        assign(other.value(), m_category);
-    }
-
     using error_code::operator=;
 
     FORCEDINLINE domain_error_code& operator=(domain_error_code&& other)

@@ -20,7 +20,7 @@ using Clock = Chrono::steady_clock;
 inline time_point<Clock, Chrono::seconds> from_unix(libc_types::u64 ts)
 {
     static_assert(
-        std::is_pod<std::time_t>::value, "std::time_t is not a POD type");
+        type_safety::is_pod_v<std::time_t>, "std::time_t is not a POD type");
 
     std::time_t ts_unix = C_FCAST<std::time_t>(ts);
     auto        immTs   = Chrono::system_clock::from_time_t(ts_unix);
@@ -32,7 +32,7 @@ inline time_point<Clock, Chrono::seconds> from_unix(libc_types::u64 ts)
 inline libc_types::u64 to_unix(Clock::time_point ts)
 {
     static_assert(
-        std::is_pod<std::time_t>::value, "std::time_t is not a POD type");
+        type_safety::is_pod_v<std::time_t>, "std::time_t is not a POD type");
 
     return C_FCAST<libc_types::u64>(
         Chrono::system_clock::to_time_t(system_clock::time_point(

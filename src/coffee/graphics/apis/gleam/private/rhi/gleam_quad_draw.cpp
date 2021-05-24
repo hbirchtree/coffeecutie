@@ -116,7 +116,7 @@ void GLEAM_Quad_Drawer::draw(const Matf4& xf, GLEAM_Sampler2D& sampler)
     GLEAM_ShaderUniformState m_state_v;
     GLEAM_ShaderUniformState m_state_f;
 
-    Bytes              xf_data     = Bytes::Create(xf);
+    auto               xf_data     = BytesConst::ofBytes(xf);
     GLEAM_UniformValue m_transform = {};
     m_transform.data               = &xf_data;
     m_state_v.setUniform(m_transformLoc, &m_transform);
@@ -168,9 +168,9 @@ bool GLEAM_Quad_Drawer::compile_shaders()
     GLEAM_Shader vertex;
     GLEAM_Shader fragment;
 
-    Bytes vertex_src = Bytes::CreateString(
+    auto vertex_src = BytesConst::ofString(
         find_shader(ShaderStage::Vertex, GLEAM_API::Level()));
-    Bytes fragment_src = Bytes::CreateString(
+    auto fragment_src = BytesConst::ofString(
         find_shader(ShaderStage::Fragment, GLEAM_API::Level()));
 
     vertex.compile(ShaderStage::Vertex, vertex_src);

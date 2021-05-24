@@ -1,5 +1,7 @@
 #pragma once
 
+#include <peripherals/concepts/resource.h>
+
 #include <coffee/core/libc_types.h>
 #include <coffee/core/stl_types.h>
 #include <coffee/core/types/chunk.h>
@@ -95,6 +97,7 @@ struct Resource : semantic::ByteProvider
     }
 
     operator Bytes();
+    operator BytesConst();
 
     operator Path() const;
 
@@ -159,15 +162,6 @@ C_DEPRECATED FORCEDINLINE bool FileCommit(
  * Equal to the "-p" option for mkdir. \return True if process succeeded
  */
 extern bool FileMkdir(const Url& dirname, bool recursive);
-
-FORCEDINLINE Bytes FileGetDescriptor(Resource& resc)
-{
-    return {C_CAST<byte_t*>(resc.data), resc.size, resc.size};
-}
-FORCEDINLINE BytesConst FileGetDescriptor(Resource const& resc)
-{
-    return {C_CAST<byte_t const*>(resc.data), resc.size, resc.size};
-}
 
 FORCEDINLINE Resource operator"" _rsc(const char* fn, size_t)
 {

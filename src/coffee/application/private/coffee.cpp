@@ -30,6 +30,9 @@
 
 #include <coffee/core/CDebug>
 
+#define BOOST_STACKTRACE_USE_BACKTRACE
+#include <boost/stacktrace.hpp>
+
 #if defined(COFFEE_ANDROID)
 #include <android_native_app_glue.h>
 #endif
@@ -176,9 +179,10 @@ FORCEDINLINE void PrintArchitectureInfo()
         return;
 
     cOutputPrint(
-        "Compiled for {0} on {1} ({2})",
+        "Compiled for {0} on {1} {2} ({3})",
         compile_info::target,
         compile_info::compiler::name,
+        compile_info::compiler::version_str,
         compile_info::architecture);
     cOutputPrint("Executing on {0}", info::system_name());
     cOutputPrint("Device: {0}", SysInfo::DeviceName());
@@ -232,7 +236,7 @@ static void CoffeeInit_Internal(u32 flags)
     }
 
     State::GetBuildInfo().default_window_name =
-        GetCurrentApp().application_name + " [OpenGL]";
+        GetCurrentApp().application_name;
 }
 
 void SetPlatformState()
@@ -280,14 +284,11 @@ i32 CoffeeMain(MainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
 
     /* AppData contains the application name and etc. from AppInfo_*.cpp */
     if constexpr(!compile_info::lowfat_mode)
-    {
-        auto appData = State::GetAppData();
-        if(appData)
+        if(auto appData = State::GetAppData())
         {
             SetApplicationData(*appData);
             CurrentThread::SetName(appData->application_name);
         }
-    }
 
     InstallStacktraceWriter();
     /* Must be created before ThreadState, but after internal state */
@@ -335,9 +336,7 @@ i32 CoffeeMain(MainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
             if(ret > 0)
                 return ret;
         } else
-        {
             Coffee::PrintingVerbosityLevel() = 1;
-        }
 #endif
 
 #if defined(COFFEE_DEFAULT_VERBOSITY)
@@ -348,7 +347,7 @@ i32 CoffeeMain(MainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
         CoffeeInit_Internal(flags);
         Profiler::PopContext();
 
-        if(Env::ExistsVar("COFFEE_DEEP_PROFILE"))
+        if(env::var("COFFEE_DEEP_PROFILE"))
         {
             auto profilerState = State::GetProfilerStore();
 
@@ -472,15 +471,25 @@ void CoffeeTerminate()
 
 void GotoApplicationDir()
 {
-    using namespace ::platform::url;
-
-    file::file_error ec;
-
-    Url dir = Env::ApplicationDir();
-    file::DirFun::ChDir(constructors::MkUrl(dir), ec);
+    path::change_dir(path::app_dir().value());
 }
 
-#if COFFEE_GLIBC_STACKTRACE || COFFEE_UNWIND_STACKTRACE
+static file::file_handle stack_file;
+
+static void stack_writer(
+    String const& frame, String const& ip, String const& filename, u32 line)
+{
+    auto out = Strings::fmt(
+        R"({"frame": "{0}", "ip": "{1}", "file": "{2}", "line": {3}},)",
+        frame,
+        ip,
+        filename,
+        line);
+    if(auto error = file::write(stack_file, Bytes::ofContainer(out)))
+        Throw(undefined_behavior(
+            platform::file::error_message(error).value_or("")));
+}
+
 void generic_stacktrace(int sig)
 {
     using semantic::debug::Severity;
@@ -491,36 +500,26 @@ void generic_stacktrace(int sig)
     fprintf(stderr, "signal encountered:\n");
     fprintf(stderr, " >> %s\n", sig_string);
 
-    platform::env::Stacktracer::Backtrace(typing::logging::fprintf_logger);
+    platform::stacktrace::print_frames(
+        platform::stacktrace::frames(),
+        typing::logging::fprintf_logger,
+        stack_writer);
 
     posix::proc::send_sig(getpid(), libc::signal::sig::kill);
 }
 
-static FileFun::FileHandle stack_file;
-
-static void stack_writer(CString const& frame, CString const& ip)
-{
-    auto out = Strings::fmt(R"({"frame": "{0}", "ip": "{1}"},)", frame, ip);
-    file_error ec;
-    FileFun::Write(stack_file, Bytes::CreateString(out.c_str()), ec);
-    C_ERROR_CHECK(ec)
-}
-
-#endif
-
 void InstallDefaultSigHandlers()
 {
-#if COFFEE_GLIBC_STACKTRACE || COFFEE_UNWIND_STACKTRACE
 #if !defined(COFFEE_CUSTOM_STACKTRACE)
     std::set_terminate([]() {
-        platform::env::Stacktracer::ExceptionStacktrace(
-            std::current_exception(),
-            typing::logging::fprintf_logger,
-            stack_writer);
+        if(auto frames = platform::stacktrace::exception_frames();
+           frames.has_value())
+            platform::stacktrace::print_exception(
+                std::move(frames.value()),
+                typing::logging::fprintf_logger,
+                stack_writer);
         abort();
     });
-
-    platform::env::Stacktracer::Backtrace();
 
     libc::signal::install(libc::signal::sig::fpe, generic_stacktrace);
     libc::signal::install(libc::signal::sig::ill_op, generic_stacktrace);
@@ -532,27 +531,29 @@ void InstallDefaultSigHandlers()
         libc::signal::exit(libc::signal::sig::interrupt);
     });
 #endif
-#endif
 }
 
 void InstallStacktraceWriter()
 {
 #if COFFEE_GLIBC_STACKTRACE || COFFEE_UNWIND_STACKTRACE
     using namespace platform::url::constructors;
-    file_error ec;
-    stack_file = FileFun::Open(
-        "stacktrace.json"_tmp,
-        RSCA::Append | RSCA::WriteOnly | RSCA::NewFile,
-        ec);
-    C_ERROR_CHECK(ec)
-    FileFun::Truncate("stacktrace.json"_tmp, 0, ec);
-    FileFun::Write(stack_file, Bytes::CreateString("["), ec);
-    C_ERROR_CHECK(ec)
+    if(auto fd = file::open_file(
+           "stacktrace.json"_tmp,
+           RSCA::Discard | RSCA::Append | RSCA::WriteOnly | RSCA::NewFile);
+       fd.has_error())
+    {
+        if(auto error = file::error_message(fd.error()); error.has_value())
+            Throw(undefined_behavior(error.value()));
+        else
+            Throw(undefined_behavior("unknown error"));
+    } else
+        stack_file = std::move(fd.value());
+    file::truncate("stacktrace.json"_tmp);
+    file::write(stack_file, BytesConst::ofString("["));
 
     libc::signal::register_atexit([]() {
-        file_error ec;
-        FileFun::Write(stack_file, Bytes::CreateString("{}]"), ec);
-        FileFun::Close(std::move(stack_file), ec);
+        file::write(stack_file, BytesConst::ofString("{}]"));
+        stack_file = {};
     });
 #endif
 }

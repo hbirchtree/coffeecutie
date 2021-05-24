@@ -1,6 +1,7 @@
 #pragma once
 
 #include <peripherals/libc/output_ops.h>
+#include <peripherals/stl/functional_types.h>
 #include <peripherals/stl/types.h>
 #include <peripherals/typing/enum/debug/severity.h>
 
@@ -26,6 +27,13 @@ using StackWriter = void (*)(
     stl_types::CString const&, /* frame name */
     stl_types::CString const&  /* instruction pointer (hex format) */
     );
+
+using StackWriterEx = stl_types::Function<void(
+    stl_types::String const&, /* frame name */
+    stl_types::String const&, /* instruction pointer */
+    stl_types::String const&, /* source file */
+    libc_types::u64 /* source line */
+    )>;
 
 STATICINLINE void fprintf_logger(
     libc::io::output_fd       fd,

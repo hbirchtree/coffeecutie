@@ -513,7 +513,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
 
             stb::image_rw img;
             stb::LoadData(
-                &img, BytesConst(imdata.data, imdata.size, imdata.size));
+                &img, BytesConst::ofBytes(imdata.data, imdata.size));
 
             GLM::ERROR ec;
             mainSurface.upload(
@@ -556,7 +556,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
                     if(rsc->fetch())
                     {
                         runtime_queue_error ec;
-                        imgCoder.decode(rsc->data(), std::move(rsc))
+                        imgCoder.decode(rsc->data(), rsc)
                             .then(mainQueue, [&](stb::image_rw&& img) {
                                 ProfContext _("Uploading texture");
                                 GLM::ERROR  ec;
@@ -624,7 +624,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
         RuntimeState state = {};
         d->saving          = Store::CreateDefaultSave();
 
-        d->saving->restore(Bytes::Create(state));
+        d->saving->restore(Bytes::ofBytes(state));
         entities.register_subsystem<TimeTag>(
             MkUq<TimeSystem>(TimeSystem::system_clock::time_point(
                 Chrono::milliseconds(state.time_base))));
@@ -692,7 +692,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
         if(constant.m_name == "transform")
             params->set_constant(
                 constant,
-                Bytes::CreateFrom(
+                Bytes::ofBytes(
                     entities.container_cast<MatrixContainer>().get_storage()));
         else if(constant.m_name == "texdata")
             params->set_sampler(constant, std::get<0>(mainTexture)->handle());
@@ -780,7 +780,7 @@ void RendererCleanup(CDRenderer&, RendererState* d)
                           .count();
 
     state.camera = entities.subsystem<CameraTag>().get().camera_source;
-    d->saving->save(Bytes::Create(state));
+    d->saving->save(Bytes::ofBytes(state));
 
     Profiler::PopContext();
 

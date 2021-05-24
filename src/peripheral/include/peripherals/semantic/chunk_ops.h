@@ -13,7 +13,10 @@ template<
         !is_specialized<T2, ::semantic::mem_chunk>::value>::type* = nullptr>
 FORCEDINLINE void MemCpy(T1 const& src, T2& target)
 {
-    std::copy(src.begin(), src.end(), std::back_insert_iterator<T2>(target));
+    std::copy(
+        std::cbegin(src),
+        std::cend(src),
+        std::back_insert_iterator<T2>(target));
 }
 
 template<
@@ -23,10 +26,15 @@ template<
         is_specialized<T2, ::semantic::mem_chunk>::value>::type* = nullptr>
 FORCEDINLINE void MemCpy(T1 const& src, T2& target)
 {
+    auto src_begin = std::cbegin(src);
+    auto src_end = std::cend(src);
+    if(target.view.size() < src_end - src_begin)
+        Throw(std::out_of_range("mem_chunk not big enough"));
+
     std::copy(
-        src.begin(),
-        src.end(),
-        std::insert_iterator<T2>(target, target.begin()));
+        std::cbegin(src),
+        std::cend(src),
+        std::begin(target));
 }
 
 template<
