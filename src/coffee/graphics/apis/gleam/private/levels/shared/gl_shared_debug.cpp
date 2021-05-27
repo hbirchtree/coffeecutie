@@ -1,7 +1,9 @@
-#include <coffee/graphics/apis/gleam/levels/gl_shared_debug.h>
+//#include <coffee/graphics/apis/gleam/levels/gl_shared_debug.h>
 
 #include <coffee/core/CRegex>
 #include <peripherals/stl/string_casting.h>
+
+#if 0
 
 #if defined(COFFEE_USE_APPLE_GLKIT)
 #include <CEAGL/eagl.h>
@@ -406,3 +408,4 @@ size_2d<i32> CGL_Shared_Limits::MaxSize(u32 v)
 
 } // namespace CGL
 } // namespace Coffee
+#endif

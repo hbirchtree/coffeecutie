@@ -6,10 +6,7 @@
 #include <coffee/interfaces/file_resolver.h>
 #include <peripherals/stl/types.h>
 
-namespace Coffee {
-
-namespace RHI {
-namespace GLEAM {
+namespace Coffee::RHI::GLEAM {
 
 struct GLEAM_API : GraphicsAPI
 {
@@ -92,7 +89,7 @@ struct GLEAM_API : GraphicsAPI
 
     using Q_OCC = OccludeQuery;
 
-    using DataStore = UqPtr<GLEAM_DataStore>;
+    using DataStore = UqPtr<GLEAM::DataStore>;
 
     using PipelineState = Map<ShaderStage, GLEAM_ShaderUniformState*>;
 
@@ -372,10 +369,10 @@ struct GLEAM_PRF
     using DRAW_QUAD  = GLEAM_Quad_Drawer;
 };
 
-} // namespace GLEAM
-} // namespace RHI
+} // namespace Coffee::RHI::GLEAM
 
-namespace Strings {
+namespace Coffee::Strings {
+
 extern cstring to_string(RHI::GLEAM::APILevel lev);
+
 }
-} // namespace Coffee

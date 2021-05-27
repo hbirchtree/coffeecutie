@@ -102,12 +102,12 @@ def enums_for(requirements, registry):
             yield name, enum.get('value'), enum.get('group')
 
 
-def features_of(registry):
+def features_of(registry, apis: list):
     version_expression = r'^([0-9]).([0-9])$'
     for feature in registry.findall('feature'):
         api = feature.get('api')
 
-        if api not in WHITELISTED_APIS:
+        if api not in apis:
             continue
 
         api = 'es' if api == 'gles2' else api
@@ -121,11 +121,19 @@ def features_of(registry):
         yield version, feature
 
 
-def extensions_supported_by(api, registry):
+def overlaps(a1, a2):
+    num_matches = 0
+    for v in a1:
+        if v in a2:
+            num_matches = num_matches + 1
+    return num_matches > 0
+
+
+def extensions_supported_by(apis, registry):
     extensions = registry.find('extensions')
     vendor_expression = r'^GL_([0-9A-Z]+)_'
     for extension in extensions.findall('extension'):
-        if api not in extension.get('supported').split('|'):
+        if not overlaps(apis, extension.get('supported').split('|')):
             continue
         name = extension.get('name')
         vendor = re.findall(vendor_expression, name)

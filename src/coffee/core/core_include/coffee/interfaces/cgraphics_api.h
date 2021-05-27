@@ -20,10 +20,6 @@ namespace Coffee {
 using HWDeviceInfo  = platform::info::HardwareDevice;
 using SWVersionInfo = platform::info::SoftwareVersion;
 
-namespace Display {
-struct Properties;
-}
-
 namespace RHI {
 
 struct GraphicsAPI : GraphicsAPI_Base, GraphicsAPI_Threading

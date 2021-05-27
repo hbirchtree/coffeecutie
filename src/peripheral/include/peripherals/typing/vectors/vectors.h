@@ -10,6 +10,8 @@ using namespace stl_types::math;
 template<typename T, size_t Size>
 struct tvector
 {
+    using value_type = T;
+
   private:
     T data[Size];
 

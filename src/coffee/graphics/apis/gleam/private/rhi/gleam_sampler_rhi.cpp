@@ -8,44 +8,50 @@ namespace GLEAM {
 
 namespace detail {
 
-enum GraphicsCompatibility
+inline void bind_sampler()
 {
-    Everything    = 0x0,
-    Dim3_Textures = 0x1,
-};
-
-template<
-    u32 Compatibility,
-    typename SurfaceT,
-    typename std::enable_if<Compatibility == Dim3_Textures>::type* = nullptr>
-inline void bind_sampler_fallback(u32 i, SurfaceT* m_surface)
-{
-    Throw(undefined_behavior("3D textures with interpolation not supported"));
+    gl::core::all::bind_texture<gl::core::highest>(
+        gl::groups::texture_target::texture_2d, 0);
 }
 
-template<
-    u32 Compatibility,
-    typename SurfaceT,
-    typename std::enable_if<Compatibility != Dim3_Textures>::type* = nullptr>
-inline void bind_sampler_fallback(u32 i, SurfaceT* m_surface)
-{
-    gl::vlow::TexBind(m_surface->m_type, m_surface->m_handle);
-}
+//enum GraphicsCompatibility
+//{
+//    Everything    = 0x0,
+//    Dim3_Textures = 0x1,
+//};
 
-template<u32 Compatibility = Everything, typename SurfaceT>
-inline void bind_sampler(u32 i, glhnd& m_handle, SurfaceT* m_surface)
-{
-    gl::vlow::TexActive(i);
-#if GL_VERSION_VERIFY(0x300, 0x300)
-    if(!GLEAM_FEATURES.gles20)
-    {
-        gl::v33::SamplerBind(i, m_handle);
-    } else
-#endif
-        bind_sampler_fallback<Compatibility>(i, m_surface);
+//template<
+//    u32 Compatibility,
+//    typename SurfaceT,
+//    typename std::enable_if<Compatibility == Dim3_Textures>::type* = nullptr>
+//inline void bind_sampler_fallback(u32 i, SurfaceT* m_surface)
+//{
+//    Throw(undefined_behavior("3D textures with interpolation not supported"));
+//}
 
-    gl::vlow::TexBind(m_surface->m_type, m_surface->m_handle);
-}
+//template<
+//    u32 Compatibility,
+//    typename SurfaceT,
+//    typename std::enable_if<Compatibility != Dim3_Textures>::type* = nullptr>
+//inline void bind_sampler_fallback(u32 i, SurfaceT* m_surface)
+//{
+//    gl::vlow::TexBind(m_surface->m_type, m_surface->m_handle);
+//}
+
+//template<u32 Compatibility = Everything, typename SurfaceT>
+//inline void bind_sampler(u32 i, glhnd& m_handle, SurfaceT* m_surface)
+//{
+//    gl::vlow::TexActive(i);
+//#if GL_VERSION_VERIFY(0x300, 0x300)
+//    if(!GLEAM_FEATURES.gles20)
+//    {
+//        gl::v33::SamplerBind(i, m_handle);
+//    } else
+//#endif
+//        bind_sampler_fallback<Compatibility>(i, m_surface);
+
+//    gl::vlow::TexBind(m_surface->m_type, m_surface->m_handle);
+//}
 
 } // namespace detail
 

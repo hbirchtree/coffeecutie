@@ -1,0 +1,14 @@
+#pragma once
+
+#include "common.h"
+
+namespace gl::groups {
+
+// EvalMapsModeNV
+enum class eval_maps_mode_nv : ::libc_types::u32 {
+#ifdef GL_FILL_NV
+    fill_nv = GL_FILL_NV,
+#endif
+}; // enum class eval_maps_mode_nv
+
+} // namespace gl::groups

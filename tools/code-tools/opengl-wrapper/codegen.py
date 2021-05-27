@@ -4,22 +4,15 @@ from enum import unique
 import re
 
 
+VERSION_TEMPLATE = None
 OVERLOADABLE_FUNCTIONS = [
-    'Uniform',
-    'ProgramUniform',
+    r'^Uniform',
+    r'^ProgramUniform',
+    r'Parameter[a-z]+$',
 ]
 
 value_vector_pattern = r'(const GL(short|float|double|int|uint)) *'
 vector_extract_pattern = r'^([^6]*?)(Matrix)?(([0-4](x[0-4])?)?[siufd]{1,2}(64)?_?v?)?(ARB|NV)?$'
-
-
-span_type = 'template<typename> class Span'
-span_concept = 'semantic::concepts::Span<Span>'
-
-vector_type = 'template<typename, size_t> class vec'
-matrix_type = 'template<typename, size_t, size_t> class mat'
-vector_concept = 'semantic::concepts::Vector<vec>'
-matrix_concept = 'semantic::concepts::Matrix<mat>'
 
 
 type_map = {
@@ -39,7 +32,7 @@ type_map = {
     'GLdouble': 'f64',
     'GLboolean': 'bool',
 
-    # 'GLsizei': 'u64',
+    'GLsizei': 'i32',
 }
 
 
@@ -150,15 +143,27 @@ def translate_type(type: str):
 
 def translate_param(param: tuple):
     name, type, group = param
+    type = type.strip()
     type = translate_type(type)
     return f'{type} {name}'
 
 
-def extract_pod_type(pointer_type):
+def extract_type(pointer_type):
     elements = pointer_type.split(' ')
     if len(elements) == 1:
-        return elements[0]
-    return translate_type(' '.join(elements[:-1]))
+        return '', translate_type(elements[0])
+    segments = elements[:-1]
+    assert(len(segments) <= 2)
+    const = ''
+    base_type = segments[-1]
+    if len(segments) > 1:
+        const, base_type = segments
+    return const, translate_type(base_type)
+
+
+def extract_pod_type(pointer_type: str):
+    const, base_type = extract_type(pointer_type)
+    return f'{const} {base_type}'.strip()
 
 
 def make_storable(type: str):
@@ -175,7 +180,6 @@ def patch_size_param(inputs: list, outputs: list, source_param: str, meta: str, 
         try:
             i = inputs.index(param_name)
             output = [ p for p in outputs if p[0] == param_name ][0]
-            print(inputs[i], output)
             outputs.remove(output)
             name = name_override if name_override is not None else source_param
             inputs[i] = f'{name}.size()'
@@ -183,21 +187,38 @@ def patch_size_param(inputs: list, outputs: list, source_param: str, meta: str, 
             return False
         return True
     
+    # TODO: Fix for when multiple params use the same count parameter
+
     for option in other_params + [meta, f'{source_param}Length']:
         if patch_param(option):
             return
 
 
+def gen_concept_type(pod_type: str, const: bool = False, cls: str = None, dim: str = None):
+    '''
+        const_mat_2x2_f32
+    '''
+    if '::' in pod_type:
+        pod_type = pod_type.split('::')[-1]
+    const = 'const_' if const else ''
+    dim = f'{dim}_' if dim is not None else ''
+    cls = f'{cls}_' if cls is not None else ''
+    return f'{const}{cls}{dim}{pod_type}'
+
+
+def add_concept(templates: list, type: str, concept_name: str):
+    templates.append([f'class {type}', f'semantic::concepts::{concept_name}'])
+
+
 def coordinate_transform(params: list, i: int, output: list, inputs: list, template: list):
     name, type, _ = params[i]
-    pod_type = extract_pod_type(type)
+    _, pod_type = extract_type(type)
     num = 1
     inputs.append(f'{name}.x()')
     try:
         if params[i+1][0] in ['y', 'v1', 'yoffset', 'green']:
             inputs.append(f'{name}.y()')
             num += 1
-        template.append([vector_type, vector_concept])
         if params[i+2][0] in ['z', 'v2', 'zoffset', 'blue']:
             inputs.append(f'{name}.z()')
             num += 1
@@ -208,45 +229,56 @@ def coordinate_transform(params: list, i: int, output: list, inputs: list, templ
         pass
 
     if num == 1:
-        inputs.pop()
-        inputs.append(name)
+        inputs[-1] = name
         output.append(params[i])
         return 1
 
-    output.append([name, f'vec<{pod_type}, {num}> const&', None])
+    vector_type = gen_concept_type(pod_type, False, 'vec', num)
+    template.append([f'class {vector_type}', f'semantic::concepts::Vector<{vector_type}, {pod_type}, {num}>'])
+    output.append([name, f'{vector_type} const&', None])
     return num
 
 
 def dimensions_transform(params: list, i: int, output: list, inputs: list, template: list):
     name, type, _ = params[i]
-    pod_type = type.strip()
+    _, pod_type = extract_type(type)
     num = 1
-    inputs.append(f'{name}.w')
+    inputs.append(f'{name}[0]')
     try:
         if params[i+1][0] in ['height', 'h']:
-            inputs.append(f'{name}.h')
+            inputs.append(f'{name}[1]')
             num += 1
         if params[i+2][0] in ['depth']:
-            inputs.append(f'{name}.d')
+            inputs.append(f'{name}[2]')
             num += 1
     except:
         pass
 
-    template.append([vector_type, vector_concept])
-    output.append([name, f'vec<{pod_type}, {num}> const&', None])
+    if num == 1:
+        output.append([name, f'{pod_type}', None])
+        inputs[-1] = name
+        return 1
+
+    vector_type = gen_concept_type(pod_type, False, 'vec', num)
+    template.append([f'class {vector_type}', f'semantic::concepts::Vector<{vector_type}, {pod_type}, {num}>'])
+    output.append([name, f'{vector_type} const&', None])
+
     return num
 
 
 def pointer_transform(params: list, i: int, output: list, inputs: list, template: list):
     name, type, meta = params[i]
-    pod_type = extract_pod_type(type)
+    const, pod_type = extract_type(type)
 
     if 'void' in pod_type:
-        constness = 'const ' if 'const' in pod_type else ''
-        pod_type = f'{constness}std::byte'
+        pod_type = f'{const} std::byte'.strip()
 
-    template.append([span_type, span_concept])
-    output.append([name, f'Span<{pod_type}>', meta])
+    span_type = 'span_' + gen_concept_type(pod_type, const == 'const')
+    add_concept(template, span_type, f'Span<{span_type}>')
+    template.append([None, f'std::is_same_v<std::decay_t<typename {span_type}::value_type>, {pod_type}>'])
+    
+    const = 'const&' if const != '' else ''
+    output.append([name, f'{span_type} {const}', meta])
     inputs.append(f'reinterpret_cast<{type}>({name}.data())')
 
     patch_size_param(inputs, output, name, meta[1])
@@ -256,8 +288,7 @@ def pointer_transform(params: list, i: int, output: list, inputs: list, template
 
 def static_array_transform(params: list, i: int, static_size: str, output: list, inputs: list, template: list):
     name, type, meta = params[i]
-    pod_type = extract_pod_type(type)
-    constness = 'const ' if 'const' in pod_type else ''
+    const, pod_type = extract_type(type)
 
     count_element = [ x for x in output if x[0] == meta[1] ]
     if len(count_element) == 1:
@@ -265,20 +296,28 @@ def static_array_transform(params: list, i: int, static_size: str, output: list,
         output.remove(count_element)
         inputs[inputs.index(meta[1])] = f'{name}.size()'
 
-    static_size = static_size.split('x')
+    size = static_size.split('x')
 
-    template.append([span_type, span_concept])
-    if len(static_size) == 2:
-        template.append([matrix_type, matrix_concept])
-        output.append([name, f'Span<{constness}mat<std::decay_t<{pod_type}>, {static_size[0]}, {static_size[1]}>> const&', None])
+    cls = None
+    dim = None
+    if len(size) == 2:
+        cls = 'mat'
+        dim = f'{size[0]}x{size[1]}'
+    elif size[0] != '1':
+        cls = 'vec'
+        dim = f'{size[0]}'
+
+    concept_type = 'span_' + gen_concept_type(pod_type, const == 'const', cls, dim)
+    add_concept(template, concept_type, f'Span<{concept_type}>')
+    if cls == 'mat':
+        template.append([None, f'semantic::concepts::Matrix<typename {concept_type}::value_type, {pod_type}, {size[0]}, {size[1]}>'])
+    elif cls == 'vec':
+        template.append([None, f'semantic::concepts::Vector<typename {concept_type}::value_type, {pod_type}, {size[0]}>'])
     else:
-        if static_size[0] != '1':
-            template.append([vector_type, vector_concept])
-            output.append([name, f'Span<{constness}vec<std::decay_t<{pod_type}>, {static_size[0]}>> const&', None])
-        else:
-            output.append([name, f'Span<{pod_type}> const&', None])
-
-    inputs.append(f'reinterpret_cast<{pod_type}*>({name}.data())')
+        template.append([None, f'std::is_same_v<std::decay_t<typename {concept_type}::value_type>, {pod_type}>'])
+    const = 'const&' if const != '' else ''
+    output.append([name, f'{concept_type} {const}', None])
+    inputs.append(f'reinterpret_cast<{type}>({name}.data())')
 
     return 1
 
@@ -316,9 +355,11 @@ def string_transform(params: list, i: int, output: list, inputs: list, lines: li
         output.append([name, 'std::string_view const&', meta])
         inputs.append(f'{name}.data()')
     elif meta[1] is not None:
-        pod_type = extract_pod_type(type)
-        template.append([span_type, span_concept])
-        output.append([name, f'Span<{pod_type}>', meta])
+        const, pod_type = extract_type(type)
+        span_type = 'span_' + gen_concept_type(pod_type, const == 'const')
+        add_concept(template, span_type, f'Span<{span_type}>')
+        template.append([None, f'std::is_same_v<std::decay_t<typename {span_type}::value_type>, {pod_type}>'])
+        output.append([name, span_type, meta])
         inputs.append(f'{name}.data()')
         patch_size_param(inputs, output, name, meta[1], ['bufSize'])
     return 1
@@ -327,11 +368,13 @@ def string_transform(params: list, i: int, output: list, inputs: list, lines: li
 def handle_transform(params: list, i: int, inputs: list, output: list, template: list):
     # TODO: Map handles to Span<...> type, including count
     name, type, meta = params[i]
-    pod_type = extract_pod_type(type)
+    const, pod_type = extract_type(type)
 
     if '*' in type:
-        template.append([span_type, span_concept])
-        output.append([name, f'Span<{pod_type}>&&', meta])
+        span_type = 'span_' + gen_concept_type(pod_type, const == 'const')
+        add_concept(template, span_type, f'Span<{span_type}>')
+        template.append([None, f'std::is_same_v<std::decay_t<typename {span_type}::value_type>, {pod_type}>'])
+        output.append([name, f'{span_type}', meta])
         inputs.append(f'{name}.data()')
         patch_size_param(inputs, output, name, meta[1])
     else:
@@ -359,12 +402,11 @@ def draw_transform(params: list, inputs: list, lines: list, template: list, usag
         count_idx = params.index(count)
 
         lines.append(f'{count[1]} {count[0]} = {arrays[0][0]}.size();')
-        template.append([span_type, span_concept])
 
     output = []
     for i, param in enumerate(params):
         name, type, meta = param
-        pod_type = extract_pod_type(type)
+        const, pod_type = extract_type(type)
 
         if has_arrays and i == count_idx:
             continue
@@ -376,8 +418,11 @@ def draw_transform(params: list, inputs: list, lines: list, template: list, usag
 
         if has_arrays and param in arrays:
             lines.append(f'detail::assert_equal({name}.size(), {count[0]});')
+            span_type = 'span_' + gen_concept_type(pod_type, const == 'const')
+            add_concept(template, span_type, f'Span<{span_type}>')
+            template.append([None, f'std::is_same_v<std::decay_t<typename {span_type}::value_type>, {pod_type}>'])
             inputs.append(f'{name}.data()')
-            output.append([name, f'Span<{pod_type}>', meta])
+            output.append([name, span_type, meta])
         else:
             if type in ['GLenum', 'GLbitfield']:
                 enum_transform(params, i, output, inputs, usages)
@@ -489,7 +534,7 @@ def preprocess_params(
 def map_function_name(func_name: str):
     vattr_exclude = re.findall(r'P[0-4]', func_name)
     excluded = len(vattr_exclude) > 0
-    excluded = excluded or len([ x for x in OVERLOADABLE_FUNCTIONS if func_name.startswith(x) ]) == 0
+    excluded = excluded or len([ x for x in OVERLOADABLE_FUNCTIONS if re.findall(x, func_name) ]) == 0
     vector_match = re.findall(vector_extract_pattern, func_name)
     if len(vector_match) > 0 and not excluded:
         func_name = vector_match[0][0]
@@ -499,7 +544,7 @@ def map_function_name(func_name: str):
     return func_name
 
 
-def generate_function(command, usages: dict, version: tuple):
+def generate_function(command, usages: dict, version: tuple = None):
     func_name, return_type, params = command
 
     if return_type is None:
@@ -509,9 +554,14 @@ def generate_function(command, usages: dict, version: tuple):
     inputs = []
     lines = []
     debug_lines = []
-    template_args = [
-        ['class Current', f'MinimumVersion<Current, Version<{version[1][0]}, {version[1][1]}>>']
-    ]
+    template_args = []
+
+    if version is not None:
+        template_args.append([
+            None,
+            f'MinimumVersion<Current, Version<{version[1][0]}, {version[1][1]}>>'
+        ])
+
     params = preprocess_params(
         params, func_name,
         inputs,
@@ -526,13 +576,18 @@ def generate_function(command, usages: dict, version: tuple):
     [ templates.append(x) for x in template_args if x not in templates ]
 
     if len(templates) > 0:
-        types = [x[0] for x in templates]
+        types = set()
+        [ types.add(x[0]) for x in templates if x[0] is not None ]
+        if len(types) == 0:
+            types.add('typename Dummy = void')
+        types = list(types)
+        types.sort()
         concepts = [x[1] for x in templates if x[1] is not None]
         yield 'template<'
-        yield '    ' + ',\n    '.join(types)
+        yield '    ' + ',\n    '.join([ t for t in types if t is not None ])
         yield '>'
         if len(concepts) > 0:
-            yield 'requires (' + ' && '.join(concepts) + ')'
+            yield 'requires (\n    ' + ' &&\n    '.join(concepts) + ')'
 
     yield f'''STATICINLINE {return_type} {visible_name}({param_string})
 {{
@@ -540,7 +595,8 @@ def generate_function(command, usages: dict, version: tuple):
     {{
         if constexpr(gl::is_linked)
             if(!gl{func_name})
-                Throw(undefined_behavior("unloaded function {func_name}"));'''
+                Throw(undefined_behavior(
+                    "unloaded function {func_name}"));'''
 
     for chunk in debug_lines:
         for line in chunk.split('\n'):

@@ -29,7 +29,7 @@ coffee_library (
     TARGET GLeamCommon
 
     SOURCES
-    private/levels/shared/gl_shared_debug.cpp
+#    private/levels/shared/gl_shared_debug.cpp
 
     LIBRARIES
     Core

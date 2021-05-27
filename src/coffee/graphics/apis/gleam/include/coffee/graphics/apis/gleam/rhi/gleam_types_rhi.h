@@ -1,14 +1,13 @@
 #pragma once
 
 #include <coffee/interfaces/cgraphics_api.h>
+#include <glw/glw.h>
 #include <peripherals/semantic/handle.h>
 
 #define GLEAM_API_LINKAGE extern
 #define GLEAM_API_CLASS_LINKAGE
 
-namespace Coffee {
-namespace RHI {
-namespace GLEAM {
+namespace Coffee::RHI::GLEAM {
 
 using glhnd   = semantic::generic_handle_t<u32>;
 using BufType = buf::flags;
@@ -133,8 +132,8 @@ struct GLEAM_API;
 
 /* GLEAM-specific data */
 
-struct GLEAM_Instance_Data;
-struct GLEAM_DataStore;
+struct InstanceData;
+struct DataStore;
 
 /* Profiler structures */
 struct GLEAM_PRF;
@@ -202,7 +201,4 @@ struct GLEAM_TimeQuery;
 
 struct GLEAM_ScopeMarker;
 
-} // namespace GLEAM
-} // namespace RHI
-
-} // namespace Coffee
+} // namespace Coffee::RHI::GLEAM

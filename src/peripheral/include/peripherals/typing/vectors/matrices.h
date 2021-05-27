@@ -9,7 +9,9 @@ namespace vectors {
 template<typename T, size_t Size>
 struct tmatrix
 {
-    typedef tvector<T, Size> col_type;
+    using value_type = T;
+    using col_type = tvector<T, Size>;
+
     static constexpr size_t  size = Size * Size;
 
     tvector<T, Size> d[Size];

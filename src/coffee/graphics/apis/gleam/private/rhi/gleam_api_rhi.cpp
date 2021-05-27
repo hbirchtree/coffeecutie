@@ -24,11 +24,9 @@
 
 using namespace ::platform;
 
-namespace Coffee {
-namespace RHI {
-namespace GLEAM {
+namespace Coffee::RHI::GLEAM {
 
-UqPtr<GLEAM_DataStore> m_store;
+UqPtr<DataStore> m_store;
 
 GraphicsAPI_Threading::GraphicsQueue& GLEAM_API::Queue(u32 idx)
 {
@@ -959,10 +957,9 @@ std::string api_error::message(int error_code) const
     C_ERROR_CODE_OUT_OF_BOUNDS();
 }
 
-} // namespace GLEAM
-} // namespace RHI
+} // namespace Coffee::RHI::GLEAM
 
-namespace Strings {
+namespace Coffee::Strings {
 cstring to_string(RHI::GLEAM::APILevel lev)
 {
     using LEV = RHI::GLEAM::APILevel;
@@ -990,5 +987,4 @@ cstring to_string(RHI::GLEAM::APILevel lev)
 
     return "?";
 }
-} // namespace Strings
-} // namespace Coffee
+} // namespace Coffee::Strings

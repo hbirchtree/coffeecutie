@@ -25,7 +25,7 @@ struct mem_chunk
 {
     using size_type       = libc_types::szptr;
     using difference_type = libc_types::ptroff;
-    using value_type      = typename std::remove_cv<T>::type;
+    using value_type      = typename std::decay_t<T>;
     using span_type       = gsl::span<T, gsl::dynamic_extent>;
     using allocation_type = std::vector<value_type>;
     using iterator        = typename span_type::iterator;

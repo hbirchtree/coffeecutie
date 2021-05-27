@@ -5,22 +5,22 @@
 #include "gleam_quad_draw.h"
 #include "gleam_types_rhi.h"
 
-namespace Coffee {
-namespace RHI {
-namespace GLEAM {
+namespace Coffee::RHI::GLEAM {
+
+using namespace ::enum_helpers;
 
 struct InstanceDataDeleter
 {
-    void operator()(GLEAM_Instance_Data* p);
+    void operator()(InstanceData* p);
 };
 
-struct GLEAM_DataStore
+struct DataStore
 {
-    GLEAM_DataStore() : DefaultFramebuffer(MkShared<GLEAM_API::FB_T>())
+    DataStore() : DefaultFramebuffer(MkShared<GLEAM_API::FB_T>())
     {
     }
 
-    UqPtr<GLEAM_Instance_Data, InstanceDataDeleter> inst_data;
+    UqPtr<InstanceData, InstanceDataDeleter> inst_data;
     ShPtr<GLEAM_API::FB_T>                          DefaultFramebuffer;
 
     UqPtr<GLEAM_Quad_Drawer> debug_drawer;
@@ -81,6 +81,4 @@ struct GLEAM_DataStore
 #endif
 };
 
-} // namespace GLEAM
-} // namespace RHI
-} // namespace Coffee
+} // namespace Coffee::RHI::GLEAM

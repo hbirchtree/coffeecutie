@@ -7,7 +7,9 @@ namespace vectors {
 template<typename T, size_t MSize, size_t NSize>
 struct tmnmatrix
 {
-    typedef tvector<T, NSize> col_type;
+    using value_type = T;
+    using col_type = tvector<T, NSize>;
+
     static constexpr size_t   size_m = MSize;
     static constexpr size_t   size_n = NSize;
     static constexpr size_t   size   = MSize * NSize;

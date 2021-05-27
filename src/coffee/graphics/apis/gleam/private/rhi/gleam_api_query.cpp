@@ -3,9 +3,7 @@
 #include "gleam_internal_types.h"
 #include <peripherals/stl/string_ops.h>
 
-namespace Coffee {
-namespace RHI {
-namespace GLEAM {
+namespace Coffee::RHI::GLEAM {
 
 CString GLEAM_API::GetAPIName(const GraphicsAPI::GraphicsDevice&)
 {
@@ -69,10 +67,10 @@ bool GLEAM_API::GetShaderLanguageVersion(
 
 bool GLEAM_API::TextureFormatSupport(PixFmt fmt, CompFlags flags)
 {
+#if 0
     switch(fmt)
     {
-    case PixFmt::S3TC:
-    {
+    case PixFmt::S3TC: {
         if(flags == CompFlags::BC7 || flags == CompFlags::BC6H)
         {
 #if GL_VERSION_VERIFY(0x420, GL_VERSION_NONE) || \
@@ -170,6 +168,9 @@ bool GLEAM_API::TextureFormatSupport(PixFmt fmt, CompFlags flags)
     }
 
     return CGL::Debug::CompressedFormatSupport(CGL_DBG_CTXT, fmt);
+#else
+    return false;
+#endif
 }
 
 u32 GLSLVersionFromAPI(APILevel level)
@@ -196,6 +197,4 @@ u32 GLSLVersionFromAPI(APILevel level)
     }
 }
 
-} // namespace GLEAM
-} // namespace RHI
-} // namespace Coffee
+} // namespace Coffee::RHI::GLEAM

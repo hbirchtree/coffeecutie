@@ -1,21 +1,16 @@
 #pragma once
 
-#include <coffee/graphics/apis/gleam/gleam.h>
 #include <coffee/graphics/apis/gleam/rhi/gleam_data.h>
 #include <coffee/graphics/apis/gleam/rhi/gleam_query_rhi.h>
 #include <coffee/graphics/apis/gleam/rhi/gleam_types_rhi.h>
 
 #define GLM_API "GLEAM_API::"
 
-namespace Coffee {
-namespace RHI {
-namespace GLEAM {
+namespace Coffee::RHI::GLEAM {
 
-using namespace CGL;
+extern UqPtr<DataStore> m_store;
 
-extern UqPtr<GLEAM_DataStore> m_store;
-
-struct GLEAM_PboQueue
+struct PboQueue
 {
     /* TODO: Convert these to use handle semantics */
     struct Pbo
@@ -33,24 +28,24 @@ struct GLEAM_PboQueue
     }
 };
 
-struct GLEAM_Instance_Data
+struct InstanceData
 {
-    GLEAM_Instance_Data() :
+    InstanceData() :
         framebufferBinds({{FramebufferT::Draw, 0}, {FramebufferT::Read, 0}})
     {
         GL_CACHED.NUM_PROGRAM_BINARY_FORMATS = -1;
     }
 
-    ~GLEAM_Instance_Data()
+    ~InstanceData()
     {
 #if GL_VERSION_VERIFY(0x300, 0x300)
         for(auto const& pbo : pboQueue.buffers)
-            gl::vlow::BufFree(SpanOne(pbo.buf));
+            gl::core::delete_buffers<gl::core::highest>(SpanOne(pbo.buf));
 #endif
     }
 
 #if GL_VERSION_VERIFY(0x300, 0x300)
-    GLEAM_PboQueue                 pboQueue;
+    PboQueue                 pboQueue;
     Vector<ShPtr<GLEAM_TimeQuery>> queries;
 #endif
 
@@ -62,8 +57,6 @@ struct GLEAM_Instance_Data
     {
         i32 NUM_PROGRAM_BINARY_FORMATS;
     } GL_CACHED;
-
-    Debug::CGL_Shared_Debug::Context dbgContext;
 
     Map<FramebufferT, glhnd::handle_type> framebufferBinds;
 };
@@ -87,9 +80,7 @@ inline APILevel gl_level_from_string(CString const& str)
     else
         return GL_Nothing;
 }
-} // namespace GLEAM
-} // namespace RHI
-} // namespace Coffee
+} // namespace Coffee::RHI::GLEAM
 
 #define GLEAM_API_THREAD m_store->GpuThread
 #define GL_CURR_API m_store->CURR_API
@@ -97,7 +88,6 @@ inline APILevel gl_level_from_string(CString const& str)
 #define GLEAM_API_INSTANCE_DATA m_store->inst_data
 #define GLEAM_FEATURES RHI::GLEAM::m_store->features
 #define GLEAM_OPTIONS RHI::GLEAM::m_store->options
-#define CGL_DBG_CTXT GLEAM_API_INSTANCE_DATA->dbgContext
 #define fb_cached_binds GLEAM_API_INSTANCE_DATA->framebufferBinds
 
 #define GLEAM_VERSION_CHECK(desktop_ver, es_ver)          \
