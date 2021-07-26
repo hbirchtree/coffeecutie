@@ -1,0 +1,233 @@
+#pragma once
+
+#ifdef GL_INTEL_performance_query
+#include "../enums/PerformanceQueryCapsMaskINTEL.h"
+namespace gl::intel::performance_query {
+using gl::group::performance_query_caps_mask_intel;
+namespace values {
+constexpr libc_types::u32 perfquery_donot_flush             = 0x83F9;
+constexpr libc_types::u32 perfquery_flush                   = 0x83FA;
+constexpr libc_types::u32 perfquery_wait                    = 0x83FB;
+constexpr libc_types::u32 perfquery_counter_event           = 0x94F0;
+constexpr libc_types::u32 perfquery_counter_duration_norm   = 0x94F1;
+constexpr libc_types::u32 perfquery_counter_duration_raw    = 0x94F2;
+constexpr libc_types::u32 perfquery_counter_throughput      = 0x94F3;
+constexpr libc_types::u32 perfquery_counter_raw             = 0x94F4;
+constexpr libc_types::u32 perfquery_counter_timestamp       = 0x94F5;
+constexpr libc_types::u32 perfquery_counter_data_uint32     = 0x94F8;
+constexpr libc_types::u32 perfquery_counter_data_uint64     = 0x94F9;
+constexpr libc_types::u32 perfquery_counter_data_float      = 0x94FA;
+constexpr libc_types::u32 perfquery_counter_data_double     = 0x94FB;
+constexpr libc_types::u32 perfquery_counter_data_bool32     = 0x94FC;
+constexpr libc_types::u32 perfquery_query_name_length_max   = 0x94FD;
+constexpr libc_types::u32 perfquery_counter_name_length_max = 0x94FE;
+constexpr libc_types::u32 perfquery_counter_desc_length_max = 0x94FF;
+constexpr libc_types::u32 perfquery_gpa_extended_counters   = 0x9500;
+} // namespace values
+STATICINLINE void begin_perf_query(u32 queryHandle)
+{
+    using namespace std::string_view_literals;
+    if constexpr(compile_info::debug_mode)
+    {
+        GLW_FPTR_CHECK(BeginPerfQueryINTEL)
+    }
+    glBeginPerfQueryINTEL(queryHandle);
+    detail::error_check("BeginPerfQueryINTEL"sv);
+}
+
+template<class span_u32>
+requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+         std::decay_t<typename span_u32::value_type>,
+         std::decay_t<u32>>) STATICINLINE
+    void create_perf_query(u32 queryId, span_u32 queryHandle)
+{
+    using namespace std::string_view_literals;
+    if constexpr(compile_info::debug_mode)
+    {
+        GLW_FPTR_CHECK(CreatePerfQueryINTEL)
+    }
+    glCreatePerfQueryINTEL(
+        queryId,
+        queryHandle.size() ? reinterpret_cast<GLuint*>(queryHandle.data())
+                           : nullptr);
+    detail::error_check("CreatePerfQueryINTEL"sv);
+}
+
+STATICINLINE void delete_perf_query(u32 queryHandle)
+{
+    using namespace std::string_view_literals;
+    if constexpr(compile_info::debug_mode)
+    {
+        GLW_FPTR_CHECK(DeletePerfQueryINTEL)
+    }
+    glDeletePerfQueryINTEL(queryHandle);
+    detail::error_check("DeletePerfQueryINTEL"sv);
+}
+
+STATICINLINE void end_perf_query(u32 queryHandle)
+{
+    using namespace std::string_view_literals;
+    if constexpr(compile_info::debug_mode)
+    {
+        GLW_FPTR_CHECK(EndPerfQueryINTEL)
+    }
+    glEndPerfQueryINTEL(queryHandle);
+    detail::error_check("EndPerfQueryINTEL"sv);
+}
+
+template<class span_u32>
+requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+         std::decay_t<typename span_u32::value_type>,
+         std::decay_t<u32>>) STATICINLINE
+    void get_first_perf_query_id(span_u32 queryId)
+{
+    using namespace std::string_view_literals;
+    if constexpr(compile_info::debug_mode)
+    {
+        GLW_FPTR_CHECK(GetFirstPerfQueryIdINTEL)
+    }
+    glGetFirstPerfQueryIdINTEL(
+        queryId.size() ? reinterpret_cast<GLuint*>(queryId.data()) : nullptr);
+    detail::error_check("GetFirstPerfQueryIdINTEL"sv);
+}
+
+template<class span_u32>
+requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+         std::decay_t<typename span_u32::value_type>,
+         std::decay_t<u32>>) STATICINLINE
+    void get_next_perf_query_id(u32 queryId, span_u32 nextQueryId)
+{
+    using namespace std::string_view_literals;
+    if constexpr(compile_info::debug_mode)
+    {
+        GLW_FPTR_CHECK(GetNextPerfQueryIdINTEL)
+    }
+    glGetNextPerfQueryIdINTEL(
+        queryId,
+        nextQueryId.size() ? reinterpret_cast<GLuint*>(nextQueryId.data())
+                           : nullptr);
+    detail::error_check("GetNextPerfQueryIdINTEL"sv);
+}
+
+template<class span_u32, class span_u64>
+requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+         std::decay_t<typename span_u32::value_type>,
+         std::decay_t<u32>>&& semantic::concepts::Span<span_u64>&&
+                              std::is_same_v<
+                 std::decay_t<typename span_u64::value_type>,
+                 std::decay_t<u64>>) STATICINLINE
+    void get_perf_counter_info(
+        u32      queryId,
+        u32      counterId,
+        u32      counterNameLength,
+        u32      counterDescLength,
+        span_u32 counterOffset,
+        span_u32 counterDataSize,
+        span_u32 counterTypeEnum,
+        span_u32 counterDataTypeEnum,
+        span_u64 rawCounterMaxValue)
+{
+    using namespace std::string_view_literals;
+    if constexpr(compile_info::debug_mode)
+    {
+        GLW_FPTR_CHECK(GetPerfCounterInfoINTEL)
+    }
+    glGetPerfCounterInfoINTEL(
+        queryId,
+        counterId,
+        counterNameLength,
+        counterDescLength,
+        counterOffset.size() ? reinterpret_cast<GLuint*>(counterOffset.data())
+                             : nullptr,
+        counterDataSize.size()
+            ? reinterpret_cast<GLuint*>(counterDataSize.data())
+            : nullptr,
+        counterTypeEnum.size()
+            ? reinterpret_cast<GLuint*>(counterTypeEnum.data())
+            : nullptr,
+        counterDataTypeEnum.size()
+            ? reinterpret_cast<GLuint*>(counterDataTypeEnum.data())
+            : nullptr,
+        rawCounterMaxValue.size()
+            ? reinterpret_cast<GLuint64*>(rawCounterMaxValue.data())
+            : nullptr);
+    detail::error_check("GetPerfCounterInfoINTEL"sv);
+}
+
+template<class span_u32, class span_void>
+requires(semantic::concepts::Span<span_void>&&
+             semantic::concepts::Span<span_u32>&& std::is_same_v<
+                 std::decay_t<typename span_u32::value_type>,
+                 std::decay_t<u32>>) STATICINLINE
+    void get_perf_query_data(
+        u32       queryHandle,
+        u32       flags,
+        i32       dataSize,
+        span_void data,
+        span_u32  bytesWritten)
+{
+    using namespace std::string_view_literals;
+    if constexpr(compile_info::debug_mode)
+    {
+        GLW_FPTR_CHECK(GetPerfQueryDataINTEL)
+    }
+    glGetPerfQueryDataINTEL(
+        queryHandle,
+        flags,
+        dataSize,
+        data.size() ? reinterpret_cast<void*>(data.data()) : nullptr,
+        bytesWritten.size() ? reinterpret_cast<GLuint*>(bytesWritten.data())
+                            : nullptr);
+    detail::error_check("GetPerfQueryDataINTEL"sv);
+}
+
+template<class span_u32>
+requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+         std::decay_t<typename span_u32::value_type>,
+         std::decay_t<u32>>) STATICINLINE
+    void get_perf_query_id_by_name(span_u32 queryId)
+{
+    using namespace std::string_view_literals;
+    if constexpr(compile_info::debug_mode)
+    {
+        GLW_FPTR_CHECK(GetPerfQueryIdByNameINTEL)
+    }
+    glGetPerfQueryIdByNameINTEL(
+        queryId.size() ? reinterpret_cast<GLuint*>(queryId.data()) : nullptr);
+    detail::error_check("GetPerfQueryIdByNameINTEL"sv);
+}
+
+template<class span_u32>
+requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+         std::decay_t<typename span_u32::value_type>,
+         std::decay_t<u32>>) STATICINLINE
+    void get_perf_query_info(
+        u32      queryId,
+        u32      queryNameLength,
+        span_u32 dataSize,
+        span_u32 noCounters,
+        span_u32 noInstances,
+        span_u32 capsMask)
+{
+    using namespace std::string_view_literals;
+    if constexpr(compile_info::debug_mode)
+    {
+        GLW_FPTR_CHECK(GetPerfQueryInfoINTEL)
+    }
+    glGetPerfQueryInfoINTEL(
+        queryId,
+        queryNameLength,
+        dataSize.size() ? reinterpret_cast<GLuint*>(dataSize.data()) : nullptr,
+        noCounters.size() ? reinterpret_cast<GLuint*>(noCounters.data())
+                          : nullptr,
+        noInstances.size() ? reinterpret_cast<GLuint*>(noInstances.data())
+                           : nullptr,
+        capsMask.size() ? reinterpret_cast<GLuint*>(capsMask.data()) : nullptr);
+    detail::error_check("GetPerfQueryInfoINTEL"sv);
+}
+
+} // namespace gl::intel::performance_query
+#endif // GL_INTEL_performance_query
+namespace gl::intel::performance_query {
+constexpr auto name = "GL_INTEL_performance_query";
+}

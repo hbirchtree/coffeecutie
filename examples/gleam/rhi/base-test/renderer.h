@@ -7,12 +7,14 @@
 #include <coffee/core/platform_data.h>
 #include <coffee/core/task_queue/task.h>
 #include <coffee/core/types/chunk.h>
-#include <coffee/core/types/graphics_types.h>
 #include <coffee/core/url.h>
 #include <coffee/graphics/apis/CGLeamRHI>
 #include <coffee/image/image_coder_system.h>
 #include <coffee/interfaces/cgraphics_util.h>
 #include <coffee/windowing/renderer/renderer.h>
+#include <peripherals/typing/vectors/camera.h>
+#include <peripherals/typing/vectors/matrix_functions.h>
+#include <peripherals/typing/vectors/transform.h>
 
 #include <coffee/components/entity_selectors.h>
 
@@ -42,7 +44,6 @@
 
 using namespace Coffee;
 using namespace Display;
-using namespace SceneGraph;
 using namespace Coffee::RHI::Datatypes;
 
 using CDRenderer = CSDL2Renderer;
@@ -53,7 +54,7 @@ using GfxSys = RHI::Components::GraphicsAllocator<GLM>;
 
 struct RuntimeState
 {
-    CGCamera camera;
+    typing::vectors::scene::camera<f32> camera;
 
     i64  time_base     = 0.;
     bool debug_enabled = false;
@@ -64,14 +65,14 @@ static const constexpr szptr num_textures = 5;
 
 struct TransformPair
 {
-    Transform first;
+    typing::vectors::scene::transform<f32> first;
     Matf4     second;
     Vecf3     mask;
 };
 
 struct CameraData
 {
-    CGCamera camera_source;
+    typing::vectors::scene::camera<f32> camera_source;
 
     Matf4 projection;
     Matf4 transform;
@@ -136,6 +137,8 @@ class TransformVisitor : public Components::EntityVisitor<
         const Components::Entity&,
         const Components::time_point&) override
     {
+        using typing::vectors::scene::GenTransform;
+
         auto camera        = c.subsystem<CameraTag>().get();
         auto camera_source = camera.camera_source;
 
@@ -144,7 +147,7 @@ class TransformVisitor : public Components::EntityVisitor<
         auto& object_matrix = c.get<TransformTag>().second;
 
         auto output_matrix = camera.projection *
-                             GenTransform<scalar>(camera_source) *
+                             GenTransform<f32>(camera_source) *
                              object_matrix;
 
         auto& mats = c.get<MatrixTag>();
@@ -153,7 +156,7 @@ class TransformVisitor : public Components::EntityVisitor<
 
         camera_source.position.x() += camera.eye_distance * 2;
 
-        *mats.second = camera.projection * GenTransform<scalar>(camera_source) *
+        *mats.second = camera.projection * GenTransform<f32>(camera_source) *
                        object_matrix;
 
         return true;
@@ -490,7 +493,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
         cVerbose("Texture allocation");
 
         ProfContext _("Texture loading");
-        for(i32 i = 0; i < mainSurface.m_size.depth; i++)
+        for(i32 i = 0; i < mainSurface.m_size.d; i++)
         {
             Resource rsc(textures[i], RSCA::AssetFile);
 

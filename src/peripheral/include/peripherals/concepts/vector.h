@@ -30,4 +30,15 @@ concept Matrix = requires(T v)
     std::is_same_v<decltype(v * v), T>;
 };
 
+template<class T, typename E>
+concept Size2D = std::is_same_v<typename T::value_type, E> && requires(T v)
+{
+    { v.volume() };
+    { v.aspect() };
+    { v[0] };
+};
+
+template<class T, typename E>
+concept Size3D = Size2D<T, E>;
+
 }

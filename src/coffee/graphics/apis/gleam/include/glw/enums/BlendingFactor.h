@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // BlendingFactor
-enum class blending_factor : ::libc_types::u32 {
+enum class blending_factor : ::libc_types::u32
+{
 #ifdef GL_CONSTANT_ALPHA
     constant_alpha = GL_CONSTANT_ALPHA,
 #endif
@@ -65,4 +66,4 @@ enum class blending_factor : ::libc_types::u32 {
 #endif
 }; // enum class blending_factor
 
-} // namespace gl::groups
+} // namespace gl::group

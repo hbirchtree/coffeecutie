@@ -2,6 +2,14 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
-} // namespace gl::groups
+// IndexMaterialParameterEXT
+enum class index_material_parameter_ext : ::libc_types::u32
+{
+#ifdef GL_INDEX_OFFSET
+    index_offset = GL_INDEX_OFFSET,
+#endif
+}; // enum class index_material_parameter_ext
+
+} // namespace gl::group

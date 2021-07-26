@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // BufferPNameARB
-enum class buffer_prop_arb : ::libc_types::u32 {
+enum class buffer_prop_arb : ::libc_types::u32
+{
 #ifdef GL_BUFFER_ACCESS
     buffer_access = GL_BUFFER_ACCESS,
 #endif
@@ -47,4 +48,4 @@ enum class buffer_prop_arb : ::libc_types::u32 {
 #endif
 }; // enum class buffer_prop_arb
 
-} // namespace gl::groups
+} // namespace gl::group

@@ -81,6 +81,11 @@ lsb_data get_lsb_release()
         .distribution = dist != lsb_strings.end() ? *dist : String(),
         .release      = rel != lsb_strings.end() ? *rel : String(),
     };
+    if(!out.distribution.empty())
+        out.distribution =
+            out.distribution.substr(out.distribution.find("=") + 1);
+    if(!out.release.empty())
+        out.release = out.release.substr(out.release.find("=") + 1);
 
     if(!out.distribution.empty() && !out.release.empty())
         return out;
@@ -331,7 +336,7 @@ u64 SysInfo::CachedMemory()
     auto data = sys_read("/proc/meminfo");
     auto it   = std::find_if(data.begin(), data.end(), [](auto const& s) {
         return str::find::starts_with<char>(s, "Cached:");
-    });
+      });
 
     if(it == data.end())
         return 0;
@@ -476,12 +481,12 @@ bool SysInfo::HasFPU()
 {
 #if !defined(COFFEE_LOWFAT) && defined(COFFEE_LINUX)
 #if defined(COFFEE_MAEMO)
-    const cstring query = "vfpv3";
+    constexpr cstring query = "vfpv3";
 #elif defined(COFFEE_ANDROID)
-    const cstring query = "vfpv3";
-    const cstring query2 = "vfpv4";
+    constexpr cstring query = "vfpv3";
+    constexpr cstring query2 = "vfpv4";
 #else
-    const cstring query = "fpu";
+    constexpr cstring query = "fpu";
 #endif
 
     CPUInfoString();
@@ -512,7 +517,7 @@ bool SysInfo::HasFPU()
 bool SysInfo::HasFPUExceptions()
 {
 #if !defined(COFFEE_LOWFAT) && defined(COFFEE_LINUX)
-    const cstring query = "fpu_exception";
+    constexpr cstring query = "fpu_exception";
 
     CPUInfoString();
 
@@ -528,7 +533,7 @@ bool SysInfo::HasFPUExceptions()
 u64 SysInfo::ProcessorCacheSize()
 {
 #if !defined(COFFEE_LOWFAT) && defined(COFFEE_LINUX)
-    const cstring query = "cache size";
+    constexpr cstring query = "cache size";
 
     CPUInfoString();
 
@@ -569,9 +574,9 @@ info::HardwareDevice SysInfo::DeviceName()
     return info::HardwareDevice(
         "Nokia", "N900", get_kern_name() + (" " + get_kern_ver()));
 #else
-    static const cstring prod_ver = DMI_PATH "/product_version";
-    static const cstring prod_name = DMI_PATH "/product_name";
-    static const cstring manufacturer = DMI_PATH "/sys_vendor";
+    constexpr cstring prod_ver = DMI_PATH "/product_version";
+    constexpr cstring prod_name = DMI_PATH "/product_name";
+    constexpr cstring manufacturer = DMI_PATH "/sys_vendor";
 
     auto manufac = sys_read_str(manufacturer).value_or("Generic");
     auto product = sys_read_str(manufac == "LENOVO" ? prod_ver : prod_name)
@@ -591,9 +596,9 @@ info::HardwareDevice SysInfo::Motherboard()
 #if defined(COFFEE_MAEMO)
     return info::HardwareDevice("Nokia", "RX-51", "0x0");
 #else
-    static const cstring mb_manuf = DMI_PATH "/board_vendor";
-    static const cstring mb_model = DMI_PATH "/board_name";
-    static const cstring mb_version = DMI_PATH "/bios_version";
+    constexpr cstring mb_manuf = DMI_PATH "/board_vendor";
+    constexpr cstring mb_model = DMI_PATH "/board_name";
+    constexpr cstring mb_version = DMI_PATH "/bios_version";
 
     auto manuf = sys_read_str(mb_manuf).value_or("Generic");
     auto model = sys_read_str(mb_model).value_or("Motherboard");
@@ -609,9 +614,9 @@ info::HardwareDevice SysInfo::Motherboard()
 info::HardwareDevice SysInfo::Chassis()
 {
 #if !defined(COFFEE_LOWFAT) && defined(COFFEE_LINUX)
-    static const cstring ch_manuf   = DMI_PATH "/chassis_vendor";
-    static const cstring ch_model   = DMI_PATH "/chassis_name";
-    static const cstring ch_version = DMI_PATH "/chassis_version";
+    constexpr cstring ch_manuf   = DMI_PATH "/chassis_vendor";
+    constexpr cstring ch_model   = DMI_PATH "/chassis_name";
+    constexpr cstring ch_version = DMI_PATH "/chassis_version";
 
     auto manuf   = sys_read_str(ch_manuf).value_or("Generic");
     auto model   = sys_read_str(ch_model).value_or("Chassis");
@@ -626,9 +631,9 @@ info::HardwareDevice SysInfo::Chassis()
 info::HardwareDevice SysInfo::BIOS()
 {
 #if !defined(COFFEE_LOWFAT) && defined(COFFEE_LINUX)
-    static const cstring bios_manuf   = DMI_PATH "/bios_vendor";
-    static const cstring bios_name    = DMI_PATH "/board_version";
-    static const cstring bios_version = DMI_PATH "/bios_version";
+    constexpr cstring bios_manuf   = DMI_PATH "/bios_vendor";
+    constexpr cstring bios_name    = DMI_PATH "/board_version";
+    constexpr cstring bios_version = DMI_PATH "/bios_version";
 
     auto manuf   = sys_read_str(bios_manuf).value_or("Generic");
     auto name    = sys_read_str(bios_name).value_or("BIOS");
@@ -649,8 +654,8 @@ PowerInfoDef::Temp PowerInfo::CpuTemperature()
     using url::Path;
     using url::Url;
 
-    static const constexpr cstring thermal_class = "/sys/class/thermal";
-    static const constexpr cstring hwmon_class   = "/sys/class/hwmon";
+    constexpr cstring thermal_class = "/sys/class/thermal";
+    constexpr cstring hwmon_class   = "/sys/class/hwmon";
     Temp                           out           = {};
 
     /* First, look for thermal_zone* units */

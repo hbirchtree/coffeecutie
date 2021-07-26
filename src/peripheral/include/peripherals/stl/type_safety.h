@@ -13,6 +13,10 @@
 #include <stdexcept>
 #endif
 
+#if defined(COFFEE_EMSCRIPTEN)
+#include <peripherals/identify/compiler/debug_break.h>
+#endif
+
 /* Wrap text that is used for debugging with this, and it will disappear
  *  in release-mode */
 #if !defined(COFFEE_LOWFAT) && MODE_DEBUG
@@ -48,6 +52,9 @@ template<typename T>
 template<typename T>
 [[noreturn]] inline void Throw(T&& exception)
 {
+#if MODE_DEBUG && defined(COFFEE_EMSCRIPTEN)
+    C_BREAK();
+#endif
     throw std::move(exception);
 }
 #endif
@@ -441,3 +448,6 @@ constexpr auto is_pod_v = is_pod<T>::value;
 #undef IS_CONST
 #undef IS_SIGNED
 #undef IS_USIGNED
+
+#define TEMPLATE_REQUIRES(condition, dummy) \
+    typename std::enable_if<condition, dummy>::type* = nullptr

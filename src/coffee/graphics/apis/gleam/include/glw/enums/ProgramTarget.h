@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // ProgramTarget
-enum class program_target : ::libc_types::u32 {
+enum class program_target : ::libc_types::u32
+{
 #ifdef GL_COMPUTE_PROGRAM_NV
     compute_program_nv = GL_COMPUTE_PROGRAM_NV,
 #endif
@@ -29,4 +30,4 @@ enum class program_target : ::libc_types::u32 {
 #endif
 }; // enum class program_target
 
-} // namespace gl::groups
+} // namespace gl::group

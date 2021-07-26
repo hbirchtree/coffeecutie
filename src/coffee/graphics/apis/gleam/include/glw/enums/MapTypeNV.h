@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // MapTypeNV
-enum class map_type_nv : ::libc_types::u32 {
+enum class map_type_nv : ::libc_types::u32
+{
 #ifdef GL_DOUBLE
     double_ = GL_DOUBLE,
 #endif
@@ -14,4 +15,4 @@ enum class map_type_nv : ::libc_types::u32 {
 #endif
 }; // enum class map_type_nv
 
-} // namespace gl::groups
+} // namespace gl::group

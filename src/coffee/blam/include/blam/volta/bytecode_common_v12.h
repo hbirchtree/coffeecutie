@@ -4,15 +4,9 @@
 #include "cblam_structures.h"
 #include <peripherals/stl/time_types.h>
 
-#if C_HAS_INCLUDE(<optional>) && __cplusplus >= 201703
-#define USE_MAGIC_ENUM 1
-#endif
-
-#if USE_MAGIC_ENUM
 #define MAGIC_ENUM_RANGE_MIN -10
 #define MAGIC_ENUM_RANGE_MAX 540
-#include "magic_enum.hpp"
-#endif
+#include <peripherals/stl/magic_enum.hpp>
 
 namespace blam {
 namespace hsc {

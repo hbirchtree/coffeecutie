@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from enum import unique
 import re
 from collections import defaultdict
 from os import makedirs, mkdir
@@ -11,7 +12,7 @@ from parse import extensions_supported_by
 from parse import features_of
 from parse import parse_registry
 
-from codegen import generate_enum, generate_function, generate_header, map_function_name, snakeify, snakeify_underscores
+from codegen import enum_create_name, generate_enum, generate_function, generate_header, map_function_name, snakeify, snakeify_underscores
 
 
 def clear_file(filename: str):
@@ -34,14 +35,18 @@ def generate_version_commands(
         function_defs: dict,
         usages: dict):
     
+    makedirs('versions', exist_ok=True)
+
     api_ns = 'es' if api == 'gles2' else 'core'
 
     append_file(command_file, f'''
 template<typename Current>
 struct {api_ns}
-{{''')
+{{
+    using version = Current;''')
     append_file(code_file, f'namespace {api_ns} {{')
 
+    is_first = True
     for version, feature in features_of(registry, [api]):
         version_suffix = 'es' if version[0] == 'es' else ''
         major, min = version[1]
@@ -51,36 +56,50 @@ struct {api_ns}
         guard = 'GL_ES' if version_suffix == 'es' else 'GL'
         guard = f'{guard}_VERSION_{major}_{min}'
 
-        append_file(command_file, f'#ifdef {guard}')
-        for func_name, return_type, params in commands_for(feature.findall('require'), registry):
+        ver_file = f'versions/ver_{major}{min}_{api_ns}.h'
+
+        clear_file(ver_file)
+        append_file(ver_file, f'#ifdef {guard}')
+        for func_name, return_type, params, _ in commands_for(feature.findall('require'), registry):
             if func_name in compatibility_symbols[version[0]]:
                 continue
             if func_name in function_defs[version[0]]:
                 continue
             function_defs[version[0]].append(func_name)
-            append_file(command_file, f'/* Introduced in GL {version[0]} {major}.{min} */')
+            append_file(ver_file, f'/* Introduced in GL {version[0]} {major}.{min} */')
             for chunk in generate_function((func_name[2:],  return_type, params), usages, version):
-                append_file(command_file, chunk)
-        append_file(command_file, f'#endif // {guard}')
-        
-        append_file(code_file, f'#ifdef {guard}')
+                append_file(ver_file, chunk)
+        append_file(ver_file, f'#endif // {guard}')
+
+        append_file(command_file, f'#include "{ver_file}"')
+        if is_first:
+            append_file(code_file, f'''constexpr bool enabled =
+#ifdef {guard}
+    true
+#else
+    false
+#endif
+    ;
+''')
         append_file(code_file, f'using v{major}{min} = ::gl::impl::{api_ns}<Version<{major}, {min}>>;')
-        append_file(code_file, '#endif')
 
-        # append_file(command_file, f'}} // {version[0]}')
+        is_first = False
 
-        # active_functions = set()
-        # [ active_functions.add(map_function_name(x[2:])) for x in function_defs[version[0]] if x not in compatibility_symbols[version[0]] ]
-        # active_functions = list(active_functions)
-        # active_functions.sort()
-        # for definition in active_functions:
-        #     append_file(code_file, f'using {version[0]}::{definition};')
+    for i, feature in enumerate(reversed([ x for x in features_of(registry, [api]) ])):
+        version, feature = feature
+        guard = 'GL_ES' if version[0] == 'es' else 'GL'
+        guard = f'{guard}_VERSION_{version[1][0]}_{version[1][1]}'
+        if i == 0:
+            append_file(code_file, f'#ifdef {guard}')
+        else:
+            append_file(code_file, f'#elif defined({guard})')
+        append_file(code_file, f'using highest = Version<{version[1][0]}, {version[1][1]}>;')
+    append_file(code_file, '#endif')
 
-        
-
-        # append_file(code_file, f'}} // {namespace_name}')
-        # append_file(code_file, f'#endif // {guard}')
-        # append_file(code_file)
+    for i, feature in enumerate(features_of(registry, [api])):
+        version, feature = feature
+        append_file(code_file, f'using lowest = Version<{version[1][0]}, {version[1][1]}>;')
+        break
     
     append_file(command_file, f'''
 }}; // struct {api_ns}''')
@@ -95,12 +114,9 @@ def main():
 
     code_file = 'glw.h'
     command_file = 'commands.h'
-    
-    ext_file = 'extensions.h'
 
     clear_file(code_file)
     clear_file(command_file)
-    clear_file(ext_file)
 
     append_file(command_file, generate_header([], []))
     append_file(command_file, '''
@@ -131,60 +147,72 @@ namespace gl {''')
 
     append_file(command_file, '''
 } // gl::impl''')
-
-    # for version in versions.keys():
-        # namespace_name = 'core' if version == '' else version
-        # append_file(code_file, f'namespace {namespace_name}::all {{')
-
-        # for namespace in versions[version]:
-        #     prefix = '_ES' if version == 'es' else ''
-        #     append_file(code_file, f'#ifdef GL{prefix}_VERSION_{namespace[0]}_{namespace[1]}')
-        #     append_file(code_file, f'using namespace ::gl::v{namespace};')
-        #     append_file(code_file, '#endif')
-
-        # append_file(code_file, f'}} // {namespace_name}::all')
-        # append_file(code_file, f'namespace {namespace_name} {{')
-
-        # append_file(code_file, f'using lowest = Version<{versions[version][0]}, {versions[version][0]}>;')
-
-        # for namespace in versions[version]:
-        #     prefix = '_ES' if version == 'es' else ''
-        #     append_file(code_file, f'#if defined(GL{prefix}_VERSION_{namespace[0]}_{namespace[1]})')
-        #     append_file(code_file, f'using ver_{namespace[0]}_{namespace[1]} = Version<{namespace[0]}, {namespace[1]}>;')
-        #     append_file(code_file, '#endif')
-        # for i, namespace in enumerate(reversed(versions[version])):
-        #     prefix = '_ES' if version == 'es' else ''
-        #     if i == 0:
-        #         append_file(code_file, f'#if defined(GL{prefix}_VERSION_{namespace[0]}_{namespace[1]})')
-        #     else:
-        #         append_file(code_file, f'#elif defined(GL{prefix}_VERSION_{namespace[0]}_{namespace[1]})')
-        #     append_file(code_file, f'using highest = Version<{namespace[0]}, {namespace[1]}>;')
-        # append_file(code_file, '#endif')
-        # append_file(code_file, f'}} // {namespace_name}')
         
     append_file(code_file, '} // gl')
 
-    append_file(ext_file, '''#pragma once
-
-#include "groups.h"
-
-namespace gl::ext {
-''')
+    makedirs('extensions', exist_ok=True)
 
     for extension, ext_name in extensions_supported_by(['gl', 'gles2'], registry):
-            ns_name = snakeify_underscores(ext_name)
-            append_file(ext_file, f'#ifdef {ext_name}')
-            append_file(ext_file, f'namespace {ns_name} {{')
-            for name, value, _ in enums_for(extension.findall('require'), registry):
+            current_file_stem = f'{ext_name[3:]}.h'
+            current_file = f'extensions/{current_file_stem}'
+            clear_file(current_file)
+            ns_components = [ comp.lower() for comp in ext_name.split('_')[1:] ]
+            ns = ns_components[0]
+            ns_components = ns_components[1:]
+            ns_name = '_'.join(ns_components)
+
+            append_file(current_file, f'''#pragma once
+
+#ifdef {ext_name}''')
+
+            enum_classes = set()
+            [ enum_classes.add(meta[0]) for name, _, meta in enums_for(extension.findall('require'), registry) if meta[0] is not None and name != 'GL_NONE' ]
+            enum_classes = list(enum_classes)
+            enum_classes.sort()
+            for meta in enum_classes:
+                usages[meta] = 1
+                append_file(current_file, f'#include "../enums/{meta}.h"')
+
+            append_file(current_file, f'namespace gl::{ns}::{ns_name} {{')
+
+            for meta in enum_classes:
+                meta = enum_create_name(meta)
+                append_file(current_file, f'using gl::group::{meta};')
+
+            append_file(current_file, 'namespace values {')
+            for name, value, meta in enums_for(extension.findall('require'), registry):
                 name = snakeify_underscores(name)
-                append_file(ext_file, f'constexpr u32 {name} = {value};')
-            for func_name, rtype, params in commands_for(extension.findall('require'), registry):
-                for chunk in generate_function((func_name[2:], rtype, params), usages, None):
-                    append_file(ext_file, chunk)
-            append_file(ext_file, f'}} // {ns_name}')
-            append_file(ext_file, f'#endif // {ext_name}')
-    
-    append_file(ext_file, '} // gl::ext')
+                if re.match(r'^[0-9]', name):
+                    name = f'n{name}'
+                if name.endswith(ns):
+                    name = name[:-len(f'_{ns}')]
+                if meta[0] is not None:
+                    continue
+                elif meta[1] != 'all':
+                    guard = 'GL_ES_VERSION_2_0' if meta[1] == 'gles2' else 'GL_VERSION_1_0'
+                    append_file(current_file, f'#if defined({guard})')
+                append_file(current_file, f'constexpr libc_types::u32 {name} = {value};')
+                if meta[1] != 'all':
+                    append_file(current_file, '#endif')
+            append_file(current_file, '} // values')
+
+            for func_name, rtype, params, api in commands_for(extension.findall('require'), registry):
+                visible_name = func_name[2:]
+                if func_name.endswith(ns.upper()):
+                    visible_name = func_name[2:-len(ns)]
+                if api is not None:
+                    guard = 'GL_ES_VERSION_2_0' if api == 'gles2' else 'GL_VERSION_1_0'
+                    append_file(current_file, f'#if defined({guard})')
+                for chunk in generate_function((func_name[2:], rtype, params), usages, override_name=visible_name):
+                    append_file(current_file, chunk)
+                if api is not None:
+                    append_file(current_file, '#endif')
+            append_file(current_file, f'}} // gl::{ns}::{ns_name}')
+            append_file(current_file, f'#endif // {ext_name}')
+
+            append_file(current_file, f'''namespace gl::{ns}::{ns_name} {{
+constexpr auto name = "{ext_name}";
+}}''')
 
     common_file = 'enums/common.h'
     group_file = 'groups.h'
@@ -196,10 +224,9 @@ namespace gl::ext {
 
     append_file(common_file, '''#pragma once
 
-#include "base.h"
+#include "../base.h"
 #include <peripherals/enum/helpers.h>
-#include <peripherals/libc/types.h>
-''')
+#include <peripherals/libc/types.h>''')
 
     append_file(group_file, '''#pragma once
 ''')
@@ -213,15 +240,12 @@ namespace gl::ext {
 
 #include "common.h"
 
-namespace gl::groups {''')
+namespace gl::group {''')
         for line in generate_enum(enum, usages, compatibility_symbols):
             append_file(enum_file, line)
         
-        append_file(enum_file, '\n} // namespace gl::groups')
+        append_file(enum_file, '\n} // namespace gl::group')
         append_file(group_file, f'#include "{enum_file}"')
-    
-    append_file(group_file, '''
-} // gl::groups''')
 
 if __name__ == '__main__':
     main()

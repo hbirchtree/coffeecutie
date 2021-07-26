@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // MaterialParameter
-enum class material_parameter : ::libc_types::u32 {
+enum class material_parameter : ::libc_types::u32
+{
 #ifdef GL_AMBIENT
     ambient = GL_AMBIENT,
 #endif
@@ -29,4 +30,4 @@ enum class material_parameter : ::libc_types::u32 {
 #endif
 }; // enum class material_parameter
 
-} // namespace gl::groups
+} // namespace gl::group

@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // MemoryBarrierMask
-enum class memory_barrier_mask : ::libc_types::u32 {
+enum class memory_barrier_mask : ::libc_types::u32
+{
 #ifdef GL_ALL_BARRIER_BITS
     all_barrier_bits = GL_ALL_BARRIER_BITS,
 #endif
@@ -28,7 +29,8 @@ enum class memory_barrier_mask : ::libc_types::u32 {
     client_mapped_buffer_barrier_bit = GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT,
 #endif
 #ifdef GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT_EXT
-    client_mapped_buffer_barrier_bit_ext = GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT_EXT,
+    client_mapped_buffer_barrier_bit_ext =
+        GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT_EXT,
 #endif
 #ifdef GL_COMMAND_BARRIER_BIT
     command_barrier_bit = GL_COMMAND_BARRIER_BIT,
@@ -58,13 +60,15 @@ enum class memory_barrier_mask : ::libc_types::u32 {
     query_buffer_barrier_bit = GL_QUERY_BUFFER_BARRIER_BIT,
 #endif
 #ifdef GL_SHADER_GLOBAL_ACCESS_BARRIER_BIT_NV
-    shader_global_access_barrier_bit_nv = GL_SHADER_GLOBAL_ACCESS_BARRIER_BIT_NV,
+    shader_global_access_barrier_bit_nv =
+        GL_SHADER_GLOBAL_ACCESS_BARRIER_BIT_NV,
 #endif
 #ifdef GL_SHADER_IMAGE_ACCESS_BARRIER_BIT
     shader_image_access_barrier_bit = GL_SHADER_IMAGE_ACCESS_BARRIER_BIT,
 #endif
 #ifdef GL_SHADER_IMAGE_ACCESS_BARRIER_BIT_EXT
-    shader_image_access_barrier_bit_ext = GL_SHADER_IMAGE_ACCESS_BARRIER_BIT_EXT,
+    shader_image_access_barrier_bit_ext =
+        GL_SHADER_IMAGE_ACCESS_BARRIER_BIT_EXT,
 #endif
 #ifdef GL_SHADER_STORAGE_BARRIER_BIT
     shader_storage_barrier_bit = GL_SHADER_STORAGE_BARRIER_BIT,
@@ -97,9 +101,10 @@ enum class memory_barrier_mask : ::libc_types::u32 {
     vertex_attrib_array_barrier_bit = GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT,
 #endif
 #ifdef GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT_EXT
-    vertex_attrib_array_barrier_bit_ext = GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT_EXT,
+    vertex_attrib_array_barrier_bit_ext =
+        GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT_EXT,
 #endif
 }; // enum class memory_barrier_mask
 C_FLAGS(memory_barrier_mask, ::libc_types::u32);
 
-} // namespace gl::groups
+} // namespace gl::group

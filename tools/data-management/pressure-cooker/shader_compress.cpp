@@ -644,7 +644,7 @@ static void GenerateGLSL(
             "{0}:{1}:{2}: {3}\n{4}",
             file::ResourcePrefix() + "/" + srcFile.internUrl,
             0,
-            platform::env::Stacktracer::DemangleSymbol(typeid(e).name()),
+            platform::stacktrace::demangle::name(typeid(e).name()),
             e.what(),
             compiler.get_partial_source());
         return;
@@ -659,7 +659,7 @@ static void GenerateGLSL(
             cursor,
             scompiler,
             srcFile.extension(),
-            Bytes::CreateString(glsl.c_str()),
+            Bytes::ofString(glsl),
             srcFile,
             shaderc_optimization_level_zero,
             shaderc_target_env_opengl,
@@ -679,7 +679,7 @@ static void GenerateGLSL(
                     .addExtension(ext.c_str());
 
     files.push_back({path.internUrl.c_str(),
-                     Bytes::CopyFrom(glslData),
+                     Bytes::copy(glslData),
                      VirtFS::File_Compressed});
 #endif
 }
@@ -767,7 +767,7 @@ void ShaderProcessor::process(
         Path binaryPath = path.first.addExtension("spv");
 
         newFiles.push_back({binaryPath.internUrl.c_str(),
-                            Bytes::CopyFrom(optimized),
+                            Bytes::copy(optimized),
                             VirtFS::File_Compressed});
 
         /* Generate unoptimized SPIR-V binary for

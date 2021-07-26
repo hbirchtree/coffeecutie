@@ -38,6 +38,12 @@ struct TaggedTypeWrapper
 template<typename WrappedType, typename TaggedType = void>
 using TagType = TaggedTypeWrapper<WrappedType, TaggedType>;
 
+template<class T>
+concept is_tag_type = requires(T& v)
+{
+    typename T::type;
+};
+
 enum class VisitorFlags : u32
 {
     None,
@@ -99,7 +105,7 @@ struct EntityVisitorBase : non_copy
         EntityContainer& container, const time_point& current) = 0;
 };
 
-template<typename ComponentType>
+template<is_tag_type ComponentType>
 struct ComponentContainer : ComponentContainerBase
 {
     using tag_type = ComponentType;
@@ -113,7 +119,7 @@ struct ComponentContainer : ComponentContainerBase
     }
 };
 
-struct SubsystemBase : non_copy
+struct SubsystemBase
 {
     using ContainerProxy = Components::ContainerProxy;
     using time_point     = Components::time_point;
@@ -123,6 +129,9 @@ struct SubsystemBase : non_copy
     static constexpr u32 system_prio  = 0;
 
     virtual ~SubsystemBase();
+
+    SubsystemBase() = default;
+    SubsystemBase(SubsystemBase const&) = delete;
 
     virtual void start_frame(ContainerProxy&, time_point const&)
     {
@@ -137,7 +146,7 @@ struct SubsystemBase : non_copy
     static EntityContainer& get_container(ContainerProxy& proxy);
 };
 
-template<typename OutputType>
+template<is_tag_type OutputType>
 struct Subsystem : SubsystemBase
 {
     using tag_type = OutputType;
@@ -155,7 +164,7 @@ struct Subsystem : SubsystemBase
 
 namespace Globals {
 
-template<typename T>
+template<is_tag_type T>
 struct ValueSubsystem : Subsystem<T>
 {
     using type = typename Subsystem<T>::type;
@@ -174,6 +183,34 @@ struct ValueSubsystem : Subsystem<T>
 };
 
 } // namespace Globals
+
+template<class T>
+concept is_subsystem = true;
+//concept is_subsystem = std::is_convertible_v<T&, SubsystemBase&>;
+
+template<class T>
+concept is_component = std::is_convertible_v<T&, ComponentContainerBase&>;
+
+template<class T>
+concept is_visitor = std::is_convertible_v<T&, EntityVisitorBase&>;
+
+template<typename T>
+concept is_subsystem_tag = is_tag_type<T> && is_subsystem<typename T::type>;
+
+template<typename T>
+concept is_component_tag = is_tag_type<T> && is_component<typename T::type>;
+
+template<typename T>
+concept is_visitor_tag = is_tag_type<T> && is_visitor<typename T::type>;
+
+template<is_subsystem... Args>
+using subsystem_list = TypeList<Args...>;
+
+template<is_component... Args>
+using component_list = TypeList<Args...>;
+
+template<is_visitor... Args>
+using visitor_list = TypeList<Args...>;
 
 // namespace Globals
 } // namespace Components

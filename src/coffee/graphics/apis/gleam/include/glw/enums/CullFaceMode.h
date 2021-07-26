@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // CullFaceMode
-enum class cull_face_mode : ::libc_types::u32 {
+enum class cull_face_mode : ::libc_types::u32
+{
 #ifdef GL_BACK
     back = GL_BACK,
 #endif
@@ -17,4 +18,4 @@ enum class cull_face_mode : ::libc_types::u32 {
 #endif
 }; // enum class cull_face_mode
 
-} // namespace gl::groups
+} // namespace gl::group

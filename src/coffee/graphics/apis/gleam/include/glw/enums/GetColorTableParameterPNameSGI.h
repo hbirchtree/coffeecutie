@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // GetColorTableParameterPNameSGI
-enum class get_color_table_parameter_prop_sgi : ::libc_types::u32 {
+enum class get_color_table_parameter_prop_sgi : ::libc_types::u32
+{
 #ifdef GL_COLOR_TABLE_ALPHA_SIZE
     color_table_alpha_size = GL_COLOR_TABLE_ALPHA_SIZE,
 #endif
@@ -68,4 +69,4 @@ enum class get_color_table_parameter_prop_sgi : ::libc_types::u32 {
 #endif
 }; // enum class get_color_table_parameter_prop_sgi
 
-} // namespace gl::groups
+} // namespace gl::group

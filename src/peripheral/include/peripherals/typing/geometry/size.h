@@ -10,77 +10,65 @@ namespace geometry {
 using namespace libc_types;
 using namespace type_safety;
 
-struct base_size
+template<typename T>
+requires std::is_trivial<T>::value struct size_2d
 {
-    constexpr base_size()
-    {
-    }
-    constexpr base_size(i32, i32)
-    {
-    }
-    constexpr base_size(i32, i32, i32)
-    {
-    }
-};
+    using value_type = T;
 
-template<
-    typename T,
-
-    typename is_pod<T>::type* = nullptr
-
-    >
-struct size_2d : base_size
-{
-    template<typename U>
-    operator size_2d<U>() const
+    template<typename U, typename Self = size_2d>
+    STATICINLINE Self from_values(U w, U h)
     {
-        return this->convert<U>();
+        return {static_cast<T>(w), static_cast<T>(h)};
+    }
+    STATICINLINE size_2d from_vector(vectors::tvector<T, 2> const& src)
+    {
+        return {src[0], src[1]};
     }
 
-    size_2d(vectors::tvector<T, 2> const& src) : w(src.x()), h(src.y())
-    {
-    }
-    constexpr size_2d(T wd, T hg) : w(wd), h(hg)
-    {
-    }
-    constexpr size_2d() : w(0), h(0)
-    {
-    }
+    T w{0}, h{0};
 
-    T w;
-    T h;
-
-    T area() const
+    inline T area() const
     {
         return w * h;
     }
 
-    scalar aspect() const
+    inline T volume() const
     {
-        return scalar(w) / scalar(h);
+        return area();
+    }
+
+    inline f32 aspect() const
+    {
+        return f32(w) / f32(h);
+    }
+
+    template<typename U>
+    inline operator size_2d<U>() const
+    {
+        return this->convert<U>();
     }
 
     template<typename U>
     inline size_2d<U> convert() const
     {
-        return size_2d<U>(w, h);
+        return size_2d<U>{static_cast<U>(w), static_cast<U>(h)};
     }
 
-    FORCEDINLINE size_2d<T> operator/(const T& d)
+    inline size_2d<T> operator/(const T& d)
     {
         return size_2d<T>(this->w / d, this->h / d);
     }
-    FORCEDINLINE size_2d<T> operator*(const T& d)
+    inline size_2d<T> operator*(const T& d)
     {
         return size_2d<T>(this->w * d, this->h * d);
     }
 
-    FORCEDINLINE size_2d<T>& operator/=(const T& d)
+    inline size_2d<T>& operator/=(const T& d)
     {
         (*this) = (*this) / d;
         return *this;
     }
-    FORCEDINLINE size_2d<T>& operator*=(const T& d)
+    inline size_2d<T>& operator*=(const T& d)
     {
         (*this) = (*this) * d;
         return *this;
@@ -113,36 +101,33 @@ struct size_2d : base_size
     }
 };
 
-template<
-    typename T,
-
-    typename is_pod<T>::type* = nullptr
-
-    >
-struct size_3d : base_size
+template<typename T>
+requires std::is_trivial<T>::value struct size_3d
 {
-    size_3d(vectors::tvector<T, 3> const& src) :
-        width(src.x()), height(src.y()), depth(src.z())
+    using value_type = T;
+
+    STATICINLINE size_3d from_vector(vectors::tvector<T, 3> const& src)
     {
-    }
-    size_3d(T w, T h, T d) : width(w), height(h), depth(d)
-    {
-    }
-    size_3d() : width(0), height(0), depth(0)
-    {
+        return {src[0], src[1], src[2]};
     }
 
     template<typename U>
     inline size_3d<U> convert() const
     {
-        return size_3d<U>(width, height, depth);
+        return size_3d<U>{
+            static_cast<U>(w), static_cast<U>(h), static_cast<U>(d)};
     }
 
-    T width, height, depth;
+    T w{0}, h{0}, d{0};
 
-    T volume() const
+    inline T volume() const
     {
-        return width * height * depth;
+        return w * h * d;
+    }
+
+    inline f32 aspect() const
+    {
+        return f32(w) / f32(h);
     }
 
     inline T operator[](size_t i) const
@@ -150,11 +135,11 @@ struct size_3d : base_size
         switch(i)
         {
         case 0:
-            return width;
+            return w;
         case 1:
-            return height;
+            return h;
         case 2:
-            return depth;
+            return d;
         default:
             return 0;
         }
@@ -165,14 +150,14 @@ struct size_3d : base_size
         switch(i)
         {
         case 0:
-            return width;
+            return w;
         case 1:
-            return height;
+            return h;
         case 2:
-            return depth;
+            return d;
+        default:
+            return 0;
         }
-
-        return width;
     }
 };
 

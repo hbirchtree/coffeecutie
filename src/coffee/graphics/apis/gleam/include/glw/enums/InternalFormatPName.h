@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // InternalFormatPName
-enum class internal_format_prop : ::libc_types::u32 {
+enum class internal_format_prop : ::libc_types::u32
+{
 #ifdef GL_AUTO_GENERATE_MIPMAP
     auto_generate_mipmap = GL_AUTO_GENERATE_MIPMAP,
 #endif
@@ -157,16 +158,20 @@ enum class internal_format_prop : ::libc_types::u32 {
     shader_image_store = GL_SHADER_IMAGE_STORE,
 #endif
 #ifdef GL_SIMULTANEOUS_TEXTURE_AND_DEPTH_TEST
-    simultaneous_texture_and_depth_test = GL_SIMULTANEOUS_TEXTURE_AND_DEPTH_TEST,
+    simultaneous_texture_and_depth_test =
+        GL_SIMULTANEOUS_TEXTURE_AND_DEPTH_TEST,
 #endif
 #ifdef GL_SIMULTANEOUS_TEXTURE_AND_DEPTH_WRITE
-    simultaneous_texture_and_depth_write = GL_SIMULTANEOUS_TEXTURE_AND_DEPTH_WRITE,
+    simultaneous_texture_and_depth_write =
+        GL_SIMULTANEOUS_TEXTURE_AND_DEPTH_WRITE,
 #endif
 #ifdef GL_SIMULTANEOUS_TEXTURE_AND_STENCIL_TEST
-    simultaneous_texture_and_stencil_test = GL_SIMULTANEOUS_TEXTURE_AND_STENCIL_TEST,
+    simultaneous_texture_and_stencil_test =
+        GL_SIMULTANEOUS_TEXTURE_AND_STENCIL_TEST,
 #endif
 #ifdef GL_SIMULTANEOUS_TEXTURE_AND_STENCIL_WRITE
-    simultaneous_texture_and_stencil_write = GL_SIMULTANEOUS_TEXTURE_AND_STENCIL_WRITE,
+    simultaneous_texture_and_stencil_write =
+        GL_SIMULTANEOUS_TEXTURE_AND_STENCIL_WRITE,
 #endif
 #ifdef GL_SRGB_READ
     srgb_read = GL_SRGB_READ,
@@ -221,4 +226,4 @@ enum class internal_format_prop : ::libc_types::u32 {
 #endif
 }; // enum class internal_format_prop
 
-} // namespace gl::groups
+} // namespace gl::group

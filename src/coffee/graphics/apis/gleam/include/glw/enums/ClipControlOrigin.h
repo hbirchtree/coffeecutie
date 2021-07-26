@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // ClipControlOrigin
-enum class clip_control_origin : ::libc_types::u32 {
+enum class clip_control_origin : ::libc_types::u32
+{
 #ifdef GL_LOWER_LEFT
     lower_left = GL_LOWER_LEFT,
 #endif
@@ -14,4 +15,4 @@ enum class clip_control_origin : ::libc_types::u32 {
 #endif
 }; // enum class clip_control_origin
 
-} // namespace gl::groups
+} // namespace gl::group

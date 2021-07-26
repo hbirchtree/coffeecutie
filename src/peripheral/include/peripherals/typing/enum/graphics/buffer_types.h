@@ -61,10 +61,7 @@ struct buf_basetype
         (BaseType & (Vertex | Elements | Constants | Indirect)) ||
         ((BaseType & PixelBuffer) && (Modifiers & Pack));
 
-    enum ex
-    {
-        value = BaseType | Modifiers
-    };
+    static constexpr buf_flag value = BaseType | Modifiers;
 
     explicit FORCEDINLINE operator buf_flag()
     {

@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // SyncParameterName
-enum class sync_parameter_name : ::libc_types::u32 {
+enum class sync_parameter_name : ::libc_types::u32
+{
 #ifdef GL_OBJECT_TYPE
     object_type = GL_OBJECT_TYPE,
 #endif
@@ -20,4 +21,4 @@ enum class sync_parameter_name : ::libc_types::u32 {
 #endif
 }; // enum class sync_parameter_name
 
-} // namespace gl::groups
+} // namespace gl::group

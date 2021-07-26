@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // ConvolutionParameterEXT
-enum class convolution_parameter_ext : ::libc_types::u32 {
+enum class convolution_parameter_ext : ::libc_types::u32
+{
 #ifdef GL_CONVOLUTION_BORDER_MODE
     convolution_border_mode = GL_CONVOLUTION_BORDER_MODE,
 #endif
@@ -26,4 +27,4 @@ enum class convolution_parameter_ext : ::libc_types::u32 {
 #endif
 }; // enum class convolution_parameter_ext
 
-} // namespace gl::groups
+} // namespace gl::group

@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // PathColorFormat
-enum class path_color_format : ::libc_types::u32 {
+enum class path_color_format : ::libc_types::u32
+{
 #ifdef GL_ALPHA
     alpha = GL_ALPHA,
 #endif
@@ -29,4 +30,4 @@ enum class path_color_format : ::libc_types::u32 {
 #endif
 }; // enum class path_color_format
 
-} // namespace gl::groups
+} // namespace gl::group

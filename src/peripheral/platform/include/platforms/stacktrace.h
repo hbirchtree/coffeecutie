@@ -9,7 +9,9 @@
 #include <typeinfo>
 #include <utility>
 
-#if defined(COFFEE_UNIXPLAT)
+#if defined(COFFEE_EMSCRIPTEN)
+// Nothing...
+#elif defined(COFFEE_UNIXPLAT)
 #define BOOST_STACKTRACE_USE_BACKTRACE
 #endif
 

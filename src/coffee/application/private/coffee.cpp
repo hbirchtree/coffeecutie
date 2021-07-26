@@ -30,9 +30,6 @@
 
 #include <coffee/core/CDebug>
 
-#define BOOST_STACKTRACE_USE_BACKTRACE
-#include <boost/stacktrace.hpp>
-
 #if defined(COFFEE_ANDROID)
 #include <android_native_app_glue.h>
 #endif
@@ -193,7 +190,7 @@ FORCEDINLINE void PrintHelpInfo(args::ArgumentParser const& arg)
     cOutputPrint("{0}", arg.helpMessage());
 }
 
-FORCEDINLINE void PrintLicenseInfo()
+static void PrintLicenseInfo()
 {
     if constexpr(compile_info::lowfat_mode)
         return;
@@ -369,33 +366,35 @@ i32 CoffeeMain(MainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
 
     i32 result = -1;
 
-#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_GEKKO)
-    try
-    {
-#endif
+    if constexpr(
+        compile_info::platform::is_emscripten ||
+        compile_info::platform::is_gekko)
+        try
+        {
+            result = mainfun(argc, argv);
+        } catch(std::exception const& ex)
+        {
+            Logging::log(
+                libc::io::io_handles::err,
+                "Main",
+                String("Exception encountered: ") + ex.what(),
+                semantic::debug::Severity::Fatal);
+            try
+            {
+                std::rethrow_if_nested(ex);
+            } catch(std::exception const& ex2)
+            {
+                Logging::log(
+                    libc::io::io_handles::err,
+                    "Main",
+                    String("Further information: ") + ex2.what(),
+                    semantic::debug::Severity::Fatal);
+            } catch(...)
+            {
+            }
+        }
+    else
         result = mainfun(argc, argv);
-#if defined(COFFEE_EMSCRIPTEN)
-    } catch(std::exception const& ex)
-    {
-        emscripten_log(EM_LOG_ERROR, "Exception encountered: %s", ex.what());
-    }
-#elif defined(COFFEE_GEKKO)
-}
-catch(std::exception const& ex)
-{
-    printf("Exception encountered: %s\n", ex.what());
-
-    try
-    {
-        std::rethrow_if_nested(ex);
-    } catch(std::exception const& ex2)
-    {
-        printf(" Further information: %s\n", ex2.what());
-    } catch(...)
-    {
-    }
-}
-#endif
 
     if constexpr(!compile_info::lowfat_mode)
     {
@@ -510,17 +509,19 @@ void generic_stacktrace(int sig)
 
 void InstallDefaultSigHandlers()
 {
-#if !defined(COFFEE_CUSTOM_STACKTRACE)
     std::set_terminate([]() {
+#if !defined(COFFEE_CUSTOM_STACKTRACE)
         if(auto frames = platform::stacktrace::exception_frames();
            frames.has_value())
             platform::stacktrace::print_exception(
                 std::move(frames.value()),
                 typing::logging::fprintf_logger,
                 stack_writer);
+#endif
         abort();
     });
 
+#if !defined(COFFEE_CUSTOM_STACKTRACE)
     libc::signal::install(libc::signal::sig::fpe, generic_stacktrace);
     libc::signal::install(libc::signal::sig::ill_op, generic_stacktrace);
     libc::signal::install(libc::signal::sig::bus_error, generic_stacktrace);
@@ -614,7 +615,7 @@ int PerformDefaults(ArgumentParser& parser, ArgumentResult& args)
 {
     using namespace ::platform::url::constructors;
 
-    for(Pair<CString, u32> sw_ : args.switches)
+    for(auto const& sw_ : args.switches)
     {
         auto sw = sw_.first;
         if(sw == "help")

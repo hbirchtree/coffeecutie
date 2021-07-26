@@ -113,6 +113,18 @@
 #define COFFEE_ARCH "ARM"
 #endif
 
+#elif defined(__wasm64__)
+#define COFFEE_ARCH "WebAssembly/64"
+
+#elif defined(__wasm32__)
+#define COFFEE_ARCH "WebAssembly/32"
+
+#elif defined(__wasm__)
+#define COFFEE_ARCH "WebAssembly"
+
+#elif defined(__EMSCRIPTEN__)
+#define COFFEE_ARCH "asm.js"
+
 /* And if we don't know..? */
 #else
 #define COFFEE_ARCH "Magic"

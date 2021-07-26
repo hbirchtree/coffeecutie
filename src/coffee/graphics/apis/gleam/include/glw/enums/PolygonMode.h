@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // PolygonMode
-enum class polygon_mode : ::libc_types::u32 {
+enum class polygon_mode : ::libc_types::u32
+{
 #ifdef GL_FILL
     fill = GL_FILL,
 #endif
@@ -17,4 +18,4 @@ enum class polygon_mode : ::libc_types::u32 {
 #endif
 }; // enum class polygon_mode
 
-} // namespace gl::groups
+} // namespace gl::group

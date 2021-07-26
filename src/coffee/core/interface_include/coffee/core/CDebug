@@ -1,5 +1,3 @@
 #pragma once
 
-#include <coffee/core/formatting.h>
-
-#include <coffee/core/debug/cdebug.h>
+#include <coffee/core/debug/formatting.h>

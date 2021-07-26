@@ -1,24 +1,26 @@
-coffee_library (
-    TARGET GLADComponent
-    SOURCES private/glad_comp.cpp
-    LIBRARIES ComponentApp
-    HEADER_DIRS
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-    )
+foreach(GLIMPL Dynamic ESDynamic ES2Dynamic)
+    coffee_library (
+        TARGET GLADComponent_${GLIMPL}
+        SOURCES private/glad_comp.cpp
+        LIBRARIES ComponentApp
+        HEADER_DIRS
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+        )
 
-if(BUILD_GLES AND NOT BUILD_GLES_20)
-    target_link_libraries ( GLADComponent PUBLIC
-        GLAD_ES
-        )
-    target_compile_definitions ( GLADComponent PRIVATE
-        -DGLADCOMP_COMPILE_ES
-        )
-elseif(NOT BUILD_GLES)
-    target_link_libraries ( GLADComponent PUBLIC
-        GLAD_Core
-        )
-    target_compile_definitions ( GLADComponent PRIVATE
-        -DGLADCOMP_COMPILE_CORE
-        )
-endif()
+    if("${GLIMPL}" MATCHES "ES")
+        target_link_libraries ( GLADComponent_${GLIMPL} PUBLIC
+            GLAD_ES
+            )
+        target_compile_definitions ( GLADComponent_${GLIMPL} PRIVATE
+            -DGLADCOMP_COMPILE_ES
+            )
+    else()
+        target_link_libraries ( GLADComponent_${GLIMPL} PUBLIC
+            GLAD_Core
+            )
+        target_compile_definitions ( GLADComponent_${GLIMPL} PRIVATE
+            -DGLADCOMP_COMPILE_CORE
+            )
+    endif()
+endforeach()

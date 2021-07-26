@@ -266,5 +266,10 @@ FORCEDINLINE Url operator"" _config(const char* url, size_t)
     return MkUrl(url, RSCA::ConfigFile);
 }
 
+FORCEDINLINE Url operator"" _sys(const char* url, size_t)
+{
+    return MkUrl(url, RSCA::SystemFile);
+}
+
 } // namespace constructors
 } // namespace platform::url

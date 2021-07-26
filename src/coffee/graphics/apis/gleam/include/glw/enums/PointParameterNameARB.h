@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // PointParameterNameARB
-enum class point_parameter_name_arb : ::libc_types::u32 {
+enum class point_parameter_name_arb : ::libc_types::u32
+{
 #ifdef GL_POINT_FADE_THRESHOLD_SIZE
     point_fade_threshold_size = GL_POINT_FADE_THRESHOLD_SIZE,
 #endif
@@ -20,4 +21,4 @@ enum class point_parameter_name_arb : ::libc_types::u32 {
 #endif
 }; // enum class point_parameter_name_arb
 
-} // namespace gl::groups
+} // namespace gl::group

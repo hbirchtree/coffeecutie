@@ -2,15 +2,17 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // UniformPName
-enum class uniform_prop : ::libc_types::u32 {
+enum class uniform_prop : ::libc_types::u32
+{
 #ifdef GL_UNIFORM_ARRAY_STRIDE
     uniform_array_stride = GL_UNIFORM_ARRAY_STRIDE,
 #endif
 #ifdef GL_UNIFORM_ATOMIC_COUNTER_BUFFER_INDEX
-    uniform_atomic_counter_buffer_index = GL_UNIFORM_ATOMIC_COUNTER_BUFFER_INDEX,
+    uniform_atomic_counter_buffer_index =
+        GL_UNIFORM_ATOMIC_COUNTER_BUFFER_INDEX,
 #endif
 #ifdef GL_UNIFORM_BLOCK_INDEX
     uniform_block_index = GL_UNIFORM_BLOCK_INDEX,
@@ -35,4 +37,4 @@ enum class uniform_prop : ::libc_types::u32 {
 #endif
 }; // enum class uniform_prop
 
-} // namespace gl::groups
+} // namespace gl::group

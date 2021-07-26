@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // FrontFaceDirection
-enum class front_face_direction : ::libc_types::u32 {
+enum class front_face_direction : ::libc_types::u32
+{
 #ifdef GL_CCW
     ccw = GL_CCW,
 #endif
@@ -14,4 +15,4 @@ enum class front_face_direction : ::libc_types::u32 {
 #endif
 }; // enum class front_face_direction
 
-} // namespace gl::groups
+} // namespace gl::group

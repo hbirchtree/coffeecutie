@@ -42,74 +42,95 @@ struct list_creator
 } // namespace detail
 
 namespace detail {
-template<typename T, typename std::enable_if<false, T>::type* = nullptr>
-FORCEDINLINE void in_list()
-{
-    /* List is empty, but not match, failure */
-}
 
-template<
-    typename T,
-    typename Head,
-    typename Tail,
-    typename std::enable_if<std::is_same<T, Head>::value>::type* = nullptr>
-FORCEDINLINE void in_list()
+template<typename... Types>
+struct list_inspector
 {
-    /* Type matches! Great! */
-}
+    constexpr list_inspector(type_list<Types...>)
+    {
+    }
 
-template<
-    typename T,
-    typename Head,
-    typename Tail,
-    typename std::enable_if<!std::is_same<T, Head>::value>::type* = nullptr,
-    typename std::enable_if<!std::is_same<Tail, empty_list>::value>::type* =
-        nullptr>
-FORCEDINLINE void in_list()
+    static constexpr size_t num_types = sizeof...(Types);
+
+    template<typename T>
+    struct has_type
+    {
+        static constexpr bool value = (std::is_same_v<T, Types> || ...);
+    };
+
+    template<class UnaryOperator>
+    struct for_each
+    {
+        for_each(UnaryOperator&& op) : op(std::move(op))
+        {
+        }
+        void operator()()
+        {
+            (op.template operator()<Types>(), ...);
+        }
+
+        UnaryOperator op;
+    };
+
+    template<class UnaryOperator>
+    struct for_each_rev
+    {
+        for_each_rev(UnaryOperator&& op) : op(std::move(op))
+        {
+        }
+        void operator()()
+        {
+            int dummy;
+            (dummy = ... = (op.template operator()<Types>(), 0));
+        }
+
+        UnaryOperator op;
+    };
+
+    template<typename... MoreTypes>
+    struct concat_list
+    {
+        constexpr concat_list(type_list<MoreTypes...>)
+        {
+        }
+
+        using type = type_list<Types..., MoreTypes...>;
+    };
+};
+
+struct collect_operator
 {
-    in_list<T, typename Tail::head, typename Tail::tail>();
-}
+    collect_operator(stl_types::Vector<size_t>& hashes) : hashes(hashes)
+    {
+    }
+    template<typename T>
+    void operator()()
+    {
+        hashes.push_back(typeid(T).hash_code());
+    }
+
+    stl_types::Vector<size_t>& hashes;
+};
+
 } // namespace detail
 
-template<typename T, typename Types>
-/*!
- * \brief Attempts to find T in Types (a type_list<...>)
- */
-FORCEDINLINE void type_in_list()
-{
-    detail::in_list<T, typename Types::head, typename Types::tail>();
-}
+template<typename List>
+using list_inspector = decltype(detail::list_inspector(std::declval<List>()));
 
-namespace detail {
+template<typename T, typename List>
+constexpr bool type_in_list_v =
+    list_inspector<List>::template has_type<T>::value;
 
-template<
-    typename Head,
-    typename Tail,
-    typename std::enable_if<std::is_same<Tail, empty_list>::value>::type* =
-        nullptr>
-FORCEDINLINE void collect_head(stl_types::Vector<size_t>& type_hashes)
-{
-    type_hashes.push_back(typeid(Head).hash_code());
-}
+template<typename T1, typename T2>
+using concat_lists = typename decltype(list_inspector<T1>::concat_list(
+    std::declval<T2>()))::type;
 
-template<
-    typename Head,
-    typename Tail,
-    typename std::enable_if<!std::is_same<Tail, empty_list>::value>::type* =
-        nullptr>
-FORCEDINLINE void collect_head(stl_types::Vector<size_t>& type_hashes)
-{
-    type_hashes.push_back(typeid(Head).hash_code());
-    collect_head<typename Tail::head, typename Tail::tail>(type_hashes);
-}
-
-} // namespace detail
-
-template<typename Types>
+template<typename List>
 FORCEDINLINE void collect(stl_types::Vector<size_t>& type_hashes)
 {
-    detail::collect_head<typename Types::head, typename Types::tail>(
-        type_hashes);
+    using for_each = typename list_inspector<List>::template for_each<
+        detail::collect_operator>;
+    for_each(detail::collect_operator(type_hashes))();
 }
 
 template<typename Types>
@@ -120,73 +141,19 @@ FORCEDINLINE stl_types::Vector<size_t> collect_list()
     return out;
 }
 
-namespace detail {
-
-template<
-    typename Head,
-    typename Tail,
-    template<typename T> class Pred,
-    typename... Args,
-    typename std::enable_if<std::is_same<Tail, empty_list>::value>::type* =
-        nullptr>
-void for_each_operator(Args... args)
+template<typename List, typename Operator>
+void for_each(Operator&& op)
 {
-    Pred<Head>()(std::forward<Args>(args)...);
+    using for_each = typename list_inspector<List>::template for_each<Operator>;
+    for_each(std::move(op))();
 }
 
-template<
-    typename Head,
-    typename Tail,
-    template<typename T> class Pred,
-    typename... Args,
-    typename std::enable_if<std::is_same<Tail, empty_list>::value>::type* =
-        nullptr>
-void for_each_operator_rev(Args... args)
+template<typename List, typename Operator>
+void for_each_rev(Operator&& op)
 {
-    Pred<Head>()(std::forward<Args>(args)...);
-}
-
-template<
-    typename Head,
-    typename Tail,
-    template<typename T> class Pred,
-    typename... Args,
-    typename std::enable_if<!std::is_same<Tail, empty_list>::value>::type* =
-        nullptr>
-void for_each_operator(Args... args)
-{
-    Pred<Head>()(std::forward<Args>(args)...);
-    for_each_operator<typename Tail::head, typename Tail::tail, Pred>(args...);
-}
-
-template<
-    typename Head,
-    typename Tail,
-    template<typename T> class Pred,
-    typename... Args,
-    typename std::enable_if<!std::is_same<Tail, empty_list>::value>::type* =
-        nullptr>
-void for_each_operator_rev(Args... args)
-{
-    for_each_operator_rev<typename Tail::head, typename Tail::tail, Pred>(
-        args...);
-    Pred<Head>()(std::forward<Args>(args)...);
-}
-
-} // namespace detail
-
-template<typename Types, template<typename T> class Pred, typename... Args>
-FORCEDINLINE void for_each(Args... args)
-{
-    detail::for_each_operator<typename Types::head, typename Types::tail, Pred>(
-        std::forward<Args>(args)...);
-}
-template<typename Types, template<typename T> class Pred, typename... Args>
-FORCEDINLINE void for_each_rev(Args... args)
-{
-    detail::
-        for_each_operator_rev<typename Types::head, typename Types::tail, Pred>(
-            std::forward<Args>(args)...);
+    using for_each =
+        typename list_inspector<List>::template for_each_rev<Operator>;
+    for_each(std::move(op))();
 }
 
 } // namespace type_list

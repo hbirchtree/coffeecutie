@@ -4,8 +4,7 @@
 
 #include "entity_container.h"
 
-namespace Coffee {
-namespace Components {
+namespace Coffee::Components {
 
 struct ContainerProxy : non_copy
 {
@@ -20,7 +19,7 @@ struct ContainerProxy : non_copy
         return m_container.select(tags);
     }
 
-    template<typename ComponentType>
+    template<is_component ComponentType>
     FORCEDINLINE quick_container<EntityContainer::entity_query> select()
     {
         return m_container.select<ComponentType>();
@@ -42,6 +41,11 @@ struct ContainerProxy : non_copy
     FORCEDINLINE EntityRef<ContainerType> ref(u64 e)
     {
         return EntityRef<ContainerType>(e, C_CAST<ContainerType*>(this));
+    }
+
+    auto& underlying()
+    {
+        return m_container;
     }
 
   protected:
@@ -74,33 +78,30 @@ struct ConstrainedProxy : ContainerProxy
     }
 
     template<typename ComponentType>
-    FORCEDINLINE quick_container<EntityContainer::entity_query> select()
+    requires type_list::type_in_list_v<ComponentType, ComponentList>
+        FORCEDINLINE quick_container<EntityContainer::entity_query> select()
     {
-        type_list::type_in_list<ComponentType, ComponentList>();
-
         return ContainerProxy::select<ComponentType>();
     }
 
     template<typename ComponentType>
-    FORCEDINLINE typename ComponentType::type* get(u64 id)
+    requires type_list::type_in_list_v<ComponentType, ComponentList>
+        FORCEDINLINE typename ComponentType::type* get(u64 id)
     {
-        type_list::type_in_list<ComponentType, ComponentList>();
-
         return m_container.get<ComponentType>(id);
     }
 
     template<typename ComponentType>
-    FORCEDINLINE typename ComponentType::type const* get(u64 id) const
+    requires type_list::type_in_list_v<ComponentType, ComponentList>
+        FORCEDINLINE typename ComponentType::type const* get(u64 id) const
     {
-        type_list::type_in_list<ComponentType, ComponentList>();
-
         return m_container.get<ComponentType>(id);
     }
 
     template<typename ComponentType>
-    FORCEDINLINE typename ComponentType::type& get()
+    requires type_list::type_in_list_v<ComponentType, ComponentList>
+        FORCEDINLINE typename ComponentType::type& get()
     {
-        type_list::type_in_list<ComponentType, ComponentList>();
         auto v = get<ComponentType>(current_entity);
 
         if constexpr(compile_info::debug_mode)
@@ -111,9 +112,9 @@ struct ConstrainedProxy : ContainerProxy
     }
 
     template<typename ComponentType>
-    FORCEDINLINE typename ComponentType::type const& get() const
+    requires type_list::type_in_list_v<ComponentType, ComponentList>
+        FORCEDINLINE typename ComponentType::type const& get() const
     {
-        type_list::type_in_list<ComponentType, ComponentList>();
         auto v = get<ComponentType>(current_entity);
 
         if constexpr(compile_info::debug_mode)
@@ -124,24 +125,25 @@ struct ConstrainedProxy : ContainerProxy
     }
 
     template<typename OutputType>
-    FORCEDINLINE Subsystem<OutputType>& subsystem()
+    requires type_list::type_in_list_v<OutputType, SubsystemList> FORCEDINLINE
+        Subsystem<OutputType>
+    &subsystem()
     {
-        type_list::type_in_list<OutputType, SubsystemList>();
         return m_container.subsystem<OutputType>();
     }
 
     template<typename SubsystemType>
-    FORCEDINLINE SubsystemType& subsystem_cast()
+    requires type_list::
+        type_in_list_v<typename SubsystemType::tag_type, SubsystemList>
+            FORCEDINLINE SubsystemType& subsystem_cast()
     {
-        type_list::
-            type_in_list<typename SubsystemType::tag_type, SubsystemList>();
         return m_container.subsystem_cast<SubsystemType>();
     }
 
     template<typename Service>
-    FORCEDINLINE Service* service()
+    requires type_list::type_in_list_v<Service, ServiceList>
+        FORCEDINLINE typename Service::type* service()
     {
-        type_list::type_in_list<Service, ServiceList>();
         return m_container.service<Service>();
     }
 
@@ -152,5 +154,4 @@ struct ConstrainedProxy : ContainerProxy
     }
 };
 
-} // namespace Components
-} // namespace Coffee
+} // namespace Coffee::Components

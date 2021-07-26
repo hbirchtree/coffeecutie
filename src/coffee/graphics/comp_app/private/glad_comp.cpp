@@ -3,11 +3,7 @@
 #include <coffee/comp_app/gl_config.h>
 #include <coffee/components/components.h>
 
-#if defined(GLADCOMP_COMPILE_CORE)
 #include <glad/glad.h>
-#elif defined(GLADCOMP_COMPILE_ES)
-#include <glad_es/glad.h>
-#endif
 
 namespace glad {
 
@@ -21,7 +17,9 @@ void Binding::load(entity_container& e, comp_app::app_error& ec)
         ec = comp_app::AppError::BindingFailed;
     }
 #elif defined(GLADCOMP_COMPILE_ES)
-    auto loader = e.service<comp_app::GraphicsBindingConfig>()->loader;
+    auto loader = e.service<comp_app::AppLoader>()
+                      ->config<comp_app::GraphicsBindingConfig>()
+                      .loader;
 
     if(!loader)
     {

@@ -156,15 +156,6 @@ extern SafeArea safe_area()
 }
 } // namespace display
 
-namespace is {
-const bool mobile =
-#if defined(COFFEE_ANDROID) || defined(COFFEE_IOS)
-    true;
-#else
-    false;
-#endif
-} // namespace is
-
 DeviceType variant()
 {
     if constexpr(

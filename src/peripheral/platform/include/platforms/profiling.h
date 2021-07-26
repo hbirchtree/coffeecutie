@@ -1,5 +1,6 @@
 #pragma once
 
+#include <peripherals/constants.h>
 #include <peripherals/profiler/profiler.h>
 #include <platforms/pimpl_state.h>
 
@@ -152,7 +153,8 @@ using DataPoint = Profiler::datapoint;
 struct ExtraDataImpl
 {
     STATICINLINE void Add(
-        UNUSED_PARAM(CString const&, k), UNUSED_PARAM(CString const&, v))
+        UNUSED_PARAM(CString const&, k),
+        UNUSED_PARAM(std::string_view const&, v))
     {
         if constexpr(!compile_info::profiler::enabled)
             return;
@@ -163,7 +165,7 @@ struct ExtraDataImpl
 
         Lock _(context->access);
 
-        context->extra_data[k] = v;
+        context->extra_data[k] = String(v.begin(), v.end());
     }
 
     STATICINLINE PExtraData Get()
@@ -229,7 +231,8 @@ struct SimpleProfilerImpl
     }
 
     C_DEPRECATED_S("use ExtraData::Add() instead")
-    STATICINLINE void AddExtraData(CString const& key, CString const& value)
+    STATICINLINE void AddExtraData(
+        CString const& key, std::string_view const& value)
     {
     }
 

@@ -10,8 +10,7 @@ namespace detail {
 
 inline void bind_sampler()
 {
-    gl::core::all::bind_texture<gl::core::highest>(
-        gl::groups::texture_target::texture_2d, 0);
+    gl::core::v33::bind_texture(gl::groups::texture_target::texture_2d, 0);
 }
 
 //enum GraphicsCompatibility

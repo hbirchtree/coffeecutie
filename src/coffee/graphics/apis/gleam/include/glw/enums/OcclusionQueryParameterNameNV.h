@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // OcclusionQueryParameterNameNV
-enum class occlusion_query_parameter_name_nv : ::libc_types::u32 {
+enum class occlusion_query_parameter_name_nv : ::libc_types::u32
+{
 #ifdef GL_PIXEL_COUNT_AVAILABLE_NV
     pixel_count_available_nv = GL_PIXEL_COUNT_AVAILABLE_NV,
 #endif
@@ -14,4 +15,4 @@ enum class occlusion_query_parameter_name_nv : ::libc_types::u32 {
 #endif
 }; // enum class occlusion_query_parameter_name_nv
 
-} // namespace gl::groups
+} // namespace gl::group

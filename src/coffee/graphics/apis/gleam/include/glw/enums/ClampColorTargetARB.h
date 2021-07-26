@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // ClampColorTargetARB
-enum class clamp_color_target_arb : ::libc_types::u32 {
+enum class clamp_color_target_arb : ::libc_types::u32
+{
 #ifdef GL_CLAMP_FRAGMENT_COLOR_ARB
     clamp_fragment_color_arb = GL_CLAMP_FRAGMENT_COLOR_ARB,
 #endif
@@ -20,4 +21,4 @@ enum class clamp_color_target_arb : ::libc_types::u32 {
 #endif
 }; // enum class clamp_color_target_arb
 
-} // namespace gl::groups
+} // namespace gl::group

@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // PathFontTarget
-enum class path_font_target : ::libc_types::u32 {
+enum class path_font_target : ::libc_types::u32
+{
 #ifdef GL_FILE_NAME_NV
     file_name_nv = GL_FILE_NAME_NV,
 #endif
@@ -17,4 +18,4 @@ enum class path_font_target : ::libc_types::u32 {
 #endif
 }; // enum class path_font_target
 
-} // namespace gl::groups
+} // namespace gl::group

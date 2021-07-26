@@ -8,7 +8,7 @@ from os.path import abspath, dirname
 
 
 WHITELISTED_APIS       = ['gl', 'gles2']
-WHITELISTED_EXTENSION_NAMESPACES = ['AMD', 'ARB', 'ARM', 'INTEL', 'KHR', 'NV', 'NVX', 'OES', 'QCOM']
+WHITELISTED_EXTENSION_NAMESPACES = ['AMD', 'ARB', 'ARM', 'EXT', 'IMG', 'INTEL', 'KHR', 'NV', 'NVX', 'OES', 'QCOM']
 
 WHITELISTED_EXTENSIONS = [
     'GL_EXT_texture_compression_dxt1',
@@ -23,7 +23,13 @@ WHITELISTED_EXTENSIONS = [
     'GL_EXT_texture_compression_bptc'
     'GL_OES_texture_compression_astc',
 ]
-
+BLACKLISTED_EXTENSIONS = [
+    'GL_ARB_transpose_matrix',
+    'GL_EXT_separate_shader_objects',
+    'GL_EXT_texture_env_add',
+    'GL_EXT_texture_env_combine',
+    'GL_EXT_texture_env_dot3',
+]
 
 def parse_registry(file='gl.xml'):
     basedir = dirname(abspath(__file__))
@@ -46,10 +52,12 @@ def commands_for(requirements, registry):
     all_commands = registry.find('commands')
     for req in requirements:
         all_version_commands = [ value.get('name') for value in req.findall('command') ]
+        api = req.get('api')
         for command in all_commands.findall('command'):
             proto = command.find('proto')
             return_type = [ x for x in ' '.join(proto.itertext()).split(' ') if x != '' ]
             return_type = ' '.join(return_type[:-1])
+            return_group = proto.get('group')
             func_name = proto.find('name').text
             params = command.findall('param')
 
@@ -63,7 +71,7 @@ def commands_for(requirements, registry):
                 func_name = func_name
                 func_name = segment_command_name(func_name)
 
-                yield func_name, return_type, params_out
+                yield func_name, (return_type, return_group), params_out, api
 
 
 def all_enums(registry):
@@ -90,16 +98,23 @@ def all_enums(registry):
 
 
 def enums_for(requirements, registry):
-    required_values = []
+    required_values = defaultdict(list)
     for req in requirements:
-        required_values = required_values + [ value.get('name') for value in req.findall('enum') ]
+        enum_values = [ value.get('name') for value in req.findall('enum') ]
+        if req.get('api') is None:
+            required_values['all'] = required_values['all'] + enum_values
+        else:
+            required_values[req.get('api')] = required_values[req.get('api')] + enum_values
 
     for enum_group in registry.findall('enums'):
         for enum in enum_group.findall('enum'):
             name = enum.get('name')
-            if name not in required_values:
-                continue
-            yield name, enum.get('value'), enum.get('group')
+            for api in required_values:
+                if name not in required_values[api]:
+                    continue
+                groups = enum.get('group').split(',') if enum.get('group') is not None else [None]
+                for group in groups:
+                    yield name, enum.get('value'), [group, api]
 
 
 def features_of(registry, apis: list):
@@ -139,6 +154,6 @@ def extensions_supported_by(apis, registry):
         vendor = re.findall(vendor_expression, name)
         assert(len(vendor) == 1)
         vendor = vendor[0]
-        if vendor not in WHITELISTED_EXTENSION_NAMESPACES:
+        if vendor not in WHITELISTED_EXTENSION_NAMESPACES or name in BLACKLISTED_EXTENSIONS:
             continue
         yield extension, name

@@ -2,13 +2,14 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // ProgramFormat
-enum class program_format : ::libc_types::u32 {
+enum class program_format : ::libc_types::u32
+{
 #ifdef GL_PROGRAM_FORMAT_ASCII_ARB
     ascii_arb = GL_PROGRAM_FORMAT_ASCII_ARB,
 #endif
 }; // enum class program_format
 
-} // namespace gl::groups
+} // namespace gl::group

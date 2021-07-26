@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // TextureParameterName
-enum class texture_parameter_name : ::libc_types::u32 {
+enum class texture_parameter_name : ::libc_types::u32
+{
 #ifdef GL_DEPTH_STENCIL_TEXTURE_MODE
     depth_stencil_texture_mode = GL_DEPTH_STENCIL_TEXTURE_MODE,
 #endif
@@ -106,7 +107,8 @@ enum class texture_parameter_name : ::libc_types::u32 {
     texture_filter4_size_sgis = GL_TEXTURE_FILTER4_SIZE_SGIS,
 #endif
 #ifdef GL_TEXTURE_FOVEATED_CUTOFF_DENSITY_QCOM
-    texture_foveated_cutoff_density_qcom = GL_TEXTURE_FOVEATED_CUTOFF_DENSITY_QCOM,
+    texture_foveated_cutoff_density_qcom =
+        GL_TEXTURE_FOVEATED_CUTOFF_DENSITY_QCOM,
 #endif
 #ifdef GL_TEXTURE_GEQUAL_R_SGIX
     texture_gequal_r_sgix = GL_TEXTURE_GEQUAL_R_SGIX,
@@ -205,7 +207,8 @@ enum class texture_parameter_name : ::libc_types::u32 {
     texture_tiling_ext = GL_TEXTURE_TILING_EXT,
 #endif
 #ifdef GL_TEXTURE_UNNORMALIZED_COORDINATES_ARM
-    texture_unnormalized_coordinates_arm = GL_TEXTURE_UNNORMALIZED_COORDINATES_ARM,
+    texture_unnormalized_coordinates_arm =
+        GL_TEXTURE_UNNORMALIZED_COORDINATES_ARM,
 #endif
 #ifdef GL_TEXTURE_WIDTH
     texture_width = GL_TEXTURE_WIDTH,
@@ -230,4 +233,4 @@ enum class texture_parameter_name : ::libc_types::u32 {
 #endif
 }; // enum class texture_parameter_name
 
-} // namespace gl::groups
+} // namespace gl::group

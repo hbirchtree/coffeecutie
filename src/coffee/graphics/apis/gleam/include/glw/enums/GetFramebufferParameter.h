@@ -2,15 +2,17 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // GetFramebufferParameter
-enum class get_framebuffer_parameter : ::libc_types::u32 {
+enum class get_framebuffer_parameter : ::libc_types::u32
+{
 #ifdef GL_DOUBLEBUFFER
     doublebuffer = GL_DOUBLEBUFFER,
 #endif
 #ifdef GL_FRAMEBUFFER_DEFAULT_FIXED_SAMPLE_LOCATIONS
-    framebuffer_default_fixed_sample_locations = GL_FRAMEBUFFER_DEFAULT_FIXED_SAMPLE_LOCATIONS,
+    framebuffer_default_fixed_sample_locations =
+        GL_FRAMEBUFFER_DEFAULT_FIXED_SAMPLE_LOCATIONS,
 #endif
 #ifdef GL_FRAMEBUFFER_DEFAULT_HEIGHT
     framebuffer_default_height = GL_FRAMEBUFFER_DEFAULT_HEIGHT,
@@ -41,4 +43,4 @@ enum class get_framebuffer_parameter : ::libc_types::u32 {
 #endif
 }; // enum class get_framebuffer_parameter
 
-} // namespace gl::groups
+} // namespace gl::group

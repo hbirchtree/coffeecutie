@@ -10,7 +10,7 @@
 #include <peripherals/semantic/chunk.h>
 #include <peripherals/stl/functional_types.h>
 #include <peripherals/typing/enum/graphics/texture_types.h>
-#include <platforms/types/vector_types.h>
+#include <peripherals/typing/vectors/vector_types.h>
 
 #include "blam_tag_classes.h"
 

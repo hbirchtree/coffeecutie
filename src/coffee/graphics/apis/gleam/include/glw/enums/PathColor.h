@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // PathColor
-enum class path_color : ::libc_types::u32 {
+enum class path_color : ::libc_types::u32
+{
 #ifdef GL_PRIMARY_COLOR
     primary_color = GL_PRIMARY_COLOR,
 #endif
@@ -17,4 +18,4 @@ enum class path_color : ::libc_types::u32 {
 #endif
 }; // enum class path_color
 
-} // namespace gl::groups
+} // namespace gl::group

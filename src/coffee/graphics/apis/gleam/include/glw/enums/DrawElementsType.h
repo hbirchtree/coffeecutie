@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // DrawElementsType
-enum class draw_elements_type : ::libc_types::u32 {
+enum class draw_elements_type : ::libc_types::u32
+{
 #ifdef GL_UNSIGNED_BYTE
     unsigned_byte = GL_UNSIGNED_BYTE,
 #endif
@@ -17,4 +18,4 @@ enum class draw_elements_type : ::libc_types::u32 {
 #endif
 }; // enum class draw_elements_type
 
-} // namespace gl::groups
+} // namespace gl::group

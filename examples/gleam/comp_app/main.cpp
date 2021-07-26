@@ -8,10 +8,9 @@
 #include <coffee/core/coffee.h>
 #include <coffee/core/input/eventhandlers.h>
 #include <coffee/core/task_queue/task.h>
-#include <coffee/interfaces/graphics_subsystem.h>
 
-#if defined(FEATURE_ENABLE_GLeamRHI)
-#include <coffee/graphics/apis/CGLeamRHI>
+#if defined(GLEAM_MAX_VERSION)
+#include <coffee/graphics/apis/CGLeam>
 #endif
 #if defined(FEATURE_ENABLE_Gexxo)
 #include <coffee/gexxo/gexxo_api.h>
@@ -19,16 +18,17 @@
 #endif
 
 #include <coffee/strings/geometry_types.h>
-#include <coffee/strings/vector_types.h>
 #include <coffee/strings/info.h>
 #include <coffee/strings/libc_types.h>
+#include <coffee/strings/vector_types.h>
 
 namespace Coffee {
 namespace Strings {
 
-static CString to_string(comp_app::ControllerInput::controller_map const& box)
+static CString to_string(
+    comp_app::interfaces::ControllerInput::controller_map const& box)
 {
-    return cStringFormat(
+    return fmt(
         "controller_map("
         "L({0},{1}):R({2},{3}):TRIG({4}:{5})"
         ":A={6}:B={7}:X={8}:Y={9}"
@@ -67,14 +67,11 @@ i32 coffee_main(i32, cstring_w*)
     using namespace Coffee::Display;
     using namespace Coffee::Input;
 
-#if defined(FEATURE_ENABLE_GLeamRHI)
-    using GFX = RHI::GLEAM::GLEAM_API;
+#if defined(GLEAM_MAX_VERSION)
+    using gfx = gleam::api;
 #elif defined(FEATURE_ENABLE_Gexxo)
-    using GFX = gexxo::GXAPI;
-#else
-    using GFX = RHI::NullAPI;
+    using gfx = gexxo::api;
 #endif
-    using GFX_SYS = RHI::Components::GraphicsAllocator<GFX>;
 
     SetPrintingVerbosity(15);
 
@@ -89,27 +86,17 @@ i32 coffee_main(i32, cstring_w*)
     {
         auto& windowConf = loader.config<comp_app::WindowConfig>();
         auto& ctlrConf   = loader.config<comp_app::ControllerConfig>();
-
-        windowConf.size  = {1024, 768};
+        windowConf.size  = {1024, 1024};
         windowConf.title = "Hello World";
-
-#if defined(FEATURE_ENABLE_GLeamRHI)
-        auto& glConf = loader.config<comp_app::GLConfig>();
-#endif
-#if defined(FEATURE_ENABLE_GLADComponent)
-        glConf.framebufferFmt = typing::pixels::PixFmt::RGB565;
-
-        glConf.profile |= comp_app::GLConfig::Debug;
-#if defined(FEATURE_ENABLE_GLAD_Core)
-        glConf.version.major = 3;
-        glConf.version.minor = 3;
-#else
-        glConf.version.major = 2;
-        glConf.version.minor = 0;
-#endif
-#endif
-
         ctlrConf.options = comp_app::ControllerConfig::BackgroundInput;
+
+#if defined(GLEAM_USE_ES)
+        auto& glConf          = loader.config<comp_app::GLConfig>();
+        glConf.framebufferFmt = typing::pixels::PixFmt::RGB565;
+//        glConf.profile |= comp_app::GLConfig::Debug;
+//        glConf.version.major = 2;
+//        glConf.version.minor = 0;
+#endif
     }
 
     comp_app::addDefaults(e, loader, ec);
@@ -149,7 +136,9 @@ i32 coffee_main(i32, cstring_w*)
 
             if(!dump || !mouse)
                 return;
+            return;
 
+            cDebug("Controllers: {0}", dump->count());
             for(auto i : Range<u32>(dump->count()))
                 cDebug("Controller {0}: {1}", dump->name(i), dump->state(i));
 
@@ -162,18 +151,14 @@ i32 coffee_main(i32, cstring_w*)
 
     struct APIData
     {
-        GFX::API_CONTEXT context;
+        gfx                      context;
+        ShPtr<gfx::buffer_type>  vertex;
+        ShPtr<gfx::vertex_type>  verts;
+        ShPtr<gfx::program_type> color;
+        ShPtr<gfx::program_type> simple;
 
-        GFX::PIP          plain_color;
-        GFX::D_DATA       plane_data;
-        GFX::V_DESC       plane_desc;
-        ShPtr<GFX::BUF_A> plane_vertex;
-        ShPtr<GFX::BUF_E> plane_index;
-
-        ~APIData()
-        {
-            abort();
-        }
+        i32 load_idx{0};
+        f32 load_basis{0};
     };
 
 #if defined(COFFEE_GEKKO)
@@ -181,16 +166,41 @@ i32 coffee_main(i32, cstring_w*)
     Mtx   modelview;
 #endif
 
-    static Array<u8, 20> vertex_data = {
-        32,  32,  0xff, 0x00, 0xff,
-
-        255, 32,  0xff, 0xff, 0x00,
-
-        32,  255, 0xff, 0x00, 0xff,
-
-        255, 255, 0x00, 0xff, 0xff,
+    struct vertex_t
+    {
+        tvec2<f32> pos;
+        tvec3<f32> col;
+        f32        idx;
     };
-//    static Array<u8, 4> index_data = {0, 1, 2, 3};
+
+    static Vector<vertex_t> vertex_data;
+
+    constexpr f32 i_d  = 0.628f;
+    f32           v_id = 0;
+    for(auto i : Range<f32>(stl_types::math::pi_f * 2, i_d))
+    {
+        auto v1 = tvec2<f32>{std::cos(i), std::sin(i)} / 5.f;
+        auto v2 = tvec2<f32>{std::cos(i + i_d), std::sin(i + i_d)} / 5.f;
+
+        vertex_data.push_back({{v1.x(), v1.y()}, {0.f, 0.f, 0.f}, v_id});
+        vertex_data.push_back({{0.f, 0.f}, {1.f}, v_id});
+        v_id += 1.f;
+    }
+
+    constexpr stl_types::Array<Vecf3, 4> button_colors = {
+        {{0, 1, 0}, {1, 0, 0}, {0, 0, 1}, {1, 1, 0}}};
+    for(auto const& i : Range<>(button_colors.size()))
+    {
+        Vecf2 offset = {0.05f * i, 0.f};
+        vertex_data.push_back(
+            {offset + Vecf2{-0.95f, -0.95f}, button_colors.at(i)});
+        vertex_data.push_back(
+            {offset + Vecf2{-0.95f, -1.f}, button_colors.at(i)});
+        vertex_data.push_back(
+            {offset + Vecf2{-1.f, -0.95f}, button_colors.at(i)});
+        vertex_data.push_back(
+            {offset + Vecf2{-1.f, -1.f}, button_colors.at(i)});
+    }
 
     comp_app::AppContainer<APIData>::addTo(
         e,
@@ -200,35 +210,127 @@ i32 coffee_main(i32, cstring_w*)
         [](
 #endif
             EntityContainer& e, APIData& d, Components::time_point const&) {
-            e.register_subsystem_inplace<GFX_SYS::tag_type, GFX_SYS>(
-                GFX::OPTS(), true);
+            d.context.load({
+                .api_version = 0x300,
+                .api_type    = gleam::api_type_t::es,
+            });
 
-            auto& sys = e.subsystem_cast<GFX_SYS>();
+            gleam::cmd::viewport(Veci2{0, 0}, size_2d<i32>{1024, 1024});
 
-            d.plane_vertex = sys.alloc_buffer<GFX::BUF_A>(RSCA::ReadOnly, 0);
+            d.vertex = d.context.alloc_buffer(
+                gleam::buffers::vertex, RSCA::ReadOnly | RSCA::Streaming);
+            d.vertex->alloc();
 
-            d.plane_data = GFX::D_DATA(3);
-            d.plane_desc = GFX::V_DESC();
+            d.vertex->commit(vertex_data);
 
-            d.plane_vertex->alloc();
-            d.plane_vertex->commit(BytesConst::CreateFrom(vertex_data));
+            d.verts = d.context.alloc_vertex_array();
+            d.verts->alloc();
+            using attr_flags =
+                gleam::vertex_array_t::attribute_type::attribute_flags;
+            d.verts->add({
+                .index = 0,
+                .value =
+                    {
+                        .stride = sizeof(decltype(vertex_data)::value_type),
+                        .count  = 2,
+                        .type   = semantic::TypeEnum::Scalar,
+                    },
+            });
+            d.verts->add({
+                .index = 1,
+                .value =
+                    {
+                        .offset = sizeof(f32) * 2,
+                        .stride = sizeof(decltype(vertex_data)::value_type),
+                        .count  = 3,
+                        .type   = semantic::TypeEnum::Scalar,
+                    },
+            });
+            d.verts->add({
+                .index = 2,
+                .value =
+                    {
+                        .offset = sizeof(f32) * 5,
+                        .stride = sizeof(decltype(vertex_data)::value_type),
+                        .count  = 1,
+                        .type   = semantic::TypeEnum::Scalar,
+                        //                        .flags  =
+                        //                        attr_flags::normalized |
+                        //                        attr_flags::packed,
+                    },
+            });
+            d.verts->set_buffer(gleam::buffers::vertex, d.vertex, 0);
 
-            d.plane_desc.alloc();
-            {
-                GFX::V_ATTR pos, col;
-                pos.m_idx    = 0;
-                col.m_idx    = 1;
-                pos.m_size   = 2;
-                col.m_size   = 3;
-                col.m_off    = sizeof(u8) * 2;
-                pos.m_stride = col.m_stride = sizeof(u8) * 5;
-                pos.m_type = col.m_type = semantic::TypeEnum::UByte;
-                pos.m_bassoc = col.m_bassoc = 0;
-                pos.m_boffset = col.m_boffset = 0;
-                d.plane_desc.addAttribute(pos);
-                d.plane_desc.addAttribute(col);
-                d.plane_desc.bindBuffer(0, *d.plane_vertex);
-            }
+            d.color = d.context.alloc_program();
+            d.color->add(
+                gleam::program_t::stage_t::Vertex,
+                d.context.alloc_shader(std::string_view(R"(#version 100
+attribute vec2 pos;
+attribute vec3 color;
+attribute float idx;
+
+varying vec3 fcolor;
+varying float fidx;
+
+void main()
+{
+    fidx = idx;
+    fcolor = color;
+    gl_Position = vec4(pos, 0, 1);
+}
+)")));
+            d.color->add(
+                gleam::program_t::stage_t::Fragment,
+                d.context.alloc_shader(std::string_view(R"(#version 100
+precision lowp float;
+varying vec3 fcolor;
+varying float fidx;
+
+uniform int currIdx;
+
+void main()
+{
+    int diff = int(abs(floor(fidx) - float(currIdx)));
+    float amplify = diff < 1 ? 1.0 : 0.0;
+    gl_FragColor = vec4(fcolor * amplify, 1.0);
+}
+)")));
+
+            d.simple = d.context.alloc_program();
+            d.simple->add(
+                gfx::program_type::stage_t::Vertex,
+                d.context.alloc_shader(std::string_view(R"(#version 100
+attribute vec2 pos;
+attribute vec3 color;
+
+varying vec3 fcolor;
+
+void main()
+{
+    fcolor = color;
+    gl_Position = vec4(pos, 0, 1);
+}
+)")));
+            d.simple->add(
+                gfx::program_type::stage_t::Fragment,
+                d.context.alloc_shader(std::string_view(R"(#version 100
+precision lowp float;
+varying vec3 fcolor;
+
+void main()
+{
+    gl_FragColor = vec4(fcolor, 1.0);
+}
+)")));
+            if(auto res = d.color->compile(); res.has_error())
+                cFatal("Shader error log: {0}", res.error());
+            else
+                cDebug("Shader info log: {0}", res.value());
+
+            if(auto res = d.simple->compile(); res.has_error())
+                cFatal("Shader error log: {0}", res.error());
+            else
+                cDebug("Shader info log: {0}", res.value());
 
 #if defined(COFFEE_GEKKO)
             guOrtho(perspective, 0, 479, 0, 639, 0, 300);
@@ -244,29 +346,66 @@ i32 coffee_main(i32, cstring_w*)
             GFX::DefaultFramebuffer()->clear(0, {0.5f, 0, 0, 1}, 1);
 #endif
         },
-        [](EntityContainer& e,
-           APIData&         data,
-           Components::time_point const&,
-           Components::duration const&) {
+        [](EntityContainer&              e,
+           APIData&                      data,
+           Components::time_point const& t,
+           Components::duration const&   delta) {
+            data.context.default_rendertarget()->clear(
+                Vecf4{0, 0, 0, 1}, 1.0, 0x0);
 
-            GFX::DefaultFramebuffer()->clear(0, {0.5f, 0, 0, 1}, 1);
+            data.context.submit({
+                .program  = data.color,
+                .vertices = data.verts,
+                .call =
+                    {
+                        .mode = gleam::drawing::primitive::triangle_fan,
+                    },
+                .data =
+                    {
+                        .arrays =
+                            {
+                                .count = 22,
+                            },
+                    },
+            });
+            gleam::cmd::uniform(0, 1, SpanOne(data.load_idx));
 
-            GFX::Draw(
-                data.plain_color,
-                {},
-                data.plane_desc,
-                GFX::D_CALL(true, false),
-                data.plane_data);
+            auto controller = e.service<comp_app::ControllerInput>()->state(0);
+            stl_types::Array<bool, 4> button_states{
+                {controller.buttons.e.a,
+                 controller.buttons.e.b,
+                 controller.buttons.e.x,
+                 controller.buttons.e.y}};
 
+            for(auto const& i : Range<u32>(button_states.size()))
+                if(button_states.at(i))
+                    data.context.submit({
+                        .program  = data.simple,
+                        .vertices = data.verts,
+                        .call =
+                            {
+                                .mode =
+                                    gleam::drawing::primitive::triangle_strip,
+                            },
+                        .data =
+                            {
+                                .arrays =
+                                    {
+                                        .count  = 4,
+                                        .offset = 22 + 4 * i,
+                                    },
+                            },
+                    });
+
+            data.load_basis += Chrono::to_float(delta) * 10.f;
+            data.load_basis = std::fmod(data.load_basis, 10.f);
+            data.load_idx   = i32(data.load_basis);
         },
         [](EntityContainer& e, APIData& d, Components::time_point const&) {
-            e.remove_subsystems_matching<
-                Components::matchers::all_subsystems_in<
-                    type_list_t<GFX_SYS>>>();
-            d.plain_color.dealloc();
-            d.plane_desc.dealloc();
-            GFX::UnloadAPI();
-            d.context = nullptr;
+            d.vertex->dealloc();
+            d.verts->dealloc();
+            d.color->dealloc();
+            d.simple->dealloc();
         });
 
     return comp_app::ExecLoop<comp_app::BundleData>::exec(e);

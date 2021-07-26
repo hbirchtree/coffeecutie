@@ -29,6 +29,11 @@ struct undefined_behavior : public std::logic_error
     using std::logic_error::logic_error;
 };
 
+struct unimplemented_path : public std::logic_error
+{
+    using std::logic_error::logic_error;
+};
+
 struct memory_error : public std::logic_error
 {
     using std::logic_error::logic_error;

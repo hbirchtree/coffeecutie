@@ -8,7 +8,7 @@ coffee_library (
     private/libc_functions.cpp
     private/pimpl_state.cpp
 
-    LIBRARIES Microsoft.GSL::GSL stdc++fs
+    LIBRARIES Microsoft.GSL::GSL
 
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -43,33 +43,24 @@ if(BUILD_ASAN)
 endif()
 
 if(EMSCRIPTEN)
-    if("${EMSCRIPTEN_SOURCEMAP_BASE}" STREQUAL "")
-        set ( EMSCRIPTEN_SOURCEMAP_BASE "http://localhost:8000" )
-    endif()
-
-    set ( EMSCRIPTEN_SOURCEMAP_BASE "${EMSCRIPTEN_SOURCEMAP_BASE}"
-        CACHE STRING "Emscripten sourcemap base URL"
-        )
-
     if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
         target_compile_options ( PeripheralLib PUBLIC
-            -g4
-            "-s                              " DEMANGLE_SUPPORT=1
+            -gsource-map
             )
         target_link_options ( PeripheralLib PUBLIC
-            -g4
-            "-s                            " DEMANGLE_SUPPORT=1
-            --source-map-base "${EMSCRIPTEN_SOURCEMAP_BASE}"
+            -gsource-map
+            "-s         " DEMANGLE_SUPPORT=1
+            "-s        " ASSERTIONS=1
             )
     elseif("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
         target_compile_options ( PeripheralLib PUBLIC
-            -g4 -O1
-            "-s                                 " DEMANGLE_SUPPORT=1
+            -gsource-map -O1
+#            "-s                                 " DEMANGLE_SUPPORT=1
             )
         target_link_options ( PeripheralLib PUBLIC
-            -g4 -O1
-            "-s                                " DEMANGLE_SUPPORT=1
-            --source-map-base "${EMSCRIPTEN_SOURCEMAP_BASE}"
+            -gsource-map -O1
+            "-s         " DEMANGLE_SUPPORT=1
+            "-s        " ASSERTIONS=1
             )
     else()
         target_compile_options ( PeripheralLib PUBLIC
@@ -138,7 +129,6 @@ if(APPLE)
         target_link_libraries ( PeripheralLib PUBLIC
             "-framework CoreGraphics"
             "-framework QuartzCore"
-            "-framework OpenGL"
             "-framework AppKit"
             )
     else()
@@ -159,36 +149,9 @@ if(APPLE)
 endif()
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
-    # Libunwind is used to print function names at runtime
-    # Windows does not support this library
-    # Android's Bionic does not grant access to unwind, even though it is there. Bad Google, bad!
-    
-    #if(NOT DEFINED LIBUNWIND_INCLUDE_DIR)
-    #    find_package( Unwind QUIET )
-    #endif()
-    #if (DEFINED LIBUNWIND_INCLUDE_DIR)
-    #    target_include_directories ( PeripheralLib PUBLIC
-    #        $<BUILD_INTERFACE:${LIBUNWIND_INCLUDE_DIR}>
-    #        )
-    #    target_link_libraries ( PeripheralLib PUBLIC 
-    #        $<BUILD_INTERFACE:${LIBUNWIND_GENERIC_LIBRARY}>
-    #        $<BUILD_INTERFACE:${LIBUNWIND_SPECIFIC_LIBRARY}>
-    #        )
-    #endif()
-
     target_link_libraries ( PeripheralLib PUBLIC
         rt
         )
-
-    if(BEAGLE)
-#        find_library ( UNWIND_ARM_LIB unwind
-#            PATH_SUFFIXES lib/${CMAKE_LIBRARY_ARCHITECTURE}
-#            )
-
-#        target_link_libraries( PeripheralLib PUBLIC
-#            ${UNWIND_ARM_LIB}
-#            )
-    endif()
 endif()
 
 if(NOT WIN32 AND NOT MSYS AND NOT MINGW AND NOT EMSCRIPTEN)
@@ -206,6 +169,7 @@ if(NOT WIN32 AND NOT APPLE AND NOT EMSCRIPTEN AND NOT GAMECUBE)
     find_package ( Threads REQUIRED )
     target_link_libraries ( PeripheralLib PUBLIC
         Threads::Threads
+        stdc++fs
         )
 endif()
 
@@ -217,20 +181,18 @@ endif()
 
 if(EMSCRIPTEN)
     target_compile_options ( PeripheralLib PUBLIC
-        "-s            " ALLOW_MEMORY_GROWTH=1
-        "-s           " SAFE_HEAP=1
-        "-s          " DISABLE_EXCEPTION_CATCHING=0
-        "-s         " DEMANGLE_SUPPORT=1
-        "--no-heap-copy"
-        "-fPIC"
+        -fexceptions
+        --no-heap-copy
+        -fPIC
        )
    target_link_options ( PeripheralLib PUBLIC
-        "-s            " ALLOW_MEMORY_GROWTH=1
+#        "-s            " ALLOW_MEMORY_GROWTH=1
         "-s           " SAFE_HEAP=1
         "-s          " DISABLE_EXCEPTION_CATCHING=0
-        "-s         " DEMANGLE_SUPPORT=1
-        "--no-heap-copy"
-        "-fPIC"
+        "-s       " LLD_REPORT_UNDEFINED
+        -fexceptions
+        --no-heap-copy
+        -fPIC
        )
 endif()
 

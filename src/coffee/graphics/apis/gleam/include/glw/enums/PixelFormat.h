@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // PixelFormat
-enum class pixel_format : ::libc_types::u32 {
+enum class pixel_format : ::libc_types::u32
+{
 #ifdef GL_ABGR_EXT
     abgr_ext = GL_ABGR_EXT,
 #endif
@@ -101,4 +102,4 @@ enum class pixel_format : ::libc_types::u32 {
 #endif
 }; // enum class pixel_format
 
-} // namespace gl::groups
+} // namespace gl::group

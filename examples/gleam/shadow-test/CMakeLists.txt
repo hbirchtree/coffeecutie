@@ -4,7 +4,7 @@ coffee_application (
     SOURCES main.cpp
     LIBRARIES
     DropinRenderer
-    GLeamRHI
+    GLeamRHI_Dynamic
     Core
     )
 

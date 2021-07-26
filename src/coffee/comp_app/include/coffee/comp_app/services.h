@@ -3,12 +3,13 @@
 #include <coffee/components/components.h>
 #include <coffee/core/types/display/properties.h>
 #include <coffee/core/types/input/event_types.h>
+
+#include <peripherals/semantic/chunk.h>
 #include <peripherals/stl/functional_types.h>
 #include <peripherals/stl/thread_types.h>
 #include <peripherals/typing/enum/pixels/format.h>
 #include <peripherals/typing/geometry/point.h>
 #include <peripherals/typing/geometry/size.h>
-#include <peripherals/semantic/chunk.h>
 #include <peripherals/typing/pixels/rgba.h>
 
 #include "app_error.h"
@@ -18,6 +19,9 @@ namespace detail {
 using namespace Coffee::Components;
 
 using WindowState = Coffee::Display::Properties::State;
+
+template<typename T>
+using tag_t = detail::TagType<T>;
 } // namespace detail
 
 using text_type   = Coffee::CString const&;
@@ -26,122 +30,19 @@ using position_t  = typing::geometry::point_2d<libc_types::i32>;
 using size_2d_t   = typing::geometry::size_2d<libc_types::i32>;
 using PixFmt      = typing::pixels::PixFmt;
 
-template<class ExposedType, class... OtherServices>
-struct AppServiceTraits
-{
-    using type     = ExposedType;
-    using services = typename detail::TypeList<ExposedType, OtherServices...>;
-};
+using Coffee::Components::component_list;
+using Coffee::Components::subsystem_list;
 
-template<class ConfigType>
-struct ConfigTraits
-{
-    using type = ConfigType;
-};
+namespace interfaces {
 
-template<class ExposedConfig>
-struct Config : detail::Subsystem<ConfigTraits<ExposedConfig>>
-{
-    using type = ExposedConfig;
-
-    virtual ExposedConfig const& get() const final
-    {
-        return *C_CAST<ExposedConfig const*>(this);
-    }
-    virtual ExposedConfig& get() final
-    {
-        return *C_CAST<ExposedConfig*>(this);
-    }
-};
-
-struct WindowConfig : Config<WindowConfig>
-{
-    text_type_t         title;
-    size_2d_t           size;
-    position_t          position;
-    detail::WindowState flags = detail::WindowState::Resizable |
-                                detail::WindowState::Windowed |
-                                detail::WindowState::Visible;
-};
-
-template<
-    class ExposedType,
-    typename ServiceList = detail::TypeList<ExposedType>>
-struct AppService : detail::RestrictedSubsystem<
-                        AppServiceTraits<ExposedType>,
-                        detail::TypeList<void>,
-                        detail::TypeList<void>,
-                        ServiceList>
-{
-    using subsystem_type = typename detail::RestrictedSubsystem<
-        AppServiceTraits<ExposedType>,
-        detail::TypeList<void>,
-        detail::TypeList<void>,
-        ServiceList>;
-
-    using services = ServiceList;
-
-    virtual ~AppService()
-    {
-    }
-
-    template<typename InternalType, typename... Args>
-    static InternalType& register_service(
-        detail::EntityContainer& container, Args... args)
-    {
-        using tag_type = AppServiceTraits<ExposedType>;
-
-        auto& subsys =
-            container.register_subsystem_inplace<tag_type, InternalType>(
-                std::forward<Args>(args)...);
-
-        using service_types = AppServiceTraits<
-            ExposedType,
-            InternalType,
-            AppService<ExposedType>>;
-
-        container.register_subsystem_services<service_types>(&subsys);
-
-        subsys.priority = AppService::system_prio;
-
-        return subsys;
-    }
-
-    virtual ExposedType& get() final
-    {
-        return *C_DCAST<ExposedType>(this);
-    }
-
-    virtual ExposedType const& get() const final
-    {
-        return *C_DCAST<ExposedType const>(this);
-    }
-};
-
-struct AppLoadableService
-{
-    using entity_container = detail::EntityContainer;
-
-    virtual void load(entity_container& e, app_error& ec)
-    {
-        (void)e, (void)ec;
-    }
-    virtual void unload(entity_container& e, app_error& ec)
-    {
-        (void)e, (void)ec;
-    }
-};
-
-struct AppInfo : AppService<AppInfo>
+struct AppInfo
 {
     virtual void        add(text_type key, text_type value) = 0;
     virtual text_type_t get(text_type key)                  = 0;
 };
 
-struct Windowing : AppService<Windowing>
+struct Windowing
 {
-    virtual ~Windowing();
-
     virtual void show()  = 0;
     virtual void close() = 0;
 
@@ -188,7 +89,7 @@ struct StaticWindowing : Windowing
     }
 };
 
-struct Dialogs : AppService<Dialogs>
+struct Dialogs
 {
     using prompt_callback  = Coffee::Function<void(text_type)>;
     using confirm_callback = Coffee::Function<void(bool)>;
@@ -202,7 +103,7 @@ struct Dialogs : AppService<Dialogs>
     virtual void prompt(text_type title, prompt_callback&& callback)     = 0;
 };
 
-struct DisplayInfo : AppService<DisplayInfo>
+struct DisplayInfo
 {
     virtual size_2d_t       virtualSize() const                     = 0;
     virtual libc_types::u32 count() const                           = 0;
@@ -227,26 +128,24 @@ struct SingleDisplayInfo : DisplayInfo
     }
 };
 
-struct ScreensaverInfo : AppService<ScreensaverInfo>
+struct ScreensaverInfo
 {
     virtual bool isEnabled() const        = 0;
     virtual void setEnabled(bool enabled) = 0;
 };
 
-struct WindowInfo : AppService<WindowInfo>
+struct WindowInfo
 {
     virtual text_type_t name() const               = 0;
     virtual void        setName(text_type newName) = 0;
 };
 
-struct NativeWindowInfo : AppService<NativeWindowInfo>
+struct NativeWindowInfo
 {
 };
 
 struct PtrNativeWindowInfo : NativeWindowInfo
 {
-    using type = PtrNativeWindowInfo;
-
     using NDisplay = void*;
     using NWindow  = void*;
 
@@ -255,7 +154,7 @@ struct PtrNativeWindowInfo : NativeWindowInfo
 };
 
 template<typename EventType>
-struct EventBus : AppService<EventBus<EventType>>
+struct EventBus
 {
     virtual ~EventBus()
     {
@@ -271,8 +170,6 @@ struct EventBus : AppService<EventBus<EventType>>
 template<typename EventType>
 struct BasicEventBus : EventBus<EventType>
 {
-    using type = BasicEventBus<EventType>;
-
     virtual ~BasicEventBus()
     {
     }
@@ -324,19 +221,9 @@ struct BasicEventBus : EventBus<EventType>
     {
         return e1.prio > e2.prio;
     }
-
-    void start_restricted(
-        typename EventBus<EventType>::Proxy&,
-        typename EventBus<EventType>::time_point const&)
-    {
-        std::sort(
-            m_handlers.begin(),
-            m_handlers.end(),
-            &BasicEventBus::sort_handlers);
-    }
 };
 
-struct MouseInput : AppService<MouseInput>
+struct MouseInput
 {
     using MouseButton = Coffee::Input::CIMouseButtonEvent::MouseButton;
 
@@ -348,7 +235,7 @@ struct MouseInput : AppService<MouseInput>
     virtual MouseButton buttons() const                = 0;
 };
 
-struct KeyboardInput : AppService<KeyboardInput>
+struct KeyboardInput
 {
     using KeyModifiers = Coffee::Input::CIKeyEvent::KeyModifiers;
 
@@ -368,6 +255,7 @@ struct KeyboardInput : AppService<KeyboardInput>
 
 struct BasicKeyboardInput : KeyboardInput
 {
+    using KeyModifiers  = Coffee::Input::CIKeyEvent::KeyModifiers;
     using register_type = stl_types::Map<libc_types::u32, KeyModifiers>;
 
     struct EventHandler
@@ -394,20 +282,7 @@ struct BasicKeyboardInput : KeyboardInput
     stl_types::Map<libc_types::u32, KeyModifiers> m_register;
 };
 
-struct ControllerConfig : Config<ControllerConfig>
-{
-    enum Options
-    {
-        None            = 0x0,
-        BackgroundInput = 0x1,
-    };
-
-    text_type_t     mapping;
-    libc_types::i16 deadzone = 6000;
-    Options         options  = None;
-};
-
-struct ControllerInput : AppService<ControllerInput>
+struct ControllerInput
 {
     using controller_map = Coffee::Input::CIControllerState;
 
@@ -416,7 +291,7 @@ struct ControllerInput : AppService<ControllerInput>
     virtual text_type_t     name(libc_types::u32 idx) const  = 0;
 };
 
-struct TouchInput : AppService<TouchInput>
+struct TouchInput
 {
     virtual libc_types::u32 points() const = 0;
 
@@ -424,37 +299,27 @@ struct TouchInput : AppService<TouchInput>
     virtual position_t startPosition(libc_types::u32 idx) const = 0;
 };
 
-struct GestureInput : AppService<GestureInput>
+struct GestureInput
 {
 };
 
-struct GraphicsBindingConfig : Config<GraphicsBindingConfig>
-{
-    using loader_func = void* (*)(const char*);
-
-    loader_func loader = nullptr;
-};
-
-struct GraphicsBinding : AppService<GraphicsBinding>
+struct GraphicsBinding
 {
 };
 
-struct LinkedGraphicsBinding : GraphicsBinding
+struct GraphicsContext
 {
 };
 
-struct GraphicsContext : AppService<GraphicsContext>
+struct GraphicsFramebuffer
 {
-};
-
-struct GraphicsFramebuffer : AppService<GraphicsFramebuffer>
-{
-    virtual void end_restricted(Proxy&, time_point const&) final
+    void defaultSwap()
     {
         app_error ec;
         swapBuffers(ec);
         C_ERROR_CHECK(ec);
     }
+
     virtual libc_types::u32 buffers() const
     {
         return 1;
@@ -475,20 +340,40 @@ struct GraphicsFramebuffer : AppService<GraphicsFramebuffer>
     virtual void swapBuffers(app_error& ec) = 0;
 };
 
-struct GraphicsThreadInfo : AppService<GraphicsThreadInfo>
+struct GraphicsThreadInfo
 {
     virtual stl_types::ThreadId::Hash thread() const             = 0;
     virtual void                      makeCurrent(app_error& ec) = 0;
 };
 
-struct GraphicsSwapControl : AppService<GraphicsSwapControl>
+struct GraphicsSwapControl
 {
     virtual libc_types::i32 swapInterval() const                      = 0;
     virtual void            setSwapInterval(libc_types::i32 interval) = 0;
 };
 
 template<typename T>
-struct TempProvider : AppService<T>
+struct ClockProvider
+{
+    enum class Governor
+    {
+        Powersaving,
+        Ondemand,
+        Performance,
+    };
+
+    virtual libc_types::u32 threads() = 0;
+
+    virtual Governor        governor(libc_types::u32)  = 0;
+    virtual libc_types::f64 frequency(libc_types::u32) = 0;
+};
+
+struct CPUClockProvider : ClockProvider<CPUClockProvider>
+{
+};
+
+template<typename T>
+struct TempProvider
 {
     enum class Presence
     {
@@ -519,26 +404,8 @@ struct TempProvider : AppService<T>
     }
 };
 
-template<typename T>
-struct ClockProvider : AppService<T>
-{
-    enum class Governor
-    {
-        Powersaving,
-        Ondemand,
-        Performance,
-    };
-
-    virtual libc_types::u32 threads() = 0;
-
-    virtual Governor governor(libc_types::u32) = 0;
-    virtual libc_types::f64 frequency(libc_types::u32) = 0;
-};
-
 struct CPUTempProvider : TempProvider<CPUTempProvider>
 {
-    using type = CPUTempProvider;
-
     virtual DeviceClass device()
     {
         return DeviceClass::CPU;
@@ -547,8 +414,6 @@ struct CPUTempProvider : TempProvider<CPUTempProvider>
 
 struct GPUTempProvider : TempProvider<GPUTempProvider>
 {
-    using type = GPUTempProvider;
-
     virtual DeviceClass device()
     {
         return DeviceClass::GPU;
@@ -557,34 +422,27 @@ struct GPUTempProvider : TempProvider<GPUTempProvider>
 
 struct MultiTempProvider : TempProvider<MultiTempProvider>
 {
-    using type = MultiTempProvider;
-
     virtual DeviceClass device()
     {
         return DeviceClass::Multi;
     }
 };
 
-struct CPUClockProvider : ClockProvider<CPUClockProvider>
+struct NetworkStatProvider
 {
-    using type = CPUClockProvider;
-};
-
-struct NetworkStatProvider : AppService<NetworkStatProvider>
-{
-    virtual libc_types::u32 received() const = 0;
+    virtual libc_types::u32 received() const    = 0;
     virtual libc_types::u32 transmitted() const = 0;
     virtual libc_types::u32 connections() const = 0;
 
     virtual void reset_counters() = 0;
 };
 
-struct MemoryStatProvider : AppService<MemoryStatProvider>
+struct MemoryStatProvider
 {
     virtual libc_types::u32 resident() = 0;
 };
 
-struct BatteryProvider : AppService<BatteryProvider>
+struct BatteryProvider
 {
     enum class PowerSource
     {
@@ -592,19 +450,181 @@ struct BatteryProvider : AppService<BatteryProvider>
         Battery,
     };
 
-    virtual PowerSource source() = 0;
+    virtual PowerSource     source()     = 0;
     virtual libc_types::u16 percentage() = 0;
 };
 
-struct ScreenshotProvider : AppService<ScreenshotProvider>
+struct ScreenshotProvider
 {
-    virtual size_2d_t size() const = 0;
+    virtual size_2d_t                                  size() const   = 0;
     virtual semantic::mem_chunk<typing::pixels::rgb_t> pixels() const = 0;
 };
 
-struct StreamConfig : Config<StreamConfig>
+} // namespace interfaces
+
+template<class ExposedType, class... OtherServices>
+struct AppServiceTraits
 {
-    virtual libc_types::i32 framerate() const = 0;
+    using type     = ExposedType;
+    using services = detail::subsystem_list<ExposedType, OtherServices...>;
+};
+
+template<class ConfigType>
+struct ConfigTraits
+{
+    using type = ConfigType;
+};
+
+template<class ExposedConfig>
+struct Config : detail::SubsystemBase
+{
+    using type = ExposedConfig;
+
+    virtual ExposedConfig const& get() const final
+    {
+        return *C_CAST<ExposedConfig const*>(this);
+    }
+    virtual ExposedConfig& get() final
+    {
+        return *C_CAST<ExposedConfig*>(this);
+    }
+};
+
+struct WindowConfig : Config<WindowConfig>
+{
+    text_type_t         title;
+    size_2d_t           size;
+    position_t          position;
+    detail::WindowState flags = detail::WindowState::Resizable |
+                                detail::WindowState::Windowed |
+                                detail::WindowState::Visible;
+};
+
+struct ControllerConfig : Config<ControllerConfig>
+{
+    enum Options
+    {
+        None            = 0x0,
+        BackgroundInput = 0x1,
+    };
+
+    text_type_t     mapping;
+    libc_types::i16 deadzone = 6000;
+    Options         options  = None;
+};
+
+struct GraphicsBindingConfig : Config<GraphicsBindingConfig>
+{
+    using loader_func = void* (*)(const char*);
+
+    loader_func loader = nullptr;
+};
+
+template<detail::is_subsystem ExposedType, typename Iface = void>
+struct AppService : detail::SubsystemBase
+{
+    using type         = ExposedType;
+    using exposed_type = ExposedType;
+    using components   = type_safety::empty_list_t;
+    using subsystems   = type_safety::empty_list_t;
+    using services     = typename std::conditional<
+        std::is_same_v<Iface, void>,
+        detail::subsystem_list<ExposedType>,
+        detail::subsystem_list<ExposedType, Iface>>::type;
+    using time_point = detail::time_point;
+
+    virtual ~AppService()
+    {
+    }
+
+    virtual void start_frame(
+        detail::ContainerProxy& c, detail::time_point const& t)
+    {
+        detail::restricted::start_frame(
+            C_OCAST<exposed_type&>(*this), c.underlying(), t);
+    }
+    virtual void end_frame(
+        detail::ContainerProxy& c, detail::time_point const& t)
+    {
+        detail::restricted::end_frame(
+            C_OCAST<exposed_type&>(*this), c.underlying(), t);
+    }
+
+    template<typename InternalType, typename... Args>
+    requires std::is_convertible_v<InternalType*, ExposedType*>
+    static InternalType& register_service(
+        detail::EntityContainer& container, Args... args)
+    {
+        using tag_type = AppServiceTraits<ExposedType>;
+
+        auto& subsys =
+            container.register_subsystem_inplace<ExposedType, InternalType>(
+                std::forward<Args>(args)...);
+
+        container.register_subsystem_services<ExposedType>(&subsys);
+
+        subsys.priority = AppService::system_prio;
+
+        return subsys;
+    }
+};
+
+struct AppLoadableService
+{
+    using entity_container = detail::EntityContainer;
+
+    virtual void load(entity_container& e, app_error& ec)
+    {
+        (void)e, (void)ec;
+    }
+    virtual void unload(entity_container& e, app_error& ec)
+    {
+        (void)e, (void)ec;
+    }
+};
+
+using AppInfo             = detail::tag_t<interfaces::AppInfo>;
+using BatteryProvider     = detail::tag_t<interfaces::BatteryProvider>;
+using ControllerInput     = detail::tag_t<interfaces::ControllerInput>;
+using CPUClockProvider    = detail::tag_t<interfaces::CPUClockProvider>;
+using CPUTempProvider     = detail::tag_t<interfaces::CPUTempProvider>;
+using DisplayInfo         = detail::tag_t<interfaces::DisplayInfo>;
+using GPUTempProvider     = detail::tag_t<interfaces::GPUTempProvider>;
+using GraphicsBinding     = detail::tag_t<interfaces::GraphicsBinding>;
+using GraphicsContext     = detail::tag_t<interfaces::GraphicsContext>;
+using GraphicsFramebuffer = detail::tag_t<interfaces::GraphicsFramebuffer>;
+using GraphicsSwapControl = detail::tag_t<interfaces::GraphicsSwapControl>;
+using GraphicsThreadInfo  = detail::tag_t<interfaces::GraphicsThreadInfo>;
+using KeyboardInput       = detail::tag_t<interfaces::KeyboardInput>;
+using MemoryStatProvider  = detail::tag_t<interfaces::MemoryStatProvider>;
+using MouseInput          = detail::tag_t<interfaces::MouseInput>;
+using NetworkStatProvider = detail::tag_t<interfaces::NetworkStatProvider>;
+using PtrNativeWindowInfo = detail::tag_t<interfaces::PtrNativeWindowInfo>;
+using ScreenshotProvider  = detail::tag_t<interfaces::ScreenshotProvider>;
+using TouchInput          = detail::tag_t<interfaces::TouchInput>;
+using WindowInfo          = detail::tag_t<interfaces::WindowInfo>;
+using Windowing           = detail::tag_t<interfaces::Windowing>;
+
+template<typename EType>
+struct EventBus : interfaces::EventBus<EType>,
+                  AppService<interfaces::EventBus<EType>>
+{
+};
+
+template<typename EType>
+struct BasicEventBus : interfaces::BasicEventBus<EType>,
+                       AppService<BasicEventBus<EType>, EventBus<EType>>
+{
+    using readable_services = type_safety::empty_list_t;
+    using proxy_type        = detail::restricted::proxy_t<BasicEventBus<EType>>;
+
+    void start_restricted(proxy_type&, detail::time_point const&)
+    {
+        std::sort(
+            this->m_handlers.begin(),
+            this->m_handlers.end(),
+            &BasicEventBus::sort_handlers);
+    }
 };
 
 } // namespace comp_app

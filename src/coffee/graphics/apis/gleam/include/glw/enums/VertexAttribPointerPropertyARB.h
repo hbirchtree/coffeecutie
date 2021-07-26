@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // VertexAttribPointerPropertyARB
-enum class vertex_attrib_pointer_property_arb : ::libc_types::u32 {
+enum class vertex_attrib_pointer_property_arb : ::libc_types::u32
+{
 #ifdef GL_VERTEX_ATTRIB_ARRAY_POINTER
     vertex_attrib_array_pointer = GL_VERTEX_ATTRIB_ARRAY_POINTER,
 #endif
@@ -14,4 +15,4 @@ enum class vertex_attrib_pointer_property_arb : ::libc_types::u32 {
 #endif
 }; // enum class vertex_attrib_pointer_property_arb
 
-} // namespace gl::groups
+} // namespace gl::group

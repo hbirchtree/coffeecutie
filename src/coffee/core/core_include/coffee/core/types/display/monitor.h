@@ -14,7 +14,7 @@ namespace Display {
 struct Monitor
 {
     Monitor() :
-        screenArea(), name(nullptr), phySize(0, 0), colorBits(), refresh(0),
+        screenArea(), name(nullptr), colorBits(), refresh(0),
         index(0)
     {
     }

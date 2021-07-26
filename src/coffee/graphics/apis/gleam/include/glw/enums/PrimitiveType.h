@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // PrimitiveType
-enum class primitive_type : ::libc_types::u32 {
+enum class primitive_type : ::libc_types::u32
+{
 #ifdef GL_LINES
     lines = GL_LINES,
 #endif
@@ -83,4 +84,4 @@ enum class primitive_type : ::libc_types::u32 {
 #endif
 }; // enum class primitive_type
 
-} // namespace gl::groups
+} // namespace gl::group

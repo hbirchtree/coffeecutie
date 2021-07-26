@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // GetMapQuery
-enum class get_map_query : ::libc_types::u32 {
+enum class get_map_query : ::libc_types::u32
+{
 #ifdef GL_COEFF
     coeff = GL_COEFF,
 #endif
@@ -17,4 +18,4 @@ enum class get_map_query : ::libc_types::u32 {
 #endif
 }; // enum class get_map_query
 
-} // namespace gl::groups
+} // namespace gl::group

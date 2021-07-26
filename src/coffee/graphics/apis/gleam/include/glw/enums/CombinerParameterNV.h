@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // CombinerParameterNV
-enum class combiner_parameter_nv : ::libc_types::u32 {
+enum class combiner_parameter_nv : ::libc_types::u32
+{
 #ifdef GL_COMBINER_COMPONENT_USAGE_NV
     combiner_component_usage_nv = GL_COMBINER_COMPONENT_USAGE_NV,
 #endif
@@ -17,4 +18,4 @@ enum class combiner_parameter_nv : ::libc_types::u32 {
 #endif
 }; // enum class combiner_parameter_nv
 
-} // namespace gl::groups
+} // namespace gl::group

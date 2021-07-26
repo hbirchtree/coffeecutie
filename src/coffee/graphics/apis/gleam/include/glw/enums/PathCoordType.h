@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // PathCoordType
-enum class path_coord_type : ::libc_types::u32 {
+enum class path_coord_type : ::libc_types::u32
+{
 #ifdef GL_ARC_TO_NV
     arc_to_nv = GL_ARC_TO_NV,
 #endif
@@ -106,7 +107,8 @@ enum class path_coord_type : ::libc_types::u32 {
     relative_smooth_cubic_curve_to_nv = GL_RELATIVE_SMOOTH_CUBIC_CURVE_TO_NV,
 #endif
 #ifdef GL_RELATIVE_SMOOTH_QUADRATIC_CURVE_TO_NV
-    relative_smooth_quadratic_curve_to_nv = GL_RELATIVE_SMOOTH_QUADRATIC_CURVE_TO_NV,
+    relative_smooth_quadratic_curve_to_nv =
+        GL_RELATIVE_SMOOTH_QUADRATIC_CURVE_TO_NV,
 #endif
 #ifdef GL_RELATIVE_VERTICAL_LINE_TO_NV
     relative_vertical_line_to_nv = GL_RELATIVE_VERTICAL_LINE_TO_NV,
@@ -143,4 +145,4 @@ enum class path_coord_type : ::libc_types::u32 {
 #endif
 }; // enum class path_coord_type
 
-} // namespace gl::groups
+} // namespace gl::group

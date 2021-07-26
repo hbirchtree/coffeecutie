@@ -18,36 +18,36 @@ struct tvector
   public:
     static constexpr size_t size = Size;
 
-    FORCEDINLINE tvector()
+    constexpr FORCEDINLINE tvector()
     {
         for(size_t i = 0; i < Size; i++)
             (*this)[i] = T(0);
     }
-    FORCEDINLINE tvector(const T& c)
+    constexpr FORCEDINLINE tvector(const T& c)
     {
         for(size_t i = 0; i < Size; i++)
             (*this)[i] = c;
     }
-    FORCEDINLINE tvector(const tvector<T, Size>& vector)
+    constexpr FORCEDINLINE tvector(const tvector<T, Size>& vector)
     {
         for(size_t i = 0; i < Size; i++)
             (*this)[i] = vector[i];
     }
     template<class = typename std::enable_if<Size == 2>>
-    FORCEDINLINE tvector(const T& x, const T& y)
+    constexpr FORCEDINLINE tvector(const T& x, const T& y)
     {
         this->x() = x;
         this->y() = y;
     }
     template<class = typename std::enable_if<Size == 3>>
-    FORCEDINLINE tvector(const T& x, const T& y, const T& z)
+    constexpr FORCEDINLINE tvector(const T& x, const T& y, const T& z)
     {
         this->x() = x;
         this->y() = y;
         this->z() = z;
     }
     template<class = typename std::enable_if<Size == 4>>
-    FORCEDINLINE tvector(const T& x, const T& y, const T& z, const T& w)
+    constexpr FORCEDINLINE tvector(const T& x, const T& y, const T& z, const T& w)
     {
         this->x() = x;
         this->y() = y;
@@ -55,7 +55,7 @@ struct tvector
         this->w() = w;
     }
 
-    FORCEDINLINE tvector(const tvector<T, Size - 1>& v, const T& c)
+    constexpr FORCEDINLINE tvector(const tvector<T, Size - 1>& v, const T& c)
     {
         static_assert((Size - 1) > 1, "Invalid vector combination!");
         for(size_t i = 0; i < Size - 1; i++)
@@ -63,49 +63,49 @@ struct tvector
         (*this)[Size - 1] = c;
     }
 
-    FORCEDINLINE tvector(const tvector<T, Size + 1>& v)
+    constexpr FORCEDINLINE tvector(const tvector<T, Size + 1>& v)
     {
         static_assert((Size + 1) <= 4, "Invalid vector combination!");
         for(size_t i = 0; i < Size; i++)
             (*this)[i] = v[i];
     }
 
-    FORCEDINLINE T& x()
+    constexpr FORCEDINLINE T& x()
     {
         return (*this)[0];
     }
     template<class = typename std::enable_if<Size >= 2>>
-    FORCEDINLINE T& y()
+    constexpr FORCEDINLINE T& y()
     {
         return (*this)[1];
     }
     template<class = typename std::enable_if<Size >= 3>>
-    FORCEDINLINE T& z()
+    constexpr FORCEDINLINE T& z()
     {
         return (*this)[2];
     }
     template<class = typename std::enable_if<Size >= 4>>
-    FORCEDINLINE T& w()
+    constexpr FORCEDINLINE T& w()
     {
         return (*this)[3];
     }
 
-    FORCEDINLINE const T& x() const
+    constexpr FORCEDINLINE const T& x() const
     {
         return (*this)[0];
     }
     template<class = typename std::enable_if<Size >= 2>>
-    FORCEDINLINE const T& y() const
+    constexpr FORCEDINLINE const T& y() const
     {
         return (*this)[1];
     }
     template<class = typename std::enable_if<Size >= 3>>
-    FORCEDINLINE const T& z() const
+    constexpr FORCEDINLINE const T& z() const
     {
         return (*this)[2];
     }
     template<class = typename std::enable_if<Size >= 4>>
-    FORCEDINLINE const T& w() const
+    constexpr FORCEDINLINE const T& w() const
     {
         return (*this)[3];
     }
@@ -187,11 +187,11 @@ struct tvector
 
     /*No more swizzles*/
 
-    FORCEDINLINE T& operator[](size_t i)
+    constexpr FORCEDINLINE T& operator[](size_t i)
     {
         return data[i];
     }
-    FORCEDINLINE const T& operator[](size_t i) const
+    constexpr FORCEDINLINE const T& operator[](size_t i) const
     {
         return data[i];
     }

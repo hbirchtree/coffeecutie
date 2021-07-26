@@ -5,6 +5,7 @@
 #include "entity_reference.h"
 #include "entity_selectors.h"
 #include "proxy.h"
+#include "restricted_subsystem.h"
 #include "service_query.h"
 #include "service_reference.h"
 #include "subsystem.h"

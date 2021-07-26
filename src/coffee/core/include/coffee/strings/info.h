@@ -41,24 +41,24 @@ extern CString to_string(Display::Monitor const& arg);
 template<typename T>
 inline CString to_string(point_2d<T> const& v)
 {
-    return cStringFormat("p({0},{1})", v.x, v.y);
+    return fmt("p({0},{1})", v.x, v.y);
 }
 
 template<typename T>
 inline CString to_string(size_2d<T> const& v)
 {
-    return cStringFormat("sz({0},{1})", v.w, v.h);
+    return fmt("sz({0},{1})", v.w, v.h);
 }
 
 inline CString to_string(Size const& v)
 {
-    return cStringFormat("sz({0},{1})", v.w, v.h);
+    return fmt("sz({0},{1})", v.w, v.h);
 }
 
 template<typename T>
 inline CString to_string(size_3d<T> const& v)
 {
-    return cStringFormat("sz({0},{1},{2}})", v.width, v.height, v.depth);
+    return fmt("sz({0},{1},{2}})", v.width, v.height, v.depth);
 }
 
 } // namespace Strings

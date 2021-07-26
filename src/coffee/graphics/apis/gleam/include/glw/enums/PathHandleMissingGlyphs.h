@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // PathHandleMissingGlyphs
-enum class path_handle_missing_glyphs : ::libc_types::u32 {
+enum class path_handle_missing_glyphs : ::libc_types::u32
+{
 #ifdef GL_SKIP_MISSING_GLYPH_NV
     skip_missing_glyph_nv = GL_SKIP_MISSING_GLYPH_NV,
 #endif
@@ -14,4 +15,4 @@ enum class path_handle_missing_glyphs : ::libc_types::u32 {
 #endif
 }; // enum class path_handle_missing_glyphs
 
-} // namespace gl::groups
+} // namespace gl::group

@@ -187,6 +187,7 @@ enum class CompFlags : u8
     DXT5 = S3TC_5,
 
     BC1 = S3TC_1,
+    BC2 = S3TC_3,
     BC3 = S3TC_5,
     BC4,  /* 8-bit R */
     BC5,  /* 8-bit RG */

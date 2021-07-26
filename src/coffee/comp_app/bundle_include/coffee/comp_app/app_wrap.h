@@ -9,12 +9,9 @@ namespace comp_app {
 template<typename DataType>
 struct AppContainer : AppService<AppContainer<DataType>>, AppMain
 {
-    using type = AppContainer<DataType>;
-
-    using service_type = AppService<AppContainer<DataType>>;
-    using Proxy        = typename service_type::Proxy;
-    using duration     = typename service_type::duration;
-    using time_point   = typename service_type::time_point;
+    using type       = AppContainer<DataType>;
+    using duration   = typename type::duration;
+    using time_point = typename type::time_point;
 
     using setup_func = stl_types::Function<void(
         entity_container&, DataType&, time_point const&)>;
@@ -32,8 +29,7 @@ struct AppContainer : AppService<AppContainer<DataType>>, AppMain
     template<typename... Args>
     static void addTo(entity_container& e, Args... args)
     {
-        service_type::template register_service<AppContainer<DataType>>(
-            e, args...);
+        type::template register_service<AppContainer<DataType>>(e, args...);
 
         e.register_subsystem_services<AppServiceTraits<AppMain>>(
             e.service<AppContainer<DataType>>());
@@ -61,10 +57,11 @@ struct AppContainer : AppService<AppContainer<DataType>>, AppMain
     {
         m_cleanup(e, *m_data, detail::clock::now());
     }
-    virtual void start_restricted(Proxy& p, time_point const& t) final
+    virtual void start_frame(
+        detail::ContainerProxy& p, time_point const& t) final
     {
         m_loop(
-            service_type::get_container(p),
+            type::get_container(p),
             *m_data,
             t,
             stl_types::Chrono::duration_cast<duration>(t - m_previousTime));

@@ -162,8 +162,7 @@ CALContext* context_create(cstring device)
         return nullptr;
     }
 
-    cTag(
-        "ALC",
+    cDebug(
         "Initialized, using device: {0}",
         alcGetString(context->device, ALC_DEVICE_SPECIFIER));
 
@@ -172,7 +171,7 @@ CALContext* context_create(cstring device)
     context_make_current(context);
 
     CALVersion ver = context_version(context);
-    cTag("ALC", "Context version: {0}.{1}", ver.major, ver.minor);
+    cDebug("Context version: {0}.{1}", ver.major, ver.minor);
 
     return context;
 }
@@ -192,7 +191,7 @@ void context_destroy(CALContext* context)
         cWarning("Failed to close AL device");
     context->context = nullptr;
     context->device  = nullptr;
-    cTag("ALC", "Destroyed");
+    cDebug("Destroyed");
 
     delete context;
 }
@@ -323,9 +322,8 @@ void listener_set(const CALListener* listener)
     context_get_error();
     alListenerfv(AL_VELOCITY, C_RCAST<const scalar*>(&listener->velocity));
     context_get_error();
-    Array<Vecf3, 2> orient = {{
-        listener->orientation_forward, listener->orientation_up
-    }};
+    Array<Vecf3, 2> orient = {
+        {listener->orientation_forward, listener->orientation_up}};
 
     alListenerfv(AL_ORIENTATION, C_RCAST<f32*>(orient.data()));
     context_get_error();

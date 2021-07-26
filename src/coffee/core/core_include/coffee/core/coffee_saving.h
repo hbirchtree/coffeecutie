@@ -4,6 +4,7 @@
 #include <coffee/core/stl_types.h>
 #include <coffee/core/types/chunk.h>
 #include <peripherals/build/application.h>
+#include <peripherals/stl/thread_types.h>
 
 namespace Coffee {
 namespace Store {
@@ -36,14 +37,14 @@ struct SaveApi
      * can be null to retrieve size preemptively) \param data_size Target data
      * size \param slot If applicable, which data slot
      */
-    virtual szptr restore(Bytes&& data, slot_count_t slot = 0) = 0;
+    virtual Future<szptr> restore(Bytes&& data, slot_count_t slot = 0) = 0;
     /*!
      * \brief Save memory to storage
      * \param data_ptr Source data pointer
      * \param data_size Source data size
      * \param slot If applicable, which data slot
      */
-    virtual szptr save(Bytes const& data, slot_count_t slot = 0) = 0;
+    virtual Future<szptr> save(Bytes const& data, slot_count_t slot = 0) = 0;
 };
 
 struct FilesystemApi : SaveApi
@@ -52,10 +53,11 @@ struct FilesystemApi : SaveApi
 
     virtual ~FilesystemApi();
 
-    u64          availableMemory();
-    slot_count_t availableSlots();
-    szptr        restore(Bytes&& data, slot_count_t slot = 0);
-    szptr        save(Bytes const& data, slot_count_t slot = 0);
+    u64                availableMemory();
+    slot_count_t       availableSlots();
+
+    Future<szptr> restore(Bytes&& data, slot_count_t slot = 0);
+    Future<szptr> save(Bytes const& data, slot_count_t slot = 0);
 
     AppData const& m_app;
 

@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // UseProgramStageMask
-enum class use_program_stage_mask : ::libc_types::u32 {
+enum class use_program_stage_mask : ::libc_types::u32
+{
 #ifdef GL_ALL_SHADER_BITS
     all_shader_bits = GL_ALL_SHADER_BITS,
 #endif
@@ -63,4 +64,4 @@ enum class use_program_stage_mask : ::libc_types::u32 {
 }; // enum class use_program_stage_mask
 C_FLAGS(use_program_stage_mask, ::libc_types::u32);
 
-} // namespace gl::groups
+} // namespace gl::group

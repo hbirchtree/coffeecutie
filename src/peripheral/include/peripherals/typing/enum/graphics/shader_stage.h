@@ -2,8 +2,7 @@
 
 #include <peripherals/enum/helpers.h>
 
-namespace typing {
-namespace graphics {
+namespace typing::graphics {
 
 enum class ShaderStage
 {
@@ -18,5 +17,7 @@ enum class ShaderStage
 
     All = Vertex | TessEval | TessControl | Geometry | Fragment | Compute
 };
-}
-} // namespace typing
+
+C_FLAGS(ShaderStage, int);
+
+} // namespace typing::graphics

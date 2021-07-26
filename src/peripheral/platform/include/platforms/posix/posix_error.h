@@ -1,7 +1,7 @@
 #pragma once
 
-#include <array>
 #include <peripherals/error/posix.h>
+#include <peripherals/libc/string_ops.h>
 #include <peripherals/stl/types.h>
 #include <string.h>
 
@@ -10,8 +10,15 @@ namespace platform::common::posix {
 FORCEDINLINE stl_types::Optional<stl_types::String> error_message(int error)
 {
     stl_types::Array<char, 255> error_msg = {{}};
+#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_APPLE)
+    if(auto ret = ::strerror_r(error, error_msg.data(), error_msg.size());
+       ret == 0)
+        return stl_types::String(
+            error_msg.data(), libc::str::len(error_msg.data()));
+#else
     if(auto msg = ::strerror_r(error, error_msg.data(), error_msg.size()))
         return stl_types::String(msg, libc::str::len(msg));
+#endif
     return std::nullopt;
 }
 
@@ -21,4 +28,4 @@ FORCEDINLINE stl_types::Optional<stl_types::String> error_message(
     return error_message(error.value_or(0));
 }
 
-} // namespace platform::posix
+} // namespace platform::common::posix

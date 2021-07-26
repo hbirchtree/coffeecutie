@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // RenderbufferParameterName
-enum class renderbuffer_parameter_name : ::libc_types::u32 {
+enum class renderbuffer_parameter_name : ::libc_types::u32
+{
 #ifdef GL_RENDERBUFFER_ALPHA_SIZE
     renderbuffer_alpha_size = GL_RENDERBUFFER_ALPHA_SIZE,
 #endif
@@ -116,4 +117,4 @@ enum class renderbuffer_parameter_name : ::libc_types::u32 {
 #endif
 }; // enum class renderbuffer_parameter_name
 
-} // namespace gl::groups
+} // namespace gl::group

@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // ObjectIdentifier
-enum class object_identifier : ::libc_types::u32 {
+enum class object_identifier : ::libc_types::u32
+{
 #ifdef GL_BUFFER
     buffer = GL_BUFFER,
 #endif
@@ -41,4 +42,4 @@ enum class object_identifier : ::libc_types::u32 {
 #endif
 }; // enum class object_identifier
 
-} // namespace gl::groups
+} // namespace gl::group

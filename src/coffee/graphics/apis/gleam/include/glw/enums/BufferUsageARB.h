@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // BufferUsageARB
-enum class buffer_usage_arb : ::libc_types::u32 {
+enum class buffer_usage_arb : ::libc_types::u32
+{
 #ifdef GL_DYNAMIC_COPY
     dynamic_copy = GL_DYNAMIC_COPY,
 #endif
@@ -35,4 +36,4 @@ enum class buffer_usage_arb : ::libc_types::u32 {
 #endif
 }; // enum class buffer_usage_arb
 
-} // namespace gl::groups
+} // namespace gl::group

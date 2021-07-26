@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // TextureEnvParameter
-enum class texture_env_parameter : ::libc_types::u32 {
+enum class texture_env_parameter : ::libc_types::u32
+{
 #ifdef GL_TEXTURE_ENV_COLOR
     texture_env_color = GL_TEXTURE_ENV_COLOR,
 #endif
@@ -14,4 +15,4 @@ enum class texture_env_parameter : ::libc_types::u32 {
 #endif
 }; // enum class texture_env_parameter
 
-} // namespace gl::groups
+} // namespace gl::group

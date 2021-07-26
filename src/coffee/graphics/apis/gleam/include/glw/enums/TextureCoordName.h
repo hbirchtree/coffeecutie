@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // TextureCoordName
-enum class texture_coord_name : ::libc_types::u32 {
+enum class texture_coord_name : ::libc_types::u32
+{
 #ifdef GL_Q
     q = GL_Q,
 #endif
@@ -20,4 +21,4 @@ enum class texture_coord_name : ::libc_types::u32 {
 #endif
 }; // enum class texture_coord_name
 
-} // namespace gl::groups
+} // namespace gl::group

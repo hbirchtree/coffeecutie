@@ -1,5 +1,7 @@
 #pragma once
 
+#include <peripherals/identify/compiler/function_export.h>
+#include <peripherals/constants.h>
 #include <peripherals/libc/types.h>
 #include <peripherals/stl/types.h>
 
@@ -92,10 +94,6 @@ extern SafeArea safe_area();
 
 } // namespace display
 
-namespace is {
-extern const bool mobile;
-}
-
 extern DeviceType variant();
 
 } // namespace device
@@ -124,7 +122,7 @@ namespace compile_info {
 /*!
  * \brief The underlying engine version
  */
-extern const cstring engine_version;
+extern const libc_types::cstring engine_version;
 
 } // namespace compile_info
 

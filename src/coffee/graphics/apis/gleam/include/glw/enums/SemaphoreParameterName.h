@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // SemaphoreParameterName
-enum class semaphore_parameter_name : ::libc_types::u32 {
+enum class semaphore_parameter_name : ::libc_types::u32
+{
 #ifdef GL_D3D12_FENCE_VALUE_EXT
     d3d12_fence_value_ext = GL_D3D12_FENCE_VALUE_EXT,
 #endif
@@ -23,4 +24,4 @@ enum class semaphore_parameter_name : ::libc_types::u32 {
 #endif
 }; // enum class semaphore_parameter_name
 
-} // namespace gl::groups
+} // namespace gl::group

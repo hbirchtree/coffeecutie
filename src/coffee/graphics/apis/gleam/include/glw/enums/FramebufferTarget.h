@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // FramebufferTarget
-enum class framebuffer_target : ::libc_types::u32 {
+enum class framebuffer_target : ::libc_types::u32
+{
 #ifdef GL_DRAW_FRAMEBUFFER
     draw_framebuffer = GL_DRAW_FRAMEBUFFER,
 #endif
@@ -20,4 +21,4 @@ enum class framebuffer_target : ::libc_types::u32 {
 #endif
 }; // enum class framebuffer_target
 
-} // namespace gl::groups
+} // namespace gl::group

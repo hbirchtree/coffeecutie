@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // NormalPointerType
-enum class normal_pointer_type : ::libc_types::u32 {
+enum class normal_pointer_type : ::libc_types::u32
+{
 #ifdef GL_BYTE
     byte_ = GL_BYTE,
 #endif
@@ -23,4 +24,4 @@ enum class normal_pointer_type : ::libc_types::u32 {
 #endif
 }; // enum class normal_pointer_type
 
-} // namespace gl::groups
+} // namespace gl::group

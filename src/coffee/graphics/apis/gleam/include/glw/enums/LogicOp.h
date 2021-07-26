@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // LogicOp
-enum class logic_op : ::libc_types::u32 {
+enum class logic_op : ::libc_types::u32
+{
 #ifdef GL_AND
     and_ = GL_AND,
 #endif
@@ -56,4 +57,4 @@ enum class logic_op : ::libc_types::u32 {
 #endif
 }; // enum class logic_op
 
-} // namespace gl::groups
+} // namespace gl::group

@@ -20,13 +20,14 @@ struct SysInfo : SysInfoDef
 
     STATICINLINE info::HardwareDevice DeviceName()
     {
-        cstring_w userAgentRaw = get_user_agent();
-        if(!userAgentRaw)
-            return info::HardwareDevice("Generic", "Browser", "1.0");
+//        cstring_w userAgentRaw = get_user_agent();
+//        if(!userAgentRaw)
+//            return info::HardwareDevice("Generic", "Browser", "1.0");
 
-        CString userAgent = userAgentRaw;
-        free(userAgentRaw);
-        return info::HardwareDevice(userAgent, "", "1.0");
+//        CString userAgent = userAgentRaw;
+//        free(userAgentRaw);
+//        return info::HardwareDevice(userAgent, "", "1.0");
+        return {};
     }
 };
 

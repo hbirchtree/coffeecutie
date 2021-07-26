@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // PathFontStyle
-enum class path_font_style : ::libc_types::u32 {
+enum class path_font_style : ::libc_types::u32
+{
 #ifdef GL_BOLD_BIT_NV
     bold_bit_nv = GL_BOLD_BIT_NV,
 #endif
@@ -18,4 +19,4 @@ enum class path_font_style : ::libc_types::u32 {
 }; // enum class path_font_style
 C_FLAGS(path_font_style, ::libc_types::u32);
 
-} // namespace gl::groups
+} // namespace gl::group

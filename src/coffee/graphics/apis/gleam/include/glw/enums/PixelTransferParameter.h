@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // PixelTransferParameter
-enum class pixel_transfer_parameter : ::libc_types::u32 {
+enum class pixel_transfer_parameter : ::libc_types::u32
+{
 #ifdef GL_ALPHA_BIAS
     alpha_bias = GL_ALPHA_BIAS,
 #endif
@@ -146,4 +147,4 @@ enum class pixel_transfer_parameter : ::libc_types::u32 {
 #endif
 }; // enum class pixel_transfer_parameter
 
-} // namespace gl::groups
+} // namespace gl::group

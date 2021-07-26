@@ -25,16 +25,17 @@ namespace sdl2 {
 using F      = comp_app::detail::WindowState;
 using WState = comp_app::detail::WindowState;
 
-static const stl_types::MultiMap<Uint32, F> window_flag_mapping = {
-    {SDL_WINDOW_SHOWN, F::Visible},
+static constexpr stl_types::Array<stl_types::Pair<Uint32, F>, 7>
+    window_flag_mapping = {
+        {{SDL_WINDOW_SHOWN, F::Visible},
 
-    {SDL_WINDOW_MINIMIZED, F::Minimized},
-    {SDL_WINDOW_MAXIMIZED, F::Maximized},
-    {SDL_WINDOW_RESIZABLE, F::Resizable},
-    {SDL_WINDOW_BORDERLESS, F::Undecorated},
+         {SDL_WINDOW_MINIMIZED, F::Minimized},
+         {SDL_WINDOW_MAXIMIZED, F::Maximized},
+         {SDL_WINDOW_RESIZABLE, F::Resizable},
+         {SDL_WINDOW_BORDERLESS, F::Undecorated},
 
-    {SDL_WINDOW_FULLSCREEN, F::FullScreen},
-    {SDL_WINDOW_FULLSCREEN_DESKTOP, F::WindowedFullScreen}};
+         {SDL_WINDOW_FULLSCREEN, F::FullScreen},
+         {SDL_WINDOW_FULLSCREEN_DESKTOP, F::WindowedFullScreen}}};
 
 static ::Uint32 window_to_sdl2(comp_app::detail::WindowState state)
 {
@@ -58,7 +59,8 @@ static libc_types::u16 window_from_sdl2(::Uint32 state)
     return out;
 }
 
-static void getWindow(SDL_Window* window, comp_app::PtrNativeWindowInfo& info);
+static void getWindow(
+    SDL_Window* window, comp_app::interfaces::PtrNativeWindowInfo& info);
 
 using namespace stl_types;
 
@@ -85,7 +87,7 @@ void Context::unload(entity_container&, comp_app::app_error&)
     SDL_Quit();
 }
 
-void Context::end_restricted(Proxy& p, time_point const&)
+void Context::end_restricted(proxy_type& p, time_point const&)
 {
     using namespace Coffee::Display;
     using namespace Coffee::Input;
@@ -113,9 +115,8 @@ Windowing::~Windowing()
 
 void Windowing::load(entity_container& c, comp_app::app_error& ec)
 {
-#if defined(COFFEE_LINUX) && !defined(COFFEE_EMSCRIPTEN)
-    struct sigaction action;
-    sigaction(SIGINT, nullptr, &action);
+#if defined(COFFEE_LINUX) || defined(COFFEE_EMSCRIPTEN)
+    SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
 #endif
 
     if(NOT_ZERO(SDL_InitSubSystem(SDL_INIT_VIDEO)))
@@ -124,10 +125,6 @@ void Windowing::load(entity_container& c, comp_app::app_error& ec)
         ec = SDL_GetError();
         return;
     }
-
-#if defined(COFFEE_LINUX) && !defined(COFFEE_EMSCRIPTEN)
-    sigaction(SIGINT, &action, nullptr);
-#endif
 
     auto& config = comp_app::AppLoader::config<comp_app::WindowConfig>(c);
 
@@ -172,7 +169,7 @@ void Windowing::unload(entity_container&, comp_app::app_error&)
     SDL_QuitSubSystem(SDL_INIT_VIDEO);
 }
 
-void Windowing::start_restricted(Proxy& p, time_point const&)
+void Windowing::start_restricted(proxy_type& p, time_point const&)
 {
     using namespace Coffee::Display;
 
@@ -352,19 +349,19 @@ void GLContext::setupAttributes(entity_container& c)
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, contextProfile);
     }
 
-#if !defined(COFFEE_ONLY_GLES20)
     {
-        Sint32 contextFlags = SDL_GL_CONTEXT_ROBUST_ACCESS_FLAG;
+        Sint32 contextFlags = 0;
 
         if constexpr(compile_info::platform::is_macos)
             contextFlags |= SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG;
 
+        if(glConfig.profile & GLConfig::Robust)
+            contextFlags |= SDL_GL_CONTEXT_ROBUST_ACCESS_FLAG;
         if(glConfig.profile & GLConfig::Debug)
             contextFlags |= SDL_GL_CONTEXT_DEBUG_FLAG;
 
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, contextFlags);
     }
-#endif
 
     using namespace typing::pixels;
 
@@ -387,30 +384,40 @@ void GLContext::setupAttributes(entity_container& c)
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, depth_stencil.stencil);
 }
 
-template<typename version>
 struct try_create_context
 {
-    void operator()(
+    try_create_context(
         SDL_Window*                 window,
-        SDL_GLContext*              m_context,
-        comp_app::GLConfig::Profile profile)
+        SDL_GLContext*              context,
+        comp_app::GLConfig::Profile profile) :
+        window(window),
+        context(context), profile(profile)
     {
-        if((profile & version::profile) == 0 || *m_context)
+    }
+
+    template<typename version>
+    void operator()()
+    {
+        if((profile & version::profile) == 0 || *context)
             return;
 
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, version::major);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, version::minor);
 
-        *m_context = SDL_GL_CreateContext(window);
+        *context = SDL_GL_CreateContext(window);
 
-        if(*m_context)
+        if(*context)
             SDL_GetError();
     }
+
+    SDL_Window*                 window;
+    SDL_GLContext*              context;
+    comp_app::GLConfig::Profile profile;
 };
 
 void GLContext::load(entity_container& c, comp_app::app_error& ec)
 {
-    using GLConfig = comp_app::GLConfig;
+    using comp_app::GLConfig;
 
     auto  window   = c.service<Windowing>()->m_window;
     auto& glConfig = comp_app::AppLoader::config<GLConfig>(c);
@@ -418,12 +425,12 @@ void GLContext::load(entity_container& c, comp_app::app_error& ec)
     m_context = nullptr;
 
 #if defined(COFFEE_EMSCRIPTEN)
-    try_create_context<GLConfig::gles2_version>()(
-        window, &m_context, glConfig.profile);
+    auto try_create = try_create_context(window, &m_context, glConfig.profile);
+    try_create.template operator()<GLConfig::gles3_version>();
+    try_create.template operator()<GLConfig::gles2_version>();
 #else
-    type_safety::type_list::
-        for_each_rev<GLConfig::valid_versions, try_create_context>(
-            window, &m_context, glConfig.profile);
+    type_list::for_each_rev<GLConfig::valid_versions>(
+        try_create_context(window, &m_context, glConfig.profile));
 #endif
 
     if(!m_context)
@@ -493,6 +500,12 @@ comp_app::size_2d_t GLFramebuffer::size() const
     return out;
 }
 
+void GLFramebuffer::start_frame(
+    comp_app::detail::ContainerProxy&, time_point const&)
+{
+    defaultSwap();
+}
+
 void ControllerInput::load(entity_container& c, comp_app::app_error& ec)
 {
     if constexpr(compile_info::platform::is_emscripten)
@@ -501,7 +514,7 @@ void ControllerInput::load(entity_container& c, comp_app::app_error& ec)
     auto& config = comp_app::AppLoader::config<comp_app::ControllerConfig>(c);
 
     if(!config.mapping.empty())
-        SDL_SetHint(SDL_HINT_GAMECONTROLLERCONFIG, "controllerdb.txt");
+        SDL_SetHint(SDL_HINT_GAMECONTROLLERCONFIG_FILE, "controllerdb.txt");
     if(config.options & comp_app::ControllerConfig::BackgroundInput)
         SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
 
@@ -539,7 +552,7 @@ void ControllerInput::unload(entity_container&, comp_app::app_error&)
     SDL_GetError();
 }
 
-void ControllerInput::start_restricted(Proxy& p, time_point const&)
+void ControllerInput::start_restricted(proxy_type& p, time_point const&)
 {
     if constexpr(compile_info::platform::is_emscripten)
         return;
@@ -728,7 +741,7 @@ int ControllerInput::controllerDisconnect(int device)
     return delete_key;
 }
 
-void KeyboardInput::start_restricted(Proxy& p, time_point const&)
+void KeyboardInput::start_restricted(proxy_type& p, time_point const&)
 {
     using namespace Coffee::Input;
 
@@ -749,16 +762,14 @@ void KeyboardInput::start_restricted(Proxy& p, time_point const&)
     {
         switch(event.type)
         {
-        case SDL_TEXTEDITING:
-        {
+        case SDL_TEXTEDITING: {
             CIWEditEvent edit;
             edit.cursor = event.edit.start;
             edit.len    = event.edit.length;
             EMIT_IEVENT(edit)
             break;
         }
-        case SDL_TEXTINPUT:
-        {
+        case SDL_TEXTINPUT: {
             CIWriteEvent write;
             write.text = event.text.text;
             EMIT_IEVENT(write)
@@ -786,7 +797,7 @@ void MouseInput::load(entity_container& e, comp_app::app_error&)
     priority    = 256;
 }
 
-void MouseInput::start_restricted(Proxy&, time_point const&)
+void MouseInput::start_restricted(proxy_type&, time_point const&)
 {
     using namespace Coffee::Input;
 
@@ -803,8 +814,7 @@ void MouseInput::start_restricted(Proxy&, time_point const&)
             EMIT_IEVENT(translate::event<CIMouseMoveEvent>(event))
             break;
         case SDL_MOUSEBUTTONUP:
-        case SDL_MOUSEBUTTONDOWN:
-        {
+        case SDL_MOUSEBUTTONDOWN: {
             auto ev = translate::event<CIMouseButtonEvent>(event);
             EMIT_IEVENT(ev)
 
@@ -880,7 +890,8 @@ void WindowInfo::setName(comp_app::text_type newName)
 
 namespace sdl2 {
 
-void getWindow(SDL_Window* window, comp_app::PtrNativeWindowInfo& info)
+void getWindow(
+    SDL_Window* window, comp_app::interfaces::PtrNativeWindowInfo& info)
 {
     using namespace comp_app;
 
@@ -889,8 +900,8 @@ void getWindow(SDL_Window* window, comp_app::PtrNativeWindowInfo& info)
     SDL_GetWindowWMInfo(window, &windowInfo);
 
 #if defined(SDL_VIDEO_DRIVER_X11)
-    info.window =
-        C_RCAST<PtrNativeWindowInfo::NWindow>(windowInfo.info.x11.window);
+    info.window = C_RCAST<interfaces::PtrNativeWindowInfo::NWindow>(
+        windowInfo.info.x11.window);
     info.display = windowInfo.info.x11.display;
 #elif defined(SDL_VIDEO_DRIVER_WINDOWS)
     info.window  = windowInfo.info.win.window;

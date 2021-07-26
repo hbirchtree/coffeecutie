@@ -1,6 +1,7 @@
 #include <coffee/core/logging/jsonlogger.h>
 
 #include <coffee/core/coffee.h>
+#include <coffee/core/debug/logging.h>
 #include <coffee/core/internal_state.h>
 #include <peripherals/libc/signals.h>
 #include <peripherals/stl/string_ops.h>
@@ -51,9 +52,9 @@ static const cstring JsonFormat =
 static CString JsonFilter(CString const& message)
 {
     CString filtered_message = message;
-    filtered_message = str::replace::str(filtered_message, "\\", "\\\\");
-    filtered_message = str::replace::str(filtered_message, "\n", "\\n");
-    return str::replace::str(filtered_message, "\"", "\\\"");
+    filtered_message = str::replace::str<char>(filtered_message, "\\", "\\\\");
+    filtered_message = str::replace::str<char>(filtered_message, "\n", "\\n");
+    return str::replace::str<char>(filtered_message, "\"", "\\\"");
 }
 
 static JsonLogState& GetLogState()
@@ -64,23 +65,6 @@ static JsonLogState& GetLogState()
 #if defined(COFFEE_WINDOWS)
 #define fileno _fileno
 #endif
-
-static void JsonLogger(
-    FILE* pipe, CString const& message, Severity sev, u32 level, u32)
-{
-    auto  filtered_message = JsonFilter(message);
-    auto& jsonLog          = GetLogState().handle;
-
-    auto json_msg = Strings::fmt(
-        JsonFormat,
-        filtered_message,
-        Strings::to_string(sev),
-        fileno(pipe),
-        level,
-        Time<>::Microsecond() / 1000);
-
-    platform::file::write(jsonLog, BytesConst::ofContainer(json_msg));
-}
 
 static void JsonTagLogger(
     FILE*          pipe,
@@ -111,9 +95,7 @@ static void JsonLoggerExit()
 
     platform::file::write(jsonLog, BytesConst::ofString("{}\n]\n"));
 
-    DebugFun::SetLogInterface(
-        {DebugFun::OutputPrinter::fprintf_platform,
-         DebugFun::OutputPrinter::fprintf_platform_tagged});
+    DebugFun::SetLogInterface({Logging::log});
 }
 
 JsonLogState::~JsonLogState()
@@ -122,7 +104,7 @@ JsonLogState::~JsonLogState()
 
 DebugFun::LogInterface SetupJsonLogger(platform::url::Url const& jsonFilename)
 {
-//    FileFun::Truncate(jsonFilename, 0, ec);
+    //    FileFun::Truncate(jsonFilename, 0, ec);
 
     auto jsonFile = platform::file::open_file(
         jsonFilename,
@@ -138,7 +120,7 @@ DebugFun::LogInterface SetupJsonLogger(platform::url::Url const& jsonFilename)
     State::SwapState("jsonLog", jsonState);
     ::libc::signal::register_atexit(JsonLoggerExit);
 
-    return {JsonLogger, JsonTagLogger};
+    return {JsonTagLogger};
 }
 
 } // namespace Coffee

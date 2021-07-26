@@ -1,11 +1,8 @@
-find_library ( BACKTRACE_LIBRARY backtrace )
-
 coffee_library (
     TARGET PeripheralPlatform
 
     LIBRARIES
     PeripheralLib
-    ${BACKTRACE_LIBRARY}
 
     SOURCES
     private/argument_parse.cpp
@@ -23,13 +20,20 @@ coffee_library (
     $<INSTALL_INTERFACE:include>
     )
 
+if((${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE) AND NOT EMSCRIPTEN)
+    find_library ( BACKTRACE_LIBRARY backtrace )
+    target_link_libraries ( PeripheralPlatform PUBLIC
+        ${BACKTRACE_LIBRARY}
+        )
+endif()
+
 #
 #
 # SDL power management info
 #
 #
 if(BUILD_SDL2 AND NOT POWERPC AND NOT IOS AND
-        (${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE OR WIN32))
+        (${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE OR WIN32) AND NOT EMSCRIPTEN)
 
     if(NOT TARGET SDL2)
         find_package ( SDL2 CONFIG QUIET )
@@ -117,7 +121,7 @@ endif()
 # Portable POSIX code
 #
 #
-if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE OR ANDROID)
+if((${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE OR ANDROID))
 #    target_sources ( PeripheralPlatform PRIVATE
 
         #

@@ -3,10 +3,10 @@
 #include <coffee/core/CApplication>
 #include <coffee/core/profiler/profiling-export.h>
 
-#if defined(FEATURE_ENABLE_GLeamRHI)
+#if defined(FEATURE_ENABLE_GLeamRHI_ES)
 #define HAS_GRAPHICS 1
-#include <coffee/graphics/apis/CGLeamRHI>
-using GFX = Coffee::RHI::GLEAM::GLEAM_API;
+#include <coffee/graphics/apis/CGLeam>
+using GFX = gleam::api;
 #elif defined(FEATURE_ENABLE_Gexxo)
 #define HAS_GRAPHICS 1
 #include <coffee/gexxo/gexxo_api.h>
@@ -27,16 +27,30 @@ i32 systeminfo_main(i32, cstring_w*)
     auto& container = comp_app::createContainer();
     auto& loader    = comp_app::AppLoader::register_service(container);
 
+    cDebug("Checking graphics...");
+
     comp_app::app_error ec;
     comp_app::configureDefaults(loader);
     comp_app::addDefaults(container, loader, ec);
+    C_ERROR_CHECK(ec);
 
     container_type::addTo(
         container,
         [](decltype(container), u32, container_type::time_point const&) {
-            if(GFX::GetLoadAPI()(true))
-                GFX::UnloadAPI();
+            auto api = GFX();
+            api.load();
+
+            ExtraData::Add("graphics:api", api.api_name());
+            auto [major, minor] = api.api_version();
+            ExtraData::Add("gl:version", Strings::fmt("{0}.{1}", major, minor));
+            auto [vendor, renderer] = api.device();
+            ExtraData::Add("gl:renderer", renderer);
+            ExtraData::Add("gl:vendor", vendor);
+            cDebug("Graphics success");
         });
+    container.service<container_type>()->load(container, ec);
+    C_ERROR_CHECK(ec);
+
 #endif
 
     CString profile;

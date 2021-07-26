@@ -6,9 +6,9 @@ coffee_application (
     LIBRARIES ComponentBundleSetup
     )
 
-if(TARGET GLeamRHI)
+if(TARGET GLeamRHI_ES)
     target_link_libraries ( SystemInfo PUBLIC
-        GLeamRHI
+        GLeamRHI_ES
         )
 elseif(TARGET Gexxo)
     target_link_libraries ( SystemInfo PUBLIC

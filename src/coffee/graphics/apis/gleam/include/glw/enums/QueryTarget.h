@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // QueryTarget
-enum class query_target : ::libc_types::u32 {
+enum class query_target : ::libc_types::u32
+{
 #ifdef GL_ANY_SAMPLES_PASSED
     any_samples_passed = GL_ANY_SAMPLES_PASSED,
 #endif
@@ -28,7 +29,8 @@ enum class query_target : ::libc_types::u32 {
     transform_feedback_overflow = GL_TRANSFORM_FEEDBACK_OVERFLOW,
 #endif
 #ifdef GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN
-    transform_feedback_primitives_written = GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN,
+    transform_feedback_primitives_written =
+        GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN,
 #endif
 #ifdef GL_VERTEX_SHADER_INVOCATIONS
     vertex_shader_invocations = GL_VERTEX_SHADER_INVOCATIONS,
@@ -38,4 +40,4 @@ enum class query_target : ::libc_types::u32 {
 #endif
 }; // enum class query_target
 
-} // namespace gl::groups
+} // namespace gl::group

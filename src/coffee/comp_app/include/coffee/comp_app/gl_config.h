@@ -30,6 +30,7 @@ struct GLConfig : Config<GLConfig>
         Core     = 0x1,
         Embedded = 0x2,
         Debug    = 0x4,
+        Robust   = 0x8,
 
 #if defined(FEATURE_ENABLE_GLAD_Core)
         Default = Core,

@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // RenderbufferTarget
-enum class renderbuffer_target : ::libc_types::u32 {
+enum class renderbuffer_target : ::libc_types::u32
+{
 #ifdef GL_RENDERBUFFER
     renderbuffer = GL_RENDERBUFFER,
 #endif
@@ -14,4 +15,4 @@ enum class renderbuffer_target : ::libc_types::u32 {
 #endif
 }; // enum class renderbuffer_target
 
-} // namespace gl::groups
+} // namespace gl::group

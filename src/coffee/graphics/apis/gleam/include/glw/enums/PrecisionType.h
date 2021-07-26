@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // PrecisionType
-enum class precision_type : ::libc_types::u32 {
+enum class precision_type : ::libc_types::u32
+{
 #ifdef GL_HIGH_FLOAT
     high_float = GL_HIGH_FLOAT,
 #endif
@@ -26,4 +27,4 @@ enum class precision_type : ::libc_types::u32 {
 #endif
 }; // enum class precision_type
 
-} // namespace gl::groups
+} // namespace gl::group

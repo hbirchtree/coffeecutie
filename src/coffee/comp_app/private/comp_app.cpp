@@ -6,10 +6,6 @@
 
 namespace comp_app {
 
-Windowing::~Windowing()
-{
-}
-
 SysCPUTemp::Presence SysCPUTemp::sensorPresence(DeviceClass)
 {
     return Presence::Present;
@@ -35,7 +31,7 @@ libc_types::u32 SysMemoryStats::resident()
     return C_FCAST<libc_types::u32>(platform::SysInfo::MemResident());
 }
 
-BatteryProvider::PowerSource SysBattery::source()
+interfaces::BatteryProvider::PowerSource SysBattery::source()
 {
     return platform::PowerInfo::HasBattery() ? PowerSource::Battery
                                              : PowerSource::AC;

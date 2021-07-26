@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // MapBufferAccessMask
-enum class map_buffer_access_mask : ::libc_types::u32 {
+enum class map_buffer_access_mask : ::libc_types::u32
+{
 #ifdef GL_MAP_COHERENT_BIT
     map_coherent_bit = GL_MAP_COHERENT_BIT,
 #endif
@@ -57,4 +58,4 @@ enum class map_buffer_access_mask : ::libc_types::u32 {
 }; // enum class map_buffer_access_mask
 C_FLAGS(map_buffer_access_mask, ::libc_types::u32);
 
-} // namespace gl::groups
+} // namespace gl::group

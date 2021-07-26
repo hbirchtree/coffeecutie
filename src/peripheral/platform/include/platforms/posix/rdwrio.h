@@ -50,7 +50,7 @@ FORCEDINLINE result<mem_chunk<char>, posix_error> read(
     szptr         chunk    = 0;
     while(i < size)
     {
-        chunk = std::max<szptr>(read_max, size - i);
+        chunk = std::min<szptr>(read_max, size - i);
         if(auto read_count = ::read(file, view.data() + i, chunk);
            read_count < 0)
             return failure(common::posix::get_error());
@@ -76,7 +76,7 @@ FORCEDINLINE Optional<posix_error> write(
     szptr         chunk     = 0;
     while(i < size)
     {
-        chunk = std::max<szptr>(write_max, size - i);
+        chunk = std::min<szptr>(write_max, size - i);
         if(auto write_count = ::write(file, view.data() + i, chunk);
            write_count < 0)
         {

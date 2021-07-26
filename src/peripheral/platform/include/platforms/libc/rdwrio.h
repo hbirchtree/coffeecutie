@@ -71,9 +71,12 @@ FORCEDINLINE result<stl_types::Vector<stl_types::String>, int> read_lines(
                     spliterator<char>(std::string_view(buffer.data), '\n');
                 do
                     out.push_back(String((*it).data(), (*it).size()));
-                while(it++ != spliterator<char>());
+                while(++it != spliterator<char>());
             }
         }
+        for(auto& line : out)
+            if(line.starts_with('\n'))
+                line = line.substr(1);
         return success(out);
     }
 }

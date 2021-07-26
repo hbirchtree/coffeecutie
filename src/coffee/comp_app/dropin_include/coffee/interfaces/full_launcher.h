@@ -29,7 +29,12 @@ libc_types::i32 AutoExec(
     auto& container = comp_app::createContainer();
     auto& loader    = comp_app::AppLoader::register_service(container);
 
+
     comp_app::configureDefaults(loader);
+#if defined(FEATURE_ENABLE_GLADComponent)
+    auto& glConfig = loader.config<comp_app::GLConfig>();
+    glConfig.profile |= comp_app::GLConfig::Debug;
+#endif
     comp_app::addDefaults(container, loader, ec);
 
     comp_app::AutoExec<R, D>::addTo(

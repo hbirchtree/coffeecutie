@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // BlitFramebufferFilter
-enum class blit_framebuffer_filter : ::libc_types::u32 {
+enum class blit_framebuffer_filter : ::libc_types::u32
+{
 #ifdef GL_LINEAR
     linear = GL_LINEAR,
 #endif
@@ -14,4 +15,4 @@ enum class blit_framebuffer_filter : ::libc_types::u32 {
 #endif
 }; // enum class blit_framebuffer_filter
 
-} // namespace gl::groups
+} // namespace gl::group

@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // GetTextureParameter
-enum class get_texture_parameter : ::libc_types::u32 {
+enum class get_texture_parameter : ::libc_types::u32
+{
 #ifdef GL_DETAIL_TEXTURE_FUNC_POINTS_SGIS
     detail_texture_func_points_sgis = GL_DETAIL_TEXTURE_FUNC_POINTS_SGIS,
 #endif
@@ -154,7 +155,8 @@ enum class get_texture_parameter : ::libc_types::u32 {
     texture_resident = GL_TEXTURE_RESIDENT,
 #endif
 #ifdef GL_TEXTURE_UNNORMALIZED_COORDINATES_ARM
-    texture_unnormalized_coordinates_arm = GL_TEXTURE_UNNORMALIZED_COORDINATES_ARM,
+    texture_unnormalized_coordinates_arm =
+        GL_TEXTURE_UNNORMALIZED_COORDINATES_ARM,
 #endif
 #ifdef GL_TEXTURE_WIDTH
     texture_width = GL_TEXTURE_WIDTH,
@@ -173,4 +175,4 @@ enum class get_texture_parameter : ::libc_types::u32 {
 #endif
 }; // enum class get_texture_parameter
 
-} // namespace gl::groups
+} // namespace gl::group

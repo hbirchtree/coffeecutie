@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // CombinerVariableNV
-enum class combiner_variable_nv : ::libc_types::u32 {
+enum class combiner_variable_nv : ::libc_types::u32
+{
 #ifdef GL_VARIABLE_A_NV
     variable_a_nv = GL_VARIABLE_A_NV,
 #endif
@@ -29,4 +30,4 @@ enum class combiner_variable_nv : ::libc_types::u32 {
 #endif
 }; // enum class combiner_variable_nv
 
-} // namespace gl::groups
+} // namespace gl::group

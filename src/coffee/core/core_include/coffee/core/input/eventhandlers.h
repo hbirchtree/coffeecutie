@@ -19,15 +19,15 @@ namespace EventHandlers {
 namespace detail {
 
 #if defined(FEATURE_ENABLE_ComponentApp)
-void closeWindow(comp_app::Windowing* window)
+void closeWindow(comp_app::interfaces::Windowing* window)
 {
     window->close();
 }
-void setState(comp_app::Windowing* window, Properties::State state)
+void setState(comp_app::interfaces::Windowing* window, Properties::State state)
 {
     window->setState(state);
 }
-Properties::State getState(comp_app::Windowing* window)
+Properties::State getState(comp_app::interfaces::Windowing* window)
 {
     return window->state();
 }

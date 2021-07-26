@@ -24,10 +24,12 @@ BraceWrapping:
   SplitEmptyNamespace: true
 BreakBeforeBraces: Custom
 BreakBeforeTernaryOperators: 'true'
+BreakBeforeConceptDeclarations: 'true'
 BreakConstructorInitializers: AfterColon
 ColumnLimit: '80'
 FixNamespaceComments: 'true'
 IndentWidth: '4'
+IndentRequires: 'false'
 KeepEmptyLinesAtTheStartOfBlocks: 'false'
 Language: Cpp
 NamespaceIndentation: None
@@ -40,3 +42,4 @@ SpaceBeforeParens: Never
 Standard: Cpp11
 UseTab: Never
 PenaltyReturnTypeOnItsOwnLine: 10000
+WhitespaceSensitiveMacros: ['C_HAS_INCLUDE']

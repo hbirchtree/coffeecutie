@@ -6,7 +6,9 @@
 #include <platforms/sensor.h>
 #include <platforms/sysinfo.h>
 
+#if defined(FEATURE_ENABLE_MediaFfmpeg)
 #include <av/decode.h>
+#endif
 
 #include <coffee/strings/info.h>
 #include <coffee/strings/libc_types.h>
@@ -23,11 +25,6 @@ using namespace Coffee;
 using namespace platform::file;
 using namespace platform::url::constructors;
 
-template<semantic::concepts::Resource T>
-void consume_bytes(T& resource)
-{
-}
-
 i32 coffee_main(i32, cstring_w*)
 {
 #if defined(FEATURE_ENABLE_ASIO)
@@ -43,8 +40,8 @@ i32 coffee_main(i32, cstring_w*)
 
         cDebug("Test directory: {0} '{1}'", test_dir, *test_dir);
 
-        Url app_dir  = platform::path::app_dir().value();
-        Url exe_name = platform::path::executable().value();
+        auto app_dir  = platform::path::app_dir();
+        auto exe_name = platform::path::executable();
         Profiler::Profile("Get application location");
 
         cDebug("Settings directory: {0}", *cfg_dir);
@@ -58,9 +55,6 @@ i32 coffee_main(i32, cstring_w*)
             platform::file::create(
                 cfg_dir / "test_file.sav",
                 {.mode = platform::file::mode_t::file});
-
-            Resource e(cfg_dir / "test_file.sav");
-            consume_bytes(e);
         }
         Profiler::Profile("Create directory recursively");
     }
@@ -75,7 +69,7 @@ i32 coffee_main(i32, cstring_w*)
     cDebug("Sensor acceleration: {0}", Sensor::Acceleration());
     cDebug("Sensor orientation: {0}", Sensor::Orientation());
 
-    cDebug("avcodec: {0}", av::init_codec());
+//    cDebug("avcodec: {0}", av::init_codec());
 
     return 0;
 }

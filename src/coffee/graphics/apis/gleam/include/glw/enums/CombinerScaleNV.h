@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // CombinerScaleNV
-enum class combiner_scale_nv : ::libc_types::u32 {
+enum class combiner_scale_nv : ::libc_types::u32
+{
 #ifdef GL_NONE
     none = GL_NONE,
 #endif
@@ -20,4 +21,4 @@ enum class combiner_scale_nv : ::libc_types::u32 {
 #endif
 }; // enum class combiner_scale_nv
 
-} // namespace gl::groups
+} // namespace gl::group

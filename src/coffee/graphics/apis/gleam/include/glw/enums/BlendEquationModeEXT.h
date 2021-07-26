@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // BlendEquationModeEXT
-enum class blend_equation_mode_ext : ::libc_types::u32 {
+enum class blend_equation_mode_ext : ::libc_types::u32
+{
 #ifdef GL_ALPHA_MAX_SGIX
     alpha_max_sgix = GL_ALPHA_MAX_SGIX,
 #endif
@@ -44,4 +45,4 @@ enum class blend_equation_mode_ext : ::libc_types::u32 {
 #endif
 }; // enum class blend_equation_mode_ext
 
-} // namespace gl::groups
+} // namespace gl::group

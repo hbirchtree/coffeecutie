@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // CombinerPortionNV
-enum class combiner_portion_nv : ::libc_types::u32 {
+enum class combiner_portion_nv : ::libc_types::u32
+{
 #ifdef GL_ALPHA
     alpha = GL_ALPHA,
 #endif
@@ -14,4 +15,4 @@ enum class combiner_portion_nv : ::libc_types::u32 {
 #endif
 }; // enum class combiner_portion_nv
 
-} // namespace gl::groups
+} // namespace gl::group

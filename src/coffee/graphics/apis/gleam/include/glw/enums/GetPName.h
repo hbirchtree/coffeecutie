@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // GetPName
-enum class get_prop : ::libc_types::u32 {
+enum class get_prop : ::libc_types::u32
+{
 #ifdef GL_ACCUM_ALPHA_BITS
     accum_alpha_bits = GL_ACCUM_ALPHA_BITS,
 #endif
@@ -376,7 +377,8 @@ enum class get_prop : ::libc_types::u32 {
     fragment_color_material_face_sgix = GL_FRAGMENT_COLOR_MATERIAL_FACE_SGIX,
 #endif
 #ifdef GL_FRAGMENT_COLOR_MATERIAL_PARAMETER_SGIX
-    fragment_color_material_parameter_sgix = GL_FRAGMENT_COLOR_MATERIAL_PARAMETER_SGIX,
+    fragment_color_material_parameter_sgix =
+        GL_FRAGMENT_COLOR_MATERIAL_PARAMETER_SGIX,
 #endif
 #ifdef GL_FRAGMENT_COLOR_MATERIAL_SGIX
     fragment_color_material_sgix = GL_FRAGMENT_COLOR_MATERIAL_SGIX,
@@ -391,10 +393,12 @@ enum class get_prop : ::libc_types::u32 {
     fragment_light_model_ambient_sgix = GL_FRAGMENT_LIGHT_MODEL_AMBIENT_SGIX,
 #endif
 #ifdef GL_FRAGMENT_LIGHT_MODEL_LOCAL_VIEWER_SGIX
-    fragment_light_model_local_viewer_sgix = GL_FRAGMENT_LIGHT_MODEL_LOCAL_VIEWER_SGIX,
+    fragment_light_model_local_viewer_sgix =
+        GL_FRAGMENT_LIGHT_MODEL_LOCAL_VIEWER_SGIX,
 #endif
 #ifdef GL_FRAGMENT_LIGHT_MODEL_NORMAL_INTERPOLATION_SGIX
-    fragment_light_model_normal_interpolation_sgix = GL_FRAGMENT_LIGHT_MODEL_NORMAL_INTERPOLATION_SGIX,
+    fragment_light_model_normal_interpolation_sgix =
+        GL_FRAGMENT_LIGHT_MODEL_NORMAL_INTERPOLATION_SGIX,
 #endif
 #ifdef GL_FRAGMENT_LIGHT_MODEL_TWO_SIDE_SGIX
     fragment_light_model_two_side_sgix = GL_FRAGMENT_LIGHT_MODEL_TWO_SIDE_SGIX,
@@ -691,13 +695,16 @@ enum class get_prop : ::libc_types::u32 {
     max_combined_atomic_counters = GL_MAX_COMBINED_ATOMIC_COUNTERS,
 #endif
 #ifdef GL_MAX_COMBINED_COMPUTE_UNIFORM_COMPONENTS
-    max_combined_compute_uniform_components = GL_MAX_COMBINED_COMPUTE_UNIFORM_COMPONENTS,
+    max_combined_compute_uniform_components =
+        GL_MAX_COMBINED_COMPUTE_UNIFORM_COMPONENTS,
 #endif
 #ifdef GL_MAX_COMBINED_FRAGMENT_UNIFORM_COMPONENTS
-    max_combined_fragment_uniform_components = GL_MAX_COMBINED_FRAGMENT_UNIFORM_COMPONENTS,
+    max_combined_fragment_uniform_components =
+        GL_MAX_COMBINED_FRAGMENT_UNIFORM_COMPONENTS,
 #endif
 #ifdef GL_MAX_COMBINED_GEOMETRY_UNIFORM_COMPONENTS
-    max_combined_geometry_uniform_components = GL_MAX_COMBINED_GEOMETRY_UNIFORM_COMPONENTS,
+    max_combined_geometry_uniform_components =
+        GL_MAX_COMBINED_GEOMETRY_UNIFORM_COMPONENTS,
 #endif
 #ifdef GL_MAX_COMBINED_SHADER_STORAGE_BLOCKS
     max_combined_shader_storage_blocks = GL_MAX_COMBINED_SHADER_STORAGE_BLOCKS,
@@ -709,7 +716,8 @@ enum class get_prop : ::libc_types::u32 {
     max_combined_uniform_blocks = GL_MAX_COMBINED_UNIFORM_BLOCKS,
 #endif
 #ifdef GL_MAX_COMBINED_VERTEX_UNIFORM_COMPONENTS
-    max_combined_vertex_uniform_components = GL_MAX_COMBINED_VERTEX_UNIFORM_COMPONENTS,
+    max_combined_vertex_uniform_components =
+        GL_MAX_COMBINED_VERTEX_UNIFORM_COMPONENTS,
 #endif
 #ifdef GL_MAX_COMPUTE_ATOMIC_COUNTERS
     max_compute_atomic_counters = GL_MAX_COMPUTE_ATOMIC_COUNTERS,
@@ -871,16 +879,19 @@ enum class get_prop : ::libc_types::u32 {
     max_tess_control_atomic_counters = GL_MAX_TESS_CONTROL_ATOMIC_COUNTERS,
 #endif
 #ifdef GL_MAX_TESS_CONTROL_SHADER_STORAGE_BLOCKS
-    max_tess_control_shader_storage_blocks = GL_MAX_TESS_CONTROL_SHADER_STORAGE_BLOCKS,
+    max_tess_control_shader_storage_blocks =
+        GL_MAX_TESS_CONTROL_SHADER_STORAGE_BLOCKS,
 #endif
 #ifdef GL_MAX_TESS_CONTROL_UNIFORM_BLOCKS
     max_tess_control_uniform_blocks = GL_MAX_TESS_CONTROL_UNIFORM_BLOCKS,
 #endif
 #ifdef GL_MAX_TESS_EVALUATION_ATOMIC_COUNTERS
-    max_tess_evaluation_atomic_counters = GL_MAX_TESS_EVALUATION_ATOMIC_COUNTERS,
+    max_tess_evaluation_atomic_counters =
+        GL_MAX_TESS_EVALUATION_ATOMIC_COUNTERS,
 #endif
 #ifdef GL_MAX_TESS_EVALUATION_SHADER_STORAGE_BLOCKS
-    max_tess_evaluation_shader_storage_blocks = GL_MAX_TESS_EVALUATION_SHADER_STORAGE_BLOCKS,
+    max_tess_evaluation_shader_storage_blocks =
+        GL_MAX_TESS_EVALUATION_SHADER_STORAGE_BLOCKS,
 #endif
 #ifdef GL_MAX_TESS_EVALUATION_UNIFORM_BLOCKS
     max_tess_evaluation_uniform_blocks = GL_MAX_TESS_EVALUATION_UNIFORM_BLOCKS,
@@ -901,7 +912,8 @@ enum class get_prop : ::libc_types::u32 {
     max_texture_stack_depth = GL_MAX_TEXTURE_STACK_DEPTH,
 #endif
 #ifdef GL_MAX_TIMELINE_SEMAPHORE_VALUE_DIFFERENCE_NV
-    max_timeline_semaphore_value_difference_nv = GL_MAX_TIMELINE_SEMAPHORE_VALUE_DIFFERENCE_NV,
+    max_timeline_semaphore_value_difference_nv =
+        GL_MAX_TIMELINE_SEMAPHORE_VALUE_DIFFERENCE_NV,
 #endif
 #ifdef GL_MAX_UNIFORM_BLOCK_SIZE
     max_uniform_block_size = GL_MAX_UNIFORM_BLOCK_SIZE,
@@ -982,10 +994,12 @@ enum class get_prop : ::libc_types::u32 {
     modelview_stack_depth = GL_MODELVIEW_STACK_DEPTH,
 #endif
 #ifdef GL_MOTION_ESTIMATION_SEARCH_BLOCK_X_QCOM
-    motion_estimation_search_block_x_qcom = GL_MOTION_ESTIMATION_SEARCH_BLOCK_X_QCOM,
+    motion_estimation_search_block_x_qcom =
+        GL_MOTION_ESTIMATION_SEARCH_BLOCK_X_QCOM,
 #endif
 #ifdef GL_MOTION_ESTIMATION_SEARCH_BLOCK_Y_QCOM
-    motion_estimation_search_block_y_qcom = GL_MOTION_ESTIMATION_SEARCH_BLOCK_Y_QCOM,
+    motion_estimation_search_block_y_qcom =
+        GL_MOTION_ESTIMATION_SEARCH_BLOCK_Y_QCOM,
 #endif
 #ifdef GL_MULTISAMPLE_SGIS
     multisample_sgis = GL_MULTISAMPLE_SGIS,
@@ -1252,10 +1266,12 @@ enum class get_prop : ::libc_types::u32 {
     post_convolution_red_scale_ext = GL_POST_CONVOLUTION_RED_SCALE_EXT,
 #endif
 #ifdef GL_POST_TEXTURE_FILTER_BIAS_RANGE_SGIX
-    post_texture_filter_bias_range_sgix = GL_POST_TEXTURE_FILTER_BIAS_RANGE_SGIX,
+    post_texture_filter_bias_range_sgix =
+        GL_POST_TEXTURE_FILTER_BIAS_RANGE_SGIX,
 #endif
 #ifdef GL_POST_TEXTURE_FILTER_SCALE_RANGE_SGIX
-    post_texture_filter_scale_range_sgix = GL_POST_TEXTURE_FILTER_SCALE_RANGE_SGIX,
+    post_texture_filter_scale_range_sgix =
+        GL_POST_TEXTURE_FILTER_SCALE_RANGE_SGIX,
 #endif
 #ifdef GL_PRIMITIVE_RESTART_INDEX
     primitive_restart_index = GL_PRIMITIVE_RESTART_INDEX,
@@ -1378,7 +1394,8 @@ enum class get_prop : ::libc_types::u32 {
     shader_storage_buffer_binding = GL_SHADER_STORAGE_BUFFER_BINDING,
 #endif
 #ifdef GL_SHADER_STORAGE_BUFFER_OFFSET_ALIGNMENT
-    shader_storage_buffer_offset_alignment = GL_SHADER_STORAGE_BUFFER_OFFSET_ALIGNMENT,
+    shader_storage_buffer_offset_alignment =
+        GL_SHADER_STORAGE_BUFFER_OFFSET_ALIGNMENT,
 #endif
 #ifdef GL_SHADER_STORAGE_BUFFER_SIZE
     shader_storage_buffer_size = GL_SHADER_STORAGE_BUFFER_SIZE,
@@ -1390,10 +1407,12 @@ enum class get_prop : ::libc_types::u32 {
     shade_model = GL_SHADE_MODEL,
 #endif
 #ifdef GL_SHADING_RATE_IMAGE_PALETTE_COUNT_NV
-    shading_rate_image_palette_count_nv = GL_SHADING_RATE_IMAGE_PALETTE_COUNT_NV,
+    shading_rate_image_palette_count_nv =
+        GL_SHADING_RATE_IMAGE_PALETTE_COUNT_NV,
 #endif
 #ifdef GL_SHADING_RATE_IMAGE_PER_PRIMITIVE_NV
-    shading_rate_image_per_primitive_nv = GL_SHADING_RATE_IMAGE_PER_PRIMITIVE_NV,
+    shading_rate_image_per_primitive_nv =
+        GL_SHADING_RATE_IMAGE_PER_PRIMITIVE_NV,
 #endif
 #ifdef GL_SHADING_RATE_QCOM
     shading_rate_qcom = GL_SHADING_RATE_QCOM,
@@ -1516,7 +1535,8 @@ enum class get_prop : ::libc_types::u32 {
     texture_binding_2d_multisample = GL_TEXTURE_BINDING_2D_MULTISAMPLE,
 #endif
 #ifdef GL_TEXTURE_BINDING_2D_MULTISAMPLE_ARRAY
-    texture_binding_2d_multisample_array = GL_TEXTURE_BINDING_2D_MULTISAMPLE_ARRAY,
+    texture_binding_2d_multisample_array =
+        GL_TEXTURE_BINDING_2D_MULTISAMPLE_ARRAY,
 #endif
 #ifdef GL_TEXTURE_BINDING_3D
     texture_binding_3d = GL_TEXTURE_BINDING_3D,
@@ -1694,4 +1714,4 @@ enum class get_prop : ::libc_types::u32 {
 #endif
 }; // enum class get_prop
 
-} // namespace gl::groups
+} // namespace gl::group

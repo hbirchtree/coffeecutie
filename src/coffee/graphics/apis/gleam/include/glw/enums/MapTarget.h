@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // MapTarget
-enum class map_target : ::libc_types::u32 {
+enum class map_target : ::libc_types::u32
+{
 #ifdef GL_GEOMETRY_DEFORMATION_SGIX
     geometry_deformation_sgix = GL_GEOMETRY_DEFORMATION_SGIX,
 #endif
@@ -68,4 +69,4 @@ enum class map_target : ::libc_types::u32 {
 #endif
 }; // enum class map_target
 
-} // namespace gl::groups
+} // namespace gl::group

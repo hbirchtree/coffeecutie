@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // HintTarget
-enum class hint_target : ::libc_types::u32 {
+enum class hint_target : ::libc_types::u32
+{
 #ifdef GL_ALLOW_DRAW_FRG_HINT_PGI
     allow_draw_frg_hint_pgi = GL_ALLOW_DRAW_FRG_HINT_PGI,
 #endif
@@ -52,10 +53,12 @@ enum class hint_target : ::libc_types::u32 {
     fragment_shader_derivative_hint = GL_FRAGMENT_SHADER_DERIVATIVE_HINT,
 #endif
 #ifdef GL_FRAGMENT_SHADER_DERIVATIVE_HINT_ARB
-    fragment_shader_derivative_hint_arb = GL_FRAGMENT_SHADER_DERIVATIVE_HINT_ARB,
+    fragment_shader_derivative_hint_arb =
+        GL_FRAGMENT_SHADER_DERIVATIVE_HINT_ARB,
 #endif
 #ifdef GL_FRAGMENT_SHADER_DERIVATIVE_HINT_OES
-    fragment_shader_derivative_hint_oes = GL_FRAGMENT_SHADER_DERIVATIVE_HINT_OES,
+    fragment_shader_derivative_hint_oes =
+        GL_FRAGMENT_SHADER_DERIVATIVE_HINT_OES,
 #endif
 #ifdef GL_FULL_STIPPLE_HINT_PGI
     full_stipple_hint_pgi = GL_FULL_STIPPLE_HINT_PGI,
@@ -161,4 +164,4 @@ enum class hint_target : ::libc_types::u32 {
 #endif
 }; // enum class hint_target
 
-} // namespace gl::groups
+} // namespace gl::group

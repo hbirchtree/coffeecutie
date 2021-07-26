@@ -17,7 +17,8 @@ struct function_traits_impl<std::function<R(Args...)>>
 {
     static const std::size_t nargs = sizeof...(Args);
 
-    typedef R result_type;
+    using result_type     = R;
+    using arguments_tuple = std::tuple<std::decay_t<Args>...>;
 
     template<std::size_t i>
     struct arg
@@ -27,21 +28,22 @@ struct function_traits_impl<std::function<R(Args...)>>
 };
 
 template<class R, class T, class... Args>
-function_traits_impl<std::function<R(Args...)>> function_traits(
+constexpr function_traits_impl<std::function<R(Args...)>> function_traits(
     R (T::*)(Args...) const)
 {
     return function_traits_impl<std::function<R(Args...)>>();
 }
 
 template<class R, class T, class... Args>
-function_traits_impl<std::function<R(Args...)>> function_traits(
+constexpr function_traits_impl<std::function<R(Args...)>> function_traits(
     R (T::*)(Args...))
 {
     return function_traits_impl<std::function<R(Args...)>>();
 }
 
 template<class R, class... Args>
-function_traits_impl<std::function<R(Args...)>> function_traits(R (*)(Args...))
+constexpr function_traits_impl<std::function<R(Args...)>> function_traits(
+    R (*)(Args...))
 {
     return function_traits_impl<std::function<R(Args...)>>();
 }
@@ -185,12 +187,24 @@ void call(RType (*fun)(Args...), Args... args)
 
 } // namespace quiet_exception
 
+template<typename EType, typename... Args>
+inline void wrap_exception(
+    Function<void(EType const&)> exHandler,
+    Args... args)
+{
+    try
+    {
+        std::invoke(std::forward<Args>(args)...);
+    } catch(EType const& e)
+    {
+        exHandler(e);
+    }
+}
+
 template<typename T, typename... Args>
 using mem_args_tuple = std::tuple<T*, Args...>;
 
-template<class T,
-         typename R,
-         typename... Args>
+template<class T, typename R, typename... Args>
 struct mem_function_traits
 {
     using class_type  = T;
@@ -210,10 +224,9 @@ struct mem_function_traits
 } // namespace stl_types
 
 #if __cplusplus >= 201703L
-#define declmemtype(fun) \
-    decltype(mem_function_traits(fun))::result_type
-//#define declmemtype(T, fun) \
-//    decltype(std::apply(&T::fun, std::declval<mem_args_tuple<T>>()))
+#define declmemtype(fun) decltype(mem_function_traits(fun))::result_type
+#define declmemtype2(T, fun) \
+    decltype(std::apply(&T::fun, std::declval<mem_args_tuple<T>>()))
 #else
 #define declmemtype(fun) decltype(std::mem_fn(fun))::result_type
 #endif

@@ -5,24 +5,24 @@
 #include <coffee/components/service_query.h>
 #include <coffee/components/visitor.h>
 #include <coffee/core/CProfiling>
+#include <coffee/core/debug/logging.h>
 
 #include <platforms/stacktrace.h>
 
 #define ENT_TYPE_NAME(var) \
-    platform::env::Stacktracer::DemangleSymbol(typeid(var).name())
+    platform::stacktrace::demangle::name(typeid(var).name())
 
-#define ENT_DBG_TYPE(flag, prefix, var)        \
-    if(debug_flags & flag)                     \
-    {                                          \
-        CString dbg;                           \
-        (dbg += prefix) += ENT_TYPE_NAME(var); \
-        cDebug(dbg.c_str());                   \
+#define ENT_DBG_TYPE(flag, prefix, var)          \
+    if(debug_flags & flag)                       \
+    {                                            \
+        CString dbg;                             \
+        (dbg += prefix) += ENT_TYPE_NAME(var);   \
+        Logging::log(                            \
+            libc::io::io_handles::err,           \
+            "Coffee::Components",                \
+            dbg,                                 \
+            semantic::debug::Severity::Verbose); \
     }
-
-namespace Coffee {
-
-extern void cDebug(cstring f);
-}
 
 namespace Coffee {
 namespace Components {
@@ -163,6 +163,17 @@ void EntityContainer::exec()
 
     std::sort(subsystems_.begin(), subsystems_.end(), detail::subsystem_sort);
 
+    auto ex_handler = [](auto const& source) {
+        return [&source](auto const& e) {
+            Logging::log(
+                libc::io::io_handles::err,
+                "Components",
+                platform::stacktrace::demangle::type_name(source) + ": " +
+                    platform::stacktrace::demangle::type_name(e) + ": " +
+                    e.what());
+        };
+    };
+
     for(auto& subsys_ptr : subsystems_)
     {
         auto& subsys = *subsys_ptr;
@@ -171,7 +182,15 @@ void EntityContainer::exec()
             ENT_DBG_TYPE(Verbose_Subsystems, "subsystem:start:", subsys)
         DProfContext _(typeid(subsys).name() + CString("::start_frame"));
 
-        subsys.start_frame(proxy, time_now);
+        if constexpr(compile_info::debug_mode)
+            wrap_exception<std::exception>(
+                ex_handler(subsys),
+                &SubsystemBase::start_frame,
+                &subsys,
+                std::ref(proxy),
+                time_now);
+        else
+            subsys.start_frame(proxy, time_now);
     }
 
     /* TODO: Put visitors in buckets according to what data they access */
@@ -183,7 +202,15 @@ void EntityContainer::exec()
             ENT_DBG_TYPE(Verbose_Visitors, "visitor:dispatch:", visitor)
         DProfContext _(typeid(visitor).name() + CString("::dispatch"));
 
-        visitor.dispatch(*this, time_now);
+        if constexpr(compile_info::debug_mode)
+            wrap_exception<std::exception>(
+                ex_handler(visitor_ptr),
+                &EntityVisitorBase::dispatch,
+                std::ref(visitor),
+                std::ref(*this),
+                time_now);
+        else
+            visitor.dispatch(*this, time_now);
     }
 
     for(auto it = subsystems_.rbegin(); it != subsystems_.rend(); ++it)
@@ -194,7 +221,15 @@ void EntityContainer::exec()
             ENT_DBG_TYPE(Verbose_Subsystems, "subsystem:end:", subsys)
         DProfContext _(typeid(subsys).name() + CString("::end_frame"));
 
-        subsys.end_frame(proxy, time_now);
+        if constexpr(compile_info::debug_mode)
+            wrap_exception<std::exception>(
+                ex_handler(subsys),
+                &SubsystemBase::end_frame,
+                std::ref(subsys),
+                std::ref(proxy),
+                time_now);
+        else
+            subsys.end_frame(proxy, time_now);
     }
 }
 
@@ -223,19 +258,24 @@ FORCEDINLINE void EntityContainer::register_component(
 template<typename ServiceType, typename SubsystemType>
 struct service_test
 {
-    template<typename T>
     struct dynamic_test
     {
-        void operator()(SubsystemType* sub)
+        dynamic_test(SubsystemType* sub) : sub(sub)
+        {
+        }
+        template<typename T>
+        void operator()()
         {
             C_PTR_CHECK_MSG(
                 C_DCAST<typename T::type>(sub), "service cast mismatch");
         }
+
+        SubsystemType* sub;
     };
 
     void check_subsystems(SubsystemType* sub)
     {
-        type_list::for_each<typename ServiceType::services, dynamic_test>(sub);
+        type_list::for_each<typename ServiceType::services>(dynamic_test(sub));
     }
 };
 
@@ -265,14 +305,14 @@ FORCEDINLINE EntityRef<EntityContainer> EntityContainer::ref(u64 entity)
     return EntityRef<EntityContainer>(entity, this);
 }
 
-template<typename ComponentTag>
+template<is_tag_type ComponentTag>
 ComponentRef<EntityContainer, ComponentTag> EntityContainer::ref_comp(
     u64 entity)
 {
     return ComponentRef<EntityContainer, ComponentTag>(entity, this);
 }
 
-template<typename Service>
+template<is_subsystem Service>
 ServiceRef<Service> EntityContainer::service_ref()
 {
     return ServiceRef<Service>(this);
@@ -284,13 +324,13 @@ quick_container<service_query<BaseType, Reversed>> EntityContainer::
 {
     using query_type = service_query<BaseType, Reversed>;
 
-    return {[this]() {
-                return query_type(
-                    *this, typename query_type::begin_iterator_t());
-            },
-            [this]() {
-                return query_type(*this, typename query_type::end_iterator_t());
-            }};
+    return {
+        [this]() {
+            return query_type(*this, typename query_type::begin_iterator_t());
+        },
+        [this]() {
+            return query_type(*this, typename query_type::end_iterator_t());
+        }};
 }
 
 template<class BaseType>

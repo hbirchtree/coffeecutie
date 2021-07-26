@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // PathMetricMask
-enum class path_metric_mask : ::libc_types::u32 {
+enum class path_metric_mask : ::libc_types::u32
+{
 #ifdef GL_FONT_ASCENDER_BIT_NV
     font_ascender_bit_nv = GL_FONT_ASCENDER_BIT_NV,
 #endif
@@ -55,7 +56,8 @@ enum class path_metric_mask : ::libc_types::u32 {
     glyph_height_bit_nv = GL_GLYPH_HEIGHT_BIT_NV,
 #endif
 #ifdef GL_GLYPH_HORIZONTAL_BEARING_ADVANCE_BIT_NV
-    glyph_horizontal_bearing_advance_bit_nv = GL_GLYPH_HORIZONTAL_BEARING_ADVANCE_BIT_NV,
+    glyph_horizontal_bearing_advance_bit_nv =
+        GL_GLYPH_HORIZONTAL_BEARING_ADVANCE_BIT_NV,
 #endif
 #ifdef GL_GLYPH_HORIZONTAL_BEARING_X_BIT_NV
     glyph_horizontal_bearing_x_bit_nv = GL_GLYPH_HORIZONTAL_BEARING_X_BIT_NV,
@@ -64,7 +66,8 @@ enum class path_metric_mask : ::libc_types::u32 {
     glyph_horizontal_bearing_y_bit_nv = GL_GLYPH_HORIZONTAL_BEARING_Y_BIT_NV,
 #endif
 #ifdef GL_GLYPH_VERTICAL_BEARING_ADVANCE_BIT_NV
-    glyph_vertical_bearing_advance_bit_nv = GL_GLYPH_VERTICAL_BEARING_ADVANCE_BIT_NV,
+    glyph_vertical_bearing_advance_bit_nv =
+        GL_GLYPH_VERTICAL_BEARING_ADVANCE_BIT_NV,
 #endif
 #ifdef GL_GLYPH_VERTICAL_BEARING_X_BIT_NV
     glyph_vertical_bearing_x_bit_nv = GL_GLYPH_VERTICAL_BEARING_X_BIT_NV,
@@ -78,4 +81,4 @@ enum class path_metric_mask : ::libc_types::u32 {
 }; // enum class path_metric_mask
 C_FLAGS(path_metric_mask, ::libc_types::u32);
 
-} // namespace gl::groups
+} // namespace gl::group

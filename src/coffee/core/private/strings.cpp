@@ -13,56 +13,6 @@
 namespace Coffee {
 namespace Strings {
 
-CString extArgReplacePhrase(
-    const CString& fmt, const CString& phrase, const CString& replace)
-{
-    return str::replace::str(fmt, phrase, replace);
-}
-
-CString extArgReplace(
-    const CString& fmt, const size_t& index, const CString& replace)
-{
-    // TODO: This needs optimizations
-    CString subfmt = "{" + cast_pod(index) + "}";
-    return str::replace::str(fmt, subfmt, replace);
-}
-
-template<
-    typename T,
-
-    typename std::enable_if<std::is_floating_point<T>::value, bool>::type* =
-        nullptr
-
-    >
-CString cStringReplace(CString const& fmt, size_t const& index, T const& arg)
-{
-    /* Regexes, man, these fucking regexes */
-    regex::Pattern  patt = regex::compile_pattern(".*?(\\{\\d+:(\\d+)\\}).*");
-    Vector<CString> match;
-
-    if(!regex::match(patt, fmt, match))
-        return extArgReplace(fmt, index, Strings::to_string(arg));
-
-    u32 prec = cast_string<u32>(match[2].c_str());
-
-    CString rep;
-#ifdef COFFEE_USE_IOSTREAMS
-    std::stringstream ss;
-    ss << std::fixed << std::setprecision(prec) << arg;
-    ss >> rep;
-#else
-    rep       = str::convert::to_string(arg);
-    auto dot1 = rep.find('.');
-    auto dot2 = rep.find(',');
-    if(dot1)
-        rep.resize(dot1 + 1 + prec, '0');
-    else if(dot2)
-        rep.resize(dot2 + 1 + prec, '0');
-#endif
-
-    return extArgReplacePhrase(fmt, match[1], rep);
-}
-
 template<
     typename T,
     size_t num,
@@ -94,11 +44,9 @@ static inline CString vector_to_string(
 template<
     typename T,
     size_t num,
-    char   v,
-
-    typename std::is_pod<T>::type* = nullptr
-
+    char   v
     >
+requires (std::is_standard_layout_v<T> && std::is_trivial_v<T>)
 static inline CString matrix_to_string(
     typing::vectors::tmatrix<T, num> const& value)
 {

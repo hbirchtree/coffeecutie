@@ -2,7 +2,7 @@ coffee_application (
     TARGET CompAppTest
     TITLE "Component app"
     SOURCES main.cpp
-    LIBRARIES ComponentBundleSetup
+    LIBRARIES ComponentBundleSetup GLeamRHI_ES
     )
 
 if(TARGET GLeamRHI)

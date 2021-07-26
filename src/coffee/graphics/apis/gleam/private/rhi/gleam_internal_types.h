@@ -40,7 +40,7 @@ struct InstanceData
     {
 #if GL_VERSION_VERIFY(0x300, 0x300)
         for(auto const& pbo : pboQueue.buffers)
-            gl::core::delete_buffers<gl::core::highest>(SpanOne(pbo.buf));
+            gl::core::v33::delete_buffers(SpanOne(pbo.buf));
 #endif
     }
 

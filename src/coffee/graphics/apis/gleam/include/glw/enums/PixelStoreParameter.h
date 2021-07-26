@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // PixelStoreParameter
-enum class pixel_store_parameter : ::libc_types::u32 {
+enum class pixel_store_parameter : ::libc_types::u32
+{
 #ifdef GL_PACK_ALIGNMENT
     pack_alignment = GL_PACK_ALIGNMENT,
 #endif
@@ -125,4 +126,4 @@ enum class pixel_store_parameter : ::libc_types::u32 {
 #endif
 }; // enum class pixel_store_parameter
 
-} // namespace gl::groups
+} // namespace gl::group

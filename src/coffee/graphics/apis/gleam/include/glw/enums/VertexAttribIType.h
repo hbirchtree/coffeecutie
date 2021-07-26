@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // VertexAttribIType
-enum class vertex_attrib_int : ::libc_types::u32 {
+enum class vertex_attrib_int : ::libc_types::u32
+{
 #ifdef GL_BYTE
     byte_ = GL_BYTE,
 #endif
@@ -26,4 +27,4 @@ enum class vertex_attrib_int : ::libc_types::u32 {
 #endif
 }; // enum class vertex_attrib_int
 
-} // namespace gl::groups
+} // namespace gl::group

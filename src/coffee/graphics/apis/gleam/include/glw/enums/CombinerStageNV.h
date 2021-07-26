@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // CombinerStageNV
-enum class combiner_stage_nv : ::libc_types::u32 {
+enum class combiner_stage_nv : ::libc_types::u32
+{
 #ifdef GL_COMBINER0_NV
     combiner0_nv = GL_COMBINER0_NV,
 #endif
@@ -32,4 +33,4 @@ enum class combiner_stage_nv : ::libc_types::u32 {
 #endif
 }; // enum class combiner_stage_nv
 
-} // namespace gl::groups
+} // namespace gl::group

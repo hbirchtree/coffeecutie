@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // StencilFaceDirection
-enum class stencil_face_direction : ::libc_types::u32 {
+enum class stencil_face_direction : ::libc_types::u32
+{
 #ifdef GL_BACK
     back = GL_BACK,
 #endif
@@ -17,4 +18,4 @@ enum class stencil_face_direction : ::libc_types::u32 {
 #endif
 }; // enum class stencil_face_direction
 
-} // namespace gl::groups
+} // namespace gl::group

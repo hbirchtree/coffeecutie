@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // FogPName
-enum class fog_prop : ::libc_types::u32 {
+enum class fog_prop : ::libc_types::u32
+{
 #ifdef GL_FOG_COORD_SRC
     fog_coord_src = GL_FOG_COORD_SRC,
 #endif
@@ -26,4 +27,4 @@ enum class fog_prop : ::libc_types::u32 {
 #endif
 }; // enum class fog_prop
 
-} // namespace gl::groups
+} // namespace gl::group

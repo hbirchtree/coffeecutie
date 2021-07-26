@@ -5,9 +5,10 @@
 namespace typing {
 namespace pixels {
 
-using namespace libc_types;
-
-template<typename T, u32 min_value = 0, u32 max_value = 0>
+template<
+    typename T,
+    libc_types::u32 min_value = 0,
+    libc_types::u32 max_value = 0>
 struct rgba_untyped
 {
     T r, g, b, a;
@@ -16,24 +17,21 @@ struct rgba_untyped
 /*!
  * \brief Used for storing typical 8-bit color with alpha
  */
-struct rgba_t
+union rgba_t
 {
     rgba_t() : i(0)
     {
     }
-    rgba_t(u8 r, u8 g, u8 b, u8 a = 255) : r(r), g(g), b(b), a(a)
+    rgba_t(
+        libc_types::u8 r,
+        libc_types::u8 g,
+        libc_types::u8 b,
+        libc_types::u8 a = 255) :
+        r(r), g(g), b(b), a(a)
     {
     }
 
-    union
-    {
-        u32 i;
-        struct
-        {
-            u8 r, g, b, a;
-        };
-    };
-    u32 rgba() const
+    libc_types::u32 rgba() const
     {
 #if defined(COFFEE_LIL_ENDIAN)
         rgba_t t;
@@ -46,17 +44,20 @@ struct rgba_t
         return i;
 #endif
     }
+
+    libc_types::u32 i;
+    struct
+    {
+        u8 r, g, b, a;
+    };
 };
 
-struct rgb_t
+union rgb_t
 {
-    union
+    libc_types::u24 i;
+    struct
     {
-        u24 i;
-        struct
-        {
-            u8 r, g, b;
-        };
+        libc_types::u8 r, g, b;
     };
 };
 

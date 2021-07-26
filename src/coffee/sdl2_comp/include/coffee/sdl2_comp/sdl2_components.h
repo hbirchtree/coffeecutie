@@ -12,32 +12,34 @@ namespace sdl2 {
 using comp_app::position_t;
 using comp_app::size_2d_t;
 
-struct Context : comp_app::AppService<
-                     Context,
-                     comp_app::detail::TypeList<
-                         comp_app::EventBus<Coffee::Input::CIEvent>,
-                         comp_app::EventBus<Coffee::Display::Event>>>,
-                 comp_app::AppLoadableService
+struct Context : comp_app::AppService<Context>, comp_app::AppLoadableService
 {
-    using type = Context;
+    using readable_services = comp_app::detail::subsystem_list<
+        comp_app::EventBus<Coffee::Input::CIEvent>,
+        comp_app::EventBus<Coffee::Display::Event>>;
+    using proxy_type = comp_app::detail::restricted::proxy_t<Context>;
 
     virtual void load(entity_container& c, comp_app::app_error&) final;
     virtual void unload(entity_container& c, comp_app::app_error&) final;
-    virtual void end_restricted(Proxy& p, time_point const&) final;
+    void         end_restricted(proxy_type& p, time_point const&);
 
     bool m_shouldClose = false;
 };
 
-struct Windowing : comp_app::Windowing, comp_app::AppLoadableService
+struct Windowing : comp_app::interfaces::Windowing,
+                   comp_app::AppService<Windowing, comp_app::Windowing>,
+                   comp_app::AppLoadableService
 {
-    using type = Windowing;
+    using readable_services = comp_app::detail::subsystem_list<
+        comp_app::EventBus<Coffee::Display::Event>>;
+    using proxy_type = comp_app::detail::restricted::proxy_t<Windowing>;
 
     virtual ~Windowing();
 
     virtual void load(entity_container& c, comp_app::app_error& ec) final;
     virtual void unload(entity_container& c, comp_app::app_error& ec) final;
 
-    virtual void start_restricted(Proxy& p, time_point const&) final;
+    void start_restricted(proxy_type& p, time_point const&);
 
     virtual void show() final;
     virtual void close() final;
@@ -56,7 +58,15 @@ struct Windowing : comp_app::Windowing, comp_app::AppLoadableService
     entity_container* m_container = nullptr;
 };
 
-struct WindowInfo : comp_app::WindowInfo, comp_app::AppLoadableService
+struct NativeWindowInfo
+    : comp_app::interfaces::PtrNativeWindowInfo,
+      comp_app::AppService<NativeWindowInfo, comp_app::PtrNativeWindowInfo>
+{
+};
+
+struct WindowInfo : comp_app::interfaces::WindowInfo,
+                    comp_app::AppService<WindowInfo, comp_app::WindowInfo>,
+                    comp_app::AppLoadableService
 {
     virtual void load(entity_container& e, comp_app::app_error&) final;
 
@@ -66,7 +76,8 @@ struct WindowInfo : comp_app::WindowInfo, comp_app::AppLoadableService
     entity_container* m_container = nullptr;
 };
 
-struct DisplayInfo : comp_app::DisplayInfo
+struct DisplayInfo : comp_app::interfaces::DisplayInfo,
+                     comp_app::AppService<DisplayInfo, comp_app::DisplayInfo>
 {
     virtual comp_app::size_2d_t virtualSize() const final;
     virtual libc_types::u32     count() const final;
@@ -75,10 +86,10 @@ struct DisplayInfo : comp_app::DisplayInfo
     virtual comp_app::size_2d_t physicalSize(libc_types::u32) const final;
 };
 
-struct GLContext : comp_app::GraphicsContext, comp_app::AppLoadableService
+struct GLContext : comp_app::interfaces::GraphicsContext,
+                   comp_app::AppService<GLContext, comp_app::GraphicsContext>,
+                   comp_app::AppLoadableService
 {
-    using type = GLContext;
-
     void setupAttributes(entity_container& c);
 
     virtual void load(entity_container& c, comp_app::app_error& ec) final;
@@ -88,30 +99,42 @@ struct GLContext : comp_app::GraphicsContext, comp_app::AppLoadableService
     entity_container* m_container = nullptr;
 };
 
-struct GLSwapControl : comp_app::GraphicsSwapControl
+struct GLSwapControl
+    : comp_app::interfaces::GraphicsSwapControl,
+      comp_app::AppService<GLSwapControl, comp_app::GraphicsSwapControl>
 {
     virtual libc_types::i32 swapInterval() const final;
     virtual void            setSwapInterval(libc_types::i32 interval) final;
 };
 
-struct GLFramebuffer : comp_app::GraphicsFramebuffer,
-                       comp_app::AppLoadableService
+struct GLFramebuffer
+    : comp_app::interfaces::GraphicsFramebuffer,
+      comp_app::AppService<GLFramebuffer, comp_app::GraphicsFramebuffer>,
+      comp_app::AppLoadableService
 {
-    using type = GLFramebuffer;
-
     virtual void load(entity_container& c, comp_app::app_error&) final;
 
     virtual void                swapBuffers(comp_app::app_error& ec) final;
     virtual comp_app::size_2d_t size() const final;
 
+    virtual void start_frame(
+        comp_app::detail::ContainerProxy&, time_point const&) final;
+
     entity_container* m_container;
 };
 
-struct ControllerInput : comp_app::ControllerInput, comp_app::AppLoadableService
+struct ControllerInput
+    : comp_app::interfaces::ControllerInput,
+      comp_app::AppService<ControllerInput, comp_app::ControllerInput>,
+      comp_app::AppLoadableService
 {
+    using readable_services =
+        comp_app::subsystem_list<comp_app::EventBus<Coffee::Input::CIEvent>>;
+    using proxy_type = comp_app::detail::restricted::proxy_t<ControllerInput>;
+
     virtual void load(entity_container&, comp_app::app_error& ec) final;
     virtual void unload(entity_container&, comp_app::app_error& ec) final;
-    virtual void start_restricted(Proxy& p, time_point const&) final;
+    void         start_restricted(proxy_type& p, time_point const&);
 
     virtual libc_types::u32       count() const final;
     virtual controller_map        state(libc_types::u32 idx) const final;
@@ -127,23 +150,35 @@ struct ControllerInput : comp_app::ControllerInput, comp_app::AppLoadableService
     stl_types::Map<int, void*> m_playerIndex;
 };
 
-struct KeyboardInput : comp_app::BasicKeyboardInput
+struct KeyboardInput
+    : comp_app::interfaces::BasicKeyboardInput,
+      comp_app::AppService<KeyboardInput, comp_app::KeyboardInput>
 {
-    virtual void start_restricted(Proxy& p, time_point const&) final;
+    using readable_services =
+        comp_app::subsystem_list<comp_app::EventBus<Coffee::Input::CIEvent>>;
+    using proxy_type = comp_app::detail::restricted::proxy_t<KeyboardInput>;
+
+    void start_restricted(proxy_type& p, time_point const&);
 
     virtual void openVirtual() const final;
     virtual void closeVirtual() const final;
 };
 
-struct MouseInput : comp_app::MouseInput, comp_app::AppLoadableService
+struct MouseInput : comp_app::interfaces::MouseInput,
+                    comp_app::AppService<MouseInput, comp_app::MouseInput>,
+                    comp_app::AppLoadableService
 {
+    using readable_services =
+        comp_app::subsystem_list<comp_app::EventBus<Coffee::Input::CIEvent>>;
+    using proxy_type = comp_app::detail::restricted::proxy_t<MouseInput>;
+
     MouseInput()
     {
         priority = default_prio + 100;
     }
 
     virtual void load(entity_container& e, comp_app::app_error&) override;
-    virtual void start_restricted(Proxy&, time_point const&) final;
+    void         start_restricted(proxy_type&, time_point const&);
 
     virtual bool                 mouseGrabbed() const final;
     virtual void                 setMouseGrab(bool enabled) final;
@@ -155,17 +190,16 @@ struct MouseInput : comp_app::MouseInput, comp_app::AppLoadableService
     entity_container* m_container;
 };
 
-using Services = comp_app::detail::TypeList<
+using Services = comp_app::subsystem_list<
     Context,
     Windowing,
     WindowInfo,
     DisplayInfo,
-    comp_app::PtrNativeWindowInfo,
-    ControllerInput,
+    NativeWindowInfo,
     KeyboardInput,
     MouseInput>;
 
 using GLServices =
-    comp_app::detail::TypeList<GLSwapControl, GLContext, GLFramebuffer>;
+    comp_app::subsystem_list<GLSwapControl, GLContext, GLFramebuffer>;
 
 } // namespace sdl2

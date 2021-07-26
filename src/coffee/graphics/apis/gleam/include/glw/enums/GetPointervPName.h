@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // GetPointervPName
-enum class get_pointerv_prop : ::libc_types::u32 {
+enum class get_pointerv_prop : ::libc_types::u32
+{
 #ifdef GL_COLOR_ARRAY_POINTER
     color_array_pointer = GL_COLOR_ARRAY_POINTER,
 #endif
@@ -59,4 +60,4 @@ enum class get_pointerv_prop : ::libc_types::u32 {
 #endif
 }; // enum class get_pointerv_prop
 
-} // namespace gl::groups
+} // namespace gl::group

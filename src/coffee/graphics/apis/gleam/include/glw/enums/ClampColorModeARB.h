@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // ClampColorModeARB
-enum class clamp_color_mode_arb : ::libc_types::u32 {
+enum class clamp_color_mode_arb : ::libc_types::u32
+{
 #ifdef GL_FALSE
     false_ = GL_FALSE,
 #endif
@@ -20,4 +21,4 @@ enum class clamp_color_mode_arb : ::libc_types::u32 {
 #endif
 }; // enum class clamp_color_mode_arb
 
-} // namespace gl::groups
+} // namespace gl::group

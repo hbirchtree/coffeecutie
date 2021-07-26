@@ -18,18 +18,10 @@ namespace stb {
 
 void _stbi_write_data(void* ctxt, void* data, int size)
 {
-    Bytes* target = C_FCAST<Bytes*>(ctxt);
-    auto   offset = target->size;
-    target->size += C_FCAST<szptr>(size);
+    auto* target = C_RCAST<stl_types::Vector<char>*>(ctxt);
 
-//    target->size += 8 - (size % 8);
-
-    if(!target->data)
-        *target = Bytes::withSize(target->size);
-    else
-        target->resize(target->size);
-
-    MemCpy(Bytes::ofBytes(data, size), *target->at(offset));
+    semantic::Span<char> source(C_RCAST<char*>(data), size);
+    std::copy(source.begin(), source.end(), std::back_inserter(*target));
 }
 
 inline void DataSetDestr(Bytes& b)
@@ -331,16 +323,19 @@ bool SavePNG(Bytes& target, const image_const& src, stb_error& ec)
 {
     DProfContext _(STB_ABI "Saving PNG image");
 
+    target = {};
+
     auto res = stbi_write_png_to_func(
         _stbi_write_data,
-        &target,
+        &target.allocation,
+        src.size.w * src.bpp,
         src.size.w,
         src.size.h,
-        src.bpp,
         src.data,
-        src.size.w * src.bpp);
+        src.bpp);
+    target.updatePointers(semantic::Ownership::Owned);
 
-    if(res == 0)
+    if(!res)
     {
         ec = STBError::EncodingError;
         ec = stbi_failure_reason();
@@ -353,8 +348,16 @@ bool SaveTGA(Bytes& target, const image_const& src, stb_error& ec)
 {
     DProfContext _(STB_ABI "Saving TGA image");
 
+    target = {};
+
     auto res = stbi_write_tga_to_func(
-        _stbi_write_data, &target, src.size.w, src.size.h, src.bpp, src.data);
+        _stbi_write_data,
+        &target.allocation,
+        src.size.w,
+        src.size.h,
+        src.bpp,
+        src.data);
+    target.updatePointers(semantic::Ownership::Owned);
 
     if(res == 0)
     {
@@ -369,16 +372,19 @@ bool SaveJPG(Bytes& target, const image_const& src, stb_error& ec, int qual)
 {
     DProfContext _(STB_ABI "Saving JPG image");
 
+    target = {};
+
     auto res = stbi_write_jpg_to_func(
         _stbi_write_data,
-        &target,
+        &target.allocation,
         src.size.w,
         src.size.h,
         src.bpp,
         src.data,
         qual);
+    target.updatePointers(semantic::Ownership::Owned);
 
-    if(res == 0)
+    if(!res)
     {
         ec = STBError::EncodingError;
         ec = stbi_failure_reason();

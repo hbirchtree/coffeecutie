@@ -233,6 +233,8 @@ FORCEDINLINE result<Url, posix_error> executable()
     return url::constructors::MkUrl("App");
 #elif defined(COFFEE_MACOS)
 #error Unimplemented function
+#elif defined(COFFEE_EMSCRIPTEN)
+    return url::constructors::MkSysUrl("/app");
 #else
     return url::constructors::MkInvalidUrl();
 #endif

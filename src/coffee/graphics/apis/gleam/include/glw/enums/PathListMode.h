@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // PathListMode
-enum class path_list_mode : ::libc_types::u32 {
+enum class path_list_mode : ::libc_types::u32
+{
 #ifdef GL_ACCUM_ADJACENT_PAIRS_NV
     accum_adjacent_pairs_nv = GL_ACCUM_ADJACENT_PAIRS_NV,
 #endif
@@ -17,4 +18,4 @@ enum class path_list_mode : ::libc_types::u32 {
 #endif
 }; // enum class path_list_mode
 
-} // namespace gl::groups
+} // namespace gl::group

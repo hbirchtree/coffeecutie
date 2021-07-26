@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // BufferTargetARB
-enum class buffer_target_arb : ::libc_types::u32 {
+enum class buffer_target_arb : ::libc_types::u32
+{
 #ifdef GL_ARRAY_BUFFER
     array_buffer = GL_ARRAY_BUFFER,
 #endif
@@ -53,4 +54,4 @@ enum class buffer_target_arb : ::libc_types::u32 {
 #endif
 }; // enum class buffer_target_arb
 
-} // namespace gl::groups
+} // namespace gl::group

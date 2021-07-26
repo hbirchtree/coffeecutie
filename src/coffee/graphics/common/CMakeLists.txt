@@ -10,6 +10,19 @@ header_install (
 
 add_export ( GraphicsAPI "" )
 
+add_library ( GraphicsInterface INTERFACE )
+
+target_include_directories ( GraphicsInterface INTERFACE
+    "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+    )
+
+coffee_bundle (
+    DESTINATION ""
+    HEADER_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/include"
+    )
+
+add_export ( GraphicsInterface "" )
+
 SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH FALSE)
 
 if(NOT NO_DYNAMIC_LINKING AND FALSE)

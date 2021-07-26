@@ -1,12 +1,9 @@
+
 ################################################################################
 # Shorthand for enabling C++11, with less copy-pasta
 ################################################################################
 
 include (CheckIPOSupported)
-
-if(EMSCRIPTEN)
-    set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20" CACHE STRING "" FORCE )
-endif()
 
 macro(TARGET_ENABLE_CXX11 TARGET)
     if(BUILD_CPP11)

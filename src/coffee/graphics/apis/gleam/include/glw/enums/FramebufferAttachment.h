@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // FramebufferAttachment
-enum class framebuffer_attachment : ::libc_types::u32 {
+enum class framebuffer_attachment : ::libc_types::u32
+{
 #ifdef GL_COLOR_ATTACHMENT0
     color_attachment0 = GL_COLOR_ATTACHMENT0,
 #endif
@@ -110,4 +111,4 @@ enum class framebuffer_attachment : ::libc_types::u32 {
 #endif
 }; // enum class framebuffer_attachment
 
-} // namespace gl::groups
+} // namespace gl::group

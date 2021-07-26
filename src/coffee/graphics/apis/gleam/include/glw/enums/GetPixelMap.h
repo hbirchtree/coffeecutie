@@ -2,6 +2,6 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
-} // namespace gl::groups
+} // namespace gl::group

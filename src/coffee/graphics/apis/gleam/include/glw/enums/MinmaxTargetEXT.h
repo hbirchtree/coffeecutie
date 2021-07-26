@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // MinmaxTargetEXT
-enum class minmax_target_ext : ::libc_types::u32 {
+enum class minmax_target_ext : ::libc_types::u32
+{
 #ifdef GL_MINMAX
     minmax = GL_MINMAX,
 #endif
@@ -14,4 +15,4 @@ enum class minmax_target_ext : ::libc_types::u32 {
 #endif
 }; // enum class minmax_target_ext
 
-} // namespace gl::groups
+} // namespace gl::group

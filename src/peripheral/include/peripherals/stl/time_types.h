@@ -39,13 +39,17 @@ inline libc_types::u64 to_unix(Clock::time_point ts)
             seconds(duration_cast<seconds>(ts.time_since_epoch()).count()))));
 }
 
-template<class Timepoint>
-inline libc_types::scalar to_float(Timepoint const& dur)
+template<typename Clock, typename Rep>
+inline libc_types::scalar to_float(
+    std::chrono::time_point<Clock, Rep> const& dur)
 {
-    return duration_cast<seconds_float>(
-               time_point_cast<steady_clock::time_point>(dur)
-                   .time_since_epoch())
-        .count();
+    return duration_cast<seconds_float>(dur.time_since_epoch()).count();
+}
+
+template<typename Rep, typename Ratio>
+inline libc_types::scalar to_float(std::chrono::duration<Rep, Ratio> const& dur)
+{
+    return duration_cast<seconds_float>(dur).count();
 }
 
 } // namespace Chrono

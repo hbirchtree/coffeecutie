@@ -2,13 +2,14 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // SyncBehaviorFlags
-enum class sync_behavior_flags : ::libc_types::u32 {
+enum class sync_behavior_flags : ::libc_types::u32
+{
 #ifdef GL_NONE
     none = GL_NONE,
 #endif
 }; // enum class sync_behavior_flags
 
-} // namespace gl::groups
+} // namespace gl::group

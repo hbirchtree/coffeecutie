@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // HistogramTargetEXT
-enum class histogram_target_ext : ::libc_types::u32 {
+enum class histogram_target_ext : ::libc_types::u32
+{
 #ifdef GL_HISTOGRAM
     histogram = GL_HISTOGRAM,
 #endif
@@ -20,4 +21,4 @@ enum class histogram_target_ext : ::libc_types::u32 {
 #endif
 }; // enum class histogram_target_ext
 
-} // namespace gl::groups
+} // namespace gl::group

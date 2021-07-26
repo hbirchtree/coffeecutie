@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // DepthFunction
-enum class depth_function : ::libc_types::u32 {
+enum class depth_function : ::libc_types::u32
+{
 #ifdef GL_ALWAYS
     always = GL_ALWAYS,
 #endif
@@ -32,4 +33,4 @@ enum class depth_function : ::libc_types::u32 {
 #endif
 }; // enum class depth_function
 
-} // namespace gl::groups
+} // namespace gl::group

@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // SubroutineParameterName
-enum class subroutine_parameter_name : ::libc_types::u32 {
+enum class subroutine_parameter_name : ::libc_types::u32
+{
 #ifdef GL_COMPATIBLE_SUBROUTINES
     compatible_subroutines = GL_COMPATIBLE_SUBROUTINES,
 #endif
@@ -20,4 +21,4 @@ enum class subroutine_parameter_name : ::libc_types::u32 {
 #endif
 }; // enum class subroutine_parameter_name
 
-} // namespace gl::groups
+} // namespace gl::group

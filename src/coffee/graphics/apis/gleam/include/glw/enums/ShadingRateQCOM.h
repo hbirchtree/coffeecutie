@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // ShadingRateQCOM
-enum class shading_rate_qcom : ::libc_types::u32 {
+enum class shading_rate_qcom : ::libc_types::u32
+{
 #ifdef GL_SHADING_RATE_1X1_PIXELS_QCOM
     shading_rate_1x1_pixels_qcom = GL_SHADING_RATE_1X1_PIXELS_QCOM,
 #endif
@@ -35,4 +36,4 @@ enum class shading_rate_qcom : ::libc_types::u32 {
 #endif
 }; // enum class shading_rate_qcom
 
-} // namespace gl::groups
+} // namespace gl::group

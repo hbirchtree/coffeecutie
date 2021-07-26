@@ -1,8 +1,12 @@
 #pragma once
 
 #include "standard_exceptions.h"
-#include <peripherals/base.h>
+#include <peripherals/identify/compiler/variable_attributes.h>
+#include <peripherals/identify/compiler/function_inlining.h>
 #include <peripherals/identify/quirks.h>
+#include <peripherals/identify/system.h>
+#include <peripherals/stl/constructors.h>
+#include <peripherals/stl/type_safety.h>
 
 /*Container types*/
 #include <array>
@@ -13,6 +17,7 @@
 #include <queue>
 #include <set>
 #include <string>
+#include <string_view>
 #include <tuple>
 #include <vector>
 

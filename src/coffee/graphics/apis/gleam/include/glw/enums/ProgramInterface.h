@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // ProgramInterface
-enum class program_interface : ::libc_types::u32 {
+enum class program_interface : ::libc_types::u32
+{
 #ifdef GL_BUFFER_VARIABLE
     buffer_variable = GL_BUFFER_VARIABLE,
 #endif
@@ -68,4 +69,4 @@ enum class program_interface : ::libc_types::u32 {
 #endif
 }; // enum class program_interface
 
-} // namespace gl::groups
+} // namespace gl::group

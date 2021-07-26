@@ -1,12 +1,14 @@
 #include <coffee/core/internal_state.h>
 
 #include <coffee/core/CDebug>
+#include <coffee/core/debug/logging.h>
 #include <coffee/core/printing/log_interface.h>
-#include <coffee/core/printing/outputprinter.h>
 #include <coffee/foreign/foreign.h>
 #include <platforms/argument_parse.h>
 #include <platforms/environment.h>
 #include <platforms/profiling/jsonprofile.h>
+
+#include <coffee/core/debug/logging.h>
 
 #if !defined(COFFEE_DISABLE_PROFILER)
 #include <coffee/core/profiler/profiling-export.h>
@@ -24,15 +26,14 @@ struct InternalState
 
     InternalState() :
         current_app(MkShared<platform::info::AppData>()),
-#if !defined(COFFEE_DISABLE_PROFILER)
+#if PERIPHERAL_PROFILER_ENABLED
         profiler_store(MkShared<profiling::PContext>()),
 #endif
         bits()
     {
     }
 
-    LogInterface logger = {OutputPrinter::fprintf_platform,
-                           OutputPrinter::fprintf_platform_tagged};
+    DebugFun::LogInterface logger = {Logging::log};
 
 #ifndef COFFEE_LOWFAT
     Mutex printer_lock;
@@ -72,7 +73,7 @@ struct InternalState
 
 struct InternalThreadState
 {
-#if !defined(COFFEE_DISABLE_PROFILER)
+#if PERIPHERAL_PROFILER_ENABLED
     InternalThreadState() :
         current_thread_id(), profiler_data(MkShared<profiling::ThreadState>())
     {
@@ -326,8 +327,7 @@ Coffee::DebugFun::LogInterface GetLogInterface()
     if(State::ISTATE)
         return State::ISTATE->logger;
     else
-        return {OutputPrinter::fprintf_platform,
-                OutputPrinter::fprintf_platform_tagged};
+        return {Logging::log};
 }
 
 } // namespace DebugFun

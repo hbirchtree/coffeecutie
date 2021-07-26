@@ -32,28 +32,27 @@ if(BUILD_COMPONENT_APP)
     add_subdirectory(comp_app)
 
     add_library ( ComponentBundle INTERFACE )
+    add_library ( GraphicsBundle INTERFACE )
     add_library ( MobileBundle INTERFACE )
 
     if(BUILD_OPENGL)
-        target_compile_definitions ( ComponentBundle INTERFACE
+        target_compile_definitions ( GraphicsBundle INTERFACE
             -DSELECT_API_OPENGL=1
             )
 
         if(BUILD_GLEAM)
-            target_link_libraries ( ComponentBundle INTERFACE GLVersion )
+            target_link_libraries ( GraphicsBundle INTERFACE GLVersion_ES )
         endif()
 
-        if(NOT BUILD_GLES)
-            add_subdirectory(graphics/comp_app)
-            target_link_libraries ( ComponentBundle INTERFACE GLADComponent )
-        endif()
+        add_subdirectory(graphics/comp_app)
+#        target_link_libraries ( GraphicsBundle INTERFACE GLADComponent_ES )
 
         if(BUILD_EGL)
             add_subdirectory(graphics/egl_comp)
             target_link_libraries ( ComponentBundle INTERFACE EGLComponent )
         endif()
 
-        target_link_libraries ( ComponentBundle INTERFACE GLScreenshot )
+        target_link_libraries ( GraphicsBundle INTERFACE GLScreenshot_ES )
     endif()
     if(BUILD_X11)
         add_subdirectory(windowing/x11_comp)
@@ -66,7 +65,7 @@ if(BUILD_COMPONENT_APP)
     if(BUILD_GLKIT)
         add_subdirectory(windowing/glkit_comp)
         add_subdirectory(uikit)
-        target_link_libraries ( ComponentBundle INTERFACE GLKitComponent )
+        target_link_libraries ( GraphicsBundle INTERFACE GLKitComponent )
         target_link_libraries ( MobileBundle INTERFACE UIKitGestures )
     endif()
     if(BUILD_LIBOGC)
@@ -81,11 +80,19 @@ if(BUILD_COMPONENT_APP)
         add_subdirectory(sdl2_comp)
         target_link_libraries ( ComponentBundle INTERFACE SDL2Components )
     endif()
+    if(BUILD_EMSCRIPTEN)
+        add_subdirectory(emscripten)
+        target_link_libraries ( ComponentBundle INTERFACE EmscriptenComponents )
+    endif()
 
-    target_link_libraries ( ComponentBundle INTERFACE MobileBundle )
+    target_link_libraries ( ComponentBundle INTERFACE
+        MobileBundle
+        GraphicsBundle
+        )
 
-    add_export ( MobileBundle    "" )
     add_export ( ComponentBundle "" )
+    add_export ( GraphicsBundle "" )
+    add_export ( MobileBundle    "" )
 endif()
 
 if(BUILD_ASIO)

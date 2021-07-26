@@ -15,6 +15,8 @@
 #include <peripherals/stl/string_ops.h>
 #include <platforms/environment.h>
 
+#include <platforms/stacktrace.h>
+
 #include <coffee/comp_app/stat_providers.h>
 
 #include <coffee/strings/libc_types.h>
@@ -33,7 +35,9 @@
 #include <coffee/x11/x11_comp.h>
 #endif
 
-#if defined(FEATURE_ENABLE_GLADComponent)
+#if defined(FEATURE_ENABLE_GLADComponent_Dynamic) ||   \
+    defined(FEATURE_ENABLE_GLADComponent_ESDynamic) || \
+    defined(FEATURE_ENABLE_GLADComponent_ES2Dynamic)
 #include <coffee/glad/glad_comp.h>
 #endif
 
@@ -57,6 +61,10 @@
 #include <coffee/uikit/uikit_comp.h>
 #endif
 
+#if defined(FEATURE_ENABLE_EmscriptenComponents)
+#include <coffee/emscripten_comp/emscripten_components.h>
+#endif
+
 #if defined(FEATURE_ENABLE_GLScreenshot)
 #include <glscreenshot/screenshot.h>
 #endif
@@ -66,17 +74,18 @@
 #define USES_LINKED_GL 1
 #endif
 
-#if defined(FEATURE_ENABLE_GLADComponent) || \
-    defined(FEATURE_ENABLE_EGLComponent) ||  \
+#if defined(FEATURE_ENABLE_GLADComponent_Dynamic) ||    \
+    defined(FEATURE_ENABLE_GLADComponent_ESDynamic) ||  \
+    defined(FEATURE_ENABLE_GLADComponent_ES2Dynamic) || \
+    defined(FEATURE_ENABLE_EGLComponent) ||             \
     defined(FEATURE_ENABLE_SDL2Components) || USES_LINKED_GL
 #define USES_GL 1
 #endif
 
 namespace comp_app {
 
-struct DefaultAppInfo : AppInfo
+struct DefaultAppInfo : interfaces::AppInfo, AppService<DefaultAppInfo, AppInfo>
 {
-  public:
     virtual void        add(text_type key, text_type value) final;
     virtual text_type_t get(text_type key) final;
 };
@@ -102,20 +111,24 @@ void emscripten_loop()
 {
     static bool isLoaded = false;
 
-    try
+    //    try
+    //    {
+    if(!isLoaded)
     {
-        if(!isLoaded)
-        {
-            CoffeeEventHandle(nullptr, CoffeeHandle_Setup);
-            isLoaded = true;
-        }
-
-        CoffeeEventHandle(nullptr, CoffeeHandle_Loop);
-    } catch(std::exception const& e)
-    {
-        emscripten_log(EM_LOG_ERROR, "Exception encountered: %s", e.what());
-        emscripten_pause_main_loop();
+        CoffeeEventHandle(nullptr, CoffeeHandle_Setup);
+        isLoaded = true;
     }
+
+    CoffeeEventHandle(nullptr, CoffeeHandle_Loop);
+    //    } catch(std::exception const& e)
+    //    {
+    //        emscripten_log(
+    //            EM_LOG_ERROR,
+    //            "Exception encountered: %s: %s",
+    //            platform::stacktrace::demangle::name(typeid(e).name()).c_str(),
+    //            e.what());
+    //        emscripten_pause_main_loop();
+    //    }
 }
 #endif
 
@@ -146,8 +159,7 @@ detail::EntityContainer& createContainer()
 
         switch(event)
         {
-        case CoffeeHandle_Setup:
-        {
+        case CoffeeHandle_Setup: {
             DProfContext _("Bundle::Setup");
 
             app_error ec;
@@ -166,8 +178,7 @@ detail::EntityContainer& createContainer()
             C_ERROR_CHECK(ec)
             break;
         }
-        case CoffeeHandle_Loop:
-        {
+        case CoffeeHandle_Loop: {
             DProfContext _("Bundle::Loop");
 
             container->exec();
@@ -177,8 +188,7 @@ detail::EntityContainer& createContainer()
                 queue->executeTasks();
             break;
         }
-        case CoffeeHandle_Cleanup:
-        {
+        case CoffeeHandle_Cleanup: {
             DProfContext _("Bundle::Cleanup");
 
             app_error appec;
@@ -189,8 +199,7 @@ detail::EntityContainer& createContainer()
                 service.unload(*container, appec);
             break;
         }
-        default:
-        {
+        default: {
             DProfContext _("Bundle::AppEvent");
             auto         app_bus = container->service<EventBus<AppEvent>>();
 
@@ -253,7 +262,9 @@ detail::EntityContainer& createContainer()
     };
     CoffeeEventHandleNA = [](void*, int, void*, void*, void*) {};
 
-    if constexpr(compile_info::platform::is_unix)
+    if constexpr(
+        compile_info::platform::is_unix &&
+        !compile_info::platform::is_emscripten)
         libc::signal::install(libc::signal::sig::interrupt, [](int) {
             if(!container)
                 return;
@@ -284,11 +295,11 @@ void configureDefaults(AppLoader& loader)
     glConfig.framebufferFmt = PixFmt::RGBA8;
     glConfig.depthFmt       = PixFmt::Depth24Stencil8;
 
-#if !defined(COFFEE_LINKED_GLES)
+#if !defined(GLEAM_USE_LINKED)
     glConfig.framebufferFmt = PixFmt::SRGB8A8;
 #endif
 
-#if defined(COFFEE_LINKED_GLES)
+#if defined(GLEAM_USE_LINKED)
     glConfig.framebufferFmt = PixFmt::RGB565;
     glConfig.profile        = GLConfig::Embedded;
     glConfig.version.major  = 3;
@@ -297,11 +308,6 @@ void configureDefaults(AppLoader& loader)
     glConfig.profile       = GLConfig::Core;
     glConfig.version.major = 3;
     glConfig.version.minor = 3;
-#endif
-
-#if defined(COFFEE_EMSCRIPTEN)
-    glConfig.version.major = 2;
-    glConfig.version.minor = 0;
 #endif
 #endif
 
@@ -326,7 +332,7 @@ void addDefaults(
 {
     Coffee::ProfContext _("comp_app::addDefaults");
 
-    loader.loadAll<detail::TypeList<
+    loader.loadAll<subsystem_list<
         BasicEventBus<Coffee::Input::CIEvent>,
         BasicEventBus<Coffee::Display::Event>,
         BasicEventBus<AppEvent>,
@@ -335,31 +341,52 @@ void addDefaults(
     auto& appInfo = *container.service<AppInfo>();
 
     if constexpr(compile_info::debug_mode && compile_info::profiler::enabled)
+    {
         loader.loadAll<type_safety::type_list_t<PerformanceMonitor>>(
             container, ec);
+        C_ERROR_CHECK(ec);
+    }
 
-        /* Selection of window/event manager */
+    /* Selection of window/event manager */
 #if defined(FEATURE_ENABLE_SDL2Components)
     sdl2::GLContext::register_service<sdl2::GLContext>(container);
     loader.loadAll<sdl2::Services>(container, ec);
+    C_ERROR_CHECK(ec);
+
+#if !defined(FEATURE_ENABLE_EmscriptenComponents)
+    /* Controller API in Emscripten is not part of the SDL2 port */
+    loader.loadAll<type_safety::type_list_t<sdl2::ControllerInput>>(
+        container, ec);
+    C_ERROR_CHECK(ec);
+#endif
 
     appInfo.add("window:library", "SDL2 " + appInfo.get("sdl2:version"));
 #elif defined(FEATURE_ENABLE_X11Component)
     loader.loadAll<x11::Services>(container, ec);
+    C_ERROR_CHECK(ec);
     appInfo.add("window:library", "X11");
 #elif defined(FEATURE_ENABLE_GLKitComponent)
     loader.loadAll<glkit::Services>(container, ec);
+    C_ERROR_CHECK(ec);
     appInfo.add("window:library", "Apple GLKit");
 #elif defined(FEATURE_ENABLE_ANativeComponent)
     loader.loadAll<anative::Services>(container, ec);
+    C_ERROR_CHECK(ec);
     appInfo.add("window:library", "Android NativeActivity");
 #elif defined(FEATURE_ENABLE_CogComponent)
     /* There is no window */
 #elif defined(COFFEE_BEAGLEBONE)
     loader.loadAll<type_safety::type_list_t<egl::Windowing>>(container, ec);
+    C_ERROR_CHECK(ec);
     appInfo.add("window:library", "EGL Headless");
 #else
 #error No window manager
+#endif
+
+#if defined(FEATURE_ENABLE_EmscriptenComponents)
+    loader.loadAll<type_safety::type_list_t<emscripten::ControllerInput>>(
+        container, ec);
+    C_ERROR_CHECK(ec);
 #endif
 
 #if defined(SELECT_API_OPENGL)
@@ -370,23 +397,26 @@ void addDefaults(
     sdl2::GLSwapControl::register_service<sdl2::GLSwapControl>(container);
     sdl2::GLFramebuffer::register_service<sdl2::GLFramebuffer>(container);
     container.service<sdl2::GLContext>()->load(container, ec);
+    C_ERROR_CHECK(ec);
     container.service<sdl2::GLFramebuffer>()->load(container, ec);
+    C_ERROR_CHECK(ec);
     appInfo.add("gl:context", "SDL2");
 #elif defined(FEATURE_ENABLE_EGLComponent)
     loader.loadAll<egl::Services>(container, ec);
+    C_ERROR_CHECK(ec);
     appInfo.add("gl:context", "EGL");
 #else
 #error No context manager
 #endif
 
     /* Selection of GL binding */
-#if defined(FEATURE_ENABLE_GLKitComponent) ||                                 \
-    defined(FEATURE_ENABLE_ANativeComponent) || defined(COFFEE_EMSCRIPTEN) || \
-    defined(COFFEE_RASPBERRYPI) || defined(COFFEE_BEAGLEBONE)
-    loader.loadAll<detail::TypeList<LinkedGraphicsBinding>>(container, ec);
+#if GLEAM_USE_LINKED
     appInfo.add("gl:loader", "Linked");
-#elif defined(FEATURE_ENABLE_GLADComponent)
+#elif defined(FEATURE_ENABLE_GLADComponent_Dynamic) || \
+    defined(FEATURE_ENABLE_GLADComponent_ESDynamic) || \
+    defined(FEATURE_ENABLE_GLADComponent_ES2Dynamic)
     loader.loadAll<glad::Services>(container, ec);
+    C_ERROR_CHECK(ec);
     appInfo.add("gl:loader", "GLAD");
 #else
 #error No OpenGL/ES binding
@@ -394,27 +424,31 @@ void addDefaults(
 
 #elif defined(FEATURE_ENABLE_CogComponent)
     loader.loadAll<cog::Services>(container, ec);
+    C_ERROR_CHECK(ec);
 #else
 #error No graphics
 #endif
 
 #if defined(FEATURE_ENABLE_UIKitGestures)
     loader.loadAll<uikit::Services>(container, ec);
+    C_ERROR_CHECK(ec);
 #endif
 
     if constexpr(compile_info::debug_mode)
     {
-        loader.loadAll<detail::TypeList<
+        /* TODO: Conditionally load based on availability */
+        loader.loadAll<detail::subsystem_list<
             comp_app::SysBattery,
             comp_app::SysCPUTemp,
             comp_app::SysGPUTemp,
             comp_app::SysCPUClock,
             comp_app::SysMemoryStats>>(container, ec);
+        C_ERROR_CHECK(ec);
 
 #if defined(FEATURE_ENABLE_GLScreenshot)
-        if constexpr(compile_info::debug_mode)
-            loader.loadAll<detail::TypeList<glscreenshot::ScreenshotProvider>>(
-                container, ec);
+        loader.loadAll<detail::TypeList<glscreenshot::ScreenshotProvider>>(
+            container, ec);
+        C_ERROR_CHECK(ec);
 #endif
     }
 }
@@ -426,7 +460,7 @@ void addDefaults(
 
 namespace comp_app {
 
-void PerformanceMonitor::start_restricted(Proxy& p, time_point const& time)
+void PerformanceMonitor::start_restricted(proxy_type& p, time_point const& time)
 {
     using namespace platform::profiling;
 
@@ -447,12 +481,12 @@ void PerformanceMonitor::start_restricted(Proxy& p, time_point const& time)
 
     m_nextTime = time + Coffee::Chrono::seconds(5);
 
-    auto clock      = p.service<CPUClockProvider>();
-    auto cpu_temp   = p.service<CPUTempProvider>();
-    auto gpu_temp   = p.service<GPUTempProvider>();
-    auto mem        = p.service<MemoryStatProvider>();
-    auto battery    = p.service<BatteryProvider>();
-    auto network    = p.service<NetworkStatProvider>();
+    auto clock    = p.service<CPUClockProvider>();
+    auto cpu_temp = p.service<CPUTempProvider>();
+    auto gpu_temp = p.service<GPUTempProvider>();
+    auto mem      = p.service<MemoryStatProvider>();
+    auto battery  = p.service<BatteryProvider>();
+    auto network  = p.service<NetworkStatProvider>();
 
     if(clock)
         for(auto i : Range<u32>(clock->threads()))
@@ -500,7 +534,10 @@ void PerformanceMonitor::start_restricted(Proxy& p, time_point const& time)
         json::CaptureMetrics(
             "Power state",
             MetricVariant::Symbolic,
-            battery->source() == BatteryProvider::PowerSource::Battery ? 1 : 0,
+            battery->source() ==
+                    interfaces::BatteryProvider::PowerSource::Battery
+                ? 1
+                : 0,
             timestamp);
     }
 
@@ -522,13 +559,12 @@ void PerformanceMonitor::start_restricted(Proxy& p, time_point const& time)
     }
 }
 
-void PerformanceMonitor::end_restricted(Proxy& p, time_point const& time)
+void PerformanceMonitor::end_restricted(proxy_type& p, time_point const& time)
 {
     using namespace platform::profiling;
 
     auto timestamp =
         Chrono::duration_cast<Chrono::microseconds>(time.time_since_epoch());
-
 
     if constexpr(compile_info::debug_mode)
     {
@@ -551,9 +587,11 @@ void PerformanceMonitor::end_restricted(Proxy& p, time_point const& time)
             FileOpenMap(
                 screenshot_file,
                 encoded.size,
-                RSCA::ReadWrite | RSCA::Persistent);
+                RSCA::ReadWrite | RSCA::Persistent | RSCA::NewFile |
+                    RSCA::Discard);
             if(encoded.size == screenshot_file.size)
-                memcpy(screenshot_file.data, encoded.data, screenshot_file.size);
+                memcpy(
+                    screenshot_file.data, encoded.data, screenshot_file.size);
             FileUnmap(screenshot_file);
 
             json::CaptureMetrics(

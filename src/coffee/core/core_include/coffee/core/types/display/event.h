@@ -28,8 +28,8 @@ struct Event
         TransitionBackground,
         TransitionForeground,
     };
-    u32       ts;   /*!< Event timestamp*/
-    EventType type; /*!< Event type*/
+    u32       ts{0};   /*!< Event timestamp*/
+    EventType type{}; /*!< Event type*/
 
     STATICINLINE Event Create(u32 ts, EventType et)
     {
@@ -49,10 +49,6 @@ struct BaseEvent
  */
 struct StateEvent : BaseEvent<Event::State>
 {
-    StateEvent() : type()
-    {
-    }
-
     enum StateChange : u8
     {
         Minimized = 0x01,
@@ -64,7 +60,8 @@ struct StateEvent : BaseEvent<Event::State>
         Hidden = 0x05,
         Shown  = 0x06,
     };
-    StateChange type; /*!< Type of window state event*/
+    StateChange type{0}; /*!< Type of window state event*/
+    StateEvent(StateChange type) : type(type) {}
 };
 
 /*!
@@ -80,12 +77,8 @@ struct FocusEvent : BaseEvent<Event::Focus>
         Exposed = 0x4,
         Leave   = 0x8,
     };
-
-    FocusEvent(FocusMask mod = None) : mod(mod)
-    {
-    }
-
-    FocusMask mod; /*!< Type of focus event*/
+    FocusMask mod{None}; /*!< Type of focus event*/
+    FocusEvent(FocusMask mask = None) : mod(mask) {}
 };
 
 C_FLAGS(FocusEvent::FocusMask, u8);
@@ -93,11 +86,21 @@ C_FLAGS(FocusEvent::FocusMask, u8);
 struct MoveEvent : Point, BaseEvent<Event::Move>
 {
     using Point::point_2d;
+    MoveEvent(i32 x = 0, i32 y = 0)
+    {
+        this->x = x;
+        this->y = y;
+    }
 };
 
 struct ResizeEvent : Size, BaseEvent<Event::Resize>
 {
     using Size::size_2d;
+    ResizeEvent(i32 w = 0, i32 h = 0)
+    {
+        this->w = w;
+        this->h = h;
+    }
 };
 
 } // namespace Display

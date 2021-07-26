@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // StringName
-enum class string_name : ::libc_types::u32 {
+enum class string_name : ::libc_types::u32
+{
 #ifdef GL_EXTENSIONS
     extensions = GL_EXTENSIONS,
 #endif
@@ -23,4 +24,4 @@ enum class string_name : ::libc_types::u32 {
 #endif
 }; // enum class string_name
 
-} // namespace gl::groups
+} // namespace gl::group

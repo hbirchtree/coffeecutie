@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // QueryParameterName
-enum class query_parameter_name : ::libc_types::u32 {
+enum class query_parameter_name : ::libc_types::u32
+{
 #ifdef GL_CURRENT_QUERY
     current_query = GL_CURRENT_QUERY,
 #endif
@@ -14,4 +15,4 @@ enum class query_parameter_name : ::libc_types::u32 {
 #endif
 }; // enum class query_parameter_name
 
-} // namespace gl::groups
+} // namespace gl::group

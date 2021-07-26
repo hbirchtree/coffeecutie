@@ -13,10 +13,8 @@
 
 #if defined(COFFEE_ANDROID)
 #include <coffee/android/android_main.h>
-#endif
 
-#if defined(COFFEE_WINDOWS_UWP)
-
+#elif defined(COFFEE_WINDOWS_UWP)
 #pragma comment(lib, "windowsapp")
 
 #include <ntverp.h>
@@ -28,9 +26,7 @@ using namespace winrt;
 
 using WPkg = ::Windows::ApplicationModel::Package;
 
-#endif
-
-#if defined(COFFEE_APPLE)
+#elif defined(COFFEE_APPLE)
 #include <CoreFoundation/CFBundle.h>
 #include <CoreFoundation/CFString.h>
 #endif
@@ -217,12 +213,10 @@ STATICINLINE SystemPaths GetSystemPaths()
 
     /* Emscripten uses a virtual filesystem */
 
-    paths.assetDir = MkUrl("/assets", RSCA::SystemFile);
-
+    paths.assetDir  = MkUrl("/assets", RSCA::SystemFile);
+    paths.cacheDir  = MkUrl("/cache", RSCA::SystemFile);
     paths.configDir = MkUrl("/config", RSCA::SystemFile);
-
-    paths.tempDir  = MkUrl("/tmp", RSCA::SystemFile);
-    paths.cacheDir = paths.tempDir;
+    paths.tempDir   = MkUrl("/tmp", RSCA::SystemFile);
 
 #elif defined(COFFEE_GEKKO)
 
@@ -294,9 +288,9 @@ CString Url::operator*() const
         if(cachedUrl.size())
             return cachedUrl;
 
-        CString derefPath = DereferenceLocalPath();
+        String derefPath = DereferenceLocalPath();
 #if defined(COFFEE_UNIXPLAT) && !defined(COFFEE_EMSCRIPTEN)
-        derefPath = str::replace::str(derefPath, "//", "/");
+        derefPath = str::replace::str<char>(derefPath, "//", "/");
         if(feval(flags, RSCA::NoDereference))
             return derefPath;
         if(auto path =
@@ -306,7 +300,7 @@ CString Url::operator*() const
         else
             return path.value().internUrl;
 #else
-        derefPath = str::replace::str(derefPath, "\\", "/");
+        derefPath = str::replace::str<char>(derefPath, "\\", "/");
         return derefPath;
 #endif
     }

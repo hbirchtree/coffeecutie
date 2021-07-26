@@ -133,7 +133,7 @@ struct rect
     }
     FORCEDINLINE size_2d<T> size() const
     {
-        return size_2d<T>(w, h);
+        return size_2d<T>{w, h};
     }
 };
 

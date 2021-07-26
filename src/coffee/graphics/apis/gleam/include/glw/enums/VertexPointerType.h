@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // VertexPointerType
-enum class vertex_pointer_type : ::libc_types::u32 {
+enum class vertex_pointer_type : ::libc_types::u32
+{
 #ifdef GL_DOUBLE
     double_ = GL_DOUBLE,
 #endif
@@ -20,4 +21,4 @@ enum class vertex_pointer_type : ::libc_types::u32 {
 #endif
 }; // enum class vertex_pointer_type
 
-} // namespace gl::groups
+} // namespace gl::group

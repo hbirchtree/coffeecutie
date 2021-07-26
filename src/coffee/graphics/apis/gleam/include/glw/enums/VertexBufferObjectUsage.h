@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // VertexBufferObjectUsage
-enum class vertex_buffer_object_usage : ::libc_types::u32 {
+enum class vertex_buffer_object_usage : ::libc_types::u32
+{
 #ifdef GL_DYNAMIC_COPY
     dynamic_copy = GL_DYNAMIC_COPY,
 #endif
@@ -35,4 +36,4 @@ enum class vertex_buffer_object_usage : ::libc_types::u32 {
 #endif
 }; // enum class vertex_buffer_object_usage
 
-} // namespace gl::groups
+} // namespace gl::group

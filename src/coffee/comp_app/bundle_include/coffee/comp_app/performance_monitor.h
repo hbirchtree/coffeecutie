@@ -5,28 +5,28 @@
 
 namespace comp_app {
 
-struct PerformanceMonitor : AppService<
-                                PerformanceMonitor,
-                                detail::TypeList<
-                                    PerformanceMonitor,
-                                    CPUClockProvider,
-                                    CPUTempProvider,
-                                    GPUTempProvider,
-                                    MemoryStatProvider,
-                                    BatteryProvider,
-                                    NetworkStatProvider,
-                                    ScreenshotProvider>>,
-                            AppLoadableService
+struct PerformanceMonitor : AppService<PerformanceMonitor>, AppLoadableService
 {
+    using readable_services = detail::subsystem_list<
+        PerformanceMonitor,
+        CPUClockProvider,
+        CPUTempProvider,
+        GPUTempProvider,
+        MemoryStatProvider,
+        BatteryProvider,
+        NetworkStatProvider,
+        ScreenshotProvider>;
+    using proxy_type = detail::restricted::proxy_t<PerformanceMonitor>;
+
     time_point m_nextTime;
     time_point m_nextScreenshot;
     time_point m_prevFrame;
 
-    virtual void start_restricted(Proxy& p, time_point const& time) final;
-    virtual void end_restricted(Proxy& p, time_point const& time) final;
+    void start_restricted(proxy_type& p, time_point const& time);
+    void end_restricted(proxy_type& p, time_point const& time);
 
-    void load(entity_container &e, app_error &ec);
-    void unload(entity_container &e, app_error &ec);
+    void load(entity_container& e, app_error& ec);
+    void unload(entity_container& e, app_error& ec);
 };
 
 } // namespace comp_app

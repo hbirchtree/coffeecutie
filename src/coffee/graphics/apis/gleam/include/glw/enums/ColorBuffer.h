@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // ColorBuffer
-enum class color_buffer : ::libc_types::u32 {
+enum class color_buffer : ::libc_types::u32
+{
 #ifdef GL_BACK
     back = GL_BACK,
 #endif
@@ -134,4 +135,4 @@ enum class color_buffer : ::libc_types::u32 {
 #endif
 }; // enum class color_buffer
 
-} // namespace gl::groups
+} // namespace gl::group

@@ -2,8 +2,7 @@
 
 #include <peripherals/typing/logging.h>
 
-namespace Coffee {
-namespace DebugFun {
+namespace Coffee::DebugFun {
 
 using semantic::debug::Severity;
 using typing::logging::LogInterfaceBasic;
@@ -11,9 +10,15 @@ using typing::logging::LogInterfaceTagged;
 
 struct LogInterface
 {
-    LogInterfaceBasic  basic;
     LogInterfaceTagged tag;
 };
 
-} // namespace DebugFun
-} // namespace Coffee
+/*!
+ * \brief Get the currently set logging interface
+ * By default this is set to OutputPrinterImpl::fprintf_platform
+ * \return
+ */
+extern LogInterface GetLogInterface();
+extern void         SetLogInterface(LogInterface intf);
+
+} // namespace Coffee::DebugFun

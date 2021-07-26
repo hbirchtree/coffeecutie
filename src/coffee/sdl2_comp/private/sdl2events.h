@@ -15,12 +15,9 @@ T event(SDL_Event&)
     return {};
 }
 
-#define EVENT_TRANSLATE(type_)                                             \
-    template<                                                              \
-        typename T,                                                        \
-        typename std::enable_if<std::is_same<T, type_>::value, T>::type* = \
-            nullptr>                                                       \
-    type_ event(SDL_Event& ev)
+#define EVENT_TRANSLATE(type_) \
+    template<typename T>       \
+    requires std::is_same_v<T, type_> type_ event(SDL_Event& ev)
 
 EVENT_TRANSLATE(FocusEvent)
 {
@@ -42,8 +39,9 @@ EVENT_TRANSLATE(FocusEvent)
 
 EVENT_TRANSLATE(ResizeEvent)
 {
-    return {C_FCAST<libc_types::u32>(ev.window.data1),
-            C_FCAST<libc_types::u32>(ev.window.data2)};
+    using libc_types::i32;
+    return ResizeEvent::from_values<i32, ResizeEvent>(
+        ev.window.data1, ev.window.data2);
 }
 
 EVENT_TRANSLATE(MoveEvent)
@@ -138,8 +136,9 @@ EVENT_TRANSLATE(CIMouseButtonEvent)
 
 EVENT_TRANSLATE(CIMouseMoveEvent)
 {
-    CIMouseMoveEvent out = {Coffee::PtF(ev.motion.x, ev.motion.y),
-            Coffee::PtF(ev.motion.xrel, ev.motion.yrel)};
+    CIMouseMoveEvent out = {
+        Coffee::PtF(ev.motion.x, ev.motion.y),
+        Coffee::PtF(ev.motion.xrel, ev.motion.yrel)};
 
     auto buttons = SDL_GetMouseState(nullptr, nullptr);
 
@@ -157,9 +156,10 @@ EVENT_TRANSLATE(CIMouseMoveEvent)
 
 EVENT_TRANSLATE(CIScrollEvent)
 {
-    return {typing::geometry::point_2d<libc_types::i32>(ev.wheel.x, ev.wheel.y)
-                .convert<libc_types::scalar>(),
-            0};
+    return {
+        typing::geometry::point_2d<libc_types::i32>(ev.wheel.x, ev.wheel.y)
+            .convert<libc_types::scalar>(),
+        0};
 }
 
 EVENT_TRANSLATE(CIControllerAtomicUpdateEvent)
@@ -193,4 +193,3 @@ EVENT_TRANSLATE(CIQuit)
 
 } // namespace translate
 } // namespace sdl2
-

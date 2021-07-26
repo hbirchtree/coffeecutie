@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // SizedInternalFormat
-enum class sized_internal_format : ::libc_types::u32 {
+enum class sized_internal_format : ::libc_types::u32
+{
 #ifdef GL_ALPHA12
     alpha12 = GL_ALPHA12,
 #endif
@@ -79,10 +80,12 @@ enum class sized_internal_format : ::libc_types::u32 {
     compressed_rgb8_etc2_oes = GL_COMPRESSED_RGB8_ETC2_OES,
 #endif
 #ifdef GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2
-    compressed_rgb8_punchthrough_alpha1_etc2 = GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2,
+    compressed_rgb8_punchthrough_alpha1_etc2 =
+        GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2,
 #endif
 #ifdef GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2_OES
-    compressed_rgb8_punchthrough_alpha1_etc2_oes = GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2_OES,
+    compressed_rgb8_punchthrough_alpha1_etc2_oes =
+        GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2_OES,
 #endif
 #ifdef GL_COMPRESSED_RGBA8_ETC2_EAC
     compressed_rgba8_etc2_eac = GL_COMPRESSED_RGBA8_ETC2_EAC,
@@ -232,19 +235,23 @@ enum class sized_internal_format : ::libc_types::u32 {
     compressed_rgb_bptc_signed_float = GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT,
 #endif
 #ifdef GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT_ARB
-    compressed_rgb_bptc_signed_float_arb = GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT_ARB,
+    compressed_rgb_bptc_signed_float_arb =
+        GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT_ARB,
 #endif
 #ifdef GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT_EXT
-    compressed_rgb_bptc_signed_float_ext = GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT_EXT,
+    compressed_rgb_bptc_signed_float_ext =
+        GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT_EXT,
 #endif
 #ifdef GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT
     compressed_rgb_bptc_unsigned_float = GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT,
 #endif
 #ifdef GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_ARB
-    compressed_rgb_bptc_unsigned_float_arb = GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_ARB,
+    compressed_rgb_bptc_unsigned_float_arb =
+        GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_ARB,
 #endif
 #ifdef GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_EXT
-    compressed_rgb_bptc_unsigned_float_ext = GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_EXT,
+    compressed_rgb_bptc_unsigned_float_ext =
+        GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_EXT,
 #endif
 #ifdef GL_COMPRESSED_RGB_S3TC_DXT1_EXT
     compressed_rgb_s3tc_dxt1_ext = GL_COMPRESSED_RGB_S3TC_DXT1_EXT,
@@ -259,7 +266,8 @@ enum class sized_internal_format : ::libc_types::u32 {
     compressed_signed_r11_eac_oes = GL_COMPRESSED_SIGNED_R11_EAC_OES,
 #endif
 #ifdef GL_COMPRESSED_SIGNED_RED_GREEN_RGTC2_EXT
-    compressed_signed_red_green_rgtc2_ext = GL_COMPRESSED_SIGNED_RED_GREEN_RGTC2_EXT,
+    compressed_signed_red_green_rgtc2_ext =
+        GL_COMPRESSED_SIGNED_RED_GREEN_RGTC2_EXT,
 #endif
 #ifdef GL_COMPRESSED_SIGNED_RED_RGTC1
     compressed_signed_red_rgtc1 = GL_COMPRESSED_SIGNED_RED_RGTC1,
@@ -280,121 +288,146 @@ enum class sized_internal_format : ::libc_types::u32 {
     compressed_srgb8_alpha8_astc_10x10 = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x10,
 #endif
 #ifdef GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x10_KHR
-    compressed_srgb8_alpha8_astc_10x10_khr = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x10_KHR,
+    compressed_srgb8_alpha8_astc_10x10_khr =
+        GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x10_KHR,
 #endif
 #ifdef GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x5
     compressed_srgb8_alpha8_astc_10x5 = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x5,
 #endif
 #ifdef GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x5_KHR
-    compressed_srgb8_alpha8_astc_10x5_khr = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x5_KHR,
+    compressed_srgb8_alpha8_astc_10x5_khr =
+        GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x5_KHR,
 #endif
 #ifdef GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x6
     compressed_srgb8_alpha8_astc_10x6 = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x6,
 #endif
 #ifdef GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x6_KHR
-    compressed_srgb8_alpha8_astc_10x6_khr = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x6_KHR,
+    compressed_srgb8_alpha8_astc_10x6_khr =
+        GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x6_KHR,
 #endif
 #ifdef GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x8
     compressed_srgb8_alpha8_astc_10x8 = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x8,
 #endif
 #ifdef GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x8_KHR
-    compressed_srgb8_alpha8_astc_10x8_khr = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x8_KHR,
+    compressed_srgb8_alpha8_astc_10x8_khr =
+        GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x8_KHR,
 #endif
 #ifdef GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x10
     compressed_srgb8_alpha8_astc_12x10 = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x10,
 #endif
 #ifdef GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x10_KHR
-    compressed_srgb8_alpha8_astc_12x10_khr = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x10_KHR,
+    compressed_srgb8_alpha8_astc_12x10_khr =
+        GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x10_KHR,
 #endif
 #ifdef GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x12
     compressed_srgb8_alpha8_astc_12x12 = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x12,
 #endif
 #ifdef GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x12_KHR
-    compressed_srgb8_alpha8_astc_12x12_khr = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x12_KHR,
+    compressed_srgb8_alpha8_astc_12x12_khr =
+        GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x12_KHR,
 #endif
 #ifdef GL_COMPRESSED_SRGB8_ALPHA8_ASTC_3x3x3_OES
-    compressed_srgb8_alpha8_astc_3x3x3_oes = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_3x3x3_OES,
+    compressed_srgb8_alpha8_astc_3x3x3_oes =
+        GL_COMPRESSED_SRGB8_ALPHA8_ASTC_3x3x3_OES,
 #endif
 #ifdef GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x3x3_OES
-    compressed_srgb8_alpha8_astc_4x3x3_oes = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x3x3_OES,
+    compressed_srgb8_alpha8_astc_4x3x3_oes =
+        GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x3x3_OES,
 #endif
 #ifdef GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4
     compressed_srgb8_alpha8_astc_4x4 = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4,
 #endif
 #ifdef GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4_KHR
-    compressed_srgb8_alpha8_astc_4x4_khr = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4_KHR,
+    compressed_srgb8_alpha8_astc_4x4_khr =
+        GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4_KHR,
 #endif
 #ifdef GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4x3_OES
-    compressed_srgb8_alpha8_astc_4x4x3_oes = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4x3_OES,
+    compressed_srgb8_alpha8_astc_4x4x3_oes =
+        GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4x3_OES,
 #endif
 #ifdef GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4x4_OES
-    compressed_srgb8_alpha8_astc_4x4x4_oes = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4x4_OES,
+    compressed_srgb8_alpha8_astc_4x4x4_oes =
+        GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4x4_OES,
 #endif
 #ifdef GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x4
     compressed_srgb8_alpha8_astc_5x4 = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x4,
 #endif
 #ifdef GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x4_KHR
-    compressed_srgb8_alpha8_astc_5x4_khr = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x4_KHR,
+    compressed_srgb8_alpha8_astc_5x4_khr =
+        GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x4_KHR,
 #endif
 #ifdef GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x4x4_OES
-    compressed_srgb8_alpha8_astc_5x4x4_oes = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x4x4_OES,
+    compressed_srgb8_alpha8_astc_5x4x4_oes =
+        GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x4x4_OES,
 #endif
 #ifdef GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x5
     compressed_srgb8_alpha8_astc_5x5 = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x5,
 #endif
 #ifdef GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x5_KHR
-    compressed_srgb8_alpha8_astc_5x5_khr = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x5_KHR,
+    compressed_srgb8_alpha8_astc_5x5_khr =
+        GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x5_KHR,
 #endif
 #ifdef GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x5x4_OES
-    compressed_srgb8_alpha8_astc_5x5x4_oes = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x5x4_OES,
+    compressed_srgb8_alpha8_astc_5x5x4_oes =
+        GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x5x4_OES,
 #endif
 #ifdef GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x5x5_OES
-    compressed_srgb8_alpha8_astc_5x5x5_oes = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x5x5_OES,
+    compressed_srgb8_alpha8_astc_5x5x5_oes =
+        GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x5x5_OES,
 #endif
 #ifdef GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x5
     compressed_srgb8_alpha8_astc_6x5 = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x5,
 #endif
 #ifdef GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x5_KHR
-    compressed_srgb8_alpha8_astc_6x5_khr = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x5_KHR,
+    compressed_srgb8_alpha8_astc_6x5_khr =
+        GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x5_KHR,
 #endif
 #ifdef GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x5x5_OES
-    compressed_srgb8_alpha8_astc_6x5x5_oes = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x5x5_OES,
+    compressed_srgb8_alpha8_astc_6x5x5_oes =
+        GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x5x5_OES,
 #endif
 #ifdef GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x6
     compressed_srgb8_alpha8_astc_6x6 = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x6,
 #endif
 #ifdef GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x6_KHR
-    compressed_srgb8_alpha8_astc_6x6_khr = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x6_KHR,
+    compressed_srgb8_alpha8_astc_6x6_khr =
+        GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x6_KHR,
 #endif
 #ifdef GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x6x5_OES
-    compressed_srgb8_alpha8_astc_6x6x5_oes = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x6x5_OES,
+    compressed_srgb8_alpha8_astc_6x6x5_oes =
+        GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x6x5_OES,
 #endif
 #ifdef GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x6x6_OES
-    compressed_srgb8_alpha8_astc_6x6x6_oes = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x6x6_OES,
+    compressed_srgb8_alpha8_astc_6x6x6_oes =
+        GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x6x6_OES,
 #endif
 #ifdef GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x5
     compressed_srgb8_alpha8_astc_8x5 = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x5,
 #endif
 #ifdef GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x5_KHR
-    compressed_srgb8_alpha8_astc_8x5_khr = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x5_KHR,
+    compressed_srgb8_alpha8_astc_8x5_khr =
+        GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x5_KHR,
 #endif
 #ifdef GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x6
     compressed_srgb8_alpha8_astc_8x6 = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x6,
 #endif
 #ifdef GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x6_KHR
-    compressed_srgb8_alpha8_astc_8x6_khr = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x6_KHR,
+    compressed_srgb8_alpha8_astc_8x6_khr =
+        GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x6_KHR,
 #endif
 #ifdef GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x8
     compressed_srgb8_alpha8_astc_8x8 = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x8,
 #endif
 #ifdef GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x8_KHR
-    compressed_srgb8_alpha8_astc_8x8_khr = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x8_KHR,
+    compressed_srgb8_alpha8_astc_8x8_khr =
+        GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x8_KHR,
 #endif
 #ifdef GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC
     compressed_srgb8_alpha8_etc2_eac = GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC,
 #endif
 #ifdef GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC_OES
-    compressed_srgb8_alpha8_etc2_eac_oes = GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC_OES,
+    compressed_srgb8_alpha8_etc2_eac_oes =
+        GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC_OES,
 #endif
 #ifdef GL_COMPRESSED_SRGB8_ETC2
     compressed_srgb8_etc2 = GL_COMPRESSED_SRGB8_ETC2,
@@ -403,34 +436,41 @@ enum class sized_internal_format : ::libc_types::u32 {
     compressed_srgb8_etc2_oes = GL_COMPRESSED_SRGB8_ETC2_OES,
 #endif
 #ifdef GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2
-    compressed_srgb8_punchthrough_alpha1_etc2 = GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2,
+    compressed_srgb8_punchthrough_alpha1_etc2 =
+        GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2,
 #endif
 #ifdef GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2_OES
-    compressed_srgb8_punchthrough_alpha1_etc2_oes = GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2_OES,
+    compressed_srgb8_punchthrough_alpha1_etc2_oes =
+        GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2_OES,
 #endif
 #ifdef GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM
     compressed_srgb_alpha_bptc_unorm = GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM,
 #endif
 #ifdef GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_ARB
-    compressed_srgb_alpha_bptc_unorm_arb = GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_ARB,
+    compressed_srgb_alpha_bptc_unorm_arb =
+        GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_ARB,
 #endif
 #ifdef GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_EXT
-    compressed_srgb_alpha_bptc_unorm_ext = GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_EXT,
+    compressed_srgb_alpha_bptc_unorm_ext =
+        GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_EXT,
 #endif
 #ifdef GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT
-    compressed_srgb_alpha_s3tc_dxt1_ext = GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT,
+    compressed_srgb_alpha_s3tc_dxt1_ext =
+        GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT,
 #endif
 #ifdef GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_NV
     compressed_srgb_alpha_s3tc_dxt1_nv = GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_NV,
 #endif
 #ifdef GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT
-    compressed_srgb_alpha_s3tc_dxt3_ext = GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT,
+    compressed_srgb_alpha_s3tc_dxt3_ext =
+        GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT,
 #endif
 #ifdef GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_NV
     compressed_srgb_alpha_s3tc_dxt3_nv = GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_NV,
 #endif
 #ifdef GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT
-    compressed_srgb_alpha_s3tc_dxt5_ext = GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT,
+    compressed_srgb_alpha_s3tc_dxt5_ext =
+        GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT,
 #endif
 #ifdef GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_NV
     compressed_srgb_alpha_s3tc_dxt5_nv = GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_NV,
@@ -1040,4 +1080,4 @@ enum class sized_internal_format : ::libc_types::u32 {
 #endif
 }; // enum class sized_internal_format
 
-} // namespace gl::groups
+} // namespace gl::group

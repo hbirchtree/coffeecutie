@@ -47,25 +47,34 @@ namespace matchers {
 template<typename subsystem_list>
 struct all_subsystems_in
 {
-    template<typename T>
     struct match_single
     {
-        void operator()(SubsystemBase* sub, bool& match)
+        match_single(SubsystemBase* sub, bool& match) : sub(sub), match(match)
+        {
+        }
+        template<typename T>
+        void operator()()
         {
             match = match || C_DCAST<T>(sub);
         }
+        SubsystemBase* sub;
+        bool&          match;
     };
 
     static bool match(SubsystemBase* sub)
     {
         bool out = false;
-        type_safety::type_list::for_each<subsystem_list, match_single>(
-            sub, std::ref(out));
+        type_safety::type_list::for_each<subsystem_list>(
+            match_single(sub, out));
         return out;
     }
 };
 
 } // namespace matchers
+
+template<class T>
+concept is_matcher =
+    std::is_same_v<decltype(T::match(std::declval<SubsystemBase>())), bool>;
 
 struct EntityContainer : non_copy
 {
@@ -202,17 +211,12 @@ struct EntityContainer : non_copy
     }
 
     template<typename OutputType>
-    void register_subsystem(UqPtr<Subsystem<OutputType>>&& sys)
+    void register_subsystem(UqPtr<OutputType>&& sys)
     {
         static const type_hash type_id = typeid(OutputType).hash_code();
 
         if(subsystems.find(type_id) != subsystems.end())
             throw implementation_error("cannot register subsystem twice");
-
-        auto adapted = C_DCAST<SubsystemBase>(sys.get());
-
-        if(C_RCAST<void*>(adapted) != C_RCAST<void*>(sys.get()))
-            throw implementation_error("pointer casts will fail");
 
         subsystems.emplace(type_id, std::move(sys));
     }
@@ -226,12 +230,13 @@ struct EntityContainer : non_copy
         typename OutputType,
         typename AllocType = typename OutputType::type,
         typename... Args>
+    requires std::is_convertible_v<AllocType*, OutputType*>
     AllocType& register_subsystem_inplace(Args... args)
     {
         register_subsystem<OutputType>(
             MkUq<AllocType>(std::forward<Args>(args)...));
 
-        return subsystem_cast<AllocType>();
+        return C_OCAST<AllocType&>(subsystem_cast<OutputType>());
     }
 
     template<typename SystemType, typename... Args>
@@ -282,7 +287,7 @@ struct EntityContainer : non_copy
             [=]() { return entity_query(*this); });
     }
 
-    template<typename ComponentType>
+    template<is_component ComponentType>
     quick_container<entity_query> select()
     {
         return quick_container<entity_query>(
@@ -293,7 +298,7 @@ struct EntityContainer : non_copy
             [=]() { return entity_query(*this); });
     }
 
-    template<typename Matcher>
+    template<is_matcher Matcher>
     quick_container<entity_query> match()
     {
         return quick_container<entity_query>(
@@ -335,7 +340,7 @@ struct EntityContainer : non_copy
             Throw(undefined_behavior("component not found"));
     }
 
-    template<typename ComponentType>
+    template<is_component ComponentType>
     ComponentContainer<ComponentType>& container()
     {
         using container_t = ComponentContainer<ComponentType>;
@@ -350,12 +355,12 @@ struct EntityContainer : non_copy
         return *C_FCAST<container_t*>(it->second.get());
     }
 
-    template<typename SubsystemType>
+    template<is_subsystem SubsystemType>
     SubsystemType& subsystem_cast()
     {
-        using output_type = typename SubsystemType::tag_type;
+        using tag_type = SubsystemType;
 
-        const type_hash type_id = typeid(output_type).hash_code();
+        const type_hash type_id = typeid(tag_type).hash_code();
 
         auto it = subsystems.find(type_id);
 
@@ -370,7 +375,7 @@ struct EntityContainer : non_copy
             Throw(undefined_behavior("subsystem not found"));
     }
 
-    template<typename TagType>
+    template<is_tag_type TagType>
     Subsystem<TagType>& subsystem()
     {
         using subsystem_t = Subsystem<TagType>;
@@ -385,7 +390,7 @@ struct EntityContainer : non_copy
         return *C_FCAST<subsystem_t*>(it->second.get());
     }
 
-    template<typename Service>
+    template<is_tag_type Service>
     typename Service::type* service()
     {
         const type_hash type_id = typeid(Service).hash_code();
@@ -397,7 +402,7 @@ struct EntityContainer : non_copy
         return C_DCAST<typename Service::type>(it->second);
     }
 
-    template<typename Service>
+    template<is_subsystem Service>
     ServiceRef<Service> service_ref();
 
     template<class BaseType, bool Reversed = false>
@@ -406,7 +411,7 @@ struct EntityContainer : non_copy
     template<class BaseType>
     auto services_with(reverse_query_t);
 
-    template<typename ComponentType>
+    template<is_tag_type ComponentType>
     typename ComponentType::type* get(u64 id)
     {
         return container<ComponentType>().get(id);
@@ -415,10 +420,10 @@ struct EntityContainer : non_copy
     EntityRef<EntityContainer> ref(Entity& entity);
     EntityRef<EntityContainer> ref(u64 entity);
 
-    template<typename ComponentTag>
+    template<is_tag_type ComponentTag>
     ComponentRef<EntityContainer, ComponentTag> ref_comp(u64 entity);
 
-    template<typename Matcher>
+    template<is_matcher Matcher>
     void remove_subsystems_matching()
     {
         using subsystem_pair = decltype(subsystems)::value_type;

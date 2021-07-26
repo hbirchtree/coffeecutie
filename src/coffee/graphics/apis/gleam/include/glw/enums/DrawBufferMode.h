@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // DrawBufferMode
-enum class draw_buffer_mode : ::libc_types::u32 {
+enum class draw_buffer_mode : ::libc_types::u32
+{
 #ifdef GL_AUX0
     aux0 = GL_AUX0,
 #endif
@@ -149,4 +150,4 @@ enum class draw_buffer_mode : ::libc_types::u32 {
 #endif
 }; // enum class draw_buffer_mode
 
-} // namespace gl::groups
+} // namespace gl::group

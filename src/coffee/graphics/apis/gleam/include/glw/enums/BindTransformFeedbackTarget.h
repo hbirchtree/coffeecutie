@@ -2,13 +2,14 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // BindTransformFeedbackTarget
-enum class bind_transform_feedback_target : ::libc_types::u32 {
+enum class bind_transform_feedback_target : ::libc_types::u32
+{
 #ifdef GL_TRANSFORM_FEEDBACK
     transform_feedback = GL_TRANSFORM_FEEDBACK,
 #endif
 }; // enum class bind_transform_feedback_target
 
-} // namespace gl::groups
+} // namespace gl::group

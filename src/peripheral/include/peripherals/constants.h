@@ -1,10 +1,12 @@
 #pragma once
 
+#include <string_view>
+
 #include <peripherals/identify/architecture.h>
 #include <peripherals/identify/compiler.h>
+#include <peripherals/identify/quirks.h>
 #include <peripherals/identify/system.h>
 #include <peripherals/libc/types.h>
-#include <peripherals/stl/types.h>
 
 #if defined(COFFEE_WINDOWS)
 #include <sdkddkver.h>
@@ -158,6 +160,7 @@ namespace compiler {
 constexpr cstring name        = C_COMPILER_NAME;
 constexpr cstring version_str = C_STR(C_COMPILER_VER_MAJ) "." C_STR(
     C_COMPILER_VER_MIN) "." C_STR(C_COMPILER_VER_REV);
+
 constexpr compiler_version_t version = {
 #if defined(COFFEE_WINDOWS)
     C_COMPILER_VER_MAJ / 10000000,
@@ -187,6 +190,8 @@ constexpr cstring build_mode =
 #if defined(MODULE_VERSION)
 constexpr cstring version = MODULE_VERSION;
 #endif
+
+constexpr cstring name = COFFEE_COMPONENT_NAME;
 
 } // namespace module
 
@@ -295,6 +300,13 @@ constexpr bool is_maemo =
 #endif
     ;
 
+constexpr bool is_wasm =
+#if defined(COFFEE_WASM)
+    true;
+#else
+    false;
+#endif
+
 constexpr bool is_emscripten =
 #if defined(COFFEE_EMSCRIPTEN)
     true
@@ -337,6 +349,26 @@ constexpr bool is_raspberrypi =
 
 constexpr bool is_iot = is_raspberrypi;
 
+constexpr bool is_mobile = is_android || is_ios || is_maemo;
+
+enum class endianness
+{
+    big_,
+    little_,
+};
+
+constexpr endianness endian =
+#if defined(__BYTE_ORDER__)
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+    endianness::little_;
+#else
+    endianness::big_;
+#endif
+#else
+#error Could not identify endianness
+#endif
+
+
 } // namespace platform
 
 namespace printing {
@@ -349,7 +381,7 @@ constexpr bool is_simple    = platform::is_gekko;
 namespace profiler {
 
 constexpr bool enabled =
-#if defined(COFFEE_GEKKO) || defined(COFFEE_EMSCRIPTEN) || MODE_RELEASE
+#if defined(COFFEE_GEKKO) || MODE_RELEASE
 #define PERIPHERAL_PROFILER_ENABLED 0
     false
 #else

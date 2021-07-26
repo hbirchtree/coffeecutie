@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // SamplerParameterI
-enum class sampler_parameter_i : ::libc_types::u32 {
+enum class sampler_parameter_i : ::libc_types::u32
+{
 #ifdef GL_TEXTURE_COMPARE_FUNC
     texture_compare_func = GL_TEXTURE_COMPARE_FUNC,
 #endif
@@ -19,7 +20,8 @@ enum class sampler_parameter_i : ::libc_types::u32 {
     texture_min_filter = GL_TEXTURE_MIN_FILTER,
 #endif
 #ifdef GL_TEXTURE_UNNORMALIZED_COORDINATES_ARM
-    texture_unnormalized_coordinates_arm = GL_TEXTURE_UNNORMALIZED_COORDINATES_ARM,
+    texture_unnormalized_coordinates_arm =
+        GL_TEXTURE_UNNORMALIZED_COORDINATES_ARM,
 #endif
 #ifdef GL_TEXTURE_WRAP_R
     texture_wrap_r = GL_TEXTURE_WRAP_R,
@@ -32,4 +34,4 @@ enum class sampler_parameter_i : ::libc_types::u32 {
 #endif
 }; // enum class sampler_parameter_i
 
-} // namespace gl::groups
+} // namespace gl::group

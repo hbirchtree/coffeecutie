@@ -1,7 +1,7 @@
 #pragma once
 
 #include <peripherals/base.h>
-#include <platforms/types/vector_types.h>
+#include <peripherals/typing/vectors/vector_types.h>
 
 namespace platform {
 namespace sensor {

@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // TextureTarget
-enum class texture_target : ::libc_types::u32 {
+enum class texture_target : ::libc_types::u32
+{
 #ifdef GL_DETAIL_TEXTURE_2D_SGIS
     detail_texture_2d_sgis = GL_DETAIL_TEXTURE_2D_SGIS,
 #endif
@@ -143,4 +144,4 @@ enum class texture_target : ::libc_types::u32 {
 #endif
 }; // enum class texture_target
 
-} // namespace gl::groups
+} // namespace gl::group

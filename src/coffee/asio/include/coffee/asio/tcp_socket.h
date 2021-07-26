@@ -63,17 +63,17 @@ FORCEDINLINE auto construct_socket(net::context& service)
     return socket_types::raw(service.service);
 }
 
+template<typename SocketType>
+FORCEDINLINE auto socket_shutdown(SocketType& socket, asio::error_code& ec)
+{
+  socket.shutdown(socket_types::raw::shutdown_both, ec);
+}
+
 #if defined(ASIO_USE_SSL)
 template<>
 FORCEDINLINE auto construct_socket<socket_types::ssl>(net::context& service)
 {
     return socket_types::ssl(service.service, service.sslctxt);
-}
-
-template<typename SocketType>
-FORCEDINLINE auto socket_shutdown(SocketType& socket, asio::error_code& ec)
-{
-    socket.shutdown(socket_types::raw::shutdown_both, ec);
 }
 
 template<>

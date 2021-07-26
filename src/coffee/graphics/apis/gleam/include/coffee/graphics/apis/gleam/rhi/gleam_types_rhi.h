@@ -7,6 +7,12 @@
 #define GLEAM_API_LINKAGE extern
 #define GLEAM_API_CLASS_LINKAGE
 
+namespace glw {
+using cmd = gl::core::v45;
+
+using namespace gl::group;
+}
+
 namespace Coffee::RHI::GLEAM {
 
 using glhnd   = semantic::generic_handle_t<u32>;

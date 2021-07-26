@@ -32,11 +32,6 @@ coffee_library (
     TARGET CoreDebug
 
     SOURCES
-    #
-    # Debug functions
-    #
-    private/base/cdebug.cpp
-    private/base/debugprinter.cpp
 
     #
     # to_string(...) functions

@@ -41,62 +41,69 @@ FilesystemApi::slot_count_t FilesystemApi::availableSlots()
     return 1;
 }
 
-#if defined(COFFEE_EMSCRIPTEN)
 struct DataStatus
 {
-    int32  status;
-    int32  __padding;
-    c_ptr  ptr;
-    szptr* size;
+    enum Status
+    {
+        Uninitialized,
+        Waiting,
+        Success,
+        Failure,
+    };
+
+    Bytes               data;
+    std::promise<szptr> output;
+    Status              status{Uninitialized};
 };
 
-void emscripten_callback_load(void* arg, void* data, int size)
+static void emscripten_callback_load(void* arg, void* data, int size)
 {
-    DataStatus* status = C_FCAST<DataStatus*>(arg);
+    auto* status = C_FCAST<DataStatus*>(arg);
     cDebug("Loaded file");
-    if(size <= C_CAST<int>(*status->size))
-        MemCpy(
-            Bytes::FromBytes(data, size), Bytes::FromBytes(status->ptr, size));
-    status->status = 1;
+    MemCpy(Bytes::ofBytes(data, size), status->data);
+    status->output.set_value(size);
+    status->status = DataStatus::Success;
 }
-void emscripten_callback_store(void* arg)
+static void emscripten_callback_store(void* arg)
 {
-    int32* status = C_FCAST<int32*>(arg);
+    auto* status = C_FCAST<DataStatus*>(arg);
     cDebug("Stored file");
-    *status = 1;
+    status->output.set_value(status->data.size);
+    status->status = DataStatus::Success;
 }
-void emscripten_callback_error(void* arg)
+static void emscripten_callback_error(void* arg)
 {
-    int32* status = C_FCAST<int32*>(arg);
+    auto* status = C_FCAST<DataStatus*>(arg);
     cDebug("Failed to do something with file :(");
-    *status = -1;
+    status->output.set_value(0);
+    status->status = DataStatus::Failure;
 }
-#endif
 
-#if defined(COFFEE_EMSCRIPTEN)
 static CString CreateSaveString(u16 slot)
 {
     return Strings::cStringFormat(
         "{0}-{1}.data", GetCurrentApp().application_name, slot);
 }
-#else
+
 static Url CreateSaveUrl(u16 slot)
 {
     return platform::url::constructors::MkUrl(
         Path("CoffeeData").addExtension(cast_pod(slot)).addExtension("bin"),
         RSCA::ConfigFile);
 }
-#endif
 
-szptr FilesystemApi::restore(Bytes&& data, slot_count_t slot)
+Future<szptr> FilesystemApi::restore(Bytes&& data, slot_count_t slot)
 {
+    std::promise<szptr> out;
+
     if(!data.data)
-        return 0;
+        return out.get_future();
 
 #if defined(COFFEE_EMSCRIPTEN)
     CString save_file = CreateSaveString(slot);
 
-    static DataStatus data_status = {0, 0, data.data, &data.size};
+    auto out_fut = out.get_future();
+    DataStatus data_status = {std::move(data), std::move(out), DataStatus::Waiting};
     emscripten_idb_async_load(
         m_app.organization_name.c_str(),
         save_file.c_str(),
@@ -104,47 +111,54 @@ szptr FilesystemApi::restore(Bytes&& data, slot_count_t slot)
         emscripten_callback_load,
         emscripten_callback_error);
 
-    return data.size;
+    return out_fut;
 #else
     Resource rsc(CreateSaveUrl(slot));
 
     if(!FileExists(rsc))
-        return 0;
+    {
+        out.set_value(0);
+        return out.get_future();
+    }
 
     if(!FilePull(rsc) && rsc.size <= data.size)
     {
-        data.size = 0;
-        return data.size;
+        out.set_value(0);
+        return out.get_future();
     }
 
     if(!rsc.data || rsc.size < 1 || rsc.size > data.size)
     {
-        return rsc.size;
+        out.set_value(0);
+        return out.get_future();
     }
 
     MemCpy(C_OCAST<Bytes>(rsc), data);
 
-    return rsc.size;
+    out.set_value(rsc.size);
+    return out.get_future();
 #endif
 }
 
-szptr FilesystemApi::save(Bytes const& data, slot_count_t slot)
+Future<szptr> FilesystemApi::save(Bytes const& data, slot_count_t slot)
 {
+    std::promise<szptr> out;
+
 #if defined(COFFEE_EMSCRIPTEN)
     CString save_file = CreateSaveString(slot);
-
-    static int32 status = 0;
+    auto out_fut = out.get_future();
+    DataStatus data_status = {*data.at(0), std::move(out), DataStatus::Waiting};
 
     emscripten_idb_async_store(
         m_app.organization_name.c_str(),
         save_file.c_str(),
         C_FCAST<void*>(data.data),
         data.size,
-        &status,
+        &data_status,
         emscripten_callback_store,
         emscripten_callback_error);
 
-    return data.size;
+    return out_fut;
 #else
     Resource rsc(CreateSaveUrl(slot));
 
@@ -152,9 +166,11 @@ szptr FilesystemApi::save(Bytes const& data, slot_count_t slot)
     rsc = data;
 
     if(!FileCommit(rsc, RSCA::WriteOnly | RSCA::Discard | RSCA::NewFile))
-        return 0;
+        out.set_value(0);
+    else
+        out.set_value(rsc.size);
 
-    return rsc.size;
+    return out.get_future();
 #endif
 }
 

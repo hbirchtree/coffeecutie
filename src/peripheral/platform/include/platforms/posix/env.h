@@ -20,7 +20,11 @@ using posix_error = int;
 
 FORCEDINLINE Optional<String> var(String const& var)
 {
+#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_APPLE)
+    if(auto out = ::getenv(var.c_str()))
+#else
     if(auto out = ::secure_getenv(var.c_str()))
+#endif
         return out;
     return std::nullopt;
 }

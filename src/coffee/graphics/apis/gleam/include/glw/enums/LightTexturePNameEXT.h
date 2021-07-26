@@ -2,6 +2,17 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
-} // namespace gl::groups
+// LightTexturePNameEXT
+enum class light_texture_prop_ext : ::libc_types::u32
+{
+#ifdef GL_ATTENUATION_EXT
+    attenuation_ext = GL_ATTENUATION_EXT,
+#endif
+#ifdef GL_SHADOW_ATTENUATION_EXT
+    shadow_attenuation_ext = GL_SHADOW_ATTENUATION_EXT,
+#endif
+}; // enum class light_texture_prop_ext
+
+} // namespace gl::group

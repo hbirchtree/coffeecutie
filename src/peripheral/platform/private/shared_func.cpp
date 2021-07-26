@@ -14,8 +14,7 @@
 #include <peripherals/platform/windows.h>
 #endif
 
-namespace platform {
-namespace env {
+namespace platform::env {
 
 CString SysInfoDef::GetSystemString()
 {
@@ -82,8 +81,7 @@ info::HardwareDevice SysInfoDef::BIOS()
 }
 #endif
 
-} // namespace env
-} // namespace platform
+} // namespace platform::env
 
 namespace platform::stacktrace {
 

@@ -62,7 +62,8 @@ struct FileProcessor
 
     virtual Url cacheTransform(Path const& f)
     {
-        return cacheBaseDir + Path(str::replace::str(f.internUrl, "/", "_"));
+        return cacheBaseDir +
+               Path(str::replace::str<char>(f.internUrl, "/", "_"));
     }
 
     virtual bool isCached(Path const& file)
@@ -85,9 +86,12 @@ struct FileProcessor
 
     virtual void cacheFile(Path const& file, Bytes const& content)
     {
-        file_error ec;
-
-        DirFun::MkDir(MkUrl(cacheBaseDir), true, ec);
+        platform::file::create(
+            MkUrl(cacheBaseDir),
+            {
+                .mode      = platform::file::mode_t::directory,
+                .recursive = true,
+            });
         Path outputPath = cacheTransform(file);
 
         Resource output(MkUrl(outputPath));

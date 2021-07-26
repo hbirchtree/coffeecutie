@@ -2,6 +2,17 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
-} // namespace gl::groups
+// FogPointerTypeEXT
+enum class fog_pointer_type_ext : ::libc_types::u32
+{
+#ifdef GL_DOUBLE
+    double_ = GL_DOUBLE,
+#endif
+#ifdef GL_FLOAT
+    float_ = GL_FLOAT,
+#endif
+}; // enum class fog_pointer_type_ext
+
+} // namespace gl::group

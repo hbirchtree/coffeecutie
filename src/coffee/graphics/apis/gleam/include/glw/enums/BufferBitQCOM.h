@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // BufferBitQCOM
-enum class buffer_bit_qcom : ::libc_types::u32 {
+enum class buffer_bit_qcom : ::libc_types::u32
+{
 #ifdef GL_COLOR_BUFFER_BIT0_QCOM
     color_buffer_bit0_qcom = GL_COLOR_BUFFER_BIT0_QCOM,
 #endif
@@ -105,4 +106,4 @@ enum class buffer_bit_qcom : ::libc_types::u32 {
 }; // enum class buffer_bit_qcom
 C_FLAGS(buffer_bit_qcom, ::libc_types::u32);
 
-} // namespace gl::groups
+} // namespace gl::group

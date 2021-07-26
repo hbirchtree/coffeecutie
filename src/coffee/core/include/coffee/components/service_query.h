@@ -45,14 +45,9 @@ struct service_query : Iterator<ForwardIteratorTag, T>
         return *this;
     }
 
-    bool operator==(service_query const& other)
+    bool operator==(service_query const& other) const
     {
         return other.it == it;
-    }
-
-    bool operator!=(service_query const& other)
-    {
-        return other.it != it;
     }
 
     T& operator*() const

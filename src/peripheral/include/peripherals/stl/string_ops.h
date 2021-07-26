@@ -15,6 +15,7 @@
 #include <peripherals/stl/types.h>
 
 #include <cppcodec/base64_default_rfc4648.hpp>
+#include <tinyutf8.h>
 
 namespace stl_types {
 namespace str {
@@ -36,13 +37,10 @@ using libc_types::u64;
 using libc_types::u8;
 
 namespace encode {
-template<
-    typename TargetCharT,
-    typename SourceCharT,
-    typename std::enable_if<
-        !std::is_same<SourceCharT, TargetCharT>::value>::type* = nullptr>
-FORCEDINLINE std::basic_string<TargetCharT> to(
-    std::basic_string<SourceCharT> const& from)
+template<typename TargetCharT, typename T>
+requires(!std::is_same_v<typename T::value_type, TargetCharT>)
+    //
+    FORCEDINLINE std::basic_string<TargetCharT> to(T const& from)
 {
     // TODO: use proper conversions here, eg. iconv
     return std::basic_string<TargetCharT>(from.begin(), from.end());
@@ -69,7 +67,7 @@ FORCEDINLINE bool ends_with(
     return haystack.find(needle) == (haystack.size() - needle.size());
 }
 
-}
+} // namespace find
 
 template<typename CharType>
 FORCEDINLINE std::basic_string<CharType> encapsulate(
@@ -192,112 +190,8 @@ FORCEDINLINE std::basic_string<OutCharType> convertformat(
 } // namespace trim
 
 namespace convert {
-#define FMT_TYPE const constexpr cstring
-#if defined(PRIu8a)
-#define FMT_STR(bits, fmt) FMT_TYPE fmt##bits##_fmt = "%" PRI##fmt##bits
-#define FMT_PAIR(bits) \
-    FMT_STR(bits, u);  \
-    FMT_STR(bits, i);  \
-    FMT_STR(bits, x);
 
-FMT_PAIR(8)
-FMT_PAIR(16)
-FMT_PAIR(32)
-FMT_PAIR(64)
-#else
-#define FMT_STR(bits, fmt, prefix) FMT_TYPE fmt##bits##_fmt = "%" prefix #fmt
-
-#define FMT_PAIR(bits, prefix) \
-    FMT_STR(bits, u, prefix);  \
-    FMT_STR(bits, i, prefix);  \
-    FMT_STR(bits, x, prefix);
-
-FMT_PAIR(8, "hh")
-FMT_PAIR(16, "h")
-FMT_PAIR(32, "")
-
-#if defined(COFFEE_ARCH_LLP64)
-FMT_PAIR(64, "ll")
-#else
-FMT_PAIR(64, "l")
-#endif
-#endif
-
-FMT_TYPE fmt_size_t_fmt = "%zu";
-
-#undef FMT_TYPE
-#undef FMT_STR
-#undef FMT_PAIR
-
-/*
- * In the below functions we remove the null-terminator from the strings.
- * It causes a literal NULL to appear in the strings, which is bad, m'kay?
- *
- */
-
-#define SCALAR_CONVERT(ftype, fmt)                                            \
-    template<                                                                 \
-        typename FType,                                                       \
-        typename TargetType = ftype,                                          \
-        typename CharType   = char,                                           \
-        typename std::enable_if<std::is_same<FType, ftype>::value>::type* =   \
-            nullptr>                                                          \
-    FORCEDINLINE std::basic_string<CharType> to_string(FType s)               \
-    {                                                                         \
-        std::basic_string<CharType> str;                                      \
-        str.resize(                                                           \
-            C_CAST<size_t>(snprintf(nullptr, 0, fmt, C_CAST<ftype>(s))) + 1); \
-        snprintf(&str[0], str.size() + 1, fmt, C_CAST<ftype>(s));             \
-        str.resize(str.size() - 1);                                           \
-        return str;                                                           \
-    }
-
-/* Floating-point conversion */
-SCALAR_CONVERT(lscalar, "%Lf")
-SCALAR_CONVERT(bigscalar, "%f")
-SCALAR_CONVERT(scalar, "%f")
-
-#undef SCALAR_CONVERT
-
-/* Unsigned integer conversion */
-#define INTEGER_CONVERT(itype, fmt)                                         \
-    template<                                                               \
-        typename IType,                                                     \
-        typename TargetType = itype,                                        \
-        typename CharType   = char,                                         \
-        typename std::enable_if<                                            \
-            type_safety::is_similar<IType, itype>::value>::type* = nullptr> \
-    FORCEDINLINE std::basic_string<CharType> to_string(IType s)             \
-    {                                                                       \
-        if(s == 0)                                                          \
-            return "0";                                                     \
-        itype                       ss = s;                                 \
-        std::basic_string<CharType> str;                                    \
-        str.resize(C_CAST<size_t>(snprintf(nullptr, 0, fmt, ss)) + 1);      \
-        snprintf(&str[0], str.size() + 1, fmt, ss);                         \
-        str.resize(str.size() - 1);                                         \
-        return str;                                                         \
-    }
-
-INTEGER_CONVERT(u64, u64_fmt)
-INTEGER_CONVERT(u32, u32_fmt)
-INTEGER_CONVERT(u16, u16_fmt)
-INTEGER_CONVERT(u8, u8_fmt)
-
-INTEGER_CONVERT(i64, i64_fmt)
-INTEGER_CONVERT(i32, i32_fmt)
-INTEGER_CONVERT(i16, i16_fmt)
-INTEGER_CONVERT(i8, i8_fmt)
-
-#undef INTEGER_CONVERT
-
-template<
-    typename IType,
-    typename std::enable_if<std::is_same<IType, bool>::value>::type* = nullptr>
-FORCEDINLINE cstring to_string(bool i)
-{
-    return (i) ? "true" : "false";
-}
+using std::to_string;
 
 template<typename CharType = char>
 FORCEDINLINE std::basic_string<CharType> hexify(u64 s, bool trim_zero = false)
@@ -308,8 +202,8 @@ FORCEDINLINE std::basic_string<CharType> hexify(u64 s, bool trim_zero = false)
     u64 ss = s;
 
     std::basic_string<CharType> str;
-    str.resize(C_CAST<size_t>(snprintf(nullptr, 0, x64_fmt, ss)) + 1);
-    snprintf(&str[0], str.size() + 1, x64_fmt, ss);
+    str.resize(C_CAST<size_t>(snprintf(nullptr, 0, "%llx", ss)) + 1);
+    snprintf(&str[0], str.size() + 1, "%llx", ss);
     str.resize(str.size() - 1);
     trim::left_zero(str);
     if(trim_zero)
@@ -336,8 +230,8 @@ FORCEDINLINE std::basic_string<CharType> pointerify(T ptr)
 template<typename CharType = char>
 FORCEDINLINE std::basic_string<CharType> hexdump(
     semantic::mem_chunk<const char> const& data,
-    bool spacing = true,
-    szptr newline_freq = 0)
+    bool                                   spacing      = true,
+    szptr                                  newline_freq = 0)
 {
     std::basic_string<CharType> out;
     out.reserve(data.size * 2 /* Hexadec */ + data.size * spacing /* Space */);
@@ -449,20 +343,21 @@ FORCEDINLINE std::basic_string<CharT> propercase(
 } // namespace fmt
 
 namespace replace {
+namespace detail {
 template<typename CharType>
 FORCEDINLINE std::basic_string<CharType> str_impl(
-    std::basic_string<CharType> const& target,
-    std::basic_string<CharType> const& query,
-    std::basic_string<CharType> const& replacement)
+    std::basic_string_view<CharType> const& target,
+    std::basic_string_view<CharType> const& query,
+    std::basic_string_view<CharType> const& replacement)
 {
     if(query.size() == 0)
-        return target;
+        return std::basic_string<CharType>(target.begin(), target.end());
 
-    std::basic_string<CharType> out = target;
+    std::basic_string<CharType> out(target.begin(), target.end());
     for(size_t pos = 0;; pos += replacement.size())
     {
         pos = out.find(query, pos);
-        if(pos == std::basic_string<CharType>::npos)
+        if(pos == decltype(out)::npos)
             break;
         out.erase(pos, query.size());
         out.insert(pos, replacement);
@@ -471,22 +366,41 @@ FORCEDINLINE std::basic_string<CharType> str_impl(
 }
 
 template<typename CharType>
-FORCEDINLINE std::basic_string<CharType> str(
-    std::basic_string<CharType> const& target,
-    std::basic_string<CharType> const& query,
-    std::basic_string<CharType> const& replacement)
+FORCEDINLINE std::basic_string_view<CharType> as_view(
+    std::basic_string_view<CharType> const& in)
 {
-    return str_impl<CharType>(target, query, replacement);
+    return in;
 }
+
+template<typename CharType, typename T>
+requires std::is_same_v<T, std::basic_string<CharType>>
+    FORCEDINLINE std::basic_string_view<CharType> as_view(T const& in)
+{
+    return std::basic_string_view<CharType>(in.data(), in.size());
+}
+} // namespace detail
 
 template<typename CharType>
 FORCEDINLINE std::basic_string<CharType> str(
-    std::basic_string<CharType> const& target,
-    const CharType*                    query,
-    const CharType*                    replacement)
+    auto const& target, auto const& query, auto const& replace)
 {
-    return str_impl<CharType>(target, query, replacement);
+    return detail::str_impl<CharType>(
+        detail::as_view<CharType>(target),
+        detail::as_view<CharType>(query),
+        detail::as_view<CharType>(replace));
 }
+
+// template<typename CharType>
+// FORCEDINLINE std::basic_string<CharType> str(
+//     std::basic_string<CharType> const& target,
+//     std::basic_string<CharType> const& query,
+//     std::basic_string<CharType> const& replace)
+//{
+//     return str_impl<CharType>(
+//         target,
+//         std::basic_string_view<CharType>(query.begin(), query.end()),
+//         std::basic_string_view<CharType>(replace.begin(), replace.end()));
+// }
 
 } // namespace replace
 
@@ -498,31 +412,31 @@ struct spliterator : Iterator<std::forward_iterator_tag, CharType>
     using string_type = std::basic_string_view<CharType>;
     using sep_type    = CharType;
 
-    spliterator() : source(nullptr), sep(sep_type()), idx(string_type::npos)
+    spliterator() : source(), sep(sep_type()), idx(string_type::npos)
     {
     }
 
     spliterator(string_type const& source, sep_type sep) :
-        source(&source), sep(sep), idx(0)
+        source(source), sep(sep), idx(0)
     {
     }
 
-    spliterator operator++() const
+    spliterator operator++(int) const
     {
         auto cpy = *this;
         cpy.idx  = next_idx();
 
-        if(cpy.idx > source->size())
+        if(cpy.idx > source.size())
             cpy.idx = string_type::npos;
 
         return cpy;
     }
 
-    spliterator& operator++(int)
+    spliterator& operator++()
     {
         idx = next_idx();
 
-        if(idx > source->size())
+        if(idx > source.size())
             idx = string_type::npos;
 
         return *this;
@@ -530,7 +444,7 @@ struct spliterator : Iterator<std::forward_iterator_tag, CharType>
 
     string_type operator*() const
     {
-        return source->substr(idx, len());
+        return source.substr(idx, len());
     }
 
     bool operator!=(spliterator const& other) const
@@ -548,10 +462,10 @@ struct spliterator : Iterator<std::forward_iterator_tag, CharType>
 
     typename string_type::size_type next_idx() const
     {
-        return source->find(sep, idx + 1);
+        return source.find(sep, idx + 1);
     }
 
-    string_type const*              source;
+    string_type                     source;
     sep_type                        sep;
     typename string_type::size_type idx;
 };

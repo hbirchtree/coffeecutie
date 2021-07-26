@@ -15,7 +15,7 @@ namespace Display {
 struct Properties
 {
     Properties() :
-        gl(), title(nullptr), window(nullptr), size(0, 0), flags(), monitor(0)
+        gl(), title(nullptr), window(nullptr), flags(), monitor(0)
     {
     }
 

@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // HintMode
-enum class hint_mode : ::libc_types::u32 {
+enum class hint_mode : ::libc_types::u32
+{
 #ifdef GL_DONT_CARE
     dont_care = GL_DONT_CARE,
 #endif
@@ -17,4 +18,4 @@ enum class hint_mode : ::libc_types::u32 {
 #endif
 }; // enum class hint_mode
 
-} // namespace gl::groups
+} // namespace gl::group

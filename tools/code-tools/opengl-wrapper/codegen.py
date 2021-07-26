@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-from enum import unique
 import re
 
 
@@ -12,7 +11,7 @@ OVERLOADABLE_FUNCTIONS = [
 ]
 
 value_vector_pattern = r'(const GL(short|float|double|int|uint)) *'
-vector_extract_pattern = r'^([^6]*?)(Matrix)?(([0-4](x[0-4])?)?[siufd]{1,2}(64)?_?v?)?(ARB|NV)?$'
+vector_extract_pattern = r'^([^6]*?)(Matrix)?(([0-4](x[0-4])?)?[siufd]{1,2}(64)?_?v?)?(ARB|EXT|KHR|NV)?$'
 
 
 type_map = {
@@ -35,6 +34,10 @@ type_map = {
     'GLsizei': 'i32',
 }
 
+type_guards = {
+    'GLdouble': 'defined(GL_VERSION_4_1)'
+}
+
 
 def generate_header(includes, lines):
     output = ''
@@ -49,10 +52,16 @@ def generate_header(includes, lines):
     includes.append('vector')
     includes.append('peripherals/concepts/span.h')
     includes.append('peripherals/concepts/vector.h')
+
     for include in includes:
         output = output + f'#include <{include}>\n'
 
     lines.append('''
+#define GLW_FPTR_CHECK(functionName) \\
+    if constexpr(!gl::is_linked) \\
+        if(!gl ## functionName ) \\
+            Throw(undefined_behavior("undefined function" # functionName ));
+
 namespace gl {
 
 namespace detail {
@@ -79,28 +88,27 @@ transform_strings(std::vector<std::string_view> const& strings)
         std::move(stringstorage));
 }
 
-inline std::string error_to_hex()
-{
-    return "0x0000";
-}
-
 template<typename T1, typename T2>
 inline void assert_equal(T1 const& v1, T2 const& v2)
 {
     if (v1 != v2)
         Throw(std::runtime_error("assertion failed"));
 }
+
 }
 ''')
     added = []
     for gl_type in type_map.keys():
         m_type = type_map[gl_type]
-        if m_type in ['bool']:
+        if m_type in ['bool'] or m_type in added:
             continue
+        if gl_type in type_guards:
+            guard = type_guards[gl_type]
+            lines.append(f'#if {guard}')
         lines.append(f'static_assert(std::is_same_v<{gl_type}, ::libc_types::{m_type}>, "{gl_type} does not match {m_type}");')
-        if m_type in added:
-            continue
         lines.append(f'using ::libc_types::{m_type};')
+        if gl_type in type_guards:
+            lines.append('#endif')
         added.append(m_type)
 
     lines.append('''
@@ -179,10 +187,14 @@ def patch_size_param(inputs: list, outputs: list, source_param: str, meta: str, 
     def patch_param(param_name: str):
         try:
             i = inputs.index(param_name)
+            ptr_output = [ p for p in outputs if p[0] == source_param ][0]
             output = [ p for p in outputs if p[0] == param_name ][0]
             outputs.remove(output)
             name = name_override if name_override is not None else source_param
-            inputs[i] = f'{name}.size()'
+            if 'void' in ptr_output[1]:
+                inputs[i] = f'{name}.size() * sizeof(typename std::decay_t<{ptr_output[1]}>::value_type)'
+            else:
+                inputs[i] = f'{name}.size()'
         except ValueError:
             return False
         return True
@@ -259,27 +271,34 @@ def dimensions_transform(params: list, i: int, output: list, inputs: list, templ
         inputs[-1] = name
         return 1
 
-    vector_type = gen_concept_type(pod_type, False, 'vec', num)
-    template.append([f'class {vector_type}', f'semantic::concepts::Vector<{vector_type}, {pod_type}, {num}>'])
+    vector_type = gen_concept_type(pod_type, False, 'size', num)
+    if num == 2:
+        template.append([f'class {vector_type}', f'semantic::concepts::Size2D<{vector_type}, {pod_type}>'])
+    elif num == 3:
+        template.append([f'class {vector_type}', f'semantic::concepts::Size2D<{vector_type}, {pod_type}>'])
+    else:
+        raise RuntimeError('dimension structure > 3 elements')
     output.append([name, f'{vector_type} const&', None])
 
     return num
 
 
-def pointer_transform(params: list, i: int, output: list, inputs: list, template: list):
+def pointer_transform(params: list, i: int, output: list, inputs: list, template: list, usages: dict):
     name, type, meta = params[i]
     const, pod_type = extract_type(type)
 
-    if 'void' in pod_type:
-        pod_type = f'{const} std::byte'.strip()
+    if meta[0] is not None and pod_type == 'GLenum':
+        usages[meta[0]] = 1
+        pod_type = 'group::' + enum_create_name(meta[0])
 
     span_type = 'span_' + gen_concept_type(pod_type, const == 'const')
     add_concept(template, span_type, f'Span<{span_type}>')
-    template.append([None, f'std::is_same_v<std::decay_t<typename {span_type}::value_type>, {pod_type}>'])
+    if 'void' not in pod_type:
+        template.append([None, f'std::is_same_v<std::decay_t<typename {span_type}::value_type>, std::decay_t<{pod_type}>>'])
     
     const = 'const&' if const != '' else ''
     output.append([name, f'{span_type} {const}', meta])
-    inputs.append(f'reinterpret_cast<{type}>({name}.data())')
+    inputs.append(f'{name}.size() ? reinterpret_cast<{type}>({name}.data()) : nullptr')
 
     patch_size_param(inputs, output, name, meta[1])
 
@@ -314,7 +333,7 @@ def static_array_transform(params: list, i: int, static_size: str, output: list,
     elif cls == 'vec':
         template.append([None, f'semantic::concepts::Vector<typename {concept_type}::value_type, {pod_type}, {size[0]}>'])
     else:
-        template.append([None, f'std::is_same_v<std::decay_t<typename {concept_type}::value_type>, {pod_type}>'])
+        template.append([None, f'std::is_same_v<std::decay_t<typename {concept_type}::value_type>, std::decay_t<{pod_type}>>'])
     const = 'const&' if const != '' else ''
     output.append([name, f'{concept_type} {const}', None])
     inputs.append(f'reinterpret_cast<{type}>({name}.data())')
@@ -337,7 +356,7 @@ def enum_transform(params: list, i: int, output: list, inputs: list, usages: dic
         output.append(params[i])
         inputs.append(name)
     else:
-        output.append([name, 'groups::' + enum_create_name(group), meta])
+        output.append([name, 'group::' + enum_create_name(group), meta])
         inputs.append(f'static_cast<GLenum>({name})')
     return 1
 
@@ -347,18 +366,18 @@ def string_transform(params: list, i: int, output: list, inputs: list, lines: li
 
     if '*const*' in type:
         lines.append(f'auto [{name}_lens, {name}_cstr, {name}_store] = detail::transform_strings({name});')
-        patch_size_param(inputs, output, name, meta[1], [], f'{name}_cstr')
         output.append([name, 'std::vector<std::string_view>', meta])
         inputs.append(f'{name}_cstr.data()')
+        patch_size_param(inputs, output, name, meta[1], [], f'{name}_cstr')
     elif 'const' in type:
-        patch_size_param(inputs, output, name, meta[1])
         output.append([name, 'std::string_view const&', meta])
         inputs.append(f'{name}.data()')
+        patch_size_param(inputs, output, name, meta[1])
     elif meta[1] is not None:
         const, pod_type = extract_type(type)
         span_type = 'span_' + gen_concept_type(pod_type, const == 'const')
         add_concept(template, span_type, f'Span<{span_type}>')
-        template.append([None, f'std::is_same_v<std::decay_t<typename {span_type}::value_type>, {pod_type}>'])
+        template.append([None, f'std::is_same_v<std::decay_t<typename {span_type}::value_type>, std::decay_t<{pod_type}>>'])
         output.append([name, span_type, meta])
         inputs.append(f'{name}.data()')
         patch_size_param(inputs, output, name, meta[1], ['bufSize'])
@@ -373,7 +392,7 @@ def handle_transform(params: list, i: int, inputs: list, output: list, template:
     if '*' in type:
         span_type = 'span_' + gen_concept_type(pod_type, const == 'const')
         add_concept(template, span_type, f'Span<{span_type}>')
-        template.append([None, f'std::is_same_v<std::decay_t<typename {span_type}::value_type>, {pod_type}>'])
+        template.append([None, f'std::is_same_v<std::decay_t<typename {span_type}::value_type>, std::decay_t<{pod_type}>>'])
         output.append([name, f'{span_type}', meta])
         inputs.append(f'{name}.data()')
         patch_size_param(inputs, output, name, meta[1])
@@ -420,7 +439,7 @@ def draw_transform(params: list, inputs: list, lines: list, template: list, usag
             lines.append(f'detail::assert_equal({name}.size(), {count[0]});')
             span_type = 'span_' + gen_concept_type(pod_type, const == 'const')
             add_concept(template, span_type, f'Span<{span_type}>')
-            template.append([None, f'std::is_same_v<std::decay_t<typename {span_type}::value_type>, {pod_type}>'])
+            template.append([None, f'std::is_same_v<std::decay_t<typename {span_type}::value_type>, std::decay_t<{pod_type}>>'])
             inputs.append(f'{name}.data()')
             output.append([name, span_type, meta])
         else:
@@ -514,10 +533,10 @@ def preprocess_params(
         elif '1' in group and 'const' not in type and 'void' not in type:
             i += reference_transform(params, i, output, inputs)
         elif '*' in type and static_size is None:
-            i += pointer_transform(params, i, output, inputs, template_args)
+            i += pointer_transform(params, i, output, inputs, template_args, usages)
         elif '*' in type and static_size:
             i += static_array_transform(params, i, static_size, output, inputs, template_args)
-        elif func_name.startswith('Gen') or func_name.startswith('Create') or func_name.startswith('Delete'):
+        elif 'GLuint' in type and (func_name.startswith('Gen') or func_name.startswith('Create') or func_name.startswith('Delete')):
             i += handle_transform(params, i, inputs, output, template_args)
         # elif name in ['n'] and '*' in params[i+1][1]:
             # i += handle_transform(params, i, func_name, output, inputs)
@@ -544,11 +563,16 @@ def map_function_name(func_name: str):
     return func_name
 
 
-def generate_function(command, usages: dict, version: tuple = None):
-    func_name, return_type, params = command
+def generate_function(command, usages: dict, version: tuple = None, override_name: str = None):
+    func_name, return_data, params = command
+    return_type, return_group = return_data
 
+    return_var = 'out'
     if return_type is None:
         return_type = 'void'
+    if return_group == 'String':
+        return_type = 'stl_types::String'
+        return_var = f'reinterpret_cast<const char*>({return_var})'
     return_type = return_type.strip()
 
     inputs = []
@@ -570,7 +594,10 @@ def generate_function(command, usages: dict, version: tuple = None):
     param_string = [ translate_param(p) for p in params ]
     param_string = ', '.join(param_string)
     input_string = ', '.join(inputs)
-    visible_name = map_function_name(func_name)
+    if override_name is not None:
+        visible_name = map_function_name(override_name)
+    else:
+        visible_name = map_function_name(func_name)
 
     templates = []
     [ templates.append(x) for x in template_args if x not in templates ]
@@ -591,12 +618,10 @@ def generate_function(command, usages: dict, version: tuple = None):
 
     yield f'''STATICINLINE {return_type} {visible_name}({param_string})
 {{
+    using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {{
-        if constexpr(gl::is_linked)
-            if(!gl{func_name})
-                Throw(undefined_behavior(
-                    "unloaded function {func_name}"));'''
+        GLW_FPTR_CHECK({func_name})'''
 
     for chunk in debug_lines:
         for line in chunk.split('\n'):
@@ -609,17 +634,20 @@ def generate_function(command, usages: dict, version: tuple = None):
     ret_statement = 'auto out = ' if return_type != 'void' else ''
     yield f'    {ret_statement}gl{func_name}({input_string});'
 
-    yield '''    if constexpr(compile_info::debug_mode)
-    {
-        if(auto error = glGetError(); error != GL_NO_ERROR)
-            Throw(undefined_behavior("GL error occurred: " + std::to_string(error)));
-    }'''
+    yield f'''    detail::error_check("{func_name}"sv);'''
 
     if ret_statement != '':
-        yield '    return out;'
+        yield f'    return {return_var};'
 
     yield '''}
 '''
+
+    # param_types = ', '.join([
+    #     make_storable(translate_type(p[1]))
+    #     for p in params 
+    # ])
+
+    # yield f'using {visible_name}_param_t = std::tuple<{param_types}>;'
 
     return
 
@@ -651,8 +679,10 @@ def generate_function(command, usages: dict, version: tuple = None):
 
 
 def generate_enum(enum: tuple, usages: dict, deprecated_symbols: set):
+    ILLEGAL_START = r'^[0-9]'
     DENIED_NAMES = [
-        'byte', 'double', 'float', 'int', 'short', 'true', 'false', 'or', 'and', 'xor',
+        'byte', 'double', 'float', 'int', 'short', 
+        'true', 'false', 'or', 'and', 'xor', 'bool',
     ]
 
     name, values, meta = enum
@@ -672,6 +702,12 @@ enum class {snake_name} : ::libc_types::u32 {{'''
     unique_values.sort()
 
     unique_values = [ x for x in unique_values if x not in deprecated_symbols]
+
+    for i, x in enumerate(unique_values):
+        if not re.match(ILLEGAL_START, x):
+            continue
+        x = f'n{x}'
+        unique_values[i] = x
 
     if len(unique_values) == 0:
         return

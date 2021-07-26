@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // DebugSource
-enum class debug_source : ::libc_types::u32 {
+enum class debug_source : ::libc_types::u32
+{
 #ifdef GL_DEBUG_SOURCE_API
     api = GL_DEBUG_SOURCE_API,
 #endif
@@ -29,4 +30,4 @@ enum class debug_source : ::libc_types::u32 {
 #endif
 }; // enum class debug_source
 
-} // namespace gl::groups
+} // namespace gl::group

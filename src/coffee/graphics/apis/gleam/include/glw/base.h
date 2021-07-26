@@ -2,6 +2,7 @@
 
 #include <peripherals/identify/compiler/variable_attributes.h>
 #include <peripherals/libc/types.h>
+#include <peripherals/stl/string_ops.h>
 
 #define GL_BASE_ES_MASK 0x1000
 #define GL_BASE_VERSION_MASK 0x00FF
@@ -17,35 +18,40 @@
 
 #elif defined(GLEAM_USE_ES)
 
+#ifndef GLEAM_RESTRICT_ES
+#define GLEAM_RESTRICT_ES 0x400
+#endif
+
 #define GL_BASE_CORE_VERSION 0x000
 
 #if defined(GLEAM_USE_LINKED)
 
-#if C_HAS_INCLUDE(<GLES3 / glext3.h>)
-#include <GLES3/glext3.h>
-#endif
-#if C_HAS_INCLUDE(<GLES2 / glext2.h>)
-#include <GLES2/glext2.h>
-#endif
-
-#if C_HAS_INCLUDE(<GLES3 / gl32.h>)
+#if C_HAS_INCLUDE(<GLES3/gl32.h>) && GLEAM_RESTRICT_ES >= 0x320
 #include <GLES3/gl32.h>
 #define GL_BASE_ES_VERSION 0x320
-#elif C_HAS_INCLUDE(<GLES3 / gl31.h>)
+#elif C_HAS_INCLUDE(<GLES3/gl31.h>) && GLEAM_RESTRICT_ES >= 0x310
 #include <GLES3/gl31.h>
 #define GL_BASE_ES_VERSION 0x310
-#elif C_HAS_INCLUDE(<GLES3 / gl3.h>)
+#elif C_HAS_INCLUDE(<GLES3/gl3.h>) && GLEAM_RESTRICT_ES >= 0x300
 #include <GLES3/gl3.h>
 #define GL_BASE_ES_VERSION 0x300
-#elif C_HAS_INCLUDE(<GLES2 / gl2.h>)
+#elif C_HAS_INCLUDE(<GLES2/gl2.h>) && GLEAM_RESTRICT_ES >= 0x200
 #include <GLES2/gl2.h>
 #define GL_BASE_ES_VERSION 0x200
 #else
 #error Configured for linked GLES headers, but none found
 #endif
+
+#if C_HAS_INCLUDE(<GLES3 / gl3ext.h>) && GLEAM_RESTRICT_ES >= 0x300
+#include <GLES3/gl3ext.h>
+#endif
+#if C_HAS_INCLUDE(<GLES2 / gl2ext.h>) && GLEAM_RESTRICT_ES == 0x200
+#include <GLES2/gl2ext.h>
+#endif
+
 #else
 
-#include <glad_es/glad.h>
+#include <glad/glad.h>
 #define GL_BASE_VERSION 0x320
 
 #endif
@@ -76,6 +82,21 @@ concept MinimumVersion = Current::major >= Required::major &&
                          (Current::major > Required::major ||
                           Current::minor >= Required::minor);
 
+template<class Current, class Maximum>
+concept MaximumVersion = Current::major < Maximum::major ||
+                         (Current::major == Maximum::major &&
+                          Current::minor < Maximum::minor);
+
 using ::libc_types::ptroff;
 
+namespace detail {
+
+inline std::string error_to_hex(auto error)
+{
+    return stl_types::str::print::pointerify(error);
+}
+
+void error_check(std::string_view cmd_name);
+
+} // namespace detail
 } // namespace gl

@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // VertexArrayPName
-enum class vertex_array_prop : ::libc_types::u32 {
+enum class vertex_array_prop : ::libc_types::u32
+{
 #ifdef GL_VERTEX_ATTRIB_ARRAY_DIVISOR
     vertex_attrib_array_divisor = GL_VERTEX_ATTRIB_ARRAY_DIVISOR,
 #endif
@@ -35,4 +36,4 @@ enum class vertex_array_prop : ::libc_types::u32 {
 #endif
 }; // enum class vertex_array_prop
 
-} // namespace gl::groups
+} // namespace gl::group

@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // ClipPlaneName
-enum class clip_plane_name : ::libc_types::u32 {
+enum class clip_plane_name : ::libc_types::u32
+{
 #ifdef GL_CLIP_DISTANCE0
     clip_distance0 = GL_CLIP_DISTANCE0,
 #endif
@@ -50,4 +51,4 @@ enum class clip_plane_name : ::libc_types::u32 {
 #endif
 }; // enum class clip_plane_name
 
-} // namespace gl::groups
+} // namespace gl::group

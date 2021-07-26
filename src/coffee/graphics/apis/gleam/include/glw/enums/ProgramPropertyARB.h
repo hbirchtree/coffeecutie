@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // ProgramPropertyARB
-enum class program_property_arb : ::libc_types::u32 {
+enum class program_property_arb : ::libc_types::u32
+{
 #ifdef GL_ACTIVE_ATOMIC_COUNTER_BUFFERS
     active_atomic_counter_buffers = GL_ACTIVE_ATOMIC_COUNTER_BUFFERS,
 #endif
@@ -22,7 +23,8 @@ enum class program_property_arb : ::libc_types::u32 {
     active_uniform_blocks = GL_ACTIVE_UNIFORM_BLOCKS,
 #endif
 #ifdef GL_ACTIVE_UNIFORM_BLOCK_MAX_NAME_LENGTH
-    active_uniform_block_max_name_length = GL_ACTIVE_UNIFORM_BLOCK_MAX_NAME_LENGTH,
+    active_uniform_block_max_name_length =
+        GL_ACTIVE_UNIFORM_BLOCK_MAX_NAME_LENGTH,
 #endif
 #ifdef GL_ACTIVE_UNIFORM_MAX_LENGTH
     active_uniform_max_length = GL_ACTIVE_UNIFORM_MAX_LENGTH,
@@ -61,11 +63,12 @@ enum class program_property_arb : ::libc_types::u32 {
     transform_feedback_varyings = GL_TRANSFORM_FEEDBACK_VARYINGS,
 #endif
 #ifdef GL_TRANSFORM_FEEDBACK_VARYING_MAX_LENGTH
-    transform_feedback_varying_max_length = GL_TRANSFORM_FEEDBACK_VARYING_MAX_LENGTH,
+    transform_feedback_varying_max_length =
+        GL_TRANSFORM_FEEDBACK_VARYING_MAX_LENGTH,
 #endif
 #ifdef GL_VALIDATE_STATUS
     validate_status = GL_VALIDATE_STATUS,
 #endif
 }; // enum class program_property_arb
 
-} // namespace gl::groups
+} // namespace gl::group

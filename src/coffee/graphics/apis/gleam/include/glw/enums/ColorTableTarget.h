@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // ColorTableTarget
-enum class color_table_target : ::libc_types::u32 {
+enum class color_table_target : ::libc_types::u32
+{
 #ifdef GL_COLOR_TABLE
     color_table = GL_COLOR_TABLE,
 #endif
@@ -19,11 +20,12 @@ enum class color_table_target : ::libc_types::u32 {
     proxy_color_table = GL_PROXY_COLOR_TABLE,
 #endif
 #ifdef GL_PROXY_POST_COLOR_MATRIX_COLOR_TABLE
-    proxy_post_color_matrix_color_table = GL_PROXY_POST_COLOR_MATRIX_COLOR_TABLE,
+    proxy_post_color_matrix_color_table =
+        GL_PROXY_POST_COLOR_MATRIX_COLOR_TABLE,
 #endif
 #ifdef GL_PROXY_POST_CONVOLUTION_COLOR_TABLE
     proxy_post_convolution_color_table = GL_PROXY_POST_CONVOLUTION_COLOR_TABLE,
 #endif
 }; // enum class color_table_target
 
-} // namespace gl::groups
+} // namespace gl::group

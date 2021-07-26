@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // ProgramInterfacePName
-enum class program_interface_prop : ::libc_types::u32 {
+enum class program_interface_prop : ::libc_types::u32
+{
 #ifdef GL_ACTIVE_RESOURCES
     active_resources = GL_ACTIVE_RESOURCES,
 #endif
@@ -20,4 +21,4 @@ enum class program_interface_prop : ::libc_types::u32 {
 #endif
 }; // enum class program_interface_prop
 
-} // namespace gl::groups
+} // namespace gl::group

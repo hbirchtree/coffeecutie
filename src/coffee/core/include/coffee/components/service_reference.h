@@ -12,19 +12,19 @@ struct ServiceRef
     {
     }
 
-    Service* lock()
+    auto* lock()
     {
         return m_container->service<Service>();
     }
 
-    Service& operator*()
+    auto& operator*()
     {
         auto ptr = m_container->service<Service>();
         C_PTR_CHECK(ptr);
         return *ptr;
     }
 
-    operator Service*()
+    operator typename Service::type*()
     {
         return lock();
     }

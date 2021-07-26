@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // ConditionalRenderMode
-enum class conditional_render_mode : ::libc_types::u32 {
+enum class conditional_render_mode : ::libc_types::u32
+{
 #ifdef GL_QUERY_BY_REGION_NO_WAIT
     query_by_region_no_wait = GL_QUERY_BY_REGION_NO_WAIT,
 #endif
@@ -32,4 +33,4 @@ enum class conditional_render_mode : ::libc_types::u32 {
 #endif
 }; // enum class conditional_render_mode
 
-} // namespace gl::groups
+} // namespace gl::group

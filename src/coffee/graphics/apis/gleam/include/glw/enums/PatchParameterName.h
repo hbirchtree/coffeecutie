@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // PatchParameterName
-enum class patch_parameter_name : ::libc_types::u32 {
+enum class patch_parameter_name : ::libc_types::u32
+{
 #ifdef GL_PATCH_DEFAULT_INNER_LEVEL
     patch_default_inner_level = GL_PATCH_DEFAULT_INNER_LEVEL,
 #endif
@@ -17,4 +18,4 @@ enum class patch_parameter_name : ::libc_types::u32 {
 #endif
 }; // enum class patch_parameter_name
 
-} // namespace gl::groups
+} // namespace gl::group

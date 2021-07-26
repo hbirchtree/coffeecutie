@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // BufferAccessARB
-enum class buffer_access_arb : ::libc_types::u32 {
+enum class buffer_access_arb : ::libc_types::u32
+{
 #ifdef GL_READ_ONLY
     read_only = GL_READ_ONLY,
 #endif
@@ -17,4 +18,4 @@ enum class buffer_access_arb : ::libc_types::u32 {
 #endif
 }; // enum class buffer_access_arb
 
-} // namespace gl::groups
+} // namespace gl::group

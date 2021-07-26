@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // DebugType
-enum class debug_type : ::libc_types::u32 {
+enum class debug_type : ::libc_types::u32
+{
 #ifdef GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR
     deprecated_behavior = GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR,
 #endif
@@ -38,4 +39,4 @@ enum class debug_type : ::libc_types::u32 {
 #endif
 }; // enum class debug_type
 
-} // namespace gl::groups
+} // namespace gl::group

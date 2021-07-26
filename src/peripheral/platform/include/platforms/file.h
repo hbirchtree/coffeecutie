@@ -8,7 +8,12 @@
 //#include "posix/file.h"
 //#include "win32/file.h"
 
-#if defined(COFFEE_LINUX) || defined(COFFEE_ANDROID) || defined(COFFEE_APPLE)
+#if defined(COFFEE_LINUX) || defined(COFFEE_ANDROID) || \
+    defined(COFFEE_APPLE) || defined(COFFEE_EMSCRIPTEN)
+#define USE_POSIX_API 1
+#endif
+
+#if defined(USE_POSIX_API)
 #include "posix/fsio.h"
 #include "posix/mmio.h"
 #include "posix/rdwrio.h"
@@ -27,7 +32,7 @@ namespace platform::file {
 
 #endif
 
-#if defined(COFFEE_LINUX) || defined(COFFEE_ANDROID) || defined(COFFEE_APPLE)
+#if defined(USE_POSIX_API)
 #define PLATFORM_FILE_SUPPORTS_FS 1
 #define PLATFORM_FILE_SUPPORTS_LIST 1
 #define PLATFORM_FILE_SUPPORTS_MAPPING 1
@@ -70,7 +75,7 @@ using map_handle  = declreturntype(map)::value_type;
 
 namespace platform::path {
 
-#if defined(COFFEE_LINUX) || defined(COFFEE_ANDROID) || defined(COFFEE_APPLE)
+#if defined(USE_POSIX_API)
 static constexpr auto path_separator = '/';
 #elif defined(COFFEE_WINDOWS)
 static constexpr auto path_separator = '\\';
@@ -78,7 +83,7 @@ static constexpr auto path_separator = '\\';
 #error No path separator defined
 #endif
 
-#if defined(COFFEE_LINUX) || defined(COFFEE_ANDROID) || defined(COFFEE_APPLE)
+#if defined(USE_POSIX_API)
 #define PLATFORM_FILE_SUPPORTS_LINK 1
 
 using file::posix::path::change_dir;
@@ -89,9 +94,9 @@ using file::posix::path::dereference;
 using file::posix::path::base;
 using file::posix::path::dir;
 
-using file::posix::path::executable;
 using file::posix::path::app_dir;
 using file::posix::path::current_dir;
+using file::posix::path::executable;
 #else
 #define PLATFORM_FILE_SUPPORTS_LINK 0
 #endif

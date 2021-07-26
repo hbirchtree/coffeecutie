@@ -89,7 +89,12 @@ struct generic_handle_t : non_copy
         return hnd == InvalidValue;
     }
 
-    operator hnd_type() const
+    operator hnd_type const& () const
+    {
+        return hnd;
+    }
+
+    operator hnd_type& ()
     {
         return hnd;
     }

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from sys import argv
+from os.path import realpath
 
 import json
 
@@ -18,8 +19,9 @@ for source_file in content['sources']:
         with open(source_file) as source:
             content['sourcesContent'].append(source.read())
     except IOError:
-        print('%s: No such file' % source_file)
-
+        print('%s: No such file' % realpath(source_file))
+    except UnicodeDecodeError as e:
+        print('%s: Decode error: %s' % (realpath(source_file), e))
 
 with open(argv[1], 'w') as out_file:
     out_file.write(json.dumps(content))

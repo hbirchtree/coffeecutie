@@ -10,6 +10,21 @@
 #include <gsl/span>
 
 namespace semantic {
+namespace detail {
+
+template<typename T>
+requires (!std::is_same_v<T, void>) constexpr inline size_t size_of_type()
+{
+    return sizeof(T);
+}
+template<typename T>
+requires std::is_same_v<T, void>
+constexpr inline size_t size_of_type()
+{
+    return 1;
+}
+
+} // namespace detail
 
 using namespace ::type_safety;
 
@@ -23,10 +38,10 @@ enum class Ownership
 template<typename T>
 struct mem_chunk
 {
-    using size_type       = libc_types::szptr;
     using difference_type = libc_types::ptroff;
     using value_type      = typename std::decay_t<T>;
     using span_type       = gsl::span<T, gsl::dynamic_extent>;
+    using size_type       = typename span_type::size_type;
     using allocation_type = std::vector<value_type>;
     using iterator        = typename span_type::iterator;
 
@@ -48,7 +63,7 @@ struct mem_chunk
     }
     C_DEPRECATED_S("use ofBytes()")
     NO_DISCARD STATICINLINE mem_chunk
-                            FromBytes(const void* data, size_type size)
+    FromBytes(const void* data, size_type size)
     {
         return of(C_RCAST<T*>(data), size / sizeof(T));
     }
@@ -112,12 +127,15 @@ struct mem_chunk
     template<typename OtherT>
     STATICINLINE mem_chunk ofBytes(OtherT* data, size_type size)
     {
-        return of(C_RCAST<T*>(data), (size * sizeof(OtherT)) / sizeof(T));
+        return of(
+            C_RCAST<T*>(data),
+            (size * detail::size_of_type<OtherT>()) / sizeof(T));
     }
     template<typename OtherT>
     STATICINLINE mem_chunk ofBytes(OtherT& object)
     {
-        return of(C_RCAST<T*>(&object), sizeof(OtherT));
+        return of(
+            C_RCAST<T*>(&object), detail::size_of_type<OtherT>() / sizeof(T));
     }
     template<
         typename Dummy                                            = void,
@@ -142,6 +160,15 @@ struct mem_chunk
         out.allocation = allocation_type(size * sizeof(T), value_type{});
         T* data_ptr    = out.allocation.data();
         out.view       = span_type(data_ptr, out.allocation.size());
+        out.updatePointers(Ownership::Owned);
+        return out;
+    }
+    template<class Container>
+    NO_DISCARD STATICINLINE mem_chunk copy(Container& c)
+    {
+        mem_chunk out;
+        out.allocation = allocation_type(std::begin(c), std::end(c));
+        out.view = span_type(out.allocation.data(), out.allocation.size());
         out.updatePointers(Ownership::Owned);
         return out;
     }
@@ -227,8 +254,7 @@ struct mem_chunk
                 {
                     auto offset = i - (needle_idx - 1);
                     auto chunk =
-                        at((i - (needle_idx - 1)) *
-                           sizeof(value_type)).value();
+                        at((i - (needle_idx - 1)) * sizeof(value_type)).value();
                     return std::make_optional(find_result{offset});
                 }
             } else
@@ -245,7 +271,7 @@ struct mem_chunk
 
     NO_DISCARD auto at(size_type offset, size_type size = 0)
     {
-        auto      translated_size = size == 0 ? gsl::dynamic_extent : size;
+        auto      translated_size = size == 0 ? view.size() - offset : size;
         mem_chunk out             = {
             .view = view.subspan(offset, translated_size),
         };
@@ -254,7 +280,7 @@ struct mem_chunk
     }
     NO_DISCARD auto at(size_type offset, size_type size = 0) const
     {
-        auto      translated_size = size == 0 ? gsl::dynamic_extent : size;
+        auto      translated_size = size == 0 ? view.size() - offset : size;
         mem_chunk out             = {
             .view = view.subspan(offset, translated_size),
         };
@@ -285,6 +311,7 @@ struct mem_chunk
         if(ownership != Ownership::Owned)
             Throw(undefined_behavior("cannot modify borrowed structure"));
         allocation.resize(new_size);
+        updatePointers();
     }
 
     span_type       view;

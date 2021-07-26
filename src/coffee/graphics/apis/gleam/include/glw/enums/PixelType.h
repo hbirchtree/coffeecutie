@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // PixelType
-enum class pixel_type : ::libc_types::u32 {
+enum class pixel_type : ::libc_types::u32
+{
 #ifdef GL_BITMAP
     bitmap = GL_BITMAP,
 #endif
@@ -62,4 +63,4 @@ enum class pixel_type : ::libc_types::u32 {
 #endif
 }; // enum class pixel_type
 
-} // namespace gl::groups
+} // namespace gl::group

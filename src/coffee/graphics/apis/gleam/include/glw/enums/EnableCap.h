@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // EnableCap
-enum class enable_cap : ::libc_types::u32 {
+enum class enable_cap : ::libc_types::u32
+{
 #ifdef GL_ALPHA_TEST
     alpha_test = GL_ALPHA_TEST,
 #endif
@@ -358,10 +359,12 @@ enum class enable_cap : ::libc_types::u32 {
     separable_2d_ext = GL_SEPARABLE_2D_EXT,
 #endif
 #ifdef GL_SHADING_RATE_IMAGE_PER_PRIMITIVE_NV
-    shading_rate_image_per_primitive_nv = GL_SHADING_RATE_IMAGE_PER_PRIMITIVE_NV,
+    shading_rate_image_per_primitive_nv =
+        GL_SHADING_RATE_IMAGE_PER_PRIMITIVE_NV,
 #endif
 #ifdef GL_SHADING_RATE_PRESERVE_ASPECT_RATIO_QCOM
-    shading_rate_preserve_aspect_ratio_qcom = GL_SHADING_RATE_PRESERVE_ASPECT_RATIO_QCOM,
+    shading_rate_preserve_aspect_ratio_qcom =
+        GL_SHADING_RATE_PRESERVE_ASPECT_RATIO_QCOM,
 #endif
 #ifdef GL_SHARED_TEXTURE_PALETTE_EXT
     shared_texture_palette_ext = GL_SHARED_TEXTURE_PALETTE_EXT,
@@ -410,4 +413,4 @@ enum class enable_cap : ::libc_types::u32 {
 #endif
 }; // enum class enable_cap
 
-} // namespace gl::groups
+} // namespace gl::group

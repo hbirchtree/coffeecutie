@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // ConvolutionTargetEXT
-enum class convolution_target_ext : ::libc_types::u32 {
+enum class convolution_target_ext : ::libc_types::u32
+{
 #ifdef GL_CONVOLUTION_1D
     convolution_1d = GL_CONVOLUTION_1D,
 #endif
@@ -20,4 +21,4 @@ enum class convolution_target_ext : ::libc_types::u32 {
 #endif
 }; // enum class convolution_target_ext
 
-} // namespace gl::groups
+} // namespace gl::group

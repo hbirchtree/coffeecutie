@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // PipelineParameterName
-enum class pipeline_parameter_name : ::libc_types::u32 {
+enum class pipeline_parameter_name : ::libc_types::u32
+{
 #ifdef GL_ACTIVE_PROGRAM
     active_program = GL_ACTIVE_PROGRAM,
 #endif
@@ -29,4 +30,4 @@ enum class pipeline_parameter_name : ::libc_types::u32 {
 #endif
 }; // enum class pipeline_parameter_name
 
-} // namespace gl::groups
+} // namespace gl::group

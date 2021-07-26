@@ -1,7 +1,6 @@
 #pragma once
 
 #include <coffee/components/components.h>
-#include <coffee/components/subsystem.h>
 #include <coffee/core/libc_types.h>
 #include <coffee/core/stl_types.h>
 #include <coffee/core/types/display/event.h>
@@ -14,25 +13,31 @@ using Coffee::Components::Convenience::type_hash_v;
 
 using AppLoaderTag = detail::TagType<libc_types::u32, libc_types::u32>;
 
-struct AppLoader : AppService<
-                       AppLoader,
-                       detail::TypeList<
-                           Windowing,
-                           GraphicsContext,
-                           GraphicsBinding,
-                           EventBus<Coffee::Display::Event>,
-                           EventBus<Coffee::Input::CIEvent>,
-                           KeyboardInput,
-                           MouseInput,
-                           ControllerInput,
-                           TouchInput>>
+struct AppLoader : AppService<AppLoader>
 {
-    using services = Proxy::service_list;
+    using readable_services = detail::subsystem_list<
+        Windowing,
+        GraphicsContext,
+        GraphicsBinding,
+        EventBus<Coffee::Display::Event>,
+        EventBus<Coffee::Input::CIEvent>,
+        KeyboardInput,
+        MouseInput,
+        ControllerInput,
+        TouchInput>;
+    using type = AppLoader;
 
-    template<typename T>
+    using proxy_type = detail::restricted::proxy_t<AppLoader>;
+
     struct service_register
     {
-        void operator()(detail::EntityContainer& e, app_error& ec)
+        service_register(detail::EntityContainer& e, app_error& ec) :
+            e(e), ec(ec)
+        {
+        }
+
+        template<typename T>
+        void operator()()
         {
             using namespace type_safety;
 
@@ -40,34 +45,50 @@ struct AppLoader : AppService<
 
             C_ERROR_CHECK(ec);
         }
+
+        detail::EntityContainer& e;
+        app_error&               ec;
     };
 
-    template<typename T>
     struct service_loader
     {
-        void operator()(detail::EntityContainer& p, app_error& ec)
+        service_loader(detail::EntityContainer& e, app_error& ec) : e(e), ec(ec)
         {
-            auto ptr = C_DCAST<AppLoadableService>(p.service<T>());
+        }
+        template<detail::is_subsystem T>
+        void operator()()
+        {
+            auto ptr = C_DCAST<AppLoadableService>(e.service<T>());
 
             if(ptr)
-                ptr->load(p, ec);
+                ptr->load(e, ec);
 
             C_ERROR_CHECK(ec);
         }
+
+        detail::EntityContainer& e;
+        app_error&               ec;
     };
 
-    template<typename T>
     struct service_unloader
     {
-        void operator()(detail::EntityContainer& p, app_error& ec)
+        service_unloader(detail::EntityContainer& e, app_error& ec) :
+            e(e), ec(ec)
         {
-            auto ptr = C_DCAST<AppLoadableService>(p.service<T>());
+        }
+        template<typename T>
+        void operator()()
+        {
+            auto ptr = C_DCAST<AppLoadableService>(e.service<T>());
 
             if(ptr)
-                ptr->unload(p, ec);
+                ptr->unload(e, ec);
 
             C_ERROR_CHECK(ec);
         }
+
+        detail::EntityContainer& e;
+        app_error&               ec;
     };
 
     template<typename Services>
@@ -77,9 +98,9 @@ struct AppLoader : AppService<
 
         ec = AppError::None;
 
-        for_each<Services, service_register>(std::ref(e), std::ref(ec));
+        for_each<Services>(service_register(e, ec));
 #if !defined(COFFEE_CUSTOM_MAIN)
-        for_each<Services, service_loader>(std::ref(e), std::ref(ec));
+        for_each<Services>(service_loader(e, ec));
 #endif
     }
 
@@ -94,7 +115,7 @@ struct AppLoader : AppService<
     {
         using namespace type_safety::type_list;
 
-        for_each_rev<Services, service_unloader>(std::ref(e), std::ref(ec));
+        for_each_rev<Services>(service_unloader(e, ec));
     }
 
     template<class Config>
@@ -108,13 +129,18 @@ struct AppLoader : AppService<
         return *C_DCAST<Config>(m_configStore.back().get());
     }
 
-    template<typename T>
     struct config_adder
     {
-        void operator()(AppLoader& ldr)
+        config_adder(AppLoader& ldr) : ldr(ldr)
+        {
+        }
+        template<typename T>
+        void operator()()
         {
             ldr.addConfig(stl_types::MkUq<T>());
         }
+
+        AppLoader& ldr;
     };
 
     template<typename Configs>
@@ -122,7 +148,7 @@ struct AppLoader : AppService<
     {
         using namespace type_safety::type_list;
 
-        for_each<Configs, config_adder>(std::ref(*this));
+        for_each<Configs>(config_adder(*this));
     }
 
     template<class Config>

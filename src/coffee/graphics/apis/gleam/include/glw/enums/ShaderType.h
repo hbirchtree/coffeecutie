@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // ShaderType
-enum class shader_type : ::libc_types::u32 {
+enum class shader_type : ::libc_types::u32
+{
 #ifdef GL_COMPUTE_SHADER
     compute_shader = GL_COMPUTE_SHADER,
 #endif
@@ -32,4 +33,4 @@ enum class shader_type : ::libc_types::u32 {
 #endif
 }; // enum class shader_type
 
-} // namespace gl::groups
+} // namespace gl::group

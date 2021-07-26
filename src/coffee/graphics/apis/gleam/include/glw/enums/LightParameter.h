@@ -2,10 +2,11 @@
 
 #include "common.h"
 
-namespace gl::groups {
+namespace gl::group {
 
 // LightParameter
-enum class light_parameter : ::libc_types::u32 {
+enum class light_parameter : ::libc_types::u32
+{
 #ifdef GL_CONSTANT_ATTENUATION
     constant_attenuation = GL_CONSTANT_ATTENUATION,
 #endif
@@ -29,4 +30,4 @@ enum class light_parameter : ::libc_types::u32 {
 #endif
 }; // enum class light_parameter
 
-} // namespace gl::groups
+} // namespace gl::group

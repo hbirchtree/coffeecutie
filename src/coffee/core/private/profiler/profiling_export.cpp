@@ -145,7 +145,9 @@ STATICINLINE void PutRuntimeInfo(json::ObjectBuilder& target)
 
     runtime.put("system", PlatformData::SystemDisplayString())
         .put("distro", platform::info::device::system::runtime_distro())
-        .put("distroVersion", SysInfo::GetSystemVersion())
+        .put(
+            "distroVersion",
+            platform::info::device::system::runtime_distro_version())
         .put("architecture", platform::info::device::system::runtime_arch())
         .put("kernel", platform::info::device::system::runtime_kernel())
         .put(
@@ -179,6 +181,7 @@ STATICINLINE void PutRuntimeInfo(json::ObjectBuilder& target)
 
         auto motherboard = SysInfo::Motherboard();
         auto deviceName  = SysInfo::DeviceName();
+        auto chassis     = SysInfo::Chassis();
 
         device.put("name", Strings::to_string(SysInfo::DeviceName()))
             .put("dpi", PlatformData::DeviceDPI())
@@ -189,7 +192,10 @@ STATICINLINE void PutRuntimeInfo(json::ObjectBuilder& target)
                 Strings::to_string(platform::info::HardwareDevice(
                     motherboard.manufacturer, motherboard.model, {})))
             .put("motherboardVersion", Strings::to_string(motherboard.firmware))
-            .put("chassis", Strings::to_string(SysInfo::Chassis()))
+            .put(
+                "chassis",
+                Strings::fmt(
+                    "{0} {1} {2}", chassis.manufacturer, chassis.model))
             .put("machineManufacturer", deviceName.manufacturer)
             .put("machineModel", deviceName.model);
 

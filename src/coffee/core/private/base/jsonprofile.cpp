@@ -126,8 +126,6 @@ ProfileWriter::~ProfileWriter()
      */
     write(*BytesConst::ofContainer(chromeInfo).at(1));
 
-    write(BytesConst::ofString("}"));
-
     logfile = {};
 }
 
