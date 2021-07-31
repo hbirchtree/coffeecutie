@@ -13,9 +13,7 @@ else
 fi
 TC_DIR=${BASE_DIR}/toolchain
 
-# For Firebase reporting
-export TRAVIS_BRANCH=$(git -C "${BASE_DIR}" rev-parse --abbrev-ref HEAD)
-export TRAVIS_REPO_URL=$(git -C "${BASE_DIR}" remote get-url $(git -C "${BASE_DIR}" remote | head -1))
+source $BASE_DIR/toolchain/building.sh
 
 function all_source_files()
 {
@@ -24,149 +22,14 @@ function all_source_files()
 }
 
 case $1 in
-"ci-build")
-    source ${BASE_DIR}/.github/cmake/select/${BUILDVARIANT}.sh
-
-    INSTALL_DIR=${INSTALL_DIR:-/build/install}
-    BUILD_DIR=${BUILD_DIR:-/build/build}
-
-    if [ "$(uname)" = "Darwin" ]; then
-        INSTALL_DIR="${BASE_DIR}/../install"
-        BUILD_DIR="${BASE_DIR}/../build"
-    fi
-
-    mkdir -p ${BUILD_DIR} ${INSTALL_DIR}
-
-    pushd ${BUILD_DIR}
-    export GENERATE_PROGRAMS=${GENERATE_PROGRAMS:-ON}
-    export CONFIGURATION=${CONFIGURATION:-Debug}
-    export CMAKE_SOURCE_DIR=${BASE_DIR}
-    export CMAKE_INSTALL_DIR=${INSTALL_DIR}
-    echo "::group::Configuring project"
-    cmake \
-        -C${BASE_DIR}/.github/cmake/${BUILDVARIANT}.preload.cmake \
-        -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} \
-        ${BASE_DIR} ${@:2}
-    echo "::endgroup::"
-    echo "::group::Building project"
-    cmake --build . --target ${BUILD_TARGET:-all}
-    echo "::endgroup::"
-    echo "::group::Installing project"
-    cmake --build . --target install
-    echo "::endgroup::"
-    popd
-;;
-"docker-build")
-    if [ -z "$CONTAINER" ]; then
-        source ${BASE_DIR}/.github/cmake/select/${BUILDVARIANT}.sh
-    fi
-    pwd
-    docker run --rm \
-        -v ${BASE_DIR}:/build/src \
-        -v $PWD/build:/build/build \
-        -v $PWD/install:/build/install \
-        -e BUILDVARIANT=${BUILDVARIANT} \
-        -e CONFIGURATION=${CONFIGURATION} \
-        -e GENERATE_PROGRAMS=${GENERATE_PROGRAMS} \
-        -e BUILD_TARGET=${BUILD_TARGET:-all} \
-        -u root \
-        ${CONTAINER} /build/src/cb ci-build ${@:2}
-;;
 "native-build")
-    PLATFORM="${2%%:*}"
-    SYSROOT="${2##*:}"
-    ARCHITECTURE="${2#*:}"
-    ARCHITECTURE="${ARCHITECTURE%:*}"
-    TOOLCHAIN_DOWNLOAD="${PLATFORM}-${ARCHITECTURE}_${SYSROOT}"
-
-    mkdir -p $BASE_DIR/multi_build/$TOOLCHAIN_DOWNLOAD
-    pushd $BASE_DIR/multi_build/$TOOLCHAIN_DOWNLOAD
-    
-    TOOLCHAIN_VER=$($SELF build-info toolchain version)
-    if [[ -z "$TOOLCHAIN_VER" ]]; then
-        echo \
-"No compiler version found in .build.yml, add one with:
-toolchain:
-  source: <repo>
-  version: <version>
-
-Example:
-toolchain:
-  source: hbirchtree/coffeecutie-automation-tools
-  version: v1.0.18"
-        exit 1
-    fi
-
-    DEFAULT_ROOT="$PWD/compiler-$TOOLCHAIN_VER"
-    export TOOLCHAIN_ROOT="${TOOLCHAIN_ROOT:-$DEFAULT_ROOT}"
-    export TOOLCHAIN_PREFIX="${ARCHITECTURE}"
-
-    echo " * Selected platform ${PLATFORM}:${ARCHITECTURE}:${SYSROOT}"
-
-    if [[ "$DEFAULT_ROOT" = "$TOOLCHAIN_ROOT" ]] && [[ "$(cat compiler-ver)" != "$TOOLCHAIN_VER" ]]; then
-        echo ::group::Getting compiler
-        TOOLCHAIN_REPO=$($SELF build-info toolchain source)
- 
-        rm $TOOLCHAIN_DOWNLOAD.tar.xz ${PLATFORM}-${ARCHITECTURE}.manifest || true
-        gh release download -R "$TOOLCHAIN_REPO" "$TOOLCHAIN_VER" -p "${TOOLCHAIN_DOWNLOAD}.*"
-        gh release download -R "$TOOLCHAIN_REPO" "$TOOLCHAIN_VER" -p "${PLATFORM}-${ARCHITECTURE}.manifest"
-        cat ${PLATFORM}-${ARCHITECTURE}.manifest
-
-        mkdir -p compiler-$TOOLCHAIN_VER
-        pushd compiler-$TOOLCHAIN_VER
-        umask 022
-        tar xf ../$TOOLCHAIN_DOWNLOAD.tar.xz --no-same-owner --no-same-permissions
-        chmod -R u+w $(realpath .)
-        popd
-
-        echo $TOOLCHAIN_VER > compiler-ver
-
-        echo ::endgroup::
-    fi
-
-    export GENERATE_PROGRAMS=${GENERATE_PROGRAMS:-ON}
-    export CONFIGURATION=${CONFIGURATION:-Debug}
-    export CMAKE_SOURCE_DIR=${BASE_DIR}
-    export CMAKE_INSTALL_DIR=${INSTALL_DIR:-$PWD/install}
-
-    export PATH=$PATH:$TOOLCHAIN_ROOT/bin
-    
-    export VCPKG_ROOT=$(dirname $(readlink -f $(which vcpkg)))
-    export VCPKG_CHAINLOAD_TOOLCHAIN_FILE=${BASE_DIR}/toolchain/cmake/Toolchains/${TOOLCHAIN_PREFIX}.toolchain.cmake
-
-    echo ::group::Installing dependencies
-    vcpkg install \
-        --x-manifest-root=${BASE_DIR} \
-        --feature-flags=versions \
-        --overlay-ports=${BASE_DIR}/toolchain/vcpkg/ports \
-        --overlay-triplets=${BASE_DIR}/toolchain/vcpkg/triplets \
-        --triplet=${TOOLCHAIN_PREFIX}
-    echo ::endgroup::
-
-    echo ::group::Configuring project
-    echo "::info::Set up for ${TOOLCHAIN_PREFIX} (${TOOLCHAIN_ROOT})"
-    cmake \
-        -GNinja \
-        -C${BASE_DIR}/.github/cmake/${PLATFORM}-${ARCHITECTURE}.preload.cmake \
-        -DCMAKE_C_COMPILER=${TOOLCHAIN_ROOT}/bin/${ARCHITECTURE}-gcc \
-        -DCMAKE_CXX_COMPILER=${TOOLCHAIN_ROOT}/bin/${ARCHITECTURE}-g++ \
-        -DCMAKE_INSTALL_PREFIX=$PWD/install \
-        -DCMAKE_MAKE_PROGRAM=$(which ninja) \
-        -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake \
-        -DTOOLCHAIN_ROOT="${TOOLCHAIN_ROOT}" \
-        -DTOOLCHAIN_PREFIX=${TOOLCHAIN_PREFIX} \
-        -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=${VCPKG_CHAINLOAD_TOOLCHAIN_FILE} \
-        -DVCPKG_OVERLAY_PORTS=${BASE_DIR}/toolchain/vcpkg/ports \
-        -DVCPKG_OVERLAY_TRIPLETS=${BASE_DIR}/toolchain/vcpkg/triplets \
-        -DVCPKG_TARGET_TRIPLET=${TOOLCHAIN_PREFIX} \
-        ${BASE_DIR} ${@:3}
-    echo ::endgroup::
-
-    echo ::group::Building project
-    cmake --build .
-    echo ::endgroup::
-
-    popd
+    native_build $@
+;;
+"web-build")
+    emscripten_build $@
+;;
+"xcode-build")
+    xcode_build $@
 ;;
 "compress-usr-dir")
     echo "::group::Compressing install directory"
@@ -228,7 +91,7 @@ toolchain:
 ;;
 "lint")
     echo "::group::Lint"
-    find src/ -regextype egrep -regex '.*\.(h|hpp|c|cpp)' -exec ${0} lint-file {} \;
+    echo "NEEDS REIMPLEMENTATION"
     echo "::endgroup::"
 ;;
 "lint-file")
@@ -236,23 +99,17 @@ toolchain:
 
     pushd ${BASE_DIR}
 
-    LINTED=$(${CLANG_FORMAT:-clang-format} -style=file ${FILE_IN})
+    echo "NEEDS REIMPLEMENTATION"
 
-    DIFF=$(diff -py -W 200 --suppress-common-lines ${FILE_IN} <(echo "$LINTED"))
-    DIFF=$(echo "${DIFF}" | tr '\n' '%0A' | sed -e 's/\[/%5B/g' | sed -e 's/\]/%5D/g' | sed -e 's/;/%3B/g')
-    echo "::warning file=${FILE_IN}::${DIFF}"
+    #echo "::warning file=${FILE_IN}::${DIFF}"
 
     popd
 ;;
 "list-targets")
-    grep '^[a-z]' toolchain/makers/Makefile.linux | grep FORCE | cut -d':' -f 1
-    grep '^[a-z]' toolchain/makers/Makefile.mac | grep FORCE | cut -d':' -f 1
+    ls -1 $BASE_DIR/.github/cmake/ | sed 's/.preload.cmake//g'
 
     echo "
 To build a target, execute $0 quick-build [target]"
-;;
-"quick-build-deps")
-    pip install PyYaml
 ;;
 "ci")
     "${TC_DIR}"/configure_ci.py ${@:2}
@@ -263,17 +120,8 @@ To build a target, execute $0 quick-build [target]"
 "build-info")
     "${TC_DIR}"/buildinfo.py ${@:2}
 ;;
-"extract-tools")
-    "${TC_DIR}"/extract-tools.sh ${@:2}
-;;
-"extract-native-libs")
-    "${TC_DIR}"/extract-native-libs.sh ${@:2}
-;;
 "generate-project")
     "${TC_DIR}"/generate_project.py ${@:2}
-;;
-"update-local-tools")
-    "${TC_DIR}"/update-local-tools.sh ${@:2}
 ;;
 "gen-release")
     set -e
@@ -288,51 +136,12 @@ To build a target, execute $0 quick-build [target]"
     popd
 ;;
 "format")
-    if [ -z "$CLANG_FORMAT" ]; then
-        CLANG_FORMAT=clang-format   
-    fi
+    CLANG_FORMAT=$(CLANG_FORMAT:-clang-format)
     if [ -z "$2" ]; then
         all_source_files
     else
         all_source_files -exec $CLANG_FORMAT -style=file "$2" {} \;
     fi
-;;
-"include-guards")
-    for f in $(all_source_files); do
-        if [ ! -z "$(head -1 "$f" | grep '#ifndef ')" ]; then
-            echo "$f"
-        fi
-    done
-;;
-"platform-guards")
-    for f in $(all_source_files); do
-        grep '^#if' "$f" /dev/null | grep -E 'defined[ ]*\([ ]*COFFEE_[A-Za-z]+\)'
-    done
-;;
-"exception-guards")
-    for f in $(all_source_files); do
-        grep -E '[^A-Za-z0-9]throw ' "$f" /dev/null
-    done
-;;
-"rtti-guards")
-    for f in $(all_source_files); do
-        grep -E 'typeid' "$f" /dev/null
-    done
-;;
-"cast-guards")
-    for f in $(all_source_files); do
-        grep -E '(reinterpret|static|dynamic|const)_cast' "$f" /dev/null
-    done
-;;
-"cpp11-guards")
-    for f in $(all_source_files); do
-        grep -E '(\[.*\]\s*\(.*?\)\s*\{|std::thread|std::function|std::unique_ptr|std::shared_ptr)' "$f" /dev/null
-    done
-;;
-"stl-guards")
-    for f in $(all_source_files); do
-        grep -E '(std::| std)' "$f" /dev/null
-    done
 ;;
 "type-guards")
     for f in $(all_source_files); do
@@ -341,17 +150,12 @@ To build a target, execute $0 quick-build [target]"
 ;;
 "query-source")
     for f in $(all_source_files); do
-        grep -E "$2" "$f" /dev/null
-    done
-;;
-"filter-source")
-    for f in $(all_source_files); do
-        echo sed -e ${@:2} "$f"
+        git grep -E "$2"
     done
 ;;
 "get-notes")
     for f in $(all_source_files); do
-        grep -E  '(//|/\*)\s?(TODO|NOTE|WARNING|BUG|FIXME)' "$f" /dev/null
+        git grep -E  '(//|/\*)\s?(TODO|NOTE|WARNING|BUG|FIXME)'
     done
 ;;
 *)
@@ -361,10 +165,14 @@ Project management:
     generate-project    - Generate a new project directory
 
 Build tools:
-    quick-build         - Use pre-defined build environments
+    native-build        - Builds Linux targets natively without containers or host setup
+                          By default downloads a toolchain as specified in .build.yml
+                          Specify a custom path using TOOLCHAIN_ROOT
+    web-build           - Builds WebAssembly targets natively without containers or host setup
+                          By default downloads the emsdk version as specified in .build.yml
+                          Specify a custom path using TOOLCHAIN_ROOT
+    xcode-build         - Builds macOS/iOS targets natively
     list-targets        - List all available targets for building
-    extract-tools       - Extract compiled tools into deployment directory
-    extract-native-libs - Extract compiled libraries into deployment directory
     makefile-generator  - Regenerate meta-build system
 
 CI/CD tools:
@@ -375,26 +183,8 @@ CI/CD tools:
 
 Code tools:
     format              - Format code according to .clang-format
-    include-guards      - Detect files not using '#pragma once'
-    platform-guards     - Find usages of platform guards in code
-    exception-guards    - Find usages of exeptions that are not wrapped
-    rtti-guards         - Find usages of RTTI
-                          Currently detected:
-                            - typeid(...)
-    cast-guards         - Find usages of C++ *_cast<T>() operators
-    cpp11-guards        - Find usages of features from C++11 and later
-                          Currently detected:
-                            - Lambdas
-                            - std::*_ptr
-                            - std::thread
-                            - std::function
-    stl-guards          - Usage of std::* types
-
     type-guards         - Usage of deprecated [u]int[8|16|32|64] types
-
     query-source        - Search through codebase
-    filter-source       - Perform sed regex operations on codebase
-
     get-notes           - Get notes/todos from code
     "
 ;;

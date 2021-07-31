@@ -6,7 +6,7 @@
         { "name": "angle", "platform": "windows | uwp" },
         "asio",
         "boost-outcome",
-        "boost-stacktrace",
+        { "name": "boost-stacktrace", "platform": "!emscripten" },
         "bullet3",
         "cppcodec",
         { "name": "discord-rpc", "platform": "(linux & x64) | osx | windows" },

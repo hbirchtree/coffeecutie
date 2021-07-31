@@ -1,1 +1,0 @@
-export CONTAINER=hbirch/coffeecutie:fedora
