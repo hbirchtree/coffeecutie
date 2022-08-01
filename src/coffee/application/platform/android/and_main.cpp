@@ -40,10 +40,6 @@ using namespace jnipp;
 
 namespace android {
 
-} // namespace android
-
-namespace android {
-
 /*
  *
  * Android structures
@@ -154,22 +150,19 @@ void AndroidHandleAppCmd(struct android_app* app, int32_t event)
 
     switch(event)
     {
-    case APP_CMD_START:
-    {
+    case APP_CMD_START: {
         break;
     }
     case APP_CMD_RESUME:
     case APP_CMD_PAUSE:
         //    case APP_CMD_DESTROY:
-    case APP_CMD_STOP:
-    {
+    case APP_CMD_STOP: {
         cDebug("Lifecycle event triggered: {0}", event);
         break;
     }
 
         /* Lifecycle events we care about */
-    case APP_CMD_INIT_WINDOW:
-    {
+    case APP_CMD_INIT_WINDOW: {
         if(!(app_internal_state->currentState & AndroidApp_Initialized))
         {
             auto& entrypoints = Coffee::main_functions;
@@ -197,8 +190,7 @@ void AndroidHandleAppCmd(struct android_app* app, int32_t event)
 
         /* Intentional fallthrough, we need to push a resize event */
     }
-    case APP_CMD_WINDOW_RESIZED:
-    {
+    case APP_CMD_WINDOW_RESIZED: {
         struct CfGeneralEvent gev;
         gev.type = CfResizeEvent;
 
@@ -211,24 +203,21 @@ void AndroidHandleAppCmd(struct android_app* app, int32_t event)
         break;
     }
 
-    case APP_CMD_GAINED_FOCUS:
-    {
+    case APP_CMD_GAINED_FOCUS: {
         CoffeeEventHandleCall(CoffeeHandle_IsForeground);
 
         app_internal_state->currentState =
             AndroidApp_Visible | AndroidApp_Initialized;
         break;
     }
-    case APP_CMD_LOST_FOCUS:
-    {
+    case APP_CMD_LOST_FOCUS: {
         CoffeeEventHandleCall(CoffeeHandle_IsBackground);
 
         app_internal_state->currentState =
             AndroidApp_Hidden | AndroidApp_Initialized;
         break;
     }
-    case APP_CMD_TERM_WINDOW:
-    {
+    case APP_CMD_TERM_WINDOW: {
         CoffeeEventHandleCall(CoffeeHandle_Cleanup);
 
         Profiling::ExitRoutine();
@@ -245,19 +234,16 @@ void AndroidHandleAppCmd(struct android_app* app, int32_t event)
     }
 
         /* Special events */
-    case APP_CMD_LOW_MEMORY:
-    {
+    case APP_CMD_LOW_MEMORY: {
         CoffeeEventHandleCall(CoffeeHandle_LowMem);
         break;
     }
 
-    case APP_CMD_DESTROY:
-    {
+    case APP_CMD_DESTROY: {
         break;
     }
 
-    default:
-    {
+    default: {
         cWarning("Unhandled native event: {0}", event);
         break;
     }
@@ -273,7 +259,10 @@ int32_t AndroidHandleInputCmd(
     auto  android_bus = entities.service<anative::AndroidEventBus>();
 
     if(!android_bus)
+    {
+        pthread_mutex_unlock(&app->mutex);
         return 0;
+    }
 
     android_bus->handleInputEvent(event);
 
@@ -285,8 +274,7 @@ static void AndroidForeignSignalHandle(int evtype)
 {
     switch(evtype)
     {
-    case CoffeeForeign_ActivateMotion:
-    {
+    case CoffeeForeign_ActivateMotion: {
         /* TODO: Fix sensor code */
         //        Sensor::Android::Android_InitSensors();
         //        libc::signal::register_atexit(Sensor::Android::Android_DestroySensors);
@@ -325,10 +313,10 @@ static void AndroidForeignSignalHandleNA(int evtype, void* p1, void*, void*)
 {
     using namespace ::jnipp_operators;
 
+    /*
     switch(evtype)
     {
-    case CoffeeForeign_RequestPlatformData:
-    {
+    case CoffeeForeign_RequestPlatformData: {
         auto out = C_FCAST<AndroidForeignCommand*>(p1);
         switch(out->type)
         {
@@ -342,8 +330,7 @@ static void AndroidForeignSignalHandleNA(int evtype, void* p1, void*, void*)
         case Android_QueryExternalDataPath:
             out->store_string = coffee_app->activity->externalDataPath;
             break;
-        case Android_QueryCachePath:
-        {
+        case Android_QueryCachePath: {
             auto Context     = "android.content.Context"_jclass;
             auto File        = "java.io.File"_jclass;
             auto getCacheDir = "getCacheDir"_jmethod.ret("java.io.File");
@@ -431,8 +418,7 @@ static void AndroidForeignSignalHandleNA(int evtype, void* p1, void*, void*)
 
         break;
     }
-    case CoffeeForeign_GetWinSize:
-    {
+    case CoffeeForeign_GetWinSize: {
         int* winSize = C_FCAST<int*>(p1);
 
         winSize[0] = ANativeWindow_getWidth(coffee_app->window);
@@ -441,6 +427,7 @@ static void AndroidForeignSignalHandleNA(int evtype, void* p1, void*, void*)
         break;
     }
     }
+    */
 }
 
 STATICINLINE void GetExtras()
@@ -484,7 +471,7 @@ STATICINLINE void GetExtras()
             if(e.first.substr(0, 7) != "COFFEE_")
                 continue;
 
-            platform::Env::SetVar(e.first.c_str(), e.second.c_str());
+            platform::env::set_var(e.first, e.second);
             cDebug("{0} = {1}", e.first, e.second);
         }
 
@@ -600,6 +587,7 @@ namespace android {
 
 using namespace Coffee;
 using namespace jnipp_operators;
+using namespace platform::url;
 using re = jnipp::return_type;
 
 intent::intent() : m_intent({{}, {}})
@@ -741,6 +729,35 @@ std::string app_info::package_name()
     return jnipp::java::type_unwrapper<std::string>(context[getPackageName]());
 }
 
+int app_info::sdk_version()
+{
+    return coffee_app->activity->sdkVersion;
+}
+
+Url app_info::data_path()
+{
+    return constructors::MkSysUrl(coffee_app->activity->internalDataPath);
+}
+
+Url app_info::cache_path()
+{
+    auto Context         = "android.content.Context"_jclass;
+    auto File            = "java.io.File"_jclass;
+    auto getCacheDir     = "getCacheDir"_jmethod.ret("java.io.File");
+    auto getAbsolutePath = "getAbsolutePath"_jmethod.ret("java.lang.String");
+
+    auto context  = Context(coffee_app->activity->clazz);
+    auto cacheDir = File(context[getCacheDir]());
+
+    return constructors::MkSysUrl(
+        java::type_unwrapper<std::string>(cacheDir[getAbsolutePath]()));
+}
+
+Url app_info::external_data_path()
+{
+    return constructors::MkSysUrl(coffee_app->activity->externalDataPath);
+}
+
 stl_types::Optional<::jnipp::java::object> app_info::get_service(
     std::string const& service)
 {
@@ -756,7 +773,8 @@ stl_types::Optional<::jnipp::java::object> app_info::get_service(
     return jnipp::java::object{Context.clazz, instance};
 }
 
-stl_types::Optional<network_stats::result_t> network_stats::query()
+stl_types::Optional<network_stats::result_t> network_stats::query(
+    network_class net)
 {
     auto System            = "java.lang.System"_jclass;
     auto currentTimeMillis = "currentTimeMillis"_jmethod.ret<re::long_>();
@@ -788,7 +806,7 @@ stl_types::Optional<network_stats::result_t> network_stats::query()
     auto now = System[currentTimeMillis]();
 
     auto stats = NetworkStats(
-        net_stats[querySummary](network_class_mobile, *sub_id, 0, now));
+        net_stats[querySummary](net, *sub_id, 0, now));
 
     auto bucket = Bucket.construct(bucketConstruct);
 
@@ -831,11 +849,10 @@ stl_types::Optional<activity_manager::memory_info> activity_manager::
 
     activity_manager[getMemoryInfo](mem_info);
 
-    memory_info out;
-    out.available = *mem_info[avail];
-    out.total     = *mem_info[total];
-
-    return out;
+    return memory_info{
+        .available = C_FCAST<libc_types::u64>(*mem_info[avail]),
+        .total = C_FCAST<libc_types::u64>(*mem_info[total]),
+    };
 }
 
 stl_types::Optional<activity_manager::config_info> activity_manager::
@@ -848,6 +865,20 @@ stl_types::Optional<activity_manager::config_info> activity_manager::
         "getDeviceConfigurationInfo"_jmethod.arg(ConfigInfo);
 
     return {};
+}
+
+stl_types::Optional<activity_manager::window_info> activity_manager::window()
+{
+    return window_info{
+        .activity = Coffee::coffee_app->activity,
+        .window = Coffee::coffee_app->window,
+        .activity_object = Coffee::coffee_app->activity->clazz,
+    };
+}
+
+AAssetManager* activity_manager::asset_manager()
+{
+    return Coffee::coffee_app->activity->assetManager;
 }
 
 std::vector<std::string> cpu_abis()

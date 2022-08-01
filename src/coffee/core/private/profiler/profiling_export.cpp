@@ -63,7 +63,7 @@ STATICINLINE void PutArgs(json::ArrayBuilder& target)
 
 STATICINLINE void PutExtraData(json::ObjectBuilder& target)
 {
-    for(auto info : ExtraData::Get())
+    for(auto const& info : ExtraData::Get())
         target.put(info.first, info.second);
 }
 
@@ -143,28 +143,35 @@ STATICINLINE void PutRuntimeInfo(json::ObjectBuilder& target)
 
     json::ObjectBuilder runtime(target.allocator());
 
-    runtime.put("system", PlatformData::SystemDisplayString())
-        .put("distro", platform::info::device::system::runtime_distro())
-        .put(
-            "distroVersion",
-            platform::info::device::system::runtime_distro_version())
-        .put("architecture", platform::info::device::system::runtime_arch())
-        .put("kernel", platform::info::device::system::runtime_kernel())
-        .put(
-            "kernelVersion",
-            platform::info::device::system::runtime_kernel_version())
-        .put(
-            "libcVersion",
-            platform::info::device::system::runtime_libc_version())
+    runtime.put("architecture", platform::info::os::architecture())
+        .put("kernel", platform::info::os::kernel())
+        .put("kernelVersion", platform::info::os::kernel_version())
         .put("cwd", AnonymizePath(cwd.value()));
 
-#if defined(COFFEE_ANDROID)
-    AndroidForeignCommand cmd;
-    cmd.type = Android_QueryAPI;
-    CoffeeForeignSignalHandleNA(
-        CoffeeForeign_RequestPlatformData, &cmd, nullptr, nullptr);
+    if(auto sysname = platform::info::os::name())
+        if(auto sysver = platform::info::os::version())
+        {
+            stl_types::String system_string(sysname->begin(), sysname->end());
+            system_string.append(" ");
+            system_string.append(sysver->begin(), sysver->end());
+            runtime.put("system", system_string);
+        }
 
-    runtime.put("androidLevel", cast_pod(cmd.data.scalarI64));
+    if constexpr(platform::info::os::has_libc_info)
+        runtime.put("libcVersion", platform::info::os::libc_version());
+
+    if(auto distro = platform::info::os::name(); distro)
+        runtime.put("distro", *distro);
+    if(auto version = platform::info::os::version(); version)
+        runtime.put("distroVersion", *version);
+
+#if defined(COFFEE_ANDROID)
+//    AndroidForeignCommand cmd;
+//    cmd.type = Android_QueryAPI;
+//    CoffeeForeignSignalHandleNA(
+//        CoffeeForeign_RequestPlatformData, &cmd, nullptr, nullptr);
+
+    runtime.put("androidLevel", cast_pod(android::app_info().sdk_version()));
 #endif
 
     {
@@ -176,31 +183,26 @@ STATICINLINE void PutRuntimeInfo(json::ObjectBuilder& target)
 
     target.put("runtime", runtime.eject());
 
+    auto unknown_pair = std::pair{"<unknown>", "<unknown>"};
+
     {
         json::ObjectBuilder device(target.allocator());
 
-        auto motherboard = SysInfo::Motherboard();
-        auto deviceName  = SysInfo::DeviceName();
-        auto chassis     = SysInfo::Chassis();
+        auto deviceName =
+            platform::info::device::device().value_or(unknown_pair);
+        auto motherboard =
+            platform::info::device::motherboard().value_or(unknown_pair);
+        auto chassis = platform::info::device::chassis().value_or(unknown_pair);
 
-        device.put("name", Strings::to_string(SysInfo::DeviceName()))
-            .put("dpi", PlatformData::DeviceDPI())
-            .put("type", PlatformData::DeviceVariant())
-            .put("platform", PlatformData::PlatformVariant())
-            .put(
-                "motherboard",
-                Strings::to_string(platform::info::HardwareDevice(
-                    motherboard.manufacturer, motherboard.model, {})))
-            .put("motherboardVersion", Strings::to_string(motherboard.firmware))
-            .put(
-                "chassis",
-                Strings::fmt(
-                    "{0} {1} {2}", chassis.manufacturer, chassis.model))
-            .put("machineManufacturer", deviceName.manufacturer)
-            .put("machineModel", deviceName.model);
-
-        if constexpr(compile_info::internal_build)
-            device.put("hostname", Strings::to_string(SysInfo::HostName()));
+        device.put("name", deviceName.first + " " + deviceName.second)
+            .put("machineManufacturer", deviceName.first)
+            .put("machineModel", deviceName.second)
+            .put("type", platform::info::device::variant())
+            .put("platform", platform::info::os::variant())
+            .put("motherboard", motherboard.first + " " + motherboard.second)
+            .put("motherboardManufacturer", motherboard.first)
+            .put("motherboardModel", motherboard.second)
+            .put("chassis", chassis.first + " " + chassis.second);
 
         target.put("device", device.eject());
     }
@@ -208,37 +210,53 @@ STATICINLINE void PutRuntimeInfo(json::ObjectBuilder& target)
     {
         json::ObjectBuilder processor(target.allocator());
         json::ArrayBuilder  freq(target.allocator());
+        json::ArrayBuilder  clusters(target.allocator());
 
-        auto pinfo = SysInfo::Processor();
-        auto freqs = SysInfo::ProcessorFrequencies();
+        for(auto i : stl_types::Range<u32>(platform::info::proc::cpu_count()))
+        {
+            json::ObjectBuilder model_info(target.allocator());
+            auto frequency = platform::info::proc::frequency(false, i);
+            freq.push_back(frequency / 1000000.f);
+            if(auto model = platform::info::proc::model(i); model.has_value())
+            {
+                model_info.put("id", i);
+                model_info.put("manufacturer", model.value().first);
+                model_info.put("model", model.value().second);
+                model_info.put("frequency", frequency);
+                model_info.put("cores", platform::info::proc::core_count(i));
+                model_info.put("threads", platform::info::proc::thread_count(i));
+            }
+            if(!model_info.empty())
+                clusters.push_back(model_info.eject());
+        }
 
-        if(freqs.size())
-            for(auto f : freqs)
-                freq.push_back(f);
-        else
-            freq.push_back(SysInfo::ProcessorFrequency());
+        auto pinfo = platform::info::proc::model().value_or(unknown_pair);
 
-        processor.put("frequencies", freq.eject())
-            .put("manufacturer", pinfo.manufacturer)
-            .put("model", pinfo.model)
-            .put("firmware", pinfo.firmware)
-            .put("cores", SysInfo::CoreCount())
-            .put("threads", SysInfo::ThreadCount())
-            .put("hyperthreading", SysInfo::HasHyperThreading())
-            .put("pae", SysInfo::HasPAE())
-            .put("fpu", SysInfo::HasFPU());
+        processor
+            // Legacy CPU info
+            .put("frequencies", freq.eject())
+            .put("manufacturer", pinfo.first)
+            .put("model", pinfo.second)
+            .put("firmware", "")
+            // New CPU info
+            .put("clusters", clusters.eject())
+            .put("nodes", platform::info::proc::node_count())
+            .put("cpus", platform::info::proc::cpu_count())
+            .put("cores", platform::info::proc::core_count())
+            .put("threads", platform::info::proc::thread_count())
+            .put("hyperthreading", platform::info::proc::is_hyperthreaded());
 
         target.put("processor", processor.eject());
     }
 
     {
         json::ObjectBuilder memory(target.allocator());
-
         json::ObjectBuilder virtmem(target.allocator());
-        virtmem.put("total", SysInfo::SwapTotal());
-        virtmem.put("available", SysInfo::SwapAvailable());
+        //        runtime.put("virtual", virtmem.eject());
+        //        virtmem.put("total", SysInfo::SwapTotal());
+        //        virtmem.put("available", SysInfo::SwapAvailable());
 
-        memory.put("bank", SysInfo::MemTotal()).put("virtual", virtmem.eject());
+        //        memory.put("bank", SysInfo::MemTotal())
 
         target.put("memory", memory.eject());
     }
@@ -272,6 +290,9 @@ void ExportChromeTracerData(CString& target)
     for(auto it = rootDoc.MemberBegin(); it != rootDoc.MemberEnd(); ++it)
         doc.AddMember(it->name, it->value, doc.GetAllocator());
 
+    json::ArrayBuilder emptyEvents(doc.GetAllocator());
+    doc.AddMember("traceEvents", emptyEvents.eject(), doc.GetAllocator());
+
     target = json::Serialize(doc);
 }
 
@@ -282,9 +303,7 @@ void ExportStringToFile(const CString& data, const Url& outfile)
 
     cVerbose(6, "Creating filename");
     Resource out(outfile);
-    out.data = C_CCAST<c_ptr>(C_FCAST<c_cptr>(data.c_str()));
-    /* -1 because we don't want the null-terminator */
-    out.size = C_CAST<szptr>(data.size() - 1);
+    out = mem_chunk<const byte_t>::ofContainer(data);
     cVerbose(6, "Retrieving data pointers");
 
     if(!FileCommit(out, RSCA::Discard | RSCA::WriteOnly | RSCA::NewFile))

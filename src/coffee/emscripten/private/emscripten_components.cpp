@@ -6,10 +6,6 @@
 
 namespace emscripten {
 
-ControllerInput::~ControllerInput()
-{
-}
-
 void ControllerInput::start_frame(
     comp_app::detail::ContainerProxy&, const comp_app::detail::time_point&)
 {
@@ -37,13 +33,13 @@ ControllerInput::controller_map ControllerInput::state(
         {2, 2}, // X
         {3, 3}, // Y
 
-        {4, 9}, // Bumper left
+        {4, 9},  // Bumper left
         {5, 10}, // Bumper right
-//        {6, 0}, // Trigger left
-//        {7, 0}, // Bumper right
+                 //        {6, 0}, // Trigger left
+                 //        {7, 0}, // Bumper right
 
-        {8, 4}, // Back
-        {9, 5}, // Start
+        {8, 4},  // Back
+        {9, 5},  // Start
         {10, 8}, // Stick left
         {11, 9}, // Stick right
 
@@ -61,6 +57,23 @@ ControllerInput::controller_map ControllerInput::state(
 comp_app::text_type_t ControllerInput::name(libc_types::u32 idx) const
 {
     return {};
+}
+
+BatteryProvider::PowerSource BatteryProvider::source() const
+{
+    EmscriptenBatteryEvent battery{};
+    if(emscripten_get_battery_status(&battery) != EMSCRIPTEN_RESULT_SUCCESS)
+        return PowerSource::AC;
+    return std::isinf(battery.dischargingTime) ? PowerSource::AC
+                                               : PowerSource::Battery;
+}
+
+libc_types::u16 BatteryProvider::percentage() const
+{
+    EmscriptenBatteryEvent battery{};
+    if(emscripten_get_battery_status(&battery) != EMSCRIPTEN_RESULT_SUCCESS)
+        return 0;
+    return std::numeric_limits<libc_types::u16>::max() * battery.level;
 }
 
 } // namespace emscripten

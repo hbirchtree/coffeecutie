@@ -13,13 +13,16 @@ namespace semantic {
 namespace detail {
 
 template<typename T>
-requires (!std::is_same_v<T, void>) constexpr inline size_t size_of_type()
+requires(!std::is_same_v<std::decay_t<T>, void>)
+    //
+    constexpr inline size_t size_of_type()
 {
     return sizeof(T);
 }
 template<typename T>
-requires std::is_same_v<T, void>
-constexpr inline size_t size_of_type()
+requires(std::is_same_v<std::decay_t<T>, void>)
+    //
+    constexpr inline size_t size_of_type()
 {
     return 1;
 }
@@ -137,10 +140,10 @@ struct mem_chunk
         return of(
             C_RCAST<T*>(&object), detail::size_of_type<OtherT>() / sizeof(T));
     }
-    template<
-        typename Dummy                                            = void,
-        typename std::enable_if<std::is_const_v<T>, Dummy>::type* = nullptr>
-    STATICINLINE mem_chunk ofString(const char* data)
+    template<typename Dummy = void>
+    requires std::is_const_v<T>
+        //
+        STATICINLINE mem_chunk ofString(const char* data)
     {
         return ofBytes(data, libc::str::len(data));
     }
@@ -158,8 +161,6 @@ struct mem_chunk
     {
         mem_chunk out;
         out.allocation = allocation_type(size * sizeof(T), value_type{});
-        T* data_ptr    = out.allocation.data();
-        out.view       = span_type(data_ptr, out.allocation.size());
         out.updatePointers(Ownership::Owned);
         return out;
     }
@@ -168,7 +169,26 @@ struct mem_chunk
     {
         mem_chunk out;
         out.allocation = allocation_type(std::begin(c), std::end(c));
-        out.view = span_type(out.allocation.data(), out.allocation.size());
+        return out;
+    }
+
+    template<class Container>
+    requires (!std::is_same_v<Container, allocation_type>)
+    NO_DISCARD STATICINLINE mem_chunk move(Container const& c)
+    {
+        /* If the container_type is not the same, we need to copy */
+        mem_chunk out;
+        std::move(std::begin(c), std::end(c), std::back_insert_iterator(out.allocation));
+        out.updatePointers(Ownership::Owned);
+        return out;
+    }
+    template<class Container>
+    requires (std::is_same_v<typename Container::value_type, value_type>)
+    NO_DISCARD STATICINLINE mem_chunk move(Container&& c)
+    {
+        /* If the container_type is the same, steal the data */
+        mem_chunk out;
+        out.allocation = std::move(c);
         out.updatePointers(Ownership::Owned);
         return out;
     }
@@ -231,17 +251,10 @@ struct mem_chunk
         return view.end();
     }
 
-    struct find_result
+    typename span_type::iterator find(mem_chunk const& needle) const
     {
-        size_type offset{0};
-    };
-
-    std::optional<find_result> find(mem_chunk const& needle) const
-    {
-        stl_types::Optional<find_result> out;
-
         if(needle.empty())
-            return std::nullopt;
+            return view.end();
 
         size_type needle_idx = 0;
 
@@ -255,13 +268,13 @@ struct mem_chunk
                     auto offset = i - (needle_idx - 1);
                     auto chunk =
                         at((i - (needle_idx - 1)) * sizeof(value_type)).value();
-                    return std::make_optional(find_result{offset});
+                    return view.begin() + offset;
                 }
             } else
                 needle_idx = 0;
         }
 
-        return std::nullopt;
+        return view.end();
     }
 
     auto empty() const
@@ -276,7 +289,7 @@ struct mem_chunk
             .view = view.subspan(offset, translated_size),
         };
         out.updatePointers(Ownership::Borrowed, access);
-        return std::make_optional(out);
+        return std::make_optional(std::move(out));
     }
     NO_DISCARD auto at(size_type offset, size_type size = 0) const
     {
@@ -285,17 +298,27 @@ struct mem_chunk
             .view = view.subspan(offset, translated_size),
         };
         out.updatePointers(Ownership::Borrowed, access);
-        return std::make_optional(out);
+        return std::make_optional(std::move(out));
     }
     template<typename OtherT>
-    NO_DISCARD auto as()
+    requires(!std::is_same_v<T, OtherT>) NO_DISCARD auto as()
     {
         return C_OCAST<mem_chunk<OtherT>>(*this);
+    }
+    template<typename OtherT>
+    requires std::is_same_v<T, OtherT> NO_DISCARD auto& as()
+    {
+        return *this;
     }
     template<typename OtherT>
     NO_DISCARD auto as() const
     {
         return C_OCAST<mem_chunk<OtherT>>(*this);
+    }
+    template<typename OtherT>
+    requires std::is_same_v<T, OtherT> NO_DISCARD auto const& as() const
+    {
+        return *this;
     }
 
     /* Allocator methods */
@@ -311,7 +334,7 @@ struct mem_chunk
         if(ownership != Ownership::Owned)
             Throw(undefined_behavior("cannot modify borrowed structure"));
         allocation.resize(new_size);
-        updatePointers();
+        updatePointers(Ownership::Owned);
     }
 
     span_type       view;
@@ -322,6 +345,8 @@ struct mem_chunk
     size_type elements{0};
     RSCA      access{RSCA::None};
     Ownership ownership{Ownership::Borrowed};
+
+    stl_types::non_copy move_sentry{};
 
     void assignAccess(RSCA acc)
     {

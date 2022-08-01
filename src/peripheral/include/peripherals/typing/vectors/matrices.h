@@ -12,6 +12,8 @@ struct tmatrix
     using value_type = T;
     using col_type = tvector<T, Size>;
 
+    static constexpr size_t col_size = Size;
+    static constexpr size_t row_size = Size;
     static constexpr size_t  size = Size * Size;
 
     tvector<T, Size> d[Size];

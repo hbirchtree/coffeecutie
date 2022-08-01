@@ -105,7 +105,7 @@ struct bitmap_header_t
     {
         auto const& loc = locators()[bitm_idx];
         return magic_data_t(
-            bitm.base_ptr + loc.offset, 0, bitm.max_size - loc.offset);
+            {bitm.base_ptr + loc.offset, bitm.max_size - loc.offset}, 0);
     }
     inline reflexive_t<header_t> get_block(u32 bitm_idx = 0) const
     {

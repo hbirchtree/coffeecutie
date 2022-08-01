@@ -1,13 +1,73 @@
 #pragma once
 
-#include <coffee/core/libc_types.h>
-#include <coffee/core/stl_types.h>
+#include <coffee/core/internal_state.h>
 #include <peripherals/enum/helpers.h>
+#include <peripherals/error/result.h>
 #include <peripherals/stl/functional_types.h>
-#include <peripherals/stl/time_types.h>
 #include <peripherals/stl/thread_types.h>
+#include <peripherals/stl/time_types.h>
 
-namespace Coffee {
+namespace rq {
+namespace detail {
+
+using clock      = std::chrono::steady_clock;
+using time_point = clock::time_point;
+using duration   = clock::duration;
+
+using thread          = stl_types::Thread;
+using thread_id       = libc_types::u64;
+using mutex           = stl_types::Mutex;
+using recursive_mutex = stl_types::RecMutex;
+
+template<typename T = std::mutex>
+using lock_guard = std::lock_guard<T>;
+template<typename T = std::mutex>
+using unique_lock = std::unique_lock<T>;
+
+template<typename T, typename E>
+using result = stl_types::result<T, E>;
+
+using stl_types::failure;
+using stl_types::success;
+
+inline thread_id current_thread_id()
+{
+    return std::hash<thread::id>()(std::this_thread::get_id());
+}
+
+inline void on_thread_created()
+{
+    Coffee::State::SetInternalThreadState(
+        Coffee::State::CreateNewThreadState());
+}
+
+template<typename R, typename... Args>
+requires std::is_same_v<R, void> STATICINLINE void set_promise_value(
+    std::promise<void>& out, std::function<void(Args...)>& fun, Args... args)
+{
+    fun(args...);
+    out.set_value();
+}
+
+template<typename R, typename... Args>
+requires(!std::is_same_v<R, void>) STATICINLINE
+    void set_promise_value(std::promise<R>& out, std::function<R(Args...)>& fun, Args... args)
+{
+    out.set_value(fun(args...));
+}
+
+} // namespace detail
+
+using libc_types::u32;
+using libc_types::u64;
+
+struct runtime_queue_error : std::runtime_error
+{
+    runtime_queue_error(std::string_view error) :
+        std::runtime_error(std::string(error.begin(), error.end()))
+    {
+    }
+};
 
 enum class RuntimeQueueError
 {
@@ -32,123 +92,195 @@ enum class RuntimeQueueError
 
     SameThread, /*!< Function has no effect on same thread */
 
+    QueueCreationFailed, /*!< Failed to create queue */
+
     ShuttingDown /*!< Queues are shutting down, killing threads */
 };
 
-struct runtime_queue_category : error_category
+using RuntimeQueueVerboseError = std::pair<RuntimeQueueError, std::string>;
+
+std::string_view to_string(RuntimeQueueError error);
+
+enum class task_flags
 {
-    virtual const char* name() const noexcept;
-    virtual std::string message(int error_code) const;
+    parallel    = 0x1,
+    single_shot = 0x2,
+    periodic    = 0x4,
+    immediate   = 0x8,
 };
 
-using runtime_queue_error =
-    domain_error_code<RuntimeQueueError, runtime_queue_category>;
+C_FLAGS(task_flags, u32);
 
-struct RuntimeTask
+struct runtime_task
 {
-    enum TaskFlags
+    STATICINLINE runtime_task CreateTask(
+        std::function<void()>&& fun,
+        task_flags              flags          = task_flags::single_shot,
+        detail::time_point      scheduled_time = {})
     {
-        Parallel   = 0x1,
-        SingleShot = 0x2,
-        Periodic   = 0x4,
-        Immediate  = 0x8,
-    };
-
-    using clock = Chrono::steady_clock;
-
-    using Timepoint = Chrono::time_point<clock>;
-    using Duration  = clock::duration;
-
-    STATICINLINE RuntimeTask CreateTask(
-        Function<void()>&& fun, TaskFlags f = SingleShot, Timepoint ts = {})
-    {
-        RuntimeTask task = {};
-        task.flags       = f;
-        task.task        = std::move(fun);
-        task.time        = ts;
-
-        return task;
+        return runtime_task{
+            .task  = std::move(fun),
+            .time  = scheduled_time,
+            .flags = flags,
+        };
     }
 
-    STATICINLINE RuntimeTask CreateTask(
-        Function<void()>&& fun, TaskFlags f = SingleShot, Duration d = {})
+    template<task_flags Flags, typename T>
+    STATICINLINE std::pair<runtime_task, std::future<T>> CreateTask(
+        std::function<T()>&& fun, detail::time_point scheduled_time = {})
     {
-        RuntimeTask task = {};
-        task.flags       = f;
-        task.task        = std::move(fun);
-        task.interval    = d;
+        static_assert(
+            static_cast<int>(Flags) & static_cast<int>(task_flags::single_shot),
+            "only single-shot tasks supported");
 
-        return task;
+        std::promise<T> result;
+        auto            handle = result.get_future();
+        return {
+            runtime_task{
+                .task  = [fun = std::move(fun),
+                         result =
+                             std::move(result)] { result.set_value(fun()); },
+                .time  = scheduled_time,
+                .flags = Flags,
+            },
+            handle,
+        };
     }
 
-    Function<void()> task;
-    Timepoint        time;
-    Duration         interval;
-    TaskFlags        flags;
-    u32              _pad;
+    template<typename T1, typename T2>
+    STATICINLINE runtime_task
+    CreateTask(std::future<T2>&& dependency, std::function<T1()>&& fun);
 
-    FORCEDINLINE bool operator<(RuntimeTask const& other) const
+    STATICINLINE runtime_task CreateTask(
+        std::function<void()>&& fun,
+        task_flags              flags      = task_flags::single_shot,
+        detail::duration        time_until = {})
+    {
+        return runtime_task{
+            .task     = std::move(fun),
+            .interval = time_until,
+            .flags    = flags,
+        };
+    }
+
+    std::function<void()> task{};
+    detail::time_point    time{};
+    detail::duration      interval{};
+    task_flags            flags{task_flags::single_shot};
+    u32                   _pad{};
+
+    FORCEDINLINE bool operator<(runtime_task const& other) const
     {
         return time < other.time;
     }
 };
 
-C_FLAGS(RuntimeTask::TaskFlags, u32);
+struct dependent_task_invoker
+{
+    virtual bool ready()   = 0;
+    virtual void execute() = 0;
+};
 
-class RuntimeQueue
+template<typename Dependency, typename Out>
+struct dependent_task : public dependent_task_invoker
+{
+    STATICINLINE auto CreateTask(
+        std::future<Dependency>&&         dependency,
+        std::function<Out(Dependency*)>&& task)
+    {
+        auto out = std::make_unique<dependent_task>();
+
+        out->task       = std::move(task);
+        out->dependency = std::move(dependency);
+
+        return out;
+    }
+
+    virtual bool ready() override final
+    {
+        using namespace std::chrono_literals;
+        return dependency.wait_for(0ms) == std::future_status::ready;
+    }
+
+    virtual void execute() override final
+    {
+        (*this)();
+    }
+
+    template<typename Dummy = void>
+    requires(!std::is_same_v<Dependency, void>) void operator()()
+    {
+        Dependency input = dependency.get();
+        detail::set_promise_value<Out, Dependency*>(output, task, &input);
+    }
+
+    template<typename Dummy = void>
+    requires std::is_same_v<Dependency, void>
+    void operator()()
+    {
+        dependency.get();
+        detail::set_promise_value<Out, void*>(output, task, nullptr);
+    }
+
+    std::function<Out(Dependency*)> task{};
+    std::future<Dependency>         dependency;
+    std::promise<Out>               output;
+};
+
+class runtime_queue
 {
   public:
     struct semaphore_t
     {
-        CondVar     condition;
-        Mutex       start_mutex;
-        Mutex       mutex;
-        atomic_bool running;
+        std::condition_variable condition;
+        std::mutex              mutex;
+        std::atomic_bool        running;
     };
 
     struct QueueContext
     {
         QueueContext()
         {
-            shutdownFlag.store(false);
+            shutdown_flag.store(false);
         }
         ~QueueContext()
         {
-            runtime_queue_error rqec;
-            RuntimeQueue::TerminateThreads(rqec);
+            if(auto error = runtime_queue::TerminateThreads())
+                (void)error;
         }
 
-        Mutex       globalMod;
-        atomic_bool shutdownFlag;
+        std::mutex       global_lock;
+        std::atomic_bool shutdown_flag;
 
-        Map<ThreadId::Hash, RuntimeQueue> queues;
-        Map<ThreadId::Hash, Thread>       queueThreads;
+        std::map<u64, runtime_queue>  queues;
+        std::map<u64, detail::thread> queue_threads;
         /*!
          * \brief Contains all data necessary to manage a worker thread.
          * Needs to be a ShPtr<T> in order to avoid early destruction.
          */
-        Map<ThreadId::Hash, ShPtr<semaphore_t>> queueFlags;
+        std::map<u64, std::shared_ptr<semaphore_t>> queue_flags;
     };
 
-    using QueueContextPtr = ShPtr<QueueContext>;
-    using rqe             = runtime_queue_error;
+    using queue_context_ptr = std::shared_ptr<QueueContext>;
 
-    static RuntimeQueue* CreateNewQueue(CString const& name);
-    static RuntimeQueue* CreateNewThreadQueue(CString const& name, rqe& ec);
+    static detail::result<runtime_queue*, RuntimeQueueError> CreateNewQueue(
+        std::string_view name);
+    static detail::result<runtime_queue*, RuntimeQueueVerboseError>
+    CreateNewThreadQueue(std::string_view name);
 
-    static RuntimeQueue* GetCurrentQueue(rqe& ec);
+    static detail::result<runtime_queue*, RuntimeQueueError> GetCurrentQueue();
 
     /*!
      * \brief From inside a task, get a reference to itself
      * \return
      */
-    static RuntimeTask* GetSelf(rqe& ec);
+    static detail::result<runtime_task*, RuntimeQueueError> GetSelf();
 
     /*!
      * \brief From inside a task, get its ID. Calling from outside will return
      * 0. \return
      */
-    static u64 GetSelfId(rqe& ec);
+    static detail::result<u64, RuntimeQueueError> GetSelfId();
 
     /*!
      * \brief Enqueue a task into the current thread's runtime queue
@@ -161,7 +293,7 @@ class RuntimeQueue
      * \param task Task to be run with its internal parameters
      * \return 0 on failure, non-zero value handle otherwise.
      */
-    static u64 Queue(RuntimeTask&& task, rqe& ec);
+    static detail::result<u64, RuntimeQueueError> Queue(runtime_task&& task);
     /*!
      * \brief Like Queue(RuntimeTask&&), but targets a thread.
      * Queue(RuntimeTask&&) uses this function behind the scenes.
@@ -170,7 +302,8 @@ class RuntimeQueue
      * \param task
      * \return
      */
-    static u64 Queue(ThreadId const& targetThread, RuntimeTask&& task, rqe& ec);
+    static detail::result<u64, RuntimeQueueError> Queue(
+        detail::thread_id targetThread, runtime_task&& task);
 
     /*!
      * \brief Queue
@@ -179,7 +312,14 @@ class RuntimeQueue
      * \param ec
      * \return
      */
-    static u64 Queue(RuntimeQueue* queue, RuntimeTask&& task, rqe& ec);
+    static detail::result<u64, RuntimeQueueError> Queue(
+        runtime_queue* queue, runtime_task&& task);
+
+    static detail::result<u64, RuntimeQueueError> Queue(
+        runtime_queue* queue, std::unique_ptr<dependent_task_invoker>&& task);
+
+    static detail::result<u64, RuntimeQueueError> Queue(
+        std::unique_ptr<dependent_task_invoker> &&task);
 
     /*!
      * \brief Queue a single-shot task, without the effort
@@ -188,21 +328,17 @@ class RuntimeQueue
      * \param task Task to be run
      * \return
      */
-    STATICINLINE u64 QueueShot(
-        RuntimeQueue*         q,
-        RuntimeTask::Duration time,
-        Function<void()>&&    task,
-        rqe&                  ec)
+    [[nodiscard]] STATICINLINE detail::result<u64, RuntimeQueueError> QueueShot(
+        runtime_queue* q, detail::duration time, std::function<void()>&& task)
     {
         if(!q)
             return 0;
         return Queue(
-            q->threadId(),
-            RuntimeTask::CreateTask(
+            q->thread_id(),
+            runtime_task::CreateTask(
                 std::move(task),
-                RuntimeTask::SingleShot,
-                RuntimeTask::clock::now() + time),
-            ec);
+                task_flags::single_shot,
+                detail::clock::now() + time));
     }
 
     /*!
@@ -213,35 +349,39 @@ class RuntimeQueue
      * \param task
      * \return
      */
-    STATICINLINE u64 QueueEnsureThread(
-        RuntimeQueue* q, Function<void()>&& task, rqe& ec, bool await = false)
+    [[nodiscard]] STATICINLINE detail::result<u64, RuntimeQueueError>
+                               QueueEnsureThread(
+                                   runtime_queue* q, std::function<void()>&& task, bool await = false)
     {
         if(!q)
         {
-            ec = RuntimeQueueError::InvalidQueue;
-            return 0;
+            return detail::failure(RuntimeQueueError::InvalidQueue);
         }
 
         /* If we are on the desired thread, run it now */
-        if(ThreadId() == q->threadId())
+        if(detail::current_thread_id() == q->thread_id())
         {
             task();
-            return 0;
+            return detail::success(0);
         }
 
         /* Otherwise queue it */
-        u64 id = Queue(
-            q->threadId(),
-            RuntimeTask::CreateTask(
-                std::move(task),
-                RuntimeTask::SingleShot | RuntimeTask::Immediate,
-                RuntimeTask::clock::now()),
-            ec);
-
-        if(await)
-            AwaitTask(q->threadId(), id, ec);
-
-        return id;
+        if(auto res = Queue(
+               q->thread_id(),
+               runtime_task::CreateTask(
+                   std::move(task),
+                   task_flags::single_shot | task_flags::immediate,
+                   detail::clock::now()));
+           res.has_error())
+            return detail::failure(res.error());
+        else if(await)
+        {
+            if(auto error = AwaitTask(q->thread_id(), res.value()))
+                return detail::failure(*error);
+            else
+                return detail::success(res.value());
+        } else
+            return detail::success(res.value());
     }
 
     /*!
@@ -252,47 +392,41 @@ class RuntimeQueue
      * \param task
      * \return
      */
-    STATICINLINE u64 QueueImmediate(
-        RuntimeQueue*         q,
-        RuntimeTask::Duration time,
-        Function<void()>&&    task,
-        rqe&                  ec)
+    [[nodiscard]] STATICINLINE detail::result<u64, RuntimeQueueError>
+                               QueueImmediate(
+                                   runtime_queue* q, detail::duration time, std::function<void()>&& task)
     {
         if(!q)
-            return 0;
+            return detail::failure(RuntimeQueueError::InvalidQueue);
         return Queue(
-            q->threadId(),
-            RuntimeTask::CreateTask(
+            q->thread_id(),
+            runtime_task::CreateTask(
                 std::move(task),
-                RuntimeTask::SingleShot | RuntimeTask::Immediate,
-                RuntimeTask::clock::now() + time),
-            ec);
+                task_flags::single_shot | task_flags::immediate,
+                detail::clock::now() + time));
     }
 
-    STATICINLINE u64 QueuePeriodic(
-        RuntimeQueue*         q,
-        RuntimeTask::Duration time,
-        Function<void()>&&    task,
-        rqe&                  ec)
+    [[nodiscard]] STATICINLINE detail::result<u64, RuntimeQueueError>
+                               QueuePeriodic(
+                                   runtime_queue* q, detail::duration time, std::function<void()>&& task)
     {
         if(!q)
-            return 0;
+            return detail::failure(RuntimeQueueError::InvalidQueue);
         return Queue(
-            q->threadId(),
+            q->thread_id(),
             {
                 task,
                 {},
                 time,
-                RuntimeTask::Periodic,
+                task_flags::periodic,
                 0,
-            },
-            ec);
+            });
     }
 
     struct task_data_t
     {
-        RuntimeTask task;
-        u64         index;
+        runtime_task task;
+        u64          index;
         union
         {
             struct
@@ -302,7 +436,7 @@ class RuntimeQueue
             };
         };
 
-        u8 _pad[7];
+        char _pad[7];
 
         FORCEDINLINE bool operator<(task_data_t const& other) const
         {
@@ -310,123 +444,134 @@ class RuntimeQueue
         }
     };
 
-    STATICINLINE bool Block(u64 taskId, rqe& ec)
+    struct dependent_task_data_t
     {
-        return Block(ThreadId(), taskId, ec);
-    }
-    static bool Block(ThreadId const& targetThread, u64 taskId, rqe& ec);
+        std::unique_ptr<dependent_task_invoker> task;
+        bool                                    alive{true};
+    };
 
-    STATICINLINE bool Unblock(u64 taskId, rqe& ec)
+    STATICINLINE std::optional<RuntimeQueueError> Block(u64 taskId)
     {
-        return Unblock(ThreadId(), taskId, ec);
+        return Block(detail::current_thread_id(), taskId);
     }
-    static bool Unblock(ThreadId const& targetThread, u64 taskId, rqe& ec);
+    static std::optional<RuntimeQueueError> Block(
+        detail::thread_id targetThread, u64 taskId);
 
-    STATICINLINE bool CancelTask(u64 taskId, rqe& ec)
+    STATICINLINE std::optional<RuntimeQueueError> Unblock(u64 taskId)
     {
-        return CancelTask(ThreadId(), taskId, ec);
+        return Unblock(detail::current_thread_id(), taskId);
     }
-    static bool CancelTask(ThreadId const& targetThread, u64 taskId, rqe& ec);
+    static std::optional<RuntimeQueueError> Unblock(
+        detail::thread_id targetThread, u64 taskId);
 
-    static void AwaitTask(ThreadId const& targetThread, u64 taskId, rqe& ec);
+    STATICINLINE std::optional<RuntimeQueueError> CancelTask(u64 taskId)
+    {
+        return CancelTask(detail::current_thread_id(), taskId);
+    }
+    static std::optional<RuntimeQueueError> CancelTask(
+        detail::thread_id targetThread, u64 taskId);
 
-    static bool IsRunning(RuntimeQueue* thread, rqe& ec);
+    static std::optional<RuntimeQueueError> AwaitTask(
+        detail::thread_id targetThread, u64 taskId);
 
-    static void TerminateThread(RuntimeQueue* thread, rqe& ec);
-    static void TerminateThreads(rqe& ec);
+    static detail::result<bool, RuntimeQueueError> IsRunning(
+        runtime_queue* thread);
 
-    void                  executeTasks();
-    RuntimeTask::Duration timeTillNext();
-    RuntimeTask::Duration timeTillNext(RuntimeTask::Timepoint clock);
-    CString               name();
-    ThreadId              threadId();
+    static std::optional<RuntimeQueueError> TerminateThread(
+        runtime_queue* thread);
+    static std::optional<RuntimeQueueError> TerminateThreads();
 
-    RuntimeQueue();
-    RuntimeQueue(const RuntimeQueue& queue);
+    void              execute_tasks();
+    detail::duration  time_till_next() const;
+    detail::duration  time_till_next(detail::time_point clock) const;
+    std::string_view  name();
+    detail::thread_id thread_id() const;
 
     /*!
      * \brief Create a new thread context, do nothing else.
      * \return
      */
-    static QueueContextPtr CreateContext();
+    static queue_context_ptr CreateContext();
     /*!
      * \brief Set queue context if and only if there is none from before.
      * If one already exists, we cannot control it.
      * \param i
      */
-    static bool SetQueueContext(QueueContextPtr i);
+    static bool SetQueueContext(queue_context_ptr i);
     /*!
      * \brief Return the current context, regardless of whether it exists.
      * \return
      */
-    static QueueContextPtr GetQueueContext();
+    static queue_context_ptr GetQueueContext();
 
-    RuntimeTask::Timepoint mNextWakeup;
-    RecMutex               mTasksLock;
+    detail::time_point   m_next_wakeup{};
+    std::recursive_mutex m_tasks_lock;
 
   private:
-    u64  enqueue(RuntimeTask&& task);
+    u64  enqueue(runtime_task&& task);
+    u64  enqueue(std::unique_ptr<dependent_task_invoker>&& task);
     void sortTasks();
 
-    Vector<task_data_t> mTasks;
-    u64                 mTaskIndex;
-    ThreadId            mThreadId;
+    std::vector<task_data_t>           m_tasks;
+    std::vector<dependent_task_data_t> m_dependent_tasks;
+    detail::thread_id                  m_thread_id{0};
+    u64                                m_task_index{0};
+    u64                                m_current_task_id{0};
 
-    u64 mCurrentTaskId;
-
-    static ShPtr<QueueContext> context;
+    static std::shared_ptr<QueueContext> context;
 };
 
-struct ScopedTask
+struct scoped_task
 {
-    ScopedTask() : m_id(0)
+    scoped_task() : m_id(0)
     {
     }
 
     template<typename... Args>
-    ScopedTask(ThreadId const& tid, Function<void()>&& fun, Args... args)
+    scoped_task(
+        detail::thread_id tid, std::function<void()>&& fun, Args... args)
     {
-        runtime_queue_error ec;
-        m_id = RuntimeQueue::Queue(
-            tid, RuntimeTask::CreateTask(std::move(fun), args...), ec);
-
-        C_ERROR_CHECK(ec);
-
-        m_threadId = tid;
+        if(auto res = runtime_queue::Queue(
+               tid, runtime_task::CreateTask(std::move(fun), args...));
+           res.has_error())
+            Throw(runtime_queue_error(to_string(res.error())));
+        else
+            m_id = res.value();
+        m_thread_id = tid;
     }
 
-    ScopedTask(ThreadId const& tid, RuntimeTask&& task)
+    scoped_task(detail::thread_id tid, runtime_task&& task)
     {
-        runtime_queue_error ec;
-        m_id = RuntimeQueue::Queue(tid, std::move(task), ec);
+        if(auto res = runtime_queue::Queue(tid, std::move(task));
+           res.has_error())
+            Throw(runtime_queue_error(to_string(res.error())));
+        else
+            m_id = res.value();
 
-        C_ERROR_CHECK(ec);
-
-        m_threadId = tid;
+        m_thread_id = tid;
     }
 
-    ScopedTask(ScopedTask&& other) :
-        m_id(other.m_id), m_threadId(other.m_threadId)
+    scoped_task(scoped_task&& other) :
+        m_id(other.m_id), m_thread_id(other.m_thread_id)
     {
         other.m_id = 0;
     }
 
-    C_DELETE_COPY_CONSTRUCTOR(ScopedTask);
+    C_DELETE_COPY_CONSTRUCTOR(scoped_task);
 
-    ~ScopedTask()
+    ~scoped_task()
     {
-        runtime_queue_error ec;
         if(m_id != 0)
-            RuntimeQueue::CancelTask(m_threadId, m_id, ec);
+            runtime_queue::CancelTask(m_thread_id, m_id);
     }
 
-    ScopedTask& operator=(ScopedTask&& other)
+    scoped_task& operator=(scoped_task&& other)
     {
-        m_id       = other.m_id;
-        m_threadId = other.m_threadId;
+        m_id        = other.m_id;
+        m_thread_id = other.m_thread_id;
 
-        other.m_id       = 0;
-        other.m_threadId = {};
+        other.m_id        = 0;
+        other.m_thread_id = {};
 
         return *this;
     }
@@ -435,14 +580,14 @@ struct ScopedTask
     {
         return m_id;
     }
-    ThreadId threadId() const
+    detail::thread_id threadId() const
     {
-        return m_threadId;
+        return m_thread_id;
     }
 
   private:
-    u64      m_id;
-    ThreadId m_threadId;
+    u64               m_id;
+    detail::thread_id m_thread_id;
 };
 
-} // namespace Coffee
+} // namespace rq

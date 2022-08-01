@@ -58,7 +58,7 @@ struct DataStatus
 
 static void emscripten_callback_load(void* arg, void* data, int size)
 {
-    auto* status = C_FCAST<DataStatus*>(arg);
+    auto* status = C_RCAST<DataStatus*>(arg);
     cDebug("Loaded file");
     MemCpy(Bytes::ofBytes(data, size), status->data);
     status->output.set_value(size);
@@ -66,14 +66,14 @@ static void emscripten_callback_load(void* arg, void* data, int size)
 }
 static void emscripten_callback_store(void* arg)
 {
-    auto* status = C_FCAST<DataStatus*>(arg);
+    auto* status = C_RCAST<DataStatus*>(arg);
     cDebug("Stored file");
     status->output.set_value(status->data.size);
     status->status = DataStatus::Success;
 }
 static void emscripten_callback_error(void* arg)
 {
-    auto* status = C_FCAST<DataStatus*>(arg);
+    auto* status = C_RCAST<DataStatus*>(arg);
     cDebug("Failed to do something with file :(");
     status->output.set_value(0);
     status->status = DataStatus::Failure;
@@ -121,13 +121,13 @@ Future<szptr> FilesystemApi::restore(Bytes&& data, slot_count_t slot)
         return out.get_future();
     }
 
-    if(!FilePull(rsc) && rsc.size <= data.size)
+    if(!FilePull(rsc) && !rsc.data_ro.empty())
     {
         out.set_value(0);
         return out.get_future();
     }
 
-    if(!rsc.data || rsc.size < 1 || rsc.size > data.size)
+    if(rsc.data_ro.empty() || rsc.data_ro.size() > data.size)
     {
         out.set_value(0);
         return out.get_future();
@@ -135,7 +135,7 @@ Future<szptr> FilesystemApi::restore(Bytes&& data, slot_count_t slot)
 
     MemCpy(C_OCAST<Bytes>(rsc), data);
 
-    out.set_value(rsc.size);
+    out.set_value(rsc.data_ro.size());
     return out.get_future();
 #endif
 }
@@ -152,7 +152,7 @@ Future<szptr> FilesystemApi::save(Bytes const& data, slot_count_t slot)
     emscripten_idb_async_store(
         m_app.organization_name.c_str(),
         save_file.c_str(),
-        C_FCAST<void*>(data.data),
+        reinterpret_cast<void*>(data.data),
         data.size,
         &data_status,
         emscripten_callback_store,
@@ -168,7 +168,7 @@ Future<szptr> FilesystemApi::save(Bytes const& data, slot_count_t slot)
     if(!FileCommit(rsc, RSCA::WriteOnly | RSCA::Discard | RSCA::NewFile))
         out.set_value(0);
     else
-        out.set_value(rsc.size);
+        out.set_value(rsc.data_ro.size());
 
     return out.get_future();
 #endif

@@ -6,7 +6,7 @@
         { "name": "angle", "platform": "windows | uwp" },
         "asio",
         "boost-outcome",
-        { "name": "boost-stacktrace", "platform": "!emscripten" },
+        "boost-stacktrace",
         "bullet3",
         "cppcodec",
         { "name": "discord-rpc", "platform": "(linux & x64) | osx | windows" },
@@ -16,7 +16,7 @@
         "lz4",
         { "name": "openvr", "platform": "windows" },
         "rapidjson",
-        { "name": "sdl2", "platform": "linux | osx | windows" },
+        { "name": "sdl2", "platform": "linux | osx | windows", "default-features": false, "features": ["x11"] },
         "sqlite3",
         "stb",
         "tinyxml2",
@@ -24,51 +24,44 @@
         { "name": "zlib", "platform": "!emscripten" },
         "zstd"
     ],
-    "features": [
-        {
-            "name": "asio",
+    "features": {
+        "asio": {
             "description": "ASIO networking lib",
             "dependencies": ["asio"]
         },
-        {
-            "name": "assimp",
+        "assimp": {
             "description": "Model processing",
             "dependencies": [
                 { "name": "assimp", "platform": "(linux & x64) | osx | windows" }
             ]
         },
-        {
-            "name": "audio",
+        "audio": {
             "description": "Audio output support",
             "dependencies": [
                 { "name": "openal-soft", "platform": "linux | osx | windows | android" },
                 { "name": "libogg", "platform": "!emscripten" }
             ]
         },
-        { "name": "blam", "description": "Blam! data support" },
-        { "name": "crash-recovery", "description": "Crash reporting and logging tool"},
-        { "name": "headful", "description": "Graphical support" },
-        {
-            "name": "media",
+        "blam": { "description": "Blam! data support" },
+        "crash-recovery": { "description": "Crash reporting and logging tool"},
+        "headful": { "description": "Graphical support" },
+        "media": {
             "description": "Media encoding",
             "dependencies": [
                 { "name": "ffmpeg", "platform": "linux | osx | windows" }
             ]
         },
-        {
-            "name": "openssl",
-            "description": "OpenSSL support in ASIO",
+        "openssl": {
+            "description": "OpenSSL support in ASIO + some crypto functionality",
             "dependencies": [
                 { "name": "openssl", "platform": "!emscripten" }
             ]
         },
-        {
-            "name": "etc2comp",
+        "etc2comp": {
             "description": "ETC1/ETC2 compression support"
         },
-        {
-            "name": "pressure-cooker",
-            "description": "Asset packing",
+        "pressure-cooker": {
+            "description": "Asset packing utilities",
             "dependencies": [
                 { "name": "ffmpeg", "platform": "(linux & x64) | osx | windows" },
                 { "name": "glslang", "platform": "(linux & x64) | osx | windows" },
@@ -77,7 +70,7 @@
                 { "name": "spirv-cross", "platform": "(linux & x64) | osx | windows" }
             ]
         }
-    ],
+    },
     "default-features": [
         "asio",
         "assimp",

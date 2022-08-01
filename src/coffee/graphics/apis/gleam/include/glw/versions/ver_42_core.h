@@ -23,12 +23,12 @@ requires(MinimumVersion<Current, Version<4, 2>>) STATICINLINE
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<4, 2>>) STATICINLINE
     void draw_elements_instanced_base_instance(
-        group::primitive_type mode,
-        i32                   count,
-        group::primitive_type type,
-        ptroff                indices,
-        i32                   instancecount,
-        u32                   baseinstance)
+        group::primitive_type     mode,
+        i32                       count,
+        group::draw_elements_type type,
+        ptroff                    indices,
+        i32                       instancecount,
+        u32                       baseinstance)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

@@ -29,7 +29,9 @@ struct DisplayHandle : comp_app::AppService<DisplayHandle>,
     stl_types::UqPtr<detail::EGLData, detail::EGLDataDeleter> m_data;
 };
 
-struct GraphicsContext : comp_app::GraphicsContext, comp_app::AppLoadableService
+struct GraphicsContext : comp_app::interfaces::GraphicsContext,
+                         comp_app::AppService<GraphicsContext>,
+                         comp_app::AppLoadableService
 {
     using type = GraphicsContext;
 
@@ -47,7 +49,8 @@ struct GraphicsContext : comp_app::GraphicsContext, comp_app::AppLoadableService
     } feature_flags;
 };
 
-struct GraphicsFramebuffer : comp_app::GraphicsFramebuffer,
+struct GraphicsFramebuffer : comp_app::interfaces::GraphicsFramebuffer,
+                             comp_app::AppService<GraphicsFramebuffer>,
                              comp_app::AppLoadableService
 {
     virtual void load(entity_container& e, comp_app::app_error& ec) final;
@@ -60,8 +63,9 @@ struct GraphicsFramebuffer : comp_app::GraphicsFramebuffer,
     entity_container* m_container;
 };
 
-struct GraphicsSwapControls : comp_app::GraphicsSwapControl,
-                              comp_app::AppLoadableService
+struct GraphicsSwapControl : comp_app::interfaces::GraphicsSwapControl,
+                             comp_app::AppService<GraphicsSwapControl>,
+                             comp_app::AppLoadableService
 {
     virtual void load(entity_container& p, comp_app::app_error&) final;
 
@@ -71,13 +75,15 @@ struct GraphicsSwapControls : comp_app::GraphicsSwapControl,
     entity_container* m_container;
 };
 
-struct Windowing : comp_app::StaticWindowing, comp_app::AppLoadableService
+struct Windowing : comp_app::interfaces::StaticWindowing,
+                   comp_app::AppService<Windowing>,
+                   comp_app::AppLoadableService
 {
-    void load(entity_container &e, comp_app::app_error &ec);
+    void load(entity_container& e, comp_app::app_error& ec);
 
-    comp_app::size_2d_t size() const final;
+    comp_app::size_2d_t           size() const final;
     comp_app::detail::WindowState state() const final;
-    void setState(comp_app::detail::WindowState) final;
+    void                          setState(comp_app::detail::WindowState) final;
 
   private:
     entity_container* m_container;
@@ -87,7 +93,7 @@ using Services = comp_app::detail::TypeList<
     DisplayHandle,
     GraphicsContext,
     GraphicsFramebuffer,
-    GraphicsSwapControls,
-    comp_app::PtrNativeWindowInfo>;
+    GraphicsSwapControl,
+    comp_app::PtrNativeWindowInfoService>;
 
 } // namespace egl

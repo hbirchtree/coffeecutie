@@ -91,12 +91,23 @@ struct vertex_array_t
             cmd::create_vertex_arrays(SpanOne<u32>(m_handle));
         } else
 #endif
+        if(m_features.vertex_arrays)
             cmd::gen_vertex_arrays(SpanOne<u32>(m_handle));
     }
     void dealloc()
     {
+        if(!m_features.vertex_arrays)
+            return;
         cmd::delete_vertex_arrays(SpanOne<u32>(m_handle));
         m_handle.release();
+    }
+
+    void set_attribute_names(
+        std::vector<std::pair<std::string_view, u32>>&& attributes)
+    {
+        if(m_features.attribute_binding)
+            return;
+        m_attribute_names = std::move(attributes);
     }
 
     void add(attribute_type attribute)
@@ -150,6 +161,7 @@ struct vertex_array_t
                     attribute.value.offset);
         } else
 #endif
+        if(m_features.vertex_arrays)
         {
             cmd::enable_vertex_attrib_array(attribute.index);
             cmd::vertex_attrib_divisor(
@@ -189,7 +201,7 @@ struct vertex_array_t
                     m_handle,
                     attribute.index,
                     buffer->m_handle,
-                    attribute.buffer.offset,
+                    attribute.buffer.offset + attribute.value.offset,
                     attribute.value.stride);
                 cmd::vertex_array_binding_divisor(
                     m_handle, attribute.index, instanced ? 1 : 0);
@@ -203,11 +215,11 @@ struct vertex_array_t
                 cmd::bind_vertex_buffer(
                     attribute.index,
                     buffer->m_handle,
-                    attribute.buffer.offset,
+                    attribute.buffer.offset + attribute.value.offset,
                     attribute.value.stride);
                 cmd::vertex_binding_divisor(attribute.index, instanced ? 1 : 0);
                 cmd::vertex_attrib_binding(attribute.index, attribute.index);
-            } else
+            } else if(m_features.vertex_arrays)
 #endif
             {
                 cmd::bind_buffer(
@@ -223,7 +235,8 @@ struct vertex_array_t
                             attribute.buffer.offset + attribute.value.offset));
                 else
                     detail::vertex_setup_attribute(attribute);
-            }
+            } else
+                m_buffers.insert({binding, buffer});
         }
         if(!m_features.dsa)
             cmd::bind_vertex_array(0);
@@ -245,20 +258,25 @@ struct vertex_array_t
             cmd::vertex_array_element_buffer(m_handle, buffer->m_handle);
         } else
 #endif
+        if(m_features.vertex_arrays)
         {
             cmd::bind_buffer(
                 group::buffer_target_arb::element_array_buffer,
                 buffer->m_handle);
-        }
+        } else
+            m_element_buffer = buffer;
 
         if(!m_features.dsa)
             cmd::bind_vertex_array(0);
     }
 
-    features::vertices                m_features;
-    debug::api                        m_debug;
-    stl_types::Vector<attribute_type> m_attributes;
-    hnd                               m_handle;
+    features::vertices                            m_features;
+    debug::api                                    m_debug;
+    std::vector<attribute_type>                   m_attributes;
+    std::vector<std::pair<std::string_view, u32>> m_attribute_names;
+    std::map<u32, std::weak_ptr<buffer_t>>        m_buffers;
+    std::weak_ptr<buffer_t>                       m_element_buffer;
+    hnd                                           m_handle;
 };
 #endif
 
@@ -282,26 +300,27 @@ struct vertex_array_legacy_t
         m_attributes.push_back(attribute);
     }
 
-    void apply(u32 offset = 0)
+    template<class T>
+    requires(T::value == buffers::type::vertex)
+        //
+        void set_buffer(T, stl_types::ShPtr<buffer_t> buffer, u32 binding)
     {
-        for(auto const& attribute : m_attributes)
-        {
-            auto const& buffer = m_buffers.at(attribute.buffer.id).lock();
-            cmd::bind_buffer(
-                group::buffer_target_arb::array_buffer, buffer->m_handle);
-            cmd::enable_vertex_attrib_array(attribute.index);
-            detail::vertex_setup_attribute(attribute, offset);
-        }
-    }
-    void remove()
-    {
-        for(auto const& attribute : m_attributes)
-            cmd::disable_vertex_attrib_array(attribute.index);
+        m_buffers.insert({binding, buffer});
     }
 
-    features::vertices                              m_features;
-    stl_types::Vector<attribute_type>               m_attributes;
-    stl_types::Map<u32, stl_types::WkPtr<buffer_t>> m_buffers;
+    template<class T>
+    requires(T::value == buffers::type::element)
+        //
+        void set_buffer(T, stl_types::ShPtr<buffer_t> buffer)
+    {
+        m_element_buffer = buffer;
+    }
+
+    features::vertices                            m_features;
+    std::vector<attribute_type>                   m_attributes;
+    std::vector<std::pair<std::string_view, u32>> m_attribute_names;
+    std::map<u32, std::weak_ptr<buffer_t>>        m_buffers;
+    std::weak_ptr<buffer_t>                       m_element_buffer;
 };
 
 } // namespace gleam

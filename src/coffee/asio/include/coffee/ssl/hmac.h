@@ -4,8 +4,7 @@
 #include <peripherals/semantic/chunk.h>
 #include <peripherals/stl/types.h>
 
-namespace net {
-namespace hmac {
+namespace net::hmac {
 
 enum class digest_type
 {
@@ -58,5 +57,4 @@ stl_types::String digest(
     return out;
 }
 
-} // namespace hmac
-} // namespace net
+} // namespace net::hmac

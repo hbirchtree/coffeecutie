@@ -40,19 +40,31 @@ if(BUILD_COMPONENT_APP)
             -DSELECT_API_OPENGL=1
             )
 
+        if(ANDROID OR IOS OR EMSCRIPTEN)
+            set( GLIMPL "ES" )
+        else()
+            set( GLIMPL "Dynamic" )
+        endif()
+
         if(BUILD_GLEAM)
-            target_link_libraries ( GraphicsBundle INTERFACE GLVersion_ES )
+            add_library ( GLeamRHI INTERFACE )
+            add_export ( GLeamRHI "" )
+
+            target_link_libraries ( GraphicsBundle INTERFACE GLVersion_${GLIMPL} )
+            target_link_libraries( GLeamRHI INTERFACE GLeamRHI_${GLIMPL} )
         endif()
 
         add_subdirectory(graphics/comp_app)
-#        target_link_libraries ( GraphicsBundle INTERFACE GLADComponent_ES )
+        if("${GLIMPL}" MATCHES "Dynamic")
+            target_link_libraries ( GraphicsBundle INTERFACE GLADComponent_${GLIMPL} )
+        endif()
 
         if(BUILD_EGL)
             add_subdirectory(graphics/egl_comp)
             target_link_libraries ( ComponentBundle INTERFACE EGLComponent )
         endif()
 
-        target_link_libraries ( GraphicsBundle INTERFACE GLScreenshot_ES )
+        target_link_libraries ( GraphicsBundle INTERFACE GLScreenshot_${GLIMPL} )
     endif()
     if(BUILD_X11)
         add_subdirectory(windowing/x11_comp)
@@ -84,11 +96,6 @@ if(BUILD_COMPONENT_APP)
         add_subdirectory(emscripten)
         target_link_libraries ( ComponentBundle INTERFACE EmscriptenComponents )
     endif()
-
-    target_link_libraries ( ComponentBundle INTERFACE
-        MobileBundle
-        GraphicsBundle
-        )
 
     add_export ( ComponentBundle "" )
     add_export ( GraphicsBundle "" )

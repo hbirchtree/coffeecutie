@@ -28,15 +28,18 @@ struct ContainerProxy;
 template<typename... Types>
 using TypeList = type_safety::type_list::type_list<Types...>;
 
-template<typename WrappedType, typename TagType = void>
-struct TaggedTypeWrapper
+template<typename WrappedType, typename ValueType>
+struct ValueTag
 {
-    using type = WrappedType;
-    using tag  = TagType;
+    using type       = WrappedType;
+    using value_type = ValueType;
 };
 
-template<typename WrappedType, typename TaggedType = void>
-using TagType = TaggedTypeWrapper<WrappedType, TaggedType>;
+template<typename WrappedType, typename Tagging = void>
+struct TagType
+{
+    using type = WrappedType;
+};
 
 template<class T>
 concept is_tag_type = requires(T& v)
@@ -105,91 +108,16 @@ struct EntityVisitorBase : non_copy
         EntityContainer& container, const time_point& current) = 0;
 };
 
-template<is_tag_type ComponentType>
-struct ComponentContainer : ComponentContainerBase
-{
-    using tag_type = ComponentType;
-    using type     = typename ComponentType::type;
-
-    virtual type* get(u64 id) = 0;
-
-    virtual type const* get(u64 id) const final
-    {
-        return C_CCAST<ComponentContainer<ComponentType>*>(this)->get(id);
-    }
-};
-
-struct SubsystemBase
-{
-    using ContainerProxy = Components::ContainerProxy;
-    using time_point     = Components::time_point;
-    using duration       = Components::duration;
-
-    static constexpr u32 default_prio = 1024;
-    static constexpr u32 system_prio  = 0;
-
-    virtual ~SubsystemBase();
-
-    SubsystemBase() = default;
-    SubsystemBase(SubsystemBase const&) = delete;
-
-    virtual void start_frame(ContainerProxy&, time_point const&)
-    {
-    }
-    virtual void end_frame(ContainerProxy&, time_point const&)
-    {
-    }
-
-    u32 priority = default_prio;
-
-  protected:
-    static EntityContainer& get_container(ContainerProxy& proxy);
-};
-
-template<is_tag_type OutputType>
-struct Subsystem : SubsystemBase
-{
-    using tag_type = OutputType;
-    using type     = typename OutputType::type;
-
-    virtual type const& get() const
-    {
-        Throw(implementation_error("unimplemented getter"));
-    }
-    virtual type& get()
-    {
-        Throw(implementation_error("unimplemented getter"));
-    }
-};
-
-namespace Globals {
-
-template<is_tag_type T>
-struct ValueSubsystem : Subsystem<T>
-{
-    using type = typename Subsystem<T>::type;
-
-    virtual type const& get() const override
-    {
-        return m_value;
-    }
-    virtual type& get() override
-    {
-        return m_value;
-    }
-
-  private:
-    type m_value;
-};
-
-} // namespace Globals
-
 template<class T>
 concept is_subsystem = true;
-//concept is_subsystem = std::is_convertible_v<T&, SubsystemBase&>;
+// concept is_subsystem = std::is_convertible_v<T&, SubsystemBase&>;
 
 template<class T>
-concept is_component = std::is_convertible_v<T&, ComponentContainerBase&>;
+concept is_component = std::is_convertible_v<T&, ComponentContainerBase&> &&
+    requires(T v)
+{
+    typename T::value_type;
+};
 
 template<class T>
 concept is_visitor = std::is_convertible_v<T&, EntityVisitorBase&>;
@@ -211,6 +139,86 @@ using component_list = TypeList<Args...>;
 
 template<is_visitor... Args>
 using visitor_list = TypeList<Args...>;
+
+template<typename ComponentType>
+struct ComponentContainer : ComponentContainerBase
+{
+    using tag_type   = ComponentType;
+    using type       = typename ComponentType::type;
+    using value_type = typename ComponentType::value_type;
+
+    virtual value_type* get(u64 id) = 0;
+
+    virtual value_type const* get(u64 id) const final
+    {
+        return C_CCAST<ComponentContainer<ComponentType>*>(this)->get(id);
+    }
+};
+
+struct SubsystemBase
+{
+    using ContainerProxy = Components::ContainerProxy;
+    using time_point     = Components::time_point;
+    using duration       = Components::duration;
+
+    static constexpr u32 default_prio = 1024;
+    static constexpr u32 system_prio  = 0;
+
+    virtual ~SubsystemBase();
+
+    SubsystemBase()                     = default;
+    SubsystemBase(SubsystemBase const&) = delete;
+
+    virtual void start_frame(ContainerProxy&, time_point const&)
+    {
+    }
+    virtual void end_frame(ContainerProxy&, time_point const&)
+    {
+    }
+
+    u32 priority = default_prio;
+
+  protected:
+    static EntityContainer& get_container(ContainerProxy& proxy);
+};
+
+template<is_tag_type OutputType>
+struct Subsystem : SubsystemBase
+{
+    using tag_type = OutputType;
+    using type     = typename OutputType::value_type;
+
+    virtual type const& get() const
+    {
+        Throw(implementation_error("unimplemented getter"));
+    }
+    virtual type& get()
+    {
+        Throw(implementation_error("unimplemented getter"));
+    }
+};
+
+namespace Globals {
+
+template<is_tag_type T>
+struct ValueSubsystem : Subsystem<T>
+{
+    using value_type = typename T::value_type;
+
+    virtual value_type const& get() const override
+    {
+        return m_value;
+    }
+    virtual value_type& get() override
+    {
+        return m_value;
+    }
+
+  private:
+    value_type m_value;
+};
+
+} // namespace Globals
 
 // namespace Globals
 } // namespace Components

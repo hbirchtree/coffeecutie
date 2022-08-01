@@ -5,6 +5,7 @@
 #include <glw/extensions/EXT_disjoint_timer_query.h>
 #include <peripherals/concepts/graphics_api.h>
 #include <peripherals/semantic/enum/data_types.h>
+#include <peripherals/typing/enum/pixels/filtering.h>
 
 namespace gleam::convert {
 namespace mappings {
@@ -432,7 +433,8 @@ inline group::buffer_storage_mask to(semantic::RSCA flags)
 }
 #endif
 
-#if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
+#if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300 || \
+    defined(GL_OES_mapbuffer)
 template<typename T>
 requires std::is_same_v<T, group::buffer_access_arb>
 inline group::buffer_access_arb to(semantic::RSCA flags)
@@ -621,9 +623,9 @@ inline group::primitive_type to(drawing::primitive primitive)
         case drawing::primitive::strip:
             return group::primitive_type::triangle_strip;
         case drawing::primitive::fan:
-            return group::primitive_type::triangle_strip;
+            return group::primitive_type::triangle_fan;
         default:
-            return group::primitive_type::triangle_strip;
+            return group::primitive_type::triangles;
         }
     default:
         Throw(undefined_behavior("invalid primitive type"));
@@ -645,7 +647,45 @@ inline group::draw_elements_type to(semantic::TypeEnum type)
     default:
         Throw(undefined_behavior("invalid draw element type"));
     }
+}
 
+template<typename T>
+requires std::is_same_v<T, group::sampler_parameter_i>
+inline GLenum to(
+    typing::Filtering f1, typing::Filtering f2 = typing::Filtering::None)
+{
+    using F = typing::Filtering;
+
+    switch(f1)
+    {
+    case F::Linear: {
+        switch(f2)
+        {
+        case F::Linear:
+            return GL_LINEAR_MIPMAP_LINEAR;
+        case F::Nearest:
+            return GL_LINEAR_MIPMAP_NEAREST;
+        default:
+            return GL_LINEAR;
+        }
+        break;
+    }
+    case F::Nearest: {
+        switch(f2)
+        {
+        case F::Linear:
+            return GL_NEAREST_MIPMAP_LINEAR;
+        case F::Nearest:
+            return GL_NEAREST_MIPMAP_NEAREST;
+        default:
+            return GL_NEAREST;
+        }
+        break;
+    }
+    default:
+        break;
+    }
+    return GL_NEAREST;
 }
 
 } // namespace gleam::convert

@@ -272,7 +272,7 @@ struct opcode_layout
 
         return long_;
     }
-    inline scalar to_real() const
+    inline f32 to_real() const
     {
         verify_expression();
 
@@ -285,14 +285,14 @@ struct opcode_layout
     {
         return data_ptr;
     }
-    inline cstring to_str(string_segment_ref const& string_seg) const
+    inline std::string_view to_str(string_segment_ref const& string_seg) const
     {
         verify_expression();
 
         if(param_type != type_t::string_)
             Throw(undefined_behavior("invalid string"));
 
-        return string_seg.at(data_ptr).str();
+        return string_seg.at(data_ptr).data;
     }
 
     template<

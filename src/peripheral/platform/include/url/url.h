@@ -16,10 +16,7 @@ struct Url;
 
 struct Path
 {
-    explicit Path(cstring path) : internUrl(path ? path : "")
-    {
-    }
-    explicit Path(CString const& path) : internUrl(path)
+    explicit Path(std::string_view const& path) : internUrl(path)
     {
     }
     Path() : Path(nullptr)

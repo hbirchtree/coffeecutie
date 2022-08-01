@@ -90,7 +90,7 @@ struct rendertarget_t
         else
 #endif
 #if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
-            if(!m_features.es20)
+            if(m_features.framebuffer_texture)
         {
             cmd::framebuffer_texture(
                 group::framebuffer_target::draw_framebuffer,
@@ -149,11 +149,14 @@ struct rendertarget_t
 #if GLEAM_MAX_VERSION >= 0x450
         if(m_features.dsa)
             cmd::clear_named_framebufferfv(
-                m_handle, group::buffer::color, i, Span<const f32>(&color[0], 4));
+                m_handle,
+                group::buffer::color,
+                i,
+                Span<const f32>(&color[0], 4));
         else
 #endif
 #if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
-            if(!m_features.es20)
+            if(m_features.clearbuffer)
             cmd::clear_bufferfv(
                 group::buffer::color, i, Span<const f32>(&color[0], 4));
         else
@@ -176,7 +179,7 @@ struct rendertarget_t
         else
 #endif
 #if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
-            if(!m_features.es20)
+            if(m_features.clearbuffer)
             cmd::clear_bufferfv(group::buffer::depth, 0, SpanOne(depthf));
         else
 #endif
@@ -197,7 +200,7 @@ struct rendertarget_t
         else
 #endif
 #if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
-            if(!m_features.es20)
+            if(m_features.clearbuffer)
             cmd::clear_bufferiv(group::buffer::stencil, 0, SpanOne(stencil));
         else
 #endif
@@ -221,7 +224,10 @@ struct rendertarget_t
         if(m_features.dsa)
         {
             cmd::clear_named_framebufferfv(
-                m_handle, group::buffer::color, i, Span<const f32>(&color[0], 4));
+                m_handle,
+                group::buffer::color,
+                i,
+                Span<const f32>(&color[0], 4));
             cmd::clear_named_framebufferfi(
                 m_handle,
                 static_cast<group::buffer>(GL_DEPTH_STENCIL),
@@ -230,7 +236,7 @@ struct rendertarget_t
                 stencil);
         } else
 #endif
-            if(!m_features.es20)
+            if(m_features.clearbuffer)
 #if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
         {
             cmd::clear_bufferfv(
@@ -321,7 +327,7 @@ inline void detail::rendertarget_copy(
         cmd::bind_framebuffer(
             group::framebuffer_target::framebuffer, source.m_handle);
 #if GLEAM_MAX_VERSION >= 0x200 || GLEAM_MAX_VERSION_ES >= 0x300
-        if(!features.es20)
+        if(features.readdraw_buffers)
             cmd::read_buffer(
                 convert::to<group::read_buffer_mode>(srcAttachment, srci));
 #endif

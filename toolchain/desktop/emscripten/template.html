@@ -9,13 +9,15 @@
         padding: none;
         color: #D0D0D0;
         background-color: #101010;
+        display: flex;
+        flex-direction: column;
       }
 
-      .emscripten { padding-right: 0; margin-left: 1em; margin-right: auto; display: block; }
-      div.emscripten { text-align: center; }      
+      .emscripten { padding-right: 0; display: block; }
+      div.emscripten { text-align: center; }
       div.emscripten_border { border: 1px solid black; }
       /* the canvas *must not* have any border or padding, or mouse coords will be wrong */
-      canvas.emscripten { border: 0px none; margin-left: auto; background-color: black; }
+      canvas.emscripten { border: 0px none; background-color: black; }
 
       #emscripten_logo {
         display: inline-block;

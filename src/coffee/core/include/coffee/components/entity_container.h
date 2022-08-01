@@ -211,7 +211,7 @@ struct EntityContainer : non_copy
     }
 
     template<typename OutputType>
-    void register_subsystem(UqPtr<OutputType>&& sys)
+    void register_subsystem(UqPtr<typename OutputType::type>&& sys)
     {
         static const type_hash type_id = typeid(OutputType).hash_code();
 
@@ -230,7 +230,7 @@ struct EntityContainer : non_copy
         typename OutputType,
         typename AllocType = typename OutputType::type,
         typename... Args>
-    requires std::is_convertible_v<AllocType*, OutputType*>
+    requires std::is_convertible_v<AllocType*, typename OutputType::type*>
     AllocType& register_subsystem_inplace(Args... args)
     {
         register_subsystem<OutputType>(
@@ -320,19 +320,17 @@ struct EntityContainer : non_copy
         return *it->second;
     }
 
-    template<typename ComponentContainerType>
-    ComponentContainerType& container_cast()
+    template<is_component_tag ComponentType>
+    typename ComponentType::type& container_cast()
     {
-        using component_type = typename ComponentContainerType::tag_type;
-
-        const type_hash type_id = typeid(component_type).hash_code();
+        const type_hash type_id = typeid(ComponentType).hash_code();
 
         auto it = components.find(type_id);
 
         if(it == components.end())
             Throw(undefined_behavior("component not found"));
 
-        auto ptr = C_DCAST<ComponentContainerType>(it->second.get());
+        auto ptr = C_DCAST<typename ComponentType::type>(it->second.get());
 
         if(ptr)
             return *ptr;
@@ -340,7 +338,7 @@ struct EntityContainer : non_copy
             Throw(undefined_behavior("component not found"));
     }
 
-    template<is_component ComponentType>
+    template<is_component_tag ComponentType>
     ComponentContainer<ComponentType>& container()
     {
         using container_t = ComponentContainer<ComponentType>;
@@ -352,22 +350,20 @@ struct EntityContainer : non_copy
         if(it == components.end())
             Throw(undefined_behavior("component not found"));
 
-        return *C_FCAST<container_t*>(it->second.get());
+        return *C_DCAST<container_t>(it->second.get());
     }
 
     template<is_subsystem SubsystemType>
-    SubsystemType& subsystem_cast()
+    typename SubsystemType::type& subsystem_cast()
     {
-        using tag_type = SubsystemType;
-
-        const type_hash type_id = typeid(tag_type).hash_code();
+        const type_hash type_id = typeid(SubsystemType).hash_code();
 
         auto it = subsystems.find(type_id);
 
         if(it == subsystems.end())
             Throw(undefined_behavior("subsystem not found"));
 
-        auto ptr = C_DCAST<SubsystemType>(it->second.get());
+        auto ptr = C_DCAST<typename SubsystemType::type>(it->second.get());
 
         if(ptr)
             return *ptr;
@@ -376,10 +372,8 @@ struct EntityContainer : non_copy
     }
 
     template<is_tag_type TagType>
-    Subsystem<TagType>& subsystem()
+    SubsystemBase& subsystem()
     {
-        using subsystem_t = Subsystem<TagType>;
-
         const type_hash type_id = typeid(TagType).hash_code();
 
         auto it = subsystems.find(type_id);
@@ -387,7 +381,7 @@ struct EntityContainer : non_copy
         if(it == subsystems.end())
             Throw(undefined_behavior("subsystem not found"));
 
-        return *C_FCAST<subsystem_t*>(it->second.get());
+        return *it->second;
     }
 
     template<is_tag_type Service>
@@ -411,8 +405,8 @@ struct EntityContainer : non_copy
     template<class BaseType>
     auto services_with(reverse_query_t);
 
-    template<is_tag_type ComponentType>
-    typename ComponentType::type* get(u64 id)
+    template<is_component_tag ComponentType>
+    typename ComponentType::value_type* get(u64 id)
     {
         return container<ComponentType>().get(id);
     }

@@ -4,6 +4,7 @@
 #include <peripherals/constants.h>
 #include <peripherals/libc/output_ops.h>
 #include <peripherals/stl/time_types.h>
+#include <peripherals/stl/time_formatting.h>
 #include <peripherals/typing/enum/debug/severity.h>
 #include <platforms/environment.h>
 
@@ -47,7 +48,7 @@ requires compile_info::platform::is_android
     }
 
     __android_log_print(
-        flag, tag.data(), "%.*s", formatted.size(), formatted.data());
+        flag, tag.data(), "%s", formatted.data());
 #endif
 }
 

@@ -12,7 +12,7 @@
 #include <coffee/core/CStringFormat>
 
 #define DISCORD_EP "https://cdn.discordapp.com"
-#define DISCORD_TAG "DiscordRPC"
+#define DISCORD_TAG "DiscordRPC: "
 
 namespace Coffee {
 namespace Discord {
@@ -159,7 +159,7 @@ void DiscordService::initialize(DiscordOptions const& options)
 
         auto& delegate = GetService().delegate();
 
-        cTag(8, DISCORD_TAG, "Disconnecting: {0}", message);
+        cVerbose(8, DISCORD_TAG "Disconnecting: {0}", message);
 
         if(delegate.disconnected)
             delegate.disconnected(ec);
@@ -171,7 +171,7 @@ void DiscordService::initialize(DiscordOptions const& options)
 
         auto& delegate = GetService().delegate();
 
-        cTag(8, DISCORD_TAG, "Error occurred: {0}", message);
+        cVerbose(8, DISCORD_TAG "Error occurred: {0}", message);
 
         if(delegate.error)
             delegate.error(ec);
@@ -216,7 +216,7 @@ void DiscordService::initialize(DiscordOptions const& options)
 
 DiscordService::~DiscordService()
 {
-    cTag(8, DISCORD_TAG, "Unloading Discord");
+    cVerbose(8, DISCORD_TAG "Unloading Discord");
     Discord_Shutdown();
 }
 

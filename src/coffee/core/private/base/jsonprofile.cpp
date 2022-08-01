@@ -70,12 +70,15 @@ struct ProfileWriter : GlobalState
     ShPtr<GlobalState>             threadState;
     ShPtr<platform::info::AppData> appData;
     AtomicUInt64                   event_count;
+    bool                           block_writes;
 
     virtual ~ProfileWriter();
 
-    FORCEDINLINE void write(BytesConst&& data)
+    FORCEDINLINE void write(BytesConst&& data, bool blockable_write = false)
     {
-        if(auto error = platform::file::write(logfile, data))
+        if(block_writes && blockable_write)
+            return;
+        if(auto error = platform::file::write(logfile, data); error.has_value())
             return;
     }
 };
@@ -84,6 +87,8 @@ ProfileWriter::~ProfileWriter()
 {
     if constexpr(!compile_info::profiler::enabled)
         return;
+
+    block_writes = true;
 
     auto thread_name = Coffee::Strings::fmt(
         R"({"name":"process_name","ph":"M","pid":1,"args":{"name":"{0}"}},)",
@@ -109,7 +114,7 @@ ProfileWriter::~ProfileWriter()
         write(BytesConst::ofContainer(out));
     }
 
-    write(BytesConst::ofString(R"({}],)"));
+    write(BytesConst::ofString("{}],"));
 
     CString chromeInfo;
     Coffee::Profiling::ExportChromeTracerData(chromeInfo);
@@ -125,6 +130,7 @@ ProfileWriter::~ProfileWriter()
      *    This is also more compatible with the Chrome Trace Format.
      */
     write(*BytesConst::ofContainer(chromeInfo).at(1));
+    write(BytesConst::ofString("}"));
 
     logfile = {};
 }
@@ -206,7 +212,7 @@ void Push(profiling::ThreadState& tdata, profiling::DataPoint const& point)
 
     event = str::transform::printclean(event);
 
-    profileData->write(Bytes::ofContainer(event));
+    profileData->write(Bytes::ofContainer(event), true);
     profileData->event_count++;
 }
 

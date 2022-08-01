@@ -115,15 +115,15 @@ using namespace std::this_thread;
 #endif
 
 extern bool    SetName(CString const& name);
-extern CString GetName();
+extern std::string_view GetName();
 } // namespace CurrentThread
 
 namespace Threads {
 extern bool SetName(Thread& t, CString const& name);
 extern bool SetName(ThreadId::Hash const& t, CString const& name);
 
-extern CString GetName(Thread& t);
-extern CString GetName(ThreadId::Hash const& t);
+extern std::string_view GetName(Thread& t);
+extern std::string_view GetName(ThreadId::Hash t);
 
 extern Map<ThreadId::Hash, CString> GetNames(
     platform::GlobalState* context = nullptr);
@@ -133,7 +133,7 @@ FORCEDINLINE bool ThreadSetName(Thread& t, CString const& name)
 {
     return Threads::SetName(t, name);
 }
-FORCEDINLINE CString ThreadGetName(Thread& t)
+FORCEDINLINE std::string_view ThreadGetName(Thread& t)
 {
     return Threads::GetName(t);
 }
@@ -142,7 +142,7 @@ FORCEDINLINE bool ThreadSetName(ThreadId::Hash t, CString const& name)
 {
     return Threads::SetName(t, name);
 }
-FORCEDINLINE CString ThreadGetName(ThreadId::Hash t)
+FORCEDINLINE std::string_view ThreadGetName(ThreadId::Hash t)
 {
     return Threads::GetName(t);
 }

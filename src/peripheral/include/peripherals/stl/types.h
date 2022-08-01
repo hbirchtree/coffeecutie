@@ -1,8 +1,8 @@
 #pragma once
 
 #include "standard_exceptions.h"
-#include <peripherals/identify/compiler/variable_attributes.h>
 #include <peripherals/identify/compiler/function_inlining.h>
+#include <peripherals/identify/compiler/variable_attributes.h>
 #include <peripherals/identify/quirks.h>
 #include <peripherals/identify/system.h>
 #include <peripherals/stl/constructors.h>
@@ -33,7 +33,7 @@
 #include <system_error>
 #include <type_traits>
 
-#include <tinyutf8.h>
+#include <tinyutf8/tinyutf8.h>
 
 #if __cplusplus >= 201703L && C_HAS_INCLUDE(<optional>)
 #include <optional>
@@ -53,6 +53,13 @@ using CWString = std::wstring;
 using String   = CString;
 using WString  = CWString;
 using U8String = tiny_utf8::utf8_string;
+
+using u8string  = tiny_utf8::utf8_string;
+using u16string = std::basic_string<char16_t>;
+
+using string_view    = std::string_view;
+using u8string_view  = std::basic_string_view<char8_t>;
+using u16string_view = std::basic_string_view<char16_t>;
 
 #if defined(COFFEE_NO_THREADLIB)
 struct Mutex
@@ -521,12 +528,9 @@ static inline auto slice_num(
 
 struct non_copy
 {
+    non_copy() = default;
     C_MOVE_CONSTRUCTOR(non_copy);
     C_DELETE_COPY_CONSTRUCTOR(non_copy);
-
-    non_copy()
-    {
-    }
 };
 
 template<typename IteratorType>
@@ -755,103 +759,8 @@ struct nested_empty_error_code
     using nested_error_type = NestedError;
 };
 
-#if __cplusplus >= 201703L && C_HAS_INCLUDE(<optional>)
 template<typename T>
 using Optional = std::optional<T>;
-#else
-using bad_optional_access = undefined_behavior;
-
-template<typename T>
-struct Optional
-{
-    constexpr Optional() : valid(false)
-    {
-    }
-    constexpr Optional(T&& value) : m_value(std::move(value)), valid(true)
-    {
-    }
-
-    constexpr T& operator->() &
-    {
-        if(!valid)
-            Throw(bad_optional_access("invalid optional"));
-
-        return m_value;
-    }
-
-    constexpr T const& operator->() const&
-    {
-        if(!valid)
-            Throw(bad_optional_access("invalid optional"));
-
-        return m_value;
-    }
-
-    constexpr T& operator*() &
-    {
-        if(!valid)
-            Throw(bad_optional_access("invalid optional"));
-
-        return m_value;
-    }
-
-    constexpr T const& operator*() const&
-    {
-        if(!valid)
-            Throw(bad_optional_access("invalid optional"));
-
-        return m_value;
-    }
-
-    constexpr T&& operator*() &&
-    {
-        if(!valid)
-            Throw(bad_optional_access("invalid optional"));
-
-        return std::move(m_value);
-    }
-
-    constexpr T const&& operator*() const&&
-    {
-        if(!valid)
-            Throw(bad_optional_access("invalid optional"));
-
-        return std::move(m_value);
-    }
-
-    constexpr operator bool() const
-    {
-        return valid;
-    }
-
-    constexpr T const& value() const&
-    {
-        if(!valid)
-            Throw(bad_optional_access("invalid optional"));
-
-        return m_value;
-    }
-
-    constexpr T& value() &
-    {
-        if(!valid)
-            Throw(bad_optional_access("invalid optional"));
-
-        return m_value;
-    }
-
-    constexpr Optional& operator=(T&& v)
-    {
-        m_value = std::move(v);
-        valid   = true;
-
-        return *this;
-    }
-
-    T    m_value;
-    bool valid;
-};
-#endif
 
 template<typename T>
 inline ShPtr<T> unwrap_ptr(WkPtr<T> const& ptr)

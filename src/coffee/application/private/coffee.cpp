@@ -182,7 +182,10 @@ FORCEDINLINE void PrintArchitectureInfo()
         compile_info::compiler::version_str,
         compile_info::architecture);
     cOutputPrint("Executing on {0}", info::system_name());
-    cOutputPrint("Device: {0}", SysInfo::DeviceName());
+    if(auto device = info::device::device(); device.has_value())
+        cOutputPrint("Device: {0} {1}",
+                     device.value().first,
+                     device.value().second);
 }
 
 FORCEDINLINE void PrintHelpInfo(args::ArgumentParser const& arg)
@@ -302,7 +305,7 @@ i32 CoffeeMain(MainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
     State::SetInternalThreadState(State::CreateNewThreadState());
 
     /* Create initial RuntimeQueue context for the user */
-    RuntimeQueue::SetQueueContext(RuntimeQueue::CreateContext());
+    rq::runtime_queue::SetQueueContext(rq::runtime_queue::CreateContext());
 
 #if defined(COFFEE_CUSTOM_EXIT_HANDLING)
     libc::signal::register_atexit([]() {
@@ -499,10 +502,11 @@ void generic_stacktrace(int sig)
     fprintf(stderr, "signal encountered:\n");
     fprintf(stderr, " >> %s\n", sig_string);
 
-    platform::stacktrace::print_frames(
-        platform::stacktrace::frames(),
-        typing::logging::fprintf_logger,
-        stack_writer);
+    if constexpr(platform::stacktrace::supports_stacktrace)
+        platform::stacktrace::print_frames(
+            platform::stacktrace::frames(),
+            typing::logging::fprintf_logger,
+            stack_writer);
 
     posix::proc::send_sig(getpid(), libc::signal::sig::kill);
 }
@@ -656,7 +660,7 @@ int PerformDefaults(ArgumentParser& parser, ArgumentResult& args)
         }
     }
 
-    for(auto arg : args.arguments)
+    for(auto const& arg : args.arguments)
     {
         if(arg.first == "resource_prefix")
 #if !COFFEE_FIXED_RESOURCE_DIR
@@ -666,7 +670,7 @@ int PerformDefaults(ArgumentParser& parser, ArgumentResult& args)
 #endif
     }
 
-    for(auto pos : args.positional)
+    for(auto const& pos : args.positional)
     {
         if(pos.first == "resource_prefix")
             file::ResourcePrefix(pos.second.c_str());

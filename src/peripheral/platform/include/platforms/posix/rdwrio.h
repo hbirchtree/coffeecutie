@@ -42,6 +42,7 @@ FORCEDINLINE result<mem_chunk<char>, posix_error> read(
 
     auto  output = mem_chunk<char>::withSize(size);
     auto& view   = output.view;
+    auto ptr = view.data();
 
     detail::scoped_offset _(file, offset);
 
@@ -54,11 +55,17 @@ FORCEDINLINE result<mem_chunk<char>, posix_error> read(
         if(auto read_count = ::read(file, view.data() + i, chunk);
            read_count < 0)
             return failure(common::posix::get_error());
+        else if(read_count < chunk)
+        {
+            /* Special case when file size is unknown */
+            output.resize(read_count);
+            break;
+        }
         else
             i += C_CAST<szptr>(read_count);
     }
 
-    return success(output);
+    return success(std::move(output));
 }
 
 FORCEDINLINE Optional<posix_error> write(

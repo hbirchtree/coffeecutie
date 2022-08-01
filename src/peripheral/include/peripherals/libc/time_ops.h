@@ -1,10 +1,10 @@
 #pragma once
 
+#include <ctime>
+
 #include <peripherals/identify/identify.h>
 #include <peripherals/libc/string_ops.h>
 #include <peripherals/stl/types.h>
-
-#include <ctime>
 
 namespace libc {
 namespace time {

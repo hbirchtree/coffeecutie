@@ -9,6 +9,26 @@
 
 namespace gleam {
 
+constexpr libc_types::i32 invalid_uniform = -1;
+using uniform_key = std::pair<std::string_view, libc_types::i32>;
+
+template<typename... UType>
+using uniform_list =
+    std::tuple<std::pair<uniform_key, semantic::Span<UType>>...>;
+
+template<typename... UType>
+inline auto make_uniform_list(
+    typing::graphics::ShaderStage stage,
+    std::pair<uniform_key, semantic::Span<UType>>&&... uniforms)
+{
+    return std::make_tuple<
+        typing::graphics::ShaderStage,
+        std::pair<uniform_key, semantic::Span<UType>>...>(
+        std::move(stage), std::move(uniforms)...);
+}
+
+struct sampler_t;
+
 struct draw_command
 {
     using vertex_type =
@@ -23,6 +43,14 @@ struct draw_command
 #else
         null_query_t;
 #endif
+    using sampler_data_t = std::vector<std::tuple<
+        typing::graphics::ShaderStage,
+        uniform_key,
+        std::shared_ptr<sampler_t>>>;
+    using buffer_data_t  = std::vector<std::tuple<
+        typing::graphics::ShaderStage,
+        uniform_key,
+        std::shared_ptr<sampler_t>>>;
 
     stl_types::WkPtr<program_t>   program;
     stl_types::WkPtr<vertex_type> vertices;
@@ -54,9 +82,8 @@ struct draw_command
 
     stl_types::WkPtr<query_type> conditional_query;
 
-    int uniforms;
-    int buffers;
-    int samplers;
+    sampler_data_t samplers;
+    buffer_data_t  buffers;
 };
 
 } // namespace gleam

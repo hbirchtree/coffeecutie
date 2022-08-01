@@ -40,18 +40,28 @@ struct TablePrinter_Basic
         for(szptr i = 0; i < num; i++)
         {
             T const& ref = val[i];
-            CString  v   = Strings::cStringFormat("{0}", ref);
+            auto     v   = std::to_string(ref);
             vec.push_back(v);
         }
         return vec;
     }
 
     template<typename T>
+    requires (!std::is_same_v<T, const char*>)
     STATICINLINE Column GenColumn(Vector<T> const& col)
     {
         Column vec;
         for(T const& v : col)
-            vec.push_back(Strings::cStringFormat("{0}", v));
+            vec.push_back(std::to_string(v));
+        return vec;
+    }
+    template<typename T>
+    requires (std::is_same_v<T, const char*>)
+    STATICINLINE Column GenColumn(Vector<T> const& col)
+    {
+        Column vec;
+        for(T const& v : col)
+            vec.push_back(v);
         return vec;
     }
 

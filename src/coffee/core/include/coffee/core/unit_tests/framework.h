@@ -48,11 +48,8 @@ struct StartupMessage
     {
         if constexpr(!compile_info::lowfat_mode)
         {
-            using Coffee::DebugFun::OutputPrinter;
-            using Coffee::DebugFun::Severity;
-
-            OutputPrinter::fprintf_platform(
-                stderr, msg, Severity::Information, 0, 0);
+            Coffee::Logging::log(
+                stderr, "Test", msg, semantic::debug::Severity::Information);
         } else
             fprintf(stderr, "TESTING: %s\n", msg);
     }

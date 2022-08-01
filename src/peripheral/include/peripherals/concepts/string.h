@@ -16,4 +16,10 @@ concept is_string =
     { &v[0] };
 };
 
+template<typename T>
+concept is_string_container = requires(T v)
+{
+    is_string<decltype(v.data())>;
+};
+
 }

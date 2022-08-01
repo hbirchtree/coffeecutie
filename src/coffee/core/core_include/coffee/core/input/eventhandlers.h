@@ -16,60 +16,23 @@ namespace Coffee {
 namespace Display {
 namespace EventHandlers {
 
-namespace detail {
-
-#if defined(FEATURE_ENABLE_ComponentApp)
-void closeWindow(comp_app::interfaces::Windowing* window)
-{
-    window->close();
-}
-void setState(comp_app::interfaces::Windowing* window, Properties::State state)
-{
-    window->setState(state);
-}
-Properties::State getState(comp_app::interfaces::Windowing* window)
-{
-    return window->state();
-}
-
-using WindowPtr    = comp_app::detail::ServiceRef<comp_app::Windowing>;
-using WindowManPtr = comp_app::detail::ServiceRef<comp_app::Windowing>;
-#else
-void closeWindow(WindowApplication* window)
-{
-    window->closeWindow();
-}
-void setState(WindowManagerClient* window, Properties::State state)
-{
-    window->setWindowState(state);
-}
-u32 getState(WindowManagerClient* window)
-{
-    return window->windowState();
-}
-
-using WindowPtr    = WkPtr<WindowApplication>;
-using WindowManPtr = WkPtr<WindowManagerClient>;
-#endif
-
-} // namespace detail
-
 using namespace Input;
 
-template<class GLM>
 struct WindowResize
 {
     using event_type = ResizeEvent;
 
-    WindowResize()
+    WindowResize(Function<void(u32, u32)>&& action) : m_action(std::move(action))
     {
     }
 
     void operator()(Event const&, ResizeEvent const* rev)
     {
-        Rect64 view(0, 0, rev->w, rev->h);
-        GLM::DefaultFramebuffer()->resize(0, view);
+        m_action(rev->w, rev->h);
     }
+
+  private:
+    Function<void(u32, u32)> m_action;
 };
 
 struct OnQuit
@@ -82,7 +45,7 @@ struct OnKey
     static constexpr InputCode key = Key;
 };
 
-template<typename Event, typename WindowAppPtr = detail::WindowPtr>
+template<typename Event>
 struct ExitOn
 {
     using event_type = typename std::conditional<
@@ -90,7 +53,7 @@ struct ExitOn
         Input::BaseEvent<CIEvent::QuitSign>,
         CIKeyEvent>::type;
 
-    ExitOn(WindowAppPtr renderer) : m_renderer(renderer)
+    ExitOn(Function<void()>&& action) : m_action(action)
     {
     }
 
@@ -102,10 +65,7 @@ struct ExitOn
     {
         if(e.type != CIEvent::QuitSign)
             return;
-
-        auto ptr = m_renderer.lock();
-        C_PTR_CHECK(ptr);
-        detail::closeWindow(ptr);
+        m_action();
     }
 
     template<
@@ -116,14 +76,11 @@ struct ExitOn
     {
         if(ev->key != Event::key)
             return;
-
-        auto ptr = m_renderer.lock();
-        C_PTR_CHECK(ptr);
-        detail::closeWindow(ptr);
+        m_action();
     }
 
   private:
-    WindowAppPtr m_renderer;
+    Function<void()> m_action;
 };
 
 template<
@@ -167,12 +124,12 @@ struct AnyIKey
     }
 };
 
-template<typename Event, typename WindowManPtr = detail::WindowManPtr>
+template<typename Event>
 struct FullscreenOn
 {
     using event_type = CIKeyEvent;
 
-    FullscreenOn(WindowManPtr renderer) : m_renderer(renderer)
+    FullscreenOn(Function<void(bool)>&& action, Function<bool()>&& getter) : m_action(std::move(action)), m_getter(std::move(getter))
     {
     }
 
@@ -180,15 +137,16 @@ struct FullscreenOn
     {
         if(Event::filter(*keyEvent))
         {
-            if(detail::getState(m_renderer) & Properties::Windowed)
-                detail::setState(m_renderer, Properties::WindowedFullScreen);
+            if(m_getter())
+                m_action(true);
             else
-                detail::setState(m_renderer, Properties::Windowed);
+                m_action(false);
         }
     }
 
   private:
-    WindowManPtr m_renderer;
+    Function<void(bool)> m_action;
+    Function<bool()> m_getter;
 };
 
 } // namespace EventHandlers

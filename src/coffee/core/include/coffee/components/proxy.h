@@ -86,21 +86,21 @@ struct ConstrainedProxy : ContainerProxy
 
     template<typename ComponentType>
     requires type_list::type_in_list_v<ComponentType, ComponentList>
-        FORCEDINLINE typename ComponentType::type* get(u64 id)
+        FORCEDINLINE typename ComponentType::value_type* get(u64 id)
     {
         return m_container.get<ComponentType>(id);
     }
 
     template<typename ComponentType>
     requires type_list::type_in_list_v<ComponentType, ComponentList>
-        FORCEDINLINE typename ComponentType::type const* get(u64 id) const
+        FORCEDINLINE typename ComponentType::value_type const* get(u64 id) const
     {
         return m_container.get<ComponentType>(id);
     }
 
     template<typename ComponentType>
     requires type_list::type_in_list_v<ComponentType, ComponentList>
-        FORCEDINLINE typename ComponentType::type& get()
+        FORCEDINLINE typename ComponentType::value_type& get()
     {
         auto v = get<ComponentType>(current_entity);
 
@@ -113,7 +113,7 @@ struct ConstrainedProxy : ContainerProxy
 
     template<typename ComponentType>
     requires type_list::type_in_list_v<ComponentType, ComponentList>
-        FORCEDINLINE typename ComponentType::type const& get() const
+        FORCEDINLINE typename ComponentType::value_type const& get() const
     {
         auto v = get<ComponentType>(current_entity);
 
@@ -125,17 +125,16 @@ struct ConstrainedProxy : ContainerProxy
     }
 
     template<typename OutputType>
-    requires type_list::type_in_list_v<OutputType, SubsystemList> FORCEDINLINE
-        Subsystem<OutputType>
-    &subsystem()
+    requires type_list::type_in_list_v<OutputType, SubsystemList>
+        FORCEDINLINE SubsystemBase& subsystem()
     {
         return m_container.subsystem<OutputType>();
     }
 
     template<typename SubsystemType>
     requires type_list::
-        type_in_list_v<typename SubsystemType::tag_type, SubsystemList>
-            FORCEDINLINE SubsystemType& subsystem_cast()
+        type_in_list_v<SubsystemType, SubsystemList>
+            FORCEDINLINE typename SubsystemType::type& subsystem_cast()
     {
         return m_container.subsystem_cast<SubsystemType>();
     }

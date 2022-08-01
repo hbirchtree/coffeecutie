@@ -111,7 +111,9 @@ i32 coffee_main(i32, cstring_w*)
     inputs.addEventHandler(
         0,
         EventHandlers::ExitOn<EventHandlers::OnKey<CK_Escape>>(
-            e.service_ref<comp_app::Windowing>()));
+            [&e] {
+                e.service<comp_app::Windowing>()->close();
+            }));
 
     auto displays = e.service<comp_app::DisplayInfo>();
 
@@ -124,11 +126,15 @@ i32 coffee_main(i32, cstring_w*)
 
     C_ERROR_CHECK(ec)
 
-    RuntimeQueue::CreateNewQueue("Main");
+    rq::runtime_queue* queue = nullptr;
+    if(auto queue_ = rq::runtime_queue::CreateNewQueue("Main");
+       queue_.has_error())
+        Throw(rq::runtime_queue_error(rq::to_string(queue_.error())));
+    else
+        queue = queue_.value();
 
-    runtime_queue_error rqec;
-    RuntimeQueue::QueuePeriodic(
-        RuntimeQueue::GetCurrentQueue(rqec),
+    rq::runtime_queue::QueuePeriodic(
+        queue,
         Chrono::milliseconds(100),
         [&e]() {
             auto dump  = e.service<comp_app::ControllerInput>();
@@ -146,8 +152,7 @@ i32 coffee_main(i32, cstring_w*)
                 "Mouse state: {0} {1}",
                 mouse->position().toVector<f32>(),
                 C_CAST<u32>(mouse->buttons()));
-        },
-        rqec);
+        });
 
     struct APIData
     {

@@ -877,58 +877,30 @@ struct scenario
             (script_bytecode_size - sizeof(hsc::script_ref<Bytecode>)) /
             sizeof(hsc::opcode_layout<Bytecode>);
         auto const& script_base = scripts.data(magic)[0].opcode_first();
-        return semantic::mem_chunk<hsc::opcode_layout<Bytecode> const>::From(
+        return semantic::mem_chunk<hsc::opcode_layout<Bytecode> const>::of(
             &script_base, num_opcodes);
     }
     inline string_segment_ref string_segment(magic_data_t const& magic) const
     {
-        constexpr Array<char, 4> terminator = {{0, 0, 0, 0}};
-
-        auto terminator_data =
-            semantic::mem_chunk<char const>::ofContainer(terminator);
-
-        auto string_base = script_string_segment.data(magic);
-        auto end = *string_base.at(string_base.find(terminator_data)->offset);
-
-        u32  num_strings = 0;
-        auto start_ptr   = *string_base.at(0, end.size);
-
-        while(C_OCAST<bool>(start_ptr))
-        {
-            if(start_ptr[0] != 0)
-                num_strings++;
-
-            auto start_ptr_ = start_ptr.find(
-                semantic::mem_chunk<char const>::of(terminator[0]));
-
-            if(!start_ptr_)
-                break;
-
-            start_ptr = *start_ptr.at(start_ptr_->offset);
-
-            if((*start_ptr.find(terminator_data)).offset == 0)
-                break;
-
-            start_ptr = *start_ptr.at(1); // Jump over null-terminator
-        }
-
-        return {semantic::mem_chunk<const char>::of(
-                    &string_base[0], end.size + 1),
-                num_strings};
+        auto string_base_chunk = script_string_segment.data(magic).view;
+        auto string_base       = std::string_view(
+                  string_base_chunk.data(), string_base_chunk.size());
+        return {string_base};
     }
     inline semantic::mem_chunk<hsc::function_declaration const> function_table(
         magic_data_t const& magic) const
     {
         auto string_seg = string_segment(magic);
 
-        auto init_ptr = string_seg.data.data + script_function_table_offset;
+        auto init_ptr = string_seg.data.substr(script_function_table_offset);
         hsc::function_declaration const* func_seg_start = nullptr;
 
         /* TODO: Find out what the true offset is, for now just look for the
          * padding */
         for(auto i : stl_types::Range<u32>(4))
         {
-            func_seg_start = C_RCAST<decltype(func_seg_start)>(init_ptr + i);
+            func_seg_start =
+                C_RCAST<decltype(func_seg_start)>(init_ptr.data() + i);
             if(func_seg_start->padding[0] == 0 &&
                func_seg_start->padding[1] == 0)
                 break;
@@ -938,7 +910,8 @@ struct scenario
             return {};
 
         auto num_functions =
-            (script_string_segment.count - string_seg.data.size) /
+            (&string_seg.data.at(script_string_segment.count - 1) -
+             init_ptr.data()) /
             sizeof(hsc::function_declaration);
 
         for(auto i : stl_types::Range<>(num_functions))
@@ -951,7 +924,7 @@ struct scenario
         if(!num_functions)
             return {};
 
-        return semantic::mem_chunk<hsc::function_declaration const>::From(
+        return semantic::mem_chunk<hsc::function_declaration const>::of(
             func_seg_start, num_functions);
     }
 
@@ -981,7 +954,7 @@ namespace ui {
 
 struct unicode_ref
 {
-    using wide_string = std::basic_string<u16>;
+    using wide_string = stl_types::u16string_view;
 
     u32                         length;
     u32                         padding;

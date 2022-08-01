@@ -24,16 +24,6 @@ void _stbi_write_data(void* ctxt, void* data, int size)
     std::copy(source.begin(), source.end(), std::back_inserter(*target));
 }
 
-inline void DataSetDestr(Bytes& b)
-{
-    Bytes::SetDestr(b, [](Bytes& b) {
-        stbi_image_free(b.data);
-        b.data     = nullptr;
-        b.size     = 0;
-        b.elements = 0;
-    });
-}
-
 namespace stb_templates {
 
 template<typename PixType>
@@ -205,8 +195,6 @@ bool LoadData(
     target->data_owner = mem_chunk<f32>::ofBytes(
         target->data, C_FCAST<szptr>(target->size.area() * target->bpp));
 
-    DataSetDestr(target->data_owner);
-
     if(!target->data)
     {
         ec = STBError::DecodingError;
@@ -223,7 +211,7 @@ image<PixType> Resize(
 {
     using namespace ::enum_helpers;
 
-    Bytes          data = Bytes::Alloc(target.area() * channels);
+    Bytes          data = Bytes::withSize(target.area() * channels);
     image<PixType> out_image;
     stb_error      ec;
 
@@ -396,7 +384,7 @@ bool SaveJPG(Bytes& target, const image_const& src, stb_error& ec, int qual)
 image_float ToFloat(const image_const& image)
 {
     image_float out = image_float::From(
-        Bytes::Alloc(
+        Bytes::withSize(
             C_FCAST<szptr>(image.size.area() * image.bpp) * sizeof(scalar)),
         image.size,
         image.bpp);
@@ -448,30 +436,21 @@ std::string stb_error_category::message(int error_code) const
 Bytes TGA::Save(stb::image_const const& im, stb::stb_error& ec)
 {
     Bytes output;
-
     stb::SaveTGA(output, im, ec);
-    stb::DataSetDestr(output);
-
     return output;
 }
 
 Bytes PNG::Save(stb::image_const const& im, stb::stb_error& ec)
 {
     Bytes output;
-
     Stb::SavePNG(output, im, ec);
-    stb::DataSetDestr(output);
-
     return output;
 }
 
 Bytes JPG::Save(const stb::image_const& src, stb_error& ec, int qual)
 {
     Bytes output;
-
     stb::SaveJPG(output, src, ec, qual);
-    stb::DataSetDestr(output);
-
     return output;
 }
 

@@ -7,83 +7,81 @@
 namespace Coffee {
 namespace Discord {
 
-namespace detail {
-
-struct DiscordData
+struct Subsystem : Components::SubsystemBase
 {
-    ShPtr<DiscordDelegate>           delegate;
-    ShPtr<platform::online::Service> service;
-};
-} // namespace detail
+    using type = Subsystem;
 
-using Tag = Components::TagType<detail::DiscordData>;
-
-struct Subsystem : Components::Globals::ValueSubsystem<Tag>
-{
-    using tag_type = Tag;
-
-    Subsystem(RuntimeQueue* queue, DiscordOptions&& options) :
+    Subsystem(rq::runtime_queue* queue, DiscordOptions&& options) :
         m_discordQueue(queue), m_options(std::move(options))
     {
-        runtime_queue_error ec;
-        m_mainQueue = RuntimeQueue::GetCurrentQueue(ec);
+        if(auto q = rq::runtime_queue::GetCurrentQueue(); q.has_value())
+            m_mainQueue = q.value();
 
-        C_ERROR_CHECK(ec);
-
-        get().delegate   = MkShared<DiscordDelegate>();
-        delegate().ready = [&](Discord::PlayerInfo&& info) {
+        m_delegate        = MkShared<DiscordDelegate>();
+        m_delegate->ready = [this](Discord::PlayerInfo&& info) {
             m_playerInfo = std::move(info);
-            if(!readyWait.mutx.try_lock())
-                readyWait.var.notify_all();
+            m_startAwaiter.set_value();
         };
     }
 
     void start()
     {
-        get().service = CreateService(std::move(m_options), get().delegate);
-        auto _service = get().service;
+        using namespace std::chrono_literals;
 
-        runtime_queue_error ec;
-        RuntimeQueue::QueuePeriodic(
+        if(m_taskId)
+        {
+            rq::runtime_queue::Unblock(m_taskId);
+            return;
+        }
+
+        auto err = rq::runtime_queue::QueueImmediate(
             m_discordQueue,
-            Chrono::milliseconds(100),
-            [_service]() { _service->poll(); },
-            ec);
+            0ms,
+            [this]() {
+            m_service = CreateService(std::move(m_options), m_delegate);
+
+            auto task = [service = m_service]() { service->poll(); };
+            if(auto taskId = rq::runtime_queue::QueuePeriodic(
+                   m_discordQueue, Chrono::milliseconds(100), task);
+               taskId.has_value())
+                m_taskId = taskId.value();
+        });
+        if (err.has_error())
+            Throw(rq::runtime_queue_error("failed to start Discord task"));
+    }
+    void stop()
+    {
+        rq::runtime_queue::Block(m_taskId);
     }
 
     DiscordDelegate& delegate()
     {
-        return *get().delegate;
+        return *m_delegate;
     }
 
     platform::online::Service& service()
     {
-        return *get().service;
+        return *m_service;
     }
 
     platform::online::PresenceDelegate& presence()
     {
-        return *get().service->getPresence();
+        return *m_service->getPresence();
     }
 
     platform::online::GameDelegate& game()
     {
-        return *get().service->getGame();
+        return *m_service->getGame();
     }
 
     platform::online::Service const& service() const
     {
-        return *get().service;
+        return *m_service;
     }
 
-    bool awaitReady(RuntimeTask::clock::duration timeout)
+    std::future<void> startCondition()
     {
-        UqLock lk(readyWait.mutx, std::try_to_lock);
-
-        if(!lk.owns_lock())
-            return true;
-
-        return readyWait.var.wait_for(lk, timeout) == cv_status::no_timeout;
+        return m_startAwaiter.get_future();
     }
 
     PlayerInfo const& playerInfo() const
@@ -91,16 +89,33 @@ struct Subsystem : Components::Globals::ValueSubsystem<Tag>
         return m_playerInfo;
     }
 
-  private:
-    RuntimeQueue*  m_discordQueue;
-    RuntimeQueue*  m_mainQueue;
-    DiscordOptions m_options;
-
-    struct
+    rq::runtime_queue* queue() const
     {
-        CondVar var;
-        Mutex   mutx;
-    } readyWait;
+        return m_discordQueue;
+    }
+
+    template<typename T>
+    auto on_started(std::function<T(Discord::Subsystem&)>&& func)
+    {
+        auto task = rq::dependent_task<void, T>::CreateTask(
+            startCondition(),
+            [this, func] (void*) {
+                return func(*this);
+            });
+        auto output = task->output.get_future();
+        if (rq::runtime_queue::Queue(m_discordQueue, std::move(task)).has_error())
+            return decltype(output){};
+        return output;
+    }
+
+  private:
+    ShPtr<DiscordDelegate>           m_delegate;
+    ShPtr<platform::online::Service> m_service;
+    rq::runtime_queue*               m_discordQueue{nullptr};
+    rq::runtime_queue*               m_mainQueue{nullptr};
+    u64                              m_taskId{0};
+    DiscordOptions                   m_options;
+    std::promise<void>               m_startAwaiter;
 
     PlayerInfo m_playerInfo;
 };

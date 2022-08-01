@@ -7,7 +7,9 @@ struct AInputEvent;
 
 namespace anative {
 
-struct Windowing : comp_app::StaticWindowing, comp_app::AppLoadableService
+struct Windowing : comp_app::interfaces::StaticWindowing,
+                   comp_app::AppService<Windowing, comp_app::Windowing>,
+                   comp_app::AppLoadableService
 {
     virtual void load(entity_container& e, comp_app::app_error& ec) override;
 
@@ -16,7 +18,9 @@ struct Windowing : comp_app::StaticWindowing, comp_app::AppLoadableService
     virtual void setState(comp_app::detail::WindowState state) override;
 };
 
-struct ControllerInput : comp_app::ControllerInput
+struct ControllerInput
+    : comp_app::interfaces::ControllerInput,
+      comp_app::AppService<ControllerInput, comp_app::ControllerInput>
 {
     using type = ControllerInput;
 
@@ -24,7 +28,7 @@ struct ControllerInput : comp_app::ControllerInput
     {
     }
 
-    stl_types::Vector<controller_map> m_cache;
+    stl_types::Vector<controller_map>                m_cache;
     stl_types::Map<libc_types::i32, libc_types::u32> m_mapping;
 
     virtual libc_types::u32       count() const override;
@@ -47,9 +51,7 @@ struct AndroidEventBus : comp_app::AppService<AndroidEventBus>,
     entity_container* m_container;
 };
 
-using Services = comp_app::detail::TypeList<
-    Windowing,
-    ControllerInput,
-    AndroidEventBus>;
+using Services =
+    comp_app::detail::TypeList<Windowing, ControllerInput, AndroidEventBus>;
 
 } // namespace anative

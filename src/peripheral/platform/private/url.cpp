@@ -93,22 +93,12 @@ STATICINLINE SystemPaths GetSystemPaths()
 
 #if defined(COFFEE_ANDROID)
 
-    AndroidForeignCommand cmd;
-    cmd.store_string = {};
+    auto app_info = android::app_info();
 
-    cmd.type = Android_QueryDataPath;
-    CoffeeForeignSignalHandleNA(
-        CoffeeForeign_RequestPlatformData, &cmd, nullptr, nullptr);
+    paths.configDir = app_info.data_path();
 
-    paths.configDir = MkUrl(cmd.store_string.c_str(), RSCA::SystemFile);
-
-    cmd.type = Android_QueryCachePath;
-    CoffeeForeignSignalHandleNA(
-        CoffeeForeign_RequestPlatformData, &cmd, nullptr, nullptr);
-
-    paths.cacheDir = MkUrl(cmd.store_string.c_str(), RSCA::SystemFile);
+    paths.cacheDir = app_info.cache_path();
     paths.tempDir  = paths.cacheDir;
-
 #elif defined(COFFEE_LINUX)
 
     /* Asset directories may be in AppImages or Snaps */

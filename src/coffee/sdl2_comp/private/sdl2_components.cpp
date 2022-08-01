@@ -6,6 +6,7 @@
 #include <coffee/core/CProfiling>
 #include <peripherals/stl/string_casting.h>
 #include <peripherals/typing/enum/pixels/format_transform.h>
+#include <platforms/sysinfo.h>
 
 #include "sdl2events.h"
 
@@ -317,9 +318,41 @@ comp_app::size_2d_t DisplayInfo::size(libc_types::u32 idx) const
     return {rect.w, rect.h};
 }
 
-comp_app::size_2d_t DisplayInfo::physicalSize(libc_types::u32) const
+comp_app::size_2d_t DisplayInfo::physicalSize(libc_types::u32 i) const
 {
-    return {};
+    libc_types::f32 hdpi{1.f}, vdpi{1.f};
+    if(SDL_GetDisplayDPI(i, nullptr, &hdpi, &vdpi) != 0)
+        return {};
+    SDL_DisplayMode mode{};
+    if(SDL_GetCurrentDisplayMode(i, &mode) != 0)
+        return {};
+    return typing::geometry::size_2d<libc_types::f32>{
+        mode.w / hdpi, mode.h / vdpi}
+        .convert<libc_types::i32>();
+}
+
+libc_types::f32 DisplayInfo::dpi(libc_types::u32 i) const
+{
+#if defined(COFFEE_EMSCRIPTEN)
+    return platform::info::device::emscripten::dpi();
+#else
+    libc_types::f32 hdpi{1.f};
+    SDL_GetDisplayDPI(i, nullptr, &hdpi, nullptr);
+    return hdpi;
+#endif
+}
+
+libc_types::f32 DisplayInfo::diagonal(libc_types::u32 i) const
+{
+    libc_types::f32 hdpi{1.f}, vdpi{1.f};
+    if(SDL_GetDisplayDPI(i, nullptr, &hdpi, &vdpi) != 0)
+        return 0.f;
+    SDL_DisplayMode mode{};
+    if(SDL_GetCurrentDisplayMode(i, &mode) != 0)
+        return 0.f;
+    libc_types::f32 h = mode.w / hdpi, w = mode.h / vdpi;
+
+    return std::sqrt(h * h + w * w);
 }
 
 void GLContext::setupAttributes(entity_container& c)

@@ -7,7 +7,7 @@ coffee_application (
     renderer.h
 
     LIBRARIES
-    GLeamRHI_Dynamic
+    GLeamRHI
     DropinRenderer
     Core
     EntComp

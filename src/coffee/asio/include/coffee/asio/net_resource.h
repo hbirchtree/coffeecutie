@@ -88,6 +88,8 @@ struct Resource : semantic::ByteProvider
     u32     responseCode() const;
     BytesConst   data() const;
 
+    Bytes move();
+
     operator BytesConst()
     {
         if(!isResponseReady() && !fetch())

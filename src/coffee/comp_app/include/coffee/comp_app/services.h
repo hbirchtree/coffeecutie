@@ -110,6 +110,8 @@ struct DisplayInfo
     virtual libc_types::u32 currentDisplay() const                  = 0;
     virtual size_2d_t       size(libc_types::u32 idx) const         = 0;
     virtual size_2d_t       physicalSize(libc_types::u32 idx) const = 0;
+    virtual libc_types::f32 dpi(libc_types::u32 idx) const          = 0;
+    virtual libc_types::f32 diagonal(libc_types::u32 idx) const     = 0;
 };
 
 struct SingleDisplayInfo : DisplayInfo
@@ -450,8 +452,8 @@ struct BatteryProvider
         Battery,
     };
 
-    virtual PowerSource     source()     = 0;
-    virtual libc_types::u16 percentage() = 0;
+    virtual PowerSource     source() const     = 0;
+    virtual libc_types::u16 percentage() const = 0;
 };
 
 struct ScreenshotProvider
@@ -625,6 +627,11 @@ struct BasicEventBus : interfaces::BasicEventBus<EType>,
             this->m_handlers.end(),
             &BasicEventBus::sort_handlers);
     }
+};
+
+struct PtrNativeWindowInfoService : interfaces::PtrNativeWindowInfo,
+                                    AppService<PtrNativeWindowInfoService>
+{
 };
 
 } // namespace comp_app

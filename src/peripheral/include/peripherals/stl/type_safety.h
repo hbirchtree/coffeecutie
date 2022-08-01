@@ -128,17 +128,22 @@ using remove_cvref_t = typename remove_cvref<T>::type;
  */
 #if !defined(COFFEE_WINDOWS)
 
-template<
-    typename D,
-    typename T,
-    typename std::enable_if<IS_INT(D) && IS_INT(T)>::type* = nullptr,
-    typename std::enable_if<
-        ((std::numeric_limits<T>::max)() <= (std::numeric_limits<D>::max)()) &&
-        ((std::numeric_limits<T>::min)() >=
-         (std::numeric_limits<D>::min)())>::type*                = nullptr,
-    typename std::enable_if<IS_SIGNED(D) == IS_SIGNED(T)>::type* = nullptr>
+template<typename D, typename T>
+concept is_narrowing_integer_v = std::is_integral_v<D> &&
+    std::is_integral_v<T> &&
+    (std::numeric_limits<T>::max() > std::numeric_limits<D>::max() ||
+     std::numeric_limits<T>::min() < std::numeric_limits<D>::min());
+
+template<typename D, typename T>
+concept is_widening_integer_v = std::is_integral_v<D> &&
+    std::is_integral_v<T> &&
+    (std::numeric_limits<T>::max() <= std::numeric_limits<D>::max() &&
+     std::numeric_limits<T>::min() >= std::numeric_limits<D>::min());
+
+template<typename D, typename T>
+requires is_widening_integer_v<D, T>
 /*!
- * \brief The case where all casting is safe, no downcasting
+ * \brief The case where all casting is safe, no narrowing
  *  or signed-unsigned conversion
  * \param from
  * \return
@@ -148,14 +153,8 @@ static inline D C_FCAST(T from)
     return static_cast<D>(from);
 }
 
-template<
-    typename D,
-    typename T,
-    typename std::enable_if<IS_INT(D) && IS_INT(T)>::type* = nullptr,
-    typename std::enable_if<
-        ((std::numeric_limits<T>::max)() > (std::numeric_limits<D>::max)()) ||
-        ((std::numeric_limits<T>::min)() <
-         (std::numeric_limits<D>::min)())>::type* = nullptr>
+template<typename D, typename T>
+requires is_narrowing_integer_v<D, T>
 /*!
  * \brief If there is a risk of going out of the
  *  range of type D, return the closest value.
@@ -230,101 +229,26 @@ static inline D C_FCAST(T from)
 
 #endif
 
-template<
-    typename D,
-    typename T,
+template<typename D, typename T>
+concept is_pointer_to_integer_cast =
+    std::is_integral_v<D> && std::is_pointer_v<T>;
 
-    typename std::enable_if<IS_PTR(D), T>::type*                      = nullptr,
-    typename std::enable_if<IS_PTR(T), T>::type*                      = nullptr,
-    typename std::enable_if<IS_POD(RP(D)) && IS_POD(RP(T)), T>::type* = nullptr,
-    typename std::enable_if<
-        (IS_CONST(RP(D)) && IS_CONST(RP(T))) ||
-            (!IS_CONST(RP(D)) && !IS_CONST(RP(T))) ||
-            (IS_CONST(RP(D)) && !IS_CONST(RP(T))),
-        T>::type* = nullptr
-
-    >
-/*!
- * \brief Simple reinterpretation of a pointer, does not allow breaking const
- * rules. \param from \return
- */
-static inline D C_FCAST(T from)
+template<typename D, typename T>
+requires(is_pointer_to_integer_cast<D, T>)
+    /*!
+     * \brief For converting pointer to integer type.
+     * \param from
+     * \return
+     */
+    static inline D C_FCAST(T from)
 {
     return reinterpret_cast<D>(from);
 }
 
-template<
-    typename D,
-    typename T,
-
-    typename std::enable_if<IS_INT(D), D>::type* = nullptr,
-    typename std::enable_if<IS_PTR(T), T>::type* = nullptr
-
-    >
-/*!
- * \brief For converting pointer to integer type.
- * \param from
- * \return
- */
-static inline D C_FCAST(T from)
-{
-    return reinterpret_cast<D>(from);
-}
-
-template<
-    typename D,
-    typename T,
-
-    typename std::enable_if<IS_PTR(D), D>::type*    = nullptr,
-    typename std::enable_if<!IS_CONST(D), D>::type* = nullptr,
-
-    typename std::enable_if<IS_CONST(T), D>::type* = nullptr,
-    typename std::enable_if<IS_PTR(T), T>::type*   = nullptr>
-/*!
- * \brief This overload operates on the pointer type. Example:
- * `char* const` -> `char*`
- * \param from
- * \return
- */
-static inline D C_FCAST(T from)
-{
-    using T_not_const = typename std::remove_cv<T>::type;
-    return reinterpret_cast<D>(const_cast<T_not_const>(from));
-}
-
-template<
-    typename D,
-    typename T,
-
-    typename std::enable_if<IS_PTR(D) && IS_PTR(T), D>::type* = nullptr,
-
-    typename std::enable_if<IS_POD(RP(D)) && !IS_CONST(RP(D)), bool>::type* =
-        nullptr,
-    typename std::enable_if<IS_POD(RP(T)) && IS_CONST(RP(T)), bool>::type* =
-        nullptr
-
-    >
-/*!
- * \brief This overload is for the case:
- * `const char*` -> `char*`, operating on the inner type.
- * \param from
- * \return
- */
-static inline D C_FCAST(T from)
-{
-    using T_not_const = typename std::add_pointer<typename std::remove_const<
-        typename std::remove_pointer<T>::type>::type>::type;
-
-    return reinterpret_cast<D>(const_cast<T_not_const>(from));
-}
-
-template<
-    typename D,
-    typename T,
-    typename std::enable_if<
-        std::is_floating_point<D>::value &&
-        std::is_floating_point<T>::value>::type* = nullptr>
-static inline D C_FCAST(T from)
+template<typename D, typename T>
+requires(std::is_floating_point<D>::value&& std::is_floating_point<T>::value)
+    //
+    static inline D C_FCAST(T from)
 {
     return static_cast<D>(from);
 }
@@ -341,17 +265,15 @@ static inline constexpr D C_CAST(T from)
     return static_cast<D>(from);
 }
 
-template<
-    typename D,
-    typename T,
-    typename std::enable_if<std::is_class<T>::value>::type* = nullptr>
-/*!
- * \brief For coercing a class/struct into another type,
- *  such as with `operator T()`
- * \param from
- * \return
- */
-static inline constexpr D C_OCAST(T& from)
+template<typename D, typename T>
+requires(std::is_class_v<T> && !std::is_same_v<T, D>)
+    /*!
+     * \brief For coercing a class/struct into another type,
+     *  such as with `operator T()`
+     * \param from
+     * \return
+     */
+    static inline constexpr D C_OCAST(T& from)
 {
     return static_cast<D>(from);
 }
@@ -409,7 +331,7 @@ struct implements
     typedef int type;
 #else
     typedef typename std::enable_if<
-        std::is_base_of<Interface, Implementation>::value>::type    type;
+        std::is_base_of<Interface, Implementation>::value>::type type;
 #endif
 };
 
@@ -432,7 +354,8 @@ template<typename T>
  */
 struct is_pod
 {
-    static constexpr auto value = std::is_standard_layout_v<T> && std::is_trivial_v<T>;
+    static constexpr auto value =
+        std::is_standard_layout_v<T> && std::is_trivial_v<T>;
     typedef typename std::enable_if<value, T>::type type;
 };
 

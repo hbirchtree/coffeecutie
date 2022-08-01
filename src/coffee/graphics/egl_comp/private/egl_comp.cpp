@@ -295,17 +295,17 @@ comp_app::size_2d_t GraphicsFramebuffer::size() const
     return out;
 }
 
-void GraphicsSwapControls::load(entity_container& p, comp_app::app_error&)
+void GraphicsSwapControl::load(entity_container& p, comp_app::app_error&)
 {
     m_container = &p;
 }
 
-libc_types::i32 GraphicsSwapControls::swapInterval() const
+libc_types::i32 GraphicsSwapControl::swapInterval() const
 {
     return 0;
 }
 
-void GraphicsSwapControls::setSwapInterval(libc_types::i32 interval)
+void GraphicsSwapControl::setSwapInterval(libc_types::i32 interval)
 {
     auto display = m_container->service<DisplayHandle>()->context().display;
 

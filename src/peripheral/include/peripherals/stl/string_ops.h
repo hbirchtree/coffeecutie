@@ -15,7 +15,7 @@
 #include <peripherals/stl/types.h>
 
 #include <cppcodec/base64_default_rfc4648.hpp>
-#include <tinyutf8.h>
+#include <tinyutf8/tinyutf8.h>
 
 namespace stl_types {
 namespace str {
@@ -46,28 +46,6 @@ requires(!std::is_same_v<typename T::value_type, TargetCharT>)
     return std::basic_string<TargetCharT>(from.begin(), from.end());
 }
 } // namespace encode
-
-namespace find {
-
-template<typename CharType>
-FORCEDINLINE bool starts_with(
-    std::basic_string_view<CharType> const& haystack,
-    std::basic_string_view<CharType> const& needle)
-{
-    return haystack.find(needle) == 0;
-}
-
-template<typename CharType>
-FORCEDINLINE bool ends_with(
-    std::basic_string_view<CharType> const& haystack,
-    std::basic_string_view<CharType> const& needle)
-{
-    if(haystack.size() < needle.size())
-        return false;
-    return haystack.find(needle) == (haystack.size() - needle.size());
-}
-
-} // namespace find
 
 template<typename CharType>
 FORCEDINLINE std::basic_string<CharType> encapsulate(
@@ -120,73 +98,55 @@ FORCEDINLINE std::basic_string<CharT> multiply(CharT character, size_t num)
 } // namespace transform
 
 namespace trim {
-#if defined(COFFEE_MSVCXX) && \
-    (__cplusplus >= 201703L || (defined(_HAS_CXX17) && _HAS_CXX17))
-#define NOT_FN std::not_fn
-#else
-#define NOT_FN(s) std::not1(std::ptr_fun<int, int>(s))
-#endif
 
-template<typename CharType>
+template<class StrType>
 /* Reference:
  * http://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring
  */
-FORCEDINLINE std::basic_string<CharType>& left(std::basic_string<CharType>& s)
+FORCEDINLINE StrType left(StrType const& s)
 {
-    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int c) {
-                return !std::isspace(c);
-            }));
-    return s;
+    auto start = std::find_if(
+            s.begin(), s.end(), [](int c) { return !std::isspace(c); });
+    return StrType(
+        s.data() + (start - s.begin()),
+        s.end() - start);
 }
 
-template<typename CharType>
-FORCEDINLINE std::basic_string<CharType>& right(std::basic_string<CharType>& s)
+template<class StrType>
+FORCEDINLINE StrType right(StrType const& s)
 {
-    s.erase(
-        std::find_if(
-            s.rbegin(), s.rend(), [](int c) { return !std::isspace(c); })
-            .base(),
-        s.end());
-    return s;
+    auto end = std::find_if(s.rbegin(), s.rend(), [](int c) {
+                                  return !std::isspace(c);
+                              }).base();
+    return StrType(s.data(), end - s.begin());
 }
 
-#undef NOT_FN
-
-template<typename CharType>
-FORCEDINLINE std::basic_string<CharType>& both(std::basic_string<CharType>& s)
+template<class StrType>
+FORCEDINLINE StrType both(StrType const& s)
 {
     return left(right(s));
 }
 
-template<typename CharType>
-FORCEDINLINE std::basic_string<CharType>& left_zero(
-    std::basic_string<CharType>& s)
+template<class StrType>
+FORCEDINLINE StrType left_zero(StrType const& s)
 {
-    s.erase(0, s.find_first_not_of('0'));
-    return s;
+    auto end = s.find_first_not_of('0');
+    return StrType(s.data() + end, s.size() - end);
 }
 
-template<typename CharType>
-FORCEDINLINE std::basic_string<CharType>& right_zero(
-    std::basic_string<CharType>& s)
+template<class StrType>
+FORCEDINLINE StrType right_zero(StrType const& s)
 {
-    s.erase(s.find_last_not_of('0') + 1, s.size());
-    return s;
+    auto end = s.find_first_not_of('0');
+    return StrType(s.data(), end);
 }
 
-template<typename CharType>
-FORCEDINLINE std::basic_string<CharType>& both_zero(
-    std::basic_string<CharType>& s)
+template<class StrType>
+FORCEDINLINE StrType both_zero(StrType const& s)
 {
     return left_zero(right_zero(s));
 }
 
-template<typename OutCharType, typename InCharType>
-FORCEDINLINE std::basic_string<OutCharType> convertformat(
-    typename std::basic_string<InCharType> const& input)
-{
-    return std::basic_string<OutCharType>(input.begin(), input.end());
-}
 } // namespace trim
 
 namespace convert {
@@ -206,51 +166,9 @@ FORCEDINLINE std::basic_string<CharType> hexify(u64 s, bool trim_zero = false)
     snprintf(&str[0], str.size() + 1, "%llx", ss);
     str.resize(str.size() - 1);
     trim::left_zero(str);
-    if(trim_zero)
-        trim::right_zero(str);
     return str;
 }
 } // namespace convert
-
-namespace print {
-template<typename CharType = char>
-FORCEDINLINE std::basic_string<CharType> pointerify(u64 const& ptr)
-{
-    return "0x" + convert::hexify(ptr);
-}
-template<
-    typename T,
-    typename CharType                                               = char,
-    typename std::enable_if<std::is_pointer<T>::value, bool>::type* = nullptr>
-FORCEDINLINE std::basic_string<CharType> pointerify(T ptr)
-{
-    return pointerify(C_FCAST<u64>(ptr));
-}
-
-template<typename CharType = char>
-FORCEDINLINE std::basic_string<CharType> hexdump(
-    semantic::mem_chunk<const char> const& data,
-    bool                                   spacing      = true,
-    szptr                                  newline_freq = 0)
-{
-    std::basic_string<CharType> out;
-    out.reserve(data.size * 2 /* Hexadec */ + data.size * spacing /* Space */);
-
-    for(szptr i = 0; i < data.size; i++)
-    {
-        out.append("00");
-        sprintf(&out[out.size() - 2], "%02x", data[i]);
-        if(newline_freq == 0 || (i + 1) % newline_freq != 0)
-        {
-            if(spacing)
-                out.append(" ");
-        } else
-            out.append("\n");
-    }
-
-    return out;
-}
-} // namespace print
 
 namespace pad {
 template<typename T>
@@ -407,7 +325,7 @@ FORCEDINLINE std::basic_string<CharType> str(
 namespace split {
 
 template<typename CharType>
-struct spliterator : Iterator<std::forward_iterator_tag, CharType>
+struct spliterator : Iterator<std::forward_iterator_tag, std::basic_string_view<CharType>>
 {
     using string_type = std::basic_string_view<CharType>;
     using sep_type    = CharType;
@@ -444,7 +362,8 @@ struct spliterator : Iterator<std::forward_iterator_tag, CharType>
 
     string_type operator*() const
     {
-        return source.substr(idx, len());
+        u8 adjustment = idx != 0 ? 1 : 0;
+        return source.substr(idx + adjustment, len() - adjustment);
     }
 
     bool operator!=(spliterator const& other) const
@@ -452,17 +371,21 @@ struct spliterator : Iterator<std::forward_iterator_tag, CharType>
         return idx != other.idx;
     }
 
+    operator string_type() const
+    {
+        return *(*this);
+    }
+
   private:
     typename string_type::size_type len() const
     {
-        auto it = next_idx();
-
-        return it - idx;
+        return next_idx() - idx;
     }
 
     typename string_type::size_type next_idx() const
     {
-        return source.find(sep, idx + 1);
+        auto next = source.find(sep, idx + 1);
+        return next;
     }
 
     string_type                     source;
@@ -472,9 +395,9 @@ struct spliterator : Iterator<std::forward_iterator_tag, CharType>
 
 template<typename CharType>
 FORCEDINLINE quick_container<spliterator<CharType>> str(
-    std::basic_string<CharType> const& source, CharType sep)
+    std::basic_string_view<CharType> const& source, CharType sep)
 {
-    using str_type = std::basic_string<CharType>;
+    using str_type = std::basic_string_view<CharType>;
 
     auto it = source.find(sep);
 
@@ -489,6 +412,57 @@ FORCEDINLINE quick_container<spliterator<CharType>> str(
 }
 
 } // namespace split
+
+namespace print {
+template<typename CharType = char>
+FORCEDINLINE std::basic_string<CharType> pointerify(u64 const& ptr)
+{
+    return "0x" + convert::hexify(ptr);
+}
+template<
+    typename T,
+    typename CharType                                               = char,
+    typename std::enable_if<std::is_pointer<T>::value, bool>::type* = nullptr>
+FORCEDINLINE std::basic_string<CharType> pointerify(T ptr)
+{
+    return pointerify(C_FCAST<u64>(ptr));
+}
+
+template<typename CharType = char>
+FORCEDINLINE std::basic_string<CharType> hexdump(
+    semantic::mem_chunk<const char> const& data,
+    bool                                   spacing      = true,
+    szptr                                  newline_freq = 0)
+{
+    std::basic_string<CharType> out;
+    out.reserve(data.size * 2 /* Hexadec */ + data.size * spacing /* Space */);
+
+    for(szptr i = 0; i < data.size; i++)
+    {
+        out.append("00");
+        sprintf(&out[out.size() - 2], "%02x", data[i]);
+        if(newline_freq == 0 || (i + 1) % newline_freq != 0)
+        {
+            if(spacing)
+                out.append(" ");
+        } else
+            out.append("\n");
+    }
+
+    return out;
+}
+
+template<typename CharType = char>
+FORCEDINLINE std::basic_string<CharType> indent(
+    std::basic_string_view<CharType> const& in,
+    std::basic_string_view<CharType> const& padding)
+{
+    std::basic_string<CharType> out = replace::str(in, "\n", padding);
+    out.insert(out.begin(), padding.begin(), padding.end());
+    return out;
+}
+
+} // namespace print
 
 } // namespace str
 } // namespace stl_types

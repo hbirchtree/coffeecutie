@@ -260,6 +260,14 @@ constexpr bool is_unix =
 #endif
     ;
 
+constexpr bool is_mingw =
+#if defined(COFFEE_MINGW64)
+    true
+#else
+    false
+#endif
+    ;
+
 constexpr bool is_windows =
 #if defined(COFFEE_WINDOWS)
     true

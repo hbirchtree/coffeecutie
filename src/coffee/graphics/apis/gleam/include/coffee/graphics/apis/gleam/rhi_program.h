@@ -39,6 +39,14 @@ struct shader_t
 {
     using constants_t = stl_types::Map<stl_types::String, stl_types::String>;
 
+    template<typename CharType>
+    shader_t(
+        semantic::mem_chunk<CharType> const& data,
+        constants_t const&                   constants = {}) :
+        shader_t(data.view, constants)
+    {
+    }
+
     template<class span_data>
     requires semantic::concepts::Span<span_data> shader_t(
         span_data const& data, constants_t const& constants = {}) :
@@ -162,7 +170,9 @@ struct program_t
                 cmd::shader_source(
                     stage_info->m_handle,
                     {
-                        std::string_view(stage_info->m_data.data()),
+                        std::string_view(
+                            stage_info->m_data.data(),
+                            stage_info->m_data.size()),
                     },
                     SpanOne(data_length));
                 cmd::compile_shader(stage_info->m_handle);

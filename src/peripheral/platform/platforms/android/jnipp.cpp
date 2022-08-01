@@ -25,7 +25,7 @@ JNIEnv* GetJNI()
 
 JavaVM* GetVM()
 {
-    return Coffee::coffee_app->activity->vm;
+    return android::activity_manager().window()->activity->vm;
 }
 
 } // namespace jnipp

@@ -11,14 +11,15 @@
 #include "rhi_query.h"
 #include "rhi_rendertarget.h"
 #include "rhi_texture.h"
+#include "rhi_uniforms.h"
 #include "rhi_vertex.h"
 
 #include <peripherals/concepts/graphics_api.h>
 #include <peripherals/concepts/span.h>
 #include <peripherals/stl/types.h>
 
-#include <glw/extensions/KHR_debug.h>
 #include <glw/extensions/EXT_multi_draw_arrays.h>
+#include <glw/extensions/KHR_debug.h>
 
 namespace gleam {
 using stl_types::Optional;
@@ -57,7 +58,7 @@ struct api
     }
 
     template<typename... Args>
-    inline auto alloc_shader(Args... args)
+    inline auto alloc_shader(Args&&... args)
     {
         return MkShared<shader_t>(std::forward<Args>(args)...);
     }
@@ -76,11 +77,11 @@ struct api
                 m_features.texture, T::value, data_type, mipmaps, properties);
         } else if constexpr(T::value == textures::type::d2_array)
         {
-            return MkShared<texture_t>(
+            return MkShared<texture_2da_t>(
                 m_features.texture, T::value, data_type, mipmaps, properties);
         } else if constexpr(T::value == textures::type::d3)
         {
-            return MkShared<texture_t>(
+            return MkShared<texture_3d_t>(
                 m_features.texture, T::value, data_type, mipmaps, properties);
         } else if constexpr(T::value == textures::type::cube)
         {
@@ -153,9 +154,9 @@ struct api
 #endif
     }
 
-    template<typename Dummy = void>
-    requires DrawCommand<draw_command> Optional<Tup<error, String>> submit(
-        draw_command const& command);
+    template<typename... UList>
+    Optional<Tup<error, String>> submit(
+        draw_command const& command, UList&&... uniforms);
 
     using extensions_set = stl_types::Set<String>;
     struct load_options_t
@@ -231,15 +232,22 @@ inline Optional<error> evaluate_draw_state(draw_command const& command)
     return std::nullopt;
 }
 
+inline void unsupported_drawcall()
+{
+    Throw(unimplemented_path("unsupported draw call"));
+}
+
 } // namespace detail
 
-template<typename Dummy>
-requires DrawCommand<draw_command>
-inline Optional<Tup<error, String>> api::submit(draw_command const& command)
+template<typename... UList>
+inline Optional<Tup<error, String>> api::submit(
+    draw_command const& command, UList&&... uniforms)
 {
-    auto const& call = command.call;
-    auto const& data = command.data;
-    auto program = command.program.lock();
+    auto _ = debug().scope(__PRETTY_FUNCTION__);
+
+    auto const& call    = command.call;
+    auto const& data    = command.data;
+    auto        program = command.program.lock();
 
     if constexpr(compile_info::debug_mode)
     {
@@ -248,30 +256,115 @@ inline Optional<Tup<error, String>> api::submit(draw_command const& command)
             return std::make_tuple(*error, String());
     }
 
+    auto                      vao = command.vertices.lock();
+    std::shared_ptr<buffer_t> element_buf;
 #if GLEAM_MAX_VERSION_ES != 0x200
-    auto vao = command.vertices.lock();
-    if(!m_features.es20)
+    if(m_features.vertex.vertex_arrays && m_features.vertex.attribute_binding)
         cmd::bind_vertex_array(vao->m_handle);
     else
-    {
-        //
-    }
 #endif
+    {
+        using buffer_target = group::buffer_target_arb;
+
+        for(auto const& attrib : vao->m_attribute_names)
+            cmd::bind_attrib_location(
+                program->m_handle, attrib.second, attrib.first);
+        for(auto i : stl_types::range<u32>(16))
+            cmd::disable_vertex_attrib_array(i);
+        for(auto const& attrib : vao->m_attributes)
+        {
+            cmd::enable_vertex_attrib_array(attrib.index);
+            cmd::bind_buffer(
+                buffer_target::array_buffer,
+                vao->m_buffers.at(attrib.buffer.id).lock()->m_handle);
+            detail::vertex_setup_attribute(attrib);
+        }
+
+        element_buf = vao->m_element_buffer.lock();
+        cmd::bind_buffer(
+            buffer_target::element_array_buffer, element_buf->m_handle);
+    }
 
     cmd::use_program(program->m_handle);
 
+    detail::apply_uniforms<UList...>(*program, std::move(uniforms)...);
+    if(auto r = detail::apply_samplers(*program, command.samplers);
+       r.has_error())
+    {
+        Throw(undefined_behavior("error when binding samplers"));
+    }
+
     if(call.indexed)
     {
-        cmd::draw_elements(
-            convert::to(call.mode),
-            data.elements.count,
-            convert::to<group::draw_elements_type>(data.elements.type),
-            data.elements.offset);
+#if GLEAM_MAX_VERSION_ES != 0x200
+        if(call.instanced)
+        {
+            if(data.instances.offset == 0 && data.arrays.offset == 0)
+                cmd::draw_elements_instanced(
+                    convert::to(call.mode),
+                    data.elements.count,
+                    convert::to<group::draw_elements_type>(data.elements.type),
+                    data.elements.offset,
+                    data.instances.count);
+            else
+#if GLEAM_MAX_VERSION_ES == 0
+            {
+                cmd::draw_elements_instanced_base_instance(
+                    convert::to(call.mode),
+                    data.elements.count,
+                    convert::to<group::draw_elements_type>(data.elements.type),
+                    data.elements.offset,
+                    data.instances.count,
+                    data.instances.offset);
+            }
+#else
+                detail::unsupported_drawcall();
+#endif
+        } else
+#endif
+            cmd::draw_elements(
+                convert::to(call.mode),
+                data.elements.count,
+                convert::to<group::draw_elements_type>(data.elements.type),
+                data.elements.offset);
     } else
-        cmd::draw_arrays(
-            convert::to(call.mode),
-            data.arrays.offset,
-            data.arrays.count);
+    {
+#if GLEAM_MAX_VERSION_ES != 0x200
+        if(call.instanced)
+        {
+            if(data.instances.offset == 0)
+                cmd::draw_arrays_instanced(
+                    convert::to(call.mode),
+                    data.arrays.offset,
+                    data.arrays.count,
+                    data.instances.count);
+            else
+#if GLEAM_MAX_VERSION_ES == 0
+            {
+                cmd::draw_arrays_instanced_base_instance(
+                    convert::to(call.mode),
+                    data.arrays.offset,
+                    data.arrays.count,
+                    data.instances.count,
+                    data.instances.offset);
+            }
+#else
+                detail::unsupported_drawcall();
+#endif
+        } else
+#endif
+        {
+            cmd::draw_arrays(
+                convert::to(call.mode), data.arrays.offset, data.arrays.count);
+        }
+    }
+
+    if(element_buf)
+    {
+        cmd::bind_buffer(
+            group::buffer_target_arb::element_array_buffer,
+            element_buf->m_handle);
+    }
 
     return std::nullopt;
 }

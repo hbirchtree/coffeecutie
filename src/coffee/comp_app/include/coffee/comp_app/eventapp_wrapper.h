@@ -16,7 +16,10 @@ struct EventapplicationWrapper : AppService<EventapplicationWrapper<R, D>>,
     using type = EventapplicationWrapper<R, D>;
 
     using loop_fun     = stl_types::Function<void(R&, D*)>;
-    using service_type = AppService<EventapplicationWrapper<R, D>>;
+    using service_type = AppService<type>;
+
+    using readable_services = type_safety::empty_list_t;
+    using proxy_type        = detail::restricted::proxy_t<type>;
 
     struct EventConfig : comp_app::Config<EventConfig>
     {
@@ -63,18 +66,21 @@ struct EventapplicationWrapper : AppService<EventapplicationWrapper<R, D>>,
         m_loaded = false;
     }
     virtual void start_restricted(
-        typename service_type::Proxy&,
-        typename service_type::time_point const&) final
-    {
-        if(!m_loaded)
-            return;
-
-        m_config.m_loop(*m_config.m_renderer, m_config.m_data.get());
-    }
+        proxy_type&, typename service_type::time_point const&) final;
 
     EventConfig m_config;
     bool        m_loaded;
 };
+
+template<typename R, typename D>
+void EventapplicationWrapper<R, D>::start_restricted(
+    proxy_type&, const typename service_type::time_point&)
+{
+    if(!m_loaded)
+        return;
+
+    m_config.m_loop(*m_config.m_renderer, m_config.m_data.get());
+}
 
 namespace detail {
 
@@ -132,20 +138,20 @@ struct AutoExecEx
         EventAppType::template register_service<EventAppType>(container);
 
         auto& windowConfig = app->config<WindowConfig>();
-        auto& glConfig = app->config<GLConfig>();
+        auto& glConfig     = app->config<GLConfig>();
 
         Coffee::Display::Properties props;
 
-        props.title = windowConfig.title.c_str();
-        props.size = windowConfig.size.convert<libc_types::u32>();
+        props.title            = windowConfig.title.c_str();
+        props.size             = windowConfig.size.convert<libc_types::u32>();
         props.gl.version.major = glConfig.version.major;
         props.gl.version.minor = glConfig.version.minor;
 
         detail::addContainer<R>(renderer, container);
         presetup(config.m_renderer, config.m_data, props);
 
-        windowConfig.title = props.title;
-        windowConfig.size = props.size.convert<libc_types::i32>();
+        windowConfig.title     = props.title;
+        windowConfig.size      = props.size.convert<libc_types::i32>();
         glConfig.version.major = props.gl.version.major;
         glConfig.version.minor = props.gl.version.minor;
 

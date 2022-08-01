@@ -468,12 +468,7 @@ template<
 FORCEDINLINE PodType from_string(const CharType* s)
 {
     CharType* end_ptr = nullptr;
-
     auto out = convert_ops::to_int<PodType, ConvertMode>(s, &end_ptr);
-
-    if(end_ptr < s + len(s))
-        Throw(std::invalid_argument("not a number"));
-
     return out;
 }
 
@@ -486,12 +481,7 @@ template<
 FORCEDINLINE PodType from_string(const CharType* s)
 {
     CharType* end_ptr = nullptr;
-
     auto out = convert_ops::to_float<PodType>(s, &end_ptr);
-
-    if(end_ptr < s + len(s))
-        Throw(std::invalid_argument("not a number"));
-
     return out;
 }
 

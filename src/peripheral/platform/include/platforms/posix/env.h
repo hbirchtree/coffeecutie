@@ -10,17 +10,18 @@
 
 namespace platform::env::posix {
 
-using stl_types::String;
+using stl_types::failure;
 using stl_types::Optional;
 using stl_types::result;
+using stl_types::String;
 using stl_types::success;
-using stl_types::failure;
 
 using posix_error = int;
 
 FORCEDINLINE Optional<String> var(String const& var)
 {
-#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_APPLE)
+#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_APPLE) || \
+    defined(COFFEE_ANDROID)
     if(auto out = ::getenv(var.c_str()))
 #else
     if(auto out = ::secure_getenv(var.c_str()))

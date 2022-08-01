@@ -6,10 +6,9 @@ namespace emscripten {
 
 struct ControllerInput
     : comp_app::interfaces::ControllerInput,
-      comp_app::AppService<ControllerInput, comp_app::ControllerInput>,
-      comp_app::AppLoadableService
+      comp_app::AppService<ControllerInput, comp_app::ControllerInput>
 {
-    virtual ~ControllerInput();
+    virtual ~ControllerInput() = default;
 
     virtual void start_frame(
         comp_app::detail::ContainerProxy&,
@@ -26,6 +25,16 @@ struct ControllerInput
         controller_map    state;
     };
     stl_types::Map<libc_types::u32, state_t> m_controllers;
+};
+
+struct BatteryProvider
+    : comp_app::interfaces::BatteryProvider,
+      comp_app::AppService<BatteryProvider, comp_app::BatteryProvider>
+{
+    virtual ~BatteryProvider() = default;
+
+    virtual PowerSource     source() const final;
+    virtual libc_types::u16 percentage() const final;
 };
 
 } // namespace emscripten

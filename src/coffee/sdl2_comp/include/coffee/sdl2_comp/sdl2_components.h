@@ -83,7 +83,9 @@ struct DisplayInfo : comp_app::interfaces::DisplayInfo,
     virtual libc_types::u32     count() const final;
     virtual libc_types::u32     currentDisplay() const final;
     virtual comp_app::size_2d_t size(libc_types::u32 idx) const final;
-    virtual comp_app::size_2d_t physicalSize(libc_types::u32) const final;
+    virtual comp_app::size_2d_t physicalSize(libc_types::u32 i) const final;
+    virtual libc_types::f32     dpi(libc_types::u32 i) const final;
+    virtual libc_types::f32     diagonal(libc_types::u32 i) const final;
 };
 
 struct GLContext : comp_app::interfaces::GraphicsContext,

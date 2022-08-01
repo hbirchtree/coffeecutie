@@ -155,8 +155,6 @@ detail::EntityContainer& createContainer()
     CoffeeEventHandle          = [](void*, int event) {
         using namespace Coffee;
 
-        runtime_queue_error ec;
-
         switch(event)
         {
         case CoffeeHandle_Setup: {
@@ -183,10 +181,9 @@ detail::EntityContainer& createContainer()
 
             container->exec();
 
-            auto queue = RuntimeQueue::GetCurrentQueue(ec);
-            if(queue)
-                queue->executeTasks();
-            break;
+            if(auto queue = rq::runtime_queue::GetCurrentQueue();
+               queue.has_value())
+                queue.value()->execute_tasks();
         }
         case CoffeeHandle_Cleanup: {
             DProfContext _("Bundle::Cleanup");
@@ -412,9 +409,7 @@ void addDefaults(
     /* Selection of GL binding */
 #if GLEAM_USE_LINKED
     appInfo.add("gl:loader", "Linked");
-#elif defined(FEATURE_ENABLE_GLADComponent_Dynamic) || \
-    defined(FEATURE_ENABLE_GLADComponent_ESDynamic) || \
-    defined(FEATURE_ENABLE_GLADComponent_ES2Dynamic)
+#elif defined(FEATURE_ENABLE_GLADComponent_Dynamic) || defined(FEATURE_ENABLE_GLADComponent_ESDynamic)
     loader.loadAll<glad::Services>(container, ec);
     C_ERROR_CHECK(ec);
     appInfo.add("gl:loader", "GLAD");
@@ -438,19 +433,47 @@ void addDefaults(
     {
         /* TODO: Conditionally load based on availability */
         loader.loadAll<detail::subsystem_list<
-            comp_app::SysBattery,
-            comp_app::SysCPUTemp,
-            comp_app::SysGPUTemp,
-            comp_app::SysCPUClock,
-            comp_app::SysMemoryStats>>(container, ec);
-        C_ERROR_CHECK(ec);
-
+            comp_app::SysMemoryStats
 #if defined(FEATURE_ENABLE_GLScreenshot)
-        loader.loadAll<detail::TypeList<glscreenshot::ScreenshotProvider>>(
-            container, ec);
-        C_ERROR_CHECK(ec);
+            ,
+            glscreenshot::ScreenshotProvider
 #endif
+            >>(container, ec);
+        C_ERROR_CHECK(ec);
     }
+
+    loader.loadAll<detail::subsystem_list<
+#if defined(FEATURE_ENABLE_EmscriptenComponents)
+        emscripten::BatteryProvider,
+#else
+        comp_app::SysBattery,
+#endif
+        comp_app::SysCPUTemp,
+        comp_app::SysGPUTemp,
+        comp_app::SysCPUClock>>(container, ec);
+    C_ERROR_CHECK(ec);
+
+    if(auto dinfo = container.service<DisplayInfo>())
+        for(auto i : stl_types::Range<>(dinfo->count()))
+        {
+            auto idx = std::to_string(i);
+            appInfo.add(
+                "display:size:" + idx,
+                std::to_string(
+                    static_cast<int>(std::round(dinfo->diagonal(i)))));
+            appInfo.add(
+                "display:dpi:" + idx,
+                std::to_string(static_cast<int>(std::round(dinfo->dpi(i)))));
+            auto res = dinfo->size(i);
+            appInfo.add(
+                "display:resolution:" + idx,
+                std::to_string(res.w) + "x" + std::to_string(res.h));
+        }
+    if(auto winfo = container.service<Windowing>())
+        if(auto size = winfo->size(); size.w != 0)
+            appInfo.add(
+                "window:size",
+                std::to_string(size.w) + "x" + std::to_string(size.h));
 }
 
 } // namespace comp_app
@@ -526,6 +549,8 @@ void PerformanceMonitor::start_restricted(proxy_type& p, time_point const& time)
             timestamp);
     if(battery)
     {
+        using PowerSource = interfaces::BatteryProvider::PowerSource;
+
         json::CaptureMetrics(
             "Battery level",
             MetricVariant::Value,
@@ -534,17 +559,17 @@ void PerformanceMonitor::start_restricted(proxy_type& p, time_point const& time)
         json::CaptureMetrics(
             "Power state",
             MetricVariant::Symbolic,
-            battery->source() ==
-                    interfaces::BatteryProvider::PowerSource::Battery
-                ? 1
-                : 0,
+            battery->source() == PowerSource::Battery ? 1 : 0,
             timestamp);
     }
 
     if(network)
     {
         json::CaptureMetrics(
-            "Network RX", MetricVariant::Value, network->received(), timestamp);
+            "Network RX",
+            MetricVariant::Value,
+            network->received(),
+            timestamp);
         json::CaptureMetrics(
             "Network TX",
             MetricVariant::Value,
@@ -589,9 +614,11 @@ void PerformanceMonitor::end_restricted(proxy_type& p, time_point const& time)
                 encoded.size,
                 RSCA::ReadWrite | RSCA::Persistent | RSCA::NewFile |
                     RSCA::Discard);
-            if(encoded.size == screenshot_file.size)
-                memcpy(
-                    screenshot_file.data, encoded.data, screenshot_file.size);
+            if(encoded.size == screenshot_file.data_rw.size())
+                std::copy(
+                    encoded.view.begin(),
+                    encoded.view.end(),
+                    screenshot_file.data_rw.begin());
             FileUnmap(screenshot_file);
 
             json::CaptureMetrics(

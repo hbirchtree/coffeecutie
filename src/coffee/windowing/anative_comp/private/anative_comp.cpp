@@ -16,11 +16,11 @@ void Windowing::load(entity_container& e, comp_app::app_error& ec)
 {
     using namespace Coffee;
 
-    AndroidForeignCommand cmd;
-    cmd.type = Android_QueryNativeWindow;
+//    AndroidForeignCommand cmd;
+//    cmd.type = Android_QueryNativeWindow;
 
-    CoffeeForeignSignalHandleNA(
-        CoffeeForeign_RequestPlatformData, &cmd, nullptr, nullptr);
+//    CoffeeForeignSignalHandleNA(
+//        CoffeeForeign_RequestPlatformData, &cmd, nullptr, nullptr);
 
     //    if(!cmd.data.ptr)
     //    {
@@ -28,6 +28,15 @@ void Windowing::load(entity_container& e, comp_app::app_error& ec)
     //        ec = comp_app::AppError::NoWindow;
     //        return;
     //    }
+
+    auto window_info = android::activity_manager().window();
+
+    if(!window_info || !window_info->window)
+    {
+        ec = "ANativeWindow not available";
+        ec = comp_app::AppError::NoWindow;
+        return;
+    }
 
     auto windowInfo = e.service<comp_app::PtrNativeWindowInfo>();
     if(!windowInfo)
@@ -37,7 +46,7 @@ void Windowing::load(entity_container& e, comp_app::app_error& ec)
         return;
     }
 
-    windowInfo->window = cmd.data.ptr;
+    windowInfo->window = window_info->window;
 }
 
 comp_app::size_2d_t Windowing::size() const
@@ -214,7 +223,7 @@ void AndroidEventBus::handleKeyEvent(AInputEvent* event)
         switch(button)
         {
         case AKEYCODE_BACK:
-            Coffee::DebugFun::cDebug("Back key");
+            Coffee::cDebug("Back key");
             break;
         default:
             break;
@@ -263,7 +272,7 @@ void AndroidEventBus::handleMotionEvent(AInputEvent* event)
     }
     }
 
-    Coffee::DebugFun::cDebug("Motion event: {0}", event);
+    Coffee::cDebug("Motion event: {0}", event);
 }
 
 void AndroidEventBus::handleInputEvent(AInputEvent* event)
@@ -300,7 +309,7 @@ void AndroidEventBus::handleInputEvent(AInputEvent* event)
 
 void AndroidEventBus::handleWindowEvent(android_app* app, libc_types::i32 event)
 {
-    Coffee::DebugFun::cDebug("App event: {0}", event);
+    Coffee::cDebug("App event: {0}", event);
 }
 
 } // namespace anative

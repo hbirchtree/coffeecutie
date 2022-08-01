@@ -17,30 +17,25 @@ struct ExecLoop
 {
     static int exec(detail::EntityContainer& container)
     {
-        Coffee::runtime_queue_error ec;
-
-        if(!Coffee::RuntimeQueue::GetCurrentQueue(ec))
-            Coffee::RuntimeQueue::CreateNewQueue(
+        rq::runtime_queue* queue = nullptr;
+        if(auto r = rq::runtime_queue::CreateNewQueue(
                         platform::state->GetAppData()->application_name);
-
-        ec.clear();
+           r.has_value())
+            queue = r.value();
+        else
+            Throw(std::move(r.error()));
 
 #if defined(COFFEE_EMSCRIPTEN)
         emscripten_set_main_loop(BundleData::EmscriptenLoop, -1, 1);
 #elif !defined(COFFEE_CUSTOM_EXIT_HANDLING)
         app_error                   appec;
 
-        auto queue = Coffee::RuntimeQueue::GetCurrentQueue(ec);
-        C_ERROR_CHECK(ec);
-
         container.service<AppMain>()->load(container, appec);
 
         while(!container.service<Windowing>()->notifiedClose())
         {
             container.exec();
-
-            if(queue)
-                queue->executeTasks();
+            queue->execute_tasks();
         }
 
         auto services = container.services_with<AppLoadableService>(

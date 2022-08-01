@@ -41,7 +41,7 @@ struct info
 
     inline magic_data_t bsp_magic(magic_data_t const& map_magic) const
     {
-        return {map_magic.base_ptr, magic - offset, map_magic.max_size};
+        return {{map_magic.base_ptr, map_magic.max_size}, magic - offset};
     }
 
     inline section const& to_bsp(magic_data_t const& magic) const

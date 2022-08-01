@@ -20,30 +20,34 @@ i32 coffee_main(i32, cstring_w*)
     C_UNUSED(auto _ = Net::RegisterProfiling());
 #endif
 
-    CString err;
-    return AutoExec<GLM, CDRenderer, RendererState>(
-        [](ShPtr<CDRenderer>    r,
-           ShPtr<RendererState>,
-           Display::Properties& props) {
-            props.gl.flags |= GL::Properties::GLDebug | GL::Properties::GLVSync;
+    auto& entities = comp_app::createContainer();
+    auto& loader = comp_app::AppLoader::register_service(entities);
 
-            /* Install some standard event handlers */
-            r->installEventHandler(
-                EHandle<Event>::MkHandler(WindowResize<GLM>()));
-            r->installEventHandler(EHandle<CIEvent>::MkHandler(
-                ExitOn<OnKey<Input::CK_Escape>>(r->window())));
-            r->installEventHandler(
-                EHandle<CIEvent>::MkHandler(ExitOn<OnQuit>(r->window())));
-            r->installEventHandler(EHandle<CIEvent>::MkHandler(
-                FullscreenOn<AnyIKey<
-                    KeyCombo<
-                        CK_EnterNL,
-                        CIKeyEvent::KeyModifiers::RAltModifier>,
-                    KeyCombo<CK_F11>>>(r->window())));
-        },
+    comp_app::configureDefaults(loader);
+
+    {
+        auto& window = loader.config<comp_app::WindowConfig>();
+        window.title = "Hello World";
+    }
+
+    comp_app::app_error ec;
+    comp_app::addDefaults(entities, loader, ec);
+    C_ERROR_CHECK(ec)
+
+    auto& input = *entities.service<comp_app::BasicEventBus<CIEvent>>();
+
+//    input.addEventHandler(input.default_prio, EHandle<Event>::MkHandler(WindowResize<>()));
+    input.addEventHandler(1024, ExitOn<OnKey<Input::CK_Escape>>([&entities]() {
+        entities.service<comp_app::Windowing>()->close();
+    }));
+
+    comp_app::AppContainer<RendererState>::addTo(
+        entities,
         SetupRendering,
         RendererLoop,
         RendererCleanup);
+
+    return comp_app::ExecLoop<comp_app::BundleData>::exec(entities);
 }
 
 COFFEE_APPLICATION_MAIN(coffee_main)

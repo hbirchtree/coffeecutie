@@ -25,14 +25,14 @@ void Resource::RscData_deleter::operator()(Resource::ResourceData* data)
     delete data;
 }
 
-Resource::Resource(cstring rsrc, RSCA acc) :
-    Resource(MkUrl(rsrc, acc & RSCA::StorageMask))
+Resource::Resource(std::string_view rsrc, RSCA acc) :
+    Resource(MkUrl(String(rsrc.begin(), rsrc.end()), acc & RSCA::StorageMask))
 {
 }
 
 Resource::Resource(const Url& url) :
     m_resource(*url), m_platform_data(MkUqDST<ResourceData, RscData_deleter>()),
-    data(nullptr), size(0), flags(Undefined)
+    flags(Undefined)
 {
     m_platform_data->m_url = url;
 
@@ -41,16 +41,14 @@ Resource::Resource(const Url& url) :
 
 Resource::Resource(Resource&& rsc)
 {
-    this->data            = rsc.data;
-    this->size            = rsc.size;
+    this->data_rw         = rsc.data_rw;
+    this->data_ro         = rsc.data_ro;
     this->flags           = rsc.flags;
     this->m_platform_data = std::move(rsc.m_platform_data);
     this->m_resource      = std::move(rsc.m_resource);
 
-    rsc.data            = nullptr;
     rsc.flags           = FileFlags::Undefined;
     rsc.m_platform_data = nullptr;
-    rsc.size            = 0;
 }
 
 Resource::~Resource()
@@ -72,8 +70,8 @@ Resource& Resource::operator=(Bytes&& data)
     Bytes& internal_store = this->m_platform_data->m_resourceBuffer;
 
     internal_store = std::move(data);
-    this->data     = internal_store.data;
-    this->size     = internal_store.size;
+    this->data_rw  = internal_store;
+    this->data_ro  = internal_store;
     return *this;
 }
 
@@ -84,23 +82,25 @@ Resource::operator Path() const
 
 Resource::operator Bytes()
 {
-    if(data && size)
-        return Bytes::FromBytes(data, size);
+    if(!data_rw.empty())
+        return Bytes::ofContainer(data_rw);
 
     if(flags == Undefined && FileMap(*this, RSCA::ReadOnly))
-        return Bytes::ofBytes(data, size);
+        return Bytes::ofContainer(data_rw);
     else
         return Bytes();
 }
 
 Resource::operator BytesConst()
 {
-    if(data && size)
-        return BytesConst::ofBytes(data, size);
+    if(!data_ro.empty())
+        return BytesConst::ofContainer(data_ro);
 
     if(flags == Undefined && FileMap(*this, RSCA::ReadOnly))
-        return BytesConst::ofBytes(data, size);
-    else
+    {
+        data_ro = data_rw;
+        return BytesConst::ofContainer(data_rw);
+    } else
         return BytesConst();
 }
 
@@ -119,11 +119,15 @@ bool FileMap(Resource& resc, RSCA acc, szptr size)
 
     Profiler::DeepPushContext(CFILES_TAG "File mapping");
 
-    resc.size = platform::file::size(resc.m_platform_data->m_url).value();
-    if(size != 0)
-        resc.size = math::min(resc.size, size);
+    szptr map_size = 0;
+    resc.data_rw   = {};
+    resc.data_ro   = {};
 
-    if(resc.size == 0)
+    if(auto fsize = platform::file::size(resc.m_platform_data->m_url);
+       fsize.has_value() && fsize.value() > 0)
+        map_size = size != 0 ? math::min(fsize.value(), size) : fsize.value();
+
+    if(map_size == 0)
     {
         Profiler::DeepProfile(CFILES_TAG "File not found");
         Profiler::DeepPopContext();
@@ -132,18 +136,18 @@ bool FileMap(Resource& resc, RSCA acc, szptr size)
 
     if(auto res = platform::file::map(
            resc.m_platform_data->m_url,
-           {.access = acc, .offset = 0, .size = resc.size});
+           {.access = acc, .offset = 0, .size = map_size});
        res.has_error())
     {
-        resc.size = 0;
         Profiler::DeepProfile(CFILES_TAG "Mapping failed");
         Profiler::DeepPopContext();
         return false;
     } else
         resc.m_platform_data->m_mapping = res.value();
 
-    resc.data  = resc.m_platform_data->m_mapping.view.data();
-    resc.flags = resc.flags | Resource::Mapped;
+    resc.data_rw = resc.m_platform_data->m_mapping.view;
+    resc.data_ro = resc.data_rw;
+    resc.flags   = resc.flags | Resource::Mapped;
 
     Profiler::DeepProfile(CFILES_TAG "File mapped");
 
@@ -170,8 +174,8 @@ bool FileUnmap(Resource& resc)
     }
 
     resc.m_platform_data->m_mapping = {};
-    resc.data                       = nullptr;
-    resc.size                       = 0;
+    resc.data_rw                    = {};
+    resc.data_ro                    = {};
 
     resc.flags ^= Resource::Mapped;
 
@@ -193,9 +197,8 @@ bool FileOpenMap(Resource& resc, szptr size, RSCA acc)
     } else
         resc.m_platform_data->m_mapping = res.value();
 
-    resc.data = resc.m_platform_data->m_mapping.view.data();
-    resc.size = resc.m_platform_data->m_mapping.view.size();
-
+    resc.data_rw = resc.m_platform_data->m_mapping.view;
+    resc.data_ro = resc.data_rw;
     resc.flags |= Resource::Mapped;
 
     return true;
@@ -232,9 +235,9 @@ bool FilePull(Resource& resc)
     } else
         data = rd.value();
 
-    resc.data  = data.data;
-    resc.size  = data.size;
-    resc.flags = resc.flags | Resource::FileIO;
+    resc.data_rw = data;
+    resc.data_ro = data;
+    resc.flags   = resc.flags | Resource::FileIO;
 
     return true;
 }
@@ -275,8 +278,8 @@ bool FileMkdir(Url const& dirname, bool recursive)
 namespace Strings {
 CString to_string(Resource const& r)
 {
-    return CString("rsc(") + str::print::pointerify(r.data) + "+" +
-           cast_pod(r.size) + ")";
+    return CString("rsc(") + str::print::pointerify(r.data_ro.data()) + "+" +
+           cast_pod(r.data_ro.size()) + ")";
 }
 } // namespace Strings
 } // namespace Coffee

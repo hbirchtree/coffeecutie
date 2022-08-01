@@ -9,76 +9,69 @@
 
 #include <coffee/core/CDebug>
 
-#define RQ_API "RuntimeQueue::"
+#define RQ_API "runtime_queue::"
 
 using Stacktracer = platform::env::Stacktracer;
 
-namespace Coffee {
+using Profiler     = Coffee::Profiler;
+using DProfContext = Coffee::DProfContext;
 
-using RQE = RuntimeQueueError;
+namespace rq {
 
-RuntimeQueue::QueueContextPtr RuntimeQueue::context;
+using RQE  = RuntimeQueueError;
+using RQVE = RuntimeQueueVerboseError;
 
-const char* runtime_queue_category::name() const noexcept
+runtime_queue::queue_context_ptr runtime_queue::context;
+
+std::string_view to_string(RuntimeQueueError error)
 {
-    return "RuntimeQueue";
-}
-
-std::string runtime_queue_category::message(int error_code) const
-{
-    switch(C_CAST<RQE>(error_code))
+    using namespace std::string_view_literals;
+    switch(error)
     {
     case RQE::ExpiredTaskDeadline:
-        return "RuntimeTask's deadline is already expired";
+        return "RuntimeTask's deadline is already expired"sv;
     case RQE::IncompatibleTaskAwait:
-        return "Provided RuntimeTask cannot be awaited";
+        return "Provided RuntimeTask cannot be awaited"sv;
     case RQE::InvalidQueue:
-        return "Invalid reference to RuntimeQueue";
+        return "Invalid reference to runtime_queue"sv;
     case RQE::InvalidTaskFlags:
-        return "Invalid combination of RuntimeTask flags";
+        return "Invalid combination of RuntimeTask flags"sv;
     case RQE::InvalidTaskId:
-        return "Invalid reference to RuntimeTask";
+        return "Invalid reference to RuntimeTask"sv;
     case RQE::InvalidTaskLifetime:
-        return "RuntimeTask cannot be awaited";
+        return "RuntimeTask cannot be awaited"sv;
     case RQE::TaskAlreadyBlocked:
-        return "Attempt to block already blocked task";
+        return "Attempt to block already blocked task"sv;
     case RQE::TaskAlreadyStarted:
-        return "Attempt to unblock already running task";
+        return "Attempt to unblock already running task"sv;
     case RQE::ThreadSpawn:
-        return "Failed to spawn dedicated task thread";
+        return "Failed to spawn dedicated task thread"sv;
     case RQE::UncaughtException:
-        return "Thread died from uncaught exception";
+        return "Thread died from uncaught exception"sv;
     case RQE::SameThread:
-        return "Cannot be performed on same thread";
+        return "Cannot be performed on same thread"sv;
+    case RQE::QueueCreationFailed:
+        return "Failed to create queue"sv;
     case RQE::ShuttingDown:
-        return "Operation unavailable on shutdown";
+        return "Operation unavailable on shutdown"sv;
     }
 
     throw implementation_error("unimplemented error message");
 }
 
-static bool VerifyTask(RuntimeTask const& t, runtime_queue_error& ec)
+static std::optional<RQE> VerifyTask(runtime_task const& t)
 {
-    if(!(t.flags & (RuntimeTask::SingleShot | RuntimeTask::Periodic)))
-    {
-        ec = RQE::InvalidTaskFlags;
-        return false;
-    }
-
-    if((t.flags & RuntimeTask::SingleShot) && (t.flags & RuntimeTask::Periodic))
-    {
-        ec = RQE::InvalidTaskFlags;
-        return false;
-    }
-
-    if((t.flags & RuntimeTask::SingleShot) &&
-       !(t.flags & RuntimeTask::Immediate) &&
-       t.time < RuntimeTask::clock::now())
-    {
-        ec = RQE::ExpiredTaskDeadline;
-        return false;
-    }
-    return true;
+    if(enum_helpers::feval(
+           t.flags, task_flags::single_shot | task_flags::periodic))
+        return RQE::InvalidTaskFlags;
+    if(enum_helpers::feval(t.flags, task_flags::single_shot) &&
+       enum_helpers::feval(t.flags, task_flags::periodic))
+        return RQE::InvalidTaskFlags;
+    if(enum_helpers::feval(t.flags, task_flags::single_shot) &&
+       !enum_helpers::feval(t.flags, task_flags::immediate) &&
+       t.time < detail::clock::now())
+        return RQE::ExpiredTaskDeadline;
+    return std::nullopt;
 }
 
 /*!
@@ -90,48 +83,28 @@ static bool VerifyTask(RuntimeTask const& t, runtime_queue_error& ec)
  * \param taskId
  * \return
  */
-static RuntimeTask const* GetTask(
-    Vector<RuntimeQueue::task_data_t> const& tasks,
-    u64                                      taskId,
-    runtime_queue_error&                     ec,
-    szptr*                                   idx = nullptr)
+static detail::result<std::pair<runtime_task const*, size_t>, RQE> GetTask(
+    std::vector<runtime_queue::task_data_t> const& tasks, u64 taskId)
 {
     /* Locate the task in our vector */
-    szptr i;
-    bool  found = false;
-    for(i = 0; i < tasks.size(); i++)
-    {
+    for(size_t i = 0; i < tasks.size(); i++)
         if(tasks[i].index == taskId)
-        {
-            found = true;
-            break;
-        }
-    }
-
-    if(!found)
-    {
-        ec = RQE::InvalidTaskId;
-        return nullptr;
-    }
-
-    if(idx)
-        *idx = i;
-
-    return &tasks[i].task;
+            return detail::success(std::pair{&tasks[i].task, i});
+    return detail::failure(RQE::InvalidTaskId);
 }
 
 static void NotifyThread(
-    ShPtr<RuntimeQueue::QueueContext> context,
-    ThreadId::Hash                    threadId,
-    RuntimeTask::Duration             previousDeadline,
-    RuntimeTask::Timepoint            currentBase)
+    std::shared_ptr<runtime_queue::QueueContext> context,
+    detail::thread_id                            threadId,
+    detail::duration                             previousDeadline,
+    detail::time_point                           currentBase)
 {
     C_PTR_CHECK(context);
 
-    auto threadFlags = context->queueFlags.find(threadId);
+    auto threadFlags = context->queue_flags.find(threadId);
     auto queueRef    = context->queues.find(threadId);
 
-    if(threadFlags == context->queueFlags.end() ||
+    if(threadFlags == context->queue_flags.end() ||
        queueRef == context->queues.end())
         return;
 
@@ -148,7 +121,7 @@ static void NotifyThread(
     auto& condition = threadFlags->second->condition;
     auto& queue     = queueRef->second;
 
-    auto wakeupTime = queue.timeTillNext(currentBase);
+    auto wakeupTime = queue.time_till_next(currentBase);
 
     if(wakeupTime < previousDeadline)
     {
@@ -158,273 +131,289 @@ static void NotifyThread(
         Profiler::DeepProfile(RQ_API "Skipping thread");
 }
 
-RuntimeQueue* RuntimeQueue::CreateNewQueue(const CString& name)
+detail::result<runtime_queue*, RuntimeQueueError> runtime_queue::CreateNewQueue(
+    std::string_view name)
 {
     C_PTR_CHECK(context);
 
-    Lock _(context->globalMod);
+    detail::lock_guard<> _(context->global_lock);
 
-    auto t_id = ThreadId().hash();
-
-    auto q_it = context->queues.find(t_id);
-
-    if(q_it == context->queues.end())
+    auto t_id = detail::current_thread_id();
+    if(auto q_it = context->queues.find(t_id); q_it == context->queues.end())
     {
-        context->queues.insert({t_id, RuntimeQueue()});
-        CurrentThread::SetName(name);
-        return &context->queues[t_id];
+        auto [_, inserted] = context->queues.try_emplace(t_id);
+        if(!inserted)
+            return detail::failure(RuntimeQueueError::QueueCreationFailed);
+        stl_types::CurrentThread::SetName(
+            std::string(name.begin(), name.end()));
+        auto& q       = context->queues.at(t_id);
+        q.m_thread_id = t_id;
+        return detail::success(&q);
     } else
-        return &(*q_it).second;
+        return detail::success(&(*q_it).second);
 }
 
 STATICINLINE void ThreadQueueSleep(
-    RuntimeQueue* queue, UqLock& thread_lock, RuntimeQueue::semaphore_t* sem_)
+    runtime_queue*              queue,
+    detail::unique_lock<>&      thread_lock,
+    runtime_queue::semaphore_t* sem_)
 {
     if(!sem_->running)
         return;
 
     DProfContext ___(RQ_API "Sleeping");
 
-    RuntimeTask::Duration sleepTime;
+    detail::duration sleepTime;
 
     {
-        RecLock _(queue->mTasksLock);
-        auto    currentTime = RuntimeTask::clock::now();
-
-        sleepTime          = queue->timeTillNext(currentTime);
-        queue->mNextWakeup = currentTime + sleepTime;
+        detail::unique_lock<detail::recursive_mutex> _(queue->m_tasks_lock);
+        auto currentTime     = detail::clock::now();
+        sleepTime            = queue->time_till_next(currentTime);
+        queue->m_next_wakeup = currentTime + sleepTime;
     }
 
     sem_->condition.wait_for(thread_lock, sleepTime);
 }
 
 static void ImpCreateNewThreadQueue(
-    CString const& name, ShPtr<RuntimeQueue::semaphore_t>* sem)
+    std::string_view name,
+    std::shared_ptr<runtime_queue::semaphore_t> sem,
+    std::promise<void> started)
 {
-    runtime_queue_error ec;
-
-    ShPtr<RuntimeQueue::semaphore_t> sem_ = *sem;
-
 #ifndef COFFEE_LOWFAT
     try
     {
 #endif
         /* Enable profiler and etc. */
-        State::SetInternalThreadState(State::CreateNewThreadState());
+        detail::on_thread_created();
 
         /* First create the queue object... */
-        RuntimeQueue* queue = RuntimeQueue::CreateNewQueue(name);
+        runtime_queue* queue = nullptr;
+        if(auto queue_create = runtime_queue::CreateNewQueue(name);
+           queue_create.has_error())
+        {
+            Coffee::cWarning(
+                RQ_API "Failed to create queue: {}",
+                to_string(queue_create.error()));
+        } else
+            queue = queue_create.value();
 
         /* Then notify our parent that everything is done */
-        sem_->condition.notify_one();
+        started.set_value();
 
         /* We use a mutex to allow our parent to notify us of work
          *  or changes in the queue, to allow rescheduling. */
-        UqLock thread_lock(sem_->mutex);
+        detail::unique_lock<> thread_lock(sem->mutex);
 
         {
             DProfContext _(RQ_API "Running queue");
-            while(sem_->running)
+            while(sem->running)
             {
-                queue->executeTasks();
-
-                ThreadQueueSleep(queue, thread_lock, sem_.get());
+                queue->execute_tasks();
+                ThreadQueueSleep(queue, thread_lock, sem.get());
             }
         }
-
 #ifndef COFFEE_LOWFAT
     } catch(std::exception const& e)
     {
-        ec = RQE::UncaughtException;
-        ec = platform::stacktrace::demangle::type_name(e) + ": " + e.what();
+        Coffee::cWarning(RQ_API "Error encountered: {}", e.what());
     }
 #endif
 
-    if(ec)
-        cWarning(
-            RQ_API "Uncaught exception!\n"
-                   "\n"
-                   "{0}: {1}"
-                   "\n",
-            ec.message(),
-            ec.error_message);
+    //    if(ec)
+    //        cWarning(
+    //            RQ_API "Uncaught exception!\n"
+    //                   "\n"
+    //                   "{0}: {1}"
+    //                   "\n",
+    //            ec.message(),
+    //            ec.error_message);
 }
 
-RuntimeQueue* RuntimeQueue::CreateNewThreadQueue(const CString& name, rqe& ec)
+detail::result<runtime_queue*, RuntimeQueueVerboseError> runtime_queue::
+    CreateNewThreadQueue(std::string_view name)
 {
+    using namespace std::chrono_literals;
+
     C_PTR_CHECK(context);
 
     try
     {
         DProfContext _(DTEXT(RQ_API "Creating new task queue"));
 
-        ShPtr<semaphore_t> sem = MkShared<semaphore_t>();
-        UqLock             temp_lock(sem->start_mutex);
+        std::shared_ptr<semaphore_t> sem = std::make_shared<semaphore_t>();
+        std::promise<void> thread_started;
+        std::future<void> thread_started_signal = thread_started.get_future();
 
         sem->running.store(true);
 
         /* Spawn the thread */
-        Thread t(ImpCreateNewThreadQueue, name, &sem);
-        auto   tid = ThreadId(t.get_id()).hash();
+        detail::thread worker(
+            [name, sem, started = std::move(thread_started)]() mutable {
+                ImpCreateNewThreadQueue(name, sem, std::move(started));
+            });
+        auto tid = std::hash<detail::thread::id>()(worker.get_id());
 
-        /* Wait for the RuntimeQueue to be created on the thread */
-        sem->condition.wait(temp_lock);
+        /* Wait for the runtime_queue to be created on the thread */
+        if (thread_started_signal.wait_for(10ms) != std::future_status::ready)
+            return RuntimeQueueVerboseError{
+                RQE::ThreadSpawn, "thread creation timed out"};
 
         {
-            Lock _(context->globalMod);
+            detail::lock_guard<> _(context->global_lock);
 
-            context->queueThreads[tid] = std::move(t);
-            context->queueFlags.insert({tid, sem});
+            context->queue_threads[tid] = std::move(worker);
+            context->queue_flags.insert({tid, sem});
         }
 
-        return &context->queues.find(tid)->second;
+        auto& q       = context->queues.at(tid);
+        q.m_thread_id = tid;
+        return &q;
     } catch(std::exception const& e)
     {
-        ec = RQE::ThreadSpawn;
-        ec = e.what();
-        return nullptr;
+        return detail::failure(RQVE{RQE::ThreadSpawn, e.what()});
     }
 }
 
-RuntimeQueue* RuntimeQueue::GetCurrentQueue(rqe& ec)
+detail::result<runtime_queue*, RuntimeQueueError> runtime_queue::
+    GetCurrentQueue()
 {
     C_PTR_CHECK(context);
 
-    Lock _(context->globalMod);
+    detail::lock_guard<> _(context->global_lock);
 
-    auto q_id = ThreadId().hash();
+    auto q_id = detail::current_thread_id();
     auto q_it = context->queues.find(q_id);
 
     if(q_it != context->queues.end())
-        return &(*q_it).second;
+        return detail::success(&(*q_it).second);
     else
-    {
-        ec = RQE::InvalidQueue;
-        return nullptr;
-    }
+        return detail::failure(RQE::InvalidQueue);
 }
 
-RuntimeTask* RuntimeQueue::GetSelf(rqe& ec)
+detail::result<runtime_task*, RuntimeQueueError> runtime_queue::GetSelf()
 {
-    RuntimeQueue* q = GetCurrentQueue(ec);
-
-    if(!q)
-        return nullptr;
-
-    szptr idx = 0;
-
-    for(auto i : Range<>(q->mTasks.size()))
-        if(q->mTasks[i].index == q->mCurrentTaskId)
-        {
-            idx = i;
-            break;
-        }
-
-    /* To avoid casting the from size_t to signed,
-     *  check if the validation holds */
-    if(idx != 0 || q->mTasks[0].index != q->mCurrentTaskId)
+    if(auto res = GetCurrentQueue(); res.has_error())
     {
-        ec = RQE::InvalidTaskId;
-        return nullptr;
+        return res.error();
+    } else
+    {
+        auto* queue = res.value();
+        for(auto i : stl_types::Range<>(queue->m_tasks.size()))
+            if(queue->m_tasks[i].index == queue->m_current_task_id)
+            {
+                return &queue->m_tasks[i].task;
+            }
     }
-
-    return &q->mTasks[idx].task;
+    return RQE::InvalidTaskId;
 }
 
-u64 RuntimeQueue::GetSelfId(rqe& ec)
+detail::result<u64, RuntimeQueueError> runtime_queue::GetSelfId()
 {
-    RuntimeQueue* q = GetCurrentQueue(ec);
-
-    if(!q)
-        return 0;
-
-    return q->mCurrentTaskId;
+    if(auto res = GetCurrentQueue(); res.has_error())
+        return res.error();
+    else
+        return res.value()->m_current_task_id;
 }
 
-u64 RuntimeQueue::Queue(RuntimeTask&& task, rqe& ec)
+detail::result<u64, RuntimeQueueError> runtime_queue::Queue(runtime_task&& task)
 {
-    return Queue(ThreadId(), std::move(task), ec);
+    return Queue(detail::current_thread_id(), std::move(task));
 }
 
-u64 RuntimeQueue::Queue(
-    ThreadId const& targetThread, RuntimeTask&& task, rqe& ec)
+detail::result<u64, RuntimeQueueError> runtime_queue::Queue(
+    detail::thread_id targetThread, runtime_task&& task)
 {
-    if(!VerifyTask(task, ec))
-        return 0;
+    if(auto error = VerifyTask(task))
+        return *error;
 
-    if(task.flags & RuntimeTask::Periodic)
-    {
-        task.time = RuntimeTask::clock::now() + task.interval;
-    }
+    if(enum_helpers::feval(task.flags, task_flags::periodic))
+        task.time = detail::clock::now() + task.interval;
 
-    if(!context->globalMod.try_lock())
-    {
-        ec = RQE::ShuttingDown;
-        return 0;
-    }
+    if(!context->global_lock.try_lock())
+        return RQE::ShuttingDown;
 
-    auto thread_id = targetThread.hash();
-    auto q_it      = context->queues.find(thread_id);
+    auto q_it = context->queues.find(targetThread);
 
     if(q_it == context->queues.end())
     {
-        context->globalMod.unlock();
-        ec = RQE::InvalidQueue;
-        return 0;
+        context->global_lock.unlock();
+        return RQE::InvalidQueue;
     } else
     {
-        context->globalMod.unlock();
-        return Queue(&q_it->second, std::move(task), ec);
+        context->global_lock.unlock();
+        return Queue(&q_it->second, std::move(task));
     }
 }
 
-u64 RuntimeQueue::Queue(
-    RuntimeQueue* queue, RuntimeTask&& task, RuntimeQueue::rqe& ec)
+detail::result<u64, RuntimeQueueError> runtime_queue::Queue(
+    runtime_queue* queue, runtime_task&& task)
 {
-    if(context->shutdownFlag.load())
+    if(context->shutdown_flag.load())
     {
-        ec = RQE::ShuttingDown;
-        return 0;
+        return RQE::ShuttingDown;
     }
 
     DProfContext _(RQ_API "Adding task to Queue");
     auto&        ref = *queue;
 
-    RecLock __(queue->mTasksLock);
+    detail::unique_lock<detail::recursive_mutex> __(queue->m_tasks_lock);
 
-    auto currentBase      = RuntimeTask::clock::now();
-    auto previousNextTime = ref.timeTillNext(currentBase);
+    auto currentBase      = detail::clock::now();
+    auto previousNextTime = ref.time_till_next(currentBase);
 
     auto id = ref.enqueue(std::move(task));
 
-    NotifyThread(
-        context, queue->mThreadId.hash(), previousNextTime, currentBase);
+    NotifyThread(context, queue->m_thread_id, previousNextTime, currentBase);
 
     return id;
 }
 
-bool RuntimeQueue::Block(const ThreadId& targetThread, u64 taskId, rqe& ec)
+detail::result<u64, RuntimeQueueError> runtime_queue::Queue(
+    runtime_queue *queue, std::unique_ptr<dependent_task_invoker> &&task)
 {
-    if(context->shutdownFlag.load())
+    if(context->shutdown_flag.load())
+        return RQE::ShuttingDown;
+
+    DProfContext _(RQ_API "Adding dependent task to queue");
+    auto& ref = *queue;
+
+    detail::unique_lock<detail::recursive_mutex> __(queue->m_tasks_lock);
+
+    auto id = ref.enqueue(std::move(task));
+
+    return id;
+}
+
+detail::result<u64, RuntimeQueueError> runtime_queue::Queue(
+    std::unique_ptr<dependent_task_invoker> &&task)
+{
+    if (auto q = GetCurrentQueue(); q.has_error())
+        return detail::failure(RQE::InvalidQueue);
+    else
+        return Queue(q.value(), std::move(task));
+}
+
+std::optional<RuntimeQueueError> runtime_queue::Block(
+    detail::thread_id targetThread, u64 taskId)
+{
+    if(context->shutdown_flag.load())
     {
-        ec = RQE::ShuttingDown;
-        return false;
+        return RQE::ShuttingDown;
     }
 
     DProfContext __(RQ_API "Blocking task");
 
-    auto          thread_id = targetThread.hash();
-    RuntimeQueue* pQueue    = nullptr;
+    runtime_queue* pQueue = nullptr;
 
     {
-        Lock _(context->globalMod);
+        detail::lock_guard<detail::mutex> _(context->global_lock);
 
-        auto q_it = context->queues.find(thread_id);
+        auto q_it = context->queues.find(targetThread);
 
         if(q_it == context->queues.end())
         {
-            ec = RQE::InvalidQueue;
-            return false;
+            return RQE::InvalidQueue;
         }
 
         pQueue = &(*q_it).second;
@@ -432,279 +421,232 @@ bool RuntimeQueue::Block(const ThreadId& targetThread, u64 taskId, rqe& ec)
 
     auto& queue = *pQueue;
 
-    RuntimeTask const* task = nullptr;
-    szptr              idx  = 0;
+    runtime_task const* task = nullptr;
 
-    if(!(task = GetTask(queue.mTasks, taskId, ec, &idx)))
+    if(auto res = GetTask(queue.m_tasks, taskId); res.has_error())
+        return res.error();
+    else
     {
-        ec = RQE::InvalidTaskId;
-        return false;
-    }
-
-    {
+        auto [task, idx] = res.value();
         /* We do this check in case we are executing in the queue */
         /* Otherwise we deadlock */
-        RecLock ___(queue.mTasksLock);
+        detail::unique_lock<detail::recursive_mutex> ___(queue.m_tasks_lock);
 
-        if(!queue.mTasks[idx].alive)
+        if(!queue.m_tasks[idx].alive)
         {
-            ec = RQE::TaskAlreadyBlocked;
-            return false;
+            return RQE::TaskAlreadyBlocked;
         }
 
-        auto currentBase      = RuntimeTask::clock::now();
-        auto previousNextTime = queue.timeTillNext(currentBase);
+        auto currentBase      = detail::clock::now();
+        auto previousNextTime = queue.time_till_next(currentBase);
 
-        queue.mTasks[idx].alive = false;
+        queue.m_tasks[idx].alive = false;
 
-        NotifyThread(context, thread_id, previousNextTime, currentBase);
+        NotifyThread(context, targetThread, previousNextTime, currentBase);
     }
 
-    return true;
+    return std::nullopt;
 }
 
-bool RuntimeQueue::Unblock(const ThreadId& targetThread, u64 taskId, rqe& ec)
+std::optional<RuntimeQueueError> runtime_queue::Unblock(
+    detail::thread_id targetThread, u64 taskId)
 {
-    if(context->shutdownFlag.load())
-    {
-        ec = RQE::ShuttingDown;
-        return false;
-    }
+    if(context->shutdown_flag.load())
+        return RQE::ShuttingDown;
 
     DProfContext __(RQ_API "Unblocking task");
 
-    auto          thread_id = targetThread.hash();
-    RuntimeQueue* pQueue    = nullptr;
+    runtime_queue* pQueue = nullptr;
 
     {
-        Lock _(context->globalMod);
-        auto q_it = context->queues.find(thread_id);
+        detail::lock_guard<> _(context->global_lock);
+        auto                 q_it = context->queues.find(targetThread);
 
         if(q_it == context->queues.end())
-        {
-            ec = RQE::InvalidQueue;
-            return false;
-        }
+            return RQE::InvalidQueue;
 
         pQueue = &(*q_it).second;
     }
 
     auto& queue = *pQueue;
 
+    detail::unique_lock<detail::recursive_mutex> _(queue.m_tasks_lock);
+
+    if(auto res = GetTask(queue.m_tasks, taskId); res.has_error())
+        return res.error();
+    else
     {
-        RecLock            _(queue.mTasksLock);
-        RuntimeTask const* task = nullptr;
-        szptr              idx  = 0;
+        auto [task, idx] = res.value();
+        if(queue.m_tasks[idx].alive)
+            return RQE::TaskAlreadyStarted;
 
-        if(!(task = GetTask(queue.mTasks, taskId, ec, &idx)))
-        {
-            ec = RQE::InvalidTaskId;
-            return false;
-        }
+        auto currentBase      = detail::clock::now();
+        auto previousNextTime = queue.time_till_next(currentBase);
 
-        if(queue.mTasks[idx].alive)
-        {
-            ec = RQE::TaskAlreadyStarted;
-            return false;
-        }
+        queue.m_tasks[idx].alive = true;
 
-        auto currentBase      = RuntimeTask::clock::now();
-        auto previousNextTime = queue.timeTillNext(currentBase);
-
-        queue.mTasks[idx].alive = true;
-
-        NotifyThread(context, thread_id, previousNextTime, currentBase);
+        NotifyThread(context, targetThread, previousNextTime, currentBase);
     }
-
-    return true;
+    return std::nullopt;
 }
 
-bool RuntimeQueue::CancelTask(const ThreadId& targetThread, u64 taskId, rqe& ec)
+std::optional<RuntimeQueueError> runtime_queue::CancelTask(
+    detail::thread_id targetThread, u64 taskId)
 {
-    if(context->shutdownFlag.load())
-    {
-        ec = RQE::ShuttingDown;
-        return false;
-    }
+    if(context->shutdown_flag.load())
+        return RQE::ShuttingDown;
 
-    auto          thread_id = targetThread.hash();
-    RuntimeQueue* pQueue    = nullptr;
+    runtime_queue* pQueue = nullptr;
 
     {
-        Lock _(context->globalMod);
+        detail::lock_guard<> _(context->global_lock);
 
-        auto q_it = context->queues.find(thread_id);
+        auto q_it = context->queues.find(targetThread);
 
         if(q_it == context->queues.end())
-        {
-            ec = RQE::InvalidQueue;
-            return false;
-        }
+            return RQE::InvalidQueue;
 
         pQueue = &(*q_it).second;
     }
 
     auto& queue = *pQueue;
 
+    detail::unique_lock<detail::recursive_mutex> _(queue.m_tasks_lock);
+
+    if(auto res = GetTask(queue.m_tasks, taskId); res.has_error())
+        return res.error();
+    else
     {
-        RecLock _(queue.mTasksLock);
+        auto [task, idx] = res.value();
 
-        RuntimeTask const* task = nullptr;
-        szptr              idx  = 0;
+        queue.m_tasks[idx].alive      = false;
+        queue.m_tasks[idx].to_dispose = true;
 
-        if(!(task = GetTask(queue.mTasks, taskId, ec, &idx)))
-        {
-            ec = RQE::InvalidTaskId;
-            return false;
-        }
+        auto currentBase      = detail::clock::now();
+        auto previousNextTime = queue.time_till_next(currentBase);
 
-        queue.mTasks[idx].alive      = false;
-        queue.mTasks[idx].to_dispose = true;
+        NotifyThread(context, targetThread, previousNextTime, currentBase);
 
-        auto currentBase      = RuntimeTask::clock::now();
-        auto previousNextTime = queue.timeTillNext(currentBase);
-
-        NotifyThread(context, thread_id, previousNextTime, currentBase);
+        return std::nullopt;
     }
-
-    return true;
 }
 
-void RuntimeQueue::AwaitTask(const ThreadId& targetThread, u64 taskId, rqe& ec)
+std::optional<RuntimeQueueError> runtime_queue::AwaitTask(
+    detail::thread_id targetThread, u64 taskId)
 {
     if(taskId == 0)
-        return;
+        return RQE::InvalidTaskId;
 
-    if(context->shutdownFlag.load())
-    {
-        ec = RQE::ShuttingDown;
-        return;
-    }
+    if(context->shutdown_flag.load())
+        return RQE::ShuttingDown;
 
-    if(ThreadId().hash() == targetThread.hash())
-    {
-        ec = RQE::SameThread;
-        return;
-    }
+    if(detail::current_thread_id() == targetThread)
+        return RQE::SameThread;
 
-    RuntimeQueue const* queueRef = nullptr;
+    runtime_queue const* queueRef = nullptr;
 
     {
-        Lock _(context->globalMod);
+        detail::lock_guard<> _(context->global_lock);
 
-        auto queue = context->queues.find(targetThread.hash());
+        auto queue = context->queues.find(targetThread);
 
         /* If thread has no queue, return */
         if(queue == context->queues.end())
-        {
-            ec = RQE::InvalidQueue;
-            return;
-        }
+            return RQE::InvalidQueue;
 
         queueRef = &queue->second;
     }
 
-    RuntimeTask const* task = nullptr;
-    szptr              idx  = 0;
-
-    if(!(task = GetTask(queueRef->mTasks, taskId, ec, &idx)))
+    if(auto res = GetTask(queueRef->m_tasks, taskId))
+        return res.error();
+    else
     {
-        ec = RQE::InvalidTaskId;
-        return;
-    }
+        auto [task, idx] = res.value();
 
-    /* We cannot reliably await periodic tasks */
-    if(task->flags & RuntimeTask::Periodic)
-    {
-        ec = RQE::IncompatibleTaskAwait;
-        return;
-    }
+        /* We cannot reliably await periodic tasks */
+        if(enum_helpers::feval(task->flags, task_flags::periodic))
+            return RQE::IncompatibleTaskAwait;
 
-    /* Do not await a past event */
-    if(!(task->flags & RuntimeTask::Immediate) &&
-       RuntimeTask::clock::now() > task->time)
-    {
-        ec = RQE::ExpiredTaskDeadline;
-        return;
-    }
+        /* Do not await a past event */
+        if(!enum_helpers::feval(task->flags, task_flags::immediate) &&
+           detail::clock::now() > task->time)
+        {
+            return RQE::ExpiredTaskDeadline;
+        }
 
-    DProfContext _(RQ_API "Awaiting task...");
-    CurrentThread::sleep_until(task->time);
+        DProfContext _(RQ_API "Awaiting task...");
+        stl_types::CurrentThread::sleep_until(task->time);
 
-    {
-        DProfContext _(RQ_API "Busy-waiting task");
+        {
+            DProfContext _(RQ_API "Busy-waiting task");
 
-        /* I know this is bad, but we must await the task */
-        while(queueRef->mTasks[idx].alive)
-            CurrentThread::yield();
+            /* I know this is bad, but we must await the task */
+            while(queueRef->m_tasks[idx].alive)
+                stl_types::CurrentThread::yield();
+        }
+        return std::nullopt;
     }
 }
 
-bool RuntimeQueue::IsRunning(RuntimeQueue* thread, RuntimeQueue::rqe& ec)
+detail::result<bool, RuntimeQueueError> runtime_queue::IsRunning(
+    runtime_queue* thread)
 {
     if(!thread)
-    {
-        ec = RQE::InvalidQueue;
-        return false;
-    }
-
-    auto tid = thread->threadId().hash();
-
-    //    UqLock _(context->globalMod, std::try_to_lock);
-
-    return context->queueFlags[tid]->running;
+        return RQE::InvalidQueue;
+    auto tid = thread->thread_id();
+    return detail::success(context->queue_flags[tid]->running.load());
 }
 
-void RuntimeQueue::TerminateThread(RuntimeQueue* thread, rqe& ec)
+std::optional<RuntimeQueueError> runtime_queue::TerminateThread(
+    runtime_queue* thread)
 {
     if(!thread)
-    {
-        ec = RQE::InvalidQueue;
-        return;
-    }
+        return RQE::InvalidQueue;
 
-    auto tid = thread->threadId().hash();
+    auto tid = thread->thread_id();
 
-    Lock _(context->globalMod);
+    detail::lock_guard<> _(context->global_lock);
 
-    auto& queueFlags = context->queueFlags[tid];
+    auto& queueFlags = context->queue_flags[tid];
 
     queueFlags->running.store(false);
     queueFlags->condition.notify_one();
 
-    context->queueThreads[tid].join();
+    context->queue_threads[tid].join();
 
-    context->queueFlags.erase(tid);
-    context->queueThreads.erase(tid);
+    context->queue_flags.erase(tid);
+    context->queue_threads.erase(tid);
+
+    return std::nullopt;
 }
 
-void RuntimeQueue::TerminateThreads(rqe&)
+std::optional<RuntimeQueueError> runtime_queue::TerminateThreads()
 {
-    context->shutdownFlag.store(true);
-    Lock _(context->globalMod);
+    context->shutdown_flag.store(true);
+    detail::lock_guard<> _(context->global_lock);
 
-    for(auto t : context->queueFlags)
+    for(auto t : context->queue_flags)
     {
         t.second->running.store(false);
         t.second->condition.notify_one();
     }
 
-    for(auto& t : context->queueThreads)
-    {
+    for(auto& t : context->queue_threads)
         t.second.join();
-    }
 
-    context->queueFlags.clear();
-    context->queueThreads.clear();
+    context->queue_flags.clear();
+    context->queue_threads.clear();
     context->queues.clear();
+
+    return std::nullopt;
 }
 
-RuntimeQueue::QueueContextPtr RuntimeQueue::CreateContext()
+runtime_queue::queue_context_ptr runtime_queue::CreateContext()
 {
-    return MkShared<QueueContext>();
+    return std::make_shared<QueueContext>();
 }
 
-bool RuntimeQueue::SetQueueContext(RuntimeQueue::QueueContextPtr i)
+bool runtime_queue::SetQueueContext(runtime_queue::queue_context_ptr i)
 {
     if(context)
         return false;
@@ -713,74 +655,117 @@ bool RuntimeQueue::SetQueueContext(RuntimeQueue::QueueContextPtr i)
     return true;
 }
 
-RuntimeQueue::QueueContextPtr RuntimeQueue::GetQueueContext()
+runtime_queue::queue_context_ptr runtime_queue::GetQueueContext()
 {
     return context;
 }
 
-void RuntimeQueue::executeTasks()
+void runtime_queue::execute_tasks()
 {
     DProfContext __(DTEXT(RQ_API "Executing thread tasks"));
 
     Profiler::DeepPushContext(RQ_API "Locking queue");
-    RecLock _(mTasksLock);
+    detail::unique_lock<detail::recursive_mutex> _(m_tasks_lock);
     Profiler::DeepPopContext();
 
-    auto currTime = RuntimeTask::clock::now();
+    auto currTime = detail::clock::now();
 
-    szptr i = 0;
-    for(task_data_t& task : mTasks)
+    u64 i = 0;
+    auto tasks = std::move(m_tasks);
+    for(task_data_t& task : tasks)
     {
         /* If this task has to be run in the future,
          *  all proceeding tasks will do as well */
         if(task.task.time > currTime)
         {
-            i++;
             break;
         }
 
         /* Skip dead tasks, clean it up later */
-        if(!mTasks[i].alive)
+        if(!task.alive)
         {
-            i++;
             continue;
         }
 
         /* In this case we will let it run */
-        mCurrentTaskId = mTasks[i].index;
+        m_current_task_id = task.index;
         Profiler::DeepPushContext(RQ_API "Running task");
         task.task.task();
         Profiler::DeepPopContext();
-        mCurrentTaskId = 0;
+        m_current_task_id = 0;
 
         /* Now, if a task is single-shot, remove it */
-        if(task.task.flags & RuntimeTask::SingleShot)
+        if(enum_helpers::feval(task.task.flags, task_flags::single_shot))
         {
-            mTasks[i].alive      = false;
-            mTasks[i].to_dispose = true;
-        } else if(task.task.flags & RuntimeTask::Periodic)
+            task.alive      = false;
+            task.to_dispose = true;
+        } else if(enum_helpers::feval(task.task.flags & task_flags::periodic))
         {
-            task.task.time = RuntimeTask::clock::now() + task.task.interval;
+            task.task.time = detail::clock::now() + task.task.interval;
         } else
         {
             Throw(implementation_error("unknown task type"));
         }
-        i++;
     }
+    std::move(
+        std::begin(m_tasks),
+        std::end(m_tasks),
+        std::back_inserter(tasks));
+    m_tasks = std::move(tasks);
+
+    auto dependent_tasks = std::move(m_dependent_tasks);
+    for(dependent_task_data_t& task : dependent_tasks)
+    {
+        if(!task.alive)
+            continue;
+        if(!task.task->ready())
+            continue;
+
+        Profiler::DeepPushContext(RQ_API "Running dependent task");
+        task.task->execute();
+        Profiler::DeepPopContext();
+
+        task.alive = false;
+    }
+    std::move(
+        std::begin(m_dependent_tasks),
+        std::end(m_dependent_tasks),
+        std::back_inserter(dependent_tasks));
+    m_dependent_tasks = std::move(dependent_tasks);
+
+// TODO: Do this only occasionally
+//    {
+//        auto trimmed_tasks = std::remove_if(
+//            m_dependent_tasks.begin(),
+//            m_dependent_tasks.end(),
+//            [] (dependent_task_data_t const& task) {
+//                return !task.alive;
+//        });
+//        m_dependent_tasks.erase(trimmed_tasks, m_dependent_tasks.end());
+//    }
+//    {
+//        auto trimmed_tasks = std::remove_if(
+//            m_tasks.begin(), m_tasks.end(), [] (task_data_t const& task) {
+//                return !task.to_dispose;
+//        });
+//        m_tasks.erase(trimmed_tasks, m_tasks.end());
+//    }
 }
 
-RuntimeTask::Duration RuntimeQueue::timeTillNext()
+detail::duration runtime_queue::time_till_next() const
 {
-    RuntimeTask::Timepoint current = RuntimeTask::clock::now();
-    return timeTillNext(current);
+    detail::time_point current = detail::clock::now();
+    return time_till_next(current);
 }
 
-RuntimeTask::Duration RuntimeQueue::timeTillNext(RuntimeTask::Timepoint current)
+detail::duration runtime_queue::time_till_next(detail::time_point current) const
 {
-    RuntimeTask::Timepoint firstTask;
-    bool                   taskFound = false;
+    using namespace std::chrono_literals;
 
-    for(auto task : mTasks)
+    detail::time_point firstTask;
+    bool               taskFound = false;
+
+    for(auto task : m_tasks)
         if(task.alive)
         {
             firstTask = task.task.time;
@@ -791,46 +776,35 @@ RuntimeTask::Duration RuntimeQueue::timeTillNext(RuntimeTask::Timepoint current)
     if(!taskFound)
     {
         Profiler::DeepProfile(RQ_API "Entering deep sleep");
-        if(mNextWakeup < current)
-            return Chrono::seconds(1);
+        if(m_next_wakeup < current)
+            return std::chrono::seconds(1);
         else
-            return mNextWakeup - current;
+            return m_next_wakeup - current;
     } else
     {
         if(firstTask < current)
-            return Chrono::milliseconds::zero();
+            return std::chrono::milliseconds::zero();
         else
             return firstTask - current;
     }
 }
 
-CString RuntimeQueue::name()
+std::string_view runtime_queue::name()
 {
-    RecLock _(mTasksLock);
-    return {};
+    detail::unique_lock<detail::recursive_mutex> _(m_tasks_lock);
+    return stl_types::Threads::GetName(m_thread_id);
 }
 
-ThreadId RuntimeQueue::threadId()
+detail::thread_id runtime_queue::thread_id() const
 {
-    return mThreadId;
+    return m_thread_id;
 }
 
-RuntimeQueue::RuntimeQueue(RuntimeQueue const& queue)
+u64 runtime_queue::enqueue(runtime_task&& task)
 {
-    mTasks     = std::move(queue.mTasks);
-    mTaskIndex = std::move(queue.mTaskIndex);
-}
+    detail::unique_lock<detail::recursive_mutex> _(m_tasks_lock);
 
-RuntimeQueue::RuntimeQueue() :
-    mTasksLock(), mTasks(), mTaskIndex(0), mCurrentTaskId(0)
-{
-}
-
-u64 RuntimeQueue::enqueue(RuntimeTask&& task)
-{
-    RecLock _(mTasksLock);
-
-    u64 output = ++mTaskIndex;
+    u64 output = ++m_task_index;
 
     task_data_t task_d;
     task_d.task       = std::move(task);
@@ -838,16 +812,28 @@ u64 RuntimeQueue::enqueue(RuntimeTask&& task)
     task_d.alive      = true;
     task_d.to_dispose = false;
 
-    mTasks.push_back(task_d);
+    m_tasks.push_back(task_d);
 
     sortTasks();
 
     return output;
 }
 
-void RuntimeQueue::sortTasks()
+u64 runtime_queue::enqueue(std::unique_ptr<dependent_task_invoker>&& task)
 {
-    std::sort(mTasks.begin(), mTasks.end());
+    detail::unique_lock<detail::recursive_mutex> _(m_tasks_lock);
+
+    dependent_task_data_t data;
+    data.task = std::move(task);
+
+    m_dependent_tasks.emplace_back(std::move(data));
+
+    return ++m_task_index;
 }
 
-} // namespace Coffee
+void runtime_queue::sortTasks()
+{
+    std::sort(m_tasks.begin(), m_tasks.end());
+}
+
+} // namespace rq

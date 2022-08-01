@@ -123,9 +123,9 @@ enum class type
     cube_up    = 0x100,
     cube_down  = 0x200,
 
-    type_mask     = 0b11,
-    modifier_mask = 0b1100,
-    cube_mask     = 0xFF0,
+    type_mask     = 0b0111,
+    modifier_mask = 0b1000,
+    cube_mask     = 0x0FF0,
 
     d2_array   = d2 | array,
     cube_array = cube | array,
@@ -151,8 +151,11 @@ constexpr texture_type<type::cube>       cube;
 constexpr texture_type<type::cube_array> cube_array;
 
 static_assert(
-    (type::array & type::modifier_mask) == type::array,
-    "modifier mask mismatch");
+    (type::d2_array & type::type_mask) == type::d2_array,
+    "d2_array not matched");
+static_assert(
+    ((type::cube | type::cube_north) & type::type_mask) == type::cube,
+    "cube not matched");
 static_assert(
     (type::multisample & type::modifier_mask) == type::multisample,
     "modifier mask mismatch");
@@ -272,7 +275,8 @@ concept Texture = requires(T v)
     {v.upload(
         std::declval<gsl::span<int, gsl::dynamic_extent>>(),
         std::declval<typing::vector_types::Vecui2>(),
-        std::declval<typing::geometry::size_3d<u32>>())};
+        std::declval<typing::geometry::size_3d<u32>>(),
+        0)};
     {v.size()};
 
     {v.view(
@@ -559,4 +563,22 @@ concept API = FixedPipeline<T> && Sampler<typename T::sampler_type> &&
     {v.default_rendertarget()};
 };
 
+namespace util {
+namespace detail {
+
+template<typename T>
+inline void dealloc_single(T& r)
+{
+    r->dealloc();
+}
+
+}
+
+template<typename... T>
+inline void dealloc_all(T&... resources)
+{
+    (..., detail::dealloc_single(resources));
+}
+
+}
 } // namespace semantic::concepts::graphics

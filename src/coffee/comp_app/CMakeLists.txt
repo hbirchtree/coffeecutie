@@ -19,7 +19,7 @@ target_precompile_headers ( ComponentApp PUBLIC
 coffee_library (
     TARGET ComponentBundleSetup
     SOURCES private/bundle.cpp
-    LIBRARIES ComponentApp ComponentBundle Image
+    LIBRARIES ComponentApp ComponentBundle GraphicsBundle MobileBundle Image
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/bundle_include>
     )

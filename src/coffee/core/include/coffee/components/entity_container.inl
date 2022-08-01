@@ -149,6 +149,8 @@ FORCEDINLINE bool subsystem_sort(
 FORCEDINLINE
 void EntityContainer::exec()
 {
+    constexpr auto wrap_exceptions = compile_info::debug_mode && false;
+
     time_point     time_now = clock::now();
     ContainerProxy proxy(*this);
 
@@ -178,11 +180,11 @@ void EntityContainer::exec()
     {
         auto& subsys = *subsys_ptr;
 
-        if constexpr(compile_info::debug_mode)
+        if constexpr(wrap_exceptions)
             ENT_DBG_TYPE(Verbose_Subsystems, "subsystem:start:", subsys)
         DProfContext _(typeid(subsys).name() + CString("::start_frame"));
 
-        if constexpr(compile_info::debug_mode)
+        if constexpr(wrap_exceptions)
             wrap_exception<std::exception>(
                 ex_handler(subsys),
                 &SubsystemBase::start_frame,
@@ -198,11 +200,11 @@ void EntityContainer::exec()
     {
         auto& visitor = *visitor_ptr;
 
-        if constexpr(compile_info::debug_mode)
+        if constexpr(wrap_exceptions)
             ENT_DBG_TYPE(Verbose_Visitors, "visitor:dispatch:", visitor)
         DProfContext _(typeid(visitor).name() + CString("::dispatch"));
 
-        if constexpr(compile_info::debug_mode)
+        if constexpr(wrap_exceptions)
             wrap_exception<std::exception>(
                 ex_handler(visitor_ptr),
                 &EntityVisitorBase::dispatch,
@@ -217,11 +219,11 @@ void EntityContainer::exec()
     {
         auto& subsys = *(*it);
 
-        if constexpr(compile_info::debug_mode)
+        if constexpr(wrap_exceptions)
             ENT_DBG_TYPE(Verbose_Subsystems, "subsystem:end:", subsys)
         DProfContext _(typeid(subsys).name() + CString("::end_frame"));
 
-        if constexpr(compile_info::debug_mode)
+        if constexpr(wrap_exceptions)
             wrap_exception<std::exception>(
                 ex_handler(subsys),
                 &SubsystemBase::end_frame,

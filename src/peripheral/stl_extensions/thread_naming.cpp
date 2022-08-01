@@ -61,7 +61,7 @@ STATICINLINE void SaveThreadName(ThreadId::Hash hs, CString const& name)
     context.names[hs] = name;
 }
 
-STATICINLINE CString LoadThreadName(ThreadId::Hash hs)
+STATICINLINE std::string_view LoadThreadName(ThreadId::Hash hs)
 {
     C_UNUSED(auto state) = platform::state->LockState("threadNames");
     auto& context        = GetContext();
@@ -85,11 +85,11 @@ bool SetName(Thread& t, CString const& name)
 #endif
 }
 
-CString GetName(Thread& t)
+std::string_view GetName(Thread& t)
 {
+#if defined(COFFEE_UNIXPLAT) && !defined(COFFEE_NO_PTHREAD_GETNAME_NP) && 0
     CString out;
     out.resize(17);
-#if defined(COFFEE_UNIXPLAT) && !defined(COFFEE_NO_PTHREAD_GETNAME_NP)
     int stat = pthread_getname_np(t.native_handle(), &out[0], out.size());
     if(stat != 0)
         return out;
@@ -100,13 +100,13 @@ CString GetName(Thread& t)
 #endif
 }
 
-bool SetName(ThreadId::Hash const& t, CString const& name)
+bool SetName(ThreadId::Hash t, CString const& name)
 {
     SaveThreadName(t, name);
     return true;
 }
 
-CString GetName(ThreadId::Hash const& t)
+std::string_view GetName(ThreadId::Hash t)
 {
     return LoadThreadName(t);
 }
@@ -138,9 +138,9 @@ bool SetName(CString const& name)
 #endif
 }
 
-CString GetName()
+std::string_view GetName()
 {
-#if defined(COFFEE_UNIXPLAT) && !defined(COFFEE_NO_PTHREAD_GETNAME_NP)
+#if defined(COFFEE_UNIXPLAT) && !defined(COFFEE_NO_PTHREAD_GETNAME_NP) && 0
     CString out;
     out.resize(17);
     int stat = pthread_getname_np(pthread_self(), &out[0], out.size());
@@ -148,7 +148,7 @@ CString GetName()
         return out;
     out.resize(out.find('\0', 0));
     return out;
-#elif defined(COFFEE_ANDROID)
+#elif defined(COFFEE_ANDROID) && 0
     CString out;
     out.resize(17);
     int stat = prctl(PR_GET_NAME, &out[0], 0, 0, 0);

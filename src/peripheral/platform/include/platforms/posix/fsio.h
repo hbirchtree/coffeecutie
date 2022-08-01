@@ -64,7 +64,7 @@ FORCEDINLINE result<stl_types::Vector<file_entry_t>, posix_error> list(
            name == "." || name == "..")
             continue;
         result.push_back(file_entry_t{
-            .mode = detail::mode_from_native(direntry->d_type),
+            .mode = detail::dirmode_from_native(direntry->d_type),
             .name = direntry->d_name,
         });
     }
@@ -225,7 +225,7 @@ FORCEDINLINE result<Url, posix_error> dereference(Url const& path)
 
 FORCEDINLINE result<Url, posix_error> executable()
 {
-#if defined(COFFEE_LINUX)
+#if defined(COFFEE_LINUX) || defined(COFFEE_ANDROID)
     using url::constructors::MkSysUrl;
 
     return path::canon(MkSysUrl("/proc/self/exe"));
@@ -236,7 +236,7 @@ FORCEDINLINE result<Url, posix_error> executable()
 #elif defined(COFFEE_EMSCRIPTEN)
     return url::constructors::MkSysUrl("/app");
 #else
-    return url::constructors::MkInvalidUrl();
+    static_assert(false, "Unimplemented executable()");
 #endif
 }
 
@@ -252,7 +252,11 @@ FORCEDINLINE result<Url, posix_error> current_dir()
 {
     using url::constructors::MkSysUrl;
 
+#if defined(COFFEE_LINUX)
     if(auto res = get_current_dir_name(); !res)
+#else
+    if(auto res = getcwd(nullptr, 0); !res)
+#endif
         return detail::posix_failure();
     else
     {

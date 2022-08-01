@@ -17,10 +17,10 @@ function identify_host()
 
 function identify_target()
 {
-    PLATFORM="${1%%:*}"
-    SYSROOT="${1##*:}"
-    ARCHITECTURE="${1#*:}"
-    ARCHITECTURE="${ARCHITECTURE%:*}"
+    PLATFORM="$(echo $1 | cut -d: -f1)"
+    ARCHITECTURE="$(echo $1 | cut -d: -f2)"
+    SYSROOT="$(echo $1 | cut -d: -f3)"
+    TARGET="$(echo $1 | cut -d: -f4)"
 }
 
 function install_dependencies()
@@ -35,9 +35,16 @@ function install_dependencies()
     echo "::endgroup::"
 }
 
+function cmake_debug()
+{
+    echo "About to execute:"
+    echo cmake $@
+    cmake $@
+}
+
 function native_build()
 {
-    identify_target $2
+    identify_target $1
     TOOLCHAIN_DOWNLOAD="${PLATFORM}-${ARCHITECTURE}_${SYSROOT}"
 
     mkdir -p $BASE_DIR/multi_build/$TOOLCHAIN_DOWNLOAD
@@ -95,6 +102,11 @@ function native_build()
     export VCPKG_ROOT=$(dirname $(readlink $(which vcpkg)))
     export VCPKG_CHAINLOAD_TOOLCHAIN_FILE=${BASE_DIR}/toolchain/cmake/Toolchains/${TOOLCHAIN_PREFIX}.toolchain.cmake
 
+    TARGET_SPEC=""
+    if [ -n "${TARGET}" ]; then
+        TARGET_SPEC="--target ${TARGET}"
+    fi
+
     install_dependencies
 
     echo "::group::Configuring project"
@@ -113,11 +125,11 @@ function native_build()
         -DVCPKG_OVERLAY_PORTS=${BASE_DIR}/toolchain/vcpkg/ports \
         -DVCPKG_OVERLAY_TRIPLETS=${BASE_DIR}/toolchain/vcpkg/triplets \
         -DVCPKG_TARGET_TRIPLET=${TOOLCHAIN_PREFIX} \
-        ${BASE_DIR} ${@:3}
+        ${BASE_DIR} ${@:2}
     echo "::endgroup::"
 
     echo "::group::Building project"
-    cmake --build .
+    cmake --build . ${TARGET_SPEC}
     echo "::endgroup::"
 
     popd
@@ -125,7 +137,7 @@ function native_build()
 
 function emscripten_build()
 {
-    identify_target $2
+    identify_target $1
 
     echo " * Selected platform ${PLATFORM}:${ARCHITECTURE}:${SYSROOT}"
 
@@ -152,6 +164,11 @@ function emscripten_build()
     export VCPKG_ROOT=$(dirname $(readlink $(which vcpkg)))
     export VCPKG_CHAINLOAD_TOOLCHAIN_FILE=${EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake
 
+    TARGET_SPEC=""
+    if [ -n "${TARGET}" ]; then
+        TARGET_SPEC="--target ${TARGET}"
+    fi
+
     install_dependencies
 
     echo "::group::Configuring project"
@@ -165,11 +182,11 @@ function emscripten_build()
         -DVCPKG_OVERLAY_PORTS=${BASE_DIR}/toolchain/vcpkg/ports \
         -DVCPKG_OVERLAY_TRIPLETS=${BASE_DIR}/toolchain/vcpkg/triplets \
         -DVCPKG_TARGET_TRIPLET=${TOOLCHAIN_PREFIX} \
-        ${BASE_DIR} ${@:3}
+        ${BASE_DIR} ${@:2}
     echo "::endgroup::"
 
     echo "::group::Building project"
-    cmake --build .
+    cmake --build . ${TARGET_SPEC}
     echo "::endgroup::"
 
     popd
@@ -177,7 +194,7 @@ function emscripten_build()
 
 function xcode_build()
 {
-    identify_target $2
+    identify_target $1
 
     echo " * Selected platform ${PLATFORM}:${ARCHITECTURE}"
 
@@ -193,6 +210,11 @@ function xcode_build()
 
     export VCPKG_ROOT=$(dirname $(readlink $(which vcpkg)))
 
+    TARGET_SPEC=""
+    if [ -n "${TARGET}" ]; then
+        TARGET_SPEC="--target ${TARGET}"
+    fi
+
     install_dependencies
 
     echo "::group::Configuring project"
@@ -205,11 +227,69 @@ function xcode_build()
         -DVCPKG_OVERLAY_PORTS=${BASE_DIR}/toolchain/vcpkg/ports \
         -DVCPKG_OVERLAY_TRIPLETS=${BASE_DIR}/toolchain/vcpkg/triplets \
         -DVCPKG_TARGET_TRIPLET=${TOOLCHAIN_PREFIX} \
-        ${BASE_DIR} ${@:3}
+        ${BASE_DIR} ${@:2}
     echo "::endgroup::"
 
     echo "::group::Building project"
-    cmake --build .
+    cmake --build . ${TARGET_SPEC}
+    echo "::endgroup::"
+
+    popd
+}
+
+function android_build()
+{
+    identify_target $1
+
+    BUILD_NAME="${PLATFORM}-${ARCHITECTURE}_${SYSROOT}"
+
+    mkdir -p $BASE_DIR/multi_build/$BUILD_NAME
+    pushd $BASE_DIR/multi_build/$BUILD_NAME
+
+    export TOOLCHAIN_ROOT="${TOOLCHAIN_ROOT:-$ANDROID_NDK}"
+    export TOOLCHAIN_PREFIX="${ARCHITECTURE}-android"
+    export ANDROID_NDK_HOME=$ANDROID_NDK
+    ANDROID_API_LEVEL=android-${SYSROOT:-28}
+
+    echo " * Selected platform ${PLATFORM}:${ARCHITECTURE}:${SYSROOT}"
+    echo " * Selected Android NDK ${ANDROID_NDK} ($(cat ${ANDROID_NDK}/source.properties | grep Pkg.Revision | cut -d= -f2))"
+    echo " * Selected Android SDK ${ANDROID_SDK}"
+
+    export CONFIGURATION=${CONFIGURATION:-Debug}
+    export CMAKE_SOURCE_DIR=${BASE_DIR}
+    export CMAKE_INSTALL_DIR=${INSTALL_DIR:-$PWD/install}
+
+    export VCPKG_ROOT=$(dirname $(readlink $(which vcpkg)))
+    export VCPKG_CHAINLOAD_TOOLCHAIN_FILE=${ANDROID_NDK}/build/cmake/android.toolchain.cmake
+
+    TARGET_SPEC=""
+    if [ -n "${TARGET}" ]; then
+        TARGET_SPEC="--target ${TARGET}"
+    fi
+
+    #install_dependencies
+
+    echo "::group::Configuring project"
+    echo "::info::Set up for ${TOOLCHAIN_PREFIX} (${TOOLCHAIN_ROOT})"
+    cmake_debug \
+        -GNinja \
+        -C${BASE_DIR}/.github/cmake/${PLATFORM}-${ARCHITECTURE}.preload.cmake \
+        -DANDROID_SDK=${ANDROID_SDK} \
+        -DANDROID_NDK=${ANDROID_NDK} \
+        -DCMAKE_INSTALL_PREFIX=$PWD/install \
+        -DVCPKG_OVERLAY_PORTS=${BASE_DIR}/toolchain/vcpkg/ports \
+        -DVCPKG_OVERLAY_TRIPLETS=${BASE_DIR}/toolchain/vcpkg/triplets \
+        -DVCPKG_TARGET_TRIPLET=${TOOLCHAIN_PREFIX} \
+        -DANDROID_PLATFORM=${ANDROID_API_LEVEL} \
+        -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/toolchains/android.cmake \
+        -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake \
+        ${BASE_DIR} ${@:2}
+    echo "::endgroup::"
+        #-DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=${VCPKG_CHAINLOAD_TOOLCHAIN_FILE} \
+        #-DANDROID_ABI=${ARCHITECTURE} \
+
+    echo "::group::Building project"
+    cmake --build . ${TARGET_SPEC}
     echo "::endgroup::"
 
     popd

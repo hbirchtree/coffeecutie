@@ -22,14 +22,20 @@ function all_source_files()
 }
 
 case $1 in
-"native-build")
-    native_build $@
+"build")
+    ${0} $(echo $2 | cut -d: -f 1)-build ${@:2}
+;;
+"desktop-build")
+    native_build ${@:2}
 ;;
 "web-build")
-    emscripten_build $@
+    emscripten_build ${@:2}
 ;;
 "xcode-build")
-    xcode_build $@
+    xcode_build ${@:2}
+;;
+"android-build")
+    android_build ${@:2}
 ;;
 "compress-usr-dir")
     echo "::group::Compressing install directory"
@@ -107,7 +113,6 @@ case $1 in
 ;;
 "list-targets")
     ls -1 $BASE_DIR/.github/cmake/ | sed 's/.preload.cmake//g'
-
     echo "
 To build a target, execute $0 quick-build [target]"
 ;;

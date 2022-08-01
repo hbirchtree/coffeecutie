@@ -31,7 +31,7 @@ bool StandardKeyRegister(
     {
     case CIEvent::Keyboard:
     {
-        auto const& ev = *C_FCAST<CIKeyEvent const*>(data);
+        auto const& ev = *C_RCAST<CIKeyEvent const*>(data);
 
         if(ev.mod & CIKeyEvent::RepeatedModifier)
             break;
@@ -44,7 +44,7 @@ bool StandardKeyRegister(
     }
     case CIEvent::MouseButton:
     {
-        auto const& ev = *C_FCAST<CIMouseButtonEvent const*>(data);
+        auto const& ev = *C_RCAST<CIMouseButtonEvent const*>(data);
 
         bool pressed = ev.mod & CIMouseButtonEvent::Pressed;
 

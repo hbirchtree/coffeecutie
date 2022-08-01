@@ -13,7 +13,7 @@ namespace detail {
 
 FORCEDINLINE bool requires_delimiters(stl_types::String const& filename)
 {
-    return stl_types::str::find::starts_with<char>(filename.c_str(), "/proc/");
+    return filename.starts_with("/proc/");
 }
 
 } // namespace detail
@@ -43,8 +43,59 @@ FORCEDINLINE result<mem_chunk<char>, int> read(
         return success(std::move(out));
 }
 
-FORCEDINLINE result<stl_types::Vector<stl_types::String>, int> read_lines(
-    Url const& file)
+struct line_iterator
+{
+    line_iterator(file_t&& fd) : fd(stl_types::MkShared<file_t>(std::move(fd)))
+    {
+    }
+    line_iterator()
+    {
+    }
+
+    inline line_iterator& operator++()
+    {
+        advance();
+        return *this;
+    }
+    inline line_iterator operator++(int) const
+    {
+        auto cpy = *this;
+        cpy.advance();
+        return cpy;
+    }
+
+    inline bool empty() const
+    {
+        return feof(*fd);
+    }
+
+    inline std::string_view operator*() const
+    {
+        return std::string_view(current_line.data(), current_line.size());
+    }
+
+  private:
+    inline void advance()
+    {
+        char*  line = nullptr;
+        size_t size = 0;
+        if(auto len = getdelim(&line, &size, '\n', *fd); len != -1)
+        {
+            current_line.insert(current_line.begin(), line, line + len);
+            current_line.resize(len);
+        } else
+            current_line = {};
+        ::free(line);
+        if(current_line.starts_with('\n'))
+            current_line = current_line.substr(1);
+        current_line = current_line.substr(0, current_line.find('\n'));
+    }
+
+    stl_types::ShPtr<file_t> fd;
+    stl_types::String        current_line;
+};
+
+FORCEDINLINE result<line_iterator, int> read_lines(Url const& file)
 {
     using stl_types::String;
     using stl_types::str::split::spliterator;
@@ -52,33 +103,7 @@ FORCEDINLINE result<stl_types::Vector<stl_types::String>, int> read_lines(
     if(auto fd = open_file(file); fd.has_error())
         return failure(fd.error());
     else
-    {
-        stl_types::Vector<String> out;
-        if(detail::requires_delimiters(*file))
-        {
-            char*  arg  = nullptr;
-            size_t size = 0;
-            while(getdelim(&arg, &size, '\n', fd.value()) != -1)
-                out.push_back(String(arg));
-        } else
-        {
-            if(auto data = read(fd.value()); data.has_error())
-                return failure(data.error());
-            else
-            {
-                auto buffer = std::move(data.value());
-                auto it =
-                    spliterator<char>(std::string_view(buffer.data), '\n');
-                do
-                    out.push_back(String((*it).data(), (*it).size()));
-                while(++it != spliterator<char>());
-            }
-        }
-        for(auto& line : out)
-            if(line.starts_with('\n'))
-                line = line.substr(1);
-        return success(out);
-    }
+        return success(line_iterator(std::move(fd.value())));
 }
 
 FORCEDINLINE Optional<int> write(

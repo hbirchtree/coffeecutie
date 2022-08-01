@@ -1,4 +1,5 @@
 find_package ( Microsoft.GSL CONFIG REQUIRED )
+find_package ( tinyutf8 CONFIG REQUIRED )
 
 coffee_library (
     TARGET PeripheralLib
@@ -8,7 +9,7 @@ coffee_library (
     private/libc_functions.cpp
     private/pimpl_state.cpp
 
-    LIBRARIES Microsoft.GSL::GSL
+    LIBRARIES Microsoft.GSL::GSL tinyutf8::tinyutf8
 
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -113,18 +114,14 @@ if(WIN32)
     target_compile_definitions ( PeripheralLib PUBLIC
         -DCOFFEE_WINDOWS_COMPRESSION_AVAILABLE=1
         )
-endif()
-
-if(ANDROID)
+elseif(ANDROID)
     target_link_libraries ( PeripheralLib PUBLIC
         # For logcat logging
         log
         # Most Android-specifics are in here
         android
         )
-endif()
-
-if(APPLE)
+elseif(APPLE)
     if(NOT IOS)
         target_link_libraries ( PeripheralLib PUBLIC
             "-framework CoreGraphics"
@@ -145,41 +142,9 @@ if(APPLE)
         "-framework CoreAudio"
         "-framework CoreFoundation"
         "-framework Foundation"
-        )
-endif()
-
-if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
-    target_link_libraries ( PeripheralLib PUBLIC
-        rt
-        )
-endif()
-
-if(NOT WIN32 AND NOT MSYS AND NOT MINGW AND NOT EMSCRIPTEN)
-    if(NOT APPLE AND NOT GAMECUBE)
-        target_link_libraries ( PeripheralLib PUBLIC
-            dl
-            )
-    endif()
-    target_link_libraries ( PeripheralLib PUBLIC
         m
         )
-endif()
-
-if(NOT WIN32 AND NOT APPLE AND NOT EMSCRIPTEN AND NOT GAMECUBE)
-    find_package ( Threads REQUIRED )
-    target_link_libraries ( PeripheralLib PUBLIC
-        Threads::Threads
-        stdc++fs
-        )
-endif()
-
-if(GAMECUBE)
-    target_link_libraries ( PeripheralLib PUBLIC
-        ogc
-        )
-endif()
-
-if(EMSCRIPTEN)
+elseif(EMSCRIPTEN)
     target_compile_options ( PeripheralLib PUBLIC
         -fexceptions
         --no-heap-copy
@@ -194,6 +159,19 @@ if(EMSCRIPTEN)
         --no-heap-copy
         -fPIC
        )
+elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+    find_package ( Threads REQUIRED )
+    target_link_libraries ( PeripheralLib PUBLIC
+        rt
+        dl
+        m
+        Threads::Threads
+        stdc++fs
+        )
+elseif(GAMECUBE)
+    target_link_libraries ( PeripheralLib PUBLIC
+        ogc
+        )
 endif()
 
 ############################################################

@@ -21,6 +21,13 @@ i32 coffee_main(i32, cstring_w*)
 
     auto map_file =
         Resource(MkUrl(result.pos("map_name") + ".map", RSCA::AssetFile));
+
+    if(!FileExists(map_file))
+    {
+        cWarning("Map file does not exist: {0}", map_file.resource());
+        return 1;
+    }
+
     blam::map_container  map(map_file, blam::pc_version);
     blam::tag_index_view tags(map);
 
@@ -94,7 +101,7 @@ i32 coffee_main(i32, cstring_w*)
             switch(curr.exp_type)
             {
             case expression_t::group:
-                cBasicPrintNoNL(" ( {0}", curr.opcode);
+                cBasicPrintNoNL(" ( {0}", magic_enum::enum_name(curr.opcode));
                 break;
             default:
                 cBasicPrintNoNL(" {0}", val_to_string(curr));
@@ -125,8 +132,7 @@ i32 coffee_main(i32, cstring_w*)
 
             switch(curr.opcode)
             {
-            case opc::print_:
-            {
+            case opc::print_: {
                 cBasicPrint("");
                 cDebug(" >> {0}", val_to_string(ptr.param(t::string_)));
                 break;
@@ -134,29 +140,24 @@ i32 coffee_main(i32, cstring_w*)
             case opc::game_is_cooperative:
                 out.set(false);
                 break;
-            case opc::unit:
-            {
+            case opc::unit: {
                 out            = ptr.param(t::object);
                 out.param_type = out.ret_type = t::unit;
                 break;
             }
-            case opc::list_count:
-            {
+            case opc::list_count: {
                 out.set(0);
                 break;
             }
-            case opc::list_get:
-            {
+            case opc::list_get: {
                 out = script_types::layout_t::typed_(t::object);
                 break;
             }
-            case opc::players:
-            {
+            case opc::players: {
                 out.ret_type = t::obj_list;
                 break;
             }
-            case opc::inspect:
-            {
+            case opc::inspect: {
                 auto object = ptr.param(t::any);
                 cDebug("INSPECT: {0}", object);
                 break;
@@ -183,9 +184,10 @@ i32 coffee_main(i32, cstring_w*)
             return script_types::result_t::return_(out);
         };
 
-    blam::hsc::script_environment env = {&string_seg,
-                                         scenario[0].function_table(map.magic),
-                                         scenario[0].globals.data(map.magic)};
+    blam::hsc::script_environment env = {
+        &string_seg,
+        scenario[0].function_table(map.magic),
+        scenario[0].globals.data(map.magic)};
 
     C_UNUSED(auto func_table) = scenario[0].function_table(map.magic);
 
@@ -222,11 +224,14 @@ i32 coffee_main(i32, cstring_w*)
 
             cBasicPrint("");
             cDebug(" >> End state {0}", s.second.status);
-            cBasicPrintNoNL(
-                "ip={0}, lr=[ ", str::print::pointerify(s.second.ip));
-            for(auto ip : s.second.link_register)
-                cBasicPrintNoNL("{0} ", str::print::pointerify(ip));
-            cBasicPrint("]");
+            cBasicPrint(
+                "ip={0}, lr={1}",
+                str::print::pointerify(s.second.ip),
+                s.second.link_register);
+            //            for(auto ip : s.second.link_register)
+            //                cBasicPrintNoNL("{0} ",
+            //                str::print::pointerify(ip));
+            //            cBasicPrint("]");
         }
         script.update_sleepers(15ms, {opcode_executor, pre_op, post_op});
         CurrentThread::sleep_for(15ms);

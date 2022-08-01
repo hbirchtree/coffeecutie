@@ -1,131 +1,164 @@
 #include <platforms/android/sysinfo.h>
 
 #include <coffee/android/android_main.h>
-#include <coffee/core/stl_types.h>
-#include <jni.h>
-#include <peripherals/stl/string_casting.h>
-#include <platforms/file.h>
+#include <coffee/jni/jnipp.h>
 
 extern "C" {
 #include <cpu-features.h>
 }
 
-//#include <coffee/android/android_main.h>
+using re = ::jnipp::return_type;
+using namespace ::jnipp_operators;
 
-using namespace Coffee;
-using re = jnipp::return_type;
+namespace platform::info::os::android {
 
-namespace platform {
-namespace env {
-namespace Linux {
-
-extern CString get_kern_arch();
-
-}
-namespace android {
-
-using LFileFun = file::Linux::FileFun;
-
-CString SysInfo::GetSystemVersion()
+std::optional<std::string> name()
 {
-    AndroidForeignCommand cmd;
-
-    cmd.type = Android_QueryReleaseName;
-    CoffeeForeignSignalHandleNA(
-        CoffeeForeign_RequestPlatformData, &cmd, nullptr, nullptr);
-
-    return cmd.store_string;
+    return "Android";
 }
 
-HWDeviceInfo SysInfo::DeviceName()
+std::optional<std::string> version()
 {
-    AndroidForeignCommand cmd;
-
-    cmd.type = Android_QueryDeviceBoardName;
-
-    cmd.type = Android_QueryDeviceBrand;
-    CoffeeForeignSignalHandleNA(
-        CoffeeForeign_RequestPlatformData, &cmd, nullptr, nullptr);
-
-    auto brand = cmd.store_string;
-
-    cmd.type = Android_QueryDeviceName;
-    CoffeeForeignSignalHandleNA(
-        CoffeeForeign_RequestPlatformData, &cmd, nullptr, nullptr);
-
-    auto product = cmd.store_string;
-
-    cmd.type = Android_QueryReleaseName;
-    CoffeeForeignSignalHandleNA(
-        CoffeeForeign_RequestPlatformData, &cmd, nullptr, nullptr);
-
-    auto version = cmd.store_string;
-
-    return HWDeviceInfo(brand, product, version);
+    jnipp::java::object fieldValue =
+        *"android.os.Build$VERSION"_jclass["RELEASE"_jfield.as(
+            "java.lang.String")];
+    return jnipp::java::type_unwrapper<std::string>(fieldValue);
 }
 
-HWDeviceInfo SysInfo::Motherboard()
+} // namespace platform::info::os::android
+
+namespace platform::info::device::android {
+
+std::optional<std::pair<std::string, std::string>> device()
 {
-    AndroidForeignCommand cmd;
-
-    cmd.type = Android_QueryDeviceBoardName;
-
-    CoffeeForeignSignalHandleNA(
-        CoffeeForeign_RequestPlatformData, &cmd, nullptr, nullptr);
-
-    auto board = cmd.store_string;
-
-    return HWDeviceInfo(board, "", "");
+    return std::nullopt;
 }
 
-u32 SysInfo::CoreCount()
+std::optional<std::pair<std::string, std::string>> motherboard()
 {
-    return C_FCAST<u32>(android_getCpuCount());
+    return std::nullopt;
 }
 
-ThrdCnt SysInfo::ThreadCount()
+std::optional<std::pair<std::string, std::string>> chassis()
 {
-    return C_FCAST<u32>(android_getCpuCount());
+    return std::nullopt;
 }
 
-u16 PowerInfo::BatteryPercentage()
-{
-    using namespace ::jnipp_operators;
+} // namespace platform::info::device::android
 
-    auto BatteryManager = "android.os.BatteryManager"_jclass;
-    auto getProperty    = "getIntProperty"_jmethod.arg<jint>().ret<re::int_>();
+// namespace platform {
+// namespace env {
+// namespace Linux {
 
-    auto battery = *::android::app_info().get_service("batterymanager");
+// extern CString get_kern_arch();
 
-    return BatteryManager(battery)[getProperty](4);
-}
+//}
+// namespace android {
 
-PowerInfo::Temp PowerInfo::CpuTemperature()
-{
-    using namespace ::jnipp_operators;
+// using LFileFun = file::Linux::FileFun;
 
-    /* Note: CPU temps are not available anymore, get the battery temp I guess
-     */
+// CString SysInfo::GetSystemVersion()
+//{
+//     AndroidForeignCommand cmd;
 
-    auto BatteryManager = "android.os.BatteryManager"_jclass;
-    auto getProperty    = "getIntProperty"_jmethod.arg<jint>()
-                           .arg<jint>()
-                           .ret<re::int_>();
+//    cmd.type = Android_QueryReleaseName;
+//    CoffeeForeignSignalHandleNA(
+//        CoffeeForeign_RequestPlatformData, &cmd, nullptr, nullptr);
 
-    auto battery = *::android::app_info().get_service("batterymanager");
+//    return cmd.store_string;
+//}
 
-    //    auto values = BatteryManager(battery)[getProperty](0);
+// HWDeviceInfo SysInfo::DeviceName()
+//{
+//     AndroidForeignCommand cmd;
 
-    return {0.f, 0.f};
-}
+//    cmd.type = Android_QueryDeviceBoardName;
 
-PowerInfo::Temp PowerInfo::GpuTemperature()
-{
-    //    auto hw = *::android::app_info().get_service("hardware_properties");
+//    cmd.type = Android_QueryDeviceBrand;
+//    CoffeeForeignSignalHandleNA(
+//        CoffeeForeign_RequestPlatformData, &cmd, nullptr, nullptr);
 
-    return {0.f, 0.f};
-}
+//    auto brand = cmd.store_string;
 
-} // namespace android
-} // namespace env
-} // namespace platform
+//    cmd.type = Android_QueryDeviceName;
+//    CoffeeForeignSignalHandleNA(
+//        CoffeeForeign_RequestPlatformData, &cmd, nullptr, nullptr);
+
+//    auto product = cmd.store_string;
+
+//    cmd.type = Android_QueryReleaseName;
+//    CoffeeForeignSignalHandleNA(
+//        CoffeeForeign_RequestPlatformData, &cmd, nullptr, nullptr);
+
+//    auto version = cmd.store_string;
+
+//    return HWDeviceInfo(brand, product, version);
+//}
+
+// HWDeviceInfo SysInfo::Motherboard()
+//{
+//     AndroidForeignCommand cmd;
+
+//    cmd.type = Android_QueryDeviceBoardName;
+
+//    CoffeeForeignSignalHandleNA(
+//        CoffeeForeign_RequestPlatformData, &cmd, nullptr, nullptr);
+
+//    auto board = cmd.store_string;
+
+//    return HWDeviceInfo(board, "", "");
+//}
+
+// u32 SysInfo::CoreCount()
+//{
+//     return C_FCAST<u32>(android_getCpuCount());
+// }
+
+// ThrdCnt SysInfo::ThreadCount()
+//{
+//     return C_FCAST<u32>(android_getCpuCount());
+// }
+
+// u16 PowerInfo::BatteryPercentage()
+//{
+//     using namespace ::jnipp_operators;
+
+//    auto BatteryManager = "android.os.BatteryManager"_jclass;
+//    auto getProperty    =
+//    "getIntProperty"_jmethod.arg<jint>().ret<re::int_>();
+
+//    auto battery = *::android::app_info().get_service("batterymanager");
+
+//    return BatteryManager(battery)[getProperty](4);
+//}
+
+// PowerInfo::Temp PowerInfo::CpuTemperature()
+//{
+//     using namespace ::jnipp_operators;
+
+//    /* Note: CPU temps are not available anymore, get the battery temp I guess
+//     */
+
+//    auto BatteryManager = "android.os.BatteryManager"_jclass;
+//    auto getProperty    = "getIntProperty"_jmethod.arg<jint>()
+//                           .arg<jint>()
+//                           .ret<re::int_>();
+
+//    auto battery = *::android::app_info().get_service("batterymanager");
+
+//    //    auto values = BatteryManager(battery)[getProperty](0);
+
+//    return {0.f, 0.f};
+//}
+
+// PowerInfo::Temp PowerInfo::GpuTemperature()
+//{
+//     //    auto hw =
+//     *::android::app_info().get_service("hardware_properties");
+
+//    return {0.f, 0.f};
+//}
+
+//} // namespace android
+//} // namespace env
+//} // namespace platform

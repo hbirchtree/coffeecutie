@@ -6,8 +6,12 @@
 namespace Coffee {
 namespace ASIO {
 
-struct NetStats : comp_app::NetworkStatProvider
+struct NetStats
+    : comp_app::interfaces::NetworkStatProvider,
+      comp_app::AppService<NetStats, comp_app::NetworkStatProvider>
 {
+    using type = NetStats;
+
     NetStats(Service& service) : source(service.statistics)
     {
     }

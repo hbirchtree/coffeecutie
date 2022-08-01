@@ -1,42 +1,22 @@
 #pragma once
 
-#include <peripherals/base.h>
+#include <peripherals/identify/system.h>
+#include <peripherals/stl/types.h>
 
-#ifdef COFFEE_ANDROID
+namespace platform::info::os::android {
 
-#include "../linux/sysinfo.h"
+std::optional<std::string> name();
 
-#if defined(COFFEE_USE_SDL2)
-#include "../sdlpowerinfo.h"
-#endif
+std::optional<std::string> version();
 
-namespace platform {
-namespace env {
-namespace android {
-struct SysInfo : Linux::SysInfo
-{
-    static CString      GetSystemVersion();
-    static info::HardwareDevice DeviceName();
-    static info::HardwareDevice Motherboard();
+} // namespace platform::info::os::android
 
-    static u32     CoreCount();
-    static ThrdCnt ThreadCount();
-};
+namespace platform::info::device::android {
 
-struct PowerInfo : PowerInfoDef
-{
-    static u16 BatteryPercentage();
+std::optional<std::pair<std::string, std::string>> device();
 
-    static Temp CpuTemperature();
-    static Temp GpuTemperature();
-};
+std::optional<std::pair<std::string, std::string>> motherboard();
 
-} // namespace android
-} // namespace env
+std::optional<std::pair<std::string, std::string>> chassis();
 
-using PowerInfo = env::android::PowerInfo;
-using SysInfo   = env::android::SysInfo;
-
-} // namespace platform
-
-#endif
+} // namespace platform::info::device::android

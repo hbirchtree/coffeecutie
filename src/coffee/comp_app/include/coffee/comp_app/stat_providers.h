@@ -24,8 +24,8 @@ struct SysMemoryStats : interfaces::MemoryStatProvider,
 
 struct SysBattery : interfaces::BatteryProvider, AppService<SysBattery>
 {
-    virtual PowerSource     source() final;
-    virtual libc_types::u16 percentage() final;
+    virtual PowerSource     source() const final;
+    virtual libc_types::u16 percentage() const final;
 };
 
 struct SysCPUClock : interfaces::CPUClockProvider, AppService<SysCPUClock>

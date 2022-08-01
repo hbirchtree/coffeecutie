@@ -60,7 +60,18 @@ i32 coffee_main(i32, cstring_w*)
     }
     Profiler::PopContext();
 
-    cBasicPrint("Processor: {0}", platform::SysInfo::Processor());
+    if(auto model = platform::info::proc::model(); model.has_value())
+        cBasicPrint("Processor: {0}", model.value());
+    cBasicPrint("Processor: {0}", platform::info::proc::cpu_count());
+    cBasicPrint("Processor: {0}", platform::info::proc::core_count());
+    cBasicPrint("Processor: {0}", platform::info::proc::thread_count());
+    cBasicPrint("Processor: {0}", platform::info::proc::frequency());
+
+    cBasicPrint("Processor: {0}", platform::info::os::kernel());
+    cBasicPrint("Processor: {0}", platform::info::os::kernel_version());
+    cBasicPrint("Processor: {0}", platform::info::os::architecture());
+    cBasicPrint("Processor: {0}", platform::info::os::name());
+    cBasicPrint("Processor: {0}", platform::info::os::version());
 
     cDebug("Sensor gravity: {0}", Sensor::Gravity());
     cDebug("Sensor gyro: {0}", Sensor::Gyroscope());

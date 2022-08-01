@@ -70,7 +70,7 @@ FORCEDINLINE mode_t mode_from_native(::mode_t mode)
     return mode_t::none;
     // clang-format on
 }
-FORCEDINLINE mode_t mode_from_native(unsigned char mode)
+FORCEDINLINE mode_t dirmode_from_native(int mode)
 {
     switch(mode)
     {

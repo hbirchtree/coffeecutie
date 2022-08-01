@@ -1,9 +1,11 @@
 #pragma once
 
 #include <iterator>
+#include <sstream>
 #include <peripherals/libc/types.h>
 #include <peripherals/semantic/chunk.h>
 #include <peripherals/stl/string_casting.h>
+#include <peripherals/stl/string_ops.h>
 
 #if !defined(COFFEE_WINDOWS) && !defined(COFFEE_GEKKO)
 #define COFFEE_HTTP_MULTIPART
@@ -563,14 +565,14 @@ inline string read_line(std::istream& h)
 }
 
 template<typename T>
-inline szptr read_value(semantic::mem_chunk<T> const& buf, string& target)
+inline szptr read_value(semantic::Span<T> const& buf, string& target)
 {
-    auto start = buf.template as<char>();
-    auto end   = libc::str::find<libc::str::find_char, char>(start.data, ' ');
+    auto start = semantic::mem_chunk<const char>::ofContainer(buf).view;
+    auto end = std::find(start.begin(), start.end(), ' ');
 
-    if(end && (end - start.data) > 0)
+    if(end != start.end())
     {
-        target.insert(0, start.data, end - start.data);
+        target.insert(0, start.data(), end - start.begin());
         return target.size() + 1;
     }
 
@@ -578,14 +580,14 @@ inline szptr read_value(semantic::mem_chunk<T> const& buf, string& target)
 }
 
 template<typename T>
-inline szptr read_line(semantic::mem_chunk<T> const& h, string& target)
+inline szptr read_line(semantic::Span<T> const& buf, string& target)
 {
-    auto start = h.template as<char>();
-    auto end   = libc::str::find(start.data, "\r\n");
+    auto start = semantic::mem_chunk<const char>::ofContainer(buf);
+    auto end   = start.find(semantic::mem_chunk<const char>::ofString("\r\n"));
 
-    if(end && (end - start.data) > 0)
+    if(end != start.view.end() && (start.view.end() - end) > 0)
     {
-        target.insert(0, start.data, end - start.data);
+        target.insert(0, start.view.data(), end - start.view.begin());
         return target.size() + 2;
     }
 
@@ -600,7 +602,7 @@ inline Rep read_int(std::istream& h)
 }
 
 template<typename Rep, typename T>
-inline szptr read_int(semantic::mem_chunk<T> const& h, Rep& out)
+inline szptr read_int(semantic::Span<T> const& h, Rep& out)
 {
     string tmp;
     szptr  off = read_value(h, tmp);
@@ -622,7 +624,7 @@ inline header_t& response_line(header_t& h, std::istream& s)
 }
 
 template<typename T>
-inline szptr response_line(header_t& h, semantic::mem_chunk<T> const& buf)
+inline szptr response_line(header_t& h, semantic::Span<T> const& buf)
 {
     szptr offset = 0;
 
@@ -631,8 +633,8 @@ inline szptr response_line(header_t& h, semantic::mem_chunk<T> const& buf)
         offset += read_value(buf, tmp);
         h.version = header::from_string::version(tmp);
     }
-    offset += read_int<u16>(*buf.at(offset), h.code);
-    offset += read_line(*buf.at(offset), h.message);
+    offset += read_int<u16>(buf.subspan(offset), h.code);
+    offset += read_line(buf.subspan(offset), h.message);
 
     return offset;
 }
@@ -838,8 +840,8 @@ struct path_iterator
 
     inline string operator*()
     {
-        auto end = m_query_start == string::npos ? string::npos
-                                                 : m_query_start - m_pos + 1;
+        auto end       = m_query_start == string::npos ? string::npos
+                                                       : m_query_start - m_pos + 1;
         auto next_comp = m_resource.find('/', m_pos + 1) - m_pos;
 
         return m_resource.substr(m_pos + 1, std::min(next_comp, end) - 1);
@@ -1027,21 +1029,19 @@ inline payload_t read_payload(
 namespace buffer {
 
 template<typename T>
-inline szptr read_header(header_t& out, semantic::mem_chunk<T> const& buf)
+inline szptr read_header(header_t& out, semantic::Span<T> const& buf)
 {
-    auto   view = buf.template as<char>();
-    string tmp;
     szptr  offset = 0;
 
-    while(offset < buf.size)
+    while(offset < buf.size())
     {
-        offset += header::parse::read_line(*view.at(offset), tmp);
+        string tmp;
+        offset += header::parse::read_line(buf.subspan(offset), tmp);
 
         if(tmp.empty())
             break;
 
         auto classified = header::parse::field_classify(tmp);
-        tmp.clear();
 
         if(classified.first.first != header_field::none)
             out.standard_fields.insert(classified.first);
@@ -1053,14 +1053,14 @@ inline szptr read_header(header_t& out, semantic::mem_chunk<T> const& buf)
 }
 
 template<typename T>
-inline szptr read_response(header_t& out, semantic::mem_chunk<T> const& buf)
+inline szptr read_response(header_t& out, semantic::Span<T> const& buf)
 {
     szptr offset = 0;
     out          = {};
 
     offset += header::parse::response_line(out, buf);
-    offset += read_header(out, *buf.at(offset));
-    offset += 2;
+    offset += read_header(out, buf.subspan(offset));
+//    offset += 2;
 
     return offset;
 }
@@ -1224,6 +1224,7 @@ struct builder
         semantic::BytesConst const&           data,
         stl_types::Map<string, string> const& extra_headers)
     {
+        /* TODO: Avoid copying the content here */
         m_data += "--";
         m_data += m_terminator;
         m_data += line_separator;
@@ -1246,7 +1247,7 @@ struct builder
 
     operator semantic::BytesConst() const
     {
-        return semantic::BytesConst::FromBytes(m_data.data(), m_data.size());
+        return semantic::BytesConst::ofContainer(m_data);
     }
 
     string content_type() const

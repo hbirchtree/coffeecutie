@@ -23,6 +23,8 @@ struct graphics_api_error : undefined_behavior
     using undefined_behavior::undefined_behavior;
 };
 
+using typing::graphics::ShaderStage;
+
 #if FEATURE_ENABLE_Image
 FORCEDINLINE Tup<Size, CompFmt> UnpackCompressedTexture(Bytes const& img_data)
 {
@@ -414,7 +416,7 @@ struct shader_param_view
      */
     void set_constant(const_desc const& desc, Bytes&& data)
     {
-        if(!(desc.m_flags & ShaderTypes::Uniform_v))
+        if(!(desc.m_flags & typing::graphics::shader_type::Uniform_v))
             return;
 
         m_constant_data[const_desc_id{&desc}]   = std::move(data);
@@ -433,7 +435,7 @@ struct shader_param_view
 
     void set_sampler(const_desc const& desc, sampler_value&& data)
     {
-        if(!(desc.m_flags & ShaderTypes::Sampler_v))
+        if(!(desc.m_flags & typing::graphics::shader_type::Sampler_v))
             return;
 
         m_sampler_handles[const_desc_id{&desc}] = std::move(data);

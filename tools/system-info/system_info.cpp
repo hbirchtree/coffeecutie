@@ -13,6 +13,10 @@ using GFX = gleam::api;
 using GFX = gexxo::GXAPI;
 #endif
 
+#if defined(FEATURE_ENABLE_ASIO)
+#include <coffee/asio/net_profiling.h>
+#endif
+
 #include <coffee/strings/libc_types.h>
 
 #include <coffee/core/CDebug>
@@ -21,6 +25,10 @@ using namespace ::Coffee;
 
 i32 systeminfo_main(i32, cstring_w*)
 {
+#if defined(FEATURE_ENABLE_ASIO)
+    auto _ = Net::RegisterProfiling();
+#endif
+
 #if defined(HAS_GRAPHICS)
     using container_type = comp_app::AppContainer<u32>;
 
@@ -36,7 +44,7 @@ i32 systeminfo_main(i32, cstring_w*)
 
     container_type::addTo(
         container,
-        [](decltype(container), u32, container_type::time_point const&) {
+        [](decltype(container)& e, u32, container_type::time_point const&) {
             auto api = GFX();
             api.load();
 
@@ -47,6 +55,19 @@ i32 systeminfo_main(i32, cstring_w*)
             ExtraData::Add("gl:renderer", renderer);
             ExtraData::Add("gl:vendor", vendor);
             cDebug("Graphics success");
+
+            auto battery = e.service<comp_app::BatteryProvider>();
+
+            if(!battery)
+                return;
+            ExtraData::Add(
+                "power:source",
+                battery->source() ==
+                        comp_app::interfaces::BatteryProvider::PowerSource::AC
+                    ? "ac"
+                    : "battery");
+            ExtraData::Add(
+                "power:level", std::to_string(battery->percentage()));
         });
     container.service<container_type>()->load(container, ec);
     C_ERROR_CHECK(ec);

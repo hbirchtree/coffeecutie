@@ -1,4 +1,5 @@
 #include <coffee/core/CStringFormat>
+#include <sstream>
 
 #include <coffee/core/terminal/table.h>
 

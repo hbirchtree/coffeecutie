@@ -19,9 +19,8 @@ using Path = platform::url::Path;
 /*!
  * \brief A data resource which location cannot be changed.
  */
-struct Resource : semantic::ByteProvider
+class Resource
 {
-  private:
     CString m_resource; /*!< URL for the resource*/
 
     struct ResourceData;
@@ -50,12 +49,12 @@ struct Resource : semantic::ByteProvider
      * \param url Path to resource
      */
     explicit Resource(Url const& url);
-    Resource(cstring rsrc, semantic::RSCA acc = semantic::RSCA::AssetFile);
+    Resource(std::string_view rsrc, semantic::RSCA acc = semantic::RSCA::AssetFile);
     Resource(Resource&& rsc);
     ~Resource();
 
-    void* data; /*!< Data pointer*/
-    szptr size; /*!< Data size*/
+    semantic::Span<char> data_rw;
+    semantic::Span<const char> data_ro;
 
     cstring resource() const;
     bool    valid() const;
@@ -74,21 +73,26 @@ struct Resource : semantic::ByteProvider
      */
     FORCEDINLINE Resource& operator=(Bytes const& data)
     {
-        this->data = data.data;
-        this->size = data.size;
+        this->data_rw = data;
+        this->data_ro = data;
+        return *this;
+    }
+
+    FORCEDINLINE Resource& operator=(BytesConst const& data)
+    {
+        this->data_rw = {};
+        this->data_ro = data;
         return *this;
     }
 
     FORCEDINLINE Resource& operator=(Resource&& other)
     {
-        this->data            = other.data;
-        this->size            = other.size;
+        this->data_rw            = std::move(other.data_rw);
+        this->data_ro            = std::move(other.data_ro);
         this->flags           = other.flags;
         this->m_platform_data = std::move(other.m_platform_data);
         this->m_resource      = std::move(other.m_resource);
 
-        other.data  = nullptr;
-        other.size  = 0;
         other.flags = Undefined;
         other.m_platform_data.reset();
         other.m_resource.clear();

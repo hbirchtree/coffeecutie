@@ -101,36 +101,38 @@ using bl_footer = char[4];
 template<size_t Size>
 struct unicode_var
 {
-    using wide_string               = std::basic_string<u16>;
-    using string_span               = semantic::mem_chunk<const u16>;
-    static constexpr u16 terminator = 0;
+    using string_span                       = stl_types::u16string_view;
+    static constexpr string_span terminator = u"\0";
 
-    u16 data[Size];
+    static_assert(sizeof(char16_t) == 2, "size of char16_t unexpected");
+    static_assert(sizeof(u"\0") == 4, "size of terminator wrong");
+
+    char16_t data[Size];
 
     inline string_span view(u32 len, u16 off = 0) const
     {
-        string_span string_data = string_span::of(data + off, len);
+        string_span string_data = string_span(data + off, len);
 
-        if(auto end = string_data.find(string_span::of(terminator)))
-            return string_data.at(0, end->offset).value();
+        if(auto end = string_data.find(string_span(terminator));
+           end != string_span::npos)
+            return string_data.substr(0, end);
         else
             return string_span{};
     }
 
-    inline wide_string str(u16 off = 0) const
+    inline string_span str(u16 off = 0) const
     {
-        string_span string_data = string_span::of(data + off, 256);
+        string_span string_data = string_span(data + off, 256);
 
-        auto res = string_data.find(string_span::of(terminator));
+        auto res = string_data.find(string_span(u"\0"));
 
-        auto out = wide_string(data + off, res ? (*res).offset : 0);
-        return out;
+        return string_span(data + off, res != string_span::npos ? res : 0);
     }
 
-    inline stl_types::CString flat_str() const
+    inline stl_types::String flat_str() const
     {
         auto from = str();
-        return stl_types::CString(from.begin(), from.end());
+        return stl_types::String(from.begin(), from.end());
     }
 };
 
@@ -426,19 +428,14 @@ struct alignas(4) file_header_t : stl_types::non_copy
 
 struct magic_data_t
 {
-    magic_data_t() : magic_offset(0)
+    magic_data_t()
     {
         base_ptr = nullptr;
     }
-    magic_data_t(byte_t const* base_ptr, u32 magic, u32 max_size) :
-        magic_offset(magic), max_size(max_size)
+    magic_data_t(semantic::Span<const byte_t> const& data, u32 magic = 0) :
+        magic_offset(magic), max_size(data.size())
     {
-        this->base_ptr = base_ptr;
-    }
-    magic_data_t(semantic::Bytes const& data) :
-        magic_offset(0), max_size(data.size)
-    {
-        base_ptr = data.data;
+        base_ptr = data.data();
     }
 
     inline magic_data_t& operator=(semantic::Bytes const& data)
@@ -467,8 +464,8 @@ struct magic_data_t
         file_header_t const* header_ptr;
         byte_t const*        base_ptr;
     };
-    u32 magic_offset;
-    u32 max_size;
+    u32 magic_offset{0};
+    u32 max_size{0};
 };
 
 struct xbox_variant
@@ -637,12 +634,12 @@ struct alignas(4) tag_index_t : stl_types::non_copy
     {
         byte_t const* base_ptr   = C_RCAST<byte_t const*>(base);
         u32           index_size = base->version == version_t::xbox
-                             ? sizeof(tag_index_t) - sizeof(u32)
-                             : sizeof(tag_index_t);
+                                       ? sizeof(tag_index_t) - sizeof(u32)
+                                       : sizeof(tag_index_t);
 
-        return magic_data_t{base_ptr,
-                            index_magic - (base->tag_index_offset + index_size),
-                            base->decomp_len};
+        return magic_data_t{
+            {base_ptr, base->decomp_len},
+            index_magic - (base->tag_index_offset + index_size)};
     }
 
     inline vertex_array vertex_base() const
@@ -659,7 +656,7 @@ struct alignas(4) tag_index_t : stl_types::non_copy
 
     inline magic_data_t vertex_magic(magic_data_t const& base) const
     {
-        return magic_data_t{base.base_ptr, 0, base.max_size};
+        return magic_data_t{{base.base_ptr, base.max_size}, 0};
     }
 
     /*!
@@ -788,46 +785,44 @@ struct string_segment_ref
 {
     struct string_ref
     {
-        const char* data;
-        u32         offset;
+        std::string_view data;
+        u32              offset;
 
-        inline cstring str() const
+        inline stl_types::String str()
         {
-            return data;
-        }
-
-        inline bool valid() const
-        {
-            return data[0] != 0 && data[1] != 0 && data[2] != 0;
+            return stl_types::String(data.begin(), data.end());
         }
     };
 
-    semantic::mem_chunk<const char> data;
-    u32                             num_strings;
+    std::string_view data;
 
     inline string_ref at(u32 offset = 0) const
     {
-        auto out = *data.at(offset);
+        if(offset > data.size())
+            Throw(std::out_of_range("outside string segment"));
 
-        if(!out.size)
+        auto end = data.find('\0', offset);
+        auto out = data.substr(offset, end - offset);
+
+        if(!out.size())
             Throw(undefined_behavior("string out of bounds"));
-        return {out.data, offset};
+        return {out, offset};
     }
 
     inline string_ref indexed(u32 i = 0) const
     {
-        const char* loc = data.data;
+        auto loc = data;
 
         u32 s_i = 0;
         while(s_i != i)
         {
-            loc = C_RCAST<const char*>(
-                ::memchr(loc, '\0', std::numeric_limits<u16>::max()));
-            loc++;
+            loc = loc.substr(loc.find('\0'));
+            if(loc.size())
+                loc = loc.substr(1);
             s_i++;
         }
 
-        return {C_RCAST<const char*>(loc), C_FCAST<u32>(loc - data.data)};
+        return {loc, C_FCAST<u32>(loc.data() - data.data())};
     }
 
     inline u32 get_index(bl_string const& str) const
@@ -848,7 +843,7 @@ struct string_segment_ref
         const char* ptr = data.data;
 #else
         const char* ptr = C_RCAST<const char*>(
-            ::memmem(data.data, data.size, search.data(), num_chars));
+            ::memmem(data.data(), data.size(), search.data(), num_chars));
 #endif
 
         if(!ptr)
@@ -856,7 +851,7 @@ struct string_segment_ref
 
         ptr++;
 
-        return ptr - data.data;
+        return ptr - data.data();
     }
 };
 

@@ -6,9 +6,15 @@ coffee_application (
     LIBRARIES ComponentBundleSetup
     )
 
-if(TARGET GLeamRHI_ES)
+if(TARGET ASIO)
     target_link_libraries ( SystemInfo PUBLIC
-        GLeamRHI_ES
+        ASIO
+        )
+endif()
+
+if(TARGET GLeamRHI)
+    target_link_libraries ( SystemInfo PUBLIC
+        GLeamRHI
         )
 elseif(TARGET Gexxo)
     target_link_libraries ( SystemInfo PUBLIC

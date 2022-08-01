@@ -2,6 +2,8 @@
 
 #include <coffee/core/libc_types.h>
 #include <coffee/core/stl_types.h>
+#include <peripherals/concepts/container.h>
+#include <peripherals/concepts/string.h>
 #include <peripherals/error/result.h>
 #include <peripherals/stl/string_ops.h>
 
@@ -45,6 +47,26 @@ CString to_string(std::tuple<Args...> const& a)
     return "tuple(" + repr + ")";
 }
 
+template<typename T1, typename T2>
+CString to_string(std::pair<T1, T2> const& a)
+{
+    return "pair(" + to_string(a.first) + ", " + to_string(a.second) + ")";
+}
+
+template<typename T>
+requires(
+    semantic::concepts::is_container<T> &&
+    !semantic::concepts::is_string_container<T>)
+    //
+    CString to_string(T const& container)
+{
+    CString out;
+    out.reserve(1024);
+    for(auto const& item : container)
+        out.append(to_string(item) + ", ");
+    return "[ " + out + " ]";
+}
+
 /* Core string resolution */
 
 template<typename... Arg>
@@ -53,7 +75,7 @@ FORCEDINLINE CString cStringFormat(String fmt, Arg... args)
     size_t i = 0;
 
     ((fmt = stl_types::str::replace::str<char>(
-         fmt, "{" + std::to_string(i++) + "}", to_string(args))),
+          fmt, "{" + std::to_string(i++) + "}", to_string(args))),
      ...);
 
     return fmt;

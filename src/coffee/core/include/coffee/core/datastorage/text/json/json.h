@@ -6,6 +6,9 @@
 #include <string>
 #include <string_view>
 
+#define RAPIDJSON_ASSERT(cond) \
+    if(!(cond)) Throw(undefined_behavior("assert failed: " C_STR(cond)));
+
 #include <rapidjson/document.h>
 #include <rapidjson/prettywriter.h>
 #include <rapidjson/rapidjson.h>
@@ -56,22 +59,32 @@ STATICINLINE stl_types::CString Serialize(Document const& doc)
 namespace detail {
 
 template<typename T>
-FORCEDINLINE json::Value wrap_value(T value, Document::AllocatorType&)
+requires(!std::is_pointer_v<T> && !std::is_class_v<T>) FORCEDINLINE json::Value
+    wrap_value(T value, Document::AllocatorType&)
 {
     return json::Value(value);
 }
 
-template<>
-FORCEDINLINE json::Value wrap_value<std::string>(
-    std::string value, Document::AllocatorType& alloc)
+template<typename T>
+requires(std::is_same_v<T, std::string> || std::is_same_v<T, std::string_view>)
+    FORCEDINLINE json::Value
+    wrap_value(T const& value, Document::AllocatorType& alloc)
 {
     return json::Value(
-        value.c_str(), C_FCAST<libc_types::u32>(value.size()), alloc);
+        value.data(), C_FCAST<libc_types::u32>(value.size()), alloc);
 }
 
-template<>
-FORCEDINLINE json::Value wrap_value<const char*>(
-    const char* value, Document::AllocatorType& alloc)
+template<typename T>
+requires(std::is_same_v<T, const char*>) FORCEDINLINE json::Value
+    wrap_value(std::string_view value, Document::AllocatorType& alloc)
+{
+    return json::Value(
+        value.data(), C_FCAST<libc_types::u32>(value.size()), alloc);
+}
+
+template<typename T>
+requires(std::is_same_v<T, Object>) FORCEDINLINE json::Value
+    wrap_value(T&& value, Document::AllocatorType& alloc)
 {
     return json::Value(value, alloc);
 }
@@ -80,7 +93,7 @@ template<typename T>
 FORCEDINLINE void set_member(
     Object& obj, Value&& field, T&& value, Document::AllocatorType& alloc)
 {
-    obj.AddMember(field, detail::wrap_value(value, alloc), alloc);
+    obj.AddMember(field, detail::wrap_value<T>(std::move(value), alloc), alloc);
 }
 
 template<>
@@ -115,7 +128,7 @@ struct ObjectBuilder
     {
         detail::set_member<T>(
             m_object,
-            detail::wrap_value(field, m_alloc),
+            detail::wrap_value<std::string>(std::string(field), m_alloc),
             std::move(value),
             m_alloc);
         return *this;
@@ -131,6 +144,11 @@ struct ObjectBuilder
         return m_alloc;
     }
 
+    bool empty() const
+    {
+        return m_object.ObjectEmpty();
+    }
+
   private:
     Object                   m_object;
     Document::AllocatorType& m_alloc;
@@ -143,15 +161,21 @@ struct ArrayBuilder
     }
 
     template<typename T>
-    ArrayBuilder& push_back(T value)
+    ArrayBuilder& push_back(T&& value)
     {
-        m_array.PushBack(detail::wrap_value(value, m_alloc), m_alloc);
+        m_array.PushBack(
+            detail::wrap_value<T>(std::move(value), m_alloc), m_alloc);
         return *this;
     }
 
     Array&& eject()
     {
         return std::move(m_array);
+    }
+
+    bool empty() const
+    {
+        return m_array.Empty();
     }
 
   private:

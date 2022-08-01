@@ -20,11 +20,13 @@ coffee_library (
     $<INSTALL_INTERFACE:include>
     )
 
-if((${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE) AND NOT EMSCRIPTEN)
+if((${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE) AND NOT EMSCRIPTEN AND NOT ANDROID)
     find_library ( BACKTRACE_LIBRARY backtrace )
-    target_link_libraries ( PeripheralPlatform PUBLIC
-        ${BACKTRACE_LIBRARY}
-        )
+    if (BACKTRACE_LIBRARY)
+        target_link_libraries ( PeripheralPlatform PUBLIC
+            ${BACKTRACE_LIBRARY}
+            )
+    endif()
 endif()
 
 #
@@ -69,7 +71,7 @@ if(ANDROID)
         platforms/android/sysinfo.cpp
 #        platforms/linux/file.cpp
 #        platforms/linux/process.cpp
-        platforms/linux/sysinfo.cpp
+#        platforms/linux/sysinfo.cpp
 
         platforms/android/jnipp.cpp
         platforms/android/JNIHelper.cpp
@@ -176,7 +178,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
         #
 #        platforms/linux/environment.cpp
 #        platforms/linux/process.cpp
-        platforms/linux/sysinfo.cpp
+#        platforms/linux/sysinfo.cpp
 
 #        platforms/linux/file.cpp
         )

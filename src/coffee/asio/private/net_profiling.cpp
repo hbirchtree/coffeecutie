@@ -4,8 +4,11 @@
 #include <coffee/asio/net_resource.h>
 #include <coffee/core/CEnvironment>
 #include <coffee/core/CFiles>
-#include <coffee/ssl/hmac.h>
 #include <peripherals/libc/signals.h>
+
+#if defined(COFFEE_ENABLE_SSL)
+#include <coffee/ssl/hmac.h>
+#endif
 
 #include <coffee/strings/libc_types.h>
 #include <coffee/strings/url_types.h>
@@ -29,8 +32,7 @@ void ProfilingExport()
 
     cVerbose(10, "Checking for network profiling...");
 
-    const constexpr cstring network_server = "COFFEE_REPORT_URL";
-    if(auto server = env::var(network_server); server.has_value())
+    if(auto server = env::var("COFFEE_REPORT_URL"); server.has_value())
     {
         cVerbose(10, "Network export starting");
 
@@ -64,11 +66,13 @@ void ProfilingExport()
             reportBinRsc.setHeaderField(
                 "X-Coffee-Token",
                 "token " + env::var("COFFEE_REPORT_ID").value());
+#if defined(COFFEE_ENABLE_SSL)
         reportBinRsc.setHeaderField(
             "X-Coffee-Signature",
             "sha1=" + hex::encode(net::hmac::digest(
                           C_OCAST<BytesConst>(profile).view,
                           env::var("COFFEE_HMAC_KEY").value_or("0000"))));
+#endif
 
         http::multipart::builder out("-----------NetProfile");
 

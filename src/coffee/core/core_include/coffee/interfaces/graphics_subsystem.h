@@ -149,18 +149,15 @@ ShPtr<BufT> allocate_buffer(AllocatorData<API>& data, Args... args)
 } // namespace detail
 
 template<typename API>
-using AllocatorTag = Coffee::Components::TagType<AllocatorData<API>>;
-
-template<typename API>
-struct GraphicsAllocator
-    : Coffee::Components::Globals::ValueSubsystem<AllocatorTag<API>>
+struct GraphicsAllocator : Coffee::Components::SubsystemBase
 {
+    using type = GraphicsAllocator<API>;
     using AllocData = AllocatorData<API>;
 
     template<typename... Args>
     GraphicsAllocator(typename API::OPTS const& opts, Args... args)
     {
-        auto& context = this->get().context;
+        auto& context = m_data.context;
 
         context = API::GetLoadAPI(opts);
 
@@ -174,7 +171,7 @@ struct GraphicsAllocator
     ShPtr<typename API::V_DESC> alloc_desc(
         Array<typename API::V_ATTR, NumAttribs>&& attribs)
     {
-        auto& store = this->get().vertex_desc;
+        auto& store = m_data.vertex_desc;
         store.push_back(MkShared<typename API::V_DESC>());
         auto& vao = store.back();
 
@@ -192,7 +189,7 @@ struct GraphicsAllocator
     typename AllocData::PipelineParams& alloc_standard_pipeline(
         Array<Bytes, NumShaders>&& shaders, Args... args)
     {
-        auto& store = this->get().pipelines;
+        auto& store = m_data.pipelines;
         store.push_back(MkShared<typename AllocData::PipelineData>());
 
         auto& pipeline = *store.back();
@@ -227,7 +224,7 @@ struct GraphicsAllocator
     ShPtr<BUF_Type> alloc_buffer(Args... args)
     {
         auto buf_hnd = detail::allocate_buffer<BUF_Type, API, Args...>(
-            this->get(), std::forward<Args>(args)...);
+            m_data, std::forward<Args>(args)...);
 
         buf_hnd->alloc();
 
@@ -241,8 +238,8 @@ struct GraphicsAllocator
         auto surf_hnd = MkShared<SUF_Type>(std::forward<Args>(args)...);
         auto samp_hnd = MkShared<typename SUF_Type::sampler_type>();
 
-        auto& store         = this->get().surfaces;
-        auto& sampler_store = this->get().samplers;
+        auto& store         = m_data.surfaces;
+        auto& sampler_store = m_data.samplers;
 
         store.push_back(surf_hnd);
         sampler_store.push_back(samp_hnd);
@@ -252,6 +249,8 @@ struct GraphicsAllocator
 
         return std::make_tuple(samp_hnd, surf_hnd);
     }
+
+    AllocatorData<API> m_data;
 };
 
 } // namespace Components

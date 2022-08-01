@@ -23,9 +23,11 @@ concept Vector = std::is_same_v<typename T::value_type, E> && requires(T v)
 };
 
 template<class T, typename E, size_t M, size_t N>
-concept Matrix = requires(T v)
-{
-    std::is_same_v<typename T::value_type, E>;
+concept Matrix =
+    M == T::col_size &&
+    N == T::row_size &&
+    std::is_same_v<typename T::value_type, E> &&
+    requires(T v) {
     std::is_same_v<decltype(v[0][0]), int>;
     std::is_same_v<decltype(v * v), T>;
 };

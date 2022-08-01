@@ -263,12 +263,13 @@ void Resource::readResponseHeader(net_buffer& buffer, szptr& consumed)
         normal->flush();
         normal->read_until(buffer, http::header_terminator, ec);
     }
-    C_ERROR_CHECK(ec)
+    if(ec.value() != asio::error::eof)
+        C_ERROR_CHECK(ec)
 
     {
         DProfContext __(NETRSC_TAG "Parsing response");
         consumed = http::buffer::read_response(
-            m_response.header, Bytes::ofContainer(buffer));
+            m_response.header, Bytes::ofContainer(buffer).view);
     }
 
     if constexpr(compile_info::debug_mode)
@@ -313,7 +314,10 @@ void Resource::readResponsePayload(net_buffer& buffer)
 
         /* If we're lucky, we already got all the data */
         if(content_len == buffer.size())
+        {
+            cVerbose(12, NETRSC_TAG "All data ready");
             return;
+        }
 
         if(auto view = Bytes::ofContainer(m_response.payload).at(buffer.size()))
         {
@@ -407,7 +411,7 @@ bool Resource::push(http::method_t method, BytesConst const& data)
                 cast_pod(head.code),
                 head.message);
 
-            for(auto header : head.fields)
+            for(auto const& header : head.fields)
                 cVerbose(
                     12, NETRSC_TAG "{0}: {1}", header.first, header.second);
 
@@ -453,6 +457,7 @@ bool Resource::push(http::method_t method, BytesConst const& data)
 
     consumed = 0;
     readResponseHeader(recv_buf, consumed);
+    consumed = std::min(consumed, recv_buf.size());
     recv_buf.erase(recv_buf.begin(), recv_buf.begin() + consumed);
     readResponsePayload(recv_buf);
 
@@ -462,17 +467,16 @@ bool Resource::push(http::method_t method, BytesConst const& data)
 
     if(response_code == response_class::redirect)
     {
-        const auto redirect_location =
-            response_fields.find(header_field::location);
-
-        if(response_fields.find(header_field::connection) !=
-               response_fields.end() &&
-           util::strings::iequals(
-               response_fields[header_field::connection], "close"))
-            close();
-        initRsc(MkUrl(redirect_location->second, m_access));
-
-        return push(method, data);
+        if(auto loc = response_fields.find(header_field::location);
+                loc != response_fields.end())
+        {
+            if(auto conn = response_fields.find(header_field::connection);
+                    conn != response_fields.end() &&
+                    util::strings::iequals(conn->second, "close"))
+                close();
+            initRsc(MkUrl(loc->second, m_access));
+            return push(method, data);
+        }
     }
 
     close();
@@ -501,6 +505,12 @@ BytesConst Resource::data() const
     Profiler::DeepProfile(NETRSC_TAG "Retrieving data");
 
     return BytesConst::ofContainer(m_response.payload);
+}
+
+Bytes Resource::move()
+{
+    auto out = Bytes::move(std::move(m_response.payload));
+    return out;
 }
 
 } // namespace Net

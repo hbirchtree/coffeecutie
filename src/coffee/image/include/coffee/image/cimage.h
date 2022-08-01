@@ -143,7 +143,7 @@ struct image
     {
         image<PixType> img;
         img.data_owner = std::move(data);
-        img.data       = C_FCAST<PixType*>(img.data_owner.data);
+        img.data       = C_RCAST<PixType*>(img.data_owner.data);
         img.size       = size;
         img.bpp        = bpp;
 
@@ -168,13 +168,7 @@ struct image
 
     operator Bytes()
     {
-        Bytes out;
-
-        out.data     = C_RCAST<byte_t*>(this->data);
-        out.size     = C_FCAST<szptr>(size.area() * bpp);
-        out.elements = C_FCAST<szptr>(size.area());
-
-        return out;
+        return Bytes::ofBytes(this->data, size.area() * bpp);
     }
 
     void disown()
@@ -267,11 +261,6 @@ extern bool SaveTGA(Bytes& target, const image_const& src, stb_error& ec);
  */
 extern bool SaveJPG(
     Bytes& target, const image_const& src, stb_error& ec, int qual = 80);
-/*!
- * \brief Free image data
- * \param img
- */
-extern void DataSetDestr(Bytes& b);
 
 } // namespace stb
 

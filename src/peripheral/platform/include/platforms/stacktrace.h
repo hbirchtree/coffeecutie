@@ -9,7 +9,7 @@
 #include <typeinfo>
 #include <utility>
 
-#if defined(COFFEE_EMSCRIPTEN)
+#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_ANDROID)
 // Nothing...
 #elif defined(COFFEE_UNIXPLAT)
 #define BOOST_STACKTRACE_USE_BACKTRACE
@@ -23,6 +23,14 @@
 //#include "win32/stacktrace.h"
 
 namespace platform::stacktrace {
+
+constexpr bool supports_stacktrace =
+#if defined(COFFEE_EMSCRIPTEN)
+    false;
+#else
+    true;
+#endif
+
 namespace detail {
 
 template<typename... Args>
@@ -62,29 +70,34 @@ FORCEDINLINE auto type_name(T& e)
 
 using boost::stacktrace::stacktrace;
 
+FORCEDINLINE auto frames()
+{
+    return boost::stacktrace::stacktrace();
+}
+
 FORCEDINLINE
 std::optional<std::pair<std::string, stacktrace>> frames_of(
     stl_types::ExceptionPtr const& exc)
 {
+    if constexpr(!supports_stacktrace)
+        return std::nullopt;
+
     try
     {
         std::rethrow_exception(exc);
     } catch(std::exception& e)
     {
         return std::make_optional(std::pair<std::string, stacktrace>(
-            demangle::type_name(e) + ": " + e.what(), stacktrace()));
+            demangle::type_name(e) + ": " + e.what(), frames()));
     }
     return std::nullopt;
 }
 
-FORCEDINLINE auto exception_frames()
+FORCEDINLINE declreturntype(frames_of) exception_frames()
 {
+    if constexpr(!supports_stacktrace)
+        return std::nullopt;
     return frames_of(std::current_exception());
-}
-
-FORCEDINLINE auto frames()
-{
-    return boost::stacktrace::stacktrace();
 }
 
 void print_frames(

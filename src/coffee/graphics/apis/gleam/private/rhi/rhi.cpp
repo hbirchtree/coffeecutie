@@ -12,9 +12,11 @@ template<class Version>
 #if defined(GL_VERSION_4_5)
 requires gl::MaximumVersion<Version, gl::Version<4, 4>>
 #endif
-inline void texture_alloc(textures::type, u32& hnd)
+inline void texture_alloc(textures::type type, u32& hnd)
 {
-    cmd::gen_textures(semantic::SpanOne(hnd));
+    cmd::gen_textures(SpanOne(hnd));
+    cmd::bind_texture(convert::to(type), hnd);
+    cmd::bind_texture(convert::to(type), 0);
 }
 
 #if defined(GL_VERSION_4_5)
@@ -22,7 +24,7 @@ template<class Version>
 requires gl::MinimumVersion<Version, gl::Version<4, 5>>
 inline void texture_alloc(textures::type type, u32& hnd)
 {
-    cmd::create_textures(convert::to(type), semantic::SpanOne(hnd));
+    cmd::create_textures(convert::to(type), SpanOne(hnd));
 }
 #endif
 
@@ -42,8 +44,8 @@ void texture_t::alloc(size_type const& size, bool create_storage)
 
     if(create_storage)
     {
-        auto sized_fmt =
-            std::get<0>(convert::to<group::sized_internal_format>(m_format));
+        auto [sized_fmt, _, __] =
+            convert::to<group::sized_internal_format>(m_format);
         auto glsize = size.convert<i32>();
 
         using textures::type;
@@ -178,7 +180,7 @@ size_3d<u32> texture_t::size()
     using target = group::texture_target;
 
     size_3d<u32> out;
-    Span<i32>    p = mem_chunk<i32>::ofBytes(out);
+    Span<i32>    p = mem_chunk<i32>::ofBytes(out).view;
 #if GLEAM_MAX_VERSION >= 0x450
     if(m_features.dsa)
     {
@@ -190,15 +192,18 @@ size_3d<u32> texture_t::size()
     } else
 #endif
 #if GLEAM_MAX_VERSION >= 0x200 || GLEAM_MAX_VERSION_ES >= 0x310
-        if(!m_features.es20)
+        if(!m_features.tex_layer_query)
     {
         cmd::get_tex_level_parameter(
             target::texture_2d, 0, get::texture_width, p);
         cmd::get_tex_level_parameter(
             target::texture_2d, 0, get::texture_height, p.subspan(1, 1));
         cmd::get_tex_level_parameter(
-            target::texture_2d, 0, static_cast<get>(GL_TEXTURE_DEPTH), p.subspan(2, 1));
-    } else
+            target::texture_2d,
+            0,
+            static_cast<get>(GL_TEXTURE_DEPTH),
+            p.subspan(2, 1));
+    }
 #else
     {
         p[0] = m_tex_size[0];
@@ -229,27 +234,37 @@ Tup<features, api_type_t, u32> api::query_native_api_features(
         out.buffer.dsa = out.program.dsa = out.query.dsa =
             out.rendertarget.dsa = out.texture.dsa = out.vertex.dsa = dsa_mode;
 
-        out.buffer.storage      = api_version >= 0x440;
-//        out.vertex.format       = api_version >= 0x430;
-        out.texture.storage     = api_version >= 0x420;
-        out.buffer.mapping      = true;
-        out.texture.tex.gl.etc2 = api_version >= 0x430;
-        out.texture.tex.gl.bptc = api_version >= 0x420;
-        out.texture.tex.gl.rgtc = api_version >= 0x300;
+        out.buffer.storage           = api_version >= 0x440;
+        out.program.uniform_location = api_version >= 0x430;
+        out.texture.storage          = api_version >= 0x420;
+        out.texture.multibind        = api_version >= 0x440;
+        out.texture.tex.gl.etc2      = api_version >= 0x430;
+        out.texture.tex.gl.bptc      = api_version >= 0x420;
+        out.vertex.format            = api_version >= 0x430;
     } else if(api_type == api_type_t::es)
     {
-        out.buffer.mapping =
-            api_version >= 0x300 ||
+        out.texture.tex.gl.rgtc = false;
+
+        out.buffer.mapping                   = api_version >= 0x300;
+        out.program.uniform_location         = api_version >= 0x310;
+        out.rendertarget.clearbuffer         = api_version >= 0x300;
+        out.rendertarget.framebuffer_texture = api_version >= 0x320;
+        out.rendertarget.readdraw_buffers    = api_version >= 0x300;
+        out.texture.samplers                 = api_version >= 0x300;
+        out.texture.texture_3d               = api_version >= 0x300;
+        out.texture.tex_layer_query          = api_version >= 0x300;
+        out.texture.tex.gl.astc              = api_version >= 0x320;
+        out.texture.tex.gl.etc2              = api_version >= 0x300;
+        out.vertex.attribute_binding         = api_version >= 0x300;
+        out.vertex.format                    = api_version >= 0x310;
+        out.vertex.vertex_arrays             = api_version >= 0x300;
+
+        out.buffer.oes.mapbuffer =
             supports_extension(extensions, oes::mapbuffer::name);
-//        out.vertex.format = api_version >= 0x310;
-        out.texture.oes.texture_3d =
-            supports_extension(extensions, oes::texture_3d::name);
         out.query.disjoint_timer_query =
             supports_extension(extensions, ext::disjoint_timer_query::name);
-        out.es20                = api_version == 0x200;
-        out.texture.tex.gl.etc2 = api_version >= 0x300;
-
-        out.texture.es20 = out.vertex.es20 = out.es20;
+        out.texture.oes.texture_3d =
+            supports_extension(extensions, oes::texture_3d::name);
     }
     out.texture.arb.texture_view =
         supports_extension(extensions, arb::texture_view::name);
@@ -257,6 +272,9 @@ Tup<features, api_type_t, u32> api::query_native_api_features(
         supports_extension(extensions, ext::texture_view::name);
     out.texture.oes.texture_view =
         supports_extension(extensions, oes::texture_view::name);
+
+    out.texture.ext.texture_anisotropic =
+        supports_extension(extensions, ext::texture_filter_anisotropic::name);
 
     out.texture.tex.arb.bptc =
         supports_extension(extensions, arb::texture_compression_bptc::name);
@@ -282,6 +300,9 @@ Tup<features, api_type_t, u32> api::query_native_api_features(
         supports_extension(extensions, img::texture_compression_pvrtc::name);
     out.texture.tex.img.pvrtc2 =
         supports_extension(extensions, img::texture_compression_pvrtc2::name);
+
+    out.texture.bindless_handles =
+        supports_extension(extensions, arb::bindless_texture::name);
 
     return {out, api_type, api_version};
 }
@@ -328,7 +349,7 @@ stl_types::Set<String> api::query_native_extensions()
 #endif
     {
         String extensions = cmd::get_string(group::string_name::extensions);
-        for(auto ext : stl_types::str::split::str(extensions, ' '))
+        for(auto ext : stl_types::str::split::str<char>(extensions, ' '))
             out.insert(String(ext.begin(), ext.end()));
     }
 
@@ -353,10 +374,11 @@ stl_types::Set<String> api::query_native_extensions()
 
 std::string_view api::api_name()
 {
+    using namespace std::string_view_literals;
     if(m_api_type == api_type_t::core)
-        return "OpenGL Core";
+        return "OpenGL Core"sv;
     else
-        return "OpenGL ES";
+        return "OpenGL ES"sv;
 }
 
 api_type_t api::api_type()
@@ -471,7 +493,7 @@ Optional<error> api::load(load_options_t options)
             return error::refuse_version_too_low;
     }
 
-//    cmd::enable(group::enable_cap::cull_face);
+    //    cmd::enable(group::enable_cap::cull_face);
     cmd::cull_face(group::cull_face_mode::back);
     cmd::front_face(group::front_face_direction::ccw);
 

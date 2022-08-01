@@ -2,6 +2,7 @@
 
 #include <coffee/core/libc_types.h>
 #include <coffee/core/stl_types.h>
+#include <url/url.h>
 
 #include <coffee/foreign/foreign.h>
 #include <coffee/jni/jnipp.h>
@@ -13,6 +14,8 @@
 struct android_app;
 struct AAsset;
 struct AAssetManager;
+struct ANativeWindow;
+struct ANativeActivity;
 
 namespace android {
 
@@ -90,6 +93,12 @@ struct intent
 struct app_info
 {
     std::string package_name();
+    int sdk_version();
+
+    platform::url::Url data_path();
+    platform::url::Url cache_path();
+    platform::url::Url external_data_path();
+    std::optional<platform::url::Url> obb_path();
 
     stl_types::Optional<::jnipp::java::object> get_service(
         std::string const& service);
@@ -113,27 +122,40 @@ struct network_stats
         libc_types::u64 rx, tx;
     };
 
-    stl_types::Optional<result_t> query();
+    stl_types::Optional<result_t> query(network_class net = network_class_mobile);
 };
 
 struct activity_manager
 {
     struct memory_info
     {
-        libc_types::u64 available, threshold, low_mem, total;
+        libc_types::u64 available{0}, threshold{0}, low_mem{0}, total{0};
     };
 
     struct config_info
     {
         struct
         {
-            libc_types::i32 gles_version, input_features, keyboard_type,
-                touchscreen;
+            libc_types::i32 gles_version{0};
+            libc_types::i32 input_features{0};
+            libc_types::i32 keyboard_type{0};
+            libc_types::i32 touchscreen{0};
         } req;
+    };
+
+    struct window_info
+    {
+        ANativeActivity* activity{nullptr};
+        ANativeWindow* window{nullptr};
+        ::jobject activity_object{};
     };
 
     stl_types::Optional<memory_info> get_mem_info();
     stl_types::Optional<config_info> get_config_info();
+
+    stl_types::Optional<window_info> window();
+
+    AAssetManager* asset_manager();
 
     bool clear_app_data();
 
@@ -156,62 +178,3 @@ extern android::ScopedJNI* SwapJNI(android::ScopedJNI* jniScope);
 extern JavaVM* GetVM();
 
 } // namespace jnipp
-
-namespace Coffee {
-
-extern struct android_app* coffee_app;
-
-enum FCmdType
-{
-    Android_QueryNull,
-
-    /* System information queries */
-    Android_QueryAPI,
-    Android_QueryReleaseName,
-    Android_QueryDeviceBoardName,
-    Android_QueryDeviceBrand,
-    Android_QueryDeviceName,
-    Android_QueryDeviceManufacturer,
-    Android_QueryDeviceProduct,
-
-    /* Low-level information */
-    Android_QueryPlatformABIs,
-    Android_QueryBuildType,
-
-    /* Hardware information */
-    Android_QueryMaxMemory,
-    Android_QueryDeviceDPI,
-
-    /* System-level functionality */
-    Android_QueryNativeWindow,
-    Android_QueryAssetManager,
-    Android_QueryActivity,
-    Android_QueryApp,
-
-    /* Filesystem queries */
-    Android_QueryDataPath,
-    Android_QueryExternalDataPath,
-    Android_QueryObbPath,
-    Android_QueryCachePath,
-
-    Android_QueryStartActivity,
-};
-
-struct AndroidForeignCommand
-{
-    FCmdType type;
-
-    union
-    {
-        u64       scalarU64;
-        i64       scalarI64;
-        scalar    scalarF32;
-        bigscalar scalarF64;
-        cstring   ptr_string;
-        void*     ptr;
-    } data;
-
-    CString store_string;
-};
-
-} // namespace Coffee
