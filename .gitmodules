@@ -1,18 +1,6 @@
-[submodule "libs/stb"]
-	path = src/libs/stb
-	url = https://github.com/nothings/stb.git
 [submodule "libs/glm"]
 	path = src/libs/glm
 	url = https://github.com/g-truc/glm.git
-[submodule "libs/tinyxml2"]
-	path = src/libs/tinyxml2
-	url = https://github.com/leethomason/tinyxml2.git
-[submodule "libs/asio"]
-	path = src/libs/asio
-	url = https://github.com/chriskohlhoff/asio.git
-[submodule "libs/rapidjson"]
-	path = src/libs/rapidjson
-	url = https://github.com/Tencent/rapidjson.git
 [submodule "sample_data"]
 	path = sample_data
 	url = https://github.com/hbirchtree/coffeecutie-data.git
@@ -31,9 +19,3 @@
 [submodule "src/coffee/windowing/glkit_comp/ceagl"]
 	path = src/coffee/windowing/glkit_comp/ceagl
 	url = https://github.com/hbirchtree/ceagl.git
-[submodule "src/libs/tiny-utf8"]
-	path = src/libs/tiny-utf8
-	url = https://github.com/DuffsDevice/tiny-utf8.git
-[submodule "src/libs/cppcodec"]
-	path = src/libs/cppcodec
-	url = https://github.com/tplgy/cppcodec.git
