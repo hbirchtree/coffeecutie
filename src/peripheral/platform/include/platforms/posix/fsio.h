@@ -4,6 +4,10 @@
 
 #include <libgen.h>
 
+#if defined(COFFEE_APPLE)
+#include <libproc.h>
+#endif
+
 namespace platform::file::posix {
 
 FORCEDINLINE result<file_info_t, posix_error> file_info(posix_fd_t const& file)
@@ -232,7 +236,9 @@ FORCEDINLINE result<Url, posix_error> executable()
 #elif defined(COFFEE_IOS)
     return url::constructors::MkUrl("App");
 #elif defined(COFFEE_MACOS)
-#error Unimplemented function
+//    std::string path;
+//    auto res = proc_pidpath(getpid(), path.data(), path.size());
+    return url::constructors::MkSysUrl("");
 #elif defined(COFFEE_EMSCRIPTEN)
     return url::constructors::MkSysUrl("/app");
 #else

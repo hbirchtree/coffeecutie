@@ -2,16 +2,7 @@
 
 #include <peripherals/identify/system.h>
 
-//#include "power.h"
-
-//#include "android/sysinfo.h"
-//#include "emscripten/sysinfo.h"
-//#include "linux/sysinfo.h"
-//#include "osx/sysinfo.h"
-//#include "raspberry/sysinfo.h"
-//#include "win32/sysinfo.h"
-
-//#include "base/sysinfo.h"
+#include <thread>
 
 #include <platforms/base/device_variant.h>
 
@@ -28,6 +19,8 @@
 #include "linux/sysinfo.h"
 #elif defined(COFFEE_EMSCRIPTEN)
 #include "emscripten/sysinfo.h"
+#elif defined(COFFEE_MACOS) || defined(COFFEE_IOS)
+#include "osx/sysinfo.h"
 #else
 #include <thread>
 #endif
@@ -55,11 +48,11 @@ using emscripten::thread_count;
 
 #else
 
-inline libc_types::u32 core_count()
+inline libc_types::u32 core_count(libc_types::u32 = 0)
 {
     return 1;
 }
-inline libc_types::u32 cpu_count()
+inline libc_types::u32 cpu_count(libc_types::u32 = 0)
 {
     return 1;
 }
@@ -67,7 +60,7 @@ inline libc_types::u32 node_count()
 {
     return 1;
 }
-inline libc_types::u32 thread_count()
+inline libc_types::u32 thread_count(libc_types::u32 = 0)
 {
     return std::thread::hardware_concurrency();
 }
@@ -277,6 +270,7 @@ inline DeviceType variant()
 using linux_::variant;
 
 #elif defined(COFFEE_APPLE)
+using apple::variant;
 
 #else
 inline DeviceType variant()
@@ -306,6 +300,8 @@ namespace display {
 
 #if defined(COFFEE_EMSCRIPTEN)
 //using emscripten::dpi;
+#elif defined(COFFEE_IOS) || defined(COFFEE_MACOS)
+using info::display::apple::dpi;
 #else
 
 #endif

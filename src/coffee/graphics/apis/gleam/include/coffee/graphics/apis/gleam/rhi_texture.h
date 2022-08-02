@@ -245,7 +245,7 @@ struct texture_3d_t : texture_t
     }
 };
 
-#if GLEAM_MAX_VERSION >= 430 || defined(GL_EXT_texture_view) || \
+#if GLEAM_MAX_VERSION >= 0x430 || defined(GL_EXT_texture_view) || \
     defined(GL_OES_texture_view)
 template<class TypeT, class VectorT, class SizeT>
 requires std::is_same_v<TypeT, textures::type_d2> &&
@@ -277,7 +277,7 @@ inline auto make_texture_view(
     if constexpr(compile_info::debug_mode)
     {
         i32 is_immutable{0};
-#if GLEAM_MAX_VERSION >= 450
+#if GLEAM_MAX_VERSION >= 0x450
         if(origin.m_features.dsa)
         {
             cmd::get_texture_parameter(
@@ -311,7 +311,7 @@ inline auto make_texture_view(
         params.layer.count,
         params.mip.min_,
         params.mip.count);
-#if GLEAM_MAX_VERSION >= 430
+#if GLEAM_MAX_VERSION >= 0x430
     if(origin.m_features.views)
         std::apply(cmd::texture_view, arguments);
     else

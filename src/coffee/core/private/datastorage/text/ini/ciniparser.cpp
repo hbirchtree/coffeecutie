@@ -62,7 +62,7 @@ SimpleIniParser::document_t SimpleIniParser::Read(
         linesep = "\r";
 
     /* Retrieve data */
-    cstring data = C_FCAST<cstring>(source.data);
+    cstring data = C_RCAST<cstring>(source.data);
     cstring ref  = data;
     cstring end  = data + source.size;
 

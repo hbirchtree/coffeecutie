@@ -7,11 +7,19 @@ endif()
 
 if (NOT IOS AND NOT ANDROID AND NOT EMSCRIPTEN)
     add_library ( GLVersion_Dynamic   INTERFACE )
-    target_compile_definitions ( GLVersion_Dynamic INTERFACE
-        -DGLEAM_USE_CORE
-        -DGLEAM_MAX_VERSION=0x460
-        -DGLEAM_MAX_VERSION_ES=0
-        )
+    if (NOT APPLE)
+        target_compile_definitions ( GLVersion_Dynamic INTERFACE
+            -DGLEAM_USE_CORE
+            -DGLEAM_MAX_VERSION=0x460
+            -DGLEAM_MAX_VERSION_ES=0
+            )
+    else()
+        target_compile_definitions ( GLVersion_Dynamic INTERFACE
+            -DGLEAM_USE_CORE
+            -DGLEAM_MAX_VERSION=0x410
+            -DGLEAM_MAX_VERSION_ES=0
+            )
+    endif()
     target_link_libraries ( GLVersion_Dynamic INTERFACE GLAD_Core )
     add_export ( GLVersion_Dynamic "" )
 endif()

@@ -408,7 +408,7 @@ struct BitmapCache
         GFX::ERROR ec;
         bucket.surface->upload(
             img.image.fmt,
-            size_3d<i32>(size.w, size.h, 1),
+            size_3d<i32>{size.w, size.h, 1},
             img.image.mip->data(magic, mipmap),
             ec,
             Point3(
@@ -442,7 +442,7 @@ struct BitmapCache
 
         bucket.surface->upload(
             img.image.fmt,
-            size_3d<i32>(size.w, 4, 1),
+            size_3d<i32>{size.w, 4, 1},
             *img.image.mip->data(magic, mipmap)
                  .at(PixDescSize(img.image.fmt, {size.w, size.h - 4}),
                      PixDescSize(img.image.fmt, {size.w, 4})),
@@ -455,7 +455,7 @@ struct BitmapCache
 
         bucket.surface->upload(
             img.image.fmt,
-            size_3d<i32>(size.w, 4, 1),
+            size_3d<i32>{size.w, 4, 1},
             *img.image.mip->data(magic, mipmap)
                  .at(0, PixDescSize(img.image.fmt, {size.w, 4})),
             ec,

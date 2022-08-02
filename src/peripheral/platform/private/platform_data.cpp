@@ -108,55 +108,55 @@ CString system_name()
 
 namespace device {
 
-namespace display {
+//namespace display {
 
-scalar dpi()
-{
-/* We add this to allow better indication on traces */
-/* TODO: Re-enable this */
-//    DProfContext _("Fetching device DPI");
+//scalar dpi()
+//{
+///* We add this to allow better indication on traces */
+///* TODO: Re-enable this */
+////    DProfContext _("Fetching device DPI");
 
-/* TODO: Add DPI fetch for Android and iOS */
-/* Also, add DPI fetching for OS X and Linux */
-/* DPI in Windows is a lie */
-#if defined(COFFEE_ANDROID) && 0
+///* TODO: Add DPI fetch for Android and iOS */
+///* Also, add DPI fetching for OS X and Linux */
+///* DPI in Windows is a lie */
+//#if defined(COFFEE_ANDROID) && 0
 
-    AndroidForeignCommand fcmd;
-    fcmd.type = Android_QueryDeviceDPI;
+//    AndroidForeignCommand fcmd;
+//    fcmd.type = Android_QueryDeviceDPI;
 
-    CoffeeForeignSignalHandleNA(
-        CoffeeForeign_RequestPlatformData, &fcmd, nullptr, nullptr);
+//    CoffeeForeignSignalHandleNA(
+//        CoffeeForeign_RequestPlatformData, &fcmd, nullptr, nullptr);
 
-    /* A very careful ballpark set of constants
-     *  based on how it looks on a 320 DPI screen
-     *  and a 420 DPI screen */
-    return (scalar(fcmd.data.scalarI64) / 160.f);
-#elif defined(COFFEE_APPLE) && 0
-    stl_types::Vector<f32> dpis;
-    ::platform::mac::get_display_dpi(dpis);
+//    /* A very careful ballpark set of constants
+//     *  based on how it looks on a 320 DPI screen
+//     *  and a 420 DPI screen */
+//    return (scalar(fcmd.data.scalarI64) / 160.f);
+//#elif defined(COFFEE_APPLE) && 0
+//    stl_types::Vector<f32> dpis;
+//    ::platform::mac::get_display_dpi(dpis);
 
-    if(dpis.empty())
-        return 1.f;
+//    if(dpis.empty())
+//        return 1.f;
 
-    f32 maxDpi = 0.f;
-    for(auto const& dpi : dpis)
-        maxDpi = math::max(dpi, maxDpi);
+//    f32 maxDpi = 0.f;
+//    for(auto const& dpi : dpis)
+//        maxDpi = math::max(dpi, maxDpi);
 
-    return maxDpi;
-#else
-    return 1.f;
-#endif
-}
-extern SafeArea safe_area()
-{
-    SafeArea area = {};
-#if defined(COFFEE_APPLE_MOBILE)
-    CoffeeForeignSignalHandleNA(
-        CoffeeForeign_GetSafeMargins, &area, nullptr, nullptr);
-#endif
-    return area;
-}
-} // namespace display
+//    return maxDpi;
+//#else
+//    return 1.f;
+//#endif
+//}
+//extern SafeArea safe_area()
+//{
+//    SafeArea area = {};
+//#if defined(COFFEE_APPLE_MOBILE)
+//    CoffeeForeignSignalHandleNA(
+//        CoffeeForeign_GetSafeMargins, &area, nullptr, nullptr);
+//#endif
+//    return area;
+//}
+//} // namespace display
 
 //DeviceType variant()
 //{

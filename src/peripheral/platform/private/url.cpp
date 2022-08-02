@@ -176,7 +176,7 @@ STATICINLINE SystemPaths GetSystemPaths()
     else
         paths.assetDir = GetAppleStoragePath();
 
-    auto home = Env::GetVar("HOME");
+    auto home = env::var("HOME").value_or("/");
 #if defined(COFFEE_APPLE_MOBILE)
 
     auto base = MkUrl(home.c_str(), RSCA::SystemFile);

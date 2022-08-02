@@ -30,7 +30,7 @@ icon_file[8]="${ICON_DESTINATION}/icon_512x512.png"
 icon_file[9]="${ICON_DESTINATION}/icon_512x512@2x.png"
 
 for i in $(seq 0 9); do
-sips -z ${iconsizes[$i]} ${iconsizes[$i]} "${SRC_ICON}" --out "${icon_file[$i]}"
+sips -z ${iconsizes[$i]} ${iconsizes[$i]} "${SRC_ICON}" --out "${icon_file[$i]}" 1>/dev/null
 done
 
 iconutil -c icns "${ICON_DESTINATION}"

@@ -222,7 +222,6 @@ function xcode_build()
         -GNinja \
         -C${BASE_DIR}/.github/cmake/${ARCHITECTURE}.preload.cmake \
         -DCMAKE_INSTALL_PREFIX=$PWD/install \
-        -DCMAKE_MAKE_PROGRAM=$(which ninja) \
         -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake \
         -DVCPKG_OVERLAY_PORTS=${BASE_DIR}/toolchain/vcpkg/ports \
         -DVCPKG_OVERLAY_TRIPLETS=${BASE_DIR}/toolchain/vcpkg/triplets \

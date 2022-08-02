@@ -112,10 +112,19 @@ if(APPLE)
         # System information queries
         #
         platforms/osx/sysinfo.mm
-#        platforms/osx/environment.cpp
         # Some functions are exposed by Obj-C
         platforms/osx/system_interface.mm
         )
+    if (IOS)
+        target_link_libraries ( PeripheralPlatform PRIVATE
+            "-framework UIKit"
+            )
+    else()
+        target_link_libraries ( PeripheralPlatform PRIVATE
+            "-framework AppKit"
+            "-framework Foundation"
+            )
+    endif()
 endif()
 
 #
@@ -149,6 +158,11 @@ if((${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE OR ANDROID))
             #
 #            platforms/posix/loader.cpp
 #            )
+    endif()
+
+    if(APPLE)
+        target_compile_definitions( PeripheralPlatform PUBLIC
+            -D_GNU_SOURCE)
     endif()
 
     find_package( Unwind QUIET )

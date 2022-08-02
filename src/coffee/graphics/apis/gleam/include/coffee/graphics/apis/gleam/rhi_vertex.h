@@ -219,8 +219,9 @@ struct vertex_array_t
                     attribute.value.stride);
                 cmd::vertex_binding_divisor(attribute.index, instanced ? 1 : 0);
                 cmd::vertex_attrib_binding(attribute.index, attribute.index);
-            } else if(m_features.vertex_arrays)
+            } else
 #endif
+            if(m_features.vertex_arrays)
             {
                 cmd::bind_buffer(
                     group::buffer_target_arb::array_buffer, buffer->m_handle);

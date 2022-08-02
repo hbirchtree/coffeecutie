@@ -11,6 +11,8 @@
 
 #if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_ANDROID)
 // Nothing...
+#elif defined(COFFEE_APPLE)
+#define BOOST_STACKTRACE_USE_LIBC_BACKTRACE_FUNCTION
 #elif defined(COFFEE_UNIXPLAT)
 #define BOOST_STACKTRACE_USE_BACKTRACE
 #endif
@@ -25,7 +27,7 @@
 namespace platform::stacktrace {
 
 constexpr bool supports_stacktrace =
-#if defined(COFFEE_EMSCRIPTEN)
+#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_APPLE)
     false;
 #else
     true;

@@ -395,17 +395,17 @@ void SetupRendering(
 
     RendererState::RGraphicsData& g = d.g_data;
 
-#if defined(FEATURE_ENABLE_DiscordLatte)
     if(auto worker = rq::runtime_queue::CreateNewThreadQueue("Online Worker");
        worker.has_value())
     {
+#if defined(FEATURE_ENABLE_DiscordLatte)
         e.register_subsystem_inplace<Discord::Subsystem>(
             worker.value(), Discord::DiscordOptions{"468164529617109002", 256});
+#endif
         d.online_queue = worker.value();
     }
     else
         Throw(std::runtime_error("Failed to create queue for Discord"));
-#endif
 #if defined(FEATURE_ENABLE_ASIO)
     e.register_subsystem_inplace<ASIO::Subsystem>();
     auto asio_context = e.subsystem_cast<ASIO::Subsystem>().context();

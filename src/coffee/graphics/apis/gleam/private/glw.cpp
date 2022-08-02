@@ -2,7 +2,11 @@
 
 #include <glw/enums/ErrorCode.h>
 #define MAGIC_ENUM_RANGE_MIN 0x0
+#if defined(COFFEE_APPLE)
+#define MAGIC_ENUM_RANGE_MAX 0xFF
+#else
 #define MAGIC_ENUM_RANGE_MAX 0x599
+#endif
 #include <peripherals/stl/magic_enum.hpp>
 
 namespace gl::detail {

@@ -5,7 +5,7 @@
 #include <peripherals/stl/time_types.h>
 
 #define MAGIC_ENUM_RANGE_MIN -10
-#define MAGIC_ENUM_RANGE_MAX 540
+#define MAGIC_ENUM_RANGE_MAX 245
 #include <peripherals/stl/magic_enum.hpp>
 
 namespace blam {

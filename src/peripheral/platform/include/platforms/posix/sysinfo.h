@@ -12,7 +12,6 @@ inline stl_types::String kernel()
     if(uname(&data) != 0)
         return {};
     return data.sysname;
-    return {};
 }
 
 inline stl_types::String kernel_version()
