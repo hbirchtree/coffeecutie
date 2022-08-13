@@ -27,7 +27,7 @@
 namespace platform::stacktrace {
 
 constexpr bool supports_stacktrace =
-#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_APPLE)
+#if defined(COFFEE_EMSCRIPTEN)
     false;
 #else
     true;

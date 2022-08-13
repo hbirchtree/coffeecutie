@@ -18,6 +18,8 @@ constexpr Array<Pair<textures::type, group::texture_target>, 5> tex_type = {{
 #if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
     {textures::type::d2_array, group::texture_target::texture_2d_array},
     {textures::type::d3, group::texture_target::texture_3d},
+#endif
+#if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x310
     {textures::type::cube_array, group::texture_target::texture_cube_map_array},
 #endif
 }};
@@ -29,9 +31,11 @@ constexpr Array<Pair<buffers::type, group::buffer_target_arb>, 6> buf_type = {{
     {buffers::type::pixel_unpack,
      group::buffer_target_arb::pixel_unpack_buffer},
     {buffers::type::pixel_pack, group::buffer_target_arb::pixel_pack_buffer},
+    {buffers::type::constants, group::buffer_target_arb::uniform_buffer},
+#endif
+#if GLEAM_MAX_VERSION >= 0x430 || GLEAM_MAX_VERSION_ES >= 0x310
     {buffers::type::shader_writable,
      group::buffer_target_arb::shader_storage_buffer},
-    {buffers::type::constants, group::buffer_target_arb::uniform_buffer},
 #endif
 }};
 
@@ -45,10 +49,12 @@ constexpr Array<Pair<buffers::type, group::buffer_storage_target>, 6>
          group::buffer_storage_target::pixel_unpack_buffer},
         {buffers::type::pixel_pack,
          group::buffer_storage_target::pixel_pack_buffer},
-        {buffers::type::shader_writable,
-         group::buffer_storage_target::shader_storage_buffer},
         {buffers::type::constants,
          group::buffer_storage_target::uniform_buffer},
+#endif
+#if GLEAM_MAX_VERSION >= 0x430 || GLEAM_MAX_VERSION_ES >= 0x310
+        {buffers::type::shader_writable,
+         group::buffer_storage_target::shader_storage_buffer},
 #endif
     }};
 
@@ -433,7 +439,7 @@ inline group::buffer_storage_mask to(semantic::RSCA flags)
 }
 #endif
 
-#if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300 || \
+#if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x310 || \
     defined(GL_OES_mapbuffer)
 template<typename T>
 requires std::is_same_v<T, group::buffer_access_arb>

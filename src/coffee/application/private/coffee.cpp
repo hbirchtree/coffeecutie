@@ -309,8 +309,7 @@ i32 CoffeeMain(MainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
 
 #if defined(COFFEE_CUSTOM_EXIT_HANDLING)
     libc::signal::register_atexit([]() {
-        runtime_queue_error ec;
-        RuntimeQueue::TerminateThreads(ec);
+        rq::runtime_queue::TerminateThreads();
     });
 #endif
 

@@ -179,7 +179,11 @@ void GraphicsContext::load(entity_container& e, comp_app::app_error& ec)
 #endif
 #elif defined(EGL_VERSION_1_3)
         EGL_CONTEXT_CLIENT_VERSION,
+#if defined(COFFEE_IOS)
+        3,
+#else
         2,
+#endif
 #endif
         EGL_NONE,
     };
@@ -226,7 +230,7 @@ void GraphicsFramebuffer::load(entity_container& e, comp_app::app_error& ec)
 
     auto display = e.service<DisplayHandle>()->context().display;
 
-    auto ptr_info = e.service<comp_app::PtrNativeWindowInfo>();
+    auto ptr_info = e.service<comp_app::PtrNativeWindowInfoService>();
 
     m_surface = eglCreateWindowSurface(
         display,

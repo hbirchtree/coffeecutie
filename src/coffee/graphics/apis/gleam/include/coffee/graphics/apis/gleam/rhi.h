@@ -137,8 +137,15 @@ struct api
     inline auto default_rendertarget()
     {
         if(!m_framebuffer)
+        {
             m_framebuffer = stl_types::MkShared<rendertarget_type>(
                 m_features.rendertarget, std::ref(m_rendertargetCurrency));
+            
+            m_framebuffer->internal_bind(group::framebuffer_target::framebuffer);
+            auto status = static_cast<group::framebuffer_status>(cmd::check_framebuffer_status(group::framebuffer_target::framebuffer));
+            if (status != group::framebuffer_status::framebuffer_complete)
+                Throw(undefined_behavior("invalid framebuffer"));
+        }
         return m_framebuffer;
     }
 

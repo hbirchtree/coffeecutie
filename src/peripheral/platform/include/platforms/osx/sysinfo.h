@@ -46,7 +46,7 @@ inline stl_types::Optional<stl_types::Pair<String, String>> model(
     u32 = 0, u32 = 0)
 {
 #if defined(COFFEE_IOS)
-#error Unimplemented
+    return stl_types::Pair<String, String>("Apple", "A");
 #else
     return stl_types::Pair<String, String>(
         info::apple::sysctl_by_name<std::string>("machdep.cpu.vendor"),

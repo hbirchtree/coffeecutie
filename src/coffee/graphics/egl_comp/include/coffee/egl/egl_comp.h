@@ -90,10 +90,10 @@ struct Windowing : comp_app::interfaces::StaticWindowing,
 };
 
 using Services = comp_app::detail::TypeList<
+    comp_app::PtrNativeWindowInfoService,
     DisplayHandle,
     GraphicsContext,
     GraphicsFramebuffer,
-    GraphicsSwapControl,
-    comp_app::PtrNativeWindowInfoService>;
+    GraphicsSwapControl>;
 
 } // namespace egl

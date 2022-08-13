@@ -4,6 +4,7 @@
 #include <coffee/core/stl_types.h>
 #include <coffee/core/types/application_main.h>
 #include <peripherals/build/application.h>
+#include <peripherals/identify/compiler/function_export.h>
 
 namespace Coffee {
 

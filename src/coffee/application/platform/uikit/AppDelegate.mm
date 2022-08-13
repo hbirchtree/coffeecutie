@@ -29,8 +29,8 @@ extern void* uikit_window;
 CMMotionManager* app_motionManager = NULL;
 
 // Event handling, sending stuff to Coffee
-void(*CoffeeForeignSignalHandle)(int);
-void(*CoffeeForeignSignalHandleNA)(int, void*, void*, void*);
+extern void(*CoffeeForeignSignalHandle)(int);
+extern void(*CoffeeForeignSignalHandleNA)(int, void*, void*, void*);
 
 void HandleForeignSignals(int event);
 void HandleForeignSignalsNA(int event, void* ptr1, void* ptr2, void* ptr3);
@@ -89,9 +89,9 @@ static inline void DispatchAppEvent(comp_app::AppEvent::Type type, void* event)
     Coffee::SetPrintingVerbosity(10);
     // Call the Coffee entrypoint, it will set up a bunch of things
     if(Coffee::main_functions.is_no_args)
-        Coffee::MainSetup(Coffee::main_functions.no_args);
+        Coffee::MainSetup(Coffee::main_functions.no_args, 0, nullptr, 0);
     else
-        Coffee::MainSetup(Coffee::main_functions.with_args, 0, nullptr);
+        Coffee::MainSetup(Coffee::main_functions.with_args, 0, nullptr, 0);
     Coffee::SetPrintingVerbosity(10);
     
     self.hasInitialized = FALSE;
@@ -197,13 +197,12 @@ static inline void DispatchAppEvent(comp_app::AppEvent::Type type, void* event)
 #if defined(COFFEE_APP_USE_GLKIT)
 - (void)glkView:(GLKView *)view drawInRect:(CGRect)rect
 {
-    if(self.hasInitialized)
-        CoffeeEventHandleCall(CoffeeHandle_Loop);
 }
 
 - (void)glkViewControllerUpdate:(GLKViewController *)controller
 {
-    // NOOP
+    if(self.hasInitialized)
+        CoffeeEventHandleCall(CoffeeHandle_Loop);
 }
 #endif
 

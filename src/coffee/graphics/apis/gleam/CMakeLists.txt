@@ -22,10 +22,9 @@ if (NOT IOS AND NOT ANDROID AND NOT EMSCRIPTEN)
     endif()
     target_link_libraries ( GLVersion_Dynamic INTERFACE GLAD_Core )
     add_export ( GLVersion_Dynamic "" )
-endif()
-if (NOT (APPLE AND NOT IOS))
-    add_library ( GLVersion_ES        INTERFACE )
-    if(EMSCRIPTEN)
+else()
+    add_library ( GLVersion_ES INTERFACE )
+    if(EMSCRIPTEN OR IOS)
         target_compile_definitions ( GLVersion_ES INTERFACE
             -DGLEAM_USE_ES
             -DGLEAM_USE_LINKED
@@ -140,12 +139,12 @@ function ( GEN_GLEAM_TARGET GLVERSION SUFFIX )
     endif()
 
     if(APPLE AND IOS AND ${GLVERSION} MATCHES "_ES")
-        target_link_libraries ( GLeamCommon_${SUFFIX} PUBLIC "-framework OpenGLES" )
         target_compile_definitions ( GLeamCommon_${SUFFIX} PUBLIC
             -DGLES_SILENCE_DEPRECATION=1
             )
         target_link_libraries ( GLeamCommon_${SUFFIX} PUBLIC
             CEAGL
+            "-framework OpenGLES"
             )
         target_include_directories ( GLeamCommon_${SUFFIX} PRIVATE
             $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/src/coffee/windowing/private/graphics/ceagl/include>

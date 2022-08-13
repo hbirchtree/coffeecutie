@@ -5,12 +5,6 @@ if(BUILD_OPENSSL)
     set ( OPENSSL_ROOT_DIR "${OpenSSL_DIR}" )
     set ( ENV{OPENSSL_ROOT_DIR} "${OpenSSL_DIR}" )
 
-    if(APPLE AND IOS)
-        set ( OPENSSL_CRYPTO_LIBRARY "${OPENSSL_ROOT_DIR}/lib/libcrypto.a" )
-        set ( OPENSSL_SSL_LIBRARY "${OPENSSL_ROOT_DIR}/lib/libssl.a" )
-        set ( OPENSSL_INCLUDE_DIR "${OPENSSL_ROOT_DIR}/include" )
-    endif()
-
     find_package ( OpenSSL REQUIRED )
 endif()
 

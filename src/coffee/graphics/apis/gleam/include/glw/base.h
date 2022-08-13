@@ -35,6 +35,9 @@
 #elif C_HAS_INCLUDE(<GLES3/gl3.h>) && GLEAM_RESTRICT_ES >= 0x300
 #include <GLES3/gl3.h>
 #define GL_BASE_ES_VERSION 0x300
+#elif C_HAS_INCLUDE(<OpenGLES/ES3/gl.h>)
+#include <OpenGLES/ES3/gl.h>
+#define GL_BASE_ES_VERSION 0x300
 #elif C_HAS_INCLUDE(<GLES2/gl2.h>) && GLEAM_RESTRICT_ES >= 0x200
 #include <GLES2/gl2.h>
 #define GL_BASE_ES_VERSION 0x200

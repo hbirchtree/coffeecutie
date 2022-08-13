@@ -89,7 +89,7 @@ struct rendertarget_t
                 m_handle, convert::to(attachment, i), texture.m_handle, level);
         else
 #endif
-#if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
+#if GLEAM_MAX_VERSION >= 0x320 || GLEAM_MAX_VERSION_ES >= 0x320
             if(m_features.framebuffer_texture)
         {
             cmd::framebuffer_texture(

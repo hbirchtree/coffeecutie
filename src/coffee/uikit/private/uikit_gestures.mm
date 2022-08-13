@@ -26,13 +26,13 @@ extern void* uikit_window;
 
 - (void)handleTap:(UITapGestureRecognizer *)recog
 {
-    Coffee::DebugFun::cDebug("Hello tap");
+    Coffee::cDebug("Hello tap");
     CGPoint point = [recog locationInView: self.window.rootViewController.view];
 }
 
 - (void)handlePan:(UIPanGestureRecognizer *)recog
 {
-    Coffee::DebugFun::cDebug("Hello pan");
+    Coffee::cDebug("Hello pan");
     UIView* targetView = self.window.rootViewController.view;
     
     CGPoint point = [recog locationInView: targetView];
@@ -43,19 +43,19 @@ extern void* uikit_window;
 
 - (void)handlePinch: (UIPinchGestureRecognizer*) recog
 {
-    Coffee::DebugFun::cDebug("Hello pinch");
+    Coffee::cDebug("Hello pinch");
     CGPoint point = [recog locationInView: self.window.rootViewController.view];
 }
 
 - (void)handleSwipe:(UISwipeGestureRecognizer *)recog
 {
-    Coffee::DebugFun::cDebug("Hello swipe");
+    Coffee::cDebug("Hello swipe");
     CGPoint point = [recog locationInView: self.window.rootViewController.view];
 }
 
 - (void)handleRotation: (UIRotationGestureRecognizer*) recog
 {
-    Coffee::DebugFun::cDebug("Hello rotate");
+    Coffee::cDebug("Hello rotate");
     CGPoint point = [recog locationInView: self.window.rootViewController.view];
 }
 
@@ -109,7 +109,7 @@ void GestureInput::load(
     GestureDelegate* gestures = [[GestureDelegate alloc] init];
 }
 
-void GestureInput::start_restricted(Proxy& c, time_point const&)
+void GestureInput::start_frame(ContainerProxy&, time_point const&)
 {
     auto ibus =
             m_container->service<comp_app::EventBus<Coffee::Input::CIEvent>>();

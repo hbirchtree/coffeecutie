@@ -140,7 +140,7 @@ using component_list = TypeList<Args...>;
 template<is_visitor... Args>
 using visitor_list = TypeList<Args...>;
 
-template<typename ComponentType>
+template<is_tag_type ComponentType>
 struct ComponentContainer : ComponentContainerBase
 {
     using tag_type   = ComponentType;

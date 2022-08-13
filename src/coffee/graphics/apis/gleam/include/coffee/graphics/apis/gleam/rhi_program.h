@@ -5,6 +5,8 @@
 #include "rhi_translate.h"
 #include "rhi_versioning.h"
 
+#include <peripherals/error/result.h>
+
 namespace gleam {
 namespace detail {
 

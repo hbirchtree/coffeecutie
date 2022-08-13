@@ -20,6 +20,6 @@ target_compile_definitions ( CEAGL PRIVATE
 coffee_library (
     TARGET GLKitComponent
     SOURCES private/glk_comp.mm
-    LIBRARIES ComponentApp CEAGL GLeamCommon
+    LIBRARIES ComponentApp CEAGL GLeamCommon_ES
     HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     )

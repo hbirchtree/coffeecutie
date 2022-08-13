@@ -60,7 +60,7 @@ inline bool apply_single_uniform(
     auto [key, data] = uniform;
     auto ulocation   = get_program_uniform_location(program, stage, key);
 
-#if GLEAM_MAX_VERSION_ES != 0x200
+#if GLEAM_MAX_VERSION >= 0x410 || GLEAM_MAX_VERSION_ES >= 0x310
     if(program.m_features.separable_programs)
         cmd::program_uniform(
             program.m_stages.find(stage)->second->m_handle,
@@ -85,7 +85,7 @@ inline bool apply_single_uniform(
     auto [key, data] = uniform;
     auto ulocation   = get_program_uniform_location(program, stage, key);
 
-#if GLEAM_MAX_VERSION_ES != 0x200
+#if GLEAM_MAX_VERSION >= 0x410 || GLEAM_MAX_VERSION_ES >= 0x310
     if(program.m_features.separable_programs)
         cmd::program_uniform(
             program.m_stages.find(stage)->second->m_handle, ulocation, data);
@@ -104,7 +104,7 @@ requires(std::is_floating_point_v<T> || std::is_integral_v<T>) inline bool apply
     auto [key, data] = uniform;
     auto ulocation   = get_program_uniform_location(program, stage, key);
 
-#if GLEAM_MAX_VERSION_ES != 0x200
+#if GLEAM_MAX_VERSION >= 0x410 || GLEAM_MAX_VERSION_ES >= 0x310
     if(program.m_features.separable_programs)
         cmd::program_uniform(
             program.m_stages.find(stage)->second->m_handle, ulocation, data);

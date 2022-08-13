@@ -40,8 +40,7 @@ EVENT_TRANSLATE(FocusEvent)
 EVENT_TRANSLATE(ResizeEvent)
 {
     using libc_types::i32;
-    return ResizeEvent::from_values<i32, ResizeEvent>(
-        ev.window.data1, ev.window.data2);
+    return ResizeEvent(ev.window.data1, ev.window.data2);
 }
 
 EVENT_TRANSLATE(MoveEvent)

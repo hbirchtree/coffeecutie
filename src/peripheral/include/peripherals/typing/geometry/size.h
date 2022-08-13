@@ -15,10 +15,10 @@ requires std::is_trivial<T>::value struct size_2d
 {
     using value_type = T;
 
-    template<typename U, typename Self = size_2d>
+    template<typename Self, typename U>
     STATICINLINE Self from_values(U w, U h)
     {
-        return {static_cast<T>(w), static_cast<T>(h)};
+        return Self{static_cast<T>(w), static_cast<T>(h)};
     }
     STATICINLINE size_2d from_vector(vectors::tvector<T, 2> const& src)
     {

@@ -4,7 +4,7 @@
 
 #include <libgen.h>
 
-#if defined(COFFEE_APPLE)
+#if defined(COFFEE_MACOS)
 #include <libproc.h>
 #endif
 
@@ -229,18 +229,17 @@ FORCEDINLINE result<Url, posix_error> dereference(Url const& path)
 
 FORCEDINLINE result<Url, posix_error> executable()
 {
+    using namespace url::constructors;
 #if defined(COFFEE_LINUX) || defined(COFFEE_ANDROID)
-    using url::constructors::MkSysUrl;
-
     return path::canon(MkSysUrl("/proc/self/exe"));
 #elif defined(COFFEE_IOS)
-    return url::constructors::MkUrl("App");
+    return path::canon(MkUrl("App"));
 #elif defined(COFFEE_MACOS)
-//    std::string path;
-//    auto res = proc_pidpath(getpid(), path.data(), path.size());
-    return url::constructors::MkSysUrl("");
+    std::string path(PATH_MAX, '\0');
+    auto res = proc_pidpath(getpid(), path.data(), path.size());
+    return MkSysUrl("");
 #elif defined(COFFEE_EMSCRIPTEN)
-    return url::constructors::MkSysUrl("/app");
+    return MkSysUrl("/app");
 #else
     static_assert(false, "Unimplemented executable()");
 #endif
