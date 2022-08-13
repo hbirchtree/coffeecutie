@@ -93,8 +93,7 @@ using StateTag  = Components::ValueTag<RuntimeStateSystem, RuntimeState>;
 static constexpr u32 FloorTag    = 0x1;
 static constexpr u32 BaseItemTag = 0x2;
 
-struct TransformContainer
-    : Components::Allocators::VectorContainer<TransformTag>
+struct TransformContainer : Components::Allocators::VectorContainer<TransformTag>
 {
 };
 

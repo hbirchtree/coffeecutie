@@ -27,7 +27,7 @@ struct MatrixContainer : ComponentContainer<TagMatf4>
     Map<u64, szptr> mapping;
     Vector<Matf4>   matrices;
 
-    virtual ~MatrixContainer() override
+    virtual ~MatrixContainer()
     {
     }
 

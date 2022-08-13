@@ -1,4 +1,5 @@
 #include "renderer.h"
+#include <coffee/comp_app/app_wrap.h>
 #include <coffee/core/CApplication>
 #include <coffee/core/coffee.h>
 #include <coffee/core/input/eventhandlers.h>
