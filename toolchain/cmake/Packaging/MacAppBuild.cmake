@@ -113,7 +113,6 @@ macro( MACAPP_PACKAGE
             ${IOS_LOADING_ICON}
             ${IOS_ICON_ASSETS}
             )
-        message ( "Xcassets: ${IOS_ICON_ASSETS}" )
     endif()
 
     if(IOS)

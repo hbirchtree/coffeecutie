@@ -198,14 +198,10 @@ function xcode_build()
 
     echo " * Selected platform ${PLATFORM}:${ARCHITECTURE}"
 
-    mkdir -p $BASE_DIR/multi_build/${PLATFORM}-${ARCHITECTURE}
-    pushd $BASE_DIR/multi_build/${PLATFORM}-${ARCHITECTURE}
+    mkdir -p $BASE_DIR/multi_build/${PLATFORM}-${ARCHITECTURE}-${SYSROOT:-}
+    pushd $BASE_DIR/multi_build/${PLATFORM}-${ARCHITECTURE}-${SYSROOT:-}
 
-    DEFAULT_ROOT=$PWD/emsdk
-    TOOLCHAIN_ROOT=${TOOLCHAIN_ROOT:-$DEFAULT_ROOT}
-
-    echo "::info::Set up for ${PLATFORM}:${ARCHITECTURE}:${SYSROOT} (${TOOLCHAIN_ROOT})"
-    export TOOLCHAIN_ROOT=$TOOLCHAIN_ROOT
+    echo "::info::Set up for ${PLATFORM}:${ARCHITECTURE}:${SYSROOT}"
     export TOOLCHAIN_PREFIX=$ARCHITECTURE
 
     export VCPKG_ROOT=$(dirname $(readlink $(which vcpkg)))
@@ -218,15 +214,31 @@ function xcode_build()
     install_dependencies
 
     echo "::group::Configuring project"
-    cmake \
-        -GNinja \
-        -C${BASE_DIR}/.github/cmake/${ARCHITECTURE}.preload.cmake \
-        -DCMAKE_INSTALL_PREFIX=$PWD/install \
-        -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake \
-        -DVCPKG_OVERLAY_PORTS=${BASE_DIR}/toolchain/vcpkg/ports \
-        -DVCPKG_OVERLAY_TRIPLETS=${BASE_DIR}/toolchain/vcpkg/triplets \
-        -DVCPKG_TARGET_TRIPLET=${TOOLCHAIN_PREFIX} \
-        ${BASE_DIR} ${@:2}
+    if [[ "${ARCHITECTURE}" = *ios ]]; then
+        echo "::info::Doing iOS build"
+        cmake \
+            -G${GENERATOR:-Xcode} \
+            -C${BASE_DIR}/.github/cmake/${ARCHITECTURE}.preload.cmake \
+            -DCMAKE_INSTALL_PREFIX=$PWD/install \
+            -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake \
+            -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=${BASE_DIR}/toolchain/cmake/Toolchains/all-ios.toolchain.cmake \
+            -DVCPKG_OVERLAY_PORTS=${BASE_DIR}/toolchain/vcpkg/ports \
+            -DVCPKG_OVERLAY_TRIPLETS=${BASE_DIR}/toolchain/vcpkg/triplets \
+            -DVCPKG_TARGET_TRIPLET=${TOOLCHAIN_PREFIX} \
+            -DIOS_PLATFORM=${PLATFORM} \
+            ${BASE_DIR} ${@:2}
+    else
+        echo "::info::Doing macOS build"
+        cmake \
+            -G${GENERATOR:-Ninja} \
+            -C${BASE_DIR}/.github/cmake/${ARCHITECTURE}.preload.cmake \
+            -DCMAKE_INSTALL_PREFIX=$PWD/install \
+            -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake \
+            -DVCPKG_OVERLAY_PORTS=${BASE_DIR}/toolchain/vcpkg/ports \
+            -DVCPKG_OVERLAY_TRIPLETS=${BASE_DIR}/toolchain/vcpkg/triplets \
+            -DVCPKG_TARGET_TRIPLET=${TOOLCHAIN_PREFIX} \
+            ${BASE_DIR} ${@:2}
+    fi
     echo "::endgroup::"
 
     echo "::group::Building project"
