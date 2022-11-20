@@ -69,9 +69,18 @@
         color: rgb(120, 120, 120);
       }
 
+      #status_banner {
+        display:flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 2px solid darkgray;
+        margin-bottom: 10px;height: 3.5em;
+        transition: background-color 500ms ease-in-out;
+      }
+
       #progress {
         height: 20px;
-        width: 30px;
+        width: 200px;
       }
 
       #controls {
@@ -100,7 +109,7 @@
   <body>
     
 
-    <span style="display:flex;align-items: center;justify-content: space-between;border-bottom: 2px solid darkgray;margin-bottom: 10px;height: 3.5em;">
+    <span style="" id="status_banner">
         <div class="spinner" id="spinner" style=""></div>
         <div class="emscripten" id="status">Connecting...</div>
     <span id="controls">
@@ -123,6 +132,7 @@
 
     <script type='text/javascript'>
       var statusElement = document.getElementById('status');
+      var statusBar = document.querySelector('#status_banner');
       var progressElement = document.getElementById('progress');
       var spinnerElement = document.getElementById('spinner');
 
@@ -181,14 +191,31 @@
             if (!text) spinnerElement.style.display = 'none';
           }
           statusElement.innerHTML = text;
+          if (text === "Running...") {
+            statusBar.style.background = "#050";
+            statusElement.style.color = "white";
+          }
+          if (text.startsWith("Exception thrown")) {
+            statusBar.style.background = "#500";
+            statusElement.style.color = "white";
+          }
+          if (text === "") {
+            statusBar.style.background = "#333";
+            statusElement.style.color = "white";
+          }
         },
         totalDependencies: 0,
         monitorRunDependencies: function(left) {
           this.totalDependencies = Math.max(this.totalDependencies, left);
           Module.setStatus(left ? 'Preparing... (' + (this.totalDependencies-left) + '/' + this.totalDependencies + ')' : 'All downloads complete.');
+          statusBar.style.background = "#055";
+          statusElement.style.color = "white";
         }
       };
       Module.setStatus('Downloading...');
+      statusBar.style.background = "#005";
+      statusElement.style.color = "white";
+
       window.onerror = function(event) {
         // TODO: do not warn on ok events like simulating an infinite loop or exitStatus
         Module.setStatus('Exception thrown, see JavaScript console');
