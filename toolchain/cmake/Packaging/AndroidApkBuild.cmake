@@ -16,9 +16,10 @@ if(ANDROID)
 
     # Misc properties
 
-    set ( ANDROID_BUILD_TOOLS_VER "28.0.3" CACHE STRING "" )
-    set ( ANDROID_GRADLE_MODULE_VER "3.6.3" CACHE STRING "" )
-    set ( ANDROID_GRADLE_VER "5.6.4" CACHE STRING "" )
+    set ( ANDROID_BUILD_TOOLS_VER "30.0.3" CACHE STRING "" )
+    set ( ANDROID_GRADLE_MODULE_VER "7.3.1" CACHE STRING "" )
+    set ( ANDROID_GRADLE_VER "7.4" CACHE STRING "" )
+    set ( ANDROID_NDK_VER "25.1.8937393" CACHE STRING "" )
 
     set ( ANDROID_APK_OUTPUT_DIR "${COFFEE_PACKAGE_DIRECTORY}/android-apk"
         CACHE PATH "" )
@@ -175,6 +176,7 @@ function(ANDROIDAPK_PACKAGE)
         )
 
     set_target_properties ( "${AAPK_TARGET}" PROPERTIES
+        IS_GAME "true"
         ANDROID_API_TARGET "${AAPK_APK_TARGET}"
         ANDROID_API_MIN_TARGET "${AAPK_APK_MIN_TARGET}"
         ANDROID_FEATURES
@@ -281,8 +283,8 @@ function(ANDROIDAPK_PACKAGE)
             )
 
         file ( WRITE "${BUILD_OUTDIR}/local.properties"
-            "sdk.dir=${ANDROID_SDK}\n"
-            "ndk.dir=${ANDROID_NDK}")
+            "sdk.dir=${ANDROID_SDK}"
+            )
 
         #
         # Create project directories

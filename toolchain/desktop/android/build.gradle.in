@@ -2,6 +2,7 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion @ANDROID_API_TARGET@
+    ndkVersion "@ANDROID_NDK_VER@"
     buildToolsVersion "@ANDROID_BUILD_TOOLS_VER@"
 
     defaultConfig {
@@ -21,4 +22,5 @@ android {
             debuggable true
         }
     }
+    namespace "@ANDROID_PACKAGE_NAME@"
 }
