@@ -703,6 +703,16 @@ enum class {snake_name} : ::libc_types::u32 {{'''
 
     unique_values = [ x for x in unique_values if x not in deprecated_symbols]
 
+    overflow_values = []
+    for e in unique_values:
+        real_value = [ int(value, base=16) for name, _, value in enum[1] if name == e ]
+        if len(real_value) != 1:
+            continue
+        real_value = real_value[0]
+        if real_value > 0xFFFFFFFF:
+            overflow_values.append(e)
+    [ unique_values.remove(x) for x in overflow_values ]
+
     for i, x in enumerate(unique_values):
         if not re.match(ILLEGAL_START, x):
             continue
@@ -726,3 +736,11 @@ enum class {snake_name} : ::libc_types::u32 {{'''
 
     if meta[0] == 'bitmask':
         yield f'C_FLAGS({snake_name}, ::libc_types::u32);'
+
+    for value in overflow_values:
+        snake_value = snakeify_underscores(value)
+        yield f'''#ifdef {value}
+constexpr auto {snake_name}_{snake_value} = {value};
+#endif'''
+
+

@@ -25,6 +25,14 @@ def append_file(filename: str, code: str = ''):
         f.write(code + '\n')
 
 
+def generate_command_docstring(func_name, params, return_type: str, brief: str):
+    param_list = '\n'.join([ f' * \\param {name} {type}' for name, type, ex in params ])
+    return f'''/*!
+ * \\brief {brief}
+''' + param_list + f'''
+ * \\return {return_type[1] or return_type[0]}
+ */'''
+
 def generate_version_commands(
         registry,
         api: str,
@@ -66,8 +74,14 @@ struct {api_ns}
             if func_name in function_defs[version[0]]:
                 continue
             function_defs[version[0]].append(func_name)
-            append_file(ver_file, f'/* Introduced in GL {version[0]} {major}.{min} */')
-            for chunk in generate_function((func_name[2:],  return_type, params), usages, version):
+            for chunk in generate_function((func_name[2:], return_type, params), usages, version):
+                if 'STATICINLINE' in chunk:
+                    # Insert the comment right after requires clause
+                    append_file(ver_file, generate_command_docstring(
+                        func_name,
+                        params,
+                        return_type,
+                        f'Wraps around {func_name}. Introduced in GL {version[0]} {major}.{min}'))
                 append_file(ver_file, chunk)
         append_file(ver_file, f'#endif // {guard}')
 
@@ -140,6 +154,9 @@ namespace gl {''')
             for symbol in section:
                 compatibility_symbols[version[0]].add(symbol.get('name'))
 
+    #
+    # Generate versioned headers
+    #
     for api in ['gl', 'gles2']:
         generate_version_commands(
             registry, api, versions, command_file, code_file,
@@ -152,6 +169,9 @@ namespace gl {''')
 
     makedirs('extensions', exist_ok=True)
 
+    #
+    # Generate extension headers
+    #
     for extension, ext_name in extensions_supported_by(['gl', 'gles2'], registry):
             current_file_stem = f'{ext_name[3:]}.h'
             current_file = f'extensions/{current_file_stem}'
@@ -166,7 +186,7 @@ namespace gl {''')
 #ifdef {ext_name}''')
 
             enum_classes = set()
-            [ enum_classes.add(meta[0]) for name, _, meta in enums_for(extension.findall('require'), registry) if meta[0] is not None and name != 'GL_NONE' ]
+            [ enum_classes.add(meta[0]) for name, value, meta in enums_for(extension.findall('require'), registry) if meta[0] is not None and name != 'GL_NONE' ]
             enum_classes = list(enum_classes)
             enum_classes.sort()
             for meta in enum_classes:
@@ -204,6 +224,13 @@ namespace gl {''')
                     guard = 'GL_ES_VERSION_2_0' if api == 'gles2' else 'GL_VERSION_1_0'
                     append_file(current_file, f'#if defined({guard})')
                 for chunk in generate_function((func_name[2:], rtype, params), usages, override_name=visible_name):
+                    if 'STATICINLINE' in chunk:
+                        # Insert the comment right after requires clause
+                        append_file(current_file, generate_command_docstring(
+                            func_name,
+                            params,
+                            rtype,
+                            f'Part of {ext_name}'))
                     append_file(current_file, chunk)
                 if api is not None:
                     append_file(current_file, '#endif')
@@ -233,8 +260,7 @@ constexpr auto name = "{ext_name}";
 
     for enum in all_enums(registry):
         name, _, _ = enum
-        enum_file = name + '.h'
-        enum_file = f'enums/{enum_file}'
+        enum_file = f'enums/{name}.h'
         clear_file(enum_file)
         append_file(enum_file, '''#pragma once
 

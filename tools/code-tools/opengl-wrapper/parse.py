@@ -81,19 +81,20 @@ def all_enums(registry):
         type = enum_group.get('type')
         for enum in enum_group.findall('enum'):
             name = enum.get('name')
+            value = enum.get('value')
             memberships = enum.get('group')
             if memberships is None:
                 continue
             memberships = memberships.split(',')
             for membership in memberships:
-                enums[membership].append([name, type])
+                enums[membership].append([name, type, value])
                 if type != None:
                     enum_types[membership] = type
     for v in enums.values():
         v.sort()
     return [ 
         (name, enums[name], [enum_types[name] if name in enum_types else None]) 
-        for name in enums.keys() 
+        for name in enums.keys()
     ]
 
 
