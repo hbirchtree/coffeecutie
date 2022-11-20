@@ -1,8 +1,12 @@
 #ifdef GL_ES_VERSION_3_2
-/* Introduced in GL es 3.2 */
 template<typename Dummy = void>
-requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
-    void blend_barrier()
+requires(MinimumVersion<Current, Version<3, 2>>)
+    /*!
+     * \brief Wraps around glBlendBarrier. Introduced in GL es 3.2
+
+     * \return void
+     */
+    STATICINLINE void blend_barrier()
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -13,10 +17,28 @@ requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
     detail::error_check("BlendBarrier"sv);
 }
 
-/* Introduced in GL es 3.2 */
 template<typename Dummy = void>
-requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
-    void copy_image_sub_data(
+requires(MinimumVersion<Current, Version<3, 2>>)
+    /*!
+     * \brief Wraps around glCopyImageSubData. Introduced in GL es 3.2
+     * \param srcName GLuint
+     * \param srcTarget GLenum
+     * \param srcLevel GLint
+     * \param srcX GLint
+     * \param srcY GLint
+     * \param srcZ GLint
+     * \param dstName GLuint
+     * \param dstTarget GLenum
+     * \param dstLevel GLint
+     * \param dstX GLint
+     * \param dstY GLint
+     * \param dstZ GLint
+     * \param srcWidth GLsizei
+     * \param srcHeight GLsizei
+     * \param srcDepth GLsizei
+     * \return void
+     */
+    STATICINLINE void copy_image_sub_data(
         u32                               srcName,
         group::copy_image_sub_data_target srcTarget,
         i32                               srcLevel,
@@ -57,11 +79,16 @@ requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
     detail::error_check("CopyImageSubData"sv);
 }
 
-/* Introduced in GL es 3.2 */
 template<class span_const_void>
 requires(MinimumVersion<Current, Version<3, 2>>&&
-             semantic::concepts::Span<span_const_void>) STATICINLINE
-    void debug_message_callback(
+             semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Wraps around glDebugMessageCallback. Introduced in GL es 3.2
+     * \param callback GLDEBUGPROC
+     * \param userParam const void *
+     * \return void
+     */
+    STATICINLINE void debug_message_callback(
         GLDEBUGPROC callback, span_const_void const& userParam)
 {
     using namespace std::string_view_literals;
@@ -76,13 +103,22 @@ requires(MinimumVersion<Current, Version<3, 2>>&&
     detail::error_check("DebugMessageCallback"sv);
 }
 
-/* Introduced in GL es 3.2 */
 template<class span_const_u32>
 requires(MinimumVersion<Current, Version<3, 2>>&&
              semantic::concepts::Span<span_const_u32>&& std::is_same_v<
                  std::decay_t<typename span_const_u32::value_type>,
-                 std::decay_t<u32>>) STATICINLINE
-    void debug_message_control(
+                 std::decay_t<u32>>)
+    /*!
+     * \brief Wraps around glDebugMessageControl. Introduced in GL es 3.2
+     * \param source GLenum
+     * \param type GLenum
+     * \param severity GLenum
+     * \param count GLsizei
+     * \param ids const GLuint *
+     * \param enabled GLboolean
+     * \return void
+     */
+    STATICINLINE void debug_message_control(
         group::debug_source   source,
         group::debug_type     type,
         group::debug_severity severity,
@@ -104,10 +140,19 @@ requires(MinimumVersion<Current, Version<3, 2>>&&
     detail::error_check("DebugMessageControl"sv);
 }
 
-/* Introduced in GL es 3.2 */
 template<typename Dummy = void>
-requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
-    void debug_message_insert(
+requires(MinimumVersion<Current, Version<3, 2>>)
+    /*!
+     * \brief Wraps around glDebugMessageInsert. Introduced in GL es 3.2
+     * \param source GLenum
+     * \param type GLenum
+     * \param id GLuint
+     * \param severity GLenum
+     * \param length GLsizei
+     * \param buf const GLchar *
+     * \return void
+     */
+    STATICINLINE void debug_message_insert(
         group::debug_source     source,
         group::debug_type       type,
         u32                     id,
@@ -130,7 +175,6 @@ requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
     detail::error_check("DebugMessageInsert"sv);
 }
 
-/* Introduced in GL es 3.2 */
 template<
     class span_GLchar,
     class span_debug_severity,
@@ -157,8 +201,20 @@ requires(
                             std::decay_t<i32>>&& semantic::concepts::
                             Span<span_GLchar>&&  std::is_same_v<
                                 std::decay_t<typename span_GLchar::value_type>,
-                                std::decay_t<GLchar>>) STATICINLINE GLuint
-    get_debug_message_log(
+                                std::decay_t<GLchar>>)
+    /*!
+     * \brief Wraps around glGetDebugMessageLog. Introduced in GL es 3.2
+     * \param count GLuint
+     * \param bufSize GLsizei
+     * \param sources GLenum *
+     * \param types GLenum *
+     * \param ids GLuint *
+     * \param severities GLenum *
+     * \param lengths GLsizei *
+     * \param messageLog GLchar *
+     * \return GLuint
+     */
+    STATICINLINE GLuint get_debug_message_log(
         span_debug_source   sources,
         span_debug_type     types,
         span_u32            ids,
@@ -185,13 +241,21 @@ requires(
     return out;
 }
 
-/* Introduced in GL es 3.2 */
 template<class span_GLchar>
 requires(MinimumVersion<Current, Version<3, 2>>&&
              semantic::concepts::Span<span_GLchar>&& std::is_same_v<
                  std::decay_t<typename span_GLchar::value_type>,
-                 std::decay_t<GLchar>>) STATICINLINE
-    void get_object_label(
+                 std::decay_t<GLchar>>)
+    /*!
+     * \brief Wraps around glGetObjectLabel. Introduced in GL es 3.2
+     * \param identifier GLenum
+     * \param name GLuint
+     * \param bufSize GLsizei
+     * \param length GLsizei *
+     * \param label GLchar *
+     * \return void
+     */
+    STATICINLINE void get_object_label(
         group::object_identifier identifier,
         u32                      name,
         i32&                     length,
@@ -211,14 +275,21 @@ requires(MinimumVersion<Current, Version<3, 2>>&&
     detail::error_check("GetObjectLabel"sv);
 }
 
-/* Introduced in GL es 3.2 */
 template<class span_GLchar, class span_const_void>
 requires(MinimumVersion<Current, Version<3, 2>>&&
                  semantic::concepts::Span<span_const_void>&&
                  semantic::concepts::Span<span_GLchar>&& std::is_same_v<
                      std::decay_t<typename span_GLchar::value_type>,
-                     std::decay_t<GLchar>>) STATICINLINE
-    void get_object_ptr_label(
+                     std::decay_t<GLchar>>)
+    /*!
+     * \brief Wraps around glGetObjectPtrLabel. Introduced in GL es 3.2
+     * \param ptr const void *
+     * \param bufSize GLsizei
+     * \param length GLsizei *
+     * \param label GLchar *
+     * \return void
+     */
+    STATICINLINE void get_object_ptr_label(
         span_const_void const& ptr, i32& length, span_GLchar label)
 {
     using namespace std::string_view_literals;
@@ -234,10 +305,16 @@ requires(MinimumVersion<Current, Version<3, 2>>&&
     detail::error_check("GetObjectPtrLabel"sv);
 }
 
-/* Introduced in GL es 3.2 */
 template<class span_void>
 requires(MinimumVersion<Current, Version<3, 2>>&&
-             semantic::concepts::Span<span_void>) STATICINLINE
+             semantic::concepts::Span<span_void>)
+    /*!
+     * \brief Wraps around glGetPointerv. Introduced in GL es 3.2
+     * \param pname GLenum
+     * \param params void **
+     * \return void
+     */
+    STATICINLINE
     void get_pointerv(group::get_pointerv_prop pname, span_void params)
 {
     using namespace std::string_view_literals;
@@ -251,13 +328,21 @@ requires(MinimumVersion<Current, Version<3, 2>>&&
     detail::error_check("GetPointerv"sv);
 }
 
-/* Introduced in GL es 3.2 */
 template<typename Dummy = void>
-requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE void object_label(
-    group::object_identifier identifier,
-    u32                      name,
-    i32                      length,
-    std::string_view const&  label)
+requires(MinimumVersion<Current, Version<3, 2>>)
+    /*!
+     * \brief Wraps around glObjectLabel. Introduced in GL es 3.2
+     * \param identifier GLenum
+     * \param name GLuint
+     * \param length GLsizei
+     * \param label const GLchar *
+     * \return void
+     */
+    STATICINLINE void object_label(
+        group::object_identifier identifier,
+        u32                      name,
+        i32                      length,
+        std::string_view const&  label)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -268,11 +353,17 @@ requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE void object_label(
     detail::error_check("ObjectLabel"sv);
 }
 
-/* Introduced in GL es 3.2 */
 template<class span_const_void>
 requires(MinimumVersion<Current, Version<3, 2>>&&
-             semantic::concepts::Span<span_const_void>) STATICINLINE
-    void object_ptr_label(
+             semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Wraps around glObjectPtrLabel. Introduced in GL es 3.2
+     * \param ptr const void *
+     * \param length GLsizei
+     * \param label const GLchar *
+     * \return void
+     */
+    STATICINLINE void object_ptr_label(
         span_const_void const& ptr, i32 length, std::string_view const& label)
 {
     using namespace std::string_view_literals;
@@ -287,10 +378,14 @@ requires(MinimumVersion<Current, Version<3, 2>>&&
     detail::error_check("ObjectPtrLabel"sv);
 }
 
-/* Introduced in GL es 3.2 */
 template<typename Dummy = void>
-requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
-    void pop_debug_group()
+requires(MinimumVersion<Current, Version<3, 2>>)
+    /*!
+     * \brief Wraps around glPopDebugGroup. Introduced in GL es 3.2
+
+     * \return void
+     */
+    STATICINLINE void pop_debug_group()
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -301,10 +396,17 @@ requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
     detail::error_check("PopDebugGroup"sv);
 }
 
-/* Introduced in GL es 3.2 */
 template<typename Dummy = void>
-requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
-    void push_debug_group(
+requires(MinimumVersion<Current, Version<3, 2>>)
+    /*!
+     * \brief Wraps around glPushDebugGroup. Introduced in GL es 3.2
+     * \param source GLenum
+     * \param id GLuint
+     * \param length GLsizei
+     * \param message const GLchar *
+     * \return void
+     */
+    STATICINLINE void push_debug_group(
         group::debug_source     source,
         u32                     id,
         i32                     length,
@@ -319,10 +421,16 @@ requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
     detail::error_check("PushDebugGroup"sv);
 }
 
-/* Introduced in GL es 3.2 */
 template<typename Dummy = void>
-requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
-    void blend_equation_separatei(
+requires(MinimumVersion<Current, Version<3, 2>>)
+    /*!
+     * \brief Wraps around glBlendEquationSeparatei. Introduced in GL es 3.2
+     * \param buf GLuint
+     * \param modeRGB GLenum
+     * \param modeAlpha GLenum
+     * \return void
+     */
+    STATICINLINE void blend_equation_separatei(
         u32                            buf,
         group::blend_equation_mode_ext modeRGB,
         group::blend_equation_mode_ext modeAlpha)
@@ -337,9 +445,15 @@ requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
     detail::error_check("BlendEquationSeparatei"sv);
 }
 
-/* Introduced in GL es 3.2 */
 template<typename Dummy = void>
-requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
+requires(MinimumVersion<Current, Version<3, 2>>)
+    /*!
+     * \brief Wraps around glBlendEquationi. Introduced in GL es 3.2
+     * \param buf GLuint
+     * \param mode GLenum
+     * \return void
+     */
+    STATICINLINE
     void blend_equationi(u32 buf, group::blend_equation_mode_ext mode)
 {
     using namespace std::string_view_literals;
@@ -351,10 +465,18 @@ requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
     detail::error_check("BlendEquationi"sv);
 }
 
-/* Introduced in GL es 3.2 */
 template<typename Dummy = void>
-requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
-    void blend_func_separatei(
+requires(MinimumVersion<Current, Version<3, 2>>)
+    /*!
+     * \brief Wraps around glBlendFuncSeparatei. Introduced in GL es 3.2
+     * \param buf GLuint
+     * \param srcRGB GLenum
+     * \param dstRGB GLenum
+     * \param srcAlpha GLenum
+     * \param dstAlpha GLenum
+     * \return void
+     */
+    STATICINLINE void blend_func_separatei(
         u32                    buf,
         group::blending_factor srcRGB,
         group::blending_factor dstRGB,
@@ -375,10 +497,17 @@ requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
     detail::error_check("BlendFuncSeparatei"sv);
 }
 
-/* Introduced in GL es 3.2 */
 template<typename Dummy = void>
-requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE void blend_funci(
-    u32 buf, group::blending_factor src, group::blending_factor dst)
+requires(MinimumVersion<Current, Version<3, 2>>)
+    /*!
+     * \brief Wraps around glBlendFunci. Introduced in GL es 3.2
+     * \param buf GLuint
+     * \param src GLenum
+     * \param dst GLenum
+     * \return void
+     */
+    STATICINLINE void blend_funci(
+        u32 buf, group::blending_factor src, group::blending_factor dst)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -389,10 +518,18 @@ requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE void blend_funci(
     detail::error_check("BlendFunci"sv);
 }
 
-/* Introduced in GL es 3.2 */
 template<typename Dummy = void>
-requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
-    void color_maski(u32 index, bool r, bool g, bool b, bool a)
+requires(MinimumVersion<Current, Version<3, 2>>)
+    /*!
+     * \brief Wraps around glColorMaski. Introduced in GL es 3.2
+     * \param index GLuint
+     * \param r GLboolean
+     * \param g GLboolean
+     * \param b GLboolean
+     * \param a GLboolean
+     * \return void
+     */
+    STATICINLINE void color_maski(u32 index, bool r, bool g, bool b, bool a)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -403,10 +540,15 @@ requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
     detail::error_check("ColorMaski"sv);
 }
 
-/* Introduced in GL es 3.2 */
 template<typename Dummy = void>
-requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
-    void disablei(group::enable_cap target, u32 index)
+requires(MinimumVersion<Current, Version<3, 2>>)
+    /*!
+     * \brief Wraps around glDisablei. Introduced in GL es 3.2
+     * \param target GLenum
+     * \param index GLuint
+     * \return void
+     */
+    STATICINLINE void disablei(group::enable_cap target, u32 index)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -417,10 +559,15 @@ requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
     detail::error_check("Disablei"sv);
 }
 
-/* Introduced in GL es 3.2 */
 template<typename Dummy = void>
-requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
-    void enablei(group::enable_cap target, u32 index)
+requires(MinimumVersion<Current, Version<3, 2>>)
+    /*!
+     * \brief Wraps around glEnablei. Introduced in GL es 3.2
+     * \param target GLenum
+     * \param index GLuint
+     * \return void
+     */
+    STATICINLINE void enablei(group::enable_cap target, u32 index)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -431,10 +578,15 @@ requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
     detail::error_check("Enablei"sv);
 }
 
-/* Introduced in GL es 3.2 */
 template<typename Dummy = void>
-requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE GLboolean
-    is_enabledi(group::enable_cap target, u32 index)
+requires(MinimumVersion<Current, Version<3, 2>>)
+    /*!
+     * \brief Wraps around glIsEnabledi. Introduced in GL es 3.2
+     * \param target GLenum
+     * \param index GLuint
+     * \return Boolean
+     */
+    STATICINLINE GLboolean is_enabledi(group::enable_cap target, u32 index)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -446,10 +598,18 @@ requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE GLboolean
     return out;
 }
 
-/* Introduced in GL es 3.2 */
 template<typename Dummy = void>
-requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
-    void draw_elements_base_vertex(
+requires(MinimumVersion<Current, Version<3, 2>>)
+    /*!
+     * \brief Wraps around glDrawElementsBaseVertex. Introduced in GL es 3.2
+     * \param mode GLenum
+     * \param count GLsizei
+     * \param type GLenum
+     * \param indices const void *
+     * \param basevertex GLint
+     * \return void
+     */
+    STATICINLINE void draw_elements_base_vertex(
         group::primitive_type     mode,
         i32                       count,
         group::draw_elements_type type,
@@ -470,10 +630,15 @@ requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
     detail::error_check("DrawElementsBaseVertex"sv);
 }
 
-/* Introduced in GL es 3.2 */
 template<typename Dummy = void>
-requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
-    void draw_elements_instanced_base_vertex(
+requires(MinimumVersion<Current, Version<3, 2>>)
+    /*!
+     * \brief Wraps around glDrawElementsInstancedBaseVertex. Introduced in GL
+     * es 3.2 \param mode GLenum \param count GLsizei \param type GLenum \param
+     * indices const void * \param instancecount GLsizei \param basevertex GLint
+     * \return void
+     */
+    STATICINLINE void draw_elements_instanced_base_vertex(
         group::primitive_type     mode,
         i32                       count,
         group::draw_elements_type type,
@@ -496,11 +661,16 @@ requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
     detail::error_check("DrawElementsInstancedBaseVertex"sv);
 }
 
-/* Introduced in GL es 3.2 */
 template<class span_const_void>
 requires(MinimumVersion<Current, Version<3, 2>>&&
-             semantic::concepts::Span<span_const_void>) STATICINLINE
-    void draw_range_elements_base_vertex(
+             semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Wraps around glDrawRangeElementsBaseVertex. Introduced in GL
+     * es 3.2 \param mode GLenum \param start GLuint \param end GLuint \param
+     * count GLsizei \param type GLenum \param indices const void * \param
+     * basevertex GLint \return void
+     */
+    STATICINLINE void draw_range_elements_base_vertex(
         group::primitive_type     mode,
         u32                       start,
         u32                       end,
@@ -526,10 +696,17 @@ requires(MinimumVersion<Current, Version<3, 2>>&&
     detail::error_check("DrawRangeElementsBaseVertex"sv);
 }
 
-/* Introduced in GL es 3.2 */
 template<typename Dummy = void>
-requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
-    void framebuffer_texture(
+requires(MinimumVersion<Current, Version<3, 2>>)
+    /*!
+     * \brief Wraps around glFramebufferTexture. Introduced in GL es 3.2
+     * \param target GLenum
+     * \param attachment GLenum
+     * \param texture GLuint
+     * \param level GLint
+     * \return void
+     */
+    STATICINLINE void framebuffer_texture(
         group::framebuffer_target     target,
         group::framebuffer_attachment attachment,
         u32                           texture,
@@ -549,10 +726,21 @@ requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
     detail::error_check("FramebufferTexture"sv);
 }
 
-/* Introduced in GL es 3.2 */
 template<typename Dummy = void>
-requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
-    void primitive_bounding_box(
+requires(MinimumVersion<Current, Version<3, 2>>)
+    /*!
+     * \brief Wraps around glPrimitiveBoundingBox. Introduced in GL es 3.2
+     * \param minX GLfloat
+     * \param minY GLfloat
+     * \param minZ GLfloat
+     * \param minW GLfloat
+     * \param maxX GLfloat
+     * \param maxY GLfloat
+     * \param maxZ GLfloat
+     * \param maxW GLfloat
+     * \return void
+     */
+    STATICINLINE void primitive_bounding_box(
         f32 minX,
         f32 minY,
         f32 minZ,
@@ -571,10 +759,14 @@ requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
     detail::error_check("PrimitiveBoundingBox"sv);
 }
 
-/* Introduced in GL es 3.2 */
 template<typename Dummy = void>
-requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE GLenum
-    get_graphics_reset_status()
+requires(MinimumVersion<Current, Version<3, 2>>)
+    /*!
+     * \brief Wraps around glGetGraphicsResetStatus. Introduced in GL es 3.2
+
+     * \return GraphicsResetStatus
+     */
+    STATICINLINE GLenum get_graphics_reset_status()
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -586,12 +778,20 @@ requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE GLenum
     return out;
 }
 
-/* Introduced in GL es 3.2 */
 template<class span_f32>
 requires(MinimumVersion<Current, Version<3, 2>>&&
              semantic::concepts::Span<span_f32>&& std::is_same_v<
                  std::decay_t<typename span_f32::value_type>,
-                 std::decay_t<f32>>) STATICINLINE
+                 std::decay_t<f32>>)
+    /*!
+     * \brief Wraps around glGetnUniformfv. Introduced in GL es 3.2
+     * \param program GLuint
+     * \param location GLint
+     * \param bufSize GLsizei
+     * \param params GLfloat *
+     * \return void
+     */
+    STATICINLINE
     void getn_uniformfv(u32 program, i32 location, i32 bufSize, span_f32 params)
 {
     using namespace std::string_view_literals;
@@ -608,12 +808,20 @@ requires(MinimumVersion<Current, Version<3, 2>>&&
     detail::error_check("GetnUniformfv"sv);
 }
 
-/* Introduced in GL es 3.2 */
 template<class span_i32>
 requires(MinimumVersion<Current, Version<3, 2>>&&
              semantic::concepts::Span<span_i32>&& std::is_same_v<
                  std::decay_t<typename span_i32::value_type>,
-                 std::decay_t<i32>>) STATICINLINE
+                 std::decay_t<i32>>)
+    /*!
+     * \brief Wraps around glGetnUniformiv. Introduced in GL es 3.2
+     * \param program GLuint
+     * \param location GLint
+     * \param bufSize GLsizei
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE
     void getn_uniformiv(u32 program, i32 location, i32 bufSize, span_i32 params)
 {
     using namespace std::string_view_literals;
@@ -630,13 +838,20 @@ requires(MinimumVersion<Current, Version<3, 2>>&&
     detail::error_check("GetnUniformiv"sv);
 }
 
-/* Introduced in GL es 3.2 */
 template<class span_u32>
 requires(MinimumVersion<Current, Version<3, 2>>&&
              semantic::concepts::Span<span_u32>&& std::is_same_v<
                  std::decay_t<typename span_u32::value_type>,
-                 std::decay_t<u32>>) STATICINLINE
-    void getn_uniformuiv(
+                 std::decay_t<u32>>)
+    /*!
+     * \brief Wraps around glGetnUniformuiv. Introduced in GL es 3.2
+     * \param program GLuint
+     * \param location GLint
+     * \param bufSize GLsizei
+     * \param params GLuint *
+     * \return void
+     */
+    STATICINLINE void getn_uniformuiv(
         u32 program, i32 location, i32 bufSize, span_u32 params)
 {
     using namespace std::string_view_literals;
@@ -653,13 +868,24 @@ requires(MinimumVersion<Current, Version<3, 2>>&&
     detail::error_check("GetnUniformuiv"sv);
 }
 
-/* Introduced in GL es 3.2 */
 template<class size_2_i32, class span_void, class vec_2_i32>
 requires(MinimumVersion<Current, Version<3, 2>>&&
                      semantic::concepts::Vector<vec_2_i32, i32, 2>&&
                      semantic::concepts::Size2D<size_2_i32, i32>&&
-                     semantic::concepts::Span<span_void>) STATICINLINE
-    void readn_pixels(
+                     semantic::concepts::Span<span_void>)
+    /*!
+     * \brief Wraps around glReadnPixels. Introduced in GL es 3.2
+     * \param x GLint
+     * \param y GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param format GLenum
+     * \param type GLenum
+     * \param bufSize GLsizei
+     * \param data void *
+     * \return void
+     */
+    STATICINLINE void readn_pixels(
         vec_2_i32 const&    x,
         size_2_i32 const&   width,
         group::pixel_format format,
@@ -683,10 +909,14 @@ requires(MinimumVersion<Current, Version<3, 2>>&&
     detail::error_check("ReadnPixels"sv);
 }
 
-/* Introduced in GL es 3.2 */
 template<typename Dummy = void>
-requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
-    void min_sample_shading(f32 value)
+requires(MinimumVersion<Current, Version<3, 2>>)
+    /*!
+     * \brief Wraps around glMinSampleShading. Introduced in GL es 3.2
+     * \param value GLfloat
+     * \return void
+     */
+    STATICINLINE void min_sample_shading(f32 value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -697,9 +927,15 @@ requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
     detail::error_check("MinSampleShading"sv);
 }
 
-/* Introduced in GL es 3.2 */
 template<typename Dummy = void>
-requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
+requires(MinimumVersion<Current, Version<3, 2>>)
+    /*!
+     * \brief Wraps around glPatchParameteri. Introduced in GL es 3.2
+     * \param pname GLenum
+     * \param value GLint
+     * \return void
+     */
+    STATICINLINE
     void patch_parameter(group::patch_parameter_name pname, i32 value)
 {
     using namespace std::string_view_literals;
@@ -711,13 +947,19 @@ requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
     detail::error_check("PatchParameteri"sv);
 }
 
-/* Introduced in GL es 3.2 */
 template<class span_i32>
 requires(MinimumVersion<Current, Version<3, 2>>&&
              semantic::concepts::Span<span_i32>&& std::is_same_v<
                  std::decay_t<typename span_i32::value_type>,
-                 std::decay_t<i32>>) STATICINLINE
-    void get_sampler_parameter_iiv(
+                 std::decay_t<i32>>)
+    /*!
+     * \brief Wraps around glGetSamplerParameterIiv. Introduced in GL es 3.2
+     * \param sampler GLuint
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_sampler_parameter_iiv(
         u32 sampler, group::sampler_parameter_i pname, span_i32 params)
 {
     using namespace std::string_view_literals;
@@ -733,13 +975,19 @@ requires(MinimumVersion<Current, Version<3, 2>>&&
     detail::error_check("GetSamplerParameterIiv"sv);
 }
 
-/* Introduced in GL es 3.2 */
 template<class span_u32>
 requires(MinimumVersion<Current, Version<3, 2>>&&
              semantic::concepts::Span<span_u32>&& std::is_same_v<
                  std::decay_t<typename span_u32::value_type>,
-                 std::decay_t<u32>>) STATICINLINE
-    void get_sampler_parameter_iuiv(
+                 std::decay_t<u32>>)
+    /*!
+     * \brief Wraps around glGetSamplerParameterIuiv. Introduced in GL es 3.2
+     * \param sampler GLuint
+     * \param pname GLenum
+     * \param params GLuint *
+     * \return void
+     */
+    STATICINLINE void get_sampler_parameter_iuiv(
         u32 sampler, group::sampler_parameter_i pname, span_u32 params)
 {
     using namespace std::string_view_literals;
@@ -755,13 +1003,19 @@ requires(MinimumVersion<Current, Version<3, 2>>&&
     detail::error_check("GetSamplerParameterIuiv"sv);
 }
 
-/* Introduced in GL es 3.2 */
 template<class span_i32>
 requires(MinimumVersion<Current, Version<3, 2>>&&
              semantic::concepts::Span<span_i32>&& std::is_same_v<
                  std::decay_t<typename span_i32::value_type>,
-                 std::decay_t<i32>>) STATICINLINE
-    void get_tex_parameter_iiv(
+                 std::decay_t<i32>>)
+    /*!
+     * \brief Wraps around glGetTexParameterIiv. Introduced in GL es 3.2
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_tex_parameter_iiv(
         group::texture_target        target,
         group::get_texture_parameter pname,
         span_i32                     params)
@@ -778,13 +1032,19 @@ requires(MinimumVersion<Current, Version<3, 2>>&&
     detail::error_check("GetTexParameterIiv"sv);
 }
 
-/* Introduced in GL es 3.2 */
 template<class span_u32>
 requires(MinimumVersion<Current, Version<3, 2>>&&
              semantic::concepts::Span<span_u32>&& std::is_same_v<
                  std::decay_t<typename span_u32::value_type>,
-                 std::decay_t<u32>>) STATICINLINE
-    void get_tex_parameter_iuiv(
+                 std::decay_t<u32>>)
+    /*!
+     * \brief Wraps around glGetTexParameterIuiv. Introduced in GL es 3.2
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params GLuint *
+     * \return void
+     */
+    STATICINLINE void get_tex_parameter_iuiv(
         group::texture_target        target,
         group::get_texture_parameter pname,
         span_u32                     params)
@@ -801,13 +1061,19 @@ requires(MinimumVersion<Current, Version<3, 2>>&&
     detail::error_check("GetTexParameterIuiv"sv);
 }
 
-/* Introduced in GL es 3.2 */
 template<class span_const_i32>
 requires(MinimumVersion<Current, Version<3, 2>>&&
              semantic::concepts::Span<span_const_i32>&& std::is_same_v<
                  std::decay_t<typename span_const_i32::value_type>,
-                 std::decay_t<i32>>) STATICINLINE
-    void sampler_parameter_iiv(
+                 std::decay_t<i32>>)
+    /*!
+     * \brief Wraps around glSamplerParameterIiv. Introduced in GL es 3.2
+     * \param sampler GLuint
+     * \param pname GLenum
+     * \param param const GLint *
+     * \return void
+     */
+    STATICINLINE void sampler_parameter_iiv(
         u32                        sampler,
         group::sampler_parameter_i pname,
         span_const_i32 const&      param)
@@ -825,13 +1091,19 @@ requires(MinimumVersion<Current, Version<3, 2>>&&
     detail::error_check("SamplerParameterIiv"sv);
 }
 
-/* Introduced in GL es 3.2 */
 template<class span_const_u32>
 requires(MinimumVersion<Current, Version<3, 2>>&&
              semantic::concepts::Span<span_const_u32>&& std::is_same_v<
                  std::decay_t<typename span_const_u32::value_type>,
-                 std::decay_t<u32>>) STATICINLINE
-    void sampler_parameter_iuiv(
+                 std::decay_t<u32>>)
+    /*!
+     * \brief Wraps around glSamplerParameterIuiv. Introduced in GL es 3.2
+     * \param sampler GLuint
+     * \param pname GLenum
+     * \param param const GLuint *
+     * \return void
+     */
+    STATICINLINE void sampler_parameter_iuiv(
         u32                        sampler,
         group::sampler_parameter_i pname,
         span_const_u32 const&      param)
@@ -849,13 +1121,19 @@ requires(MinimumVersion<Current, Version<3, 2>>&&
     detail::error_check("SamplerParameterIuiv"sv);
 }
 
-/* Introduced in GL es 3.2 */
 template<class span_const_i32>
 requires(MinimumVersion<Current, Version<3, 2>>&&
              semantic::concepts::Span<span_const_i32>&& std::is_same_v<
                  std::decay_t<typename span_const_i32::value_type>,
-                 std::decay_t<i32>>) STATICINLINE
-    void tex_parameter_iiv(
+                 std::decay_t<i32>>)
+    /*!
+     * \brief Wraps around glTexParameterIiv. Introduced in GL es 3.2
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params const GLint *
+     * \return void
+     */
+    STATICINLINE void tex_parameter_iiv(
         group::texture_target         target,
         group::texture_parameter_name pname,
         span_const_i32 const&         params)
@@ -873,13 +1151,19 @@ requires(MinimumVersion<Current, Version<3, 2>>&&
     detail::error_check("TexParameterIiv"sv);
 }
 
-/* Introduced in GL es 3.2 */
 template<class span_const_u32>
 requires(MinimumVersion<Current, Version<3, 2>>&&
              semantic::concepts::Span<span_const_u32>&& std::is_same_v<
                  std::decay_t<typename span_const_u32::value_type>,
-                 std::decay_t<u32>>) STATICINLINE
-    void tex_parameter_iuiv(
+                 std::decay_t<u32>>)
+    /*!
+     * \brief Wraps around glTexParameterIuiv. Introduced in GL es 3.2
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params const GLuint *
+     * \return void
+     */
+    STATICINLINE void tex_parameter_iuiv(
         group::texture_target         target,
         group::texture_parameter_name pname,
         span_const_u32 const&         params)
@@ -897,12 +1181,19 @@ requires(MinimumVersion<Current, Version<3, 2>>&&
     detail::error_check("TexParameterIuiv"sv);
 }
 
-/* Introduced in GL es 3.2 */
 template<typename Dummy = void>
-requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE void tex_buffer(
-    group::texture_target        target,
-    group::sized_internal_format internalformat,
-    u32                          buffer)
+requires(MinimumVersion<Current, Version<3, 2>>)
+    /*!
+     * \brief Wraps around glTexBuffer. Introduced in GL es 3.2
+     * \param target GLenum
+     * \param internalformat GLenum
+     * \param buffer GLuint
+     * \return void
+     */
+    STATICINLINE void tex_buffer(
+        group::texture_target        target,
+        group::sized_internal_format internalformat,
+        u32                          buffer)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -917,10 +1208,18 @@ requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE void tex_buffer(
     detail::error_check("TexBuffer"sv);
 }
 
-/* Introduced in GL es 3.2 */
 template<typename Dummy = void>
-requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
-    void tex_buffer_range(
+requires(MinimumVersion<Current, Version<3, 2>>)
+    /*!
+     * \brief Wraps around glTexBufferRange. Introduced in GL es 3.2
+     * \param target GLenum
+     * \param internalformat GLenum
+     * \param buffer GLuint
+     * \param offset GLintptr
+     * \param size GLsizeiptr
+     * \return void
+     */
+    STATICINLINE void tex_buffer_range(
         group::texture_target        target,
         group::sized_internal_format internalformat,
         u32                          buffer,
@@ -942,11 +1241,21 @@ requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
     detail::error_check("TexBufferRange"sv);
 }
 
-/* Introduced in GL es 3.2 */
 template<class size_3_i32>
 requires(MinimumVersion<Current, Version<3, 2>>&&
-             semantic::concepts::Size2D<size_3_i32, i32>) STATICINLINE
-    void tex_storage_3d_multisample(
+             semantic::concepts::Size2D<size_3_i32, i32>)
+    /*!
+     * \brief Wraps around glTexStorage3DMultisample. Introduced in GL es 3.2
+     * \param target GLenum
+     * \param samples GLsizei
+     * \param internalformat GLenum
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param depth GLsizei
+     * \param fixedsamplelocations GLboolean
+     * \return void
+     */
+    STATICINLINE void tex_storage_3d_multisample(
         group::texture_target        target,
         i32                          samples,
         group::sized_internal_format internalformat,

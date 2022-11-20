@@ -22,6 +22,21 @@ enum class get_texture_parameter : ::libc_types::u32
 #ifdef GL_GENERATE_MIPMAP_SGIS
     generate_mipmap_sgis = GL_GENERATE_MIPMAP_SGIS,
 #endif
+#ifdef GL_NORMAL_MAP
+    normal_map = GL_NORMAL_MAP,
+#endif
+#ifdef GL_NORMAL_MAP_ARB
+    normal_map_arb = GL_NORMAL_MAP_ARB,
+#endif
+#ifdef GL_NORMAL_MAP_EXT
+    normal_map_ext = GL_NORMAL_MAP_EXT,
+#endif
+#ifdef GL_NORMAL_MAP_NV
+    normal_map_nv = GL_NORMAL_MAP_NV,
+#endif
+#ifdef GL_NORMAL_MAP_OES
+    normal_map_oes = GL_NORMAL_MAP_OES,
+#endif
 #ifdef GL_POST_TEXTURE_FILTER_BIAS_SGIX
     post_texture_filter_bias_sgix = GL_POST_TEXTURE_FILTER_BIAS_SGIX,
 #endif
@@ -31,11 +46,29 @@ enum class get_texture_parameter : ::libc_types::u32
 #ifdef GL_QUAD_TEXTURE_SELECT_SGIS
     quad_texture_select_sgis = GL_QUAD_TEXTURE_SELECT_SGIS,
 #endif
+#ifdef GL_REFLECTION_MAP
+    reflection_map = GL_REFLECTION_MAP,
+#endif
+#ifdef GL_REFLECTION_MAP_ARB
+    reflection_map_arb = GL_REFLECTION_MAP_ARB,
+#endif
+#ifdef GL_REFLECTION_MAP_EXT
+    reflection_map_ext = GL_REFLECTION_MAP_EXT,
+#endif
+#ifdef GL_REFLECTION_MAP_NV
+    reflection_map_nv = GL_REFLECTION_MAP_NV,
+#endif
+#ifdef GL_REFLECTION_MAP_OES
+    reflection_map_oes = GL_REFLECTION_MAP_OES,
+#endif
 #ifdef GL_SHADOW_AMBIENT_SGIX
     shadow_ambient_sgix = GL_SHADOW_AMBIENT_SGIX,
 #endif
 #ifdef GL_SHARPEN_TEXTURE_FUNC_POINTS_SGIS
     sharpen_texture_func_points_sgis = GL_SHARPEN_TEXTURE_FUNC_POINTS_SGIS,
+#endif
+#ifdef GL_SURFACE_COMPRESSION_EXT
+    surface_compression_ext = GL_SURFACE_COMPRESSION_EXT,
 #endif
 #ifdef GL_TEXTURE_4DSIZE_SGIS
     texture_4dsize_sgis = GL_TEXTURE_4DSIZE_SGIS,

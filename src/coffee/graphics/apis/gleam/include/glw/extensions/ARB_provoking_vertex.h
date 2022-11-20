@@ -9,6 +9,11 @@ using gl::group::vertex_provoking_mode;
 namespace values {
 constexpr libc_types::u32 quads_follow_provoking_vertex_convention = 0x8E4C;
 } // namespace values
+/*!
+ * \brief Part of GL_ARB_provoking_vertex
+ * \param mode GLenum
+ * \return void
+ */
 STATICINLINE void provoking_vertex(group::vertex_provoking_mode mode)
 {
     using namespace std::string_view_literals;

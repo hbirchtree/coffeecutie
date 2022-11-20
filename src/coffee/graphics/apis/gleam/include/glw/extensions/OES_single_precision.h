@@ -4,6 +4,11 @@
 namespace gl::oes::single_precision {
 namespace values {
 } // namespace values
+/*!
+ * \brief Part of GL_OES_single_precision
+ * \param depth GLclampf
+ * \return void
+ */
 STATICINLINE void clear_depthf(GLclampf depth)
 {
     using namespace std::string_view_literals;
@@ -18,8 +23,14 @@ STATICINLINE void clear_depthf(GLclampf depth)
 template<class span_const_f32>
 requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
-    void clip_planef(
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_OES_single_precision
+     * \param plane GLenum
+     * \param equation const GLfloat *
+     * \return void
+     */
+    STATICINLINE void clip_planef(
         group::clip_plane_name plane, span_const_f32 const& equation)
 {
     using namespace std::string_view_literals;
@@ -34,6 +45,12 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
     detail::error_check("ClipPlanefOES"sv);
 }
 
+/*!
+ * \brief Part of GL_OES_single_precision
+ * \param n GLclampf
+ * \param f GLclampf
+ * \return void
+ */
 STATICINLINE void depth_rangef(GLclampf n, GLclampf f)
 {
     using namespace std::string_view_literals;
@@ -45,6 +62,16 @@ STATICINLINE void depth_rangef(GLclampf n, GLclampf f)
     detail::error_check("DepthRangefOES"sv);
 }
 
+/*!
+ * \brief Part of GL_OES_single_precision
+ * \param l GLfloat
+ * \param r GLfloat
+ * \param b GLfloat
+ * \param t GLfloat
+ * \param n GLfloat
+ * \param f GLfloat
+ * \return void
+ */
 STATICINLINE void frustumf(f32 l, f32 r, f32 b, f32 t, f32 n, f32 f)
 {
     using namespace std::string_view_literals;
@@ -59,7 +86,14 @@ STATICINLINE void frustumf(f32 l, f32 r, f32 b, f32 t, f32 n, f32 f)
 template<class span_f32>
 requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_OES_single_precision
+     * \param plane GLenum
+     * \param equation GLfloat *
+     * \return void
+     */
+    STATICINLINE
     void get_clip_planef(group::clip_plane_name plane, span_f32 equation)
 {
     using namespace std::string_view_literals;
@@ -74,6 +108,16 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
     detail::error_check("GetClipPlanefOES"sv);
 }
 
+/*!
+ * \brief Part of GL_OES_single_precision
+ * \param l GLfloat
+ * \param r GLfloat
+ * \param b GLfloat
+ * \param t GLfloat
+ * \param n GLfloat
+ * \param f GLfloat
+ * \return void
+ */
 STATICINLINE void orthof(f32 l, f32 r, f32 b, f32 t, f32 n, f32 f)
 {
     using namespace std::string_view_literals;

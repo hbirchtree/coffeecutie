@@ -17,8 +17,15 @@ constexpr libc_types::u32 max_sample_mask_words                   = 0x8E59;
 template<class span_f32>
 requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
-    void get_multisamplefv(
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_NV_explicit_multisample
+     * \param pname GLenum
+     * \param index GLuint
+     * \param val GLfloat *
+     * \return void
+     */
+    STATICINLINE void get_multisamplefv(
         group::get_multisample_prop_nv pname, u32 index, span_f32 val)
 {
     using namespace std::string_view_literals;
@@ -33,6 +40,12 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
     detail::error_check("GetMultisamplefvNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_explicit_multisample
+ * \param index GLuint
+ * \param mask GLbitfield
+ * \return void
+ */
 STATICINLINE void sample_mask_indexed(u32 index, group::sample_mask_nv mask)
 {
     using namespace std::string_view_literals;
@@ -44,6 +57,12 @@ STATICINLINE void sample_mask_indexed(u32 index, group::sample_mask_nv mask)
     detail::error_check("SampleMaskIndexedNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_explicit_multisample
+ * \param target GLenum
+ * \param renderbuffer GLuint
+ * \return void
+ */
 STATICINLINE void tex_renderbuffer(
     group::texture_target target, u32 renderbuffer)
 {

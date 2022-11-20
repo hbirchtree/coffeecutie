@@ -3,9 +3,11 @@
 #ifdef GL_EXT_robustness
 #include "../enums/ErrorCode.h"
 #include "../enums/GraphicsResetStatus.h"
+#include "../enums/SpecialNumbers.h"
 namespace gl::ext::robustness {
 using gl::group::error_code;
 using gl::group::graphics_reset_status;
+using gl::group::special_numbers;
 namespace values {
 constexpr libc_types::u32 lose_context_on_reset       = 0x8252;
 constexpr libc_types::u32 guilty_context_reset        = 0x8253;
@@ -15,6 +17,11 @@ constexpr libc_types::u32 reset_notification_strategy = 0x8256;
 constexpr libc_types::u32 no_reset_notification       = 0x8261;
 constexpr libc_types::u32 context_robust_access       = 0x90F3;
 } // namespace values
+/*!
+ * \brief Part of GL_EXT_robustness
+
+ * \return GraphicsResetStatus
+ */
 STATICINLINE GLenum get_graphics_reset_status()
 {
     using namespace std::string_view_literals;
@@ -30,7 +37,16 @@ STATICINLINE GLenum get_graphics_reset_status()
 template<class span_f32>
 requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_EXT_robustness
+     * \param program GLuint
+     * \param location GLint
+     * \param bufSize GLsizei
+     * \param params GLfloat *
+     * \return void
+     */
+    STATICINLINE
     void getn_uniformfv(u32 program, i32 location, i32 bufSize, span_f32 params)
 {
     using namespace std::string_view_literals;
@@ -50,7 +66,16 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_EXT_robustness
+     * \param program GLuint
+     * \param location GLint
+     * \param bufSize GLsizei
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE
     void getn_uniformiv(u32 program, i32 location, i32 bufSize, span_i32 params)
 {
     using namespace std::string_view_literals;
@@ -70,8 +95,20 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 template<class size_2_i32, class span_void, class vec_2_i32>
 requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
                  semantic::concepts::Size2D<size_2_i32, i32>&&
-                 semantic::concepts::Span<span_void>) STATICINLINE
-    void readn_pixels(
+                 semantic::concepts::Span<span_void>)
+    /*!
+     * \brief Part of GL_EXT_robustness
+     * \param x GLint
+     * \param y GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param format GLenum
+     * \param type GLenum
+     * \param bufSize GLsizei
+     * \param data void *
+     * \return void
+     */
+    STATICINLINE void readn_pixels(
         vec_2_i32 const&    x,
         size_2_i32 const&   width,
         group::pixel_format format,

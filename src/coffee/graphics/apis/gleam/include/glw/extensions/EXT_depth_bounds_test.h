@@ -6,6 +6,12 @@ namespace values {
 constexpr libc_types::u32 depth_bounds_test = 0x8890;
 constexpr libc_types::u32 depth_bounds      = 0x8891;
 } // namespace values
+/*!
+ * \brief Part of GL_EXT_depth_bounds_test
+ * \param zmin GLclampd
+ * \param zmax GLclampd
+ * \return void
+ */
 STATICINLINE void depth_bounds(GLclampd zmin, GLclampd zmax)
 {
     using namespace std::string_view_literals;

@@ -6,6 +6,11 @@ namespace gl::nv::read_buffer {
 using gl::group::get_prop;
 namespace values {
 } // namespace values
+/*!
+ * \brief Part of GL_NV_read_buffer
+ * \param mode GLenum
+ * \return void
+ */
 STATICINLINE void read_buffer(GLenum mode)
 {
     using namespace std::string_view_literals;

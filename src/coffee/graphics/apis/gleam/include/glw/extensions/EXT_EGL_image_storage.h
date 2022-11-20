@@ -7,8 +7,15 @@ namespace values {
 template<class span_const_i32>
 requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void egl_image_target_tex_storage(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_EXT_EGL_image_storage
+     * \param target GLenum
+     * \param image GLeglImageOES
+     * \param attrib_list const GLint *
+     * \return void
+     */
+    STATICINLINE void egl_image_target_tex_storage(
         GLenum target, GLeglImageOES image, span_const_i32 const& attrib_list)
 {
     using namespace std::string_view_literals;
@@ -27,8 +34,15 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
 template<class span_const_i32>
 requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void egl_image_target_texture_storage(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_EXT_EGL_image_storage
+     * \param texture GLuint
+     * \param image GLeglImageOES
+     * \param attrib_list const GLint *
+     * \return void
+     */
+    STATICINLINE void egl_image_target_texture_storage(
         u32 texture, GLeglImageOES image, span_const_i32 const& attrib_list)
 {
     using namespace std::string_view_literals;

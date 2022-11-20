@@ -8,6 +8,13 @@ using gl::group::buffer_storage_mask;
 using gl::group::map_buffer_access_mask;
 namespace values {
 } // namespace values
+/*!
+ * \brief Part of GL_EXT_map_buffer_range
+ * \param target GLenum
+ * \param offset GLintptr
+ * \param length GLsizeiptr
+ * \return void
+ */
 STATICINLINE void flush_mapped_buffer_range(
     group::buffer_target_arb target, GLintptr offset, GLsizeiptr length)
 {
@@ -20,6 +27,14 @@ STATICINLINE void flush_mapped_buffer_range(
     detail::error_check("FlushMappedBufferRangeEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_map_buffer_range
+ * \param target GLenum
+ * \param offset GLintptr
+ * \param length GLsizeiptr
+ * \param access GLbitfield
+ * \return void *
+ */
 STATICINLINE void* map_buffer_range(
     group::buffer_target_arb      target,
     GLintptr                      offset,

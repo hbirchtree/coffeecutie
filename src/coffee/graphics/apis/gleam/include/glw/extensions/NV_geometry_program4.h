@@ -19,6 +19,14 @@ constexpr libc_types::u32 geometry_vertices_out_ext                = 0x8DDA;
 constexpr libc_types::u32 geometry_input_type_ext                  = 0x8DDB;
 constexpr libc_types::u32 geometry_output_type_ext                 = 0x8DDC;
 } // namespace values
+/*!
+ * \brief Part of GL_NV_geometry_program4
+ * \param target GLenum
+ * \param attachment GLenum
+ * \param texture GLuint
+ * \param level GLint
+ * \return void
+ */
 STATICINLINE void framebuffer_texture_ext(
     group::framebuffer_target     target,
     group::framebuffer_attachment attachment,
@@ -39,6 +47,15 @@ STATICINLINE void framebuffer_texture_ext(
     detail::error_check("FramebufferTextureEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_geometry_program4
+ * \param target GLenum
+ * \param attachment GLenum
+ * \param texture GLuint
+ * \param level GLint
+ * \param face GLenum
+ * \return void
+ */
 STATICINLINE void framebuffer_texture_face_ext(
     group::framebuffer_target     target,
     group::framebuffer_attachment attachment,
@@ -61,6 +78,15 @@ STATICINLINE void framebuffer_texture_face_ext(
     detail::error_check("FramebufferTextureFaceEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_geometry_program4
+ * \param target GLenum
+ * \param attachment GLenum
+ * \param texture GLuint
+ * \param level GLint
+ * \param layer GLint
+ * \return void
+ */
 STATICINLINE void framebuffer_texture_layer_ext(
     group::framebuffer_target     target,
     group::framebuffer_attachment attachment,
@@ -83,6 +109,12 @@ STATICINLINE void framebuffer_texture_layer_ext(
     detail::error_check("FramebufferTextureLayerEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_geometry_program4
+ * \param target GLenum
+ * \param limit GLint
+ * \return void
+ */
 STATICINLINE void program_vertex_limit(group::program_target target, i32 limit)
 {
     using namespace std::string_view_literals;

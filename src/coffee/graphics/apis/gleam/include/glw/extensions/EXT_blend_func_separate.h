@@ -8,6 +8,14 @@ constexpr libc_types::u32 blend_src_rgb   = 0x80C9;
 constexpr libc_types::u32 blend_dst_alpha = 0x80CA;
 constexpr libc_types::u32 blend_src_alpha = 0x80CB;
 } // namespace values
+/*!
+ * \brief Part of GL_EXT_blend_func_separate
+ * \param sfactorRGB GLenum
+ * \param dfactorRGB GLenum
+ * \param sfactorAlpha GLenum
+ * \param dfactorAlpha GLenum
+ * \return void
+ */
 STATICINLINE void blend_func_separate(
     group::blending_factor sfactorRGB,
     group::blending_factor dfactorRGB,

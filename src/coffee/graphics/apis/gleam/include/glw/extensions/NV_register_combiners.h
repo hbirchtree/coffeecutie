@@ -10,8 +10,10 @@
 #include "../enums/CombinerStageNV.h"
 #include "../enums/CombinerVariableNV.h"
 #include "../enums/EnableCap.h"
+#include "../enums/FragmentShaderGenericSourceATI.h"
 #include "../enums/GetPName.h"
 #include "../enums/PathColor.h"
+#include "../enums/SpecialNumbers.h"
 #include "../enums/StencilOp.h"
 #include "../enums/TextureSwizzle.h"
 namespace gl::nv::register_combiners {
@@ -24,8 +26,10 @@ using gl::group::combiner_scale_nv;
 using gl::group::combiner_stage_nv;
 using gl::group::combiner_variable_nv;
 using gl::group::enable_cap;
+using gl::group::fragment_shader_generic_source_ati;
 using gl::group::get_prop;
 using gl::group::path_color;
+using gl::group::special_numbers;
 using gl::group::stencil_op;
 using gl::group::texture_swizzle;
 namespace values {
@@ -46,6 +50,16 @@ constexpr libc_types::u32 max_general_combiners       = 0x854D;
 constexpr libc_types::u32 num_general_combiners       = 0x854E;
 constexpr libc_types::u32 color_sum_clamp             = 0x854F;
 } // namespace values
+/*!
+ * \brief Part of GL_NV_register_combiners
+ * \param stage GLenum
+ * \param portion GLenum
+ * \param variable GLenum
+ * \param input GLenum
+ * \param mapping GLenum
+ * \param componentUsage GLenum
+ * \return void
+ */
 STATICINLINE void combiner_input(
     group::combiner_stage_nv           stage,
     group::combiner_portion_nv         portion,
@@ -69,6 +83,20 @@ STATICINLINE void combiner_input(
     detail::error_check("CombinerInputNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_register_combiners
+ * \param stage GLenum
+ * \param portion GLenum
+ * \param abOutput GLenum
+ * \param cdOutput GLenum
+ * \param sumOutput GLenum
+ * \param scale GLenum
+ * \param bias GLenum
+ * \param abDotProduct GLboolean
+ * \param cdDotProduct GLboolean
+ * \param muxSum GLboolean
+ * \return void
+ */
 STATICINLINE void combiner_output(
     group::combiner_stage_nv    stage,
     group::combiner_portion_nv  portion,
@@ -100,6 +128,12 @@ STATICINLINE void combiner_output(
     detail::error_check("CombinerOutputNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_register_combiners
+ * \param pname GLenum
+ * \param param GLfloat
+ * \return void
+ */
 STATICINLINE void combiner_parameter(
     group::combiner_parameter_nv pname, f32 param)
 {
@@ -115,8 +149,14 @@ STATICINLINE void combiner_parameter(
 template<class span_const_f32>
 requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
-    void combiner_parameter(
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_NV_register_combiners
+     * \param pname GLenum
+     * \param params const GLfloat *
+     * \return void
+     */
+    STATICINLINE void combiner_parameter(
         group::combiner_parameter_nv pname, span_const_f32 const& params)
 {
     using namespace std::string_view_literals;
@@ -131,6 +171,12 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
     detail::error_check("CombinerParameterfvNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_register_combiners
+ * \param pname GLenum
+ * \param param GLint
+ * \return void
+ */
 STATICINLINE void combiner_parameter(
     group::combiner_parameter_nv pname, i32 param)
 {
@@ -146,8 +192,14 @@ STATICINLINE void combiner_parameter(
 template<class span_const_i32>
 requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void combiner_parameter(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_NV_register_combiners
+     * \param pname GLenum
+     * \param params const GLint *
+     * \return void
+     */
+    STATICINLINE void combiner_parameter(
         group::combiner_parameter_nv pname, span_const_i32 const& params)
 {
     using namespace std::string_view_literals;
@@ -162,6 +214,14 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
     detail::error_check("CombinerParameterivNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_register_combiners
+ * \param variable GLenum
+ * \param input GLenum
+ * \param mapping GLenum
+ * \param componentUsage GLenum
+ * \return void
+ */
 STATICINLINE void final_combiner_input(
     group::combiner_variable_nv        variable,
     group::combiner_register_nv        input,
@@ -184,8 +244,17 @@ STATICINLINE void final_combiner_input(
 template<class span_f32>
 requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
-    void get_combiner_input_parameter(
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_NV_register_combiners
+     * \param stage GLenum
+     * \param portion GLenum
+     * \param variable GLenum
+     * \param pname GLenum
+     * \param params GLfloat *
+     * \return void
+     */
+    STATICINLINE void get_combiner_input_parameter(
         group::combiner_stage_nv     stage,
         group::combiner_portion_nv   portion,
         group::combiner_variable_nv  variable,
@@ -209,8 +278,17 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void get_combiner_input_parameter(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_NV_register_combiners
+     * \param stage GLenum
+     * \param portion GLenum
+     * \param variable GLenum
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_combiner_input_parameter(
         group::combiner_stage_nv     stage,
         group::combiner_portion_nv   portion,
         group::combiner_variable_nv  variable,
@@ -234,8 +312,16 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 template<class span_f32>
 requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
-    void get_combiner_output_parameter(
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_NV_register_combiners
+     * \param stage GLenum
+     * \param portion GLenum
+     * \param pname GLenum
+     * \param params GLfloat *
+     * \return void
+     */
+    STATICINLINE void get_combiner_output_parameter(
         group::combiner_stage_nv     stage,
         group::combiner_portion_nv   portion,
         group::combiner_parameter_nv pname,
@@ -257,8 +343,16 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void get_combiner_output_parameter(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_NV_register_combiners
+     * \param stage GLenum
+     * \param portion GLenum
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_combiner_output_parameter(
         group::combiner_stage_nv     stage,
         group::combiner_portion_nv   portion,
         group::combiner_parameter_nv pname,
@@ -280,8 +374,15 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 template<class span_f32>
 requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
-    void get_final_combiner_input_parameter(
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_NV_register_combiners
+     * \param variable GLenum
+     * \param pname GLenum
+     * \param params GLfloat *
+     * \return void
+     */
+    STATICINLINE void get_final_combiner_input_parameter(
         group::combiner_variable_nv  variable,
         group::combiner_parameter_nv pname,
         span_f32                     params)
@@ -301,8 +402,15 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void get_final_combiner_input_parameter(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_NV_register_combiners
+     * \param variable GLenum
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_final_combiner_input_parameter(
         group::combiner_variable_nv  variable,
         group::combiner_parameter_nv pname,
         span_i32                     params)

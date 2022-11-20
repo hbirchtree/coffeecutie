@@ -11,7 +11,15 @@ constexpr libc_types::u32
 template<class span_const_u32>
 requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>) STATICINLINE
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_EXT_shader_pixel_local_storage2
+     * \param offset GLsizei
+     * \param n GLsizei
+     * \param values const GLuint *
+     * \return void
+     */
+    STATICINLINE
     void clear_pixel_local_storageui(i32 offset, span_const_u32 const& values)
 {
     using namespace std::string_view_literals;
@@ -27,6 +35,12 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
     detail::error_check("ClearPixelLocalStorageuiEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_shader_pixel_local_storage2
+ * \param target GLuint
+ * \param size GLsizei
+ * \return void
+ */
 STATICINLINE void framebuffer_pixel_local_storage_size(u32 target, i32 size)
 {
     using namespace std::string_view_literals;
@@ -38,6 +52,11 @@ STATICINLINE void framebuffer_pixel_local_storage_size(u32 target, i32 size)
     detail::error_check("FramebufferPixelLocalStorageSizeEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_shader_pixel_local_storage2
+ * \param target GLuint
+ * \return GLsizei
+ */
 STATICINLINE GLsizei get_framebuffer_pixel_local_storage_size(u32 target)
 {
     using namespace std::string_view_literals;

@@ -2,14 +2,18 @@
 
 #ifdef GL_NV_blend_equation_advanced
 #include "../enums/BlendingFactor.h"
+#include "../enums/FragmentShaderGenericSourceATI.h"
 #include "../enums/LogicOp.h"
 #include "../enums/PathFillMode.h"
+#include "../enums/SpecialNumbers.h"
 #include "../enums/StencilOp.h"
 #include "../enums/TextureSwizzle.h"
 namespace gl::nv::blend_equation_advanced {
 using gl::group::blending_factor;
+using gl::group::fragment_shader_generic_source_ati;
 using gl::group::logic_op;
 using gl::group::path_fill_mode;
+using gl::group::special_numbers;
 using gl::group::stencil_op;
 using gl::group::texture_swizzle;
 namespace values {
@@ -63,6 +67,11 @@ constexpr libc_types::u32 plus_clamped_alpha      = 0x92B2;
 constexpr libc_types::u32 minus_clamped           = 0x92B3;
 constexpr libc_types::u32 invert_ovg              = 0x92B4;
 } // namespace values
+/*!
+ * \brief Part of GL_NV_blend_equation_advanced
+
+ * \return void
+ */
 STATICINLINE void blend_barrier()
 {
     using namespace std::string_view_literals;
@@ -74,6 +83,12 @@ STATICINLINE void blend_barrier()
     detail::error_check("BlendBarrierNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_blend_equation_advanced
+ * \param pname GLenum
+ * \param value GLint
+ * \return void
+ */
 STATICINLINE void blend_parameter(GLenum pname, i32 value)
 {
     using namespace std::string_view_literals;

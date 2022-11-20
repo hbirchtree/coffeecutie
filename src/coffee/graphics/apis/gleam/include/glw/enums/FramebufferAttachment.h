@@ -106,6 +106,12 @@ enum class framebuffer_attachment : ::libc_types::u32
 #ifdef GL_DEPTH_ATTACHMENT
     depth_attachment = GL_DEPTH_ATTACHMENT,
 #endif
+#ifdef GL_DEPTH_STENCIL_ATTACHMENT
+    depth_stencil_attachment = GL_DEPTH_STENCIL_ATTACHMENT,
+#endif
+#ifdef GL_SHADING_RATE_ATTACHMENT_EXT
+    shading_rate_attachment_ext = GL_SHADING_RATE_ATTACHMENT_EXT,
+#endif
 #ifdef GL_STENCIL_ATTACHMENT
     stencil_attachment = GL_STENCIL_ATTACHMENT,
 #endif

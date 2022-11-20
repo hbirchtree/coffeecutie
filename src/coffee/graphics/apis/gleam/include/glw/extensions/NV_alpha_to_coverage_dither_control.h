@@ -8,6 +8,11 @@ constexpr libc_types::u32 alpha_to_coverage_dither_default = 0x934D;
 constexpr libc_types::u32 alpha_to_coverage_dither_enable  = 0x934E;
 constexpr libc_types::u32 alpha_to_coverage_dither_disable = 0x934F;
 } // namespace values
+/*!
+ * \brief Part of GL_NV_alpha_to_coverage_dither_control
+ * \param mode GLenum
+ * \return void
+ */
 STATICINLINE void alpha_to_coverage_dither_control(GLenum mode)
 {
     using namespace std::string_view_literals;

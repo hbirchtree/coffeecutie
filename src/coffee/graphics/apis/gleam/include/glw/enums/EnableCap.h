@@ -115,6 +115,9 @@ enum class enable_cap : ::libc_types::u32
 #ifdef GL_EDGE_FLAG_ARRAY
     edge_flag_array = GL_EDGE_FLAG_ARRAY,
 #endif
+#ifdef GL_FETCH_PER_SAMPLE_ARM
+    fetch_per_sample_arm = GL_FETCH_PER_SAMPLE_ARM,
+#endif
 #ifdef GL_FOG
     fog = GL_FOG,
 #endif
@@ -150,6 +153,9 @@ enum class enable_cap : ::libc_types::u32
 #endif
 #ifdef GL_FRAGMENT_LIGHTING_SGIX
     fragment_lighting_sgix = GL_FRAGMENT_LIGHTING_SGIX,
+#endif
+#ifdef GL_FRAMEBUFFER_FETCH_NONCOHERENT_QCOM
+    framebuffer_fetch_noncoherent_qcom = GL_FRAMEBUFFER_FETCH_NONCOHERENT_QCOM,
 #endif
 #ifdef GL_FRAMEBUFFER_SRGB
     framebuffer_srgb = GL_FRAMEBUFFER_SRGB,
@@ -393,6 +399,18 @@ enum class enable_cap : ::libc_types::u32
 #ifdef GL_TEXTURE_COORD_ARRAY
     texture_coord_array = GL_TEXTURE_COORD_ARRAY,
 #endif
+#ifdef GL_TEXTURE_CUBE_MAP
+    texture_cube_map = GL_TEXTURE_CUBE_MAP,
+#endif
+#ifdef GL_TEXTURE_CUBE_MAP_ARB
+    texture_cube_map_arb = GL_TEXTURE_CUBE_MAP_ARB,
+#endif
+#ifdef GL_TEXTURE_CUBE_MAP_EXT
+    texture_cube_map_ext = GL_TEXTURE_CUBE_MAP_EXT,
+#endif
+#ifdef GL_TEXTURE_CUBE_MAP_OES
+    texture_cube_map_oes = GL_TEXTURE_CUBE_MAP_OES,
+#endif
 #ifdef GL_TEXTURE_CUBE_MAP_SEAMLESS
     texture_cube_map_seamless = GL_TEXTURE_CUBE_MAP_SEAMLESS,
 #endif
@@ -405,8 +423,20 @@ enum class enable_cap : ::libc_types::u32
 #ifdef GL_TEXTURE_GEN_S
     texture_gen_s = GL_TEXTURE_GEN_S,
 #endif
+#ifdef GL_TEXTURE_GEN_STR_OES
+    texture_gen_str_oes = GL_TEXTURE_GEN_STR_OES,
+#endif
 #ifdef GL_TEXTURE_GEN_T
     texture_gen_t = GL_TEXTURE_GEN_T,
+#endif
+#ifdef GL_TEXTURE_RECTANGLE
+    texture_rectangle = GL_TEXTURE_RECTANGLE,
+#endif
+#ifdef GL_TEXTURE_RECTANGLE_ARB
+    texture_rectangle_arb = GL_TEXTURE_RECTANGLE_ARB,
+#endif
+#ifdef GL_TEXTURE_RECTANGLE_NV
+    texture_rectangle_nv = GL_TEXTURE_RECTANGLE_NV,
 #endif
 #ifdef GL_VERTEX_ARRAY
     vertex_array = GL_VERTEX_ARRAY,

@@ -4,6 +4,12 @@
 namespace gl::amd::draw_buffers_blend {
 namespace values {
 } // namespace values
+/*!
+ * \brief Part of GL_AMD_draw_buffers_blend
+ * \param buf GLuint
+ * \param mode GLenum
+ * \return void
+ */
 STATICINLINE void blend_equation_indexed(
     u32 buf, group::blend_equation_mode_ext mode)
 {
@@ -16,6 +22,13 @@ STATICINLINE void blend_equation_indexed(
     detail::error_check("BlendEquationIndexedAMD"sv);
 }
 
+/*!
+ * \brief Part of GL_AMD_draw_buffers_blend
+ * \param buf GLuint
+ * \param modeRGB GLenum
+ * \param modeAlpha GLenum
+ * \return void
+ */
 STATICINLINE void blend_equation_separate_indexed(
     u32                            buf,
     group::blend_equation_mode_ext modeRGB,
@@ -31,6 +44,13 @@ STATICINLINE void blend_equation_separate_indexed(
     detail::error_check("BlendEquationSeparateIndexedAMD"sv);
 }
 
+/*!
+ * \brief Part of GL_AMD_draw_buffers_blend
+ * \param buf GLuint
+ * \param src GLenum
+ * \param dst GLenum
+ * \return void
+ */
 STATICINLINE void blend_func_indexed(u32 buf, GLenum src, GLenum dst)
 {
     using namespace std::string_view_literals;
@@ -42,6 +62,15 @@ STATICINLINE void blend_func_indexed(u32 buf, GLenum src, GLenum dst)
     detail::error_check("BlendFuncIndexedAMD"sv);
 }
 
+/*!
+ * \brief Part of GL_AMD_draw_buffers_blend
+ * \param buf GLuint
+ * \param srcRGB GLenum
+ * \param dstRGB GLenum
+ * \param srcAlpha GLenum
+ * \param dstAlpha GLenum
+ * \return void
+ */
 STATICINLINE void blend_func_separate_indexed(
     u32                    buf,
     group::blending_factor srcRGB,

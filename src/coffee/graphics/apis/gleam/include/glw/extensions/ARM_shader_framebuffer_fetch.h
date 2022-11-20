@@ -1,10 +1,12 @@
 #pragma once
 
 #ifdef GL_ARM_shader_framebuffer_fetch
+#include "../enums/EnableCap.h"
+#include "../enums/GetPName.h"
 namespace gl::arm::shader_framebuffer_fetch {
+using gl::group::enable_cap;
+using gl::group::get_prop;
 namespace values {
-constexpr libc_types::u32 fetch_per_sample                      = 0x8F65;
-constexpr libc_types::u32 fragment_shader_framebuffer_fetch_mrt = 0x8F66;
 } // namespace values
 } // namespace gl::arm::shader_framebuffer_fetch
 #endif // GL_ARM_shader_framebuffer_fetch

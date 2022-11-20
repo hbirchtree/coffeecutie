@@ -4,6 +4,15 @@
 namespace gl::arb::base_instance {
 namespace values {
 } // namespace values
+/*!
+ * \brief Part of GL_ARB_base_instance
+ * \param mode GLenum
+ * \param first GLint
+ * \param count GLsizei
+ * \param instancecount GLsizei
+ * \param baseinstance GLuint
+ * \return void
+ */
 STATICINLINE void draw_arrays_instanced_base_instance(
     group::primitive_type mode,
     i32                   first,
@@ -21,6 +30,16 @@ STATICINLINE void draw_arrays_instanced_base_instance(
     detail::error_check("DrawArraysInstancedBaseInstance"sv);
 }
 
+/*!
+ * \brief Part of GL_ARB_base_instance
+ * \param mode GLenum
+ * \param count GLsizei
+ * \param type GLenum
+ * \param indices const void *
+ * \param instancecount GLsizei
+ * \param baseinstance GLuint
+ * \return void
+ */
 STATICINLINE void draw_elements_instanced_base_instance(
     group::primitive_type     mode,
     i32                       count,
@@ -44,6 +63,17 @@ STATICINLINE void draw_elements_instanced_base_instance(
     detail::error_check("DrawElementsInstancedBaseInstance"sv);
 }
 
+/*!
+ * \brief Part of GL_ARB_base_instance
+ * \param mode GLenum
+ * \param count GLsizei
+ * \param type GLenum
+ * \param indices const void *
+ * \param instancecount GLsizei
+ * \param basevertex GLint
+ * \param baseinstance GLuint
+ * \return void
+ */
 STATICINLINE void draw_elements_instanced_base_vertex_base_instance(
     group::primitive_type     mode,
     i32                       count,

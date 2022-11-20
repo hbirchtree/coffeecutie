@@ -10,6 +10,9 @@ enum class query_counter_target : ::libc_types::u32
 #ifdef GL_TIMESTAMP
     timestamp = GL_TIMESTAMP,
 #endif
+#ifdef GL_TIMESTAMP_EXT
+    timestamp_ext = GL_TIMESTAMP_EXT,
+#endif
 }; // enum class query_counter_target
 
 } // namespace gl::group

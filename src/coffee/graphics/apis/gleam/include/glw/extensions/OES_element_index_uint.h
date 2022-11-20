@@ -5,7 +5,6 @@
 #include "../enums/ColorPointerType.h"
 #include "../enums/DrawElementsType.h"
 #include "../enums/ElementPointerTypeATI.h"
-#include "../enums/GlslTypeToken.h"
 #include "../enums/ListNameType.h"
 #include "../enums/MatrixIndexPointerTypeARB.h"
 #include "../enums/PixelFormat.h"
@@ -22,7 +21,6 @@ using gl::group::attribute_type;
 using gl::group::color_pointer_type;
 using gl::group::draw_elements_type;
 using gl::group::element_pointer_type_ati;
-using gl::group::glsl_type_token;
 using gl::group::list_name_type;
 using gl::group::matrix_index_pointer_type_arb;
 using gl::group::pixel_format;

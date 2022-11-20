@@ -7,8 +7,19 @@ constexpr libc_types::u32 texture_coverage_samples = 0x9045;
 constexpr libc_types::u32 texture_color_samples    = 0x9046;
 } // namespace values
 template<class size_2_i32>
-requires(semantic::concepts::Size2D<size_2_i32, i32>) STATICINLINE
-    void tex_image_2d_multisample_coverage(
+requires(semantic::concepts::Size2D<size_2_i32, i32>)
+    /*!
+     * \brief Part of GL_NV_texture_multisample
+     * \param target GLenum
+     * \param coverageSamples GLsizei
+     * \param colorSamples GLsizei
+     * \param internalFormat GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param fixedSampleLocations GLboolean
+     * \return void
+     */
+    STATICINLINE void tex_image_2d_multisample_coverage(
         group::texture_target target,
         i32                   coverageSamples,
         i32                   colorSamples,
@@ -33,8 +44,20 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>) STATICINLINE
 }
 
 template<class size_3_i32>
-requires(semantic::concepts::Size2D<size_3_i32, i32>) STATICINLINE
-    void tex_image_3d_multisample_coverage(
+requires(semantic::concepts::Size2D<size_3_i32, i32>)
+    /*!
+     * \brief Part of GL_NV_texture_multisample
+     * \param target GLenum
+     * \param coverageSamples GLsizei
+     * \param colorSamples GLsizei
+     * \param internalFormat GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param depth GLsizei
+     * \param fixedSampleLocations GLboolean
+     * \return void
+     */
+    STATICINLINE void tex_image_3d_multisample_coverage(
         group::texture_target target,
         i32                   coverageSamples,
         i32                   colorSamples,
@@ -60,8 +83,20 @@ requires(semantic::concepts::Size2D<size_3_i32, i32>) STATICINLINE
 }
 
 template<class size_2_i32>
-requires(semantic::concepts::Size2D<size_2_i32, i32>) STATICINLINE
-    void texture_image_2d_multisample_coverage(
+requires(semantic::concepts::Size2D<size_2_i32, i32>)
+    /*!
+     * \brief Part of GL_NV_texture_multisample
+     * \param texture GLuint
+     * \param target GLenum
+     * \param coverageSamples GLsizei
+     * \param colorSamples GLsizei
+     * \param internalFormat GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param fixedSampleLocations GLboolean
+     * \return void
+     */
+    STATICINLINE void texture_image_2d_multisample_coverage(
         u32                   texture,
         group::texture_target target,
         i32                   coverageSamples,
@@ -89,8 +124,19 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>) STATICINLINE
 }
 
 template<class size_2_i32>
-requires(semantic::concepts::Size2D<size_2_i32, i32>) STATICINLINE
-    void texture_image_2d_multisample(
+requires(semantic::concepts::Size2D<size_2_i32, i32>)
+    /*!
+     * \brief Part of GL_NV_texture_multisample
+     * \param texture GLuint
+     * \param target GLenum
+     * \param samples GLsizei
+     * \param internalFormat GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param fixedSampleLocations GLboolean
+     * \return void
+     */
+    STATICINLINE void texture_image_2d_multisample(
         u32                   texture,
         group::texture_target target,
         i32                   samples,
@@ -116,8 +162,21 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>) STATICINLINE
 }
 
 template<class size_3_i32>
-requires(semantic::concepts::Size2D<size_3_i32, i32>) STATICINLINE
-    void texture_image_3d_multisample_coverage(
+requires(semantic::concepts::Size2D<size_3_i32, i32>)
+    /*!
+     * \brief Part of GL_NV_texture_multisample
+     * \param texture GLuint
+     * \param target GLenum
+     * \param coverageSamples GLsizei
+     * \param colorSamples GLsizei
+     * \param internalFormat GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param depth GLsizei
+     * \param fixedSampleLocations GLboolean
+     * \return void
+     */
+    STATICINLINE void texture_image_3d_multisample_coverage(
         u32                   texture,
         group::texture_target target,
         i32                   coverageSamples,
@@ -146,8 +205,20 @@ requires(semantic::concepts::Size2D<size_3_i32, i32>) STATICINLINE
 }
 
 template<class size_3_i32>
-requires(semantic::concepts::Size2D<size_3_i32, i32>) STATICINLINE
-    void texture_image_3d_multisample(
+requires(semantic::concepts::Size2D<size_3_i32, i32>)
+    /*!
+     * \brief Part of GL_NV_texture_multisample
+     * \param texture GLuint
+     * \param target GLenum
+     * \param samples GLsizei
+     * \param internalFormat GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param depth GLsizei
+     * \param fixedSampleLocations GLboolean
+     * \return void
+     */
+    STATICINLINE void texture_image_3d_multisample(
         u32                   texture,
         group::texture_target target,
         i32                   samples,

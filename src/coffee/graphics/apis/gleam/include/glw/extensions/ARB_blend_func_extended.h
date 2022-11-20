@@ -3,11 +3,21 @@
 #ifdef GL_ARB_blend_func_extended
 #include "../enums/BlendingFactor.h"
 #include "../enums/GetPName.h"
+#include "../enums/TextureEnvParameter.h"
 namespace gl::arb::blend_func_extended {
 using gl::group::blending_factor;
 using gl::group::get_prop;
+using gl::group::texture_env_parameter;
 namespace values {
 } // namespace values
+/*!
+ * \brief Part of GL_ARB_blend_func_extended
+ * \param program GLuint
+ * \param colorNumber GLuint
+ * \param index GLuint
+ * \param name const GLchar *
+ * \return void
+ */
 STATICINLINE void bind_frag_data_location_indexed(
     u32 program, u32 colorNumber, u32 index, std::string_view const& name)
 {
@@ -21,6 +31,12 @@ STATICINLINE void bind_frag_data_location_indexed(
     detail::error_check("BindFragDataLocationIndexed"sv);
 }
 
+/*!
+ * \brief Part of GL_ARB_blend_func_extended
+ * \param program GLuint
+ * \param name const GLchar *
+ * \return GLint
+ */
 STATICINLINE GLint
 get_frag_data_index(u32 program, std::string_view const& name)
 {

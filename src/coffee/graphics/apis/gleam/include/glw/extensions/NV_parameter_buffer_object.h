@@ -12,8 +12,17 @@ constexpr libc_types::u32 fragment_program_parameter_buffer     = 0x8DA4;
 template<class span_const_i32>
 requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void program_buffer_parameters_iiv(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_NV_parameter_buffer_object
+     * \param target GLenum
+     * \param bindingIndex GLuint
+     * \param wordIndex GLuint
+     * \param count GLsizei
+     * \param params const GLint *
+     * \return void
+     */
+    STATICINLINE void program_buffer_parameters_iiv(
         group::program_target target,
         u32                   bindingIndex,
         u32                   wordIndex,
@@ -37,8 +46,17 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
 template<class span_const_u32>
 requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>) STATICINLINE
-    void program_buffer_parameters_iuiv(
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_NV_parameter_buffer_object
+     * \param target GLenum
+     * \param bindingIndex GLuint
+     * \param wordIndex GLuint
+     * \param count GLsizei
+     * \param params const GLuint *
+     * \return void
+     */
+    STATICINLINE void program_buffer_parameters_iuiv(
         group::program_target target,
         u32                   bindingIndex,
         u32                   wordIndex,
@@ -62,8 +80,17 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
 template<class span_const_f32>
 requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
-    void program_buffer_parameter(
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_NV_parameter_buffer_object
+     * \param target GLenum
+     * \param bindingIndex GLuint
+     * \param wordIndex GLuint
+     * \param count GLsizei
+     * \param params const GLfloat *
+     * \return void
+     */
+    STATICINLINE void program_buffer_parameter(
         group::program_target target,
         u32                   bindingIndex,
         u32                   wordIndex,

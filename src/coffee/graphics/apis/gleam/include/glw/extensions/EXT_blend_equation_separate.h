@@ -6,6 +6,12 @@ namespace values {
 constexpr libc_types::u32 blend_equation_rgb   = 0x8009;
 constexpr libc_types::u32 blend_equation_alpha = 0x883D;
 } // namespace values
+/*!
+ * \brief Part of GL_EXT_blend_equation_separate
+ * \param modeRGB GLenum
+ * \param modeAlpha GLenum
+ * \return void
+ */
 STATICINLINE void blend_equation_separate(
     group::blend_equation_mode_ext modeRGB,
     group::blend_equation_mode_ext modeAlpha)

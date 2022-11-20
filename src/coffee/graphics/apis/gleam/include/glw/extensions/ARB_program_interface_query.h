@@ -21,8 +21,16 @@ namespace values {
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void get_program_interfaceiv(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_ARB_program_interface_query
+     * \param program GLuint
+     * \param programInterface GLenum
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_program_interfaceiv(
         u32                           program,
         group::program_interface      programInterface,
         group::program_interface_prop pname,
@@ -42,6 +50,13 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
     detail::error_check("GetProgramInterfaceiv"sv);
 }
 
+/*!
+ * \brief Part of GL_ARB_program_interface_query
+ * \param program GLuint
+ * \param programInterface GLenum
+ * \param name const GLchar *
+ * \return GLuint
+ */
 STATICINLINE GLuint get_program_resource_index(
     u32                      program,
     group::program_interface programInterface,
@@ -59,6 +74,13 @@ STATICINLINE GLuint get_program_resource_index(
     return out;
 }
 
+/*!
+ * \brief Part of GL_ARB_program_interface_query
+ * \param program GLuint
+ * \param programInterface GLenum
+ * \param name const GLchar *
+ * \return GLint
+ */
 STATICINLINE GLint get_program_resource_location(
     u32                      program,
     group::program_interface programInterface,
@@ -76,6 +98,13 @@ STATICINLINE GLint get_program_resource_location(
     return out;
 }
 
+/*!
+ * \brief Part of GL_ARB_program_interface_query
+ * \param program GLuint
+ * \param programInterface GLenum
+ * \param name const GLchar *
+ * \return GLint
+ */
 STATICINLINE GLint get_program_resource_location_index(
     u32                      program,
     group::program_interface programInterface,
@@ -96,8 +125,18 @@ STATICINLINE GLint get_program_resource_location_index(
 template<class span_GLchar>
 requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
          std::decay_t<typename span_GLchar::value_type>,
-         std::decay_t<GLchar>>) STATICINLINE
-    void get_program_resource_name(
+         std::decay_t<GLchar>>)
+    /*!
+     * \brief Part of GL_ARB_program_interface_query
+     * \param program GLuint
+     * \param programInterface GLenum
+     * \param index GLuint
+     * \param bufSize GLsizei
+     * \param length GLsizei *
+     * \param name GLchar *
+     * \return void
+     */
+    STATICINLINE void get_program_resource_name(
         u32                      program,
         group::program_interface programInterface,
         u32                      index,
@@ -128,8 +167,20 @@ requires(semantic::concepts::Span<span_const_program_resource_property>&&
                  std::decay_t<group::program_resource_property>>&&
                  semantic::concepts::Span<span_i32>&& std::is_same_v<
                      std::decay_t<typename span_i32::value_type>,
-                     std::decay_t<i32>>) STATICINLINE
-    void get_program_resourceiv(
+                     std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_ARB_program_interface_query
+     * \param program GLuint
+     * \param programInterface GLenum
+     * \param index GLuint
+     * \param propCount GLsizei
+     * \param props const GLenum *
+     * \param count GLsizei
+     * \param length GLsizei *
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_program_resourceiv(
         u32                                         program,
         group::program_interface                    programInterface,
         u32                                         index,

@@ -1,16 +1,24 @@
 #pragma once
 
 #ifdef GL_EXT_blend_func_extended
+#include "../enums/TextureEnvParameter.h"
 namespace gl::ext::blend_func_extended {
+using gl::group::texture_env_parameter;
 namespace values {
 constexpr libc_types::u32 src_alpha_saturate           = 0x0308;
-constexpr libc_types::u32 src1_alpha                   = 0x8589;
 constexpr libc_types::u32 src1_color                   = 0x88F9;
 constexpr libc_types::u32 one_minus_src1_color         = 0x88FA;
 constexpr libc_types::u32 one_minus_src1_alpha         = 0x88FB;
 constexpr libc_types::u32 max_dual_source_draw_buffers = 0x88FC;
 constexpr libc_types::u32 location_index               = 0x930F;
 } // namespace values
+/*!
+ * \brief Part of GL_EXT_blend_func_extended
+ * \param program GLuint
+ * \param color GLuint
+ * \param name const GLchar *
+ * \return void
+ */
 STATICINLINE void bind_frag_data_location(
     u32 program, u32 color, std::string_view const& name)
 {
@@ -24,6 +32,14 @@ STATICINLINE void bind_frag_data_location(
     detail::error_check("BindFragDataLocationEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_blend_func_extended
+ * \param program GLuint
+ * \param colorNumber GLuint
+ * \param index GLuint
+ * \param name const GLchar *
+ * \return void
+ */
 STATICINLINE void bind_frag_data_location_indexed(
     u32 program, u32 colorNumber, u32 index, std::string_view const& name)
 {
@@ -37,6 +53,12 @@ STATICINLINE void bind_frag_data_location_indexed(
     detail::error_check("BindFragDataLocationIndexedEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_blend_func_extended
+ * \param program GLuint
+ * \param name const GLchar *
+ * \return GLint
+ */
 STATICINLINE GLint
 get_frag_data_index(u32 program, std::string_view const& name)
 {
@@ -51,6 +73,13 @@ get_frag_data_index(u32 program, std::string_view const& name)
     return out;
 }
 
+/*!
+ * \brief Part of GL_EXT_blend_func_extended
+ * \param program GLuint
+ * \param programInterface GLenum
+ * \param name const GLchar *
+ * \return GLint
+ */
 STATICINLINE GLint get_program_resource_location_index(
     u32                      program,
     group::program_interface programInterface,

@@ -79,6 +79,11 @@ constexpr libc_types::u32 invariant_datatype                          = 0x87EB;
 constexpr libc_types::u32 local_constant_value                        = 0x87EC;
 constexpr libc_types::u32 local_constant_datatype                     = 0x87ED;
 } // namespace values
+/*!
+ * \brief Part of GL_EXT_vertex_shader
+
+ * \return void
+ */
 STATICINLINE void begin_vertex_shader()
 {
     using namespace std::string_view_literals;
@@ -90,6 +95,12 @@ STATICINLINE void begin_vertex_shader()
     detail::error_check("BeginVertexShaderEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_vertex_shader
+ * \param light GLenum
+ * \param value GLenum
+ * \return GLuint
+ */
 STATICINLINE GLuint
 bind_light_parameter(group::light_name light, group::light_parameter value)
 {
@@ -104,8 +115,14 @@ bind_light_parameter(group::light_name light, group::light_parameter value)
     return out;
 }
 
+/*!
+ * \brief Part of GL_EXT_vertex_shader
+ * \param face GLenum
+ * \param value GLenum
+ * \return GLuint
+ */
 STATICINLINE GLuint bind_material_parameter(
-    group::material_face face, group::material_parameter value)
+    group::triangle_face face, group::material_parameter value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -118,6 +135,11 @@ STATICINLINE GLuint bind_material_parameter(
     return out;
 }
 
+/*!
+ * \brief Part of GL_EXT_vertex_shader
+ * \param value GLenum
+ * \return GLuint
+ */
 STATICINLINE GLuint bind_parameter(group::vertex_shader_parameter_ext value)
 {
     using namespace std::string_view_literals;
@@ -130,6 +152,13 @@ STATICINLINE GLuint bind_parameter(group::vertex_shader_parameter_ext value)
     return out;
 }
 
+/*!
+ * \brief Part of GL_EXT_vertex_shader
+ * \param unit GLenum
+ * \param coord GLenum
+ * \param value GLenum
+ * \return GLuint
+ */
 STATICINLINE GLuint bind_tex_gen_parameter(
     group::texture_unit          unit,
     group::texture_coord_name    coord,
@@ -148,6 +177,12 @@ STATICINLINE GLuint bind_tex_gen_parameter(
     return out;
 }
 
+/*!
+ * \brief Part of GL_EXT_vertex_shader
+ * \param unit GLenum
+ * \param value GLenum
+ * \return GLuint
+ */
 STATICINLINE GLuint bind_texture_unit_parameter(
     group::texture_unit unit, group::vertex_shader_texture_unit_parameter value)
 {
@@ -162,6 +197,11 @@ STATICINLINE GLuint bind_texture_unit_parameter(
     return out;
 }
 
+/*!
+ * \brief Part of GL_EXT_vertex_shader
+ * \param id GLuint
+ * \return void
+ */
 STATICINLINE void bind_vertex_shader(u32 id)
 {
     using namespace std::string_view_literals;
@@ -173,6 +213,11 @@ STATICINLINE void bind_vertex_shader(u32 id)
     detail::error_check("BindVertexShaderEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_vertex_shader
+ * \param id GLuint
+ * \return void
+ */
 STATICINLINE void delete_vertex_shader(u32 id)
 {
     using namespace std::string_view_literals;
@@ -184,6 +229,11 @@ STATICINLINE void delete_vertex_shader(u32 id)
     detail::error_check("DeleteVertexShaderEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_vertex_shader
+ * \param id GLuint
+ * \return void
+ */
 STATICINLINE void disable_variant_client_state(u32 id)
 {
     using namespace std::string_view_literals;
@@ -195,6 +245,11 @@ STATICINLINE void disable_variant_client_state(u32 id)
     detail::error_check("DisableVariantClientStateEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_vertex_shader
+ * \param id GLuint
+ * \return void
+ */
 STATICINLINE void enable_variant_client_state(u32 id)
 {
     using namespace std::string_view_literals;
@@ -206,6 +261,11 @@ STATICINLINE void enable_variant_client_state(u32 id)
     detail::error_check("EnableVariantClientStateEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_vertex_shader
+
+ * \return void
+ */
 STATICINLINE void end_vertex_shader()
 {
     using namespace std::string_view_literals;
@@ -217,6 +277,13 @@ STATICINLINE void end_vertex_shader()
     detail::error_check("EndVertexShaderEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_vertex_shader
+ * \param res GLuint
+ * \param src GLuint
+ * \param num GLuint
+ * \return void
+ */
 STATICINLINE void extract_component(u32 res, u32 src, u32 num)
 {
     using namespace std::string_view_literals;
@@ -228,6 +295,14 @@ STATICINLINE void extract_component(u32 res, u32 src, u32 num)
     detail::error_check("ExtractComponentEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_vertex_shader
+ * \param datatype GLenum
+ * \param storagetype GLenum
+ * \param range GLenum
+ * \param components GLuint
+ * \return GLuint
+ */
 STATICINLINE GLuint gen_symbols(
     group::data_type_ext                  datatype,
     group::vertex_shader_storage_type_ext storagetype,
@@ -248,6 +323,11 @@ STATICINLINE GLuint gen_symbols(
     return out;
 }
 
+/*!
+ * \brief Part of GL_EXT_vertex_shader
+ * \param range GLuint
+ * \return GLuint
+ */
 STATICINLINE GLuint gen_vertex_shaders(u32 range)
 {
     using namespace std::string_view_literals;
@@ -263,8 +343,15 @@ STATICINLINE GLuint gen_vertex_shaders(u32 range)
 template<class span_bool>
 requires(semantic::concepts::Span<span_bool>&& std::is_same_v<
          std::decay_t<typename span_bool::value_type>,
-         std::decay_t<bool>>) STATICINLINE
-    void get_invariant_booleanv(
+         std::decay_t<bool>>)
+    /*!
+     * \brief Part of GL_EXT_vertex_shader
+     * \param id GLuint
+     * \param value GLenum
+     * \param data GLboolean *
+     * \return void
+     */
+    STATICINLINE void get_invariant_booleanv(
         u32 id, group::get_variant_value_ext value, span_bool data)
 {
     using namespace std::string_view_literals;
@@ -282,8 +369,15 @@ requires(semantic::concepts::Span<span_bool>&& std::is_same_v<
 template<class span_f32>
 requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
-    void get_invariant_floatv(
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_EXT_vertex_shader
+     * \param id GLuint
+     * \param value GLenum
+     * \param data GLfloat *
+     * \return void
+     */
+    STATICINLINE void get_invariant_floatv(
         u32 id, group::get_variant_value_ext value, span_f32 data)
 {
     using namespace std::string_view_literals;
@@ -301,8 +395,15 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void get_invariant_integerv(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_EXT_vertex_shader
+     * \param id GLuint
+     * \param value GLenum
+     * \param data GLint *
+     * \return void
+     */
+    STATICINLINE void get_invariant_integerv(
         u32 id, group::get_variant_value_ext value, span_i32 data)
 {
     using namespace std::string_view_literals;
@@ -320,8 +421,15 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 template<class span_bool>
 requires(semantic::concepts::Span<span_bool>&& std::is_same_v<
          std::decay_t<typename span_bool::value_type>,
-         std::decay_t<bool>>) STATICINLINE
-    void get_local_constant_booleanv(
+         std::decay_t<bool>>)
+    /*!
+     * \brief Part of GL_EXT_vertex_shader
+     * \param id GLuint
+     * \param value GLenum
+     * \param data GLboolean *
+     * \return void
+     */
+    STATICINLINE void get_local_constant_booleanv(
         u32 id, group::get_variant_value_ext value, span_bool data)
 {
     using namespace std::string_view_literals;
@@ -339,8 +447,15 @@ requires(semantic::concepts::Span<span_bool>&& std::is_same_v<
 template<class span_f32>
 requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
-    void get_local_constant_floatv(
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_EXT_vertex_shader
+     * \param id GLuint
+     * \param value GLenum
+     * \param data GLfloat *
+     * \return void
+     */
+    STATICINLINE void get_local_constant_floatv(
         u32 id, group::get_variant_value_ext value, span_f32 data)
 {
     using namespace std::string_view_literals;
@@ -358,8 +473,15 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void get_local_constant_integerv(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_EXT_vertex_shader
+     * \param id GLuint
+     * \param value GLenum
+     * \param data GLint *
+     * \return void
+     */
+    STATICINLINE void get_local_constant_integerv(
         u32 id, group::get_variant_value_ext value, span_i32 data)
 {
     using namespace std::string_view_literals;
@@ -377,8 +499,15 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 template<class span_bool>
 requires(semantic::concepts::Span<span_bool>&& std::is_same_v<
          std::decay_t<typename span_bool::value_type>,
-         std::decay_t<bool>>) STATICINLINE
-    void get_variant_booleanv(
+         std::decay_t<bool>>)
+    /*!
+     * \brief Part of GL_EXT_vertex_shader
+     * \param id GLuint
+     * \param value GLenum
+     * \param data GLboolean *
+     * \return void
+     */
+    STATICINLINE void get_variant_booleanv(
         u32 id, group::get_variant_value_ext value, span_bool data)
 {
     using namespace std::string_view_literals;
@@ -396,8 +525,15 @@ requires(semantic::concepts::Span<span_bool>&& std::is_same_v<
 template<class span_f32>
 requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
-    void get_variant_floatv(
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_EXT_vertex_shader
+     * \param id GLuint
+     * \param value GLenum
+     * \param data GLfloat *
+     * \return void
+     */
+    STATICINLINE void get_variant_floatv(
         u32 id, group::get_variant_value_ext value, span_f32 data)
 {
     using namespace std::string_view_literals;
@@ -415,8 +551,15 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void get_variant_integerv(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_EXT_vertex_shader
+     * \param id GLuint
+     * \param value GLenum
+     * \param data GLint *
+     * \return void
+     */
+    STATICINLINE void get_variant_integerv(
         u32 id, group::get_variant_value_ext value, span_i32 data)
 {
     using namespace std::string_view_literals;
@@ -432,8 +575,15 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_void>
-requires(semantic::concepts::Span<span_void>) STATICINLINE
-    void get_variant_pointerv(
+requires(semantic::concepts::Span<span_void>)
+    /*!
+     * \brief Part of GL_EXT_vertex_shader
+     * \param id GLuint
+     * \param value GLenum
+     * \param data void **
+     * \return void
+     */
+    STATICINLINE void get_variant_pointerv(
         u32 id, group::get_variant_value_ext value, span_void data)
 {
     using namespace std::string_view_literals;
@@ -448,6 +598,13 @@ requires(semantic::concepts::Span<span_void>) STATICINLINE
     detail::error_check("GetVariantPointervEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_vertex_shader
+ * \param res GLuint
+ * \param src GLuint
+ * \param num GLuint
+ * \return void
+ */
 STATICINLINE void insert_component(u32 res, u32 src, u32 num)
 {
     using namespace std::string_view_literals;
@@ -459,6 +616,12 @@ STATICINLINE void insert_component(u32 res, u32 src, u32 num)
     detail::error_check("InsertComponentEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_vertex_shader
+ * \param id GLuint
+ * \param cap GLenum
+ * \return Boolean
+ */
 STATICINLINE GLboolean is_variant_enabled(u32 id, group::variant_cap_ext cap)
 {
     using namespace std::string_view_literals;
@@ -472,8 +635,15 @@ STATICINLINE GLboolean is_variant_enabled(u32 id, group::variant_cap_ext cap)
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>) STATICINLINE
-    void set_invariant(
+requires(semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_EXT_vertex_shader
+     * \param id GLuint
+     * \param type GLenum
+     * \param addr const void *
+     * \return void
+     */
+    STATICINLINE void set_invariant(
         u32 id, group::scalar_type type, span_const_void const& addr)
 {
     using namespace std::string_view_literals;
@@ -489,8 +659,15 @@ requires(semantic::concepts::Span<span_const_void>) STATICINLINE
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>) STATICINLINE
-    void set_local_constant(
+requires(semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_EXT_vertex_shader
+     * \param id GLuint
+     * \param type GLenum
+     * \param addr const void *
+     * \return void
+     */
+    STATICINLINE void set_local_constant(
         u32 id, group::scalar_type type, span_const_void const& addr)
 {
     using namespace std::string_view_literals;
@@ -505,6 +682,13 @@ requires(semantic::concepts::Span<span_const_void>) STATICINLINE
     detail::error_check("SetLocalConstantEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_vertex_shader
+ * \param op GLenum
+ * \param res GLuint
+ * \param arg1 GLuint
+ * \return void
+ */
 STATICINLINE void shader_op1(group::vertex_shader_op_ext op, u32 res, u32 arg1)
 {
     using namespace std::string_view_literals;
@@ -516,6 +700,14 @@ STATICINLINE void shader_op1(group::vertex_shader_op_ext op, u32 res, u32 arg1)
     detail::error_check("ShaderOp1EXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_vertex_shader
+ * \param op GLenum
+ * \param res GLuint
+ * \param arg1 GLuint
+ * \param arg2 GLuint
+ * \return void
+ */
 STATICINLINE void shader_op2(
     group::vertex_shader_op_ext op, u32 res, u32 arg1, u32 arg2)
 {
@@ -528,6 +720,15 @@ STATICINLINE void shader_op2(
     detail::error_check("ShaderOp2EXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_vertex_shader
+ * \param op GLenum
+ * \param res GLuint
+ * \param arg1 GLuint
+ * \param arg2 GLuint
+ * \param arg3 GLuint
+ * \return void
+ */
 STATICINLINE void shader_op3(
     group::vertex_shader_op_ext op, u32 res, u32 arg1, u32 arg2, u32 arg3)
 {
@@ -540,6 +741,16 @@ STATICINLINE void shader_op3(
     detail::error_check("ShaderOp3EXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_vertex_shader
+ * \param res GLuint
+ * \param in GLuint
+ * \param outX GLenum
+ * \param outY GLenum
+ * \param outZ GLenum
+ * \param outW GLenum
+ * \return void
+ */
 STATICINLINE void swizzle(
     u32                                res,
     u32                                in,
@@ -564,8 +775,16 @@ STATICINLINE void swizzle(
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>) STATICINLINE
-    void variant_pointer(
+requires(semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_EXT_vertex_shader
+     * \param id GLuint
+     * \param type GLenum
+     * \param stride GLuint
+     * \param addr const void *
+     * \return void
+     */
+    STATICINLINE void variant_pointer(
         u32                    id,
         group::scalar_type     type,
         u32                    stride,
@@ -587,8 +806,14 @@ requires(semantic::concepts::Span<span_const_void>) STATICINLINE
 template<class span_const_i8>
 requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
          std::decay_t<typename span_const_i8::value_type>,
-         std::decay_t<i8>>) STATICINLINE
-    void variantbv(u32 id, span_const_i8 const& addr)
+         std::decay_t<i8>>)
+    /*!
+     * \brief Part of GL_EXT_vertex_shader
+     * \param id GLuint
+     * \param addr const GLbyte *
+     * \return void
+     */
+    STATICINLINE void variantbv(u32 id, span_const_i8 const& addr)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -604,8 +829,14 @@ requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
 template<class span_const_f64>
 requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
          std::decay_t<typename span_const_f64::value_type>,
-         std::decay_t<f64>>) STATICINLINE
-    void variantdv(u32 id, span_const_f64 const& addr)
+         std::decay_t<f64>>)
+    /*!
+     * \brief Part of GL_EXT_vertex_shader
+     * \param id GLuint
+     * \param addr const GLdouble *
+     * \return void
+     */
+    STATICINLINE void variantdv(u32 id, span_const_f64 const& addr)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -621,8 +852,14 @@ requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
 template<class span_const_f32>
 requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
-    void variantfv(u32 id, span_const_f32 const& addr)
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_EXT_vertex_shader
+     * \param id GLuint
+     * \param addr const GLfloat *
+     * \return void
+     */
+    STATICINLINE void variantfv(u32 id, span_const_f32 const& addr)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -638,8 +875,14 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
 template<class span_const_i32>
 requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void variantiv(u32 id, span_const_i32 const& addr)
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_EXT_vertex_shader
+     * \param id GLuint
+     * \param addr const GLint *
+     * \return void
+     */
+    STATICINLINE void variantiv(u32 id, span_const_i32 const& addr)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -655,8 +898,14 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
 template<class span_const_i16>
 requires(semantic::concepts::Span<span_const_i16>&& std::is_same_v<
          std::decay_t<typename span_const_i16::value_type>,
-         std::decay_t<i16>>) STATICINLINE
-    void variantsv(u32 id, span_const_i16 const& addr)
+         std::decay_t<i16>>)
+    /*!
+     * \brief Part of GL_EXT_vertex_shader
+     * \param id GLuint
+     * \param addr const GLshort *
+     * \return void
+     */
+    STATICINLINE void variantsv(u32 id, span_const_i16 const& addr)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -672,8 +921,14 @@ requires(semantic::concepts::Span<span_const_i16>&& std::is_same_v<
 template<class span_const_u8>
 requires(semantic::concepts::Span<span_const_u8>&& std::is_same_v<
          std::decay_t<typename span_const_u8::value_type>,
-         std::decay_t<u8>>) STATICINLINE
-    void variantubv(u32 id, span_const_u8 const& addr)
+         std::decay_t<u8>>)
+    /*!
+     * \brief Part of GL_EXT_vertex_shader
+     * \param id GLuint
+     * \param addr const GLubyte *
+     * \return void
+     */
+    STATICINLINE void variantubv(u32 id, span_const_u8 const& addr)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -689,8 +944,14 @@ requires(semantic::concepts::Span<span_const_u8>&& std::is_same_v<
 template<class span_const_u32>
 requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>) STATICINLINE
-    void variantuiv(u32 id, span_const_u32 const& addr)
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_EXT_vertex_shader
+     * \param id GLuint
+     * \param addr const GLuint *
+     * \return void
+     */
+    STATICINLINE void variantuiv(u32 id, span_const_u32 const& addr)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -706,8 +967,14 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
 template<class span_const_u16>
 requires(semantic::concepts::Span<span_const_u16>&& std::is_same_v<
          std::decay_t<typename span_const_u16::value_type>,
-         std::decay_t<u16>>) STATICINLINE
-    void variantusv(u32 id, span_const_u16 const& addr)
+         std::decay_t<u16>>)
+    /*!
+     * \brief Part of GL_EXT_vertex_shader
+     * \param id GLuint
+     * \param addr const GLushort *
+     * \return void
+     */
+    STATICINLINE void variantusv(u32 id, span_const_u16 const& addr)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -720,6 +987,16 @@ requires(semantic::concepts::Span<span_const_u16>&& std::is_same_v<
     detail::error_check("VariantusvEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_vertex_shader
+ * \param res GLuint
+ * \param in GLuint
+ * \param outX GLenum
+ * \param outY GLenum
+ * \param outZ GLenum
+ * \param outW GLenum
+ * \return void
+ */
 STATICINLINE void write_mask(
     u32                                 res,
     u32                                 in,

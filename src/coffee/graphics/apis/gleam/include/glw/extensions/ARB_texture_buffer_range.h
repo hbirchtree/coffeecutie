@@ -8,6 +8,15 @@ namespace values {
 constexpr libc_types::u32 texture_buffer_offset = 0x919D;
 constexpr libc_types::u32 texture_buffer_size   = 0x919E;
 } // namespace values
+/*!
+ * \brief Part of GL_ARB_texture_buffer_range
+ * \param target GLenum
+ * \param internalformat GLenum
+ * \param buffer GLuint
+ * \param offset GLintptr
+ * \param size GLsizeiptr
+ * \return void
+ */
 STATICINLINE void tex_buffer_range(
     group::texture_target        target,
     group::sized_internal_format internalformat,

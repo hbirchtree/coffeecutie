@@ -55,6 +55,9 @@ enum class vertex_attrib_pointer_type : ::libc_types::u32
 #ifdef GL_UNSIGNED_INT_2_10_10_10_REV
     unsigned_int_2_10_10_10_rev = GL_UNSIGNED_INT_2_10_10_10_REV,
 #endif
+#ifdef GL_UNSIGNED_INT_2_10_10_10_REV_EXT
+    unsigned_int_2_10_10_10_rev_ext = GL_UNSIGNED_INT_2_10_10_10_REV_EXT,
+#endif
 #ifdef GL_UNSIGNED_SHORT
     unsigned_short = GL_UNSIGNED_SHORT,
 #endif

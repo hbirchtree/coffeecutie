@@ -14,6 +14,12 @@ constexpr libc_types::u32 samples                  = 0x80A9;
 constexpr libc_types::u32 sample_coverage_value    = 0x80AA;
 constexpr libc_types::u32 sample_coverage_invert   = 0x80AB;
 } // namespace values
+/*!
+ * \brief Part of GL_ARB_multisample
+ * \param value GLfloat
+ * \param invert GLboolean
+ * \return void
+ */
 STATICINLINE void sample_coverage(f32 value, bool invert)
 {
     using namespace std::string_view_literals;

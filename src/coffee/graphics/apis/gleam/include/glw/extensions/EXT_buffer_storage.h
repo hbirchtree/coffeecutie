@@ -13,8 +13,16 @@ constexpr libc_types::u32 buffer_immutable_storage = 0x821F;
 constexpr libc_types::u32 buffer_storage_flags     = 0x8220;
 } // namespace values
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>) STATICINLINE
-    void buffer_storage(
+requires(semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_EXT_buffer_storage
+     * \param target GLenum
+     * \param size GLsizeiptr
+     * \param data const void *
+     * \param flags GLbitfield
+     * \return void
+     */
+    STATICINLINE void buffer_storage(
         group::buffer_storage_target target,
         span_const_void const&       data,
         group::buffer_storage_mask   flags)

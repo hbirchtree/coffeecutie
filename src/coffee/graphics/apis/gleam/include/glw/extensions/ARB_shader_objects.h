@@ -2,10 +2,11 @@
 
 #ifdef GL_ARB_shader_objects
 #include "../enums/AttributeType.h"
+#include "../enums/ContainerType.h"
 namespace gl::arb::shader_objects {
 using gl::group::attribute_type;
+using gl::group::container_type;
 namespace values {
-constexpr libc_types::u32 program_object                   = 0x8B40;
 constexpr libc_types::u32 shader_object                    = 0x8B48;
 constexpr libc_types::u32 object_type                      = 0x8B4E;
 constexpr libc_types::u32 object_subtype                   = 0x8B4F;
@@ -19,6 +20,12 @@ constexpr libc_types::u32 object_active_uniforms           = 0x8B86;
 constexpr libc_types::u32 object_active_uniform_max_length = 0x8B87;
 constexpr libc_types::u32 object_shader_source_length      = 0x8B88;
 } // namespace values
+/*!
+ * \brief Part of GL_ARB_shader_objects
+ * \param containerObj GLhandleARB
+ * \param obj GLhandleARB
+ * \return void
+ */
 STATICINLINE void attach_object(GLhandleARB containerObj, GLhandleARB obj)
 {
     using namespace std::string_view_literals;
@@ -30,6 +37,11 @@ STATICINLINE void attach_object(GLhandleARB containerObj, GLhandleARB obj)
     detail::error_check("AttachObjectARB"sv);
 }
 
+/*!
+ * \brief Part of GL_ARB_shader_objects
+ * \param shaderObj GLhandleARB
+ * \return void
+ */
 STATICINLINE void compile_shader(GLhandleARB shaderObj)
 {
     using namespace std::string_view_literals;
@@ -41,6 +53,11 @@ STATICINLINE void compile_shader(GLhandleARB shaderObj)
     detail::error_check("CompileShaderARB"sv);
 }
 
+/*!
+ * \brief Part of GL_ARB_shader_objects
+
+ * \return handleARB
+ */
 STATICINLINE GLhandleARB create_program_object()
 {
     using namespace std::string_view_literals;
@@ -53,6 +70,11 @@ STATICINLINE GLhandleARB create_program_object()
     return out;
 }
 
+/*!
+ * \brief Part of GL_ARB_shader_objects
+ * \param shaderType GLenum
+ * \return handleARB
+ */
 STATICINLINE GLhandleARB create_shader_object(group::shader_type shaderType)
 {
     using namespace std::string_view_literals;
@@ -65,6 +87,11 @@ STATICINLINE GLhandleARB create_shader_object(group::shader_type shaderType)
     return out;
 }
 
+/*!
+ * \brief Part of GL_ARB_shader_objects
+ * \param obj GLhandleARB
+ * \return void
+ */
 STATICINLINE void delete_object(GLhandleARB obj)
 {
     using namespace std::string_view_literals;
@@ -76,6 +103,12 @@ STATICINLINE void delete_object(GLhandleARB obj)
     detail::error_check("DeleteObjectARB"sv);
 }
 
+/*!
+ * \brief Part of GL_ARB_shader_objects
+ * \param containerObj GLhandleARB
+ * \param attachedObj GLhandleARB
+ * \return void
+ */
 STATICINLINE void detach_object(
     GLhandleARB containerObj, GLhandleARB attachedObj)
 {
@@ -91,8 +124,19 @@ STATICINLINE void detach_object(
 template<class span_GLcharARB>
 requires(semantic::concepts::Span<span_GLcharARB>&& std::is_same_v<
          std::decay_t<typename span_GLcharARB::value_type>,
-         std::decay_t<GLcharARB>>) STATICINLINE
-    void get_active_uniform(
+         std::decay_t<GLcharARB>>)
+    /*!
+     * \brief Part of GL_ARB_shader_objects
+     * \param programObj GLhandleARB
+     * \param index GLuint
+     * \param maxLength GLsizei
+     * \param length GLsizei *
+     * \param size GLint *
+     * \param type GLenum *
+     * \param name GLcharARB *
+     * \return void
+     */
+    STATICINLINE void get_active_uniform(
         GLhandleARB    programObj,
         u32            index,
         i32&           length,
@@ -119,8 +163,16 @@ requires(semantic::concepts::Span<span_GLcharARB>&& std::is_same_v<
 template<class span_GLhandleARB>
 requires(semantic::concepts::Span<span_GLhandleARB>&& std::is_same_v<
          std::decay_t<typename span_GLhandleARB::value_type>,
-         std::decay_t<GLhandleARB>>) STATICINLINE
-    void get_attached_objects(
+         std::decay_t<GLhandleARB>>)
+    /*!
+     * \brief Part of GL_ARB_shader_objects
+     * \param containerObj GLhandleARB
+     * \param maxCount GLsizei
+     * \param count GLsizei *
+     * \param obj GLhandleARB *
+     * \return void
+     */
+    STATICINLINE void get_attached_objects(
         GLhandleARB containerObj, i32& count, span_GLhandleARB obj)
 {
     using namespace std::string_view_literals;
@@ -136,14 +188,19 @@ requires(semantic::concepts::Span<span_GLhandleARB>&& std::is_same_v<
     detail::error_check("GetAttachedObjectsARB"sv);
 }
 
-STATICINLINE GLhandleARB get_handle(GLenum pname)
+/*!
+ * \brief Part of GL_ARB_shader_objects
+ * \param pname GLenum
+ * \return handleARB
+ */
+STATICINLINE GLhandleARB get_handle(group::container_type pname)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetHandleARB)
     }
-    auto out = glGetHandleARB(pname);
+    auto out = glGetHandleARB(static_cast<GLenum>(pname));
     detail::error_check("GetHandleARB"sv);
     return out;
 }
@@ -151,7 +208,16 @@ STATICINLINE GLhandleARB get_handle(GLenum pname)
 template<class span_GLcharARB>
 requires(semantic::concepts::Span<span_GLcharARB>&& std::is_same_v<
          std::decay_t<typename span_GLcharARB::value_type>,
-         std::decay_t<GLcharARB>>) STATICINLINE
+         std::decay_t<GLcharARB>>)
+    /*!
+     * \brief Part of GL_ARB_shader_objects
+     * \param obj GLhandleARB
+     * \param maxLength GLsizei
+     * \param length GLsizei *
+     * \param infoLog GLcharARB *
+     * \return void
+     */
+    STATICINLINE
     void get_info_log(GLhandleARB obj, i32& length, span_GLcharARB infoLog)
 {
     using namespace std::string_view_literals;
@@ -171,7 +237,15 @@ requires(semantic::concepts::Span<span_GLcharARB>&& std::is_same_v<
 template<class span_f32>
 requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_ARB_shader_objects
+     * \param obj GLhandleARB
+     * \param pname GLenum
+     * \param params GLfloat *
+     * \return void
+     */
+    STATICINLINE
     void get_object_parameter(GLhandleARB obj, GLenum pname, span_f32 params)
 {
     using namespace std::string_view_literals;
@@ -189,7 +263,15 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_ARB_shader_objects
+     * \param obj GLhandleARB
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE
     void get_object_parameter(GLhandleARB obj, GLenum pname, span_i32 params)
 {
     using namespace std::string_view_literals;
@@ -207,7 +289,16 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 template<class span_GLcharARB>
 requires(semantic::concepts::Span<span_GLcharARB>&& std::is_same_v<
          std::decay_t<typename span_GLcharARB::value_type>,
-         std::decay_t<GLcharARB>>) STATICINLINE
+         std::decay_t<GLcharARB>>)
+    /*!
+     * \brief Part of GL_ARB_shader_objects
+     * \param obj GLhandleARB
+     * \param maxLength GLsizei
+     * \param length GLsizei *
+     * \param source GLcharARB *
+     * \return void
+     */
+    STATICINLINE
     void get_shader_source(GLhandleARB obj, i32& length, span_GLcharARB source)
 {
     using namespace std::string_view_literals;
@@ -226,8 +317,14 @@ requires(semantic::concepts::Span<span_GLcharARB>&& std::is_same_v<
 template<class span_const_GLcharARB>
 requires(semantic::concepts::Span<span_const_GLcharARB>&& std::is_same_v<
          std::decay_t<typename span_const_GLcharARB::value_type>,
-         std::decay_t<GLcharARB>>) STATICINLINE GLint
-    get_uniform_location(
+         std::decay_t<GLcharARB>>)
+    /*!
+     * \brief Part of GL_ARB_shader_objects
+     * \param programObj GLhandleARB
+     * \param name const GLcharARB *
+     * \return GLint
+     */
+    STATICINLINE GLint get_uniform_location(
         GLhandleARB programObj, span_const_GLcharARB const& name)
 {
     using namespace std::string_view_literals;
@@ -246,7 +343,15 @@ requires(semantic::concepts::Span<span_const_GLcharARB>&& std::is_same_v<
 template<class span_f32>
 requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_ARB_shader_objects
+     * \param programObj GLhandleARB
+     * \param location GLint
+     * \param params GLfloat *
+     * \return void
+     */
+    STATICINLINE
     void get_uniformfv(GLhandleARB programObj, i32 location, span_f32 params)
 {
     using namespace std::string_view_literals;
@@ -264,7 +369,15 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_ARB_shader_objects
+     * \param programObj GLhandleARB
+     * \param location GLint
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE
     void get_uniformiv(GLhandleARB programObj, i32 location, span_i32 params)
 {
     using namespace std::string_view_literals;
@@ -279,6 +392,11 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
     detail::error_check("GetUniformivARB"sv);
 }
 
+/*!
+ * \brief Part of GL_ARB_shader_objects
+ * \param programObj GLhandleARB
+ * \return void
+ */
 STATICINLINE void link_program(GLhandleARB programObj)
 {
     using namespace std::string_view_literals;
@@ -296,8 +414,16 @@ requires(semantic::concepts::Span<span_const_GLcharARB>&& std::is_same_v<
          std::decay_t<GLcharARB>>&& semantic::concepts::Span<span_const_i32>&&
                                     std::is_same_v<
                  std::decay_t<typename span_const_i32::value_type>,
-                 std::decay_t<i32>>) STATICINLINE
-    void shader_source(
+                 std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_ARB_shader_objects
+     * \param shaderObj GLhandleARB
+     * \param count GLsizei
+     * \param string const GLcharARB **
+     * \param length const GLint *
+     * \return void
+     */
+    STATICINLINE void shader_source(
         GLhandleARB                 shaderObj,
         span_const_GLcharARB const& string,
         span_const_i32 const&       length)
@@ -317,6 +443,12 @@ requires(semantic::concepts::Span<span_const_GLcharARB>&& std::is_same_v<
     detail::error_check("ShaderSourceARB"sv);
 }
 
+/*!
+ * \brief Part of GL_ARB_shader_objects
+ * \param location GLint
+ * \param v0 GLfloat
+ * \return void
+ */
 STATICINLINE void uniform(i32 location, f32 v0)
 {
     using namespace std::string_view_literals;
@@ -331,7 +463,15 @@ STATICINLINE void uniform(i32 location, f32 v0)
 template<class span_const_f32>
 requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_ARB_shader_objects
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLfloat *
+     * \return void
+     */
+    STATICINLINE
     void uniform(i32 location, i32 count, span_const_f32 const& value)
 {
     using namespace std::string_view_literals;
@@ -344,6 +484,12 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
     detail::error_check("Uniform1fvARB"sv);
 }
 
+/*!
+ * \brief Part of GL_ARB_shader_objects
+ * \param location GLint
+ * \param v0 GLint
+ * \return void
+ */
 STATICINLINE void uniform(i32 location, i32 v0)
 {
     using namespace std::string_view_literals;
@@ -358,7 +504,15 @@ STATICINLINE void uniform(i32 location, i32 v0)
 template<class span_const_i32>
 requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_ARB_shader_objects
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLint *
+     * \return void
+     */
+    STATICINLINE
     void uniform(i32 location, i32 count, span_const_i32 const& value)
 {
     using namespace std::string_view_literals;
@@ -372,8 +526,15 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
 }
 
 template<class vec_2_f32>
-requires(semantic::concepts::Vector<vec_2_f32, f32, 2>) STATICINLINE
-    void uniform(i32 location, vec_2_f32 const& v0)
+requires(semantic::concepts::Vector<vec_2_f32, f32, 2>)
+    /*!
+     * \brief Part of GL_ARB_shader_objects
+     * \param location GLint
+     * \param v0 GLfloat
+     * \param v1 GLfloat
+     * \return void
+     */
+    STATICINLINE void uniform(i32 location, vec_2_f32 const& v0)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -387,6 +548,13 @@ requires(semantic::concepts::Vector<vec_2_f32, f32, 2>) STATICINLINE
 template<class span_const_vec_2_f32>
 requires(semantic::concepts::Span<span_const_vec_2_f32>&& semantic::concepts::
              Vector<typename span_const_vec_2_f32::value_type, f32, 2>)
+    /*!
+     * \brief Part of GL_ARB_shader_objects
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLfloat *
+     * \return void
+     */
     STATICINLINE
     void uniform(i32 location, i32 count, span_const_vec_2_f32 const& value)
 {
@@ -401,8 +569,15 @@ requires(semantic::concepts::Span<span_const_vec_2_f32>&& semantic::concepts::
 }
 
 template<class vec_2_i32>
-requires(semantic::concepts::Vector<vec_2_i32, i32, 2>) STATICINLINE
-    void uniform(i32 location, vec_2_i32 const& v0)
+requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
+    /*!
+     * \brief Part of GL_ARB_shader_objects
+     * \param location GLint
+     * \param v0 GLint
+     * \param v1 GLint
+     * \return void
+     */
+    STATICINLINE void uniform(i32 location, vec_2_i32 const& v0)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -416,6 +591,13 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>) STATICINLINE
 template<class span_const_vec_2_i32>
 requires(semantic::concepts::Span<span_const_vec_2_i32>&& semantic::concepts::
              Vector<typename span_const_vec_2_i32::value_type, i32, 2>)
+    /*!
+     * \brief Part of GL_ARB_shader_objects
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLint *
+     * \return void
+     */
     STATICINLINE
     void uniform(i32 location, i32 count, span_const_vec_2_i32 const& value)
 {
@@ -430,8 +612,16 @@ requires(semantic::concepts::Span<span_const_vec_2_i32>&& semantic::concepts::
 }
 
 template<class vec_3_f32>
-requires(semantic::concepts::Vector<vec_3_f32, f32, 3>) STATICINLINE
-    void uniform(i32 location, vec_3_f32 const& v0)
+requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
+    /*!
+     * \brief Part of GL_ARB_shader_objects
+     * \param location GLint
+     * \param v0 GLfloat
+     * \param v1 GLfloat
+     * \param v2 GLfloat
+     * \return void
+     */
+    STATICINLINE void uniform(i32 location, vec_3_f32 const& v0)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -445,6 +635,13 @@ requires(semantic::concepts::Vector<vec_3_f32, f32, 3>) STATICINLINE
 template<class span_const_vec_3_f32>
 requires(semantic::concepts::Span<span_const_vec_3_f32>&& semantic::concepts::
              Vector<typename span_const_vec_3_f32::value_type, f32, 3>)
+    /*!
+     * \brief Part of GL_ARB_shader_objects
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLfloat *
+     * \return void
+     */
     STATICINLINE
     void uniform(i32 location, i32 count, span_const_vec_3_f32 const& value)
 {
@@ -459,8 +656,16 @@ requires(semantic::concepts::Span<span_const_vec_3_f32>&& semantic::concepts::
 }
 
 template<class vec_3_i32>
-requires(semantic::concepts::Vector<vec_3_i32, i32, 3>) STATICINLINE
-    void uniform(i32 location, vec_3_i32 const& v0)
+requires(semantic::concepts::Vector<vec_3_i32, i32, 3>)
+    /*!
+     * \brief Part of GL_ARB_shader_objects
+     * \param location GLint
+     * \param v0 GLint
+     * \param v1 GLint
+     * \param v2 GLint
+     * \return void
+     */
+    STATICINLINE void uniform(i32 location, vec_3_i32 const& v0)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -474,6 +679,13 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>) STATICINLINE
 template<class span_const_vec_3_i32>
 requires(semantic::concepts::Span<span_const_vec_3_i32>&& semantic::concepts::
              Vector<typename span_const_vec_3_i32::value_type, i32, 3>)
+    /*!
+     * \brief Part of GL_ARB_shader_objects
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLint *
+     * \return void
+     */
     STATICINLINE
     void uniform(i32 location, i32 count, span_const_vec_3_i32 const& value)
 {
@@ -488,8 +700,17 @@ requires(semantic::concepts::Span<span_const_vec_3_i32>&& semantic::concepts::
 }
 
 template<class vec_4_f32>
-requires(semantic::concepts::Vector<vec_4_f32, f32, 4>) STATICINLINE
-    void uniform(i32 location, vec_4_f32 const& v0)
+requires(semantic::concepts::Vector<vec_4_f32, f32, 4>)
+    /*!
+     * \brief Part of GL_ARB_shader_objects
+     * \param location GLint
+     * \param v0 GLfloat
+     * \param v1 GLfloat
+     * \param v2 GLfloat
+     * \param v3 GLfloat
+     * \return void
+     */
+    STATICINLINE void uniform(i32 location, vec_4_f32 const& v0)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -503,6 +724,13 @@ requires(semantic::concepts::Vector<vec_4_f32, f32, 4>) STATICINLINE
 template<class span_const_vec_4_f32>
 requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
              Vector<typename span_const_vec_4_f32::value_type, f32, 4>)
+    /*!
+     * \brief Part of GL_ARB_shader_objects
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLfloat *
+     * \return void
+     */
     STATICINLINE
     void uniform(i32 location, i32 count, span_const_vec_4_f32 const& value)
 {
@@ -517,8 +745,17 @@ requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
 }
 
 template<class vec_4_i32>
-requires(semantic::concepts::Vector<vec_4_i32, i32, 4>) STATICINLINE
-    void uniform(i32 location, vec_4_i32 const& v0)
+requires(semantic::concepts::Vector<vec_4_i32, i32, 4>)
+    /*!
+     * \brief Part of GL_ARB_shader_objects
+     * \param location GLint
+     * \param v0 GLint
+     * \param v1 GLint
+     * \param v2 GLint
+     * \param v3 GLint
+     * \return void
+     */
+    STATICINLINE void uniform(i32 location, vec_4_i32 const& v0)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -532,6 +769,13 @@ requires(semantic::concepts::Vector<vec_4_i32, i32, 4>) STATICINLINE
 template<class span_const_vec_4_i32>
 requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
              Vector<typename span_const_vec_4_i32::value_type, i32, 4>)
+    /*!
+     * \brief Part of GL_ARB_shader_objects
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLint *
+     * \return void
+     */
     STATICINLINE
     void uniform(i32 location, i32 count, span_const_vec_4_i32 const& value)
 {
@@ -548,6 +792,14 @@ requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
 template<class span_const_mat_2x2_f32>
 requires(semantic::concepts::Span<span_const_mat_2x2_f32>&& semantic::concepts::
              Matrix<typename span_const_mat_2x2_f32::value_type, f32, 2, 2>)
+    /*!
+     * \brief Part of GL_ARB_shader_objects
+     * \param location GLint
+     * \param count GLsizei
+     * \param transpose GLboolean
+     * \param value const GLfloat *
+     * \return void
+     */
     STATICINLINE void uniform(
         i32                           location,
         i32                           count,
@@ -570,6 +822,14 @@ requires(semantic::concepts::Span<span_const_mat_2x2_f32>&& semantic::concepts::
 template<class span_const_mat_3x3_f32>
 requires(semantic::concepts::Span<span_const_mat_3x3_f32>&& semantic::concepts::
              Matrix<typename span_const_mat_3x3_f32::value_type, f32, 3, 3>)
+    /*!
+     * \brief Part of GL_ARB_shader_objects
+     * \param location GLint
+     * \param count GLsizei
+     * \param transpose GLboolean
+     * \param value const GLfloat *
+     * \return void
+     */
     STATICINLINE void uniform(
         i32                           location,
         i32                           count,
@@ -592,6 +852,14 @@ requires(semantic::concepts::Span<span_const_mat_3x3_f32>&& semantic::concepts::
 template<class span_const_mat_4x4_f32>
 requires(semantic::concepts::Span<span_const_mat_4x4_f32>&& semantic::concepts::
              Matrix<typename span_const_mat_4x4_f32::value_type, f32, 4, 4>)
+    /*!
+     * \brief Part of GL_ARB_shader_objects
+     * \param location GLint
+     * \param count GLsizei
+     * \param transpose GLboolean
+     * \param value const GLfloat *
+     * \return void
+     */
     STATICINLINE void uniform(
         i32                           location,
         i32                           count,
@@ -611,6 +879,11 @@ requires(semantic::concepts::Span<span_const_mat_4x4_f32>&& semantic::concepts::
     detail::error_check("UniformMatrix4fvARB"sv);
 }
 
+/*!
+ * \brief Part of GL_ARB_shader_objects
+ * \param programObj GLhandleARB
+ * \return void
+ */
 STATICINLINE void use_program_object(GLhandleARB programObj)
 {
     using namespace std::string_view_literals;
@@ -622,6 +895,11 @@ STATICINLINE void use_program_object(GLhandleARB programObj)
     detail::error_check("UseProgramObjectARB"sv);
 }
 
+/*!
+ * \brief Part of GL_ARB_shader_objects
+ * \param programObj GLhandleARB
+ * \return void
+ */
 STATICINLINE void validate_program(GLhandleARB programObj)
 {
     using namespace std::string_view_literals;

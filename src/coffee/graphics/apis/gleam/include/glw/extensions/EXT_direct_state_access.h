@@ -7,6 +7,17 @@ constexpr libc_types::u32 program_matrix             = 0x8E2D;
 constexpr libc_types::u32 transpose_program_matrix   = 0x8E2E;
 constexpr libc_types::u32 program_matrix_stack_depth = 0x8E2F;
 } // namespace values
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param mode GLenum
+ * \param left GLdouble
+ * \param right GLdouble
+ * \param bottom GLdouble
+ * \param top GLdouble
+ * \param zNear GLdouble
+ * \param zFar GLdouble
+ * \return void
+ */
 STATICINLINE void matrix_frustum(
     group::matrix_mode mode,
     f64                left,
@@ -26,6 +37,11 @@ STATICINLINE void matrix_frustum(
     detail::error_check("MatrixFrustumEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param mode GLenum
+ * \return void
+ */
 STATICINLINE void matrix_load_identity(group::matrix_mode mode)
 {
     using namespace std::string_view_literals;
@@ -40,7 +56,14 @@ STATICINLINE void matrix_load_identity(group::matrix_mode mode)
 template<class span_const_f64>
 requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
          std::decay_t<typename span_const_f64::value_type>,
-         std::decay_t<f64>>) STATICINLINE
+         std::decay_t<f64>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param mode GLenum
+     * \param m const GLdouble *
+     * \return void
+     */
+    STATICINLINE
     void matrix_loadd(group::matrix_mode mode, span_const_f64 const& m)
 {
     using namespace std::string_view_literals;
@@ -57,7 +80,14 @@ requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
 template<class span_const_f32>
 requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param mode GLenum
+     * \param m const GLfloat *
+     * \return void
+     */
+    STATICINLINE
     void matrix_loadf(group::matrix_mode mode, span_const_f32 const& m)
 {
     using namespace std::string_view_literals;
@@ -74,7 +104,14 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
 template<class span_const_f64>
 requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
          std::decay_t<typename span_const_f64::value_type>,
-         std::decay_t<f64>>) STATICINLINE
+         std::decay_t<f64>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param mode GLenum
+     * \param m const GLdouble *
+     * \return void
+     */
+    STATICINLINE
     void matrix_multd(group::matrix_mode mode, span_const_f64 const& m)
 {
     using namespace std::string_view_literals;
@@ -91,7 +128,14 @@ requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
 template<class span_const_f32>
 requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param mode GLenum
+     * \param m const GLfloat *
+     * \return void
+     */
+    STATICINLINE
     void matrix_multf(group::matrix_mode mode, span_const_f32 const& m)
 {
     using namespace std::string_view_literals;
@@ -105,6 +149,17 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
     detail::error_check("MatrixMultfEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param mode GLenum
+ * \param left GLdouble
+ * \param right GLdouble
+ * \param bottom GLdouble
+ * \param top GLdouble
+ * \param zNear GLdouble
+ * \param zFar GLdouble
+ * \return void
+ */
 STATICINLINE void matrix_ortho(
     group::matrix_mode mode,
     f64                left,
@@ -124,6 +179,11 @@ STATICINLINE void matrix_ortho(
     detail::error_check("MatrixOrthoEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param mode GLenum
+ * \return void
+ */
 STATICINLINE void matrix_pop(group::matrix_mode mode)
 {
     using namespace std::string_view_literals;
@@ -135,6 +195,11 @@ STATICINLINE void matrix_pop(group::matrix_mode mode)
     detail::error_check("MatrixPopEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param mode GLenum
+ * \return void
+ */
 STATICINLINE void matrix_push(group::matrix_mode mode)
 {
     using namespace std::string_view_literals;
@@ -147,7 +212,17 @@ STATICINLINE void matrix_push(group::matrix_mode mode)
 }
 
 template<class vec_3_f64>
-requires(semantic::concepts::Vector<vec_3_f64, f64, 3>) STATICINLINE
+requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param mode GLenum
+     * \param angle GLdouble
+     * \param x GLdouble
+     * \param y GLdouble
+     * \param z GLdouble
+     * \return void
+     */
+    STATICINLINE
     void matrix_rotated(group::matrix_mode mode, f64 angle, vec_3_f64 const& x)
 {
     using namespace std::string_view_literals;
@@ -160,7 +235,17 @@ requires(semantic::concepts::Vector<vec_3_f64, f64, 3>) STATICINLINE
 }
 
 template<class vec_3_f32>
-requires(semantic::concepts::Vector<vec_3_f32, f32, 3>) STATICINLINE
+requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param mode GLenum
+     * \param angle GLfloat
+     * \param x GLfloat
+     * \param y GLfloat
+     * \param z GLfloat
+     * \return void
+     */
+    STATICINLINE
     void matrix_rotatef(group::matrix_mode mode, f32 angle, vec_3_f32 const& x)
 {
     using namespace std::string_view_literals;
@@ -173,8 +258,16 @@ requires(semantic::concepts::Vector<vec_3_f32, f32, 3>) STATICINLINE
 }
 
 template<class vec_3_f64>
-requires(semantic::concepts::Vector<vec_3_f64, f64, 3>) STATICINLINE
-    void matrix_scaled(group::matrix_mode mode, vec_3_f64 const& x)
+requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param mode GLenum
+     * \param x GLdouble
+     * \param y GLdouble
+     * \param z GLdouble
+     * \return void
+     */
+    STATICINLINE void matrix_scaled(group::matrix_mode mode, vec_3_f64 const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -186,8 +279,16 @@ requires(semantic::concepts::Vector<vec_3_f64, f64, 3>) STATICINLINE
 }
 
 template<class vec_3_f32>
-requires(semantic::concepts::Vector<vec_3_f32, f32, 3>) STATICINLINE
-    void matrix_scalef(group::matrix_mode mode, vec_3_f32 const& x)
+requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param mode GLenum
+     * \param x GLfloat
+     * \param y GLfloat
+     * \param z GLfloat
+     * \return void
+     */
+    STATICINLINE void matrix_scalef(group::matrix_mode mode, vec_3_f32 const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -199,7 +300,16 @@ requires(semantic::concepts::Vector<vec_3_f32, f32, 3>) STATICINLINE
 }
 
 template<class vec_3_f64>
-requires(semantic::concepts::Vector<vec_3_f64, f64, 3>) STATICINLINE
+requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param mode GLenum
+     * \param x GLdouble
+     * \param y GLdouble
+     * \param z GLdouble
+     * \return void
+     */
+    STATICINLINE
     void matrix_translated(group::matrix_mode mode, vec_3_f64 const& x)
 {
     using namespace std::string_view_literals;
@@ -212,7 +322,16 @@ requires(semantic::concepts::Vector<vec_3_f64, f64, 3>) STATICINLINE
 }
 
 template<class vec_3_f32>
-requires(semantic::concepts::Vector<vec_3_f32, f32, 3>) STATICINLINE
+requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param mode GLenum
+     * \param x GLfloat
+     * \param y GLfloat
+     * \param z GLfloat
+     * \return void
+     */
+    STATICINLINE
     void matrix_translatef(group::matrix_mode mode, vec_3_f32 const& x)
 {
     using namespace std::string_view_literals;
@@ -224,6 +343,11 @@ requires(semantic::concepts::Vector<vec_3_f32, f32, 3>) STATICINLINE
     detail::error_check("MatrixTranslatefEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param mask GLbitfield
+ * \return void
+ */
 STATICINLINE void client_attrib_default(group::client_attrib_mask mask)
 {
     using namespace std::string_view_literals;
@@ -235,6 +359,11 @@ STATICINLINE void client_attrib_default(group::client_attrib_mask mask)
     detail::error_check("ClientAttribDefaultEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param mask GLbitfield
+ * \return void
+ */
 STATICINLINE void push_client_attrib_default(group::client_attrib_mask mask)
 {
     using namespace std::string_view_literals;
@@ -247,8 +376,20 @@ STATICINLINE void push_client_attrib_default(group::client_attrib_mask mask)
 }
 
 template<class vec_2_i32>
-requires(semantic::concepts::Vector<vec_2_i32, i32, 2>) STATICINLINE
-    void copy_texture_image_1d(
+requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texture GLuint
+     * \param target GLenum
+     * \param level GLint
+     * \param internalformat GLenum
+     * \param x GLint
+     * \param y GLint
+     * \param width GLsizei
+     * \param border GLint
+     * \return void
+     */
+    STATICINLINE void copy_texture_image_1d(
         u32                    texture,
         group::texture_target  target,
         i32                    level,
@@ -277,8 +418,21 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>) STATICINLINE
 
 template<class size_2_i32, class vec_2_i32>
 requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
-             semantic::concepts::Size2D<size_2_i32, i32>) STATICINLINE
-    void copy_texture_image_2d(
+             semantic::concepts::Size2D<size_2_i32, i32>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texture GLuint
+     * \param target GLenum
+     * \param level GLint
+     * \param internalformat GLenum
+     * \param x GLint
+     * \param y GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param border GLint
+     * \return void
+     */
+    STATICINLINE void copy_texture_image_2d(
         u32                    texture,
         group::texture_target  target,
         i32                    level,
@@ -307,8 +461,19 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
 }
 
 template<class vec_2_i32>
-requires(semantic::concepts::Vector<vec_2_i32, i32, 2>) STATICINLINE
-    void copy_texture_sub_image_1d(
+requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texture GLuint
+     * \param target GLenum
+     * \param level GLint
+     * \param xoffset GLint
+     * \param x GLint
+     * \param y GLint
+     * \param width GLsizei
+     * \return void
+     */
+    STATICINLINE void copy_texture_sub_image_1d(
         u32                   texture,
         group::texture_target target,
         i32                   level,
@@ -335,8 +500,21 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>) STATICINLINE
 
 template<class size_2_i32, class vec_2_i32>
 requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
-             semantic::concepts::Size2D<size_2_i32, i32>) STATICINLINE
-    void copy_texture_sub_image_2d(
+             semantic::concepts::Size2D<size_2_i32, i32>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texture GLuint
+     * \param target GLenum
+     * \param level GLint
+     * \param xoffset GLint
+     * \param yoffset GLint
+     * \param x GLint
+     * \param y GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \return void
+     */
+    STATICINLINE void copy_texture_sub_image_2d(
         u32                   texture,
         group::texture_target target,
         i32                   level,
@@ -364,8 +542,18 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
 }
 
 template<class span_void>
-requires(semantic::concepts::Span<span_void>) STATICINLINE
-    void get_texture_image(
+requires(semantic::concepts::Span<span_void>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texture GLuint
+     * \param target GLenum
+     * \param level GLint
+     * \param format GLenum
+     * \param type GLenum
+     * \param pixels void *
+     * \return void
+     */
+    STATICINLINE void get_texture_image(
         u32                   texture,
         group::texture_target target,
         i32                   level,
@@ -392,8 +580,17 @@ requires(semantic::concepts::Span<span_void>) STATICINLINE
 template<class span_f32>
 requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
-    void get_texture_level_parameter(
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texture GLuint
+     * \param target GLenum
+     * \param level GLint
+     * \param pname GLenum
+     * \param params GLfloat *
+     * \return void
+     */
+    STATICINLINE void get_texture_level_parameter(
         u32                          texture,
         group::texture_target        target,
         i32                          level,
@@ -418,8 +615,17 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void get_texture_level_parameter(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texture GLuint
+     * \param target GLenum
+     * \param level GLint
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_texture_level_parameter(
         u32                          texture,
         group::texture_target        target,
         i32                          level,
@@ -444,8 +650,16 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 template<class span_f32>
 requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
-    void get_texture_parameter(
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texture GLuint
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params GLfloat *
+     * \return void
+     */
+    STATICINLINE void get_texture_parameter(
         u32                          texture,
         group::texture_target        target,
         group::get_texture_parameter pname,
@@ -468,8 +682,16 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void get_texture_parameter(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texture GLuint
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_texture_parameter(
         u32                          texture,
         group::texture_target        target,
         group::get_texture_parameter pname,
@@ -490,8 +712,21 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>) STATICINLINE
-    void texture_image_1d(
+requires(semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texture GLuint
+     * \param target GLenum
+     * \param level GLint
+     * \param internalformat GLint
+     * \param width GLsizei
+     * \param border GLint
+     * \param format GLenum
+     * \param type GLenum
+     * \param pixels const void *
+     * \return void
+     */
+    STATICINLINE void texture_image_1d(
         u32                    texture,
         group::texture_target  target,
         i32                    level,
@@ -523,8 +758,22 @@ requires(semantic::concepts::Span<span_const_void>) STATICINLINE
 
 template<class size_2_i32, class span_const_void>
 requires(semantic::concepts::Size2D<size_2_i32, i32>&&
-             semantic::concepts::Span<span_const_void>) STATICINLINE
-    void texture_image_2d(
+             semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texture GLuint
+     * \param target GLenum
+     * \param level GLint
+     * \param internalformat GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param border GLint
+     * \param format GLenum
+     * \param type GLenum
+     * \param pixels const void *
+     * \return void
+     */
+    STATICINLINE void texture_image_2d(
         u32                    texture,
         group::texture_target  target,
         i32                    level,
@@ -555,6 +804,14 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>&&
     detail::error_check("TextureImage2DEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param texture GLuint
+ * \param target GLenum
+ * \param pname GLenum
+ * \param param GLfloat
+ * \return void
+ */
 STATICINLINE void texture_parameter(
     u32                           texture,
     group::texture_target         target,
@@ -578,8 +835,16 @@ STATICINLINE void texture_parameter(
 template<class span_const_f32>
 requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
-    void texture_parameter(
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texture GLuint
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params const GLfloat *
+     * \return void
+     */
+    STATICINLINE void texture_parameter(
         u32                           texture,
         group::texture_target         target,
         group::texture_parameter_name pname,
@@ -600,6 +865,14 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
     detail::error_check("TextureParameterfvEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param texture GLuint
+ * \param target GLenum
+ * \param pname GLenum
+ * \param param GLint
+ * \return void
+ */
 STATICINLINE void texture_parameter(
     u32                           texture,
     group::texture_target         target,
@@ -623,8 +896,16 @@ STATICINLINE void texture_parameter(
 template<class span_const_i32>
 requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void texture_parameter(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texture GLuint
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params const GLint *
+     * \return void
+     */
+    STATICINLINE void texture_parameter(
         u32                           texture,
         group::texture_target         target,
         group::texture_parameter_name pname,
@@ -646,8 +927,20 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>) STATICINLINE
-    void texture_sub_image_1d(
+requires(semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texture GLuint
+     * \param target GLenum
+     * \param level GLint
+     * \param xoffset GLint
+     * \param width GLsizei
+     * \param format GLenum
+     * \param type GLenum
+     * \param pixels const void *
+     * \return void
+     */
+    STATICINLINE void texture_sub_image_1d(
         u32                    texture,
         group::texture_target  target,
         i32                    level,
@@ -678,8 +971,22 @@ requires(semantic::concepts::Span<span_const_void>) STATICINLINE
 template<class size_2_i32, class span_const_void, class vec_2_i32>
 requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
                  semantic::concepts::Size2D<size_2_i32, i32>&&
-                 semantic::concepts::Span<span_const_void>) STATICINLINE
-    void texture_sub_image_2d(
+                 semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texture GLuint
+     * \param target GLenum
+     * \param level GLint
+     * \param xoffset GLint
+     * \param yoffset GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param format GLenum
+     * \param type GLenum
+     * \param pixels const void *
+     * \return void
+     */
+    STATICINLINE void texture_sub_image_2d(
         u32                    texture,
         group::texture_target  target,
         i32                    level,
@@ -712,8 +1019,22 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
 template<class size_2_i32, class vec_2_i32, class vec_3_i32>
 requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
                  semantic::concepts::Vector<vec_2_i32, i32, 2>&&
-                 semantic::concepts::Size2D<size_2_i32, i32>) STATICINLINE
-    void copy_texture_sub_image_3d(
+                 semantic::concepts::Size2D<size_2_i32, i32>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texture GLuint
+     * \param target GLenum
+     * \param level GLint
+     * \param xoffset GLint
+     * \param yoffset GLint
+     * \param zoffset GLint
+     * \param x GLint
+     * \param y GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \return void
+     */
+    STATICINLINE void copy_texture_sub_image_3d(
         u32                   texture,
         group::texture_target target,
         i32                   level,
@@ -743,8 +1064,23 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
 
 template<class size_3_i32, class span_const_void>
 requires(semantic::concepts::Size2D<size_3_i32, i32>&&
-             semantic::concepts::Span<span_const_void>) STATICINLINE
-    void texture_image_3d(
+             semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texture GLuint
+     * \param target GLenum
+     * \param level GLint
+     * \param internalformat GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param depth GLsizei
+     * \param border GLint
+     * \param format GLenum
+     * \param type GLenum
+     * \param pixels const void *
+     * \return void
+     */
+    STATICINLINE void texture_image_3d(
         u32                    texture,
         group::texture_target  target,
         i32                    level,
@@ -779,8 +1115,24 @@ requires(semantic::concepts::Size2D<size_3_i32, i32>&&
 template<class size_3_i32, class span_const_void, class vec_3_i32>
 requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
                  semantic::concepts::Size2D<size_3_i32, i32>&&
-                 semantic::concepts::Span<span_const_void>) STATICINLINE
-    void texture_sub_image_3d(
+                 semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texture GLuint
+     * \param target GLenum
+     * \param level GLint
+     * \param xoffset GLint
+     * \param yoffset GLint
+     * \param zoffset GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param depth GLsizei
+     * \param format GLenum
+     * \param type GLenum
+     * \param pixels const void *
+     * \return void
+     */
+    STATICINLINE void texture_sub_image_3d(
         u32                    texture,
         group::texture_target  target,
         i32                    level,
@@ -812,6 +1164,13 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
     detail::error_check("TextureSubImage3DEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param texunit GLenum
+ * \param target GLenum
+ * \param texture GLuint
+ * \return void
+ */
 STATICINLINE void bind_multi_texture(
     group::texture_unit texunit, group::texture_target target, u32 texture)
 {
@@ -827,8 +1186,20 @@ STATICINLINE void bind_multi_texture(
 }
 
 template<class vec_2_i32>
-requires(semantic::concepts::Vector<vec_2_i32, i32, 2>) STATICINLINE
-    void copy_multi_tex_image_1d(
+requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texunit GLenum
+     * \param target GLenum
+     * \param level GLint
+     * \param internalformat GLenum
+     * \param x GLint
+     * \param y GLint
+     * \param width GLsizei
+     * \param border GLint
+     * \return void
+     */
+    STATICINLINE void copy_multi_tex_image_1d(
         group::texture_unit    texunit,
         group::texture_target  target,
         i32                    level,
@@ -856,8 +1227,21 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>) STATICINLINE
 
 template<class size_2_i32, class vec_2_i32>
 requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
-             semantic::concepts::Size2D<size_2_i32, i32>) STATICINLINE
-    void copy_multi_tex_image_2d(
+             semantic::concepts::Size2D<size_2_i32, i32>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texunit GLenum
+     * \param target GLenum
+     * \param level GLint
+     * \param internalformat GLenum
+     * \param x GLint
+     * \param y GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param border GLint
+     * \return void
+     */
+    STATICINLINE void copy_multi_tex_image_2d(
         group::texture_unit    texunit,
         group::texture_target  target,
         i32                    level,
@@ -885,8 +1269,19 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
 }
 
 template<class vec_2_i32>
-requires(semantic::concepts::Vector<vec_2_i32, i32, 2>) STATICINLINE
-    void copy_multi_tex_sub_image_1d(
+requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texunit GLenum
+     * \param target GLenum
+     * \param level GLint
+     * \param xoffset GLint
+     * \param x GLint
+     * \param y GLint
+     * \param width GLsizei
+     * \return void
+     */
+    STATICINLINE void copy_multi_tex_sub_image_1d(
         group::texture_unit   texunit,
         group::texture_target target,
         i32                   level,
@@ -912,8 +1307,21 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>) STATICINLINE
 
 template<class size_2_i32, class vec_2_i32>
 requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
-             semantic::concepts::Size2D<size_2_i32, i32>) STATICINLINE
-    void copy_multi_tex_sub_image_2d(
+             semantic::concepts::Size2D<size_2_i32, i32>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texunit GLenum
+     * \param target GLenum
+     * \param level GLint
+     * \param xoffset GLint
+     * \param yoffset GLint
+     * \param x GLint
+     * \param y GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \return void
+     */
+    STATICINLINE void copy_multi_tex_sub_image_2d(
         group::texture_unit   texunit,
         group::texture_target target,
         i32                   level,
@@ -942,8 +1350,22 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
 template<class size_2_i32, class vec_2_i32, class vec_3_i32>
 requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
                  semantic::concepts::Vector<vec_2_i32, i32, 2>&&
-                 semantic::concepts::Size2D<size_2_i32, i32>) STATICINLINE
-    void copy_multi_tex_sub_image_3d(
+                 semantic::concepts::Size2D<size_2_i32, i32>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texunit GLenum
+     * \param target GLenum
+     * \param level GLint
+     * \param xoffset GLint
+     * \param yoffset GLint
+     * \param zoffset GLint
+     * \param x GLint
+     * \param y GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \return void
+     */
+    STATICINLINE void copy_multi_tex_sub_image_3d(
         group::texture_unit   texunit,
         group::texture_target target,
         i32                   level,
@@ -973,8 +1395,16 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
 template<class span_f32>
 requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
-    void get_multi_tex_envfv(
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texunit GLenum
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params GLfloat *
+     * \return void
+     */
+    STATICINLINE void get_multi_tex_envfv(
         group::texture_unit          texunit,
         group::texture_env_target    target,
         group::texture_env_parameter pname,
@@ -996,8 +1426,16 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void get_multi_tex_enviv(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texunit GLenum
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_multi_tex_enviv(
         group::texture_unit          texunit,
         group::texture_env_target    target,
         group::texture_env_parameter pname,
@@ -1019,8 +1457,16 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 template<class span_f64>
 requires(semantic::concepts::Span<span_f64>&& std::is_same_v<
          std::decay_t<typename span_f64::value_type>,
-         std::decay_t<f64>>) STATICINLINE
-    void get_multi_tex_gendv(
+         std::decay_t<f64>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texunit GLenum
+     * \param coord GLenum
+     * \param pname GLenum
+     * \param params GLdouble *
+     * \return void
+     */
+    STATICINLINE void get_multi_tex_gendv(
         group::texture_unit          texunit,
         group::texture_coord_name    coord,
         group::texture_gen_parameter pname,
@@ -1042,8 +1488,16 @@ requires(semantic::concepts::Span<span_f64>&& std::is_same_v<
 template<class span_f32>
 requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
-    void get_multi_tex_genfv(
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texunit GLenum
+     * \param coord GLenum
+     * \param pname GLenum
+     * \param params GLfloat *
+     * \return void
+     */
+    STATICINLINE void get_multi_tex_genfv(
         group::texture_unit          texunit,
         group::texture_coord_name    coord,
         group::texture_gen_parameter pname,
@@ -1065,8 +1519,16 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void get_multi_tex_geniv(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texunit GLenum
+     * \param coord GLenum
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_multi_tex_geniv(
         group::texture_unit          texunit,
         group::texture_coord_name    coord,
         group::texture_gen_parameter pname,
@@ -1086,8 +1548,18 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_void>
-requires(semantic::concepts::Span<span_void>) STATICINLINE
-    void get_multi_tex_image(
+requires(semantic::concepts::Span<span_void>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texunit GLenum
+     * \param target GLenum
+     * \param level GLint
+     * \param format GLenum
+     * \param type GLenum
+     * \param pixels void *
+     * \return void
+     */
+    STATICINLINE void get_multi_tex_image(
         group::texture_unit   texunit,
         group::texture_target target,
         i32                   level,
@@ -1113,8 +1585,17 @@ requires(semantic::concepts::Span<span_void>) STATICINLINE
 template<class span_f32>
 requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
-    void get_multi_tex_level_parameter(
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texunit GLenum
+     * \param target GLenum
+     * \param level GLint
+     * \param pname GLenum
+     * \param params GLfloat *
+     * \return void
+     */
+    STATICINLINE void get_multi_tex_level_parameter(
         group::texture_unit          texunit,
         group::texture_target        target,
         i32                          level,
@@ -1138,8 +1619,17 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void get_multi_tex_level_parameter(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texunit GLenum
+     * \param target GLenum
+     * \param level GLint
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_multi_tex_level_parameter(
         group::texture_unit          texunit,
         group::texture_target        target,
         i32                          level,
@@ -1163,8 +1653,16 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 template<class span_f32>
 requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
-    void get_multi_tex_parameter(
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texunit GLenum
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params GLfloat *
+     * \return void
+     */
+    STATICINLINE void get_multi_tex_parameter(
         group::texture_unit          texunit,
         group::texture_target        target,
         group::get_texture_parameter pname,
@@ -1186,8 +1684,16 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void get_multi_tex_parameter(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texunit GLenum
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_multi_tex_parameter(
         group::texture_unit          texunit,
         group::texture_target        target,
         group::get_texture_parameter pname,
@@ -1207,8 +1713,17 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>) STATICINLINE
-    void multi_tex_coord_pointer(
+requires(semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texunit GLenum
+     * \param size GLint
+     * \param type GLenum
+     * \param stride GLsizei
+     * \param pointer const void *
+     * \return void
+     */
+    STATICINLINE void multi_tex_coord_pointer(
         group::texture_unit           texunit,
         i32                           size,
         group::tex_coord_pointer_type type,
@@ -1230,6 +1745,14 @@ requires(semantic::concepts::Span<span_const_void>) STATICINLINE
     detail::error_check("MultiTexCoordPointerEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param texunit GLenum
+ * \param target GLenum
+ * \param pname GLenum
+ * \param param GLfloat
+ * \return void
+ */
 STATICINLINE void multi_tex_envf(
     group::texture_unit          texunit,
     group::texture_env_target    target,
@@ -1252,8 +1775,16 @@ STATICINLINE void multi_tex_envf(
 template<class span_const_f32>
 requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
-    void multi_tex_envfv(
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texunit GLenum
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params const GLfloat *
+     * \return void
+     */
+    STATICINLINE void multi_tex_envfv(
         group::texture_unit          texunit,
         group::texture_env_target    target,
         group::texture_env_parameter pname,
@@ -1273,6 +1804,14 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
     detail::error_check("MultiTexEnvfvEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param texunit GLenum
+ * \param target GLenum
+ * \param pname GLenum
+ * \param param GLint
+ * \return void
+ */
 STATICINLINE void multi_tex_envi(
     group::texture_unit          texunit,
     group::texture_env_target    target,
@@ -1295,8 +1834,16 @@ STATICINLINE void multi_tex_envi(
 template<class span_const_i32>
 requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void multi_tex_enviv(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texunit GLenum
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params const GLint *
+     * \return void
+     */
+    STATICINLINE void multi_tex_enviv(
         group::texture_unit          texunit,
         group::texture_env_target    target,
         group::texture_env_parameter pname,
@@ -1316,6 +1863,14 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
     detail::error_check("MultiTexEnvivEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param texunit GLenum
+ * \param coord GLenum
+ * \param pname GLenum
+ * \param param GLdouble
+ * \return void
+ */
 STATICINLINE void multi_tex_gend(
     group::texture_unit          texunit,
     group::texture_coord_name    coord,
@@ -1338,8 +1893,16 @@ STATICINLINE void multi_tex_gend(
 template<class span_const_f64>
 requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
          std::decay_t<typename span_const_f64::value_type>,
-         std::decay_t<f64>>) STATICINLINE
-    void multi_tex_gendv(
+         std::decay_t<f64>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texunit GLenum
+     * \param coord GLenum
+     * \param pname GLenum
+     * \param params const GLdouble *
+     * \return void
+     */
+    STATICINLINE void multi_tex_gendv(
         group::texture_unit          texunit,
         group::texture_coord_name    coord,
         group::texture_gen_parameter pname,
@@ -1359,6 +1922,14 @@ requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
     detail::error_check("MultiTexGendvEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param texunit GLenum
+ * \param coord GLenum
+ * \param pname GLenum
+ * \param param GLfloat
+ * \return void
+ */
 STATICINLINE void multi_tex_genf(
     group::texture_unit          texunit,
     group::texture_coord_name    coord,
@@ -1381,8 +1952,16 @@ STATICINLINE void multi_tex_genf(
 template<class span_const_f32>
 requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
-    void multi_tex_genfv(
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texunit GLenum
+     * \param coord GLenum
+     * \param pname GLenum
+     * \param params const GLfloat *
+     * \return void
+     */
+    STATICINLINE void multi_tex_genfv(
         group::texture_unit          texunit,
         group::texture_coord_name    coord,
         group::texture_gen_parameter pname,
@@ -1402,6 +1981,14 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
     detail::error_check("MultiTexGenfvEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param texunit GLenum
+ * \param coord GLenum
+ * \param pname GLenum
+ * \param param GLint
+ * \return void
+ */
 STATICINLINE void multi_tex_geni(
     group::texture_unit          texunit,
     group::texture_coord_name    coord,
@@ -1424,8 +2011,16 @@ STATICINLINE void multi_tex_geni(
 template<class span_const_i32>
 requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void multi_tex_geniv(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texunit GLenum
+     * \param coord GLenum
+     * \param pname GLenum
+     * \param params const GLint *
+     * \return void
+     */
+    STATICINLINE void multi_tex_geniv(
         group::texture_unit          texunit,
         group::texture_coord_name    coord,
         group::texture_gen_parameter pname,
@@ -1446,8 +2041,21 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>) STATICINLINE
-    void multi_tex_image_1d(
+requires(semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texunit GLenum
+     * \param target GLenum
+     * \param level GLint
+     * \param internalformat GLint
+     * \param width GLsizei
+     * \param border GLint
+     * \param format GLenum
+     * \param type GLenum
+     * \param pixels const void *
+     * \return void
+     */
+    STATICINLINE void multi_tex_image_1d(
         group::texture_unit    texunit,
         group::texture_target  target,
         i32                    level,
@@ -1478,8 +2086,22 @@ requires(semantic::concepts::Span<span_const_void>) STATICINLINE
 
 template<class size_2_i32, class span_const_void>
 requires(semantic::concepts::Size2D<size_2_i32, i32>&&
-             semantic::concepts::Span<span_const_void>) STATICINLINE
-    void multi_tex_image_2d(
+             semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texunit GLenum
+     * \param target GLenum
+     * \param level GLint
+     * \param internalformat GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param border GLint
+     * \param format GLenum
+     * \param type GLenum
+     * \param pixels const void *
+     * \return void
+     */
+    STATICINLINE void multi_tex_image_2d(
         group::texture_unit    texunit,
         group::texture_target  target,
         i32                    level,
@@ -1511,8 +2133,23 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>&&
 
 template<class size_3_i32, class span_const_void>
 requires(semantic::concepts::Size2D<size_3_i32, i32>&&
-             semantic::concepts::Span<span_const_void>) STATICINLINE
-    void multi_tex_image_3d(
+             semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texunit GLenum
+     * \param target GLenum
+     * \param level GLint
+     * \param internalformat GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param depth GLsizei
+     * \param border GLint
+     * \param format GLenum
+     * \param type GLenum
+     * \param pixels const void *
+     * \return void
+     */
+    STATICINLINE void multi_tex_image_3d(
         group::texture_unit    texunit,
         group::texture_target  target,
         i32                    level,
@@ -1543,6 +2180,14 @@ requires(semantic::concepts::Size2D<size_3_i32, i32>&&
     detail::error_check("MultiTexImage3DEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param texunit GLenum
+ * \param target GLenum
+ * \param pname GLenum
+ * \param param GLfloat
+ * \return void
+ */
 STATICINLINE void multi_tex_parameter(
     group::texture_unit           texunit,
     group::texture_target         target,
@@ -1565,8 +2210,16 @@ STATICINLINE void multi_tex_parameter(
 template<class span_const_f32>
 requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
-    void multi_tex_parameter(
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texunit GLenum
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params const GLfloat *
+     * \return void
+     */
+    STATICINLINE void multi_tex_parameter(
         group::texture_unit           texunit,
         group::texture_target         target,
         group::texture_parameter_name pname,
@@ -1586,6 +2239,14 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
     detail::error_check("MultiTexParameterfvEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param texunit GLenum
+ * \param target GLenum
+ * \param pname GLenum
+ * \param param GLint
+ * \return void
+ */
 STATICINLINE void multi_tex_parameter(
     group::texture_unit           texunit,
     group::texture_target         target,
@@ -1608,8 +2269,16 @@ STATICINLINE void multi_tex_parameter(
 template<class span_const_i32>
 requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void multi_tex_parameter(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texunit GLenum
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params const GLint *
+     * \return void
+     */
+    STATICINLINE void multi_tex_parameter(
         group::texture_unit           texunit,
         group::texture_target         target,
         group::texture_parameter_name pname,
@@ -1630,8 +2299,20 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>) STATICINLINE
-    void multi_tex_sub_image_1d(
+requires(semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texunit GLenum
+     * \param target GLenum
+     * \param level GLint
+     * \param xoffset GLint
+     * \param width GLsizei
+     * \param format GLenum
+     * \param type GLenum
+     * \param pixels const void *
+     * \return void
+     */
+    STATICINLINE void multi_tex_sub_image_1d(
         group::texture_unit    texunit,
         group::texture_target  target,
         i32                    level,
@@ -1661,8 +2342,22 @@ requires(semantic::concepts::Span<span_const_void>) STATICINLINE
 template<class size_2_i32, class span_const_void, class vec_2_i32>
 requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
                  semantic::concepts::Size2D<size_2_i32, i32>&&
-                 semantic::concepts::Span<span_const_void>) STATICINLINE
-    void multi_tex_sub_image_2d(
+                 semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texunit GLenum
+     * \param target GLenum
+     * \param level GLint
+     * \param xoffset GLint
+     * \param yoffset GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param format GLenum
+     * \param type GLenum
+     * \param pixels const void *
+     * \return void
+     */
+    STATICINLINE void multi_tex_sub_image_2d(
         group::texture_unit    texunit,
         group::texture_target  target,
         i32                    level,
@@ -1694,8 +2389,24 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
 template<class size_3_i32, class span_const_void, class vec_3_i32>
 requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
                  semantic::concepts::Size2D<size_3_i32, i32>&&
-                 semantic::concepts::Span<span_const_void>) STATICINLINE
-    void multi_tex_sub_image_3d(
+                 semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texunit GLenum
+     * \param target GLenum
+     * \param level GLint
+     * \param xoffset GLint
+     * \param yoffset GLint
+     * \param zoffset GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param depth GLsizei
+     * \param format GLenum
+     * \param type GLenum
+     * \param pixels const void *
+     * \return void
+     */
+    STATICINLINE void multi_tex_sub_image_3d(
         group::texture_unit    texunit,
         group::texture_target  target,
         i32                    level,
@@ -1726,6 +2437,12 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
     detail::error_check("MultiTexSubImage3DEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param array GLenum
+ * \param index GLuint
+ * \return void
+ */
 STATICINLINE void disable_client_state_indexed(
     group::enable_cap array, u32 index)
 {
@@ -1738,6 +2455,12 @@ STATICINLINE void disable_client_state_indexed(
     detail::error_check("DisableClientStateIndexedEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param array GLenum
+ * \param index GLuint
+ * \return void
+ */
 STATICINLINE void enable_client_state_indexed(
     group::enable_cap array, u32 index)
 {
@@ -1753,7 +2476,15 @@ STATICINLINE void enable_client_state_indexed(
 template<class span_f64>
 requires(semantic::concepts::Span<span_f64>&& std::is_same_v<
          std::decay_t<typename span_f64::value_type>,
-         std::decay_t<f64>>) STATICINLINE
+         std::decay_t<f64>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param target GLenum
+     * \param index GLuint
+     * \param data GLdouble *
+     * \return void
+     */
+    STATICINLINE
     void get_double_indexedv(group::get_prop target, u32 index, span_f64 data)
 {
     using namespace std::string_view_literals;
@@ -1771,7 +2502,15 @@ requires(semantic::concepts::Span<span_f64>&& std::is_same_v<
 template<class span_f32>
 requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param target GLenum
+     * \param index GLuint
+     * \param data GLfloat *
+     * \return void
+     */
+    STATICINLINE
     void get_float_indexedv(group::get_prop target, u32 index, span_f32 data)
 {
     using namespace std::string_view_literals;
@@ -1787,7 +2526,15 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 }
 
 template<class span_void>
-requires(semantic::concepts::Span<span_void>) STATICINLINE
+requires(semantic::concepts::Span<span_void>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param target GLenum
+     * \param index GLuint
+     * \param data void **
+     * \return void
+     */
+    STATICINLINE
     void get_pointer_indexedv(GLenum target, u32 index, span_void data)
 {
     using namespace std::string_view_literals;
@@ -1802,6 +2549,12 @@ requires(semantic::concepts::Span<span_void>) STATICINLINE
     detail::error_check("GetPointerIndexedvEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param target GLenum
+ * \param index GLuint
+ * \return void
+ */
 STATICINLINE void disable_indexed(group::enable_cap target, u32 index)
 {
     using namespace std::string_view_literals;
@@ -1813,6 +2566,12 @@ STATICINLINE void disable_indexed(group::enable_cap target, u32 index)
     detail::error_check("DisableIndexedEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param target GLenum
+ * \param index GLuint
+ * \return void
+ */
 STATICINLINE void enable_indexed(group::enable_cap target, u32 index)
 {
     using namespace std::string_view_literals;
@@ -1827,8 +2586,15 @@ STATICINLINE void enable_indexed(group::enable_cap target, u32 index)
 template<class span_bool>
 requires(semantic::concepts::Span<span_bool>&& std::is_same_v<
          std::decay_t<typename span_bool::value_type>,
-         std::decay_t<bool>>) STATICINLINE
-    void get_boolean_indexedv(
+         std::decay_t<bool>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param target GLenum
+     * \param index GLuint
+     * \param data GLboolean *
+     * \return void
+     */
+    STATICINLINE void get_boolean_indexedv(
         group::buffer_target_arb target, u32 index, span_bool data)
 {
     using namespace std::string_view_literals;
@@ -1846,7 +2612,15 @@ requires(semantic::concepts::Span<span_bool>&& std::is_same_v<
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param target GLenum
+     * \param index GLuint
+     * \param data GLint *
+     * \return void
+     */
+    STATICINLINE
     void get_integer_indexedv(group::get_prop target, u32 index, span_i32 data)
 {
     using namespace std::string_view_literals;
@@ -1861,6 +2635,12 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
     detail::error_check("GetIntegerIndexedvEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param target GLenum
+ * \param index GLuint
+ * \return Boolean
+ */
 STATICINLINE GLboolean is_enabled_indexed(group::enable_cap target, u32 index)
 {
     using namespace std::string_view_literals;
@@ -1874,8 +2654,20 @@ STATICINLINE GLboolean is_enabled_indexed(group::enable_cap target, u32 index)
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>) STATICINLINE
-    void compressed_texture_image_1d(
+requires(semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texture GLuint
+     * \param target GLenum
+     * \param level GLint
+     * \param internalformat GLenum
+     * \param width GLsizei
+     * \param border GLint
+     * \param imageSize GLsizei
+     * \param bits const void *
+     * \return void
+     */
+    STATICINLINE void compressed_texture_image_1d(
         u32                    texture,
         group::texture_target  target,
         i32                    level,
@@ -1905,8 +2697,21 @@ requires(semantic::concepts::Span<span_const_void>) STATICINLINE
 
 template<class size_2_i32, class span_const_void>
 requires(semantic::concepts::Size2D<size_2_i32, i32>&&
-             semantic::concepts::Span<span_const_void>) STATICINLINE
-    void compressed_texture_image_2d(
+             semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texture GLuint
+     * \param target GLenum
+     * \param level GLint
+     * \param internalformat GLenum
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param border GLint
+     * \param imageSize GLsizei
+     * \param bits const void *
+     * \return void
+     */
+    STATICINLINE void compressed_texture_image_2d(
         u32                    texture,
         group::texture_target  target,
         i32                    level,
@@ -1937,8 +2742,22 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>&&
 
 template<class size_3_i32, class span_const_void>
 requires(semantic::concepts::Size2D<size_3_i32, i32>&&
-             semantic::concepts::Span<span_const_void>) STATICINLINE
-    void compressed_texture_image_3d(
+             semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texture GLuint
+     * \param target GLenum
+     * \param level GLint
+     * \param internalformat GLenum
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param depth GLsizei
+     * \param border GLint
+     * \param imageSize GLsizei
+     * \param bits const void *
+     * \return void
+     */
+    STATICINLINE void compressed_texture_image_3d(
         u32                    texture,
         group::texture_target  target,
         i32                    level,
@@ -1969,14 +2788,26 @@ requires(semantic::concepts::Size2D<size_3_i32, i32>&&
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>) STATICINLINE
-    void compressed_texture_sub_image_1d(
+requires(semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texture GLuint
+     * \param target GLenum
+     * \param level GLint
+     * \param xoffset GLint
+     * \param width GLsizei
+     * \param format GLenum
+     * \param imageSize GLsizei
+     * \param bits const void *
+     * \return void
+     */
+    STATICINLINE void compressed_texture_sub_image_1d(
         u32                    texture,
         group::texture_target  target,
         i32                    level,
         i32                    xoffset,
         i32                    width,
-        group::pixel_format    format,
+        group::internal_format format,
         span_const_void const& bits)
 {
     using namespace std::string_view_literals;
@@ -2001,14 +2832,28 @@ requires(semantic::concepts::Span<span_const_void>) STATICINLINE
 template<class size_2_i32, class span_const_void, class vec_2_i32>
 requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
                  semantic::concepts::Size2D<size_2_i32, i32>&&
-                 semantic::concepts::Span<span_const_void>) STATICINLINE
-    void compressed_texture_sub_image_2d(
+                 semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texture GLuint
+     * \param target GLenum
+     * \param level GLint
+     * \param xoffset GLint
+     * \param yoffset GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param format GLenum
+     * \param imageSize GLsizei
+     * \param bits const void *
+     * \return void
+     */
+    STATICINLINE void compressed_texture_sub_image_2d(
         u32                    texture,
         group::texture_target  target,
         i32                    level,
         vec_2_i32 const&       xoffset,
         size_2_i32 const&      width,
-        group::pixel_format    format,
+        group::internal_format format,
         span_const_void const& bits)
 {
     using namespace std::string_view_literals;
@@ -2035,14 +2880,30 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
 template<class size_3_i32, class span_const_void, class vec_3_i32>
 requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
                  semantic::concepts::Size2D<size_3_i32, i32>&&
-                 semantic::concepts::Span<span_const_void>) STATICINLINE
-    void compressed_texture_sub_image_3d(
+                 semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texture GLuint
+     * \param target GLenum
+     * \param level GLint
+     * \param xoffset GLint
+     * \param yoffset GLint
+     * \param zoffset GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param depth GLsizei
+     * \param format GLenum
+     * \param imageSize GLsizei
+     * \param bits const void *
+     * \return void
+     */
+    STATICINLINE void compressed_texture_sub_image_3d(
         u32                    texture,
         group::texture_target  target,
         i32                    level,
         vec_3_i32 const&       xoffset,
         size_3_i32 const&      width,
-        group::pixel_format    format,
+        group::internal_format format,
         span_const_void const& bits)
 {
     using namespace std::string_view_literals;
@@ -2069,8 +2930,16 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
 }
 
 template<class span_void>
-requires(semantic::concepts::Span<span_void>) STATICINLINE
-    void get_compressed_texture_image(
+requires(semantic::concepts::Span<span_void>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texture GLuint
+     * \param target GLenum
+     * \param lod GLint
+     * \param img void *
+     * \return void
+     */
+    STATICINLINE void get_compressed_texture_image(
         u32 texture, group::texture_target target, i32 lod, span_void img)
 {
     using namespace std::string_view_literals;
@@ -2088,8 +2957,20 @@ requires(semantic::concepts::Span<span_void>) STATICINLINE
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>) STATICINLINE
-    void compressed_multi_tex_image_1d(
+requires(semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texunit GLenum
+     * \param target GLenum
+     * \param level GLint
+     * \param internalformat GLenum
+     * \param width GLsizei
+     * \param border GLint
+     * \param imageSize GLsizei
+     * \param bits const void *
+     * \return void
+     */
+    STATICINLINE void compressed_multi_tex_image_1d(
         group::texture_unit    texunit,
         group::texture_target  target,
         i32                    level,
@@ -2118,8 +2999,21 @@ requires(semantic::concepts::Span<span_const_void>) STATICINLINE
 
 template<class size_2_i32, class span_const_void>
 requires(semantic::concepts::Size2D<size_2_i32, i32>&&
-             semantic::concepts::Span<span_const_void>) STATICINLINE
-    void compressed_multi_tex_image_2d(
+             semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texunit GLenum
+     * \param target GLenum
+     * \param level GLint
+     * \param internalformat GLenum
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param border GLint
+     * \param imageSize GLsizei
+     * \param bits const void *
+     * \return void
+     */
+    STATICINLINE void compressed_multi_tex_image_2d(
         group::texture_unit    texunit,
         group::texture_target  target,
         i32                    level,
@@ -2149,8 +3043,22 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>&&
 
 template<class size_3_i32, class span_const_void>
 requires(semantic::concepts::Size2D<size_3_i32, i32>&&
-             semantic::concepts::Span<span_const_void>) STATICINLINE
-    void compressed_multi_tex_image_3d(
+             semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texunit GLenum
+     * \param target GLenum
+     * \param level GLint
+     * \param internalformat GLenum
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param depth GLsizei
+     * \param border GLint
+     * \param imageSize GLsizei
+     * \param bits const void *
+     * \return void
+     */
+    STATICINLINE void compressed_multi_tex_image_3d(
         group::texture_unit    texunit,
         group::texture_target  target,
         i32                    level,
@@ -2180,14 +3088,26 @@ requires(semantic::concepts::Size2D<size_3_i32, i32>&&
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>) STATICINLINE
-    void compressed_multi_tex_sub_image_1d(
+requires(semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texunit GLenum
+     * \param target GLenum
+     * \param level GLint
+     * \param xoffset GLint
+     * \param width GLsizei
+     * \param format GLenum
+     * \param imageSize GLsizei
+     * \param bits const void *
+     * \return void
+     */
+    STATICINLINE void compressed_multi_tex_sub_image_1d(
         group::texture_unit    texunit,
         group::texture_target  target,
         i32                    level,
         i32                    xoffset,
         i32                    width,
-        group::pixel_format    format,
+        group::internal_format format,
         span_const_void const& bits)
 {
     using namespace std::string_view_literals;
@@ -2211,14 +3131,28 @@ requires(semantic::concepts::Span<span_const_void>) STATICINLINE
 template<class size_2_i32, class span_const_void, class vec_2_i32>
 requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
                  semantic::concepts::Size2D<size_2_i32, i32>&&
-                 semantic::concepts::Span<span_const_void>) STATICINLINE
-    void compressed_multi_tex_sub_image_2d(
+                 semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texunit GLenum
+     * \param target GLenum
+     * \param level GLint
+     * \param xoffset GLint
+     * \param yoffset GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param format GLenum
+     * \param imageSize GLsizei
+     * \param bits const void *
+     * \return void
+     */
+    STATICINLINE void compressed_multi_tex_sub_image_2d(
         group::texture_unit    texunit,
         group::texture_target  target,
         i32                    level,
         vec_2_i32 const&       xoffset,
         size_2_i32 const&      width,
-        group::pixel_format    format,
+        group::internal_format format,
         span_const_void const& bits)
 {
     using namespace std::string_view_literals;
@@ -2244,14 +3178,30 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
 template<class size_3_i32, class span_const_void, class vec_3_i32>
 requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
                  semantic::concepts::Size2D<size_3_i32, i32>&&
-                 semantic::concepts::Span<span_const_void>) STATICINLINE
-    void compressed_multi_tex_sub_image_3d(
+                 semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texunit GLenum
+     * \param target GLenum
+     * \param level GLint
+     * \param xoffset GLint
+     * \param yoffset GLint
+     * \param zoffset GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param depth GLsizei
+     * \param format GLenum
+     * \param imageSize GLsizei
+     * \param bits const void *
+     * \return void
+     */
+    STATICINLINE void compressed_multi_tex_sub_image_3d(
         group::texture_unit    texunit,
         group::texture_target  target,
         i32                    level,
         vec_3_i32 const&       xoffset,
         size_3_i32 const&      width,
-        group::pixel_format    format,
+        group::internal_format format,
         span_const_void const& bits)
 {
     using namespace std::string_view_literals;
@@ -2277,8 +3227,16 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
 }
 
 template<class span_void>
-requires(semantic::concepts::Span<span_void>) STATICINLINE
-    void get_compressed_multi_tex_image(
+requires(semantic::concepts::Span<span_void>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texunit GLenum
+     * \param target GLenum
+     * \param lod GLint
+     * \param img void *
+     * \return void
+     */
+    STATICINLINE void get_compressed_multi_tex_image(
         group::texture_unit   texunit,
         group::texture_target target,
         i32                   lod,
@@ -2300,8 +3258,14 @@ requires(semantic::concepts::Span<span_void>) STATICINLINE
 template<class span_const_f64>
 requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
          std::decay_t<typename span_const_f64::value_type>,
-         std::decay_t<f64>>) STATICINLINE
-    void matrix_load_transposed(
+         std::decay_t<f64>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param mode GLenum
+     * \param m const GLdouble *
+     * \return void
+     */
+    STATICINLINE void matrix_load_transposed(
         group::matrix_mode mode, span_const_f64 const& m)
 {
     using namespace std::string_view_literals;
@@ -2318,8 +3282,14 @@ requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
 template<class span_const_f32>
 requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
-    void matrix_load_transposef(
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param mode GLenum
+     * \param m const GLfloat *
+     * \return void
+     */
+    STATICINLINE void matrix_load_transposef(
         group::matrix_mode mode, span_const_f32 const& m)
 {
     using namespace std::string_view_literals;
@@ -2336,8 +3306,14 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
 template<class span_const_f64>
 requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
          std::decay_t<typename span_const_f64::value_type>,
-         std::decay_t<f64>>) STATICINLINE
-    void matrix_mult_transposed(
+         std::decay_t<f64>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param mode GLenum
+     * \param m const GLdouble *
+     * \return void
+     */
+    STATICINLINE void matrix_mult_transposed(
         group::matrix_mode mode, span_const_f64 const& m)
 {
     using namespace std::string_view_literals;
@@ -2354,8 +3330,14 @@ requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
 template<class span_const_f32>
 requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
-    void matrix_mult_transposef(
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param mode GLenum
+     * \param m const GLfloat *
+     * \return void
+     */
+    STATICINLINE void matrix_mult_transposef(
         group::matrix_mode mode, span_const_f32 const& m)
 {
     using namespace std::string_view_literals;
@@ -2372,8 +3354,15 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void get_named_buffer_parameter(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param buffer GLuint
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_named_buffer_parameter(
         u32 buffer, group::buffer_prop_arb pname, span_i32 params)
 {
     using namespace std::string_view_literals;
@@ -2390,8 +3379,15 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_void>
-requires(semantic::concepts::Span<span_void>) STATICINLINE
-    void get_named_buffer_pointerv(
+requires(semantic::concepts::Span<span_void>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param buffer GLuint
+     * \param pname GLenum
+     * \param params void **
+     * \return void
+     */
+    STATICINLINE void get_named_buffer_pointerv(
         u32 buffer, group::buffer_pointer_name_arb pname, span_void params)
 {
     using namespace std::string_view_literals;
@@ -2408,8 +3404,16 @@ requires(semantic::concepts::Span<span_void>) STATICINLINE
 }
 
 template<class span_void>
-requires(semantic::concepts::Span<span_void>) STATICINLINE
-    void get_named_buffer_sub_data(
+requires(semantic::concepts::Span<span_void>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param buffer GLuint
+     * \param offset GLintptr
+     * \param size GLsizeiptr
+     * \param data void *
+     * \return void
+     */
+    STATICINLINE void get_named_buffer_sub_data(
         u32 buffer, GLintptr offset, GLsizeiptr size, span_void data)
 {
     using namespace std::string_view_literals;
@@ -2426,6 +3430,12 @@ requires(semantic::concepts::Span<span_void>) STATICINLINE
     detail::error_check("GetNamedBufferSubDataEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param buffer GLuint
+ * \param access GLenum
+ * \return void *
+ */
 STATICINLINE void* map_named_buffer(u32 buffer, group::buffer_access_arb access)
 {
     using namespace std::string_view_literals;
@@ -2440,8 +3450,16 @@ STATICINLINE void* map_named_buffer(u32 buffer, group::buffer_access_arb access)
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>) STATICINLINE
-    void named_buffer_data(
+requires(semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param buffer GLuint
+     * \param size GLsizeiptr
+     * \param data const void *
+     * \param usage GLenum
+     * \return void
+     */
+    STATICINLINE void named_buffer_data(
         u32                               buffer,
         GLsizeiptr                        size,
         span_const_void const&            data,
@@ -2462,8 +3480,16 @@ requires(semantic::concepts::Span<span_const_void>) STATICINLINE
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>) STATICINLINE
-    void named_buffer_sub_data(
+requires(semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param buffer GLuint
+     * \param offset GLintptr
+     * \param size GLsizeiptr
+     * \param data const void *
+     * \return void
+     */
+    STATICINLINE void named_buffer_sub_data(
         u32                    buffer,
         GLintptr               offset,
         GLsizeiptr             size,
@@ -2483,6 +3509,11 @@ requires(semantic::concepts::Span<span_const_void>) STATICINLINE
     detail::error_check("NamedBufferSubDataEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param buffer GLuint
+ * \return Boolean
+ */
 STATICINLINE GLboolean unmap_named_buffer(u32 buffer)
 {
     using namespace std::string_view_literals;
@@ -2496,6 +3527,13 @@ STATICINLINE GLboolean unmap_named_buffer(u32 buffer)
     return out;
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param program GLuint
+ * \param location GLint
+ * \param v0 GLfloat
+ * \return void
+ */
 STATICINLINE void program_uniform(u32 program, i32 location, f32 v0)
 {
     using namespace std::string_view_literals;
@@ -2511,7 +3549,16 @@ STATICINLINE void program_uniform(u32 program, i32 location, f32 v0)
 template<class span_const_f32>
 requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLfloat *
+     * \return void
+     */
+    STATICINLINE
     void program_uniform(u32 program, i32 location, span_const_f32 const& value)
 {
     using namespace std::string_view_literals;
@@ -2528,6 +3575,13 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
     detail::error_check("ProgramUniform1fvEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param program GLuint
+ * \param location GLint
+ * \param v0 GLint
+ * \return void
+ */
 STATICINLINE void program_uniform(u32 program, i32 location, i32 v0)
 {
     using namespace std::string_view_literals;
@@ -2543,7 +3597,16 @@ STATICINLINE void program_uniform(u32 program, i32 location, i32 v0)
 template<class span_const_i32>
 requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLint *
+     * \return void
+     */
+    STATICINLINE
     void program_uniform(u32 program, i32 location, span_const_i32 const& value)
 {
     using namespace std::string_view_literals;
@@ -2561,7 +3624,16 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
 }
 
 template<class vec_2_f32>
-requires(semantic::concepts::Vector<vec_2_f32, f32, 2>) STATICINLINE
+requires(semantic::concepts::Vector<vec_2_f32, f32, 2>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param location GLint
+     * \param v0 GLfloat
+     * \param v1 GLfloat
+     * \return void
+     */
+    STATICINLINE
     void program_uniform(u32 program, i32 location, vec_2_f32 const& v0)
 {
     using namespace std::string_view_literals;
@@ -2577,6 +3649,14 @@ requires(semantic::concepts::Vector<vec_2_f32, f32, 2>) STATICINLINE
 template<class span_const_vec_2_f32>
 requires(semantic::concepts::Span<span_const_vec_2_f32>&& semantic::concepts::
              Vector<typename span_const_vec_2_f32::value_type, f32, 2>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLfloat *
+     * \return void
+     */
     STATICINLINE void program_uniform(
         u32 program, i32 location, i32 count, span_const_vec_2_f32 const& value)
 {
@@ -2595,7 +3675,16 @@ requires(semantic::concepts::Span<span_const_vec_2_f32>&& semantic::concepts::
 }
 
 template<class vec_2_i32>
-requires(semantic::concepts::Vector<vec_2_i32, i32, 2>) STATICINLINE
+requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param location GLint
+     * \param v0 GLint
+     * \param v1 GLint
+     * \return void
+     */
+    STATICINLINE
     void program_uniform(u32 program, i32 location, vec_2_i32 const& v0)
 {
     using namespace std::string_view_literals;
@@ -2611,6 +3700,14 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>) STATICINLINE
 template<class span_const_vec_2_i32>
 requires(semantic::concepts::Span<span_const_vec_2_i32>&& semantic::concepts::
              Vector<typename span_const_vec_2_i32::value_type, i32, 2>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLint *
+     * \return void
+     */
     STATICINLINE void program_uniform(
         u32 program, i32 location, i32 count, span_const_vec_2_i32 const& value)
 {
@@ -2626,7 +3723,17 @@ requires(semantic::concepts::Span<span_const_vec_2_i32>&& semantic::concepts::
 }
 
 template<class vec_3_f32>
-requires(semantic::concepts::Vector<vec_3_f32, f32, 3>) STATICINLINE
+requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param location GLint
+     * \param v0 GLfloat
+     * \param v1 GLfloat
+     * \param v2 GLfloat
+     * \return void
+     */
+    STATICINLINE
     void program_uniform(u32 program, i32 location, vec_3_f32 const& v0)
 {
     using namespace std::string_view_literals;
@@ -2642,6 +3749,14 @@ requires(semantic::concepts::Vector<vec_3_f32, f32, 3>) STATICINLINE
 template<class span_const_vec_3_f32>
 requires(semantic::concepts::Span<span_const_vec_3_f32>&& semantic::concepts::
              Vector<typename span_const_vec_3_f32::value_type, f32, 3>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLfloat *
+     * \return void
+     */
     STATICINLINE void program_uniform(
         u32 program, i32 location, i32 count, span_const_vec_3_f32 const& value)
 {
@@ -2660,7 +3775,17 @@ requires(semantic::concepts::Span<span_const_vec_3_f32>&& semantic::concepts::
 }
 
 template<class vec_3_i32>
-requires(semantic::concepts::Vector<vec_3_i32, i32, 3>) STATICINLINE
+requires(semantic::concepts::Vector<vec_3_i32, i32, 3>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param location GLint
+     * \param v0 GLint
+     * \param v1 GLint
+     * \param v2 GLint
+     * \return void
+     */
+    STATICINLINE
     void program_uniform(u32 program, i32 location, vec_3_i32 const& v0)
 {
     using namespace std::string_view_literals;
@@ -2676,6 +3801,14 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>) STATICINLINE
 template<class span_const_vec_3_i32>
 requires(semantic::concepts::Span<span_const_vec_3_i32>&& semantic::concepts::
              Vector<typename span_const_vec_3_i32::value_type, i32, 3>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLint *
+     * \return void
+     */
     STATICINLINE void program_uniform(
         u32 program, i32 location, i32 count, span_const_vec_3_i32 const& value)
 {
@@ -2691,7 +3824,18 @@ requires(semantic::concepts::Span<span_const_vec_3_i32>&& semantic::concepts::
 }
 
 template<class vec_4_f32>
-requires(semantic::concepts::Vector<vec_4_f32, f32, 4>) STATICINLINE
+requires(semantic::concepts::Vector<vec_4_f32, f32, 4>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param location GLint
+     * \param v0 GLfloat
+     * \param v1 GLfloat
+     * \param v2 GLfloat
+     * \param v3 GLfloat
+     * \return void
+     */
+    STATICINLINE
     void program_uniform(u32 program, i32 location, vec_4_f32 const& v0)
 {
     using namespace std::string_view_literals;
@@ -2707,6 +3851,14 @@ requires(semantic::concepts::Vector<vec_4_f32, f32, 4>) STATICINLINE
 template<class span_const_vec_4_f32>
 requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
              Vector<typename span_const_vec_4_f32::value_type, f32, 4>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLfloat *
+     * \return void
+     */
     STATICINLINE void program_uniform(
         u32 program, i32 location, i32 count, span_const_vec_4_f32 const& value)
 {
@@ -2725,7 +3877,18 @@ requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
 }
 
 template<class vec_4_i32>
-requires(semantic::concepts::Vector<vec_4_i32, i32, 4>) STATICINLINE
+requires(semantic::concepts::Vector<vec_4_i32, i32, 4>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param location GLint
+     * \param v0 GLint
+     * \param v1 GLint
+     * \param v2 GLint
+     * \param v3 GLint
+     * \return void
+     */
+    STATICINLINE
     void program_uniform(u32 program, i32 location, vec_4_i32 const& v0)
 {
     using namespace std::string_view_literals;
@@ -2741,6 +3904,14 @@ requires(semantic::concepts::Vector<vec_4_i32, i32, 4>) STATICINLINE
 template<class span_const_vec_4_i32>
 requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
              Vector<typename span_const_vec_4_i32::value_type, i32, 4>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLint *
+     * \return void
+     */
     STATICINLINE void program_uniform(
         u32 program, i32 location, i32 count, span_const_vec_4_i32 const& value)
 {
@@ -2758,6 +3929,15 @@ requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
 template<class span_const_mat_2x2_f32>
 requires(semantic::concepts::Span<span_const_mat_2x2_f32>&& semantic::concepts::
              Matrix<typename span_const_mat_2x2_f32::value_type, f32, 2, 2>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param transpose GLboolean
+     * \param value const GLfloat *
+     * \return void
+     */
     STATICINLINE void program_uniform(
         u32                           program,
         i32                           location,
@@ -2783,6 +3963,15 @@ requires(semantic::concepts::Span<span_const_mat_2x2_f32>&& semantic::concepts::
 template<class span_const_mat_3x3_f32>
 requires(semantic::concepts::Span<span_const_mat_3x3_f32>&& semantic::concepts::
              Matrix<typename span_const_mat_3x3_f32::value_type, f32, 3, 3>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param transpose GLboolean
+     * \param value const GLfloat *
+     * \return void
+     */
     STATICINLINE void program_uniform(
         u32                           program,
         i32                           location,
@@ -2808,6 +3997,15 @@ requires(semantic::concepts::Span<span_const_mat_3x3_f32>&& semantic::concepts::
 template<class span_const_mat_4x4_f32>
 requires(semantic::concepts::Span<span_const_mat_4x4_f32>&& semantic::concepts::
              Matrix<typename span_const_mat_4x4_f32::value_type, f32, 4, 4>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param transpose GLboolean
+     * \param value const GLfloat *
+     * \return void
+     */
     STATICINLINE void program_uniform(
         u32                           program,
         i32                           location,
@@ -2833,6 +4031,15 @@ requires(semantic::concepts::Span<span_const_mat_4x4_f32>&& semantic::concepts::
 template<class span_const_mat_2x3_f32>
 requires(semantic::concepts::Span<span_const_mat_2x3_f32>&& semantic::concepts::
              Matrix<typename span_const_mat_2x3_f32::value_type, f32, 2, 3>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param transpose GLboolean
+     * \param value const GLfloat *
+     * \return void
+     */
     STATICINLINE void program_uniform(
         u32                           program,
         i32                           location,
@@ -2858,6 +4065,15 @@ requires(semantic::concepts::Span<span_const_mat_2x3_f32>&& semantic::concepts::
 template<class span_const_mat_2x4_f32>
 requires(semantic::concepts::Span<span_const_mat_2x4_f32>&& semantic::concepts::
              Matrix<typename span_const_mat_2x4_f32::value_type, f32, 2, 4>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param transpose GLboolean
+     * \param value const GLfloat *
+     * \return void
+     */
     STATICINLINE void program_uniform(
         u32                           program,
         i32                           location,
@@ -2883,6 +4099,15 @@ requires(semantic::concepts::Span<span_const_mat_2x4_f32>&& semantic::concepts::
 template<class span_const_mat_3x2_f32>
 requires(semantic::concepts::Span<span_const_mat_3x2_f32>&& semantic::concepts::
              Matrix<typename span_const_mat_3x2_f32::value_type, f32, 3, 2>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param transpose GLboolean
+     * \param value const GLfloat *
+     * \return void
+     */
     STATICINLINE void program_uniform(
         u32                           program,
         i32                           location,
@@ -2908,6 +4133,15 @@ requires(semantic::concepts::Span<span_const_mat_3x2_f32>&& semantic::concepts::
 template<class span_const_mat_3x4_f32>
 requires(semantic::concepts::Span<span_const_mat_3x4_f32>&& semantic::concepts::
              Matrix<typename span_const_mat_3x4_f32::value_type, f32, 3, 4>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param transpose GLboolean
+     * \param value const GLfloat *
+     * \return void
+     */
     STATICINLINE void program_uniform(
         u32                           program,
         i32                           location,
@@ -2933,6 +4167,15 @@ requires(semantic::concepts::Span<span_const_mat_3x4_f32>&& semantic::concepts::
 template<class span_const_mat_4x2_f32>
 requires(semantic::concepts::Span<span_const_mat_4x2_f32>&& semantic::concepts::
              Matrix<typename span_const_mat_4x2_f32::value_type, f32, 4, 2>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param transpose GLboolean
+     * \param value const GLfloat *
+     * \return void
+     */
     STATICINLINE void program_uniform(
         u32                           program,
         i32                           location,
@@ -2958,6 +4201,15 @@ requires(semantic::concepts::Span<span_const_mat_4x2_f32>&& semantic::concepts::
 template<class span_const_mat_4x3_f32>
 requires(semantic::concepts::Span<span_const_mat_4x3_f32>&& semantic::concepts::
              Matrix<typename span_const_mat_4x3_f32::value_type, f32, 4, 3>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param transpose GLboolean
+     * \param value const GLfloat *
+     * \return void
+     */
     STATICINLINE void program_uniform(
         u32                           program,
         i32                           location,
@@ -2980,6 +4232,14 @@ requires(semantic::concepts::Span<span_const_mat_4x3_f32>&& semantic::concepts::
     detail::error_check("ProgramUniformMatrix4x3fvEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param texunit GLenum
+ * \param target GLenum
+ * \param internalformat GLenum
+ * \param buffer GLuint
+ * \return void
+ */
 STATICINLINE void multi_tex_buffer(
     group::texture_unit    texunit,
     group::texture_target  target,
@@ -3000,6 +4260,14 @@ STATICINLINE void multi_tex_buffer(
     detail::error_check("MultiTexBufferEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param texture GLuint
+ * \param target GLenum
+ * \param internalformat GLenum
+ * \param buffer GLuint
+ * \return void
+ */
 STATICINLINE void texture_buffer(
     u32                          texture,
     group::texture_target        target,
@@ -3024,8 +4292,16 @@ STATICINLINE void texture_buffer(
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void get_multi_tex_parameter_iiv(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texunit GLenum
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_multi_tex_parameter_iiv(
         group::texture_unit          texunit,
         group::texture_target        target,
         group::get_texture_parameter pname,
@@ -3047,8 +4323,16 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 template<class span_u32>
 requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>) STATICINLINE
-    void get_multi_tex_parameter_iuiv(
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texunit GLenum
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params GLuint *
+     * \return void
+     */
+    STATICINLINE void get_multi_tex_parameter_iuiv(
         group::texture_unit          texunit,
         group::texture_target        target,
         group::get_texture_parameter pname,
@@ -3070,8 +4354,16 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void get_texture_parameter_iiv(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texture GLuint
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_texture_parameter_iiv(
         u32                          texture,
         group::texture_target        target,
         group::get_texture_parameter pname,
@@ -3094,8 +4386,16 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 template<class span_u32>
 requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>) STATICINLINE
-    void get_texture_parameter_iuiv(
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texture GLuint
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params GLuint *
+     * \return void
+     */
+    STATICINLINE void get_texture_parameter_iuiv(
         u32                          texture,
         group::texture_target        target,
         group::get_texture_parameter pname,
@@ -3118,8 +4418,16 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 template<class span_const_i32>
 requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void multi_tex_parameter_iiv(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texunit GLenum
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params const GLint *
+     * \return void
+     */
+    STATICINLINE void multi_tex_parameter_iiv(
         group::texture_unit           texunit,
         group::texture_target         target,
         group::texture_parameter_name pname,
@@ -3142,8 +4450,16 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
 template<class span_const_u32>
 requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>) STATICINLINE
-    void multi_tex_parameter_iuiv(
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texunit GLenum
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params const GLuint *
+     * \return void
+     */
+    STATICINLINE void multi_tex_parameter_iuiv(
         group::texture_unit           texunit,
         group::texture_target         target,
         group::texture_parameter_name pname,
@@ -3166,8 +4482,16 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
 template<class span_const_i32>
 requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void texture_parameter_iiv(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texture GLuint
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params const GLint *
+     * \return void
+     */
+    STATICINLINE void texture_parameter_iiv(
         u32                           texture,
         group::texture_target         target,
         group::texture_parameter_name pname,
@@ -3191,8 +4515,16 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
 template<class span_const_u32>
 requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>) STATICINLINE
-    void texture_parameter_iuiv(
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texture GLuint
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params const GLuint *
+     * \return void
+     */
+    STATICINLINE void texture_parameter_iuiv(
         u32                           texture,
         group::texture_target         target,
         group::texture_parameter_name pname,
@@ -3213,6 +4545,13 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
     detail::error_check("TextureParameterIuivEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param program GLuint
+ * \param location GLint
+ * \param v0 GLuint
+ * \return void
+ */
 STATICINLINE void program_uniform(u32 program, i32 location, u32 v0)
 {
     using namespace std::string_view_literals;
@@ -3228,7 +4567,16 @@ STATICINLINE void program_uniform(u32 program, i32 location, u32 v0)
 template<class span_const_u32>
 requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>) STATICINLINE
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLuint *
+     * \return void
+     */
+    STATICINLINE
     void program_uniform(u32 program, i32 location, span_const_u32 const& value)
 {
     using namespace std::string_view_literals;
@@ -3246,7 +4594,16 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
 }
 
 template<class vec_2_u32>
-requires(semantic::concepts::Vector<vec_2_u32, u32, 2>) STATICINLINE
+requires(semantic::concepts::Vector<vec_2_u32, u32, 2>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param location GLint
+     * \param v0 GLuint
+     * \param v1 GLuint
+     * \return void
+     */
+    STATICINLINE
     void program_uniform(u32 program, i32 location, vec_2_u32 const& v0)
 {
     using namespace std::string_view_literals;
@@ -3262,6 +4619,14 @@ requires(semantic::concepts::Vector<vec_2_u32, u32, 2>) STATICINLINE
 template<class span_const_vec_2_u32>
 requires(semantic::concepts::Span<span_const_vec_2_u32>&& semantic::concepts::
              Vector<typename span_const_vec_2_u32::value_type, u32, 2>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLuint *
+     * \return void
+     */
     STATICINLINE void program_uniform(
         u32 program, i32 location, i32 count, span_const_vec_2_u32 const& value)
 {
@@ -3280,7 +4645,17 @@ requires(semantic::concepts::Span<span_const_vec_2_u32>&& semantic::concepts::
 }
 
 template<class vec_3_u32>
-requires(semantic::concepts::Vector<vec_3_u32, u32, 3>) STATICINLINE
+requires(semantic::concepts::Vector<vec_3_u32, u32, 3>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param location GLint
+     * \param v0 GLuint
+     * \param v1 GLuint
+     * \param v2 GLuint
+     * \return void
+     */
+    STATICINLINE
     void program_uniform(u32 program, i32 location, vec_3_u32 const& v0)
 {
     using namespace std::string_view_literals;
@@ -3296,6 +4671,14 @@ requires(semantic::concepts::Vector<vec_3_u32, u32, 3>) STATICINLINE
 template<class span_const_vec_3_u32>
 requires(semantic::concepts::Span<span_const_vec_3_u32>&& semantic::concepts::
              Vector<typename span_const_vec_3_u32::value_type, u32, 3>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLuint *
+     * \return void
+     */
     STATICINLINE void program_uniform(
         u32 program, i32 location, i32 count, span_const_vec_3_u32 const& value)
 {
@@ -3314,7 +4697,18 @@ requires(semantic::concepts::Span<span_const_vec_3_u32>&& semantic::concepts::
 }
 
 template<class vec_4_u32>
-requires(semantic::concepts::Vector<vec_4_u32, u32, 4>) STATICINLINE
+requires(semantic::concepts::Vector<vec_4_u32, u32, 4>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param location GLint
+     * \param v0 GLuint
+     * \param v1 GLuint
+     * \param v2 GLuint
+     * \param v3 GLuint
+     * \return void
+     */
+    STATICINLINE
     void program_uniform(u32 program, i32 location, vec_4_u32 const& v0)
 {
     using namespace std::string_view_literals;
@@ -3330,6 +4724,14 @@ requires(semantic::concepts::Vector<vec_4_u32, u32, 4>) STATICINLINE
 template<class span_const_vec_4_u32>
 requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
              Vector<typename span_const_vec_4_u32::value_type, u32, 4>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLuint *
+     * \return void
+     */
     STATICINLINE void program_uniform(
         u32 program, i32 location, i32 count, span_const_vec_4_u32 const& value)
 {
@@ -3350,6 +4752,15 @@ requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
 template<class span_const_vec_4_f32>
 requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
              Vector<typename span_const_vec_4_f32::value_type, f32, 4>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param target GLenum
+     * \param index GLuint
+     * \param count GLsizei
+     * \param params const GLfloat *
+     * \return void
+     */
     STATICINLINE void named_program_local_parameters4fv(
         u32                         program,
         group::program_target       target,
@@ -3375,8 +4786,16 @@ requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void get_named_program_local_parameter_iiv(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param target GLenum
+     * \param index GLuint
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_named_program_local_parameter_iiv(
         u32 program, group::program_target target, u32 index, span_i32 params)
 {
     using namespace std::string_view_literals;
@@ -3396,8 +4815,16 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 template<class span_u32>
 requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>) STATICINLINE
-    void get_named_program_local_parameter_iuiv(
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param target GLenum
+     * \param index GLuint
+     * \param params GLuint *
+     * \return void
+     */
+    STATICINLINE void get_named_program_local_parameter_iuiv(
         u32 program, group::program_target target, u32 index, span_u32 params)
 {
     using namespace std::string_view_literals;
@@ -3415,8 +4842,19 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 }
 
 template<class vec_4_i32>
-requires(semantic::concepts::Vector<vec_4_i32, i32, 4>) STATICINLINE
-    void named_program_local_parameter_i4i(
+requires(semantic::concepts::Vector<vec_4_i32, i32, 4>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param target GLenum
+     * \param index GLuint
+     * \param x GLint
+     * \param y GLint
+     * \param z GLint
+     * \param w GLint
+     * \return void
+     */
+    STATICINLINE void named_program_local_parameter_i4i(
         u32                   program,
         group::program_target target,
         u32                   index,
@@ -3442,6 +4880,14 @@ requires(semantic::concepts::Vector<vec_4_i32, i32, 4>) STATICINLINE
 template<class span_const_vec_4_i32>
 requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
              Vector<typename span_const_vec_4_i32::value_type, i32, 4>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param target GLenum
+     * \param index GLuint
+     * \param params const GLint *
+     * \return void
+     */
     STATICINLINE void named_program_local_parameter_i4iv(
         u32                         program,
         group::program_target       target,
@@ -3463,8 +4909,19 @@ requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
 }
 
 template<class vec_4_u32>
-requires(semantic::concepts::Vector<vec_4_u32, u32, 4>) STATICINLINE
-    void named_program_local_parameter_i4ui(
+requires(semantic::concepts::Vector<vec_4_u32, u32, 4>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param target GLenum
+     * \param index GLuint
+     * \param x GLuint
+     * \param y GLuint
+     * \param z GLuint
+     * \param w GLuint
+     * \return void
+     */
+    STATICINLINE void named_program_local_parameter_i4ui(
         u32                   program,
         group::program_target target,
         u32                   index,
@@ -3490,6 +4947,14 @@ requires(semantic::concepts::Vector<vec_4_u32, u32, 4>) STATICINLINE
 template<class span_const_vec_4_u32>
 requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
              Vector<typename span_const_vec_4_u32::value_type, u32, 4>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param target GLenum
+     * \param index GLuint
+     * \param params const GLuint *
+     * \return void
+     */
     STATICINLINE void named_program_local_parameter_i4uiv(
         u32                         program,
         group::program_target       target,
@@ -3513,6 +4978,15 @@ requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
 template<class span_const_vec_4_i32>
 requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
              Vector<typename span_const_vec_4_i32::value_type, i32, 4>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param target GLenum
+     * \param index GLuint
+     * \param count GLsizei
+     * \param params const GLint *
+     * \return void
+     */
     STATICINLINE void named_program_local_parameters_i4iv(
         u32                         program,
         group::program_target       target,
@@ -3538,6 +5012,15 @@ requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
 template<class span_const_vec_4_u32>
 requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
              Vector<typename span_const_vec_4_u32::value_type, u32, 4>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param target GLenum
+     * \param index GLuint
+     * \param count GLsizei
+     * \param params const GLuint *
+     * \return void
+     */
     STATICINLINE void named_program_local_parameters_i4uiv(
         u32                         program,
         group::program_target       target,
@@ -3560,6 +5043,12 @@ requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
     detail::error_check("NamedProgramLocalParametersI4uivEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param array GLenum
+ * \param index GLuint
+ * \return void
+ */
 STATICINLINE void disable_client_statei(group::enable_cap array, u32 index)
 {
     using namespace std::string_view_literals;
@@ -3571,6 +5060,12 @@ STATICINLINE void disable_client_statei(group::enable_cap array, u32 index)
     detail::error_check("DisableClientStateiEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param array GLenum
+ * \param index GLuint
+ * \return void
+ */
 STATICINLINE void enable_client_statei(group::enable_cap array, u32 index)
 {
     using namespace std::string_view_literals;
@@ -3585,7 +5080,15 @@ STATICINLINE void enable_client_statei(group::enable_cap array, u32 index)
 template<class span_f64>
 requires(semantic::concepts::Span<span_f64>&& std::is_same_v<
          std::decay_t<typename span_f64::value_type>,
-         std::decay_t<f64>>) STATICINLINE
+         std::decay_t<f64>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param pname GLenum
+     * \param index GLuint
+     * \param params GLdouble *
+     * \return void
+     */
+    STATICINLINE
     void get_doublei_v(group::get_prop pname, u32 index, span_f64 params)
 {
     using namespace std::string_view_literals;
@@ -3603,7 +5106,15 @@ requires(semantic::concepts::Span<span_f64>&& std::is_same_v<
 template<class span_f32>
 requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param pname GLenum
+     * \param index GLuint
+     * \param params GLfloat *
+     * \return void
+     */
+    STATICINLINE
     void get_floati_v(group::get_prop pname, u32 index, span_f32 params)
 {
     using namespace std::string_view_literals;
@@ -3619,8 +5130,15 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 }
 
 template<class span_void>
-requires(semantic::concepts::Span<span_void>) STATICINLINE
-    void get_pointeri_v(GLenum pname, u32 index, span_void params)
+requires(semantic::concepts::Span<span_void>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param pname GLenum
+     * \param index GLuint
+     * \param params void **
+     * \return void
+     */
+    STATICINLINE void get_pointeri_v(GLenum pname, u32 index, span_void params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -3637,8 +5155,16 @@ requires(semantic::concepts::Span<span_void>) STATICINLINE
 template<class span_f64>
 requires(semantic::concepts::Span<span_f64>&& std::is_same_v<
          std::decay_t<typename span_f64::value_type>,
-         std::decay_t<f64>>) STATICINLINE
-    void get_named_program_local_parameter(
+         std::decay_t<f64>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param target GLenum
+     * \param index GLuint
+     * \param params GLdouble *
+     * \return void
+     */
+    STATICINLINE void get_named_program_local_parameter(
         u32 program, group::program_target target, u32 index, span_f64 params)
 {
     using namespace std::string_view_literals;
@@ -3658,8 +5184,16 @@ requires(semantic::concepts::Span<span_f64>&& std::is_same_v<
 template<class span_f32>
 requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
-    void get_named_program_local_parameter(
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param target GLenum
+     * \param index GLuint
+     * \param params GLfloat *
+     * \return void
+     */
+    STATICINLINE void get_named_program_local_parameter(
         u32 program, group::program_target target, u32 index, span_f32 params)
 {
     using namespace std::string_view_literals;
@@ -3677,8 +5211,16 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 }
 
 template<class span_void>
-requires(semantic::concepts::Span<span_void>) STATICINLINE
-    void get_named_program_string(
+requires(semantic::concepts::Span<span_void>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param target GLenum
+     * \param pname GLenum
+     * \param string void *
+     * \return void
+     */
+    STATICINLINE void get_named_program_string(
         u32                            program,
         group::program_target          target,
         group::program_string_property pname,
@@ -3698,6 +5240,14 @@ requires(semantic::concepts::Span<span_void>) STATICINLINE
     detail::error_check("GetNamedProgramStringEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param program GLuint
+ * \param target GLenum
+ * \param pname GLenum
+ * \param params GLint *
+ * \return void
+ */
 STATICINLINE void get_named_programiv(
     u32                         program,
     group::program_target       target,
@@ -3719,8 +5269,19 @@ STATICINLINE void get_named_programiv(
 }
 
 template<class vec_4_f64>
-requires(semantic::concepts::Vector<vec_4_f64, f64, 4>) STATICINLINE
-    void named_program_local_parameter4d(
+requires(semantic::concepts::Vector<vec_4_f64, f64, 4>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param target GLenum
+     * \param index GLuint
+     * \param x GLdouble
+     * \param y GLdouble
+     * \param z GLdouble
+     * \param w GLdouble
+     * \return void
+     */
+    STATICINLINE void named_program_local_parameter4d(
         u32                   program,
         group::program_target target,
         u32                   index,
@@ -3746,6 +5307,14 @@ requires(semantic::concepts::Vector<vec_4_f64, f64, 4>) STATICINLINE
 template<class span_const_vec_4_f64>
 requires(semantic::concepts::Span<span_const_vec_4_f64>&& semantic::concepts::
              Vector<typename span_const_vec_4_f64::value_type, f64, 4>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param target GLenum
+     * \param index GLuint
+     * \param params const GLdouble *
+     * \return void
+     */
     STATICINLINE void named_program_local_parameter4dv(
         u32                         program,
         group::program_target       target,
@@ -3767,8 +5336,19 @@ requires(semantic::concepts::Span<span_const_vec_4_f64>&& semantic::concepts::
 }
 
 template<class vec_4_f32>
-requires(semantic::concepts::Vector<vec_4_f32, f32, 4>) STATICINLINE
-    void named_program_local_parameter4f(
+requires(semantic::concepts::Vector<vec_4_f32, f32, 4>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param target GLenum
+     * \param index GLuint
+     * \param x GLfloat
+     * \param y GLfloat
+     * \param z GLfloat
+     * \param w GLfloat
+     * \return void
+     */
+    STATICINLINE void named_program_local_parameter4f(
         u32                   program,
         group::program_target target,
         u32                   index,
@@ -3794,6 +5374,14 @@ requires(semantic::concepts::Vector<vec_4_f32, f32, 4>) STATICINLINE
 template<class span_const_vec_4_f32>
 requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
              Vector<typename span_const_vec_4_f32::value_type, f32, 4>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param target GLenum
+     * \param index GLuint
+     * \param params const GLfloat *
+     * \return void
+     */
     STATICINLINE void named_program_local_parameter4fv(
         u32                         program,
         group::program_target       target,
@@ -3815,8 +5403,17 @@ requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>) STATICINLINE
-    void named_program_string(
+requires(semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param target GLenum
+     * \param format GLenum
+     * \param len GLsizei
+     * \param string const void *
+     * \return void
+     */
+    STATICINLINE void named_program_string(
         u32                    program,
         group::program_target  target,
         group::program_format  format,
@@ -3841,8 +5438,15 @@ requires(semantic::concepts::Span<span_const_void>) STATICINLINE
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void get_named_renderbuffer_parameter(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param renderbuffer GLuint
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_named_renderbuffer_parameter(
         u32                                renderbuffer,
         group::renderbuffer_parameter_name pname,
         span_i32                           params)
@@ -3861,8 +5465,16 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class size_2_i32>
-requires(semantic::concepts::Size2D<size_2_i32, i32>) STATICINLINE
-    void named_renderbuffer_storage(
+requires(semantic::concepts::Size2D<size_2_i32, i32>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param renderbuffer GLuint
+     * \param internalformat GLenum
+     * \param width GLsizei
+     * \param height GLsizei
+     * \return void
+     */
+    STATICINLINE void named_renderbuffer_storage(
         u32                    renderbuffer,
         group::internal_format internalformat,
         size_2_i32 const&      width)
@@ -3879,8 +5491,17 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>) STATICINLINE
 }
 
 template<class size_2_i32>
-requires(semantic::concepts::Size2D<size_2_i32, i32>) STATICINLINE
-    void named_renderbuffer_storage_multisample(
+requires(semantic::concepts::Size2D<size_2_i32, i32>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param renderbuffer GLuint
+     * \param samples GLsizei
+     * \param internalformat GLenum
+     * \param width GLsizei
+     * \param height GLsizei
+     * \return void
+     */
+    STATICINLINE void named_renderbuffer_storage_multisample(
         u32                    renderbuffer,
         i32                    samples,
         group::internal_format internalformat,
@@ -3902,8 +5523,18 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>) STATICINLINE
 }
 
 template<class size_2_i32>
-requires(semantic::concepts::Size2D<size_2_i32, i32>) STATICINLINE
-    void named_renderbuffer_storage_multisample_coverage(
+requires(semantic::concepts::Size2D<size_2_i32, i32>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param renderbuffer GLuint
+     * \param coverageSamples GLsizei
+     * \param colorSamples GLsizei
+     * \param internalformat GLenum
+     * \param width GLsizei
+     * \param height GLsizei
+     * \return void
+     */
+    STATICINLINE void named_renderbuffer_storage_multisample_coverage(
         u32                    renderbuffer,
         i32                    coverageSamples,
         i32                    colorSamples,
@@ -3926,6 +5557,12 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>) STATICINLINE
     detail::error_check("NamedRenderbufferStorageMultisampleCoverageEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param framebuffer GLuint
+ * \param target GLenum
+ * \return FramebufferStatus
+ */
 STATICINLINE GLenum check_named_framebuffer_status(
     u32 framebuffer, group::framebuffer_target target)
 {
@@ -3944,8 +5581,16 @@ STATICINLINE GLenum check_named_framebuffer_status(
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void get_named_framebuffer_attachment_parameter(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param framebuffer GLuint
+     * \param attachment GLenum
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_named_framebuffer_attachment_parameter(
         u32                                          framebuffer,
         group::framebuffer_attachment                attachment,
         group::framebuffer_attachment_parameter_name pname,
@@ -3965,6 +5610,14 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
     detail::error_check("GetNamedFramebufferAttachmentParameterivEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param framebuffer GLuint
+ * \param attachment GLenum
+ * \param renderbuffertarget GLenum
+ * \param renderbuffer GLuint
+ * \return void
+ */
 STATICINLINE void named_framebuffer_renderbuffer(
     u32                           framebuffer,
     group::framebuffer_attachment attachment,
@@ -3986,6 +5639,15 @@ STATICINLINE void named_framebuffer_renderbuffer(
     detail::error_check("NamedFramebufferRenderbufferEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param framebuffer GLuint
+ * \param attachment GLenum
+ * \param textarget GLenum
+ * \param texture GLuint
+ * \param level GLint
+ * \return void
+ */
 STATICINLINE void named_framebuffer_texture_1d(
     u32                           framebuffer,
     group::framebuffer_attachment attachment,
@@ -4009,6 +5671,15 @@ STATICINLINE void named_framebuffer_texture_1d(
     detail::error_check("NamedFramebufferTexture1DEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param framebuffer GLuint
+ * \param attachment GLenum
+ * \param textarget GLenum
+ * \param texture GLuint
+ * \param level GLint
+ * \return void
+ */
 STATICINLINE void named_framebuffer_texture_2d(
     u32                           framebuffer,
     group::framebuffer_attachment attachment,
@@ -4032,6 +5703,16 @@ STATICINLINE void named_framebuffer_texture_2d(
     detail::error_check("NamedFramebufferTexture2DEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param framebuffer GLuint
+ * \param attachment GLenum
+ * \param textarget GLenum
+ * \param texture GLuint
+ * \param level GLint
+ * \param zoffset GLint
+ * \return void
+ */
 STATICINLINE void named_framebuffer_texture_3d(
     u32                           framebuffer,
     group::framebuffer_attachment attachment,
@@ -4057,6 +5738,12 @@ STATICINLINE void named_framebuffer_texture_3d(
     detail::error_check("NamedFramebufferTexture3DEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param texunit GLenum
+ * \param target GLenum
+ * \return void
+ */
 STATICINLINE void generate_multi_tex_mipmap(
     group::texture_unit texunit, group::texture_target target)
 {
@@ -4070,6 +5757,12 @@ STATICINLINE void generate_multi_tex_mipmap(
     detail::error_check("GenerateMultiTexMipmapEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param texture GLuint
+ * \param target GLenum
+ * \return void
+ */
 STATICINLINE void generate_texture_mipmap(
     u32 texture, group::texture_target target)
 {
@@ -4083,6 +5776,12 @@ STATICINLINE void generate_texture_mipmap(
     detail::error_check("GenerateTextureMipmapEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param framebuffer GLuint
+ * \param mode GLenum
+ * \return void
+ */
 STATICINLINE void framebuffer_draw_buffer(
     u32 framebuffer, group::draw_buffer_mode mode)
 {
@@ -4099,8 +5798,15 @@ STATICINLINE void framebuffer_draw_buffer(
 template<class span_const_draw_buffer_mode>
 requires(semantic::concepts::Span<span_const_draw_buffer_mode>&& std::is_same_v<
          std::decay_t<typename span_const_draw_buffer_mode::value_type>,
-         std::decay_t<group::draw_buffer_mode>>) STATICINLINE
-    void framebuffer_draw_buffers(
+         std::decay_t<group::draw_buffer_mode>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param framebuffer GLuint
+     * \param n GLsizei
+     * \param bufs const GLenum *
+     * \return void
+     */
+    STATICINLINE void framebuffer_draw_buffers(
         u32 framebuffer, span_const_draw_buffer_mode const& bufs)
 {
     using namespace std::string_view_literals;
@@ -4116,6 +5822,12 @@ requires(semantic::concepts::Span<span_const_draw_buffer_mode>&& std::is_same_v<
     detail::error_check("FramebufferDrawBuffersEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param framebuffer GLuint
+ * \param mode GLenum
+ * \return void
+ */
 STATICINLINE void framebuffer_read_buffer(
     u32 framebuffer, group::read_buffer_mode mode)
 {
@@ -4132,8 +5844,15 @@ STATICINLINE void framebuffer_read_buffer(
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void get_framebuffer_parameter(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param framebuffer GLuint
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_framebuffer_parameter(
         u32                              framebuffer,
         group::get_framebuffer_parameter pname,
         span_i32                         params)
@@ -4151,6 +5870,15 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
     detail::error_check("GetFramebufferParameterivEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param readBuffer GLuint
+ * \param writeBuffer GLuint
+ * \param readOffset GLintptr
+ * \param writeOffset GLintptr
+ * \param size GLsizeiptr
+ * \return void
+ */
 STATICINLINE void named_copy_buffer_sub_data(
     u32        readBuffer,
     u32        writeBuffer,
@@ -4168,6 +5896,14 @@ STATICINLINE void named_copy_buffer_sub_data(
     detail::error_check("NamedCopyBufferSubDataEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param framebuffer GLuint
+ * \param attachment GLenum
+ * \param texture GLuint
+ * \param level GLint
+ * \return void
+ */
 STATICINLINE void named_framebuffer_texture(
     u32                           framebuffer,
     group::framebuffer_attachment attachment,
@@ -4186,6 +5922,15 @@ STATICINLINE void named_framebuffer_texture(
     detail::error_check("NamedFramebufferTextureEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param framebuffer GLuint
+ * \param attachment GLenum
+ * \param texture GLuint
+ * \param level GLint
+ * \param face GLenum
+ * \return void
+ */
 STATICINLINE void named_framebuffer_texture_face(
     u32                           framebuffer,
     group::framebuffer_attachment attachment,
@@ -4209,6 +5954,15 @@ STATICINLINE void named_framebuffer_texture_face(
     detail::error_check("NamedFramebufferTextureFaceEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param framebuffer GLuint
+ * \param attachment GLenum
+ * \param texture GLuint
+ * \param level GLint
+ * \param layer GLint
+ * \return void
+ */
 STATICINLINE void named_framebuffer_texture_layer(
     u32                           framebuffer,
     group::framebuffer_attachment attachment,
@@ -4228,6 +5982,13 @@ STATICINLINE void named_framebuffer_texture_layer(
     detail::error_check("NamedFramebufferTextureLayerEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param texunit GLenum
+ * \param target GLenum
+ * \param renderbuffer GLuint
+ * \return void
+ */
 STATICINLINE void multi_tex_renderbuffer(
     group::texture_unit texunit, group::texture_target target, u32 renderbuffer)
 {
@@ -4244,6 +6005,13 @@ STATICINLINE void multi_tex_renderbuffer(
     detail::error_check("MultiTexRenderbufferEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param texture GLuint
+ * \param target GLenum
+ * \param renderbuffer GLuint
+ * \return void
+ */
 STATICINLINE void texture_renderbuffer(
     u32 texture, group::texture_target target, u32 renderbuffer)
 {
@@ -4259,6 +6027,16 @@ STATICINLINE void texture_renderbuffer(
     detail::error_check("TextureRenderbufferEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param vaobj GLuint
+ * \param buffer GLuint
+ * \param size GLint
+ * \param type GLenum
+ * \param stride GLsizei
+ * \param offset GLintptr
+ * \return void
+ */
 STATICINLINE void vertex_array_color_offset(
     u32                       vaobj,
     u32                       buffer,
@@ -4279,6 +6057,14 @@ STATICINLINE void vertex_array_color_offset(
     detail::error_check("VertexArrayColorOffsetEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param vaobj GLuint
+ * \param buffer GLuint
+ * \param stride GLsizei
+ * \param offset GLintptr
+ * \return void
+ */
 STATICINLINE void vertex_array_edge_flag_offset(
     u32 vaobj, u32 buffer, i32 stride, GLintptr offset)
 {
@@ -4293,6 +6079,15 @@ STATICINLINE void vertex_array_edge_flag_offset(
     detail::error_check("VertexArrayEdgeFlagOffsetEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param vaobj GLuint
+ * \param buffer GLuint
+ * \param type GLenum
+ * \param stride GLsizei
+ * \param offset GLintptr
+ * \return void
+ */
 STATICINLINE void vertex_array_fog_coord_offset(
     u32                                vaobj,
     u32                                buffer,
@@ -4312,6 +6107,15 @@ STATICINLINE void vertex_array_fog_coord_offset(
     detail::error_check("VertexArrayFogCoordOffsetEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param vaobj GLuint
+ * \param buffer GLuint
+ * \param type GLenum
+ * \param stride GLsizei
+ * \param offset GLintptr
+ * \return void
+ */
 STATICINLINE void vertex_array_index_offset(
     u32                       vaobj,
     u32                       buffer,
@@ -4331,6 +6135,17 @@ STATICINLINE void vertex_array_index_offset(
     detail::error_check("VertexArrayIndexOffsetEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param vaobj GLuint
+ * \param buffer GLuint
+ * \param texunit GLenum
+ * \param size GLint
+ * \param type GLenum
+ * \param stride GLsizei
+ * \param offset GLintptr
+ * \return void
+ */
 STATICINLINE void vertex_array_multi_tex_coord_offset(
     u32                           vaobj,
     u32                           buffer,
@@ -4358,6 +6173,15 @@ STATICINLINE void vertex_array_multi_tex_coord_offset(
     detail::error_check("VertexArrayMultiTexCoordOffsetEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param vaobj GLuint
+ * \param buffer GLuint
+ * \param type GLenum
+ * \param stride GLsizei
+ * \param offset GLintptr
+ * \return void
+ */
 STATICINLINE void vertex_array_normal_offset(
     u32                        vaobj,
     u32                        buffer,
@@ -4377,6 +6201,16 @@ STATICINLINE void vertex_array_normal_offset(
     detail::error_check("VertexArrayNormalOffsetEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param vaobj GLuint
+ * \param buffer GLuint
+ * \param size GLint
+ * \param type GLenum
+ * \param stride GLsizei
+ * \param offset GLintptr
+ * \return void
+ */
 STATICINLINE void vertex_array_secondary_color_offset(
     u32                       vaobj,
     u32                       buffer,
@@ -4397,6 +6231,16 @@ STATICINLINE void vertex_array_secondary_color_offset(
     detail::error_check("VertexArraySecondaryColorOffsetEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param vaobj GLuint
+ * \param buffer GLuint
+ * \param size GLint
+ * \param type GLenum
+ * \param stride GLsizei
+ * \param offset GLintptr
+ * \return void
+ */
 STATICINLINE void vertex_array_tex_coord_offset(
     u32                           vaobj,
     u32                           buffer,
@@ -4417,6 +6261,17 @@ STATICINLINE void vertex_array_tex_coord_offset(
     detail::error_check("VertexArrayTexCoordOffsetEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param vaobj GLuint
+ * \param buffer GLuint
+ * \param index GLuint
+ * \param size GLint
+ * \param type GLenum
+ * \param stride GLsizei
+ * \param offset GLintptr
+ * \return void
+ */
 STATICINLINE void vertex_array_vertex_attrib_i_offset(
     u32                       vaobj,
     u32                       buffer,
@@ -4438,6 +6293,18 @@ STATICINLINE void vertex_array_vertex_attrib_i_offset(
     detail::error_check("VertexArrayVertexAttribIOffsetEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param vaobj GLuint
+ * \param buffer GLuint
+ * \param index GLuint
+ * \param size GLint
+ * \param type GLenum
+ * \param normalized GLboolean
+ * \param stride GLsizei
+ * \param offset GLintptr
+ * \return void
+ */
 STATICINLINE void vertex_array_vertex_attrib_offset(
     u32                               vaobj,
     u32                               buffer,
@@ -4467,6 +6334,16 @@ STATICINLINE void vertex_array_vertex_attrib_offset(
     detail::error_check("VertexArrayVertexAttribOffsetEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param vaobj GLuint
+ * \param buffer GLuint
+ * \param size GLint
+ * \param type GLenum
+ * \param stride GLsizei
+ * \param offset GLintptr
+ * \return void
+ */
 STATICINLINE void vertex_array_vertex_offset(
     u32                        vaobj,
     u32                        buffer,
@@ -4487,6 +6364,12 @@ STATICINLINE void vertex_array_vertex_offset(
     detail::error_check("VertexArrayVertexOffsetEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param vaobj GLuint
+ * \param array GLenum
+ * \return void
+ */
 STATICINLINE void disable_vertex_array(u32 vaobj, group::enable_cap array)
 {
     using namespace std::string_view_literals;
@@ -4499,6 +6382,12 @@ STATICINLINE void disable_vertex_array(u32 vaobj, group::enable_cap array)
     detail::error_check("DisableVertexArrayEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param vaobj GLuint
+ * \param array GLenum
+ * \return void
+ */
 STATICINLINE void enable_vertex_array(u32 vaobj, group::enable_cap array)
 {
     using namespace std::string_view_literals;
@@ -4511,6 +6400,12 @@ STATICINLINE void enable_vertex_array(u32 vaobj, group::enable_cap array)
     detail::error_check("EnableVertexArrayEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param vaobj GLuint
+ * \param index GLuint
+ * \return void
+ */
 STATICINLINE void disable_vertex_array_attrib(u32 vaobj, u32 index)
 {
     using namespace std::string_view_literals;
@@ -4523,6 +6418,12 @@ STATICINLINE void disable_vertex_array_attrib(u32 vaobj, u32 index)
     detail::error_check("DisableVertexArrayAttribEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param vaobj GLuint
+ * \param index GLuint
+ * \return void
+ */
 STATICINLINE void enable_vertex_array_attrib(u32 vaobj, u32 index)
 {
     using namespace std::string_view_literals;
@@ -4538,8 +6439,16 @@ STATICINLINE void enable_vertex_array_attrib(u32 vaobj, u32 index)
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void get_vertex_array_integeri_v(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param vaobj GLuint
+     * \param index GLuint
+     * \param pname GLenum
+     * \param param GLint *
+     * \return void
+     */
+    STATICINLINE void get_vertex_array_integeri_v(
         u32 vaobj, u32 index, group::vertex_array_prop pname, span_i32 param)
 {
     using namespace std::string_view_literals;
@@ -4559,8 +6468,15 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void get_vertex_array_integerv(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param vaobj GLuint
+     * \param pname GLenum
+     * \param param GLint *
+     * \return void
+     */
+    STATICINLINE void get_vertex_array_integerv(
         u32 vaobj, group::vertex_array_prop pname, span_i32 param)
 {
     using namespace std::string_view_literals;
@@ -4577,8 +6493,16 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_void>
-requires(semantic::concepts::Span<span_void>) STATICINLINE
-    void get_vertex_array_pointeri_v(
+requires(semantic::concepts::Span<span_void>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param vaobj GLuint
+     * \param index GLuint
+     * \param pname GLenum
+     * \param param void **
+     * \return void
+     */
+    STATICINLINE void get_vertex_array_pointeri_v(
         u32 vaobj, u32 index, group::vertex_array_prop pname, span_void param)
 {
     using namespace std::string_view_literals;
@@ -4596,8 +6520,15 @@ requires(semantic::concepts::Span<span_void>) STATICINLINE
 }
 
 template<class span_void>
-requires(semantic::concepts::Span<span_void>) STATICINLINE
-    void get_vertex_array_pointerv(
+requires(semantic::concepts::Span<span_void>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param vaobj GLuint
+     * \param pname GLenum
+     * \param param void **
+     * \return void
+     */
+    STATICINLINE void get_vertex_array_pointerv(
         u32 vaobj, group::vertex_array_prop pname, span_void param)
 {
     using namespace std::string_view_literals;
@@ -4613,6 +6544,13 @@ requires(semantic::concepts::Span<span_void>) STATICINLINE
     detail::error_check("GetVertexArrayPointervEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param buffer GLuint
+ * \param offset GLintptr
+ * \param length GLsizeiptr
+ * \return void
+ */
 STATICINLINE void flush_mapped_named_buffer_range(
     u32 buffer, GLintptr offset, GLsizeiptr length)
 {
@@ -4626,6 +6564,14 @@ STATICINLINE void flush_mapped_named_buffer_range(
     detail::error_check("FlushMappedNamedBufferRangeEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param buffer GLuint
+ * \param offset GLintptr
+ * \param length GLsizeiptr
+ * \param access GLbitfield
+ * \return void *
+ */
 STATICINLINE void* map_named_buffer_range(
     u32                           buffer,
     GLintptr                      offset,
@@ -4645,8 +6591,16 @@ STATICINLINE void* map_named_buffer_range(
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>) STATICINLINE
-    void named_buffer_storage(
+requires(semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param buffer GLuint
+     * \param size GLsizeiptr
+     * \param data const void *
+     * \param flags GLbitfield
+     * \return void
+     */
+    STATICINLINE void named_buffer_storage(
         u32                        buffer,
         span_const_void const&     data,
         group::buffer_storage_mask flags)
@@ -4667,8 +6621,17 @@ requires(semantic::concepts::Span<span_const_void>) STATICINLINE
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>) STATICINLINE
-    void clear_named_buffer_data(
+requires(semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param buffer GLuint
+     * \param internalformat GLenum
+     * \param format GLenum
+     * \param type GLenum
+     * \param data const void *
+     * \return void
+     */
+    STATICINLINE void clear_named_buffer_data(
         u32                          buffer,
         group::sized_internal_format internalformat,
         group::pixel_format          format,
@@ -4691,8 +6654,19 @@ requires(semantic::concepts::Span<span_const_void>) STATICINLINE
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>) STATICINLINE
-    void clear_named_buffer_sub_data(
+requires(semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param buffer GLuint
+     * \param internalformat GLenum
+     * \param offset GLsizeiptr
+     * \param size GLsizeiptr
+     * \param format GLenum
+     * \param type GLenum
+     * \param data const void *
+     * \return void
+     */
+    STATICINLINE void clear_named_buffer_sub_data(
         u32                          buffer,
         group::sized_internal_format internalformat,
         GLsizeiptr                   offset,
@@ -4721,8 +6695,15 @@ requires(semantic::concepts::Span<span_const_void>) STATICINLINE
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void get_named_framebuffer_parameter(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param framebuffer GLuint
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_named_framebuffer_parameter(
         u32                              framebuffer,
         group::get_framebuffer_parameter pname,
         span_i32                         params)
@@ -4740,6 +6721,13 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
     detail::error_check("GetNamedFramebufferParameterivEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param framebuffer GLuint
+ * \param pname GLenum
+ * \param param GLint
+ * \return void
+ */
 STATICINLINE void named_framebuffer_parameter(
     u32 framebuffer, group::framebuffer_parameter_name pname, i32 param)
 {
@@ -4754,6 +6742,13 @@ STATICINLINE void named_framebuffer_parameter(
     detail::error_check("NamedFramebufferParameteriEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param program GLuint
+ * \param location GLint
+ * \param x GLdouble
+ * \return void
+ */
 STATICINLINE void program_uniform(u32 program, i32 location, f64 x)
 {
     using namespace std::string_view_literals;
@@ -4769,7 +6764,16 @@ STATICINLINE void program_uniform(u32 program, i32 location, f64 x)
 template<class span_const_f64>
 requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
          std::decay_t<typename span_const_f64::value_type>,
-         std::decay_t<f64>>) STATICINLINE
+         std::decay_t<f64>>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLdouble *
+     * \return void
+     */
+    STATICINLINE
     void program_uniform(u32 program, i32 location, span_const_f64 const& value)
 {
     using namespace std::string_view_literals;
@@ -4787,7 +6791,16 @@ requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
 }
 
 template<class vec_2_f64>
-requires(semantic::concepts::Vector<vec_2_f64, f64, 2>) STATICINLINE
+requires(semantic::concepts::Vector<vec_2_f64, f64, 2>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param location GLint
+     * \param x GLdouble
+     * \param y GLdouble
+     * \return void
+     */
+    STATICINLINE
     void program_uniform(u32 program, i32 location, vec_2_f64 const& x)
 {
     using namespace std::string_view_literals;
@@ -4803,6 +6816,14 @@ requires(semantic::concepts::Vector<vec_2_f64, f64, 2>) STATICINLINE
 template<class span_const_vec_2_f64>
 requires(semantic::concepts::Span<span_const_vec_2_f64>&& semantic::concepts::
              Vector<typename span_const_vec_2_f64::value_type, f64, 2>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLdouble *
+     * \return void
+     */
     STATICINLINE void program_uniform(
         u32 program, i32 location, i32 count, span_const_vec_2_f64 const& value)
 {
@@ -4821,7 +6842,17 @@ requires(semantic::concepts::Span<span_const_vec_2_f64>&& semantic::concepts::
 }
 
 template<class vec_3_f64>
-requires(semantic::concepts::Vector<vec_3_f64, f64, 3>) STATICINLINE
+requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param location GLint
+     * \param x GLdouble
+     * \param y GLdouble
+     * \param z GLdouble
+     * \return void
+     */
+    STATICINLINE
     void program_uniform(u32 program, i32 location, vec_3_f64 const& x)
 {
     using namespace std::string_view_literals;
@@ -4837,6 +6868,14 @@ requires(semantic::concepts::Vector<vec_3_f64, f64, 3>) STATICINLINE
 template<class span_const_vec_3_f64>
 requires(semantic::concepts::Span<span_const_vec_3_f64>&& semantic::concepts::
              Vector<typename span_const_vec_3_f64::value_type, f64, 3>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLdouble *
+     * \return void
+     */
     STATICINLINE void program_uniform(
         u32 program, i32 location, i32 count, span_const_vec_3_f64 const& value)
 {
@@ -4855,7 +6894,18 @@ requires(semantic::concepts::Span<span_const_vec_3_f64>&& semantic::concepts::
 }
 
 template<class vec_4_f64>
-requires(semantic::concepts::Vector<vec_4_f64, f64, 4>) STATICINLINE
+requires(semantic::concepts::Vector<vec_4_f64, f64, 4>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param location GLint
+     * \param x GLdouble
+     * \param y GLdouble
+     * \param z GLdouble
+     * \param w GLdouble
+     * \return void
+     */
+    STATICINLINE
     void program_uniform(u32 program, i32 location, vec_4_f64 const& x)
 {
     using namespace std::string_view_literals;
@@ -4871,6 +6921,14 @@ requires(semantic::concepts::Vector<vec_4_f64, f64, 4>) STATICINLINE
 template<class span_const_vec_4_f64>
 requires(semantic::concepts::Span<span_const_vec_4_f64>&& semantic::concepts::
              Vector<typename span_const_vec_4_f64::value_type, f64, 4>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLdouble *
+     * \return void
+     */
     STATICINLINE void program_uniform(
         u32 program, i32 location, i32 count, span_const_vec_4_f64 const& value)
 {
@@ -4891,6 +6949,15 @@ requires(semantic::concepts::Span<span_const_vec_4_f64>&& semantic::concepts::
 template<class span_const_mat_2x2_f64>
 requires(semantic::concepts::Span<span_const_mat_2x2_f64>&& semantic::concepts::
              Matrix<typename span_const_mat_2x2_f64::value_type, f64, 2, 2>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param transpose GLboolean
+     * \param value const GLdouble *
+     * \return void
+     */
     STATICINLINE void program_uniform(
         u32                           program,
         i32                           location,
@@ -4916,6 +6983,15 @@ requires(semantic::concepts::Span<span_const_mat_2x2_f64>&& semantic::concepts::
 template<class span_const_mat_2x3_f64>
 requires(semantic::concepts::Span<span_const_mat_2x3_f64>&& semantic::concepts::
              Matrix<typename span_const_mat_2x3_f64::value_type, f64, 2, 3>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param transpose GLboolean
+     * \param value const GLdouble *
+     * \return void
+     */
     STATICINLINE void program_uniform(
         u32                           program,
         i32                           location,
@@ -4941,6 +7017,15 @@ requires(semantic::concepts::Span<span_const_mat_2x3_f64>&& semantic::concepts::
 template<class span_const_mat_2x4_f64>
 requires(semantic::concepts::Span<span_const_mat_2x4_f64>&& semantic::concepts::
              Matrix<typename span_const_mat_2x4_f64::value_type, f64, 2, 4>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param transpose GLboolean
+     * \param value const GLdouble *
+     * \return void
+     */
     STATICINLINE void program_uniform(
         u32                           program,
         i32                           location,
@@ -4966,6 +7051,15 @@ requires(semantic::concepts::Span<span_const_mat_2x4_f64>&& semantic::concepts::
 template<class span_const_mat_3x3_f64>
 requires(semantic::concepts::Span<span_const_mat_3x3_f64>&& semantic::concepts::
              Matrix<typename span_const_mat_3x3_f64::value_type, f64, 3, 3>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param transpose GLboolean
+     * \param value const GLdouble *
+     * \return void
+     */
     STATICINLINE void program_uniform(
         u32                           program,
         i32                           location,
@@ -4991,6 +7085,15 @@ requires(semantic::concepts::Span<span_const_mat_3x3_f64>&& semantic::concepts::
 template<class span_const_mat_3x2_f64>
 requires(semantic::concepts::Span<span_const_mat_3x2_f64>&& semantic::concepts::
              Matrix<typename span_const_mat_3x2_f64::value_type, f64, 3, 2>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param transpose GLboolean
+     * \param value const GLdouble *
+     * \return void
+     */
     STATICINLINE void program_uniform(
         u32                           program,
         i32                           location,
@@ -5016,6 +7119,15 @@ requires(semantic::concepts::Span<span_const_mat_3x2_f64>&& semantic::concepts::
 template<class span_const_mat_3x4_f64>
 requires(semantic::concepts::Span<span_const_mat_3x4_f64>&& semantic::concepts::
              Matrix<typename span_const_mat_3x4_f64::value_type, f64, 3, 4>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param transpose GLboolean
+     * \param value const GLdouble *
+     * \return void
+     */
     STATICINLINE void program_uniform(
         u32                           program,
         i32                           location,
@@ -5041,6 +7153,15 @@ requires(semantic::concepts::Span<span_const_mat_3x4_f64>&& semantic::concepts::
 template<class span_const_mat_4x4_f64>
 requires(semantic::concepts::Span<span_const_mat_4x4_f64>&& semantic::concepts::
              Matrix<typename span_const_mat_4x4_f64::value_type, f64, 4, 4>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param transpose GLboolean
+     * \param value const GLdouble *
+     * \return void
+     */
     STATICINLINE void program_uniform(
         u32                           program,
         i32                           location,
@@ -5066,6 +7187,15 @@ requires(semantic::concepts::Span<span_const_mat_4x4_f64>&& semantic::concepts::
 template<class span_const_mat_4x2_f64>
 requires(semantic::concepts::Span<span_const_mat_4x2_f64>&& semantic::concepts::
              Matrix<typename span_const_mat_4x2_f64::value_type, f64, 4, 2>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param transpose GLboolean
+     * \param value const GLdouble *
+     * \return void
+     */
     STATICINLINE void program_uniform(
         u32                           program,
         i32                           location,
@@ -5091,6 +7221,15 @@ requires(semantic::concepts::Span<span_const_mat_4x2_f64>&& semantic::concepts::
 template<class span_const_mat_4x3_f64>
 requires(semantic::concepts::Span<span_const_mat_4x3_f64>&& semantic::concepts::
              Matrix<typename span_const_mat_4x3_f64::value_type, f64, 4, 3>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param transpose GLboolean
+     * \param value const GLdouble *
+     * \return void
+     */
     STATICINLINE void program_uniform(
         u32                           program,
         i32                           location,
@@ -5113,6 +7252,16 @@ requires(semantic::concepts::Span<span_const_mat_4x3_f64>&& semantic::concepts::
     detail::error_check("ProgramUniformMatrix4x3dvEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param texture GLuint
+ * \param target GLenum
+ * \param internalformat GLenum
+ * \param buffer GLuint
+ * \param offset GLintptr
+ * \param size GLsizeiptr
+ * \return void
+ */
 STATICINLINE void texture_buffer_range(
     u32                          texture,
     group::texture_target        target,
@@ -5138,6 +7287,15 @@ STATICINLINE void texture_buffer_range(
     detail::error_check("TextureBufferRangeEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param texture GLuint
+ * \param target GLenum
+ * \param levels GLsizei
+ * \param internalformat GLenum
+ * \param width GLsizei
+ * \return void
+ */
 STATICINLINE void texture_storage_1d(
     u32                          texture,
     GLenum                       target,
@@ -5157,8 +7315,18 @@ STATICINLINE void texture_storage_1d(
 }
 
 template<class size_2_i32>
-requires(semantic::concepts::Size2D<size_2_i32, i32>) STATICINLINE
-    void texture_storage_2d(
+requires(semantic::concepts::Size2D<size_2_i32, i32>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texture GLuint
+     * \param target GLenum
+     * \param levels GLsizei
+     * \param internalformat GLenum
+     * \param width GLsizei
+     * \param height GLsizei
+     * \return void
+     */
+    STATICINLINE void texture_storage_2d(
         u32                          texture,
         GLenum                       target,
         i32                          levels,
@@ -5182,8 +7350,19 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>) STATICINLINE
 }
 
 template<class size_3_i32>
-requires(semantic::concepts::Size2D<size_3_i32, i32>) STATICINLINE
-    void texture_storage_3d(
+requires(semantic::concepts::Size2D<size_3_i32, i32>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texture GLuint
+     * \param target GLenum
+     * \param levels GLsizei
+     * \param internalformat GLenum
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param depth GLsizei
+     * \return void
+     */
+    STATICINLINE void texture_storage_3d(
         u32                          texture,
         GLenum                       target,
         i32                          levels,
@@ -5208,8 +7387,19 @@ requires(semantic::concepts::Size2D<size_3_i32, i32>) STATICINLINE
 }
 
 template<class size_2_i32>
-requires(semantic::concepts::Size2D<size_2_i32, i32>) STATICINLINE
-    void texture_storage_2d_multisample(
+requires(semantic::concepts::Size2D<size_2_i32, i32>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texture GLuint
+     * \param target GLenum
+     * \param samples GLsizei
+     * \param internalformat GLenum
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param fixedsamplelocations GLboolean
+     * \return void
+     */
+    STATICINLINE void texture_storage_2d_multisample(
         u32                          texture,
         group::texture_target        target,
         i32                          samples,
@@ -5235,8 +7425,20 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>) STATICINLINE
 }
 
 template<class size_3_i32>
-requires(semantic::concepts::Size2D<size_3_i32, i32>) STATICINLINE
-    void texture_storage_3d_multisample(
+requires(semantic::concepts::Size2D<size_3_i32, i32>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texture GLuint
+     * \param target GLenum
+     * \param samples GLsizei
+     * \param internalformat GLenum
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param depth GLsizei
+     * \param fixedsamplelocations GLboolean
+     * \return void
+     */
+    STATICINLINE void texture_storage_3d_multisample(
         u32                          texture,
         GLenum                       target,
         i32                          samples,
@@ -5262,6 +7464,15 @@ requires(semantic::concepts::Size2D<size_3_i32, i32>) STATICINLINE
     detail::error_check("TextureStorage3DMultisampleEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param vaobj GLuint
+ * \param bindingindex GLuint
+ * \param buffer GLuint
+ * \param offset GLintptr
+ * \param stride GLsizei
+ * \return void
+ */
 STATICINLINE void vertex_array_bind_vertex_buffer(
     u32 vaobj, u32 bindingindex, u32 buffer, GLintptr offset, i32 stride)
 {
@@ -5277,6 +7488,13 @@ STATICINLINE void vertex_array_bind_vertex_buffer(
     detail::error_check("VertexArrayBindVertexBufferEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param vaobj GLuint
+ * \param attribindex GLuint
+ * \param bindingindex GLuint
+ * \return void
+ */
 STATICINLINE void vertex_array_vertex_attrib_binding(
     u32 vaobj, u32 attribindex, u32 bindingindex)
 {
@@ -5290,6 +7508,16 @@ STATICINLINE void vertex_array_vertex_attrib_binding(
     detail::error_check("VertexArrayVertexAttribBindingEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param vaobj GLuint
+ * \param attribindex GLuint
+ * \param size GLint
+ * \param type GLenum
+ * \param normalized GLboolean
+ * \param relativeoffset GLuint
+ * \return void
+ */
 STATICINLINE void vertex_array_vertex_attrib_format(
     u32                       vaobj,
     u32                       attribindex,
@@ -5314,6 +7542,15 @@ STATICINLINE void vertex_array_vertex_attrib_format(
     detail::error_check("VertexArrayVertexAttribFormatEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param vaobj GLuint
+ * \param attribindex GLuint
+ * \param size GLint
+ * \param type GLenum
+ * \param relativeoffset GLuint
+ * \return void
+ */
 STATICINLINE void vertex_array_vertex_attrib_i_format(
     u32                      vaobj,
     u32                      attribindex,
@@ -5332,6 +7569,15 @@ STATICINLINE void vertex_array_vertex_attrib_i_format(
     detail::error_check("VertexArrayVertexAttribIFormatEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param vaobj GLuint
+ * \param attribindex GLuint
+ * \param size GLint
+ * \param type GLenum
+ * \param relativeoffset GLuint
+ * \return void
+ */
 STATICINLINE void vertex_array_vertex_attrib_l_format(
     u32                       vaobj,
     u32                       attribindex,
@@ -5350,6 +7596,13 @@ STATICINLINE void vertex_array_vertex_attrib_l_format(
     detail::error_check("VertexArrayVertexAttribLFormatEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param vaobj GLuint
+ * \param bindingindex GLuint
+ * \param divisor GLuint
+ * \return void
+ */
 STATICINLINE void vertex_array_vertex_binding_divisor(
     u32 vaobj, u32 bindingindex, u32 divisor)
 {
@@ -5363,6 +7616,17 @@ STATICINLINE void vertex_array_vertex_binding_divisor(
     detail::error_check("VertexArrayVertexBindingDivisorEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param vaobj GLuint
+ * \param buffer GLuint
+ * \param index GLuint
+ * \param size GLint
+ * \param type GLenum
+ * \param stride GLsizei
+ * \param offset GLintptr
+ * \return void
+ */
 STATICINLINE void vertex_array_vertex_attrib_l_offset(
     u32                       vaobj,
     u32                       buffer,
@@ -5386,8 +7650,21 @@ STATICINLINE void vertex_array_vertex_attrib_l_offset(
 
 template<class size_3_i32, class vec_3_i32>
 requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
-             semantic::concepts::Size2D<size_3_i32, i32>) STATICINLINE
-    void texture_page_commitment(
+             semantic::concepts::Size2D<size_3_i32, i32>)
+    /*!
+     * \brief Part of GL_EXT_direct_state_access
+     * \param texture GLuint
+     * \param level GLint
+     * \param xoffset GLint
+     * \param yoffset GLint
+     * \param zoffset GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param depth GLsizei
+     * \param commit GLboolean
+     * \return void
+     */
+    STATICINLINE void texture_page_commitment(
         u32               texture,
         i32               level,
         vec_3_i32 const&  xoffset,
@@ -5413,6 +7690,13 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
     detail::error_check("TexturePageCommitmentEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_direct_state_access
+ * \param vaobj GLuint
+ * \param index GLuint
+ * \param divisor GLuint
+ * \return void
+ */
 STATICINLINE void vertex_array_vertex_attrib_divisor(
     u32 vaobj, u32 index, u32 divisor)
 {

@@ -10,6 +10,11 @@ constexpr libc_types::u32 per_gpu_storage                        = 0x9548;
 constexpr libc_types::u32 multicast_programmable_sample_location = 0x9549;
 constexpr libc_types::u32 render_gpu_mask                        = 0x9558;
 } // namespace values
+/*!
+ * \brief Part of GL_NV_gpu_multicast
+
+ * \return void
+ */
 STATICINLINE void multicast_barrier()
 {
     using namespace std::string_view_literals;
@@ -21,6 +26,22 @@ STATICINLINE void multicast_barrier()
     detail::error_check("MulticastBarrierNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_gpu_multicast
+ * \param srcGpu GLuint
+ * \param dstGpu GLuint
+ * \param srcX0 GLint
+ * \param srcY0 GLint
+ * \param srcX1 GLint
+ * \param srcY1 GLint
+ * \param dstX0 GLint
+ * \param dstY0 GLint
+ * \param dstX1 GLint
+ * \param dstY1 GLint
+ * \param mask GLbitfield
+ * \param filter GLenum
+ * \return void
+ */
 STATICINLINE void multicast_blit_framebuffer(
     u32                      srcGpu,
     u32                      dstGpu,
@@ -57,8 +78,17 @@ STATICINLINE void multicast_blit_framebuffer(
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>) STATICINLINE
-    void multicast_buffer_sub_data(
+requires(semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_NV_gpu_multicast
+     * \param gpuMask GLbitfield
+     * \param buffer GLuint
+     * \param offset GLintptr
+     * \param size GLsizeiptr
+     * \param data const void *
+     * \return void
+     */
+    STATICINLINE void multicast_buffer_sub_data(
         GLbitfield             gpuMask,
         u32                    buffer,
         GLintptr               offset,
@@ -80,6 +110,17 @@ requires(semantic::concepts::Span<span_const_void>) STATICINLINE
     detail::error_check("MulticastBufferSubDataNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_gpu_multicast
+ * \param readGpu GLuint
+ * \param writeGpuMask GLbitfield
+ * \param readBuffer GLuint
+ * \param writeBuffer GLuint
+ * \param readOffset GLintptr
+ * \param writeOffset GLintptr
+ * \param size GLsizeiptr
+ * \return void
+ */
 STATICINLINE void multicast_copy_buffer_sub_data(
     u32        readGpu,
     GLbitfield writeGpuMask,
@@ -105,6 +146,27 @@ STATICINLINE void multicast_copy_buffer_sub_data(
     detail::error_check("MulticastCopyBufferSubDataNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_gpu_multicast
+ * \param srcGpu GLuint
+ * \param dstGpuMask GLbitfield
+ * \param srcName GLuint
+ * \param srcTarget GLenum
+ * \param srcLevel GLint
+ * \param srcX GLint
+ * \param srcY GLint
+ * \param srcZ GLint
+ * \param dstName GLuint
+ * \param dstTarget GLenum
+ * \param dstLevel GLint
+ * \param dstX GLint
+ * \param dstY GLint
+ * \param dstZ GLint
+ * \param srcWidth GLsizei
+ * \param srcHeight GLsizei
+ * \param srcDepth GLsizei
+ * \return void
+ */
 STATICINLINE void multicast_copy_image_sub_data(
     u32        srcGpu,
     GLbitfield dstGpuMask,
@@ -153,8 +215,17 @@ STATICINLINE void multicast_copy_image_sub_data(
 template<class span_const_f32>
 requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
-    void multicast_framebuffer_sample_locationsfv(
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_NV_gpu_multicast
+     * \param gpu GLuint
+     * \param framebuffer GLuint
+     * \param start GLuint
+     * \param count GLsizei
+     * \param v const GLfloat *
+     * \return void
+     */
+    STATICINLINE void multicast_framebuffer_sample_locationsfv(
         u32 gpu, u32 framebuffer, u32 start, i32 count, span_const_f32 const& v)
 {
     using namespace std::string_view_literals;
@@ -175,8 +246,16 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
 template<class span_i64>
 requires(semantic::concepts::Span<span_i64>&& std::is_same_v<
          std::decay_t<typename span_i64::value_type>,
-         std::decay_t<i64>>) STATICINLINE
-    void multicast_get_query_objecti64v(
+         std::decay_t<i64>>)
+    /*!
+     * \brief Part of GL_NV_gpu_multicast
+     * \param gpu GLuint
+     * \param id GLuint
+     * \param pname GLenum
+     * \param params GLint64 *
+     * \return void
+     */
+    STATICINLINE void multicast_get_query_objecti64v(
         u32 gpu, u32 id, GLenum pname, span_i64 params)
 {
     using namespace std::string_view_literals;
@@ -195,8 +274,16 @@ requires(semantic::concepts::Span<span_i64>&& std::is_same_v<
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void multicast_get_query_objectiv(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_NV_gpu_multicast
+     * \param gpu GLuint
+     * \param id GLuint
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void multicast_get_query_objectiv(
         u32 gpu, u32 id, GLenum pname, span_i32 params)
 {
     using namespace std::string_view_literals;
@@ -215,8 +302,16 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 template<class span_u64>
 requires(semantic::concepts::Span<span_u64>&& std::is_same_v<
          std::decay_t<typename span_u64::value_type>,
-         std::decay_t<u64>>) STATICINLINE
-    void multicast_get_query_objectui64v(
+         std::decay_t<u64>>)
+    /*!
+     * \brief Part of GL_NV_gpu_multicast
+     * \param gpu GLuint
+     * \param id GLuint
+     * \param pname GLenum
+     * \param params GLuint64 *
+     * \return void
+     */
+    STATICINLINE void multicast_get_query_objectui64v(
         u32 gpu, u32 id, GLenum pname, span_u64 params)
 {
     using namespace std::string_view_literals;
@@ -235,8 +330,16 @@ requires(semantic::concepts::Span<span_u64>&& std::is_same_v<
 template<class span_u32>
 requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>) STATICINLINE
-    void multicast_get_query_objectuiv(
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_NV_gpu_multicast
+     * \param gpu GLuint
+     * \param id GLuint
+     * \param pname GLenum
+     * \param params GLuint *
+     * \return void
+     */
+    STATICINLINE void multicast_get_query_objectuiv(
         u32 gpu, u32 id, GLenum pname, span_u32 params)
 {
     using namespace std::string_view_literals;
@@ -252,6 +355,12 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
     detail::error_check("MulticastGetQueryObjectuivNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_gpu_multicast
+ * \param signalGpu GLuint
+ * \param waitGpuMask GLbitfield
+ * \return void
+ */
 STATICINLINE void multicast_wait_sync(u32 signalGpu, GLbitfield waitGpuMask)
 {
     using namespace std::string_view_literals;
@@ -263,6 +372,11 @@ STATICINLINE void multicast_wait_sync(u32 signalGpu, GLbitfield waitGpuMask)
     detail::error_check("MulticastWaitSyncNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_gpu_multicast
+ * \param mask GLbitfield
+ * \return void
+ */
 STATICINLINE void render_gpu_mask(GLbitfield mask)
 {
     using namespace std::string_view_literals;

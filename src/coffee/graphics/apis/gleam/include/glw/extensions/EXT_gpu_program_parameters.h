@@ -7,6 +7,14 @@ namespace values {
 template<class span_const_vec_4_f32>
 requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
              Vector<typename span_const_vec_4_f32::value_type, f32, 4>)
+    /*!
+     * \brief Part of GL_EXT_gpu_program_parameters
+     * \param target GLenum
+     * \param index GLuint
+     * \param count GLsizei
+     * \param params const GLfloat *
+     * \return void
+     */
     STATICINLINE void program_env_parameters4fv(
         group::program_target       target,
         u32                         index,
@@ -29,6 +37,14 @@ requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
 template<class span_const_vec_4_f32>
 requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
              Vector<typename span_const_vec_4_f32::value_type, f32, 4>)
+    /*!
+     * \brief Part of GL_EXT_gpu_program_parameters
+     * \param target GLenum
+     * \param index GLuint
+     * \param count GLsizei
+     * \param params const GLfloat *
+     * \return void
+     */
     STATICINLINE void program_local_parameters4fv(
         group::program_target       target,
         u32                         index,

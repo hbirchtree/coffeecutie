@@ -11,6 +11,11 @@ constexpr libc_types::u32 tessellation_factor         = 0x9005;
 constexpr libc_types::u32 discrete                    = 0x9006;
 constexpr libc_types::u32 continuous                  = 0x9007;
 } // namespace values
+/*!
+ * \brief Part of GL_AMD_vertex_shader_tessellator
+ * \param factor GLfloat
+ * \return void
+ */
 STATICINLINE void tessellation_factor(f32 factor)
 {
     using namespace std::string_view_literals;
@@ -22,6 +27,11 @@ STATICINLINE void tessellation_factor(f32 factor)
     detail::error_check("TessellationFactorAMD"sv);
 }
 
+/*!
+ * \brief Part of GL_AMD_vertex_shader_tessellator
+ * \param mode GLenum
+ * \return void
+ */
 STATICINLINE void tessellation_mode(GLenum mode)
 {
     using namespace std::string_view_literals;

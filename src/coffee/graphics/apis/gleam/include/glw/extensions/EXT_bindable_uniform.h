@@ -10,6 +10,12 @@ constexpr libc_types::u32 max_bindable_uniform_size      = 0x8DED;
 constexpr libc_types::u32 uniform_buffer                 = 0x8DEE;
 constexpr libc_types::u32 uniform_buffer_binding         = 0x8DEF;
 } // namespace values
+/*!
+ * \brief Part of GL_EXT_bindable_uniform
+ * \param program GLuint
+ * \param location GLint
+ * \return GLint
+ */
 STATICINLINE GLint get_uniform_buffer_size(u32 program, i32 location)
 {
     using namespace std::string_view_literals;
@@ -23,6 +29,12 @@ STATICINLINE GLint get_uniform_buffer_size(u32 program, i32 location)
     return out;
 }
 
+/*!
+ * \brief Part of GL_EXT_bindable_uniform
+ * \param program GLuint
+ * \param location GLint
+ * \return BufferOffset
+ */
 STATICINLINE GLintptr get_uniform_offset(u32 program, i32 location)
 {
     using namespace std::string_view_literals;
@@ -36,6 +48,13 @@ STATICINLINE GLintptr get_uniform_offset(u32 program, i32 location)
     return out;
 }
 
+/*!
+ * \brief Part of GL_EXT_bindable_uniform
+ * \param program GLuint
+ * \param location GLint
+ * \param buffer GLuint
+ * \return void
+ */
 STATICINLINE void uniform_buffer(u32 program, i32 location, u32 buffer)
 {
     using namespace std::string_view_literals;

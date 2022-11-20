@@ -4,6 +4,14 @@
 namespace gl::qcom::frame_extrapolation {
 namespace values {
 } // namespace values
+/*!
+ * \brief Part of GL_QCOM_frame_extrapolation
+ * \param src1 GLuint
+ * \param src2 GLuint
+ * \param output GLuint
+ * \param scaleFactor GLfloat
+ * \return void
+ */
 STATICINLINE void extrapolate_tex_2d(
     u32 src1, u32 src2, u32 output, f32 scaleFactor)
 {

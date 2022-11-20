@@ -10,7 +10,14 @@ requires(semantic::concepts::Span<span_GLfixed>&& std::is_same_v<
          std::decay_t<GLfixed>>&& semantic::concepts::Span<span_i32>&&
                                   std::is_same_v<
                  std::decay_t<typename span_i32::value_type>,
-                 std::decay_t<i32>>) STATICINLINE GLbitfield
+                 std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_OES_query_matrix
+     * \param mantissa GLfixed *
+     * \param exponent GLint *
+     * \return GLbitfield
+     */
+    STATICINLINE GLbitfield
     query_matrixx(span_GLfixed mantissa, span_i32 exponent)
 {
     using namespace std::string_view_literals;

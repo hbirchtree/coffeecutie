@@ -8,6 +8,16 @@ constexpr libc_types::u32 max_compute_fixed_group_size           = 0x91BF;
 constexpr libc_types::u32 max_compute_variable_group_invocations = 0x9344;
 constexpr libc_types::u32 max_compute_variable_group_size        = 0x9345;
 } // namespace values
+/*!
+ * \brief Part of GL_ARB_compute_variable_group_size
+ * \param num_groups_x GLuint
+ * \param num_groups_y GLuint
+ * \param num_groups_z GLuint
+ * \param group_size_x GLuint
+ * \param group_size_y GLuint
+ * \param group_size_z GLuint
+ * \return void
+ */
 STATICINLINE void dispatch_compute_group_size(
     u32 num_groups_x,
     u32 num_groups_y,

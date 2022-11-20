@@ -2,18 +2,25 @@
 
 #ifdef GL_EXT_semaphore
 #include "../enums/GetPName.h"
+#include "../enums/SpecialNumbers.h"
 #include "../enums/TextureLayout.h"
 namespace gl::ext::semaphore {
 using gl::group::get_prop;
+using gl::group::special_numbers;
 using gl::group::texture_layout;
 namespace values {
-constexpr libc_types::u32 uuid_size = 16;
 } // namespace values
 template<class span_const_u32>
 requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>) STATICINLINE
-    void delete_semaphores(span_const_u32 const& semaphores)
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_EXT_semaphore
+     * \param n GLsizei
+     * \param semaphores const GLuint *
+     * \return void
+     */
+    STATICINLINE void delete_semaphores(span_const_u32 const& semaphores)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -30,8 +37,14 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
 template<class span_u32>
 requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>) STATICINLINE
-    void gen_semaphores(span_u32 semaphores)
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_EXT_semaphore
+     * \param n GLsizei
+     * \param semaphores GLuint *
+     * \return void
+     */
+    STATICINLINE void gen_semaphores(span_u32 semaphores)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -48,8 +61,15 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 template<class span_u64>
 requires(semantic::concepts::Span<span_u64>&& std::is_same_v<
          std::decay_t<typename span_u64::value_type>,
-         std::decay_t<u64>>) STATICINLINE
-    void get_semaphore_parameterui64v(
+         std::decay_t<u64>>)
+    /*!
+     * \brief Part of GL_EXT_semaphore
+     * \param semaphore GLuint
+     * \param pname GLenum
+     * \param params GLuint64 *
+     * \return void
+     */
+    STATICINLINE void get_semaphore_parameterui64v(
         u32 semaphore, group::semaphore_parameter_name pname, span_u64 params)
 {
     using namespace std::string_view_literals;
@@ -67,8 +87,14 @@ requires(semantic::concepts::Span<span_u64>&& std::is_same_v<
 template<class span_u8>
 requires(semantic::concepts::Span<span_u8>&& std::is_same_v<
          std::decay_t<typename span_u8::value_type>,
-         std::decay_t<u8>>) STATICINLINE
-    void get_unsigned_bytev(group::get_prop pname, span_u8 data)
+         std::decay_t<u8>>)
+    /*!
+     * \brief Part of GL_EXT_semaphore
+     * \param pname GLenum
+     * \param data GLubyte *
+     * \return void
+     */
+    STATICINLINE void get_unsigned_bytev(group::get_prop pname, span_u8 data)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -84,7 +110,15 @@ requires(semantic::concepts::Span<span_u8>&& std::is_same_v<
 template<class span_u8>
 requires(semantic::concepts::Span<span_u8>&& std::is_same_v<
          std::decay_t<typename span_u8::value_type>,
-         std::decay_t<u8>>) STATICINLINE
+         std::decay_t<u8>>)
+    /*!
+     * \brief Part of GL_EXT_semaphore
+     * \param target GLenum
+     * \param index GLuint
+     * \param data GLubyte *
+     * \return void
+     */
+    STATICINLINE
     void get_unsigned_bytei_v(GLenum target, u32 index, span_u8 data)
 {
     using namespace std::string_view_literals;
@@ -99,6 +133,11 @@ requires(semantic::concepts::Span<span_u8>&& std::is_same_v<
     detail::error_check("GetUnsignedBytei_vEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_semaphore
+ * \param semaphore GLuint
+ * \return Boolean
+ */
 STATICINLINE GLboolean is_semaphore(u32 semaphore)
 {
     using namespace std::string_view_literals;
@@ -114,8 +153,15 @@ STATICINLINE GLboolean is_semaphore(u32 semaphore)
 template<class span_const_u64>
 requires(semantic::concepts::Span<span_const_u64>&& std::is_same_v<
          std::decay_t<typename span_const_u64::value_type>,
-         std::decay_t<u64>>) STATICINLINE
-    void semaphore_parameterui64v(
+         std::decay_t<u64>>)
+    /*!
+     * \brief Part of GL_EXT_semaphore
+     * \param semaphore GLuint
+     * \param pname GLenum
+     * \param params const GLuint64 *
+     * \return void
+     */
+    STATICINLINE void semaphore_parameterui64v(
         u32                             semaphore,
         group::semaphore_parameter_name pname,
         span_const_u64 const&           params)
@@ -140,8 +186,18 @@ requires(
         std::decay_t<u32>>&&
         semantic::concepts::Span<span_const_texture_layout>&& std::is_same_v<
             std::decay_t<typename span_const_texture_layout::value_type>,
-            std::decay_t<group::texture_layout>>) STATICINLINE
-    void signal_semaphore(
+            std::decay_t<group::texture_layout>>)
+    /*!
+     * \brief Part of GL_EXT_semaphore
+     * \param semaphore GLuint
+     * \param numBufferBarriers GLuint
+     * \param buffers const GLuint *
+     * \param numTextureBarriers GLuint
+     * \param textures const GLuint *
+     * \param dstLayouts const GLenum *
+     * \return void
+     */
+    STATICINLINE void signal_semaphore(
         u32                              semaphore,
         u32                              numBufferBarriers,
         span_const_u32 const&            buffers,
@@ -174,8 +230,18 @@ requires(
         std::decay_t<u32>>&&
         semantic::concepts::Span<span_const_texture_layout>&& std::is_same_v<
             std::decay_t<typename span_const_texture_layout::value_type>,
-            std::decay_t<group::texture_layout>>) STATICINLINE
-    void wait_semaphore(
+            std::decay_t<group::texture_layout>>)
+    /*!
+     * \brief Part of GL_EXT_semaphore
+     * \param semaphore GLuint
+     * \param numBufferBarriers GLuint
+     * \param buffers const GLuint *
+     * \param numTextureBarriers GLuint
+     * \param textures const GLuint *
+     * \param srcLayouts const GLenum *
+     * \return void
+     */
+    STATICINLINE void wait_semaphore(
         u32                              semaphore,
         u32                              numBufferBarriers,
         span_const_u32 const&            buffers,

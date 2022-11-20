@@ -34,6 +34,12 @@ constexpr libc_types::u32 dynamic_draw                         = 0x88E8;
 constexpr libc_types::u32 dynamic_read                         = 0x88E9;
 constexpr libc_types::u32 dynamic_copy                         = 0x88EA;
 } // namespace values
+/*!
+ * \brief Part of GL_ARB_vertex_buffer_object
+ * \param target GLenum
+ * \param buffer GLuint
+ * \return void
+ */
 STATICINLINE void bind_buffer(group::buffer_target_arb target, u32 buffer)
 {
     using namespace std::string_view_literals;
@@ -47,8 +53,16 @@ STATICINLINE void bind_buffer(group::buffer_target_arb target, u32 buffer)
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>) STATICINLINE
-    void buffer_data(
+requires(semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_ARB_vertex_buffer_object
+     * \param target GLenum
+     * \param size GLsizeiptrARB
+     * \param data const void *
+     * \param usage GLenum
+     * \return void
+     */
+    STATICINLINE void buffer_data(
         group::buffer_target_arb target,
         span_const_void const&   data,
         group::buffer_usage_arb  usage)
@@ -68,8 +82,16 @@ requires(semantic::concepts::Span<span_const_void>) STATICINLINE
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>) STATICINLINE
-    void buffer_sub_data(
+requires(semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_ARB_vertex_buffer_object
+     * \param target GLenum
+     * \param offset GLintptrARB
+     * \param size GLsizeiptrARB
+     * \param data const void *
+     * \return void
+     */
+    STATICINLINE void buffer_sub_data(
         group::buffer_target_arb target,
         GLintptrARB              offset,
         span_const_void const&   data)
@@ -91,8 +113,14 @@ requires(semantic::concepts::Span<span_const_void>) STATICINLINE
 template<class span_const_u32>
 requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>) STATICINLINE
-    void delete_buffers(span_const_u32 const& buffers)
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_ARB_vertex_buffer_object
+     * \param n GLsizei
+     * \param buffers const GLuint *
+     * \return void
+     */
+    STATICINLINE void delete_buffers(span_const_u32 const& buffers)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -109,7 +137,14 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
 template<class span_u32>
 requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>) STATICINLINE void gen_buffers(span_u32 buffers)
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_ARB_vertex_buffer_object
+     * \param n GLsizei
+     * \param buffers GLuint *
+     * \return void
+     */
+    STATICINLINE void gen_buffers(span_u32 buffers)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -125,8 +160,15 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void get_buffer_parameter(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_ARB_vertex_buffer_object
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_buffer_parameter(
         group::buffer_target_arb target,
         group::buffer_prop_arb   pname,
         span_i32                 params)
@@ -144,8 +186,15 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_void>
-requires(semantic::concepts::Span<span_void>) STATICINLINE
-    void get_buffer_pointerv(
+requires(semantic::concepts::Span<span_void>)
+    /*!
+     * \brief Part of GL_ARB_vertex_buffer_object
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params void **
+     * \return void
+     */
+    STATICINLINE void get_buffer_pointerv(
         group::buffer_target_arb       target,
         group::buffer_pointer_name_arb pname,
         span_void                      params)
@@ -163,8 +212,16 @@ requires(semantic::concepts::Span<span_void>) STATICINLINE
 }
 
 template<class span_void>
-requires(semantic::concepts::Span<span_void>) STATICINLINE
-    void get_buffer_sub_data(
+requires(semantic::concepts::Span<span_void>)
+    /*!
+     * \brief Part of GL_ARB_vertex_buffer_object
+     * \param target GLenum
+     * \param offset GLintptrARB
+     * \param size GLsizeiptrARB
+     * \param data void *
+     * \return void
+     */
+    STATICINLINE void get_buffer_sub_data(
         group::buffer_target_arb target, GLintptrARB offset, span_void data)
 {
     using namespace std::string_view_literals;
@@ -180,6 +237,11 @@ requires(semantic::concepts::Span<span_void>) STATICINLINE
     detail::error_check("GetBufferSubDataARB"sv);
 }
 
+/*!
+ * \brief Part of GL_ARB_vertex_buffer_object
+ * \param buffer GLuint
+ * \return Boolean
+ */
 STATICINLINE GLboolean is_buffer(u32 buffer)
 {
     using namespace std::string_view_literals;
@@ -193,6 +255,12 @@ STATICINLINE GLboolean is_buffer(u32 buffer)
     return out;
 }
 
+/*!
+ * \brief Part of GL_ARB_vertex_buffer_object
+ * \param target GLenum
+ * \param access GLenum
+ * \return void *
+ */
 STATICINLINE void* map_buffer(
     group::buffer_target_arb target, group::buffer_access_arb access)
 {
@@ -207,6 +275,11 @@ STATICINLINE void* map_buffer(
     return out;
 }
 
+/*!
+ * \brief Part of GL_ARB_vertex_buffer_object
+ * \param target GLenum
+ * \return Boolean
+ */
 STATICINLINE GLboolean unmap_buffer(group::buffer_target_arb target)
 {
     using namespace std::string_view_literals;

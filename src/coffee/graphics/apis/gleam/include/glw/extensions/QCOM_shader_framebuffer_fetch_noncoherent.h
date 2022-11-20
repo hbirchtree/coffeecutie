@@ -1,11 +1,18 @@
 #pragma once
 
 #ifdef GL_QCOM_shader_framebuffer_fetch_noncoherent
-#include "../enums/FramebufferFetchNoncoherent.h"
+#include "../enums/EnableCap.h"
+#include "../enums/GetPName.h"
 namespace gl::qcom::shader_framebuffer_fetch_noncoherent {
-using gl::group::framebuffer_fetch_noncoherent;
+using gl::group::enable_cap;
+using gl::group::get_prop;
 namespace values {
 } // namespace values
+/*!
+ * \brief Part of GL_QCOM_shader_framebuffer_fetch_noncoherent
+
+ * \return void
+ */
 STATICINLINE void framebuffer_fetch_barrier()
 {
     using namespace std::string_view_literals;

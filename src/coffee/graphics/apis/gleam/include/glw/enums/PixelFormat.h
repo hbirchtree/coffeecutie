@@ -19,8 +19,17 @@ enum class pixel_format : ::libc_types::u32
 #ifdef GL_BGRA
     bgra = GL_BGRA,
 #endif
+#ifdef GL_BGRA_EXT
+    bgra_ext = GL_BGRA_EXT,
+#endif
+#ifdef GL_BGRA_IMG
+    bgra_img = GL_BGRA_IMG,
+#endif
 #ifdef GL_BGRA_INTEGER
     bgra_integer = GL_BGRA_INTEGER,
+#endif
+#ifdef GL_BGR_EXT
+    bgr_ext = GL_BGR_EXT,
 #endif
 #ifdef GL_BGR_INTEGER
     bgr_integer = GL_BGR_INTEGER,

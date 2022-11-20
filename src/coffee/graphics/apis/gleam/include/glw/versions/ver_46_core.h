@@ -1,14 +1,21 @@
 #ifdef GL_VERSION_4_6
-/* Introduced in GL core 4.6 */
 template<class span_const_u32>
 requires(MinimumVersion<Current, Version<4, 6>>&&
              semantic::concepts::Span<span_const_u32>&& std::is_same_v<
                  std::decay_t<typename span_const_u32::value_type>,
-                 std::decay_t<u32>>) STATICINLINE
-    void specialize_shader(
+                 std::decay_t<u32>>)
+    /*!
+     * \brief Wraps around glSpecializeShader. Introduced in GL core 4.6
+     * \param shader GLuint
+     * \param pEntryPoint const GLchar *
+     * \param numSpecializationConstants GLuint
+     * \param pConstantIndex const GLuint *
+     * \param pConstantValue const GLuint *
+     * \return void
+     */
+    STATICINLINE void specialize_shader(
         u32                     shader,
         std::string_view const& pEntryPoint,
-        u32                     numSpecializationConstants,
         span_const_u32 const&   pConstantIndex,
         span_const_u32 const&   pConstantValue)
 {
@@ -21,7 +28,7 @@ requires(MinimumVersion<Current, Version<4, 6>>&&
     glSpecializeShader(
         shader,
         pEntryPoint.data(),
-        numSpecializationConstants,
+        pConstantIndex.size(),
         pConstantIndex.size()
             ? reinterpret_cast<const GLuint*>(pConstantIndex.data())
             : nullptr,
@@ -31,10 +38,14 @@ requires(MinimumVersion<Current, Version<4, 6>>&&
     detail::error_check("SpecializeShader"sv);
 }
 
-/* Introduced in GL core 4.6 */
 template<typename Dummy = void>
-requires(MinimumVersion<Current, Version<4, 6>>) STATICINLINE
-    void multi_draw_arrays_indirect_count(
+requires(MinimumVersion<Current, Version<4, 6>>)
+    /*!
+     * \brief Wraps around glMultiDrawArraysIndirectCount. Introduced in GL
+     * core 4.6 \param mode GLenum \param indirect const void * \param drawcount
+     * GLintptr \param maxdrawcount GLsizei \param stride GLsizei \return void
+     */
+    STATICINLINE void multi_draw_arrays_indirect_count(
         group::primitive_type mode,
         ptroff                indirect,
         GLintptr              drawcount,
@@ -55,10 +66,15 @@ requires(MinimumVersion<Current, Version<4, 6>>) STATICINLINE
     detail::error_check("MultiDrawArraysIndirectCount"sv);
 }
 
-/* Introduced in GL core 4.6 */
 template<typename Dummy = void>
-requires(MinimumVersion<Current, Version<4, 6>>) STATICINLINE
-    void multi_draw_elements_indirect_count(
+requires(MinimumVersion<Current, Version<4, 6>>)
+    /*!
+     * \brief Wraps around glMultiDrawElementsIndirectCount. Introduced in GL
+     * core 4.6 \param mode GLenum \param type GLenum \param indirect const void
+     * * \param drawcount GLintptr \param maxdrawcount GLsizei \param stride
+     * GLsizei \return void
+     */
+    STATICINLINE void multi_draw_elements_indirect_count(
         group::primitive_type     mode,
         group::draw_elements_type type,
         ptroff                    indirect,
@@ -81,10 +97,16 @@ requires(MinimumVersion<Current, Version<4, 6>>) STATICINLINE
     detail::error_check("MultiDrawElementsIndirectCount"sv);
 }
 
-/* Introduced in GL core 4.6 */
 template<typename Dummy = void>
-requires(MinimumVersion<Current, Version<4, 6>>) STATICINLINE
-    void polygon_offset_clamp(f32 factor, f32 units, f32 clamp)
+requires(MinimumVersion<Current, Version<4, 6>>)
+    /*!
+     * \brief Wraps around glPolygonOffsetClamp. Introduced in GL core 4.6
+     * \param factor GLfloat
+     * \param units GLfloat
+     * \param clamp GLfloat
+     * \return void
+     */
+    STATICINLINE void polygon_offset_clamp(f32 factor, f32 units, f32 clamp)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

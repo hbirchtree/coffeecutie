@@ -136,6 +136,10 @@ enum class internal_format_prop : ::libc_types::u32
 #ifdef GL_NUM_SAMPLE_COUNTS
     num_sample_counts = GL_NUM_SAMPLE_COUNTS,
 #endif
+#ifdef GL_NUM_SURFACE_COMPRESSION_FIXED_RATES_EXT
+    num_surface_compression_fixed_rates_ext =
+        GL_NUM_SURFACE_COMPRESSION_FIXED_RATES_EXT,
+#endif
 #ifdef GL_READ_PIXELS
     read_pixels = GL_READ_PIXELS,
 #endif

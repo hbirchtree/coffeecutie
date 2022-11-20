@@ -9,6 +9,11 @@ constexpr libc_types::u32 vertex_array_range_valid       = 0x851F;
 constexpr libc_types::u32 max_vertex_array_range_element = 0x8520;
 constexpr libc_types::u32 vertex_array_range_pointer     = 0x8521;
 } // namespace values
+/*!
+ * \brief Part of GL_NV_vertex_array_range
+
+ * \return void
+ */
 STATICINLINE void flush_vertex_array_range()
 {
     using namespace std::string_view_literals;
@@ -21,7 +26,14 @@ STATICINLINE void flush_vertex_array_range()
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>) STATICINLINE
+requires(semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_NV_vertex_array_range
+     * \param length GLsizei
+     * \param pointer const void *
+     * \return void
+     */
+    STATICINLINE
     void vertex_array_range(i32 length, span_const_void const& pointer)
 {
     using namespace std::string_view_literals;

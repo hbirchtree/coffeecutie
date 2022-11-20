@@ -9,6 +9,18 @@ constexpr libc_types::u32 texture_view_min_layer   = 0x82DD;
 constexpr libc_types::u32 texture_view_num_layers  = 0x82DE;
 constexpr libc_types::u32 texture_immutable_levels = 0x82DF;
 } // namespace values
+/*!
+ * \brief Part of GL_OES_texture_view
+ * \param texture GLuint
+ * \param target GLenum
+ * \param origtexture GLuint
+ * \param internalformat GLenum
+ * \param minlevel GLuint
+ * \param numlevels GLuint
+ * \param minlayer GLuint
+ * \param numlayers GLuint
+ * \return void
+ */
 STATICINLINE void texture_view(
     u32                          texture,
     group::texture_target        target,

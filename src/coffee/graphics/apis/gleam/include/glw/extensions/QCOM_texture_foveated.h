@@ -11,6 +11,18 @@ constexpr libc_types::u32 texture_foveated_feature_query          = 0x8BFD;
 constexpr libc_types::u32 texture_foveated_num_focal_points_query = 0x8BFE;
 constexpr libc_types::u32 framebuffer_incomplete_foveation        = 0x8BFF;
 } // namespace values
+/*!
+ * \brief Part of GL_QCOM_texture_foveated
+ * \param texture GLuint
+ * \param layer GLuint
+ * \param focalPoint GLuint
+ * \param focalX GLfloat
+ * \param focalY GLfloat
+ * \param gainX GLfloat
+ * \param gainY GLfloat
+ * \param foveaArea GLfloat
+ * \return void
+ */
 STATICINLINE void texture_foveation_parameter(
     u32 texture,
     u32 layer,

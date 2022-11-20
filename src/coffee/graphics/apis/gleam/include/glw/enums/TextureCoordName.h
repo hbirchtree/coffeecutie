@@ -19,6 +19,9 @@ enum class texture_coord_name : ::libc_types::u32
 #ifdef GL_T
     t = GL_T,
 #endif
+#ifdef GL_TEXTURE_GEN_STR_OES
+    texture_gen_str_oes = GL_TEXTURE_GEN_STR_OES,
+#endif
 }; // enum class texture_coord_name
 
 } // namespace gl::group

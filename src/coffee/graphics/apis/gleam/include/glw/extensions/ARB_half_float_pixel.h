@@ -1,9 +1,10 @@
 #pragma once
 
 #ifdef GL_ARB_half_float_pixel
+#include "../enums/PixelType.h"
 namespace gl::arb::half_float_pixel {
+using gl::group::pixel_type;
 namespace values {
-constexpr libc_types::u32 half_float = 0x140B;
 } // namespace values
 } // namespace gl::arb::half_float_pixel
 #endif // GL_ARB_half_float_pixel

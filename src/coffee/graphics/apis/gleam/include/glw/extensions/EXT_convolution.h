@@ -2,27 +2,35 @@
 
 #ifdef GL_EXT_convolution
 #include "../enums/ConvolutionBorderModeEXT.h"
-#include "../enums/ConvolutionParameterEXT.h"
+#include "../enums/ConvolutionParameter.h"
 #include "../enums/ConvolutionTargetEXT.h"
 #include "../enums/EnableCap.h"
-#include "../enums/GetConvolutionParameter.h"
 #include "../enums/GetPName.h"
 #include "../enums/PixelTransferParameter.h"
 #include "../enums/SeparableTargetEXT.h"
 namespace gl::ext::convolution {
 using gl::group::convolution_border_mode_ext;
-using gl::group::convolution_parameter_ext;
+using gl::group::convolution_parameter;
 using gl::group::convolution_target_ext;
 using gl::group::enable_cap;
-using gl::group::get_convolution_parameter;
 using gl::group::get_prop;
 using gl::group::pixel_transfer_parameter;
 using gl::group::separable_target_ext;
 namespace values {
 } // namespace values
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>) STATICINLINE
-    void convolution_filter_1d(
+requires(semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_EXT_convolution
+     * \param target GLenum
+     * \param internalformat GLenum
+     * \param width GLsizei
+     * \param format GLenum
+     * \param type GLenum
+     * \param image const void *
+     * \return void
+     */
+    STATICINLINE void convolution_filter_1d(
         group::convolution_target_ext target,
         group::internal_format        internalformat,
         i32                           width,
@@ -47,8 +55,19 @@ requires(semantic::concepts::Span<span_const_void>) STATICINLINE
 
 template<class size_2_i32, class span_const_void>
 requires(semantic::concepts::Size2D<size_2_i32, i32>&&
-             semantic::concepts::Span<span_const_void>) STATICINLINE
-    void convolution_filter_2d(
+             semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_EXT_convolution
+     * \param target GLenum
+     * \param internalformat GLenum
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param format GLenum
+     * \param type GLenum
+     * \param image const void *
+     * \return void
+     */
+    STATICINLINE void convolution_filter_2d(
         group::convolution_target_ext target,
         group::internal_format        internalformat,
         size_2_i32 const&             width,
@@ -72,10 +91,17 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>&&
     detail::error_check("ConvolutionFilter2DEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_convolution
+ * \param target GLenum
+ * \param pname GLenum
+ * \param params GLfloat
+ * \return void
+ */
 STATICINLINE void convolution_parameter(
-    group::convolution_target_ext    target,
-    group::convolution_parameter_ext pname,
-    f32                              params)
+    group::convolution_target_ext target,
+    group::convolution_parameter  pname,
+    f32                           params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -90,11 +116,18 @@ STATICINLINE void convolution_parameter(
 template<class span_const_f32>
 requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
-    void convolution_parameter(
-        group::convolution_target_ext    target,
-        group::convolution_parameter_ext pname,
-        span_const_f32 const&            params)
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_EXT_convolution
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params const GLfloat *
+     * \return void
+     */
+    STATICINLINE void convolution_parameter(
+        group::convolution_target_ext target,
+        group::convolution_parameter  pname,
+        span_const_f32 const&         params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -109,10 +142,17 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
     detail::error_check("ConvolutionParameterfvEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_convolution
+ * \param target GLenum
+ * \param pname GLenum
+ * \param params GLint
+ * \return void
+ */
 STATICINLINE void convolution_parameter(
-    group::convolution_target_ext    target,
-    group::convolution_parameter_ext pname,
-    i32                              params)
+    group::convolution_target_ext target,
+    group::convolution_parameter  pname,
+    i32                           params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -127,11 +167,18 @@ STATICINLINE void convolution_parameter(
 template<class span_const_i32>
 requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void convolution_parameter(
-        group::convolution_target_ext    target,
-        group::convolution_parameter_ext pname,
-        span_const_i32 const&            params)
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_EXT_convolution
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params const GLint *
+     * \return void
+     */
+    STATICINLINE void convolution_parameter(
+        group::convolution_target_ext target,
+        group::convolution_parameter  pname,
+        span_const_i32 const&         params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -147,8 +194,17 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
 }
 
 template<class vec_2_i32>
-requires(semantic::concepts::Vector<vec_2_i32, i32, 2>) STATICINLINE
-    void copy_convolution_filter_1d(
+requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
+    /*!
+     * \brief Part of GL_EXT_convolution
+     * \param target GLenum
+     * \param internalformat GLenum
+     * \param x GLint
+     * \param y GLint
+     * \param width GLsizei
+     * \return void
+     */
+    STATICINLINE void copy_convolution_filter_1d(
         group::convolution_target_ext target,
         group::internal_format        internalformat,
         vec_2_i32 const&              x,
@@ -170,8 +226,18 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>) STATICINLINE
 
 template<class size_2_i32, class vec_2_i32>
 requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
-             semantic::concepts::Size2D<size_2_i32, i32>) STATICINLINE
-    void copy_convolution_filter_2d(
+             semantic::concepts::Size2D<size_2_i32, i32>)
+    /*!
+     * \brief Part of GL_EXT_convolution
+     * \param target GLenum
+     * \param internalformat GLenum
+     * \param x GLint
+     * \param y GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \return void
+     */
+    STATICINLINE void copy_convolution_filter_2d(
         group::convolution_target_ext target,
         group::internal_format        internalformat,
         vec_2_i32 const&              x,
@@ -193,8 +259,16 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
 }
 
 template<class span_void>
-requires(semantic::concepts::Span<span_void>) STATICINLINE
-    void get_convolution_filter(
+requires(semantic::concepts::Span<span_void>)
+    /*!
+     * \brief Part of GL_EXT_convolution
+     * \param target GLenum
+     * \param format GLenum
+     * \param type GLenum
+     * \param image void *
+     * \return void
+     */
+    STATICINLINE void get_convolution_filter(
         group::convolution_target_ext target,
         group::pixel_format           format,
         group::pixel_type             type,
@@ -216,11 +290,18 @@ requires(semantic::concepts::Span<span_void>) STATICINLINE
 template<class span_f32>
 requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
-    void get_convolution_parameter(
-        group::convolution_target_ext    target,
-        group::convolution_parameter_ext pname,
-        span_f32                         params)
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_EXT_convolution
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params GLfloat *
+     * \return void
+     */
+    STATICINLINE void get_convolution_parameter(
+        group::convolution_target_ext target,
+        group::convolution_parameter  pname,
+        span_f32                      params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -237,11 +318,18 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void get_convolution_parameter(
-        group::convolution_target_ext    target,
-        group::convolution_parameter_ext pname,
-        span_i32                         params)
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_EXT_convolution
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_convolution_parameter(
+        group::convolution_target_ext target,
+        group::convolution_parameter  pname,
+        span_i32                      params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -256,8 +344,18 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_void>
-requires(semantic::concepts::Span<span_void>) STATICINLINE
-    void get_separable_filter(
+requires(semantic::concepts::Span<span_void>)
+    /*!
+     * \brief Part of GL_EXT_convolution
+     * \param target GLenum
+     * \param format GLenum
+     * \param type GLenum
+     * \param row void *
+     * \param column void *
+     * \param span void *
+     * \return void
+     */
+    STATICINLINE void get_separable_filter(
         group::separable_target_ext target,
         group::pixel_format         format,
         group::pixel_type           type,
@@ -282,8 +380,20 @@ requires(semantic::concepts::Span<span_void>) STATICINLINE
 
 template<class size_2_i32, class span_const_void>
 requires(semantic::concepts::Size2D<size_2_i32, i32>&&
-             semantic::concepts::Span<span_const_void>) STATICINLINE
-    void separable_filter_2d(
+             semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_EXT_convolution
+     * \param target GLenum
+     * \param internalformat GLenum
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param format GLenum
+     * \param type GLenum
+     * \param row const void *
+     * \param column const void *
+     * \return void
+     */
+    STATICINLINE void separable_filter_2d(
         group::separable_target_ext target,
         group::internal_format      internalformat,
         size_2_i32 const&           width,

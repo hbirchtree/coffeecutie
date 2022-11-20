@@ -8,6 +8,20 @@ constexpr libc_types::u32 read_framebuffer         = 0x8CA8;
 constexpr libc_types::u32 draw_framebuffer         = 0x8CA9;
 constexpr libc_types::u32 read_framebuffer_binding = 0x8CAA;
 } // namespace values
+/*!
+ * \brief Part of GL_EXT_framebuffer_blit
+ * \param srcX0 GLint
+ * \param srcY0 GLint
+ * \param srcX1 GLint
+ * \param srcY1 GLint
+ * \param dstX0 GLint
+ * \param dstY0 GLint
+ * \param dstX1 GLint
+ * \param dstY1 GLint
+ * \param mask GLbitfield
+ * \param filter GLenum
+ * \return void
+ */
 STATICINLINE void blit_framebuffer(
     i32                            srcX0,
     i32                            srcY0,

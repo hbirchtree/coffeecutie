@@ -4,6 +4,15 @@
 namespace gl::nv::bindless_multi_draw_indirect {
 namespace values {
 } // namespace values
+/*!
+ * \brief Part of GL_NV_bindless_multi_draw_indirect
+ * \param mode GLenum
+ * \param indirect const void *
+ * \param drawCount GLsizei
+ * \param stride GLsizei
+ * \param vertexBufferCount GLint
+ * \return void
+ */
 STATICINLINE void multi_draw_arrays_indirect_bindless(
     group::primitive_type mode,
     ptroff                indirect,
@@ -25,6 +34,16 @@ STATICINLINE void multi_draw_arrays_indirect_bindless(
     detail::error_check("MultiDrawArraysIndirectBindlessNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_bindless_multi_draw_indirect
+ * \param mode GLenum
+ * \param type GLenum
+ * \param indirect const void *
+ * \param drawCount GLsizei
+ * \param stride GLsizei
+ * \param vertexBufferCount GLint
+ * \return void
+ */
 STATICINLINE void multi_draw_elements_indirect_bindless(
     group::primitive_type     mode,
     group::draw_elements_type type,

@@ -28,6 +28,9 @@ enum class texture_gen_parameter : ::libc_types::u32
 #ifdef GL_TEXTURE_GEN_MODE
     texture_gen_mode = GL_TEXTURE_GEN_MODE,
 #endif
+#ifdef GL_TEXTURE_GEN_MODE_OES
+    texture_gen_mode_oes = GL_TEXTURE_GEN_MODE_OES,
+#endif
 }; // enum class texture_gen_parameter
 
 } // namespace gl::group

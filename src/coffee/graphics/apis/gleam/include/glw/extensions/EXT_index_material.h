@@ -7,8 +7,14 @@ constexpr libc_types::u32 index_material           = 0x81B8;
 constexpr libc_types::u32 index_material_parameter = 0x81B9;
 constexpr libc_types::u32 index_material_face      = 0x81BA;
 } // namespace values
+/*!
+ * \brief Part of GL_EXT_index_material
+ * \param face GLenum
+ * \param mode GLenum
+ * \return void
+ */
 STATICINLINE void index_material(
-    group::material_face face, group::index_material_parameter_ext mode)
+    group::triangle_face face, group::index_material_parameter_ext mode)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

@@ -39,6 +39,14 @@ constexpr libc_types::u32 referenced_by_geometry_shader            = 0x9309;
 constexpr libc_types::u32 framebuffer_default_layers               = 0x9312;
 constexpr libc_types::u32 max_framebuffer_layers                   = 0x9317;
 } // namespace values
+/*!
+ * \brief Part of GL_OES_geometry_shader
+ * \param target GLenum
+ * \param attachment GLenum
+ * \param texture GLuint
+ * \param level GLint
+ * \return void
+ */
 STATICINLINE void framebuffer_texture(
     group::framebuffer_target     target,
     group::framebuffer_attachment attachment,

@@ -2,12 +2,10 @@
 
 #ifdef GL_ARB_shader_image_load_store
 #include "../enums/AttributeType.h"
-#include "../enums/GlslTypeToken.h"
 #include "../enums/InternalFormatPName.h"
 #include "../enums/MemoryBarrierMask.h"
 namespace gl::arb::shader_image_load_store {
 using gl::group::attribute_type;
-using gl::group::glsl_type_token;
 using gl::group::internal_format_prop;
 using gl::group::memory_barrier_mask;
 namespace values {
@@ -30,6 +28,17 @@ constexpr libc_types::u32 max_geometry_image_uniforms         = 0x90CD;
 constexpr libc_types::u32 max_fragment_image_uniforms         = 0x90CE;
 constexpr libc_types::u32 max_combined_image_uniforms         = 0x90CF;
 } // namespace values
+/*!
+ * \brief Part of GL_ARB_shader_image_load_store
+ * \param unit GLuint
+ * \param texture GLuint
+ * \param level GLint
+ * \param layered GLboolean
+ * \param layer GLint
+ * \param access GLenum
+ * \param format GLenum
+ * \return void
+ */
 STATICINLINE void bind_image_texture(
     u32                      unit,
     u32                      texture,
@@ -56,6 +65,11 @@ STATICINLINE void bind_image_texture(
     detail::error_check("BindImageTexture"sv);
 }
 
+/*!
+ * \brief Part of GL_ARB_shader_image_load_store
+ * \param barriers GLbitfield
+ * \return void
+ */
 STATICINLINE void memory_barrier(group::memory_barrier_mask barriers)
 {
     using namespace std::string_view_literals;

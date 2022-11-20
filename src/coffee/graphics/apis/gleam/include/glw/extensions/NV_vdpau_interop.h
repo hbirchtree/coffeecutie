@@ -8,6 +8,11 @@ constexpr libc_types::u32 surface_registered = 0x86FD;
 constexpr libc_types::u32 surface_mapped     = 0x8700;
 constexpr libc_types::u32 write_discard      = 0x88BE;
 } // namespace values
+/*!
+ * \brief Part of GL_NV_vdpau_interop
+
+ * \return void
+ */
 STATICINLINE void vdpau_fini()
 {
     using namespace std::string_view_literals;
@@ -22,8 +27,17 @@ STATICINLINE void vdpau_fini()
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void vdpau_get_surfaceiv(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_NV_vdpau_interop
+     * \param surface GLvdpauSurfaceNV
+     * \param pname GLenum
+     * \param count GLsizei
+     * \param length GLsizei *
+     * \param values GLint *
+     * \return void
+     */
+    STATICINLINE void vdpau_get_surfaceiv(
         GLvdpauSurfaceNV surface,
         GLenum           pname,
         span_i32         length,
@@ -44,8 +58,14 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>) STATICINLINE
-    void vdpau_init(
+requires(semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_NV_vdpau_interop
+     * \param vdpDevice const void *
+     * \param getProcAddress const void *
+     * \return void
+     */
+    STATICINLINE void vdpau_init(
         span_const_void const& vdpDevice, span_const_void const& getProcAddress)
 {
     using namespace std::string_view_literals;
@@ -62,6 +82,11 @@ requires(semantic::concepts::Span<span_const_void>) STATICINLINE
     detail::error_check("VDPAUInitNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_vdpau_interop
+ * \param surface GLvdpauSurfaceNV
+ * \return Boolean
+ */
 STATICINLINE GLboolean vdpau_is_surface(GLvdpauSurfaceNV surface)
 {
     using namespace std::string_view_literals;
@@ -77,7 +102,14 @@ STATICINLINE GLboolean vdpau_is_surface(GLvdpauSurfaceNV surface)
 template<class span_const_GLvdpauSurfaceNV>
 requires(semantic::concepts::Span<span_const_GLvdpauSurfaceNV>&& std::is_same_v<
          std::decay_t<typename span_const_GLvdpauSurfaceNV::value_type>,
-         std::decay_t<GLvdpauSurfaceNV>>) STATICINLINE
+         std::decay_t<GLvdpauSurfaceNV>>)
+    /*!
+     * \brief Part of GL_NV_vdpau_interop
+     * \param numSurfaces GLsizei
+     * \param surfaces const GLvdpauSurfaceNV *
+     * \return void
+     */
+    STATICINLINE
     void vdpau_map_surfaces(span_const_GLvdpauSurfaceNV const& surfaces)
 {
     using namespace std::string_view_literals;
@@ -97,8 +129,16 @@ template<class span_const_u32, class span_const_void>
 requires(semantic::concepts::Span<span_const_void>&&
              semantic::concepts::Span<span_const_u32>&& std::is_same_v<
                  std::decay_t<typename span_const_u32::value_type>,
-                 std::decay_t<u32>>) STATICINLINE GLvdpauSurfaceNV
-    vdpau_register_output_surface(
+                 std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_NV_vdpau_interop
+     * \param vdpSurface const void *
+     * \param target GLenum
+     * \param numTextureNames GLsizei
+     * \param textureNames const GLuint *
+     * \return vdpauSurfaceNV
+     */
+    STATICINLINE GLvdpauSurfaceNV vdpau_register_output_surface(
         span_const_void const& vdpSurface,
         GLenum                 target,
         span_const_u32 const&  textureNames)
@@ -124,8 +164,16 @@ template<class span_const_u32, class span_const_void>
 requires(semantic::concepts::Span<span_const_void>&&
              semantic::concepts::Span<span_const_u32>&& std::is_same_v<
                  std::decay_t<typename span_const_u32::value_type>,
-                 std::decay_t<u32>>) STATICINLINE GLvdpauSurfaceNV
-    vdpau_register_video_surface(
+                 std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_NV_vdpau_interop
+     * \param vdpSurface const void *
+     * \param target GLenum
+     * \param numTextureNames GLsizei
+     * \param textureNames const GLuint *
+     * \return vdpauSurfaceNV
+     */
+    STATICINLINE GLvdpauSurfaceNV vdpau_register_video_surface(
         span_const_void const& vdpSurface,
         GLenum                 target,
         span_const_u32 const&  textureNames)
@@ -147,6 +195,12 @@ requires(semantic::concepts::Span<span_const_void>&&
     return out;
 }
 
+/*!
+ * \brief Part of GL_NV_vdpau_interop
+ * \param surface GLvdpauSurfaceNV
+ * \param access GLenum
+ * \return void
+ */
 STATICINLINE void vdpau_surface_access(GLvdpauSurfaceNV surface, GLenum access)
 {
     using namespace std::string_view_literals;
@@ -161,7 +215,14 @@ STATICINLINE void vdpau_surface_access(GLvdpauSurfaceNV surface, GLenum access)
 template<class span_const_GLvdpauSurfaceNV>
 requires(semantic::concepts::Span<span_const_GLvdpauSurfaceNV>&& std::is_same_v<
          std::decay_t<typename span_const_GLvdpauSurfaceNV::value_type>,
-         std::decay_t<GLvdpauSurfaceNV>>) STATICINLINE
+         std::decay_t<GLvdpauSurfaceNV>>)
+    /*!
+     * \brief Part of GL_NV_vdpau_interop
+     * \param numSurface GLsizei
+     * \param surfaces const GLvdpauSurfaceNV *
+     * \return void
+     */
+    STATICINLINE
     void vdpau_unmap_surfaces(span_const_GLvdpauSurfaceNV const& surfaces)
 {
     using namespace std::string_view_literals;
@@ -177,6 +238,11 @@ requires(semantic::concepts::Span<span_const_GLvdpauSurfaceNV>&& std::is_same_v<
     detail::error_check("VDPAUUnmapSurfacesNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_vdpau_interop
+ * \param surface GLvdpauSurfaceNV
+ * \return void
+ */
 STATICINLINE void vdpau_unregister_surface(GLvdpauSurfaceNV surface)
 {
     using namespace std::string_view_literals;

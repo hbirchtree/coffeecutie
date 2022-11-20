@@ -19,6 +19,11 @@ constexpr libc_types::u32 hsl_saturation = 0x92AE;
 constexpr libc_types::u32 hsl_color      = 0x92AF;
 constexpr libc_types::u32 hsl_luminosity = 0x92B0;
 } // namespace values
+/*!
+ * \brief Part of GL_KHR_blend_equation_advanced
+
+ * \return void
+ */
 STATICINLINE void blend_barrier()
 {
     using namespace std::string_view_literals;

@@ -18,6 +18,13 @@ constexpr libc_types::u32 texture_buffer_offset             = 0x919D;
 constexpr libc_types::u32 texture_buffer_size               = 0x919E;
 constexpr libc_types::u32 texture_buffer_offset_alignment   = 0x919F;
 } // namespace values
+/*!
+ * \brief Part of GL_OES_texture_buffer
+ * \param target GLenum
+ * \param internalformat GLenum
+ * \param buffer GLuint
+ * \return void
+ */
 STATICINLINE void tex_buffer(
     group::texture_target        target,
     group::sized_internal_format internalformat,
@@ -36,6 +43,15 @@ STATICINLINE void tex_buffer(
     detail::error_check("TexBufferOES"sv);
 }
 
+/*!
+ * \brief Part of GL_OES_texture_buffer
+ * \param target GLenum
+ * \param internalformat GLenum
+ * \param buffer GLuint
+ * \param offset GLintptr
+ * \param size GLsizeiptr
+ * \return void
+ */
 STATICINLINE void tex_buffer_range(
     group::texture_target        target,
     group::sized_internal_format internalformat,

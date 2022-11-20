@@ -7,8 +7,16 @@ namespace values {
 template<class span_const_u32>
 requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>) STATICINLINE
-    void bind_buffers_base(
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_ARB_multi_bind
+     * \param target GLenum
+     * \param first GLuint
+     * \param count GLsizei
+     * \param buffers const GLuint *
+     * \return void
+     */
+    STATICINLINE void bind_buffers_base(
         group::buffer_target_arb target,
         u32                      first,
         span_const_u32 const&    buffers)
@@ -40,8 +48,18 @@ requires(
             std::decay_t<GLintptr>>&&
             semantic::concepts::Span<span_const_GLsizeiptr>&& std::is_same_v<
                 std::decay_t<typename span_const_GLsizeiptr::value_type>,
-                std::decay_t<GLsizeiptr>>) STATICINLINE
-    void bind_buffers_range(
+                std::decay_t<GLsizeiptr>>)
+    /*!
+     * \brief Part of GL_ARB_multi_bind
+     * \param target GLenum
+     * \param first GLuint
+     * \param count GLsizei
+     * \param buffers const GLuint *
+     * \param offsets const GLintptr *
+     * \param sizes const GLsizeiptr *
+     * \return void
+     */
+    STATICINLINE void bind_buffers_range(
         group::buffer_target_arb     target,
         u32                          first,
         span_const_u32 const&        buffers,
@@ -69,7 +87,15 @@ requires(
 template<class span_const_u32>
 requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>) STATICINLINE
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_ARB_multi_bind
+     * \param first GLuint
+     * \param count GLsizei
+     * \param textures const GLuint *
+     * \return void
+     */
+    STATICINLINE
     void bind_image_textures(u32 first, span_const_u32 const& textures)
 {
     using namespace std::string_view_literals;
@@ -88,8 +114,15 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
 template<class span_const_u32>
 requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>) STATICINLINE
-    void bind_samplers(u32 first, span_const_u32 const& samplers)
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_ARB_multi_bind
+     * \param first GLuint
+     * \param count GLsizei
+     * \param samplers const GLuint *
+     * \return void
+     */
+    STATICINLINE void bind_samplers(u32 first, span_const_u32 const& samplers)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -107,8 +140,15 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
 template<class span_const_u32>
 requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>) STATICINLINE
-    void bind_textures(u32 first, span_const_u32 const& textures)
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_ARB_multi_bind
+     * \param first GLuint
+     * \param count GLsizei
+     * \param textures const GLuint *
+     * \return void
+     */
+    STATICINLINE void bind_textures(u32 first, span_const_u32 const& textures)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -132,8 +172,17 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
                  std::decay_t<GLintptr>>&&
                  semantic::concepts::Span<span_const_i32>&& std::is_same_v<
                      std::decay_t<typename span_const_i32::value_type>,
-                     std::decay_t<i32>>) STATICINLINE
-    void bind_vertex_buffers(
+                     std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_ARB_multi_bind
+     * \param first GLuint
+     * \param count GLsizei
+     * \param buffers const GLuint *
+     * \param offsets const GLintptr *
+     * \param strides const GLsizei *
+     * \return void
+     */
+    STATICINLINE void bind_vertex_buffers(
         u32                        first,
         span_const_u32 const&      buffers,
         span_const_GLintptr const& offsets,

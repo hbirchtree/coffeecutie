@@ -10,6 +10,9 @@ enum class light_texture_mode_ext : ::libc_types::u32
 #ifdef GL_FRAGMENT_COLOR_EXT
     fragment_color_ext = GL_FRAGMENT_COLOR_EXT,
 #endif
+#ifdef GL_FRAGMENT_DEPTH
+    fragment_depth = GL_FRAGMENT_DEPTH,
+#endif
 #ifdef GL_FRAGMENT_DEPTH_EXT
     fragment_depth_ext = GL_FRAGMENT_DEPTH_EXT,
 #endif

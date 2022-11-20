@@ -6,6 +6,11 @@ namespace values {
 constexpr libc_types::u32 sample_shading           = 0x8C36;
 constexpr libc_types::u32 min_sample_shading_value = 0x8C37;
 } // namespace values
+/*!
+ * \brief Part of GL_ARB_sample_shading
+ * \param value GLfloat
+ * \return void
+ */
 STATICINLINE void min_sample_shading(f32 value)
 {
     using namespace std::string_view_literals;

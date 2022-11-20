@@ -1,11 +1,23 @@
 #ifdef GL_VERSION_1_2
-/* Introduced in GL core 1.2 */
 template<class size_2_i32, class vec_2_i32, class vec_3_i32>
 requires(MinimumVersion<Current, Version<1, 2>>&&
                      semantic::concepts::Vector<vec_3_i32, i32, 3>&&
                      semantic::concepts::Vector<vec_2_i32, i32, 2>&&
-                     semantic::concepts::Size2D<size_2_i32, i32>) STATICINLINE
-    void copy_tex_sub_image_3d(
+                     semantic::concepts::Size2D<size_2_i32, i32>)
+    /*!
+     * \brief Wraps around glCopyTexSubImage3D. Introduced in GL core 1.2
+     * \param target GLenum
+     * \param level GLint
+     * \param xoffset GLint
+     * \param yoffset GLint
+     * \param zoffset GLint
+     * \param x GLint
+     * \param y GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \return void
+     */
+    STATICINLINE void copy_tex_sub_image_3d(
         group::texture_target target,
         i32                   level,
         vec_3_i32 const&      xoffset,
@@ -30,11 +42,20 @@ requires(MinimumVersion<Current, Version<1, 2>>&&
     detail::error_check("CopyTexSubImage3D"sv);
 }
 
-/* Introduced in GL core 1.2 */
 template<class span_const_void>
 requires(MinimumVersion<Current, Version<1, 2>>&&
-             semantic::concepts::Span<span_const_void>) STATICINLINE
-    void draw_range_elements(
+             semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Wraps around glDrawRangeElements. Introduced in GL core 1.2
+     * \param mode GLenum
+     * \param start GLuint
+     * \param end GLuint
+     * \param count GLsizei
+     * \param type GLenum
+     * \param indices const void *
+     * \return void
+     */
+    STATICINLINE void draw_range_elements(
         group::primitive_type     mode,
         u32                       start,
         u32                       end,
@@ -58,12 +79,25 @@ requires(MinimumVersion<Current, Version<1, 2>>&&
     detail::error_check("DrawRangeElements"sv);
 }
 
-/* Introduced in GL core 1.2 */
 template<class size_3_i32, class span_const_void>
 requires(MinimumVersion<Current, Version<1, 2>>&&
                  semantic::concepts::Size2D<size_3_i32, i32>&&
-                 semantic::concepts::Span<span_const_void>) STATICINLINE
-    void tex_image_3d(
+                 semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Wraps around glTexImage3D. Introduced in GL core 1.2
+     * \param target GLenum
+     * \param level GLint
+     * \param internalformat GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param depth GLsizei
+     * \param border GLint
+     * \param format GLenum
+     * \param type GLenum
+     * \param pixels const void *
+     * \return void
+     */
+    STATICINLINE void tex_image_3d(
         group::texture_target  target,
         i32                    level,
         i32                    internalformat,
@@ -92,13 +126,27 @@ requires(MinimumVersion<Current, Version<1, 2>>&&
     detail::error_check("TexImage3D"sv);
 }
 
-/* Introduced in GL core 1.2 */
 template<class size_3_i32, class span_const_void, class vec_3_i32>
 requires(MinimumVersion<Current, Version<1, 2>>&&
                      semantic::concepts::Vector<vec_3_i32, i32, 3>&&
                      semantic::concepts::Size2D<size_3_i32, i32>&&
-                     semantic::concepts::Span<span_const_void>) STATICINLINE
-    void tex_sub_image_3d(
+                     semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Wraps around glTexSubImage3D. Introduced in GL core 1.2
+     * \param target GLenum
+     * \param level GLint
+     * \param xoffset GLint
+     * \param yoffset GLint
+     * \param zoffset GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param depth GLsizei
+     * \param format GLenum
+     * \param type GLenum
+     * \param pixels const void *
+     * \return void
+     */
+    STATICINLINE void tex_sub_image_3d(
         group::texture_target  target,
         i32                    level,
         vec_3_i32 const&       xoffset,

@@ -9,8 +9,17 @@ constexpr libc_types::u32 spir_v_binary               = 0x9552;
 template<class span_const_u32>
 requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>) STATICINLINE
-    void specialize_shader(
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_ARB_gl_spirv
+     * \param shader GLuint
+     * \param pEntryPoint const GLchar *
+     * \param numSpecializationConstants GLuint
+     * \param pConstantIndex const GLuint *
+     * \param pConstantValue const GLuint *
+     * \return void
+     */
+    STATICINLINE void specialize_shader(
         u32                     shader,
         std::string_view const& pEntryPoint,
         u32                     numSpecializationConstants,

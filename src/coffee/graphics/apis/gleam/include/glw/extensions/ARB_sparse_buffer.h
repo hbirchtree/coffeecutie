@@ -7,6 +7,14 @@ using gl::group::buffer_storage_mask;
 namespace values {
 constexpr libc_types::u32 sparse_buffer_page_size = 0x82F8;
 } // namespace values
+/*!
+ * \brief Part of GL_ARB_sparse_buffer
+ * \param target GLenum
+ * \param offset GLintptr
+ * \param size GLsizeiptr
+ * \param commit GLboolean
+ * \return void
+ */
 STATICINLINE void buffer_page_commitment(
     GLenum target, GLintptr offset, GLsizeiptr size, bool commit)
 {
@@ -19,6 +27,14 @@ STATICINLINE void buffer_page_commitment(
     detail::error_check("BufferPageCommitmentARB"sv);
 }
 
+/*!
+ * \brief Part of GL_ARB_sparse_buffer
+ * \param buffer GLuint
+ * \param offset GLintptr
+ * \param size GLsizeiptr
+ * \param commit GLboolean
+ * \return void
+ */
 STATICINLINE void named_buffer_page_commitment_ext(
     u32 buffer, GLintptr offset, GLsizeiptr size, bool commit)
 {
@@ -32,6 +48,14 @@ STATICINLINE void named_buffer_page_commitment_ext(
     detail::error_check("NamedBufferPageCommitmentEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_ARB_sparse_buffer
+ * \param buffer GLuint
+ * \param offset GLintptr
+ * \param size GLsizeiptr
+ * \param commit GLboolean
+ * \return void
+ */
 STATICINLINE void named_buffer_page_commitment(
     u32 buffer, GLintptr offset, GLsizeiptr size, bool commit)
 {

@@ -146,6 +146,9 @@ enum class texture_parameter_name : ::libc_types::u32
 #ifdef GL_TEXTURE_MAG_FILTER
     texture_mag_filter = GL_TEXTURE_MAG_FILTER,
 #endif
+#ifdef GL_TEXTURE_MAX_ANISOTROPY
+    texture_max_anisotropy = GL_TEXTURE_MAX_ANISOTROPY,
+#endif
 #ifdef GL_TEXTURE_MAX_CLAMP_R_SGIX
     texture_max_clamp_r_sgix = GL_TEXTURE_MAX_CLAMP_R_SGIX,
 #endif
@@ -166,6 +169,9 @@ enum class texture_parameter_name : ::libc_types::u32
 #endif
 #ifdef GL_TEXTURE_MAX_LOD_SGIS
     texture_max_lod_sgis = GL_TEXTURE_MAX_LOD_SGIS,
+#endif
+#ifdef GL_TEXTURE_MEMORY_LAYOUT_INTEL
+    texture_memory_layout_intel = GL_TEXTURE_MEMORY_LAYOUT_INTEL,
 #endif
 #ifdef GL_TEXTURE_MIN_FILTER
     texture_min_filter = GL_TEXTURE_MIN_FILTER,

@@ -6,7 +6,6 @@
 #include "../enums/FogCoordinatePointerType.h"
 #include "../enums/FogPointerTypeEXT.h"
 #include "../enums/FogPointerTypeIBM.h"
-#include "../enums/GlslTypeToken.h"
 #include "../enums/IndexPointerType.h"
 #include "../enums/ListNameType.h"
 #include "../enums/MapTypeNV.h"
@@ -27,7 +26,6 @@ using gl::group::binormal_pointer_type_ext;
 using gl::group::fog_coordinate_pointer_type;
 using gl::group::fog_pointer_type_ext;
 using gl::group::fog_pointer_type_ibm;
-using gl::group::glsl_type_token;
 using gl::group::index_pointer_type;
 using gl::group::list_name_type;
 using gl::group::map_type_nv;

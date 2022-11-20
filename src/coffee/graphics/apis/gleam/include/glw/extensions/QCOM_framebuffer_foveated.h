@@ -6,6 +6,15 @@ namespace gl::qcom::framebuffer_foveated {
 using gl::group::foveation_config_bit_qcom;
 namespace values {
 } // namespace values
+/*!
+ * \brief Part of GL_QCOM_framebuffer_foveated
+ * \param framebuffer GLuint
+ * \param numLayers GLuint
+ * \param focalPointsPerLayer GLuint
+ * \param requestedFeatures GLuint
+ * \param providedFeatures GLuint *
+ * \return void
+ */
 STATICINLINE void framebuffer_foveation_config(
     u32  framebuffer,
     u32  numLayers,
@@ -28,6 +37,18 @@ STATICINLINE void framebuffer_foveation_config(
     detail::error_check("FramebufferFoveationConfigQCOM"sv);
 }
 
+/*!
+ * \brief Part of GL_QCOM_framebuffer_foveated
+ * \param framebuffer GLuint
+ * \param layer GLuint
+ * \param focalPoint GLuint
+ * \param focalX GLfloat
+ * \param focalY GLfloat
+ * \param gainX GLfloat
+ * \param gainY GLfloat
+ * \param foveaArea GLfloat
+ * \return void
+ */
 STATICINLINE void framebuffer_foveation_parameter(
     u32 framebuffer,
     u32 layer,

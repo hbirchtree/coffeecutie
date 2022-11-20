@@ -25,6 +25,11 @@ constexpr libc_types::u32 shading_rate_sample_order_default        = 0x95AE;
 constexpr libc_types::u32 shading_rate_sample_order_pixel_major    = 0x95AF;
 constexpr libc_types::u32 shading_rate_sample_order_sample_major   = 0x95B0;
 } // namespace values
+/*!
+ * \brief Part of GL_NV_shading_rate_image
+ * \param texture GLuint
+ * \return void
+ */
 STATICINLINE void bind_shading_rate_image(u32 texture)
 {
     using namespace std::string_view_literals;
@@ -37,6 +42,13 @@ STATICINLINE void bind_shading_rate_image(u32 texture)
     detail::error_check("BindShadingRateImageNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_shading_rate_image
+ * \param viewport GLuint
+ * \param entry GLuint
+ * \param rate GLenum *
+ * \return void
+ */
 STATICINLINE void get_shading_rate_image_palette(
     u32 viewport, u32 entry, GLenum& rate)
 {
@@ -52,8 +64,16 @@ STATICINLINE void get_shading_rate_image_palette(
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void get_shading_rate_sample_locationiv(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_NV_shading_rate_image
+     * \param rate GLenum
+     * \param samples GLuint
+     * \param index GLuint
+     * \param location GLint *
+     * \return void
+     */
+    STATICINLINE void get_shading_rate_sample_locationiv(
         GLenum rate, u32 samples, u32 index, span_i32 location)
 {
     using namespace std::string_view_literals;
@@ -69,6 +89,11 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
     detail::error_check("GetShadingRateSampleLocationivNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_shading_rate_image
+ * \param synchronize GLboolean
+ * \return void
+ */
 STATICINLINE void shading_rate_image_barrier(bool synchronize)
 {
     using namespace std::string_view_literals;
@@ -83,8 +108,16 @@ STATICINLINE void shading_rate_image_barrier(bool synchronize)
 template<class span_const_GLenum>
 requires(semantic::concepts::Span<span_const_GLenum>&& std::is_same_v<
          std::decay_t<typename span_const_GLenum::value_type>,
-         std::decay_t<GLenum>>) STATICINLINE
-    void shading_rate_image_palette(
+         std::decay_t<GLenum>>)
+    /*!
+     * \brief Part of GL_NV_shading_rate_image
+     * \param viewport GLuint
+     * \param first GLuint
+     * \param count GLsizei
+     * \param rates const GLenum *
+     * \return void
+     */
+    STATICINLINE void shading_rate_image_palette(
         u32 viewport, u32 first, span_const_GLenum const& rates)
 {
     using namespace std::string_view_literals;
@@ -100,6 +133,11 @@ requires(semantic::concepts::Span<span_const_GLenum>&& std::is_same_v<
     detail::error_check("ShadingRateImagePaletteNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_shading_rate_image
+ * \param order GLenum
+ * \return void
+ */
 STATICINLINE void shading_rate_sample_order(GLenum order)
 {
     using namespace std::string_view_literals;
@@ -114,8 +152,15 @@ STATICINLINE void shading_rate_sample_order(GLenum order)
 template<class span_const_i32>
 requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void shading_rate_sample_order_custom(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_NV_shading_rate_image
+     * \param rate GLenum
+     * \param samples GLuint
+     * \param locations const GLint *
+     * \return void
+     */
+    STATICINLINE void shading_rate_sample_order_custom(
         GLenum rate, u32 samples, span_const_i32 const& locations)
 {
     using namespace std::string_view_literals;

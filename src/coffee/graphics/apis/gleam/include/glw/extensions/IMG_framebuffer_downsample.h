@@ -10,6 +10,17 @@ constexpr libc_types::u32 framebuffer_incomplete_multisample_and_downsample =
 constexpr libc_types::u32 num_downsample_scales = 0x913D;
 constexpr libc_types::u32 downsample_scales     = 0x913E;
 } // namespace values
+/*!
+ * \brief Part of GL_IMG_framebuffer_downsample
+ * \param target GLenum
+ * \param attachment GLenum
+ * \param textarget GLenum
+ * \param texture GLuint
+ * \param level GLint
+ * \param xscale GLint
+ * \param yscale GLint
+ * \return void
+ */
 STATICINLINE void framebuffer_texture_2d_downsample(
     group::framebuffer_target     target,
     group::framebuffer_attachment attachment,
@@ -36,6 +47,17 @@ STATICINLINE void framebuffer_texture_2d_downsample(
     detail::error_check("FramebufferTexture2DDownsampleIMG"sv);
 }
 
+/*!
+ * \brief Part of GL_IMG_framebuffer_downsample
+ * \param target GLenum
+ * \param attachment GLenum
+ * \param texture GLuint
+ * \param level GLint
+ * \param layer GLint
+ * \param xscale GLint
+ * \param yscale GLint
+ * \return void
+ */
 STATICINLINE void framebuffer_texture_layer_downsample(
     group::framebuffer_target     target,
     group::framebuffer_attachment attachment,

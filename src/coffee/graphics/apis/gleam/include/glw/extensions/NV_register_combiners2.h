@@ -8,8 +8,15 @@ constexpr libc_types::u32 per_stage_constants = 0x8535;
 template<class span_const_f32>
 requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
-    void combiner_stage_parameter(
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_NV_register_combiners2
+     * \param stage GLenum
+     * \param pname GLenum
+     * \param params const GLfloat *
+     * \return void
+     */
+    STATICINLINE void combiner_stage_parameter(
         group::combiner_stage_nv     stage,
         group::combiner_parameter_nv pname,
         span_const_f32 const&        params)
@@ -30,8 +37,15 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
 template<class span_f32>
 requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
-    void get_combiner_stage_parameter(
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_NV_register_combiners2
+     * \param stage GLenum
+     * \param pname GLenum
+     * \param params GLfloat *
+     * \return void
+     */
+    STATICINLINE void get_combiner_stage_parameter(
         group::combiner_stage_nv     stage,
         group::combiner_parameter_nv pname,
         span_f32                     params)

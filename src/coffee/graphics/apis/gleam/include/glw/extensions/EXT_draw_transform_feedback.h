@@ -4,6 +4,12 @@
 namespace gl::ext::draw_transform_feedback {
 namespace values {
 } // namespace values
+/*!
+ * \brief Part of GL_EXT_draw_transform_feedback
+ * \param mode GLenum
+ * \param id GLuint
+ * \return void
+ */
 STATICINLINE void draw_transform_feedback(group::primitive_type mode, u32 id)
 {
     using namespace std::string_view_literals;
@@ -15,6 +21,13 @@ STATICINLINE void draw_transform_feedback(group::primitive_type mode, u32 id)
     detail::error_check("DrawTransformFeedbackEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_draw_transform_feedback
+ * \param mode GLenum
+ * \param id GLuint
+ * \param instancecount GLsizei
+ * \return void
+ */
 STATICINLINE void draw_transform_feedback_instanced(
     group::primitive_type mode, u32 id, i32 instancecount)
 {

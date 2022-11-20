@@ -8,6 +8,12 @@ constexpr libc_types::u32 subpixel_precision_bias_x_bits   = 0x9347;
 constexpr libc_types::u32 subpixel_precision_bias_y_bits   = 0x9348;
 constexpr libc_types::u32 max_subpixel_precision_bias_bits = 0x9349;
 } // namespace values
+/*!
+ * \brief Part of GL_NV_conservative_raster
+ * \param xbits GLuint
+ * \param ybits GLuint
+ * \return void
+ */
 STATICINLINE void subpixel_precision_bias(u32 xbits, u32 ybits)
 {
     using namespace std::string_view_literals;

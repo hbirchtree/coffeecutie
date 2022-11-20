@@ -6,7 +6,6 @@
 #include "../enums/EnableCap.h"
 #include "../enums/GetMultisamplePNameNV.h"
 #include "../enums/GetPName.h"
-#include "../enums/GlslTypeToken.h"
 #include "../enums/TextureTarget.h"
 #include "../enums/UniformType.h"
 namespace gl::arb::texture_multisample {
@@ -15,7 +14,6 @@ using gl::group::copy_image_sub_data_target;
 using gl::group::enable_cap;
 using gl::group::get_multisample_prop_nv;
 using gl::group::get_prop;
-using gl::group::glsl_type_token;
 using gl::group::texture_target;
 using gl::group::uniform_type;
 namespace values {
@@ -26,8 +24,15 @@ constexpr libc_types::u32 texture_fixed_sample_locations = 0x9107;
 template<class span_f32>
 requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
-    void get_multisamplefv(
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_ARB_texture_multisample
+     * \param pname GLenum
+     * \param index GLuint
+     * \param val GLfloat *
+     * \return void
+     */
+    STATICINLINE void get_multisamplefv(
         group::get_multisample_prop_nv pname, u32 index, span_f32 val)
 {
     using namespace std::string_view_literals;
@@ -42,6 +47,12 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
     detail::error_check("GetMultisamplefv"sv);
 }
 
+/*!
+ * \brief Part of GL_ARB_texture_multisample
+ * \param maskNumber GLuint
+ * \param mask GLbitfield
+ * \return void
+ */
 STATICINLINE void sample_maski(u32 maskNumber, GLbitfield mask)
 {
     using namespace std::string_view_literals;
@@ -54,8 +65,18 @@ STATICINLINE void sample_maski(u32 maskNumber, GLbitfield mask)
 }
 
 template<class size_2_i32>
-requires(semantic::concepts::Size2D<size_2_i32, i32>) STATICINLINE
-    void tex_image_2d_multisample(
+requires(semantic::concepts::Size2D<size_2_i32, i32>)
+    /*!
+     * \brief Part of GL_ARB_texture_multisample
+     * \param target GLenum
+     * \param samples GLsizei
+     * \param internalformat GLenum
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param fixedsamplelocations GLboolean
+     * \return void
+     */
+    STATICINLINE void tex_image_2d_multisample(
         group::texture_target  target,
         i32                    samples,
         group::internal_format internalformat,
@@ -78,8 +99,19 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>) STATICINLINE
 }
 
 template<class size_3_i32>
-requires(semantic::concepts::Size2D<size_3_i32, i32>) STATICINLINE
-    void tex_image_3d_multisample(
+requires(semantic::concepts::Size2D<size_3_i32, i32>)
+    /*!
+     * \brief Part of GL_ARB_texture_multisample
+     * \param target GLenum
+     * \param samples GLsizei
+     * \param internalformat GLenum
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param depth GLsizei
+     * \param fixedsamplelocations GLboolean
+     * \return void
+     */
+    STATICINLINE void tex_image_3d_multisample(
         group::texture_target  target,
         i32                    samples,
         group::internal_format internalformat,

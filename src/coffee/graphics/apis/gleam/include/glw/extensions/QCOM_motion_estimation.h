@@ -8,6 +8,13 @@ using gl::group::foveation_config_bit_qcom;
 using gl::group::get_prop;
 namespace values {
 } // namespace values
+/*!
+ * \brief Part of GL_QCOM_motion_estimation
+ * \param ref GLuint
+ * \param target GLuint
+ * \param output GLuint
+ * \return void
+ */
 STATICINLINE void tex_estimate_motion(u32 ref, u32 target, u32 output)
 {
     using namespace std::string_view_literals;
@@ -19,6 +26,14 @@ STATICINLINE void tex_estimate_motion(u32 ref, u32 target, u32 output)
     detail::error_check("TexEstimateMotionQCOM"sv);
 }
 
+/*!
+ * \brief Part of GL_QCOM_motion_estimation
+ * \param ref GLuint
+ * \param target GLuint
+ * \param output GLuint
+ * \param mask GLuint
+ * \return void
+ */
 STATICINLINE void tex_estimate_motion_regions(
     u32 ref, u32 target, u32 output, u32 mask)
 {

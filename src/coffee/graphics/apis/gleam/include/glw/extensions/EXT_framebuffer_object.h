@@ -3,6 +3,7 @@
 #ifdef GL_EXT_framebuffer_object
 #include "../enums/ErrorCode.h"
 #include "../enums/FramebufferAttachmentParameterName.h"
+#include "../enums/GetPName.h"
 #include "../enums/InternalFormat.h"
 #include "../enums/InvalidateFramebufferAttachment.h"
 #include "../enums/RenderbufferParameterName.h"
@@ -10,6 +11,7 @@
 namespace gl::ext::framebuffer_object {
 using gl::group::error_code;
 using gl::group::framebuffer_attachment_parameter_name;
+using gl::group::get_prop;
 using gl::group::internal_format;
 using gl::group::invalidate_framebuffer_attachment;
 using gl::group::renderbuffer_parameter_name;
@@ -26,10 +28,15 @@ constexpr libc_types::u32 framebuffer_incomplete_formats            = 0x8CDA;
 constexpr libc_types::u32 framebuffer_incomplete_draw_buffer        = 0x8CDB;
 constexpr libc_types::u32 framebuffer_incomplete_read_buffer        = 0x8CDC;
 constexpr libc_types::u32 framebuffer_unsupported                   = 0x8CDD;
-constexpr libc_types::u32 max_color_attachments                     = 0x8CDF;
 constexpr libc_types::u32 framebuffer                               = 0x8D40;
 constexpr libc_types::u32 renderbuffer                              = 0x8D41;
 } // namespace values
+/*!
+ * \brief Part of GL_EXT_framebuffer_object
+ * \param target GLenum
+ * \param framebuffer GLuint
+ * \return void
+ */
 STATICINLINE void bind_framebuffer(
     group::framebuffer_target target, u32 framebuffer)
 {
@@ -43,6 +50,12 @@ STATICINLINE void bind_framebuffer(
     detail::error_check("BindFramebufferEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_framebuffer_object
+ * \param target GLenum
+ * \param renderbuffer GLuint
+ * \return void
+ */
 STATICINLINE void bind_renderbuffer(
     group::renderbuffer_target target, u32 renderbuffer)
 {
@@ -56,6 +69,11 @@ STATICINLINE void bind_renderbuffer(
     detail::error_check("BindRenderbufferEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_framebuffer_object
+ * \param target GLenum
+ * \return FramebufferStatus
+ */
 STATICINLINE GLenum check_framebuffer_status(group::framebuffer_target target)
 {
     using namespace std::string_view_literals;
@@ -71,8 +89,14 @@ STATICINLINE GLenum check_framebuffer_status(group::framebuffer_target target)
 template<class span_const_u32>
 requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>) STATICINLINE
-    void delete_framebuffers(span_const_u32 const& framebuffers)
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_EXT_framebuffer_object
+     * \param n GLsizei
+     * \param framebuffers const GLuint *
+     * \return void
+     */
+    STATICINLINE void delete_framebuffers(span_const_u32 const& framebuffers)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -90,8 +114,14 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
 template<class span_const_u32>
 requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>) STATICINLINE
-    void delete_renderbuffers(span_const_u32 const& renderbuffers)
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_EXT_framebuffer_object
+     * \param n GLsizei
+     * \param renderbuffers const GLuint *
+     * \return void
+     */
+    STATICINLINE void delete_renderbuffers(span_const_u32 const& renderbuffers)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -106,6 +136,14 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
     detail::error_check("DeleteRenderbuffersEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_framebuffer_object
+ * \param target GLenum
+ * \param attachment GLenum
+ * \param renderbuffertarget GLenum
+ * \param renderbuffer GLuint
+ * \return void
+ */
 STATICINLINE void framebuffer_renderbuffer(
     group::framebuffer_target     target,
     group::framebuffer_attachment attachment,
@@ -126,6 +164,15 @@ STATICINLINE void framebuffer_renderbuffer(
     detail::error_check("FramebufferRenderbufferEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_framebuffer_object
+ * \param target GLenum
+ * \param attachment GLenum
+ * \param textarget GLenum
+ * \param texture GLuint
+ * \param level GLint
+ * \return void
+ */
 STATICINLINE void framebuffer_texture_1d(
     group::framebuffer_target     target,
     group::framebuffer_attachment attachment,
@@ -148,6 +195,15 @@ STATICINLINE void framebuffer_texture_1d(
     detail::error_check("FramebufferTexture1DEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_framebuffer_object
+ * \param target GLenum
+ * \param attachment GLenum
+ * \param textarget GLenum
+ * \param texture GLuint
+ * \param level GLint
+ * \return void
+ */
 STATICINLINE void framebuffer_texture_2d(
     group::framebuffer_target     target,
     group::framebuffer_attachment attachment,
@@ -170,6 +226,16 @@ STATICINLINE void framebuffer_texture_2d(
     detail::error_check("FramebufferTexture2DEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_framebuffer_object
+ * \param target GLenum
+ * \param attachment GLenum
+ * \param textarget GLenum
+ * \param texture GLuint
+ * \param level GLint
+ * \param zoffset GLint
+ * \return void
+ */
 STATICINLINE void framebuffer_texture_3d(
     group::framebuffer_target     target,
     group::framebuffer_attachment attachment,
@@ -197,8 +263,14 @@ STATICINLINE void framebuffer_texture_3d(
 template<class span_u32>
 requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>) STATICINLINE
-    void gen_framebuffers(span_u32 framebuffers)
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_EXT_framebuffer_object
+     * \param n GLsizei
+     * \param framebuffers GLuint *
+     * \return void
+     */
+    STATICINLINE void gen_framebuffers(span_u32 framebuffers)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -215,8 +287,14 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 template<class span_u32>
 requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>) STATICINLINE
-    void gen_renderbuffers(span_u32 renderbuffers)
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_EXT_framebuffer_object
+     * \param n GLsizei
+     * \param renderbuffers GLuint *
+     * \return void
+     */
+    STATICINLINE void gen_renderbuffers(span_u32 renderbuffers)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -230,6 +308,11 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
     detail::error_check("GenRenderbuffersEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_framebuffer_object
+ * \param target GLenum
+ * \return void
+ */
 STATICINLINE void generate_mipmap(group::texture_target target)
 {
     using namespace std::string_view_literals;
@@ -244,8 +327,16 @@ STATICINLINE void generate_mipmap(group::texture_target target)
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void get_framebuffer_attachment_parameter(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_EXT_framebuffer_object
+     * \param target GLenum
+     * \param attachment GLenum
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_framebuffer_attachment_parameter(
         group::framebuffer_target                    target,
         group::framebuffer_attachment                attachment,
         group::framebuffer_attachment_parameter_name pname,
@@ -267,8 +358,15 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void get_renderbuffer_parameter(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_EXT_framebuffer_object
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_renderbuffer_parameter(
         group::renderbuffer_target         target,
         group::renderbuffer_parameter_name pname,
         span_i32                           params)
@@ -285,6 +383,11 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
     detail::error_check("GetRenderbufferParameterivEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_framebuffer_object
+ * \param framebuffer GLuint
+ * \return Boolean
+ */
 STATICINLINE GLboolean is_framebuffer(u32 framebuffer)
 {
     using namespace std::string_view_literals;
@@ -298,6 +401,11 @@ STATICINLINE GLboolean is_framebuffer(u32 framebuffer)
     return out;
 }
 
+/*!
+ * \brief Part of GL_EXT_framebuffer_object
+ * \param renderbuffer GLuint
+ * \return Boolean
+ */
 STATICINLINE GLboolean is_renderbuffer(u32 renderbuffer)
 {
     using namespace std::string_view_literals;
@@ -312,8 +420,16 @@ STATICINLINE GLboolean is_renderbuffer(u32 renderbuffer)
 }
 
 template<class size_2_i32>
-requires(semantic::concepts::Size2D<size_2_i32, i32>) STATICINLINE
-    void renderbuffer_storage(
+requires(semantic::concepts::Size2D<size_2_i32, i32>)
+    /*!
+     * \brief Part of GL_EXT_framebuffer_object
+     * \param target GLenum
+     * \param internalformat GLenum
+     * \param width GLsizei
+     * \param height GLsizei
+     * \return void
+     */
+    STATICINLINE void renderbuffer_storage(
         group::renderbuffer_target target,
         group::internal_format     internalformat,
         size_2_i32 const&          width)

@@ -12,8 +12,18 @@ constexpr libc_types::u32 num_supported_multisample_modes       = 0x91B6;
 constexpr libc_types::u32 supported_multisample_modes           = 0x91B7;
 } // namespace values
 template<class size_2_i32>
-requires(semantic::concepts::Size2D<size_2_i32, i32>) STATICINLINE
-    void named_renderbuffer_storage_multisample_advanced(
+requires(semantic::concepts::Size2D<size_2_i32, i32>)
+    /*!
+     * \brief Part of GL_AMD_framebuffer_multisample_advanced
+     * \param renderbuffer GLuint
+     * \param samples GLsizei
+     * \param storageSamples GLsizei
+     * \param internalformat GLenum
+     * \param width GLsizei
+     * \param height GLsizei
+     * \return void
+     */
+    STATICINLINE void named_renderbuffer_storage_multisample_advanced(
         u32                    renderbuffer,
         i32                    samples,
         i32                    storageSamples,
@@ -37,8 +47,18 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>) STATICINLINE
 }
 
 template<class size_2_i32>
-requires(semantic::concepts::Size2D<size_2_i32, i32>) STATICINLINE
-    void renderbuffer_storage_multisample_advanced(
+requires(semantic::concepts::Size2D<size_2_i32, i32>)
+    /*!
+     * \brief Part of GL_AMD_framebuffer_multisample_advanced
+     * \param target GLenum
+     * \param samples GLsizei
+     * \param storageSamples GLsizei
+     * \param internalformat GLenum
+     * \param width GLsizei
+     * \param height GLsizei
+     * \return void
+     */
+    STATICINLINE void renderbuffer_storage_multisample_advanced(
         group::renderbuffer_target target,
         i32                        samples,
         i32                        storageSamples,

@@ -4,6 +4,13 @@
 namespace gl::ext::win32_keyed_mutex {
 namespace values {
 } // namespace values
+/*!
+ * \brief Part of GL_EXT_win32_keyed_mutex
+ * \param memory GLuint
+ * \param key GLuint64
+ * \param timeout GLuint
+ * \return Boolean
+ */
 STATICINLINE GLboolean
 acquire_keyed_mutex_win32(u32 memory, u64 key, u32 timeout)
 {
@@ -17,6 +24,12 @@ acquire_keyed_mutex_win32(u32 memory, u64 key, u32 timeout)
     return out;
 }
 
+/*!
+ * \brief Part of GL_EXT_win32_keyed_mutex
+ * \param memory GLuint
+ * \param key GLuint64
+ * \return Boolean
+ */
 STATICINLINE GLboolean release_keyed_mutex_win32(u32 memory, u64 key)
 {
     using namespace std::string_view_literals;

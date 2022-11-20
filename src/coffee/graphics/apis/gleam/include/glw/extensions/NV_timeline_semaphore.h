@@ -11,8 +11,14 @@ namespace values {
 template<class span_u32>
 requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>) STATICINLINE
-    void create_semaphores(span_u32 semaphores)
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_NV_timeline_semaphore
+     * \param n GLsizei
+     * \param semaphores GLuint *
+     * \return void
+     */
+    STATICINLINE void create_semaphores(span_u32 semaphores)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -29,8 +35,15 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void get_semaphore_parameter(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_NV_timeline_semaphore
+     * \param semaphore GLuint
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_semaphore_parameter(
         u32 semaphore, group::semaphore_parameter_name pname, span_i32 params)
 {
     using namespace std::string_view_literals;
@@ -48,8 +61,15 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 template<class span_const_i32>
 requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void semaphore_parameter(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_NV_timeline_semaphore
+     * \param semaphore GLuint
+     * \param pname GLenum
+     * \param params const GLint *
+     * \return void
+     */
+    STATICINLINE void semaphore_parameter(
         u32                             semaphore,
         group::semaphore_parameter_name pname,
         span_const_i32 const&           params)

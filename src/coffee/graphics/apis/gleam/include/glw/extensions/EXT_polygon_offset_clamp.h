@@ -5,6 +5,13 @@ namespace gl::ext::polygon_offset_clamp {
 namespace values {
 constexpr libc_types::u32 polygon_offset_clamp = 0x8E1B;
 } // namespace values
+/*!
+ * \brief Part of GL_EXT_polygon_offset_clamp
+ * \param factor GLfloat
+ * \param units GLfloat
+ * \param clamp GLfloat
+ * \return void
+ */
 STATICINLINE void polygon_offset_clamp(f32 factor, f32 units, f32 clamp)
 {
     using namespace std::string_view_literals;

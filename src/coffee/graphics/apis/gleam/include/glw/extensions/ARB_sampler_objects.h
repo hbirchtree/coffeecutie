@@ -6,6 +6,12 @@ namespace gl::arb::sampler_objects {
 using gl::group::get_prop;
 namespace values {
 } // namespace values
+/*!
+ * \brief Part of GL_ARB_sampler_objects
+ * \param unit GLuint
+ * \param sampler GLuint
+ * \return void
+ */
 STATICINLINE void bind_sampler(u32 unit, u32 sampler)
 {
     using namespace std::string_view_literals;
@@ -21,8 +27,14 @@ STATICINLINE void bind_sampler(u32 unit, u32 sampler)
 template<class span_const_u32>
 requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>) STATICINLINE
-    void delete_samplers(span_const_u32 const& samplers)
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_ARB_sampler_objects
+     * \param count GLsizei
+     * \param samplers const GLuint *
+     * \return void
+     */
+    STATICINLINE void delete_samplers(span_const_u32 const& samplers)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -39,7 +51,14 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
 template<class span_u32>
 requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>) STATICINLINE void gen_samplers(span_u32 samplers)
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_ARB_sampler_objects
+     * \param count GLsizei
+     * \param samplers GLuint *
+     * \return void
+     */
+    STATICINLINE void gen_samplers(span_u32 samplers)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -55,8 +74,15 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void get_sampler_parameter_iiv(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_ARB_sampler_objects
+     * \param sampler GLuint
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_sampler_parameter_iiv(
         u32 sampler, group::sampler_parameter_i pname, span_i32 params)
 {
     using namespace std::string_view_literals;
@@ -75,8 +101,15 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 template<class span_u32>
 requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>) STATICINLINE
-    void get_sampler_parameter_iuiv(
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_ARB_sampler_objects
+     * \param sampler GLuint
+     * \param pname GLenum
+     * \param params GLuint *
+     * \return void
+     */
+    STATICINLINE void get_sampler_parameter_iuiv(
         u32 sampler, group::sampler_parameter_i pname, span_u32 params)
 {
     using namespace std::string_view_literals;
@@ -95,8 +128,15 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 template<class span_f32>
 requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
-    void get_sampler_parameter(
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_ARB_sampler_objects
+     * \param sampler GLuint
+     * \param pname GLenum
+     * \param params GLfloat *
+     * \return void
+     */
+    STATICINLINE void get_sampler_parameter(
         u32 sampler, group::sampler_parameter_f pname, span_f32 params)
 {
     using namespace std::string_view_literals;
@@ -115,8 +155,15 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void get_sampler_parameter(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_ARB_sampler_objects
+     * \param sampler GLuint
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_sampler_parameter(
         u32 sampler, group::sampler_parameter_i pname, span_i32 params)
 {
     using namespace std::string_view_literals;
@@ -132,6 +179,11 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
     detail::error_check("GetSamplerParameteriv"sv);
 }
 
+/*!
+ * \brief Part of GL_ARB_sampler_objects
+ * \param sampler GLuint
+ * \return Boolean
+ */
 STATICINLINE GLboolean is_sampler(u32 sampler)
 {
     using namespace std::string_view_literals;
@@ -148,8 +200,15 @@ STATICINLINE GLboolean is_sampler(u32 sampler)
 template<class span_const_i32>
 requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void sampler_parameter_iiv(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_ARB_sampler_objects
+     * \param sampler GLuint
+     * \param pname GLenum
+     * \param param const GLint *
+     * \return void
+     */
+    STATICINLINE void sampler_parameter_iiv(
         u32                        sampler,
         group::sampler_parameter_i pname,
         span_const_i32 const&      param)
@@ -170,8 +229,15 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
 template<class span_const_u32>
 requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>) STATICINLINE
-    void sampler_parameter_iuiv(
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_ARB_sampler_objects
+     * \param sampler GLuint
+     * \param pname GLenum
+     * \param param const GLuint *
+     * \return void
+     */
+    STATICINLINE void sampler_parameter_iuiv(
         u32                        sampler,
         group::sampler_parameter_i pname,
         span_const_u32 const&      param)
@@ -189,6 +255,13 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
     detail::error_check("SamplerParameterIuiv"sv);
 }
 
+/*!
+ * \brief Part of GL_ARB_sampler_objects
+ * \param sampler GLuint
+ * \param pname GLenum
+ * \param param GLfloat
+ * \return void
+ */
 STATICINLINE void sampler_parameter(
     u32 sampler, group::sampler_parameter_f pname, f32 param)
 {
@@ -205,8 +278,15 @@ STATICINLINE void sampler_parameter(
 template<class span_const_f32>
 requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
-    void sampler_parameter(
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_ARB_sampler_objects
+     * \param sampler GLuint
+     * \param pname GLenum
+     * \param param const GLfloat *
+     * \return void
+     */
+    STATICINLINE void sampler_parameter(
         u32                        sampler,
         group::sampler_parameter_f pname,
         span_const_f32 const&      param)
@@ -225,6 +305,13 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
     detail::error_check("SamplerParameterfv"sv);
 }
 
+/*!
+ * \brief Part of GL_ARB_sampler_objects
+ * \param sampler GLuint
+ * \param pname GLenum
+ * \param param GLint
+ * \return void
+ */
 STATICINLINE void sampler_parameter(
     u32 sampler, group::sampler_parameter_i pname, i32 param)
 {
@@ -241,8 +328,15 @@ STATICINLINE void sampler_parameter(
 template<class span_const_i32>
 requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void sampler_parameter(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_ARB_sampler_objects
+     * \param sampler GLuint
+     * \param pname GLenum
+     * \param param const GLint *
+     * \return void
+     */
+    STATICINLINE void sampler_parameter(
         u32                        sampler,
         group::sampler_parameter_i pname,
         span_const_i32 const&      param)

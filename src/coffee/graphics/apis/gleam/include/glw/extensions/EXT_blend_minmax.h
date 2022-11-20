@@ -9,6 +9,11 @@ using gl::group::get_prop;
 namespace values {
 } // namespace values
 #if defined(GL_VERSION_1_0)
+/*!
+ * \brief Part of GL_EXT_blend_minmax
+ * \param mode GLenum
+ * \return void
+ */
 STATICINLINE void blend_equation(group::blend_equation_mode_ext mode)
 {
     using namespace std::string_view_literals;

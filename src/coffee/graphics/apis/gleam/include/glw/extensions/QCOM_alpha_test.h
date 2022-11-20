@@ -6,6 +6,12 @@ namespace gl::qcom::alpha_test {
 using gl::group::get_prop;
 namespace values {
 } // namespace values
+/*!
+ * \brief Part of GL_QCOM_alpha_test
+ * \param func GLenum
+ * \param ref GLclampf
+ * \return void
+ */
 STATICINLINE void alpha_func(GLenum func, GLclampf ref)
 {
     using namespace std::string_view_literals;

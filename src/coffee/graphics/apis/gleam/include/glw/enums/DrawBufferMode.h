@@ -31,26 +31,47 @@ enum class draw_buffer_mode : ::libc_types::u32
 #ifdef GL_COLOR_ATTACHMENT0
     color_attachment0 = GL_COLOR_ATTACHMENT0,
 #endif
+#ifdef GL_COLOR_ATTACHMENT0_NV
+    color_attachment0_nv = GL_COLOR_ATTACHMENT0_NV,
+#endif
 #ifdef GL_COLOR_ATTACHMENT1
     color_attachment1 = GL_COLOR_ATTACHMENT1,
 #endif
 #ifdef GL_COLOR_ATTACHMENT10
     color_attachment10 = GL_COLOR_ATTACHMENT10,
 #endif
+#ifdef GL_COLOR_ATTACHMENT10_NV
+    color_attachment10_nv = GL_COLOR_ATTACHMENT10_NV,
+#endif
 #ifdef GL_COLOR_ATTACHMENT11
     color_attachment11 = GL_COLOR_ATTACHMENT11,
+#endif
+#ifdef GL_COLOR_ATTACHMENT11_NV
+    color_attachment11_nv = GL_COLOR_ATTACHMENT11_NV,
 #endif
 #ifdef GL_COLOR_ATTACHMENT12
     color_attachment12 = GL_COLOR_ATTACHMENT12,
 #endif
+#ifdef GL_COLOR_ATTACHMENT12_NV
+    color_attachment12_nv = GL_COLOR_ATTACHMENT12_NV,
+#endif
 #ifdef GL_COLOR_ATTACHMENT13
     color_attachment13 = GL_COLOR_ATTACHMENT13,
+#endif
+#ifdef GL_COLOR_ATTACHMENT13_NV
+    color_attachment13_nv = GL_COLOR_ATTACHMENT13_NV,
 #endif
 #ifdef GL_COLOR_ATTACHMENT14
     color_attachment14 = GL_COLOR_ATTACHMENT14,
 #endif
+#ifdef GL_COLOR_ATTACHMENT14_NV
+    color_attachment14_nv = GL_COLOR_ATTACHMENT14_NV,
+#endif
 #ifdef GL_COLOR_ATTACHMENT15
     color_attachment15 = GL_COLOR_ATTACHMENT15,
+#endif
+#ifdef GL_COLOR_ATTACHMENT15_NV
+    color_attachment15_nv = GL_COLOR_ATTACHMENT15_NV,
 #endif
 #ifdef GL_COLOR_ATTACHMENT16
     color_attachment16 = GL_COLOR_ATTACHMENT16,
@@ -63,6 +84,9 @@ enum class draw_buffer_mode : ::libc_types::u32
 #endif
 #ifdef GL_COLOR_ATTACHMENT19
     color_attachment19 = GL_COLOR_ATTACHMENT19,
+#endif
+#ifdef GL_COLOR_ATTACHMENT1_NV
+    color_attachment1_nv = GL_COLOR_ATTACHMENT1_NV,
 #endif
 #ifdef GL_COLOR_ATTACHMENT2
     color_attachment2 = GL_COLOR_ATTACHMENT2,
@@ -97,6 +121,9 @@ enum class draw_buffer_mode : ::libc_types::u32
 #ifdef GL_COLOR_ATTACHMENT29
     color_attachment29 = GL_COLOR_ATTACHMENT29,
 #endif
+#ifdef GL_COLOR_ATTACHMENT2_NV
+    color_attachment2_nv = GL_COLOR_ATTACHMENT2_NV,
+#endif
 #ifdef GL_COLOR_ATTACHMENT3
     color_attachment3 = GL_COLOR_ATTACHMENT3,
 #endif
@@ -106,23 +133,44 @@ enum class draw_buffer_mode : ::libc_types::u32
 #ifdef GL_COLOR_ATTACHMENT31
     color_attachment31 = GL_COLOR_ATTACHMENT31,
 #endif
+#ifdef GL_COLOR_ATTACHMENT3_NV
+    color_attachment3_nv = GL_COLOR_ATTACHMENT3_NV,
+#endif
 #ifdef GL_COLOR_ATTACHMENT4
     color_attachment4 = GL_COLOR_ATTACHMENT4,
+#endif
+#ifdef GL_COLOR_ATTACHMENT4_NV
+    color_attachment4_nv = GL_COLOR_ATTACHMENT4_NV,
 #endif
 #ifdef GL_COLOR_ATTACHMENT5
     color_attachment5 = GL_COLOR_ATTACHMENT5,
 #endif
+#ifdef GL_COLOR_ATTACHMENT5_NV
+    color_attachment5_nv = GL_COLOR_ATTACHMENT5_NV,
+#endif
 #ifdef GL_COLOR_ATTACHMENT6
     color_attachment6 = GL_COLOR_ATTACHMENT6,
+#endif
+#ifdef GL_COLOR_ATTACHMENT6_NV
+    color_attachment6_nv = GL_COLOR_ATTACHMENT6_NV,
 #endif
 #ifdef GL_COLOR_ATTACHMENT7
     color_attachment7 = GL_COLOR_ATTACHMENT7,
 #endif
+#ifdef GL_COLOR_ATTACHMENT7_NV
+    color_attachment7_nv = GL_COLOR_ATTACHMENT7_NV,
+#endif
 #ifdef GL_COLOR_ATTACHMENT8
     color_attachment8 = GL_COLOR_ATTACHMENT8,
 #endif
+#ifdef GL_COLOR_ATTACHMENT8_NV
+    color_attachment8_nv = GL_COLOR_ATTACHMENT8_NV,
+#endif
 #ifdef GL_COLOR_ATTACHMENT9
     color_attachment9 = GL_COLOR_ATTACHMENT9,
+#endif
+#ifdef GL_COLOR_ATTACHMENT9_NV
+    color_attachment9_nv = GL_COLOR_ATTACHMENT9_NV,
 #endif
 #ifdef GL_FRONT
     front = GL_FRONT,

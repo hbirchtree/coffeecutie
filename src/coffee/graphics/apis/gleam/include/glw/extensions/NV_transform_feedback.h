@@ -33,6 +33,12 @@ constexpr libc_types::u32 transform_feedback_buffer               = 0x8C8E;
 constexpr libc_types::u32 transform_feedback_buffer_binding       = 0x8C8F;
 constexpr libc_types::u32 layer                                   = 0x8DAA;
 } // namespace values
+/*!
+ * \brief Part of GL_NV_transform_feedback
+ * \param program GLuint
+ * \param name const GLchar *
+ * \return void
+ */
 STATICINLINE void active_varying(u32 program, std::string_view const& name)
 {
     using namespace std::string_view_literals;
@@ -45,6 +51,11 @@ STATICINLINE void active_varying(u32 program, std::string_view const& name)
     detail::error_check("ActiveVaryingNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_transform_feedback
+ * \param primitiveMode GLenum
+ * \return void
+ */
 STATICINLINE void begin_transform_feedback(group::primitive_type primitiveMode)
 {
     using namespace std::string_view_literals;
@@ -56,6 +67,13 @@ STATICINLINE void begin_transform_feedback(group::primitive_type primitiveMode)
     detail::error_check("BeginTransformFeedbackNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_transform_feedback
+ * \param target GLenum
+ * \param index GLuint
+ * \param buffer GLuint
+ * \return void
+ */
 STATICINLINE void bind_buffer_base(
     group::buffer_target_arb target, u32 index, u32 buffer)
 {
@@ -69,6 +87,14 @@ STATICINLINE void bind_buffer_base(
     detail::error_check("BindBufferBaseNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_transform_feedback
+ * \param target GLenum
+ * \param index GLuint
+ * \param buffer GLuint
+ * \param offset GLintptr
+ * \return void
+ */
 STATICINLINE void bind_buffer_offset(
     group::buffer_target_arb target, u32 index, u32 buffer, GLintptr offset)
 {
@@ -82,6 +108,15 @@ STATICINLINE void bind_buffer_offset(
     detail::error_check("BindBufferOffsetNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_transform_feedback
+ * \param target GLenum
+ * \param index GLuint
+ * \param buffer GLuint
+ * \param offset GLintptr
+ * \param size GLsizeiptr
+ * \return void
+ */
 STATICINLINE void bind_buffer_range(
     group::buffer_target_arb target,
     u32                      index,
@@ -100,6 +135,11 @@ STATICINLINE void bind_buffer_range(
     detail::error_check("BindBufferRangeNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_transform_feedback
+
+ * \return void
+ */
 STATICINLINE void end_transform_feedback()
 {
     using namespace std::string_view_literals;
@@ -114,8 +154,19 @@ STATICINLINE void end_transform_feedback()
 template<class span_GLchar>
 requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
          std::decay_t<typename span_GLchar::value_type>,
-         std::decay_t<GLchar>>) STATICINLINE
-    void get_active_varying(
+         std::decay_t<GLchar>>)
+    /*!
+     * \brief Part of GL_NV_transform_feedback
+     * \param program GLuint
+     * \param index GLuint
+     * \param bufSize GLsizei
+     * \param length GLsizei *
+     * \param size GLsizei *
+     * \param type GLenum *
+     * \param name GLchar *
+     * \return void
+     */
+    STATICINLINE void get_active_varying(
         u32         program,
         u32         index,
         i32&        length,
@@ -134,6 +185,13 @@ requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
     detail::error_check("GetActiveVaryingNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_transform_feedback
+ * \param program GLuint
+ * \param index GLuint
+ * \param location GLint *
+ * \return void
+ */
 STATICINLINE void get_transform_feedback_varying(
     u32 program, u32 index, i32& location)
 {
@@ -147,6 +205,12 @@ STATICINLINE void get_transform_feedback_varying(
     detail::error_check("GetTransformFeedbackVaryingNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_transform_feedback
+ * \param program GLuint
+ * \param name const GLchar *
+ * \return GLint
+ */
 STATICINLINE GLint
 get_varying_location(u32 program, std::string_view const& name)
 {
@@ -164,8 +228,15 @@ get_varying_location(u32 program, std::string_view const& name)
 template<class span_const_i32>
 requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void transform_feedback_attribs(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_NV_transform_feedback
+     * \param count GLsizei
+     * \param attribs const GLint *
+     * \param bufferMode GLenum
+     * \return void
+     */
+    STATICINLINE void transform_feedback_attribs(
         i32 count, span_const_i32 const& attribs, GLenum bufferMode)
 {
     using namespace std::string_view_literals;
@@ -184,9 +255,19 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
 template<class span_const_i32>
 requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void transform_feedback_varyings(
-        u32 program, span_const_i32 const& locations, GLenum bufferMode)
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_NV_transform_feedback
+     * \param program GLuint
+     * \param count GLsizei
+     * \param locations const GLint *
+     * \param bufferMode GLenum
+     * \return void
+     */
+    STATICINLINE void transform_feedback_varyings(
+        u32                                   program,
+        span_const_i32 const&                 locations,
+        group::transform_feedback_buffer_mode bufferMode)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -199,15 +280,24 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
         locations.size(),
         locations.size() ? reinterpret_cast<const GLint*>(locations.data())
                          : nullptr,
-        bufferMode);
+        static_cast<GLenum>(bufferMode));
     detail::error_check("TransformFeedbackVaryingsNV"sv);
 }
 
 template<class span_const_i32>
 requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void transform_feedback_stream_attribs(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_NV_transform_feedback
+     * \param count GLsizei
+     * \param attribs const GLint *
+     * \param nbuffers GLsizei
+     * \param bufstreams const GLint *
+     * \param bufferMode GLenum
+     * \return void
+     */
+    STATICINLINE void transform_feedback_stream_attribs(
         span_const_i32 const& attribs,
         span_const_i32 const& bufstreams,
         GLenum                bufferMode)

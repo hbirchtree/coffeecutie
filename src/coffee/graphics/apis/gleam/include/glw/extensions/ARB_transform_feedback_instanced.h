@@ -4,6 +4,13 @@
 namespace gl::arb::transform_feedback_instanced {
 namespace values {
 } // namespace values
+/*!
+ * \brief Part of GL_ARB_transform_feedback_instanced
+ * \param mode GLenum
+ * \param id GLuint
+ * \param instancecount GLsizei
+ * \return void
+ */
 STATICINLINE void draw_transform_feedback_instanced(
     group::primitive_type mode, u32 id, i32 instancecount)
 {
@@ -17,6 +24,14 @@ STATICINLINE void draw_transform_feedback_instanced(
     detail::error_check("DrawTransformFeedbackInstanced"sv);
 }
 
+/*!
+ * \brief Part of GL_ARB_transform_feedback_instanced
+ * \param mode GLenum
+ * \param id GLuint
+ * \param stream GLuint
+ * \param instancecount GLsizei
+ * \return void
+ */
 STATICINLINE void draw_transform_feedback_stream_instanced(
     group::primitive_type mode, u32 id, u32 stream, i32 instancecount)
 {

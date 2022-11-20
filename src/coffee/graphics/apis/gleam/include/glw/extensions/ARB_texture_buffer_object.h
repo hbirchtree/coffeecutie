@@ -9,6 +9,13 @@ constexpr libc_types::u32 texture_binding_buffer            = 0x8C2C;
 constexpr libc_types::u32 texture_buffer_data_store_binding = 0x8C2D;
 constexpr libc_types::u32 texture_buffer_format             = 0x8C2E;
 } // namespace values
+/*!
+ * \brief Part of GL_ARB_texture_buffer_object
+ * \param target GLenum
+ * \param internalformat GLenum
+ * \param buffer GLuint
+ * \return void
+ */
 STATICINLINE void tex_buffer(
     group::texture_target        target,
     group::sized_internal_format internalformat,

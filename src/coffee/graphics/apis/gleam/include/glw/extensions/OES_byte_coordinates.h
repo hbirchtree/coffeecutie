@@ -25,6 +25,12 @@ using gl::group::weight_pointer_type_arb;
 namespace values {
 } // namespace values
 #if defined(GL_VERSION_1_0)
+/*!
+ * \brief Part of GL_OES_byte_coordinates
+ * \param texture GLenum
+ * \param s GLbyte
+ * \return void
+ */
 STATICINLINE void multi_tex_coord1b(group::texture_unit texture, i8 s)
 {
     using namespace std::string_view_literals;
@@ -41,8 +47,14 @@ STATICINLINE void multi_tex_coord1b(group::texture_unit texture, i8 s)
 template<class span_const_i8>
 requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
          std::decay_t<typename span_const_i8::value_type>,
-         std::decay_t<i8>>) STATICINLINE
-    void multi_tex_coord1bv(
+         std::decay_t<i8>>)
+    /*!
+     * \brief Part of GL_OES_byte_coordinates
+     * \param texture GLenum
+     * \param coords const GLbyte *
+     * \return void
+     */
+    STATICINLINE void multi_tex_coord1bv(
         group::texture_unit texture, span_const_i8 const& coords)
 {
     using namespace std::string_view_literals;
@@ -59,6 +71,13 @@ requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
 
 #endif
 #if defined(GL_VERSION_1_0)
+/*!
+ * \brief Part of GL_OES_byte_coordinates
+ * \param texture GLenum
+ * \param s GLbyte
+ * \param t GLbyte
+ * \return void
+ */
 STATICINLINE void multi_tex_coord2b(group::texture_unit texture, i8 s, i8 t)
 {
     using namespace std::string_view_literals;
@@ -75,8 +94,14 @@ STATICINLINE void multi_tex_coord2b(group::texture_unit texture, i8 s, i8 t)
 template<class span_const_i8>
 requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
          std::decay_t<typename span_const_i8::value_type>,
-         std::decay_t<i8>>) STATICINLINE
-    void multi_tex_coord2bv(
+         std::decay_t<i8>>)
+    /*!
+     * \brief Part of GL_OES_byte_coordinates
+     * \param texture GLenum
+     * \param coords const GLbyte *
+     * \return void
+     */
+    STATICINLINE void multi_tex_coord2bv(
         group::texture_unit texture, span_const_i8 const& coords)
 {
     using namespace std::string_view_literals;
@@ -93,6 +118,14 @@ requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
 
 #endif
 #if defined(GL_VERSION_1_0)
+/*!
+ * \brief Part of GL_OES_byte_coordinates
+ * \param texture GLenum
+ * \param s GLbyte
+ * \param t GLbyte
+ * \param r GLbyte
+ * \return void
+ */
 STATICINLINE void multi_tex_coord3b(
     group::texture_unit texture, i8 s, i8 t, i8 r)
 {
@@ -110,8 +143,14 @@ STATICINLINE void multi_tex_coord3b(
 template<class span_const_i8>
 requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
          std::decay_t<typename span_const_i8::value_type>,
-         std::decay_t<i8>>) STATICINLINE
-    void multi_tex_coord3bv(
+         std::decay_t<i8>>)
+    /*!
+     * \brief Part of GL_OES_byte_coordinates
+     * \param texture GLenum
+     * \param coords const GLbyte *
+     * \return void
+     */
+    STATICINLINE void multi_tex_coord3bv(
         group::texture_unit texture, span_const_i8 const& coords)
 {
     using namespace std::string_view_literals;
@@ -128,6 +167,15 @@ requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
 
 #endif
 #if defined(GL_VERSION_1_0)
+/*!
+ * \brief Part of GL_OES_byte_coordinates
+ * \param texture GLenum
+ * \param s GLbyte
+ * \param t GLbyte
+ * \param r GLbyte
+ * \param q GLbyte
+ * \return void
+ */
 STATICINLINE void multi_tex_coord4b(
     group::texture_unit texture, i8 s, i8 t, i8 r, i8 q)
 {
@@ -145,8 +193,14 @@ STATICINLINE void multi_tex_coord4b(
 template<class span_const_i8>
 requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
          std::decay_t<typename span_const_i8::value_type>,
-         std::decay_t<i8>>) STATICINLINE
-    void multi_tex_coord4bv(
+         std::decay_t<i8>>)
+    /*!
+     * \brief Part of GL_OES_byte_coordinates
+     * \param texture GLenum
+     * \param coords const GLbyte *
+     * \return void
+     */
+    STATICINLINE void multi_tex_coord4bv(
         group::texture_unit texture, span_const_i8 const& coords)
 {
     using namespace std::string_view_literals;
@@ -163,6 +217,11 @@ requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
 
 #endif
 #if defined(GL_VERSION_1_0)
+/*!
+ * \brief Part of GL_OES_byte_coordinates
+ * \param s GLbyte
+ * \return void
+ */
 STATICINLINE void tex_coord1b(i8 s)
 {
     using namespace std::string_view_literals;
@@ -179,8 +238,13 @@ STATICINLINE void tex_coord1b(i8 s)
 template<class span_const_i8>
 requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
          std::decay_t<typename span_const_i8::value_type>,
-         std::decay_t<i8>>) STATICINLINE
-    void tex_coord1bv(span_const_i8 const& coords)
+         std::decay_t<i8>>)
+    /*!
+     * \brief Part of GL_OES_byte_coordinates
+     * \param coords const GLbyte *
+     * \return void
+     */
+    STATICINLINE void tex_coord1bv(span_const_i8 const& coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -195,6 +259,12 @@ requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
 
 #endif
 #if defined(GL_VERSION_1_0)
+/*!
+ * \brief Part of GL_OES_byte_coordinates
+ * \param s GLbyte
+ * \param t GLbyte
+ * \return void
+ */
 STATICINLINE void tex_coord2b(i8 s, i8 t)
 {
     using namespace std::string_view_literals;
@@ -211,8 +281,13 @@ STATICINLINE void tex_coord2b(i8 s, i8 t)
 template<class span_const_i8>
 requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
          std::decay_t<typename span_const_i8::value_type>,
-         std::decay_t<i8>>) STATICINLINE
-    void tex_coord2bv(span_const_i8 const& coords)
+         std::decay_t<i8>>)
+    /*!
+     * \brief Part of GL_OES_byte_coordinates
+     * \param coords const GLbyte *
+     * \return void
+     */
+    STATICINLINE void tex_coord2bv(span_const_i8 const& coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -227,6 +302,13 @@ requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
 
 #endif
 #if defined(GL_VERSION_1_0)
+/*!
+ * \brief Part of GL_OES_byte_coordinates
+ * \param s GLbyte
+ * \param t GLbyte
+ * \param r GLbyte
+ * \return void
+ */
 STATICINLINE void tex_coord3b(i8 s, i8 t, i8 r)
 {
     using namespace std::string_view_literals;
@@ -243,8 +325,13 @@ STATICINLINE void tex_coord3b(i8 s, i8 t, i8 r)
 template<class span_const_i8>
 requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
          std::decay_t<typename span_const_i8::value_type>,
-         std::decay_t<i8>>) STATICINLINE
-    void tex_coord3bv(span_const_i8 const& coords)
+         std::decay_t<i8>>)
+    /*!
+     * \brief Part of GL_OES_byte_coordinates
+     * \param coords const GLbyte *
+     * \return void
+     */
+    STATICINLINE void tex_coord3bv(span_const_i8 const& coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -259,6 +346,14 @@ requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
 
 #endif
 #if defined(GL_VERSION_1_0)
+/*!
+ * \brief Part of GL_OES_byte_coordinates
+ * \param s GLbyte
+ * \param t GLbyte
+ * \param r GLbyte
+ * \param q GLbyte
+ * \return void
+ */
 STATICINLINE void tex_coord4b(i8 s, i8 t, i8 r, i8 q)
 {
     using namespace std::string_view_literals;
@@ -275,8 +370,13 @@ STATICINLINE void tex_coord4b(i8 s, i8 t, i8 r, i8 q)
 template<class span_const_i8>
 requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
          std::decay_t<typename span_const_i8::value_type>,
-         std::decay_t<i8>>) STATICINLINE
-    void tex_coord4bv(span_const_i8 const& coords)
+         std::decay_t<i8>>)
+    /*!
+     * \brief Part of GL_OES_byte_coordinates
+     * \param coords const GLbyte *
+     * \return void
+     */
+    STATICINLINE void tex_coord4bv(span_const_i8 const& coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -292,8 +392,14 @@ requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
 #endif
 #if defined(GL_VERSION_1_0)
 template<class vec_2_i8>
-requires(semantic::concepts::Vector<vec_2_i8, i8, 2>) STATICINLINE
-    void vertex2b(vec_2_i8 const& x)
+requires(semantic::concepts::Vector<vec_2_i8, i8, 2>)
+    /*!
+     * \brief Part of GL_OES_byte_coordinates
+     * \param x GLbyte
+     * \param y GLbyte
+     * \return void
+     */
+    STATICINLINE void vertex2b(vec_2_i8 const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -309,8 +415,13 @@ requires(semantic::concepts::Vector<vec_2_i8, i8, 2>) STATICINLINE
 template<class span_const_i8>
 requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
          std::decay_t<typename span_const_i8::value_type>,
-         std::decay_t<i8>>) STATICINLINE
-    void vertex2bv(span_const_i8 const& coords)
+         std::decay_t<i8>>)
+    /*!
+     * \brief Part of GL_OES_byte_coordinates
+     * \param coords const GLbyte *
+     * \return void
+     */
+    STATICINLINE void vertex2bv(span_const_i8 const& coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -326,8 +437,15 @@ requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
 #endif
 #if defined(GL_VERSION_1_0)
 template<class vec_3_i8>
-requires(semantic::concepts::Vector<vec_3_i8, i8, 3>) STATICINLINE
-    void vertex3b(vec_3_i8 const& x)
+requires(semantic::concepts::Vector<vec_3_i8, i8, 3>)
+    /*!
+     * \brief Part of GL_OES_byte_coordinates
+     * \param x GLbyte
+     * \param y GLbyte
+     * \param z GLbyte
+     * \return void
+     */
+    STATICINLINE void vertex3b(vec_3_i8 const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -343,8 +461,13 @@ requires(semantic::concepts::Vector<vec_3_i8, i8, 3>) STATICINLINE
 template<class span_const_i8>
 requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
          std::decay_t<typename span_const_i8::value_type>,
-         std::decay_t<i8>>) STATICINLINE
-    void vertex3bv(span_const_i8 const& coords)
+         std::decay_t<i8>>)
+    /*!
+     * \brief Part of GL_OES_byte_coordinates
+     * \param coords const GLbyte *
+     * \return void
+     */
+    STATICINLINE void vertex3bv(span_const_i8 const& coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -360,8 +483,16 @@ requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
 #endif
 #if defined(GL_VERSION_1_0)
 template<class vec_4_i8>
-requires(semantic::concepts::Vector<vec_4_i8, i8, 4>) STATICINLINE
-    void vertex4b(vec_4_i8 const& x)
+requires(semantic::concepts::Vector<vec_4_i8, i8, 4>)
+    /*!
+     * \brief Part of GL_OES_byte_coordinates
+     * \param x GLbyte
+     * \param y GLbyte
+     * \param z GLbyte
+     * \param w GLbyte
+     * \return void
+     */
+    STATICINLINE void vertex4b(vec_4_i8 const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -377,8 +508,13 @@ requires(semantic::concepts::Vector<vec_4_i8, i8, 4>) STATICINLINE
 template<class span_const_i8>
 requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
          std::decay_t<typename span_const_i8::value_type>,
-         std::decay_t<i8>>) STATICINLINE
-    void vertex4bv(span_const_i8 const& coords)
+         std::decay_t<i8>>)
+    /*!
+     * \brief Part of GL_OES_byte_coordinates
+     * \param coords const GLbyte *
+     * \return void
+     */
+    STATICINLINE void vertex4bv(span_const_i8 const& coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

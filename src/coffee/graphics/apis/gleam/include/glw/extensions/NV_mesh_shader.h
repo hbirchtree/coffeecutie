@@ -54,6 +54,12 @@ constexpr libc_types::u32 referenced_by_task_shader       = 0x95A1;
 constexpr libc_types::u32 max_mesh_work_group_invocations = 0x95A2;
 constexpr libc_types::u32 max_task_work_group_invocations = 0x95A3;
 } // namespace values
+/*!
+ * \brief Part of GL_NV_mesh_shader
+ * \param first GLuint
+ * \param count GLuint
+ * \return void
+ */
 STATICINLINE void draw_mesh_tasks(u32 first, u32 count)
 {
     using namespace std::string_view_literals;
@@ -65,6 +71,11 @@ STATICINLINE void draw_mesh_tasks(u32 first, u32 count)
     detail::error_check("DrawMeshTasksNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_mesh_shader
+ * \param indirect GLintptr
+ * \return void
+ */
 STATICINLINE void draw_mesh_tasks_indirect(GLintptr indirect)
 {
     using namespace std::string_view_literals;
@@ -76,6 +87,13 @@ STATICINLINE void draw_mesh_tasks_indirect(GLintptr indirect)
     detail::error_check("DrawMeshTasksIndirectNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_mesh_shader
+ * \param indirect GLintptr
+ * \param drawcount GLsizei
+ * \param stride GLsizei
+ * \return void
+ */
 STATICINLINE void multi_draw_mesh_tasks_indirect(
     GLintptr indirect, i32 drawcount, i32 stride)
 {
@@ -88,6 +106,14 @@ STATICINLINE void multi_draw_mesh_tasks_indirect(
     detail::error_check("MultiDrawMeshTasksIndirectNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_mesh_shader
+ * \param indirect GLintptr
+ * \param drawcount GLintptr
+ * \param maxdrawcount GLsizei
+ * \param stride GLsizei
+ * \return void
+ */
 STATICINLINE void multi_draw_mesh_tasks_indirect_count(
     GLintptr indirect, GLintptr drawcount, i32 maxdrawcount, i32 stride)
 {

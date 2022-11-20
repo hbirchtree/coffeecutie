@@ -18,6 +18,13 @@ constexpr libc_types::u32 max_combined_image_units_and_fragment_outputs =
 constexpr libc_types::u32 max_combined_shader_output_resources = 0x8F39;
 constexpr libc_types::u32 max_shader_storage_block_size        = 0x90DE;
 } // namespace values
+/*!
+ * \brief Part of GL_ARB_shader_storage_buffer_object
+ * \param program GLuint
+ * \param storageBlockIndex GLuint
+ * \param storageBlockBinding GLuint
+ * \return void
+ */
 STATICINLINE void shader_storage_block_binding(
     u32 program, u32 storageBlockIndex, u32 storageBlockBinding)
 {

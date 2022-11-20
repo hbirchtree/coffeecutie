@@ -8,6 +8,12 @@ namespace values {
 constexpr libc_types::u32 polygon_offset        = 0x8037;
 constexpr libc_types::u32 polygon_offset_factor = 0x8038;
 } // namespace values
+/*!
+ * \brief Part of GL_EXT_polygon_offset
+ * \param factor GLfloat
+ * \param bias GLfloat
+ * \return void
+ */
 STATICINLINE void polygon_offset(f32 factor, f32 bias)
 {
     using namespace std::string_view_literals;

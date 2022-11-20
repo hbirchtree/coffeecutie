@@ -33,6 +33,11 @@ constexpr libc_types::u32 video_capture_field_upper_height      = 0x903A;
 constexpr libc_types::u32 video_capture_field_lower_height      = 0x903B;
 constexpr libc_types::u32 video_capture_surface_origin          = 0x903C;
 } // namespace values
+/*!
+ * \brief Part of GL_NV_video_capture
+ * \param video_capture_slot GLuint
+ * \return void
+ */
 STATICINLINE void begin_video_capture(u32 video_capture_slot)
 {
     using namespace std::string_view_literals;
@@ -44,6 +49,14 @@ STATICINLINE void begin_video_capture(u32 video_capture_slot)
     detail::error_check("BeginVideoCaptureNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_video_capture
+ * \param video_capture_slot GLuint
+ * \param stream GLuint
+ * \param frame_region GLenum
+ * \param offset GLintptrARB
+ * \return void
+ */
 STATICINLINE void bind_video_capture_stream_buffer(
     u32 video_capture_slot, u32 stream, GLenum frame_region, GLintptrARB offset)
 {
@@ -57,6 +70,15 @@ STATICINLINE void bind_video_capture_stream_buffer(
     detail::error_check("BindVideoCaptureStreamBufferNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_video_capture
+ * \param video_capture_slot GLuint
+ * \param stream GLuint
+ * \param frame_region GLenum
+ * \param target GLenum
+ * \param texture GLuint
+ * \return void
+ */
 STATICINLINE void bind_video_capture_stream_texture(
     u32    video_capture_slot,
     u32    stream,
@@ -75,6 +97,11 @@ STATICINLINE void bind_video_capture_stream_texture(
     detail::error_check("BindVideoCaptureStreamTextureNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_video_capture
+ * \param video_capture_slot GLuint
+ * \return void
+ */
 STATICINLINE void end_video_capture(u32 video_capture_slot)
 {
     using namespace std::string_view_literals;
@@ -89,8 +116,16 @@ STATICINLINE void end_video_capture(u32 video_capture_slot)
 template<class span_f64>
 requires(semantic::concepts::Span<span_f64>&& std::is_same_v<
          std::decay_t<typename span_f64::value_type>,
-         std::decay_t<f64>>) STATICINLINE
-    void get_video_capture_streamdv(
+         std::decay_t<f64>>)
+    /*!
+     * \brief Part of GL_NV_video_capture
+     * \param video_capture_slot GLuint
+     * \param stream GLuint
+     * \param pname GLenum
+     * \param params GLdouble *
+     * \return void
+     */
+    STATICINLINE void get_video_capture_streamdv(
         u32 video_capture_slot, u32 stream, GLenum pname, span_f64 params)
 {
     using namespace std::string_view_literals;
@@ -109,8 +144,16 @@ requires(semantic::concepts::Span<span_f64>&& std::is_same_v<
 template<class span_f32>
 requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
-    void get_video_capture_streamfv(
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_NV_video_capture
+     * \param video_capture_slot GLuint
+     * \param stream GLuint
+     * \param pname GLenum
+     * \param params GLfloat *
+     * \return void
+     */
+    STATICINLINE void get_video_capture_streamfv(
         u32 video_capture_slot, u32 stream, GLenum pname, span_f32 params)
 {
     using namespace std::string_view_literals;
@@ -129,8 +172,16 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void get_video_capture_streamiv(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_NV_video_capture
+     * \param video_capture_slot GLuint
+     * \param stream GLuint
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_video_capture_streamiv(
         u32 video_capture_slot, u32 stream, GLenum pname, span_i32 params)
 {
     using namespace std::string_view_literals;
@@ -149,8 +200,15 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void get_video_captureiv(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_NV_video_capture
+     * \param video_capture_slot GLuint
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_video_captureiv(
         u32 video_capture_slot, GLenum pname, span_i32 params)
 {
     using namespace std::string_view_literals;
@@ -171,8 +229,15 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
          std::decay_t<u32>>&& semantic::concepts::Span<span_GLuint64EXT>&&
                               std::is_same_v<
                  std::decay_t<typename span_GLuint64EXT::value_type>,
-                 std::decay_t<GLuint64EXT>>) STATICINLINE GLenum
-    video_capture(
+                 std::decay_t<GLuint64EXT>>)
+    /*!
+     * \brief Part of GL_NV_video_capture
+     * \param video_capture_slot GLuint
+     * \param sequence_num GLuint *
+     * \param capture_time GLuint64EXT *
+     * \return GLenum
+     */
+    STATICINLINE GLenum video_capture(
         u32              video_capture_slot,
         span_u32         sequence_num,
         span_GLuint64EXT capture_time)
@@ -196,8 +261,16 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 template<class span_const_f64>
 requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
          std::decay_t<typename span_const_f64::value_type>,
-         std::decay_t<f64>>) STATICINLINE
-    void video_capture_stream_parameter(
+         std::decay_t<f64>>)
+    /*!
+     * \brief Part of GL_NV_video_capture
+     * \param video_capture_slot GLuint
+     * \param stream GLuint
+     * \param pname GLenum
+     * \param params const GLdouble *
+     * \return void
+     */
+    STATICINLINE void video_capture_stream_parameter(
         u32                   video_capture_slot,
         u32                   stream,
         GLenum                pname,
@@ -220,8 +293,16 @@ requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
 template<class span_const_f32>
 requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
-    void video_capture_stream_parameter(
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_NV_video_capture
+     * \param video_capture_slot GLuint
+     * \param stream GLuint
+     * \param pname GLenum
+     * \param params const GLfloat *
+     * \return void
+     */
+    STATICINLINE void video_capture_stream_parameter(
         u32                   video_capture_slot,
         u32                   stream,
         GLenum                pname,
@@ -244,8 +325,16 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
 template<class span_const_i32>
 requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void video_capture_stream_parameter(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_NV_video_capture
+     * \param video_capture_slot GLuint
+     * \param stream GLuint
+     * \param pname GLenum
+     * \param params const GLint *
+     * \return void
+     */
+    STATICINLINE void video_capture_stream_parameter(
         u32                   video_capture_slot,
         u32                   stream,
         GLenum                pname,

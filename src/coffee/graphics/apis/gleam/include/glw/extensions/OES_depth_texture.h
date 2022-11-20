@@ -3,9 +3,9 @@
 #ifdef GL_OES_depth_texture
 #include "../enums/AttributeType.h"
 #include "../enums/ColorPointerType.h"
+#include "../enums/DepthStencilTextureMode.h"
 #include "../enums/DrawElementsType.h"
 #include "../enums/ElementPointerTypeATI.h"
-#include "../enums/GlslTypeToken.h"
 #include "../enums/InternalFormat.h"
 #include "../enums/ListNameType.h"
 #include "../enums/MatrixIndexPointerTypeARB.h"
@@ -21,9 +21,9 @@
 namespace gl::oes::depth_texture {
 using gl::group::attribute_type;
 using gl::group::color_pointer_type;
+using gl::group::depth_stencil_texture_mode;
 using gl::group::draw_elements_type;
 using gl::group::element_pointer_type_ati;
-using gl::group::glsl_type_token;
 using gl::group::internal_format;
 using gl::group::list_name_type;
 using gl::group::matrix_index_pointer_type_arb;

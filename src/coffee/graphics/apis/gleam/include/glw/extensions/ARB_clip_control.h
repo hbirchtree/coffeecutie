@@ -10,6 +10,12 @@ namespace values {
 constexpr libc_types::u32 clip_origin     = 0x935C;
 constexpr libc_types::u32 clip_depth_mode = 0x935D;
 } // namespace values
+/*!
+ * \brief Part of GL_ARB_clip_control
+ * \param origin GLenum
+ * \param depth GLenum
+ * \return void
+ */
 STATICINLINE void clip_control(
     group::clip_control_origin origin, group::clip_control_depth depth)
 {

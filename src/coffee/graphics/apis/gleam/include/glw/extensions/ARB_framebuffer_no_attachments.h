@@ -10,6 +10,13 @@ using gl::group::get_framebuffer_parameter;
 using gl::group::get_prop;
 namespace values {
 } // namespace values
+/*!
+ * \brief Part of GL_ARB_framebuffer_no_attachments
+ * \param target GLenum
+ * \param pname GLenum
+ * \param param GLint
+ * \return void
+ */
 STATICINLINE void framebuffer_parameter(
     group::framebuffer_target         target,
     group::framebuffer_parameter_name pname,
@@ -28,8 +35,15 @@ STATICINLINE void framebuffer_parameter(
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void get_framebuffer_parameter(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_ARB_framebuffer_no_attachments
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_framebuffer_parameter(
         group::framebuffer_target                    target,
         group::framebuffer_attachment_parameter_name pname,
         span_i32                                     params)

@@ -6,6 +6,11 @@ namespace values {
 constexpr libc_types::u32 primitive_restart       = 0x8558;
 constexpr libc_types::u32 primitive_restart_index = 0x8559;
 } // namespace values
+/*!
+ * \brief Part of GL_NV_primitive_restart
+ * \param index GLuint
+ * \return void
+ */
 STATICINLINE void primitive_restart_index(u32 index)
 {
     using namespace std::string_view_literals;
@@ -17,6 +22,11 @@ STATICINLINE void primitive_restart_index(u32 index)
     detail::error_check("PrimitiveRestartIndexNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_primitive_restart
+
+ * \return void
+ */
 STATICINLINE void primitive_restart()
 {
     using namespace std::string_view_literals;

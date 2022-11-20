@@ -4,6 +4,11 @@
 namespace gl::nvx::conditional_render {
 namespace values {
 } // namespace values
+/*!
+ * \brief Part of GL_NVX_conditional_render
+ * \param id GLuint
+ * \return void
+ */
 STATICINLINE void begin_conditional_render(u32 id)
 {
     using namespace std::string_view_literals;
@@ -15,6 +20,11 @@ STATICINLINE void begin_conditional_render(u32 id)
     detail::error_check("BeginConditionalRenderNVX"sv);
 }
 
+/*!
+ * \brief Part of GL_NVX_conditional_render
+
+ * \return void
+ */
 STATICINLINE void end_conditional_render()
 {
     using namespace std::string_view_literals;

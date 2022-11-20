@@ -29,6 +29,14 @@ constexpr libc_types::u32 draw_indirect_unified         = 0x8F40;
 constexpr libc_types::u32 draw_indirect_address         = 0x8F41;
 constexpr libc_types::u32 draw_indirect_length          = 0x8F42;
 } // namespace values
+/*!
+ * \brief Part of GL_NV_vertex_buffer_unified_memory
+ * \param pname GLenum
+ * \param index GLuint
+ * \param address GLuint64EXT
+ * \param length GLsizeiptr
+ * \return void
+ */
 STATICINLINE void buffer_address_range(
     GLenum pname, u32 index, GLuint64EXT address, GLsizeiptr length)
 {
@@ -41,6 +49,13 @@ STATICINLINE void buffer_address_range(
     detail::error_check("BufferAddressRangeNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_vertex_buffer_unified_memory
+ * \param size GLint
+ * \param type GLenum
+ * \param stride GLsizei
+ * \return void
+ */
 STATICINLINE void color_format(i32 size, GLenum type, i32 stride)
 {
     using namespace std::string_view_literals;
@@ -52,6 +67,11 @@ STATICINLINE void color_format(i32 size, GLenum type, i32 stride)
     detail::error_check("ColorFormatNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_vertex_buffer_unified_memory
+ * \param stride GLsizei
+ * \return void
+ */
 STATICINLINE void edge_flag_format(i32 stride)
 {
     using namespace std::string_view_literals;
@@ -63,6 +83,12 @@ STATICINLINE void edge_flag_format(i32 stride)
     detail::error_check("EdgeFlagFormatNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_vertex_buffer_unified_memory
+ * \param type GLenum
+ * \param stride GLsizei
+ * \return void
+ */
 STATICINLINE void fog_coord_format(GLenum type, i32 stride)
 {
     using namespace std::string_view_literals;
@@ -77,7 +103,15 @@ STATICINLINE void fog_coord_format(GLenum type, i32 stride)
 template<class span_GLuint64EXT>
 requires(semantic::concepts::Span<span_GLuint64EXT>&& std::is_same_v<
          std::decay_t<typename span_GLuint64EXT::value_type>,
-         std::decay_t<GLuint64EXT>>) STATICINLINE
+         std::decay_t<GLuint64EXT>>)
+    /*!
+     * \brief Part of GL_NV_vertex_buffer_unified_memory
+     * \param value GLenum
+     * \param index GLuint
+     * \param result GLuint64EXT *
+     * \return void
+     */
+    STATICINLINE
     void get_integerui64i_v(GLenum value, u32 index, span_GLuint64EXT result)
 {
     using namespace std::string_view_literals;
@@ -93,6 +127,12 @@ requires(semantic::concepts::Span<span_GLuint64EXT>&& std::is_same_v<
     detail::error_check("GetIntegerui64i_vNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_vertex_buffer_unified_memory
+ * \param type GLenum
+ * \param stride GLsizei
+ * \return void
+ */
 STATICINLINE void index_format(GLenum type, i32 stride)
 {
     using namespace std::string_view_literals;
@@ -104,6 +144,12 @@ STATICINLINE void index_format(GLenum type, i32 stride)
     detail::error_check("IndexFormatNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_vertex_buffer_unified_memory
+ * \param type GLenum
+ * \param stride GLsizei
+ * \return void
+ */
 STATICINLINE void normal_format(GLenum type, i32 stride)
 {
     using namespace std::string_view_literals;
@@ -115,6 +161,13 @@ STATICINLINE void normal_format(GLenum type, i32 stride)
     detail::error_check("NormalFormatNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_vertex_buffer_unified_memory
+ * \param size GLint
+ * \param type GLenum
+ * \param stride GLsizei
+ * \return void
+ */
 STATICINLINE void secondary_color_format(
     i32 size, group::color_pointer_type type, i32 stride)
 {
@@ -127,6 +180,13 @@ STATICINLINE void secondary_color_format(
     detail::error_check("SecondaryColorFormatNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_vertex_buffer_unified_memory
+ * \param size GLint
+ * \param type GLenum
+ * \param stride GLsizei
+ * \return void
+ */
 STATICINLINE void tex_coord_format(i32 size, GLenum type, i32 stride)
 {
     using namespace std::string_view_literals;
@@ -138,6 +198,15 @@ STATICINLINE void tex_coord_format(i32 size, GLenum type, i32 stride)
     detail::error_check("TexCoordFormatNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_vertex_buffer_unified_memory
+ * \param index GLuint
+ * \param size GLint
+ * \param type GLenum
+ * \param normalized GLboolean
+ * \param stride GLsizei
+ * \return void
+ */
 STATICINLINE void vertex_attrib_format(
     u32                       index,
     i32                       size,
@@ -155,6 +224,14 @@ STATICINLINE void vertex_attrib_format(
     detail::error_check("VertexAttribFormatNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_vertex_buffer_unified_memory
+ * \param index GLuint
+ * \param size GLint
+ * \param type GLenum
+ * \param stride GLsizei
+ * \return void
+ */
 STATICINLINE void vertex_attrib_i_format(
     u32 index, i32 size, group::vertex_attrib_int type, i32 stride)
 {
@@ -167,6 +244,13 @@ STATICINLINE void vertex_attrib_i_format(
     detail::error_check("VertexAttribIFormatNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_vertex_buffer_unified_memory
+ * \param size GLint
+ * \param type GLenum
+ * \param stride GLsizei
+ * \return void
+ */
 STATICINLINE void vertex_format(
     i32 size, group::vertex_pointer_type type, i32 stride)
 {

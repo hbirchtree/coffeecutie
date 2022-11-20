@@ -5,18 +5,24 @@
 #include "../enums/BufferStorageMask.h"
 #include "../enums/MapBufferAccessMask.h"
 #include "../enums/MemoryBarrierMask.h"
-#include "../enums/VertexBufferObjectParameter.h"
 namespace gl::arb::buffer_storage {
 using gl::group::buffer_prop_arb;
 using gl::group::buffer_storage_mask;
 using gl::group::map_buffer_access_mask;
 using gl::group::memory_barrier_mask;
-using gl::group::vertex_buffer_object_parameter;
 namespace values {
 } // namespace values
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>) STATICINLINE
-    void buffer_storage(
+requires(semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_ARB_buffer_storage
+     * \param target GLenum
+     * \param size GLsizeiptr
+     * \param data const void *
+     * \param flags GLbitfield
+     * \return void
+     */
+    STATICINLINE void buffer_storage(
         group::buffer_storage_target target,
         span_const_void const&       data,
         group::buffer_storage_mask   flags)

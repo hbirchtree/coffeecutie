@@ -24,6 +24,13 @@ namespace values {
 constexpr libc_types::u32 max_compute_shared_memory_size = 0x8262;
 constexpr libc_types::u32 max_compute_image_uniforms     = 0x91BD;
 } // namespace values
+/*!
+ * \brief Part of GL_ARB_compute_shader
+ * \param num_groups_x GLuint
+ * \param num_groups_y GLuint
+ * \param num_groups_z GLuint
+ * \return void
+ */
 STATICINLINE void dispatch_compute(
     u32 num_groups_x, u32 num_groups_y, u32 num_groups_z)
 {
@@ -36,6 +43,11 @@ STATICINLINE void dispatch_compute(
     detail::error_check("DispatchCompute"sv);
 }
 
+/*!
+ * \brief Part of GL_ARB_compute_shader
+ * \param indirect GLintptr
+ * \return void
+ */
 STATICINLINE void dispatch_compute_indirect(GLintptr indirect)
 {
     using namespace std::string_view_literals;

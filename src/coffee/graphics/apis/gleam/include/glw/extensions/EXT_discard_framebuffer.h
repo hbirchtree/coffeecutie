@@ -13,6 +13,13 @@ requires(
             std::decay_t<typename span_const_invalidate_framebuffer_attachment::
                              value_type>,
             std::decay_t<group::invalidate_framebuffer_attachment>>)
+    /*!
+     * \brief Part of GL_EXT_discard_framebuffer
+     * \param target GLenum
+     * \param numAttachments GLsizei
+     * \param attachments const GLenum *
+     * \return void
+     */
     STATICINLINE void discard_framebuffer(
         group::framebuffer_target                           target,
         span_const_invalidate_framebuffer_attachment const& attachments)

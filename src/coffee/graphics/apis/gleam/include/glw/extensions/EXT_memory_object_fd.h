@@ -6,6 +6,14 @@ namespace gl::ext::memory_object_fd {
 using gl::group::external_handle_type;
 namespace values {
 } // namespace values
+/*!
+ * \brief Part of GL_EXT_memory_object_fd
+ * \param memory GLuint
+ * \param size GLuint64
+ * \param handleType GLenum
+ * \param fd GLint
+ * \return void
+ */
 STATICINLINE void import_memory_fd(
     u32 memory, u64 size, group::external_handle_type handleType, i32 fd)
 {

@@ -15,8 +15,16 @@ constexpr libc_types::u32 framebuffer_sample_location_pixel_grid    = 0x9343;
 template<class span_const_f32>
 requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
-    void framebuffer_sample_locationsfv(
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_NV_sample_locations
+     * \param target GLenum
+     * \param start GLuint
+     * \param count GLsizei
+     * \param v const GLfloat *
+     * \return void
+     */
+    STATICINLINE void framebuffer_sample_locationsfv(
         group::framebuffer_target target,
         u32                       start,
         i32                       count,
@@ -38,8 +46,16 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
 template<class span_const_f32>
 requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
-    void named_framebuffer_sample_locationsfv(
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_NV_sample_locations
+     * \param framebuffer GLuint
+     * \param start GLuint
+     * \param count GLsizei
+     * \param v const GLfloat *
+     * \return void
+     */
+    STATICINLINE void named_framebuffer_sample_locationsfv(
         u32 framebuffer, u32 start, i32 count, span_const_f32 const& v)
 {
     using namespace std::string_view_literals;
@@ -56,6 +72,11 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
     detail::error_check("NamedFramebufferSampleLocationsfvNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_sample_locations
+
+ * \return void
+ */
 STATICINLINE void resolve_depth_values()
 {
     using namespace std::string_view_literals;

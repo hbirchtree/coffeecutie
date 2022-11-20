@@ -39,7 +39,15 @@ constexpr libc_types::u32 float16_vec4        = 0x8FFB;
 template<class span_GLint64EXT>
 requires(semantic::concepts::Span<span_GLint64EXT>&& std::is_same_v<
          std::decay_t<typename span_GLint64EXT::value_type>,
-         std::decay_t<GLint64EXT>>) STATICINLINE
+         std::decay_t<GLint64EXT>>)
+    /*!
+     * \brief Part of GL_NV_gpu_shader5
+     * \param program GLuint
+     * \param location GLint
+     * \param params GLint64EXT *
+     * \return void
+     */
+    STATICINLINE
     void get_uniformi64v(u32 program, i32 location, span_GLint64EXT params)
 {
     using namespace std::string_view_literals;
@@ -55,6 +63,12 @@ requires(semantic::concepts::Span<span_GLint64EXT>&& std::is_same_v<
     detail::error_check("GetUniformi64vNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_gpu_shader5
+ * \param location GLint
+ * \param x GLint64EXT
+ * \return void
+ */
 STATICINLINE void uniform(i32 location, GLint64EXT x)
 {
     using namespace std::string_view_literals;
@@ -69,7 +83,15 @@ STATICINLINE void uniform(i32 location, GLint64EXT x)
 template<class span_const_GLint64EXT>
 requires(semantic::concepts::Span<span_const_GLint64EXT>&& std::is_same_v<
          std::decay_t<typename span_const_GLint64EXT::value_type>,
-         std::decay_t<GLint64EXT>>) STATICINLINE
+         std::decay_t<GLint64EXT>>)
+    /*!
+     * \brief Part of GL_NV_gpu_shader5
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLint64EXT *
+     * \return void
+     */
+    STATICINLINE
     void uniform(i32 location, i32 count, span_const_GLint64EXT const& value)
 {
     using namespace std::string_view_literals;
@@ -82,6 +104,12 @@ requires(semantic::concepts::Span<span_const_GLint64EXT>&& std::is_same_v<
     detail::error_check("Uniform1i64vNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_gpu_shader5
+ * \param location GLint
+ * \param x GLuint64EXT
+ * \return void
+ */
 STATICINLINE void uniform(i32 location, GLuint64EXT x)
 {
     using namespace std::string_view_literals;
@@ -96,7 +124,15 @@ STATICINLINE void uniform(i32 location, GLuint64EXT x)
 template<class span_const_GLuint64EXT>
 requires(semantic::concepts::Span<span_const_GLuint64EXT>&& std::is_same_v<
          std::decay_t<typename span_const_GLuint64EXT::value_type>,
-         std::decay_t<GLuint64EXT>>) STATICINLINE
+         std::decay_t<GLuint64EXT>>)
+    /*!
+     * \brief Part of GL_NV_gpu_shader5
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLuint64EXT *
+     * \return void
+     */
+    STATICINLINE
     void uniform(i32 location, i32 count, span_const_GLuint64EXT const& value)
 {
     using namespace std::string_view_literals;
@@ -111,6 +147,13 @@ requires(semantic::concepts::Span<span_const_GLuint64EXT>&& std::is_same_v<
 
 template<class vec_2_GLint64EXT>
 requires(semantic::concepts::Vector<vec_2_GLint64EXT, GLint64EXT, 2>)
+    /*!
+     * \brief Part of GL_NV_gpu_shader5
+     * \param location GLint
+     * \param x GLint64EXT
+     * \param y GLint64EXT
+     * \return void
+     */
     STATICINLINE void uniform(i32 location, vec_2_GLint64EXT const& x)
 {
     using namespace std::string_view_literals;
@@ -126,6 +169,13 @@ template<class span_const_vec_2_GLint64EXT>
 requires(
     semantic::concepts::Span<span_const_vec_2_GLint64EXT>&& semantic::concepts::
         Vector<typename span_const_vec_2_GLint64EXT::value_type, GLint64EXT, 2>)
+    /*!
+     * \brief Part of GL_NV_gpu_shader5
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLint64EXT *
+     * \return void
+     */
     STATICINLINE void uniform(
         i32 location, i32 count, span_const_vec_2_GLint64EXT const& value)
 {
@@ -141,6 +191,13 @@ requires(
 
 template<class vec_2_GLuint64EXT>
 requires(semantic::concepts::Vector<vec_2_GLuint64EXT, GLuint64EXT, 2>)
+    /*!
+     * \brief Part of GL_NV_gpu_shader5
+     * \param location GLint
+     * \param x GLuint64EXT
+     * \param y GLuint64EXT
+     * \return void
+     */
     STATICINLINE void uniform(i32 location, vec_2_GLuint64EXT const& x)
 {
     using namespace std::string_view_literals;
@@ -157,8 +214,15 @@ requires(semantic::concepts::Span<span_const_vec_2_GLuint64EXT>&&
              semantic::concepts::Vector<
                  typename span_const_vec_2_GLuint64EXT::value_type,
                  GLuint64EXT,
-                 2>) STATICINLINE
-    void uniform(
+                 2>)
+    /*!
+     * \brief Part of GL_NV_gpu_shader5
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLuint64EXT *
+     * \return void
+     */
+    STATICINLINE void uniform(
         i32 location, i32 count, span_const_vec_2_GLuint64EXT const& value)
 {
     using namespace std::string_view_literals;
@@ -173,6 +237,14 @@ requires(semantic::concepts::Span<span_const_vec_2_GLuint64EXT>&&
 
 template<class vec_3_GLint64EXT>
 requires(semantic::concepts::Vector<vec_3_GLint64EXT, GLint64EXT, 3>)
+    /*!
+     * \brief Part of GL_NV_gpu_shader5
+     * \param location GLint
+     * \param x GLint64EXT
+     * \param y GLint64EXT
+     * \param z GLint64EXT
+     * \return void
+     */
     STATICINLINE void uniform(i32 location, vec_3_GLint64EXT const& x)
 {
     using namespace std::string_view_literals;
@@ -188,6 +260,13 @@ template<class span_const_vec_3_GLint64EXT>
 requires(
     semantic::concepts::Span<span_const_vec_3_GLint64EXT>&& semantic::concepts::
         Vector<typename span_const_vec_3_GLint64EXT::value_type, GLint64EXT, 3>)
+    /*!
+     * \brief Part of GL_NV_gpu_shader5
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLint64EXT *
+     * \return void
+     */
     STATICINLINE void uniform(
         i32 location, i32 count, span_const_vec_3_GLint64EXT const& value)
 {
@@ -203,6 +282,14 @@ requires(
 
 template<class vec_3_GLuint64EXT>
 requires(semantic::concepts::Vector<vec_3_GLuint64EXT, GLuint64EXT, 3>)
+    /*!
+     * \brief Part of GL_NV_gpu_shader5
+     * \param location GLint
+     * \param x GLuint64EXT
+     * \param y GLuint64EXT
+     * \param z GLuint64EXT
+     * \return void
+     */
     STATICINLINE void uniform(i32 location, vec_3_GLuint64EXT const& x)
 {
     using namespace std::string_view_literals;
@@ -219,8 +306,15 @@ requires(semantic::concepts::Span<span_const_vec_3_GLuint64EXT>&&
              semantic::concepts::Vector<
                  typename span_const_vec_3_GLuint64EXT::value_type,
                  GLuint64EXT,
-                 3>) STATICINLINE
-    void uniform(
+                 3>)
+    /*!
+     * \brief Part of GL_NV_gpu_shader5
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLuint64EXT *
+     * \return void
+     */
+    STATICINLINE void uniform(
         i32 location, i32 count, span_const_vec_3_GLuint64EXT const& value)
 {
     using namespace std::string_view_literals;
@@ -235,6 +329,15 @@ requires(semantic::concepts::Span<span_const_vec_3_GLuint64EXT>&&
 
 template<class vec_4_GLint64EXT>
 requires(semantic::concepts::Vector<vec_4_GLint64EXT, GLint64EXT, 4>)
+    /*!
+     * \brief Part of GL_NV_gpu_shader5
+     * \param location GLint
+     * \param x GLint64EXT
+     * \param y GLint64EXT
+     * \param z GLint64EXT
+     * \param w GLint64EXT
+     * \return void
+     */
     STATICINLINE void uniform(i32 location, vec_4_GLint64EXT const& x)
 {
     using namespace std::string_view_literals;
@@ -250,6 +353,13 @@ template<class span_const_vec_4_GLint64EXT>
 requires(
     semantic::concepts::Span<span_const_vec_4_GLint64EXT>&& semantic::concepts::
         Vector<typename span_const_vec_4_GLint64EXT::value_type, GLint64EXT, 4>)
+    /*!
+     * \brief Part of GL_NV_gpu_shader5
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLint64EXT *
+     * \return void
+     */
     STATICINLINE void uniform(
         i32 location, i32 count, span_const_vec_4_GLint64EXT const& value)
 {
@@ -265,6 +375,15 @@ requires(
 
 template<class vec_4_GLuint64EXT>
 requires(semantic::concepts::Vector<vec_4_GLuint64EXT, GLuint64EXT, 4>)
+    /*!
+     * \brief Part of GL_NV_gpu_shader5
+     * \param location GLint
+     * \param x GLuint64EXT
+     * \param y GLuint64EXT
+     * \param z GLuint64EXT
+     * \param w GLuint64EXT
+     * \return void
+     */
     STATICINLINE void uniform(i32 location, vec_4_GLuint64EXT const& x)
 {
     using namespace std::string_view_literals;
@@ -281,8 +400,15 @@ requires(semantic::concepts::Span<span_const_vec_4_GLuint64EXT>&&
              semantic::concepts::Vector<
                  typename span_const_vec_4_GLuint64EXT::value_type,
                  GLuint64EXT,
-                 4>) STATICINLINE
-    void uniform(
+                 4>)
+    /*!
+     * \brief Part of GL_NV_gpu_shader5
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLuint64EXT *
+     * \return void
+     */
+    STATICINLINE void uniform(
         i32 location, i32 count, span_const_vec_4_GLuint64EXT const& value)
 {
     using namespace std::string_view_literals;
@@ -295,6 +421,13 @@ requires(semantic::concepts::Span<span_const_vec_4_GLuint64EXT>&&
     detail::error_check("Uniform4ui64vNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_gpu_shader5
+ * \param program GLuint
+ * \param location GLint
+ * \param x GLint64EXT
+ * \return void
+ */
 STATICINLINE void program_uniform(u32 program, i32 location, GLint64EXT x)
 {
     using namespace std::string_view_literals;
@@ -310,8 +443,16 @@ STATICINLINE void program_uniform(u32 program, i32 location, GLint64EXT x)
 template<class span_const_GLint64EXT>
 requires(semantic::concepts::Span<span_const_GLint64EXT>&& std::is_same_v<
          std::decay_t<typename span_const_GLint64EXT::value_type>,
-         std::decay_t<GLint64EXT>>) STATICINLINE
-    void program_uniform(
+         std::decay_t<GLint64EXT>>)
+    /*!
+     * \brief Part of GL_NV_gpu_shader5
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLint64EXT *
+     * \return void
+     */
+    STATICINLINE void program_uniform(
         u32 program, i32 location, span_const_GLint64EXT const& value)
 {
     using namespace std::string_view_literals;
@@ -328,6 +469,13 @@ requires(semantic::concepts::Span<span_const_GLint64EXT>&& std::is_same_v<
     detail::error_check("ProgramUniform1i64vNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_gpu_shader5
+ * \param program GLuint
+ * \param location GLint
+ * \param x GLuint64EXT
+ * \return void
+ */
 STATICINLINE void program_uniform(u32 program, i32 location, GLuint64EXT x)
 {
     using namespace std::string_view_literals;
@@ -343,8 +491,16 @@ STATICINLINE void program_uniform(u32 program, i32 location, GLuint64EXT x)
 template<class span_const_GLuint64EXT>
 requires(semantic::concepts::Span<span_const_GLuint64EXT>&& std::is_same_v<
          std::decay_t<typename span_const_GLuint64EXT::value_type>,
-         std::decay_t<GLuint64EXT>>) STATICINLINE
-    void program_uniform(
+         std::decay_t<GLuint64EXT>>)
+    /*!
+     * \brief Part of GL_NV_gpu_shader5
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLuint64EXT *
+     * \return void
+     */
+    STATICINLINE void program_uniform(
         u32 program, i32 location, span_const_GLuint64EXT const& value)
 {
     using namespace std::string_view_literals;
@@ -363,6 +519,14 @@ requires(semantic::concepts::Span<span_const_GLuint64EXT>&& std::is_same_v<
 
 template<class vec_2_GLint64EXT>
 requires(semantic::concepts::Vector<vec_2_GLint64EXT, GLint64EXT, 2>)
+    /*!
+     * \brief Part of GL_NV_gpu_shader5
+     * \param program GLuint
+     * \param location GLint
+     * \param x GLint64EXT
+     * \param y GLint64EXT
+     * \return void
+     */
     STATICINLINE
     void program_uniform(u32 program, i32 location, vec_2_GLint64EXT const& x)
 {
@@ -380,6 +544,14 @@ template<class span_const_vec_2_GLint64EXT>
 requires(
     semantic::concepts::Span<span_const_vec_2_GLint64EXT>&& semantic::concepts::
         Vector<typename span_const_vec_2_GLint64EXT::value_type, GLint64EXT, 2>)
+    /*!
+     * \brief Part of GL_NV_gpu_shader5
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLint64EXT *
+     * \return void
+     */
     STATICINLINE void program_uniform(
         u32                                program,
         i32                                location,
@@ -402,6 +574,14 @@ requires(
 
 template<class vec_2_GLuint64EXT>
 requires(semantic::concepts::Vector<vec_2_GLuint64EXT, GLuint64EXT, 2>)
+    /*!
+     * \brief Part of GL_NV_gpu_shader5
+     * \param program GLuint
+     * \param location GLint
+     * \param x GLuint64EXT
+     * \param y GLuint64EXT
+     * \return void
+     */
     STATICINLINE
     void program_uniform(u32 program, i32 location, vec_2_GLuint64EXT const& x)
 {
@@ -420,8 +600,16 @@ requires(semantic::concepts::Span<span_const_vec_2_GLuint64EXT>&&
              semantic::concepts::Vector<
                  typename span_const_vec_2_GLuint64EXT::value_type,
                  GLuint64EXT,
-                 2>) STATICINLINE
-    void program_uniform(
+                 2>)
+    /*!
+     * \brief Part of GL_NV_gpu_shader5
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLuint64EXT *
+     * \return void
+     */
+    STATICINLINE void program_uniform(
         u32                                 program,
         i32                                 location,
         i32                                 count,
@@ -443,6 +631,15 @@ requires(semantic::concepts::Span<span_const_vec_2_GLuint64EXT>&&
 
 template<class vec_3_GLint64EXT>
 requires(semantic::concepts::Vector<vec_3_GLint64EXT, GLint64EXT, 3>)
+    /*!
+     * \brief Part of GL_NV_gpu_shader5
+     * \param program GLuint
+     * \param location GLint
+     * \param x GLint64EXT
+     * \param y GLint64EXT
+     * \param z GLint64EXT
+     * \return void
+     */
     STATICINLINE
     void program_uniform(u32 program, i32 location, vec_3_GLint64EXT const& x)
 {
@@ -460,6 +657,14 @@ template<class span_const_vec_3_GLint64EXT>
 requires(
     semantic::concepts::Span<span_const_vec_3_GLint64EXT>&& semantic::concepts::
         Vector<typename span_const_vec_3_GLint64EXT::value_type, GLint64EXT, 3>)
+    /*!
+     * \brief Part of GL_NV_gpu_shader5
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLint64EXT *
+     * \return void
+     */
     STATICINLINE void program_uniform(
         u32                                program,
         i32                                location,
@@ -482,6 +687,15 @@ requires(
 
 template<class vec_3_GLuint64EXT>
 requires(semantic::concepts::Vector<vec_3_GLuint64EXT, GLuint64EXT, 3>)
+    /*!
+     * \brief Part of GL_NV_gpu_shader5
+     * \param program GLuint
+     * \param location GLint
+     * \param x GLuint64EXT
+     * \param y GLuint64EXT
+     * \param z GLuint64EXT
+     * \return void
+     */
     STATICINLINE
     void program_uniform(u32 program, i32 location, vec_3_GLuint64EXT const& x)
 {
@@ -500,8 +714,16 @@ requires(semantic::concepts::Span<span_const_vec_3_GLuint64EXT>&&
              semantic::concepts::Vector<
                  typename span_const_vec_3_GLuint64EXT::value_type,
                  GLuint64EXT,
-                 3>) STATICINLINE
-    void program_uniform(
+                 3>)
+    /*!
+     * \brief Part of GL_NV_gpu_shader5
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLuint64EXT *
+     * \return void
+     */
+    STATICINLINE void program_uniform(
         u32                                 program,
         i32                                 location,
         i32                                 count,
@@ -523,6 +745,16 @@ requires(semantic::concepts::Span<span_const_vec_3_GLuint64EXT>&&
 
 template<class vec_4_GLint64EXT>
 requires(semantic::concepts::Vector<vec_4_GLint64EXT, GLint64EXT, 4>)
+    /*!
+     * \brief Part of GL_NV_gpu_shader5
+     * \param program GLuint
+     * \param location GLint
+     * \param x GLint64EXT
+     * \param y GLint64EXT
+     * \param z GLint64EXT
+     * \param w GLint64EXT
+     * \return void
+     */
     STATICINLINE
     void program_uniform(u32 program, i32 location, vec_4_GLint64EXT const& x)
 {
@@ -540,6 +772,14 @@ template<class span_const_vec_4_GLint64EXT>
 requires(
     semantic::concepts::Span<span_const_vec_4_GLint64EXT>&& semantic::concepts::
         Vector<typename span_const_vec_4_GLint64EXT::value_type, GLint64EXT, 4>)
+    /*!
+     * \brief Part of GL_NV_gpu_shader5
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLint64EXT *
+     * \return void
+     */
     STATICINLINE void program_uniform(
         u32                                program,
         i32                                location,
@@ -562,6 +802,16 @@ requires(
 
 template<class vec_4_GLuint64EXT>
 requires(semantic::concepts::Vector<vec_4_GLuint64EXT, GLuint64EXT, 4>)
+    /*!
+     * \brief Part of GL_NV_gpu_shader5
+     * \param program GLuint
+     * \param location GLint
+     * \param x GLuint64EXT
+     * \param y GLuint64EXT
+     * \param z GLuint64EXT
+     * \param w GLuint64EXT
+     * \return void
+     */
     STATICINLINE
     void program_uniform(u32 program, i32 location, vec_4_GLuint64EXT const& x)
 {
@@ -580,8 +830,16 @@ requires(semantic::concepts::Span<span_const_vec_4_GLuint64EXT>&&
              semantic::concepts::Vector<
                  typename span_const_vec_4_GLuint64EXT::value_type,
                  GLuint64EXT,
-                 4>) STATICINLINE
-    void program_uniform(
+                 4>)
+    /*!
+     * \brief Part of GL_NV_gpu_shader5
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLuint64EXT *
+     * \return void
+     */
+    STATICINLINE void program_uniform(
         u32                                 program,
         i32                                 location,
         i32                                 count,

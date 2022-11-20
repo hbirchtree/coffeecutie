@@ -7,7 +7,6 @@ namespace gl::oes::required_internalformat {
 using gl::group::internal_format;
 using gl::group::sized_internal_format;
 namespace values {
-constexpr libc_types::u32 rgb565 = 0x8D62;
 } // namespace values
 } // namespace gl::oes::required_internalformat
 #endif // GL_OES_required_internalformat

@@ -1,9 +1,10 @@
 #pragma once
 
 #ifdef GL_AMD_framebuffer_sample_positions
+#include "../enums/SpecialNumbers.h"
 namespace gl::amd::framebuffer_sample_positions {
+using gl::group::special_numbers;
 namespace values {
-constexpr libc_types::u32 all_pixels                  = 0xFFFFFFFF;
 constexpr libc_types::u32 subsample_distance          = 0x883F;
 constexpr libc_types::u32 pixels_per_sample_pattern_x = 0x91AE;
 constexpr libc_types::u32 pixels_per_sample_pattern_y = 0x91AF;
@@ -11,8 +12,16 @@ constexpr libc_types::u32 pixels_per_sample_pattern_y = 0x91AF;
 template<class span_const_f32>
 requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
-    void framebuffer_sample_positionsfv(
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_AMD_framebuffer_sample_positions
+     * \param target GLenum
+     * \param numsamples GLuint
+     * \param pixelindex GLuint
+     * \param values const GLfloat *
+     * \return void
+     */
+    STATICINLINE void framebuffer_sample_positionsfv(
         group::framebuffer_target target,
         u32                       numsamples,
         u32                       pixelindex,
@@ -35,8 +44,18 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
 template<class span_f32>
 requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
-    void get_framebuffer_parameter(
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_AMD_framebuffer_sample_positions
+     * \param target GLenum
+     * \param pname GLenum
+     * \param numsamples GLuint
+     * \param pixelindex GLuint
+     * \param size GLsizei
+     * \param values GLfloat *
+     * \return void
+     */
+    STATICINLINE void get_framebuffer_parameter(
         group::framebuffer_target                    target,
         group::framebuffer_attachment_parameter_name pname,
         u32                                          numsamples,
@@ -62,8 +81,18 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 template<class span_f32>
 requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
-    void get_named_framebuffer_parameter(
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_AMD_framebuffer_sample_positions
+     * \param framebuffer GLuint
+     * \param pname GLenum
+     * \param numsamples GLuint
+     * \param pixelindex GLuint
+     * \param size GLsizei
+     * \param values GLfloat *
+     * \return void
+     */
+    STATICINLINE void get_named_framebuffer_parameter(
         u32      framebuffer,
         GLenum   pname,
         u32      numsamples,
@@ -90,8 +119,16 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 template<class span_const_f32>
 requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
-    void named_framebuffer_sample_positionsfv(
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_AMD_framebuffer_sample_positions
+     * \param framebuffer GLuint
+     * \param numsamples GLuint
+     * \param pixelindex GLuint
+     * \param values const GLfloat *
+     * \return void
+     */
+    STATICINLINE void named_framebuffer_sample_positionsfv(
         u32                   framebuffer,
         u32                   numsamples,
         u32                   pixelindex,

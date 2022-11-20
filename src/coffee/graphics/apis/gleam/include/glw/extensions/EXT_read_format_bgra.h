@@ -1,11 +1,12 @@
 #pragma once
 
 #ifdef GL_EXT_read_format_bgra
+#include "../enums/PixelFormat.h"
+#include "../enums/PixelType.h"
 namespace gl::ext::read_format_bgra {
+using gl::group::pixel_format;
+using gl::group::pixel_type;
 namespace values {
-constexpr libc_types::u32 bgra                       = 0x80E1;
-constexpr libc_types::u32 unsigned_short_4_4_4_4_rev = 0x8365;
-constexpr libc_types::u32 unsigned_short_1_5_5_5_rev = 0x8366;
 } // namespace values
 } // namespace gl::ext::read_format_bgra
 #endif // GL_EXT_read_format_bgra

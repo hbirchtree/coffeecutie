@@ -9,6 +9,12 @@ using gl::group::clamp_color_target_arb;
 namespace values {
 constexpr libc_types::u32 rgba_float_mode = 0x8820;
 } // namespace values
+/*!
+ * \brief Part of GL_ARB_color_buffer_float
+ * \param target GLenum
+ * \param clamp GLenum
+ * \return void
+ */
 STATICINLINE void clamp_color(
     group::clamp_color_target_arb target, group::clamp_color_mode_arb clamp)
 {

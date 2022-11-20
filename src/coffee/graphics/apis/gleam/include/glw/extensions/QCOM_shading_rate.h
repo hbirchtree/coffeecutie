@@ -10,6 +10,11 @@ using gl::group::get_prop;
 using gl::group::shading_rate_qcom;
 namespace values {
 } // namespace values
+/*!
+ * \brief Part of GL_QCOM_shading_rate
+ * \param rate GLenum
+ * \return void
+ */
 STATICINLINE void shading_rate(group::shading_rate_qcom rate)
 {
     using namespace std::string_view_literals;

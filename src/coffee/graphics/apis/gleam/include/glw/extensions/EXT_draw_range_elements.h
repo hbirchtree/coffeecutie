@@ -7,8 +7,18 @@ constexpr libc_types::u32 max_elements_vertices = 0x80E8;
 constexpr libc_types::u32 max_elements_indices  = 0x80E9;
 } // namespace values
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>) STATICINLINE
-    void draw_range_elements(
+requires(semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_EXT_draw_range_elements
+     * \param mode GLenum
+     * \param start GLuint
+     * \param end GLuint
+     * \param count GLsizei
+     * \param type GLenum
+     * \param indices const void *
+     * \return void
+     */
+    STATICINLINE void draw_range_elements(
         group::primitive_type     mode,
         u32                       start,
         u32                       end,

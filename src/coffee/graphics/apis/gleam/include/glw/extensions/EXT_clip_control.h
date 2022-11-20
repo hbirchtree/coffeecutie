@@ -10,6 +10,12 @@ constexpr libc_types::u32 clip_depth_mode     = 0x935D;
 constexpr libc_types::u32 negative_one_to_one = 0x935E;
 constexpr libc_types::u32 zero_to_one         = 0x935F;
 } // namespace values
+/*!
+ * \brief Part of GL_EXT_clip_control
+ * \param origin GLenum
+ * \param depth GLenum
+ * \return void
+ */
 STATICINLINE void clip_control(GLenum origin, GLenum depth)
 {
     using namespace std::string_view_literals;

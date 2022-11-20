@@ -4,6 +4,11 @@
 namespace gl::intel::framebuffer_cmaa {
 namespace values {
 } // namespace values
+/*!
+ * \brief Part of GL_INTEL_framebuffer_CMAA
+
+ * \return void
+ */
 STATICINLINE void apply_framebuffer_attachment_cmaa()
 {
     using namespace std::string_view_literals;

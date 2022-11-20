@@ -17,8 +17,18 @@ constexpr libc_types::u32 max_subroutine_uniform_locations = 0x8DE8;
 template<class span_GLchar>
 requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
          std::decay_t<typename span_GLchar::value_type>,
-         std::decay_t<GLchar>>) STATICINLINE
-    void get_active_subroutine_name(
+         std::decay_t<GLchar>>)
+    /*!
+     * \brief Part of GL_ARB_shader_subroutine
+     * \param program GLuint
+     * \param shadertype GLenum
+     * \param index GLuint
+     * \param bufSize GLsizei
+     * \param length GLsizei *
+     * \param name GLchar *
+     * \return void
+     */
+    STATICINLINE void get_active_subroutine_name(
         u32                program,
         group::shader_type shadertype,
         u32                index,
@@ -44,8 +54,18 @@ requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
 template<class span_GLchar>
 requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
          std::decay_t<typename span_GLchar::value_type>,
-         std::decay_t<GLchar>>) STATICINLINE
-    void get_active_subroutine_uniform_name(
+         std::decay_t<GLchar>>)
+    /*!
+     * \brief Part of GL_ARB_shader_subroutine
+     * \param program GLuint
+     * \param shadertype GLenum
+     * \param index GLuint
+     * \param bufSize GLsizei
+     * \param length GLsizei *
+     * \param name GLchar *
+     * \return void
+     */
+    STATICINLINE void get_active_subroutine_uniform_name(
         u32                program,
         group::shader_type shadertype,
         u32                index,
@@ -71,8 +91,17 @@ requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void get_active_subroutine_uniformiv(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_ARB_shader_subroutine
+     * \param program GLuint
+     * \param shadertype GLenum
+     * \param index GLuint
+     * \param pname GLenum
+     * \param values GLint *
+     * \return void
+     */
+    STATICINLINE void get_active_subroutine_uniformiv(
         u32                              program,
         group::shader_type               shadertype,
         u32                              index,
@@ -94,6 +123,14 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
     detail::error_check("GetActiveSubroutineUniformiv"sv);
 }
 
+/*!
+ * \brief Part of GL_ARB_shader_subroutine
+ * \param program GLuint
+ * \param shadertype GLenum
+ * \param pname GLenum
+ * \param values GLint *
+ * \return void
+ */
 STATICINLINE void get_program_stageiv(
     u32                       program,
     group::shader_type        shadertype,
@@ -114,6 +151,13 @@ STATICINLINE void get_program_stageiv(
     detail::error_check("GetProgramStageiv"sv);
 }
 
+/*!
+ * \brief Part of GL_ARB_shader_subroutine
+ * \param program GLuint
+ * \param shadertype GLenum
+ * \param name const GLchar *
+ * \return GLuint
+ */
 STATICINLINE GLuint get_subroutine_index(
     u32 program, group::shader_type shadertype, std::string_view const& name)
 {
@@ -129,6 +173,13 @@ STATICINLINE GLuint get_subroutine_index(
     return out;
 }
 
+/*!
+ * \brief Part of GL_ARB_shader_subroutine
+ * \param program GLuint
+ * \param shadertype GLenum
+ * \param name const GLchar *
+ * \return GLint
+ */
 STATICINLINE GLint get_subroutine_uniform_location(
     u32 program, group::shader_type shadertype, std::string_view const& name)
 {
@@ -144,6 +195,13 @@ STATICINLINE GLint get_subroutine_uniform_location(
     return out;
 }
 
+/*!
+ * \brief Part of GL_ARB_shader_subroutine
+ * \param shadertype GLenum
+ * \param location GLint
+ * \param params GLuint *
+ * \return void
+ */
 STATICINLINE void get_uniform_subroutineuiv(
     group::shader_type shadertype, i32 location, u32& params)
 {
@@ -160,8 +218,15 @@ STATICINLINE void get_uniform_subroutineuiv(
 template<class span_const_u32>
 requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>) STATICINLINE
-    void uniform_subroutines(
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_ARB_shader_subroutine
+     * \param shadertype GLenum
+     * \param count GLsizei
+     * \param indices const GLuint *
+     * \return void
+     */
+    STATICINLINE void uniform_subroutines(
         group::shader_type shadertype, span_const_u32 const& indices)
 {
     using namespace std::string_view_literals;

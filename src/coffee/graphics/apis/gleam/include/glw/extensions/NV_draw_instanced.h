@@ -4,6 +4,14 @@
 namespace gl::nv::draw_instanced {
 namespace values {
 } // namespace values
+/*!
+ * \brief Part of GL_NV_draw_instanced
+ * \param mode GLenum
+ * \param first GLint
+ * \param count GLsizei
+ * \param primcount GLsizei
+ * \return void
+ */
 STATICINLINE void draw_arrays_instanced(
     group::primitive_type mode, i32 first, i32 count, i32 primcount)
 {
@@ -16,12 +24,21 @@ STATICINLINE void draw_arrays_instanced(
     detail::error_check("DrawArraysInstancedNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_draw_instanced
+ * \param mode GLenum
+ * \param count GLsizei
+ * \param type GLenum
+ * \param indices const void *
+ * \param primcount GLsizei
+ * \return void
+ */
 STATICINLINE void draw_elements_instanced(
-    group::primitive_type mode,
-    i32                   count,
-    group::primitive_type type,
-    ptroff                indices,
-    i32                   primcount)
+    group::primitive_type     mode,
+    i32                       count,
+    group::draw_elements_type type,
+    ptroff                    indices,
+    i32                       primcount)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

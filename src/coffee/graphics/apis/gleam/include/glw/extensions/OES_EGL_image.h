@@ -4,6 +4,12 @@
 namespace gl::oes::egl_image {
 namespace values {
 } // namespace values
+/*!
+ * \brief Part of GL_OES_EGL_image
+ * \param target GLenum
+ * \param image GLeglImageOES
+ * \return void
+ */
 STATICINLINE void egl_image_target_renderbuffer_storage(
     GLenum target, GLeglImageOES image)
 {
@@ -16,6 +22,12 @@ STATICINLINE void egl_image_target_renderbuffer_storage(
     detail::error_check("EGLImageTargetRenderbufferStorageOES"sv);
 }
 
+/*!
+ * \brief Part of GL_OES_EGL_image
+ * \param target GLenum
+ * \param image GLeglImageOES
+ * \return void
+ */
 STATICINLINE void egl_image_target_texture_2d(
     GLenum target, GLeglImageOES image)
 {

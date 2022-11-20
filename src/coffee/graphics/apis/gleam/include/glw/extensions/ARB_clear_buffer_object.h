@@ -5,8 +5,17 @@ namespace gl::arb::clear_buffer_object {
 namespace values {
 } // namespace values
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>) STATICINLINE
-    void clear_buffer_data(
+requires(semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_ARB_clear_buffer_object
+     * \param target GLenum
+     * \param internalformat GLenum
+     * \param format GLenum
+     * \param type GLenum
+     * \param data const void *
+     * \return void
+     */
+    STATICINLINE void clear_buffer_data(
         group::buffer_storage_target target,
         group::sized_internal_format internalformat,
         group::pixel_format          format,
@@ -28,8 +37,19 @@ requires(semantic::concepts::Span<span_const_void>) STATICINLINE
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>) STATICINLINE
-    void clear_buffer_sub_data(
+requires(semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_ARB_clear_buffer_object
+     * \param target GLenum
+     * \param internalformat GLenum
+     * \param offset GLintptr
+     * \param size GLsizeiptr
+     * \param format GLenum
+     * \param type GLenum
+     * \param data const void *
+     * \return void
+     */
+    STATICINLINE void clear_buffer_sub_data(
         group::buffer_target_arb     target,
         group::sized_internal_format internalformat,
         GLintptr                     offset,

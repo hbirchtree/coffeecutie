@@ -52,8 +52,14 @@ constexpr libc_types::u32 max_tess_evaluation_output_components    = 0x8E86;
 template<class span_const_f32>
 requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
-    void patch_parameter(
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_ARB_tessellation_shader
+     * \param pname GLenum
+     * \param values const GLfloat *
+     * \return void
+     */
+    STATICINLINE void patch_parameter(
         group::patch_parameter_name pname, span_const_f32 const& values)
 {
     using namespace std::string_view_literals;
@@ -68,6 +74,12 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
     detail::error_check("PatchParameterfv"sv);
 }
 
+/*!
+ * \brief Part of GL_ARB_tessellation_shader
+ * \param pname GLenum
+ * \param value GLint
+ * \return void
+ */
 STATICINLINE void patch_parameter(group::patch_parameter_name pname, i32 value)
 {
     using namespace std::string_view_literals;

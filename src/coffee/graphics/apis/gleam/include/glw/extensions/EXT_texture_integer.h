@@ -20,8 +20,16 @@ constexpr libc_types::u32 luminance_alpha_integer = 0x8D9D;
 constexpr libc_types::u32 rgba_integer_mode       = 0x8D9E;
 } // namespace values
 template<class vec_4_i32>
-requires(semantic::concepts::Vector<vec_4_i32, i32, 4>) STATICINLINE
-    void clear_color_ii(vec_4_i32 const& red)
+requires(semantic::concepts::Vector<vec_4_i32, i32, 4>)
+    /*!
+     * \brief Part of GL_EXT_texture_integer
+     * \param red GLint
+     * \param green GLint
+     * \param blue GLint
+     * \param alpha GLint
+     * \return void
+     */
+    STATICINLINE void clear_color_ii(vec_4_i32 const& red)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -33,8 +41,16 @@ requires(semantic::concepts::Vector<vec_4_i32, i32, 4>) STATICINLINE
 }
 
 template<class vec_4_u32>
-requires(semantic::concepts::Vector<vec_4_u32, u32, 4>) STATICINLINE
-    void clear_color_iui(vec_4_u32 const& red)
+requires(semantic::concepts::Vector<vec_4_u32, u32, 4>)
+    /*!
+     * \brief Part of GL_EXT_texture_integer
+     * \param red GLuint
+     * \param green GLuint
+     * \param blue GLuint
+     * \param alpha GLuint
+     * \return void
+     */
+    STATICINLINE void clear_color_iui(vec_4_u32 const& red)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -48,8 +64,15 @@ requires(semantic::concepts::Vector<vec_4_u32, u32, 4>) STATICINLINE
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void get_tex_parameter_iiv(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_EXT_texture_integer
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_tex_parameter_iiv(
         group::texture_target        target,
         group::get_texture_parameter pname,
         span_i32                     params)
@@ -69,8 +92,15 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 template<class span_u32>
 requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>) STATICINLINE
-    void get_tex_parameter_iuiv(
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_EXT_texture_integer
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params GLuint *
+     * \return void
+     */
+    STATICINLINE void get_tex_parameter_iuiv(
         group::texture_target        target,
         group::get_texture_parameter pname,
         span_u32                     params)
@@ -90,8 +120,15 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 template<class span_const_i32>
 requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void tex_parameter_iiv(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_EXT_texture_integer
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params const GLint *
+     * \return void
+     */
+    STATICINLINE void tex_parameter_iiv(
         group::texture_target         target,
         group::texture_parameter_name pname,
         span_const_i32 const&         params)
@@ -112,8 +149,15 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
 template<class span_const_u32>
 requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>) STATICINLINE
-    void tex_parameter_iuiv(
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_EXT_texture_integer
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params const GLuint *
+     * \return void
+     */
+    STATICINLINE void tex_parameter_iuiv(
         group::texture_target         target,
         group::texture_parameter_name pname,
         span_const_u32 const&         params)

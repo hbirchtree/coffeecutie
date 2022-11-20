@@ -103,11 +103,17 @@ enum class get_prop : ::libc_types::u32
 #ifdef GL_BLEND_DST_RGB
     blend_dst_rgb = GL_BLEND_DST_RGB,
 #endif
+#ifdef GL_BLEND_EQUATION
+    blend_equation = GL_BLEND_EQUATION,
+#endif
 #ifdef GL_BLEND_EQUATION_ALPHA
     blend_equation_alpha = GL_BLEND_EQUATION_ALPHA,
 #endif
 #ifdef GL_BLEND_EQUATION_EXT
     blend_equation_ext = GL_BLEND_EQUATION_EXT,
+#endif
+#ifdef GL_BLEND_EQUATION_OES
+    blend_equation_oes = GL_BLEND_EQUATION_OES,
 #endif
 #ifdef GL_BLEND_EQUATION_RGB
     blend_equation_rgb = GL_BLEND_EQUATION_RGB,
@@ -298,6 +304,9 @@ enum class get_prop : ::libc_types::u32
 #ifdef GL_DISPATCH_INDIRECT_BUFFER_BINDING
     dispatch_indirect_buffer_binding = GL_DISPATCH_INDIRECT_BUFFER_BINDING,
 #endif
+#ifdef GL_DISTANCE_ATTENUATION_EXT
+    distance_attenuation_ext = GL_DISTANCE_ATTENUATION_EXT,
+#endif
 #ifdef GL_DISTANCE_ATTENUATION_SGIS
     distance_attenuation_sgis = GL_DISTANCE_ATTENUATION_SGIS,
 #endif
@@ -339,6 +348,9 @@ enum class get_prop : ::libc_types::u32
 #endif
 #ifdef GL_FEEDBACK_BUFFER_TYPE
     feedback_buffer_type = GL_FEEDBACK_BUFFER_TYPE,
+#endif
+#ifdef GL_FETCH_PER_SAMPLE_ARM
+    fetch_per_sample_arm = GL_FETCH_PER_SAMPLE_ARM,
 #endif
 #ifdef GL_FOG
     fog = GL_FOG,
@@ -403,8 +415,34 @@ enum class get_prop : ::libc_types::u32
 #ifdef GL_FRAGMENT_LIGHT_MODEL_TWO_SIDE_SGIX
     fragment_light_model_two_side_sgix = GL_FRAGMENT_LIGHT_MODEL_TWO_SIDE_SGIX,
 #endif
+#ifdef GL_FRAGMENT_SHADER_ATI
+    fragment_shader_ati = GL_FRAGMENT_SHADER_ATI,
+#endif
 #ifdef GL_FRAGMENT_SHADER_DERIVATIVE_HINT
     fragment_shader_derivative_hint = GL_FRAGMENT_SHADER_DERIVATIVE_HINT,
+#endif
+#ifdef GL_FRAGMENT_SHADER_FRAMEBUFFER_FETCH_MRT_ARM
+    fragment_shader_framebuffer_fetch_mrt_arm =
+        GL_FRAGMENT_SHADER_FRAMEBUFFER_FETCH_MRT_ARM,
+#endif
+#ifdef GL_FRAGMENT_SHADING_RATE_ATTACHMENT_WITH_DEFAULT_FRAMEBUFFER_SUPPORTED_EXT
+    fragment_shading_rate_attachment_with_default_framebuffer_supported_ext =
+        GL_FRAGMENT_SHADING_RATE_ATTACHMENT_WITH_DEFAULT_FRAMEBUFFER_SUPPORTED_EXT,
+#endif
+#ifdef GL_FRAGMENT_SHADING_RATE_NON_TRIVIAL_COMBINERS_SUPPORTED_EXT
+    fragment_shading_rate_non_trivial_combiners_supported_ext =
+        GL_FRAGMENT_SHADING_RATE_NON_TRIVIAL_COMBINERS_SUPPORTED_EXT,
+#endif
+#ifdef GL_FRAGMENT_SHADING_RATE_WITH_SAMPLE_MASK_SUPPORTED_EXT
+    fragment_shading_rate_with_sample_mask_supported_ext =
+        GL_FRAGMENT_SHADING_RATE_WITH_SAMPLE_MASK_SUPPORTED_EXT,
+#endif
+#ifdef GL_FRAGMENT_SHADING_RATE_WITH_SHADER_DEPTH_STENCIL_WRITES_SUPPORTED_EXT
+    fragment_shading_rate_with_shader_depth_stencil_writes_supported_ext =
+        GL_FRAGMENT_SHADING_RATE_WITH_SHADER_DEPTH_STENCIL_WRITES_SUPPORTED_EXT,
+#endif
+#ifdef GL_FRAMEBUFFER_FETCH_NONCOHERENT_QCOM
+    framebuffer_fetch_noncoherent_qcom = GL_FRAMEBUFFER_FETCH_NONCOHERENT_QCOM,
 #endif
 #ifdef GL_FRAMEZOOM_FACTOR_SGIX
     framezoom_factor_sgix = GL_FRAMEZOOM_FACTOR_SGIX,
@@ -685,6 +723,15 @@ enum class get_prop : ::libc_types::u32
 #ifdef GL_MAX_CLIP_PLANES
     max_clip_planes = GL_MAX_CLIP_PLANES,
 #endif
+#ifdef GL_MAX_COLOR_ATTACHMENTS
+    max_color_attachments = GL_MAX_COLOR_ATTACHMENTS,
+#endif
+#ifdef GL_MAX_COLOR_ATTACHMENTS_EXT
+    max_color_attachments_ext = GL_MAX_COLOR_ATTACHMENTS_EXT,
+#endif
+#ifdef GL_MAX_COLOR_ATTACHMENTS_NV
+    max_color_attachments_nv = GL_MAX_COLOR_ATTACHMENTS_NV,
+#endif
 #ifdef GL_MAX_COLOR_MATRIX_STACK_DEPTH_SGI
     max_color_matrix_stack_depth_sgi = GL_MAX_COLOR_MATRIX_STACK_DEPTH_SGI,
 #endif
@@ -749,6 +796,15 @@ enum class get_prop : ::libc_types::u32
 #ifdef GL_MAX_CUBE_MAP_TEXTURE_SIZE
     max_cube_map_texture_size = GL_MAX_CUBE_MAP_TEXTURE_SIZE,
 #endif
+#ifdef GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB
+    max_cube_map_texture_size_arb = GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB,
+#endif
+#ifdef GL_MAX_CUBE_MAP_TEXTURE_SIZE_EXT
+    max_cube_map_texture_size_ext = GL_MAX_CUBE_MAP_TEXTURE_SIZE_EXT,
+#endif
+#ifdef GL_MAX_CUBE_MAP_TEXTURE_SIZE_OES
+    max_cube_map_texture_size_oes = GL_MAX_CUBE_MAP_TEXTURE_SIZE_OES,
+#endif
 #ifdef GL_MAX_DEBUG_GROUP_STACK_DEPTH
     max_debug_group_stack_depth = GL_MAX_DEBUG_GROUP_STACK_DEPTH,
 #endif
@@ -787,6 +843,22 @@ enum class get_prop : ::libc_types::u32
 #endif
 #ifdef GL_MAX_FRAGMENT_SHADER_STORAGE_BLOCKS
     max_fragment_shader_storage_blocks = GL_MAX_FRAGMENT_SHADER_STORAGE_BLOCKS,
+#endif
+#ifdef GL_MAX_FRAGMENT_SHADING_RATE_ATTACHMENT_LAYERS_EXT
+    max_fragment_shading_rate_attachment_layers_ext =
+        GL_MAX_FRAGMENT_SHADING_RATE_ATTACHMENT_LAYERS_EXT,
+#endif
+#ifdef GL_MAX_FRAGMENT_SHADING_RATE_ATTACHMENT_TEXEL_ASPECT_RATIO_EXT
+    max_fragment_shading_rate_attachment_texel_aspect_ratio_ext =
+        GL_MAX_FRAGMENT_SHADING_RATE_ATTACHMENT_TEXEL_ASPECT_RATIO_EXT,
+#endif
+#ifdef GL_MAX_FRAGMENT_SHADING_RATE_ATTACHMENT_TEXEL_HEIGHT_EXT
+    max_fragment_shading_rate_attachment_texel_height_ext =
+        GL_MAX_FRAGMENT_SHADING_RATE_ATTACHMENT_TEXEL_HEIGHT_EXT,
+#endif
+#ifdef GL_MAX_FRAGMENT_SHADING_RATE_ATTACHMENT_TEXEL_WIDTH_EXT
+    max_fragment_shading_rate_attachment_texel_width_ext =
+        GL_MAX_FRAGMENT_SHADING_RATE_ATTACHMENT_TEXEL_WIDTH_EXT,
 #endif
 #ifdef GL_MAX_FRAGMENT_UNIFORM_BLOCKS
     max_fragment_uniform_blocks = GL_MAX_FRAGMENT_UNIFORM_BLOCKS,
@@ -975,6 +1047,14 @@ enum class get_prop : ::libc_types::u32
 #ifdef GL_MINOR_VERSION
     minor_version = GL_MINOR_VERSION,
 #endif
+#ifdef GL_MIN_FRAGMENT_SHADING_RATE_ATTACHMENT_TEXEL_HEIGHT_EXT
+    min_fragment_shading_rate_attachment_texel_height_ext =
+        GL_MIN_FRAGMENT_SHADING_RATE_ATTACHMENT_TEXEL_HEIGHT_EXT,
+#endif
+#ifdef GL_MIN_FRAGMENT_SHADING_RATE_ATTACHMENT_TEXEL_WIDTH_EXT
+    min_fragment_shading_rate_attachment_texel_width_ext =
+        GL_MIN_FRAGMENT_SHADING_RATE_ATTACHMENT_TEXEL_WIDTH_EXT,
+#endif
 #ifdef GL_MIN_MAP_BUFFER_ALIGNMENT
     min_map_buffer_alignment = GL_MIN_MAP_BUFFER_ALIGNMENT,
 #endif
@@ -1154,8 +1234,20 @@ enum class get_prop : ::libc_types::u32
 #ifdef GL_PIXEL_UNPACK_BUFFER_BINDING
     pixel_unpack_buffer_binding = GL_PIXEL_UNPACK_BUFFER_BINDING,
 #endif
+#ifdef GL_POINT_DISTANCE_ATTENUATION
+    point_distance_attenuation = GL_POINT_DISTANCE_ATTENUATION,
+#endif
+#ifdef GL_POINT_DISTANCE_ATTENUATION_ARB
+    point_distance_attenuation_arb = GL_POINT_DISTANCE_ATTENUATION_ARB,
+#endif
 #ifdef GL_POINT_FADE_THRESHOLD_SIZE
     point_fade_threshold_size = GL_POINT_FADE_THRESHOLD_SIZE,
+#endif
+#ifdef GL_POINT_FADE_THRESHOLD_SIZE_ARB
+    point_fade_threshold_size_arb = GL_POINT_FADE_THRESHOLD_SIZE_ARB,
+#endif
+#ifdef GL_POINT_FADE_THRESHOLD_SIZE_EXT
+    point_fade_threshold_size_ext = GL_POINT_FADE_THRESHOLD_SIZE_EXT,
 #endif
 #ifdef GL_POINT_FADE_THRESHOLD_SIZE_SGIS
     point_fade_threshold_size_sgis = GL_POINT_FADE_THRESHOLD_SIZE_SGIS,
@@ -1166,8 +1258,26 @@ enum class get_prop : ::libc_types::u32
 #ifdef GL_POINT_SIZE_GRANULARITY
     point_size_granularity = GL_POINT_SIZE_GRANULARITY,
 #endif
+#ifdef GL_POINT_SIZE_MAX
+    point_size_max = GL_POINT_SIZE_MAX,
+#endif
+#ifdef GL_POINT_SIZE_MAX_ARB
+    point_size_max_arb = GL_POINT_SIZE_MAX_ARB,
+#endif
+#ifdef GL_POINT_SIZE_MAX_EXT
+    point_size_max_ext = GL_POINT_SIZE_MAX_EXT,
+#endif
 #ifdef GL_POINT_SIZE_MAX_SGIS
     point_size_max_sgis = GL_POINT_SIZE_MAX_SGIS,
+#endif
+#ifdef GL_POINT_SIZE_MIN
+    point_size_min = GL_POINT_SIZE_MIN,
+#endif
+#ifdef GL_POINT_SIZE_MIN_ARB
+    point_size_min_arb = GL_POINT_SIZE_MIN_ARB,
+#endif
+#ifdef GL_POINT_SIZE_MIN_EXT
+    point_size_min_ext = GL_POINT_SIZE_MIN_EXT,
 #endif
 #ifdef GL_POINT_SIZE_MIN_SGIS
     point_size_min_sgis = GL_POINT_SIZE_MIN_SGIS,
@@ -1406,6 +1516,9 @@ enum class get_prop : ::libc_types::u32
 #ifdef GL_SHADE_MODEL
     shade_model = GL_SHADE_MODEL,
 #endif
+#ifdef GL_SHADING_RATE_EXT
+    shading_rate_ext = GL_SHADING_RATE_EXT,
+#endif
 #ifdef GL_SHADING_RATE_IMAGE_PALETTE_COUNT_NV
     shading_rate_image_palette_count_nv =
         GL_SHADING_RATE_IMAGE_PALETTE_COUNT_NV,
@@ -1547,8 +1660,23 @@ enum class get_prop : ::libc_types::u32
 #ifdef GL_TEXTURE_BINDING_CUBE_MAP
     texture_binding_cube_map = GL_TEXTURE_BINDING_CUBE_MAP,
 #endif
+#ifdef GL_TEXTURE_BINDING_CUBE_MAP_ARB
+    texture_binding_cube_map_arb = GL_TEXTURE_BINDING_CUBE_MAP_ARB,
+#endif
+#ifdef GL_TEXTURE_BINDING_CUBE_MAP_EXT
+    texture_binding_cube_map_ext = GL_TEXTURE_BINDING_CUBE_MAP_EXT,
+#endif
+#ifdef GL_TEXTURE_BINDING_CUBE_MAP_OES
+    texture_binding_cube_map_oes = GL_TEXTURE_BINDING_CUBE_MAP_OES,
+#endif
 #ifdef GL_TEXTURE_BINDING_RECTANGLE
     texture_binding_rectangle = GL_TEXTURE_BINDING_RECTANGLE,
+#endif
+#ifdef GL_TEXTURE_BINDING_RECTANGLE_ARB
+    texture_binding_rectangle_arb = GL_TEXTURE_BINDING_RECTANGLE_ARB,
+#endif
+#ifdef GL_TEXTURE_BINDING_RECTANGLE_NV
+    texture_binding_rectangle_nv = GL_TEXTURE_BINDING_RECTANGLE_NV,
 #endif
 #ifdef GL_TEXTURE_BUFFER_OFFSET_ALIGNMENT
     texture_buffer_offset_alignment = GL_TEXTURE_BUFFER_OFFSET_ALIGNMENT,
@@ -1583,6 +1711,9 @@ enum class get_prop : ::libc_types::u32
 #ifdef GL_TEXTURE_GEN_S
     texture_gen_s = GL_TEXTURE_GEN_S,
 #endif
+#ifdef GL_TEXTURE_GEN_STR_OES
+    texture_gen_str_oes = GL_TEXTURE_GEN_STR_OES,
+#endif
 #ifdef GL_TEXTURE_GEN_T
     texture_gen_t = GL_TEXTURE_GEN_T,
 #endif
@@ -1594,6 +1725,9 @@ enum class get_prop : ::libc_types::u32
 #endif
 #ifdef GL_TIMESTAMP
     timestamp = GL_TIMESTAMP,
+#endif
+#ifdef GL_TIMESTAMP_EXT
+    timestamp_ext = GL_TIMESTAMP_EXT,
 #endif
 #ifdef GL_TRANSFORM_FEEDBACK_BUFFER_BINDING
     transform_feedback_buffer_binding = GL_TRANSFORM_FEEDBACK_BUFFER_BINDING,

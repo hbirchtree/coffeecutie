@@ -13,7 +13,16 @@ constexpr libc_types::u32 query_resource_bufferobject      = 0x9547;
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE GLint
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_NV_query_resource
+     * \param queryType GLenum
+     * \param tagId GLint
+     * \param count GLuint
+     * \param buffer GLint *
+     * \return GLint
+     */
+    STATICINLINE GLint
     query_resource(GLenum queryType, i32 tagId, span_i32 buffer)
 {
     using namespace std::string_view_literals;

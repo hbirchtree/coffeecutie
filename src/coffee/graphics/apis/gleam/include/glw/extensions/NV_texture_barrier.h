@@ -4,6 +4,11 @@
 namespace gl::nv::texture_barrier {
 namespace values {
 } // namespace values
+/*!
+ * \brief Part of GL_NV_texture_barrier
+
+ * \return void
+ */
 STATICINLINE void texture_barrier()
 {
     using namespace std::string_view_literals;

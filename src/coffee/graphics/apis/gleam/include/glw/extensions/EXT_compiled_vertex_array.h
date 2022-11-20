@@ -6,6 +6,12 @@ namespace values {
 constexpr libc_types::u32 array_element_lock_first = 0x81A8;
 constexpr libc_types::u32 array_element_lock_count = 0x81A9;
 } // namespace values
+/*!
+ * \brief Part of GL_EXT_compiled_vertex_array
+ * \param first GLint
+ * \param count GLsizei
+ * \return void
+ */
 STATICINLINE void lock_arrays(i32 first, i32 count)
 {
     using namespace std::string_view_literals;
@@ -17,6 +23,11 @@ STATICINLINE void lock_arrays(i32 first, i32 count)
     detail::error_check("LockArraysEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_compiled_vertex_array
+
+ * \return void
+ */
 STATICINLINE void unlock_arrays()
 {
     using namespace std::string_view_literals;

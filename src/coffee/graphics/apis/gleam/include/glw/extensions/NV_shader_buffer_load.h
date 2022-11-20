@@ -10,8 +10,15 @@ constexpr libc_types::u32 max_shader_buffer_address = 0x8F35;
 template<class span_GLuint64EXT>
 requires(semantic::concepts::Span<span_GLuint64EXT>&& std::is_same_v<
          std::decay_t<typename span_GLuint64EXT::value_type>,
-         std::decay_t<GLuint64EXT>>) STATICINLINE
-    void get_buffer_parameterui64v(
+         std::decay_t<GLuint64EXT>>)
+    /*!
+     * \brief Part of GL_NV_shader_buffer_load
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params GLuint64EXT *
+     * \return void
+     */
+    STATICINLINE void get_buffer_parameterui64v(
         group::buffer_target_arb target, GLenum pname, span_GLuint64EXT params)
 {
     using namespace std::string_view_literals;
@@ -30,8 +37,14 @@ requires(semantic::concepts::Span<span_GLuint64EXT>&& std::is_same_v<
 template<class span_GLuint64EXT>
 requires(semantic::concepts::Span<span_GLuint64EXT>&& std::is_same_v<
          std::decay_t<typename span_GLuint64EXT::value_type>,
-         std::decay_t<GLuint64EXT>>) STATICINLINE
-    void get_integerui64v(GLenum value, span_GLuint64EXT result)
+         std::decay_t<GLuint64EXT>>)
+    /*!
+     * \brief Part of GL_NV_shader_buffer_load
+     * \param value GLenum
+     * \param result GLuint64EXT *
+     * \return void
+     */
+    STATICINLINE void get_integerui64v(GLenum value, span_GLuint64EXT result)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -48,8 +61,15 @@ requires(semantic::concepts::Span<span_GLuint64EXT>&& std::is_same_v<
 template<class span_GLuint64EXT>
 requires(semantic::concepts::Span<span_GLuint64EXT>&& std::is_same_v<
          std::decay_t<typename span_GLuint64EXT::value_type>,
-         std::decay_t<GLuint64EXT>>) STATICINLINE
-    void get_named_buffer_parameterui64v(
+         std::decay_t<GLuint64EXT>>)
+    /*!
+     * \brief Part of GL_NV_shader_buffer_load
+     * \param buffer GLuint
+     * \param pname GLenum
+     * \param params GLuint64EXT *
+     * \return void
+     */
+    STATICINLINE void get_named_buffer_parameterui64v(
         u32 buffer, group::buffer_prop_arb pname, span_GLuint64EXT params)
 {
     using namespace std::string_view_literals;
@@ -69,7 +89,15 @@ requires(semantic::concepts::Span<span_GLuint64EXT>&& std::is_same_v<
 template<class span_GLuint64EXT>
 requires(semantic::concepts::Span<span_GLuint64EXT>&& std::is_same_v<
          std::decay_t<typename span_GLuint64EXT::value_type>,
-         std::decay_t<GLuint64EXT>>) STATICINLINE
+         std::decay_t<GLuint64EXT>>)
+    /*!
+     * \brief Part of GL_NV_shader_buffer_load
+     * \param program GLuint
+     * \param location GLint
+     * \param params GLuint64EXT *
+     * \return void
+     */
+    STATICINLINE
     void get_uniformui64v(u32 program, i32 location, span_GLuint64EXT params)
 {
     using namespace std::string_view_literals;
@@ -86,6 +114,11 @@ requires(semantic::concepts::Span<span_GLuint64EXT>&& std::is_same_v<
     detail::error_check("GetUniformui64vNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_shader_buffer_load
+ * \param target GLenum
+ * \return Boolean
+ */
 STATICINLINE GLboolean is_buffer_resident(GLenum target)
 {
     using namespace std::string_view_literals;
@@ -98,6 +131,11 @@ STATICINLINE GLboolean is_buffer_resident(GLenum target)
     return out;
 }
 
+/*!
+ * \brief Part of GL_NV_shader_buffer_load
+ * \param buffer GLuint
+ * \return Boolean
+ */
 STATICINLINE GLboolean is_named_buffer_resident(u32 buffer)
 {
     using namespace std::string_view_literals;
@@ -111,6 +149,11 @@ STATICINLINE GLboolean is_named_buffer_resident(u32 buffer)
     return out;
 }
 
+/*!
+ * \brief Part of GL_NV_shader_buffer_load
+ * \param target GLenum
+ * \return void
+ */
 STATICINLINE void make_buffer_non_resident(GLenum target)
 {
     using namespace std::string_view_literals;
@@ -122,6 +165,12 @@ STATICINLINE void make_buffer_non_resident(GLenum target)
     detail::error_check("MakeBufferNonResidentNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_shader_buffer_load
+ * \param target GLenum
+ * \param access GLenum
+ * \return void
+ */
 STATICINLINE void make_buffer_resident(GLenum target, GLenum access)
 {
     using namespace std::string_view_literals;
@@ -133,6 +182,11 @@ STATICINLINE void make_buffer_resident(GLenum target, GLenum access)
     detail::error_check("MakeBufferResidentNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_shader_buffer_load
+ * \param buffer GLuint
+ * \return void
+ */
 STATICINLINE void make_named_buffer_non_resident(u32 buffer)
 {
     using namespace std::string_view_literals;
@@ -145,6 +199,12 @@ STATICINLINE void make_named_buffer_non_resident(u32 buffer)
     detail::error_check("MakeNamedBufferNonResidentNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_shader_buffer_load
+ * \param buffer GLuint
+ * \param access GLenum
+ * \return void
+ */
 STATICINLINE void make_named_buffer_resident(u32 buffer, GLenum access)
 {
     using namespace std::string_view_literals;
@@ -157,6 +217,13 @@ STATICINLINE void make_named_buffer_resident(u32 buffer, GLenum access)
     detail::error_check("MakeNamedBufferResidentNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_shader_buffer_load
+ * \param program GLuint
+ * \param location GLint
+ * \param value GLuint64EXT
+ * \return void
+ */
 STATICINLINE void program_uniform(u32 program, i32 location, GLuint64EXT value)
 {
     using namespace std::string_view_literals;
@@ -172,8 +239,16 @@ STATICINLINE void program_uniform(u32 program, i32 location, GLuint64EXT value)
 template<class span_const_GLuint64EXT>
 requires(semantic::concepts::Span<span_const_GLuint64EXT>&& std::is_same_v<
          std::decay_t<typename span_const_GLuint64EXT::value_type>,
-         std::decay_t<GLuint64EXT>>) STATICINLINE
-    void program_uniform(
+         std::decay_t<GLuint64EXT>>)
+    /*!
+     * \brief Part of GL_NV_shader_buffer_load
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLuint64EXT *
+     * \return void
+     */
+    STATICINLINE void program_uniform(
         u32 program, i32 location, span_const_GLuint64EXT const& value)
 {
     using namespace std::string_view_literals;
@@ -191,6 +266,12 @@ requires(semantic::concepts::Span<span_const_GLuint64EXT>&& std::is_same_v<
     detail::error_check("ProgramUniformui64vNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_shader_buffer_load
+ * \param location GLint
+ * \param value GLuint64EXT
+ * \return void
+ */
 STATICINLINE void uniform(i32 location, GLuint64EXT value)
 {
     using namespace std::string_view_literals;
@@ -205,7 +286,15 @@ STATICINLINE void uniform(i32 location, GLuint64EXT value)
 template<class span_const_GLuint64EXT>
 requires(semantic::concepts::Span<span_const_GLuint64EXT>&& std::is_same_v<
          std::decay_t<typename span_const_GLuint64EXT::value_type>,
-         std::decay_t<GLuint64EXT>>) STATICINLINE
+         std::decay_t<GLuint64EXT>>)
+    /*!
+     * \brief Part of GL_NV_shader_buffer_load
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLuint64EXT *
+     * \return void
+     */
+    STATICINLINE
     void uniform(i32 location, i32 count, span_const_GLuint64EXT const& value)
 {
     using namespace std::string_view_literals;

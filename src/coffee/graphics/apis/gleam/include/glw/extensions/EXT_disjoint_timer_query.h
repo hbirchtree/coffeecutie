@@ -1,16 +1,25 @@
 #pragma once
 
 #ifdef GL_EXT_disjoint_timer_query
+#include "../enums/GetPName.h"
+#include "../enums/QueryCounterTarget.h"
 namespace gl::ext::disjoint_timer_query {
+using gl::group::get_prop;
+using gl::group::query_counter_target;
 namespace values {
 constexpr libc_types::u32 query_counter_bits     = 0x8864;
 constexpr libc_types::u32 current_query          = 0x8865;
 constexpr libc_types::u32 query_result           = 0x8866;
 constexpr libc_types::u32 query_result_available = 0x8867;
 constexpr libc_types::u32 time_elapsed           = 0x88BF;
-constexpr libc_types::u32 timestamp              = 0x8E28;
 constexpr libc_types::u32 gpu_disjoint           = 0x8FBB;
 } // namespace values
+/*!
+ * \brief Part of GL_EXT_disjoint_timer_query
+ * \param target GLenum
+ * \param id GLuint
+ * \return void
+ */
 STATICINLINE void begin_query(group::query_target target, u32 id)
 {
     using namespace std::string_view_literals;
@@ -25,8 +34,14 @@ STATICINLINE void begin_query(group::query_target target, u32 id)
 template<class span_const_u32>
 requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>) STATICINLINE
-    void delete_queries(span_const_u32 const& ids)
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_EXT_disjoint_timer_query
+     * \param n GLsizei
+     * \param ids const GLuint *
+     * \return void
+     */
+    STATICINLINE void delete_queries(span_const_u32 const& ids)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -39,6 +54,11 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
     detail::error_check("DeleteQueriesEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_disjoint_timer_query
+ * \param target GLenum
+ * \return void
+ */
 STATICINLINE void end_query(group::query_target target)
 {
     using namespace std::string_view_literals;
@@ -53,7 +73,14 @@ STATICINLINE void end_query(group::query_target target)
 template<class span_u32>
 requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>) STATICINLINE void gen_queries(span_u32 ids)
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_EXT_disjoint_timer_query
+     * \param n GLsizei
+     * \param ids GLuint *
+     * \return void
+     */
+    STATICINLINE void gen_queries(span_u32 ids)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -69,8 +96,14 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 template<class span_i64>
 requires(semantic::concepts::Span<span_i64>&& std::is_same_v<
          std::decay_t<typename span_i64::value_type>,
-         std::decay_t<i64>>) STATICINLINE
-    void get_integer64v(group::get_prop pname, span_i64 data)
+         std::decay_t<i64>>)
+    /*!
+     * \brief Part of GL_EXT_disjoint_timer_query
+     * \param pname GLenum
+     * \param data GLint64 *
+     * \return void
+     */
+    STATICINLINE void get_integer64v(group::get_prop pname, span_i64 data)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -86,8 +119,15 @@ requires(semantic::concepts::Span<span_i64>&& std::is_same_v<
 template<class span_i64>
 requires(semantic::concepts::Span<span_i64>&& std::is_same_v<
          std::decay_t<typename span_i64::value_type>,
-         std::decay_t<i64>>) STATICINLINE
-    void get_query_objecti64v(
+         std::decay_t<i64>>)
+    /*!
+     * \brief Part of GL_EXT_disjoint_timer_query
+     * \param id GLuint
+     * \param pname GLenum
+     * \param params GLint64 *
+     * \return void
+     */
+    STATICINLINE void get_query_objecti64v(
         u32 id, group::query_object_parameter_name pname, span_i64 params)
 {
     using namespace std::string_view_literals;
@@ -105,8 +145,15 @@ requires(semantic::concepts::Span<span_i64>&& std::is_same_v<
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void get_query_objectiv(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_EXT_disjoint_timer_query
+     * \param id GLuint
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_query_objectiv(
         u32 id, group::query_object_parameter_name pname, span_i32 params)
 {
     using namespace std::string_view_literals;
@@ -124,8 +171,15 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 template<class span_u64>
 requires(semantic::concepts::Span<span_u64>&& std::is_same_v<
          std::decay_t<typename span_u64::value_type>,
-         std::decay_t<u64>>) STATICINLINE
-    void get_query_objectui64v(
+         std::decay_t<u64>>)
+    /*!
+     * \brief Part of GL_EXT_disjoint_timer_query
+     * \param id GLuint
+     * \param pname GLenum
+     * \param params GLuint64 *
+     * \return void
+     */
+    STATICINLINE void get_query_objectui64v(
         u32 id, group::query_object_parameter_name pname, span_u64 params)
 {
     using namespace std::string_view_literals;
@@ -143,8 +197,15 @@ requires(semantic::concepts::Span<span_u64>&& std::is_same_v<
 template<class span_u32>
 requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>) STATICINLINE
-    void get_query_objectuiv(
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_EXT_disjoint_timer_query
+     * \param id GLuint
+     * \param pname GLenum
+     * \param params GLuint *
+     * \return void
+     */
+    STATICINLINE void get_query_objectuiv(
         u32 id, group::query_object_parameter_name pname, span_u32 params)
 {
     using namespace std::string_view_literals;
@@ -162,8 +223,15 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void get_queryiv(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_EXT_disjoint_timer_query
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_queryiv(
         group::query_target         target,
         group::query_parameter_name pname,
         span_i32                    params)
@@ -180,6 +248,11 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
     detail::error_check("GetQueryivEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_disjoint_timer_query
+ * \param id GLuint
+ * \return Boolean
+ */
 STATICINLINE GLboolean is_query(u32 id)
 {
     using namespace std::string_view_literals;
@@ -192,6 +265,12 @@ STATICINLINE GLboolean is_query(u32 id)
     return out;
 }
 
+/*!
+ * \brief Part of GL_EXT_disjoint_timer_query
+ * \param id GLuint
+ * \param target GLenum
+ * \return void
+ */
 STATICINLINE void query_counter(u32 id, group::query_counter_target target)
 {
     using namespace std::string_view_literals;

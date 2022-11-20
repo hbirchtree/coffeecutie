@@ -616,6 +616,9 @@ enum class internal_format : ::libc_types::u32
 #ifdef GL_DUAL_LUMINANCE_ALPHA8_SGIS
     dual_luminance_alpha8_sgis = GL_DUAL_LUMINANCE_ALPHA8_SGIS,
 #endif
+#ifdef GL_ETC1_RGB8_OES
+    etc1_rgb8_oes = GL_ETC1_RGB8_OES,
+#endif
 #ifdef GL_INTENSITY
     intensity = GL_INTENSITY,
 #endif
@@ -996,6 +999,12 @@ enum class internal_format : ::libc_types::u32
 #endif
 #ifdef GL_RGB5
     rgb5 = GL_RGB5,
+#endif
+#ifdef GL_RGB565
+    rgb565 = GL_RGB565,
+#endif
+#ifdef GL_RGB565_OES
+    rgb565_oes = GL_RGB565_OES,
 #endif
 #ifdef GL_RGB5_A1
     rgb5_a1 = GL_RGB5_A1,

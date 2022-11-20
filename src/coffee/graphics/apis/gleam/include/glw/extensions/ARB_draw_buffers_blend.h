@@ -4,6 +4,13 @@
 namespace gl::arb::draw_buffers_blend {
 namespace values {
 } // namespace values
+/*!
+ * \brief Part of GL_ARB_draw_buffers_blend
+ * \param buf GLuint
+ * \param modeRGB GLenum
+ * \param modeAlpha GLenum
+ * \return void
+ */
 STATICINLINE void blend_equation_separatei(
     u32                            buf,
     group::blend_equation_mode_ext modeRGB,
@@ -19,6 +26,12 @@ STATICINLINE void blend_equation_separatei(
     detail::error_check("BlendEquationSeparateiARB"sv);
 }
 
+/*!
+ * \brief Part of GL_ARB_draw_buffers_blend
+ * \param buf GLuint
+ * \param mode GLenum
+ * \return void
+ */
 STATICINLINE void blend_equationi(u32 buf, group::blend_equation_mode_ext mode)
 {
     using namespace std::string_view_literals;
@@ -30,6 +43,15 @@ STATICINLINE void blend_equationi(u32 buf, group::blend_equation_mode_ext mode)
     detail::error_check("BlendEquationiARB"sv);
 }
 
+/*!
+ * \brief Part of GL_ARB_draw_buffers_blend
+ * \param buf GLuint
+ * \param srcRGB GLenum
+ * \param dstRGB GLenum
+ * \param srcAlpha GLenum
+ * \param dstAlpha GLenum
+ * \return void
+ */
 STATICINLINE void blend_func_separatei(
     u32                    buf,
     group::blending_factor srcRGB,
@@ -51,6 +73,13 @@ STATICINLINE void blend_func_separatei(
     detail::error_check("BlendFuncSeparateiARB"sv);
 }
 
+/*!
+ * \brief Part of GL_ARB_draw_buffers_blend
+ * \param buf GLuint
+ * \param src GLenum
+ * \param dst GLenum
+ * \return void
+ */
 STATICINLINE void blend_funci(
     u32 buf, group::blending_factor src, group::blending_factor dst)
 {

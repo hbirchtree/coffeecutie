@@ -9,8 +9,15 @@ constexpr libc_types::u32 clamp_to_border      = 0x812D;
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void get_sampler_parameter_iiv(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_EXT_texture_border_clamp
+     * \param sampler GLuint
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_sampler_parameter_iiv(
         u32 sampler, group::sampler_parameter_i pname, span_i32 params)
 {
     using namespace std::string_view_literals;
@@ -29,8 +36,15 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 template<class span_u32>
 requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>) STATICINLINE
-    void get_sampler_parameter_iuiv(
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_EXT_texture_border_clamp
+     * \param sampler GLuint
+     * \param pname GLenum
+     * \param params GLuint *
+     * \return void
+     */
+    STATICINLINE void get_sampler_parameter_iuiv(
         u32 sampler, group::sampler_parameter_i pname, span_u32 params)
 {
     using namespace std::string_view_literals;
@@ -49,8 +63,15 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void get_tex_parameter_iiv(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_EXT_texture_border_clamp
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_tex_parameter_iiv(
         group::texture_target        target,
         group::get_texture_parameter pname,
         span_i32                     params)
@@ -70,8 +91,15 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 template<class span_u32>
 requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>) STATICINLINE
-    void get_tex_parameter_iuiv(
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_EXT_texture_border_clamp
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params GLuint *
+     * \return void
+     */
+    STATICINLINE void get_tex_parameter_iuiv(
         group::texture_target        target,
         group::get_texture_parameter pname,
         span_u32                     params)
@@ -91,8 +119,15 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 template<class span_const_i32>
 requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void sampler_parameter_iiv(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_EXT_texture_border_clamp
+     * \param sampler GLuint
+     * \param pname GLenum
+     * \param param const GLint *
+     * \return void
+     */
+    STATICINLINE void sampler_parameter_iiv(
         u32                        sampler,
         group::sampler_parameter_i pname,
         span_const_i32 const&      param)
@@ -113,8 +148,15 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
 template<class span_const_u32>
 requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>) STATICINLINE
-    void sampler_parameter_iuiv(
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_EXT_texture_border_clamp
+     * \param sampler GLuint
+     * \param pname GLenum
+     * \param param const GLuint *
+     * \return void
+     */
+    STATICINLINE void sampler_parameter_iuiv(
         u32                        sampler,
         group::sampler_parameter_i pname,
         span_const_u32 const&      param)
@@ -135,8 +177,15 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
 template<class span_const_i32>
 requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void tex_parameter_iiv(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_EXT_texture_border_clamp
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params const GLint *
+     * \return void
+     */
+    STATICINLINE void tex_parameter_iiv(
         group::texture_target         target,
         group::texture_parameter_name pname,
         span_const_i32 const&         params)
@@ -157,8 +206,15 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
 template<class span_const_u32>
 requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>) STATICINLINE
-    void tex_parameter_iuiv(
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_EXT_texture_border_clamp
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params const GLuint *
+     * \return void
+     */
+    STATICINLINE void tex_parameter_iuiv(
         group::texture_target         target,
         group::texture_parameter_name pname,
         span_const_u32 const&         params)

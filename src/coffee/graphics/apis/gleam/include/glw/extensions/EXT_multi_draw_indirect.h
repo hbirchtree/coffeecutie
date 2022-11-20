@@ -4,6 +4,14 @@
 namespace gl::ext::multi_draw_indirect {
 namespace values {
 } // namespace values
+/*!
+ * \brief Part of GL_EXT_multi_draw_indirect
+ * \param mode GLenum
+ * \param indirect const void *
+ * \param drawcount GLsizei
+ * \param stride GLsizei
+ * \return void
+ */
 STATICINLINE void multi_draw_arrays_indirect(
     group::primitive_type mode, ptroff indirect, i32 drawcount, i32 stride)
 {
@@ -20,6 +28,15 @@ STATICINLINE void multi_draw_arrays_indirect(
     detail::error_check("MultiDrawArraysIndirectEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_multi_draw_indirect
+ * \param mode GLenum
+ * \param type GLenum
+ * \param indirect const void *
+ * \param drawcount GLsizei
+ * \param stride GLsizei
+ * \return void
+ */
 STATICINLINE void multi_draw_elements_indirect(
     group::primitive_type     mode,
     group::draw_elements_type type,

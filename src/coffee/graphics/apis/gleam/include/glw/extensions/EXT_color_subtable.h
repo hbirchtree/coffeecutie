@@ -5,8 +5,18 @@ namespace gl::ext::color_subtable {
 namespace values {
 } // namespace values
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>) STATICINLINE
-    void color_sub_table(
+requires(semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_EXT_color_subtable
+     * \param target GLenum
+     * \param start GLsizei
+     * \param count GLsizei
+     * \param format GLenum
+     * \param type GLenum
+     * \param data const void *
+     * \return void
+     */
+    STATICINLINE void color_sub_table(
         group::color_table_target target,
         i32                       start,
         i32                       count,
@@ -30,8 +40,17 @@ requires(semantic::concepts::Span<span_const_void>) STATICINLINE
 }
 
 template<class vec_2_i32>
-requires(semantic::concepts::Vector<vec_2_i32, i32, 2>) STATICINLINE
-    void copy_color_sub_table(
+requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
+    /*!
+     * \brief Part of GL_EXT_color_subtable
+     * \param target GLenum
+     * \param start GLsizei
+     * \param x GLint
+     * \param y GLint
+     * \param width GLsizei
+     * \return void
+     */
+    STATICINLINE void copy_color_sub_table(
         group::color_table_target target,
         i32                       start,
         vec_2_i32 const&          x,

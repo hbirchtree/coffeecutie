@@ -14,6 +14,15 @@ constexpr libc_types::u32 texture_2d_array             = 0x8C1A;
 constexpr libc_types::u32 texture_binding_1d_array     = 0x8C1C;
 constexpr libc_types::u32 texture_binding_2d_array     = 0x8C1D;
 } // namespace values
+/*!
+ * \brief Part of GL_EXT_texture_array
+ * \param target GLenum
+ * \param attachment GLenum
+ * \param texture GLuint
+ * \param level GLint
+ * \param layer GLint
+ * \return void
+ */
 STATICINLINE void framebuffer_texture_layer(
     group::framebuffer_target     target,
     group::framebuffer_attachment attachment,

@@ -7,6 +7,11 @@ using gl::group::texture_normal_mode_ext;
 namespace values {
 constexpr libc_types::u32 texture_normal = 0x85AF;
 } // namespace values
+/*!
+ * \brief Part of GL_EXT_texture_perturb_normal
+ * \param mode GLenum
+ * \return void
+ */
 STATICINLINE void texture_normal(group::texture_normal_mode_ext mode)
 {
     using namespace std::string_view_literals;

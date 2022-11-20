@@ -15,8 +15,19 @@ constexpr libc_types::u32 min_sparse_level                = 0x919B;
 constexpr libc_types::u32 min_lod_warning                 = 0x919C;
 } // namespace values
 template<class size_3_i32>
-requires(semantic::concepts::Size2D<size_3_i32, i32>) STATICINLINE
-    void tex_storage_sparse(
+requires(semantic::concepts::Size2D<size_3_i32, i32>)
+    /*!
+     * \brief Part of GL_AMD_sparse_texture
+     * \param target GLenum
+     * \param internalFormat GLenum
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param depth GLsizei
+     * \param layers GLsizei
+     * \param flags GLbitfield
+     * \return void
+     */
+    STATICINLINE void tex_storage_sparse(
         group::texture_target           target,
         group::sized_internal_format    internalFormat,
         size_3_i32 const&               width,
@@ -40,8 +51,20 @@ requires(semantic::concepts::Size2D<size_3_i32, i32>) STATICINLINE
 }
 
 template<class size_3_i32>
-requires(semantic::concepts::Size2D<size_3_i32, i32>) STATICINLINE
-    void texture_storage_sparse(
+requires(semantic::concepts::Size2D<size_3_i32, i32>)
+    /*!
+     * \brief Part of GL_AMD_sparse_texture
+     * \param texture GLuint
+     * \param target GLenum
+     * \param internalFormat GLenum
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param depth GLsizei
+     * \param layers GLsizei
+     * \param flags GLbitfield
+     * \return void
+     */
+    STATICINLINE void texture_storage_sparse(
         u32                             texture,
         GLenum                          target,
         group::sized_internal_format    internalFormat,

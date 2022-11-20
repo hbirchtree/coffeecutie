@@ -9,6 +9,16 @@ constexpr libc_types::u32 framebuffer_incomplete_multisample = 0x9134;
 constexpr libc_types::u32 max_samples                        = 0x9135;
 constexpr libc_types::u32 texture_samples                    = 0x9136;
 } // namespace values
+/*!
+ * \brief Part of GL_IMG_multisampled_render_to_texture
+ * \param target GLenum
+ * \param attachment GLenum
+ * \param textarget GLenum
+ * \param texture GLuint
+ * \param level GLint
+ * \param samples GLsizei
+ * \return void
+ */
 STATICINLINE void framebuffer_texture_2d_multisample(
     group::framebuffer_target     target,
     group::framebuffer_attachment attachment,
@@ -34,8 +44,17 @@ STATICINLINE void framebuffer_texture_2d_multisample(
 }
 
 template<class size_2_i32>
-requires(semantic::concepts::Size2D<size_2_i32, i32>) STATICINLINE
-    void renderbuffer_storage_multisample(
+requires(semantic::concepts::Size2D<size_2_i32, i32>)
+    /*!
+     * \brief Part of GL_IMG_multisampled_render_to_texture
+     * \param target GLenum
+     * \param samples GLsizei
+     * \param internalformat GLenum
+     * \param width GLsizei
+     * \param height GLsizei
+     * \return void
+     */
+    STATICINLINE void renderbuffer_storage_multisample(
         group::renderbuffer_target target,
         i32                        samples,
         group::internal_format     internalformat,

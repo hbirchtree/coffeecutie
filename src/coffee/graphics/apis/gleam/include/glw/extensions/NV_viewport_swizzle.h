@@ -16,6 +16,15 @@ constexpr libc_types::u32 viewport_swizzle_y          = 0x9359;
 constexpr libc_types::u32 viewport_swizzle_z          = 0x935A;
 constexpr libc_types::u32 viewport_swizzle_w          = 0x935B;
 } // namespace values
+/*!
+ * \brief Part of GL_NV_viewport_swizzle
+ * \param index GLuint
+ * \param swizzlex GLenum
+ * \param swizzley GLenum
+ * \param swizzlez GLenum
+ * \param swizzlew GLenum
+ * \return void
+ */
 STATICINLINE void viewport_swizzle(
     u32    index,
     GLenum swizzlex,

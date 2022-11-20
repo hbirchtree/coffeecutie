@@ -11,8 +11,14 @@ constexpr libc_types::u32 line                 = 0x1B01;
 constexpr libc_types::u32 polygon_offset_point = 0x2A01;
 constexpr libc_types::u32 polygon_offset_line  = 0x2A02;
 } // namespace values
+/*!
+ * \brief Part of GL_NV_polygon_mode
+ * \param face GLenum
+ * \param mode GLenum
+ * \return void
+ */
 STATICINLINE void polygon_mode(
-    group::material_face face, group::polygon_mode mode)
+    group::triangle_face face, group::polygon_mode mode)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

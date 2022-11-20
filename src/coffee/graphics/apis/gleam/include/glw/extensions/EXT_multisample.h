@@ -19,6 +19,12 @@ constexpr libc_types::u32 sample_mask_value    = 0x80AA;
 constexpr libc_types::u32 sample_mask_invert   = 0x80AB;
 constexpr libc_types::u32 sample_pattern       = 0x80AC;
 } // namespace values
+/*!
+ * \brief Part of GL_EXT_multisample
+ * \param value GLclampf
+ * \param invert GLboolean
+ * \return void
+ */
 STATICINLINE void sample_mask(GLclampf value, bool invert)
 {
     using namespace std::string_view_literals;
@@ -30,6 +36,11 @@ STATICINLINE void sample_mask(GLclampf value, bool invert)
     detail::error_check("SampleMaskEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_multisample
+ * \param pattern GLenum
+ * \return void
+ */
 STATICINLINE void sample_pattern(group::sample_pattern_ext pattern)
 {
     using namespace std::string_view_literals;

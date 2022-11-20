@@ -1,8 +1,16 @@
 #ifdef GL_VERSION_3_2
-/* Introduced in GL core 3.2 */
 template<typename Dummy = void>
-requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
-    void draw_elements_base_vertex(
+requires(MinimumVersion<Current, Version<3, 2>>)
+    /*!
+     * \brief Wraps around glDrawElementsBaseVertex. Introduced in GL core 3.2
+     * \param mode GLenum
+     * \param count GLsizei
+     * \param type GLenum
+     * \param indices const void *
+     * \param basevertex GLint
+     * \return void
+     */
+    STATICINLINE void draw_elements_base_vertex(
         group::primitive_type     mode,
         i32                       count,
         group::draw_elements_type type,
@@ -23,10 +31,17 @@ requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
     detail::error_check("DrawElementsBaseVertex"sv);
 }
 
-/* Introduced in GL core 3.2 */
 template<typename Dummy = void>
-requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
-    void draw_elements_instanced_base_vertex(
+requires(MinimumVersion<Current, Version<3, 2>>)
+    /*!
+     * \brief Wraps around glDrawElementsInstancedBaseVertex. Introduced in GL
+     * core 3.2 \param mode GLenum \param count GLsizei \param type GLenum
+     * \param indices const void *
+     * \param instancecount GLsizei
+     * \param basevertex GLint
+     * \return void
+     */
+    STATICINLINE void draw_elements_instanced_base_vertex(
         group::primitive_type     mode,
         i32                       count,
         group::draw_elements_type type,
@@ -49,11 +64,16 @@ requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
     detail::error_check("DrawElementsInstancedBaseVertex"sv);
 }
 
-/* Introduced in GL core 3.2 */
 template<class span_const_void>
 requires(MinimumVersion<Current, Version<3, 2>>&&
-             semantic::concepts::Span<span_const_void>) STATICINLINE
-    void draw_range_elements_base_vertex(
+             semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Wraps around glDrawRangeElementsBaseVertex. Introduced in GL
+     * core 3.2 \param mode GLenum \param start GLuint \param end GLuint \param
+     * count GLsizei \param type GLenum \param indices const void * \param
+     * basevertex GLint \return void
+     */
+    STATICINLINE void draw_range_elements_base_vertex(
         group::primitive_type     mode,
         u32                       start,
         u32                       end,
@@ -79,13 +99,18 @@ requires(MinimumVersion<Current, Version<3, 2>>&&
     detail::error_check("DrawRangeElementsBaseVertex"sv);
 }
 
-/* Introduced in GL core 3.2 */
 template<class span_const_i32>
 requires(MinimumVersion<Current, Version<3, 2>>&&
              semantic::concepts::Span<span_const_i32>&& std::is_same_v<
                  std::decay_t<typename span_const_i32::value_type>,
-                 std::decay_t<i32>>) STATICINLINE
-    void multi_draw_elements_base_vertex(
+                 std::decay_t<i32>>)
+    /*!
+     * \brief Wraps around glMultiDrawElementsBaseVertex. Introduced in GL
+     * core 3.2 \param mode GLenum \param count const GLsizei * \param type
+     * GLenum \param indices const void *const* \param drawcount GLsizei \param
+     * basevertex const GLint * \return void
+     */
+    STATICINLINE void multi_draw_elements_base_vertex(
         group::primitive_type     mode,
         span_const_i32            count,
         group::draw_elements_type type,
@@ -109,10 +134,14 @@ requires(MinimumVersion<Current, Version<3, 2>>&&
     detail::error_check("MultiDrawElementsBaseVertex"sv);
 }
 
-/* Introduced in GL core 3.2 */
 template<typename Dummy = void>
-requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
-    void provoking_vertex(group::vertex_provoking_mode mode)
+requires(MinimumVersion<Current, Version<3, 2>>)
+    /*!
+     * \brief Wraps around glProvokingVertex. Introduced in GL core 3.2
+     * \param mode GLenum
+     * \return void
+     */
+    STATICINLINE void provoking_vertex(group::vertex_provoking_mode mode)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -123,9 +152,16 @@ requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
     detail::error_check("ProvokingVertex"sv);
 }
 
-/* Introduced in GL core 3.2 */
 template<typename Dummy = void>
-requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE GLenum
+requires(MinimumVersion<Current, Version<3, 2>>)
+    /*!
+     * \brief Wraps around glClientWaitSync. Introduced in GL core 3.2
+     * \param sync GLsync
+     * \param flags GLbitfield
+     * \param timeout GLuint64
+     * \return SyncStatus
+     */
+    STATICINLINE GLenum
     client_wait_sync(GLsync sync, group::sync_object_mask flags, u64 timeout)
 {
     using namespace std::string_view_literals;
@@ -138,10 +174,14 @@ requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE GLenum
     return out;
 }
 
-/* Introduced in GL core 3.2 */
 template<typename Dummy = void>
-requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
-    void delete_sync(GLsync sync)
+requires(MinimumVersion<Current, Version<3, 2>>)
+    /*!
+     * \brief Wraps around glDeleteSync. Introduced in GL core 3.2
+     * \param sync GLsync
+     * \return void
+     */
+    STATICINLINE void delete_sync(GLsync sync)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -152,10 +192,16 @@ requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
     detail::error_check("DeleteSync"sv);
 }
 
-/* Introduced in GL core 3.2 */
 template<typename Dummy = void>
-requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE GLsync fence_sync(
-    group::sync_condition condition, group::sync_behavior_flags flags)
+requires(MinimumVersion<Current, Version<3, 2>>)
+    /*!
+     * \brief Wraps around glFenceSync. Introduced in GL core 3.2
+     * \param condition GLenum
+     * \param flags GLbitfield
+     * \return sync
+     */
+    STATICINLINE GLsync fence_sync(
+        group::sync_condition condition, group::sync_behavior_flags flags)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -168,13 +214,18 @@ requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE GLsync fence_sync(
     return out;
 }
 
-/* Introduced in GL core 3.2 */
 template<class span_i64>
 requires(MinimumVersion<Current, Version<3, 2>>&&
              semantic::concepts::Span<span_i64>&& std::is_same_v<
                  std::decay_t<typename span_i64::value_type>,
-                 std::decay_t<i64>>) STATICINLINE
-    void get_integer64v(group::get_prop pname, span_i64 data)
+                 std::decay_t<i64>>)
+    /*!
+     * \brief Wraps around glGetInteger64v. Introduced in GL core 3.2
+     * \param pname GLenum
+     * \param data GLint64 *
+     * \return void
+     */
+    STATICINLINE void get_integer64v(group::get_prop pname, span_i64 data)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -187,13 +238,21 @@ requires(MinimumVersion<Current, Version<3, 2>>&&
     detail::error_check("GetInteger64v"sv);
 }
 
-/* Introduced in GL core 3.2 */
 template<class span_i32>
 requires(MinimumVersion<Current, Version<3, 2>>&&
              semantic::concepts::Span<span_i32>&& std::is_same_v<
                  std::decay_t<typename span_i32::value_type>,
-                 std::decay_t<i32>>) STATICINLINE
-    void get_synciv(
+                 std::decay_t<i32>>)
+    /*!
+     * \brief Wraps around glGetSynciv. Introduced in GL core 3.2
+     * \param sync GLsync
+     * \param pname GLenum
+     * \param count GLsizei
+     * \param length GLsizei *
+     * \param values GLint *
+     * \return void
+     */
+    STATICINLINE void get_synciv(
         GLsync                     sync,
         group::sync_parameter_name pname,
         i32&                       length,
@@ -213,10 +272,14 @@ requires(MinimumVersion<Current, Version<3, 2>>&&
     detail::error_check("GetSynciv"sv);
 }
 
-/* Introduced in GL core 3.2 */
 template<typename Dummy = void>
-requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE GLboolean
-    is_sync(GLsync sync)
+requires(MinimumVersion<Current, Version<3, 2>>)
+    /*!
+     * \brief Wraps around glIsSync. Introduced in GL core 3.2
+     * \param sync GLsync
+     * \return Boolean
+     */
+    STATICINLINE GLboolean is_sync(GLsync sync)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -228,9 +291,16 @@ requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE GLboolean
     return out;
 }
 
-/* Introduced in GL core 3.2 */
 template<typename Dummy = void>
-requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
+requires(MinimumVersion<Current, Version<3, 2>>)
+    /*!
+     * \brief Wraps around glWaitSync. Introduced in GL core 3.2
+     * \param sync GLsync
+     * \param flags GLbitfield
+     * \param timeout GLuint64
+     * \return void
+     */
+    STATICINLINE
     void wait_sync(GLsync sync, group::sync_behavior_flags flags, u64 timeout)
 {
     using namespace std::string_view_literals;
@@ -242,10 +312,17 @@ requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
     detail::error_check("WaitSync"sv);
 }
 
-/* Introduced in GL core 3.2 */
 template<typename Dummy = void>
-requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
-    void framebuffer_texture(
+requires(MinimumVersion<Current, Version<3, 2>>)
+    /*!
+     * \brief Wraps around glFramebufferTexture. Introduced in GL core 3.2
+     * \param target GLenum
+     * \param attachment GLenum
+     * \param texture GLuint
+     * \param level GLint
+     * \return void
+     */
+    STATICINLINE void framebuffer_texture(
         group::framebuffer_target     target,
         group::framebuffer_attachment attachment,
         u32                           texture,
@@ -265,13 +342,19 @@ requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
     detail::error_check("FramebufferTexture"sv);
 }
 
-/* Introduced in GL core 3.2 */
 template<class span_i64>
 requires(MinimumVersion<Current, Version<3, 2>>&&
              semantic::concepts::Span<span_i64>&& std::is_same_v<
                  std::decay_t<typename span_i64::value_type>,
-                 std::decay_t<i64>>) STATICINLINE
-    void get_buffer_parameteri64v(
+                 std::decay_t<i64>>)
+    /*!
+     * \brief Wraps around glGetBufferParameteri64v. Introduced in GL core 3.2
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params GLint64 *
+     * \return void
+     */
+    STATICINLINE void get_buffer_parameteri64v(
         group::buffer_target_arb target,
         group::buffer_prop_arb   pname,
         span_i64                 params)
@@ -288,12 +371,19 @@ requires(MinimumVersion<Current, Version<3, 2>>&&
     detail::error_check("GetBufferParameteri64v"sv);
 }
 
-/* Introduced in GL core 3.2 */
 template<class span_i64>
 requires(MinimumVersion<Current, Version<3, 2>>&&
              semantic::concepts::Span<span_i64>&& std::is_same_v<
                  std::decay_t<typename span_i64::value_type>,
-                 std::decay_t<i64>>) STATICINLINE
+                 std::decay_t<i64>>)
+    /*!
+     * \brief Wraps around glGetInteger64i_v. Introduced in GL core 3.2
+     * \param target GLenum
+     * \param index GLuint
+     * \param data GLint64 *
+     * \return void
+     */
+    STATICINLINE
     void get_integer64i_v(group::get_prop target, u32 index, span_i64 data)
 {
     using namespace std::string_view_literals;
@@ -308,13 +398,19 @@ requires(MinimumVersion<Current, Version<3, 2>>&&
     detail::error_check("GetInteger64i_v"sv);
 }
 
-/* Introduced in GL core 3.2 */
 template<class span_f32>
 requires(MinimumVersion<Current, Version<3, 2>>&&
              semantic::concepts::Span<span_f32>&& std::is_same_v<
                  std::decay_t<typename span_f32::value_type>,
-                 std::decay_t<f32>>) STATICINLINE
-    void get_multisamplefv(
+                 std::decay_t<f32>>)
+    /*!
+     * \brief Wraps around glGetMultisamplefv. Introduced in GL core 3.2
+     * \param pname GLenum
+     * \param index GLuint
+     * \param val GLfloat *
+     * \return void
+     */
+    STATICINLINE void get_multisamplefv(
         group::get_multisample_prop_nv pname, u32 index, span_f32 val)
 {
     using namespace std::string_view_literals;
@@ -329,10 +425,15 @@ requires(MinimumVersion<Current, Version<3, 2>>&&
     detail::error_check("GetMultisamplefv"sv);
 }
 
-/* Introduced in GL core 3.2 */
 template<typename Dummy = void>
-requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
-    void sample_maski(u32 maskNumber, GLbitfield mask)
+requires(MinimumVersion<Current, Version<3, 2>>)
+    /*!
+     * \brief Wraps around glSampleMaski. Introduced in GL core 3.2
+     * \param maskNumber GLuint
+     * \param mask GLbitfield
+     * \return void
+     */
+    STATICINLINE void sample_maski(u32 maskNumber, GLbitfield mask)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -343,11 +444,20 @@ requires(MinimumVersion<Current, Version<3, 2>>) STATICINLINE
     detail::error_check("SampleMaski"sv);
 }
 
-/* Introduced in GL core 3.2 */
 template<class size_2_i32>
 requires(MinimumVersion<Current, Version<3, 2>>&&
-             semantic::concepts::Size2D<size_2_i32, i32>) STATICINLINE
-    void tex_image_2d_multisample(
+             semantic::concepts::Size2D<size_2_i32, i32>)
+    /*!
+     * \brief Wraps around glTexImage2DMultisample. Introduced in GL core 3.2
+     * \param target GLenum
+     * \param samples GLsizei
+     * \param internalformat GLenum
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param fixedsamplelocations GLboolean
+     * \return void
+     */
+    STATICINLINE void tex_image_2d_multisample(
         group::texture_target  target,
         i32                    samples,
         group::internal_format internalformat,
@@ -369,11 +479,21 @@ requires(MinimumVersion<Current, Version<3, 2>>&&
     detail::error_check("TexImage2DMultisample"sv);
 }
 
-/* Introduced in GL core 3.2 */
 template<class size_3_i32>
 requires(MinimumVersion<Current, Version<3, 2>>&&
-             semantic::concepts::Size2D<size_3_i32, i32>) STATICINLINE
-    void tex_image_3d_multisample(
+             semantic::concepts::Size2D<size_3_i32, i32>)
+    /*!
+     * \brief Wraps around glTexImage3DMultisample. Introduced in GL core 3.2
+     * \param target GLenum
+     * \param samples GLsizei
+     * \param internalformat GLenum
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param depth GLsizei
+     * \param fixedsamplelocations GLboolean
+     * \return void
+     */
+    STATICINLINE void tex_image_3d_multisample(
         group::texture_target  target,
         i32                    samples,
         group::internal_format internalformat,

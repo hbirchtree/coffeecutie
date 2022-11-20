@@ -11,8 +11,25 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
          std::decay_t<u32>>&& semantic::concepts::Span<span_const_u64>&&
                               std::is_same_v<
                  std::decay_t<typename span_const_u64::value_type>,
-                 std::decay_t<u64>>) STATICINLINE GLuint
-    async_copy_buffer_sub_data(
+                 std::decay_t<u64>>)
+    /*!
+     * \brief Part of GL_NVX_gpu_multicast2
+     * \param waitSemaphoreCount GLsizei
+     * \param waitSemaphoreArray const GLuint *
+     * \param fenceValueArray const GLuint64 *
+     * \param readGpu GLuint
+     * \param writeGpuMask GLbitfield
+     * \param readBuffer GLuint
+     * \param writeBuffer GLuint
+     * \param readOffset GLintptr
+     * \param writeOffset GLintptr
+     * \param size GLsizeiptr
+     * \param signalSemaphoreCount GLsizei
+     * \param signalSemaphoreArray const GLuint *
+     * \param signalValueArray const GLuint64 *
+     * \return GLuint
+     */
+    STATICINLINE GLuint async_copy_buffer_sub_data(
         span_const_u32 const& waitSemaphoreArray,
         span_const_u64 const& fenceValueArray,
         u32                   readGpu,
@@ -62,8 +79,35 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
          std::decay_t<u32>>&& semantic::concepts::Span<span_const_u64>&&
                               std::is_same_v<
                  std::decay_t<typename span_const_u64::value_type>,
-                 std::decay_t<u64>>) STATICINLINE GLuint
-    async_copy_image_sub_data(
+                 std::decay_t<u64>>)
+    /*!
+     * \brief Part of GL_NVX_gpu_multicast2
+     * \param waitSemaphoreCount GLsizei
+     * \param waitSemaphoreArray const GLuint *
+     * \param waitValueArray const GLuint64 *
+     * \param srcGpu GLuint
+     * \param dstGpuMask GLbitfield
+     * \param srcName GLuint
+     * \param srcTarget GLenum
+     * \param srcLevel GLint
+     * \param srcX GLint
+     * \param srcY GLint
+     * \param srcZ GLint
+     * \param dstName GLuint
+     * \param dstTarget GLenum
+     * \param dstLevel GLint
+     * \param dstX GLint
+     * \param dstY GLint
+     * \param dstZ GLint
+     * \param srcWidth GLsizei
+     * \param srcHeight GLsizei
+     * \param srcDepth GLsizei
+     * \param signalSemaphoreCount GLsizei
+     * \param signalSemaphoreArray const GLuint *
+     * \param signalValueArray const GLuint64 *
+     * \return GLuint
+     */
+    STATICINLINE GLuint async_copy_image_sub_data(
         span_const_u32 const& waitSemaphoreArray,
         span_const_u64 const& waitValueArray,
         u32                   srcGpu,
@@ -130,8 +174,16 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
 template<class span_const_i32>
 requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void multicast_scissor_arrayv(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_NVX_gpu_multicast2
+     * \param gpu GLuint
+     * \param first GLuint
+     * \param count GLsizei
+     * \param v const GLint *
+     * \return void
+     */
+    STATICINLINE void multicast_scissor_arrayv(
         u32 gpu, u32 first, i32 count, span_const_i32 const& v)
 {
     using namespace std::string_view_literals;
@@ -150,8 +202,16 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
 template<class span_const_f32>
 requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
-    void multicast_viewport_arrayv(
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_NVX_gpu_multicast2
+     * \param gpu GLuint
+     * \param first GLuint
+     * \param count GLsizei
+     * \param v const GLfloat *
+     * \return void
+     */
+    STATICINLINE void multicast_viewport_arrayv(
         u32 gpu, u32 first, i32 count, span_const_f32 const& v)
 {
     using namespace std::string_view_literals;
@@ -167,6 +227,14 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
     detail::error_check("MulticastViewportArrayvNVX"sv);
 }
 
+/*!
+ * \brief Part of GL_NVX_gpu_multicast2
+ * \param gpu GLuint
+ * \param index GLuint
+ * \param xcoeff GLfloat
+ * \param ycoeff GLfloat
+ * \return void
+ */
 STATICINLINE void multicast_viewport_position_w_scale(
     u32 gpu, u32 index, f32 xcoeff, f32 ycoeff)
 {
@@ -179,6 +247,11 @@ STATICINLINE void multicast_viewport_position_w_scale(
     detail::error_check("MulticastViewportPositionWScaleNVX"sv);
 }
 
+/*!
+ * \brief Part of GL_NVX_gpu_multicast2
+ * \param mask GLbitfield
+ * \return void
+ */
 STATICINLINE void upload_gpu_mask(GLbitfield mask)
 {
     using namespace std::string_view_literals;

@@ -4,6 +4,11 @@
 namespace gl::arb::invalidate_subdata {
 namespace values {
 } // namespace values
+/*!
+ * \brief Part of GL_ARB_invalidate_subdata
+ * \param buffer GLuint
+ * \return void
+ */
 STATICINLINE void invalidate_buffer_data(u32 buffer)
 {
     using namespace std::string_view_literals;
@@ -16,6 +21,13 @@ STATICINLINE void invalidate_buffer_data(u32 buffer)
     detail::error_check("InvalidateBufferData"sv);
 }
 
+/*!
+ * \brief Part of GL_ARB_invalidate_subdata
+ * \param buffer GLuint
+ * \param offset GLintptr
+ * \param length GLsizeiptr
+ * \return void
+ */
 STATICINLINE void invalidate_buffer_sub_data(
     u32 buffer, GLintptr offset, GLsizeiptr length)
 {
@@ -36,6 +48,13 @@ requires(
             std::decay_t<typename span_const_invalidate_framebuffer_attachment::
                              value_type>,
             std::decay_t<group::invalidate_framebuffer_attachment>>)
+    /*!
+     * \brief Part of GL_ARB_invalidate_subdata
+     * \param target GLenum
+     * \param numAttachments GLsizei
+     * \param attachments const GLenum *
+     * \return void
+     */
     STATICINLINE void invalidate_framebuffer(
         group::framebuffer_target                           target,
         span_const_invalidate_framebuffer_attachment const& attachments)
@@ -64,8 +83,19 @@ requires(
                              value_type>,
             std::decay_t<group::invalidate_framebuffer_attachment>>&&
                 semantic::concepts::Vector<vec_2_i32, i32, 2>&&
-                semantic::concepts::Size2D<size_2_i32, i32>) STATICINLINE
-    void invalidate_sub_framebuffer(
+                semantic::concepts::Size2D<size_2_i32, i32>)
+    /*!
+     * \brief Part of GL_ARB_invalidate_subdata
+     * \param target GLenum
+     * \param numAttachments GLsizei
+     * \param attachments const GLenum *
+     * \param x GLint
+     * \param y GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \return void
+     */
+    STATICINLINE void invalidate_sub_framebuffer(
         group::framebuffer_target                           target,
         span_const_invalidate_framebuffer_attachment const& attachments,
         vec_2_i32 const&                                    x,
@@ -88,6 +118,12 @@ requires(
     detail::error_check("InvalidateSubFramebuffer"sv);
 }
 
+/*!
+ * \brief Part of GL_ARB_invalidate_subdata
+ * \param texture GLuint
+ * \param level GLint
+ * \return void
+ */
 STATICINLINE void invalidate_tex_image(u32 texture, i32 level)
 {
     using namespace std::string_view_literals;
@@ -102,8 +138,20 @@ STATICINLINE void invalidate_tex_image(u32 texture, i32 level)
 
 template<class size_3_i32, class vec_3_i32>
 requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
-             semantic::concepts::Size2D<size_3_i32, i32>) STATICINLINE
-    void invalidate_tex_sub_image(
+             semantic::concepts::Size2D<size_3_i32, i32>)
+    /*!
+     * \brief Part of GL_ARB_invalidate_subdata
+     * \param texture GLuint
+     * \param level GLint
+     * \param xoffset GLint
+     * \param yoffset GLint
+     * \param zoffset GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param depth GLsizei
+     * \return void
+     */
+    STATICINLINE void invalidate_tex_sub_image(
         u32               texture,
         i32               level,
         vec_3_i32 const&  xoffset,

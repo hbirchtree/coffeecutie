@@ -6,6 +6,7 @@
 #include "../enums/CopyBufferSubDataTarget.h"
 #include "../enums/GetPName.h"
 #include "../enums/ProgramPropertyARB.h"
+#include "../enums/SpecialNumbers.h"
 #include "../enums/SubroutineParameterName.h"
 #include "../enums/UniformBlockPName.h"
 #include "../enums/UniformPName.h"
@@ -15,12 +16,19 @@ using gl::group::buffer_target_arb;
 using gl::group::copy_buffer_sub_data_target;
 using gl::group::get_prop;
 using gl::group::program_property_arb;
+using gl::group::special_numbers;
 using gl::group::subroutine_parameter_name;
 using gl::group::uniform_block_prop;
 using gl::group::uniform_prop;
 namespace values {
-constexpr libc_types::u32 invalid_index = 0xFFFFFFFF;
 } // namespace values
+/*!
+ * \brief Part of GL_ARB_uniform_buffer_object
+ * \param target GLenum
+ * \param index GLuint
+ * \param buffer GLuint
+ * \return void
+ */
 STATICINLINE void bind_buffer_base(
     group::buffer_target_arb target, u32 index, u32 buffer)
 {
@@ -34,6 +42,15 @@ STATICINLINE void bind_buffer_base(
     detail::error_check("BindBufferBase"sv);
 }
 
+/*!
+ * \brief Part of GL_ARB_uniform_buffer_object
+ * \param target GLenum
+ * \param index GLuint
+ * \param buffer GLuint
+ * \param offset GLintptr
+ * \param size GLsizeiptr
+ * \return void
+ */
 STATICINLINE void bind_buffer_range(
     group::buffer_target_arb target,
     u32                      index,
@@ -54,8 +71,17 @@ STATICINLINE void bind_buffer_range(
 template<class span_GLchar>
 requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
          std::decay_t<typename span_GLchar::value_type>,
-         std::decay_t<GLchar>>) STATICINLINE
-    void get_active_uniform_block_name(
+         std::decay_t<GLchar>>)
+    /*!
+     * \brief Part of GL_ARB_uniform_buffer_object
+     * \param program GLuint
+     * \param uniformBlockIndex GLuint
+     * \param bufSize GLsizei
+     * \param length GLsizei *
+     * \param uniformBlockName GLchar *
+     * \return void
+     */
+    STATICINLINE void get_active_uniform_block_name(
         u32         program,
         u32         uniformBlockIndex,
         i32&        length,
@@ -79,8 +105,16 @@ requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void get_active_uniform_blockiv(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_ARB_uniform_buffer_object
+     * \param program GLuint
+     * \param uniformBlockIndex GLuint
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_active_uniform_blockiv(
         u32                       program,
         u32                       uniformBlockIndex,
         group::uniform_block_prop pname,
@@ -103,8 +137,17 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 template<class span_GLchar>
 requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
          std::decay_t<typename span_GLchar::value_type>,
-         std::decay_t<GLchar>>) STATICINLINE
-    void get_active_uniform_name(
+         std::decay_t<GLchar>>)
+    /*!
+     * \brief Part of GL_ARB_uniform_buffer_object
+     * \param program GLuint
+     * \param uniformIndex GLuint
+     * \param bufSize GLsizei
+     * \param length GLsizei *
+     * \param uniformName GLchar *
+     * \return void
+     */
+    STATICINLINE void get_active_uniform_name(
         u32 program, u32 uniformIndex, i32& length, span_GLchar uniformName)
 {
     using namespace std::string_view_literals;
@@ -124,8 +167,17 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
          std::decay_t<u32>>&& semantic::concepts::Span<span_i32>&&
                               std::is_same_v<
                  std::decay_t<typename span_i32::value_type>,
-                 std::decay_t<i32>>) STATICINLINE
-    void get_active_uniformsiv(
+                 std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_ARB_uniform_buffer_object
+     * \param program GLuint
+     * \param uniformCount GLsizei
+     * \param uniformIndices const GLuint *
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_active_uniformsiv(
         u32                   program,
         span_const_u32 const& uniformIndices,
         group::uniform_prop   pname,
@@ -151,7 +203,15 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_ARB_uniform_buffer_object
+     * \param target GLenum
+     * \param index GLuint
+     * \param data GLint *
+     * \return void
+     */
+    STATICINLINE
     void get_integeri_v(group::get_prop target, u32 index, span_i32 data)
 {
     using namespace std::string_view_literals;
@@ -166,6 +226,12 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
     detail::error_check("GetIntegeri_v"sv);
 }
 
+/*!
+ * \brief Part of GL_ARB_uniform_buffer_object
+ * \param program GLuint
+ * \param uniformBlockName const GLchar *
+ * \return GLuint
+ */
 STATICINLINE GLuint
 get_uniform_block_index(u32 program, std::string_view const& uniformBlockName)
 {
@@ -183,8 +249,16 @@ get_uniform_block_index(u32 program, std::string_view const& uniformBlockName)
 template<class span_u32>
 requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>) STATICINLINE
-    void get_uniform_indices(
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_ARB_uniform_buffer_object
+     * \param program GLuint
+     * \param uniformCount GLsizei
+     * \param uniformNames const GLchar *const*
+     * \param uniformIndices GLuint *
+     * \return void
+     */
+    STATICINLINE void get_uniform_indices(
         u32                           program,
         i32                           uniformCount,
         std::vector<std::string_view> uniformNames,
@@ -207,6 +281,13 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
     detail::error_check("GetUniformIndices"sv);
 }
 
+/*!
+ * \brief Part of GL_ARB_uniform_buffer_object
+ * \param program GLuint
+ * \param uniformBlockIndex GLuint
+ * \param uniformBlockBinding GLuint
+ * \return void
+ */
 STATICINLINE void uniform_block_binding(
     u32 program, u32 uniformBlockIndex, u32 uniformBlockBinding)
 {

@@ -1,10 +1,10 @@
 #pragma once
 
 #ifdef GL_NV_draw_buffers
-#include "../enums/DrawBufferModeATI.h"
+#include "../enums/DrawBufferMode.h"
 #include "../enums/InvalidateFramebufferAttachment.h"
 namespace gl::nv::draw_buffers {
-using gl::group::draw_buffer_mode_ati;
+using gl::group::draw_buffer_mode;
 using gl::group::invalidate_framebuffer_attachment;
 namespace values {
 constexpr libc_types::u32 max_draw_buffers = 0x8824;
@@ -28,8 +28,14 @@ constexpr libc_types::u32 draw_buffer15    = 0x8834;
 template<class span_const_GLenum>
 requires(semantic::concepts::Span<span_const_GLenum>&& std::is_same_v<
          std::decay_t<typename span_const_GLenum::value_type>,
-         std::decay_t<GLenum>>) STATICINLINE
-    void draw_buffers(span_const_GLenum const& bufs)
+         std::decay_t<GLenum>>)
+    /*!
+     * \brief Part of GL_NV_draw_buffers
+     * \param n GLsizei
+     * \param bufs const GLenum *
+     * \return void
+     */
+    STATICINLINE void draw_buffers(span_const_GLenum const& bufs)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

@@ -5,8 +5,18 @@ namespace gl::arb::texture_storage_multisample {
 namespace values {
 } // namespace values
 template<class size_2_i32>
-requires(semantic::concepts::Size2D<size_2_i32, i32>) STATICINLINE
-    void tex_storage_2d_multisample(
+requires(semantic::concepts::Size2D<size_2_i32, i32>)
+    /*!
+     * \brief Part of GL_ARB_texture_storage_multisample
+     * \param target GLenum
+     * \param samples GLsizei
+     * \param internalformat GLenum
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param fixedsamplelocations GLboolean
+     * \return void
+     */
+    STATICINLINE void tex_storage_2d_multisample(
         group::texture_target        target,
         i32                          samples,
         group::sized_internal_format internalformat,
@@ -29,8 +39,19 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>) STATICINLINE
 }
 
 template<class size_3_i32>
-requires(semantic::concepts::Size2D<size_3_i32, i32>) STATICINLINE
-    void tex_storage_3d_multisample(
+requires(semantic::concepts::Size2D<size_3_i32, i32>)
+    /*!
+     * \brief Part of GL_ARB_texture_storage_multisample
+     * \param target GLenum
+     * \param samples GLsizei
+     * \param internalformat GLenum
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param depth GLsizei
+     * \param fixedsamplelocations GLboolean
+     * \return void
+     */
+    STATICINLINE void tex_storage_3d_multisample(
         group::texture_target        target,
         i32                          samples,
         group::sized_internal_format internalformat,

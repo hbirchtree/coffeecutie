@@ -1,10 +1,10 @@
 #pragma once
 
 #ifdef GL_EXT_bgra
+#include "../enums/PixelFormat.h"
 namespace gl::ext::bgra {
+using gl::group::pixel_format;
 namespace values {
-constexpr libc_types::u32 bgr  = 0x80E0;
-constexpr libc_types::u32 bgra = 0x80E1;
 } // namespace values
 } // namespace gl::ext::bgra
 #endif // GL_EXT_bgra

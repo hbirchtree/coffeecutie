@@ -11,8 +11,14 @@ namespace values {
 template<class span_const_u32>
 requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>) STATICINLINE
-    void delete_fences(span_const_u32 const& fences)
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_NV_fence
+     * \param n GLsizei
+     * \param fences const GLuint *
+     * \return void
+     */
+    STATICINLINE void delete_fences(span_const_u32 const& fences)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -26,6 +32,11 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
     detail::error_check("DeleteFencesNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_fence
+ * \param fence GLuint
+ * \return void
+ */
 STATICINLINE void finish_fence(u32 fence)
 {
     using namespace std::string_view_literals;
@@ -40,7 +51,14 @@ STATICINLINE void finish_fence(u32 fence)
 template<class span_u32>
 requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>) STATICINLINE void gen_fences(span_u32 fences)
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_NV_fence
+     * \param n GLsizei
+     * \param fences GLuint *
+     * \return void
+     */
+    STATICINLINE void gen_fences(span_u32 fences)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -56,8 +74,15 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void get_fenceiv(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_NV_fence
+     * \param fence GLuint
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_fenceiv(
         u32 fence, group::fence_parameter_name_nv pname, span_i32 params)
 {
     using namespace std::string_view_literals;
@@ -72,6 +97,11 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
     detail::error_check("GetFenceivNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_fence
+ * \param fence GLuint
+ * \return Boolean
+ */
 STATICINLINE GLboolean is_fence(u32 fence)
 {
     using namespace std::string_view_literals;
@@ -84,6 +114,12 @@ STATICINLINE GLboolean is_fence(u32 fence)
     return out;
 }
 
+/*!
+ * \brief Part of GL_NV_fence
+ * \param fence GLuint
+ * \param condition GLenum
+ * \return void
+ */
 STATICINLINE void set_fence(u32 fence, group::fence_condition_nv condition)
 {
     using namespace std::string_view_literals;
@@ -95,6 +131,11 @@ STATICINLINE void set_fence(u32 fence, group::fence_condition_nv condition)
     detail::error_check("SetFenceNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_fence
+ * \param fence GLuint
+ * \return Boolean
+ */
 STATICINLINE GLboolean test_fence(u32 fence)
 {
     using namespace std::string_view_literals;

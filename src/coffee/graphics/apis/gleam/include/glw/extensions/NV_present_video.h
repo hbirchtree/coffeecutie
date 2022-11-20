@@ -13,7 +13,15 @@ constexpr libc_types::u32 present_duration = 0x8E2B;
 template<class span_GLint64EXT>
 requires(semantic::concepts::Span<span_GLint64EXT>&& std::is_same_v<
          std::decay_t<typename span_GLint64EXT::value_type>,
-         std::decay_t<GLint64EXT>>) STATICINLINE
+         std::decay_t<GLint64EXT>>)
+    /*!
+     * \brief Part of GL_NV_present_video
+     * \param video_slot GLuint
+     * \param pname GLenum
+     * \param params GLint64EXT *
+     * \return void
+     */
+    STATICINLINE
     void get_videoi64v(u32 video_slot, GLenum pname, span_GLint64EXT params)
 {
     using namespace std::string_view_literals;
@@ -31,8 +39,15 @@ requires(semantic::concepts::Span<span_GLint64EXT>&& std::is_same_v<
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void get_videoiv(u32 video_slot, GLenum pname, span_i32 params)
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_NV_present_video
+     * \param video_slot GLuint
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_videoiv(u32 video_slot, GLenum pname, span_i32 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -49,7 +64,15 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 template<class span_GLuint64EXT>
 requires(semantic::concepts::Span<span_GLuint64EXT>&& std::is_same_v<
          std::decay_t<typename span_GLuint64EXT::value_type>,
-         std::decay_t<GLuint64EXT>>) STATICINLINE
+         std::decay_t<GLuint64EXT>>)
+    /*!
+     * \brief Part of GL_NV_present_video
+     * \param video_slot GLuint
+     * \param pname GLenum
+     * \param params GLuint64EXT *
+     * \return void
+     */
+    STATICINLINE
     void get_videoui64v(u32 video_slot, GLenum pname, span_GLuint64EXT params)
 {
     using namespace std::string_view_literals;
@@ -68,7 +91,15 @@ requires(semantic::concepts::Span<span_GLuint64EXT>&& std::is_same_v<
 template<class span_u32>
 requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>) STATICINLINE
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_NV_present_video
+     * \param video_slot GLuint
+     * \param pname GLenum
+     * \param params GLuint *
+     * \return void
+     */
+    STATICINLINE
     void get_videouiv(u32 video_slot, GLenum pname, span_u32 params)
 {
     using namespace std::string_view_literals;
@@ -83,6 +114,23 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
     detail::error_check("GetVideouivNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_present_video
+ * \param video_slot GLuint
+ * \param minPresentTime GLuint64EXT
+ * \param beginPresentTimeId GLuint
+ * \param presentDurationId GLuint
+ * \param type GLenum
+ * \param target0 GLenum
+ * \param fill0 GLuint
+ * \param target1 GLenum
+ * \param fill1 GLuint
+ * \param target2 GLenum
+ * \param fill2 GLuint
+ * \param target3 GLenum
+ * \param fill3 GLuint
+ * \return void
+ */
 STATICINLINE void present_frame_dual_fill(
     u32         video_slot,
     GLuint64EXT minPresentTime,
@@ -120,6 +168,21 @@ STATICINLINE void present_frame_dual_fill(
     detail::error_check("PresentFrameDualFillNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_present_video
+ * \param video_slot GLuint
+ * \param minPresentTime GLuint64EXT
+ * \param beginPresentTimeId GLuint
+ * \param presentDurationId GLuint
+ * \param type GLenum
+ * \param target0 GLenum
+ * \param fill0 GLuint
+ * \param key0 GLuint
+ * \param target1 GLenum
+ * \param fill1 GLuint
+ * \param key1 GLuint
+ * \return void
+ */
 STATICINLINE void present_frame_keyed(
     u32         video_slot,
     GLuint64EXT minPresentTime,

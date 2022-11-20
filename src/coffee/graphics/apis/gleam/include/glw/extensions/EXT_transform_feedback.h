@@ -20,6 +20,11 @@ constexpr libc_types::u32 separate_attribs                        = 0x8C8D;
 constexpr libc_types::u32 transform_feedback_buffer               = 0x8C8E;
 constexpr libc_types::u32 transform_feedback_buffer_binding       = 0x8C8F;
 } // namespace values
+/*!
+ * \brief Part of GL_EXT_transform_feedback
+ * \param primitiveMode GLenum
+ * \return void
+ */
 STATICINLINE void begin_transform_feedback(group::primitive_type primitiveMode)
 {
     using namespace std::string_view_literals;
@@ -31,6 +36,13 @@ STATICINLINE void begin_transform_feedback(group::primitive_type primitiveMode)
     detail::error_check("BeginTransformFeedbackEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_transform_feedback
+ * \param target GLenum
+ * \param index GLuint
+ * \param buffer GLuint
+ * \return void
+ */
 STATICINLINE void bind_buffer_base(
     group::buffer_target_arb target, u32 index, u32 buffer)
 {
@@ -44,6 +56,14 @@ STATICINLINE void bind_buffer_base(
     detail::error_check("BindBufferBaseEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_transform_feedback
+ * \param target GLenum
+ * \param index GLuint
+ * \param buffer GLuint
+ * \param offset GLintptr
+ * \return void
+ */
 STATICINLINE void bind_buffer_offset(
     group::buffer_target_arb target, u32 index, u32 buffer, GLintptr offset)
 {
@@ -57,6 +77,15 @@ STATICINLINE void bind_buffer_offset(
     detail::error_check("BindBufferOffsetEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_transform_feedback
+ * \param target GLenum
+ * \param index GLuint
+ * \param buffer GLuint
+ * \param offset GLintptr
+ * \param size GLsizeiptr
+ * \return void
+ */
 STATICINLINE void bind_buffer_range(
     group::buffer_target_arb target,
     u32                      index,
@@ -75,6 +104,11 @@ STATICINLINE void bind_buffer_range(
     detail::error_check("BindBufferRangeEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_transform_feedback
+
+ * \return void
+ */
 STATICINLINE void end_transform_feedback()
 {
     using namespace std::string_view_literals;
@@ -89,8 +123,19 @@ STATICINLINE void end_transform_feedback()
 template<class span_GLchar>
 requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
          std::decay_t<typename span_GLchar::value_type>,
-         std::decay_t<GLchar>>) STATICINLINE
-    void get_transform_feedback_varying(
+         std::decay_t<GLchar>>)
+    /*!
+     * \brief Part of GL_EXT_transform_feedback
+     * \param program GLuint
+     * \param index GLuint
+     * \param bufSize GLsizei
+     * \param length GLsizei *
+     * \param size GLsizei *
+     * \param type GLenum *
+     * \param name GLchar *
+     * \return void
+     */
+    STATICINLINE void get_transform_feedback_varying(
         u32         program,
         u32         index,
         i32&        length,
@@ -109,8 +154,18 @@ requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
     detail::error_check("GetTransformFeedbackVaryingEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_transform_feedback
+ * \param program GLuint
+ * \param count GLsizei
+ * \param varyings const GLchar *const*
+ * \param bufferMode GLenum
+ * \return void
+ */
 STATICINLINE void transform_feedback_varyings(
-    u32 program, std::vector<std::string_view> varyings, GLenum bufferMode)
+    u32                                   program,
+    std::vector<std::string_view>         varyings,
+    group::transform_feedback_buffer_mode bufferMode)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -121,7 +176,10 @@ STATICINLINE void transform_feedback_varyings(
     auto [varyings_lens, varyings_cstr, varyings_store] =
         detail::transform_strings(varyings);
     glTransformFeedbackVaryingsEXT(
-        program, varyings_cstr.size(), varyings_cstr.data(), bufferMode);
+        program,
+        varyings_cstr.size(),
+        varyings_cstr.data(),
+        static_cast<GLenum>(bufferMode));
     detail::error_check("TransformFeedbackVaryingsEXT"sv);
 }
 

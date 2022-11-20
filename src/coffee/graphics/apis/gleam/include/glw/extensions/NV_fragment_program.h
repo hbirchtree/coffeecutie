@@ -16,8 +16,16 @@ requires(semantic::concepts::Span<span_const_u8>&& std::is_same_v<
          std::decay_t<u8>>&& semantic::concepts::Span<span_f64>&&
                              std::is_same_v<
                  std::decay_t<typename span_f64::value_type>,
-                 std::decay_t<f64>>) STATICINLINE
-    void get_program_named_parameter(
+                 std::decay_t<f64>>)
+    /*!
+     * \brief Part of GL_NV_fragment_program
+     * \param id GLuint
+     * \param len GLsizei
+     * \param name const GLubyte *
+     * \param params GLdouble *
+     * \return void
+     */
+    STATICINLINE void get_program_named_parameter(
         u32 id, i32 len, span_const_u8 const& name, span_f64 params)
 {
     using namespace std::string_view_literals;
@@ -39,8 +47,16 @@ requires(semantic::concepts::Span<span_const_u8>&& std::is_same_v<
          std::decay_t<u8>>&& semantic::concepts::Span<span_f32>&&
                              std::is_same_v<
                  std::decay_t<typename span_f32::value_type>,
-                 std::decay_t<f32>>) STATICINLINE
-    void get_program_named_parameter(
+                 std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_NV_fragment_program
+     * \param id GLuint
+     * \param len GLsizei
+     * \param name const GLubyte *
+     * \param params GLfloat *
+     * \return void
+     */
+    STATICINLINE void get_program_named_parameter(
         u32 id, i32 len, span_const_u8 const& name, span_f32 params)
 {
     using namespace std::string_view_literals;
@@ -59,8 +75,19 @@ requires(semantic::concepts::Span<span_const_u8>&& std::is_same_v<
 template<class span_const_vec_4_u8, class vec_4_f64>
 requires(semantic::concepts::Span<span_const_vec_4_u8>&& semantic::concepts::
              Vector<typename span_const_vec_4_u8::value_type, u8, 4>&&
-                 semantic::concepts::Vector<vec_4_f64, f64, 4>) STATICINLINE
-    void program_named_parameter4d(
+                 semantic::concepts::Vector<vec_4_f64, f64, 4>)
+    /*!
+     * \brief Part of GL_NV_fragment_program
+     * \param id GLuint
+     * \param len GLsizei
+     * \param name const GLubyte *
+     * \param x GLdouble
+     * \param y GLdouble
+     * \param z GLdouble
+     * \param w GLdouble
+     * \return void
+     */
+    STATICINLINE void program_named_parameter4d(
         u32 id, i32 len, span_const_vec_4_u8 const& name, vec_4_f64 const& x)
 {
     using namespace std::string_view_literals;
@@ -86,6 +113,14 @@ requires(
         u8,
         4>&& semantic::concepts::Span<span_const_vec_4_f64>&& semantic::
         concepts::Vector<typename span_const_vec_4_f64::value_type, f64, 4>)
+    /*!
+     * \brief Part of GL_NV_fragment_program
+     * \param id GLuint
+     * \param len GLsizei
+     * \param name const GLubyte *
+     * \param v const GLdouble *
+     * \return void
+     */
     STATICINLINE void program_named_parameter4dv(
         u32                         id,
         i32                         len,
@@ -108,8 +143,19 @@ requires(
 template<class span_const_vec_4_u8, class vec_4_f32>
 requires(semantic::concepts::Span<span_const_vec_4_u8>&& semantic::concepts::
              Vector<typename span_const_vec_4_u8::value_type, u8, 4>&&
-                 semantic::concepts::Vector<vec_4_f32, f32, 4>) STATICINLINE
-    void program_named_parameter4f(
+                 semantic::concepts::Vector<vec_4_f32, f32, 4>)
+    /*!
+     * \brief Part of GL_NV_fragment_program
+     * \param id GLuint
+     * \param len GLsizei
+     * \param name const GLubyte *
+     * \param x GLfloat
+     * \param y GLfloat
+     * \param z GLfloat
+     * \param w GLfloat
+     * \return void
+     */
+    STATICINLINE void program_named_parameter4f(
         u32 id, i32 len, span_const_vec_4_u8 const& name, vec_4_f32 const& x)
 {
     using namespace std::string_view_literals;
@@ -135,6 +181,14 @@ requires(
         u8,
         4>&& semantic::concepts::Span<span_const_vec_4_f32>&& semantic::
         concepts::Vector<typename span_const_vec_4_f32::value_type, f32, 4>)
+    /*!
+     * \brief Part of GL_NV_fragment_program
+     * \param id GLuint
+     * \param len GLsizei
+     * \param name const GLubyte *
+     * \param v const GLfloat *
+     * \return void
+     */
     STATICINLINE void program_named_parameter4fv(
         u32                         id,
         i32                         len,

@@ -15,8 +15,15 @@ requires(semantic::concepts::Span<span_const_GLenum>&& std::is_same_v<
          std::decay_t<GLenum>>&& semantic::concepts::Span<span_const_i32>&&
                                  std::is_same_v<
                  std::decay_t<typename span_const_i32::value_type>,
-                 std::decay_t<i32>>) STATICINLINE
-    void draw_buffers_indexed(
+                 std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_EXT_multiview_draw_buffers
+     * \param n GLint
+     * \param location const GLenum *
+     * \param indices const GLint *
+     * \return void
+     */
+    STATICINLINE void draw_buffers_indexed(
         span_const_GLenum const& location, span_const_i32 const& indices)
 {
     using namespace std::string_view_literals;
@@ -36,7 +43,15 @@ requires(semantic::concepts::Span<span_const_GLenum>&& std::is_same_v<
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_EXT_multiview_draw_buffers
+     * \param target GLenum
+     * \param index GLuint
+     * \param data GLint *
+     * \return void
+     */
+    STATICINLINE
     void get_integeri_v(group::get_prop target, u32 index, span_i32 data)
 {
     using namespace std::string_view_literals;
@@ -51,6 +66,12 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
     detail::error_check("GetIntegeri_vEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_multiview_draw_buffers
+ * \param src GLenum
+ * \param index GLint
+ * \return void
+ */
 STATICINLINE void read_buffer_indexed(group::read_buffer_mode src, i32 index)
 {
     using namespace std::string_view_literals;

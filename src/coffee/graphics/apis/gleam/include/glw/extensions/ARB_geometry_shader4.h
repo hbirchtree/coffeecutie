@@ -23,6 +23,14 @@ constexpr libc_types::u32 max_geometry_uniform_components      = 0x8DDF;
 constexpr libc_types::u32 max_geometry_output_vertices         = 0x8DE0;
 constexpr libc_types::u32 max_geometry_total_output_components = 0x8DE1;
 } // namespace values
+/*!
+ * \brief Part of GL_ARB_geometry_shader4
+ * \param target GLenum
+ * \param attachment GLenum
+ * \param texture GLuint
+ * \param level GLint
+ * \return void
+ */
 STATICINLINE void framebuffer_texture(
     group::framebuffer_target     target,
     group::framebuffer_attachment attachment,
@@ -43,6 +51,15 @@ STATICINLINE void framebuffer_texture(
     detail::error_check("FramebufferTextureARB"sv);
 }
 
+/*!
+ * \brief Part of GL_ARB_geometry_shader4
+ * \param target GLenum
+ * \param attachment GLenum
+ * \param texture GLuint
+ * \param level GLint
+ * \param face GLenum
+ * \return void
+ */
 STATICINLINE void framebuffer_texture_face(
     group::framebuffer_target     target,
     group::framebuffer_attachment attachment,
@@ -65,6 +82,15 @@ STATICINLINE void framebuffer_texture_face(
     detail::error_check("FramebufferTextureFaceARB"sv);
 }
 
+/*!
+ * \brief Part of GL_ARB_geometry_shader4
+ * \param target GLenum
+ * \param attachment GLenum
+ * \param texture GLuint
+ * \param level GLint
+ * \param layer GLint
+ * \return void
+ */
 STATICINLINE void framebuffer_texture_layer(
     group::framebuffer_target     target,
     group::framebuffer_attachment attachment,
@@ -87,6 +113,13 @@ STATICINLINE void framebuffer_texture_layer(
     detail::error_check("FramebufferTextureLayerARB"sv);
 }
 
+/*!
+ * \brief Part of GL_ARB_geometry_shader4
+ * \param program GLuint
+ * \param pname GLenum
+ * \param value GLint
+ * \return void
+ */
 STATICINLINE void program_parameter(
     u32 program, group::program_parameter_prop pname, i32 value)
 {

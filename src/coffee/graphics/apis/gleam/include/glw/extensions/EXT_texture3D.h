@@ -18,8 +18,22 @@ namespace values {
 } // namespace values
 template<class size_3_i32, class span_const_void>
 requires(semantic::concepts::Size2D<size_3_i32, i32>&&
-             semantic::concepts::Span<span_const_void>) STATICINLINE
-    void tex_image_3d(
+             semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_EXT_texture3D
+     * \param target GLenum
+     * \param level GLint
+     * \param internalformat GLenum
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param depth GLsizei
+     * \param border GLint
+     * \param format GLenum
+     * \param type GLenum
+     * \param pixels const void *
+     * \return void
+     */
+    STATICINLINE void tex_image_3d(
         group::texture_target  target,
         i32                    level,
         group::internal_format internalformat,
@@ -51,8 +65,23 @@ requires(semantic::concepts::Size2D<size_3_i32, i32>&&
 template<class size_3_i32, class span_const_void, class vec_3_i32>
 requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
                  semantic::concepts::Size2D<size_3_i32, i32>&&
-                 semantic::concepts::Span<span_const_void>) STATICINLINE
-    void tex_sub_image_3d(
+                 semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_EXT_texture3D
+     * \param target GLenum
+     * \param level GLint
+     * \param xoffset GLint
+     * \param yoffset GLint
+     * \param zoffset GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param depth GLsizei
+     * \param format GLenum
+     * \param type GLenum
+     * \param pixels const void *
+     * \return void
+     */
+    STATICINLINE void tex_sub_image_3d(
         group::texture_target  target,
         i32                    level,
         vec_3_i32 const&       xoffset,

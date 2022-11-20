@@ -46,6 +46,11 @@ constexpr libc_types::u32 modelview29          = 0x873D;
 constexpr libc_types::u32 modelview30          = 0x873E;
 constexpr libc_types::u32 modelview31          = 0x873F;
 } // namespace values
+/*!
+ * \brief Part of GL_ARB_vertex_blend
+ * \param count GLint
+ * \return void
+ */
 STATICINLINE void vertex_blend(i32 count)
 {
     using namespace std::string_view_literals;
@@ -58,8 +63,16 @@ STATICINLINE void vertex_blend(i32 count)
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>) STATICINLINE
-    void weight_pointer(
+requires(semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_ARB_vertex_blend
+     * \param size GLint
+     * \param type GLenum
+     * \param stride GLsizei
+     * \param pointer const void *
+     * \return void
+     */
+    STATICINLINE void weight_pointer(
         i32                            size,
         group::weight_pointer_type_arb type,
         i32                            stride,
@@ -82,8 +95,14 @@ requires(semantic::concepts::Span<span_const_void>) STATICINLINE
 template<class span_const_i8>
 requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
          std::decay_t<typename span_const_i8::value_type>,
-         std::decay_t<i8>>) STATICINLINE
-    void weightbv(span_const_i8 const& weights)
+         std::decay_t<i8>>)
+    /*!
+     * \brief Part of GL_ARB_vertex_blend
+     * \param size GLint
+     * \param weights const GLbyte *
+     * \return void
+     */
+    STATICINLINE void weightbv(span_const_i8 const& weights)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -100,8 +119,14 @@ requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
 template<class span_const_f64>
 requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
          std::decay_t<typename span_const_f64::value_type>,
-         std::decay_t<f64>>) STATICINLINE
-    void weightdv(span_const_f64 const& weights)
+         std::decay_t<f64>>)
+    /*!
+     * \brief Part of GL_ARB_vertex_blend
+     * \param size GLint
+     * \param weights const GLdouble *
+     * \return void
+     */
+    STATICINLINE void weightdv(span_const_f64 const& weights)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -118,8 +143,14 @@ requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
 template<class span_const_f32>
 requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
-         std::decay_t<f32>>) STATICINLINE
-    void weightfv(span_const_f32 const& weights)
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_ARB_vertex_blend
+     * \param size GLint
+     * \param weights const GLfloat *
+     * \return void
+     */
+    STATICINLINE void weightfv(span_const_f32 const& weights)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -136,8 +167,14 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
 template<class span_const_i32>
 requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void weightiv(span_const_i32 const& weights)
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_ARB_vertex_blend
+     * \param size GLint
+     * \param weights const GLint *
+     * \return void
+     */
+    STATICINLINE void weightiv(span_const_i32 const& weights)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -154,8 +191,14 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
 template<class span_const_i16>
 requires(semantic::concepts::Span<span_const_i16>&& std::is_same_v<
          std::decay_t<typename span_const_i16::value_type>,
-         std::decay_t<i16>>) STATICINLINE
-    void weightsv(span_const_i16 const& weights)
+         std::decay_t<i16>>)
+    /*!
+     * \brief Part of GL_ARB_vertex_blend
+     * \param size GLint
+     * \param weights const GLshort *
+     * \return void
+     */
+    STATICINLINE void weightsv(span_const_i16 const& weights)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -172,8 +215,14 @@ requires(semantic::concepts::Span<span_const_i16>&& std::is_same_v<
 template<class span_const_u8>
 requires(semantic::concepts::Span<span_const_u8>&& std::is_same_v<
          std::decay_t<typename span_const_u8::value_type>,
-         std::decay_t<u8>>) STATICINLINE
-    void weightubv(span_const_u8 const& weights)
+         std::decay_t<u8>>)
+    /*!
+     * \brief Part of GL_ARB_vertex_blend
+     * \param size GLint
+     * \param weights const GLubyte *
+     * \return void
+     */
+    STATICINLINE void weightubv(span_const_u8 const& weights)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -190,8 +239,14 @@ requires(semantic::concepts::Span<span_const_u8>&& std::is_same_v<
 template<class span_const_u32>
 requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>) STATICINLINE
-    void weightuiv(span_const_u32 const& weights)
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_ARB_vertex_blend
+     * \param size GLint
+     * \param weights const GLuint *
+     * \return void
+     */
+    STATICINLINE void weightuiv(span_const_u32 const& weights)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -208,8 +263,14 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
 template<class span_const_u16>
 requires(semantic::concepts::Span<span_const_u16>&& std::is_same_v<
          std::decay_t<typename span_const_u16::value_type>,
-         std::decay_t<u16>>) STATICINLINE
-    void weightusv(span_const_u16 const& weights)
+         std::decay_t<u16>>)
+    /*!
+     * \brief Part of GL_ARB_vertex_blend
+     * \param size GLint
+     * \param weights const GLushort *
+     * \return void
+     */
+    STATICINLINE void weightusv(span_const_u16 const& weights)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

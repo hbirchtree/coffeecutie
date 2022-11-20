@@ -5,8 +5,27 @@ namespace gl::nv::copy_image {
 namespace values {
 } // namespace values
 template<class size_3_i32>
-requires(semantic::concepts::Size2D<size_3_i32, i32>) STATICINLINE
-    void copy_image_sub_data(
+requires(semantic::concepts::Size2D<size_3_i32, i32>)
+    /*!
+     * \brief Part of GL_NV_copy_image
+     * \param srcName GLuint
+     * \param srcTarget GLenum
+     * \param srcLevel GLint
+     * \param srcX GLint
+     * \param srcY GLint
+     * \param srcZ GLint
+     * \param dstName GLuint
+     * \param dstTarget GLenum
+     * \param dstLevel GLint
+     * \param dstX GLint
+     * \param dstY GLint
+     * \param dstZ GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param depth GLsizei
+     * \return void
+     */
+    STATICINLINE void copy_image_sub_data(
         u32                                srcName,
         group::copy_buffer_sub_data_target srcTarget,
         i32                                srcLevel,

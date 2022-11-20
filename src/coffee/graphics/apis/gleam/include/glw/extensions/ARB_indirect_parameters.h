@@ -6,6 +6,15 @@ namespace values {
 constexpr libc_types::u32 parameter_buffer         = 0x80EE;
 constexpr libc_types::u32 parameter_buffer_binding = 0x80EF;
 } // namespace values
+/*!
+ * \brief Part of GL_ARB_indirect_parameters
+ * \param mode GLenum
+ * \param indirect const void *
+ * \param drawcount GLintptr
+ * \param maxdrawcount GLsizei
+ * \param stride GLsizei
+ * \return void
+ */
 STATICINLINE void multi_draw_arrays_indirect_count(
     group::primitive_type mode,
     ptroff                indirect,
@@ -27,6 +36,16 @@ STATICINLINE void multi_draw_arrays_indirect_count(
     detail::error_check("MultiDrawArraysIndirectCountARB"sv);
 }
 
+/*!
+ * \brief Part of GL_ARB_indirect_parameters
+ * \param mode GLenum
+ * \param type GLenum
+ * \param indirect const void *
+ * \param drawcount GLintptr
+ * \param maxdrawcount GLsizei
+ * \param stride GLsizei
+ * \return void
+ */
 STATICINLINE void multi_draw_elements_indirect_count(
     group::primitive_type     mode,
     group::draw_elements_type type,

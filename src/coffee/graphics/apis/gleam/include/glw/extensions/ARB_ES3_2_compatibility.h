@@ -7,6 +7,18 @@ constexpr libc_types::u32 primitive_bounding_box             = 0x92BE;
 constexpr libc_types::u32 multisample_line_width_range       = 0x9381;
 constexpr libc_types::u32 multisample_line_width_granularity = 0x9382;
 } // namespace values
+/*!
+ * \brief Part of GL_ARB_ES3_2_compatibility
+ * \param minX GLfloat
+ * \param minY GLfloat
+ * \param minZ GLfloat
+ * \param minW GLfloat
+ * \param maxX GLfloat
+ * \param maxY GLfloat
+ * \param maxZ GLfloat
+ * \param maxW GLfloat
+ * \return void
+ */
 STATICINLINE void primitive_bounding_box(
     f32 minX,
     f32 minY,

@@ -4,6 +4,25 @@
 namespace gl::oes::copy_image {
 namespace values {
 } // namespace values
+/*!
+ * \brief Part of GL_OES_copy_image
+ * \param srcName GLuint
+ * \param srcTarget GLenum
+ * \param srcLevel GLint
+ * \param srcX GLint
+ * \param srcY GLint
+ * \param srcZ GLint
+ * \param dstName GLuint
+ * \param dstTarget GLenum
+ * \param dstLevel GLint
+ * \param dstX GLint
+ * \param dstY GLint
+ * \param dstZ GLint
+ * \param srcWidth GLsizei
+ * \param srcHeight GLsizei
+ * \param srcDepth GLsizei
+ * \return void
+ */
 STATICINLINE void copy_image_sub_data(
     u32                                srcName,
     group::copy_buffer_sub_data_target srcTarget,

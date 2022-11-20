@@ -4,6 +4,21 @@
 namespace gl::nv::draw_vulkan_image {
 namespace values {
 } // namespace values
+/*!
+ * \brief Part of GL_NV_draw_vulkan_image
+ * \param vkImage GLuint64
+ * \param sampler GLuint
+ * \param x0 GLfloat
+ * \param y0 GLfloat
+ * \param x1 GLfloat
+ * \param y1 GLfloat
+ * \param z GLfloat
+ * \param s0 GLfloat
+ * \param t0 GLfloat
+ * \param s1 GLfloat
+ * \param t1 GLfloat
+ * \return void
+ */
 STATICINLINE void draw_vk_image(
     u64 vkImage,
     u32 sampler,
@@ -27,6 +42,11 @@ STATICINLINE void draw_vk_image(
     detail::error_check("DrawVkImageNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_draw_vulkan_image
+ * \param name const GLchar *
+ * \return GLVULKANPROCNV
+ */
 STATICINLINE GLVULKANPROCNV get_vk_proc_addr(std::string_view const& name)
 {
     using namespace std::string_view_literals;
@@ -39,6 +59,11 @@ STATICINLINE GLVULKANPROCNV get_vk_proc_addr(std::string_view const& name)
     return out;
 }
 
+/*!
+ * \brief Part of GL_NV_draw_vulkan_image
+ * \param vkSemaphore GLuint64
+ * \return void
+ */
 STATICINLINE void wait_vk_semaphore(u64 vkSemaphore)
 {
     using namespace std::string_view_literals;
@@ -50,6 +75,11 @@ STATICINLINE void wait_vk_semaphore(u64 vkSemaphore)
     detail::error_check("WaitVkSemaphoreNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_draw_vulkan_image
+ * \param vkSemaphore GLuint64
+ * \return void
+ */
 STATICINLINE void signal_vk_semaphore(u64 vkSemaphore)
 {
     using namespace std::string_view_literals;
@@ -61,6 +91,11 @@ STATICINLINE void signal_vk_semaphore(u64 vkSemaphore)
     detail::error_check("SignalVkSemaphoreNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_draw_vulkan_image
+ * \param vkFence GLuint64
+ * \return void
+ */
 STATICINLINE void signal_vk_fence(u64 vkFence)
 {
     using namespace std::string_view_literals;

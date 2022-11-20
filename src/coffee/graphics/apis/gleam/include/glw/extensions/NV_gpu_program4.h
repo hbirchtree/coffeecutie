@@ -15,8 +15,15 @@ constexpr libc_types::u32 max_program_generic_results   = 0x8DA6;
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void get_program_env_parameter_iiv(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_NV_gpu_program4
+     * \param target GLenum
+     * \param index GLuint
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_program_env_parameter_iiv(
         group::program_target target, u32 index, span_i32 params)
 {
     using namespace std::string_view_literals;
@@ -34,8 +41,15 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 template<class span_u32>
 requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>) STATICINLINE
-    void get_program_env_parameter_iuiv(
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_NV_gpu_program4
+     * \param target GLenum
+     * \param index GLuint
+     * \param params GLuint *
+     * \return void
+     */
+    STATICINLINE void get_program_env_parameter_iuiv(
         group::program_target target, u32 index, span_u32 params)
 {
     using namespace std::string_view_literals;
@@ -53,8 +67,15 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void get_program_local_parameter_iiv(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_NV_gpu_program4
+     * \param target GLenum
+     * \param index GLuint
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_program_local_parameter_iiv(
         group::program_target target, u32 index, span_i32 params)
 {
     using namespace std::string_view_literals;
@@ -72,8 +93,15 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 template<class span_u32>
 requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>) STATICINLINE
-    void get_program_local_parameter_iuiv(
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_NV_gpu_program4
+     * \param target GLenum
+     * \param index GLuint
+     * \param params GLuint *
+     * \return void
+     */
+    STATICINLINE void get_program_local_parameter_iuiv(
         group::program_target target, u32 index, span_u32 params)
 {
     using namespace std::string_view_literals;
@@ -89,8 +117,18 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 }
 
 template<class vec_4_i32>
-requires(semantic::concepts::Vector<vec_4_i32, i32, 4>) STATICINLINE
-    void program_env_parameter_i4i(
+requires(semantic::concepts::Vector<vec_4_i32, i32, 4>)
+    /*!
+     * \brief Part of GL_NV_gpu_program4
+     * \param target GLenum
+     * \param index GLuint
+     * \param x GLint
+     * \param y GLint
+     * \param z GLint
+     * \param w GLint
+     * \return void
+     */
+    STATICINLINE void program_env_parameter_i4i(
         group::program_target target, u32 index, vec_4_i32 const& x)
 {
     using namespace std::string_view_literals;
@@ -106,6 +144,13 @@ requires(semantic::concepts::Vector<vec_4_i32, i32, 4>) STATICINLINE
 template<class span_const_vec_4_i32>
 requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
              Vector<typename span_const_vec_4_i32::value_type, i32, 4>)
+    /*!
+     * \brief Part of GL_NV_gpu_program4
+     * \param target GLenum
+     * \param index GLuint
+     * \param params const GLint *
+     * \return void
+     */
     STATICINLINE void program_env_parameter_i4iv(
         group::program_target       target,
         u32                         index,
@@ -124,8 +169,18 @@ requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
 }
 
 template<class vec_4_u32>
-requires(semantic::concepts::Vector<vec_4_u32, u32, 4>) STATICINLINE
-    void program_env_parameter_i4ui(
+requires(semantic::concepts::Vector<vec_4_u32, u32, 4>)
+    /*!
+     * \brief Part of GL_NV_gpu_program4
+     * \param target GLenum
+     * \param index GLuint
+     * \param x GLuint
+     * \param y GLuint
+     * \param z GLuint
+     * \param w GLuint
+     * \return void
+     */
+    STATICINLINE void program_env_parameter_i4ui(
         group::program_target target, u32 index, vec_4_u32 const& x)
 {
     using namespace std::string_view_literals;
@@ -141,6 +196,13 @@ requires(semantic::concepts::Vector<vec_4_u32, u32, 4>) STATICINLINE
 template<class span_const_vec_4_u32>
 requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
              Vector<typename span_const_vec_4_u32::value_type, u32, 4>)
+    /*!
+     * \brief Part of GL_NV_gpu_program4
+     * \param target GLenum
+     * \param index GLuint
+     * \param params const GLuint *
+     * \return void
+     */
     STATICINLINE void program_env_parameter_i4uiv(
         group::program_target       target,
         u32                         index,
@@ -161,6 +223,14 @@ requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
 template<class span_const_vec_4_i32>
 requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
              Vector<typename span_const_vec_4_i32::value_type, i32, 4>)
+    /*!
+     * \brief Part of GL_NV_gpu_program4
+     * \param target GLenum
+     * \param index GLuint
+     * \param count GLsizei
+     * \param params const GLint *
+     * \return void
+     */
     STATICINLINE void program_env_parameters_i4iv(
         group::program_target       target,
         u32                         index,
@@ -183,6 +253,14 @@ requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
 template<class span_const_vec_4_u32>
 requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
              Vector<typename span_const_vec_4_u32::value_type, u32, 4>)
+    /*!
+     * \brief Part of GL_NV_gpu_program4
+     * \param target GLenum
+     * \param index GLuint
+     * \param count GLsizei
+     * \param params const GLuint *
+     * \return void
+     */
     STATICINLINE void program_env_parameters_i4uiv(
         group::program_target       target,
         u32                         index,
@@ -203,8 +281,18 @@ requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
 }
 
 template<class vec_4_i32>
-requires(semantic::concepts::Vector<vec_4_i32, i32, 4>) STATICINLINE
-    void program_local_parameter_i4i(
+requires(semantic::concepts::Vector<vec_4_i32, i32, 4>)
+    /*!
+     * \brief Part of GL_NV_gpu_program4
+     * \param target GLenum
+     * \param index GLuint
+     * \param x GLint
+     * \param y GLint
+     * \param z GLint
+     * \param w GLint
+     * \return void
+     */
+    STATICINLINE void program_local_parameter_i4i(
         group::program_target target, u32 index, vec_4_i32 const& x)
 {
     using namespace std::string_view_literals;
@@ -220,6 +308,13 @@ requires(semantic::concepts::Vector<vec_4_i32, i32, 4>) STATICINLINE
 template<class span_const_vec_4_i32>
 requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
              Vector<typename span_const_vec_4_i32::value_type, i32, 4>)
+    /*!
+     * \brief Part of GL_NV_gpu_program4
+     * \param target GLenum
+     * \param index GLuint
+     * \param params const GLint *
+     * \return void
+     */
     STATICINLINE void program_local_parameter_i4iv(
         group::program_target       target,
         u32                         index,
@@ -238,8 +333,18 @@ requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
 }
 
 template<class vec_4_u32>
-requires(semantic::concepts::Vector<vec_4_u32, u32, 4>) STATICINLINE
-    void program_local_parameter_i4ui(
+requires(semantic::concepts::Vector<vec_4_u32, u32, 4>)
+    /*!
+     * \brief Part of GL_NV_gpu_program4
+     * \param target GLenum
+     * \param index GLuint
+     * \param x GLuint
+     * \param y GLuint
+     * \param z GLuint
+     * \param w GLuint
+     * \return void
+     */
+    STATICINLINE void program_local_parameter_i4ui(
         group::program_target target, u32 index, vec_4_u32 const& x)
 {
     using namespace std::string_view_literals;
@@ -255,6 +360,13 @@ requires(semantic::concepts::Vector<vec_4_u32, u32, 4>) STATICINLINE
 template<class span_const_vec_4_u32>
 requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
              Vector<typename span_const_vec_4_u32::value_type, u32, 4>)
+    /*!
+     * \brief Part of GL_NV_gpu_program4
+     * \param target GLenum
+     * \param index GLuint
+     * \param params const GLuint *
+     * \return void
+     */
     STATICINLINE void program_local_parameter_i4uiv(
         group::program_target       target,
         u32                         index,
@@ -275,6 +387,14 @@ requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
 template<class span_const_vec_4_i32>
 requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
              Vector<typename span_const_vec_4_i32::value_type, i32, 4>)
+    /*!
+     * \brief Part of GL_NV_gpu_program4
+     * \param target GLenum
+     * \param index GLuint
+     * \param count GLsizei
+     * \param params const GLint *
+     * \return void
+     */
     STATICINLINE void program_local_parameters_i4iv(
         group::program_target       target,
         u32                         index,
@@ -297,6 +417,14 @@ requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
 template<class span_const_vec_4_u32>
 requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
              Vector<typename span_const_vec_4_u32::value_type, u32, 4>)
+    /*!
+     * \brief Part of GL_NV_gpu_program4
+     * \param target GLenum
+     * \param index GLuint
+     * \param count GLsizei
+     * \param params const GLuint *
+     * \return void
+     */
     STATICINLINE void program_local_parameters_i4uiv(
         group::program_target       target,
         u32                         index,

@@ -22,6 +22,13 @@ constexpr libc_types::u32 max_geometry_uniform_components      = 0x8DDF;
 constexpr libc_types::u32 max_geometry_output_vertices         = 0x8DE0;
 constexpr libc_types::u32 max_geometry_total_output_components = 0x8DE1;
 } // namespace values
+/*!
+ * \brief Part of GL_EXT_geometry_shader4
+ * \param program GLuint
+ * \param pname GLenum
+ * \param value GLint
+ * \return void
+ */
 STATICINLINE void program_parameter(
     u32 program, group::program_parameter_prop pname, i32 value)
 {

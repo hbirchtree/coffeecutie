@@ -4,6 +4,15 @@
 namespace gl::ext::draw_buffers2 {
 namespace values {
 } // namespace values
+/*!
+ * \brief Part of GL_EXT_draw_buffers2
+ * \param index GLuint
+ * \param r GLboolean
+ * \param g GLboolean
+ * \param b GLboolean
+ * \param a GLboolean
+ * \return void
+ */
 STATICINLINE void color_mask_indexed(u32 index, bool r, bool g, bool b, bool a)
 {
     using namespace std::string_view_literals;
@@ -15,6 +24,12 @@ STATICINLINE void color_mask_indexed(u32 index, bool r, bool g, bool b, bool a)
     detail::error_check("ColorMaskIndexedEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_draw_buffers2
+ * \param target GLenum
+ * \param index GLuint
+ * \return void
+ */
 STATICINLINE void disable_indexed(group::enable_cap target, u32 index)
 {
     using namespace std::string_view_literals;
@@ -26,6 +41,12 @@ STATICINLINE void disable_indexed(group::enable_cap target, u32 index)
     detail::error_check("DisableIndexedEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_draw_buffers2
+ * \param target GLenum
+ * \param index GLuint
+ * \return void
+ */
 STATICINLINE void enable_indexed(group::enable_cap target, u32 index)
 {
     using namespace std::string_view_literals;
@@ -40,8 +61,15 @@ STATICINLINE void enable_indexed(group::enable_cap target, u32 index)
 template<class span_bool>
 requires(semantic::concepts::Span<span_bool>&& std::is_same_v<
          std::decay_t<typename span_bool::value_type>,
-         std::decay_t<bool>>) STATICINLINE
-    void get_boolean_indexedv(
+         std::decay_t<bool>>)
+    /*!
+     * \brief Part of GL_EXT_draw_buffers2
+     * \param target GLenum
+     * \param index GLuint
+     * \param data GLboolean *
+     * \return void
+     */
+    STATICINLINE void get_boolean_indexedv(
         group::buffer_target_arb target, u32 index, span_bool data)
 {
     using namespace std::string_view_literals;
@@ -59,7 +87,15 @@ requires(semantic::concepts::Span<span_bool>&& std::is_same_v<
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_EXT_draw_buffers2
+     * \param target GLenum
+     * \param index GLuint
+     * \param data GLint *
+     * \return void
+     */
+    STATICINLINE
     void get_integer_indexedv(group::get_prop target, u32 index, span_i32 data)
 {
     using namespace std::string_view_literals;
@@ -74,6 +110,12 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
     detail::error_check("GetIntegerIndexedvEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_draw_buffers2
+ * \param target GLenum
+ * \param index GLuint
+ * \return Boolean
+ */
 STATICINLINE GLboolean is_enabled_indexed(group::enable_cap target, u32 index)
 {
     using namespace std::string_view_literals;

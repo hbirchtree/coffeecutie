@@ -1,10 +1,17 @@
 #ifdef GL_VERSION_2_1
-/* Introduced in GL core 2.1 */
 template<class span_const_mat_2x3_f32>
 requires(
     MinimumVersion<Current, Version<2, 1>>&&
         semantic::concepts::Span<span_const_mat_2x3_f32>&& semantic::concepts::
             Matrix<typename span_const_mat_2x3_f32::value_type, f32, 2, 3>)
+    /*!
+     * \brief Wraps around glUniformMatrix2x3fv. Introduced in GL core 2.1
+     * \param location GLint
+     * \param count GLsizei
+     * \param transpose GLboolean
+     * \param value const GLfloat *
+     * \return void
+     */
     STATICINLINE void uniform(
         i32                           location,
         i32                           count,
@@ -24,12 +31,19 @@ requires(
     detail::error_check("UniformMatrix2x3fv"sv);
 }
 
-/* Introduced in GL core 2.1 */
 template<class span_const_mat_2x4_f32>
 requires(
     MinimumVersion<Current, Version<2, 1>>&&
         semantic::concepts::Span<span_const_mat_2x4_f32>&& semantic::concepts::
             Matrix<typename span_const_mat_2x4_f32::value_type, f32, 2, 4>)
+    /*!
+     * \brief Wraps around glUniformMatrix2x4fv. Introduced in GL core 2.1
+     * \param location GLint
+     * \param count GLsizei
+     * \param transpose GLboolean
+     * \param value const GLfloat *
+     * \return void
+     */
     STATICINLINE void uniform(
         i32                           location,
         i32                           count,
@@ -49,12 +63,19 @@ requires(
     detail::error_check("UniformMatrix2x4fv"sv);
 }
 
-/* Introduced in GL core 2.1 */
 template<class span_const_mat_3x2_f32>
 requires(
     MinimumVersion<Current, Version<2, 1>>&&
         semantic::concepts::Span<span_const_mat_3x2_f32>&& semantic::concepts::
             Matrix<typename span_const_mat_3x2_f32::value_type, f32, 3, 2>)
+    /*!
+     * \brief Wraps around glUniformMatrix3x2fv. Introduced in GL core 2.1
+     * \param location GLint
+     * \param count GLsizei
+     * \param transpose GLboolean
+     * \param value const GLfloat *
+     * \return void
+     */
     STATICINLINE void uniform(
         i32                           location,
         i32                           count,
@@ -74,12 +95,19 @@ requires(
     detail::error_check("UniformMatrix3x2fv"sv);
 }
 
-/* Introduced in GL core 2.1 */
 template<class span_const_mat_3x4_f32>
 requires(
     MinimumVersion<Current, Version<2, 1>>&&
         semantic::concepts::Span<span_const_mat_3x4_f32>&& semantic::concepts::
             Matrix<typename span_const_mat_3x4_f32::value_type, f32, 3, 4>)
+    /*!
+     * \brief Wraps around glUniformMatrix3x4fv. Introduced in GL core 2.1
+     * \param location GLint
+     * \param count GLsizei
+     * \param transpose GLboolean
+     * \param value const GLfloat *
+     * \return void
+     */
     STATICINLINE void uniform(
         i32                           location,
         i32                           count,
@@ -99,12 +127,19 @@ requires(
     detail::error_check("UniformMatrix3x4fv"sv);
 }
 
-/* Introduced in GL core 2.1 */
 template<class span_const_mat_4x2_f32>
 requires(
     MinimumVersion<Current, Version<2, 1>>&&
         semantic::concepts::Span<span_const_mat_4x2_f32>&& semantic::concepts::
             Matrix<typename span_const_mat_4x2_f32::value_type, f32, 4, 2>)
+    /*!
+     * \brief Wraps around glUniformMatrix4x2fv. Introduced in GL core 2.1
+     * \param location GLint
+     * \param count GLsizei
+     * \param transpose GLboolean
+     * \param value const GLfloat *
+     * \return void
+     */
     STATICINLINE void uniform(
         i32                           location,
         i32                           count,
@@ -124,12 +159,19 @@ requires(
     detail::error_check("UniformMatrix4x2fv"sv);
 }
 
-/* Introduced in GL core 2.1 */
 template<class span_const_mat_4x3_f32>
 requires(
     MinimumVersion<Current, Version<2, 1>>&&
         semantic::concepts::Span<span_const_mat_4x3_f32>&& semantic::concepts::
             Matrix<typename span_const_mat_4x3_f32::value_type, f32, 4, 3>)
+    /*!
+     * \brief Wraps around glUniformMatrix4x3fv. Introduced in GL core 2.1
+     * \param location GLint
+     * \param count GLsizei
+     * \param transpose GLboolean
+     * \param value const GLfloat *
+     * \return void
+     */
     STATICINLINE void uniform(
         i32                           location,
         i32                           count,

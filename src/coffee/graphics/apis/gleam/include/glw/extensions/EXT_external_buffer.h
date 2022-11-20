@@ -4,6 +4,15 @@
 namespace gl::ext::external_buffer {
 namespace values {
 } // namespace values
+/*!
+ * \brief Part of GL_EXT_external_buffer
+ * \param target GLenum
+ * \param offset GLintptr
+ * \param size GLsizeiptr
+ * \param clientBuffer GLeglClientBufferEXT
+ * \param flags GLbitfield
+ * \return void
+ */
 STATICINLINE void buffer_storage_external(
     GLenum                     target,
     GLintptr                   offset,
@@ -21,6 +30,15 @@ STATICINLINE void buffer_storage_external(
     detail::error_check("BufferStorageExternalEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_external_buffer
+ * \param buffer GLuint
+ * \param offset GLintptr
+ * \param size GLsizeiptr
+ * \param clientBuffer GLeglClientBufferEXT
+ * \param flags GLbitfield
+ * \return void
+ */
 STATICINLINE void named_buffer_storage_external(
     u32                        buffer,
     GLintptr                   offset,

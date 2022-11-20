@@ -5,6 +5,14 @@ namespace gl::arb::texture_storage {
 namespace values {
 constexpr libc_types::u32 texture_immutable_format = 0x912F;
 } // namespace values
+/*!
+ * \brief Part of GL_ARB_texture_storage
+ * \param target GLenum
+ * \param levels GLsizei
+ * \param internalformat GLenum
+ * \param width GLsizei
+ * \return void
+ */
 STATICINLINE void tex_storage_1d(
     group::texture_target        target,
     i32                          levels,
@@ -25,8 +33,17 @@ STATICINLINE void tex_storage_1d(
 }
 
 template<class size_2_i32>
-requires(semantic::concepts::Size2D<size_2_i32, i32>) STATICINLINE
-    void tex_storage_2d(
+requires(semantic::concepts::Size2D<size_2_i32, i32>)
+    /*!
+     * \brief Part of GL_ARB_texture_storage
+     * \param target GLenum
+     * \param levels GLsizei
+     * \param internalformat GLenum
+     * \param width GLsizei
+     * \param height GLsizei
+     * \return void
+     */
+    STATICINLINE void tex_storage_2d(
         group::texture_target        target,
         i32                          levels,
         group::sized_internal_format internalformat,
@@ -47,8 +64,18 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>) STATICINLINE
 }
 
 template<class size_3_i32>
-requires(semantic::concepts::Size2D<size_3_i32, i32>) STATICINLINE
-    void tex_storage_3d(
+requires(semantic::concepts::Size2D<size_3_i32, i32>)
+    /*!
+     * \brief Part of GL_ARB_texture_storage
+     * \param target GLenum
+     * \param levels GLsizei
+     * \param internalformat GLenum
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param depth GLsizei
+     * \return void
+     */
+    STATICINLINE void tex_storage_3d(
         group::texture_target        target,
         i32                          levels,
         group::sized_internal_format internalformat,

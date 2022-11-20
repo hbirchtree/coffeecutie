@@ -49,6 +49,17 @@ constexpr libc_types::u32 unsigned_int_image_2d_multisample_array = 0x906C;
 constexpr libc_types::u32 max_image_samples                       = 0x906D;
 constexpr libc_types::u32 image_binding_format                    = 0x906E;
 } // namespace values
+/*!
+ * \brief Part of GL_EXT_shader_image_load_store
+ * \param index GLuint
+ * \param texture GLuint
+ * \param level GLint
+ * \param layered GLboolean
+ * \param layer GLint
+ * \param access GLenum
+ * \param format GLint
+ * \return void
+ */
 STATICINLINE void bind_image_texture(
     u32                      index,
     u32                      texture,
@@ -75,6 +86,11 @@ STATICINLINE void bind_image_texture(
     detail::error_check("BindImageTextureEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_shader_image_load_store
+ * \param barriers GLbitfield
+ * \return void
+ */
 STATICINLINE void memory_barrier(group::memory_barrier_mask barriers)
 {
     using namespace std::string_view_literals;

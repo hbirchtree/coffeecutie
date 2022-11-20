@@ -12,8 +12,15 @@ requires(semantic::concepts::Span<span__cl_context>&& std::is_same_v<
          std::decay_t<_cl_context>>&& semantic::concepts::Span<span__cl_event>&&
                                       std::is_same_v<
                  std::decay_t<typename span__cl_event::value_type>,
-                 std::decay_t<_cl_event>>) STATICINLINE GLsync
-    create_sync_from_c_levent(
+                 std::decay_t<_cl_event>>)
+    /*!
+     * \brief Part of GL_ARB_cl_event
+     * \param context struct _cl_context *
+     * \param event struct _cl_event *
+     * \param flags GLbitfield
+     * \return sync
+     */
+    STATICINLINE GLsync create_sync_from_c_levent(
         span__cl_context const& context,
         span__cl_event const&   event,
         GLbitfield              flags)

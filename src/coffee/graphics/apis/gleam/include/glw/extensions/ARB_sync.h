@@ -2,22 +2,30 @@
 
 #ifdef GL_ARB_sync
 #include "../enums/GetPName.h"
+#include "../enums/SpecialNumbers.h"
 #include "../enums/SyncCondition.h"
 #include "../enums/SyncObjectMask.h"
 #include "../enums/SyncParameterName.h"
 #include "../enums/SyncStatus.h"
 namespace gl::arb::sync {
 using gl::group::get_prop;
+using gl::group::special_numbers;
 using gl::group::sync_condition;
 using gl::group::sync_object_mask;
 using gl::group::sync_parameter_name;
 using gl::group::sync_status;
 namespace values {
-constexpr libc_types::u32 timeout_ignored = 0xFFFFFFFFFFFFFFFF;
-constexpr libc_types::u32 sync_fence      = 0x9116;
-constexpr libc_types::u32 unsignaled      = 0x9118;
-constexpr libc_types::u32 signaled        = 0x9119;
+constexpr libc_types::u32 sync_fence = 0x9116;
+constexpr libc_types::u32 unsignaled = 0x9118;
+constexpr libc_types::u32 signaled   = 0x9119;
 } // namespace values
+/*!
+ * \brief Part of GL_ARB_sync
+ * \param sync GLsync
+ * \param flags GLbitfield
+ * \param timeout GLuint64
+ * \return SyncStatus
+ */
 STATICINLINE GLenum
 client_wait_sync(GLsync sync, group::sync_object_mask flags, u64 timeout)
 {
@@ -31,6 +39,11 @@ client_wait_sync(GLsync sync, group::sync_object_mask flags, u64 timeout)
     return out;
 }
 
+/*!
+ * \brief Part of GL_ARB_sync
+ * \param sync GLsync
+ * \return void
+ */
 STATICINLINE void delete_sync(GLsync sync)
 {
     using namespace std::string_view_literals;
@@ -42,6 +55,12 @@ STATICINLINE void delete_sync(GLsync sync)
     detail::error_check("DeleteSync"sv);
 }
 
+/*!
+ * \brief Part of GL_ARB_sync
+ * \param condition GLenum
+ * \param flags GLbitfield
+ * \return sync
+ */
 STATICINLINE GLsync
 fence_sync(group::sync_condition condition, group::sync_behavior_flags flags)
 {
@@ -59,8 +78,14 @@ fence_sync(group::sync_condition condition, group::sync_behavior_flags flags)
 template<class span_i64>
 requires(semantic::concepts::Span<span_i64>&& std::is_same_v<
          std::decay_t<typename span_i64::value_type>,
-         std::decay_t<i64>>) STATICINLINE
-    void get_integer64v(group::get_prop pname, span_i64 data)
+         std::decay_t<i64>>)
+    /*!
+     * \brief Part of GL_ARB_sync
+     * \param pname GLenum
+     * \param data GLint64 *
+     * \return void
+     */
+    STATICINLINE void get_integer64v(group::get_prop pname, span_i64 data)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -76,8 +101,17 @@ requires(semantic::concepts::Span<span_i64>&& std::is_same_v<
 template<class span_i32>
 requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
-    void get_synciv(
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_ARB_sync
+     * \param sync GLsync
+     * \param pname GLenum
+     * \param count GLsizei
+     * \param length GLsizei *
+     * \param values GLint *
+     * \return void
+     */
+    STATICINLINE void get_synciv(
         GLsync                     sync,
         group::sync_parameter_name pname,
         i32&                       length,
@@ -97,6 +131,11 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
     detail::error_check("GetSynciv"sv);
 }
 
+/*!
+ * \brief Part of GL_ARB_sync
+ * \param sync GLsync
+ * \return Boolean
+ */
 STATICINLINE GLboolean is_sync(GLsync sync)
 {
     using namespace std::string_view_literals;
@@ -109,6 +148,13 @@ STATICINLINE GLboolean is_sync(GLsync sync)
     return out;
 }
 
+/*!
+ * \brief Part of GL_ARB_sync
+ * \param sync GLsync
+ * \param flags GLbitfield
+ * \param timeout GLuint64
+ * \return void
+ */
 STATICINLINE void wait_sync(
     GLsync sync, group::sync_behavior_flags flags, u64 timeout)
 {

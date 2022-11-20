@@ -7,6 +7,12 @@ constexpr libc_types::u32 conservative_raster_mode                    = 0x954D;
 constexpr libc_types::u32 conservative_raster_mode_post_snap          = 0x954E;
 constexpr libc_types::u32 conservative_raster_mode_pre_snap_triangles = 0x954F;
 } // namespace values
+/*!
+ * \brief Part of GL_NV_conservative_raster_pre_snap_triangles
+ * \param pname GLenum
+ * \param param GLint
+ * \return void
+ */
 STATICINLINE void conservative_raster_parameter(GLenum pname, i32 param)
 {
     using namespace std::string_view_literals;

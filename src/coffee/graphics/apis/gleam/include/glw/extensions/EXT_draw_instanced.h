@@ -4,6 +4,14 @@
 namespace gl::ext::draw_instanced {
 namespace values {
 } // namespace values
+/*!
+ * \brief Part of GL_EXT_draw_instanced
+ * \param mode GLenum
+ * \param start GLint
+ * \param count GLsizei
+ * \param primcount GLsizei
+ * \return void
+ */
 STATICINLINE void draw_arrays_instanced(
     group::primitive_type mode, i32 start, i32 count, i32 primcount)
 {
@@ -17,6 +25,15 @@ STATICINLINE void draw_arrays_instanced(
     detail::error_check("DrawArraysInstancedEXT"sv);
 }
 
+/*!
+ * \brief Part of GL_EXT_draw_instanced
+ * \param mode GLenum
+ * \param count GLsizei
+ * \param type GLenum
+ * \param indices const void *
+ * \param primcount GLsizei
+ * \return void
+ */
 STATICINLINE void draw_elements_instanced(
     group::primitive_type     mode,
     i32                       count,

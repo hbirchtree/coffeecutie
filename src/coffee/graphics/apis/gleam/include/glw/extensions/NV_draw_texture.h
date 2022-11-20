@@ -4,6 +4,21 @@
 namespace gl::nv::draw_texture {
 namespace values {
 } // namespace values
+/*!
+ * \brief Part of GL_NV_draw_texture
+ * \param texture GLuint
+ * \param sampler GLuint
+ * \param x0 GLfloat
+ * \param y0 GLfloat
+ * \param x1 GLfloat
+ * \param y1 GLfloat
+ * \param z GLfloat
+ * \param s0 GLfloat
+ * \param t0 GLfloat
+ * \param s1 GLfloat
+ * \param t1 GLfloat
+ * \return void
+ */
 STATICINLINE void draw_texture(
     u32 texture,
     u32 sampler,

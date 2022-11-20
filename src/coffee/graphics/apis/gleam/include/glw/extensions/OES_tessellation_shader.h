@@ -60,6 +60,12 @@ constexpr libc_types::u32 is_per_patch                               = 0x92E7;
 constexpr libc_types::u32 referenced_by_tess_control_shader          = 0x9307;
 constexpr libc_types::u32 referenced_by_tess_evaluation_shader       = 0x9308;
 } // namespace values
+/*!
+ * \brief Part of GL_OES_tessellation_shader
+ * \param pname GLenum
+ * \param value GLint
+ * \return void
+ */
 STATICINLINE void patch_parameter(group::patch_parameter_name pname, i32 value)
 {
     using namespace std::string_view_literals;

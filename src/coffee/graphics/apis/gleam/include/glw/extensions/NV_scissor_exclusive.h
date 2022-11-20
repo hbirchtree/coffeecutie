@@ -9,7 +9,15 @@ constexpr libc_types::u32 scissor_box_exclusive  = 0x9556;
 template<class span_const_i32>
 requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
-         std::decay_t<i32>>) STATICINLINE
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_NV_scissor_exclusive
+     * \param first GLuint
+     * \param count GLsizei
+     * \param v const GLint *
+     * \return void
+     */
+    STATICINLINE
     void scissor_exclusive_arrayv(u32 first, i32 count, span_const_i32 const& v)
 {
     using namespace std::string_view_literals;
@@ -26,7 +34,16 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
 
 template<class size_2_i32, class vec_2_i32>
 requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
-             semantic::concepts::Size2D<size_2_i32, i32>) STATICINLINE
+             semantic::concepts::Size2D<size_2_i32, i32>)
+    /*!
+     * \brief Part of GL_NV_scissor_exclusive
+     * \param x GLint
+     * \param y GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \return void
+     */
+    STATICINLINE
     void scissor_exclusive(vec_2_i32 const& x, size_2_i32 const& width)
 {
     using namespace std::string_view_literals;

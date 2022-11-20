@@ -5,6 +5,13 @@ namespace gl::ext::x11_sync_object {
 namespace values {
 constexpr libc_types::u32 sync_x11_fence = 0x90E1;
 } // namespace values
+/*!
+ * \brief Part of GL_EXT_x11_sync_object
+ * \param external_sync_type GLenum
+ * \param external_sync GLintptr
+ * \param flags GLbitfield
+ * \return sync
+ */
 STATICINLINE GLsync
 import_sync(GLenum external_sync_type, GLintptr external_sync, GLbitfield flags)
 {

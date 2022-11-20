@@ -14,6 +14,11 @@ constexpr libc_types::u32 coverage_all_fragments  = 0x8ED5;
 constexpr libc_types::u32 coverage_edge_fragments = 0x8ED6;
 constexpr libc_types::u32 coverage_automatic      = 0x8ED7;
 } // namespace values
+/*!
+ * \brief Part of GL_NV_coverage_sample
+ * \param mask GLboolean
+ * \return void
+ */
 STATICINLINE void coverage_mask(bool mask)
 {
     using namespace std::string_view_literals;
@@ -25,6 +30,11 @@ STATICINLINE void coverage_mask(bool mask)
     detail::error_check("CoverageMaskNV"sv);
 }
 
+/*!
+ * \brief Part of GL_NV_coverage_sample
+ * \param operation GLenum
+ * \return void
+ */
 STATICINLINE void coverage_operation(GLenum operation)
 {
     using namespace std::string_view_literals;

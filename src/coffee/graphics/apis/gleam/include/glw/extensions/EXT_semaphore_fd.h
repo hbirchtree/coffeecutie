@@ -6,6 +6,13 @@ namespace gl::ext::semaphore_fd {
 using gl::group::external_handle_type;
 namespace values {
 } // namespace values
+/*!
+ * \brief Part of GL_EXT_semaphore_fd
+ * \param semaphore GLuint
+ * \param handleType GLenum
+ * \param fd GLint
+ * \return void
+ */
 STATICINLINE void import_semaphore_fd(
     u32 semaphore, group::external_handle_type handleType, i32 fd)
 {
