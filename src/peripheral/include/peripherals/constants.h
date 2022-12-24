@@ -22,7 +22,7 @@
 
 namespace compile_info {
 
-using libc_types::cstring;
+using std::string_view;
 using libc_types::u32;
 
 struct compiler_version_t
@@ -30,8 +30,8 @@ struct compiler_version_t
     u32 major, minor, rev;
 };
 
-constexpr cstring target       = C_SYSTEM_STRING;
-constexpr cstring architecture = COFFEE_ARCH;
+constexpr string_view target       = C_SYSTEM_STRING;
+constexpr string_view architecture = COFFEE_ARCH;
 
 namespace android {
 
@@ -112,7 +112,7 @@ constexpr u32 wdk =
 
 namespace linux_ {
 
-constexpr cstring libc_runtime =
+constexpr string_view libc_runtime =
 #if defined(_LIBCPP_VERSION)
     "libc++"
 #elif defined(__GLIBC__)
@@ -157,8 +157,8 @@ constexpr u32 version =
 
 namespace compiler {
 
-constexpr cstring name        = C_COMPILER_NAME;
-constexpr cstring version_str = C_STR(C_COMPILER_VER_MAJ) "." C_STR(
+constexpr string_view name        = C_COMPILER_NAME;
+constexpr string_view version_str = C_STR(C_COMPILER_VER_MAJ) "." C_STR(
     C_COMPILER_VER_MIN) "." C_STR(C_COMPILER_VER_REV);
 
 constexpr compiler_version_t version = {
@@ -175,7 +175,7 @@ constexpr compiler_version_t version = {
 
 namespace module {
 
-constexpr cstring build_mode =
+constexpr string_view build_mode =
 #if MODE_DEBUG
     "Debug"
 #elif MODE_LOWFAT
@@ -191,7 +191,7 @@ constexpr cstring build_mode =
 constexpr cstring version = MODULE_VERSION;
 #endif
 
-constexpr cstring name = COFFEE_COMPONENT_NAME;
+constexpr string_view name = COFFEE_COMPONENT_NAME;
 
 } // namespace module
 

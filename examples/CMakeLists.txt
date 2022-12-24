@@ -53,7 +53,7 @@ endif()
 #
 
 # Examples of CAudio API through OpenAL and Coffee audio abstraction layer
-if(BUILD_AUDIO AND BUILD_OPENAL AND BUILD_GLEAM)
+if(BUILD_AUDIO AND BUILD_OPENAL AND BUILD_GLEAM AND FALSE)
     if(NOT APPLE)
         add_subdirectory (audio/caudio-test)
     endif()
@@ -68,9 +68,11 @@ endif()
 
 if(BUILD_GLEAM)
     add_subdirectory(gleam/rhi/base-test)
-    add_subdirectory(gleam/compress-formats)
-    if(BUILD_OPENGL)
-        add_subdirectory(gleam/shadow-test)
+    if(FALSE)
+        add_subdirectory(gleam/compress-formats)
+        if(BUILD_OPENGL)
+            add_subdirectory(gleam/shadow-test)
+        endif()
     endif()
 endif()
 

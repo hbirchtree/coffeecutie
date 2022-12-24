@@ -86,8 +86,8 @@ FORCEDINLINE EntityContainer::visitor_graph create_visitor_graph(
     /* Connect all nodes that run on main thread, grouping them together */
     {
         auto const is_mainthread = [](UqPtr<EntityVisitorBase> const& p) {
-            return (p->flags & VisitorFlags::MainThread) ==
-                   VisitorFlags::MainThread;
+            return (p->flags & VisitorFlags::MainThread)
+                   == VisitorFlags::MainThread;
         };
 
         auto start = visitors.begin();
@@ -170,9 +170,9 @@ void EntityContainer::exec()
             Logging::log(
                 libc::io::io_handles::err,
                 "Components",
-                platform::stacktrace::demangle::type_name(source) + ": " +
-                    platform::stacktrace::demangle::type_name(e) + ": " +
-                    e.what());
+                platform::stacktrace::demangle::type_name(source) + ": "
+                    + platform::stacktrace::demangle::type_name(e) + ": "
+                    + e.what());
         };
     };
 
@@ -268,6 +268,7 @@ struct service_test
         template<typename T>
         void operator()()
         {
+            static_assert(std::is_base_of_v<typename T::type, SubsystemType>);
             C_PTR_CHECK_MSG(
                 C_DCAST<typename T::type>(sub), "service cast mismatch");
         }
@@ -305,6 +306,23 @@ FORCEDINLINE EntityRef<EntityContainer> EntityContainer::ref(Entity& entity)
 FORCEDINLINE EntityRef<EntityContainer> EntityContainer::ref(u64 entity)
 {
     return EntityRef<EntityContainer>(entity, this);
+}
+
+FORCEDINLINE EntityRef<EntityContainer> EntityContainer::create_entity(
+    EntityRecipe const& recipe)
+{
+    entity_counter++;
+
+    entities.emplace_back();
+    auto& entity = entities.back();
+
+    entity.id   = entity_counter;
+    entity.tags = recipe.tags;
+
+    for(auto type_id : recipe.components)
+        add_component(entity_counter, type_id);
+
+    return ref(entity);
 }
 
 template<is_tag_type ComponentTag>

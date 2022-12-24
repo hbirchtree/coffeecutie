@@ -109,7 +109,10 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureImage2DMultisampleCoverageNV)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glTextureImage2DMultisampleCoverageNV(
         texture,
@@ -148,7 +151,10 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureImage2DMultisampleNV)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glTextureImage2DMultisampleNV(
         texture,
@@ -189,7 +195,10 @@ requires(semantic::concepts::Size2D<size_3_i32, i32>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureImage3DMultisampleCoverageNV)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glTextureImage3DMultisampleCoverageNV(
         texture,
@@ -230,7 +239,10 @@ requires(semantic::concepts::Size2D<size_3_i32, i32>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureImage3DMultisampleNV)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glTextureImage3DMultisampleNV(
         texture,

@@ -4,23 +4,27 @@
 #include <coffee/comp_app/eventapp_wrapper.h>
 #include <coffee/comp_app/gl_config.h>
 #include <coffee/comp_app/performance_monitor.h>
+#include <coffee/comp_app/stat_providers.h>
+
 #include <coffee/core/CProfiling>
 #include <coffee/core/base_state.h>
+#include <coffee/core/coffee.h>
 #include <coffee/core/task_queue/task.h>
 #include <coffee/core/types/display/event.h>
 #include <coffee/core/types/input/event_types.h>
 #include <coffee/foreign/foreign.h>
 #include <coffee/image/cimage.h>
+
 #include <peripherals/libc/signals.h>
+#include <peripherals/stl/magic_enum.hpp>
 #include <peripherals/stl/string_ops.h>
+
 #include <platforms/environment.h>
-
 #include <platforms/stacktrace.h>
-
-#include <coffee/comp_app/stat_providers.h>
 
 #include <coffee/strings/libc_types.h>
 
+#include <coffee/core/debug/formatting.h>
 #include <coffee/strings/format.h>
 
 #if defined(COFFEE_EMSCRIPTEN)
@@ -35,9 +39,9 @@
 #include <coffee/x11/x11_comp.h>
 #endif
 
-#if defined(FEATURE_ENABLE_GLADComponent_Dynamic) ||   \
-    defined(FEATURE_ENABLE_GLADComponent_ESDynamic) || \
-    defined(FEATURE_ENABLE_GLADComponent_ES2Dynamic)
+#if defined(FEATURE_ENABLE_GLADComponent_Dynamic)      \
+    || defined(FEATURE_ENABLE_GLADComponent_ESDynamic) \
+    || defined(FEATURE_ENABLE_GLADComponent_ES2Dynamic)
 #include <coffee/glad/glad_comp.h>
 #endif
 
@@ -65,24 +69,136 @@
 #include <coffee/emscripten_comp/emscripten_components.h>
 #endif
 
-#if defined(FEATURE_ENABLE_GLScreenshot)
+#if defined(FEATURE_ENABLE_DispManXComponent)
+#include <coffee/dispmanx/dispmanx_comp.h>
+#endif
+
+#if defined(FEATURE_ENABLE_GLScreenshot_ES2Dynamic)   \
+    || defined(FEATURE_ENABLE_GLScreenshot_ESDynamic) \
+    || defined(FEATURE_ENABLE_GLScreenshot_ES)        \
+    || defined(FEATURE_ENABLE_GLScreenshot_Dynamic)
 #include <glscreenshot/screenshot.h>
 #endif
 
-#if defined(FEATURE_ENABLE_GLKitComponent) || \
-    defined(FEATURE_ENABLE_ANativeComponent) || defined(COFFEE_EMSCRIPTEN)
+#if defined(FEATURE_ENABLE_GLKitComponent) \
+    || defined(FEATURE_ENABLE_ANativeComponent) || defined(COFFEE_EMSCRIPTEN)
 #define USES_LINKED_GL 1
 #endif
 
-#if defined(FEATURE_ENABLE_GLADComponent_Dynamic) ||    \
-    defined(FEATURE_ENABLE_GLADComponent_ESDynamic) ||  \
-    defined(FEATURE_ENABLE_GLADComponent_ES2Dynamic) || \
-    defined(FEATURE_ENABLE_EGLComponent) ||             \
-    defined(FEATURE_ENABLE_SDL2Components) || USES_LINKED_GL
+#if defined(FEATURE_ENABLE_GLADComponent_Dynamic)       \
+    || defined(FEATURE_ENABLE_GLADComponent_ESDynamic)  \
+    || defined(FEATURE_ENABLE_GLADComponent_ES2Dynamic) \
+    || defined(FEATURE_ENABLE_EGLComponent)             \
+    || defined(FEATURE_ENABLE_SDL2Components) || USES_LINKED_GL
 #define USES_GL 1
 #endif
 
+using Coffee::Logging::cVerbose;
+
 namespace comp_app {
+
+namespace {
+
+void printConfig(AppLoader& loader)
+{
+    using Coffee::cDebug;
+#if USES_GL
+    {
+        auto& glConf = loader.config<GLConfig>();
+        cDebug(
+            "comp_app::GLConfig: version={0}:{1}.{2} ({3}) fmt={4} depth={5}",
+            glConf.profile == GLConfig::Profile::Core ? "core" : "es",
+            glConf.version.major,
+            glConf.version.minor,
+            glConf.versionIsFixed ? "fixed" : "dynamic",
+            magic_enum::enum_name(glConf.framebufferFmt),
+            magic_enum::enum_name(glConf.depthFmt));
+    }
+#endif
+    {
+        using enum_helpers::feval;
+        auto& windowConfig = loader.config<WindowConfig>();
+        cDebug(
+            "comp_app::WindowConfig: size={0}x{1} title={2} windowed={3} "
+            "fullscreen={4} highdpi={5}",
+            windowConfig.size.w,
+            windowConfig.size.h,
+            windowConfig.title,
+            feval(windowConfig.flags, detail::WindowState::Windowed),
+            feval(windowConfig.flags, detail::WindowState::FullScreen),
+            feval(windowConfig.flags, detail::WindowState::HighDPI));
+    }
+}
+
+rq::runtime_queue* loop_main_queue = nullptr;
+bool               is_loaded       = false;
+
+} // namespace
+
+void setup_container(detail::EntityContainer& container)
+{
+    if(is_loaded)
+        return;
+
+    using namespace Coffee;
+    DProfContext _("Bundle::Cleanup");
+
+    app_error appec;
+    auto      services = container.services_with<AppLoadableService>();
+    for(auto& service : services)
+    {
+        if(service.is_loaded())
+            continue;
+        service.do_load(container, appec);
+        C_ERROR_CHECK(appec);
+    }
+
+    is_loaded = true;
+}
+
+bool loop_container(detail::EntityContainer& container)
+{
+    auto window = container.service<Windowing>();
+    if(!window)
+        return true;
+    if(window->notifiedClose())
+        return false;
+    if(!loop_main_queue)
+        if(auto queue = rq::runtime_queue::GetCurrentQueue(); queue.has_value())
+            loop_main_queue = queue.value();
+
+    container.exec();
+    if(loop_main_queue)
+        loop_main_queue->execute_tasks();
+    return true;
+}
+
+void cleanup_container(detail::EntityContainer& container)
+{
+    using namespace Coffee;
+    DProfContext _("Bundle::Cleanup");
+
+    app_error appec;
+    auto      services = container.services_with<AppLoadableService>(
+        Components::reverse_query);
+    for(auto& service : services)
+    {
+        if(service.is_loaded())
+            continue;
+        service.do_unload(container, appec);
+    }
+
+    loop_main_queue = nullptr;
+    is_loaded       = false;
+}
+
+void setup_and_loop_container(detail::EntityContainer& container)
+{
+    if(!is_loaded)
+        setup_container(createContainer());
+
+    loop_container(createContainer());
+}
 
 struct DefaultAppInfo : interfaces::AppInfo, AppService<DefaultAppInfo, AppInfo>
 {
@@ -106,31 +222,10 @@ text_type_t DefaultAppInfo::get(text_type key)
     return it->second;
 }
 
-#if defined(COFFEE_EMSCRIPTEN)
 void emscripten_loop()
 {
-    static bool isLoaded = false;
-
-    //    try
-    //    {
-    if(!isLoaded)
-    {
-        CoffeeEventHandle(nullptr, CoffeeHandle_Setup);
-        isLoaded = true;
-    }
-
-    CoffeeEventHandle(nullptr, CoffeeHandle_Loop);
-    //    } catch(std::exception const& e)
-    //    {
-    //        emscripten_log(
-    //            EM_LOG_ERROR,
-    //            "Exception encountered: %s: %s",
-    //            platform::stacktrace::demangle::name(typeid(e).name()).c_str(),
-    //            e.what());
-    //        emscripten_pause_main_loop();
-    //    }
+    setup_and_loop_container(createContainer());
 }
-#endif
 
 struct app_loadable_matcher
 {
@@ -149,130 +244,19 @@ detail::EntityContainer& createContainer()
 
     container = stl_types::MkShared<detail::EntityContainer>();
 
-    using namespace Coffee;
-
-    coffee_event_handling_data = container.get();
-    CoffeeEventHandle          = [](void*, int event) {
-        using namespace Coffee;
-
-        switch(event)
-        {
-        case CoffeeHandle_Setup: {
-            DProfContext _("Bundle::Setup");
-
-            app_error ec;
-            for(auto& service : container->services_with<AppLoadableService>())
-            {
-                if(C_DCAST<AppMain>(&service))
-                    continue;
-                service.load(*container, ec);
-                C_ERROR_CHECK(ec)
-            }
-
-            auto eventMain = container->service<AppMain>();
-            if(!eventMain)
-                break;
-            eventMain->load(*container, ec);
-            C_ERROR_CHECK(ec)
-            break;
-        }
-        case CoffeeHandle_Loop: {
-            DProfContext _("Bundle::Loop");
-
-            container->exec();
-
-            if(auto queue = rq::runtime_queue::GetCurrentQueue();
-               queue.has_value())
-                queue.value()->execute_tasks();
-        }
-        case CoffeeHandle_Cleanup: {
-            DProfContext _("Bundle::Cleanup");
-
-            app_error appec;
-            auto      services = container->services_with<AppLoadableService>(
-                Components::reverse_query);
-
-            for(auto& service : services)
-                service.unload(*container, appec);
-            break;
-        }
-        default: {
-            DProfContext _("Bundle::AppEvent");
-            auto         app_bus = container->service<EventBus<AppEvent>>();
-
-            if(!app_bus)
-                break;
-
-            AppEvent appevent;
-            appevent.type = AppEvent::None;
-            union
-            {
-                LifecycleEvent  lifecycle;
-                NavigationEvent navi;
-            };
-            switch(event)
-            {
-            case CoffeeHandle_LowMem:
-            case CoffeeHandle_IsTerminating:
-            case CoffeeHandle_IsBackground:
-            case CoffeeHandle_IsForeground:
-            case CoffeeHandle_TransBackground:
-            case CoffeeHandle_TransForeground:
-                appevent.type = AppEvent::LifecycleEvent;
-                break;
-            }
-
-            switch(event)
-            {
-            case CoffeeHandle_LowMem:
-                lifecycle.lifecycle_type = LifecycleEvent::LowMemory;
-                break;
-            case CoffeeHandle_IsTerminating:
-                lifecycle.lifecycle_type = LifecycleEvent::Terminate;
-                break;
-            case CoffeeHandle_IsBackground:
-                lifecycle.lifecycle_type = LifecycleEvent::Background;
-                break;
-            case CoffeeHandle_IsForeground:
-                lifecycle.lifecycle_type = LifecycleEvent::Foreground;
-                break;
-            case CoffeeHandle_TransBackground:
-                lifecycle.lifecycle_type = LifecycleEvent::WillEnterBackground;
-                break;
-            case CoffeeHandle_TransForeground:
-                lifecycle.lifecycle_type = LifecycleEvent::WillEnterForeground;
-                break;
-            }
-            switch(event)
-            {
-            case CoffeeHandle_LowMem:
-            case CoffeeHandle_IsTerminating:
-            case CoffeeHandle_IsBackground:
-            case CoffeeHandle_IsForeground:
-            case CoffeeHandle_TransBackground:
-            case CoffeeHandle_TransForeground:
-                app_bus->process(appevent, &lifecycle);
-                break;
-            }
-        }
-        }
-    };
-    CoffeeEventHandleNA = [](void*, int, void*, void*, void*) {};
-
     if constexpr(
-        compile_info::platform::is_unix &&
-        !compile_info::platform::is_emscripten)
-        libc::signal::install(libc::signal::sig::interrupt, [](int) {
+        compile_info::platform::is_unix
+        && !compile_info::platform::is_emscripten)
+    {
+        auto handler = [](int) {
             if(!container)
                 return;
-
-            auto windowing = container->service<Windowing>();
-
-            if(!windowing)
-                return;
-
-            windowing->close();
-        });
+            if(auto windowing = container->service<Windowing>())
+                windowing->close();
+        };
+        libc::signal::install(libc::signal::sig::interrupt, handler);
+        libc::signal::install(libc::signal::sig::terminate, handler);
+    }
 
     return *container;
 }
@@ -296,7 +280,15 @@ void configureDefaults(AppLoader& loader)
     glConfig.framebufferFmt = PixFmt::SRGB8A8;
 #endif
 
-#if defined(GLEAM_USE_LINKED)
+#if defined(FEATURE_ENABLE_GLeamCommon_ES2) \
+    || defined(FEATURE_ENABLE_GLeamCommon_ES2Dynamic)
+    glConfig.framebufferFmt = PixFmt::RGB565;
+    glConfig.depthFmt       = PixFmt::Depth24Stencil8;
+    glConfig.profile        = GLConfig::Embedded;
+    glConfig.version.major  = 2;
+    glConfig.version.minor  = 0;
+#elif defined(FEATURE_ENABLE_GLeamCommon_ES) \
+    || defined(FEATURE_ENABLE_GLeamCommon_ESDynamic)
     glConfig.framebufferFmt = PixFmt::RGB565;
     glConfig.profile        = GLConfig::Embedded;
     glConfig.version.major  = 3;
@@ -329,11 +321,40 @@ void addDefaults(
 {
     Coffee::ProfContext _("comp_app::addDefaults");
 
+    if constexpr(compile_info::debug_mode)
+    {
+        if(auto loader = container.service<AppLoader>())
+            printConfig(*loader);
+    }
+
+    cVerbose(10, "Loading event bus: InputEvent, DisplayEvent, AppEvent");
     loader.loadAll<subsystem_list<
         BasicEventBus<Coffee::Input::CIEvent>,
         BasicEventBus<Coffee::Display::Event>,
         BasicEventBus<AppEvent>,
         DefaultAppInfo>>(container, ec);
+
+    BasicEventBus<AppEvent>* app_bus
+        = container.service<BasicEventBus<AppEvent>>();
+    app_bus->addEventFunction<LifecycleEvent>(
+        2048, [&container](AppEvent&, LifecycleEvent* event) {
+            switch(event->lifecycle_type)
+            {
+                //        case LifecycleEvent::Startup:
+                //            break;
+            case LifecycleEvent::Foreground:
+                setup_container(container);
+                break;
+                //        case LifecycleEvent::Background:
+                //            break;
+            case LifecycleEvent::ResourcesLost:
+            case LifecycleEvent::Terminate:
+                cleanup_container(container);
+                break;
+            default:
+                break;
+            }
+        });
 
     auto& appInfo = *container.service<AppInfo>();
 
@@ -345,6 +366,7 @@ void addDefaults(
     }
 
     /* Selection of window/event manager */
+    cVerbose(10, "Loading windowing library");
 #if defined(FEATURE_ENABLE_SDL2Components)
     sdl2::GLContext::register_service<sdl2::GLContext>(container);
     loader.loadAll<sdl2::Services>(container, ec);
@@ -372,7 +394,15 @@ void addDefaults(
     appInfo.add("window:library", "Android NativeActivity");
 #elif defined(FEATURE_ENABLE_CogComponent)
     /* There is no window */
-#elif defined(COFFEE_BEAGLEBONE)
+#elif defined(FEATURE_ENABLE_DispManXComponent)
+    loader.loadAll<type_safety::type_list_t<
+        comp_app::PtrNativeWindowInfoService,
+        dispmanx::Windowing>>(container, ec);
+    C_ERROR_CHECK(ec);
+    appInfo.add("window:library", "DispManX");
+#elif defined(FEATURE_ENABLE_EGLComponent)
+    // For when there's no window creation necessary
+    // For example NullWS on SGX
     loader.loadAll<type_safety::type_list_t<egl::Windowing>>(container, ec);
     C_ERROR_CHECK(ec);
     appInfo.add("window:library", "EGL Headless");
@@ -386,6 +416,7 @@ void addDefaults(
     C_ERROR_CHECK(ec);
 #endif
 
+    cVerbose(10, "Loading graphics context");
 #if defined(SELECT_API_OPENGL)
     appInfo.add("graphics:library", "OpenGL");
 
@@ -406,10 +437,13 @@ void addDefaults(
 #error No context manager
 #endif
 
+    cVerbose(10, "Loading graphics binding");
     /* Selection of GL binding */
 #if GLEAM_USE_LINKED
     appInfo.add("gl:loader", "Linked");
-#elif defined(FEATURE_ENABLE_GLADComponent_Dynamic) || defined(FEATURE_ENABLE_GLADComponent_ESDynamic)
+#elif defined(FEATURE_ENABLE_GLADComponent_Dynamic)    \
+    || defined(FEATURE_ENABLE_GLADComponent_ESDynamic) \
+    || defined(FEATURE_ENABLE_GLADComponent_ES2Dynamic)
     loader.loadAll<glad::Services>(container, ec);
     C_ERROR_CHECK(ec);
     appInfo.add("gl:loader", "GLAD");
@@ -434,7 +468,10 @@ void addDefaults(
         /* TODO: Conditionally load based on availability */
         loader.loadAll<detail::subsystem_list<
             comp_app::SysMemoryStats
-#if defined(FEATURE_ENABLE_GLScreenshot)
+#if defined(FEATURE_ENABLE_GLScreenshot_ES2Dynamic)   \
+    || defined(FEATURE_ENABLE_GLScreenshot_Dynamic)   \
+    || defined(FEATURE_ENABLE_GLScreenshot_ESDynamic) \
+    || defined(FEATURE_ENABLE_GLScreenshot_ES)
             ,
             glscreenshot::ScreenshotProvider
 #endif
@@ -487,15 +524,14 @@ void PerformanceMonitor::start_restricted(proxy_type& p, time_point const& time)
 {
     using namespace platform::profiling;
 
-    auto timestamp =
-        Chrono::duration_cast<Chrono::microseconds>(time.time_since_epoch());
+    auto timestamp
+        = Chrono::duration_cast<Chrono::microseconds>(time.time_since_epoch());
 
     json::CaptureMetrics(
         "Frametime",
         MetricVariant::Value,
-        Chrono::duration_cast<Chrono::seconds_float>(time - m_prevFrame)
-                .count() *
-            1000.f,
+        Chrono::duration_cast<Chrono::seconds_float>(time - m_prevFrame).count()
+            * 1000.f,
         timestamp);
     m_prevFrame = time;
 
@@ -566,10 +602,7 @@ void PerformanceMonitor::start_restricted(proxy_type& p, time_point const& time)
     if(network)
     {
         json::CaptureMetrics(
-            "Network RX",
-            MetricVariant::Value,
-            network->received(),
-            timestamp);
+            "Network RX", MetricVariant::Value, network->received(), timestamp);
         json::CaptureMetrics(
             "Network TX",
             MetricVariant::Value,
@@ -588,15 +621,17 @@ void PerformanceMonitor::end_restricted(proxy_type& p, time_point const& time)
 {
     using namespace platform::profiling;
 
-    auto timestamp =
-        Chrono::duration_cast<Chrono::microseconds>(time.time_since_epoch());
+    auto timestamp
+        = Chrono::duration_cast<Chrono::microseconds>(time.time_since_epoch());
 
     if constexpr(compile_info::debug_mode)
-    {
-        auto screenshot = p.service<ScreenshotProvider>();
-
-        if(screenshot && time > m_nextScreenshot)
+        do
         {
+            auto screenshot = p.service<ScreenshotProvider>();
+
+            if(!screenshot || time > m_nextScreenshot)
+                break;
+
             using namespace Coffee;
 
             m_nextScreenshot        = time + Chrono::seconds(10);
@@ -604,16 +639,20 @@ void PerformanceMonitor::end_restricted(proxy_type& p, time_point const& time)
             Bytes            encoded;
             stb::stb_error   ec;
             stb::image_const source = stb::image_const::From(
-                pixels.as<Bytes::value_type>(), screenshot->size(), 3);
+                pixels.as<Bytes::value_type>(), screenshot->size(), 4);
 
-            stb::SaveJPG(encoded, source, ec, 50);
+            if(!stb::SaveJPG(encoded, source, ec, 50))
+            {
+                cWarning("Failed to dump screenshot: {0}", ec.message());
+                break;
+            }
             auto screenshot_file = "screenshot.jpg"_tmpfile;
 
             FileOpenMap(
                 screenshot_file,
                 encoded.size,
-                RSCA::ReadWrite | RSCA::Persistent | RSCA::NewFile |
-                    RSCA::Discard);
+                RSCA::ReadWrite | RSCA::Persistent | RSCA::NewFile
+                    | RSCA::Discard);
             if(encoded.size == screenshot_file.data_rw.size())
                 std::copy(
                     encoded.view.begin(),
@@ -624,10 +663,9 @@ void PerformanceMonitor::end_restricted(proxy_type& p, time_point const& time)
             json::CaptureMetrics(
                 "Screenshots",
                 MetricVariant::Image,
-                b64::encode<byte_t>(encoded),
+                b64::encode<byte_t>(encoded.view),
                 timestamp);
-        }
-    }
+        } while(false);
 
     json::CaptureMetrics(
         "VSYNC",

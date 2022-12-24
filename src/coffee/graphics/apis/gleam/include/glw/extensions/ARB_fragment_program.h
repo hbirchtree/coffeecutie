@@ -97,7 +97,10 @@ STATICINLINE void bind_program(group::program_target target, u32 program)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindProgramARB)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glBindProgramARB(static_cast<GLenum>(target), program);
     detail::error_check("BindProgramARB"sv);
@@ -313,7 +316,10 @@ STATICINLINE GLboolean is_program(u32 program)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(IsProgramARB)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     auto out = glIsProgramARB(program);
     detail::error_check("IsProgramARB"sv);

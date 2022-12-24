@@ -42,7 +42,7 @@ enum permission_t : libc_types::u16
     read    = 04,
 
     none = 00,
-    all = read | write | execute,
+    all  = read | write | execute,
 };
 }
 
@@ -50,16 +50,17 @@ C_FLAGS(permission_t::permission_t, libc_types::u16);
 
 struct permissions_t
 {
-    permission_t::permission_t owner, group, other;
+    permission_t::permission_t owner{}, group{}, other{};
 };
 
-static constexpr permissions_t default_permissions = {
-    permission_t::all, permission_t::all, permission_t::none};
+static constexpr permissions_t default_permissions
+    = {permission_t::all, permission_t::all, permission_t::none};
 
 struct file_info_t
 {
     libc_types::szptr size;
     mode_t            mode;
+    permissions_t     perms;
 };
 
 struct read_params_t

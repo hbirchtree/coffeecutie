@@ -541,9 +541,6 @@ void GLFramebuffer::start_frame(
 
 void ControllerInput::load(entity_container& c, comp_app::app_error& ec)
 {
-    if constexpr(compile_info::platform::is_emscripten)
-        return;
-
     auto& config = comp_app::AppLoader::config<comp_app::ControllerConfig>(c);
 
     if(!config.mapping.empty())
@@ -569,9 +566,6 @@ void ControllerInput::load(entity_container& c, comp_app::app_error& ec)
 
 void ControllerInput::unload(entity_container&, comp_app::app_error&)
 {
-    if constexpr(compile_info::platform::is_emscripten)
-        return;
-
     //    for(auto const& controller : m_controllers)
     //        SDL_GameControllerClose(
     //            C_RCAST<SDL_GameController*>(controller.second));
@@ -587,9 +581,6 @@ void ControllerInput::unload(entity_container&, comp_app::app_error&)
 
 void ControllerInput::start_restricted(proxy_type& p, time_point const&)
 {
-    if constexpr(compile_info::platform::is_emscripten)
-        return;
-
     using namespace Coffee::Input;
 
     auto    inputBus = get_container(p).service<comp_app::EventBus<CIEvent>>();

@@ -17,7 +17,10 @@ STATICINLINE void bind_vertex_array(u32 array)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindVertexArray)
-        glIsVertexArray(array);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsVertexArray)
+            glIsVertexArray(array);
+#endif
     }
     glBindVertexArray(array);
     detail::error_check("BindVertexArray"sv);
@@ -81,7 +84,10 @@ STATICINLINE GLboolean is_vertex_array(u32 array)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(IsVertexArray)
-        glIsVertexArray(array);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsVertexArray)
+            glIsVertexArray(array);
+#endif
     }
     auto out = glIsVertexArray(array);
     detail::error_check("IsVertexArray"sv);

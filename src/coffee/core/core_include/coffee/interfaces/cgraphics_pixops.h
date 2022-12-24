@@ -6,6 +6,8 @@
 #include <coffee/core/types/pixel_transform.h>
 #include <coffee/core/types/size.h>
 
+#include <peripherals/stl/any_of.h>
+
 namespace Coffee {
 
 FORCEDINLINE szptr GetPixSize(BitFmt fmt, PixCmp comp, szptr pixels)
@@ -83,35 +85,20 @@ FORCEDINLINE constexpr szptr GetPixCompressedSize(
 
     switch(fmt)
     {
-    case PixFmt::S3TC: /* Alias for BCn and DXTn */
+    case PixFmt::BCn: /* Alias for BCn and DXTn */
     {
-        if(cflags == CompFlags::S3TC_1 || cflags == CompFlags::S3TC_3 ||
-           cflags == CompFlags::S3TC_5)
+        if(one_of(cflags, CompFlags::BC1, CompFlags::BC2, CompFlags::BC3))
         {
-            u32 block_bytes = 128 / 8;
-
-            if(cflags == CompFlags::S3TC_1)
-                block_bytes = 64 / 8;
-
+            const u32 block_bytes = (cflags == CompFlags::BC1 ? 64 : 128) / 8;
             return GetPixBlockSize(tex_size, block_size) * block_bytes;
 
-        } else if(cflags == CompFlags::BC4 || cflags == CompFlags::BC5)
+        } else if(one_of(cflags, CompFlags::BC4, CompFlags::BC5))
         {
-            u32 block_bytes = 0;
-
-            if(feval(pflags & PixFlg::R))
-                block_bytes = 64 / 8;
-            else if(feval(pflags & PixFlg::RG))
-                block_bytes = 128 / 8;
-
-            if(block_bytes)
-                return GetPixBlockSize(tex_size, block_size) * block_bytes;
-
-        } else if(cflags == CompFlags::BC6H || cflags == CompFlags::BC7)
-        {
-            const u32 block_bytes = 128 / 8;
-
+            const u32 block_bytes = (feval(pflags & PixFlg::R) ? 64 : 128) / 8;
             return GetPixBlockSize(tex_size, block_size) * block_bytes;
+        } else if(one_of(cflags, CompFlags::BC6H, CompFlags::BC7))
+        {
+            return GetPixBlockSize(tex_size, block_size) * (128 / 8);
         }
         break;
     }
@@ -172,7 +159,7 @@ FORCEDINLINE constexpr szptr GetPixCompressedSize(
                            CMath::max<u32>(tex_size.h, 8)};
         u32  bpp        = 4;
 
-        if(feval(cflags & CompFlags::bpp_2))
+        if(cflags == CompFlags::bpp_2)
         {
             bpp          = 2;
             pvrtc_size.w = CMath::max<u32>(pvrtc_size.w, 16);
@@ -201,15 +188,21 @@ FORCEDINLINE cstring GetPixCompressedExtension(CompFmt fmt)
     {
         switch(fmt.c_flags)
         {
-        case CompFlags::S3TC_1:
+        case CompFlags::BC1:
             return "dxt1";
-        case CompFlags::S3TC_5:
+        case CompFlags::BC3:
             return "dxt5";
-        default:
+        case CompFlags::BC5:
+            return "rgtc";
+        case CompFlags::BC6H:
+            return "bptch";
+        case CompFlags::BC7:
             return "bptc";
         }
         break;
     }
+    case PixFmt::ASTC:
+        return "astc";
     case PixFmt::ETC1:
         return "etc1";
     case PixFmt::ETC2:

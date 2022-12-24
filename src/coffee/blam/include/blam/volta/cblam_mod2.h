@@ -1,6 +1,8 @@
 #pragma once
 
-#include "cblam_structures.h"
+#include "cblam_base_types.h"
+#include "cblam_reflexive.h"
+#include "cblam_shaders.h"
 
 namespace blam {
 
@@ -77,7 +79,6 @@ struct xbox_ref
         reflexive_t<vert::vertex<vert::compressed>> out;
         out.count  = vert_count;
         out.offset = offset;
-        out.zero   = 0;
         return out;
     }
 };
@@ -97,7 +98,7 @@ struct submesh_header
     u32 pad__[4];
     u32 unknown_count;
 
-    reflexive_t<vert::idx_t, xbox_variant> indices;
+    reflexive_t<vert::idx_t, xbox_t> indices;
 
     u32 unknown_offset;
     u32 unknown_count2;
@@ -106,8 +107,8 @@ struct submesh_header
     u32 raw_offset_behavior;
     u32 vertex_ref_offset;
 
-    inline decltype(tag_index_t::vertex_objects) vertex_segment(
-        tag_index_t const& base) const
+    template<typename V>
+    inline auto vertex_segment(tag_index_t<V> const& base) const
     {
         auto cpy = base.vertex_base();
         cpy.offset += vertex_ref_offset;
@@ -120,67 +121,56 @@ struct submesh_header
         reflexive_t<xbox_ref> out;
         out.count  = 1;
         out.offset = vertex_ref_offset;
-        out.zero   = 0;
         return out;
     }
 
+    template<typename V>
     /*!
      * \brief Gives the indices **for a triangle strip**
      * Trying to read these as normal triangles will be very bad
      * \param base
      */
-    inline decltype(tag_index_t::index_objects) index_segment(
-        tag_index_t const& base) const
+    inline auto index_segment(tag_index_t<V> const& base) const
     {
         auto cpy = base.index_base();
         cpy.offset += indices.offset;
         cpy.count = indices.count + 2;
         return cpy;
     }
-    inline tag_index_t::index_array xbox_index_segment() const
+
+    inline auto xbox_index_segment() const
     {
         return indices;
     }
 };
 
-template<typename Variant, bool = std::is_same<Variant, pc_variant>::value>
+template<typename Variant>
+requires is_game_version<Variant>
 struct submesh_wrap_header
 {
-    submesh_header data;
-    u32            unknown_2[7];
+    static constexpr size_t padding_size
+        = std::is_same_v<Variant, grbx_t> ? 28 : 0;
 
-  private:
-    constexpr void size_check()
-    {
-        static_assert(
-            sizeof(submesh_wrap_header<pc_variant>) == 132, "Invalid size");
-    }
+    submesh_header data;
+    u8             unknown_2[padding_size];
 };
+
+static_assert(sizeof(submesh_wrap_header<xbox_t>) == 104);
+static_assert(sizeof(submesh_wrap_header<grbx_t>) == 132);
 
 template<typename Variant>
-struct submesh_wrap_header<Variant, false>
-{
-    submesh_header data;
-
-  private:
-    constexpr void size_check()
-    {
-        static_assert(
-            sizeof(submesh_wrap_header<xbox_variant>) == 104, "Invalid size");
-    }
-};
-
 struct geometry_header
 {
     u32 unknown[9];
 
-    reflexive_t<char> meshes_;
+    reflexive_t<submesh_wrap_header<Variant>> meshes_;
 
-    template<typename Variant>
-    inline semantic::mem_chunk<submesh_wrap_header<Variant> const> meshes(
-        magic_data_t const& magic) const
+    inline auto meshes(magic_data_t const& magic) const
     {
-        return meshes_.as<submesh_wrap_header<Variant>>().data(magic);
+        if(auto out = meshes_.data(magic); out.has_value())
+            return out.value();
+        else
+            return typename decltype(meshes_)::span_type();
     }
 };
 
@@ -209,6 +199,7 @@ struct bone
 /*!
  * \brief Header referenced by mod2 tags
  */
+template<typename V>
 struct header
 {
     model_flags_t zero1;
@@ -225,11 +216,11 @@ struct header
 
     u32 unknown2[29];
 
-    reflexive_t<marker>          markers;
-    reflexive_t<bone>            bones;
-    reflexive_t<region>          regions;
-    reflexive_t<geometry_header> geometries;
-    reflexive_t<shader_desc>     shaders;
+    reflexive_t<marker>              markers;
+    reflexive_t<bone>                bones;
+    reflexive_t<region>              regions;
+    reflexive_t<geometry_header<V>>  geometries;
+    reflexive_t<shader::shader_desc> shaders;
 };
 
 } // namespace mod2

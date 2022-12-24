@@ -19,8 +19,6 @@ using stl_types::failure;
 using stl_types::result;
 using stl_types::success;
 
-using stl_types::String;
-
 namespace detail {
 
 FORCEDINLINE void close_dl_handle(void* handle)
@@ -38,10 +36,10 @@ FORCEDINLINE void close_dl_handle(void* handle)
     }
 }
 
-FORCEDINLINE String error()
+FORCEDINLINE std::optional<std::string> error()
 {
     if(auto error = dlerror(); !error)
-        return {};
+        return std::nullopt;
     else
         return error;
 }
@@ -59,7 +57,7 @@ FORCEDINLINE int from_open_flags(load_flags flags)
 
 } // namespace detail
 
-using dl_error = String;
+using dl_error = std::string;
 
 using dl_handle_t = semantic::generic_handle_t<
     void*,
@@ -77,7 +75,7 @@ static constexpr auto library_suffix =
     compile_info::platform::is_macos ? ".dylib" : ".so";
 
 FORCEDINLINE result<dynamic_lib, dl_error> load(
-    String const& name, load_params_t const& params = {})
+    std::string const& name, load_params_t const& params = {})
 {
     auto load_name = library_prefix + name + library_suffix;
 
@@ -85,7 +83,7 @@ FORCEDINLINE result<dynamic_lib, dl_error> load(
            name.c_str(), RTLD_NOW | detail::from_open_flags(params.flags));
        !handle)
     {
-        return failure(detail::error());
+        return failure(detail::error().value_or("[no error]"));
     } else
     {
         return success(dynamic_lib{
@@ -95,17 +93,17 @@ FORCEDINLINE result<dynamic_lib, dl_error> load(
 }
 
 template<typename ReturnType, typename... Args>
-FORCEDINLINE result<stl_types::Function<ReturnType(Args...)>, dl_error>
-             symbol_from(dynamic_lib& lib, String const& symbol)
+FORCEDINLINE result<std::function<ReturnType(Args...)>, dl_error>
+             symbol_from(dynamic_lib& lib, std::string const& symbol)
 {
-    using function_type = stl_types::Function<ReturnType(Args...)>;
+    using function_type = std::function<ReturnType(Args...)>;
     using pointer_type  = ReturnType (*)(Args...);
 
-    if(auto symbol = dlsym(lib.handle, symbol.c_str()); !symbol)
+    if(auto symbol_ = dlsym(lib.handle, symbol.c_str()); !symbol_)
         return failure(detail::error());
     else
     {
-        auto f_ptr = reinterpret_cast<pointer_type>(symbol);
+        auto f_ptr = reinterpret_cast<pointer_type>(symbol_);
         return success(function_type(f_ptr));
     }
 }

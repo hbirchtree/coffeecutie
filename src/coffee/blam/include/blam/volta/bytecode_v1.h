@@ -2,9 +2,7 @@
 
 #include <peripherals/libc/types.h>
 
-namespace blam {
-namespace hsc {
-namespace bc {
+namespace blam::hsc::bc {
 
 /* Xbox maps, a30 and b30 on PC */
 enum class v1 : libc_types::i16
@@ -648,6 +646,4 @@ enum class v1 : libc_types::i16
     max_opcode = 550,
 };
 
-} // namespace bc
-} // namespace hsc
 } // namespace blam

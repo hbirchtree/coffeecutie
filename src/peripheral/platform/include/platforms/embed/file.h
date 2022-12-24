@@ -4,15 +4,9 @@
 #include <peripherals/semantic/chunk.h>
 #include <platforms/base/file.h>
 
-namespace platform {
-namespace file {
-namespace embed {
+namespace platform::file::embed {
 
-#if __cplusplus__ >= 201703L
 using file_reference_t = std::string_view;
-#else
-using file_reference_t = const char*;
-#endif
 
 struct data_descriptor_t
 {
@@ -23,11 +17,27 @@ struct data_descriptor_t
 #if !defined(COFFEE_LINUX)
 constexpr bool embeds_enabled = false;
 #else
-extern bool embeds_enabled;
+extern const bool embeds_enabled;
 #endif
 
-extern bool file_lookup(file_reference_t query, semantic::Bytes& data);
+namespace detail {
+extern semantic::Span<const data_descriptor_t> files_listing();
+extern semantic::Span<const libc_types::u8>    files_data();
+} // namespace detail
 
-} // namespace embed
-} // namespace file
-} // namespace platform
+FORCEDINLINE std::optional<semantic::Span<const libc_types::u8>> file_lookup(
+    file_reference_t query)
+{
+    auto range = detail::files_listing();
+    auto it    = std::find_if(
+        range.begin(), range.end(), [query](data_descriptor_t const& e) {
+            return e.name == query;
+        });
+
+    if(it == range.end())
+        return std::nullopt;
+
+    return detail::files_data().subspan(it->offset, it->size);
+}
+
+} // namespace platform::file::embed

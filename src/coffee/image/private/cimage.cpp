@@ -347,10 +347,11 @@ bool SaveTGA(Bytes& target, const image_const& src, stb_error& ec)
         src.data);
     target.updatePointers(semantic::Ownership::Owned);
 
-    if(res == 0)
+    if(!res)
     {
         ec = STBError::EncodingError;
-        ec = stbi_failure_reason();
+        if(auto err = stbi_failure_reason())
+            ec = err;
     }
 
     return res;
@@ -375,7 +376,8 @@ bool SaveJPG(Bytes& target, const image_const& src, stb_error& ec, int qual)
     if(!res)
     {
         ec = STBError::EncodingError;
-        ec = stbi_failure_reason();
+        if(auto err = stbi_failure_reason())
+            ec = err;
     }
 
     return res;

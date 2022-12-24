@@ -8,48 +8,48 @@
 template<typename Version>
 struct BlamBspWidget;
 
-template<typename Version>
-using BlamBspWidgetTag = Components::TaggedTypeWrapper<BlamBspWidget<Version>>;
+template<typename V>
+using BlamBspWidgetManifest = Components::SubsystemManifest<
+    type_list_t<BspReference, ShaderData, SubModel>,
+    type_list_t<ShaderCache<V>, BSPCache<V>>,
+    empty_list_t>;
 
-template<typename Version>
+template<typename V>
 struct BlamBspWidget : Components::RestrictedSubsystem<
-                           BlamBspWidgetTag<Version>,
-                           type_list_t<BspTag, ShaderTag, SubModelTag>,
-                           empty_list_t>
+                           BlamBspWidget<V>,
+                           BlamBspWidgetManifest<V>>
 {
-    using parent_type = Components::RestrictedSubsystem<
-        BlamBspWidgetTag<Version>,
-        type_list_t<BspTag, ShaderTag, SubModelTag>,
-        empty_list_t>;
+    using type  = BlamBspWidget<V>;
+    using Proxy = Components::proxy_of<BlamBspWidgetManifest<V>>;
 
-    using Proxy = typename parent_type::Proxy;
-
-    BlamBspWidget(BlamData<Version>& data) :
-        m_data(&data), m_map(&m_data->map_container)
+    BlamBspWidget(BlamData<V>* data) :
+        m_data(data), m_map(&m_data->map_container)
     {
     }
 
-    virtual void start_restricted(Proxy& e, time_point const&) override
+    void start_restricted(Proxy& e, time_point const&)
     {
         using Components::Entity;
         using Components::EntityRef;
 
-        auto bsps   = e.template select<BspTag>();
-        auto models = e.template select<SubModelTag>();
+        auto bsps   = e.template select<BspReference>();
+        auto models = e.template select<SubModel>();
+        auto& shader_cache = e.template subsystem<ShaderCache<V>>();
+        auto& bsp_cache = e.template subsystem<BSPCache<V>>();
 
         if(ImGui::Begin("Static models"))
         {
             CString current_bsp;
-            bool current_hidden = true;
+            bool    current_hidden = true;
 
             for(Entity& bsp_ : bsps)
             {
-                auto                bsp_e = e.template ref<Proxy>(bsp_);
-                BspReference& bsp   = bsp_e.template get<BspTag>();
+                auto          bsp_e = e.template ref<Proxy>(bsp_);
+                BspReference& bsp   = bsp_e.template get<BspReference>();
 
-                BSPItem const&    bsp_it = m_data->bsp_cache.find(bsp.bsp)->second;
-                ShaderItem const& shader =
-                    m_data->shader_cache.find(bsp.shader)->second;
+                BSPItem const& bsp_it = bsp_cache.find(bsp.bsp)->second;
+                ShaderItem const& shader
+                    = shader_cache.find(bsp.shader)->second;
 
                 auto bsp_name    = m_map->get_name(bsp_it.tag);
                 auto shader_name = m_map->get_name(shader.tag);
@@ -58,7 +58,7 @@ struct BlamBspWidget : Components::RestrictedSubsystem<
                 {
                     if(!current_bsp.empty() && !current_hidden)
                         ImGui::TreePop();
-                    current_bsp = bsp_name;
+                    current_bsp    = bsp_name;
                     current_hidden = !ImGui::TreeNode(current_bsp.c_str());
                 }
 
@@ -70,7 +70,9 @@ struct BlamBspWidget : Components::RestrictedSubsystem<
                 if(current_hidden)
                     continue;
 
-                ImGui::Checkbox(shader_name, &bsp.visible);
+                ImGui::Checkbox(shader_name.data(), &bsp.visible);
+                if(bsp.visible)
+                    cDebug("{0}", bsp.visible);
             }
 
             if(!current_bsp.empty() && !current_hidden)
@@ -80,17 +82,22 @@ struct BlamBspWidget : Components::RestrictedSubsystem<
 
         if(ImGui::Begin("Sectors"))
         {
+            String name;
             for(auto& region : m_bsps)
-                ImGui::Checkbox(region.first.c_str(), &region.second);
+            {
+                name.clear();
+                name.insert(name.begin(), region.first.begin(), region.first.end());
+                ImGui::Checkbox(name.c_str(), &region.second);
+            }
         }
         ImGui::End();
     }
-    virtual void end_restricted(Proxy&, time_point const&) override
+    void end_restricted(Proxy&, time_point const&)
     {
     }
 
-    BlamData<Version>*         m_data;
-    blam::map_container const* m_map;
+    BlamData<V>*                  m_data;
+    blam::map_container<V> const* m_map;
 
-    Map<CString, bool> m_bsps;
+    Map<std::string_view, bool> m_bsps;
 };

@@ -381,7 +381,10 @@ STATICINLINE void named_buffer_storage_mem(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedBufferStorageMemEXT)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glNamedBufferStorageMemEXT(buffer, size, memory, offset);
     detail::error_check("NamedBufferStorageMemEXT"sv);
@@ -412,7 +415,10 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureStorageMem2DEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glTextureStorageMem2DEXT(
         texture,
@@ -452,7 +458,10 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureStorageMem2DMultisampleEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glTextureStorageMem2DMultisampleEXT(
         texture,
@@ -492,7 +501,10 @@ requires(semantic::concepts::Size2D<size_3_i32, i32>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureStorageMem3DEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glTextureStorageMem3DEXT(
         texture,
@@ -534,7 +546,10 @@ requires(semantic::concepts::Size2D<size_3_i32, i32>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureStorageMem3DMultisampleEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glTextureStorageMem3DMultisampleEXT(
         texture,
@@ -607,7 +622,10 @@ STATICINLINE void texture_storage_mem_1d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureStorageMem1DEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glTextureStorageMem1DEXT(
         texture,

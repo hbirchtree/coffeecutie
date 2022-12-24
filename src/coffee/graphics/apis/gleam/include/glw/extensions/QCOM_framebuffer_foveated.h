@@ -26,7 +26,10 @@ STATICINLINE void framebuffer_foveation_config(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(FramebufferFoveationConfigQCOM)
-        glIsFramebuffer(framebuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsFramebuffer)
+            glIsFramebuffer(framebuffer);
+#endif
     }
     glFramebufferFoveationConfigQCOM(
         framebuffer,
@@ -63,7 +66,10 @@ STATICINLINE void framebuffer_foveation_parameter(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(FramebufferFoveationParametersQCOM)
-        glIsFramebuffer(framebuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsFramebuffer)
+            glIsFramebuffer(framebuffer);
+#endif
     }
     glFramebufferFoveationParametersQCOM(
         framebuffer,

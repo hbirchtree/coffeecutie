@@ -1,6 +1,7 @@
 #pragma once
 
 #include <concepts>
+#include <peripherals/concepts/span.h>
 #include <peripherals/concepts/vector.h>
 #include <peripherals/stl/functional_types.h>
 #include <peripherals/typing/enum/graphics/buffer_types.h>
@@ -94,6 +95,16 @@ constexpr type_shader_writable shader_writable;
 constexpr type_compute compute;
 constexpr type_draw    draw;
 
+enum attribute_flags
+{
+    none       = 0x0,
+    packed     = 0x1,
+    normalized = 0x2,
+    instanced  = 0x4,
+};
+
+C_FLAGS(attribute_flags, u32);
+
 } // namespace buffers
 
 namespace textures {
@@ -116,19 +127,12 @@ enum class type
     array       = 0x4,
     multisample = 0x8,
 
-    cube_north = 0x010,
-    cube_south = 0x020,
-    cube_west  = 0x040,
-    cube_east  = 0x080,
-    cube_up    = 0x100,
-    cube_down  = 0x200,
+    d2_array   = d2 | array,
+    cube_array = cube | array,
 
     type_mask     = 0b0111,
     modifier_mask = 0b1000,
-    cube_mask     = 0x0FF0,
 
-    d2_array   = d2 | array,
-    cube_array = cube | array,
 };
 C_FLAGS(type, u32);
 
@@ -141,30 +145,16 @@ struct texture_type
 using type_d2         = texture_type<type::d2>;
 using type_d2_array   = texture_type<type::d2_array>;
 using type_d3         = texture_type<type::d3>;
-using type_cube       = texture_type<type::cube>;
 using type_cube_array = texture_type<type::cube_array>;
 
 constexpr texture_type<type::d2>         d2;
 constexpr texture_type<type::d2_array>   d2_array;
 constexpr texture_type<type::d3>         d3;
-constexpr texture_type<type::cube>       cube;
 constexpr texture_type<type::cube_array> cube_array;
 
 static_assert(
     (type::d2_array & type::type_mask) == type::d2_array,
     "d2_array not matched");
-static_assert(
-    ((type::cube | type::cube_north) & type::type_mask) == type::cube,
-    "cube not matched");
-static_assert(
-    (type::multisample & type::modifier_mask) == type::multisample,
-    "modifier mask mismatch");
-static_assert(
-    (type::cube_north & type::cube_mask) == type::cube_north,
-    "cube mask mismatch");
-static_assert(
-    (type::cube_down & type::cube_mask) == type::cube_down,
-    "cube mask mismatch");
 
 enum class sample_properties
 {
@@ -394,10 +384,10 @@ concept RenderTarget = requires(T v)
     {v.resize(std::declval<typing::geometry::rect<i32>>(), 0)};
     {v.size()};
 
-    {v.clear(std::declval<typing::vector_types::Vecf2>(), 0)};
+    {v.clear(std::declval<typing::vector_types::Vecf4>(), 0)};
     {v.clear(f64())};
     {v.clear(i32())};
-    {v.clear(std::declval<typing::vector_types::Vecf2>(), f64(), i32(), 0)};
+    {v.clear(std::declval<typing::vector_types::Vecf4>(), f64(), i32(), 0)};
 };
 
 template<class T>
@@ -563,6 +553,22 @@ concept API = FixedPipeline<T> && Sampler<typename T::sampler_type> &&
     {v.default_rendertarget()};
 };
 
+namespace detail
+{
+
+    template<typename T>
+    concept is_uniform_pair = true
+        /*std::is_same_v<decltype(typename T::first_type().name), std::string_view> &&
+        std::is_same_v<decltype(typename T::first_type().location), libc_types::i32> &&
+        semantic::concepts::Span<typename T::second_type>*/;
+
+    template<typename S, typename... U>
+    concept is_uniform_stage =
+        (std::is_same_v<S, typing::graphics::ShaderStage> &&
+         (is_uniform_pair<U> && ...));
+
+} // namespace detail
+
 namespace util {
 namespace detail {
 
@@ -572,7 +578,7 @@ inline void dealloc_single(T& r)
     r->dealloc();
 }
 
-}
+} // namespace detail
 
 template<typename... T>
 inline void dealloc_all(T&... resources)
@@ -580,5 +586,5 @@ inline void dealloc_all(T&... resources)
     (..., detail::dealloc_single(resources));
 }
 
-}
+} // namespace util
 } // namespace semantic::concepts::graphics

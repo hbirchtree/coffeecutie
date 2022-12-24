@@ -9,7 +9,7 @@
 #include <typeinfo>
 #include <utility>
 
-#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_ANDROID)
+#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_ANDROID) || defined(COFFEE_BEAGLEBONE)
 // Nothing...
 #elif defined(COFFEE_APPLE)
 #define BOOST_STACKTRACE_USE_LIBC_BACKTRACE_FUNCTION

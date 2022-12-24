@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "rhi_features.h"
 #include "rhi_translate.h"
@@ -42,6 +42,7 @@ struct texture_t : std::enable_shared_from_this<texture_t>
         m_format(data), m_type(type), m_mipmaps(mipmaps), m_flags(properties)
     {
     }
+    virtual ~texture_t() = default;
 
     void        alloc(size_type const& size, bool create_storage = true);
     inline void dealloc()
@@ -76,6 +77,10 @@ struct sampler_t
     sampler_t(stl_types::ShPtr<texture_t> const& source) :
         m_source(source), m_type(source->m_type), m_features(source->m_features)
     {
+    }
+
+    inline void alloc()
+    {
 #if GLEAM_MAX_VERSION_ES != 0x200
         if(m_features.samplers)
         {
@@ -97,7 +102,7 @@ struct sampler_t
 #endif
     }
 
-    inline void setLod(typing::vector_types::Vecf2 const& range)
+    inline void set_lod(typing::vector_types::Vecf2 const& range)
     {
 #if GLEAM_MAX_VERSION_ES != 0x200
         if(m_features.samplers)
@@ -117,17 +122,18 @@ struct sampler_t
         }
     }
 
-    inline void setAnisotropy(f32 samples)
+    inline void set_anisotropic(f32 samples)
     {
+        i32 max_aniso = 0;
 #if GLEAM_MAX_VERSION != 0
         if(m_features.anisotropy)
         {
-            i32 max_aniso = 0;
             cmd::get_integerv(
-                static_cast<group::get_prop>(GL_MAX_TEXTURE_MAX_ANISOTROPY),
+                group::get_prop::max_texture_max_anisotropy,
                 SpanOne(max_aniso));
             if(samples > max_aniso)
-              Throw(std::out_of_range("anisotropic sample value out of range"));
+                Throw(
+                    std::out_of_range("anisotropic sample value out of range"));
             cmd::sampler_parameter(
                 m_handle,
                 group::sampler_parameter_f::texture_max_anisotropy,
@@ -138,12 +144,21 @@ struct sampler_t
 #if GLEAM_MAX_VERSION_ES != 0x200 && defined(GL_EXT_texture_filter_anisotropic)
         if(m_features.ext.texture_anisotropic)
         {
-            // TODO
+            cmd::get_integerv(
+                group::get_prop::max_texture_max_anisotropy_ext,
+                SpanOne(max_aniso));
+            if(samples > max_aniso)
+                Throw(
+                    std::out_of_range("anisotropic sample value out of range"));
+            cmd::sampler_parameter(
+                m_handle,
+                group::sampler_parameter_f::texture_max_anisotropy,
+                SpanOne(samples));
         }
 #endif
     }
 
-    inline void setFiltering(
+    inline void set_filtering(
         typing::Filtering mag,
         typing::Filtering min,
         typing::Filtering mip = typing::Filtering::None)
@@ -185,20 +200,49 @@ struct texture_2d_t : texture_t
     std::optional<error> upload(
         T const& data, VectorT const& offset, SizeT const& size, i32 level = 0)
     {
-        auto [ifmt1, type, layout] =
-            convert::to<group::internal_format>(m_format);
-        cmd::tex_sub_image_2d(
-            group::texture_target::texture_2d,
-            level,
-            offset,
-            size,
-            type,
-            layout,
-            data);
+        auto [ifmt1, type, layout]
+            = convert::to<group::internal_format>(m_format, m_features);
+        auto is_compressed = m_format.compressed();
+#if GLEAM_MAX_VERSION >= 0x450
+        if(m_features.dsa && is_compressed)
+        {
+            cmd::compressed_texture_sub_image_2d(
+                m_handle, level, offset, size, ifmt1, data);
+        } else if(m_features.dsa)
+        {
+            cmd::texture_sub_image_2d(
+                m_handle, level, offset, size, layout, type, data);
+        } else
+#endif
+            if(is_compressed)
+        {
+            cmd::bind_texture(group::texture_target::texture_2d, m_handle);
+            cmd::compressed_tex_sub_image_2d(
+                group::texture_target::texture_2d,
+                level,
+                offset,
+                size,
+                ifmt1,
+                data);
+            cmd::bind_texture(group::texture_target::texture_2d, 0);
+        } else
+        {
+            cmd::bind_texture(group::texture_target::texture_2d, m_handle);
+            cmd::tex_sub_image_2d(
+                group::texture_target::texture_2d,
+                level,
+                offset,
+                size,
+                layout,
+                type,
+                data);
+            cmd::bind_texture(group::texture_target::texture_2d, 0);
+        }
         return std::nullopt;
     }
 };
 
+#if GLEAM_MAX_VERSION >= 0x120 || GLEAM_MAX_VERSION_ES >= 0x300
 struct texture_2da_t : texture_t
 {
     using texture_t::texture_t;
@@ -207,17 +251,46 @@ struct texture_2da_t : texture_t
     std::optional<error> upload(
         T const& data, VectorT const& offset, SizeT const& size, i32 level = 0)
     {
-        auto [ifmt1, type, layout] =
-            convert::to<group::internal_format>(m_format);
-        cmd::bind_texture(group::texture_target::texture_2d_array, m_handle);
-        cmd::tex_sub_image_3d(
-            group::texture_target::texture_2d_array,
-            level,
-            offset,
-            size,
-            layout,
-            type,
-            data);
+        auto [ifmt1, type, layout]
+            = convert::to<group::internal_format>(m_format, m_features);
+        auto is_compressed = m_format.compressed();
+#if GLEAM_MAX_VERSION >= 0x450
+        if(m_features.dsa && is_compressed)
+        {
+            cmd::compressed_texture_sub_image_3d(
+                m_handle, level, offset, size, ifmt1, data);
+        } else if(m_features.dsa)
+        {
+            cmd::texture_sub_image_3d(
+                m_handle, level, offset, size, layout, type, data);
+        } else
+#endif
+            if(is_compressed)
+        {
+            cmd::bind_texture(
+                group::texture_target::texture_2d_array, m_handle);
+            cmd::compressed_tex_sub_image_3d(
+                group::texture_target::texture_2d_array,
+                level,
+                offset,
+                size,
+                ifmt1,
+                data);
+            cmd::bind_texture(group::texture_target::texture_2d_array, 0);
+        } else
+        {
+            cmd::bind_texture(
+                group::texture_target::texture_2d_array, m_handle);
+            cmd::tex_sub_image_3d(
+                group::texture_target::texture_2d_array,
+                level,
+                offset,
+                size,
+                layout,
+                type,
+                data);
+            cmd::bind_texture(group::texture_target::texture_2d_array, 0);
+        }
         return std::nullopt;
     }
 };
@@ -230,27 +303,114 @@ struct texture_3d_t : texture_t
     std::optional<error> upload(
         T const& data, VectorT const& offset, SizeT const& size, i32 level = 0)
     {
-        auto [ifmt1, type, layout] =
-            convert::to<group::internal_format>(m_format);
-        cmd::bind_texture(group::texture_target::texture_3d, m_handle);
-        cmd::tex_sub_image_3d(
-            group::texture_target::texture_3d,
-            level,
-            offset,
-            size,
-            layout,
-            type,
-            data);
+        auto [ifmt1, type, layout]
+            = convert::to<group::internal_format>(m_format, m_features);
+        auto is_compressed = m_format.compressed();
+#if GLEAM_MAX_VERSION >= 0x450
+        if(m_features.dsa && is_compressed)
+        {
+            cmd::compressed_texture_sub_image_3d(
+                m_handle, level, offset, size, ifmt1, data);
+        } else if(m_features.dsa)
+        {
+            cmd::texture_sub_image_3d(
+                m_handle, level, offset, size, layout, type, data);
+        } else
+#endif
+            if(is_compressed)
+        {
+            cmd::bind_texture(group::texture_target::texture_3d, m_handle);
+            cmd::compressed_tex_sub_image_3d(
+                group::texture_target::texture_3d,
+                level,
+                offset,
+                size,
+                ifmt1,
+                data);
+        } else
+        {
+            cmd::bind_texture(group::texture_target::texture_3d, m_handle);
+            cmd::tex_sub_image_3d(
+                group::texture_target::texture_3d,
+                level,
+                offset,
+                size,
+                layout,
+                type,
+                data);
+        }
         return std::nullopt;
     }
 };
 
-#if GLEAM_MAX_VERSION >= 0x430 || defined(GL_EXT_texture_view) || \
-    defined(GL_OES_texture_view)
+struct texture_cube_array_t : texture_t
+{
+    using texture_t::texture_t;
+
+    template<class T, class VectorT, class SizeT>
+    std::optional<error> upload(
+        std::array<T, 6> const& data,
+        VectorT const&          offset,
+        SizeT const&            size,
+        i32                     level = 0)
+    {
+        auto [ifmt1, type, layout]
+            = convert::to<group::internal_format>(m_format, m_features);
+        auto    is_compressed = m_format.compressed();
+        VectorT offset_mul    = offset;
+        offset_mul[2]         = offset_mul[2] * 6;
+        for(auto const& face : data)
+        {
+#if GLEAM_MAX_VERSION >= 0x450
+            if(m_features.dsa && is_compressed)
+            {
+                cmd::compressed_texture_sub_image_3d(
+                    m_handle, level, offset_mul, size, ifmt1, data);
+            } else if(m_features.dsa)
+            {
+                cmd::texture_sub_image_3d(
+                    m_handle, level, offset_mul, size, layout, type, data);
+            } else
+#endif
+                if(is_compressed)
+            {
+                cmd::bind_texture(
+                    group::texture_target::texture_cube_map_array, m_handle);
+                cmd::compressed_tex_sub_image_3d(
+                    group::texture_target::texture_cube_map_array,
+                    level,
+                    offset_mul,
+                    size,
+                    ifmt1,
+                    data);
+                cmd::bind_texture(
+                    group::texture_target::texture_cube_map_array, 0);
+            } else
+            {
+                cmd::bind_texture(
+                    group::texture_target::texture_cube_map_array, m_handle);
+                cmd::tex_sub_image_3d(
+                    group::texture_target::texture_cube_map_array,
+                    level,
+                    offset_mul,
+                    size,
+                    layout,
+                    type,
+                    data);
+                cmd::bind_texture(
+                    group::texture_target::texture_cube_map_array, 0);
+            }
+        }
+        return std::nullopt;
+    }
+};
+#endif
+
+#if GLEAM_MAX_VERSION >= 0x430 || defined(GL_EXT_texture_view) \
+    || defined(GL_OES_texture_view)
 template<class TypeT, class VectorT, class SizeT>
-requires std::is_same_v<TypeT, textures::type_d2> &&
-    semantic::concepts::Vector<VectorT, u32, 3> &&
-    semantic::concepts::Size3D<SizeT, u32>
+requires std::is_same_v<TypeT, textures::type_d2> && semantic::concepts::
+    Vector<VectorT, u32, 3> && semantic::concepts::Size3D<SizeT, u32>
 inline auto make_texture_view(
     texture_t&                   origin,
     TypeT                        type,
@@ -282,8 +442,7 @@ inline auto make_texture_view(
         {
             cmd::get_texture_parameter(
                 origin.m_handle,
-                static_cast<group::get_texture_parameter>(
-                    GL_TEXTURE_IMMUTABLE_FORMAT),
+                group::get_texture_parameter::texture_immutable_format,
                 SpanOne(is_immutable));
         } else
 #endif
@@ -306,7 +465,8 @@ inline auto make_texture_view(
         out->m_handle.hnd,
         convert::to(TypeT::value),
         origin.m_handle.hnd,
-        std::get<0>(convert::to<group::sized_internal_format>(params.format)),
+        std::get<0>(convert::to<group::sized_internal_format>(
+            params.format, origin.m_features)),
         params.layer.min_,
         params.layer.count,
         params.mip.min_,
@@ -339,14 +499,17 @@ inline auto make_texture_view(Args...)
 #endif
 
 template<class TypeT, class VectorT, class SizeT>
-requires semantic::concepts::Vector<VectorT, u32, 3> &&
-    semantic::concepts::Size3D<SizeT, u32>
-inline auto make_texture_view(
-    texture_t&                   origin,
-    TypeT                        type,
-    textures::view_params const& params,
-    VectorT const&               offset,
-    SizeT const&                 size)
+requires(
+    semantic::concepts::
+        Vector<VectorT, u32, 3> || semantic::concepts::Vector<VectorT, u32, 2>)
+    && semantic::concepts::Size3D<SizeT, u32>
+    //
+    inline auto make_texture_view(
+        texture_t&                   origin,
+        TypeT                        type,
+        textures::view_params const& params,
+        VectorT const&               offset,
+        SizeT const&                 size)
 {
     return nullptr;
 }
@@ -363,13 +526,7 @@ auto texture_t::view(
 
 inline auto texture_t::sampler()
 {
-    if(!m_features.samplers)
-        Throw(undefined_behavior("this isn't gonna go well anyways"));
-#if GLEAM_MAX_VERSION_ES != 0x200
     return stl_types::MkShared<sampler_t>(this->shared_from_this());
-#else
-    return nullptr;
-#endif
 }
 
 } // namespace gleam

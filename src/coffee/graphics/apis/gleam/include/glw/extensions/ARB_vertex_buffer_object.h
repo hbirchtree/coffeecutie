@@ -46,7 +46,10 @@ STATICINLINE void bind_buffer(group::buffer_target_arb target, u32 buffer)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindBufferARB)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glBindBufferARB(static_cast<GLenum>(target), buffer);
     detail::error_check("BindBufferARB"sv);
@@ -248,7 +251,10 @@ STATICINLINE GLboolean is_buffer(u32 buffer)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(IsBufferARB)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     auto out = glIsBufferARB(buffer);
     detail::error_check("IsBufferARB"sv);

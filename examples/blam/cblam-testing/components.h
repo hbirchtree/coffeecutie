@@ -35,6 +35,9 @@ enum Passes
 
 struct BspReference
 {
+    using value_type = BspReference;
+    using type       = Components::Allocators::VectorContainer<value_type>;
+
     generation_idx_t bsp;
     generation_idx_t shader;
     generation_idx_t lightmap;
@@ -42,16 +45,15 @@ struct BspReference
     u32    draw_idx;
     Passes current_pass;
 
-    struct
-    {
-        GFX::D_DATA draw;
-        GFX::D_CALL call;
-    } draw;
-    bool visible = false;
+    gfx::draw_command draw;
+    bool              visible{false};
 };
 
 struct SubModel
 {
+    using value_type = SubModel;
+    using type       = Components::Allocators::VectorContainer<value_type>;
+
     ERef parent;
 
     generation_idx_t shader;
@@ -61,20 +63,23 @@ struct SubModel
     u32    draw_idx;
     Passes current_pass;
 
-    struct
-    {
-        GFX::D_DATA draw;
-        GFX::D_CALL call;
-    } draw;
+    gfx::draw_command draw;
 
+    template<typename V>
     void initialize(
-        generation_idx_t model_idx, ModelItem::SubModel const& model_)
+        generation_idx_t                       model_idx,
+        typename ModelItem<V>::SubModel const& model_)
     {
-        draw.call =
-            GFX::D_CALL().withIndexing().withTriStrip().withInstancing();
-        draw.draw = model_.draw;
-        model     = model_idx;
-        shader    = model_.shader;
+        draw.call = {
+            .indexed   = true,
+            .instanced = true,
+            .mode      = gfx::drawing::primitive::triangle_strip,
+        };
+        draw.data = {
+            model_.draw,
+        };
+        model  = model_idx;
+        shader = model_.shader;
     }
 };
 
@@ -99,6 +104,10 @@ static Vecf3 spawn_rotation_to_euler(SpawnType const* spawn)
 
 struct Model
 {
+    using value_type = Model;
+    using type       = Components::Allocators::VectorContainer<value_type>;
+    using tag_type   = value_type;
+
     Matf4 transform;
 
     Vector<ERef>                        models;
@@ -108,20 +117,26 @@ struct Model
     template<typename T>
     void initialize(T const* spawn)
     {
-        transform = typing::vectors::translation(Matf4(), spawn->pos) *
-                    typing::vectors::matrixify(
+        transform = typing::vectors::translation(Matf4(), spawn->pos)
+                    * typing::vectors::matrixify(
                         typing::vectors::euler(spawn_rotation_to_euler(spawn)));
     }
 };
 
 struct ObjectSpawn
 {
+    using value_type = ObjectSpawn;
+    using type       = Components::Allocators::VectorContainer<value_type>;
+
     blam::scn::object_spawn const* header = nullptr;
     blam::tag_t const*             tag    = nullptr;
 };
 
 struct MultiplayerSpawn
 {
+    using value_type = MultiplayerSpawn;
+    using type       = Components::Allocators::VectorContainer<value_type>;
+
     blam::scn::multiplayer_equipment const* spawn      = nullptr;
     blam::scn::item_collection const*       collection = nullptr;
     blam::scn::item const*                  item       = nullptr;
@@ -183,8 +198,11 @@ struct alignas(32) senv_micro
 
 struct ShaderData
 {
-    blam::tag_t const*       shader_tag;
-    blam::shader_base const* shader;
+    using value_type = ShaderData;
+    using type       = Components::Allocators::VectorContainer<value_type>;
+
+    blam::tag_t const*               shader_tag;
+    blam::shader::shader_base const* shader;
 
     generation_idx_t shader_id;
 
@@ -194,7 +212,8 @@ struct ShaderData
         return C_RCAST<T const*>(shader);
     }
 
-    inline Passes get_render_pass(ShaderCache& cache) const
+    template<typename V>
+    inline Passes get_render_pass(ShaderCache<V>& cache) const
     {
         using tc = blam::tag_class_t;
         using namespace enum_helpers;
@@ -204,19 +223,17 @@ struct ShaderData
 
         switch(shader_tag->tagclass_e[0])
         {
-        case tc::senv:
-        {
-            blam::shader_env const* shader = shader_data<blam::shader_env>();
+        case tc::senv: {
+            auto const* shader = shader_data<blam::shader::shader_env>();
 
             return Pass_EnvMicro;
             //            return shader->diffuse.micro.map.valid() ?
             //            Pass_EnvMicro : Pass_Env;
         }
-        case tc::soso:
-        {
-            auto flags = shader_data<blam::shader_model>()->flags;
-            bool transparent =
-                feval(flags, blam::shader_model::model_flags::no_alpha_test);
+        case tc::soso: {
+            auto flags       = shader_data<blam::shader::shader_model>()->flags;
+            bool transparent = feval(
+                flags, blam::shader::shader_model::model_flags::no_alpha_test);
             return transparent ? Pass_Glass : Pass_Env;
         }
         case tc::swat:
@@ -230,7 +247,8 @@ struct ShaderData
         }
     }
 
-    inline ShaderItem const& get_shader(ShaderCache& cache) const
+    template<typename V>
+    inline ShaderItem const& get_shader(ShaderCache<V>& cache) const
     {
         return cache.find(shader_id)->second;
     }
@@ -266,19 +284,3 @@ enum ObjectTags : u32
     ObjectMod2 = 0x100000,
     ObjectBsp  = ObjectMod2 << 1,
 };
-
-using BspTag              = Components::TagType<BspReference>;
-using SubModelTag         = Components::TagType<SubModel>;
-using ModelTag            = Components::TagType<Model>;
-using ObjectSpawnTag      = Components::TagType<ObjectSpawn>;
-using MultiplayerSpawnTag = Components::TagType<MultiplayerSpawn>;
-using ShaderTag           = Components::TagType<ShaderData>;
-
-using BspStore         = Components::Allocators::VectorContainer<BspTag>;
-using ModelStore       = Components::Allocators::VectorContainer<SubModelTag>;
-using ModelParentStore = Components::Allocators::VectorContainer<ModelTag>;
-using ObjectSpawnStore =
-    Components::Allocators::VectorContainer<ObjectSpawnTag>;
-using MultiplayerSpawnStore =
-    Components::Allocators::VectorContainer<MultiplayerSpawnTag>;
-using ShaderDataStore = Components::Allocators::VectorContainer<ShaderTag>;

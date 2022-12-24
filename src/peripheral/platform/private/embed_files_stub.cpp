@@ -1,17 +1,16 @@
 #include <platforms/embed/file.h>
 
-namespace platform {
-namespace file {
-namespace embed {
+namespace platform::file::embed {
 
-bool embeds_enabled = false;
+const bool embeds_enabled = false;
 
-bool file_lookup(file_reference_t, semantic::Bytes&)
+semantic::Span<const data_descriptor_t> files_listing()
 {
-    Throw(undefined_behavior(
-        "calling into embed::file_lookup without it being present"));
+    return {};
+}
+semantic::Span<const libc_types::u8> files_data()
+{
+    return {};
 }
 
-} // namespace embed
-} // namespace file
-} // namespace platform
+} // namespace platform::file::embed

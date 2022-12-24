@@ -5,6 +5,8 @@
 #include "rhi_translate.h"
 #include "rhi_versioning.h"
 
+#include <glw/extensions/EXT_discard_framebuffer.h>
+
 namespace gleam {
 
 struct rendertarget_t;
@@ -27,24 +29,35 @@ struct rendertarget_currency
 {
     u32 read{0}, draw{0};
 
-    inline void update(u32 hnd, group::framebuffer_target target)
+    inline bool update(u32 hnd, group::framebuffer_target target)
     {
+        bool changed = false;
         switch(target)
         {
         case group::framebuffer_target::framebuffer:
+            if(hnd == read && hnd == draw)
+                break;
             read = draw = hnd;
+            changed     = true;
             break;
 #if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
         case group::framebuffer_target::draw_framebuffer:
-            draw = hnd;
+            if(hnd == draw)
+                break;
+            draw    = hnd;
+            changed = true;
             break;
         case group::framebuffer_target::read_framebuffer:
-            read = hnd;
+            if(hnd == read)
+                break;
+            read    = hnd;
+            changed = true;
             break;
 #endif
         default:
-            break;
+            Throw(unimplemented_path("read/draw bindings not available"));
         }
+        return changed;
     }
 };
 
@@ -81,8 +94,15 @@ struct rendertarget_t
         u32                        i     = 0,
         u32                        layer = 0)
     {
+        auto target =
+#if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
+            group::framebuffer_target::draw_framebuffer;
+#else
+            group::framebuffer_target::framebuffer;
+#endif
+
         if(!m_features.dsa)
-            internal_bind(group::framebuffer_target::draw_framebuffer);
+            internal_bind(target);
 #if GLEAM_MAX_VERSION >= 0x450
         if(m_features.dsa)
             cmd::named_framebuffer_texture(
@@ -93,15 +113,12 @@ struct rendertarget_t
             if(m_features.framebuffer_texture)
         {
             cmd::framebuffer_texture(
-                group::framebuffer_target::draw_framebuffer,
-                convert::to(attachment, i),
-                texture.m_handle,
-                level);
+                target, convert::to(attachment, i), texture.m_handle, level);
         } else
 #endif
         {
             cmd::framebuffer_texture_2d(
-                group::framebuffer_target::draw_framebuffer,
+                target,
                 convert::to(attachment, i),
                 convert::to(texture.m_type),
                 texture.m_handle,
@@ -144,8 +161,14 @@ struct rendertarget_t
     requires semantic::concepts::Vector<vec_4_f32, f32, 4>
     inline void clear(vec_4_f32 const& color, u32 i = 0)
     {
+        auto target =
+#if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
+            group::framebuffer_target::draw_framebuffer;
+#else
+            group::framebuffer_target::framebuffer;
+#endif
         if(!m_features.dsa)
-            internal_bind(group::framebuffer_target::draw_framebuffer);
+            internal_bind(target);
 #if GLEAM_MAX_VERSION >= 0x450
         if(m_features.dsa)
             cmd::clear_named_framebufferfv(
@@ -169,8 +192,14 @@ struct rendertarget_t
 
     inline void clear(f64 depth)
     {
+        auto target =
+#if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
+            group::framebuffer_target::draw_framebuffer;
+#else
+            group::framebuffer_target::framebuffer;
+#endif
         if(!m_features.dsa)
-            internal_bind(group::framebuffer_target::draw_framebuffer);
+            internal_bind(target);
         auto depthf = static_cast<f32>(depth);
 #if GLEAM_MAX_VERSION >= 0x450
         if(m_features.dsa)
@@ -191,8 +220,14 @@ struct rendertarget_t
 
     inline void clear(i32 stencil)
     {
+        auto target =
+#if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
+            group::framebuffer_target::draw_framebuffer;
+#else
+            group::framebuffer_target::framebuffer;
+#endif
         if(!m_features.dsa)
-            internal_bind(group::framebuffer_target::draw_framebuffer);
+            internal_bind(target);
 #if GLEAM_MAX_VERSION >= 0x450
         if(m_features.dsa)
             cmd::clear_named_framebufferiv(
@@ -218,8 +253,14 @@ struct rendertarget_t
     inline void clear(vec_4_f32 const& color, f64 depth, i32 stencil, u32 i = 0)
     // clang-format on
     {
+        auto target =
+#if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
+            group::framebuffer_target::draw_framebuffer;
+#else
+            group::framebuffer_target::framebuffer;
+#endif
         if(!m_features.dsa)
-            internal_bind(group::framebuffer_target::draw_framebuffer);
+            internal_bind(target);
 #if GLEAM_MAX_VERSION >= 0x450
         if(m_features.dsa)
         {
@@ -236,8 +277,8 @@ struct rendertarget_t
                 stencil);
         } else
 #endif
-            if(m_features.clearbuffer)
 #if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
+            if(m_features.clearbuffer)
         {
             cmd::clear_bufferfv(
                 group::buffer::color, i, Span<const f32>(&color[0], 4));
@@ -254,10 +295,32 @@ struct rendertarget_t
             cmd::clear_stencil(stencil);
             cmd::clear_color(color);
             cmd::clear(
-                clear_buffer_mask::color_buffer_bit |
-                clear_buffer_mask::depth_buffer_bit |
-                clear_buffer_mask::stencil_buffer_bit);
+                clear_buffer_mask::color_buffer_bit
+                | clear_buffer_mask::depth_buffer_bit
+                | clear_buffer_mask::stencil_buffer_bit);
         }
+    }
+
+    inline void discard()
+    {
+#if GLEAM_MAX_VERSION == 0 && defined(GL_EXT_discard_framebuffer)
+        if(m_features.ext.discard_framebuffer)
+        {
+            using attachment = gl::group::invalidate_framebuffer_attachment;
+            std::array<attachment, 3> buffers = {{
+                attachment::color_ext,
+                attachment::depth_ext,
+                attachment::stencil_ext,
+            }};
+#if GLEAM_MAX_VERSION_ES >= 0x300
+            auto target = group::framebuffer_target::draw_framebuffer;
+#else
+            auto target = group::framebuffer_target::framebuffer;
+#endif
+            internal_bind(target);
+            gl::ext::discard_framebuffer::discard_framebuffer(target, buffers);
+        }
+#endif
     }
 
     features::rendertargets m_features;
@@ -266,8 +329,8 @@ struct rendertarget_t
 
     void internal_bind(group::framebuffer_target target)
     {
-        m_currency->update(m_handle, target);
-        cmd::bind_framebuffer(target, m_handle);
+        if(m_currency->update(m_handle, target))
+            cmd::bind_framebuffer(target, m_handle);
     }
 };
 
@@ -331,9 +394,9 @@ inline void detail::rendertarget_copy(
             cmd::read_buffer(
                 convert::to<group::read_buffer_mode>(srcAttachment, srci));
 #endif
-        group::texture_target texTarget =
-            dstTarget == 0 ? group::texture_target::texture_2d
-                           : static_cast<group::texture_target>(dstTarget);
+        group::texture_target texTarget
+            = dstTarget == 0 ? group::texture_target::texture_2d
+                             : static_cast<group::texture_target>(dstTarget);
         cmd::bind_texture(texTarget, dstTexture);
         cmd::copy_tex_sub_image_2d(
             texTarget,

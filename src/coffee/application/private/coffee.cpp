@@ -90,8 +90,8 @@ int MainSetup(MainWithArgs mainfun, int argc, char** argv, u32 flags)
     cDebug("Entering MainSetup() at {0}", str::print::pointerify(MainSetup));
 #endif
 
-#if defined(COFFEE_WINDOWS) && !defined(COFFEE_WINDOWS_UWP) && \
-    !defined(__MINGW64__)
+#if defined(COFFEE_WINDOWS) && !defined(COFFEE_WINDOWS_UWP) \
+    && !defined(__MINGW64__)
 #if MODE_RELEASE
     ShowWindow(GetConsoleWindow(), SW_HIDE);
 #else
@@ -181,11 +181,23 @@ FORCEDINLINE void PrintArchitectureInfo()
         compile_info::compiler::name,
         compile_info::compiler::version_str,
         compile_info::architecture);
-    cOutputPrint("Executing on {0}", info::system_name());
+    cOutputPrint(
+        "Executing on {0} {1} ({2})",
+        info::os::kernel(),
+        info::os::kernel_version(),
+        info::os::architecture());
     if(auto device = info::device::device(); device.has_value())
-        cOutputPrint("Device: {0} {1}",
-                     device.value().first,
-                     device.value().second);
+        cOutputPrint(
+            "Device: {0} {1}", device.value().first, device.value().second);
+    if(auto device = info::device::motherboard(); device.has_value())
+        cOutputPrint(
+            "Board: {0} {1}", device.value().first, device.value().second);
+    if(auto cpu = info::proc::model(); cpu.has_value())
+        cOutputPrint(
+            "Processor: {0} {1} @ {2} GHz",
+            cpu.value().first,
+            cpu.value().second,
+            info::proc::frequency() / 1000000.f);
 }
 
 FORCEDINLINE void PrintHelpInfo(args::ArgumentParser const& arg)
@@ -235,8 +247,8 @@ static void CoffeeInit_Internal(u32 flags)
         PrintArchitectureInfo();
     }
 
-    State::GetBuildInfo().default_window_name =
-        GetCurrentApp().application_name;
+    State::GetBuildInfo().default_window_name
+        = GetCurrentApp().application_name;
 }
 
 void SetPlatformState()
@@ -244,9 +256,11 @@ void SetPlatformState()
     /* Initialize state management in ::platform namespace */
     auto& platState = platform::state;
 
-    platState->m_LockState = State::LockState;
-    platState->SwapState   = State::SwapState;
-    platState->PeekState   = State::PeekState;
+    platState->m_LockState
+        = static_cast<stl_types::UqLock (*)(std::string_view)>(
+            State::LockState);
+    platState->SwapState = State::SwapState;
+    platState->PeekState = State::PeekState;
 
     platState->ProfilerEnabled   = State::ProfilerEnabled;
     platState->GetProfilerStore  = State::GetProfilerStore;
@@ -308,9 +322,8 @@ i32 CoffeeMain(MainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
     rq::runtime_queue::SetQueueContext(rq::runtime_queue::CreateContext());
 
 #if defined(COFFEE_CUSTOM_EXIT_HANDLING)
-    libc::signal::register_atexit([]() {
-        rq::runtime_queue::TerminateThreads();
-    });
+    libc::signal::register_atexit(
+        []() { rq::runtime_queue::TerminateThreads(); });
 #endif
 
     /* Set the program arguments so that we can look at them later */
@@ -369,8 +382,8 @@ i32 CoffeeMain(MainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
     i32 result = -1;
 
     if constexpr(
-        compile_info::platform::is_emscripten ||
-        compile_info::platform::is_gekko)
+        compile_info::platform::is_emscripten
+        || compile_info::platform::is_gekko)
         try
         {
             result = mainfun(argc, argv);
@@ -478,7 +491,10 @@ void GotoApplicationDir()
 static file::file_handle stack_file;
 
 static void stack_writer(
-    String const& frame, String const& ip, String const& filename, u32 line)
+    std::string_view frame,
+    std::string_view ip,
+    std::string_view filename,
+    u32              line)
 {
     auto out = Strings::fmt(
         R"({"frame": "{0}", "ip": "{1}", "file": "{2}", "line": {3}},)",
@@ -525,14 +541,20 @@ void InstallDefaultSigHandlers()
     });
 
 #if !defined(COFFEE_CUSTOM_STACKTRACE)
-    libc::signal::install(libc::signal::sig::fpe, generic_stacktrace);
-    libc::signal::install(libc::signal::sig::ill_op, generic_stacktrace);
-    libc::signal::install(libc::signal::sig::bus_error, generic_stacktrace);
-    libc::signal::install(libc::signal::sig::segfault, generic_stacktrace);
+    using libc::signal::sig;
 
-    libc::signal::install(libc::signal::sig::interrupt, [](i32) {
+    libc::signal::install(sig::fpe, generic_stacktrace);
+    libc::signal::install(sig::ill_op, generic_stacktrace);
+    libc::signal::install(sig::bus_error, generic_stacktrace);
+    libc::signal::install(sig::segfault, generic_stacktrace);
+
+    libc::signal::install(sig::terminate, [](i32) {
         CoffeeTerminate();
-        libc::signal::exit(libc::signal::sig::interrupt);
+        libc::signal::exit(sig::terminate);
+    });
+    libc::signal::install(sig::interrupt, [](i32) {
+        CoffeeTerminate();
+        libc::signal::exit(sig::interrupt);
     });
 #endif
 }

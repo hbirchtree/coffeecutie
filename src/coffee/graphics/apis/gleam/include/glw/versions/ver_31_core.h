@@ -90,7 +90,10 @@ requires(MinimumVersion<Current, Version<3, 1>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TexBuffer)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glTexBuffer(
         static_cast<GLenum>(target),
@@ -152,7 +155,10 @@ requires(MinimumVersion<Current, Version<3, 1>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetActiveUniformBlockName)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetActiveUniformBlockName(
         program,
@@ -186,7 +192,10 @@ requires(MinimumVersion<Current, Version<3, 1>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetActiveUniformBlockiv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetActiveUniformBlockiv(
         program,
@@ -217,7 +226,10 @@ requires(MinimumVersion<Current, Version<3, 1>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetActiveUniformName)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetActiveUniformName(
         program, uniformIndex, uniformName.size(), &length, uniformName.data());
@@ -251,7 +263,10 @@ requires(MinimumVersion<Current, Version<3, 1>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetActiveUniformsiv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetActiveUniformsiv(
         program,
@@ -279,7 +294,10 @@ requires(MinimumVersion<Current, Version<3, 1>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetUniformBlockIndex)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     auto out = glGetUniformBlockIndex(program, uniformBlockName.data());
     detail::error_check("GetUniformBlockIndex"sv);
@@ -309,7 +327,10 @@ requires(MinimumVersion<Current, Version<3, 1>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetUniformIndices)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     auto [uniformNames_lens, uniformNames_cstr, uniformNames_store] =
         detail::transform_strings(uniformNames);
@@ -338,7 +359,10 @@ requires(MinimumVersion<Current, Version<3, 1>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(UniformBlockBinding)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glUniformBlockBinding(program, uniformBlockIndex, uniformBlockBinding);
     detail::error_check("UniformBlockBinding"sv);

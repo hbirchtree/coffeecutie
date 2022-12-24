@@ -25,7 +25,10 @@ STATICINLINE void bind_frag_data_location_indexed(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindFragDataLocationIndexed)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glBindFragDataLocationIndexed(program, colorNumber, index, name.data());
     detail::error_check("BindFragDataLocationIndexed"sv);
@@ -44,7 +47,10 @@ get_frag_data_index(u32 program, std::string_view const& name)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetFragDataIndex)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     auto out = glGetFragDataIndex(program, name.data());
     detail::error_check("GetFragDataIndex"sv);

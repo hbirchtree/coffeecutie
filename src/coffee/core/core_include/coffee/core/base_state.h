@@ -21,15 +21,21 @@ namespace State {
 
 using GlobalState = platform::detail::GlobalState;
 
-extern stl_types::UqLock LockState(libc_types::cstring key);
+extern stl_types::UqLock LockState(std::string_view key);
 inline stl_types::UqLock LockState(GlobalState& state)
 {
     return stl_types::UqLock(state.access);
 }
 
 extern stl_types::ShPtr<GlobalState> SwapState(
-    libc_types::cstring key, stl_types::ShPtr<GlobalState> const& ptr);
-extern stl_types::ShPtr<GlobalState> const& PeekState(libc_types::cstring key);
+    std::string_view key, stl_types::ShPtr<GlobalState> const& ptr);
+extern stl_types::ShPtr<GlobalState> const& PeekState(std::string_view key);
+
+template<typename T>
+inline stl_types::ShPtr<T> CastState(std::string_view key)
+{
+    return std::dynamic_pointer_cast<T>(PeekState(key));
+}
 
 extern bool ProfilerEnabled();
 

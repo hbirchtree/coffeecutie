@@ -36,7 +36,10 @@ STATICINLINE void draw_vk_image(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(DrawVkImageNV)
-        glIsSampler(sampler);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsSampler)
+            glIsSampler(sampler);
+#endif
     }
     glDrawVkImageNV(vkImage, sampler, x0, y0, x1, y1, z, s0, t0, s1, t1);
     detail::error_check("DrawVkImageNV"sv);

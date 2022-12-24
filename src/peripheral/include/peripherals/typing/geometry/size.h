@@ -14,6 +14,7 @@ template<typename T>
 requires std::is_trivial<T>::value struct size_2d
 {
     using value_type = T;
+    static constexpr size_t row_size = 2;
 
     template<typename Self, typename U>
     STATICINLINE Self from_values(U w, U h)
@@ -105,6 +106,7 @@ template<typename T>
 requires std::is_trivial<T>::value struct size_3d
 {
     using value_type = T;
+    static constexpr size_t row_size = 3;
 
     STATICINLINE size_3d from_vector(vectors::tvector<T, 3> const& src)
     {

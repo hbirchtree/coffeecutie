@@ -13,6 +13,12 @@
 #define USE_POSIX_API 1
 #endif
 
+#if defined(COFFEE_ANDROID)
+#include "android/fsio.h"
+#include "android/mmio.h"
+#include "android/rdwrio.h"
+#endif
+
 #if defined(USE_POSIX_API)
 #include "posix/fsio.h"
 #include "posix/mmio.h"
@@ -29,10 +35,29 @@
 namespace platform::file {
 
 #if defined(COFFEE_ANDROID)
+#define PLATFORM_FILE_SUPPORTS_FS 1
+#define PLATFORM_FILE_SUPPORTS_LIST 1
+#define PLATFORM_FILE_SUPPORTS_MAPPING 1
 
-#endif
+using android::open_file;
+using android::read;
+using android::write;
 
-#if defined(USE_POSIX_API)
+using android::map;
+using android::unmap;
+
+using posix::create;
+using posix::create_directory;
+using android::exists;
+using android::file_info;
+using posix::remove;
+using android::size;
+using android::truncate;
+
+using android::list;
+
+using common::posix::error_message;
+#elif defined(USE_POSIX_API)
 #define PLATFORM_FILE_SUPPORTS_FS 1
 #define PLATFORM_FILE_SUPPORTS_LIST 1
 #define PLATFORM_FILE_SUPPORTS_MAPPING 1

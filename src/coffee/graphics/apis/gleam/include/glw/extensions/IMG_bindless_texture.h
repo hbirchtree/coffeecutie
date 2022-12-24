@@ -15,7 +15,10 @@ STATICINLINE GLuint64 get_texture_handle(u32 texture)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetTextureHandleIMG)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     auto out = glGetTextureHandleIMG(texture);
     detail::error_check("GetTextureHandleIMG"sv);
@@ -34,8 +37,14 @@ STATICINLINE GLuint64 get_texture_sampler_handle(u32 texture, u32 sampler)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetTextureSamplerHandleIMG)
-        glIsTexture(texture);
-        glIsSampler(sampler);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsSampler)
+            glIsSampler(sampler);
+#endif
     }
     auto out = glGetTextureSamplerHandleIMG(texture, sampler);
     detail::error_check("GetTextureSamplerHandleIMG"sv);
@@ -55,7 +64,10 @@ STATICINLINE void program_uniform_handle(u32 program, i32 location, u64 value)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformHandleui64IMG)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformHandleui64IMG(program, location, value);
     detail::error_check("ProgramUniformHandleui64IMG"sv);
@@ -80,7 +92,10 @@ requires(semantic::concepts::Span<span_const_u64>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformHandleui64vIMG)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformHandleui64vIMG(
         program,

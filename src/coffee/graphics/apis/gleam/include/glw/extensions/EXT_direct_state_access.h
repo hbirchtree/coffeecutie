@@ -402,7 +402,10 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(CopyTextureImage1DEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glCopyTextureImage1DEXT(
         texture,
@@ -445,7 +448,10 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(CopyTextureImage2DEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glCopyTextureImage2DEXT(
         texture,
@@ -485,7 +491,10 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(CopyTextureSubImage1DEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glCopyTextureSubImage1DEXT(
         texture,
@@ -526,7 +535,10 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(CopyTextureSubImage2DEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glCopyTextureSubImage2DEXT(
         texture,
@@ -565,7 +577,10 @@ requires(semantic::concepts::Span<span_void>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetTextureImageEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glGetTextureImageEXT(
         texture,
@@ -601,7 +616,10 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetTextureLevelParameterfvEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glGetTextureLevelParameterfvEXT(
         texture,
@@ -636,7 +654,10 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetTextureLevelParameterivEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glGetTextureLevelParameterivEXT(
         texture,
@@ -669,7 +690,10 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetTextureParameterfvEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glGetTextureParameterfvEXT(
         texture,
@@ -701,7 +725,10 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetTextureParameterivEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glGetTextureParameterivEXT(
         texture,
@@ -741,7 +768,10 @@ requires(semantic::concepts::Span<span_const_void>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureImage1DEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glTextureImage1DEXT(
         texture,
@@ -788,7 +818,10 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureImage2DEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glTextureImage2DEXT(
         texture,
@@ -822,7 +855,10 @@ STATICINLINE void texture_parameter(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureParameterfEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glTextureParameterfEXT(
         texture,
@@ -854,7 +890,10 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureParameterfvEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glTextureParameterfvEXT(
         texture,
@@ -883,7 +922,10 @@ STATICINLINE void texture_parameter(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureParameteriEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glTextureParameteriEXT(
         texture,
@@ -915,7 +957,10 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureParameterivEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glTextureParameterivEXT(
         texture,
@@ -954,7 +999,10 @@ requires(semantic::concepts::Span<span_const_void>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureSubImage1DEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glTextureSubImage1DEXT(
         texture,
@@ -1000,7 +1048,10 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureSubImage2DEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glTextureSubImage2DEXT(
         texture,
@@ -1046,7 +1097,10 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(CopyTextureSubImage3DEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glCopyTextureSubImage3DEXT(
         texture,
@@ -1095,7 +1149,10 @@ requires(semantic::concepts::Size2D<size_3_i32, i32>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureImage3DEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glTextureImage3DEXT(
         texture,
@@ -1146,7 +1203,10 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureSubImage3DEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glTextureSubImage3DEXT(
         texture,
@@ -1178,7 +1238,10 @@ STATICINLINE void bind_multi_texture(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindMultiTextureEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glBindMultiTextureEXT(
         static_cast<GLenum>(texunit), static_cast<GLenum>(target), texture);
@@ -2680,7 +2743,10 @@ requires(semantic::concepts::Span<span_const_void>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(CompressedTextureImage1DEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glCompressedTextureImage1DEXT(
         texture,
@@ -2724,7 +2790,10 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(CompressedTextureImage2DEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glCompressedTextureImage2DEXT(
         texture,
@@ -2770,7 +2839,10 @@ requires(semantic::concepts::Size2D<size_3_i32, i32>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(CompressedTextureImage3DEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glCompressedTextureImage3DEXT(
         texture,
@@ -2814,7 +2886,10 @@ requires(semantic::concepts::Span<span_const_void>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(CompressedTextureSubImage1DEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glCompressedTextureSubImage1DEXT(
         texture,
@@ -2860,7 +2935,10 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(CompressedTextureSubImage2DEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glCompressedTextureSubImage2DEXT(
         texture,
@@ -2910,7 +2988,10 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(CompressedTextureSubImage3DEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glCompressedTextureSubImage3DEXT(
         texture,
@@ -2946,7 +3027,10 @@ requires(semantic::concepts::Span<span_void>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetCompressedTextureImageEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glGetCompressedTextureImageEXT(
         texture,
@@ -3369,7 +3453,10 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetNamedBufferParameterivEXT)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glGetNamedBufferParameterivEXT(
         buffer,
@@ -3394,7 +3481,10 @@ requires(semantic::concepts::Span<span_void>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetNamedBufferPointervEXT)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glGetNamedBufferPointervEXT(
         buffer,
@@ -3420,7 +3510,10 @@ requires(semantic::concepts::Span<span_void>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetNamedBufferSubDataEXT)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glGetNamedBufferSubDataEXT(
         buffer,
@@ -3442,7 +3535,10 @@ STATICINLINE void* map_named_buffer(u32 buffer, group::buffer_access_arb access)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(MapNamedBufferEXT)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     auto out = glMapNamedBufferEXT(buffer, static_cast<GLenum>(access));
     detail::error_check("MapNamedBufferEXT"sv);
@@ -3469,7 +3565,10 @@ requires(semantic::concepts::Span<span_const_void>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedBufferDataEXT)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glNamedBufferDataEXT(
         buffer,
@@ -3499,7 +3598,10 @@ requires(semantic::concepts::Span<span_const_void>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedBufferSubDataEXT)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glNamedBufferSubDataEXT(
         buffer,
@@ -3520,7 +3622,10 @@ STATICINLINE GLboolean unmap_named_buffer(u32 buffer)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(UnmapNamedBufferEXT)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     auto out = glUnmapNamedBufferEXT(buffer);
     detail::error_check("UnmapNamedBufferEXT"sv);
@@ -3540,7 +3645,10 @@ STATICINLINE void program_uniform(u32 program, i32 location, f32 v0)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform1fEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform1fEXT(program, location, v0);
     detail::error_check("ProgramUniform1fEXT"sv);
@@ -3565,7 +3673,10 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform1fvEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform1fvEXT(
         program,
@@ -3588,7 +3699,10 @@ STATICINLINE void program_uniform(u32 program, i32 location, i32 v0)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform1iEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform1iEXT(program, location, v0);
     detail::error_check("ProgramUniform1iEXT"sv);
@@ -3613,7 +3727,10 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform1ivEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform1ivEXT(
         program,
@@ -3640,7 +3757,10 @@ requires(semantic::concepts::Vector<vec_2_f32, f32, 2>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform2fEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform2fEXT(program, location, v0.x(), v0.y());
     detail::error_check("ProgramUniform2fEXT"sv);
@@ -3664,7 +3784,10 @@ requires(semantic::concepts::Span<span_const_vec_2_f32>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform2fvEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform2fvEXT(
         program,
@@ -3691,7 +3814,10 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform2iEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform2iEXT(program, location, v0.x(), v0.y());
     detail::error_check("ProgramUniform2iEXT"sv);
@@ -3715,7 +3841,10 @@ requires(semantic::concepts::Span<span_const_vec_2_i32>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform2ivEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform2ivEXT(
         program, location, count, reinterpret_cast<const GLint*>(value.data()));
@@ -3740,7 +3869,10 @@ requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform3fEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform3fEXT(program, location, v0.x(), v0.y(), v0.z());
     detail::error_check("ProgramUniform3fEXT"sv);
@@ -3764,7 +3896,10 @@ requires(semantic::concepts::Span<span_const_vec_3_f32>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform3fvEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform3fvEXT(
         program,
@@ -3792,7 +3927,10 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform3iEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform3iEXT(program, location, v0.x(), v0.y(), v0.z());
     detail::error_check("ProgramUniform3iEXT"sv);
@@ -3816,7 +3954,10 @@ requires(semantic::concepts::Span<span_const_vec_3_i32>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform3ivEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform3ivEXT(
         program, location, count, reinterpret_cast<const GLint*>(value.data()));
@@ -3842,7 +3983,10 @@ requires(semantic::concepts::Vector<vec_4_f32, f32, 4>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform4fEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform4fEXT(program, location, v0.x(), v0.y(), v0.z(), v0.w());
     detail::error_check("ProgramUniform4fEXT"sv);
@@ -3866,7 +4010,10 @@ requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform4fvEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform4fvEXT(
         program,
@@ -3895,7 +4042,10 @@ requires(semantic::concepts::Vector<vec_4_i32, i32, 4>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform4iEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform4iEXT(program, location, v0.x(), v0.y(), v0.z(), v0.w());
     detail::error_check("ProgramUniform4iEXT"sv);
@@ -3919,7 +4069,10 @@ requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform4ivEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform4ivEXT(
         program, location, count, reinterpret_cast<const GLint*>(value.data()));
@@ -3949,7 +4102,10 @@ requires(semantic::concepts::Span<span_const_mat_2x2_f32>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix2fvEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformMatrix2fvEXT(
         program,
@@ -3983,7 +4139,10 @@ requires(semantic::concepts::Span<span_const_mat_3x3_f32>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix3fvEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformMatrix3fvEXT(
         program,
@@ -4017,7 +4176,10 @@ requires(semantic::concepts::Span<span_const_mat_4x4_f32>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix4fvEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformMatrix4fvEXT(
         program,
@@ -4051,7 +4213,10 @@ requires(semantic::concepts::Span<span_const_mat_2x3_f32>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix2x3fvEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformMatrix2x3fvEXT(
         program,
@@ -4085,7 +4250,10 @@ requires(semantic::concepts::Span<span_const_mat_2x4_f32>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix2x4fvEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformMatrix2x4fvEXT(
         program,
@@ -4119,7 +4287,10 @@ requires(semantic::concepts::Span<span_const_mat_3x2_f32>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix3x2fvEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformMatrix3x2fvEXT(
         program,
@@ -4153,7 +4324,10 @@ requires(semantic::concepts::Span<span_const_mat_3x4_f32>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix3x4fvEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformMatrix3x4fvEXT(
         program,
@@ -4187,7 +4361,10 @@ requires(semantic::concepts::Span<span_const_mat_4x2_f32>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix4x2fvEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformMatrix4x2fvEXT(
         program,
@@ -4221,7 +4398,10 @@ requires(semantic::concepts::Span<span_const_mat_4x3_f32>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix4x3fvEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformMatrix4x3fvEXT(
         program,
@@ -4250,7 +4430,10 @@ STATICINLINE void multi_tex_buffer(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(MultiTexBufferEXT)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glMultiTexBufferEXT(
         static_cast<GLenum>(texunit),
@@ -4278,8 +4461,14 @@ STATICINLINE void texture_buffer(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureBufferEXT)
-        glIsTexture(texture);
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glTextureBufferEXT(
         texture,
@@ -4373,7 +4562,10 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetTextureParameterIivEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glGetTextureParameterIivEXT(
         texture,
@@ -4405,7 +4597,10 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetTextureParameterIuivEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glGetTextureParameterIuivEXT(
         texture,
@@ -4501,7 +4696,10 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureParameterIivEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glTextureParameterIivEXT(
         texture,
@@ -4534,7 +4732,10 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureParameterIuivEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glTextureParameterIuivEXT(
         texture,
@@ -4558,7 +4759,10 @@ STATICINLINE void program_uniform(u32 program, i32 location, u32 v0)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform1uiEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform1uiEXT(program, location, v0);
     detail::error_check("ProgramUniform1uiEXT"sv);
@@ -4583,7 +4787,10 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform1uivEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform1uivEXT(
         program,
@@ -4610,7 +4817,10 @@ requires(semantic::concepts::Vector<vec_2_u32, u32, 2>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform2uiEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform2uiEXT(program, location, v0.x(), v0.y());
     detail::error_check("ProgramUniform2uiEXT"sv);
@@ -4634,7 +4844,10 @@ requires(semantic::concepts::Span<span_const_vec_2_u32>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform2uivEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform2uivEXT(
         program,
@@ -4662,7 +4875,10 @@ requires(semantic::concepts::Vector<vec_3_u32, u32, 3>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform3uiEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform3uiEXT(program, location, v0.x(), v0.y(), v0.z());
     detail::error_check("ProgramUniform3uiEXT"sv);
@@ -4686,7 +4902,10 @@ requires(semantic::concepts::Span<span_const_vec_3_u32>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform3uivEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform3uivEXT(
         program,
@@ -4715,7 +4934,10 @@ requires(semantic::concepts::Vector<vec_4_u32, u32, 4>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform4uiEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform4uiEXT(program, location, v0.x(), v0.y(), v0.z(), v0.w());
     detail::error_check("ProgramUniform4uiEXT"sv);
@@ -4739,7 +4961,10 @@ requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform4uivEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform4uivEXT(
         program,
@@ -4772,7 +4997,10 @@ requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedProgramLocalParameters4fvEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glNamedProgramLocalParameters4fvEXT(
         program,
@@ -4802,7 +5030,10 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetNamedProgramLocalParameterIivEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetNamedProgramLocalParameterIivEXT(
         program,
@@ -4831,7 +5062,10 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetNamedProgramLocalParameterIuivEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetNamedProgramLocalParameterIuivEXT(
         program,
@@ -4864,7 +5098,10 @@ requires(semantic::concepts::Vector<vec_4_i32, i32, 4>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedProgramLocalParameterI4iEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glNamedProgramLocalParameterI4iEXT(
         program,
@@ -4898,7 +5135,10 @@ requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedProgramLocalParameterI4ivEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glNamedProgramLocalParameterI4ivEXT(
         program,
@@ -4931,7 +5171,10 @@ requires(semantic::concepts::Vector<vec_4_u32, u32, 4>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedProgramLocalParameterI4uiEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glNamedProgramLocalParameterI4uiEXT(
         program,
@@ -4965,7 +5208,10 @@ requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedProgramLocalParameterI4uivEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glNamedProgramLocalParameterI4uivEXT(
         program,
@@ -4998,7 +5244,10 @@ requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedProgramLocalParametersI4ivEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glNamedProgramLocalParametersI4ivEXT(
         program,
@@ -5032,7 +5281,10 @@ requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedProgramLocalParametersI4uivEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glNamedProgramLocalParametersI4uivEXT(
         program,
@@ -5171,7 +5423,10 @@ requires(semantic::concepts::Span<span_f64>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetNamedProgramLocalParameterdvEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetNamedProgramLocalParameterdvEXT(
         program,
@@ -5200,7 +5455,10 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetNamedProgramLocalParameterfvEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetNamedProgramLocalParameterfvEXT(
         program,
@@ -5230,7 +5488,10 @@ requires(semantic::concepts::Span<span_void>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetNamedProgramStringEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetNamedProgramStringEXT(
         program,
@@ -5258,7 +5519,10 @@ STATICINLINE void get_named_programiv(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetNamedProgramivEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetNamedProgramivEXT(
         program,
@@ -5291,7 +5555,10 @@ requires(semantic::concepts::Vector<vec_4_f64, f64, 4>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedProgramLocalParameter4dEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glNamedProgramLocalParameter4dEXT(
         program,
@@ -5325,7 +5592,10 @@ requires(semantic::concepts::Span<span_const_vec_4_f64>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedProgramLocalParameter4dvEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glNamedProgramLocalParameter4dvEXT(
         program,
@@ -5358,7 +5628,10 @@ requires(semantic::concepts::Vector<vec_4_f32, f32, 4>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedProgramLocalParameter4fEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glNamedProgramLocalParameter4fEXT(
         program,
@@ -5392,7 +5665,10 @@ requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedProgramLocalParameter4fvEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glNamedProgramLocalParameter4fvEXT(
         program,
@@ -5423,7 +5699,10 @@ requires(semantic::concepts::Span<span_const_void>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedProgramStringEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glNamedProgramStringEXT(
         program,
@@ -5455,7 +5734,10 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetNamedRenderbufferParameterivEXT)
-        glIsRenderbuffer(renderbuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsRenderbuffer)
+            glIsRenderbuffer(renderbuffer);
+#endif
     }
     glGetNamedRenderbufferParameterivEXT(
         renderbuffer,
@@ -5483,7 +5765,10 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedRenderbufferStorageEXT)
-        glIsRenderbuffer(renderbuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsRenderbuffer)
+            glIsRenderbuffer(renderbuffer);
+#endif
     }
     glNamedRenderbufferStorageEXT(
         renderbuffer, static_cast<GLenum>(internalformat), width[0], width[1]);
@@ -5511,7 +5796,10 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedRenderbufferStorageMultisampleEXT)
-        glIsRenderbuffer(renderbuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsRenderbuffer)
+            glIsRenderbuffer(renderbuffer);
+#endif
     }
     glNamedRenderbufferStorageMultisampleEXT(
         renderbuffer,
@@ -5545,7 +5833,10 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedRenderbufferStorageMultisampleCoverageEXT)
-        glIsRenderbuffer(renderbuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsRenderbuffer)
+            glIsRenderbuffer(renderbuffer);
+#endif
     }
     glNamedRenderbufferStorageMultisampleCoverageEXT(
         renderbuffer,
@@ -5570,7 +5861,10 @@ STATICINLINE GLenum check_named_framebuffer_status(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(CheckNamedFramebufferStatusEXT)
-        glIsFramebuffer(framebuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsFramebuffer)
+            glIsFramebuffer(framebuffer);
+#endif
     }
     auto out = glCheckNamedFramebufferStatusEXT(
         framebuffer, static_cast<GLenum>(target));
@@ -5600,7 +5894,10 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetNamedFramebufferAttachmentParameterivEXT)
-        glIsFramebuffer(framebuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsFramebuffer)
+            glIsFramebuffer(framebuffer);
+#endif
     }
     glGetNamedFramebufferAttachmentParameterivEXT(
         framebuffer,
@@ -5628,8 +5925,14 @@ STATICINLINE void named_framebuffer_renderbuffer(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedFramebufferRenderbufferEXT)
-        glIsFramebuffer(framebuffer);
-        glIsRenderbuffer(renderbuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsFramebuffer)
+            glIsFramebuffer(framebuffer);
+#endif
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsRenderbuffer)
+            glIsRenderbuffer(renderbuffer);
+#endif
     }
     glNamedFramebufferRenderbufferEXT(
         framebuffer,
@@ -5659,8 +5962,14 @@ STATICINLINE void named_framebuffer_texture_1d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedFramebufferTexture1DEXT)
-        glIsFramebuffer(framebuffer);
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsFramebuffer)
+            glIsFramebuffer(framebuffer);
+#endif
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glNamedFramebufferTexture1DEXT(
         framebuffer,
@@ -5691,8 +6000,14 @@ STATICINLINE void named_framebuffer_texture_2d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedFramebufferTexture2DEXT)
-        glIsFramebuffer(framebuffer);
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsFramebuffer)
+            glIsFramebuffer(framebuffer);
+#endif
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glNamedFramebufferTexture2DEXT(
         framebuffer,
@@ -5725,8 +6040,14 @@ STATICINLINE void named_framebuffer_texture_3d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedFramebufferTexture3DEXT)
-        glIsFramebuffer(framebuffer);
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsFramebuffer)
+            glIsFramebuffer(framebuffer);
+#endif
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glNamedFramebufferTexture3DEXT(
         framebuffer,
@@ -5770,7 +6091,10 @@ STATICINLINE void generate_texture_mipmap(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GenerateTextureMipmapEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glGenerateTextureMipmapEXT(texture, static_cast<GLenum>(target));
     detail::error_check("GenerateTextureMipmapEXT"sv);
@@ -5789,7 +6113,10 @@ STATICINLINE void framebuffer_draw_buffer(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(FramebufferDrawBufferEXT)
-        glIsFramebuffer(framebuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsFramebuffer)
+            glIsFramebuffer(framebuffer);
+#endif
     }
     glFramebufferDrawBufferEXT(framebuffer, static_cast<GLenum>(mode));
     detail::error_check("FramebufferDrawBufferEXT"sv);
@@ -5813,7 +6140,10 @@ requires(semantic::concepts::Span<span_const_draw_buffer_mode>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(FramebufferDrawBuffersEXT)
-        glIsFramebuffer(framebuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsFramebuffer)
+            glIsFramebuffer(framebuffer);
+#endif
     }
     glFramebufferDrawBuffersEXT(
         framebuffer,
@@ -5835,7 +6165,10 @@ STATICINLINE void framebuffer_read_buffer(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(FramebufferReadBufferEXT)
-        glIsFramebuffer(framebuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsFramebuffer)
+            glIsFramebuffer(framebuffer);
+#endif
     }
     glFramebufferReadBufferEXT(framebuffer, static_cast<GLenum>(mode));
     detail::error_check("FramebufferReadBufferEXT"sv);
@@ -5861,7 +6194,10 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetFramebufferParameterivEXT)
-        glIsFramebuffer(framebuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsFramebuffer)
+            glIsFramebuffer(framebuffer);
+#endif
     }
     glGetFramebufferParameterivEXT(
         framebuffer,
@@ -5914,8 +6250,14 @@ STATICINLINE void named_framebuffer_texture(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedFramebufferTextureEXT)
-        glIsFramebuffer(framebuffer);
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsFramebuffer)
+            glIsFramebuffer(framebuffer);
+#endif
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glNamedFramebufferTextureEXT(
         framebuffer, static_cast<GLenum>(attachment), texture, level);
@@ -5942,8 +6284,14 @@ STATICINLINE void named_framebuffer_texture_face(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedFramebufferTextureFaceEXT)
-        glIsFramebuffer(framebuffer);
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsFramebuffer)
+            glIsFramebuffer(framebuffer);
+#endif
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glNamedFramebufferTextureFaceEXT(
         framebuffer,
@@ -5974,8 +6322,14 @@ STATICINLINE void named_framebuffer_texture_layer(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedFramebufferTextureLayerEXT)
-        glIsFramebuffer(framebuffer);
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsFramebuffer)
+            glIsFramebuffer(framebuffer);
+#endif
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glNamedFramebufferTextureLayerEXT(
         framebuffer, static_cast<GLenum>(attachment), texture, level, layer);
@@ -5996,7 +6350,10 @@ STATICINLINE void multi_tex_renderbuffer(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(MultiTexRenderbufferEXT)
-        glIsRenderbuffer(renderbuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsRenderbuffer)
+            glIsRenderbuffer(renderbuffer);
+#endif
     }
     glMultiTexRenderbufferEXT(
         static_cast<GLenum>(texunit),
@@ -6019,8 +6376,14 @@ STATICINLINE void texture_renderbuffer(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureRenderbufferEXT)
-        glIsTexture(texture);
-        glIsRenderbuffer(renderbuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsRenderbuffer)
+            glIsRenderbuffer(renderbuffer);
+#endif
     }
     glTextureRenderbufferEXT(
         texture, static_cast<GLenum>(target), renderbuffer);
@@ -6049,8 +6412,14 @@ STATICINLINE void vertex_array_color_offset(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(VertexArrayColorOffsetEXT)
-        glIsVertexArray(vaobj);
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsVertexArray)
+            glIsVertexArray(vaobj);
+#endif
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glVertexArrayColorOffsetEXT(
         vaobj, buffer, size, static_cast<GLenum>(type), stride, offset);
@@ -6072,8 +6441,14 @@ STATICINLINE void vertex_array_edge_flag_offset(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(VertexArrayEdgeFlagOffsetEXT)
-        glIsVertexArray(vaobj);
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsVertexArray)
+            glIsVertexArray(vaobj);
+#endif
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glVertexArrayEdgeFlagOffsetEXT(vaobj, buffer, stride, offset);
     detail::error_check("VertexArrayEdgeFlagOffsetEXT"sv);
@@ -6099,8 +6474,14 @@ STATICINLINE void vertex_array_fog_coord_offset(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(VertexArrayFogCoordOffsetEXT)
-        glIsVertexArray(vaobj);
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsVertexArray)
+            glIsVertexArray(vaobj);
+#endif
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glVertexArrayFogCoordOffsetEXT(
         vaobj, buffer, static_cast<GLenum>(type), stride, offset);
@@ -6127,8 +6508,14 @@ STATICINLINE void vertex_array_index_offset(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(VertexArrayIndexOffsetEXT)
-        glIsVertexArray(vaobj);
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsVertexArray)
+            glIsVertexArray(vaobj);
+#endif
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glVertexArrayIndexOffsetEXT(
         vaobj, buffer, static_cast<GLenum>(type), stride, offset);
@@ -6159,8 +6546,14 @@ STATICINLINE void vertex_array_multi_tex_coord_offset(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(VertexArrayMultiTexCoordOffsetEXT)
-        glIsVertexArray(vaobj);
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsVertexArray)
+            glIsVertexArray(vaobj);
+#endif
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glVertexArrayMultiTexCoordOffsetEXT(
         vaobj,
@@ -6193,8 +6586,14 @@ STATICINLINE void vertex_array_normal_offset(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(VertexArrayNormalOffsetEXT)
-        glIsVertexArray(vaobj);
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsVertexArray)
+            glIsVertexArray(vaobj);
+#endif
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glVertexArrayNormalOffsetEXT(
         vaobj, buffer, static_cast<GLenum>(type), stride, offset);
@@ -6223,8 +6622,14 @@ STATICINLINE void vertex_array_secondary_color_offset(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(VertexArraySecondaryColorOffsetEXT)
-        glIsVertexArray(vaobj);
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsVertexArray)
+            glIsVertexArray(vaobj);
+#endif
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glVertexArraySecondaryColorOffsetEXT(
         vaobj, buffer, size, static_cast<GLenum>(type), stride, offset);
@@ -6253,8 +6658,14 @@ STATICINLINE void vertex_array_tex_coord_offset(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(VertexArrayTexCoordOffsetEXT)
-        glIsVertexArray(vaobj);
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsVertexArray)
+            glIsVertexArray(vaobj);
+#endif
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glVertexArrayTexCoordOffsetEXT(
         vaobj, buffer, size, static_cast<GLenum>(type), stride, offset);
@@ -6285,8 +6696,14 @@ STATICINLINE void vertex_array_vertex_attrib_i_offset(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(VertexArrayVertexAttribIOffsetEXT)
-        glIsVertexArray(vaobj);
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsVertexArray)
+            glIsVertexArray(vaobj);
+#endif
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glVertexArrayVertexAttribIOffsetEXT(
         vaobj, buffer, index, size, static_cast<GLenum>(type), stride, offset);
@@ -6319,8 +6736,14 @@ STATICINLINE void vertex_array_vertex_attrib_offset(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(VertexArrayVertexAttribOffsetEXT)
-        glIsVertexArray(vaobj);
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsVertexArray)
+            glIsVertexArray(vaobj);
+#endif
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glVertexArrayVertexAttribOffsetEXT(
         vaobj,
@@ -6356,8 +6779,14 @@ STATICINLINE void vertex_array_vertex_offset(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(VertexArrayVertexOffsetEXT)
-        glIsVertexArray(vaobj);
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsVertexArray)
+            glIsVertexArray(vaobj);
+#endif
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glVertexArrayVertexOffsetEXT(
         vaobj, buffer, size, static_cast<GLenum>(type), stride, offset);
@@ -6376,7 +6805,10 @@ STATICINLINE void disable_vertex_array(u32 vaobj, group::enable_cap array)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(DisableVertexArrayEXT)
-        glIsVertexArray(vaobj);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsVertexArray)
+            glIsVertexArray(vaobj);
+#endif
     }
     glDisableVertexArrayEXT(vaobj, static_cast<GLenum>(array));
     detail::error_check("DisableVertexArrayEXT"sv);
@@ -6394,7 +6826,10 @@ STATICINLINE void enable_vertex_array(u32 vaobj, group::enable_cap array)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(EnableVertexArrayEXT)
-        glIsVertexArray(vaobj);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsVertexArray)
+            glIsVertexArray(vaobj);
+#endif
     }
     glEnableVertexArrayEXT(vaobj, static_cast<GLenum>(array));
     detail::error_check("EnableVertexArrayEXT"sv);
@@ -6412,7 +6847,10 @@ STATICINLINE void disable_vertex_array_attrib(u32 vaobj, u32 index)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(DisableVertexArrayAttribEXT)
-        glIsVertexArray(vaobj);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsVertexArray)
+            glIsVertexArray(vaobj);
+#endif
     }
     glDisableVertexArrayAttribEXT(vaobj, index);
     detail::error_check("DisableVertexArrayAttribEXT"sv);
@@ -6430,7 +6868,10 @@ STATICINLINE void enable_vertex_array_attrib(u32 vaobj, u32 index)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(EnableVertexArrayAttribEXT)
-        glIsVertexArray(vaobj);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsVertexArray)
+            glIsVertexArray(vaobj);
+#endif
     }
     glEnableVertexArrayAttribEXT(vaobj, index);
     detail::error_check("EnableVertexArrayAttribEXT"sv);
@@ -6455,7 +6896,10 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetVertexArrayIntegeri_vEXT)
-        glIsVertexArray(vaobj);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsVertexArray)
+            glIsVertexArray(vaobj);
+#endif
     }
     glGetVertexArrayIntegeri_vEXT(
         vaobj,
@@ -6483,7 +6927,10 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetVertexArrayIntegervEXT)
-        glIsVertexArray(vaobj);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsVertexArray)
+            glIsVertexArray(vaobj);
+#endif
     }
     glGetVertexArrayIntegervEXT(
         vaobj,
@@ -6509,7 +6956,10 @@ requires(semantic::concepts::Span<span_void>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetVertexArrayPointeri_vEXT)
-        glIsVertexArray(vaobj);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsVertexArray)
+            glIsVertexArray(vaobj);
+#endif
     }
     glGetVertexArrayPointeri_vEXT(
         vaobj,
@@ -6535,7 +6985,10 @@ requires(semantic::concepts::Span<span_void>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetVertexArrayPointervEXT)
-        glIsVertexArray(vaobj);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsVertexArray)
+            glIsVertexArray(vaobj);
+#endif
     }
     glGetVertexArrayPointervEXT(
         vaobj,
@@ -6558,7 +7011,10 @@ STATICINLINE void flush_mapped_named_buffer_range(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(FlushMappedNamedBufferRangeEXT)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glFlushMappedNamedBufferRangeEXT(buffer, offset, length);
     detail::error_check("FlushMappedNamedBufferRangeEXT"sv);
@@ -6582,7 +7038,10 @@ STATICINLINE void* map_named_buffer_range(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(MapNamedBufferRangeEXT)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     auto out = glMapNamedBufferRangeEXT(
         buffer, offset, length, static_cast<GLenum>(access));
@@ -6609,7 +7068,10 @@ requires(semantic::concepts::Span<span_const_void>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedBufferStorageEXT)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glNamedBufferStorageEXT(
         buffer,
@@ -6642,7 +7104,10 @@ requires(semantic::concepts::Span<span_const_void>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ClearNamedBufferDataEXT)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glClearNamedBufferDataEXT(
         buffer,
@@ -6679,7 +7144,10 @@ requires(semantic::concepts::Span<span_const_void>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ClearNamedBufferSubDataEXT)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glClearNamedBufferSubDataEXT(
         buffer,
@@ -6712,7 +7180,10 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetNamedFramebufferParameterivEXT)
-        glIsFramebuffer(framebuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsFramebuffer)
+            glIsFramebuffer(framebuffer);
+#endif
     }
     glGetNamedFramebufferParameterivEXT(
         framebuffer,
@@ -6735,7 +7206,10 @@ STATICINLINE void named_framebuffer_parameter(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedFramebufferParameteriEXT)
-        glIsFramebuffer(framebuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsFramebuffer)
+            glIsFramebuffer(framebuffer);
+#endif
     }
     glNamedFramebufferParameteriEXT(
         framebuffer, static_cast<GLenum>(pname), param);
@@ -6755,7 +7229,10 @@ STATICINLINE void program_uniform(u32 program, i32 location, f64 x)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform1dEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform1dEXT(program, location, x);
     detail::error_check("ProgramUniform1dEXT"sv);
@@ -6780,7 +7257,10 @@ requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform1dvEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform1dvEXT(
         program,
@@ -6807,7 +7287,10 @@ requires(semantic::concepts::Vector<vec_2_f64, f64, 2>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform2dEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform2dEXT(program, location, x.x(), x.y());
     detail::error_check("ProgramUniform2dEXT"sv);
@@ -6831,7 +7314,10 @@ requires(semantic::concepts::Span<span_const_vec_2_f64>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform2dvEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform2dvEXT(
         program,
@@ -6859,7 +7345,10 @@ requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform3dEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform3dEXT(program, location, x.x(), x.y(), x.z());
     detail::error_check("ProgramUniform3dEXT"sv);
@@ -6883,7 +7372,10 @@ requires(semantic::concepts::Span<span_const_vec_3_f64>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform3dvEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform3dvEXT(
         program,
@@ -6912,7 +7404,10 @@ requires(semantic::concepts::Vector<vec_4_f64, f64, 4>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform4dEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform4dEXT(program, location, x.x(), x.y(), x.z(), x.w());
     detail::error_check("ProgramUniform4dEXT"sv);
@@ -6936,7 +7431,10 @@ requires(semantic::concepts::Span<span_const_vec_4_f64>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform4dvEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform4dvEXT(
         program,
@@ -6969,7 +7467,10 @@ requires(semantic::concepts::Span<span_const_mat_2x2_f64>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix2dvEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformMatrix2dvEXT(
         program,
@@ -7003,7 +7504,10 @@ requires(semantic::concepts::Span<span_const_mat_2x3_f64>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix2x3dvEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformMatrix2x3dvEXT(
         program,
@@ -7037,7 +7541,10 @@ requires(semantic::concepts::Span<span_const_mat_2x4_f64>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix2x4dvEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformMatrix2x4dvEXT(
         program,
@@ -7071,7 +7578,10 @@ requires(semantic::concepts::Span<span_const_mat_3x3_f64>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix3dvEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformMatrix3dvEXT(
         program,
@@ -7105,7 +7615,10 @@ requires(semantic::concepts::Span<span_const_mat_3x2_f64>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix3x2dvEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformMatrix3x2dvEXT(
         program,
@@ -7139,7 +7652,10 @@ requires(semantic::concepts::Span<span_const_mat_3x4_f64>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix3x4dvEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformMatrix3x4dvEXT(
         program,
@@ -7173,7 +7689,10 @@ requires(semantic::concepts::Span<span_const_mat_4x4_f64>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix4dvEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformMatrix4dvEXT(
         program,
@@ -7207,7 +7726,10 @@ requires(semantic::concepts::Span<span_const_mat_4x2_f64>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix4x2dvEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformMatrix4x2dvEXT(
         program,
@@ -7241,7 +7763,10 @@ requires(semantic::concepts::Span<span_const_mat_4x3_f64>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix4x3dvEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformMatrix4x3dvEXT(
         program,
@@ -7274,8 +7799,14 @@ STATICINLINE void texture_buffer_range(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureBufferRangeEXT)
-        glIsTexture(texture);
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glTextureBufferRangeEXT(
         texture,
@@ -7307,7 +7838,10 @@ STATICINLINE void texture_storage_1d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureStorage1DEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glTextureStorage1DEXT(
         texture, target, levels, static_cast<GLenum>(internalformat), width);
@@ -7337,7 +7871,10 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureStorage2DEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glTextureStorage2DEXT(
         texture,
@@ -7373,7 +7910,10 @@ requires(semantic::concepts::Size2D<size_3_i32, i32>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureStorage3DEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glTextureStorage3DEXT(
         texture,
@@ -7411,7 +7951,10 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureStorage2DMultisampleEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glTextureStorage2DMultisampleEXT(
         texture,
@@ -7450,7 +7993,10 @@ requires(semantic::concepts::Size2D<size_3_i32, i32>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureStorage3DMultisampleEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glTextureStorage3DMultisampleEXT(
         texture,
@@ -7480,8 +8026,14 @@ STATICINLINE void vertex_array_bind_vertex_buffer(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(VertexArrayBindVertexBufferEXT)
-        glIsVertexArray(vaobj);
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsVertexArray)
+            glIsVertexArray(vaobj);
+#endif
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glVertexArrayBindVertexBufferEXT(
         vaobj, bindingindex, buffer, offset, stride);
@@ -7502,7 +8054,10 @@ STATICINLINE void vertex_array_vertex_attrib_binding(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(VertexArrayVertexAttribBindingEXT)
-        glIsVertexArray(vaobj);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsVertexArray)
+            glIsVertexArray(vaobj);
+#endif
     }
     glVertexArrayVertexAttribBindingEXT(vaobj, attribindex, bindingindex);
     detail::error_check("VertexArrayVertexAttribBindingEXT"sv);
@@ -7530,7 +8085,10 @@ STATICINLINE void vertex_array_vertex_attrib_format(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(VertexArrayVertexAttribFormatEXT)
-        glIsVertexArray(vaobj);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsVertexArray)
+            glIsVertexArray(vaobj);
+#endif
     }
     glVertexArrayVertexAttribFormatEXT(
         vaobj,
@@ -7562,7 +8120,10 @@ STATICINLINE void vertex_array_vertex_attrib_i_format(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(VertexArrayVertexAttribIFormatEXT)
-        glIsVertexArray(vaobj);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsVertexArray)
+            glIsVertexArray(vaobj);
+#endif
     }
     glVertexArrayVertexAttribIFormatEXT(
         vaobj, attribindex, size, static_cast<GLenum>(type), relativeoffset);
@@ -7589,7 +8150,10 @@ STATICINLINE void vertex_array_vertex_attrib_l_format(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(VertexArrayVertexAttribLFormatEXT)
-        glIsVertexArray(vaobj);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsVertexArray)
+            glIsVertexArray(vaobj);
+#endif
     }
     glVertexArrayVertexAttribLFormatEXT(
         vaobj, attribindex, size, static_cast<GLenum>(type), relativeoffset);
@@ -7610,7 +8174,10 @@ STATICINLINE void vertex_array_vertex_binding_divisor(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(VertexArrayVertexBindingDivisorEXT)
-        glIsVertexArray(vaobj);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsVertexArray)
+            glIsVertexArray(vaobj);
+#endif
     }
     glVertexArrayVertexBindingDivisorEXT(vaobj, bindingindex, divisor);
     detail::error_check("VertexArrayVertexBindingDivisorEXT"sv);
@@ -7640,8 +8207,14 @@ STATICINLINE void vertex_array_vertex_attrib_l_offset(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(VertexArrayVertexAttribLOffsetEXT)
-        glIsVertexArray(vaobj);
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsVertexArray)
+            glIsVertexArray(vaobj);
+#endif
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glVertexArrayVertexAttribLOffsetEXT(
         vaobj, buffer, index, size, static_cast<GLenum>(type), stride, offset);
@@ -7675,7 +8248,10 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TexturePageCommitmentEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glTexturePageCommitmentEXT(
         texture,
@@ -7704,7 +8280,10 @@ STATICINLINE void vertex_array_vertex_attrib_divisor(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(VertexArrayVertexAttribDivisorEXT)
-        glIsVertexArray(vaobj);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsVertexArray)
+            glIsVertexArray(vaobj);
+#endif
     }
     glVertexArrayVertexAttribDivisorEXT(vaobj, index, divisor);
     detail::error_check("VertexArrayVertexAttribDivisorEXT"sv);

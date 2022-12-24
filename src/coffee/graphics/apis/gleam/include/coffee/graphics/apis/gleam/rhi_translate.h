@@ -1,11 +1,22 @@
 #pragma once
 
+#include "rhi_features.h"
 #include "rhi_versioning.h"
 
 #include <glw/extensions/EXT_disjoint_timer_query.h>
 #include <peripherals/concepts/graphics_api.h>
 #include <peripherals/semantic/enum/data_types.h>
+#include <peripherals/stl/any_of.h>
 #include <peripherals/typing/enum/pixels/filtering.h>
+
+namespace gl::group {
+
+inline texture_unit operator+(texture_unit base_unit, libc_types::u32 index)
+{
+    return static_cast<texture_unit>(static_cast<u32>(base_unit) + index);
+}
+
+} // namespace gl::group
 
 namespace gleam::convert {
 namespace mappings {
@@ -71,6 +82,9 @@ constexpr Array<Pair<queries::type, group::query_target>, 5> query_type = {{
     {queries::type::time,
      static_cast<group::query_target>(
          gl::ext::disjoint_timer_query::values::time_elapsed)},
+#endif
+#if 0
+    // TODO: Where did this come from
     {queries::type::timestamp,
      static_cast<group::query_target>(
          gl::ext::disjoint_timer_query::values::timestamp)},
@@ -126,8 +140,8 @@ requires(std::is_same_v<T, group::buffer_storage_target>)
     return it->second;
 }
 
-#if GLEAM_MAX_VERSION >= 0x150 || GLEAM_MAX_VERSION_ES >= 0x300 || \
-    defined(GL_EXT_disjoint_timer_query)
+#if GLEAM_MAX_VERSION >= 0x150 || GLEAM_MAX_VERSION_ES >= 0x300 \
+    || defined(GL_EXT_disjoint_timer_query)
 inline group::query_target to(queries::type type)
 {
     auto it = std::find_if(
@@ -141,10 +155,49 @@ inline group::query_target to(queries::type type)
 }
 #endif
 
+namespace detail {
+
 template<typename T>
-requires std::is_same_v<T, group::sized_internal_format> ||
-    std::is_same_v<T, group::internal_format>
-inline Tup<T, group::pixel_type, group::pixel_format> to(PixDesc const& fmt)
+requires std::is_same_v<T, group::internal_format>
+inline Tup<group::internal_format, group::pixel_type, group::pixel_format>
+to_internal(PixDesc const& fmt)
+{
+    using f = group::internal_format;
+    using b = group::pixel_type;
+    using p = group::pixel_format;
+
+    using P = typing::pixels::PixFmt;
+    using B = typing::pixels::BitFmt;
+
+    if(fmt.pixfmt == P::RGBA8 && fmt.bfmt == B::UByte)
+        return {f::rgba, b::unsigned_byte, p::rgba};
+    if(fmt.pixfmt == P::RGB8 && fmt.bfmt == B::UByte)
+        return {f::rgb, b::unsigned_byte, p::rgb};
+
+    if(fmt.pixfmt == P::RGB565 && fmt.bfmt == B::UShort_565)
+        return {f::rgb, b::unsigned_short_5_6_5, p::rgb};
+    if(fmt.pixfmt == P::RGB5A1 && fmt.bfmt == B::UShort_5551)
+        return {f::rgba, b::unsigned_short_5_5_5_1, p::rgba};
+    if(fmt.pixfmt == P::RGBA4 && fmt.bfmt == B::UShort_4444)
+        return {f::rgba, b::unsigned_short_4_4_4_4, p::rgba};
+    return {};
+}
+
+template<typename T>
+requires std::is_same_v<T, group::sized_internal_format>
+inline Tup<group::sized_internal_format, group::pixel_type, group::pixel_format>
+to_internal(PixDesc const&)
+{
+    return {};
+}
+
+} // namespace detail
+
+template<typename T>
+requires std::is_same_v<T, group::sized_internal_format> || std::
+    is_same_v<T, group::internal_format>
+inline Tup<T, group::pixel_type, group::pixel_format> to(
+    PixDesc const& fmt, features::textures const& features)
 {
     using ::enum_helpers::feval;
 
@@ -158,7 +211,13 @@ inline Tup<T, group::pixel_type, group::pixel_format> to(PixDesc const& fmt)
     using M = typing::pixels::CompFlags;
     using B = typing::pixels::BitFmt;
 
-    constexpr stl_types::Array<Pair<P, Tup<f, b, p>>, 22> direct_mapping = {{
+    if(auto fmt_ = detail::to_internal<T>(fmt);
+       static_cast<u32>(std::get<0>(fmt_)) != 0)
+    {
+        return fmt_;
+    }
+
+    constexpr std::array<std::pair<P, Tup<f, b, p>>, 22> direct_mapping = {{
 #if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
         {P::R8, {f::r8, b::unsigned_byte, p::red}},
         {P::R16F, {f::r16f, b::float_, p::rgb}},
@@ -170,11 +229,7 @@ inline Tup<T, group::pixel_type, group::pixel_format> to(PixDesc const& fmt)
 
     /* RGB */
 #if defined(GL_RGB565) && defined(GL_UNSIGNED_SHORT_5_6_5)
-        /* TODO: Ugly hack, needs workaround in wrapper layer */
-        {P::RGB565,
-         {static_cast<f>(GL_RGB565),
-          static_cast<b>(GL_UNSIGNED_SHORT_5_6_5),
-          p::rgb}},
+        {P::RGB565, {f::rgb565, b::unsigned_short_5_6_5, p::rgb}},
 #endif
 #if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
         {P::RGB8, {f::rgb8, b::unsigned_byte, p::rgb}},
@@ -182,17 +237,14 @@ inline Tup<T, group::pixel_type, group::pixel_format> to(PixDesc const& fmt)
         {P::RGB32F, {f::rgb32f, b::float_, p::rgb}},
 #endif
 #if defined(GL_UNSIGNED_INT_5_9_9_9_REV)
-        {P::RGB9E5,
-         {f::rgb9_e5, static_cast<b>(GL_UNSIGNED_INT_5_9_9_9_REV), p::rgba}},
+        {P::RGB9E5, {f::rgb9_e5, b::unsigned_int_5_9_9_9_rev, p::rgba}},
 #endif
 #if defined(GL_UNSIGNED_INT_10F_11F_11F_REV)
         {P::R11G11B10F,
-         {f::r11f_g11f_b10f,
-          static_cast<b>(GL_UNSIGNED_INT_10F_11F_11F_REV),
-          p::rgb}},
+         {f::r11f_g11f_b10f, b::unsigned_int_10f_11f_11f_rev, p::rgb}},
 #endif
 #if defined(GL_ETC1_RGB8_OES)
-        {P::ETC1, {static_cast<f>(GL_ETC1_RGB8_OES), b::unsigned_byte, p::rgb}},
+        {P::ETC1, {f::etc1_rgb8_oes, b::unsigned_byte, p::rgb}},
 #endif
 
         /* RGBA */
@@ -256,8 +308,8 @@ inline Tup<T, group::pixel_type, group::pixel_format> to(PixDesc const& fmt)
                     f::compressed_srgb_s3tc_dxt1_ext, b::unsigned_byte, p::rgb};
             }
 #endif
-#if defined(GL_EXT_texture_compression_s3tc) || \
-    defined(GL_EXT_texture_compression_dxt1)
+#if defined(GL_EXT_texture_compression_s3tc) \
+    || defined(GL_EXT_texture_compression_dxt1)
             switch(fmt.comp)
             {
             case C::RGB:
@@ -325,7 +377,21 @@ inline Tup<T, group::pixel_type, group::pixel_format> to(PixDesc const& fmt)
     default:
         break;
     }
-    Throw(undefined_behavior("unhandled pixel format"));
+
+    /* Formats behind extensions */
+
+#if defined(GL_OES_rgb8_rgba8)
+    if(fmt.pixfmt == P::RGBA8 && features.tex.oes.rgba8)
+    {
+        return {f::rgba8_oes, b::unsigned_byte, p::rgba};
+    } else if(fmt.pixfmt == P::RGB8 && features.tex.oes.rgba8)
+    {
+        return {f::rgb8_oes, b::unsigned_byte, p::rgb};
+    } else
+#endif
+    {
+        Throw(undefined_behavior("unhandled pixel format"));
+    }
 }
 
 template<typename T = group::framebuffer_attachment>
@@ -355,8 +421,8 @@ inline group::framebuffer_attachment to(
 }
 
 template<typename T>
-requires std::is_same_v<T, group::read_buffer_mode> ||
-    std::is_same_v<T, group::color_buffer>
+requires std::is_same_v<T, group::read_buffer_mode> || std::
+    is_same_v<T, group::color_buffer>
 inline T to(render_targets::attachment attachment, u32 i)
 {
     using mode = T;
@@ -375,8 +441,9 @@ inline T to(render_targets::attachment attachment, u32 i)
 }
 
 template<typename T = group::buffer_usage_arb>
-requires std::is_same_v<T, group::buffer_usage_arb>
-inline group::buffer_usage_arb to(semantic::RSCA flags)
+requires stl_types::
+    is_any_of<T, group::buffer_usage_arb, group::vertex_buffer_object_usage>
+inline T to(semantic::RSCA flags)
 {
     using enum_helpers::feval;
     using semantic::RSCA;
@@ -384,34 +451,34 @@ inline group::buffer_usage_arb to(semantic::RSCA flags)
     {
 #if GLEAM_MAX_VERSION >= 0x200 || GLEAM_MAX_VERSION_ES >= 0x300
         if(feval(flags, RSCA::ReadWrite))
-            return group::buffer_usage_arb::dynamic_copy;
+            return T::dynamic_copy;
         if(feval(flags, RSCA::ReadOnly))
-            return group::buffer_usage_arb::dynamic_read;
+            return T::dynamic_read;
 #endif
-        return group::buffer_usage_arb::dynamic_draw;
+        return T::dynamic_draw;
     }
 
     if(feval(flags, RSCA::Streaming))
     {
 #if GLEAM_MAX_VERSION >= 0x200 || GLEAM_MAX_VERSION_ES >= 0x300
         if(feval(flags, RSCA::ReadWrite | RSCA::Streaming))
-            return group::buffer_usage_arb::stream_copy;
+            return T::stream_copy;
         if(feval(flags, RSCA::ReadOnly | RSCA::Streaming))
-            return group::buffer_usage_arb::stream_read;
+            return T::stream_read;
 #endif
-        return group::buffer_usage_arb::stream_draw;
+        return T::stream_draw;
     }
 
 #if GLEAM_MAX_VERSION >= 0x200 || GLEAM_MAX_VERSION_ES >= 0x300
     if(feval(flags, RSCA::ReadOnly))
-        return group::buffer_usage_arb::static_draw;
+        return T::static_draw;
     if(feval(flags, RSCA::WriteOnly))
-        return group::buffer_usage_arb::static_read;
+        return T::static_read;
 #endif
-    return group::buffer_usage_arb::static_draw;
+    return T::static_draw;
 }
 
-#if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
+#if GLEAM_MAX_VERSION >= 0x440
 template<typename T>
 requires std::is_same_v<T, group::buffer_storage_mask>
 inline group::buffer_storage_mask to(semantic::RSCA flags)
@@ -439,37 +506,44 @@ inline group::buffer_storage_mask to(semantic::RSCA flags)
 }
 #endif
 
-#if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x310 || \
-    defined(GL_OES_mapbuffer)
+#if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x310 \
+    || defined(GL_OES_mapbuffer)
 template<typename T>
 requires std::is_same_v<T, group::buffer_access_arb>
 inline group::buffer_access_arb to(semantic::RSCA flags)
 {
     using enum_helpers::feval;
     using semantic::RSCA;
+#if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x310
     if(feval(flags, RSCA::ReadWrite))
         return group::buffer_access_arb::read_write;
     if(feval(flags, RSCA::WriteOnly))
         return group::buffer_access_arb::write_only;
     return group::buffer_access_arb::read_only;
+#else
+    return group::buffer_access_arb::write_only_oes;
+#endif
 }
 #endif
 
 #if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
 template<typename T>
 requires(std::is_same_v<T, group::map_buffer_access_mask>) inline group::
-    map_buffer_access_mask to(semantic::RSCA flags, bool whole_buffer)
+    map_buffer_access_mask
+    to(features::buffers const& features,
+       semantic::RSCA           flags,
+       bool                     whole_buffer)
 {
     using enum_helpers::feval;
     using semantic::RSCA;
     using mask = group::map_buffer_access_mask;
-    auto out   = mask::map_unsynchronized_bit;
+    mask out   = static_cast<mask>(0);
     if(feval(flags, RSCA::ReadOnly))
         out |= mask::map_read_bit;
     if(feval(flags, RSCA::WriteOnly))
         out |= mask::map_write_bit;
 #if GLEAM_MAX_VERSION >= 0x440
-    if(feval(flags, RSCA::Persistent))
+    if(feval(flags, RSCA::Persistent) && features.persistence)
         out |= mask::map_persistent_bit | mask::map_coherent_bit;
 #endif
     if(feval(flags, RSCA::Discard))
@@ -538,9 +612,9 @@ inline T vertex_type_to(semantic::TypeEnum type)
 } // namespace detail
 
 template<typename T>
-requires std::is_same_v<T, group::vertex_attrib_int> ||
-    std::is_same_v<T, group::vertex_attrib_pointer_type> ||
-    std::is_same_v<T, group::vertex_attrib_type>
+requires std::is_same_v<T, group::vertex_attrib_int> || std::
+    is_same_v<T, group::vertex_attrib_pointer_type> || std::
+        is_same_v<T, group::vertex_attrib_type>
 inline T to(semantic::TypeEnum type)
 {
     using semantic::TypeEnum;

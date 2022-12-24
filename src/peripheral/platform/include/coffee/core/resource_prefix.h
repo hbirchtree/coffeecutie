@@ -18,7 +18,7 @@ extern void ResourcePrefix(libc_types::cstring prefix);
  * \brief Get the current file resource prefix
  * \return
  */
-extern stl_types::CString const& ResourcePrefix(bool fallback = false);
+extern std::optional<std::string> ResourcePrefix(bool fallback = false);
 
 } // namespace file
 } // namespace platform

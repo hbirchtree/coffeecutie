@@ -30,7 +30,10 @@ requires(semantic::concepts::Span<span_void>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetProgramBinary)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetProgramBinary(
         program,
@@ -61,7 +64,10 @@ requires(semantic::concepts::Span<span_const_void>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramBinary)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramBinary(
         program,
@@ -85,7 +91,10 @@ STATICINLINE void program_parameter(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramParameteri)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramParameteri(program, static_cast<GLenum>(pname), value);
     detail::error_check("ProgramParameteri"sv);

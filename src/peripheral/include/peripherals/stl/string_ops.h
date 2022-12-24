@@ -339,7 +339,7 @@ struct spliterator : Iterator<std::forward_iterator_tag, std::basic_string_view<
     {
     }
 
-    spliterator operator++(int) const
+    [[nodiscard]] spliterator operator++(int) const
     {
         auto cpy = *this;
         cpy.idx  = next_idx();

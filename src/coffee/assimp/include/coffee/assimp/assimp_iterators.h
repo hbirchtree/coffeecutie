@@ -10,7 +10,7 @@
 
 #include <coffee/core/CProfiling>
 #include <coffee/graphics/common/SMesh>
-#include <coffee/interfaces/cgraphics_api.h>
+//#include <coffee/interfaces/cgraphics_api.h>
 #include <peripherals/semantic/enum/data_types.h>
 #include <peripherals/typing/enum/graphics/primitive.h>
 

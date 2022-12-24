@@ -1,9 +1,19 @@
 #pragma once
 
+#include <coffee/comp_app/app_events.h>
 #include <coffee/comp_app/services.h>
 
 struct android_app;
 struct AInputEvent;
+
+namespace ndk_helper {
+
+class TapDetector;
+class DoubletapDetector;
+class PinchDetector;
+class DragDetector;
+
+}
 
 namespace anative {
 
@@ -16,6 +26,8 @@ struct Windowing : comp_app::interfaces::StaticWindowing,
     virtual comp_app::size_2d_t           size() const override;
     virtual comp_app::detail::WindowState state() const override;
     virtual void setState(comp_app::detail::WindowState state) override;
+
+    void close() final;
 };
 
 struct ControllerInput
@@ -36,6 +48,14 @@ struct ControllerInput
     virtual comp_app::text_type_t name(libc_types::u32 idx) const override;
 };
 
+struct KeyboardInput
+    : comp_app::interfaces::BasicKeyboardInput,
+      comp_app::AppService<KeyboardInput, comp_app::KeyboardInput>
+{
+    void openVirtual() const;
+    void closeVirtual() const;
+};
+
 struct AndroidEventBus : comp_app::AppService<AndroidEventBus>,
                          comp_app::AppLoadableService
 {
@@ -46,12 +66,23 @@ struct AndroidEventBus : comp_app::AppService<AndroidEventBus>,
 
     void handleGamepadEvent(AInputEvent* event);
     void handleInputEvent(AInputEvent* event);
+    bool filterTouchEvent(AInputEvent* event);
     void handleWindowEvent(android_app* app, libc_types::i32 event);
 
+    void emitLifecycleEvent(comp_app::LifecycleEvent event);
+
     entity_container* m_container;
+
+    ndk_helper::TapDetector* m_tapDetector;
+    ndk_helper::DoubletapDetector* m_doubleDetector;
+    ndk_helper::PinchDetector* m_pinchDetector;
+    ndk_helper::DragDetector* m_dragDetector;
 };
 
-using Services =
-    comp_app::detail::TypeList<Windowing, ControllerInput, AndroidEventBus>;
+using Services = comp_app::detail::TypeList<
+    comp_app::PtrNativeWindowInfoService,
+    Windowing,
+    ControllerInput,
+    AndroidEventBus>;
 
 } // namespace anative

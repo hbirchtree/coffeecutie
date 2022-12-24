@@ -3,29 +3,21 @@
 #include "caching.h"
 #include <coffee/imgui/imgui_binding.h>
 
-template<typename BC>
-struct BlamScript;
+using BlamScriptManifest
+    = Components::SubsystemManifest<empty_list_t, empty_list_t, empty_list_t>;
 
-template<typename BC>
-using BlamScriptTag = Components::TaggedTypeWrapper<BlamScript<BC>>;
-
-template<typename BC>
-struct BlamScript : Components::RestrictedSubsystem<
-                        BlamScriptTag<BC>,
-                        empty_list_t,
-                        empty_list_t,
-                        empty_list_t>
+template<typename Version>
+struct BlamScript
+    : Components::RestrictedSubsystem<BlamScript<Version>, BlamScriptManifest>
 {
-    using parent_type = Components::RestrictedSubsystem<
-        BlamScriptTag<BC>,
-        empty_list_t,
-        empty_list_t,
-        empty_list_t>;
+    using type = BlamScript<Version>;
 
-    using Proxy      = typename parent_type::Proxy;
-    using time_point = typename parent_type::time_point;
+    using script_types = blam::hsc::types<typename Version::bytecode_type>;
+    using script_state = typename blam::hsc::script_context<
+        typename Version::bytecode_type>::script_state;
 
-    using script_types = blam::hsc::types<BC>;
+    using Proxy      = Components::proxy_of<BlamScriptManifest>;
+    using time_point = Components::time_point;
 
     static constexpr u32 max_log_lines = 1024;
 
@@ -53,15 +45,15 @@ struct BlamScript : Components::RestrictedSubsystem<
         case status::finished:
             return {1, 0, 1, 1};
         }
+        __builtin_unreachable();
     }
 
-    static void display_script(
-        typename blam::hsc::script_context<BC>::script_state const& state)
+    static void display_script(script_state const& state)
     {
         auto color = status_to_color(state.status);
 
         blam::hsc::function_declaration const& def = *state.function;
-        ImGui::TextColored(color, "%s", C_OCAST<const char*>(def.name));
+        ImGui::TextColored(color, "%s", def.name.str().data());
         ImGui::NextColumn();
         ImGui::TextColored(color, "%s", enum_to_string(def.schedule).c_str());
         ImGui::NextColumn();
@@ -103,42 +95,45 @@ struct BlamScript : Components::RestrictedSubsystem<
     }
 
     BlamScript(
-        blam::map_container const&     map,
-        blam::scn::scenario<BC> const* scenario,
-        blam::magic_data_t const&      magic) :
+        blam::map_container<Version> const& map,
+        blam::scn::scenario<Version> const* scenario,
+        blam::magic_data_t const&           magic) :
         m_map(&map),
         m_tags(map), m_magic(magic), m_scenario(scenario), m_running(true)
     {
         this->priority = 2048;
 
-        m_strings = scenario->string_segment(magic);
-        m_env     = {&m_strings,
-                 scenario->function_table(magic),
-                 scenario->globals.data(magic)};
+        auto string_segment = scenario->string_segment(magic);
+
+        if(string_segment.has_error())
+            Throw(undefined_behavior(string_segment.error()));
+        m_strings = string_segment.value();
+
+        auto globals = scenario->script.globals.data(magic);
+
+        if(globals.has_error())
+            Throw(undefined_behavior(globals.error()));
+
+        m_env = {
+            .strings = &m_strings,
+            .scripts = scenario->function_table(magic),
+            .globals = globals.value(),
+        };
 
         m_script = script_types::bytecode_ptr::start_from(
             m_env, &scenario->bytecode(magic)[0]);
 
-        typename script_types::opcode_handler hnd =
-            [](typename script_types::bytecode_ptr&,
-               typename script_types::layout_t const&) {
-                return script_types::result_t::return_(
-                    script_types::layout_t::void_());
-            };
+        typename script_types::opcode_handler hnd
+            = [](typename script_types::bytecode_ptr&,
+                 typename script_types::layout_t const&) {
+                  return script_types::result_t::return_(
+                      script_types::layout_t::void_());
+              };
 
         m_script.init_globals(m_env.globals, m_strings, {hnd});
     }
 
-    BlamScript& get() override
-    {
-        return *this;
-    }
-    BlamScript const& get() const override
-    {
-        return *this;
-    }
-
-    virtual void start_restricted(Proxy& e, time_point const&) override
+    void start_restricted(Proxy& e, time_point const&)
     {
         static typename script_types::opcode_handler hnd =
             [this](
@@ -149,36 +144,32 @@ struct BlamScript : Components::RestrictedSubsystem<
 
                 switch(curr.opcode)
                 {
-                case op::print_:
-                {
+                case op::print_: {
                     auto output = CString(
                         m_strings.at(ptr.param(t::string_).to_ptr()).str());
                     log_line("print: " + output);
                     cDebug("Debug output: {0}", output);
                     break;
                 }
-                case op::inspect:
-                {
+                case op::inspect: {
                     auto inspect_target = ptr.param(t::any);
                     auto output         = layout_to_string(
                         inspect_target, inspect_target.ret_type);
 
-                    cstring name = nullptr;
+                    std::string_view name;
                     if(inspect_target.to_ptr() != 0)
                         name = m_strings.at(inspect_target.to_ptr()).str();
 
-                    log_line(
-                        "inspect: " + ((name ? name : "") + (" = " + output)));
+                    log_line(Strings::fmt("inspect: {0} = {1}", name, output));
                     break;
                 }
-                case op::hud_set_help_text:
-                {
-                    typename script_types::layout_t help_text =
-                        ptr.param(t::hud_msg);
-                    auto hud_texts =
-                        (*m_tags.find(m_scenario->ui_text.hud_text))
-                            ->template to_reflexive<blam::ui::hud_message>()
-                            .data(m_magic);
+                case op::hud_set_help_text: {
+                    typename script_types::layout_t help_text
+                        = ptr.param(t::hud_msg);
+                    auto hud_texts
+                        = (*m_tags.find(m_scenario->ui_text.hud_text))
+                              ->template data<blam::ui::hud_message>(m_magic)
+                              .value();
                     auto sym  = m_strings.at(help_text.data_ptr).str();
                     auto text = hud_texts[0].symbol_find(m_magic, sym).value();
 
@@ -306,7 +297,7 @@ struct BlamScript : Components::RestrictedSubsystem<
                 auto store = *m_script.context.global_by_ptr(
                     m_strings.get_index(global.name));
 
-                ImGui::Text("%s", C_OCAST<const char*>(global.name));
+                ImGui::Text("%s", global.name.str().data());
                 ImGui::NextColumn();
                 ImGui::Text("%s", enum_to_string(global.type).c_str());
                 ImGui::NextColumn();
@@ -319,17 +310,17 @@ struct BlamScript : Components::RestrictedSubsystem<
         }
         ImGui::End();
     }
-    virtual void end_restricted(Proxy& e, time_point const&) override
+    void end_restricted(Proxy& e, time_point const&)
     {
     }
 
-    blam::map_container const*      m_map;
-    blam::tag_index_view            m_tags;
-    blam::magic_data_t              m_magic;
-    blam::scn::scenario<BC> const*  m_scenario;
-    blam::hsc::bytecode_pointer<BC> m_script;
-    blam::hsc::script_environment   m_env;
-    blam::string_segment_ref        m_strings;
-    Vector<CString>                 m_log;
-    bool                            m_running;
+    blam::map_container<Version> const*                          m_map;
+    blam::tag_index_view<Version>                                m_tags;
+    blam::magic_data_t                                           m_magic;
+    blam::scn::scenario<Version> const*                          m_scenario;
+    blam::hsc::bytecode_pointer<typename Version::bytecode_type> m_script;
+    blam::hsc::script_environment                                m_env;
+    blam::string_segment_ref                                     m_strings;
+    Vector<CString>                                              m_log;
+    bool                                                         m_running;
 };

@@ -53,7 +53,10 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetnUniformfvEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetnUniformfvEXT(
         program,
@@ -82,7 +85,10 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetnUniformivEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetnUniformivEXT(
         program,

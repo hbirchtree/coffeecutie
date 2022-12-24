@@ -68,7 +68,8 @@ struct program_t
     using stage_map_t = stl_types::Map<stage_t, stl_types::ShPtr<shader_t>>;
 
     using compile_error_t = std::tuple<stl_types::String>;
-    using compile_log_t   = std::tuple<stl_types::String, int>;
+    using compile_log_t =
+        std::tuple<stl_types::String /* log text*/, int /* ??? */>;
 
     program_t(features::programs features, debug::api& debug) :
         m_features(features), m_debug(debug)
@@ -127,8 +128,8 @@ struct program_t
 
                 auto const& shader_data = stage_info->m_data;
                 stage_info->m_handle    = cmd::create_shader_programv(
-                       convert::to<group::shader_type>(stage_type),
-                       {std::string_view(shader_data.data(), shader_data.size())});
+                    convert::to<group::shader_type>(stage_type),
+                    {std::string_view(shader_data.data(), shader_data.size())});
 
                 auto log = detail::program_log(stage_info->m_handle);
 

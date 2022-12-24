@@ -25,6 +25,12 @@ inline void addDefaults(AppLoadableService::entity_container& container,
     addDefaults(container, *container.service<AppLoader>(), ec);
 }
 
+void setup_container(detail::EntityContainer& container);
+bool loop_container(detail::EntityContainer& container);
+void cleanup_container(detail::EntityContainer& container);
+
+void setup_and_loop_container(detail::EntityContainer& container);
+
 #if defined(COFFEE_EMSCRIPTEN)
 void emscripten_loop();
 #endif

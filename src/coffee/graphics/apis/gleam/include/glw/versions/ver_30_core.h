@@ -54,7 +54,10 @@ requires(MinimumVersion<Current, Version<3, 0>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindBufferBase)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glBindBufferBase(static_cast<GLenum>(target), index, buffer);
     detail::error_check("BindBufferBase"sv);
@@ -82,7 +85,10 @@ requires(MinimumVersion<Current, Version<3, 0>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindBufferRange)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glBindBufferRange(static_cast<GLenum>(target), index, buffer, offset, size);
     detail::error_check("BindBufferRange"sv);
@@ -104,7 +110,10 @@ requires(MinimumVersion<Current, Version<3, 0>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindFragDataLocation)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glBindFragDataLocation(program, color, name.data());
     detail::error_check("BindFragDataLocation"sv);
@@ -372,7 +381,10 @@ requires(MinimumVersion<Current, Version<3, 0>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetFragDataLocation)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     auto out = glGetFragDataLocation(program, name.data());
     detail::error_check("GetFragDataLocation"sv);
@@ -511,7 +523,10 @@ requires(MinimumVersion<Current, Version<3, 0>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetTransformFeedbackVarying)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetTransformFeedbackVarying(
         program, index, name.size(), &length, &size, &type, name.data());
@@ -536,7 +551,10 @@ requires(MinimumVersion<Current, Version<3, 0>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetUniformuiv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetUniformuiv(
         program,
@@ -683,7 +701,10 @@ requires(MinimumVersion<Current, Version<3, 0>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TransformFeedbackVaryings)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     auto [varyings_lens, varyings_cstr, varyings_store] =
         detail::transform_strings(varyings);
@@ -1373,7 +1394,10 @@ requires(MinimumVersion<Current, Version<3, 0>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindFramebuffer)
-        glIsFramebuffer(framebuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsFramebuffer)
+            glIsFramebuffer(framebuffer);
+#endif
     }
     glBindFramebuffer(static_cast<GLenum>(target), framebuffer);
     detail::error_check("BindFramebuffer"sv);
@@ -1394,7 +1418,10 @@ requires(MinimumVersion<Current, Version<3, 0>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindRenderbuffer)
-        glIsRenderbuffer(renderbuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsRenderbuffer)
+            glIsRenderbuffer(renderbuffer);
+#endif
     }
     glBindRenderbuffer(static_cast<GLenum>(target), renderbuffer);
     detail::error_check("BindRenderbuffer"sv);
@@ -1539,7 +1566,10 @@ requires(MinimumVersion<Current, Version<3, 0>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(FramebufferRenderbuffer)
-        glIsRenderbuffer(renderbuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsRenderbuffer)
+            glIsRenderbuffer(renderbuffer);
+#endif
     }
     glFramebufferRenderbuffer(
         static_cast<GLenum>(target),
@@ -1571,7 +1601,10 @@ requires(MinimumVersion<Current, Version<3, 0>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(FramebufferTexture1D)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glFramebufferTexture1D(
         static_cast<GLenum>(target),
@@ -1604,7 +1637,10 @@ requires(MinimumVersion<Current, Version<3, 0>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(FramebufferTexture2D)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glFramebufferTexture2D(
         static_cast<GLenum>(target),
@@ -1639,7 +1675,10 @@ requires(MinimumVersion<Current, Version<3, 0>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(FramebufferTexture3D)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glFramebufferTexture3D(
         static_cast<GLenum>(target),
@@ -1673,7 +1712,10 @@ requires(MinimumVersion<Current, Version<3, 0>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(FramebufferTextureLayer)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glFramebufferTextureLayer(
         static_cast<GLenum>(target),
@@ -1821,7 +1863,10 @@ requires(MinimumVersion<Current, Version<3, 0>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(IsFramebuffer)
-        glIsFramebuffer(framebuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsFramebuffer)
+            glIsFramebuffer(framebuffer);
+#endif
     }
     auto out = glIsFramebuffer(framebuffer);
     detail::error_check("IsFramebuffer"sv);
@@ -1841,7 +1886,10 @@ requires(MinimumVersion<Current, Version<3, 0>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(IsRenderbuffer)
-        glIsRenderbuffer(renderbuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsRenderbuffer)
+            glIsRenderbuffer(renderbuffer);
+#endif
     }
     auto out = glIsRenderbuffer(renderbuffer);
     detail::error_check("IsRenderbuffer"sv);
@@ -1970,7 +2018,10 @@ requires(MinimumVersion<Current, Version<3, 0>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindVertexArray)
-        glIsVertexArray(array);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsVertexArray)
+            glIsVertexArray(array);
+#endif
     }
     glBindVertexArray(array);
     detail::error_check("BindVertexArray"sv);
@@ -2038,7 +2089,10 @@ requires(MinimumVersion<Current, Version<3, 0>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(IsVertexArray)
-        glIsVertexArray(array);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsVertexArray)
+            glIsVertexArray(array);
+#endif
     }
     auto out = glIsVertexArray(array);
     detail::error_check("IsVertexArray"sv);

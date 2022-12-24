@@ -78,7 +78,10 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedFramebufferSampleLocationsfvARB)
-        glIsFramebuffer(framebuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsFramebuffer)
+            glIsFramebuffer(framebuffer);
+#endif
     }
     glNamedFramebufferSampleLocationsfvARB(
         framebuffer,

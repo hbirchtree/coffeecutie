@@ -56,7 +56,7 @@ struct UrlResolver
         using namespace platform::url;
 
         Path newPath = Path(path).addExtension(ext.c_str());
-        Url  newUrl  = constructors::MkUrl(newPath, path.flags);
+        Url  newUrl  = newPath.url(path.flags);
 
         return newUrl;
     }

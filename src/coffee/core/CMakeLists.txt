@@ -164,10 +164,10 @@ if(TARGET ZLIB::ZLIB AND NOT EMSCRIPTEN AND NOT APPLE)
         )
 elseif(EMSCRIPTEN)
     target_compile_options ( CoreCompression PUBLIC
-        "-s" USE_ZLIB=1
+        -sUSE_ZLIB=1
        )
    target_link_options ( CoreCompression PUBLIC
-        "-s" USE_ZLIB=1
+        -sUSE_ZLIB=1
        )
 elseif(ANDROID OR APPLE)
     target_link_libraries ( CoreCompression PUBLIC

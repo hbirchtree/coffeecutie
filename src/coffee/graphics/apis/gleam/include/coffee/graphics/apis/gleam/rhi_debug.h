@@ -20,6 +20,10 @@ struct null_api
     {
         return nullptr;
     }
+
+    inline void message(std::string_view const&)
+    {
+    }
 };
 
 #if GLEAM_MAX_VERSION >= 0x430 || GLEAM_MAX_VERSION_ES >= 0x320
@@ -29,7 +33,7 @@ struct scope
     scope(std::string_view const& name)
     {
         cmd::push_debug_group(
-            group::debug_source::third_party, 0, name.size(), name);
+            group::debug_source::application, 0, name.size(), name);
     }
     ~scope()
     {
@@ -42,6 +46,17 @@ struct api
     inline auto scope(std::string_view const& name)
     {
         return stl_types::MkUq<debug::scope>(name);
+    }
+
+    inline void message(std::string_view const& msg)
+    {
+        cmd::debug_message_insert(
+            group::debug_source::application,
+            group::debug_type::performance,
+            0,
+            group::debug_severity::notification,
+            msg.size(),
+            msg);
     }
 
     inline void enable()
@@ -68,12 +83,12 @@ struct api
                         std::string_view(message, length));
             },
             semantic::Span<const api>(this, 1));
-        cmd::debug_message_control(
-            group::debug_source::dont_care,
-            group::debug_type::dont_care,
-            group::debug_severity::dont_care,
-            null_span<u32>{},
-            true);
+//        cmd::debug_message_control(
+//            group::debug_source::dont_care,
+//            group::debug_type::dont_care,
+//            group::debug_severity::dont_care,
+//            null_span<u32>{},
+//            true);
     }
 
     using debug_function  = stl_types::Function<void(

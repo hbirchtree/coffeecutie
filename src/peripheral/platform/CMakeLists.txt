@@ -235,14 +235,14 @@ endif()
 # Raspberry Pi-specific code
 #
 #
-if(RASPBERRY)
-    target_sources ( PeripheralPlatform PRIVATE
-        #
-        # Extracts Raspberry Pi board name
-        #
-        devices/raspberry/sysinfo.cpp
-        )
-endif()
+#if(RASPBERRY)
+#    target_sources ( PeripheralPlatform PRIVATE
+#        #
+#        # Extracts Raspberry Pi board name
+#        #
+##        devices/raspberry/sysinfo.cpp
+#        )
+#endif()
 
 #
 #

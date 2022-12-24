@@ -1,11 +1,13 @@
 #pragma once
 
+#include <peripherals/stl/any_of.h>
+
+#include "cblam_base_types.h"
+
 #include "bytecode_v1.h"
 #include "bytecode_v2.h"
-#include "cblam_structures.h"
 
-namespace blam {
-namespace hsc {
+namespace blam::hsc {
 
 namespace bc {
 
@@ -26,5 +28,7 @@ enum class cheats : i16
 using xbox_opcode_t = bc::v1;
 using pc_opcode_t   = bc::v2;
 
-} // namespace hsc
-} // namespace blam
+template<typename T>
+concept is_bytecode_variant = stl_types::is_any_of<T, bc::v1, bc::v2>;
+
+} // namespace blam::hsc

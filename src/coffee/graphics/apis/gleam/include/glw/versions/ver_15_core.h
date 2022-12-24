@@ -32,7 +32,10 @@ requires(MinimumVersion<Current, Version<1, 5>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindBuffer)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glBindBuffer(static_cast<GLenum>(target), buffer);
     detail::error_check("BindBuffer"sv);
@@ -392,7 +395,10 @@ requires(MinimumVersion<Current, Version<1, 5>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(IsBuffer)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     auto out = glIsBuffer(buffer);
     detail::error_check("IsBuffer"sv);

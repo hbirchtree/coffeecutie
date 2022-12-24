@@ -118,6 +118,9 @@ enum class get_texture_parameter : ::libc_types::u32
 #ifdef GL_TEXTURE_COMPONENTS
     texture_components = GL_TEXTURE_COMPONENTS,
 #endif
+#ifdef GL_TEXTURE_DEPTH
+    texture_depth = GL_TEXTURE_DEPTH,
+#endif
 #ifdef GL_TEXTURE_DEPTH_EXT
     texture_depth_ext = GL_TEXTURE_DEPTH_EXT,
 #endif
@@ -132,6 +135,9 @@ enum class get_texture_parameter : ::libc_types::u32
 #endif
 #ifdef GL_TEXTURE_HEIGHT
     texture_height = GL_TEXTURE_HEIGHT,
+#endif
+#ifdef GL_TEXTURE_IMMUTABLE_FORMAT
+    texture_immutable_format = GL_TEXTURE_IMMUTABLE_FORMAT,
 #endif
 #ifdef GL_TEXTURE_INTENSITY_SIZE
     texture_intensity_size = GL_TEXTURE_INTENSITY_SIZE,

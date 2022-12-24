@@ -112,7 +112,10 @@ STATICINLINE void named_buffer_attach_memory(u32 buffer, u32 memory, u64 offset)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedBufferAttachMemoryNV)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glNamedBufferAttachMemoryNV(buffer, memory, offset);
     detail::error_check("NamedBufferAttachMemoryNV"sv);
@@ -131,7 +134,10 @@ STATICINLINE void texture_attach_memory(u32 texture, u32 memory, u64 offset)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureAttachMemoryNV)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glTextureAttachMemoryNV(texture, memory, offset);
     detail::error_check("TextureAttachMemoryNV"sv);

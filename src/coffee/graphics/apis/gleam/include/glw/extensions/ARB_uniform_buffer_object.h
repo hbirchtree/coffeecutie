@@ -36,7 +36,10 @@ STATICINLINE void bind_buffer_base(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindBufferBase)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glBindBufferBase(static_cast<GLenum>(target), index, buffer);
     detail::error_check("BindBufferBase"sv);
@@ -62,7 +65,10 @@ STATICINLINE void bind_buffer_range(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindBufferRange)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glBindBufferRange(static_cast<GLenum>(target), index, buffer, offset, size);
     detail::error_check("BindBufferRange"sv);
@@ -91,7 +97,10 @@ requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetActiveUniformBlockName)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetActiveUniformBlockName(
         program,
@@ -124,7 +133,10 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetActiveUniformBlockiv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetActiveUniformBlockiv(
         program,
@@ -154,7 +166,10 @@ requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetActiveUniformName)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetActiveUniformName(
         program, uniformIndex, uniformName.size(), &length, uniformName.data());
@@ -187,7 +202,10 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetActiveUniformsiv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetActiveUniformsiv(
         program,
@@ -239,7 +257,10 @@ get_uniform_block_index(u32 program, std::string_view const& uniformBlockName)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetUniformBlockIndex)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     auto out = glGetUniformBlockIndex(program, uniformBlockName.data());
     detail::error_check("GetUniformBlockIndex"sv);
@@ -268,7 +289,10 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetUniformIndices)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     auto [uniformNames_lens, uniformNames_cstr, uniformNames_store] =
         detail::transform_strings(uniformNames);
@@ -295,7 +319,10 @@ STATICINLINE void uniform_block_binding(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(UniformBlockBinding)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glUniformBlockBinding(program, uniformBlockIndex, uniformBlockBinding);
     detail::error_check("UniformBlockBinding"sv);

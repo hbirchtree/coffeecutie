@@ -6,13 +6,18 @@ enum class error
 {
     none,
 
+    no_program,
+
     refuse_bad_es20_impl,
     refuse_version_too_low,
+
+    sampler_state_invalid,
 
     draw_no_element_buffer,
     draw_no_elements,
     draw_no_arrays,
-    draw_unsupported,
+    draw_unsupported_call,
+    no_implementation_for_draw_call,
 };
 
 struct features
@@ -28,6 +33,20 @@ struct features
         {
             bool mapbuffer;
         } oes;
+    };
+    struct drawing
+    {
+        bool instancing{false};
+        bool vertex_offset{false};
+        bool indirect{false};
+        bool multi_indirect{false};
+        bool base_instance{false};
+        bool shader_base_instance{false};
+
+        struct
+        {
+            bool shader_draw_parameters;
+        } arb;
     };
     struct programs
     {
@@ -47,6 +66,11 @@ struct features
         bool framebuffer_texture{true};
         bool indexed{false};
         bool readdraw_buffers{true};
+
+        struct
+        {
+            bool discard_framebuffer{false};
+        } ext;
     };
     struct textures
     {
@@ -92,12 +116,13 @@ struct features
             struct
             {
                 bool etc1{false};
+                bool rgba8{false};
             } oes;
             struct
             {
                 bool etc2{false};
                 bool bptc{false};
-                bool rgtc{true};
+                bool rgtc{false};
                 bool astc{false};
             } gl;
         } tex;
@@ -122,9 +147,14 @@ struct features
         bool dsa{false};
         bool format{false};
         bool vertex_arrays{true};
+        struct
+        {
+            bool vertex_arrays{false};
+        } oes;
     };
 
     buffers       buffer{};
+    drawing       draw{};
     programs      program{};
     queries       query{};
     rendertargets rendertarget{};
@@ -132,6 +162,18 @@ struct features
     vertices      vertex{};
 
     bool khr_debug{false};
+};
+
+struct workarounds
+{
+    struct
+    {
+        bool emulated_instance_id{false};
+        bool emulated_base_instance{false};
+        bool emulated_vertex_offset{false};
+    } draw;
+
+    bool ignore_all_warnings{false};
 };
 
 } // namespace gleam

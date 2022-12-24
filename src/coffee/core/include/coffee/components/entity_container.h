@@ -128,14 +128,9 @@ struct EntityContainer : non_copy
             return *this;
         }
 
-        bool operator==(entity_query const& other)
+        bool operator==(entity_query const& other) const
         {
-            return other.it == it;
-        }
-
-        bool operator!=(entity_query const& other)
-        {
-            return other.it != it;
+            return it == other.it;
         }
 
         Entity& operator*() const
@@ -206,8 +201,8 @@ struct EntityContainer : non_copy
     template<typename ContainerType, typename... Args>
     void register_component_inplace(Args... args)
     {
-        register_component<typename ContainerType::tag_type>(
-            MkUq<ContainerType>(std::forward<Args>(args)...));
+        register_component<ContainerType>(
+            MkUq<typename ContainerType::type>(std::forward<Args>(args)...));
     }
 
     template<typename OutputType>
@@ -258,22 +253,6 @@ struct EntityContainer : non_copy
         add_component(entity_id, typeid(T).hash_code());
     }
 
-    Entity& create_entity(EntityRecipe const& recipe)
-    {
-        entity_counter++;
-
-        entities.emplace_back();
-        auto& entity = entities.back();
-
-        entity.id   = entity_counter;
-        entity.tags = recipe.tags;
-
-        for(auto type_id : recipe.components)
-            add_component(entity_counter, type_id);
-
-        return entity;
-    }
-
     /*
      *
      * For querying components or getting data
@@ -287,7 +266,7 @@ struct EntityContainer : non_copy
             [=]() { return entity_query(*this); });
     }
 
-    template<is_component ComponentType>
+    template<is_component_tag ComponentType>
     quick_container<entity_query> select()
     {
         return quick_container<entity_query>(
@@ -437,6 +416,8 @@ struct EntityContainer : non_copy
             }
         }
     }
+
+    EntityRef<EntityContainer> create_entity(EntityRecipe const& recipe);
 
     /* For optimizations */
     using visitor_graph = Set<Vector<bool>>;

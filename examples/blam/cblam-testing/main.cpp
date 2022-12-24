@@ -6,7 +6,6 @@
 #include <coffee/core/CProfiling>
 #include <coffee/core/base/renderer/eventapplication.h>
 #include <coffee/core/stl_types.h>
-#include <coffee/graphics/apis/CGLeamRHI>
 #include <coffee/image/cimage.h>
 #include <coffee/interfaces/full_launcher.h>
 #include <coffee/strings/libc_types.h>

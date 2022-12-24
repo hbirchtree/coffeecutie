@@ -28,8 +28,9 @@ void Binding::load(entity_container& e, comp_app::app_error& ec)
         return;
     }
 
-    if(!gladLoadGLES2Loader(loader))
+    if(gladLoadGLES2Loader(loader) == 0)
     {
+        ec = "Failed to load function pointers";
         ec = comp_app::AppError::BindingFailed;
     }
 #else

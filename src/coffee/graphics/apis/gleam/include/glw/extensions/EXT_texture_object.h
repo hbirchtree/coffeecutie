@@ -55,7 +55,10 @@ STATICINLINE void bind_texture(group::texture_target target, u32 texture)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindTextureEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glBindTextureEXT(static_cast<GLenum>(target), texture);
     detail::error_check("BindTextureEXT"sv);
@@ -119,7 +122,10 @@ STATICINLINE GLboolean is_texture(u32 texture)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(IsTextureEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     auto out = glIsTextureEXT(texture);
     detail::error_check("IsTextureEXT"sv);

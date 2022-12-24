@@ -46,12 +46,12 @@ struct AppContainer : AppService<AppContainer<DataType>>, AppMain
         m_loop(loop), m_cleanup(cleanup),
         m_data(stl_types::MkShared<DataType>())
     {
+        detail::SubsystemBase::priority = 8192 * 1024;
     }
 
     virtual void load(entity_container& e, app_error& ec) final
     {
         m_setup(e, *m_data, detail::clock::now());
-        detail::SubsystemBase::priority = 8192 * 1024;
     }
     virtual void unload(entity_container& e, app_error& ec) final
     {

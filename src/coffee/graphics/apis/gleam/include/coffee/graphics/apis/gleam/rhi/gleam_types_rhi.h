@@ -15,7 +15,7 @@ using namespace gl::group;
 
 namespace Coffee::RHI::GLEAM {
 
-using glhnd   = semantic::generic_handle_t<u32>;
+using glhnd   = semantic::generic_handle_t<u32, semantic::handle_modes::no_op>;
 using BufType = buf::flags;
 
 struct GLEAM_Options

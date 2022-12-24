@@ -47,7 +47,6 @@ constexpr libc_types::u32 index = 0x8222;
 #endif
 constexpr libc_types::u32 texture_stencil_size = 0x88F1;
 constexpr libc_types::u32 unsigned_normalized  = 0x8C17;
-constexpr libc_types::u32 framebuffer_binding  = 0x8CA6;
 constexpr libc_types::u32 max_samples          = 0x8D57;
 } // namespace values
 /*!
@@ -63,7 +62,10 @@ STATICINLINE void bind_framebuffer(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindFramebuffer)
-        glIsFramebuffer(framebuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsFramebuffer)
+            glIsFramebuffer(framebuffer);
+#endif
     }
     glBindFramebuffer(static_cast<GLenum>(target), framebuffer);
     detail::error_check("BindFramebuffer"sv);
@@ -82,7 +84,10 @@ STATICINLINE void bind_renderbuffer(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindRenderbuffer)
-        glIsRenderbuffer(renderbuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsRenderbuffer)
+            glIsRenderbuffer(renderbuffer);
+#endif
     }
     glBindRenderbuffer(static_cast<GLenum>(target), renderbuffer);
     detail::error_check("BindRenderbuffer"sv);
@@ -218,7 +223,10 @@ STATICINLINE void framebuffer_renderbuffer(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(FramebufferRenderbuffer)
-        glIsRenderbuffer(renderbuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsRenderbuffer)
+            glIsRenderbuffer(renderbuffer);
+#endif
     }
     glFramebufferRenderbuffer(
         static_cast<GLenum>(target),
@@ -248,7 +256,10 @@ STATICINLINE void framebuffer_texture_1d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(FramebufferTexture1D)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glFramebufferTexture1D(
         static_cast<GLenum>(target),
@@ -279,7 +290,10 @@ STATICINLINE void framebuffer_texture_2d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(FramebufferTexture2D)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glFramebufferTexture2D(
         static_cast<GLenum>(target),
@@ -312,7 +326,10 @@ STATICINLINE void framebuffer_texture_3d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(FramebufferTexture3D)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glFramebufferTexture3D(
         static_cast<GLenum>(target),
@@ -344,7 +361,10 @@ STATICINLINE void framebuffer_texture_layer(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(FramebufferTextureLayer)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glFramebufferTextureLayer(
         static_cast<GLenum>(target),
@@ -489,7 +509,10 @@ STATICINLINE GLboolean is_framebuffer(u32 framebuffer)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(IsFramebuffer)
-        glIsFramebuffer(framebuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsFramebuffer)
+            glIsFramebuffer(framebuffer);
+#endif
     }
     auto out = glIsFramebuffer(framebuffer);
     detail::error_check("IsFramebuffer"sv);
@@ -507,7 +530,10 @@ STATICINLINE GLboolean is_renderbuffer(u32 renderbuffer)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(IsRenderbuffer)
-        glIsRenderbuffer(renderbuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsRenderbuffer)
+            glIsRenderbuffer(renderbuffer);
+#endif
     }
     auto out = glIsRenderbuffer(renderbuffer);
     detail::error_check("IsRenderbuffer"sv);

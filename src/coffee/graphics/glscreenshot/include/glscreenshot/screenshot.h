@@ -4,15 +4,14 @@
 
 namespace glscreenshot {
 
-struct ScreenshotProvider : comp_app::interfaces::ScreenshotProvider,
-                            comp_app::AppService<ScreenshotProvider>
+struct ScreenshotProvider
+    : comp_app::interfaces::ScreenshotProvider,
+      comp_app::AppService<ScreenshotProvider, comp_app::ScreenshotProvider>
 {
-    using services = comp_app::subsystem_list<
-        comp_app::interfaces::ScreenshotProvider,
-        ScreenshotProvider>;
+    using type = ScreenshotProvider;
 
-    comp_app::size_2d_t                        size() const;
-    semantic::mem_chunk<typing::pixels::rgb_t> pixels() const;
+    comp_app::size_2d_t                         size() const;
+    semantic::mem_chunk<typing::pixels::rgba_t> pixels() const;
 };
 
 } // namespace glscreenshot

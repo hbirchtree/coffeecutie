@@ -24,8 +24,14 @@ STATICINLINE void active_shader_program(u32 pipeline, u32 program)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ActiveShaderProgram)
-        glIsProgramPipeline(pipeline);
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgramPipeline)
+            glIsProgramPipeline(pipeline);
+#endif
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glActiveShaderProgram(pipeline, program);
     detail::error_check("ActiveShaderProgram"sv);
@@ -42,7 +48,10 @@ STATICINLINE void bind_program_pipeline(u32 pipeline)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindProgramPipeline)
-        glIsProgramPipeline(pipeline);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgramPipeline)
+            glIsProgramPipeline(pipeline);
+#endif
     }
     glBindProgramPipeline(pipeline);
     detail::error_check("BindProgramPipeline"sv);
@@ -138,7 +147,10 @@ requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetProgramPipelineInfoLog)
-        glIsProgramPipeline(pipeline);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgramPipeline)
+            glIsProgramPipeline(pipeline);
+#endif
     }
     glGetProgramPipelineInfoLog(
         pipeline, infoLog.size(), &length, infoLog.data());
@@ -163,7 +175,10 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetProgramPipelineiv)
-        glIsProgramPipeline(pipeline);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgramPipeline)
+            glIsProgramPipeline(pipeline);
+#endif
     }
     glGetProgramPipelineiv(
         pipeline,
@@ -183,7 +198,10 @@ STATICINLINE GLboolean is_program_pipeline(u32 pipeline)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(IsProgramPipeline)
-        glIsProgramPipeline(pipeline);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgramPipeline)
+            glIsProgramPipeline(pipeline);
+#endif
     }
     auto out = glIsProgramPipeline(pipeline);
     detail::error_check("IsProgramPipeline"sv);
@@ -204,7 +222,10 @@ STATICINLINE void program_parameter(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramParameteri)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramParameteri(program, static_cast<GLenum>(pname), value);
     detail::error_check("ProgramParameteri"sv);
@@ -223,7 +244,10 @@ STATICINLINE void program_uniform(u32 program, i32 location, f64 v0)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform1d)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform1d(program, location, v0);
     detail::error_check("ProgramUniform1d"sv);
@@ -248,7 +272,10 @@ requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform1dv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform1dv(
         program,
@@ -271,7 +298,10 @@ STATICINLINE void program_uniform(u32 program, i32 location, f32 v0)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform1f)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform1f(program, location, v0);
     detail::error_check("ProgramUniform1f"sv);
@@ -296,7 +326,10 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform1fv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform1fv(
         program,
@@ -319,7 +352,10 @@ STATICINLINE void program_uniform(u32 program, i32 location, i32 v0)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform1i)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform1i(program, location, v0);
     detail::error_check("ProgramUniform1i"sv);
@@ -344,7 +380,10 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform1iv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform1iv(
         program,
@@ -367,7 +406,10 @@ STATICINLINE void program_uniform(u32 program, i32 location, u32 v0)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform1ui)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform1ui(program, location, v0);
     detail::error_check("ProgramUniform1ui"sv);
@@ -392,7 +434,10 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform1uiv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform1uiv(
         program,
@@ -419,7 +464,10 @@ requires(semantic::concepts::Vector<vec_2_f64, f64, 2>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform2d)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform2d(program, location, v0.x(), v0.y());
     detail::error_check("ProgramUniform2d"sv);
@@ -443,7 +491,10 @@ requires(semantic::concepts::Span<span_const_vec_2_f64>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform2dv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform2dv(
         program,
@@ -470,7 +521,10 @@ requires(semantic::concepts::Vector<vec_2_f32, f32, 2>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform2f)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform2f(program, location, v0.x(), v0.y());
     detail::error_check("ProgramUniform2f"sv);
@@ -494,7 +548,10 @@ requires(semantic::concepts::Span<span_const_vec_2_f32>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform2fv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform2fv(
         program,
@@ -521,7 +578,10 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform2i)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform2i(program, location, v0.x(), v0.y());
     detail::error_check("ProgramUniform2i"sv);
@@ -545,7 +605,10 @@ requires(semantic::concepts::Span<span_const_vec_2_i32>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform2iv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform2iv(
         program, location, count, reinterpret_cast<const GLint*>(value.data()));
@@ -569,7 +632,10 @@ requires(semantic::concepts::Vector<vec_2_u32, u32, 2>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform2ui)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform2ui(program, location, v0.x(), v0.y());
     detail::error_check("ProgramUniform2ui"sv);
@@ -593,7 +659,10 @@ requires(semantic::concepts::Span<span_const_vec_2_u32>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform2uiv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform2uiv(
         program,
@@ -621,7 +690,10 @@ requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform3d)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform3d(program, location, v0.x(), v0.y(), v0.z());
     detail::error_check("ProgramUniform3d"sv);
@@ -645,7 +717,10 @@ requires(semantic::concepts::Span<span_const_vec_3_f64>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform3dv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform3dv(
         program,
@@ -673,7 +748,10 @@ requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform3f)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform3f(program, location, v0.x(), v0.y(), v0.z());
     detail::error_check("ProgramUniform3f"sv);
@@ -697,7 +775,10 @@ requires(semantic::concepts::Span<span_const_vec_3_f32>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform3fv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform3fv(
         program,
@@ -725,7 +806,10 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform3i)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform3i(program, location, v0.x(), v0.y(), v0.z());
     detail::error_check("ProgramUniform3i"sv);
@@ -749,7 +833,10 @@ requires(semantic::concepts::Span<span_const_vec_3_i32>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform3iv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform3iv(
         program, location, count, reinterpret_cast<const GLint*>(value.data()));
@@ -774,7 +861,10 @@ requires(semantic::concepts::Vector<vec_3_u32, u32, 3>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform3ui)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform3ui(program, location, v0.x(), v0.y(), v0.z());
     detail::error_check("ProgramUniform3ui"sv);
@@ -798,7 +888,10 @@ requires(semantic::concepts::Span<span_const_vec_3_u32>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform3uiv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform3uiv(
         program,
@@ -827,7 +920,10 @@ requires(semantic::concepts::Vector<vec_4_f64, f64, 4>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform4d)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform4d(program, location, v0.x(), v0.y(), v0.z(), v0.w());
     detail::error_check("ProgramUniform4d"sv);
@@ -851,7 +947,10 @@ requires(semantic::concepts::Span<span_const_vec_4_f64>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform4dv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform4dv(
         program,
@@ -880,7 +979,10 @@ requires(semantic::concepts::Vector<vec_4_f32, f32, 4>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform4f)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform4f(program, location, v0.x(), v0.y(), v0.z(), v0.w());
     detail::error_check("ProgramUniform4f"sv);
@@ -904,7 +1006,10 @@ requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform4fv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform4fv(
         program,
@@ -933,7 +1038,10 @@ requires(semantic::concepts::Vector<vec_4_i32, i32, 4>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform4i)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform4i(program, location, v0.x(), v0.y(), v0.z(), v0.w());
     detail::error_check("ProgramUniform4i"sv);
@@ -957,7 +1065,10 @@ requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform4iv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform4iv(
         program, location, count, reinterpret_cast<const GLint*>(value.data()));
@@ -983,7 +1094,10 @@ requires(semantic::concepts::Vector<vec_4_u32, u32, 4>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform4ui)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform4ui(program, location, v0.x(), v0.y(), v0.z(), v0.w());
     detail::error_check("ProgramUniform4ui"sv);
@@ -1007,7 +1121,10 @@ requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform4uiv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform4uiv(
         program,
@@ -1040,7 +1157,10 @@ requires(semantic::concepts::Span<span_const_mat_2x2_f64>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix2dv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformMatrix2dv(
         program,
@@ -1074,7 +1194,10 @@ requires(semantic::concepts::Span<span_const_mat_2x2_f32>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix2fv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformMatrix2fv(
         program,
@@ -1108,7 +1231,10 @@ requires(semantic::concepts::Span<span_const_mat_2x3_f64>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix2x3dv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformMatrix2x3dv(
         program,
@@ -1142,7 +1268,10 @@ requires(semantic::concepts::Span<span_const_mat_2x3_f32>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix2x3fv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformMatrix2x3fv(
         program,
@@ -1176,7 +1305,10 @@ requires(semantic::concepts::Span<span_const_mat_2x4_f64>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix2x4dv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformMatrix2x4dv(
         program,
@@ -1210,7 +1342,10 @@ requires(semantic::concepts::Span<span_const_mat_2x4_f32>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix2x4fv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformMatrix2x4fv(
         program,
@@ -1244,7 +1379,10 @@ requires(semantic::concepts::Span<span_const_mat_3x3_f64>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix3dv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformMatrix3dv(
         program,
@@ -1278,7 +1416,10 @@ requires(semantic::concepts::Span<span_const_mat_3x3_f32>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix3fv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformMatrix3fv(
         program,
@@ -1312,7 +1453,10 @@ requires(semantic::concepts::Span<span_const_mat_3x2_f64>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix3x2dv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformMatrix3x2dv(
         program,
@@ -1346,7 +1490,10 @@ requires(semantic::concepts::Span<span_const_mat_3x2_f32>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix3x2fv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformMatrix3x2fv(
         program,
@@ -1380,7 +1527,10 @@ requires(semantic::concepts::Span<span_const_mat_3x4_f64>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix3x4dv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformMatrix3x4dv(
         program,
@@ -1414,7 +1564,10 @@ requires(semantic::concepts::Span<span_const_mat_3x4_f32>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix3x4fv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformMatrix3x4fv(
         program,
@@ -1448,7 +1601,10 @@ requires(semantic::concepts::Span<span_const_mat_4x4_f64>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix4dv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformMatrix4dv(
         program,
@@ -1482,7 +1638,10 @@ requires(semantic::concepts::Span<span_const_mat_4x4_f32>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix4fv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformMatrix4fv(
         program,
@@ -1516,7 +1675,10 @@ requires(semantic::concepts::Span<span_const_mat_4x2_f64>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix4x2dv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformMatrix4x2dv(
         program,
@@ -1550,7 +1712,10 @@ requires(semantic::concepts::Span<span_const_mat_4x2_f32>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix4x2fv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformMatrix4x2fv(
         program,
@@ -1584,7 +1749,10 @@ requires(semantic::concepts::Span<span_const_mat_4x3_f64>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix4x3dv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformMatrix4x3dv(
         program,
@@ -1618,7 +1786,10 @@ requires(semantic::concepts::Span<span_const_mat_4x3_f32>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix4x3fv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformMatrix4x3fv(
         program,
@@ -1643,8 +1814,14 @@ STATICINLINE void use_program_stages(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(UseProgramStages)
-        glIsProgramPipeline(pipeline);
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgramPipeline)
+            glIsProgramPipeline(pipeline);
+#endif
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glUseProgramStages(pipeline, static_cast<GLenum>(stages), program);
     detail::error_check("UseProgramStages"sv);
@@ -1661,7 +1838,10 @@ STATICINLINE void validate_program_pipeline(u32 pipeline)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ValidateProgramPipeline)
-        glIsProgramPipeline(pipeline);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgramPipeline)
+            glIsProgramPipeline(pipeline);
+#endif
     }
     glValidateProgramPipeline(pipeline);
     detail::error_check("ValidateProgramPipeline"sv);

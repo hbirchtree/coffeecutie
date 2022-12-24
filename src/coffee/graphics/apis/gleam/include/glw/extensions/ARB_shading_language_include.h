@@ -28,7 +28,10 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(CompileShaderIncludeARB)
-        glIsShader(shader);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsShader)
+            glIsShader(shader);
+#endif
     }
     auto [path_lens, path_cstr, path_store] = detail::transform_strings(path);
     glCompileShaderIncludeARB(

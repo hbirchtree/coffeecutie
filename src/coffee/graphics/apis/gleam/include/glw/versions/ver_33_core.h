@@ -13,7 +13,10 @@ requires(MinimumVersion<Current, Version<3, 3>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindFragDataLocationIndexed)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glBindFragDataLocationIndexed(program, colorNumber, index, name.data());
     detail::error_check("BindFragDataLocationIndexed"sv);
@@ -34,7 +37,10 @@ requires(MinimumVersion<Current, Version<3, 3>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetFragDataIndex)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     auto out = glGetFragDataIndex(program, name.data());
     detail::error_check("GetFragDataIndex"sv);
@@ -55,7 +61,10 @@ requires(MinimumVersion<Current, Version<3, 3>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindSampler)
-        glIsSampler(sampler);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsSampler)
+            glIsSampler(sampler);
+#endif
     }
     glBindSampler(unit, sampler);
     detail::error_check("BindSampler"sv);
@@ -129,7 +138,10 @@ requires(MinimumVersion<Current, Version<3, 3>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetSamplerParameterIiv)
-        glIsSampler(sampler);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsSampler)
+            glIsSampler(sampler);
+#endif
     }
     glGetSamplerParameterIiv(
         sampler,
@@ -157,7 +169,10 @@ requires(MinimumVersion<Current, Version<3, 3>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetSamplerParameterIuiv)
-        glIsSampler(sampler);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsSampler)
+            glIsSampler(sampler);
+#endif
     }
     glGetSamplerParameterIuiv(
         sampler,
@@ -185,7 +200,10 @@ requires(MinimumVersion<Current, Version<3, 3>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetSamplerParameterfv)
-        glIsSampler(sampler);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsSampler)
+            glIsSampler(sampler);
+#endif
     }
     glGetSamplerParameterfv(
         sampler,
@@ -213,7 +231,10 @@ requires(MinimumVersion<Current, Version<3, 3>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetSamplerParameteriv)
-        glIsSampler(sampler);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsSampler)
+            glIsSampler(sampler);
+#endif
     }
     glGetSamplerParameteriv(
         sampler,
@@ -235,7 +256,10 @@ requires(MinimumVersion<Current, Version<3, 3>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(IsSampler)
-        glIsSampler(sampler);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsSampler)
+            glIsSampler(sampler);
+#endif
     }
     auto out = glIsSampler(sampler);
     detail::error_check("IsSampler"sv);
@@ -263,7 +287,10 @@ requires(MinimumVersion<Current, Version<3, 3>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(SamplerParameterIiv)
-        glIsSampler(sampler);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsSampler)
+            glIsSampler(sampler);
+#endif
     }
     glSamplerParameterIiv(
         sampler,
@@ -293,7 +320,10 @@ requires(MinimumVersion<Current, Version<3, 3>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(SamplerParameterIuiv)
-        glIsSampler(sampler);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsSampler)
+            glIsSampler(sampler);
+#endif
     }
     glSamplerParameterIuiv(
         sampler,
@@ -318,7 +348,10 @@ requires(MinimumVersion<Current, Version<3, 3>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(SamplerParameterf)
-        glIsSampler(sampler);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsSampler)
+            glIsSampler(sampler);
+#endif
     }
     glSamplerParameterf(sampler, static_cast<GLenum>(pname), param);
     detail::error_check("SamplerParameterf"sv);
@@ -345,7 +378,10 @@ requires(MinimumVersion<Current, Version<3, 3>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(SamplerParameterfv)
-        glIsSampler(sampler);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsSampler)
+            glIsSampler(sampler);
+#endif
     }
     glSamplerParameterfv(
         sampler,
@@ -371,7 +407,10 @@ requires(MinimumVersion<Current, Version<3, 3>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(SamplerParameteri)
-        glIsSampler(sampler);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsSampler)
+            glIsSampler(sampler);
+#endif
     }
     glSamplerParameteri(sampler, static_cast<GLenum>(pname), param);
     detail::error_check("SamplerParameteri"sv);
@@ -398,7 +437,10 @@ requires(MinimumVersion<Current, Version<3, 3>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(SamplerParameteriv)
-        glIsSampler(sampler);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsSampler)
+            glIsSampler(sampler);
+#endif
     }
     glSamplerParameteriv(
         sampler,

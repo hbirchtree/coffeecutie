@@ -22,7 +22,7 @@ namespace State {
 
 struct InternalState
 {
-    using StateStorage = Map<CString, ShPtr<State::GlobalState>>;
+    using StateStorage = Map<std::string_view, ShPtr<State::GlobalState>>;
 
     InternalState() :
         current_app(MkShared<platform::info::AppData>()),
@@ -256,7 +256,7 @@ ThreadId& GetCurrentThreadId()
 #endif
 }
 
-stl_types::UqLock LockState(libc_types::cstring key)
+stl_types::UqLock LockState(std::string_view key)
 {
     C_PTR_CHECK(ISTATE);
 
@@ -266,7 +266,7 @@ stl_types::UqLock LockState(libc_types::cstring key)
     return UqLock(ISTATE->pointer_storage[key]->access);
 }
 
-ShPtr<GlobalState> SwapState(cstring key, ShPtr<GlobalState> const& ptr)
+ShPtr<GlobalState> SwapState(std::string_view key, ShPtr<GlobalState> const& ptr)
 {
     C_PTR_CHECK(ISTATE);
 
@@ -275,7 +275,7 @@ ShPtr<GlobalState> SwapState(cstring key, ShPtr<GlobalState> const& ptr)
     return current;
 }
 
-const ShPtr<GlobalState>& PeekState(cstring key)
+const ShPtr<GlobalState>& PeekState(std::string_view key)
 {
     C_PTR_CHECK(ISTATE);
     return ISTATE->pointer_storage[key];
@@ -354,19 +354,15 @@ void ResourcePrefix(cstring prefix)
     State::ISTATE->resource_prefix = prefix;
 }
 
-CString const& ResourcePrefix(bool fallback)
+std::optional<std::string> ResourcePrefix(bool fallback)
 {
-    static CString fallback_store = "./";
-
     if(!State::ISTATE)
-        return fallback_store;
+        return std::nullopt;
 
     auto const& out = State::ISTATE->resource_prefix;
 
-    if(fallback && out.size() == 0)
-    {
-        return fallback_store;
-    }
+    if(out.size() == 0)
+        return std::nullopt;
 
     return out;
 }
@@ -386,50 +382,3 @@ MainWithArgs coffee_main_function_ptr = nullptr;
 void* uikit_appdelegate = nullptr;
 void* uikit_window      = nullptr;
 #endif
-
-/*
- * These declarations are library-local storage for event handling
- *
- * They require compatibility with C linkage in order to work with
- *  Objective-C and other things.
- *
- * They shouldn't be used externally to the program anyway.
- *
- */
-void* coffee_event_handling_data;
-
-void (*CoffeeEventHandle)(void*, int);
-void (*CoffeeEventHandleNA)(void*, int, void*, void*, void*);
-
-void (*CoffeeForeignSignalHandle)(int);
-void (*CoffeeForeignSignalHandleNA)(int, void*, void*, void*);
-
-bool CoffeeEventHandleCall(int event)
-{
-    if(CoffeeEventHandle && coffee_event_handling_data)
-    {
-        CoffeeEventHandle(coffee_event_handling_data, event);
-        return true;
-    } else
-    {
-        fprintf(
-            stderr,
-            "Event handler function called without valid configuration!\n");
-        return false;
-    }
-}
-bool CoffeeEventHandleNACall(int event, void* ptr1, void* ptr2, void* ptr3)
-{
-    if(CoffeeEventHandleNA && coffee_event_handling_data)
-    {
-        CoffeeEventHandleNA(
-            coffee_event_handling_data, event, ptr1, ptr2, ptr3);
-        return true;
-    } else
-    {
-        fprintf(
-            stderr,
-            "Event handler function called without valid configuration!\n");
-        return false;
-    }
-}

@@ -70,7 +70,10 @@ STATICINLINE void tex_renderbuffer(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TexRenderbufferNV)
-        glIsRenderbuffer(renderbuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsRenderbuffer)
+            glIsRenderbuffer(renderbuffer);
+#endif
     }
     glTexRenderbufferNV(static_cast<GLenum>(target), renderbuffer);
     detail::error_check("TexRenderbufferNV"sv);

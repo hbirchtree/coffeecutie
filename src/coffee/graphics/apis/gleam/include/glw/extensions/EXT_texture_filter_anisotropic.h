@@ -1,10 +1,11 @@
 #pragma once
 
 #ifdef GL_EXT_texture_filter_anisotropic
+#include "../enums/GetPName.h"
 namespace gl::ext::texture_filter_anisotropic {
+using gl::group::get_prop;
 namespace values {
-constexpr libc_types::u32 texture_max_anisotropy     = 0x84FE;
-constexpr libc_types::u32 max_texture_max_anisotropy = 0x84FF;
+constexpr libc_types::u32 texture_max_anisotropy = 0x84FE;
 } // namespace values
 } // namespace gl::ext::texture_filter_anisotropic
 #endif // GL_EXT_texture_filter_anisotropic

@@ -40,7 +40,10 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetProgramInterfaceiv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetProgramInterfaceiv(
         program,
@@ -66,7 +69,10 @@ STATICINLINE GLuint get_program_resource_index(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetProgramResourceIndex)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     auto out = glGetProgramResourceIndex(
         program, static_cast<GLenum>(programInterface), name.data());
@@ -90,7 +96,10 @@ STATICINLINE GLint get_program_resource_location(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetProgramResourceLocation)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     auto out = glGetProgramResourceLocation(
         program, static_cast<GLenum>(programInterface), name.data());
@@ -114,7 +123,10 @@ STATICINLINE GLint get_program_resource_location_index(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetProgramResourceLocationIndex)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     auto out = glGetProgramResourceLocationIndex(
         program, static_cast<GLenum>(programInterface), name.data());
@@ -147,7 +159,10 @@ requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetProgramResourceName)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetProgramResourceName(
         program,
@@ -192,7 +207,10 @@ requires(semantic::concepts::Span<span_const_program_resource_property>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetProgramResourceiv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetProgramResourceiv(
         program,

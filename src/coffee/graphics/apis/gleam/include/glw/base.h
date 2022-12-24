@@ -4,6 +4,8 @@
 #include <peripherals/libc/types.h>
 #include <peripherals/stl/string_ops.h>
 
+// clang-format off
+
 #define GL_BASE_ES_MASK 0x1000
 #define GL_BASE_VERSION_MASK 0x00FF
 
@@ -25,7 +27,6 @@
 #define GL_BASE_CORE_VERSION 0x000
 
 #if defined(GLEAM_USE_LINKED)
-
 #if C_HAS_INCLUDE(<GLES3/gl32.h>) && GLEAM_RESTRICT_ES >= 0x320
 #include <GLES3/gl32.h>
 #define GL_BASE_ES_VERSION 0x320
@@ -45,20 +46,22 @@
 #error Configured for linked GLES headers, but none found
 #endif
 
-#if C_HAS_INCLUDE(<GLES3 / gl3ext.h>) && GLEAM_RESTRICT_ES >= 0x300
+#if C_HAS_INCLUDE(<GLES3/gl3ext.h>) && GLEAM_RESTRICT_ES >= 0x300
 #include <GLES3/gl3ext.h>
 #endif
-#if C_HAS_INCLUDE(<GLES2 / gl2ext.h>) && GLEAM_RESTRICT_ES == 0x200
+#if C_HAS_INCLUDE(<GLES2/gl2ext.h>) && GLEAM_RESTRICT_ES == 0x200
 #include <GLES2/gl2ext.h>
 #endif
 
 #else
 
 #include <glad/glad.h>
-#define GL_BASE_VERSION 0x320
+#define GL_BASE_ES_VERSION 0x320
 
 #endif
 #endif
+
+// clang-format on
 
 #define GL_VERSION_VERIFY(CORE_VER, ES_VER) \
     GL_BASE_CORE_VERSION >= CORE_VER || GL_BASE_ES_VERSION >= ES_VER

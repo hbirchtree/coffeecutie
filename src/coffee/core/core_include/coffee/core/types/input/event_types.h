@@ -279,7 +279,6 @@ inline i16 CIControllerAtomicEvent::axis_value<i16>() const
  */
 struct CIControllerAtomicUpdateEvent : BaseEvent<CIEvent::ControllerUpdate>
 {
-    cstring name;
     union
     {
         struct
@@ -431,7 +430,7 @@ struct CITouchTapEvent : BaseEvent<CIEvent::TouchTap>
     {
         Pressed = 0x1,
     };
-    PtF pos;
+    Vecf2 pos;
     union
     {
         struct
@@ -498,13 +497,13 @@ struct CIGestureEvent : BaseEvent<CIEvent::Gesture>
 
 struct CITouchPinchEvent : BaseEvent<CIEvent::TouchPinch>
 {
-    PtF    origin;
+    Vecf2    origin;
     scalar factor;
 };
 
 struct CITouchRotateEvent : BaseEvent<CIEvent::TouchRotate>
 {
-    PtF    origin;
+    Vecf2    origin;
     scalar radians;
 };
 

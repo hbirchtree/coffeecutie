@@ -12,6 +12,7 @@ namespace platform::dl {
 static constexpr bool supported = true;
 
 using posix::load;
+using posix::symbol_from;
 using posix::error_message;
 #else
 static constexpr bool supported = false;

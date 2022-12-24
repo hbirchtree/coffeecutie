@@ -21,10 +21,10 @@ struct GlobalState
 
 using global_state_ptr = stl_types::ShPtr<GlobalState>;
 
-using lock_state_fn = stl_types::UqLock (*)(libc_types::cstring);
+using lock_state_fn = std::function<stl_types::UqLock(std::string_view)>;
 using swap_state_fn =
-    global_state_ptr (*)(libc_types::cstring, global_state_ptr const&);
-using peek_state_fn = global_state_ptr const& (*)(libc_types::cstring);
+    std::function<global_state_ptr(std::string_view, global_state_ptr const&)>;
+using peek_state_fn = std::function<global_state_ptr const&(std::string_view)>;
 
 using profiler_enabled_fn = bool (*)();
 using profiler_store_fn = stl_types::ShPtr<platform::profiling::PContext> (*)();

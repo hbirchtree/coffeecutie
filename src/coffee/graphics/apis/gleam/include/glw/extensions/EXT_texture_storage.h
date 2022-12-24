@@ -127,7 +127,10 @@ STATICINLINE void texture_storage_1d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureStorage1DEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glTextureStorage1DEXT(
         texture, target, levels, static_cast<GLenum>(internalformat), width);
@@ -157,7 +160,10 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureStorage2DEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glTextureStorage2DEXT(
         texture,
@@ -193,7 +199,10 @@ requires(semantic::concepts::Size2D<size_3_i32, i32>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureStorage3DEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glTextureStorage3DEXT(
         texture,

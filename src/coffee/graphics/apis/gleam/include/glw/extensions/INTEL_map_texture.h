@@ -24,7 +24,10 @@ STATICINLINE void* map_texture_2d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(MapTexture2DINTEL)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     auto out = glMapTexture2DINTEL(texture, level, access, &stride, &layout);
     detail::error_check("MapTexture2DINTEL"sv);
@@ -42,7 +45,10 @@ STATICINLINE void sync_texture(u32 texture)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(SyncTextureINTEL)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glSyncTextureINTEL(texture);
     detail::error_check("SyncTextureINTEL"sv);
@@ -60,7 +66,10 @@ STATICINLINE void unmap_texture_2d(u32 texture, i32 level)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(UnmapTexture2DINTEL)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glUnmapTexture2DINTEL(texture, level);
     detail::error_check("UnmapTexture2DINTEL"sv);

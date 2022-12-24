@@ -9,16 +9,15 @@ namespace glscreenshot {
 
 using namespace gl::group;
 
-using glw =
-    std::conditional<
-        gl::core::enabled,
-        gl::core::v33,
+using glw = std::conditional<
+    gl::core::enabled,
+    gl::core::v33,
 #if GLEAM_MAX_VERSION_ES >= 0x300
-        gl::es::v30
+    gl::es::v30
 #else
-        gl::es::v20
+    gl::es::v20
 #endif
->::type;
+    >::type;
 
 comp_app::size_2d_t ScreenshotProvider::size() const
 {
@@ -27,21 +26,21 @@ comp_app::size_2d_t ScreenshotProvider::size() const
     return {tmp[2], tmp[3]};
 }
 
-semantic::mem_chunk<typing::pixels::rgb_t> ScreenshotProvider::pixels() const
+semantic::mem_chunk<typing::pixels::rgba_t> ScreenshotProvider::pixels() const
 {
     using namespace ::typing::vector_types;
 
     Coffee::DProfContext _("glscreenshot::ScreenshotProvider::pixels");
 
     auto size_ = size();
-    auto out =
-        semantic::mem_chunk<typing::pixels::rgb_t>::withSize(size_.area());
+    auto out
+        = semantic::mem_chunk<typing::pixels::rgba_t>::withSize(size_.area());
     i32 currentBinding = 0;
     glw::get_integerv(
 #if GLEAM_MAX_VERSION >= 0x100 || GLEAM_MAX_VERSION_ES >= 0x300
         gl::group::get_prop::draw_framebuffer_binding,
 #else
-        static_cast<gl::group::get_prop>(GL_FRAMEBUFFER_BINDING),
+        gl::group::get_prop::framebuffer_binding,
 #endif
         semantic::SpanOne(currentBinding));
 #if GLEAM_MAX_VERSION >= 0x100 || GLEAM_MAX_VERSION_ES >= 0x300
@@ -52,9 +51,9 @@ semantic::mem_chunk<typing::pixels::rgb_t> ScreenshotProvider::pixels() const
 #endif
     glw::read_pixels(
         Veci2{0, 0},
-        typing::geometry::size_2d<i32>{size_.w, size_.h},
+        size_,
         pixel_format::rgb,
-        pixel_type::unsigned_byte,
+        pixel_type::unsigned_short_5_6_5,
         out.as<std::byte>().view);
 #if GLEAM_MAX_VERSION >= 0x100 || GLEAM_MAX_VERSION_ES >= 0x300
     glw::bind_framebuffer(

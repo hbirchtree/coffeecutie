@@ -1,4 +1,4 @@
-find_package ( Microsoft.GSL CONFIG REQUIRED )
+find_package ( Microsoft.GSL REQUIRED )
 find_package ( tinyutf8 CONFIG REQUIRED )
 
 coffee_library (
@@ -50,18 +50,18 @@ if(EMSCRIPTEN)
             )
         target_link_options ( PeripheralLib PUBLIC
             -gsource-map
-            "-s         " DEMANGLE_SUPPORT=1
-            "-s        " ASSERTIONS=1
+            -sDEMANGLE_SUPPORT=1
+            -sASSERTIONS=1
             )
     elseif("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
         target_compile_options ( PeripheralLib PUBLIC
             -gsource-map -O1
-#            "-s                                 " DEMANGLE_SUPPORT=1
+#            -sDEMANGLE_SUPPORT=1
             )
         target_link_options ( PeripheralLib PUBLIC
             -gsource-map -O1
-            "-s         " DEMANGLE_SUPPORT=1
-            "-s        " ASSERTIONS=1
+            -sDEMANGLE_SUPPORT=1
+            -sASSERTIONS=1
             )
     else()
         target_compile_options ( PeripheralLib PUBLIC
@@ -77,38 +77,52 @@ endif()
 # Base system libraries
 ###########################################################
 
-if(WIN32)
-    if(WIN_UWP)
-        target_link_libraries ( PeripheralLib PUBLIC
-            OneCore
-            )
-    else()
-        target_link_libraries ( PeripheralLib PUBLIC
-            user32
-            gdi32
-            winmm
-            imm32
-            ole32
-            oleaut32
-            version
-            uuid
-            dinput8
-            shell32
-            ws2_32
-            wbemuuid
-            netapi32
-            )
-    endif()
-
-    if(MINGW)
-        target_link_libraries ( PeripheralLib PUBLIC
-            mingw32
-            )
-    endif()
-
+if(MINGW)
     target_link_libraries ( PeripheralLib PUBLIC
-        # For compression using Windows built-in zlib-like
-        # This is only available on Windows 8+
+        user32
+        gdi32
+        winmm
+        imm32
+        ole32
+        oleaut32
+        version
+        uuid
+        dinput8
+        shell32
+        ws2_32
+        wbemuuid
+        netapi32
+        mingw32
+        # Requires Windows 8+
+        cabinet
+        )
+    target_compile_definitions ( PeripheralLib PUBLIC
+        -DCOFFEE_WINDOWS_COMPRESSION_AVAILABLE=1
+        )
+elseif(WIN_UWP)
+    target_link_libraries ( PeripheralLib PUBLIC
+        OneCore
+        cabinet
+        )
+    target_compile_definitions ( PeripheralLib PUBLIC
+        -DCOFFEE_WINDOWS_COMPRESSION_AVAILABLE=1
+        )
+elseif(WIN32)
+    target_link_libraries ( PeripheralLib PUBLIC
+        user32
+        gdi32
+        winmm
+        imm32
+        ole32
+        oleaut32
+        version
+        uuid
+        dinput8
+        shell32
+        ws2_32
+        wbemuuid
+        netapi32
+        # Requires Windows 8+
         cabinet
         )
     target_compile_definitions ( PeripheralLib PUBLIC
@@ -146,18 +160,18 @@ elseif(APPLE)
         )
 elseif(EMSCRIPTEN)
     target_compile_options ( PeripheralLib PUBLIC
-        -fexceptions
-        --no-heap-copy
+        -fwasm-exceptions
         -fPIC
+        -pthread
        )
-   target_link_options ( PeripheralLib PUBLIC
-#        "-s            " ALLOW_MEMORY_GROWTH=1
-        "-s           " SAFE_HEAP=1
-        "-s          " DISABLE_EXCEPTION_CATCHING=0
-        "-s       " LLD_REPORT_UNDEFINED
-        -fexceptions
-        --no-heap-copy
+    target_link_options ( PeripheralLib PUBLIC
+        -fwasm-exceptions
         -fPIC
+        -pthread
+        --no-heap-copy
+        -sALLOW_MEMORY_GROWTH
+        -sLLD_REPORT_UNDEFINED
+        -sSAFE_HEAP=1
        )
 elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
     find_package ( Threads REQUIRED )

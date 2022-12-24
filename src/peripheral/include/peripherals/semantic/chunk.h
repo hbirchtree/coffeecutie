@@ -38,7 +38,7 @@ enum class Ownership
     Owned,
     Borrowed,
 };
-template<typename T>
+template<typename T = char>
 struct mem_chunk
 {
     using difference_type = libc_types::ptroff;
@@ -306,19 +306,9 @@ struct mem_chunk
         return C_OCAST<mem_chunk<OtherT>>(*this);
     }
     template<typename OtherT>
-    requires std::is_same_v<T, OtherT> NO_DISCARD auto& as()
-    {
-        return *this;
-    }
-    template<typename OtherT>
     NO_DISCARD auto as() const
     {
         return C_OCAST<mem_chunk<OtherT>>(*this);
-    }
-    template<typename OtherT>
-    requires std::is_same_v<T, OtherT> NO_DISCARD auto const& as() const
-    {
-        return *this;
     }
 
     /* Allocator methods */

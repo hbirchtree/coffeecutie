@@ -7,8 +7,6 @@
 #include <coffee/foreign/foreign.h>
 #include <coffee/jni/jnipp.h>
 
-#include <android/asset_manager.h>
-#include <android/sensor.h>
 #include <jni.h>
 
 struct android_app;
@@ -16,6 +14,9 @@ struct AAsset;
 struct AAssetManager;
 struct ANativeWindow;
 struct ANativeActivity;
+struct AConfiguration;
+
+using app_cmd_t = decltype(APP_CMD_START);
 
 namespace android {
 
@@ -100,8 +101,13 @@ struct app_info
     platform::url::Url external_data_path();
     std::optional<platform::url::Url> obb_path();
 
-    stl_types::Optional<::jnipp::java::object> get_service(
+    std::optional<::jnipp::java::object> get_service(
         std::string const& service);
+
+    ANativeActivity* activity() const;
+    AConfiguration* configuration() const;
+    AInputQueue* input_queue() const;
+    ALooper* looper() const;
 };
 
 struct network_stats
@@ -122,7 +128,7 @@ struct network_stats
         libc_types::u64 rx, tx;
     };
 
-    stl_types::Optional<result_t> query(network_class net = network_class_mobile);
+    std::optional<result_t> query(network_class net = network_class_mobile);
 };
 
 struct activity_manager
@@ -150,10 +156,10 @@ struct activity_manager
         ::jobject activity_object{};
     };
 
-    stl_types::Optional<memory_info> get_mem_info();
-    stl_types::Optional<config_info> get_config_info();
+    std::optional<memory_info> get_mem_info();
+    std::optional<config_info> get_config_info();
 
-    stl_types::Optional<window_info> window();
+    std::optional<window_info> window();
 
     AAssetManager* asset_manager();
 

@@ -42,6 +42,7 @@ enum class codec : libc_types::u32
 
     /* external codecs */
     lz4,
+    zstd,
 };
 
 } // namespace compression

@@ -48,19 +48,17 @@ struct OnKey
 template<typename Event>
 struct ExitOn
 {
-    using event_type = typename std::conditional<
-        std::is_same<Event, OnQuit>::value,
+    using event_type = typename std::conditional_t<
+        std::is_same_v<Event, OnQuit>,
         Input::BaseEvent<CIEvent::QuitSign>,
-        CIKeyEvent>::type;
+        CIKeyEvent>;
 
     ExitOn(Function<void()>&& action) : m_action(action)
     {
     }
 
-    template<
-        typename Dummy = void,
-        typename std::enable_if<std::is_same<Event, OnQuit>::value, Dummy>::
-            type* = nullptr>
+    template<typename Event_ = Event>
+    requires std::is_same_v<Event_, OnQuit>
     void operator()(CIEvent const& e, c_cptr)
     {
         if(e.type != CIEvent::QuitSign)
@@ -68,10 +66,8 @@ struct ExitOn
         m_action();
     }
 
-    template<
-        typename Dummy = void,
-        typename std::enable_if<!std::is_same<Event, OnQuit>::value, Dummy>::
-            type* = nullptr>
+    template<typename Event_ = Event>
+    requires (!std::is_same_v<Event, OnQuit>)
     void operator()(CIEvent const&, CIKeyEvent const* ev)
     {
         if(ev->key != Event::key)

@@ -24,7 +24,10 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetSamplerParameterIivEXT)
-        glIsSampler(sampler);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsSampler)
+            glIsSampler(sampler);
+#endif
     }
     glGetSamplerParameterIivEXT(
         sampler,
@@ -51,7 +54,10 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetSamplerParameterIuivEXT)
-        glIsSampler(sampler);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsSampler)
+            glIsSampler(sampler);
+#endif
     }
     glGetSamplerParameterIuivEXT(
         sampler,
@@ -136,7 +142,10 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(SamplerParameterIivEXT)
-        glIsSampler(sampler);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsSampler)
+            glIsSampler(sampler);
+#endif
     }
     glSamplerParameterIivEXT(
         sampler,
@@ -165,7 +174,10 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(SamplerParameterIuivEXT)
-        glIsSampler(sampler);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsSampler)
+            glIsSampler(sampler);
+#endif
     }
     glSamplerParameterIuivEXT(
         sampler,

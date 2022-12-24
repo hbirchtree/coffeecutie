@@ -39,7 +39,10 @@ requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetActiveSubroutineName)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetActiveSubroutineName(
         program,
@@ -76,7 +79,10 @@ requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetActiveSubroutineUniformName)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetActiveSubroutineUniformName(
         program,
@@ -112,7 +118,10 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetActiveSubroutineUniformiv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetActiveSubroutineUniformiv(
         program,
@@ -141,7 +150,10 @@ STATICINLINE void get_program_stageiv(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetProgramStageiv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetProgramStageiv(
         program,
@@ -165,7 +177,10 @@ STATICINLINE GLuint get_subroutine_index(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetSubroutineIndex)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     auto out = glGetSubroutineIndex(
         program, static_cast<GLenum>(shadertype), name.data());
@@ -187,7 +202,10 @@ STATICINLINE GLint get_subroutine_uniform_location(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetSubroutineUniformLocation)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     auto out = glGetSubroutineUniformLocation(
         program, static_cast<GLenum>(shadertype), name.data());

@@ -42,7 +42,10 @@ STATICINLINE void named_buffer_page_commitment_ext(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedBufferPageCommitmentEXT)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glNamedBufferPageCommitmentEXT(buffer, offset, size, commit);
     detail::error_check("NamedBufferPageCommitmentEXT"sv);
@@ -63,7 +66,10 @@ STATICINLINE void named_buffer_page_commitment(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedBufferPageCommitmentARB)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glNamedBufferPageCommitmentARB(buffer, offset, size, commit);
     detail::error_check("NamedBufferPageCommitmentARB"sv);

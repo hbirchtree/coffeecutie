@@ -7,7 +7,9 @@
 #include <coffee/core/task_queue/task.h>
 #include <coffee/interfaces/full_launcher.h>
 
+#if defined(FEATURE_ENABLE_ASIO)
 #include <coffee/asio/net_profiling.h>
+#endif
 
 i32 coffee_main(i32, cstring_w*)
 {

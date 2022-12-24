@@ -11,6 +11,7 @@ template<typename T, size_t Size>
 struct tvector
 {
     using value_type = T;
+    static constexpr size_t row_size = Size;
 
   private:
     T data[Size];

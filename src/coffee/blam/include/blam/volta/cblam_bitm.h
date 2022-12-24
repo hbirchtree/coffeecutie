@@ -3,29 +3,33 @@
 #include "cblam_structures.h"
 
 #include <coffee/interfaces/cgraphics_pixops.h>
+
+#include <peripherals/typing/enum/pixels/components.h>
+#include <peripherals/typing/enum/pixels/format.h>
 #include <peripherals/typing/enum/pixels/format_transform.h>
 
-namespace blam {
-namespace bitm {
+namespace blam::bitm {
+
+using typing::PixCmp;
 
 /*!
  * \brief These are the various texture formats found in the Blam engine
  */
 enum class format_t : u16
 {
-    A8       = 0x00, /*!< 000A -> GL_RED + GL_UNSIGNED_BYTE*/
-    Y8       = 0x01, /*!< LLL0 -> GL_RED + GL_UNSIGNED_BYTE*/
-    AY8      = 0x02, /*!< LLLL -> GL_RED + GL_UNSIGNED_BYTE*/
-    A8Y8     = 0x03, /*!< LLLA1 -> GL_RG + GL_UNSIGNED_BYTE*/
-    R5G6B5   = 0x06, /*!< R5G6B5 -> GL_RGB + GL_UNSIGNED_BYTE_5_6_5*/
-    A1R5G5B5 = 0x08, /*!< RGB5A1 -> GL_RGB + GL_UNSIGNED_SHORT_5_5_5_1*/
-    A4R4G4B4 = 0x09, /*!< RGBA4 -> GL_RGB + GL_UNSIGNED_SHORT_4_4_4_4*/
-    X8R8G8B8 = 0x0A, /*!< RGBX8 -> GL_RGBA + GL_UNSIGNED_BYTE*/
-    A8R8G8B8 = 0x0B, /*!< RGBA8 -> GL_RGBA + GL_UNSIGNED_BYTE*/
-    DXT1     = 0x0E, /*!< DXT1*/
-    DXT2AND3 = 0x0F, /*!< DXT3*/
-    DXT4AND5 = 0x10, /*!< DXT5*/
-    P8       = 0x11, /*!< LLL01 (See A8)*/
+    A8     = 0x00, /*!< 000A -> GL_RED + GL_UNSIGNED_BYTE*/
+    Y8     = 0x01, /*!< LLL0 -> GL_RED + GL_UNSIGNED_BYTE*/
+    AY8    = 0x02, /*!< LLLL -> GL_RED + GL_UNSIGNED_BYTE*/
+    A8Y8   = 0x03, /*!< LLLA1 -> GL_RG + GL_UNSIGNED_BYTE*/
+    R5G6B5 = 0x06, /*!< R5G6B5 -> GL_RGB + GL_UNSIGNED_BYTE_5_6_5*/
+    A1RGB5 = 0x08, /*!< RGB5A1 -> GL_RGB + GL_UNSIGNED_SHORT_5_5_5_1*/
+    ARGB4  = 0x09, /*!< RGBA4 -> GL_RGB + GL_UNSIGNED_SHORT_4_4_4_4*/
+    XRGB8  = 0x0A, /*!< RGBX8 -> GL_RGBA + GL_UNSIGNED_BYTE*/
+    ARGB8  = 0x0B, /*!< RGBA8 -> GL_RGBA + GL_UNSIGNED_BYTE*/
+    BC1    = 0x0E, /*!< BC1/DXT1 */
+    BC2    = 0x0F, /*!< BC2/DXT2/3*/
+    BC3    = 0x10, /*!< BC3/DXT5*/
+    P8     = 0x11, /*!< LLL01 (See A8)*/
 };
 
 /*!
@@ -65,9 +69,9 @@ struct locator_block
     u32        size;
     u32        offset;
 
-    inline reflexive_t<header_t> to_reflexive() const
+    inline auto to_reflexive() const
     {
-        return {1, offset, 0};
+        return reflexive_t<header_t>{1, offset};
     }
 };
 
@@ -79,7 +83,8 @@ struct bitmap_header_t
     u32 locators_offset;
     u32 locators_count;
 
-    static inline bitmap_header_t const* from_data(semantic::Bytes const& data)
+    static inline bitmap_header_t const* from_data(
+        semantic::BytesConst const& data)
     {
         return C_RCAST<bitmap_header_t const*>(data.data);
     }
@@ -197,14 +202,14 @@ struct image_t
             return {BitFmt::UByte, PixCmp::RG};
         case format_t::R5G6B5:
             return {BitFmt::UShort_565, PixCmp::RGB};
-        case format_t::A1R5G5B5:
+        case format_t::A1RGB5:
             return {BitFmt::UShort_1555R, PixCmp::RGBA};
-        case format_t::A4R4G4B4:
+        case format_t::ARGB4:
             return {BitFmt::UShort_4444, PixCmp::RGBA};
 
-        case format_t::A8R8G8B8:
+        case format_t::ARGB8:
             return {BitFmt::UByte, PixCmp::RGBA};
-        case format_t::X8R8G8B8:
+        case format_t::XRGB8:
             return {BitFmt::UByte, PixCmp::RGBA};
 
         default:
@@ -225,18 +230,18 @@ struct image_t
             return PixFmt::RGB565;
         case format_t::A8Y8:
             return PixFmt::RG8;
-        case format_t::A1R5G5B5:
+        case format_t::A1RGB5:
             return PixFmt::RGB5A1;
-        case format_t::A4R4G4B4:
+        case format_t::ARGB4:
             return PixFmt::RGBA4;
-        case format_t::A8R8G8B8:
+        case format_t::ARGB8:
             return PixFmt::RGBA8;
-        case format_t::X8R8G8B8:
+        case format_t::XRGB8:
             return PixFmt::RGBA8;
-        case format_t::DXT1:
-        case format_t::DXT2AND3:
-        case format_t::DXT4AND5:
-            return PixFmt::DXTn;
+        case format_t::BC1:
+        case format_t::BC2:
+        case format_t::BC3:
+            return PixFmt::BCn;
         }
     }
 
@@ -244,17 +249,16 @@ struct image_t
     {
         switch(format)
         {
-        case format_t::DXT1:
-            return {PixFmt::DXTn, CompFlags::S3TC_1};
-        case format_t::DXT2AND3:
-            return {PixFmt::DXTn, CompFlags::S3TC_3};
-        case format_t::DXT4AND5:
-            return {PixFmt::DXTn, CompFlags::S3TC_5};
+        case format_t::BC1:
+            return {PixFmt::BCn, CompFlags::BC1};
+        case format_t::BC2:
+            return {PixFmt::BCn, CompFlags::BC2};
+        case format_t::BC3:
+            return {PixFmt::BCn, CompFlags::BC3};
         }
     }
 
-    inline semantic::BytesConst data(
-        magic_data_t const& magic, u16 mipmap = 0) const
+    inline Span<const u8> data(magic_data_t const& magic, u16 mipmap = 0) const
     {
         using namespace typing::pixels::properties;
 
@@ -274,8 +278,8 @@ struct image_t
             PixCmp data_layout;
             std::tie(data_fmt, data_layout) = to_fmt();
 
-            u32 size = get<pixel_size>(data_fmt, data_layout, 1) *
-                       mipsize.convert<u32>().area();
+            u32 size = get<pixel_size>(data_fmt, data_layout, 1)
+                       * mipsize.convert<u32>().area();
             u32 mip_offset = 0;
 
             for(auto i : stl_types::Range<>(mipmap))
@@ -286,7 +290,9 @@ struct image_t
                 mip_offset += imsize.area();
             }
 
-            return reflexive_t<u8>{size, offset + mip_offset, 0}.data(magic);
+            return reflexive_t<u8>{size, offset + mip_offset}
+                .data(magic)
+                .value();
         } else
         {
             PixFmt    fmt;
@@ -294,8 +300,8 @@ struct image_t
             std::tie(fmt, flags) = to_compressed_fmt();
             auto comp_fmt        = typing::pixels::CompFmt(fmt, flags);
 
-            u32 size =
-                Coffee::GetPixCompressedSize(comp_fmt, mipsize.convert<u32>());
+            u32 size = Coffee::GetPixCompressedSize(
+                comp_fmt, mipsize.convert<u32>());
 
             u32 mip_offset = 0;
             for(auto i : stl_types::Range<>(mipmap))
@@ -306,7 +312,9 @@ struct image_t
                 mip_offset += Coffee::GetPixCompressedSize(
                     comp_fmt, off_size.convert<u32>());
             }
-            return reflexive_t<u8>{size, offset + mip_offset, 0}.data(magic);
+            return reflexive_t<u8>{size, offset + mip_offset}
+                .data(magic)
+                .value();
         }
     }
 };
@@ -326,6 +334,4 @@ struct texture_t
     u16          blocksize; /*!< Block size of DXT* formats*/
 };
 
-} // namespace bitm
-
-} // namespace blam
+} // namespace blam::bitm

@@ -10,15 +10,15 @@ namespace logging {
 
 using LogInterfaceBasic = void (*)(
     libc::io::output_fd,
-    stl_types::CString const&,
+    std::string_view,
     semantic::debug::Severity,
     libc_types::u32, /* level */
     libc_types::u32  /* flags */
 );
 using LogInterfaceTagged = void (*)(
     libc::io::output_fd,
-    libc_types::cstring,       /* tag */
-    stl_types::CString const&, /* line to print */
+    std::string_view, /* tag */
+    std::string_view, /* line to print */
     semantic::debug::Severity,
     libc_types::u32, /* level */
     libc_types::u32  /* flags */
@@ -26,23 +26,23 @@ using LogInterfaceTagged = void (*)(
 using StackWriter = void (*)(
     stl_types::CString const&, /* frame name */
     stl_types::CString const&  /* instruction pointer (hex format) */
-    );
+);
 
 using StackWriterEx = stl_types::Function<void(
-    stl_types::String const&, /* frame name */
-    stl_types::String const&, /* instruction pointer */
-    stl_types::String const&, /* source file */
-    libc_types::u64 /* source line */
+    std::string_view, /* frame name */
+    std::string_view, /* instruction pointer */
+    std::string_view, /* source file */
+    libc_types::u64   /* source line */
     )>;
 
 STATICINLINE void fprintf_logger(
-    libc::io::output_fd       fd,
-    stl_types::CString const& line,
+    libc::io::output_fd fd,
+    std::string_view    line,
     semantic::debug::Severity,
     libc_types::u32,
     libc_types::u32)
 {
-    fprintf(fd, "%s\n", line.c_str());
+    fprintf(fd, "%.*s\n", line.size(), line.data());
 }
 
 } // namespace logging

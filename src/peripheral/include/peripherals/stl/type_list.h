@@ -158,6 +158,13 @@ void for_each_rev(Operator&& op)
 
 } // namespace type_list
 
+template<typename T>
+concept is_type_list =
+    std::is_same_v<T, type_list::detail::empty_list> ||
+    (std::is_same_v<typename T::head, typename T::head> &&
+     (std::is_same_v<typename T::tail, type_list::detail::empty_list> ||
+      std::is_same_v<typename T::tail::head, typename T::tail::head>));
+
 template<typename... T>
 using type_list_t = type_list::type_list<T...>;
 

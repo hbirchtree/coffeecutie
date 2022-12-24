@@ -76,7 +76,10 @@ requires(semantic::concepts::Span<span_GLuint64EXT>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetNamedBufferParameterui64vNV)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glGetNamedBufferParameterui64vNV(
         buffer,
@@ -104,7 +107,10 @@ requires(semantic::concepts::Span<span_GLuint64EXT>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetUniformui64vNV)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetUniformui64vNV(
         program,
@@ -142,7 +148,10 @@ STATICINLINE GLboolean is_named_buffer_resident(u32 buffer)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(IsNamedBufferResidentNV)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     auto out = glIsNamedBufferResidentNV(buffer);
     detail::error_check("IsNamedBufferResidentNV"sv);
@@ -193,7 +202,10 @@ STATICINLINE void make_named_buffer_non_resident(u32 buffer)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(MakeNamedBufferNonResidentNV)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glMakeNamedBufferNonResidentNV(buffer);
     detail::error_check("MakeNamedBufferNonResidentNV"sv);
@@ -211,7 +223,10 @@ STATICINLINE void make_named_buffer_resident(u32 buffer, GLenum access)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(MakeNamedBufferResidentNV)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glMakeNamedBufferResidentNV(buffer, access);
     detail::error_check("MakeNamedBufferResidentNV"sv);
@@ -230,7 +245,10 @@ STATICINLINE void program_uniform(u32 program, i32 location, GLuint64EXT value)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformui64NV)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformui64NV(program, location, value);
     detail::error_check("ProgramUniformui64NV"sv);
@@ -255,7 +273,10 @@ requires(semantic::concepts::Span<span_const_GLuint64EXT>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformui64vNV)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformui64vNV(
         program,

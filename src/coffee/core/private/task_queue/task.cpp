@@ -193,7 +193,7 @@ static void ImpCreateNewThreadQueue(
            queue_create.has_error())
         {
             Coffee::cWarning(
-                RQ_API "Failed to create queue: {}",
+                RQ_API "Failed to create queue: {0}",
                 to_string(queue_create.error()));
         } else
             queue = queue_create.value();

@@ -19,7 +19,7 @@ concept is_string =
 template<typename T>
 concept is_string_container = requires(T v)
 {
-    is_string<decltype(v.data())>;
+    requires is_string<decltype(v.data())>;
 };
 
 }

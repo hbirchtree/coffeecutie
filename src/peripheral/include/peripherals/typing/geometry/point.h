@@ -33,6 +33,7 @@ template<
 struct point_2d : base_point
 {
     using value_type = T;
+    static constexpr size_t row_size = 2;
 
     point_2d(vectors::tvector<T, 2> const& src) : x(src.x()), y(src.y())
     {
@@ -77,6 +78,7 @@ template<
 struct point_3d : base_point
 {
     using value_type = T;
+    static constexpr size_t row_size = 3;
 
     point_3d(vectors::tvector<T, 3> const& src) :
         x(src.x()), y(src.y()), z(src.z())

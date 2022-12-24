@@ -23,53 +23,44 @@ void Resource::initRsc(const Url& url)
 {
     DProfContext a(DTEXT(NETRSC_TAG "Initializing NetResource"));
 
-    CString urlS = *url;
-
     Profiler::DeepPushContext(DTEXT(NETRSC_TAG "Extracting URL components"));
-    UrlParse urlComponents = UrlParse::From(url);
-
+    auto [protocol, host, resource, port] = UrlParse::from(url);
+    if(host.empty())
     {
-        if(!urlComponents.valid())
-        {
-            cVerbose(10, "Failed to decode URL");
-            Profiler::DeepProfile(DTEXT(NETRSC_TAG "Failed to decode URL"));
-            return;
-        }
+        cVerbose(10, "Failed to decode URL");
+        Profiler::DeepProfile(DTEXT(NETRSC_TAG "Failed to decode URL"));
+        return;
     }
     Profiler::DeepPopContext();
 
-    u16 port = C_FCAST<u16>(urlComponents.port());
     if(port == 0)
     {
-        if(urlComponents.protocol() == "https")
+        if(protocol == "https")
         {
             port = 443;
             m_access |= HTTPAccess::Secure;
-        } else
+        } else if(protocol == "http")
             port = 80;
     }
 
-    if(m_request.host == urlComponents.host() && m_request.port == port &&
-       ((secure() && urlComponents.protocol() == "https") ||
-        (!secure() && urlComponents.protocol() == "http")))
-    {
-        m_request.header.resource = "/" + urlComponents.resource();
-        return;
-    } else
-        close();
+//    if((secure() && protocol == "https") || (!secure() && protocol == "http"))
+//    {
+//        m_request.header.resource = "/" + resource;
+//        return;
+//    } else
+//        close();
 
-    m_request.host            = urlComponents.host();
-    m_request.header.resource = "/" + urlComponents.resource();
+    m_request.host            = host;
+    m_request.header.resource = "/" + resource;
     m_request.header.version  = http::version_t::v11;
+    m_request.port            = port;
 
     //    const auto verify_https = !feval(m_access, HTTPAccess::NoVerify);
-
-    m_request.port = port;
 
     m_error = asio::error_code();
 
 #if defined(ASIO_USE_SSL)
-    if(urlComponents.protocol() == "http" && secure())
+    if(protocol == "http" && secure())
     {
         cVerbose(10, "Switching off SSL, protocol mismatch");
         m_access = m_access & (m_access ^ HTTPAccess::Secure);
@@ -183,12 +174,14 @@ bool Resource::isResponseReady() const
     return m_response.code != 0;
 }
 
-void Resource::setHeaderField(http::header_field field, const CString& value)
+void Resource::setHeaderField(
+    http::header_field field, const std::string& value)
 {
     m_request.header.standard_fields[field] = value;
 }
 
-void Resource::setHeaderField(const CString& field, const CString& value)
+void Resource::setHeaderField(
+    const std::string& field, const std::string& value)
 {
     m_request.header.fields[field] = value;
 }
@@ -266,11 +259,11 @@ void Resource::readResponseHeader(net_buffer& buffer, szptr& consumed)
     if(ec.value() != asio::error::eof)
         C_ERROR_CHECK(ec)
 
-    {
-        DProfContext __(NETRSC_TAG "Parsing response");
-        consumed = http::buffer::read_response(
-            m_response.header, Bytes::ofContainer(buffer).view);
-    }
+        {
+            DProfContext __(NETRSC_TAG "Parsing response");
+            consumed = http::buffer::read_response(
+                m_response.header, Bytes::ofContainer(buffer).view);
+        }
 
     if constexpr(compile_info::debug_mode)
     {
@@ -358,17 +351,17 @@ bool Resource::push(http::method_t method, BytesConst const& data)
     asio::error_code ec;
 
     bool has_payload = data.size > 0;
-    bool should_expect =
-        m_request.header.version != version_t::v10 && has_payload;
+    bool should_expect
+        = m_request.header.version != version_t::v10 && has_payload;
 
     /* We do this to allow GET/POST/PUT/UPDATE/whatever */
     m_request.header.method = method;
 
     /* Most services require a MIME-type with the request */
-    if(has_payload &&
-       st_fields.find(header_field::content_type) == st_fields.end())
-        st_fields[header_field::content_type] =
-            header::to_string::content_type(content_type::octet_stream);
+    if(has_payload
+       && st_fields.find(header_field::content_type) == st_fields.end())
+        st_fields[header_field::content_type]
+            = header::to_string::content_type(content_type::octet_stream);
 
     if(st_fields.find(header_field::expect) == st_fields.end() && should_expect)
         st_fields[header_field::expect] = "100-continue";
@@ -468,11 +461,11 @@ bool Resource::push(http::method_t method, BytesConst const& data)
     if(response_code == response_class::redirect)
     {
         if(auto loc = response_fields.find(header_field::location);
-                loc != response_fields.end())
+           loc != response_fields.end())
         {
             if(auto conn = response_fields.find(header_field::connection);
-                    conn != response_fields.end() &&
-                    util::strings::iequals(conn->second, "close"))
+               conn != response_fields.end()
+               && util::strings::iequals(conn->second, "close"))
                 close();
             initRsc(MkUrl(loc->second, m_access));
             return push(method, data);
@@ -483,7 +476,7 @@ bool Resource::push(http::method_t method, BytesConst const& data)
     return response_code == response_class::success;
 }
 
-CString Resource::mimeType() const
+std::string Resource::mimeType() const
 {
     using field = http::header_field;
 

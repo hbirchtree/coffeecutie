@@ -10,18 +10,12 @@
 namespace typing {
 namespace pixels {
 
-#if __cpp_constexpr >= 201304
-#define CONSTEXPR_EXTENDED constexpr
-#else
-#define CONSTEXPR_EXTENDED
-#endif
-
 namespace convert {
 
 template<
     typename ToType,
-    typename std::enable_if<std::is_same<ToType, PixFlg>::value>::type* =
-        nullptr>
+    typename std::enable_if<
+        std::is_same<ToType, PixFlg>::value>::type* = nullptr>
 FORCEDINLINE constexpr PixFlg to(PixCmp component)
 {
     switch(component)
@@ -48,8 +42,8 @@ FORCEDINLINE constexpr PixFlg to(PixCmp component)
 
 template<
     typename ToType,
-    typename std::enable_if<std::is_same<ToType, BitFmt>::value>::type* =
-        nullptr>
+    typename std::enable_if<
+        std::is_same<ToType, BitFmt>::value>::type* = nullptr>
 FORCEDINLINE constexpr BitFmt to(PixFmt fmt)
 {
     using P = PixFmt;
@@ -144,8 +138,8 @@ FORCEDINLINE constexpr BitFmt to(PixFmt fmt)
  */
 template<
     typename ToType,
-    typename std::enable_if<std::is_same<ToType, PixFlg>::value>::type* =
-        nullptr>
+    typename std::enable_if<
+        std::is_same<ToType, PixFlg>::value>::type* = nullptr>
 FORCEDINLINE constexpr PixFlg to(PixFmt fmt)
 {
     using F = PixFmt;
@@ -241,8 +235,8 @@ FORCEDINLINE constexpr PixFlg to(PixFmt fmt)
 
 template<
     typename ToType,
-    typename std::enable_if<std::is_same<ToType, PixCmp>::value>::type* =
-        nullptr>
+    typename std::enable_if<
+        std::is_same<ToType, PixCmp>::value>::type* = nullptr>
 FORCEDINLINE constexpr PixCmp to(PixFmt fmt)
 {
     using C = PixCmp;
@@ -337,6 +331,7 @@ enum format_property
 {
     is_compressed,
     pixel_size,
+    is_floating_point,
 
     layout,
 
@@ -347,10 +342,8 @@ enum format_property
     supports_srgb,
 };
 
-template<
-    format_property Prop,
-    typename std::enable_if<Prop == is_compressed>::type* = nullptr>
-FORCEDINLINE constexpr bool get(PixFmt f)
+template<format_property Prop>
+requires(Prop == is_compressed) FORCEDINLINE constexpr bool get(PixFmt f)
 {
     switch(f)
     {
@@ -367,10 +360,8 @@ FORCEDINLINE constexpr bool get(PixFmt f)
     }
 }
 
-template<
-    format_property Prop,
-    typename std::enable_if<Prop == supports_srgb>::type* = nullptr>
-FORCEDINLINE constexpr bool get(PixFmt f)
+template<format_property Prop>
+requires(Prop == supports_srgb) FORCEDINLINE constexpr bool get(PixFmt f)
 {
     switch(f)
     {
@@ -382,10 +373,9 @@ FORCEDINLINE constexpr bool get(PixFmt f)
     }
 }
 
-template<
-    format_property Prop,
-    typename std::enable_if<Prop == pixel_size>::type* = nullptr>
-FORCEDINLINE constexpr szptr get(BitFmt fmt, PixCmp comp, szptr pixels)
+template<format_property Prop>
+requires(Prop == pixel_size) FORCEDINLINE constexpr szptr
+    get(BitFmt fmt, PixCmp comp, szptr pixels)
 {
     using B = BitFmt;
 
@@ -495,16 +485,13 @@ struct CompFmt
 
 namespace convert {
 
-template<
-    typename ToType,
-    typename std::enable_if<std::is_same<ToType, PixCmp>::value>::type* =
-        nullptr>
-FORCEDINLINE constexpr PixCmp to(CompFmt fmt)
+template<typename ToType>
+requires std::is_same_v<ToType, PixCmp> FORCEDINLINE constexpr PixCmp to(
+    CompFmt fmt)
 {
     switch(fmt.base_fmt)
     {
-    case PixFmt::S3TC:
-    {
+    case PixFmt::BCn: {
         switch(fmt.p_flags)
         {
         case PixFlg::RGB:
@@ -516,10 +503,16 @@ FORCEDINLINE constexpr PixCmp to(CompFmt fmt)
         }
         switch(fmt.c_flags)
         {
-        case CompFlags::S3TC_1:
+        case CompFlags::BC4:
+            return PixCmp::R;
+        case CompFlags::BC5:
+            return PixCmp::RG;
+        case CompFlags::BC1:
             return PixCmp::RGB;
-        case CompFlags::S3TC_3:
-        case CompFlags::S3TC_5:
+        case CompFlags::BC2:
+        case CompFlags::BC3:
+        case CompFlags::BC6H:
+        case CompFlags::BC7:
             return PixCmp::RGBA;
         default:
             break;
@@ -543,10 +536,9 @@ struct block_dim
     i32 w, h;
 };
 
-template<
-    format_property Prop,
-    typename std::enable_if<Prop == block_size>::type* = nullptr>
-FORCEDINLINE constexpr block_dim get(CompFmt format)
+template<format_property Prop>
+requires(Prop == block_size) FORCEDINLINE constexpr block_dim
+    get(CompFmt format)
 {
     switch(format.base_fmt)
     {
@@ -555,14 +547,13 @@ FORCEDINLINE constexpr block_dim get(CompFmt format)
     case PixFmt::S3TC:
     case PixFmt::ATC:
         return {4, 4};
-    case PixFmt::ASTC:
-    {
+    case PixFmt::ASTC: {
         static_assert(
             C_CAST<u8>(CompFlags::ASTC_4x4) == 1, "assumption broken");
         static_assert(
             C_CAST<u8>(CompFlags::ASTC_12x12) == 14, "assumption broken");
 
-        const constexpr stl_types::Array<block_dim, 14> ASTC_Block_Sizes = {{
+        const constexpr std::array<block_dim, 14> ASTC_Block_Sizes = {{
             {4, 4},
 
             {5, 4},
@@ -583,13 +574,12 @@ FORCEDINLINE constexpr block_dim get(CompFmt format)
             {12, 10},
             {12, 12},
         }};
-        const u8                                        block_idx =
-            C_CAST<u8>(format.c_flags) - C_CAST<u8>(CompFlags::ASTC_4x4);
+        const u8                                  block_idx
+            = C_CAST<u8>(format.c_flags) - C_CAST<u8>(CompFlags::ASTC_4x4);
 
         return ASTC_Block_Sizes.at(block_idx);
     }
-    case PixFmt::PVRTC2:
-    {
+    case PixFmt::PVRTC2: {
         block_dim block_size = {4, 4};
 
         if(enum_helpers::feval(format.c_flags & CompFlags::bpp_2))
@@ -604,10 +594,9 @@ FORCEDINLINE constexpr block_dim get(CompFmt format)
     return {1, 1};
 }
 
-template<
-    format_property Prop,
-    typename std::enable_if<Prop == supports_subtextures>::type* = nullptr>
-FORCEDINLINE constexpr bool get(CompFmt format)
+template<format_property Prop>
+requires(Prop == supports_subtextures) FORCEDINLINE
+    constexpr bool get(CompFmt format)
 {
     switch(format.base_fmt)
     {
@@ -641,10 +630,10 @@ struct layout_t
     }
 };
 
-template<
-    format_property Prop,
-    typename std::enable_if<Prop == layout>::type* = nullptr>
-FORCEDINLINE constexpr layout_t get(PixFmt fmt)
+template<format_property Prop>
+requires(Prop == layout)
+    //
+    FORCEDINLINE constexpr layout_t get(PixFmt fmt)
 {
     using F = PixFmt;
 
@@ -722,6 +711,59 @@ FORCEDINLINE constexpr layout_t get(PixFmt fmt)
     }
 }
 
+template<format_property Prop>
+requires(Prop == is_floating_point)
+    //
+    FORCEDINLINE constexpr bool get(PixFmt fmt)
+{
+    using F = PixFmt;
+
+    switch(fmt)
+    {
+    case F::RGBA2:
+    case F::R3G3B2:
+    case F::RGB4:
+    case F::RGBA4:
+    case F::RGB5:
+    case F::RGB5A1:
+    case F::RGB565:
+    case F::RGB8:
+    case F::SRGB8:
+    case F::RGBA8:
+    case F::SRGB8A8:
+    case F::RGBA8I:
+    case F::RGBA8UI:
+    case F::RGB9E5:
+    case F::RGB10:
+    case F::RGB10A2:
+    case F::RGB10A2UI:
+    case F::RGB12:
+    case F::RGBA12:
+    case F::Depth16:
+    case F::RGB16:
+    case F::RGBA16:
+    case F::RGBA16I:
+    case F::RGBA16UI:
+    case F::Depth24Stencil8:
+    case F::RGB32I:
+    case F::RGBA32I:
+    case F::RGB32UI:
+    case F::RGBA32UI:
+        return false;
+    case F::R11G11B10F:
+    case F::RGB16F:
+    case F::RGBA16F:
+    case F::Depth16F:
+    case F::RGB32F:
+    case F::RGBA32F:
+    case F::Depth32F:
+    case F::Depth32FStencil8:
+        return true;
+    default:
+        Throw(undefined_behavior("type not defined"));
+    }
+}
+
 } // namespace properties
 
 struct PixDesc
@@ -769,9 +811,13 @@ struct PixDesc
 
     BitFmt bfmt;
     PixCmp comp;
+
+    inline bool compressed() const
+    {
+        return properties::get<properties::is_compressed>(pixfmt);
+    }
 };
 
-#if __cpp_constexpr >= 201304
 template<PixFmt F, BitFmt B, PixFlg Sample>
 struct PixInfo
 {
@@ -786,7 +832,6 @@ struct PixInfoDefault
     : PixInfo<F, convert::to<BitFmt>(F), convert::to<PixFlg>(F)>
 {
 };
-#endif
+
 } // namespace pixels
 } // namespace typing
-#undef CONSTEXPR_EXTENDED

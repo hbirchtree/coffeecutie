@@ -12,6 +12,8 @@ inline std::optional<std::string_view> map_cpu_implementer(
         return "ARM";
     if(imp == "0x42")
         return "Broadcom";
+    if(imp == "0x4E")
+        return "NVIDIA";
     if(imp == "0x51")
         return "Qualcomm";
     if(imp == "0x53")
@@ -67,32 +69,35 @@ inline std::optional<std::string_view> map_cpu_part(
         if(part == "0xd05") return "Cortex-A55";
         if(part == "0xd07") return "Cortex-A57";
 
+        if(part == "0xd06") return "Cortex-A65";
+
         if(part == "0xd08") return "Cortex-A72";
         if(part == "0xd09") return "Cortex-A73";
         if(part == "0xd0a") return "Cortex-A75";
         if(part == "0xd0b") return "Cortex-A76";
         if(part == "0xd0e") return "Cortex-A76AE";
         if(part == "0xd0d") return "Cortex-A77";
-        if(part == "0xd09") return "Cortex-A73";
-
         if(part == "0xd41") return "Cortex-A78";
-        if(part == "0xd42") return "Cortex-A78AE";
-        if(part == "0xd4b") return "Cortex-A78C";
-        if(part == "0xd46") return "Cortex-A65";
-        if(part == "0xd43") return "Cortex-A65AE";
+
         if(part == "0xd44") return "Cortex-X1";
-        if(part == "0xd0c") return "Neoverse-N1";
+        if(part == "0xd48") return "Cortex-X2";
+
+        if(part == "0xd46") return "Cortex-A510";
+        if(part == "0xd47") return "Cortex-A710";
+
+        if(part == "0xd40") return "Neoverse-N1";
+        if(part == "0xd49") return "Neoverse-N2";
         if(part == "0xd4a") return "Neoverse-E1";
 
         /* ARMv8-R */
         if(part == "0xd15") return "Cortex-R82";
-    } else if(imp == "0x53")
+    } else if(imp == "0x4E")
     {
-        if(part == "0x001") return "Exynos-M1";
+        if(part == "0x000") return "Denver";
+        if(part == "0x003") return "Denver2";
+        if(part == "0x004") return "Carmel";
     } else if(imp == "0x51")
     {
-        if(part == "0xc00") return "Falkor";
-        if(part == "0xc01") return "Saphira";
 
         /* From pytorch/cpuinfo/src/arm/uarch.c */
 
@@ -109,6 +114,12 @@ inline std::optional<std::string_view> map_cpu_part(
         if(part == "0x803") return "Kryo 385 Silver";
         if(part == "0x804") return "Kryo 485 Gold";
         if(part == "0x805") return "Kryo 485 Silver";
+
+        if(part == "0xc00") return "Falkor";
+        if(part == "0xc01") return "Saphira";
+    } else if(imp == "0x53")
+    {
+        if(part == "0x001") return "Exynos-M1";
     }
     return std::nullopt;
     // clang-format on

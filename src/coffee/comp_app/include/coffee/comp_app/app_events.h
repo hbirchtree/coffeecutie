@@ -16,6 +16,8 @@ struct AppEvent
 
 struct NavigationEvent
 {
+    static constexpr auto event_type = AppEvent::NavigationEvent;
+
     enum Type
     {
         None,
@@ -27,6 +29,8 @@ struct NavigationEvent
 
 struct LifecycleEvent
 {
+    static constexpr auto event_type = AppEvent::LifecycleEvent;
+
     enum Type
     {
         None,
@@ -36,11 +40,13 @@ struct LifecycleEvent
         WillEnterForeground,
 
         /* Core events */
+        Startup,
         Background,
         Foreground,
         Terminate,
 
-        /* Special events */
+        /* Resource hints */
+        ResourcesLost, /* on Android, we might lose the window in some cases*/
         LowMemory,
     };
 

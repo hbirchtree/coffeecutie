@@ -36,8 +36,14 @@ STATICINLINE void draw_texture(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(DrawTextureNV)
-        glIsTexture(texture);
-        glIsSampler(sampler);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsSampler)
+            glIsSampler(sampler);
+#endif
     }
     glDrawTextureNV(texture, sampler, x0, y0, x1, y1, z, s0, t0, s1, t1);
     detail::error_check("DrawTextureNV"sv);

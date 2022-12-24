@@ -53,7 +53,10 @@ requires(MinimumVersion<Current, Version<3, 0>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindBufferBase)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glBindBufferBase(static_cast<GLenum>(target), index, buffer);
     detail::error_check("BindBufferBase"sv);
@@ -81,7 +84,10 @@ requires(MinimumVersion<Current, Version<3, 0>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindBufferRange)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glBindBufferRange(static_cast<GLenum>(target), index, buffer, offset, size);
     detail::error_check("BindBufferRange"sv);
@@ -101,7 +107,10 @@ requires(MinimumVersion<Current, Version<3, 0>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindSampler)
-        glIsSampler(sampler);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsSampler)
+            glIsSampler(sampler);
+#endif
     }
     glBindSampler(unit, sampler);
     detail::error_check("BindSampler"sv);
@@ -140,7 +149,10 @@ requires(MinimumVersion<Current, Version<3, 0>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindVertexArray)
-        glIsVertexArray(array);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsVertexArray)
+            glIsVertexArray(array);
+#endif
     }
     glBindVertexArray(array);
     detail::error_check("BindVertexArray"sv);
@@ -821,7 +833,10 @@ requires(MinimumVersion<Current, Version<3, 0>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(FramebufferTextureLayer)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glFramebufferTextureLayer(
         static_cast<GLenum>(target),
@@ -952,7 +967,10 @@ requires(MinimumVersion<Current, Version<3, 0>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetActiveUniformBlockName)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetActiveUniformBlockName(
         program,
@@ -986,7 +1004,10 @@ requires(MinimumVersion<Current, Version<3, 0>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetActiveUniformBlockiv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetActiveUniformBlockiv(
         program,
@@ -1023,7 +1044,10 @@ requires(MinimumVersion<Current, Version<3, 0>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetActiveUniformsiv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetActiveUniformsiv(
         program,
@@ -1107,7 +1131,10 @@ requires(MinimumVersion<Current, Version<3, 0>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetFragDataLocation)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     auto out = glGetFragDataLocation(program, name.data());
     detail::error_check("GetFragDataLocation"sv);
@@ -1245,7 +1272,10 @@ requires(MinimumVersion<Current, Version<3, 0>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetProgramBinary)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetProgramBinary(
         program,
@@ -1331,7 +1361,10 @@ requires(MinimumVersion<Current, Version<3, 0>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetSamplerParameterfv)
-        glIsSampler(sampler);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsSampler)
+            glIsSampler(sampler);
+#endif
     }
     glGetSamplerParameterfv(
         sampler,
@@ -1359,7 +1392,10 @@ requires(MinimumVersion<Current, Version<3, 0>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetSamplerParameteriv)
-        glIsSampler(sampler);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsSampler)
+            glIsSampler(sampler);
+#endif
     }
     glGetSamplerParameteriv(
         sampler,
@@ -1449,7 +1485,10 @@ requires(MinimumVersion<Current, Version<3, 0>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetTransformFeedbackVarying)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetTransformFeedbackVarying(
         program, index, name.size(), &length, &size, &type, name.data());
@@ -1471,7 +1510,10 @@ requires(MinimumVersion<Current, Version<3, 0>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetUniformBlockIndex)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     auto out = glGetUniformBlockIndex(program, uniformBlockName.data());
     detail::error_check("GetUniformBlockIndex"sv);
@@ -1501,7 +1543,10 @@ requires(MinimumVersion<Current, Version<3, 0>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetUniformIndices)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     auto [uniformNames_lens, uniformNames_cstr, uniformNames_store] =
         detail::transform_strings(uniformNames);
@@ -1532,7 +1577,10 @@ requires(MinimumVersion<Current, Version<3, 0>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetUniformuiv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetUniformuiv(
         program,
@@ -1692,7 +1740,10 @@ requires(MinimumVersion<Current, Version<3, 0>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(IsSampler)
-        glIsSampler(sampler);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsSampler)
+            glIsSampler(sampler);
+#endif
     }
     auto out = glIsSampler(sampler);
     detail::error_check("IsSampler"sv);
@@ -1750,7 +1801,10 @@ requires(MinimumVersion<Current, Version<3, 0>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(IsVertexArray)
-        glIsVertexArray(array);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsVertexArray)
+            glIsVertexArray(array);
+#endif
     }
     auto out = glIsVertexArray(array);
     detail::error_check("IsVertexArray"sv);
@@ -1826,7 +1880,10 @@ requires(MinimumVersion<Current, Version<3, 0>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramBinary)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramBinary(
         program,
@@ -1852,7 +1909,10 @@ requires(MinimumVersion<Current, Version<3, 0>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramParameteri)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramParameteri(program, static_cast<GLenum>(pname), value);
     detail::error_check("ProgramParameteri"sv);
@@ -1938,7 +1998,10 @@ requires(MinimumVersion<Current, Version<3, 0>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(SamplerParameterf)
-        glIsSampler(sampler);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsSampler)
+            glIsSampler(sampler);
+#endif
     }
     glSamplerParameterf(sampler, static_cast<GLenum>(pname), param);
     detail::error_check("SamplerParameterf"sv);
@@ -1965,7 +2028,10 @@ requires(MinimumVersion<Current, Version<3, 0>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(SamplerParameterfv)
-        glIsSampler(sampler);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsSampler)
+            glIsSampler(sampler);
+#endif
     }
     glSamplerParameterfv(
         sampler,
@@ -1991,7 +2057,10 @@ requires(MinimumVersion<Current, Version<3, 0>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(SamplerParameteri)
-        glIsSampler(sampler);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsSampler)
+            glIsSampler(sampler);
+#endif
     }
     glSamplerParameteri(sampler, static_cast<GLenum>(pname), param);
     detail::error_check("SamplerParameteri"sv);
@@ -2018,7 +2087,10 @@ requires(MinimumVersion<Current, Version<3, 0>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(SamplerParameteriv)
-        glIsSampler(sampler);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsSampler)
+            glIsSampler(sampler);
+#endif
     }
     glSamplerParameteriv(
         sampler,
@@ -2208,7 +2280,10 @@ requires(MinimumVersion<Current, Version<3, 0>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TransformFeedbackVaryings)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     auto [varyings_lens, varyings_cstr, varyings_store] =
         detail::transform_strings(varyings);
@@ -2421,7 +2496,10 @@ requires(MinimumVersion<Current, Version<3, 0>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(UniformBlockBinding)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glUniformBlockBinding(program, uniformBlockIndex, uniformBlockBinding);
     detail::error_check("UniformBlockBinding"sv);

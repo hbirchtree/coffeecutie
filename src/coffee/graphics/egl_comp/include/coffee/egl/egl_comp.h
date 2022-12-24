@@ -27,6 +27,8 @@ struct DisplayHandle : comp_app::AppService<DisplayHandle>,
     detail::EGLData& context();
 
     stl_types::UqPtr<detail::EGLData, detail::EGLDataDeleter> m_data;
+
+    libc_types::i32 m_major{}, m_minor{};
 };
 
 struct GraphicsContext : comp_app::interfaces::GraphicsContext,
@@ -59,6 +61,8 @@ struct GraphicsFramebuffer : comp_app::interfaces::GraphicsFramebuffer,
     virtual comp_app::size_2d_t size() const final;
     virtual void                swapBuffers(comp_app::app_error& ec) final;
 
+    void end_frame(ContainerProxy& e, const time_point&);
+
     EGLSurface        m_surface;
     entity_container* m_container;
 };
@@ -75,9 +79,10 @@ struct GraphicsSwapControl : comp_app::interfaces::GraphicsSwapControl,
     entity_container* m_container;
 };
 
-struct Windowing : comp_app::interfaces::StaticWindowing,
-                   comp_app::AppService<Windowing>,
-                   comp_app::AppLoadableService
+struct Windowing
+    : comp_app::interfaces::StaticWindowing,
+      comp_app::AppService<Windowing, comp_app::Windowing>,
+      comp_app::AppLoadableService
 {
     void load(entity_container& e, comp_app::app_error& ec);
 

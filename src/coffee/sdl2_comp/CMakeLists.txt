@@ -12,10 +12,10 @@ coffee_library (
 
 if(EMSCRIPTEN)
     target_compile_options ( SDL2Components PUBLIC
-            "-s " USE_SDL=2
+            -sUSE_SDL=2
        )
     target_link_options ( SDL2Components PUBLIC
-            "-s " USE_SDL=2
+            -sUSE_SDL=2
        )
 else()
     find_package ( SDL2 CONFIG REQUIRED )

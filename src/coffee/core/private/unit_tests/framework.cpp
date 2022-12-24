@@ -251,13 +251,13 @@ void RunTest(Test const& test, TestInstance& test_info)
 #if !MODE_CRASHTEST
     catch(std::exception const&)
     {
-        if constexpr(!compile_info::lowfat_mode)
-            platform::env::Stacktracer::ExceptionStacktrace(
-                std::current_exception(),
-                DebugFun::OutputPrinter::fprintf_platform);
-        else
-            platform::env::Stacktracer::ExceptionStacktrace(
-                std::current_exception(), typing::logging::fprintf_logger);
+//        if constexpr(!compile_info::lowfat_mode)
+//            platform::env::Stacktracer::ExceptionStacktrace(
+//                std::current_exception(),
+//                Coffee::DebugFun::GetLogInterface().tag);
+//        else
+//            platform::env::Stacktracer::ExceptionStacktrace(
+//                std::current_exception(), typing::logging::fprintf_logger);
         Profiler::Profile("exception");
     }
 #endif
@@ -277,7 +277,7 @@ int run_tests(u32 num, Test const* tests, int argc, char** argv)
     SetPrintingVerbosity(10);
     auto args = AppArg::Clone(argc, argv);
 
-    RuntimeQueue::CreateNewQueue("Testing");
+    auto test_queue = rq::runtime_queue::CreateNewQueue("Testing");
 
     ArgumentParser parser;
     parser.addSwitch("json", "json", nullptr, "Output JSON document");

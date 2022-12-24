@@ -441,6 +441,9 @@ enum class get_prop : ::libc_types::u32
     fragment_shading_rate_with_shader_depth_stencil_writes_supported_ext =
         GL_FRAGMENT_SHADING_RATE_WITH_SHADER_DEPTH_STENCIL_WRITES_SUPPORTED_EXT,
 #endif
+#ifdef GL_FRAMEBUFFER_BINDING
+    framebuffer_binding = GL_FRAMEBUFFER_BINDING,
+#endif
 #ifdef GL_FRAMEBUFFER_FETCH_NONCOHERENT_QCOM
     framebuffer_fetch_noncoherent_qcom = GL_FRAMEBUFFER_FETCH_NONCOHERENT_QCOM,
 #endif
@@ -976,6 +979,12 @@ enum class get_prop : ::libc_types::u32
 #endif
 #ifdef GL_MAX_TEXTURE_LOD_BIAS
     max_texture_lod_bias = GL_MAX_TEXTURE_LOD_BIAS,
+#endif
+#ifdef GL_MAX_TEXTURE_MAX_ANISOTROPY
+    max_texture_max_anisotropy = GL_MAX_TEXTURE_MAX_ANISOTROPY,
+#endif
+#ifdef GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT
+    max_texture_max_anisotropy_ext = GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT,
 #endif
 #ifdef GL_MAX_TEXTURE_SIZE
     max_texture_size = GL_MAX_TEXTURE_SIZE,

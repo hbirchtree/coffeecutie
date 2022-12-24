@@ -45,7 +45,10 @@ STATICINLINE void active_varying(u32 program, std::string_view const& name)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ActiveVaryingNV)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glActiveVaryingNV(program, name.data());
     detail::error_check("ActiveVaryingNV"sv);
@@ -81,7 +84,10 @@ STATICINLINE void bind_buffer_base(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindBufferBaseNV)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glBindBufferBaseNV(static_cast<GLenum>(target), index, buffer);
     detail::error_check("BindBufferBaseNV"sv);
@@ -102,7 +108,10 @@ STATICINLINE void bind_buffer_offset(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindBufferOffsetNV)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glBindBufferOffsetNV(static_cast<GLenum>(target), index, buffer, offset);
     detail::error_check("BindBufferOffsetNV"sv);
@@ -128,7 +137,10 @@ STATICINLINE void bind_buffer_range(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindBufferRangeNV)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glBindBufferRangeNV(
         static_cast<GLenum>(target), index, buffer, offset, size);
@@ -178,7 +190,10 @@ requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetActiveVaryingNV)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetActiveVaryingNV(
         program, index, name.size(), &length, &size, &type, name.data());
@@ -199,7 +214,10 @@ STATICINLINE void get_transform_feedback_varying(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetTransformFeedbackVaryingNV)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetTransformFeedbackVaryingNV(program, index, &location);
     detail::error_check("GetTransformFeedbackVaryingNV"sv);
@@ -218,7 +236,10 @@ get_varying_location(u32 program, std::string_view const& name)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetVaryingLocationNV)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     auto out = glGetVaryingLocationNV(program, name.data());
     detail::error_check("GetVaryingLocationNV"sv);
@@ -273,7 +294,10 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TransformFeedbackVaryingsNV)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glTransformFeedbackVaryingsNV(
         program,

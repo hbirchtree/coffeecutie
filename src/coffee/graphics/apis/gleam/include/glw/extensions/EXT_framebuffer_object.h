@@ -44,7 +44,10 @@ STATICINLINE void bind_framebuffer(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindFramebufferEXT)
-        glIsFramebuffer(framebuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsFramebuffer)
+            glIsFramebuffer(framebuffer);
+#endif
     }
     glBindFramebufferEXT(static_cast<GLenum>(target), framebuffer);
     detail::error_check("BindFramebufferEXT"sv);
@@ -63,7 +66,10 @@ STATICINLINE void bind_renderbuffer(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindRenderbufferEXT)
-        glIsRenderbuffer(renderbuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsRenderbuffer)
+            glIsRenderbuffer(renderbuffer);
+#endif
     }
     glBindRenderbufferEXT(static_cast<GLenum>(target), renderbuffer);
     detail::error_check("BindRenderbufferEXT"sv);
@@ -154,7 +160,10 @@ STATICINLINE void framebuffer_renderbuffer(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(FramebufferRenderbufferEXT)
-        glIsRenderbuffer(renderbuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsRenderbuffer)
+            glIsRenderbuffer(renderbuffer);
+#endif
     }
     glFramebufferRenderbufferEXT(
         static_cast<GLenum>(target),
@@ -184,7 +193,10 @@ STATICINLINE void framebuffer_texture_1d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(FramebufferTexture1DEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glFramebufferTexture1DEXT(
         static_cast<GLenum>(target),
@@ -215,7 +227,10 @@ STATICINLINE void framebuffer_texture_2d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(FramebufferTexture2DEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glFramebufferTexture2DEXT(
         static_cast<GLenum>(target),
@@ -248,7 +263,10 @@ STATICINLINE void framebuffer_texture_3d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(FramebufferTexture3DEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glFramebufferTexture3DEXT(
         static_cast<GLenum>(target),
@@ -394,7 +412,10 @@ STATICINLINE GLboolean is_framebuffer(u32 framebuffer)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(IsFramebufferEXT)
-        glIsFramebuffer(framebuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsFramebuffer)
+            glIsFramebuffer(framebuffer);
+#endif
     }
     auto out = glIsFramebufferEXT(framebuffer);
     detail::error_check("IsFramebufferEXT"sv);
@@ -412,7 +433,10 @@ STATICINLINE GLboolean is_renderbuffer(u32 renderbuffer)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(IsRenderbufferEXT)
-        glIsRenderbuffer(renderbuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsRenderbuffer)
+            glIsRenderbuffer(renderbuffer);
+#endif
     }
     auto out = glIsRenderbufferEXT(renderbuffer);
     detail::error_check("IsRenderbufferEXT"sv);

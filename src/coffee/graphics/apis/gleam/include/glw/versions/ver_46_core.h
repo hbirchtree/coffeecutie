@@ -23,7 +23,10 @@ requires(MinimumVersion<Current, Version<4, 6>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(SpecializeShader)
-        glIsShader(shader);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsShader)
+            glIsShader(shader);
+#endif
     }
     glSpecializeShader(
         shader,

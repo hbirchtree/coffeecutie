@@ -1,6 +1,8 @@
 #pragma once
 
 #include <array>
+#include <peripherals/stl/tuple_foreach.h>
+#include <peripherals/stl/tuple_slice.h>
 
 #include "rhi_draw_command.h"
 #include "rhi_features.h"
@@ -20,13 +22,23 @@ struct unknown_shader_stage : std::runtime_error
     using std::runtime_error::runtime_error;
 };
 
+struct shader_bookkeeping_t
+{
+    u32 buffer_idx{0};
+    u32 sampler_idx{0};
+    u32 view_idx{0};
+
+    i32 instanceId{0};
+    i32 baseInstance{0};
+};
+
 inline i32 get_program_uniform_location(
     program_t const&              program,
     typing::graphics::ShaderStage stage,
     uniform_key const&            key)
 {
-    auto [uname, ulocation] = key;
-    auto const& features    = program.m_features;
+    auto        ulocation = key.location;
+    auto const& features  = program.m_features;
     if(ulocation != invalid_uniform && features.uniform_location)
         return ulocation;
 
@@ -35,30 +47,46 @@ inline i32 get_program_uniform_location(
         auto stageprogram = program.m_stages.find(stage);
         if(stageprogram == program.m_stages.end())
             Throw(unknown_shader_stage(
-                "stage not defined in program: " +
-                std::to_string(C_CAST<int>(stage))));
-        ulocation =
-            cmd::get_uniform_location(stageprogram->second->m_handle, uname);
+                "stage not defined in program: "
+                + std::to_string(C_CAST<int>(stage))));
+        ulocation = cmd::get_uniform_location(
+            stageprogram->second->m_handle, key.name);
     } else
-        ulocation = cmd::get_uniform_location(program.m_handle, uname);
+        ulocation = cmd::get_uniform_location(program.m_handle, key.name);
 
-    if(ulocation == invalid_uniform)
-        Throw(uniform_location_undefined(
-            std::string("uniform not found: ") + uname.data()));
+    //    if(ulocation == invalid_uniform)
+    //        Throw(uniform_location_undefined(
+    //            "uniform not found: "
+    //            + std::string(key.name.begin(), key.name.end())));
 
     return ulocation;
 }
 
-template<typename T, size_t Num>
-inline bool apply_single_uniform(
+inline i32 get_program_buffer_location(
     program_t const&              program,
     typing::graphics::ShaderStage stage,
-    std::pair<
-        uniform_key,
-        semantic::Span<const typing::vectors::tmatrix<T, Num>>>&& uniform)
+    uniform_key const&            key)
 {
-    auto [key, data] = uniform;
-    auto ulocation   = get_program_uniform_location(program, stage, key);
+    using namespace std::string_literals;
+
+    if(key.location != invalid_uniform)
+        return key.location;
+    Throw(uniform_location_undefined(
+        "buffer location must be specified: "
+        + std::string(key.name.begin(), key.name.end())));
+}
+
+template<typename T, size_t Num>
+inline bool apply_single_uniform(
+    program_t const&                                            program,
+    typing::graphics::ShaderStage                               stage,
+    uniform_pair<const typing::vectors::tmatrix<T, Num>> const& uniform)
+{
+    auto& [key, data] = uniform;
+    auto ulocation    = get_program_uniform_location(program, stage, key);
+
+    if(ulocation == invalid_uniform)
+        return false;
 
 #if GLEAM_MAX_VERSION >= 0x410 || GLEAM_MAX_VERSION_ES >= 0x310
     if(program.m_features.separable_programs)
@@ -67,23 +95,24 @@ inline bool apply_single_uniform(
             ulocation,
             data.size(),
             false,
-            data);
+            std::move(data));
     else
 #endif
-        cmd::uniform(ulocation, data.size(), false, data);
+        cmd::uniform(ulocation, data.size(), false, std::move(data));
     return true;
 }
 
 template<typename T, size_t Num>
 inline bool apply_single_uniform(
-    program_t const&              program,
-    typing::graphics::ShaderStage stage,
-    std::pair<
-        uniform_key,
-        semantic::Span<const typing::vectors::tvector<T, Num>>>&& uniform)
+    program_t const&                                            program,
+    typing::graphics::ShaderStage                               stage,
+    uniform_pair<const typing::vectors::tvector<T, Num>> const& uniform)
 {
     auto [key, data] = uniform;
     auto ulocation   = get_program_uniform_location(program, stage, key);
+
+    if(ulocation == invalid_uniform)
+        return false;
 
 #if GLEAM_MAX_VERSION >= 0x410 || GLEAM_MAX_VERSION_ES >= 0x310
     if(program.m_features.separable_programs)
@@ -96,13 +125,18 @@ inline bool apply_single_uniform(
 }
 
 template<typename T>
-requires(std::is_floating_point_v<T> || std::is_integral_v<T>) inline bool apply_single_uniform(
-    program_t const&                                  program,
-    typing::graphics::ShaderStage                     stage,
-    std::pair<uniform_key, semantic::Span<const T>>&& uniform)
+requires(std::is_floating_point_v<T> || std::is_integral_v<T>)
+    //
+    inline bool apply_single_uniform(
+        program_t const&              program,
+        typing::graphics::ShaderStage stage,
+        uniform_pair<const T> const&  uniform)
 {
-    auto [key, data] = uniform;
+    auto [key, data] = std::tie(uniform.key, uniform.data);
     auto ulocation   = get_program_uniform_location(program, stage, key);
+
+    if(ulocation == invalid_uniform)
+        return false;
 
 #if GLEAM_MAX_VERSION >= 0x410 || GLEAM_MAX_VERSION_ES >= 0x310
     if(program.m_features.separable_programs)
@@ -114,77 +148,228 @@ requires(std::is_floating_point_v<T> || std::is_integral_v<T>) inline bool apply
     return true;
 }
 
-template<typename Dummy, typename T>
-inline bool apply_uniform_list_unwrap(
-    program_t const& program, typing::graphics::ShaderStage stage, T&& uniform)
+template<typename S, typename... UType>
+requires semantic::concepts::graphics::detail::is_uniform_stage<S, UType...>
+inline bool apply_command_modifier(
+    program_t const&         program,
+    shader_bookkeeping_t&    bookkeeping,
+    std::tuple<S, UType...>& uniforms)
 {
-    return apply_single_uniform(program, stage, std::move(uniform));
+    auto stage         = std::move(std::get<0>(uniforms));
+    auto only_uniforms = stl_types::tuple::slice<1>(std::move(uniforms));
+    stl_types::tuple::for_each(only_uniforms, [&program, &stage](auto& u) {
+        apply_single_uniform(program, stage, u);
+    });
+    return true;
 }
 
-template<typename Dummy, typename T, typename... Rest>
-requires(sizeof...(Rest) > 0) inline bool apply_uniform_list_unwrap(
-    program_t const&              program,
-    typing::graphics::ShaderStage stage,
-    T&&                           uniform,
-    Rest&&... rest)
+template<typename S, typename... UType>
+requires semantic::concepts::graphics::detail::is_uniform_stage<S, UType...>
+inline void undo_command_modifier(
+    program_t const&, shader_bookkeeping_t&, std::tuple<S, UType...>&&)
 {
-    if(!apply_single_uniform(program, stage, std::move(uniform)))
-        return false;
-    return apply_uniform_list_unwrap<Rest...>(
-        program, stage, std::move(rest)...);
+    // Nothing to do here
 }
 
-template<typename... UType>
-inline bool apply_uniform_stage(
-    program_t const& program, std::tuple<UType...>&& uniforms)
+inline bool apply_command_modifier(
+    program_t const&      program,
+    shader_bookkeeping_t& bookkeeping,
+    buffer_list&          buffer_info)
 {
-    return std::apply(
-        apply_uniform_list_unwrap<UType...>,
-        std::tuple_cat(
-            std::make_tuple(std::ref(program)), std::move(uniforms)));
+#if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
+    for(auto const& buffer_def : buffer_info)
+    {
+        auto [stage, key, buffer] = buffer_def;
+        auto binding              = key.location;
+
+        if(!buffer.valid())
+            continue;
+
+        cmd::bind_buffer_range(
+            convert::to<group::buffer_target_arb>(buffer.m_type),
+            binding,
+            buffer.handle(),
+            buffer.m_offset,
+            buffer.m_size);
+        //        apply_single_uniform<u32>(program, stage, {key,
+        //        SpanOne(binding)});
+    }
+    return true;
+#else
+    return false;
+#endif
 }
 
-template<typename... UList>
-inline std::optional<error> apply_uniforms(
-    program_t const& program, UList&&... uniforms)
+inline void undo_command_modifier(
+    program_t const&, shader_bookkeeping_t&, buffer_list&&)
 {
-    (apply_uniform_stage(program, std::move(uniforms)) && ...);
-
-    return std::nullopt;
 }
 
-inline semantic::result<u32, error> apply_samplers(
-    program_t const&                    program,
-    draw_command::sampler_data_t const& samplers,
-    u32                                 first_unit = 0)
+inline bool apply_command_modifier(
+    program_t const&      program,
+    shader_bookkeeping_t& bookkeeping,
+    sampler_list&         samplers)
 {
     if(samplers.empty())
-        return semantic::success(0);
-    u32         max_unit = 0;
-    auto const& features =
-        std::get<2>(samplers.at(0))->m_source.lock()->m_features;
+        return true;
+    auto const& features
+        = std::get<2>(samplers.at(0))->m_source.lock()->m_features;
     for(auto const& sampler : samplers)
     {
         auto [stage, locinfo, sampler_hnd] = sampler;
-        auto [uname, index]                = locinfo;
+        auto [uname, ulocation]            = locinfo;
         auto& texture                      = *sampler_hnd->m_source.lock();
+        auto  index                        = ++bookkeeping.sampler_idx;
 
-        auto ulocation = cmd::get_uniform_location(program.m_handle, uname);
+        if(ulocation == invalid_uniform)
+            ulocation = cmd::get_uniform_location(program.m_handle, uname);
 
-        cmd::active_texture(static_cast<group::texture_unit>(
-            static_cast<libc_types::u32>(group::texture_unit::texture0) +
-            first_unit + index));
+        cmd::active_texture(group::texture_unit::texture0 + index);
+        cmd::bind_texture(convert::to(texture.m_type), texture.m_handle);
 #if GLEAM_MAX_VERSION_ES != 0x200
         if(features.samplers)
-            cmd::bind_sampler(first_unit + index, sampler_hnd->m_handle);
+            cmd::bind_sampler(index, sampler_hnd->m_handle);
+        else
 #endif
-        cmd::bind_texture(convert::to(texture.m_type), texture.m_handle);
-        i32 uindex = first_unit + index;
+        {
+            cmd::tex_parameter(
+                convert::to(texture.m_type),
+                group::texture_parameter_name::texture_min_filter,
+                static_cast<i32>(convert::to<group::sampler_parameter_i>(
+                    sampler_hnd->m_min)));
+            cmd::tex_parameter(
+                convert::to(texture.m_type),
+                group::texture_parameter_name::texture_mag_filter,
+                static_cast<i32>(convert::to<group::sampler_parameter_i>(
+                    sampler_hnd->m_mag)));
+        }
+        i32 uindex = index;
         apply_single_uniform<i32>(
             program, stage, {{uname, ulocation}, SpanOne<const i32>(uindex)});
-        max_unit = std::max<u32>(max_unit, first_unit + index);
     }
-    return semantic::success(max_unit);
+    return true;
+}
+
+inline void undo_command_modifier(
+    program_t const&      program,
+    shader_bookkeeping_t& bookkeeping,
+    sampler_list&&        samplers)
+{
+    for(auto const& sampler : samplers)
+    {
+    }
+}
+
+inline bool apply_command_modifier(
+    program_t const&      program,
+    shader_bookkeeping_t& bookkeeping,
+    view_state&           view_info)
+{
+    using typing::vector_types::Vecf2;
+    using typing::vector_types::Veci2;
+
+    if(bookkeeping.view_idx > 0 && !view_info.indexed)
+        return false;
+
+#if GLEAM_MAX_VERSION >= 0x410
+    if(view_info.indexed)
+    {
+        if(auto view = view_info.view; view)
+            cmd::viewport_indexedf(
+                bookkeeping.view_idx,
+                Vecf2(view->x(), view->y()),
+                Vecf2(view->z(), view->w()));
+        if(auto view = view_info.scissor; view)
+        {
+            cmd::enable(group::enable_cap::scissor_test);
+            cmd::scissor_indexed(
+                bookkeeping.view_idx,
+                view->x(),
+                view->y(),
+                Veci2{view->z(), view->w()});
+        }
+        if(auto depth = view_info.depth; depth)
+        {
+            cmd::enable(group::enable_cap::depth_test);
+            cmd::depth_range_indexed(
+                bookkeeping.view_idx, depth->x(), depth->y());
+        }
+        bookkeeping.view_idx++;
+    } else
+#endif
+    {
+        if(auto view = view_info.view; view)
+            cmd::viewport(
+                Veci2{view->x(), view->y()}, Veci2{view->z(), view->w()});
+        if(auto view = view_info.scissor; view)
+        {
+            cmd::enable(group::enable_cap::scissor_test);
+            cmd::scissor(
+                Veci2{view->x(), view->y()}, Veci2{view->z(), view->w()});
+        }
+        if(auto depth = view_info.depth; depth)
+        {
+            cmd::enable(group::enable_cap::depth_test);
+#if GLEAM_MAX_VERSION >= 0x100
+            cmd::depth_range(depth->x(), depth->y());
+#else
+            cmd::depth_rangef(depth->x(), depth->y());
+#endif
+        }
+    }
+
+    return true;
+}
+
+inline void undo_command_modifier(
+    program_t const&      program,
+    shader_bookkeeping_t& bookkeeping,
+    view_state&&          view_info)
+{
+    if(view_info.scissor.has_value())
+        cmd::disable(group::enable_cap::scissor_test);
+    if(view_info.depth.has_value())
+        cmd::disable(group::enable_cap::depth_test);
+}
+
+inline bool apply_command_modifier(
+    program_t const&      program,
+    shader_bookkeeping_t& bookkeeping,
+    cull_state&           view_info)
+{
+    cmd::enable(group::enable_cap::cull_face);
+    cmd::cull_face(
+        view_info.front_face ? group::triangle_face::front
+                             : group::triangle_face::back);
+    return true;
+}
+
+inline void undo_command_modifier(
+    program_t const&      program,
+    shader_bookkeeping_t& bookkeeping,
+    cull_state&&          view_info)
+{
+    cmd::disable(group::enable_cap::cull_face);
+}
+
+inline bool apply_command_modifier(
+    program_t const&      program,
+    shader_bookkeeping_t& bookkeeping,
+    blend_state&          view_info)
+{
+    cmd::enable(group::enable_cap::blend);
+    cmd::blend_func(
+        group::blending_factor::src_alpha,
+        group::blending_factor::one_minus_src_alpha);
+    return true;
+}
+
+inline void undo_command_modifier(
+    program_t const&      program,
+    shader_bookkeeping_t& bookkeeping,
+    blend_state&&         view_info)
+{
+    cmd::disable(group::enable_cap::blend);
 }
 
 } // namespace gleam::detail

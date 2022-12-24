@@ -55,7 +55,10 @@ requires(semantic::concepts::Span<span_i64>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetTransformFeedbacki64_v)
-        glIsTransformFeedback(xfb);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTransformFeedback)
+            glIsTransformFeedback(xfb);
+#endif
     }
     glGetTransformFeedbacki64_v(
         xfb,
@@ -87,7 +90,10 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetTransformFeedbacki_v)
-        glIsTransformFeedback(xfb);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTransformFeedback)
+            glIsTransformFeedback(xfb);
+#endif
     }
     glGetTransformFeedbacki_v(
         xfb,
@@ -115,7 +121,10 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetTransformFeedbackiv)
-        glIsTransformFeedback(xfb);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTransformFeedback)
+            glIsTransformFeedback(xfb);
+#endif
     }
     glGetTransformFeedbackiv(
         xfb,
@@ -137,8 +146,14 @@ STATICINLINE void transform_feedback_buffer_base(u32 xfb, u32 index, u32 buffer)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TransformFeedbackBufferBase)
-        glIsTransformFeedback(xfb);
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTransformFeedback)
+            glIsTransformFeedback(xfb);
+#endif
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glTransformFeedbackBufferBase(xfb, index, buffer);
     detail::error_check("TransformFeedbackBufferBase"sv);
@@ -160,8 +175,14 @@ STATICINLINE void transform_feedback_buffer_range(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TransformFeedbackBufferRange)
-        glIsTransformFeedback(xfb);
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTransformFeedback)
+            glIsTransformFeedback(xfb);
+#endif
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glTransformFeedbackBufferRange(xfb, index, buffer, offset, size);
     detail::error_check("TransformFeedbackBufferRange"sv);
@@ -189,7 +210,10 @@ requires(semantic::concepts::Span<span_const_void>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ClearNamedBufferData)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glClearNamedBufferData(
         buffer,
@@ -226,7 +250,10 @@ requires(semantic::concepts::Span<span_const_void>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ClearNamedBufferSubData)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glClearNamedBufferSubData(
         buffer,
@@ -302,7 +329,10 @@ STATICINLINE void flush_mapped_named_buffer_range(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(FlushMappedNamedBufferRange)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glFlushMappedNamedBufferRange(buffer, offset, length);
     detail::error_check("FlushMappedNamedBufferRange"sv);
@@ -326,7 +356,10 @@ requires(semantic::concepts::Span<span_i64>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetNamedBufferParameteri64v)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glGetNamedBufferParameteri64v(
         buffer,
@@ -353,7 +386,10 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetNamedBufferParameteriv)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glGetNamedBufferParameteriv(
         buffer,
@@ -378,7 +414,10 @@ requires(semantic::concepts::Span<span_void>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetNamedBufferPointerv)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glGetNamedBufferPointerv(
         buffer,
@@ -404,7 +443,10 @@ requires(semantic::concepts::Span<span_void>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetNamedBufferSubData)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glGetNamedBufferSubData(
         buffer,
@@ -426,7 +468,10 @@ STATICINLINE void* map_named_buffer(u32 buffer, group::buffer_access_arb access)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(MapNamedBuffer)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     auto out = glMapNamedBuffer(buffer, static_cast<GLenum>(access));
     detail::error_check("MapNamedBuffer"sv);
@@ -451,7 +496,10 @@ STATICINLINE void* map_named_buffer_range(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(MapNamedBufferRange)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     auto out = glMapNamedBufferRange(
         buffer, offset, length, static_cast<GLenum>(access));
@@ -478,7 +526,10 @@ requires(semantic::concepts::Span<span_const_void>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedBufferData)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glNamedBufferData(
         buffer,
@@ -508,7 +559,10 @@ requires(semantic::concepts::Span<span_const_void>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedBufferStorage)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glNamedBufferStorage(
         buffer,
@@ -536,7 +590,10 @@ requires(semantic::concepts::Span<span_const_void>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedBufferSubData)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glNamedBufferSubData(
         buffer,
@@ -558,7 +615,10 @@ STATICINLINE GLboolean unmap_named_buffer(u32 buffer)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(UnmapNamedBuffer)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     auto out = glUnmapNamedBuffer(buffer);
     detail::error_check("UnmapNamedBuffer"sv);
@@ -629,7 +689,10 @@ STATICINLINE GLenum check_named_framebuffer_status(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(CheckNamedFramebufferStatus)
-        glIsFramebuffer(framebuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsFramebuffer)
+            glIsFramebuffer(framebuffer);
+#endif
     }
     auto out =
         glCheckNamedFramebufferStatus(framebuffer, static_cast<GLenum>(target));
@@ -657,7 +720,10 @@ STATICINLINE void clear_named_framebufferfi(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ClearNamedFramebufferfi)
-        glIsFramebuffer(framebuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsFramebuffer)
+            glIsFramebuffer(framebuffer);
+#endif
     }
     glClearNamedFramebufferfi(
         framebuffer, static_cast<GLenum>(buffer), drawbuffer, depth, stencil);
@@ -686,7 +752,10 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ClearNamedFramebufferfv)
-        glIsFramebuffer(framebuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsFramebuffer)
+            glIsFramebuffer(framebuffer);
+#endif
     }
     glClearNamedFramebufferfv(
         framebuffer,
@@ -719,7 +788,10 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ClearNamedFramebufferiv)
-        glIsFramebuffer(framebuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsFramebuffer)
+            glIsFramebuffer(framebuffer);
+#endif
     }
     glClearNamedFramebufferiv(
         framebuffer,
@@ -751,7 +823,10 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ClearNamedFramebufferuiv)
-        glIsFramebuffer(framebuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsFramebuffer)
+            glIsFramebuffer(framebuffer);
+#endif
     }
     glClearNamedFramebufferuiv(
         framebuffer,
@@ -807,7 +882,10 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetNamedFramebufferAttachmentParameteriv)
-        glIsFramebuffer(framebuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsFramebuffer)
+            glIsFramebuffer(framebuffer);
+#endif
     }
     glGetNamedFramebufferAttachmentParameteriv(
         framebuffer,
@@ -835,7 +913,10 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetNamedFramebufferParameteriv)
-        glIsFramebuffer(framebuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsFramebuffer)
+            glIsFramebuffer(framebuffer);
+#endif
     }
     glGetNamedFramebufferParameteriv(
         framebuffer,
@@ -864,7 +945,10 @@ requires(semantic::concepts::Span<span_const_framebuffer_attachment>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(InvalidateNamedFramebufferData)
-        glIsFramebuffer(framebuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsFramebuffer)
+            glIsFramebuffer(framebuffer);
+#endif
     }
     glInvalidateNamedFramebufferData(
         framebuffer,
@@ -906,7 +990,10 @@ requires(semantic::concepts::Span<span_const_framebuffer_attachment>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(InvalidateNamedFramebufferSubData)
-        glIsFramebuffer(framebuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsFramebuffer)
+            glIsFramebuffer(framebuffer);
+#endif
     }
     glInvalidateNamedFramebufferSubData(
         framebuffer,
@@ -933,7 +1020,10 @@ STATICINLINE void named_framebuffer_draw_buffer(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedFramebufferDrawBuffer)
-        glIsFramebuffer(framebuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsFramebuffer)
+            glIsFramebuffer(framebuffer);
+#endif
     }
     glNamedFramebufferDrawBuffer(framebuffer, static_cast<GLenum>(buf));
     detail::error_check("NamedFramebufferDrawBuffer"sv);
@@ -957,7 +1047,10 @@ requires(semantic::concepts::Span<span_const_color_buffer>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedFramebufferDrawBuffers)
-        glIsFramebuffer(framebuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsFramebuffer)
+            glIsFramebuffer(framebuffer);
+#endif
     }
     glNamedFramebufferDrawBuffers(
         framebuffer,
@@ -980,7 +1073,10 @@ STATICINLINE void named_framebuffer_parameter(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedFramebufferParameteri)
-        glIsFramebuffer(framebuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsFramebuffer)
+            glIsFramebuffer(framebuffer);
+#endif
     }
     glNamedFramebufferParameteri(
         framebuffer, static_cast<GLenum>(pname), param);
@@ -1000,7 +1096,10 @@ STATICINLINE void named_framebuffer_read_buffer(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedFramebufferReadBuffer)
-        glIsFramebuffer(framebuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsFramebuffer)
+            glIsFramebuffer(framebuffer);
+#endif
     }
     glNamedFramebufferReadBuffer(framebuffer, static_cast<GLenum>(src));
     detail::error_check("NamedFramebufferReadBuffer"sv);
@@ -1024,8 +1123,14 @@ STATICINLINE void named_framebuffer_renderbuffer(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedFramebufferRenderbuffer)
-        glIsFramebuffer(framebuffer);
-        glIsRenderbuffer(renderbuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsFramebuffer)
+            glIsFramebuffer(framebuffer);
+#endif
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsRenderbuffer)
+            glIsRenderbuffer(renderbuffer);
+#endif
     }
     glNamedFramebufferRenderbuffer(
         framebuffer,
@@ -1053,8 +1158,14 @@ STATICINLINE void named_framebuffer_texture(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedFramebufferTexture)
-        glIsFramebuffer(framebuffer);
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsFramebuffer)
+            glIsFramebuffer(framebuffer);
+#endif
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glNamedFramebufferTexture(
         framebuffer, static_cast<GLenum>(attachment), texture, level);
@@ -1081,8 +1192,14 @@ STATICINLINE void named_framebuffer_texture_layer(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedFramebufferTextureLayer)
-        glIsFramebuffer(framebuffer);
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsFramebuffer)
+            glIsFramebuffer(framebuffer);
+#endif
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glNamedFramebufferTextureLayer(
         framebuffer, static_cast<GLenum>(attachment), texture, level, layer);
@@ -1133,7 +1250,10 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetNamedRenderbufferParameteriv)
-        glIsRenderbuffer(renderbuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsRenderbuffer)
+            glIsRenderbuffer(renderbuffer);
+#endif
     }
     glGetNamedRenderbufferParameteriv(
         renderbuffer,
@@ -1161,7 +1281,10 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedRenderbufferStorage)
-        glIsRenderbuffer(renderbuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsRenderbuffer)
+            glIsRenderbuffer(renderbuffer);
+#endif
     }
     glNamedRenderbufferStorage(
         renderbuffer, static_cast<GLenum>(internalformat), width[0], width[1]);
@@ -1189,7 +1312,10 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedRenderbufferStorageMultisample)
-        glIsRenderbuffer(renderbuffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsRenderbuffer)
+            glIsRenderbuffer(renderbuffer);
+#endif
     }
     glNamedRenderbufferStorageMultisample(
         renderbuffer,
@@ -1212,7 +1338,10 @@ STATICINLINE void bind_texture_unit(u32 unit, u32 texture)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindTextureUnit)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glBindTextureUnit(unit, texture);
     detail::error_check("BindTextureUnit"sv);
@@ -1243,7 +1372,10 @@ requires(semantic::concepts::Span<span_const_void>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(CompressedTextureSubImage1D)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glCompressedTextureSubImage1D(
         texture,
@@ -1286,7 +1418,10 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(CompressedTextureSubImage2D)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glCompressedTextureSubImage2D(
         texture,
@@ -1333,7 +1468,10 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(CompressedTextureSubImage3D)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glCompressedTextureSubImage3D(
         texture,
@@ -1370,7 +1508,10 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(CopyTextureSubImage1D)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glCopyTextureSubImage1D(texture, level, xoffset, x.x(), x.y(), width);
     detail::error_check("CopyTextureSubImage1D"sv);
@@ -1402,7 +1543,10 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(CopyTextureSubImage2D)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glCopyTextureSubImage2D(
         texture,
@@ -1444,7 +1588,10 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(CopyTextureSubImage3D)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glCopyTextureSubImage3D(
         texture,
@@ -1496,7 +1643,10 @@ STATICINLINE void generate_texture_mipmap(u32 texture)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GenerateTextureMipmap)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glGenerateTextureMipmap(texture);
     detail::error_check("GenerateTextureMipmap"sv);
@@ -1519,7 +1669,10 @@ requires(semantic::concepts::Span<span_void>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetCompressedTextureImage)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glGetCompressedTextureImage(
         texture,
@@ -1552,7 +1705,10 @@ requires(semantic::concepts::Span<span_void>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetTextureImage)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glGetTextureImage(
         texture,
@@ -1586,7 +1742,10 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetTextureLevelParameterfv)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glGetTextureLevelParameterfv(
         texture,
@@ -1618,7 +1777,10 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetTextureLevelParameteriv)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glGetTextureLevelParameteriv(
         texture,
@@ -1646,7 +1808,10 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetTextureParameterIiv)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glGetTextureParameterIiv(
         texture,
@@ -1673,7 +1838,10 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetTextureParameterIuiv)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glGetTextureParameterIuiv(
         texture,
@@ -1700,7 +1868,10 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetTextureParameterfv)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glGetTextureParameterfv(
         texture,
@@ -1727,7 +1898,10 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetTextureParameteriv)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glGetTextureParameteriv(
         texture,
@@ -1750,8 +1924,14 @@ STATICINLINE void texture_buffer(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureBuffer)
-        glIsTexture(texture);
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glTextureBuffer(texture, static_cast<GLenum>(internalformat), buffer);
     detail::error_check("TextureBuffer"sv);
@@ -1777,8 +1957,14 @@ STATICINLINE void texture_buffer_range(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureBufferRange)
-        glIsTexture(texture);
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glTextureBufferRange(
         texture, static_cast<GLenum>(internalformat), buffer, offset, size);
@@ -1805,7 +1991,10 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureParameterIiv)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glTextureParameterIiv(
         texture,
@@ -1835,7 +2024,10 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureParameterIuiv)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glTextureParameterIuiv(
         texture,
@@ -1859,7 +2051,10 @@ STATICINLINE void texture_parameter(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureParameterf)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glTextureParameterf(texture, static_cast<GLenum>(pname), param);
     detail::error_check("TextureParameterf"sv);
@@ -1885,7 +2080,10 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureParameterfv)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glTextureParameterfv(
         texture,
@@ -1909,7 +2107,10 @@ STATICINLINE void texture_parameter(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureParameteri)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glTextureParameteri(texture, static_cast<GLenum>(pname), param);
     detail::error_check("TextureParameteri"sv);
@@ -1935,7 +2136,10 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureParameteriv)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glTextureParameteriv(
         texture,
@@ -1962,7 +2166,10 @@ STATICINLINE void texture_storage_1d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureStorage1D)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glTextureStorage1D(
         texture, levels, static_cast<GLenum>(internalformat), width);
@@ -1990,7 +2197,10 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureStorage2D)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glTextureStorage2D(
         texture,
@@ -2024,7 +2234,10 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureStorage2DMultisample)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glTextureStorage2DMultisample(
         texture,
@@ -2058,7 +2271,10 @@ requires(semantic::concepts::Size2D<size_3_i32, i32>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureStorage3D)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glTextureStorage3D(
         texture,
@@ -2094,7 +2310,10 @@ requires(semantic::concepts::Size2D<size_3_i32, i32>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureStorage3DMultisample)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glTextureStorage3DMultisample(
         texture,
@@ -2133,7 +2352,10 @@ requires(semantic::concepts::Span<span_const_void>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureSubImage1D)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glTextureSubImage1D(
         texture,
@@ -2176,7 +2398,10 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureSubImage2D)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glTextureSubImage2D(
         texture,
@@ -2223,7 +2448,10 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureSubImage3D)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glTextureSubImage3D(
         texture,
@@ -2275,7 +2503,10 @@ STATICINLINE void disable_vertex_array_attrib(u32 vaobj, u32 index)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(DisableVertexArrayAttrib)
-        glIsVertexArray(vaobj);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsVertexArray)
+            glIsVertexArray(vaobj);
+#endif
     }
     glDisableVertexArrayAttrib(vaobj, index);
     detail::error_check("DisableVertexArrayAttrib"sv);
@@ -2293,7 +2524,10 @@ STATICINLINE void enable_vertex_array_attrib(u32 vaobj, u32 index)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(EnableVertexArrayAttrib)
-        glIsVertexArray(vaobj);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsVertexArray)
+            glIsVertexArray(vaobj);
+#endif
     }
     glEnableVertexArrayAttrib(vaobj, index);
     detail::error_check("EnableVertexArrayAttrib"sv);
@@ -2318,7 +2552,10 @@ requires(semantic::concepts::Span<span_i64>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetVertexArrayIndexed64iv)
-        glIsVertexArray(vaobj);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsVertexArray)
+            glIsVertexArray(vaobj);
+#endif
     }
     glGetVertexArrayIndexed64iv(
         vaobj,
@@ -2347,7 +2584,10 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetVertexArrayIndexediv)
-        glIsVertexArray(vaobj);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsVertexArray)
+            glIsVertexArray(vaobj);
+#endif
     }
     glGetVertexArrayIndexediv(
         vaobj,
@@ -2375,7 +2615,10 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetVertexArrayiv)
-        glIsVertexArray(vaobj);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsVertexArray)
+            glIsVertexArray(vaobj);
+#endif
     }
     glGetVertexArrayiv(
         vaobj,
@@ -2398,7 +2641,10 @@ STATICINLINE void vertex_array_attrib_binding(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(VertexArrayAttribBinding)
-        glIsVertexArray(vaobj);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsVertexArray)
+            glIsVertexArray(vaobj);
+#endif
     }
     glVertexArrayAttribBinding(vaobj, attribindex, bindingindex);
     detail::error_check("VertexArrayAttribBinding"sv);
@@ -2426,7 +2672,10 @@ STATICINLINE void vertex_array_attrib_format(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(VertexArrayAttribFormat)
-        glIsVertexArray(vaobj);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsVertexArray)
+            glIsVertexArray(vaobj);
+#endif
     }
     glVertexArrayAttribFormat(
         vaobj,
@@ -2458,7 +2707,10 @@ STATICINLINE void vertex_array_attrib_i_format(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(VertexArrayAttribIFormat)
-        glIsVertexArray(vaobj);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsVertexArray)
+            glIsVertexArray(vaobj);
+#endif
     }
     glVertexArrayAttribIFormat(
         vaobj, attribindex, size, static_cast<GLenum>(type), relativeoffset);
@@ -2485,7 +2737,10 @@ STATICINLINE void vertex_array_attrib_l_format(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(VertexArrayAttribLFormat)
-        glIsVertexArray(vaobj);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsVertexArray)
+            glIsVertexArray(vaobj);
+#endif
     }
     glVertexArrayAttribLFormat(
         vaobj, attribindex, size, static_cast<GLenum>(type), relativeoffset);
@@ -2506,7 +2761,10 @@ STATICINLINE void vertex_array_binding_divisor(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(VertexArrayBindingDivisor)
-        glIsVertexArray(vaobj);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsVertexArray)
+            glIsVertexArray(vaobj);
+#endif
     }
     glVertexArrayBindingDivisor(vaobj, bindingindex, divisor);
     detail::error_check("VertexArrayBindingDivisor"sv);
@@ -2524,8 +2782,14 @@ STATICINLINE void vertex_array_element_buffer(u32 vaobj, u32 buffer)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(VertexArrayElementBuffer)
-        glIsVertexArray(vaobj);
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsVertexArray)
+            glIsVertexArray(vaobj);
+#endif
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glVertexArrayElementBuffer(vaobj, buffer);
     detail::error_check("VertexArrayElementBuffer"sv);
@@ -2547,8 +2811,14 @@ STATICINLINE void vertex_array_vertex_buffer(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(VertexArrayVertexBuffer)
-        glIsVertexArray(vaobj);
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsVertexArray)
+            glIsVertexArray(vaobj);
+#endif
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glVertexArrayVertexBuffer(vaobj, bindingindex, buffer, offset, stride);
     detail::error_check("VertexArrayVertexBuffer"sv);
@@ -2585,7 +2855,10 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(VertexArrayVertexBuffers)
-        glIsVertexArray(vaobj);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsVertexArray)
+            glIsVertexArray(vaobj);
+#endif
     }
     glVertexArrayVertexBuffers(
         vaobj,
@@ -2690,7 +2963,10 @@ STATICINLINE void get_query_buffer_objecti64v(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetQueryBufferObjecti64v)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glGetQueryBufferObjecti64v(id, buffer, static_cast<GLenum>(pname), offset);
     detail::error_check("GetQueryBufferObjecti64v"sv);
@@ -2714,7 +2990,10 @@ STATICINLINE void get_query_buffer_objectiv(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetQueryBufferObjectiv)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glGetQueryBufferObjectiv(id, buffer, static_cast<GLenum>(pname), offset);
     detail::error_check("GetQueryBufferObjectiv"sv);
@@ -2738,7 +3017,10 @@ STATICINLINE void get_query_buffer_objectui64v(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetQueryBufferObjectui64v)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glGetQueryBufferObjectui64v(id, buffer, static_cast<GLenum>(pname), offset);
     detail::error_check("GetQueryBufferObjectui64v"sv);
@@ -2762,7 +3044,10 @@ STATICINLINE void get_query_buffer_objectuiv(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetQueryBufferObjectuiv)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glGetQueryBufferObjectuiv(id, buffer, static_cast<GLenum>(pname), offset);
     detail::error_check("GetQueryBufferObjectuiv"sv);

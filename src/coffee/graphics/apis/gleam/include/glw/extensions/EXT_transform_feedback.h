@@ -50,7 +50,10 @@ STATICINLINE void bind_buffer_base(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindBufferBaseEXT)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glBindBufferBaseEXT(static_cast<GLenum>(target), index, buffer);
     detail::error_check("BindBufferBaseEXT"sv);
@@ -71,7 +74,10 @@ STATICINLINE void bind_buffer_offset(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindBufferOffsetEXT)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glBindBufferOffsetEXT(static_cast<GLenum>(target), index, buffer, offset);
     detail::error_check("BindBufferOffsetEXT"sv);
@@ -97,7 +103,10 @@ STATICINLINE void bind_buffer_range(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindBufferRangeEXT)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glBindBufferRangeEXT(
         static_cast<GLenum>(target), index, buffer, offset, size);
@@ -147,7 +156,10 @@ requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetTransformFeedbackVaryingEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetTransformFeedbackVaryingEXT(
         program, index, name.size(), &length, &size, &type, name.data());
@@ -171,7 +183,10 @@ STATICINLINE void transform_feedback_varyings(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TransformFeedbackVaryingsEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     auto [varyings_lens, varyings_cstr, varyings_store] =
         detail::transform_strings(varyings);

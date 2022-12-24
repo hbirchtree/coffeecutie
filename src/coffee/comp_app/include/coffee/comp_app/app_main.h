@@ -1,6 +1,7 @@
 #pragma once
 
 #include <coffee/components/components.h>
+#include <coffee/comp_app/bundle.h>
 #include <coffee/core/task_queue/task.h>
 
 #include "services.h"
@@ -30,19 +31,11 @@ struct ExecLoop
 #elif !defined(COFFEE_CUSTOM_EXIT_HANDLING)
         app_error                   appec;
 
-        container.service<AppMain>()->load(container, appec);
+        comp_app::setup_container(container);
 
-        while(!container.service<Windowing>()->notifiedClose())
-        {
-            container.exec();
-            queue->execute_tasks();
-        }
+        while(comp_app::loop_container(container));
 
-        auto services = container.services_with<AppLoadableService>(
-            Coffee::Components::reverse_query);
-        for(auto& service : services)
-            service.unload(container, appec);
-            /* TODO: Unload all services */
+        comp_app::cleanup_container(container);
 #endif
         return 0;
     }

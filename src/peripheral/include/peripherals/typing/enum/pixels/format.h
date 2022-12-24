@@ -178,21 +178,13 @@ enum class CompFlags : u8
     ASTC_12x10,
     ASTC_12x12,
 
-    S3TC_1, /* RGB */
-    S3TC_3,
-    S3TC_5, /* RGBA */
-
-    DXT1 = S3TC_1,
-    DXT3 = S3TC_3,
-    DXT5 = S3TC_5,
-
-    BC1 = S3TC_1,
-    BC2 = S3TC_3,
-    BC3 = S3TC_5,
-    BC4,  /* 8-bit R */
-    BC5,  /* 8-bit RG */
-    BC6H, /* RGBA half-precision float */
-    BC7,  /* 8-bit RGBA */
+    BC1, /* 8-bit RGB/RGBA, aka DXT1, 6bpp, 64 bits */
+    BC2, /* 8-bit RGBA, aka DXT3, 8bpp, 128 bits */
+    BC3, /* 8-bit RGBA, aka DXT5, 8bpp, 128 bits */
+    BC4,  /* 8-bit R, aka RGTC, 4bpp, 64 bits */
+    BC5,  /* 8-bit RG, aka RGTC, 8bpp, 128 bits */
+    BC6H, /* RGBA half-precision float, aka BPTC, 128 bits */
+    BC7,  /* 8-bit RGBA, aka BPTC, 128 bits */
 
     /* BPP specification, meant for PVRTC */
     bpp_2,
@@ -244,103 +236,29 @@ enum class BitFmt : u8
     Undefined,
 };
 
-PACKED(struct) r11g11b10f 
+struct r11g11b10f
 {
-#if !defined(COFFEE_WINDOWS)
-    u16 b_ : 10;
-    u16 g_ : 11;
-    u16 r_ : 11;
-#else
-    u32 data;
-#endif
-
-    static constexpr u32 bit_10_mask = 0b1111111111;
-    static constexpr u32 bit_11_mask = 0b11111111111;
-
-    u16 b() const
-    {
-#if !defined(COFFEE_WINDOWS)
-        return b_;
-#else
-        return data & bit_10_mask;
-#endif
-    }
-    u16 g() const
-    {
-#if !defined(COFFEE_WINDOWS)
-        return g_;
-#else
-        return (data >> 10) & bit_11_mask;
-#endif
-    }
-    u16 r() const
-    {
-#if !defined(COFFEE_WINDOWS)
-        return r_;
-#else
-        return (data >> 21) & bit_11_mask;
-#endif
-    }
-
-  private:
-    constexpr void size_check()
-    {
-        static_assert(sizeof(r11g11b10f) == 4, "Invalid size");
-    }
+    u32 d;
 };
+static_assert(sizeof(r11g11b10f) == 4, "Invalid size");
 
-PACKED(struct) r10g10b10a2
+struct r10g10b10a2
 {
-#if !defined(COFFEE_WINDOWS)
-    u16 r_ : 10;
-    u16 g_ : 10;
-    u16 b_ : 10;
-    u8  a_ : 2;
-#else
-    u32 data;
-
-    static constexpr u32 bit_10_mask = 0b1111111111;
-#endif
-
-    u16 r() const
-    {
-#if !defined(COFFEE_WINDOWS)
-        return r_;
-#else
-        return data & bit_10_mask;
-#endif
-    }
-    u16 g() const
-    {
-#if !defined(COFFEE_WINDOWS)
-        return g_;
-#else
-        return (data >> 10) & bit_10_mask;
-#endif
-    }
-    u16 b() const
-    {
-#if !defined(COFFEE_WINDOWS)
-        return b_;
-#else
-        return (data >> 20) & bit_10_mask;
-#endif
-    }
-    u8 a() const
-    {
-#if !defined(COFFEE_WINDOWS)
-        return a_;
-#else
-        return (data >> 30) & 0b11;
-#endif
-    }
-
-  private:
-    constexpr void size_check()
-    {
-        static_assert(sizeof(r10g10b10a2) == 4, "Invalid size");
-    }
+    u32 d;
 };
+static_assert(sizeof(r10g10b10a2) == 4, "Invalid size");
+
+union r4g4b4a4
+{
+    u16 d;
+};
+static_assert(sizeof(r4g4b4a4) == 2, "Invalid size");
+
+union r5g6b5
+{
+    u16 d;
+};
+static_assert(sizeof(r5g6b5) == 2, "Invalid size");
 
 using f11 = r11g11b10f;
 using u10 = r10g10b10a2;

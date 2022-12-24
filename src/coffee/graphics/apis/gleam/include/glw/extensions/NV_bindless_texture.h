@@ -20,7 +20,10 @@ STATICINLINE GLuint64 get_image_handle(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetImageHandleNV)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     auto out = glGetImageHandleNV(
         texture, level, layered, layer, static_cast<GLenum>(format));
@@ -39,7 +42,10 @@ STATICINLINE GLuint64 get_texture_handle(u32 texture)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetTextureHandleNV)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     auto out = glGetTextureHandleNV(texture);
     detail::error_check("GetTextureHandleNV"sv);
@@ -58,8 +64,14 @@ STATICINLINE GLuint64 get_texture_sampler_handle(u32 texture, u32 sampler)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetTextureSamplerHandleNV)
-        glIsTexture(texture);
-        glIsSampler(sampler);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsSampler)
+            glIsSampler(sampler);
+#endif
     }
     auto out = glGetTextureSamplerHandleNV(texture, sampler);
     detail::error_check("GetTextureSamplerHandleNV"sv);
@@ -178,7 +190,10 @@ STATICINLINE void program_uniform_handle(u32 program, i32 location, u64 value)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformHandleui64NV)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformHandleui64NV(program, location, value);
     detail::error_check("ProgramUniformHandleui64NV"sv);
@@ -203,7 +218,10 @@ requires(semantic::concepts::Span<span_const_u64>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformHandleui64vNV)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformHandleui64vNV(
         program,

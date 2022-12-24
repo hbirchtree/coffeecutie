@@ -36,7 +36,10 @@ STATICINLINE void framebuffer_shading_rate(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(FramebufferShadingRateEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glFramebufferShadingRateEXT(
         static_cast<GLenum>(target),

@@ -19,46 +19,24 @@ struct Path
     explicit Path(std::string_view const& path) : internUrl(path)
     {
     }
-    Path() : Path(nullptr)
+    explicit Path()
     {
     }
 
-    STATICINLINE Path Mk(cstring p)
-    {
-        return Path(p);
-    }
+    std::string internUrl;
 
-    CString internUrl;
-
-    Path              removeExt() const;
-    Path              addExtension(cstring ext) const;
-    FORCEDINLINE Path addExtension(CString const& ext) const
-    {
-        return addExtension(ext.c_str());
-    }
+    Path removeExt() const;
+    Path addExtension(std::string_view const& ext) const;
     Path fileBasename() const;
 
-    CString extension() const;
+    std::string extension() const;
 
     Path dirname() const;
 
     Vector<Path> components() const;
 
-    Path              operator+(cstring component) const;
-    FORCEDINLINE Path operator+(CString const& component) const
-    {
-        return *this + component.c_str();
-    }
-    Path operator+(Path const& path) const;
-
-    FORCEDINLINE Path operator/(CString const& component) const
-    {
-        return *this + component;
-    }
-    FORCEDINLINE Path operator/(Path const& path) const
-    {
-        return *this + path;
-    }
+    Path operator/(std::string_view const& component) const;
+    Path operator/(Path const& path) const;
 
     Path& operator=(Url const& url);
 
@@ -86,6 +64,9 @@ struct Path
     {
         return internUrl <= other.internUrl;
     }
+
+    Url url(RSCA flags = RSCA::SystemFile) const;
+    Url url(HTTPAccess flags) const;
 };
 
 struct Url
@@ -95,33 +76,28 @@ struct Url
         Undefined,
         Local,
         Networked,
-        Memory,
     };
 
-    CString              internUrl{};
-    StorageType          category{Local};
+    std::string          internUrl{};
+    StorageType          category{Undefined};
     semantic::RSCA       flags{RSCA::None};
     semantic::HTTPAccess netflags{HTTPAccess::None};
-
-    CString cachedUrl{};
 
     FORCEDINLINE bool isLocal() const
     {
         return category == Local;
     }
 
+    FORCEDINLINE bool valid() const
+    {
+        return category != Undefined;
+    }
+
     /*!
      * \brief Operator with const which does not perform caching of dereferenced
      * URLs \return
      */
-    CString operator*() const;
-    /*!
-     * \brief Does the same as const operator*, except it caches the value for
-     * later dereferences. Currently not very useful since most `FileFun::*`
-     * functions do not take `Url&`, but rather `Url const&`.
-     * \return
-     */
-    CString operator*();
+    std::string operator*() const;
 
     Url operator+(Path const& path) const;
 
@@ -163,82 +139,44 @@ struct Url
     }
 
   private:
-    CString DereferenceLocalPath() const;
+    std::string DereferenceLocalPath() const;
 };
 
 struct UrlParse
 {
-    static UrlParse From(Url const& url);
+    static UrlParse const from(Url const& url);
 
-    CString protocol()
-    {
-        return m_protocol;
-    }
-    CString host()
-    {
-        return m_host;
-    }
-    CString resource()
-    {
-        return m_resource;
-    }
-    u32 port()
-    {
-        return m_port;
-    }
+    std::string protocol;
+    std::string host;
+    std::string resource;
+    u16         port{0};
 
     bool valid() const
     {
-        return m_protocol.size();
+        return protocol.size();
     }
-
-  private:
-    UrlParse()
-    {
-    }
-    CString m_protocol;
-    CString m_host;
-    CString m_resource;
-    u32     m_port;
 };
 
 namespace constructors {
 
-FORCEDINLINE Url MkInvalidUrl()
-{
-    return {{}, Url::Undefined, RSCA::None, HTTPAccess::None, {}};
-}
-
-FORCEDINLINE Url MkUrl(CString const& p, RSCA access = RSCA::SystemFile)
-{
-    return {p, Url::Local, access, HTTPAccess::None, {}};
-}
-
-FORCEDINLINE Url MkSysUrl(CString const& urlString)
-{
-    return {urlString, Url::Local, RSCA::SystemFile, HTTPAccess::None, {}};
-}
-
-FORCEDINLINE Url MkSysUrl(Path const& urlString)
+FORCEDINLINE Url MkUrl(std::string const& p, RSCA access = RSCA::SystemFile)
 {
     return {
-        urlString.internUrl,
-        Url::Local,
-        RSCA::SystemFile,
-        HTTPAccess::None,
-        {}};
+        .internUrl = p,
+        .category  = Url::Local,
+        .flags     = access,
+        .netflags  = HTTPAccess::None,
+    };
 }
 
-FORCEDINLINE Url MkUrl(Path const& p, RSCA access = RSCA::SystemFile)
+FORCEDINLINE Url MkSysUrl(std::string const& urlString)
 {
-    return {p.internUrl.c_str(), Url::Local, access, HTTPAccess::None, {}};
-}
-
-/* Basic Url constructors */
-
-FORCEDINLINE Url operator"" _url(const char* url, size_t)
-{
-    return MkUrl(url);
+    return {
+        .internUrl = urlString,
+        .category  = Url::Local,
+        .flags     = RSCA::SystemFile,
+        .netflags  = HTTPAccess::None,
+    };
 }
 
 /*
@@ -269,4 +207,10 @@ FORCEDINLINE Url operator"" _sys(const char* url, size_t)
 }
 
 } // namespace constructors
+
+FORCEDINLINE Url invalid_url()
+{
+    return {.category = Url::Undefined};
+}
+
 } // namespace platform::url

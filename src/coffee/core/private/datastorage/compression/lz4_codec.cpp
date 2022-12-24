@@ -51,14 +51,14 @@ bool compressor::Compress(
         return false;
     }
 
-    semantic::Bytes state = semantic::Bytes::Alloc(
+    semantic::Bytes state = semantic::Bytes::withSize(
         opts.mode == compression_mode::high ? LZ4_sizeofStateHC()
                                             : LZ4_sizeofState());
 
     int approx_size =
         LZ4_compressBound(C_FCAST<libc_types::i32>(uncompressed.size));
 
-    *target = semantic::Bytes::Alloc(
+    *target = semantic::Bytes::withSize(
         C_FCAST<libc_types::u32>(approx_size) + sizeof(chunk_header));
 
     chunk_header& header = *C_RCAST<chunk_header*>(target->data);
@@ -142,7 +142,7 @@ bool compressor::Decompress(
         return false;
     }
 
-    *target = semantic::Bytes::Alloc(header.real_size);
+    *target = semantic::Bytes::withSize(header.real_size);
 
     auto contentChunk = compressed.at(sizeof(chunk_header));
 

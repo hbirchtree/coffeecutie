@@ -28,7 +28,10 @@ requires(semantic::concepts::Span<span_const_void>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ClearTexImage)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glClearTexImage(
         texture,
@@ -71,7 +74,10 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ClearTexSubImage)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glClearTexSubImage(
         texture,

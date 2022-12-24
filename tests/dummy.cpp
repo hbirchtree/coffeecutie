@@ -10,9 +10,9 @@
 #include <peripherals/stl/string_casting.h>
 
 /* Graphics API interfaces */
-#include <coffee/interfaces/cgraphics_api.h>
-#include <coffee/interfaces/cgraphics_api_thread.h>
-#include <coffee/interfaces/cgraphics_ext.h>
+//#include <coffee/interfaces/cgraphics_api.h>
+//#include <coffee/interfaces/cgraphics_api_thread.h>
+//#include <coffee/interfaces/cgraphics_ext.h>
 #include <coffee/interfaces/cgraphics_pixops.h>
 
 /* General interfaces */

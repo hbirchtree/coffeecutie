@@ -270,7 +270,10 @@ requires(MinimumVersion<Current, Version<4, 3>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(InvalidateBufferData)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glInvalidateBufferData(buffer);
     detail::error_check("InvalidateBufferData"sv);
@@ -292,7 +295,10 @@ requires(MinimumVersion<Current, Version<4, 3>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(InvalidateBufferSubData)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glInvalidateBufferSubData(buffer, offset, length);
     detail::error_check("InvalidateBufferSubData"sv);
@@ -389,7 +395,10 @@ requires(MinimumVersion<Current, Version<4, 3>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(InvalidateTexImage)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glInvalidateTexImage(texture, level);
     detail::error_check("InvalidateTexImage"sv);
@@ -421,7 +430,10 @@ requires(MinimumVersion<Current, Version<4, 3>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(InvalidateTexSubImage)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glInvalidateTexSubImage(
         texture,
@@ -512,7 +524,10 @@ requires(MinimumVersion<Current, Version<4, 3>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetProgramInterfaceiv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetProgramInterfaceiv(
         program,
@@ -540,7 +555,10 @@ requires(MinimumVersion<Current, Version<4, 3>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetProgramResourceIndex)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     auto out = glGetProgramResourceIndex(
         program, static_cast<GLenum>(programInterface), name.data());
@@ -564,7 +582,10 @@ requires(MinimumVersion<Current, Version<4, 3>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetProgramResourceLocation)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     auto out = glGetProgramResourceLocation(
         program, static_cast<GLenum>(programInterface), name.data());
@@ -588,7 +609,10 @@ requires(MinimumVersion<Current, Version<4, 3>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetProgramResourceLocationIndex)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     auto out = glGetProgramResourceLocationIndex(
         program, static_cast<GLenum>(programInterface), name.data());
@@ -622,7 +646,10 @@ requires(MinimumVersion<Current, Version<4, 3>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetProgramResourceName)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetProgramResourceName(
         program,
@@ -667,7 +694,10 @@ requires(MinimumVersion<Current, Version<4, 3>>&&         semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetProgramResourceiv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetProgramResourceiv(
         program,
@@ -695,7 +725,10 @@ requires(MinimumVersion<Current, Version<4, 3>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ShaderStorageBlockBinding)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glShaderStorageBlockBinding(
         program, storageBlockIndex, storageBlockBinding);
@@ -724,7 +757,10 @@ requires(MinimumVersion<Current, Version<4, 3>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TexBufferRange)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glTexBufferRange(
         static_cast<GLenum>(target),
@@ -835,7 +871,10 @@ requires(MinimumVersion<Current, Version<4, 3>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureView)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glTextureView(
         texture,
@@ -866,7 +905,10 @@ requires(MinimumVersion<Current, Version<4, 3>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindVertexBuffer)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glBindVertexBuffer(bindingindex, buffer, offset, stride);
     detail::error_check("BindVertexBuffer"sv);

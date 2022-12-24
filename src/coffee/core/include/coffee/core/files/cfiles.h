@@ -49,15 +49,21 @@ class Resource
      * \param url Path to resource
      */
     explicit Resource(Url const& url);
-    Resource(std::string_view rsrc, semantic::RSCA acc = semantic::RSCA::AssetFile);
+    Resource(
+        std::string_view rsrc, semantic::RSCA acc = semantic::RSCA::AssetFile);
     Resource(Resource&& rsc);
     ~Resource();
 
-    semantic::Span<char> data_rw;
+    semantic::Span<char>       data_rw;
     semantic::Span<const char> data_ro;
 
     cstring resource() const;
     bool    valid() const;
+
+    semantic::Span<const char> data()
+    {
+        return C_OCAST<BytesConst>(*this).as<const char>().view;
+    }
 
     /*!
      * \brief Owning data assignment
@@ -87,8 +93,8 @@ class Resource
 
     FORCEDINLINE Resource& operator=(Resource&& other)
     {
-        this->data_rw            = std::move(other.data_rw);
-        this->data_ro            = std::move(other.data_ro);
+        this->data_rw         = std::move(other.data_rw);
+        this->data_ro         = std::move(other.data_ro);
         this->flags           = other.flags;
         this->m_platform_data = std::move(other.m_platform_data);
         this->m_resource      = std::move(other.m_resource);
@@ -155,7 +161,8 @@ C_DEPRECATED FORCEDINLINE bool FileCommit(
 {
     return FileCommit(
         resc,
-        acc | (append ? RSCA::NewFile | RSCA::WriteOnly | RSCA::Append
+        acc
+            | (append ? RSCA::NewFile | RSCA::WriteOnly | RSCA::Append
                       : RSCA::None));
 }
 

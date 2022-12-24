@@ -1,12 +1,26 @@
 #pragma once
 
+#include "cblam_base_types.h"
 #include "cblam_bsp_structures.h"
 #include "cblam_bytecode.h"
+#include "cblam_file_header.h"
+#include "cblam_magic_data.h"
 #include "cblam_mod2.h"
-#include "cblam_structures.h"
+#include "cblam_reflexive.h"
+#include "cblam_tag_index.h"
+#include "cblam_vertex.h"
 
-namespace blam {
-namespace scn {
+namespace blam::scn {
+
+template<typename T>
+/*!
+ * \brief Encapsulates a base and reference reflexive group
+ */
+struct reflex_group
+{
+    reflexive_t<T>                  instances;
+    reflexive_t<Array<tagref_t, 3>> palette;
+};
 
 using angle_t = scalar;
 
@@ -36,20 +50,6 @@ enum class ai_state : i16
     unknown_6 = 10,
     unknown_7 = 11,
 };
-
-} // namespace scn
-
-template<typename T>
-/*!
- * \brief Encapsulates a base and reference reflexive group
- */
-struct reflex_group
-{
-    reflexive_t<T>                  instances;
-    reflexive_t<Array<tagref_t, 3>> palette;
-};
-
-namespace scn {
 
 using scn_chunk = byte_t[100];
 
@@ -762,7 +762,8 @@ struct light_fixture
 /*!
  * \brief A Blam! scenario descriptor
  */
-template<typename Bytecode>
+template<typename V>
+requires is_game_version<V>
 struct scenario
 {
     enum class scenario_type : u16
@@ -778,7 +779,9 @@ struct scenario
         demo_ui      = 0x2,
     };
 
-    struct /* 260-byte block? */
+    using bytecode_t = typename V::bytecode_type;
+
+    struct scenario_info_t /* 260-byte block? */
     {
         tagref_t unk_bsp1; // Unused
         tagref_t unk_bsp2; // Unused
@@ -797,17 +800,17 @@ struct scenario
         reflexive_t<u32> functions;
 
         u32 padding1[39];
-    };
+    } info;
 
-    struct /* 256-byte block */
+    struct editor_t /* 256-byte block */
     {
         i32                 editor_scenario_size;
         u32                 unknown_2;
         reflexive_t<byte_t> comments;
         u32                 padding2[59];
-    };
+    } editor;
 
-    struct /* 324-byte block, object spawns */
+    struct objects_t /* 324-byte block, object spawns */
     {
         reflexive_t<object_name>           object_names;
         reflex_group<scenery_spawn>        scenery;
@@ -822,97 +825,107 @@ struct scenario
         reflex_group<sound_scenery>        snd_scenery;
 
         u32 padding3[21];
-    };
+    } objects;
 
-    struct /* 216-byte block */
+    struct multiplayer_t /* 216-byte block */
     {
         reflexive_t<player_starting_profile> player_start_profiles;
         reflexive_t<player_spawn>            player_spawns;
         reflexive_t<trigger_volume>          trigger_volumes;
         reflexive_t<scn_chunk>               animation;
-        reflexive_t<multiplayer_flag>        mp_flags;
-        reflexive_t<multiplayer_equipment>   mp_equipment;
+        reflexive_t<multiplayer_flag>        flags;
+        reflexive_t<multiplayer_equipment>   equipment;
         reflexive_t<starting_equip>          starting_equipment;
         reflexive_t<bsp_trigger>             bsp_switch_triggers;
         reflex_group<decal>                  decals;
         reflexive_t<scn_chunk>               detail_obj_collision_ref;
         u32                                  padding4[21];
-    };
+    } mp;
 
-    struct /* 340-byte block */
+    struct script_t /* 340-byte block */
     {
-        reflexive_t<actor_variant_ref>         actor_variant_refs;
-        reflexive_t<encounter::encounter>      encounters;
-        reflexive_t<scn_chunk>                 command_lists;
-        reflexive_t<scn_chunk>                 unknown_6;
-        reflexive_t<scn_chunk>                 starting_locations;
-        reflexive_t<scn_chunk>                 platoons;
-        reflexive_t<scn_chunk>                 ai_conversations;
-        u32                                    script_bytecode_size;
-        u32                                    unknown_7;
-        reflexive_t<hsc::script_ref<Bytecode>> scripts;
-        u32                                    script_function_table_offset;
-        u32                                    script_function_table_size;
-        reflexive_t<char>                      script_string_segment;
-        reflexive_t<ai::animation_ref>         ai_animation_refs;
-        reflexive_t<hsc::global>               globals;
-        reflexive_t<ai::recording_ref>         ai_recording_refs;
-        reflexive_t<scn_chunk>                 unknown_8;
-        reflexive_t<scn_chunk>                 participants;
-        reflexive_t<scn_chunk>                 lines;
-        reflexive_t<script_trigger>            script_triggers;
-        reflexive_t<scn_chunk>                 cutscenes_verify;
-        reflexive_t<scn_chunk>                 cutscene_titles_verify;
-        reflexive_t<scn_chunk>                 source_files;
-        reflexive_t<scn_chunk>                 cutscene_flags;
-        reflexive_t<scn_chunk>                 cutscene_camera_poi;
-        reflexive_t<scn_chunk>                 cutscene_titles_;
-        u32                                    padding5[15];
-    };
+        reflexive_t<actor_variant_ref>           actor_variant_refs;
+        reflexive_t<encounter::encounter>        encounters;
+        reflexive_t<scn_chunk>                   command_lists;
+        reflexive_t<scn_chunk>                   unknown_6;
+        reflexive_t<scn_chunk>                   starting_locations;
+        reflexive_t<scn_chunk>                   platoons;
+        reflexive_t<scn_chunk>                   ai_conversations;
+        u32                                      script_bytecode_size;
+        u32                                      unknown_7;
+        reflexive_t<hsc::script_ref<bytecode_t>> scripts;
+        u32                                      script_function_table_offset;
+        u32                                      script_function_table_size;
+        reflexive_t<char>                        script_string_segment;
+        reflexive_t<ai::animation_ref>           ai_animation_refs;
+        reflexive_t<hsc::global>                 globals;
+        reflexive_t<ai::recording_ref>           ai_recording_refs;
+        reflexive_t<scn_chunk>                   unknown_8;
+        reflexive_t<scn_chunk>                   participants;
+        reflexive_t<scn_chunk>                   lines;
+        reflexive_t<script_trigger>              script_triggers;
+        reflexive_t<scn_chunk>                   cutscenes_verify;
+        reflexive_t<scn_chunk>                   cutscene_titles_verify;
+        reflexive_t<scn_chunk>                   source_files;
+        reflexive_t<scn_chunk>                   cutscene_flags;
+        reflexive_t<scn_chunk>                   cutscene_camera_poi;
+        reflexive_t<scn_chunk>                   cutscene_titles_;
+        u32                                      padding5[15];
+    } script;
 
-    inline semantic::mem_chunk<hsc::opcode_layout<Bytecode> const> bytecode(
+    inline Span<hsc::opcode_layout<bytecode_t> const> bytecode(
         magic_data_t const& magic) const
     {
-        auto num_opcodes =
-            (script_bytecode_size - sizeof(hsc::script_ref<Bytecode>)) /
-            sizeof(hsc::opcode_layout<Bytecode>);
-        auto const& script_base = scripts.data(magic)[0].opcode_first();
-        return semantic::mem_chunk<hsc::opcode_layout<Bytecode> const>::of(
-            &script_base, num_opcodes);
+        auto num_opcodes = (script.script_bytecode_size
+                            - sizeof(hsc::script_ref<bytecode_t>))
+                           / sizeof(hsc::opcode_layout<bytecode_t>);
+        auto const& script_base
+            = script.scripts.data(magic).value()[0].opcode_first();
+        return semantic::mem_chunk<hsc::opcode_layout<bytecode_t> const>::of(
+                   &script_base, num_opcodes)
+            .view;
     }
-    inline string_segment_ref string_segment(magic_data_t const& magic) const
-    {
-        auto string_base_chunk = script_string_segment.data(magic).view;
-        auto string_base       = std::string_view(
-                  string_base_chunk.data(), string_base_chunk.size());
-        return {string_base};
-    }
-    inline semantic::mem_chunk<hsc::function_declaration const> function_table(
+    inline result<string_segment_ref, error_msg> string_segment(
         magic_data_t const& magic) const
     {
-        auto string_seg = string_segment(magic);
+        if(auto string_base_chunk
+           = script.script_string_segment.data(magic);
+           string_base_chunk.has_error())
+            return string_base_chunk.error();
+        else if(auto chunk = string_base_chunk.value(); true)
+        {
+            return string_segment_ref{
+                .data = std::string_view(chunk.data(), chunk.size()),
+            };
+        }
+    }
+    inline Span<hsc::function_declaration const> function_table(
+        magic_data_t const& magic) const
+    {
+        auto string_seg = string_segment(magic).value();
 
-        auto init_ptr = string_seg.data.substr(script_function_table_offset);
+        auto init_ptr
+            = string_seg.data.substr(script.script_function_table_offset);
         hsc::function_declaration const* func_seg_start = nullptr;
 
         /* TODO: Find out what the true offset is, for now just look for the
          * padding */
         for(auto i : stl_types::Range<u32>(4))
         {
-            func_seg_start =
-                C_RCAST<decltype(func_seg_start)>(init_ptr.data() + i);
-            if(func_seg_start->padding[0] == 0 &&
-               func_seg_start->padding[1] == 0)
+            func_seg_start
+                = C_RCAST<decltype(func_seg_start)>(init_ptr.data() + i);
+            if(func_seg_start->padding[0] == 0
+               && func_seg_start->padding[1] == 0)
                 break;
         }
 
         if(!func_seg_start)
             return {};
 
-        auto num_functions =
-            (&string_seg.data.at(script_string_segment.count - 1) -
-             init_ptr.data()) /
-            sizeof(hsc::function_declaration);
+        auto num_functions
+            = (&string_seg.data.at(script.script_string_segment.count - 1)
+               - init_ptr.data())
+              / sizeof(hsc::function_declaration);
 
         for(auto i : stl_types::Range<>(num_functions))
         {
@@ -925,7 +938,8 @@ struct scenario
             return {};
 
         return semantic::mem_chunk<hsc::function_declaration const>::of(
-            func_seg_start, num_functions);
+                   func_seg_start, num_functions)
+            .view;
     }
 
     struct
@@ -938,32 +952,34 @@ struct scenario
     reflexive_t<bsp::info> bsp_info;
 };
 
-template<typename Bytecode>
-inline scenario<Bytecode> const& get_scenario(
+template<typename V>
+requires is_game_version<V>
+inline scenario<V> const& get_scenario(
     file_header_t const* header, magic_data_t const& magic)
 {
-    return tag_index_t::from_header(header)
+    return tag_index_t<V>::from_header(header)
         .scenario(header)
-        .to_reflexive<scenario<Bytecode>>()
+        .template to_reflexive<scenario<V>>()
         .data(magic)[0];
 }
 
-} // namespace scn
+} // namespace blam::scn
 
-namespace ui {
+namespace blam::ui {
 
 struct unicode_ref
 {
-    using wide_string = stl_types::u16string_view;
-
     u32                         length;
     u32                         padding;
     reflexive_t<unicode_var<1>> data;
 
-    inline wide_string str(magic_data_t const& magic, u16 off = 0) const
+    inline result<ucs_string, error_msg> str(
+        magic_data_t const& magic, u16 off = 0) const
     {
-        auto str_data = data.data(magic);
-        return str_data[0].str(off);
+        if(auto str_data = data.data(magic); str_data.has_error())
+            return str_data.error();
+        else
+            return str_data.value()[0].str(off);
     }
 };
 
@@ -994,31 +1010,42 @@ struct hud_message
     reflexive_t<hud_symbol>  symbols;
 
     /* Get offset into unicode_ref for a string */
-    inline u16 str_offset(magic_data_t const& magic, u32 idx) const
+    inline std::optional<u16> str_offset(
+        magic_data_t const& magic, u32 idx) const
     {
-        u16  out         = 0;
-        auto offset_data = offsets.data(magic);
-        for(auto i : stl_types::Range<>(idx))
+        if(auto offset_data = offsets.data(magic); offset_data.has_error())
+            return std::nullopt;
+        else
         {
-            out += offset_data[i].size;
+            u16 out = 0;
+            for(auto i : stl_types::Range<>(idx))
+            {
+                out += offset_data.value()[i].size;
+            }
+            return out;
         }
-        return out;
     }
 
-    inline stl_types::Optional<unicode_var<1>::string_span> symbol_find(
-        magic_data_t const& magic, stl_types::String const& sym) const
+    inline std::optional<ucs_string> symbol_find(
+        magic_data_t const& magic, std::string_view const& sym) const
     {
-        for(hud_symbol const& s : symbols.data(magic))
+        auto symbol_res = symbols.data(magic);
+        if(symbol_res.has_error())
+            return std::nullopt;
+        auto symbol_data = std::move(symbol_res.value());
+        for(hud_symbol const& s : symbol_data)
         {
-            if(s.symbol.str() != sym)
+            if(s.symbol != sym)
                 continue;
 
-            return text.data.data(magic)[0].view(text.length, s.offset);
+            if(auto symbol = text.data.data(magic); symbol.has_error())
+                continue;
+            else
+                return symbol.value()[0].view(text.length, s.offset);
         }
 
-        return {};
+        return std::nullopt;
     }
 };
 
-} // namespace ui
-} // namespace blam
+} // namespace blam::ui

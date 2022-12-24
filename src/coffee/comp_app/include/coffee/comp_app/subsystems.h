@@ -41,6 +41,9 @@ struct AppLoader : AppService<AppLoader>
         {
             using namespace type_safety;
 
+            if(e.template service<T>())
+                return;
+
             auto& service = T::template register_service<T>(e);
 
             C_ERROR_CHECK(ec);
@@ -61,7 +64,7 @@ struct AppLoader : AppService<AppLoader>
             auto ptr = C_DCAST<AppLoadableService>(e.service<T>());
 
             if(ptr)
-                ptr->load(e, ec);
+                ptr->do_load(e, ec);
 
             C_ERROR_CHECK(ec);
         }
@@ -82,7 +85,7 @@ struct AppLoader : AppService<AppLoader>
             auto ptr = C_DCAST<AppLoadableService>(e.service<T>());
 
             if(ptr)
-                ptr->unload(e, ec);
+                ptr->do_unload(e, ec);
 
             C_ERROR_CHECK(ec);
         }
@@ -99,7 +102,7 @@ struct AppLoader : AppService<AppLoader>
         ec = AppError::None;
 
         for_each<Services>(service_register(e, ec));
-#if !defined(COFFEE_CUSTOM_MAIN)
+#if !defined(COFFEE_CUSTOM_MAIN) || defined(COFFEE_ANDROID)
         for_each<Services>(service_loader(e, ec));
 #endif
     }

@@ -17,7 +17,7 @@ struct EntityRef
     }
 
     template<typename T>
-    typename T::type& get()
+    typename T::value_type& get()
     {
         auto ptr = container->template get<T>(m_id);
         C_PTR_CHECK(ptr);
@@ -30,7 +30,7 @@ struct EntityRef
     }
 
     template<typename T>
-    typename T::type const& get() const
+    typename T::value_type const& get() const
     {
         /* TODO: Add const get<T>() function to EntityContainer */
         auto container_mut = C_CCAST<ContainerType*>(container);

@@ -19,7 +19,7 @@ bool url_parsing()
         ProfContext __("Parse");
 
         Profiler::PushContext("URL parsing");
-        auto components = UrlParse::From(queryUrl);
+        auto components = UrlParse::from(queryUrl);
         Profiler::PopContext();
 
         auto path_it = http::resource::path_iterator(components.resource());

@@ -57,10 +57,10 @@ C_FLAGS(VisitorFlags, u32);
 
 struct EntityRecipe
 {
-    EntityRecipe(Vector<size_t>&& comps = {}, u32 tags = 0) :
-        components(std::move(comps)), tags(tags)
-    {
-    }
+//    EntityRecipe(Vector<size_t>&& comps = {}, u32 tags = 0) :
+//        components(std::move(comps)), tags(tags)
+//    {
+//    }
 
     Vector<size_t> components;
     u32            tags;

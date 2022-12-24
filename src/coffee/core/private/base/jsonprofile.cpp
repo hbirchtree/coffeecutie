@@ -150,17 +150,15 @@ ShPtr<Coffee::State::GlobalState> CreateProfiler()
 static void platform_trace_begin(
     UNUSED_PARAM(profiling::DataPoint const&, point))
 {
-#if defined(COFFEE_ANDROID)
-    if constexpr(compile_info::android::api >= 23)
-        ATrace_beginSection(point.name.c_str());
+#if defined(COFFEE_ANDROID) && ANDROID_API_LEVEL > 23
+    ATrace_beginSection(point.name.c_str());
 #endif
 }
 
 static void platform_trace_end(UNUSED_PARAM(profiling::DataPoint const&, point))
 {
-#if defined(COFFEE_ANDROID)
-    if constexpr(compile_info::android::api >= 23)
-        ATrace_endSection();
+#if defined(COFFEE_ANDROID) && ANDROID_API_LEVEL > 23
+    ATrace_endSection();
 #endif
 }
 

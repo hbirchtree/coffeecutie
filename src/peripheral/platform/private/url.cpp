@@ -60,34 +60,42 @@ Url GetAppleStoragePath()
         if(!bun)
             break;
         CFURLRef    path = CFBundleCopyBundleURL(bun);
-        CFStringRef pathstr =
-            CFURLCopyFileSystemPath(path, kCFURLPOSIXPathStyle);
+        CFStringRef pathstr
+            = CFURLCopyFileSystemPath(path, kCFURLPOSIXPathStyle);
         CFStringEncoding enc      = CFStringGetSystemEncoding();
-        const char*      pathcstr = CFStringGetCStringPtr(pathstr, enc);
-        CString          outStr   = pathcstr;
+        const char*      pathcstr = CFStringGetstd::stringPtr(pathstr, enc);
+        std::string      outStr   = pathcstr;
         CFRelease(pathstr);
         CFRelease(path);
 #if defined(COFFEE_APPLE_MOBILE)
         out = MkUrl(outStr.c_str(), RSCA::SystemFile);
 #else
-        out = MkUrl(outStr.c_str(), RSCA::SystemFile) + Path{"Contents"} +
-              Path{"Resources"};
+        out = MkUrl(outStr.c_str(), RSCA::SystemFile) + Path{"Contents"}
+              + Path{"Resources"};
 #endif
     } while(false);
     return out;
 }
 #endif
 
-STATICINLINE SystemPaths GetSystemPaths()
+STATICINLINE SystemPaths& GetSystemPaths()
 {
-    SystemPaths paths;
+    static SystemPaths paths{};
+    static bool        prefix_available{false};
 
-    paths.assetDir  = MkInvalidUrl();
-    paths.cacheDir  = MkInvalidUrl();
-    paths.configDir = MkInvalidUrl();
-    paths.tempDir   = MkInvalidUrl();
+    const bool valid_paths = paths.assetDir.valid() || paths.cacheDir.valid();
+    if(valid_paths && prefix_available)
+        return paths;
 
-    CString const& _coffee_resource_prefix = file::ResourcePrefix();
+    auto prefix      = file::ResourcePrefix();
+    prefix_available = prefix.has_value();
+
+    paths.assetDir  = invalid_url();
+    paths.cacheDir  = invalid_url();
+    paths.configDir = invalid_url();
+    paths.tempDir   = invalid_url();
+
+    auto _coffee_resource_prefix = prefix.value_or("./");
 
     auto& appData = *state->GetAppData();
 
@@ -114,11 +122,11 @@ STATICINLINE SystemPaths GetSystemPaths()
         paths.assetDir = path::current_dir().value();
 
     /* Cache goes in ~/.cache/ORGNAME/APPNAME */
-    paths.cacheDir = env::home_dir().value() / ".cache" /
-                     appData.organization_name / appData.application_name;
+    paths.cacheDir = env::home_dir().value() / ".cache"
+                     / appData.organization_name / appData.application_name;
 
     /* Temporary files go in /tmp */
-    paths.tempDir = MkSysUrl("/tmp") / appData.application_name;
+    paths.tempDir = "/tmp"_sys / appData.application_name;
 
     if(auto snappy = env::var("SNAP_USER_COMMON"); snappy.has_value())
         paths.configDir = MkSysUrl(snappy.value());
@@ -127,8 +135,8 @@ STATICINLINE SystemPaths GetSystemPaths()
         auto& orgname = appData.organization_name;
         auto& appname = appData.application_name;
 
-        paths.configDir =
-            env::home_dir().value() / ".local" / "share" / orgname / appname;
+        paths.configDir
+            = env::home_dir().value() / ".local" / "share" / orgname / appname;
     }
 
 #elif defined(COFFEE_WINDOWS)
@@ -137,27 +145,27 @@ STATICINLINE SystemPaths GetSystemPaths()
 
     paths.assetDir = MkUrl(_coffee_resource_prefix, RSCA::SystemFile);
 
-    CString temp_dir = Env::GetVar("TEMP");
-    paths.tempDir    = MkUrl(temp_dir.c_str(), RSCA::SystemFile) +
-                    Path{GetCurrentApp()->organization_name} +
-                    Path{GetCurrentApp()->application_name};
+    std::string temp_dir = Env::GetVar("TEMP");
+    paths.tempDir        = MkUrl(temp_dir.c_str(), RSCA::SystemFile)
+                    + Path{GetCurrentApp()->organization_name}
+                    + Path{GetCurrentApp()->application_name};
 
-    CString config_dir = Env::GetVar("APPDATA");
-    paths.configDir    = MkUrl(config_dir.c_str(), RSCA::SystemFile) +
-                      Path{GetCurrentApp()->organization_name} +
-                      Path{GetCurrentApp()->application_name};
+    std::string config_dir = Env::GetVar("APPDATA");
+    paths.configDir        = MkUrl(config_dir.c_str(), RSCA::SystemFile)
+                      + Path{GetCurrentApp()->organization_name}
+                      + Path{GetCurrentApp()->application_name};
 
-    CString cache_dir = Env::GetVar("LOCALAPPDATA");
-    paths.cacheDir    = MkUrl(cache_dir.c_str(), RSCA::SystemFile) +
-                     Path{GetCurrentApp()->organization_name} +
-                     Path{GetCurrentApp()->application_name};
+    std::string cache_dir = Env::GetVar("LOCALAPPDATA");
+    paths.cacheDir        = MkUrl(cache_dir.c_str(), RSCA::SystemFile)
+                     + Path{GetCurrentApp()->organization_name}
+                     + Path{GetCurrentApp()->application_name};
 
 #if defined(COFFEE_WINDOWS_UWP)
     auto pkg     = ::Windows::ApplicationModel::Package::Current();
     auto appdata = pkg.InstalledLocation().Path();
 
-    CString bs =
-        StrUtil::convertformat<char, wchar_t>(CWString(appdata.data()));
+    std::string bs
+        = StrUtil::convertformat<char, wchar_t>(CWString(appdata.data()));
 
     paths.assetDir = MkUrl(bs.c_str(), RSCA::SystemFile);
 #endif
@@ -186,13 +194,13 @@ STATICINLINE SystemPaths GetSystemPaths()
     paths.cacheDir  = base + Path{"Library"} + Path{"Caches"};
 
 #else
-    paths.tempDir =
-        MkUrl("/tmp", RSCA::SystemFile) + Path(appData.application_name);
+    paths.tempDir
+        = MkUrl("/tmp", RSCA::SystemFile) + Path(appData.application_name);
 
     auto library = MkUrl(home.c_str(), RSCA::SystemFile) + Path{"Library"};
 
-    auto app_path =
-        Path{appData.organization_name} + Path{appData.application_name};
+    auto app_path
+        = Path{appData.organization_name} + Path{appData.application_name};
 
     paths.configDir = library + Path{"Application Support"} + app_path;
 
@@ -234,7 +242,7 @@ STATICINLINE SystemPaths GetSystemPaths()
  * This is used on Android for creating temporary files.
  * \return
  */
-CString GetSystemDirectedPath(cstring suffix, RSCA storage)
+std::string GetSystemDirectedPath(std::string suffix, RSCA storage)
 {
     DProfContext _("JNI path resolution");
 
@@ -270,21 +278,18 @@ CString GetSystemDirectedPath(cstring suffix, RSCA storage)
 }
 #endif
 
-CString Url::operator*() const
+std::string Url::operator*() const
 {
     switch(category)
     {
     case Local: {
-        if(cachedUrl.size())
-            return cachedUrl;
-
         String derefPath = DereferenceLocalPath();
 #if defined(COFFEE_UNIXPLAT) && !defined(COFFEE_EMSCRIPTEN)
         derefPath = str::replace::str<char>(derefPath, "//", "/");
         if(feval(flags, RSCA::NoDereference))
             return derefPath;
-        if(auto path =
-               path::dereference(MkUrl(derefPath.c_str(), RSCA::SystemFile));
+        if(auto path
+           = path::dereference(MkUrl(derefPath.c_str(), RSCA::SystemFile));
            path.has_error())
             return derefPath;
         else
@@ -301,18 +306,6 @@ CString Url::operator*() const
     }
 }
 
-CString Url::operator*()
-{
-    if(!cachedUrl.size())
-    {
-        Url const& self  = *this;
-        auto       deref = *self;
-
-        cachedUrl = deref;
-    }
-    return cachedUrl;
-}
-
 Url Url::operator+(const Path& path) const
 {
     Url cpy = *this;
@@ -322,11 +315,10 @@ Url Url::operator+(const Path& path) const
     else
         cpy.internUrl = path.internUrl;
 
-    cpy.cachedUrl = {};
     return cpy;
 }
 
-STATICINLINE CString DereferencePath(cstring suffix, RSCA storageMask)
+STATICINLINE std::string DereferencePath(std::string suffix, RSCA storageMask)
 {
     if(feval(storageMask & RSCA::SystemFile))
         return suffix;
@@ -362,8 +354,8 @@ STATICINLINE CString DereferencePath(cstring suffix, RSCA storageMask)
     }
     case RSCA::TemporaryFile: {
 #if defined(COFFEE_DYNAMIC_TEMPFILES)
-        tempStore =
-            MkUrl(GetSystemDirectedPath(suffix, storageMask), RSCA::SystemFile);
+        tempStore = MkUrl(
+            GetSystemDirectedPath(suffix, storageMask), RSCA::SystemFile);
 #else
         file::create_directory(paths.tempDir, {.recursive = true});
         tempStore = paths.tempDir + urlPart;
@@ -372,8 +364,8 @@ STATICINLINE CString DereferencePath(cstring suffix, RSCA storageMask)
     }
     case RSCA::CachedFile: {
 #if defined(COFFEE_DYNAMIC_TEMPFILES)
-        tempStore =
-            MkUrl(GetSystemDirectedPath(suffix, storageMask), RSCA::SystemFile);
+        tempStore = MkUrl(
+            GetSystemDirectedPath(suffix, storageMask), RSCA::SystemFile);
 #else
         file::create_directory(paths.cacheDir, {.recursive = true});
         tempStore = paths.cacheDir + urlPart;
@@ -397,7 +389,7 @@ STATICINLINE CString DereferencePath(cstring suffix, RSCA storageMask)
 #endif
 }
 
-CString Url::DereferenceLocalPath() const
+std::string Url::DereferenceLocalPath() const
 {
     return DereferencePath(
         internUrl.c_str(), flags & (RSCA::StorageMask | RSCA::NoDereference));
@@ -406,14 +398,16 @@ CString Url::DereferenceLocalPath() const
 Path Path::removeExt() const
 {
     auto it = internUrl.rfind(".");
-    if(it == CString::npos)
-        return {};
+    if(it == std::string::npos)
+        return Path{};
     return Path{internUrl.substr(0, it)};
 }
 
-Path Path::addExtension(cstring ext) const
+Path Path::addExtension(std::string_view const& ext) const
 {
-    return Path{(internUrl + ".") + ext};
+    auto out = (internUrl + ".");
+    out.insert(out.end(), ext.begin(), ext.end());
+    return Path{out};
 }
 
 Path Path::fileBasename() const
@@ -422,12 +416,12 @@ Path Path::fileBasename() const
     return p;
 }
 
-CString Path::extension() const
+std::string Path::extension() const
 {
     auto it     = internUrl.rfind(".");
     auto sep_it = internUrl.rfind(path::path_separator);
 
-    if(it == CString::npos || (sep_it != CString::npos && sep_it > it))
+    if(it == std::string::npos || (sep_it != std::string::npos && sep_it > it))
         return {};
 
     return internUrl.substr(it + 1, internUrl.size() - it - 1);
@@ -435,7 +429,7 @@ CString Path::extension() const
 
 Path Path::dirname() const
 {
-    Path p(path::dir({internUrl}).value().internUrl);
+    Path p(path::dir(MkUrl(internUrl)).value().internUrl);
     return p;
 }
 
@@ -454,17 +448,18 @@ Vector<Path> Path::components() const
     return out;
 }
 
-Path Path::operator+(cstring component) const
+Path Path::operator/(std::string_view const& component) const
 {
-    Path cpy = *this;
-    if(cpy.internUrl.size())
-        cpy.internUrl = cpy.internUrl + path::path_separator + component;
-    else
-        cpy.internUrl = component;
-    return cpy;
+    if(!internUrl.empty())
+    {
+        auto out = internUrl + path::path_separator;
+        out.insert(out.end(), component.begin(), component.end());
+        return Path{out};
+    } else
+        return Path{component};
 }
 
-Path Path::operator+(const Path& path) const
+Path Path::operator/(Path const& path) const
 {
     if(internUrl.size())
         return Path{internUrl + path::path_separator + path.internUrl};
@@ -478,48 +473,49 @@ Path& Path::operator=(const Url& url)
     return *this;
 }
 
+Url Path::url(RSCA flags) const
+{
+    return {
+        .internUrl = internUrl,
+        .category  = Url::Local,
+        .flags     = flags,
+    };
+}
+
+Url Path::url(HTTPAccess flags) const
+{
+    return {
+        .internUrl = internUrl,
+        .category  = Url::Networked,
+        .netflags  = flags,
+    };
+}
+
 #define URLPARSE_TAG "UrlParse::From"
 #define URLPARSE_CHARS ""
 
-struct UrlParseCache : GlobalState
+regex::Pattern& GetCache()
 {
-    virtual ~UrlParseCache();
-    regex::Pattern pattern;
-};
+    static std::optional<regex::Pattern> pattern;
 
-UrlParseCache::~UrlParseCache()
-{
-}
+    if(pattern.has_value())
+        return *pattern;
 
-UrlParseCache& GetCache()
-{
-    constexpr cstring url_pattern =
-        "^"                                     /* from start */
-        "([A-Za-z0-9\\.]*[A-Za-z0-9])://"       /* protocol */
-        "([A-Za-z0-9-_$\\.\\,\\+!\\*'\\(\\)]+)" /* host */
-        "(:([0-9]+)/(.*)|:([0-9]+)|/(.+)|)"     /* port and resource */
-        "$"                                     /* to end */
+    const std::string url_pattern
+        = "^"                                     /* from start */
+          "([A-Za-z0-9\\.]*[A-Za-z0-9])://"       /* protocol */
+          "([A-Za-z0-9-_$\\.\\,\\+!\\*'\\(\\)]+)" /* host */
+          "(:([0-9]+)/(.*)|:([0-9]+)|/(.+)|)"     /* port and resource */
+          "$"                                     /* to end */
         ;
-
-    constexpr cstring pattern_key = "urlParsePattern";
-
-    auto ptr = state->PeekState(pattern_key);
-
-    if(ptr)
-        return *C_DCAST<UrlParseCache>(ptr.get());
-
-    auto patt = MkShared<UrlParseCache>();
-
     Profiler::DeepPushContext(URLPARSE_TAG "Regex compile");
-    patt->pattern = regex::compile_pattern(url_pattern);
+    pattern = regex::compile_pattern(url_pattern);
     Profiler::DeepPopContext();
 
-    state->SwapState(pattern_key, patt);
-
-    return *C_DCAST<UrlParseCache>(patt.get());
+    return *pattern;
 }
 
-UrlParse UrlParse::From(const Url& url)
+const UrlParse UrlParse::from(const Url& url)
 {
     enum RegexEnum
     {
@@ -537,55 +533,56 @@ UrlParse UrlParse::From(const Url& url)
 
 #if !defined(COFFEE_IOS)
 
-    Vector<CString> matches;
+    Vector<std::string> matches;
 
     {
         DProfContext _(URLPARSE_TAG "Regex");
-        if(!regex::match(GetCache().pattern, *url, matches))
+        if(!regex::match(GetCache(), *url, matches))
             return p;
     }
 
-    p.m_protocol = matches[1];
-    p.m_host     = matches[2];
+    p.protocol = matches[1];
+    p.host     = matches[2];
 
     if(matches[URL_Port].size())
     {
-        p.m_port     = cast_string<u32>(matches[URL_Port]);
-        p.m_resource = matches[URL_PortResource];
+        p.port     = cast_string<u32>(matches[URL_Port]);
+        p.resource = matches[URL_PortResource];
     } else if(matches[URL_PortOnly].size())
     {
-        p.m_port = cast_string<u32>(matches[URL_PortOnly]);
+        p.port = cast_string<u32>(matches[URL_PortOnly]);
     } else
     {
-        p.m_port     = 0;
-        p.m_resource = matches[URL_Resource];
+        p.port     = 0;
+        p.resource = matches[URL_Resource];
     }
 #else
-    p.m_protocol = "https";
-    p.m_port     = 0;
+    p.protocol = "https";
+    p.port     = 0;
 
     auto urlData     = *url;
     auto protocolEnd = urlData.find("://");
-    auto hasProtocol = protocolEnd != CString::npos;
+    auto hasProtocol = protocolEnd != std::string::npos;
 
     auto host        = urlData.substr(hasProtocol ? protocolEnd + 3 : 0);
     auto hostEnd     = host.find("/");
-    auto hasResource = hostEnd != CString::npos;
+    auto hasResource = hostEnd != std::string::npos;
     auto portStart   = host.find(":");
 
-    if(portStart != CString::npos)
+    if(portStart != std::string::npos)
     {
-        p.m_port = cast_string<u32>(host.substr(
-            portStart + 1, hasResource ? hostEnd - portStart : CString::npos));
+        p.port = cast_string<u32>(host.substr(
+            portStart + 1,
+            hasResource ? hostEnd - portStart : std::string::npos));
     }
 
-    if(hostEnd != CString::npos)
+    if(hostEnd != std::string::npos)
     {
-        p.m_resource = host.substr(hostEnd);
+        p.resource = host.substr(hostEnd);
     }
 
-    p.m_protocol = urlData.substr(0, protocolEnd);
-    p.m_host     = host.substr(0, hostEnd);
+    p.protocol = urlData.substr(0, protocolEnd);
+    p.host     = host.substr(0, hostEnd);
 
 #endif
     return p;
@@ -599,15 +596,15 @@ namespace Strings {
 using namespace ::stl_types;
 using namespace ::platform::url;
 
-CString to_string(const Path& path)
+std::string to_string(const Path& path)
 {
     return "path(" + path.internUrl + ")";
 }
 
-CString to_string(const Url& url)
+std::string to_string(const Url& url)
 {
-    return "url(" + url.internUrl + "," +
-           str::print::pointerify(C_CAST<u32>(url.flags)) + ")";
+    return "url(" + url.internUrl + ","
+           + str::print::pointerify(C_CAST<u32>(url.flags)) + ")";
 }
 } // namespace Strings
 } // namespace Coffee

@@ -37,7 +37,10 @@ STATICINLINE void framebuffer_texture_ext(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(FramebufferTextureEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glFramebufferTextureEXT(
         static_cast<GLenum>(target),
@@ -67,7 +70,10 @@ STATICINLINE void framebuffer_texture_face_ext(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(FramebufferTextureFaceEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glFramebufferTextureFaceEXT(
         static_cast<GLenum>(target),
@@ -98,7 +104,10 @@ STATICINLINE void framebuffer_texture_layer_ext(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(FramebufferTextureLayerEXT)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glFramebufferTextureLayerEXT(
         static_cast<GLenum>(target),

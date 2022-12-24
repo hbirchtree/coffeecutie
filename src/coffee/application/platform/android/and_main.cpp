@@ -1,4 +1,4 @@
-#include <coffee/android/android_main.h>
+﻿#include <coffee/android/android_main.h>
 
 #include <coffee/anative/anative_comp.h>
 #include <coffee/comp_app/bundle.h>
@@ -7,12 +7,13 @@
 #include <coffee/core/types/point.h>
 #include <coffee/core/types/size.h>
 #include <coffee/core/types/vector_types.h>
-#include <coffee/foreign/foreign.h>
+
 #include <peripherals/libc/signals.h>
+#include <peripherals/stl/any_of.h>
+#include <peripherals/stl/magic_enum.hpp>
 #include <peripherals/stl/string_casting.h>
 #include <peripherals/stl/types.h>
 #include <platforms/environment.h>
-#include <platforms/sensor.h>
 
 #include <coffee/strings/info.h>
 #include <coffee/strings/libc_types.h>
@@ -21,22 +22,23 @@
 #include <coffee/core/CDebug>
 #include <coffee/strings/format.h>
 
+#include <android_native_app_glue.h>
+#include <android/asset_manager.h>
 #include <android/looper.h>
 #include <android/native_activity.h>
 #include <android/window.h>
-#include <android_native_app_glue.h>
-#include <gestureDetector.h>
 #include <sys/sysinfo.h>
 
-namespace libc {
-namespace signal {
-
+namespace libc::signal {
 extern stl_types::Vector<exit_handler> global_exit_handlers;
-
 }
-} // namespace libc
 
 using namespace jnipp;
+
+namespace Coffee {
+struct android_app* coffee_app = nullptr;
+static JNIEnv*      coffee_jni_env;
+} // namespace Coffee
 
 namespace android {
 
@@ -45,38 +47,6 @@ namespace android {
  * Android structures
  *
  */
-
-enum AndroidAppState
-{
-    AndroidApp_Hidden      = 0x1,
-    AndroidApp_Visible     = 0x2,
-    AndroidApp_Initialized = 0x4,
-};
-
-C_FLAGS(AndroidAppState, libc_types::u32);
-
-struct AndroidSensorData
-{
-    ASensorManager*    manager;
-    const ASensor*     accelerometer;
-    const ASensor*     gyroscope;
-    ASensorEventQueue* eventQueue;
-};
-
-struct InputDetectors
-{
-    ndk_helper::TapDetector       tap;
-    ndk_helper::DoubletapDetector double_tap;
-    ndk_helper::PinchDetector     pinch;
-    ndk_helper::DragDetector      drag;
-};
-
-struct AndroidInternalState
-{
-    InputDetectors  input;
-    AndroidAppState currentState;
-    std::string     cachePath;
-};
 
 const char* jni_error_category::name() const noexcept
 {
@@ -100,491 +70,6 @@ std::string jni_error_category::message(int error_code) const
     throw implementation_error("error message not implemented");
 }
 
-} // namespace android
-
-extern void* coffee_event_handling_data;
-
-namespace Coffee {
-
-int MainSetup(::MainWithArgs mainfun, int argc, char** argv, u32 flags);
-int MainSetup(::MainNoArgs mainfun, int argc, char** argv, u32 flags);
-
-using namespace android;
-
-/*
- *
- * Android storage
- *
- */
-static const constexpr u8    INPUT_VERB         = 11;
-static AndroidInternalState* app_internal_state = nullptr;
-struct android_app*          coffee_app         = nullptr;
-static JNIEnv*               coffee_jni_env;
-
-void (*CoffeeEventHandle_Platform)(void*, int);
-void (*CoffeeEventHandleNA_Platform)(void*, int, void*, void*, void*);
-
-void (*CoffeeForeignSignalHandle_Platform)(int);
-void (*CoffeeForeignSignalHandleNA_Platform)(int, void*, void*, void*);
-
-/*
- *
- * Android event handling
- *
- */
-
-inline void AndroidForwardAppEvent(android_app* app, libc_types::i32 event)
-{
-    auto& entities    = comp_app::createContainer();
-    auto  android_bus = entities.service<anative::AndroidEventBus>();
-
-    if(!android_bus)
-        return;
-
-    android_bus->handleWindowEvent(app, event);
-}
-
-void AndroidHandleAppCmd(struct android_app* app, int32_t event)
-{
-    AndroidForwardAppEvent(app, event);
-
-    switch(event)
-    {
-    case APP_CMD_START: {
-        break;
-    }
-    case APP_CMD_RESUME:
-    case APP_CMD_PAUSE:
-        //    case APP_CMD_DESTROY:
-    case APP_CMD_STOP: {
-        cDebug("Lifecycle event triggered: {0}", event);
-        break;
-    }
-
-        /* Lifecycle events we care about */
-    case APP_CMD_INIT_WINDOW: {
-        if(!(app_internal_state->currentState & AndroidApp_Initialized))
-        {
-            auto& entrypoints = Coffee::main_functions;
-
-            if(entrypoints.is_no_args)
-                MainSetup(entrypoints.no_args, 0, nullptr);
-            else
-                MainSetup(entrypoints.with_args, 0, nullptr);
-
-            auto extras = android::intent().extras();
-            if(auto it = extras.find("COFFEE_VERBOSITY"); it != extras.end())
-                Coffee::SetPrintingVerbosity(cast_string<u8>(it->second));
-
-            app_internal_state->currentState |= AndroidApp_Initialized;
-        }
-
-        CoffeeEventHandleCall(CoffeeHandle_Setup);
-
-        ANativeActivity_setWindowFlags(
-            app->activity,
-            AWINDOW_FLAG_FULLSCREEN | AWINDOW_FLAG_KEEP_SCREEN_ON,
-            AWINDOW_FLAG_FULLSCREEN | AWINDOW_FLAG_KEEP_SCREEN_ON);
-
-        cDebug("Window: {0}", coffee_app->window);
-
-        /* Intentional fallthrough, we need to push a resize event */
-    }
-    case APP_CMD_WINDOW_RESIZED: {
-        struct CfGeneralEvent gev;
-        gev.type = CfResizeEvent;
-
-        struct CfResizeEventData rev;
-        rev.w = C_FCAST<u32>(ANativeWindow_getWidth(app->window));
-        rev.h = C_FCAST<u32>(ANativeWindow_getHeight(app->window));
-
-        CoffeeEventHandleNACall(CoffeeHandle_GeneralEvent, &gev, &rev, nullptr);
-
-        break;
-    }
-
-    case APP_CMD_GAINED_FOCUS: {
-        CoffeeEventHandleCall(CoffeeHandle_IsForeground);
-
-        app_internal_state->currentState =
-            AndroidApp_Visible | AndroidApp_Initialized;
-        break;
-    }
-    case APP_CMD_LOST_FOCUS: {
-        CoffeeEventHandleCall(CoffeeHandle_IsBackground);
-
-        app_internal_state->currentState =
-            AndroidApp_Hidden | AndroidApp_Initialized;
-        break;
-    }
-    case APP_CMD_TERM_WINDOW: {
-        CoffeeEventHandleCall(CoffeeHandle_Cleanup);
-
-        Profiling::ExitRoutine();
-
-        auto rev_handlers = libc::signal::global_exit_handlers;
-        std::reverse(rev_handlers.begin(), rev_handlers.end());
-
-        for(auto const& hnd : rev_handlers)
-            hnd();
-
-        libc::signal::exit(libc::signal::sig::abort);
-
-        break;
-    }
-
-        /* Special events */
-    case APP_CMD_LOW_MEMORY: {
-        CoffeeEventHandleCall(CoffeeHandle_LowMem);
-        break;
-    }
-
-    case APP_CMD_DESTROY: {
-        break;
-    }
-
-    default: {
-        cWarning("Unhandled native event: {0}", event);
-        break;
-    }
-    }
-}
-
-int32_t AndroidHandleInputCmd(
-    struct android_app* app, struct AInputEvent* event)
-{
-    pthread_mutex_lock(&app->mutex);
-
-    auto& entities    = comp_app::createContainer();
-    auto  android_bus = entities.service<anative::AndroidEventBus>();
-
-    if(!android_bus)
-    {
-        pthread_mutex_unlock(&app->mutex);
-        return 0;
-    }
-
-    android_bus->handleInputEvent(event);
-
-    pthread_mutex_unlock(&app->mutex);
-    return 1;
-}
-
-static void AndroidForeignSignalHandle(int evtype)
-{
-    switch(evtype)
-    {
-    case CoffeeForeign_ActivateMotion: {
-        /* TODO: Fix sensor code */
-        //        Sensor::Android::Android_InitSensors();
-        //        libc::signal::register_atexit(Sensor::Android::Android_DestroySensors);
-
-        break;
-    }
-
-    default:
-        break;
-    }
-}
-
-template<jnipp::return_type T>
-static std::string GetBuildField(wrapping::jfield<T>&& field)
-{
-    using namespace ::jnipp_operators;
-
-    java::object fieldValue =
-        *"android.os.Build"_jclass[field.as("java.lang.String")];
-
-    return java::type_unwrapper<std::string>(fieldValue);
-}
-
-template<jnipp::return_type T>
-static std::string GetBuildVersionField(wrapping::jfield<T>&& field)
-{
-    using namespace ::jnipp_operators;
-
-    java::object fieldValue =
-        *"android.os.Build$VERSION"_jclass[field.as("java.lang.String")];
-
-    return java::type_unwrapper<std::string>(fieldValue);
-}
-
-static void AndroidForeignSignalHandleNA(int evtype, void* p1, void*, void*)
-{
-    using namespace ::jnipp_operators;
-
-    /*
-    switch(evtype)
-    {
-    case CoffeeForeign_RequestPlatformData: {
-        auto out = C_FCAST<AndroidForeignCommand*>(p1);
-        switch(out->type)
-        {
-        case Android_QueryAPI:
-            out->data.scalarI64 = coffee_app->activity->sdkVersion;
-            break;
-
-        case Android_QueryDataPath:
-            out->store_string = coffee_app->activity->internalDataPath;
-            break;
-        case Android_QueryExternalDataPath:
-            out->store_string = coffee_app->activity->externalDataPath;
-            break;
-        case Android_QueryCachePath: {
-            auto Context     = "android.content.Context"_jclass;
-            auto File        = "java.io.File"_jclass;
-            auto getCacheDir = "getCacheDir"_jmethod.ret("java.io.File");
-            auto getAbsolutePath =
-                "getAbsolutePath"_jmethod.ret("java.lang.String");
-
-            auto context  = Context(coffee_app->activity->clazz);
-            auto cacheDir = File(context[getCacheDir]());
-
-            out->store_string =
-                java::type_unwrapper<std::string>(cacheDir[getAbsolutePath]());
-            break;
-        }
-#if ANDROID_API_LEVEL >= 13
-        case Android_QueryObbPath:
-            out->store_string = coffee_app->activity->obbPath;
-            break;
-#endif
-
-        case Android_QueryPlatformABIs:
-            out->store_string = {};
-
-            for(auto abi : android::cpu_abis())
-                out->store_string += abi + " ";
-
-            out->store_string = str::trim::both(out->store_string);
-
-            break;
-
-        case Android_QueryReleaseName:
-            out->store_string = Strings::fmt(
-                "{0} ({1})",
-                GetBuildVersionField("RELEASE"_jfield),
-                (coffee_app->activity->sdkVersion >= 23)
-                    ? GetBuildVersionField("SECURITY_PATCH"_jfield)
-                    : CString());
-            break;
-        case Android_QueryDeviceBoardName:
-            out->store_string = GetBuildField("BOARD"_jfield);
-            break;
-        case Android_QueryDeviceBrand:
-            out->store_string = GetBuildField("BRAND"_jfield);
-            break;
-        case Android_QueryDeviceName:
-            out->store_string = GetBuildField("MODEL"_jfield);
-            break;
-        case Android_QueryDeviceManufacturer:
-            out->store_string = GetBuildField("MANUFACTURER"_jfield);
-            break;
-        case Android_QueryDeviceProduct:
-            out->store_string = GetBuildField("PRODUCT"_jfield);
-            break;
-
-        case Android_QueryMaxMemory:
-            struct sysinfo inf;
-            sysinfo(&inf);
-            out->data.scalarI64 = C_FCAST<i64>(inf.totalram * inf.mem_unit);
-            break;
-
-        case Android_QueryDeviceDPI:
-            out->data.scalarI64 = android::app_dpi();
-            break;
-
-        case Android_QueryNativeWindow:
-            out->data.ptr = coffee_app->window;
-            cDebug("Window ptr: {0}", coffee_app->window);
-            break;
-        case Android_QueryActivity:
-            out->data.ptr = coffee_app->activity->clazz;
-            break;
-        case Android_QueryAssetManager:
-            out->data.ptr = coffee_app->activity->assetManager;
-            break;
-        case Android_QueryApp:
-            out->data.ptr = coffee_app;
-            break;
-
-        case Android_QueryStartActivity:
-            out->store_string = jnipp::java::objects::get_class(
-                {{}, coffee_app->activity->clazz});
-
-        default:
-            break;
-        }
-
-        break;
-    }
-    case CoffeeForeign_GetWinSize: {
-        int* winSize = C_FCAST<int*>(p1);
-
-        winSize[0] = ANativeWindow_getWidth(coffee_app->window);
-        winSize[1] = ANativeWindow_getHeight(coffee_app->window);
-
-        break;
-    }
-    }
-    */
-}
-
-STATICINLINE void GetExtras()
-{
-    using namespace jnipp_operators;
-
-    jobject native_app = coffee_app->activity->clazz;
-
-    /* CLasses */
-    auto NativeActivity = "android.app.NativeActivity"_jclass;
-
-    /* Methods */
-
-    auto activityObject = NativeActivity(native_app);
-
-    {
-        /* Get display DPI */
-
-        cDebug("Display DPI: {0}", android::app_dpi());
-    }
-
-    {
-        /* Get system ABIs */
-        for(auto const& abi : android::cpu_abis())
-            cDebug("{0}", abi);
-    }
-
-    {
-        /* Intent extras */
-
-        intent appIntent;
-
-        cDebug("Intent summary:");
-
-        cDebug("App URI: {0}", appIntent.data());
-
-        auto extras = appIntent.extras();
-
-        for(auto e : extras)
-        {
-            if(e.first.substr(0, 7) != "COFFEE_")
-                continue;
-
-            platform::env::set_var(e.first, e.second);
-            cDebug("{0} = {1}", e.first, e.second);
-        }
-
-        auto verbosity = extras.find("COFFEE_VERBOSITY");
-        if(verbosity != extras.end())
-            Coffee::SetPrintingVerbosity(
-                stl_types::cast_string<u8>(verbosity->second));
-
-        cDebug("App action: {0}", appIntent.action());
-
-        for(auto cat : appIntent.categories())
-            cDebug("{0}", cat);
-
-        cDebug("App flags: {0}", str::convert::hexify(appIntent.flags()));
-    }
-}
-
-STATICINLINE void InitializeState(struct android_app* state)
-{
-    using namespace jnipp_operators;
-
-    coffee_app = state;
-
-    ScopedJNI jni(coffee_app->activity->vm);
-    jnipp::SwapJNI(&jni);
-
-    app_internal_state = new AndroidInternalState;
-
-    app_internal_state->currentState = AndroidApp_Hidden;
-
-    CoffeeForeignSignalHandle   = AndroidForeignSignalHandle;
-    CoffeeForeignSignalHandleNA = AndroidForeignSignalHandleNA;
-
-    state->onAppCmd     = AndroidHandleAppCmd;
-    state->onInputEvent = AndroidHandleInputCmd;
-
-    Coffee::SetPrintingVerbosity(15);
-
-    auto activityName = jnipp::java::objects::get_class(
-        jnipp::java::object({}, state->activity->clazz));
-
-    cDebug("State:       {0}", str::print::pointerify(state));
-    cDebug("Activity:    {0}", activityName);
-    cDebug("Android API: {0}", state->activity->sdkVersion);
-
-    auto memory = *android::activity_manager().get_mem_info();
-    cDebug("System memory: {0}", memory.total);
-
-    auto stats = android::network_stats().query();
-
-    GetExtras();
-
-    jnipp::SwapJNI(nullptr);
-}
-
-STATICINLINE void HandleEvents()
-{
-    int ident;
-    int events;
-
-    struct android_poll_source* source;
-
-    while((ident = ALooper_pollAll(0, nullptr, &events, (void**)&source)) >= 0)
-    {
-        if(source != nullptr)
-            source->process(coffee_app, source);
-
-        if(ident == LOOPER_ID_USER)
-        {
-            cDebug("User event");
-        }
-
-        if(coffee_app->destroyRequested)
-        {
-            CoffeeEventHandleCall(CoffeeHandle_Cleanup);
-            return;
-        }
-    }
-}
-
-STATICINLINE void StartEventProcessing()
-{
-    ScopedJNI jni(coffee_app->activity->vm);
-    jnipp::SwapJNI(&jni);
-
-    while(1)
-    {
-        int timeout = -1;
-
-        if(app_internal_state->currentState == AndroidApp_Visible)
-            timeout = 0;
-
-        HandleEvents();
-
-        if(app_internal_state->currentState & AndroidApp_Visible)
-        {
-            CoffeeEventHandleCall(CoffeeHandle_Loop);
-        }
-    }
-
-    jnipp::SwapJNI(nullptr);
-}
-
-} // namespace Coffee
-
-/*
- *
- * JNI functions
- *
- */
-
-namespace android {
-
 using namespace Coffee;
 using namespace jnipp_operators;
 using namespace platform::url;
@@ -592,8 +77,8 @@ using re = jnipp::return_type;
 
 intent::intent() : m_intent({{}, {}})
 {
-    auto activity =
-        "android.app.NativeActivity"_jclass(coffee_app->activity->clazz);
+    auto activity
+        = "android.app.NativeActivity"_jclass(coffee_app->activity->clazz);
     auto Intent = "android.content.Intent"_jclass;
 
     auto getIntent = "getIntent"_jmethod.ret("android.content.Intent");
@@ -648,9 +133,9 @@ std::set<std::string> intent::categories()
     if(!categories)
         return {};
 
-    auto categorySet = Set(categories);
-    auto categoryArray =
-        jnipp::java::array_type_unwrapper<re::object_>(categorySet[toArray]());
+    auto categorySet   = Set(categories);
+    auto categoryArray = jnipp::java::array_type_unwrapper<re::object_>(
+        categorySet[toArray]());
 
     std::set<std::string> outCategories;
 
@@ -675,8 +160,8 @@ std::map<std::string, std::string> intent::extras()
     auto getStringExtra = "getStringExtra"_jmethod.ret("java.lang.String")
                               .arg<std::string>("java.lang.String");
     auto keySet = "keySet"_jmethod.ret("java.util.Set");
-    auto setArray =
-        "toArray"_jmethod.ret<re::object_array_>("java.lang.Object");
+    auto setArray
+        = "toArray"_jmethod.ret<re::object_array_>("java.lang.Object");
 
     auto extrasRef = m_intent[getExtras]();
 
@@ -700,8 +185,8 @@ std::map<std::string, std::string> intent::extras()
                 continue;
             }
 
-            std::string value =
-                jnipp::java::type_unwrapper<std::string>(extraVal);
+            std::string value
+                = jnipp::java::type_unwrapper<std::string>(extraVal);
             out[key_s] = value;
         }
     }
@@ -773,9 +258,31 @@ stl_types::Optional<::jnipp::java::object> app_info::get_service(
     return jnipp::java::object{Context.clazz, instance};
 }
 
-stl_types::Optional<network_stats::result_t> network_stats::query(
-    network_class net)
+ANativeActivity *app_info::activity() const
 {
+    return coffee_app->activity;
+}
+
+AConfiguration *app_info::configuration() const
+{
+    return coffee_app->config;
+}
+
+AInputQueue *app_info::input_queue() const
+{
+    return coffee_app->inputQueue;
+}
+
+ALooper *app_info::looper() const
+{
+    return coffee_app->looper;
+}
+
+std::optional<network_stats::result_t> network_stats::query(network_class net)
+{
+    if(coffee_app->activity->sdkVersion < 23)
+        return std::nullopt;
+
     auto System            = "java.lang.System"_jclass;
     auto currentTimeMillis = "currentTimeMillis"_jmethod.ret<re::long_>();
 
@@ -787,9 +294,9 @@ stl_types::Optional<network_stats::result_t> network_stats::query(
                             .ret("android.app.usage.NetworkStats");
 
     auto NetworkStats = "android.app.usage.NetworkStats"_jclass;
-    auto getNextBucket =
-        "getNextBucket"_jmethod.arg("android.app.usage.NetworkStats$Bucket")
-            .ret<re::bool_>();
+    auto getNextBucket
+        = "getNextBucket"_jmethod.arg("android.app.usage.NetworkStats$Bucket")
+              .ret<re::bool_>();
     auto hasNextBucket = "hasNextBucket"_jmethod.ret<re::bool_>();
 
     auto Bucket          = "android.app.usage.NetworkStats$Bucket"_jclass;
@@ -805,8 +312,7 @@ stl_types::Optional<network_stats::result_t> network_stats::query(
 
     auto now = System[currentTimeMillis]();
 
-    auto stats = NetworkStats(
-        net_stats[querySummary](net, *sub_id, 0, now));
+    auto stats = NetworkStats(net_stats[querySummary](net, *sub_id, 0, now));
 
     auto bucket = Bucket.construct(bucketConstruct);
 
@@ -851,7 +357,7 @@ stl_types::Optional<activity_manager::memory_info> activity_manager::
 
     return memory_info{
         .available = C_FCAST<libc_types::u64>(*mem_info[avail]),
-        .total = C_FCAST<libc_types::u64>(*mem_info[total]),
+        .total     = C_FCAST<libc_types::u64>(*mem_info[total]),
     };
 }
 
@@ -861,8 +367,8 @@ stl_types::Optional<activity_manager::config_info> activity_manager::
     auto Activity   = "android.app.ActivityManager"_jclass;
     auto ConfigInfo = "android.app.ActivityManager$ConfigurationInfo"_jclass;
 
-    auto getDeviceConfigurationInfo =
-        "getDeviceConfigurationInfo"_jmethod.arg(ConfigInfo);
+    auto getDeviceConfigurationInfo
+        = "getDeviceConfigurationInfo"_jmethod.arg(ConfigInfo);
 
     return {};
 }
@@ -870,8 +376,8 @@ stl_types::Optional<activity_manager::config_info> activity_manager::
 stl_types::Optional<activity_manager::window_info> activity_manager::window()
 {
     return window_info{
-        .activity = Coffee::coffee_app->activity,
-        .window = Coffee::coffee_app->window,
+        .activity        = Coffee::coffee_app->activity,
+        .window          = Coffee::coffee_app->window,
         .activity_object = Coffee::coffee_app->activity->clazz,
     };
 }
@@ -912,16 +418,16 @@ std::vector<std::string> cpu_abis()
 
 int app_dpi()
 {
-    auto activityObject =
-        "android.app.NativeActivity"_jclass(coffee_app->activity->clazz);
+    auto activityObject
+        = "android.app.NativeActivity"_jclass(coffee_app->activity->clazz);
 
     auto Resources      = "android.content.res.Resources"_jclass;
     auto DisplayMetrics = "android.util.DisplayMetrics"_jclass;
 
-    auto getResources =
-        "getResources"_jmethod.ret("android.content.res.Resources");
-    auto getDisplayMetrics =
-        "getDisplayMetrics"_jmethod.ret("android.util.DisplayMetrics");
+    auto getResources
+        = "getResources"_jmethod.ret("android.content.res.Resources");
+    auto getDisplayMetrics
+        = "getDisplayMetrics"_jmethod.ret("android.util.DisplayMetrics");
 
     auto resourceObject = Resources(activityObject[getResources]());
     auto displayMetrics = DisplayMetrics(resourceObject[getDisplayMetrics]());
@@ -933,9 +439,263 @@ int app_dpi()
 
 } // namespace android
 
+namespace Coffee {
+
+int MainSetup(::MainWithArgs mainfun, int argc, char** argv, u32 flags);
+int MainSetup(::MainNoArgs mainfun, int argc, char** argv, u32 flags);
+
+using namespace android;
+
+/*
+ *
+ * Android storage
+ *
+ */
+static const constexpr u8 INPUT_VERB = 11;
+
+/*
+ *
+ * Android event handling
+ *
+ */
+
+STATICINLINE void GetExtras()
+{
+    using namespace jnipp_operators;
+
+    jobject native_app = coffee_app->activity->clazz;
+
+    /* CLasses */
+    auto NativeActivity = "android.app.NativeActivity"_jclass;
+
+    /* Methods */
+
+    auto activityObject = NativeActivity(native_app);
+
+    {
+        /* Get display DPI */
+
+        cDebug("Display DPI: {0}", android::app_dpi());
+    }
+
+    {
+        /* Get system ABIs */
+        for(auto const& abi : android::cpu_abis())
+            cDebug("{0}", abi);
+    }
+
+    {
+        /* Intent extras */
+
+        intent appIntent;
+
+        cDebug("Intent summary:");
+
+        cDebug("App URI: {0}", appIntent.data());
+
+        auto extras = appIntent.extras();
+
+        for(auto e : extras)
+        {
+            if(e.first.substr(0, 7) != "COFFEE_")
+                continue;
+
+            platform::env::set_var(e.first, e.second);
+            cDebug("{0} = {1}", e.first, e.second);
+        }
+
+        auto verbosity = extras.find("COFFEE_VERBOSITY");
+        if(verbosity != extras.end())
+            Coffee::SetPrintingVerbosity(
+                stl_types::cast_string<u8>(verbosity->second));
+
+        cDebug("App action: {0}", appIntent.action());
+
+        for(auto cat : appIntent.categories())
+            cDebug("{0}", cat);
+
+        cDebug("App flags: {0}", str::convert::hexify(appIntent.flags()));
+    }
+}
+
+static bool                                  window_initialized  = false;
+static bool                                  first_loop_complete = false;
+static std::chrono::steady_clock::time_point launch_time;
+
+STATICINLINE void InitializeState(struct android_app* state)
+{
+    using namespace jnipp_operators;
+
+    coffee_app = state;
+
+    ScopedJNI jni(coffee_app->activity->vm);
+    jnipp::SwapJNI(&jni);
+
+    state->onAppCmd = [](struct android_app* app, int32_t event) {
+        static anative::AndroidEventBus* android_bus;
+
+        cDebug(
+            "Incoming event: {0}",
+            magic_enum::enum_name(static_cast<app_cmd_t>(event)));
+
+        if(event == APP_CMD_INIT_WINDOW)
+        {
+            auto& entrypoints = Coffee::main_functions;
+            if(entrypoints.is_no_args)
+                MainSetup(entrypoints.no_args, 0, nullptr);
+            else
+                MainSetup(entrypoints.with_args, 0, nullptr);
+
+            auto extras = android::intent().extras();
+            if(auto it = extras.find("COFFEE_VERBOSITY"); it != extras.end())
+                Coffee::SetPrintingVerbosity(cast_string<u8>(it->second));
+            else
+                Coffee::SetPrintingVerbosity(compile_info::debug_mode ? 15 : 1);
+
+            window_initialized = true;
+            auto delta_launch  = std::chrono::steady_clock::now() - launch_time;
+            cDebug(
+                "Took {0} ms to create window",
+                std::chrono::duration_cast<std::chrono::milliseconds>(
+                    delta_launch)
+                    .count());
+        }
+
+        if(!android_bus)
+        {
+            auto& entities = comp_app::createContainer();
+            android_bus    = entities.service<anative::AndroidEventBus>();
+        }
+
+        if(!android_bus)
+            return;
+
+        android_bus->handleWindowEvent(app, event);
+
+        if(event == APP_CMD_TERM_WINDOW)
+        {
+            Profiling::ExitRoutine();
+
+            auto rev_handlers = libc::signal::global_exit_handlers;
+            std::reverse(rev_handlers.begin(), rev_handlers.end());
+
+            for(auto const& hnd : rev_handlers)
+                hnd();
+
+            libc::signal::exit(libc::signal::sig::abort);
+            window_initialized = false;
+        }
+    };
+    state->onInputEvent
+        = [](struct android_app* app, struct AInputEvent* event) {
+              static anative::AndroidEventBus* android_bus;
+
+              if(!window_initialized)
+                  return 0;
+
+              if(!android_bus)
+              {
+                  auto& entities = comp_app::createContainer();
+                  android_bus    = entities.service<anative::AndroidEventBus>();
+              }
+
+              if(!android_bus)
+                  return 0;
+
+              android_bus->handleInputEvent(event);
+
+              return 1;
+          };
+
+    auto activityName = jnipp::java::objects::get_class(
+        jnipp::java::object({}, state->activity->clazz));
+
+    cDebug("State:       {0}", str::print::pointerify(state));
+    cDebug("Activity:    {0}", activityName);
+    cDebug("Android API: {0}", state->activity->sdkVersion);
+
+    auto memory = *android::activity_manager().get_mem_info();
+    cDebug("System memory: {0}", memory.total);
+
+    auto stats = android::network_stats().query();
+
+    GetExtras();
+    auto extras = android::intent().extras();
+    if(auto it = extras.find("COFFEE_VERBOSITY"); it != extras.end())
+        SetPrintingVerbosity(cast_string<u8>(it->second));
+
+    jnipp::SwapJNI(nullptr);
+}
+
+STATICINLINE void StartEventProcessing(android_app* state)
+{
+    ScopedJNI jni(state->activity->vm);
+    jnipp::SwapJNI(&jni);
+
+    cDebug(
+        "Starting in state: activity_state={0}, running={1}",
+        magic_enum::enum_name(static_cast<app_cmd_t>(state->activityState)),
+        static_cast<bool>(state->running));
+
+    cDebug(
+        "Took {0} ms to start event loop",
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::steady_clock::now() - launch_time))
+            .count());
+
+    while(1)
+    {
+        int timeout = -1;
+
+        if(state->activityState == APP_CMD_START
+           || state->activityState == APP_CMD_RESUME)
+            timeout = 0;
+
+        int ident;
+        int events;
+
+        struct android_poll_source* source = nullptr;
+
+        while((ident = ALooper_pollAll(0, nullptr, &events, (void**)&source))
+              >= 0)
+        {
+            if(source != nullptr)
+                source->process(state, source);
+
+            if(state->destroyRequested)
+                break;
+        }
+
+        bool active = state->activityState == APP_CMD_START
+                      || state->activityState == APP_CMD_RESUME;
+
+        if(window_initialized && active)
+        {
+            if(!first_loop_complete)
+            {
+                cDebug(
+                    "Took {0} ms till first draw",
+                    std::chrono::duration_cast<std::chrono::milliseconds>(
+                        std::chrono::duration_cast<std::chrono::milliseconds>(
+                            std::chrono::steady_clock::now() - launch_time))
+                        .count());
+                first_loop_complete = true;
+            }
+            comp_app::setup_and_loop_container(comp_app::createContainer());
+        }
+    }
+
+    comp_app::cleanup_container(comp_app::createContainer());
+    jnipp::SwapJNI(nullptr);
+}
+
+} // namespace Coffee
+
 void android_main(struct android_app* state)
 {
+    Coffee::launch_time = std::chrono::steady_clock::now();
     Coffee::InitializeState(state);
     Coffee::SetPrintingVerbosity(15);
-    Coffee::StartEventProcessing();
+    Coffee::StartEventProcessing(state);
 }

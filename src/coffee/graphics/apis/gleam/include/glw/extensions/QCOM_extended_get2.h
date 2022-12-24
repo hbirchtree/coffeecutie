@@ -29,7 +29,10 @@ requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ExtGetProgramBinarySourceQCOM)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glExtGetProgramBinarySourceQCOM(
         program,
@@ -102,7 +105,10 @@ STATICINLINE GLboolean ext_is_program_binary(u32 program)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ExtIsProgramBinaryQCOM)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     auto out = glExtIsProgramBinaryQCOM(program);
     detail::error_check("ExtIsProgramBinaryQCOM"sv);

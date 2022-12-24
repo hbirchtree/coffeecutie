@@ -15,7 +15,10 @@ STATICINLINE void invalidate_buffer_data(u32 buffer)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(InvalidateBufferData)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glInvalidateBufferData(buffer);
     detail::error_check("InvalidateBufferData"sv);
@@ -35,7 +38,10 @@ STATICINLINE void invalidate_buffer_sub_data(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(InvalidateBufferSubData)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glInvalidateBufferSubData(buffer, offset, length);
     detail::error_check("InvalidateBufferSubData"sv);
@@ -130,7 +136,10 @@ STATICINLINE void invalidate_tex_image(u32 texture, i32 level)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(InvalidateTexImage)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glInvalidateTexImage(texture, level);
     detail::error_check("InvalidateTexImage"sv);
@@ -161,7 +170,10 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(InvalidateTexSubImage)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glInvalidateTexSubImage(
         texture,

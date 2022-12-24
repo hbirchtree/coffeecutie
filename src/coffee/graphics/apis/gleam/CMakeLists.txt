@@ -1,12 +1,22 @@
+option ( BUILD_DESKTOP_GL "Override for building Desktop GL on f.ex. Android" OFF )
+
+option ( BUILD_GLES_20 "Build against OpenGL ES 2.0 (mutually exclusive)" OFF )
 option ( BUILD_GLES "Build library targeting OpenGL ES 3.0+" OFF )
-option ( BUILD_GLES_20 "Build library targeting OpenGL ES 2.0" OFF )
+option ( BUILD_GLES_31 "Build with support for OpenGL ES 3.1 (Only activates when BUILD_GLES is on)" ON )
+option ( BUILD_GLES_32 "Build with support for OpenGL ES 3.2 (Only activates when BUILD_GLES is on)" ON )
 
 if(WIN32 AND WIN_UWP)
-    option ( BUILD_ANGLE "Build with OpenGL ES 2.0 backed by ANGLE" ON )
+    option ( BUILD_ANGLE "Build on ANGLE as backend for OpenGL ES" ON )
 endif()
 
-if (NOT IOS AND NOT ANDROID AND NOT EMSCRIPTEN)
-    add_library ( GLVersion_Dynamic   INTERFACE )
+if (
+    (NOT IOS AND
+     NOT ANDROID AND
+     NOT EMSCRIPTEN AND
+     NOT (WIN32 AND WIN_UWP)) OR
+     BUILD_DESKTOP_GL
+    )
+    add_library ( GLVersion_Dynamic INTERFACE )
     if (NOT APPLE)
         target_compile_definitions ( GLVersion_Dynamic INTERFACE
             -DGLEAM_USE_CORE
@@ -22,7 +32,8 @@ if (NOT IOS AND NOT ANDROID AND NOT EMSCRIPTEN)
     endif()
     target_link_libraries ( GLVersion_Dynamic INTERFACE GLAD_Core )
     add_export ( GLVersion_Dynamic "" )
-else()
+endif()
+if(IOS OR ANDROID OR EMSCRIPTEN OR BUILD_GLES)
     add_library ( GLVersion_ES INTERFACE )
     if(EMSCRIPTEN OR IOS)
         target_compile_definitions ( GLVersion_ES INTERFACE
@@ -32,11 +43,18 @@ else()
             -DGLEAM_MAX_VERSION_ES=0x300
             )
     else()
+        set ( MAX_VERSION 0x300 )
+        if(BUILD_GLES_31)
+            set ( MAX_VERSION 0x310 )
+        endif()
+        if(BUILD_GLES_32)
+            set ( MAX_VERSION 0x320 )
+        endif()
         target_compile_definitions ( GLVersion_ES INTERFACE
             -DGLEAM_USE_ES
             -DGLEAM_USE_LINKED
             -DGLEAM_MAX_VERSION=0
-            -DGLEAM_MAX_VERSION_ES=0x320
+            -DGLEAM_MAX_VERSION_ES=${MAX_VERSION}
             )
     endif()
     add_export ( GLVersion_ES "" )
@@ -100,28 +118,9 @@ function ( GEN_GLEAM_TARGET GLVERSION SUFFIX )
 
             private/rhi/rhi.cpp
 
-    #        private/rhi/gleam_api_query.cpp
-#            private/rhi/gleam_api_rhi.cpp
-    #        private/rhi/gleam_api_draw.cpp
-
-    #        private/rhi/gleam_buffer_rhi.cpp
-
-    #        private/rhi/gleam_framebuffer_rhi.cpp
-
-    #        private/rhi/gleam_profiler_rhi.cpp
-    #        private/rhi/gleam_query_rhi.cpp
-    #        private/rhi/gleam_quad_draw.cpp
-
-    #        private/rhi/gleam_shader_rhi.cpp
-    #        private/rhi/gleam_shader_uniforms.cpp
-
-    #        private/rhi/gleam_sampler_rhi.cpp
-    #        private/rhi/gleam_surface_rhi.cpp
-
-    #        private/rhi/gleam_vertex_rhi.cpp
-
             LIBRARIES
             GLeamCommon_${SUFFIX}
+            ComponentApp
 
             HEADER_DIRS
             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -162,7 +161,8 @@ function ( GEN_GLEAM_TARGET GLVERSION SUFFIX )
                 )
         elseif(EMSCRIPTEN)
             target_link_options ( GLeamCommon_${SUFFIX} PUBLIC
-                "-s    " MAX_WEBGL_VERSION=2
+                -sMAX_WEBGL_VERSION=2
+                -sFULL_ES3
                 )
         else()
             find_library ( GLESV2_LIB GLESv2 )
@@ -170,66 +170,6 @@ function ( GEN_GLEAM_TARGET GLVERSION SUFFIX )
             # Elsewhere, just use GLESv2
             target_link_libraries ( GLeamCommon_${SUFFIX} PUBLIC
                 ${GLESV2_LIB}
-                )
-        endif()
-
-        if(MAEMO)
-            target_link_libraries ( GLeamCommon_${SUFFIX} PUBLIC
-                IMGegl
-                )
-        endif()
-        if(BEAGLE AND FALSE)
-            set ( BEAGLE_SUFFIXES
-                lib
-                lib/${CMAKE_LIBRARY_ARCHITECTURE}
-                )
-
-            find_library ( IMGEGL_LIB IMGegl
-                PATH_SUFFIXES ${BEAGLE_SUFFIXES}
-                PATHS
-                ${DEB_SYSROOT}/usr
-                )
-            find_library ( SRVUM_LIB srv_um
-                PATH_SUFFIXES ${BEAGLE_SUFFIXES}
-                PATHS
-                ${DEB_SYSROOT}/usr
-                )
-            find_library ( DRMOMAP_LIB
-                NAMES drm_omap libdrm_omap.so.1
-                PATH_SUFFIXES ${BEAGLE_SUFFIXES}
-                PATHS
-                ${DEB_SYSROOT}/usr
-                )
-            find_library ( DRM_LIB
-                NAMES drm libdrm.so.2
-                PATH_SUFFIXES ${BEAGLE_SUFFIXES}
-                PATHS
-                ${DEB_SYSROOT}/usr
-                )
-            find_library ( WLSERVER_LIB
-                NAMES wayland-server  libwayland-server.so.0
-                PATH_SUFFIXES ${BEAGLE_SUFFIXES}
-                PATHS
-                ${DEB_SYSROOT}/usr
-                )
-            find_library ( WLCLIENT_LIB
-                NAMES wayland-client libwayland-client.so.0
-                PATH_SUFFIXES ${BEAGLE_SUFFIXES}
-                PATHS
-                ${DEB_SYSROOT}/usr
-                )
-            find_library ( FFI_LIB
-                NAMES ffi libffi.so.6
-                PATH_SUFFIXES ${BEAGLE_SUFFIXES}
-                PATHS
-                ${DEB_SYSROOT}/usr
-                )
-
-            target_link_libraries ( GLeamCommon_${SUFFIX} PUBLIC
-                ${IMGEGL_LIB} ${SRVUM_LIB}
-                ${DRMOMAP_LIB} ${WLSERVER_LIB} ${WLCLIENT_LIB}
-
-                ${DRM_LIB} ${FFI_LIB}
                 )
         endif()
     endif()

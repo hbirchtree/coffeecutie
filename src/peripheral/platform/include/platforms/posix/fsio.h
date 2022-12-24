@@ -17,10 +17,21 @@ FORCEDINLINE result<file_info_t, posix_error> file_info(posix_fd_t const& file)
     {
         return detail::posix_failure();
     }
-
+    using namespace permission_t;
     return success(file_info_t{
         .size = C_CAST<szptr>(file_.st_size),
         .mode = detail::mode_from_native(file_.st_mode),
+        .perms = {
+            .owner = (file_.st_mode & S_IRUSR ? read : none) |
+                     (file_.st_mode & S_IWUSR ? write : none) |
+                     (file_.st_mode & S_IXUSR ? execute : none),
+            .group = (file_.st_mode & S_IRGRP ? read : none) |
+                     (file_.st_mode & S_IWGRP ? write : none) |
+                     (file_.st_mode & S_IXGRP ? execute : none),
+            .other = (file_.st_mode & S_IROTH ? read : none) |
+                     (file_.st_mode & S_IWOTH ? write : none) |
+                     (file_.st_mode & S_IXOTH ? execute : none),
+        },
     });
 }
 
@@ -37,7 +48,9 @@ FORCEDINLINE result<file_info_t, posix_error> file_info(Url const& file)
 }
 
 template<typename T>
-FORCEDINLINE result<mode_t, posix_error> exists(T const& file)
+requires(std::is_same_v<T, Url> || std::is_same_v<T, posix_fd_t>)
+    //
+    FORCEDINLINE result<mode_t, posix_error> exists(T const& file)
 {
     if(auto info = file_info(file); info.has_error())
         return failure(info.error());
@@ -46,7 +59,9 @@ FORCEDINLINE result<mode_t, posix_error> exists(T const& file)
 }
 
 template<typename T>
-FORCEDINLINE result<szptr, posix_error> size(T const& file)
+requires(std::is_same_v<T, Url> || std::is_same_v<T, posix_fd_t>)
+    //
+    FORCEDINLINE result<szptr, posix_error> size(T const& file)
 {
     if(auto info = file_info(file); info.has_error())
         return failure(info.error());
@@ -103,8 +118,8 @@ FORCEDINLINE Optional<posix_error> create_directory(
         auto it = resolved.begin();
         while(it != resolved.end())
         {
-            auto current_path =
-                resolved.substr(0, C_FCAST<szptr>(it - resolved.begin()));
+            auto current_path
+                = resolved.substr(0, C_FCAST<szptr>(it - resolved.begin()));
             if(current_path == resolved || current_path.empty())
                 break;
             if(auto status = mkdir(current_path.c_str(), perm); status != 0)
@@ -212,31 +227,29 @@ FORCEDINLINE result<Url, posix_error> base(Url const& path)
 }
 FORCEDINLINE result<Url, posix_error> dereference(Url const& path)
 {
-    auto unresolved = path.internUrl.c_str();
-    char probe_storage;
-    if(auto size = readlink(unresolved, &probe_storage, 1); size < 0)
+    auto        unresolved = path.internUrl.c_str();
+    struct stat link_info  = {};
+    if(auto status = lstat(unresolved, &link_info))
+        return detail::posix_failure();
+    stl_types::String output(link_info.st_size, 0);
+    if(auto size = readlink(unresolved, output.data(), output.size()); size < 0)
         return detail::posix_failure();
     else
-    {
-        stl_types::String output;
-        output.resize(C_FCAST<unsigned>(size + 1), '\0');
-        if(auto sz = readlink(unresolved, &output[0], C_FCAST<unsigned>(size));
-           sz < 0)
-            return detail::posix_failure();
         return success(url::constructors::MkUrl(output));
-    }
 }
 
 FORCEDINLINE result<Url, posix_error> executable()
 {
     using namespace url::constructors;
-#if defined(COFFEE_LINUX) || defined(COFFEE_ANDROID)
+#if defined(COFFEE_LINUX)
     return path::canon(MkSysUrl("/proc/self/exe"));
+#elif defined(COFFEE_ANDROID)
+//    return path::canon()
 #elif defined(COFFEE_IOS)
     return path::canon(MkUrl("App"));
 #elif defined(COFFEE_MACOS)
     std::string path(PATH_MAX, '\0');
-    auto res = proc_pidpath(getpid(), path.data(), path.size());
+    auto        res = proc_pidpath(getpid(), path.data(), path.size());
     return MkSysUrl("");
 #elif defined(COFFEE_EMSCRIPTEN)
     return MkSysUrl("/app");

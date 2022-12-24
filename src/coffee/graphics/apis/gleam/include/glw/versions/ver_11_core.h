@@ -13,7 +13,10 @@ requires(MinimumVersion<Current, Version<1, 1>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindTexture)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glBindTexture(static_cast<GLenum>(target), texture);
     detail::error_check("BindTexture"sv);
@@ -280,7 +283,10 @@ requires(MinimumVersion<Current, Version<1, 1>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(IsTexture)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     auto out = glIsTexture(texture);
     detail::error_check("IsTexture"sv);

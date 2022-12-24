@@ -11,7 +11,7 @@ coffee_library (
 find_package ( FFMPEG REQUIRED )
 
 target_link_libraries ( MediaFfmpeg PUBLIC
-    ${FFMPEG_LIBRARIES} vdpau va
+    ${FFMPEG_LIBRARIES} #vdpau va
     )
 target_include_directories ( MediaFfmpeg PUBLIC
     $<BUILD_INTERFACE:${FFMPEG_INCLUDE_DIRS}>

@@ -74,8 +74,9 @@ struct StaticWindowing : Windowing
     virtual void show() final
     {
     }
-    virtual void close() final
+    virtual void close()
     {
+        m_notifiedClose = true;
     }
     virtual void resize(size_2d_t const&) final
     {
@@ -87,6 +88,13 @@ struct StaticWindowing : Windowing
     virtual void move(position_t const&) final
     {
     }
+    virtual bool notifiedClose() const
+    {
+        return m_notifiedClose;
+    }
+
+  private:
+    bool m_notifiedClose{false};
 };
 
 struct Dialogs
@@ -99,8 +107,9 @@ struct Dialogs
     virtual void error(text_type title, text_type message) = 0;
 
     virtual void confirm(
-        text_type title, text_type message, confirm_callback&& callback) = 0;
-    virtual void prompt(text_type title, prompt_callback&& callback)     = 0;
+        text_type title, text_type message, confirm_callback&& callback)
+        = 0;
+    virtual void prompt(text_type title, prompt_callback&& callback) = 0;
 };
 
 struct DisplayInfo
@@ -303,6 +312,15 @@ struct TouchInput
 
 struct GestureInput
 {
+    enum class gesture_type_t
+    {
+        double_tap,
+        long_press,
+        pan,
+        pinch,
+        swipe,
+        tap,
+    };
 };
 
 struct GraphicsBinding
@@ -458,8 +476,8 @@ struct BatteryProvider
 
 struct ScreenshotProvider
 {
-    virtual size_2d_t                                  size() const   = 0;
-    virtual semantic::mem_chunk<typing::pixels::rgb_t> pixels() const = 0;
+    virtual size_2d_t                                   size() const   = 0;
+    virtual semantic::mem_chunk<typing::pixels::rgba_t> pixels() const = 0;
 };
 
 } // namespace interfaces
@@ -497,9 +515,9 @@ struct WindowConfig : Config<WindowConfig>
     text_type_t         title;
     size_2d_t           size;
     position_t          position;
-    detail::WindowState flags = detail::WindowState::Resizable |
-                                detail::WindowState::Windowed |
-                                detail::WindowState::Visible;
+    detail::WindowState flags = detail::WindowState::Resizable
+                                | detail::WindowState::Windowed
+                                | detail::WindowState::Visible;
 };
 
 struct ControllerConfig : Config<ControllerConfig>
@@ -559,8 +577,8 @@ struct AppService : detail::SubsystemBase
     {
         using tag_type = AppServiceTraits<ExposedType>;
 
-        auto& subsys =
-            container.register_subsystem_inplace<ExposedType, InternalType>(
+        auto& subsys
+            = container.register_subsystem_inplace<ExposedType, InternalType>(
                 std::forward<Args>(args)...);
 
         container.register_subsystem_services<ExposedType>(&subsys);
@@ -573,8 +591,34 @@ struct AppService : detail::SubsystemBase
 
 struct AppLoadableService
 {
+    enum State
+    {
+        Uninitialized,
+        Initialized,
+        Error,
+    };
+
     using entity_container = detail::EntityContainer;
 
+    bool do_load(entity_container& e, app_error& ec)
+    {
+        load(e, ec);
+        m_state = ec ? Error : Initialized;
+        return static_cast<bool>(ec);
+    }
+    bool do_unload(entity_container& e, app_error& ec)
+    {
+        load(e, ec);
+        m_state = ec ? Error : Uninitialized;
+        return static_cast<bool>(ec);
+    }
+
+    bool is_loaded() const
+    {
+        return m_state == Initialized;
+    }
+
+protected:
     virtual void load(entity_container& e, app_error& ec)
     {
         (void)e, (void)ec;
@@ -583,6 +627,9 @@ struct AppLoadableService
     {
         (void)e, (void)ec;
     }
+
+private:
+    State m_state;
 };
 
 using AppInfo             = detail::tag_t<interfaces::AppInfo>;
@@ -608,15 +655,20 @@ using WindowInfo          = detail::tag_t<interfaces::WindowInfo>;
 using Windowing           = detail::tag_t<interfaces::Windowing>;
 
 template<typename EType>
-struct EventBus : interfaces::EventBus<EType>,
-                  AppService<interfaces::EventBus<EType>>
+struct EventBus : interfaces::EventBus<EType>, AppService<EventBus<EType>>
 {
 };
 
 template<typename EType>
-struct BasicEventBus : interfaces::BasicEventBus<EType>,
-                       AppService<BasicEventBus<EType>, EventBus<EType>>
+struct BasicEventBus
+    : interfaces::BasicEventBus<EType>,
+      AppService<BasicEventBus<EType>>
 {
+//    using services = detail::subsystem_list<
+//        BasicEventBus<EType>,
+//        interfaces::EventBus<EType>,
+//        interfaces::BasicEventBus<EType>>;
+
     using readable_services = type_safety::empty_list_t;
     using proxy_type        = detail::restricted::proxy_t<BasicEventBus<EType>>;
 

@@ -1,15 +1,13 @@
 #pragma once
 
-#include "cgraphics_api.h"
-
-#define STATICVAR static const constexpr
+//#include "cgraphics_api.h"
 
 /*!
  * Extensions for fixed-function pipeline APIs
  * This is intended for compatibility with OpenGL 1.x-like APIs,
  *  and should not be used if you are aiming for low overhead.
  */
-namespace Coffee{
+namespace Coffee {
 
 struct Graphics_Extensions : RHI::GraphicsAPI
 {
@@ -36,6 +34,3 @@ STATICINLINE Pipeline& DefaultPipeline();
 };
 
 }
-
-#undef STATICVAR
-

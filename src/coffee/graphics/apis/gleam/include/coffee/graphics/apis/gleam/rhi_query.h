@@ -132,8 +132,7 @@ struct timestamp_query
         {
             gl::ext::disjoint_timer_query::query_counter(
                 m_handle,
-                static_cast<group::query_counter_target>(
-                    gl::ext::disjoint_timer_query::values::timestamp));
+                group::query_counter_target::timestamp_ext);
         }
 #elif GLEAM_MAX_VERSION >= 0x300
         {

@@ -39,6 +39,9 @@ struct Resource;
  */
 namespace VirtFS {
 
+template<typename T>
+using Span = semantic::Span<T>;
+
 struct VirtualFile;
 struct VirtualFS;
 struct VirtualIndex;
@@ -201,8 +204,8 @@ struct directory_data_t
 
     struct node_t
     {
-        static const constexpr index_type sentinel_value =
-            std::numeric_limits<index_type>::max();
+        static const constexpr index_type sentinel_value
+            = std::numeric_limits<index_type>::max();
 
         char                prefix[MaxPrefixLength];
         child_t<index_type> left;
@@ -291,8 +294,8 @@ struct directory_data_t
         inline szptr longest_match(CString const& other, szptr offset = 0) const
         {
             auto node_prefix = prefix();
-            auto comparison =
-                (std::min)(other.size() - offset, prefix_length());
+            auto comparison
+                = (std::min)(other.size() - offset, prefix_length());
 
             return libc::str::longest_prefix(
                 node_prefix, &other[offset], comparison);
@@ -364,8 +367,8 @@ struct VirtualIndex : non_copy
     const void* data() const
     {
         static_assert(
-            sizeof(directory_data_t::node_t) ==
-                sizeof(directory_data_t::leaf_t),
+            sizeof(directory_data_t::node_t)
+                == sizeof(directory_data_t::leaf_t),
             "Mismatching node and leaf size");
 
         return &this[1];
@@ -479,8 +482,8 @@ struct VirtualFS
         {
 #if !defined(COFFEE_NO_ENDIAN_OPS)
             /* It's nice to specify if the endian is wrong here */
-            if(magic[0] == endian::to<endian::u32_net>(fileMagic[0]) &&
-               magic[1] == endian::to<endian::u32_net>(fileMagic[1]))
+            if(magic[0] == endian::to<endian::u32_net>(fileMagic[0])
+               && magic[1] == endian::to<endian::u32_net>(fileMagic[1]))
                 ec = VFSError::EndianMismatch;
             else
 #endif
@@ -567,8 +570,8 @@ struct VirtualFS
 
     template<
         LookupMethod Method = LookupMethod::linear_search,
-        typename std::enable_if<Method == LookupMethod::linear_search>::type* =
-            nullptr>
+        typename std::enable_if<
+            Method == LookupMethod::linear_search>::type* = nullptr>
     /*!
      * \brief Given a VFS, get the handle to a file with the name `name'. This
      * performs a linear search through the VFS, which becomes slow on larger
@@ -589,8 +592,8 @@ struct VirtualFS
 
     template<
         LookupMethod Method,
-        typename std::enable_if<Method == LookupMethod::binary_tree>::type* =
-            nullptr>
+        typename std::enable_if<
+            Method == LookupMethod::binary_tree>::type* = nullptr>
     /*!
      * \brief GetFile, but using a binary tree to lookup the file.
      * This has a better worst-case performance than
@@ -644,8 +647,7 @@ struct VirtualFS
         VFS const* vfs, cstring name, vfs_error_code& ec);
 };
 
-PACKEDSTRUCT(VirtualFile
-{
+PACKEDSTRUCT(VirtualFile {
     char name[MaxFileNameLength]; /*!< File name */
     u64  offset;                  /*!< Offset to file */
     u64  size;  /*!< Size of file. If compressed, size of compressed file */
@@ -785,8 +787,8 @@ struct vfs_linear_iterator : Iterator<ForwardIteratorTag, VFile>
 
     difference_type operator-(vfs_linear_iterator& other)
     {
-        return C_FCAST<difference_type>(m_idx) -
-               C_FCAST<difference_type>(other.m_idx);
+        return C_FCAST<difference_type>(m_idx)
+               - C_FCAST<difference_type>(other.m_idx);
     }
 
     bool operator!=(vfs_linear_iterator const& other) const
@@ -858,9 +860,8 @@ struct vfs_view
                 return false;
             else
             {
-                return fname.substr(0, path.internUrl.size()) ==
-                           path.internUrl &&
-                       fname.at(path.internUrl.size()) == '.';
+                return fname.substr(0, path.internUrl.size()) == path.internUrl
+                       && fname.at(path.internUrl.size()) == '.';
             }
         });
     }
@@ -876,18 +877,18 @@ struct vfs_view
  */
 struct VirtDesc
 {
-    VirtDesc(cstring fname, Bytes&& data, u32 flags = 0) :
+    VirtDesc(std::string fname, Bytes&& data, u32 flags = 0) :
         filename(fname), data(std::move(data)), flags(flags)
     {
     }
 
     VirtDesc(Path const& fname, Bytes&& data, u32 flags = 0) :
-        filename(fname.internUrl.c_str()), data(std::move(data)), flags(flags)
+        filename(fname.internUrl), data(std::move(data)), flags(flags)
     {
     }
 
-    CString filename;
-    Bytes   data;
+    std::string filename;
+    Bytes       data;
     /*!
      * \brief when matching File_Compressed,
      *  compress the input data using zlib.
@@ -916,7 +917,7 @@ extern bool GenVirtFS(
 NO_DISCARD FORCEDINLINE Url operator"" _vfs(const char* url, size_t)
 {
     Url out      = MkUrl(url);
-    out.category = Url::Memory;
+    out.category = Url::Local;
     return out;
 }
 

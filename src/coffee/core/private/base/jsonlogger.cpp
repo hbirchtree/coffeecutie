@@ -49,9 +49,9 @@ static const cstring JsonFormat =
     "time": "{4}"
   },)";
 
-static CString JsonFilter(CString const& message)
+static std::string JsonFilter(std::string_view message)
 {
-    CString filtered_message = message;
+    std::string filtered_message(message.begin(), message.end());
     filtered_message = str::replace::str<char>(filtered_message, "\\", "\\\\");
     filtered_message = str::replace::str<char>(filtered_message, "\n", "\\n");
     return str::replace::str<char>(filtered_message, "\"", "\\\"");
@@ -67,11 +67,11 @@ static JsonLogState& GetLogState()
 #endif
 
 static void JsonTagLogger(
-    FILE*          pipe,
-    cstring        tag,
-    CString const& message,
-    Severity       sev,
-    u32            level,
+    FILE*            pipe,
+    std::string_view tag,
+    std::string_view message,
+    Severity         sev,
+    u32              level,
     u32)
 {
     auto  filtered_message = JsonFilter(message);

@@ -22,7 +22,10 @@ STATICINLINE GLint get_uniform_buffer_size(u32 program, i32 location)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetUniformBufferSizeEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     auto out = glGetUniformBufferSizeEXT(program, location);
     detail::error_check("GetUniformBufferSizeEXT"sv);
@@ -41,7 +44,10 @@ STATICINLINE GLintptr get_uniform_offset(u32 program, i32 location)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetUniformOffsetEXT)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     auto out = glGetUniformOffsetEXT(program, location);
     detail::error_check("GetUniformOffsetEXT"sv);
@@ -61,8 +67,14 @@ STATICINLINE void uniform_buffer(u32 program, i32 location, u32 buffer)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(UniformBufferEXT)
-        glIsProgram(program);
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glUniformBufferEXT(program, location, buffer);
     detail::error_check("UniformBufferEXT"sv);

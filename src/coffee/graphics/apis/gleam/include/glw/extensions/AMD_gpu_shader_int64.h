@@ -52,7 +52,10 @@ requires(semantic::concepts::Span<span_GLint64EXT>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetUniformi64vNV)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetUniformi64vNV(
         program,
@@ -79,7 +82,10 @@ requires(semantic::concepts::Span<span_GLuint64EXT>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetUniformui64vNV)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetUniformui64vNV(
         program,
@@ -460,7 +466,10 @@ STATICINLINE void program_uniform(u32 program, i32 location, GLint64EXT x)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform1i64NV)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform1i64NV(program, location, x);
     detail::error_check("ProgramUniform1i64NV"sv);
@@ -485,7 +494,10 @@ requires(semantic::concepts::Span<span_const_GLint64EXT>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform1i64vNV)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform1i64vNV(
         program,
@@ -508,7 +520,10 @@ STATICINLINE void program_uniform(u32 program, i32 location, GLuint64EXT x)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform1ui64NV)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform1ui64NV(program, location, x);
     detail::error_check("ProgramUniform1ui64NV"sv);
@@ -533,7 +548,10 @@ requires(semantic::concepts::Span<span_const_GLuint64EXT>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform1ui64vNV)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform1ui64vNV(
         program,
@@ -560,7 +578,10 @@ requires(semantic::concepts::Vector<vec_2_GLint64EXT, GLint64EXT, 2>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform2i64NV)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform2i64NV(program, location, x.x(), x.y());
     detail::error_check("ProgramUniform2i64NV"sv);
@@ -588,7 +609,10 @@ requires(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform2i64vNV)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform2i64vNV(
         program,
@@ -615,7 +639,10 @@ requires(semantic::concepts::Vector<vec_2_GLuint64EXT, GLuint64EXT, 2>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform2ui64NV)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform2ui64NV(program, location, x.x(), x.y());
     detail::error_check("ProgramUniform2ui64NV"sv);
@@ -645,7 +672,10 @@ requires(semantic::concepts::Span<span_const_vec_2_GLuint64EXT>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform2ui64vNV)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform2ui64vNV(
         program,
@@ -673,7 +703,10 @@ requires(semantic::concepts::Vector<vec_3_GLint64EXT, GLint64EXT, 3>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform3i64NV)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform3i64NV(program, location, x.x(), x.y(), x.z());
     detail::error_check("ProgramUniform3i64NV"sv);
@@ -701,7 +734,10 @@ requires(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform3i64vNV)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform3i64vNV(
         program,
@@ -729,7 +765,10 @@ requires(semantic::concepts::Vector<vec_3_GLuint64EXT, GLuint64EXT, 3>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform3ui64NV)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform3ui64NV(program, location, x.x(), x.y(), x.z());
     detail::error_check("ProgramUniform3ui64NV"sv);
@@ -759,7 +798,10 @@ requires(semantic::concepts::Span<span_const_vec_3_GLuint64EXT>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform3ui64vNV)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform3ui64vNV(
         program,
@@ -788,7 +830,10 @@ requires(semantic::concepts::Vector<vec_4_GLint64EXT, GLint64EXT, 4>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform4i64NV)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform4i64NV(program, location, x.x(), x.y(), x.z(), x.w());
     detail::error_check("ProgramUniform4i64NV"sv);
@@ -816,7 +861,10 @@ requires(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform4i64vNV)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform4i64vNV(
         program,
@@ -845,7 +893,10 @@ requires(semantic::concepts::Vector<vec_4_GLuint64EXT, GLuint64EXT, 4>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform4ui64NV)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform4ui64NV(program, location, x.x(), x.y(), x.z(), x.w());
     detail::error_check("ProgramUniform4ui64NV"sv);
@@ -875,7 +926,10 @@ requires(semantic::concepts::Span<span_const_vec_4_GLuint64EXT>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform4ui64vNV)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform4ui64vNV(
         program,

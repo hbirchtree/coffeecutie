@@ -109,7 +109,7 @@ enum class api_type_t
     core,
     es,
 };
-constexpr api_type_t platform_api =
+constexpr api_type_t compiled_api =
 #if GLEAM_MAX_VERSION != 0
     api_type_t::core;
 #else
@@ -118,6 +118,7 @@ constexpr api_type_t platform_api =
 
 constexpr auto platform_version = cmd::version{};
 
-using hnd = semantic::generic_handle_t<libc_types::u32>;
+using hnd = semantic::
+    generic_handle_t<libc_types::u32, semantic::handle_modes::no_op>;
 
 } // namespace gleam

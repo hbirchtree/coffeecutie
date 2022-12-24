@@ -1,9 +1,10 @@
 #pragma once
 
 #ifdef GL_OES_mapbuffer
+#include "../enums/BufferAccessARB.h"
 namespace gl::oes::mapbuffer {
+using gl::group::buffer_access_arb;
 namespace values {
-constexpr libc_types::u32 write_only         = 0x88B9;
 constexpr libc_types::u32 buffer_access      = 0x88BB;
 constexpr libc_types::u32 buffer_mapped      = 0x88BC;
 constexpr libc_types::u32 buffer_map_pointer = 0x88BD;
@@ -59,14 +60,14 @@ STATICINLINE void* map_buffer(
  * \param target GLenum
  * \return Boolean
  */
-STATICINLINE GLboolean unmap_buffer(GLenum target)
+STATICINLINE GLboolean unmap_buffer(group::buffer_target_arb target)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(UnmapBufferOES)
     }
-    auto out = glUnmapBufferOES(target);
+    auto out = glUnmapBufferOES(static_cast<GLenum>(target));
     detail::error_check("UnmapBufferOES"sv);
     return out;
 }

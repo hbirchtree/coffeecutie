@@ -6,11 +6,11 @@
 namespace semantic::concepts {
 
 template<class T, typename E, size_t N>
-concept Vector = std::is_same_v<typename T::value_type, E> && requires(T v)
+concept Vector = std::is_same_v<typename T::value_type, E> && T::row_size == N && requires(T v)
 {
     {v.x() = 1.f};
     {v[0] = 1.f};
-    {v[1] = 1.f};
+    {v[N - 1] = 1.f};
 
     {v += 1.f};
     {v -= 1.f};
@@ -35,8 +35,8 @@ concept Matrix =
 template<class T, typename E>
 concept Size2D = std::is_same_v<typename T::value_type, E> && requires(T v)
 {
-    { v.volume() };
-    { v.aspect() };
+//    { v.volume() };
+//    { v.aspect() };
     { v[0] };
 };
 

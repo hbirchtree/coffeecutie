@@ -87,9 +87,10 @@ static CString CreateSaveString(u16 slot)
 
 static Url CreateSaveUrl(u16 slot)
 {
-    return platform::url::constructors::MkUrl(
-        Path("CoffeeData").addExtension(cast_pod(slot)).addExtension("bin"),
-        RSCA::ConfigFile);
+    return Path{"CoffeeData"}
+        .addExtension(cast_pod(slot))
+        .addExtension("bin")
+        .url(RSCA::ConfigFile);
 }
 
 Future<szptr> FilesystemApi::restore(Bytes&& data, slot_count_t slot)
@@ -102,14 +103,15 @@ Future<szptr> FilesystemApi::restore(Bytes&& data, slot_count_t slot)
 #if defined(COFFEE_EMSCRIPTEN)
     CString save_file = CreateSaveString(slot);
 
-    auto out_fut = out.get_future();
-    DataStatus data_status = {std::move(data), std::move(out), DataStatus::Waiting};
-    emscripten_idb_async_load(
-        m_app.organization_name.c_str(),
-        save_file.c_str(),
-        &data_status,
-        emscripten_callback_load,
-        emscripten_callback_error);
+    auto       out_fut = out.get_future();
+    DataStatus data_status
+        = {std::move(data), std::move(out), DataStatus::Waiting};
+    //    emscripten_idb_async_load(
+    //        m_app.organization_name.c_str(),
+    //        save_file.c_str(),
+    //        &data_status,
+    //        emscripten_callback_load,
+    //        emscripten_callback_error);
 
     return out_fut;
 #else
@@ -145,18 +147,18 @@ Future<szptr> FilesystemApi::save(Bytes const& data, slot_count_t slot)
     std::promise<szptr> out;
 
 #if defined(COFFEE_EMSCRIPTEN)
-    CString save_file = CreateSaveString(slot);
-    auto out_fut = out.get_future();
+    CString    save_file   = CreateSaveString(slot);
+    auto       out_fut     = out.get_future();
     DataStatus data_status = {*data.at(0), std::move(out), DataStatus::Waiting};
 
-    emscripten_idb_async_store(
-        m_app.organization_name.c_str(),
-        save_file.c_str(),
-        reinterpret_cast<void*>(data.data),
-        data.size,
-        &data_status,
-        emscripten_callback_store,
-        emscripten_callback_error);
+    //    emscripten_idb_async_store(
+    //        m_app.organization_name.c_str(),
+    //        save_file.c_str(),
+    //        reinterpret_cast<void*>(data.data),
+    //        data.size,
+    //        &data_status,
+    //        emscripten_callback_store,
+    //        emscripten_callback_error);
 
     return out_fut;
 #else

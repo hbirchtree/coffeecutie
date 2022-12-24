@@ -41,7 +41,7 @@ template<typename T>
 FORCEDINLINE void CaptureMetrics(
     cstring              name,
     MetricVariant        variant,
-    T                    value,
+    T const&             value,
     Chrono::microseconds ts,
     u32                  index = 0)
 {

@@ -4,8 +4,7 @@
 #include <coffee/core/coffee.h>
 #include <coffee/core/platform_data.h>
 #include <coffee/core/types/debug/severity.h>
-#include <coffee/graphics/apis/CGLeam>
-#include <coffee/graphics/apis/CGLeamRHI>
+#include <coffee/graphics/apis/gleam/rhi.h>
 #include <coffee/interfaces/full_launcher.h>
 #include <coffee/strings/info.h>
 #include <coffee/strings/libc_types.h>
@@ -29,9 +28,9 @@ struct SharedData
     Timestamp  frame_ts{0};
     gleam::api api;
 
-    stl_types::ShPtr<gleam::texture_2d>   tex;
-    stl_types::ShPtr<gleam::texture_2d>   depth_tex;
-    stl_types::ShPtr<gleam::rendertarget> offscreen;
+    stl_types::ShPtr<gleam::texture_2d_t>   tex;
+    stl_types::ShPtr<gleam::texture_2d_t>   depth_tex;
+    stl_types::ShPtr<gleam::rendertarget_t> offscreen;
 };
 
 void setup_fun(CDRenderer& renderer, SharedData* data)

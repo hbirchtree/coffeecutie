@@ -161,7 +161,10 @@ requires(MinimumVersion<Current, Version<3, 1>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetProgramInterfaceiv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetProgramInterfaceiv(
         program,
@@ -189,7 +192,10 @@ requires(MinimumVersion<Current, Version<3, 1>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetProgramResourceIndex)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     auto out = glGetProgramResourceIndex(
         program, static_cast<GLenum>(programInterface), name.data());
@@ -215,7 +221,10 @@ requires(MinimumVersion<Current, Version<3, 1>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetProgramResourceLocation)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     auto out = glGetProgramResourceLocation(
         program, static_cast<GLenum>(programInterface), name.data());
@@ -249,7 +258,10 @@ requires(MinimumVersion<Current, Version<3, 1>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetProgramResourceName)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetProgramResourceName(
         program,
@@ -294,7 +306,10 @@ requires(MinimumVersion<Current, Version<3, 1>>&&         semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetProgramResourceiv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetProgramResourceiv(
         program,
@@ -322,8 +337,14 @@ requires(MinimumVersion<Current, Version<3, 1>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ActiveShaderProgram)
-        glIsProgramPipeline(pipeline);
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgramPipeline)
+            glIsProgramPipeline(pipeline);
+#endif
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glActiveShaderProgram(pipeline, program);
     detail::error_check("ActiveShaderProgram"sv);
@@ -342,7 +363,10 @@ requires(MinimumVersion<Current, Version<3, 1>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindProgramPipeline)
-        glIsProgramPipeline(pipeline);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgramPipeline)
+            glIsProgramPipeline(pipeline);
+#endif
     }
     glBindProgramPipeline(pipeline);
     detail::error_check("BindProgramPipeline"sv);
@@ -443,7 +467,10 @@ requires(MinimumVersion<Current, Version<3, 1>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetProgramPipelineInfoLog)
-        glIsProgramPipeline(pipeline);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgramPipeline)
+            glIsProgramPipeline(pipeline);
+#endif
     }
     glGetProgramPipelineInfoLog(
         pipeline, infoLog.size(), &length, infoLog.data());
@@ -469,7 +496,10 @@ requires(MinimumVersion<Current, Version<3, 1>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetProgramPipelineiv)
-        glIsProgramPipeline(pipeline);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgramPipeline)
+            glIsProgramPipeline(pipeline);
+#endif
     }
     glGetProgramPipelineiv(
         pipeline,
@@ -491,7 +521,10 @@ requires(MinimumVersion<Current, Version<3, 1>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(IsProgramPipeline)
-        glIsProgramPipeline(pipeline);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgramPipeline)
+            glIsProgramPipeline(pipeline);
+#endif
     }
     auto out = glIsProgramPipeline(pipeline);
     detail::error_check("IsProgramPipeline"sv);
@@ -513,7 +546,10 @@ requires(MinimumVersion<Current, Version<3, 1>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform1f)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform1f(program, location, v0);
     detail::error_check("ProgramUniform1f"sv);
@@ -539,7 +575,10 @@ requires(MinimumVersion<Current, Version<3, 1>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform1fv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform1fv(
         program,
@@ -564,7 +603,10 @@ requires(MinimumVersion<Current, Version<3, 1>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform1i)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform1i(program, location, v0);
     detail::error_check("ProgramUniform1i"sv);
@@ -590,7 +632,10 @@ requires(MinimumVersion<Current, Version<3, 1>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform1iv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform1iv(
         program,
@@ -615,7 +660,10 @@ requires(MinimumVersion<Current, Version<3, 1>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform1ui)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform1ui(program, location, v0);
     detail::error_check("ProgramUniform1ui"sv);
@@ -641,7 +689,10 @@ requires(MinimumVersion<Current, Version<3, 1>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform1uiv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform1uiv(
         program,
@@ -669,7 +720,10 @@ requires(MinimumVersion<Current, Version<3, 1>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform2f)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform2f(program, location, v0.x(), v0.y());
     detail::error_check("ProgramUniform2f"sv);
@@ -695,7 +749,10 @@ requires(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform2fv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform2fv(
         program,
@@ -723,7 +780,10 @@ requires(MinimumVersion<Current, Version<3, 1>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform2i)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform2i(program, location, v0.x(), v0.y());
     detail::error_check("ProgramUniform2i"sv);
@@ -749,7 +809,10 @@ requires(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform2iv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform2iv(
         program, location, count, reinterpret_cast<const GLint*>(value.data()));
@@ -774,7 +837,10 @@ requires(MinimumVersion<Current, Version<3, 1>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform2ui)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform2ui(program, location, v0.x(), v0.y());
     detail::error_check("ProgramUniform2ui"sv);
@@ -800,7 +866,10 @@ requires(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform2uiv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform2uiv(
         program,
@@ -829,7 +898,10 @@ requires(MinimumVersion<Current, Version<3, 1>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform3f)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform3f(program, location, v0.x(), v0.y(), v0.z());
     detail::error_check("ProgramUniform3f"sv);
@@ -855,7 +927,10 @@ requires(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform3fv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform3fv(
         program,
@@ -884,7 +959,10 @@ requires(MinimumVersion<Current, Version<3, 1>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform3i)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform3i(program, location, v0.x(), v0.y(), v0.z());
     detail::error_check("ProgramUniform3i"sv);
@@ -910,7 +988,10 @@ requires(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform3iv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform3iv(
         program, location, count, reinterpret_cast<const GLint*>(value.data()));
@@ -936,7 +1017,10 @@ requires(MinimumVersion<Current, Version<3, 1>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform3ui)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform3ui(program, location, v0.x(), v0.y(), v0.z());
     detail::error_check("ProgramUniform3ui"sv);
@@ -962,7 +1046,10 @@ requires(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform3uiv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform3uiv(
         program,
@@ -992,7 +1079,10 @@ requires(MinimumVersion<Current, Version<3, 1>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform4f)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform4f(program, location, v0.x(), v0.y(), v0.z(), v0.w());
     detail::error_check("ProgramUniform4f"sv);
@@ -1018,7 +1108,10 @@ requires(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform4fv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform4fv(
         program,
@@ -1048,7 +1141,10 @@ requires(MinimumVersion<Current, Version<3, 1>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform4i)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform4i(program, location, v0.x(), v0.y(), v0.z(), v0.w());
     detail::error_check("ProgramUniform4i"sv);
@@ -1074,7 +1170,10 @@ requires(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform4iv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform4iv(
         program, location, count, reinterpret_cast<const GLint*>(value.data()));
@@ -1101,7 +1200,10 @@ requires(MinimumVersion<Current, Version<3, 1>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform4ui)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform4ui(program, location, v0.x(), v0.y(), v0.z(), v0.w());
     detail::error_check("ProgramUniform4ui"sv);
@@ -1127,7 +1229,10 @@ requires(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform4uiv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform4uiv(
         program,
@@ -1162,7 +1267,10 @@ requires(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix2fv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformMatrix2fv(
         program,
@@ -1198,7 +1306,10 @@ requires(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix2x3fv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformMatrix2x3fv(
         program,
@@ -1234,7 +1345,10 @@ requires(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix2x4fv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformMatrix2x4fv(
         program,
@@ -1270,7 +1384,10 @@ requires(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix3fv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformMatrix3fv(
         program,
@@ -1306,7 +1423,10 @@ requires(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix3x2fv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformMatrix3x2fv(
         program,
@@ -1342,7 +1462,10 @@ requires(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix3x4fv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformMatrix3x4fv(
         program,
@@ -1378,7 +1501,10 @@ requires(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix4fv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformMatrix4fv(
         program,
@@ -1414,7 +1540,10 @@ requires(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix4x2fv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformMatrix4x2fv(
         program,
@@ -1450,7 +1579,10 @@ requires(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix4x3fv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniformMatrix4x3fv(
         program,
@@ -1477,8 +1609,14 @@ requires(MinimumVersion<Current, Version<3, 1>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(UseProgramStages)
-        glIsProgramPipeline(pipeline);
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgramPipeline)
+            glIsProgramPipeline(pipeline);
+#endif
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glUseProgramStages(pipeline, static_cast<GLenum>(stages), program);
     detail::error_check("UseProgramStages"sv);
@@ -1497,7 +1635,10 @@ requires(MinimumVersion<Current, Version<3, 1>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ValidateProgramPipeline)
-        glIsProgramPipeline(pipeline);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgramPipeline)
+            glIsProgramPipeline(pipeline);
+#endif
     }
     glValidateProgramPipeline(pipeline);
     detail::error_check("ValidateProgramPipeline"sv);
@@ -1529,7 +1670,10 @@ requires(MinimumVersion<Current, Version<3, 1>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindImageTexture)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glBindImageTexture(
         unit,
@@ -1768,7 +1912,10 @@ requires(MinimumVersion<Current, Version<3, 1>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindVertexBuffer)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glBindVertexBuffer(bindingindex, buffer, offset, stride);
     detail::error_check("BindVertexBuffer"sv);

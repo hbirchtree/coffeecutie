@@ -1,7 +1,6 @@
 #pragma once
 
 #include <peripherals/libc/types.h>
-#include <coffee/interfaces/cgraphics_api.h>
 
 namespace Coffee{
 namespace SMSH{
@@ -25,14 +24,14 @@ struct vertex_blob_t
 
 struct attr_description_t
 {
-    RHI::GraphicsAPI::VertexAttribute attr;
+//    RHI::GraphicsAPI::VertexAttribute attr;
     u32 id;
 };
 
 struct mesh_descriptor_t
 {
-    RHI::GraphicsAPI::DrawInstanceData data;
-    RHI::GraphicsAPI::DrawCall call_info;
+//    RHI::GraphicsAPI::DrawInstanceData data;
+//    RHI::GraphicsAPI::DrawCall call_info;
     u32 id;
     u32 num_attrs;
     u16 element_buffer;

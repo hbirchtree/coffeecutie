@@ -13,8 +13,14 @@ requires(MinimumVersion<Current, Version<2, 0>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(AttachShader)
-        glIsProgram(program);
-        glIsShader(shader);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsShader)
+            glIsShader(shader);
+#endif
     }
     glAttachShader(program, shader);
     detail::error_check("AttachShader"sv);
@@ -36,7 +42,10 @@ requires(MinimumVersion<Current, Version<2, 0>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindAttribLocation)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glBindAttribLocation(program, index, name.data());
     detail::error_check("BindAttribLocation"sv);
@@ -77,7 +86,10 @@ requires(MinimumVersion<Current, Version<2, 0>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(CompileShader)
-        glIsShader(shader);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsShader)
+            glIsShader(shader);
+#endif
     }
     glCompileShader(shader);
     detail::error_check("CompileShader"sv);
@@ -134,7 +146,10 @@ requires(MinimumVersion<Current, Version<2, 0>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(DeleteProgram)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glDeleteProgram(program);
     detail::error_check("DeleteProgram"sv);
@@ -153,7 +168,10 @@ requires(MinimumVersion<Current, Version<2, 0>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(DeleteShader)
-        glIsShader(shader);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsShader)
+            glIsShader(shader);
+#endif
     }
     glDeleteShader(shader);
     detail::error_check("DeleteShader"sv);
@@ -173,8 +191,14 @@ requires(MinimumVersion<Current, Version<2, 0>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(DetachShader)
-        glIsProgram(program);
-        glIsShader(shader);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsShader)
+            glIsShader(shader);
+#endif
     }
     glDetachShader(program, shader);
     detail::error_check("DetachShader"sv);
@@ -269,7 +293,10 @@ requires(MinimumVersion<Current, Version<2, 0>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetActiveAttrib)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetActiveAttrib(
         program, index, name.size(), &length, &size, &type, name.data());
@@ -304,7 +331,10 @@ requires(MinimumVersion<Current, Version<2, 0>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetActiveUniform)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetActiveUniform(
         program, index, name.size(), &length, &size, &type, name.data());
@@ -331,7 +361,10 @@ requires(MinimumVersion<Current, Version<2, 0>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetAttachedShaders)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetAttachedShaders(
         program,
@@ -356,7 +389,10 @@ requires(MinimumVersion<Current, Version<2, 0>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetAttribLocation)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     auto out = glGetAttribLocation(program, name.data());
     detail::error_check("GetAttribLocation"sv);
@@ -383,7 +419,10 @@ requires(MinimumVersion<Current, Version<2, 0>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetProgramInfoLog)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetProgramInfoLog(program, infoLog.size(), &length, infoLog.data());
     detail::error_check("GetProgramInfoLog"sv);
@@ -408,7 +447,10 @@ requires(MinimumVersion<Current, Version<2, 0>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetProgramiv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetProgramiv(
         program,
@@ -437,7 +479,10 @@ requires(MinimumVersion<Current, Version<2, 0>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetShaderInfoLog)
-        glIsShader(shader);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsShader)
+            glIsShader(shader);
+#endif
     }
     glGetShaderInfoLog(shader, infoLog.size(), &length, infoLog.data());
     detail::error_check("GetShaderInfoLog"sv);
@@ -463,7 +508,10 @@ requires(MinimumVersion<Current, Version<2, 0>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetShaderSource)
-        glIsShader(shader);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsShader)
+            glIsShader(shader);
+#endif
     }
     glGetShaderSource(shader, source.size(), &length, source.data());
     detail::error_check("GetShaderSource"sv);
@@ -488,7 +536,10 @@ requires(MinimumVersion<Current, Version<2, 0>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetShaderiv)
-        glIsShader(shader);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsShader)
+            glIsShader(shader);
+#endif
     }
     glGetShaderiv(
         shader,
@@ -512,7 +563,10 @@ requires(MinimumVersion<Current, Version<2, 0>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetUniformLocation)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     auto out = glGetUniformLocation(program, name.data());
     detail::error_check("GetUniformLocation"sv);
@@ -537,7 +591,10 @@ requires(MinimumVersion<Current, Version<2, 0>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetUniformfv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetUniformfv(
         program,
@@ -564,7 +621,10 @@ requires(MinimumVersion<Current, Version<2, 0>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetUniformiv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetUniformiv(
         program,
@@ -694,7 +754,10 @@ requires(MinimumVersion<Current, Version<2, 0>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(IsProgram)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     auto out = glIsProgram(program);
     detail::error_check("IsProgram"sv);
@@ -714,7 +777,10 @@ requires(MinimumVersion<Current, Version<2, 0>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(IsShader)
-        glIsShader(shader);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsShader)
+            glIsShader(shader);
+#endif
     }
     auto out = glIsShader(shader);
     detail::error_check("IsShader"sv);
@@ -734,7 +800,10 @@ requires(MinimumVersion<Current, Version<2, 0>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(LinkProgram)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glLinkProgram(program);
     detail::error_check("LinkProgram"sv);
@@ -762,7 +831,10 @@ requires(MinimumVersion<Current, Version<2, 0>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ShaderSource)
-        glIsShader(shader);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsShader)
+            glIsShader(shader);
+#endif
     }
     auto [string_lens, string_cstr, string_store] =
         detail::transform_strings(string);
@@ -1324,7 +1396,10 @@ requires(MinimumVersion<Current, Version<2, 0>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(UseProgram)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glUseProgram(program);
     detail::error_check("UseProgram"sv);
@@ -1343,7 +1418,10 @@ requires(MinimumVersion<Current, Version<2, 0>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ValidateProgram)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glValidateProgram(program);
     detail::error_check("ValidateProgram"sv);

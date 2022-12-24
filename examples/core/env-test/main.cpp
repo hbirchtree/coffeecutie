@@ -35,25 +35,22 @@ i32 coffee_main(i32, cstring_w*)
     {
         /* Check out system directory strings and user data directories */
         Url test_dir = MkUrl("config", RSCA::ConfigFile);
-        Url cfg_dir  = MkUrl("", RSCA::ConfigFile);
         Profiler::Profile("Get userdata directory");
 
         cDebug("Test directory: {0} '{1}'", test_dir, *test_dir);
 
-        auto app_dir  = platform::path::app_dir();
-        auto exe_name = platform::path::executable();
         Profiler::Profile("Get application location");
 
-        cDebug("Settings directory: {0}", *cfg_dir);
-        cDebug("Program directory:  {0}", app_dir);
-        cDebug("Launching from      {0}", exe_name);
+        cDebug("Settings directory: {0}", *MkUrl("", RSCA::ConfigFile));
+        cDebug("Program directory:  {0}", platform::path::app_dir());
+        cDebug("Launching from      {0}", platform::path::executable());
         cDebug("Current directory:  {0}", platform::path::current_dir());
 
         Profiler::Profile("Print some data");
 
         {
             platform::file::create(
-                cfg_dir / "test_file.sav",
+                MkUrl("", RSCA::ConfigFile) / "test_file.sav",
                 {.mode = platform::file::mode_t::file});
         }
         Profiler::Profile("Create directory recursively");
@@ -61,17 +58,28 @@ i32 coffee_main(i32, cstring_w*)
     Profiler::PopContext();
 
     if(auto model = platform::info::proc::model(); model.has_value())
-        cBasicPrint("Processor: {0}", model.value());
-    cBasicPrint("Processor: {0}", platform::info::proc::cpu_count());
-    cBasicPrint("Processor: {0}", platform::info::proc::core_count());
-    cBasicPrint("Processor: {0}", platform::info::proc::thread_count());
-    cBasicPrint("Processor: {0}", platform::info::proc::frequency());
+    {
+        auto [vendor, model_] = model.value();
+        cBasicPrint("Processor: {0} {1}", vendor, model_);
+    }
+    if(auto device = platform::info::device::device())
+    {
+        auto [vendor, model] = device.value();
+        cBasicPrint("Device: {0} {1}", vendor, model);
+    }
+    cBasicPrint(
+        "Processor: nodes={0},cpus={1},cores={2},threads={3}",
+        platform::info::proc::node_count(),
+        platform::info::proc::cpu_count(),
+        platform::info::proc::core_count(),
+        platform::info::proc::thread_count());
+    cBasicPrint("Processor frequency: {0}", platform::info::proc::frequency());
 
-    cBasicPrint("Processor: {0}", platform::info::os::kernel());
-    cBasicPrint("Processor: {0}", platform::info::os::kernel_version());
-    cBasicPrint("Processor: {0}", platform::info::os::architecture());
-    cBasicPrint("Processor: {0}", platform::info::os::name());
-    cBasicPrint("Processor: {0}", platform::info::os::version());
+    cBasicPrint("Kernel: {0}", platform::info::os::kernel());
+    cBasicPrint("Kernel version: {0}", platform::info::os::kernel_version());
+    cBasicPrint("Architecture: {0}", platform::info::os::architecture());
+    cBasicPrint("OS name: {0}", platform::info::os::name());
+    cBasicPrint("OS version: {0}", platform::info::os::version());
 
     cDebug("Sensor gravity: {0}", Sensor::Gravity());
     cDebug("Sensor gyro: {0}", Sensor::Gyroscope());
@@ -79,8 +87,6 @@ i32 coffee_main(i32, cstring_w*)
     cDebug("Sensor steps: {0}", Sensor::StepCounter());
     cDebug("Sensor acceleration: {0}", Sensor::Acceleration());
     cDebug("Sensor orientation: {0}", Sensor::Orientation());
-
-//    cDebug("avcodec: {0}", av::init_codec());
 
     return 0;
 }

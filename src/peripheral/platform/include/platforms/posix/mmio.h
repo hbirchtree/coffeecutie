@@ -15,6 +15,11 @@ struct mem_mapping_t
 
     span_type view;
     RSCA      access;
+
+    operator posix::mem_mapping_t::span_type()
+    {
+        return view;
+    }
 };
 struct mapping_params_t
 {

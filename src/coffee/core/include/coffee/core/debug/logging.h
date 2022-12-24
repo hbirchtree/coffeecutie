@@ -3,8 +3,8 @@
 #include <coffee/core/printing/verbosity_level.h>
 #include <peripherals/constants.h>
 #include <peripherals/libc/output_ops.h>
-#include <peripherals/stl/time_types.h>
 #include <peripherals/stl/time_formatting.h>
+#include <peripherals/stl/time_types.h>
 #include <peripherals/typing/enum/debug/severity.h>
 #include <platforms/environment.h>
 
@@ -22,8 +22,8 @@ namespace detail {
 template<typename Dummy = void>
 requires compile_info::platform::is_android
     //
-    void log(
-        libc::io::output_fd,
+    void
+    log(libc::io::output_fd,
         UNUSED_PARAM(std::string_view, tag),
         UNUSED_PARAM(std::string_view, formatted),
         UNUSED_PARAM(semantic::debug::Severity, severity))
@@ -47,16 +47,15 @@ requires compile_info::platform::is_android
         break;
     }
 
-    __android_log_print(
-        flag, tag.data(), "%s", formatted.data());
+    __android_log_print(flag, tag.data(), "%s", formatted.data());
 #endif
 }
 
 template<typename Dummy = void>
 requires compile_info::platform::is_emscripten
     //
-    void log(
-        libc::io::output_fd,
+    void
+    log(libc::io::output_fd,
         std::string_view,
         UNUSED_PARAM(std::string_view, formatted),
         UNUSED_PARAM(semantic::debug::Severity, severity))
@@ -102,10 +101,10 @@ requires compile_info::platform::is_windows void log(
 
 template<typename Dummy = void>
 requires(
-    (compile_info::platform::is_ios || compile_info::platform::is_linux ||
-     compile_info::platform::is_macos) &&
-    !compile_info::platform::is_android &&
-    !compile_info::platform::is_emscripten)
+    (compile_info::platform::is_ios || compile_info::platform::is_linux
+     || compile_info::platform::is_macos)
+    && !compile_info::platform::is_android
+    && !compile_info::platform::is_emscripten)
     //
     void log(
         libc::io::output_fd stream,
@@ -161,11 +160,11 @@ requires(!compile_info::lowfat_mode)
     //
     void log(
         libc::io::output_fd       stream,
-        cstring                   tag,
-        stl_types::String const&  message,
+        std::string_view          tag,
+        std::string_view          message,
         semantic::debug::Severity severity = semantic::debug::Severity::Debug,
-        u32                       level = 0,
-        u32                       flags = print_context | print_newline)
+        u32                       level    = 0,
+        u32                       flags    = print_context | print_newline)
 {
     if(PrintingVerbosityLevel() < level)
         return;
@@ -178,16 +177,17 @@ requires(!compile_info::lowfat_mode)
 
     stl_types::String output;
 
-    bool has_context =
-        (flags & print_context) && !compile_info::printing::is_simple;
+    bool has_context
+        = (flags & print_context) && !compile_info::printing::is_simple;
     bool has_newline = flags & print_newline;
 
     output.reserve(
-        message.size() +
-        (has_context ? (detail::context_len + 1 +
-                        (tag ? 1 + libc::str::len(tag) : 0) + 2)
-                     : 0) +
-        (has_newline ? 1 : 0));
+        message.size()
+        + (has_context
+               ? (detail::context_len + 1 + (!tag.empty() ? 1 + tag.size() : 0)
+                  + 2)
+               : 0)
+        + (has_newline ? 1 : 0));
 
     if(has_context)
     {

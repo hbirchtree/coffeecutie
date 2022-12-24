@@ -1,9 +1,10 @@
 #pragma once
 
 #ifdef GL_ARB_texture_storage
+#include "../enums/GetTextureParameter.h"
 namespace gl::arb::texture_storage {
+using gl::group::get_texture_parameter;
 namespace values {
-constexpr libc_types::u32 texture_immutable_format = 0x912F;
 } // namespace values
 /*!
  * \brief Part of GL_ARB_texture_storage

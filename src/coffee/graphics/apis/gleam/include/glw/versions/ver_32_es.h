@@ -716,7 +716,10 @@ requires(MinimumVersion<Current, Version<3, 2>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(FramebufferTexture)
-        glIsTexture(texture);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsTexture)
+            glIsTexture(texture);
+#endif
     }
     glFramebufferTexture(
         static_cast<GLenum>(target),
@@ -798,7 +801,10 @@ requires(MinimumVersion<Current, Version<3, 2>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetnUniformfv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetnUniformfv(
         program,
@@ -828,7 +834,10 @@ requires(MinimumVersion<Current, Version<3, 2>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetnUniformiv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetnUniformiv(
         program,
@@ -858,7 +867,10 @@ requires(MinimumVersion<Current, Version<3, 2>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetnUniformuiv)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetnUniformuiv(
         program,
@@ -966,7 +978,10 @@ requires(MinimumVersion<Current, Version<3, 2>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetSamplerParameterIiv)
-        glIsSampler(sampler);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsSampler)
+            glIsSampler(sampler);
+#endif
     }
     glGetSamplerParameterIiv(
         sampler,
@@ -994,7 +1009,10 @@ requires(MinimumVersion<Current, Version<3, 2>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetSamplerParameterIuiv)
-        glIsSampler(sampler);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsSampler)
+            glIsSampler(sampler);
+#endif
     }
     glGetSamplerParameterIuiv(
         sampler,
@@ -1082,7 +1100,10 @@ requires(MinimumVersion<Current, Version<3, 2>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(SamplerParameterIiv)
-        glIsSampler(sampler);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsSampler)
+            glIsSampler(sampler);
+#endif
     }
     glSamplerParameterIiv(
         sampler,
@@ -1112,7 +1133,10 @@ requires(MinimumVersion<Current, Version<3, 2>>&&
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(SamplerParameterIuiv)
-        glIsSampler(sampler);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsSampler)
+            glIsSampler(sampler);
+#endif
     }
     glSamplerParameterIuiv(
         sampler,
@@ -1199,7 +1223,10 @@ requires(MinimumVersion<Current, Version<3, 2>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TexBuffer)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glTexBuffer(
         static_cast<GLenum>(target),
@@ -1230,7 +1257,10 @@ requires(MinimumVersion<Current, Version<3, 2>>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TexBufferRange)
-        glIsBuffer(buffer);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsBuffer)
+            glIsBuffer(buffer);
+#endif
     }
     glTexBufferRange(
         static_cast<GLenum>(target),

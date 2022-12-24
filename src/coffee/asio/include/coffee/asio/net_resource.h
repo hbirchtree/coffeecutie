@@ -74,8 +74,8 @@ struct Resource : semantic::ByteProvider
         return isResponseReady();
     }
 
-    void setHeaderField(http::header_field field, CString const& value);
-    void setHeaderField(CString const& field, CString const& value);
+    void setHeaderField(http::header_field field, std::string const& value);
+    void setHeaderField(std::string const& field, std::string const& value);
 
     http::request_t&        request();
     http::response_t const& response() const;
@@ -84,7 +84,7 @@ struct Resource : semantic::ByteProvider
     bool push(BytesConst const& data);
     bool push(http::method_t method, BytesConst const& data);
 
-    CString mimeType() const;
+    std::string mimeType() const;
     u32     responseCode() const;
     BytesConst   data() const;
 
@@ -113,17 +113,10 @@ struct Resource : semantic::ByteProvider
 };
 
 FORCEDINLINE Url MkUrl(
-    CString const&       url,
+    std::string const&       url,
     semantic::HTTPAccess access = semantic::HTTPAccess::DefaultAccess)
 {
-    return {url.c_str(), Url::Networked, semantic::RSCA::None, access, {}};
-}
-
-FORCEDINLINE Url MkUrl(
-    cstring              url,
-    semantic::HTTPAccess access = semantic::HTTPAccess::DefaultAccess)
-{
-    return {url, Url::Networked, semantic::RSCA::None, access, {}};
+    return {url, Url::Networked, semantic::RSCA::None, access};
 }
 
 } // namespace Net

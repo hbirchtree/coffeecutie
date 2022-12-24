@@ -13,7 +13,7 @@ coffee_application (
     EntComp
 
     RESOURCES
-    "${COFFEE_ASSET_DIRECTORY}/eye-demo/"
+    ${CMAKE_CURRENT_SOURCE_DIR}/basic_test
     )
 
 if(TARGET GpuQuery)

@@ -5,11 +5,10 @@
 #include <peripherals/stl/time_types.h>
 
 #define MAGIC_ENUM_RANGE_MIN -10
-#define MAGIC_ENUM_RANGE_MAX 245
+#define MAGIC_ENUM_RANGE_MAX 550
 #include <peripherals/stl/magic_enum.hpp>
 
-namespace blam {
-namespace hsc {
+namespace blam::hsc {
 
 struct script_error : undefined_behavior
 {
@@ -147,10 +146,6 @@ enum class type_t : i16
 
 struct global : stl_types::non_copy
 {
-    global(type_t type = type_t::void_) : type(type)
-    {
-    }
-
     bl_string name;
     type_t    type;
     u16       pad;
@@ -201,6 +196,7 @@ struct script_header : stl_types::non_copy
 };
 
 template<typename Bytecode>
+requires is_bytecode_variant<Bytecode>
 struct opcode_layout
 {
     u16 index;
@@ -370,36 +366,30 @@ struct opcode_layout
         switch(other.param_type)
         {
         case type_t::short_:
-        case type_t::long_:
-        {
+        case type_t::long_: {
             switch(param_type)
             {
             case type_t::short_:
-            case type_t::long_:
-            {
+            case type_t::long_: {
                 cpy.long_ = op(cpy.long_, other.long_);
                 break;
             }
-            case type_t::real_:
-            {
+            case type_t::real_: {
                 cpy.real = op(cpy.real, other.long_);
                 break;
             }
             }
             break;
         }
-        case type_t::real_:
-        {
+        case type_t::real_: {
             switch(param_type)
             {
             case type_t::short_:
-            case type_t::long_:
-            {
+            case type_t::long_: {
                 cpy.long_ = op(cpy.long_, other.real);
                 break;
             }
-            case type_t::real_:
-            {
+            case type_t::real_: {
                 cpy.real = op(cpy.real, other.real);
                 break;
             }
@@ -436,5 +426,4 @@ struct opcode_layout
     }
 };
 
-} // namespace hsc
-} // namespace blam
+} // namespace blam::hsc

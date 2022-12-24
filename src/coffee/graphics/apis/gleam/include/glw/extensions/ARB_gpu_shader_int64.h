@@ -26,7 +26,10 @@ requires(semantic::concepts::Span<span_i64>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetUniformi64vARB)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetUniformi64vARB(
         program,
@@ -53,7 +56,10 @@ requires(semantic::concepts::Span<span_u64>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetUniformui64vARB)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetUniformui64vARB(
         program,
@@ -81,7 +87,10 @@ requires(semantic::concepts::Span<span_i64>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetnUniformi64vARB)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetnUniformi64vARB(
         program,
@@ -110,7 +119,10 @@ requires(semantic::concepts::Span<span_u64>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetnUniformui64vARB)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glGetnUniformui64vARB(
         program,
@@ -133,7 +145,10 @@ STATICINLINE void program_uniform(u32 program, i32 location, i64 x)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform1i64ARB)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform1i64ARB(program, location, x);
     detail::error_check("ProgramUniform1i64ARB"sv);
@@ -158,7 +173,10 @@ requires(semantic::concepts::Span<span_const_i64>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform1i64vARB)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform1i64vARB(
         program,
@@ -181,7 +199,10 @@ STATICINLINE void program_uniform(u32 program, i32 location, u64 x)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform1ui64ARB)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform1ui64ARB(program, location, x);
     detail::error_check("ProgramUniform1ui64ARB"sv);
@@ -206,7 +227,10 @@ requires(semantic::concepts::Span<span_const_u64>&& std::is_same_v<
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform1ui64vARB)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform1ui64vARB(
         program,
@@ -233,7 +257,10 @@ requires(semantic::concepts::Vector<vec_2_i64, i64, 2>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform2i64ARB)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform2i64ARB(program, location, x.x(), x.y());
     detail::error_check("ProgramUniform2i64ARB"sv);
@@ -257,7 +284,10 @@ requires(semantic::concepts::Span<span_const_vec_2_i64>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform2i64vARB)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform2i64vARB(
         program,
@@ -284,7 +314,10 @@ requires(semantic::concepts::Vector<vec_2_u64, u64, 2>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform2ui64ARB)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform2ui64ARB(program, location, x.x(), x.y());
     detail::error_check("ProgramUniform2ui64ARB"sv);
@@ -308,7 +341,10 @@ requires(semantic::concepts::Span<span_const_vec_2_u64>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform2ui64vARB)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform2ui64vARB(
         program,
@@ -336,7 +372,10 @@ requires(semantic::concepts::Vector<vec_3_i64, i64, 3>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform3i64ARB)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform3i64ARB(program, location, x.x(), x.y(), x.z());
     detail::error_check("ProgramUniform3i64ARB"sv);
@@ -360,7 +399,10 @@ requires(semantic::concepts::Span<span_const_vec_3_i64>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform3i64vARB)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform3i64vARB(
         program,
@@ -388,7 +430,10 @@ requires(semantic::concepts::Vector<vec_3_u64, u64, 3>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform3ui64ARB)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform3ui64ARB(program, location, x.x(), x.y(), x.z());
     detail::error_check("ProgramUniform3ui64ARB"sv);
@@ -412,7 +457,10 @@ requires(semantic::concepts::Span<span_const_vec_3_u64>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform3ui64vARB)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform3ui64vARB(
         program,
@@ -441,7 +489,10 @@ requires(semantic::concepts::Vector<vec_4_i64, i64, 4>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform4i64ARB)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform4i64ARB(program, location, x.x(), x.y(), x.z(), x.w());
     detail::error_check("ProgramUniform4i64ARB"sv);
@@ -465,7 +516,10 @@ requires(semantic::concepts::Span<span_const_vec_4_i64>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform4i64vARB)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform4i64vARB(
         program,
@@ -494,7 +548,10 @@ requires(semantic::concepts::Vector<vec_4_u64, u64, 4>)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform4ui64ARB)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform4ui64ARB(program, location, x.x(), x.y(), x.z(), x.w());
     detail::error_check("ProgramUniform4ui64ARB"sv);
@@ -518,7 +575,10 @@ requires(semantic::concepts::Span<span_const_vec_4_u64>&& semantic::concepts::
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform4ui64vARB)
-        glIsProgram(program);
+#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+        if(glIsProgram)
+            glIsProgram(program);
+#endif
     }
     glProgramUniform4ui64vARB(
         program,

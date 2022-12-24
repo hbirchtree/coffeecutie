@@ -5,28 +5,15 @@
 
 struct BlamDebugUi;
 
-using BlamDebugUiTag = Components::TaggedTypeWrapper<BlamDebugUi>;
+using BlamDebugUiManifest
+    = Components::SubsystemManifest<empty_list_t, empty_list_t, empty_list_t>;
 
-struct BlamDebugUi : Components::RestrictedSubsystem<
-                         BlamDebugUiTag,
-                         empty_list_t,
-                         empty_list_t,
-                         empty_list_t>
+struct BlamDebugUi
+    : Components::RestrictedSubsystem<BlamDebugUi, BlamDebugUiManifest>
 {
-    BlamDebugUi()
-    {
-    }
+    using type = BlamDebugUi;
 
-    BlamDebugUi& get() override
-    {
-        return *this;
-    }
-    BlamDebugUi const& get() const override
-    {
-        return *this;
-    }
-
-    virtual void start_restricted(Proxy&, time_point const&) override
+    void start_restricted(Proxy&, time_point const&)
     {
         if(ImGui::BeginMenuBar())
         {
@@ -41,9 +28,9 @@ struct BlamDebugUi : Components::RestrictedSubsystem<
 
         ImGui::DockSpace(ImGui::GetID("center"));
 
-//        ImGui::ShowDemoWindow();
+        //        ImGui::ShowDemoWindow();
     }
-    virtual void end_restricted(Proxy&, time_point const&) override
+    void end_restricted(Proxy&, time_point const&)
     {
     }
 };

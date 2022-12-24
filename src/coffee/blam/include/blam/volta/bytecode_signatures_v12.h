@@ -23,8 +23,8 @@ struct sig_t
 {
     static constexpr type_t return_type = RType;
     static constexpr auto   parameters  = std::make_tuple(Params...);
-    static constexpr size_t num_parameters =
-        std::tuple_size<decltype(parameters)>::value;
+    static constexpr size_t num_parameters
+        = std::tuple_size<decltype(parameters)>::value;
 
     static inline sig_v value = {return_type, num_parameters};
 
@@ -534,6 +534,9 @@ inline typename Getter::return_type opcode_signature(
     case o::volume_test_objects_all:
         return Getter::template get<
             sig_t<t::bool_, t::trigger_vol, t::obj_list>>();
+    case o::volume_teleport_players_not_inside:
+        return Getter::template get<
+            sig_t<t::void_, t::trigger_vol, t::cutscene_flag>>();
 
     case o::switch_bsp:
         return Getter::template get<sig_t<t::void_, t::short_>>();

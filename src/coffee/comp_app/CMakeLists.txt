@@ -10,6 +10,7 @@ coffee_library (
 
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/bundle_include>
     )
 
 target_precompile_headers ( ComponentApp PUBLIC
