@@ -35,7 +35,9 @@ type_map = {
 }
 
 type_guards = {
-    'GLdouble': 'defined(GL_VERSION_4_1)'
+    'GLdouble': 'defined(GL_VERSION_4_1)',
+    'GLint64': 'defined(GL_VERSION_4_1) || defined(GL_ES_VERSION_3_2)',
+    'GLuint64': 'defined(GL_VERSION_4_1) || defined(GL_ES_VERSION_3_2)'
 }
 
 
@@ -486,7 +488,9 @@ def add_handle_check(params: list, i: int, debug_lines: list):
     if name in map_names.keys():
         cap_name = map_names[name]
     
-    debug_lines.append(f'glIs{cap_name}({name});')
+    debug_lines.append(f'''#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+    if(glIs{cap_name}) glIs{cap_name}({name});
+#endif''')
 
 
 def preprocess_params(

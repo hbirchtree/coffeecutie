@@ -1,11 +1,10 @@
 {
-    "custom-ports": [
-        "./toolchain/vcpkg/ports/assimp-coffee",
-        "./toolchain/vcpkg/ports/discord-rpc-cf"
-    ],
     "overlay-ports": [
+        "./toolchain/vcpkg/ports/assimp",
         "./toolchain/vcpkg/ports/bullet2",
-        "./toolchain/vcpkg/ports/zlib.cmake"
+        "./toolchain/vcpkg/ports/discord-rpc",
+        "./toolchain/vcpkg/ports/ffmpeg",
+        "./toolchain/vcpkg/ports/sdl2"
     ],
     "overlay-triplets": [
         "./toolchain/vcpkg/triplets"

@@ -25,6 +25,7 @@ function identify_target()
 
 function install_dependencies()
 {
+    return
     echo "::group::Installing dependencies"
     vcpkg install \
         --x-manifest-root=${BASE_DIR} \
@@ -96,11 +97,13 @@ function native_build()
     export CONFIGURATION=${CONFIGURATION:-Debug}
     export CMAKE_SOURCE_DIR=${BASE_DIR}
     export CMAKE_INSTALL_DIR=${INSTALL_DIR:-$PWD/install}
+    export
 
     export PATH=$PATH:$TOOLCHAIN_ROOT/bin
 
     export VCPKG_ROOT=$(dirname $(readlink $(which vcpkg)))
     export VCPKG_CHAINLOAD_TOOLCHAIN_FILE=${BASE_DIR}/toolchain/cmake/Toolchains/${TOOLCHAIN_PREFIX}.toolchain.cmake
+    export VCPKG_DEP_INFO_OVERRIDE_VARS="${PLATFORM};${ARCHITECTURE#-*};${SYSROOT}"
 
     TARGET_SPEC=""
     if [ -n "${TARGET}" ]; then
@@ -109,11 +112,23 @@ function native_build()
 
     install_dependencies
 
+    if [ "${ENTER_ENV:-0}" = "1" ]; then
+        exec $SHELL
+        return
+    fi
+
     echo "::group::Configuring project"
     echo "::info::Set up for ${TOOLCHAIN_PREFIX} (${TOOLCHAIN_ROOT})"
+    PRELOAD_FILE=${BASE_DIR}/.github/cmake/${PLATFORM}-${ARCHITECTURE}-${SYSROOT}.preload.cmake
+    echo "::info::Using preload ${PRELOAD_FILE}"
+
+    if [ ! -f $PRELOAD_FILE ]; then
+        echo "::error::Preload file not found"
+        return
+    fi
     cmake \
         -GNinja \
-        -C${BASE_DIR}/.github/cmake/${PLATFORM}-${ARCHITECTURE}.preload.cmake \
+        -C${PRELOAD_FILE} \
         -DCMAKE_C_COMPILER=${TOOLCHAIN_ROOT}/bin/${ARCHITECTURE}-gcc \
         -DCMAKE_CXX_COMPILER=${TOOLCHAIN_ROOT}/bin/${ARCHITECTURE}-g++ \
         -DCMAKE_INSTALL_PREFIX=$PWD/install \
@@ -122,9 +137,8 @@ function native_build()
         -DTOOLCHAIN_ROOT="${TOOLCHAIN_ROOT}" \
         -DTOOLCHAIN_PREFIX=${TOOLCHAIN_PREFIX} \
         -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=${VCPKG_CHAINLOAD_TOOLCHAIN_FILE} \
-        -DVCPKG_OVERLAY_PORTS=${BASE_DIR}/toolchain/vcpkg/ports \
-        -DVCPKG_OVERLAY_TRIPLETS=${BASE_DIR}/toolchain/vcpkg/triplets \
-        -DVCPKG_TARGET_TRIPLET=${TOOLCHAIN_PREFIX} \
+        -DVCPKG_DEP_INFO_OVERRIDE_VARS=${VCPKG_DEP_INFO_OVERRIDE_VARS} \
+        -DVCPKG_TARGET_TRIPLET=${PLATFORM}-${TOOLCHAIN_PREFIX} \
         ${BASE_DIR} ${@:2}
     echo "::endgroup::"
 
@@ -154,9 +168,20 @@ function emscripten_build()
         emsdk/emsdk install $SELECTED_VERSION
         emsdk/emsdk activate $SELECTED_VERSION
         echo "::endgroup::"
+    else
+        echo "::info::Using compiler on disk"
+                echo "::endgroup::"
     fi
 
+    echo "::group::Toolchain versions"
+    echo "::info::emsdk version: $(emsdk/emsdk list | grep INSTALLED | head -1 | awk '{print $1}')"
+    echo "::info::clang version: $(emsdk/upstream/bin/clang --version | head -1 | awk '{print $3}')"
+    echo "::info::node version: $(emsdk/emsdk list | grep node- | grep INSTALLED | head -1 | awk '{print $2}' | cut -d'-' -f2)"
+    echo "::endgroup::"
+
+    echo "::group::Setting up emsdk environment"
     source $TOOLCHAIN_ROOT/emsdk_env.sh
+    echo "::endgroup::"
     echo "::info::Set up for ${PLATFORM}:${ARCHITECTURE}:${SYSROOT} (${TOOLCHAIN_ROOT})"
     export TOOLCHAIN_ROOT=$TOOLCHAIN_ROOT
     export TOOLCHAIN_PREFIX=${ARCHITECTURE}
@@ -171,16 +196,27 @@ function emscripten_build()
 
     install_dependencies
 
+    if [ "${ENTER_ENV:-0}" = "1" ]; then
+        exec $SHELL
+        return
+    fi
+
     echo "::group::Configuring project"
+    echo "::info::Set up for ${TOOLCHAIN_PREFIX} (${TOOLCHAIN_ROOT})"
+    PRELOAD_FILE=${BASE_DIR}/.github/cmake/${PLATFORM}-${ARCHITECTURE}-${SYSROOT}.preload.cmake
+    echo "::info::Using preload ${PRELOAD_FILE}"
+
+    if [ ! -f $PRELOAD_FILE ]; then
+        echo "::error::Preload file not found"
+        return
+    fi
     cmake \
         -GNinja \
-        -C${BASE_DIR}/.github/cmake/${ARCHITECTURE}-${SYSROOT}.preload.cmake \
+        -C${BASE_DIR}/.github/cmake/${PLATFORM}-${ARCHITECTURE}-${SYSROOT}.preload.cmake \
         -DCMAKE_INSTALL_PREFIX=$PWD/install \
         -DCMAKE_MAKE_PROGRAM=$(which ninja) \
         -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake \
         -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=${VCPKG_CHAINLOAD_TOOLCHAIN_FILE} \
-        -DVCPKG_OVERLAY_PORTS=${BASE_DIR}/toolchain/vcpkg/ports \
-        -DVCPKG_OVERLAY_TRIPLETS=${BASE_DIR}/toolchain/vcpkg/triplets \
         -DVCPKG_TARGET_TRIPLET=${TOOLCHAIN_PREFIX} \
         ${BASE_DIR} ${@:2}
     echo "::endgroup::"
@@ -213,6 +249,11 @@ function xcode_build()
 
     install_dependencies
 
+    if [ "${ENTER_ENV:-0}" = "1" ]; then
+        exec $SHELL
+        return
+    fi
+
     echo "::group::Configuring project"
     if [[ "${ARCHITECTURE}" = *ios ]]; then
         echo "::info::Doing iOS build"
@@ -222,8 +263,6 @@ function xcode_build()
             -DCMAKE_INSTALL_PREFIX=$PWD/install \
             -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake \
             -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=${BASE_DIR}/toolchain/cmake/Toolchains/all-ios.toolchain.cmake \
-            -DVCPKG_OVERLAY_PORTS=${BASE_DIR}/toolchain/vcpkg/ports \
-            -DVCPKG_OVERLAY_TRIPLETS=${BASE_DIR}/toolchain/vcpkg/triplets \
             -DVCPKG_TARGET_TRIPLET=${TOOLCHAIN_PREFIX} \
             -DIOS_PLATFORM=${PLATFORM} \
             ${BASE_DIR} ${@:2}
@@ -234,8 +273,6 @@ function xcode_build()
             -C${BASE_DIR}/.github/cmake/${ARCHITECTURE}.preload.cmake \
             -DCMAKE_INSTALL_PREFIX=$PWD/install \
             -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake \
-            -DVCPKG_OVERLAY_PORTS=${BASE_DIR}/toolchain/vcpkg/ports \
-            -DVCPKG_OVERLAY_TRIPLETS=${BASE_DIR}/toolchain/vcpkg/triplets \
             -DVCPKG_TARGET_TRIPLET=${TOOLCHAIN_PREFIX} \
             ${BASE_DIR} ${@:2}
     fi
@@ -263,6 +300,7 @@ function android_build()
     ANDROID_API_LEVEL=android-${SYSROOT:-28}
 
     echo " * Selected platform ${PLATFORM}:${ARCHITECTURE}:${SYSROOT}"
+    echo " * Selected vcpkg triplet ${TOOLCHAIN_PREFIX}"
     echo " * Selected Android NDK ${ANDROID_NDK} ($(cat ${ANDROID_NDK}/source.properties | grep Pkg.Revision | cut -d= -f2))"
     echo " * Selected Android SDK ${ANDROID_SDK}"
 
@@ -272,32 +310,44 @@ function android_build()
 
     export VCPKG_ROOT=$(dirname $(readlink $(which vcpkg)))
     export VCPKG_CHAINLOAD_TOOLCHAIN_FILE=${ANDROID_NDK}/build/cmake/android.toolchain.cmake
+    export VCPKG_TARGET_TRIPLET=${TOOLCHAIN_PREFIX}
 
     TARGET_SPEC=""
     if [ -n "${TARGET}" ]; then
         TARGET_SPEC="--target ${TARGET}"
     fi
 
-    #install_dependencies
+    if [ "${ENTER_ENV:-0}" = "1" ]; then
+        exec $SHELL
+        return
+    fi
 
     echo "::group::Configuring project"
     echo "::info::Set up for ${TOOLCHAIN_PREFIX} (${TOOLCHAIN_ROOT})"
+    PRELOAD_FILE=${BASE_DIR}/.github/cmake/${PLATFORM}-${ARCHITECTURE}-${SYSROOT}.preload.cmake
+    echo "::info::Using preload ${PRELOAD_FILE}"
+
+    if [ ! -f $PRELOAD_FILE ]; then
+        echo "::error::Preload file not found"
+        return
+    fi
     cmake_debug \
         -GNinja \
-        -C${BASE_DIR}/.github/cmake/${PLATFORM}-${ARCHITECTURE}.preload.cmake \
+        -C${BASE_DIR}/.github/cmake/${PLATFORM}-${ARCHITECTURE}-${SYSROOT}.preload.cmake \
         -DANDROID_SDK=${ANDROID_SDK} \
         -DANDROID_NDK=${ANDROID_NDK} \
+        -DCMAKE_MAKE_PROGRAM=$(which ninja) \
         -DCMAKE_INSTALL_PREFIX=$PWD/install \
-        -DVCPKG_OVERLAY_PORTS=${BASE_DIR}/toolchain/vcpkg/ports \
-        -DVCPKG_OVERLAY_TRIPLETS=${BASE_DIR}/toolchain/vcpkg/triplets \
         -DVCPKG_TARGET_TRIPLET=${TOOLCHAIN_PREFIX} \
         -DANDROID_PLATFORM=${ANDROID_API_LEVEL} \
+        -DVCPKG_CMAKE_SYSTEM_VERSION=${SYSROOT:-28} \
+        -DVCPKG_CRT_LINKAGE=static \
+        -DVCPKG_LIBRARY_LINKAGE=static \
         -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/toolchains/android.cmake \
         -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake \
         ${BASE_DIR} ${@:2}
     echo "::endgroup::"
         #-DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=${VCPKG_CHAINLOAD_TOOLCHAIN_FILE} \
-        #-DANDROID_ABI=${ARCHITECTURE} \
 
     echo "::group::Building project"
     cmake --build . ${TARGET_SPEC}

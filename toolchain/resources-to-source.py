@@ -41,13 +41,13 @@ if __name__ == '__main__':
     with open(args.output, 'w+') as output:
         output.write(
 '''#include <array>
-#if __cplusplus__ >= 201703L
 #include <string_view>
-#endif
 
 #include <platforms/embed/file.h>
 
-static const std::array<const unsigned char, %s> embed_vfs_data = {{''' % total_vfs_length)
+using namespace std::string_view_literals;
+
+static const std::array<const libc_types::u8, %s> embed_vfs_data = {{''' % total_vfs_length)
         offset = 0
 
         descriptors = []
@@ -70,38 +70,41 @@ static const std::array<const unsigned char, %s> embed_vfs_data = {{''' % total_
                     output.write('0x%02x,' % b)
                 output.write('\n\n    ')
                 for i in range(padding(content_len)):
-                    output.write('0x0,' % b)
+                    if i == 0:
+                        output.write('/* padding */ ')
+                    output.write('0x0,')
 
         output.write('''
 }};
 
-static const std::array<platform::file::embed::data_descriptor_t,''' + '{}'.format(len(files)) + '''> embed_vfs_descriptors = {{
+static const std::array<platform::file::embed::data_descriptor_t,''' + str(len(files)) + '''> embed_vfs_descriptors = {{
 ''')
         for desc in descriptors:
-            output.write('    {"%s", %s, %s},\n' % desc)
+            output.write('    {"%s"sv, %s, %s},\n' % desc)
 
         output.write('''
 }};
 
 namespace platform::file::embed {
 
-bool embeds_enabled = true;
+const bool embeds_enabled = true;
 
-bool file_lookup(file_reference_t query, semantic::BytesConst& data)
+namespace detail {
+
+semantic::Span<const data_descriptor_t> files_listing()
 {
-    auto it = std::find_if(
-        embed_vfs_descriptors.begin(),
-        embed_vfs_descriptors.end(),
-        [query](data_descriptor_t const& e) {
-            return std::string(e.name) == query;
-        });
-
-    if(it == embed_vfs_descriptors.end())
-        return false;
-
-    data = semantic::BytesConst::ofBytes(&embed_vfs_data.at(it->offset), it->size);
-    return true;
+    if(!embeds_enabled || !embed_vfs_descriptors.size())
+        return {};
+    return semantic::Span<const data_descriptor_t>(embed_vfs_descriptors);
 }
 
+semantic::Span<const libc_types::u8> files_data()
+{
+    if(!embeds_enabled || !embed_vfs_descriptors.size())
+        return {};
+    return semantic::Span<const libc_types::u8>(embed_vfs_data);
+}
+
+} // namespace detail
 } // namespace platform::file::embed
 ''')

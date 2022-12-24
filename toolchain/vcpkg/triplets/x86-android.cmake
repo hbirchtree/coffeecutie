@@ -1,3 +1,3 @@
-include(all-android.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/all-android.cmake)
 set(VCPKG_TARGET_ARCHITECTURE x86)
-
+set(ANDROID_ABI x86 CACHE STRING "")

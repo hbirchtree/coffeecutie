@@ -7,7 +7,7 @@ index f5553e5..5cffa0c 100644
  
  # irrXML
 -  find_package(irrXML CONFIG REQUIRED)
-+  find_package(irrlicht CONFIG REQUIRED)
++
  
  # polyclipping
    find_package(polyclipping CONFIG REQUIRED)
@@ -16,7 +16,7 @@ index f5553e5..5cffa0c 100644
    TARGET_LINK_LIBRARIES(assimp
        polyclipping::polyclipping
 -      irrXML::irrXML
-+      Irrlicht
++
        minizip::minizip
        ZLIB::ZLIB
        kubazip::kubazip
@@ -59,3 +59,39 @@ index 77cfd5e..ba584a0 100644
      }
  
  private:
+
+diff --git a/contrib/CMakeLists.txt b/contrib/CMakeLists.txt
+index 77cfd5e..ba584a0 100644
+--- a/contrib/CMakeLists.txt
++++ b/contrib/CMakeLists.txt
+@@ -1,4 +1 @@
+-# Compile internal irrXML only if system is not requested
+-if( NOT SYSTEM_IRRXML )
+-    add_subdirectory(irrXML)
+-endif( NOT SYSTEM_IRRXML )
++
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index dcafb649f..82c71bdac 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -551,6 +551,20 @@ ELSE (ASSIMP_BUILD_NONFREE_C4D_IMPORTER)
+   ADD_DEFINITIONS( -DASSIMP_BUILD_NO_C4D_IMPORTER )
+ ENDIF (ASSIMP_BUILD_NONFREE_C4D_IMPORTER)
+ 
++ADD_DEFINITIONS(
++    -DASSIMP_BUILD_NO_3DS_IMPORTER
++    -DASSIMP_BUILD_NO_3MF_EXPORTER
++    -DASSIMP_BUILD_NO_3MF_IMPORTER
++    -DASSIMP_BUILD_NO_AMF_IMPORTER
++    -DASSIMP_BUILD_NO_COLLADA_EXPORTER
++    -DASSIMP_BUILD_NO_COLLADA_IMPORTER
++    -DASSIMP_BUILD_NO_IRR_IMPORTER
++    -DASSIMP_BUILD_NO_IRRMESH_IMPORTER
++    -DASSIMP_BUILD_NO_OGRE_IMPORTER
++    -DASSIMP_BUILD_NO_X3D_IMPORTER
++    -DASSIMP_BUILD_NO_XGL_IMPORTER
++    )
++
+ IF(NOT HUNTER_ENABLED)
+   ADD_SUBDIRECTORY(contrib)
+ ENDIF(NOT HUNTER_ENABLED)

@@ -9,7 +9,7 @@ include ( BuildPackaging )
 
 function(COFFEE_TEST)
     # If a platform does not support simple testing, drop out here
-    if(WIN_UWP)
+    if(WIN_UWP OR ANDROID)
         return()
     endif()
 

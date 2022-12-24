@@ -1,12 +1,13 @@
 apply plugin: 'com.android.application'
+apply plugin: 'org.jetbrains.kotlin.android'
 
 android {
     compileSdkVersion @ANDROID_API_TARGET@
-    ndkVersion "@ANDROID_NDK_VER@"
-    buildToolsVersion "@ANDROID_BUILD_TOOLS_VER@"
+    ndkVersion '@ANDROID_NDK_VER@'
+    buildToolsVersion '@ANDROID_BUILD_TOOLS_VER@'
 
     defaultConfig {
-        applicationId "@ANDROID_PACKAGE_NAME@"
+        applicationId '@ANDROID_PACKAGE_NAME@'
         minSdkVersion @ANDROID_API_MIN_TARGET@
         targetSdkVersion @ANDROID_API_TARGET@
     }
@@ -22,5 +23,5 @@ android {
             debuggable true
         }
     }
-    namespace "@ANDROID_PACKAGE_NAME@"
+    namespace '@ANDROID_PACKAGE_NAME@'
 }
