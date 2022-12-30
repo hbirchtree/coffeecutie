@@ -44,7 +44,7 @@ struct map_container
 
             zlib_error_code ec;
             Zlib::Decompress(
-                compressed_segment,
+                compressed_segment.view,
                 &decompressed_region,
                 Zlib::Opts(10_MB, 5, decompressed_region.size),
                 ec);

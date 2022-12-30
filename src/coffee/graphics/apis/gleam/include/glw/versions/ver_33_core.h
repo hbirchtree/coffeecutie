@@ -1,13 +1,16 @@
 #ifdef GL_VERSION_3_3
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<3, 3>>)
-    /*!
-     * \brief Wraps around glBindFragDataLocationIndexed. Introduced in GL
-     * core 3.3 \param program GLuint \param colorNumber GLuint \param index
-     * GLuint \param name const GLchar * \return void
-     */
-    STATICINLINE void bind_frag_data_location_indexed(
-        u32 program, u32 colorNumber, u32 index, std::string_view const& name)
+/*!
+ * \brief Wraps around glBindFragDataLocationIndexed. Introduced in GL core 3.3
+ * \param program GLuint
+ * \param colorNumber GLuint
+ * \param index GLuint
+ * \param name const GLchar *
+ * \return void
+ */
+STATICINLINE void bind_frag_data_location_indexed(
+    u32 program, u32 colorNumber, u32 index, std::string_view const& name)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -24,13 +27,13 @@ requires(MinimumVersion<Current, Version<3, 3>>)
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<3, 3>>)
-    /*!
-     * \brief Wraps around glGetFragDataIndex. Introduced in GL core 3.3
-     * \param program GLuint
-     * \param name const GLchar *
-     * \return GLint
-     */
-    STATICINLINE GLint
+/*!
+ * \brief Wraps around glGetFragDataIndex. Introduced in GL core 3.3
+ * \param program GLuint
+ * \param name const GLchar *
+ * \return GLint
+ */
+STATICINLINE GLint
     get_frag_data_index(u32 program, std::string_view const& name)
 {
     using namespace std::string_view_literals;
@@ -49,13 +52,13 @@ requires(MinimumVersion<Current, Version<3, 3>>)
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<3, 3>>)
-    /*!
-     * \brief Wraps around glBindSampler. Introduced in GL core 3.3
-     * \param unit GLuint
-     * \param sampler GLuint
-     * \return void
-     */
-    STATICINLINE void bind_sampler(u32 unit, u32 sampler)
+/*!
+ * \brief Wraps around glBindSampler. Introduced in GL core 3.3
+ * \param unit GLuint
+ * \param sampler GLuint
+ * \return void
+ */
+STATICINLINE void bind_sampler(u32 unit, u32 sampler)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -71,17 +74,19 @@ requires(MinimumVersion<Current, Version<3, 3>>)
 }
 
 template<class span_const_u32>
-requires(MinimumVersion<Current, Version<3, 3>>&&
-             semantic::concepts::Span<span_const_u32>&& std::is_same_v<
-                 std::decay_t<typename span_const_u32::value_type>,
-                 std::decay_t<u32>>)
-    /*!
-     * \brief Wraps around glDeleteSamplers. Introduced in GL core 3.3
-     * \param count GLsizei
-     * \param samplers const GLuint *
-     * \return void
-     */
-    STATICINLINE void delete_samplers(span_const_u32 const& samplers)
+requires(
+    MinimumVersion<Current, Version<3, 3>> &&
+    semantic::concepts::Span<span_const_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_u32::value_type>,
+        std::decay_t<u32>>)
+/*!
+ * \brief Wraps around glDeleteSamplers. Introduced in GL core 3.3
+ * \param count GLsizei
+ * \param samplers const GLuint *
+ * \return void
+ */
+STATICINLINE void delete_samplers(span_const_u32 const& samplers)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -96,17 +101,19 @@ requires(MinimumVersion<Current, Version<3, 3>>&&
 }
 
 template<class span_u32>
-requires(MinimumVersion<Current, Version<3, 3>>&&
-             semantic::concepts::Span<span_u32>&& std::is_same_v<
-                 std::decay_t<typename span_u32::value_type>,
-                 std::decay_t<u32>>)
-    /*!
-     * \brief Wraps around glGenSamplers. Introduced in GL core 3.3
-     * \param count GLsizei
-     * \param samplers GLuint *
-     * \return void
-     */
-    STATICINLINE void gen_samplers(span_u32 samplers)
+requires(
+    MinimumVersion<Current, Version<3, 3>> &&
+    semantic::concepts::Span<span_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_u32::value_type>,
+        std::decay_t<u32>>)
+/*!
+ * \brief Wraps around glGenSamplers. Introduced in GL core 3.3
+ * \param count GLsizei
+ * \param samplers GLuint *
+ * \return void
+ */
+STATICINLINE void gen_samplers(span_u32 samplers)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -120,19 +127,21 @@ requires(MinimumVersion<Current, Version<3, 3>>&&
 }
 
 template<class span_i32>
-requires(MinimumVersion<Current, Version<3, 3>>&&
-             semantic::concepts::Span<span_i32>&& std::is_same_v<
-                 std::decay_t<typename span_i32::value_type>,
-                 std::decay_t<i32>>)
-    /*!
-     * \brief Wraps around glGetSamplerParameterIiv. Introduced in GL core 3.3
-     * \param sampler GLuint
-     * \param pname GLenum
-     * \param params GLint *
-     * \return void
-     */
-    STATICINLINE void get_sampler_parameter_iiv(
-        u32 sampler, group::sampler_parameter_i pname, span_i32 params)
+requires(
+    MinimumVersion<Current, Version<3, 3>> &&
+    semantic::concepts::Span<span_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_i32::value_type>,
+        std::decay_t<i32>>)
+/*!
+ * \brief Wraps around glGetSamplerParameterIiv. Introduced in GL core 3.3
+ * \param sampler GLuint
+ * \param pname GLenum
+ * \param params GLint *
+ * \return void
+ */
+STATICINLINE void get_sampler_parameter_iiv(
+    u32 sampler, group::sampler_parameter_i pname, span_i32 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -151,19 +160,21 @@ requires(MinimumVersion<Current, Version<3, 3>>&&
 }
 
 template<class span_u32>
-requires(MinimumVersion<Current, Version<3, 3>>&&
-             semantic::concepts::Span<span_u32>&& std::is_same_v<
-                 std::decay_t<typename span_u32::value_type>,
-                 std::decay_t<u32>>)
-    /*!
-     * \brief Wraps around glGetSamplerParameterIuiv. Introduced in GL core 3.3
-     * \param sampler GLuint
-     * \param pname GLenum
-     * \param params GLuint *
-     * \return void
-     */
-    STATICINLINE void get_sampler_parameter_iuiv(
-        u32 sampler, group::sampler_parameter_i pname, span_u32 params)
+requires(
+    MinimumVersion<Current, Version<3, 3>> &&
+    semantic::concepts::Span<span_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_u32::value_type>,
+        std::decay_t<u32>>)
+/*!
+ * \brief Wraps around glGetSamplerParameterIuiv. Introduced in GL core 3.3
+ * \param sampler GLuint
+ * \param pname GLenum
+ * \param params GLuint *
+ * \return void
+ */
+STATICINLINE void get_sampler_parameter_iuiv(
+    u32 sampler, group::sampler_parameter_i pname, span_u32 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -182,19 +193,21 @@ requires(MinimumVersion<Current, Version<3, 3>>&&
 }
 
 template<class span_f32>
-requires(MinimumVersion<Current, Version<3, 3>>&&
-             semantic::concepts::Span<span_f32>&& std::is_same_v<
-                 std::decay_t<typename span_f32::value_type>,
-                 std::decay_t<f32>>)
-    /*!
-     * \brief Wraps around glGetSamplerParameterfv. Introduced in GL core 3.3
-     * \param sampler GLuint
-     * \param pname GLenum
-     * \param params GLfloat *
-     * \return void
-     */
-    STATICINLINE void get_sampler_parameter(
-        u32 sampler, group::sampler_parameter_f pname, span_f32 params)
+requires(
+    MinimumVersion<Current, Version<3, 3>> &&
+    semantic::concepts::Span<span_f32> &&
+    std::is_same_v<
+        std::decay_t<typename span_f32::value_type>,
+        std::decay_t<f32>>)
+/*!
+ * \brief Wraps around glGetSamplerParameterfv. Introduced in GL core 3.3
+ * \param sampler GLuint
+ * \param pname GLenum
+ * \param params GLfloat *
+ * \return void
+ */
+STATICINLINE void get_sampler_parameter(
+    u32 sampler, group::sampler_parameter_f pname, span_f32 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -213,19 +226,21 @@ requires(MinimumVersion<Current, Version<3, 3>>&&
 }
 
 template<class span_i32>
-requires(MinimumVersion<Current, Version<3, 3>>&&
-             semantic::concepts::Span<span_i32>&& std::is_same_v<
-                 std::decay_t<typename span_i32::value_type>,
-                 std::decay_t<i32>>)
-    /*!
-     * \brief Wraps around glGetSamplerParameteriv. Introduced in GL core 3.3
-     * \param sampler GLuint
-     * \param pname GLenum
-     * \param params GLint *
-     * \return void
-     */
-    STATICINLINE void get_sampler_parameter(
-        u32 sampler, group::sampler_parameter_i pname, span_i32 params)
+requires(
+    MinimumVersion<Current, Version<3, 3>> &&
+    semantic::concepts::Span<span_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_i32::value_type>,
+        std::decay_t<i32>>)
+/*!
+ * \brief Wraps around glGetSamplerParameteriv. Introduced in GL core 3.3
+ * \param sampler GLuint
+ * \param pname GLenum
+ * \param params GLint *
+ * \return void
+ */
+STATICINLINE void get_sampler_parameter(
+    u32 sampler, group::sampler_parameter_i pname, span_i32 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -245,12 +260,12 @@ requires(MinimumVersion<Current, Version<3, 3>>&&
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<3, 3>>)
-    /*!
-     * \brief Wraps around glIsSampler. Introduced in GL core 3.3
-     * \param sampler GLuint
-     * \return Boolean
-     */
-    STATICINLINE GLboolean is_sampler(u32 sampler)
+/*!
+ * \brief Wraps around glIsSampler. Introduced in GL core 3.3
+ * \param sampler GLuint
+ * \return Boolean
+ */
+STATICINLINE GLboolean is_sampler(u32 sampler)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -267,21 +282,21 @@ requires(MinimumVersion<Current, Version<3, 3>>)
 }
 
 template<class span_const_i32>
-requires(MinimumVersion<Current, Version<3, 3>>&&
-             semantic::concepts::Span<span_const_i32>&& std::is_same_v<
-                 std::decay_t<typename span_const_i32::value_type>,
-                 std::decay_t<i32>>)
-    /*!
-     * \brief Wraps around glSamplerParameterIiv. Introduced in GL core 3.3
-     * \param sampler GLuint
-     * \param pname GLenum
-     * \param param const GLint *
-     * \return void
-     */
-    STATICINLINE void sampler_parameter_iiv(
-        u32                        sampler,
-        group::sampler_parameter_i pname,
-        span_const_i32 const&      param)
+requires(
+    MinimumVersion<Current, Version<3, 3>> &&
+    semantic::concepts::Span<span_const_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_i32::value_type>,
+        std::decay_t<i32>>)
+/*!
+ * \brief Wraps around glSamplerParameterIiv. Introduced in GL core 3.3
+ * \param sampler GLuint
+ * \param pname GLenum
+ * \param param const GLint *
+ * \return void
+ */
+STATICINLINE void sampler_parameter_iiv(
+    u32 sampler, group::sampler_parameter_i pname, span_const_i32 const& param)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -300,21 +315,21 @@ requires(MinimumVersion<Current, Version<3, 3>>&&
 }
 
 template<class span_const_u32>
-requires(MinimumVersion<Current, Version<3, 3>>&&
-             semantic::concepts::Span<span_const_u32>&& std::is_same_v<
-                 std::decay_t<typename span_const_u32::value_type>,
-                 std::decay_t<u32>>)
-    /*!
-     * \brief Wraps around glSamplerParameterIuiv. Introduced in GL core 3.3
-     * \param sampler GLuint
-     * \param pname GLenum
-     * \param param const GLuint *
-     * \return void
-     */
-    STATICINLINE void sampler_parameter_iuiv(
-        u32                        sampler,
-        group::sampler_parameter_i pname,
-        span_const_u32 const&      param)
+requires(
+    MinimumVersion<Current, Version<3, 3>> &&
+    semantic::concepts::Span<span_const_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_u32::value_type>,
+        std::decay_t<u32>>)
+/*!
+ * \brief Wraps around glSamplerParameterIuiv. Introduced in GL core 3.3
+ * \param sampler GLuint
+ * \param pname GLenum
+ * \param param const GLuint *
+ * \return void
+ */
+STATICINLINE void sampler_parameter_iuiv(
+    u32 sampler, group::sampler_parameter_i pname, span_const_u32 const& param)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -334,15 +349,15 @@ requires(MinimumVersion<Current, Version<3, 3>>&&
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<3, 3>>)
-    /*!
-     * \brief Wraps around glSamplerParameterf. Introduced in GL core 3.3
-     * \param sampler GLuint
-     * \param pname GLenum
-     * \param param GLfloat
-     * \return void
-     */
-    STATICINLINE void sampler_parameter(
-        u32 sampler, group::sampler_parameter_f pname, f32 param)
+/*!
+ * \brief Wraps around glSamplerParameterf. Introduced in GL core 3.3
+ * \param sampler GLuint
+ * \param pname GLenum
+ * \param param GLfloat
+ * \return void
+ */
+STATICINLINE void sampler_parameter(
+    u32 sampler, group::sampler_parameter_f pname, f32 param)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -358,21 +373,21 @@ requires(MinimumVersion<Current, Version<3, 3>>)
 }
 
 template<class span_const_f32>
-requires(MinimumVersion<Current, Version<3, 3>>&&
-             semantic::concepts::Span<span_const_f32>&& std::is_same_v<
-                 std::decay_t<typename span_const_f32::value_type>,
-                 std::decay_t<f32>>)
-    /*!
-     * \brief Wraps around glSamplerParameterfv. Introduced in GL core 3.3
-     * \param sampler GLuint
-     * \param pname GLenum
-     * \param param const GLfloat *
-     * \return void
-     */
-    STATICINLINE void sampler_parameter(
-        u32                        sampler,
-        group::sampler_parameter_f pname,
-        span_const_f32 const&      param)
+requires(
+    MinimumVersion<Current, Version<3, 3>> &&
+    semantic::concepts::Span<span_const_f32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_f32::value_type>,
+        std::decay_t<f32>>)
+/*!
+ * \brief Wraps around glSamplerParameterfv. Introduced in GL core 3.3
+ * \param sampler GLuint
+ * \param pname GLenum
+ * \param param const GLfloat *
+ * \return void
+ */
+STATICINLINE void sampler_parameter(
+    u32 sampler, group::sampler_parameter_f pname, span_const_f32 const& param)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -393,15 +408,15 @@ requires(MinimumVersion<Current, Version<3, 3>>&&
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<3, 3>>)
-    /*!
-     * \brief Wraps around glSamplerParameteri. Introduced in GL core 3.3
-     * \param sampler GLuint
-     * \param pname GLenum
-     * \param param GLint
-     * \return void
-     */
-    STATICINLINE void sampler_parameter(
-        u32 sampler, group::sampler_parameter_i pname, i32 param)
+/*!
+ * \brief Wraps around glSamplerParameteri. Introduced in GL core 3.3
+ * \param sampler GLuint
+ * \param pname GLenum
+ * \param param GLint
+ * \return void
+ */
+STATICINLINE void sampler_parameter(
+    u32 sampler, group::sampler_parameter_i pname, i32 param)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -417,21 +432,21 @@ requires(MinimumVersion<Current, Version<3, 3>>)
 }
 
 template<class span_const_i32>
-requires(MinimumVersion<Current, Version<3, 3>>&&
-             semantic::concepts::Span<span_const_i32>&& std::is_same_v<
-                 std::decay_t<typename span_const_i32::value_type>,
-                 std::decay_t<i32>>)
-    /*!
-     * \brief Wraps around glSamplerParameteriv. Introduced in GL core 3.3
-     * \param sampler GLuint
-     * \param pname GLenum
-     * \param param const GLint *
-     * \return void
-     */
-    STATICINLINE void sampler_parameter(
-        u32                        sampler,
-        group::sampler_parameter_i pname,
-        span_const_i32 const&      param)
+requires(
+    MinimumVersion<Current, Version<3, 3>> &&
+    semantic::concepts::Span<span_const_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_i32::value_type>,
+        std::decay_t<i32>>)
+/*!
+ * \brief Wraps around glSamplerParameteriv. Introduced in GL core 3.3
+ * \param sampler GLuint
+ * \param pname GLenum
+ * \param param const GLint *
+ * \return void
+ */
+STATICINLINE void sampler_parameter(
+    u32 sampler, group::sampler_parameter_i pname, span_const_i32 const& param)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -450,19 +465,21 @@ requires(MinimumVersion<Current, Version<3, 3>>&&
 }
 
 template<class span_i64>
-requires(MinimumVersion<Current, Version<3, 3>>&&
-             semantic::concepts::Span<span_i64>&& std::is_same_v<
-                 std::decay_t<typename span_i64::value_type>,
-                 std::decay_t<i64>>)
-    /*!
-     * \brief Wraps around glGetQueryObjecti64v. Introduced in GL core 3.3
-     * \param id GLuint
-     * \param pname GLenum
-     * \param params GLint64 *
-     * \return void
-     */
-    STATICINLINE void get_query_objecti64v(
-        u32 id, group::query_object_parameter_name pname, span_i64 params)
+requires(
+    MinimumVersion<Current, Version<3, 3>> &&
+    semantic::concepts::Span<span_i64> &&
+    std::is_same_v<
+        std::decay_t<typename span_i64::value_type>,
+        std::decay_t<i64>>)
+/*!
+ * \brief Wraps around glGetQueryObjecti64v. Introduced in GL core 3.3
+ * \param id GLuint
+ * \param pname GLenum
+ * \param params GLint64 *
+ * \return void
+ */
+STATICINLINE void get_query_objecti64v(
+    u32 id, group::query_object_parameter_name pname, span_i64 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -477,19 +494,21 @@ requires(MinimumVersion<Current, Version<3, 3>>&&
 }
 
 template<class span_u64>
-requires(MinimumVersion<Current, Version<3, 3>>&&
-             semantic::concepts::Span<span_u64>&& std::is_same_v<
-                 std::decay_t<typename span_u64::value_type>,
-                 std::decay_t<u64>>)
-    /*!
-     * \brief Wraps around glGetQueryObjectui64v. Introduced in GL core 3.3
-     * \param id GLuint
-     * \param pname GLenum
-     * \param params GLuint64 *
-     * \return void
-     */
-    STATICINLINE void get_query_objectui64v(
-        u32 id, group::query_object_parameter_name pname, span_u64 params)
+requires(
+    MinimumVersion<Current, Version<3, 3>> &&
+    semantic::concepts::Span<span_u64> &&
+    std::is_same_v<
+        std::decay_t<typename span_u64::value_type>,
+        std::decay_t<u64>>)
+/*!
+ * \brief Wraps around glGetQueryObjectui64v. Introduced in GL core 3.3
+ * \param id GLuint
+ * \param pname GLenum
+ * \param params GLuint64 *
+ * \return void
+ */
+STATICINLINE void get_query_objectui64v(
+    u32 id, group::query_object_parameter_name pname, span_u64 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -505,13 +524,13 @@ requires(MinimumVersion<Current, Version<3, 3>>&&
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<3, 3>>)
-    /*!
-     * \brief Wraps around glQueryCounter. Introduced in GL core 3.3
-     * \param id GLuint
-     * \param target GLenum
-     * \return void
-     */
-    STATICINLINE void query_counter(u32 id, group::query_counter_target target)
+/*!
+ * \brief Wraps around glQueryCounter. Introduced in GL core 3.3
+ * \param id GLuint
+ * \param target GLenum
+ * \return void
+ */
+STATICINLINE void query_counter(u32 id, group::query_counter_target target)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -524,13 +543,13 @@ requires(MinimumVersion<Current, Version<3, 3>>)
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<3, 3>>)
-    /*!
-     * \brief Wraps around glVertexAttribDivisor. Introduced in GL core 3.3
-     * \param index GLuint
-     * \param divisor GLuint
-     * \return void
-     */
-    STATICINLINE void vertex_attrib_divisor(u32 index, u32 divisor)
+/*!
+ * \brief Wraps around glVertexAttribDivisor. Introduced in GL core 3.3
+ * \param index GLuint
+ * \param divisor GLuint
+ * \return void
+ */
+STATICINLINE void vertex_attrib_divisor(u32 index, u32 divisor)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -543,19 +562,19 @@ requires(MinimumVersion<Current, Version<3, 3>>)
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<3, 3>>)
-    /*!
-     * \brief Wraps around glVertexAttribP1ui. Introduced in GL core 3.3
-     * \param index GLuint
-     * \param type GLenum
-     * \param normalized GLboolean
-     * \param value GLuint
-     * \return void
-     */
-    STATICINLINE void vertex_attrib_p1ui(
-        u32                               index,
-        group::vertex_attrib_pointer_type type,
-        bool                              normalized,
-        u32                               value)
+/*!
+ * \brief Wraps around glVertexAttribP1ui. Introduced in GL core 3.3
+ * \param index GLuint
+ * \param type GLenum
+ * \param normalized GLboolean
+ * \param value GLuint
+ * \return void
+ */
+STATICINLINE void vertex_attrib_p1ui(
+    u32                               index,
+    group::vertex_attrib_pointer_type type,
+    bool                              normalized,
+    u32                               value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -567,23 +586,25 @@ requires(MinimumVersion<Current, Version<3, 3>>)
 }
 
 template<class span_const_u32>
-requires(MinimumVersion<Current, Version<3, 3>>&&
-             semantic::concepts::Span<span_const_u32>&& std::is_same_v<
-                 std::decay_t<typename span_const_u32::value_type>,
-                 std::decay_t<u32>>)
-    /*!
-     * \brief Wraps around glVertexAttribP1uiv. Introduced in GL core 3.3
-     * \param index GLuint
-     * \param type GLenum
-     * \param normalized GLboolean
-     * \param value const GLuint *
-     * \return void
-     */
-    STATICINLINE void vertex_attrib_p1uiv(
-        u32                               index,
-        group::vertex_attrib_pointer_type type,
-        bool                              normalized,
-        span_const_u32 const&             value)
+requires(
+    MinimumVersion<Current, Version<3, 3>> &&
+    semantic::concepts::Span<span_const_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_u32::value_type>,
+        std::decay_t<u32>>)
+/*!
+ * \brief Wraps around glVertexAttribP1uiv. Introduced in GL core 3.3
+ * \param index GLuint
+ * \param type GLenum
+ * \param normalized GLboolean
+ * \param value const GLuint *
+ * \return void
+ */
+STATICINLINE void vertex_attrib_p1uiv(
+    u32                               index,
+    group::vertex_attrib_pointer_type type,
+    bool                              normalized,
+    span_const_u32 const&             value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -600,19 +621,19 @@ requires(MinimumVersion<Current, Version<3, 3>>&&
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<3, 3>>)
-    /*!
-     * \brief Wraps around glVertexAttribP2ui. Introduced in GL core 3.3
-     * \param index GLuint
-     * \param type GLenum
-     * \param normalized GLboolean
-     * \param value GLuint
-     * \return void
-     */
-    STATICINLINE void vertex_attrib_p2ui(
-        u32                               index,
-        group::vertex_attrib_pointer_type type,
-        bool                              normalized,
-        u32                               value)
+/*!
+ * \brief Wraps around glVertexAttribP2ui. Introduced in GL core 3.3
+ * \param index GLuint
+ * \param type GLenum
+ * \param normalized GLboolean
+ * \param value GLuint
+ * \return void
+ */
+STATICINLINE void vertex_attrib_p2ui(
+    u32                               index,
+    group::vertex_attrib_pointer_type type,
+    bool                              normalized,
+    u32                               value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -625,22 +646,23 @@ requires(MinimumVersion<Current, Version<3, 3>>)
 
 template<class span_const_vec_2_u32>
 requires(
-    MinimumVersion<Current, Version<3, 3>>&&
-        semantic::concepts::Span<span_const_vec_2_u32>&& semantic::concepts::
-            Vector<typename span_const_vec_2_u32::value_type, u32, 2>)
-    /*!
-     * \brief Wraps around glVertexAttribP2uiv. Introduced in GL core 3.3
-     * \param index GLuint
-     * \param type GLenum
-     * \param normalized GLboolean
-     * \param value const GLuint *
-     * \return void
-     */
-    STATICINLINE void vertex_attrib_p2uiv(
-        u32                               index,
-        group::vertex_attrib_pointer_type type,
-        bool                              normalized,
-        span_const_vec_2_u32 const&       value)
+    MinimumVersion<Current, Version<3, 3>> &&
+    semantic::concepts::Span<span_const_vec_2_u32> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_2_u32::value_type, u32, 2>)
+/*!
+ * \brief Wraps around glVertexAttribP2uiv. Introduced in GL core 3.3
+ * \param index GLuint
+ * \param type GLenum
+ * \param normalized GLboolean
+ * \param value const GLuint *
+ * \return void
+ */
+STATICINLINE void vertex_attrib_p2uiv(
+    u32                               index,
+    group::vertex_attrib_pointer_type type,
+    bool                              normalized,
+    span_const_vec_2_u32 const&       value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -657,19 +679,19 @@ requires(
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<3, 3>>)
-    /*!
-     * \brief Wraps around glVertexAttribP3ui. Introduced in GL core 3.3
-     * \param index GLuint
-     * \param type GLenum
-     * \param normalized GLboolean
-     * \param value GLuint
-     * \return void
-     */
-    STATICINLINE void vertex_attrib_p3ui(
-        u32                               index,
-        group::vertex_attrib_pointer_type type,
-        bool                              normalized,
-        u32                               value)
+/*!
+ * \brief Wraps around glVertexAttribP3ui. Introduced in GL core 3.3
+ * \param index GLuint
+ * \param type GLenum
+ * \param normalized GLboolean
+ * \param value GLuint
+ * \return void
+ */
+STATICINLINE void vertex_attrib_p3ui(
+    u32                               index,
+    group::vertex_attrib_pointer_type type,
+    bool                              normalized,
+    u32                               value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -682,22 +704,23 @@ requires(MinimumVersion<Current, Version<3, 3>>)
 
 template<class span_const_vec_3_u32>
 requires(
-    MinimumVersion<Current, Version<3, 3>>&&
-        semantic::concepts::Span<span_const_vec_3_u32>&& semantic::concepts::
-            Vector<typename span_const_vec_3_u32::value_type, u32, 3>)
-    /*!
-     * \brief Wraps around glVertexAttribP3uiv. Introduced in GL core 3.3
-     * \param index GLuint
-     * \param type GLenum
-     * \param normalized GLboolean
-     * \param value const GLuint *
-     * \return void
-     */
-    STATICINLINE void vertex_attrib_p3uiv(
-        u32                               index,
-        group::vertex_attrib_pointer_type type,
-        bool                              normalized,
-        span_const_vec_3_u32 const&       value)
+    MinimumVersion<Current, Version<3, 3>> &&
+    semantic::concepts::Span<span_const_vec_3_u32> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_3_u32::value_type, u32, 3>)
+/*!
+ * \brief Wraps around glVertexAttribP3uiv. Introduced in GL core 3.3
+ * \param index GLuint
+ * \param type GLenum
+ * \param normalized GLboolean
+ * \param value const GLuint *
+ * \return void
+ */
+STATICINLINE void vertex_attrib_p3uiv(
+    u32                               index,
+    group::vertex_attrib_pointer_type type,
+    bool                              normalized,
+    span_const_vec_3_u32 const&       value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -714,19 +737,19 @@ requires(
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<3, 3>>)
-    /*!
-     * \brief Wraps around glVertexAttribP4ui. Introduced in GL core 3.3
-     * \param index GLuint
-     * \param type GLenum
-     * \param normalized GLboolean
-     * \param value GLuint
-     * \return void
-     */
-    STATICINLINE void vertex_attrib_p4ui(
-        u32                               index,
-        group::vertex_attrib_pointer_type type,
-        bool                              normalized,
-        u32                               value)
+/*!
+ * \brief Wraps around glVertexAttribP4ui. Introduced in GL core 3.3
+ * \param index GLuint
+ * \param type GLenum
+ * \param normalized GLboolean
+ * \param value GLuint
+ * \return void
+ */
+STATICINLINE void vertex_attrib_p4ui(
+    u32                               index,
+    group::vertex_attrib_pointer_type type,
+    bool                              normalized,
+    u32                               value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -739,22 +762,23 @@ requires(MinimumVersion<Current, Version<3, 3>>)
 
 template<class span_const_vec_4_u32>
 requires(
-    MinimumVersion<Current, Version<3, 3>>&&
-        semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
-            Vector<typename span_const_vec_4_u32::value_type, u32, 4>)
-    /*!
-     * \brief Wraps around glVertexAttribP4uiv. Introduced in GL core 3.3
-     * \param index GLuint
-     * \param type GLenum
-     * \param normalized GLboolean
-     * \param value const GLuint *
-     * \return void
-     */
-    STATICINLINE void vertex_attrib_p4uiv(
-        u32                               index,
-        group::vertex_attrib_pointer_type type,
-        bool                              normalized,
-        span_const_vec_4_u32 const&       value)
+    MinimumVersion<Current, Version<3, 3>> &&
+    semantic::concepts::Span<span_const_vec_4_u32> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_4_u32::value_type, u32, 4>)
+/*!
+ * \brief Wraps around glVertexAttribP4uiv. Introduced in GL core 3.3
+ * \param index GLuint
+ * \param type GLenum
+ * \param normalized GLboolean
+ * \param value const GLuint *
+ * \return void
+ */
+STATICINLINE void vertex_attrib_p4uiv(
+    u32                               index,
+    group::vertex_attrib_pointer_type type,
+    bool                              normalized,
+    span_const_vec_4_u32 const&       value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -771,13 +795,13 @@ requires(
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<3, 3>>)
-    /*!
-     * \brief Wraps around glColorP3ui. Introduced in GL core 3.3
-     * \param type GLenum
-     * \param color GLuint
-     * \return void
-     */
-    STATICINLINE void color_p3ui(group::color_pointer_type type, u32 color)
+/*!
+ * \brief Wraps around glColorP3ui. Introduced in GL core 3.3
+ * \param type GLenum
+ * \param color GLuint
+ * \return void
+ */
+STATICINLINE void color_p3ui(group::color_pointer_type type, u32 color)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -790,17 +814,18 @@ requires(MinimumVersion<Current, Version<3, 3>>)
 
 template<class span_const_vec_3_u32>
 requires(
-    MinimumVersion<Current, Version<3, 3>>&&
-        semantic::concepts::Span<span_const_vec_3_u32>&& semantic::concepts::
-            Vector<typename span_const_vec_3_u32::value_type, u32, 3>)
-    /*!
-     * \brief Wraps around glColorP3uiv. Introduced in GL core 3.3
-     * \param type GLenum
-     * \param color const GLuint *
-     * \return void
-     */
-    STATICINLINE void color_p3uiv(
-        group::color_pointer_type type, span_const_vec_3_u32 const& color)
+    MinimumVersion<Current, Version<3, 3>> &&
+    semantic::concepts::Span<span_const_vec_3_u32> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_3_u32::value_type, u32, 3>)
+/*!
+ * \brief Wraps around glColorP3uiv. Introduced in GL core 3.3
+ * \param type GLenum
+ * \param color const GLuint *
+ * \return void
+ */
+STATICINLINE void color_p3uiv(
+    group::color_pointer_type type, span_const_vec_3_u32 const& color)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -815,13 +840,13 @@ requires(
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<3, 3>>)
-    /*!
-     * \brief Wraps around glColorP4ui. Introduced in GL core 3.3
-     * \param type GLenum
-     * \param color GLuint
-     * \return void
-     */
-    STATICINLINE void color_p4ui(group::color_pointer_type type, u32 color)
+/*!
+ * \brief Wraps around glColorP4ui. Introduced in GL core 3.3
+ * \param type GLenum
+ * \param color GLuint
+ * \return void
+ */
+STATICINLINE void color_p4ui(group::color_pointer_type type, u32 color)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -834,17 +859,18 @@ requires(MinimumVersion<Current, Version<3, 3>>)
 
 template<class span_const_vec_4_u32>
 requires(
-    MinimumVersion<Current, Version<3, 3>>&&
-        semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
-            Vector<typename span_const_vec_4_u32::value_type, u32, 4>)
-    /*!
-     * \brief Wraps around glColorP4uiv. Introduced in GL core 3.3
-     * \param type GLenum
-     * \param color const GLuint *
-     * \return void
-     */
-    STATICINLINE void color_p4uiv(
-        group::color_pointer_type type, span_const_vec_4_u32 const& color)
+    MinimumVersion<Current, Version<3, 3>> &&
+    semantic::concepts::Span<span_const_vec_4_u32> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_4_u32::value_type, u32, 4>)
+/*!
+ * \brief Wraps around glColorP4uiv. Introduced in GL core 3.3
+ * \param type GLenum
+ * \param color const GLuint *
+ * \return void
+ */
+STATICINLINE void color_p4uiv(
+    group::color_pointer_type type, span_const_vec_4_u32 const& color)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -859,17 +885,15 @@ requires(
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<3, 3>>)
-    /*!
-     * \brief Wraps around glMultiTexCoordP1ui. Introduced in GL core 3.3
-     * \param texture GLenum
-     * \param type GLenum
-     * \param coords GLuint
-     * \return void
-     */
-    STATICINLINE void multi_tex_coord_p1ui(
-        group::texture_unit           texture,
-        group::tex_coord_pointer_type type,
-        u32                           coords)
+/*!
+ * \brief Wraps around glMultiTexCoordP1ui. Introduced in GL core 3.3
+ * \param texture GLenum
+ * \param type GLenum
+ * \param coords GLuint
+ * \return void
+ */
+STATICINLINE void multi_tex_coord_p1ui(
+    group::texture_unit texture, group::tex_coord_pointer_type type, u32 coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -882,21 +906,23 @@ requires(MinimumVersion<Current, Version<3, 3>>)
 }
 
 template<class span_const_u32>
-requires(MinimumVersion<Current, Version<3, 3>>&&
-             semantic::concepts::Span<span_const_u32>&& std::is_same_v<
-                 std::decay_t<typename span_const_u32::value_type>,
-                 std::decay_t<u32>>)
-    /*!
-     * \brief Wraps around glMultiTexCoordP1uiv. Introduced in GL core 3.3
-     * \param texture GLenum
-     * \param type GLenum
-     * \param coords const GLuint *
-     * \return void
-     */
-    STATICINLINE void multi_tex_coord_p1uiv(
-        group::texture_unit           texture,
-        group::tex_coord_pointer_type type,
-        span_const_u32 const&         coords)
+requires(
+    MinimumVersion<Current, Version<3, 3>> &&
+    semantic::concepts::Span<span_const_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_u32::value_type>,
+        std::decay_t<u32>>)
+/*!
+ * \brief Wraps around glMultiTexCoordP1uiv. Introduced in GL core 3.3
+ * \param texture GLenum
+ * \param type GLenum
+ * \param coords const GLuint *
+ * \return void
+ */
+STATICINLINE void multi_tex_coord_p1uiv(
+    group::texture_unit           texture,
+    group::tex_coord_pointer_type type,
+    span_const_u32 const&         coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -912,17 +938,15 @@ requires(MinimumVersion<Current, Version<3, 3>>&&
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<3, 3>>)
-    /*!
-     * \brief Wraps around glMultiTexCoordP2ui. Introduced in GL core 3.3
-     * \param texture GLenum
-     * \param type GLenum
-     * \param coords GLuint
-     * \return void
-     */
-    STATICINLINE void multi_tex_coord_p2ui(
-        group::texture_unit           texture,
-        group::tex_coord_pointer_type type,
-        u32                           coords)
+/*!
+ * \brief Wraps around glMultiTexCoordP2ui. Introduced in GL core 3.3
+ * \param texture GLenum
+ * \param type GLenum
+ * \param coords GLuint
+ * \return void
+ */
+STATICINLINE void multi_tex_coord_p2ui(
+    group::texture_unit texture, group::tex_coord_pointer_type type, u32 coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -936,20 +960,21 @@ requires(MinimumVersion<Current, Version<3, 3>>)
 
 template<class span_const_vec_2_u32>
 requires(
-    MinimumVersion<Current, Version<3, 3>>&&
-        semantic::concepts::Span<span_const_vec_2_u32>&& semantic::concepts::
-            Vector<typename span_const_vec_2_u32::value_type, u32, 2>)
-    /*!
-     * \brief Wraps around glMultiTexCoordP2uiv. Introduced in GL core 3.3
-     * \param texture GLenum
-     * \param type GLenum
-     * \param coords const GLuint *
-     * \return void
-     */
-    STATICINLINE void multi_tex_coord_p2uiv(
-        group::texture_unit           texture,
-        group::tex_coord_pointer_type type,
-        span_const_vec_2_u32 const&   coords)
+    MinimumVersion<Current, Version<3, 3>> &&
+    semantic::concepts::Span<span_const_vec_2_u32> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_2_u32::value_type, u32, 2>)
+/*!
+ * \brief Wraps around glMultiTexCoordP2uiv. Introduced in GL core 3.3
+ * \param texture GLenum
+ * \param type GLenum
+ * \param coords const GLuint *
+ * \return void
+ */
+STATICINLINE void multi_tex_coord_p2uiv(
+    group::texture_unit           texture,
+    group::tex_coord_pointer_type type,
+    span_const_vec_2_u32 const&   coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -965,17 +990,15 @@ requires(
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<3, 3>>)
-    /*!
-     * \brief Wraps around glMultiTexCoordP3ui. Introduced in GL core 3.3
-     * \param texture GLenum
-     * \param type GLenum
-     * \param coords GLuint
-     * \return void
-     */
-    STATICINLINE void multi_tex_coord_p3ui(
-        group::texture_unit           texture,
-        group::tex_coord_pointer_type type,
-        u32                           coords)
+/*!
+ * \brief Wraps around glMultiTexCoordP3ui. Introduced in GL core 3.3
+ * \param texture GLenum
+ * \param type GLenum
+ * \param coords GLuint
+ * \return void
+ */
+STATICINLINE void multi_tex_coord_p3ui(
+    group::texture_unit texture, group::tex_coord_pointer_type type, u32 coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -989,20 +1012,21 @@ requires(MinimumVersion<Current, Version<3, 3>>)
 
 template<class span_const_vec_3_u32>
 requires(
-    MinimumVersion<Current, Version<3, 3>>&&
-        semantic::concepts::Span<span_const_vec_3_u32>&& semantic::concepts::
-            Vector<typename span_const_vec_3_u32::value_type, u32, 3>)
-    /*!
-     * \brief Wraps around glMultiTexCoordP3uiv. Introduced in GL core 3.3
-     * \param texture GLenum
-     * \param type GLenum
-     * \param coords const GLuint *
-     * \return void
-     */
-    STATICINLINE void multi_tex_coord_p3uiv(
-        group::texture_unit           texture,
-        group::tex_coord_pointer_type type,
-        span_const_vec_3_u32 const&   coords)
+    MinimumVersion<Current, Version<3, 3>> &&
+    semantic::concepts::Span<span_const_vec_3_u32> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_3_u32::value_type, u32, 3>)
+/*!
+ * \brief Wraps around glMultiTexCoordP3uiv. Introduced in GL core 3.3
+ * \param texture GLenum
+ * \param type GLenum
+ * \param coords const GLuint *
+ * \return void
+ */
+STATICINLINE void multi_tex_coord_p3uiv(
+    group::texture_unit           texture,
+    group::tex_coord_pointer_type type,
+    span_const_vec_3_u32 const&   coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1018,17 +1042,15 @@ requires(
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<3, 3>>)
-    /*!
-     * \brief Wraps around glMultiTexCoordP4ui. Introduced in GL core 3.3
-     * \param texture GLenum
-     * \param type GLenum
-     * \param coords GLuint
-     * \return void
-     */
-    STATICINLINE void multi_tex_coord_p4ui(
-        group::texture_unit           texture,
-        group::tex_coord_pointer_type type,
-        u32                           coords)
+/*!
+ * \brief Wraps around glMultiTexCoordP4ui. Introduced in GL core 3.3
+ * \param texture GLenum
+ * \param type GLenum
+ * \param coords GLuint
+ * \return void
+ */
+STATICINLINE void multi_tex_coord_p4ui(
+    group::texture_unit texture, group::tex_coord_pointer_type type, u32 coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1042,20 +1064,21 @@ requires(MinimumVersion<Current, Version<3, 3>>)
 
 template<class span_const_vec_4_u32>
 requires(
-    MinimumVersion<Current, Version<3, 3>>&&
-        semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
-            Vector<typename span_const_vec_4_u32::value_type, u32, 4>)
-    /*!
-     * \brief Wraps around glMultiTexCoordP4uiv. Introduced in GL core 3.3
-     * \param texture GLenum
-     * \param type GLenum
-     * \param coords const GLuint *
-     * \return void
-     */
-    STATICINLINE void multi_tex_coord_p4uiv(
-        group::texture_unit           texture,
-        group::tex_coord_pointer_type type,
-        span_const_vec_4_u32 const&   coords)
+    MinimumVersion<Current, Version<3, 3>> &&
+    semantic::concepts::Span<span_const_vec_4_u32> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_4_u32::value_type, u32, 4>)
+/*!
+ * \brief Wraps around glMultiTexCoordP4uiv. Introduced in GL core 3.3
+ * \param texture GLenum
+ * \param type GLenum
+ * \param coords const GLuint *
+ * \return void
+ */
+STATICINLINE void multi_tex_coord_p4uiv(
+    group::texture_unit           texture,
+    group::tex_coord_pointer_type type,
+    span_const_vec_4_u32 const&   coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1071,13 +1094,13 @@ requires(
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<3, 3>>)
-    /*!
-     * \brief Wraps around glNormalP3ui. Introduced in GL core 3.3
-     * \param type GLenum
-     * \param coords GLuint
-     * \return void
-     */
-    STATICINLINE void normal_p3ui(group::normal_pointer_type type, u32 coords)
+/*!
+ * \brief Wraps around glNormalP3ui. Introduced in GL core 3.3
+ * \param type GLenum
+ * \param coords GLuint
+ * \return void
+ */
+STATICINLINE void normal_p3ui(group::normal_pointer_type type, u32 coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1090,17 +1113,18 @@ requires(MinimumVersion<Current, Version<3, 3>>)
 
 template<class span_const_vec_3_u32>
 requires(
-    MinimumVersion<Current, Version<3, 3>>&&
-        semantic::concepts::Span<span_const_vec_3_u32>&& semantic::concepts::
-            Vector<typename span_const_vec_3_u32::value_type, u32, 3>)
-    /*!
-     * \brief Wraps around glNormalP3uiv. Introduced in GL core 3.3
-     * \param type GLenum
-     * \param coords const GLuint *
-     * \return void
-     */
-    STATICINLINE void normal_p3uiv(
-        group::normal_pointer_type type, span_const_vec_3_u32 const& coords)
+    MinimumVersion<Current, Version<3, 3>> &&
+    semantic::concepts::Span<span_const_vec_3_u32> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_3_u32::value_type, u32, 3>)
+/*!
+ * \brief Wraps around glNormalP3uiv. Introduced in GL core 3.3
+ * \param type GLenum
+ * \param coords const GLuint *
+ * \return void
+ */
+STATICINLINE void normal_p3uiv(
+    group::normal_pointer_type type, span_const_vec_3_u32 const& coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1115,13 +1139,13 @@ requires(
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<3, 3>>)
-    /*!
-     * \brief Wraps around glSecondaryColorP3ui. Introduced in GL core 3.3
-     * \param type GLenum
-     * \param color GLuint
-     * \return void
-     */
-    STATICINLINE
+/*!
+ * \brief Wraps around glSecondaryColorP3ui. Introduced in GL core 3.3
+ * \param type GLenum
+ * \param color GLuint
+ * \return void
+ */
+STATICINLINE
     void secondary_color_p3ui(group::color_pointer_type type, u32 color)
 {
     using namespace std::string_view_literals;
@@ -1135,17 +1159,18 @@ requires(MinimumVersion<Current, Version<3, 3>>)
 
 template<class span_const_vec_3_u32>
 requires(
-    MinimumVersion<Current, Version<3, 3>>&&
-        semantic::concepts::Span<span_const_vec_3_u32>&& semantic::concepts::
-            Vector<typename span_const_vec_3_u32::value_type, u32, 3>)
-    /*!
-     * \brief Wraps around glSecondaryColorP3uiv. Introduced in GL core 3.3
-     * \param type GLenum
-     * \param color const GLuint *
-     * \return void
-     */
-    STATICINLINE void secondary_color_p3uiv(
-        group::color_pointer_type type, span_const_vec_3_u32 const& color)
+    MinimumVersion<Current, Version<3, 3>> &&
+    semantic::concepts::Span<span_const_vec_3_u32> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_3_u32::value_type, u32, 3>)
+/*!
+ * \brief Wraps around glSecondaryColorP3uiv. Introduced in GL core 3.3
+ * \param type GLenum
+ * \param color const GLuint *
+ * \return void
+ */
+STATICINLINE void secondary_color_p3uiv(
+    group::color_pointer_type type, span_const_vec_3_u32 const& color)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1160,14 +1185,13 @@ requires(
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<3, 3>>)
-    /*!
-     * \brief Wraps around glTexCoordP1ui. Introduced in GL core 3.3
-     * \param type GLenum
-     * \param coords GLuint
-     * \return void
-     */
-    STATICINLINE
-    void tex_coord_p1ui(group::tex_coord_pointer_type type, u32 coords)
+/*!
+ * \brief Wraps around glTexCoordP1ui. Introduced in GL core 3.3
+ * \param type GLenum
+ * \param coords GLuint
+ * \return void
+ */
+STATICINLINE void tex_coord_p1ui(group::tex_coord_pointer_type type, u32 coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1179,18 +1203,20 @@ requires(MinimumVersion<Current, Version<3, 3>>)
 }
 
 template<class span_const_u32>
-requires(MinimumVersion<Current, Version<3, 3>>&&
-             semantic::concepts::Span<span_const_u32>&& std::is_same_v<
-                 std::decay_t<typename span_const_u32::value_type>,
-                 std::decay_t<u32>>)
-    /*!
-     * \brief Wraps around glTexCoordP1uiv. Introduced in GL core 3.3
-     * \param type GLenum
-     * \param coords const GLuint *
-     * \return void
-     */
-    STATICINLINE void tex_coord_p1uiv(
-        group::tex_coord_pointer_type type, span_const_u32 const& coords)
+requires(
+    MinimumVersion<Current, Version<3, 3>> &&
+    semantic::concepts::Span<span_const_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_u32::value_type>,
+        std::decay_t<u32>>)
+/*!
+ * \brief Wraps around glTexCoordP1uiv. Introduced in GL core 3.3
+ * \param type GLenum
+ * \param coords const GLuint *
+ * \return void
+ */
+STATICINLINE void tex_coord_p1uiv(
+    group::tex_coord_pointer_type type, span_const_u32 const& coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1205,14 +1231,13 @@ requires(MinimumVersion<Current, Version<3, 3>>&&
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<3, 3>>)
-    /*!
-     * \brief Wraps around glTexCoordP2ui. Introduced in GL core 3.3
-     * \param type GLenum
-     * \param coords GLuint
-     * \return void
-     */
-    STATICINLINE
-    void tex_coord_p2ui(group::tex_coord_pointer_type type, u32 coords)
+/*!
+ * \brief Wraps around glTexCoordP2ui. Introduced in GL core 3.3
+ * \param type GLenum
+ * \param coords GLuint
+ * \return void
+ */
+STATICINLINE void tex_coord_p2ui(group::tex_coord_pointer_type type, u32 coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1225,17 +1250,18 @@ requires(MinimumVersion<Current, Version<3, 3>>)
 
 template<class span_const_vec_2_u32>
 requires(
-    MinimumVersion<Current, Version<3, 3>>&&
-        semantic::concepts::Span<span_const_vec_2_u32>&& semantic::concepts::
-            Vector<typename span_const_vec_2_u32::value_type, u32, 2>)
-    /*!
-     * \brief Wraps around glTexCoordP2uiv. Introduced in GL core 3.3
-     * \param type GLenum
-     * \param coords const GLuint *
-     * \return void
-     */
-    STATICINLINE void tex_coord_p2uiv(
-        group::tex_coord_pointer_type type, span_const_vec_2_u32 const& coords)
+    MinimumVersion<Current, Version<3, 3>> &&
+    semantic::concepts::Span<span_const_vec_2_u32> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_2_u32::value_type, u32, 2>)
+/*!
+ * \brief Wraps around glTexCoordP2uiv. Introduced in GL core 3.3
+ * \param type GLenum
+ * \param coords const GLuint *
+ * \return void
+ */
+STATICINLINE void tex_coord_p2uiv(
+    group::tex_coord_pointer_type type, span_const_vec_2_u32 const& coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1250,14 +1276,13 @@ requires(
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<3, 3>>)
-    /*!
-     * \brief Wraps around glTexCoordP3ui. Introduced in GL core 3.3
-     * \param type GLenum
-     * \param coords GLuint
-     * \return void
-     */
-    STATICINLINE
-    void tex_coord_p3ui(group::tex_coord_pointer_type type, u32 coords)
+/*!
+ * \brief Wraps around glTexCoordP3ui. Introduced in GL core 3.3
+ * \param type GLenum
+ * \param coords GLuint
+ * \return void
+ */
+STATICINLINE void tex_coord_p3ui(group::tex_coord_pointer_type type, u32 coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1270,17 +1295,18 @@ requires(MinimumVersion<Current, Version<3, 3>>)
 
 template<class span_const_vec_3_u32>
 requires(
-    MinimumVersion<Current, Version<3, 3>>&&
-        semantic::concepts::Span<span_const_vec_3_u32>&& semantic::concepts::
-            Vector<typename span_const_vec_3_u32::value_type, u32, 3>)
-    /*!
-     * \brief Wraps around glTexCoordP3uiv. Introduced in GL core 3.3
-     * \param type GLenum
-     * \param coords const GLuint *
-     * \return void
-     */
-    STATICINLINE void tex_coord_p3uiv(
-        group::tex_coord_pointer_type type, span_const_vec_3_u32 const& coords)
+    MinimumVersion<Current, Version<3, 3>> &&
+    semantic::concepts::Span<span_const_vec_3_u32> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_3_u32::value_type, u32, 3>)
+/*!
+ * \brief Wraps around glTexCoordP3uiv. Introduced in GL core 3.3
+ * \param type GLenum
+ * \param coords const GLuint *
+ * \return void
+ */
+STATICINLINE void tex_coord_p3uiv(
+    group::tex_coord_pointer_type type, span_const_vec_3_u32 const& coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1295,14 +1321,13 @@ requires(
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<3, 3>>)
-    /*!
-     * \brief Wraps around glTexCoordP4ui. Introduced in GL core 3.3
-     * \param type GLenum
-     * \param coords GLuint
-     * \return void
-     */
-    STATICINLINE
-    void tex_coord_p4ui(group::tex_coord_pointer_type type, u32 coords)
+/*!
+ * \brief Wraps around glTexCoordP4ui. Introduced in GL core 3.3
+ * \param type GLenum
+ * \param coords GLuint
+ * \return void
+ */
+STATICINLINE void tex_coord_p4ui(group::tex_coord_pointer_type type, u32 coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1315,17 +1340,18 @@ requires(MinimumVersion<Current, Version<3, 3>>)
 
 template<class span_const_vec_4_u32>
 requires(
-    MinimumVersion<Current, Version<3, 3>>&&
-        semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
-            Vector<typename span_const_vec_4_u32::value_type, u32, 4>)
-    /*!
-     * \brief Wraps around glTexCoordP4uiv. Introduced in GL core 3.3
-     * \param type GLenum
-     * \param coords const GLuint *
-     * \return void
-     */
-    STATICINLINE void tex_coord_p4uiv(
-        group::tex_coord_pointer_type type, span_const_vec_4_u32 const& coords)
+    MinimumVersion<Current, Version<3, 3>> &&
+    semantic::concepts::Span<span_const_vec_4_u32> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_4_u32::value_type, u32, 4>)
+/*!
+ * \brief Wraps around glTexCoordP4uiv. Introduced in GL core 3.3
+ * \param type GLenum
+ * \param coords const GLuint *
+ * \return void
+ */
+STATICINLINE void tex_coord_p4uiv(
+    group::tex_coord_pointer_type type, span_const_vec_4_u32 const& coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1340,13 +1366,13 @@ requires(
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<3, 3>>)
-    /*!
-     * \brief Wraps around glVertexP2ui. Introduced in GL core 3.3
-     * \param type GLenum
-     * \param value GLuint
-     * \return void
-     */
-    STATICINLINE void vertex_p2ui(group::vertex_pointer_type type, u32 value)
+/*!
+ * \brief Wraps around glVertexP2ui. Introduced in GL core 3.3
+ * \param type GLenum
+ * \param value GLuint
+ * \return void
+ */
+STATICINLINE void vertex_p2ui(group::vertex_pointer_type type, u32 value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1359,17 +1385,18 @@ requires(MinimumVersion<Current, Version<3, 3>>)
 
 template<class span_const_vec_2_u32>
 requires(
-    MinimumVersion<Current, Version<3, 3>>&&
-        semantic::concepts::Span<span_const_vec_2_u32>&& semantic::concepts::
-            Vector<typename span_const_vec_2_u32::value_type, u32, 2>)
-    /*!
-     * \brief Wraps around glVertexP2uiv. Introduced in GL core 3.3
-     * \param type GLenum
-     * \param value const GLuint *
-     * \return void
-     */
-    STATICINLINE void vertex_p2uiv(
-        group::vertex_pointer_type type, span_const_vec_2_u32 const& value)
+    MinimumVersion<Current, Version<3, 3>> &&
+    semantic::concepts::Span<span_const_vec_2_u32> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_2_u32::value_type, u32, 2>)
+/*!
+ * \brief Wraps around glVertexP2uiv. Introduced in GL core 3.3
+ * \param type GLenum
+ * \param value const GLuint *
+ * \return void
+ */
+STATICINLINE void vertex_p2uiv(
+    group::vertex_pointer_type type, span_const_vec_2_u32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1384,13 +1411,13 @@ requires(
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<3, 3>>)
-    /*!
-     * \brief Wraps around glVertexP3ui. Introduced in GL core 3.3
-     * \param type GLenum
-     * \param value GLuint
-     * \return void
-     */
-    STATICINLINE void vertex_p3ui(group::vertex_pointer_type type, u32 value)
+/*!
+ * \brief Wraps around glVertexP3ui. Introduced in GL core 3.3
+ * \param type GLenum
+ * \param value GLuint
+ * \return void
+ */
+STATICINLINE void vertex_p3ui(group::vertex_pointer_type type, u32 value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1403,17 +1430,18 @@ requires(MinimumVersion<Current, Version<3, 3>>)
 
 template<class span_const_vec_3_u32>
 requires(
-    MinimumVersion<Current, Version<3, 3>>&&
-        semantic::concepts::Span<span_const_vec_3_u32>&& semantic::concepts::
-            Vector<typename span_const_vec_3_u32::value_type, u32, 3>)
-    /*!
-     * \brief Wraps around glVertexP3uiv. Introduced in GL core 3.3
-     * \param type GLenum
-     * \param value const GLuint *
-     * \return void
-     */
-    STATICINLINE void vertex_p3uiv(
-        group::vertex_pointer_type type, span_const_vec_3_u32 const& value)
+    MinimumVersion<Current, Version<3, 3>> &&
+    semantic::concepts::Span<span_const_vec_3_u32> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_3_u32::value_type, u32, 3>)
+/*!
+ * \brief Wraps around glVertexP3uiv. Introduced in GL core 3.3
+ * \param type GLenum
+ * \param value const GLuint *
+ * \return void
+ */
+STATICINLINE void vertex_p3uiv(
+    group::vertex_pointer_type type, span_const_vec_3_u32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1428,13 +1456,13 @@ requires(
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<3, 3>>)
-    /*!
-     * \brief Wraps around glVertexP4ui. Introduced in GL core 3.3
-     * \param type GLenum
-     * \param value GLuint
-     * \return void
-     */
-    STATICINLINE void vertex_p4ui(group::vertex_pointer_type type, u32 value)
+/*!
+ * \brief Wraps around glVertexP4ui. Introduced in GL core 3.3
+ * \param type GLenum
+ * \param value GLuint
+ * \return void
+ */
+STATICINLINE void vertex_p4ui(group::vertex_pointer_type type, u32 value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1447,17 +1475,18 @@ requires(MinimumVersion<Current, Version<3, 3>>)
 
 template<class span_const_vec_4_u32>
 requires(
-    MinimumVersion<Current, Version<3, 3>>&&
-        semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
-            Vector<typename span_const_vec_4_u32::value_type, u32, 4>)
-    /*!
-     * \brief Wraps around glVertexP4uiv. Introduced in GL core 3.3
-     * \param type GLenum
-     * \param value const GLuint *
-     * \return void
-     */
-    STATICINLINE void vertex_p4uiv(
-        group::vertex_pointer_type type, span_const_vec_4_u32 const& value)
+    MinimumVersion<Current, Version<3, 3>> &&
+    semantic::concepts::Span<span_const_vec_4_u32> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_4_u32::value_type, u32, 4>)
+/*!
+ * \brief Wraps around glVertexP4uiv. Introduced in GL core 3.3
+ * \param type GLenum
+ * \param value const GLuint *
+ * \return void
+ */
+STATICINLINE void vertex_p4uiv(
+    group::vertex_pointer_type type, span_const_vec_4_u32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

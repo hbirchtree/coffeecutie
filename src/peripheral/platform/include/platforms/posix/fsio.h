@@ -249,7 +249,8 @@ FORCEDINLINE result<Url, posix_error> executable()
     return path::canon(MkUrl("App"));
 #elif defined(COFFEE_MACOS)
     std::string path(PATH_MAX, '\0');
-    auto        res = proc_pidpath(getpid(), path.data(), path.size());
+    auto res = proc_pidpath(
+       getpid(), path.data(), static_cast<int>(path.size()));
     return MkSysUrl("");
 #elif defined(COFFEE_EMSCRIPTEN)
     return MkSysUrl("/app");

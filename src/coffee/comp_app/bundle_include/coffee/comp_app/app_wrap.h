@@ -27,24 +27,27 @@ struct AppContainer : AppService<AppContainer<DataType>>, AppMain
     }
 
     template<typename... Args>
-    static void addTo(entity_container& e, Args... args)
+    static void addTo(entity_container& e, Args&&... args)
     {
-        type::template register_service<AppContainer<DataType>>(e, args...);
+        type::template register_service<AppContainer<DataType>>(
+            e, std::forward<Args>(args)...);
 
         e.register_subsystem_services<AppServiceTraits<AppMain>>(
             e.service<AppContainer<DataType>>());
     }
-    static void exec(entity_container& e)
+    static void exec(entity_container&)
     {
     }
 
+    template<typename... Args>
     AppContainer(
         setup_func&& setup,
         loop_func&&  loop    = dummy_loop,
-        setup_func&& cleanup = dummy_setup) :
+        setup_func&& cleanup = dummy_setup,
+        Args&&... args) :
         m_setup(setup),
         m_loop(loop), m_cleanup(cleanup),
-        m_data(stl_types::MkShared<DataType>())
+        m_data(stl_types::MkShared<DataType>(std::forward<Args>(args)...))
     {
         detail::SubsystemBase::priority = 8192 * 1024;
     }

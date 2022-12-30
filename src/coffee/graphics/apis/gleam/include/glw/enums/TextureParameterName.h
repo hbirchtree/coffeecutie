@@ -149,6 +149,9 @@ enum class texture_parameter_name : ::libc_types::u32
 #ifdef GL_TEXTURE_MAX_ANISOTROPY
     texture_max_anisotropy = GL_TEXTURE_MAX_ANISOTROPY,
 #endif
+#ifdef GL_TEXTURE_MAX_ANISOTROPY_EXT
+    texture_max_anisotropy_ext = GL_TEXTURE_MAX_ANISOTROPY_EXT,
+#endif
 #ifdef GL_TEXTURE_MAX_CLAMP_R_SGIX
     texture_max_clamp_r_sgix = GL_TEXTURE_MAX_CLAMP_R_SGIX,
 #endif

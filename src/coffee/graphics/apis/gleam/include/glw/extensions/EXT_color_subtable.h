@@ -6,23 +6,23 @@ namespace values {
 } // namespace values
 template<class span_const_void>
 requires(semantic::concepts::Span<span_const_void>)
-    /*!
-     * \brief Part of GL_EXT_color_subtable
-     * \param target GLenum
-     * \param start GLsizei
-     * \param count GLsizei
-     * \param format GLenum
-     * \param type GLenum
-     * \param data const void *
-     * \return void
-     */
-    STATICINLINE void color_sub_table(
-        group::color_table_target target,
-        i32                       start,
-        i32                       count,
-        group::pixel_format       format,
-        group::pixel_type         type,
-        span_const_void const&    data)
+/*!
+ * \brief Part of GL_EXT_color_subtable
+ * \param target GLenum
+ * \param start GLsizei
+ * \param count GLsizei
+ * \param format GLenum
+ * \param type GLenum
+ * \param data const void *
+ * \return void
+ */
+STATICINLINE void color_sub_table(
+    group::color_table_target target,
+    i32                       start,
+    i32                       count,
+    group::pixel_format       format,
+    group::pixel_type         type,
+    span_const_void const&    data)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -41,20 +41,17 @@ requires(semantic::concepts::Span<span_const_void>)
 
 template<class vec_2_i32>
 requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
-    /*!
-     * \brief Part of GL_EXT_color_subtable
-     * \param target GLenum
-     * \param start GLsizei
-     * \param x GLint
-     * \param y GLint
-     * \param width GLsizei
-     * \return void
-     */
-    STATICINLINE void copy_color_sub_table(
-        group::color_table_target target,
-        i32                       start,
-        vec_2_i32 const&          x,
-        i32                       width)
+/*!
+ * \brief Part of GL_EXT_color_subtable
+ * \param target GLenum
+ * \param start GLsizei
+ * \param x GLint
+ * \param y GLint
+ * \param width GLsizei
+ * \return void
+ */
+STATICINLINE void copy_color_sub_table(
+    group::color_table_target target, i32 start, vec_2_i32 const& x, i32 width)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

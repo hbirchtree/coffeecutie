@@ -3,9 +3,7 @@
 #include <coffee/core/libc_types.h>
 #include <coffee/core/stl_types.h>
 
-namespace Coffee {
-namespace Components {
-namespace Timedivide {
+namespace compo::timedivide {
 
 struct node_association
 {
@@ -13,6 +11,4 @@ struct node_association
     size_t tag_type; /*!< Hash code of the tag that associates them */
 };
 
-}
-}
 }

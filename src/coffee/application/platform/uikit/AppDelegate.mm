@@ -26,24 +26,24 @@
 extern void* uikit_appdelegate;
 extern void* uikit_window;
 
-CMMotionManager* app_motionManager = NULL;
+//CMMotionManager* app_motionManager = NULL;
 
 // Event handling, sending stuff to Coffee
-extern void(*CoffeeForeignSignalHandle)(int);
-extern void(*CoffeeForeignSignalHandleNA)(int, void*, void*, void*);
+//extern void(*CoffeeForeignSignalHandle)(int);
+//extern void(*CoffeeForeignSignalHandleNA)(int, void*, void*, void*);
 
-void HandleForeignSignals(int event);
-void HandleForeignSignalsNA(int event, void* ptr1, void* ptr2, void* ptr3);
+//void HandleForeignSignals(int event);
+//void HandleForeignSignalsNA(int event, void* ptr1, void* ptr2, void* ptr3);
 
-void DispatchGeneralEvent(uint32_t type, void* data)
-{
-    struct CfGeneralEvent ev = {
-        .type = static_cast<CfGeneralEventType>(type),
-        .pad = 0,
-    };
+//void DispatchGeneralEvent(uint32_t type, void* data)
+//{
+//    struct CfGeneralEvent ev = {
+//        .type = static_cast<CfGeneralEventType>(type),
+//        .pad = 0,
+//    };
     
-    CoffeeEventHandleNACall(CoffeeHandle_GeneralEvent, &ev, data, NULL);
-}
+//    CoffeeEventHandleNACall(CoffeeHandle_GeneralEvent, &ev, data, NULL);
+//}
 
 namespace Coffee {
 
@@ -52,19 +52,17 @@ extern int MainSetup(MainNoArgs mainfun, int argc, char** argv, u32 flags);
 
 }
 
-namespace libc {
-namespace signal {
+namespace libc::signal {
 
 extern stl_types::Vector<exit_handler> global_exit_handlers;
 
-}
 } // namespace libc
 
 using comp_app::LifecycleEvent;
 
 static inline void DispatchAppEvent(comp_app::AppEvent::Type type, void* event)
 {
-    using bus_type = comp_app::EventBus<comp_app::AppEvent>;
+    using bus_type = comp_app::BasicEventBus<comp_app::AppEvent>;
     
     comp_app::AppEvent baseEvent;
     baseEvent.type = type;
@@ -79,10 +77,7 @@ static inline void DispatchAppEvent(comp_app::AppEvent::Type type, void* event)
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
-    uikit_appdelegate = self;
-    
-    CoffeeForeignSignalHandle = HandleForeignSignals;
-    CoffeeForeignSignalHandleNA = HandleForeignSignalsNA;
+    uikit_appdelegate = (__bridge void*)self;
     
     NSLog(@"View controller");
     
@@ -126,7 +121,6 @@ static inline void DispatchAppEvent(comp_app::AppEvent::Type type, void* event)
     DispatchAppEvent(comp_app::AppEvent::LifecycleEvent, &event);
     
     NSLog(@"AppDelegate running cleanup");
-    CoffeeEventHandleCall(CoffeeHandle_Cleanup);
     self.hasInitialized = FALSE;
 }
 
@@ -161,10 +155,10 @@ static inline void DispatchAppEvent(comp_app::AppEvent::Type type, void* event)
         NSLog(@"AppDelegate running setup");
 
         self.window.backgroundColor = [UIColor blackColor];
-        uikit_window = self.window;
+        uikit_window = (__bridge void*)self.window;
         [self.window makeKeyAndVisible];
 
-        CoffeeEventHandleCall(CoffeeHandle_Setup);
+//        CoffeeEventHandleCall(CoffeeHandle_Setup);
         self.hasInitialized = TRUE;
     }
     
@@ -183,7 +177,7 @@ static inline void DispatchAppEvent(comp_app::AppEvent::Type type, void* event)
     resize.h = screenRes.height;
     
     comp_app::createContainer()
-        .service<comp_app::EventBus<Event>>()->process(baseEvent, &resize);
+        .service<comp_app::BasicEventBus<Event>>()->process(baseEvent, &resize);
 }
 
 - (void)applicationWillTerminate:(UIApplication *)application {
@@ -201,168 +195,171 @@ static inline void DispatchAppEvent(comp_app::AppEvent::Type type, void* event)
 
 - (void)glkViewControllerUpdate:(GLKViewController *)controller
 {
-    if(self.hasInitialized)
-        CoffeeEventHandleCall(CoffeeHandle_Loop);
+    if(!self.hasInitialized)
+        return;
+    LifecycleEvent event;
+    event.lifecycle_type = LifecycleEvent::FrameRequested;
+    DispatchAppEvent(comp_app::AppEvent::LifecycleEvent, &event);
 }
 #endif
 
 @end
 
 // The simple foreign signal handler
-void HandleForeignSignals(int)
-{
-}
+//void HandleForeignSignals(int)
+//{
+//}
 
 // Foreign signal handler
-void HandleForeignSignalsNA(int event, void* ptr1, void* ptr2, void* ptr3)
-{
-    AppDelegate* appdelegate_typed = (AppDelegate*)uikit_appdelegate;
-
-    switch(event)
-    {
-        case CoffeeForeign_DisplayMessage:
-        {
-            NSString* title = [NSString
-                        stringWithUTF8String: (const char*)ptr1];
-            NSString* message = [NSString
-                        stringWithUTF8String: (const char*)ptr2];
-        
-            UIAlertController* c = [UIAlertController
-                        alertControllerWithTitle: title
-                        message: message
-                        preferredStyle:UIAlertControllerStyleAlert];
-            
-            void (^complete_handler)(void) = nil;
-            
-            bool no_actions = true;
-            
-            if(ptr3)
-            {
-                struct CfMessageDisplay* messageActions = (struct CfMessageDisplay*)ptr3;
-                
-                // We have to explicitly get the ptr here
-                // Otherwise, it is dereferenced too late, when CfMessageDisplay
-                //  does not exist
-                void(*complete_c_fun)(void*) = messageActions->completion;
-                void* user_ptr = messageActions->user_ptr;
-                
-                if(complete_c_fun)
-                {
-                    complete_handler = ^{
-                        complete_c_fun(user_ptr);
-                    };
-                }
-                
-                if(messageActions->actions)
-                {
-                    struct CfMessageAction* actionPtr = messageActions->actions;
-                    // We can only check actionPtr->text, because it's a 1D array
-                    while (actionPtr->text)
-                    {
-                        NSString* actionTitle = [NSString
-                                            stringWithUTF8String: actionPtr->text];
-                        
-                        void(*action_handler)(void*) = actionPtr->action;
-                        
-                        void(^action_obj_handler)(UIAlertAction*) = nil;
-                        
-                        if(action_handler)
-                            action_obj_handler = ^(UIAlertAction* action){
-                                            action_handler(user_ptr);
-                                        };
-                        
-                        [c addAction: [UIAlertAction actionWithTitle: actionTitle
-                                        style:UIAlertActionStyleDefault
-                                        handler: action_obj_handler]];
-                        
-                        
-                        no_actions = false;
-                        actionPtr++;
-                    }
-                }
-            }
-            
-            // If no action is created by CfMessageDisplay, create default one
-            if(no_actions)
-                [c addAction: [UIAlertAction actionWithTitle:@"OK"
-                                style:UIAlertActionStyleDefault
-                                handler:nil]];
-            
-            // And then present it to the user
-            [appdelegate_typed.window.rootViewController
-                        presentViewController:c
-                        animated:YES
-                        completion:complete_handler];
-            
-            break;
-        }
-        case CoffeeForeign_GetWinSize:
-        {
-            int* winSize = (int*)ptr1;
-            // nativeBounds returns the portrait resolution...
-            CGSize size = [[UIScreen mainScreen] nativeBounds].size;
-            
-#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 130000
-            UIInterfaceOrientation currOri =
-                appdelegate_typed.window.windowScene.interfaceOrientation;
-#else
-            UIInterfaceOrientation currOri = [[UIApplication sharedApplication] statusBarOrientation];
-#endif
-            // So we have to transpose it when running in landscape mode
-            // We cannot use UIDevice's orientation, because it is undefined
-            //  at load-time
-            if(UIInterfaceOrientationIsLandscape(currOri))
-            {
-                CGFloat width = size.width;
-                size.width = size.height;
-                size.height = width;
-            }
-            
-            // ... and then we just fill the C++-side buffers.
-            winSize[0] = size.width;
-            winSize[1] = size.height;
-            break;
-        }
-        case CoffeeForeign_GetSafeMargins:
-        {
-        #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 110000
-            UIEdgeInsets a = appdelegate_typed.window.safeAreaInsets;
-        #else
-            UIEdgeInsets a = appdelegate_typed.window.layoutMargins;
-        #endif
-            
-            float* margins = (float*)ptr1;
-            if(margins)
-            {
-                margins[0] = a.left;
-                margins[1] = a.top;
-                margins[2] = a.right;
-                margins[3] = a.bottom;
-            }
-            
-            break;
-        }
-        case CoffeeForeign_ActivateMotion:
-        {
-            // Make sensor initialization explicit, for power consumption
-        
-            printf("Request to activate motion device");
-            if(!app_motionManager)
-                app_motionManager = [CMMotionManager alloc];
-            
-            uint32_t flags = *((uint32_t*)ptr1);
-            
-            if(flags & CfSensor_Accel)
-                [app_motionManager startAccelerometerUpdates];
-            if(flags & CfSensor_Gyro)
-                [app_motionManager startGyroUpdates];
-            if(flags & CfSensor_Magnetometer)
-                [app_motionManager startMagnetometerUpdates];
-            
-            break;
-        }
-        default:
-        printf("Unhandled signal: %i\n", event);
-        break;
-    }
-}
+//void HandleForeignSignalsNA(int event, void* ptr1, void* ptr2, void* ptr3)
+//{
+//    AppDelegate* appdelegate_typed = (__bridge AppDelegate*)uikit_appdelegate;
+//
+//    switch(event)
+//    {
+//        case CoffeeForeign_DisplayMessage:
+//        {
+//            NSString* title = [NSString
+//                        stringWithUTF8String: (const char*)ptr1];
+//            NSString* message = [NSString
+//                        stringWithUTF8String: (const char*)ptr2];
+//
+//            UIAlertController* c = [UIAlertController
+//                        alertControllerWithTitle: title
+//                        message: message
+//                        preferredStyle:UIAlertControllerStyleAlert];
+//
+//            void (^complete_handler)(void) = nil;
+//
+//            bool no_actions = true;
+//
+//            if(ptr3)
+//            {
+//                struct CfMessageDisplay* messageActions = (struct CfMessageDisplay*)ptr3;
+//
+//                // We have to explicitly get the ptr here
+//                // Otherwise, it is dereferenced too late, when CfMessageDisplay
+//                //  does not exist
+//                void(*complete_c_fun)(void*) = messageActions->completion;
+//                void* user_ptr = messageActions->user_ptr;
+//
+//                if(complete_c_fun)
+//                {
+//                    complete_handler = ^{
+//                        complete_c_fun(user_ptr);
+//                    };
+//                }
+//
+//                if(messageActions->actions)
+//                {
+//                    struct CfMessageAction* actionPtr = messageActions->actions;
+//                    // We can only check actionPtr->text, because it's a 1D array
+//                    while (actionPtr->text)
+//                    {
+//                        NSString* actionTitle = [NSString
+//                                            stringWithUTF8String: actionPtr->text];
+//
+//                        void(*action_handler)(void*) = actionPtr->action;
+//
+//                        void(^action_obj_handler)(UIAlertAction*) = nil;
+//
+//                        if(action_handler)
+//                            action_obj_handler = ^(UIAlertAction* action){
+//                                            action_handler(user_ptr);
+//                                        };
+//
+//                        [c addAction: [UIAlertAction actionWithTitle: actionTitle
+//                                        style:UIAlertActionStyleDefault
+//                                        handler: action_obj_handler]];
+//
+//
+//                        no_actions = false;
+//                        actionPtr++;
+//                    }
+//                }
+//            }
+//
+//            // If no action is created by CfMessageDisplay, create default one
+//            if(no_actions)
+//                [c addAction: [UIAlertAction actionWithTitle:@"OK"
+//                                style:UIAlertActionStyleDefault
+//                                handler:nil]];
+//
+//            // And then present it to the user
+//            [appdelegate_typed.window.rootViewController
+//                        presentViewController:c
+//                        animated:YES
+//                        completion:complete_handler];
+//
+//            break;
+//        }
+//        case CoffeeForeign_GetWinSize:
+//        {
+//            int* winSize = (int*)ptr1;
+//            // nativeBounds returns the portrait resolution...
+//            CGSize size = [[UIScreen mainScreen] nativeBounds].size;
+//
+//#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 130000
+//            UIInterfaceOrientation currOri =
+//                appdelegate_typed.window.windowScene.interfaceOrientation;
+//#else
+//            UIInterfaceOrientation currOri = [[UIApplication sharedApplication] statusBarOrientation];
+//#endif
+//            // So we have to transpose it when running in landscape mode
+//            // We cannot use UIDevice's orientation, because it is undefined
+//            //  at load-time
+//            if(UIInterfaceOrientationIsLandscape(currOri))
+//            {
+//                CGFloat width = size.width;
+//                size.width = size.height;
+//                size.height = width;
+//            }
+//
+//            // ... and then we just fill the C++-side buffers.
+//            winSize[0] = size.width;
+//            winSize[1] = size.height;
+//            break;
+//        }
+//        case CoffeeForeign_GetSafeMargins:
+//        {
+//        #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 110000
+//            UIEdgeInsets a = appdelegate_typed.window.safeAreaInsets;
+//        #else
+//            UIEdgeInsets a = appdelegate_typed.window.layoutMargins;
+//        #endif
+//
+//            float* margins = (float*)ptr1;
+//            if(margins)
+//            {
+//                margins[0] = a.left;
+//                margins[1] = a.top;
+//                margins[2] = a.right;
+//                margins[3] = a.bottom;
+//            }
+//
+//            break;
+//        }
+//        case CoffeeForeign_ActivateMotion:
+//        {
+//            // Make sensor initialization explicit, for power consumption
+//
+//            printf("Request to activate motion device");
+//            if(!app_motionManager)
+//                app_motionManager = [CMMotionManager alloc];
+//
+//            uint32_t flags = *((uint32_t*)ptr1);
+//
+//            if(flags & CfSensor_Accel)
+//                [app_motionManager startAccelerometerUpdates];
+//            if(flags & CfSensor_Gyro)
+//                [app_motionManager startGyroUpdates];
+//            if(flags & CfSensor_Magnetometer)
+//                [app_motionManager startMagnetometerUpdates];
+//
+//            break;
+//        }
+//        default:
+//        printf("Unhandled signal: %i\n", event);
+//        break;
+//    }
+//}

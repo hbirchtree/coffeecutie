@@ -30,16 +30,18 @@ STATICINLINE void bind_transform_feedback(
 }
 
 template<class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
-         std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>)
-    /*!
-     * \brief Part of GL_ARB_transform_feedback2
-     * \param n GLsizei
-     * \param ids const GLuint *
-     * \return void
-     */
-    STATICINLINE void delete_transform_feedbacks(span_const_u32 const& ids)
+requires(
+    semantic::concepts::Span<span_const_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_u32::value_type>,
+        std::decay_t<u32>>)
+/*!
+ * \brief Part of GL_ARB_transform_feedback2
+ * \param n GLsizei
+ * \param ids const GLuint *
+ * \return void
+ */
+STATICINLINE void delete_transform_feedbacks(span_const_u32 const& ids)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -70,16 +72,18 @@ STATICINLINE void draw_transform_feedback(group::primitive_type mode, u32 id)
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
-         std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>)
-    /*!
-     * \brief Part of GL_ARB_transform_feedback2
-     * \param n GLsizei
-     * \param ids GLuint *
-     * \return void
-     */
-    STATICINLINE void gen_transform_feedbacks(span_u32 ids)
+requires(
+    semantic::concepts::Span<span_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_u32::value_type>,
+        std::decay_t<u32>>)
+/*!
+ * \brief Part of GL_ARB_transform_feedback2
+ * \param n GLsizei
+ * \param ids GLuint *
+ * \return void
+ */
+STATICINLINE void gen_transform_feedbacks(span_u32 ids)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

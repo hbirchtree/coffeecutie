@@ -99,12 +99,23 @@ void create_resources(EntityContainer& e, BlamData<Version>& data)
     data.model_index->alloc();
     data.model_index->commit(memory_budget::mesh_elements);
 
-    data.model_matrix_store
-        = api.alloc_buffer(gfx::buffers::shader_writable, access);
+    if(api.feature_info().buffer.ssbo)
+    {
+        data.model_matrix_store
+            = api.alloc_buffer(gfx::buffers::shader_writable, access);
+        data.material_store
+            = api.alloc_buffer(gfx::buffers::shader_writable, access);
+    } else if(api.feature_info().buffer.ubo)
+    {
+        data.model_matrix_store
+            = api.alloc_buffer(gfx::buffers::constants, access);
+        data.material_store
+            = api.alloc_buffer(gfx::buffers::constants, access);
+    }
+    else
+        Throw(unimplemented_path("no fallback from UBO"));
     data.model_matrix_store->alloc();
     data.model_matrix_store->commit(memory_budget::matrix_buffer);
-    data.material_store
-        = api.alloc_buffer(gfx::buffers::shader_writable, access);
     data.material_store->alloc();
     data.material_store->commit(memory_budget::material_buffer);
 
@@ -147,6 +158,11 @@ void create_resources(EntityContainer& e, BlamData<Version>& data)
     bsp_array.set_buffer(gfx::buffers::vertex, data.bsp_buf, 0);
     bsp_array.set_buffer(gfx::buffers::vertex, data.bsp_light_buf, 1);
     bsp_array.set_buffer(gfx::buffers::element, data.bsp_index);
+    bsp_array.set_attribute_names({
+        {"position", 0},
+        {"tex", 1},
+        {"light_tex", 2},
+    });
 
     using model_vertex_type = std::conditional_t<
         std::is_same_v<Version, blam::xbox_version_t>,
@@ -172,6 +188,10 @@ void create_resources(EntityContainer& e, BlamData<Version>& data)
     }
     mod2_array.set_buffer(gfx::buffers::vertex, data.model_buf, 0);
     mod2_array.set_buffer(gfx::buffers::element, data.model_index);
+    mod2_array.set_attribute_names({
+        {"position", 0},
+        {"tex", 1},
+    });
 
     //    data.bitm_cache.allocator = &gfx;
 }

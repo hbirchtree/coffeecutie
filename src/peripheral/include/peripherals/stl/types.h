@@ -374,9 +374,9 @@ struct range
 {
     struct iterator : Iterator<ForwardIteratorTag, T>
     {
-        static const constexpr T npos = std::numeric_limits<T>::max();
+        using difference_type = intptr_t;
 
-        iterator() : m_idx(npos)
+        iterator(T end) : m_idx(end), m_end(end), m_stride(0)
         {
         }
 
@@ -388,9 +388,6 @@ struct range
 
             if(correct && correct_rev)
                 Throw(std::out_of_range("invalid range"));
-
-            if(start == end)
-                m_idx = npos;
         }
 
         iterator& operator++()
@@ -398,7 +395,10 @@ struct range
             m_idx += m_stride;
 
             if(m_idx >= m_end)
-                m_idx = npos;
+            {
+                m_idx = m_end;
+                m_stride = 0;
+            }
 
             return *this;
         }
@@ -430,6 +430,18 @@ struct range
                 return m_idx;
         }
 
+        difference_type operator-(iterator const& other) const
+        {
+            return m_idx - other.m_idx;
+        }
+
+        auto operator+(intptr_t offset) const
+        {
+            auto out = *this;
+            out.m_idx += offset;
+            return out;
+        }
+
       private:
         T m_idx;
         T m_end;
@@ -449,7 +461,7 @@ struct range
 
     iterator end()
     {
-        return iterator();
+        return iterator(m_len);
     }
 
   private:

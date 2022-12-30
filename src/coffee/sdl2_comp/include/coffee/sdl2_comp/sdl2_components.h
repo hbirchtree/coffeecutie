@@ -15,8 +15,8 @@ using comp_app::size_2d_t;
 struct Context : comp_app::AppService<Context>, comp_app::AppLoadableService
 {
     using readable_services = comp_app::detail::subsystem_list<
-        comp_app::EventBus<Coffee::Input::CIEvent>,
-        comp_app::EventBus<Coffee::Display::Event>>;
+        comp_app::BasicEventBus<Coffee::Input::CIEvent>,
+        comp_app::BasicEventBus<Coffee::Display::Event>>;
     using proxy_type = comp_app::detail::restricted::proxy_t<Context>;
 
     virtual void load(entity_container& c, comp_app::app_error&) final;

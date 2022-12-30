@@ -5,10 +5,10 @@ USE_TEXT_PARSING = False
 
 from sys import stderr, version_info, path
 from os import getcwd
-try:
-    from yaml import load, dump
-except ImportError:
-    USE_TEXT_PARSING = True
+#try:
+from yaml import load, dump
+#except ImportError:
+#    USE_TEXT_PARSING = True
 
 from os.path import dirname, realpath, isfile
 from argparse import ArgumentParser

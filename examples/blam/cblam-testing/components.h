@@ -36,7 +36,7 @@ enum Passes
 struct BspReference
 {
     using value_type = BspReference;
-    using type       = Components::Allocators::VectorContainer<value_type>;
+    using type       = compo::alloc::VectorContainer<value_type>;
 
     generation_idx_t bsp;
     generation_idx_t shader;
@@ -52,7 +52,7 @@ struct BspReference
 struct SubModel
 {
     using value_type = SubModel;
-    using type       = Components::Allocators::VectorContainer<value_type>;
+    using type       = compo::alloc::VectorContainer<value_type>;
 
     ERef parent;
 
@@ -105,7 +105,7 @@ static Vecf3 spawn_rotation_to_euler(SpawnType const* spawn)
 struct Model
 {
     using value_type = Model;
-    using type       = Components::Allocators::VectorContainer<value_type>;
+    using type       = compo::alloc::VectorContainer<value_type>;
     using tag_type   = value_type;
 
     Matf4 transform;
@@ -126,7 +126,7 @@ struct Model
 struct ObjectSpawn
 {
     using value_type = ObjectSpawn;
-    using type       = Components::Allocators::VectorContainer<value_type>;
+    using type       = compo::alloc::VectorContainer<value_type>;
 
     blam::scn::object_spawn const* header = nullptr;
     blam::tag_t const*             tag    = nullptr;
@@ -135,7 +135,7 @@ struct ObjectSpawn
 struct MultiplayerSpawn
 {
     using value_type = MultiplayerSpawn;
-    using type       = Components::Allocators::VectorContainer<value_type>;
+    using type       = compo::alloc::VectorContainer<value_type>;
 
     blam::scn::multiplayer_equipment const* spawn      = nullptr;
     blam::scn::item_collection const*       collection = nullptr;
@@ -199,7 +199,7 @@ struct alignas(32) senv_micro
 struct ShaderData
 {
     using value_type = ShaderData;
-    using type       = Components::Allocators::VectorContainer<value_type>;
+    using type       = compo::alloc::VectorContainer<value_type>;
 
     blam::tag_t const*               shader_tag;
     blam::shader::shader_base const* shader;

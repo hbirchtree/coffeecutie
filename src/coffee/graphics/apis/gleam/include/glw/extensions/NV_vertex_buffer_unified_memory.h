@@ -101,17 +101,19 @@ STATICINLINE void fog_coord_format(GLenum type, i32 stride)
 }
 
 template<class span_GLuint64EXT>
-requires(semantic::concepts::Span<span_GLuint64EXT>&& std::is_same_v<
-         std::decay_t<typename span_GLuint64EXT::value_type>,
-         std::decay_t<GLuint64EXT>>)
-    /*!
-     * \brief Part of GL_NV_vertex_buffer_unified_memory
-     * \param value GLenum
-     * \param index GLuint
-     * \param result GLuint64EXT *
-     * \return void
-     */
-    STATICINLINE
+requires(
+    semantic::concepts::Span<span_GLuint64EXT> &&
+    std::is_same_v<
+        std::decay_t<typename span_GLuint64EXT::value_type>,
+        std::decay_t<GLuint64EXT>>)
+/*!
+ * \brief Part of GL_NV_vertex_buffer_unified_memory
+ * \param value GLenum
+ * \param index GLuint
+ * \param result GLuint64EXT *
+ * \return void
+ */
+STATICINLINE
     void get_integerui64i_v(GLenum value, u32 index, span_GLuint64EXT result)
 {
     using namespace std::string_view_literals;

@@ -10,22 +10,24 @@ constexpr libc_types::u32 pixels_per_sample_pattern_x = 0x91AE;
 constexpr libc_types::u32 pixels_per_sample_pattern_y = 0x91AF;
 } // namespace values
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
-         std::decay_t<typename span_const_f32::value_type>,
-         std::decay_t<f32>>)
-    /*!
-     * \brief Part of GL_AMD_framebuffer_sample_positions
-     * \param target GLenum
-     * \param numsamples GLuint
-     * \param pixelindex GLuint
-     * \param values const GLfloat *
-     * \return void
-     */
-    STATICINLINE void framebuffer_sample_positionsfv(
-        group::framebuffer_target target,
-        u32                       numsamples,
-        u32                       pixelindex,
-        span_const_f32 const&     values)
+requires(
+    semantic::concepts::Span<span_const_f32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_f32::value_type>,
+        std::decay_t<f32>>)
+/*!
+ * \brief Part of GL_AMD_framebuffer_sample_positions
+ * \param target GLenum
+ * \param numsamples GLuint
+ * \param pixelindex GLuint
+ * \param values const GLfloat *
+ * \return void
+ */
+STATICINLINE void framebuffer_sample_positionsfv(
+    group::framebuffer_target target,
+    u32                       numsamples,
+    u32                       pixelindex,
+    span_const_f32 const&     values)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -42,26 +44,28 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
 }
 
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
-         std::decay_t<typename span_f32::value_type>,
-         std::decay_t<f32>>)
-    /*!
-     * \brief Part of GL_AMD_framebuffer_sample_positions
-     * \param target GLenum
-     * \param pname GLenum
-     * \param numsamples GLuint
-     * \param pixelindex GLuint
-     * \param size GLsizei
-     * \param values GLfloat *
-     * \return void
-     */
-    STATICINLINE void get_framebuffer_parameter(
-        group::framebuffer_target                    target,
-        group::framebuffer_attachment_parameter_name pname,
-        u32                                          numsamples,
-        u32                                          pixelindex,
-        i32                                          size,
-        span_f32                                     values)
+requires(
+    semantic::concepts::Span<span_f32> &&
+    std::is_same_v<
+        std::decay_t<typename span_f32::value_type>,
+        std::decay_t<f32>>)
+/*!
+ * \brief Part of GL_AMD_framebuffer_sample_positions
+ * \param target GLenum
+ * \param pname GLenum
+ * \param numsamples GLuint
+ * \param pixelindex GLuint
+ * \param size GLsizei
+ * \param values GLfloat *
+ * \return void
+ */
+STATICINLINE void get_framebuffer_parameter(
+    group::framebuffer_target                    target,
+    group::framebuffer_attachment_parameter_name pname,
+    u32                                          numsamples,
+    u32                                          pixelindex,
+    i32                                          size,
+    span_f32                                     values)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -79,26 +83,28 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 }
 
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
-         std::decay_t<typename span_f32::value_type>,
-         std::decay_t<f32>>)
-    /*!
-     * \brief Part of GL_AMD_framebuffer_sample_positions
-     * \param framebuffer GLuint
-     * \param pname GLenum
-     * \param numsamples GLuint
-     * \param pixelindex GLuint
-     * \param size GLsizei
-     * \param values GLfloat *
-     * \return void
-     */
-    STATICINLINE void get_named_framebuffer_parameter(
-        u32      framebuffer,
-        GLenum   pname,
-        u32      numsamples,
-        u32      pixelindex,
-        i32      size,
-        span_f32 values)
+requires(
+    semantic::concepts::Span<span_f32> &&
+    std::is_same_v<
+        std::decay_t<typename span_f32::value_type>,
+        std::decay_t<f32>>)
+/*!
+ * \brief Part of GL_AMD_framebuffer_sample_positions
+ * \param framebuffer GLuint
+ * \param pname GLenum
+ * \param numsamples GLuint
+ * \param pixelindex GLuint
+ * \param size GLsizei
+ * \param values GLfloat *
+ * \return void
+ */
+STATICINLINE void get_named_framebuffer_parameter(
+    u32      framebuffer,
+    GLenum   pname,
+    u32      numsamples,
+    u32      pixelindex,
+    i32      size,
+    span_f32 values)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -120,22 +126,24 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 }
 
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
-         std::decay_t<typename span_const_f32::value_type>,
-         std::decay_t<f32>>)
-    /*!
-     * \brief Part of GL_AMD_framebuffer_sample_positions
-     * \param framebuffer GLuint
-     * \param numsamples GLuint
-     * \param pixelindex GLuint
-     * \param values const GLfloat *
-     * \return void
-     */
-    STATICINLINE void named_framebuffer_sample_positionsfv(
-        u32                   framebuffer,
-        u32                   numsamples,
-        u32                   pixelindex,
-        span_const_f32 const& values)
+requires(
+    semantic::concepts::Span<span_const_f32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_f32::value_type>,
+        std::decay_t<f32>>)
+/*!
+ * \brief Part of GL_AMD_framebuffer_sample_positions
+ * \param framebuffer GLuint
+ * \param numsamples GLuint
+ * \param pixelindex GLuint
+ * \param values const GLfloat *
+ * \return void
+ */
+STATICINLINE void named_framebuffer_sample_positionsfv(
+    u32                   framebuffer,
+    u32                   numsamples,
+    u32                   pixelindex,
+    span_const_f32 const& values)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

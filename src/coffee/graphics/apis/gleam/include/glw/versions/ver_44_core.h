@@ -1,19 +1,20 @@
 #ifdef GL_VERSION_4_4
 template<class span_const_void>
-requires(MinimumVersion<Current, Version<4, 4>>&&
-             semantic::concepts::Span<span_const_void>)
-    /*!
-     * \brief Wraps around glBufferStorage. Introduced in GL core 4.4
-     * \param target GLenum
-     * \param size GLsizeiptr
-     * \param data const void *
-     * \param flags GLbitfield
-     * \return void
-     */
-    STATICINLINE void buffer_storage(
-        group::buffer_storage_target target,
-        span_const_void const&       data,
-        group::buffer_storage_mask   flags)
+requires(
+    MinimumVersion<Current, Version<4, 4>> &&
+    semantic::concepts::Span<span_const_void>)
+/*!
+ * \brief Wraps around glBufferStorage. Introduced in GL core 4.4
+ * \param target GLenum
+ * \param size GLsizeiptr
+ * \param data const void *
+ * \param flags GLbitfield
+ * \return void
+ */
+STATICINLINE void buffer_storage(
+    group::buffer_storage_target target,
+    span_const_void const&       data,
+    group::buffer_storage_mask   flags)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -30,23 +31,24 @@ requires(MinimumVersion<Current, Version<4, 4>>&&
 }
 
 template<class span_const_void>
-requires(MinimumVersion<Current, Version<4, 4>>&&
-             semantic::concepts::Span<span_const_void>)
-    /*!
-     * \brief Wraps around glClearTexImage. Introduced in GL core 4.4
-     * \param texture GLuint
-     * \param level GLint
-     * \param format GLenum
-     * \param type GLenum
-     * \param data const void *
-     * \return void
-     */
-    STATICINLINE void clear_tex_image(
-        u32                    texture,
-        i32                    level,
-        group::pixel_format    format,
-        group::pixel_type      type,
-        span_const_void const& data)
+requires(
+    MinimumVersion<Current, Version<4, 4>> &&
+    semantic::concepts::Span<span_const_void>)
+/*!
+ * \brief Wraps around glClearTexImage. Introduced in GL core 4.4
+ * \param texture GLuint
+ * \param level GLint
+ * \param format GLenum
+ * \param type GLenum
+ * \param data const void *
+ * \return void
+ */
+STATICINLINE void clear_tex_image(
+    u32                    texture,
+    i32                    level,
+    group::pixel_format    format,
+    group::pixel_type      type,
+    span_const_void const& data)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -67,33 +69,34 @@ requires(MinimumVersion<Current, Version<4, 4>>&&
 }
 
 template<class size_3_i32, class span_const_void, class vec_3_i32>
-requires(MinimumVersion<Current, Version<4, 4>>&&
-                     semantic::concepts::Vector<vec_3_i32, i32, 3>&&
-                     semantic::concepts::Size2D<size_3_i32, i32>&&
-                     semantic::concepts::Span<span_const_void>)
-    /*!
-     * \brief Wraps around glClearTexSubImage. Introduced in GL core 4.4
-     * \param texture GLuint
-     * \param level GLint
-     * \param xoffset GLint
-     * \param yoffset GLint
-     * \param zoffset GLint
-     * \param width GLsizei
-     * \param height GLsizei
-     * \param depth GLsizei
-     * \param format GLenum
-     * \param type GLenum
-     * \param data const void *
-     * \return void
-     */
-    STATICINLINE void clear_tex_sub_image(
-        u32                    texture,
-        i32                    level,
-        vec_3_i32 const&       xoffset,
-        size_3_i32 const&      width,
-        group::pixel_format    format,
-        group::pixel_type      type,
-        span_const_void const& data)
+requires(
+    MinimumVersion<Current, Version<4, 4>> &&
+    semantic::concepts::Vector<vec_3_i32, i32, 3> &&
+    semantic::concepts::Size2D<size_3_i32, i32> &&
+    semantic::concepts::Span<span_const_void>)
+/*!
+ * \brief Wraps around glClearTexSubImage. Introduced in GL core 4.4
+ * \param texture GLuint
+ * \param level GLint
+ * \param xoffset GLint
+ * \param yoffset GLint
+ * \param zoffset GLint
+ * \param width GLsizei
+ * \param height GLsizei
+ * \param depth GLsizei
+ * \param format GLenum
+ * \param type GLenum
+ * \param data const void *
+ * \return void
+ */
+STATICINLINE void clear_tex_sub_image(
+    u32                    texture,
+    i32                    level,
+    vec_3_i32 const&       xoffset,
+    size_3_i32 const&      width,
+    group::pixel_format    format,
+    group::pixel_type      type,
+    span_const_void const& data)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -120,22 +123,22 @@ requires(MinimumVersion<Current, Version<4, 4>>&&
 }
 
 template<class span_const_u32>
-requires(MinimumVersion<Current, Version<4, 4>>&&
-             semantic::concepts::Span<span_const_u32>&& std::is_same_v<
-                 std::decay_t<typename span_const_u32::value_type>,
-                 std::decay_t<u32>>)
-    /*!
-     * \brief Wraps around glBindBuffersBase. Introduced in GL core 4.4
-     * \param target GLenum
-     * \param first GLuint
-     * \param count GLsizei
-     * \param buffers const GLuint *
-     * \return void
-     */
-    STATICINLINE void bind_buffers_base(
-        group::buffer_target_arb target,
-        u32                      first,
-        span_const_u32 const&    buffers)
+requires(
+    MinimumVersion<Current, Version<4, 4>> &&
+    semantic::concepts::Span<span_const_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_u32::value_type>,
+        std::decay_t<u32>>)
+/*!
+ * \brief Wraps around glBindBuffersBase. Introduced in GL core 4.4
+ * \param target GLenum
+ * \param first GLuint
+ * \param count GLsizei
+ * \param buffers const GLuint *
+ * \return void
+ */
+STATICINLINE void bind_buffers_base(
+    group::buffer_target_arb target, u32 first, span_const_u32 const& buffers)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -156,32 +159,35 @@ template<
     class span_const_GLsizeiptr,
     class span_const_u32>
 requires(
-    MinimumVersion<Current, Version<4, 4>>&&
-        semantic::concepts::Span<span_const_u32>&& std::is_same_v<
-            std::decay_t<typename span_const_u32::value_type>,
-            std::decay_t<u32>>&& semantic::concepts::Span<span_const_GLintptr>&&
-                                 std::is_same_v<
-                std::decay_t<typename span_const_GLintptr::value_type>,
-                std::decay_t<GLintptr>>&&     semantic::concepts::
-                Span<span_const_GLsizeiptr>&& std::is_same_v<
-                    std::decay_t<typename span_const_GLsizeiptr::value_type>,
-                    std::decay_t<GLsizeiptr>>)
-    /*!
-     * \brief Wraps around glBindBuffersRange. Introduced in GL core 4.4
-     * \param target GLenum
-     * \param first GLuint
-     * \param count GLsizei
-     * \param buffers const GLuint *
-     * \param offsets const GLintptr *
-     * \param sizes const GLsizeiptr *
-     * \return void
-     */
-    STATICINLINE void bind_buffers_range(
-        group::buffer_target_arb     target,
-        u32                          first,
-        span_const_u32 const&        buffers,
-        span_const_GLintptr const&   offsets,
-        span_const_GLsizeiptr const& sizes)
+    MinimumVersion<Current, Version<4, 4>> &&
+    semantic::concepts::Span<span_const_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_u32::value_type>,
+        std::decay_t<u32>> &&
+    semantic::concepts::Span<span_const_GLintptr> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLintptr::value_type>,
+        std::decay_t<GLintptr>> &&
+    semantic::concepts::Span<span_const_GLsizeiptr> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLsizeiptr::value_type>,
+        std::decay_t<GLsizeiptr>>)
+/*!
+ * \brief Wraps around glBindBuffersRange. Introduced in GL core 4.4
+ * \param target GLenum
+ * \param first GLuint
+ * \param count GLsizei
+ * \param buffers const GLuint *
+ * \param offsets const GLintptr *
+ * \param sizes const GLsizeiptr *
+ * \return void
+ */
+STATICINLINE void bind_buffers_range(
+    group::buffer_target_arb     target,
+    u32                          first,
+    span_const_u32 const&        buffers,
+    span_const_GLintptr const&   offsets,
+    span_const_GLsizeiptr const& sizes)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -202,19 +208,20 @@ requires(
 }
 
 template<class span_const_u32>
-requires(MinimumVersion<Current, Version<4, 4>>&&
-             semantic::concepts::Span<span_const_u32>&& std::is_same_v<
-                 std::decay_t<typename span_const_u32::value_type>,
-                 std::decay_t<u32>>)
-    /*!
-     * \brief Wraps around glBindImageTextures. Introduced in GL core 4.4
-     * \param first GLuint
-     * \param count GLsizei
-     * \param textures const GLuint *
-     * \return void
-     */
-    STATICINLINE
-    void bind_image_textures(u32 first, span_const_u32 const& textures)
+requires(
+    MinimumVersion<Current, Version<4, 4>> &&
+    semantic::concepts::Span<span_const_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_u32::value_type>,
+        std::decay_t<u32>>)
+/*!
+ * \brief Wraps around glBindImageTextures. Introduced in GL core 4.4
+ * \param first GLuint
+ * \param count GLsizei
+ * \param textures const GLuint *
+ * \return void
+ */
+STATICINLINE void bind_image_textures(u32 first, span_const_u32 const& textures)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -230,18 +237,20 @@ requires(MinimumVersion<Current, Version<4, 4>>&&
 }
 
 template<class span_const_u32>
-requires(MinimumVersion<Current, Version<4, 4>>&&
-             semantic::concepts::Span<span_const_u32>&& std::is_same_v<
-                 std::decay_t<typename span_const_u32::value_type>,
-                 std::decay_t<u32>>)
-    /*!
-     * \brief Wraps around glBindSamplers. Introduced in GL core 4.4
-     * \param first GLuint
-     * \param count GLsizei
-     * \param samplers const GLuint *
-     * \return void
-     */
-    STATICINLINE void bind_samplers(u32 first, span_const_u32 const& samplers)
+requires(
+    MinimumVersion<Current, Version<4, 4>> &&
+    semantic::concepts::Span<span_const_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_u32::value_type>,
+        std::decay_t<u32>>)
+/*!
+ * \brief Wraps around glBindSamplers. Introduced in GL core 4.4
+ * \param first GLuint
+ * \param count GLsizei
+ * \param samplers const GLuint *
+ * \return void
+ */
+STATICINLINE void bind_samplers(u32 first, span_const_u32 const& samplers)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -257,18 +266,20 @@ requires(MinimumVersion<Current, Version<4, 4>>&&
 }
 
 template<class span_const_u32>
-requires(MinimumVersion<Current, Version<4, 4>>&&
-             semantic::concepts::Span<span_const_u32>&& std::is_same_v<
-                 std::decay_t<typename span_const_u32::value_type>,
-                 std::decay_t<u32>>)
-    /*!
-     * \brief Wraps around glBindTextures. Introduced in GL core 4.4
-     * \param first GLuint
-     * \param count GLsizei
-     * \param textures const GLuint *
-     * \return void
-     */
-    STATICINLINE void bind_textures(u32 first, span_const_u32 const& textures)
+requires(
+    MinimumVersion<Current, Version<4, 4>> &&
+    semantic::concepts::Span<span_const_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_u32::value_type>,
+        std::decay_t<u32>>)
+/*!
+ * \brief Wraps around glBindTextures. Introduced in GL core 4.4
+ * \param first GLuint
+ * \param count GLsizei
+ * \param textures const GLuint *
+ * \return void
+ */
+STATICINLINE void bind_textures(u32 first, span_const_u32 const& textures)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -284,30 +295,34 @@ requires(MinimumVersion<Current, Version<4, 4>>&&
 }
 
 template<class span_const_GLintptr, class span_const_i32, class span_const_u32>
-requires(MinimumVersion<Current, Version<4, 4>>&&
-             semantic::concepts::Span<span_const_u32>&& std::is_same_v<
-                 std::decay_t<typename span_const_u32::value_type>,
-                 std::decay_t<u32>>&&
-                 semantic::concepts::Span<span_const_GLintptr>&& std::is_same_v<
-                     std::decay_t<typename span_const_GLintptr::value_type>,
-                     std::decay_t<GLintptr>>&&
-                     semantic::concepts::Span<span_const_i32>&& std::is_same_v<
-                         std::decay_t<typename span_const_i32::value_type>,
-                         std::decay_t<i32>>)
-    /*!
-     * \brief Wraps around glBindVertexBuffers. Introduced in GL core 4.4
-     * \param first GLuint
-     * \param count GLsizei
-     * \param buffers const GLuint *
-     * \param offsets const GLintptr *
-     * \param strides const GLsizei *
-     * \return void
-     */
-    STATICINLINE void bind_vertex_buffers(
-        u32                        first,
-        span_const_u32 const&      buffers,
-        span_const_GLintptr const& offsets,
-        span_const_i32 const&      strides)
+requires(
+    MinimumVersion<Current, Version<4, 4>> &&
+    semantic::concepts::Span<span_const_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_u32::value_type>,
+        std::decay_t<u32>> &&
+    semantic::concepts::Span<span_const_GLintptr> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLintptr::value_type>,
+        std::decay_t<GLintptr>> &&
+    semantic::concepts::Span<span_const_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_i32::value_type>,
+        std::decay_t<i32>>)
+/*!
+ * \brief Wraps around glBindVertexBuffers. Introduced in GL core 4.4
+ * \param first GLuint
+ * \param count GLsizei
+ * \param buffers const GLuint *
+ * \param offsets const GLintptr *
+ * \param strides const GLsizei *
+ * \return void
+ */
+STATICINLINE void bind_vertex_buffers(
+    u32                        first,
+    span_const_u32 const&      buffers,
+    span_const_GLintptr const& offsets,
+    span_const_i32 const&      strides)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

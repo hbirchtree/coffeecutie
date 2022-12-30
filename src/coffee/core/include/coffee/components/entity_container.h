@@ -4,9 +4,8 @@
 #include <coffee/components/types.h>
 #include <coffee/core/printing/log_interface.h>
 
-namespace Coffee {
-namespace Components {
-namespace Convenience {
+namespace compo {
+namespace convenience {
 
 using hash_type = declmemtype(&std::type_info::hash_code);
 
@@ -16,9 +15,9 @@ FORCEDINLINE hash_type type_hash_v()
     return typeid(T).hash_code();
 }
 
-} // namespace Convenience
+} // namespace convenience
 
-using Convenience::type_hash_v;
+using convenience::type_hash_v;
 
 namespace detail {
 struct visitor_path;
@@ -76,7 +75,26 @@ template<class T>
 concept is_matcher =
     std::is_same_v<decltype(T::match(std::declval<SubsystemBase>())), bool>;
 
-struct EntityContainer : non_copy
+template<typename BaseType>
+using service_sort_predicate = std::function<bool(BaseType*, BaseType*)>;
+
+template<class T>
+concept has_priority =
+    requires(T& a) { std::is_integral_v<decltype(a.priority)>; };
+
+namespace sorter {
+
+template<class BaseType, class CompType>
+    requires has_priority<CompType>
+constexpr bool (*priority_ranked)(BaseType*, BaseType*) =
+    [](BaseType* left, BaseType* right) {
+        return dynamic_cast<CompType*>(left)->priority <
+               dynamic_cast<CompType*>(right)->priority;
+    };
+
+}
+
+struct EntityContainer : stl_types::non_copy
 {
     enum DebugFlags
     {
@@ -92,9 +110,11 @@ struct EntityContainer : non_copy
     {
     }
 
-    struct entity_query : Iterator<ForwardIteratorTag, Entity>
+    struct entity_query
     {
-        using entity_predicate = Function<bool(Entity const&)>;
+        using value_type       = Entity;
+        using size_type        = szptr;
+        using entity_predicate = std::function<bool(Entity const&)>;
 
         entity_query(EntityContainer& c, u32 tags) :
             pred([=](Entity const& e) { return (e.tags & tags) == tags; }),
@@ -150,9 +170,9 @@ struct EntityContainer : non_copy
                 pred);
         }
 
-        entity_predicate const   pred;
-        EntityContainer* const   m_container;
-        Vector<Entity>::iterator it;
+        entity_predicate const        pred;
+        EntityContainer* const        m_container;
+        std::vector<Entity>::iterator it;
     };
 
     /*
@@ -196,17 +216,19 @@ struct EntityContainer : non_copy
      */
 
     template<typename ComponentType>
-    void register_component(UqPtr<ComponentContainer<ComponentType>>&& c);
+    void register_component(
+        std::unique_ptr<ComponentContainer<ComponentType>>&& c);
 
     template<typename ContainerType, typename... Args>
     void register_component_inplace(Args... args)
     {
         register_component<ContainerType>(
-            MkUq<typename ContainerType::type>(std::forward<Args>(args)...));
+            std::make_unique<typename ContainerType::type>(
+                std::forward<Args>(args)...));
     }
 
     template<typename OutputType>
-    void register_subsystem(UqPtr<typename OutputType::type>&& sys)
+    void register_subsystem(std::unique_ptr<typename OutputType::type>&& sys)
     {
         static const type_hash type_id = typeid(OutputType).hash_code();
 
@@ -216,7 +238,7 @@ struct EntityContainer : non_copy
         subsystems.emplace(type_id, std::move(sys));
     }
 
-    void register_system(UqPtr<EntityVisitorBase>&& visitor)
+    void register_system(std::unique_ptr<EntityVisitorBase>&& visitor)
     {
         visitors.push_back(std::move(visitor));
     }
@@ -225,11 +247,11 @@ struct EntityContainer : non_copy
         typename OutputType,
         typename AllocType = typename OutputType::type,
         typename... Args>
-    requires std::is_convertible_v<AllocType*, typename OutputType::type*>
+        requires std::is_convertible_v<AllocType*, typename OutputType::type*>
     AllocType& register_subsystem_inplace(Args... args)
     {
         register_subsystem<OutputType>(
-            MkUq<AllocType>(std::forward<Args>(args)...));
+            std::make_unique<AllocType>(std::forward<Args>(args)...));
 
         return C_OCAST<AllocType&>(subsystem_cast<OutputType>());
     }
@@ -237,7 +259,8 @@ struct EntityContainer : non_copy
     template<typename SystemType, typename... Args>
     void register_inplace(Args... args)
     {
-        register_system(MkUq<SystemType>(std::forward<Args>(args)...));
+        register_system(
+            std::make_unique<SystemType>(std::forward<Args>(args)...));
     }
 
     template<typename ServiceType, typename SubsystemType>
@@ -262,31 +285,31 @@ struct EntityContainer : non_copy
     quick_container<entity_query> select(u32 tags)
     {
         return quick_container<entity_query>(
-            [=]() { return entity_query(*this, tags); },
-            [=]() { return entity_query(*this); });
+            [this, tags]() { return entity_query(*this, tags); },
+            [this]() { return entity_query(*this); });
     }
 
     template<is_component_tag ComponentType>
     quick_container<entity_query> select()
     {
         return quick_container<entity_query>(
-            [=]() {
+            [this]() {
                 return entity_query::from_container(
                     *this, container<ComponentType>());
             },
-            [=]() { return entity_query(*this); });
+            [this]() { return entity_query(*this); });
     }
 
     template<is_matcher Matcher>
     quick_container<entity_query> match()
     {
         return quick_container<entity_query>(
-            [=]() {
-                return entity_query(*this, [=](Entity const& e) {
+            [this]() {
+                return entity_query(*this, [this](Entity const& e) {
                     return Matcher::match(*this, e.id);
                 });
             },
-            [=]() { return entity_query(*this); });
+            [this]() { return entity_query(*this); });
     }
 
     ComponentContainerBase& container(size_t type_id)
@@ -384,6 +407,9 @@ struct EntityContainer : non_copy
     template<class BaseType>
     auto services_with(reverse_query_t);
 
+    template<class BaseType>
+    auto services_with(service_sort_predicate<BaseType> sorter);
+
     template<is_component_tag ComponentType>
     typename ComponentType::value_type* get(u64 id)
     {
@@ -420,21 +446,21 @@ struct EntityContainer : non_copy
     EntityRef<EntityContainer> create_entity(EntityRecipe const& recipe);
 
     /* For optimizations */
-    using visitor_graph = Set<Vector<bool>>;
+    using visitor_graph = std::set<std::vector<bool>>;
 
     visitor_graph create_task_graph();
 
-    u32 debug_flags;
-
   private:
-    u64            entity_counter; /*!< For enumerating entities */
-    Vector<Entity> entities;
+    u64                 entity_counter; /*!< For enumerating entities */
+    std::vector<Entity> entities;
 
-    Map<type_hash, UqPtr<ComponentContainerBase>> components;
-    Map<type_hash, UqPtr<SubsystemBase>>          subsystems;
-    Vector<UqPtr<EntityVisitorBase>>              visitors;
-    Map<type_hash, SubsystemBase*>                services;
+    std::map<type_hash, std::unique_ptr<ComponentContainerBase>> components;
+    std::map<type_hash, std::unique_ptr<SubsystemBase>>          subsystems;
+    std::vector<std::unique_ptr<EntityVisitorBase>>              visitors;
+    std::map<type_hash, SubsystemBase*>                          services;
+
+  public:
+    u32 debug_flags;
 };
 
-} // namespace Components
-} // namespace Coffee
+} // namespace compo

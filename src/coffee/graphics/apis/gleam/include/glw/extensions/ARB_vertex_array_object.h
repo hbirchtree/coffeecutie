@@ -27,16 +27,18 @@ STATICINLINE void bind_vertex_array(u32 array)
 }
 
 template<class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
-         std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>)
-    /*!
-     * \brief Part of GL_ARB_vertex_array_object
-     * \param n GLsizei
-     * \param arrays const GLuint *
-     * \return void
-     */
-    STATICINLINE void delete_vertex_arrays(span_const_u32 const& arrays)
+requires(
+    semantic::concepts::Span<span_const_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_u32::value_type>,
+        std::decay_t<u32>>)
+/*!
+ * \brief Part of GL_ARB_vertex_array_object
+ * \param n GLsizei
+ * \param arrays const GLuint *
+ * \return void
+ */
+STATICINLINE void delete_vertex_arrays(span_const_u32 const& arrays)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -51,16 +53,18 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
-         std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>)
-    /*!
-     * \brief Part of GL_ARB_vertex_array_object
-     * \param n GLsizei
-     * \param arrays GLuint *
-     * \return void
-     */
-    STATICINLINE void gen_vertex_arrays(span_u32 arrays)
+requires(
+    semantic::concepts::Span<span_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_u32::value_type>,
+        std::decay_t<u32>>)
+/*!
+ * \brief Part of GL_ARB_vertex_array_object
+ * \param n GLsizei
+ * \param arrays GLuint *
+ * \return void
+ */
+STATICINLINE void gen_vertex_arrays(span_u32 arrays)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

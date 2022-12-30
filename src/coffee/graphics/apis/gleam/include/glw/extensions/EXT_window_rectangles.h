@@ -11,17 +11,19 @@ constexpr libc_types::u32 max_window_rectangles = 0x8F14;
 constexpr libc_types::u32 num_window_rectangles = 0x8F15;
 } // namespace values
 template<class span_const_i32>
-requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
-         std::decay_t<typename span_const_i32::value_type>,
-         std::decay_t<i32>>)
-    /*!
-     * \brief Part of GL_EXT_window_rectangles
-     * \param mode GLenum
-     * \param count GLsizei
-     * \param box const GLint *
-     * \return void
-     */
-    STATICINLINE
+requires(
+    semantic::concepts::Span<span_const_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_i32::value_type>,
+        std::decay_t<i32>>)
+/*!
+ * \brief Part of GL_EXT_window_rectangles
+ * \param mode GLenum
+ * \param count GLsizei
+ * \param box const GLint *
+ * \return void
+ */
+STATICINLINE
     void window_rectangles(GLenum mode, i32 count, span_const_i32 const& box)
 {
     using namespace std::string_view_literals;

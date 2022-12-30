@@ -6,52 +6,55 @@
 
 using namespace Coffee;
 
+using semantic::Bytes;
+
 using RSC = Coffee::Resource;
 
-static const cstring test_txt_content = "TEST DATA LOL"
-                                        "TEST DATA LOL"
-                                        "TEST DATA LOL"
-                                        "TEST DATA LOL"
-                                        "TEST DATA LOL"
-                                        "TEST DATA LOL"
-                                        "TEST DATA LOL"
-                                        "TEST DATA LOL"
-                                        "TEST DATA LOL"
-                                        "TEST DATA LOL"
-                                        "TEST DATA LOL"
-                                        "TEST DATA LOL"
-                                        "TEST DATA LOL";
-
-using VFS = VirtFS::VFS;
+static constexpr std::string_view test_txt_content = "TEST DATA LOL"
+                                                     "TEST DATA LOL"
+                                                     "TEST DATA LOL"
+                                                     "TEST DATA LOL"
+                                                     "TEST DATA LOL"
+                                                     "TEST DATA LOL"
+                                                     "TEST DATA LOL"
+                                                     "TEST DATA LOL"
+                                                     "TEST DATA LOL"
+                                                     "TEST DATA LOL"
+                                                     "TEST DATA LOL"
+                                                     "TEST DATA LOL"
+                                                     "TEST DATA LOL";
 
 bool gen_dummy_virtfs(
-    Vector<byte_t>&           outputData,
-    Vector<VirtFS::VirtDesc>& inputData,
-    VFS const**               vfs)
+    Vector<byte_t>&    outputData,
+    Vector<vfs::desc>& inputData,
+    vfs::fs const**    vfs)
 {
     inputData.emplace_back(
         "test.txt",
-        Bytes::CreateString(test_txt_content),
-        VirtFS::File_Compressed);
+        BytesConst::ofContainer(test_txt_content).view,
+        vfs::File_Compressed);
     inputData.emplace_back(
-        "test2.txt", Bytes::CreateString(test_txt_content), 0);
+        "test2.txt", BytesConst::ofContainer(test_txt_content).view, 0);
 
-    VirtFS::vfs_error_code ec;
-
-    if(!VirtFS::GenVirtFS(inputData, &outputData, ec))
+    if(auto fs = vfs::generate(inputData); fs.has_error())
         return false;
+    else
+        outputData = fs.value();
 
-    if(!VFS::OpenVFS(Bytes::CreateFrom(outputData), vfs, ec))
+    if(auto fs = vfs::fs::open(Bytes::ofContainer(outputData).view);
+       fs.has_error())
         return false;
+    else
+        *vfs = fs.value();
 
     return true;
 }
 
 bool virtfs_serialize()
 {
-    Vector<byte_t>           outputData;
-    Vector<VirtFS::VirtDesc> inputData;
-    VFS const*               readVfs = nullptr;
+    std::vector<byte_t>    outputData;
+    std::vector<vfs::desc> inputData;
+    vfs::fs const*         readVfs = nullptr;
 
     if(!gen_dummy_virtfs(outputData, inputData, &readVfs))
         return false;
@@ -61,25 +64,24 @@ bool virtfs_serialize()
     auto out_rsc = MkUrl("test.vfs", RSCA::TempFile);
 
     RSC output(out_rsc);
-    output.data = outputData.data();
-    output.size = outputData.size();
+    output = Bytes::ofContainer(outputData);
 
     if(!FileCommit(output, RSCA::WriteOnly | RSCA::NewFile | RSCA::Discard))
         return false;
 
-    VirtFS::vfs_error_code ec;
-
-    if(!VFS::OpenVFS(FileGetDescriptor(output), &readVfs, ec))
+    if(auto fs = vfs::fs::open(output.data()); fs.has_error())
         return false;
+    else
+        readVfs = fs.value();
 
-    VirtFS::Resource rsc(readVfs, MkUrl("test2.txt"));
+    vfs::Resource rsc(readVfs, MkUrl("test2.txt"));
 
     if(!rsc.valid())
         return false;
 
-    Bytes rscData = rsc.data();
+    auto rscData = rsc.data();
 
-    if(rscData.size != inputData[1].data.size)
+    if(rscData.size != inputData[1].data.size())
         return false;
 
     return true;
@@ -87,19 +89,17 @@ bool virtfs_serialize()
 
 bool virtfs_iterator()
 {
-    Vector<byte_t>           outputData;
-    Vector<VirtFS::VirtDesc> inputData;
-    VFS const*               readVfs = nullptr;
+    Vector<byte_t>    outputData;
+    Vector<vfs::desc> inputData;
+    vfs::fs const*    readVfs = nullptr;
 
     if(!gen_dummy_virtfs(outputData, inputData, &readVfs))
         return false;
 
-    using vfs_view = VirtFS::vfs_view;
-
-    vfs_view view(Bytes::CreateFrom(outputData));
+    vfs::view view = vfs::view::of(Bytes::ofContainer(outputData).view);
 
     for(auto const& file : view)
-        cDebug("File: {0}", file.name);
+        cDebug("File: {0}", file.name());
 
     return true;
 }

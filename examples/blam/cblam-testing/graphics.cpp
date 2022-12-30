@@ -24,8 +24,8 @@ void load_scenario_bsp(EntityContainer& e, BlamData<Version>& data)
 
     auto&                 magic     = data.map_container.magic;
     BSPCache<Version>&    bsp_cache = e.subsystem_cast<BSPCache<Version>>();
-    ShaderCache<Version>& shader_cache
-        = e.subsystem_cast<ShaderCache<Version>>();
+    ShaderCache<Version>& shader_cache =
+        e.subsystem_cast<ShaderCache<Version>>();
 
     {
         auto vert                = data.bsp_buf->map(0);
@@ -80,8 +80,8 @@ void load_scenario_bsp(EntityContainer& e, BlamData<Version>& data)
                 bsp_ref.shader = mesh.shader;
 
                 ShaderData&       shader_ = mesh_ent.get<ShaderData>();
-                ShaderItem const& shader_it
-                    = shader_cache.find(mesh.shader)->second;
+                ShaderItem const& shader_it =
+                    shader_cache.find(mesh.shader)->second;
                 shader_.shader     = shader_it.header;
                 shader_.shader_tag = shader_it.tag;
                 shader_.shader_id  = mesh.shader;
@@ -113,8 +113,8 @@ void load_objects(
     auto& model_cache  = e.subsystem_cast<ModelCache<Version>>();
     auto& shader_cache = e.subsystem_cast<ShaderCache<Version>>();
 
-    auto obj_names
-        = data.scenario->objects.object_names.data(data.map_container.magic);
+    auto obj_names =
+        data.scenario->objects.object_names.data(data.map_container.magic);
     auto magic   = data.map_container.magic;
     auto index   = blam::tag_index_view(data.map_container);
     auto palette = group.palette.data(magic).value();
@@ -129,11 +129,11 @@ void load_objects(
         if(!instance_tag->valid())
             continue;
 
-        auto instance_obj
-            = instance_tag->template data<blam::scn::object>(magic).value();
+        auto instance_obj =
+            instance_tag->template data<blam::scn::object>(magic).value();
 
-        ModelAssembly mesh_data
-            = model_cache.predict_regions(instance_obj[0].model.to_plain());
+        ModelAssembly mesh_data =
+            model_cache.predict_regions(instance_obj[0].model.to_plain());
 
         auto         parent_ = e.create_entity(parent);
         Model&       model   = parent_.get<Model>();
@@ -146,8 +146,8 @@ void load_objects(
 
         for(auto const& model_ : mesh_data.models)
         {
-            ModelItem<Version> const& modelit
-                = model_cache.find(model_.at(blam::mod2::lod_high_ext))->second;
+            ModelItem<Version> const& modelit =
+                model_cache.find(model_.at(blam::mod2::lod_high_ext))->second;
 
             for(auto const& sub : modelit.mesh.sub)
             {
@@ -163,8 +163,8 @@ void load_objects(
                     model_.at(blam::mod2::lod_high_ext), sub);
 
                 ShaderData&       shader_ = submod.get<ShaderData>();
-                ShaderItem const& shader_it
-                    = shader_cache.find(sub.shader)->second;
+                ShaderItem const& shader_it =
+                    shader_cache.find(sub.shader)->second;
                 shader_.initialize(shader_it, submod_);
 
                 submod_.current_pass = shader_.get_render_pass(shader_cache);
@@ -209,10 +209,10 @@ void load_multiplayer_equipment(
         if(item_coll_tag == index.end())
             continue;
 
-        blam::scn::item_collection const& item_coll
-            = (*item_coll_tag)
-                  ->template data<blam::scn::item_collection>(magic)
-                  .value()[0];
+        blam::scn::item_collection const& item_coll =
+            (*item_coll_tag)
+                ->template data<blam::scn::item_collection>(magic)
+                .value()[0];
 
         for(blam::scn::item_permutation const& item_perm :
             item_coll.items.data(magic).value())
@@ -221,10 +221,10 @@ void load_multiplayer_equipment(
             {
             case blam::tag_class_t::weap:
             case blam::tag_class_t::eqip: {
-                blam::scn::item const& item
-                    = (*index.find(item_perm.item))
-                          ->template data<blam::scn::item>(magic)
-                          .value()[0];
+                blam::scn::item const& item =
+                    (*index.find(item_perm.item))
+                        ->template data<blam::scn::item>(magic)
+                        .value()[0];
 
                 auto              set    = e.create_entity(equip);
                 Model&            model_ = set.get<Model>();
@@ -236,14 +236,14 @@ void load_multiplayer_equipment(
                 model_.initialize(&equipment_ref);
                 model_.tag = *index.find(item.model);
 
-                ModelAssembly models
-                    = model_cache.predict_regions(item.model.to_plain());
+                ModelAssembly models =
+                    model_cache.predict_regions(item.model.to_plain());
 
                 for(auto const& model : models.models)
                 {
-                    ModelItem<Version> const& modelit
-                        = model_cache.find(model.at(blam::mod2::lod_high_ext))
-                              ->second;
+                    ModelItem<Version> const& modelit =
+                        model_cache.find(model.at(blam::mod2::lod_high_ext))
+                            ->second;
 
                     for(auto const& sub : modelit.mesh.sub)
                     {
@@ -255,12 +255,12 @@ void load_multiplayer_equipment(
                             model.at(blam::mod2::lod_high_ext), sub);
 
                         ShaderData&       shader_ = submod.get<ShaderData>();
-                        ShaderItem const& shader_it
-                            = shader_cache.find(sub.shader)->second;
+                        ShaderItem const& shader_it =
+                            shader_cache.find(sub.shader)->second;
                         shader_.initialize(shader_it, submod_);
 
-                        submod_.current_pass
-                            = shader_.get_render_pass(shader_cache);
+                        submod_.current_pass =
+                            shader_.get_render_pass(shader_cache);
                     }
                 }
                 break;
@@ -311,9 +311,9 @@ void load_scenario_scenery(EntityContainer& e, BlamData<Version>& data)
     skybox_base.tags       = ObjectSkybox;
     skybox_base.components = {type_hash_v<Model>()};
     EntityRecipe skybox_model;
-    skybox_model.tags = ObjectSkybox | ObjectMod2;
-    skybox_model.components
-        = {type_hash_v<SubModel>(), type_hash_v<ShaderData>()};
+    skybox_model.tags       = ObjectSkybox | ObjectMod2;
+    skybox_model.components = {
+        type_hash_v<SubModel>(), type_hash_v<ShaderData>()};
 
     auto   skybox_ent = e.create_entity(skybox_base);
     Model& skybox_mod = skybox_ent.get<Model>();
@@ -321,8 +321,8 @@ void load_scenario_scenery(EntityContainer& e, BlamData<Version>& data)
     for(auto const& skybox : data.scenario->info.skyboxes.data(magic).value())
     {
         auto        skybox_tag = *index.find(skybox);
-        auto const& skybox_
-            = skybox_tag->template data<blam::scn::skybox>(magic).value()[0];
+        auto const& skybox_ =
+            skybox_tag->template data<blam::scn::skybox>(magic).value()[0];
 
         skybox_mod.tag = skybox_tag;
 
@@ -370,8 +370,8 @@ i32 blam_main(i32, cstring_w*)
     comp_app::configureDefaults(e);
 
 #if defined(FEATURE_ENABLE_GLeamRHI)
-    auto& glConfig
-        = e.service<comp_app::AppLoader>()->config<comp_app::GLConfig>();
+    auto& glConfig =
+        e.service<comp_app::AppLoader>()->config<comp_app::GLConfig>();
     glConfig.swapInterval = 1;
     if constexpr(compile_info::debug_mode)
         glConfig.profile |= comp_app::GLConfig::Debug;
@@ -392,8 +392,8 @@ i32 blam_main(i32, cstring_w*)
 
             auto& gfx        = e.register_subsystem_inplace<gfx::system>();
             auto  load_error = gfx.load(gfx::api::load_options_t{
-                 .api_version = 0x430,
-                 .api_type    = gfx::api_type_t::core,
+                //                 .api_version = 0x430,
+                //                 .api_type    = gfx::api_type_t::core,
             });
 
             if(load_error)
@@ -418,8 +418,8 @@ i32 blam_main(i32, cstring_w*)
             e.register_component_inplace<MultiplayerSpawn>();
             e.register_component_inplace<ShaderData>();
 
-            auto& imgui = e.register_subsystem_inplace<imgui::ImGuiSystem>(
-                std::ref(gfx));
+            auto& imgui =
+                e.register_subsystem_inplace<imgui::ImGuiSystem>(std::ref(gfx));
             e.register_subsystem_inplace<BlamDebugUi>();
             e.register_subsystem_inplace<BlamBspWidget<halo_version>>(&data);
 
@@ -427,29 +427,32 @@ i32 blam_main(i32, cstring_w*)
                 comp_app::app_error ec;
                 imgui.load(e, ec);
                 auto frame_ui = e.create_entity({
-                    .components = { typeid(imgui::ImGuiWidget).hash_code(), },
+                    .components =
+                        {
+                            typeid(imgui::ImGuiWidget).hash_code(),
+                        },
                 });
-                frame_ui.get<imgui::ImGuiWidget>()
-                    = imgui::widgets::StatsMenu();
+                frame_ui.get<imgui::ImGuiWidget>() =
+                    imgui::widgets::StatsMenu();
             }
 
             {
-                auto& bitm_cache
-                    = e.register_subsystem_inplace<BitmapCache<halo_version>>(
+                auto& bitm_cache =
+                    e.register_subsystem_inplace<BitmapCache<halo_version>>(
                         std::ref(data.map_container),
                         blam::magic_data_t(
                             C_OCAST<Bytes>(data.bitmap_file).view),
                         &gfx);
-                auto& shader_cache
-                    = e.register_subsystem_inplace<ShaderCache<halo_version>>(
+                auto& shader_cache =
+                    e.register_subsystem_inplace<ShaderCache<halo_version>>(
                         std::ref(data.map_container), std::ref(bitm_cache));
-                auto& bsp_cache
-                    = e.register_subsystem_inplace<BSPCache<halo_version>>(
+                auto& bsp_cache =
+                    e.register_subsystem_inplace<BSPCache<halo_version>>(
                         std::ref(data.map_container),
                         std::ref(bitm_cache),
                         std::ref(shader_cache));
-                auto& model_cache
-                    = e.register_subsystem_inplace<ModelCache<halo_version>>(
+                auto& model_cache =
+                    e.register_subsystem_inplace<ModelCache<halo_version>>(
                         std::ref(data.map_container),
                         std::ref(bitm_cache),
                         std::ref(shader_cache),
@@ -460,11 +463,11 @@ i32 blam_main(i32, cstring_w*)
 
             auto& magic = data.map_container.magic;
 
-            data.scenario
-                = data.map_container.tags->scenario(data.map_container.map)
-                      .value()
-                      ->data<blam::scn::scenario<halo_version>>(magic)
-                      .value();
+            data.scenario =
+                data.map_container.tags->scenario(data.map_container.map)
+                    .value()
+                    ->data<blam::scn::scenario<halo_version>>(magic)
+                    .value();
 
             e.register_subsystem_inplace<BlamScript<halo_version>>(
                 std::ref(data.map_container), data.scenario, magic);
@@ -479,14 +482,22 @@ i32 blam_main(i32, cstring_w*)
 
             create_resources(e, data);
 
+            const bool use_old_shaders =
+                gfx.api_version() != std::make_tuple<u32>(4, 6);
+            auto map_shader =
+                use_old_shaders ? "map.410.vert"_rsc : "map.vert"_rsc;
             {
                 auto pipeline = gfx.alloc_program();
                 pipeline->add(
                     gfx::program_t::stage_t::Vertex,
-                    gfx.alloc_shader("map.vert"_rsc.data()));
+                    gfx.alloc_shader(map_shader.data()));
                 pipeline->add(
                     gfx::program_t::stage_t::Fragment,
-                    gfx.alloc_shader("map.frag"_rsc.data()));
+                    gfx.alloc_shader(
+                        (use_old_shaders ? "map.410.frag"_rsc : "map.frag"_rsc)
+                            .data())
+                    //
+                );
                 if(auto res = pipeline->compile(); res.has_error())
                 {
                     auto [msg] = res.error();
@@ -498,10 +509,19 @@ i32 blam_main(i32, cstring_w*)
                 auto pipeline = gfx.alloc_program();
                 pipeline->add(
                     gfx::program_t::stage_t::Vertex,
-                    gfx.alloc_shader("scenery.vert"_rsc.data()));
+                    gfx.alloc_shader((use_old_shaders ? "scenery.410.vert"_rsc
+                                                      : "scenery.vert"_rsc)
+                                         .data()));
                 pipeline->add(
                     gfx::program_t::stage_t::Fragment,
-                    gfx.alloc_shader("scenery.frag"_rsc.data()));
+                    gfx.alloc_shader("white.frag"_rsc.data())
+                    //                    gfx.alloc_shader((use_old_shaders ?
+                    //                    "scenery.410.frag"_rsc
+                    //                                                      :
+                    //                                                      "scenery.frag"_rsc)
+                    //                                         .data())
+                    //
+                );
                 if(auto res = pipeline->compile(); res.has_error())
                 {
                     auto [msg] = res.error();
@@ -513,11 +533,17 @@ i32 blam_main(i32, cstring_w*)
                 auto pipeline = gfx.alloc_program();
                 pipeline->add(
                     gfx::program_t::stage_t::Vertex,
-                    gfx.alloc_shader("map.vert"_rsc.data()));
+                    gfx.alloc_shader(map_shader.data()));
                 pipeline->add(
                     gfx::program_t::stage_t::Fragment,
                     gfx.alloc_shader(
-                        "map_senv.frag"_rsc.data(),
+                        "white.frag"_rsc.data(),
+                        //                    gfx.alloc_shader(
+                        //                        (use_old_shaders ?
+                        //                        "map_senv.410.frag"_rsc
+                        //                                         :
+                        //                                         "map_senv.frag"_rsc)
+                        //                            .data(),
                         {{"MICRO_BLEND", "1"}, {"PRIMARY_BLEND", "1"}}));
                 if(auto res = pipeline->compile(); res.has_error())
                 {
@@ -530,11 +556,17 @@ i32 blam_main(i32, cstring_w*)
                 auto pipeline = gfx.alloc_program();
                 pipeline->add(
                     gfx::program_t::stage_t::Vertex,
-                    gfx.alloc_shader("map.vert"_rsc.data()));
+                    gfx.alloc_shader(map_shader.data()));
                 pipeline->add(
                     gfx::program_t::stage_t::Fragment,
-//                    gfx.alloc_shader("white.frag"_rsc.data()));
-                    gfx.alloc_shader("wireframe.frag"_rsc.data()));
+                    gfx.alloc_shader("white.frag"_rsc.data())
+                    //                    gfx.alloc_shader((use_old_shaders ?
+                    //                    "wireframe.410.frag"_rsc
+                    //                                                      :
+                    //                                                      "wireframe.frag"_rsc)
+                    //                                         .data())
+                    //
+                );
                 if(auto res = pipeline->compile(); res.has_error())
                 {
                     auto [msg] = res.error();
@@ -577,10 +609,10 @@ i32 blam_main(i32, cstring_w*)
 
                 if(!spawn_locations.empty())
                 {
-                    data.camera.position
-                        = (Vecf4(spawn_locations[0].pos + Vecf3(0, 0, 1), 1)
-                           * -1.f)
-                          * transform;
+                    data.camera.position =
+                        (Vecf4(spawn_locations[0].pos + Vecf3(0, 0, 1), 1) *
+                         -1.f) *
+                        transform;
                     // TODO: Fix facing of camera here
                     cDebug("Facing of player: {0}", spawn_locations[0].rot);
                     data.camera.rotation = typing::vectors::euler(
@@ -681,18 +713,24 @@ i32 blam_main(i32, cstring_w*)
 
             using namespace typing::vectors::scene;
             {
-                data.camera.aspect
-                    = e.service<comp_app::Windowing>()->size().aspect();
+                data.camera.aspect =
+                    e.service<comp_app::Windowing>()->size().aspect();
                 data.camera.zVals = {0.01f, 20000.f};
 
-                data.camera_matrix
-                    = GenPerspective(data.camera) * GenTransform(data.camera)
-                      * typing::vectors::scale(Matf4(), Vecf3(10));
+                data.camera_matrix = GenPerspective(data.camera) *
+                                     GenTransform(data.camera) *
+                                     typing::vectors::scale(Matf4(), Vecf3(10));
             }
         },
         [](EntityContainer&, BlamData<halo_version>&, time_point const&) {
 
-        });
+        },
+#if defined(COFFEE_ANDROID)
+        MkUrl("bloodgulch.map", RSCA::AssetFile)
+#else
+        MkUrl("bloodgulch.map", RSCA::SystemFile)
+#endif
+    );
 
     return comp_app::ExecLoop<comp_app::BundleData>::exec(e);
 }

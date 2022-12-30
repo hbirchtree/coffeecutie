@@ -11,7 +11,6 @@ extern void* uikit_window;
 
 @interface GestureDelegate : UIResponder<UIGestureRecognizerDelegate>
 
-- (void)initRecognizers;
 - (void)handleTap:(UITapGestureRecognizer *)recog;
 - (void)handlePan:(UIPanGestureRecognizer *)recog;
 - (void)handlePinch: (UIPinchGestureRecognizer*) recog;
@@ -61,7 +60,7 @@ extern void* uikit_window;
 
 - (GestureDelegate*)init
 {
-    [super init];
+    self = [super init];
     
     UITapGestureRecognizer* tapRecog = [[UITapGestureRecognizer alloc]
                                         initWithTarget:self
@@ -83,7 +82,7 @@ extern void* uikit_window;
                                             initWithTarget:self
                                             action:@selector(handleRotation:)];
 
-    self.window = (UIWindow*)uikit_window;
+    self.window = (__bridge UIWindow*)uikit_window;
     
     UIView* view = self.window.rootViewController.view;
 

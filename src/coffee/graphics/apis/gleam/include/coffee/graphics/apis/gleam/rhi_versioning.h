@@ -90,6 +90,10 @@ using cmd =
     gl::impl::core<gl::core::highest>
 #elif GLEAM_RESTRICT_ES == 0x200
     gl::es::v20
+#elif GLEAM_RESTRICT_ES >= 0x300
+    gl::es::v30
+#elif GLEAM_RESTRICT_ES == 0x310
+    gl::es::v31
 #elif defined(GL_ES_VERSION_2_0)
     gl::impl::es<gl::es::highest>
 #endif

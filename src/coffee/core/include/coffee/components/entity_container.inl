@@ -9,35 +9,41 @@
 
 #include <platforms/stacktrace.h>
 
+#include <algorithm>
+
 #define ENT_TYPE_NAME(var) \
     platform::stacktrace::demangle::name(typeid(var).name())
 
 #define ENT_DBG_TYPE(flag, prefix, var)          \
     if(debug_flags & flag)                       \
     {                                            \
-        CString dbg;                             \
+        std::string dbg;                         \
         (dbg += prefix) += ENT_TYPE_NAME(var);   \
-        Logging::log(                            \
-            libc::io::io_handles::err,           \
+        log(libc::io::io_handles::err,           \
             "Coffee::Components",                \
             dbg,                                 \
             semantic::debug::Severity::Verbose); \
     }
 
-namespace Coffee {
-namespace Components {
+namespace compo {
+
+using Coffee::DProfContext;
+using Coffee::Logging::log;
+
+using type_safety::type_list::collect_list;
+using type_safety::type_list::for_each;
 
 namespace detail {
 
 using node_id = size_t;
 
 extern void expand_neighbor_matrix(
-    Vector<bool>& matrix, size_t size, node_id current_node);
+    std::vector<bool>& matrix, size_t size, node_id current_node);
 
 FORCEDINLINE EntityContainer::visitor_graph create_visitor_graph(
-    Vector<UqPtr<EntityVisitorBase>> const& visitors)
+    std::vector<std::unique_ptr<EntityVisitorBase>> const& visitors)
 {
-    Map<type_hash, Vector<node_id>> buckets;
+    std::map<type_hash, std::vector<node_id>> buckets;
 
     /* Add visitors to buckets */
     node_id idx = 0;
@@ -50,7 +56,7 @@ FORCEDINLINE EntityContainer::visitor_graph create_visitor_graph(
     }
 
     auto         neigh_size = visitors.size();
-    Vector<bool> neighbor_matrix;
+    std::vector<bool> neighbor_matrix;
     neighbor_matrix.resize(visitors.size() * visitors.size());
 
     /* Create a neighbor matrix for the nodes */
@@ -85,7 +91,8 @@ FORCEDINLINE EntityContainer::visitor_graph create_visitor_graph(
 
     /* Connect all nodes that run on main thread, grouping them together */
     {
-        auto const is_mainthread = [](UqPtr<EntityVisitorBase> const& p) {
+        auto const is_mainthread = [](
+                std::unique_ptr<EntityVisitorBase> const& p) {
             return (p->flags & VisitorFlags::MainThread)
                    == VisitorFlags::MainThread;
         };
@@ -121,19 +128,19 @@ FORCEDINLINE EntityContainer::visitor_graph create_visitor_graph(
         expand_neighbor_matrix(neighbor_matrix, neigh_size, i);
 
     /* De-duplicate neighbor matrix rows to create task queues */
-    Set<Vector<bool>> unique_rows;
+    std::set<std::vector<bool>> unique_rows;
     for(auto i : Range<>(neigh_size))
     {
-        unique_rows.insert(Vector<bool>(
-            neighbor_matrix.begin() + C_FCAST<ptroff>(neigh_size * i),
-            neighbor_matrix.begin() + C_FCAST<ptroff>(neigh_size * (i + 1))));
+        unique_rows.insert(std::vector<bool>(
+            neighbor_matrix.begin() + static_cast<ptroff>(neigh_size * i),
+            neighbor_matrix.begin() + static_cast<ptroff>(neigh_size * (i + 1))));
     }
 
     return unique_rows;
 }
 
 FORCEDINLINE SubsystemBase* pointer_extract(
-    Pair<const type_hash, UqPtr<SubsystemBase>> const& sub)
+    std::pair<const type_hash, std::unique_ptr<SubsystemBase>> const& sub)
 {
     return sub.second.get();
 }
@@ -154,7 +161,7 @@ void EntityContainer::exec()
     time_point     time_now = clock::now();
     ContainerProxy proxy(*this);
 
-    Vector<SubsystemBase*> subsystems_;
+    std::vector<SubsystemBase*> subsystems_;
     subsystems_.reserve(subsystems.size());
 
     std::transform(
@@ -167,8 +174,7 @@ void EntityContainer::exec()
 
     auto ex_handler = [](auto const& source) {
         return [&source](auto const& e) {
-            Logging::log(
-                libc::io::io_handles::err,
+            log(libc::io::io_handles::err,
                 "Components",
                 platform::stacktrace::demangle::type_name(source) + ": "
                     + platform::stacktrace::demangle::type_name(e) + ": "
@@ -182,7 +188,7 @@ void EntityContainer::exec()
 
         if constexpr(wrap_exceptions)
             ENT_DBG_TYPE(Verbose_Subsystems, "subsystem:start:", subsys)
-        DProfContext _(typeid(subsys).name() + CString("::start_frame"));
+        DProfContext _(typeid(subsys).name() + std::string("::start_frame"));
 
         if constexpr(wrap_exceptions)
             wrap_exception<std::exception>(
@@ -202,7 +208,7 @@ void EntityContainer::exec()
 
         if constexpr(wrap_exceptions)
             ENT_DBG_TYPE(Verbose_Visitors, "visitor:dispatch:", visitor)
-        DProfContext _(typeid(visitor).name() + CString("::dispatch"));
+        DProfContext _(typeid(visitor).name() + std::string("::dispatch"));
 
         if constexpr(wrap_exceptions)
             wrap_exception<std::exception>(
@@ -221,7 +227,7 @@ void EntityContainer::exec()
 
         if constexpr(wrap_exceptions)
             ENT_DBG_TYPE(Verbose_Subsystems, "subsystem:end:", subsys)
-        DProfContext _(typeid(subsys).name() + CString("::end_frame"));
+        DProfContext _(typeid(subsys).name() + std::string("::end_frame"));
 
         if constexpr(wrap_exceptions)
             wrap_exception<std::exception>(
@@ -242,7 +248,7 @@ FORCEDINLINE EntityContainer::visitor_graph EntityContainer::create_task_graph()
 
 template<typename ComponentType>
 FORCEDINLINE void EntityContainer::register_component(
-    UqPtr<ComponentContainer<ComponentType>>&& c)
+    std::unique_ptr<ComponentContainer<ComponentType>>&& c)
 {
     static const type_hash type_id = typeid(ComponentType).hash_code();
 
@@ -278,7 +284,7 @@ struct service_test
 
     void check_subsystems(SubsystemType* sub)
     {
-        type_list::for_each<typename ServiceType::services>(dynamic_test(sub));
+        for_each<typename ServiceType::services>(dynamic_test(sub));
     }
 };
 
@@ -287,7 +293,7 @@ void EntityContainer::register_subsystem_services(SubsystemType* subsystem)
 {
     static_assert(std::is_same<type_hash, size_t>::value, "Mismatched types");
 
-    auto types = type_list::collect_list<typename ServiceType::services>();
+    auto types = collect_list<typename ServiceType::services>();
 
     if constexpr(compile_info::debug_mode)
         service_test<ServiceType, SubsystemType>().check_subsystems(subsystem);
@@ -359,14 +365,24 @@ auto EntityContainer::services_with(reverse_query_t)
     return services_with<BaseType, true>();
 }
 
+template<class BaseType>
+auto EntityContainer::services_with(service_sort_predicate<BaseType> sorter)
+{
+    auto services = services_with<BaseType>();
+    std::vector<BaseType*> out;
+    for(auto& service : services)
+        out.push_back(&service);
+    std::sort(out.begin(), out.end(), std::move(sorter));
+    return out;
+}
+
 FORCEDINLINE EntityContainer& SubsystemBase::get_container(
     SubsystemBase::ContainerProxy& proxy)
 {
     return proxy.m_container;
 }
 
-} // namespace Components
-} // namespace Coffee
+} // namespace compo
 
 #undef ENT_DBG_TYPE
 #undef ENT_TYPE_NAME

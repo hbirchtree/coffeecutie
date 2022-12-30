@@ -3,8 +3,9 @@
 #include "proxy.h"
 #include "types.h"
 
-namespace Coffee {
-namespace Components {
+namespace compo {
+
+using type_safety::type_list::collect_list;
 
 template<typename CompList, typename SubsysList>
 struct EntityVisitor : EntityVisitorBase
@@ -12,16 +13,16 @@ struct EntityVisitor : EntityVisitorBase
     using ComponentList = CompList;
     using SubsystemList = SubsysList;
 
-    using VisitorFlags = Components::VisitorFlags;
-    using time_point   = Components::time_point;
-    using Entity       = Components::Entity;
+    using VisitorFlags = VisitorFlags;
+    using time_point   = time_point;
+    using Entity       = Entity;
     using VisitorType  = EntityVisitor<CompList, SubsysList>;
     using Proxy        = ConstrainedProxy<CompList, SubsysList>;
 
     EntityVisitor(u32 tag = 0, VisitorFlags flags = VisitorFlags::None) :
         EntityVisitorBase(
-            type_list::collect_list<CompList>(),
-            type_list::collect_list<SubsysList>(),
+            collect_list<CompList>(),
+            collect_list<SubsysList>(),
             tag,
             flags)
     {
@@ -57,5 +58,4 @@ inline bool EntityVisitor<CompList, SubsysList>::dispatch(
     return true;
 }
 
-} // namespace Components
-} // namespace Coffee
+} // namespace compo

@@ -26,16 +26,18 @@ constexpr libc_types::u32 draw_buffer14    = 0x8833;
 constexpr libc_types::u32 draw_buffer15    = 0x8834;
 } // namespace values
 template<class span_const_GLenum>
-requires(semantic::concepts::Span<span_const_GLenum>&& std::is_same_v<
-         std::decay_t<typename span_const_GLenum::value_type>,
-         std::decay_t<GLenum>>)
-    /*!
-     * \brief Part of GL_NV_draw_buffers
-     * \param n GLsizei
-     * \param bufs const GLenum *
-     * \return void
-     */
-    STATICINLINE void draw_buffers(span_const_GLenum const& bufs)
+requires(
+    semantic::concepts::Span<span_const_GLenum> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLenum::value_type>,
+        std::decay_t<GLenum>>)
+/*!
+ * \brief Part of GL_NV_draw_buffers
+ * \param n GLsizei
+ * \param bufs const GLenum *
+ * \return void
+ */
+STATICINLINE void draw_buffers(span_const_GLenum const& bufs)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

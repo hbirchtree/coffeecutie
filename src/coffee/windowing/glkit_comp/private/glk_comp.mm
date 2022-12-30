@@ -6,12 +6,13 @@ namespace glkit {
 
 comp_app::size_2d_t Windowing::size() const
 {
-    int winSize[2] = {};
+//    int winSize[2] = {};
 
-    CoffeeForeignSignalHandleNA(
-        CoffeeForeign_GetWinSize, winSize, nullptr, nullptr);
+//    CoffeeForeignSignalHandleNA(
+//        CoffeeForeign_GetWinSize, winSize, nullptr, nullptr);
+//    Throw(unimplemented_path("GLKit screen size"));
 
-    return comp_app::size_2d_t{winSize[0], winSize[1]};
+    return comp_app::size_2d_t{0, 0};
 }
 
 comp_app::detail::WindowState Windowing::state() const

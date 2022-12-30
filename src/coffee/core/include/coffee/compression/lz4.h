@@ -51,16 +51,16 @@ struct compressor : Coffee::Compression::Compressor_def
     };
 
     static bool Compress(
-        semantic::Bytes const& uncompressed,
-        semantic::Bytes*       target,
-        opts const&            opts,
-        error_code&            ec);
+        semantic::Span<const libc_types::u8> const& uncompressed,
+        semantic::mem_chunk<libc_types::u8>*        target,
+        opts const&                                 opts,
+        error_code&                                 ec);
 
     static bool Decompress(
-        semantic::Bytes const& compressed,
-        semantic::Bytes*       target,
-        opts const&            opts,
-        error_code&            ec);
+        semantic::Span<const libc_types::u8> const& compressed,
+        semantic::mem_chunk<libc_types::u8>*        target,
+        opts const&                                 opts,
+        error_code&                                 ec);
 };
 
 } // namespace lz4

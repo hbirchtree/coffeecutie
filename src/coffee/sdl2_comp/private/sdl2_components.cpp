@@ -26,7 +26,7 @@ namespace sdl2 {
 using F      = comp_app::detail::WindowState;
 using WState = comp_app::detail::WindowState;
 
-static constexpr stl_types::Array<stl_types::Pair<Uint32, F>, 7>
+static constexpr stl_types::Array<stl_types::Pair<Uint32, F>, 8>
     window_flag_mapping = {
         {{SDL_WINDOW_SHOWN, F::Visible},
 
@@ -34,6 +34,7 @@ static constexpr stl_types::Array<stl_types::Pair<Uint32, F>, 7>
          {SDL_WINDOW_MAXIMIZED, F::Maximized},
          {SDL_WINDOW_RESIZABLE, F::Resizable},
          {SDL_WINDOW_BORDERLESS, F::Undecorated},
+         {SDL_WINDOW_ALLOW_HIGHDPI, F::HighDPI},
 
          {SDL_WINDOW_FULLSCREEN, F::FullScreen},
          {SDL_WINDOW_FULLSCREEN_DESKTOP, F::WindowedFullScreen}}};
@@ -93,7 +94,7 @@ void Context::end_restricted(proxy_type& p, time_point const&)
     using namespace Coffee::Display;
     using namespace Coffee::Input;
 
-    auto inputBus = p.service<comp_app::EventBus<CIEvent>>();
+    auto inputBus = p.service<comp_app::BasicEventBus<CIEvent>>();
 
     C_PTR_CHECK_MSG(inputBus, "EventBus<CIEvent> not specified")
 
@@ -131,8 +132,7 @@ void Windowing::load(entity_container& c, comp_app::app_error& ec)
 
     Uint32 extraFlags = SDL_WINDOW_ALLOW_HIGHDPI;
 
-    auto glContext = c.service<GLContext>();
-    if(glContext)
+    if(auto glContext = c.service<GLContext>())
     {
         extraFlags |= SDL_WINDOW_OPENGL;
         glContext->setupAttributes(c);
@@ -156,8 +156,7 @@ void Windowing::load(entity_container& c, comp_app::app_error& ec)
 
     SDL_SetWindowTitle(m_window, config.title.c_str());
 
-    auto nativeWindowInfo = c.service<comp_app::PtrNativeWindowInfo>();
-    if(nativeWindowInfo)
+    if(auto nativeWindowInfo = c.service<comp_app::PtrNativeWindowInfo>())
         getWindow(m_window, *nativeWindowInfo);
 
     m_container = &c;
@@ -174,7 +173,9 @@ void Windowing::start_restricted(proxy_type& p, time_point const&)
 {
     using namespace Coffee::Display;
 
-    auto  displayBus = get_container(p).service<comp_app::EventBus<Event>>();
+    auto  displayBus = get_container(p).service<comp_app::BasicEventBus<Event>>();
+    if(!displayBus)
+        Throw(implementation_error("display bus not available!"));
     Event displayEv;
 
 #define EMIT_DEVENT(from)                      \
@@ -583,7 +584,7 @@ void ControllerInput::start_restricted(proxy_type& p, time_point const&)
 {
     using namespace Coffee::Input;
 
-    auto    inputBus = get_container(p).service<comp_app::EventBus<CIEvent>>();
+    auto    inputBus = get_container(p).service<comp_app::BasicEventBus<CIEvent>>();
     CIEvent inputEv;
 
     SDL_Event event;
@@ -772,7 +773,7 @@ void KeyboardInput::start_restricted(proxy_type& p, time_point const&)
     CIEvent   inputEv;
     SDL_Event event;
 
-    auto inputBus = get_container(p).service<comp_app::EventBus<CIEvent>>();
+    auto inputBus = get_container(p).service<comp_app::BasicEventBus<CIEvent>>();
 
     while(SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_KEYDOWN, SDL_KEYUP))
     {
@@ -826,7 +827,7 @@ void MouseInput::start_restricted(proxy_type&, time_point const&)
     using namespace Coffee::Input;
 
     CIEvent inputEv;
-    auto    inputBus = m_container->service<comp_app::EventBus<CIEvent>>();
+    auto    inputBus = m_container->service<comp_app::BasicEventBus<CIEvent>>();
 
     SDL_Event event;
     while(SDL_PeepEvents(

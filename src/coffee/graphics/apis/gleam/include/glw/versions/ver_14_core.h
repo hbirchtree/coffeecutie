@@ -1,19 +1,19 @@
 #ifdef GL_VERSION_1_4
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<1, 4>>)
-    /*!
-     * \brief Wraps around glBlendFuncSeparate. Introduced in GL core 1.4
-     * \param sfactorRGB GLenum
-     * \param dfactorRGB GLenum
-     * \param sfactorAlpha GLenum
-     * \param dfactorAlpha GLenum
-     * \return void
-     */
-    STATICINLINE void blend_func_separate(
-        group::blending_factor sfactorRGB,
-        group::blending_factor dfactorRGB,
-        group::blending_factor sfactorAlpha,
-        group::blending_factor dfactorAlpha)
+/*!
+ * \brief Wraps around glBlendFuncSeparate. Introduced in GL core 1.4
+ * \param sfactorRGB GLenum
+ * \param dfactorRGB GLenum
+ * \param sfactorAlpha GLenum
+ * \param dfactorAlpha GLenum
+ * \return void
+ */
+STATICINLINE void blend_func_separate(
+    group::blending_factor sfactorRGB,
+    group::blending_factor dfactorRGB,
+    group::blending_factor sfactorAlpha,
+    group::blending_factor dfactorAlpha)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -29,20 +29,22 @@ requires(MinimumVersion<Current, Version<1, 4>>)
 }
 
 template<class span_const_i32>
-requires(MinimumVersion<Current, Version<1, 4>>&&
-             semantic::concepts::Span<span_const_i32>&& std::is_same_v<
-                 std::decay_t<typename span_const_i32::value_type>,
-                 std::decay_t<i32>>)
-    /*!
-     * \brief Wraps around glMultiDrawArrays. Introduced in GL core 1.4
-     * \param mode GLenum
-     * \param first const GLint *
-     * \param count const GLsizei *
-     * \param drawcount GLsizei
-     * \return void
-     */
-    STATICINLINE void multi_draw_arrays(
-        group::primitive_type mode, span_const_i32 first, span_const_i32 count)
+requires(
+    MinimumVersion<Current, Version<1, 4>> &&
+    semantic::concepts::Span<span_const_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_i32::value_type>,
+        std::decay_t<i32>>)
+/*!
+ * \brief Wraps around glMultiDrawArrays. Introduced in GL core 1.4
+ * \param mode GLenum
+ * \param first const GLint *
+ * \param count const GLsizei *
+ * \param drawcount GLsizei
+ * \return void
+ */
+STATICINLINE void multi_draw_arrays(
+    group::primitive_type mode, span_const_i32 first, span_const_i32 count)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -57,24 +59,26 @@ requires(MinimumVersion<Current, Version<1, 4>>&&
 }
 
 template<class span_const_i32>
-requires(MinimumVersion<Current, Version<1, 4>>&&
-             semantic::concepts::Span<span_const_i32>&& std::is_same_v<
-                 std::decay_t<typename span_const_i32::value_type>,
-                 std::decay_t<i32>>)
-    /*!
-     * \brief Wraps around glMultiDrawElements. Introduced in GL core 1.4
-     * \param mode GLenum
-     * \param count const GLsizei *
-     * \param type GLenum
-     * \param indices const void *const*
-     * \param drawcount GLsizei
-     * \return void
-     */
-    STATICINLINE void multi_draw_elements(
-        group::primitive_type     mode,
-        span_const_i32            count,
-        group::draw_elements_type type,
-        ptroff                    indices)
+requires(
+    MinimumVersion<Current, Version<1, 4>> &&
+    semantic::concepts::Span<span_const_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_i32::value_type>,
+        std::decay_t<i32>>)
+/*!
+ * \brief Wraps around glMultiDrawElements. Introduced in GL core 1.4
+ * \param mode GLenum
+ * \param count const GLsizei *
+ * \param type GLenum
+ * \param indices const void *const*
+ * \param drawcount GLsizei
+ * \return void
+ */
+STATICINLINE void multi_draw_elements(
+    group::primitive_type     mode,
+    span_const_i32            count,
+    group::draw_elements_type type,
+    ptroff                    indices)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -93,13 +97,13 @@ requires(MinimumVersion<Current, Version<1, 4>>&&
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<1, 4>>)
-    /*!
-     * \brief Wraps around glPointParameterf. Introduced in GL core 1.4
-     * \param pname GLenum
-     * \param param GLfloat
-     * \return void
-     */
-    STATICINLINE
+/*!
+ * \brief Wraps around glPointParameterf. Introduced in GL core 1.4
+ * \param pname GLenum
+ * \param param GLfloat
+ * \return void
+ */
+STATICINLINE
     void point_parameter(group::point_parameter_name_arb pname, f32 param)
 {
     using namespace std::string_view_literals;
@@ -112,18 +116,20 @@ requires(MinimumVersion<Current, Version<1, 4>>)
 }
 
 template<class span_const_f32>
-requires(MinimumVersion<Current, Version<1, 4>>&&
-             semantic::concepts::Span<span_const_f32>&& std::is_same_v<
-                 std::decay_t<typename span_const_f32::value_type>,
-                 std::decay_t<f32>>)
-    /*!
-     * \brief Wraps around glPointParameterfv. Introduced in GL core 1.4
-     * \param pname GLenum
-     * \param params const GLfloat *
-     * \return void
-     */
-    STATICINLINE void point_parameter(
-        group::point_parameter_name_arb pname, span_const_f32 const& params)
+requires(
+    MinimumVersion<Current, Version<1, 4>> &&
+    semantic::concepts::Span<span_const_f32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_f32::value_type>,
+        std::decay_t<f32>>)
+/*!
+ * \brief Wraps around glPointParameterfv. Introduced in GL core 1.4
+ * \param pname GLenum
+ * \param params const GLfloat *
+ * \return void
+ */
+STATICINLINE void point_parameter(
+    group::point_parameter_name_arb pname, span_const_f32 const& params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -139,13 +145,13 @@ requires(MinimumVersion<Current, Version<1, 4>>&&
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<1, 4>>)
-    /*!
-     * \brief Wraps around glPointParameteri. Introduced in GL core 1.4
-     * \param pname GLenum
-     * \param param GLint
-     * \return void
-     */
-    STATICINLINE
+/*!
+ * \brief Wraps around glPointParameteri. Introduced in GL core 1.4
+ * \param pname GLenum
+ * \param param GLint
+ * \return void
+ */
+STATICINLINE
     void point_parameter(group::point_parameter_name_arb pname, i32 param)
 {
     using namespace std::string_view_literals;
@@ -158,18 +164,20 @@ requires(MinimumVersion<Current, Version<1, 4>>)
 }
 
 template<class span_const_i32>
-requires(MinimumVersion<Current, Version<1, 4>>&&
-             semantic::concepts::Span<span_const_i32>&& std::is_same_v<
-                 std::decay_t<typename span_const_i32::value_type>,
-                 std::decay_t<i32>>)
-    /*!
-     * \brief Wraps around glPointParameteriv. Introduced in GL core 1.4
-     * \param pname GLenum
-     * \param params const GLint *
-     * \return void
-     */
-    STATICINLINE void point_parameter(
-        group::point_parameter_name_arb pname, span_const_i32 const& params)
+requires(
+    MinimumVersion<Current, Version<1, 4>> &&
+    semantic::concepts::Span<span_const_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_i32::value_type>,
+        std::decay_t<i32>>)
+/*!
+ * \brief Wraps around glPointParameteriv. Introduced in GL core 1.4
+ * \param pname GLenum
+ * \param params const GLint *
+ * \return void
+ */
+STATICINLINE void point_parameter(
+    group::point_parameter_name_arb pname, span_const_i32 const& params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -184,17 +192,18 @@ requires(MinimumVersion<Current, Version<1, 4>>&&
 }
 
 template<class vec_4_f32>
-requires(MinimumVersion<Current, Version<1, 4>>&&
-             semantic::concepts::Vector<vec_4_f32, f32, 4>)
-    /*!
-     * \brief Wraps around glBlendColor. Introduced in GL core 1.4
-     * \param red GLfloat
-     * \param green GLfloat
-     * \param blue GLfloat
-     * \param alpha GLfloat
-     * \return void
-     */
-    STATICINLINE void blend_color(vec_4_f32 const& red)
+requires(
+    MinimumVersion<Current, Version<1, 4>> &&
+    semantic::concepts::Vector<vec_4_f32, f32, 4>)
+/*!
+ * \brief Wraps around glBlendColor. Introduced in GL core 1.4
+ * \param red GLfloat
+ * \param green GLfloat
+ * \param blue GLfloat
+ * \param alpha GLfloat
+ * \return void
+ */
+STATICINLINE void blend_color(vec_4_f32 const& red)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -207,12 +216,12 @@ requires(MinimumVersion<Current, Version<1, 4>>&&
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<1, 4>>)
-    /*!
-     * \brief Wraps around glBlendEquation. Introduced in GL core 1.4
-     * \param mode GLenum
-     * \return void
-     */
-    STATICINLINE void blend_equation(group::blend_equation_mode_ext mode)
+/*!
+ * \brief Wraps around glBlendEquation. Introduced in GL core 1.4
+ * \param mode GLenum
+ * \return void
+ */
+STATICINLINE void blend_equation(group::blend_equation_mode_ext mode)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

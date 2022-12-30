@@ -44,15 +44,15 @@ struct api
     using rendertarget_type = rendertarget_t;
     using program_type      = program_t;
     using vertex_type =
-#if GLEAM_MAX_VERSION >= 0x150 || GLEAM_MAX_VERSION_ES >= 0x300 \
-    || defined(GL_OES_vertex_array_object)
+#if GLEAM_MAX_VERSION >= 0x150 || GLEAM_MAX_VERSION_ES >= 0x300 || \
+    defined(GL_OES_vertex_array_object)
         vertex_array_t;
 #else
         vertex_array_legacy_t;
 #endif
 
     template<class T>
-    requires Buffer<buffer_t, buffer_slice_t>
+        requires Buffer<buffer_t, buffer_slice_t>
     inline auto alloc_buffer(T, semantic::RSCA access)
     {
         return MkShared<buffer_t>(m_features.buffer, T::value, access);
@@ -83,7 +83,7 @@ struct api
     }
 
     template<class T>
-    requires Texture<texture_2d_t>
+        requires Texture<texture_2d_t>
     inline auto alloc_texture(
         T,
         typing::pixels::PixDesc data_type,
@@ -114,16 +114,19 @@ struct api
         {
             return MkShared<texture_3d_t>(
                 m_features.texture, T::value, data_type, mipmaps, properties);
-        } else if constexpr(T::value == textures::type::cube_array)
+        }
+#if GLEAM_MAX_VERSION >= 0x410 || GLEAM_MAX_VERSION_ES >= 0x320
+        else if constexpr(T::value == textures::type::cube_array)
         {
             return MkShared<texture_cube_array_t>(
                 m_features.texture, T::value, data_type, mipmaps, properties);
         }
 #endif
+#endif
     }
 
     template<typename Dummy = void>
-    requires VertexArray<vertex_type, buffer_type>
+        requires VertexArray<vertex_type, buffer_type>
     inline auto alloc_vertex_array()
     {
         return MkShared<vertex_type>(
@@ -131,7 +134,7 @@ struct api
     }
 
     template<class T>
-    requires
+        requires
 #if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
         Query<query_t> &&
 #endif
@@ -159,7 +162,7 @@ struct api
     }
 
     template<class Dummy = void>
-    requires RenderTarget<rendertarget_type, texture_type>
+        requires RenderTarget<rendertarget_type, texture_type>
     inline auto default_rendertarget()
     {
         if(!m_framebuffer)
@@ -221,6 +224,11 @@ struct api
         return m_context_state;
     }
 
+    inline const auto& feature_info() const
+    {
+        return m_features;
+    }
+
     template<typename... UList>
     Optional<Tup<error, std::string_view>> submit(
         draw_command const& command, UList&&... uniforms);
@@ -256,7 +264,7 @@ struct api
     Tup<String, String> device();
     Optional<String>    device_driver();
 
-    void collect_info(comp_app::interfaces::AppInfo &appInfo);
+    void collect_info(comp_app::interfaces::AppInfo& appInfo);
 
     Optional<error> load(load_options_t options = {});
     void            unload();
@@ -322,8 +330,8 @@ inline std::optional<std::tuple<error, std::string_view>> direct_draw(
     shader_bookkeeping_t&            bookkeeping)
 {
     const auto base_instance = data.instances.offset != 0;
-    const auto instanced     = call.instanced || data.instances.offset > 0
-                           || (call.indexed && data.elements.vertex_offset > 0);
+    const auto instanced     = call.instanced || data.instances.offset > 0 ||
+                           (call.indexed && data.elements.vertex_offset > 0);
 
     if(call.indexed)
     {
@@ -555,22 +563,22 @@ inline Optional<Tup<error, std::string_view>> api::submit(
 
     const bool uses_baseinstance = stl_types::any_of(
         data, [](auto const& d) { return d.instances.offset > 0; });
-    const bool uses_vertex_offset
-        = call.indexed && stl_types::any_of(data, [](auto const& d) {
-              return d.elements.vertex_offset > 0;
-          });
-    if(m_api_type == api_type_t::es && uses_baseinstance
-       && !m_workarounds.draw.emulated_base_instance)
+    const bool uses_vertex_offset =
+        call.indexed && stl_types::any_of(data, [](auto const& d) {
+            return d.elements.vertex_offset > 0;
+        });
+    if(m_api_type == api_type_t::es && uses_baseinstance &&
+       !m_workarounds.draw.emulated_base_instance)
         return std::make_tuple(
             error::no_implementation_for_draw_call,
             "baseinstance not enabled in GL ES"sv);
-    if(m_api_type == api_type_t::es && m_api_version == 0x200 && call.instanced
-       && !m_workarounds.draw.emulated_instance_id)
+    if(m_api_type == api_type_t::es && m_api_version == 0x200 &&
+       call.instanced && !m_workarounds.draw.emulated_instance_id)
         return std::make_tuple(
             error::no_implementation_for_draw_call,
             "instancing not enabled in GL ES 2.0"sv);
-    if(m_api_type == api_type_t::es && m_api_version <= 0x300
-       && uses_vertex_offset && !m_workarounds.draw.emulated_vertex_offset)
+    if(m_api_type == api_type_t::es && m_api_version <= 0x300 &&
+       uses_vertex_offset && !m_workarounds.draw.emulated_vertex_offset)
         return std::make_tuple(
             error::no_implementation_for_draw_call,
             "base vertex not enabled in GL ES 3.0 and below"sv);
@@ -582,8 +590,16 @@ inline Optional<Tup<error, std::string_view>> api::submit(
     std::shared_ptr<buffer_t> element_buf;
 #if GLEAM_MAX_VERSION_ES != 0x200
     if(m_features.vertex.vertex_arrays && m_features.vertex.attribute_binding)
+    {
+        if(m_features.vertex.layout_binding)
+        {
+            for(auto const& attrib : vao->m_attribute_names)
+                cmd::bind_attrib_location(
+                    program->m_handle, attrib.second, attrib.first);
+            cmd::link_program(program->m_handle);
+        }
         cmd::bind_vertex_array(vao->m_handle);
-    else
+    } else
 #endif
     {
         using buffer_target = group::buffer_target_arb;
@@ -611,10 +627,10 @@ inline Optional<Tup<error, std::string_view>> api::submit(
     cmd::use_program(program->m_handle);
 
     {
-        u32 vertex_program
-            = m_features.program.separable_programs
-                  ? program->m_stages.at(program_t::stage_t::Vertex)->m_handle
-                  : program->m_handle;
+        u32 vertex_program =
+            m_features.program.separable_programs
+                ? program->m_stages.at(program_t::stage_t::Vertex)->m_handle
+                : program->m_handle;
         for(auto const& attrib : vao->m_attribute_names)
             cmd::bind_attrib_location(
                 vertex_program, attrib.second, attrib.first);
@@ -665,17 +681,17 @@ inline Optional<Tup<error, std::string_view>> api::submit(
     //              ? (uses_baseinstance ? m_api_version >= 0x420
     //                                   : m_api_version >= 0x400)
     //              : m_api_version >= 0x310;
-    const bool has_uniform_element_type
-        = call.indexed && stl_types::all_of(data, [&data](auto const& d) {
-              return d.elements.type == data.at(0).elements.type;
-          });
+    const bool has_uniform_element_type =
+        call.indexed && stl_types::all_of(data, [&data](auto const& d) {
+            return d.elements.type == data.at(0).elements.type;
+        });
     const bool multi_indirect_supported = false;
     //        = m_api_type == api_type_t::core ? m_api_version >= 0x430 : false;
 
     if constexpr(compile_info::debug_mode)
     {
-        if(multi_indirect_supported && call.indexed
-           && !has_uniform_element_type)
+        if(multi_indirect_supported && call.indexed &&
+           !has_uniform_element_type)
             debug().message(
                 "varying element types prevents use of MultiDrawIndirect"sv);
     }
@@ -730,8 +746,8 @@ inline void test_buffer()
 {
     using semantic::RSCA;
     api  ap;
-    auto a
-        = ap.alloc_buffer(buffers::vertex, RSCA::ReadWrite | RSCA::Persistent);
+    auto a =
+        ap.alloc_buffer(buffers::vertex, RSCA::ReadWrite | RSCA::Persistent);
 }
 
 inline void test_query()

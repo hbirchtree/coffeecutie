@@ -217,7 +217,7 @@ struct BlamScript
             ImGui::SameLine();
             if(ImGui::Button("Step") || m_running)
             {
-                m_script.execute_timestep(15ms, {hnd});
+//                m_script.execute_timestep(15ms, {hnd});
             }
         }
         ImGui::End();

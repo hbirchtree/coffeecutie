@@ -241,7 +241,7 @@ template<
     typename CharType = char,
     typename... Args>
 FORCEDINLINE lexical_order
-             cmp_enum(const CharType* s1, const CharType* s2, Args... args)
+cmp_enum(const CharType* s1, const CharType* s2, Args... args)
 {
     auto result = cmp<comp_idx_bound, CharType>(s1, s2, args...);
 
@@ -254,44 +254,57 @@ FORCEDINLINE lexical_order
 }
 
 template<typename CharType>
-FORCEDINLINE szptr longest_prefix(const CharType* s1, const CharType* s2)
+FORCEDINLINE szptr longest_prefix(
+    std::basic_string_view<CharType> left,
+    std::basic_string_view<CharType> right)
 {
-    /* TODO: Add C++17 std::mismatch() here */
-    const auto len1 = str::len(s1);
-    const auto len2 = str::len(s2);
-
-    const auto minlen = (len1 < len2) ? len1 : len2;
-
-    szptr prefix = 0;
-
-    for(szptr i = 0; i < minlen; i++)
-    {
-        if(s1[prefix] == s2[prefix])
-            prefix++;
-        else
-            return prefix;
-    }
-
-    return prefix;
+    auto [left_match, right_match] =
+        std::mismatch(left.begin(), left.end(), right.begin(), right.end());
+    auto left_len  = left_match - left.begin();
+    auto right_len = right_match - right.begin();
+    return std::max(left_len, right_len);
 }
 
-template<typename CharType>
-FORCEDINLINE szptr
-             longest_prefix(const CharType* s1, const CharType* s2, szptr minlen)
-{
-    /* TODO: Add C++17 std::mismatch() here */
-    szptr prefix = 0;
+// template<typename CharType>
+// FORCEDINLINE szptr longest_prefix(const CharType* s1, const CharType* s2)
+//{
+//     /* TODO: Add C++17 std::mismatch() here */
+//     const auto len1 = str::len(s1);
+//     const auto len2 = str::len(s2);
 
-    for(szptr i = 0; i < minlen; i++)
-    {
-        if(s1[prefix] == s2[prefix])
-            prefix++;
-        else
-            return prefix;
-    }
+//    const auto minlen = (len1 < len2) ? len1 : len2;
 
-    return prefix;
-}
+//    szptr prefix = 0;
+
+//    for(szptr i = 0; i < minlen; i++)
+//    {
+//        if(s1[prefix] == s2[prefix])
+//            prefix++;
+//        else
+//            return prefix;
+//    }
+
+//    return prefix;
+//}
+
+// template<typename CharType>
+// FORCEDINLINE szptr
+//              longest_prefix(const CharType* s1, const CharType* s2, szptr
+//              minlen)
+//{
+//     /* TODO: Add C++17 std::mismatch() here */
+//     szptr prefix = 0;
+
+//    for(szptr i = 0; i < minlen; i++)
+//    {
+//        if(s1[prefix] == s2[prefix])
+//            prefix++;
+//        else
+//            return prefix;
+//    }
+
+//    return prefix;
+//}
 
 namespace find_ops {
 
@@ -468,7 +481,7 @@ template<
 FORCEDINLINE PodType from_string(const CharType* s)
 {
     CharType* end_ptr = nullptr;
-    auto out = convert_ops::to_int<PodType, ConvertMode>(s, &end_ptr);
+    auto      out     = convert_ops::to_int<PodType, ConvertMode>(s, &end_ptr);
     return out;
 }
 
@@ -481,7 +494,7 @@ template<
 FORCEDINLINE PodType from_string(const CharType* s)
 {
     CharType* end_ptr = nullptr;
-    auto out = convert_ops::to_float<PodType>(s, &end_ptr);
+    auto      out     = convert_ops::to_float<PodType>(s, &end_ptr);
     return out;
 }
 

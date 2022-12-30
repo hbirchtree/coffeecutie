@@ -69,12 +69,12 @@ using ::libc_types::u32;
 static_assert(
     std::is_same_v<GLint, ::libc_types::i32>, "GLint does not match i32");
 using ::libc_types::i32;
-#if defined(GL_VERSION_4_1) || defined(GL_ES_VERSION_3_2)
+#if defined(GL_VERSION_4_1) || defined(GL_ES_VERSION_3_0)
 static_assert(
     std::is_same_v<GLuint64, ::libc_types::u64>, "GLuint64 does not match u64");
 using ::libc_types::u64;
 #endif
-#if defined(GL_VERSION_4_1) || defined(GL_ES_VERSION_3_2)
+#if defined(GL_VERSION_4_1) || defined(GL_ES_VERSION_3_0)
 static_assert(
     std::is_same_v<GLint64, ::libc_types::i64>, "GLint64 does not match i64");
 using ::libc_types::i64;

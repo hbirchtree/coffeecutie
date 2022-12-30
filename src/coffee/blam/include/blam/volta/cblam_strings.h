@@ -22,7 +22,7 @@ struct string_segment_ref
 
         inline std::string_view str() const
         {
-            return std::string_view(data.begin(), data.end());
+            return data;
         }
 
         inline operator std::string_view() const

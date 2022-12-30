@@ -107,7 +107,7 @@ using namespace ::libc_types;
 FORCEDINLINE u32 page_size()
 {
 #if defined(COFFEE_UNIXPLAT)
-    int pagesize = ::sysconf(_SC_PAGESIZE);
+    i64 pagesize = ::sysconf(_SC_PAGESIZE);
 
     return C_FCAST<u32>(pagesize > 0 ? pagesize : 4_kB);
 #else

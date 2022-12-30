@@ -57,10 +57,10 @@ template<
     process_fun      Proc  = nullptr,
     end_fun          End   = nullptr>
 bool compression_routine(
-    BytesConst const& input,
-    Bytes*            output,
-    Opts const&       opts,
-    zlib_error_code&  ret)
+    semantic::Span<const libc_types::u8> const& input,
+    semantic::mem_chunk<libc_types::u8>*        output,
+    Opts const&                                 opts,
+    zlib_error_code&                            ret)
 {
     DProfContext _("zlib::Compression routine");
 
@@ -83,8 +83,8 @@ bool compression_routine(
         direct_output ? opts.prealloc_size : compress_store.size());
     strm.next_out = write_ptr;
 
-    strm.avail_in = C_FCAST<u32>(input.size);
-    strm.next_in  = C_CCAST<unsigned char*>(input.data);
+    strm.avail_in = C_FCAST<u32>(input.size());
+    strm.next_in  = C_CCAST<unsigned char*>(input.data());
 
     ret = Z_OK;
 
@@ -145,12 +145,7 @@ bool compression_routine(
         return false;
 
     szptr out_size = direct_output ? 0 : compress_store.size() - strm.avail_out;
-
-    {
-        DProfContext _("zlib::Allocate output");
-        if(output->size < out_size)
-            (*output) = Bytes::Alloc(out_size);
-    }
+    compress_store.resize(out_size);
 
     if(!direct_output)
     {
@@ -163,10 +158,10 @@ bool compression_routine(
 }
 
 bool Compressor::Compress(
-    BytesConst const& uncompressed,
-    Bytes*            target,
-    Opts const&       opts,
-    zlib_error_code&  ec)
+    semantic::Span<const libc_types::u8> const& uncompressed,
+    semantic::mem_chunk<libc_types::u8>*        target,
+    Opts const&                                 opts,
+    zlib_error_code&                            ec)
 {
     return compression_routine<
         nullptr,
@@ -176,10 +171,10 @@ bool Compressor::Compress(
 }
 
 bool Compressor::Decompress(
-    BytesConst const& compressed,
-    Bytes*            target,
-    Opts const&       opts,
-    zlib_error_code&  ec)
+    semantic::Span<const libc_types::u8> const& compressed,
+    semantic::mem_chunk<libc_types::u8>*        target,
+    Opts const&                                 opts,
+    zlib_error_code&                            ec)
 {
     return compression_routine<
         ::inflateInit_,

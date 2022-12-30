@@ -1,11 +1,10 @@
 #include <coffee/components/components.h>
 
-namespace Coffee {
-namespace Components {
+namespace compo {
 namespace detail {
 
 static void assign_reachables(
-    Vector<bool>& matrix,
+    std::vector<bool>& matrix,
     size_t        size,
     node_id       source_node,
     node_id       current_node)
@@ -19,7 +18,7 @@ static void assign_reachables(
 }
 
 void expand_neighbor_matrix(
-    Vector<bool>& matrix, size_t size, node_id current_node)
+    std::vector<bool>& matrix, size_t size, node_id current_node)
 {
     for(auto i : Range<>(size))
         if(i != current_node && matrix[size * current_node + i])
@@ -40,5 +39,4 @@ SubsystemBase::~SubsystemBase()
 {
 }
 
-} // namespace Components
-} // namespace Coffee
+} // namespace compo

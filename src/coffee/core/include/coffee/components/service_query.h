@@ -4,11 +4,10 @@
 
 #include <coffee/core/stl_types.h>
 
-namespace Coffee {
-namespace Components {
+namespace compo {
 
 template<typename T, bool Reversed>
-struct service_query : Iterator<ForwardIteratorTag, T>
+struct service_query
 {
     using subsystem_iterator = typename std::conditional<
         Reversed,
@@ -16,7 +15,7 @@ struct service_query : Iterator<ForwardIteratorTag, T>
         typename decltype(EntityContainer::subsystems)::const_iterator>::type;
     using subsystem_ref =
         typename decltype(EntityContainer::subsystems)::const_reference;
-    using service_predicate = Function<bool(subsystem_ref)>;
+    using service_predicate = std::function<bool(subsystem_ref)>;
 
     struct begin_iterator_t
     {
@@ -84,5 +83,4 @@ struct service_query : Iterator<ForwardIteratorTag, T>
     subsystem_iterator      it;
 };
 
-} // namespace Components
-} // namespace Coffee
+} // namespace compo

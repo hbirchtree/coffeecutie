@@ -329,13 +329,6 @@ i32 CoffeeMain(MainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
     /* Set the program arguments so that we can look at them later */
     GetInitArgs() = ::platform::args::AppArg::Clone(argc, argv);
 
-#if defined(COFFEE_ANDROID)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-    app_dummy();
-#pragma clang diagnostic pop
-#endif
-
     if constexpr(!compile_info::lowfat_mode)
     {
 #if !defined(COFFEE_CUSTOM_EXIT_HANDLING)
@@ -625,12 +618,14 @@ ArgumentParser& GetBase()
 
         parser.addSwitch("json", "json", nullptr, "Output information as JSON");
 
+#if !COFFEE_FIXED_RESOURCE_DIR
         parser.addPositionalArgument(
             "resource_prefix",
 
             "Change resource prefix"
             " (only works if application does not"
             " override resource prefix)");
+#endif
     }
 
     return parser;
@@ -684,11 +679,7 @@ int PerformDefaults(ArgumentParser& parser, ArgumentResult& args)
     for(auto const& arg : args.arguments)
     {
         if(arg.first == "resource_prefix")
-#if !COFFEE_FIXED_RESOURCE_DIR
             file::ResourcePrefix(arg.second.c_str());
-#else
-            cWarning("Resource directory attempted overridden, denied");
-#endif
     }
 
     for(auto const& pos : args.positional)

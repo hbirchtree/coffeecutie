@@ -12,3 +12,7 @@
 #include "visitor.h"
 
 #include "entity_container.inl"
+
+namespace Coffee::Components {
+using namespace compo;
+}

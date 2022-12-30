@@ -18,11 +18,11 @@ FORCEDINLINE szptr GetPixSize(BitFmt fmt, PixCmp comp, szptr pixels)
 
 FORCEDINLINE u32 GetPixBlockSize(Size const& size, Size const& blockSize)
 {
-    const f32 block_w = blockSize.w;
-    const f32 block_h = blockSize.h;
+    const f32 block_w = static_cast<f32>(blockSize.w);
+    const f32 block_h = static_cast<f32>(blockSize.h);
 
-    const f32 width_block  = CMath::ceil(size.w / block_w);
-    const f32 height_block = CMath::ceil(size.h / block_h);
+    const f32 width_block  = std::ceil(size.w / block_w);
+    const f32 height_block = std::ceil(size.h / block_h);
 
     return static_cast<u32>(width_block) * static_cast<u32>(height_block);
 }
@@ -198,6 +198,8 @@ FORCEDINLINE cstring GetPixCompressedExtension(CompFmt fmt)
             return "bptch";
         case CompFlags::BC7:
             return "bptc";
+        default:
+            abort();
         }
         break;
     }

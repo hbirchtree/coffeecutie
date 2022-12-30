@@ -1,6 +1,7 @@
 #include <coffee/virtfs/virtualfs.h>
 
 #include <coffee/compression/libz.h>
+#include <peripherals/stl/parallel_for_each.h>
 
 #if defined(COFFEE_COMPRESS_LZ4)
 #include <coffee/compression/lz4.h>
@@ -8,53 +9,19 @@
 
 #include "directory_index.h"
 
-namespace Coffee {
-namespace VirtFS {
+using Coffee::DProfContext;
+using Coffee::Profiler;
 
-const char* vfs_error_category::name() const noexcept
+using Zlib = Coffee::Compression::zlib::Compressor;
+
+namespace vfs {
+
+Resource::Resource(const fs* base, const Url& url) : filesystem(base)
 {
-    return "vfs_error_category";
-}
-
-std::string vfs_error_category::message(int error_code) const
-{
-    using E = VFSError;
-
-    E e = C_CAST<E>(error_code);
-
-    switch(e)
-    {
-    case E::NotFound:
-        return "Virtual file entry not found";
-    case E::NotVFS:
-        return "File is not a virtual filesystem";
-    case E::EndianMismatch:
-        return "Virtual filesystem has incompatible endianness";
-    case E::CompressionUnsupported:
-        return "Compression is not supported, platform policy";
-    case E::UnsupportedCompressionCodec:
-        return "Unsupported compression codec";
-    case E::CompressionError:
-        return "Error while compressing";
-    case E::VersionMismatch:
-        return "Version mismatch";
-    case E::NoIndexing:
-        return "File does not contain index";
-    case E::NoFilesProvided:
-        return "No files provided";
-    case E::FilenameTooLong:
-        return "Filename too long";
-    }
-
-    C_ERROR_CODE_OUT_OF_BOUNDS();
-}
-
-Resource::Resource(const VFS* base, const Url& url) : filesystem(base)
-{
-    vfs_error_code ec;
-    file = VFS::GetFile(base, url.internUrl.c_str(), ec);
-
-    C_ERROR_CHECK(ec);
+    if(auto src = fs::GetFile(base, url.internUrl.c_str()); src.has_error())
+        file = nullptr;
+    else
+        file = src.value();
 }
 
 bool Resource::valid() const
@@ -62,13 +29,11 @@ bool Resource::valid() const
     return file != nullptr;
 }
 
-Bytes Resource::data() const
+mem_chunk<const u8> Resource::data() const
 {
     if(!file)
         return {};
-
-    vfs_error_code ec;
-    return VFS::GetData(filesystem, file, ec);
+    return fs::GetData(filesystem, file).value();
 }
 
 /*!
@@ -77,41 +42,44 @@ Bytes Resource::data() const
  * \param d2
  * \return
  */
-static bool VirtDesc_Sort(VirtDesc const& d1, VirtDesc const& d2)
+static bool VirtDesc_Sort(desc const& d1, desc const& d2)
 {
     return d1.filename < d2.filename;
 }
 
-bool GenVirtFS(
-    Vector<VirtDesc>&     filenames,
-    Vector<byte_t>*       output,
-    vfs_error_code&       ec,
-    generation_settings&& settings)
+stl_types::result<std::vector<libc_types::byte_t>, error> generate(
+    std::vector<desc>& filenames, generation_settings&& settings)
 {
     DProfContext _(VIRTFS_API "Generating VirtFS");
+    using namespace Coffee;
 
-    /* You can't create a VFS without files */
+    if(settings.workers == 0)
+        settings.workers = std::thread::hardware_concurrency();
+
+    /* You can't create a fs without files */
     if(filenames.size() == 0)
     {
         Profiler::DeepProfile(VIRTFS_API "Failed, no files");
-        ec = VFSError::NoFilesProvided;
-        return false;
+        return error::no_files_provided;
     }
 
-    VFS base_fs = {};
+    fs base_fs = {};
 
     /* Insert header, calculate file segment offset */
-    MemCpy(
-        BytesConst::ofBytes(VFSMagic_Encoded, 2),
-        Bytes::ofBytes(base_fs.vfs_header, MagicLength));
+    {
+        auto src =
+            mem_chunk<const u8>::ofBytes(VFSMagic_Encoded, sizeof(u32) * 2);
+        auto dst = mem_chunk<u8>::ofBytes(base_fs.vfs_header, MagicLength);
+        std::copy(src.begin(), src.end(), dst.begin());
+    }
 
     base_fs.num_files   = filenames.size();
-    base_fs.data_offset = sizeof(VFS) + sizeof(VFile) * base_fs.num_files;
+    base_fs.data_offset = sizeof(fs) + sizeof(file) * base_fs.num_files;
 
     /* ----------- v2 fields ----------- */
     base_fs.virtfs_version    = VFSVersion;
     base_fs.backcomp_sentinel = std::numeric_limits<u32>::max();
-    base_fs.files_offset      = sizeof(VFS);
+    base_fs.files_offset      = sizeof(fs);
 
     base_fs.ext_index.num    = 0; /* Filled in later */
     base_fs.ext_index.offset = 0; /* Filled in later */
@@ -121,15 +89,18 @@ bool GenVirtFS(
     std::sort(filenames.begin(), filenames.end(), VirtDesc_Sort);
 
     /* Pre-allocate vectors */
-    Vector<VFile> files;
+    std::vector<file> files;
     files.resize(filenames.size());
-    Vector<Bytes> data_arrays;
+    std::vector<mem_chunk<const libc_types::u8>> data_arrays;
     data_arrays.resize(filenames.size());
 
     {
+        using namespace Coffee::Compression;
+        using stl_types::Range;
+
         DProfContext __(VIRTFS_API "Compressing files");
 
-        Function<void(szptr)> worker = [&](szptr i) {
+        std::function<void(szptr)> worker = [&](szptr i) {
             auto& file     = files[i];
             auto& src_file = filenames[i];
             auto& in_data  = filenames[i].data;
@@ -139,7 +110,7 @@ bool GenVirtFS(
             {
 
 #if defined(COFFEE_BUILD_NO_COMPRESSION)
-                ec = VFSError::CompressionUnsupported;
+                ec = fsError::CompressionUnsupported;
                 return false;
 #else
                 DProfContext _(VIRTFS_API "Compression worker");
@@ -147,12 +118,11 @@ bool GenVirtFS(
                 switch(settings.file_codec)
                 {
 #if defined(COFFEE_COMPRESS_LZ4)
-                case compression::codec::lz4:
-                {
+                case compression::codec::lz4: {
                     lz4::error_code comp_ec;
                     lz4::compressor::Compress(
                         in_data,
-                        &out_data,
+                        &out_data.allocation,
                         lz4::compressor::opts::high_comp(9),
                         comp_ec);
 
@@ -165,37 +135,43 @@ bool GenVirtFS(
                 case compression::codec::deflate:
 #endif
                 {
-                    Compression::zlib::error_code comp_ec;
-                    Zlib::Compress(in_data, &out_data, {}, comp_ec);
+                    zlib::error_code comp_ec;
+                    Zlib::Compress(in_data, &out_data.allocation, {}, comp_ec);
 
                     if(comp_ec)
                     {
-                        ec = VFSError::CompressionError;
+                        //                        ec =
+                        //                        fsError::CompressionError;
                     }
                     break;
                 }
-                default:
-                {
-                    ec = VFSError::UnsupportedCompressionCodec;
+                default: {
+                    //                    ec =
+                    //                    fsError::UnsupportedCompressionCodec;
                     break;
                 }
                 }
 
                 file.codec = settings.file_codec;
                 file.size  = out_data.size;
+                out_data.updatePointers(semantic::Ownership::Owned);
 #endif
             }
         };
-        threads::Parallel::Consume(
-            Range<>(filenames.size()), std::move(worker), settings.workers);
+        stl_types::parallel_for_each(
+            stl_types::Range<>(filenames.size()),
+            std::move(worker),
+            settings.workers);
     }
 
+    std::vector<libc_types::u8> output;
+
     {
-        DProfContext __(VIRTFS_API "Setting up VFS descriptors");
+        DProfContext __(VIRTFS_API "Setting up fs descriptors");
         szptr        data_size = 0;
         /* Define the data segment, compress data if necessary */
 
-        for(auto i : Range<>(filenames.size()))
+        for(auto i : stl_types::Range<>(filenames.size()))
         {
             auto& file = files[i];
 
@@ -208,8 +184,7 @@ bool GenVirtFS(
                     fn.size(),
                     MaxFileNameLength);
                 Profiler::DeepProfile(VIRTFS_API "Failed, filename too long");
-                ec = VFSError::FilenameTooLong;
-                return false;
+                return error::filename_too_long;
             }
 
             /* We want to align data to 8-byte boundaries */
@@ -217,51 +192,44 @@ bool GenVirtFS(
                 libc::align::align<libc::align::dir_forward>(8, data_size);
 
             file.offset = data_size;
-            file.rsize  = filenames[i].data.size;
+            file.rsize  = filenames[i].data.size();
 
-            MemCpy(fn, Bytes::ofBytes(file.name, fn.size()));
+            MemCpy(fn, Bytes::ofBytes(file.name_, fn.size()));
             file.flags = filenames[i].flags;
 
             auto& arr = data_arrays[i];
             if(!(file.flags & File_Compressed))
             {
-                arr.data     = filenames[i].data.data;
-                arr.size     = filenames[i].data.size;
-                arr.elements = filenames[i].data.elements;
-
-                file.size = filenames[i].data.size;
+                arr       = mem_chunk<const u8>::ofContainer(filenames[i].data);
+                file.size = filenames[i].data.size();
             }
 
             data_size += file.size;
         }
 
-        output->reserve(base_fs.data_offset + data_size);
+        output.reserve(base_fs.data_offset + data_size);
     }
 
     /* Final size has been determined */
 
     {
-        DProfContext _(VIRTFS_API "Copy VFS header");
+        DProfContext _(VIRTFS_API "Copy fs header");
         /* Header is copied straight into array */
-        MemCpy(Bytes::ofBytes(base_fs), *output);
+        MemCpy(Bytes::ofBytes(base_fs), output);
     }
 
     {
         DProfContext _(VIRTFS_API "Copy file descriptors");
-        /* Copy file descriptors to VFS */
-        MemCpy(Bytes::ofBytes(files), *output);
+        /* Copy file descriptors to fs */
+        MemCpy(Bytes::ofContainer(files), output);
     }
 
-    {
-        DProfContext _(VIRTFS_API "Free'ing input files");
-        files.resize(0);
-    }
     {
         DProfContext _(VIRTFS_API "Allocating output buffer");
-        output->resize(output->capacity());
+        output.resize(output.capacity());
     }
 
-    Bytes outputView = Bytes::ofBytes(*output);
+    Bytes outputView = Bytes::ofContainer(output);
 
     for(auto i : Range<>(filenames.size()))
     {
@@ -279,24 +247,29 @@ bool GenVirtFS(
                 base_fs.data_offset + files[i].offset, srcData.size));
     }
 
+    {
+        DProfContext _(VIRTFS_API "Free'ing input files");
+        files.resize(0);
+    }
+
     data_arrays.resize(0);
 
     /* ---------- Added in v2 ---------- */
 
-    outputView.as<VFS>().data->ext_index.offset = output->size();
+    outputView.as<fs>().data->ext_index.offset = output.size();
 
     /* Index creation */
     {
         DProfContext _(VIRTFS_API "Creating extension index");
 
         /* Create extension buckets */
-        Map<CString, Vector<u64>> extension_buckets;
+        std::map<std::string, std::vector<u64>> extension_buckets;
 
         u64 i = 0;
 
-        for(auto const& file : vfs_view(outputView))
+        for(auto const& file : view::of(outputView.view))
         {
-            Path filename(file.name);
+            Path filename(file.name());
 
             if(filename.extension().size() >= MaxExtensionLength)
                 continue;
@@ -307,10 +280,10 @@ bool GenVirtFS(
 
         for(auto& index : extension_buckets)
         {
-            VirtualIndex outIndex;
-            outIndex.kind       = VirtualIndex::index_t::file_extension;
-            outIndex.next_index = sizeof(VirtualIndex) +
-                                  index.second.size() * sizeof(index.second[0]);
+            struct index outIndex;
+            outIndex.kind = index::index_t::file_extension;
+            outIndex.next_index =
+                sizeof(index) + index.second.size() * sizeof(index.second[0]);
 
             auto extensionData =
                 Bytes::ofBytes(outIndex.extension.ext, MaxExtensionLength);
@@ -321,28 +294,27 @@ bool GenVirtFS(
                 index.first, outIndex.extension.ext, MaxExtensionLength);
             outIndex.extension.num_files = index.second.size();
 
-            auto start = output->size();
+            auto start = output.size();
 
-            output->resize(
-                output->size() + sizeof(VirtualIndex) +
+            output.resize(
+                output.size() + sizeof(index) +
                 index.second.size() * sizeof(index.second[0]));
 
             MemCpy(
-                Bytes::ofBytes(outIndex), *Bytes::ofBytes(*output).at(start));
+                Bytes::ofBytes(outIndex),
+                *Bytes::ofContainer(output).at(start));
 
-            start += sizeof(VirtualIndex);
+            start += sizeof(index);
 
             MemCpy(
-                Bytes::ofBytes(index.second),
-                *Bytes::ofBytes(*output).at(start));
+                Bytes::ofContainer(index.second),
+                *Bytes::ofContainer(output).at(start));
         }
 
-        outputView = Bytes::ofBytes(*output);
+        outputView = Bytes::ofContainer(output);
 
-        outputView.as<VFS>()[0].ext_index.num += extension_buckets.size();
+        outputView.as<fs>()[0].ext_index.num += extension_buckets.size();
     }
-
-    outputView = Bytes::ofBytes(*output);
 
     /* Ensure that we can create a node hierarchy of n^2 size.
      * If this test fails, boy, you got a big filesystem on your hands.
@@ -352,83 +324,80 @@ bool GenVirtFS(
     {
         DProfContext _(VIRTFS_API "Inserting directory index");
 
-        auto vfsRef = outputView.as<VFS>().data;
-        auto files  = mem_chunk<const VFile>::ofBytes(
-            vfsRef->files(), vfsRef->num_files * sizeof(VFile));
+        auto vfsRef = outputView.as<fs>().data;
+        auto files  = vfsRef->files();
 
         dir_index::directory_index_t dirIndex = dir_index::Generate(files);
 
-        auto prevSize = output->size();
-        output->resize(output->size() + dirIndex.totalSize);
-        outputView = Bytes::ofBytes(*output);
+        auto prevSize = output.size();
+        output.resize(output.size() + dirIndex.totalSize);
+        outputView = Bytes::ofContainer(output);
 
         auto index_ref = *outputView.at(prevSize);
-        auto data_ref  = *outputView.at(prevSize + sizeof(VirtualIndex));
+        auto data_ref  = *outputView.at(prevSize + sizeof(index));
 
         MemCpy(Bytes::ofBytes(dirIndex.baseIndex), index_ref);
         MemCpy(Bytes::ofBytes(dirIndex.nodes), data_ref);
 
-        outputView = Bytes::ofBytes(*output);
+        outputView = Bytes::ofContainer(output);
 
-        outputView.as<VFS>()[0].ext_index.num++;
+        outputView.as<fs>()[0].ext_index.num++;
     }
 
     /* --------------------------------- */
 
     Profiler::DeepProfile(VIRTFS_API "Creation successful");
-    return true;
+    return output;
 }
 
-directory_data_t::result_t VirtualFS::SearchFile(
-    VFS const*                            vfs,
-    cstring                               name,
-    vfs_error_code&                       ec,
+stl_types::result<directory_data_t::result_t, error> fs::SearchFile(
+    fs const*                             vfs,
+    std::string_view                      name,
     search_strategy                       strat,
     directory_data_t::cached_index const* filter)
 {
-    return dir_index::lookup::SearchFile(vfs, name, ec, strat, filter);
+    return dir_index::lookup::SearchFile(vfs, name, strat, filter);
 }
 
-Bytes Coffee::VirtFS::VirtualFS::GetData(
-    const VFS* vfs, const VFile* file, vfs_error_code& ec)
+stl_types::result<mem_chunk<const u8>, error> fs::GetData(
+    const fs* vfs, const file* file)
 {
     DProfContext _(VIRTFS_API "Getting data");
+    using namespace Coffee::Compression;
 
-    byte_t const* basePtr = C_RCAST<byte_t const*>(vfs->data());
+    auto basePtr = vfs->data();
 
-    Bytes data;
+    mem_chunk<const u8> data;
 
     if(file)
     {
-        byte_t* srcPtr  = C_CCAST<byte_t*>(basePtr + file->offset);
-        szptr   srcSize = file->size;
+        auto srcData = basePtr.subspan(file->offset, file->size);
 
         if(file->flags & File_Compressed)
         {
 #if defined(COFFEE_BUILD_NO_COMPRESSION)
-            ec = VFSError::CompressionUnsupported;
+            ec = fsError::CompressionUnsupported;
             return {};
 #else
             DProfContext _(VIRTFS_API "Decompressing file");
+            auto writable = data.as<libc_types::u8>();
 
             switch(file->codec)
             {
-            case compression::codec::lz4:
-            {
+            case compression::codec::lz4: {
 #if defined(COFFEE_COMPRESS_LZ4)
                 lz4::error_code comp_ec;
                 lz4::compressor::Decompress(
-                    Bytes::ofBytes(srcPtr, srcSize), &data, {}, comp_ec);
+                    srcData, &writable, {}, comp_ec);
 
                 if(comp_ec)
                 {
-                    ec = VFSError::CompressionError;
-                    return {};
+                    return error::compression_error;
                 }
+                data.ownership = semantic::Ownership::Owned;
                 break;
 #else
-                ec = VFSError::UnsupportedCompressionCodec;
-                return {};
+                return error::compression_codec_unsupported;
 #endif
             }
 #if defined(COFFEE_WINDOWS)
@@ -437,99 +406,93 @@ Bytes Coffee::VirtFS::VirtualFS::GetData(
             case compression::codec::deflate:
 #endif
             {
-                Compression::zlib::error_code comp_ec;
-                Zlib::Decompress(
-                    BytesConst::ofBytes(srcPtr, srcSize), &data, {}, comp_ec);
+                zlib::error_code comp_ec;
+                Zlib::Decompress(srcData, &writable, {}, comp_ec);
 
                 if(comp_ec)
                 {
-                    ec = VFSError::CompressionError;
-                    return {};
+                    return error::compression_error;
                 }
+                data.ownership = semantic::Ownership::Owned;
                 break;
             }
-            default:
-            {
-                ec = VFSError::UnsupportedCompressionCodec;
-                break;
+            default: {
+                return error::compression_codec_unsupported;
             }
             }
 #endif
         } else
         {
-            data.data = srcPtr;
-            data.size = srcSize;
+            data           = mem_chunk<const u8>::ofContainer(srcData);
+            data.ownership = semantic::Ownership::Borrowed;
         }
     } else
-        ec = VFSError::NotFound;
+        return error::not_found;
 
-    data.elements = data.size;
+    data.updatePointers(data.ownership);
 
     return data;
 }
 
-ResourceResolver<Resource> VirtualFS::GetResolver(const VirtualFS* vfs)
+Coffee::ResourceResolver<Resource> fs::GetResolver(const fs* vfs)
 {
     using namespace platform::url;
 
     if(!vfs)
         Throw(undefined_behavior(VIRTFS_API "got null vfs!"));
 
-    return {[=](Url const& path) { return VirtFS::Resource(vfs, path); },
-            [=](Path const& query, Vector<Url>& output) {
-                DProfContext _(DTEXT(VIRTFS_API "Resolving filesystem"));
+    return {
+        [=](Url const& path) { return Resource(vfs, path); },
+        [=](Path const& query, Vector<Url>& output) {
+            DProfContext _(DTEXT(VIRTFS_API "Resolving filesystem"));
 
-                vfs_error_code ec;
+            error ec;
 
-                if(vfs->supportsIndex(VirtualIndex::index_t::directory_tree))
+            if(vfs->supportsIndex(index::index_t::directory_tree))
+            {
+                auto index =
+                    fs::SearchFile(
+                        vfs, query.internUrl.c_str(), search_strategy::earliest)
+                        .value();
+
+                DProfContext __(DTEXT(VIRTFS_API "Checking files"));
+
+                /* Every child node necessarily has a lower index than its
+                 * parent
+                 */
+                auto node_start = index.index.sub_root;
+                auto files      = vfs->files();
+                auto nodes      = index.index.nodes();
+
+                for(auto i :
+                    Range<>(index.index.node_match.size() - node_start))
                 {
-                    auto index = VFS::SearchFile(
-                        vfs,
-                        query.internUrl.c_str(),
-                        ec,
-                        search_strategy::earliest);
+                    auto const idx = node_start + i;
 
-                    C_ERROR_CHECK(ec);
+                    if(!index.index.node_match.at(idx))
+                        continue;
 
-                    DProfContext __(DTEXT(VIRTFS_API "Checking files"));
+                    if(!nodes[idx].is_leaf())
+                        continue;
 
-                    /* Every child node necessarily has a lower index than its
-                     * parent
-                     */
-                    auto node_start = index.index.sub_root;
-                    auto files      = C_RCAST<VFile const*>(vfs->files());
-                    auto nodes      = index.index.nodes();
+                    auto const& node = files[nodes[idx].leaf.fileIdx];
 
-                    for(auto i :
-                        Range<>(index.index.node_match.size() - node_start))
-                    {
-                        auto const idx = node_start + i;
-
-                        if(!index.index.node_match.at(idx))
-                            continue;
-
-                        if(!nodes[idx].is_leaf())
-                            continue;
-
-                        auto const& node = files[nodes[idx].leaf.fileIdx];
-
-                        output.push_back(constructors::MkUrl(node.name));
-                    }
-                } else
-                {
-                    vfs_view view(BytesConst::ofBytes(*vfs));
-
-                    auto it = view.begin();
-                    while((it = view.starting_with(query, it)) != view.end())
-                    {
-                        output.push_back(constructors::MkUrl((*it).name));
-                        ++it;
-                    }
+                    output.push_back(constructors::MkUrl(node.name().data()));
                 }
+            } else
+            {
+                vfs::view view = vfs::view::of(BytesConst::ofBytes(*vfs).view);
 
-                return true;
-            }};
+                auto it = view.begin();
+                while((it = view.starting_with(query, it)) != view.end())
+                {
+                    output.push_back(constructors::MkUrl((*it).name().data()));
+                    ++it;
+                }
+            }
+
+            return true;
+        }};
 }
 
-} // namespace VirtFS
-} // namespace Coffee
+} // namespace vfs

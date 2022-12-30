@@ -2,8 +2,7 @@
 
 #include "proxy.h"
 
-namespace Coffee {
-namespace Components {
+namespace compo {
 namespace detail {
 
 template<class T>
@@ -98,5 +97,4 @@ using only = detail::single_selector<T>;
 
 }
 
-} // namespace Components
-} // namespace Coffee
+} // namespace compo

@@ -2,9 +2,7 @@
 
 #include <coffee/components/types.h>
 
-namespace Coffee {
-namespace Components {
-namespace Allocators {
+namespace compo::alloc {
 
 template<
     typename ComponentType,
@@ -13,8 +11,8 @@ struct VectorBaseContainer : ComponentContainer<ComponentType>
 {
     using typename ComponentContainer<ComponentType>::type;
 
-    using vector_type = Vector<AllocationType>;
-    using map_type    = Map<u64, size_t>;
+    using vector_type = std::vector<AllocationType>;
+    using map_type    = std::map<u64, size_t>;
     using value_type  = AllocationType;
 
     map_type    m_mapping;
@@ -67,6 +65,4 @@ struct VectorContainer : VectorBaseContainer<ComponentType, AllocationType>
     }
 };
 
-} // namespace Allocators
-} // namespace Components
-} // namespace Coffee
+} // namespace alloc

@@ -13,12 +13,20 @@
         using type = libc_types::u32; \
     };
 
-namespace Coffee {
-namespace Components {
+namespace compo {
 
-using clock      = Chrono::high_resolution_clock;
-using duration   = Chrono::microseconds;
-using time_point = Chrono::time_point<clock>;
+using libc_types::u32;
+using libc_types::i32;
+using libc_types::u64;
+using libc_types::i64;
+using libc_types::szptr;
+using libc_types::ptroff;
+using clock      = std::chrono::high_resolution_clock;
+using duration   = std::chrono::microseconds;
+using time_point = std::chrono::time_point<clock>;
+
+using stl_types::quick_container;
+using stl_types::Range;
 
 using type_hash = declreturntype(std::type_info::hash_code);
 
@@ -57,23 +65,18 @@ C_FLAGS(VisitorFlags, u32);
 
 struct EntityRecipe
 {
-//    EntityRecipe(Vector<size_t>&& comps = {}, u32 tags = 0) :
-//        components(std::move(comps)), tags(tags)
-//    {
-//    }
-
-    Vector<size_t> components;
+    std::vector<size_t> components;
     u32            tags;
 };
 
-struct Entity : non_copy
+struct Entity : stl_types::non_copy
 {
     u64 id;
     u32 tags;
     u32 _pad = 0;
 };
 
-struct ComponentContainerBase : non_copy
+struct ComponentContainerBase : stl_types::non_copy
 {
     virtual ~ComponentContainerBase();
 
@@ -83,9 +86,9 @@ struct ComponentContainerBase : non_copy
     virtual bool contains_entity(u64 id) const = 0;
 };
 
-struct EntityVisitorBase : non_copy
+struct EntityVisitorBase : stl_types::non_copy
 {
-    using type_hashes = Vector<size_t>;
+    using type_hashes = std::vector<size_t>;
 
     type_hashes const components;
     type_hashes const subsystems;
@@ -157,9 +160,9 @@ struct ComponentContainer : ComponentContainerBase
 
 struct SubsystemBase
 {
-    using ContainerProxy = Components::ContainerProxy;
-    using time_point     = Components::time_point;
-    using duration       = Components::duration;
+    using ContainerProxy = ContainerProxy;
+    using time_point     = time_point;
+    using duration       = duration;
 
     static constexpr u32 default_prio = 1024;
     static constexpr u32 system_prio  = 0;
@@ -198,7 +201,7 @@ struct Subsystem : SubsystemBase
     }
 };
 
-namespace Globals {
+namespace globals {
 
 template<is_tag_type T>
 struct ValueSubsystem : Subsystem<T>
@@ -218,8 +221,6 @@ struct ValueSubsystem : Subsystem<T>
     value_type m_value;
 };
 
-} // namespace Globals
+} // namespace globals
 
-// namespace Globals
-} // namespace Components
-} // namespace Coffee
+} // namespace compo

@@ -16,10 +16,10 @@
 
 #define VIRTFS_API "VirtFS::"
 
-namespace Coffee {
-namespace VirtFS {
+using Coffee::DProfContext;
+using Coffee::Profiler;
 
-namespace dir_index {
+namespace vfs::dir_index {
 
 /*!
  * \brief Insert into a static array the std::string
@@ -27,45 +27,45 @@ namespace dir_index {
  * \param ptr
  * \param size
  */
-NO_DISCARD static u8 CharInsert(CString const& src, char* ptr, szptr size)
+NO_DISCARD static u8 CharInsert(std::string_view src, char* ptr, szptr size)
 {
     if(src.size() > (size - 1))
         Throw(std::out_of_range("entry too long"));
 
-    MemCpy(
-        BytesConst::ofBytes(src.data(), src.size()), Bytes::ofBytes(ptr, size));
+    std::copy(src.begin(), src.end(), Span<char>(ptr, size).begin());
     return C_FCAST<u8>(src.size());
 }
 
 struct node_info_t
 {
-    using dir_data_t = VirtualIndex::directory_data_t;
+    using dir_data_t = directory_data_t;
 
-    Vector<Path>            children;
+    std::vector<Path>       children;
     dir_data_t::node_base_t node;
 };
 
 struct node_working_set_t
 {
-    Vector<VirtualIndex::directory_data_t::node_base_t>& outNodes;
-    Map<Path, node_info_t> const&                        stems;
+    std::vector<index::directory_data_t::node_base_t>& outNodes;
+    std::map<Path, node_info_t> const&                 stems;
 };
 
 struct directory_index_t
 {
-    VirtualIndex baseIndex;
-    szptr        totalSize;
+    index baseIndex;
+    szptr totalSize;
 
-    Vector<VirtualIndex::directory_data_t::node_base_t> nodes;
+    std::vector<directory_data_t::node_base_t> nodes;
 };
 
-using node_t      = VirtualIndex::directory_data_t::node_t;
-using node_base_t = VirtualIndex::directory_data_t::node_base_t;
+using node_t      = index::directory_data_t::node_t;
+using node_base_t = index::directory_data_t::node_base_t;
 
-using child_slice = slice<const Vector<Path>, Vector<Path>::const_iterator>;
-using part_slice  = slice<const child_slice, child_slice::iterator>;
+using child_slice = Span<const Path>;
+using part_slice  = child_slice;
 
-static cstring VirtGetPrefix(node_working_set_t& set, part_slice::iterator p)
+static std::string_view VirtGetPrefix(
+    node_working_set_t& set, part_slice::iterator p)
 {
     auto& it = set.stems.find(*p)->second.node;
 
@@ -73,7 +73,9 @@ static cstring VirtGetPrefix(node_working_set_t& set, part_slice::iterator p)
 }
 
 static u32 VirtRecurseChildren(
-    node_working_set_t& set, cstring src, node_info_t const& currentNode);
+    node_working_set_t& set,
+    std::string_view    src,
+    node_info_t const&  currentNode);
 
 /*!
  * \brief VirtPartitionChildren creates waypoint nodes for traversing the files,
@@ -86,7 +88,10 @@ static u32 VirtRecurseChildren(
  * \return
  */
 static u32 VirtPartitionChildren(
-    node_working_set_t& set, part_slice children, cstring prefix, u32 flags = 0)
+    node_working_set_t& set,
+    part_slice          children,
+    std::string_view    prefix,
+    u32                 flags = 0)
 {
     auto parentIdx = C_FCAST<u32>(set.outNodes.size());
 
@@ -135,10 +140,10 @@ static u32 VirtPartitionChildren(
     /* Directory tree has a minimum size of 3 at this point */
 
     /* We slice the child tree in half, left and right side for space reasons */
-    auto left_slice =
-        part_slice(children.begin(), children.begin() + mid_point + rest);
-    auto right_slice =
-        part_slice(children.begin() + mid_point + rest, children.end());
+    auto left_slice = semantic::SpanOver<const Path>(
+        children.begin(), children.begin() + mid_point + rest);
+    auto right_slice = semantic::SpanOver<const Path>(
+        children.begin() + mid_point + rest, children.end());
 
     auto left_head  = left_slice.end() - 1;
     auto right_head = right_slice.begin();
@@ -164,7 +169,9 @@ static u32 VirtPartitionChildren(
  * \return Index of created node
  */
 static u32 VirtRecurseChildren(
-    node_working_set_t& set, cstring src, node_info_t const& currentNode)
+    node_working_set_t& set,
+    std::string_view    src,
+    node_info_t const&  currentNode)
 {
     auto        num_children = currentNode.children.size();
     auto const& childrenRef  = currentNode.children;
@@ -183,7 +190,8 @@ static u32 VirtRecurseChildren(
     }
 
     /* We need to perform partitioning on this node */
-    part_slice childrenRange(childrenRef.begin(), childrenRef.end());
+    part_slice childrenRange =
+        semantic::SpanOver<const Path>(childrenRef.begin(), childrenRef.end());
     return VirtPartitionChildren(
         set, childrenRange, src, currentNode.node.flags);
 }
@@ -210,19 +218,19 @@ static szptr GetNodeTypeMaxLen(link_node_type t)
  * \param node_type
  */
 static void GenPrefixNodes(
-    Map<Path, node_info_t>& stems,
-    CString                 prefix,
-    CString                 remaining_suffix,
-    link_node_type          node_type)
+    std::map<Path, node_info_t>& stems,
+    std::string                  prefix,
+    std::string                  remaining_suffix,
+    link_node_type               node_type)
 {
-    const auto prefix_len = GetNodeTypeMaxLen(node_type);
-    auto current_size     = CMath::min(remaining_suffix.size(), prefix_len - 1);
+    const auto prefix_len   = GetNodeTypeMaxLen(node_type);
+    auto       current_size = std::min(remaining_suffix.size(), prefix_len - 1);
 
     auto append_prefix = prefix == "./" ? "" : prefix;
-    prefix             = (prefix == "./")
-                 ? "."
-                 : (prefix.back() == '/') ? prefix.substr(0, prefix.size() - 1)
-                                          : prefix;
+
+    prefix = (prefix == "./")         ? "."
+             : (prefix.back() == '/') ? prefix.substr(0, prefix.size() - 1)
+                                      : prefix;
 
     /* This is the end of the prefix nodes, the final one fits */
     if(current_size == remaining_suffix.size())
@@ -274,12 +282,14 @@ static void GenPrefixNodes(
 }
 
 static void PrintDirIndex(
-    Vector<VirtualIndex::directory_data_t::node_base_t>& nodes)
+    std::vector<index::directory_data_t::node_base_t>& nodes)
 {
     if(auto toggle = platform::env::var("VIRTFS_GRAPH"); !toggle.has_value())
         return;
+    using namespace Coffee;
 
-    Deque<Pair<VirtualIndex::directory_data_t::node_base_t*, Pair<u32, u32>>> q;
+    std::deque<std::pair<directory_data_t::node_base_t*, std::pair<u32, u32>>>
+        q;
 
     q.push_back({&nodes.front(), {0, 0}});
 
@@ -369,15 +379,15 @@ static bool NeedsOptimization(node_working_set_t& set, u32 idx = 0)
 
 } // namespace opt_detail
 
-static directory_index_t Generate(mem_chunk<const VFile> const& files)
+static directory_index_t Generate(Span<const file> const& files)
 {
     DProfContext _(VIRTFS_API "Generating directory index");
 
-    using dir_data_t = VirtualIndex::directory_data_t;
+    using dir_data_t = directory_data_t;
 
     /* Directory-ordered binary tree */
-    Map<Path, node_info_t>          stems;
-    Vector<dir_data_t::node_base_t> outNodes;
+    std::map<Path, node_info_t>          stems;
+    std::vector<dir_data_t::node_base_t> outNodes;
 
     /* This part is only used as the root of the tree,
      *  and is never included in paths. */
@@ -393,7 +403,7 @@ static directory_index_t Generate(mem_chunk<const VFile> const& files)
     u64 fileIdx = 0;
     for(auto const& file : files)
     {
-        Path filename(file.name);
+        Path filename(file.name());
         Path stem = filename.dirname();
 
         auto pathComponents = stem.components();
@@ -465,12 +475,12 @@ static directory_index_t Generate(mem_chunk<const VFile> const& files)
         PrintDirIndex(outNodes);
     }
 
-    auto indexSize = sizeof(VirtualIndex) +
-                     outNodes.size() * sizeof(dir_data_t::node_base_t);
+    auto indexSize =
+        sizeof(index) + outNodes.size() * sizeof(dir_data_t::node_base_t);
 
-    VirtualIndex outIndex;
+    index outIndex;
 
-    outIndex.kind                = VirtualIndex::index_t::directory_tree;
+    outIndex.kind                = index::index_t::directory_tree;
     outIndex.next_index          = indexSize;
     outIndex.directory.num_nodes = outNodes.size();
 
@@ -479,10 +489,10 @@ static directory_index_t Generate(mem_chunk<const VFile> const& files)
 
 namespace lookup {
 
-using node_base_t = VirtualIndex::directory_data_t::node_base_t;
-using node_t      = VirtualIndex::directory_data_t::node_t;
+using node_base_t = index::directory_data_t::node_base_t;
+using node_t      = index::directory_data_t::node_t;
 
-using node_list_t = mem_chunk<node_base_t const>;
+using node_list_t = Span<node_base_t const>;
 
 static node_base_t const* GetNode(u32 idx, node_list_t const& nodes)
 {
@@ -502,9 +512,9 @@ static bool SelectNodes(
     if(node.is_leaf())
         return cache_idx.node_match.at(idx);
 
-    auto left = node.node.left.valid()
-                    ? SelectNodes(cache_idx, nodes, node.node.left)
-                    : false;
+    auto left  = node.node.left.valid()
+                     ? SelectNodes(cache_idx, nodes, node.node.left)
+                     : false;
     auto right = node.node.right.valid()
                      ? SelectNodes(cache_idx, nodes, node.node.right)
                      : false;
@@ -541,36 +551,32 @@ static u32 GetFirstSelected(
         auto valid_right =
             node.node.right.valid() && cache_idx.node_match.at(node.node.right);
 
-        return valid_left
-                   ? GetFirstSelected(cache_idx, nodes, node.node.left)
-                   : valid_right
-                         ? GetFirstSelected(cache_idx, nodes, node.node.right)
-                         : node_t::sentinel_value;
+        return valid_left ? GetFirstSelected(cache_idx, nodes, node.node.left)
+               : valid_right
+                   ? GetFirstSelected(cache_idx, nodes, node.node.right)
+                   : node_t::sentinel_value;
     } else
         return node_t::sentinel_value;
 }
 
-directory_data_t::result_t SearchFile(
-    VFS const*                            vfs,
-    cstring                               name,
-    vfs_error_code&                       ec,
+stl_types::result<directory_data_t::result_t, error> SearchFile(
+    fs const*                             vfs,
+    std::string_view                      name,
     search_strategy                       strat,
     directory_data_t::cached_index const* filter)
 {
-    using node_base_t = VirtualIndex::directory_data_t::node_base_t;
+    using node_base_t = directory_data_t::node_base_t;
+    using result_t    = directory_data_t::result_t;
 
-    auto index =
-        index_common::FindIndex(vfs, VirtualIndex::index_t::directory_tree, ec);
+    auto search = index_common::FindIndex(vfs, index::index_t::directory_tree);
 
-    if(!index)
-    {
-        ec = VFSError::NoIndexing;
-        return {{}, {}, strat};
-    }
+    if(search.has_error())
+        return error::no_indexing;
+    auto index = search.value();
 
-    CString prefix        = name;
-    szptr   currentPrefix = 0;
-    szptr   prefixLen     = prefix.size();
+    std::string prefix(name.data(), name.size());
+    szptr       currentPrefix = 0;
+    szptr       prefixLen     = prefix.size();
 
     auto nodes = index->directory.nodes(*index);
 
@@ -582,7 +588,7 @@ directory_data_t::result_t SearchFile(
     }
 
     if(currentNode->is_leaf())
-        return {{}, {}, strat};
+        return error::not_found;
 
     /* exact matching can achieve log N by not doing any backtracking */
     if(strat == search_strategy::exact)
@@ -592,15 +598,15 @@ directory_data_t::result_t SearchFile(
             if(currentPrefix +
                    currentNode->longest_match(prefix, currentPrefix) ==
                prefixLen)
-                return {{}, {currentNode, index}, strat};
+                return result_t{{}, {currentNode, index}, strat};
 
             /* Can't go further with leaf node */
             if(currentNode->is_leaf())
-                return {{}, {}, strat};
+                return error::not_found;
 
             /* It's longer than our prefix, mismatch */
             if(currentPrefix > prefixLen)
-                return {{}, {}, strat};
+                return error::not_found;
 
             auto& node = currentNode->node;
 
@@ -673,7 +679,7 @@ directory_data_t::result_t SearchFile(
             }
 
             /* Failed to select entry */
-            return {{}, {}, strat};
+            return error::not_found;
         }
     /* Earliest matching creates a bitmap of matching nodes.
      * This can be used later to combine bitmaps, ANDing or ORing them. */
@@ -684,7 +690,8 @@ directory_data_t::result_t SearchFile(
         cache_index.node_match.resize(index->directory.num_nodes * 2);
         cache_index.virt_index = index;
 
-        Deque<Pair<u32, szptr>> disco_nodes; /* node_idx, prefix match length */
+        std::deque<std::pair<u32, szptr>>
+            disco_nodes; /* node_idx, prefix match length */
         disco_nodes.push_back({0, 0});
 
         while(!disco_nodes.empty())
@@ -712,9 +719,9 @@ directory_data_t::result_t SearchFile(
 
             match_len += currentNode->flags & node_base_t::prefix_directory
                              ? prefix_match + 1
-                             : currentNode->flags & node_base_t::prefix_carry
-                                   ? prefix_match
-                                   : 0;
+                         : currentNode->flags & node_base_t::prefix_carry
+                             ? prefix_match
+                             : 0;
 
             /* !filter shortcircuits if-statement, very important */
             if(currentNode->node.left.valid())
@@ -725,18 +732,15 @@ directory_data_t::result_t SearchFile(
                     disco_nodes.push_back({currentNode->node.right, match_len});
         }
 
-        if(SelectNodes(cache_index, nodes.data))
-            cache_index.sub_root = GetFirstSelected(cache_index, nodes.data);
+        if(SelectNodes(cache_index, nodes.data()))
+            cache_index.sub_root = GetFirstSelected(cache_index, nodes.data());
 
-        return {cache_index, {}, strat};
+        return result_t{cache_index, {}, strat};
     }
 
-    return {{}, {}, strat};
+    return error::not_found;
 }
 
 } // namespace lookup
 
-} // namespace dir_index
-
-} // namespace VirtFS
-} // namespace Coffee
+} // namespace vfs::dir_index

@@ -33,33 +33,34 @@ STATICINLINE void buffer_page_commitment_mem(
 }
 
 template<class size_3_i32, class vec_3_i32>
-requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
-             semantic::concepts::Size2D<size_3_i32, i32>)
-    /*!
-     * \brief Part of GL_NV_memory_object_sparse
-     * \param target GLenum
-     * \param layer GLint
-     * \param level GLint
-     * \param xoffset GLint
-     * \param yoffset GLint
-     * \param zoffset GLint
-     * \param width GLsizei
-     * \param height GLsizei
-     * \param depth GLsizei
-     * \param memory GLuint
-     * \param offset GLuint64
-     * \param commit GLboolean
-     * \return void
-     */
-    STATICINLINE void tex_page_commitment_mem(
-        group::texture_target target,
-        i32                   layer,
-        i32                   level,
-        vec_3_i32 const&      xoffset,
-        size_3_i32 const&     width,
-        u32                   memory,
-        u64                   offset,
-        bool                  commit)
+requires(
+    semantic::concepts::Vector<vec_3_i32, i32, 3> &&
+    semantic::concepts::Size2D<size_3_i32, i32>)
+/*!
+ * \brief Part of GL_NV_memory_object_sparse
+ * \param target GLenum
+ * \param layer GLint
+ * \param level GLint
+ * \param xoffset GLint
+ * \param yoffset GLint
+ * \param zoffset GLint
+ * \param width GLsizei
+ * \param height GLsizei
+ * \param depth GLsizei
+ * \param memory GLuint
+ * \param offset GLuint64
+ * \param commit GLboolean
+ * \return void
+ */
+STATICINLINE void tex_page_commitment_mem(
+    group::texture_target target,
+    i32                   layer,
+    i32                   level,
+    vec_3_i32 const&      xoffset,
+    size_3_i32 const&     width,
+    u32                   memory,
+    u64                   offset,
+    bool                  commit)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -115,33 +116,34 @@ STATICINLINE void named_buffer_page_commitment_mem(
 }
 
 template<class size_3_i32, class vec_3_i32>
-requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
-             semantic::concepts::Size2D<size_3_i32, i32>)
-    /*!
-     * \brief Part of GL_NV_memory_object_sparse
-     * \param texture GLuint
-     * \param layer GLint
-     * \param level GLint
-     * \param xoffset GLint
-     * \param yoffset GLint
-     * \param zoffset GLint
-     * \param width GLsizei
-     * \param height GLsizei
-     * \param depth GLsizei
-     * \param memory GLuint
-     * \param offset GLuint64
-     * \param commit GLboolean
-     * \return void
-     */
-    STATICINLINE void texture_page_commitment_mem(
-        u32               texture,
-        i32               layer,
-        i32               level,
-        vec_3_i32 const&  xoffset,
-        size_3_i32 const& width,
-        u32               memory,
-        u64               offset,
-        bool              commit)
+requires(
+    semantic::concepts::Vector<vec_3_i32, i32, 3> &&
+    semantic::concepts::Size2D<size_3_i32, i32>)
+/*!
+ * \brief Part of GL_NV_memory_object_sparse
+ * \param texture GLuint
+ * \param layer GLint
+ * \param level GLint
+ * \param xoffset GLint
+ * \param yoffset GLint
+ * \param zoffset GLint
+ * \param width GLsizei
+ * \param height GLsizei
+ * \param depth GLsizei
+ * \param memory GLuint
+ * \param offset GLuint64
+ * \param commit GLboolean
+ * \return void
+ */
+STATICINLINE void texture_page_commitment_mem(
+    u32               texture,
+    i32               layer,
+    i32               level,
+    vec_3_i32 const&  xoffset,
+    size_3_i32 const& width,
+    u32               memory,
+    u64               offset,
+    bool              commit)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

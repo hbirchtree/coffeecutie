@@ -20,19 +20,19 @@ constexpr libc_types::u32 vertex_weight_array_pointer = 0x8510;
 } // namespace values
 template<class span_const_void>
 requires(semantic::concepts::Span<span_const_void>)
-    /*!
-     * \brief Part of GL_EXT_vertex_weighting
-     * \param size GLint
-     * \param type GLenum
-     * \param stride GLsizei
-     * \param pointer const void *
-     * \return void
-     */
-    STATICINLINE void vertex_weight_pointer(
-        i32                                   size,
-        group::vertex_weight_pointer_type_ext type,
-        i32                                   stride,
-        span_const_void const&                pointer)
+/*!
+ * \brief Part of GL_EXT_vertex_weighting
+ * \param size GLint
+ * \param type GLenum
+ * \param stride GLsizei
+ * \param pointer const void *
+ * \return void
+ */
+STATICINLINE void vertex_weight_pointer(
+    i32                                   size,
+    group::vertex_weight_pointer_type_ext type,
+    i32                                   stride,
+    span_const_void const&                pointer)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -65,15 +65,17 @@ STATICINLINE void vertex_weightf(f32 weight)
 }
 
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
-         std::decay_t<typename span_const_f32::value_type>,
-         std::decay_t<f32>>)
-    /*!
-     * \brief Part of GL_EXT_vertex_weighting
-     * \param weight const GLfloat *
-     * \return void
-     */
-    STATICINLINE void vertex_weightfv(span_const_f32 const& weight)
+requires(
+    semantic::concepts::Span<span_const_f32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_f32::value_type>,
+        std::decay_t<f32>>)
+/*!
+ * \brief Part of GL_EXT_vertex_weighting
+ * \param weight const GLfloat *
+ * \return void
+ */
+STATICINLINE void vertex_weightfv(span_const_f32 const& weight)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

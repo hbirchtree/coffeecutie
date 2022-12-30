@@ -28,6 +28,8 @@ struct features
         bool mapping{true};
         bool persistence{false};
         bool storage{false};
+        bool ssbo{false};
+        bool ubo{false};
 
         struct
         {
@@ -146,6 +148,7 @@ struct features
         bool attribute_binding{true};
         bool dsa{false};
         bool format{false};
+        bool layout_binding{false};
         bool vertex_arrays{true};
         struct
         {

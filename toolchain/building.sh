@@ -40,6 +40,7 @@ function cmake_debug()
 {
     echo "About to execute:"
     echo cmake $@
+    echo $@ > cmake_params
     cmake $@
 }
 
@@ -126,7 +127,7 @@ function native_build()
         echo "::error::Preload file not found"
         return
     fi
-    cmake \
+    cmake_debug \
         -GNinja \
         -C${PRELOAD_FILE} \
         -DCMAKE_C_COMPILER=${TOOLCHAIN_ROOT}/bin/${ARCHITECTURE}-gcc \
@@ -210,7 +211,7 @@ function emscripten_build()
         echo "::error::Preload file not found"
         return
     fi
-    cmake \
+    cmake_debug \
         -GNinja \
         -C${BASE_DIR}/.github/cmake/${PLATFORM}-${ARCHITECTURE}-${SYSROOT}.preload.cmake \
         -DCMAKE_INSTALL_PREFIX=$PWD/install \
@@ -239,6 +240,13 @@ function xcode_build()
 
     echo "::info::Set up for ${PLATFORM}:${ARCHITECTURE}:${SYSROOT}"
     export TOOLCHAIN_PREFIX=$ARCHITECTURE
+    PRELOAD_FILE=${BASE_DIR}/.github/cmake/${ARCHITECTURE}-${SYSROOT}.preload.cmake
+    echo "::info::Using preload ${PRELOAD_FILE}"
+
+    if [ ! -f $PRELOAD_FILE ]; then
+        echo "::error::Preload file not found"
+        return
+    fi
 
     export VCPKG_ROOT=$(dirname $(readlink $(which vcpkg)))
 
@@ -257,23 +265,55 @@ function xcode_build()
     echo "::group::Configuring project"
     if [[ "${ARCHITECTURE}" = *ios ]]; then
         echo "::info::Doing iOS build"
-        cmake \
+        TRANSLATED_PLATFORM=""
+        if [ $SYSROOT = "ios" ]; then
+            TRANSLATED_PLATFORM=OS64COMBINED
+        elif [ $SYSROOT = "tvos" ]; then
+            TRANSLATED_PLATFORM=TVOSCOMBINED
+        elif [ $SYSROOT = "watchos" ]; then
+            TRANSLATED_PLATFORM=WATCHOSCOMBINED
+        elif [ $SYSROOT = "catalyst" ]; then
+            TRANSLATED_PLATFORM=MAC_CATALYST
+        else
+            echo "::error::Invalid platform specified: Needs to be one of:"
+            echo "::error::ios, tvos, watchos"
+            echo "::endgroup::"
+            return
+        fi
+        cmake_debug \
             -G${GENERATOR:-Xcode} \
-            -C${BASE_DIR}/.github/cmake/${ARCHITECTURE}.preload.cmake \
+            -C${PRELOAD_FILE} \
             -DCMAKE_INSTALL_PREFIX=$PWD/install \
             -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake \
             -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=${BASE_DIR}/toolchain/cmake/Toolchains/all-ios.toolchain.cmake \
             -DVCPKG_TARGET_TRIPLET=${TOOLCHAIN_PREFIX} \
-            -DIOS_PLATFORM=${PLATFORM} \
+            -DPLATFORM=${TRANSLATED_PLATFORM} \
             ${BASE_DIR} ${@:2}
     else
         echo "::info::Doing macOS build"
-        cmake \
-            -G${GENERATOR:-Ninja} \
-            -C${BASE_DIR}/.github/cmake/${ARCHITECTURE}.preload.cmake \
+        TRANSLATED_PLATFORM=""
+        if [ $SYSROOT = "universal" ]; then
+            TRANSLATED_PLATFORM=MAC_UNIVERSAL
+        elif [ $SYSROOT = "intel" ]; then
+            TRANSLATED_PLATFORM=MAC
+        elif [ $SYSROOT = "apple" ]; then
+            TRANSLATED_PLATFORM=MAC
+        elif [ $SYSROOT = "catalyst" ]; then
+            TRANSLATED_PLATFORM=MAC_CATALYST
+        else
+            echo "::error::Invalid platform specified: Needs to be one of:"
+            echo "::error::universal, intel, apple, catalyst"
+            echo "::endgroup::"
+            return
+        fi
+        cmake_debug \
+            -G${GENERATOR:-Xcode} \
+            -C${PRELOAD_FILE} \
             -DCMAKE_INSTALL_PREFIX=$PWD/install \
             -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake \
+            -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=${BASE_DIR}/toolchain/cmake/Toolchains/all-ios.toolchain.cmake \
             -DVCPKG_TARGET_TRIPLET=${TOOLCHAIN_PREFIX} \
+            -DPLATFORM=${TRANSLATED_PLATFORM} \
             ${BASE_DIR} ${@:2}
     fi
     echo "::endgroup::"

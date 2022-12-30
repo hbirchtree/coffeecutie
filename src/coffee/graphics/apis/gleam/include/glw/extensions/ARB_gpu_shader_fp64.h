@@ -39,17 +39,19 @@ using gl::group::weight_pointer_type_arb;
 namespace values {
 } // namespace values
 template<class span_f64>
-requires(semantic::concepts::Span<span_f64>&& std::is_same_v<
-         std::decay_t<typename span_f64::value_type>,
-         std::decay_t<f64>>)
-    /*!
-     * \brief Part of GL_ARB_gpu_shader_fp64
-     * \param program GLuint
-     * \param location GLint
-     * \param params GLdouble *
-     * \return void
-     */
-    STATICINLINE void get_uniformdv(u32 program, i32 location, span_f64 params)
+requires(
+    semantic::concepts::Span<span_f64> &&
+    std::is_same_v<
+        std::decay_t<typename span_f64::value_type>,
+        std::decay_t<f64>>)
+/*!
+ * \brief Part of GL_ARB_gpu_shader_fp64
+ * \param program GLuint
+ * \param location GLint
+ * \param params GLdouble *
+ * \return void
+ */
+STATICINLINE void get_uniformdv(u32 program, i32 location, span_f64 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -85,18 +87,19 @@ STATICINLINE void uniform(i32 location, f64 x)
 }
 
 template<class span_const_f64>
-requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
-         std::decay_t<typename span_const_f64::value_type>,
-         std::decay_t<f64>>)
-    /*!
-     * \brief Part of GL_ARB_gpu_shader_fp64
-     * \param location GLint
-     * \param count GLsizei
-     * \param value const GLdouble *
-     * \return void
-     */
-    STATICINLINE
-    void uniform(i32 location, i32 count, span_const_f64 const& value)
+requires(
+    semantic::concepts::Span<span_const_f64> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_f64::value_type>,
+        std::decay_t<f64>>)
+/*!
+ * \brief Part of GL_ARB_gpu_shader_fp64
+ * \param location GLint
+ * \param count GLsizei
+ * \param value const GLdouble *
+ * \return void
+ */
+STATICINLINE void uniform(i32 location, i32 count, span_const_f64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -110,14 +113,14 @@ requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
 
 template<class vec_2_f64>
 requires(semantic::concepts::Vector<vec_2_f64, f64, 2>)
-    /*!
-     * \brief Part of GL_ARB_gpu_shader_fp64
-     * \param location GLint
-     * \param x GLdouble
-     * \param y GLdouble
-     * \return void
-     */
-    STATICINLINE void uniform(i32 location, vec_2_f64 const& x)
+/*!
+ * \brief Part of GL_ARB_gpu_shader_fp64
+ * \param location GLint
+ * \param x GLdouble
+ * \param y GLdouble
+ * \return void
+ */
+STATICINLINE void uniform(i32 location, vec_2_f64 const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -129,16 +132,18 @@ requires(semantic::concepts::Vector<vec_2_f64, f64, 2>)
 }
 
 template<class span_const_vec_2_f64>
-requires(semantic::concepts::Span<span_const_vec_2_f64>&& semantic::concepts::
-             Vector<typename span_const_vec_2_f64::value_type, f64, 2>)
-    /*!
-     * \brief Part of GL_ARB_gpu_shader_fp64
-     * \param location GLint
-     * \param count GLsizei
-     * \param value const GLdouble *
-     * \return void
-     */
-    STATICINLINE
+requires(
+    semantic::concepts::Span<span_const_vec_2_f64> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_2_f64::value_type, f64, 2>)
+/*!
+ * \brief Part of GL_ARB_gpu_shader_fp64
+ * \param location GLint
+ * \param count GLsizei
+ * \param value const GLdouble *
+ * \return void
+ */
+STATICINLINE
     void uniform(i32 location, i32 count, span_const_vec_2_f64 const& value)
 {
     using namespace std::string_view_literals;
@@ -153,15 +158,15 @@ requires(semantic::concepts::Span<span_const_vec_2_f64>&& semantic::concepts::
 
 template<class vec_3_f64>
 requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
-    /*!
-     * \brief Part of GL_ARB_gpu_shader_fp64
-     * \param location GLint
-     * \param x GLdouble
-     * \param y GLdouble
-     * \param z GLdouble
-     * \return void
-     */
-    STATICINLINE void uniform(i32 location, vec_3_f64 const& x)
+/*!
+ * \brief Part of GL_ARB_gpu_shader_fp64
+ * \param location GLint
+ * \param x GLdouble
+ * \param y GLdouble
+ * \param z GLdouble
+ * \return void
+ */
+STATICINLINE void uniform(i32 location, vec_3_f64 const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -173,16 +178,18 @@ requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
 }
 
 template<class span_const_vec_3_f64>
-requires(semantic::concepts::Span<span_const_vec_3_f64>&& semantic::concepts::
-             Vector<typename span_const_vec_3_f64::value_type, f64, 3>)
-    /*!
-     * \brief Part of GL_ARB_gpu_shader_fp64
-     * \param location GLint
-     * \param count GLsizei
-     * \param value const GLdouble *
-     * \return void
-     */
-    STATICINLINE
+requires(
+    semantic::concepts::Span<span_const_vec_3_f64> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_3_f64::value_type, f64, 3>)
+/*!
+ * \brief Part of GL_ARB_gpu_shader_fp64
+ * \param location GLint
+ * \param count GLsizei
+ * \param value const GLdouble *
+ * \return void
+ */
+STATICINLINE
     void uniform(i32 location, i32 count, span_const_vec_3_f64 const& value)
 {
     using namespace std::string_view_literals;
@@ -197,16 +204,16 @@ requires(semantic::concepts::Span<span_const_vec_3_f64>&& semantic::concepts::
 
 template<class vec_4_f64>
 requires(semantic::concepts::Vector<vec_4_f64, f64, 4>)
-    /*!
-     * \brief Part of GL_ARB_gpu_shader_fp64
-     * \param location GLint
-     * \param x GLdouble
-     * \param y GLdouble
-     * \param z GLdouble
-     * \param w GLdouble
-     * \return void
-     */
-    STATICINLINE void uniform(i32 location, vec_4_f64 const& x)
+/*!
+ * \brief Part of GL_ARB_gpu_shader_fp64
+ * \param location GLint
+ * \param x GLdouble
+ * \param y GLdouble
+ * \param z GLdouble
+ * \param w GLdouble
+ * \return void
+ */
+STATICINLINE void uniform(i32 location, vec_4_f64 const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -218,16 +225,18 @@ requires(semantic::concepts::Vector<vec_4_f64, f64, 4>)
 }
 
 template<class span_const_vec_4_f64>
-requires(semantic::concepts::Span<span_const_vec_4_f64>&& semantic::concepts::
-             Vector<typename span_const_vec_4_f64::value_type, f64, 4>)
-    /*!
-     * \brief Part of GL_ARB_gpu_shader_fp64
-     * \param location GLint
-     * \param count GLsizei
-     * \param value const GLdouble *
-     * \return void
-     */
-    STATICINLINE
+requires(
+    semantic::concepts::Span<span_const_vec_4_f64> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_4_f64::value_type, f64, 4>)
+/*!
+ * \brief Part of GL_ARB_gpu_shader_fp64
+ * \param location GLint
+ * \param count GLsizei
+ * \param value const GLdouble *
+ * \return void
+ */
+STATICINLINE
     void uniform(i32 location, i32 count, span_const_vec_4_f64 const& value)
 {
     using namespace std::string_view_literals;
@@ -241,21 +250,23 @@ requires(semantic::concepts::Span<span_const_vec_4_f64>&& semantic::concepts::
 }
 
 template<class span_const_mat_2x2_f64>
-requires(semantic::concepts::Span<span_const_mat_2x2_f64>&& semantic::concepts::
-             Matrix<typename span_const_mat_2x2_f64::value_type, f64, 2, 2>)
-    /*!
-     * \brief Part of GL_ARB_gpu_shader_fp64
-     * \param location GLint
-     * \param count GLsizei
-     * \param transpose GLboolean
-     * \param value const GLdouble *
-     * \return void
-     */
-    STATICINLINE void uniform(
-        i32                           location,
-        i32                           count,
-        bool                          transpose,
-        span_const_mat_2x2_f64 const& value)
+requires(
+    semantic::concepts::Span<span_const_mat_2x2_f64> &&
+    semantic::concepts::
+        Matrix<typename span_const_mat_2x2_f64::value_type, f64, 2, 2>)
+/*!
+ * \brief Part of GL_ARB_gpu_shader_fp64
+ * \param location GLint
+ * \param count GLsizei
+ * \param transpose GLboolean
+ * \param value const GLdouble *
+ * \return void
+ */
+STATICINLINE void uniform(
+    i32                           location,
+    i32                           count,
+    bool                          transpose,
+    span_const_mat_2x2_f64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -271,21 +282,23 @@ requires(semantic::concepts::Span<span_const_mat_2x2_f64>&& semantic::concepts::
 }
 
 template<class span_const_mat_2x3_f64>
-requires(semantic::concepts::Span<span_const_mat_2x3_f64>&& semantic::concepts::
-             Matrix<typename span_const_mat_2x3_f64::value_type, f64, 2, 3>)
-    /*!
-     * \brief Part of GL_ARB_gpu_shader_fp64
-     * \param location GLint
-     * \param count GLsizei
-     * \param transpose GLboolean
-     * \param value const GLdouble *
-     * \return void
-     */
-    STATICINLINE void uniform(
-        i32                           location,
-        i32                           count,
-        bool                          transpose,
-        span_const_mat_2x3_f64 const& value)
+requires(
+    semantic::concepts::Span<span_const_mat_2x3_f64> &&
+    semantic::concepts::
+        Matrix<typename span_const_mat_2x3_f64::value_type, f64, 2, 3>)
+/*!
+ * \brief Part of GL_ARB_gpu_shader_fp64
+ * \param location GLint
+ * \param count GLsizei
+ * \param transpose GLboolean
+ * \param value const GLdouble *
+ * \return void
+ */
+STATICINLINE void uniform(
+    i32                           location,
+    i32                           count,
+    bool                          transpose,
+    span_const_mat_2x3_f64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -301,21 +314,23 @@ requires(semantic::concepts::Span<span_const_mat_2x3_f64>&& semantic::concepts::
 }
 
 template<class span_const_mat_2x4_f64>
-requires(semantic::concepts::Span<span_const_mat_2x4_f64>&& semantic::concepts::
-             Matrix<typename span_const_mat_2x4_f64::value_type, f64, 2, 4>)
-    /*!
-     * \brief Part of GL_ARB_gpu_shader_fp64
-     * \param location GLint
-     * \param count GLsizei
-     * \param transpose GLboolean
-     * \param value const GLdouble *
-     * \return void
-     */
-    STATICINLINE void uniform(
-        i32                           location,
-        i32                           count,
-        bool                          transpose,
-        span_const_mat_2x4_f64 const& value)
+requires(
+    semantic::concepts::Span<span_const_mat_2x4_f64> &&
+    semantic::concepts::
+        Matrix<typename span_const_mat_2x4_f64::value_type, f64, 2, 4>)
+/*!
+ * \brief Part of GL_ARB_gpu_shader_fp64
+ * \param location GLint
+ * \param count GLsizei
+ * \param transpose GLboolean
+ * \param value const GLdouble *
+ * \return void
+ */
+STATICINLINE void uniform(
+    i32                           location,
+    i32                           count,
+    bool                          transpose,
+    span_const_mat_2x4_f64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -331,21 +346,23 @@ requires(semantic::concepts::Span<span_const_mat_2x4_f64>&& semantic::concepts::
 }
 
 template<class span_const_mat_3x3_f64>
-requires(semantic::concepts::Span<span_const_mat_3x3_f64>&& semantic::concepts::
-             Matrix<typename span_const_mat_3x3_f64::value_type, f64, 3, 3>)
-    /*!
-     * \brief Part of GL_ARB_gpu_shader_fp64
-     * \param location GLint
-     * \param count GLsizei
-     * \param transpose GLboolean
-     * \param value const GLdouble *
-     * \return void
-     */
-    STATICINLINE void uniform(
-        i32                           location,
-        i32                           count,
-        bool                          transpose,
-        span_const_mat_3x3_f64 const& value)
+requires(
+    semantic::concepts::Span<span_const_mat_3x3_f64> &&
+    semantic::concepts::
+        Matrix<typename span_const_mat_3x3_f64::value_type, f64, 3, 3>)
+/*!
+ * \brief Part of GL_ARB_gpu_shader_fp64
+ * \param location GLint
+ * \param count GLsizei
+ * \param transpose GLboolean
+ * \param value const GLdouble *
+ * \return void
+ */
+STATICINLINE void uniform(
+    i32                           location,
+    i32                           count,
+    bool                          transpose,
+    span_const_mat_3x3_f64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -361,21 +378,23 @@ requires(semantic::concepts::Span<span_const_mat_3x3_f64>&& semantic::concepts::
 }
 
 template<class span_const_mat_3x2_f64>
-requires(semantic::concepts::Span<span_const_mat_3x2_f64>&& semantic::concepts::
-             Matrix<typename span_const_mat_3x2_f64::value_type, f64, 3, 2>)
-    /*!
-     * \brief Part of GL_ARB_gpu_shader_fp64
-     * \param location GLint
-     * \param count GLsizei
-     * \param transpose GLboolean
-     * \param value const GLdouble *
-     * \return void
-     */
-    STATICINLINE void uniform(
-        i32                           location,
-        i32                           count,
-        bool                          transpose,
-        span_const_mat_3x2_f64 const& value)
+requires(
+    semantic::concepts::Span<span_const_mat_3x2_f64> &&
+    semantic::concepts::
+        Matrix<typename span_const_mat_3x2_f64::value_type, f64, 3, 2>)
+/*!
+ * \brief Part of GL_ARB_gpu_shader_fp64
+ * \param location GLint
+ * \param count GLsizei
+ * \param transpose GLboolean
+ * \param value const GLdouble *
+ * \return void
+ */
+STATICINLINE void uniform(
+    i32                           location,
+    i32                           count,
+    bool                          transpose,
+    span_const_mat_3x2_f64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -391,21 +410,23 @@ requires(semantic::concepts::Span<span_const_mat_3x2_f64>&& semantic::concepts::
 }
 
 template<class span_const_mat_3x4_f64>
-requires(semantic::concepts::Span<span_const_mat_3x4_f64>&& semantic::concepts::
-             Matrix<typename span_const_mat_3x4_f64::value_type, f64, 3, 4>)
-    /*!
-     * \brief Part of GL_ARB_gpu_shader_fp64
-     * \param location GLint
-     * \param count GLsizei
-     * \param transpose GLboolean
-     * \param value const GLdouble *
-     * \return void
-     */
-    STATICINLINE void uniform(
-        i32                           location,
-        i32                           count,
-        bool                          transpose,
-        span_const_mat_3x4_f64 const& value)
+requires(
+    semantic::concepts::Span<span_const_mat_3x4_f64> &&
+    semantic::concepts::
+        Matrix<typename span_const_mat_3x4_f64::value_type, f64, 3, 4>)
+/*!
+ * \brief Part of GL_ARB_gpu_shader_fp64
+ * \param location GLint
+ * \param count GLsizei
+ * \param transpose GLboolean
+ * \param value const GLdouble *
+ * \return void
+ */
+STATICINLINE void uniform(
+    i32                           location,
+    i32                           count,
+    bool                          transpose,
+    span_const_mat_3x4_f64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -421,21 +442,23 @@ requires(semantic::concepts::Span<span_const_mat_3x4_f64>&& semantic::concepts::
 }
 
 template<class span_const_mat_4x4_f64>
-requires(semantic::concepts::Span<span_const_mat_4x4_f64>&& semantic::concepts::
-             Matrix<typename span_const_mat_4x4_f64::value_type, f64, 4, 4>)
-    /*!
-     * \brief Part of GL_ARB_gpu_shader_fp64
-     * \param location GLint
-     * \param count GLsizei
-     * \param transpose GLboolean
-     * \param value const GLdouble *
-     * \return void
-     */
-    STATICINLINE void uniform(
-        i32                           location,
-        i32                           count,
-        bool                          transpose,
-        span_const_mat_4x4_f64 const& value)
+requires(
+    semantic::concepts::Span<span_const_mat_4x4_f64> &&
+    semantic::concepts::
+        Matrix<typename span_const_mat_4x4_f64::value_type, f64, 4, 4>)
+/*!
+ * \brief Part of GL_ARB_gpu_shader_fp64
+ * \param location GLint
+ * \param count GLsizei
+ * \param transpose GLboolean
+ * \param value const GLdouble *
+ * \return void
+ */
+STATICINLINE void uniform(
+    i32                           location,
+    i32                           count,
+    bool                          transpose,
+    span_const_mat_4x4_f64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -451,21 +474,23 @@ requires(semantic::concepts::Span<span_const_mat_4x4_f64>&& semantic::concepts::
 }
 
 template<class span_const_mat_4x2_f64>
-requires(semantic::concepts::Span<span_const_mat_4x2_f64>&& semantic::concepts::
-             Matrix<typename span_const_mat_4x2_f64::value_type, f64, 4, 2>)
-    /*!
-     * \brief Part of GL_ARB_gpu_shader_fp64
-     * \param location GLint
-     * \param count GLsizei
-     * \param transpose GLboolean
-     * \param value const GLdouble *
-     * \return void
-     */
-    STATICINLINE void uniform(
-        i32                           location,
-        i32                           count,
-        bool                          transpose,
-        span_const_mat_4x2_f64 const& value)
+requires(
+    semantic::concepts::Span<span_const_mat_4x2_f64> &&
+    semantic::concepts::
+        Matrix<typename span_const_mat_4x2_f64::value_type, f64, 4, 2>)
+/*!
+ * \brief Part of GL_ARB_gpu_shader_fp64
+ * \param location GLint
+ * \param count GLsizei
+ * \param transpose GLboolean
+ * \param value const GLdouble *
+ * \return void
+ */
+STATICINLINE void uniform(
+    i32                           location,
+    i32                           count,
+    bool                          transpose,
+    span_const_mat_4x2_f64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -481,21 +506,23 @@ requires(semantic::concepts::Span<span_const_mat_4x2_f64>&& semantic::concepts::
 }
 
 template<class span_const_mat_4x3_f64>
-requires(semantic::concepts::Span<span_const_mat_4x3_f64>&& semantic::concepts::
-             Matrix<typename span_const_mat_4x3_f64::value_type, f64, 4, 3>)
-    /*!
-     * \brief Part of GL_ARB_gpu_shader_fp64
-     * \param location GLint
-     * \param count GLsizei
-     * \param transpose GLboolean
-     * \param value const GLdouble *
-     * \return void
-     */
-    STATICINLINE void uniform(
-        i32                           location,
-        i32                           count,
-        bool                          transpose,
-        span_const_mat_4x3_f64 const& value)
+requires(
+    semantic::concepts::Span<span_const_mat_4x3_f64> &&
+    semantic::concepts::
+        Matrix<typename span_const_mat_4x3_f64::value_type, f64, 4, 3>)
+/*!
+ * \brief Part of GL_ARB_gpu_shader_fp64
+ * \param location GLint
+ * \param count GLsizei
+ * \param transpose GLboolean
+ * \param value const GLdouble *
+ * \return void
+ */
+STATICINLINE void uniform(
+    i32                           location,
+    i32                           count,
+    bool                          transpose,
+    span_const_mat_4x3_f64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

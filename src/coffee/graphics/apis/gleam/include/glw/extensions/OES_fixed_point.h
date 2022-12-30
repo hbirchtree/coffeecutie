@@ -24,15 +24,15 @@ STATICINLINE void alpha_funcx(group::alpha_function func, GLfixed ref)
 
 template<class vec_4_GLfixed>
 requires(semantic::concepts::Vector<vec_4_GLfixed, GLfixed, 4>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param red GLfixed
-     * \param green GLfixed
-     * \param blue GLfixed
-     * \param alpha GLfixed
-     * \return void
-     */
-    STATICINLINE void clear_colorx(vec_4_GLfixed const& red)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param red GLfixed
+ * \param green GLfixed
+ * \param blue GLfixed
+ * \param alpha GLfixed
+ * \return void
+ */
+STATICINLINE void clear_colorx(vec_4_GLfixed const& red)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -60,17 +60,19 @@ STATICINLINE void clear_depthx(GLfixed depth)
 }
 
 template<class span_const_GLfixed>
-requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_const_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param plane GLenum
-     * \param equation const GLfixed *
-     * \return void
-     */
-    STATICINLINE void clip_planex(
-        group::clip_plane_name plane, span_const_GLfixed const& equation)
+requires(
+    semantic::concepts::Span<span_const_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param plane GLenum
+ * \param equation const GLfixed *
+ * \return void
+ */
+STATICINLINE void clip_planex(
+    group::clip_plane_name plane, span_const_GLfixed const& equation)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -86,15 +88,15 @@ requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
 
 template<class vec_4_GLfixed>
 requires(semantic::concepts::Vector<vec_4_GLfixed, GLfixed, 4>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param red GLfixed
-     * \param green GLfixed
-     * \param blue GLfixed
-     * \param alpha GLfixed
-     * \return void
-     */
-    STATICINLINE void color4x(vec_4_GLfixed const& red)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param red GLfixed
+ * \param green GLfixed
+ * \param blue GLfixed
+ * \param alpha GLfixed
+ * \return void
+ */
+STATICINLINE void color4x(vec_4_GLfixed const& red)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -140,17 +142,18 @@ STATICINLINE void fogx(group::fog_prop pname, GLfixed param)
 }
 
 template<class span_const_GLfixed>
-requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_const_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param pname GLenum
-     * \param param const GLfixed *
-     * \return void
-     */
-    STATICINLINE
-    void fogxv(group::fog_prop pname, span_const_GLfixed const& param)
+requires(
+    semantic::concepts::Span<span_const_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param pname GLenum
+ * \param param const GLfixed *
+ * \return void
+ */
+STATICINLINE void fogxv(group::fog_prop pname, span_const_GLfixed const& param)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -187,16 +190,18 @@ STATICINLINE void frustumx(
 }
 
 template<class span_GLfixed>
-requires(semantic::concepts::Span<span_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param plane GLenum
-     * \param equation GLfixed *
-     * \return void
-     */
-    STATICINLINE
+requires(
+    semantic::concepts::Span<span_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param plane GLenum
+ * \param equation GLfixed *
+ * \return void
+ */
+STATICINLINE
     void get_clip_planex(group::clip_plane_name plane, span_GLfixed equation)
 {
     using namespace std::string_view_literals;
@@ -212,16 +217,18 @@ requires(semantic::concepts::Span<span_GLfixed>&& std::is_same_v<
 }
 
 template<class span_GLfixed>
-requires(semantic::concepts::Span<span_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param pname GLenum
-     * \param params GLfixed *
-     * \return void
-     */
-    STATICINLINE void get_fixedv(group::get_prop pname, span_GLfixed params)
+requires(
+    semantic::concepts::Span<span_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param pname GLenum
+ * \param params GLfixed *
+ * \return void
+ */
+STATICINLINE void get_fixedv(group::get_prop pname, span_GLfixed params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -235,20 +242,22 @@ requires(semantic::concepts::Span<span_GLfixed>&& std::is_same_v<
 }
 
 template<class span_GLfixed>
-requires(semantic::concepts::Span<span_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param target GLenum
-     * \param pname GLenum
-     * \param params GLfixed *
-     * \return void
-     */
-    STATICINLINE void get_tex_envxv(
-        group::texture_env_target    target,
-        group::texture_env_parameter pname,
-        span_GLfixed                 params)
+requires(
+    semantic::concepts::Span<span_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param target GLenum
+ * \param pname GLenum
+ * \param params GLfixed *
+ * \return void
+ */
+STATICINLINE void get_tex_envxv(
+    group::texture_env_target    target,
+    group::texture_env_parameter pname,
+    span_GLfixed                 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -263,20 +272,22 @@ requires(semantic::concepts::Span<span_GLfixed>&& std::is_same_v<
 }
 
 template<class span_GLfixed>
-requires(semantic::concepts::Span<span_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param target GLenum
-     * \param pname GLenum
-     * \param params GLfixed *
-     * \return void
-     */
-    STATICINLINE void get_tex_parameterxv(
-        group::texture_target        target,
-        group::get_texture_parameter pname,
-        span_GLfixed                 params)
+requires(
+    semantic::concepts::Span<span_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param target GLenum
+ * \param pname GLenum
+ * \param params GLfixed *
+ * \return void
+ */
+STATICINLINE void get_tex_parameterxv(
+    group::texture_target        target,
+    group::get_texture_parameter pname,
+    span_GLfixed                 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -309,17 +320,19 @@ STATICINLINE void light_modelx(
 }
 
 template<class span_const_GLfixed>
-requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_const_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param pname GLenum
-     * \param param const GLfixed *
-     * \return void
-     */
-    STATICINLINE void light_modelxv(
-        group::light_model_parameter pname, span_const_GLfixed const& param)
+requires(
+    semantic::concepts::Span<span_const_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param pname GLenum
+ * \param param const GLfixed *
+ * \return void
+ */
+STATICINLINE void light_modelxv(
+    group::light_model_parameter pname, span_const_GLfixed const& param)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -353,20 +366,22 @@ STATICINLINE void lightx(
 }
 
 template<class span_const_GLfixed>
-requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_const_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param light GLenum
-     * \param pname GLenum
-     * \param params const GLfixed *
-     * \return void
-     */
-    STATICINLINE void lightxv(
-        group::light_name         light,
-        group::light_parameter    pname,
-        span_const_GLfixed const& params)
+requires(
+    semantic::concepts::Span<span_const_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param light GLenum
+ * \param pname GLenum
+ * \param params const GLfixed *
+ * \return void
+ */
+STATICINLINE void lightxv(
+    group::light_name         light,
+    group::light_parameter    pname,
+    span_const_GLfixed const& params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -398,15 +413,17 @@ STATICINLINE void line_widthx(GLfixed width)
 }
 
 template<class span_const_GLfixed>
-requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_const_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param m const GLfixed *
-     * \return void
-     */
-    STATICINLINE void load_matrixx(span_const_GLfixed const& m)
+requires(
+    semantic::concepts::Span<span_const_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param m const GLfixed *
+ * \return void
+ */
+STATICINLINE void load_matrixx(span_const_GLfixed const& m)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -439,20 +456,22 @@ STATICINLINE void materialx(
 }
 
 template<class span_const_GLfixed>
-requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_const_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param face GLenum
-     * \param pname GLenum
-     * \param param const GLfixed *
-     * \return void
-     */
-    STATICINLINE void materialxv(
-        group::triangle_face      face,
-        group::material_parameter pname,
-        span_const_GLfixed const& param)
+requires(
+    semantic::concepts::Span<span_const_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param face GLenum
+ * \param pname GLenum
+ * \param param const GLfixed *
+ * \return void
+ */
+STATICINLINE void materialxv(
+    group::triangle_face      face,
+    group::material_parameter pname,
+    span_const_GLfixed const& param)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -468,15 +487,17 @@ requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
 }
 
 template<class span_const_GLfixed>
-requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_const_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param m const GLfixed *
-     * \return void
-     */
-    STATICINLINE void mult_matrixx(span_const_GLfixed const& m)
+requires(
+    semantic::concepts::Span<span_const_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param m const GLfixed *
+ * \return void
+ */
+STATICINLINE void mult_matrixx(span_const_GLfixed const& m)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -550,17 +571,19 @@ STATICINLINE void orthox(
 }
 
 template<class span_const_GLfixed>
-requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_const_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param pname GLenum
-     * \param params const GLfixed *
-     * \return void
-     */
-    STATICINLINE void point_parameterxv(
-        group::point_parameter_name_arb pname, span_const_GLfixed const& params)
+requires(
+    semantic::concepts::Span<span_const_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param pname GLenum
+ * \param params const GLfixed *
+ * \return void
+ */
+STATICINLINE void point_parameterxv(
+    group::point_parameter_name_arb pname, span_const_GLfixed const& params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -609,15 +632,15 @@ STATICINLINE void polygon_offsetx(GLfixed factor, GLfixed units)
 
 template<class vec_3_GLfixed>
 requires(semantic::concepts::Vector<vec_3_GLfixed, GLfixed, 3>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param angle GLfixed
-     * \param x GLfixed
-     * \param y GLfixed
-     * \param z GLfixed
-     * \return void
-     */
-    STATICINLINE void rotatex(GLfixed angle, vec_3_GLfixed const& x)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param angle GLfixed
+ * \param x GLfixed
+ * \param y GLfixed
+ * \param z GLfixed
+ * \return void
+ */
+STATICINLINE void rotatex(GLfixed angle, vec_3_GLfixed const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -630,14 +653,14 @@ requires(semantic::concepts::Vector<vec_3_GLfixed, GLfixed, 3>)
 
 template<class vec_3_GLfixed>
 requires(semantic::concepts::Vector<vec_3_GLfixed, GLfixed, 3>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param x GLfixed
-     * \param y GLfixed
-     * \param z GLfixed
-     * \return void
-     */
-    STATICINLINE void scalex(vec_3_GLfixed const& x)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param x GLfixed
+ * \param y GLfixed
+ * \param z GLfixed
+ * \return void
+ */
+STATICINLINE void scalex(vec_3_GLfixed const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -671,20 +694,22 @@ STATICINLINE void tex_envx(
 }
 
 template<class span_const_GLfixed>
-requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_const_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param target GLenum
-     * \param pname GLenum
-     * \param params const GLfixed *
-     * \return void
-     */
-    STATICINLINE void tex_envxv(
-        group::texture_env_target    target,
-        group::texture_env_parameter pname,
-        span_const_GLfixed const&    params)
+requires(
+    semantic::concepts::Span<span_const_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param target GLenum
+ * \param pname GLenum
+ * \param params const GLfixed *
+ * \return void
+ */
+STATICINLINE void tex_envxv(
+    group::texture_env_target    target,
+    group::texture_env_parameter pname,
+    span_const_GLfixed const&    params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -722,20 +747,22 @@ STATICINLINE void tex_parameterx(
 }
 
 template<class span_const_GLfixed>
-requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_const_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param target GLenum
-     * \param pname GLenum
-     * \param params const GLfixed *
-     * \return void
-     */
-    STATICINLINE void tex_parameterxv(
-        group::texture_target        target,
-        group::get_texture_parameter pname,
-        span_const_GLfixed const&    params)
+requires(
+    semantic::concepts::Span<span_const_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param target GLenum
+ * \param pname GLenum
+ * \param params const GLfixed *
+ * \return void
+ */
+STATICINLINE void tex_parameterxv(
+    group::texture_target        target,
+    group::get_texture_parameter pname,
+    span_const_GLfixed const&    params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -752,14 +779,14 @@ requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
 
 template<class vec_3_GLfixed>
 requires(semantic::concepts::Vector<vec_3_GLfixed, GLfixed, 3>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param x GLfixed
-     * \param y GLfixed
-     * \param z GLfixed
-     * \return void
-     */
-    STATICINLINE void translatex(vec_3_GLfixed const& x)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param x GLfixed
+ * \param y GLfixed
+ * \param z GLfixed
+ * \return void
+ */
+STATICINLINE void translatex(vec_3_GLfixed const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -772,20 +799,20 @@ requires(semantic::concepts::Vector<vec_3_GLfixed, GLfixed, 3>)
 
 #if defined(GL_VERSION_1_0)
 template<class span_GLfixed>
-requires(semantic::concepts::Span<span_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param light GLenum
-     * \param pname GLenum
-     * \param params GLfixed *
-     * \return void
-     */
-    STATICINLINE void get_lightxv(
-        group::light_name      light,
-        group::light_parameter pname,
-        span_GLfixed           params)
+requires(
+    semantic::concepts::Span<span_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param light GLenum
+ * \param pname GLenum
+ * \param params GLfixed *
+ * \return void
+ */
+STATICINLINE void get_lightxv(
+    group::light_name light, group::light_parameter pname, span_GLfixed params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -802,20 +829,22 @@ requires(semantic::concepts::Span<span_GLfixed>&& std::is_same_v<
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_GLfixed>
-requires(semantic::concepts::Span<span_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param face GLenum
-     * \param pname GLenum
-     * \param params GLfixed *
-     * \return void
-     */
-    STATICINLINE void get_materialxv(
-        group::triangle_face      face,
-        group::material_parameter pname,
-        span_GLfixed              params)
+requires(
+    semantic::concepts::Span<span_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param face GLenum
+ * \param pname GLenum
+ * \param params GLfixed *
+ * \return void
+ */
+STATICINLINE void get_materialxv(
+    group::triangle_face      face,
+    group::material_parameter pname,
+    span_GLfixed              params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -890,28 +919,30 @@ STATICINLINE void accumx(GLenum op, GLfixed value)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class size_2_i32, class span_const_u8>
-requires(semantic::concepts::Size2D<size_2_i32, i32>&&
-             semantic::concepts::Span<span_const_u8>&& std::is_same_v<
-                 std::decay_t<typename span_const_u8::value_type>,
-                 std::decay_t<u8>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param width GLsizei
-     * \param height GLsizei
-     * \param xorig GLfixed
-     * \param yorig GLfixed
-     * \param xmove GLfixed
-     * \param ymove GLfixed
-     * \param bitmap const GLubyte *
-     * \return void
-     */
-    STATICINLINE void bitmapx(
-        size_2_i32 const&    width,
-        GLfixed              xorig,
-        GLfixed              yorig,
-        GLfixed              xmove,
-        GLfixed              ymove,
-        span_const_u8 const& bitmap)
+requires(
+    semantic::concepts::Size2D<size_2_i32, i32> &&
+    semantic::concepts::Span<span_const_u8> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_u8::value_type>,
+        std::decay_t<u8>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param width GLsizei
+ * \param height GLsizei
+ * \param xorig GLfixed
+ * \param yorig GLfixed
+ * \param xmove GLfixed
+ * \param ymove GLfixed
+ * \param bitmap const GLubyte *
+ * \return void
+ */
+STATICINLINE void bitmapx(
+    size_2_i32 const&    width,
+    GLfixed              xorig,
+    GLfixed              yorig,
+    GLfixed              xmove,
+    GLfixed              ymove,
+    span_const_u8 const& bitmap)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -934,15 +965,15 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>&&
 #if defined(GL_VERSION_1_0)
 template<class vec_4_GLfixed>
 requires(semantic::concepts::Vector<vec_4_GLfixed, GLfixed, 4>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param red GLfixed
-     * \param green GLfixed
-     * \param blue GLfixed
-     * \param alpha GLfixed
-     * \return void
-     */
-    STATICINLINE void blend_colorx(vec_4_GLfixed const& red)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param red GLfixed
+ * \param green GLfixed
+ * \param blue GLfixed
+ * \param alpha GLfixed
+ * \return void
+ */
+STATICINLINE void blend_colorx(vec_4_GLfixed const& red)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -957,15 +988,15 @@ requires(semantic::concepts::Vector<vec_4_GLfixed, GLfixed, 4>)
 #if defined(GL_VERSION_1_0)
 template<class vec_4_GLfixed>
 requires(semantic::concepts::Vector<vec_4_GLfixed, GLfixed, 4>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param red GLfixed
-     * \param green GLfixed
-     * \param blue GLfixed
-     * \param alpha GLfixed
-     * \return void
-     */
-    STATICINLINE void clear_accumx(vec_4_GLfixed const& red)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param red GLfixed
+ * \param green GLfixed
+ * \param blue GLfixed
+ * \param alpha GLfixed
+ * \return void
+ */
+STATICINLINE void clear_accumx(vec_4_GLfixed const& red)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -980,14 +1011,14 @@ requires(semantic::concepts::Vector<vec_4_GLfixed, GLfixed, 4>)
 #if defined(GL_VERSION_1_0)
 template<class vec_3_GLfixed>
 requires(semantic::concepts::Vector<vec_3_GLfixed, GLfixed, 3>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param red GLfixed
-     * \param green GLfixed
-     * \param blue GLfixed
-     * \return void
-     */
-    STATICINLINE void color3x(vec_3_GLfixed const& red)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param red GLfixed
+ * \param green GLfixed
+ * \param blue GLfixed
+ * \return void
+ */
+STATICINLINE void color3x(vec_3_GLfixed const& red)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1001,15 +1032,17 @@ requires(semantic::concepts::Vector<vec_3_GLfixed, GLfixed, 3>)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_GLfixed>
-requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_const_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param components const GLfixed *
-     * \return void
-     */
-    STATICINLINE void color3xv(span_const_GLfixed const& components)
+requires(
+    semantic::concepts::Span<span_const_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param components const GLfixed *
+ * \return void
+ */
+STATICINLINE void color3xv(span_const_GLfixed const& components)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1025,15 +1058,17 @@ requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_GLfixed>
-requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_const_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param components const GLfixed *
-     * \return void
-     */
-    STATICINLINE void color4xv(span_const_GLfixed const& components)
+requires(
+    semantic::concepts::Span<span_const_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param components const GLfixed *
+ * \return void
+ */
+STATICINLINE void color4xv(span_const_GLfixed const& components)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1073,20 +1108,22 @@ STATICINLINE void convolution_parameterx(
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_GLfixed>
-requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_const_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param target GLenum
-     * \param pname GLenum
-     * \param params const GLfixed *
-     * \return void
-     */
-    STATICINLINE void convolution_parameterxv(
-        group::convolution_target_ext target,
-        group::convolution_parameter  pname,
-        span_const_GLfixed const&     params)
+requires(
+    semantic::concepts::Span<span_const_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param target GLenum
+ * \param pname GLenum
+ * \param params const GLfixed *
+ * \return void
+ */
+STATICINLINE void convolution_parameterxv(
+    group::convolution_target_ext target,
+    group::convolution_parameter  pname,
+    span_const_GLfixed const&     params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1122,15 +1159,17 @@ STATICINLINE void eval_coord1x(GLfixed u)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_GLfixed>
-requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_const_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param coords const GLfixed *
-     * \return void
-     */
-    STATICINLINE void eval_coord1xv(span_const_GLfixed const& coords)
+requires(
+    semantic::concepts::Span<span_const_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param coords const GLfixed *
+ * \return void
+ */
+STATICINLINE void eval_coord1xv(span_const_GLfixed const& coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1165,15 +1204,17 @@ STATICINLINE void eval_coord2x(GLfixed u, GLfixed v)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_GLfixed>
-requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_const_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param coords const GLfixed *
-     * \return void
-     */
-    STATICINLINE void eval_coord2xv(span_const_GLfixed const& coords)
+requires(
+    semantic::concepts::Span<span_const_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param coords const GLfixed *
+ * \return void
+ */
+STATICINLINE void eval_coord2xv(span_const_GLfixed const& coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1189,17 +1230,19 @@ requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_GLfixed>
-requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_const_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param n GLsizei
-     * \param type GLenum
-     * \param buffer const GLfixed *
-     * \return void
-     */
-    STATICINLINE
+requires(
+    semantic::concepts::Span<span_const_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param n GLsizei
+ * \param type GLenum
+ * \param buffer const GLfixed *
+ * \return void
+ */
+STATICINLINE
     void feedback_bufferx(GLenum type, span_const_GLfixed const& buffer)
 {
     using namespace std::string_view_literals;
@@ -1218,18 +1261,20 @@ requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_GLfixed>
-requires(semantic::concepts::Span<span_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param target GLenum
-     * \param pname GLenum
-     * \param params GLfixed *
-     * \return void
-     */
-    STATICINLINE void get_convolution_parameterxv(
-        GLenum target, GLenum pname, span_GLfixed params)
+requires(
+    semantic::concepts::Span<span_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param target GLenum
+ * \param pname GLenum
+ * \param params GLfixed *
+ * \return void
+ */
+STATICINLINE void get_convolution_parameterxv(
+    GLenum target, GLenum pname, span_GLfixed params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1246,20 +1291,22 @@ requires(semantic::concepts::Span<span_GLfixed>&& std::is_same_v<
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_GLfixed>
-requires(semantic::concepts::Span<span_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param target GLenum
-     * \param pname GLenum
-     * \param params GLfixed *
-     * \return void
-     */
-    STATICINLINE void get_histogram_parameterxv(
-        group::histogram_target_ext             target,
-        group::get_histogram_parameter_prop_ext pname,
-        span_GLfixed                            params)
+requires(
+    semantic::concepts::Span<span_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param target GLenum
+ * \param pname GLenum
+ * \param params GLfixed *
+ * \return void
+ */
+STATICINLINE void get_histogram_parameterxv(
+    group::histogram_target_ext             target,
+    group::get_histogram_parameter_prop_ext pname,
+    span_GLfixed                            params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1276,20 +1323,20 @@ requires(semantic::concepts::Span<span_GLfixed>&& std::is_same_v<
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_GLfixed>
-requires(semantic::concepts::Span<span_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param light GLenum
-     * \param pname GLenum
-     * \param params GLfixed *
-     * \return void
-     */
-    STATICINLINE void get_lightx(
-        group::light_name      light,
-        group::light_parameter pname,
-        span_GLfixed           params)
+requires(
+    semantic::concepts::Span<span_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param light GLenum
+ * \param pname GLenum
+ * \param params GLfixed *
+ * \return void
+ */
+STATICINLINE void get_lightx(
+    group::light_name light, group::light_parameter pname, span_GLfixed params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1306,18 +1353,20 @@ requires(semantic::concepts::Span<span_GLfixed>&& std::is_same_v<
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_GLfixed>
-requires(semantic::concepts::Span<span_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param target GLenum
-     * \param query GLenum
-     * \param v GLfixed *
-     * \return void
-     */
-    STATICINLINE void get_mapxv(
-        group::map_target target, group::get_map_query query, span_GLfixed v)
+requires(
+    semantic::concepts::Span<span_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param target GLenum
+ * \param query GLenum
+ * \param v GLfixed *
+ * \return void
+ */
+STATICINLINE void get_mapxv(
+    group::map_target target, group::get_map_query query, span_GLfixed v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1356,17 +1405,19 @@ STATICINLINE void get_materialx(
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_GLfixed>
-requires(semantic::concepts::Span<span_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param map GLenum
-     * \param size GLint
-     * \param values GLfixed *
-     * \return void
-     */
-    STATICINLINE void get_pixel_mapxv(group::pixel_map map, span_GLfixed values)
+requires(
+    semantic::concepts::Span<span_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param map GLenum
+ * \param size GLint
+ * \param values GLfixed *
+ * \return void
+ */
+STATICINLINE void get_pixel_mapxv(group::pixel_map map, span_GLfixed values)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1383,20 +1434,22 @@ requires(semantic::concepts::Span<span_GLfixed>&& std::is_same_v<
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_GLfixed>
-requires(semantic::concepts::Span<span_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param coord GLenum
-     * \param pname GLenum
-     * \param params GLfixed *
-     * \return void
-     */
-    STATICINLINE void get_tex_genxv(
-        group::texture_coord_name    coord,
-        group::texture_gen_parameter pname,
-        span_GLfixed                 params)
+requires(
+    semantic::concepts::Span<span_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param coord GLenum
+ * \param pname GLenum
+ * \param params GLfixed *
+ * \return void
+ */
+STATICINLINE void get_tex_genxv(
+    group::texture_coord_name    coord,
+    group::texture_gen_parameter pname,
+    span_GLfixed                 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1413,22 +1466,24 @@ requires(semantic::concepts::Span<span_GLfixed>&& std::is_same_v<
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_GLfixed>
-requires(semantic::concepts::Span<span_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param target GLenum
-     * \param level GLint
-     * \param pname GLenum
-     * \param params GLfixed *
-     * \return void
-     */
-    STATICINLINE void get_tex_level_parameterxv(
-        group::texture_target        target,
-        i32                          level,
-        group::get_texture_parameter pname,
-        span_GLfixed                 params)
+requires(
+    semantic::concepts::Span<span_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param target GLenum
+ * \param level GLint
+ * \param pname GLenum
+ * \param params GLfixed *
+ * \return void
+ */
+STATICINLINE void get_tex_level_parameterxv(
+    group::texture_target        target,
+    i32                          level,
+    group::get_texture_parameter pname,
+    span_GLfixed                 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1464,15 +1519,17 @@ STATICINLINE void indexx(GLfixed component)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_GLfixed>
-requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_const_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param component const GLfixed *
-     * \return void
-     */
-    STATICINLINE void indexxv(span_const_GLfixed const& component)
+requires(
+    semantic::concepts::Span<span_const_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param component const GLfixed *
+ * \return void
+ */
+STATICINLINE void indexxv(span_const_GLfixed const& component)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1488,15 +1545,17 @@ requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_GLfixed>
-requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_const_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param m const GLfixed *
-     * \return void
-     */
-    STATICINLINE void load_transpose_matrixx(span_const_GLfixed const& m)
+requires(
+    semantic::concepts::Span<span_const_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param m const GLfixed *
+ * \return void
+ */
+STATICINLINE void load_transpose_matrixx(span_const_GLfixed const& m)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1630,15 +1689,17 @@ STATICINLINE void map_grid2x(
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_GLfixed>
-requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_const_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param m const GLfixed *
-     * \return void
-     */
-    STATICINLINE void mult_transpose_matrixx(span_const_GLfixed const& m)
+requires(
+    semantic::concepts::Span<span_const_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param m const GLfixed *
+ * \return void
+ */
+STATICINLINE void mult_transpose_matrixx(span_const_GLfixed const& m)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1672,17 +1733,19 @@ STATICINLINE void multi_tex_coord1x(group::texture_unit texture, GLfixed s)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_GLfixed>
-requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_const_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param texture GLenum
-     * \param coords const GLfixed *
-     * \return void
-     */
-    STATICINLINE void multi_tex_coord1xv(
-        group::texture_unit texture, span_const_GLfixed const& coords)
+requires(
+    semantic::concepts::Span<span_const_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param texture GLenum
+ * \param coords const GLfixed *
+ * \return void
+ */
+STATICINLINE void multi_tex_coord1xv(
+    group::texture_unit texture, span_const_GLfixed const& coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1720,17 +1783,19 @@ STATICINLINE void multi_tex_coord2x(
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_GLfixed>
-requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_const_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param texture GLenum
-     * \param coords const GLfixed *
-     * \return void
-     */
-    STATICINLINE void multi_tex_coord2xv(
-        group::texture_unit texture, span_const_GLfixed const& coords)
+requires(
+    semantic::concepts::Span<span_const_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param texture GLenum
+ * \param coords const GLfixed *
+ * \return void
+ */
+STATICINLINE void multi_tex_coord2xv(
+    group::texture_unit texture, span_const_GLfixed const& coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1769,17 +1834,19 @@ STATICINLINE void multi_tex_coord3x(
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_GLfixed>
-requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_const_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param texture GLenum
-     * \param coords const GLfixed *
-     * \return void
-     */
-    STATICINLINE void multi_tex_coord3xv(
-        group::texture_unit texture, span_const_GLfixed const& coords)
+requires(
+    semantic::concepts::Span<span_const_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param texture GLenum
+ * \param coords const GLfixed *
+ * \return void
+ */
+STATICINLINE void multi_tex_coord3xv(
+    group::texture_unit texture, span_const_GLfixed const& coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1796,17 +1863,19 @@ requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_GLfixed>
-requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_const_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param texture GLenum
-     * \param coords const GLfixed *
-     * \return void
-     */
-    STATICINLINE void multi_tex_coord4xv(
-        group::texture_unit texture, span_const_GLfixed const& coords)
+requires(
+    semantic::concepts::Span<span_const_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param texture GLenum
+ * \param coords const GLfixed *
+ * \return void
+ */
+STATICINLINE void multi_tex_coord4xv(
+    group::texture_unit texture, span_const_GLfixed const& coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1823,15 +1892,17 @@ requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_GLfixed>
-requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_const_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param coords const GLfixed *
-     * \return void
-     */
-    STATICINLINE void normal3xv(span_const_GLfixed const& coords)
+requires(
+    semantic::concepts::Span<span_const_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param coords const GLfixed *
+ * \return void
+ */
+STATICINLINE void normal3xv(span_const_GLfixed const& coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1865,17 +1936,19 @@ STATICINLINE void pass_throughx(GLfixed token)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_GLfixed>
-requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_const_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param map GLenum
-     * \param size GLint
-     * \param values const GLfixed *
-     * \return void
-     */
-    STATICINLINE
+requires(
+    semantic::concepts::Span<span_const_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param map GLenum
+ * \param size GLint
+ * \param values const GLfixed *
+ * \return void
+ */
+STATICINLINE
     void pixel_mapx(group::pixel_map map, span_const_GLfixed const& values)
 {
     using namespace std::string_view_literals;
@@ -1953,21 +2026,24 @@ STATICINLINE void pixel_zoomx(GLfixed xfactor, GLfixed yfactor)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_GLfixed, class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
-         std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>&& semantic::concepts::Span<span_const_GLfixed>&&
-                              std::is_same_v<
-                 std::decay_t<typename span_const_GLfixed::value_type>,
-                 std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param n GLsizei
-     * \param textures const GLuint *
-     * \param priorities const GLfixed *
-     * \return void
-     */
-    STATICINLINE void prioritize_texturesx(
-        span_const_u32 const& textures, span_const_GLfixed const& priorities)
+requires(
+    semantic::concepts::Span<span_const_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_u32::value_type>,
+        std::decay_t<u32>> &&
+    semantic::concepts::Span<span_const_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param n GLsizei
+ * \param textures const GLuint *
+ * \param priorities const GLfixed *
+ * \return void
+ */
+STATICINLINE void prioritize_texturesx(
+    span_const_u32 const& textures, span_const_GLfixed const& priorities)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1987,13 +2063,13 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
 #if defined(GL_VERSION_1_0)
 template<class vec_2_GLfixed>
 requires(semantic::concepts::Vector<vec_2_GLfixed, GLfixed, 2>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param x GLfixed
-     * \param y GLfixed
-     * \return void
-     */
-    STATICINLINE void raster_pos2x(vec_2_GLfixed const& x)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param x GLfixed
+ * \param y GLfixed
+ * \return void
+ */
+STATICINLINE void raster_pos2x(vec_2_GLfixed const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2007,15 +2083,17 @@ requires(semantic::concepts::Vector<vec_2_GLfixed, GLfixed, 2>)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_GLfixed>
-requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_const_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param coords const GLfixed *
-     * \return void
-     */
-    STATICINLINE void raster_pos2xv(span_const_GLfixed const& coords)
+requires(
+    semantic::concepts::Span<span_const_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param coords const GLfixed *
+ * \return void
+ */
+STATICINLINE void raster_pos2xv(span_const_GLfixed const& coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2032,14 +2110,14 @@ requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
 #if defined(GL_VERSION_1_0)
 template<class vec_3_GLfixed>
 requires(semantic::concepts::Vector<vec_3_GLfixed, GLfixed, 3>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param x GLfixed
-     * \param y GLfixed
-     * \param z GLfixed
-     * \return void
-     */
-    STATICINLINE void raster_pos3x(vec_3_GLfixed const& x)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param x GLfixed
+ * \param y GLfixed
+ * \param z GLfixed
+ * \return void
+ */
+STATICINLINE void raster_pos3x(vec_3_GLfixed const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2053,15 +2131,17 @@ requires(semantic::concepts::Vector<vec_3_GLfixed, GLfixed, 3>)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_GLfixed>
-requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_const_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param coords const GLfixed *
-     * \return void
-     */
-    STATICINLINE void raster_pos3xv(span_const_GLfixed const& coords)
+requires(
+    semantic::concepts::Span<span_const_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param coords const GLfixed *
+ * \return void
+ */
+STATICINLINE void raster_pos3xv(span_const_GLfixed const& coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2078,15 +2158,15 @@ requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
 #if defined(GL_VERSION_1_0)
 template<class vec_4_GLfixed>
 requires(semantic::concepts::Vector<vec_4_GLfixed, GLfixed, 4>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param x GLfixed
-     * \param y GLfixed
-     * \param z GLfixed
-     * \param w GLfixed
-     * \return void
-     */
-    STATICINLINE void raster_pos4x(vec_4_GLfixed const& x)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param x GLfixed
+ * \param y GLfixed
+ * \param z GLfixed
+ * \param w GLfixed
+ * \return void
+ */
+STATICINLINE void raster_pos4x(vec_4_GLfixed const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2100,15 +2180,17 @@ requires(semantic::concepts::Vector<vec_4_GLfixed, GLfixed, 4>)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_GLfixed>
-requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_const_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param coords const GLfixed *
-     * \return void
-     */
-    STATICINLINE void raster_pos4xv(span_const_GLfixed const& coords)
+requires(
+    semantic::concepts::Span<span_const_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param coords const GLfixed *
+ * \return void
+ */
+STATICINLINE void raster_pos4xv(span_const_GLfixed const& coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2145,16 +2227,18 @@ STATICINLINE void rectx(GLfixed x1, GLfixed y1, GLfixed x2, GLfixed y2)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_GLfixed>
-requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_const_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param v1 const GLfixed *
-     * \param v2 const GLfixed *
-     * \return void
-     */
-    STATICINLINE
+requires(
+    semantic::concepts::Span<span_const_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param v1 const GLfixed *
+ * \param v2 const GLfixed *
+ * \return void
+ */
+STATICINLINE
     void rectxv(span_const_GLfixed const& v1, span_const_GLfixed const& v2)
 {
     using namespace std::string_view_literals;
@@ -2189,15 +2273,17 @@ STATICINLINE void tex_coord1x(GLfixed s)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_GLfixed>
-requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_const_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param coords const GLfixed *
-     * \return void
-     */
-    STATICINLINE void tex_coord1xv(span_const_GLfixed const& coords)
+requires(
+    semantic::concepts::Span<span_const_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param coords const GLfixed *
+ * \return void
+ */
+STATICINLINE void tex_coord1xv(span_const_GLfixed const& coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2232,15 +2318,17 @@ STATICINLINE void tex_coord2x(GLfixed s, GLfixed t)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_GLfixed>
-requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_const_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param coords const GLfixed *
-     * \return void
-     */
-    STATICINLINE void tex_coord2xv(span_const_GLfixed const& coords)
+requires(
+    semantic::concepts::Span<span_const_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param coords const GLfixed *
+ * \return void
+ */
+STATICINLINE void tex_coord2xv(span_const_GLfixed const& coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2276,15 +2364,17 @@ STATICINLINE void tex_coord3x(GLfixed s, GLfixed t, GLfixed r)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_GLfixed>
-requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_const_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param coords const GLfixed *
-     * \return void
-     */
-    STATICINLINE void tex_coord3xv(span_const_GLfixed const& coords)
+requires(
+    semantic::concepts::Span<span_const_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param coords const GLfixed *
+ * \return void
+ */
+STATICINLINE void tex_coord3xv(span_const_GLfixed const& coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2321,15 +2411,17 @@ STATICINLINE void tex_coord4x(GLfixed s, GLfixed t, GLfixed r, GLfixed q)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_GLfixed>
-requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_const_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param coords const GLfixed *
-     * \return void
-     */
-    STATICINLINE void tex_coord4xv(span_const_GLfixed const& coords)
+requires(
+    semantic::concepts::Span<span_const_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param coords const GLfixed *
+ * \return void
+ */
+STATICINLINE void tex_coord4xv(span_const_GLfixed const& coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2368,20 +2460,22 @@ STATICINLINE void tex_genx(
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_GLfixed>
-requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_const_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param coord GLenum
-     * \param pname GLenum
-     * \param params const GLfixed *
-     * \return void
-     */
-    STATICINLINE void tex_genxv(
-        group::texture_coord_name    coord,
-        group::texture_gen_parameter pname,
-        span_const_GLfixed const&    params)
+requires(
+    semantic::concepts::Span<span_const_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param coord GLenum
+ * \param pname GLenum
+ * \param params const GLfixed *
+ * \return void
+ */
+STATICINLINE void tex_genxv(
+    group::texture_coord_name    coord,
+    group::texture_gen_parameter pname,
+    span_const_GLfixed const&    params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2417,15 +2511,17 @@ STATICINLINE void vertex2x(GLfixed x)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_GLfixed>
-requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_const_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param coords const GLfixed *
-     * \return void
-     */
-    STATICINLINE void vertex2xv(span_const_GLfixed const& coords)
+requires(
+    semantic::concepts::Span<span_const_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param coords const GLfixed *
+ * \return void
+ */
+STATICINLINE void vertex2xv(span_const_GLfixed const& coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2442,13 +2538,13 @@ requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
 #if defined(GL_VERSION_1_0)
 template<class vec_2_GLfixed>
 requires(semantic::concepts::Vector<vec_2_GLfixed, GLfixed, 2>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param x GLfixed
-     * \param y GLfixed
-     * \return void
-     */
-    STATICINLINE void vertex3x(vec_2_GLfixed const& x)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param x GLfixed
+ * \param y GLfixed
+ * \return void
+ */
+STATICINLINE void vertex3x(vec_2_GLfixed const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2462,15 +2558,17 @@ requires(semantic::concepts::Vector<vec_2_GLfixed, GLfixed, 2>)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_GLfixed>
-requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_const_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param coords const GLfixed *
-     * \return void
-     */
-    STATICINLINE void vertex3xv(span_const_GLfixed const& coords)
+requires(
+    semantic::concepts::Span<span_const_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param coords const GLfixed *
+ * \return void
+ */
+STATICINLINE void vertex3xv(span_const_GLfixed const& coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2487,14 +2585,14 @@ requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
 #if defined(GL_VERSION_1_0)
 template<class vec_3_GLfixed>
 requires(semantic::concepts::Vector<vec_3_GLfixed, GLfixed, 3>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param x GLfixed
-     * \param y GLfixed
-     * \param z GLfixed
-     * \return void
-     */
-    STATICINLINE void vertex4x(vec_3_GLfixed const& x)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param x GLfixed
+ * \param y GLfixed
+ * \param z GLfixed
+ * \return void
+ */
+STATICINLINE void vertex4x(vec_3_GLfixed const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2508,15 +2606,17 @@ requires(semantic::concepts::Vector<vec_3_GLfixed, GLfixed, 3>)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_GLfixed>
-requires(semantic::concepts::Span<span_const_GLfixed>&& std::is_same_v<
-         std::decay_t<typename span_const_GLfixed::value_type>,
-         std::decay_t<GLfixed>>)
-    /*!
-     * \brief Part of GL_OES_fixed_point
-     * \param coords const GLfixed *
-     * \return void
-     */
-    STATICINLINE void vertex4xv(span_const_GLfixed const& coords)
+requires(
+    semantic::concepts::Span<span_const_GLfixed> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLfixed::value_type>,
+        std::decay_t<GLfixed>>)
+/*!
+ * \brief Part of GL_OES_fixed_point
+ * \param coords const GLfixed *
+ * \return void
+ */
+STATICINLINE void vertex4xv(span_const_GLfixed const& coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

@@ -42,6 +42,7 @@ struct LifecycleEvent
         /* Core events */
         Startup,
         Background,
+        FrameRequested,
         Foreground,
         Terminate,
 

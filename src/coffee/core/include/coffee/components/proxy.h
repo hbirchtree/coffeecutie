@@ -4,9 +4,13 @@
 
 #include "entity_container.h"
 
-namespace Coffee::Components {
+namespace compo {
 
-struct ContainerProxy : non_copy
+using type_safety::type_list_t;
+using type_safety::empty_list_t;
+using type_safety::type_list::type_in_list_v;
+
+struct ContainerProxy : stl_types::non_copy
 {
     friend struct EntityContainer;
     template<typename T1, typename T2>
@@ -78,28 +82,28 @@ struct ConstrainedProxy : ContainerProxy
     }
 
     template<is_component_tag ComponentType>
-    requires type_list::type_in_list_v<ComponentType, ComponentList>
+    requires type_in_list_v<ComponentType, ComponentList>
         FORCEDINLINE quick_container<EntityContainer::entity_query> select()
     {
         return ContainerProxy::select<ComponentType>();
     }
 
     template<is_component_tag ComponentType>
-    requires type_list::type_in_list_v<ComponentType, ComponentList>
+    requires type_in_list_v<ComponentType, ComponentList>
         FORCEDINLINE typename ComponentType::value_type* get(u64 id)
     {
         return m_container.get<ComponentType>(id);
     }
 
     template<is_component_tag ComponentType>
-    requires type_list::type_in_list_v<ComponentType, ComponentList>
+    requires type_in_list_v<ComponentType, ComponentList>
         FORCEDINLINE typename ComponentType::value_type const* get(u64 id) const
     {
         return m_container.get<ComponentType>(id);
     }
 
     template<is_component_tag ComponentType>
-    requires type_list::type_in_list_v<ComponentType, ComponentList>
+    requires type_in_list_v<ComponentType, ComponentList>
         FORCEDINLINE typename ComponentType::value_type& get()
     {
         auto v = get<ComponentType>(current_entity);
@@ -112,7 +116,7 @@ struct ConstrainedProxy : ContainerProxy
     }
 
     template<is_component_tag ComponentType>
-    requires type_list::type_in_list_v<ComponentType, ComponentList>
+    requires type_in_list_v<ComponentType, ComponentList>
         FORCEDINLINE typename ComponentType::value_type const& get() const
     {
         auto v = get<ComponentType>(current_entity);
@@ -125,14 +129,14 @@ struct ConstrainedProxy : ContainerProxy
     }
 
     template<is_tag_type SubsystemType>
-    requires type_list::type_in_list_v<SubsystemType, SubsystemList>
+    requires type_in_list_v<SubsystemType, SubsystemList>
         FORCEDINLINE typename SubsystemType::type& subsystem()
     {
         return m_container.subsystem_cast<SubsystemType>();
     }
 
     template<is_tag_type Service>
-    requires type_list::type_in_list_v<Service, ServiceList>
+    requires type_in_list_v<Service, ServiceList>
         FORCEDINLINE typename Service::type* service()
     {
         return m_container.service<Service>();
@@ -151,4 +155,4 @@ using proxy_of = ConstrainedProxy<
     typename Manifest::subsystems,
     typename Manifest::services>;
 
-} // namespace Coffee::Components
+} // namespace compo

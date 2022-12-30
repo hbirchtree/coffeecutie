@@ -7,23 +7,25 @@ using gl::group::internal_format_prop;
 namespace values {
 } // namespace values
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
-         std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>)
-    /*!
-     * \brief Part of GL_ARB_internalformat_query
-     * \param target GLenum
-     * \param internalformat GLenum
-     * \param pname GLenum
-     * \param count GLsizei
-     * \param params GLint *
-     * \return void
-     */
-    STATICINLINE void get_internalformativ(
-        group::texture_target       target,
-        group::internal_format      internalformat,
-        group::internal_format_prop pname,
-        span_i32                    params)
+requires(
+    semantic::concepts::Span<span_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_i32::value_type>,
+        std::decay_t<i32>>)
+/*!
+ * \brief Part of GL_ARB_internalformat_query
+ * \param target GLenum
+ * \param internalformat GLenum
+ * \param pname GLenum
+ * \param count GLsizei
+ * \param params GLint *
+ * \return void
+ */
+STATICINLINE void get_internalformativ(
+    group::texture_target       target,
+    group::internal_format      internalformat,
+    group::internal_format_prop pname,
+    span_i32                    params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

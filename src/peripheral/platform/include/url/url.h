@@ -138,6 +138,11 @@ struct Url
         return Resource(a..., *this);
     }
 
+    Path path() const
+    {
+        return Path{internUrl};
+    }
+
   private:
     std::string DereferenceLocalPath() const;
 };

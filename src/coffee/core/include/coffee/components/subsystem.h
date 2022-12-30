@@ -4,7 +4,7 @@
 #include "proxy.h"
 #include "types.h"
 
-namespace Coffee::Components {
+namespace compo {
 
 template<typename T>
 concept is_restricted_subsystem = requires(T& v, typename T::Proxy& p)
@@ -50,4 +50,4 @@ struct RestrictedSubsystem : SubsystemBase
     }
 };
 
-} // namespace Coffee::Components
+} // namespace compo

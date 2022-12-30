@@ -27,14 +27,13 @@ STATICINLINE void flush_vertex_array_range()
 
 template<class span_const_void>
 requires(semantic::concepts::Span<span_const_void>)
-    /*!
-     * \brief Part of GL_NV_vertex_array_range
-     * \param length GLsizei
-     * \param pointer const void *
-     * \return void
-     */
-    STATICINLINE
-    void vertex_array_range(i32 length, span_const_void const& pointer)
+/*!
+ * \brief Part of GL_NV_vertex_array_range
+ * \param length GLsizei
+ * \param pointer const void *
+ * \return void
+ */
+STATICINLINE void vertex_array_range(i32 length, span_const_void const& pointer)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

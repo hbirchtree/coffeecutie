@@ -18,7 +18,7 @@ namespace Coffee {
 
 struct Resource;
 
-/*! \brief VirtualFS is used to store an asset file system in a single file.
+/*! \brief fs is used to store an asset file system in a single file.
  * Referring into it is done using filenames, and all the files are
  *  ReadOnly, memory mappable.
  *
@@ -29,64 +29,69 @@ struct Resource;
  * Layout of a .cvfs file:
  *
  * |---------------|-------|----------|----------|--------------|
- * | VFS struct[0] |[other]| VFile[0] | VFile[1] | Blob data    |
+ * | VFS struct[0] |[other]| file[0] | file[1] | Blob data    |
  * |---------------|-------|----------|----------|--------------|
  *
- * VirtualFS struct serves as a header, with a magic segment.
+ * fs struct serves as a header, with a magic segment.
  * VirtualFile structures refer into the Blob data segment.
  *
  * All offsets in VFS use offsets based on global offsets in the header.
  */
-namespace VirtFS {
+} // namespace Coffee
 
-template<typename T>
-using Span = semantic::Span<T>;
+namespace vfs {
 
-struct VirtualFile;
-struct VirtualFS;
-struct VirtualIndex;
+using libc_types::i32;
+using libc_types::i64;
+using libc_types::ptroff;
+using libc_types::szptr;
+using libc_types::u32;
+using libc_types::u64;
+using libc_types::u8;
+using platform::url::Path;
+using platform::url::Url;
+using semantic::mem_chunk;
+using semantic::Span;
 
-using VFS   = VirtualFS;
-using VFile = VirtualFile;
+using Span_u8 = Span<const libc_types::u8>;
 
-enum class VFSError : int
+using namespace std::string_view_literals;
+
+struct file;
+struct fs;
+struct index;
+
+enum class error : int
 {
-    NotFound = 1,
-    NotVFS,
-    EndianMismatch,
+    not_found = 1,
+    not_vfs,
+    endian_mismatch,
 
-    VersionMismatch,
-    NoIndexing,
+    version_mismatch,
+    no_indexing,
+    index_not_found,
 
-    CompressionUnsupported,
-    CompressionError,
-    UnsupportedCompressionCodec,
+    compression_unsupported,
+    compression_error,
+    compression_codec_unsupported,
 
     /* Creation of a VFS */
-    NoFilesProvided,
-    FilenameTooLong,
+    no_files_provided,
+    filename_too_long,
 };
-
-struct vfs_error_category : error_category
-{
-    virtual const char* name() const noexcept override;
-    virtual std::string message(int error_code) const override;
-};
-
-using vfs_error_code = domain_error_code<VFSError, vfs_error_category>;
 
 /*!
  * \brief In-memory wrapper that handles opening
- *  the VirtualFile from a VirtualFS, while complying with ByteProvider.
+ *  the VirtualFile from a fs, while complying with ByteProvider.
  */
 struct Resource : semantic::ByteProvider
 {
   private:
-    VFS const*   filesystem;
-    VFile const* file;
+    fs const*   filesystem;
+    file const* file;
 
   public:
-    Resource(VFS const* base, Url const& url);
+    Resource(fs const* base, Url const& url);
 
     C_MOVE_CONSTRUCTOR(Resource);
 
@@ -96,19 +101,14 @@ struct Resource : semantic::ByteProvider
      */
     NO_DISCARD bool valid() const;
 
-    cstring resource() const;
+    std::string_view resource() const;
     /*!
      * \brief Return the data contained in the virtual file.
      *  If the file in question is compressed,
      *  decompression happens here.
      * \return
      */
-    NO_DISCARD Bytes data() const;
-
-    NO_DISCARD operator Bytes()
-    {
-        return data();
-    }
+    NO_DISCARD semantic::mem_chunk<const libc_types::u8> data() const;
 
     NO_DISCARD operator Path() const;
 };
@@ -140,18 +140,18 @@ enum class search_strategy
                     files with same name but different extension. */
 };
 
-static const constexpr Version VFSVersion = Version::v3;
+constexpr auto VFSVersion = Version::v3;
 
-static const constexpr szptr MaxPrefixLength    = 40;
-static const constexpr szptr MaxLeafLength      = MaxPrefixLength - sizeof(u64);
-static const constexpr szptr MaxExtensionLength = 16;
+constexpr auto MaxPrefixLength    = 40u;
+constexpr auto MaxLeafLength      = MaxPrefixLength - sizeof(u64);
+constexpr auto MaxExtensionLength = 16u;
 
-static const constexpr szptr MaxFileNameLength   = 96;
-static const constexpr szptr MagicLength         = 8;
-static const constexpr szptr MagicLength_Encoded = MagicLength / sizeof(u32);
+constexpr auto MaxFileNameLength   = 96u;
+constexpr auto MagicLength         = 8u;
+constexpr auto MagicLength_Encoded = MagicLength / sizeof(u32);
 
-static const constexpr char VFSMagic[MagicLength] = "CfVrtFS";
-static const constexpr u32  VFSMagic_Encoded[2]   = {0x72566643, 0x534674};
+constexpr char VFSMagic[MagicLength] = "CfVrtFS";
+constexpr u32  VFSMagic_Encoded[2]   = {0x72566643, 0x534674};
 
 /*!
  * \brief Stores a binary ordered tree on disk.
@@ -204,8 +204,8 @@ struct directory_data_t
 
     struct node_t
     {
-        static const constexpr index_type sentinel_value
-            = std::numeric_limits<index_type>::max();
+        static const constexpr index_type sentinel_value =
+            std::numeric_limits<index_type>::max();
 
         char                prefix[MaxPrefixLength];
         child_t<index_type> left;
@@ -220,12 +220,12 @@ struct directory_data_t
             } len_info;
         };
 
-        inline bool operator<=(CString const other) const
+        inline bool operator<=(std::string const other) const
         {
             return prefix <= other;
         }
 
-        inline bool operator>=(CString const other) const
+        inline bool operator>=(std::string const other) const
         {
             return prefix >= other;
         }
@@ -264,7 +264,8 @@ struct directory_data_t
         {
             node.left  = 0;
             node.right = 0;
-            MemClear(Bytes::ofBytes(node.prefix, MaxPrefixLength));
+            auto nodes = Span<char>(node.prefix, MaxPrefixLength);
+            std::fill(nodes.begin(), nodes.end(), 0);
         }
 
         u32 flags;
@@ -281,7 +282,7 @@ struct directory_data_t
             prefix_directory = 0x2,
         };
 
-        inline cstring prefix() const
+        inline std::string_view prefix() const
         {
             return is_leaf() ? leaf.prefix : node.prefix;
         }
@@ -291,14 +292,15 @@ struct directory_data_t
             return is_leaf() ? leaf.len_info.prefix : node.len_info.prefix;
         }
 
-        inline szptr longest_match(CString const& other, szptr offset = 0) const
+        inline szptr longest_match(
+            std::string_view const& other, szptr offset = 0) const
         {
             auto node_prefix = prefix();
-            auto comparison
-                = (std::min)(other.size() - offset, prefix_length());
+            auto comparison =
+                (std::min)(other.size() - offset, prefix_length());
 
             return libc::str::longest_prefix(
-                node_prefix, &other[offset], comparison);
+                node_prefix.substr(0, comparison), other.substr(offset, comparison));
         }
 
         inline bool is_leaf() const
@@ -307,7 +309,7 @@ struct directory_data_t
         }
     };
 
-    mem_chunk<const node_base_t> nodes(VirtualIndex const& idx) const;
+    Span<const node_base_t> nodes(index const& idx) const;
 
     struct node_container_t
     {
@@ -315,15 +317,15 @@ struct directory_data_t
         {
         }
 
-        node_container_t(node_base_t const* node, VirtualIndex const* index) :
+        node_container_t(node_base_t const* node, index const* index) :
             node(node), index(index)
         {
         }
 
-        node_base_t const*  node;
-        VirtualIndex const* index;
+        node_base_t const* node;
+        index const*       index;
 
-        VFile const* file(const VirtualFS* vfs);
+        file const* file(const fs* vfs);
 
         FORCEDINLINE bool valid()
         {
@@ -337,11 +339,11 @@ struct directory_data_t
 
     struct cached_index
     {
-        bit_vector          node_match;
+        std::vector<bool>   node_match;
         child_t<index_type> sub_root;
-        VirtualIndex const* virt_index;
+        index const*        virt_index;
 
-        mem_chunk<const node_base_t> nodes() const;
+        Span<const node_base_t> nodes() const;
     };
 
     struct result_t
@@ -353,7 +355,7 @@ struct directory_data_t
     };
 };
 
-struct VirtualIndex : non_copy
+struct index : stl_types::non_copy
 {
     enum class index_t : u32
     {
@@ -367,18 +369,18 @@ struct VirtualIndex : non_copy
     const void* data() const
     {
         static_assert(
-            sizeof(directory_data_t::node_t)
-                == sizeof(directory_data_t::leaf_t),
+            sizeof(directory_data_t::node_t) ==
+                sizeof(directory_data_t::leaf_t),
             "Mismatching node and leaf size");
 
         return &this[1];
     }
 
-    const VirtualIndex* next() const
+    const index* next() const
     {
-        const byte_t* basePtr = C_RCAST<const byte_t*>(this);
-
-        return C_RCAST<const VirtualIndex*>(basePtr + next_index);
+        auto base =
+            mem_chunk<const u8>::ofBytes(this, next_index + sizeof(index));
+        return (*base.at(next_index)).as<const index>().data;
     }
 
     /*!
@@ -389,14 +391,14 @@ struct VirtualIndex : non_copy
         char ext[MaxExtensionLength];
         u64  num_files;
 
-        mem_chunk<const u64> indices(VirtualIndex const& idx) const
+        mem_chunk<const u64> indices(index const& idx) const
         {
             return mem_chunk<const u64>::of(
                 C_RCAST<const u64*>(idx.data()), num_files);
         }
     };
 
-    using directory_data_t = VirtFS::directory_data_t;
+    using directory_data_t = vfs::directory_data_t;
 
     union
     {
@@ -405,11 +407,12 @@ struct VirtualIndex : non_copy
     };
 };
 
-FORCEDINLINE mem_chunk<const directory_data_t::node_base_t> directory_data_t::
-    nodes(const VirtualIndex& idx) const
+FORCEDINLINE Span<const directory_data_t::node_base_t> directory_data_t::nodes(
+    const index& idx) const
 {
     return mem_chunk<const node_base_t>::of(
-        C_RCAST<const node_base_t*>(idx.data()), num_nodes);
+               C_RCAST<const node_base_t*>(idx.data()), num_nodes)
+        .view;
 }
 
 FORCEDINLINE directory_data_t::node_container_t directory_data_t::
@@ -436,13 +439,27 @@ FORCEDINLINE directory_data_t::node_container_t directory_data_t::
     return {&index->directory.nodes(*index)[node->node.left], index};
 }
 
-FORCEDINLINE mem_chunk<const directory_data_t::node_base_t> directory_data_t::
+FORCEDINLINE Span<const directory_data_t::node_base_t> directory_data_t::
     cached_index::nodes() const
 {
     return virt_index->directory.nodes(*virt_index);
 }
 
-struct VirtualFS
+PACKEDSTRUCT(file {
+    char name_[MaxFileNameLength]; /*!< File name */
+    u64  offset;                   /*!< Offset to file */
+    u64  size;  /*!< Size of file. If compressed, size of compressed file */
+    u64  rsize; /*!< Size of file in memory. If compressed, uncompressed size */
+    u32  flags;
+    compression::codec codec = compression::codec::none;
+
+    FORCEDINLINE std::string_view name() const
+    {
+        return name_;
+    }
+});
+
+struct fs
 {
     /*!
      * \brief Given bytes from `src', open the VFS inside iff
@@ -452,8 +469,8 @@ struct VirtualFS
      * \param vfs
      * \return
      */
-    static bool OpenVFS(
-        BytesConst const& src, VirtualFS const** vfs, vfs_error_code& ec)
+    template<typename T>
+    static stl_types::result<const fs*, error> open(Span<T> const& src)
     {
         static_assert(
             MagicLength == MagicLength_Encoded * sizeof(u32),
@@ -465,15 +482,12 @@ struct VirtualFS
         using namespace libc;
         using IntData = mem_chunk<const u32>;
 
-        *vfs = nullptr;
-
-        if(src.size < sizeof(VirtualFS))
+        if(src.size() < sizeof(fs))
         {
-            ec = VFSError::NotVFS;
-            return false;
+            return error::not_vfs;
         }
 
-        auto* temp_vfs = C_RCAST<const VirtualFS*>(src.data);
+        auto* temp_vfs = C_RCAST<const fs*>(src.data());
 
         IntData magic     = IntData::of(VFSMagic_Encoded, 2);
         IntData fileMagic = IntData::of(temp_vfs->vfs_header, MagicLength);
@@ -482,24 +496,20 @@ struct VirtualFS
         {
 #if !defined(COFFEE_NO_ENDIAN_OPS)
             /* It's nice to specify if the endian is wrong here */
-            if(magic[0] == endian::to<endian::u32_net>(fileMagic[0])
-               && magic[1] == endian::to<endian::u32_net>(fileMagic[1]))
-                ec = VFSError::EndianMismatch;
+            if(magic[0] == endian::to<endian::u32_net>(fileMagic[0]) &&
+               magic[1] == endian::to<endian::u32_net>(fileMagic[1]))
+                return error::endian_mismatch;
             else
 #endif
-                ec = VFSError::NotVFS;
-
-            return false;
+                return error::not_vfs;
         }
 
-        *vfs = temp_vfs;
-
-        return true;
+        return temp_vfs;
     }
 
     u32 vfs_header[MagicLength_Encoded]; /*!< Magic file header */
 
-    u64 num_files;   /*!< Number of VFile entries */
+    u64 num_files;   /*!< Number of file entries */
     u64 data_offset; /*!< Offset from start of this structure to the data
                         segment */
 
@@ -528,19 +538,19 @@ struct VirtualFS
         return virtfs_version;
     }
 
-    FORCEDINLINE bool supportsIndex(VirtualIndex::index_t type) const
+    FORCEDINLINE bool supportsIndex(index::index_t type) const
     {
         if(version() == Version::v1)
             return false;
 
-        for(C_UNUSED(auto _) : Range<>(ext_index.num))
+        for(C_UNUSED(auto _) : stl_types::Range<>(ext_index.num))
             if(indices()[0].kind == type)
                 return true;
 
         return false;
     }
 
-    FORCEDINLINE const void* files() const
+    FORCEDINLINE Span<const file> files() const
     {
         szptr offset = 0;
 
@@ -554,24 +564,27 @@ struct VirtualFS
             break;
         }
 
-        return C_RCAST<const char*>(&this[0]) + offset;
+        return mem_chunk<const file>::ofBytes(
+                   C_RCAST<const u8*>(this) + offset, num_files * sizeof(file))
+            .view;
     }
 
-    FORCEDINLINE const void* data() const
+    FORCEDINLINE Span_u8 data() const
     {
-        return C_RCAST<const char*>(&this[0]) + data_offset;
+        return mem_chunk<const u8>::ofBytes(this, Span<const u8>::extent).view;
     }
 
-    FORCEDINLINE const VirtualIndex* indices() const
+    FORCEDINLINE Span<const index> indices() const
     {
-        return C_RCAST<const VirtualIndex*>(
-            C_RCAST<const char*>(&this[0]) + ext_index.offset);
+        return mem_chunk<const index>::ofBytes(
+                   this + ext_index.offset, sizeof(index))
+            .view.subspan<0, 1>();
     }
 
     template<
         LookupMethod Method = LookupMethod::linear_search,
-        typename std::enable_if<
-            Method == LookupMethod::linear_search>::type* = nullptr>
+        typename std::enable_if<Method == LookupMethod::linear_search>::type* =
+            nullptr>
     /*!
      * \brief Given a VFS, get the handle to a file with the name `name'. This
      * performs a linear search through the VFS, which becomes slow on larger
@@ -584,16 +597,16 @@ struct VirtualFS
      * \param name Filename to perform search with
      * \return nullptr if file not found
      */
-    STATICINLINE VFile const* GetFile(
-        VFS const* vfs, cstring name, vfs_error_code& ec)
+    STATICINLINE stl_types::result<file const*, error> GetFile(
+        fs const* vfs, std::string_view name)
     {
-        return GetFileLinear(vfs, name, ec);
+        return GetFileLinear(vfs, name);
     }
 
     template<
         LookupMethod Method,
-        typename std::enable_if<
-            Method == LookupMethod::binary_tree>::type* = nullptr>
+        typename std::enable_if<Method == LookupMethod::binary_tree>::type* =
+            nullptr>
     /*!
      * \brief GetFile, but using a binary tree to lookup the file.
      * This has a better worst-case performance than
@@ -604,16 +617,15 @@ struct VirtualFS
      * \param ec
      * \return
      */
-    STATICINLINE VFile const* GetFile(
-        VFS const* vfs, cstring name, vfs_error_code& ec)
+    STATICINLINE stl_types::result<file const*, error> GetFile(
+        fs const* vfs, std::string_view name)
     {
-        return GetFileTreeExact(vfs, name, ec);
+        return GetFileTreeExact(vfs, name);
     }
 
-    static directory_data_t::result_t SearchFile(
-        VFS const*                            vfs,
-        cstring                               name,
-        vfs_error_code&                       ec,
+    static stl_types::result<directory_data_t::result_t, error> SearchFile(
+        fs const*                             vfs,
+        std::string_view                      name,
         search_strategy                       strat  = search_strategy::exact,
         const directory_data_t::cached_index* filter = nullptr);
 
@@ -623,7 +635,8 @@ struct VirtualFS
      * \param idx
      * \return nullptr if file not found
      */
-    static VFile const* GetFile(VFS const* vfs, szptr idx, vfs_error_code& ec);
+    static stl_types::result<file const*, error> GetFile(
+        fs const* vfs, szptr idx);
 
     /* TODO: Return read-only pointer here */
     /*!
@@ -635,83 +648,70 @@ struct VirtualFS
      * \param file
      * \return
      */
-    static Bytes GetData(VFS const* vfs, VFile const* file, vfs_error_code& ec);
+    static stl_types::result<mem_chunk<const u8>, error> GetData(
+        fs const* vfs, file const* file);
 
-    static ResourceResolver<VirtFS::Resource> GetResolver(VirtualFS const* vfs);
+    static Coffee::ResourceResolver<vfs::Resource> GetResolver(fs const* vfs);
 
   private:
-    static VFile const* GetFileLinear(
-        VFS const* vfs, cstring name, vfs_error_code& ec);
+    static stl_types::result<file const*, error> GetFileLinear(
+        fs const* vfs, std::string_view name);
 
-    static VFile const* GetFileTreeExact(
-        VFS const* vfs, cstring name, vfs_error_code& ec);
+    static stl_types::result<file const*, error> GetFileTreeExact(
+        fs const* vfs, std::string_view name);
 };
 
-PACKEDSTRUCT(VirtualFile {
-    char name[MaxFileNameLength]; /*!< File name */
-    u64  offset;                  /*!< Offset to file */
-    u64  size;  /*!< Size of file. If compressed, size of compressed file */
-    u64  rsize; /*!< Size of file in memory. If compressed, uncompressed size */
-    u32  flags;
-    compression::codec codec = compression::codec::none;
-});
-
-FORCEDINLINE VFile const* VirtualFS::GetFileLinear(
-    VFS const* vfs, cstring name, vfs_error_code& ec)
+FORCEDINLINE stl_types::result<file const*, error> fs::GetFileLinear(
+    fs const* vfs, std::string_view name)
 {
-    /* We start finding files after the VirtualFS structure */
-    VFile const* vf_start = C_RCAST<VFile const*>(vfs->files());
-
-    auto searchName = CString(name);
+    /* We start finding files after the fs structure */
+    auto vf_start = vfs->files();
 
     for(szptr i = 0; i < vfs->num_files; i++)
     {
         auto& current_file = vf_start[i];
 
-        if(searchName == current_file.name)
+        if(name == current_file.name())
             return &current_file;
     }
 
-    ec = VFSError::NotFound;
-    return nullptr;
+    return error::not_found;
 }
 
-FORCEDINLINE VFile const* VirtualFS::GetFileTreeExact(
-    const VFS* vfs, cstring name, vfs_error_code& ec)
+FORCEDINLINE stl_types::result<file const*, error> fs::GetFileTreeExact(
+    const fs* vfs, std::string_view name)
 {
-    auto file      = SearchFile(vfs, name, ec, search_strategy::exact);
-    auto vfs_files = C_RCAST<VFile const*>(vfs->files());
-
-    if(file.node.node)
-        return &(vfs_files[file.node.node->leaf.fileIdx]);
-
-    return nullptr;
+    auto vfs_files = vfs->files();
+    if(auto search = SearchFile(vfs, name, search_strategy::exact);
+       search.has_error())
+        return search.error();
+    else if(auto file = search.value(); file.node.node)
+        return &vfs_files[file.node.node->leaf.fileIdx];
+    return error::not_found;
 }
 
-FORCEDINLINE VFile const* VirtualFS::GetFile(
-    const VFS* vfs, szptr idx, vfs_error_code& ec)
+FORCEDINLINE stl_types::result<file const*, error> fs::GetFile(
+    const fs* vfs, szptr idx)
 {
-    VFile const* vf_start = C_RCAST<VFile const*>(vfs->files());
+    auto vf_start = vfs->files();
 
     if(idx >= vfs->num_files)
-    {
-        ec = VFSError::NotFound;
-        return nullptr;
-    }
+        return error::not_found;
 
     return &vf_start[idx];
 }
 
-FORCEDINLINE VFile const* VirtualIndex::directory_data_t::node_container_t::
-    file(VirtualFS const* vfs)
+FORCEDINLINE file const* index::directory_data_t::node_container_t::file(
+    fs const* vfs)
 {
     if(node && node->is_leaf())
-        return &C_RCAST<VFile const*>(vfs->files())[node->leaf.fileIdx];
+        return &vfs->files()[node->leaf.fileIdx];
 
     return nullptr;
 }
 
-struct vfs_linear_iterator : Iterator<ForwardIteratorTag, VFile>
+struct vfs_linear_iterator
+    : stl_types::Iterator<stl_types::ForwardIteratorTag, file>
 {
     static constexpr szptr npos = C_CAST<szptr>(-1);
 
@@ -722,11 +722,9 @@ struct vfs_linear_iterator : Iterator<ForwardIteratorTag, VFile>
     {
     }
 
-    vfs_linear_iterator(VFS const* vfs, szptr idx) : m_vfs(vfs), m_idx(idx)
+    vfs_linear_iterator(fs const* vfs, szptr idx) : m_vfs(vfs), m_idx(idx)
     {
-        vfs_error_code ec;
-        m_file = vfs ? VFS::GetFile(vfs, idx, ec) : nullptr;
-
+        m_file = vfs ? fs::GetFile(vfs, idx).value() : nullptr;
         if(!m_vfs)
             m_idx = npos;
     }
@@ -787,8 +785,8 @@ struct vfs_linear_iterator : Iterator<ForwardIteratorTag, VFile>
 
     difference_type operator-(vfs_linear_iterator& other)
     {
-        return C_FCAST<difference_type>(m_idx)
-               - C_FCAST<difference_type>(other.m_idx);
+        return C_FCAST<difference_type>(m_idx) -
+               C_FCAST<difference_type>(other.m_idx);
     }
 
     bool operator!=(vfs_linear_iterator const& other) const
@@ -800,45 +798,45 @@ struct vfs_linear_iterator : Iterator<ForwardIteratorTag, VFile>
         return other.m_idx == m_idx;
     }
 
-    VFile const& operator*() const
+    file const& operator*() const
     {
         if(!m_file)
             Throw(resource_error("non-existent virtual file"));
         return *m_file;
     }
 
-    operator Bytes()
+    operator mem_chunk<const u8>() const
     {
-        vfs_error_code ec;
-        return VFS::GetData(m_vfs, m_file, ec);
+        return fs::GetData(m_vfs, m_file).value();
     }
 
   private:
     void update_file()
     {
-        vfs_error_code ec;
-        m_file = VFS::GetFile(m_vfs, m_idx, ec);
+        m_file = fs::GetFile(m_vfs, m_idx).value();
     }
 
-    VFS const*   m_vfs;
-    szptr        m_idx;
-    VFile const* m_file;
+    fs const*   m_vfs;
+    szptr       m_idx;
+    file const* m_file;
 };
 
 /*!
- * \brief Nearly STL-compatible wrapper around VirtualFS,
+ * \brief Nearly STL-compatible wrapper around fs,
  *  allowing iteration and some convenience functions
  *
  * This is only useful if you want to view *every* file in the filesystem.
  */
-struct vfs_view
+struct view
 {
     using iterator = vfs_linear_iterator;
 
-    vfs_view(BytesConst const& base)
+    template<typename T>
+    static auto of(Span<T> const& base)
     {
-        vfs_error_code ec;
-        VFS::OpenVFS(base, &m_vfs, ec);
+        view out;
+        out.m_vfs = fs::open(base).value();
+        return out;
     }
 
     NO_DISCARD iterator begin() const
@@ -853,21 +851,25 @@ struct vfs_view
 
     NO_DISCARD iterator starting_with(Path const& path, iterator start)
     {
-        return std::find_if(start, end(), [&](VFile const& file) {
-            CString fname = file.name;
+        return std::find_if(start, end(), [&](file const& file) {
             /* +4 for extension */
-            if(fname.size() + 4 < path.internUrl.size())
+            if(file.name().size() + 4 < path.internUrl.size())
                 return false;
             else
             {
-                return fname.substr(0, path.internUrl.size()) == path.internUrl
-                       && fname.at(path.internUrl.size()) == '.';
+                return file.name().substr(0, path.internUrl.size()) ==
+                           path.internUrl &&
+                       file.name().at(path.internUrl.size()) == '.';
             }
         });
     }
 
   private:
-    VFS const* m_vfs;
+    view()
+    {
+    }
+
+    fs const* m_vfs;
 };
 
 /*!
@@ -875,20 +877,20 @@ struct vfs_view
  * Used dynamic storage, and should never be read from disk.
  * Should be passed to GenVirtFS()
  */
-struct VirtDesc
+struct desc
 {
-    VirtDesc(std::string fname, Bytes&& data, u32 flags = 0) :
+    desc(std::string_view fname, Span_u8&& data, u32 flags = 0) :
         filename(fname), data(std::move(data)), flags(flags)
     {
     }
 
-    VirtDesc(Path const& fname, Bytes&& data, u32 flags = 0) :
+    desc(Path const& fname, Span_u8&& data, u32 flags = 0) :
         filename(fname.internUrl), data(std::move(data)), flags(flags)
     {
     }
 
     std::string filename;
-    Bytes       data;
+    Span_u8     data;
     /*!
      * \brief when matching File_Compressed,
      *  compress the input data using zlib.
@@ -898,39 +900,33 @@ struct VirtDesc
 
 struct generation_settings
 {
-    generation_settings(szptr workers = 0) :
-        workers(workers), file_codec(compression::codec::deflate)
-    {
-    }
-
-    szptr workers; /*!< 0 will default to maximum */
-
-    compression::codec file_codec; /*!< Codec for compressing files */
+    szptr              workers; /*!< 0 will default to maximum */
+    compression::codec file_codec =
+        compression::codec::deflate; /*!< Codec for compressing files */
 };
 
-extern bool GenVirtFS(
-    Vector<VirtDesc>&     filenames,
-    Vector<byte_t>*       output,
-    vfs_error_code&       ec,
-    generation_settings&& settings = {});
+extern stl_types::result<std::vector<libc_types::byte_t>, error> generate(
+    std::vector<desc>& filenames, generation_settings&& settings = {});
 
 NO_DISCARD FORCEDINLINE Url operator"" _vfs(const char* url, size_t)
 {
-    Url out      = MkUrl(url);
+    Url out      = Coffee::MkUrl(url);
     out.category = Url::Local;
-    return out;
+    return {
+        .internUrl = url,
+        .category  = Url::StorageType::Local,
+        .flags     = semantic::RSCA::Virtual | semantic::RSCA::AssetFile,
+    };
 }
 
-FORCEDINLINE cstring Resource::resource() const
+FORCEDINLINE std::string_view Resource::resource() const
 {
-    return file->name;
+    return file->name();
 }
 
 NO_DISCARD FORCEDINLINE Resource::operator Path() const
 {
-    return Path(file->name);
+    return Path(file->name());
 }
 
-} // namespace VirtFS
-
-} // namespace Coffee
+} // namespace vfs

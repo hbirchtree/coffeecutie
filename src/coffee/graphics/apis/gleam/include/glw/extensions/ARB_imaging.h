@@ -63,15 +63,15 @@ constexpr libc_types::u32 replicate_border = 0x8153;
 } // namespace values
 template<class vec_4_f32>
 requires(semantic::concepts::Vector<vec_4_f32, f32, 4>)
-    /*!
-     * \brief Part of GL_ARB_imaging
-     * \param red GLfloat
-     * \param green GLfloat
-     * \param blue GLfloat
-     * \param alpha GLfloat
-     * \return void
-     */
-    STATICINLINE void blend_color(vec_4_f32 const& red)
+/*!
+ * \brief Part of GL_ARB_imaging
+ * \param red GLfloat
+ * \param green GLfloat
+ * \param blue GLfloat
+ * \param alpha GLfloat
+ * \return void
+ */
+STATICINLINE void blend_color(vec_4_f32 const& red)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -101,23 +101,23 @@ STATICINLINE void blend_equation(group::blend_equation_mode_ext mode)
 #if defined(GL_VERSION_1_0)
 template<class span_const_void>
 requires(semantic::concepts::Span<span_const_void>)
-    /*!
-     * \brief Part of GL_ARB_imaging
-     * \param target GLenum
-     * \param start GLsizei
-     * \param count GLsizei
-     * \param format GLenum
-     * \param type GLenum
-     * \param data const void *
-     * \return void
-     */
-    STATICINLINE void color_sub_table(
-        group::color_table_target target,
-        i32                       start,
-        i32                       count,
-        group::pixel_format       format,
-        group::pixel_type         type,
-        span_const_void const&    data)
+/*!
+ * \brief Part of GL_ARB_imaging
+ * \param target GLenum
+ * \param start GLsizei
+ * \param count GLsizei
+ * \param format GLenum
+ * \param type GLenum
+ * \param data const void *
+ * \return void
+ */
+STATICINLINE void color_sub_table(
+    group::color_table_target target,
+    i32                       start,
+    i32                       count,
+    group::pixel_format       format,
+    group::pixel_type         type,
+    span_const_void const&    data)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -138,23 +138,23 @@ requires(semantic::concepts::Span<span_const_void>)
 #if defined(GL_VERSION_1_0)
 template<class span_const_void>
 requires(semantic::concepts::Span<span_const_void>)
-    /*!
-     * \brief Part of GL_ARB_imaging
-     * \param target GLenum
-     * \param internalformat GLenum
-     * \param width GLsizei
-     * \param format GLenum
-     * \param type GLenum
-     * \param table const void *
-     * \return void
-     */
-    STATICINLINE void color_table(
-        group::color_table_target target,
-        group::internal_format    internalformat,
-        i32                       width,
-        group::pixel_format       format,
-        group::pixel_type         type,
-        span_const_void const&    table)
+/*!
+ * \brief Part of GL_ARB_imaging
+ * \param target GLenum
+ * \param internalformat GLenum
+ * \param width GLsizei
+ * \param format GLenum
+ * \param type GLenum
+ * \param table const void *
+ * \return void
+ */
+STATICINLINE void color_table(
+    group::color_table_target target,
+    group::internal_format    internalformat,
+    i32                       width,
+    group::pixel_format       format,
+    group::pixel_type         type,
+    span_const_void const&    table)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -174,20 +174,22 @@ requires(semantic::concepts::Span<span_const_void>)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
-         std::decay_t<typename span_const_f32::value_type>,
-         std::decay_t<f32>>)
-    /*!
-     * \brief Part of GL_ARB_imaging
-     * \param target GLenum
-     * \param pname GLenum
-     * \param params const GLfloat *
-     * \return void
-     */
-    STATICINLINE void color_table_parameter(
-        group::color_table_target         target,
-        group::color_table_parameter_prop pname,
-        span_const_f32 const&             params)
+requires(
+    semantic::concepts::Span<span_const_f32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_f32::value_type>,
+        std::decay_t<f32>>)
+/*!
+ * \brief Part of GL_ARB_imaging
+ * \param target GLenum
+ * \param pname GLenum
+ * \param params const GLfloat *
+ * \return void
+ */
+STATICINLINE void color_table_parameter(
+    group::color_table_target         target,
+    group::color_table_parameter_prop pname,
+    span_const_f32 const&             params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -205,20 +207,22 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_i32>
-requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
-         std::decay_t<typename span_const_i32::value_type>,
-         std::decay_t<i32>>)
-    /*!
-     * \brief Part of GL_ARB_imaging
-     * \param target GLenum
-     * \param pname GLenum
-     * \param params const GLint *
-     * \return void
-     */
-    STATICINLINE void color_table_parameter(
-        group::color_table_target         target,
-        group::color_table_parameter_prop pname,
-        span_const_i32 const&             params)
+requires(
+    semantic::concepts::Span<span_const_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_i32::value_type>,
+        std::decay_t<i32>>)
+/*!
+ * \brief Part of GL_ARB_imaging
+ * \param target GLenum
+ * \param pname GLenum
+ * \param params const GLint *
+ * \return void
+ */
+STATICINLINE void color_table_parameter(
+    group::color_table_target         target,
+    group::color_table_parameter_prop pname,
+    span_const_i32 const&             params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -237,23 +241,23 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
 #if defined(GL_VERSION_1_0)
 template<class span_const_void>
 requires(semantic::concepts::Span<span_const_void>)
-    /*!
-     * \brief Part of GL_ARB_imaging
-     * \param target GLenum
-     * \param internalformat GLenum
-     * \param width GLsizei
-     * \param format GLenum
-     * \param type GLenum
-     * \param image const void *
-     * \return void
-     */
-    STATICINLINE void convolution_filter_1d(
-        group::convolution_target target,
-        group::internal_format    internalformat,
-        i32                       width,
-        group::pixel_format       format,
-        group::pixel_type         type,
-        span_const_void const&    image)
+/*!
+ * \brief Part of GL_ARB_imaging
+ * \param target GLenum
+ * \param internalformat GLenum
+ * \param width GLsizei
+ * \param format GLenum
+ * \param type GLenum
+ * \param image const void *
+ * \return void
+ */
+STATICINLINE void convolution_filter_1d(
+    group::convolution_target target,
+    group::internal_format    internalformat,
+    i32                       width,
+    group::pixel_format       format,
+    group::pixel_type         type,
+    span_const_void const&    image)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -273,26 +277,27 @@ requires(semantic::concepts::Span<span_const_void>)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class size_2_i32, class span_const_void>
-requires(semantic::concepts::Size2D<size_2_i32, i32>&&
-             semantic::concepts::Span<span_const_void>)
-    /*!
-     * \brief Part of GL_ARB_imaging
-     * \param target GLenum
-     * \param internalformat GLenum
-     * \param width GLsizei
-     * \param height GLsizei
-     * \param format GLenum
-     * \param type GLenum
-     * \param image const void *
-     * \return void
-     */
-    STATICINLINE void convolution_filter_2d(
-        group::convolution_target target,
-        group::internal_format    internalformat,
-        size_2_i32 const&         width,
-        group::pixel_format       format,
-        group::pixel_type         type,
-        span_const_void const&    image)
+requires(
+    semantic::concepts::Size2D<size_2_i32, i32> &&
+    semantic::concepts::Span<span_const_void>)
+/*!
+ * \brief Part of GL_ARB_imaging
+ * \param target GLenum
+ * \param internalformat GLenum
+ * \param width GLsizei
+ * \param height GLsizei
+ * \param format GLenum
+ * \param type GLenum
+ * \param image const void *
+ * \return void
+ */
+STATICINLINE void convolution_filter_2d(
+    group::convolution_target target,
+    group::internal_format    internalformat,
+    size_2_i32 const&         width,
+    group::pixel_format       format,
+    group::pixel_type         type,
+    span_const_void const&    image)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -337,20 +342,22 @@ STATICINLINE void convolution_parameter(
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
-         std::decay_t<typename span_const_f32::value_type>,
-         std::decay_t<f32>>)
-    /*!
-     * \brief Part of GL_ARB_imaging
-     * \param target GLenum
-     * \param pname GLenum
-     * \param params const GLfloat *
-     * \return void
-     */
-    STATICINLINE void convolution_parameter(
-        group::convolution_target    target,
-        group::convolution_parameter pname,
-        span_const_f32 const&        params)
+requires(
+    semantic::concepts::Span<span_const_f32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_f32::value_type>,
+        std::decay_t<f32>>)
+/*!
+ * \brief Part of GL_ARB_imaging
+ * \param target GLenum
+ * \param pname GLenum
+ * \param params const GLfloat *
+ * \return void
+ */
+STATICINLINE void convolution_parameter(
+    group::convolution_target    target,
+    group::convolution_parameter pname,
+    span_const_f32 const&        params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -392,20 +399,22 @@ STATICINLINE void convolution_parameter(
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_i32>
-requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
-         std::decay_t<typename span_const_i32::value_type>,
-         std::decay_t<i32>>)
-    /*!
-     * \brief Part of GL_ARB_imaging
-     * \param target GLenum
-     * \param pname GLenum
-     * \param params const GLint *
-     * \return void
-     */
-    STATICINLINE void convolution_parameter(
-        group::convolution_target    target,
-        group::convolution_parameter pname,
-        span_const_i32 const&        params)
+requires(
+    semantic::concepts::Span<span_const_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_i32::value_type>,
+        std::decay_t<i32>>)
+/*!
+ * \brief Part of GL_ARB_imaging
+ * \param target GLenum
+ * \param pname GLenum
+ * \param params const GLint *
+ * \return void
+ */
+STATICINLINE void convolution_parameter(
+    group::convolution_target    target,
+    group::convolution_parameter pname,
+    span_const_i32 const&        params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -424,20 +433,17 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
 #if defined(GL_VERSION_1_0)
 template<class vec_2_i32>
 requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
-    /*!
-     * \brief Part of GL_ARB_imaging
-     * \param target GLenum
-     * \param start GLsizei
-     * \param x GLint
-     * \param y GLint
-     * \param width GLsizei
-     * \return void
-     */
-    STATICINLINE void copy_color_sub_table(
-        group::color_table_target target,
-        i32                       start,
-        vec_2_i32 const&          x,
-        i32                       width)
+/*!
+ * \brief Part of GL_ARB_imaging
+ * \param target GLenum
+ * \param start GLsizei
+ * \param x GLint
+ * \param y GLint
+ * \param width GLsizei
+ * \return void
+ */
+STATICINLINE void copy_color_sub_table(
+    group::color_table_target target, i32 start, vec_2_i32 const& x, i32 width)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -453,20 +459,20 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
 #if defined(GL_VERSION_1_0)
 template<class vec_2_i32>
 requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
-    /*!
-     * \brief Part of GL_ARB_imaging
-     * \param target GLenum
-     * \param internalformat GLenum
-     * \param x GLint
-     * \param y GLint
-     * \param width GLsizei
-     * \return void
-     */
-    STATICINLINE void copy_color_table(
-        group::color_table_target target,
-        group::internal_format    internalformat,
-        vec_2_i32 const&          x,
-        i32                       width)
+/*!
+ * \brief Part of GL_ARB_imaging
+ * \param target GLenum
+ * \param internalformat GLenum
+ * \param x GLint
+ * \param y GLint
+ * \param width GLsizei
+ * \return void
+ */
+STATICINLINE void copy_color_table(
+    group::color_table_target target,
+    group::internal_format    internalformat,
+    vec_2_i32 const&          x,
+    i32                       width)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -486,20 +492,20 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
 #if defined(GL_VERSION_1_0)
 template<class vec_2_i32>
 requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
-    /*!
-     * \brief Part of GL_ARB_imaging
-     * \param target GLenum
-     * \param internalformat GLenum
-     * \param x GLint
-     * \param y GLint
-     * \param width GLsizei
-     * \return void
-     */
-    STATICINLINE void copy_convolution_filter_1d(
-        group::convolution_target target,
-        group::internal_format    internalformat,
-        vec_2_i32 const&          x,
-        i32                       width)
+/*!
+ * \brief Part of GL_ARB_imaging
+ * \param target GLenum
+ * \param internalformat GLenum
+ * \param x GLint
+ * \param y GLint
+ * \param width GLsizei
+ * \return void
+ */
+STATICINLINE void copy_convolution_filter_1d(
+    group::convolution_target target,
+    group::internal_format    internalformat,
+    vec_2_i32 const&          x,
+    i32                       width)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -518,23 +524,24 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class size_2_i32, class vec_2_i32>
-requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
-             semantic::concepts::Size2D<size_2_i32, i32>)
-    /*!
-     * \brief Part of GL_ARB_imaging
-     * \param target GLenum
-     * \param internalformat GLenum
-     * \param x GLint
-     * \param y GLint
-     * \param width GLsizei
-     * \param height GLsizei
-     * \return void
-     */
-    STATICINLINE void copy_convolution_filter_2d(
-        group::convolution_target target,
-        group::internal_format    internalformat,
-        vec_2_i32 const&          x,
-        size_2_i32 const&         width)
+requires(
+    semantic::concepts::Vector<vec_2_i32, i32, 2> &&
+    semantic::concepts::Size2D<size_2_i32, i32>)
+/*!
+ * \brief Part of GL_ARB_imaging
+ * \param target GLenum
+ * \param internalformat GLenum
+ * \param x GLint
+ * \param y GLint
+ * \param width GLsizei
+ * \param height GLsizei
+ * \return void
+ */
+STATICINLINE void copy_convolution_filter_2d(
+    group::convolution_target target,
+    group::internal_format    internalformat,
+    vec_2_i32 const&          x,
+    size_2_i32 const&         width)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -555,19 +562,19 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
 #if defined(GL_VERSION_1_0)
 template<class span_void>
 requires(semantic::concepts::Span<span_void>)
-    /*!
-     * \brief Part of GL_ARB_imaging
-     * \param target GLenum
-     * \param format GLenum
-     * \param type GLenum
-     * \param table void *
-     * \return void
-     */
-    STATICINLINE void get_color_table(
-        group::color_table_target target,
-        group::pixel_format       format,
-        group::pixel_type         type,
-        span_void                 table)
+/*!
+ * \brief Part of GL_ARB_imaging
+ * \param target GLenum
+ * \param format GLenum
+ * \param type GLenum
+ * \param table void *
+ * \return void
+ */
+STATICINLINE void get_color_table(
+    group::color_table_target target,
+    group::pixel_format       format,
+    group::pixel_type         type,
+    span_void                 table)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -585,20 +592,22 @@ requires(semantic::concepts::Span<span_void>)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
-         std::decay_t<typename span_f32::value_type>,
-         std::decay_t<f32>>)
-    /*!
-     * \brief Part of GL_ARB_imaging
-     * \param target GLenum
-     * \param pname GLenum
-     * \param params GLfloat *
-     * \return void
-     */
-    STATICINLINE void get_color_table_parameter(
-        group::color_table_target         target,
-        group::color_table_parameter_prop pname,
-        span_f32                          params)
+requires(
+    semantic::concepts::Span<span_f32> &&
+    std::is_same_v<
+        std::decay_t<typename span_f32::value_type>,
+        std::decay_t<f32>>)
+/*!
+ * \brief Part of GL_ARB_imaging
+ * \param target GLenum
+ * \param pname GLenum
+ * \param params GLfloat *
+ * \return void
+ */
+STATICINLINE void get_color_table_parameter(
+    group::color_table_target         target,
+    group::color_table_parameter_prop pname,
+    span_f32                          params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -615,20 +624,22 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
-         std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>)
-    /*!
-     * \brief Part of GL_ARB_imaging
-     * \param target GLenum
-     * \param pname GLenum
-     * \param params GLint *
-     * \return void
-     */
-    STATICINLINE void get_color_table_parameter(
-        group::color_table_target         target,
-        group::color_table_parameter_prop pname,
-        span_i32                          params)
+requires(
+    semantic::concepts::Span<span_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_i32::value_type>,
+        std::decay_t<i32>>)
+/*!
+ * \brief Part of GL_ARB_imaging
+ * \param target GLenum
+ * \param pname GLenum
+ * \param params GLint *
+ * \return void
+ */
+STATICINLINE void get_color_table_parameter(
+    group::color_table_target         target,
+    group::color_table_parameter_prop pname,
+    span_i32                          params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -646,19 +657,19 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 #if defined(GL_VERSION_1_0)
 template<class span_void>
 requires(semantic::concepts::Span<span_void>)
-    /*!
-     * \brief Part of GL_ARB_imaging
-     * \param target GLenum
-     * \param format GLenum
-     * \param type GLenum
-     * \param image void *
-     * \return void
-     */
-    STATICINLINE void get_convolution_filter(
-        group::convolution_target target,
-        group::pixel_format       format,
-        group::pixel_type         type,
-        span_void                 image)
+/*!
+ * \brief Part of GL_ARB_imaging
+ * \param target GLenum
+ * \param format GLenum
+ * \param type GLenum
+ * \param image void *
+ * \return void
+ */
+STATICINLINE void get_convolution_filter(
+    group::convolution_target target,
+    group::pixel_format       format,
+    group::pixel_type         type,
+    span_void                 image)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -676,20 +687,22 @@ requires(semantic::concepts::Span<span_void>)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
-         std::decay_t<typename span_f32::value_type>,
-         std::decay_t<f32>>)
-    /*!
-     * \brief Part of GL_ARB_imaging
-     * \param target GLenum
-     * \param pname GLenum
-     * \param params GLfloat *
-     * \return void
-     */
-    STATICINLINE void get_convolution_parameter(
-        group::convolution_target    target,
-        group::convolution_parameter pname,
-        span_f32                     params)
+requires(
+    semantic::concepts::Span<span_f32> &&
+    std::is_same_v<
+        std::decay_t<typename span_f32::value_type>,
+        std::decay_t<f32>>)
+/*!
+ * \brief Part of GL_ARB_imaging
+ * \param target GLenum
+ * \param pname GLenum
+ * \param params GLfloat *
+ * \return void
+ */
+STATICINLINE void get_convolution_parameter(
+    group::convolution_target    target,
+    group::convolution_parameter pname,
+    span_f32                     params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -706,20 +719,22 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
-         std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>)
-    /*!
-     * \brief Part of GL_ARB_imaging
-     * \param target GLenum
-     * \param pname GLenum
-     * \param params GLint *
-     * \return void
-     */
-    STATICINLINE void get_convolution_parameter(
-        group::convolution_target    target,
-        group::convolution_parameter pname,
-        span_i32                     params)
+requires(
+    semantic::concepts::Span<span_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_i32::value_type>,
+        std::decay_t<i32>>)
+/*!
+ * \brief Part of GL_ARB_imaging
+ * \param target GLenum
+ * \param pname GLenum
+ * \param params GLint *
+ * \return void
+ */
+STATICINLINE void get_convolution_parameter(
+    group::convolution_target    target,
+    group::convolution_parameter pname,
+    span_i32                     params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -737,21 +752,21 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 #if defined(GL_VERSION_1_0)
 template<class span_void>
 requires(semantic::concepts::Span<span_void>)
-    /*!
-     * \brief Part of GL_ARB_imaging
-     * \param target GLenum
-     * \param reset GLboolean
-     * \param format GLenum
-     * \param type GLenum
-     * \param values void *
-     * \return void
-     */
-    STATICINLINE void get_histogram(
-        group::histogram_target_ext target,
-        bool                        reset,
-        group::pixel_format         format,
-        group::pixel_type           type,
-        span_void                   values)
+/*!
+ * \brief Part of GL_ARB_imaging
+ * \param target GLenum
+ * \param reset GLboolean
+ * \param format GLenum
+ * \param type GLenum
+ * \param values void *
+ * \return void
+ */
+STATICINLINE void get_histogram(
+    group::histogram_target_ext target,
+    bool                        reset,
+    group::pixel_format         format,
+    group::pixel_type           type,
+    span_void                   values)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -770,20 +785,22 @@ requires(semantic::concepts::Span<span_void>)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
-         std::decay_t<typename span_f32::value_type>,
-         std::decay_t<f32>>)
-    /*!
-     * \brief Part of GL_ARB_imaging
-     * \param target GLenum
-     * \param pname GLenum
-     * \param params GLfloat *
-     * \return void
-     */
-    STATICINLINE void get_histogram_parameter(
-        group::histogram_target_ext             target,
-        group::get_histogram_parameter_prop_ext pname,
-        span_f32                                params)
+requires(
+    semantic::concepts::Span<span_f32> &&
+    std::is_same_v<
+        std::decay_t<typename span_f32::value_type>,
+        std::decay_t<f32>>)
+/*!
+ * \brief Part of GL_ARB_imaging
+ * \param target GLenum
+ * \param pname GLenum
+ * \param params GLfloat *
+ * \return void
+ */
+STATICINLINE void get_histogram_parameter(
+    group::histogram_target_ext             target,
+    group::get_histogram_parameter_prop_ext pname,
+    span_f32                                params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -800,20 +817,22 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
-         std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>)
-    /*!
-     * \brief Part of GL_ARB_imaging
-     * \param target GLenum
-     * \param pname GLenum
-     * \param params GLint *
-     * \return void
-     */
-    STATICINLINE void get_histogram_parameter(
-        group::histogram_target_ext             target,
-        group::get_histogram_parameter_prop_ext pname,
-        span_i32                                params)
+requires(
+    semantic::concepts::Span<span_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_i32::value_type>,
+        std::decay_t<i32>>)
+/*!
+ * \brief Part of GL_ARB_imaging
+ * \param target GLenum
+ * \param pname GLenum
+ * \param params GLint *
+ * \return void
+ */
+STATICINLINE void get_histogram_parameter(
+    group::histogram_target_ext             target,
+    group::get_histogram_parameter_prop_ext pname,
+    span_i32                                params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -831,21 +850,21 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 #if defined(GL_VERSION_1_0)
 template<class span_void>
 requires(semantic::concepts::Span<span_void>)
-    /*!
-     * \brief Part of GL_ARB_imaging
-     * \param target GLenum
-     * \param reset GLboolean
-     * \param format GLenum
-     * \param type GLenum
-     * \param values void *
-     * \return void
-     */
-    STATICINLINE void get_minmax(
-        group::minmax_target_ext target,
-        bool                     reset,
-        group::pixel_format      format,
-        group::pixel_type        type,
-        span_void                values)
+/*!
+ * \brief Part of GL_ARB_imaging
+ * \param target GLenum
+ * \param reset GLboolean
+ * \param format GLenum
+ * \param type GLenum
+ * \param values void *
+ * \return void
+ */
+STATICINLINE void get_minmax(
+    group::minmax_target_ext target,
+    bool                     reset,
+    group::pixel_format      format,
+    group::pixel_type        type,
+    span_void                values)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -864,20 +883,22 @@ requires(semantic::concepts::Span<span_void>)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
-         std::decay_t<typename span_f32::value_type>,
-         std::decay_t<f32>>)
-    /*!
-     * \brief Part of GL_ARB_imaging
-     * \param target GLenum
-     * \param pname GLenum
-     * \param params GLfloat *
-     * \return void
-     */
-    STATICINLINE void get_minmax_parameter(
-        group::minmax_target_ext             target,
-        group::get_minmax_parameter_prop_ext pname,
-        span_f32                             params)
+requires(
+    semantic::concepts::Span<span_f32> &&
+    std::is_same_v<
+        std::decay_t<typename span_f32::value_type>,
+        std::decay_t<f32>>)
+/*!
+ * \brief Part of GL_ARB_imaging
+ * \param target GLenum
+ * \param pname GLenum
+ * \param params GLfloat *
+ * \return void
+ */
+STATICINLINE void get_minmax_parameter(
+    group::minmax_target_ext             target,
+    group::get_minmax_parameter_prop_ext pname,
+    span_f32                             params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -894,20 +915,22 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
-         std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>)
-    /*!
-     * \brief Part of GL_ARB_imaging
-     * \param target GLenum
-     * \param pname GLenum
-     * \param params GLint *
-     * \return void
-     */
-    STATICINLINE void get_minmax_parameter(
-        group::minmax_target_ext             target,
-        group::get_minmax_parameter_prop_ext pname,
-        span_i32                             params)
+requires(
+    semantic::concepts::Span<span_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_i32::value_type>,
+        std::decay_t<i32>>)
+/*!
+ * \brief Part of GL_ARB_imaging
+ * \param target GLenum
+ * \param pname GLenum
+ * \param params GLint *
+ * \return void
+ */
+STATICINLINE void get_minmax_parameter(
+    group::minmax_target_ext             target,
+    group::get_minmax_parameter_prop_ext pname,
+    span_i32                             params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -925,23 +948,23 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 #if defined(GL_VERSION_1_0)
 template<class span_void>
 requires(semantic::concepts::Span<span_void>)
-    /*!
-     * \brief Part of GL_ARB_imaging
-     * \param target GLenum
-     * \param format GLenum
-     * \param type GLenum
-     * \param row void *
-     * \param column void *
-     * \param span void *
-     * \return void
-     */
-    STATICINLINE void get_separable_filter(
-        group::separable_target_ext target,
-        group::pixel_format         format,
-        group::pixel_type           type,
-        span_void                   row,
-        span_void                   column,
-        span_void                   span)
+/*!
+ * \brief Part of GL_ARB_imaging
+ * \param target GLenum
+ * \param format GLenum
+ * \param type GLenum
+ * \param row void *
+ * \param column void *
+ * \param span void *
+ * \return void
+ */
+STATICINLINE void get_separable_filter(
+    group::separable_target_ext target,
+    group::pixel_format         format,
+    group::pixel_type           type,
+    span_void                   row,
+    span_void                   column,
+    span_void                   span)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1050,28 +1073,29 @@ STATICINLINE void reset_minmax(group::minmax_target_ext target)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class size_2_i32, class span_const_void>
-requires(semantic::concepts::Size2D<size_2_i32, i32>&&
-             semantic::concepts::Span<span_const_void>)
-    /*!
-     * \brief Part of GL_ARB_imaging
-     * \param target GLenum
-     * \param internalformat GLenum
-     * \param width GLsizei
-     * \param height GLsizei
-     * \param format GLenum
-     * \param type GLenum
-     * \param row const void *
-     * \param column const void *
-     * \return void
-     */
-    STATICINLINE void separable_filter_2d(
-        group::separable_target_ext target,
-        group::internal_format      internalformat,
-        size_2_i32 const&           width,
-        group::pixel_format         format,
-        group::pixel_type           type,
-        span_const_void const&      row,
-        span_const_void const&      column)
+requires(
+    semantic::concepts::Size2D<size_2_i32, i32> &&
+    semantic::concepts::Span<span_const_void>)
+/*!
+ * \brief Part of GL_ARB_imaging
+ * \param target GLenum
+ * \param internalformat GLenum
+ * \param width GLsizei
+ * \param height GLsizei
+ * \param format GLenum
+ * \param type GLenum
+ * \param row const void *
+ * \param column const void *
+ * \return void
+ */
+STATICINLINE void separable_filter_2d(
+    group::separable_target_ext target,
+    group::internal_format      internalformat,
+    size_2_i32 const&           width,
+    group::pixel_format         format,
+    group::pixel_type           type,
+    span_const_void const&      row,
+    span_const_void const&      column)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

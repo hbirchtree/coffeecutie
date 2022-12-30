@@ -40,12 +40,12 @@ struct alignas(8) chunk_header
 };
 
 bool compressor::Compress(
-    semantic::Bytes const&  uncompressed,
-    semantic::Bytes*        target,
-    compressor::opts const& opts,
-    error_code&             ec)
+    semantic::Span<const libc_types::u8> const& uncompressed,
+    semantic::mem_chunk<libc_types::u8>*        target,
+    compressor::opts const&                     opts,
+    error_code&                                 ec)
 {
-    if(uncompressed.size > std::numeric_limits<int>::max())
+    if(uncompressed.size() > std::numeric_limits<int>::max())
     {
         ec = error::exceeds_file_size_limit;
         return false;
@@ -56,42 +56,41 @@ bool compressor::Compress(
                                             : LZ4_sizeofState());
 
     int approx_size =
-        LZ4_compressBound(C_FCAST<libc_types::i32>(uncompressed.size));
+        LZ4_compressBound(C_FCAST<libc_types::i32>(uncompressed.size()));
 
-    *target = semantic::Bytes::withSize(
+    target->resize(
         C_FCAST<libc_types::u32>(approx_size) + sizeof(chunk_header));
 
     chunk_header& header = *C_RCAST<chunk_header*>(target->data);
 
     header.magic     = chunk_header::header_magic;
-    header.real_size = C_FCAST<libc_types::u32>(uncompressed.size);
+    header.real_size = C_FCAST<libc_types::u32>(uncompressed.size());
 
-    auto contentChunk = *target->at(sizeof(chunk_header));
+    auto contentChunk = semantic::SpanOver<libc_types::u8>(
+        target->begin() + sizeof(chunk_header), target->end());
 
     int result;
 
     switch(opts.mode)
     {
     case compression_mode::fast:
-    case compression_mode::default_:
-    {
+    case compression_mode::default_: {
         result = LZ4_compress_fast_extState(
             state.data,
-            C_RCAST<const char*>(uncompressed.data),
-            C_RCAST<char*>(contentChunk.data),
-            C_FCAST<int>(uncompressed.size),
-            C_FCAST<int>(contentChunk.size),
+            C_RCAST<const char*>(uncompressed.data()),
+            C_RCAST<char*>(contentChunk.data()),
+            C_FCAST<int>(uncompressed.size()),
+            C_FCAST<int>(contentChunk.size()),
             opts.mode == compression_mode::default_ ? 0
                                                     : opts.fast_acceleration);
         break;
     }
-    case compression_mode::high:
-    {
+    case compression_mode::high: {
         result = LZ4_compress_HC_extStateHC(
             state.data,
-            C_RCAST<const char*>(uncompressed.data),
+            C_RCAST<const char*>(uncompressed.data()),
             C_RCAST<char*>(target->data + sizeof(chunk_header)),
-            C_FCAST<int>(uncompressed.size),
+            C_FCAST<int>(uncompressed.size()),
             C_FCAST<int>(target->size - sizeof(chunk_header)),
             opts.high_compression);
         break;
@@ -100,8 +99,7 @@ bool compressor::Compress(
 
     if(result > 0)
     {
-        target->size = C_FCAST<libc_types::u32>(result) + sizeof(chunk_header);
-        target->elements = target->size;
+        target->resize(C_FCAST<libc_types::u32>(result) + sizeof(chunk_header));
         return true;
     } else
     {
@@ -111,24 +109,24 @@ bool compressor::Compress(
 }
 
 bool compressor::Decompress(
-    semantic::Bytes const& compressed,
-    semantic::Bytes*       target,
+    semantic::Span<const libc_types::u8> const& compressed,
+    semantic::mem_chunk<libc_types::u8>*        target,
     compressor::opts const&,
     error_code& ec)
 {
-    if(compressed.size < sizeof(chunk_header))
+    if(compressed.size() < sizeof(chunk_header))
     {
         ec = error::not_enough_data;
         return false;
     }
 
-    if(compressed.size > std::numeric_limits<int>::max())
+    if(compressed.size() > std::numeric_limits<int>::max())
     {
         ec = error::exceeds_file_size_limit;
         return false;
     }
 
-    chunk_header& header = *C_RCAST<chunk_header*>(compressed.data);
+    auto& header = *C_RCAST<const chunk_header*>(compressed.data());
 
     if(header.magic != chunk_header::header_magic)
     {
@@ -142,14 +140,14 @@ bool compressor::Decompress(
         return false;
     }
 
-    *target = semantic::Bytes::withSize(header.real_size);
+    target->resize(header.real_size);
 
-    auto contentChunk = compressed.at(sizeof(chunk_header));
+    auto contentChunk = compressed.subspan(sizeof(chunk_header));
 
     int result = LZ4_decompress_safe(
-        C_RCAST<const char*>(compressed.data + sizeof(chunk_header)),
+        C_RCAST<const char*>(compressed.data() + sizeof(chunk_header)),
         C_RCAST<char*>(target->data),
-        C_FCAST<int>(compressed.size - sizeof(chunk_header)),
+        C_FCAST<int>(compressed.size() - sizeof(chunk_header)),
         C_FCAST<int>(target->size));
 
     if(result > 0 && target->size != result)

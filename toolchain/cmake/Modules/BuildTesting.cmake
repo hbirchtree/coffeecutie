@@ -105,6 +105,10 @@ function(COFFEE_TEST)
             )
     endif()
 
+    target_compile_definitions ( ${TEST_TITLE} PUBLIC
+        -DCOFFEE_COMPONENT_NAME="${TEST_TITLE}"
+        )
+
     target_enable_cxx11( ${TEST_TITLE} )
 
     if(IOS)

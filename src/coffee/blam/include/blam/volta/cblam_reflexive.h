@@ -55,14 +55,15 @@ struct alignas(4) reflexive_t
     {
         using namespace std::string_view_literals;
 
-        if(std::is_same_v<V, grbx_t> && (pad.padding >> 16) != 0)
-            return stl_types::failure("invalid reflexive_t"sv);
+        auto padding = pad.padding >> 16;
+//        if(std::is_same_v<V, grbx_t> && padding != 0)
+//            return stl_types::failure("invalid reflexive_t"sv);
+
+        if(count == 0)
+            return stl_types::success(span_type{});
 
         if((offset - magic.magic_offset) > magic.max_size)
             return stl_types::failure("reflexive pointer out of bounds"sv);
-
-        if(count == 0)
-            return stl_types::failure("no data"sv);
 
         span_type chunk = chunk_type::of(
                    C_RCAST<T const*>(

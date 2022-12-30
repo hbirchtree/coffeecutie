@@ -329,34 +329,14 @@
 #undef COFFEE_USE_POSIX_BASENAME
 #endif
 
-#include "video_quirks.h"
-
 /*
  *
  * And here comes some simplification for configuration issues
  *
  */
 
-#if defined(COFFEE_ONLY_GLES20) && defined(COFFEE_GLEAM_DESKTOP)
-#error Invalid configuration detected, cannot use GLES2.0 mode with desktop GL!
-#endif
-#if defined(COFFEE_GLEAM_DESKTOP) && defined(COFFEE_USE_MAEMO_EGL)
-#error Invalid configuration detected, cannot use EGL with OpenGL (non-ES)!
-#endif
-
-#if defined(COFFEE_ANDROID) || defined(COFFEE_IOS) || \
-    defined(COFFEE_APPLE_MOBILE)
+#if defined(COFFEE_ANDROID) || defined(COFFEE_IOS) || defined(COFFEE_MACOS)
 #define COFFEE_FIXED_RESOURCE_DIR 1
 #else
 #define COFFEE_FIXED_RESOURCE_DIR 0
-#endif
-
-#if defined(COFFEE_BEAGLEBONE)
-/* Fix some symbol versioning for BeagleBone, very hacky */
-__asm__(".symver fcntl,fcntl@GLIBC_2.4");
-#endif
-
-#if defined(__MUSL__)
-#define COFFEE_NO_CANONICALIZE 1
-#define COFFEE_MUSL
 #endif

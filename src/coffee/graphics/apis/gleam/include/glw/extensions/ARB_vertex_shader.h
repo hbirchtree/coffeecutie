@@ -64,18 +64,20 @@ constexpr libc_types::u32 object_active_attributes           = 0x8B89;
 constexpr libc_types::u32 object_active_attribute_max_length = 0x8B8A;
 } // namespace values
 template<class span_const_GLcharARB>
-requires(semantic::concepts::Span<span_const_GLcharARB>&& std::is_same_v<
-         std::decay_t<typename span_const_GLcharARB::value_type>,
-         std::decay_t<GLcharARB>>)
-    /*!
-     * \brief Part of GL_ARB_vertex_shader
-     * \param programObj GLhandleARB
-     * \param index GLuint
-     * \param name const GLcharARB *
-     * \return void
-     */
-    STATICINLINE void bind_attrib_location(
-        GLhandleARB programObj, u32 index, span_const_GLcharARB const& name)
+requires(
+    semantic::concepts::Span<span_const_GLcharARB> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLcharARB::value_type>,
+        std::decay_t<GLcharARB>>)
+/*!
+ * \brief Part of GL_ARB_vertex_shader
+ * \param programObj GLhandleARB
+ * \param index GLuint
+ * \param name const GLcharARB *
+ * \return void
+ */
+STATICINLINE void bind_attrib_location(
+    GLhandleARB programObj, u32 index, span_const_GLcharARB const& name)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -123,27 +125,29 @@ STATICINLINE void enable_vertex_attrib_array(u32 index)
 }
 
 template<class span_GLcharARB>
-requires(semantic::concepts::Span<span_GLcharARB>&& std::is_same_v<
-         std::decay_t<typename span_GLcharARB::value_type>,
-         std::decay_t<GLcharARB>>)
-    /*!
-     * \brief Part of GL_ARB_vertex_shader
-     * \param programObj GLhandleARB
-     * \param index GLuint
-     * \param maxLength GLsizei
-     * \param length GLsizei *
-     * \param size GLint *
-     * \param type GLenum *
-     * \param name GLcharARB *
-     * \return void
-     */
-    STATICINLINE void get_active_attrib(
-        GLhandleARB    programObj,
-        u32            index,
-        i32&           length,
-        i32&           size,
-        GLenum&        type,
-        span_GLcharARB name)
+requires(
+    semantic::concepts::Span<span_GLcharARB> &&
+    std::is_same_v<
+        std::decay_t<typename span_GLcharARB::value_type>,
+        std::decay_t<GLcharARB>>)
+/*!
+ * \brief Part of GL_ARB_vertex_shader
+ * \param programObj GLhandleARB
+ * \param index GLuint
+ * \param maxLength GLsizei
+ * \param length GLsizei *
+ * \param size GLint *
+ * \param type GLenum *
+ * \param name GLcharARB *
+ * \return void
+ */
+STATICINLINE void get_active_attrib(
+    GLhandleARB    programObj,
+    u32            index,
+    i32&           length,
+    i32&           size,
+    GLenum&        type,
+    span_GLcharARB name)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -162,17 +166,19 @@ requires(semantic::concepts::Span<span_GLcharARB>&& std::is_same_v<
 }
 
 template<class span_const_GLcharARB>
-requires(semantic::concepts::Span<span_const_GLcharARB>&& std::is_same_v<
-         std::decay_t<typename span_const_GLcharARB::value_type>,
-         std::decay_t<GLcharARB>>)
-    /*!
-     * \brief Part of GL_ARB_vertex_shader
-     * \param programObj GLhandleARB
-     * \param name const GLcharARB *
-     * \return GLint
-     */
-    STATICINLINE GLint get_attrib_location(
-        GLhandleARB programObj, span_const_GLcharARB const& name)
+requires(
+    semantic::concepts::Span<span_const_GLcharARB> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLcharARB::value_type>,
+        std::decay_t<GLcharARB>>)
+/*!
+ * \brief Part of GL_ARB_vertex_shader
+ * \param programObj GLhandleARB
+ * \param name const GLcharARB *
+ * \return GLint
+ */
+STATICINLINE GLint get_attrib_location(
+    GLhandleARB programObj, span_const_GLcharARB const& name)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -189,17 +195,17 @@ requires(semantic::concepts::Span<span_const_GLcharARB>&& std::is_same_v<
 
 template<class span_void>
 requires(semantic::concepts::Span<span_void>)
-    /*!
-     * \brief Part of GL_ARB_vertex_shader
-     * \param index GLuint
-     * \param pname GLenum
-     * \param pointer void **
-     * \return void
-     */
-    STATICINLINE void get_vertex_attrib_pointerv(
-        u32                                       index,
-        group::vertex_attrib_pointer_property_arb pname,
-        span_void                                 pointer)
+/*!
+ * \brief Part of GL_ARB_vertex_shader
+ * \param index GLuint
+ * \param pname GLenum
+ * \param pointer void **
+ * \return void
+ */
+STATICINLINE void get_vertex_attrib_pointerv(
+    u32                                       index,
+    group::vertex_attrib_pointer_property_arb pname,
+    span_void                                 pointer)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -214,18 +220,20 @@ requires(semantic::concepts::Span<span_void>)
 }
 
 template<class span_f64>
-requires(semantic::concepts::Span<span_f64>&& std::is_same_v<
-         std::decay_t<typename span_f64::value_type>,
-         std::decay_t<f64>>)
-    /*!
-     * \brief Part of GL_ARB_vertex_shader
-     * \param index GLuint
-     * \param pname GLenum
-     * \param params GLdouble *
-     * \return void
-     */
-    STATICINLINE void get_vertex_attribdv(
-        u32 index, group::vertex_attrib_property_arb pname, span_f64 params)
+requires(
+    semantic::concepts::Span<span_f64> &&
+    std::is_same_v<
+        std::decay_t<typename span_f64::value_type>,
+        std::decay_t<f64>>)
+/*!
+ * \brief Part of GL_ARB_vertex_shader
+ * \param index GLuint
+ * \param pname GLenum
+ * \param params GLdouble *
+ * \return void
+ */
+STATICINLINE void get_vertex_attribdv(
+    u32 index, group::vertex_attrib_property_arb pname, span_f64 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -240,18 +248,20 @@ requires(semantic::concepts::Span<span_f64>&& std::is_same_v<
 }
 
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
-         std::decay_t<typename span_f32::value_type>,
-         std::decay_t<f32>>)
-    /*!
-     * \brief Part of GL_ARB_vertex_shader
-     * \param index GLuint
-     * \param pname GLenum
-     * \param params GLfloat *
-     * \return void
-     */
-    STATICINLINE void get_vertex_attribfv(
-        u32 index, group::vertex_attrib_property_arb pname, span_f32 params)
+requires(
+    semantic::concepts::Span<span_f32> &&
+    std::is_same_v<
+        std::decay_t<typename span_f32::value_type>,
+        std::decay_t<f32>>)
+/*!
+ * \brief Part of GL_ARB_vertex_shader
+ * \param index GLuint
+ * \param pname GLenum
+ * \param params GLfloat *
+ * \return void
+ */
+STATICINLINE void get_vertex_attribfv(
+    u32 index, group::vertex_attrib_property_arb pname, span_f32 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -266,18 +276,20 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
-         std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>)
-    /*!
-     * \brief Part of GL_ARB_vertex_shader
-     * \param index GLuint
-     * \param pname GLenum
-     * \param params GLint *
-     * \return void
-     */
-    STATICINLINE void get_vertex_attribiv(
-        u32 index, group::vertex_attrib_property_arb pname, span_i32 params)
+requires(
+    semantic::concepts::Span<span_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_i32::value_type>,
+        std::decay_t<i32>>)
+/*!
+ * \brief Part of GL_ARB_vertex_shader
+ * \param index GLuint
+ * \param pname GLenum
+ * \param params GLint *
+ * \return void
+ */
+STATICINLINE void get_vertex_attribiv(
+    u32 index, group::vertex_attrib_property_arb pname, span_i32 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -309,16 +321,18 @@ STATICINLINE void vertex_attrib1d(u32 index, f64 x)
 }
 
 template<class span_const_f64>
-requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
-         std::decay_t<typename span_const_f64::value_type>,
-         std::decay_t<f64>>)
-    /*!
-     * \brief Part of GL_ARB_vertex_shader
-     * \param index GLuint
-     * \param v const GLdouble *
-     * \return void
-     */
-    STATICINLINE void vertex_attrib1dv(u32 index, span_const_f64 const& v)
+requires(
+    semantic::concepts::Span<span_const_f64> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_f64::value_type>,
+        std::decay_t<f64>>)
+/*!
+ * \brief Part of GL_ARB_vertex_shader
+ * \param index GLuint
+ * \param v const GLdouble *
+ * \return void
+ */
+STATICINLINE void vertex_attrib1dv(u32 index, span_const_f64 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -347,16 +361,18 @@ STATICINLINE void vertex_attrib1f(u32 index, f32 x)
 }
 
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
-         std::decay_t<typename span_const_f32::value_type>,
-         std::decay_t<f32>>)
-    /*!
-     * \brief Part of GL_ARB_vertex_shader
-     * \param index GLuint
-     * \param v const GLfloat *
-     * \return void
-     */
-    STATICINLINE void vertex_attrib1fv(u32 index, span_const_f32 const& v)
+requires(
+    semantic::concepts::Span<span_const_f32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_f32::value_type>,
+        std::decay_t<f32>>)
+/*!
+ * \brief Part of GL_ARB_vertex_shader
+ * \param index GLuint
+ * \param v const GLfloat *
+ * \return void
+ */
+STATICINLINE void vertex_attrib1fv(u32 index, span_const_f32 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -385,16 +401,18 @@ STATICINLINE void vertex_attrib1s(u32 index, i16 x)
 }
 
 template<class span_const_i16>
-requires(semantic::concepts::Span<span_const_i16>&& std::is_same_v<
-         std::decay_t<typename span_const_i16::value_type>,
-         std::decay_t<i16>>)
-    /*!
-     * \brief Part of GL_ARB_vertex_shader
-     * \param index GLuint
-     * \param v const GLshort *
-     * \return void
-     */
-    STATICINLINE void vertex_attrib1sv(u32 index, span_const_i16 const& v)
+requires(
+    semantic::concepts::Span<span_const_i16> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_i16::value_type>,
+        std::decay_t<i16>>)
+/*!
+ * \brief Part of GL_ARB_vertex_shader
+ * \param index GLuint
+ * \param v const GLshort *
+ * \return void
+ */
+STATICINLINE void vertex_attrib1sv(u32 index, span_const_i16 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -407,14 +425,14 @@ requires(semantic::concepts::Span<span_const_i16>&& std::is_same_v<
 
 template<class vec_2_f64>
 requires(semantic::concepts::Vector<vec_2_f64, f64, 2>)
-    /*!
-     * \brief Part of GL_ARB_vertex_shader
-     * \param index GLuint
-     * \param x GLdouble
-     * \param y GLdouble
-     * \return void
-     */
-    STATICINLINE void vertex_attrib2d(u32 index, vec_2_f64 const& x)
+/*!
+ * \brief Part of GL_ARB_vertex_shader
+ * \param index GLuint
+ * \param x GLdouble
+ * \param y GLdouble
+ * \return void
+ */
+STATICINLINE void vertex_attrib2d(u32 index, vec_2_f64 const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -426,15 +444,17 @@ requires(semantic::concepts::Vector<vec_2_f64, f64, 2>)
 }
 
 template<class span_const_vec_2_f64>
-requires(semantic::concepts::Span<span_const_vec_2_f64>&& semantic::concepts::
-             Vector<typename span_const_vec_2_f64::value_type, f64, 2>)
-    /*!
-     * \brief Part of GL_ARB_vertex_shader
-     * \param index GLuint
-     * \param v const GLdouble *
-     * \return void
-     */
-    STATICINLINE void vertex_attrib2dv(u32 index, span_const_vec_2_f64 const& v)
+requires(
+    semantic::concepts::Span<span_const_vec_2_f64> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_2_f64::value_type, f64, 2>)
+/*!
+ * \brief Part of GL_ARB_vertex_shader
+ * \param index GLuint
+ * \param v const GLdouble *
+ * \return void
+ */
+STATICINLINE void vertex_attrib2dv(u32 index, span_const_vec_2_f64 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -447,14 +467,14 @@ requires(semantic::concepts::Span<span_const_vec_2_f64>&& semantic::concepts::
 
 template<class vec_2_f32>
 requires(semantic::concepts::Vector<vec_2_f32, f32, 2>)
-    /*!
-     * \brief Part of GL_ARB_vertex_shader
-     * \param index GLuint
-     * \param x GLfloat
-     * \param y GLfloat
-     * \return void
-     */
-    STATICINLINE void vertex_attrib2f(u32 index, vec_2_f32 const& x)
+/*!
+ * \brief Part of GL_ARB_vertex_shader
+ * \param index GLuint
+ * \param x GLfloat
+ * \param y GLfloat
+ * \return void
+ */
+STATICINLINE void vertex_attrib2f(u32 index, vec_2_f32 const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -466,15 +486,17 @@ requires(semantic::concepts::Vector<vec_2_f32, f32, 2>)
 }
 
 template<class span_const_vec_2_f32>
-requires(semantic::concepts::Span<span_const_vec_2_f32>&& semantic::concepts::
-             Vector<typename span_const_vec_2_f32::value_type, f32, 2>)
-    /*!
-     * \brief Part of GL_ARB_vertex_shader
-     * \param index GLuint
-     * \param v const GLfloat *
-     * \return void
-     */
-    STATICINLINE void vertex_attrib2fv(u32 index, span_const_vec_2_f32 const& v)
+requires(
+    semantic::concepts::Span<span_const_vec_2_f32> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_2_f32::value_type, f32, 2>)
+/*!
+ * \brief Part of GL_ARB_vertex_shader
+ * \param index GLuint
+ * \param v const GLfloat *
+ * \return void
+ */
+STATICINLINE void vertex_attrib2fv(u32 index, span_const_vec_2_f32 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -487,14 +509,14 @@ requires(semantic::concepts::Span<span_const_vec_2_f32>&& semantic::concepts::
 
 template<class vec_2_i16>
 requires(semantic::concepts::Vector<vec_2_i16, i16, 2>)
-    /*!
-     * \brief Part of GL_ARB_vertex_shader
-     * \param index GLuint
-     * \param x GLshort
-     * \param y GLshort
-     * \return void
-     */
-    STATICINLINE void vertex_attrib2s(u32 index, vec_2_i16 const& x)
+/*!
+ * \brief Part of GL_ARB_vertex_shader
+ * \param index GLuint
+ * \param x GLshort
+ * \param y GLshort
+ * \return void
+ */
+STATICINLINE void vertex_attrib2s(u32 index, vec_2_i16 const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -506,15 +528,17 @@ requires(semantic::concepts::Vector<vec_2_i16, i16, 2>)
 }
 
 template<class span_const_vec_2_i16>
-requires(semantic::concepts::Span<span_const_vec_2_i16>&& semantic::concepts::
-             Vector<typename span_const_vec_2_i16::value_type, i16, 2>)
-    /*!
-     * \brief Part of GL_ARB_vertex_shader
-     * \param index GLuint
-     * \param v const GLshort *
-     * \return void
-     */
-    STATICINLINE void vertex_attrib2sv(u32 index, span_const_vec_2_i16 const& v)
+requires(
+    semantic::concepts::Span<span_const_vec_2_i16> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_2_i16::value_type, i16, 2>)
+/*!
+ * \brief Part of GL_ARB_vertex_shader
+ * \param index GLuint
+ * \param v const GLshort *
+ * \return void
+ */
+STATICINLINE void vertex_attrib2sv(u32 index, span_const_vec_2_i16 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -527,15 +551,15 @@ requires(semantic::concepts::Span<span_const_vec_2_i16>&& semantic::concepts::
 
 template<class vec_3_f64>
 requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
-    /*!
-     * \brief Part of GL_ARB_vertex_shader
-     * \param index GLuint
-     * \param x GLdouble
-     * \param y GLdouble
-     * \param z GLdouble
-     * \return void
-     */
-    STATICINLINE void vertex_attrib3d(u32 index, vec_3_f64 const& x)
+/*!
+ * \brief Part of GL_ARB_vertex_shader
+ * \param index GLuint
+ * \param x GLdouble
+ * \param y GLdouble
+ * \param z GLdouble
+ * \return void
+ */
+STATICINLINE void vertex_attrib3d(u32 index, vec_3_f64 const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -547,15 +571,17 @@ requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
 }
 
 template<class span_const_vec_3_f64>
-requires(semantic::concepts::Span<span_const_vec_3_f64>&& semantic::concepts::
-             Vector<typename span_const_vec_3_f64::value_type, f64, 3>)
-    /*!
-     * \brief Part of GL_ARB_vertex_shader
-     * \param index GLuint
-     * \param v const GLdouble *
-     * \return void
-     */
-    STATICINLINE void vertex_attrib3dv(u32 index, span_const_vec_3_f64 const& v)
+requires(
+    semantic::concepts::Span<span_const_vec_3_f64> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_3_f64::value_type, f64, 3>)
+/*!
+ * \brief Part of GL_ARB_vertex_shader
+ * \param index GLuint
+ * \param v const GLdouble *
+ * \return void
+ */
+STATICINLINE void vertex_attrib3dv(u32 index, span_const_vec_3_f64 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -568,15 +594,15 @@ requires(semantic::concepts::Span<span_const_vec_3_f64>&& semantic::concepts::
 
 template<class vec_3_f32>
 requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
-    /*!
-     * \brief Part of GL_ARB_vertex_shader
-     * \param index GLuint
-     * \param x GLfloat
-     * \param y GLfloat
-     * \param z GLfloat
-     * \return void
-     */
-    STATICINLINE void vertex_attrib3f(u32 index, vec_3_f32 const& x)
+/*!
+ * \brief Part of GL_ARB_vertex_shader
+ * \param index GLuint
+ * \param x GLfloat
+ * \param y GLfloat
+ * \param z GLfloat
+ * \return void
+ */
+STATICINLINE void vertex_attrib3f(u32 index, vec_3_f32 const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -588,15 +614,17 @@ requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
 }
 
 template<class span_const_vec_3_f32>
-requires(semantic::concepts::Span<span_const_vec_3_f32>&& semantic::concepts::
-             Vector<typename span_const_vec_3_f32::value_type, f32, 3>)
-    /*!
-     * \brief Part of GL_ARB_vertex_shader
-     * \param index GLuint
-     * \param v const GLfloat *
-     * \return void
-     */
-    STATICINLINE void vertex_attrib3fv(u32 index, span_const_vec_3_f32 const& v)
+requires(
+    semantic::concepts::Span<span_const_vec_3_f32> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_3_f32::value_type, f32, 3>)
+/*!
+ * \brief Part of GL_ARB_vertex_shader
+ * \param index GLuint
+ * \param v const GLfloat *
+ * \return void
+ */
+STATICINLINE void vertex_attrib3fv(u32 index, span_const_vec_3_f32 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -609,15 +637,15 @@ requires(semantic::concepts::Span<span_const_vec_3_f32>&& semantic::concepts::
 
 template<class vec_3_i16>
 requires(semantic::concepts::Vector<vec_3_i16, i16, 3>)
-    /*!
-     * \brief Part of GL_ARB_vertex_shader
-     * \param index GLuint
-     * \param x GLshort
-     * \param y GLshort
-     * \param z GLshort
-     * \return void
-     */
-    STATICINLINE void vertex_attrib3s(u32 index, vec_3_i16 const& x)
+/*!
+ * \brief Part of GL_ARB_vertex_shader
+ * \param index GLuint
+ * \param x GLshort
+ * \param y GLshort
+ * \param z GLshort
+ * \return void
+ */
+STATICINLINE void vertex_attrib3s(u32 index, vec_3_i16 const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -629,15 +657,17 @@ requires(semantic::concepts::Vector<vec_3_i16, i16, 3>)
 }
 
 template<class span_const_vec_3_i16>
-requires(semantic::concepts::Span<span_const_vec_3_i16>&& semantic::concepts::
-             Vector<typename span_const_vec_3_i16::value_type, i16, 3>)
-    /*!
-     * \brief Part of GL_ARB_vertex_shader
-     * \param index GLuint
-     * \param v const GLshort *
-     * \return void
-     */
-    STATICINLINE void vertex_attrib3sv(u32 index, span_const_vec_3_i16 const& v)
+requires(
+    semantic::concepts::Span<span_const_vec_3_i16> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_3_i16::value_type, i16, 3>)
+/*!
+ * \brief Part of GL_ARB_vertex_shader
+ * \param index GLuint
+ * \param v const GLshort *
+ * \return void
+ */
+STATICINLINE void vertex_attrib3sv(u32 index, span_const_vec_3_i16 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -649,16 +679,18 @@ requires(semantic::concepts::Span<span_const_vec_3_i16>&& semantic::concepts::
 }
 
 template<class span_const_i8>
-requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
-         std::decay_t<typename span_const_i8::value_type>,
-         std::decay_t<i8>>)
-    /*!
-     * \brief Part of GL_ARB_vertex_shader
-     * \param index GLuint
-     * \param v const GLbyte *
-     * \return void
-     */
-    STATICINLINE void vertex_attrib4_nbv(u32 index, span_const_i8 const& v)
+requires(
+    semantic::concepts::Span<span_const_i8> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_i8::value_type>,
+        std::decay_t<i8>>)
+/*!
+ * \brief Part of GL_ARB_vertex_shader
+ * \param index GLuint
+ * \param v const GLbyte *
+ * \return void
+ */
+STATICINLINE void vertex_attrib4_nbv(u32 index, span_const_i8 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -671,16 +703,18 @@ requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
 }
 
 template<class span_const_i32>
-requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
-         std::decay_t<typename span_const_i32::value_type>,
-         std::decay_t<i32>>)
-    /*!
-     * \brief Part of GL_ARB_vertex_shader
-     * \param index GLuint
-     * \param v const GLint *
-     * \return void
-     */
-    STATICINLINE void vertex_attrib4_niv(u32 index, span_const_i32 const& v)
+requires(
+    semantic::concepts::Span<span_const_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_i32::value_type>,
+        std::decay_t<i32>>)
+/*!
+ * \brief Part of GL_ARB_vertex_shader
+ * \param index GLuint
+ * \param v const GLint *
+ * \return void
+ */
+STATICINLINE void vertex_attrib4_niv(u32 index, span_const_i32 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -693,16 +727,18 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
 }
 
 template<class span_const_i16>
-requires(semantic::concepts::Span<span_const_i16>&& std::is_same_v<
-         std::decay_t<typename span_const_i16::value_type>,
-         std::decay_t<i16>>)
-    /*!
-     * \brief Part of GL_ARB_vertex_shader
-     * \param index GLuint
-     * \param v const GLshort *
-     * \return void
-     */
-    STATICINLINE void vertex_attrib4_nsv(u32 index, span_const_i16 const& v)
+requires(
+    semantic::concepts::Span<span_const_i16> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_i16::value_type>,
+        std::decay_t<i16>>)
+/*!
+ * \brief Part of GL_ARB_vertex_shader
+ * \param index GLuint
+ * \param v const GLshort *
+ * \return void
+ */
+STATICINLINE void vertex_attrib4_nsv(u32 index, span_const_i16 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -716,16 +752,16 @@ requires(semantic::concepts::Span<span_const_i16>&& std::is_same_v<
 
 template<class vec_4_u8>
 requires(semantic::concepts::Vector<vec_4_u8, u8, 4>)
-    /*!
-     * \brief Part of GL_ARB_vertex_shader
-     * \param index GLuint
-     * \param x GLubyte
-     * \param y GLubyte
-     * \param z GLubyte
-     * \param w GLubyte
-     * \return void
-     */
-    STATICINLINE void vertex_attrib4_nub(u32 index, vec_4_u8 const& x)
+/*!
+ * \brief Part of GL_ARB_vertex_shader
+ * \param index GLuint
+ * \param x GLubyte
+ * \param y GLubyte
+ * \param z GLubyte
+ * \param w GLubyte
+ * \return void
+ */
+STATICINLINE void vertex_attrib4_nub(u32 index, vec_4_u8 const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -737,16 +773,18 @@ requires(semantic::concepts::Vector<vec_4_u8, u8, 4>)
 }
 
 template<class span_const_u8>
-requires(semantic::concepts::Span<span_const_u8>&& std::is_same_v<
-         std::decay_t<typename span_const_u8::value_type>,
-         std::decay_t<u8>>)
-    /*!
-     * \brief Part of GL_ARB_vertex_shader
-     * \param index GLuint
-     * \param v const GLubyte *
-     * \return void
-     */
-    STATICINLINE void vertex_attrib4_nubv(u32 index, span_const_u8 const& v)
+requires(
+    semantic::concepts::Span<span_const_u8> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_u8::value_type>,
+        std::decay_t<u8>>)
+/*!
+ * \brief Part of GL_ARB_vertex_shader
+ * \param index GLuint
+ * \param v const GLubyte *
+ * \return void
+ */
+STATICINLINE void vertex_attrib4_nubv(u32 index, span_const_u8 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -759,16 +797,18 @@ requires(semantic::concepts::Span<span_const_u8>&& std::is_same_v<
 }
 
 template<class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
-         std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>)
-    /*!
-     * \brief Part of GL_ARB_vertex_shader
-     * \param index GLuint
-     * \param v const GLuint *
-     * \return void
-     */
-    STATICINLINE void vertex_attrib4_nuiv(u32 index, span_const_u32 const& v)
+requires(
+    semantic::concepts::Span<span_const_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_u32::value_type>,
+        std::decay_t<u32>>)
+/*!
+ * \brief Part of GL_ARB_vertex_shader
+ * \param index GLuint
+ * \param v const GLuint *
+ * \return void
+ */
+STATICINLINE void vertex_attrib4_nuiv(u32 index, span_const_u32 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -781,16 +821,18 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
 }
 
 template<class span_const_u16>
-requires(semantic::concepts::Span<span_const_u16>&& std::is_same_v<
-         std::decay_t<typename span_const_u16::value_type>,
-         std::decay_t<u16>>)
-    /*!
-     * \brief Part of GL_ARB_vertex_shader
-     * \param index GLuint
-     * \param v const GLushort *
-     * \return void
-     */
-    STATICINLINE void vertex_attrib4_nusv(u32 index, span_const_u16 const& v)
+requires(
+    semantic::concepts::Span<span_const_u16> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_u16::value_type>,
+        std::decay_t<u16>>)
+/*!
+ * \brief Part of GL_ARB_vertex_shader
+ * \param index GLuint
+ * \param v const GLushort *
+ * \return void
+ */
+STATICINLINE void vertex_attrib4_nusv(u32 index, span_const_u16 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -804,16 +846,18 @@ requires(semantic::concepts::Span<span_const_u16>&& std::is_same_v<
 }
 
 template<class span_const_i8>
-requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
-         std::decay_t<typename span_const_i8::value_type>,
-         std::decay_t<i8>>)
-    /*!
-     * \brief Part of GL_ARB_vertex_shader
-     * \param index GLuint
-     * \param v const GLbyte *
-     * \return void
-     */
-    STATICINLINE void vertex_attrib4bv(u32 index, span_const_i8 const& v)
+requires(
+    semantic::concepts::Span<span_const_i8> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_i8::value_type>,
+        std::decay_t<i8>>)
+/*!
+ * \brief Part of GL_ARB_vertex_shader
+ * \param index GLuint
+ * \param v const GLbyte *
+ * \return void
+ */
+STATICINLINE void vertex_attrib4bv(u32 index, span_const_i8 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -827,16 +871,16 @@ requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
 
 template<class vec_4_f64>
 requires(semantic::concepts::Vector<vec_4_f64, f64, 4>)
-    /*!
-     * \brief Part of GL_ARB_vertex_shader
-     * \param index GLuint
-     * \param x GLdouble
-     * \param y GLdouble
-     * \param z GLdouble
-     * \param w GLdouble
-     * \return void
-     */
-    STATICINLINE void vertex_attrib4d(u32 index, vec_4_f64 const& x)
+/*!
+ * \brief Part of GL_ARB_vertex_shader
+ * \param index GLuint
+ * \param x GLdouble
+ * \param y GLdouble
+ * \param z GLdouble
+ * \param w GLdouble
+ * \return void
+ */
+STATICINLINE void vertex_attrib4d(u32 index, vec_4_f64 const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -848,15 +892,17 @@ requires(semantic::concepts::Vector<vec_4_f64, f64, 4>)
 }
 
 template<class span_const_vec_4_f64>
-requires(semantic::concepts::Span<span_const_vec_4_f64>&& semantic::concepts::
-             Vector<typename span_const_vec_4_f64::value_type, f64, 4>)
-    /*!
-     * \brief Part of GL_ARB_vertex_shader
-     * \param index GLuint
-     * \param v const GLdouble *
-     * \return void
-     */
-    STATICINLINE void vertex_attrib4dv(u32 index, span_const_vec_4_f64 const& v)
+requires(
+    semantic::concepts::Span<span_const_vec_4_f64> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_4_f64::value_type, f64, 4>)
+/*!
+ * \brief Part of GL_ARB_vertex_shader
+ * \param index GLuint
+ * \param v const GLdouble *
+ * \return void
+ */
+STATICINLINE void vertex_attrib4dv(u32 index, span_const_vec_4_f64 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -869,16 +915,16 @@ requires(semantic::concepts::Span<span_const_vec_4_f64>&& semantic::concepts::
 
 template<class vec_4_f32>
 requires(semantic::concepts::Vector<vec_4_f32, f32, 4>)
-    /*!
-     * \brief Part of GL_ARB_vertex_shader
-     * \param index GLuint
-     * \param x GLfloat
-     * \param y GLfloat
-     * \param z GLfloat
-     * \param w GLfloat
-     * \return void
-     */
-    STATICINLINE void vertex_attrib4f(u32 index, vec_4_f32 const& x)
+/*!
+ * \brief Part of GL_ARB_vertex_shader
+ * \param index GLuint
+ * \param x GLfloat
+ * \param y GLfloat
+ * \param z GLfloat
+ * \param w GLfloat
+ * \return void
+ */
+STATICINLINE void vertex_attrib4f(u32 index, vec_4_f32 const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -890,15 +936,17 @@ requires(semantic::concepts::Vector<vec_4_f32, f32, 4>)
 }
 
 template<class span_const_vec_4_f32>
-requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
-             Vector<typename span_const_vec_4_f32::value_type, f32, 4>)
-    /*!
-     * \brief Part of GL_ARB_vertex_shader
-     * \param index GLuint
-     * \param v const GLfloat *
-     * \return void
-     */
-    STATICINLINE void vertex_attrib4fv(u32 index, span_const_vec_4_f32 const& v)
+requires(
+    semantic::concepts::Span<span_const_vec_4_f32> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_4_f32::value_type, f32, 4>)
+/*!
+ * \brief Part of GL_ARB_vertex_shader
+ * \param index GLuint
+ * \param v const GLfloat *
+ * \return void
+ */
+STATICINLINE void vertex_attrib4fv(u32 index, span_const_vec_4_f32 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -910,15 +958,17 @@ requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
 }
 
 template<class span_const_vec_4_i32>
-requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
-             Vector<typename span_const_vec_4_i32::value_type, i32, 4>)
-    /*!
-     * \brief Part of GL_ARB_vertex_shader
-     * \param index GLuint
-     * \param v const GLint *
-     * \return void
-     */
-    STATICINLINE void vertex_attrib4iv(u32 index, span_const_vec_4_i32 const& v)
+requires(
+    semantic::concepts::Span<span_const_vec_4_i32> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_4_i32::value_type, i32, 4>)
+/*!
+ * \brief Part of GL_ARB_vertex_shader
+ * \param index GLuint
+ * \param v const GLint *
+ * \return void
+ */
+STATICINLINE void vertex_attrib4iv(u32 index, span_const_vec_4_i32 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -931,16 +981,16 @@ requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
 
 template<class vec_4_i16>
 requires(semantic::concepts::Vector<vec_4_i16, i16, 4>)
-    /*!
-     * \brief Part of GL_ARB_vertex_shader
-     * \param index GLuint
-     * \param x GLshort
-     * \param y GLshort
-     * \param z GLshort
-     * \param w GLshort
-     * \return void
-     */
-    STATICINLINE void vertex_attrib4s(u32 index, vec_4_i16 const& x)
+/*!
+ * \brief Part of GL_ARB_vertex_shader
+ * \param index GLuint
+ * \param x GLshort
+ * \param y GLshort
+ * \param z GLshort
+ * \param w GLshort
+ * \return void
+ */
+STATICINLINE void vertex_attrib4s(u32 index, vec_4_i16 const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -952,15 +1002,17 @@ requires(semantic::concepts::Vector<vec_4_i16, i16, 4>)
 }
 
 template<class span_const_vec_4_i16>
-requires(semantic::concepts::Span<span_const_vec_4_i16>&& semantic::concepts::
-             Vector<typename span_const_vec_4_i16::value_type, i16, 4>)
-    /*!
-     * \brief Part of GL_ARB_vertex_shader
-     * \param index GLuint
-     * \param v const GLshort *
-     * \return void
-     */
-    STATICINLINE void vertex_attrib4sv(u32 index, span_const_vec_4_i16 const& v)
+requires(
+    semantic::concepts::Span<span_const_vec_4_i16> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_4_i16::value_type, i16, 4>)
+/*!
+ * \brief Part of GL_ARB_vertex_shader
+ * \param index GLuint
+ * \param v const GLshort *
+ * \return void
+ */
+STATICINLINE void vertex_attrib4sv(u32 index, span_const_vec_4_i16 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -972,16 +1024,18 @@ requires(semantic::concepts::Span<span_const_vec_4_i16>&& semantic::concepts::
 }
 
 template<class span_const_u8>
-requires(semantic::concepts::Span<span_const_u8>&& std::is_same_v<
-         std::decay_t<typename span_const_u8::value_type>,
-         std::decay_t<u8>>)
-    /*!
-     * \brief Part of GL_ARB_vertex_shader
-     * \param index GLuint
-     * \param v const GLubyte *
-     * \return void
-     */
-    STATICINLINE void vertex_attrib4ubv(u32 index, span_const_u8 const& v)
+requires(
+    semantic::concepts::Span<span_const_u8> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_u8::value_type>,
+        std::decay_t<u8>>)
+/*!
+ * \brief Part of GL_ARB_vertex_shader
+ * \param index GLuint
+ * \param v const GLubyte *
+ * \return void
+ */
+STATICINLINE void vertex_attrib4ubv(u32 index, span_const_u8 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -994,16 +1048,17 @@ requires(semantic::concepts::Span<span_const_u8>&& std::is_same_v<
 }
 
 template<class span_const_vec_4_u32>
-requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
-             Vector<typename span_const_vec_4_u32::value_type, u32, 4>)
-    /*!
-     * \brief Part of GL_ARB_vertex_shader
-     * \param index GLuint
-     * \param v const GLuint *
-     * \return void
-     */
-    STATICINLINE
-    void vertex_attrib4uiv(u32 index, span_const_vec_4_u32 const& v)
+requires(
+    semantic::concepts::Span<span_const_vec_4_u32> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_4_u32::value_type, u32, 4>)
+/*!
+ * \brief Part of GL_ARB_vertex_shader
+ * \param index GLuint
+ * \param v const GLuint *
+ * \return void
+ */
+STATICINLINE void vertex_attrib4uiv(u32 index, span_const_vec_4_u32 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1015,16 +1070,17 @@ requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
 }
 
 template<class span_const_vec_4_u16>
-requires(semantic::concepts::Span<span_const_vec_4_u16>&& semantic::concepts::
-             Vector<typename span_const_vec_4_u16::value_type, u16, 4>)
-    /*!
-     * \brief Part of GL_ARB_vertex_shader
-     * \param index GLuint
-     * \param v const GLushort *
-     * \return void
-     */
-    STATICINLINE
-    void vertex_attrib4usv(u32 index, span_const_vec_4_u16 const& v)
+requires(
+    semantic::concepts::Span<span_const_vec_4_u16> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_4_u16::value_type, u16, 4>)
+/*!
+ * \brief Part of GL_ARB_vertex_shader
+ * \param index GLuint
+ * \param v const GLushort *
+ * \return void
+ */
+STATICINLINE void vertex_attrib4usv(u32 index, span_const_vec_4_u16 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1037,23 +1093,23 @@ requires(semantic::concepts::Span<span_const_vec_4_u16>&& semantic::concepts::
 
 template<class span_const_void>
 requires(semantic::concepts::Span<span_const_void>)
-    /*!
-     * \brief Part of GL_ARB_vertex_shader
-     * \param index GLuint
-     * \param size GLint
-     * \param type GLenum
-     * \param normalized GLboolean
-     * \param stride GLsizei
-     * \param pointer const void *
-     * \return void
-     */
-    STATICINLINE void vertex_attrib_pointer(
-        u32                               index,
-        i32                               size,
-        group::vertex_attrib_pointer_type type,
-        bool                              normalized,
-        i32                               stride,
-        span_const_void const&            pointer)
+/*!
+ * \brief Part of GL_ARB_vertex_shader
+ * \param index GLuint
+ * \param size GLint
+ * \param type GLenum
+ * \param normalized GLboolean
+ * \param stride GLsizei
+ * \param pointer const void *
+ * \return void
+ */
+STATICINLINE void vertex_attrib_pointer(
+    u32                               index,
+    i32                               size,
+    group::vertex_attrib_pointer_type type,
+    bool                              normalized,
+    i32                               stride,
+    span_const_void const&            pointer)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

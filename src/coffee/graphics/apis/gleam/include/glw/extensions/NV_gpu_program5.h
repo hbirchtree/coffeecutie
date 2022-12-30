@@ -13,18 +13,20 @@ constexpr libc_types::u32 max_program_subroutine_parameters          = 0x8F44;
 constexpr libc_types::u32 max_program_subroutine_num                 = 0x8F45;
 } // namespace values
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
-         std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>)
-    /*!
-     * \brief Part of GL_NV_gpu_program5
-     * \param target GLenum
-     * \param index GLuint
-     * \param param GLuint *
-     * \return void
-     */
-    STATICINLINE void get_program_subroutine_parameter(
-        GLenum target, u32 index, span_u32 param)
+requires(
+    semantic::concepts::Span<span_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_u32::value_type>,
+        std::decay_t<u32>>)
+/*!
+ * \brief Part of GL_NV_gpu_program5
+ * \param target GLenum
+ * \param index GLuint
+ * \param param GLuint *
+ * \return void
+ */
+STATICINLINE void get_program_subroutine_parameter(
+    GLenum target, u32 index, span_u32 param)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -39,18 +41,20 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 }
 
 template<class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
-         std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>)
-    /*!
-     * \brief Part of GL_NV_gpu_program5
-     * \param target GLenum
-     * \param count GLsizei
-     * \param params const GLuint *
-     * \return void
-     */
-    STATICINLINE void program_subroutine_parameters(
-        GLenum target, span_const_u32 const& params)
+requires(
+    semantic::concepts::Span<span_const_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_u32::value_type>,
+        std::decay_t<u32>>)
+/*!
+ * \brief Part of GL_NV_gpu_program5
+ * \param target GLenum
+ * \param count GLsizei
+ * \param params const GLuint *
+ * \return void
+ */
+STATICINLINE void program_subroutine_parameters(
+    GLenum target, span_const_u32 const& params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

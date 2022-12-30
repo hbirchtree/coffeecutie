@@ -83,18 +83,20 @@ STATICINLINE GLuint64 get_texture_sampler_handle(u32 texture, u32 sampler)
 }
 
 template<class span_GLuint64EXT>
-requires(semantic::concepts::Span<span_GLuint64EXT>&& std::is_same_v<
-         std::decay_t<typename span_GLuint64EXT::value_type>,
-         std::decay_t<GLuint64EXT>>)
-    /*!
-     * \brief Part of GL_ARB_bindless_texture
-     * \param index GLuint
-     * \param pname GLenum
-     * \param params GLuint64EXT *
-     * \return void
-     */
-    STATICINLINE void get_vertex_attrib_lui64v(
-        u32 index, group::vertex_attrib_enum pname, span_GLuint64EXT params)
+requires(
+    semantic::concepts::Span<span_GLuint64EXT> &&
+    std::is_same_v<
+        std::decay_t<typename span_GLuint64EXT::value_type>,
+        std::decay_t<GLuint64EXT>>)
+/*!
+ * \brief Part of GL_ARB_bindless_texture
+ * \param index GLuint
+ * \param pname GLenum
+ * \param params GLuint64EXT *
+ * \return void
+ */
+STATICINLINE void get_vertex_attrib_lui64v(
+    u32 index, group::vertex_attrib_enum pname, span_GLuint64EXT params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -231,19 +233,21 @@ STATICINLINE void program_uniform_handle(u32 program, i32 location, u64 value)
 }
 
 template<class span_const_u64>
-requires(semantic::concepts::Span<span_const_u64>&& std::is_same_v<
-         std::decay_t<typename span_const_u64::value_type>,
-         std::decay_t<u64>>)
-    /*!
-     * \brief Part of GL_ARB_bindless_texture
-     * \param program GLuint
-     * \param location GLint
-     * \param count GLsizei
-     * \param values const GLuint64 *
-     * \return void
-     */
-    STATICINLINE void program_uniform_handle(
-        u32 program, i32 location, span_const_u64 const& values)
+requires(
+    semantic::concepts::Span<span_const_u64> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_u64::value_type>,
+        std::decay_t<u64>>)
+/*!
+ * \brief Part of GL_ARB_bindless_texture
+ * \param program GLuint
+ * \param location GLint
+ * \param count GLsizei
+ * \param values const GLuint64 *
+ * \return void
+ */
+STATICINLINE void program_uniform_handle(
+    u32 program, i32 location, span_const_u64 const& values)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -281,17 +285,19 @@ STATICINLINE void uniform_handle(i32 location, u64 value)
 }
 
 template<class span_const_u64>
-requires(semantic::concepts::Span<span_const_u64>&& std::is_same_v<
-         std::decay_t<typename span_const_u64::value_type>,
-         std::decay_t<u64>>)
-    /*!
-     * \brief Part of GL_ARB_bindless_texture
-     * \param location GLint
-     * \param count GLsizei
-     * \param value const GLuint64 *
-     * \return void
-     */
-    STATICINLINE void uniform_handle(i32 location, span_const_u64 const& value)
+requires(
+    semantic::concepts::Span<span_const_u64> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_u64::value_type>,
+        std::decay_t<u64>>)
+/*!
+ * \brief Part of GL_ARB_bindless_texture
+ * \param location GLint
+ * \param count GLsizei
+ * \param value const GLuint64 *
+ * \return void
+ */
+STATICINLINE void uniform_handle(i32 location, span_const_u64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -324,16 +330,18 @@ STATICINLINE void vertex_attrib_l1ui64(u32 index, GLuint64EXT x)
 }
 
 template<class span_const_GLuint64EXT>
-requires(semantic::concepts::Span<span_const_GLuint64EXT>&& std::is_same_v<
-         std::decay_t<typename span_const_GLuint64EXT::value_type>,
-         std::decay_t<GLuint64EXT>>)
-    /*!
-     * \brief Part of GL_ARB_bindless_texture
-     * \param index GLuint
-     * \param v const GLuint64EXT *
-     * \return void
-     */
-    STATICINLINE
+requires(
+    semantic::concepts::Span<span_const_GLuint64EXT> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLuint64EXT::value_type>,
+        std::decay_t<GLuint64EXT>>)
+/*!
+ * \brief Part of GL_ARB_bindless_texture
+ * \param index GLuint
+ * \param v const GLuint64EXT *
+ * \return void
+ */
+STATICINLINE
     void vertex_attrib_l1ui64v(u32 index, span_const_GLuint64EXT const& v)
 {
     using namespace std::string_view_literals;

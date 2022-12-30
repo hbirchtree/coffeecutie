@@ -1,9 +1,7 @@
 {
     "overlay-ports": [
-        "./toolchain/vcpkg/ports/assimp",
         "./toolchain/vcpkg/ports/bullet2",
         "./toolchain/vcpkg/ports/discord-rpc",
-        "./toolchain/vcpkg/ports/ffmpeg",
         "./toolchain/vcpkg/ports/sdl2"
     ],
     "overlay-triplets": [

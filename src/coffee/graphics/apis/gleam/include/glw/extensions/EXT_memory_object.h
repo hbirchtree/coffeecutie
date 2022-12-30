@@ -37,16 +37,18 @@ STATICINLINE void buffer_storage_mem(
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
-         std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>)
-    /*!
-     * \brief Part of GL_EXT_memory_object
-     * \param n GLsizei
-     * \param memoryObjects GLuint *
-     * \return void
-     */
-    STATICINLINE void create_memory_objects(i32 n, span_u32 memoryObjects)
+requires(
+    semantic::concepts::Span<span_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_u32::value_type>,
+        std::decay_t<u32>>)
+/*!
+ * \brief Part of GL_EXT_memory_object
+ * \param n GLsizei
+ * \param memoryObjects GLuint *
+ * \return void
+ */
+STATICINLINE void create_memory_objects(i32 n, span_u32 memoryObjects)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -61,16 +63,18 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 }
 
 template<class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
-         std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>)
-    /*!
-     * \brief Part of GL_EXT_memory_object
-     * \param n GLsizei
-     * \param memoryObjects const GLuint *
-     * \return void
-     */
-    STATICINLINE void delete_memory_objects(span_const_u32 const& memoryObjects)
+requires(
+    semantic::concepts::Span<span_const_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_u32::value_type>,
+        std::decay_t<u32>>)
+/*!
+ * \brief Part of GL_EXT_memory_object
+ * \param n GLsizei
+ * \param memoryObjects const GLuint *
+ * \return void
+ */
+STATICINLINE void delete_memory_objects(span_const_u32 const& memoryObjects)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -86,20 +90,22 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
-         std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>)
-    /*!
-     * \brief Part of GL_EXT_memory_object
-     * \param memoryObject GLuint
-     * \param pname GLenum
-     * \param params GLint *
-     * \return void
-     */
-    STATICINLINE void get_memory_object_parameter(
-        u32                                 memoryObject,
-        group::memory_object_parameter_name pname,
-        span_i32                            params)
+requires(
+    semantic::concepts::Span<span_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_i32::value_type>,
+        std::decay_t<i32>>)
+/*!
+ * \brief Part of GL_EXT_memory_object
+ * \param memoryObject GLuint
+ * \param pname GLenum
+ * \param params GLint *
+ * \return void
+ */
+STATICINLINE void get_memory_object_parameter(
+    u32                                 memoryObject,
+    group::memory_object_parameter_name pname,
+    span_i32                            params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -114,16 +120,17 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_u8>
-requires(semantic::concepts::Span<span_u8>&& std::is_same_v<
-         std::decay_t<typename span_u8::value_type>,
-         std::decay_t<u8>>)
-    /*!
-     * \brief Part of GL_EXT_memory_object
-     * \param pname GLenum
-     * \param data GLubyte *
-     * \return void
-     */
-    STATICINLINE void get_unsigned_bytev(group::get_prop pname, span_u8 data)
+requires(
+    semantic::concepts::Span<span_u8> &&
+    std::
+        is_same_v<std::decay_t<typename span_u8::value_type>, std::decay_t<u8>>)
+/*!
+ * \brief Part of GL_EXT_memory_object
+ * \param pname GLenum
+ * \param data GLubyte *
+ * \return void
+ */
+STATICINLINE void get_unsigned_bytev(group::get_prop pname, span_u8 data)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -137,18 +144,18 @@ requires(semantic::concepts::Span<span_u8>&& std::is_same_v<
 }
 
 template<class span_u8>
-requires(semantic::concepts::Span<span_u8>&& std::is_same_v<
-         std::decay_t<typename span_u8::value_type>,
-         std::decay_t<u8>>)
-    /*!
-     * \brief Part of GL_EXT_memory_object
-     * \param target GLenum
-     * \param index GLuint
-     * \param data GLubyte *
-     * \return void
-     */
-    STATICINLINE
-    void get_unsigned_bytei_v(GLenum target, u32 index, span_u8 data)
+requires(
+    semantic::concepts::Span<span_u8> &&
+    std::
+        is_same_v<std::decay_t<typename span_u8::value_type>, std::decay_t<u8>>)
+/*!
+ * \brief Part of GL_EXT_memory_object
+ * \param target GLenum
+ * \param index GLuint
+ * \param data GLubyte *
+ * \return void
+ */
+STATICINLINE void get_unsigned_bytei_v(GLenum target, u32 index, span_u8 data)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -180,20 +187,22 @@ STATICINLINE GLboolean is_memory_object(u32 memoryObject)
 }
 
 template<class span_const_i32>
-requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
-         std::decay_t<typename span_const_i32::value_type>,
-         std::decay_t<i32>>)
-    /*!
-     * \brief Part of GL_EXT_memory_object
-     * \param memoryObject GLuint
-     * \param pname GLenum
-     * \param params const GLint *
-     * \return void
-     */
-    STATICINLINE void memory_object_parameter(
-        u32                                 memoryObject,
-        group::memory_object_parameter_name pname,
-        span_const_i32 const&               params)
+requires(
+    semantic::concepts::Span<span_const_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_i32::value_type>,
+        std::decay_t<i32>>)
+/*!
+ * \brief Part of GL_EXT_memory_object
+ * \param memoryObject GLuint
+ * \param pname GLenum
+ * \param params const GLint *
+ * \return void
+ */
+STATICINLINE void memory_object_parameter(
+    u32                                 memoryObject,
+    group::memory_object_parameter_name pname,
+    span_const_i32 const&               params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -210,24 +219,24 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
 
 template<class size_2_i32>
 requires(semantic::concepts::Size2D<size_2_i32, i32>)
-    /*!
-     * \brief Part of GL_EXT_memory_object
-     * \param target GLenum
-     * \param levels GLsizei
-     * \param internalFormat GLenum
-     * \param width GLsizei
-     * \param height GLsizei
-     * \param memory GLuint
-     * \param offset GLuint64
-     * \return void
-     */
-    STATICINLINE void tex_storage_mem_2d(
-        group::texture_target        target,
-        i32                          levels,
-        group::sized_internal_format internalFormat,
-        size_2_i32 const&            width,
-        u32                          memory,
-        u64                          offset)
+/*!
+ * \brief Part of GL_EXT_memory_object
+ * \param target GLenum
+ * \param levels GLsizei
+ * \param internalFormat GLenum
+ * \param width GLsizei
+ * \param height GLsizei
+ * \param memory GLuint
+ * \param offset GLuint64
+ * \return void
+ */
+STATICINLINE void tex_storage_mem_2d(
+    group::texture_target        target,
+    i32                          levels,
+    group::sized_internal_format internalFormat,
+    size_2_i32 const&            width,
+    u32                          memory,
+    u64                          offset)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -247,26 +256,26 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>)
 
 template<class size_2_i32>
 requires(semantic::concepts::Size2D<size_2_i32, i32>)
-    /*!
-     * \brief Part of GL_EXT_memory_object
-     * \param target GLenum
-     * \param samples GLsizei
-     * \param internalFormat GLenum
-     * \param width GLsizei
-     * \param height GLsizei
-     * \param fixedSampleLocations GLboolean
-     * \param memory GLuint
-     * \param offset GLuint64
-     * \return void
-     */
-    STATICINLINE void tex_storage_mem_2d_multisample(
-        group::texture_target        target,
-        i32                          samples,
-        group::sized_internal_format internalFormat,
-        size_2_i32 const&            width,
-        bool                         fixedSampleLocations,
-        u32                          memory,
-        u64                          offset)
+/*!
+ * \brief Part of GL_EXT_memory_object
+ * \param target GLenum
+ * \param samples GLsizei
+ * \param internalFormat GLenum
+ * \param width GLsizei
+ * \param height GLsizei
+ * \param fixedSampleLocations GLboolean
+ * \param memory GLuint
+ * \param offset GLuint64
+ * \return void
+ */
+STATICINLINE void tex_storage_mem_2d_multisample(
+    group::texture_target        target,
+    i32                          samples,
+    group::sized_internal_format internalFormat,
+    size_2_i32 const&            width,
+    bool                         fixedSampleLocations,
+    u32                          memory,
+    u64                          offset)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -287,25 +296,25 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>)
 
 template<class size_3_i32>
 requires(semantic::concepts::Size2D<size_3_i32, i32>)
-    /*!
-     * \brief Part of GL_EXT_memory_object
-     * \param target GLenum
-     * \param levels GLsizei
-     * \param internalFormat GLenum
-     * \param width GLsizei
-     * \param height GLsizei
-     * \param depth GLsizei
-     * \param memory GLuint
-     * \param offset GLuint64
-     * \return void
-     */
-    STATICINLINE void tex_storage_mem_3d(
-        group::texture_target        target,
-        i32                          levels,
-        group::sized_internal_format internalFormat,
-        size_3_i32 const&            width,
-        u32                          memory,
-        u64                          offset)
+/*!
+ * \brief Part of GL_EXT_memory_object
+ * \param target GLenum
+ * \param levels GLsizei
+ * \param internalFormat GLenum
+ * \param width GLsizei
+ * \param height GLsizei
+ * \param depth GLsizei
+ * \param memory GLuint
+ * \param offset GLuint64
+ * \return void
+ */
+STATICINLINE void tex_storage_mem_3d(
+    group::texture_target        target,
+    i32                          levels,
+    group::sized_internal_format internalFormat,
+    size_3_i32 const&            width,
+    u32                          memory,
+    u64                          offset)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -326,27 +335,27 @@ requires(semantic::concepts::Size2D<size_3_i32, i32>)
 
 template<class size_3_i32>
 requires(semantic::concepts::Size2D<size_3_i32, i32>)
-    /*!
-     * \brief Part of GL_EXT_memory_object
-     * \param target GLenum
-     * \param samples GLsizei
-     * \param internalFormat GLenum
-     * \param width GLsizei
-     * \param height GLsizei
-     * \param depth GLsizei
-     * \param fixedSampleLocations GLboolean
-     * \param memory GLuint
-     * \param offset GLuint64
-     * \return void
-     */
-    STATICINLINE void tex_storage_mem_3d_multisample(
-        group::texture_target        target,
-        i32                          samples,
-        group::sized_internal_format internalFormat,
-        size_3_i32 const&            width,
-        bool                         fixedSampleLocations,
-        u32                          memory,
-        u64                          offset)
+/*!
+ * \brief Part of GL_EXT_memory_object
+ * \param target GLenum
+ * \param samples GLsizei
+ * \param internalFormat GLenum
+ * \param width GLsizei
+ * \param height GLsizei
+ * \param depth GLsizei
+ * \param fixedSampleLocations GLboolean
+ * \param memory GLuint
+ * \param offset GLuint64
+ * \return void
+ */
+STATICINLINE void tex_storage_mem_3d_multisample(
+    group::texture_target        target,
+    i32                          samples,
+    group::sized_internal_format internalFormat,
+    size_3_i32 const&            width,
+    bool                         fixedSampleLocations,
+    u32                          memory,
+    u64                          offset)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -392,24 +401,24 @@ STATICINLINE void named_buffer_storage_mem(
 
 template<class size_2_i32>
 requires(semantic::concepts::Size2D<size_2_i32, i32>)
-    /*!
-     * \brief Part of GL_EXT_memory_object
-     * \param texture GLuint
-     * \param levels GLsizei
-     * \param internalFormat GLenum
-     * \param width GLsizei
-     * \param height GLsizei
-     * \param memory GLuint
-     * \param offset GLuint64
-     * \return void
-     */
-    STATICINLINE void texture_storage_mem_2d(
-        u32                          texture,
-        i32                          levels,
-        group::sized_internal_format internalFormat,
-        size_2_i32 const&            width,
-        u32                          memory,
-        u64                          offset)
+/*!
+ * \brief Part of GL_EXT_memory_object
+ * \param texture GLuint
+ * \param levels GLsizei
+ * \param internalFormat GLenum
+ * \param width GLsizei
+ * \param height GLsizei
+ * \param memory GLuint
+ * \param offset GLuint64
+ * \return void
+ */
+STATICINLINE void texture_storage_mem_2d(
+    u32                          texture,
+    i32                          levels,
+    group::sized_internal_format internalFormat,
+    size_2_i32 const&            width,
+    u32                          memory,
+    u64                          offset)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -433,26 +442,26 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>)
 
 template<class size_2_i32>
 requires(semantic::concepts::Size2D<size_2_i32, i32>)
-    /*!
-     * \brief Part of GL_EXT_memory_object
-     * \param texture GLuint
-     * \param samples GLsizei
-     * \param internalFormat GLenum
-     * \param width GLsizei
-     * \param height GLsizei
-     * \param fixedSampleLocations GLboolean
-     * \param memory GLuint
-     * \param offset GLuint64
-     * \return void
-     */
-    STATICINLINE void texture_storage_mem_2d_multisample(
-        u32                          texture,
-        i32                          samples,
-        group::sized_internal_format internalFormat,
-        size_2_i32 const&            width,
-        bool                         fixedSampleLocations,
-        u32                          memory,
-        u64                          offset)
+/*!
+ * \brief Part of GL_EXT_memory_object
+ * \param texture GLuint
+ * \param samples GLsizei
+ * \param internalFormat GLenum
+ * \param width GLsizei
+ * \param height GLsizei
+ * \param fixedSampleLocations GLboolean
+ * \param memory GLuint
+ * \param offset GLuint64
+ * \return void
+ */
+STATICINLINE void texture_storage_mem_2d_multisample(
+    u32                          texture,
+    i32                          samples,
+    group::sized_internal_format internalFormat,
+    size_2_i32 const&            width,
+    bool                         fixedSampleLocations,
+    u32                          memory,
+    u64                          offset)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -477,25 +486,25 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>)
 
 template<class size_3_i32>
 requires(semantic::concepts::Size2D<size_3_i32, i32>)
-    /*!
-     * \brief Part of GL_EXT_memory_object
-     * \param texture GLuint
-     * \param levels GLsizei
-     * \param internalFormat GLenum
-     * \param width GLsizei
-     * \param height GLsizei
-     * \param depth GLsizei
-     * \param memory GLuint
-     * \param offset GLuint64
-     * \return void
-     */
-    STATICINLINE void texture_storage_mem_3d(
-        u32                          texture,
-        i32                          levels,
-        group::sized_internal_format internalFormat,
-        size_3_i32 const&            width,
-        u32                          memory,
-        u64                          offset)
+/*!
+ * \brief Part of GL_EXT_memory_object
+ * \param texture GLuint
+ * \param levels GLsizei
+ * \param internalFormat GLenum
+ * \param width GLsizei
+ * \param height GLsizei
+ * \param depth GLsizei
+ * \param memory GLuint
+ * \param offset GLuint64
+ * \return void
+ */
+STATICINLINE void texture_storage_mem_3d(
+    u32                          texture,
+    i32                          levels,
+    group::sized_internal_format internalFormat,
+    size_3_i32 const&            width,
+    u32                          memory,
+    u64                          offset)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -520,27 +529,27 @@ requires(semantic::concepts::Size2D<size_3_i32, i32>)
 
 template<class size_3_i32>
 requires(semantic::concepts::Size2D<size_3_i32, i32>)
-    /*!
-     * \brief Part of GL_EXT_memory_object
-     * \param texture GLuint
-     * \param samples GLsizei
-     * \param internalFormat GLenum
-     * \param width GLsizei
-     * \param height GLsizei
-     * \param depth GLsizei
-     * \param fixedSampleLocations GLboolean
-     * \param memory GLuint
-     * \param offset GLuint64
-     * \return void
-     */
-    STATICINLINE void texture_storage_mem_3d_multisample(
-        u32                          texture,
-        i32                          samples,
-        group::sized_internal_format internalFormat,
-        size_3_i32 const&            width,
-        bool                         fixedSampleLocations,
-        u32                          memory,
-        u64                          offset)
+/*!
+ * \brief Part of GL_EXT_memory_object
+ * \param texture GLuint
+ * \param samples GLsizei
+ * \param internalFormat GLenum
+ * \param width GLsizei
+ * \param height GLsizei
+ * \param depth GLsizei
+ * \param fixedSampleLocations GLboolean
+ * \param memory GLuint
+ * \param offset GLuint64
+ * \return void
+ */
+STATICINLINE void texture_storage_mem_3d_multisample(
+    u32                          texture,
+    i32                          samples,
+    group::sized_internal_format internalFormat,
+    size_3_i32 const&            width,
+    bool                         fixedSampleLocations,
+    u32                          memory,
+    u64                          offset)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

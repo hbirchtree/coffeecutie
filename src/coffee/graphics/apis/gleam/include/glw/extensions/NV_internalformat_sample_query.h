@@ -17,25 +17,27 @@ constexpr libc_types::u32 supersample_scale_y = 0x9373;
 constexpr libc_types::u32 conformant          = 0x9374;
 } // namespace values
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
-         std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>)
-    /*!
-     * \brief Part of GL_NV_internalformat_sample_query
-     * \param target GLenum
-     * \param internalformat GLenum
-     * \param samples GLsizei
-     * \param pname GLenum
-     * \param count GLsizei
-     * \param params GLint *
-     * \return void
-     */
-    STATICINLINE void get_internalformat_sampleiv(
-        group::texture_target       target,
-        group::internal_format      internalformat,
-        i32                         samples,
-        group::internal_format_prop pname,
-        span_i32                    params)
+requires(
+    semantic::concepts::Span<span_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_i32::value_type>,
+        std::decay_t<i32>>)
+/*!
+ * \brief Part of GL_NV_internalformat_sample_query
+ * \param target GLenum
+ * \param internalformat GLenum
+ * \param samples GLsizei
+ * \param pname GLenum
+ * \param count GLsizei
+ * \param params GLint *
+ * \return void
+ */
+STATICINLINE void get_internalformat_sampleiv(
+    group::texture_target       target,
+    group::internal_format      internalformat,
+    i32                         samples,
+    group::internal_format_prop pname,
+    span_i32                    params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

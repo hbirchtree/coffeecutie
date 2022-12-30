@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "rhi_features.h"
 #include "rhi_translate.h"
@@ -152,7 +152,7 @@ struct sampler_t
                     std::out_of_range("anisotropic sample value out of range"));
             cmd::sampler_parameter(
                 m_handle,
-                group::sampler_parameter_f::texture_max_anisotropy,
+                group::sampler_parameter_f::texture_max_anisotropy_ext,
                 SpanOne(samples));
         }
 #endif
@@ -343,6 +343,7 @@ struct texture_3d_t : texture_t
     }
 };
 
+#if GLEAM_MAX_VERSION >= 0x410 || GLEAM_MAX_VERSION_ES >= 0x320
 struct texture_cube_array_t : texture_t
 {
     using texture_t::texture_t;
@@ -404,6 +405,7 @@ struct texture_cube_array_t : texture_t
         return std::nullopt;
     }
 };
+#endif
 #endif
 
 #if GLEAM_MAX_VERSION >= 0x430 || defined(GL_EXT_texture_view) \

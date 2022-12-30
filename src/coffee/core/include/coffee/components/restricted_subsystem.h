@@ -3,7 +3,7 @@
 #include "types.h"
 #include "proxy.h"
 
-namespace Coffee::Components::restricted {
+namespace compo::restricted {
 
 template<class T>
 concept is_restricted_subsystem = is_subsystem<T>;
@@ -62,4 +62,4 @@ void end_frame(T& subsys, EntityContainer& container, time_point const& t)
 //{
 //}
 
-} // namespace Coffee::Components::restricted
+} // namespace compo::restricted

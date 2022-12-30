@@ -53,16 +53,16 @@ struct Compressor : Compressor_def
     };
 
     static bool Compress(
-        BytesConst const& uncompressed,
-        Bytes*            target,
-        Opts const&       opts,
-        zlib_error_code&  ec);
+        semantic::Span<const libc_types::u8> const& uncompressed,
+        semantic::mem_chunk<libc_types::u8>*        target,
+        Opts const&                                 opts,
+        zlib_error_code&                            ec);
 
     static bool Decompress(
-        BytesConst const& compressed,
-        Bytes*            target,
-        Opts const&       opts,
-        zlib_error_code&  ec);
+        semantic::Span<const libc_types::u8> const& compressed,
+        semantic::mem_chunk<libc_types::u8>*        target,
+        Opts const&                                 opts,
+        zlib_error_code&                            ec);
 };
 
 using error_code = zlib_error_code;

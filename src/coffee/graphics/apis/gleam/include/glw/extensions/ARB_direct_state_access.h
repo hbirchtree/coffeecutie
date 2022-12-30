@@ -11,16 +11,18 @@ constexpr libc_types::u32 texture_target                 = 0x1006;
 constexpr libc_types::u32 texture_binding_cube_map_array = 0x900A;
 } // namespace values
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
-         std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param n GLsizei
-     * \param ids GLuint *
-     * \return void
-     */
-    STATICINLINE void create_transform_feedbacks(span_u32 ids)
+requires(
+    semantic::concepts::Span<span_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_u32::value_type>,
+        std::decay_t<u32>>)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param n GLsizei
+ * \param ids GLuint *
+ * \return void
+ */
+STATICINLINE void create_transform_feedbacks(span_u32 ids)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -34,22 +36,21 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 }
 
 template<class span_i64>
-requires(semantic::concepts::Span<span_i64>&& std::is_same_v<
-         std::decay_t<typename span_i64::value_type>,
-         std::decay_t<i64>>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param xfb GLuint
-     * \param pname GLenum
-     * \param index GLuint
-     * \param param GLint64 *
-     * \return void
-     */
-    STATICINLINE void get_transform_feedbacki64_v(
-        u32                            xfb,
-        group::transform_feedback_prop pname,
-        u32                            index,
-        span_i64                       param)
+requires(
+    semantic::concepts::Span<span_i64> &&
+    std::is_same_v<
+        std::decay_t<typename span_i64::value_type>,
+        std::decay_t<i64>>)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param xfb GLuint
+ * \param pname GLenum
+ * \param index GLuint
+ * \param param GLint64 *
+ * \return void
+ */
+STATICINLINE void get_transform_feedbacki64_v(
+    u32 xfb, group::transform_feedback_prop pname, u32 index, span_i64 param)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -69,22 +70,21 @@ requires(semantic::concepts::Span<span_i64>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
-         std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param xfb GLuint
-     * \param pname GLenum
-     * \param index GLuint
-     * \param param GLint *
-     * \return void
-     */
-    STATICINLINE void get_transform_feedbacki_v(
-        u32                            xfb,
-        group::transform_feedback_prop pname,
-        u32                            index,
-        span_i32                       param)
+requires(
+    semantic::concepts::Span<span_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_i32::value_type>,
+        std::decay_t<i32>>)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param xfb GLuint
+ * \param pname GLenum
+ * \param index GLuint
+ * \param param GLint *
+ * \return void
+ */
+STATICINLINE void get_transform_feedbacki_v(
+    u32 xfb, group::transform_feedback_prop pname, u32 index, span_i32 param)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -104,18 +104,20 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
-         std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param xfb GLuint
-     * \param pname GLenum
-     * \param param GLint *
-     * \return void
-     */
-    STATICINLINE void get_transform_feedbackiv(
-        u32 xfb, group::transform_feedback_prop pname, span_i32 param)
+requires(
+    semantic::concepts::Span<span_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_i32::value_type>,
+        std::decay_t<i32>>)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param xfb GLuint
+ * \param pname GLenum
+ * \param param GLint *
+ * \return void
+ */
+STATICINLINE void get_transform_feedbackiv(
+    u32 xfb, group::transform_feedback_prop pname, span_i32 param)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -190,21 +192,21 @@ STATICINLINE void transform_feedback_buffer_range(
 
 template<class span_const_void>
 requires(semantic::concepts::Span<span_const_void>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param buffer GLuint
-     * \param internalformat GLenum
-     * \param format GLenum
-     * \param type GLenum
-     * \param data const void *
-     * \return void
-     */
-    STATICINLINE void clear_named_buffer_data(
-        u32                          buffer,
-        group::sized_internal_format internalformat,
-        group::pixel_format          format,
-        group::pixel_type            type,
-        span_const_void const&       data)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param buffer GLuint
+ * \param internalformat GLenum
+ * \param format GLenum
+ * \param type GLenum
+ * \param data const void *
+ * \return void
+ */
+STATICINLINE void clear_named_buffer_data(
+    u32                          buffer,
+    group::sized_internal_format internalformat,
+    group::pixel_format          format,
+    group::pixel_type            type,
+    span_const_void const&       data)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -226,25 +228,25 @@ requires(semantic::concepts::Span<span_const_void>)
 
 template<class span_const_void>
 requires(semantic::concepts::Span<span_const_void>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param buffer GLuint
-     * \param internalformat GLenum
-     * \param offset GLintptr
-     * \param size GLsizeiptr
-     * \param format GLenum
-     * \param type GLenum
-     * \param data const void *
-     * \return void
-     */
-    STATICINLINE void clear_named_buffer_sub_data(
-        u32                          buffer,
-        group::sized_internal_format internalformat,
-        GLintptr                     offset,
-        GLsizeiptr                   size,
-        group::pixel_format          format,
-        group::pixel_type            type,
-        span_const_void const&       data)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param buffer GLuint
+ * \param internalformat GLenum
+ * \param offset GLintptr
+ * \param size GLsizeiptr
+ * \param format GLenum
+ * \param type GLenum
+ * \param data const void *
+ * \return void
+ */
+STATICINLINE void clear_named_buffer_sub_data(
+    u32                          buffer,
+    group::sized_internal_format internalformat,
+    GLintptr                     offset,
+    GLsizeiptr                   size,
+    group::pixel_format          format,
+    group::pixel_type            type,
+    span_const_void const&       data)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -293,16 +295,18 @@ STATICINLINE void copy_named_buffer_sub_data(
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
-         std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param n GLsizei
-     * \param buffers GLuint *
-     * \return void
-     */
-    STATICINLINE void create_buffers(span_u32 buffers)
+requires(
+    semantic::concepts::Span<span_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_u32::value_type>,
+        std::decay_t<u32>>)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param n GLsizei
+ * \param buffers GLuint *
+ * \return void
+ */
+STATICINLINE void create_buffers(span_u32 buffers)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -339,18 +343,20 @@ STATICINLINE void flush_mapped_named_buffer_range(
 }
 
 template<class span_i64>
-requires(semantic::concepts::Span<span_i64>&& std::is_same_v<
-         std::decay_t<typename span_i64::value_type>,
-         std::decay_t<i64>>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param buffer GLuint
-     * \param pname GLenum
-     * \param params GLint64 *
-     * \return void
-     */
-    STATICINLINE void get_named_buffer_parameteri64v(
-        u32 buffer, group::buffer_prop_arb pname, span_i64 params)
+requires(
+    semantic::concepts::Span<span_i64> &&
+    std::is_same_v<
+        std::decay_t<typename span_i64::value_type>,
+        std::decay_t<i64>>)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param buffer GLuint
+ * \param pname GLenum
+ * \param params GLint64 *
+ * \return void
+ */
+STATICINLINE void get_named_buffer_parameteri64v(
+    u32 buffer, group::buffer_prop_arb pname, span_i64 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -369,18 +375,20 @@ requires(semantic::concepts::Span<span_i64>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
-         std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param buffer GLuint
-     * \param pname GLenum
-     * \param params GLint *
-     * \return void
-     */
-    STATICINLINE void get_named_buffer_parameter(
-        u32 buffer, group::buffer_prop_arb pname, span_i32 params)
+requires(
+    semantic::concepts::Span<span_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_i32::value_type>,
+        std::decay_t<i32>>)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param buffer GLuint
+ * \param pname GLenum
+ * \param params GLint *
+ * \return void
+ */
+STATICINLINE void get_named_buffer_parameter(
+    u32 buffer, group::buffer_prop_arb pname, span_i32 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -400,15 +408,15 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 
 template<class span_void>
 requires(semantic::concepts::Span<span_void>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param buffer GLuint
-     * \param pname GLenum
-     * \param params void **
-     * \return void
-     */
-    STATICINLINE void get_named_buffer_pointerv(
-        u32 buffer, group::buffer_pointer_name_arb pname, span_void params)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param buffer GLuint
+ * \param pname GLenum
+ * \param params void **
+ * \return void
+ */
+STATICINLINE void get_named_buffer_pointerv(
+    u32 buffer, group::buffer_pointer_name_arb pname, span_void params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -428,15 +436,15 @@ requires(semantic::concepts::Span<span_void>)
 
 template<class span_void>
 requires(semantic::concepts::Span<span_void>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param buffer GLuint
-     * \param offset GLintptr
-     * \param size GLsizeiptr
-     * \param data void *
-     * \return void
-     */
-    STATICINLINE
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param buffer GLuint
+ * \param offset GLintptr
+ * \param size GLsizeiptr
+ * \param data void *
+ * \return void
+ */
+STATICINLINE
     void get_named_buffer_sub_data(u32 buffer, GLintptr offset, span_void data)
 {
     using namespace std::string_view_literals;
@@ -509,18 +517,18 @@ STATICINLINE void* map_named_buffer_range(
 
 template<class span_const_void>
 requires(semantic::concepts::Span<span_const_void>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param buffer GLuint
-     * \param size GLsizeiptr
-     * \param data const void *
-     * \param usage GLenum
-     * \return void
-     */
-    STATICINLINE void named_buffer_data(
-        u32                               buffer,
-        span_const_void const&            data,
-        group::vertex_buffer_object_usage usage)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param buffer GLuint
+ * \param size GLsizeiptr
+ * \param data const void *
+ * \param usage GLenum
+ * \return void
+ */
+STATICINLINE void named_buffer_data(
+    u32                               buffer,
+    span_const_void const&            data,
+    group::vertex_buffer_object_usage usage)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -542,18 +550,16 @@ requires(semantic::concepts::Span<span_const_void>)
 
 template<class span_const_void>
 requires(semantic::concepts::Span<span_const_void>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param buffer GLuint
-     * \param size GLsizeiptr
-     * \param data const void *
-     * \param flags GLbitfield
-     * \return void
-     */
-    STATICINLINE void named_buffer_storage(
-        u32                        buffer,
-        span_const_void const&     data,
-        group::buffer_storage_mask flags)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param buffer GLuint
+ * \param size GLsizeiptr
+ * \param data const void *
+ * \param flags GLbitfield
+ * \return void
+ */
+STATICINLINE void named_buffer_storage(
+    u32 buffer, span_const_void const& data, group::buffer_storage_mask flags)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -575,16 +581,16 @@ requires(semantic::concepts::Span<span_const_void>)
 
 template<class span_const_void>
 requires(semantic::concepts::Span<span_const_void>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param buffer GLuint
-     * \param offset GLintptr
-     * \param size GLsizeiptr
-     * \param data const void *
-     * \return void
-     */
-    STATICINLINE void named_buffer_sub_data(
-        u32 buffer, GLintptr offset, span_const_void const& data)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param buffer GLuint
+ * \param offset GLintptr
+ * \param size GLsizeiptr
+ * \param data const void *
+ * \return void
+ */
+STATICINLINE void named_buffer_sub_data(
+    u32 buffer, GLintptr offset, span_const_void const& data)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -731,22 +737,24 @@ STATICINLINE void clear_named_framebufferfi(
 }
 
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
-         std::decay_t<typename span_const_f32::value_type>,
-         std::decay_t<f32>>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param framebuffer GLuint
-     * \param buffer GLenum
-     * \param drawbuffer GLint
-     * \param value const GLfloat *
-     * \return void
-     */
-    STATICINLINE void clear_named_framebufferfv(
-        u32                   framebuffer,
-        group::buffer         buffer,
-        i32                   drawbuffer,
-        span_const_f32 const& value)
+requires(
+    semantic::concepts::Span<span_const_f32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_f32::value_type>,
+        std::decay_t<f32>>)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param framebuffer GLuint
+ * \param buffer GLenum
+ * \param drawbuffer GLint
+ * \param value const GLfloat *
+ * \return void
+ */
+STATICINLINE void clear_named_framebufferfv(
+    u32                   framebuffer,
+    group::buffer         buffer,
+    i32                   drawbuffer,
+    span_const_f32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -767,22 +775,24 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
 }
 
 template<class span_const_i32>
-requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
-         std::decay_t<typename span_const_i32::value_type>,
-         std::decay_t<i32>>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param framebuffer GLuint
-     * \param buffer GLenum
-     * \param drawbuffer GLint
-     * \param value const GLint *
-     * \return void
-     */
-    STATICINLINE void clear_named_framebufferiv(
-        u32                   framebuffer,
-        group::buffer         buffer,
-        i32                   drawbuffer,
-        span_const_i32 const& value)
+requires(
+    semantic::concepts::Span<span_const_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_i32::value_type>,
+        std::decay_t<i32>>)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param framebuffer GLuint
+ * \param buffer GLenum
+ * \param drawbuffer GLint
+ * \param value const GLint *
+ * \return void
+ */
+STATICINLINE void clear_named_framebufferiv(
+    u32                   framebuffer,
+    group::buffer         buffer,
+    i32                   drawbuffer,
+    span_const_i32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -802,22 +812,24 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
 }
 
 template<class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
-         std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param framebuffer GLuint
-     * \param buffer GLenum
-     * \param drawbuffer GLint
-     * \param value const GLuint *
-     * \return void
-     */
-    STATICINLINE void clear_named_framebufferuiv(
-        u32                   framebuffer,
-        group::buffer         buffer,
-        i32                   drawbuffer,
-        span_const_u32 const& value)
+requires(
+    semantic::concepts::Span<span_const_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_u32::value_type>,
+        std::decay_t<u32>>)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param framebuffer GLuint
+ * \param buffer GLenum
+ * \param drawbuffer GLint
+ * \param value const GLuint *
+ * \return void
+ */
+STATICINLINE void clear_named_framebufferuiv(
+    u32                   framebuffer,
+    group::buffer         buffer,
+    i32                   drawbuffer,
+    span_const_u32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -837,16 +849,18 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
-         std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param n GLsizei
-     * \param framebuffers GLuint *
-     * \return void
-     */
-    STATICINLINE void create_framebuffers(span_u32 framebuffers)
+requires(
+    semantic::concepts::Span<span_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_u32::value_type>,
+        std::decay_t<u32>>)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param n GLsizei
+ * \param framebuffers GLuint *
+ * \return void
+ */
+STATICINLINE void create_framebuffers(span_u32 framebuffers)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -861,22 +875,24 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
-         std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param framebuffer GLuint
-     * \param attachment GLenum
-     * \param pname GLenum
-     * \param params GLint *
-     * \return void
-     */
-    STATICINLINE void get_named_framebuffer_attachment_parameter(
-        u32                                          framebuffer,
-        group::framebuffer_attachment                attachment,
-        group::framebuffer_attachment_parameter_name pname,
-        span_i32                                     params)
+requires(
+    semantic::concepts::Span<span_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_i32::value_type>,
+        std::decay_t<i32>>)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param framebuffer GLuint
+ * \param attachment GLenum
+ * \param pname GLenum
+ * \param params GLint *
+ * \return void
+ */
+STATICINLINE void get_named_framebuffer_attachment_parameter(
+    u32                                          framebuffer,
+    group::framebuffer_attachment                attachment,
+    group::framebuffer_attachment_parameter_name pname,
+    span_i32                                     params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -896,18 +912,20 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
-         std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param framebuffer GLuint
-     * \param pname GLenum
-     * \param param GLint *
-     * \return void
-     */
-    STATICINLINE void get_named_framebuffer_parameter(
-        u32 framebuffer, group::get_framebuffer_parameter pname, span_i32 param)
+requires(
+    semantic::concepts::Span<span_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_i32::value_type>,
+        std::decay_t<i32>>)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param framebuffer GLuint
+ * \param pname GLenum
+ * \param param GLint *
+ * \return void
+ */
+STATICINLINE void get_named_framebuffer_parameter(
+    u32 framebuffer, group::get_framebuffer_parameter pname, span_i32 param)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -926,20 +944,20 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_const_framebuffer_attachment>
-requires(semantic::concepts::Span<span_const_framebuffer_attachment>&&
-             std::is_same_v<
-                 std::decay_t<
-                     typename span_const_framebuffer_attachment::value_type>,
-                 std::decay_t<group::framebuffer_attachment>>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param framebuffer GLuint
-     * \param numAttachments GLsizei
-     * \param attachments const GLenum *
-     * \return void
-     */
-    STATICINLINE void invalidate_named_framebuffer_data(
-        u32 framebuffer, span_const_framebuffer_attachment const& attachments)
+requires(
+    semantic::concepts::Span<span_const_framebuffer_attachment> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_framebuffer_attachment::value_type>,
+        std::decay_t<group::framebuffer_attachment>>)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param framebuffer GLuint
+ * \param numAttachments GLsizei
+ * \param attachments const GLenum *
+ * \return void
+ */
+STATICINLINE void invalidate_named_framebuffer_data(
+    u32 framebuffer, span_const_framebuffer_attachment const& attachments)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -962,29 +980,29 @@ template<
     class size_2_i32,
     class span_const_framebuffer_attachment,
     class vec_2_i32>
-requires(semantic::concepts::Span<span_const_framebuffer_attachment>&&
-             std::is_same_v<
-                 std::decay_t<
-                     typename span_const_framebuffer_attachment::value_type>,
-                 std::decay_t<group::framebuffer_attachment>>&&
-                     semantic::concepts::Vector<vec_2_i32, i32, 2>&&
-                     semantic::concepts::Size2D<size_2_i32, i32>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param framebuffer GLuint
-     * \param numAttachments GLsizei
-     * \param attachments const GLenum *
-     * \param x GLint
-     * \param y GLint
-     * \param width GLsizei
-     * \param height GLsizei
-     * \return void
-     */
-    STATICINLINE void invalidate_named_framebuffer_sub_data(
-        u32                                      framebuffer,
-        span_const_framebuffer_attachment const& attachments,
-        vec_2_i32 const&                         x,
-        size_2_i32 const&                        width)
+requires(
+    semantic::concepts::Span<span_const_framebuffer_attachment> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_framebuffer_attachment::value_type>,
+        std::decay_t<group::framebuffer_attachment>> &&
+    semantic::concepts::Vector<vec_2_i32, i32, 2> &&
+    semantic::concepts::Size2D<size_2_i32, i32>)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param framebuffer GLuint
+ * \param numAttachments GLsizei
+ * \param attachments const GLenum *
+ * \param x GLint
+ * \param y GLint
+ * \param width GLsizei
+ * \param height GLsizei
+ * \return void
+ */
+STATICINLINE void invalidate_named_framebuffer_sub_data(
+    u32                                      framebuffer,
+    span_const_framebuffer_attachment const& attachments,
+    vec_2_i32 const&                         x,
+    size_2_i32 const&                        width)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1030,18 +1048,20 @@ STATICINLINE void named_framebuffer_draw_buffer(
 }
 
 template<class span_const_color_buffer>
-requires(semantic::concepts::Span<span_const_color_buffer>&& std::is_same_v<
-         std::decay_t<typename span_const_color_buffer::value_type>,
-         std::decay_t<group::color_buffer>>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param framebuffer GLuint
-     * \param n GLsizei
-     * \param bufs const GLenum *
-     * \return void
-     */
-    STATICINLINE void named_framebuffer_draw_buffers(
-        u32 framebuffer, span_const_color_buffer const& bufs)
+requires(
+    semantic::concepts::Span<span_const_color_buffer> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_color_buffer::value_type>,
+        std::decay_t<group::color_buffer>>)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param framebuffer GLuint
+ * \param n GLsizei
+ * \param bufs const GLenum *
+ * \return void
+ */
+STATICINLINE void named_framebuffer_draw_buffers(
+    u32 framebuffer, span_const_color_buffer const& bufs)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1207,16 +1227,18 @@ STATICINLINE void named_framebuffer_texture_layer(
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
-         std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param n GLsizei
-     * \param renderbuffers GLuint *
-     * \return void
-     */
-    STATICINLINE void create_renderbuffers(span_u32 renderbuffers)
+requires(
+    semantic::concepts::Span<span_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_u32::value_type>,
+        std::decay_t<u32>>)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param n GLsizei
+ * \param renderbuffers GLuint *
+ * \return void
+ */
+STATICINLINE void create_renderbuffers(span_u32 renderbuffers)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1231,20 +1253,20 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
-         std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param renderbuffer GLuint
-     * \param pname GLenum
-     * \param params GLint *
-     * \return void
-     */
-    STATICINLINE void get_named_renderbuffer_parameter(
-        u32                                renderbuffer,
-        group::renderbuffer_parameter_name pname,
-        span_i32                           params)
+requires(
+    semantic::concepts::Span<span_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_i32::value_type>,
+        std::decay_t<i32>>)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param renderbuffer GLuint
+ * \param pname GLenum
+ * \param params GLint *
+ * \return void
+ */
+STATICINLINE void get_named_renderbuffer_parameter(
+    u32 renderbuffer, group::renderbuffer_parameter_name pname, span_i32 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1264,18 +1286,18 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 
 template<class size_2_i32>
 requires(semantic::concepts::Size2D<size_2_i32, i32>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param renderbuffer GLuint
-     * \param internalformat GLenum
-     * \param width GLsizei
-     * \param height GLsizei
-     * \return void
-     */
-    STATICINLINE void named_renderbuffer_storage(
-        u32                    renderbuffer,
-        group::internal_format internalformat,
-        size_2_i32 const&      width)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param renderbuffer GLuint
+ * \param internalformat GLenum
+ * \param width GLsizei
+ * \param height GLsizei
+ * \return void
+ */
+STATICINLINE void named_renderbuffer_storage(
+    u32                    renderbuffer,
+    group::internal_format internalformat,
+    size_2_i32 const&      width)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1293,20 +1315,20 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>)
 
 template<class size_2_i32>
 requires(semantic::concepts::Size2D<size_2_i32, i32>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param renderbuffer GLuint
-     * \param samples GLsizei
-     * \param internalformat GLenum
-     * \param width GLsizei
-     * \param height GLsizei
-     * \return void
-     */
-    STATICINLINE void named_renderbuffer_storage_multisample(
-        u32                    renderbuffer,
-        i32                    samples,
-        group::internal_format internalformat,
-        size_2_i32 const&      width)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param renderbuffer GLuint
+ * \param samples GLsizei
+ * \param internalformat GLenum
+ * \param width GLsizei
+ * \param height GLsizei
+ * \return void
+ */
+STATICINLINE void named_renderbuffer_storage_multisample(
+    u32                    renderbuffer,
+    i32                    samples,
+    group::internal_format internalformat,
+    size_2_i32 const&      width)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1349,24 +1371,24 @@ STATICINLINE void bind_texture_unit(u32 unit, u32 texture)
 
 template<class span_const_void>
 requires(semantic::concepts::Span<span_const_void>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param texture GLuint
-     * \param level GLint
-     * \param xoffset GLint
-     * \param width GLsizei
-     * \param format GLenum
-     * \param imageSize GLsizei
-     * \param data const void *
-     * \return void
-     */
-    STATICINLINE void compressed_texture_sub_image_1d(
-        u32                    texture,
-        i32                    level,
-        i32                    xoffset,
-        i32                    width,
-        group::internal_format format,
-        span_const_void const& data)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param texture GLuint
+ * \param level GLint
+ * \param xoffset GLint
+ * \param width GLsizei
+ * \param format GLenum
+ * \param imageSize GLsizei
+ * \param data const void *
+ * \return void
+ */
+STATICINLINE void compressed_texture_sub_image_1d(
+    u32                    texture,
+    i32                    level,
+    i32                    xoffset,
+    i32                    width,
+    group::internal_format format,
+    span_const_void const& data)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1390,29 +1412,30 @@ requires(semantic::concepts::Span<span_const_void>)
 }
 
 template<class size_2_i32, class span_const_void, class vec_2_i32>
-requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
-                 semantic::concepts::Size2D<size_2_i32, i32>&&
-                 semantic::concepts::Span<span_const_void>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param texture GLuint
-     * \param level GLint
-     * \param xoffset GLint
-     * \param yoffset GLint
-     * \param width GLsizei
-     * \param height GLsizei
-     * \param format GLenum
-     * \param imageSize GLsizei
-     * \param data const void *
-     * \return void
-     */
-    STATICINLINE void compressed_texture_sub_image_2d(
-        u32                    texture,
-        i32                    level,
-        vec_2_i32 const&       xoffset,
-        size_2_i32 const&      width,
-        group::internal_format format,
-        span_const_void const& data)
+requires(
+    semantic::concepts::Vector<vec_2_i32, i32, 2> &&
+    semantic::concepts::Size2D<size_2_i32, i32> &&
+    semantic::concepts::Span<span_const_void>)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param texture GLuint
+ * \param level GLint
+ * \param xoffset GLint
+ * \param yoffset GLint
+ * \param width GLsizei
+ * \param height GLsizei
+ * \param format GLenum
+ * \param imageSize GLsizei
+ * \param data const void *
+ * \return void
+ */
+STATICINLINE void compressed_texture_sub_image_2d(
+    u32                    texture,
+    i32                    level,
+    vec_2_i32 const&       xoffset,
+    size_2_i32 const&      width,
+    group::internal_format format,
+    span_const_void const& data)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1438,31 +1461,32 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
 }
 
 template<class size_3_i32, class span_const_void, class vec_3_i32>
-requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
-                 semantic::concepts::Size2D<size_3_i32, i32>&&
-                 semantic::concepts::Span<span_const_void>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param texture GLuint
-     * \param level GLint
-     * \param xoffset GLint
-     * \param yoffset GLint
-     * \param zoffset GLint
-     * \param width GLsizei
-     * \param height GLsizei
-     * \param depth GLsizei
-     * \param format GLenum
-     * \param imageSize GLsizei
-     * \param data const void *
-     * \return void
-     */
-    STATICINLINE void compressed_texture_sub_image_3d(
-        u32                    texture,
-        i32                    level,
-        vec_3_i32 const&       xoffset,
-        size_3_i32 const&      width,
-        group::internal_format format,
-        span_const_void const& data)
+requires(
+    semantic::concepts::Vector<vec_3_i32, i32, 3> &&
+    semantic::concepts::Size2D<size_3_i32, i32> &&
+    semantic::concepts::Span<span_const_void>)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param texture GLuint
+ * \param level GLint
+ * \param xoffset GLint
+ * \param yoffset GLint
+ * \param zoffset GLint
+ * \param width GLsizei
+ * \param height GLsizei
+ * \param depth GLsizei
+ * \param format GLenum
+ * \param imageSize GLsizei
+ * \param data const void *
+ * \return void
+ */
+STATICINLINE void compressed_texture_sub_image_3d(
+    u32                    texture,
+    i32                    level,
+    vec_3_i32 const&       xoffset,
+    size_3_i32 const&      width,
+    group::internal_format format,
+    span_const_void const& data)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1491,18 +1515,18 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
 
 template<class vec_2_i32>
 requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param texture GLuint
-     * \param level GLint
-     * \param xoffset GLint
-     * \param x GLint
-     * \param y GLint
-     * \param width GLsizei
-     * \return void
-     */
-    STATICINLINE void copy_texture_sub_image_1d(
-        u32 texture, i32 level, i32 xoffset, vec_2_i32 const& x, i32 width)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param texture GLuint
+ * \param level GLint
+ * \param xoffset GLint
+ * \param x GLint
+ * \param y GLint
+ * \param width GLsizei
+ * \return void
+ */
+STATICINLINE void copy_texture_sub_image_1d(
+    u32 texture, i32 level, i32 xoffset, vec_2_i32 const& x, i32 width)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1518,26 +1542,27 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
 }
 
 template<class size_2_i32, class vec_2_i32>
-requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
-             semantic::concepts::Size2D<size_2_i32, i32>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param texture GLuint
-     * \param level GLint
-     * \param xoffset GLint
-     * \param yoffset GLint
-     * \param x GLint
-     * \param y GLint
-     * \param width GLsizei
-     * \param height GLsizei
-     * \return void
-     */
-    STATICINLINE void copy_texture_sub_image_2d(
-        u32               texture,
-        i32               level,
-        vec_2_i32 const&  xoffset,
-        vec_2_i32 const&  x,
-        size_2_i32 const& width)
+requires(
+    semantic::concepts::Vector<vec_2_i32, i32, 2> &&
+    semantic::concepts::Size2D<size_2_i32, i32>)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param texture GLuint
+ * \param level GLint
+ * \param xoffset GLint
+ * \param yoffset GLint
+ * \param x GLint
+ * \param y GLint
+ * \param width GLsizei
+ * \param height GLsizei
+ * \return void
+ */
+STATICINLINE void copy_texture_sub_image_2d(
+    u32               texture,
+    i32               level,
+    vec_2_i32 const&  xoffset,
+    vec_2_i32 const&  x,
+    size_2_i32 const& width)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1561,28 +1586,29 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
 }
 
 template<class size_2_i32, class vec_2_i32, class vec_3_i32>
-requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
-                 semantic::concepts::Vector<vec_2_i32, i32, 2>&&
-                 semantic::concepts::Size2D<size_2_i32, i32>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param texture GLuint
-     * \param level GLint
-     * \param xoffset GLint
-     * \param yoffset GLint
-     * \param zoffset GLint
-     * \param x GLint
-     * \param y GLint
-     * \param width GLsizei
-     * \param height GLsizei
-     * \return void
-     */
-    STATICINLINE void copy_texture_sub_image_3d(
-        u32               texture,
-        i32               level,
-        vec_3_i32 const&  xoffset,
-        vec_2_i32 const&  x,
-        size_2_i32 const& width)
+requires(
+    semantic::concepts::Vector<vec_3_i32, i32, 3> &&
+    semantic::concepts::Vector<vec_2_i32, i32, 2> &&
+    semantic::concepts::Size2D<size_2_i32, i32>)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param texture GLuint
+ * \param level GLint
+ * \param xoffset GLint
+ * \param yoffset GLint
+ * \param zoffset GLint
+ * \param x GLint
+ * \param y GLint
+ * \param width GLsizei
+ * \param height GLsizei
+ * \return void
+ */
+STATICINLINE void copy_texture_sub_image_3d(
+    u32               texture,
+    i32               level,
+    vec_3_i32 const&  xoffset,
+    vec_2_i32 const&  x,
+    size_2_i32 const& width)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1607,17 +1633,19 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
-         std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param target GLenum
-     * \param n GLsizei
-     * \param textures GLuint *
-     * \return void
-     */
-    STATICINLINE
+requires(
+    semantic::concepts::Span<span_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_u32::value_type>,
+        std::decay_t<u32>>)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param target GLenum
+ * \param n GLsizei
+ * \param textures GLuint *
+ * \return void
+ */
+STATICINLINE
     void create_textures(group::texture_target target, span_u32 textures)
 {
     using namespace std::string_view_literals;
@@ -1654,15 +1682,15 @@ STATICINLINE void generate_texture_mipmap(u32 texture)
 
 template<class span_void>
 requires(semantic::concepts::Span<span_void>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param texture GLuint
-     * \param level GLint
-     * \param bufSize GLsizei
-     * \param pixels void *
-     * \return void
-     */
-    STATICINLINE
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param texture GLuint
+ * \param level GLint
+ * \param bufSize GLsizei
+ * \param pixels void *
+ * \return void
+ */
+STATICINLINE
     void get_compressed_texture_image(u32 texture, i32 level, span_void pixels)
 {
     using namespace std::string_view_literals;
@@ -1684,22 +1712,22 @@ requires(semantic::concepts::Span<span_void>)
 
 template<class span_void>
 requires(semantic::concepts::Span<span_void>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param texture GLuint
-     * \param level GLint
-     * \param format GLenum
-     * \param type GLenum
-     * \param bufSize GLsizei
-     * \param pixels void *
-     * \return void
-     */
-    STATICINLINE void get_texture_image(
-        u32                 texture,
-        i32                 level,
-        group::pixel_format format,
-        group::pixel_type   type,
-        span_void           pixels)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param texture GLuint
+ * \param level GLint
+ * \param format GLenum
+ * \param type GLenum
+ * \param bufSize GLsizei
+ * \param pixels void *
+ * \return void
+ */
+STATICINLINE void get_texture_image(
+    u32                 texture,
+    i32                 level,
+    group::pixel_format format,
+    group::pixel_type   type,
+    span_void           pixels)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1721,22 +1749,21 @@ requires(semantic::concepts::Span<span_void>)
 }
 
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
-         std::decay_t<typename span_f32::value_type>,
-         std::decay_t<f32>>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param texture GLuint
-     * \param level GLint
-     * \param pname GLenum
-     * \param params GLfloat *
-     * \return void
-     */
-    STATICINLINE void get_texture_level_parameter(
-        u32                          texture,
-        i32                          level,
-        group::get_texture_parameter pname,
-        span_f32                     params)
+requires(
+    semantic::concepts::Span<span_f32> &&
+    std::is_same_v<
+        std::decay_t<typename span_f32::value_type>,
+        std::decay_t<f32>>)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param texture GLuint
+ * \param level GLint
+ * \param pname GLenum
+ * \param params GLfloat *
+ * \return void
+ */
+STATICINLINE void get_texture_level_parameter(
+    u32 texture, i32 level, group::get_texture_parameter pname, span_f32 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1756,22 +1783,21 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
-         std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param texture GLuint
-     * \param level GLint
-     * \param pname GLenum
-     * \param params GLint *
-     * \return void
-     */
-    STATICINLINE void get_texture_level_parameter(
-        u32                          texture,
-        i32                          level,
-        group::get_texture_parameter pname,
-        span_i32                     params)
+requires(
+    semantic::concepts::Span<span_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_i32::value_type>,
+        std::decay_t<i32>>)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param texture GLuint
+ * \param level GLint
+ * \param pname GLenum
+ * \param params GLint *
+ * \return void
+ */
+STATICINLINE void get_texture_level_parameter(
+    u32 texture, i32 level, group::get_texture_parameter pname, span_i32 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1791,18 +1817,20 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
-         std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param texture GLuint
-     * \param pname GLenum
-     * \param params GLint *
-     * \return void
-     */
-    STATICINLINE void get_texture_parameter_iiv(
-        u32 texture, group::get_texture_parameter pname, span_i32 params)
+requires(
+    semantic::concepts::Span<span_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_i32::value_type>,
+        std::decay_t<i32>>)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param texture GLuint
+ * \param pname GLenum
+ * \param params GLint *
+ * \return void
+ */
+STATICINLINE void get_texture_parameter_iiv(
+    u32 texture, group::get_texture_parameter pname, span_i32 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1821,18 +1849,20 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
-         std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param texture GLuint
-     * \param pname GLenum
-     * \param params GLuint *
-     * \return void
-     */
-    STATICINLINE void get_texture_parameter_iuiv(
-        u32 texture, group::get_texture_parameter pname, span_u32 params)
+requires(
+    semantic::concepts::Span<span_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_u32::value_type>,
+        std::decay_t<u32>>)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param texture GLuint
+ * \param pname GLenum
+ * \param params GLuint *
+ * \return void
+ */
+STATICINLINE void get_texture_parameter_iuiv(
+    u32 texture, group::get_texture_parameter pname, span_u32 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1851,18 +1881,20 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 }
 
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
-         std::decay_t<typename span_f32::value_type>,
-         std::decay_t<f32>>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param texture GLuint
-     * \param pname GLenum
-     * \param params GLfloat *
-     * \return void
-     */
-    STATICINLINE void get_texture_parameter(
-        u32 texture, group::get_texture_parameter pname, span_f32 params)
+requires(
+    semantic::concepts::Span<span_f32> &&
+    std::is_same_v<
+        std::decay_t<typename span_f32::value_type>,
+        std::decay_t<f32>>)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param texture GLuint
+ * \param pname GLenum
+ * \param params GLfloat *
+ * \return void
+ */
+STATICINLINE void get_texture_parameter(
+    u32 texture, group::get_texture_parameter pname, span_f32 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1881,18 +1913,20 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
-         std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param texture GLuint
-     * \param pname GLenum
-     * \param params GLint *
-     * \return void
-     */
-    STATICINLINE void get_texture_parameter(
-        u32 texture, group::get_texture_parameter pname, span_i32 params)
+requires(
+    semantic::concepts::Span<span_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_i32::value_type>,
+        std::decay_t<i32>>)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param texture GLuint
+ * \param pname GLenum
+ * \param params GLint *
+ * \return void
+ */
+STATICINLINE void get_texture_parameter(
+    u32 texture, group::get_texture_parameter pname, span_i32 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1972,20 +2006,22 @@ STATICINLINE void texture_buffer_range(
 }
 
 template<class span_const_i32>
-requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
-         std::decay_t<typename span_const_i32::value_type>,
-         std::decay_t<i32>>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param texture GLuint
-     * \param pname GLenum
-     * \param params const GLint *
-     * \return void
-     */
-    STATICINLINE void texture_parameter_iiv(
-        u32                           texture,
-        group::texture_parameter_name pname,
-        span_const_i32 const&         params)
+requires(
+    semantic::concepts::Span<span_const_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_i32::value_type>,
+        std::decay_t<i32>>)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param texture GLuint
+ * \param pname GLenum
+ * \param params const GLint *
+ * \return void
+ */
+STATICINLINE void texture_parameter_iiv(
+    u32                           texture,
+    group::texture_parameter_name pname,
+    span_const_i32 const&         params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2005,20 +2041,22 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
 }
 
 template<class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
-         std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param texture GLuint
-     * \param pname GLenum
-     * \param params const GLuint *
-     * \return void
-     */
-    STATICINLINE void texture_parameter_iuiv(
-        u32                           texture,
-        group::texture_parameter_name pname,
-        span_const_u32 const&         params)
+requires(
+    semantic::concepts::Span<span_const_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_u32::value_type>,
+        std::decay_t<u32>>)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param texture GLuint
+ * \param pname GLenum
+ * \param params const GLuint *
+ * \return void
+ */
+STATICINLINE void texture_parameter_iuiv(
+    u32                           texture,
+    group::texture_parameter_name pname,
+    span_const_u32 const&         params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2061,20 +2099,22 @@ STATICINLINE void texture_parameter(
 }
 
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
-         std::decay_t<typename span_const_f32::value_type>,
-         std::decay_t<f32>>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param texture GLuint
-     * \param pname GLenum
-     * \param param const GLfloat *
-     * \return void
-     */
-    STATICINLINE void texture_parameter(
-        u32                           texture,
-        group::texture_parameter_name pname,
-        span_const_f32 const&         param)
+requires(
+    semantic::concepts::Span<span_const_f32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_f32::value_type>,
+        std::decay_t<f32>>)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param texture GLuint
+ * \param pname GLenum
+ * \param param const GLfloat *
+ * \return void
+ */
+STATICINLINE void texture_parameter(
+    u32                           texture,
+    group::texture_parameter_name pname,
+    span_const_f32 const&         param)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2117,20 +2157,22 @@ STATICINLINE void texture_parameter(
 }
 
 template<class span_const_i32>
-requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
-         std::decay_t<typename span_const_i32::value_type>,
-         std::decay_t<i32>>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param texture GLuint
-     * \param pname GLenum
-     * \param param const GLint *
-     * \return void
-     */
-    STATICINLINE void texture_parameter(
-        u32                           texture,
-        group::texture_parameter_name pname,
-        span_const_i32 const&         param)
+requires(
+    semantic::concepts::Span<span_const_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_i32::value_type>,
+        std::decay_t<i32>>)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param texture GLuint
+ * \param pname GLenum
+ * \param param const GLint *
+ * \return void
+ */
+STATICINLINE void texture_parameter(
+    u32                           texture,
+    group::texture_parameter_name pname,
+    span_const_i32 const&         param)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2178,20 +2220,20 @@ STATICINLINE void texture_storage_1d(
 
 template<class size_2_i32>
 requires(semantic::concepts::Size2D<size_2_i32, i32>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param texture GLuint
-     * \param levels GLsizei
-     * \param internalformat GLenum
-     * \param width GLsizei
-     * \param height GLsizei
-     * \return void
-     */
-    STATICINLINE void texture_storage_2d(
-        u32                          texture,
-        i32                          levels,
-        group::sized_internal_format internalformat,
-        size_2_i32 const&            width)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param texture GLuint
+ * \param levels GLsizei
+ * \param internalformat GLenum
+ * \param width GLsizei
+ * \param height GLsizei
+ * \return void
+ */
+STATICINLINE void texture_storage_2d(
+    u32                          texture,
+    i32                          levels,
+    group::sized_internal_format internalformat,
+    size_2_i32 const&            width)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2213,22 +2255,22 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>)
 
 template<class size_2_i32>
 requires(semantic::concepts::Size2D<size_2_i32, i32>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param texture GLuint
-     * \param samples GLsizei
-     * \param internalformat GLenum
-     * \param width GLsizei
-     * \param height GLsizei
-     * \param fixedsamplelocations GLboolean
-     * \return void
-     */
-    STATICINLINE void texture_storage_2d_multisample(
-        u32                          texture,
-        i32                          samples,
-        group::sized_internal_format internalformat,
-        size_2_i32 const&            width,
-        bool                         fixedsamplelocations)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param texture GLuint
+ * \param samples GLsizei
+ * \param internalformat GLenum
+ * \param width GLsizei
+ * \param height GLsizei
+ * \param fixedsamplelocations GLboolean
+ * \return void
+ */
+STATICINLINE void texture_storage_2d_multisample(
+    u32                          texture,
+    i32                          samples,
+    group::sized_internal_format internalformat,
+    size_2_i32 const&            width,
+    bool                         fixedsamplelocations)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2251,21 +2293,21 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>)
 
 template<class size_3_i32>
 requires(semantic::concepts::Size2D<size_3_i32, i32>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param texture GLuint
-     * \param levels GLsizei
-     * \param internalformat GLenum
-     * \param width GLsizei
-     * \param height GLsizei
-     * \param depth GLsizei
-     * \return void
-     */
-    STATICINLINE void texture_storage_3d(
-        u32                          texture,
-        i32                          levels,
-        group::sized_internal_format internalformat,
-        size_3_i32 const&            width)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param texture GLuint
+ * \param levels GLsizei
+ * \param internalformat GLenum
+ * \param width GLsizei
+ * \param height GLsizei
+ * \param depth GLsizei
+ * \return void
+ */
+STATICINLINE void texture_storage_3d(
+    u32                          texture,
+    i32                          levels,
+    group::sized_internal_format internalformat,
+    size_3_i32 const&            width)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2288,23 +2330,23 @@ requires(semantic::concepts::Size2D<size_3_i32, i32>)
 
 template<class size_3_i32>
 requires(semantic::concepts::Size2D<size_3_i32, i32>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param texture GLuint
-     * \param samples GLsizei
-     * \param internalformat GLenum
-     * \param width GLsizei
-     * \param height GLsizei
-     * \param depth GLsizei
-     * \param fixedsamplelocations GLboolean
-     * \return void
-     */
-    STATICINLINE void texture_storage_3d_multisample(
-        u32                          texture,
-        i32                          samples,
-        group::sized_internal_format internalformat,
-        size_3_i32 const&            width,
-        bool                         fixedsamplelocations)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param texture GLuint
+ * \param samples GLsizei
+ * \param internalformat GLenum
+ * \param width GLsizei
+ * \param height GLsizei
+ * \param depth GLsizei
+ * \param fixedsamplelocations GLboolean
+ * \return void
+ */
+STATICINLINE void texture_storage_3d_multisample(
+    u32                          texture,
+    i32                          samples,
+    group::sized_internal_format internalformat,
+    size_3_i32 const&            width,
+    bool                         fixedsamplelocations)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2328,25 +2370,25 @@ requires(semantic::concepts::Size2D<size_3_i32, i32>)
 
 template<class span_const_void>
 requires(semantic::concepts::Span<span_const_void>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param texture GLuint
-     * \param level GLint
-     * \param xoffset GLint
-     * \param width GLsizei
-     * \param format GLenum
-     * \param type GLenum
-     * \param pixels const void *
-     * \return void
-     */
-    STATICINLINE void texture_sub_image_1d(
-        u32                    texture,
-        i32                    level,
-        i32                    xoffset,
-        i32                    width,
-        group::pixel_format    format,
-        group::pixel_type      type,
-        span_const_void const& pixels)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param texture GLuint
+ * \param level GLint
+ * \param xoffset GLint
+ * \param width GLsizei
+ * \param format GLenum
+ * \param type GLenum
+ * \param pixels const void *
+ * \return void
+ */
+STATICINLINE void texture_sub_image_1d(
+    u32                    texture,
+    i32                    level,
+    i32                    xoffset,
+    i32                    width,
+    group::pixel_format    format,
+    group::pixel_type      type,
+    span_const_void const& pixels)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2369,30 +2411,31 @@ requires(semantic::concepts::Span<span_const_void>)
 }
 
 template<class size_2_i32, class span_const_void, class vec_2_i32>
-requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
-                 semantic::concepts::Size2D<size_2_i32, i32>&&
-                 semantic::concepts::Span<span_const_void>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param texture GLuint
-     * \param level GLint
-     * \param xoffset GLint
-     * \param yoffset GLint
-     * \param width GLsizei
-     * \param height GLsizei
-     * \param format GLenum
-     * \param type GLenum
-     * \param pixels const void *
-     * \return void
-     */
-    STATICINLINE void texture_sub_image_2d(
-        u32                    texture,
-        i32                    level,
-        vec_2_i32 const&       xoffset,
-        size_2_i32 const&      width,
-        group::pixel_format    format,
-        group::pixel_type      type,
-        span_const_void const& pixels)
+requires(
+    semantic::concepts::Vector<vec_2_i32, i32, 2> &&
+    semantic::concepts::Size2D<size_2_i32, i32> &&
+    semantic::concepts::Span<span_const_void>)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param texture GLuint
+ * \param level GLint
+ * \param xoffset GLint
+ * \param yoffset GLint
+ * \param width GLsizei
+ * \param height GLsizei
+ * \param format GLenum
+ * \param type GLenum
+ * \param pixels const void *
+ * \return void
+ */
+STATICINLINE void texture_sub_image_2d(
+    u32                    texture,
+    i32                    level,
+    vec_2_i32 const&       xoffset,
+    size_2_i32 const&      width,
+    group::pixel_format    format,
+    group::pixel_type      type,
+    span_const_void const& pixels)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2417,32 +2460,33 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
 }
 
 template<class size_3_i32, class span_const_void, class vec_3_i32>
-requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
-                 semantic::concepts::Size2D<size_3_i32, i32>&&
-                 semantic::concepts::Span<span_const_void>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param texture GLuint
-     * \param level GLint
-     * \param xoffset GLint
-     * \param yoffset GLint
-     * \param zoffset GLint
-     * \param width GLsizei
-     * \param height GLsizei
-     * \param depth GLsizei
-     * \param format GLenum
-     * \param type GLenum
-     * \param pixels const void *
-     * \return void
-     */
-    STATICINLINE void texture_sub_image_3d(
-        u32                    texture,
-        i32                    level,
-        vec_3_i32 const&       xoffset,
-        size_3_i32 const&      width,
-        group::pixel_format    format,
-        group::pixel_type      type,
-        span_const_void const& pixels)
+requires(
+    semantic::concepts::Vector<vec_3_i32, i32, 3> &&
+    semantic::concepts::Size2D<size_3_i32, i32> &&
+    semantic::concepts::Span<span_const_void>)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param texture GLuint
+ * \param level GLint
+ * \param xoffset GLint
+ * \param yoffset GLint
+ * \param zoffset GLint
+ * \param width GLsizei
+ * \param height GLsizei
+ * \param depth GLsizei
+ * \param format GLenum
+ * \param type GLenum
+ * \param pixels const void *
+ * \return void
+ */
+STATICINLINE void texture_sub_image_3d(
+    u32                    texture,
+    i32                    level,
+    vec_3_i32 const&       xoffset,
+    size_3_i32 const&      width,
+    group::pixel_format    format,
+    group::pixel_type      type,
+    span_const_void const& pixels)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2469,16 +2513,18 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
-         std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param n GLsizei
-     * \param arrays GLuint *
-     * \return void
-     */
-    STATICINLINE void create_vertex_arrays(span_u32 arrays)
+requires(
+    semantic::concepts::Span<span_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_u32::value_type>,
+        std::decay_t<u32>>)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param n GLsizei
+ * \param arrays GLuint *
+ * \return void
+ */
+STATICINLINE void create_vertex_arrays(span_u32 arrays)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2534,19 +2580,21 @@ STATICINLINE void enable_vertex_array_attrib(u32 vaobj, u32 index)
 }
 
 template<class span_i64>
-requires(semantic::concepts::Span<span_i64>&& std::is_same_v<
-         std::decay_t<typename span_i64::value_type>,
-         std::decay_t<i64>>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param vaobj GLuint
-     * \param index GLuint
-     * \param pname GLenum
-     * \param param GLint64 *
-     * \return void
-     */
-    STATICINLINE void get_vertex_array_indexed64iv(
-        u32 vaobj, u32 index, group::vertex_array_prop pname, span_i64 param)
+requires(
+    semantic::concepts::Span<span_i64> &&
+    std::is_same_v<
+        std::decay_t<typename span_i64::value_type>,
+        std::decay_t<i64>>)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param vaobj GLuint
+ * \param index GLuint
+ * \param pname GLenum
+ * \param param GLint64 *
+ * \return void
+ */
+STATICINLINE void get_vertex_array_indexed64iv(
+    u32 vaobj, u32 index, group::vertex_array_prop pname, span_i64 param)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2566,19 +2614,21 @@ requires(semantic::concepts::Span<span_i64>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
-         std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param vaobj GLuint
-     * \param index GLuint
-     * \param pname GLenum
-     * \param param GLint *
-     * \return void
-     */
-    STATICINLINE void get_vertex_array_indexediv(
-        u32 vaobj, u32 index, group::vertex_array_prop pname, span_i32 param)
+requires(
+    semantic::concepts::Span<span_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_i32::value_type>,
+        std::decay_t<i32>>)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param vaobj GLuint
+ * \param index GLuint
+ * \param pname GLenum
+ * \param param GLint *
+ * \return void
+ */
+STATICINLINE void get_vertex_array_indexediv(
+    u32 vaobj, u32 index, group::vertex_array_prop pname, span_i32 param)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2598,18 +2648,20 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
-         std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param vaobj GLuint
-     * \param pname GLenum
-     * \param param GLint *
-     * \return void
-     */
-    STATICINLINE void get_vertex_arrayiv(
-        u32 vaobj, group::vertex_array_prop pname, span_i32 param)
+requires(
+    semantic::concepts::Span<span_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_i32::value_type>,
+        std::decay_t<i32>>)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param vaobj GLuint
+ * \param pname GLenum
+ * \param param GLint *
+ * \return void
+ */
+STATICINLINE void get_vertex_arrayiv(
+    u32 vaobj, group::vertex_array_prop pname, span_i32 param)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2825,31 +2877,35 @@ STATICINLINE void vertex_array_vertex_buffer(
 }
 
 template<class span_const_GLintptr, class span_const_i32, class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
-         std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>&& semantic::concepts::Span<span_const_GLintptr>&&
-                              std::is_same_v<
-                 std::decay_t<typename span_const_GLintptr::value_type>,
-                 std::decay_t<GLintptr>>&&
-                 semantic::concepts::Span<span_const_i32>&& std::is_same_v<
-                     std::decay_t<typename span_const_i32::value_type>,
-                     std::decay_t<i32>>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param vaobj GLuint
-     * \param first GLuint
-     * \param count GLsizei
-     * \param buffers const GLuint *
-     * \param offsets const GLintptr *
-     * \param strides const GLsizei *
-     * \return void
-     */
-    STATICINLINE void vertex_array_vertex_buffers(
-        u32                        vaobj,
-        u32                        first,
-        span_const_u32 const&      buffers,
-        span_const_GLintptr const& offsets,
-        span_const_i32 const&      strides)
+requires(
+    semantic::concepts::Span<span_const_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_u32::value_type>,
+        std::decay_t<u32>> &&
+    semantic::concepts::Span<span_const_GLintptr> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLintptr::value_type>,
+        std::decay_t<GLintptr>> &&
+    semantic::concepts::Span<span_const_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_i32::value_type>,
+        std::decay_t<i32>>)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param vaobj GLuint
+ * \param first GLuint
+ * \param count GLsizei
+ * \param buffers const GLuint *
+ * \param offsets const GLintptr *
+ * \param strides const GLsizei *
+ * \return void
+ */
+STATICINLINE void vertex_array_vertex_buffers(
+    u32                        vaobj,
+    u32                        first,
+    span_const_u32 const&      buffers,
+    span_const_GLintptr const& offsets,
+    span_const_i32 const&      strides)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2874,16 +2930,18 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
-         std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param n GLsizei
-     * \param samplers GLuint *
-     * \return void
-     */
-    STATICINLINE void create_samplers(span_u32 samplers)
+requires(
+    semantic::concepts::Span<span_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_u32::value_type>,
+        std::decay_t<u32>>)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param n GLsizei
+ * \param samplers GLuint *
+ * \return void
+ */
+STATICINLINE void create_samplers(span_u32 samplers)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2897,16 +2955,18 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
-         std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param n GLsizei
-     * \param pipelines GLuint *
-     * \return void
-     */
-    STATICINLINE void create_program_pipelines(span_u32 pipelines)
+requires(
+    semantic::concepts::Span<span_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_u32::value_type>,
+        std::decay_t<u32>>)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param n GLsizei
+ * \param pipelines GLuint *
+ * \return void
+ */
+STATICINLINE void create_program_pipelines(span_u32 pipelines)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2921,17 +2981,19 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
-         std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>)
-    /*!
-     * \brief Part of GL_ARB_direct_state_access
-     * \param target GLenum
-     * \param n GLsizei
-     * \param ids GLuint *
-     * \return void
-     */
-    STATICINLINE void create_queries(group::query_target target, span_u32 ids)
+requires(
+    semantic::concepts::Span<span_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_u32::value_type>,
+        std::decay_t<u32>>)
+/*!
+ * \brief Part of GL_ARB_direct_state_access
+ * \param target GLenum
+ * \param n GLsizei
+ * \param ids GLuint *
+ * \return void
+ */
+STATICINLINE void create_queries(group::query_target target, span_u32 ids)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

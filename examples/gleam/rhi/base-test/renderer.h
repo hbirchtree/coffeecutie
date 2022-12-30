@@ -96,18 +96,17 @@ using StateTag  = Components::ValueTag<RuntimeStateSystem, RuntimeState>;
 static constexpr u32 FloorTag    = 0x1;
 static constexpr u32 BaseItemTag = 0x2;
 
-struct TransformContainer
-    : Components::Allocators::VectorContainer<TransformTag>
+struct TransformContainer : compo::alloc::VectorContainer<TransformTag>
 {
 };
 
-struct MatrixContainer : Components::Allocators::VectorBaseContainer<MatrixTag>
+struct MatrixContainer : compo::alloc::VectorBaseContainer<MatrixTag>
 {
     Vector<Matf4> m_matrices;
 
     virtual void register_entity(u64 id)
     {
-        Components::Allocators::VectorBaseContainer<MatrixTag>::register_entity(
+        compo::alloc::VectorBaseContainer<MatrixTag>::register_entity(
             id);
 
         m_matrices.push_back({});
@@ -135,7 +134,7 @@ struct MatrixContainer : Components::Allocators::VectorBaseContainer<MatrixTag>
     }
 };
 
-class CameraContainer : public Components::Globals::ValueSubsystem<CameraTag>
+class CameraContainer : public compo::globals::ValueSubsystem<CameraTag>
 {
   public:
     CameraContainer()
@@ -200,7 +199,7 @@ class TimeSystem : public Components::SubsystemBase
     system_clock::duration   current_time{};
 };
 
-struct FrameCounter : public Components::Globals::ValueSubsystem<FrameTag>
+struct FrameCounter : public compo::globals::ValueSubsystem<FrameTag>
 {
     time_point next_print;
 
@@ -545,7 +544,10 @@ void SetupRendering(
         if(auto res = program->compile(); res.has_error())
         {
             auto [error_msg] = res.error();
-            cFatal("Failed to compile shaders: {0}", error_msg);
+            cFatal("Failed to compile shaders: {0}\nSource:\n{1}\n------\n{2}",
+                   error_msg,
+                   v_rsc.data().data(),
+                   f_rsc.data().data());
         } else
         {
             auto [info_msg, nothing] = res.value();

@@ -13,16 +13,16 @@ namespace semantic {
 namespace detail {
 
 template<typename T>
-requires(!std::is_same_v<std::decay_t<T>, void>)
-    //
-    constexpr inline size_t size_of_type()
+    requires(!std::is_same_v<std::decay_t<T>, void>)
+//
+constexpr inline size_t size_of_type()
 {
     return sizeof(T);
 }
 template<typename T>
-requires(std::is_same_v<std::decay_t<T>, void>)
-    //
-    constexpr inline size_t size_of_type()
+    requires(std::is_same_v<std::decay_t<T>, void>)
+//
+constexpr inline size_t size_of_type()
 {
     return 1;
 }
@@ -109,7 +109,7 @@ struct mem_chunk
     STATICINLINE mem_chunk ofContainer(OtherT& obj)
     {
         mem_chunk out = {
-            .view = span_type(obj),
+            .view = span_type(obj.data(), obj.size()),
         };
         out.updatePointers();
         return out;
@@ -122,7 +122,8 @@ struct mem_chunk
     STATICINLINE mem_chunk ofContainer(OtherT& obj)
     {
         mem_chunk out = {
-            .view = span_type(C_RCAST<T*>(obj.data()), obj.size()),
+            .view =
+                span_type(C_RCAST<T*>(obj.data()), (obj.size() * sizeof(typename OtherT::value_type)) / sizeof(value_type)),
         };
         out.updatePointers();
         return out;
@@ -141,9 +142,9 @@ struct mem_chunk
             C_RCAST<T*>(&object), detail::size_of_type<OtherT>() / sizeof(T));
     }
     template<typename Dummy = void>
-    requires std::is_const_v<T>
-        //
-        STATICINLINE mem_chunk ofString(const char* data)
+        requires std::is_const_v<T>
+    //
+    STATICINLINE mem_chunk ofString(const char* data)
     {
         return ofBytes(data, libc::str::len(data));
     }
@@ -173,17 +174,20 @@ struct mem_chunk
     }
 
     template<class Container>
-    requires (!std::is_same_v<Container, allocation_type>)
+        requires(!std::is_same_v<Container, allocation_type>)
     NO_DISCARD STATICINLINE mem_chunk move(Container const& c)
     {
         /* If the container_type is not the same, we need to copy */
         mem_chunk out;
-        std::move(std::begin(c), std::end(c), std::back_insert_iterator(out.allocation));
+        std::move(
+            std::begin(c),
+            std::end(c),
+            std::back_insert_iterator(out.allocation));
         out.updatePointers(Ownership::Owned);
         return out;
     }
     template<class Container>
-    requires (std::is_same_v<typename Container::value_type, value_type>)
+        requires(std::is_same_v<typename Container::value_type, value_type>)
     NO_DISCARD STATICINLINE mem_chunk move(Container&& c)
     {
         /* If the container_type is the same, steal the data */
@@ -286,7 +290,7 @@ struct mem_chunk
     {
         auto      translated_size = size == 0 ? view.size() - offset : size;
         mem_chunk out             = {
-            .view = view.subspan(offset, translated_size),
+                        .view = view.subspan(offset, translated_size),
         };
         out.updatePointers(Ownership::Borrowed, access);
         return std::make_optional(std::move(out));
@@ -295,13 +299,14 @@ struct mem_chunk
     {
         auto      translated_size = size == 0 ? view.size() - offset : size;
         mem_chunk out             = {
-            .view = view.subspan(offset, translated_size),
+                        .view = view.subspan(offset, translated_size),
         };
         out.updatePointers(Ownership::Borrowed, access);
         return std::make_optional(std::move(out));
     }
     template<typename OtherT>
-    requires(!std::is_same_v<T, OtherT>) NO_DISCARD auto as()
+        requires(!std::is_same_v<T, OtherT>)
+    NO_DISCARD auto as()
     {
         return C_OCAST<mem_chunk<OtherT>>(*this);
     }
@@ -393,6 +398,13 @@ template<typename T, typename U>
 FORCEDINLINE auto SpanOne(U const& value)
 {
     return mem_chunk<T>::ofBytes(value).view;
+}
+
+template<typename T, typename It>
+FORCEDINLINE auto SpanOver(It begin, It end)
+{
+    auto ptrBegin = &(*begin), ptrEnd = &(*end);
+    return Span<T>(ptrBegin, ptrEnd);
 }
 
 } // namespace semantic

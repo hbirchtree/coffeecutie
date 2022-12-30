@@ -9,23 +9,22 @@ using std_camera_t = StandardCamera<camera_t*, StandardCameraOpts*>;
 template<typename Version>
 struct BlamData
 {
-    BlamData() :
+    BlamData(Url map_filename) :
 #if defined(COFFEE_ANDROID)
-        map_file(MkUrl("bloodgulch.map")), bitmap_file("bitmaps.map"_rsc),
+        map_file(map_filename), bitmap_file("bitmaps.map"_rsc),
 #else
-        map_file(MkUrl(GetInitArgs().arguments().at(0), RSCA::SystemFile)),
-        bitmap_file(
-            Resource((Path(GetInitArgs().arguments().at(0)).dirname()
-                      / (std::is_same<Version, blam::pc_version_t>::value
-                             ? "bitmaps.map"
-                             : "bitmaps_custom.map"))
-                         .url(RSCA::SystemFile))),
+        map_file(map_filename),
+        bitmap_file(Resource((map_filename.path().dirname() /
+                              (std::is_same_v<Version, blam::pc_version_t>
+                                   ? "bitmaps.map"
+                                   : "bitmaps_custom.map"))
+                                 .url(RSCA::SystemFile))),
 #endif
         std_camera(MkShared<std_camera_t>(&camera, &camera_opts)),
         controller_camera(&camera, &controller_opts)
     {
-        auto container
-            = blam::map_container<Version>::from_bytes(map_file, Version());
+        auto container =
+            blam::map_container<Version>::from_bytes(map_file, Version());
         if(container.has_error())
         {
             auto error = magic_enum::enum_name(container.error());

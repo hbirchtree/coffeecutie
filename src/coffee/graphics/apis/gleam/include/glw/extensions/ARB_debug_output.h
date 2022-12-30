@@ -28,14 +28,14 @@ constexpr libc_types::u32 debug_severity_low               = 0x9148;
 } // namespace values
 template<class span_const_void>
 requires(semantic::concepts::Span<span_const_void>)
-    /*!
-     * \brief Part of GL_ARB_debug_output
-     * \param callback GLDEBUGPROCARB
-     * \param userParam const void *
-     * \return void
-     */
-    STATICINLINE void debug_message_callback(
-        GLDEBUGPROCARB callback, span_const_void const& userParam)
+/*!
+ * \brief Part of GL_ARB_debug_output
+ * \param callback GLDEBUGPROCARB
+ * \param userParam const void *
+ * \return void
+ */
+STATICINLINE void debug_message_callback(
+    GLDEBUGPROCARB callback, span_const_void const& userParam)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -50,25 +50,27 @@ requires(semantic::concepts::Span<span_const_void>)
 }
 
 template<class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
-         std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>)
-    /*!
-     * \brief Part of GL_ARB_debug_output
-     * \param source GLenum
-     * \param type GLenum
-     * \param severity GLenum
-     * \param count GLsizei
-     * \param ids const GLuint *
-     * \param enabled GLboolean
-     * \return void
-     */
-    STATICINLINE void debug_message_control(
-        group::debug_source   source,
-        group::debug_type     type,
-        group::debug_severity severity,
-        span_const_u32 const& ids,
-        bool                  enabled)
+requires(
+    semantic::concepts::Span<span_const_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_u32::value_type>,
+        std::decay_t<u32>>)
+/*!
+ * \brief Part of GL_ARB_debug_output
+ * \param source GLenum
+ * \param type GLenum
+ * \param severity GLenum
+ * \param count GLsizei
+ * \param ids const GLuint *
+ * \param enabled GLboolean
+ * \return void
+ */
+STATICINLINE void debug_message_control(
+    group::debug_source   source,
+    group::debug_type     type,
+    group::debug_severity severity,
+    span_const_u32 const& ids,
+    bool                  enabled)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -125,43 +127,49 @@ template<
     class span_i32,
     class span_u32>
 requires(
-    semantic::concepts::Span<span_debug_source>&& std::is_same_v<
+    semantic::concepts::Span<span_debug_source> &&
+    std::is_same_v<
         std::decay_t<typename span_debug_source::value_type>,
-        std::decay_t<group::debug_source>>&&
-        semantic::concepts::Span<span_debug_type>&& std::is_same_v<
-            std::decay_t<typename span_debug_type::value_type>,
-            std::decay_t<group::debug_type>>&&
-            semantic::concepts::Span<span_u32>&& std::is_same_v<
-                std::decay_t<typename span_u32::value_type>,
-                std::decay_t<u32>>&&
-                semantic::concepts::Span<span_debug_severity>&& std::is_same_v<
-                    std::decay_t<typename span_debug_severity::value_type>,
-                    std::decay_t<group::debug_severity>>&&
-                    semantic::concepts::Span<span_i32>&& std::is_same_v<
-                        std::decay_t<typename span_i32::value_type>,
-                        std::decay_t<i32>>&&
-                        semantic::concepts::Span<span_GLchar>&& std::is_same_v<
-                            std::decay_t<typename span_GLchar::value_type>,
-                            std::decay_t<GLchar>>)
-    /*!
-     * \brief Part of GL_ARB_debug_output
-     * \param count GLuint
-     * \param bufSize GLsizei
-     * \param sources GLenum *
-     * \param types GLenum *
-     * \param ids GLuint *
-     * \param severities GLenum *
-     * \param lengths GLsizei *
-     * \param messageLog GLchar *
-     * \return GLuint
-     */
-    STATICINLINE GLuint get_debug_message_log(
-        span_debug_source   sources,
-        span_debug_type     types,
-        span_u32            ids,
-        span_debug_severity severities,
-        span_i32            lengths,
-        span_GLchar         messageLog)
+        std::decay_t<group::debug_source>> &&
+    semantic::concepts::Span<span_debug_type> &&
+    std::is_same_v<
+        std::decay_t<typename span_debug_type::value_type>,
+        std::decay_t<group::debug_type>> &&
+    semantic::concepts::Span<span_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_u32::value_type>,
+        std::decay_t<u32>> &&
+    semantic::concepts::Span<span_debug_severity> &&
+    std::is_same_v<
+        std::decay_t<typename span_debug_severity::value_type>,
+        std::decay_t<group::debug_severity>> &&
+    semantic::concepts::Span<span_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_i32::value_type>,
+        std::decay_t<i32>> &&
+    semantic::concepts::Span<span_GLchar> &&
+    std::is_same_v<
+        std::decay_t<typename span_GLchar::value_type>,
+        std::decay_t<GLchar>>)
+/*!
+ * \brief Part of GL_ARB_debug_output
+ * \param count GLuint
+ * \param bufSize GLsizei
+ * \param sources GLenum *
+ * \param types GLenum *
+ * \param ids GLuint *
+ * \param severities GLenum *
+ * \param lengths GLsizei *
+ * \param messageLog GLchar *
+ * \return GLuint
+ */
+STATICINLINE GLuint get_debug_message_log(
+    span_debug_source   sources,
+    span_debug_type     types,
+    span_u32            ids,
+    span_debug_severity severities,
+    span_i32            lengths,
+    span_GLchar         messageLog)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

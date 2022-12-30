@@ -1,19 +1,17 @@
 #ifdef GL_VERSION_4_2
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<4, 2>>)
-    /*!
-     * \brief Wraps around glDrawArraysInstancedBaseInstance. Introduced in GL
-     * core 4.2 \param mode GLenum \param first GLint \param count GLsizei
-     * \param instancecount GLsizei
-     * \param baseinstance GLuint
-     * \return void
-     */
-    STATICINLINE void draw_arrays_instanced_base_instance(
-        group::primitive_type mode,
-        i32                   first,
-        i32                   count,
-        i32                   instancecount,
-        u32                   baseinstance)
+/*!
+ * \brief Wraps around glDrawArraysInstancedBaseInstance. Introduced in GL
+ * core 4.2 \param mode GLenum \param first GLint \param count GLsizei \param
+ * instancecount GLsizei \param baseinstance GLuint \return void
+ */
+STATICINLINE void draw_arrays_instanced_base_instance(
+    group::primitive_type mode,
+    i32                   first,
+    i32                   count,
+    i32                   instancecount,
+    u32                   baseinstance)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -27,21 +25,19 @@ requires(MinimumVersion<Current, Version<4, 2>>)
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<4, 2>>)
-    /*!
-     * \brief Wraps around glDrawElementsInstancedBaseInstance. Introduced in GL
-     * core 4.2 \param mode GLenum \param count GLsizei \param type GLenum
-     * \param indices const void *
-     * \param instancecount GLsizei
-     * \param baseinstance GLuint
-     * \return void
-     */
-    STATICINLINE void draw_elements_instanced_base_instance(
-        group::primitive_type     mode,
-        i32                       count,
-        group::draw_elements_type type,
-        ptroff                    indices,
-        i32                       instancecount,
-        u32                       baseinstance)
+/*!
+ * \brief Wraps around glDrawElementsInstancedBaseInstance. Introduced in GL
+ * core 4.2 \param mode GLenum \param count GLsizei \param type GLenum \param
+ * indices const void * \param instancecount GLsizei \param baseinstance GLuint
+ * \return void
+ */
+STATICINLINE void draw_elements_instanced_base_instance(
+    group::primitive_type     mode,
+    i32                       count,
+    group::draw_elements_type type,
+    ptroff                    indices,
+    i32                       instancecount,
+    u32                       baseinstance)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -60,22 +56,23 @@ requires(MinimumVersion<Current, Version<4, 2>>)
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<4, 2>>)
-    /*!
-     * \brief Wraps around glDrawElementsInstancedBaseVertexBaseInstance.
-     * Introduced in GL core 4.2 \param mode GLenum \param count GLsizei \param
-     * type GLenum \param indices const void * \param instancecount GLsizei
-     * \param basevertex GLint
-     * \param baseinstance GLuint
-     * \return void
-     */
-    STATICINLINE void draw_elements_instanced_base_vertex_base_instance(
-        group::primitive_type     mode,
-        i32                       count,
-        group::draw_elements_type type,
-        ptroff                    indices,
-        i32                       instancecount,
-        i32                       basevertex,
-        u32                       baseinstance)
+/*!
+ * \brief Wraps around glDrawElementsInstancedBaseVertexBaseInstance. Introduced
+ * in GL core 4.2 \param mode GLenum \param count GLsizei \param type GLenum
+ * \param indices const void *
+ * \param instancecount GLsizei
+ * \param basevertex GLint
+ * \param baseinstance GLuint
+ * \return void
+ */
+STATICINLINE void draw_elements_instanced_base_vertex_base_instance(
+    group::primitive_type     mode,
+    i32                       count,
+    group::draw_elements_type type,
+    ptroff                    indices,
+    i32                       instancecount,
+    i32                       basevertex,
+    u32                       baseinstance)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -94,24 +91,26 @@ requires(MinimumVersion<Current, Version<4, 2>>)
 }
 
 template<class span_i32>
-requires(MinimumVersion<Current, Version<4, 2>>&&
-             semantic::concepts::Span<span_i32>&& std::is_same_v<
-                 std::decay_t<typename span_i32::value_type>,
-                 std::decay_t<i32>>)
-    /*!
-     * \brief Wraps around glGetInternalformativ. Introduced in GL core 4.2
-     * \param target GLenum
-     * \param internalformat GLenum
-     * \param pname GLenum
-     * \param count GLsizei
-     * \param params GLint *
-     * \return void
-     */
-    STATICINLINE void get_internalformativ(
-        group::texture_target       target,
-        group::internal_format      internalformat,
-        group::internal_format_prop pname,
-        span_i32                    params)
+requires(
+    MinimumVersion<Current, Version<4, 2>> &&
+    semantic::concepts::Span<span_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_i32::value_type>,
+        std::decay_t<i32>>)
+/*!
+ * \brief Wraps around glGetInternalformativ. Introduced in GL core 4.2
+ * \param target GLenum
+ * \param internalformat GLenum
+ * \param pname GLenum
+ * \param count GLsizei
+ * \param params GLint *
+ * \return void
+ */
+STATICINLINE void get_internalformativ(
+    group::texture_target       target,
+    group::internal_format      internalformat,
+    group::internal_format_prop pname,
+    span_i32                    params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -128,20 +127,23 @@ requires(MinimumVersion<Current, Version<4, 2>>&&
 }
 
 template<class span_i32>
-requires(MinimumVersion<Current, Version<4, 2>>&&
-             semantic::concepts::Span<span_i32>&& std::is_same_v<
-                 std::decay_t<typename span_i32::value_type>,
-                 std::decay_t<i32>>)
-    /*!
-     * \brief Wraps around glGetActiveAtomicCounterBufferiv. Introduced in GL
-     * core 4.2 \param program GLuint \param bufferIndex GLuint \param pname
-     * GLenum \param params GLint * \return void
-     */
-    STATICINLINE void get_active_atomic_counter_bufferiv(
-        u32                               program,
-        u32                               bufferIndex,
-        group::atomic_counter_buffer_prop pname,
-        span_i32                          params)
+requires(
+    MinimumVersion<Current, Version<4, 2>> &&
+    semantic::concepts::Span<span_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_i32::value_type>,
+        std::decay_t<i32>>)
+/*!
+ * \brief Wraps around glGetActiveAtomicCounterBufferiv. Introduced in GL
+ * core 4.2 \param program GLuint \param bufferIndex GLuint \param pname GLenum
+ * \param params GLint *
+ * \return void
+ */
+STATICINLINE void get_active_atomic_counter_bufferiv(
+    u32                               program,
+    u32                               bufferIndex,
+    group::atomic_counter_buffer_prop pname,
+    span_i32                          params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -162,25 +164,25 @@ requires(MinimumVersion<Current, Version<4, 2>>&&
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<4, 2>>)
-    /*!
-     * \brief Wraps around glBindImageTexture. Introduced in GL core 4.2
-     * \param unit GLuint
-     * \param texture GLuint
-     * \param level GLint
-     * \param layered GLboolean
-     * \param layer GLint
-     * \param access GLenum
-     * \param format GLenum
-     * \return void
-     */
-    STATICINLINE void bind_image_texture(
-        u32                      unit,
-        u32                      texture,
-        i32                      level,
-        bool                     layered,
-        i32                      layer,
-        group::buffer_access_arb access,
-        group::internal_format   format)
+/*!
+ * \brief Wraps around glBindImageTexture. Introduced in GL core 4.2
+ * \param unit GLuint
+ * \param texture GLuint
+ * \param level GLint
+ * \param layered GLboolean
+ * \param layer GLint
+ * \param access GLenum
+ * \param format GLenum
+ * \return void
+ */
+STATICINLINE void bind_image_texture(
+    u32                      unit,
+    u32                      texture,
+    i32                      level,
+    bool                     layered,
+    i32                      layer,
+    group::buffer_access_arb access,
+    group::internal_format   format)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -204,12 +206,12 @@ requires(MinimumVersion<Current, Version<4, 2>>)
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<4, 2>>)
-    /*!
-     * \brief Wraps around glMemoryBarrier. Introduced in GL core 4.2
-     * \param barriers GLbitfield
-     * \return void
-     */
-    STATICINLINE void memory_barrier(group::memory_barrier_mask barriers)
+/*!
+ * \brief Wraps around glMemoryBarrier. Introduced in GL core 4.2
+ * \param barriers GLbitfield
+ * \return void
+ */
+STATICINLINE void memory_barrier(group::memory_barrier_mask barriers)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -222,19 +224,19 @@ requires(MinimumVersion<Current, Version<4, 2>>)
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<4, 2>>)
-    /*!
-     * \brief Wraps around glTexStorage1D. Introduced in GL core 4.2
-     * \param target GLenum
-     * \param levels GLsizei
-     * \param internalformat GLenum
-     * \param width GLsizei
-     * \return void
-     */
-    STATICINLINE void tex_storage_1d(
-        group::texture_target        target,
-        i32                          levels,
-        group::sized_internal_format internalformat,
-        i32                          width)
+/*!
+ * \brief Wraps around glTexStorage1D. Introduced in GL core 4.2
+ * \param target GLenum
+ * \param levels GLsizei
+ * \param internalformat GLenum
+ * \param width GLsizei
+ * \return void
+ */
+STATICINLINE void tex_storage_1d(
+    group::texture_target        target,
+    i32                          levels,
+    group::sized_internal_format internalformat,
+    i32                          width)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -250,22 +252,23 @@ requires(MinimumVersion<Current, Version<4, 2>>)
 }
 
 template<class size_2_i32>
-requires(MinimumVersion<Current, Version<4, 2>>&&
-             semantic::concepts::Size2D<size_2_i32, i32>)
-    /*!
-     * \brief Wraps around glTexStorage2D. Introduced in GL core 4.2
-     * \param target GLenum
-     * \param levels GLsizei
-     * \param internalformat GLenum
-     * \param width GLsizei
-     * \param height GLsizei
-     * \return void
-     */
-    STATICINLINE void tex_storage_2d(
-        group::texture_target        target,
-        i32                          levels,
-        group::sized_internal_format internalformat,
-        size_2_i32 const&            width)
+requires(
+    MinimumVersion<Current, Version<4, 2>> &&
+    semantic::concepts::Size2D<size_2_i32, i32>)
+/*!
+ * \brief Wraps around glTexStorage2D. Introduced in GL core 4.2
+ * \param target GLenum
+ * \param levels GLsizei
+ * \param internalformat GLenum
+ * \param width GLsizei
+ * \param height GLsizei
+ * \return void
+ */
+STATICINLINE void tex_storage_2d(
+    group::texture_target        target,
+    i32                          levels,
+    group::sized_internal_format internalformat,
+    size_2_i32 const&            width)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -282,23 +285,24 @@ requires(MinimumVersion<Current, Version<4, 2>>&&
 }
 
 template<class size_3_i32>
-requires(MinimumVersion<Current, Version<4, 2>>&&
-             semantic::concepts::Size2D<size_3_i32, i32>)
-    /*!
-     * \brief Wraps around glTexStorage3D. Introduced in GL core 4.2
-     * \param target GLenum
-     * \param levels GLsizei
-     * \param internalformat GLenum
-     * \param width GLsizei
-     * \param height GLsizei
-     * \param depth GLsizei
-     * \return void
-     */
-    STATICINLINE void tex_storage_3d(
-        group::texture_target        target,
-        i32                          levels,
-        group::sized_internal_format internalformat,
-        size_3_i32 const&            width)
+requires(
+    MinimumVersion<Current, Version<4, 2>> &&
+    semantic::concepts::Size2D<size_3_i32, i32>)
+/*!
+ * \brief Wraps around glTexStorage3D. Introduced in GL core 4.2
+ * \param target GLenum
+ * \param levels GLsizei
+ * \param internalformat GLenum
+ * \param width GLsizei
+ * \param height GLsizei
+ * \param depth GLsizei
+ * \return void
+ */
+STATICINLINE void tex_storage_3d(
+    group::texture_target        target,
+    i32                          levels,
+    group::sized_internal_format internalformat,
+    size_3_i32 const&            width)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -317,13 +321,13 @@ requires(MinimumVersion<Current, Version<4, 2>>&&
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<4, 2>>)
-    /*!
-     * \brief Wraps around glDrawTransformFeedbackInstanced. Introduced in GL
-     * core 4.2 \param mode GLenum \param id GLuint \param instancecount GLsizei
-     * \return void
-     */
-    STATICINLINE void draw_transform_feedback_instanced(
-        group::primitive_type mode, u32 id, i32 instancecount)
+/*!
+ * \brief Wraps around glDrawTransformFeedbackInstanced. Introduced in GL
+ * core 4.2 \param mode GLenum \param id GLuint \param instancecount GLsizei
+ * \return void
+ */
+STATICINLINE void draw_transform_feedback_instanced(
+    group::primitive_type mode, u32 id, i32 instancecount)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -337,14 +341,13 @@ requires(MinimumVersion<Current, Version<4, 2>>)
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<4, 2>>)
-    /*!
-     * \brief Wraps around glDrawTransformFeedbackStreamInstanced. Introduced in
-     * GL core 4.2 \param mode GLenum \param id GLuint \param stream GLuint
-     * \param instancecount GLsizei
-     * \return void
-     */
-    STATICINLINE void draw_transform_feedback_stream_instanced(
-        group::primitive_type mode, u32 id, u32 stream, i32 instancecount)
+/*!
+ * \brief Wraps around glDrawTransformFeedbackStreamInstanced. Introduced in GL
+ * core 4.2 \param mode GLenum \param id GLuint \param stream GLuint \param
+ * instancecount GLsizei \return void
+ */
+STATICINLINE void draw_transform_feedback_stream_instanced(
+    group::primitive_type mode, u32 id, u32 stream, i32 instancecount)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

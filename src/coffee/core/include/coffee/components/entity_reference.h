@@ -2,8 +2,7 @@
 
 #include "entity_container.h"
 
-namespace Coffee {
-namespace Components {
+namespace compo {
 
 template<typename ContainerType>
 struct EntityRef
@@ -64,5 +63,4 @@ struct ComponentRef
     ContainerType* m_ref;
 };
 
-} // namespace Components
-} // namespace Coffee
+} // namespace compo

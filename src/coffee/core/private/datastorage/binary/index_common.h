@@ -2,29 +2,23 @@
 
 #include <coffee/virtfs/virtualfs.h>
 
-namespace Coffee {
-namespace VirtFS {
+namespace vfs::index_common {
 
-namespace index_common {
-
-static VirtualIndex const* FindIndex(
-    VFS const* vfs, VirtualIndex::index_t kind, vfs_error_code& ec)
+static stl_types::result<index const*, error> FindIndex(fs const* vfs, index::index_t kind)
 {
     if(vfs->version() == Version::v1)
     {
-        ec = VFSError::VersionMismatch;
-        return nullptr;
+        return error::version_mismatch;
     }
 
     if(vfs->ext_index.num == 0)
     {
-        ec = VFSError::NoIndexing;
-        return nullptr;
+        return error::no_indexing;
     }
 
-    VirtualIndex const* index = vfs->indices();
+    auto index = vfs->indices().data();
 
-    for(C_UNUSED(auto i) : Range<>(vfs->ext_index.num + 1))
+    for(C_UNUSED(auto i) : stl_types::Range<>(vfs->ext_index.num + 1))
     {
         if(index->kind == kind)
             return index;
@@ -32,10 +26,7 @@ static VirtualIndex const* FindIndex(
         index = index->next();
     }
 
-    return nullptr;
+    return error::index_not_found;
 }
 
-} // namespace index_common
-
-} // namespace VirtFS
-} // namespace Coffee
+} // namespace vfs::index_common

@@ -10,21 +10,21 @@ namespace values {
 } // namespace values
 template<class span_const_invalidate_framebuffer_attachment>
 requires(
-    semantic::concepts::Span<span_const_invalidate_framebuffer_attachment>&&
-        std::is_same_v<
-            std::decay_t<typename span_const_invalidate_framebuffer_attachment::
-                             value_type>,
-            std::decay_t<group::invalidate_framebuffer_attachment>>)
-    /*!
-     * \brief Part of GL_EXT_discard_framebuffer
-     * \param target GLenum
-     * \param numAttachments GLsizei
-     * \param attachments const GLenum *
-     * \return void
-     */
-    STATICINLINE void discard_framebuffer(
-        group::framebuffer_target                           target,
-        span_const_invalidate_framebuffer_attachment const& attachments)
+    semantic::concepts::Span<span_const_invalidate_framebuffer_attachment> &&
+    std::is_same_v<
+        std::decay_t<
+            typename span_const_invalidate_framebuffer_attachment::value_type>,
+        std::decay_t<group::invalidate_framebuffer_attachment>>)
+/*!
+ * \brief Part of GL_EXT_discard_framebuffer
+ * \param target GLenum
+ * \param numAttachments GLsizei
+ * \param attachments const GLenum *
+ * \return void
+ */
+STATICINLINE void discard_framebuffer(
+    group::framebuffer_target                           target,
+    span_const_invalidate_framebuffer_attachment const& attachments)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

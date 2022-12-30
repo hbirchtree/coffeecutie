@@ -10,18 +10,19 @@ constexpr libc_types::u32 vertex_array_object = 0x9154;
 constexpr libc_types::u32 sampler_object      = 0x9155;
 } // namespace values
 template<class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
-         std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>)
-    /*!
-     * \brief Part of GL_AMD_name_gen_delete
-     * \param identifier GLenum
-     * \param num GLuint
-     * \param names const GLuint *
-     * \return void
-     */
-    STATICINLINE
-    void delete_names(GLenum identifier, span_const_u32 const& names)
+requires(
+    semantic::concepts::Span<span_const_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_u32::value_type>,
+        std::decay_t<u32>>)
+/*!
+ * \brief Part of GL_AMD_name_gen_delete
+ * \param identifier GLenum
+ * \param num GLuint
+ * \param names const GLuint *
+ * \return void
+ */
+STATICINLINE void delete_names(GLenum identifier, span_const_u32 const& names)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -36,17 +37,19 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
-         std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>)
-    /*!
-     * \brief Part of GL_AMD_name_gen_delete
-     * \param identifier GLenum
-     * \param num GLuint
-     * \param names GLuint *
-     * \return void
-     */
-    STATICINLINE void gen_names(GLenum identifier, span_u32 names)
+requires(
+    semantic::concepts::Span<span_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_u32::value_type>,
+        std::decay_t<u32>>)
+/*!
+ * \brief Part of GL_AMD_name_gen_delete
+ * \param identifier GLenum
+ * \param num GLuint
+ * \param names GLuint *
+ * \return void
+ */
+STATICINLINE void gen_names(GLenum identifier, span_u32 names)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

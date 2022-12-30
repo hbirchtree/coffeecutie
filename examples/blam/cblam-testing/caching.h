@@ -1091,12 +1091,12 @@ struct BSPCache
                         continue;
                     }
 
-                    using vertex_type = std::remove_const<
-                        decltype(vertices)::value_type>::type;
-                    using light_type = std::remove_const<
-                        decltype(light_verts)::value_type>::type;
-                    using element_type = std::remove_const<
-                        decltype(indices)::value_type>::type;
+                    using vertex_type = typename std::remove_const<
+                        typename decltype(vertices)::value_type>::type;
+                    using light_type = typename std::remove_const<
+                        typename decltype(light_verts)::value_type>::type;
+                    using element_type = typename std::remove_const<
+                        typename decltype(indices)::value_type>::type;
 
                     mesh_data.mesh          = &mesh;
                     mesh_data.draw.elements = {
@@ -1109,13 +1109,13 @@ struct BSPCache
 
                     MemCpy(
                         vertices,
-                        (*vert_buffer.at(vert_ptr)).as<vertex_type>());
+                        (*vert_buffer.at(vert_ptr)).template as<vertex_type>());
                     MemCpy(
                         indices,
-                        (*element_buffer.at(element_ptr)).as<element_type>());
+                        (*element_buffer.at(element_ptr)).template as<element_type>());
                     MemCpy(
                         light_verts,
-                        (*light_buffer.at(light_ptr)).as<light_type>());
+                        (*light_buffer.at(light_ptr)).template as<light_type>());
 
                     vert_ptr += vertices.size() * sizeof(vertex_type);
                     element_ptr += indices.size() * sizeof(element_type);
@@ -1128,12 +1128,12 @@ struct BSPCache
                     auto light_verts
                         = mesh.pc_light_verts().data(bsp_magic).value();
 
-                    using vertex_type = std::remove_const<
-                        decltype(vertices)::value_type>::type;
-                    using light_type = std::remove_const<
-                        decltype(light_verts)::value_type>::type;
-                    using element_type = std::remove_const<
-                        decltype(indices)::value_type>::type;
+                    using vertex_type = typename std::remove_const<
+                        typename decltype(vertices)::value_type>::type;
+                    using light_type = typename std::remove_const<
+                        typename decltype(light_verts)::value_type>::type;
+                    using element_type = typename std::remove_const<
+                        typename decltype(indices)::value_type>::type;
 
                     mesh_data.mesh          = &mesh;
                     mesh_data.draw.elements = {
@@ -1146,13 +1146,13 @@ struct BSPCache
 
                     MemCpy(
                         vertices,
-                        (*vert_buffer.at(vert_ptr)).as<vertex_type>());
+                        (*vert_buffer.at(vert_ptr)).template as<vertex_type>());
                     MemCpy(
                         indices,
-                        (*element_buffer.at(element_ptr)).as<element_type>());
+                        (*element_buffer.at(element_ptr)).template as<element_type>());
                     MemCpy(
                         light_verts,
-                        (*light_buffer.at(light_ptr)).as<light_type>());
+                        (*light_buffer.at(light_ptr)).template as<light_type>());
 
                     vert_ptr += vertices.size() * sizeof(vertex_type);
                     element_ptr += indices.size() * sizeof(element_type);

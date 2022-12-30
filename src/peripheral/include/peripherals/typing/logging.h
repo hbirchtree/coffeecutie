@@ -42,7 +42,7 @@ STATICINLINE void fprintf_logger(
     libc_types::u32,
     libc_types::u32)
 {
-    fprintf(fd, "%.*s\n", line.size(), line.data());
+    fprintf(fd, "%.*s\n", static_cast<int>(line.size()), line.data());
 }
 
 } // namespace logging

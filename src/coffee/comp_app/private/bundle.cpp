@@ -39,9 +39,9 @@
 #include <coffee/x11/x11_comp.h>
 #endif
 
-#if defined(FEATURE_ENABLE_GLADComponent_Dynamic)      \
-    || defined(FEATURE_ENABLE_GLADComponent_ESDynamic) \
-    || defined(FEATURE_ENABLE_GLADComponent_ES2Dynamic)
+#if defined(FEATURE_ENABLE_GLADComponent_Dynamic) ||   \
+    defined(FEATURE_ENABLE_GLADComponent_ESDynamic) || \
+    defined(FEATURE_ENABLE_GLADComponent_ES2Dynamic)
 #include <coffee/glad/glad_comp.h>
 #endif
 
@@ -73,23 +73,23 @@
 #include <coffee/dispmanx/dispmanx_comp.h>
 #endif
 
-#if defined(FEATURE_ENABLE_GLScreenshot_ES2Dynamic)   \
-    || defined(FEATURE_ENABLE_GLScreenshot_ESDynamic) \
-    || defined(FEATURE_ENABLE_GLScreenshot_ES)        \
-    || defined(FEATURE_ENABLE_GLScreenshot_Dynamic)
+#if defined(FEATURE_ENABLE_GLScreenshot_ES2Dynamic) || \
+    defined(FEATURE_ENABLE_GLScreenshot_ESDynamic) ||  \
+    defined(FEATURE_ENABLE_GLScreenshot_ES) ||         \
+    defined(FEATURE_ENABLE_GLScreenshot_Dynamic)
 #include <glscreenshot/screenshot.h>
 #endif
 
-#if defined(FEATURE_ENABLE_GLKitComponent) \
-    || defined(FEATURE_ENABLE_ANativeComponent) || defined(COFFEE_EMSCRIPTEN)
+#if defined(FEATURE_ENABLE_GLKitComponent) || \
+    defined(FEATURE_ENABLE_ANativeComponent) || defined(COFFEE_EMSCRIPTEN)
 #define USES_LINKED_GL 1
 #endif
 
-#if defined(FEATURE_ENABLE_GLADComponent_Dynamic)       \
-    || defined(FEATURE_ENABLE_GLADComponent_ESDynamic)  \
-    || defined(FEATURE_ENABLE_GLADComponent_ES2Dynamic) \
-    || defined(FEATURE_ENABLE_EGLComponent)             \
-    || defined(FEATURE_ENABLE_SDL2Components) || USES_LINKED_GL
+#if defined(FEATURE_ENABLE_GLADComponent_Dynamic) ||    \
+    defined(FEATURE_ENABLE_GLADComponent_ESDynamic) ||  \
+    defined(FEATURE_ENABLE_GLADComponent_ES2Dynamic) || \
+    defined(FEATURE_ENABLE_EGLComponent) ||             \
+    defined(FEATURE_ENABLE_SDL2Components) || USES_LINKED_GL
 #define USES_GL 1
 #endif
 
@@ -144,12 +144,14 @@ void setup_container(detail::EntityContainer& container)
     DProfContext _("Bundle::Cleanup");
 
     app_error appec;
-    auto      services = container.services_with<AppLoadableService>();
+    auto      services = container.services_with<AppLoadableService>(
+        compo::sorter::
+            priority_ranked<AppLoadableService, compo::SubsystemBase>);
     for(auto& service : services)
     {
-        if(service.is_loaded())
+        if(service->is_loaded())
             continue;
-        service.do_load(container, appec);
+        service->do_load(container, appec);
         C_ERROR_CHECK(appec);
     }
 
@@ -179,8 +181,8 @@ void cleanup_container(detail::EntityContainer& container)
     DProfContext _("Bundle::Cleanup");
 
     app_error appec;
-    auto      services = container.services_with<AppLoadableService>(
-        Components::reverse_query);
+    auto      services =
+        container.services_with<AppLoadableService>(Components::reverse_query);
     for(auto& service : services)
     {
         if(service.is_loaded())
@@ -245,8 +247,8 @@ detail::EntityContainer& createContainer()
     container = stl_types::MkShared<detail::EntityContainer>();
 
     if constexpr(
-        compile_info::platform::is_unix
-        && !compile_info::platform::is_emscripten)
+        compile_info::platform::is_unix &&
+        !compile_info::platform::is_emscripten)
     {
         auto handler = [](int) {
             if(!container)
@@ -276,19 +278,15 @@ void configureDefaults(AppLoader& loader)
     glConfig.framebufferFmt = PixFmt::RGBA8;
     glConfig.depthFmt       = PixFmt::Depth24Stencil8;
 
-#if !defined(GLEAM_USE_LINKED)
-    glConfig.framebufferFmt = PixFmt::SRGB8A8;
-#endif
-
-#if defined(FEATURE_ENABLE_GLeamCommon_ES2) \
-    || defined(FEATURE_ENABLE_GLeamCommon_ES2Dynamic)
+#if defined(FEATURE_ENABLE_GLeamCommon_ES2) || \
+    defined(FEATURE_ENABLE_GLeamCommon_ES2Dynamic)
     glConfig.framebufferFmt = PixFmt::RGB565;
     glConfig.depthFmt       = PixFmt::Depth24Stencil8;
     glConfig.profile        = GLConfig::Embedded;
     glConfig.version.major  = 2;
     glConfig.version.minor  = 0;
-#elif defined(FEATURE_ENABLE_GLeamCommon_ES) \
-    || defined(FEATURE_ENABLE_GLeamCommon_ESDynamic)
+#elif defined(FEATURE_ENABLE_GLeamCommon_ES) || \
+    defined(FEATURE_ENABLE_GLeamCommon_ESDynamic)
     glConfig.framebufferFmt = PixFmt::RGB565;
     glConfig.profile        = GLConfig::Embedded;
     glConfig.version.major  = 3;
@@ -299,6 +297,15 @@ void configureDefaults(AppLoader& loader)
     glConfig.version.minor = 3;
 #endif
 #endif
+
+    /*
+     * We *can* enable sRGB on desktop, and on Android
+     * On iOS we don't have as much control over the colorspace used
+     */
+    if(compile_info::platform::is_android ||
+       (compile_info::platform::is_linux && !compile_info::platform::is_iot) ||
+       compile_info::platform::is_macos || compile_info::platform::is_windows)
+        glConfig.framebufferFmt = PixFmt::SRGB8;
 
 #if defined(FEATURE_ENABLE_X11Component)
     loader.addConfigs<detail::TypeList<x11::X11Config>>();
@@ -312,6 +319,9 @@ void configureDefaults(AppLoader& loader)
 
     window.title = Coffee::State::GetAppData()->application_name;
     window.size  = {1280, 720};
+    if(compile_info::platform::is_macos || compile_info::platform::is_ios ||
+       compile_info::platform::is_android || compile_info::platform::is_windows)
+        window.flags |= detail::WindowState::HighDPI;
 }
 
 void addDefaults(
@@ -334,8 +344,8 @@ void addDefaults(
         BasicEventBus<AppEvent>,
         DefaultAppInfo>>(container, ec);
 
-    BasicEventBus<AppEvent>* app_bus
-        = container.service<BasicEventBus<AppEvent>>();
+    BasicEventBus<AppEvent>* app_bus =
+        container.service<BasicEventBus<AppEvent>>();
     app_bus->addEventFunction<LifecycleEvent>(
         2048, [&container](AppEvent&, LifecycleEvent* event) {
             switch(event->lifecycle_type)
@@ -345,8 +355,12 @@ void addDefaults(
             case LifecycleEvent::Foreground:
                 setup_container(container);
                 break;
-                //        case LifecycleEvent::Background:
-                //            break;
+            case LifecycleEvent::FrameRequested:
+                loop_container(container);
+                break;
+#if defined(COFFEE_APPLE_MOBILE)
+            case LifecycleEvent::Background:
+#endif
             case LifecycleEvent::ResourcesLost:
             case LifecycleEvent::Terminate:
                 cleanup_container(container);
@@ -441,9 +455,9 @@ void addDefaults(
     /* Selection of GL binding */
 #if GLEAM_USE_LINKED
     appInfo.add("gl:loader", "Linked");
-#elif defined(FEATURE_ENABLE_GLADComponent_Dynamic)    \
-    || defined(FEATURE_ENABLE_GLADComponent_ESDynamic) \
-    || defined(FEATURE_ENABLE_GLADComponent_ES2Dynamic)
+#elif defined(FEATURE_ENABLE_GLADComponent_Dynamic) || \
+    defined(FEATURE_ENABLE_GLADComponent_ESDynamic) || \
+    defined(FEATURE_ENABLE_GLADComponent_ES2Dynamic)
     loader.loadAll<glad::Services>(container, ec);
     C_ERROR_CHECK(ec);
     appInfo.add("gl:loader", "GLAD");
@@ -468,10 +482,10 @@ void addDefaults(
         /* TODO: Conditionally load based on availability */
         loader.loadAll<detail::subsystem_list<
             comp_app::SysMemoryStats
-#if defined(FEATURE_ENABLE_GLScreenshot_ES2Dynamic)   \
-    || defined(FEATURE_ENABLE_GLScreenshot_Dynamic)   \
-    || defined(FEATURE_ENABLE_GLScreenshot_ESDynamic) \
-    || defined(FEATURE_ENABLE_GLScreenshot_ES)
+#if defined(FEATURE_ENABLE_GLScreenshot_ES2Dynamic) || \
+    defined(FEATURE_ENABLE_GLScreenshot_Dynamic) ||    \
+    defined(FEATURE_ENABLE_GLScreenshot_ESDynamic) ||  \
+    defined(FEATURE_ENABLE_GLScreenshot_ES)
             ,
             glscreenshot::ScreenshotProvider
 #endif
@@ -524,14 +538,15 @@ void PerformanceMonitor::start_restricted(proxy_type& p, time_point const& time)
 {
     using namespace platform::profiling;
 
-    auto timestamp
-        = Chrono::duration_cast<Chrono::microseconds>(time.time_since_epoch());
+    auto timestamp =
+        Chrono::duration_cast<Chrono::microseconds>(time.time_since_epoch());
 
     json::CaptureMetrics(
         "Frametime",
         MetricVariant::Value,
-        Chrono::duration_cast<Chrono::seconds_float>(time - m_prevFrame).count()
-            * 1000.f,
+        Chrono::duration_cast<Chrono::seconds_float>(time - m_prevFrame)
+                .count() *
+            1000.f,
         timestamp);
     m_prevFrame = time;
 
@@ -621,8 +636,8 @@ void PerformanceMonitor::end_restricted(proxy_type& p, time_point const& time)
 {
     using namespace platform::profiling;
 
-    auto timestamp
-        = Chrono::duration_cast<Chrono::microseconds>(time.time_since_epoch());
+    auto timestamp =
+        Chrono::duration_cast<Chrono::microseconds>(time.time_since_epoch());
 
     if constexpr(compile_info::debug_mode)
         do
@@ -651,8 +666,8 @@ void PerformanceMonitor::end_restricted(proxy_type& p, time_point const& time)
             FileOpenMap(
                 screenshot_file,
                 encoded.size,
-                RSCA::ReadWrite | RSCA::Persistent | RSCA::NewFile
-                    | RSCA::Discard);
+                RSCA::ReadWrite | RSCA::Persistent | RSCA::NewFile |
+                    RSCA::Discard);
             if(encoded.size == screenshot_file.data_rw.size())
                 std::copy(
                     encoded.view.begin(),

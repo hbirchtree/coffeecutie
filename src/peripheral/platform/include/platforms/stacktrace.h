@@ -26,12 +26,7 @@
 
 namespace platform::stacktrace {
 
-constexpr bool supports_stacktrace =
-#if defined(COFFEE_EMSCRIPTEN)
-    false;
-#else
-    true;
-#endif
+constexpr bool supports_stacktrace = !compile_info::platform::is_emscripten;
 
 namespace detail {
 

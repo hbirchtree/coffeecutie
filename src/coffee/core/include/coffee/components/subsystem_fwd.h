@@ -1,6 +1,6 @@
 #pragma once
 
-namespace Coffee::Components {
+namespace compo {
 
 template<typename T>
 struct RestrictedSubsystem;

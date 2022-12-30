@@ -608,7 +608,7 @@ struct AppLoadableService
     }
     bool do_unload(entity_container& e, app_error& ec)
     {
-        load(e, ec);
+        unload(e, ec);
         m_state = ec ? Error : Uninitialized;
         return static_cast<bool>(ec);
     }

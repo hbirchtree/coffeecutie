@@ -6,13 +6,13 @@ namespace values {
 } // namespace values
 template<class vec_2_f64>
 requires(semantic::concepts::Vector<vec_2_f64, f64, 2>)
-    /*!
-     * \brief Part of GL_ARB_window_pos
-     * \param x GLdouble
-     * \param y GLdouble
-     * \return void
-     */
-    STATICINLINE void window_pos2d(vec_2_f64 const& x)
+/*!
+ * \brief Part of GL_ARB_window_pos
+ * \param x GLdouble
+ * \param y GLdouble
+ * \return void
+ */
+STATICINLINE void window_pos2d(vec_2_f64 const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -24,14 +24,16 @@ requires(semantic::concepts::Vector<vec_2_f64, f64, 2>)
 }
 
 template<class span_const_vec_2_f64>
-requires(semantic::concepts::Span<span_const_vec_2_f64>&& semantic::concepts::
-             Vector<typename span_const_vec_2_f64::value_type, f64, 2>)
-    /*!
-     * \brief Part of GL_ARB_window_pos
-     * \param v const GLdouble *
-     * \return void
-     */
-    STATICINLINE void window_pos2dv(span_const_vec_2_f64 const& v)
+requires(
+    semantic::concepts::Span<span_const_vec_2_f64> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_2_f64::value_type, f64, 2>)
+/*!
+ * \brief Part of GL_ARB_window_pos
+ * \param v const GLdouble *
+ * \return void
+ */
+STATICINLINE void window_pos2dv(span_const_vec_2_f64 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -44,13 +46,13 @@ requires(semantic::concepts::Span<span_const_vec_2_f64>&& semantic::concepts::
 
 template<class vec_2_f32>
 requires(semantic::concepts::Vector<vec_2_f32, f32, 2>)
-    /*!
-     * \brief Part of GL_ARB_window_pos
-     * \param x GLfloat
-     * \param y GLfloat
-     * \return void
-     */
-    STATICINLINE void window_pos2f(vec_2_f32 const& x)
+/*!
+ * \brief Part of GL_ARB_window_pos
+ * \param x GLfloat
+ * \param y GLfloat
+ * \return void
+ */
+STATICINLINE void window_pos2f(vec_2_f32 const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -62,14 +64,16 @@ requires(semantic::concepts::Vector<vec_2_f32, f32, 2>)
 }
 
 template<class span_const_vec_2_f32>
-requires(semantic::concepts::Span<span_const_vec_2_f32>&& semantic::concepts::
-             Vector<typename span_const_vec_2_f32::value_type, f32, 2>)
-    /*!
-     * \brief Part of GL_ARB_window_pos
-     * \param v const GLfloat *
-     * \return void
-     */
-    STATICINLINE void window_pos2fv(span_const_vec_2_f32 const& v)
+requires(
+    semantic::concepts::Span<span_const_vec_2_f32> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_2_f32::value_type, f32, 2>)
+/*!
+ * \brief Part of GL_ARB_window_pos
+ * \param v const GLfloat *
+ * \return void
+ */
+STATICINLINE void window_pos2fv(span_const_vec_2_f32 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -82,13 +86,13 @@ requires(semantic::concepts::Span<span_const_vec_2_f32>&& semantic::concepts::
 
 template<class vec_2_i32>
 requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
-    /*!
-     * \brief Part of GL_ARB_window_pos
-     * \param x GLint
-     * \param y GLint
-     * \return void
-     */
-    STATICINLINE void window_pos2i(vec_2_i32 const& x)
+/*!
+ * \brief Part of GL_ARB_window_pos
+ * \param x GLint
+ * \param y GLint
+ * \return void
+ */
+STATICINLINE void window_pos2i(vec_2_i32 const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -100,14 +104,16 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
 }
 
 template<class span_const_vec_2_i32>
-requires(semantic::concepts::Span<span_const_vec_2_i32>&& semantic::concepts::
-             Vector<typename span_const_vec_2_i32::value_type, i32, 2>)
-    /*!
-     * \brief Part of GL_ARB_window_pos
-     * \param v const GLint *
-     * \return void
-     */
-    STATICINLINE void window_pos2iv(span_const_vec_2_i32 const& v)
+requires(
+    semantic::concepts::Span<span_const_vec_2_i32> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_2_i32::value_type, i32, 2>)
+/*!
+ * \brief Part of GL_ARB_window_pos
+ * \param v const GLint *
+ * \return void
+ */
+STATICINLINE void window_pos2iv(span_const_vec_2_i32 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -120,13 +126,13 @@ requires(semantic::concepts::Span<span_const_vec_2_i32>&& semantic::concepts::
 
 template<class vec_2_i16>
 requires(semantic::concepts::Vector<vec_2_i16, i16, 2>)
-    /*!
-     * \brief Part of GL_ARB_window_pos
-     * \param x GLshort
-     * \param y GLshort
-     * \return void
-     */
-    STATICINLINE void window_pos2s(vec_2_i16 const& x)
+/*!
+ * \brief Part of GL_ARB_window_pos
+ * \param x GLshort
+ * \param y GLshort
+ * \return void
+ */
+STATICINLINE void window_pos2s(vec_2_i16 const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -138,14 +144,16 @@ requires(semantic::concepts::Vector<vec_2_i16, i16, 2>)
 }
 
 template<class span_const_vec_2_i16>
-requires(semantic::concepts::Span<span_const_vec_2_i16>&& semantic::concepts::
-             Vector<typename span_const_vec_2_i16::value_type, i16, 2>)
-    /*!
-     * \brief Part of GL_ARB_window_pos
-     * \param v const GLshort *
-     * \return void
-     */
-    STATICINLINE void window_pos2sv(span_const_vec_2_i16 const& v)
+requires(
+    semantic::concepts::Span<span_const_vec_2_i16> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_2_i16::value_type, i16, 2>)
+/*!
+ * \brief Part of GL_ARB_window_pos
+ * \param v const GLshort *
+ * \return void
+ */
+STATICINLINE void window_pos2sv(span_const_vec_2_i16 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -158,14 +166,14 @@ requires(semantic::concepts::Span<span_const_vec_2_i16>&& semantic::concepts::
 
 template<class vec_3_f64>
 requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
-    /*!
-     * \brief Part of GL_ARB_window_pos
-     * \param x GLdouble
-     * \param y GLdouble
-     * \param z GLdouble
-     * \return void
-     */
-    STATICINLINE void window_pos3d(vec_3_f64 const& x)
+/*!
+ * \brief Part of GL_ARB_window_pos
+ * \param x GLdouble
+ * \param y GLdouble
+ * \param z GLdouble
+ * \return void
+ */
+STATICINLINE void window_pos3d(vec_3_f64 const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -177,14 +185,16 @@ requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
 }
 
 template<class span_const_vec_3_f64>
-requires(semantic::concepts::Span<span_const_vec_3_f64>&& semantic::concepts::
-             Vector<typename span_const_vec_3_f64::value_type, f64, 3>)
-    /*!
-     * \brief Part of GL_ARB_window_pos
-     * \param v const GLdouble *
-     * \return void
-     */
-    STATICINLINE void window_pos3dv(span_const_vec_3_f64 const& v)
+requires(
+    semantic::concepts::Span<span_const_vec_3_f64> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_3_f64::value_type, f64, 3>)
+/*!
+ * \brief Part of GL_ARB_window_pos
+ * \param v const GLdouble *
+ * \return void
+ */
+STATICINLINE void window_pos3dv(span_const_vec_3_f64 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -197,14 +207,14 @@ requires(semantic::concepts::Span<span_const_vec_3_f64>&& semantic::concepts::
 
 template<class vec_3_f32>
 requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
-    /*!
-     * \brief Part of GL_ARB_window_pos
-     * \param x GLfloat
-     * \param y GLfloat
-     * \param z GLfloat
-     * \return void
-     */
-    STATICINLINE void window_pos3f(vec_3_f32 const& x)
+/*!
+ * \brief Part of GL_ARB_window_pos
+ * \param x GLfloat
+ * \param y GLfloat
+ * \param z GLfloat
+ * \return void
+ */
+STATICINLINE void window_pos3f(vec_3_f32 const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -216,14 +226,16 @@ requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
 }
 
 template<class span_const_vec_3_f32>
-requires(semantic::concepts::Span<span_const_vec_3_f32>&& semantic::concepts::
-             Vector<typename span_const_vec_3_f32::value_type, f32, 3>)
-    /*!
-     * \brief Part of GL_ARB_window_pos
-     * \param v const GLfloat *
-     * \return void
-     */
-    STATICINLINE void window_pos3fv(span_const_vec_3_f32 const& v)
+requires(
+    semantic::concepts::Span<span_const_vec_3_f32> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_3_f32::value_type, f32, 3>)
+/*!
+ * \brief Part of GL_ARB_window_pos
+ * \param v const GLfloat *
+ * \return void
+ */
+STATICINLINE void window_pos3fv(span_const_vec_3_f32 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -236,14 +248,14 @@ requires(semantic::concepts::Span<span_const_vec_3_f32>&& semantic::concepts::
 
 template<class vec_3_i32>
 requires(semantic::concepts::Vector<vec_3_i32, i32, 3>)
-    /*!
-     * \brief Part of GL_ARB_window_pos
-     * \param x GLint
-     * \param y GLint
-     * \param z GLint
-     * \return void
-     */
-    STATICINLINE void window_pos3i(vec_3_i32 const& x)
+/*!
+ * \brief Part of GL_ARB_window_pos
+ * \param x GLint
+ * \param y GLint
+ * \param z GLint
+ * \return void
+ */
+STATICINLINE void window_pos3i(vec_3_i32 const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -255,14 +267,16 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>)
 }
 
 template<class span_const_vec_3_i32>
-requires(semantic::concepts::Span<span_const_vec_3_i32>&& semantic::concepts::
-             Vector<typename span_const_vec_3_i32::value_type, i32, 3>)
-    /*!
-     * \brief Part of GL_ARB_window_pos
-     * \param v const GLint *
-     * \return void
-     */
-    STATICINLINE void window_pos3iv(span_const_vec_3_i32 const& v)
+requires(
+    semantic::concepts::Span<span_const_vec_3_i32> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_3_i32::value_type, i32, 3>)
+/*!
+ * \brief Part of GL_ARB_window_pos
+ * \param v const GLint *
+ * \return void
+ */
+STATICINLINE void window_pos3iv(span_const_vec_3_i32 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -275,14 +289,14 @@ requires(semantic::concepts::Span<span_const_vec_3_i32>&& semantic::concepts::
 
 template<class vec_3_i16>
 requires(semantic::concepts::Vector<vec_3_i16, i16, 3>)
-    /*!
-     * \brief Part of GL_ARB_window_pos
-     * \param x GLshort
-     * \param y GLshort
-     * \param z GLshort
-     * \return void
-     */
-    STATICINLINE void window_pos3s(vec_3_i16 const& x)
+/*!
+ * \brief Part of GL_ARB_window_pos
+ * \param x GLshort
+ * \param y GLshort
+ * \param z GLshort
+ * \return void
+ */
+STATICINLINE void window_pos3s(vec_3_i16 const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -294,14 +308,16 @@ requires(semantic::concepts::Vector<vec_3_i16, i16, 3>)
 }
 
 template<class span_const_vec_3_i16>
-requires(semantic::concepts::Span<span_const_vec_3_i16>&& semantic::concepts::
-             Vector<typename span_const_vec_3_i16::value_type, i16, 3>)
-    /*!
-     * \brief Part of GL_ARB_window_pos
-     * \param v const GLshort *
-     * \return void
-     */
-    STATICINLINE void window_pos3sv(span_const_vec_3_i16 const& v)
+requires(
+    semantic::concepts::Span<span_const_vec_3_i16> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_3_i16::value_type, i16, 3>)
+/*!
+ * \brief Part of GL_ARB_window_pos
+ * \param v const GLshort *
+ * \return void
+ */
+STATICINLINE void window_pos3sv(span_const_vec_3_i16 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

@@ -8,21 +8,23 @@ constexpr libc_types::u32 named_string_length = 0x8DE9;
 constexpr libc_types::u32 named_string_type   = 0x8DEA;
 } // namespace values
 template<class span_const_i32>
-requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
-         std::decay_t<typename span_const_i32::value_type>,
-         std::decay_t<i32>>)
-    /*!
-     * \brief Part of GL_ARB_shading_language_include
-     * \param shader GLuint
-     * \param count GLsizei
-     * \param path const GLchar *const*
-     * \param length const GLint *
-     * \return void
-     */
-    STATICINLINE void compile_shader_include(
-        u32                           shader,
-        std::vector<std::string_view> path,
-        span_const_i32 const&         length)
+requires(
+    semantic::concepts::Span<span_const_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_i32::value_type>,
+        std::decay_t<i32>>)
+/*!
+ * \brief Part of GL_ARB_shading_language_include
+ * \param shader GLuint
+ * \param count GLsizei
+ * \param path const GLchar *const*
+ * \param length const GLint *
+ * \return void
+ */
+STATICINLINE void compile_shader_include(
+    u32                           shader,
+    std::vector<std::string_view> path,
+    span_const_i32 const&         length)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -61,20 +63,22 @@ STATICINLINE void delete_named_string(std::string_view const& name)
 }
 
 template<class span_GLchar>
-requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
-         std::decay_t<typename span_GLchar::value_type>,
-         std::decay_t<GLchar>>)
-    /*!
-     * \brief Part of GL_ARB_shading_language_include
-     * \param namelen GLint
-     * \param name const GLchar *
-     * \param bufSize GLsizei
-     * \param stringlen GLint *
-     * \param string GLchar *
-     * \return void
-     */
-    STATICINLINE void get_named_string(
-        std::string_view const& name, i32& stringlen, span_GLchar string)
+requires(
+    semantic::concepts::Span<span_GLchar> &&
+    std::is_same_v<
+        std::decay_t<typename span_GLchar::value_type>,
+        std::decay_t<GLchar>>)
+/*!
+ * \brief Part of GL_ARB_shading_language_include
+ * \param namelen GLint
+ * \param name const GLchar *
+ * \param bufSize GLsizei
+ * \param stringlen GLint *
+ * \param string GLchar *
+ * \return void
+ */
+STATICINLINE void get_named_string(
+    std::string_view const& name, i32& stringlen, span_GLchar string)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -87,19 +91,21 @@ requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
-         std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>)
-    /*!
-     * \brief Part of GL_ARB_shading_language_include
-     * \param namelen GLint
-     * \param name const GLchar *
-     * \param pname GLenum
-     * \param params GLint *
-     * \return void
-     */
-    STATICINLINE void get_named_stringiv(
-        std::string_view const& name, GLenum pname, span_i32 params)
+requires(
+    semantic::concepts::Span<span_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_i32::value_type>,
+        std::decay_t<i32>>)
+/*!
+ * \brief Part of GL_ARB_shading_language_include
+ * \param namelen GLint
+ * \param name const GLchar *
+ * \param pname GLenum
+ * \param params GLint *
+ * \return void
+ */
+STATICINLINE void get_named_stringiv(
+    std::string_view const& name, GLenum pname, span_i32 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

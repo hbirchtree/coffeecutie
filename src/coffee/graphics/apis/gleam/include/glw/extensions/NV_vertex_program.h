@@ -89,20 +89,23 @@ constexpr libc_types::u32 map2_vertex_attrib14_4       = 0x867E;
 constexpr libc_types::u32 map2_vertex_attrib15_4       = 0x867F;
 } // namespace values
 template<class span_bool, class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
-         std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>&& semantic::concepts::Span<span_bool>&&
-                              std::is_same_v<
-                 std::decay_t<typename span_bool::value_type>,
-                 std::decay_t<bool>>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param n GLsizei
-     * \param programs const GLuint *
-     * \param residences GLboolean *
-     * \return Boolean
-     */
-    STATICINLINE GLboolean
+requires(
+    semantic::concepts::Span<span_const_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_u32::value_type>,
+        std::decay_t<u32>> &&
+    semantic::concepts::Span<span_bool> &&
+    std::is_same_v<
+        std::decay_t<typename span_bool::value_type>,
+        std::decay_t<bool>>)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param n GLsizei
+ * \param programs const GLuint *
+ * \param residences GLboolean *
+ * \return Boolean
+ */
+STATICINLINE GLboolean
     are_programs_resident(span_const_u32 const& programs, span_bool residences)
 {
     using namespace std::string_view_literals;
@@ -138,16 +141,18 @@ STATICINLINE void bind_program(group::vertex_attrib_enum_nv target, u32 id)
 }
 
 template<class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
-         std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param n GLsizei
-     * \param programs const GLuint *
-     * \return void
-     */
-    STATICINLINE void delete_programs(span_const_u32 const& programs)
+requires(
+    semantic::concepts::Span<span_const_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_u32::value_type>,
+        std::decay_t<u32>>)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param n GLsizei
+ * \param programs const GLuint *
+ * \return void
+ */
+STATICINLINE void delete_programs(span_const_u32 const& programs)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -162,20 +167,20 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
 }
 
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
-         std::decay_t<typename span_const_f32::value_type>,
-         std::decay_t<f32>>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param target GLenum
-     * \param id GLuint
-     * \param params const GLfloat *
-     * \return void
-     */
-    STATICINLINE void execute_program(
-        group::vertex_attrib_enum_nv target,
-        u32                          id,
-        span_const_f32 const&        params)
+requires(
+    semantic::concepts::Span<span_const_f32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_f32::value_type>,
+        std::decay_t<f32>>)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param target GLenum
+ * \param id GLuint
+ * \param params const GLfloat *
+ * \return void
+ */
+STATICINLINE void execute_program(
+    group::vertex_attrib_enum_nv target, u32 id, span_const_f32 const& params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -191,16 +196,18 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
-         std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param n GLsizei
-     * \param programs GLuint *
-     * \return void
-     */
-    STATICINLINE void gen_programs(span_u32 programs)
+requires(
+    semantic::concepts::Span<span_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_u32::value_type>,
+        std::decay_t<u32>>)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param n GLsizei
+ * \param programs GLuint *
+ * \return void
+ */
+STATICINLINE void gen_programs(span_u32 programs)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -214,22 +221,24 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 }
 
 template<class span_f64>
-requires(semantic::concepts::Span<span_f64>&& std::is_same_v<
-         std::decay_t<typename span_f64::value_type>,
-         std::decay_t<f64>>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param target GLenum
-     * \param index GLuint
-     * \param pname GLenum
-     * \param params GLdouble *
-     * \return void
-     */
-    STATICINLINE void get_program_parameter(
-        group::vertex_attrib_enum_nv target,
-        u32                          index,
-        group::vertex_attrib_enum_nv pname,
-        span_f64                     params)
+requires(
+    semantic::concepts::Span<span_f64> &&
+    std::is_same_v<
+        std::decay_t<typename span_f64::value_type>,
+        std::decay_t<f64>>)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param target GLenum
+ * \param index GLuint
+ * \param pname GLenum
+ * \param params GLdouble *
+ * \return void
+ */
+STATICINLINE void get_program_parameter(
+    group::vertex_attrib_enum_nv target,
+    u32                          index,
+    group::vertex_attrib_enum_nv pname,
+    span_f64                     params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -245,22 +254,24 @@ requires(semantic::concepts::Span<span_f64>&& std::is_same_v<
 }
 
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
-         std::decay_t<typename span_f32::value_type>,
-         std::decay_t<f32>>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param target GLenum
-     * \param index GLuint
-     * \param pname GLenum
-     * \param params GLfloat *
-     * \return void
-     */
-    STATICINLINE void get_program_parameter(
-        group::vertex_attrib_enum_nv target,
-        u32                          index,
-        group::vertex_attrib_enum_nv pname,
-        span_f32                     params)
+requires(
+    semantic::concepts::Span<span_f32> &&
+    std::is_same_v<
+        std::decay_t<typename span_f32::value_type>,
+        std::decay_t<f32>>)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param target GLenum
+ * \param index GLuint
+ * \param pname GLenum
+ * \param params GLfloat *
+ * \return void
+ */
+STATICINLINE void get_program_parameter(
+    group::vertex_attrib_enum_nv target,
+    u32                          index,
+    group::vertex_attrib_enum_nv pname,
+    span_f32                     params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -276,18 +287,19 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 }
 
 template<class span_u8>
-requires(semantic::concepts::Span<span_u8>&& std::is_same_v<
-         std::decay_t<typename span_u8::value_type>,
-         std::decay_t<u8>>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param id GLuint
-     * \param pname GLenum
-     * \param program GLubyte *
-     * \return void
-     */
-    STATICINLINE void get_program_string(
-        u32 id, group::vertex_attrib_enum_nv pname, span_u8 program)
+requires(
+    semantic::concepts::Span<span_u8> &&
+    std::
+        is_same_v<std::decay_t<typename span_u8::value_type>, std::decay_t<u8>>)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param id GLuint
+ * \param pname GLenum
+ * \param program GLubyte *
+ * \return void
+ */
+STATICINLINE void get_program_string(
+    u32 id, group::vertex_attrib_enum_nv pname, span_u8 program)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -302,18 +314,20 @@ requires(semantic::concepts::Span<span_u8>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
-         std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param id GLuint
-     * \param pname GLenum
-     * \param params GLint *
-     * \return void
-     */
-    STATICINLINE void get_programiv(
-        u32 id, group::vertex_attrib_enum_nv pname, span_i32 params)
+requires(
+    semantic::concepts::Span<span_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_i32::value_type>,
+        std::decay_t<i32>>)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param id GLuint
+ * \param pname GLenum
+ * \param params GLint *
+ * \return void
+ */
+STATICINLINE void get_programiv(
+    u32 id, group::vertex_attrib_enum_nv pname, span_i32 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -356,15 +370,15 @@ STATICINLINE void get_track_matrixiv(
 
 template<class span_void>
 requires(semantic::concepts::Span<span_void>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param index GLuint
-     * \param pname GLenum
-     * \param pointer void **
-     * \return void
-     */
-    STATICINLINE void get_vertex_attrib_pointerv(
-        u32 index, group::vertex_attrib_enum_nv pname, span_void pointer)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param index GLuint
+ * \param pname GLenum
+ * \param pointer void **
+ * \return void
+ */
+STATICINLINE void get_vertex_attrib_pointerv(
+    u32 index, group::vertex_attrib_enum_nv pname, span_void pointer)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -453,21 +467,21 @@ STATICINLINE GLboolean is_program(u32 id)
 }
 
 template<class span_const_u8>
-requires(semantic::concepts::Span<span_const_u8>&& std::is_same_v<
-         std::decay_t<typename span_const_u8::value_type>,
-         std::decay_t<u8>>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param target GLenum
-     * \param id GLuint
-     * \param len GLsizei
-     * \param program const GLubyte *
-     * \return void
-     */
-    STATICINLINE void load_program(
-        group::vertex_attrib_enum_nv target,
-        u32                          id,
-        span_const_u8 const&         program)
+requires(
+    semantic::concepts::Span<span_const_u8> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_u8::value_type>,
+        std::decay_t<u8>>)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param target GLenum
+ * \param id GLuint
+ * \param len GLsizei
+ * \param program const GLubyte *
+ * \return void
+ */
+STATICINLINE void load_program(
+    group::vertex_attrib_enum_nv target, u32 id, span_const_u8 const& program)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -485,18 +499,18 @@ requires(semantic::concepts::Span<span_const_u8>&& std::is_same_v<
 
 template<class vec_4_f64>
 requires(semantic::concepts::Vector<vec_4_f64, f64, 4>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param target GLenum
-     * \param index GLuint
-     * \param x GLdouble
-     * \param y GLdouble
-     * \param z GLdouble
-     * \param w GLdouble
-     * \return void
-     */
-    STATICINLINE void program_parameter4d(
-        group::vertex_attrib_enum_nv target, u32 index, vec_4_f64 const& x)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param target GLenum
+ * \param index GLuint
+ * \param x GLdouble
+ * \param y GLdouble
+ * \param z GLdouble
+ * \param w GLdouble
+ * \return void
+ */
+STATICINLINE void program_parameter4d(
+    group::vertex_attrib_enum_nv target, u32 index, vec_4_f64 const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -509,19 +523,21 @@ requires(semantic::concepts::Vector<vec_4_f64, f64, 4>)
 }
 
 template<class span_const_vec_4_f64>
-requires(semantic::concepts::Span<span_const_vec_4_f64>&& semantic::concepts::
-             Vector<typename span_const_vec_4_f64::value_type, f64, 4>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param target GLenum
-     * \param index GLuint
-     * \param v const GLdouble *
-     * \return void
-     */
-    STATICINLINE void program_parameter4dv(
-        group::vertex_attrib_enum_nv target,
-        u32                          index,
-        span_const_vec_4_f64 const&  v)
+requires(
+    semantic::concepts::Span<span_const_vec_4_f64> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_4_f64::value_type, f64, 4>)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param target GLenum
+ * \param index GLuint
+ * \param v const GLdouble *
+ * \return void
+ */
+STATICINLINE void program_parameter4dv(
+    group::vertex_attrib_enum_nv target,
+    u32                          index,
+    span_const_vec_4_f64 const&  v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -537,18 +553,18 @@ requires(semantic::concepts::Span<span_const_vec_4_f64>&& semantic::concepts::
 
 template<class vec_4_f32>
 requires(semantic::concepts::Vector<vec_4_f32, f32, 4>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param target GLenum
-     * \param index GLuint
-     * \param x GLfloat
-     * \param y GLfloat
-     * \param z GLfloat
-     * \param w GLfloat
-     * \return void
-     */
-    STATICINLINE void program_parameter4f(
-        group::vertex_attrib_enum_nv target, u32 index, vec_4_f32 const& x)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param target GLenum
+ * \param index GLuint
+ * \param x GLfloat
+ * \param y GLfloat
+ * \param z GLfloat
+ * \param w GLfloat
+ * \return void
+ */
+STATICINLINE void program_parameter4f(
+    group::vertex_attrib_enum_nv target, u32 index, vec_4_f32 const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -561,19 +577,21 @@ requires(semantic::concepts::Vector<vec_4_f32, f32, 4>)
 }
 
 template<class span_const_vec_4_f32>
-requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
-             Vector<typename span_const_vec_4_f32::value_type, f32, 4>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param target GLenum
-     * \param index GLuint
-     * \param v const GLfloat *
-     * \return void
-     */
-    STATICINLINE void program_parameter4fv(
-        group::vertex_attrib_enum_nv target,
-        u32                          index,
-        span_const_vec_4_f32 const&  v)
+requires(
+    semantic::concepts::Span<span_const_vec_4_f32> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_4_f32::value_type, f32, 4>)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param target GLenum
+ * \param index GLuint
+ * \param v const GLfloat *
+ * \return void
+ */
+STATICINLINE void program_parameter4fv(
+    group::vertex_attrib_enum_nv target,
+    u32                          index,
+    span_const_vec_4_f32 const&  v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -588,21 +606,23 @@ requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
 }
 
 template<class span_const_vec_4_f64>
-requires(semantic::concepts::Span<span_const_vec_4_f64>&& semantic::concepts::
-             Vector<typename span_const_vec_4_f64::value_type, f64, 4>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param target GLenum
-     * \param index GLuint
-     * \param count GLsizei
-     * \param v const GLdouble *
-     * \return void
-     */
-    STATICINLINE void program_parameters4dv(
-        group::vertex_attrib_enum_nv target,
-        u32                          index,
-        i32                          count,
-        span_const_vec_4_f64 const&  v)
+requires(
+    semantic::concepts::Span<span_const_vec_4_f64> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_4_f64::value_type, f64, 4>)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param target GLenum
+ * \param index GLuint
+ * \param count GLsizei
+ * \param v const GLdouble *
+ * \return void
+ */
+STATICINLINE void program_parameters4dv(
+    group::vertex_attrib_enum_nv target,
+    u32                          index,
+    i32                          count,
+    span_const_vec_4_f64 const&  v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -618,21 +638,23 @@ requires(semantic::concepts::Span<span_const_vec_4_f64>&& semantic::concepts::
 }
 
 template<class span_const_vec_4_f32>
-requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
-             Vector<typename span_const_vec_4_f32::value_type, f32, 4>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param target GLenum
-     * \param index GLuint
-     * \param count GLsizei
-     * \param v const GLfloat *
-     * \return void
-     */
-    STATICINLINE void program_parameters4fv(
-        group::vertex_attrib_enum_nv target,
-        u32                          index,
-        i32                          count,
-        span_const_vec_4_f32 const&  v)
+requires(
+    semantic::concepts::Span<span_const_vec_4_f32> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_4_f32::value_type, f32, 4>)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param target GLenum
+ * \param index GLuint
+ * \param count GLsizei
+ * \param v const GLfloat *
+ * \return void
+ */
+STATICINLINE void program_parameters4fv(
+    group::vertex_attrib_enum_nv target,
+    u32                          index,
+    i32                          count,
+    span_const_vec_4_f32 const&  v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -648,16 +670,18 @@ requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
 }
 
 template<class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
-         std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param n GLsizei
-     * \param programs const GLuint *
-     * \return void
-     */
-    STATICINLINE void request_resident_programs(span_const_u32 const& programs)
+requires(
+    semantic::concepts::Span<span_const_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_u32::value_type>,
+        std::decay_t<u32>>)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param n GLsizei
+ * \param programs const GLuint *
+ * \return void
+ */
+STATICINLINE void request_resident_programs(span_const_u32 const& programs)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -716,16 +740,18 @@ STATICINLINE void vertex_attrib1d(u32 index, f64 x)
 }
 
 template<class span_const_f64>
-requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
-         std::decay_t<typename span_const_f64::value_type>,
-         std::decay_t<f64>>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param index GLuint
-     * \param v const GLdouble *
-     * \return void
-     */
-    STATICINLINE void vertex_attrib1dv(u32 index, span_const_f64 const& v)
+requires(
+    semantic::concepts::Span<span_const_f64> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_f64::value_type>,
+        std::decay_t<f64>>)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param index GLuint
+ * \param v const GLdouble *
+ * \return void
+ */
+STATICINLINE void vertex_attrib1dv(u32 index, span_const_f64 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -754,16 +780,18 @@ STATICINLINE void vertex_attrib1f(u32 index, f32 x)
 }
 
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
-         std::decay_t<typename span_const_f32::value_type>,
-         std::decay_t<f32>>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param index GLuint
-     * \param v const GLfloat *
-     * \return void
-     */
-    STATICINLINE void vertex_attrib1fv(u32 index, span_const_f32 const& v)
+requires(
+    semantic::concepts::Span<span_const_f32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_f32::value_type>,
+        std::decay_t<f32>>)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param index GLuint
+ * \param v const GLfloat *
+ * \return void
+ */
+STATICINLINE void vertex_attrib1fv(u32 index, span_const_f32 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -792,16 +820,18 @@ STATICINLINE void vertex_attrib1s(u32 index, i16 x)
 }
 
 template<class span_const_i16>
-requires(semantic::concepts::Span<span_const_i16>&& std::is_same_v<
-         std::decay_t<typename span_const_i16::value_type>,
-         std::decay_t<i16>>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param index GLuint
-     * \param v const GLshort *
-     * \return void
-     */
-    STATICINLINE void vertex_attrib1sv(u32 index, span_const_i16 const& v)
+requires(
+    semantic::concepts::Span<span_const_i16> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_i16::value_type>,
+        std::decay_t<i16>>)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param index GLuint
+ * \param v const GLshort *
+ * \return void
+ */
+STATICINLINE void vertex_attrib1sv(u32 index, span_const_i16 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -814,14 +844,14 @@ requires(semantic::concepts::Span<span_const_i16>&& std::is_same_v<
 
 template<class vec_2_f64>
 requires(semantic::concepts::Vector<vec_2_f64, f64, 2>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param index GLuint
-     * \param x GLdouble
-     * \param y GLdouble
-     * \return void
-     */
-    STATICINLINE void vertex_attrib2d(u32 index, vec_2_f64 const& x)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param index GLuint
+ * \param x GLdouble
+ * \param y GLdouble
+ * \return void
+ */
+STATICINLINE void vertex_attrib2d(u32 index, vec_2_f64 const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -833,15 +863,17 @@ requires(semantic::concepts::Vector<vec_2_f64, f64, 2>)
 }
 
 template<class span_const_vec_2_f64>
-requires(semantic::concepts::Span<span_const_vec_2_f64>&& semantic::concepts::
-             Vector<typename span_const_vec_2_f64::value_type, f64, 2>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param index GLuint
-     * \param v const GLdouble *
-     * \return void
-     */
-    STATICINLINE void vertex_attrib2dv(u32 index, span_const_vec_2_f64 const& v)
+requires(
+    semantic::concepts::Span<span_const_vec_2_f64> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_2_f64::value_type, f64, 2>)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param index GLuint
+ * \param v const GLdouble *
+ * \return void
+ */
+STATICINLINE void vertex_attrib2dv(u32 index, span_const_vec_2_f64 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -854,14 +886,14 @@ requires(semantic::concepts::Span<span_const_vec_2_f64>&& semantic::concepts::
 
 template<class vec_2_f32>
 requires(semantic::concepts::Vector<vec_2_f32, f32, 2>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param index GLuint
-     * \param x GLfloat
-     * \param y GLfloat
-     * \return void
-     */
-    STATICINLINE void vertex_attrib2f(u32 index, vec_2_f32 const& x)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param index GLuint
+ * \param x GLfloat
+ * \param y GLfloat
+ * \return void
+ */
+STATICINLINE void vertex_attrib2f(u32 index, vec_2_f32 const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -873,15 +905,17 @@ requires(semantic::concepts::Vector<vec_2_f32, f32, 2>)
 }
 
 template<class span_const_vec_2_f32>
-requires(semantic::concepts::Span<span_const_vec_2_f32>&& semantic::concepts::
-             Vector<typename span_const_vec_2_f32::value_type, f32, 2>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param index GLuint
-     * \param v const GLfloat *
-     * \return void
-     */
-    STATICINLINE void vertex_attrib2fv(u32 index, span_const_vec_2_f32 const& v)
+requires(
+    semantic::concepts::Span<span_const_vec_2_f32> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_2_f32::value_type, f32, 2>)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param index GLuint
+ * \param v const GLfloat *
+ * \return void
+ */
+STATICINLINE void vertex_attrib2fv(u32 index, span_const_vec_2_f32 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -894,14 +928,14 @@ requires(semantic::concepts::Span<span_const_vec_2_f32>&& semantic::concepts::
 
 template<class vec_2_i16>
 requires(semantic::concepts::Vector<vec_2_i16, i16, 2>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param index GLuint
-     * \param x GLshort
-     * \param y GLshort
-     * \return void
-     */
-    STATICINLINE void vertex_attrib2s(u32 index, vec_2_i16 const& x)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param index GLuint
+ * \param x GLshort
+ * \param y GLshort
+ * \return void
+ */
+STATICINLINE void vertex_attrib2s(u32 index, vec_2_i16 const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -913,15 +947,17 @@ requires(semantic::concepts::Vector<vec_2_i16, i16, 2>)
 }
 
 template<class span_const_vec_2_i16>
-requires(semantic::concepts::Span<span_const_vec_2_i16>&& semantic::concepts::
-             Vector<typename span_const_vec_2_i16::value_type, i16, 2>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param index GLuint
-     * \param v const GLshort *
-     * \return void
-     */
-    STATICINLINE void vertex_attrib2sv(u32 index, span_const_vec_2_i16 const& v)
+requires(
+    semantic::concepts::Span<span_const_vec_2_i16> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_2_i16::value_type, i16, 2>)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param index GLuint
+ * \param v const GLshort *
+ * \return void
+ */
+STATICINLINE void vertex_attrib2sv(u32 index, span_const_vec_2_i16 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -934,15 +970,15 @@ requires(semantic::concepts::Span<span_const_vec_2_i16>&& semantic::concepts::
 
 template<class vec_3_f64>
 requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param index GLuint
-     * \param x GLdouble
-     * \param y GLdouble
-     * \param z GLdouble
-     * \return void
-     */
-    STATICINLINE void vertex_attrib3d(u32 index, vec_3_f64 const& x)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param index GLuint
+ * \param x GLdouble
+ * \param y GLdouble
+ * \param z GLdouble
+ * \return void
+ */
+STATICINLINE void vertex_attrib3d(u32 index, vec_3_f64 const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -954,15 +990,17 @@ requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
 }
 
 template<class span_const_vec_3_f64>
-requires(semantic::concepts::Span<span_const_vec_3_f64>&& semantic::concepts::
-             Vector<typename span_const_vec_3_f64::value_type, f64, 3>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param index GLuint
-     * \param v const GLdouble *
-     * \return void
-     */
-    STATICINLINE void vertex_attrib3dv(u32 index, span_const_vec_3_f64 const& v)
+requires(
+    semantic::concepts::Span<span_const_vec_3_f64> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_3_f64::value_type, f64, 3>)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param index GLuint
+ * \param v const GLdouble *
+ * \return void
+ */
+STATICINLINE void vertex_attrib3dv(u32 index, span_const_vec_3_f64 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -975,15 +1013,15 @@ requires(semantic::concepts::Span<span_const_vec_3_f64>&& semantic::concepts::
 
 template<class vec_3_f32>
 requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param index GLuint
-     * \param x GLfloat
-     * \param y GLfloat
-     * \param z GLfloat
-     * \return void
-     */
-    STATICINLINE void vertex_attrib3f(u32 index, vec_3_f32 const& x)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param index GLuint
+ * \param x GLfloat
+ * \param y GLfloat
+ * \param z GLfloat
+ * \return void
+ */
+STATICINLINE void vertex_attrib3f(u32 index, vec_3_f32 const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -995,15 +1033,17 @@ requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
 }
 
 template<class span_const_vec_3_f32>
-requires(semantic::concepts::Span<span_const_vec_3_f32>&& semantic::concepts::
-             Vector<typename span_const_vec_3_f32::value_type, f32, 3>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param index GLuint
-     * \param v const GLfloat *
-     * \return void
-     */
-    STATICINLINE void vertex_attrib3fv(u32 index, span_const_vec_3_f32 const& v)
+requires(
+    semantic::concepts::Span<span_const_vec_3_f32> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_3_f32::value_type, f32, 3>)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param index GLuint
+ * \param v const GLfloat *
+ * \return void
+ */
+STATICINLINE void vertex_attrib3fv(u32 index, span_const_vec_3_f32 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1016,15 +1056,15 @@ requires(semantic::concepts::Span<span_const_vec_3_f32>&& semantic::concepts::
 
 template<class vec_3_i16>
 requires(semantic::concepts::Vector<vec_3_i16, i16, 3>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param index GLuint
-     * \param x GLshort
-     * \param y GLshort
-     * \param z GLshort
-     * \return void
-     */
-    STATICINLINE void vertex_attrib3s(u32 index, vec_3_i16 const& x)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param index GLuint
+ * \param x GLshort
+ * \param y GLshort
+ * \param z GLshort
+ * \return void
+ */
+STATICINLINE void vertex_attrib3s(u32 index, vec_3_i16 const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1036,15 +1076,17 @@ requires(semantic::concepts::Vector<vec_3_i16, i16, 3>)
 }
 
 template<class span_const_vec_3_i16>
-requires(semantic::concepts::Span<span_const_vec_3_i16>&& semantic::concepts::
-             Vector<typename span_const_vec_3_i16::value_type, i16, 3>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param index GLuint
-     * \param v const GLshort *
-     * \return void
-     */
-    STATICINLINE void vertex_attrib3sv(u32 index, span_const_vec_3_i16 const& v)
+requires(
+    semantic::concepts::Span<span_const_vec_3_i16> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_3_i16::value_type, i16, 3>)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param index GLuint
+ * \param v const GLshort *
+ * \return void
+ */
+STATICINLINE void vertex_attrib3sv(u32 index, span_const_vec_3_i16 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1057,16 +1099,16 @@ requires(semantic::concepts::Span<span_const_vec_3_i16>&& semantic::concepts::
 
 template<class vec_4_f64>
 requires(semantic::concepts::Vector<vec_4_f64, f64, 4>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param index GLuint
-     * \param x GLdouble
-     * \param y GLdouble
-     * \param z GLdouble
-     * \param w GLdouble
-     * \return void
-     */
-    STATICINLINE void vertex_attrib4d(u32 index, vec_4_f64 const& x)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param index GLuint
+ * \param x GLdouble
+ * \param y GLdouble
+ * \param z GLdouble
+ * \param w GLdouble
+ * \return void
+ */
+STATICINLINE void vertex_attrib4d(u32 index, vec_4_f64 const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1078,15 +1120,17 @@ requires(semantic::concepts::Vector<vec_4_f64, f64, 4>)
 }
 
 template<class span_const_vec_4_f64>
-requires(semantic::concepts::Span<span_const_vec_4_f64>&& semantic::concepts::
-             Vector<typename span_const_vec_4_f64::value_type, f64, 4>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param index GLuint
-     * \param v const GLdouble *
-     * \return void
-     */
-    STATICINLINE void vertex_attrib4dv(u32 index, span_const_vec_4_f64 const& v)
+requires(
+    semantic::concepts::Span<span_const_vec_4_f64> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_4_f64::value_type, f64, 4>)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param index GLuint
+ * \param v const GLdouble *
+ * \return void
+ */
+STATICINLINE void vertex_attrib4dv(u32 index, span_const_vec_4_f64 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1099,16 +1143,16 @@ requires(semantic::concepts::Span<span_const_vec_4_f64>&& semantic::concepts::
 
 template<class vec_4_f32>
 requires(semantic::concepts::Vector<vec_4_f32, f32, 4>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param index GLuint
-     * \param x GLfloat
-     * \param y GLfloat
-     * \param z GLfloat
-     * \param w GLfloat
-     * \return void
-     */
-    STATICINLINE void vertex_attrib4f(u32 index, vec_4_f32 const& x)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param index GLuint
+ * \param x GLfloat
+ * \param y GLfloat
+ * \param z GLfloat
+ * \param w GLfloat
+ * \return void
+ */
+STATICINLINE void vertex_attrib4f(u32 index, vec_4_f32 const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1120,15 +1164,17 @@ requires(semantic::concepts::Vector<vec_4_f32, f32, 4>)
 }
 
 template<class span_const_vec_4_f32>
-requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
-             Vector<typename span_const_vec_4_f32::value_type, f32, 4>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param index GLuint
-     * \param v const GLfloat *
-     * \return void
-     */
-    STATICINLINE void vertex_attrib4fv(u32 index, span_const_vec_4_f32 const& v)
+requires(
+    semantic::concepts::Span<span_const_vec_4_f32> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_4_f32::value_type, f32, 4>)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param index GLuint
+ * \param v const GLfloat *
+ * \return void
+ */
+STATICINLINE void vertex_attrib4fv(u32 index, span_const_vec_4_f32 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1141,16 +1187,16 @@ requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
 
 template<class vec_4_i16>
 requires(semantic::concepts::Vector<vec_4_i16, i16, 4>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param index GLuint
-     * \param x GLshort
-     * \param y GLshort
-     * \param z GLshort
-     * \param w GLshort
-     * \return void
-     */
-    STATICINLINE void vertex_attrib4s(u32 index, vec_4_i16 const& x)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param index GLuint
+ * \param x GLshort
+ * \param y GLshort
+ * \param z GLshort
+ * \param w GLshort
+ * \return void
+ */
+STATICINLINE void vertex_attrib4s(u32 index, vec_4_i16 const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1162,15 +1208,17 @@ requires(semantic::concepts::Vector<vec_4_i16, i16, 4>)
 }
 
 template<class span_const_vec_4_i16>
-requires(semantic::concepts::Span<span_const_vec_4_i16>&& semantic::concepts::
-             Vector<typename span_const_vec_4_i16::value_type, i16, 4>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param index GLuint
-     * \param v const GLshort *
-     * \return void
-     */
-    STATICINLINE void vertex_attrib4sv(u32 index, span_const_vec_4_i16 const& v)
+requires(
+    semantic::concepts::Span<span_const_vec_4_i16> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_4_i16::value_type, i16, 4>)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param index GLuint
+ * \param v const GLshort *
+ * \return void
+ */
+STATICINLINE void vertex_attrib4sv(u32 index, span_const_vec_4_i16 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1183,16 +1231,16 @@ requires(semantic::concepts::Span<span_const_vec_4_i16>&& semantic::concepts::
 
 template<class vec_4_u8>
 requires(semantic::concepts::Vector<vec_4_u8, u8, 4>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param index GLuint
-     * \param x GLubyte
-     * \param y GLubyte
-     * \param z GLubyte
-     * \param w GLubyte
-     * \return void
-     */
-    STATICINLINE void vertex_attrib4ub(u32 index, vec_4_u8 const& x)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param index GLuint
+ * \param x GLubyte
+ * \param y GLubyte
+ * \param z GLubyte
+ * \param w GLubyte
+ * \return void
+ */
+STATICINLINE void vertex_attrib4ub(u32 index, vec_4_u8 const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1204,16 +1252,18 @@ requires(semantic::concepts::Vector<vec_4_u8, u8, 4>)
 }
 
 template<class span_const_u8>
-requires(semantic::concepts::Span<span_const_u8>&& std::is_same_v<
-         std::decay_t<typename span_const_u8::value_type>,
-         std::decay_t<u8>>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param index GLuint
-     * \param v const GLubyte *
-     * \return void
-     */
-    STATICINLINE void vertex_attrib4ubv(u32 index, span_const_u8 const& v)
+requires(
+    semantic::concepts::Span<span_const_u8> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_u8::value_type>,
+        std::decay_t<u8>>)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param index GLuint
+ * \param v const GLubyte *
+ * \return void
+ */
+STATICINLINE void vertex_attrib4ubv(u32 index, span_const_u8 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1227,21 +1277,21 @@ requires(semantic::concepts::Span<span_const_u8>&& std::is_same_v<
 
 template<class span_const_void>
 requires(semantic::concepts::Span<span_const_void>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param index GLuint
-     * \param fsize GLint
-     * \param type GLenum
-     * \param stride GLsizei
-     * \param pointer const void *
-     * \return void
-     */
-    STATICINLINE void vertex_attrib_pointer(
-        u32                          index,
-        i32                          fsize,
-        group::vertex_attrib_enum_nv type,
-        i32                          stride,
-        span_const_void const&       pointer)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param index GLuint
+ * \param fsize GLint
+ * \param type GLenum
+ * \param stride GLsizei
+ * \param pointer const void *
+ * \return void
+ */
+STATICINLINE void vertex_attrib_pointer(
+    u32                          index,
+    i32                          fsize,
+    group::vertex_attrib_enum_nv type,
+    i32                          stride,
+    span_const_void const&       pointer)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1259,17 +1309,19 @@ requires(semantic::concepts::Span<span_const_void>)
 }
 
 template<class span_const_f64>
-requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
-         std::decay_t<typename span_const_f64::value_type>,
-         std::decay_t<f64>>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param index GLuint
-     * \param count GLsizei
-     * \param v const GLdouble *
-     * \return void
-     */
-    STATICINLINE void vertex_attribs1dv(u32 index, span_const_f64 const& v)
+requires(
+    semantic::concepts::Span<span_const_f64> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_f64::value_type>,
+        std::decay_t<f64>>)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param index GLuint
+ * \param count GLsizei
+ * \param v const GLdouble *
+ * \return void
+ */
+STATICINLINE void vertex_attribs1dv(u32 index, span_const_f64 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1282,17 +1334,19 @@ requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
 }
 
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
-         std::decay_t<typename span_const_f32::value_type>,
-         std::decay_t<f32>>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param index GLuint
-     * \param count GLsizei
-     * \param v const GLfloat *
-     * \return void
-     */
-    STATICINLINE void vertex_attribs1fv(u32 index, span_const_f32 const& v)
+requires(
+    semantic::concepts::Span<span_const_f32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_f32::value_type>,
+        std::decay_t<f32>>)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param index GLuint
+ * \param count GLsizei
+ * \param v const GLfloat *
+ * \return void
+ */
+STATICINLINE void vertex_attribs1fv(u32 index, span_const_f32 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1305,17 +1359,19 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
 }
 
 template<class span_const_i16>
-requires(semantic::concepts::Span<span_const_i16>&& std::is_same_v<
-         std::decay_t<typename span_const_i16::value_type>,
-         std::decay_t<i16>>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param index GLuint
-     * \param count GLsizei
-     * \param v const GLshort *
-     * \return void
-     */
-    STATICINLINE void vertex_attribs1sv(u32 index, span_const_i16 const& v)
+requires(
+    semantic::concepts::Span<span_const_i16> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_i16::value_type>,
+        std::decay_t<i16>>)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param index GLuint
+ * \param count GLsizei
+ * \param v const GLshort *
+ * \return void
+ */
+STATICINLINE void vertex_attribs1sv(u32 index, span_const_i16 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1328,16 +1384,18 @@ requires(semantic::concepts::Span<span_const_i16>&& std::is_same_v<
 }
 
 template<class span_const_vec_2_f64>
-requires(semantic::concepts::Span<span_const_vec_2_f64>&& semantic::concepts::
-             Vector<typename span_const_vec_2_f64::value_type, f64, 2>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param index GLuint
-     * \param count GLsizei
-     * \param v const GLdouble *
-     * \return void
-     */
-    STATICINLINE
+requires(
+    semantic::concepts::Span<span_const_vec_2_f64> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_2_f64::value_type, f64, 2>)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param index GLuint
+ * \param count GLsizei
+ * \param v const GLdouble *
+ * \return void
+ */
+STATICINLINE
     void vertex_attribs2dv(u32 index, i32 count, span_const_vec_2_f64 const& v)
 {
     using namespace std::string_view_literals;
@@ -1351,16 +1409,18 @@ requires(semantic::concepts::Span<span_const_vec_2_f64>&& semantic::concepts::
 }
 
 template<class span_const_vec_2_f32>
-requires(semantic::concepts::Span<span_const_vec_2_f32>&& semantic::concepts::
-             Vector<typename span_const_vec_2_f32::value_type, f32, 2>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param index GLuint
-     * \param count GLsizei
-     * \param v const GLfloat *
-     * \return void
-     */
-    STATICINLINE
+requires(
+    semantic::concepts::Span<span_const_vec_2_f32> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_2_f32::value_type, f32, 2>)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param index GLuint
+ * \param count GLsizei
+ * \param v const GLfloat *
+ * \return void
+ */
+STATICINLINE
     void vertex_attribs2fv(u32 index, i32 count, span_const_vec_2_f32 const& v)
 {
     using namespace std::string_view_literals;
@@ -1374,16 +1434,18 @@ requires(semantic::concepts::Span<span_const_vec_2_f32>&& semantic::concepts::
 }
 
 template<class span_const_vec_2_i16>
-requires(semantic::concepts::Span<span_const_vec_2_i16>&& semantic::concepts::
-             Vector<typename span_const_vec_2_i16::value_type, i16, 2>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param index GLuint
-     * \param count GLsizei
-     * \param v const GLshort *
-     * \return void
-     */
-    STATICINLINE
+requires(
+    semantic::concepts::Span<span_const_vec_2_i16> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_2_i16::value_type, i16, 2>)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param index GLuint
+ * \param count GLsizei
+ * \param v const GLshort *
+ * \return void
+ */
+STATICINLINE
     void vertex_attribs2sv(u32 index, i32 count, span_const_vec_2_i16 const& v)
 {
     using namespace std::string_view_literals;
@@ -1397,16 +1459,18 @@ requires(semantic::concepts::Span<span_const_vec_2_i16>&& semantic::concepts::
 }
 
 template<class span_const_vec_3_f64>
-requires(semantic::concepts::Span<span_const_vec_3_f64>&& semantic::concepts::
-             Vector<typename span_const_vec_3_f64::value_type, f64, 3>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param index GLuint
-     * \param count GLsizei
-     * \param v const GLdouble *
-     * \return void
-     */
-    STATICINLINE
+requires(
+    semantic::concepts::Span<span_const_vec_3_f64> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_3_f64::value_type, f64, 3>)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param index GLuint
+ * \param count GLsizei
+ * \param v const GLdouble *
+ * \return void
+ */
+STATICINLINE
     void vertex_attribs3dv(u32 index, i32 count, span_const_vec_3_f64 const& v)
 {
     using namespace std::string_view_literals;
@@ -1420,16 +1484,18 @@ requires(semantic::concepts::Span<span_const_vec_3_f64>&& semantic::concepts::
 }
 
 template<class span_const_vec_3_f32>
-requires(semantic::concepts::Span<span_const_vec_3_f32>&& semantic::concepts::
-             Vector<typename span_const_vec_3_f32::value_type, f32, 3>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param index GLuint
-     * \param count GLsizei
-     * \param v const GLfloat *
-     * \return void
-     */
-    STATICINLINE
+requires(
+    semantic::concepts::Span<span_const_vec_3_f32> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_3_f32::value_type, f32, 3>)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param index GLuint
+ * \param count GLsizei
+ * \param v const GLfloat *
+ * \return void
+ */
+STATICINLINE
     void vertex_attribs3fv(u32 index, i32 count, span_const_vec_3_f32 const& v)
 {
     using namespace std::string_view_literals;
@@ -1443,16 +1509,18 @@ requires(semantic::concepts::Span<span_const_vec_3_f32>&& semantic::concepts::
 }
 
 template<class span_const_vec_3_i16>
-requires(semantic::concepts::Span<span_const_vec_3_i16>&& semantic::concepts::
-             Vector<typename span_const_vec_3_i16::value_type, i16, 3>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param index GLuint
-     * \param count GLsizei
-     * \param v const GLshort *
-     * \return void
-     */
-    STATICINLINE
+requires(
+    semantic::concepts::Span<span_const_vec_3_i16> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_3_i16::value_type, i16, 3>)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param index GLuint
+ * \param count GLsizei
+ * \param v const GLshort *
+ * \return void
+ */
+STATICINLINE
     void vertex_attribs3sv(u32 index, i32 count, span_const_vec_3_i16 const& v)
 {
     using namespace std::string_view_literals;
@@ -1466,16 +1534,18 @@ requires(semantic::concepts::Span<span_const_vec_3_i16>&& semantic::concepts::
 }
 
 template<class span_const_vec_4_f64>
-requires(semantic::concepts::Span<span_const_vec_4_f64>&& semantic::concepts::
-             Vector<typename span_const_vec_4_f64::value_type, f64, 4>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param index GLuint
-     * \param count GLsizei
-     * \param v const GLdouble *
-     * \return void
-     */
-    STATICINLINE
+requires(
+    semantic::concepts::Span<span_const_vec_4_f64> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_4_f64::value_type, f64, 4>)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param index GLuint
+ * \param count GLsizei
+ * \param v const GLdouble *
+ * \return void
+ */
+STATICINLINE
     void vertex_attribs4dv(u32 index, i32 count, span_const_vec_4_f64 const& v)
 {
     using namespace std::string_view_literals;
@@ -1489,16 +1559,18 @@ requires(semantic::concepts::Span<span_const_vec_4_f64>&& semantic::concepts::
 }
 
 template<class span_const_vec_4_f32>
-requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
-             Vector<typename span_const_vec_4_f32::value_type, f32, 4>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param index GLuint
-     * \param count GLsizei
-     * \param v const GLfloat *
-     * \return void
-     */
-    STATICINLINE
+requires(
+    semantic::concepts::Span<span_const_vec_4_f32> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_4_f32::value_type, f32, 4>)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param index GLuint
+ * \param count GLsizei
+ * \param v const GLfloat *
+ * \return void
+ */
+STATICINLINE
     void vertex_attribs4fv(u32 index, i32 count, span_const_vec_4_f32 const& v)
 {
     using namespace std::string_view_literals;
@@ -1512,16 +1584,18 @@ requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
 }
 
 template<class span_const_vec_4_i16>
-requires(semantic::concepts::Span<span_const_vec_4_i16>&& semantic::concepts::
-             Vector<typename span_const_vec_4_i16::value_type, i16, 4>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param index GLuint
-     * \param count GLsizei
-     * \param v const GLshort *
-     * \return void
-     */
-    STATICINLINE
+requires(
+    semantic::concepts::Span<span_const_vec_4_i16> &&
+    semantic::concepts::
+        Vector<typename span_const_vec_4_i16::value_type, i16, 4>)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param index GLuint
+ * \param count GLsizei
+ * \param v const GLshort *
+ * \return void
+ */
+STATICINLINE
     void vertex_attribs4sv(u32 index, i32 count, span_const_vec_4_i16 const& v)
 {
     using namespace std::string_view_literals;
@@ -1535,17 +1609,19 @@ requires(semantic::concepts::Span<span_const_vec_4_i16>&& semantic::concepts::
 }
 
 template<class span_const_u8>
-requires(semantic::concepts::Span<span_const_u8>&& std::is_same_v<
-         std::decay_t<typename span_const_u8::value_type>,
-         std::decay_t<u8>>)
-    /*!
-     * \brief Part of GL_NV_vertex_program
-     * \param index GLuint
-     * \param count GLsizei
-     * \param v const GLubyte *
-     * \return void
-     */
-    STATICINLINE
+requires(
+    semantic::concepts::Span<span_const_u8> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_u8::value_type>,
+        std::decay_t<u8>>)
+/*!
+ * \brief Part of GL_NV_vertex_program
+ * \param index GLuint
+ * \param count GLsizei
+ * \param v const GLubyte *
+ * \return void
+ */
+STATICINLINE
     void vertex_attribs4ubv(u32 index, i32 count, span_const_u8 const& v)
 {
     using namespace std::string_view_literals;

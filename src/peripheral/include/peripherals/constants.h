@@ -340,7 +340,7 @@ constexpr bool is_macos =
     ;
 
 constexpr bool is_ios =
-#if defined(COFFEE_APPLE_MOBILE)
+#if defined(COFFEE_IOS)
     true
 #else
     false

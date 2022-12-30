@@ -9,7 +9,7 @@
 
 namespace comp_app {
 
-using Coffee::Components::Convenience::type_hash_v;
+using compo::convenience::type_hash_v;
 
 using AppLoaderTag = detail::TagType<libc_types::u32, libc_types::u32>;
 

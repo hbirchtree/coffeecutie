@@ -12,15 +12,15 @@ constexpr libc_types::u32 one_minus_constant_alpha = 0x8004;
 } // namespace values
 template<class vec_4_f32>
 requires(semantic::concepts::Vector<vec_4_f32, f32, 4>)
-    /*!
-     * \brief Part of GL_EXT_blend_color
-     * \param red GLfloat
-     * \param green GLfloat
-     * \param blue GLfloat
-     * \param alpha GLfloat
-     * \return void
-     */
-    STATICINLINE void blend_color(vec_4_f32 const& red)
+/*!
+ * \brief Part of GL_EXT_blend_color
+ * \param red GLfloat
+ * \param green GLfloat
+ * \param blue GLfloat
+ * \param alpha GLfloat
+ * \return void
+ */
+STATICINLINE void blend_color(vec_4_f32 const& red)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

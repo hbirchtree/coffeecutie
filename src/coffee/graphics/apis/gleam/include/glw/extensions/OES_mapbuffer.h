@@ -11,17 +11,17 @@ constexpr libc_types::u32 buffer_map_pointer = 0x88BD;
 } // namespace values
 template<class span_void>
 requires(semantic::concepts::Span<span_void>)
-    /*!
-     * \brief Part of GL_OES_mapbuffer
-     * \param target GLenum
-     * \param pname GLenum
-     * \param params void **
-     * \return void
-     */
-    STATICINLINE void get_buffer_pointerv(
-        group::buffer_target_arb       target,
-        group::buffer_pointer_name_arb pname,
-        span_void                      params)
+/*!
+ * \brief Part of GL_OES_mapbuffer
+ * \param target GLenum
+ * \param pname GLenum
+ * \param params void **
+ * \return void
+ */
+STATICINLINE void get_buffer_pointerv(
+    group::buffer_target_arb       target,
+    group::buffer_pointer_name_arb pname,
+    span_void                      params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

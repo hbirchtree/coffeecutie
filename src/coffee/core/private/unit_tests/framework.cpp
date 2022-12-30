@@ -30,8 +30,8 @@ struct TestInstance
 {
     void from_test(Test const& test_info)
     {
-        title       = test_info.title;
-        description = test_info.description;
+        title       = test_info.title ? test_info.title : "";
+        description = test_info.description ? test_info.description : "";
         required    = !test_info.optional;
     }
 
@@ -43,18 +43,18 @@ struct TestInstance
 
     u64 time;
 
-    cstring title;
-    cstring description;
+    cstring title       = "";
+    cstring description = "";
 
     bool result;
     bool required;
 };
 
-static Vector<cstring> titles;
-static Vector<cstring> descriptions;
-static Vector<u64>     test_times;
-static Vector<bool>    result;
-static Vector<bool>    required;
+static Vector<const char*> titles;
+static Vector<const char*> descriptions;
+static Vector<u64>         test_times;
+static Vector<bool>        result;
+static Vector<bool>        required;
 
 void WriteJsonData(
     json::WriteBuf& buf,
@@ -207,6 +207,8 @@ struct TemporaryState
         State::SwapState("jsonProfiler", profiler);
         State::SwapState("threadNames", threadNames);
 
+        SetPrintingVerbosity(10);
+
         auto profilerState = State::GetProfilerStore();
 
         if(profilerState)
@@ -251,13 +253,12 @@ void RunTest(Test const& test, TestInstance& test_info)
 #if !MODE_CRASHTEST
     catch(std::exception const&)
     {
-//        if constexpr(!compile_info::lowfat_mode)
-//            platform::env::Stacktracer::ExceptionStacktrace(
-//                std::current_exception(),
-//                Coffee::DebugFun::GetLogInterface().tag);
-//        else
-//            platform::env::Stacktracer::ExceptionStacktrace(
-//                std::current_exception(), typing::logging::fprintf_logger);
+        if(auto frames = platform::stacktrace::exception_frames())
+            platform::stacktrace::print_exception(
+                std::move(frames.value()),
+                typing::logging::fprintf_logger,
+                [](std::string_view, std::string_view, std::string_view, u32) {
+                });
         Profiler::Profile("exception");
     }
 #endif

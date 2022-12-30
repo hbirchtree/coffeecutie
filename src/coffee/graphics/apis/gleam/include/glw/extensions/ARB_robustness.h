@@ -37,16 +37,16 @@ STATICINLINE GLenum get_graphics_reset_status()
 
 template<class span_void>
 requires(semantic::concepts::Span<span_void>)
-    /*!
-     * \brief Part of GL_ARB_robustness
-     * \param target GLenum
-     * \param lod GLint
-     * \param bufSize GLsizei
-     * \param img void *
-     * \return void
-     */
-    STATICINLINE void getn_compressed_tex_image(
-        group::texture_target target, i32 lod, span_void img)
+/*!
+ * \brief Part of GL_ARB_robustness
+ * \param target GLenum
+ * \param lod GLint
+ * \param bufSize GLsizei
+ * \param img void *
+ * \return void
+ */
+STATICINLINE void getn_compressed_tex_image(
+    group::texture_target target, i32 lod, span_void img)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -63,22 +63,22 @@ requires(semantic::concepts::Span<span_void>)
 
 template<class span_void>
 requires(semantic::concepts::Span<span_void>)
-    /*!
-     * \brief Part of GL_ARB_robustness
-     * \param target GLenum
-     * \param level GLint
-     * \param format GLenum
-     * \param type GLenum
-     * \param bufSize GLsizei
-     * \param img void *
-     * \return void
-     */
-    STATICINLINE void getn_tex_image(
-        group::texture_target target,
-        i32                   level,
-        group::pixel_format   format,
-        group::pixel_type     type,
-        span_void             img)
+/*!
+ * \brief Part of GL_ARB_robustness
+ * \param target GLenum
+ * \param level GLint
+ * \param format GLenum
+ * \param type GLenum
+ * \param bufSize GLsizei
+ * \param img void *
+ * \return void
+ */
+STATICINLINE void getn_tex_image(
+    group::texture_target target,
+    i32                   level,
+    group::pixel_format   format,
+    group::pixel_type     type,
+    span_void             img)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -96,18 +96,20 @@ requires(semantic::concepts::Span<span_void>)
 }
 
 template<class span_f64>
-requires(semantic::concepts::Span<span_f64>&& std::is_same_v<
-         std::decay_t<typename span_f64::value_type>,
-         std::decay_t<f64>>)
-    /*!
-     * \brief Part of GL_ARB_robustness
-     * \param program GLuint
-     * \param location GLint
-     * \param bufSize GLsizei
-     * \param params GLdouble *
-     * \return void
-     */
-    STATICINLINE
+requires(
+    semantic::concepts::Span<span_f64> &&
+    std::is_same_v<
+        std::decay_t<typename span_f64::value_type>,
+        std::decay_t<f64>>)
+/*!
+ * \brief Part of GL_ARB_robustness
+ * \param program GLuint
+ * \param location GLint
+ * \param bufSize GLsizei
+ * \param params GLdouble *
+ * \return void
+ */
+STATICINLINE
     void getn_uniformdv(u32 program, i32 location, i32 bufSize, span_f64 params)
 {
     using namespace std::string_view_literals;
@@ -128,18 +130,20 @@ requires(semantic::concepts::Span<span_f64>&& std::is_same_v<
 }
 
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
-         std::decay_t<typename span_f32::value_type>,
-         std::decay_t<f32>>)
-    /*!
-     * \brief Part of GL_ARB_robustness
-     * \param program GLuint
-     * \param location GLint
-     * \param bufSize GLsizei
-     * \param params GLfloat *
-     * \return void
-     */
-    STATICINLINE
+requires(
+    semantic::concepts::Span<span_f32> &&
+    std::is_same_v<
+        std::decay_t<typename span_f32::value_type>,
+        std::decay_t<f32>>)
+/*!
+ * \brief Part of GL_ARB_robustness
+ * \param program GLuint
+ * \param location GLint
+ * \param bufSize GLsizei
+ * \param params GLfloat *
+ * \return void
+ */
+STATICINLINE
     void getn_uniformfv(u32 program, i32 location, i32 bufSize, span_f32 params)
 {
     using namespace std::string_view_literals;
@@ -160,18 +164,20 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
-         std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>)
-    /*!
-     * \brief Part of GL_ARB_robustness
-     * \param program GLuint
-     * \param location GLint
-     * \param bufSize GLsizei
-     * \param params GLint *
-     * \return void
-     */
-    STATICINLINE
+requires(
+    semantic::concepts::Span<span_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_i32::value_type>,
+        std::decay_t<i32>>)
+/*!
+ * \brief Part of GL_ARB_robustness
+ * \param program GLuint
+ * \param location GLint
+ * \param bufSize GLsizei
+ * \param params GLint *
+ * \return void
+ */
+STATICINLINE
     void getn_uniformiv(u32 program, i32 location, i32 bufSize, span_i32 params)
 {
     using namespace std::string_view_literals;
@@ -192,19 +198,21 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
-         std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>)
-    /*!
-     * \brief Part of GL_ARB_robustness
-     * \param program GLuint
-     * \param location GLint
-     * \param bufSize GLsizei
-     * \param params GLuint *
-     * \return void
-     */
-    STATICINLINE void getn_uniformuiv(
-        u32 program, i32 location, i32 bufSize, span_u32 params)
+requires(
+    semantic::concepts::Span<span_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_u32::value_type>,
+        std::decay_t<u32>>)
+/*!
+ * \brief Part of GL_ARB_robustness
+ * \param program GLuint
+ * \param location GLint
+ * \param bufSize GLsizei
+ * \param params GLuint *
+ * \return void
+ */
+STATICINLINE void getn_uniformuiv(
+    u32 program, i32 location, i32 bufSize, span_u32 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -224,27 +232,28 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 }
 
 template<class size_2_i32, class span_void, class vec_2_i32>
-requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
-                 semantic::concepts::Size2D<size_2_i32, i32>&&
-                 semantic::concepts::Span<span_void>)
-    /*!
-     * \brief Part of GL_ARB_robustness
-     * \param x GLint
-     * \param y GLint
-     * \param width GLsizei
-     * \param height GLsizei
-     * \param format GLenum
-     * \param type GLenum
-     * \param bufSize GLsizei
-     * \param data void *
-     * \return void
-     */
-    STATICINLINE void readn_pixels(
-        vec_2_i32 const&    x,
-        size_2_i32 const&   width,
-        group::pixel_format format,
-        group::pixel_type   type,
-        span_void           data)
+requires(
+    semantic::concepts::Vector<vec_2_i32, i32, 2> &&
+    semantic::concepts::Size2D<size_2_i32, i32> &&
+    semantic::concepts::Span<span_void>)
+/*!
+ * \brief Part of GL_ARB_robustness
+ * \param x GLint
+ * \param y GLint
+ * \param width GLsizei
+ * \param height GLsizei
+ * \param format GLenum
+ * \param type GLenum
+ * \param bufSize GLsizei
+ * \param data void *
+ * \return void
+ */
+STATICINLINE void readn_pixels(
+    vec_2_i32 const&    x,
+    size_2_i32 const&   width,
+    group::pixel_format format,
+    group::pixel_type   type,
+    span_void           data)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -266,20 +275,20 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
 #if defined(GL_VERSION_1_0)
 template<class span_void>
 requires(semantic::concepts::Span<span_void>)
-    /*!
-     * \brief Part of GL_ARB_robustness
-     * \param target GLenum
-     * \param format GLenum
-     * \param type GLenum
-     * \param bufSize GLsizei
-     * \param table void *
-     * \return void
-     */
-    STATICINLINE void getn_color_table(
-        group::color_table_target target,
-        group::pixel_format       format,
-        group::pixel_type         type,
-        span_void                 table)
+/*!
+ * \brief Part of GL_ARB_robustness
+ * \param target GLenum
+ * \param format GLenum
+ * \param type GLenum
+ * \param bufSize GLsizei
+ * \param table void *
+ * \return void
+ */
+STATICINLINE void getn_color_table(
+    group::color_table_target target,
+    group::pixel_format       format,
+    group::pixel_type         type,
+    span_void                 table)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -299,20 +308,20 @@ requires(semantic::concepts::Span<span_void>)
 #if defined(GL_VERSION_1_0)
 template<class span_void>
 requires(semantic::concepts::Span<span_void>)
-    /*!
-     * \brief Part of GL_ARB_robustness
-     * \param target GLenum
-     * \param format GLenum
-     * \param type GLenum
-     * \param bufSize GLsizei
-     * \param image void *
-     * \return void
-     */
-    STATICINLINE void getn_convolution_filter(
-        group::convolution_target target,
-        group::pixel_format       format,
-        group::pixel_type         type,
-        span_void                 image)
+/*!
+ * \brief Part of GL_ARB_robustness
+ * \param target GLenum
+ * \param format GLenum
+ * \param type GLenum
+ * \param bufSize GLsizei
+ * \param image void *
+ * \return void
+ */
+STATICINLINE void getn_convolution_filter(
+    group::convolution_target target,
+    group::pixel_format       format,
+    group::pixel_type         type,
+    span_void                 image)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -332,22 +341,22 @@ requires(semantic::concepts::Span<span_void>)
 #if defined(GL_VERSION_1_0)
 template<class span_void>
 requires(semantic::concepts::Span<span_void>)
-    /*!
-     * \brief Part of GL_ARB_robustness
-     * \param target GLenum
-     * \param reset GLboolean
-     * \param format GLenum
-     * \param type GLenum
-     * \param bufSize GLsizei
-     * \param values void *
-     * \return void
-     */
-    STATICINLINE void getn_histogram(
-        group::histogram_target_ext target,
-        bool                        reset,
-        group::pixel_format         format,
-        group::pixel_type           type,
-        span_void                   values)
+/*!
+ * \brief Part of GL_ARB_robustness
+ * \param target GLenum
+ * \param reset GLboolean
+ * \param format GLenum
+ * \param type GLenum
+ * \param bufSize GLsizei
+ * \param values void *
+ * \return void
+ */
+STATICINLINE void getn_histogram(
+    group::histogram_target_ext target,
+    bool                        reset,
+    group::pixel_format         format,
+    group::pixel_type           type,
+    span_void                   values)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -367,22 +376,21 @@ requires(semantic::concepts::Span<span_void>)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_f64>
-requires(semantic::concepts::Span<span_f64>&& std::is_same_v<
-         std::decay_t<typename span_f64::value_type>,
-         std::decay_t<f64>>)
-    /*!
-     * \brief Part of GL_ARB_robustness
-     * \param target GLenum
-     * \param query GLenum
-     * \param bufSize GLsizei
-     * \param v GLdouble *
-     * \return void
-     */
-    STATICINLINE void getn_mapdv(
-        group::map_target target,
-        group::map_query  query,
-        i32               bufSize,
-        span_f64          v)
+requires(
+    semantic::concepts::Span<span_f64> &&
+    std::is_same_v<
+        std::decay_t<typename span_f64::value_type>,
+        std::decay_t<f64>>)
+/*!
+ * \brief Part of GL_ARB_robustness
+ * \param target GLenum
+ * \param query GLenum
+ * \param bufSize GLsizei
+ * \param v GLdouble *
+ * \return void
+ */
+STATICINLINE void getn_mapdv(
+    group::map_target target, group::map_query query, i32 bufSize, span_f64 v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -400,19 +408,21 @@ requires(semantic::concepts::Span<span_f64>&& std::is_same_v<
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
-         std::decay_t<typename span_f32::value_type>,
-         std::decay_t<f32>>)
-    /*!
-     * \brief Part of GL_ARB_robustness
-     * \param target GLenum
-     * \param query GLenum
-     * \param bufSize GLsizei
-     * \param v GLfloat *
-     * \return void
-     */
-    STATICINLINE void getn_mapfv(
-        group::map_target target, group::map_query query, span_f32 v)
+requires(
+    semantic::concepts::Span<span_f32> &&
+    std::is_same_v<
+        std::decay_t<typename span_f32::value_type>,
+        std::decay_t<f32>>)
+/*!
+ * \brief Part of GL_ARB_robustness
+ * \param target GLenum
+ * \param query GLenum
+ * \param bufSize GLsizei
+ * \param v GLfloat *
+ * \return void
+ */
+STATICINLINE void getn_mapfv(
+    group::map_target target, group::map_query query, span_f32 v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -430,19 +440,21 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
-         std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>)
-    /*!
-     * \brief Part of GL_ARB_robustness
-     * \param target GLenum
-     * \param query GLenum
-     * \param bufSize GLsizei
-     * \param v GLint *
-     * \return void
-     */
-    STATICINLINE void getn_mapiv(
-        group::map_target target, group::map_query query, span_i32 v)
+requires(
+    semantic::concepts::Span<span_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_i32::value_type>,
+        std::decay_t<i32>>)
+/*!
+ * \brief Part of GL_ARB_robustness
+ * \param target GLenum
+ * \param query GLenum
+ * \param bufSize GLsizei
+ * \param v GLint *
+ * \return void
+ */
+STATICINLINE void getn_mapiv(
+    group::map_target target, group::map_query query, span_i32 v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -461,22 +473,22 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 #if defined(GL_VERSION_1_0)
 template<class span_void>
 requires(semantic::concepts::Span<span_void>)
-    /*!
-     * \brief Part of GL_ARB_robustness
-     * \param target GLenum
-     * \param reset GLboolean
-     * \param format GLenum
-     * \param type GLenum
-     * \param bufSize GLsizei
-     * \param values void *
-     * \return void
-     */
-    STATICINLINE void getn_minmax(
-        group::minmax_target_ext target,
-        bool                     reset,
-        group::pixel_format      format,
-        group::pixel_type        type,
-        span_void                values)
+/*!
+ * \brief Part of GL_ARB_robustness
+ * \param target GLenum
+ * \param reset GLboolean
+ * \param format GLenum
+ * \param type GLenum
+ * \param bufSize GLsizei
+ * \param values void *
+ * \return void
+ */
+STATICINLINE void getn_minmax(
+    group::minmax_target_ext target,
+    bool                     reset,
+    group::pixel_format      format,
+    group::pixel_type        type,
+    span_void                values)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -496,17 +508,19 @@ requires(semantic::concepts::Span<span_void>)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
-         std::decay_t<typename span_f32::value_type>,
-         std::decay_t<f32>>)
-    /*!
-     * \brief Part of GL_ARB_robustness
-     * \param map GLenum
-     * \param bufSize GLsizei
-     * \param values GLfloat *
-     * \return void
-     */
-    STATICINLINE
+requires(
+    semantic::concepts::Span<span_f32> &&
+    std::is_same_v<
+        std::decay_t<typename span_f32::value_type>,
+        std::decay_t<f32>>)
+/*!
+ * \brief Part of GL_ARB_robustness
+ * \param map GLenum
+ * \param bufSize GLsizei
+ * \param values GLfloat *
+ * \return void
+ */
+STATICINLINE
     void getn_pixel_mapfv(group::pixel_map map, i32 bufSize, span_f32 values)
 {
     using namespace std::string_view_literals;
@@ -524,17 +538,19 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
-         std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>)
-    /*!
-     * \brief Part of GL_ARB_robustness
-     * \param map GLenum
-     * \param bufSize GLsizei
-     * \param values GLuint *
-     * \return void
-     */
-    STATICINLINE void getn_pixel_mapuiv(group::pixel_map map, span_u32 values)
+requires(
+    semantic::concepts::Span<span_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_u32::value_type>,
+        std::decay_t<u32>>)
+/*!
+ * \brief Part of GL_ARB_robustness
+ * \param map GLenum
+ * \param bufSize GLsizei
+ * \param values GLuint *
+ * \return void
+ */
+STATICINLINE void getn_pixel_mapuiv(group::pixel_map map, span_u32 values)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -551,17 +567,19 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_u16>
-requires(semantic::concepts::Span<span_u16>&& std::is_same_v<
-         std::decay_t<typename span_u16::value_type>,
-         std::decay_t<u16>>)
-    /*!
-     * \brief Part of GL_ARB_robustness
-     * \param map GLenum
-     * \param bufSize GLsizei
-     * \param values GLushort *
-     * \return void
-     */
-    STATICINLINE void getn_pixel_mapusv(group::pixel_map map, span_u16 values)
+requires(
+    semantic::concepts::Span<span_u16> &&
+    std::is_same_v<
+        std::decay_t<typename span_u16::value_type>,
+        std::decay_t<u16>>)
+/*!
+ * \brief Part of GL_ARB_robustness
+ * \param map GLenum
+ * \param bufSize GLsizei
+ * \param values GLushort *
+ * \return void
+ */
+STATICINLINE void getn_pixel_mapusv(group::pixel_map map, span_u16 values)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -578,16 +596,17 @@ requires(semantic::concepts::Span<span_u16>&& std::is_same_v<
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_u8>
-requires(semantic::concepts::Span<span_u8>&& std::is_same_v<
-         std::decay_t<typename span_u8::value_type>,
-         std::decay_t<u8>>)
-    /*!
-     * \brief Part of GL_ARB_robustness
-     * \param bufSize GLsizei
-     * \param pattern GLubyte *
-     * \return void
-     */
-    STATICINLINE void getn_polygon_stipple(span_u8 pattern)
+requires(
+    semantic::concepts::Span<span_u8> &&
+    std::
+        is_same_v<std::decay_t<typename span_u8::value_type>, std::decay_t<u8>>)
+/*!
+ * \brief Part of GL_ARB_robustness
+ * \param bufSize GLsizei
+ * \param pattern GLubyte *
+ * \return void
+ */
+STATICINLINE void getn_polygon_stipple(span_u8 pattern)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -604,25 +623,25 @@ requires(semantic::concepts::Span<span_u8>&& std::is_same_v<
 #if defined(GL_VERSION_1_0)
 template<class span_void>
 requires(semantic::concepts::Span<span_void>)
-    /*!
-     * \brief Part of GL_ARB_robustness
-     * \param target GLenum
-     * \param format GLenum
-     * \param type GLenum
-     * \param rowBufSize GLsizei
-     * \param row void *
-     * \param columnBufSize GLsizei
-     * \param column void *
-     * \param span void *
-     * \return void
-     */
-    STATICINLINE void getn_separable_filter(
-        group::separable_target_ext target,
-        group::pixel_format         format,
-        group::pixel_type           type,
-        span_void                   row,
-        span_void                   column,
-        span_void                   span)
+/*!
+ * \brief Part of GL_ARB_robustness
+ * \param target GLenum
+ * \param format GLenum
+ * \param type GLenum
+ * \param rowBufSize GLsizei
+ * \param row void *
+ * \param columnBufSize GLsizei
+ * \param column void *
+ * \param span void *
+ * \return void
+ */
+STATICINLINE void getn_separable_filter(
+    group::separable_target_ext target,
+    group::pixel_format         format,
+    group::pixel_type           type,
+    span_void                   row,
+    span_void                   column,
+    span_void                   span)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

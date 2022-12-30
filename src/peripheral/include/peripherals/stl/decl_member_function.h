@@ -91,7 +91,7 @@ struct member_traits
 } // namespace stl_types
 
 #if __cplusplus >= 201703L
-#define declmemtype(fun) decltype(mem_function_traits(fun))::result_type
+#define declmemtype(fun) decltype(stl_types::mem_function_traits(fun))::result_type
 #define declmemtype2(T, fun) \
     decltype(std::apply(&T::fun, std::declval<mem_args_tuple<T>>()))
 #else
