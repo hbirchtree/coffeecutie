@@ -1,71 +1,106 @@
-#pragma once
+﻿#pragma once
 
-#include "components.h"
+#include <coffee/core/input/standard_input_handlers.h>
+#include <peripherals/typing/vectors/camera.h>
+#include <peripherals/typing/vectors/vector_types.h>
 
-using namespace StandardInput;
-using camera_t     = typing::vectors::scene::camera<scalar>;
+#include "blam_files.h"
+#include "graphics_api.h"
+
+using namespace Coffee::StandardInput;
+
+using libc_types::f32;
+using typing::vector_types::Matf4;
+using camera_t     = typing::vectors::scene::camera<f32>;
 using std_camera_t = StandardCamera<camera_t*, StandardCameraOpts*>;
 
 template<typename Version>
 struct BlamData
 {
-    BlamData(Url map_filename) :
-#if defined(COFFEE_ANDROID)
-        map_file(map_filename), bitmap_file("bitmaps.map"_rsc),
-#else
-        map_file(map_filename),
-        bitmap_file(Resource((map_filename.path().dirname() /
-                              (std::is_same_v<Version, blam::pc_version_t>
-                                   ? "bitmaps.map"
-                                   : "bitmaps_custom.map"))
-                                 .url(RSCA::SystemFile))),
-#endif
-        std_camera(MkShared<std_camera_t>(&camera, &camera_opts)),
-        controller_camera(&camera, &controller_opts)
+    using type = BlamData<Version>;
+
+    BlamData(/*Url map_filename*/)
+    //#if defined(COFFEE_ANDROID)
+    //        map_file(map_filename), bitmap_file("bitmaps.map"_rsc),
+    //#else
+    //        map_file(map_filename),
+    //        bitmap_file(Resource((map_filename.path().dirname()
+    //                              / (std::is_same_v<Version,
+    //                              blam::pc_version_t>
+    //                                     ? "bitmaps.map"
+    //                                     : "bitmaps_custom.map"))
+    //                                 .url(RSCA::SystemFile)))
+    //#endif
     {
-        auto container =
-            blam::map_container<Version>::from_bytes(map_file, Version());
-        if(container.has_error())
-        {
-            auto error = magic_enum::enum_name(container.error());
-            Throw(undefined_behavior(
-                Strings::fmt("failed to load map: {0}", error)));
-        }
-        map_container = std::move(container.value());
+        //        auto container
+        //            = blam::map_container<Version>::from_bytes(map_file,
+        //            Version());
+        //        if(container.has_error())
+        //        {
+        //            auto error = magic_enum::enum_name(container.error());
+        //            Throw(undefined_behavior(
+        //                Strings::fmt("failed to load map: {0}", error)));
+        //        }
+        //        map_container = std::move(container.value());
     }
 
     /* Blam! data */
-    Resource                            map_file;
-    Resource                            bitmap_file;
-    blam::map_container<Version>        map_container;
-    blam::scn::scenario<Version> const* scenario;
+    blam::map_container<Version> map_container;
 
-    Vector<gfx::draw_command::data_t> bsps;
-    ShPtr<gfx::buffer_t>              bsp_buf;
-    ShPtr<gfx::buffer_t>              bsp_index;
-    ShPtr<gfx::vertex_array_t>        bsp_attr;
-    ShPtr<gfx::buffer_t>              bsp_light_buf;
+    std::unique_ptr<blam::tag_index_view<Version>> tags_view;
+    blam::scn::scenario<Version> const*            scenario{nullptr};
+};
 
-    ShPtr<gfx::program_t> bsp_pipeline;
-    ShPtr<gfx::program_t> model_pipeline;
-    ShPtr<gfx::program_t> senv_micro_pipeline;
-    ShPtr<gfx::program_t> wireframe_pipeline;
+struct BlamCamera : compo::SubsystemBase
+{
+    using type = BlamCamera;
 
-    ShPtr<gfx::buffer_t>       model_buf;
-    ShPtr<gfx::buffer_t>       model_index;
-    ShPtr<gfx::vertex_array_t> model_attr;
+    BlamCamera() :
+        std_camera(std::make_shared<std_camera_t>(&camera, &camera_opts)),
+        controller_camera(&camera, &controller_opts)
+    {
+    }
 
-    Vector<Matf4>        model_mats;
-    ShPtr<gfx::buffer_t> model_matrix_store;
-    ShPtr<gfx::buffer_t> material_store;
-
-    camera_t            camera;
-    Matf4               camera_matrix;
-    StandardCameraOpts  camera_opts;
-    ShPtr<std_camera_t> std_camera;
+    camera_t                      camera;
+    Matf4                         camera_matrix;
+    StandardCameraOpts            camera_opts;
+    std::shared_ptr<std_camera_t> std_camera;
 
     f32 wireframe_distance{100.f};
 
     ControllerOpts                               controller_opts;
     ControllerCamera<camera_t*, ControllerOpts*> controller_camera;
+};
+
+struct BlamResources : compo::SubsystemBase
+{
+    using type = BlamResources;
+
+    std::vector<gfx::draw_command::data_t> bsps;
+    std::shared_ptr<gfx::buffer_t>         bsp_buf;
+    std::shared_ptr<gfx::buffer_t>         bsp_index;
+    std::shared_ptr<gfx::vertex_array_t>   bsp_attr;
+    std::shared_ptr<gfx::buffer_t>         bsp_light_buf;
+
+    std::shared_ptr<gfx::program_t> bsp_pipeline;
+    std::shared_ptr<gfx::program_t> model_pipeline;
+    std::shared_ptr<gfx::program_t> senv_micro_pipeline;
+    std::shared_ptr<gfx::program_t> wireframe_pipeline;
+
+    std::shared_ptr<gfx::buffer_t>       model_buf;
+    std::shared_ptr<gfx::buffer_t>       model_index;
+    std::shared_ptr<gfx::vertex_array_t> model_attr;
+
+    std::shared_ptr<gfx::buffer_t>       debug_lines;
+    std::shared_ptr<gfx::vertex_array_t> debug_attr;
+    std::shared_ptr<gfx::program_t>      debug_lines_pipeline;
+
+    std::vector<Matf4>             model_mats;
+    std::shared_ptr<gfx::buffer_t> model_matrix_store;
+    std::shared_ptr<gfx::buffer_t> material_store;
+
+    typing::geometry::size_2d<libc_types::i32> offscreen_size{1920, 1080};
+    std::shared_ptr<gfx::rendertarget_t>       offscreen;
+    std::shared_ptr<gfx::texture_2d_t>         color;
+    std::shared_ptr<gfx::texture_2d_t>         depth;
 };

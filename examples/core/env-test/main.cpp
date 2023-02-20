@@ -81,12 +81,12 @@ i32 coffee_main(i32, cstring_w*)
     cBasicPrint("OS name: {0}", platform::info::os::name());
     cBasicPrint("OS version: {0}", platform::info::os::version());
 
-    cDebug("Sensor gravity: {0}", Sensor::Gravity());
-    cDebug("Sensor gyro: {0}", Sensor::Gyroscope());
-    cDebug("Sensor lux: {0}", Sensor::Lux());
-    cDebug("Sensor steps: {0}", Sensor::StepCounter());
-    cDebug("Sensor acceleration: {0}", Sensor::Acceleration());
-    cDebug("Sensor orientation: {0}", Sensor::Orientation());
+//    cDebug("Sensor gravity: {0}", Sensor::Gravity());
+//    cDebug("Sensor gyro: {0}", Sensor::Gyroscope());
+//    cDebug("Sensor lux: {0}", Sensor::Lux());
+//    cDebug("Sensor steps: {0}", Sensor::StepCounter());
+//    cDebug("Sensor acceleration: {0}", Sensor::Acceleration());
+//    cDebug("Sensor orientation: {0}", Sensor::Orientation());
 
     return 0;
 }

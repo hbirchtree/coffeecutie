@@ -7,23 +7,26 @@
 #    DropinRenderer GLeamRHI
 #    )
 
-add_gitproject (
-    imgui
-    https://github.com/hbirchtree/coffeecutie-imgui.git
-    TAG fetchcontent-master
-    )
-
-find_package ( ImGui CONFIG REQUIRED )
-
 coffee_application (
     TARGET BlamGraphics
     TITLE "Blam Graphics"
-    SOURCES graphics.cpp
+    SOURCES
+        graphics.cpp
+
+        caching.cpp
+        rendering.cpp
+        resource_creation.cpp
+        widgets.cpp
     LIBRARIES
-    Blam Core Image DropinRenderer GLeamRHI ImGui
+    Blam Core Image GLeamRHI ImGui
 
     RESOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/graphics_data
+    )
+
+target_precompile_headers ( BlamGraphics PRIVATE
+    $<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/caching.h>
+    $<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/components.h>
     )
 
 if(TARGET ASIO)

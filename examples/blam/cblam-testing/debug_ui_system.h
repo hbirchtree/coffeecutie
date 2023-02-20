@@ -13,6 +13,11 @@ struct BlamDebugUi
 {
     using type = BlamDebugUi;
 
+    BlamDebugUi()
+    {
+        compo::SubsystemBase::priority = 2048;
+    }
+
     void start_restricted(Proxy&, time_point const&)
     {
         if(ImGui::BeginMenuBar())
@@ -26,7 +31,7 @@ struct BlamDebugUi
             ImGui::EndMenuBar();
         }
 
-        ImGui::DockSpace(ImGui::GetID("center"));
+//        ImGui::DockSpace(ImGui::GetID("center"));
 
         //        ImGui::ShowDemoWindow();
     }

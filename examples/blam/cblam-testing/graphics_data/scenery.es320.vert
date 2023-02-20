@@ -1,6 +1,4 @@
-#version 460 core
-
-#extension GL_EXT_shader_io_blocks : enable
+#version 320 es
 
 precision highp float;
 precision highp int;
@@ -27,8 +25,8 @@ out gl_PerVertex
 
 out FragData
 {
-    vec2 tex;
-    flat int instanceId;
+    out vec2 tex;
+    flat out int instanceId;
 } frag;
 
 void main()

@@ -11,20 +11,20 @@ struct BlamBspWidget;
 template<typename V>
 using BlamBspWidgetManifest = Components::SubsystemManifest<
     type_list_t<BspReference, ShaderData, SubModel>,
-    type_list_t<ShaderCache<V>, BSPCache<V>>,
+    type_list_t<ShaderCache<V>, BSPCache<V>, BlamCamera>,
     empty_list_t>;
 
 template<typename V>
-struct BlamBspWidget : Components::RestrictedSubsystem<
-                           BlamBspWidget<V>,
-                           BlamBspWidgetManifest<V>>
+struct BlamBspWidget
+    : Components::
+          RestrictedSubsystem<BlamBspWidget<V>, BlamBspWidgetManifest<V>>
 {
     using type  = BlamBspWidget<V>;
     using Proxy = Components::proxy_of<BlamBspWidgetManifest<V>>;
 
-    BlamBspWidget(BlamData<V>* data) :
-        m_data(data), m_map(&m_data->map_container)
+    BlamBspWidget(BlamData<V>* data) : m_map(&data->map_container)
     {
+        compo::SubsystemBase::priority = 2048;
     }
 
     void start_restricted(Proxy& e, time_point const&)
@@ -32,10 +32,10 @@ struct BlamBspWidget : Components::RestrictedSubsystem<
         using Components::Entity;
         using Components::EntityRef;
 
-        auto bsps   = e.template select<BspReference>();
-        auto models = e.template select<SubModel>();
+        auto  bsps         = e.template select<BspReference>();
+        auto  models       = e.template select<SubModel>();
         auto& shader_cache = e.template subsystem<ShaderCache<V>>();
-        auto& bsp_cache = e.template subsystem<BSPCache<V>>();
+        auto& bsp_cache    = e.template subsystem<BSPCache<V>>();
 
         if(ImGui::Begin("Static models"))
         {
@@ -47,7 +47,7 @@ struct BlamBspWidget : Components::RestrictedSubsystem<
                 auto          bsp_e = e.template ref<Proxy>(bsp_);
                 BspReference& bsp   = bsp_e.template get<BspReference>();
 
-                BSPItem const& bsp_it = bsp_cache.find(bsp.bsp)->second;
+                BSPItem const&    bsp_it = bsp_cache.find(bsp.bsp)->second;
                 ShaderItem const& shader
                     = shader_cache.find(bsp.shader)->second;
 
@@ -63,16 +63,14 @@ struct BlamBspWidget : Components::RestrictedSubsystem<
                 }
 
                 if(auto it = m_bsps.find(bsp_name); it == m_bsps.end())
-                    m_bsps.insert({bsp_name, false});
+                    m_bsps.insert({bsp_name, true});
 
                 bsp.visible = m_bsps.at(bsp_name);
 
                 if(current_hidden)
                     continue;
 
-                ImGui::Checkbox(shader_name.data(), &bsp.visible);
-                if(bsp.visible)
-                    cDebug("{0}", bsp.visible);
+                ImGui::Checkbox(shader_name.data(), &m_bsps.at(bsp_name));
             }
 
             if(!current_bsp.empty() && !current_hidden)
@@ -86,9 +84,25 @@ struct BlamBspWidget : Components::RestrictedSubsystem<
             for(auto& region : m_bsps)
             {
                 name.clear();
-                name.insert(name.begin(), region.first.begin(), region.first.end());
+                name.insert(
+                    name.begin(), region.first.begin(), region.first.end());
                 ImGui::Checkbox(name.c_str(), &region.second);
             }
+        }
+        ImGui::End();
+
+        if(ImGui::Begin("Camera"))
+        {
+            BlamCamera const& camera = e.template subsystem<BlamCamera>();
+            ImGui::Columns(2);
+            ImGui::Text("Position");
+            ImGui::NextColumn();
+            ImGui::Text(
+                "vec3(%f, %f, %f)",
+                camera.camera.position.x(),
+                camera.camera.position.y(),
+                camera.camera.position.z());
+            ImGui::Columns();
         }
         ImGui::End();
     }
@@ -96,7 +110,6 @@ struct BlamBspWidget : Components::RestrictedSubsystem<
     {
     }
 
-    BlamData<V>*                  m_data;
     blam::map_container<V> const* m_map;
 
     Map<std::string_view, bool> m_bsps;

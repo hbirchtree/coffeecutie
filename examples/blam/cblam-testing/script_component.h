@@ -50,6 +50,8 @@ struct BlamScript
 
     static void display_script(script_state const& state)
     {
+        return;
+
         auto color = status_to_color(state.status);
 
         blam::hsc::function_declaration const& def = *state.function;
@@ -99,7 +101,7 @@ struct BlamScript
         blam::scn::scenario<Version> const* scenario,
         blam::magic_data_t const&           magic) :
         m_map(&map),
-        m_tags(map), m_magic(magic), m_scenario(scenario), m_running(true)
+        m_tags(map), m_magic(magic), m_scenario(scenario), m_running(false)
     {
         this->priority = 2048;
 
@@ -133,7 +135,7 @@ struct BlamScript
         m_script.init_globals(m_env.globals, m_strings, {hnd});
     }
 
-    void start_restricted(Proxy& e, time_point const&)
+    void start_restricted(Proxy&, time_point const&)
     {
         static typename script_types::opcode_handler hnd =
             [this](
@@ -168,7 +170,7 @@ struct BlamScript
                         = ptr.param(t::hud_msg);
                     auto hud_texts
                         = (*m_tags.find(m_scenario->ui_text.hud_text))
-                              ->template data<blam::ui::hud_message>(m_magic)
+                              .template data<blam::ui::hud_message>(m_magic)
                               .value();
                     auto sym  = m_strings.at(help_text.data_ptr).str();
                     auto text = hud_texts[0].symbol_find(m_magic, sym).value();
@@ -217,7 +219,7 @@ struct BlamScript
             ImGui::SameLine();
             if(ImGui::Button("Step") || m_running)
             {
-//                m_script.execute_timestep(15ms, {hnd});
+                //                m_script.execute_timestep(15ms, {hnd});
             }
         }
         ImGui::End();
@@ -310,7 +312,7 @@ struct BlamScript
         }
         ImGui::End();
     }
-    void end_restricted(Proxy& e, time_point const&)
+    void end_restricted(Proxy&, time_point const&)
     {
     }
 

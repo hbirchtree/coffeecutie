@@ -10,7 +10,6 @@
 #include <coffee/core/url.h>
 
 #include <coffee/image/image_coder_system.h>
-#include <coffee/interfaces/cgraphics_util.h>
 #include <coffee/windowing/renderer/renderer.h>
 #include <peripherals/stl/magic_enum.hpp>
 #include <peripherals/typing/vectors/camera.h>
@@ -39,6 +38,7 @@
 #endif
 
 #include <coffee/comp_app/bundle.h>
+#include <coffee/comp_app/fps_counter.h>
 
 #include <coffee/strings/info.h>
 #include <coffee/strings/libc_types.h>
@@ -50,8 +50,11 @@
 using namespace Coffee;
 using namespace Display;
 
+using typing::vector_types::Matf4;
+using typing::vector_types::Vecf2;
 using typing::vector_types::Vecf3;
 using typing::vector_types::Vecf4;
+using typing::vector_types::Veci3;
 
 struct RuntimeState
 {
@@ -81,16 +84,14 @@ struct CameraData
 
 struct TransformContainer;
 struct MatrixContainer;
-struct CameraContainer;
-struct TimeSystem;
-struct FrameCounter;
+class CameraContainer;
+class TimeSystem;
 struct RuntimeStateSystem;
 
 using TransformTag = Components::ValueTag<TransformContainer, TransformPair>;
 using MatrixTag = Components::ValueTag<MatrixContainer, Pair<Matf4*, Matf4*>>;
 using CameraTag = Components::ValueTag<CameraContainer, CameraData>;
 using TimeTag   = Components::ValueTag<TimeSystem, Chrono::seconds_float>;
-using FrameTag  = Components::ValueTag<FrameCounter, u32>;
 using StateTag  = Components::ValueTag<RuntimeStateSystem, RuntimeState>;
 
 static constexpr u32 FloorTag    = 0x1;
@@ -106,8 +107,7 @@ struct MatrixContainer : compo::alloc::VectorBaseContainer<MatrixTag>
 
     virtual void register_entity(u64 id)
     {
-        compo::alloc::VectorBaseContainer<MatrixTag>::register_entity(
-            id);
+        compo::alloc::VectorBaseContainer<MatrixTag>::register_entity(id);
 
         m_matrices.push_back({});
         m_matrices.push_back({});
@@ -199,25 +199,6 @@ class TimeSystem : public Components::SubsystemBase
     system_clock::duration   current_time{};
 };
 
-struct FrameCounter : public compo::globals::ValueSubsystem<FrameTag>
-{
-    time_point next_print;
-
-  public:
-    virtual void start_frame(ContainerProxy&, time_point const& current)
-    {
-        get()++;
-
-        if(next_print < current)
-        {
-            next_print = current + Chrono::seconds(1);
-
-            cDebug("FPS: {0}", get());
-            get() = 0;
-        }
-    }
-};
-
 struct RuntimeStateSystem : Components::SubsystemBase
 {
     RuntimeState state;
@@ -280,10 +261,10 @@ class FloorVisitor : public Components::EntityVisitor<
 
         auto& time = c.subsystem<TimeTag>().get_time();
 
-        xf.first.position.x() = CMath::sin(time * 200.f) * xf.mask.x();
-        xf.first.position.y() = CMath::cos(time * 200.f) * xf.mask.y();
+        xf.first.position.x() = std::sin(time / 4000.f) * xf.mask.x();
+        xf.first.position.y() = std::cos(time / 4000.f) * xf.mask.y();
 
-        xf.first.rotation.y() = CMath::sin(time * 2000.f);
+        xf.first.rotation.y() = std::sin(time / 4000.f);
         xf.first.rotation     = normalize_quat(xf.first.rotation);
 
         xf.second = GenTransform<f32>(xf.first);
@@ -309,43 +290,11 @@ class BaseItemVisitor : public Components::EntityVisitor<
         auto& xf   = c.get<TransformTag>();
         auto  time = c.subsystem<TimeTag>().get_time();
 
-        xf.first.position.x() = CMath::sin(time * 400.f);
+        xf.first.position.x() = std::sin(time / 4000.f);
 
         xf.second = GenTransform<f32>(xf.first);
 
         return true;
-    }
-};
-
-class BasicVisitor : public Components::EntityVisitor<
-                         Components::TypeList<TimeTag>,
-                         Components::TypeList<TimeTag>>
-{
-    virtual bool visit(
-        Proxy&, Components::Entity const&, Components::time_point const&)
-    {
-        return true;
-    }
-
-  public:
-    BasicVisitor(VisitorFlags flags) : VisitorType(0, flags)
-    {
-    }
-};
-
-class Basic2Visitor : public Components::EntityVisitor<
-                          Components::TypeList<CameraTag>,
-                          Components::TypeList<TimeTag>>
-{
-    virtual bool visit(
-        Proxy&, Components::Entity const&, Components::time_point const&)
-    {
-        return true;
-    }
-
-  public:
-    Basic2Visitor(VisitorFlags flags) : VisitorType(0, flags)
-    {
     }
 };
 
@@ -375,11 +324,8 @@ struct RendererState
         std::shared_ptr<gleam::buffer_t>         array;
         std::shared_ptr<gleam::program_t>        program;
         std::shared_ptr<gleam::sampler_t>        sampler;
-#if GLEAM_MAX_VERSION_ES == 0x200
-        std::shared_ptr<gleam::texture_2d_t> tex;
-#else
-        std::shared_ptr<gleam::texture_2da_t> tex;
-#endif
+
+        std::shared_ptr<gleam::compat::texture_2da_t> tex;
 
         Vecf4 clear_col = {.267f, .267f, .267f, 1.f};
     } g_data;
@@ -390,9 +336,7 @@ void SetupRendering(
     RendererState&               d,
     Components::time_point const&)
 {
-    auto mq = rq::runtime_queue::CreateNewQueue("Main");
-
-    RendererState::RGraphicsData& g = d.g_data;
+    [[maybe_unused]] auto mq = rq::runtime_queue::CreateNewQueue("Main");
 
 #if defined(FEATURE_ENABLE_ASIO)
     if(auto worker = rq::runtime_queue::CreateNewThreadQueue("Online Worker");
@@ -426,17 +370,17 @@ void SetupRendering(
     }};
 
     constexpr Array<f32, 30> vertexdata = {{
-        -1.f, -1.f, 0.f, 0.f, 0.f,
+        -1.f, -1.f, 0.f, 0.f,
 
-        1.f,  -1.f, 0.f, 1.f, 0.f,
+        1.f,  -1.f, 1.f, 0.f,
 
-        -1.f, 1.f,  0.f, 0.f, 1.f,
+        -1.f, 1.f,  0.f, 1.f,
 
-        -1.f, 1.f,  0.f, 0.f, 1.f,
+        -1.f, 1.f,  0.f, 1.f,
 
-        1.f,  -1.f, 0.f, 1.f, 0.f,
+        1.f,  -1.f, 1.f, 0.f,
 
-        1.f,  1.f,  0.f, 1.f, 1.f,
+        1.f,  1.f,  1.f, 1.f,
     }};
 
     cVerbose(8, "Loading GLeam API");
@@ -448,18 +392,20 @@ void SetupRendering(
         "Extensions: {1}",
         d.gfx.query_native_version(),
         d.gfx.query_native_extensions());
-    auto err = d.gfx.load({
-//        .api_version    = 0x200,
+    auto err
+        = d.gfx.load(/*{
+   .api_version    = 0x200,
+   .api_type = gleam::api_type_t::es,
 //        .api_extensions = gleam::api::extensions_set{
 //            "GL_EXT_discard_framebuffer",
 //            "GL_OES_rgb8_rgba8",
 //            "GL_OES_vertex_array_object",
 //        },
-        .api_workarounds = gleam::workarounds{
-            .draw = {
-                .emulated_instance_id = true,
-            },
-        }});
+   .api_workarounds = gleam::workarounds{
+       .draw = {
+           .emulated_instance_id = true,
+       },
+}}*/);
     if(err.has_value())
     {
         cWarning(
@@ -489,27 +435,27 @@ void SetupRendering(
         ProfContext _("Vertex data upload");
 
         auto array_vao = d.g_data.vao = d.gfx.alloc_vertex_array();
+        auto array_buf                = d.g_data.array
+            = d.gfx.alloc_buffer(gleam::buffers::vertex, RSCA::ReadOnly);
         array_vao->alloc();
         array_vao->add({
             .index = 0,
             .value =
                 {
-                    .stride = sizeof(Vecf3) + sizeof(Vecf2),
-                    .count  = 3,
+                    .stride = sizeof(Vecf2) + sizeof(Vecf2),
+                    .count  = 2,
                 },
         });
         array_vao->add({
             .index = 1,
             .value =
                 {
-                    .offset = sizeof(Vecf3),
-                    .stride = sizeof(Vecf3) + sizeof(Vecf2),
+                    .offset = sizeof(Vecf2),
+                    .stride = sizeof(Vecf2) + sizeof(Vecf2),
                     .count  = 2,
                 },
         });
 
-        auto array_buf = d.g_data.array
-            = d.gfx.alloc_buffer(gleam::buffers::vertex, RSCA::ReadOnly);
         array_buf->alloc();
         array_buf->commit(vertexdata);
         array_vao->set_buffer(gleam::buffers::vertex, array_buf, 0);
@@ -544,10 +490,11 @@ void SetupRendering(
         if(auto res = program->compile(); res.has_error())
         {
             auto [error_msg] = res.error();
-            cFatal("Failed to compile shaders: {0}\nSource:\n{1}\n------\n{2}",
-                   error_msg,
-                   v_rsc.data().data(),
-                   f_rsc.data().data());
+            cFatal(
+                "Failed to compile shaders: {0}\nSource:\n{1}\n------\n{2}",
+                error_msg,
+                v_rsc.data().data(),
+                f_rsc.data().data());
         } else
         {
             auto [info_msg, nothing] = res.value();
@@ -555,69 +502,70 @@ void SetupRendering(
         }
     }
 
-    auto texture = d.g_data.tex = d.gfx.alloc_texture(
-#if GLEAM_MAX_VERSION_ES == 0x200
-        gleam::textures::d2,
-#else
-        gleam::textures::d2_array,
-#endif
-        typing::pixels::PixDesc(PixFmt::RGBA8, BitFmt::UByte, PixCmp::RGBA),
-        1);
     {
-        auto sampler = d.g_data.sampler = texture->sampler();
-        sampler->alloc();
-        sampler->set_filtering(
-            typing::Filtering::Linear, typing::Filtering::Linear);
-
         /* Uploading textures */
-        texture->alloc(size_3d<u32>{1024, 1024, 4}, true);
         cVerbose(8, "Texture allocation");
 
         ProfContext _("Texture loading");
-        for(i32 i = 0; i < textures.size(); i++)
+        auto        fmt = typing::pixels::PixDesc(
+            PixFmt::RGBA8, BitFmt::UByte, PixCmp::RGBA);
+
+        auto texture = d.g_data.tex
+            = std::make_shared<gleam::compat::texture_2da_t>(&d.gfx, fmt, 1);
+        texture->set_usage_hint(
+            gleam::compat::texture_usage_hint_t::per_instance);
+        //        if(d.gfx.api_version() == std::make_tuple(2u, 0u))
+        //            d.g_data.tex = d.gfx.alloc_texture(gleam::textures::d2,
+        //            fmt, 1);
+        //        else
+        //            d.g_data.tex
+        //                = d.gfx.alloc_texture(gleam::textures::d2_array, fmt,
+        //                1);
+        texture->alloc(size_3d<u32>{1024, 1024, 4}, true);
+        for(i32 i = 0; i < static_cast<i32>(textures.size()); i++)
         {
             Resource      tex_src(textures.at(i), RSCA::AssetFile);
             stb::image_rw tex_img;
-            stb::LoadData(&tex_img, C_OCAST<Bytes>(tex_src));
+            stb::LoadData(&tex_img, C_OCAST<BytesConst>(tex_src));
+
             texture->upload(
                 C_OCAST<Bytes>(tex_img).view,
-#if GLEAM_MAX_VERSION_ES == 0x200
-                Veci2{0, 0},
-                size_2d<i32> { 1024, 1024 }
-#else
                 Veci3{0, 0, i},
-                size_3d<i32> { 1024, 1024, 1 }
-#endif
-            );
+                size_3d<i32>{1024, 1024, 1});
+        }
+        {
+            auto sampler = d.g_data.sampler = texture->sampler();
+            sampler->alloc();
+            sampler->set_filtering(
+                typing::Filtering::Linear, typing::Filtering::Linear);
         }
     }
 
 #if defined(FEATURE_ENABLE_ASIO)
     /* We download a spicy meme and paste it into the texture */
-    if(Net::Supported())
+    if(net::Supported())
     {
+        using namespace net::url_literals;
         auto img_download = e.subsystem_cast<ASIO::Subsystem>().create_download(
             "http://i.imgur.com/nQdOmCJ.png"_http);
         auto img_decode = IMG::create_decoder(
             img_download->output.get_future(), PixCmp::RGBA);
-        auto img_upload = rq::dependent_task<stb::image_rw, void>::CreateTask(
-            img_decode->output.get_future(), [texture](stb::image_rw* img) {
-                auto isize = img->size.convert<i32>();
-                texture->upload(
-                    img->data_owner.view,
-#if GLEAM_MAX_VERSION_ES == 0x200
-                    Veci2{512, 512},
-                    size_2d<i32> { isize.w, isize.h }
-#else
-                    Veci3{512, 512, 1},
-                    size_3d<i32>{isize.w, isize.h, 1}
-#endif
-                );
-            });
+        auto img_upload
+            = rq::dependent_task<stb::image_rw, void>::CreateProcessor(
+                img_decode->output.get_future(),
+                [texture = d.g_data.tex](stb::image_rw* img) {
+                    auto isize = img->size.convert<i32>();
+                    texture->upload(
+                        img->data_owner.view,
+                        Veci3{512, 512, 1},
+                        size_3d<i32>{isize.w, isize.h, 1});
+                });
 
-        rq::runtime_queue::Queue(d.online_queue, std::move(img_download));
-        rq::runtime_queue::Queue(d.online_queue, std::move(img_decode));
-        rq::runtime_queue::Queue(std::move(img_upload));
+        rq::runtime_queue::Queue(d.online_queue, std::move(img_download))
+            .assume_value();
+        rq::runtime_queue::Queue(d.online_queue, std::move(img_decode))
+            .assume_value();
+        rq::runtime_queue::Queue(std::move(img_upload)).assume_value();
     }
 
 #if defined(FEATURE_ENABLE_DiscordLatte)
@@ -632,26 +580,22 @@ void SetupRendering(
                     return system.playerInfo().avatarUrl;
                 }));
         auto decoded_img = IMG::create_decoder(img_data->output.get_future());
-        auto upload_img  = rq::dependent_task<stb::image_rw, void>::CreateTask(
-            decoded_img->output.get_future(), [texture](stb::image_rw* img) {
-                ProfContext _("Uploading image to GPU");
-                auto        imsize = img->size.convert<i32>();
-                texture->upload(
-                    img->data_owner.view,
-#if GLEAM_MAX_VERSION_ES == 0x200
-                    Veci2{0, 0},
-                    size_2d<i32>{imsize.w, imsize.h});
-#else
-                    Veci3{0, 0, 0},
-                    size_3d<i32>{imsize.w, imsize.h, 1});
-#endif
-            });
+        auto upload_img
+            = rq::dependent_task<stb::image_rw, void>::CreateProcessor(
+                decoded_img->output.get_future(), [&d](stb::image_rw* img) {
+                    ProfContext _("Uploading image to GPU");
+                    auto        imsize = img->size.convert<i32>();
+                    d.g_data.tex->upload(
+                        img->data_owner.view,
+                        Veci3{0, 0, 0},
+                        size_3d<i32>{imsize.w, imsize.h, 1});
+                });
 
-        auto& network = e.subsystem_cast<ASIO::Subsystem>();
-
-        rq::runtime_queue::Queue(discord.queue(), std::move(img_data));
-        rq::runtime_queue::Queue(discord.queue(), std::move(decoded_img));
-        rq::runtime_queue::Queue(std::move(upload_img));
+        rq::runtime_queue::Queue(discord.queue(), std::move(img_data))
+            .assume_value();
+        rq::runtime_queue::Queue(discord.queue(), std::move(decoded_img))
+            .assume_value();
+        rq::runtime_queue::Queue(std::move(upload_img)).assume_value();
 
         ProfContext __("Starting Discord RPC");
         discord.start();
@@ -668,11 +612,9 @@ void SetupRendering(
         e.register_system(MkUq<TransformVisitor>());
         e.register_system(MkUq<FloorVisitor>());
         e.register_system(MkUq<BaseItemVisitor>());
-        e.register_system(MkUq<BasicVisitor>(VisitorFlags::MainThread));
-        e.register_system(MkUq<Basic2Visitor>(VisitorFlags::MainThread));
 
         e.register_subsystem_inplace<StateTag>();
-        e.register_subsystem_inplace<FrameTag>();
+        e.register_subsystem_inplace<comp_app::FrameTag>();
         e.register_subsystem_inplace<CameraTag>();
     }
 
@@ -681,9 +623,7 @@ void SetupRendering(
         d.saving           = Store::CreateDefaultSave();
 
         d.saving->restore(Bytes::ofBytes(state));
-        e.register_subsystem_inplace<TimeTag>(
-            TimeSystem::system_clock::time_point(
-                Chrono::milliseconds(state.time_base)));
+        e.register_subsystem_inplace<TimeTag>(TimeSystem::system_clock::now());
 
         e.subsystem_cast<StateTag>().state = state;
     }
@@ -758,11 +698,10 @@ void RendererLoop(
     auto& g = d.g_data;
 
     {
-        d.gfx.default_rendertarget()->discard();
+        //        d.gfx.default_rendertarget()->discard();
         d.gfx.default_rendertarget()->clear(Vecf4{.5f, 0.f, .5f, 1.f}, 1.f, 0);
 
-        auto const& xf        = e.container_cast<MatrixTag>().m_matrices;
-        i32         samplerId = 0;
+        auto const& xf = e.container_cast<MatrixTag>().m_matrices;
         auto err = d.gfx.submit(
             {
                 .program  = g.program,
@@ -791,11 +730,12 @@ void RendererLoop(
                     {"transform"sv},
                     semantic::mem_chunk<const Matf4>::ofContainer(xf).view
                 }),
-            gleam::make_sampler_list(gleam::sampler_definition_t{
-                        ShaderStage::Fragment,
-                        {"texdata"sv, 0},
-                        g.sampler
-                    }));
+            gleam::compat::make_texture_list(gleam::compat::texture_definition_t{
+                ShaderStage::Fragment,
+                gleam::uniform_key{{"texdata"sv}},
+                g.tex,
+                g.sampler
+            }));
         if(err.has_value())
         {
             auto [code, msg] = *err;

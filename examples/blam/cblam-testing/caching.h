@@ -11,13 +11,25 @@
 #include <coffee/core/Scene>
 
 #include <coffee/graphics/apis/gleam/rhi.h>
+#include <coffee/graphics/apis/gleam/rhi_compat.h>
 
 #include <coffee/strings/libc_types.h>
 #include <coffee/strings/vector_types.h>
 
 #include <coffee/core/CDebug>
 
+#include "blam_files.h"
+#include "selected_version.h"
+
 using gfx_api = gleam::api;
+using typing::vector_types::Matf3;
+using typing::vector_types::Matf4;
+using typing::vector_types::Quatf;
+using typing::vector_types::Vecf2;
+using typing::vector_types::Vecf3;
+using typing::vector_types::Vecf4;
+using typing::vector_types::Veci2;
+using typing::vector_types::Veci3;
 
 namespace gfx {
 
@@ -31,9 +43,9 @@ using cache_id_t = u64;
 
 struct generation_idx_t
 {
-    cache_id_t i;
-    u32        gen;
-    u32        _pad;
+    cache_id_t i{0};
+    u32        gen{0};
+    u32        _pad{};
 
     inline bool valid() const
     {
@@ -61,9 +73,10 @@ struct BSPItem
         Vector<Mesh>                    meshes;
     };
 
-    blam::bsp::header const* mesh{nullptr};
-    blam::tag_t const*       tag{nullptr};
-    Vector<Group>            groups;
+    blam::bsp::header const*            mesh{nullptr};
+    blam::tag_t const*                  tag{nullptr};
+    Vector<Group>                       groups;
+    Vector<gleam::draw_command::data_t> portals;
 
     inline bool valid() const
     {
@@ -288,26 +301,32 @@ struct BitmapCache
         }
     };
 
-    BitmapCache(
-        blam::map_container<V> const& map,
-        blam::magic_data_t const&     bitmap_magic,
-        gfx_api*                      allocator) :
-        magic(map.magic),
-        bitm_magic(
-            map.map->version == blam::version_t::xbox ? magic : bitmap_magic),
-        index(map),
-        bitm_header(blam::bitm::bitmap_header_t::from_data(
-            BytesConst::ofBytes(bitmap_magic.base_ptr, bitmap_magic.max_size))),
-        allocator(allocator)
+    BitmapCache(BlamFiles const* files, gfx_api* allocator) :
+        files(files), allocator(allocator)
     {
-        bitm_magic.magic_offset = 0;
     }
+
+    inline void load_from(
+        blam::map_container<V> const& map,
+        blam::magic_data_t const&     bitmap_magic)
+    {
+        index       = blam::tag_index_view(map);
+        bitm_header = blam::bitm::bitmap_header_t::from_data(
+            BytesConst::ofBytes(bitmap_magic.base_ptr, bitmap_magic.max_size));
+        magic = map.magic;
+        bitm_magic
+            = map.map->version == blam::version_t::xbox ? magic : bitmap_magic;
+        bitm_magic.magic_offset = 0;
+        evict_all();
+    }
+
+    blam::tag_index_view<V> index;
+    BlamFiles const*        files;
+    gfx_api*                allocator;
 
     blam::magic_data_t                 magic;
     blam::magic_data_t                 bitm_magic;
-    blam::tag_index_view<V>            index;
-    blam::bitm::bitmap_header_t const* bitm_header;
-    gfx_api*                           allocator;
+    blam::bitm::bitmap_header_t const* bitm_header{nullptr};
 
     Map<bitm_format_hash, TextureBucket> tex_buckets;
 
@@ -320,6 +339,12 @@ struct BitmapCache
 
     template<typename T>
     requires std::is_same_v<T, gfx::texture_2da_t>
+    auto bucket_to_type()
+    {
+        return gfx::textures::d2_array;
+    }
+    template<typename T>
+    requires std::is_same_v<T, gfx::compat::texture_2da_t>
     auto bucket_to_type()
     {
         return gfx::textures::d2_array;
@@ -351,18 +376,16 @@ struct BitmapCache
         bucket.fmt     = fmt;
         bucket.surface = allocator->alloc_texture(
             bucket_to_type<T>(), fmt, fmt.pixfmt == PixFmt::RGB565 ? 2 : 5);
+        if(std::is_same_v<T, gfx::texture_2da_t>)
+            bucket.surface = std::make_shared<gfx::compat::texture_2da_t>(
+                allocator, fmt, fmt.pixfmt == PixFmt::RGB565 ? 2 : 5);
+
         bucket.sampler = bucket.surface->sampler();
-        //        std::tie(bucket.sampler, bucket.surface) =
-        //            allocator->alloc_surface_sampler<GFX::S_2DA>(
-        //                fmt.pixfmt,
-        //                fmt.pixfmt == PixFmt::RGB565 ? 2 : 5,
-        //                C_CAST<u32>(fmt.cmpflg) << 10);
 
         bucket.sampler->alloc();
         bucket.sampler->set_filtering(
             Filtering::Linear, Filtering::Linear, Filtering::Linear);
         bucket.sampler->set_anisotropic(4);
-        //        bucket.surface->set_levels(0, bucket.surface->m_mips - 1);
 
         return bucket;
     }
@@ -390,19 +413,23 @@ struct BitmapCache
                           ? 2 << (mips - mipmap)
                           : 0;
 
+        Veci2 pool_offset = Veci2(img.image.offset.x(), img.image.offset.y());
         Veci2 tex_offset
-            = {(C_CAST<i32>(img.image.offset.x()) >> mipmap) - mip_pad,
-               (C_CAST<i32>(img.image.offset.y()) >> mipmap) - mip_pad};
+            = {(pool_offset.x() >> mipmap) - mip_pad,
+               (pool_offset.y() >> mipmap) - mip_pad};
 
-        gfx::texture_2da_t& texture
-            = bucket.template texture_as<gfx::texture_2da_t>();
+        (tex_offset.x() >>= 2) <<= 2;
+        (tex_offset.y() >>= 2) <<= 2;
+
+        gfx::compat::texture_2da_t& texture
+            = bucket.template texture_as<gfx::compat::texture_2da_t>();
 
         texture.upload(
             img.image.mip->data(magic, mipmap),
             Veci3{
                 tex_offset.x() + mip_pad,
                 tex_offset.y() + mip_pad,
-                img.image.layer},
+                static_cast<i32>(img.image.layer)},
             size_3d<i32>{size.w, size.h, 1},
             mipmap);
 
@@ -551,12 +578,12 @@ struct BitmapCache
             u32          layers = 0;
             size_2d<i32> max    = {};
 
-            MultiMap<size_bucket, BitmapItem*> images;
+            std::map<cache_id_t, size_bucket> images;
         };
 
         ProfContext _("Building texture atlases");
 
-        Map<bitm_format_hash, pool_size> fmt_count;
+        std::map<bitm_format_hash, pool_size> fmt_count;
 
         /* Find final pool sizes */
         for(auto& bitm : m_cache)
@@ -580,8 +607,7 @@ struct BitmapCache
             pool.max.w = std::max<u32>(pool.max.w, imsize.w + pad);
             pool.max.h = std::max<u32>(pool.max.h, imsize.h + pad);
             pool.images.insert(
-                {std::make_tuple(imsize.w + pad, imsize.h + pad),
-                 &bitm.second});
+                {bitm.first, std::make_tuple(imsize.w + pad, imsize.h + pad)});
         }
 
         /*
@@ -602,10 +628,10 @@ struct BitmapCache
             u32 max_pad
                 = surface->m_format.pixfmt != PixFmt::RGB565 ? 4 << mipmaps : 0;
 
-            for(auto it = pool.images.rbegin(); it != pool.images.rend(); ++it)
+            for(auto [id, fmt] : pool.images)
             {
-                auto img    = it->second;
-                auto imsize = img->image.mip->isize;
+                auto* img    = &m_cache.find(id)->second;
+                auto  imsize = img->image.mip->isize;
 
                 imsize.w += max_pad;
                 imsize.h += max_pad;
@@ -613,39 +639,44 @@ struct BitmapCache
                 auto img_offset = offset;
                 auto img_layer  = layer;
 
-                size_2d<i32> slack
-                    = {pool.max.w - offset.w, pool.max.h - offset.h};
+                [[maybe_unused]] size_2d<i32> slack = {
+                    pool.max.w - offset.w,
+                    pool.max.h - offset.h,
+                };
 
-                bool fits_width  = (offset.w + imsize.w) <= pool.max.w;
-                i32  height_diff = offset.h - imsize.h;
+                bool fits_width = (offset.w + imsize.w) <= pool.max.w;
+                //                i32  height_diff = offset.h - imsize.h;
 
-                if(height_diff < 0)
-                    offset.h += -height_diff;
+                //                if(height_diff < 0)
+                //                    offset.h += -height_diff;
 
                 if(fits_width)
                 {
                     img_offset.w = offset.w;
-                    img_offset.h = offset.h - imsize.h;
+                    img_offset.h = offset.h /*- imsize.h*/;
                     offset.w += imsize.w;
                 } else
                 {
                     layer++;
-                    offset     = imsize.template convert<i32>();
+                    offset.w   = imsize.w;
                     img_offset = {};
                     img_layer  = layer;
                 }
 
                 img->image.layer  = layer;
-                img->image.offset = Vecf2(
-                    img_offset.w + max_pad / 2, img_offset.h + max_pad / 2);
-                img->image.scale
-                    = {C_CAST<f32>(imsize.w - max_pad),
-                       C_CAST<f32>(imsize.h - max_pad)};
+                img->image.offset = {
+                    C_CAST<f32>(img_offset.w + max_pad / 2),
+                    C_CAST<f32>(img_offset.h + max_pad / 2),
+                };
+                img->image.scale = {
+                    C_CAST<f32>(imsize.w - max_pad),
+                    C_CAST<f32>(imsize.h - max_pad),
+                };
 
-                img->image.scale.x() /= pool.max.w;
-                img->image.scale.y() /= pool.max.h;
-                img->image.offset.x() /= pool.max.w;
-                img->image.offset.y() /= pool.max.h;
+                //                img->image.scale.x() /= pool.max.w;
+                //                img->image.scale.y() /= pool.max.h;
+                //                img->image.offset.x() /= pool.max.w;
+                //                img->image.offset.y() /= pool.max.h;
 
                 cDebug(
                     "{0}x{1} - {2}x{3} @ {4} ({5},{6}) padding of {7}",
@@ -675,12 +706,16 @@ struct BitmapCache
         for(auto& bitm : m_cache)
             commit_bitmap<gfx::texture_2da_t>(bitm.second);
 
-        //        for(auto& pool : fmt_count)
-        //            for(auto& image : pool.second.images)
-        //            {
-        //                image.second->image.offset.x() /= pool.second.max.w;
-        //                image.second->image.offset.y() /= pool.second.max.h;
-        //            }
+        for(auto& [_, pool] : fmt_count)
+            for(auto [image_id, fmt] : pool.images)
+            {
+                auto  image_it = m_cache.find(image_id);
+                auto* image    = &image_it->second;
+                image->image.offset.x() /= pool.max.w;
+                image->image.offset.y() /= pool.max.h;
+                image->image.scale.x() /= pool.max.w;
+                image->image.scale.y() /= pool.max.h;
+            }
     }
 
     virtual BitmapItem predict_impl(
@@ -710,12 +745,12 @@ struct BitmapCache
         auto               curr_magic = magic;
         blam::tag_t const* bitm_tag   = nullptr;
 
-        Vecf2 prescale = {1, 1};
+        //        Vecf2 prescale = {1, 1};
 
         switch(shader.tag_class)
         {
         case tag_class_t::bitm: {
-            bitm_tag = (*it);
+            bitm_tag = &(*it);
 
             break;
         }
@@ -751,7 +786,7 @@ struct BitmapCache
         BitmapItem out;
         out.header     = &bitm;
         out.tag        = bitm_tag;
-        out.shader_tag = *it;
+        out.shader_tag = &(*it);
 
         if(auto image_ = bitm.images.data(curr_magic); image_.has_value())
         {
@@ -836,11 +871,15 @@ struct ShaderCache
     using type  = ShaderCache<V>;
     using Proxy = Components::proxy_of<ShaderManifest>;
 
-    ShaderCache(
-        blam::map_container<V> const& map, BitmapCache<V>& bitmap_cache) :
-        bitm_cache(bitmap_cache),
-        index(map), magic(map.magic)
+    ShaderCache(BitmapCache<V>& bitmap_cache) : bitm_cache(bitmap_cache)
     {
+    }
+
+    inline void load_from(blam::map_container<V> const& map)
+    {
+        index = blam::tag_index_view(map);
+        magic = map.magic;
+        evict_all();
     }
 
     BitmapCache<V>&         bitm_cache;
@@ -859,7 +898,7 @@ struct ShaderCache
     template<typename T>
     T const* extract_shader(typename blam::tag_index_view<V>::iterator it)
     {
-        return (*it)->template data<T>(magic).value();
+        return (*it).template data<T>(magic).value();
     }
 
     ShaderItem predict_impl(blam::tagref_t const& shader)
@@ -877,9 +916,9 @@ struct ShaderCache
         if(it == index.end())
             return {};
 
-        ShaderItem out;
-        out.tag    = *it;
-        out.header = extract_shader<blam::shader::shader_base>(it);
+        ShaderItem out = {};
+        out.tag        = &(*it);
+        out.header     = extract_shader<blam::shader::shader_base>(it);
 
         switch(shader.tag_class)
         {
@@ -917,8 +956,8 @@ struct ShaderCache
 
             if(auto maps = shader_model.maps.data(magic); maps.has_value())
             {
-                auto const& map1 = maps.value()[0];
-                out.schi.map1    = get_bitm_idx(maps.value()[0].map.map);
+                //                auto const& map1 = maps.value()[0];
+                out.schi.map1 = get_bitm_idx(maps.value()[0].map.map);
             }
 
             break;
@@ -983,8 +1022,8 @@ struct ShaderCache
             break;
         }
         case tag_class_t::sotr: {
-            auto const& shader_model
-                = *extract_shader<blam::shader::shader_base>(it);
+            //            auto const& shader_model
+            //                = *extract_shader<blam::shader::shader_base>(it);
 
             break;
         }
@@ -1010,6 +1049,216 @@ struct ShaderCache
     }
 };
 
+using ModelManifest
+    = Components::SubsystemManifest<empty_list_t, empty_list_t, empty_list_t>;
+
+template<typename V>
+struct ModelCache
+    : DataCache<ModelItem<V>, Tup<u32, u16>, blam::tagref_t const&, u16>,
+      Components::RestrictedSubsystem<ModelCache<V>, ModelManifest>
+{
+    using type    = ModelCache<V>;
+    using Variant = typename std::conditional_t<
+        std::is_same_v<V, blam::xbox_version_t>,
+        blam::xbox_t,
+        blam::grbx_t>;
+    using Proxy = Components::proxy_of<ModelManifest>;
+
+    ModelCache(
+        BitmapCache<V>& bitm_cache,
+        ShaderCache<V>& shader_cache,
+        gfx_api*        allocator) :
+        bitm_cache(bitm_cache),
+        shader_cache(shader_cache), allocator(allocator)
+    {
+    }
+
+    inline void load_from(blam::map_container<V> const& map)
+    {
+        version      = V::version_v;
+        tags         = map.tags;
+        index        = blam::tag_index_view(map);
+        magic        = map.magic;
+        vertex_magic = V::version_v == blam::version_t::xbox
+                           ? map.magic
+                           : tags->vertex_magic(magic);
+        vert_ptr = 0, element_ptr = 0;
+        this->evict_all();
+    }
+
+    blam::version_t             version;
+    blam::tag_index_t<V> const* tags;
+    blam::tag_index_view<V>     index;
+    blam::magic_data_t          magic;
+    blam::magic_data_t          vertex_magic;
+    BitmapCache<V>&             bitm_cache;
+    ShaderCache<V>&             shader_cache;
+    gfx_api*                    allocator;
+
+    Bytes vert_buffer, element_buffer;
+    u32   vert_ptr, element_ptr;
+
+    blam::mod2::header<V> const* get_header(blam::tagref_t const& mod2)
+    {
+        auto header_it = index.find(mod2);
+
+        if(header_it == index.end())
+            return nullptr;
+
+        auto header
+            = (*header_it).template data<blam::mod2::header<V>>(magic).value();
+
+        return &header[0];
+    }
+
+    inline auto vertex_data(blam::mod2::submesh_header const& model)
+    {
+        if constexpr(std::is_same_v<V, blam::xbox_version_t>)
+        {
+            auto const& vertex_ref = model.xbox_vertex_ref()
+                                         .data(magic, blam::single_value)
+                                         .value();
+            return vertex_ref->vertices(model.vert_count)
+                .data(vertex_magic)
+                .value();
+        } else
+            return model.vertex_segment(*tags).data(vertex_magic).value();
+    }
+    inline auto index_data(blam::mod2::submesh_header const& model)
+    {
+        if constexpr(std::is_same_v<V, blam::xbox_version_t>)
+            return model.xbox_index_segment().data(vertex_magic).value();
+        else
+            return model.index_segment(*tags).data(vertex_magic).value();
+    }
+
+    virtual ModelItem<V> predict_impl(
+        blam::tagref_t const& mod2, u16 geom_idx) override
+    {
+        auto _ = allocator->debug().scope("ModelCache");
+
+        using namespace blam::mod2;
+
+        auto const* header = get_header(mod2);
+
+        if(!header)
+            return {};
+
+        ModelItem<V> out;
+        out.mesh    = {};
+        out.header  = header;
+        out.tag     = &(*index.find(mod2));
+        out.uvscale = Vecf2(header->uvscale.u, header->uvscale.v);
+
+        auto const& shaders_ = header->shaders.data(magic);
+        if(shaders_.has_error())
+            Throw(undefined_behavior("no shaders found"));
+        auto const& shaders = shaders_.value();
+
+        auto const& geom = header[0].geometries.data(magic).value()[geom_idx];
+        {
+            out.mesh.header = &geom;
+
+            for(auto const& model : geom.meshes(magic))
+            {
+                auto elements = index_data(model.data);
+                auto vertices = vertex_data(model.data);
+
+                using element_type = typename std::remove_const<
+                    typename decltype(elements)::value_type>::type;
+                using vertex_type = typename std::remove_const<
+                    typename decltype(vertices)::value_type>::type;
+
+                if(elements.empty() || vertices.empty())
+                    Throw(undefined_behavior(
+                        "failed to locate element or vertex data"));
+
+                out.mesh.sub.emplace_back();
+                auto& draw_data         = out.mesh.sub.back();
+                draw_data.header        = &model.data;
+                draw_data.draw.elements = {
+                    .count         = static_cast<u32>(elements.size()),
+                    .offset        = element_ptr,
+                    .vertex_offset = vert_ptr / sizeof(vertex_type),
+                    .type          = semantic::TypeEnum::UShort,
+                };
+                draw_data.draw.instances.count = 1;
+                //                    = {.elements = {
+                //                           .count         = elements.size(),
+                //                           .offset        = element_ptr /
+                //                           sizeof(element_type),
+                //                           .vertex_offset = vert_ptr /
+                //                           sizeof(vertex_type), .type =
+                //                           semantic::TypeEnum::UShort,
+                //                       },
+                //                       .instances = {
+                //                           .count = 1,
+                //                       }};
+                draw_data.shader
+                    = shader_cache.predict(shaders[model.data.shader_idx].ref);
+
+                auto vert_dest
+                    = (*vert_buffer.at(vert_ptr)).template as<vertex_type>();
+                auto element_dest = (*element_buffer.at(element_ptr))
+                                        .template as<element_type>();
+
+                std::copy(vertices.begin(), vertices.end(), vert_dest.begin());
+                std::copy(
+                    elements.begin(), elements.end(), element_dest.begin());
+
+                //                Array<u16, 2> last_indices = {{elements[0],
+                //                elements[1]}};
+
+                vert_ptr += vertices.size_bytes();
+                element_ptr += elements.size_bytes() + 2;
+            }
+        }
+
+        return out;
+    }
+
+    virtual void evict_impl() override
+    {
+        vert_ptr    = 0;
+        element_ptr = 0;
+    }
+    virtual Tup<u32, u16> get_id(
+        blam::tagref_t const& tag, u16 geom_idx) override
+    {
+        return std::make_tuple(tag.tag_id, geom_idx);
+    }
+
+    ModelAssembly predict_regions(
+        blam::tagref_t const& tag, u16 max_lod = blam::mod2::lod_high_ext)
+    {
+        ModelAssembly assem  = {};
+        auto          header = get_header(tag);
+
+        if(!header)
+            return {};
+
+        for(auto const& region : header->regions.data(magic).value())
+        {
+            assem.models.emplace_back();
+            auto& mod = assem.models.back();
+            for(auto const& perm : region.permutations.data(magic).value())
+            {
+                auto const& lod = perm.meshindex_lod.at(max_lod);
+                mod.at(max_lod) = this->predict(tag, lod);
+            }
+        }
+
+        return assem;
+    }
+
+    void start_restricted(Proxy&, time_point const&)
+    {
+    }
+    void end_restricted(Proxy&, time_point const&)
+    {
+    }
+};
+
 using BSPManifest
     = Components::SubsystemManifest<empty_list_t, empty_list_t, empty_list_t>;
 
@@ -1022,23 +1271,33 @@ struct BSPCache
     using Proxy = Components::proxy_of<BSPManifest>;
 
     BSPCache(
-        blam::map_container<V> const& map,
-        BitmapCache<V>&               bitm_cache,
-        ShaderCache<V>&               shader_cache) :
-        version(map.map->version),
-        bitm_cache(bitm_cache), shader_cache(shader_cache), index(map),
-        magic(map.magic), vert_ptr(0), element_ptr(0), light_ptr(0)
+        BitmapCache<V>& bitm_cache,
+        ShaderCache<V>& shader_cache,
+        ModelCache<V>&  model_cache) :
+        version(V::version_v),
+        bitm_cache(bitm_cache), shader_cache(shader_cache),
+        model_cache(model_cache)
     {
+    }
+
+    inline void load_from(blam::map_container<V> const& map)
+    {
+        index    = blam::tag_index_view(map);
+        magic    = map.magic;
+        vert_ptr = 0, element_ptr = 0, light_ptr = 0, portal_ptr = 0;
+        evict_all();
     }
 
     blam::version_t         version;
     BitmapCache<V>&         bitm_cache;
     ShaderCache<V>&         shader_cache;
+    ModelCache<V>&          model_cache;
     blam::tag_index_view<V> index;
     blam::magic_data_t      magic;
 
-    Bytes vert_buffer, element_buffer, light_buffer;
-    u32   vert_ptr, element_ptr, light_ptr;
+    Bytes                      vert_buffer, element_buffer, light_buffer;
+    semantic::mem_chunk<Vecf3> portal_buffer;
+    u32                        vert_ptr, element_ptr, light_ptr, portal_ptr;
 
     virtual BSPItem predict_impl(blam::bsp::info const& bsp) override
     {
@@ -1051,12 +1310,29 @@ struct BSPCache
 
         BSPItem out;
         out.mesh = &section;
-        out.tag  = *index.find(bsp.tag);
+        out.tag  = &(*index.find(bsp.tag));
 
         if(!out.tag->valid())
             return {};
 
-        auto shader = section.shaders.data(bsp_magic);
+        //        auto shader = section.shaders.data(bsp_magic);
+
+        for(auto const& portal :
+            section.cluster_portals.data(bsp_magic).value())
+        {
+            auto vertices = portal.vertices.data(bsp_magic).value();
+            std::copy(
+                vertices.begin(),
+                vertices.end(),
+                portal_buffer.begin() + portal_ptr);
+            out.portals.push_back({
+                .arrays = {
+                     .count  = static_cast<u32>(vertices.size()),
+                     .offset = static_cast<u32>(portal_ptr),
+                },
+            });
+            portal_ptr += vertices.size();
+        }
 
         for(auto const& group : section.submesh_groups.data(bsp_magic).value())
         {
@@ -1100,8 +1376,8 @@ struct BSPCache
 
                     mesh_data.mesh          = &mesh;
                     mesh_data.draw.elements = {
-                        .count  = C_FCAST<u32>(indices.size()),
-                        .offset = element_ptr / sizeof(blam::vert::idx_t),
+                        .count         = C_FCAST<u32>(indices.size()),
+                        .offset        = element_ptr,
                         .vertex_offset = vert_ptr / sizeof(vertex_type),
                         .type          = semantic::TypeEnum::UShort,
                     };
@@ -1112,14 +1388,16 @@ struct BSPCache
                         (*vert_buffer.at(vert_ptr)).template as<vertex_type>());
                     MemCpy(
                         indices,
-                        (*element_buffer.at(element_ptr)).template as<element_type>());
+                        (*element_buffer.at(element_ptr))
+                            .template as<element_type>());
                     MemCpy(
                         light_verts,
-                        (*light_buffer.at(light_ptr)).template as<light_type>());
+                        (*light_buffer.at(light_ptr))
+                            .template as<light_type>());
 
-                    vert_ptr += vertices.size() * sizeof(vertex_type);
-                    element_ptr += indices.size() * sizeof(element_type);
-                    light_ptr += light_verts.size() * sizeof(light_type);
+                    vert_ptr += vertices.size_bytes();
+                    element_ptr += indices.size_bytes();
+                    light_ptr += light_verts.size_bytes();
                 } else
                 {
                     auto indices
@@ -1137,8 +1415,8 @@ struct BSPCache
 
                     mesh_data.mesh          = &mesh;
                     mesh_data.draw.elements = {
-                        .count  = C_FCAST<u32>(indices.size()),
-                        .offset = element_ptr / sizeof(blam::vert::idx_t),
+                        .count         = C_FCAST<u32>(indices.size()),
+                        .offset        = element_ptr,
                         .vertex_offset = vert_ptr / sizeof(vertex_type),
                         .type          = semantic::TypeEnum::UShort,
                     };
@@ -1149,14 +1427,16 @@ struct BSPCache
                         (*vert_buffer.at(vert_ptr)).template as<vertex_type>());
                     MemCpy(
                         indices,
-                        (*element_buffer.at(element_ptr)).template as<element_type>());
+                        (*element_buffer.at(element_ptr))
+                            .template as<element_type>());
                     MemCpy(
                         light_verts,
-                        (*light_buffer.at(light_ptr)).template as<light_type>());
+                        (*light_buffer.at(light_ptr))
+                            .template as<light_type>());
 
-                    vert_ptr += vertices.size() * sizeof(vertex_type);
-                    element_ptr += indices.size() * sizeof(element_type);
-                    light_ptr += light_verts.size() * sizeof(light_type);
+                    vert_ptr += vertices.size_bytes();
+                    element_ptr += indices.size_bytes();
+                    light_ptr += light_verts.size_bytes();
                 }
             }
         }
@@ -1166,204 +1446,6 @@ struct BSPCache
     virtual blam::bsp::info const* get_id(blam::bsp::info const& bsp) override
     {
         return &bsp;
-    }
-
-    void start_restricted(Proxy&, time_point const&)
-    {
-    }
-    void end_restricted(Proxy&, time_point const&)
-    {
-    }
-};
-
-using ModelManifest
-    = Components::SubsystemManifest<empty_list_t, empty_list_t, empty_list_t>;
-
-template<typename V>
-struct ModelCache
-    : DataCache<ModelItem<V>, Tup<u32, u16>, blam::tagref_t const&, u16>,
-      Components::RestrictedSubsystem<ModelCache<V>, ModelManifest>
-{
-    using type    = ModelCache<V>;
-    using Variant = typename std::conditional_t<
-        std::is_same_v<V, blam::xbox_version_t>,
-        blam::xbox_t,
-        blam::grbx_t>;
-    using Proxy = Components::proxy_of<ModelManifest>;
-
-    ModelCache(
-        blam::map_container<V> const& map,
-        BitmapCache<V>&               bitm_cache,
-        ShaderCache<V>&               shader_cache,
-        gfx_api*                      allocator) :
-        version(map.map->version),
-        tags(map.tags), index(map), magic(map.magic),
-        vertex_magic(
-            map.map->version == blam::version_t::xbox
-                ? map.magic
-                : tags->vertex_magic(magic)),
-        allocator(allocator), bitm_cache(bitm_cache),
-        shader_cache(shader_cache), vert_ptr(0), element_ptr(0)
-    {
-    }
-
-    blam::version_t             version;
-    blam::tag_index_t<V> const* tags;
-    blam::tag_index_view<V>     index;
-    blam::magic_data_t          magic;
-    blam::magic_data_t          vertex_magic;
-    BitmapCache<V>&             bitm_cache;
-    ShaderCache<V>&             shader_cache;
-    gfx_api*                    allocator;
-
-    Bytes vert_buffer, element_buffer;
-    u32   vert_ptr, element_ptr;
-
-    blam::mod2::header<V> const* get_header(blam::tagref_t const& mod2)
-    {
-        auto header_it = index.find(mod2);
-
-        if(header_it == index.end())
-            return nullptr;
-
-        auto header
-            = (*header_it)->template data<blam::mod2::header<V>>(magic).value();
-
-        return &header[0];
-    }
-
-    inline auto vertex_data(blam::mod2::submesh_header const& model)
-    {
-        if constexpr(std::is_same_v<V, blam::xbox_version_t>)
-        {
-            auto const& vertex_ref = model.xbox_vertex_ref()
-                                         .data(magic, blam::single_value)
-                                         .value();
-            return vertex_ref->vertices(model.vert_count)
-                .data(vertex_magic)
-                .value();
-        } else
-            return model.vertex_segment(*tags).data(vertex_magic).value();
-    }
-    inline auto index_data(blam::mod2::submesh_header const& model)
-    {
-        if constexpr(std::is_same_v<V, blam::xbox_version_t>)
-            return model.xbox_index_segment().data(vertex_magic).value();
-        else
-            return model.index_segment(*tags).data(vertex_magic).value();
-    }
-
-    virtual ModelItem<V> predict_impl(
-        blam::tagref_t const& mod2, u16 geom_idx) override
-    {
-        auto _ = allocator->debug().scope("ModelCache");
-
-        using namespace blam::mod2;
-
-        auto const* header = get_header(mod2);
-
-        if(!header)
-            return {};
-
-        ModelItem<V> out;
-        out.mesh    = {};
-        out.header  = header;
-        out.tag     = *index.find(mod2);
-        out.uvscale = Vecf2(header->uvscale.u, header->uvscale.v);
-
-        auto const& shaders_ = header->shaders.data(magic);
-        if(shaders_.has_error())
-            Throw(undefined_behavior("no shaders found"));
-        auto const& shaders = shaders_.value();
-
-        auto const& geom = header[0].geometries.data(magic).value()[geom_idx];
-        {
-            out.mesh.header = &geom;
-
-            for(auto const& model : geom.meshes(magic))
-            {
-                auto elements = index_data(model.data);
-                auto vertices = vertex_data(model.data);
-
-                using element_type = typename std::remove_const<
-                    typename decltype(elements)::value_type>::type;
-                using vertex_type = typename std::remove_const<
-                    typename decltype(vertices)::value_type>::type;
-
-                if(elements.empty() || vertices.empty())
-                    Throw(undefined_behavior(
-                        "failed to locate element or vertex data"));
-
-                out.mesh.sub.emplace_back();
-                auto& draw_data               = out.mesh.sub.back();
-                draw_data.header              = &model.data;
-                draw_data.draw.elements.count = elements.size();
-                //                    = {.elements = {
-                //                           .count         = elements.size(),
-                //                           .offset        = element_ptr /
-                //                           sizeof(element_type),
-                //                           .vertex_offset = vert_ptr /
-                //                           sizeof(vertex_type), .type =
-                //                           semantic::TypeEnum::UShort,
-                //                       },
-                //                       .instances = {
-                //                           .count = 1,
-                //                       }};
-                draw_data.shader
-                    = shader_cache.predict(shaders[model.data.shader_idx].ref);
-
-                auto vert_dest
-                    = *vert_buffer.template as<vertex_type>().at(vert_ptr);
-                auto element_dest
-                    = *element_buffer.template as<element_type>().at(
-                        element_ptr);
-
-                std::copy(vertices.begin(), vertices.end(), vert_dest.begin());
-                std::copy(
-                    elements.begin(), elements.end(), element_dest.begin());
-
-                Array<u16, 2> last_indices = {{elements[0], elements[1]}};
-
-                vert_ptr += vertices.size();
-                element_ptr += elements.size() + 2;
-            }
-        }
-
-        return out;
-    }
-
-    virtual void evict_impl() override
-    {
-        vert_ptr    = 0;
-        element_ptr = 0;
-    }
-    virtual Tup<u32, u16> get_id(
-        blam::tagref_t const& tag, u16 geom_idx) override
-    {
-        return std::make_tuple(tag.tag_id, geom_idx);
-    }
-
-    ModelAssembly predict_regions(
-        blam::tagref_t const& tag, u16 max_lod = blam::mod2::lod_high_ext)
-    {
-        ModelAssembly assem  = {};
-        auto          header = get_header(tag);
-
-        if(!header)
-            return {};
-
-        for(auto const& region : header->regions.data(magic).value())
-        {
-            assem.models.emplace_back();
-            auto& mod = assem.models.back();
-            for(auto const& perm : region.permutations.data(magic).value())
-            {
-                auto const& lod = perm.meshindex_lod.at(max_lod);
-                mod.at(max_lod) = this->predict(tag, lod);
-            }
-        }
-
-        return assem;
     }
 
     void start_restricted(Proxy&, time_point const&)

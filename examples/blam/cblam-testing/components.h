@@ -46,7 +46,22 @@ struct BspReference
     Passes current_pass;
 
     gfx::draw_command draw;
-    bool              visible{false};
+    bool              visible{true};
+};
+
+struct model_tracker_t
+{
+    u16 draw;
+    u16 instance;
+};
+static_assert(sizeof(model_tracker_t) == 4);
+
+struct MeshTrackingData
+{
+    using value_type = MeshTrackingData;
+    using type = compo::alloc::VectorContainer<value_type>;
+
+    model_tracker_t model_id;
 };
 
 struct SubModel
@@ -54,7 +69,7 @@ struct SubModel
     using value_type = SubModel;
     using type       = compo::alloc::VectorContainer<value_type>;
 
-    ERef parent;
+    u64 parent;
 
     generation_idx_t shader;
     generation_idx_t model;
@@ -213,18 +228,18 @@ struct ShaderData
     }
 
     template<typename V>
-    inline Passes get_render_pass(ShaderCache<V>& cache) const
+    inline Passes get_render_pass(ShaderCache<V>& /*cache*/) const
     {
         using tc = blam::tag_class_t;
         using namespace enum_helpers;
 
-        auto const& shader_ = get_shader(cache);
-        auto        name    = shader_tag->to_name().to_string(cache.magic);
+//        auto const& shader_ = get_shader(cache);
+//        auto        name    = shader_tag->to_name().to_string(cache.magic);
 
         switch(shader_tag->tagclass_e[0])
         {
         case tc::senv: {
-            auto const* shader = shader_data<blam::shader::shader_env>();
+//            auto const* shader = shader_data<blam::shader::shader_env>();
 
             return Pass_EnvMicro;
             //            return shader->diffuse.micro.map.valid() ?
@@ -283,4 +298,7 @@ enum ObjectTags : u32
 
     ObjectMod2 = 0x100000,
     ObjectBsp  = ObjectMod2 << 1,
+
+    /* For objects that should be removed after loading a new map */
+    ObjectGC = 0x800000,
 };

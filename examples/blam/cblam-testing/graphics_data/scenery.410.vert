@@ -7,6 +7,9 @@ precision highp sampler2DArray;
 
 in vec3 position;
 in vec2 tex;
+in vec3 normal;
+in vec3 binormal;
+in vec3 tangent;
 
 layout(std140) uniform MatrixStore
 {

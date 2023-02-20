@@ -1,20 +1,23 @@
-#version 460 core
-
-#extension GL_EXT_shader_io_blocks : enable
+#version 320 es
 
 precision highp float;
 precision highp int;
 precision highp sampler2DArray;
 
-layout(location = 0) in vec3 position;
-layout(location = 1) in vec2 tex;
-layout(location = 2) in vec3 normal;
-layout(location = 3) in vec3 binormal;
-layout(location = 4) in vec3 tangent;
-layout(location = 5) in vec2 light_tex;
+layout(location=0) in vec3 position;
+layout(location=1) in vec2 tex;
+layout(location=2) in vec3 normal;
+layout(location=3) in vec3 binormal;
+layout(location=4) in vec3 tangent;
+layout(location=5) in vec2 light_tex;
 
-layout(location = 0) uniform mat4 camera;
-layout(location = 1) uniform int g_BaseInstance;
+layout(location=0) uniform mat4 camera;
+layout(location=1) uniform int g_BaseInstance;
+
+//out vec3 frag_world_pos;
+//out vec2 frag_tex;
+//out vec2 frag_light_tex;
+//flat out int frag_instanceId;
 
 out FragData {
     vec3 world_pos;
@@ -25,10 +28,6 @@ out FragData {
     vec2 light_tex;
     flat int instanceId;
 } frag;
-
-out gl_PerVertex {
-    vec4 gl_Position;
-};
 
 void main()
 {
