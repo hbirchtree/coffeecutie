@@ -5,6 +5,8 @@ if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
     set ( APPIMAGE_APPRUN_PROGRAM CACHE FILEPATH "AppImage AppRun executable" )
     set ( APPIMAGE_RUNTIME_BINARY CACHE FILEPATH "AppImage runtime to be embedded into the AppImage" )
 
+    set ( APPIMAGE_EXTRA_LIBRARIES CACHE STRING "" )
+
     set ( APPIMAGE_WORKING_DIRECTORY "${COFFEE_DEPLOY_DIRECTORY}/linux-appimage"
         CACHE PATH "Where to put the AppDir items" )
     set ( APPIMAGE_OUTPUT_DIRECTORY "${COFFEE_PACKAGE_DIRECTORY}/linux-appimage"
@@ -85,9 +87,10 @@ function( APPIMAGE_PACKAGE
     list ( APPEND APPIMAGE_DATA
         ${DATA} )
 
-    add_custom_target ( ${TARGET}.AppImage ALL DEPENDS ${TARGET} )
+    add_custom_target ( ${TARGET}.AppDir ALL DEPENDS ${TARGET} )
+    add_custom_target ( ${TARGET}.AppImage ALL DEPENDS ${TARGET}.AppDir )
 
-    add_custom_command ( TARGET ${TARGET}.AppImage
+    add_custom_command ( TARGET ${TARGET}.AppDir
         PRE_BUILD
 
         # Remove the previous AppImage file to avoid confusion when generating a new one
@@ -143,15 +146,18 @@ function( APPIMAGE_PACKAGE
 
     # Copy resources into AppDir
     foreach ( RESC ${DATA} )
-        add_custom_command ( TARGET ${TARGET}.AppImage
+        add_custom_command ( TARGET ${TARGET}.AppDir
             PRE_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_directory "${RESC}" "${APPIMAGE_ASSET_DIR}"
             )
     endforeach()
 
     # Copy bundled libraries into AppDir
-    foreach ( LIB ${LIBRARY_FILES} )
-        add_custom_command ( TARGET ${TARGET}.AppImage
+    foreach ( LIB ${LIBRARY_FILES} ${APPIMAGE_EXTRA_LIBRARIES} )
+        if(NOT EXISTS ${LIB})
+            continue()
+        endif()
+        add_custom_command ( TARGET ${TARGET}.AppDir
             POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy "${LIB}" "${APPIMAGE_LIBRARY_DIR}"
             )
@@ -160,7 +166,7 @@ function( APPIMAGE_PACKAGE
     # If we are building CrashRecovery, include it
     if ( TARGET CrashRecovery )
         add_dependencies ( ${TARGET}.AppImage CrashRecovery )
-        add_custom_command ( TARGET ${TARGET}.AppImage
+        add_custom_command ( TARGET ${TARGET}.AppDir
             POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy
                 "$<TARGET_FILE:CrashRecovery>"
@@ -169,7 +175,7 @@ function( APPIMAGE_PACKAGE
     endif()
 
     foreach ( LIB ${LIBRARIES} )
-        add_custom_command ( TARGET ${TARGET}.AppImage
+        add_custom_command ( TARGET ${TARGET}.AppDir
             POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy
                 "$<TARGET_FILE:${LIB}>"
@@ -179,14 +185,14 @@ function( APPIMAGE_PACKAGE
 
     if("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND
             (NOT "${LIBRARIES}" STREQUAL "" OR NOT "${LIBRARY_FILES}" STREQUAL ""))
-        add_custom_command ( TARGET ${TARGET}.AppImage
+        add_custom_command ( TARGET ${TARGET}.AppDir
             POST_BUILD
             COMMAND bash -c '${CMAKE_STRIP} `find ${APPIMAGE_LIBRARY_DIR} -type f`'
             )
     endif()
 
     # Copy the binary to AppDir
-    add_custom_command ( TARGET ${TARGET}.AppImage
+    add_custom_command ( TARGET ${TARGET}.AppDir
         POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
             "$<TARGET_FILE:${TARGET}>"
@@ -194,7 +200,7 @@ function( APPIMAGE_PACKAGE
         )
 
     if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-        add_custom_command ( TARGET ${TARGET}.AppImage
+        add_custom_command ( TARGET ${TARGET}.AppDir
             POST_BUILD
             COMMAND ${CMAKE_STRIP}
                 "${APPIMAGE_BINARY_DIR}/${TARGET}"
@@ -210,7 +216,7 @@ function( APPIMAGE_PACKAGE
         # First create squashfs
         COMMAND "${MKSQUASH_PROGRAM}" "${APPIMAGE_INTERMEDIATE_DIR}"
                 "${APPIMAGE_INTERMEDIATE_SQUASH}"
-                -root-owned -noappend
+                -root-owned -noappend -comp zstd
         # Concatenate AppImage runtime with image
         COMMAND cat "${APPIMAGE_RUNTIME_BINARY}" >> "${APPIMAGE_FINAL_NAME}"
         COMMAND cat "${APPIMAGE_INTERMEDIATE_SQUASH}" >> "${APPIMAGE_FINAL_NAME}"

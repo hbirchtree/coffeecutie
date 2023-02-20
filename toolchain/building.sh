@@ -121,6 +121,8 @@ function native_build()
     echo "::group::Configuring project"
     echo "::info::Set up for ${TOOLCHAIN_PREFIX} (${TOOLCHAIN_ROOT})"
     PRELOAD_FILE=${BASE_DIR}/.github/cmake/${PLATFORM}-${ARCHITECTURE}-${SYSROOT}.preload.cmake
+    TOOLCHAIN_SYSROOT="${TOOLCHAIN_ROOT}/${ARCHITECTURE}/sysroot"
+    APPIMAGE_EXTRAS="${TOOLCHAIN_SYSROOT}/lib/libstdc++.so.6;${TOOLCHAIN_SYSROOT}/lib/libssp.so"
     echo "::info::Using preload ${PRELOAD_FILE}"
 
     if [ ! -f $PRELOAD_FILE ]; then
@@ -135,6 +137,7 @@ function native_build()
         -DCMAKE_INSTALL_PREFIX=$PWD/install \
         -DCMAKE_MAKE_PROGRAM=$(which ninja) \
         -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake \
+        -DAPPIMAGE_EXTRA_LIBRARIES="${APPIMAGE_EXTRAS}" \
         -DTOOLCHAIN_ROOT="${TOOLCHAIN_ROOT}" \
         -DTOOLCHAIN_PREFIX=${TOOLCHAIN_PREFIX} \
         -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=${VCPKG_CHAINLOAD_TOOLCHAIN_FILE} \
@@ -337,7 +340,8 @@ function android_build()
     export TOOLCHAIN_ROOT="${TOOLCHAIN_ROOT:-$ANDROID_NDK}"
     export TOOLCHAIN_PREFIX="${ARCHITECTURE}-android"
     export ANDROID_NDK_HOME=$ANDROID_NDK
-    ANDROID_API_LEVEL=android-${SYSROOT:-28}
+    ANDROID_API_LEVEL=${SYSROOT%-*}
+    ANDROID_API_LEVEL=android-${ANDROID_API_LEVEL}
 
     echo " * Selected platform ${PLATFORM}:${ARCHITECTURE}:${SYSROOT}"
     echo " * Selected vcpkg triplet ${TOOLCHAIN_PREFIX}"
@@ -373,17 +377,17 @@ function android_build()
     fi
     cmake_debug \
         -GNinja \
-        -C${BASE_DIR}/.github/cmake/${PLATFORM}-${ARCHITECTURE}-${SYSROOT}.preload.cmake \
+        -C${PRELOAD_FILE} \
         -DANDROID_SDK=${ANDROID_SDK} \
         -DANDROID_NDK=${ANDROID_NDK} \
         -DCMAKE_MAKE_PROGRAM=$(which ninja) \
         -DCMAKE_INSTALL_PREFIX=$PWD/install \
         -DVCPKG_TARGET_TRIPLET=${TOOLCHAIN_PREFIX} \
         -DANDROID_PLATFORM=${ANDROID_API_LEVEL} \
-        -DVCPKG_CMAKE_SYSTEM_VERSION=${SYSROOT:-28} \
+        -DVCPKG_CMAKE_SYSTEM_VERSION=${SYSROOT%-*} \
         -DVCPKG_CRT_LINKAGE=static \
         -DVCPKG_LIBRARY_LINKAGE=static \
-        -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/toolchains/android.cmake \
+        -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=${BASE_DIR}/toolchain/vcpkg/toolchains/android.cmake \
         -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake \
         ${BASE_DIR} ${@:2}
     echo "::endgroup::"

@@ -96,7 +96,7 @@ function(COFFEE_APPLICATION)
         "${APPLICATION_INFO_FILE};${LICENSE_FILE};${APP_SOURCES}"
         )
 
-    set ( ICON_ASSET "${COFFEE_DESKTOP_DIRECTORY}/common/icon.svg" )
+    set ( ICON_ASSET "${COFFEE_DESKTOP_DIRECTORY}/common/icon_squircle.svg" )
 
     if(ANDROID)
         ANDROIDAPK_PACKAGE(

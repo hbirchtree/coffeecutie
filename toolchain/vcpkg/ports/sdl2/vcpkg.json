@@ -28,6 +28,50 @@
     "x11": {
       "description": "Dynamically load X11 support",
       "supports": "!windows"
+    },
+    "alsa": {
+      "description": "Dynamically load X11 support",
+      "supports": "!windows"
+    },
+    "atomic": {
+      "description": "Dynamically load X11 support",
+      "supports": "!windows"
+    },
+    "audio": {
+      "description": "Dynamically load X11 support",
+      "supports": "!windows"
+    },
+    "file": {
+      "description": "Dynamically load X11 support",
+      "supports": "!windows"
+    },
+    "filesystem": {
+      "description": "Dynamically load X11 support",
+      "supports": "!windows"
+    },
+    "pipewire": {
+      "description": "Dynamically load X11 support",
+      "supports": "!windows"
+    },
+    "pulse": {
+      "description": "Dynamically load X11 support",
+      "supports": "!windows"
+    },
+    "render": {
+      "description": "Dynamically load X11 support",
+      "supports": "!windows"
+    },
+    "sensor": {
+      "description": "Dynamically load X11 support",
+      "supports": "!windows"
+    },
+    "sndio": {
+      "description": "Dynamically load X11 support",
+      "supports": "!windows"
+    },
+    "timers": {
+      "description": "Dynamically load X11 support",
+      "supports": "!windows"
     }
   }
 }

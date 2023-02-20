@@ -1,0 +1,8 @@
+{
+    "name": "bcdec",
+    "version-date": "2022-09-15",
+    "port-version": 1,
+    "description": "Small header-only C library to decompress any BC compressed image",
+    "homepage": "https://github.com/iOrange/bcdec",
+    "license": "MIT OR Unlicense"
+}

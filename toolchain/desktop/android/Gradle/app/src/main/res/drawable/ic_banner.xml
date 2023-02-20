@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+<!--    <drawa android:drawable="@drawable/ic_launcher_background"/>-->
+<!--    <foreground>-->
+<!--        <inset android:drawable="@mipmap/ic_launcher_foreground" android:inset="12%" />-->
+<!--    </foreground>-->
+    <item android:drawable="@drawable/ic_banner_background" android:gravity="fill" />
+    <item
+        android:drawable="@drawable/ic_launcher_foreground"
+        android:height="80dp"
+        android:width="80dp"
+        android:gravity="center_vertical"
+        />
+</layer-list>

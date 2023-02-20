@@ -5,4 +5,9 @@
 
     <color name="loading_background_color">#812041</color>
     <color name="loading_title_color">#ffffff</color>
+
+    <color name="icon_background_primary">#1576DD</color>
+    <color name="icon_background_secondary">#6007C6</color>
+
+    <color name="splash_background">#000</color>
 </resources>

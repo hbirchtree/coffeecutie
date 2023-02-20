@@ -154,21 +154,23 @@ function(ANDROIDAPK_PACKAGE)
         )
 
     set ( ANDROID_REQUIRED_FEATURES
-        "android.hardware.faketouch"
-        "android.hardware.gamepad"
         "android.hardware.screen.landscape"
         "android.hardware.audio.output"
         )
     set ( ANDROID_OPTIONAL_FEATURES
-        "android.hardware.usb.host"
+        "android.software.leanback"
+
+        "android.hardware.faketouch"
+        "android.hardware.gamepad"
+        "android.hardware.opengles.aep"
+        "android.hardware.sensor.accelerometer"
+        "android.hardware.sensor.gyroscope"
+        "android.hardware.sensor.hifi_sensors"
         "android.hardware.touchscreen"
         "android.hardware.touchscreen.multitouch"
         "android.hardware.touchscreen.multitouch.distinct"
         "android.hardware.touchscreen.multitouch.jazzhand"
-        "android.hardware.sensor.accelerometer"
-        "android.hardware.sensor.gyroscope"
-        "android.hardware.sensor.hifi_sensors"
-        "android.hardware.opengles.aep"
+        "android.hardware.usb.host"
         )
     set ( ANDROID_PERMISSIONS_PRE
         "android.permission.INTERNET"

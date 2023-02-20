@@ -18,16 +18,17 @@ vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
     FEATURES
         offscreen SDL_OFFSCREEN
         vulkan    SDL_VULKAN
+        wayland   SDL_WAYLAND
         wayland   SDL_WAYLAND_SHARED
+        x11       SDL_X11
         x11       SDL_X11_SHARED
-)
+        x11       SDL_X11_GLX
 
-if ("x11" IN_LIST FEATURES)
-    message(WARNING "You will need to install Xorg dependencies to use feature x11:\nsudo apt install libx11-dev libxft-dev libxext-dev\n")
-endif()
-if ("wayland" IN_LIST FEATURES)
-    message(WARNING "You will need to install Wayland dependencies to use feature wayland:\nsudo apt install libwayland-dev libxkbcommon-dev libegl1-mesa-dev\n")
-endif()
+        alsa       SDL_ALSA
+        audio      SDL_AUDIO
+        pipewire   SDL_PIPEWIRE
+        pulse      SDL_PULSEAUDIO
+)
 
 if(VCPKG_TARGET_IS_UWP)
     set(configure_opts WINDOWS_USE_MSBUILD)
@@ -43,8 +44,21 @@ vcpkg_cmake_configure(
         -DSDL_LIBC=ON
         -DSDL_HIDAPI_JOYSTICK=ON
         -DSDL_TEST=OFF
-        -DSDL_X11=OFF
-        -DSDL_WAYLAND=OFF
+        -DSDL_ARTS=OFF
+        -DSDL_DISKAUDIO=OFF
+        -DSDL_DUMMYAUDIO=OFF
+        -DSDL_DUMMYVIDEO=OFF
+        -DSDL_ESD=OFF
+        -DSDL_FILE=OFF
+        -DSDL_FILESYSTEM=OFF
+        -DSDL_FUSIONSOUND=OFF
+        -DSDL_JACK=OFF
+        -DSDL_LIBSAMPLERATE=OFF
+        -DSDL_NAS=OFF
+        -DSDL_OSS=OFF
+        -DSDL_RENDER=OFF
+        -DSDL_SNDIO=OFF
+        -DSDL_TIMERS=OFF
     MAYBE_UNUSED_VARIABLES
         SDL_FORCE_STATIC_VCRT
 )

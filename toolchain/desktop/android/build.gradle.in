@@ -12,6 +12,21 @@ android {
         targetSdkVersion @ANDROID_API_TARGET@
     }
 
+    flavorDimensions += 'version'
+    productFlavors {
+        create('legacy') {
+            dimension 'version'
+            versionNameSuffix '-legacy'
+        }
+        create('modern') {
+            dimension 'version'
+        }
+    }
+
+    dependencies {
+        modernImplementation 'androidx.core:core-splashscreen:1.0.0'
+    }
+
     buildTypes {
         release {
             minifyEnabled true

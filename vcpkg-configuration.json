@@ -1,10 +1,23 @@
 {
     "overlay-ports": [
+        "./toolchain/vcpkg/ports/appimage-runtime",
+        "./toolchain/vcpkg/ports/bcdec",
         "./toolchain/vcpkg/ports/bullet2",
         "./toolchain/vcpkg/ports/discord-rpc",
-        "./toolchain/vcpkg/ports/sdl2"
+        "./toolchain/vcpkg/ports/sdl2",
+        "./toolchain/vcpkg/ports/sdl2-wayland",
+        "./toolchain/vcpkg/ports/squashfuse",
+        "./toolchain/vcpkg/ports/stb"
     ],
     "overlay-triplets": [
         "./toolchain/vcpkg/triplets"
+    ],
+    "registries": [
+        {
+            "kind": "git",
+            "repository": "https://github.com/hbirchtree/appimage-vcpkg-registry",
+            "baseline": "master",
+            "packages": ["appimage-runtime", "squashfuse"]
+        }
     ]
 }

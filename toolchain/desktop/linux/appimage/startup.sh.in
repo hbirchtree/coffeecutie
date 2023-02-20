@@ -4,6 +4,10 @@
 ICON_DIR="$HOME/.local/share/icons/hicolor/scalable/apps"
 ICON_NAME="@APPIMAGE_INTERNALNAME@.svg"
 
+APPDIR="${APPDIR:-$(dirname $0)}"
+
+echo "AppDir: ${APPDIR}"
+
 if [ -z $(which python3) ]; then
     PYTHON_EXEC=python3
 elif [ -z $(which python2) ]; then
@@ -16,6 +20,12 @@ if [ ! -f "${ICON_DIR}/${ICON_NAME}" ] && [ -n "${PYTHON_EXEC}" ]; then
     mkdir -p "${ICON_DIR}"
     cp "${APPDIR}/${ICON_NAME}" "${ICON_DIR}/${ICON_NAME}"
     python "${APPDIR}/set_icon.py" "${APPIMAGE}" "${ICON_DIR}/${ICON_NAME}"
+fi
+if cmp -s "${APPDIR}/${ICON_NAME}" "${ICON_DIR}/${ICON_NAME}"; then
+    # No need to update the icon
+    true
+else
+    cp "${APPDIR}/${ICON_NAME}" "${ICON_DIR}/${ICON_NAME}"
 fi
 
 # This is used by the application
@@ -32,7 +42,9 @@ export COFFEE_NO_PROFILER_EXPORT="1"
 CRASH="${APPDIR}/CrashRecovery"
 
 # Executing application, we might as well destroy the current bash shell
-if [ -f "$CRASH" ]; then
+if [ -f "$GDB"  ]; then
+    $GDB --args "${APPDIR}/@APPIMAGE_EXEC@" $@
+elif [ -f "$CRASH" ] && [ -z "$NO_CRASHPAD" ]; then
     exec "$CRASH" "${APPDIR}/@APPIMAGE_EXEC@" $@
 else
     exec "${APPDIR}/@APPIMAGE_EXEC@" $@

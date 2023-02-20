@@ -4,19 +4,22 @@
     "version-string": "4.0",
     "dependencies": [
         { "name": "angle", "platform": "windows & uwp" },
+        { "name": "appimage-runtime", "platform": "linux" },
         "asio",
+        "bcdec",
         "boost-outcome",
         "boost-stacktrace",
         "bullet2",
         "cppcodec",
         { "name": "discord-rpc", "platform": "(linux & x64) | osx | windows" },
         { "name": "ffmpeg", "platform": "(linux & x64) | windows" },
+        "magic-enum",
         "ms-gsl",
-        "imgui",
+        { "name": "imgui", "features": ["docking-experimental"]},
         "lz4",
         "rapidjson",
-        { "name": "sdl2", "platform": "linux & x64", "default-features": false, "features": ["offscreen", "x11"] },
-        { "name": "sdl2", "platform": "linux & arm & wayland", "default-features": false, "features": ["wayland"] },
+        { "name": "sdl2", "platform": "linux & x64", "default-features": false, "features": ["offscreen", "wayland", "x11"] },
+        { "name": "sdl2", "platform": "linux & arm & wayland", "default-features": false, "features": ["wayland", "x11"] },
         { "name": "sdl2", "platform": "linux & arm & raspberry", "default-features": false, "features": [] },
         { "name": "sdl2", "platform": "osx | windows"},
         "sqlite3",
@@ -50,7 +53,7 @@
         "media": {
             "description": "Media encoding",
             "dependencies": [
-                { "name": "ffmpeg", "platform": "linux | osx | windows" }
+                { "name": "ffmpeg", "platform": "(linux & x64) | osx | windows" }
             ]
         },
         "openssl": {
