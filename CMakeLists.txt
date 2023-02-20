@@ -1,6 +1,8 @@
 cmake_minimum_required( VERSION 3.10 )
 cmake_policy ( SET CMP0048 NEW )
 cmake_policy ( SET CMP0069 NEW )
+set ( CMAKE_DISABLE_IN_SOURCE_BUILD ON )
+set ( CMAKE_DISABLE_SOURCE_CHANGES ON )
 
 project( 
     Coffee 
@@ -10,18 +12,10 @@ project(
 
 include ( toolchain/cmake/Modules/SubprojectFunctions.cmake )
 
+
 init_project()
 
 include ( GitDependencies )
-
-dependency_get (
-    SOURCE hbirchtree/native-library-bundle
-    TAG appimage-v1
-    NAMES
-        appimage-runtime
-    )
-
-set ( NATIVE_LIB_BUNDLE_TAG "rel-0.3.6.0.29" )
 
 set ( COFFEE_EXT_LIBRARY_DIR
     "${CMAKE_SOURCE_DIR}/src/libs"
