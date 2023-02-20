@@ -46,7 +46,8 @@ STATICINLINE void bind_buffer(group::buffer_target_arb target, u32 buffer)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindBufferARB)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
 #endif
@@ -57,18 +58,18 @@ STATICINLINE void bind_buffer(group::buffer_target_arb target, u32 buffer)
 
 template<class span_const_void>
 requires(semantic::concepts::Span<span_const_void>)
-/*!
- * \brief Part of GL_ARB_vertex_buffer_object
- * \param target GLenum
- * \param size GLsizeiptrARB
- * \param data const void *
- * \param usage GLenum
- * \return void
- */
-STATICINLINE void buffer_data(
-    group::buffer_target_arb target,
-    span_const_void const&   data,
-    group::buffer_usage_arb  usage)
+    /*!
+     * \brief Part of GL_ARB_vertex_buffer_object
+     * \param target GLenum
+     * \param size GLsizeiptrARB
+     * \param data const void *
+     * \param usage GLenum
+     * \return void
+     */
+    STATICINLINE void buffer_data(
+        group::buffer_target_arb target,
+        span_const_void const&   data,
+        group::buffer_usage_arb  usage)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -86,18 +87,18 @@ STATICINLINE void buffer_data(
 
 template<class span_const_void>
 requires(semantic::concepts::Span<span_const_void>)
-/*!
- * \brief Part of GL_ARB_vertex_buffer_object
- * \param target GLenum
- * \param offset GLintptrARB
- * \param size GLsizeiptrARB
- * \param data const void *
- * \return void
- */
-STATICINLINE void buffer_sub_data(
-    group::buffer_target_arb target,
-    GLintptrARB              offset,
-    span_const_void const&   data)
+    /*!
+     * \brief Part of GL_ARB_vertex_buffer_object
+     * \param target GLenum
+     * \param offset GLintptrARB
+     * \param size GLsizeiptrARB
+     * \param data const void *
+     * \return void
+     */
+    STATICINLINE void buffer_sub_data(
+        group::buffer_target_arb target,
+        GLintptrARB              offset,
+        span_const_void const&   data)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -114,18 +115,16 @@ STATICINLINE void buffer_sub_data(
 }
 
 template<class span_const_u32>
-requires(
-    semantic::concepts::Span<span_const_u32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_u32::value_type>,
-        std::decay_t<u32>>)
-/*!
- * \brief Part of GL_ARB_vertex_buffer_object
- * \param n GLsizei
- * \param buffers const GLuint *
- * \return void
- */
-STATICINLINE void delete_buffers(span_const_u32 const& buffers)
+requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+         std::decay_t<typename span_const_u32::value_type>,
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_ARB_vertex_buffer_object
+     * \param n GLsizei
+     * \param buffers const GLuint *
+     * \return void
+     */
+    STATICINLINE void delete_buffers(span_const_u32 const& buffers)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -140,18 +139,16 @@ STATICINLINE void delete_buffers(span_const_u32 const& buffers)
 }
 
 template<class span_u32>
-requires(
-    semantic::concepts::Span<span_u32> &&
-    std::is_same_v<
-        std::decay_t<typename span_u32::value_type>,
-        std::decay_t<u32>>)
-/*!
- * \brief Part of GL_ARB_vertex_buffer_object
- * \param n GLsizei
- * \param buffers GLuint *
- * \return void
- */
-STATICINLINE void gen_buffers(span_u32 buffers)
+requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+         std::decay_t<typename span_u32::value_type>,
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_ARB_vertex_buffer_object
+     * \param n GLsizei
+     * \param buffers GLuint *
+     * \return void
+     */
+    STATICINLINE void gen_buffers(span_u32 buffers)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -165,22 +162,20 @@ STATICINLINE void gen_buffers(span_u32 buffers)
 }
 
 template<class span_i32>
-requires(
-    semantic::concepts::Span<span_i32> &&
-    std::is_same_v<
-        std::decay_t<typename span_i32::value_type>,
-        std::decay_t<i32>>)
-/*!
- * \brief Part of GL_ARB_vertex_buffer_object
- * \param target GLenum
- * \param pname GLenum
- * \param params GLint *
- * \return void
- */
-STATICINLINE void get_buffer_parameter(
-    group::buffer_target_arb target,
-    group::buffer_prop_arb   pname,
-    span_i32                 params)
+requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+         std::decay_t<typename span_i32::value_type>,
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_ARB_vertex_buffer_object
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_buffer_parameter(
+        group::buffer_target_arb target,
+        group::buffer_prop_arb   pname,
+        span_i32                 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -196,17 +191,17 @@ STATICINLINE void get_buffer_parameter(
 
 template<class span_void>
 requires(semantic::concepts::Span<span_void>)
-/*!
- * \brief Part of GL_ARB_vertex_buffer_object
- * \param target GLenum
- * \param pname GLenum
- * \param params void **
- * \return void
- */
-STATICINLINE void get_buffer_pointerv(
-    group::buffer_target_arb       target,
-    group::buffer_pointer_name_arb pname,
-    span_void                      params)
+    /*!
+     * \brief Part of GL_ARB_vertex_buffer_object
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params void **
+     * \return void
+     */
+    STATICINLINE void get_buffer_pointerv(
+        group::buffer_target_arb       target,
+        group::buffer_pointer_name_arb pname,
+        span_void                      params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -222,16 +217,16 @@ STATICINLINE void get_buffer_pointerv(
 
 template<class span_void>
 requires(semantic::concepts::Span<span_void>)
-/*!
- * \brief Part of GL_ARB_vertex_buffer_object
- * \param target GLenum
- * \param offset GLintptrARB
- * \param size GLsizeiptrARB
- * \param data void *
- * \return void
- */
-STATICINLINE void get_buffer_sub_data(
-    group::buffer_target_arb target, GLintptrARB offset, span_void data)
+    /*!
+     * \brief Part of GL_ARB_vertex_buffer_object
+     * \param target GLenum
+     * \param offset GLintptrARB
+     * \param size GLsizeiptrARB
+     * \param data void *
+     * \return void
+     */
+    STATICINLINE void get_buffer_sub_data(
+        group::buffer_target_arb target, GLintptrARB offset, span_void data)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -257,7 +252,8 @@ STATICINLINE GLboolean is_buffer(u32 buffer)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(IsBufferARB)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
 #endif

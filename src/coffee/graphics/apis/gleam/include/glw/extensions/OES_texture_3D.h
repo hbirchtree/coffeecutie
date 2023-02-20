@@ -15,29 +15,28 @@ constexpr libc_types::u32 texture_binding_3d  = 0x806A;
 constexpr libc_types::u32 max_3d_texture_size = 0x8073;
 } // namespace values
 template<class size_3_i32, class span_const_void>
-requires(
-    semantic::concepts::Size2D<size_3_i32, i32> &&
-    semantic::concepts::Span<span_const_void>)
-/*!
- * \brief Part of GL_OES_texture_3D
- * \param target GLenum
- * \param level GLint
- * \param internalformat GLenum
- * \param width GLsizei
- * \param height GLsizei
- * \param depth GLsizei
- * \param border GLint
- * \param imageSize GLsizei
- * \param data const void *
- * \return void
- */
-STATICINLINE void compressed_tex_image_3d(
-    group::texture_target  target,
-    i32                    level,
-    group::internal_format internalformat,
-    size_3_i32 const&      width,
-    i32                    border,
-    span_const_void const& data)
+requires(semantic::concepts::Size2D<size_3_i32, i32>&&
+             semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_OES_texture_3D
+     * \param target GLenum
+     * \param level GLint
+     * \param internalformat GLenum
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param depth GLsizei
+     * \param border GLint
+     * \param imageSize GLsizei
+     * \param data const void *
+     * \return void
+     */
+    STATICINLINE void compressed_tex_image_3d(
+        group::texture_target  target,
+        i32                    level,
+        group::internal_format internalformat,
+        size_3_i32 const&      width,
+        i32                    border,
+        span_const_void const& data)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -59,32 +58,31 @@ STATICINLINE void compressed_tex_image_3d(
 }
 
 template<class size_3_i32, class span_const_void, class vec_3_i32>
-requires(
-    semantic::concepts::Vector<vec_3_i32, i32, 3> &&
-    semantic::concepts::Size2D<size_3_i32, i32> &&
-    semantic::concepts::Span<span_const_void>)
-/*!
- * \brief Part of GL_OES_texture_3D
- * \param target GLenum
- * \param level GLint
- * \param xoffset GLint
- * \param yoffset GLint
- * \param zoffset GLint
- * \param width GLsizei
- * \param height GLsizei
- * \param depth GLsizei
- * \param format GLenum
- * \param imageSize GLsizei
- * \param data const void *
- * \return void
- */
-STATICINLINE void compressed_tex_sub_image_3d(
-    group::texture_target  target,
-    i32                    level,
-    vec_3_i32 const&       xoffset,
-    size_3_i32 const&      width,
-    group::internal_format format,
-    span_const_void const& data)
+requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
+                 semantic::concepts::Size2D<size_3_i32, i32>&&
+                 semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_OES_texture_3D
+     * \param target GLenum
+     * \param level GLint
+     * \param xoffset GLint
+     * \param yoffset GLint
+     * \param zoffset GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param depth GLsizei
+     * \param format GLenum
+     * \param imageSize GLsizei
+     * \param data const void *
+     * \return void
+     */
+    STATICINLINE void compressed_tex_sub_image_3d(
+        group::texture_target  target,
+        i32                    level,
+        vec_3_i32 const&       xoffset,
+        size_3_i32 const&      width,
+        group::internal_format format,
+        span_const_void const& data)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -108,29 +106,28 @@ STATICINLINE void compressed_tex_sub_image_3d(
 }
 
 template<class size_2_i32, class vec_2_i32, class vec_3_i32>
-requires(
-    semantic::concepts::Vector<vec_3_i32, i32, 3> &&
-    semantic::concepts::Vector<vec_2_i32, i32, 2> &&
-    semantic::concepts::Size2D<size_2_i32, i32>)
-/*!
- * \brief Part of GL_OES_texture_3D
- * \param target GLenum
- * \param level GLint
- * \param xoffset GLint
- * \param yoffset GLint
- * \param zoffset GLint
- * \param x GLint
- * \param y GLint
- * \param width GLsizei
- * \param height GLsizei
- * \return void
- */
-STATICINLINE void copy_tex_sub_image_3d(
-    GLenum            target,
-    i32               level,
-    vec_3_i32 const&  xoffset,
-    vec_2_i32 const&  x,
-    size_2_i32 const& width)
+requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
+                 semantic::concepts::Vector<vec_2_i32, i32, 2>&&
+                 semantic::concepts::Size2D<size_2_i32, i32>)
+    /*!
+     * \brief Part of GL_OES_texture_3D
+     * \param target GLenum
+     * \param level GLint
+     * \param xoffset GLint
+     * \param yoffset GLint
+     * \param zoffset GLint
+     * \param x GLint
+     * \param y GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \return void
+     */
+    STATICINLINE void copy_tex_sub_image_3d(
+        GLenum            target,
+        i32               level,
+        vec_3_i32 const&  xoffset,
+        vec_2_i32 const&  x,
+        size_2_i32 const& width)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -172,7 +169,8 @@ STATICINLINE void framebuffer_texture_3d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(FramebufferTexture3DOES)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
 #endif
@@ -188,32 +186,31 @@ STATICINLINE void framebuffer_texture_3d(
 }
 
 template<class size_3_i32, class span_const_void>
-requires(
-    semantic::concepts::Size2D<size_3_i32, i32> &&
-    semantic::concepts::Span<span_const_void>)
-/*!
- * \brief Part of GL_OES_texture_3D
- * \param target GLenum
- * \param level GLint
- * \param internalformat GLenum
- * \param width GLsizei
- * \param height GLsizei
- * \param depth GLsizei
- * \param border GLint
- * \param format GLenum
- * \param type GLenum
- * \param pixels const void *
- * \return void
- */
-STATICINLINE void tex_image_3d(
-    group::texture_target  target,
-    i32                    level,
-    group::internal_format internalformat,
-    size_3_i32 const&      width,
-    i32                    border,
-    group::pixel_format    format,
-    group::pixel_type      type,
-    span_const_void const& pixels)
+requires(semantic::concepts::Size2D<size_3_i32, i32>&&
+             semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_OES_texture_3D
+     * \param target GLenum
+     * \param level GLint
+     * \param internalformat GLenum
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param depth GLsizei
+     * \param border GLint
+     * \param format GLenum
+     * \param type GLenum
+     * \param pixels const void *
+     * \return void
+     */
+    STATICINLINE void tex_image_3d(
+        group::texture_target  target,
+        i32                    level,
+        group::internal_format internalformat,
+        size_3_i32 const&      width,
+        i32                    border,
+        group::pixel_format    format,
+        group::pixel_type      type,
+        span_const_void const& pixels)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -235,33 +232,32 @@ STATICINLINE void tex_image_3d(
 }
 
 template<class size_3_i32, class span_const_void, class vec_3_i32>
-requires(
-    semantic::concepts::Vector<vec_3_i32, i32, 3> &&
-    semantic::concepts::Size2D<size_3_i32, i32> &&
-    semantic::concepts::Span<span_const_void>)
-/*!
- * \brief Part of GL_OES_texture_3D
- * \param target GLenum
- * \param level GLint
- * \param xoffset GLint
- * \param yoffset GLint
- * \param zoffset GLint
- * \param width GLsizei
- * \param height GLsizei
- * \param depth GLsizei
- * \param format GLenum
- * \param type GLenum
- * \param pixels const void *
- * \return void
- */
-STATICINLINE void tex_sub_image_3d(
-    group::texture_target  target,
-    i32                    level,
-    vec_3_i32 const&       xoffset,
-    size_3_i32 const&      width,
-    group::pixel_format    format,
-    group::pixel_type      type,
-    span_const_void const& pixels)
+requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
+                 semantic::concepts::Size2D<size_3_i32, i32>&&
+                 semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_OES_texture_3D
+     * \param target GLenum
+     * \param level GLint
+     * \param xoffset GLint
+     * \param yoffset GLint
+     * \param zoffset GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param depth GLsizei
+     * \param format GLenum
+     * \param type GLenum
+     * \param pixels const void *
+     * \return void
+     */
+    STATICINLINE void tex_sub_image_3d(
+        group::texture_target  target,
+        i32                    level,
+        vec_3_i32 const&       xoffset,
+        size_3_i32 const&      width,
+        group::pixel_format    format,
+        group::pixel_type      type,
+        span_const_void const& pixels)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

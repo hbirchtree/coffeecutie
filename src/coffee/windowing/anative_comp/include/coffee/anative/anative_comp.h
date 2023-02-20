@@ -13,7 +13,7 @@ class DoubletapDetector;
 class PinchDetector;
 class DragDetector;
 
-}
+} // namespace ndk_helper
 
 namespace anative {
 
@@ -21,11 +21,16 @@ struct Windowing : comp_app::interfaces::StaticWindowing,
                    comp_app::AppService<Windowing, comp_app::Windowing>,
                    comp_app::AppLoadableService
 {
+    Windowing()
+    {
+        priority = 511;
+    }
+
     virtual void load(entity_container& e, comp_app::app_error& ec) override;
 
     virtual comp_app::size_2d_t           size() const override;
-    virtual comp_app::detail::WindowState state() const override;
-    virtual void setState(comp_app::detail::WindowState state) override;
+    virtual comp_app::window_flags_t state() const override;
+    virtual void setState(comp_app::window_flags_t /*state*/) override;
 
     void close() final;
 };
@@ -56,6 +61,19 @@ struct KeyboardInput
     void closeVirtual() const;
 };
 
+struct MouseInput : comp_app::interfaces::MouseInput,
+                    comp_app::AppService<MouseInput, comp_app::MouseInput>
+{
+    bool mouseGrabbed() const;
+    void setMouseGrab(bool enabled);
+    comp_app::position_t position() const;
+    void warp(const comp_app::position_t &newPos);
+    MouseButton buttons() const;
+
+    comp_app::position_t m_position{};
+    MouseButton m_buttons{MouseButton::NoneBtn};
+};
+
 struct AndroidEventBus : comp_app::AppService<AndroidEventBus>,
                          comp_app::AppLoadableService
 {
@@ -64,7 +82,8 @@ struct AndroidEventBus : comp_app::AppService<AndroidEventBus>,
     void handleKeyEvent(AInputEvent* event);
     void handleMotionEvent(AInputEvent* event);
 
-    void handleGamepadEvent(AInputEvent* event);
+    void handleMouseEvent(AInputEvent* event);
+    bool handleGamepadEvent(AInputEvent* event);
     void handleInputEvent(AInputEvent* event);
     bool filterTouchEvent(AInputEvent* event);
     void handleWindowEvent(android_app* app, libc_types::i32 event);
@@ -73,16 +92,18 @@ struct AndroidEventBus : comp_app::AppService<AndroidEventBus>,
 
     entity_container* m_container;
 
-    ndk_helper::TapDetector* m_tapDetector;
+    ndk_helper::TapDetector*       m_tapDetector;
     ndk_helper::DoubletapDetector* m_doubleDetector;
-    ndk_helper::PinchDetector* m_pinchDetector;
-    ndk_helper::DragDetector* m_dragDetector;
+    ndk_helper::PinchDetector*     m_pinchDetector;
+    ndk_helper::DragDetector*      m_dragDetector;
 };
 
 using Services = comp_app::detail::TypeList<
     comp_app::PtrNativeWindowInfoService,
     Windowing,
     ControllerInput,
+    KeyboardInput,
+    MouseInput,
     AndroidEventBus>;
 
 } // namespace anative

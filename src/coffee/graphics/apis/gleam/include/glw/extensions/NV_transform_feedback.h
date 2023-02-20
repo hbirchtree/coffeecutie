@@ -45,7 +45,8 @@ STATICINLINE void active_varying(u32 program, std::string_view const& name)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ActiveVaryingNV)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -84,7 +85,8 @@ STATICINLINE void bind_buffer_base(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindBufferBaseNV)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
 #endif
@@ -108,7 +110,8 @@ STATICINLINE void bind_buffer_offset(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindBufferOffsetNV)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
 #endif
@@ -137,7 +140,8 @@ STATICINLINE void bind_buffer_range(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindBufferRangeNV)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
 #endif
@@ -164,35 +168,34 @@ STATICINLINE void end_transform_feedback()
 }
 
 template<class span_GLchar>
-requires(
-    semantic::concepts::Span<span_GLchar> &&
-    std::is_same_v<
-        std::decay_t<typename span_GLchar::value_type>,
-        std::decay_t<GLchar>>)
-/*!
- * \brief Part of GL_NV_transform_feedback
- * \param program GLuint
- * \param index GLuint
- * \param bufSize GLsizei
- * \param length GLsizei *
- * \param size GLsizei *
- * \param type GLenum *
- * \param name GLchar *
- * \return void
- */
-STATICINLINE void get_active_varying(
-    u32         program,
-    u32         index,
-    i32&        length,
-    i32&        size,
-    GLenum&     type,
-    span_GLchar name)
+requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
+         std::decay_t<typename span_GLchar::value_type>,
+         std::decay_t<GLchar>>)
+    /*!
+     * \brief Part of GL_NV_transform_feedback
+     * \param program GLuint
+     * \param index GLuint
+     * \param bufSize GLsizei
+     * \param length GLsizei *
+     * \param size GLsizei *
+     * \param type GLenum *
+     * \param name GLchar *
+     * \return void
+     */
+    STATICINLINE void get_active_varying(
+        u32         program,
+        u32         index,
+        i32&        length,
+        i32&        size,
+        GLenum&     type,
+        span_GLchar name)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetActiveVaryingNV)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -216,7 +219,8 @@ STATICINLINE void get_transform_feedback_varying(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetTransformFeedbackVaryingNV)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -238,7 +242,8 @@ get_varying_location(u32 program, std::string_view const& name)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetVaryingLocationNV)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -249,20 +254,18 @@ get_varying_location(u32 program, std::string_view const& name)
 }
 
 template<class span_const_i32>
-requires(
-    semantic::concepts::Span<span_const_i32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_i32::value_type>,
-        std::decay_t<i32>>)
-/*!
- * \brief Part of GL_NV_transform_feedback
- * \param count GLsizei
- * \param attribs const GLint *
- * \param bufferMode GLenum
- * \return void
- */
-STATICINLINE void transform_feedback_attribs(
-    i32 count, span_const_i32 const& attribs, GLenum bufferMode)
+requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
+         std::decay_t<typename span_const_i32::value_type>,
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_NV_transform_feedback
+     * \param count GLsizei
+     * \param attribs const GLint *
+     * \param bufferMode GLenum
+     * \return void
+     */
+    STATICINLINE void transform_feedback_attribs(
+        i32 count, span_const_i32 const& attribs, GLenum bufferMode)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -278,29 +281,28 @@ STATICINLINE void transform_feedback_attribs(
 }
 
 template<class span_const_i32>
-requires(
-    semantic::concepts::Span<span_const_i32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_i32::value_type>,
-        std::decay_t<i32>>)
-/*!
- * \brief Part of GL_NV_transform_feedback
- * \param program GLuint
- * \param count GLsizei
- * \param locations const GLint *
- * \param bufferMode GLenum
- * \return void
- */
-STATICINLINE void transform_feedback_varyings(
-    u32                                   program,
-    span_const_i32 const&                 locations,
-    group::transform_feedback_buffer_mode bufferMode)
+requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
+         std::decay_t<typename span_const_i32::value_type>,
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_NV_transform_feedback
+     * \param program GLuint
+     * \param count GLsizei
+     * \param locations const GLint *
+     * \param bufferMode GLenum
+     * \return void
+     */
+    STATICINLINE void transform_feedback_varyings(
+        u32                                   program,
+        span_const_i32 const&                 locations,
+        group::transform_feedback_buffer_mode bufferMode)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TransformFeedbackVaryingsNV)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -315,24 +317,22 @@ STATICINLINE void transform_feedback_varyings(
 }
 
 template<class span_const_i32>
-requires(
-    semantic::concepts::Span<span_const_i32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_i32::value_type>,
-        std::decay_t<i32>>)
-/*!
- * \brief Part of GL_NV_transform_feedback
- * \param count GLsizei
- * \param attribs const GLint *
- * \param nbuffers GLsizei
- * \param bufstreams const GLint *
- * \param bufferMode GLenum
- * \return void
- */
-STATICINLINE void transform_feedback_stream_attribs(
-    span_const_i32 const& attribs,
-    span_const_i32 const& bufstreams,
-    GLenum                bufferMode)
+requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
+         std::decay_t<typename span_const_i32::value_type>,
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_NV_transform_feedback
+     * \param count GLsizei
+     * \param attribs const GLint *
+     * \param nbuffers GLsizei
+     * \param bufstreams const GLint *
+     * \param bufferMode GLenum
+     * \return void
+     */
+    STATICINLINE void transform_feedback_stream_attribs(
+        span_const_i32 const& attribs,
+        span_const_i32 const& bufstreams,
+        GLenum                bufferMode)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

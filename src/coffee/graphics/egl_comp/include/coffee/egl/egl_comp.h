@@ -21,6 +21,11 @@ struct EGLDataDeleter
 struct DisplayHandle : comp_app::AppService<DisplayHandle>,
                        comp_app::AppLoadableService
 {
+    DisplayHandle()
+    {
+        priority = 512;
+    }
+
     virtual void load(entity_container&, comp_app::app_error& ec) final;
     virtual void unload(entity_container&, comp_app::app_error& ec) final;
 
@@ -36,6 +41,11 @@ struct GraphicsContext : comp_app::interfaces::GraphicsContext,
                          comp_app::AppLoadableService
 {
     using type = GraphicsContext;
+
+    GraphicsContext()
+    {
+        priority = 513;
+    }
 
     virtual void load(entity_container& e, comp_app::app_error& ec) final;
     virtual void unload(entity_container& c, comp_app::app_error&) final;
@@ -55,6 +65,11 @@ struct GraphicsFramebuffer : comp_app::interfaces::GraphicsFramebuffer,
                              comp_app::AppService<GraphicsFramebuffer>,
                              comp_app::AppLoadableService
 {
+    GraphicsFramebuffer()
+    {
+        priority = 514;
+    }
+
     virtual void load(entity_container& e, comp_app::app_error& ec) final;
     virtual void unload(entity_container& e, comp_app::app_error& ec) final;
 
@@ -79,16 +94,15 @@ struct GraphicsSwapControl : comp_app::interfaces::GraphicsSwapControl,
     entity_container* m_container;
 };
 
-struct Windowing
-    : comp_app::interfaces::StaticWindowing,
-      comp_app::AppService<Windowing, comp_app::Windowing>,
-      comp_app::AppLoadableService
+struct Windowing : comp_app::interfaces::StaticWindowing,
+                   comp_app::AppService<Windowing, comp_app::Windowing>,
+                   comp_app::AppLoadableService
 {
     void load(entity_container& e, comp_app::app_error& ec);
 
-    comp_app::size_2d_t           size() const final;
-    comp_app::detail::WindowState state() const final;
-    void                          setState(comp_app::detail::WindowState) final;
+    comp_app::size_2d_t      size() const final;
+    comp_app::window_flags_t state() const final;
+    void                     setState(comp_app::window_flags_t) final;
 
   private:
     entity_container* m_container;

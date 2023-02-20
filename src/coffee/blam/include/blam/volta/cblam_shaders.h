@@ -110,6 +110,12 @@ struct alignas(4) shader_base /* aka shdr */
     Vecf3            emission;
     Vecf3            tint;
     physics_material physics;
+
+    template<class T>
+    T const* as() const
+    {
+        return reinterpret_cast<T const*>(this);
+    }
 };
 
 struct texture_scrolling_animation

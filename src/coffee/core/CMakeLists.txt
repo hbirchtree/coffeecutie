@@ -124,74 +124,6 @@ coffee_library (
     )
 
 #
-# libz compression and whatever compression Windows has
-#
-if(NOT EMSCRIPTEN AND NOT APPLE)
-    find_package ( ZLIB )
-endif()
-
-find_package ( lz4 CONFIG )
-find_package ( zstd CONFIG )
-
-coffee_library (
-    TARGET CoreCompression
-
-    SOURCES
-    private/datastorage/compression/libz.cpp
-
-    LIBRARIES CoreCommon
-
-    HEADER_DIRS
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/compression>
-    HEADER_BASE coffee
-    )
-
-if(lz4_FOUND)
-    target_sources ( CoreCompression PRIVATE
-        private/datastorage/compression/lz4_codec.cpp
-        )
-    target_link_libraries ( CoreCompression PUBLIC
-        lz4::lz4
-        )
-    target_compile_definitions ( CoreCompression PUBLIC
-        -DCOFFEE_COMPRESS_LZ4
-        )
-endif()
-
-if(TARGET ZLIB::ZLIB AND NOT EMSCRIPTEN AND NOT APPLE)
-    target_link_libraries ( CoreCompression PUBLIC
-        ZLIB::ZLIB
-        )
-elseif(EMSCRIPTEN)
-    target_compile_options ( CoreCompression PUBLIC
-        -sUSE_ZLIB=1
-       )
-   target_link_options ( CoreCompression PUBLIC
-        -sUSE_ZLIB=1
-       )
-elseif(ANDROID OR APPLE)
-    target_link_libraries ( CoreCompression PUBLIC
-        z
-        )
-else()
-    target_sources ( CoreCompression PRIVATE
-        zlib/inflate.c
-        zlib/deflate.c
-
-        zlib/infback.c
-        zlib/inffast.c
-        zlib/inftrees.c
-        zlib/trees.c
-        zlib/adler32.c
-        zlib/crc32.c
-        zlib/zutil.c
-        )
-    target_include_directories ( CoreCompression PRIVATE
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/zlib/include>
-        )
-endif()
-
-#
 # Virtual filesystem
 #
 coffee_library (
@@ -202,7 +134,8 @@ coffee_library (
 
     LIBRARIES
     CoreCommon
-    CoreCompression
+    CoreZ
+    CoreZstd
 
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/virtfs>

@@ -18,7 +18,8 @@ STATICINLINE void bind_sampler(u32 unit, u32 sampler)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindSampler)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsSampler)
             glIsSampler(sampler);
 #endif
@@ -28,18 +29,16 @@ STATICINLINE void bind_sampler(u32 unit, u32 sampler)
 }
 
 template<class span_const_u32>
-requires(
-    semantic::concepts::Span<span_const_u32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_u32::value_type>,
-        std::decay_t<u32>>)
-/*!
- * \brief Part of GL_ARB_sampler_objects
- * \param count GLsizei
- * \param samplers const GLuint *
- * \return void
- */
-STATICINLINE void delete_samplers(span_const_u32 const& samplers)
+requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+         std::decay_t<typename span_const_u32::value_type>,
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_ARB_sampler_objects
+     * \param count GLsizei
+     * \param samplers const GLuint *
+     * \return void
+     */
+    STATICINLINE void delete_samplers(span_const_u32 const& samplers)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -54,18 +53,16 @@ STATICINLINE void delete_samplers(span_const_u32 const& samplers)
 }
 
 template<class span_u32>
-requires(
-    semantic::concepts::Span<span_u32> &&
-    std::is_same_v<
-        std::decay_t<typename span_u32::value_type>,
-        std::decay_t<u32>>)
-/*!
- * \brief Part of GL_ARB_sampler_objects
- * \param count GLsizei
- * \param samplers GLuint *
- * \return void
- */
-STATICINLINE void gen_samplers(span_u32 samplers)
+requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+         std::decay_t<typename span_u32::value_type>,
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_ARB_sampler_objects
+     * \param count GLsizei
+     * \param samplers GLuint *
+     * \return void
+     */
+    STATICINLINE void gen_samplers(span_u32 samplers)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -79,26 +76,25 @@ STATICINLINE void gen_samplers(span_u32 samplers)
 }
 
 template<class span_i32>
-requires(
-    semantic::concepts::Span<span_i32> &&
-    std::is_same_v<
-        std::decay_t<typename span_i32::value_type>,
-        std::decay_t<i32>>)
-/*!
- * \brief Part of GL_ARB_sampler_objects
- * \param sampler GLuint
- * \param pname GLenum
- * \param params GLint *
- * \return void
- */
-STATICINLINE void get_sampler_parameter_iiv(
-    u32 sampler, group::sampler_parameter_i pname, span_i32 params)
+requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+         std::decay_t<typename span_i32::value_type>,
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_ARB_sampler_objects
+     * \param sampler GLuint
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_sampler_parameter_iiv(
+        u32 sampler, group::sampler_parameter_i pname, span_i32 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetSamplerParameterIiv)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsSampler)
             glIsSampler(sampler);
 #endif
@@ -111,26 +107,25 @@ STATICINLINE void get_sampler_parameter_iiv(
 }
 
 template<class span_u32>
-requires(
-    semantic::concepts::Span<span_u32> &&
-    std::is_same_v<
-        std::decay_t<typename span_u32::value_type>,
-        std::decay_t<u32>>)
-/*!
- * \brief Part of GL_ARB_sampler_objects
- * \param sampler GLuint
- * \param pname GLenum
- * \param params GLuint *
- * \return void
- */
-STATICINLINE void get_sampler_parameter_iuiv(
-    u32 sampler, group::sampler_parameter_i pname, span_u32 params)
+requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+         std::decay_t<typename span_u32::value_type>,
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_ARB_sampler_objects
+     * \param sampler GLuint
+     * \param pname GLenum
+     * \param params GLuint *
+     * \return void
+     */
+    STATICINLINE void get_sampler_parameter_iuiv(
+        u32 sampler, group::sampler_parameter_i pname, span_u32 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetSamplerParameterIuiv)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsSampler)
             glIsSampler(sampler);
 #endif
@@ -143,26 +138,25 @@ STATICINLINE void get_sampler_parameter_iuiv(
 }
 
 template<class span_f32>
-requires(
-    semantic::concepts::Span<span_f32> &&
-    std::is_same_v<
-        std::decay_t<typename span_f32::value_type>,
-        std::decay_t<f32>>)
-/*!
- * \brief Part of GL_ARB_sampler_objects
- * \param sampler GLuint
- * \param pname GLenum
- * \param params GLfloat *
- * \return void
- */
-STATICINLINE void get_sampler_parameter(
-    u32 sampler, group::sampler_parameter_f pname, span_f32 params)
+requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+         std::decay_t<typename span_f32::value_type>,
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_ARB_sampler_objects
+     * \param sampler GLuint
+     * \param pname GLenum
+     * \param params GLfloat *
+     * \return void
+     */
+    STATICINLINE void get_sampler_parameter(
+        u32 sampler, group::sampler_parameter_f pname, span_f32 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetSamplerParameterfv)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsSampler)
             glIsSampler(sampler);
 #endif
@@ -175,26 +169,25 @@ STATICINLINE void get_sampler_parameter(
 }
 
 template<class span_i32>
-requires(
-    semantic::concepts::Span<span_i32> &&
-    std::is_same_v<
-        std::decay_t<typename span_i32::value_type>,
-        std::decay_t<i32>>)
-/*!
- * \brief Part of GL_ARB_sampler_objects
- * \param sampler GLuint
- * \param pname GLenum
- * \param params GLint *
- * \return void
- */
-STATICINLINE void get_sampler_parameter(
-    u32 sampler, group::sampler_parameter_i pname, span_i32 params)
+requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+         std::decay_t<typename span_i32::value_type>,
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_ARB_sampler_objects
+     * \param sampler GLuint
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_sampler_parameter(
+        u32 sampler, group::sampler_parameter_i pname, span_i32 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetSamplerParameteriv)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsSampler)
             glIsSampler(sampler);
 #endif
@@ -217,7 +210,8 @@ STATICINLINE GLboolean is_sampler(u32 sampler)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(IsSampler)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsSampler)
             glIsSampler(sampler);
 #endif
@@ -228,26 +222,27 @@ STATICINLINE GLboolean is_sampler(u32 sampler)
 }
 
 template<class span_const_i32>
-requires(
-    semantic::concepts::Span<span_const_i32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_i32::value_type>,
-        std::decay_t<i32>>)
-/*!
- * \brief Part of GL_ARB_sampler_objects
- * \param sampler GLuint
- * \param pname GLenum
- * \param param const GLint *
- * \return void
- */
-STATICINLINE void sampler_parameter_iiv(
-    u32 sampler, group::sampler_parameter_i pname, span_const_i32 const& param)
+requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
+         std::decay_t<typename span_const_i32::value_type>,
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_ARB_sampler_objects
+     * \param sampler GLuint
+     * \param pname GLenum
+     * \param param const GLint *
+     * \return void
+     */
+    STATICINLINE void sampler_parameter_iiv(
+        u32                        sampler,
+        group::sampler_parameter_i pname,
+        span_const_i32 const&      param)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(SamplerParameterIiv)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsSampler)
             glIsSampler(sampler);
 #endif
@@ -260,26 +255,27 @@ STATICINLINE void sampler_parameter_iiv(
 }
 
 template<class span_const_u32>
-requires(
-    semantic::concepts::Span<span_const_u32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_u32::value_type>,
-        std::decay_t<u32>>)
-/*!
- * \brief Part of GL_ARB_sampler_objects
- * \param sampler GLuint
- * \param pname GLenum
- * \param param const GLuint *
- * \return void
- */
-STATICINLINE void sampler_parameter_iuiv(
-    u32 sampler, group::sampler_parameter_i pname, span_const_u32 const& param)
+requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+         std::decay_t<typename span_const_u32::value_type>,
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_ARB_sampler_objects
+     * \param sampler GLuint
+     * \param pname GLenum
+     * \param param const GLuint *
+     * \return void
+     */
+    STATICINLINE void sampler_parameter_iuiv(
+        u32                        sampler,
+        group::sampler_parameter_i pname,
+        span_const_u32 const&      param)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(SamplerParameterIuiv)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsSampler)
             glIsSampler(sampler);
 #endif
@@ -305,7 +301,8 @@ STATICINLINE void sampler_parameter(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(SamplerParameterf)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsSampler)
             glIsSampler(sampler);
 #endif
@@ -315,26 +312,27 @@ STATICINLINE void sampler_parameter(
 }
 
 template<class span_const_f32>
-requires(
-    semantic::concepts::Span<span_const_f32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_f32::value_type>,
-        std::decay_t<f32>>)
-/*!
- * \brief Part of GL_ARB_sampler_objects
- * \param sampler GLuint
- * \param pname GLenum
- * \param param const GLfloat *
- * \return void
- */
-STATICINLINE void sampler_parameter(
-    u32 sampler, group::sampler_parameter_f pname, span_const_f32 const& param)
+requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+         std::decay_t<typename span_const_f32::value_type>,
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_ARB_sampler_objects
+     * \param sampler GLuint
+     * \param pname GLenum
+     * \param param const GLfloat *
+     * \return void
+     */
+    STATICINLINE void sampler_parameter(
+        u32                        sampler,
+        group::sampler_parameter_f pname,
+        span_const_f32 const&      param)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(SamplerParameterfv)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsSampler)
             glIsSampler(sampler);
 #endif
@@ -361,7 +359,8 @@ STATICINLINE void sampler_parameter(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(SamplerParameteri)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsSampler)
             glIsSampler(sampler);
 #endif
@@ -371,26 +370,27 @@ STATICINLINE void sampler_parameter(
 }
 
 template<class span_const_i32>
-requires(
-    semantic::concepts::Span<span_const_i32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_i32::value_type>,
-        std::decay_t<i32>>)
-/*!
- * \brief Part of GL_ARB_sampler_objects
- * \param sampler GLuint
- * \param pname GLenum
- * \param param const GLint *
- * \return void
- */
-STATICINLINE void sampler_parameter(
-    u32 sampler, group::sampler_parameter_i pname, span_const_i32 const& param)
+requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
+         std::decay_t<typename span_const_i32::value_type>,
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_ARB_sampler_objects
+     * \param sampler GLuint
+     * \param pname GLenum
+     * \param param const GLint *
+     * \return void
+     */
+    STATICINLINE void sampler_parameter(
+        u32                        sampler,
+        group::sampler_parameter_i pname,
+        span_const_i32 const&      param)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(SamplerParameteriv)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsSampler)
             glIsSampler(sampler);
 #endif

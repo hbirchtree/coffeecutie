@@ -148,18 +148,10 @@ struct global : stl_types::non_copy
 {
     bl_string name;
     type_t    type;
-    u16       pad;
-    u32       _pad;
-    union
-    {
-        struct
-        {
-            u16 index;
-            u16 salt;
-        };
-        u32 value;
-    };
-    u32 padding[12];
+    u16       _pad1[3] = {};
+    u16       index{0};
+    u16       salt{0};
+    u32       _pad2[12] = {};
 };
 
 struct function_declaration : stl_types::non_copy

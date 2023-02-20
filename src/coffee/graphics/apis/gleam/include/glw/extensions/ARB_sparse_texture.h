@@ -16,28 +16,27 @@ constexpr libc_types::u32 sparse_texture_full_array_cube_mipmaps = 0x91A9;
 constexpr libc_types::u32 num_sparse_levels                      = 0x91AA;
 } // namespace values
 template<class size_3_i32, class vec_3_i32>
-requires(
-    semantic::concepts::Vector<vec_3_i32, i32, 3> &&
-    semantic::concepts::Size2D<size_3_i32, i32>)
-/*!
- * \brief Part of GL_ARB_sparse_texture
- * \param target GLenum
- * \param level GLint
- * \param xoffset GLint
- * \param yoffset GLint
- * \param zoffset GLint
- * \param width GLsizei
- * \param height GLsizei
- * \param depth GLsizei
- * \param commit GLboolean
- * \return void
- */
-STATICINLINE void tex_page_commitment(
-    GLenum            target,
-    i32               level,
-    vec_3_i32 const&  xoffset,
-    size_3_i32 const& width,
-    bool              commit)
+requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
+             semantic::concepts::Size2D<size_3_i32, i32>)
+    /*!
+     * \brief Part of GL_ARB_sparse_texture
+     * \param target GLenum
+     * \param level GLint
+     * \param xoffset GLint
+     * \param yoffset GLint
+     * \param zoffset GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param depth GLsizei
+     * \param commit GLboolean
+     * \return void
+     */
+    STATICINLINE void tex_page_commitment(
+        GLenum            target,
+        i32               level,
+        vec_3_i32 const&  xoffset,
+        size_3_i32 const& width,
+        bool              commit)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

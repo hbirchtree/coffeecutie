@@ -4,6 +4,21 @@
 #include "rhi_versioning.h"
 
 #include <glw/extensions/EXT_disjoint_timer_query.h>
+#include <glw/extensions/OES_rgb8_rgba8.h>
+
+#include <glw/extensions/ARB_texture_compression_bptc.h>
+#include <glw/extensions/ARB_texture_compression_rgtc.h>
+#include <glw/extensions/EXT_texture_compression_bptc.h>
+#include <glw/extensions/EXT_texture_compression_dxt1.h>
+#include <glw/extensions/EXT_texture_compression_rgtc.h>
+#include <glw/extensions/EXT_texture_compression_s3tc.h>
+#include <glw/extensions/EXT_texture_compression_s3tc_srgb.h>
+#include <glw/extensions/IMG_texture_compression_pvrtc.h>
+#include <glw/extensions/IMG_texture_compression_pvrtc2.h>
+#include <glw/extensions/KHR_texture_compression_astc_hdr.h>
+#include <glw/extensions/KHR_texture_compression_astc_ldr.h>
+#include <glw/extensions/OES_compressed_ETC1_RGB8_texture.h>
+
 #include <peripherals/concepts/graphics_api.h>
 #include <peripherals/semantic/enum/data_types.h>
 #include <peripherals/stl/any_of.h>
@@ -97,6 +112,8 @@ using namespace semantic::concepts::graphics;
 using stl_types::Pair;
 using stl_types::Tup;
 
+template<typename T = group::texture_target>
+requires std::is_same_v<T, group::texture_target>
 inline group::texture_target to(textures::type type)
 {
     type    = type & textures::type::type_mask;
@@ -109,6 +126,36 @@ inline group::texture_target to(textures::type type)
         Throw(undefined_behavior("failed to match mapping"));
     return it->second;
 }
+
+#if GLEAM_MAX_VERSION >= 0x430 || GLEAM_MAX_VERSION_ES >= 0x320
+template<typename T>
+requires std::is_same_v<T, group::copy_image_sub_data_target>
+inline group::copy_image_sub_data_target to(textures::type type)
+{
+    using std::array;
+    using std::pair;
+    using copy_t = group::copy_image_sub_data_target;
+
+    constexpr array<pair<textures::type, copy_t>, 5> tex_copy_type = {{
+        {textures::type::d2, copy_t::texture_2d},
+        {textures::type::cube, copy_t::texture_cube_map},
+        {textures::type::d2_array, copy_t::texture_2d_array},
+        {textures::type::d3, copy_t::texture_3d},
+        {textures::type::cube_array, copy_t::texture_cube_map_array},
+    }};
+
+    type = type & textures::type::type_mask;
+
+    auto it = std::find_if(
+        tex_copy_type.begin(), tex_copy_type.end(), [type](auto const& v) {
+            return type == v.first;
+        });
+
+    if(it == tex_copy_type.end())
+        Throw(undefined_behavior("failed to match mapping"));
+    return it->second;
+}
+#endif
 
 template<typename T = group::buffer_target_arb>
 requires(std::is_same_v<T, group::buffer_target_arb>)
@@ -197,7 +244,7 @@ template<typename T>
 requires std::is_same_v<T, group::sized_internal_format> || std::
     is_same_v<T, group::internal_format>
 inline Tup<T, group::pixel_type, group::pixel_format> to(
-    PixDesc const& fmt, features::textures const& features)
+    PixDesc const& fmt, [[maybe_unused]] features::textures const& features)
 {
     using ::enum_helpers::feval;
 
@@ -209,7 +256,6 @@ inline Tup<T, group::pixel_type, group::pixel_format> to(
     using F = typing::pixels::PixFlg;
     using C = typing::PixCmp;
     using M = typing::pixels::CompFlags;
-    using B = typing::pixels::BitFmt;
 
     if(auto fmt_ = detail::to_internal<T>(fmt);
        static_cast<u32>(std::get<0>(fmt_)) != 0)
@@ -217,13 +263,13 @@ inline Tup<T, group::pixel_type, group::pixel_format> to(
         return fmt_;
     }
 
-    constexpr std::array<std::pair<P, Tup<f, b, p>>, 22> direct_mapping = {{
+    constexpr std::array<std::pair<P, Tup<f, b, p>>, 23> direct_mapping = {{
 #if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
         {P::R8, {f::r8, b::unsigned_byte, p::red}},
-        {P::R16F, {f::r16f, b::float_, p::rgb}},
+        {P::R16F, {f::r16f, b::half_float, p::red}},
         {P::R32F, {f::r32f, b::float_, p::red}},
         {P::RG8, {f::rg8, b::unsigned_byte, p::rg}},
-        {P::RG16F, {f::rg16f, b::float_, p::rgb}},
+        {P::RG16F, {f::rg16f, b::half_float, p::rg}},
         {P::RG32F, {f::rg32f, b::float_, p::rg}},
 #endif
 
@@ -233,8 +279,8 @@ inline Tup<T, group::pixel_type, group::pixel_format> to(
 #endif
 #if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
         {P::RGB8, {f::rgb8, b::unsigned_byte, p::rgb}},
-        {P::RGB16F, {f::rgb16f, b::float_, p::rgb}},
-        {P::RGB32F, {f::rgb32f, b::float_, p::rgb}},
+        {P::RGB16F, {f::rgb16f, b::half_float, p::rgb}},
+        {P::RGB32F, {f::rgb32f, b::half_float, p::rgb}},
 #endif
 #if defined(GL_UNSIGNED_INT_5_9_9_9_REV)
         {P::RGB9E5, {f::rgb9_e5, b::unsigned_int_5_9_9_9_rev, p::rgba}},
@@ -259,6 +305,7 @@ inline Tup<T, group::pixel_type, group::pixel_format> to(
         /* Special formats */
         {P::Depth16,
          {f::depth_component16, b::unsigned_short, p::depth_component}},
+//        {P::Depth16F, {f::depth_component, b::half_float, p::depth_component}},
 #if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
         {P::Depth32F, {f::depth_component32f, b::float_, p::depth_component}},
         {P::Depth24Stencil8,
@@ -275,72 +322,22 @@ inline Tup<T, group::pixel_type, group::pixel_format> to(
     if(it != direct_mapping.end())
         return it->second;
 
-    switch(fmt.pixfmt)
-    {
-#if defined(GL_KHR_texture_compression_astc_ldr)
-    case P::ASTC: {
-        switch(fmt.cmpflg)
-        {
-        case M::ASTC_4x4:
-            return {f::compressed_rgba_astc_4x4_khr, b::unsigned_byte, p::rgba};
-        case M::ASTC_8x8:
-            return {f::compressed_rgba_astc_8x8_khr, b::unsigned_byte, p::rgba};
-        case M::ASTC_10x10:
-            return {
-                f::compressed_rgba_astc_10x10_khr, b::unsigned_byte, p::rgba};
-        case M::ASTC_12x12:
-            return {
-                f::compressed_rgba_astc_12x12_khr, b::unsigned_byte, p::rgba};
-        default:
-            break;
-        }
-        break;
-    }
-#endif
-    case P::BCn: {
-        switch(fmt.cmpflg)
-        {
-        case M::BC1: {
-#if defined(GL_EXT_texture_compression_s3tc_srgb)
-            if(feval(fmt.pixflg & F::sRGB))
-            {
-                return {
-                    f::compressed_srgb_s3tc_dxt1_ext, b::unsigned_byte, p::rgb};
-            }
-#endif
-#if defined(GL_EXT_texture_compression_s3tc) \
-    || defined(GL_EXT_texture_compression_dxt1)
-            switch(fmt.comp)
-            {
-            case C::RGB:
-                return {
-                    f::compressed_rgb_s3tc_dxt1_ext, b::unsigned_byte, p::rgb};
-            case C::RGBA:
-                return {
-                    f::compressed_rgba_s3tc_dxt1_ext,
-                    b::unsigned_byte,
-                    p::rgba};
-            default:
-                break;
-            }
-#endif
-            break;
-        }
-#if defined(GL_EXT_texture_compression_s3tc)
-        case M::BC2:
-            return {
-                f::compressed_rgba_s3tc_dxt3_ext, b::unsigned_byte, p::rgba};
-        case M::BC3:
-            return {
-                f::compressed_rgba_s3tc_dxt5_ext, b::unsigned_byte, p::rgba};
-#endif
 #if GLEAM_MAX_VERSION >= 0x300
+    if(fmt.pixfmt == P::BCn && features.tex.gl.rgtc)
+        switch(fmt.cmpflg)
+        {
         case M::BC4:
             return {f::compressed_red_rgtc1, b::unsigned_byte, p::red};
         case M::BC5:
             return {f::compressed_rg_rgtc2, b::unsigned_byte, p::rg};
+        default:
+            break;
+        }
 #endif
 #if GLEAM_MAX_VERSION >= 0x420
+    if(fmt.pixfmt == P::BCn && features.tex.gl.bptc)
+        switch(fmt.cmpflg)
+        {
         case M::BC6H:
             return {
                 f::compressed_rgb_bptc_unsigned_float,
@@ -348,13 +345,12 @@ inline Tup<T, group::pixel_type, group::pixel_format> to(
                 p::rgb};
         case M::BC7:
             return {f::compressed_rgba_bptc_unorm, b::unsigned_byte, p::rgba};
-#endif
         default:
             break;
         }
-    }
+#endif
 #if GLEAM_MAX_VERSION >= 0x430 || GLEAM_MAX_VERSION_ES >= 0x300
-    case P::ETC2: {
+    if(fmt.pixfmt == P::ETC2 && features.tex.gl.etc2)
         switch(fmt.comp)
         {
         case C::RGB:
@@ -372,13 +368,105 @@ inline Tup<T, group::pixel_type, group::pixel_format> to(
         default:
             break;
         }
-    }
 #endif
-    default:
-        break;
-    }
+#if GLEAM_MAX_VERSION_ES >= 0x320
+    if(fmt.pixfmt == P::ASTC && features.tex.gl.astc)
+        switch(fmt.cmpflg)
+        {
+        case M::ASTC_4x4:
+            return {f::compressed_rgba_astc_4x4, b::unsigned_byte, p::rgba};
+        case M::ASTC_8x8:
+            return {f::compressed_rgba_astc_8x8, b::unsigned_byte, p::rgba};
+        case M::ASTC_10x10:
+            return {f::compressed_rgba_astc_10x10, b::unsigned_byte, p::rgba};
+        case M::ASTC_12x12:
+            return {f::compressed_rgba_astc_12x12, b::unsigned_byte, p::rgba};
+        default:
+            break;
+        }
+#endif
 
-    /* Formats behind extensions */
+        /* Formats behind extensions */
+#if defined(GL_EXT_texture_compression_s3tc)
+    if(fmt.pixfmt == P::BCn && features.tex.ext.s3tc)
+        switch(fmt.cmpflg)
+        {
+        case M::BC1: {
+            if(feval(fmt.pixflg & F::sRGB))
+            {
+                return {
+                    f::compressed_srgb_s3tc_dxt1_ext, b::unsigned_byte, p::rgb};
+            }
+            switch(fmt.comp)
+            {
+            case C::RGB:
+                return {
+                    f::compressed_rgb_s3tc_dxt1_ext, b::unsigned_byte, p::rgb};
+            case C::RGBA:
+                return {
+                    f::compressed_rgba_s3tc_dxt1_ext,
+                    b::unsigned_byte,
+                    p::rgba};
+            default:
+                break;
+            }
+            break;
+        }
+        case M::BC2:
+            return {
+                f::compressed_rgba_s3tc_dxt3_ext, b::unsigned_byte, p::rgba};
+        case M::BC3:
+            return {
+                f::compressed_rgba_s3tc_dxt5_ext, b::unsigned_byte, p::rgba};
+        default:
+            break;
+        };
+#endif
+#if defined(GL_ARB_texture_compression_rgtc)
+    if(fmt.pixfmt == P::BCn && features.tex.arb.rgtc)
+        switch(fmt.cmpflg)
+        {
+        case M::BC4:
+            return {f::compressed_red_rgtc1, b::unsigned_byte, p::red};
+        case M::BC5:
+            return {f::compressed_rg_rgtc2, b::unsigned_byte, p::rg};
+        default:
+            break;
+        }
+#endif
+#if defined(GL_ARB_texture_compression_bptc)
+    if(fmt.pixfmt == P::BCn && features.tex.arb.bptc)
+        switch(fmt.cmpflg)
+        {
+        case M::BC6H:
+            return {
+                f::compressed_rgb_bptc_unsigned_float,
+                b::unsigned_byte,
+                p::rgb};
+        case M::BC7:
+            return {f::compressed_rgba_bptc_unorm, b::unsigned_byte, p::rgba};
+        default:
+            break;
+        }
+#endif
+#if defined(GL_KHR_texture_compression_astc_ldr)
+    if(fmt.pixfmt == P::ASTC && features.tex.khr.astc)
+        switch(fmt.cmpflg)
+        {
+        case M::ASTC_4x4:
+            return {f::compressed_rgba_astc_4x4_khr, b::unsigned_byte, p::rgba};
+        case M::ASTC_8x8:
+            return {f::compressed_rgba_astc_8x8_khr, b::unsigned_byte, p::rgba};
+        case M::ASTC_10x10:
+            return {
+                f::compressed_rgba_astc_10x10_khr, b::unsigned_byte, p::rgba};
+        case M::ASTC_12x12:
+            return {
+                f::compressed_rgba_astc_12x12_khr, b::unsigned_byte, p::rgba};
+        default:
+            break;
+        }
+#endif
 
 #if defined(GL_OES_rgb8_rgba8)
     if(fmt.pixfmt == P::RGBA8 && features.tex.oes.rgba8)
@@ -387,11 +475,9 @@ inline Tup<T, group::pixel_type, group::pixel_format> to(
     } else if(fmt.pixfmt == P::RGB8 && features.tex.oes.rgba8)
     {
         return {f::rgb8_oes, b::unsigned_byte, p::rgb};
-    } else
-#endif
-    {
-        Throw(undefined_behavior("unhandled pixel format"));
     }
+#endif
+    Throw(undefined_behavior("unhandled pixel format"));
 }
 
 template<typename T = group::framebuffer_attachment>
@@ -443,11 +529,11 @@ inline T to(render_targets::attachment attachment, u32 i)
 template<typename T = group::buffer_usage_arb>
 requires stl_types::
     is_any_of<T, group::buffer_usage_arb, group::vertex_buffer_object_usage>
-inline T to(semantic::RSCA flags)
+inline T to(features::buffers const& features, semantic::RSCA flags)
 {
     using enum_helpers::feval;
     using semantic::RSCA;
-    if(feval(flags, RSCA::Persistent))
+    if(feval(flags, RSCA::Persistent) && features.mapping)
     {
 #if GLEAM_MAX_VERSION >= 0x200 || GLEAM_MAX_VERSION_ES >= 0x300
         if(feval(flags, RSCA::ReadWrite))
@@ -458,7 +544,7 @@ inline T to(semantic::RSCA flags)
         return T::dynamic_draw;
     }
 
-    if(feval(flags, RSCA::Streaming))
+    if(feval(flags, RSCA::Streaming) && features.mapping)
     {
 #if GLEAM_MAX_VERSION >= 0x200 || GLEAM_MAX_VERSION_ES >= 0x300
         if(feval(flags, RSCA::ReadWrite | RSCA::Streaming))
@@ -472,7 +558,7 @@ inline T to(semantic::RSCA flags)
 #if GLEAM_MAX_VERSION >= 0x200 || GLEAM_MAX_VERSION_ES >= 0x300
     if(feval(flags, RSCA::ReadOnly))
         return T::static_draw;
-    if(feval(flags, RSCA::WriteOnly))
+    if(feval(flags, RSCA::WriteOnly) && features.mapping)
         return T::static_read;
 #endif
     return T::static_draw;
@@ -510,19 +596,25 @@ inline group::buffer_storage_mask to(semantic::RSCA flags)
     || defined(GL_OES_mapbuffer)
 template<typename T>
 requires std::is_same_v<T, group::buffer_access_arb>
-inline group::buffer_access_arb to(semantic::RSCA flags)
+inline group::buffer_access_arb to(
+    features::buffers const& features, [[maybe_unused]] semantic::RSCA flags)
 {
     using enum_helpers::feval;
     using semantic::RSCA;
 #if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x310
-    if(feval(flags, RSCA::ReadWrite))
-        return group::buffer_access_arb::read_write;
-    if(feval(flags, RSCA::WriteOnly))
-        return group::buffer_access_arb::write_only;
-    return group::buffer_access_arb::read_only;
-#else
+    if(features.mapping)
+    {
+        if(feval(flags, RSCA::ReadWrite))
+            return group::buffer_access_arb::read_write;
+        if(feval(flags, RSCA::WriteOnly))
+            return group::buffer_access_arb::write_only;
+        return group::buffer_access_arb::read_only;
+    }
+#endif
+#if defined(GL_OES_mapbuffer)
     return group::buffer_access_arb::write_only_oes;
 #endif
+    Throw(undefined_behavior("no flag mapped"));
 }
 #endif
 
@@ -530,9 +622,9 @@ inline group::buffer_access_arb to(semantic::RSCA flags)
 template<typename T>
 requires(std::is_same_v<T, group::map_buffer_access_mask>) inline group::
     map_buffer_access_mask
-    to(features::buffers const& features,
-       semantic::RSCA           flags,
-       bool                     whole_buffer)
+    to([[maybe_unused]] features::buffers const& features,
+       semantic::RSCA                            flags,
+       bool                                      whole_buffer)
 {
     using enum_helpers::feval;
     using semantic::RSCA;
@@ -604,7 +696,7 @@ inline T vertex_type_to(semantic::TypeEnum type)
 
 template<typename T>
 requires std::is_same_v<T, group::vertex_attrib_int>
-inline T vertex_type_to(semantic::TypeEnum type)
+inline T vertex_type_to(semantic::TypeEnum /*type*/)
 {
     Throw(undefined_behavior("unhandled vertex type"));
 }

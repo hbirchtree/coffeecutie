@@ -19,6 +19,11 @@ struct Context : comp_app::AppService<Context>, comp_app::AppLoadableService
         comp_app::BasicEventBus<Coffee::Display::Event>>;
     using proxy_type = comp_app::detail::restricted::proxy_t<Context>;
 
+    Context()
+    {
+        priority = 512;
+    }
+
     virtual void load(entity_container& c, comp_app::app_error&) final;
     virtual void unload(entity_container& c, comp_app::app_error&) final;
     void         end_restricted(proxy_type& p, time_point const&);
@@ -34,6 +39,10 @@ struct Windowing : comp_app::interfaces::Windowing,
         comp_app::EventBus<Coffee::Display::Event>>;
     using proxy_type = comp_app::detail::restricted::proxy_t<Windowing>;
 
+    Windowing()
+    {
+        priority = 513;
+    }
     virtual ~Windowing();
 
     virtual void load(entity_container& c, comp_app::app_error& ec) final;
@@ -49,8 +58,8 @@ struct Windowing : comp_app::interfaces::Windowing,
     virtual position_t position() const final;
     virtual void       move(const position_t& newPos) final;
 
-    virtual comp_app::detail::WindowState state() const final;
-    virtual void setState(comp_app::detail::WindowState state) final;
+    virtual comp_app::window_flags_t state() const final;
+    virtual void setState(comp_app::window_flags_t state) final;
 
     virtual bool notifiedClose() const final;
 
@@ -62,12 +71,21 @@ struct NativeWindowInfo
     : comp_app::interfaces::PtrNativeWindowInfo,
       comp_app::AppService<NativeWindowInfo, comp_app::PtrNativeWindowInfo>
 {
+    NativeWindowInfo()
+    {
+        priority = 511;
+    }
 };
 
 struct WindowInfo : comp_app::interfaces::WindowInfo,
                     comp_app::AppService<WindowInfo, comp_app::WindowInfo>,
                     comp_app::AppLoadableService
 {
+    WindowInfo()
+    {
+        priority = 514;
+    }
+
     virtual void load(entity_container& e, comp_app::app_error&) final;
 
     virtual comp_app::text_type_t name() const final;
@@ -79,6 +97,11 @@ struct WindowInfo : comp_app::interfaces::WindowInfo,
 struct DisplayInfo : comp_app::interfaces::DisplayInfo,
                      comp_app::AppService<DisplayInfo, comp_app::DisplayInfo>
 {
+    DisplayInfo()
+    {
+        priority = 514;
+    }
+
     virtual comp_app::size_2d_t virtualSize() const final;
     virtual libc_types::u32     count() const final;
     virtual libc_types::u32     currentDisplay() const final;
@@ -92,6 +115,11 @@ struct GLContext : comp_app::interfaces::GraphicsContext,
                    comp_app::AppService<GLContext, comp_app::GraphicsContext>,
                    comp_app::AppLoadableService
 {
+    GLContext()
+    {
+        priority = 514;
+    }
+
     void setupAttributes(entity_container& c);
 
     virtual void load(entity_container& c, comp_app::app_error& ec) final;
@@ -105,6 +133,11 @@ struct GLSwapControl
     : comp_app::interfaces::GraphicsSwapControl,
       comp_app::AppService<GLSwapControl, comp_app::GraphicsSwapControl>
 {
+    GLSwapControl()
+    {
+        priority = 514;
+    }
+
     virtual libc_types::i32 swapInterval() const final;
     virtual void            setSwapInterval(libc_types::i32 interval) final;
 };
@@ -114,6 +147,11 @@ struct GLFramebuffer
       comp_app::AppService<GLFramebuffer, comp_app::GraphicsFramebuffer>,
       comp_app::AppLoadableService
 {
+    GLFramebuffer()
+    {
+        priority = 128;
+    }
+
     virtual void load(entity_container& c, comp_app::app_error&) final;
 
     virtual void                swapBuffers(comp_app::app_error& ec) final;
@@ -130,9 +168,14 @@ struct ControllerInput
       comp_app::AppService<ControllerInput, comp_app::ControllerInput>,
       comp_app::AppLoadableService
 {
-    using readable_services =
-        comp_app::subsystem_list<comp_app::EventBus<Coffee::Input::CIEvent>>;
+    using readable_services
+        = comp_app::subsystem_list<comp_app::EventBus<Coffee::Input::CIEvent>>;
     using proxy_type = comp_app::detail::restricted::proxy_t<ControllerInput>;
+
+    ControllerInput()
+    {
+        priority = 514;
+    }
 
     virtual void load(entity_container&, comp_app::app_error& ec) final;
     virtual void unload(entity_container&, comp_app::app_error& ec) final;
@@ -156,9 +199,14 @@ struct KeyboardInput
     : comp_app::interfaces::BasicKeyboardInput,
       comp_app::AppService<KeyboardInput, comp_app::KeyboardInput>
 {
-    using readable_services =
-        comp_app::subsystem_list<comp_app::EventBus<Coffee::Input::CIEvent>>;
+    using readable_services
+        = comp_app::subsystem_list<comp_app::EventBus<Coffee::Input::CIEvent>>;
     using proxy_type = comp_app::detail::restricted::proxy_t<KeyboardInput>;
+
+    KeyboardInput()
+    {
+        priority = 514;
+    }
 
     void start_restricted(proxy_type& p, time_point const&);
 
@@ -170,13 +218,13 @@ struct MouseInput : comp_app::interfaces::MouseInput,
                     comp_app::AppService<MouseInput, comp_app::MouseInput>,
                     comp_app::AppLoadableService
 {
-    using readable_services =
-        comp_app::subsystem_list<comp_app::EventBus<Coffee::Input::CIEvent>>;
+    using readable_services
+        = comp_app::subsystem_list<comp_app::EventBus<Coffee::Input::CIEvent>>;
     using proxy_type = comp_app::detail::restricted::proxy_t<MouseInput>;
 
     MouseInput()
     {
-        priority = default_prio + 100;
+        priority = 514;
     }
 
     virtual void load(entity_container& e, comp_app::app_error&) override;
@@ -201,7 +249,7 @@ using Services = comp_app::subsystem_list<
     KeyboardInput,
     MouseInput>;
 
-using GLServices =
-    comp_app::subsystem_list<GLSwapControl, GLContext, GLFramebuffer>;
+using GLServices
+    = comp_app::subsystem_list<GLSwapControl, GLContext, GLFramebuffer>;
 
 } // namespace sdl2

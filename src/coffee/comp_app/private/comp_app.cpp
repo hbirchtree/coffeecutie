@@ -1,7 +1,6 @@
 #include <coffee/comp_app/stat_providers.h>
 #include <coffee/comp_app/subsystems.h>
 
-#include <platforms/power.h>
 #include <platforms/sysinfo.h>
 
 namespace comp_app {
@@ -60,8 +59,7 @@ SysCPUClock::Governor SysCPUClock::governor(libc_types::u32)
 
 libc_types::f64 SysCPUClock::frequency(libc_types::u32 i)
 {
-//    return platform::SysInfo::ProcessorFrequencies(true).at(i);
-    Throw(unimplemented_path(""));
+    return platform::info::proc::frequency(true, i);
 }
 
 } // namespace comp_app

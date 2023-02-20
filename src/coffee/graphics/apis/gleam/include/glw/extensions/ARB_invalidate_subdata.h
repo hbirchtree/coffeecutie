@@ -15,7 +15,8 @@ STATICINLINE void invalidate_buffer_data(u32 buffer)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(InvalidateBufferData)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
 #endif
@@ -38,7 +39,8 @@ STATICINLINE void invalidate_buffer_sub_data(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(InvalidateBufferSubData)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
 #endif
@@ -49,21 +51,21 @@ STATICINLINE void invalidate_buffer_sub_data(
 
 template<class span_const_invalidate_framebuffer_attachment>
 requires(
-    semantic::concepts::Span<span_const_invalidate_framebuffer_attachment> &&
-    std::is_same_v<
-        std::decay_t<
-            typename span_const_invalidate_framebuffer_attachment::value_type>,
-        std::decay_t<group::invalidate_framebuffer_attachment>>)
-/*!
- * \brief Part of GL_ARB_invalidate_subdata
- * \param target GLenum
- * \param numAttachments GLsizei
- * \param attachments const GLenum *
- * \return void
- */
-STATICINLINE void invalidate_framebuffer(
-    group::framebuffer_target                           target,
-    span_const_invalidate_framebuffer_attachment const& attachments)
+    semantic::concepts::Span<span_const_invalidate_framebuffer_attachment>&&
+        std::is_same_v<
+            std::decay_t<typename span_const_invalidate_framebuffer_attachment::
+                             value_type>,
+            std::decay_t<group::invalidate_framebuffer_attachment>>)
+    /*!
+     * \brief Part of GL_ARB_invalidate_subdata
+     * \param target GLenum
+     * \param numAttachments GLsizei
+     * \param attachments const GLenum *
+     * \return void
+     */
+    STATICINLINE void invalidate_framebuffer(
+        group::framebuffer_target                           target,
+        span_const_invalidate_framebuffer_attachment const& attachments)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -83,29 +85,29 @@ template<
     class span_const_invalidate_framebuffer_attachment,
     class vec_2_i32>
 requires(
-    semantic::concepts::Span<span_const_invalidate_framebuffer_attachment> &&
-    std::is_same_v<
-        std::decay_t<
-            typename span_const_invalidate_framebuffer_attachment::value_type>,
-        std::decay_t<group::invalidate_framebuffer_attachment>> &&
-    semantic::concepts::Vector<vec_2_i32, i32, 2> &&
-    semantic::concepts::Size2D<size_2_i32, i32>)
-/*!
- * \brief Part of GL_ARB_invalidate_subdata
- * \param target GLenum
- * \param numAttachments GLsizei
- * \param attachments const GLenum *
- * \param x GLint
- * \param y GLint
- * \param width GLsizei
- * \param height GLsizei
- * \return void
- */
-STATICINLINE void invalidate_sub_framebuffer(
-    group::framebuffer_target                           target,
-    span_const_invalidate_framebuffer_attachment const& attachments,
-    vec_2_i32 const&                                    x,
-    size_2_i32 const&                                   width)
+    semantic::concepts::Span<span_const_invalidate_framebuffer_attachment>&&
+        std::is_same_v<
+            std::decay_t<typename span_const_invalidate_framebuffer_attachment::
+                             value_type>,
+            std::decay_t<group::invalidate_framebuffer_attachment>>&&
+                semantic::concepts::Vector<vec_2_i32, i32, 2>&&
+                semantic::concepts::Size2D<size_2_i32, i32>)
+    /*!
+     * \brief Part of GL_ARB_invalidate_subdata
+     * \param target GLenum
+     * \param numAttachments GLsizei
+     * \param attachments const GLenum *
+     * \param x GLint
+     * \param y GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \return void
+     */
+    STATICINLINE void invalidate_sub_framebuffer(
+        group::framebuffer_target                           target,
+        span_const_invalidate_framebuffer_attachment const& attachments,
+        vec_2_i32 const&                                    x,
+        size_2_i32 const&                                   width)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -136,7 +138,8 @@ STATICINLINE void invalidate_tex_image(u32 texture, i32 level)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(InvalidateTexImage)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
 #endif
@@ -146,29 +149,32 @@ STATICINLINE void invalidate_tex_image(u32 texture, i32 level)
 }
 
 template<class size_3_i32, class vec_3_i32>
-requires(
-    semantic::concepts::Vector<vec_3_i32, i32, 3> &&
-    semantic::concepts::Size2D<size_3_i32, i32>)
-/*!
- * \brief Part of GL_ARB_invalidate_subdata
- * \param texture GLuint
- * \param level GLint
- * \param xoffset GLint
- * \param yoffset GLint
- * \param zoffset GLint
- * \param width GLsizei
- * \param height GLsizei
- * \param depth GLsizei
- * \return void
- */
-STATICINLINE void invalidate_tex_sub_image(
-    u32 texture, i32 level, vec_3_i32 const& xoffset, size_3_i32 const& width)
+requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
+             semantic::concepts::Size2D<size_3_i32, i32>)
+    /*!
+     * \brief Part of GL_ARB_invalidate_subdata
+     * \param texture GLuint
+     * \param level GLint
+     * \param xoffset GLint
+     * \param yoffset GLint
+     * \param zoffset GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param depth GLsizei
+     * \return void
+     */
+    STATICINLINE void invalidate_tex_sub_image(
+        u32               texture,
+        i32               level,
+        vec_3_i32 const&  xoffset,
+        size_3_i32 const& width)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(InvalidateTexSubImage)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
 #endif

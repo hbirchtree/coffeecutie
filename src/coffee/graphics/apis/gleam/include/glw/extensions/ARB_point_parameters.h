@@ -27,19 +27,17 @@ STATICINLINE void point_parameter(
 }
 
 template<class span_const_f32>
-requires(
-    semantic::concepts::Span<span_const_f32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_f32::value_type>,
-        std::decay_t<f32>>)
-/*!
- * \brief Part of GL_ARB_point_parameters
- * \param pname GLenum
- * \param params const GLfloat *
- * \return void
- */
-STATICINLINE void point_parameter(
-    group::point_parameter_name_arb pname, span_const_f32 const& params)
+requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+         std::decay_t<typename span_const_f32::value_type>,
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_ARB_point_parameters
+     * \param pname GLenum
+     * \param params const GLfloat *
+     * \return void
+     */
+    STATICINLINE void point_parameter(
+        group::point_parameter_name_arb pname, span_const_f32 const& params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

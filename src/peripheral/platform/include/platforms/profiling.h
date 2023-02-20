@@ -2,6 +2,7 @@
 
 #include <peripherals/constants.h>
 #include <peripherals/profiler/profiler.h>
+#include <peripherals/stl/source_location.h>
 #include <platforms/pimpl_state.h>
 
 #ifndef COFFEE_COMPONENT_NAME
@@ -30,10 +31,10 @@ struct ThreadInternalState
 
 struct ThreadState
 {
-    GlobalState*               writer;
-    Vector<CString>            context_stack;
-    ThreadId::Hash             thread_id;
-    UqPtr<ThreadInternalState> internal_state;
+    GlobalState*                         writer;
+    std::vector<std::string_view>        context_stack;
+    ThreadId::Hash                       thread_id;
+    std::unique_ptr<ThreadInternalState> internal_state;
 };
 
 struct PContext
@@ -44,10 +45,10 @@ struct PContext
         flags.deep_enabled = false;
     }
 
-    PClock::time_point                      start_time;
-    Mutex                                   access;
-    Map<ThreadId::Hash, ShPtr<ThreadState>> thread_states;
-    Map<CString, CString>                   extra_data;
+    PClock::time_point                                     start_time;
+    std::mutex                                             access;
+    std::map<ThreadId::Hash, std::shared_ptr<ThreadState>> thread_states;
+    std::map<std::string, std::string>                     extra_data;
 
     struct
     {
@@ -70,12 +71,12 @@ struct PContext
         flags.deep_enabled = false;
     }
 
-    static ShPtr<PContext> ProfilerStore()
+    static std::shared_ptr<PContext> ProfilerStore()
     {
         return state->GetProfilerStore();
     }
 
-    static ShPtr<ThreadState> ProfilerTStore()
+    static std::shared_ptr<ThreadState> ProfilerTStore()
     {
         return state->GetProfilerTStore();
     }
@@ -85,8 +86,8 @@ template<typename Context, typename Clock, typename Types>
 struct RuntimeProperties : ThreadInternalState
 {
     using ThisType = RuntimeProperties<Context, Clock, Types>;
-    using PFunc =
-        void (*)(Context& ctxt, typename Types::datapoint const& data);
+    using PFunc
+        = void (*)(Context& ctxt, typename Types::datapoint const& data);
 
     static ThisType& get_properties()
     {
@@ -119,20 +120,20 @@ struct RuntimeProperties : ThreadInternalState
         return context->flags.deep_enabled;
     }
 
-    ShPtr<ThreadState> context;
+    std::shared_ptr<ThreadState> context;
 
-    void push_stack(CString const& frame)
+    void push_stack(std::string_view frame)
     {
         PContext::ProfilerTStore()->context_stack.push_back(frame);
     }
-    CString pop_stack()
+    std::string_view pop_stack()
     {
         auto& thread_store = *PContext::ProfilerTStore();
 
         if(!thread_store.context_stack.size())
             return {};
 
-        CString out = thread_store.context_stack.back();
+        std::string_view out = thread_store.context_stack.back();
         thread_store.context_stack.pop_back();
         return out;
     }
@@ -186,7 +187,7 @@ struct ExtraDataImpl
 struct SimpleProfilerImpl
 {
     STATICINLINE void PushContext(
-        cstring name, DataPoint::Attr = DataPoint::AttrNone)
+        std::string_view name, DataPoint::Attr = DataPoint::AttrNone)
     {
         Profiler::app::push(name);
     }
@@ -195,13 +196,13 @@ struct SimpleProfilerImpl
         Profiler::app::pop();
     }
     STATICINLINE void Profile(
-        cstring name, DataPoint::Attr = DataPoint::AttrNone)
+        std::string_view name, DataPoint::Attr = DataPoint::AttrNone)
     {
         Profiler::app::profile(name);
     }
 
     STATICINLINE void DeepPushContext(
-        cstring name, DataPoint::Attr = DataPoint::AttrNone)
+        std::string_view name, DataPoint::Attr = DataPoint::AttrNone)
     {
         Profiler::lib::push(name);
     }
@@ -210,7 +211,7 @@ struct SimpleProfilerImpl
         Profiler::lib::pop();
     }
     STATICINLINE void DeepProfile(
-        cstring name, DataPoint::Attr = DataPoint::AttrNone)
+        std::string_view name, DataPoint::Attr = DataPoint::AttrNone)
     {
         Profiler::lib::profile(name);
     }
@@ -226,13 +227,12 @@ struct SimpleProfilerImpl
     }
 
     C_DEPRECATED_S("use State::GetProfilerStore()->flags instead")
-    STATICINLINE void SetDeepProfileMode(bool state)
+    STATICINLINE void SetDeepProfileMode(bool)
     {
     }
 
     C_DEPRECATED_S("use ExtraData::Add() instead")
-    STATICINLINE void AddExtraData(
-        CString const& key, std::string_view const& value)
+    STATICINLINE void AddExtraData(std::string const&, std::string_view const&)
     {
     }
 
@@ -270,7 +270,7 @@ struct SimpleProfilerImpl
 struct SimpleProfilerImpl
 {
     STATICINLINE void PushContext(
-        cstring name, DataPoint::Attr = DataPoint::AttrNone)
+        std::string_view, DataPoint::Attr = DataPoint::AttrNone)
     {
     }
 
@@ -279,12 +279,12 @@ struct SimpleProfilerImpl
     }
 
     STATICINLINE void Profile(
-        cstring name, DataPoint::Attr = DataPoint::AttrNone)
+        std::string_view, DataPoint::Attr = DataPoint::AttrNone)
     {
     }
 
     STATICINLINE void DeepPushContext(
-        cstring name, DataPoint::Attr = DataPoint::AttrNone)
+        std::string_view, DataPoint::Attr = DataPoint::AttrNone)
     {
     }
 
@@ -293,17 +293,17 @@ struct SimpleProfilerImpl
     }
 
     STATICINLINE void DeepProfile(
-        cstring name, DataPoint::Attr = DataPoint::AttrNone)
+        std::string_view, DataPoint::Attr = DataPoint::AttrNone)
     {
     }
 
     C_DEPRECATED
-    STATICINLINE void SetDeepProfileMode(bool state)
+    STATICINLINE void SetDeepProfileMode(bool)
     {
     }
 
     C_DEPRECATED
-    STATICINLINE void AddExtraData(CString const& key, CString const& value)
+    STATICINLINE void AddExtraData(std::string const&, std::string_view const&)
     {
     }
 
@@ -322,7 +322,8 @@ struct SimpleProfilerImpl
 struct ProfilerContext
 {
     FORCEDINLINE ProfilerContext(
-        cstring name, DataPoint::Attr at = DataPoint::AttrNone)
+        std::string_view name = stl_types::source_location().function_name(),
+        DataPoint::Attr  at   = DataPoint::AttrNone)
     {
         SimpleProfilerImpl::PushContext(name, at);
     }
@@ -335,15 +336,10 @@ struct ProfilerContext
 struct DeepProfilerContext
 {
     FORCEDINLINE DeepProfilerContext(
-        cstring name, DataPoint::Attr at = DataPoint::AttrNone)
+        std::string_view name = stl_types::source_location().function_name(),
+        DataPoint::Attr  at   = DataPoint::AttrNone)
     {
         SimpleProfilerImpl::DeepPushContext(name, at);
-    }
-
-    FORCEDINLINE DeepProfilerContext(
-        CString const& name, DataPoint::Attr at = DataPoint::AttrNone)
-    {
-        SimpleProfilerImpl::DeepPushContext(name.c_str(), at);
     }
 
     FORCEDINLINE ~DeepProfilerContext()
@@ -356,8 +352,8 @@ template<typename QueryType>
 struct GpuProfilerContext
 {
     FORCEDINLINE GpuProfilerContext(
-        cstring          name,
-        ShPtr<QueryType> query,
+        std::shared_ptr<QueryType> query,
+        std::string_view name = stl_types::source_location().function_name(),
         ThreadId::Hash   gpu_thread = 0x8085) :
         m_thread(gpu_thread),
         m_name(name), m_query(query)
@@ -386,8 +382,8 @@ struct GpuProfilerContext
         auto props = Profiler::runtime_options::get_properties();
 
         Profiler::datapoint event;
-        event.flags.type =
-            offset ? Profiler::datapoint::Pop : Profiler::datapoint::Push;
+        event.flags.type
+            = offset ? Profiler::datapoint::Pop : Profiler::datapoint::Push;
         event.ts   = (m_start + Chrono::nanoseconds(offset)).time_since_epoch();
         event.name = name;
         event.tid  = m_thread;
@@ -396,10 +392,10 @@ struct GpuProfilerContext
         props.push(*props.context, event);
     }
 
-    ThreadId::Hash     m_thread;
-    cstring            m_name;
-    PClock::time_point m_start;
-    ShPtr<QueryType>   m_query;
+    ThreadId::Hash             m_thread;
+    std::string_view           m_name;
+    PClock::time_point         m_start;
+    std::shared_ptr<QueryType> m_query;
 };
 
 } // namespace profiling

@@ -29,7 +29,7 @@ using ssl     = ::asio::ssl::stream<asio::ip::tcp::socket>;
 using udp_ssl = ::asio::ssl::stream<asio::ip::udp::socket>;
 #endif
 using udp_raw = ::asio::ip::udp::socket;
-using raw = ::asio::ip::tcp::socket;
+using raw     = ::asio::ip::tcp::socket;
 } // namespace socket_types
 
 using host_t    = std::string;
@@ -66,7 +66,7 @@ FORCEDINLINE auto construct_socket(net::context& service)
 template<typename SocketType>
 FORCEDINLINE auto socket_shutdown(SocketType& socket, asio::error_code& ec)
 {
-  socket.shutdown(socket_types::raw::shutdown_both, ec);
+    socket.shutdown(socket_types::raw::shutdown_both, ec);
 }
 
 #if defined(ASIO_USE_SSL)
@@ -118,26 +118,26 @@ struct socket_base
     }
 
     template<typename T>
-    auto read(semantic::mem_chunk<T>& data, asio::error_code& ec)
+    auto read(semantic::Span<T>& data, asio::error_code& ec)
     {
         size_t read = 0;
         do
         {
             read += m_socket.read_some(
-                asio::buffer(data.data + read, data.size - read), ec);
-            if(ec || read == data.size)
+                asio::buffer(data.data() + read, data.size() - read), ec);
+            if(ec || read == data.size())
                 break;
-        } while(read < data.size);
+        } while(read < data.size());
         m_stats->received += read;
         return read;
     }
 
     template<typename T>
     auto read_until(
-        stl_types::Vector<T>&     data,
-        stl_types::CString const& delim,
-        asio::error_code&         ec,
-        libc_types::szptr         max_size = 0)
+        std::vector<T>&    data,
+        std::string const& delim,
+        asio::error_code&  ec,
+        libc_types::szptr  max_size = 0)
     {
         auto read = asio::read_until(
             m_socket,
@@ -150,16 +150,16 @@ struct socket_base
     }
 
     template<typename T>
-    auto write(semantic::mem_chunk<T> const& data, asio::error_code& ec)
+    auto write(semantic::Span<T> const& data, asio::error_code& ec)
     {
         size_t written = 0;
         do
         {
             written += m_socket.write_some(
-                asio::buffer(data.data + written, data.size - written), ec);
-            if(ec || written == data.size)
+                asio::buffer(data.data() + written, data.size() - written), ec);
+            if(ec || written == data.size())
                 break;
-        } while(written < data.size);
+        } while(written < data.size());
         m_stats->transmitted += written;
         return written;
     }
@@ -287,8 +287,8 @@ struct socket_base
     template<typename T>
     asio::error_code connect_broadcast(T port, protocol proto = protocol::v4)
     {
-        asio::error_code ec =
-            connect(asio::ip::address_v4::broadcast().to_string(), port, proto);
+        asio::error_code ec = connect(
+            asio::ip::address_v4::broadcast().to_string(), port, proto);
         VALIDATE();
         m_socket.set_option(asio::socket_base::broadcast(true), ec);
         m_socket.set_option(asio::socket_base::reuse_address(true), ec);
@@ -393,7 +393,10 @@ struct ssl_socket : socket_base<socket_types::udp_ssl>
 
 struct server
 {
-    server(net::context& service, host_t const& address, service_t const& port)
+    server(
+        net::context& /*service*/,
+        host_t const& /*address*/,
+        service_t const& /*port*/)
     {
     }
 
@@ -405,8 +408,7 @@ struct server
 
 } // namespace net
 
-namespace Coffee {
-namespace ASIO {
+namespace Coffee::ASIO {
 
 namespace TCP {
 using Socket = net::tcp::raw_socket;
@@ -415,8 +417,7 @@ using SSLSocket = net::tcp::ssl_socket;
 #endif
 } // namespace TCP
 
-} // namespace ASIO
-} // namespace Coffee
+} // namespace Coffee::ASIO
 
 #undef VALIDATE
 #undef ASIO_TAG

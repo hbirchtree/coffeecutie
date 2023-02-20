@@ -59,15 +59,6 @@ enum submesh_centroid
     submesh_centroid_second,
 };
 
-enum submesh_lod_cutoffs
-{
-    submesh_lod_lowest,
-    submesh_lod_low,
-    submesh_lod_medium,
-    submesh_lod_high,
-    submesh_lod_highest,
-};
-
 struct xbox_ref
 {
     u32 unknown_;

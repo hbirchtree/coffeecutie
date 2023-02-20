@@ -149,7 +149,7 @@ struct vertex_attribute
     {
         size_t offset{0};
         u32    id{0};
-    } buffer;
+    } buffer{};
 
     template<typename T, typename V>
     static inline constexpr auto from_member(V T::*member)
@@ -163,7 +163,9 @@ struct vertex_attribute
                 .count  = count,
                 .type   = type,
                 .flags  = flags,
-            }};
+            },
+            .buffer = {},
+        };
     }
 
     template<typename T, typename V>
@@ -244,14 +246,12 @@ struct vertex_array_t
     void set_attribute_names(
         std::vector<std::pair<std::string_view, u32>>&& attributes)
     {
-        if(m_features.attribute_binding)
-            return;
         m_attribute_names = std::move(attributes);
     }
 
     void add(attribute_type attribute)
     {
-        auto _ = m_debug.scope(__PRETTY_FUNCTION__);
+        [[maybe_unused]] auto _ = m_debug.scope(__PRETTY_FUNCTION__);
         if(!m_features.dsa)
         {
 #if GLEAM_MAX_VERSION_ES != 0x200
@@ -263,10 +263,11 @@ struct vertex_array_t
 #endif
         }
 
-        bool packed
+        [[maybe_unused]] bool packed
             = attribute.value.flags & vertex_attribute::attribute_flags::packed;
-        bool normalized = attribute.value.flags
-                          & vertex_attribute::attribute_flags::normalized;
+        [[maybe_unused]] bool normalized
+            = attribute.value.flags
+              & vertex_attribute::attribute_flags::normalized;
 
 #if GLEAM_MAX_VERSION >= 0x450
         if(m_features.dsa && m_features.format)
@@ -341,7 +342,7 @@ struct vertex_array_t
         //
         void set_buffer(T, stl_types::ShPtr<buffer_t> buffer, u32 binding)
     {
-        auto _ = m_debug.scope(__PRETTY_FUNCTION__);
+        [[maybe_unused]] auto _ = m_debug.scope(__PRETTY_FUNCTION__);
         if(!m_features.dsa)
         {
 #if GLEAM_MAX_VERSION_ES != 0x200
@@ -358,9 +359,9 @@ struct vertex_array_t
             if(attribute.buffer.id != binding)
                 continue;
 
-            bool packed = attribute.value.flags
+            [[maybe_unused]] bool packed = attribute.value.flags
                           & vertex_attribute::attribute_flags::packed;
-            bool instanced = attribute.value.flags
+            [[maybe_unused]] bool instanced = attribute.value.flags
                              & vertex_attribute::attribute_flags::instanced;
             packed = packed && detail::vertex_is_int_type(attribute.value.type);
 
@@ -435,8 +436,9 @@ struct vertex_array_t
 #if GLEAM_MAX_VERSION_ES != 0x200
             if(m_features.vertex_arrays)
                 cmd::bind_vertex_array(m_handle);
-#elif defined(GL_OES_vertex_array_object)
-            if(m_features.oes.vertex_arrays)
+#endif
+#if defined(GL_OES_vertex_array_object)
+            if(m_features.oes.vertex_arrays && !m_features.vertex_arrays)
                 gl::oes::vertex_array_object::bind_vertex_array(m_handle);
 #endif
         }
@@ -481,7 +483,7 @@ struct vertex_array_legacy_t
 {
     using attribute_type = vertex_attribute;
 
-    vertex_array_legacy_t(features::vertices& features, debug::api& debug) :
+    vertex_array_legacy_t(features::vertices& features, debug::api& /*debug*/) :
         m_features(features)
     {
     }

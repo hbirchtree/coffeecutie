@@ -17,13 +17,13 @@ constexpr libc_types::u32 state_restore           = 0x8BDC;
 } // namespace values
 template<class span_void>
 requires(semantic::concepts::Span<span_void>)
-/*!
- * \brief Part of GL_QCOM_extended_get
- * \param target GLenum
- * \param params void **
- * \return void
- */
-STATICINLINE void ext_get_buffer_pointerv(GLenum target, span_void params)
+    /*!
+     * \brief Part of GL_QCOM_extended_get
+     * \param target GLenum
+     * \param params void **
+     * \return void
+     */
+    STATICINLINE void ext_get_buffer_pointerv(GLenum target, span_void params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -37,19 +37,17 @@ STATICINLINE void ext_get_buffer_pointerv(GLenum target, span_void params)
 }
 
 template<class span_u32>
-requires(
-    semantic::concepts::Span<span_u32> &&
-    std::is_same_v<
-        std::decay_t<typename span_u32::value_type>,
-        std::decay_t<u32>>)
-/*!
- * \brief Part of GL_QCOM_extended_get
- * \param buffers GLuint *
- * \param maxBuffers GLint
- * \param numBuffers GLint *
- * \return void
- */
-STATICINLINE
+requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+         std::decay_t<typename span_u32::value_type>,
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_QCOM_extended_get
+     * \param buffers GLuint *
+     * \param maxBuffers GLint
+     * \param numBuffers GLint *
+     * \return void
+     */
+    STATICINLINE
     void ext_get_buffers(span_u32 buffers, i32 maxBuffers, i32& numBuffers)
 {
     using namespace std::string_view_literals;
@@ -65,20 +63,18 @@ STATICINLINE
 }
 
 template<class span_u32>
-requires(
-    semantic::concepts::Span<span_u32> &&
-    std::is_same_v<
-        std::decay_t<typename span_u32::value_type>,
-        std::decay_t<u32>>)
-/*!
- * \brief Part of GL_QCOM_extended_get
- * \param framebuffers GLuint *
- * \param maxFramebuffers GLint
- * \param numFramebuffers GLint *
- * \return void
- */
-STATICINLINE void ext_get_framebuffers(
-    span_u32 framebuffers, i32 maxFramebuffers, i32& numFramebuffers)
+requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+         std::decay_t<typename span_u32::value_type>,
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_QCOM_extended_get
+     * \param framebuffers GLuint *
+     * \param maxFramebuffers GLint
+     * \param numFramebuffers GLint *
+     * \return void
+     */
+    STATICINLINE void ext_get_framebuffers(
+        span_u32 framebuffers, i32 maxFramebuffers, i32& numFramebuffers)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -94,20 +90,18 @@ STATICINLINE void ext_get_framebuffers(
 }
 
 template<class span_u32>
-requires(
-    semantic::concepts::Span<span_u32> &&
-    std::is_same_v<
-        std::decay_t<typename span_u32::value_type>,
-        std::decay_t<u32>>)
-/*!
- * \brief Part of GL_QCOM_extended_get
- * \param renderbuffers GLuint *
- * \param maxRenderbuffers GLint
- * \param numRenderbuffers GLint *
- * \return void
- */
-STATICINLINE void ext_get_renderbuffers(
-    span_u32 renderbuffers, i32 maxRenderbuffers, i32& numRenderbuffers)
+requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+         std::decay_t<typename span_u32::value_type>,
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_QCOM_extended_get
+     * \param renderbuffers GLuint *
+     * \param maxRenderbuffers GLint
+     * \param numRenderbuffers GLint *
+     * \return void
+     */
+    STATICINLINE void ext_get_renderbuffers(
+        span_u32 renderbuffers, i32 maxRenderbuffers, i32& numRenderbuffers)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -123,28 +117,27 @@ STATICINLINE void ext_get_renderbuffers(
 }
 
 template<class span_i32>
-requires(
-    semantic::concepts::Span<span_i32> &&
-    std::is_same_v<
-        std::decay_t<typename span_i32::value_type>,
-        std::decay_t<i32>>)
-/*!
- * \brief Part of GL_QCOM_extended_get
- * \param texture GLuint
- * \param face GLenum
- * \param level GLint
- * \param pname GLenum
- * \param params GLint *
- * \return void
- */
-STATICINLINE void ext_get_tex_level_parameter(
-    u32 texture, GLenum face, i32 level, GLenum pname, span_i32 params)
+requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+         std::decay_t<typename span_i32::value_type>,
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_QCOM_extended_get
+     * \param texture GLuint
+     * \param face GLenum
+     * \param level GLint
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void ext_get_tex_level_parameter(
+        u32 texture, GLenum face, i32 level, GLenum pname, span_i32 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ExtGetTexLevelParameterivQCOM)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
 #endif
@@ -159,33 +152,32 @@ STATICINLINE void ext_get_tex_level_parameter(
 }
 
 template<class size_3_i32, class span_void, class vec_3_i32>
-requires(
-    semantic::concepts::Vector<vec_3_i32, i32, 3> &&
-    semantic::concepts::Size2D<size_3_i32, i32> &&
-    semantic::concepts::Span<span_void>)
-/*!
- * \brief Part of GL_QCOM_extended_get
- * \param target GLenum
- * \param level GLint
- * \param xoffset GLint
- * \param yoffset GLint
- * \param zoffset GLint
- * \param width GLsizei
- * \param height GLsizei
- * \param depth GLsizei
- * \param format GLenum
- * \param type GLenum
- * \param texels void *
- * \return void
- */
-STATICINLINE void ext_get_tex_sub_image(
-    GLenum              target,
-    i32                 level,
-    vec_3_i32 const&    xoffset,
-    size_3_i32 const&   width,
-    group::pixel_format format,
-    group::pixel_type   type,
-    span_void           texels)
+requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
+                 semantic::concepts::Size2D<size_3_i32, i32>&&
+                 semantic::concepts::Span<span_void>)
+    /*!
+     * \brief Part of GL_QCOM_extended_get
+     * \param target GLenum
+     * \param level GLint
+     * \param xoffset GLint
+     * \param yoffset GLint
+     * \param zoffset GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param depth GLsizei
+     * \param format GLenum
+     * \param type GLenum
+     * \param texels void *
+     * \return void
+     */
+    STATICINLINE void ext_get_tex_sub_image(
+        GLenum              target,
+        i32                 level,
+        vec_3_i32 const&    xoffset,
+        size_3_i32 const&   width,
+        group::pixel_format format,
+        group::pixel_type   type,
+        span_void           texels)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -208,24 +200,21 @@ STATICINLINE void ext_get_tex_sub_image(
 }
 
 template<class span_i32, class span_u32>
-requires(
-    semantic::concepts::Span<span_u32> &&
-    std::is_same_v<
-        std::decay_t<typename span_u32::value_type>,
-        std::decay_t<u32>> &&
-    semantic::concepts::Span<span_i32> &&
-    std::is_same_v<
-        std::decay_t<typename span_i32::value_type>,
-        std::decay_t<i32>>)
-/*!
- * \brief Part of GL_QCOM_extended_get
- * \param textures GLuint *
- * \param maxTextures GLint
- * \param numTextures GLint *
- * \return void
- */
-STATICINLINE void ext_get_textures(
-    span_u32 textures, i32 maxTextures, span_i32 numTextures)
+requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+         std::decay_t<typename span_u32::value_type>,
+         std::decay_t<u32>>&& semantic::concepts::Span<span_i32>&&
+                              std::is_same_v<
+                 std::decay_t<typename span_i32::value_type>,
+                 std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_QCOM_extended_get
+     * \param textures GLuint *
+     * \param maxTextures GLint
+     * \param numTextures GLint *
+     * \return void
+     */
+    STATICINLINE void ext_get_textures(
+        span_u32 textures, i32 maxTextures, span_i32 numTextures)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

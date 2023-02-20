@@ -50,7 +50,8 @@ STATICINLINE void bind_buffer_base(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindBufferBaseEXT)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
 #endif
@@ -74,7 +75,8 @@ STATICINLINE void bind_buffer_offset(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindBufferOffsetEXT)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
 #endif
@@ -103,7 +105,8 @@ STATICINLINE void bind_buffer_range(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindBufferRangeEXT)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
 #endif
@@ -130,35 +133,34 @@ STATICINLINE void end_transform_feedback()
 }
 
 template<class span_GLchar>
-requires(
-    semantic::concepts::Span<span_GLchar> &&
-    std::is_same_v<
-        std::decay_t<typename span_GLchar::value_type>,
-        std::decay_t<GLchar>>)
-/*!
- * \brief Part of GL_EXT_transform_feedback
- * \param program GLuint
- * \param index GLuint
- * \param bufSize GLsizei
- * \param length GLsizei *
- * \param size GLsizei *
- * \param type GLenum *
- * \param name GLchar *
- * \return void
- */
-STATICINLINE void get_transform_feedback_varying(
-    u32         program,
-    u32         index,
-    i32&        length,
-    i32&        size,
-    GLenum&     type,
-    span_GLchar name)
+requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
+         std::decay_t<typename span_GLchar::value_type>,
+         std::decay_t<GLchar>>)
+    /*!
+     * \brief Part of GL_EXT_transform_feedback
+     * \param program GLuint
+     * \param index GLuint
+     * \param bufSize GLsizei
+     * \param length GLsizei *
+     * \param size GLsizei *
+     * \param type GLenum *
+     * \param name GLchar *
+     * \return void
+     */
+    STATICINLINE void get_transform_feedback_varying(
+        u32         program,
+        u32         index,
+        i32&        length,
+        i32&        size,
+        GLenum&     type,
+        span_GLchar name)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetTransformFeedbackVaryingEXT)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -185,7 +187,8 @@ STATICINLINE void transform_feedback_varyings(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TransformFeedbackVaryingsEXT)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif

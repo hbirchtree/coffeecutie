@@ -3,6 +3,8 @@
 #include "bytecode_common_v12.h"
 #include "bytecode_signatures_v12.h"
 
+#include "cblam_strings.h"
+
 namespace blam::hsc {
 
 constexpr bool bypass_conditions = true;
@@ -114,10 +116,8 @@ inline opcode_layout<BC> get_as(T const& src, type_t from, type_t t)
     }
     case type_t::bool_:
         if(t == type_t::bool_)
-        {
             out.set(src.bytes[0]);
-            break;
-        }
+        break;
     default:
         if(from != t)
             Throw(script_error("invalid conversion for global"));
@@ -138,7 +138,7 @@ struct opcode_iterator
     : stl_types::Iterator<stl_types::ForwardIteratorTag, opcode_layout<BC>>
 {
     opcode_iterator(semantic::mem_chunk<u8 const>&& script_base);
-    opcode_iterator(opcode_iterator_end_t end) :
+    opcode_iterator(opcode_iterator_end_t) :
         m_script(nullptr), m_data(), m_offset(0), m_is_end(true)
     {
     }
@@ -211,7 +211,7 @@ struct script_ref : stl_types::non_copy
 
     inline semantic::mem_chunk<u8 const> dump(u32 count) const
     {
-        return semantic::mem_chunk<u8 const>::From(opcode_base(), count);
+        return semantic::mem_chunk<u8 const>::of(opcode_base(), count);
     }
 };
 
@@ -225,13 +225,13 @@ inline opcode_iterator<BC>::opcode_iterator(
 }
 
 template<typename T>
-inline stl_types::CString to_string(T val)
+inline std::string to_string(T val)
 {
 #if USE_MAGIC_ENUM
     auto out = magic_enum::enum_name(val);
     if(!out.size())
         return "[invalid(" + std::to_string(C_CAST<i16>(val)) + ")]";
-    return stl_types::CString(out) + "(" + std::to_string(C_CAST<i16>(val))
+    return stl_types::std::string(out) + "(" + std::to_string(C_CAST<i16>(val))
            + ")";
 #else
     return std::to_string(C_CAST<i16>(val));
@@ -321,10 +321,10 @@ struct global_value
 
 struct wait_condition
 {
-    sleep_condition                 condition  = sleep_condition::undefined;
-    u16                             expression = terminator;
-    stl_types::Chrono::milliseconds time; /*!< Time in milliseconds */
-    u16                             tickrate = 0;
+    sleep_condition                 condition{sleep_condition::undefined};
+    u16                             expression{terminator};
+    stl_types::Chrono::milliseconds time{};
+    u16                             tickrate{0};
 };
 
 template<typename Bytecode>
@@ -389,7 +389,7 @@ struct script_context
     };
 
     stl_types::Map<u32, procedure_data>        procedures;
-    stl_types::Map<stl_types::CString, object> objects;
+    stl_types::Map<std::string, object> objects;
     stl_types::Map<u32, global_value>          globals;
     stl_types::Map<u32, script_state>          scripts;
 
@@ -440,7 +440,7 @@ struct script_context
     }
 
     inline void set_script_state(
-        u32 ptr, script_status state, wait_condition cond)
+        u32 ptr, script_status state, wait_condition /*cond*/)
     {
         auto script = script_by_ptr(ptr).value();
 
@@ -473,13 +473,17 @@ struct bytecode_pointer
         eval            state;
 
         /* For sleep conditions */
-        wait_condition condition;
+        wait_condition condition{};
 
-        u16 end_addr;
+        u16 end_addr{0};
 
         static result_t empty()
         {
-            return {end_(), terminator, eval::running};
+            return {
+                .result = end_(),
+                .next   = terminator,
+                .state  = eval::running,
+            };
         }
 
         static opcode_layout_t end_()
@@ -491,7 +495,11 @@ struct bytecode_pointer
         }
         static result_t return_(opcode_layout_t const& out = {})
         {
-            return {out, {}, eval::running};
+            return {
+                .result = out,
+                .next   = {},
+                .state  = eval::running,
+            };
         }
         static result_t sleep_timeout(u32 time)
         {
@@ -518,7 +526,11 @@ struct bytecode_pointer
         }
         static result_t branch_to(u16 addr)
         {
-            return {end_(), addr, eval::branching};
+            return {
+                .result = end_(),
+                .next   = addr,
+                .state  = eval::branching,
+            };
         }
 
         opcode_layout<BC> operator*() const
@@ -538,7 +550,7 @@ struct bytecode_pointer
 
     struct opcode_handlers
     {
-        opcode_handler_t cmd, pre, post;
+        opcode_handler_t cmd, pre{}, post{};
     };
 
     static bytecode_ptr start_from(
@@ -749,8 +761,8 @@ struct bytecode_pointer
 
         if(num == unknown_opcode_signature)
         {
-            auto               opname      = magic_enum::enum_name(op.opcode);
-            auto               ret_type    = magic_enum::enum_name(op.ret_type);
+            auto        opname      = magic_enum::enum_name(op.opcode);
+            auto        ret_type    = magic_enum::enum_name(op.ret_type);
             std::string param_types = {};
             for(auto it = value_stack.end() - param_i; it != value_stack.end();
                 ++it)
@@ -781,9 +793,11 @@ struct bytecode_pointer
             return from.to_real();
         case expression_t::global_ref:
             return context.global_by_ptr(from.data_ptr).value()->real;
+        case expression_t::script_ref:
+        case expression_t::param_ref:
+            break;
         }
-
-        Throw(undefined_behavior("failed to dereference value"));
+        __builtin_unreachable();
     }
 
     inline i32 deref_i32(opcode_layout_t const& from)
@@ -794,9 +808,11 @@ struct bytecode_pointer
             return from.to_u32();
         case expression_t::global_ref:
             return context.global_by_ptr(from.data_ptr).value()->long_;
+        case expression_t::script_ref:
+        case expression_t::param_ref:
+            break;
         }
-
-        Throw(undefined_behavior("failed to dereference value"));
+        __builtin_unreachable();
     }
 
     inline i16 deref_i16(opcode_layout_t const& from)
@@ -807,11 +823,11 @@ struct bytecode_pointer
             return from.to_u16();
         case expression_t::global_ref:
             return context.global_by_ptr(from.data_ptr).value()->shorts[0];
-        default:
+        case expression_t::script_ref:
+        case expression_t::param_ref:
             break;
         }
-
-        Throw(undefined_behavior("failed to dereference value"));
+        __builtin_unreachable();
     }
 
     inline void advance()
@@ -909,7 +925,7 @@ struct bytecode_pointer
             return_();
         }
 
-        static stl_types::Array<global, 3> engine_props = {{
+        static std::array<global, 3> engine_props = {{
             global{
                 .name = *bl_string::from("rasterizer_near_clip_distance"),
                 .type = type_t::real_,
@@ -1113,41 +1129,41 @@ template<
     typename std::enable_if<
         std::is_same<BC, blam::hsc::bc::v1>::value
         || std::is_same<BC, blam::hsc::bc::v2>::value>::type* = nullptr>
-inline CString to_string(BC opc)
+inline std::string to_string(BC opc)
 {
     return blam::hsc::to_string(opc);
 }
 
-inline CString to_string(blam::hsc::type_t type)
+inline std::string to_string(blam::hsc::type_t type)
 {
     return blam::hsc::to_string(type);
 }
 
-inline CString to_string(blam::hsc::script_eval_result type)
+inline std::string to_string(blam::hsc::script_eval_result type)
 {
     return blam::hsc::to_string(type);
 }
 
-inline CString to_string(blam::hsc::expression_t exp)
+inline std::string to_string(blam::hsc::expression_t exp)
 {
     return blam::hsc::to_string(exp);
 }
 
-inline CString to_string(blam::hsc::script_type_t script_type)
+inline std::string to_string(blam::hsc::script_type_t script_type)
 {
     return blam::hsc::to_string(script_type);
 }
 
-inline CString to_string(blam::hsc::script_status stat)
+inline std::string to_string(blam::hsc::script_status stat)
 {
     return blam::hsc::to_string(stat);
 }
 
 template<typename BC>
-inline CString to_string(blam::hsc::opcode_layout<BC> const& op)
+inline std::string to_string(blam::hsc::opcode_layout<BC> const& op)
 {
     using namespace blam::hsc;
-    CString out = {};
+    std::string out = {};
 
     if(op.exp_type == expression_t::global_ref)
         out = "global@" + std::to_string(op.data_ptr);

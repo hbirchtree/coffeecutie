@@ -7,8 +7,8 @@ coffee_library (
 
     SOURCES
     private/cimage.cpp
-    private/cnoise-gen.cpp
     private/ctextrender.cpp
+#    private/cnoise-gen.cpp
 
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

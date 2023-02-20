@@ -1,19 +1,20 @@
 #ifdef GL_VERSION_1_1
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<1, 1>>)
-/*!
- * \brief Wraps around glBindTexture. Introduced in GL core 1.1
- * \param target GLenum
- * \param texture GLuint
- * \return void
- */
-STATICINLINE void bind_texture(group::texture_target target, u32 texture)
+    /*!
+     * \brief Wraps around glBindTexture. Introduced in GL core 1.1
+     * \param target GLenum
+     * \param texture GLuint
+     * \return void
+     */
+    STATICINLINE void bind_texture(group::texture_target target, u32 texture)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindTexture)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
 #endif
@@ -23,27 +24,26 @@ STATICINLINE void bind_texture(group::texture_target target, u32 texture)
 }
 
 template<class vec_2_i32>
-requires(
-    MinimumVersion<Current, Version<1, 1>> &&
-    semantic::concepts::Vector<vec_2_i32, i32, 2>)
-/*!
- * \brief Wraps around glCopyTexImage1D. Introduced in GL core 1.1
- * \param target GLenum
- * \param level GLint
- * \param internalformat GLenum
- * \param x GLint
- * \param y GLint
- * \param width GLsizei
- * \param border GLint
- * \return void
- */
-STATICINLINE void copy_tex_image_1d(
-    group::texture_target  target,
-    i32                    level,
-    group::internal_format internalformat,
-    vec_2_i32 const&       x,
-    i32                    width,
-    i32                    border)
+requires(MinimumVersion<Current, Version<1, 1>>&&
+             semantic::concepts::Vector<vec_2_i32, i32, 2>)
+    /*!
+     * \brief Wraps around glCopyTexImage1D. Introduced in GL core 1.1
+     * \param target GLenum
+     * \param level GLint
+     * \param internalformat GLenum
+     * \param x GLint
+     * \param y GLint
+     * \param width GLsizei
+     * \param border GLint
+     * \return void
+     */
+    STATICINLINE void copy_tex_image_1d(
+        group::texture_target  target,
+        i32                    level,
+        group::internal_format internalformat,
+        vec_2_i32 const&       x,
+        i32                    width,
+        i32                    border)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -62,29 +62,28 @@ STATICINLINE void copy_tex_image_1d(
 }
 
 template<class size_2_i32, class vec_2_i32>
-requires(
-    MinimumVersion<Current, Version<1, 1>> &&
-    semantic::concepts::Vector<vec_2_i32, i32, 2> &&
-    semantic::concepts::Size2D<size_2_i32, i32>)
-/*!
- * \brief Wraps around glCopyTexImage2D. Introduced in GL core 1.1
- * \param target GLenum
- * \param level GLint
- * \param internalformat GLenum
- * \param x GLint
- * \param y GLint
- * \param width GLsizei
- * \param height GLsizei
- * \param border GLint
- * \return void
- */
-STATICINLINE void copy_tex_image_2d(
-    group::texture_target  target,
-    i32                    level,
-    group::internal_format internalformat,
-    vec_2_i32 const&       x,
-    size_2_i32 const&      width,
-    i32                    border)
+requires(MinimumVersion<Current, Version<1, 1>>&&
+                 semantic::concepts::Vector<vec_2_i32, i32, 2>&&
+                 semantic::concepts::Size2D<size_2_i32, i32>)
+    /*!
+     * \brief Wraps around glCopyTexImage2D. Introduced in GL core 1.1
+     * \param target GLenum
+     * \param level GLint
+     * \param internalformat GLenum
+     * \param x GLint
+     * \param y GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param border GLint
+     * \return void
+     */
+    STATICINLINE void copy_tex_image_2d(
+        group::texture_target  target,
+        i32                    level,
+        group::internal_format internalformat,
+        vec_2_i32 const&       x,
+        size_2_i32 const&      width,
+        i32                    border)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -104,25 +103,24 @@ STATICINLINE void copy_tex_image_2d(
 }
 
 template<class vec_2_i32>
-requires(
-    MinimumVersion<Current, Version<1, 1>> &&
-    semantic::concepts::Vector<vec_2_i32, i32, 2>)
-/*!
- * \brief Wraps around glCopyTexSubImage1D. Introduced in GL core 1.1
- * \param target GLenum
- * \param level GLint
- * \param xoffset GLint
- * \param x GLint
- * \param y GLint
- * \param width GLsizei
- * \return void
- */
-STATICINLINE void copy_tex_sub_image_1d(
-    group::texture_target target,
-    i32                   level,
-    i32                   xoffset,
-    vec_2_i32 const&      x,
-    i32                   width)
+requires(MinimumVersion<Current, Version<1, 1>>&&
+             semantic::concepts::Vector<vec_2_i32, i32, 2>)
+    /*!
+     * \brief Wraps around glCopyTexSubImage1D. Introduced in GL core 1.1
+     * \param target GLenum
+     * \param level GLint
+     * \param xoffset GLint
+     * \param x GLint
+     * \param y GLint
+     * \param width GLsizei
+     * \return void
+     */
+    STATICINLINE void copy_tex_sub_image_1d(
+        group::texture_target target,
+        i32                   level,
+        i32                   xoffset,
+        vec_2_i32 const&      x,
+        i32                   width)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -135,28 +133,27 @@ STATICINLINE void copy_tex_sub_image_1d(
 }
 
 template<class size_2_i32, class vec_2_i32>
-requires(
-    MinimumVersion<Current, Version<1, 1>> &&
-    semantic::concepts::Vector<vec_2_i32, i32, 2> &&
-    semantic::concepts::Size2D<size_2_i32, i32>)
-/*!
- * \brief Wraps around glCopyTexSubImage2D. Introduced in GL core 1.1
- * \param target GLenum
- * \param level GLint
- * \param xoffset GLint
- * \param yoffset GLint
- * \param x GLint
- * \param y GLint
- * \param width GLsizei
- * \param height GLsizei
- * \return void
- */
-STATICINLINE void copy_tex_sub_image_2d(
-    group::texture_target target,
-    i32                   level,
-    vec_2_i32 const&      xoffset,
-    vec_2_i32 const&      x,
-    size_2_i32 const&     width)
+requires(MinimumVersion<Current, Version<1, 1>>&&
+                 semantic::concepts::Vector<vec_2_i32, i32, 2>&&
+                 semantic::concepts::Size2D<size_2_i32, i32>)
+    /*!
+     * \brief Wraps around glCopyTexSubImage2D. Introduced in GL core 1.1
+     * \param target GLenum
+     * \param level GLint
+     * \param xoffset GLint
+     * \param yoffset GLint
+     * \param x GLint
+     * \param y GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \return void
+     */
+    STATICINLINE void copy_tex_sub_image_2d(
+        group::texture_target target,
+        i32                   level,
+        vec_2_i32 const&      xoffset,
+        vec_2_i32 const&      x,
+        size_2_i32 const&     width)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -176,19 +173,17 @@ STATICINLINE void copy_tex_sub_image_2d(
 }
 
 template<class span_const_u32>
-requires(
-    MinimumVersion<Current, Version<1, 1>> &&
-    semantic::concepts::Span<span_const_u32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_u32::value_type>,
-        std::decay_t<u32>>)
-/*!
- * \brief Wraps around glDeleteTextures. Introduced in GL core 1.1
- * \param n GLsizei
- * \param textures const GLuint *
- * \return void
- */
-STATICINLINE void delete_textures(span_const_u32 const& textures)
+requires(MinimumVersion<Current, Version<1, 1>>&&
+             semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+                 std::decay_t<typename span_const_u32::value_type>,
+                 std::decay_t<u32>>)
+    /*!
+     * \brief Wraps around glDeleteTextures. Introduced in GL core 1.1
+     * \param n GLsizei
+     * \param textures const GLuint *
+     * \return void
+     */
+    STATICINLINE void delete_textures(span_const_u32 const& textures)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -204,14 +199,15 @@ STATICINLINE void delete_textures(span_const_u32 const& textures)
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<1, 1>>)
-/*!
- * \brief Wraps around glDrawArrays. Introduced in GL core 1.1
- * \param mode GLenum
- * \param first GLint
- * \param count GLsizei
- * \return void
- */
-STATICINLINE void draw_arrays(group::primitive_type mode, i32 first, i32 count)
+    /*!
+     * \brief Wraps around glDrawArrays. Introduced in GL core 1.1
+     * \param mode GLenum
+     * \param first GLint
+     * \param count GLsizei
+     * \return void
+     */
+    STATICINLINE
+    void draw_arrays(group::primitive_type mode, i32 first, i32 count)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -224,19 +220,19 @@ STATICINLINE void draw_arrays(group::primitive_type mode, i32 first, i32 count)
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<1, 1>>)
-/*!
- * \brief Wraps around glDrawElements. Introduced in GL core 1.1
- * \param mode GLenum
- * \param count GLsizei
- * \param type GLenum
- * \param indices const void *
- * \return void
- */
-STATICINLINE void draw_elements(
-    group::primitive_type     mode,
-    i32                       count,
-    group::draw_elements_type type,
-    ptroff                    indices)
+    /*!
+     * \brief Wraps around glDrawElements. Introduced in GL core 1.1
+     * \param mode GLenum
+     * \param count GLsizei
+     * \param type GLenum
+     * \param indices const void *
+     * \return void
+     */
+    STATICINLINE void draw_elements(
+        group::primitive_type     mode,
+        i32                       count,
+        group::draw_elements_type type,
+        ptroff                    indices)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -252,19 +248,17 @@ STATICINLINE void draw_elements(
 }
 
 template<class span_u32>
-requires(
-    MinimumVersion<Current, Version<1, 1>> &&
-    semantic::concepts::Span<span_u32> &&
-    std::is_same_v<
-        std::decay_t<typename span_u32::value_type>,
-        std::decay_t<u32>>)
-/*!
- * \brief Wraps around glGenTextures. Introduced in GL core 1.1
- * \param n GLsizei
- * \param textures GLuint *
- * \return void
- */
-STATICINLINE void gen_textures(span_u32 textures)
+requires(MinimumVersion<Current, Version<1, 1>>&&
+             semantic::concepts::Span<span_u32>&& std::is_same_v<
+                 std::decay_t<typename span_u32::value_type>,
+                 std::decay_t<u32>>)
+    /*!
+     * \brief Wraps around glGenTextures. Introduced in GL core 1.1
+     * \param n GLsizei
+     * \param textures GLuint *
+     * \return void
+     */
+    STATICINLINE void gen_textures(span_u32 textures)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -279,18 +273,19 @@ STATICINLINE void gen_textures(span_u32 textures)
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<1, 1>>)
-/*!
- * \brief Wraps around glIsTexture. Introduced in GL core 1.1
- * \param texture GLuint
- * \return Boolean
- */
-STATICINLINE GLboolean is_texture(u32 texture)
+    /*!
+     * \brief Wraps around glIsTexture. Introduced in GL core 1.1
+     * \param texture GLuint
+     * \return Boolean
+     */
+    STATICINLINE GLboolean is_texture(u32 texture)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(IsTexture)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
 #endif
@@ -302,13 +297,13 @@ STATICINLINE GLboolean is_texture(u32 texture)
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<1, 1>>)
-/*!
- * \brief Wraps around glPolygonOffset. Introduced in GL core 1.1
- * \param factor GLfloat
- * \param units GLfloat
- * \return void
- */
-STATICINLINE void polygon_offset(f32 factor, f32 units)
+    /*!
+     * \brief Wraps around glPolygonOffset. Introduced in GL core 1.1
+     * \param factor GLfloat
+     * \param units GLfloat
+     * \return void
+     */
+    STATICINLINE void polygon_offset(f32 factor, f32 units)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -320,28 +315,27 @@ STATICINLINE void polygon_offset(f32 factor, f32 units)
 }
 
 template<class span_const_void>
-requires(
-    MinimumVersion<Current, Version<1, 1>> &&
-    semantic::concepts::Span<span_const_void>)
-/*!
- * \brief Wraps around glTexSubImage1D. Introduced in GL core 1.1
- * \param target GLenum
- * \param level GLint
- * \param xoffset GLint
- * \param width GLsizei
- * \param format GLenum
- * \param type GLenum
- * \param pixels const void *
- * \return void
- */
-STATICINLINE void tex_sub_image_1d(
-    group::texture_target  target,
-    i32                    level,
-    i32                    xoffset,
-    i32                    width,
-    group::pixel_format    format,
-    group::pixel_type      type,
-    span_const_void const& pixels)
+requires(MinimumVersion<Current, Version<1, 1>>&&
+             semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Wraps around glTexSubImage1D. Introduced in GL core 1.1
+     * \param target GLenum
+     * \param level GLint
+     * \param xoffset GLint
+     * \param width GLsizei
+     * \param format GLenum
+     * \param type GLenum
+     * \param pixels const void *
+     * \return void
+     */
+    STATICINLINE void tex_sub_image_1d(
+        group::texture_target  target,
+        i32                    level,
+        i32                    xoffset,
+        i32                    width,
+        group::pixel_format    format,
+        group::pixel_type      type,
+        span_const_void const& pixels)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -360,32 +354,31 @@ STATICINLINE void tex_sub_image_1d(
 }
 
 template<class size_2_i32, class span_const_void, class vec_2_i32>
-requires(
-    MinimumVersion<Current, Version<1, 1>> &&
-    semantic::concepts::Vector<vec_2_i32, i32, 2> &&
-    semantic::concepts::Size2D<size_2_i32, i32> &&
-    semantic::concepts::Span<span_const_void>)
-/*!
- * \brief Wraps around glTexSubImage2D. Introduced in GL core 1.1
- * \param target GLenum
- * \param level GLint
- * \param xoffset GLint
- * \param yoffset GLint
- * \param width GLsizei
- * \param height GLsizei
- * \param format GLenum
- * \param type GLenum
- * \param pixels const void *
- * \return void
- */
-STATICINLINE void tex_sub_image_2d(
-    group::texture_target  target,
-    i32                    level,
-    vec_2_i32 const&       xoffset,
-    size_2_i32 const&      width,
-    group::pixel_format    format,
-    group::pixel_type      type,
-    span_const_void const& pixels)
+requires(MinimumVersion<Current, Version<1, 1>>&&
+                     semantic::concepts::Vector<vec_2_i32, i32, 2>&&
+                     semantic::concepts::Size2D<size_2_i32, i32>&&
+                     semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Wraps around glTexSubImage2D. Introduced in GL core 1.1
+     * \param target GLenum
+     * \param level GLint
+     * \param xoffset GLint
+     * \param yoffset GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param format GLenum
+     * \param type GLenum
+     * \param pixels const void *
+     * \return void
+     */
+    STATICINLINE void tex_sub_image_2d(
+        group::texture_target  target,
+        i32                    level,
+        vec_2_i32 const&       xoffset,
+        size_2_i32 const&      width,
+        group::pixel_format    format,
+        group::pixel_type      type,
+        span_const_void const& pixels)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

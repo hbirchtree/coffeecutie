@@ -1,7 +1,6 @@
 #pragma once
 
 #include <coffee/core/libc_types.h>
-#include <coffee/core/types/map.h>
 #include <coffee/core/types/pixel_components.h>
 #include <coffee/core/types/pixel_format.h>
 #include <coffee/core/types/point.h>

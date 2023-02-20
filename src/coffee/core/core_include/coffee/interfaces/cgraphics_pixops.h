@@ -75,7 +75,8 @@ FORCEDINLINE bool CompressedFormatSupportsSubTexture(CompFmt format)
 FORCEDINLINE constexpr szptr GetPixCompressedSize(
     CompFmt format, Size const& tex_size)
 {
-    using namespace ::enum_helpers;
+    using enum_helpers::feval;
+    using stl_types::one_of;
 
     auto fmt    = format.base_fmt;
     auto cflags = format.c_flags;
@@ -155,14 +156,14 @@ FORCEDINLINE constexpr szptr GetPixCompressedSize(
     }
     case PixFmt::PVRTC:
     {
-        Size pvrtc_size = {CMath::max<u32>(tex_size.w, 8),
-                           CMath::max<u32>(tex_size.h, 8)};
+        Size pvrtc_size = {std::max<u32>(tex_size.w, 8),
+                           std::max<u32>(tex_size.h, 8)};
         u32  bpp        = 4;
 
         if(cflags == CompFlags::bpp_2)
         {
             bpp          = 2;
-            pvrtc_size.w = CMath::max<u32>(pvrtc_size.w, 16);
+            pvrtc_size.w = std::max<u32>(pvrtc_size.w, 16);
         }
 
         return (C_FCAST<u32>(pvrtc_size.area()) * bpp + 7) / 8;

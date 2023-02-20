@@ -1,24 +1,24 @@
 #include <coffee/virtfs/virtualfs.h>
 
-#include <coffee/compression/libz.h>
-#include <peripherals/stl/parallel_for_each.h>
+#include <corez/zlib.h>
+#include <corezstd/zstd.h>
 
-#if defined(COFFEE_COMPRESS_LZ4)
-#include <coffee/compression/lz4.h>
-#endif
+#include <peripherals/concepts/data_codec.h>
+#include <peripherals/stl/parallel_for_each.h>
 
 #include "directory_index.h"
 
 using Coffee::DProfContext;
 using Coffee::Profiler;
 
-using Zlib = Coffee::Compression::zlib::Compressor;
+using Zlib = semantic::codec_stream_adapter<zlib::stream_codec>;
+using ZStd = zstd::codec;
 
 namespace vfs {
 
-Resource::Resource(const fs* base, const Url& url) : filesystem(base)
+Resource::Resource(const fs_t* base, const Url& url) : filesystem(base)
 {
-    if(auto src = fs::GetFile(base, url.internUrl.c_str()); src.has_error())
+    if(auto src = fs_t::GetFile(base, url.internUrl.c_str()); src.has_error())
         file = nullptr;
     else
         file = src.value();
@@ -33,7 +33,7 @@ mem_chunk<const u8> Resource::data() const
 {
     if(!file)
         return {};
-    return fs::GetData(filesystem, file).value();
+    return fs_t::GetData(filesystem, file).value();
 }
 
 /*!
@@ -63,23 +63,23 @@ stl_types::result<std::vector<libc_types::byte_t>, error> generate(
         return error::no_files_provided;
     }
 
-    fs base_fs = {};
+    fs_t base_fs = {};
 
     /* Insert header, calculate file segment offset */
     {
-        auto src =
-            mem_chunk<const u8>::ofBytes(VFSMagic_Encoded, sizeof(u32) * 2);
+        auto src
+            = mem_chunk<const u8>::ofBytes(VFSMagic_Encoded, sizeof(u32) * 2);
         auto dst = mem_chunk<u8>::ofBytes(base_fs.vfs_header, MagicLength);
         std::copy(src.begin(), src.end(), dst.begin());
     }
 
     base_fs.num_files   = filenames.size();
-    base_fs.data_offset = sizeof(fs) + sizeof(file) * base_fs.num_files;
+    base_fs.data_offset = sizeof(fs_t) + sizeof(file_t) * base_fs.num_files;
 
     /* ----------- v2 fields ----------- */
     base_fs.virtfs_version    = VFSVersion;
     base_fs.backcomp_sentinel = std::numeric_limits<u32>::max();
-    base_fs.files_offset      = sizeof(fs);
+    base_fs.files_offset      = sizeof(fs_t);
 
     base_fs.ext_index.num    = 0; /* Filled in later */
     base_fs.ext_index.offset = 0; /* Filled in later */
@@ -89,13 +89,12 @@ stl_types::result<std::vector<libc_types::byte_t>, error> generate(
     std::sort(filenames.begin(), filenames.end(), VirtDesc_Sort);
 
     /* Pre-allocate vectors */
-    std::vector<file> files;
+    std::vector<file_t> files;
     files.resize(filenames.size());
-    std::vector<mem_chunk<const libc_types::u8>> data_arrays;
+    std::vector<mem_chunk<const u8>> data_arrays;
     data_arrays.resize(filenames.size());
 
     {
-        using namespace Coffee::Compression;
         using stl_types::Range;
 
         DProfContext __(VIRTFS_API "Compressing files");
@@ -104,7 +103,8 @@ stl_types::result<std::vector<libc_types::byte_t>, error> generate(
             auto& file     = files[i];
             auto& src_file = filenames[i];
             auto& in_data  = filenames[i].data;
-            auto& out_data = data_arrays[i];
+            auto  out_data = mem_chunk<char>::ofBytes(
+                const_cast<u8*>(data_arrays[i].data), data_arrays[i].size);
 
             if(src_file.flags & File_Compressed)
             {
@@ -117,32 +117,18 @@ stl_types::result<std::vector<libc_types::byte_t>, error> generate(
 
                 switch(settings.file_codec)
                 {
-#if defined(COFFEE_COMPRESS_LZ4)
-                case compression::codec::lz4: {
-                    lz4::error_code comp_ec;
-                    lz4::compressor::Compress(
-                        in_data,
-                        &out_data.allocation,
-                        lz4::compressor::opts::high_comp(9),
-                        comp_ec);
-
-                    break;
-                }
-#endif
 #if defined(COFFEE_WINDOWS)
                 case compression::codec::deflate_ms:
 #else
                 case compression::codec::deflate:
 #endif
                 {
-                    zlib::error_code comp_ec;
-                    Zlib::Compress(in_data, &out_data.allocation, {}, comp_ec);
-
-                    if(comp_ec)
-                    {
-                        //                        ec =
-                        //                        fsError::CompressionError;
-                    }
+                    Zlib::compress(in_data, out_data);
+                    break;
+                }
+                case compression::codec::zstd:
+                {
+                    ZStd::compress(in_data, out_data);
                     break;
                 }
                 default: {
@@ -188,8 +174,8 @@ stl_types::result<std::vector<libc_types::byte_t>, error> generate(
             }
 
             /* We want to align data to 8-byte boundaries */
-            data_size =
-                libc::align::align<libc::align::dir_forward>(8, data_size);
+            data_size
+                = libc::align::align<libc::align::dir_forward>(8, data_size);
 
             file.offset = data_size;
             file.rsize  = filenames[i].data.size();
@@ -256,7 +242,7 @@ stl_types::result<std::vector<libc_types::byte_t>, error> generate(
 
     /* ---------- Added in v2 ---------- */
 
-    outputView.as<fs>().data->ext_index.offset = output.size();
+    outputView.as<fs_t>().data->ext_index.offset = output.size();
 
     /* Index creation */
     {
@@ -280,13 +266,13 @@ stl_types::result<std::vector<libc_types::byte_t>, error> generate(
 
         for(auto& index : extension_buckets)
         {
-            struct index outIndex;
-            outIndex.kind = index::index_t::file_extension;
-            outIndex.next_index =
-                sizeof(index) + index.second.size() * sizeof(index.second[0]);
+            struct index_t outIndex;
+            outIndex.kind = index_t::index_type::file_extension;
+            outIndex.next_index
+                = sizeof(index) + index.second.size() * sizeof(index.second[0]);
 
-            auto extensionData =
-                Bytes::ofBytes(outIndex.extension.ext, MaxExtensionLength);
+            auto extensionData
+                = Bytes::ofBytes(outIndex.extension.ext, MaxExtensionLength);
 
             MemClear(extensionData);
 
@@ -297,8 +283,8 @@ stl_types::result<std::vector<libc_types::byte_t>, error> generate(
             auto start = output.size();
 
             output.resize(
-                output.size() + sizeof(index) +
-                index.second.size() * sizeof(index.second[0]));
+                output.size() + sizeof(index)
+                + index.second.size() * sizeof(index.second[0]));
 
             MemCpy(
                 Bytes::ofBytes(outIndex),
@@ -313,7 +299,7 @@ stl_types::result<std::vector<libc_types::byte_t>, error> generate(
 
         outputView = Bytes::ofContainer(output);
 
-        outputView.as<fs>()[0].ext_index.num += extension_buckets.size();
+        outputView.as<fs_t>()[0].ext_index.num += extension_buckets.size();
     }
 
     /* Ensure that we can create a node hierarchy of n^2 size.
@@ -324,7 +310,7 @@ stl_types::result<std::vector<libc_types::byte_t>, error> generate(
     {
         DProfContext _(VIRTFS_API "Inserting directory index");
 
-        auto vfsRef = outputView.as<fs>().data;
+        auto vfsRef = outputView.as<fs_t>().data;
         auto files  = vfsRef->files();
 
         dir_index::directory_index_t dirIndex = dir_index::Generate(files);
@@ -334,14 +320,14 @@ stl_types::result<std::vector<libc_types::byte_t>, error> generate(
         outputView = Bytes::ofContainer(output);
 
         auto index_ref = *outputView.at(prevSize);
-        auto data_ref  = *outputView.at(prevSize + sizeof(index));
+        auto data_ref  = *outputView.at(prevSize + sizeof(index_t));
 
         MemCpy(Bytes::ofBytes(dirIndex.baseIndex), index_ref);
         MemCpy(Bytes::ofBytes(dirIndex.nodes), data_ref);
 
         outputView = Bytes::ofContainer(output);
 
-        outputView.as<fs>()[0].ext_index.num++;
+        outputView.as<fs_t>()[0].ext_index.num++;
     }
 
     /* --------------------------------- */
@@ -350,8 +336,8 @@ stl_types::result<std::vector<libc_types::byte_t>, error> generate(
     return output;
 }
 
-stl_types::result<directory_data_t::result_t, error> fs::SearchFile(
-    fs const*                             vfs,
+stl_types::result<directory_data_t::result_t, error> fs_t::SearchFile(
+    fs_t const*                             vfs,
     std::string_view                      name,
     search_strategy                       strat,
     directory_data_t::cached_index const* filter)
@@ -359,11 +345,10 @@ stl_types::result<directory_data_t::result_t, error> fs::SearchFile(
     return dir_index::lookup::SearchFile(vfs, name, strat, filter);
 }
 
-stl_types::result<mem_chunk<const u8>, error> fs::GetData(
-    const fs* vfs, const file* file)
+stl_types::result<mem_chunk<const u8>, error> fs_t::GetData(
+    const fs_t* vfs, const file_t* file)
 {
     DProfContext _(VIRTFS_API "Getting data");
-    using namespace Coffee::Compression;
 
     auto basePtr = vfs->data();
 
@@ -380,40 +365,22 @@ stl_types::result<mem_chunk<const u8>, error> fs::GetData(
             return {};
 #else
             DProfContext _(VIRTFS_API "Decompressing file");
-            auto writable = data.as<libc_types::u8>();
+            auto writable = data.as<char>();
 
             switch(file->codec)
             {
-            case compression::codec::lz4: {
-#if defined(COFFEE_COMPRESS_LZ4)
-                lz4::error_code comp_ec;
-                lz4::compressor::Decompress(
-                    srcData, &writable, {}, comp_ec);
-
-                if(comp_ec)
-                {
-                    return error::compression_error;
-                }
-                data.ownership = semantic::Ownership::Owned;
-                break;
-#else
-                return error::compression_codec_unsupported;
-#endif
-            }
 #if defined(COFFEE_WINDOWS)
             case compression::codec::deflate_ms:
 #else
             case compression::codec::deflate:
 #endif
             {
-                zlib::error_code comp_ec;
-                Zlib::Decompress(srcData, &writable, {}, comp_ec);
-
-                if(comp_ec)
-                {
-                    return error::compression_error;
-                }
-                data.ownership = semantic::Ownership::Owned;
+                Zlib::decompress(srcData, writable);
+                break;
+            }
+            case compression::codec::zstd:
+            {
+                ZStd::decompress(srcData, writable);
                 break;
             }
             default: {
@@ -434,7 +401,7 @@ stl_types::result<mem_chunk<const u8>, error> fs::GetData(
     return data;
 }
 
-Coffee::ResourceResolver<Resource> fs::GetResolver(const fs* vfs)
+Coffee::ResourceResolver<Resource> fs_t::GetResolver(const fs_t* vfs)
 {
     using namespace platform::url;
 
@@ -446,14 +413,13 @@ Coffee::ResourceResolver<Resource> fs::GetResolver(const fs* vfs)
         [=](Path const& query, Vector<Url>& output) {
             DProfContext _(DTEXT(VIRTFS_API "Resolving filesystem"));
 
-            error ec;
-
-            if(vfs->supportsIndex(index::index_t::directory_tree))
+            if(vfs->supportsIndex(index_t::index_type::directory_tree))
             {
-                auto index =
-                    fs::SearchFile(
-                        vfs, query.internUrl.c_str(), search_strategy::earliest)
-                        .value();
+                auto index = fs_t::SearchFile(
+                                 vfs,
+                                 query.internUrl.c_str(),
+                                 search_strategy::earliest)
+                                 .value();
 
                 DProfContext __(DTEXT(VIRTFS_API "Checking files"));
 

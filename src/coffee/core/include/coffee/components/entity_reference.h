@@ -19,7 +19,8 @@ struct EntityRef
     typename T::value_type& get()
     {
         auto ptr = container->template get<T>(m_id);
-        C_PTR_CHECK(ptr);
+        if(!ptr)
+            Throw(std::out_of_range("component not found"));
         return *ptr;
     }
 
@@ -35,7 +36,8 @@ struct EntityRef
         auto container_mut = C_CCAST<ContainerType*>(container);
 
         auto ptr = container_mut->template get<T>(m_id);
-        C_PTR_CHECK(ptr);
+        if(!ptr)
+            Throw(std::out_of_range("component not found"));
         return *ptr;
     }
 

@@ -42,16 +42,14 @@ FORCEDINLINE result<mem_chunk<char>, posix_error> read(
 
     auto  output = mem_chunk<char>::withSize(size);
     auto& view   = output.view;
-    auto ptr = view.data();
 
     detail::scoped_offset _(file, offset);
 
     constexpr int read_max = std::numeric_limits<libc_types::i32>::max();
-    szptr         i        = 0;
-    szptr         chunk    = 0;
-    while(i < size)
+    ssize_t       chunk = 0, i = 0, ssize = static_cast<ssize_t>(size);
+    while(i < ssize)
     {
-        chunk = std::min<szptr>(read_max, size - i);
+        chunk = std::min<ssize_t>(read_max, ssize - i);
         if(auto read_count = ::read(file, view.data() + i, chunk);
            read_count < 0)
             return failure(common::posix::get_error());
@@ -60,8 +58,7 @@ FORCEDINLINE result<mem_chunk<char>, posix_error> read(
             /* Special case when file size is unknown */
             output.resize(read_count);
             break;
-        }
-        else
+        } else
             i += C_CAST<szptr>(read_count);
     }
 
@@ -69,12 +66,11 @@ FORCEDINLINE result<mem_chunk<char>, posix_error> read(
 }
 
 FORCEDINLINE Optional<posix_error> write(
-    posix_fd_t const&            file,
-    mem_chunk<const char> const& data,
-    write_params_t const&        params = {})
+    posix_fd_t const&                 file,
+    semantic::Span<const char> const& data,
+    write_params_t const&             params = {})
 {
-    auto        view = data.view;
-    auto        size = view.size();
+    auto size = data.size();
 
     detail::scoped_offset _(file, params.offset);
 
@@ -84,7 +80,7 @@ FORCEDINLINE Optional<posix_error> write(
     while(i < size)
     {
         chunk = std::min<szptr>(write_max, size - i);
-        if(auto write_count = ::write(file, view.data() + i, chunk);
+        if(auto write_count = ::write(file, data.data() + i, chunk);
            write_count < 0)
         {
             return std::make_optional(common::posix::get_error());

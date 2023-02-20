@@ -1,1 +1,6 @@
+#pragma once
+
 #include "gleam/rhi.h"
+#include "gleam/rhi_compat.h"
+
+#include "gleam/rhi_submit.h"

@@ -30,30 +30,29 @@ constexpr libc_types::u32 unsigned_int_atomic_counter                = 0x92DB;
 constexpr libc_types::u32 max_atomic_counter_buffer_bindings         = 0x92DC;
 } // namespace values
 template<class span_i32>
-requires(
-    semantic::concepts::Span<span_i32> &&
-    std::is_same_v<
-        std::decay_t<typename span_i32::value_type>,
-        std::decay_t<i32>>)
-/*!
- * \brief Part of GL_ARB_shader_atomic_counters
- * \param program GLuint
- * \param bufferIndex GLuint
- * \param pname GLenum
- * \param params GLint *
- * \return void
- */
-STATICINLINE void get_active_atomic_counter_bufferiv(
-    u32                               program,
-    u32                               bufferIndex,
-    group::atomic_counter_buffer_prop pname,
-    span_i32                          params)
+requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+         std::decay_t<typename span_i32::value_type>,
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_ARB_shader_atomic_counters
+     * \param program GLuint
+     * \param bufferIndex GLuint
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_active_atomic_counter_bufferiv(
+        u32                               program,
+        u32                               bufferIndex,
+        group::atomic_counter_buffer_prop pname,
+        span_i32                          params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetActiveAtomicCounterBufferiv)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif

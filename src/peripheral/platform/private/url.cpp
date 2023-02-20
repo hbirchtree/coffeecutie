@@ -99,14 +99,14 @@ STATICINLINE SystemPaths& GetSystemPaths()
 
     auto _coffee_resource_prefix = prefix.value_or("./");
 
-    auto& appData = *state->GetAppData();
+    [[maybe_unused]] auto& appData = *state->GetAppData();
 
 #if defined(COFFEE_ANDROID)
 
     auto app_info = android::app_info();
 
     paths.configDir = app_info.data_path();
-
+    paths.assetDir = app_info.external_data_path();
     paths.cacheDir = app_info.cache_path();
     paths.tempDir  = paths.cacheDir;
 #elif defined(COFFEE_LINUX)
@@ -343,14 +343,8 @@ STATICINLINE std::string DereferencePath(std::string suffix, RSCA storageMask)
     {
     case RSCA::AssetFile:
     {
-#if defined(COFFEE_VIRTUAL_ASSETS)
-        /* Because Android uses a virtual filesystem,
-         *  we do not go deeper to find a RSCA::SystemFile URL */
-        return urlPart.internUrl.c_str();
-#else
         tempStore = paths.assetDir + urlPart;
         break;
-#endif
     }
     case RSCA::ConfigFile:
     {

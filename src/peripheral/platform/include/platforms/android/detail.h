@@ -35,10 +35,9 @@ FORCEDINLINE bool is_asset(android_fd_t const& fd)
 
 FORCEDINLINE auto* open_asset(Url const& file)
 {
-    auto filename = *file;
     return AAssetManager_open(
         ::android::activity_manager().asset_manager(),
-        filename.c_str(),
+        file.internUrl.c_str(),
         AASSET_MODE_BUFFER);
 }
 
@@ -48,6 +47,7 @@ FORCEDINLINE std::optional<posix::posix_error> close_file(android_fd_t&& file)
         AAsset_close(file.asset);
     else
         posix::detail::close_fd(file.fd);
+    return std::nullopt;
 }
 } // namespace detail
 

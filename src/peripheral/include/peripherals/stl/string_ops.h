@@ -64,6 +64,36 @@ FORCEDINLINE std::basic_string<CharType> encapsulate(const CharType* src)
     return target;
 }
 
+template<typename CharType, typename CharType2 = CharType>
+FORCEDINLINE std::basic_string_view<CharType> encapsulate_view(
+    const CharType2* src, std::optional<size_t> num_chars = std::nullopt)
+{
+    auto casted_ptr = reinterpret_cast<const CharType*>(src);
+    if(num_chars)
+        return std::basic_string_view<CharType>(casted_ptr, *num_chars);
+    else
+        return std::basic_string_view<CharType>(casted_ptr);
+}
+
+template<typename CharType, class Container>
+requires std::is_same_v<CharType, typename Container::value_type>
+//
+FORCEDINLINE std::basic_string_view<CharType> encapsulate_view(
+    Container const& src)
+{
+    return std::basic_string_view<CharType>(std::begin(src), std::end(src));
+}
+
+template<typename CharType, class Container>
+requires (!std::is_same_v<CharType, typename Container::value_type>)
+//
+FORCEDINLINE std::basic_string_view<CharType> encapsulate_view(
+    Container const& src)
+{
+    auto adapter = semantic::mem_chunk<const CharType>::ofContainer(src).view;
+    return std::basic_string_view<CharType>(adapter.data(), adapter.size());
+}
+
 namespace transform {
 template<typename CharType>
 FORCEDINLINE std::basic_string<CharType> printclean(
@@ -106,18 +136,16 @@ template<class StrType>
 FORCEDINLINE StrType left(StrType const& s)
 {
     auto start = std::find_if(
-            s.begin(), s.end(), [](int c) { return !std::isspace(c); });
-    return StrType(
-        s.data() + (start - s.begin()),
-        s.end() - start);
+        s.begin(), s.end(), [](int c) { return !std::isspace(c); });
+    return StrType(s.data() + (start - s.begin()), s.end() - start);
 }
 
 template<class StrType>
 FORCEDINLINE StrType right(StrType const& s)
 {
     auto end = std::find_if(s.rbegin(), s.rend(), [](int c) {
-                                  return !std::isspace(c);
-                              }).base();
+                   return !std::isspace(c);
+               }).base();
     return StrType(s.data(), end - s.begin());
 }
 
@@ -154,12 +182,12 @@ namespace convert {
 using std::to_string;
 
 template<typename CharType = char>
-FORCEDINLINE std::basic_string<CharType> hexify(u64 s, bool trim_zero = false)
+FORCEDINLINE std::basic_string<CharType> hexify(u64 s)
 {
     if(s == 0)
         return "0";
 
-    u64 ss = s;
+    long long unsigned int ss = s;
 
     std::basic_string<CharType> str;
     str.resize(C_CAST<size_t>(snprintf(nullptr, 0, "%llx", ss)) + 1);
@@ -325,7 +353,8 @@ FORCEDINLINE std::basic_string<CharType> str(
 namespace split {
 
 template<typename CharType>
-struct spliterator : Iterator<std::forward_iterator_tag, std::basic_string_view<CharType>>
+struct spliterator
+    : Iterator<std::forward_iterator_tag, std::basic_string_view<CharType>>
 {
     using string_type = std::basic_string_view<CharType>;
     using sep_type    = CharType;
@@ -471,8 +500,8 @@ namespace b64 {
 
 using namespace ::libc_types;
 
-constexpr const char* b64_char =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+constexpr const char* b64_char
+    = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 /* Reference:
  * https://en.wikibooks.org/wiki/Algorithm_Implementation/Miscellaneous/Base64

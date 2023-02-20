@@ -1,17 +1,20 @@
 #pragma once
 
-#include <coffee/core/libc_types.h>
-#include <coffee/core/stl_types.h>
+#include <peripherals/libc/types.h>
+#include <peripherals/stl/types.h>
 #include <url/url.h>
 
-#include <coffee/foreign/foreign.h>
 #include <coffee/jni/jnipp.h>
+
+#include <android_native_app_glue.h>
 
 #include <jni.h>
 
 struct android_app;
 struct AAsset;
 struct AAssetManager;
+struct AInputQueue;
+struct ALooper;
 struct ANativeWindow;
 struct ANativeActivity;
 struct AConfiguration;
@@ -19,6 +22,9 @@ struct AConfiguration;
 using app_cmd_t = decltype(APP_CMD_START);
 
 namespace android {
+
+using libc_types::f32;
+using libc_types::u32;
 
 struct jni_error_category : stl_types::error_category
 {
@@ -37,8 +43,8 @@ struct ScopedJNI
     {
         jni_error_code ec;
 
-        auto envcode =
-            javaVm->GetEnv(C_RCAST<void**>(&jniEnvironment), JNI_VERSION_1_6);
+        auto envcode
+            = javaVm->GetEnv(C_RCAST<void**>(&jniEnvironment), JNI_VERSION_1_6);
 
         switch(envcode)
         {
@@ -46,8 +52,7 @@ struct ScopedJNI
             break;
         case JNI_OK:
             return;
-        default:
-        {
+        default: {
             ec = envcode;
             C_ERROR_CHECK(ec);
             return;
@@ -94,20 +99,20 @@ struct intent
 struct app_info
 {
     std::string package_name();
-    int sdk_version();
+    int         sdk_version();
 
-    platform::url::Url data_path();
-    platform::url::Url cache_path();
-    platform::url::Url external_data_path();
+    platform::url::Url                data_path();
+    platform::url::Url                cache_path();
+    platform::url::Url                external_data_path();
     std::optional<platform::url::Url> obb_path();
 
     std::optional<::jnipp::java::object> get_service(
         std::string const& service);
 
     ANativeActivity* activity() const;
-    AConfiguration* configuration() const;
-    AInputQueue* input_queue() const;
-    ALooper* looper() const;
+    AConfiguration*  configuration() const;
+    AInputQueue*     input_queue() const;
+    ALooper*         looper() const;
 };
 
 struct network_stats
@@ -152,8 +157,8 @@ struct activity_manager
     struct window_info
     {
         ANativeActivity* activity{nullptr};
-        ANativeWindow* window{nullptr};
-        ::jobject activity_object{};
+        ANativeWindow*   window{nullptr};
+        ::jobject        activity_object{};
     };
 
     std::optional<memory_info> get_mem_info();
@@ -171,9 +176,42 @@ struct activity_manager
     bool is_monkey();
 };
 
-extern std::vector<std::string> cpu_abis();
+struct display_info
+{
+    enum hdr_mode_t
+    {
+        none         = 0x0,
+        dolby_vision = 0x1,
+        hdr10        = 0x2,
+        hlg          = 0x4,
+        hdr10_plus   = 0x8,
+    };
+    enum rotation_t
+    {
+        portrait_0,
+        landscape_90,
+        portrait_180,
+        landscape_270,
+    };
+    struct insets_t
+    {
+        f32 top, bottom, left, right;
+    };
 
-extern int app_dpi();
+    hdr_mode_t hdr_modes();
+    bool     is_low_latency();
+    bool     is_wide_gamut();
+
+    std::optional<insets_t> safe_insets();
+    rotation_t rotation();
+
+    f32 dpi();
+    f32 refresh_rate();
+};
+
+C_FLAGS(display_info::hdr_mode_t, u32);
+
+extern std::vector<std::string> cpu_abis();
 
 } // namespace android
 

@@ -8,7 +8,7 @@ namespace blam {
 /*!
  * \brief A file header located from the start of a map file
  */
-struct alignas(4) file_header_t : stl_types::non_copy
+struct alignas(4) file_header_t
 {
     bl_header id;      /*!< Header value, should correspond with specific data*/
     version_t version; /*!< Version of Halo, determines the process*/
@@ -60,6 +60,14 @@ struct alignas(4) file_header_t : stl_types::non_copy
     {
         return version == version_t::xbox;
     }
+
+    inline void copy_to(file_header_t& other) const
+    {
+        other = *this;
+    }
+
+  private:
+    file_header_t& operator=(file_header_t const& other) = default;
 };
 
-}
+} // namespace blam

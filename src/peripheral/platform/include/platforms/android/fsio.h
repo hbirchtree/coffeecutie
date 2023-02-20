@@ -11,7 +11,8 @@ FORCEDINLINE result<file_info_t, posix::posix_error> file_info(
     if(detail::is_asset(file))
     {
         using libc_types::u64;
-        return file_info_t{
+        return file_info_t
+        {
 #if defined(COFFEE_ARCH_ARM64)
             .size = static_cast<szptr>(AAsset_getLength64(file.asset)),
 #else
@@ -54,30 +55,43 @@ requires(std::is_same_v<T, Url> || std::is_same_v<T, detail::android_fd_t>)
         return success(info.value().size);
 }
 
-FORCEDINLINE result<stl_types::Vector<file_entry_t>, posix::posix_error> list(
+FORCEDINLINE result<std::vector<file_entry_t>, posix::posix_error> list(
     Url const& dir)
 {
-    if(detail::is_asset(dir, RSCA::ReadOnly))
+    posix::posix_error earlier_error{0};
+
+    std::vector<file_entry_t> files;
+    if(auto result = posix::list(dir); result.has_value())
     {
-        auto       dir_name = *dir;
-        AAssetDir* dir      = AAssetManager_openDir(
-            ::android::activity_manager().asset_manager(), dir_name.c_str());
-        if(!dir)
-            return posix::posix_error{ENOENT};
-        const char*                     fname = AAssetDir_getNextFileName(dir);
-        stl_types::Vector<file_entry_t> files;
-        while(!fname)
-        {
-            files.push_back(file_entry_t{
-                .mode = mode_t::file,
-                .name = std::string(fname),
-            });
-            fname = AAssetDir_getNextFileName(dir);
-        }
-        AAssetDir_close(dir);
-        return files;
+        auto external_files = result.value();
+        files.insert(
+            files.begin(), external_files.begin(), external_files.end());
     } else
-        return posix::list(dir);
+        earlier_error = result.error();
+
+    auto       dir_name = *dir;
+    AAssetDir* adir      = AAssetManager_openDir(
+        ::android::activity_manager().asset_manager(), dir_name.c_str());
+    if(!adir)
+    {
+        if(files.empty())
+            return posix::posix_error{ENOENT};
+        else if(earlier_error != 0)
+            return earlier_error;
+        else
+            return files;
+    }
+    const char* fname = AAssetDir_getNextFileName(adir);
+    while(fname)
+    {
+        files.push_back(file_entry_t{
+            .mode = mode_t::file,
+            .name = std::string(fname),
+        });
+        fname = AAssetDir_getNextFileName(adir);
+    }
+    AAssetDir_close(adir);
+    return files;
 }
 
 FORCEDINLINE Optional<posix::posix_error> truncate(Url const& file)

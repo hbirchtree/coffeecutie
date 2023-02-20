@@ -37,17 +37,15 @@ STATICINLINE void binormal3b(i8 bx, i8 by, i8 bz)
 }
 
 template<class span_const_i8>
-requires(
-    semantic::concepts::Span<span_const_i8> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_i8::value_type>,
-        std::decay_t<i8>>)
-/*!
- * \brief Part of GL_EXT_coordinate_frame
- * \param v const GLbyte *
- * \return void
- */
-STATICINLINE void binormal3bv(span_const_i8 const& v)
+requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
+         std::decay_t<typename span_const_i8::value_type>,
+         std::decay_t<i8>>)
+    /*!
+     * \brief Part of GL_EXT_coordinate_frame
+     * \param v const GLbyte *
+     * \return void
+     */
+    STATICINLINE void binormal3bv(span_const_i8 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -78,16 +76,14 @@ STATICINLINE void binormal3d(f64 bx, f64 by, f64 bz)
 }
 
 template<class span_const_vec_3_f64>
-requires(
-    semantic::concepts::Span<span_const_vec_3_f64> &&
-    semantic::concepts::
-        Vector<typename span_const_vec_3_f64::value_type, f64, 3>)
-/*!
- * \brief Part of GL_EXT_coordinate_frame
- * \param v const GLdouble *
- * \return void
- */
-STATICINLINE void binormal3dv(span_const_vec_3_f64 const& v)
+requires(semantic::concepts::Span<span_const_vec_3_f64>&& semantic::concepts::
+             Vector<typename span_const_vec_3_f64::value_type, f64, 3>)
+    /*!
+     * \brief Part of GL_EXT_coordinate_frame
+     * \param v const GLdouble *
+     * \return void
+     */
+    STATICINLINE void binormal3dv(span_const_vec_3_f64 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -117,16 +113,14 @@ STATICINLINE void binormal3f(f32 bx, f32 by, f32 bz)
 }
 
 template<class span_const_vec_3_f32>
-requires(
-    semantic::concepts::Span<span_const_vec_3_f32> &&
-    semantic::concepts::
-        Vector<typename span_const_vec_3_f32::value_type, f32, 3>)
-/*!
- * \brief Part of GL_EXT_coordinate_frame
- * \param v const GLfloat *
- * \return void
- */
-STATICINLINE void binormal3fv(span_const_vec_3_f32 const& v)
+requires(semantic::concepts::Span<span_const_vec_3_f32>&& semantic::concepts::
+             Vector<typename span_const_vec_3_f32::value_type, f32, 3>)
+    /*!
+     * \brief Part of GL_EXT_coordinate_frame
+     * \param v const GLfloat *
+     * \return void
+     */
+    STATICINLINE void binormal3fv(span_const_vec_3_f32 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -156,16 +150,14 @@ STATICINLINE void binormal3i(i32 bx, i32 by, i32 bz)
 }
 
 template<class span_const_vec_3_i32>
-requires(
-    semantic::concepts::Span<span_const_vec_3_i32> &&
-    semantic::concepts::
-        Vector<typename span_const_vec_3_i32::value_type, i32, 3>)
-/*!
- * \brief Part of GL_EXT_coordinate_frame
- * \param v const GLint *
- * \return void
- */
-STATICINLINE void binormal3iv(span_const_vec_3_i32 const& v)
+requires(semantic::concepts::Span<span_const_vec_3_i32>&& semantic::concepts::
+             Vector<typename span_const_vec_3_i32::value_type, i32, 3>)
+    /*!
+     * \brief Part of GL_EXT_coordinate_frame
+     * \param v const GLint *
+     * \return void
+     */
+    STATICINLINE void binormal3iv(span_const_vec_3_i32 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -195,16 +187,14 @@ STATICINLINE void binormal3s(i16 bx, i16 by, i16 bz)
 }
 
 template<class span_const_vec_3_i16>
-requires(
-    semantic::concepts::Span<span_const_vec_3_i16> &&
-    semantic::concepts::
-        Vector<typename span_const_vec_3_i16::value_type, i16, 3>)
-/*!
- * \brief Part of GL_EXT_coordinate_frame
- * \param v const GLshort *
- * \return void
- */
-STATICINLINE void binormal3sv(span_const_vec_3_i16 const& v)
+requires(semantic::concepts::Span<span_const_vec_3_i16>&& semantic::concepts::
+             Vector<typename span_const_vec_3_i16::value_type, i16, 3>)
+    /*!
+     * \brief Part of GL_EXT_coordinate_frame
+     * \param v const GLshort *
+     * \return void
+     */
+    STATICINLINE void binormal3sv(span_const_vec_3_i16 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -217,17 +207,17 @@ STATICINLINE void binormal3sv(span_const_vec_3_i16 const& v)
 
 template<class span_const_void>
 requires(semantic::concepts::Span<span_const_void>)
-/*!
- * \brief Part of GL_EXT_coordinate_frame
- * \param type GLenum
- * \param stride GLsizei
- * \param pointer const void *
- * \return void
- */
-STATICINLINE void binormal_pointer(
-    group::binormal_pointer_type_ext type,
-    i32                              stride,
-    span_const_void const&           pointer)
+    /*!
+     * \brief Part of GL_EXT_coordinate_frame
+     * \param type GLenum
+     * \param stride GLsizei
+     * \param pointer const void *
+     * \return void
+     */
+    STATICINLINE void binormal_pointer(
+        group::binormal_pointer_type_ext type,
+        i32                              stride,
+        span_const_void const&           pointer)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -261,17 +251,15 @@ STATICINLINE void tangent3b(i8 tx, i8 ty, i8 tz)
 }
 
 template<class span_const_i8>
-requires(
-    semantic::concepts::Span<span_const_i8> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_i8::value_type>,
-        std::decay_t<i8>>)
-/*!
- * \brief Part of GL_EXT_coordinate_frame
- * \param v const GLbyte *
- * \return void
- */
-STATICINLINE void tangent3bv(span_const_i8 const& v)
+requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
+         std::decay_t<typename span_const_i8::value_type>,
+         std::decay_t<i8>>)
+    /*!
+     * \brief Part of GL_EXT_coordinate_frame
+     * \param v const GLbyte *
+     * \return void
+     */
+    STATICINLINE void tangent3bv(span_const_i8 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -302,16 +290,14 @@ STATICINLINE void tangent3d(f64 tx, f64 ty, f64 tz)
 }
 
 template<class span_const_vec_3_f64>
-requires(
-    semantic::concepts::Span<span_const_vec_3_f64> &&
-    semantic::concepts::
-        Vector<typename span_const_vec_3_f64::value_type, f64, 3>)
-/*!
- * \brief Part of GL_EXT_coordinate_frame
- * \param v const GLdouble *
- * \return void
- */
-STATICINLINE void tangent3dv(span_const_vec_3_f64 const& v)
+requires(semantic::concepts::Span<span_const_vec_3_f64>&& semantic::concepts::
+             Vector<typename span_const_vec_3_f64::value_type, f64, 3>)
+    /*!
+     * \brief Part of GL_EXT_coordinate_frame
+     * \param v const GLdouble *
+     * \return void
+     */
+    STATICINLINE void tangent3dv(span_const_vec_3_f64 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -341,16 +327,14 @@ STATICINLINE void tangent3f(f32 tx, f32 ty, f32 tz)
 }
 
 template<class span_const_vec_3_f32>
-requires(
-    semantic::concepts::Span<span_const_vec_3_f32> &&
-    semantic::concepts::
-        Vector<typename span_const_vec_3_f32::value_type, f32, 3>)
-/*!
- * \brief Part of GL_EXT_coordinate_frame
- * \param v const GLfloat *
- * \return void
- */
-STATICINLINE void tangent3fv(span_const_vec_3_f32 const& v)
+requires(semantic::concepts::Span<span_const_vec_3_f32>&& semantic::concepts::
+             Vector<typename span_const_vec_3_f32::value_type, f32, 3>)
+    /*!
+     * \brief Part of GL_EXT_coordinate_frame
+     * \param v const GLfloat *
+     * \return void
+     */
+    STATICINLINE void tangent3fv(span_const_vec_3_f32 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -380,16 +364,14 @@ STATICINLINE void tangent3i(i32 tx, i32 ty, i32 tz)
 }
 
 template<class span_const_vec_3_i32>
-requires(
-    semantic::concepts::Span<span_const_vec_3_i32> &&
-    semantic::concepts::
-        Vector<typename span_const_vec_3_i32::value_type, i32, 3>)
-/*!
- * \brief Part of GL_EXT_coordinate_frame
- * \param v const GLint *
- * \return void
- */
-STATICINLINE void tangent3iv(span_const_vec_3_i32 const& v)
+requires(semantic::concepts::Span<span_const_vec_3_i32>&& semantic::concepts::
+             Vector<typename span_const_vec_3_i32::value_type, i32, 3>)
+    /*!
+     * \brief Part of GL_EXT_coordinate_frame
+     * \param v const GLint *
+     * \return void
+     */
+    STATICINLINE void tangent3iv(span_const_vec_3_i32 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -419,16 +401,14 @@ STATICINLINE void tangent3s(i16 tx, i16 ty, i16 tz)
 }
 
 template<class span_const_vec_3_i16>
-requires(
-    semantic::concepts::Span<span_const_vec_3_i16> &&
-    semantic::concepts::
-        Vector<typename span_const_vec_3_i16::value_type, i16, 3>)
-/*!
- * \brief Part of GL_EXT_coordinate_frame
- * \param v const GLshort *
- * \return void
- */
-STATICINLINE void tangent3sv(span_const_vec_3_i16 const& v)
+requires(semantic::concepts::Span<span_const_vec_3_i16>&& semantic::concepts::
+             Vector<typename span_const_vec_3_i16::value_type, i16, 3>)
+    /*!
+     * \brief Part of GL_EXT_coordinate_frame
+     * \param v const GLshort *
+     * \return void
+     */
+    STATICINLINE void tangent3sv(span_const_vec_3_i16 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -441,17 +421,17 @@ STATICINLINE void tangent3sv(span_const_vec_3_i16 const& v)
 
 template<class span_const_void>
 requires(semantic::concepts::Span<span_const_void>)
-/*!
- * \brief Part of GL_EXT_coordinate_frame
- * \param type GLenum
- * \param stride GLsizei
- * \param pointer const void *
- * \return void
- */
-STATICINLINE void tangent_pointer(
-    group::tangent_pointer_type_ext type,
-    i32                             stride,
-    span_const_void const&          pointer)
+    /*!
+     * \brief Part of GL_EXT_coordinate_frame
+     * \param type GLenum
+     * \param stride GLsizei
+     * \param pointer const void *
+     * \return void
+     */
+    STATICINLINE void tangent_pointer(
+        group::tangent_pointer_type_ext type,
+        i32                             stride,
+        span_const_void const&          pointer)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

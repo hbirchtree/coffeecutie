@@ -7,7 +7,8 @@
 
 namespace gleam::context {
 
-#if GLEAM_MAX_VERSION >= 0x430 || GLEAM_MAX_VERSION >= 0x320
+#if(GLEAM_MAX_VERSION >= 0x450 || GLEAM_MAX_VERSION_ES >= 0x320) \
+    && defined(GL_KHR_robustness)
 struct api
 {
     enum class strategy

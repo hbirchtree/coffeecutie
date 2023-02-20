@@ -9,19 +9,17 @@ constexpr libc_types::u32
     framebuffer_incomplete_insufficient_shader_combined_local_storage = 0x9652;
 } // namespace values
 template<class span_const_u32>
-requires(
-    semantic::concepts::Span<span_const_u32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_u32::value_type>,
-        std::decay_t<u32>>)
-/*!
- * \brief Part of GL_EXT_shader_pixel_local_storage2
- * \param offset GLsizei
- * \param n GLsizei
- * \param values const GLuint *
- * \return void
- */
-STATICINLINE
+requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+         std::decay_t<typename span_const_u32::value_type>,
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_EXT_shader_pixel_local_storage2
+     * \param offset GLsizei
+     * \param n GLsizei
+     * \param values const GLuint *
+     * \return void
+     */
+    STATICINLINE
     void clear_pixel_local_storageui(i32 offset, span_const_u32 const& values)
 {
     using namespace std::string_view_literals;

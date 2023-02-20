@@ -12,6 +12,10 @@
 
 #include <SDL.h>
 
+#include <coffee/strings/libc_types.h>
+
+#include <coffee/core/debug/formatting.h>
+
 #define NOT_ZERO(v) (v < 0)
 
 #define EMIT_IEVENT(from)                  \
@@ -23,36 +27,68 @@
 
 namespace sdl2 {
 
-using F      = comp_app::detail::WindowState;
-using WState = comp_app::detail::WindowState;
+struct current_config_t
+{
+    int major_version, minor_version;
+    int r, g, b, a, depth, stencil;
+    int srgb;
+    int profile;
+};
 
-static constexpr stl_types::Array<stl_types::Pair<Uint32, F>, 8>
-    window_flag_mapping = {
-        {{SDL_WINDOW_SHOWN, F::Visible},
+inline void print_current_config()
+{
+    current_config_t config;
+    SDL_GL_GetAttribute(SDL_GL_RED_SIZE, &config.r);
+    SDL_GL_GetAttribute(SDL_GL_GREEN_SIZE, &config.g);
+    SDL_GL_GetAttribute(SDL_GL_BLUE_SIZE, &config.b);
+    SDL_GL_GetAttribute(SDL_GL_ALPHA_SIZE, &config.a);
+    SDL_GL_GetAttribute(SDL_GL_DEPTH_SIZE, &config.depth);
+    SDL_GL_GetAttribute(SDL_GL_STENCIL_SIZE, &config.stencil);
+    SDL_GL_GetAttribute(SDL_GL_FRAMEBUFFER_SRGB_CAPABLE, &config.srgb);
+    SDL_GL_GetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, &config.profile);
+    Coffee::Logging::cDebug(
+        "SDL config: red={0} green={1} blue={2}, alpha={3} "
+        "depth={4} stencil={5} srgb={6} profile={7} version={8}.{9}",
+        config.r,
+        config.g,
+        config.b,
+        config.a,
+        config.depth,
+        config.stencil,
+        config.srgb == SDL_TRUE,
+        !!(config.profile & SDL_GL_CONTEXT_PROFILE_CORE));
+}
 
-         {SDL_WINDOW_MINIMIZED, F::Minimized},
-         {SDL_WINDOW_MAXIMIZED, F::Maximized},
-         {SDL_WINDOW_RESIZABLE, F::Resizable},
-         {SDL_WINDOW_BORDERLESS, F::Undecorated},
-         {SDL_WINDOW_ALLOW_HIGHDPI, F::HighDPI},
+using F      = comp_app::window_flags_t;
+using WState = comp_app::window_flags_t;
 
-         {SDL_WINDOW_FULLSCREEN, F::FullScreen},
-         {SDL_WINDOW_FULLSCREEN_DESKTOP, F::WindowedFullScreen}}};
+static constexpr std::array<std::pair<Uint32, F>, 8> window_flag_mapping = {{
+    {SDL_WINDOW_SHOWN, F::visible},
 
-static ::Uint32 window_to_sdl2(comp_app::detail::WindowState state)
+    {SDL_WINDOW_FULLSCREEN_DESKTOP, F::fullscreen_window},
+    {SDL_WINDOW_FULLSCREEN, F::fullscreen},
+
+    {SDL_WINDOW_MINIMIZED, F::minimized},
+    {SDL_WINDOW_MAXIMIZED, F::maximized},
+    {SDL_WINDOW_RESIZABLE, F::resizable},
+    {SDL_WINDOW_BORDERLESS, F::undecorated},
+    {SDL_WINDOW_ALLOW_HIGHDPI, F::high_dpi},
+}};
+
+static ::Uint32 window_to_sdl2(comp_app::window_flags_t state)
 {
     Uint32 out = 0;
 
     for(auto const& v : window_flag_mapping)
-        if(state & v.second)
+        if(enum_helpers::feval(state, v.second))
             out |= v.first;
 
     return out;
 }
 
-static libc_types::u16 window_from_sdl2(::Uint32 state)
+static comp_app::window_flags_t window_from_sdl2(::Uint32 state)
 {
-    libc_types::u16 out = 0;
+    comp_app::window_flags_t out = comp_app::window_flags_t::none;
 
     for(auto const& v : window_flag_mapping)
         if(state & v.first)
@@ -77,8 +113,8 @@ void Context::load(entity_container& c, comp_app::app_error&)
         SDL_version ver;
         SDL_GetVersion(&ver);
 
-        auto verString = cast_pod(ver.major) + "." + cast_pod(ver.minor) + "." +
-                         cast_pod(ver.patch);
+        auto verString = cast_pod(ver.major) + "." + cast_pod(ver.minor) + "."
+                         + cast_pod(ver.patch);
 
         info->add("sdl2:version", verString);
     }
@@ -130,13 +166,11 @@ void Windowing::load(entity_container& c, comp_app::app_error& ec)
 
     auto& config = comp_app::AppLoader::config<comp_app::WindowConfig>(c);
 
-    Uint32 extraFlags = SDL_WINDOW_ALLOW_HIGHDPI;
+    Uint32 extraFlags = 0 /*SDL_WINDOW_ALLOW_HIGHDPI*/;
 
-    if(auto glContext = c.service<GLContext>())
-    {
+    if([[maybe_unused]] auto glContext = c.service<GLContext>())
         extraFlags |= SDL_WINDOW_OPENGL;
-        glContext->setupAttributes(c);
-    } else
+    else
         extraFlags |= SDL_WINDOW_VULKAN;
 
     m_window = SDL_CreateWindow(
@@ -153,6 +187,9 @@ void Windowing::load(entity_container& c, comp_app::app_error& ec)
         ec = SDL_GetError();
         return;
     }
+
+    if(auto glContext = c.service<GLContext>())
+        glContext->setupAttributes(c);
 
     SDL_SetWindowTitle(m_window, config.title.c_str());
 
@@ -173,7 +210,8 @@ void Windowing::start_restricted(proxy_type& p, time_point const&)
 {
     using namespace Coffee::Display;
 
-    auto  displayBus = get_container(p).service<comp_app::BasicEventBus<Event>>();
+    auto displayBus
+        = get_container(p).service<comp_app::BasicEventBus<Event>>();
     if(!displayBus)
         Throw(implementation_error("display bus not available!"));
     Event displayEv;
@@ -253,34 +291,34 @@ void Windowing::move(const comp_app::position_t& newPos)
     SDL_SetWindowPosition(m_window, newPos.x, newPos.y);
 }
 
-comp_app::detail::WindowState Windowing::state() const
+comp_app::window_flags_t Windowing::state() const
 {
     return static_cast<WState>(window_from_sdl2(SDL_GetWindowFlags(m_window)));
 }
 
-void Windowing::setState(comp_app::detail::WindowState state)
+void Windowing::setState(comp_app::window_flags_t state)
 {
-    if(state & F::Visible)
+    if(enum_helpers::feval(state & F::visible))
         SDL_ShowWindow(m_window);
 
-    if(state & F::Minimized)
+    if(enum_helpers::feval(state & F::minimized))
         SDL_MinimizeWindow(m_window);
-    if(state & F::Maximized)
+    if(enum_helpers::feval(state & F::maximized))
         SDL_MaximizeWindow(m_window);
 
-    if(state & F::FullScreen)
+    if(enum_helpers::feval(state & F::fullscreen))
         SDL_SetWindowFullscreen(m_window, SDL_WINDOW_FULLSCREEN);
-    if(state & F::WindowedFullScreen)
+    if(enum_helpers::feval(state & F::fullscreen_window))
         SDL_SetWindowFullscreen(m_window, SDL_WINDOW_FULLSCREEN_DESKTOP);
-    if(state & F::Normal)
+    if(enum_helpers::feval(state & F::normal))
         SDL_SetWindowFullscreen(m_window, 0);
 
-    if(state & F::Undecorated)
+    if(enum_helpers::feval(state & F::undecorated))
         SDL_SetWindowBordered(m_window, SDL_FALSE);
     else
         SDL_SetWindowBordered(m_window, SDL_TRUE);
 
-    if(state & F::Focused)
+    if(enum_helpers::feval(state & F::focused))
         SDL_RaiseWindow(m_window);
 }
 
@@ -332,7 +370,7 @@ comp_app::size_2d_t DisplayInfo::physicalSize(libc_types::u32 i) const
         .convert<libc_types::i32>();
 }
 
-libc_types::f32 DisplayInfo::dpi(libc_types::u32 i) const
+libc_types::f32 DisplayInfo::dpi([[maybe_unused]] libc_types::u32 i) const
 {
 #if defined(COFFEE_EMSCRIPTEN)
     return platform::info::device::emscripten::dpi();
@@ -413,7 +451,7 @@ void GLContext::setupAttributes(entity_container& c)
             SDL_GL_MULTISAMPLESAMPLES, glConfig.multisampling.samples);
     }
 
-    SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, color.a);
+    //    SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, color.a);
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, depth_stencil.depth);
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, depth_stencil.stencil);
 }
@@ -486,8 +524,8 @@ void GLContext::load(entity_container& c, comp_app::app_error& ec)
 #endif
 
     {
-        auto& bindConf =
-            comp_app::AppLoader::config<comp_app::GraphicsBindingConfig>(c);
+        auto& bindConf
+            = comp_app::AppLoader::config<comp_app::GraphicsBindingConfig>(c);
         bindConf.loader = SDL_GL_GetProcAddress;
     }
 
@@ -584,7 +622,8 @@ void ControllerInput::start_restricted(proxy_type& p, time_point const&)
 {
     using namespace Coffee::Input;
 
-    auto    inputBus = get_container(p).service<comp_app::BasicEventBus<CIEvent>>();
+    auto inputBus
+        = get_container(p).service<comp_app::BasicEventBus<CIEvent>>();
     CIEvent inputEv;
 
     SDL_Event event;
@@ -675,15 +714,15 @@ ControllerInput::controller_map ControllerInput::state(
         out.buttons.e.x   = BTN(controller, SDL_CONTROLLER_BUTTON_X);
         out.buttons.e.y   = BTN(controller, SDL_CONTROLLER_BUTTON_Y);
         out.buttons.e.b_l = BTN(controller, SDL_CONTROLLER_BUTTON_LEFTSHOULDER);
-        out.buttons.e.b_r =
-            BTN(controller, SDL_CONTROLLER_BUTTON_RIGHTSHOULDER);
+        out.buttons.e.b_r
+            = BTN(controller, SDL_CONTROLLER_BUTTON_RIGHTSHOULDER);
         out.buttons.e.s_l  = BTN(controller, SDL_CONTROLLER_BUTTON_LEFTSTICK);
         out.buttons.e.s_r  = BTN(controller, SDL_CONTROLLER_BUTTON_RIGHTSTICK);
         out.buttons.e.p_up = BTN(controller, SDL_CONTROLLER_BUTTON_DPAD_UP);
         out.buttons.e.p_down = BTN(controller, SDL_CONTROLLER_BUTTON_DPAD_DOWN);
         out.buttons.e.p_left = BTN(controller, SDL_CONTROLLER_BUTTON_DPAD_LEFT);
-        out.buttons.e.p_right =
-            BTN(controller, SDL_CONTROLLER_BUTTON_DPAD_RIGHT);
+        out.buttons.e.p_right
+            = BTN(controller, SDL_CONTROLLER_BUTTON_DPAD_RIGHT);
         out.buttons.e.back  = BTN(controller, SDL_CONTROLLER_BUTTON_BACK);
         out.buttons.e.start = BTN(controller, SDL_CONTROLLER_BUTTON_START);
         out.buttons.e.guide = BTN(controller, SDL_CONTROLLER_BUTTON_GUIDE);
@@ -711,8 +750,8 @@ comp_app::text_type_t ControllerInput::name(libc_types::u32 idx) const
 
     if constexpr(!compile_info::platform::is_emscripten)
     {
-        auto name =
-            SDL_GameControllerName(C_RCAST<SDL_GameController*>(it->second));
+        auto name
+            = SDL_GameControllerName(C_RCAST<SDL_GameController*>(it->second));
 
         return name ? name : CString();
     } else
@@ -773,7 +812,8 @@ void KeyboardInput::start_restricted(proxy_type& p, time_point const&)
     CIEvent   inputEv;
     SDL_Event event;
 
-    auto inputBus = get_container(p).service<comp_app::BasicEventBus<CIEvent>>();
+    auto inputBus
+        = get_container(p).service<comp_app::BasicEventBus<CIEvent>>();
 
     while(SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_KEYDOWN, SDL_KEYUP))
     {
@@ -916,7 +956,8 @@ void WindowInfo::setName(comp_app::text_type newName)
 namespace sdl2 {
 
 void getWindow(
-    SDL_Window* window, comp_app::interfaces::PtrNativeWindowInfo& info)
+    SDL_Window* window,
+    [[maybe_unused]] comp_app::interfaces::PtrNativeWindowInfo& info)
 {
     using namespace comp_app;
 
@@ -924,23 +965,46 @@ void getWindow(
     SDL_VERSION(&windowInfo.version)
     SDL_GetWindowWMInfo(window, &windowInfo);
 
+    switch(windowInfo.subsystem)
+    {
+#if defined(COFFEE_LINUX)
 #if defined(SDL_VIDEO_DRIVER_X11)
-    info.window = C_RCAST<interfaces::PtrNativeWindowInfo::NWindow>(
-        windowInfo.info.x11.window);
-    info.display = windowInfo.info.x11.display;
-#elif defined(SDL_VIDEO_DRIVER_WINDOWS)
-    info.window  = windowInfo.info.win.window;
-    info.display = windowInfo.info.win.hdc;
-#elif defined(SDL_VIDEO_DRIVER_COCOA)
-    info.window  = windowInfo.info.cocoa.window;
-    info.display = nullptr;
-#elif defined(SDL_VIDEO_DRIVER_EMSCRIPTEN)
-    /* There's nothing here? */
-#elif defined(COFFEE_RASPBERRYPI)
-    /* No data here */
-#else
-    static_assert(false, "missing video driver");
+    case SDL_SYSWM_X11:
+        info.display = windowInfo.info.x11.display;
+        info.window  = reinterpret_cast<void*>(windowInfo.info.x11.window);
+        break;
 #endif
+#if defined(SDL_VIDEO_DRIVER_WAYLAND)
+    case SDL_SYSWM_WAYLAND:
+        info.display = windowInfo.info.wl.display;
+        info.window  = windowInfo.info.wl.egl_window;
+        break;
+#endif
+#if defined(SDL_VIDEO_DRIVER_OFFSCREEN)
+        // Nothing?
+#endif
+#elif defined(SDL_VIDEO_DRIVER_WINDOWS)
+    case SDL_SYSWM_WINDOWS:
+        info.display = windowInfo.info.win.hdc;
+        info.window  = windowInfo.info.win.window;
+        break;
+#elif defined(SDL_VIDEO_DRIVER_COCOA)
+    case SDL_SYSWM_COCOA:
+        info.display = nullptr;
+        info.window  = windowInfo.info.cocoa.window;
+        break;
+#elif defined(SDL_VIDEO_DRIVER_EMSCRIPTEN)
+        /* There's nothing here? */
+#else
+        static_assert(false, "missing video driver");
+#endif
+    default:
+#if defined(COFFEE_EMSCRIPTEN) // Emscripten does not need this info
+        break;
+#else
+        Throw(std::runtime_error("no video driver was chosen"));
+#endif
+    }
 }
 
 } // namespace sdl2

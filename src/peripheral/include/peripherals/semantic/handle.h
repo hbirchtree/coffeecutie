@@ -1,5 +1,6 @@
 #pragma once
 
+#include <peripherals/constants.h>
 #include <peripherals/libc/types.h>
 #include <peripherals/stl/types.h>
 
@@ -29,17 +30,22 @@ template<
     typename hnd_type,
     typename HandleMode          = handle_modes::exception_on_destruct,
     hnd_type InvalidValue        = hnd_type(),
-    void (*close_func)(hnd_type) = nullptr,
-
-    typename std::enable_if<
-        type_safety::is_pod_v<hnd_type> ||
-        std::is_pointer<hnd_type>::value>::type* = nullptr
-
-    >
-struct generic_handle_t : non_copy
+    void (*close_func)(hnd_type) = nullptr>
+// clang-format off
+requires(
+    (type_safety::is_pod_v<hnd_type> || std::is_pointer_v<hnd_type>) &&
+    (
+        (std::is_same_v<HandleMode, handle_modes::auto_close> &&
+         close_func != nullptr) ||
+        std::is_same_v<HandleMode, handle_modes::exception_on_destruct> ||
+        std::is_same_v<HandleMode, handle_modes::no_op>
+    )
+)
+    // clang-format on
+    struct generic_handle_t : non_copy
 {
-    static constexpr bool exceptions_mode =
-        std::is_same<handle_modes::exception_on_destruct, HandleMode>::value;
+    static constexpr bool exceptions_mode
+        = std::is_same<handle_modes::exception_on_destruct, HandleMode>::value;
 
     using handle_type = hnd_type;
 
@@ -64,15 +70,13 @@ struct generic_handle_t : non_copy
         using namespace handle_modes;
 
         if constexpr(std::is_same<auto_close, HandleMode>::value)
-            if(static_cast<bool>(close_func) && hnd != InvalidValue)
+        {
+            if(hnd != InvalidValue)
                 close_func(hnd);
+        }
 
         if constexpr(std::is_same<exception_on_destruct, HandleMode>::value)
         {
-            static_assert(
-                !(exceptions_mode && static_cast<bool>(close_func)),
-                "close function will never be called");
-
             if constexpr(compile_info::debug_mode)
                 if(hnd != InvalidValue)
                     Throw(resource_leak("resource leakage detected"));
@@ -89,12 +93,12 @@ struct generic_handle_t : non_copy
         return hnd == InvalidValue;
     }
 
-    operator hnd_type const& () const
+    operator hnd_type const&() const
     {
         return hnd;
     }
 
-    operator hnd_type& ()
+    operator hnd_type&()
     {
         return hnd;
     }

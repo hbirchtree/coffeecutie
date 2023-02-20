@@ -33,9 +33,7 @@ requires compile_info::platform::is_android
     int flag = ANDROID_LOG_INFO;
     switch(severity)
     {
-    case S::Debug:
-        flag = ANDROID_LOG_DEBUG;
-        break;
+    case S::High:
     case S::Medium:
         flag = ANDROID_LOG_WARN;
         break;
@@ -44,6 +42,9 @@ requires compile_info::platform::is_android
         break;
     case S::Verbose:
         flag = ANDROID_LOG_VERBOSE;
+        break;
+    default:
+        flag = ANDROID_LOG_DEBUG;
         break;
     }
 

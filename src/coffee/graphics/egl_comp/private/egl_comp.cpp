@@ -3,10 +3,11 @@
 #include <coffee/comp_app/gl_config.h>
 #include <coffee/comp_app/subsystems.h>
 #include <coffee/core/CProfiling>
+#include <peripherals/error/result.h>
 #include <peripherals/stl/string_casting.h>
 #include <peripherals/typing/enum/pixels/format_transform.h>
 
-#include <coffee/core/debug/logging.h>
+#include <coffee/core/debug/formatting.h>
 
 #if defined(FEATURE_ENABLE_CEAGL)
 #include <CEAGL/eagl.h>
@@ -46,7 +47,9 @@ void EGLDataDeleter::operator()(EGLData* data)
     delete data;
 }
 
+#if defined(EGL_COMP_DOUBLE_GETPROC)
 static void* gles2_dl{};
+#endif
 
 } // namespace detail
 
@@ -113,6 +116,10 @@ void DisplayHandle::load(entity_container& e, comp_app::app_error& ec)
     {
         appInfo.add("egl:extensions", extensions);
     }
+    if(auto apis = eglQueryString(m_data->display, EGL_CLIENT_APIS))
+    {
+        appInfo.add("egl:apis", apis);
+    }
 
 #if defined(EGL_VERSION_1_2)
 #if !defined(COFFEE_APPLE)
@@ -167,7 +174,7 @@ void DisplayHandle::load(entity_container& e, comp_app::app_error& ec)
     }
 }
 
-void DisplayHandle::unload(entity_container& e, comp_app::app_error& ec)
+void DisplayHandle::unload(entity_container& /*e*/, comp_app::app_error& /*ec*/)
 {
     eglTerminate(m_data->display);
 }
@@ -177,75 +184,43 @@ detail::EGLData& DisplayHandle::context()
     return *m_data;
 }
 
-void GraphicsContext::load(entity_container& e, comp_app::app_error& ec)
+static stl_types::result<EGLConfig, std::string> eglTryConfig(
+    EGLDisplay                                         display,
+    comp_app::GLConfig const&                          config,
+    typing::pixels::properties::layout_t const&        color,
+    typing::pixels::properties::layout_t const&        depth,
+    [[maybe_unused]] std::set<std::string_view> const& extensions)
 {
     using Profile = comp_app::GLConfig::Profile;
     using namespace typing::pixels;
 
-    auto&          config = comp_app::AppLoader::config<comp_app::GLConfig>(e);
-    DisplayHandle& handle = *e.service<DisplayHandle>();
-    auto color   = properties::get<properties::layout>(config.framebufferFmt);
-    auto depth   = properties::get<properties::layout>(config.depthFmt);
-    auto display = handle.context().display;
-
-    std::set<std::string_view> extensions;
-    if(auto display_extensions = eglQueryString(display, EGL_EXTENSIONS))
-    {
-        using spliterator = stl_types::str::split::spliterator<char>;
-
-        spliterator extension_list(display_extensions, ' ');
-        while(extension_list != spliterator())
-        {
-            auto ext_name = *extension_list;
-            if(!ext_name.empty())
-                extensions.insert(ext_name);
-            ++extension_list;
-        }
-#if defined(EGL_VERSION_1_5)
-        if(handle.m_major > 1 || (handle.m_major == 1 && handle.m_minor >= 5))
-        {
-            auto client_extensions =
-                eglQueryString(EGL_NO_DISPLAY, EGL_EXTENSIONS);
-            extension_list = spliterator(client_extensions, ' ');
-            while(extension_list != spliterator())
-            {
-                auto ext_name = *extension_list;
-                if(!ext_name.empty())
-                    extensions.insert(ext_name);
-                ++extension_list;
-            }
-        }
+    auto render_type =
+#if defined(EGL_VERSION_1_4)
+        (config.profile & Profile::Core) ? EGL_OPENGL_BIT :
 #endif
-    }
-
-#if defined(EGL_VERSION_1_5) && defined(EGL_EXT_pixel_format_float)
-    if(properties::get<properties::is_floating_point>(config.framebufferFmt))
-    {
-        if(extensions.contains("EGL_EXT_pixel_format_float"))
-        {
-            // Leave the color struct as is
-        } else
-        {
-            /* Unsupported */
-            config.framebufferFmt = PixFmt::RGB565;
-            color = properties::get<properties::layout>(config.framebufferFmt);
-        }
-    }
+#if defined(EGL_VERSION_1_5) && defined(EGL_OPENGL_ES3_BIT)
+//        config.version.major == 3 ? EGL_OPENGL_ES3_BIT
+//                                  :
 #endif
+                                         EGL_OPENGL_ES2_BIT;
 
     // clang-format off
     std::vector<std::pair<EGLint, EGLint>> surfaceConfig = {
         {EGL_SURFACE_TYPE, EGL_WINDOW_BIT},
 
         {EGL_COLOR_BUFFER_TYPE, EGL_RGB_BUFFER},
+        {EGL_RENDERABLE_TYPE, render_type},
+        {EGL_CONFORMANT, render_type},
+
+        {EGL_DEPTH_SIZE, depth.depth},
+
+        {EGL_STENCIL_SIZE, depth.stencil},
 
         {EGL_RED_SIZE, color.r},
         {EGL_GREEN_SIZE, color.g},
         {EGL_BLUE_SIZE, color.b},
         {EGL_ALPHA_SIZE, color.a},
 
-        {EGL_STENCIL_SIZE, depth.stencil},
-        {EGL_DEPTH_SIZE, depth.depth},
     };
     // clang-format on
 
@@ -261,31 +236,50 @@ void GraphicsContext::load(entity_container& e, comp_app::app_error& ec)
             {EGL_COLOR_COMPONENT_TYPE_EXT, EGL_COLOR_COMPONENT_TYPE_FLOAT_EXT});
     }
 #endif
-
-    auto render_type =
-#if defined(EGL_VERSION_1_4)
-        (config.profile & Profile::Core) ? EGL_OPENGL_BIT :
-#endif
-                                         EGL_OPENGL_ES2_BIT;
-
-    surfaceConfig.push_back({EGL_RENDERABLE_TYPE, render_type});
-
-    surfaceConfig.push_back({EGL_CONFORMANT, render_type});
-
     surfaceConfig.push_back({EGL_NONE, EGL_NONE});
 
     auto* configPtr = reinterpret_cast<EGLint const*>(surfaceConfig.data());
 
-    EGLint numConfig = 0;
-    eglChooseConfig(display, configPtr, &m_config, 1, &numConfig);
+    EGLConfig outConfig;
+    EGLint    numConfig = 0;
+    eglChooseConfig(display, configPtr, &outConfig, 1, &numConfig);
+
+    while(numConfig == 0)
+    {
+        /* If we fail to find a config, try trimming down the color buffer
+         * preferences, but make sure we have a depth buffer */
+        auto optional_config   = surfaceConfig.begin() + 5;
+        optional_config->first = EGL_NONE;
+
+        eglChooseConfig(display, configPtr, &outConfig, 1, &numConfig);
+
+        if(numConfig > 0)
+            break;
+
+        /* Trim down depth buffer if possible, if 32-bit was selected, try
+         * 24-bit, if 24-bit was selected, try 16-bit */
+        auto depth_config    = surfaceConfig.begin() + 4;
+        depth_config->second = depth.depth == 32 ? 24 : 16;
+        eglChooseConfig(display, configPtr, &outConfig, 1, &numConfig);
+        break;
+    }
 
     if(numConfig == 0)
     {
-        ec = "eglChooseConfig:" + egl_to_error();
-        ec = comp_app::AppError::FramebufferMismatch;
-        return;
+        return stl_types::failure(
+            "eglChooseConfig:no config selected:" + egl_to_error());
     }
 
+    return stl_types::success(outConfig);
+}
+
+using attrib_list = std::vector<std::pair<EGLint, EGLint>>;
+
+static attrib_list create_context_attribs(
+    [[maybe_unused]] comp_app::GLConfig const&         config,
+    [[maybe_unused]] DisplayHandle const&              handle,
+    [[maybe_unused]] std::set<std::string_view> const& extensions)
+{
     std::vector<std::pair<EGLint, EGLint>> attribs = {};
 
 #if defined(EGL_VERSION_1_5)
@@ -319,9 +313,100 @@ void GraphicsContext::load(entity_container& e, comp_app::app_error& ec)
 
     attribs.push_back({EGL_NONE, EGL_NONE});
 
-    configPtr = reinterpret_cast<EGLint const*>(attribs.data());
+    return attribs;
+}
+
+void GraphicsContext::load(entity_container& e, comp_app::app_error& ec)
+{
+    using namespace typing::pixels;
+
+    auto&          config = comp_app::AppLoader::config<comp_app::GLConfig>(e);
+    DisplayHandle& handle = *e.service<DisplayHandle>();
+    auto color   = properties::get<properties::layout>(config.framebufferFmt);
+    auto depth   = properties::get<properties::layout>(config.depthFmt);
+    auto display = handle.context().display;
+
+    std::set<std::string_view> extensions;
+    if(auto display_extensions = eglQueryString(display, EGL_EXTENSIONS))
+    {
+        using spliterator = stl_types::str::split::spliterator<char>;
+
+        spliterator extension_list(display_extensions, ' ');
+        while(extension_list != spliterator())
+        {
+            auto ext_name = *extension_list;
+            if(!ext_name.empty())
+                extensions.insert(ext_name);
+            ++extension_list;
+        }
+#if defined(EGL_VERSION_1_5)
+        if(handle.m_major > 1 || (handle.m_major == 1 && handle.m_minor >= 5))
+        {
+            auto client_extensions
+                = eglQueryString(EGL_NO_DISPLAY, EGL_EXTENSIONS);
+            extension_list = spliterator(client_extensions, ' ');
+            while(extension_list != spliterator())
+            {
+                auto ext_name = *extension_list;
+                if(!ext_name.empty())
+                    extensions.insert(ext_name);
+                ++extension_list;
+            }
+        }
+#endif
+    }
+
+#if defined(EGL_VERSION_1_5) && defined(EGL_EXT_pixel_format_float)
+    if(properties::get<properties::is_floating_point>(config.framebufferFmt))
+    {
+        if(extensions.contains("EGL_EXT_pixel_format_float"))
+        {
+            // Leave the color struct as is
+        } else
+        {
+            /* Unsupported */
+            config.framebufferFmt = PixFmt::RGB565;
+            color = properties::get<properties::layout>(config.framebufferFmt);
+        }
+    }
+#endif
+    if(auto res = eglTryConfig(display, config, color, depth, extensions);
+       res.has_error())
+    {
+        ec = res.error();
+        ec = comp_app::AppError::FramebufferMismatch;
+        return;
+    } else
+        m_config = res.value();
+
+    auto attribs   = create_context_attribs(config, handle, extensions);
+    auto configPtr = reinterpret_cast<EGLint const*>(attribs.data());
 
     m_context = eglCreateContext(display, m_config, EGL_NO_CONTEXT, configPtr);
+    while(!m_context)
+    {
+        /* Try to downgrade the GL version */
+        if(config.profile == comp_app::GLConfig::Core)
+        {
+            if(config.version.major == 4 && config.version.minor == 0)
+            {
+                config.version.major = 3;
+                config.version.minor = 3;
+            } else if(config.version.major == 4 && config.version.minor >= 1)
+                config.version.minor--;
+        } else
+        {
+            if(config.version.major == 3 && config.version.minor == 0)
+            {
+                config.version.major = 2;
+            } else if(config.version.major == 3 && config.version.minor >= 1)
+                config.version.minor--;
+        }
+        attribs   = create_context_attribs(config, handle, extensions);
+        configPtr = reinterpret_cast<EGLint const*>(attribs.data());
+        m_context
+            = eglCreateContext(display, m_config, EGL_NO_CONTEXT, configPtr);
+    }
 
     if(!m_context)
     {
@@ -362,26 +447,53 @@ void GraphicsFramebuffer::end_frame(ContainerProxy&, const time_point&)
 
 void GraphicsFramebuffer::load(entity_container& e, comp_app::app_error& ec)
 {
+    using comp_app::PixFmt;
+
     m_container = &e;
 
-    auto  display  = e.service<DisplayHandle>()->context().display;
-    auto  ptr_info = e.service<comp_app::PtrNativeWindowInfoService>();
-    auto& config   = comp_app::AppLoader::config<comp_app::GLConfig>(e);
+    auto display  = e.service<DisplayHandle>()->context().display;
+    auto ptr_info = e.service<comp_app::PtrNativeWindowInfoService>();
+#if defined(EGL_VERSION_1_5)
+    auto&          config = comp_app::AppLoader::config<comp_app::GLConfig>(e);
+    DisplayHandle& handle = *e.service<DisplayHandle>();
+#endif
 
     std::vector<std::pair<EGLint, EGLint>> attribs;
 
-    if(config.framebufferFmt == PixFmt::SRGB8A8 ||
-       config.framebufferFmt == PixFmt::SRGB8)
+#if defined(EGL_VERSION_1_5)
+    if((config.framebufferFmt == PixFmt::SRGB8A8
+        || config.framebufferFmt == PixFmt::SRGB8)
+       && (handle.m_major > 1 || (handle.m_major == 1 && handle.m_minor >= 5)))
         attribs.push_back({EGL_GL_COLORSPACE, EGL_GL_COLORSPACE_SRGB});
+#endif
 
     attribs.push_back({EGL_NONE, EGL_NONE});
 
-    /* TODO: Create attrib list supporting sRGB */
-    m_surface = eglCreateWindowSurface(
-        display,
-        e.service<egl::GraphicsContext>()->m_config,
-        C_RCAST<EGLNativeWindowType>(ptr_info->window),
-        C_RCAST<EGLint*>(attribs.data()));
+#if defined(EGL_VERSION_1_5) && 0
+    if(handle.m_major > 1 || (handle.m_major == 1 && handle.m_minor >= 5))
+    {
+        m_surface = eglCreatePlatformWindowSurface(
+            display,
+            e.service<egl::GraphicsContext>()->m_config,
+            C_RCAST<EGLNativeWindowType>(ptr_info->window),
+            C_RCAST<EGLint*>(attribs.data()));
+    } else
+#endif
+        m_surface = eglCreateWindowSurface(
+            display,
+            e.service<egl::GraphicsContext>()->m_config,
+            C_RCAST<EGLNativeWindowType>(ptr_info->window),
+            C_RCAST<EGLint*>(attribs.data()));
+
+    if(!m_surface)
+    {
+        m_surface = eglCreateWindowSurface(
+            display,
+            e.service<egl::GraphicsContext>()->m_config,
+            C_RCAST<EGLNativeWindowType>(ptr_info->window),
+            nullptr);
+        Coffee::cDebug("Falling back to default window configuration");
+    }
 
     if(!m_surface)
     {
@@ -402,20 +514,20 @@ void GraphicsFramebuffer::load(entity_container& e, comp_app::app_error& ec)
 #if defined(EGL_ANDROID_get_frame_timestamps)
     auto& feature_flags = e.service<GraphicsContext>()->feature_flags;
 
-    android_egl::GetCompositorTimingSupported =
-        reinterpret_cast<PFNEGLGETCOMPOSITORTIMINGSUPPORTEDANDROIDPROC>(
+    android_egl::GetCompositorTimingSupported
+        = reinterpret_cast<PFNEGLGETCOMPOSITORTIMINGSUPPORTEDANDROIDPROC>(
             eglGetProcAddress("eglGetCompositorTimingSupportedANDROID"));
-    android_egl::GetCompositorTiming =
-        reinterpret_cast<PFNEGLGETCOMPOSITORTIMINGANDROIDPROC>(
+    android_egl::GetCompositorTiming
+        = reinterpret_cast<PFNEGLGETCOMPOSITORTIMINGANDROIDPROC>(
             eglGetProcAddress("eglGetCompositorTimingANDROID"));
 
     if(android_egl::GetCompositorTimingSupported)
     {
-        feature_flags.android_composite_deadline =
-            android_egl::GetCompositorTimingSupported(
+        feature_flags.android_composite_deadline
+            = android_egl::GetCompositorTimingSupported(
                 display, m_surface, EGL_COMPOSITE_DEADLINE_ANDROID);
-        feature_flags.android_present_latency =
-            android_egl::GetCompositorTimingSupported(
+        feature_flags.android_present_latency
+            = android_egl::GetCompositorTimingSupported(
                 display, m_surface, EGL_COMPOSITE_TO_PRESENT_LATENCY_ANDROID);
     }
 #endif
@@ -480,13 +592,13 @@ comp_app::size_2d_t Windowing::size() const
     return m_container->service<GraphicsFramebuffer>()->size();
 }
 
-comp_app::detail::WindowState Windowing::state() const
+comp_app::window_flags_t Windowing::state() const
 {
-    using W = comp_app::detail::WindowState;
-    return W::Maximized | W::FullScreen | W::Focused | W::Undecorated;
+    using W = comp_app::window_flags_t;
+    return W::maximized | W::fullscreen | W::focused | W::undecorated;
 }
 
-void Windowing::setState(comp_app::detail::WindowState)
+void Windowing::setState(comp_app::window_flags_t)
 {
 }
 

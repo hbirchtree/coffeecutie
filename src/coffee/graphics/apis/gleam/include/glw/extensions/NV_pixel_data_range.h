@@ -29,15 +29,16 @@ STATICINLINE void flush_pixel_data_range(
 
 template<class span_const_void>
 requires(semantic::concepts::Span<span_const_void>)
-/*!
- * \brief Part of GL_NV_pixel_data_range
- * \param target GLenum
- * \param length GLsizei
- * \param pointer const void *
- * \return void
- */
-STATICINLINE void pixel_data_range(
-    group::pixel_data_range_target_nv target, span_const_void const& pointer)
+    /*!
+     * \brief Part of GL_NV_pixel_data_range
+     * \param target GLenum
+     * \param length GLsizei
+     * \param pointer const void *
+     * \return void
+     */
+    STATICINLINE void pixel_data_range(
+        group::pixel_data_range_target_nv target,
+        span_const_void const&            pointer)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

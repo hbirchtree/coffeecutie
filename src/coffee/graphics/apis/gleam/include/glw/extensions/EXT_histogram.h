@@ -20,21 +20,21 @@ namespace values {
 } // namespace values
 template<class span_void>
 requires(semantic::concepts::Span<span_void>)
-/*!
- * \brief Part of GL_EXT_histogram
- * \param target GLenum
- * \param reset GLboolean
- * \param format GLenum
- * \param type GLenum
- * \param values void *
- * \return void
- */
-STATICINLINE void get_histogram(
-    group::histogram_target_ext target,
-    bool                        reset,
-    group::pixel_format         format,
-    group::pixel_type           type,
-    span_void                   values)
+    /*!
+     * \brief Part of GL_EXT_histogram
+     * \param target GLenum
+     * \param reset GLboolean
+     * \param format GLenum
+     * \param type GLenum
+     * \param values void *
+     * \return void
+     */
+    STATICINLINE void get_histogram(
+        group::histogram_target_ext target,
+        bool                        reset,
+        group::pixel_format         format,
+        group::pixel_type           type,
+        span_void                   values)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -51,22 +51,20 @@ STATICINLINE void get_histogram(
 }
 
 template<class span_f32>
-requires(
-    semantic::concepts::Span<span_f32> &&
-    std::is_same_v<
-        std::decay_t<typename span_f32::value_type>,
-        std::decay_t<f32>>)
-/*!
- * \brief Part of GL_EXT_histogram
- * \param target GLenum
- * \param pname GLenum
- * \param params GLfloat *
- * \return void
- */
-STATICINLINE void get_histogram_parameter(
-    group::histogram_target_ext             target,
-    group::get_histogram_parameter_prop_ext pname,
-    span_f32                                params)
+requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+         std::decay_t<typename span_f32::value_type>,
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_EXT_histogram
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params GLfloat *
+     * \return void
+     */
+    STATICINLINE void get_histogram_parameter(
+        group::histogram_target_ext             target,
+        group::get_histogram_parameter_prop_ext pname,
+        span_f32                                params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -81,22 +79,20 @@ STATICINLINE void get_histogram_parameter(
 }
 
 template<class span_i32>
-requires(
-    semantic::concepts::Span<span_i32> &&
-    std::is_same_v<
-        std::decay_t<typename span_i32::value_type>,
-        std::decay_t<i32>>)
-/*!
- * \brief Part of GL_EXT_histogram
- * \param target GLenum
- * \param pname GLenum
- * \param params GLint *
- * \return void
- */
-STATICINLINE void get_histogram_parameter(
-    group::histogram_target_ext             target,
-    group::get_histogram_parameter_prop_ext pname,
-    span_i32                                params)
+requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+         std::decay_t<typename span_i32::value_type>,
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_EXT_histogram
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_histogram_parameter(
+        group::histogram_target_ext             target,
+        group::get_histogram_parameter_prop_ext pname,
+        span_i32                                params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -112,21 +108,21 @@ STATICINLINE void get_histogram_parameter(
 
 template<class span_void>
 requires(semantic::concepts::Span<span_void>)
-/*!
- * \brief Part of GL_EXT_histogram
- * \param target GLenum
- * \param reset GLboolean
- * \param format GLenum
- * \param type GLenum
- * \param values void *
- * \return void
- */
-STATICINLINE void get_minmax(
-    group::minmax_target_ext target,
-    bool                     reset,
-    group::pixel_format      format,
-    group::pixel_type        type,
-    span_void                values)
+    /*!
+     * \brief Part of GL_EXT_histogram
+     * \param target GLenum
+     * \param reset GLboolean
+     * \param format GLenum
+     * \param type GLenum
+     * \param values void *
+     * \return void
+     */
+    STATICINLINE void get_minmax(
+        group::minmax_target_ext target,
+        bool                     reset,
+        group::pixel_format      format,
+        group::pixel_type        type,
+        span_void                values)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -143,22 +139,20 @@ STATICINLINE void get_minmax(
 }
 
 template<class span_f32>
-requires(
-    semantic::concepts::Span<span_f32> &&
-    std::is_same_v<
-        std::decay_t<typename span_f32::value_type>,
-        std::decay_t<f32>>)
-/*!
- * \brief Part of GL_EXT_histogram
- * \param target GLenum
- * \param pname GLenum
- * \param params GLfloat *
- * \return void
- */
-STATICINLINE void get_minmax_parameter(
-    group::minmax_target_ext             target,
-    group::get_minmax_parameter_prop_ext pname,
-    span_f32                             params)
+requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+         std::decay_t<typename span_f32::value_type>,
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_EXT_histogram
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params GLfloat *
+     * \return void
+     */
+    STATICINLINE void get_minmax_parameter(
+        group::minmax_target_ext             target,
+        group::get_minmax_parameter_prop_ext pname,
+        span_f32                             params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -173,22 +167,20 @@ STATICINLINE void get_minmax_parameter(
 }
 
 template<class span_i32>
-requires(
-    semantic::concepts::Span<span_i32> &&
-    std::is_same_v<
-        std::decay_t<typename span_i32::value_type>,
-        std::decay_t<i32>>)
-/*!
- * \brief Part of GL_EXT_histogram
- * \param target GLenum
- * \param pname GLenum
- * \param params GLint *
- * \return void
- */
-STATICINLINE void get_minmax_parameter(
-    group::minmax_target_ext             target,
-    group::get_minmax_parameter_prop_ext pname,
-    span_i32                             params)
+requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+         std::decay_t<typename span_i32::value_type>,
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_EXT_histogram
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_minmax_parameter(
+        group::minmax_target_ext             target,
+        group::get_minmax_parameter_prop_ext pname,
+        span_i32                             params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

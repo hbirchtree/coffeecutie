@@ -5,34 +5,32 @@ namespace gl::qcom::extended_get2 {
 namespace values {
 } // namespace values
 template<class span_GLchar, class span_i32>
-requires(
-    semantic::concepts::Span<span_GLchar> &&
-    std::is_same_v<
-        std::decay_t<typename span_GLchar::value_type>,
-        std::decay_t<GLchar>> &&
-    semantic::concepts::Span<span_i32> &&
-    std::is_same_v<
-        std::decay_t<typename span_i32::value_type>,
-        std::decay_t<i32>>)
-/*!
- * \brief Part of GL_QCOM_extended_get2
- * \param program GLuint
- * \param shadertype GLenum
- * \param source GLchar *
- * \param length GLint *
- * \return void
- */
-STATICINLINE void ext_get_program_binary_source(
-    u32                program,
-    group::shader_type shadertype,
-    span_GLchar        source,
-    span_i32           length)
+requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
+         std::decay_t<typename span_GLchar::value_type>,
+         std::decay_t<GLchar>>&& semantic::concepts::Span<span_i32>&&
+                                 std::is_same_v<
+                 std::decay_t<typename span_i32::value_type>,
+                 std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_QCOM_extended_get2
+     * \param program GLuint
+     * \param shadertype GLenum
+     * \param source GLchar *
+     * \param length GLint *
+     * \return void
+     */
+    STATICINLINE void ext_get_program_binary_source(
+        u32                program,
+        group::shader_type shadertype,
+        span_GLchar        source,
+        span_i32           length)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ExtGetProgramBinarySourceQCOM)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -46,19 +44,17 @@ STATICINLINE void ext_get_program_binary_source(
 }
 
 template<class span_u32>
-requires(
-    semantic::concepts::Span<span_u32> &&
-    std::is_same_v<
-        std::decay_t<typename span_u32::value_type>,
-        std::decay_t<u32>>)
-/*!
- * \brief Part of GL_QCOM_extended_get2
- * \param programs GLuint *
- * \param maxPrograms GLint
- * \param numPrograms GLint *
- * \return void
- */
-STATICINLINE
+requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+         std::decay_t<typename span_u32::value_type>,
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_QCOM_extended_get2
+     * \param programs GLuint *
+     * \param maxPrograms GLint
+     * \param numPrograms GLint *
+     * \return void
+     */
+    STATICINLINE
     void ext_get_programs(span_u32 programs, i32 maxPrograms, i32& numPrograms)
 {
     using namespace std::string_view_literals;
@@ -74,19 +70,17 @@ STATICINLINE
 }
 
 template<class span_u32>
-requires(
-    semantic::concepts::Span<span_u32> &&
-    std::is_same_v<
-        std::decay_t<typename span_u32::value_type>,
-        std::decay_t<u32>>)
-/*!
- * \brief Part of GL_QCOM_extended_get2
- * \param shaders GLuint *
- * \param maxShaders GLint
- * \param numShaders GLint *
- * \return void
- */
-STATICINLINE
+requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+         std::decay_t<typename span_u32::value_type>,
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_QCOM_extended_get2
+     * \param shaders GLuint *
+     * \param maxShaders GLint
+     * \param numShaders GLint *
+     * \return void
+     */
+    STATICINLINE
     void ext_get_shaders(span_u32 shaders, i32 maxShaders, i32& numShaders)
 {
     using namespace std::string_view_literals;
@@ -112,7 +106,8 @@ STATICINLINE GLboolean ext_is_program_binary(u32 program)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ExtIsProgramBinaryQCOM)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif

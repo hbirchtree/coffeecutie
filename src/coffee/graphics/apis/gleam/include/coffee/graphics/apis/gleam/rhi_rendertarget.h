@@ -91,15 +91,14 @@ struct rendertarget_t
         render_targets::attachment attachment,
         texture_t&                 texture,
         u32                        level,
-        u32                        i     = 0,
-        u32                        layer = 0)
+        u32                        i = 0,
+        u32 /*layer*/                = 0)
     {
-        auto target =
-#if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
-            group::framebuffer_target::draw_framebuffer;
-#else
-            group::framebuffer_target::framebuffer;
+        auto target = internal_collapse_target(
+#if GLEAM_MAX_VERSION > 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
+            group::framebuffer_target::draw_framebuffer
 #endif
+        );
 
         if(!m_features.dsa)
             internal_bind(target);
@@ -149,24 +148,88 @@ struct rendertarget_t
             dsti);
     }
 
-    void resize(typing::geometry::rect<i32>, u32)
+    void resize(typing::geometry::rect<i32> const& size, u32 = 0)
     {
+
+        auto target = internal_collapse_target(
+#if GLEAM_MAX_VERSION > 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
+            group::framebuffer_target::draw_framebuffer
+#endif
+        );
+
+        internal_bind(target);
+        if(m_handle == 0)
+        {
+            cmd::viewport(Veci2{size.x, size.y}, Veci2{size.w, size.h});
+            return;
+        }
+#if GLEAM_MAX_VERSION >= 0x430 || GLEAM_MAX_VERSION_ES >= 0x310
+        cmd::framebuffer_parameter(
+            target,
+            group::framebuffer_parameter_name::framebuffer_default_width,
+            size.w);
+        cmd::framebuffer_parameter(
+            target,
+            group::framebuffer_parameter_name::framebuffer_default_width,
+            size.h);
+#endif
     }
 
-    void size()
+    size_2d<i32> size()
     {
+        auto target = internal_collapse_target(
+#if GLEAM_MAX_VERSION > 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
+            group::framebuffer_target::draw_framebuffer
+#endif
+        );
+        size_2d<i32> out;
+
+        if(!m_features.dsa)
+            internal_bind(target);
+#if GLEAM_MAX_VERSION >= 0x450
+        if(m_features.dsa)
+        {
+            cmd::get_named_framebuffer_parameter(
+                m_handle,
+                group::get_framebuffer_parameter::framebuffer_default_width,
+                SpanOne(out.w));
+            cmd::get_named_framebuffer_parameter(
+                m_handle,
+                group::get_framebuffer_parameter::framebuffer_default_height,
+                SpanOne(out.h));
+        } else
+#endif
+#if GLEAM_MAX_VERSION >= 0x320 || GLEAM_MAX_VERSION_ES >= 0x320
+            if(m_features.framebuffer_texture)
+        {
+            cmd::get_framebuffer_parameter(
+                target,
+                group::get_framebuffer_parameter::framebuffer_default_width,
+                SpanOne(out.w));
+            cmd::get_framebuffer_parameter(
+                target,
+                group::get_framebuffer_parameter::framebuffer_default_height,
+                SpanOne(out.h));
+        } else
+#endif
+        {
+            typing::vector_types::Veci4 viewport;
+            cmd::get_integerv(
+                group::get_prop::viewport, SpanOne<i32>(viewport));
+            out = {viewport.z(), viewport.w()};
+        }
+        return out;
     }
 
     template<typename vec_4_f32>
     requires semantic::concepts::Vector<vec_4_f32, f32, 4>
-    inline void clear(vec_4_f32 const& color, u32 i = 0)
+    inline void clear(vec_4_f32 const& color, [[maybe_unused]] u32 i = 0)
     {
-        auto target =
-#if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
-            group::framebuffer_target::draw_framebuffer;
-#else
-            group::framebuffer_target::framebuffer;
+        auto target = internal_collapse_target(
+#if GLEAM_MAX_VERSION > 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
+            group::framebuffer_target::draw_framebuffer
 #endif
+        );
         if(!m_features.dsa)
             internal_bind(target);
 #if GLEAM_MAX_VERSION >= 0x450
@@ -192,12 +255,11 @@ struct rendertarget_t
 
     inline void clear(f64 depth)
     {
-        auto target =
-#if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
-            group::framebuffer_target::draw_framebuffer;
-#else
-            group::framebuffer_target::framebuffer;
+        auto target = internal_collapse_target(
+#if GLEAM_MAX_VERSION > 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
+            group::framebuffer_target::draw_framebuffer
 #endif
+        );
         if(!m_features.dsa)
             internal_bind(target);
         auto depthf = static_cast<f32>(depth);
@@ -213,19 +275,22 @@ struct rendertarget_t
         else
 #endif
         {
+#if GLEAM_MAX_VERSION_ES > 0
             cmd::clear_depthf(depthf);
+#else
+            cmd::clear_depth(depth);
+#endif
             cmd::clear(group::clear_buffer_mask::depth_buffer_bit);
         }
     }
 
     inline void clear(i32 stencil)
     {
-        auto target =
-#if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
-            group::framebuffer_target::draw_framebuffer;
-#else
-            group::framebuffer_target::framebuffer;
+        auto target = internal_collapse_target(
+#if GLEAM_MAX_VERSION > 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
+            group::framebuffer_target::draw_framebuffer
 #endif
+        );
         if(!m_features.dsa)
             internal_bind(target);
 #if GLEAM_MAX_VERSION >= 0x450
@@ -250,15 +315,18 @@ struct rendertarget_t
     requires(
         semantic::concepts::Vector<vec_4_f32, f32, 4>
     )
-    inline void clear(vec_4_f32 const& color, f64 depth, i32 stencil, u32 i = 0)
-    // clang-format on
+    inline void clear(
+        // clang-format on
+        vec_4_f32 const&     color,
+        f64                  depth,
+        i32                  stencil,
+        [[maybe_unused]] u32 i = 0)
     {
-        auto target =
-#if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
-            group::framebuffer_target::draw_framebuffer;
-#else
-            group::framebuffer_target::framebuffer;
+        auto target = internal_collapse_target(
+#if GLEAM_MAX_VERSION > 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
+            group::framebuffer_target::draw_framebuffer
 #endif
+        );
         if(!m_features.dsa)
             internal_bind(target);
 #if GLEAM_MAX_VERSION >= 0x450
@@ -291,7 +359,12 @@ struct rendertarget_t
 #endif
         {
             using group::clear_buffer_mask;
+
+#if GLEAM_MAX_VERSION_ES > 0
             cmd::clear_depthf(static_cast<f32>(depth));
+#else
+            cmd::clear_depth(depth);
+#endif
             cmd::clear_stencil(stencil);
             cmd::clear_color(color);
             cmd::clear(
@@ -332,19 +405,29 @@ struct rendertarget_t
         if(m_currency->update(m_handle, target))
             cmd::bind_framebuffer(target, m_handle);
     }
+
+    group::framebuffer_target internal_collapse_target(
+        group::framebuffer_target target
+        = group::framebuffer_target::framebuffer)
+    {
+        if(m_features.readdraw_buffers)
+            return target;
+        else
+            return group::framebuffer_target::framebuffer;
+    }
 };
 
 inline void detail::rendertarget_copy(
-    features::rendertargets&        features,
-    rendertarget_t&                 source,
-    rendertarget_t&                 dest,
-    typing::geometry::rect<u32>     srcRect,
-    typing::geometry::point_2d<u32> dstCoord,
-    render_targets::attachment      srcAttachment,
-    render_targets::attachment      dstAttachment,
-    u32                             level,
-    u32                             srci,
-    u32                             dsti)
+    [[maybe_unused]] features::rendertargets&   features,
+    rendertarget_t&                             source,
+    rendertarget_t&                             dest,
+    typing::geometry::rect<u32>                 srcRect,
+    typing::geometry::point_2d<u32>             dstCoord,
+    [[maybe_unused]] render_targets::attachment srcAttachment,
+    render_targets::attachment                  dstAttachment,
+    u32                                         level,
+    [[maybe_unused]] u32                        srci,
+    u32                                         dsti)
 {
     using param = group::framebuffer_attachment_parameter_name;
 

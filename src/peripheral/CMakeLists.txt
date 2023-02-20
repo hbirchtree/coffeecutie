@@ -230,3 +230,9 @@ endif()
 ############################################################
 
 add_subdirectory ( platform )
+
+add_subdirectory ( compressors/zlib )
+add_subdirectory ( compressors/zstd )
+if(WIN32)
+    add_subdirectory ( compressors/cab )
+endif()

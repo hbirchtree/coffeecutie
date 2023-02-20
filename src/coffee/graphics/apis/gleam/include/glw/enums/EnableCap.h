@@ -103,6 +103,12 @@ enum class enable_cap : ::libc_types::u32
 #ifdef GL_DEBUG_OUTPUT_SYNCHRONOUS
     debug_output_synchronous = GL_DEBUG_OUTPUT_SYNCHRONOUS,
 #endif
+#ifdef GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB
+    debug_output_synchronous_arb = GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB,
+#endif
+#ifdef GL_DEBUG_OUTPUT_SYNCHRONOUS_KHR
+    debug_output_synchronous_khr = GL_DEBUG_OUTPUT_SYNCHRONOUS_KHR,
+#endif
 #ifdef GL_DEPTH_CLAMP
     depth_clamp = GL_DEPTH_CLAMP,
 #endif

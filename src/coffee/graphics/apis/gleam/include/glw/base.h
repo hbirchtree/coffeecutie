@@ -51,10 +51,9 @@
 #error Configured for linked GLES headers, but none found
 #endif
 
-#if C_HAS_INCLUDE(<GLES3/gl3ext.h>) && GLEAM_RESTRICT_ES >= 0x300
+#if C_HAS_INCLUDE(<GLES3/gl3ext.h>)
 #include <GLES3/gl3ext.h>
-#endif
-#if C_HAS_INCLUDE(<GLES2/gl2ext.h>) && GLEAM_RESTRICT_ES == 0x200
+#elif C_HAS_INCLUDE(<GLES2/gl2ext.h>)
 #include <GLES2/gl2ext.h>
 #endif
 
@@ -89,14 +88,14 @@ struct Version
 };
 
 template<class Current, class Required>
-concept MinimumVersion = Current::major >=
-Required::major &&
-    (Current::major > Required::major || Current::minor >= Required::minor);
+concept MinimumVersion = Current::major >= Required::major &&
+                         (Current::major > Required::major ||
+                          Current::minor >= Required::minor);
 
 template<class Current, class Maximum>
 concept MaximumVersion = Current::major < Maximum::major ||
                          (Current::major == Maximum::major &&
-                          Current::minor < Maximum::minor);
+                          Current::minor <= Maximum::minor);
 
 using ::libc_types::ptroff;
 

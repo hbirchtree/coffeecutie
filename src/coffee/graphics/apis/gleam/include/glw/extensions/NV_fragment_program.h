@@ -11,25 +11,22 @@ constexpr libc_types::u32 fragment_program_binding              = 0x8873;
 constexpr libc_types::u32 program_error_string                  = 0x8874;
 } // namespace values
 template<class span_const_u8, class span_f64>
-requires(
-    semantic::concepts::Span<span_const_u8> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_u8::value_type>,
-        std::decay_t<u8>> &&
-    semantic::concepts::Span<span_f64> &&
-    std::is_same_v<
-        std::decay_t<typename span_f64::value_type>,
-        std::decay_t<f64>>)
-/*!
- * \brief Part of GL_NV_fragment_program
- * \param id GLuint
- * \param len GLsizei
- * \param name const GLubyte *
- * \param params GLdouble *
- * \return void
- */
-STATICINLINE void get_program_named_parameter(
-    u32 id, i32 len, span_const_u8 const& name, span_f64 params)
+requires(semantic::concepts::Span<span_const_u8>&& std::is_same_v<
+         std::decay_t<typename span_const_u8::value_type>,
+         std::decay_t<u8>>&& semantic::concepts::Span<span_f64>&&
+                             std::is_same_v<
+                 std::decay_t<typename span_f64::value_type>,
+                 std::decay_t<f64>>)
+    /*!
+     * \brief Part of GL_NV_fragment_program
+     * \param id GLuint
+     * \param len GLsizei
+     * \param name const GLubyte *
+     * \param params GLdouble *
+     * \return void
+     */
+    STATICINLINE void get_program_named_parameter(
+        u32 id, i32 len, span_const_u8 const& name, span_f64 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -45,25 +42,22 @@ STATICINLINE void get_program_named_parameter(
 }
 
 template<class span_const_u8, class span_f32>
-requires(
-    semantic::concepts::Span<span_const_u8> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_u8::value_type>,
-        std::decay_t<u8>> &&
-    semantic::concepts::Span<span_f32> &&
-    std::is_same_v<
-        std::decay_t<typename span_f32::value_type>,
-        std::decay_t<f32>>)
-/*!
- * \brief Part of GL_NV_fragment_program
- * \param id GLuint
- * \param len GLsizei
- * \param name const GLubyte *
- * \param params GLfloat *
- * \return void
- */
-STATICINLINE void get_program_named_parameter(
-    u32 id, i32 len, span_const_u8 const& name, span_f32 params)
+requires(semantic::concepts::Span<span_const_u8>&& std::is_same_v<
+         std::decay_t<typename span_const_u8::value_type>,
+         std::decay_t<u8>>&& semantic::concepts::Span<span_f32>&&
+                             std::is_same_v<
+                 std::decay_t<typename span_f32::value_type>,
+                 std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_NV_fragment_program
+     * \param id GLuint
+     * \param len GLsizei
+     * \param name const GLubyte *
+     * \param params GLfloat *
+     * \return void
+     */
+    STATICINLINE void get_program_named_parameter(
+        u32 id, i32 len, span_const_u8 const& name, span_f32 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -79,24 +73,22 @@ STATICINLINE void get_program_named_parameter(
 }
 
 template<class span_const_vec_4_u8, class vec_4_f64>
-requires(
-    semantic::concepts::Span<span_const_vec_4_u8> &&
-    semantic::concepts::
-        Vector<typename span_const_vec_4_u8::value_type, u8, 4> &&
-    semantic::concepts::Vector<vec_4_f64, f64, 4>)
-/*!
- * \brief Part of GL_NV_fragment_program
- * \param id GLuint
- * \param len GLsizei
- * \param name const GLubyte *
- * \param x GLdouble
- * \param y GLdouble
- * \param z GLdouble
- * \param w GLdouble
- * \return void
- */
-STATICINLINE void program_named_parameter4d(
-    u32 id, i32 len, span_const_vec_4_u8 const& name, vec_4_f64 const& x)
+requires(semantic::concepts::Span<span_const_vec_4_u8>&& semantic::concepts::
+             Vector<typename span_const_vec_4_u8::value_type, u8, 4>&&
+                 semantic::concepts::Vector<vec_4_f64, f64, 4>)
+    /*!
+     * \brief Part of GL_NV_fragment_program
+     * \param id GLuint
+     * \param len GLsizei
+     * \param name const GLubyte *
+     * \param x GLdouble
+     * \param y GLdouble
+     * \param z GLdouble
+     * \param w GLdouble
+     * \return void
+     */
+    STATICINLINE void program_named_parameter4d(
+        u32 id, i32 len, span_const_vec_4_u8 const& name, vec_4_f64 const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -116,25 +108,24 @@ STATICINLINE void program_named_parameter4d(
 
 template<class span_const_vec_4_f64, class span_const_vec_4_u8>
 requires(
-    semantic::concepts::Span<span_const_vec_4_u8> &&
-    semantic::concepts::
-        Vector<typename span_const_vec_4_u8::value_type, u8, 4> &&
-    semantic::concepts::Span<span_const_vec_4_f64> &&
-    semantic::concepts::
-        Vector<typename span_const_vec_4_f64::value_type, f64, 4>)
-/*!
- * \brief Part of GL_NV_fragment_program
- * \param id GLuint
- * \param len GLsizei
- * \param name const GLubyte *
- * \param v const GLdouble *
- * \return void
- */
-STATICINLINE void program_named_parameter4dv(
-    u32                         id,
-    i32                         len,
-    span_const_vec_4_u8 const&  name,
-    span_const_vec_4_f64 const& v)
+    semantic::concepts::Span<span_const_vec_4_u8>&& semantic::concepts::Vector<
+        typename span_const_vec_4_u8::value_type,
+        u8,
+        4>&& semantic::concepts::Span<span_const_vec_4_f64>&& semantic::
+        concepts::Vector<typename span_const_vec_4_f64::value_type, f64, 4>)
+    /*!
+     * \brief Part of GL_NV_fragment_program
+     * \param id GLuint
+     * \param len GLsizei
+     * \param name const GLubyte *
+     * \param v const GLdouble *
+     * \return void
+     */
+    STATICINLINE void program_named_parameter4dv(
+        u32                         id,
+        i32                         len,
+        span_const_vec_4_u8 const&  name,
+        span_const_vec_4_f64 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -150,24 +141,22 @@ STATICINLINE void program_named_parameter4dv(
 }
 
 template<class span_const_vec_4_u8, class vec_4_f32>
-requires(
-    semantic::concepts::Span<span_const_vec_4_u8> &&
-    semantic::concepts::
-        Vector<typename span_const_vec_4_u8::value_type, u8, 4> &&
-    semantic::concepts::Vector<vec_4_f32, f32, 4>)
-/*!
- * \brief Part of GL_NV_fragment_program
- * \param id GLuint
- * \param len GLsizei
- * \param name const GLubyte *
- * \param x GLfloat
- * \param y GLfloat
- * \param z GLfloat
- * \param w GLfloat
- * \return void
- */
-STATICINLINE void program_named_parameter4f(
-    u32 id, i32 len, span_const_vec_4_u8 const& name, vec_4_f32 const& x)
+requires(semantic::concepts::Span<span_const_vec_4_u8>&& semantic::concepts::
+             Vector<typename span_const_vec_4_u8::value_type, u8, 4>&&
+                 semantic::concepts::Vector<vec_4_f32, f32, 4>)
+    /*!
+     * \brief Part of GL_NV_fragment_program
+     * \param id GLuint
+     * \param len GLsizei
+     * \param name const GLubyte *
+     * \param x GLfloat
+     * \param y GLfloat
+     * \param z GLfloat
+     * \param w GLfloat
+     * \return void
+     */
+    STATICINLINE void program_named_parameter4f(
+        u32 id, i32 len, span_const_vec_4_u8 const& name, vec_4_f32 const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -187,25 +176,24 @@ STATICINLINE void program_named_parameter4f(
 
 template<class span_const_vec_4_f32, class span_const_vec_4_u8>
 requires(
-    semantic::concepts::Span<span_const_vec_4_u8> &&
-    semantic::concepts::
-        Vector<typename span_const_vec_4_u8::value_type, u8, 4> &&
-    semantic::concepts::Span<span_const_vec_4_f32> &&
-    semantic::concepts::
-        Vector<typename span_const_vec_4_f32::value_type, f32, 4>)
-/*!
- * \brief Part of GL_NV_fragment_program
- * \param id GLuint
- * \param len GLsizei
- * \param name const GLubyte *
- * \param v const GLfloat *
- * \return void
- */
-STATICINLINE void program_named_parameter4fv(
-    u32                         id,
-    i32                         len,
-    span_const_vec_4_u8 const&  name,
-    span_const_vec_4_f32 const& v)
+    semantic::concepts::Span<span_const_vec_4_u8>&& semantic::concepts::Vector<
+        typename span_const_vec_4_u8::value_type,
+        u8,
+        4>&& semantic::concepts::Span<span_const_vec_4_f32>&& semantic::
+        concepts::Vector<typename span_const_vec_4_f32::value_type, f32, 4>)
+    /*!
+     * \brief Part of GL_NV_fragment_program
+     * \param id GLuint
+     * \param len GLsizei
+     * \param name const GLubyte *
+     * \param v const GLfloat *
+     * \return void
+     */
+    STATICINLINE void program_named_parameter4fv(
+        u32                         id,
+        i32                         len,
+        span_const_vec_4_u8 const&  name,
+        span_const_vec_4_f32 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

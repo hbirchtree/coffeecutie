@@ -13,9 +13,9 @@ struct EntityVisitor : EntityVisitorBase
     using ComponentList = CompList;
     using SubsystemList = SubsysList;
 
-    using VisitorFlags = VisitorFlags;
-    using time_point   = time_point;
-    using Entity       = Entity;
+    using VisitorFlags = compo::VisitorFlags;
+    using time_point   = compo::time_point;
+    using Entity       = compo::Entity;
     using VisitorType  = EntityVisitor<CompList, SubsysList>;
     using Proxy        = ConstrainedProxy<CompList, SubsysList>;
 

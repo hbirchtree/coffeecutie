@@ -86,15 +86,29 @@ using typing::vector_types::Vecui2;
 using typing::vector_types::Vecui3;
 
 using cmd =
-#ifdef GL_VERSION_1_0
+#if GLEAM_MAX_VERSION == 0x330
+    gl::core::v33
+#elif GLEAM_MAX_VERSION == 0x400
+    gl::core::v40
+#elif GLEAM_MAX_VERSION == 0x410
+    gl::core::v41
+#elif GLEAM_MAX_VERSION == 0x420
+    gl::core::v42
+#elif GLEAM_MAX_VERSION == 0x430
+    gl::core::v43
+#elif GLEAM_MAX_VERSION == 0x440
+    gl::core::v44
+#elif GLEAM_MAX_VERSION == 0x450
+    gl::core::v45
+#elif GLEAM_MAX_VERSION >= 0x460
     gl::impl::core<gl::core::highest>
-#elif GLEAM_RESTRICT_ES == 0x200
+#elif GLEAM_MAX_VERSION_ES == 0x200
     gl::es::v20
-#elif GLEAM_RESTRICT_ES >= 0x300
+#elif GLEAM_MAX_VERSION_ES == 0x300
     gl::es::v30
-#elif GLEAM_RESTRICT_ES == 0x310
+#elif GLEAM_MAX_VERSION_ES == 0x310
     gl::es::v31
-#elif defined(GL_ES_VERSION_2_0)
+#elif GLEAM_MAX_VERSION_ES == 0x320
     gl::impl::es<gl::es::highest>
 #endif
     ;

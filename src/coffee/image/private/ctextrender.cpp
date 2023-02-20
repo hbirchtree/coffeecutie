@@ -76,8 +76,8 @@ Bytes& StbFontRenderer::RenderText(
     auto scale    = properties.scale;
 
     BytesConst stringData = BytesConst::ofString(text);
-    szptr bit_w      = 0;
-    int   x          = 0;
+    szptr      bit_w      = 0;
+    int        x          = 0;
 
     /* We use this to find kerning character */
     auto shadowChar = stringData.begin();
@@ -95,8 +95,8 @@ Bytes& StbFontRenderer::RenderText(
 
         x += scale * (ax + kern);
 
-        imageSize.w = CMath::max<u32>(imageSize.w, x + (bbox.w - bbox.x));
-        imageSize.h = CMath::max<u32>(imageSize.h, y + (bbox.h - bbox.y));
+        imageSize.w = std::max<u32>(imageSize.w, x + (bbox.w - bbox.x));
+        imageSize.h = std::max<u32>(imageSize.h, y + (bbox.h - bbox.y));
     }
 
     bit_w      = C_FCAST<szptr>(imageSize.w);

@@ -444,6 +444,7 @@ struct EntityContainer : stl_types::non_copy
     }
 
     EntityRef<EntityContainer> create_entity(EntityRecipe const& recipe);
+    void remove_entity_if(std::function<bool(Entity const&)>&& predicate);
 
     /* For optimizations */
     using visitor_graph = std::set<std::vector<bool>>;

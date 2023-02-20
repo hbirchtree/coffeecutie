@@ -14,9 +14,9 @@ coffee_library (
     $<INSTALL_INTERFACE:include>
     )
 
-target_precompile_headers ( CoreApplication PUBLIC
-    $<$<COMPILE_LANGUAGE:CXX>:coffee/core/CApplication>
-    )
+#target_precompile_headers ( CoreApplication PUBLIC
+#    $<$<COMPILE_LANGUAGE:CXX>:coffee/core/CApplication>
+#    )
 
 if(ANDROID OR (APPLE AND IOS))
     target_link_libraries ( CoreApplication PUBLIC
@@ -26,25 +26,33 @@ endif()
 
 if(ANDROID)
     set ( ANDROID_SOURCES_DIR "${ANDROID_NDK}/sources/android" )
+    set ( APP_GLUE_SRC ${ANDROID_SOURCES_DIR}/native_app_glue/android_native_app_glue.c )
 
-    set ( APP_GLUE_SRC
-        ${ANDROID_SOURCES_DIR}/native_app_glue/android_native_app_glue.c
+    coffee_library(
+        TARGET AndroidNativeAppGlue
+        SOURCES
+            ${APP_GLUE_SRC}
+            ${ANDROID_SOURCES_DIR}/cpufeatures/cpu-features.c
+        HEADER_DIRS
+            $<BUILD_INTERFACE:${ANDROID_SOURCES_DIR}/native_app_glue>
+            $<BUILD_INTERFACE:${ANDROID_SOURCES_DIR}/cpufeatures>
         )
-
-    target_sources ( CoreApplication PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/platform/android/and_main.cpp
-        ${APP_GLUE_SRC}
-        )
-    target_include_directories( CoreApplication PRIVATE
-        platform/android/include
-        )
-
     get_source_file_property (
         PREV_COMPILE_DEFINITIONS ${APP_GLUE_SRC} COMPILE_DEFINITIONS
         )
     set_source_files_properties ( ${APP_GLUE_SRC}
         PROPERTIES
         COMPILE_DEFINITIONS "${PREV_COMPILE_DEFINITIONS};NDEBUG=1"
+        )
+
+    target_sources ( CoreApplication PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/platform/android/and_main.cpp
+        )
+    target_include_directories( CoreApplication PRIVATE
+        platform/android/include
+        )
+    target_link_libraries( CoreApplication PUBLIC
+        AndroidNativeAppGlue
         )
 elseif(APPLE AND IOS)
     option ( IOS_GLKIT_APP "Build iOS with GLKit for OpenGLES support" ON )

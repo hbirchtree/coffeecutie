@@ -35,15 +35,13 @@ struct magic_data_t
 
     inline magic_data_t no_magic() const
     {
-        auto cpy         = *this;
-        cpy.magic_offset = 0;
-        return cpy;
+        return magic_data_t();
     }
 
     union
     {
         file_header_t const* header_ptr;
-        byte_t const*        base_ptr;
+        byte_t const*        base_ptr{nullptr};
     };
     u32 magic_offset{0};
     u32 max_size{0};

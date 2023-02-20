@@ -131,6 +131,9 @@ enum class texture_parameter_name : ::libc_types::u32
 #ifdef GL_TEXTURE_LOD_BIAS
     texture_lod_bias = GL_TEXTURE_LOD_BIAS,
 #endif
+#ifdef GL_TEXTURE_LOD_BIAS_EXT
+    texture_lod_bias_ext = GL_TEXTURE_LOD_BIAS_EXT,
+#endif
 #ifdef GL_TEXTURE_LOD_BIAS_R_SGIX
     texture_lod_bias_r_sgix = GL_TEXTURE_LOD_BIAS_R_SGIX,
 #endif

@@ -106,23 +106,26 @@ using ThrdCnt = u64;
 using ThrdCnt               = uint32;
 #endif
 using MemUnit = u64;
-using CoreCnt = u32;
 
-constexpr MemUnit Unit_kB = 1024;
-constexpr MemUnit Unit_MB = 1024 * 1024;
-constexpr MemUnit Unit_GB = 1024 * 1024 * 1024;
-constexpr MemUnit Unit_TB = 1024ULL * 1024ULL * 1024ULL * 1024ULL;
+constexpr u16 Unit_kB = 1024;
+constexpr u32 Unit_MB = 1024 * 1024;
+constexpr u32 Unit_GB = 1024 * 1024 * 1024;
+constexpr u64 Unit_TB = 1024ULL * 1024ULL * 1024ULL * 1024ULL;
 
 #define GEN_SIZE_LITERAL(unit)                                               \
-    constexpr inline MemUnit operator"" _##unit##B(unsigned long long int v) \
+    constexpr inline u64 operator"" _##unit##B(unsigned long long int v) \
     {                                                                        \
         return v * Unit_##unit##B;                                           \
     }
+
+namespace size_literals {
 
 GEN_SIZE_LITERAL(k)
 GEN_SIZE_LITERAL(M)
 GEN_SIZE_LITERAL(G)
 GEN_SIZE_LITERAL(T)
+
+} // namespace size_literals
 
 #define GEN_TIME_LITERAL(unit, div)                                            \
     constexpr inline bigscalar operator"" _##unit##s(unsigned long long int v) \

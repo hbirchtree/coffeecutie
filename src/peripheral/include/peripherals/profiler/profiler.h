@@ -172,14 +172,14 @@ struct prof_component
         typename Dummy                                 = void,
         typename std::enable_if<Enabled, Dummy>::type* = nullptr>
     STATICINLINE void push(
-        runtime_options& opt, std::string&& name, Extra... args)
+        runtime_options& opt, std::string_view name, Extra... args)
     {
         datapoint data;
         prof_common<prof_types>::basic_init(data, opt);
 
         opt.push_stack(name);
         data.flags.type = datapoint::Push;
-        data.name       = name.c_str();
+        data.name       = name;
         data.component  = opt.component();
 
         opt.push(*opt.context, data, std::forward<Extra>(args)...);
@@ -207,7 +207,7 @@ struct prof_component
     template<
         typename Dummy                                 = void,
         typename std::enable_if<Enabled, Dummy>::type* = nullptr>
-    STATICINLINE void profile(runtime_options& opt, std::string&& name)
+    STATICINLINE void profile(runtime_options& opt, std::string_view name)
     {
         datapoint data;
         prof_common<prof_types>::basic_init(data, opt);
@@ -297,7 +297,7 @@ struct prof
     struct app
     {
         template<typename... Extra>
-        STATICINLINE void push(std::string&& name, Extra... args)
+        STATICINLINE void push(std::string_view name, Extra... args)
         {
             if(!runtime_options::enabled())
                 return;
@@ -316,7 +316,7 @@ struct prof
             app_component::pop(props);
         }
 
-        STATICINLINE void profile(std::string&& name)
+        STATICINLINE void profile(std::string_view name)
         {
             if(!runtime_options::enabled())
                 return;
@@ -329,7 +329,7 @@ struct prof
     struct lib
     {
         template<typename... Extra>
-        STATICINLINE void push(std::string&& name, Extra... args)
+        STATICINLINE void push(std::string_view name, Extra... args)
         {
             if(!runtime_options::deep_enabled())
                 return;
@@ -348,7 +348,7 @@ struct prof
             lib_component::pop(props);
         }
 
-        STATICINLINE void profile(std::string&& name)
+        STATICINLINE void profile(std::string_view name)
         {
             if(!runtime_options::deep_enabled())
                 return;

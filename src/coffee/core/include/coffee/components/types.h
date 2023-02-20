@@ -66,14 +66,14 @@ C_FLAGS(VisitorFlags, u32);
 struct EntityRecipe
 {
     std::vector<size_t> components;
-    u32            tags;
+    u32            tags{0};
 };
 
 struct Entity : stl_types::non_copy
 {
     u64 id;
     u32 tags;
-    u32 _pad = 0;
+    u32 _pad{0};
 };
 
 struct ComponentContainerBase : stl_types::non_copy
@@ -160,16 +160,18 @@ struct ComponentContainer : ComponentContainerBase
 
 struct SubsystemBase
 {
-    using ContainerProxy = ContainerProxy;
-    using time_point     = time_point;
-    using duration       = duration;
+    using ContainerProxy = compo::ContainerProxy;
+    using time_point     = compo::time_point;
+    using duration       = compo::duration;
 
     static constexpr u32 default_prio = 1024;
     static constexpr u32 system_prio  = 0;
 
     virtual ~SubsystemBase();
 
-    SubsystemBase()                     = default;
+    SubsystemBase() : priority(default_prio)
+    {
+    }
     SubsystemBase(SubsystemBase const&) = delete;
 
     virtual void start_frame(ContainerProxy&, time_point const&)
@@ -179,7 +181,12 @@ struct SubsystemBase
     {
     }
 
-    u32 priority = default_prio;
+    virtual std::string_view subsystem_name() const
+    {
+        return "Subsystem";
+    }
+
+    u32 priority;
 
   protected:
     static EntityContainer& get_container(ContainerProxy& proxy);

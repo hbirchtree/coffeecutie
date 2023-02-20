@@ -48,24 +48,22 @@ STATICINLINE void eval_maps(
 }
 
 template<class span_f32>
-requires(
-    semantic::concepts::Span<span_f32> &&
-    std::is_same_v<
-        std::decay_t<typename span_f32::value_type>,
-        std::decay_t<f32>>)
-/*!
- * \brief Part of GL_NV_evaluators
- * \param target GLenum
- * \param index GLuint
- * \param pname GLenum
- * \param params GLfloat *
- * \return void
- */
-STATICINLINE void get_map_attrib_parameter(
-    group::eval_target_nv          target,
-    u32                            index,
-    group::map_attrib_parameter_nv pname,
-    span_f32                       params)
+requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+         std::decay_t<typename span_f32::value_type>,
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_NV_evaluators
+     * \param target GLenum
+     * \param index GLuint
+     * \param pname GLenum
+     * \param params GLfloat *
+     * \return void
+     */
+    STATICINLINE void get_map_attrib_parameter(
+        group::eval_target_nv          target,
+        u32                            index,
+        group::map_attrib_parameter_nv pname,
+        span_f32                       params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -81,24 +79,22 @@ STATICINLINE void get_map_attrib_parameter(
 }
 
 template<class span_i32>
-requires(
-    semantic::concepts::Span<span_i32> &&
-    std::is_same_v<
-        std::decay_t<typename span_i32::value_type>,
-        std::decay_t<i32>>)
-/*!
- * \brief Part of GL_NV_evaluators
- * \param target GLenum
- * \param index GLuint
- * \param pname GLenum
- * \param params GLint *
- * \return void
- */
-STATICINLINE void get_map_attrib_parameter(
-    group::eval_target_nv          target,
-    u32                            index,
-    group::map_attrib_parameter_nv pname,
-    span_i32                       params)
+requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+         std::decay_t<typename span_i32::value_type>,
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_NV_evaluators
+     * \param target GLenum
+     * \param index GLuint
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_map_attrib_parameter(
+        group::eval_target_nv          target,
+        u32                            index,
+        group::map_attrib_parameter_nv pname,
+        span_i32                       params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -115,25 +111,25 @@ STATICINLINE void get_map_attrib_parameter(
 
 template<class span_void>
 requires(semantic::concepts::Span<span_void>)
-/*!
- * \brief Part of GL_NV_evaluators
- * \param target GLenum
- * \param index GLuint
- * \param type GLenum
- * \param ustride GLsizei
- * \param vstride GLsizei
- * \param packed GLboolean
- * \param points void *
- * \return void
- */
-STATICINLINE void get_map_control_points(
-    group::eval_target_nv target,
-    u32                   index,
-    group::map_type_nv    type,
-    i32                   ustride,
-    i32                   vstride,
-    bool                  packed,
-    span_void             points)
+    /*!
+     * \brief Part of GL_NV_evaluators
+     * \param target GLenum
+     * \param index GLuint
+     * \param type GLenum
+     * \param ustride GLsizei
+     * \param vstride GLsizei
+     * \param packed GLboolean
+     * \param points void *
+     * \return void
+     */
+    STATICINLINE void get_map_control_points(
+        group::eval_target_nv target,
+        u32                   index,
+        group::map_type_nv    type,
+        i32                   ustride,
+        i32                   vstride,
+        bool                  packed,
+        span_void             points)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -152,22 +148,20 @@ STATICINLINE void get_map_control_points(
 }
 
 template<class span_f32>
-requires(
-    semantic::concepts::Span<span_f32> &&
-    std::is_same_v<
-        std::decay_t<typename span_f32::value_type>,
-        std::decay_t<f32>>)
-/*!
- * \brief Part of GL_NV_evaluators
- * \param target GLenum
- * \param pname GLenum
- * \param params GLfloat *
- * \return void
- */
-STATICINLINE void get_map_parameter(
-    group::eval_target_nv   target,
-    group::map_parameter_nv pname,
-    span_f32                params)
+requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+         std::decay_t<typename span_f32::value_type>,
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_NV_evaluators
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params GLfloat *
+     * \return void
+     */
+    STATICINLINE void get_map_parameter(
+        group::eval_target_nv   target,
+        group::map_parameter_nv pname,
+        span_f32                params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -182,22 +176,20 @@ STATICINLINE void get_map_parameter(
 }
 
 template<class span_i32>
-requires(
-    semantic::concepts::Span<span_i32> &&
-    std::is_same_v<
-        std::decay_t<typename span_i32::value_type>,
-        std::decay_t<i32>>)
-/*!
- * \brief Part of GL_NV_evaluators
- * \param target GLenum
- * \param pname GLenum
- * \param params GLint *
- * \return void
- */
-STATICINLINE void get_map_parameter(
-    group::eval_target_nv   target,
-    group::map_parameter_nv pname,
-    span_i32                params)
+requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+         std::decay_t<typename span_i32::value_type>,
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_NV_evaluators
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_map_parameter(
+        group::eval_target_nv   target,
+        group::map_parameter_nv pname,
+        span_i32                params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -213,29 +205,29 @@ STATICINLINE void get_map_parameter(
 
 template<class span_const_void>
 requires(semantic::concepts::Span<span_const_void>)
-/*!
- * \brief Part of GL_NV_evaluators
- * \param target GLenum
- * \param index GLuint
- * \param type GLenum
- * \param ustride GLsizei
- * \param vstride GLsizei
- * \param uorder GLint
- * \param vorder GLint
- * \param packed GLboolean
- * \param points const void *
- * \return void
- */
-STATICINLINE void map_control_points(
-    group::eval_target_nv  target,
-    u32                    index,
-    group::map_type_nv     type,
-    i32                    ustride,
-    i32                    vstride,
-    i32                    uorder,
-    i32                    vorder,
-    bool                   packed,
-    span_const_void const& points)
+    /*!
+     * \brief Part of GL_NV_evaluators
+     * \param target GLenum
+     * \param index GLuint
+     * \param type GLenum
+     * \param ustride GLsizei
+     * \param vstride GLsizei
+     * \param uorder GLint
+     * \param vorder GLint
+     * \param packed GLboolean
+     * \param points const void *
+     * \return void
+     */
+    STATICINLINE void map_control_points(
+        group::eval_target_nv  target,
+        u32                    index,
+        group::map_type_nv     type,
+        i32                    ustride,
+        i32                    vstride,
+        i32                    uorder,
+        i32                    vorder,
+        bool                   packed,
+        span_const_void const& points)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -256,22 +248,20 @@ STATICINLINE void map_control_points(
 }
 
 template<class span_const_f32>
-requires(
-    semantic::concepts::Span<span_const_f32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_f32::value_type>,
-        std::decay_t<f32>>)
-/*!
- * \brief Part of GL_NV_evaluators
- * \param target GLenum
- * \param pname GLenum
- * \param params const GLfloat *
- * \return void
- */
-STATICINLINE void map_parameter(
-    group::eval_target_nv   target,
-    group::map_parameter_nv pname,
-    span_const_f32 const&   params)
+requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+         std::decay_t<typename span_const_f32::value_type>,
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_NV_evaluators
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params const GLfloat *
+     * \return void
+     */
+    STATICINLINE void map_parameter(
+        group::eval_target_nv   target,
+        group::map_parameter_nv pname,
+        span_const_f32 const&   params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -287,22 +277,20 @@ STATICINLINE void map_parameter(
 }
 
 template<class span_const_i32>
-requires(
-    semantic::concepts::Span<span_const_i32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_i32::value_type>,
-        std::decay_t<i32>>)
-/*!
- * \brief Part of GL_NV_evaluators
- * \param target GLenum
- * \param pname GLenum
- * \param params const GLint *
- * \return void
- */
-STATICINLINE void map_parameter(
-    group::eval_target_nv   target,
-    group::map_parameter_nv pname,
-    span_const_i32 const&   params)
+requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
+         std::decay_t<typename span_const_i32::value_type>,
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_NV_evaluators
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params const GLint *
+     * \return void
+     */
+    STATICINLINE void map_parameter(
+        group::eval_target_nv   target,
+        group::map_parameter_nv pname,
+        span_const_i32 const&   params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

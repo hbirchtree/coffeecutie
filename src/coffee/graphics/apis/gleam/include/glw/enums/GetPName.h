@@ -980,6 +980,9 @@ enum class get_prop : ::libc_types::u32
 #ifdef GL_MAX_TEXTURE_LOD_BIAS
     max_texture_lod_bias = GL_MAX_TEXTURE_LOD_BIAS,
 #endif
+#ifdef GL_MAX_TEXTURE_LOD_BIAS_EXT
+    max_texture_lod_bias_ext = GL_MAX_TEXTURE_LOD_BIAS_EXT,
+#endif
 #ifdef GL_MAX_TEXTURE_MAX_ANISOTROPY
     max_texture_max_anisotropy = GL_MAX_TEXTURE_MAX_ANISOTROPY,
 #endif

@@ -100,7 +100,7 @@ FORCEDINLINE void cFatal(std::string_view fmt, Arg... args)
 }
 
 template<typename... Arg>
-FORCEDINLINE void cVerbose(u32 v, std::string_view fmt, Arg... args)
+FORCEDINLINE void cVerbose(u32 /*v*/, std::string_view fmt, Arg... args)
 {
     logInterface(
         Logging::default_stream,

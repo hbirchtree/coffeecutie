@@ -49,16 +49,16 @@ void ProfilingExport()
 
         Coffee::Resource profile("profile.json", RSCA::TempFile);
 
-        auto reportBin = Net::MkUrl(
+        auto reportBin = net::MkUrl(
             server.value(), HTTPAccess::DefaultPOST | HTTPAccess::NoVerify);
-        Net::Resource reportBinRsc(ctxt, reportBin);
+        net::Resource reportBinRsc(ctxt, reportBin);
 
         if(!reportBinRsc.connected())
         {
             cDebug(
                 "Failed to connect to {0}: {1}",
                 reportBinRsc.resource(),
-                reportBinRsc.errorCode().message());
+                reportBinRsc.connectError().message());
             return;
         }
 
@@ -69,9 +69,10 @@ void ProfilingExport()
 #if defined(COFFEE_ENABLE_SSL)
         reportBinRsc.setHeaderField(
             "X-Coffee-Signature",
-            "sha1=" + hex::encode(net::hmac::digest(
-                          C_OCAST<BytesConst>(profile).view,
-                          env::var("COFFEE_HMAC_KEY").value_or("0000"))));
+            "sha1="
+                + hex::encode(net::hmac::digest(
+                    C_OCAST<BytesConst>(profile).view,
+                    env::var("COFFEE_HMAC_KEY").value_or("0000"))));
 #endif
 
         http::multipart::builder out("-----------NetProfile");
@@ -93,7 +94,7 @@ void ProfilingExport()
         {
             out.add(
                 "profile",
-                C_OCAST<Bytes>(profile),
+                C_OCAST<BytesConst>(profile),
                 {{"Content-Type", "text/plain"}});
         } else
         {
@@ -108,21 +109,22 @@ void ProfilingExport()
         reportBinRsc.push(out);
 
         auto response_status = classify_status(reportBinRsc.responseCode());
-        if(response_status != response_class::success)
+        if(auto data = reportBinRsc.data();
+           response_status != response_class::success && data.has_value())
         {
             cWarning(
                 "Got bad response from server: {1}\n{0}",
-                str::encapsulate(
-                    (cstring)reportBinRsc.data().data,
-                    reportBinRsc.data().size),
+                str::encapsulate_view<char>(data->view),
                 reportBinRsc.responseCode());
-        } else
+        } else if(data.has_value())
         {
-            auto data = reportBinRsc.data();
             cVerbose(
                 10,
                 "Network export successful with response: {0}",
-                str::encapsulate((cstring)data.data, data.size));
+                str::encapsulate_view<char>(data->view));
+        } else
+        {
+            cWarning("Got no data back from server?");
         }
 
         worker->stop();

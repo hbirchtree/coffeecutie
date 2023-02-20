@@ -55,7 +55,7 @@ FORCEDINLINE EntityContainer::visitor_graph create_visitor_graph(
         idx++;
     }
 
-    auto         neigh_size = visitors.size();
+    auto              neigh_size = visitors.size();
     std::vector<bool> neighbor_matrix;
     neighbor_matrix.resize(visitors.size() * visitors.size());
 
@@ -91,11 +91,11 @@ FORCEDINLINE EntityContainer::visitor_graph create_visitor_graph(
 
     /* Connect all nodes that run on main thread, grouping them together */
     {
-        auto const is_mainthread = [](
-                std::unique_ptr<EntityVisitorBase> const& p) {
-            return (p->flags & VisitorFlags::MainThread)
-                   == VisitorFlags::MainThread;
-        };
+        auto const is_mainthread
+            = [](std::unique_ptr<EntityVisitorBase> const& p) {
+                  return (p->flags & VisitorFlags::MainThread)
+                         == VisitorFlags::MainThread;
+              };
 
         auto start = visitors.begin();
 
@@ -133,7 +133,8 @@ FORCEDINLINE EntityContainer::visitor_graph create_visitor_graph(
     {
         unique_rows.insert(std::vector<bool>(
             neighbor_matrix.begin() + static_cast<ptroff>(neigh_size * i),
-            neighbor_matrix.begin() + static_cast<ptroff>(neigh_size * (i + 1))));
+            neighbor_matrix.begin()
+                + static_cast<ptroff>(neigh_size * (i + 1))));
     }
 
     return unique_rows;
@@ -331,6 +332,21 @@ FORCEDINLINE EntityRef<EntityContainer> EntityContainer::create_entity(
     return ref(entity);
 }
 
+FORCEDINLINE void EntityContainer::remove_entity_if(
+    std::function<bool(Entity const&)>&& predicate)
+{
+    auto remove_it
+        = std::remove_if(entities.begin(), entities.end(), predicate);
+    auto removed_entities
+        = semantic::Span<Entity>(&(*remove_it), entities.end() - remove_it);
+    for(auto& component : components)
+    {
+        for(auto const& entity : removed_entities)
+            component.second->unregister_entity(entity.id);
+    }
+    entities.erase(remove_it, entities.end());
+}
+
 template<is_tag_type ComponentTag>
 ComponentRef<EntityContainer, ComponentTag> EntityContainer::ref_comp(
     u64 entity)
@@ -368,7 +384,7 @@ auto EntityContainer::services_with(reverse_query_t)
 template<class BaseType>
 auto EntityContainer::services_with(service_sort_predicate<BaseType> sorter)
 {
-    auto services = services_with<BaseType>();
+    auto                   services = services_with<BaseType>();
     std::vector<BaseType*> out;
     for(auto& service : services)
         out.push_back(&service);

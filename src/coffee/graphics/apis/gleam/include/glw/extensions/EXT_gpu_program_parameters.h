@@ -5,23 +5,21 @@ namespace gl::ext::gpu_program_parameters {
 namespace values {
 } // namespace values
 template<class span_const_vec_4_f32>
-requires(
-    semantic::concepts::Span<span_const_vec_4_f32> &&
-    semantic::concepts::
-        Vector<typename span_const_vec_4_f32::value_type, f32, 4>)
-/*!
- * \brief Part of GL_EXT_gpu_program_parameters
- * \param target GLenum
- * \param index GLuint
- * \param count GLsizei
- * \param params const GLfloat *
- * \return void
- */
-STATICINLINE void program_env_parameters4fv(
-    group::program_target       target,
-    u32                         index,
-    i32                         count,
-    span_const_vec_4_f32 const& params)
+requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
+             Vector<typename span_const_vec_4_f32::value_type, f32, 4>)
+    /*!
+     * \brief Part of GL_EXT_gpu_program_parameters
+     * \param target GLenum
+     * \param index GLuint
+     * \param count GLsizei
+     * \param params const GLfloat *
+     * \return void
+     */
+    STATICINLINE void program_env_parameters4fv(
+        group::program_target       target,
+        u32                         index,
+        i32                         count,
+        span_const_vec_4_f32 const& params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -37,23 +35,21 @@ STATICINLINE void program_env_parameters4fv(
 }
 
 template<class span_const_vec_4_f32>
-requires(
-    semantic::concepts::Span<span_const_vec_4_f32> &&
-    semantic::concepts::
-        Vector<typename span_const_vec_4_f32::value_type, f32, 4>)
-/*!
- * \brief Part of GL_EXT_gpu_program_parameters
- * \param target GLenum
- * \param index GLuint
- * \param count GLsizei
- * \param params const GLfloat *
- * \return void
- */
-STATICINLINE void program_local_parameters4fv(
-    group::program_target       target,
-    u32                         index,
-    i32                         count,
-    span_const_vec_4_f32 const& params)
+requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
+             Vector<typename span_const_vec_4_f32::value_type, f32, 4>)
+    /*!
+     * \brief Part of GL_EXT_gpu_program_parameters
+     * \param target GLenum
+     * \param index GLuint
+     * \param count GLsizei
+     * \param params const GLfloat *
+     * \return void
+     */
+    STATICINLINE void program_local_parameters4fv(
+        group::program_target       target,
+        u32                         index,
+        i32                         count,
+        span_const_vec_4_f32 const& params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

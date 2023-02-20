@@ -1,14 +1,14 @@
 #ifdef GL_VERSION_1_0
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<1, 0>>)
-/*!
- * \brief Wraps around glBlendFunc. Introduced in GL core 1.0
- * \param sfactor GLenum
- * \param dfactor GLenum
- * \return void
- */
-STATICINLINE void blend_func(
-    group::blending_factor sfactor, group::blending_factor dfactor)
+    /*!
+     * \brief Wraps around glBlendFunc. Introduced in GL core 1.0
+     * \param sfactor GLenum
+     * \param dfactor GLenum
+     * \return void
+     */
+    STATICINLINE void blend_func(
+        group::blending_factor sfactor, group::blending_factor dfactor)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -21,12 +21,12 @@ STATICINLINE void blend_func(
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<1, 0>>)
-/*!
- * \brief Wraps around glClear. Introduced in GL core 1.0
- * \param mask GLbitfield
- * \return void
- */
-STATICINLINE void clear(group::clear_buffer_mask mask)
+    /*!
+     * \brief Wraps around glClear. Introduced in GL core 1.0
+     * \param mask GLbitfield
+     * \return void
+     */
+    STATICINLINE void clear(group::clear_buffer_mask mask)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -38,18 +38,17 @@ STATICINLINE void clear(group::clear_buffer_mask mask)
 }
 
 template<class vec_4_f32>
-requires(
-    MinimumVersion<Current, Version<1, 0>> &&
-    semantic::concepts::Vector<vec_4_f32, f32, 4>)
-/*!
- * \brief Wraps around glClearColor. Introduced in GL core 1.0
- * \param red GLfloat
- * \param green GLfloat
- * \param blue GLfloat
- * \param alpha GLfloat
- * \return void
- */
-STATICINLINE void clear_color(vec_4_f32 const& red)
+requires(MinimumVersion<Current, Version<1, 0>>&&
+             semantic::concepts::Vector<vec_4_f32, f32, 4>)
+    /*!
+     * \brief Wraps around glClearColor. Introduced in GL core 1.0
+     * \param red GLfloat
+     * \param green GLfloat
+     * \param blue GLfloat
+     * \param alpha GLfloat
+     * \return void
+     */
+    STATICINLINE void clear_color(vec_4_f32 const& red)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -62,12 +61,12 @@ STATICINLINE void clear_color(vec_4_f32 const& red)
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<1, 0>>)
-/*!
- * \brief Wraps around glClearDepth. Introduced in GL core 1.0
- * \param depth GLdouble
- * \return void
- */
-STATICINLINE void clear_depth(f64 depth)
+    /*!
+     * \brief Wraps around glClearDepth. Introduced in GL core 1.0
+     * \param depth GLdouble
+     * \return void
+     */
+    STATICINLINE void clear_depth(f64 depth)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -80,12 +79,12 @@ STATICINLINE void clear_depth(f64 depth)
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<1, 0>>)
-/*!
- * \brief Wraps around glClearStencil. Introduced in GL core 1.0
- * \param s GLint
- * \return void
- */
-STATICINLINE void clear_stencil(i32 s)
+    /*!
+     * \brief Wraps around glClearStencil. Introduced in GL core 1.0
+     * \param s GLint
+     * \return void
+     */
+    STATICINLINE void clear_stencil(i32 s)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -97,18 +96,17 @@ STATICINLINE void clear_stencil(i32 s)
 }
 
 template<class vec_4_bool>
-requires(
-    MinimumVersion<Current, Version<1, 0>> &&
-    semantic::concepts::Vector<vec_4_bool, bool, 4>)
-/*!
- * \brief Wraps around glColorMask. Introduced in GL core 1.0
- * \param red GLboolean
- * \param green GLboolean
- * \param blue GLboolean
- * \param alpha GLboolean
- * \return void
- */
-STATICINLINE void color_mask(vec_4_bool const& red)
+requires(MinimumVersion<Current, Version<1, 0>>&&
+             semantic::concepts::Vector<vec_4_bool, bool, 4>)
+    /*!
+     * \brief Wraps around glColorMask. Introduced in GL core 1.0
+     * \param red GLboolean
+     * \param green GLboolean
+     * \param blue GLboolean
+     * \param alpha GLboolean
+     * \return void
+     */
+    STATICINLINE void color_mask(vec_4_bool const& red)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -121,12 +119,12 @@ STATICINLINE void color_mask(vec_4_bool const& red)
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<1, 0>>)
-/*!
- * \brief Wraps around glCullFace. Introduced in GL core 1.0
- * \param mode GLenum
- * \return void
- */
-STATICINLINE void cull_face(group::triangle_face mode)
+    /*!
+     * \brief Wraps around glCullFace. Introduced in GL core 1.0
+     * \param mode GLenum
+     * \return void
+     */
+    STATICINLINE void cull_face(group::triangle_face mode)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -139,12 +137,12 @@ STATICINLINE void cull_face(group::triangle_face mode)
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<1, 0>>)
-/*!
- * \brief Wraps around glDepthFunc. Introduced in GL core 1.0
- * \param func GLenum
- * \return void
- */
-STATICINLINE void depth_func(group::depth_function func)
+    /*!
+     * \brief Wraps around glDepthFunc. Introduced in GL core 1.0
+     * \param func GLenum
+     * \return void
+     */
+    STATICINLINE void depth_func(group::depth_function func)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -157,12 +155,12 @@ STATICINLINE void depth_func(group::depth_function func)
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<1, 0>>)
-/*!
- * \brief Wraps around glDepthMask. Introduced in GL core 1.0
- * \param flag GLboolean
- * \return void
- */
-STATICINLINE void depth_mask(bool flag)
+    /*!
+     * \brief Wraps around glDepthMask. Introduced in GL core 1.0
+     * \param flag GLboolean
+     * \return void
+     */
+    STATICINLINE void depth_mask(bool flag)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -175,13 +173,13 @@ STATICINLINE void depth_mask(bool flag)
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<1, 0>>)
-/*!
- * \brief Wraps around glDepthRange. Introduced in GL core 1.0
- * \param n GLdouble
- * \param f GLdouble
- * \return void
- */
-STATICINLINE void depth_range(f64 n, f64 f)
+    /*!
+     * \brief Wraps around glDepthRange. Introduced in GL core 1.0
+     * \param n GLdouble
+     * \param f GLdouble
+     * \return void
+     */
+    STATICINLINE void depth_range(f64 n, f64 f)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -194,12 +192,12 @@ STATICINLINE void depth_range(f64 n, f64 f)
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<1, 0>>)
-/*!
- * \brief Wraps around glDisable. Introduced in GL core 1.0
- * \param cap GLenum
- * \return void
- */
-STATICINLINE void disable(group::enable_cap cap)
+    /*!
+     * \brief Wraps around glDisable. Introduced in GL core 1.0
+     * \param cap GLenum
+     * \return void
+     */
+    STATICINLINE void disable(group::enable_cap cap)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -212,12 +210,12 @@ STATICINLINE void disable(group::enable_cap cap)
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<1, 0>>)
-/*!
- * \brief Wraps around glDrawBuffer. Introduced in GL core 1.0
- * \param buf GLenum
- * \return void
- */
-STATICINLINE void draw_buffer(group::draw_buffer_mode buf)
+    /*!
+     * \brief Wraps around glDrawBuffer. Introduced in GL core 1.0
+     * \param buf GLenum
+     * \return void
+     */
+    STATICINLINE void draw_buffer(group::draw_buffer_mode buf)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -230,12 +228,12 @@ STATICINLINE void draw_buffer(group::draw_buffer_mode buf)
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<1, 0>>)
-/*!
- * \brief Wraps around glEnable. Introduced in GL core 1.0
- * \param cap GLenum
- * \return void
- */
-STATICINLINE void enable(group::enable_cap cap)
+    /*!
+     * \brief Wraps around glEnable. Introduced in GL core 1.0
+     * \param cap GLenum
+     * \return void
+     */
+    STATICINLINE void enable(group::enable_cap cap)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -248,12 +246,12 @@ STATICINLINE void enable(group::enable_cap cap)
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<1, 0>>)
-/*!
- * \brief Wraps around glFinish. Introduced in GL core 1.0
+    /*!
+     * \brief Wraps around glFinish. Introduced in GL core 1.0
 
- * \return void
- */
-STATICINLINE void finish()
+     * \return void
+     */
+    STATICINLINE void finish()
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -266,12 +264,12 @@ STATICINLINE void finish()
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<1, 0>>)
-/*!
- * \brief Wraps around glFlush. Introduced in GL core 1.0
+    /*!
+     * \brief Wraps around glFlush. Introduced in GL core 1.0
 
- * \return void
- */
-STATICINLINE void flush()
+     * \return void
+     */
+    STATICINLINE void flush()
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -284,12 +282,12 @@ STATICINLINE void flush()
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<1, 0>>)
-/*!
- * \brief Wraps around glFrontFace. Introduced in GL core 1.0
- * \param mode GLenum
- * \return void
- */
-STATICINLINE void front_face(group::front_face_direction mode)
+    /*!
+     * \brief Wraps around glFrontFace. Introduced in GL core 1.0
+     * \param mode GLenum
+     * \return void
+     */
+    STATICINLINE void front_face(group::front_face_direction mode)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -301,19 +299,17 @@ STATICINLINE void front_face(group::front_face_direction mode)
 }
 
 template<class span_bool>
-requires(
-    MinimumVersion<Current, Version<1, 0>> &&
-    semantic::concepts::Span<span_bool> &&
-    std::is_same_v<
-        std::decay_t<typename span_bool::value_type>,
-        std::decay_t<bool>>)
-/*!
- * \brief Wraps around glGetBooleanv. Introduced in GL core 1.0
- * \param pname GLenum
- * \param data GLboolean *
- * \return void
- */
-STATICINLINE void get_booleanv(group::get_prop pname, span_bool data)
+requires(MinimumVersion<Current, Version<1, 0>>&&
+             semantic::concepts::Span<span_bool>&& std::is_same_v<
+                 std::decay_t<typename span_bool::value_type>,
+                 std::decay_t<bool>>)
+    /*!
+     * \brief Wraps around glGetBooleanv. Introduced in GL core 1.0
+     * \param pname GLenum
+     * \param data GLboolean *
+     * \return void
+     */
+    STATICINLINE void get_booleanv(group::get_prop pname, span_bool data)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -327,19 +323,17 @@ STATICINLINE void get_booleanv(group::get_prop pname, span_bool data)
 }
 
 template<class span_f64>
-requires(
-    MinimumVersion<Current, Version<1, 0>> &&
-    semantic::concepts::Span<span_f64> &&
-    std::is_same_v<
-        std::decay_t<typename span_f64::value_type>,
-        std::decay_t<f64>>)
-/*!
- * \brief Wraps around glGetDoublev. Introduced in GL core 1.0
- * \param pname GLenum
- * \param data GLdouble *
- * \return void
- */
-STATICINLINE void get_doublev(group::get_prop pname, span_f64 data)
+requires(MinimumVersion<Current, Version<1, 0>>&&
+             semantic::concepts::Span<span_f64>&& std::is_same_v<
+                 std::decay_t<typename span_f64::value_type>,
+                 std::decay_t<f64>>)
+    /*!
+     * \brief Wraps around glGetDoublev. Introduced in GL core 1.0
+     * \param pname GLenum
+     * \param data GLdouble *
+     * \return void
+     */
+    STATICINLINE void get_doublev(group::get_prop pname, span_f64 data)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -354,12 +348,12 @@ STATICINLINE void get_doublev(group::get_prop pname, span_f64 data)
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<1, 0>>)
-/*!
- * \brief Wraps around glGetError. Introduced in GL core 1.0
+    /*!
+     * \brief Wraps around glGetError. Introduced in GL core 1.0
 
- * \return ErrorCode
- */
-STATICINLINE GLenum get_error()
+     * \return ErrorCode
+     */
+    STATICINLINE GLenum get_error()
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -372,19 +366,17 @@ STATICINLINE GLenum get_error()
 }
 
 template<class span_f32>
-requires(
-    MinimumVersion<Current, Version<1, 0>> &&
-    semantic::concepts::Span<span_f32> &&
-    std::is_same_v<
-        std::decay_t<typename span_f32::value_type>,
-        std::decay_t<f32>>)
-/*!
- * \brief Wraps around glGetFloatv. Introduced in GL core 1.0
- * \param pname GLenum
- * \param data GLfloat *
- * \return void
- */
-STATICINLINE void get_floatv(group::get_prop pname, span_f32 data)
+requires(MinimumVersion<Current, Version<1, 0>>&&
+             semantic::concepts::Span<span_f32>&& std::is_same_v<
+                 std::decay_t<typename span_f32::value_type>,
+                 std::decay_t<f32>>)
+    /*!
+     * \brief Wraps around glGetFloatv. Introduced in GL core 1.0
+     * \param pname GLenum
+     * \param data GLfloat *
+     * \return void
+     */
+    STATICINLINE void get_floatv(group::get_prop pname, span_f32 data)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -398,19 +390,17 @@ STATICINLINE void get_floatv(group::get_prop pname, span_f32 data)
 }
 
 template<class span_i32>
-requires(
-    MinimumVersion<Current, Version<1, 0>> &&
-    semantic::concepts::Span<span_i32> &&
-    std::is_same_v<
-        std::decay_t<typename span_i32::value_type>,
-        std::decay_t<i32>>)
-/*!
- * \brief Wraps around glGetIntegerv. Introduced in GL core 1.0
- * \param pname GLenum
- * \param data GLint *
- * \return void
- */
-STATICINLINE void get_integerv(group::get_prop pname, span_i32 data)
+requires(MinimumVersion<Current, Version<1, 0>>&&
+             semantic::concepts::Span<span_i32>&& std::is_same_v<
+                 std::decay_t<typename span_i32::value_type>,
+                 std::decay_t<i32>>)
+    /*!
+     * \brief Wraps around glGetIntegerv. Introduced in GL core 1.0
+     * \param pname GLenum
+     * \param data GLint *
+     * \return void
+     */
+    STATICINLINE void get_integerv(group::get_prop pname, span_i32 data)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -425,12 +415,12 @@ STATICINLINE void get_integerv(group::get_prop pname, span_i32 data)
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<1, 0>>)
-/*!
- * \brief Wraps around glGetString. Introduced in GL core 1.0
- * \param name GLenum
- * \return String
- */
-STATICINLINE stl_types::String get_string(group::string_name name)
+    /*!
+     * \brief Wraps around glGetString. Introduced in GL core 1.0
+     * \param name GLenum
+     * \return String
+     */
+    STATICINLINE stl_types::String get_string(group::string_name name)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -443,24 +433,23 @@ STATICINLINE stl_types::String get_string(group::string_name name)
 }
 
 template<class span_void>
-requires(
-    MinimumVersion<Current, Version<1, 0>> &&
-    semantic::concepts::Span<span_void>)
-/*!
- * \brief Wraps around glGetTexImage. Introduced in GL core 1.0
- * \param target GLenum
- * \param level GLint
- * \param format GLenum
- * \param type GLenum
- * \param pixels void *
- * \return void
- */
-STATICINLINE void get_tex_image(
-    group::texture_target target,
-    i32                   level,
-    group::pixel_format   format,
-    group::pixel_type     type,
-    span_void             pixels)
+requires(MinimumVersion<Current, Version<1, 0>>&&
+             semantic::concepts::Span<span_void>)
+    /*!
+     * \brief Wraps around glGetTexImage. Introduced in GL core 1.0
+     * \param target GLenum
+     * \param level GLint
+     * \param format GLenum
+     * \param type GLenum
+     * \param pixels void *
+     * \return void
+     */
+    STATICINLINE void get_tex_image(
+        group::texture_target target,
+        i32                   level,
+        group::pixel_format   format,
+        group::pixel_type     type,
+        span_void             pixels)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -477,25 +466,23 @@ STATICINLINE void get_tex_image(
 }
 
 template<class span_f32>
-requires(
-    MinimumVersion<Current, Version<1, 0>> &&
-    semantic::concepts::Span<span_f32> &&
-    std::is_same_v<
-        std::decay_t<typename span_f32::value_type>,
-        std::decay_t<f32>>)
-/*!
- * \brief Wraps around glGetTexLevelParameterfv. Introduced in GL core 1.0
- * \param target GLenum
- * \param level GLint
- * \param pname GLenum
- * \param params GLfloat *
- * \return void
- */
-STATICINLINE void get_tex_level_parameter(
-    group::texture_target        target,
-    i32                          level,
-    group::get_texture_parameter pname,
-    span_f32                     params)
+requires(MinimumVersion<Current, Version<1, 0>>&&
+             semantic::concepts::Span<span_f32>&& std::is_same_v<
+                 std::decay_t<typename span_f32::value_type>,
+                 std::decay_t<f32>>)
+    /*!
+     * \brief Wraps around glGetTexLevelParameterfv. Introduced in GL core 1.0
+     * \param target GLenum
+     * \param level GLint
+     * \param pname GLenum
+     * \param params GLfloat *
+     * \return void
+     */
+    STATICINLINE void get_tex_level_parameter(
+        group::texture_target        target,
+        i32                          level,
+        group::get_texture_parameter pname,
+        span_f32                     params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -511,25 +498,23 @@ STATICINLINE void get_tex_level_parameter(
 }
 
 template<class span_i32>
-requires(
-    MinimumVersion<Current, Version<1, 0>> &&
-    semantic::concepts::Span<span_i32> &&
-    std::is_same_v<
-        std::decay_t<typename span_i32::value_type>,
-        std::decay_t<i32>>)
-/*!
- * \brief Wraps around glGetTexLevelParameteriv. Introduced in GL core 1.0
- * \param target GLenum
- * \param level GLint
- * \param pname GLenum
- * \param params GLint *
- * \return void
- */
-STATICINLINE void get_tex_level_parameter(
-    group::texture_target        target,
-    i32                          level,
-    group::get_texture_parameter pname,
-    span_i32                     params)
+requires(MinimumVersion<Current, Version<1, 0>>&&
+             semantic::concepts::Span<span_i32>&& std::is_same_v<
+                 std::decay_t<typename span_i32::value_type>,
+                 std::decay_t<i32>>)
+    /*!
+     * \brief Wraps around glGetTexLevelParameteriv. Introduced in GL core 1.0
+     * \param target GLenum
+     * \param level GLint
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_tex_level_parameter(
+        group::texture_target        target,
+        i32                          level,
+        group::get_texture_parameter pname,
+        span_i32                     params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -545,23 +530,21 @@ STATICINLINE void get_tex_level_parameter(
 }
 
 template<class span_f32>
-requires(
-    MinimumVersion<Current, Version<1, 0>> &&
-    semantic::concepts::Span<span_f32> &&
-    std::is_same_v<
-        std::decay_t<typename span_f32::value_type>,
-        std::decay_t<f32>>)
-/*!
- * \brief Wraps around glGetTexParameterfv. Introduced in GL core 1.0
- * \param target GLenum
- * \param pname GLenum
- * \param params GLfloat *
- * \return void
- */
-STATICINLINE void get_tex_parameter(
-    group::texture_target        target,
-    group::get_texture_parameter pname,
-    span_f32                     params)
+requires(MinimumVersion<Current, Version<1, 0>>&&
+             semantic::concepts::Span<span_f32>&& std::is_same_v<
+                 std::decay_t<typename span_f32::value_type>,
+                 std::decay_t<f32>>)
+    /*!
+     * \brief Wraps around glGetTexParameterfv. Introduced in GL core 1.0
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params GLfloat *
+     * \return void
+     */
+    STATICINLINE void get_tex_parameter(
+        group::texture_target        target,
+        group::get_texture_parameter pname,
+        span_f32                     params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -576,23 +559,21 @@ STATICINLINE void get_tex_parameter(
 }
 
 template<class span_i32>
-requires(
-    MinimumVersion<Current, Version<1, 0>> &&
-    semantic::concepts::Span<span_i32> &&
-    std::is_same_v<
-        std::decay_t<typename span_i32::value_type>,
-        std::decay_t<i32>>)
-/*!
- * \brief Wraps around glGetTexParameteriv. Introduced in GL core 1.0
- * \param target GLenum
- * \param pname GLenum
- * \param params GLint *
- * \return void
- */
-STATICINLINE void get_tex_parameter(
-    group::texture_target        target,
-    group::get_texture_parameter pname,
-    span_i32                     params)
+requires(MinimumVersion<Current, Version<1, 0>>&&
+             semantic::concepts::Span<span_i32>&& std::is_same_v<
+                 std::decay_t<typename span_i32::value_type>,
+                 std::decay_t<i32>>)
+    /*!
+     * \brief Wraps around glGetTexParameteriv. Introduced in GL core 1.0
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_tex_parameter(
+        group::texture_target        target,
+        group::get_texture_parameter pname,
+        span_i32                     params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -608,13 +589,13 @@ STATICINLINE void get_tex_parameter(
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<1, 0>>)
-/*!
- * \brief Wraps around glHint. Introduced in GL core 1.0
- * \param target GLenum
- * \param mode GLenum
- * \return void
- */
-STATICINLINE void hint(group::hint_target target, group::hint_mode mode)
+    /*!
+     * \brief Wraps around glHint. Introduced in GL core 1.0
+     * \param target GLenum
+     * \param mode GLenum
+     * \return void
+     */
+    STATICINLINE void hint(group::hint_target target, group::hint_mode mode)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -627,12 +608,12 @@ STATICINLINE void hint(group::hint_target target, group::hint_mode mode)
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<1, 0>>)
-/*!
- * \brief Wraps around glIsEnabled. Introduced in GL core 1.0
- * \param cap GLenum
- * \return Boolean
- */
-STATICINLINE GLboolean is_enabled(group::enable_cap cap)
+    /*!
+     * \brief Wraps around glIsEnabled. Introduced in GL core 1.0
+     * \param cap GLenum
+     * \return Boolean
+     */
+    STATICINLINE GLboolean is_enabled(group::enable_cap cap)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -646,12 +627,12 @@ STATICINLINE GLboolean is_enabled(group::enable_cap cap)
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<1, 0>>)
-/*!
- * \brief Wraps around glLineWidth. Introduced in GL core 1.0
- * \param width GLfloat
- * \return void
- */
-STATICINLINE void line_width(f32 width)
+    /*!
+     * \brief Wraps around glLineWidth. Introduced in GL core 1.0
+     * \param width GLfloat
+     * \return void
+     */
+    STATICINLINE void line_width(f32 width)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -664,12 +645,12 @@ STATICINLINE void line_width(f32 width)
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<1, 0>>)
-/*!
- * \brief Wraps around glLogicOp. Introduced in GL core 1.0
- * \param opcode GLenum
- * \return void
- */
-STATICINLINE void logic_op(group::logic_op opcode)
+    /*!
+     * \brief Wraps around glLogicOp. Introduced in GL core 1.0
+     * \param opcode GLenum
+     * \return void
+     */
+    STATICINLINE void logic_op(group::logic_op opcode)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -682,13 +663,14 @@ STATICINLINE void logic_op(group::logic_op opcode)
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<1, 0>>)
-/*!
- * \brief Wraps around glPixelStoref. Introduced in GL core 1.0
- * \param pname GLenum
- * \param param GLfloat
- * \return void
- */
-STATICINLINE void pixel_storef(group::pixel_store_parameter pname, f32 param)
+    /*!
+     * \brief Wraps around glPixelStoref. Introduced in GL core 1.0
+     * \param pname GLenum
+     * \param param GLfloat
+     * \return void
+     */
+    STATICINLINE
+    void pixel_storef(group::pixel_store_parameter pname, f32 param)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -701,13 +683,14 @@ STATICINLINE void pixel_storef(group::pixel_store_parameter pname, f32 param)
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<1, 0>>)
-/*!
- * \brief Wraps around glPixelStorei. Introduced in GL core 1.0
- * \param pname GLenum
- * \param param GLint
- * \return void
- */
-STATICINLINE void pixel_storei(group::pixel_store_parameter pname, i32 param)
+    /*!
+     * \brief Wraps around glPixelStorei. Introduced in GL core 1.0
+     * \param pname GLenum
+     * \param param GLint
+     * \return void
+     */
+    STATICINLINE
+    void pixel_storei(group::pixel_store_parameter pname, i32 param)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -720,12 +703,12 @@ STATICINLINE void pixel_storei(group::pixel_store_parameter pname, i32 param)
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<1, 0>>)
-/*!
- * \brief Wraps around glPointSize. Introduced in GL core 1.0
- * \param size GLfloat
- * \return void
- */
-STATICINLINE void point_size(f32 size)
+    /*!
+     * \brief Wraps around glPointSize. Introduced in GL core 1.0
+     * \param size GLfloat
+     * \return void
+     */
+    STATICINLINE void point_size(f32 size)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -738,13 +721,13 @@ STATICINLINE void point_size(f32 size)
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<1, 0>>)
-/*!
- * \brief Wraps around glPolygonMode. Introduced in GL core 1.0
- * \param face GLenum
- * \param mode GLenum
- * \return void
- */
-STATICINLINE
+    /*!
+     * \brief Wraps around glPolygonMode. Introduced in GL core 1.0
+     * \param face GLenum
+     * \param mode GLenum
+     * \return void
+     */
+    STATICINLINE
     void polygon_mode(group::triangle_face face, group::polygon_mode mode)
 {
     using namespace std::string_view_literals;
@@ -758,12 +741,12 @@ STATICINLINE
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<1, 0>>)
-/*!
- * \brief Wraps around glReadBuffer. Introduced in GL core 1.0
- * \param src GLenum
- * \return void
- */
-STATICINLINE void read_buffer(group::read_buffer_mode src)
+    /*!
+     * \brief Wraps around glReadBuffer. Introduced in GL core 1.0
+     * \param src GLenum
+     * \return void
+     */
+    STATICINLINE void read_buffer(group::read_buffer_mode src)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -775,28 +758,27 @@ STATICINLINE void read_buffer(group::read_buffer_mode src)
 }
 
 template<class size_2_i32, class span_void, class vec_2_i32>
-requires(
-    MinimumVersion<Current, Version<1, 0>> &&
-    semantic::concepts::Vector<vec_2_i32, i32, 2> &&
-    semantic::concepts::Size2D<size_2_i32, i32> &&
-    semantic::concepts::Span<span_void>)
-/*!
- * \brief Wraps around glReadPixels. Introduced in GL core 1.0
- * \param x GLint
- * \param y GLint
- * \param width GLsizei
- * \param height GLsizei
- * \param format GLenum
- * \param type GLenum
- * \param pixels void *
- * \return void
- */
-STATICINLINE void read_pixels(
-    vec_2_i32 const&    x,
-    size_2_i32 const&   width,
-    group::pixel_format format,
-    group::pixel_type   type,
-    span_void           pixels)
+requires(MinimumVersion<Current, Version<1, 0>>&&
+                     semantic::concepts::Vector<vec_2_i32, i32, 2>&&
+                     semantic::concepts::Size2D<size_2_i32, i32>&&
+                     semantic::concepts::Span<span_void>)
+    /*!
+     * \brief Wraps around glReadPixels. Introduced in GL core 1.0
+     * \param x GLint
+     * \param y GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param format GLenum
+     * \param type GLenum
+     * \param pixels void *
+     * \return void
+     */
+    STATICINLINE void read_pixels(
+        vec_2_i32 const&    x,
+        size_2_i32 const&   width,
+        group::pixel_format format,
+        group::pixel_type   type,
+        span_void           pixels)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -815,19 +797,18 @@ STATICINLINE void read_pixels(
 }
 
 template<class size_2_i32, class vec_2_i32>
-requires(
-    MinimumVersion<Current, Version<1, 0>> &&
-    semantic::concepts::Vector<vec_2_i32, i32, 2> &&
-    semantic::concepts::Size2D<size_2_i32, i32>)
-/*!
- * \brief Wraps around glScissor. Introduced in GL core 1.0
- * \param x GLint
- * \param y GLint
- * \param width GLsizei
- * \param height GLsizei
- * \return void
- */
-STATICINLINE void scissor(vec_2_i32 const& x, size_2_i32 const& width)
+requires(MinimumVersion<Current, Version<1, 0>>&&
+                 semantic::concepts::Vector<vec_2_i32, i32, 2>&&
+                 semantic::concepts::Size2D<size_2_i32, i32>)
+    /*!
+     * \brief Wraps around glScissor. Introduced in GL core 1.0
+     * \param x GLint
+     * \param y GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \return void
+     */
+    STATICINLINE void scissor(vec_2_i32 const& x, size_2_i32 const& width)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -840,14 +821,15 @@ STATICINLINE void scissor(vec_2_i32 const& x, size_2_i32 const& width)
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<1, 0>>)
-/*!
- * \brief Wraps around glStencilFunc. Introduced in GL core 1.0
- * \param func GLenum
- * \param ref GLint
- * \param mask GLuint
- * \return void
- */
-STATICINLINE void stencil_func(group::stencil_function func, i32 ref, u32 mask)
+    /*!
+     * \brief Wraps around glStencilFunc. Introduced in GL core 1.0
+     * \param func GLenum
+     * \param ref GLint
+     * \param mask GLuint
+     * \return void
+     */
+    STATICINLINE
+    void stencil_func(group::stencil_function func, i32 ref, u32 mask)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -860,12 +842,12 @@ STATICINLINE void stencil_func(group::stencil_function func, i32 ref, u32 mask)
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<1, 0>>)
-/*!
- * \brief Wraps around glStencilMask. Introduced in GL core 1.0
- * \param mask GLuint
- * \return void
- */
-STATICINLINE void stencil_mask(u32 mask)
+    /*!
+     * \brief Wraps around glStencilMask. Introduced in GL core 1.0
+     * \param mask GLuint
+     * \return void
+     */
+    STATICINLINE void stencil_mask(u32 mask)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -878,15 +860,17 @@ STATICINLINE void stencil_mask(u32 mask)
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<1, 0>>)
-/*!
- * \brief Wraps around glStencilOp. Introduced in GL core 1.0
- * \param fail GLenum
- * \param zfail GLenum
- * \param zpass GLenum
- * \return void
- */
-STATICINLINE void stencil_op(
-    group::stencil_op fail, group::stencil_op zfail, group::stencil_op zpass)
+    /*!
+     * \brief Wraps around glStencilOp. Introduced in GL core 1.0
+     * \param fail GLenum
+     * \param zfail GLenum
+     * \param zpass GLenum
+     * \return void
+     */
+    STATICINLINE void stencil_op(
+        group::stencil_op fail,
+        group::stencil_op zfail,
+        group::stencil_op zpass)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -901,30 +885,29 @@ STATICINLINE void stencil_op(
 }
 
 template<class span_const_void>
-requires(
-    MinimumVersion<Current, Version<1, 0>> &&
-    semantic::concepts::Span<span_const_void>)
-/*!
- * \brief Wraps around glTexImage1D. Introduced in GL core 1.0
- * \param target GLenum
- * \param level GLint
- * \param internalformat GLint
- * \param width GLsizei
- * \param border GLint
- * \param format GLenum
- * \param type GLenum
- * \param pixels const void *
- * \return void
- */
-STATICINLINE void tex_image_1d(
-    group::texture_target  target,
-    i32                    level,
-    i32                    internalformat,
-    i32                    width,
-    i32                    border,
-    group::pixel_format    format,
-    group::pixel_type      type,
-    span_const_void const& pixels)
+requires(MinimumVersion<Current, Version<1, 0>>&&
+             semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Wraps around glTexImage1D. Introduced in GL core 1.0
+     * \param target GLenum
+     * \param level GLint
+     * \param internalformat GLint
+     * \param width GLsizei
+     * \param border GLint
+     * \param format GLenum
+     * \param type GLenum
+     * \param pixels const void *
+     * \return void
+     */
+    STATICINLINE void tex_image_1d(
+        group::texture_target  target,
+        i32                    level,
+        i32                    internalformat,
+        i32                    width,
+        i32                    border,
+        group::pixel_format    format,
+        group::pixel_type      type,
+        span_const_void const& pixels)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -944,32 +927,31 @@ STATICINLINE void tex_image_1d(
 }
 
 template<class size_2_i32, class span_const_void>
-requires(
-    MinimumVersion<Current, Version<1, 0>> &&
-    semantic::concepts::Size2D<size_2_i32, i32> &&
-    semantic::concepts::Span<span_const_void>)
-/*!
- * \brief Wraps around glTexImage2D. Introduced in GL core 1.0
- * \param target GLenum
- * \param level GLint
- * \param internalformat GLint
- * \param width GLsizei
- * \param height GLsizei
- * \param border GLint
- * \param format GLenum
- * \param type GLenum
- * \param pixels const void *
- * \return void
- */
-STATICINLINE void tex_image_2d(
-    group::texture_target  target,
-    i32                    level,
-    i32                    internalformat,
-    size_2_i32 const&      width,
-    i32                    border,
-    group::pixel_format    format,
-    group::pixel_type      type,
-    span_const_void const& pixels)
+requires(MinimumVersion<Current, Version<1, 0>>&&
+                 semantic::concepts::Size2D<size_2_i32, i32>&&
+                 semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Wraps around glTexImage2D. Introduced in GL core 1.0
+     * \param target GLenum
+     * \param level GLint
+     * \param internalformat GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param border GLint
+     * \param format GLenum
+     * \param type GLenum
+     * \param pixels const void *
+     * \return void
+     */
+    STATICINLINE void tex_image_2d(
+        group::texture_target  target,
+        i32                    level,
+        i32                    internalformat,
+        size_2_i32 const&      width,
+        i32                    border,
+        group::pixel_format    format,
+        group::pixel_type      type,
+        span_const_void const& pixels)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -991,17 +973,17 @@ STATICINLINE void tex_image_2d(
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<1, 0>>)
-/*!
- * \brief Wraps around glTexParameterf. Introduced in GL core 1.0
- * \param target GLenum
- * \param pname GLenum
- * \param param GLfloat
- * \return void
- */
-STATICINLINE void tex_parameter(
-    group::texture_target         target,
-    group::texture_parameter_name pname,
-    f32                           param)
+    /*!
+     * \brief Wraps around glTexParameterf. Introduced in GL core 1.0
+     * \param target GLenum
+     * \param pname GLenum
+     * \param param GLfloat
+     * \return void
+     */
+    STATICINLINE void tex_parameter(
+        group::texture_target         target,
+        group::texture_parameter_name pname,
+        f32                           param)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1014,23 +996,21 @@ STATICINLINE void tex_parameter(
 }
 
 template<class span_const_f32>
-requires(
-    MinimumVersion<Current, Version<1, 0>> &&
-    semantic::concepts::Span<span_const_f32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_f32::value_type>,
-        std::decay_t<f32>>)
-/*!
- * \brief Wraps around glTexParameterfv. Introduced in GL core 1.0
- * \param target GLenum
- * \param pname GLenum
- * \param params const GLfloat *
- * \return void
- */
-STATICINLINE void tex_parameter(
-    group::texture_target         target,
-    group::texture_parameter_name pname,
-    span_const_f32 const&         params)
+requires(MinimumVersion<Current, Version<1, 0>>&&
+             semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+                 std::decay_t<typename span_const_f32::value_type>,
+                 std::decay_t<f32>>)
+    /*!
+     * \brief Wraps around glTexParameterfv. Introduced in GL core 1.0
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params const GLfloat *
+     * \return void
+     */
+    STATICINLINE void tex_parameter(
+        group::texture_target         target,
+        group::texture_parameter_name pname,
+        span_const_f32 const&         params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1047,17 +1027,17 @@ STATICINLINE void tex_parameter(
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<1, 0>>)
-/*!
- * \brief Wraps around glTexParameteri. Introduced in GL core 1.0
- * \param target GLenum
- * \param pname GLenum
- * \param param GLint
- * \return void
- */
-STATICINLINE void tex_parameter(
-    group::texture_target         target,
-    group::texture_parameter_name pname,
-    i32                           param)
+    /*!
+     * \brief Wraps around glTexParameteri. Introduced in GL core 1.0
+     * \param target GLenum
+     * \param pname GLenum
+     * \param param GLint
+     * \return void
+     */
+    STATICINLINE void tex_parameter(
+        group::texture_target         target,
+        group::texture_parameter_name pname,
+        i32                           param)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1070,23 +1050,21 @@ STATICINLINE void tex_parameter(
 }
 
 template<class span_const_i32>
-requires(
-    MinimumVersion<Current, Version<1, 0>> &&
-    semantic::concepts::Span<span_const_i32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_i32::value_type>,
-        std::decay_t<i32>>)
-/*!
- * \brief Wraps around glTexParameteriv. Introduced in GL core 1.0
- * \param target GLenum
- * \param pname GLenum
- * \param params const GLint *
- * \return void
- */
-STATICINLINE void tex_parameter(
-    group::texture_target         target,
-    group::texture_parameter_name pname,
-    span_const_i32 const&         params)
+requires(MinimumVersion<Current, Version<1, 0>>&&
+             semantic::concepts::Span<span_const_i32>&& std::is_same_v<
+                 std::decay_t<typename span_const_i32::value_type>,
+                 std::decay_t<i32>>)
+    /*!
+     * \brief Wraps around glTexParameteriv. Introduced in GL core 1.0
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params const GLint *
+     * \return void
+     */
+    STATICINLINE void tex_parameter(
+        group::texture_target         target,
+        group::texture_parameter_name pname,
+        span_const_i32 const&         params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1102,19 +1080,18 @@ STATICINLINE void tex_parameter(
 }
 
 template<class size_2_i32, class vec_2_i32>
-requires(
-    MinimumVersion<Current, Version<1, 0>> &&
-    semantic::concepts::Vector<vec_2_i32, i32, 2> &&
-    semantic::concepts::Size2D<size_2_i32, i32>)
-/*!
- * \brief Wraps around glViewport. Introduced in GL core 1.0
- * \param x GLint
- * \param y GLint
- * \param width GLsizei
- * \param height GLsizei
- * \return void
- */
-STATICINLINE void viewport(vec_2_i32 const& x, size_2_i32 const& width)
+requires(MinimumVersion<Current, Version<1, 0>>&&
+                 semantic::concepts::Vector<vec_2_i32, i32, 2>&&
+                 semantic::concepts::Size2D<size_2_i32, i32>)
+    /*!
+     * \brief Wraps around glViewport. Introduced in GL core 1.0
+     * \param x GLint
+     * \param y GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \return void
+     */
+    STATICINLINE void viewport(vec_2_i32 const& x, size_2_i32 const& width)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

@@ -16,23 +16,23 @@ constexpr libc_types::u32 min_lod_warning                 = 0x919C;
 } // namespace values
 template<class size_3_i32>
 requires(semantic::concepts::Size2D<size_3_i32, i32>)
-/*!
- * \brief Part of GL_AMD_sparse_texture
- * \param target GLenum
- * \param internalFormat GLenum
- * \param width GLsizei
- * \param height GLsizei
- * \param depth GLsizei
- * \param layers GLsizei
- * \param flags GLbitfield
- * \return void
- */
-STATICINLINE void tex_storage_sparse(
-    group::texture_target           target,
-    group::sized_internal_format    internalFormat,
-    size_3_i32 const&               width,
-    i32                             layers,
-    group::texture_storage_mask_amd flags)
+    /*!
+     * \brief Part of GL_AMD_sparse_texture
+     * \param target GLenum
+     * \param internalFormat GLenum
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param depth GLsizei
+     * \param layers GLsizei
+     * \param flags GLbitfield
+     * \return void
+     */
+    STATICINLINE void tex_storage_sparse(
+        group::texture_target           target,
+        group::sized_internal_format    internalFormat,
+        size_3_i32 const&               width,
+        i32                             layers,
+        group::texture_storage_mask_amd flags)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -52,31 +52,32 @@ STATICINLINE void tex_storage_sparse(
 
 template<class size_3_i32>
 requires(semantic::concepts::Size2D<size_3_i32, i32>)
-/*!
- * \brief Part of GL_AMD_sparse_texture
- * \param texture GLuint
- * \param target GLenum
- * \param internalFormat GLenum
- * \param width GLsizei
- * \param height GLsizei
- * \param depth GLsizei
- * \param layers GLsizei
- * \param flags GLbitfield
- * \return void
- */
-STATICINLINE void texture_storage_sparse(
-    u32                             texture,
-    GLenum                          target,
-    group::sized_internal_format    internalFormat,
-    size_3_i32 const&               width,
-    i32                             layers,
-    group::texture_storage_mask_amd flags)
+    /*!
+     * \brief Part of GL_AMD_sparse_texture
+     * \param texture GLuint
+     * \param target GLenum
+     * \param internalFormat GLenum
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param depth GLsizei
+     * \param layers GLsizei
+     * \param flags GLbitfield
+     * \return void
+     */
+    STATICINLINE void texture_storage_sparse(
+        u32                             texture,
+        GLenum                          target,
+        group::sized_internal_format    internalFormat,
+        size_3_i32 const&               width,
+        i32                             layers,
+        group::texture_storage_mask_amd flags)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureStorageSparseAMD)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
 #endif

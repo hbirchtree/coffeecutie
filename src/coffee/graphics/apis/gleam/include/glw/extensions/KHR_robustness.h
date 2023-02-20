@@ -21,15 +21,6 @@ constexpr libc_types::u32 lose_context_on_reset = 0x8252;
 #if defined(GL_ES_VERSION_2_0)
 constexpr libc_types::u32 lose_context_on_reset = 0x8252;
 #endif
-#if defined(GL_ES_VERSION_2_0)
-constexpr libc_types::u32 guilty_context_reset = 0x8253;
-#endif
-#if defined(GL_ES_VERSION_2_0)
-constexpr libc_types::u32 innocent_context_reset = 0x8254;
-#endif
-#if defined(GL_ES_VERSION_2_0)
-constexpr libc_types::u32 unknown_context_reset = 0x8255;
-#endif
 #if defined(GL_VERSION_1_0)
 constexpr libc_types::u32 reset_notification_strategy = 0x8256;
 #endif
@@ -70,27 +61,26 @@ STATICINLINE GLenum get_graphics_reset_status()
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_f32>
-requires(
-    semantic::concepts::Span<span_f32> &&
-    std::is_same_v<
-        std::decay_t<typename span_f32::value_type>,
-        std::decay_t<f32>>)
-/*!
- * \brief Part of GL_KHR_robustness
- * \param program GLuint
- * \param location GLint
- * \param bufSize GLsizei
- * \param params GLfloat *
- * \return void
- */
-STATICINLINE
+requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+         std::decay_t<typename span_f32::value_type>,
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_KHR_robustness
+     * \param program GLuint
+     * \param location GLint
+     * \param bufSize GLsizei
+     * \param params GLfloat *
+     * \return void
+     */
+    STATICINLINE
     void getn_uniformfv(u32 program, i32 location, i32 bufSize, span_f32 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetnUniformfv)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -106,27 +96,26 @@ STATICINLINE
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_i32>
-requires(
-    semantic::concepts::Span<span_i32> &&
-    std::is_same_v<
-        std::decay_t<typename span_i32::value_type>,
-        std::decay_t<i32>>)
-/*!
- * \brief Part of GL_KHR_robustness
- * \param program GLuint
- * \param location GLint
- * \param bufSize GLsizei
- * \param params GLint *
- * \return void
- */
-STATICINLINE
+requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+         std::decay_t<typename span_i32::value_type>,
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_KHR_robustness
+     * \param program GLuint
+     * \param location GLint
+     * \param bufSize GLsizei
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE
     void getn_uniformiv(u32 program, i32 location, i32 bufSize, span_i32 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetnUniformiv)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -142,27 +131,26 @@ STATICINLINE
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_u32>
-requires(
-    semantic::concepts::Span<span_u32> &&
-    std::is_same_v<
-        std::decay_t<typename span_u32::value_type>,
-        std::decay_t<u32>>)
-/*!
- * \brief Part of GL_KHR_robustness
- * \param program GLuint
- * \param location GLint
- * \param bufSize GLsizei
- * \param params GLuint *
- * \return void
- */
-STATICINLINE void getn_uniformuiv(
-    u32 program, i32 location, i32 bufSize, span_u32 params)
+requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+         std::decay_t<typename span_u32::value_type>,
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_KHR_robustness
+     * \param program GLuint
+     * \param location GLint
+     * \param bufSize GLsizei
+     * \param params GLuint *
+     * \return void
+     */
+    STATICINLINE void getn_uniformuiv(
+        u32 program, i32 location, i32 bufSize, span_u32 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetnUniformuiv)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -178,28 +166,27 @@ STATICINLINE void getn_uniformuiv(
 #endif
 #if defined(GL_VERSION_1_0)
 template<class size_2_i32, class span_void, class vec_2_i32>
-requires(
-    semantic::concepts::Vector<vec_2_i32, i32, 2> &&
-    semantic::concepts::Size2D<size_2_i32, i32> &&
-    semantic::concepts::Span<span_void>)
-/*!
- * \brief Part of GL_KHR_robustness
- * \param x GLint
- * \param y GLint
- * \param width GLsizei
- * \param height GLsizei
- * \param format GLenum
- * \param type GLenum
- * \param bufSize GLsizei
- * \param data void *
- * \return void
- */
-STATICINLINE void readn_pixels(
-    vec_2_i32 const&    x,
-    size_2_i32 const&   width,
-    group::pixel_format format,
-    group::pixel_type   type,
-    span_void           data)
+requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
+                 semantic::concepts::Size2D<size_2_i32, i32>&&
+                 semantic::concepts::Span<span_void>)
+    /*!
+     * \brief Part of GL_KHR_robustness
+     * \param x GLint
+     * \param y GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param format GLenum
+     * \param type GLenum
+     * \param bufSize GLsizei
+     * \param data void *
+     * \return void
+     */
+    STATICINLINE void readn_pixels(
+        vec_2_i32 const&    x,
+        size_2_i32 const&   width,
+        group::pixel_format format,
+        group::pixel_type   type,
+        span_void           data)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -240,27 +227,26 @@ STATICINLINE GLenum get_graphics_reset_status()
 #endif
 #if defined(GL_ES_VERSION_2_0)
 template<class span_f32>
-requires(
-    semantic::concepts::Span<span_f32> &&
-    std::is_same_v<
-        std::decay_t<typename span_f32::value_type>,
-        std::decay_t<f32>>)
-/*!
- * \brief Part of GL_KHR_robustness
- * \param program GLuint
- * \param location GLint
- * \param bufSize GLsizei
- * \param params GLfloat *
- * \return void
- */
-STATICINLINE
+requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+         std::decay_t<typename span_f32::value_type>,
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_KHR_robustness
+     * \param program GLuint
+     * \param location GLint
+     * \param bufSize GLsizei
+     * \param params GLfloat *
+     * \return void
+     */
+    STATICINLINE
     void getn_uniformfv(u32 program, i32 location, i32 bufSize, span_f32 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetnUniformfvKHR)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -276,27 +262,26 @@ STATICINLINE
 #endif
 #if defined(GL_ES_VERSION_2_0)
 template<class span_i32>
-requires(
-    semantic::concepts::Span<span_i32> &&
-    std::is_same_v<
-        std::decay_t<typename span_i32::value_type>,
-        std::decay_t<i32>>)
-/*!
- * \brief Part of GL_KHR_robustness
- * \param program GLuint
- * \param location GLint
- * \param bufSize GLsizei
- * \param params GLint *
- * \return void
- */
-STATICINLINE
+requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+         std::decay_t<typename span_i32::value_type>,
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_KHR_robustness
+     * \param program GLuint
+     * \param location GLint
+     * \param bufSize GLsizei
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE
     void getn_uniformiv(u32 program, i32 location, i32 bufSize, span_i32 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetnUniformivKHR)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -312,27 +297,26 @@ STATICINLINE
 #endif
 #if defined(GL_ES_VERSION_2_0)
 template<class span_u32>
-requires(
-    semantic::concepts::Span<span_u32> &&
-    std::is_same_v<
-        std::decay_t<typename span_u32::value_type>,
-        std::decay_t<u32>>)
-/*!
- * \brief Part of GL_KHR_robustness
- * \param program GLuint
- * \param location GLint
- * \param bufSize GLsizei
- * \param params GLuint *
- * \return void
- */
-STATICINLINE void getn_uniformuiv(
-    u32 program, i32 location, i32 bufSize, span_u32 params)
+requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+         std::decay_t<typename span_u32::value_type>,
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_KHR_robustness
+     * \param program GLuint
+     * \param location GLint
+     * \param bufSize GLsizei
+     * \param params GLuint *
+     * \return void
+     */
+    STATICINLINE void getn_uniformuiv(
+        u32 program, i32 location, i32 bufSize, span_u32 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetnUniformuivKHR)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -348,28 +332,27 @@ STATICINLINE void getn_uniformuiv(
 #endif
 #if defined(GL_ES_VERSION_2_0)
 template<class size_2_i32, class span_void, class vec_2_i32>
-requires(
-    semantic::concepts::Vector<vec_2_i32, i32, 2> &&
-    semantic::concepts::Size2D<size_2_i32, i32> &&
-    semantic::concepts::Span<span_void>)
-/*!
- * \brief Part of GL_KHR_robustness
- * \param x GLint
- * \param y GLint
- * \param width GLsizei
- * \param height GLsizei
- * \param format GLenum
- * \param type GLenum
- * \param bufSize GLsizei
- * \param data void *
- * \return void
- */
-STATICINLINE void readn_pixels(
-    vec_2_i32 const&    x,
-    size_2_i32 const&   width,
-    group::pixel_format format,
-    group::pixel_type   type,
-    span_void           data)
+requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
+                 semantic::concepts::Size2D<size_2_i32, i32>&&
+                 semantic::concepts::Span<span_void>)
+    /*!
+     * \brief Part of GL_KHR_robustness
+     * \param x GLint
+     * \param y GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param format GLenum
+     * \param type GLenum
+     * \param bufSize GLsizei
+     * \param data void *
+     * \return void
+     */
+    STATICINLINE void readn_pixels(
+        vec_2_i32 const&    x,
+        size_2_i32 const&   width,
+        group::pixel_format format,
+        group::pixel_type   type,
+        span_void           data)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

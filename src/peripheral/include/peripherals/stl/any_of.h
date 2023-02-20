@@ -13,14 +13,27 @@ template<typename Predicate, typename... Options>
 concept is_any_of = is_any_of_v<Predicate, Options...>;
 
 template<typename T, typename... Others>
-requires(std::is_same_v<T, Others>&&...) inline bool any_of(
-    T compare, Others... others)
+requires(
+    (std::is_same_v<T, Others> && ...)
+    || (std::is_convertible_v<Others, T> && ...))
+    //
+    inline bool any_of(T compare, Others... others)
 {
     return ((compare == others) || ...);
 }
 
 template<typename T, typename... Others>
-requires(std::is_same_v<T, Others>&&...) inline bool one_of(
+requires(
+    (std::is_same_v<T, Others> && ...)
+    || (std::is_convertible_v<Others, T> && ...))
+    //
+    inline bool any_flag_of(T compare, Others... others)
+{
+    return (((compare & others) == others) || ...);
+}
+
+template<typename T, typename... Others>
+requires(std::is_same_v<T, Others>&&...) inline constexpr bool one_of(
     T compare, Others... others)
 {
     return ((compare == others) + ...) == 1;

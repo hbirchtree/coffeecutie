@@ -111,31 +111,29 @@ STATICINLINE void copy_path(u32 resultPath, u32 srcPath)
 }
 
 template<class span_const_f32, class span_const_void>
-requires(
-    semantic::concepts::Span<span_const_void> &&
-    semantic::concepts::Span<span_const_f32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_f32::value_type>,
-        std::decay_t<f32>>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param numPaths GLsizei
- * \param pathNameType GLenum
- * \param paths const void *
- * \param pathBase GLuint
- * \param coverMode GLenum
- * \param transformType GLenum
- * \param transformValues const GLfloat *
- * \return void
- */
-STATICINLINE void cover_fill_path_instanced(
-    i32                        numPaths,
-    group::path_element_type   pathNameType,
-    span_const_void const&     paths,
-    u32                        pathBase,
-    group::path_cover_mode     coverMode,
-    group::path_transform_type transformType,
-    span_const_f32 const&      transformValues)
+requires(semantic::concepts::Span<span_const_void>&&
+             semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+                 std::decay_t<typename span_const_f32::value_type>,
+                 std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param numPaths GLsizei
+     * \param pathNameType GLenum
+     * \param paths const void *
+     * \param pathBase GLuint
+     * \param coverMode GLenum
+     * \param transformType GLenum
+     * \param transformValues const GLfloat *
+     * \return void
+     */
+    STATICINLINE void cover_fill_path_instanced(
+        i32                        numPaths,
+        group::path_element_type   pathNameType,
+        span_const_void const&     paths,
+        u32                        pathBase,
+        group::path_cover_mode     coverMode,
+        group::path_transform_type transformType,
+        span_const_f32 const&      transformValues)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -173,31 +171,29 @@ STATICINLINE void cover_fill_path(u32 path, group::path_cover_mode coverMode)
 }
 
 template<class span_const_f32, class span_const_void>
-requires(
-    semantic::concepts::Span<span_const_void> &&
-    semantic::concepts::Span<span_const_f32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_f32::value_type>,
-        std::decay_t<f32>>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param numPaths GLsizei
- * \param pathNameType GLenum
- * \param paths const void *
- * \param pathBase GLuint
- * \param coverMode GLenum
- * \param transformType GLenum
- * \param transformValues const GLfloat *
- * \return void
- */
-STATICINLINE void cover_stroke_path_instanced(
-    i32                        numPaths,
-    group::path_element_type   pathNameType,
-    span_const_void const&     paths,
-    u32                        pathBase,
-    group::path_cover_mode     coverMode,
-    group::path_transform_type transformType,
-    span_const_f32 const&      transformValues)
+requires(semantic::concepts::Span<span_const_void>&&
+             semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+                 std::decay_t<typename span_const_f32::value_type>,
+                 std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param numPaths GLsizei
+     * \param pathNameType GLenum
+     * \param paths const void *
+     * \param pathBase GLuint
+     * \param coverMode GLenum
+     * \param transformType GLenum
+     * \param transformValues const GLfloat *
+     * \return void
+     */
+    STATICINLINE void cover_stroke_path_instanced(
+        i32                        numPaths,
+        group::path_element_type   pathNameType,
+        span_const_void const&     paths,
+        u32                        pathBase,
+        group::path_cover_mode     coverMode,
+        group::path_transform_type transformType,
+        span_const_f32 const&      transformValues)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -269,17 +265,16 @@ STATICINLINE GLuint gen_paths(i32 range)
 }
 
 template<class span_u8>
-requires(
-    semantic::concepts::Span<span_u8> &&
-    std::
-        is_same_v<std::decay_t<typename span_u8::value_type>, std::decay_t<u8>>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param path GLuint
- * \param commands GLubyte *
- * \return void
- */
-STATICINLINE void get_path_commands(u32 path, span_u8 commands)
+requires(semantic::concepts::Span<span_u8>&& std::is_same_v<
+         std::decay_t<typename span_u8::value_type>,
+         std::decay_t<u8>>)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param path GLuint
+     * \param commands GLubyte *
+     * \return void
+     */
+    STATICINLINE void get_path_commands(u32 path, span_u8 commands)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -294,18 +289,16 @@ STATICINLINE void get_path_commands(u32 path, span_u8 commands)
 }
 
 template<class span_f32>
-requires(
-    semantic::concepts::Span<span_f32> &&
-    std::is_same_v<
-        std::decay_t<typename span_f32::value_type>,
-        std::decay_t<f32>>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param path GLuint
- * \param coords GLfloat *
- * \return void
- */
-STATICINLINE void get_path_coords(u32 path, span_f32 coords)
+requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+         std::decay_t<typename span_f32::value_type>,
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param path GLuint
+     * \param coords GLfloat *
+     * \return void
+     */
+    STATICINLINE void get_path_coords(u32 path, span_f32 coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -319,18 +312,16 @@ STATICINLINE void get_path_coords(u32 path, span_f32 coords)
 }
 
 template<class span_f32>
-requires(
-    semantic::concepts::Span<span_f32> &&
-    std::is_same_v<
-        std::decay_t<typename span_f32::value_type>,
-        std::decay_t<f32>>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param path GLuint
- * \param dashArray GLfloat *
- * \return void
- */
-STATICINLINE void get_path_dash_array(u32 path, span_f32 dashArray)
+requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+         std::decay_t<typename span_f32::value_type>,
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param path GLuint
+     * \param dashArray GLfloat *
+     * \return void
+     */
+    STATICINLINE void get_path_dash_array(u32 path, span_f32 dashArray)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -365,26 +356,24 @@ get_path_length(u32 path, i32 startSegment, i32 numSegments)
 }
 
 template<class span_f32>
-requires(
-    semantic::concepts::Span<span_f32> &&
-    std::is_same_v<
-        std::decay_t<typename span_f32::value_type>,
-        std::decay_t<f32>>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param metricQueryMask GLbitfield
- * \param firstPathName GLuint
- * \param numPaths GLsizei
- * \param stride GLsizei
- * \param metrics GLfloat *
- * \return void
- */
-STATICINLINE void get_path_metric_range(
-    group::path_metric_mask metricQueryMask,
-    u32                     firstPathName,
-    i32                     numPaths,
-    i32                     stride,
-    span_f32                metrics)
+requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+         std::decay_t<typename span_f32::value_type>,
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param metricQueryMask GLbitfield
+     * \param firstPathName GLuint
+     * \param numPaths GLsizei
+     * \param stride GLsizei
+     * \param metrics GLfloat *
+     * \return void
+     */
+    STATICINLINE void get_path_metric_range(
+        group::path_metric_mask metricQueryMask,
+        u32                     firstPathName,
+        i32                     numPaths,
+        i32                     stride,
+        span_f32                metrics)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -401,31 +390,29 @@ STATICINLINE void get_path_metric_range(
 }
 
 template<class span_const_void, class span_f32>
-requires(
-    semantic::concepts::Span<span_const_void> &&
-    semantic::concepts::Span<span_f32> &&
-    std::is_same_v<
-        std::decay_t<typename span_f32::value_type>,
-        std::decay_t<f32>>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param metricQueryMask GLbitfield
- * \param numPaths GLsizei
- * \param pathNameType GLenum
- * \param paths const void *
- * \param pathBase GLuint
- * \param stride GLsizei
- * \param metrics GLfloat *
- * \return void
- */
-STATICINLINE void get_path_metrics(
-    group::path_metric_mask  metricQueryMask,
-    i32                      numPaths,
-    group::path_element_type pathNameType,
-    span_const_void const&   paths,
-    u32                      pathBase,
-    i32                      stride,
-    span_f32                 metrics)
+requires(semantic::concepts::Span<span_const_void>&&
+             semantic::concepts::Span<span_f32>&& std::is_same_v<
+                 std::decay_t<typename span_f32::value_type>,
+                 std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param metricQueryMask GLbitfield
+     * \param numPaths GLsizei
+     * \param pathNameType GLenum
+     * \param paths const void *
+     * \param pathBase GLuint
+     * \param stride GLsizei
+     * \param metrics GLfloat *
+     * \return void
+     */
+    STATICINLINE void get_path_metrics(
+        group::path_metric_mask  metricQueryMask,
+        i32                      numPaths,
+        group::path_element_type pathNameType,
+        span_const_void const&   paths,
+        u32                      pathBase,
+        i32                      stride,
+        span_f32                 metrics)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -444,20 +431,18 @@ STATICINLINE void get_path_metrics(
 }
 
 template<class span_f32>
-requires(
-    semantic::concepts::Span<span_f32> &&
-    std::is_same_v<
-        std::decay_t<typename span_f32::value_type>,
-        std::decay_t<f32>>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param path GLuint
- * \param pname GLenum
- * \param value GLfloat *
- * \return void
- */
-STATICINLINE void get_path_parameter(
-    u32 path, group::path_parameter pname, span_f32 value)
+requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+         std::decay_t<typename span_f32::value_type>,
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param path GLuint
+     * \param pname GLenum
+     * \param value GLfloat *
+     * \return void
+     */
+    STATICINLINE void get_path_parameter(
+        u32 path, group::path_parameter pname, span_f32 value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -472,20 +457,18 @@ STATICINLINE void get_path_parameter(
 }
 
 template<class span_i32>
-requires(
-    semantic::concepts::Span<span_i32> &&
-    std::is_same_v<
-        std::decay_t<typename span_i32::value_type>,
-        std::decay_t<i32>>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param path GLuint
- * \param pname GLenum
- * \param value GLint *
- * \return void
- */
-STATICINLINE void get_path_parameter(
-    u32 path, group::path_parameter pname, span_i32 value)
+requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+         std::decay_t<typename span_i32::value_type>,
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param path GLuint
+     * \param pname GLenum
+     * \param value GLint *
+     * \return void
+     */
+    STATICINLINE void get_path_parameter(
+        u32 path, group::path_parameter pname, span_i32 value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -500,35 +483,33 @@ STATICINLINE void get_path_parameter(
 }
 
 template<class span_const_void, class span_f32>
-requires(
-    semantic::concepts::Span<span_const_void> &&
-    semantic::concepts::Span<span_f32> &&
-    std::is_same_v<
-        std::decay_t<typename span_f32::value_type>,
-        std::decay_t<f32>>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param pathListMode GLenum
- * \param numPaths GLsizei
- * \param pathNameType GLenum
- * \param paths const void *
- * \param pathBase GLuint
- * \param advanceScale GLfloat
- * \param kerningScale GLfloat
- * \param transformType GLenum
- * \param returnedSpacing GLfloat *
- * \return void
- */
-STATICINLINE void get_path_spacing(
-    group::path_list_mode      pathListMode,
-    i32                        numPaths,
-    group::path_element_type   pathNameType,
-    span_const_void const&     paths,
-    u32                        pathBase,
-    f32                        advanceScale,
-    f32                        kerningScale,
-    group::path_transform_type transformType,
-    span_f32                   returnedSpacing)
+requires(semantic::concepts::Span<span_const_void>&&
+             semantic::concepts::Span<span_f32>&& std::is_same_v<
+                 std::decay_t<typename span_f32::value_type>,
+                 std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param pathListMode GLenum
+     * \param numPaths GLsizei
+     * \param pathNameType GLenum
+     * \param paths const void *
+     * \param pathBase GLuint
+     * \param advanceScale GLfloat
+     * \param kerningScale GLfloat
+     * \param transformType GLenum
+     * \param returnedSpacing GLfloat *
+     * \return void
+     */
+    STATICINLINE void get_path_spacing(
+        group::path_list_mode      pathListMode,
+        i32                        numPaths,
+        group::path_element_type   pathNameType,
+        span_const_void const&     paths,
+        u32                        pathBase,
+        f32                        advanceScale,
+        f32                        kerningScale,
+        group::path_transform_type transformType,
+        span_f32                   returnedSpacing)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -589,15 +570,15 @@ STATICINLINE GLboolean is_path(u32 path)
 
 template<class vec_2_f32>
 requires(semantic::concepts::Vector<vec_2_f32, f32, 2>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param path GLuint
- * \param mask GLuint
- * \param x GLfloat
- * \param y GLfloat
- * \return Boolean
- */
-STATICINLINE GLboolean
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param path GLuint
+     * \param mask GLuint
+     * \param x GLfloat
+     * \param y GLfloat
+     * \return Boolean
+     */
+    STATICINLINE GLboolean
     is_point_in_fill_path(u32 path, u32 mask, vec_2_f32 const& x)
 {
     using namespace std::string_view_literals;
@@ -612,14 +593,14 @@ STATICINLINE GLboolean
 
 template<class vec_2_f32>
 requires(semantic::concepts::Vector<vec_2_f32, f32, 2>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param path GLuint
- * \param x GLfloat
- * \param y GLfloat
- * \return Boolean
- */
-STATICINLINE GLboolean is_point_in_stroke_path(u32 path, vec_2_f32 const& x)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param path GLuint
+     * \param x GLfloat
+     * \param y GLfloat
+     * \return Boolean
+     */
+    STATICINLINE GLboolean is_point_in_stroke_path(u32 path, vec_2_f32 const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -632,28 +613,25 @@ STATICINLINE GLboolean is_point_in_stroke_path(u32 path, vec_2_f32 const& x)
 }
 
 template<class span_const_u8, class span_const_void>
-requires(
-    semantic::concepts::Span<span_const_u8> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_u8::value_type>,
-        std::decay_t<u8>> &&
-    semantic::concepts::Span<span_const_void>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param path GLuint
- * \param numCommands GLsizei
- * \param commands const GLubyte *
- * \param numCoords GLsizei
- * \param coordType GLenum
- * \param coords const void *
- * \return void
- */
-STATICINLINE void path_commands(
-    u32                    path,
-    span_const_u8 const&   commands,
-    i32                    numCoords,
-    group::path_coord_type coordType,
-    span_const_void const& coords)
+requires(semantic::concepts::Span<span_const_u8>&& std::is_same_v<
+         std::decay_t<typename span_const_u8::value_type>,
+         std::decay_t<u8>>&& semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param path GLuint
+     * \param numCommands GLsizei
+     * \param commands const GLubyte *
+     * \param numCoords GLsizei
+     * \param coordType GLenum
+     * \param coords const void *
+     * \return void
+     */
+    STATICINLINE void path_commands(
+        u32                    path,
+        span_const_u8 const&   commands,
+        i32                    numCoords,
+        group::path_coord_type coordType,
+        span_const_void const& coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -673,19 +651,19 @@ STATICINLINE void path_commands(
 
 template<class span_const_void>
 requires(semantic::concepts::Span<span_const_void>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param path GLuint
- * \param numCoords GLsizei
- * \param coordType GLenum
- * \param coords const void *
- * \return void
- */
-STATICINLINE void path_coords(
-    u32                    path,
-    i32                    numCoords,
-    group::path_coord_type coordType,
-    span_const_void const& coords)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param path GLuint
+     * \param numCoords GLsizei
+     * \param coordType GLenum
+     * \param coords const void *
+     * \return void
+     */
+    STATICINLINE void path_coords(
+        u32                    path,
+        i32                    numCoords,
+        group::path_coord_type coordType,
+        span_const_void const& coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -717,19 +695,17 @@ STATICINLINE void path_cover_depth_func(group::depth_function func)
 }
 
 template<class span_const_f32>
-requires(
-    semantic::concepts::Span<span_const_f32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_f32::value_type>,
-        std::decay_t<f32>>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param path GLuint
- * \param dashCount GLsizei
- * \param dashArray const GLfloat *
- * \return void
- */
-STATICINLINE void path_dash_array(u32 path, span_const_f32 const& dashArray)
+requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+         std::decay_t<typename span_const_f32::value_type>,
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param path GLuint
+     * \param dashCount GLsizei
+     * \param dashArray const GLfloat *
+     * \return void
+     */
+    STATICINLINE void path_dash_array(u32 path, span_const_f32 const& dashArray)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -746,29 +722,29 @@ STATICINLINE void path_dash_array(u32 path, span_const_f32 const& dashArray)
 
 template<class span_const_void>
 requires(semantic::concepts::Span<span_const_void>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param firstPathName GLuint
- * \param fontTarget GLenum
- * \param fontName const void *
- * \param fontStyle GLbitfield
- * \param firstGlyph GLuint
- * \param numGlyphs GLsizei
- * \param handleMissingGlyphs GLenum
- * \param pathParameterTemplate GLuint
- * \param emScale GLfloat
- * \return void
- */
-STATICINLINE void path_glyph_range(
-    u32                               firstPathName,
-    group::path_font_target           fontTarget,
-    span_const_void const&            fontName,
-    group::path_font_style            fontStyle,
-    u32                               firstGlyph,
-    i32                               numGlyphs,
-    group::path_handle_missing_glyphs handleMissingGlyphs,
-    u32                               pathParameterTemplate,
-    f32                               emScale)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param firstPathName GLuint
+     * \param fontTarget GLenum
+     * \param fontName const void *
+     * \param fontStyle GLbitfield
+     * \param firstGlyph GLuint
+     * \param numGlyphs GLsizei
+     * \param handleMissingGlyphs GLenum
+     * \param pathParameterTemplate GLuint
+     * \param emScale GLfloat
+     * \return void
+     */
+    STATICINLINE void path_glyph_range(
+        u32                               firstPathName,
+        group::path_font_target           fontTarget,
+        span_const_void const&            fontName,
+        group::path_font_style            fontStyle,
+        u32                               firstGlyph,
+        i32                               numGlyphs,
+        group::path_handle_missing_glyphs handleMissingGlyphs,
+        u32                               pathParameterTemplate,
+        f32                               emScale)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -791,31 +767,31 @@ STATICINLINE void path_glyph_range(
 
 template<class span_const_void>
 requires(semantic::concepts::Span<span_const_void>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param firstPathName GLuint
- * \param fontTarget GLenum
- * \param fontName const void *
- * \param fontStyle GLbitfield
- * \param numGlyphs GLsizei
- * \param type GLenum
- * \param charcodes const void *
- * \param handleMissingGlyphs GLenum
- * \param pathParameterTemplate GLuint
- * \param emScale GLfloat
- * \return void
- */
-STATICINLINE void path_glyphs(
-    u32                               firstPathName,
-    group::path_font_target           fontTarget,
-    span_const_void const&            fontName,
-    group::path_font_style            fontStyle,
-    i32                               numGlyphs,
-    group::path_element_type          type,
-    span_const_void const&            charcodes,
-    group::path_handle_missing_glyphs handleMissingGlyphs,
-    u32                               pathParameterTemplate,
-    f32                               emScale)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param firstPathName GLuint
+     * \param fontTarget GLenum
+     * \param fontName const void *
+     * \param fontStyle GLbitfield
+     * \param numGlyphs GLsizei
+     * \param type GLenum
+     * \param charcodes const void *
+     * \param handleMissingGlyphs GLenum
+     * \param pathParameterTemplate GLuint
+     * \param emScale GLfloat
+     * \return void
+     */
+    STATICINLINE void path_glyphs(
+        u32                               firstPathName,
+        group::path_font_target           fontTarget,
+        span_const_void const&            fontName,
+        group::path_font_style            fontStyle,
+        i32                               numGlyphs,
+        group::path_element_type          type,
+        span_const_void const&            charcodes,
+        group::path_handle_missing_glyphs handleMissingGlyphs,
+        u32                               pathParameterTemplate,
+        f32                               emScale)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -858,20 +834,18 @@ STATICINLINE void path_parameter(
 }
 
 template<class span_const_f32>
-requires(
-    semantic::concepts::Span<span_const_f32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_f32::value_type>,
-        std::decay_t<f32>>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param path GLuint
- * \param pname GLenum
- * \param value const GLfloat *
- * \return void
- */
-STATICINLINE void path_parameter(
-    u32 path, group::path_parameter pname, span_const_f32 const& value)
+requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+         std::decay_t<typename span_const_f32::value_type>,
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param path GLuint
+     * \param pname GLenum
+     * \param value const GLfloat *
+     * \return void
+     */
+    STATICINLINE void path_parameter(
+        u32 path, group::path_parameter pname, span_const_f32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -906,20 +880,18 @@ STATICINLINE void path_parameter(
 }
 
 template<class span_const_i32>
-requires(
-    semantic::concepts::Span<span_const_i32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_i32::value_type>,
-        std::decay_t<i32>>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param path GLuint
- * \param pname GLenum
- * \param value const GLint *
- * \return void
- */
-STATICINLINE void path_parameter(
-    u32 path, group::path_parameter pname, span_const_i32 const& value)
+requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
+         std::decay_t<typename span_const_i32::value_type>,
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param path GLuint
+     * \param pname GLenum
+     * \param value const GLint *
+     * \return void
+     */
+    STATICINLINE void path_parameter(
+        u32 path, group::path_parameter pname, span_const_i32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -971,18 +943,18 @@ STATICINLINE void path_stencil_func(
 
 template<class span_const_void>
 requires(semantic::concepts::Span<span_const_void>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param path GLuint
- * \param format GLenum
- * \param length GLsizei
- * \param pathString const void *
- * \return void
- */
-STATICINLINE void path_string(
-    u32                       path,
-    group::path_string_format format,
-    span_const_void const&    pathString)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param path GLuint
+     * \param format GLenum
+     * \param length GLsizei
+     * \param pathString const void *
+     * \return void
+     */
+    STATICINLINE void path_string(
+        u32                       path,
+        group::path_string_format format,
+        span_const_void const&    pathString)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1000,32 +972,29 @@ STATICINLINE void path_string(
 }
 
 template<class span_const_u8, class span_const_void>
-requires(
-    semantic::concepts::Span<span_const_u8> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_u8::value_type>,
-        std::decay_t<u8>> &&
-    semantic::concepts::Span<span_const_void>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param path GLuint
- * \param commandStart GLsizei
- * \param commandsToDelete GLsizei
- * \param numCommands GLsizei
- * \param commands const GLubyte *
- * \param numCoords GLsizei
- * \param coordType GLenum
- * \param coords const void *
- * \return void
- */
-STATICINLINE void path_sub_commands(
-    u32                    path,
-    i32                    commandStart,
-    i32                    commandsToDelete,
-    span_const_u8 const&   commands,
-    i32                    numCoords,
-    group::path_coord_type coordType,
-    span_const_void const& coords)
+requires(semantic::concepts::Span<span_const_u8>&& std::is_same_v<
+         std::decay_t<typename span_const_u8::value_type>,
+         std::decay_t<u8>>&& semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param path GLuint
+     * \param commandStart GLsizei
+     * \param commandsToDelete GLsizei
+     * \param numCommands GLsizei
+     * \param commands const GLubyte *
+     * \param numCoords GLsizei
+     * \param coordType GLenum
+     * \param coords const void *
+     * \return void
+     */
+    STATICINLINE void path_sub_commands(
+        u32                    path,
+        i32                    commandStart,
+        i32                    commandsToDelete,
+        span_const_u8 const&   commands,
+        i32                    numCoords,
+        group::path_coord_type coordType,
+        span_const_void const& coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1047,21 +1016,21 @@ STATICINLINE void path_sub_commands(
 
 template<class span_const_void>
 requires(semantic::concepts::Span<span_const_void>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param path GLuint
- * \param coordStart GLsizei
- * \param numCoords GLsizei
- * \param coordType GLenum
- * \param coords const void *
- * \return void
- */
-STATICINLINE void path_sub_coords(
-    u32                    path,
-    i32                    coordStart,
-    i32                    numCoords,
-    group::path_coord_type coordType,
-    span_const_void const& coords)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param path GLuint
+     * \param coordStart GLsizei
+     * \param numCoords GLsizei
+     * \param coordType GLenum
+     * \param coords const void *
+     * \return void
+     */
+    STATICINLINE void path_sub_coords(
+        u32                    path,
+        i32                    coordStart,
+        i32                    numCoords,
+        group::path_coord_type coordType,
+        span_const_void const& coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1079,26 +1048,26 @@ STATICINLINE void path_sub_coords(
 
 template<class vec_2_f32>
 requires(semantic::concepts::Vector<vec_2_f32, f32, 2>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param path GLuint
- * \param startSegment GLsizei
- * \param numSegments GLsizei
- * \param distance GLfloat
- * \param x GLfloat *
- * \param y GLfloat *
- * \param tangentX GLfloat *
- * \param tangentY GLfloat *
- * \return Boolean
- */
-STATICINLINE GLboolean point_along_path(
-    u32              path,
-    i32              startSegment,
-    i32              numSegments,
-    f32              distance,
-    vec_2_f32 const& x,
-    f32&             tangentX,
-    f32&             tangentY)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param path GLuint
+     * \param startSegment GLsizei
+     * \param numSegments GLsizei
+     * \param distance GLfloat
+     * \param x GLfloat *
+     * \param y GLfloat *
+     * \param tangentX GLfloat *
+     * \param tangentY GLfloat *
+     * \return Boolean
+     */
+    STATICINLINE GLboolean point_along_path(
+        u32              path,
+        i32              startSegment,
+        i32              numSegments,
+        f32              distance,
+        vec_2_f32 const& x,
+        f32&             tangentX,
+        f32&             tangentY)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1119,33 +1088,31 @@ STATICINLINE GLboolean point_along_path(
 }
 
 template<class span_const_f32, class span_const_void>
-requires(
-    semantic::concepts::Span<span_const_void> &&
-    semantic::concepts::Span<span_const_f32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_f32::value_type>,
-        std::decay_t<f32>>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param numPaths GLsizei
- * \param pathNameType GLenum
- * \param paths const void *
- * \param pathBase GLuint
- * \param fillMode GLenum
- * \param mask GLuint
- * \param transformType GLenum
- * \param transformValues const GLfloat *
- * \return void
- */
-STATICINLINE void stencil_fill_path_instanced(
-    i32                        numPaths,
-    group::path_element_type   pathNameType,
-    span_const_void const&     paths,
-    u32                        pathBase,
-    group::path_fill_mode      fillMode,
-    u32                        mask,
-    group::path_transform_type transformType,
-    span_const_f32 const&      transformValues)
+requires(semantic::concepts::Span<span_const_void>&&
+             semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+                 std::decay_t<typename span_const_f32::value_type>,
+                 std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param numPaths GLsizei
+     * \param pathNameType GLenum
+     * \param paths const void *
+     * \param pathBase GLuint
+     * \param fillMode GLenum
+     * \param mask GLuint
+     * \param transformType GLenum
+     * \param transformValues const GLfloat *
+     * \return void
+     */
+    STATICINLINE void stencil_fill_path_instanced(
+        i32                        numPaths,
+        group::path_element_type   pathNameType,
+        span_const_void const&     paths,
+        u32                        pathBase,
+        group::path_fill_mode      fillMode,
+        u32                        mask,
+        group::path_transform_type transformType,
+        span_const_f32 const&      transformValues)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1186,33 +1153,31 @@ STATICINLINE void stencil_fill_path(
 }
 
 template<class span_const_f32, class span_const_void>
-requires(
-    semantic::concepts::Span<span_const_void> &&
-    semantic::concepts::Span<span_const_f32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_f32::value_type>,
-        std::decay_t<f32>>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param numPaths GLsizei
- * \param pathNameType GLenum
- * \param paths const void *
- * \param pathBase GLuint
- * \param reference GLint
- * \param mask GLuint
- * \param transformType GLenum
- * \param transformValues const GLfloat *
- * \return void
- */
-STATICINLINE void stencil_stroke_path_instanced(
-    i32                        numPaths,
-    group::path_element_type   pathNameType,
-    span_const_void const&     paths,
-    u32                        pathBase,
-    i32                        reference,
-    u32                        mask,
-    group::path_transform_type transformType,
-    span_const_f32 const&      transformValues)
+requires(semantic::concepts::Span<span_const_void>&&
+             semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+                 std::decay_t<typename span_const_f32::value_type>,
+                 std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param numPaths GLsizei
+     * \param pathNameType GLenum
+     * \param paths const void *
+     * \param pathBase GLuint
+     * \param reference GLint
+     * \param mask GLuint
+     * \param transformType GLenum
+     * \param transformValues const GLfloat *
+     * \return void
+     */
+    STATICINLINE void stencil_stroke_path_instanced(
+        i32                        numPaths,
+        group::path_element_type   pathNameType,
+        span_const_void const&     paths,
+        u32                        pathBase,
+        i32                        reference,
+        u32                        mask,
+        group::path_transform_type transformType,
+        span_const_f32 const&      transformValues)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1252,24 +1217,22 @@ STATICINLINE void stencil_stroke_path(u32 path, i32 reference, u32 mask)
 }
 
 template<class span_const_f32>
-requires(
-    semantic::concepts::Span<span_const_f32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_f32::value_type>,
-        std::decay_t<f32>>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param resultPath GLuint
- * \param srcPath GLuint
- * \param transformType GLenum
- * \param transformValues const GLfloat *
- * \return void
- */
-STATICINLINE void transform_path(
-    u32                        resultPath,
-    u32                        srcPath,
-    group::path_transform_type transformType,
-    span_const_f32 const&      transformValues)
+requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+         std::decay_t<typename span_const_f32::value_type>,
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param resultPath GLuint
+     * \param srcPath GLuint
+     * \param transformType GLenum
+     * \param transformValues const GLfloat *
+     * \return void
+     */
+    STATICINLINE void transform_path(
+        u32                        resultPath,
+        u32                        srcPath,
+        group::path_transform_type transformType,
+        span_const_f32 const&      transformValues)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1287,25 +1250,24 @@ STATICINLINE void transform_path(
 }
 
 template<class span_const_f32, class span_const_u32>
-requires(
-    semantic::concepts::Span<span_const_u32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_u32::value_type>,
-        std::decay_t<u32>> &&
-    semantic::concepts::Span<span_const_f32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_f32::value_type>,
-        std::decay_t<f32>>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param resultPath GLuint
- * \param numPaths GLsizei
- * \param paths const GLuint *
- * \param weights const GLfloat *
- * \return void
- */
-STATICINLINE void weight_paths(
-    u32 resultPath, span_const_u32 const& paths, span_const_f32 const& weights)
+requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+         std::decay_t<typename span_const_u32::value_type>,
+         std::decay_t<u32>>&& semantic::concepts::Span<span_const_f32>&&
+                              std::is_same_v<
+                 std::decay_t<typename span_const_f32::value_type>,
+                 std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param resultPath GLuint
+     * \param numPaths GLsizei
+     * \param paths const GLuint *
+     * \param weights const GLfloat *
+     * \return void
+     */
+    STATICINLINE void weight_paths(
+        u32                   resultPath,
+        span_const_u32 const& paths,
+        span_const_f32 const& weights)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1322,17 +1284,15 @@ STATICINLINE void weight_paths(
 }
 
 template<class span_const_mat_3x2_f32>
-requires(
-    semantic::concepts::Span<span_const_mat_3x2_f32> &&
-    semantic::concepts::
-        Matrix<typename span_const_mat_3x2_f32::value_type, f32, 3, 2>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param matrixMode GLenum
- * \param m const GLfloat *
- * \return void
- */
-STATICINLINE
+requires(semantic::concepts::Span<span_const_mat_3x2_f32>&& semantic::concepts::
+             Matrix<typename span_const_mat_3x2_f32::value_type, f32, 3, 2>)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param matrixMode GLenum
+     * \param m const GLfloat *
+     * \return void
+     */
+    STATICINLINE
     void matrix_load3x2f(GLenum matrixMode, span_const_mat_3x2_f32 const& m)
 {
     using namespace std::string_view_literals;
@@ -1345,17 +1305,15 @@ STATICINLINE
 }
 
 template<class span_const_mat_3x3_f32>
-requires(
-    semantic::concepts::Span<span_const_mat_3x3_f32> &&
-    semantic::concepts::
-        Matrix<typename span_const_mat_3x3_f32::value_type, f32, 3, 3>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param matrixMode GLenum
- * \param m const GLfloat *
- * \return void
- */
-STATICINLINE
+requires(semantic::concepts::Span<span_const_mat_3x3_f32>&& semantic::concepts::
+             Matrix<typename span_const_mat_3x3_f32::value_type, f32, 3, 3>)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param matrixMode GLenum
+     * \param m const GLfloat *
+     * \return void
+     */
+    STATICINLINE
     void matrix_load3x3f(GLenum matrixMode, span_const_mat_3x3_f32 const& m)
 {
     using namespace std::string_view_literals;
@@ -1368,18 +1326,16 @@ STATICINLINE
 }
 
 template<class span_const_mat_3x3_f32>
-requires(
-    semantic::concepts::Span<span_const_mat_3x3_f32> &&
-    semantic::concepts::
-        Matrix<typename span_const_mat_3x3_f32::value_type, f32, 3, 3>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param matrixMode GLenum
- * \param m const GLfloat *
- * \return void
- */
-STATICINLINE void matrix_load_transpose3x3f(
-    GLenum matrixMode, span_const_mat_3x3_f32 const& m)
+requires(semantic::concepts::Span<span_const_mat_3x3_f32>&& semantic::concepts::
+             Matrix<typename span_const_mat_3x3_f32::value_type, f32, 3, 3>)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param matrixMode GLenum
+     * \param m const GLfloat *
+     * \return void
+     */
+    STATICINLINE void matrix_load_transpose3x3f(
+        GLenum matrixMode, span_const_mat_3x3_f32 const& m)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1392,17 +1348,15 @@ STATICINLINE void matrix_load_transpose3x3f(
 }
 
 template<class span_const_mat_3x2_f32>
-requires(
-    semantic::concepts::Span<span_const_mat_3x2_f32> &&
-    semantic::concepts::
-        Matrix<typename span_const_mat_3x2_f32::value_type, f32, 3, 2>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param matrixMode GLenum
- * \param m const GLfloat *
- * \return void
- */
-STATICINLINE
+requires(semantic::concepts::Span<span_const_mat_3x2_f32>&& semantic::concepts::
+             Matrix<typename span_const_mat_3x2_f32::value_type, f32, 3, 2>)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param matrixMode GLenum
+     * \param m const GLfloat *
+     * \return void
+     */
+    STATICINLINE
     void matrix_mult3x2f(GLenum matrixMode, span_const_mat_3x2_f32 const& m)
 {
     using namespace std::string_view_literals;
@@ -1415,17 +1369,15 @@ STATICINLINE
 }
 
 template<class span_const_mat_3x3_f32>
-requires(
-    semantic::concepts::Span<span_const_mat_3x3_f32> &&
-    semantic::concepts::
-        Matrix<typename span_const_mat_3x3_f32::value_type, f32, 3, 3>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param matrixMode GLenum
- * \param m const GLfloat *
- * \return void
- */
-STATICINLINE
+requires(semantic::concepts::Span<span_const_mat_3x3_f32>&& semantic::concepts::
+             Matrix<typename span_const_mat_3x3_f32::value_type, f32, 3, 3>)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param matrixMode GLenum
+     * \param m const GLfloat *
+     * \return void
+     */
+    STATICINLINE
     void matrix_mult3x3f(GLenum matrixMode, span_const_mat_3x3_f32 const& m)
 {
     using namespace std::string_view_literals;
@@ -1438,18 +1390,16 @@ STATICINLINE
 }
 
 template<class span_const_mat_3x3_f32>
-requires(
-    semantic::concepts::Span<span_const_mat_3x3_f32> &&
-    semantic::concepts::
-        Matrix<typename span_const_mat_3x3_f32::value_type, f32, 3, 3>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param matrixMode GLenum
- * \param m const GLfloat *
- * \return void
- */
-STATICINLINE void matrix_mult_transpose3x3f(
-    GLenum matrixMode, span_const_mat_3x3_f32 const& m)
+requires(semantic::concepts::Span<span_const_mat_3x3_f32>&& semantic::concepts::
+             Matrix<typename span_const_mat_3x3_f32::value_type, f32, 3, 3>)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param matrixMode GLenum
+     * \param m const GLfloat *
+     * \return void
+     */
+    STATICINLINE void matrix_mult_transpose3x3f(
+        GLenum matrixMode, span_const_mat_3x3_f32 const& m)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1462,29 +1412,27 @@ STATICINLINE void matrix_mult_transpose3x3f(
 }
 
 template<class span_const_void, class span_u32>
-requires(
-    semantic::concepts::Span<span_const_void> &&
-    semantic::concepts::Span<span_u32> &&
-    std::is_same_v<
-        std::decay_t<typename span_u32::value_type>,
-        std::decay_t<u32>>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param fontTarget GLenum
- * \param fontName const void *
- * \param fontStyle GLbitfield
- * \param pathParameterTemplate GLuint
- * \param emScale GLfloat
- * \param baseAndCount GLuint *
- * \return GLenum
- */
-STATICINLINE GLenum path_glyph_index_range(
-    GLenum                 fontTarget,
-    span_const_void const& fontName,
-    group::path_font_style fontStyle,
-    u32                    pathParameterTemplate,
-    f32                    emScale,
-    span_u32               baseAndCount)
+requires(semantic::concepts::Span<span_const_void>&&
+             semantic::concepts::Span<span_u32>&& std::is_same_v<
+                 std::decay_t<typename span_u32::value_type>,
+                 std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param fontTarget GLenum
+     * \param fontName const void *
+     * \param fontStyle GLbitfield
+     * \param pathParameterTemplate GLuint
+     * \param emScale GLfloat
+     * \param baseAndCount GLuint *
+     * \return GLenum
+     */
+    STATICINLINE GLenum path_glyph_index_range(
+        GLenum                 fontTarget,
+        span_const_void const& fontName,
+        group::path_font_style fontStyle,
+        u32                    pathParameterTemplate,
+        f32                    emScale,
+        span_u32               baseAndCount)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1505,35 +1453,33 @@ STATICINLINE GLenum path_glyph_index_range(
 }
 
 template<class span_const_f32, class span_const_void>
-requires(
-    semantic::concepts::Span<span_const_void> &&
-    semantic::concepts::Span<span_const_f32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_f32::value_type>,
-        std::decay_t<f32>>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param numPaths GLsizei
- * \param pathNameType GLenum
- * \param paths const void *
- * \param pathBase GLuint
- * \param fillMode GLenum
- * \param mask GLuint
- * \param coverMode GLenum
- * \param transformType GLenum
- * \param transformValues const GLfloat *
- * \return void
- */
-STATICINLINE void stencil_then_cover_fill_path_instanced(
-    i32                    numPaths,
-    GLenum                 pathNameType,
-    span_const_void const& paths,
-    u32                    pathBase,
-    GLenum                 fillMode,
-    u32                    mask,
-    GLenum                 coverMode,
-    GLenum                 transformType,
-    span_const_f32 const&  transformValues)
+requires(semantic::concepts::Span<span_const_void>&&
+             semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+                 std::decay_t<typename span_const_f32::value_type>,
+                 std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param numPaths GLsizei
+     * \param pathNameType GLenum
+     * \param paths const void *
+     * \param pathBase GLuint
+     * \param fillMode GLenum
+     * \param mask GLuint
+     * \param coverMode GLenum
+     * \param transformType GLenum
+     * \param transformValues const GLfloat *
+     * \return void
+     */
+    STATICINLINE void stencil_then_cover_fill_path_instanced(
+        i32                    numPaths,
+        GLenum                 pathNameType,
+        span_const_void const& paths,
+        u32                    pathBase,
+        GLenum                 fillMode,
+        u32                    mask,
+        GLenum                 coverMode,
+        GLenum                 transformType,
+        span_const_f32 const&  transformValues)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1576,35 +1522,33 @@ STATICINLINE void stencil_then_cover_fill_path(
 }
 
 template<class span_const_f32, class span_const_void>
-requires(
-    semantic::concepts::Span<span_const_void> &&
-    semantic::concepts::Span<span_const_f32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_f32::value_type>,
-        std::decay_t<f32>>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param numPaths GLsizei
- * \param pathNameType GLenum
- * \param paths const void *
- * \param pathBase GLuint
- * \param reference GLint
- * \param mask GLuint
- * \param coverMode GLenum
- * \param transformType GLenum
- * \param transformValues const GLfloat *
- * \return void
- */
-STATICINLINE void stencil_then_cover_stroke_path_instanced(
-    i32                    numPaths,
-    GLenum                 pathNameType,
-    span_const_void const& paths,
-    u32                    pathBase,
-    i32                    reference,
-    u32                    mask,
-    GLenum                 coverMode,
-    GLenum                 transformType,
-    span_const_f32 const&  transformValues)
+requires(semantic::concepts::Span<span_const_void>&&
+             semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+                 std::decay_t<typename span_const_f32::value_type>,
+                 std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param numPaths GLsizei
+     * \param pathNameType GLenum
+     * \param paths const void *
+     * \param pathBase GLuint
+     * \param reference GLint
+     * \param mask GLuint
+     * \param coverMode GLenum
+     * \param transformType GLenum
+     * \param transformValues const GLfloat *
+     * \return void
+     */
+    STATICINLINE void stencil_then_cover_stroke_path_instanced(
+        i32                    numPaths,
+        GLenum                 pathNameType,
+        span_const_void const& paths,
+        u32                    pathBase,
+        i32                    reference,
+        u32                    mask,
+        GLenum                 coverMode,
+        GLenum                 transformType,
+        span_const_f32 const&  transformValues)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1647,41 +1591,39 @@ STATICINLINE void stencil_then_cover_stroke_path(
 }
 
 template<class span_const_GLenum, class span_f32>
-requires(
-    semantic::concepts::Span<span_const_GLenum> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_GLenum::value_type>,
-        std::decay_t<GLenum>> &&
-    semantic::concepts::Span<span_f32> &&
-    std::is_same_v<
-        std::decay_t<typename span_f32::value_type>,
-        std::decay_t<f32>>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param program GLuint
- * \param programInterface GLenum
- * \param index GLuint
- * \param propCount GLsizei
- * \param props const GLenum *
- * \param count GLsizei
- * \param length GLsizei *
- * \param params GLfloat *
- * \return void
- */
-STATICINLINE void get_program_resourcefv(
-    u32                      program,
-    group::program_interface programInterface,
-    u32                      index,
-    i32                      propCount,
-    span_const_GLenum const& props,
-    i32&                     length,
-    span_f32                 params)
+requires(semantic::concepts::Span<span_const_GLenum>&& std::is_same_v<
+         std::decay_t<typename span_const_GLenum::value_type>,
+         std::decay_t<GLenum>>&& semantic::concepts::Span<span_f32>&&
+                                 std::is_same_v<
+                 std::decay_t<typename span_f32::value_type>,
+                 std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param program GLuint
+     * \param programInterface GLenum
+     * \param index GLuint
+     * \param propCount GLsizei
+     * \param props const GLenum *
+     * \param count GLsizei
+     * \param length GLsizei *
+     * \param params GLfloat *
+     * \return void
+     */
+    STATICINLINE void get_program_resourcefv(
+        u32                      program,
+        group::program_interface programInterface,
+        u32                      index,
+        i32                      propCount,
+        span_const_GLenum const& props,
+        i32&                     length,
+        span_f32                 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetProgramResourcefvNV)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -1700,27 +1642,27 @@ STATICINLINE void get_program_resourcefv(
 
 template<class span_const_void>
 requires(semantic::concepts::Span<span_const_void>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param firstPathName GLuint
- * \param fontTarget GLenum
- * \param fontName const void *
- * \param fontStyle GLbitfield
- * \param firstGlyphIndex GLuint
- * \param numGlyphs GLsizei
- * \param pathParameterTemplate GLuint
- * \param emScale GLfloat
- * \return GLenum
- */
-STATICINLINE GLenum path_glyph_index_array(
-    u32                    firstPathName,
-    GLenum                 fontTarget,
-    span_const_void const& fontName,
-    group::path_font_style fontStyle,
-    u32                    firstGlyphIndex,
-    i32                    numGlyphs,
-    u32                    pathParameterTemplate,
-    f32                    emScale)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param firstPathName GLuint
+     * \param fontTarget GLenum
+     * \param fontName const void *
+     * \param fontStyle GLbitfield
+     * \param firstGlyphIndex GLuint
+     * \param numGlyphs GLsizei
+     * \param pathParameterTemplate GLuint
+     * \param emScale GLfloat
+     * \return GLenum
+     */
+    STATICINLINE GLenum path_glyph_index_array(
+        u32                    firstPathName,
+        GLenum                 fontTarget,
+        span_const_void const& fontName,
+        group::path_font_style fontStyle,
+        u32                    firstGlyphIndex,
+        i32                    numGlyphs,
+        u32                    pathParameterTemplate,
+        f32                    emScale)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1743,29 +1685,29 @@ STATICINLINE GLenum path_glyph_index_array(
 
 template<class span_const_void>
 requires(semantic::concepts::Span<span_const_void>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param firstPathName GLuint
- * \param fontTarget GLenum
- * \param fontSize GLsizeiptr
- * \param fontData const void *
- * \param faceIndex GLsizei
- * \param firstGlyphIndex GLuint
- * \param numGlyphs GLsizei
- * \param pathParameterTemplate GLuint
- * \param emScale GLfloat
- * \return GLenum
- */
-STATICINLINE GLenum path_memory_glyph_index_array(
-    u32                    firstPathName,
-    GLenum                 fontTarget,
-    GLsizeiptr             fontSize,
-    span_const_void const& fontData,
-    i32                    faceIndex,
-    u32                    firstGlyphIndex,
-    i32                    numGlyphs,
-    u32                    pathParameterTemplate,
-    f32                    emScale)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param firstPathName GLuint
+     * \param fontTarget GLenum
+     * \param fontSize GLsizeiptr
+     * \param fontData const void *
+     * \param faceIndex GLsizei
+     * \param firstGlyphIndex GLuint
+     * \param numGlyphs GLsizei
+     * \param pathParameterTemplate GLuint
+     * \param emScale GLfloat
+     * \return GLenum
+     */
+    STATICINLINE GLenum path_memory_glyph_index_array(
+        u32                    firstPathName,
+        GLenum                 fontTarget,
+        GLsizeiptr             fontSize,
+        span_const_void const& fontData,
+        i32                    faceIndex,
+        u32                    firstGlyphIndex,
+        i32                    numGlyphs,
+        u32                    pathParameterTemplate,
+        f32                    emScale)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1788,32 +1730,31 @@ STATICINLINE GLenum path_memory_glyph_index_array(
 }
 
 template<class span_const_f32>
-requires(
-    semantic::concepts::Span<span_const_f32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_f32::value_type>,
-        std::decay_t<f32>>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param program GLuint
- * \param location GLint
- * \param genMode GLenum
- * \param components GLint
- * \param coeffs const GLfloat *
- * \return void
- */
-STATICINLINE void program_path_fragment_input_gen(
-    u32                   program,
-    i32                   location,
-    GLenum                genMode,
-    i32                   components,
-    span_const_f32 const& coeffs)
+requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+         std::decay_t<typename span_const_f32::value_type>,
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param program GLuint
+     * \param location GLint
+     * \param genMode GLenum
+     * \param components GLint
+     * \param coeffs const GLfloat *
+     * \return void
+     */
+    STATICINLINE void program_path_fragment_input_gen(
+        u32                   program,
+        i32                   location,
+        GLenum                genMode,
+        i32                   components,
+        span_const_f32 const& coeffs)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramPathFragmentInputGenNV)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -1830,20 +1771,18 @@ STATICINLINE void program_path_fragment_input_gen(
 
 #if defined(GL_VERSION_1_0)
 template<class span_f32>
-requires(
-    semantic::concepts::Span<span_f32> &&
-    std::is_same_v<
-        std::decay_t<typename span_f32::value_type>,
-        std::decay_t<f32>>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param color GLenum
- * \param pname GLenum
- * \param value GLfloat *
- * \return void
- */
-STATICINLINE void get_path_color_genfv(
-    group::path_color color, group::path_gen_mode pname, span_f32 value)
+requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+         std::decay_t<typename span_f32::value_type>,
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param color GLenum
+     * \param pname GLenum
+     * \param value GLfloat *
+     * \return void
+     */
+    STATICINLINE void get_path_color_genfv(
+        group::path_color color, group::path_gen_mode pname, span_f32 value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1860,20 +1799,18 @@ STATICINLINE void get_path_color_genfv(
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_i32>
-requires(
-    semantic::concepts::Span<span_i32> &&
-    std::is_same_v<
-        std::decay_t<typename span_i32::value_type>,
-        std::decay_t<i32>>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param color GLenum
- * \param pname GLenum
- * \param value GLint *
- * \return void
- */
-STATICINLINE void get_path_color_geniv(
-    group::path_color color, group::path_gen_mode pname, span_i32 value)
+requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+         std::decay_t<typename span_i32::value_type>,
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param color GLenum
+     * \param pname GLenum
+     * \param value GLint *
+     * \return void
+     */
+    STATICINLINE void get_path_color_geniv(
+        group::path_color color, group::path_gen_mode pname, span_i32 value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1890,20 +1827,20 @@ STATICINLINE void get_path_color_geniv(
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_f32>
-requires(
-    semantic::concepts::Span<span_f32> &&
-    std::is_same_v<
-        std::decay_t<typename span_f32::value_type>,
-        std::decay_t<f32>>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param texCoordSet GLenum
- * \param pname GLenum
- * \param value GLfloat *
- * \return void
- */
-STATICINLINE void get_path_tex_genfv(
-    group::texture_unit texCoordSet, group::path_gen_mode pname, span_f32 value)
+requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+         std::decay_t<typename span_f32::value_type>,
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param texCoordSet GLenum
+     * \param pname GLenum
+     * \param value GLfloat *
+     * \return void
+     */
+    STATICINLINE void get_path_tex_genfv(
+        group::texture_unit  texCoordSet,
+        group::path_gen_mode pname,
+        span_f32             value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1920,20 +1857,20 @@ STATICINLINE void get_path_tex_genfv(
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_i32>
-requires(
-    semantic::concepts::Span<span_i32> &&
-    std::is_same_v<
-        std::decay_t<typename span_i32::value_type>,
-        std::decay_t<i32>>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param texCoordSet GLenum
- * \param pname GLenum
- * \param value GLint *
- * \return void
- */
-STATICINLINE void get_path_tex_geniv(
-    group::texture_unit texCoordSet, group::path_gen_mode pname, span_i32 value)
+requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+         std::decay_t<typename span_i32::value_type>,
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param texCoordSet GLenum
+     * \param pname GLenum
+     * \param value GLint *
+     * \return void
+     */
+    STATICINLINE void get_path_tex_geniv(
+        group::texture_unit  texCoordSet,
+        group::path_gen_mode pname,
+        span_i32             value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1950,24 +1887,22 @@ STATICINLINE void get_path_tex_geniv(
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_f32>
-requires(
-    semantic::concepts::Span<span_const_f32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_f32::value_type>,
-        std::decay_t<f32>>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param color GLenum
- * \param genMode GLenum
- * \param colorFormat GLenum
- * \param coeffs const GLfloat *
- * \return void
- */
-STATICINLINE void path_color_gen(
-    group::path_color        color,
-    group::path_gen_mode     genMode,
-    group::path_color_format colorFormat,
-    span_const_f32 const&    coeffs)
+requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+         std::decay_t<typename span_const_f32::value_type>,
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param color GLenum
+     * \param genMode GLenum
+     * \param colorFormat GLenum
+     * \param coeffs const GLfloat *
+     * \return void
+     */
+    STATICINLINE void path_color_gen(
+        group::path_color        color,
+        group::path_gen_mode     genMode,
+        group::path_color_format colorFormat,
+        span_const_f32 const&    coeffs)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2004,24 +1939,22 @@ STATICINLINE void path_fog_gen(group::path_gen_mode genMode)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_f32>
-requires(
-    semantic::concepts::Span<span_const_f32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_f32::value_type>,
-        std::decay_t<f32>>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param texCoordSet GLenum
- * \param genMode GLenum
- * \param components GLint
- * \param coeffs const GLfloat *
- * \return void
- */
-STATICINLINE void path_tex_gen(
-    group::path_color     texCoordSet,
-    group::path_gen_mode  genMode,
-    i32                   components,
-    span_const_f32 const& coeffs)
+requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+         std::decay_t<typename span_const_f32::value_type>,
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param texCoordSet GLenum
+     * \param genMode GLenum
+     * \param components GLint
+     * \param coeffs const GLfloat *
+     * \return void
+     */
+    STATICINLINE void path_tex_gen(
+        group::path_color     texCoordSet,
+        group::path_gen_mode  genMode,
+        i32                   components,
+        span_const_f32 const& coeffs)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2085,19 +2018,17 @@ STATICINLINE void matrix_load_identity_ext(group::matrix_mode mode)
 }
 
 template<class span_const_f64>
-requires(
-    semantic::concepts::Span<span_const_f64> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_f64::value_type>,
-        std::decay_t<f64>>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param mode GLenum
- * \param m const GLdouble *
- * \return void
- */
-STATICINLINE void matrix_load_transposed_ext(
-    group::matrix_mode mode, span_const_f64 const& m)
+requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
+         std::decay_t<typename span_const_f64::value_type>,
+         std::decay_t<f64>>)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param mode GLenum
+     * \param m const GLdouble *
+     * \return void
+     */
+    STATICINLINE void matrix_load_transposed_ext(
+        group::matrix_mode mode, span_const_f64 const& m)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2111,19 +2042,17 @@ STATICINLINE void matrix_load_transposed_ext(
 }
 
 template<class span_const_f32>
-requires(
-    semantic::concepts::Span<span_const_f32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_f32::value_type>,
-        std::decay_t<f32>>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param mode GLenum
- * \param m const GLfloat *
- * \return void
- */
-STATICINLINE void matrix_load_transposef_ext(
-    group::matrix_mode mode, span_const_f32 const& m)
+requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+         std::decay_t<typename span_const_f32::value_type>,
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param mode GLenum
+     * \param m const GLfloat *
+     * \return void
+     */
+    STATICINLINE void matrix_load_transposef_ext(
+        group::matrix_mode mode, span_const_f32 const& m)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2137,18 +2066,16 @@ STATICINLINE void matrix_load_transposef_ext(
 }
 
 template<class span_const_f64>
-requires(
-    semantic::concepts::Span<span_const_f64> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_f64::value_type>,
-        std::decay_t<f64>>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param mode GLenum
- * \param m const GLdouble *
- * \return void
- */
-STATICINLINE
+requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
+         std::decay_t<typename span_const_f64::value_type>,
+         std::decay_t<f64>>)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param mode GLenum
+     * \param m const GLdouble *
+     * \return void
+     */
+    STATICINLINE
     void matrix_loadd_ext(group::matrix_mode mode, span_const_f64 const& m)
 {
     using namespace std::string_view_literals;
@@ -2163,18 +2090,16 @@ STATICINLINE
 }
 
 template<class span_const_f32>
-requires(
-    semantic::concepts::Span<span_const_f32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_f32::value_type>,
-        std::decay_t<f32>>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param mode GLenum
- * \param m const GLfloat *
- * \return void
- */
-STATICINLINE
+requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+         std::decay_t<typename span_const_f32::value_type>,
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param mode GLenum
+     * \param m const GLfloat *
+     * \return void
+     */
+    STATICINLINE
     void matrix_loadf_ext(group::matrix_mode mode, span_const_f32 const& m)
 {
     using namespace std::string_view_literals;
@@ -2189,19 +2114,17 @@ STATICINLINE
 }
 
 template<class span_const_f64>
-requires(
-    semantic::concepts::Span<span_const_f64> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_f64::value_type>,
-        std::decay_t<f64>>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param mode GLenum
- * \param m const GLdouble *
- * \return void
- */
-STATICINLINE void matrix_mult_transposed_ext(
-    group::matrix_mode mode, span_const_f64 const& m)
+requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
+         std::decay_t<typename span_const_f64::value_type>,
+         std::decay_t<f64>>)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param mode GLenum
+     * \param m const GLdouble *
+     * \return void
+     */
+    STATICINLINE void matrix_mult_transposed_ext(
+        group::matrix_mode mode, span_const_f64 const& m)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2215,19 +2138,17 @@ STATICINLINE void matrix_mult_transposed_ext(
 }
 
 template<class span_const_f32>
-requires(
-    semantic::concepts::Span<span_const_f32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_f32::value_type>,
-        std::decay_t<f32>>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param mode GLenum
- * \param m const GLfloat *
- * \return void
- */
-STATICINLINE void matrix_mult_transposef_ext(
-    group::matrix_mode mode, span_const_f32 const& m)
+requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+         std::decay_t<typename span_const_f32::value_type>,
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param mode GLenum
+     * \param m const GLfloat *
+     * \return void
+     */
+    STATICINLINE void matrix_mult_transposef_ext(
+        group::matrix_mode mode, span_const_f32 const& m)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2241,18 +2162,16 @@ STATICINLINE void matrix_mult_transposef_ext(
 }
 
 template<class span_const_f64>
-requires(
-    semantic::concepts::Span<span_const_f64> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_f64::value_type>,
-        std::decay_t<f64>>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param mode GLenum
- * \param m const GLdouble *
- * \return void
- */
-STATICINLINE
+requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
+         std::decay_t<typename span_const_f64::value_type>,
+         std::decay_t<f64>>)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param mode GLenum
+     * \param m const GLdouble *
+     * \return void
+     */
+    STATICINLINE
     void matrix_multd_ext(group::matrix_mode mode, span_const_f64 const& m)
 {
     using namespace std::string_view_literals;
@@ -2267,18 +2186,16 @@ STATICINLINE
 }
 
 template<class span_const_f32>
-requires(
-    semantic::concepts::Span<span_const_f32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_f32::value_type>,
-        std::decay_t<f32>>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param mode GLenum
- * \param m const GLfloat *
- * \return void
- */
-STATICINLINE
+requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+         std::decay_t<typename span_const_f32::value_type>,
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param mode GLenum
+     * \param m const GLfloat *
+     * \return void
+     */
+    STATICINLINE
     void matrix_multf_ext(group::matrix_mode mode, span_const_f32 const& m)
 {
     using namespace std::string_view_literals;
@@ -2356,17 +2273,17 @@ STATICINLINE void matrix_push_ext(group::matrix_mode mode)
 
 template<class vec_3_f64>
 requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param mode GLenum
- * \param angle GLdouble
- * \param x GLdouble
- * \param y GLdouble
- * \param z GLdouble
- * \return void
- */
-STATICINLINE void matrix_rotated_ext(
-    group::matrix_mode mode, f64 angle, vec_3_f64 const& x)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param mode GLenum
+     * \param angle GLdouble
+     * \param x GLdouble
+     * \param y GLdouble
+     * \param z GLdouble
+     * \return void
+     */
+    STATICINLINE void matrix_rotated_ext(
+        group::matrix_mode mode, f64 angle, vec_3_f64 const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2379,17 +2296,17 @@ STATICINLINE void matrix_rotated_ext(
 
 template<class vec_3_f32>
 requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param mode GLenum
- * \param angle GLfloat
- * \param x GLfloat
- * \param y GLfloat
- * \param z GLfloat
- * \return void
- */
-STATICINLINE void matrix_rotatef_ext(
-    group::matrix_mode mode, f32 angle, vec_3_f32 const& x)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param mode GLenum
+     * \param angle GLfloat
+     * \param x GLfloat
+     * \param y GLfloat
+     * \param z GLfloat
+     * \return void
+     */
+    STATICINLINE void matrix_rotatef_ext(
+        group::matrix_mode mode, f32 angle, vec_3_f32 const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2402,15 +2319,16 @@ STATICINLINE void matrix_rotatef_ext(
 
 template<class vec_3_f64>
 requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param mode GLenum
- * \param x GLdouble
- * \param y GLdouble
- * \param z GLdouble
- * \return void
- */
-STATICINLINE void matrix_scaled_ext(group::matrix_mode mode, vec_3_f64 const& x)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param mode GLenum
+     * \param x GLdouble
+     * \param y GLdouble
+     * \param z GLdouble
+     * \return void
+     */
+    STATICINLINE
+    void matrix_scaled_ext(group::matrix_mode mode, vec_3_f64 const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2423,15 +2341,16 @@ STATICINLINE void matrix_scaled_ext(group::matrix_mode mode, vec_3_f64 const& x)
 
 template<class vec_3_f32>
 requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param mode GLenum
- * \param x GLfloat
- * \param y GLfloat
- * \param z GLfloat
- * \return void
- */
-STATICINLINE void matrix_scalef_ext(group::matrix_mode mode, vec_3_f32 const& x)
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param mode GLenum
+     * \param x GLfloat
+     * \param y GLfloat
+     * \param z GLfloat
+     * \return void
+     */
+    STATICINLINE
+    void matrix_scalef_ext(group::matrix_mode mode, vec_3_f32 const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2444,15 +2363,15 @@ STATICINLINE void matrix_scalef_ext(group::matrix_mode mode, vec_3_f32 const& x)
 
 template<class vec_3_f64>
 requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param mode GLenum
- * \param x GLdouble
- * \param y GLdouble
- * \param z GLdouble
- * \return void
- */
-STATICINLINE
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param mode GLenum
+     * \param x GLdouble
+     * \param y GLdouble
+     * \param z GLdouble
+     * \return void
+     */
+    STATICINLINE
     void matrix_translated_ext(group::matrix_mode mode, vec_3_f64 const& x)
 {
     using namespace std::string_view_literals;
@@ -2466,15 +2385,15 @@ STATICINLINE
 
 template<class vec_3_f32>
 requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param mode GLenum
- * \param x GLfloat
- * \param y GLfloat
- * \param z GLfloat
- * \return void
- */
-STATICINLINE
+    /*!
+     * \brief Part of GL_NV_path_rendering
+     * \param mode GLenum
+     * \param x GLfloat
+     * \param y GLfloat
+     * \param z GLfloat
+     * \return void
+     */
+    STATICINLINE
     void matrix_translatef_ext(group::matrix_mode mode, vec_3_f32 const& x)
 {
     using namespace std::string_view_literals;

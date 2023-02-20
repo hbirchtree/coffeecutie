@@ -40,14 +40,14 @@ inline libc_types::u64 to_unix(Clock::time_point ts)
 }
 
 template<typename Clock, typename Rep>
-inline libc_types::scalar to_float(
+inline libc_types::f32 to_float(
     std::chrono::time_point<Clock, Rep> const& dur)
 {
     return duration_cast<seconds_float>(dur.time_since_epoch()).count();
 }
 
 template<typename Rep, typename Ratio>
-inline libc_types::scalar to_float(std::chrono::duration<Rep, Ratio> const& dur)
+inline libc_types::f32 to_float(std::chrono::duration<Rep, Ratio> const& dur)
 {
     return duration_cast<seconds_float>(dur).count();
 }

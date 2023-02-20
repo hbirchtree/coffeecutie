@@ -117,8 +117,8 @@ FORCEDINLINE tmatrix<T, 4> GenTransform(
 {
     tmatrix<T, 4> mat;
 
+    mat = matrixify(normalize_quat(rot));
     mat = scale(mat, scl);
-    mat = mat * matrixify(rot);
     mat = translation(mat, pos);
 
     return mat;

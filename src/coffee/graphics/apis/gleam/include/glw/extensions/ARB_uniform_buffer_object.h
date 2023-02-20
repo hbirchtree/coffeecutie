@@ -36,7 +36,8 @@ STATICINLINE void bind_buffer_base(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindBufferBase)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
 #endif
@@ -65,7 +66,8 @@ STATICINLINE void bind_buffer_range(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindBufferRange)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
 #endif
@@ -75,31 +77,30 @@ STATICINLINE void bind_buffer_range(
 }
 
 template<class span_GLchar>
-requires(
-    semantic::concepts::Span<span_GLchar> &&
-    std::is_same_v<
-        std::decay_t<typename span_GLchar::value_type>,
-        std::decay_t<GLchar>>)
-/*!
- * \brief Part of GL_ARB_uniform_buffer_object
- * \param program GLuint
- * \param uniformBlockIndex GLuint
- * \param bufSize GLsizei
- * \param length GLsizei *
- * \param uniformBlockName GLchar *
- * \return void
- */
-STATICINLINE void get_active_uniform_block_name(
-    u32         program,
-    u32         uniformBlockIndex,
-    i32&        length,
-    span_GLchar uniformBlockName)
+requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
+         std::decay_t<typename span_GLchar::value_type>,
+         std::decay_t<GLchar>>)
+    /*!
+     * \brief Part of GL_ARB_uniform_buffer_object
+     * \param program GLuint
+     * \param uniformBlockIndex GLuint
+     * \param bufSize GLsizei
+     * \param length GLsizei *
+     * \param uniformBlockName GLchar *
+     * \return void
+     */
+    STATICINLINE void get_active_uniform_block_name(
+        u32         program,
+        u32         uniformBlockIndex,
+        i32&        length,
+        span_GLchar uniformBlockName)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetActiveUniformBlockName)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -114,30 +115,29 @@ STATICINLINE void get_active_uniform_block_name(
 }
 
 template<class span_i32>
-requires(
-    semantic::concepts::Span<span_i32> &&
-    std::is_same_v<
-        std::decay_t<typename span_i32::value_type>,
-        std::decay_t<i32>>)
-/*!
- * \brief Part of GL_ARB_uniform_buffer_object
- * \param program GLuint
- * \param uniformBlockIndex GLuint
- * \param pname GLenum
- * \param params GLint *
- * \return void
- */
-STATICINLINE void get_active_uniform_blockiv(
-    u32                       program,
-    u32                       uniformBlockIndex,
-    group::uniform_block_prop pname,
-    span_i32                  params)
+requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+         std::decay_t<typename span_i32::value_type>,
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_ARB_uniform_buffer_object
+     * \param program GLuint
+     * \param uniformBlockIndex GLuint
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_active_uniform_blockiv(
+        u32                       program,
+        u32                       uniformBlockIndex,
+        group::uniform_block_prop pname,
+        span_i32                  params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetActiveUniformBlockiv)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -151,28 +151,27 @@ STATICINLINE void get_active_uniform_blockiv(
 }
 
 template<class span_GLchar>
-requires(
-    semantic::concepts::Span<span_GLchar> &&
-    std::is_same_v<
-        std::decay_t<typename span_GLchar::value_type>,
-        std::decay_t<GLchar>>)
-/*!
- * \brief Part of GL_ARB_uniform_buffer_object
- * \param program GLuint
- * \param uniformIndex GLuint
- * \param bufSize GLsizei
- * \param length GLsizei *
- * \param uniformName GLchar *
- * \return void
- */
-STATICINLINE void get_active_uniform_name(
-    u32 program, u32 uniformIndex, i32& length, span_GLchar uniformName)
+requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
+         std::decay_t<typename span_GLchar::value_type>,
+         std::decay_t<GLchar>>)
+    /*!
+     * \brief Part of GL_ARB_uniform_buffer_object
+     * \param program GLuint
+     * \param uniformIndex GLuint
+     * \param bufSize GLsizei
+     * \param length GLsizei *
+     * \param uniformName GLchar *
+     * \return void
+     */
+    STATICINLINE void get_active_uniform_name(
+        u32 program, u32 uniformIndex, i32& length, span_GLchar uniformName)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetActiveUniformName)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -183,35 +182,33 @@ STATICINLINE void get_active_uniform_name(
 }
 
 template<class span_const_u32, class span_i32>
-requires(
-    semantic::concepts::Span<span_const_u32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_u32::value_type>,
-        std::decay_t<u32>> &&
-    semantic::concepts::Span<span_i32> &&
-    std::is_same_v<
-        std::decay_t<typename span_i32::value_type>,
-        std::decay_t<i32>>)
-/*!
- * \brief Part of GL_ARB_uniform_buffer_object
- * \param program GLuint
- * \param uniformCount GLsizei
- * \param uniformIndices const GLuint *
- * \param pname GLenum
- * \param params GLint *
- * \return void
- */
-STATICINLINE void get_active_uniformsiv(
-    u32                   program,
-    span_const_u32 const& uniformIndices,
-    group::uniform_prop   pname,
-    span_i32              params)
+requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+         std::decay_t<typename span_const_u32::value_type>,
+         std::decay_t<u32>>&& semantic::concepts::Span<span_i32>&&
+                              std::is_same_v<
+                 std::decay_t<typename span_i32::value_type>,
+                 std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_ARB_uniform_buffer_object
+     * \param program GLuint
+     * \param uniformCount GLsizei
+     * \param uniformIndices const GLuint *
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_active_uniformsiv(
+        u32                   program,
+        span_const_u32 const& uniformIndices,
+        group::uniform_prop   pname,
+        span_i32              params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetActiveUniformsiv)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -228,19 +225,17 @@ STATICINLINE void get_active_uniformsiv(
 }
 
 template<class span_i32>
-requires(
-    semantic::concepts::Span<span_i32> &&
-    std::is_same_v<
-        std::decay_t<typename span_i32::value_type>,
-        std::decay_t<i32>>)
-/*!
- * \brief Part of GL_ARB_uniform_buffer_object
- * \param target GLenum
- * \param index GLuint
- * \param data GLint *
- * \return void
- */
-STATICINLINE
+requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+         std::decay_t<typename span_i32::value_type>,
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_ARB_uniform_buffer_object
+     * \param target GLenum
+     * \param index GLuint
+     * \param data GLint *
+     * \return void
+     */
+    STATICINLINE
     void get_integeri_v(group::get_prop target, u32 index, span_i32 data)
 {
     using namespace std::string_view_literals;
@@ -268,7 +263,8 @@ get_uniform_block_index(u32 program, std::string_view const& uniformBlockName)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetUniformBlockIndex)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -279,30 +275,29 @@ get_uniform_block_index(u32 program, std::string_view const& uniformBlockName)
 }
 
 template<class span_u32>
-requires(
-    semantic::concepts::Span<span_u32> &&
-    std::is_same_v<
-        std::decay_t<typename span_u32::value_type>,
-        std::decay_t<u32>>)
-/*!
- * \brief Part of GL_ARB_uniform_buffer_object
- * \param program GLuint
- * \param uniformCount GLsizei
- * \param uniformNames const GLchar *const*
- * \param uniformIndices GLuint *
- * \return void
- */
-STATICINLINE void get_uniform_indices(
-    u32                           program,
-    i32                           uniformCount,
-    std::vector<std::string_view> uniformNames,
-    span_u32                      uniformIndices)
+requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+         std::decay_t<typename span_u32::value_type>,
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_ARB_uniform_buffer_object
+     * \param program GLuint
+     * \param uniformCount GLsizei
+     * \param uniformNames const GLchar *const*
+     * \param uniformIndices GLuint *
+     * \return void
+     */
+    STATICINLINE void get_uniform_indices(
+        u32                           program,
+        i32                           uniformCount,
+        std::vector<std::string_view> uniformNames,
+        span_u32                      uniformIndices)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetUniformIndices)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -332,7 +327,8 @@ STATICINLINE void uniform_block_binding(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(UniformBlockBinding)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif

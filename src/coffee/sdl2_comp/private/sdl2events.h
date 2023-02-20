@@ -4,10 +4,10 @@
 #include <coffee/core/types/display/event.h>
 #include <coffee/core/types/input/event_types.h>
 
-namespace sdl2 {
-namespace translate {
+namespace sdl2::translate {
 using namespace Coffee::Input;
 using namespace Coffee::Display;
+using typing::vector_types::Vecf2;
 
 template<typename T, typename std::enable_if<false, T>::type* = nullptr>
 T event(SDL_Event&)
@@ -15,9 +15,10 @@ T event(SDL_Event&)
     return {};
 }
 
-#define EVENT_TRANSLATE(type_) \
-    template<typename T>       \
-    requires std::is_same_v<T, type_> type_ event(SDL_Event& ev)
+#define EVENT_TRANSLATE(type_)                     \
+    template<typename T>                           \
+    requires std::is_same_v<T, type_> type_ event( \
+        [[maybe_unused]] SDL_Event& ev)
 
 EVENT_TRANSLATE(FocusEvent)
 {
@@ -96,8 +97,8 @@ EVENT_TRANSLATE(CIKeyEvent)
     key.mod |= ev.key.state == SDL_PRESSED ? CIKeyEvent::PressedModifier
                                            : CIKeyEvent::NoneModifier;
 
-    key.mod |=
-        ev.key.repeat ? CIKeyEvent::RepeatedModifier : CIKeyEvent::NoneModifier;
+    key.mod |= ev.key.repeat ? CIKeyEvent::RepeatedModifier
+                             : CIKeyEvent::NoneModifier;
 
     return key;
 }
@@ -108,7 +109,7 @@ EVENT_TRANSLATE(CIMouseButtonEvent)
 
     CIMouseButtonEvent btn;
 
-    btn.pos = Coffee::PtF(ev.button.x, ev.button.y);
+    btn.pos = Vecf2(ev.button.x, ev.button.y);
     btn.mod = ev.button.state == SDL_PRESSED ? BTN::Pressed : BTN::NoneModifier;
 
     switch(ev.button.button)
@@ -136,8 +137,7 @@ EVENT_TRANSLATE(CIMouseButtonEvent)
 EVENT_TRANSLATE(CIMouseMoveEvent)
 {
     CIMouseMoveEvent out = {
-        Coffee::PtF(ev.motion.x, ev.motion.y),
-        Coffee::PtF(ev.motion.xrel, ev.motion.yrel)};
+        Vecf2(ev.motion.x, ev.motion.y), Vecf2(ev.motion.xrel, ev.motion.yrel)};
 
     auto buttons = SDL_GetMouseState(nullptr, nullptr);
 
@@ -155,18 +155,15 @@ EVENT_TRANSLATE(CIMouseMoveEvent)
 
 EVENT_TRANSLATE(CIScrollEvent)
 {
-    return {
-        typing::geometry::point_2d<libc_types::i32>(ev.wheel.x, ev.wheel.y)
-            .convert<libc_types::scalar>(),
-        0};
+    return {Vecf2(ev.wheel.x, ev.wheel.y), 0};
 }
 
 EVENT_TRANSLATE(CIControllerAtomicUpdateEvent)
 {
     CIControllerAtomicUpdateEvent out;
 
-    if(ev.type == SDL_CONTROLLERDEVICEADDED ||
-       ev.type == SDL_CONTROLLERDEVICEREMOVED)
+    if(ev.type == SDL_CONTROLLERDEVICEADDED
+       || ev.type == SDL_CONTROLLERDEVICEREMOVED)
     {
         auto& device = ev.cdevice;
 
@@ -190,5 +187,4 @@ EVENT_TRANSLATE(CIQuit)
 
 #undef EVENT_TRANSLATE
 
-} // namespace translate
-} // namespace sdl2
+} // namespace sdl2::translate

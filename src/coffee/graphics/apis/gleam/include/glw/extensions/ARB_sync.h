@@ -76,18 +76,16 @@ fence_sync(group::sync_condition condition, group::sync_behavior_flags flags)
 }
 
 template<class span_i64>
-requires(
-    semantic::concepts::Span<span_i64> &&
-    std::is_same_v<
-        std::decay_t<typename span_i64::value_type>,
-        std::decay_t<i64>>)
-/*!
- * \brief Part of GL_ARB_sync
- * \param pname GLenum
- * \param data GLint64 *
- * \return void
- */
-STATICINLINE void get_integer64v(group::get_prop pname, span_i64 data)
+requires(semantic::concepts::Span<span_i64>&& std::is_same_v<
+         std::decay_t<typename span_i64::value_type>,
+         std::decay_t<i64>>)
+    /*!
+     * \brief Part of GL_ARB_sync
+     * \param pname GLenum
+     * \param data GLint64 *
+     * \return void
+     */
+    STATICINLINE void get_integer64v(group::get_prop pname, span_i64 data)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -101,22 +99,23 @@ STATICINLINE void get_integer64v(group::get_prop pname, span_i64 data)
 }
 
 template<class span_i32>
-requires(
-    semantic::concepts::Span<span_i32> &&
-    std::is_same_v<
-        std::decay_t<typename span_i32::value_type>,
-        std::decay_t<i32>>)
-/*!
- * \brief Part of GL_ARB_sync
- * \param sync GLsync
- * \param pname GLenum
- * \param count GLsizei
- * \param length GLsizei *
- * \param values GLint *
- * \return void
- */
-STATICINLINE void get_synciv(
-    GLsync sync, group::sync_parameter_name pname, i32& length, span_i32 values)
+requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+         std::decay_t<typename span_i32::value_type>,
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_ARB_sync
+     * \param sync GLsync
+     * \param pname GLenum
+     * \param count GLsizei
+     * \param length GLsizei *
+     * \param values GLint *
+     * \return void
+     */
+    STATICINLINE void get_synciv(
+        GLsync                     sync,
+        group::sync_parameter_name pname,
+        i32&                       length,
+        span_i32                   values)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

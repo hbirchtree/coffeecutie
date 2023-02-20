@@ -10,7 +10,7 @@ namespace libc {
 namespace signal {
 
 using sig_handler  = void(int);
-using exit_handler = void(*)();
+using exit_handler = void (*)();
 
 enum class sig
 {
@@ -28,7 +28,7 @@ enum class sig
     abort             = SIGABRT,
 
 #if !defined(COFFEE_WINDOWS)
-    bus_error         = SIGBUS,
+    bus_error = SIGBUS,
 #endif
 
     ill_op = illegal_operation,
@@ -41,7 +41,8 @@ enum class sig
 #endif
 };
 
-FORCEDINLINE void install(sig signal, sig_handler h)
+FORCEDINLINE void install(
+    [[maybe_unused]] sig signal, [[maybe_unused]] sig_handler h)
 {
 #if !defined(COFFEE_ANDROID) && !defined(COFFEE_APPLE_MOBILE)
     ::signal(static_cast<int>(signal), h);
@@ -64,7 +65,7 @@ FORCEDINLINE void default_exit(int)
 }
 } // namespace handlers
 
-template<void(*Handler)()>
+template<void (*Handler)()>
 struct scope_exit_handler
 {
     ~scope_exit_handler()

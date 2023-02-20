@@ -16,10 +16,10 @@ union SafeArea
 {
     struct
     {
-        scalar left;
-        scalar top;
-        scalar right;
-        scalar bottom;
+        f32 left;
+        f32 top;
+        f32 right;
+        f32 bottom;
     };
     scalar data[4];
 };

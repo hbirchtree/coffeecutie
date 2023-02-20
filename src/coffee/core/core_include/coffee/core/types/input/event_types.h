@@ -1,16 +1,18 @@
 #pragma once
 
 #include "keymap.h"
-#include <coffee/core/types/point.h>
-#include <coffee/core/types/vector_types.h>
-#include <peripherals/libc/types.h>
 
-namespace Coffee {
+#include <peripherals/libc/types.h>
+#include <peripherals/typing/vectors/vector_types.h>
+
 /*!
  * \brief Input structures and enums, are commonly used by
  *  Display namespace
  */
-namespace Input {
+namespace Coffee::Input {
+
+using typing::vector_types::Vecf2;
+using typing::vector_types::Vecf3;
 
 constexpr szptr ci_max_text_edit_size = 32;
 
@@ -133,12 +135,12 @@ struct CITextEvent : BaseEvent<CIEvent::TextInput>
  */
 struct CIMouseMoveEvent : BaseEvent<CIEvent::MouseMove>
 {
-    CIMouseMoveEvent(PtF o = {}, PtF d = {}) : origin(o), delta(d)
+    CIMouseMoveEvent(Vecf2 o = {}, Vecf2 d = {}) : origin(o), delta(d)
     {
     }
 
-    PtF origin; /*!< Absolute position*/
-    PtF delta;  /*!< Relative movement since last poll*/
+    Vecf2 origin; /*!< Absolute position*/
+    Vecf2 delta;  /*!< Relative movement since last poll*/
     union
     {
         u8   btn = 0; /*!< Button held down while moved*/
@@ -170,9 +172,11 @@ struct CIMouseButtonEvent : BaseEvent<CIEvent::MouseButton>
         RightButton  = 0x04,
         X1Button     = 0x08,
         X2Button     = 0x10,
+
+        AllButtons = 0x1F,
     };
 
-    PtF            pos;                /*!< Mouse position*/
+    Vecf2          pos;                /*!< Mouse position*/
     ButtonModifier mod = NoneModifier; /*!< Modifier for event*/
     MouseButton    btn = NoneBtn;      /*!< Button*/
 
@@ -184,12 +188,12 @@ struct CIMouseButtonEvent : BaseEvent<CIEvent::MouseButton>
  */
 struct CIScrollEvent : BaseEvent<CIEvent::Scroll>
 {
-    CIScrollEvent(PtF delta = {}, u8 mod = 0) : delta(delta), mod(mod)
+    CIScrollEvent(Vecf2 delta = {}, u8 mod = 0) : delta(delta), mod(mod)
     {
     }
 
-    PtF delta;   /*!< Delta for scroll*/
-    u8  mod = 0; /*!< Current mouse modifiers*/
+    Vecf2 delta;   /*!< Delta for scroll*/
+    u8    mod = 0; /*!< Current mouse modifiers*/
 
     u8  pad1;
     u16 pad2;
@@ -229,7 +233,7 @@ struct CIControllerAtomicEvent : BaseEvent<CIEvent::Controller>
         ButtonStateMask = 0x400, /*!< Shifted 10,1 bit*/
     };
 
-    i16  value;            /*!< Scalar value for axis*/
+    i16  value;            /*!< f32 value for axis*/
     u8   index : 5;        /*!< Button or axis index */
     u8   controller : 4;   /*!< Controller index */
     bool button_state : 1; /*!< when true, the button is pressed */
@@ -263,9 +267,9 @@ struct CIControllerAtomicEvent : BaseEvent<CIEvent::Controller>
 };
 
 template<>
-inline scalar CIControllerAtomicEvent::axis_value<scalar>() const
+inline f32 CIControllerAtomicEvent::axis_value<f32>() const
 {
-    return C_CAST<scalar>(value) / Int16_Max;
+    return C_CAST<f32>(value) / Int16_Max;
 }
 
 template<>
@@ -300,12 +304,12 @@ struct CIControllerState
     {
         struct
         {
-            i16 l_x;
-            i16 l_y;
-            i16 r_x;
-            i16 r_y;
-            i16 t_l;
-            i16 t_r;
+            i16 l_x; /*!< Left X axis */
+            i16 l_y; /*!< Left Y axis */
+            i16 r_x; /*!< Right X axis */
+            i16 r_y; /*!< Right Y axis */
+            i16 t_l; /*!< Left trigger */
+            i16 t_r; /*!< Right trigger */
         } e;
         i16 d[6];
     } axes;
@@ -353,9 +357,9 @@ struct CIHapticEvent : BaseEvent<CIEvent::Haptic>
         u64 data = 0;
         struct
         {
-            scalar strength;
-            u32    duration : 24;
-            u8     index;
+            f32 strength;
+            u32 duration : 24;
+            u8  index;
         } rumble_input;
         struct
         {
@@ -398,7 +402,7 @@ struct CIDropEvent : BaseEvent<CIEvent::Drop>
 
 /*!
  * \brief Sensor event, enumerated with ID, can provide uint64 value or
- * bigscalar value.
+ * f64 value.
  */
 struct CISensorEvent : BaseEvent<CIEvent::Sensor>
 {
@@ -419,8 +423,8 @@ struct CISensorEvent : BaseEvent<CIEvent::Sensor>
             u16 z;
             u16 w;
         } suvec;
-        u64       lvalue; /*!< Integer value for input*/
-        bigscalar dvalue; /*!< Floating-point value for input*/
+        u64 lvalue; /*!< Integer value for input*/
+        f64 dvalue; /*!< Floating-point value for input*/
     };
 };
 
@@ -449,8 +453,8 @@ struct CITouchMotionEvent : BaseEvent<CIEvent::TouchMotion>
     {
         Hover = 0x1,
     };
-    PtF origin;
-    PtF delta;
+    Vecf2 origin;
+    Vecf2 delta;
     union
     {
         struct
@@ -465,9 +469,9 @@ struct CITouchMotionEvent : BaseEvent<CIEvent::TouchMotion>
 
 struct CIMTouchMotionEvent : BaseEvent<CIEvent::MultiTouch>
 {
-    PtF origin;
-    PtF translation;
-    PtF velocity;
+    Vecf2 origin;
+    Vecf2 translation;
+    Vecf2 velocity;
     union
     {
         struct
@@ -482,7 +486,7 @@ struct CIMTouchMotionEvent : BaseEvent<CIEvent::MultiTouch>
 
 struct CIGestureEvent : BaseEvent<CIEvent::Gesture>
 {
-    PtF origin;
+    Vecf2 origin;
     union
     {
         struct
@@ -497,19 +501,18 @@ struct CIGestureEvent : BaseEvent<CIEvent::Gesture>
 
 struct CITouchPinchEvent : BaseEvent<CIEvent::TouchPinch>
 {
-    Vecf2    origin;
-    scalar factor;
+    Vecf2 origin;
+    f32   factor;
 };
 
 struct CITouchRotateEvent : BaseEvent<CIEvent::TouchRotate>
 {
-    Vecf2    origin;
-    scalar radians;
+    Vecf2 origin;
+    f32   radians;
 };
 
 C_FLAGS(CIKeyEvent::KeyModifiers, u16);
 C_FLAGS(CIMouseButtonEvent::ButtonModifier, u8);
 C_FLAGS(CIMouseButtonEvent::MouseButton, u8);
 
-} // namespace Input
-} // namespace Coffee
+} // namespace Coffee::Input

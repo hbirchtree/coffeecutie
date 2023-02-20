@@ -4,7 +4,8 @@
 
 namespace vfs::index_common {
 
-static stl_types::result<index const*, error> FindIndex(fs const* vfs, index::index_t kind)
+static stl_types::result<index_t const*, error> FindIndex(
+    fs_t const* vfs, index_t::index_type kind)
 {
     if(vfs->version() == Version::v1)
     {

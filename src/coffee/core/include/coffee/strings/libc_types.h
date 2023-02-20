@@ -1,22 +1,22 @@
 #pragma once
 
-#include <coffee/core/base.h>
+#include <peripherals/libc/types.h>
 #include <peripherals/stl/string_casting.h>
 #include <peripherals/stl/string_ops.h>
+#include <peripherals/stl/types.h>
 
 #if C_HAS_INCLUDE(<string_view>)
 #include <string_view>
 #endif
 
-namespace Coffee {
-namespace Strings {
+namespace Coffee::Strings {
 
 template<typename... Arg>
-CString fmt(cstring fmt, Arg... arg);
+CString fmt(std::string_view fmt, Arg... arg);
 
 template<typename CharT, typename TargetChar>
-constexpr auto is_cstring_v =
-    std::is_same_v<std::decay_t<std::remove_pointer_t<CharT>>, TargetChar>;
+constexpr auto is_cstring_v
+    = std::is_same_v<std::decay_t<std::remove_pointer_t<CharT>>, TargetChar>;
 
 template<typename T>
 requires(
@@ -36,7 +36,7 @@ inline CString to_string(T const&)
 
 template<typename T>
 requires std::is_same_v<T, bool>
-inline cstring to_string(T const& v)
+inline std::string_view to_string(T const& v)
 {
     return v ? "true" : "false";
 }
@@ -58,9 +58,8 @@ inline CString to_string(std::basic_string_view<CharT> const& v)
 #endif
 
 template<typename T>
-requires(
-    (std::is_integral_v<T> ||
-     std::is_floating_point_v<T>)&&!std::is_same_v<T, bool>)
+requires((std::is_integral_v<T> || std::is_floating_point_v<T>)&&!std::
+             is_same_v<T, bool>)
     //
     inline CString to_string(const T& v)
 {
@@ -74,5 +73,4 @@ inline String to_string(T const& value)
     return static_cast<CString>(value);
 }
 
-} // namespace Strings
-} // namespace Coffee
+} // namespace Coffee::Strings

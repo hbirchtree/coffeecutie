@@ -6,7 +6,6 @@
 #include <coffee/core/profiler/profiling-export.h>
 #include <coffee/core/types/point.h>
 #include <coffee/core/types/size.h>
-#include <coffee/core/types/vector_types.h>
 
 #include <peripherals/libc/signals.h>
 #include <peripherals/stl/any_of.h>
@@ -22,11 +21,11 @@
 #include <coffee/core/CDebug>
 #include <coffee/strings/format.h>
 
-#include <android_native_app_glue.h>
 #include <android/asset_manager.h>
 #include <android/looper.h>
 #include <android/native_activity.h>
 #include <android/window.h>
+#include <android_native_app_glue.h>
 #include <sys/sysinfo.h>
 
 namespace libc::signal {
@@ -37,7 +36,6 @@ using namespace jnipp;
 
 namespace Coffee {
 struct android_app* coffee_app = nullptr;
-static JNIEnv*      coffee_jni_env;
 } // namespace Coffee
 
 namespace android {
@@ -94,6 +92,9 @@ std::string intent::action()
     auto getAction = "getAction"_jmethod.ret("java.lang.String");
 
     auto out = m_intent[getAction]();
+
+    if(!java::objects::not_null(out))
+        return {};
 
     return jnipp::java::type_unwrapper<std::string>(out);
 }
@@ -240,7 +241,17 @@ Url app_info::cache_path()
 
 Url app_info::external_data_path()
 {
-    return constructors::MkSysUrl(coffee_app->activity->externalDataPath);
+    auto def_path
+        = Path{coffee_app->activity->externalDataPath}.url(RSCA::SystemFile);
+
+    if(sdk_version() >= 21)
+        return def_path;
+    else
+    {
+        auto pkg_name = Path{package_name().data()};
+        auto base     = Path("/storage/emulated/legacy") / Path{"Android/data"};
+        return (base / pkg_name / "files").url(RSCA::SystemFile);
+    }
 }
 
 stl_types::Optional<::jnipp::java::object> app_info::get_service(
@@ -258,22 +269,22 @@ stl_types::Optional<::jnipp::java::object> app_info::get_service(
     return jnipp::java::object{Context.clazz, instance};
 }
 
-ANativeActivity *app_info::activity() const
+ANativeActivity* app_info::activity() const
 {
     return coffee_app->activity;
 }
 
-AConfiguration *app_info::configuration() const
+AConfiguration* app_info::configuration() const
 {
     return coffee_app->config;
 }
 
-AInputQueue *app_info::input_queue() const
+AInputQueue* app_info::input_queue() const
 {
     return coffee_app->inputQueue;
 }
 
-ALooper *app_info::looper() const
+ALooper* app_info::looper() const
 {
     return coffee_app->looper;
 }
@@ -416,7 +427,122 @@ std::vector<std::string> cpu_abis()
     return out;
 }
 
-int app_dpi()
+static auto getDisplay()
+{
+    auto activityObject
+        = "android.app.NativeActivity"_jclass(coffee_app->activity->clazz);
+    auto getDisplay = "getDisplay"_jmethod.ret("android.view.Display");
+
+    return "android.view.Display"_jclass(activityObject[getDisplay]());
+}
+
+display_info::hdr_mode_t display_info::hdr_modes()
+{
+    if(coffee_app->activity->sdkVersion < 30)
+        return hdr_mode_t::none;
+
+    auto display = getDisplay();
+
+    auto getHdrCapabilities = "getHdrCapabilities"_jmethod.ret(
+        "android.view.Display$HdrCapabilities");
+    auto isHdr = "isHdr"_jmethod.ret<re::bool_>();
+
+    if(!display[isHdr]())
+        return hdr_mode_t::none;
+
+    enum android_types
+    {
+        dolby_vision = 1,
+        hdr10,
+        hlg,
+        hdr10_plus,
+    };
+
+    auto HdrCapabilities = "android.view.Display$HdrCapabilities"_jclass;
+    auto getSupportedHdrTypes
+        = "getSupportedHdrTypes"_jmethod.ret<re::int_array_>();
+
+    auto hdrCapabilities = HdrCapabilities(display[getHdrCapabilities]());
+    auto hdrTypes        = hdrCapabilities[getSupportedHdrTypes]();
+
+    hdr_mode_t out = none;
+    for(i32 type : jnipp::java::array_extractors::container<re::int_>(hdrTypes))
+    {
+        if(type == dolby_vision)
+            out |= hdr_mode_t::dolby_vision;
+        else if(type == hdr10)
+            out |= hdr_mode_t::hdr10;
+        else if(type == hlg)
+            out |= hdr_mode_t::hlg;
+        else if(type == hdr10_plus)
+            out |= hdr_mode_t::hdr10_plus;
+    }
+
+    return out;
+}
+
+bool display_info::is_low_latency()
+{
+    if(coffee_app->activity->sdkVersion < 30)
+        return false;
+
+    auto display = getDisplay();
+    auto isMinimalPostProcessingSupported
+        = "isMinimalPostProcessingSupported"_jmethod.ret<re::bool_>();
+
+    return display[isMinimalPostProcessingSupported]();
+}
+
+bool display_info::is_wide_gamut()
+{
+    if(coffee_app->activity->sdkVersion < 30)
+        return false;
+
+    auto display          = getDisplay();
+    auto isWideColorGamut = "isWideColorGamut"_jmethod.ret<re::bool_>();
+    return display[isWideColorGamut]();
+}
+
+std::optional<display_info::insets_t> display_info::safe_insets()
+{
+    using libc_types::u32;
+
+    if(coffee_app->activity->sdkVersion < 30)
+        return std::nullopt;
+
+    auto display   = getDisplay();
+    auto getCutout = "getCutout"_jmethod.ret("android.view.DisplayCutout");
+
+    auto cutoutValue = display[getCutout]();
+    if(!cutoutValue)
+        return std::nullopt;
+    auto DisplayCutout = "android.view.DisplayCutout"_jclass;
+    auto cutout        = DisplayCutout(cutoutValue);
+
+    auto getSafeInsetBottom = "getSafeInsetBottom"_jmethod.ret<re::int_>();
+    auto getSafeInsetLeft   = "getSafeInsetLeft"_jmethod.ret<re::int_>();
+    auto getSafeInsetRight  = "getSafeInsetRight"_jmethod.ret<re::int_>();
+    auto getSafeInsetTop    = "getSafeInsetTop"_jmethod.ret<re::int_>();
+
+    return insets_t{
+        .top    = static_cast<f32>(cutout[getSafeInsetTop]()),
+        .bottom = static_cast<f32>(cutout[getSafeInsetBottom]()),
+        .left   = static_cast<f32>(cutout[getSafeInsetLeft]()),
+        .right  = static_cast<f32>(cutout[getSafeInsetRight]()),
+    };
+}
+
+display_info::rotation_t display_info::rotation()
+{
+    if(coffee_app->activity->sdkVersion < 30)
+        return display_info::rotation_t::portrait_0;
+    auto display          = getDisplay();
+    auto getRotation      = "getRotation"_jmethod.ret<re::int_>();
+    auto current_rotation = display[getRotation]();
+    return static_cast<rotation_t>(current_rotation);
+}
+
+f32 display_info::dpi()
 {
     auto activityObject
         = "android.app.NativeActivity"_jclass(coffee_app->activity->clazz);
@@ -437,21 +563,26 @@ int app_dpi()
     return displayDpi;
 }
 
+f32 display_info::refresh_rate()
+{
+    if(coffee_app->activity->sdkVersion < 30)
+        return 60.f;
+    auto display        = getDisplay();
+    auto getRefreshRate = "getRefreshRate"_jmethod.ret<re::float_>();
+
+    return display[getRefreshRate]();
+}
+
 } // namespace android
 
 namespace Coffee {
 
-int MainSetup(::MainWithArgs mainfun, int argc, char** argv, u32 flags);
-int MainSetup(::MainNoArgs mainfun, int argc, char** argv, u32 flags);
+using libc_types::u32;
+
+int MainSetup(::MainWithArgs mainfun, int argc, char** argv, u32 flags = 0);
+int MainSetup(::MainNoArgs mainfun, int argc, char** argv, u32 flags = 0);
 
 using namespace android;
-
-/*
- *
- * Android storage
- *
- */
-static const constexpr u8 INPUT_VERB = 11;
 
 /*
  *
@@ -463,19 +594,32 @@ STATICINLINE void GetExtras()
 {
     using namespace jnipp_operators;
 
-    jobject native_app = coffee_app->activity->clazz;
-
-    /* CLasses */
-    auto NativeActivity = "android.app.NativeActivity"_jclass;
-
-    /* Methods */
-
-    auto activityObject = NativeActivity(native_app);
-
     {
         /* Get display DPI */
 
-        cDebug("Display DPI: {0}", android::app_dpi());
+        cDebug("Display DPI: {0}", android::display_info().dpi());
+        cDebug(
+            "Display HDR mode: {0}",
+            static_cast<int>(android::display_info().hdr_modes()));
+        cDebug(
+            "Display low latency: {0}",
+            android::display_info().is_low_latency());
+        cDebug(
+            "Display wide gamut: {0}", android::display_info().is_wide_gamut());
+        cDebug(
+            "Display refresh rate: {0}",
+            android::display_info().refresh_rate());
+
+        if(auto insets_ = android::display_info().safe_insets())
+        {
+            auto insets = insets_.value();
+            cDebug(
+                "Insets: top:{0} bottom:{1} left:{2} right:{3}",
+                insets.top,
+                insets.bottom,
+                insets.left,
+                insets.right);
+        }
     }
 
     {
@@ -561,6 +705,11 @@ STATICINLINE void InitializeState(struct android_app* state)
                     .count());
         }
 
+        if(!window_initialized)
+        {
+            android_bus = nullptr;
+        }
+
         if(!android_bus)
         {
             auto& entities = comp_app::createContainer();
@@ -586,26 +735,28 @@ STATICINLINE void InitializeState(struct android_app* state)
             window_initialized = false;
         }
     };
-    state->onInputEvent
-        = [](struct android_app* app, struct AInputEvent* event) {
-              static anative::AndroidEventBus* android_bus;
+    state->onInputEvent = [](struct android_app*, struct AInputEvent* event) {
+        static anative::AndroidEventBus* android_bus;
 
-              if(!window_initialized)
-                  return 0;
+        if(!window_initialized)
+        {
+            android_bus = nullptr;
+            return 0;
+        }
 
-              if(!android_bus)
-              {
-                  auto& entities = comp_app::createContainer();
-                  android_bus    = entities.service<anative::AndroidEventBus>();
-              }
+        if(!android_bus)
+        {
+            auto& entities = comp_app::createContainer();
+            android_bus    = entities.service<anative::AndroidEventBus>();
+        }
 
-              if(!android_bus)
-                  return 0;
+        if(!android_bus)
+            return 0;
 
-              android_bus->handleInputEvent(event);
+        android_bus->handleInputEvent(event);
 
-              return 1;
-          };
+        return 1;
+    };
 
     auto activityName = jnipp::java::objects::get_class(
         jnipp::java::object({}, state->activity->clazz));
@@ -616,8 +767,6 @@ STATICINLINE void InitializeState(struct android_app* state)
 
     auto memory = *android::activity_manager().get_mem_info();
     cDebug("System memory: {0}", memory.total);
-
-    auto stats = android::network_stats().query();
 
     GetExtras();
     auto extras = android::intent().extras();
@@ -646,11 +795,11 @@ STATICINLINE void StartEventProcessing(android_app* state)
 
     while(1)
     {
-        int timeout = -1;
+        //        int timeout = -1;
 
-        if(state->activityState == APP_CMD_START
-           || state->activityState == APP_CMD_RESUME)
-            timeout = 0;
+        //        if(state->activityState == APP_CMD_START
+        //           || state->activityState == APP_CMD_RESUME)
+        //            timeout = 0;
 
         int ident;
         int events;
@@ -695,7 +844,7 @@ STATICINLINE void StartEventProcessing(android_app* state)
 void android_main(struct android_app* state)
 {
     Coffee::launch_time = std::chrono::steady_clock::now();
-    Coffee::InitializeState(state);
     Coffee::SetPrintingVerbosity(15);
+    Coffee::InitializeState(state);
     Coffee::StartEventProcessing(state);
 }

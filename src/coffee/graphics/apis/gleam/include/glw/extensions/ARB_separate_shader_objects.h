@@ -24,11 +24,13 @@ STATICINLINE void active_shader_program(u32 pipeline, u32 program)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ActiveShaderProgram)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgramPipeline)
             glIsProgramPipeline(pipeline);
 #endif
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -48,7 +50,8 @@ STATICINLINE void bind_program_pipeline(u32 pipeline)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindProgramPipeline)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgramPipeline)
             glIsProgramPipeline(pipeline);
 #endif
@@ -81,18 +84,16 @@ STATICINLINE GLuint create_shader_programv(
 }
 
 template<class span_const_u32>
-requires(
-    semantic::concepts::Span<span_const_u32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_u32::value_type>,
-        std::decay_t<u32>>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param n GLsizei
- * \param pipelines const GLuint *
- * \return void
- */
-STATICINLINE void delete_program_pipelines(span_const_u32 const& pipelines)
+requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+         std::decay_t<typename span_const_u32::value_type>,
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param n GLsizei
+     * \param pipelines const GLuint *
+     * \return void
+     */
+    STATICINLINE void delete_program_pipelines(span_const_u32 const& pipelines)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -107,18 +108,16 @@ STATICINLINE void delete_program_pipelines(span_const_u32 const& pipelines)
 }
 
 template<class span_u32>
-requires(
-    semantic::concepts::Span<span_u32> &&
-    std::is_same_v<
-        std::decay_t<typename span_u32::value_type>,
-        std::decay_t<u32>>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param n GLsizei
- * \param pipelines GLuint *
- * \return void
- */
-STATICINLINE void gen_program_pipelines(span_u32 pipelines)
+requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+         std::decay_t<typename span_u32::value_type>,
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param n GLsizei
+     * \param pipelines GLuint *
+     * \return void
+     */
+    STATICINLINE void gen_program_pipelines(span_u32 pipelines)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -133,27 +132,26 @@ STATICINLINE void gen_program_pipelines(span_u32 pipelines)
 }
 
 template<class span_GLchar>
-requires(
-    semantic::concepts::Span<span_GLchar> &&
-    std::is_same_v<
-        std::decay_t<typename span_GLchar::value_type>,
-        std::decay_t<GLchar>>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param pipeline GLuint
- * \param bufSize GLsizei
- * \param length GLsizei *
- * \param infoLog GLchar *
- * \return void
- */
-STATICINLINE void get_program_pipeline_info_log(
-    u32 pipeline, i32& length, span_GLchar infoLog)
+requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
+         std::decay_t<typename span_GLchar::value_type>,
+         std::decay_t<GLchar>>)
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param pipeline GLuint
+     * \param bufSize GLsizei
+     * \param length GLsizei *
+     * \param infoLog GLchar *
+     * \return void
+     */
+    STATICINLINE void get_program_pipeline_info_log(
+        u32 pipeline, i32& length, span_GLchar infoLog)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetProgramPipelineInfoLog)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgramPipeline)
             glIsProgramPipeline(pipeline);
 #endif
@@ -164,26 +162,25 @@ STATICINLINE void get_program_pipeline_info_log(
 }
 
 template<class span_i32>
-requires(
-    semantic::concepts::Span<span_i32> &&
-    std::is_same_v<
-        std::decay_t<typename span_i32::value_type>,
-        std::decay_t<i32>>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param pipeline GLuint
- * \param pname GLenum
- * \param params GLint *
- * \return void
- */
-STATICINLINE void get_program_pipelineiv(
-    u32 pipeline, group::pipeline_parameter_name pname, span_i32 params)
+requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+         std::decay_t<typename span_i32::value_type>,
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param pipeline GLuint
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_program_pipelineiv(
+        u32 pipeline, group::pipeline_parameter_name pname, span_i32 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetProgramPipelineiv)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgramPipeline)
             glIsProgramPipeline(pipeline);
 #endif
@@ -206,7 +203,8 @@ STATICINLINE GLboolean is_program_pipeline(u32 pipeline)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(IsProgramPipeline)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgramPipeline)
             glIsProgramPipeline(pipeline);
 #endif
@@ -230,7 +228,8 @@ STATICINLINE void program_parameter(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramParameteri)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -252,7 +251,8 @@ STATICINLINE void program_uniform(u32 program, i32 location, f64 v0)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform1d)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -262,27 +262,26 @@ STATICINLINE void program_uniform(u32 program, i32 location, f64 v0)
 }
 
 template<class span_const_f64>
-requires(
-    semantic::concepts::Span<span_const_f64> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_f64::value_type>,
-        std::decay_t<f64>>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param program GLuint
- * \param location GLint
- * \param count GLsizei
- * \param value const GLdouble *
- * \return void
- */
-STATICINLINE
+requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
+         std::decay_t<typename span_const_f64::value_type>,
+         std::decay_t<f64>>)
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLdouble *
+     * \return void
+     */
+    STATICINLINE
     void program_uniform(u32 program, i32 location, span_const_f64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform1dv)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -308,7 +307,8 @@ STATICINLINE void program_uniform(u32 program, i32 location, f32 v0)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform1f)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -318,27 +318,26 @@ STATICINLINE void program_uniform(u32 program, i32 location, f32 v0)
 }
 
 template<class span_const_f32>
-requires(
-    semantic::concepts::Span<span_const_f32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_f32::value_type>,
-        std::decay_t<f32>>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param program GLuint
- * \param location GLint
- * \param count GLsizei
- * \param value const GLfloat *
- * \return void
- */
-STATICINLINE
+requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+         std::decay_t<typename span_const_f32::value_type>,
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLfloat *
+     * \return void
+     */
+    STATICINLINE
     void program_uniform(u32 program, i32 location, span_const_f32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform1fv)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -364,7 +363,8 @@ STATICINLINE void program_uniform(u32 program, i32 location, i32 v0)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform1i)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -374,27 +374,26 @@ STATICINLINE void program_uniform(u32 program, i32 location, i32 v0)
 }
 
 template<class span_const_i32>
-requires(
-    semantic::concepts::Span<span_const_i32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_i32::value_type>,
-        std::decay_t<i32>>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param program GLuint
- * \param location GLint
- * \param count GLsizei
- * \param value const GLint *
- * \return void
- */
-STATICINLINE
+requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
+         std::decay_t<typename span_const_i32::value_type>,
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLint *
+     * \return void
+     */
+    STATICINLINE
     void program_uniform(u32 program, i32 location, span_const_i32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform1iv)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -420,7 +419,8 @@ STATICINLINE void program_uniform(u32 program, i32 location, u32 v0)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform1ui)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -430,27 +430,26 @@ STATICINLINE void program_uniform(u32 program, i32 location, u32 v0)
 }
 
 template<class span_const_u32>
-requires(
-    semantic::concepts::Span<span_const_u32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_u32::value_type>,
-        std::decay_t<u32>>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param program GLuint
- * \param location GLint
- * \param count GLsizei
- * \param value const GLuint *
- * \return void
- */
-STATICINLINE
+requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+         std::decay_t<typename span_const_u32::value_type>,
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLuint *
+     * \return void
+     */
+    STATICINLINE
     void program_uniform(u32 program, i32 location, span_const_u32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform1uiv)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -465,22 +464,23 @@ STATICINLINE
 
 template<class vec_2_f64>
 requires(semantic::concepts::Vector<vec_2_f64, f64, 2>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param program GLuint
- * \param location GLint
- * \param v0 GLdouble
- * \param v1 GLdouble
- * \return void
- */
-STATICINLINE
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param program GLuint
+     * \param location GLint
+     * \param v0 GLdouble
+     * \param v1 GLdouble
+     * \return void
+     */
+    STATICINLINE
     void program_uniform(u32 program, i32 location, vec_2_f64 const& v0)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform2d)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -490,26 +490,25 @@ STATICINLINE
 }
 
 template<class span_const_vec_2_f64>
-requires(
-    semantic::concepts::Span<span_const_vec_2_f64> &&
-    semantic::concepts::
-        Vector<typename span_const_vec_2_f64::value_type, f64, 2>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param program GLuint
- * \param location GLint
- * \param count GLsizei
- * \param value const GLdouble *
- * \return void
- */
-STATICINLINE void program_uniform(
-    u32 program, i32 location, i32 count, span_const_vec_2_f64 const& value)
+requires(semantic::concepts::Span<span_const_vec_2_f64>&& semantic::concepts::
+             Vector<typename span_const_vec_2_f64::value_type, f64, 2>)
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLdouble *
+     * \return void
+     */
+    STATICINLINE void program_uniform(
+        u32 program, i32 location, i32 count, span_const_vec_2_f64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform2dv)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -524,22 +523,23 @@ STATICINLINE void program_uniform(
 
 template<class vec_2_f32>
 requires(semantic::concepts::Vector<vec_2_f32, f32, 2>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param program GLuint
- * \param location GLint
- * \param v0 GLfloat
- * \param v1 GLfloat
- * \return void
- */
-STATICINLINE
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param program GLuint
+     * \param location GLint
+     * \param v0 GLfloat
+     * \param v1 GLfloat
+     * \return void
+     */
+    STATICINLINE
     void program_uniform(u32 program, i32 location, vec_2_f32 const& v0)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform2f)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -549,26 +549,25 @@ STATICINLINE
 }
 
 template<class span_const_vec_2_f32>
-requires(
-    semantic::concepts::Span<span_const_vec_2_f32> &&
-    semantic::concepts::
-        Vector<typename span_const_vec_2_f32::value_type, f32, 2>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param program GLuint
- * \param location GLint
- * \param count GLsizei
- * \param value const GLfloat *
- * \return void
- */
-STATICINLINE void program_uniform(
-    u32 program, i32 location, i32 count, span_const_vec_2_f32 const& value)
+requires(semantic::concepts::Span<span_const_vec_2_f32>&& semantic::concepts::
+             Vector<typename span_const_vec_2_f32::value_type, f32, 2>)
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLfloat *
+     * \return void
+     */
+    STATICINLINE void program_uniform(
+        u32 program, i32 location, i32 count, span_const_vec_2_f32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform2fv)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -583,22 +582,23 @@ STATICINLINE void program_uniform(
 
 template<class vec_2_i32>
 requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param program GLuint
- * \param location GLint
- * \param v0 GLint
- * \param v1 GLint
- * \return void
- */
-STATICINLINE
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param program GLuint
+     * \param location GLint
+     * \param v0 GLint
+     * \param v1 GLint
+     * \return void
+     */
+    STATICINLINE
     void program_uniform(u32 program, i32 location, vec_2_i32 const& v0)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform2i)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -608,26 +608,25 @@ STATICINLINE
 }
 
 template<class span_const_vec_2_i32>
-requires(
-    semantic::concepts::Span<span_const_vec_2_i32> &&
-    semantic::concepts::
-        Vector<typename span_const_vec_2_i32::value_type, i32, 2>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param program GLuint
- * \param location GLint
- * \param count GLsizei
- * \param value const GLint *
- * \return void
- */
-STATICINLINE void program_uniform(
-    u32 program, i32 location, i32 count, span_const_vec_2_i32 const& value)
+requires(semantic::concepts::Span<span_const_vec_2_i32>&& semantic::concepts::
+             Vector<typename span_const_vec_2_i32::value_type, i32, 2>)
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLint *
+     * \return void
+     */
+    STATICINLINE void program_uniform(
+        u32 program, i32 location, i32 count, span_const_vec_2_i32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform2iv)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -639,22 +638,23 @@ STATICINLINE void program_uniform(
 
 template<class vec_2_u32>
 requires(semantic::concepts::Vector<vec_2_u32, u32, 2>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param program GLuint
- * \param location GLint
- * \param v0 GLuint
- * \param v1 GLuint
- * \return void
- */
-STATICINLINE
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param program GLuint
+     * \param location GLint
+     * \param v0 GLuint
+     * \param v1 GLuint
+     * \return void
+     */
+    STATICINLINE
     void program_uniform(u32 program, i32 location, vec_2_u32 const& v0)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform2ui)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -664,26 +664,25 @@ STATICINLINE
 }
 
 template<class span_const_vec_2_u32>
-requires(
-    semantic::concepts::Span<span_const_vec_2_u32> &&
-    semantic::concepts::
-        Vector<typename span_const_vec_2_u32::value_type, u32, 2>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param program GLuint
- * \param location GLint
- * \param count GLsizei
- * \param value const GLuint *
- * \return void
- */
-STATICINLINE void program_uniform(
-    u32 program, i32 location, i32 count, span_const_vec_2_u32 const& value)
+requires(semantic::concepts::Span<span_const_vec_2_u32>&& semantic::concepts::
+             Vector<typename span_const_vec_2_u32::value_type, u32, 2>)
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLuint *
+     * \return void
+     */
+    STATICINLINE void program_uniform(
+        u32 program, i32 location, i32 count, span_const_vec_2_u32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform2uiv)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -698,23 +697,24 @@ STATICINLINE void program_uniform(
 
 template<class vec_3_f64>
 requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param program GLuint
- * \param location GLint
- * \param v0 GLdouble
- * \param v1 GLdouble
- * \param v2 GLdouble
- * \return void
- */
-STATICINLINE
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param program GLuint
+     * \param location GLint
+     * \param v0 GLdouble
+     * \param v1 GLdouble
+     * \param v2 GLdouble
+     * \return void
+     */
+    STATICINLINE
     void program_uniform(u32 program, i32 location, vec_3_f64 const& v0)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform3d)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -724,26 +724,25 @@ STATICINLINE
 }
 
 template<class span_const_vec_3_f64>
-requires(
-    semantic::concepts::Span<span_const_vec_3_f64> &&
-    semantic::concepts::
-        Vector<typename span_const_vec_3_f64::value_type, f64, 3>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param program GLuint
- * \param location GLint
- * \param count GLsizei
- * \param value const GLdouble *
- * \return void
- */
-STATICINLINE void program_uniform(
-    u32 program, i32 location, i32 count, span_const_vec_3_f64 const& value)
+requires(semantic::concepts::Span<span_const_vec_3_f64>&& semantic::concepts::
+             Vector<typename span_const_vec_3_f64::value_type, f64, 3>)
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLdouble *
+     * \return void
+     */
+    STATICINLINE void program_uniform(
+        u32 program, i32 location, i32 count, span_const_vec_3_f64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform3dv)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -758,23 +757,24 @@ STATICINLINE void program_uniform(
 
 template<class vec_3_f32>
 requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param program GLuint
- * \param location GLint
- * \param v0 GLfloat
- * \param v1 GLfloat
- * \param v2 GLfloat
- * \return void
- */
-STATICINLINE
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param program GLuint
+     * \param location GLint
+     * \param v0 GLfloat
+     * \param v1 GLfloat
+     * \param v2 GLfloat
+     * \return void
+     */
+    STATICINLINE
     void program_uniform(u32 program, i32 location, vec_3_f32 const& v0)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform3f)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -784,26 +784,25 @@ STATICINLINE
 }
 
 template<class span_const_vec_3_f32>
-requires(
-    semantic::concepts::Span<span_const_vec_3_f32> &&
-    semantic::concepts::
-        Vector<typename span_const_vec_3_f32::value_type, f32, 3>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param program GLuint
- * \param location GLint
- * \param count GLsizei
- * \param value const GLfloat *
- * \return void
- */
-STATICINLINE void program_uniform(
-    u32 program, i32 location, i32 count, span_const_vec_3_f32 const& value)
+requires(semantic::concepts::Span<span_const_vec_3_f32>&& semantic::concepts::
+             Vector<typename span_const_vec_3_f32::value_type, f32, 3>)
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLfloat *
+     * \return void
+     */
+    STATICINLINE void program_uniform(
+        u32 program, i32 location, i32 count, span_const_vec_3_f32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform3fv)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -818,23 +817,24 @@ STATICINLINE void program_uniform(
 
 template<class vec_3_i32>
 requires(semantic::concepts::Vector<vec_3_i32, i32, 3>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param program GLuint
- * \param location GLint
- * \param v0 GLint
- * \param v1 GLint
- * \param v2 GLint
- * \return void
- */
-STATICINLINE
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param program GLuint
+     * \param location GLint
+     * \param v0 GLint
+     * \param v1 GLint
+     * \param v2 GLint
+     * \return void
+     */
+    STATICINLINE
     void program_uniform(u32 program, i32 location, vec_3_i32 const& v0)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform3i)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -844,26 +844,25 @@ STATICINLINE
 }
 
 template<class span_const_vec_3_i32>
-requires(
-    semantic::concepts::Span<span_const_vec_3_i32> &&
-    semantic::concepts::
-        Vector<typename span_const_vec_3_i32::value_type, i32, 3>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param program GLuint
- * \param location GLint
- * \param count GLsizei
- * \param value const GLint *
- * \return void
- */
-STATICINLINE void program_uniform(
-    u32 program, i32 location, i32 count, span_const_vec_3_i32 const& value)
+requires(semantic::concepts::Span<span_const_vec_3_i32>&& semantic::concepts::
+             Vector<typename span_const_vec_3_i32::value_type, i32, 3>)
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLint *
+     * \return void
+     */
+    STATICINLINE void program_uniform(
+        u32 program, i32 location, i32 count, span_const_vec_3_i32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform3iv)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -875,23 +874,24 @@ STATICINLINE void program_uniform(
 
 template<class vec_3_u32>
 requires(semantic::concepts::Vector<vec_3_u32, u32, 3>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param program GLuint
- * \param location GLint
- * \param v0 GLuint
- * \param v1 GLuint
- * \param v2 GLuint
- * \return void
- */
-STATICINLINE
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param program GLuint
+     * \param location GLint
+     * \param v0 GLuint
+     * \param v1 GLuint
+     * \param v2 GLuint
+     * \return void
+     */
+    STATICINLINE
     void program_uniform(u32 program, i32 location, vec_3_u32 const& v0)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform3ui)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -901,26 +901,25 @@ STATICINLINE
 }
 
 template<class span_const_vec_3_u32>
-requires(
-    semantic::concepts::Span<span_const_vec_3_u32> &&
-    semantic::concepts::
-        Vector<typename span_const_vec_3_u32::value_type, u32, 3>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param program GLuint
- * \param location GLint
- * \param count GLsizei
- * \param value const GLuint *
- * \return void
- */
-STATICINLINE void program_uniform(
-    u32 program, i32 location, i32 count, span_const_vec_3_u32 const& value)
+requires(semantic::concepts::Span<span_const_vec_3_u32>&& semantic::concepts::
+             Vector<typename span_const_vec_3_u32::value_type, u32, 3>)
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLuint *
+     * \return void
+     */
+    STATICINLINE void program_uniform(
+        u32 program, i32 location, i32 count, span_const_vec_3_u32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform3uiv)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -935,24 +934,25 @@ STATICINLINE void program_uniform(
 
 template<class vec_4_f64>
 requires(semantic::concepts::Vector<vec_4_f64, f64, 4>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param program GLuint
- * \param location GLint
- * \param v0 GLdouble
- * \param v1 GLdouble
- * \param v2 GLdouble
- * \param v3 GLdouble
- * \return void
- */
-STATICINLINE
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param program GLuint
+     * \param location GLint
+     * \param v0 GLdouble
+     * \param v1 GLdouble
+     * \param v2 GLdouble
+     * \param v3 GLdouble
+     * \return void
+     */
+    STATICINLINE
     void program_uniform(u32 program, i32 location, vec_4_f64 const& v0)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform4d)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -962,26 +962,25 @@ STATICINLINE
 }
 
 template<class span_const_vec_4_f64>
-requires(
-    semantic::concepts::Span<span_const_vec_4_f64> &&
-    semantic::concepts::
-        Vector<typename span_const_vec_4_f64::value_type, f64, 4>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param program GLuint
- * \param location GLint
- * \param count GLsizei
- * \param value const GLdouble *
- * \return void
- */
-STATICINLINE void program_uniform(
-    u32 program, i32 location, i32 count, span_const_vec_4_f64 const& value)
+requires(semantic::concepts::Span<span_const_vec_4_f64>&& semantic::concepts::
+             Vector<typename span_const_vec_4_f64::value_type, f64, 4>)
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLdouble *
+     * \return void
+     */
+    STATICINLINE void program_uniform(
+        u32 program, i32 location, i32 count, span_const_vec_4_f64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform4dv)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -996,24 +995,25 @@ STATICINLINE void program_uniform(
 
 template<class vec_4_f32>
 requires(semantic::concepts::Vector<vec_4_f32, f32, 4>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param program GLuint
- * \param location GLint
- * \param v0 GLfloat
- * \param v1 GLfloat
- * \param v2 GLfloat
- * \param v3 GLfloat
- * \return void
- */
-STATICINLINE
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param program GLuint
+     * \param location GLint
+     * \param v0 GLfloat
+     * \param v1 GLfloat
+     * \param v2 GLfloat
+     * \param v3 GLfloat
+     * \return void
+     */
+    STATICINLINE
     void program_uniform(u32 program, i32 location, vec_4_f32 const& v0)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform4f)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -1023,26 +1023,25 @@ STATICINLINE
 }
 
 template<class span_const_vec_4_f32>
-requires(
-    semantic::concepts::Span<span_const_vec_4_f32> &&
-    semantic::concepts::
-        Vector<typename span_const_vec_4_f32::value_type, f32, 4>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param program GLuint
- * \param location GLint
- * \param count GLsizei
- * \param value const GLfloat *
- * \return void
- */
-STATICINLINE void program_uniform(
-    u32 program, i32 location, i32 count, span_const_vec_4_f32 const& value)
+requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
+             Vector<typename span_const_vec_4_f32::value_type, f32, 4>)
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLfloat *
+     * \return void
+     */
+    STATICINLINE void program_uniform(
+        u32 program, i32 location, i32 count, span_const_vec_4_f32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform4fv)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -1057,24 +1056,25 @@ STATICINLINE void program_uniform(
 
 template<class vec_4_i32>
 requires(semantic::concepts::Vector<vec_4_i32, i32, 4>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param program GLuint
- * \param location GLint
- * \param v0 GLint
- * \param v1 GLint
- * \param v2 GLint
- * \param v3 GLint
- * \return void
- */
-STATICINLINE
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param program GLuint
+     * \param location GLint
+     * \param v0 GLint
+     * \param v1 GLint
+     * \param v2 GLint
+     * \param v3 GLint
+     * \return void
+     */
+    STATICINLINE
     void program_uniform(u32 program, i32 location, vec_4_i32 const& v0)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform4i)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -1084,26 +1084,25 @@ STATICINLINE
 }
 
 template<class span_const_vec_4_i32>
-requires(
-    semantic::concepts::Span<span_const_vec_4_i32> &&
-    semantic::concepts::
-        Vector<typename span_const_vec_4_i32::value_type, i32, 4>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param program GLuint
- * \param location GLint
- * \param count GLsizei
- * \param value const GLint *
- * \return void
- */
-STATICINLINE void program_uniform(
-    u32 program, i32 location, i32 count, span_const_vec_4_i32 const& value)
+requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
+             Vector<typename span_const_vec_4_i32::value_type, i32, 4>)
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLint *
+     * \return void
+     */
+    STATICINLINE void program_uniform(
+        u32 program, i32 location, i32 count, span_const_vec_4_i32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform4iv)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -1115,24 +1114,25 @@ STATICINLINE void program_uniform(
 
 template<class vec_4_u32>
 requires(semantic::concepts::Vector<vec_4_u32, u32, 4>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param program GLuint
- * \param location GLint
- * \param v0 GLuint
- * \param v1 GLuint
- * \param v2 GLuint
- * \param v3 GLuint
- * \return void
- */
-STATICINLINE
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param program GLuint
+     * \param location GLint
+     * \param v0 GLuint
+     * \param v1 GLuint
+     * \param v2 GLuint
+     * \param v3 GLuint
+     * \return void
+     */
+    STATICINLINE
     void program_uniform(u32 program, i32 location, vec_4_u32 const& v0)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform4ui)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -1142,26 +1142,25 @@ STATICINLINE
 }
 
 template<class span_const_vec_4_u32>
-requires(
-    semantic::concepts::Span<span_const_vec_4_u32> &&
-    semantic::concepts::
-        Vector<typename span_const_vec_4_u32::value_type, u32, 4>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param program GLuint
- * \param location GLint
- * \param count GLsizei
- * \param value const GLuint *
- * \return void
- */
-STATICINLINE void program_uniform(
-    u32 program, i32 location, i32 count, span_const_vec_4_u32 const& value)
+requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
+             Vector<typename span_const_vec_4_u32::value_type, u32, 4>)
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param value const GLuint *
+     * \return void
+     */
+    STATICINLINE void program_uniform(
+        u32 program, i32 location, i32 count, span_const_vec_4_u32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniform4uiv)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -1175,31 +1174,30 @@ STATICINLINE void program_uniform(
 }
 
 template<class span_const_mat_2x2_f64>
-requires(
-    semantic::concepts::Span<span_const_mat_2x2_f64> &&
-    semantic::concepts::
-        Matrix<typename span_const_mat_2x2_f64::value_type, f64, 2, 2>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param program GLuint
- * \param location GLint
- * \param count GLsizei
- * \param transpose GLboolean
- * \param value const GLdouble *
- * \return void
- */
-STATICINLINE void program_uniform(
-    u32                           program,
-    i32                           location,
-    i32                           count,
-    bool                          transpose,
-    span_const_mat_2x2_f64 const& value)
+requires(semantic::concepts::Span<span_const_mat_2x2_f64>&& semantic::concepts::
+             Matrix<typename span_const_mat_2x2_f64::value_type, f64, 2, 2>)
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param transpose GLboolean
+     * \param value const GLdouble *
+     * \return void
+     */
+    STATICINLINE void program_uniform(
+        u32                           program,
+        i32                           location,
+        i32                           count,
+        bool                          transpose,
+        span_const_mat_2x2_f64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix2dv)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -1214,31 +1212,30 @@ STATICINLINE void program_uniform(
 }
 
 template<class span_const_mat_2x2_f32>
-requires(
-    semantic::concepts::Span<span_const_mat_2x2_f32> &&
-    semantic::concepts::
-        Matrix<typename span_const_mat_2x2_f32::value_type, f32, 2, 2>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param program GLuint
- * \param location GLint
- * \param count GLsizei
- * \param transpose GLboolean
- * \param value const GLfloat *
- * \return void
- */
-STATICINLINE void program_uniform(
-    u32                           program,
-    i32                           location,
-    i32                           count,
-    bool                          transpose,
-    span_const_mat_2x2_f32 const& value)
+requires(semantic::concepts::Span<span_const_mat_2x2_f32>&& semantic::concepts::
+             Matrix<typename span_const_mat_2x2_f32::value_type, f32, 2, 2>)
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param transpose GLboolean
+     * \param value const GLfloat *
+     * \return void
+     */
+    STATICINLINE void program_uniform(
+        u32                           program,
+        i32                           location,
+        i32                           count,
+        bool                          transpose,
+        span_const_mat_2x2_f32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix2fv)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -1253,31 +1250,30 @@ STATICINLINE void program_uniform(
 }
 
 template<class span_const_mat_2x3_f64>
-requires(
-    semantic::concepts::Span<span_const_mat_2x3_f64> &&
-    semantic::concepts::
-        Matrix<typename span_const_mat_2x3_f64::value_type, f64, 2, 3>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param program GLuint
- * \param location GLint
- * \param count GLsizei
- * \param transpose GLboolean
- * \param value const GLdouble *
- * \return void
- */
-STATICINLINE void program_uniform(
-    u32                           program,
-    i32                           location,
-    i32                           count,
-    bool                          transpose,
-    span_const_mat_2x3_f64 const& value)
+requires(semantic::concepts::Span<span_const_mat_2x3_f64>&& semantic::concepts::
+             Matrix<typename span_const_mat_2x3_f64::value_type, f64, 2, 3>)
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param transpose GLboolean
+     * \param value const GLdouble *
+     * \return void
+     */
+    STATICINLINE void program_uniform(
+        u32                           program,
+        i32                           location,
+        i32                           count,
+        bool                          transpose,
+        span_const_mat_2x3_f64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix2x3dv)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -1292,31 +1288,30 @@ STATICINLINE void program_uniform(
 }
 
 template<class span_const_mat_2x3_f32>
-requires(
-    semantic::concepts::Span<span_const_mat_2x3_f32> &&
-    semantic::concepts::
-        Matrix<typename span_const_mat_2x3_f32::value_type, f32, 2, 3>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param program GLuint
- * \param location GLint
- * \param count GLsizei
- * \param transpose GLboolean
- * \param value const GLfloat *
- * \return void
- */
-STATICINLINE void program_uniform(
-    u32                           program,
-    i32                           location,
-    i32                           count,
-    bool                          transpose,
-    span_const_mat_2x3_f32 const& value)
+requires(semantic::concepts::Span<span_const_mat_2x3_f32>&& semantic::concepts::
+             Matrix<typename span_const_mat_2x3_f32::value_type, f32, 2, 3>)
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param transpose GLboolean
+     * \param value const GLfloat *
+     * \return void
+     */
+    STATICINLINE void program_uniform(
+        u32                           program,
+        i32                           location,
+        i32                           count,
+        bool                          transpose,
+        span_const_mat_2x3_f32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix2x3fv)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -1331,31 +1326,30 @@ STATICINLINE void program_uniform(
 }
 
 template<class span_const_mat_2x4_f64>
-requires(
-    semantic::concepts::Span<span_const_mat_2x4_f64> &&
-    semantic::concepts::
-        Matrix<typename span_const_mat_2x4_f64::value_type, f64, 2, 4>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param program GLuint
- * \param location GLint
- * \param count GLsizei
- * \param transpose GLboolean
- * \param value const GLdouble *
- * \return void
- */
-STATICINLINE void program_uniform(
-    u32                           program,
-    i32                           location,
-    i32                           count,
-    bool                          transpose,
-    span_const_mat_2x4_f64 const& value)
+requires(semantic::concepts::Span<span_const_mat_2x4_f64>&& semantic::concepts::
+             Matrix<typename span_const_mat_2x4_f64::value_type, f64, 2, 4>)
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param transpose GLboolean
+     * \param value const GLdouble *
+     * \return void
+     */
+    STATICINLINE void program_uniform(
+        u32                           program,
+        i32                           location,
+        i32                           count,
+        bool                          transpose,
+        span_const_mat_2x4_f64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix2x4dv)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -1370,31 +1364,30 @@ STATICINLINE void program_uniform(
 }
 
 template<class span_const_mat_2x4_f32>
-requires(
-    semantic::concepts::Span<span_const_mat_2x4_f32> &&
-    semantic::concepts::
-        Matrix<typename span_const_mat_2x4_f32::value_type, f32, 2, 4>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param program GLuint
- * \param location GLint
- * \param count GLsizei
- * \param transpose GLboolean
- * \param value const GLfloat *
- * \return void
- */
-STATICINLINE void program_uniform(
-    u32                           program,
-    i32                           location,
-    i32                           count,
-    bool                          transpose,
-    span_const_mat_2x4_f32 const& value)
+requires(semantic::concepts::Span<span_const_mat_2x4_f32>&& semantic::concepts::
+             Matrix<typename span_const_mat_2x4_f32::value_type, f32, 2, 4>)
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param transpose GLboolean
+     * \param value const GLfloat *
+     * \return void
+     */
+    STATICINLINE void program_uniform(
+        u32                           program,
+        i32                           location,
+        i32                           count,
+        bool                          transpose,
+        span_const_mat_2x4_f32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix2x4fv)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -1409,31 +1402,30 @@ STATICINLINE void program_uniform(
 }
 
 template<class span_const_mat_3x3_f64>
-requires(
-    semantic::concepts::Span<span_const_mat_3x3_f64> &&
-    semantic::concepts::
-        Matrix<typename span_const_mat_3x3_f64::value_type, f64, 3, 3>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param program GLuint
- * \param location GLint
- * \param count GLsizei
- * \param transpose GLboolean
- * \param value const GLdouble *
- * \return void
- */
-STATICINLINE void program_uniform(
-    u32                           program,
-    i32                           location,
-    i32                           count,
-    bool                          transpose,
-    span_const_mat_3x3_f64 const& value)
+requires(semantic::concepts::Span<span_const_mat_3x3_f64>&& semantic::concepts::
+             Matrix<typename span_const_mat_3x3_f64::value_type, f64, 3, 3>)
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param transpose GLboolean
+     * \param value const GLdouble *
+     * \return void
+     */
+    STATICINLINE void program_uniform(
+        u32                           program,
+        i32                           location,
+        i32                           count,
+        bool                          transpose,
+        span_const_mat_3x3_f64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix3dv)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -1448,31 +1440,30 @@ STATICINLINE void program_uniform(
 }
 
 template<class span_const_mat_3x3_f32>
-requires(
-    semantic::concepts::Span<span_const_mat_3x3_f32> &&
-    semantic::concepts::
-        Matrix<typename span_const_mat_3x3_f32::value_type, f32, 3, 3>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param program GLuint
- * \param location GLint
- * \param count GLsizei
- * \param transpose GLboolean
- * \param value const GLfloat *
- * \return void
- */
-STATICINLINE void program_uniform(
-    u32                           program,
-    i32                           location,
-    i32                           count,
-    bool                          transpose,
-    span_const_mat_3x3_f32 const& value)
+requires(semantic::concepts::Span<span_const_mat_3x3_f32>&& semantic::concepts::
+             Matrix<typename span_const_mat_3x3_f32::value_type, f32, 3, 3>)
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param transpose GLboolean
+     * \param value const GLfloat *
+     * \return void
+     */
+    STATICINLINE void program_uniform(
+        u32                           program,
+        i32                           location,
+        i32                           count,
+        bool                          transpose,
+        span_const_mat_3x3_f32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix3fv)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -1487,31 +1478,30 @@ STATICINLINE void program_uniform(
 }
 
 template<class span_const_mat_3x2_f64>
-requires(
-    semantic::concepts::Span<span_const_mat_3x2_f64> &&
-    semantic::concepts::
-        Matrix<typename span_const_mat_3x2_f64::value_type, f64, 3, 2>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param program GLuint
- * \param location GLint
- * \param count GLsizei
- * \param transpose GLboolean
- * \param value const GLdouble *
- * \return void
- */
-STATICINLINE void program_uniform(
-    u32                           program,
-    i32                           location,
-    i32                           count,
-    bool                          transpose,
-    span_const_mat_3x2_f64 const& value)
+requires(semantic::concepts::Span<span_const_mat_3x2_f64>&& semantic::concepts::
+             Matrix<typename span_const_mat_3x2_f64::value_type, f64, 3, 2>)
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param transpose GLboolean
+     * \param value const GLdouble *
+     * \return void
+     */
+    STATICINLINE void program_uniform(
+        u32                           program,
+        i32                           location,
+        i32                           count,
+        bool                          transpose,
+        span_const_mat_3x2_f64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix3x2dv)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -1526,31 +1516,30 @@ STATICINLINE void program_uniform(
 }
 
 template<class span_const_mat_3x2_f32>
-requires(
-    semantic::concepts::Span<span_const_mat_3x2_f32> &&
-    semantic::concepts::
-        Matrix<typename span_const_mat_3x2_f32::value_type, f32, 3, 2>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param program GLuint
- * \param location GLint
- * \param count GLsizei
- * \param transpose GLboolean
- * \param value const GLfloat *
- * \return void
- */
-STATICINLINE void program_uniform(
-    u32                           program,
-    i32                           location,
-    i32                           count,
-    bool                          transpose,
-    span_const_mat_3x2_f32 const& value)
+requires(semantic::concepts::Span<span_const_mat_3x2_f32>&& semantic::concepts::
+             Matrix<typename span_const_mat_3x2_f32::value_type, f32, 3, 2>)
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param transpose GLboolean
+     * \param value const GLfloat *
+     * \return void
+     */
+    STATICINLINE void program_uniform(
+        u32                           program,
+        i32                           location,
+        i32                           count,
+        bool                          transpose,
+        span_const_mat_3x2_f32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix3x2fv)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -1565,31 +1554,30 @@ STATICINLINE void program_uniform(
 }
 
 template<class span_const_mat_3x4_f64>
-requires(
-    semantic::concepts::Span<span_const_mat_3x4_f64> &&
-    semantic::concepts::
-        Matrix<typename span_const_mat_3x4_f64::value_type, f64, 3, 4>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param program GLuint
- * \param location GLint
- * \param count GLsizei
- * \param transpose GLboolean
- * \param value const GLdouble *
- * \return void
- */
-STATICINLINE void program_uniform(
-    u32                           program,
-    i32                           location,
-    i32                           count,
-    bool                          transpose,
-    span_const_mat_3x4_f64 const& value)
+requires(semantic::concepts::Span<span_const_mat_3x4_f64>&& semantic::concepts::
+             Matrix<typename span_const_mat_3x4_f64::value_type, f64, 3, 4>)
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param transpose GLboolean
+     * \param value const GLdouble *
+     * \return void
+     */
+    STATICINLINE void program_uniform(
+        u32                           program,
+        i32                           location,
+        i32                           count,
+        bool                          transpose,
+        span_const_mat_3x4_f64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix3x4dv)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -1604,31 +1592,30 @@ STATICINLINE void program_uniform(
 }
 
 template<class span_const_mat_3x4_f32>
-requires(
-    semantic::concepts::Span<span_const_mat_3x4_f32> &&
-    semantic::concepts::
-        Matrix<typename span_const_mat_3x4_f32::value_type, f32, 3, 4>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param program GLuint
- * \param location GLint
- * \param count GLsizei
- * \param transpose GLboolean
- * \param value const GLfloat *
- * \return void
- */
-STATICINLINE void program_uniform(
-    u32                           program,
-    i32                           location,
-    i32                           count,
-    bool                          transpose,
-    span_const_mat_3x4_f32 const& value)
+requires(semantic::concepts::Span<span_const_mat_3x4_f32>&& semantic::concepts::
+             Matrix<typename span_const_mat_3x4_f32::value_type, f32, 3, 4>)
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param transpose GLboolean
+     * \param value const GLfloat *
+     * \return void
+     */
+    STATICINLINE void program_uniform(
+        u32                           program,
+        i32                           location,
+        i32                           count,
+        bool                          transpose,
+        span_const_mat_3x4_f32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix3x4fv)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -1643,31 +1630,30 @@ STATICINLINE void program_uniform(
 }
 
 template<class span_const_mat_4x4_f64>
-requires(
-    semantic::concepts::Span<span_const_mat_4x4_f64> &&
-    semantic::concepts::
-        Matrix<typename span_const_mat_4x4_f64::value_type, f64, 4, 4>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param program GLuint
- * \param location GLint
- * \param count GLsizei
- * \param transpose GLboolean
- * \param value const GLdouble *
- * \return void
- */
-STATICINLINE void program_uniform(
-    u32                           program,
-    i32                           location,
-    i32                           count,
-    bool                          transpose,
-    span_const_mat_4x4_f64 const& value)
+requires(semantic::concepts::Span<span_const_mat_4x4_f64>&& semantic::concepts::
+             Matrix<typename span_const_mat_4x4_f64::value_type, f64, 4, 4>)
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param transpose GLboolean
+     * \param value const GLdouble *
+     * \return void
+     */
+    STATICINLINE void program_uniform(
+        u32                           program,
+        i32                           location,
+        i32                           count,
+        bool                          transpose,
+        span_const_mat_4x4_f64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix4dv)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -1682,31 +1668,30 @@ STATICINLINE void program_uniform(
 }
 
 template<class span_const_mat_4x4_f32>
-requires(
-    semantic::concepts::Span<span_const_mat_4x4_f32> &&
-    semantic::concepts::
-        Matrix<typename span_const_mat_4x4_f32::value_type, f32, 4, 4>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param program GLuint
- * \param location GLint
- * \param count GLsizei
- * \param transpose GLboolean
- * \param value const GLfloat *
- * \return void
- */
-STATICINLINE void program_uniform(
-    u32                           program,
-    i32                           location,
-    i32                           count,
-    bool                          transpose,
-    span_const_mat_4x4_f32 const& value)
+requires(semantic::concepts::Span<span_const_mat_4x4_f32>&& semantic::concepts::
+             Matrix<typename span_const_mat_4x4_f32::value_type, f32, 4, 4>)
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param transpose GLboolean
+     * \param value const GLfloat *
+     * \return void
+     */
+    STATICINLINE void program_uniform(
+        u32                           program,
+        i32                           location,
+        i32                           count,
+        bool                          transpose,
+        span_const_mat_4x4_f32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix4fv)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -1721,31 +1706,30 @@ STATICINLINE void program_uniform(
 }
 
 template<class span_const_mat_4x2_f64>
-requires(
-    semantic::concepts::Span<span_const_mat_4x2_f64> &&
-    semantic::concepts::
-        Matrix<typename span_const_mat_4x2_f64::value_type, f64, 4, 2>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param program GLuint
- * \param location GLint
- * \param count GLsizei
- * \param transpose GLboolean
- * \param value const GLdouble *
- * \return void
- */
-STATICINLINE void program_uniform(
-    u32                           program,
-    i32                           location,
-    i32                           count,
-    bool                          transpose,
-    span_const_mat_4x2_f64 const& value)
+requires(semantic::concepts::Span<span_const_mat_4x2_f64>&& semantic::concepts::
+             Matrix<typename span_const_mat_4x2_f64::value_type, f64, 4, 2>)
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param transpose GLboolean
+     * \param value const GLdouble *
+     * \return void
+     */
+    STATICINLINE void program_uniform(
+        u32                           program,
+        i32                           location,
+        i32                           count,
+        bool                          transpose,
+        span_const_mat_4x2_f64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix4x2dv)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -1760,31 +1744,30 @@ STATICINLINE void program_uniform(
 }
 
 template<class span_const_mat_4x2_f32>
-requires(
-    semantic::concepts::Span<span_const_mat_4x2_f32> &&
-    semantic::concepts::
-        Matrix<typename span_const_mat_4x2_f32::value_type, f32, 4, 2>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param program GLuint
- * \param location GLint
- * \param count GLsizei
- * \param transpose GLboolean
- * \param value const GLfloat *
- * \return void
- */
-STATICINLINE void program_uniform(
-    u32                           program,
-    i32                           location,
-    i32                           count,
-    bool                          transpose,
-    span_const_mat_4x2_f32 const& value)
+requires(semantic::concepts::Span<span_const_mat_4x2_f32>&& semantic::concepts::
+             Matrix<typename span_const_mat_4x2_f32::value_type, f32, 4, 2>)
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param transpose GLboolean
+     * \param value const GLfloat *
+     * \return void
+     */
+    STATICINLINE void program_uniform(
+        u32                           program,
+        i32                           location,
+        i32                           count,
+        bool                          transpose,
+        span_const_mat_4x2_f32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix4x2fv)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -1799,31 +1782,30 @@ STATICINLINE void program_uniform(
 }
 
 template<class span_const_mat_4x3_f64>
-requires(
-    semantic::concepts::Span<span_const_mat_4x3_f64> &&
-    semantic::concepts::
-        Matrix<typename span_const_mat_4x3_f64::value_type, f64, 4, 3>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param program GLuint
- * \param location GLint
- * \param count GLsizei
- * \param transpose GLboolean
- * \param value const GLdouble *
- * \return void
- */
-STATICINLINE void program_uniform(
-    u32                           program,
-    i32                           location,
-    i32                           count,
-    bool                          transpose,
-    span_const_mat_4x3_f64 const& value)
+requires(semantic::concepts::Span<span_const_mat_4x3_f64>&& semantic::concepts::
+             Matrix<typename span_const_mat_4x3_f64::value_type, f64, 4, 3>)
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param transpose GLboolean
+     * \param value const GLdouble *
+     * \return void
+     */
+    STATICINLINE void program_uniform(
+        u32                           program,
+        i32                           location,
+        i32                           count,
+        bool                          transpose,
+        span_const_mat_4x3_f64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix4x3dv)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -1838,31 +1820,30 @@ STATICINLINE void program_uniform(
 }
 
 template<class span_const_mat_4x3_f32>
-requires(
-    semantic::concepts::Span<span_const_mat_4x3_f32> &&
-    semantic::concepts::
-        Matrix<typename span_const_mat_4x3_f32::value_type, f32, 4, 3>)
-/*!
- * \brief Part of GL_ARB_separate_shader_objects
- * \param program GLuint
- * \param location GLint
- * \param count GLsizei
- * \param transpose GLboolean
- * \param value const GLfloat *
- * \return void
- */
-STATICINLINE void program_uniform(
-    u32                           program,
-    i32                           location,
-    i32                           count,
-    bool                          transpose,
-    span_const_mat_4x3_f32 const& value)
+requires(semantic::concepts::Span<span_const_mat_4x3_f32>&& semantic::concepts::
+             Matrix<typename span_const_mat_4x3_f32::value_type, f32, 4, 3>)
+    /*!
+     * \brief Part of GL_ARB_separate_shader_objects
+     * \param program GLuint
+     * \param location GLint
+     * \param count GLsizei
+     * \param transpose GLboolean
+     * \param value const GLfloat *
+     * \return void
+     */
+    STATICINLINE void program_uniform(
+        u32                           program,
+        i32                           location,
+        i32                           count,
+        bool                          transpose,
+        span_const_mat_4x3_f32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ProgramUniformMatrix4x3fv)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -1890,11 +1871,13 @@ STATICINLINE void use_program_stages(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(UseProgramStages)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgramPipeline)
             glIsProgramPipeline(pipeline);
 #endif
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -1914,7 +1897,8 @@ STATICINLINE void validate_program_pipeline(u32 pipeline)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(ValidateProgramPipeline)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgramPipeline)
             glIsProgramPipeline(pipeline);
 #endif

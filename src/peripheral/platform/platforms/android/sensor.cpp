@@ -83,7 +83,7 @@ void Android_InitSensors()
     {
         if(m_sensors[i])
         {
-            auto s = m_sensors[i];
+//            auto s = m_sensors[i];
 //            cVerbose(
 //                5,
 //                "Selecting sensor {0} {1} for {2}",

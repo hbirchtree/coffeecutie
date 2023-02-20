@@ -15,20 +15,18 @@ constexpr libc_types::u32 unsigned_int_sampler_renderbuffer       = 0x8E58;
 constexpr libc_types::u32 max_sample_mask_words                   = 0x8E59;
 } // namespace values
 template<class span_f32>
-requires(
-    semantic::concepts::Span<span_f32> &&
-    std::is_same_v<
-        std::decay_t<typename span_f32::value_type>,
-        std::decay_t<f32>>)
-/*!
- * \brief Part of GL_NV_explicit_multisample
- * \param pname GLenum
- * \param index GLuint
- * \param val GLfloat *
- * \return void
- */
-STATICINLINE void get_multisamplefv(
-    group::get_multisample_prop_nv pname, u32 index, span_f32 val)
+requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+         std::decay_t<typename span_f32::value_type>,
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_NV_explicit_multisample
+     * \param pname GLenum
+     * \param index GLuint
+     * \param val GLfloat *
+     * \return void
+     */
+    STATICINLINE void get_multisamplefv(
+        group::get_multisample_prop_nv pname, u32 index, span_f32 val)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -72,7 +70,8 @@ STATICINLINE void tex_renderbuffer(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TexRenderbufferNV)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsRenderbuffer)
             glIsRenderbuffer(renderbuffer);
 #endif

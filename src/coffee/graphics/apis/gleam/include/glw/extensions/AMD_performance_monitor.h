@@ -28,18 +28,16 @@ STATICINLINE void begin_perf_monitor(u32 monitor)
 }
 
 template<class span_u32>
-requires(
-    semantic::concepts::Span<span_u32> &&
-    std::is_same_v<
-        std::decay_t<typename span_u32::value_type>,
-        std::decay_t<u32>>)
-/*!
- * \brief Part of GL_AMD_performance_monitor
- * \param n GLsizei
- * \param monitors GLuint *
- * \return void
- */
-STATICINLINE void delete_perf_monitors(span_u32 monitors)
+requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+         std::decay_t<typename span_u32::value_type>,
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_AMD_performance_monitor
+     * \param n GLsizei
+     * \param monitors GLuint *
+     * \return void
+     */
+    STATICINLINE void delete_perf_monitors(span_u32 monitors)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -69,18 +67,16 @@ STATICINLINE void end_perf_monitor(u32 monitor)
 }
 
 template<class span_u32>
-requires(
-    semantic::concepts::Span<span_u32> &&
-    std::is_same_v<
-        std::decay_t<typename span_u32::value_type>,
-        std::decay_t<u32>>)
-/*!
- * \brief Part of GL_AMD_performance_monitor
- * \param n GLsizei
- * \param monitors GLuint *
- * \return void
- */
-STATICINLINE void gen_perf_monitors(span_u32 monitors)
+requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+         std::decay_t<typename span_u32::value_type>,
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_AMD_performance_monitor
+     * \param n GLsizei
+     * \param monitors GLuint *
+     * \return void
+     */
+    STATICINLINE void gen_perf_monitors(span_u32 monitors)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -94,22 +90,24 @@ STATICINLINE void gen_perf_monitors(span_u32 monitors)
 }
 
 template<class span_u32>
-requires(
-    semantic::concepts::Span<span_u32> &&
-    std::is_same_v<
-        std::decay_t<typename span_u32::value_type>,
-        std::decay_t<u32>>)
-/*!
- * \brief Part of GL_AMD_performance_monitor
- * \param monitor GLuint
- * \param pname GLenum
- * \param dataSize GLsizei
- * \param data GLuint *
- * \param bytesWritten GLint *
- * \return void
- */
-STATICINLINE void get_perf_monitor_counter_data(
-    u32 monitor, GLenum pname, i32 dataSize, span_u32 data, i32& bytesWritten)
+requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+         std::decay_t<typename span_u32::value_type>,
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_AMD_performance_monitor
+     * \param monitor GLuint
+     * \param pname GLenum
+     * \param dataSize GLsizei
+     * \param data GLuint *
+     * \param bytesWritten GLint *
+     * \return void
+     */
+    STATICINLINE void get_perf_monitor_counter_data(
+        u32      monitor,
+        GLenum   pname,
+        i32      dataSize,
+        span_u32 data,
+        i32&     bytesWritten)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -127,16 +125,16 @@ STATICINLINE void get_perf_monitor_counter_data(
 
 template<class span_void>
 requires(semantic::concepts::Span<span_void>)
-/*!
- * \brief Part of GL_AMD_performance_monitor
- * \param group GLuint
- * \param counter GLuint
- * \param pname GLenum
- * \param data void *
- * \return void
- */
-STATICINLINE void get_perf_monitor_counter_info(
-    u32 group, u32 counter, GLenum pname, span_void data)
+    /*!
+     * \brief Part of GL_AMD_performance_monitor
+     * \param group GLuint
+     * \param counter GLuint
+     * \param pname GLenum
+     * \param data void *
+     * \return void
+     */
+    STATICINLINE void get_perf_monitor_counter_info(
+        u32 group, u32 counter, GLenum pname, span_void data)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -152,22 +150,20 @@ STATICINLINE void get_perf_monitor_counter_info(
 }
 
 template<class span_GLchar>
-requires(
-    semantic::concepts::Span<span_GLchar> &&
-    std::is_same_v<
-        std::decay_t<typename span_GLchar::value_type>,
-        std::decay_t<GLchar>>)
-/*!
- * \brief Part of GL_AMD_performance_monitor
- * \param group GLuint
- * \param counter GLuint
- * \param bufSize GLsizei
- * \param length GLsizei *
- * \param counterString GLchar *
- * \return void
- */
-STATICINLINE void get_perf_monitor_counter_string(
-    u32 group, u32 counter, i32& length, span_GLchar counterString)
+requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
+         std::decay_t<typename span_GLchar::value_type>,
+         std::decay_t<GLchar>>)
+    /*!
+     * \brief Part of GL_AMD_performance_monitor
+     * \param group GLuint
+     * \param counter GLuint
+     * \param bufSize GLsizei
+     * \param length GLsizei *
+     * \param counterString GLchar *
+     * \return void
+     */
+    STATICINLINE void get_perf_monitor_counter_string(
+        u32 group, u32 counter, i32& length, span_GLchar counterString)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -180,22 +176,20 @@ STATICINLINE void get_perf_monitor_counter_string(
 }
 
 template<class span_u32>
-requires(
-    semantic::concepts::Span<span_u32> &&
-    std::is_same_v<
-        std::decay_t<typename span_u32::value_type>,
-        std::decay_t<u32>>)
-/*!
- * \brief Part of GL_AMD_performance_monitor
- * \param group GLuint
- * \param numCounters GLint *
- * \param maxActiveCounters GLint *
- * \param counterSize GLsizei
- * \param counters GLuint *
- * \return void
- */
-STATICINLINE void get_perf_monitor_counters(
-    u32 group, i32& numCounters, i32& maxActiveCounters, span_u32 counters)
+requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+         std::decay_t<typename span_u32::value_type>,
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_AMD_performance_monitor
+     * \param group GLuint
+     * \param numCounters GLint *
+     * \param maxActiveCounters GLint *
+     * \param counterSize GLsizei
+     * \param counters GLuint *
+     * \return void
+     */
+    STATICINLINE void get_perf_monitor_counters(
+        u32 group, i32& numCounters, i32& maxActiveCounters, span_u32 counters)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -212,21 +206,19 @@ STATICINLINE void get_perf_monitor_counters(
 }
 
 template<class span_GLchar>
-requires(
-    semantic::concepts::Span<span_GLchar> &&
-    std::is_same_v<
-        std::decay_t<typename span_GLchar::value_type>,
-        std::decay_t<GLchar>>)
-/*!
- * \brief Part of GL_AMD_performance_monitor
- * \param group GLuint
- * \param bufSize GLsizei
- * \param length GLsizei *
- * \param groupString GLchar *
- * \return void
- */
-STATICINLINE void get_perf_monitor_group_string(
-    u32 group, i32& length, span_GLchar groupString)
+requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
+         std::decay_t<typename span_GLchar::value_type>,
+         std::decay_t<GLchar>>)
+    /*!
+     * \brief Part of GL_AMD_performance_monitor
+     * \param group GLuint
+     * \param bufSize GLsizei
+     * \param length GLsizei *
+     * \param groupString GLchar *
+     * \return void
+     */
+    STATICINLINE void get_perf_monitor_group_string(
+        u32 group, i32& length, span_GLchar groupString)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -239,19 +231,17 @@ STATICINLINE void get_perf_monitor_group_string(
 }
 
 template<class span_u32>
-requires(
-    semantic::concepts::Span<span_u32> &&
-    std::is_same_v<
-        std::decay_t<typename span_u32::value_type>,
-        std::decay_t<u32>>)
-/*!
- * \brief Part of GL_AMD_performance_monitor
- * \param numGroups GLint *
- * \param groupsSize GLsizei
- * \param groups GLuint *
- * \return void
- */
-STATICINLINE void get_perf_monitor_groups(i32& numGroups, span_u32 groups)
+requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+         std::decay_t<typename span_u32::value_type>,
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_AMD_performance_monitor
+     * \param numGroups GLint *
+     * \param groupsSize GLsizei
+     * \param groups GLuint *
+     * \return void
+     */
+    STATICINLINE void get_perf_monitor_groups(i32& numGroups, span_u32 groups)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -266,22 +256,20 @@ STATICINLINE void get_perf_monitor_groups(i32& numGroups, span_u32 groups)
 }
 
 template<class span_u32>
-requires(
-    semantic::concepts::Span<span_u32> &&
-    std::is_same_v<
-        std::decay_t<typename span_u32::value_type>,
-        std::decay_t<u32>>)
-/*!
- * \brief Part of GL_AMD_performance_monitor
- * \param monitor GLuint
- * \param enable GLboolean
- * \param group GLuint
- * \param numCounters GLint
- * \param counterList GLuint *
- * \return void
- */
-STATICINLINE void select_perf_monitor_counters(
-    u32 monitor, bool enable, u32 group, span_u32 counterList)
+requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+         std::decay_t<typename span_u32::value_type>,
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_AMD_performance_monitor
+     * \param monitor GLuint
+     * \param enable GLboolean
+     * \param group GLuint
+     * \param numCounters GLint
+     * \param counterList GLuint *
+     * \return void
+     */
+    STATICINLINE void select_perf_monitor_counters(
+        u32 monitor, bool enable, u32 group, span_u32 counterList)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

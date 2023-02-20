@@ -46,21 +46,21 @@ STATICINLINE void array_element(i32 i)
 
 template<class span_const_void>
 requires(semantic::concepts::Span<span_const_void>)
-/*!
- * \brief Part of GL_EXT_vertex_array
- * \param size GLint
- * \param type GLenum
- * \param stride GLsizei
- * \param count GLsizei
- * \param pointer const void *
- * \return void
- */
-STATICINLINE void color_pointer(
-    i32                       size,
-    group::color_pointer_type type,
-    i32                       stride,
-    i32                       count,
-    span_const_void const&    pointer)
+    /*!
+     * \brief Part of GL_EXT_vertex_array
+     * \param size GLint
+     * \param type GLenum
+     * \param stride GLsizei
+     * \param count GLsizei
+     * \param pointer const void *
+     * \return void
+     */
+    STATICINLINE void color_pointer(
+        i32                       size,
+        group::color_pointer_type type,
+        i32                       stride,
+        i32                       count,
+        span_const_void const&    pointer)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -96,20 +96,18 @@ STATICINLINE void draw_arrays(group::primitive_type mode, i32 first, i32 count)
 }
 
 template<class span_const_bool>
-requires(
-    semantic::concepts::Span<span_const_bool> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_bool::value_type>,
-        std::decay_t<bool>>)
-/*!
- * \brief Part of GL_EXT_vertex_array
- * \param stride GLsizei
- * \param count GLsizei
- * \param pointer const GLboolean *
- * \return void
- */
-STATICINLINE void edge_flag_pointer(
-    i32 stride, i32 count, span_const_bool const& pointer)
+requires(semantic::concepts::Span<span_const_bool>&& std::is_same_v<
+         std::decay_t<typename span_const_bool::value_type>,
+         std::decay_t<bool>>)
+    /*!
+     * \brief Part of GL_EXT_vertex_array
+     * \param stride GLsizei
+     * \param count GLsizei
+     * \param pointer const GLboolean *
+     * \return void
+     */
+    STATICINLINE void edge_flag_pointer(
+        i32 stride, i32 count, span_const_bool const& pointer)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -126,13 +124,14 @@ STATICINLINE void edge_flag_pointer(
 
 template<class span_void>
 requires(semantic::concepts::Span<span_void>)
-/*!
- * \brief Part of GL_EXT_vertex_array
- * \param pname GLenum
- * \param params void **
- * \return void
- */
-STATICINLINE void get_pointerv(group::get_pointerv_prop pname, span_void params)
+    /*!
+     * \brief Part of GL_EXT_vertex_array
+     * \param pname GLenum
+     * \param params void **
+     * \return void
+     */
+    STATICINLINE
+    void get_pointerv(group::get_pointerv_prop pname, span_void params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -147,19 +146,19 @@ STATICINLINE void get_pointerv(group::get_pointerv_prop pname, span_void params)
 
 template<class span_const_void>
 requires(semantic::concepts::Span<span_const_void>)
-/*!
- * \brief Part of GL_EXT_vertex_array
- * \param type GLenum
- * \param stride GLsizei
- * \param count GLsizei
- * \param pointer const void *
- * \return void
- */
-STATICINLINE void index_pointer(
-    group::index_pointer_type type,
-    i32                       stride,
-    i32                       count,
-    span_const_void const&    pointer)
+    /*!
+     * \brief Part of GL_EXT_vertex_array
+     * \param type GLenum
+     * \param stride GLsizei
+     * \param count GLsizei
+     * \param pointer const void *
+     * \return void
+     */
+    STATICINLINE void index_pointer(
+        group::index_pointer_type type,
+        i32                       stride,
+        i32                       count,
+        span_const_void const&    pointer)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -177,19 +176,19 @@ STATICINLINE void index_pointer(
 
 template<class span_const_void>
 requires(semantic::concepts::Span<span_const_void>)
-/*!
- * \brief Part of GL_EXT_vertex_array
- * \param type GLenum
- * \param stride GLsizei
- * \param count GLsizei
- * \param pointer const void *
- * \return void
- */
-STATICINLINE void normal_pointer(
-    group::normal_pointer_type type,
-    i32                        stride,
-    i32                        count,
-    span_const_void const&     pointer)
+    /*!
+     * \brief Part of GL_EXT_vertex_array
+     * \param type GLenum
+     * \param stride GLsizei
+     * \param count GLsizei
+     * \param pointer const void *
+     * \return void
+     */
+    STATICINLINE void normal_pointer(
+        group::normal_pointer_type type,
+        i32                        stride,
+        i32                        count,
+        span_const_void const&     pointer)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -207,21 +206,21 @@ STATICINLINE void normal_pointer(
 
 template<class span_const_void>
 requires(semantic::concepts::Span<span_const_void>)
-/*!
- * \brief Part of GL_EXT_vertex_array
- * \param size GLint
- * \param type GLenum
- * \param stride GLsizei
- * \param count GLsizei
- * \param pointer const void *
- * \return void
- */
-STATICINLINE void tex_coord_pointer(
-    i32                           size,
-    group::tex_coord_pointer_type type,
-    i32                           stride,
-    i32                           count,
-    span_const_void const&        pointer)
+    /*!
+     * \brief Part of GL_EXT_vertex_array
+     * \param size GLint
+     * \param type GLenum
+     * \param stride GLsizei
+     * \param count GLsizei
+     * \param pointer const void *
+     * \return void
+     */
+    STATICINLINE void tex_coord_pointer(
+        i32                           size,
+        group::tex_coord_pointer_type type,
+        i32                           stride,
+        i32                           count,
+        span_const_void const&        pointer)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -240,21 +239,21 @@ STATICINLINE void tex_coord_pointer(
 
 template<class span_const_void>
 requires(semantic::concepts::Span<span_const_void>)
-/*!
- * \brief Part of GL_EXT_vertex_array
- * \param size GLint
- * \param type GLenum
- * \param stride GLsizei
- * \param count GLsizei
- * \param pointer const void *
- * \return void
- */
-STATICINLINE void vertex_pointer(
-    i32                        size,
-    group::vertex_pointer_type type,
-    i32                        stride,
-    i32                        count,
-    span_const_void const&     pointer)
+    /*!
+     * \brief Part of GL_EXT_vertex_array
+     * \param size GLint
+     * \param type GLenum
+     * \param stride GLsizei
+     * \param count GLsizei
+     * \param pointer const void *
+     * \return void
+     */
+    STATICINLINE void vertex_pointer(
+        i32                        size,
+        group::vertex_pointer_type type,
+        i32                        stride,
+        i32                        count,
+        span_const_void const&     pointer)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

@@ -56,18 +56,16 @@ STATICINLINE void compile_command_list(u32 list)
 }
 
 template<class span_u32>
-requires(
-    semantic::concepts::Span<span_u32> &&
-    std::is_same_v<
-        std::decay_t<typename span_u32::value_type>,
-        std::decay_t<u32>>)
-/*!
- * \brief Part of GL_NV_command_list
- * \param n GLsizei
- * \param lists GLuint *
- * \return void
- */
-STATICINLINE void create_command_lists(span_u32 lists)
+requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+         std::decay_t<typename span_u32::value_type>,
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_NV_command_list
+     * \param n GLsizei
+     * \param lists GLuint *
+     * \return void
+     */
+    STATICINLINE void create_command_lists(span_u32 lists)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -81,18 +79,16 @@ STATICINLINE void create_command_lists(span_u32 lists)
 }
 
 template<class span_u32>
-requires(
-    semantic::concepts::Span<span_u32> &&
-    std::is_same_v<
-        std::decay_t<typename span_u32::value_type>,
-        std::decay_t<u32>>)
-/*!
- * \brief Part of GL_NV_command_list
- * \param n GLsizei
- * \param states GLuint *
- * \return void
- */
-STATICINLINE void create_states(span_u32 states)
+requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+         std::decay_t<typename span_u32::value_type>,
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_NV_command_list
+     * \param n GLsizei
+     * \param states GLuint *
+     * \return void
+     */
+    STATICINLINE void create_states(span_u32 states)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -106,18 +102,16 @@ STATICINLINE void create_states(span_u32 states)
 }
 
 template<class span_const_u32>
-requires(
-    semantic::concepts::Span<span_const_u32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_u32::value_type>,
-        std::decay_t<u32>>)
-/*!
- * \brief Part of GL_NV_command_list
- * \param n GLsizei
- * \param lists const GLuint *
- * \return void
- */
-STATICINLINE void delete_command_lists(span_const_u32 const& lists)
+requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+         std::decay_t<typename span_const_u32::value_type>,
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_NV_command_list
+     * \param n GLsizei
+     * \param lists const GLuint *
+     * \return void
+     */
+    STATICINLINE void delete_command_lists(span_const_u32 const& lists)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -131,18 +125,16 @@ STATICINLINE void delete_command_lists(span_const_u32 const& lists)
 }
 
 template<class span_const_u32>
-requires(
-    semantic::concepts::Span<span_const_u32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_u32::value_type>,
-        std::decay_t<u32>>)
-/*!
- * \brief Part of GL_NV_command_list
- * \param n GLsizei
- * \param states const GLuint *
- * \return void
- */
-STATICINLINE void delete_states(span_const_u32 const& states)
+requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+         std::decay_t<typename span_const_u32::value_type>,
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_NV_command_list
+     * \param n GLsizei
+     * \param states const GLuint *
+     * \return void
+     */
+    STATICINLINE void delete_states(span_const_u32 const& states)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -157,28 +149,25 @@ STATICINLINE void delete_states(span_const_u32 const& states)
 }
 
 template<class span_const_i32, class span_const_u64>
-requires(
-    semantic::concepts::Span<span_const_u64> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_u64::value_type>,
-        std::decay_t<u64>> &&
-    semantic::concepts::Span<span_const_i32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_i32::value_type>,
-        std::decay_t<i32>>)
-/*!
- * \brief Part of GL_NV_command_list
- * \param primitiveMode GLenum
- * \param indirects const GLuint64 *
- * \param sizes const GLsizei *
- * \param count GLuint
- * \return void
- */
-STATICINLINE void draw_commands_address(
-    GLenum                primitiveMode,
-    span_const_u64 const& indirects,
-    span_const_i32 const& sizes,
-    u32                   count)
+requires(semantic::concepts::Span<span_const_u64>&& std::is_same_v<
+         std::decay_t<typename span_const_u64::value_type>,
+         std::decay_t<u64>>&& semantic::concepts::Span<span_const_i32>&&
+                              std::is_same_v<
+                 std::decay_t<typename span_const_i32::value_type>,
+                 std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_NV_command_list
+     * \param primitiveMode GLenum
+     * \param indirects const GLuint64 *
+     * \param sizes const GLsizei *
+     * \param count GLuint
+     * \return void
+     */
+    STATICINLINE void draw_commands_address(
+        GLenum                primitiveMode,
+        span_const_u64 const& indirects,
+        span_const_i32 const& sizes,
+        u32                   count)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -195,36 +184,34 @@ STATICINLINE void draw_commands_address(
 }
 
 template<class span_const_GLintptr, class span_const_i32>
-requires(
-    semantic::concepts::Span<span_const_GLintptr> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_GLintptr::value_type>,
-        std::decay_t<GLintptr>> &&
-    semantic::concepts::Span<span_const_i32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_i32::value_type>,
-        std::decay_t<i32>>)
-/*!
- * \brief Part of GL_NV_command_list
- * \param primitiveMode GLenum
- * \param buffer GLuint
- * \param indirects const GLintptr *
- * \param sizes const GLsizei *
- * \param count GLuint
- * \return void
- */
-STATICINLINE void draw_commands(
-    GLenum                     primitiveMode,
-    u32                        buffer,
-    span_const_GLintptr const& indirects,
-    span_const_i32 const&      sizes,
-    u32                        count)
+requires(semantic::concepts::Span<span_const_GLintptr>&& std::is_same_v<
+         std::decay_t<typename span_const_GLintptr::value_type>,
+         std::decay_t<GLintptr>>&& semantic::concepts::Span<span_const_i32>&&
+                                   std::is_same_v<
+                 std::decay_t<typename span_const_i32::value_type>,
+                 std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_NV_command_list
+     * \param primitiveMode GLenum
+     * \param buffer GLuint
+     * \param indirects const GLintptr *
+     * \param sizes const GLsizei *
+     * \param count GLuint
+     * \return void
+     */
+    STATICINLINE void draw_commands(
+        GLenum                     primitiveMode,
+        u32                        buffer,
+        span_const_GLintptr const& indirects,
+        span_const_i32 const&      sizes,
+        u32                        count)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(DrawCommandsNV)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
 #endif
@@ -240,34 +227,30 @@ STATICINLINE void draw_commands(
 }
 
 template<class span_const_i32, class span_const_u32, class span_const_u64>
-requires(
-    semantic::concepts::Span<span_const_u64> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_u64::value_type>,
-        std::decay_t<u64>> &&
-    semantic::concepts::Span<span_const_i32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_i32::value_type>,
-        std::decay_t<i32>> &&
-    semantic::concepts::Span<span_const_u32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_u32::value_type>,
-        std::decay_t<u32>>)
-/*!
- * \brief Part of GL_NV_command_list
- * \param indirects const GLuint64 *
- * \param sizes const GLsizei *
- * \param states const GLuint *
- * \param fbos const GLuint *
- * \param count GLuint
- * \return void
- */
-STATICINLINE void draw_commands_states_address(
-    span_const_u64 const& indirects,
-    span_const_i32 const& sizes,
-    span_const_u32 const& states,
-    span_const_u32 const& fbos,
-    u32                   count)
+requires(semantic::concepts::Span<span_const_u64>&& std::is_same_v<
+         std::decay_t<typename span_const_u64::value_type>,
+         std::decay_t<u64>>&&         semantic::concepts::Span<span_const_i32>&&
+                                      std::is_same_v<
+                 std::decay_t<typename span_const_i32::value_type>,
+                 std::decay_t<i32>>&& semantic::concepts::Span<span_const_u32>&&
+                                      std::is_same_v<
+                     std::decay_t<typename span_const_u32::value_type>,
+                     std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_NV_command_list
+     * \param indirects const GLuint64 *
+     * \param sizes const GLsizei *
+     * \param states const GLuint *
+     * \param fbos const GLuint *
+     * \param count GLuint
+     * \return void
+     */
+    STATICINLINE void draw_commands_states_address(
+        span_const_u64 const& indirects,
+        span_const_i32 const& sizes,
+        span_const_u32 const& states,
+        span_const_u32 const& fbos,
+        u32                   count)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -286,42 +269,39 @@ STATICINLINE void draw_commands_states_address(
 }
 
 template<class span_const_GLintptr, class span_const_i32, class span_const_u32>
-requires(
-    semantic::concepts::Span<span_const_GLintptr> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_GLintptr::value_type>,
-        std::decay_t<GLintptr>> &&
-    semantic::concepts::Span<span_const_i32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_i32::value_type>,
-        std::decay_t<i32>> &&
-    semantic::concepts::Span<span_const_u32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_u32::value_type>,
-        std::decay_t<u32>>)
-/*!
- * \brief Part of GL_NV_command_list
- * \param buffer GLuint
- * \param indirects const GLintptr *
- * \param sizes const GLsizei *
- * \param states const GLuint *
- * \param fbos const GLuint *
- * \param count GLuint
- * \return void
- */
-STATICINLINE void draw_commands_states(
-    u32                        buffer,
-    span_const_GLintptr const& indirects,
-    span_const_i32 const&      sizes,
-    span_const_u32 const&      states,
-    span_const_u32 const&      fbos,
-    u32                        count)
+requires(semantic::concepts::Span<span_const_GLintptr>&& std::is_same_v<
+         std::decay_t<typename span_const_GLintptr::value_type>,
+         std::decay_t<GLintptr>>&&    semantic::concepts::Span<span_const_i32>&&
+                                      std::is_same_v<
+                 std::decay_t<typename span_const_i32::value_type>,
+                 std::decay_t<i32>>&& semantic::concepts::Span<span_const_u32>&&
+                                      std::is_same_v<
+                     std::decay_t<typename span_const_u32::value_type>,
+                     std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_NV_command_list
+     * \param buffer GLuint
+     * \param indirects const GLintptr *
+     * \param sizes const GLsizei *
+     * \param states const GLuint *
+     * \param fbos const GLuint *
+     * \param count GLuint
+     * \return void
+     */
+    STATICINLINE void draw_commands_states(
+        u32                        buffer,
+        span_const_GLintptr const& indirects,
+        span_const_i32 const&      sizes,
+        span_const_u32 const&      states,
+        span_const_u32 const&      fbos,
+        u32                        count)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(DrawCommandsStatesNV)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
 #endif
@@ -409,35 +389,32 @@ STATICINLINE GLboolean is_state(u32 state)
 }
 
 template<class span_const_i32, class span_const_u32, class span_const_void>
-requires(
-    semantic::concepts::Span<span_const_void> &&
-    semantic::concepts::Span<span_const_i32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_i32::value_type>,
-        std::decay_t<i32>> &&
-    semantic::concepts::Span<span_const_u32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_u32::value_type>,
-        std::decay_t<u32>>)
-/*!
- * \brief Part of GL_NV_command_list
- * \param list GLuint
- * \param segment GLuint
- * \param indirects const void **
- * \param sizes const GLsizei *
- * \param states const GLuint *
- * \param fbos const GLuint *
- * \param count GLuint
- * \return void
- */
-STATICINLINE void list_draw_commands_states_client(
-    u32                    list,
-    u32                    segment,
-    span_const_void const& indirects,
-    span_const_i32 const&  sizes,
-    span_const_u32 const&  states,
-    span_const_u32 const&  fbos,
-    u32                    count)
+requires(semantic::concepts::Span<span_const_void>&&
+             semantic::concepts::Span<span_const_i32>&& std::is_same_v<
+                 std::decay_t<typename span_const_i32::value_type>,
+                 std::decay_t<i32>>&& semantic::concepts::Span<span_const_u32>&&
+                                      std::is_same_v<
+                     std::decay_t<typename span_const_u32::value_type>,
+                     std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_NV_command_list
+     * \param list GLuint
+     * \param segment GLuint
+     * \param indirects const void **
+     * \param sizes const GLsizei *
+     * \param states const GLuint *
+     * \param fbos const GLuint *
+     * \param count GLuint
+     * \return void
+     */
+    STATICINLINE void list_draw_commands_states_client(
+        u32                    list,
+        u32                    segment,
+        span_const_void const& indirects,
+        span_const_i32 const&  sizes,
+        span_const_u32 const&  states,
+        span_const_u32 const&  fbos,
+        u32                    count)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

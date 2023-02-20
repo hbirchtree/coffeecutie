@@ -97,9 +97,9 @@ struct Subsystem : Components::SubsystemBase
     template<typename T>
     auto on_started(std::function<T(Discord::Subsystem&)>&& func)
     {
-        auto task = rq::dependent_task<void, T>::CreateTask(
+        auto task = rq::dependent_task<void, T>::CreateProcessor(
             startCondition(),
-            [this, func] (void*) {
+            [this, func](void*) {
                 return func(*this);
             });
         auto output = task->output.get_future();

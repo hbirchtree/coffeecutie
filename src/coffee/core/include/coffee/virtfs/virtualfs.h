@@ -16,7 +16,7 @@
 
 namespace Coffee {
 
-struct Resource;
+class Resource;
 
 /*! \brief fs is used to store an asset file system in a single file.
  * Referring into it is done using filenames, and all the files are
@@ -57,9 +57,9 @@ using Span_u8 = Span<const libc_types::u8>;
 
 using namespace std::string_view_literals;
 
-struct file;
-struct fs;
-struct index;
+struct file_t;
+struct fs_t;
+struct index_t;
 
 enum class error : int
 {
@@ -87,11 +87,11 @@ enum class error : int
 struct Resource : semantic::ByteProvider
 {
   private:
-    fs const*   filesystem;
-    file const* file;
+    fs_t const*   filesystem;
+    file_t const* file;
 
   public:
-    Resource(fs const* base, Url const& url);
+    Resource(fs_t const* base, Url const& url);
 
     C_MOVE_CONSTRUCTOR(Resource);
 
@@ -169,23 +169,13 @@ struct directory_data_t
     template<typename T>
     struct child_t
     {
-        child_t() : value(node_t::sentinel_value)
+        child_t(T v = node_t::sentinel_value) : value(v)
         {
         }
+        child_t(child_t const&) = default;
+        child_t& operator=(child_t const&) = default;
 
         T value;
-
-        child_t& operator=(T v)
-        {
-            value = v;
-            return *this;
-        }
-
-        child_t& operator=(child_t<T> const& v)
-        {
-            value = v;
-            return *this;
-        }
 
         operator T() const
         {
@@ -204,8 +194,8 @@ struct directory_data_t
 
     struct node_t
     {
-        static const constexpr index_type sentinel_value =
-            std::numeric_limits<index_type>::max();
+        static const constexpr index_type sentinel_value
+            = std::numeric_limits<index_type>::max();
 
         char                prefix[MaxPrefixLength];
         child_t<index_type> left;
@@ -262,8 +252,8 @@ struct directory_data_t
     {
         node_base_t() : flags(0)
         {
-            node.left  = 0;
-            node.right = 0;
+            node.left  = {};
+            node.right = {};
             auto nodes = Span<char>(node.prefix, MaxPrefixLength);
             std::fill(nodes.begin(), nodes.end(), 0);
         }
@@ -296,11 +286,12 @@ struct directory_data_t
             std::string_view const& other, szptr offset = 0) const
         {
             auto node_prefix = prefix();
-            auto comparison =
-                (std::min)(other.size() - offset, prefix_length());
+            auto comparison
+                = (std::min)(other.size() - offset, prefix_length());
 
             return libc::str::longest_prefix(
-                node_prefix.substr(0, comparison), other.substr(offset, comparison));
+                node_prefix.substr(0, comparison),
+                other.substr(offset, comparison));
         }
 
         inline bool is_leaf() const
@@ -309,7 +300,7 @@ struct directory_data_t
         }
     };
 
-    Span<const node_base_t> nodes(index const& idx) const;
+    Span<const node_base_t> nodes(index_t const& idx) const;
 
     struct node_container_t
     {
@@ -317,15 +308,15 @@ struct directory_data_t
         {
         }
 
-        node_container_t(node_base_t const* node, index const* index) :
+        node_container_t(node_base_t const* node, index_t const* index) :
             node(node), index(index)
         {
         }
 
         node_base_t const* node;
-        index const*       index;
+        index_t const*     index;
 
-        file const* file(const fs* vfs);
+        file_t const* file(const fs_t* vfs);
 
         FORCEDINLINE bool valid()
         {
@@ -341,7 +332,7 @@ struct directory_data_t
     {
         std::vector<bool>   node_match;
         child_t<index_type> sub_root;
-        index const*        virt_index;
+        index_t const*      virt_index;
 
         Span<const node_base_t> nodes() const;
     };
@@ -355,32 +346,32 @@ struct directory_data_t
     };
 };
 
-struct index : stl_types::non_copy
+struct index_t : stl_types::non_copy
 {
-    enum class index_t : u32
+    enum class index_type : u32
     {
         directory_tree = 0x10,
         file_extension = 0x20,
     };
 
-    u64     next_index; /*!< Number of bytes till next index from here */
-    index_t kind;       /*!< Describes which index structure is valid */
+    u64        next_index; /*!< Number of bytes till next index from here */
+    index_type kind;       /*!< Describes which index structure is valid */
 
     const void* data() const
     {
         static_assert(
-            sizeof(directory_data_t::node_t) ==
-                sizeof(directory_data_t::leaf_t),
+            sizeof(directory_data_t::node_t)
+                == sizeof(directory_data_t::leaf_t),
             "Mismatching node and leaf size");
 
         return &this[1];
     }
 
-    const index* next() const
+    const index_t* next() const
     {
-        auto base =
-            mem_chunk<const u8>::ofBytes(this, next_index + sizeof(index));
-        return (*base.at(next_index)).as<const index>().data;
+        auto base
+            = mem_chunk<const u8>::ofBytes(this, next_index + sizeof(index_t));
+        return (*base.at(next_index)).as<const index_t>().data;
     }
 
     /*!
@@ -391,7 +382,7 @@ struct index : stl_types::non_copy
         char ext[MaxExtensionLength];
         u64  num_files;
 
-        mem_chunk<const u64> indices(index const& idx) const
+        mem_chunk<const u64> indices(index_t const& idx) const
         {
             return mem_chunk<const u64>::of(
                 C_RCAST<const u64*>(idx.data()), num_files);
@@ -408,7 +399,7 @@ struct index : stl_types::non_copy
 };
 
 FORCEDINLINE Span<const directory_data_t::node_base_t> directory_data_t::nodes(
-    const index& idx) const
+    const index_t& idx) const
 {
     return mem_chunk<const node_base_t>::of(
                C_RCAST<const node_base_t*>(idx.data()), num_nodes)
@@ -445,7 +436,7 @@ FORCEDINLINE Span<const directory_data_t::node_base_t> directory_data_t::
     return virt_index->directory.nodes(*virt_index);
 }
 
-PACKEDSTRUCT(file {
+PACKEDSTRUCT(file_t {
     char name_[MaxFileNameLength]; /*!< File name */
     u64  offset;                   /*!< Offset to file */
     u64  size;  /*!< Size of file. If compressed, size of compressed file */
@@ -459,7 +450,7 @@ PACKEDSTRUCT(file {
     }
 });
 
-struct fs
+struct fs_t
 {
     /*!
      * \brief Given bytes from `src', open the VFS inside iff
@@ -470,7 +461,7 @@ struct fs
      * \return
      */
     template<typename T>
-    static stl_types::result<const fs*, error> open(Span<T> const& src)
+    static stl_types::result<const fs_t*, error> open(Span<T> const& src)
     {
         static_assert(
             MagicLength == MagicLength_Encoded * sizeof(u32),
@@ -482,12 +473,12 @@ struct fs
         using namespace libc;
         using IntData = mem_chunk<const u32>;
 
-        if(src.size() < sizeof(fs))
+        if(src.size() < sizeof(fs_t))
         {
             return error::not_vfs;
         }
 
-        auto* temp_vfs = C_RCAST<const fs*>(src.data());
+        auto* temp_vfs = C_RCAST<const fs_t*>(src.data());
 
         IntData magic     = IntData::of(VFSMagic_Encoded, 2);
         IntData fileMagic = IntData::of(temp_vfs->vfs_header, MagicLength);
@@ -496,8 +487,8 @@ struct fs
         {
 #if !defined(COFFEE_NO_ENDIAN_OPS)
             /* It's nice to specify if the endian is wrong here */
-            if(magic[0] == endian::to<endian::u32_net>(fileMagic[0]) &&
-               magic[1] == endian::to<endian::u32_net>(fileMagic[1]))
+            if(magic[0] == endian::to<endian::u32_net>(fileMagic[0])
+               && magic[1] == endian::to<endian::u32_net>(fileMagic[1]))
                 return error::endian_mismatch;
             else
 #endif
@@ -538,7 +529,7 @@ struct fs
         return virtfs_version;
     }
 
-    FORCEDINLINE bool supportsIndex(index::index_t type) const
+    FORCEDINLINE bool supportsIndex(index_t::index_type type) const
     {
         if(version() == Version::v1)
             return false;
@@ -550,7 +541,7 @@ struct fs
         return false;
     }
 
-    FORCEDINLINE Span<const file> files() const
+    FORCEDINLINE Span<const file_t> files() const
     {
         szptr offset = 0;
 
@@ -564,8 +555,9 @@ struct fs
             break;
         }
 
-        return mem_chunk<const file>::ofBytes(
-                   C_RCAST<const u8*>(this) + offset, num_files * sizeof(file))
+        return mem_chunk<const file_t>::ofBytes(
+                   C_RCAST<const u8*>(this) + offset,
+                   num_files * sizeof(file_t))
             .view;
     }
 
@@ -574,17 +566,17 @@ struct fs
         return mem_chunk<const u8>::ofBytes(this, Span<const u8>::extent).view;
     }
 
-    FORCEDINLINE Span<const index> indices() const
+    FORCEDINLINE Span<const index_t> indices() const
     {
-        return mem_chunk<const index>::ofBytes(
-                   this + ext_index.offset, sizeof(index))
+        return mem_chunk<const index_t>::ofBytes(
+                   this + ext_index.offset, sizeof(index_t))
             .view.subspan<0, 1>();
     }
 
     template<
         LookupMethod Method = LookupMethod::linear_search,
-        typename std::enable_if<Method == LookupMethod::linear_search>::type* =
-            nullptr>
+        typename std::enable_if<
+            Method == LookupMethod::linear_search>::type* = nullptr>
     /*!
      * \brief Given a VFS, get the handle to a file with the name `name'. This
      * performs a linear search through the VFS, which becomes slow on larger
@@ -597,16 +589,16 @@ struct fs
      * \param name Filename to perform search with
      * \return nullptr if file not found
      */
-    STATICINLINE stl_types::result<file const*, error> GetFile(
-        fs const* vfs, std::string_view name)
+    STATICINLINE stl_types::result<file_t const*, error> GetFile(
+        fs_t const* vfs, std::string_view name)
     {
         return GetFileLinear(vfs, name);
     }
 
     template<
         LookupMethod Method,
-        typename std::enable_if<Method == LookupMethod::binary_tree>::type* =
-            nullptr>
+        typename std::enable_if<
+            Method == LookupMethod::binary_tree>::type* = nullptr>
     /*!
      * \brief GetFile, but using a binary tree to lookup the file.
      * This has a better worst-case performance than
@@ -617,14 +609,14 @@ struct fs
      * \param ec
      * \return
      */
-    STATICINLINE stl_types::result<file const*, error> GetFile(
-        fs const* vfs, std::string_view name)
+    STATICINLINE stl_types::result<file_t const*, error> GetFile(
+        fs_t const* vfs, std::string_view name)
     {
         return GetFileTreeExact(vfs, name);
     }
 
     static stl_types::result<directory_data_t::result_t, error> SearchFile(
-        fs const*                             vfs,
+        fs_t const*                           vfs,
         std::string_view                      name,
         search_strategy                       strat  = search_strategy::exact,
         const directory_data_t::cached_index* filter = nullptr);
@@ -635,8 +627,8 @@ struct fs
      * \param idx
      * \return nullptr if file not found
      */
-    static stl_types::result<file const*, error> GetFile(
-        fs const* vfs, szptr idx);
+    static stl_types::result<file_t const*, error> GetFile(
+        fs_t const* vfs, szptr idx);
 
     /* TODO: Return read-only pointer here */
     /*!
@@ -649,20 +641,20 @@ struct fs
      * \return
      */
     static stl_types::result<mem_chunk<const u8>, error> GetData(
-        fs const* vfs, file const* file);
+        fs_t const* vfs, file_t const* file);
 
-    static Coffee::ResourceResolver<vfs::Resource> GetResolver(fs const* vfs);
+    static Coffee::ResourceResolver<vfs::Resource> GetResolver(fs_t const* vfs);
 
   private:
-    static stl_types::result<file const*, error> GetFileLinear(
-        fs const* vfs, std::string_view name);
+    static stl_types::result<file_t const*, error> GetFileLinear(
+        fs_t const* vfs, std::string_view name);
 
-    static stl_types::result<file const*, error> GetFileTreeExact(
-        fs const* vfs, std::string_view name);
+    static stl_types::result<file_t const*, error> GetFileTreeExact(
+        fs_t const* vfs, std::string_view name);
 };
 
-FORCEDINLINE stl_types::result<file const*, error> fs::GetFileLinear(
-    fs const* vfs, std::string_view name)
+FORCEDINLINE stl_types::result<file_t const*, error> fs_t::GetFileLinear(
+    fs_t const* vfs, std::string_view name)
 {
     /* We start finding files after the fs structure */
     auto vf_start = vfs->files();
@@ -678,8 +670,8 @@ FORCEDINLINE stl_types::result<file const*, error> fs::GetFileLinear(
     return error::not_found;
 }
 
-FORCEDINLINE stl_types::result<file const*, error> fs::GetFileTreeExact(
-    const fs* vfs, std::string_view name)
+FORCEDINLINE stl_types::result<file_t const*, error> fs_t::GetFileTreeExact(
+    const fs_t* vfs, std::string_view name)
 {
     auto vfs_files = vfs->files();
     if(auto search = SearchFile(vfs, name, search_strategy::exact);
@@ -690,8 +682,8 @@ FORCEDINLINE stl_types::result<file const*, error> fs::GetFileTreeExact(
     return error::not_found;
 }
 
-FORCEDINLINE stl_types::result<file const*, error> fs::GetFile(
-    const fs* vfs, szptr idx)
+FORCEDINLINE stl_types::result<file_t const*, error> fs_t::GetFile(
+    const fs_t* vfs, szptr idx)
 {
     auto vf_start = vfs->files();
 
@@ -701,8 +693,8 @@ FORCEDINLINE stl_types::result<file const*, error> fs::GetFile(
     return &vf_start[idx];
 }
 
-FORCEDINLINE file const* index::directory_data_t::node_container_t::file(
-    fs const* vfs)
+FORCEDINLINE file_t const* index_t::directory_data_t::node_container_t::file(
+    fs_t const* vfs)
 {
     if(node && node->is_leaf())
         return &vfs->files()[node->leaf.fileIdx];
@@ -711,7 +703,7 @@ FORCEDINLINE file const* index::directory_data_t::node_container_t::file(
 }
 
 struct vfs_linear_iterator
-    : stl_types::Iterator<stl_types::ForwardIteratorTag, file>
+    : stl_types::Iterator<stl_types::ForwardIteratorTag, file_t>
 {
     static constexpr szptr npos = C_CAST<szptr>(-1);
 
@@ -722,9 +714,9 @@ struct vfs_linear_iterator
     {
     }
 
-    vfs_linear_iterator(fs const* vfs, szptr idx) : m_vfs(vfs), m_idx(idx)
+    vfs_linear_iterator(fs_t const* vfs, szptr idx) : m_vfs(vfs), m_idx(idx)
     {
-        m_file = vfs ? fs::GetFile(vfs, idx).value() : nullptr;
+        m_file = vfs ? fs_t::GetFile(vfs, idx).value() : nullptr;
         if(!m_vfs)
             m_idx = npos;
     }
@@ -785,8 +777,8 @@ struct vfs_linear_iterator
 
     difference_type operator-(vfs_linear_iterator& other)
     {
-        return C_FCAST<difference_type>(m_idx) -
-               C_FCAST<difference_type>(other.m_idx);
+        return C_FCAST<difference_type>(m_idx)
+               - C_FCAST<difference_type>(other.m_idx);
     }
 
     bool operator!=(vfs_linear_iterator const& other) const
@@ -798,7 +790,7 @@ struct vfs_linear_iterator
         return other.m_idx == m_idx;
     }
 
-    file const& operator*() const
+    file_t const& operator*() const
     {
         if(!m_file)
             Throw(resource_error("non-existent virtual file"));
@@ -807,18 +799,18 @@ struct vfs_linear_iterator
 
     operator mem_chunk<const u8>() const
     {
-        return fs::GetData(m_vfs, m_file).value();
+        return fs_t::GetData(m_vfs, m_file).value();
     }
 
   private:
     void update_file()
     {
-        m_file = fs::GetFile(m_vfs, m_idx).value();
+        m_file = fs_t::GetFile(m_vfs, m_idx).value();
     }
 
-    fs const*   m_vfs;
-    szptr       m_idx;
-    file const* m_file;
+    fs_t const*   m_vfs;
+    szptr         m_idx;
+    file_t const* m_file;
 };
 
 /*!
@@ -835,7 +827,7 @@ struct view
     static auto of(Span<T> const& base)
     {
         view out;
-        out.m_vfs = fs::open(base).value();
+        out.m_vfs = fs_t::open(base).value();
         return out;
     }
 
@@ -851,15 +843,15 @@ struct view
 
     NO_DISCARD iterator starting_with(Path const& path, iterator start)
     {
-        return std::find_if(start, end(), [&](file const& file) {
+        return std::find_if(start, end(), [&](file_t const& file) {
             /* +4 for extension */
             if(file.name().size() + 4 < path.internUrl.size())
                 return false;
             else
             {
-                return file.name().substr(0, path.internUrl.size()) ==
-                           path.internUrl &&
-                       file.name().at(path.internUrl.size()) == '.';
+                return file.name().substr(0, path.internUrl.size())
+                           == path.internUrl
+                       && file.name().at(path.internUrl.size()) == '.';
             }
         });
     }
@@ -869,7 +861,7 @@ struct view
     {
     }
 
-    fs const* m_vfs;
+    fs_t const* m_vfs;
 };
 
 /*!
@@ -900,9 +892,10 @@ struct desc
 
 struct generation_settings
 {
-    szptr              workers; /*!< 0 will default to maximum */
-    compression::codec file_codec =
-        compression::codec::deflate; /*!< Codec for compressing files */
+    szptr workers{0};
+    /*!< 0 will default to maximum */
+    compression::codec file_codec{compression::codec::deflate};
+    /*!< Codec for compressing files */
 };
 
 extern stl_types::result<std::vector<libc_types::byte_t>, error> generate(

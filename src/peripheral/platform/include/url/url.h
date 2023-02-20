@@ -147,6 +147,11 @@ struct Url
     std::string DereferenceLocalPath() const;
 };
 
+inline bool operator<(Url const& u1, Url const& u2)
+{
+    return u1.internUrl < u2.internUrl;
+}
+
 struct UrlParse
 {
     static UrlParse const from(Url const& url);
@@ -190,6 +195,11 @@ FORCEDINLINE Url MkSysUrl(std::string const& urlString)
  *
  *
  */
+
+FORCEDINLINE Url operator"" _asset(const char* url, size_t)
+{
+    return MkUrl(url, RSCA::AssetFile);
+}
 
 FORCEDINLINE Url operator"" _tmp(const char* url, size_t)
 {

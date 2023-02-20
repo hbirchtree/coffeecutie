@@ -5,6 +5,7 @@
 #include <peripherals/stl/types.h>
 #include <peripherals/typing/geometry/point.h>
 #include <peripherals/typing/geometry/size.h>
+#include <peripherals/typing/pixels/rgba.h>
 #include <peripherals/typing/vectors/vector_types.h>
 
 #include <optional>
@@ -94,7 +95,7 @@ struct bl_string_var
 {
     static constexpr size_t size = Size;
 
-    std::array<char, Size> data;
+    std::array<char, Size> data{};
 
     template<typename Dummy = void>
     requires(Size == 4) inline std::string str() const

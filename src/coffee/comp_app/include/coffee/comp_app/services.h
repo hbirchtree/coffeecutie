@@ -1,7 +1,6 @@
 #pragma once
 
 #include <coffee/components/components.h>
-#include <coffee/core/types/display/properties.h>
 #include <coffee/core/types/input/event_types.h>
 
 #include <peripherals/semantic/chunk.h>
@@ -18,8 +17,6 @@ namespace comp_app {
 namespace detail {
 using namespace Coffee::Components;
 
-using WindowState = Coffee::Display::Properties::State;
-
 template<typename T>
 using tag_t = detail::TagType<T>;
 } // namespace detail
@@ -32,6 +29,29 @@ using PixFmt      = typing::pixels::PixFmt;
 
 using Coffee::Components::component_list;
 using Coffee::Components::subsystem_list;
+
+enum class window_flags_t : libc_types::u32
+{
+    none = 0x0,
+
+    /* State flags */
+    minimized = 0x1,
+    normal    = 0x2,
+    maximized = 0x4,
+    focused   = 0x8,
+    visible   = 0x10,
+
+    /* Window creation flags */
+    undecorated       = 0x10001,
+    fullscreen        = 0x10002,
+    windowed          = 0x10004,
+    fullscreen_window = 0x10008 | undecorated | windowed,
+    resizable         = 0x10010,
+    high_dpi          = 0x10020,
+    floating          = 0x10040,
+};
+
+C_FLAGS(window_flags_t, libc_types::u32);
 
 namespace interfaces {
 
@@ -53,15 +73,15 @@ struct Windowing
 
     virtual void fullscreenBorderless()
     {
-        setState(detail::WindowState::WindowedFullScreen);
+        setState(window_flags_t::fullscreen_window);
     }
     virtual void fullscreenExclusive()
     {
-        setState(detail::WindowState::FullScreen);
+        setState(window_flags_t::fullscreen);
     }
 
-    virtual detail::WindowState state() const                       = 0;
-    virtual void                setState(detail::WindowState state) = 0;
+    virtual window_flags_t state() const                  = 0;
+    virtual void           setState(window_flags_t state) = 0;
 
     virtual bool notifiedClose() const
     {
@@ -160,8 +180,8 @@ struct PtrNativeWindowInfo : NativeWindowInfo
     using NDisplay = void*;
     using NWindow  = void*;
 
-    NDisplay display;
-    NWindow  window;
+    NDisplay display{nullptr};
+    NWindow  window{nullptr};
 };
 
 template<typename EventType>
@@ -187,8 +207,8 @@ struct BasicEventBus : EventBus<EventType>
 
     struct EvData
     {
-        libc_types::u32                                          prio;
-        stl_types::Function<void(EventType&, libc_types::c_ptr)> handler;
+        libc_types::u32                                    prio;
+        std::function<void(EventType&, libc_types::c_ptr)> handler;
     };
 
     template<typename HandlerType>
@@ -200,12 +220,13 @@ struct BasicEventBus : EventBus<EventType>
         };
 
         m_handlers.push_back({prio, std::move(handler)});
+        sort_handlers();
     }
 
     template<typename SubEventType>
     void addEventFunction(
-        libc_types::u32                                        prio,
-        stl_types::Function<void(EventType&, SubEventType*)>&& hnd)
+        libc_types::u32                                  prio,
+        std::function<void(EventType&, SubEventType*)>&& hnd)
     {
         auto handler = [hnd](EventType& ev, libc_types::c_ptr data) mutable {
             if(ev.type == SubEventType::event_type)
@@ -213,11 +234,13 @@ struct BasicEventBus : EventBus<EventType>
         };
 
         m_handlers.push_back({prio, std::move(handler)});
+        sort_handlers();
     }
 
     void addEventData(EvData&& data)
     {
         m_handlers.push_back(std::move(data));
+        sort_handlers();
     }
 
     virtual void process(EventType& ev, libc_types::c_ptr data) final
@@ -226,11 +249,15 @@ struct BasicEventBus : EventBus<EventType>
             e.handler(ev, data);
     }
 
-    stl_types::Vector<EvData> m_handlers;
+    std::vector<EvData> m_handlers;
 
-    static bool sort_handlers(EvData const& e1, EvData const& e2)
+    static bool handler_sorter(EvData const& e1, EvData const& e2)
     {
-        return e1.prio > e2.prio;
+        return e1.prio < e2.prio;
+    }
+    void sort_handlers()
+    {
+        std::sort(m_handlers.begin(), m_handlers.end(), handler_sorter);
     }
 };
 
@@ -512,12 +539,11 @@ struct Config : detail::SubsystemBase
 
 struct WindowConfig : Config<WindowConfig>
 {
-    text_type_t         title;
-    size_2d_t           size;
-    position_t          position;
-    detail::WindowState flags = detail::WindowState::Resizable
-                                | detail::WindowState::Windowed
-                                | detail::WindowState::Visible;
+    text_type_t    title;
+    size_2d_t      size;
+    position_t     position;
+    window_flags_t flags = window_flags_t::resizable | window_flags_t::windowed
+                           | window_flags_t::visible;
 };
 
 struct ControllerConfig : Config<ControllerConfig>
@@ -533,6 +559,19 @@ struct ControllerConfig : Config<ControllerConfig>
     Options         options  = None;
 };
 
+struct TouchConfig : Config<TouchConfig>
+{
+    enum Options
+    {
+        None         = 0x0,
+        TouchToMouse = 0x1,
+        Gestures     = 0x2,
+    };
+
+    Options options = Gestures;
+};
+C_FLAGS(TouchConfig::Options, libc_types::u32);
+
 struct GraphicsBindingConfig : Config<GraphicsBindingConfig>
 {
     using loader_func = void* (*)(const char*);
@@ -547,10 +586,10 @@ struct AppService : detail::SubsystemBase
     using exposed_type = ExposedType;
     using components   = type_safety::empty_list_t;
     using subsystems   = type_safety::empty_list_t;
-    using services     = typename std::conditional<
+    using services     = typename std::conditional_t<
         std::is_same_v<Iface, void>,
         detail::subsystem_list<ExposedType>,
-        detail::subsystem_list<ExposedType, Iface>>::type;
+        detail::subsystem_list<ExposedType, Iface>>;
     using time_point = detail::time_point;
 
     virtual ~AppService()
@@ -570,6 +609,11 @@ struct AppService : detail::SubsystemBase
             C_OCAST<exposed_type&>(*this), c.underlying(), t);
     }
 
+    virtual std::string_view subsystem_name() const final
+    {
+        return typeid(ExposedType).name();
+    }
+
     template<typename InternalType, typename... Args>
     requires std::is_convertible_v<InternalType*, ExposedType*>
     static InternalType& register_service(
@@ -583,7 +627,8 @@ struct AppService : detail::SubsystemBase
 
         container.register_subsystem_services<ExposedType>(&subsys);
 
-        subsys.priority = AppService::system_prio;
+        if(subsys.priority == AppService::default_prio)
+            subsys.priority = AppService::system_prio;
 
         return subsys;
     }
@@ -615,10 +660,15 @@ struct AppLoadableService
 
     bool is_loaded() const
     {
-        return m_state == Initialized;
+        return m_state != Uninitialized;
     }
 
-protected:
+    State current_state() const
+    {
+        return m_state;
+    }
+
+  protected:
     virtual void load(entity_container& e, app_error& ec)
     {
         (void)e, (void)ec;
@@ -628,8 +678,8 @@ protected:
         (void)e, (void)ec;
     }
 
-private:
-    State m_state;
+  private:
+    State m_state = Uninitialized;
 };
 
 using AppInfo             = detail::tag_t<interfaces::AppInfo>;
@@ -655,35 +705,38 @@ using WindowInfo          = detail::tag_t<interfaces::WindowInfo>;
 using Windowing           = detail::tag_t<interfaces::Windowing>;
 
 template<typename EType>
-struct EventBus : interfaces::EventBus<EType>, AppService<EventBus<EType>>
+struct EventBus
+    : interfaces::EventBus<EType>,
+      AppService<EventBus<EType>, detail::tag_t<interfaces::EventBus<EType>>>
 {
 };
 
 template<typename EType>
-struct BasicEventBus
-    : interfaces::BasicEventBus<EType>,
-      AppService<BasicEventBus<EType>>
+struct BasicEventBus : interfaces::BasicEventBus<EType>,
+                       AppService<
+                           BasicEventBus<EType>,
+                           detail::tag_t<interfaces::BasicEventBus<EType>>>
 {
-//    using services = detail::subsystem_list<
-//        BasicEventBus<EType>,
-//        interfaces::EventBus<EType>,
-//        interfaces::BasicEventBus<EType>>;
+    //    using services = detail::subsystem_list<
+    //        BasicEventBus<EType>,
+    //        interfaces::EventBus<EType>,
+    //        interfaces::BasicEventBus<EType>>;
 
     using readable_services = type_safety::empty_list_t;
     using proxy_type        = detail::restricted::proxy_t<BasicEventBus<EType>>;
 
     void start_restricted(proxy_type&, detail::time_point const&)
     {
-        std::sort(
-            this->m_handlers.begin(),
-            this->m_handlers.end(),
-            &BasicEventBus::sort_handlers);
     }
 };
 
 struct PtrNativeWindowInfoService : interfaces::PtrNativeWindowInfo,
                                     AppService<PtrNativeWindowInfoService>
 {
+    PtrNativeWindowInfoService()
+    {
+        priority = 500;
+    }
 };
 
 } // namespace comp_app

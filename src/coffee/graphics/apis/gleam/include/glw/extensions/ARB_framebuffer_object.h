@@ -62,7 +62,8 @@ STATICINLINE void bind_framebuffer(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindFramebuffer)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsFramebuffer)
             glIsFramebuffer(framebuffer);
 #endif
@@ -84,7 +85,8 @@ STATICINLINE void bind_renderbuffer(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(BindRenderbuffer)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsRenderbuffer)
             glIsRenderbuffer(renderbuffer);
 #endif
@@ -156,18 +158,16 @@ STATICINLINE GLenum check_framebuffer_status(group::framebuffer_target target)
 }
 
 template<class span_const_u32>
-requires(
-    semantic::concepts::Span<span_const_u32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_u32::value_type>,
-        std::decay_t<u32>>)
-/*!
- * \brief Part of GL_ARB_framebuffer_object
- * \param n GLsizei
- * \param framebuffers const GLuint *
- * \return void
- */
-STATICINLINE void delete_framebuffers(span_const_u32 const& framebuffers)
+requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+         std::decay_t<typename span_const_u32::value_type>,
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_ARB_framebuffer_object
+     * \param n GLsizei
+     * \param framebuffers const GLuint *
+     * \return void
+     */
+    STATICINLINE void delete_framebuffers(span_const_u32 const& framebuffers)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -183,18 +183,16 @@ STATICINLINE void delete_framebuffers(span_const_u32 const& framebuffers)
 }
 
 template<class span_const_u32>
-requires(
-    semantic::concepts::Span<span_const_u32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_u32::value_type>,
-        std::decay_t<u32>>)
-/*!
- * \brief Part of GL_ARB_framebuffer_object
- * \param n GLsizei
- * \param renderbuffers const GLuint *
- * \return void
- */
-STATICINLINE void delete_renderbuffers(span_const_u32 const& renderbuffers)
+requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+         std::decay_t<typename span_const_u32::value_type>,
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_ARB_framebuffer_object
+     * \param n GLsizei
+     * \param renderbuffers const GLuint *
+     * \return void
+     */
+    STATICINLINE void delete_renderbuffers(span_const_u32 const& renderbuffers)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -227,7 +225,8 @@ STATICINLINE void framebuffer_renderbuffer(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(FramebufferRenderbuffer)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsRenderbuffer)
             glIsRenderbuffer(renderbuffer);
 #endif
@@ -260,7 +259,8 @@ STATICINLINE void framebuffer_texture_1d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(FramebufferTexture1D)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
 #endif
@@ -294,7 +294,8 @@ STATICINLINE void framebuffer_texture_2d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(FramebufferTexture2D)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
 #endif
@@ -330,7 +331,8 @@ STATICINLINE void framebuffer_texture_3d(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(FramebufferTexture3D)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
 #endif
@@ -365,7 +367,8 @@ STATICINLINE void framebuffer_texture_layer(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(FramebufferTextureLayer)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
 #endif
@@ -380,18 +383,16 @@ STATICINLINE void framebuffer_texture_layer(
 }
 
 template<class span_u32>
-requires(
-    semantic::concepts::Span<span_u32> &&
-    std::is_same_v<
-        std::decay_t<typename span_u32::value_type>,
-        std::decay_t<u32>>)
-/*!
- * \brief Part of GL_ARB_framebuffer_object
- * \param n GLsizei
- * \param framebuffers GLuint *
- * \return void
- */
-STATICINLINE void gen_framebuffers(span_u32 framebuffers)
+requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+         std::decay_t<typename span_u32::value_type>,
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_ARB_framebuffer_object
+     * \param n GLsizei
+     * \param framebuffers GLuint *
+     * \return void
+     */
+    STATICINLINE void gen_framebuffers(span_u32 framebuffers)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -406,18 +407,16 @@ STATICINLINE void gen_framebuffers(span_u32 framebuffers)
 }
 
 template<class span_u32>
-requires(
-    semantic::concepts::Span<span_u32> &&
-    std::is_same_v<
-        std::decay_t<typename span_u32::value_type>,
-        std::decay_t<u32>>)
-/*!
- * \brief Part of GL_ARB_framebuffer_object
- * \param n GLsizei
- * \param renderbuffers GLuint *
- * \return void
- */
-STATICINLINE void gen_renderbuffers(span_u32 renderbuffers)
+requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+         std::decay_t<typename span_u32::value_type>,
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_ARB_framebuffer_object
+     * \param n GLsizei
+     * \param renderbuffers GLuint *
+     * \return void
+     */
+    STATICINLINE void gen_renderbuffers(span_u32 renderbuffers)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -448,24 +447,22 @@ STATICINLINE void generate_mipmap(group::texture_target target)
 }
 
 template<class span_i32>
-requires(
-    semantic::concepts::Span<span_i32> &&
-    std::is_same_v<
-        std::decay_t<typename span_i32::value_type>,
-        std::decay_t<i32>>)
-/*!
- * \brief Part of GL_ARB_framebuffer_object
- * \param target GLenum
- * \param attachment GLenum
- * \param pname GLenum
- * \param params GLint *
- * \return void
- */
-STATICINLINE void get_framebuffer_attachment_parameter(
-    group::framebuffer_target                    target,
-    group::framebuffer_attachment                attachment,
-    group::framebuffer_attachment_parameter_name pname,
-    span_i32                                     params)
+requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+         std::decay_t<typename span_i32::value_type>,
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_ARB_framebuffer_object
+     * \param target GLenum
+     * \param attachment GLenum
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_framebuffer_attachment_parameter(
+        group::framebuffer_target                    target,
+        group::framebuffer_attachment                attachment,
+        group::framebuffer_attachment_parameter_name pname,
+        span_i32                                     params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -481,22 +478,20 @@ STATICINLINE void get_framebuffer_attachment_parameter(
 }
 
 template<class span_i32>
-requires(
-    semantic::concepts::Span<span_i32> &&
-    std::is_same_v<
-        std::decay_t<typename span_i32::value_type>,
-        std::decay_t<i32>>)
-/*!
- * \brief Part of GL_ARB_framebuffer_object
- * \param target GLenum
- * \param pname GLenum
- * \param params GLint *
- * \return void
- */
-STATICINLINE void get_renderbuffer_parameter(
-    group::renderbuffer_target         target,
-    group::renderbuffer_parameter_name pname,
-    span_i32                           params)
+requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+         std::decay_t<typename span_i32::value_type>,
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_ARB_framebuffer_object
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_renderbuffer_parameter(
+        group::renderbuffer_target         target,
+        group::renderbuffer_parameter_name pname,
+        span_i32                           params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -521,7 +516,8 @@ STATICINLINE GLboolean is_framebuffer(u32 framebuffer)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(IsFramebuffer)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsFramebuffer)
             glIsFramebuffer(framebuffer);
 #endif
@@ -542,7 +538,8 @@ STATICINLINE GLboolean is_renderbuffer(u32 renderbuffer)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(IsRenderbuffer)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsRenderbuffer)
             glIsRenderbuffer(renderbuffer);
 #endif
@@ -554,18 +551,18 @@ STATICINLINE GLboolean is_renderbuffer(u32 renderbuffer)
 
 template<class size_2_i32>
 requires(semantic::concepts::Size2D<size_2_i32, i32>)
-/*!
- * \brief Part of GL_ARB_framebuffer_object
- * \param target GLenum
- * \param internalformat GLenum
- * \param width GLsizei
- * \param height GLsizei
- * \return void
- */
-STATICINLINE void renderbuffer_storage(
-    group::renderbuffer_target target,
-    group::internal_format     internalformat,
-    size_2_i32 const&          width)
+    /*!
+     * \brief Part of GL_ARB_framebuffer_object
+     * \param target GLenum
+     * \param internalformat GLenum
+     * \param width GLsizei
+     * \param height GLsizei
+     * \return void
+     */
+    STATICINLINE void renderbuffer_storage(
+        group::renderbuffer_target target,
+        group::internal_format     internalformat,
+        size_2_i32 const&          width)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -582,20 +579,20 @@ STATICINLINE void renderbuffer_storage(
 
 template<class size_2_i32>
 requires(semantic::concepts::Size2D<size_2_i32, i32>)
-/*!
- * \brief Part of GL_ARB_framebuffer_object
- * \param target GLenum
- * \param samples GLsizei
- * \param internalformat GLenum
- * \param width GLsizei
- * \param height GLsizei
- * \return void
- */
-STATICINLINE void renderbuffer_storage_multisample(
-    group::renderbuffer_target target,
-    i32                        samples,
-    group::internal_format     internalformat,
-    size_2_i32 const&          width)
+    /*!
+     * \brief Part of GL_ARB_framebuffer_object
+     * \param target GLenum
+     * \param samples GLsizei
+     * \param internalformat GLenum
+     * \param width GLsizei
+     * \param height GLsizei
+     * \return void
+     */
+    STATICINLINE void renderbuffer_storage_multisample(
+        group::renderbuffer_target target,
+        i32                        samples,
+        group::internal_format     internalformat,
+        size_2_i32 const&          width)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

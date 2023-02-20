@@ -1,7 +1,9 @@
 #include <blam/volta/cblam_map.h>
-#include <coffee/core/types/chunk.h>
 
+#include <peripherals/semantic/chunk.h>
 #include <peripherals/stl/range_equal.h>
+
+#include <blam/volta/cblam_file_header.h>
 
 namespace blam {
 

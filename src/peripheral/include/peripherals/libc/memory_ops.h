@@ -102,14 +102,13 @@ FORCEDINLINE szptr align(szptr alignment, szptr off)
 } // namespace align
 namespace mem {
 
-using namespace ::libc_types;
-
-FORCEDINLINE u32 page_size()
+FORCEDINLINE libc_types::u32 page_size()
 {
+    using namespace libc_types::size_literals;
 #if defined(COFFEE_UNIXPLAT)
-    i64 pagesize = ::sysconf(_SC_PAGESIZE);
+    libc_types::i64 pagesize = ::sysconf(_SC_PAGESIZE);
 
-    return C_FCAST<u32>(pagesize > 0 ? pagesize : 4_kB);
+    return C_FCAST<libc_types::u32>(pagesize > 0 ? pagesize : 4_kB);
 #else
     return 4_kB;
 #endif

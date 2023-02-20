@@ -27,5 +27,7 @@ if(BUILD_EGL_DOUBLE_GETPROC)
     # It will not let you load the core functions, only extensions
     # Work around this by first looking up the symbol in GLESv2, then EGL
     #
-    target_compile_definitions( EGLComponent PUBLIC -DEGL_COMP_DOUBLE_GETPROC )
+    target_compile_definitions( EGLComponent PUBLIC
+        -DEGL_COMP_DOUBLE_GETPROC
+        )
 endif()

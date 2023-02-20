@@ -17,6 +17,8 @@
 
 #include <glw/extensions/ARB_shader_draw_parameters.h>
 #include <glw/extensions/EXT_discard_framebuffer.h>
+#include <glw/extensions/KHR_debug.h>
+#include <glw/extensions/NV_shading_rate_image.h>
 #include <glw/extensions/OES_rgb8_rgba8.h>
 #include <glw/extensions/OES_vertex_array_object.h>
 
@@ -27,12 +29,16 @@
 #endif
 
 namespace gleam {
+
+const api::load_options_t api::default_options = api::load_options_t{
+    .api_version = std::nullopt,
+    .api_type    = std::nullopt,
+};
+
 namespace detail {
 
 template<class Version>
-#if defined(GL_VERSION_4_5)
-    requires gl::MaximumVersion<Version, gl::Version<4, 4>>
-#endif
+requires gl::MaximumVersion<Version, gl::Version<4, 4>>
 inline void texture_alloc(textures::type type, u32& hnd)
 {
     cmd::gen_textures(SpanOne(hnd));
@@ -40,9 +46,9 @@ inline void texture_alloc(textures::type type, u32& hnd)
     cmd::bind_texture(convert::to(type), 0);
 }
 
-#if defined(GL_VERSION_4_5)
+#if GLEAM_MAX_VERSION >= 0x450
 template<class Version>
-    requires gl::MinimumVersion<Version, gl::Version<4, 5>>
+requires gl::MinimumVersion<Version, gl::Version<4, 5>>
 inline void texture_alloc(textures::type type, u32& hnd)
 {
     cmd::create_textures(convert::to(type), SpanOne(hnd));
@@ -53,27 +59,40 @@ inline void texture_alloc(textures::type type, u32& hnd)
 
 void texture_t::alloc(size_type const& size, bool create_storage)
 {
-    if(enum_helpers::feval(m_type & textures::type::multisample))
+    using enum_helpers::feval;
+
+    if(feval(m_type & textures::type::multisample))
         Throw(unimplemented_path("multisampled textures"));
+
+    [[maybe_unused]] auto _ = m_debug.scope();
 
     m_tex_size = {size[0], size[1]};
     m_layers   = size[2];
-    if(m_features.dsa)
-        detail::texture_alloc<cmd::version>(m_type, m_handle);
-    else
-        detail::texture_alloc<lowest_version>(m_type, m_handle);
+    if(m_handle == 0u)
+    {
+        if(m_features.dsa)
+            detail::texture_alloc<cmd::version>(m_type, m_handle);
+        else
+            detail::texture_alloc<lowest_version>(m_type, m_handle);
+    }
 
     if(create_storage)
     {
-        auto [sized_fmt, _, __] =
-            convert::to<group::sized_internal_format>(m_format, m_features);
-        auto glsize        = size.convert<i32>();
-        auto is_compressed = m_format.compressed();
+        [[maybe_unused]] auto glsize = size.convert<i32>();
+        auto                  is_compressed
+            = m_format.compressed() && !requires_software_decode();
+        [[maybe_unused]] auto is_immutable
+            = feval(m_flags, textures::property::immutable);
+
+        auto alloc_format = software_decode_format().value_or(m_format);
+        [[maybe_unused]] auto [sized_fmt, _, __]
+            = convert::to<group::sized_internal_format>(
+                alloc_format, m_features);
 
         using textures::type;
 
-#if GLEAM_MAX_VERSION >= 450 || defined(GL_EXT_direct_state_access)
-        if(m_features.dsa && !is_compressed)
+#if GLEAM_MAX_VERSION >= 0x450
+        if(is_immutable && m_features.dsa && !is_compressed)
         {
             switch(m_type)
             {
@@ -87,14 +106,10 @@ void texture_t::alloc(size_type const& size, bool create_storage)
             default:
                 Throw(unimplemented_path("texture type (dsa storage)"));
             }
-            cmd::texture_parameter(
-                m_handle,
-                group::texture_parameter_name::texture_max_level,
-                static_cast<i32>(m_mipmaps));
         } else
 #endif
-#if GLEAM_MAX_VERSION >= 420 || GLEAM_MAX_VERSION_ES >= 0x300
-            if(m_features.storage && !is_compressed)
+#if GLEAM_MAX_VERSION >= 0x420 || GLEAM_MAX_VERSION_ES >= 0x300
+            if(is_immutable && m_features.storage && !is_compressed)
         {
             auto target = convert::to(m_type);
             cmd::bind_texture(target, m_handle);
@@ -110,10 +125,6 @@ void texture_t::alloc(size_type const& size, bool create_storage)
             default:
                 Throw(unimplemented_path("texture type (tex storage)"));
             }
-            cmd::tex_parameter(
-                convert::to(m_type),
-                group::texture_parameter_name::texture_max_level,
-                static_cast<i32>(m_mipmaps));
             cmd::bind_texture(target, 0);
         } else
 #endif
@@ -122,19 +133,19 @@ void texture_t::alloc(size_type const& size, bool create_storage)
             using Coffee::GetPixCompressedSize;
             using typing::pixels::CompFmt;
 
-            auto [ifmt, type, layout] =
-                convert::to<group::internal_format>(m_format, m_features);
+            auto [ifmt, type, layout]
+                = convert::to<group::internal_format>(m_format, m_features);
             auto signed_size = size.convert<i32>();
             if(m_type == type::cube_array)
                 signed_size.d *= 6;
             cmd::bind_texture(convert::to(m_type), m_handle);
             for(auto i : stl_types::Range<>(m_mipmaps))
             {
-                auto alloc_size =
-                    GetPixCompressedSize(
-                        m_format.c,
-                        size_2d<i32>{signed_size.w, signed_size.h}) *
-                    signed_size.d;
+                auto alloc_size
+                    = GetPixCompressedSize(
+                          m_format.c,
+                          size_2d<i32>{signed_size.w, signed_size.h})
+                      * signed_size.d;
                 switch(m_type)
                 {
                 case type::d2:
@@ -167,10 +178,11 @@ void texture_t::alloc(size_type const& size, bool create_storage)
                     signed_size.d >>= 1;
             }
 #if GLEAM_MAX_VERSION >= 0x120 || GLEAM_MAX_VERSION_ES >= 0x300
-            cmd::tex_parameter(
-                convert::to(m_type),
-                group::texture_parameter_name::texture_max_level,
-                static_cast<i32>(m_mipmaps));
+            if(m_features.max_level)
+                cmd::tex_parameter(
+                    convert::to(m_type),
+                    group::texture_parameter_name::texture_max_level,
+                    static_cast<i32>(m_mipmaps - 1u));
 #endif
             cmd::bind_texture(convert::to(m_type), 0);
         } else
@@ -183,9 +195,9 @@ void texture_t::alloc(size_type const& size, bool create_storage)
             {
             case type::d2:
                 create_level = [&](size_3d<i32> const& s, i32 i) {
-                    auto [old_fmt, ptype, pfmt] =
-                        convert::to<group::internal_format>(
-                            m_format, m_features);
+                    auto [old_fmt, ptype, pfmt]
+                        = convert::to<group::internal_format>(
+                            alloc_format, m_features);
                     cmd::tex_image_2d(
                         target,
                         i,
@@ -197,14 +209,14 @@ void texture_t::alloc(size_type const& size, bool create_storage)
                         null_span);
                 };
                 break;
-#if GLEAM_MAX_VERSION >= 0x150 || GLEAM_MAX_VERSION_ES >= 0x300 || \
-    defined(GL_OES_texture_3D)
+#if GLEAM_MAX_VERSION >= 0x150 || GLEAM_MAX_VERSION_ES >= 0x300 \
+    || defined(GL_OES_texture_3D)
             case type::d2_array:
             case type::d3:
                 create_level = [&](size_3d<i32> const& s, i32 i) {
-                    auto [old_fmt, ptype, pfmt] =
-                        convert::to<group::internal_format>(
-                            m_format, m_features);
+                    auto [old_fmt, ptype, pfmt]
+                        = convert::to<group::internal_format>(
+                            alloc_format, m_features);
 #if GLEAM_MAX_VERSION >= 0x150 || GLEAM_MAX_VERSION_ES >= 0x300
                     using internal_format_t = i32;
 #else
@@ -261,10 +273,11 @@ void texture_t::alloc(size_type const& size, bool create_storage)
                     i);
             }
 #if GLEAM_MAX_VERSION >= 0x150 || GLEAM_MAX_VERSION_ES >= 0x300
-            cmd::tex_parameter(
-                convert::to(m_type),
-                group::texture_parameter_name::texture_max_level,
-                static_cast<i32>(m_mipmaps));
+            if(m_features.max_level)
+                cmd::tex_parameter(
+                    convert::to(m_type),
+                    group::texture_parameter_name::texture_max_level,
+                    static_cast<i32>(m_mipmaps - 1u));
 #endif
             cmd::bind_texture(convert::to(m_type), 0);
         }
@@ -273,8 +286,10 @@ void texture_t::alloc(size_type const& size, bool create_storage)
 
 size_3d<u32> texture_t::size()
 {
+#if GLEAM_MAX_VERSION >= 0x200 || GLEAM_MAX_VERSION_ES >= 0x310
     using get    = group::get_texture_parameter;
     using target = group::texture_target;
+#endif
 
     size_3d<u32> out;
     Span<i32>    p = mem_chunk<i32>::ofBytes(out).view;
@@ -325,24 +340,35 @@ Tup<features, api_type_t, u32> api::query_native_api_features(
     api_version = options.api_version.value_or(
         version_tuple_to_u32(query_native_version()));
 
+    /* Verify we're not trying to use features above what's compiled in */
+    {
+        auto compiled_ver = version_tuple_to_u32(query_compiled_version());
+        if(compiled_api == api_type && api_version > compiled_ver)
+            api_version = compiled_ver;
+    }
+
     if(api_type == api_type_t::core)
     {
-        out.texture.tex.gl.rgtc = api_version >= 0x300;
-
-        out.buffer.ubo      = api_version >= 0x310;
-        out.draw.instancing = api_version >= 0x310;
-
-        out.draw.vertex_offset = api_version >= 0x320;
+        out.buffer.mapping      = true;
+        out.buffer.pbo          = true;
+        out.buffer.ubo          = true;
+        out.draw.instancing     = true;
+        out.draw.vertex_offset  = true;
+        out.texture.max_level   = true;
+        out.texture.tex.gl.rgtc = true;
 
         out.draw.indirect         = api_version >= 0x420;
         out.draw.base_instance    = api_version >= 0x420;
+        out.texture.image_texture = api_version >= 0x420;
         out.texture.storage       = api_version >= 0x420;
         out.texture.tex.gl.bptc   = api_version >= 0x420;
         out.vertex.layout_binding = api_version >= 0x420;
 
         out.buffer.ssbo              = api_version >= 0x430;
+        out.debug.debug              = api_version >= 0x430;
         out.draw.multi_indirect      = api_version >= 0x430;
         out.program.uniform_location = api_version >= 0x430;
+        out.texture.image_copy       = api_version >= 0x430;
         out.texture.tex.gl.etc2      = api_version >= 0x430;
         out.texture.views            = api_version >= 0x430;
         out.vertex.format            = api_version >= 0x430;
@@ -361,15 +387,17 @@ Tup<features, api_type_t, u32> api::query_native_api_features(
 
         out.draw.shader_base_instance = api_version >= 0x460;
 
-        out.draw.arb.shader_draw_parameters =
-            supports_extension(extensions, arb::shader_draw_parameters::name);
+        out.draw.arb.shader_draw_parameters
+            = supports_extension(extensions, arb::shader_draw_parameters::name);
     } else if(api_type == api_type_t::es)
     {
         out.buffer.mapping                = api_version >= 0x300;
+        out.buffer.pbo                    = api_version >= 0x300;
         out.buffer.ubo                    = api_version >= 0x300;
         out.draw.instancing               = api_version >= 0x300;
         out.rendertarget.clearbuffer      = api_version >= 0x300;
         out.rendertarget.readdraw_buffers = api_version >= 0x300;
+        out.texture.max_level             = api_version >= 0x300;
         out.texture.samplers              = api_version >= 0x300;
         out.texture.texture_3d            = api_version >= 0x300;
         out.texture.tex_layer_query       = api_version >= 0x300;
@@ -379,63 +407,73 @@ Tup<features, api_type_t, u32> api::query_native_api_features(
 
         out.buffer.ssbo              = api_version >= 0x310;
         out.draw.indirect            = api_version >= 0x310;
+        out.texture.image_texture    = api_version >= 0x310;
         out.vertex.format            = api_version >= 0x310;
         out.program.uniform_location = api_version >= 0x310;
         out.vertex.layout_binding    = api_version >= 0x310;
 
+        out.debug.debug                      = api_version >= 0x320;
         out.draw.vertex_offset               = api_version >= 0x320;
         out.rendertarget.framebuffer_texture = api_version >= 0x320;
+        out.texture.image_copy               = api_version >= 0x320;
         out.texture.tex.gl.astc              = api_version >= 0x320;
 
-        out.buffer.oes.mapbuffer =
-            supports_extension(extensions, oes::mapbuffer::name);
-        out.query.disjoint_timer_query =
-            supports_extension(extensions, ext::disjoint_timer_query::name);
-        out.texture.oes.texture_3d =
-            supports_extension(extensions, oes::texture_3d::name);
-        out.vertex.oes.vertex_arrays =
-            supports_extension(extensions, oes::vertex_array_object::name);
-        out.rendertarget.ext.discard_framebuffer =
-            supports_extension(extensions, ext::discard_framebuffer::name);
+#if defined(GL_OES_mapbuffer)
+        out.buffer.oes.mapbuffer
+            = supports_extension(extensions, oes::mapbuffer::name);
+#endif
+        out.query.disjoint_timer_query
+            = supports_extension(extensions, ext::disjoint_timer_query::name);
+        out.texture.oes.texture_3d
+            = supports_extension(extensions, oes::texture_3d::name);
+        out.vertex.oes.vertex_arrays
+            = supports_extension(extensions, oes::vertex_array_object::name);
+        out.rendertarget.ext.discard_framebuffer
+            = supports_extension(extensions, ext::discard_framebuffer::name);
     }
-    out.texture.arb.texture_view =
-        supports_extension(extensions, arb::texture_view::name);
-    out.texture.ext.texture_view =
-        supports_extension(extensions, ext::texture_view::name);
-    out.texture.oes.texture_view =
-        supports_extension(extensions, oes::texture_view::name);
+    out.debug.khr.debug = supports_extension(extensions, khr::debug::name);
 
-    out.texture.ext.texture_anisotropic =
-        supports_extension(extensions, ext::texture_filter_anisotropic::name);
+    out.rendertarget.nv.shading_rate_image
+        = supports_extension(extensions, nv::shading_rate_image::name);
 
-    out.texture.tex.arb.bptc =
-        supports_extension(extensions, arb::texture_compression_bptc::name);
-    out.texture.tex.arb.rgtc =
-        supports_extension(extensions, arb::texture_compression_rgtc::name);
-    out.texture.tex.ext.bptc =
-        supports_extension(extensions, ext::texture_compression_bptc::name);
-    out.texture.tex.ext.rgtc =
-        supports_extension(extensions, ext::texture_compression_rgtc::name);
-    out.texture.tex.ext.s3tc =
-        supports_extension(extensions, ext::texture_compression_s3tc::name);
+    out.texture.arb.texture_view
+        = supports_extension(extensions, arb::texture_view::name);
+    out.texture.ext.texture_view
+        = supports_extension(extensions, ext::texture_view::name);
+    out.texture.oes.texture_view
+        = supports_extension(extensions, oes::texture_view::name);
 
-    out.texture.tex.oes.etc1 =
-        supports_extension(extensions, oes::compressed_etc1_rgb8_texture::name);
-    out.texture.tex.oes.rgba8 =
-        supports_extension(extensions, oes::rgb8_rgba8::name);
+    out.texture.ext.texture_anisotropic
+        = supports_extension(extensions, ext::texture_filter_anisotropic::name);
 
-    out.texture.tex.khr.astc =
-        supports_extension(extensions, khr::texture_compression_astc_ldr::name);
-    out.texture.tex.khr.astc_hdr =
-        supports_extension(extensions, khr::texture_compression_astc_hdr::name);
+    out.texture.tex.arb.bptc
+        = supports_extension(extensions, arb::texture_compression_bptc::name);
+    out.texture.tex.arb.rgtc
+        = supports_extension(extensions, arb::texture_compression_rgtc::name);
+    out.texture.tex.ext.bptc
+        = supports_extension(extensions, ext::texture_compression_bptc::name);
+    out.texture.tex.ext.rgtc
+        = supports_extension(extensions, ext::texture_compression_rgtc::name);
+    out.texture.tex.ext.s3tc
+        = supports_extension(extensions, ext::texture_compression_s3tc::name);
 
-    out.texture.tex.img.pvrtc =
-        supports_extension(extensions, img::texture_compression_pvrtc::name);
-    out.texture.tex.img.pvrtc2 =
-        supports_extension(extensions, img::texture_compression_pvrtc2::name);
+    out.texture.tex.oes.etc1 = supports_extension(
+        extensions, oes::compressed_etc1_rgb8_texture::name);
+    out.texture.tex.oes.rgba8
+        = supports_extension(extensions, oes::rgb8_rgba8::name);
 
-    out.texture.bindless_handles =
-        supports_extension(extensions, arb::bindless_texture::name);
+    out.texture.tex.khr.astc = supports_extension(
+        extensions, khr::texture_compression_astc_ldr::name);
+    out.texture.tex.khr.astc_hdr = supports_extension(
+        extensions, khr::texture_compression_astc_hdr::name);
+
+    out.texture.tex.img.pvrtc
+        = supports_extension(extensions, img::texture_compression_pvrtc::name);
+    out.texture.tex.img.pvrtc2
+        = supports_extension(extensions, img::texture_compression_pvrtc2::name);
+
+    out.texture.bindless_handles
+        = supports_extension(extensions, arb::bindless_texture::name);
 
     return {out, api_type, api_version};
 }
@@ -473,6 +511,19 @@ Tup<u32, u32> api::query_native_version()
         return {0, 0};
 
     return {cast_string<u32>(elements[2]), cast_string<u32>(elements[3])};
+}
+
+Tup<u32, u32> api::query_compiled_version()
+{
+    constexpr u32 version_basis =
+#if GLEAM_MAX_VERSION_ES > 0x0
+        GLEAM_MAX_VERSION_ES;
+#else
+        GLEAM_MAX_VERSION;
+#endif
+    u32 major = (version_basis & 0xF00) >> 8;
+    u32 minor = (version_basis & 0x0F0) >> 4;
+    return {major, minor};
 }
 
 stl_types::Set<String> api::query_native_extensions()
@@ -550,8 +601,8 @@ static auto shaderlang_regex()
 
 stl_types::String api::shaderlang_name()
 {
-    auto version =
-        cmd::get_string(group::string_name::shading_language_version);
+    auto version
+        = cmd::get_string(group::string_name::shading_language_version);
     stl_types::Vector<String> elements;
     if(!stl_types::regex::match(shaderlang_regex(), version, elements))
         return "Unknown GLSL";
@@ -568,8 +619,8 @@ api_type_t api::shaderlang_type()
 Tup<u32, u32> api::shaderlang_version()
 {
     using stl_types::cast_string;
-    auto version =
-        cmd::get_string(group::string_name::shading_language_version);
+    auto version
+        = cmd::get_string(group::string_name::shading_language_version);
     stl_types::Vector<String> elements;
     if(!stl_types::regex::match(shaderlang_regex(), version, elements))
         return {0, 0};
@@ -634,28 +685,23 @@ void api::collect_info(comp_app::interfaces::AppInfo& appInfo)
 
 Optional<error> api::load(load_options_t options)
 {
+    m_main_queue = rq::runtime_queue::GetCurrentQueue().value();
+
     if(options.api_extensions)
-        m_extensions = *options.api_extensions;
-    else
+    {
+        auto supported = query_native_extensions();
+        auto requested = *options.api_extensions;
+        for(auto const& ext : requested)
+            if(supported.contains(ext))
+                m_extensions.insert(ext);
+    } else
         m_extensions = query_native_extensions();
 
-    workarounds default_workarounds = {
-        .draw =
-            {
-                .emulated_instance_id   = true,
-                .emulated_base_instance = true,
-                .emulated_vertex_offset = true,
-            },
-    };
+    m_features.debug.khr.debug = supports_extension(gl::khr::debug::name);
+    [[maybe_unused]] auto _    = debug().scope(__PRETTY_FUNCTION__);
 
-    m_workarounds = options.api_workarounds.value_or(workarounds{});
-
-    m_features.khr_debug = supports_extension(gl::khr::debug::name);
-
-    auto _ = debug().scope(__PRETTY_FUNCTION__);
-
-    auto [native_features, native_api, native_version] =
-        query_native_api_features(m_extensions, options);
+    auto [native_features, native_api, native_version]
+        = query_native_api_features(m_extensions, options);
 
     if(options.api_version)
         m_api_version = *options.api_version;
@@ -667,10 +713,40 @@ Optional<error> api::load(load_options_t options)
     else
         m_api_type = native_api;
 
+    workarounds default_workarounds = {
+    // clang-format off
+        .draw = {
+            .emulated_instance_id   = true,
+            .emulated_base_instance = true,
+            .emulated_vertex_offset = true,
+            .force_vertex_attrib_names = m_api_type == api_type_t::es,
+        },
+        .buffer = {
+            .emulated_mapbuffer = true,
+        },
+    // clang-format on
+    };
+
+    /* TODO: Implement shader preprocessing to make InstanceID and BaseInstance
+     * work
+     */
+    m_workarounds = options.api_workarounds.value_or(default_workarounds);
+
     if(options.api_features)
         m_features = *options.api_features;
     else
         m_features = native_features;
+
+    m_limits.set_limits(m_features);
+
+    if(m_features.draw.instancing)
+        m_workarounds.draw.emulated_instance_id = false;
+//    if(m_features.draw.shader_base_instance)
+//        m_workarounds.draw.emulated_base_instance = false;
+    if(m_features.draw.vertex_offset)
+        m_workarounds.draw.emulated_vertex_offset = false;
+    if(m_features.buffer.mapping || m_features.buffer.oes.mapbuffer)
+        m_workarounds.buffer.emulated_mapbuffer = false;
 
     /* Let's skip ES 2.0 implementations that don't fulfill a minimum */
     if(m_api_type == api_type_t::es)
@@ -687,12 +763,62 @@ Optional<error> api::load(load_options_t options)
             if(!shader_compiler_present)
                 return error::refuse_bad_es20_impl;
         }
+
+#if GLEAM_MAX_VERSION_ES != 0x200
+        if(compiled_api == api_type_t::core
+           || (compiled_api == api_type_t::es && m_api_version >= 0x300))
+        {
+            /* Some modern implementations might not like use of VAO 0 */
+            u32 hnd{};
+            cmd::gen_vertex_arrays(SpanOne(hnd));
+            cmd::bind_vertex_array(hnd);
+        }
+#endif
     }
 
     if(m_api_type == api_type_t::core)
     {
         if(m_api_version < 0x330)
             return error::refuse_version_too_low;
+    }
+    if(compiled_api == api_type_t::core && m_api_type == api_type_t::es)
+    {
+        auto compiled_ver = version_tuple_to_u32(query_compiled_version());
+        auto native_ver   = version_tuple_to_u32(query_native_version());
+//        auto [native_features, _, __]
+//            = query_native_api_features(query_native_extensions());
+
+//        Coffee::Logging::cDebug(
+//            "\nNative extensions:\n{0}\nEmulated extensions:\n{1}",
+//            query_native_extensions(),
+//            m_extensions);
+
+        /* Emulating OpenGL ES on desktop requires specific versions */
+        if(compiled_ver < 0x410 && m_api_version >= 0x200)
+            return error::no_emulation_compiled_version_low;
+        if(compiled_ver < 0x430 && m_api_version >= 0x300)
+            return error::no_emulation_compiled_version_low;
+        if(compiled_ver < 0x450 && m_api_version >= 0x310)
+            return error::no_emulation_compiled_version_low;
+
+        if(native_ver < 0x410 && m_api_version >= 0x200)
+            return error::no_emulation_native_version_low;
+        if(native_ver < 0x430 && m_api_version >= 0x300)
+            return error::no_emulation_native_version_low;
+        if(native_ver < 0x450 && m_api_version >= 0x310)
+            return error::no_emulation_native_version_low;
+
+        /* OpenGL ES 3.2 requires some extensions,
+         * we leak a little bit of the abstraction here */
+        while(m_api_version >= 0x320)
+        {
+            /* ASTC has some problems on GL core, might need software decode */
+//            if(!native_features.texture.tex.khr.astc)
+//                return error::no_emulation_native_version_low;
+//            else
+//                m_features.texture.tex.khr.astc = true;
+            break;
+        }
     }
 
     //    cmd::enable(group::enable_cap::cull_face);

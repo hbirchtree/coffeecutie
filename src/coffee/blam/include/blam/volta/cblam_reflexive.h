@@ -55,7 +55,7 @@ struct alignas(4) reflexive_t
     {
         using namespace std::string_view_literals;
 
-        auto padding = pad.padding >> 16;
+//        auto padding = pad.padding >> 16;
 //        if(std::is_same_v<V, grbx_t> && padding != 0)
 //            return stl_types::failure("invalid reflexive_t"sv);
 

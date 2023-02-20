@@ -80,25 +80,23 @@ constexpr libc_types::u32 view_class_astc_12x10_rgba = 0x9394;
 constexpr libc_types::u32 view_class_astc_12x12_rgba = 0x9395;
 } // namespace values
 template<class span_i64>
-requires(
-    semantic::concepts::Span<span_i64> &&
-    std::is_same_v<
-        std::decay_t<typename span_i64::value_type>,
-        std::decay_t<i64>>)
-/*!
- * \brief Part of GL_ARB_internalformat_query2
- * \param target GLenum
- * \param internalformat GLenum
- * \param pname GLenum
- * \param count GLsizei
- * \param params GLint64 *
- * \return void
- */
-STATICINLINE void get_internalformati64v(
-    group::texture_target       target,
-    group::internal_format      internalformat,
-    group::internal_format_prop pname,
-    span_i64                    params)
+requires(semantic::concepts::Span<span_i64>&& std::is_same_v<
+         std::decay_t<typename span_i64::value_type>,
+         std::decay_t<i64>>)
+    /*!
+     * \brief Part of GL_ARB_internalformat_query2
+     * \param target GLenum
+     * \param internalformat GLenum
+     * \param pname GLenum
+     * \param count GLsizei
+     * \param params GLint64 *
+     * \return void
+     */
+    STATICINLINE void get_internalformati64v(
+        group::texture_target       target,
+        group::internal_format      internalformat,
+        group::internal_format_prop pname,
+        span_i64                    params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

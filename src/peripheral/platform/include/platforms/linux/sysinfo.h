@@ -168,7 +168,7 @@ inline u32 cpu_count()
 
     return die_ids.size();
 }
-inline u32 core_count(u32 cpu = 0, u32 node = 0)
+inline u32 core_count(u32 cpu = 0, [[maybe_unused]] u32 /*node*/ = 0)
 {
     using url::Path;
 
@@ -193,7 +193,7 @@ inline u32 core_count(u32 cpu = 0, u32 node = 0)
 
     return core_ids.size();
 }
-inline u32 thread_count(u32 cpu = 0, u32 node = 0)
+inline u32 thread_count(u32 cpu = 0, [[maybe_unused]] u32 /*node*/ = 0)
 {
     using url::Path;
 
@@ -218,7 +218,7 @@ inline u32 thread_count(u32 cpu = 0, u32 node = 0)
 }
 
 inline std::optional<std::pair<std::string, std::string>> model(
-    u32 cpu = 0, u32 node = 0)
+    u32 cpu = 0, [[maybe_unused]] u32 /*node*/ = 0)
 {
     using namespace url::constructors;
     using namespace stl_types::str;
@@ -290,10 +290,11 @@ inline topological_map<u32> topo_frequency()
     return freqs;
 }
 
-inline u32 frequency(bool current = false, u32 cpu = 0, u32 node = 0)
+inline u32 frequency(bool current = false, u32 cpu = 0, u32 /*node*/ = 0)
 {
     using url::Path;
     auto select_id = std::to_string(cpu);
+    auto freq_path = current ? "scaling_cur_freq" : "cpuinfo_max_freq";
     for(auto const& id : detail::online_cores())
     {
         auto cpu_id
@@ -302,7 +303,7 @@ inline u32 frequency(bool current = false, u32 cpu = 0, u32 node = 0)
         if(cpu_id.has_error()
            || (cpu_id.value() != select_id && cpu_id.value() != "-1"))
             break;
-        auto freq = detail::read_cpu(id, Path{"cpufreq/cpuinfo_max_freq"});
+        auto freq = detail::read_cpu(id, Path{"cpufreq"} / freq_path);
         if(freq.has_error())
             break;
         return libc::str::from_string<u32>(freq.value().data());

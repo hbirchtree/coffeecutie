@@ -185,6 +185,8 @@ enum class tag_class_t : u32
     wphi = 0x77706869, // ihpw 2003855465 Weapon HUD interface
 
     devi = devc,
+
+    undefined = 0xFFFFFFFF,
 };
 
 FORCEDINLINE bool tag_class_cmp(tag_class_t v1, tag_class_t v2)

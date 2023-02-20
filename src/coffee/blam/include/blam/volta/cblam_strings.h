@@ -3,6 +3,7 @@
 #include <peripherals/error/result.h>
 
 #include <codecvt>
+#include <locale>
 
 #include "cblam_magic_data.h"
 #include "cblam_reflexive.h"
@@ -115,7 +116,7 @@ struct unicode_var
         return ucs_string(data + off, res != ucs_string::npos ? res : 0);
     }
 
-    inline std::string flat_str(u16 off = 0) const
+    inline std::string flat_str(u16 /*off*/ = 0) const
     {
         std::wstring_convert<std::codecvt_utf8<value_type>> converter;
         return converter.to_bytes(str());
@@ -142,7 +143,6 @@ struct unicode_reflexive
 
     inline result<ucs_string, error_msg> str(magic_data_t const& magic) const
     {
-        constexpr char16_t terminator = u'\0';
         if(auto seg = data.data(magic); seg.has_error())
             return seg.error();
         else

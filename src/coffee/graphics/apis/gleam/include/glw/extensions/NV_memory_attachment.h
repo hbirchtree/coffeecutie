@@ -34,22 +34,20 @@ STATICINLINE void buffer_attach_memory(
 }
 
 template<class span_u32>
-requires(
-    semantic::concepts::Span<span_u32> &&
-    std::is_same_v<
-        std::decay_t<typename span_u32::value_type>,
-        std::decay_t<u32>>)
-/*!
- * \brief Part of GL_NV_memory_attachment
- * \param memory GLuint
- * \param pname GLenum
- * \param first GLint
- * \param count GLsizei
- * \param params GLuint *
- * \return void
- */
-STATICINLINE void get_memory_object_detached_resourcesuiv(
-    u32 memory, GLenum pname, i32 first, i32 count, span_u32 params)
+requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+         std::decay_t<typename span_u32::value_type>,
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_NV_memory_attachment
+     * \param memory GLuint
+     * \param pname GLenum
+     * \param first GLint
+     * \param count GLsizei
+     * \param params GLuint *
+     * \return void
+     */
+    STATICINLINE void get_memory_object_detached_resourcesuiv(
+        u32 memory, GLenum pname, i32 first, i32 count, span_u32 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -114,7 +112,8 @@ STATICINLINE void named_buffer_attach_memory(u32 buffer, u32 memory, u64 offset)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedBufferAttachMemoryNV)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
 #endif
@@ -136,7 +135,8 @@ STATICINLINE void texture_attach_memory(u32 texture, u32 memory, u64 offset)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(TextureAttachMemoryNV)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
 #endif

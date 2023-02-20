@@ -19,10 +19,10 @@ namespace Discord {
 
 using namespace platform;
 
-static constexpr cstring DiscordAvatarFmt =
-    DISCORD_EP "/avatars/{0}/{1}.{2}?size={3}";
-static constexpr cstring DiscordDefaultFmt =
-    DISCORD_EP "/embed/avatars/{0}.{1}?size={2}";
+static constexpr cstring DiscordAvatarFmt
+    = DISCORD_EP "/avatars/{0}/{1}.{2}?size={3}";
+static constexpr cstring DiscordDefaultFmt
+    = DISCORD_EP "/embed/avatars/{0}.{1}?size={2}";
 
 STATICINLINE void ClearPresence(DiscordRichPresence& p)
 {
@@ -80,7 +80,7 @@ static PlayerInfo InfoFromDiscordUser(DiscordUser const* user, u32 imgSize)
 {
     auto discriminator = cast_string<u32>(user->discriminator);
 
-    Url avatarUrl = Net::MkUrl(
+    Url avatarUrl = net::MkUrl(
         (strlen(user->avatar) > 0)
             ? fmt(DiscordAvatarFmt, user->userId, user->avatar, "jpg", imgSize)
             : fmt(DiscordDefaultFmt, discriminator % 5, "png", imgSize));
@@ -96,8 +96,8 @@ static PlayerInfo InfoFromDiscordUser(DiscordUser const* user, u32 imgSize)
 
 static DiscordService& GetService()
 {
-    auto ptr =
-        C_DCAST<DiscordService>(State::PeekState("discordService").get());
+    auto ptr
+        = C_DCAST<DiscordService>(State::PeekState("discordService").get());
 
     C_PTR_CHECK(ptr);
 
@@ -123,7 +123,7 @@ ShPtr<online::Service> CreateService(
             options.appId.c_str(), C_OCAST<const char*>(executable.value()));
     }
 
-    return std::move(discordService);
+    return discordService;
 }
 
 DiscordService::DiscordService(ShPtr<DiscordDelegate> delegate) :
@@ -144,8 +144,8 @@ void DiscordService::initialize(DiscordOptions const& options)
     DiscordEventHandlers handlers = {};
 
     handlers.ready = [](DiscordUser const* user) {
-        PlayerInfo info =
-            InfoFromDiscordUser(user, GetService().m_options.imgSize);
+        PlayerInfo info
+            = InfoFromDiscordUser(user, GetService().m_options.imgSize);
 
         auto& delegate = GetService().delegate();
 
@@ -189,8 +189,8 @@ void DiscordService::initialize(DiscordOptions const& options)
             delegate.spectate(secret);
     };
     handlers.joinRequest = [](DiscordUser const* request) {
-        PlayerInfo info =
-            InfoFromDiscordUser(request, GetService().m_options.imgSize);
+        PlayerInfo info
+            = InfoFromDiscordUser(request, GetService().m_options.imgSize);
 
         auto& delegate = GetService().delegate();
 
@@ -207,8 +207,8 @@ void DiscordService::initialize(DiscordOptions const& options)
 
     ClearPresence(m_cachedPresence);
 
-    m_cachedPresence.startTimestamp =
-        Chrono::seconds(std::time(nullptr)).count();
+    m_cachedPresence.startTimestamp
+        = Chrono::seconds(std::time(nullptr)).count();
 
     presence = MkShared<DiscordPresenceDelegate>(options, &m_cachedPresence);
     game     = MkShared<DiscordGameDelegate>(options, &m_cachedPresence);
@@ -237,7 +237,7 @@ void DiscordService::poll()
 }
 
 DiscordGameDelegate::DiscordGameDelegate(
-    const DiscordOptions& options, DiscordRichPresence* presence) :
+    const DiscordOptions& /*options*/, DiscordRichPresence* presence) :
     m_presence(presence)
 {
 }
@@ -262,7 +262,7 @@ void DiscordGameDelegate::put(DiscordGameDelegate::ExtraInfo&& gameInfo)
 }
 
 DiscordPresenceDelegate::DiscordPresenceDelegate(
-    const DiscordOptions& options, DiscordRichPresence* presence) :
+    const DiscordOptions& /*options*/, DiscordRichPresence* presence) :
     m_presence(presence)
 {
     static_assert(DISCORD_REPLY_NO == ReplyNo, "bad enum");

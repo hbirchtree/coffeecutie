@@ -40,14 +40,14 @@ static const cstring JsonTaggedFormat =
     "time": "{5}"
   },)";
 
-static const cstring JsonFormat =
-    R"({
-    "message": "{0}",
-    "severity": "{1}",
-    "pipe": "{2}",
-    "level": "{3}",
-    "time": "{4}"
-  },)";
+// static const cstring JsonFormat =
+//     R"({
+//     "message": "{0}",
+//     "severity": "{1}",
+//     "pipe": "{2}",
+//     "level": "{3}",
+//     "time": "{4}"
+//   },)";
 
 static std::string JsonFilter(std::string_view message)
 {
@@ -86,14 +86,15 @@ static void JsonTagLogger(
         tag,
         Time<>::Microsecond() / 1000);
 
-    platform::file::write(jsonLog, Bytes::ofContainer(json_msg));
+    platform::file::write(
+        jsonLog, mem_chunk<const char>::ofContainer(json_msg));
 }
 
 static void JsonLoggerExit()
 {
     auto jsonLog = std::move(GetLogState().handle);
 
-    platform::file::write(jsonLog, BytesConst::ofString("{}\n]\n"));
+    platform::file::write(jsonLog, mem_chunk<const char>::ofString("{}\n]\n"));
 
     DebugFun::SetLogInterface({Logging::log});
 }
@@ -113,7 +114,8 @@ DebugFun::LogInterface SetupJsonLogger(platform::url::Url const& jsonFilename)
     if(jsonFile.has_error())
         return {};
 
-    platform::file::write(jsonFile.value(), BytesConst::ofString("[\n  "));
+    platform::file::write(
+        jsonFile.value(), mem_chunk<const char>::ofString("[\n  "));
 
     auto jsonState    = MkShared<JsonLogState>();
     jsonState->handle = std::move(jsonFile.value());

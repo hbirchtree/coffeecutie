@@ -19,7 +19,6 @@
 
 #include <platforms/environment.h>
 #include <platforms/file.h>
-#include <platforms/process.h>
 #include <platforms/profiling/jsonprofile.h>
 #include <platforms/stacktrace.h>
 #include <platforms/sysinfo.h>
@@ -227,7 +226,9 @@ static void CoffeeInit_Internal(u32 flags)
     if constexpr(compile_info::debug_mode)
     {
         /* Allow core dump by default in debug mode */
-        ProcessProperty::CoreDumpEnable();
+#if defined(COFFEE_UNIXPLAT)
+        platform::common::posix::proc::core_dump_enable();
+#endif
 
         if constexpr(compile_info::profiler::enabled)
         {
@@ -483,6 +484,7 @@ void GotoApplicationDir()
 
 static file::file_handle stack_file;
 
+#if !defined(COFFEE_CUSTOM_STACKTRACE)
 static void stack_writer(
     std::string_view frame,
     std::string_view ip,
@@ -502,25 +504,29 @@ static void stack_writer(
 
 void generic_stacktrace(int sig)
 {
+    using platform::common::posix::proc::code_to_string;
+    using platform::common::posix::proc::send_sig;
     using semantic::debug::Severity;
     using namespace libc::io;
+    using namespace platform::stacktrace;
 
-    auto sig_string = posix::proc::code_to_string(sig);
+    auto sig_string = code_to_string(sig);
 
     fprintf(stderr, "signal encountered:\n");
     fprintf(stderr, " >> %s\n", sig_string);
 
-    if constexpr(platform::stacktrace::supports_stacktrace)
-        platform::stacktrace::print_frames(
-            platform::stacktrace::frames(),
-            typing::logging::fprintf_logger,
-            stack_writer);
+    if constexpr(supports_stacktrace)
+        print_frames(frames(), typing::logging::fprintf_logger, stack_writer);
 
-    posix::proc::send_sig(getpid(), libc::signal::sig::kill);
+    send_sig(getpid(), libc::signal::sig::kill);
 }
+#endif
 
 void InstallDefaultSigHandlers()
 {
+    if constexpr(compile_info::platform::is_android)
+        return;
+
     std::set_terminate([]() {
 #if !defined(COFFEE_CUSTOM_STACKTRACE)
         if(auto frames = platform::stacktrace::exception_frames();
@@ -530,15 +536,17 @@ void InstallDefaultSigHandlers()
                 typing::logging::fprintf_logger,
                 stack_writer);
 #endif
-        abort();
+        platform::common::posix::proc::breakpoint();
+        libc::signal::exit(libc::signal::sig::kill);
     });
 
 #if !defined(COFFEE_CUSTOM_STACKTRACE)
     using libc::signal::sig;
 
-    libc::signal::install(sig::fpe, generic_stacktrace);
     libc::signal::install(sig::ill_op, generic_stacktrace);
+    libc::signal::install(sig::abort, generic_stacktrace);
     libc::signal::install(sig::bus_error, generic_stacktrace);
+    libc::signal::install(sig::fpe, generic_stacktrace);
     libc::signal::install(sig::segfault, generic_stacktrace);
 
     libc::signal::install(sig::terminate, [](i32) {

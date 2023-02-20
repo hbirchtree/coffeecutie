@@ -3,7 +3,7 @@ coffee_library (
     SOURCES
     private/volta/cblam_map.cpp
 
-    LIBRARIES Image CoreCompression
+    LIBRARIES Image CoreZ
 
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

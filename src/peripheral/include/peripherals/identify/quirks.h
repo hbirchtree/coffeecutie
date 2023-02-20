@@ -164,9 +164,9 @@
 #elif defined(COFFEE_APPLE_MOBILE) || defined(COFFEE_ANDROID)
 #define COFFEE_CUSTOM_MAIN
 #define COFFEE_CUSTOM_EXIT_HANDLING
-#if defined(COFFEE_ANDROID)
-#define COFFEE_CUSTOM_STACKTRACE
-#endif
+//#if defined(COFFEE_ANDROID)
+//#define COFFEE_CUSTOM_STACKTRACE
+//#endif
 #endif
 
 /*
@@ -235,23 +235,6 @@
 
 /*
  *
- * Compression systems
- *
- */
-
-#if !defined(COFFEE_WINDOWS) && !defined(COFFEE_GEKKO)
-/* Zlib comes bundled with pretty much all POSIX systems
- *  except Windows */
-#define COFFEE_BUILD_ZLIB
-#elif defined(COFFEE_WINDOWS) && defined(_WIN32_WINNT) && _WIN32_WINNT >= 0x0602
-#define COFFEE_BUILD_WINDOWS_DEFLATE
-#define COFFEE_BUILD_ZLIB
-#else
-#define COFFEE_BUILD_NO_COMPRESSION
-#endif
-
-/*
- *
  * System calls
  *
  */
@@ -281,6 +264,9 @@
 
 #if defined(COFFEE_ANDROID) || defined(COFFEE_EMSCRIPTEN)
 #define COFFEE_PLATFORM_OUTPUT_FORMAT
+#endif
+
+#if defined(COFFEE_EMSCRIPTEN)
 #define COFFEE_CUSTOM_STACKTRACE
 #endif
 

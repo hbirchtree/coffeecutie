@@ -61,7 +61,8 @@ struct AppLoader : AppService<AppLoader>
         template<detail::is_subsystem T>
         void operator()()
         {
-            auto ptr = C_DCAST<AppLoadableService>(e.service<T>());
+            auto ptr
+                = C_DCAST<AppLoadableService>(e.service<typename T::type>());
 
             if(ptr)
                 ptr->do_load(e, ec);
@@ -95,6 +96,16 @@ struct AppLoader : AppService<AppLoader>
     };
 
     template<typename Services>
+    void registerAll(detail::EntityContainer& e, app_error& ec)
+    {
+        using namespace type_safety::type_list;
+
+        ec = AppError::None;
+
+        for_each<Services>(service_register(e, ec));
+    }
+
+    template<typename Services>
     void loadAll(detail::EntityContainer& e, app_error& ec)
     {
         using namespace type_safety::type_list;
@@ -102,9 +113,7 @@ struct AppLoader : AppService<AppLoader>
         ec = AppError::None;
 
         for_each<Services>(service_register(e, ec));
-#if !defined(COFFEE_CUSTOM_MAIN) || defined(COFFEE_ANDROID)
         for_each<Services>(service_loader(e, ec));
-#endif
     }
 
     void clearConfigs()
@@ -163,8 +172,8 @@ struct AppLoader : AppService<AppLoader>
 
         if(it == m_configs.end())
             Throw(undefined_behavior(
-                std::string("failed to find config: ") +
-                typeid(Config).name()));
+                std::string("failed to find config: ")
+                + typeid(Config).name()));
 
         auto ptr = C_DCAST<Config>(it->second);
 

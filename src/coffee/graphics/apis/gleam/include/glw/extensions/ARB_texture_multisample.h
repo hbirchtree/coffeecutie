@@ -22,20 +22,18 @@ constexpr libc_types::u32 texture_samples                = 0x9106;
 constexpr libc_types::u32 texture_fixed_sample_locations = 0x9107;
 } // namespace values
 template<class span_f32>
-requires(
-    semantic::concepts::Span<span_f32> &&
-    std::is_same_v<
-        std::decay_t<typename span_f32::value_type>,
-        std::decay_t<f32>>)
-/*!
- * \brief Part of GL_ARB_texture_multisample
- * \param pname GLenum
- * \param index GLuint
- * \param val GLfloat *
- * \return void
- */
-STATICINLINE void get_multisamplefv(
-    group::get_multisample_prop_nv pname, u32 index, span_f32 val)
+requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+         std::decay_t<typename span_f32::value_type>,
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_ARB_texture_multisample
+     * \param pname GLenum
+     * \param index GLuint
+     * \param val GLfloat *
+     * \return void
+     */
+    STATICINLINE void get_multisamplefv(
+        group::get_multisample_prop_nv pname, u32 index, span_f32 val)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -68,22 +66,22 @@ STATICINLINE void sample_maski(u32 maskNumber, GLbitfield mask)
 
 template<class size_2_i32>
 requires(semantic::concepts::Size2D<size_2_i32, i32>)
-/*!
- * \brief Part of GL_ARB_texture_multisample
- * \param target GLenum
- * \param samples GLsizei
- * \param internalformat GLenum
- * \param width GLsizei
- * \param height GLsizei
- * \param fixedsamplelocations GLboolean
- * \return void
- */
-STATICINLINE void tex_image_2d_multisample(
-    group::texture_target  target,
-    i32                    samples,
-    group::internal_format internalformat,
-    size_2_i32 const&      width,
-    bool                   fixedsamplelocations)
+    /*!
+     * \brief Part of GL_ARB_texture_multisample
+     * \param target GLenum
+     * \param samples GLsizei
+     * \param internalformat GLenum
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param fixedsamplelocations GLboolean
+     * \return void
+     */
+    STATICINLINE void tex_image_2d_multisample(
+        group::texture_target  target,
+        i32                    samples,
+        group::internal_format internalformat,
+        size_2_i32 const&      width,
+        bool                   fixedsamplelocations)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -102,23 +100,23 @@ STATICINLINE void tex_image_2d_multisample(
 
 template<class size_3_i32>
 requires(semantic::concepts::Size2D<size_3_i32, i32>)
-/*!
- * \brief Part of GL_ARB_texture_multisample
- * \param target GLenum
- * \param samples GLsizei
- * \param internalformat GLenum
- * \param width GLsizei
- * \param height GLsizei
- * \param depth GLsizei
- * \param fixedsamplelocations GLboolean
- * \return void
- */
-STATICINLINE void tex_image_3d_multisample(
-    group::texture_target  target,
-    i32                    samples,
-    group::internal_format internalformat,
-    size_3_i32 const&      width,
-    bool                   fixedsamplelocations)
+    /*!
+     * \brief Part of GL_ARB_texture_multisample
+     * \param target GLenum
+     * \param samples GLsizei
+     * \param internalformat GLenum
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param depth GLsizei
+     * \param fixedsamplelocations GLboolean
+     * \return void
+     */
+    STATICINLINE void tex_image_3d_multisample(
+        group::texture_target  target,
+        i32                    samples,
+        group::internal_format internalformat,
+        size_3_i32 const&      width,
+        bool                   fixedsamplelocations)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

@@ -10,7 +10,9 @@ namespace gleam {
 namespace detail {
 
 inline void query_alloc(
-    queries::type type, hnd& handle, features::queries& features)
+    [[maybe_unused]] queries::type      type,
+    [[maybe_unused]] hnd&               handle,
+    [[maybe_unused]] features::queries& features)
 {
 #if GLEAM_MAX_VERSION >= 0x450
     if(features.dsa)
@@ -33,7 +35,8 @@ inline void query_alloc(
 #endif
 }
 
-inline void query_dealloc(hnd& handle, features::queries& features)
+inline void query_dealloc(
+    [[maybe_unused]] hnd& handle, [[maybe_unused]] features::queries& features)
 {
 #if defined(GL_EXT_disjoint_timer_query)
     if(features.disjoint_timer_query)
@@ -131,8 +134,7 @@ struct timestamp_query
         if(m_features.disjoint_timer_query)
         {
             gl::ext::disjoint_timer_query::query_counter(
-                m_handle,
-                group::query_counter_target::timestamp_ext);
+                m_handle, group::query_counter_target::timestamp_ext);
         }
 #elif GLEAM_MAX_VERSION >= 0x300
         {

@@ -18,24 +18,24 @@ constexpr libc_types::u32 compressed_texture_formats     = 0x86A3;
 } // namespace values
 template<class span_const_void>
 requires(semantic::concepts::Span<span_const_void>)
-/*!
- * \brief Part of GL_ARB_texture_compression
- * \param target GLenum
- * \param level GLint
- * \param internalformat GLenum
- * \param width GLsizei
- * \param border GLint
- * \param imageSize GLsizei
- * \param data const void *
- * \return void
- */
-STATICINLINE void compressed_tex_image_1d(
-    group::texture_target  target,
-    i32                    level,
-    group::internal_format internalformat,
-    i32                    width,
-    i32                    border,
-    span_const_void const& data)
+    /*!
+     * \brief Part of GL_ARB_texture_compression
+     * \param target GLenum
+     * \param level GLint
+     * \param internalformat GLenum
+     * \param width GLsizei
+     * \param border GLint
+     * \param imageSize GLsizei
+     * \param data const void *
+     * \return void
+     */
+    STATICINLINE void compressed_tex_image_1d(
+        group::texture_target  target,
+        i32                    level,
+        group::internal_format internalformat,
+        i32                    width,
+        i32                    border,
+        span_const_void const& data)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -55,28 +55,27 @@ STATICINLINE void compressed_tex_image_1d(
 }
 
 template<class size_2_i32, class span_const_void>
-requires(
-    semantic::concepts::Size2D<size_2_i32, i32> &&
-    semantic::concepts::Span<span_const_void>)
-/*!
- * \brief Part of GL_ARB_texture_compression
- * \param target GLenum
- * \param level GLint
- * \param internalformat GLenum
- * \param width GLsizei
- * \param height GLsizei
- * \param border GLint
- * \param imageSize GLsizei
- * \param data const void *
- * \return void
- */
-STATICINLINE void compressed_tex_image_2d(
-    group::texture_target  target,
-    i32                    level,
-    group::internal_format internalformat,
-    size_2_i32 const&      width,
-    i32                    border,
-    span_const_void const& data)
+requires(semantic::concepts::Size2D<size_2_i32, i32>&&
+             semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_ARB_texture_compression
+     * \param target GLenum
+     * \param level GLint
+     * \param internalformat GLenum
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param border GLint
+     * \param imageSize GLsizei
+     * \param data const void *
+     * \return void
+     */
+    STATICINLINE void compressed_tex_image_2d(
+        group::texture_target  target,
+        i32                    level,
+        group::internal_format internalformat,
+        size_2_i32 const&      width,
+        i32                    border,
+        span_const_void const& data)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -97,29 +96,28 @@ STATICINLINE void compressed_tex_image_2d(
 }
 
 template<class size_3_i32, class span_const_void>
-requires(
-    semantic::concepts::Size2D<size_3_i32, i32> &&
-    semantic::concepts::Span<span_const_void>)
-/*!
- * \brief Part of GL_ARB_texture_compression
- * \param target GLenum
- * \param level GLint
- * \param internalformat GLenum
- * \param width GLsizei
- * \param height GLsizei
- * \param depth GLsizei
- * \param border GLint
- * \param imageSize GLsizei
- * \param data const void *
- * \return void
- */
-STATICINLINE void compressed_tex_image_3d(
-    group::texture_target  target,
-    i32                    level,
-    group::internal_format internalformat,
-    size_3_i32 const&      width,
-    i32                    border,
-    span_const_void const& data)
+requires(semantic::concepts::Size2D<size_3_i32, i32>&&
+             semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_ARB_texture_compression
+     * \param target GLenum
+     * \param level GLint
+     * \param internalformat GLenum
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param depth GLsizei
+     * \param border GLint
+     * \param imageSize GLsizei
+     * \param data const void *
+     * \return void
+     */
+    STATICINLINE void compressed_tex_image_3d(
+        group::texture_target  target,
+        i32                    level,
+        group::internal_format internalformat,
+        size_3_i32 const&      width,
+        i32                    border,
+        span_const_void const& data)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -142,24 +140,24 @@ STATICINLINE void compressed_tex_image_3d(
 
 template<class span_const_void>
 requires(semantic::concepts::Span<span_const_void>)
-/*!
- * \brief Part of GL_ARB_texture_compression
- * \param target GLenum
- * \param level GLint
- * \param xoffset GLint
- * \param width GLsizei
- * \param format GLenum
- * \param imageSize GLsizei
- * \param data const void *
- * \return void
- */
-STATICINLINE void compressed_tex_sub_image_1d(
-    group::texture_target  target,
-    i32                    level,
-    i32                    xoffset,
-    i32                    width,
-    group::internal_format format,
-    span_const_void const& data)
+    /*!
+     * \brief Part of GL_ARB_texture_compression
+     * \param target GLenum
+     * \param level GLint
+     * \param xoffset GLint
+     * \param width GLsizei
+     * \param format GLenum
+     * \param imageSize GLsizei
+     * \param data const void *
+     * \return void
+     */
+    STATICINLINE void compressed_tex_sub_image_1d(
+        group::texture_target  target,
+        i32                    level,
+        i32                    xoffset,
+        i32                    width,
+        group::internal_format format,
+        span_const_void const& data)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -179,30 +177,29 @@ STATICINLINE void compressed_tex_sub_image_1d(
 }
 
 template<class size_2_i32, class span_const_void, class vec_2_i32>
-requires(
-    semantic::concepts::Vector<vec_2_i32, i32, 2> &&
-    semantic::concepts::Size2D<size_2_i32, i32> &&
-    semantic::concepts::Span<span_const_void>)
-/*!
- * \brief Part of GL_ARB_texture_compression
- * \param target GLenum
- * \param level GLint
- * \param xoffset GLint
- * \param yoffset GLint
- * \param width GLsizei
- * \param height GLsizei
- * \param format GLenum
- * \param imageSize GLsizei
- * \param data const void *
- * \return void
- */
-STATICINLINE void compressed_tex_sub_image_2d(
-    group::texture_target  target,
-    i32                    level,
-    vec_2_i32 const&       xoffset,
-    size_2_i32 const&      width,
-    group::internal_format format,
-    span_const_void const& data)
+requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
+                 semantic::concepts::Size2D<size_2_i32, i32>&&
+                 semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_ARB_texture_compression
+     * \param target GLenum
+     * \param level GLint
+     * \param xoffset GLint
+     * \param yoffset GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param format GLenum
+     * \param imageSize GLsizei
+     * \param data const void *
+     * \return void
+     */
+    STATICINLINE void compressed_tex_sub_image_2d(
+        group::texture_target  target,
+        i32                    level,
+        vec_2_i32 const&       xoffset,
+        size_2_i32 const&      width,
+        group::internal_format format,
+        span_const_void const& data)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -224,32 +221,31 @@ STATICINLINE void compressed_tex_sub_image_2d(
 }
 
 template<class size_3_i32, class span_const_void, class vec_3_i32>
-requires(
-    semantic::concepts::Vector<vec_3_i32, i32, 3> &&
-    semantic::concepts::Size2D<size_3_i32, i32> &&
-    semantic::concepts::Span<span_const_void>)
-/*!
- * \brief Part of GL_ARB_texture_compression
- * \param target GLenum
- * \param level GLint
- * \param xoffset GLint
- * \param yoffset GLint
- * \param zoffset GLint
- * \param width GLsizei
- * \param height GLsizei
- * \param depth GLsizei
- * \param format GLenum
- * \param imageSize GLsizei
- * \param data const void *
- * \return void
- */
-STATICINLINE void compressed_tex_sub_image_3d(
-    group::texture_target  target,
-    i32                    level,
-    vec_3_i32 const&       xoffset,
-    size_3_i32 const&      width,
-    group::internal_format format,
-    span_const_void const& data)
+requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
+                 semantic::concepts::Size2D<size_3_i32, i32>&&
+                 semantic::concepts::Span<span_const_void>)
+    /*!
+     * \brief Part of GL_ARB_texture_compression
+     * \param target GLenum
+     * \param level GLint
+     * \param xoffset GLint
+     * \param yoffset GLint
+     * \param zoffset GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \param depth GLsizei
+     * \param format GLenum
+     * \param imageSize GLsizei
+     * \param data const void *
+     * \return void
+     */
+    STATICINLINE void compressed_tex_sub_image_3d(
+        group::texture_target  target,
+        i32                    level,
+        vec_3_i32 const&       xoffset,
+        size_3_i32 const&      width,
+        group::internal_format format,
+        span_const_void const& data)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -274,15 +270,15 @@ STATICINLINE void compressed_tex_sub_image_3d(
 
 template<class span_void>
 requires(semantic::concepts::Span<span_void>)
-/*!
- * \brief Part of GL_ARB_texture_compression
- * \param target GLenum
- * \param level GLint
- * \param img void *
- * \return void
- */
-STATICINLINE void get_compressed_tex_image(
-    group::texture_target target, i32 level, span_void img)
+    /*!
+     * \brief Part of GL_ARB_texture_compression
+     * \param target GLenum
+     * \param level GLint
+     * \param img void *
+     * \return void
+     */
+    STATICINLINE void get_compressed_tex_image(
+        group::texture_target target, i32 level, span_void img)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

@@ -388,6 +388,7 @@ requires(Prop == pixel_size) FORCEDINLINE constexpr szptr
     case B::UByte_332:
     case B::UByte_233R:
         packed = true;
+        [[fallthrough]];
     case B::Byte:
     case B::ByteR:
     case B::UByte:
@@ -401,6 +402,7 @@ requires(Prop == pixel_size) FORCEDINLINE constexpr szptr
     case B::UShort_5551:
     case B::UShort_1555R:
         packed = true;
+        [[fallthrough]];
     case B::Short:
     case B::ShortR:
     case B::UShort:
@@ -413,6 +415,7 @@ requires(Prop == pixel_size) FORCEDINLINE constexpr szptr
     case B::UInt_2101010R:
     case B::Scalar_11_11_10:
         packed = true;
+        [[fallthrough]];
     case B::Int:
     case B::IntR:
     case B::UInt:

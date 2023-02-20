@@ -50,8 +50,8 @@ requires std::is_same_v<R, void> STATICINLINE void set_promise_value(
 }
 
 template<typename R, typename... Args>
-requires(!std::is_same_v<R, void>) STATICINLINE
-    void set_promise_value(std::promise<R>& out, std::function<R(Args...)>& fun, Args... args)
+requires(!std::is_same_v<R, void>) STATICINLINE void set_promise_value(
+    std::promise<R>& out, std::function<R(Args...)>& fun, Args... args)
 {
     out.set_value(fun(args...));
 }
@@ -137,9 +137,9 @@ struct runtime_task
         auto            handle = result.get_future();
         return {
             runtime_task{
-                .task  = [fun = std::move(fun),
-                         result =
-                             std::move(result)] { result.set_value(fun()); },
+                .task
+                = [fun    = std::move(fun),
+                   result = std::move(result)] { result.set_value(fun()); },
                 .time  = scheduled_time,
                 .flags = Flags,
             },
@@ -184,20 +184,42 @@ struct dependent_task_invoker
 template<typename Dependency, typename Out>
 struct dependent_task : public dependent_task_invoker
 {
-    STATICINLINE auto CreateTask(
+    virtual ~dependent_task() = default;
+
+    STATICINLINE auto CreateProcessor(
         std::future<Dependency>&&         dependency,
         std::function<Out(Dependency*)>&& task)
     {
-        auto out = std::make_unique<dependent_task>();
-
+        if(!dependency.valid())
+            Throw(std::runtime_error("dependent_task: invalid dependency"));
+        auto out        = std::make_unique<dependent_task>();
         out->task       = std::move(task);
         out->dependency = std::move(dependency);
+        return out;
+    }
 
+    STATICINLINE auto CreateSource(std::function<Out()>&& task)
+    {
+        auto out        = std::make_unique<dependent_task>();
+        out->task       = [task = std::move(task)](void*) { return task(); };
+        out->dependency = {};
+        return out;
+    }
+
+    STATICINLINE auto CreateSink(
+        std::future<Dependency>&&          dependency,
+        std::function<void(Dependency*)>&& task)
+    {
+        auto out        = std::make_unique<dependent_task>();
+        out->task       = std::move(task);
+        out->dependency = std::move(dependency);
         return out;
     }
 
     virtual bool ready() override final
     {
+        if(!dependency.valid())
+            return true;
         using namespace std::chrono_literals;
         return dependency.wait_for(0ms) == std::future_status::ready;
     }
@@ -218,7 +240,8 @@ struct dependent_task : public dependent_task_invoker
     requires std::is_same_v<Dependency, void>
     void operator()()
     {
-        dependency.get();
+        if(dependency.valid())
+            dependency.get();
         detail::set_promise_value<Out, void*>(output, task, nullptr);
     }
 
@@ -319,7 +342,7 @@ class runtime_queue
         runtime_queue* queue, std::unique_ptr<dependent_task_invoker>&& task);
 
     static detail::result<u64, RuntimeQueueError> Queue(
-        std::unique_ptr<dependent_task_invoker> &&task);
+        std::unique_ptr<dependent_task_invoker>&& task);
 
     /*!
      * \brief Queue a single-shot task, without the effort
@@ -328,7 +351,7 @@ class runtime_queue
      * \param task Task to be run
      * \return
      */
-    [[nodiscard]] STATICINLINE detail::result<u64, RuntimeQueueError> QueueShot(
+    STATICINLINE detail::result<u64, RuntimeQueueError> QueueShot(
         runtime_queue* q, detail::duration time, std::function<void()>&& task)
     {
         if(!q)
@@ -349,9 +372,8 @@ class runtime_queue
      * \param task
      * \return
      */
-    [[nodiscard]] STATICINLINE detail::result<u64, RuntimeQueueError>
-                               QueueEnsureThread(
-                                   runtime_queue* q, std::function<void()>&& task, bool await = false)
+    STATICINLINE detail::result<u64, RuntimeQueueError> QueueEnsureThread(
+        runtime_queue* q, std::function<void()>&& task, bool await = false)
     {
         if(!q)
         {
@@ -392,9 +414,8 @@ class runtime_queue
      * \param task
      * \return
      */
-    [[nodiscard]] STATICINLINE detail::result<u64, RuntimeQueueError>
-                               QueueImmediate(
-                                   runtime_queue* q, detail::duration time, std::function<void()>&& task)
+    STATICINLINE detail::result<u64, RuntimeQueueError> QueueImmediate(
+        runtime_queue* q, detail::duration time, std::function<void()>&& task)
     {
         if(!q)
             return detail::failure(RuntimeQueueError::InvalidQueue);

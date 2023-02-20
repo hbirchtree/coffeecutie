@@ -1,5 +1,8 @@
 #pragma once
 
+#include "cblam_magic_data.h"
+#include "cblam_reflexive.h"
+#include "cblam_strings.h"
 #include "cblam_structures.h"
 
 #include <coffee/interfaces/cgraphics_pixops.h>
@@ -243,9 +246,10 @@ struct image_t
         case format_t::BC3:
             return PixFmt::BCn;
         }
+        __builtin_unreachable();
     }
 
-    inline stl_types::Tup<PixFmt, CompFlags> to_compressed_fmt() const
+    inline std::tuple<PixFmt, CompFlags> to_compressed_fmt() const
     {
         switch(format)
         {
@@ -255,7 +259,10 @@ struct image_t
             return {PixFmt::BCn, CompFlags::BC2};
         case format_t::BC3:
             return {PixFmt::BCn, CompFlags::BC3};
+        default:
+            break;
         }
+        __builtin_unreachable();
     }
 
     inline Span<const u8> data(magic_data_t const& magic, u16 mipmap = 0) const
@@ -290,7 +297,7 @@ struct image_t
                 mip_offset += imsize.area();
             }
 
-            return reflexive_t<u8>{size, offset + mip_offset}
+            return reflexive_t<u8>{.count = size, .offset = offset + mip_offset}
                 .data(magic)
                 .value();
         } else
@@ -312,7 +319,7 @@ struct image_t
                 mip_offset += Coffee::GetPixCompressedSize(
                     comp_fmt, off_size.convert<u32>());
             }
-            return reflexive_t<u8>{size, offset + mip_offset}
+            return reflexive_t<u8>{.count = size, .offset = offset + mip_offset}
                 .data(magic)
                 .value();
         }

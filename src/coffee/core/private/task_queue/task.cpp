@@ -3,15 +3,12 @@
 #include <algorithm>
 #include <coffee/core/CProfiling>
 #include <coffee/core/internal_state.h>
-#include <platforms/stacktrace.h>
 
 #include <coffee/strings/libc_types.h>
 
 #include <coffee/core/CDebug>
 
 #define RQ_API "runtime_queue::"
-
-using Stacktracer = platform::env::Stacktracer;
 
 using Profiler     = Coffee::Profiler;
 using DProfContext = Coffee::DProfContext;
@@ -216,7 +213,7 @@ static void ImpCreateNewThreadQueue(
 #ifndef COFFEE_LOWFAT
     } catch(std::exception const& e)
     {
-        Coffee::cWarning(RQ_API "Error encountered: {}", e.what());
+        Coffee::cWarning(RQ_API "Error encountered: {0}", e.what());
     }
 #endif
 
@@ -420,8 +417,6 @@ std::optional<RuntimeQueueError> runtime_queue::Block(
     }
 
     auto& queue = *pQueue;
-
-    runtime_task const* task = nullptr;
 
     if(auto res = GetTask(queue.m_tasks, taskId); res.has_error())
         return res.error();
@@ -670,7 +665,6 @@ void runtime_queue::execute_tasks()
 
     auto currTime = detail::clock::now();
 
-    u64 i = 0;
     auto tasks = std::move(m_tasks);
     for(task_data_t& task : tasks)
     {

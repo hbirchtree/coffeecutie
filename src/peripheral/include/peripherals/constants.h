@@ -244,6 +244,14 @@ constexpr bool internal_build =
 
 namespace platform {
 
+constexpr bool is_32bit =
+#if defined(COFFEE_ARCH_X86) || defined(COFFEE_ARCH_ARM32)
+    true
+#else
+    false
+#endif
+    ;
+
 constexpr bool custom_exit =
 #if defined(COFFEE_CUSTOM_EXIT_HANDLING)
     true

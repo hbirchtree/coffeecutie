@@ -30,7 +30,6 @@ FORCEDINLINE result<mem_chunk<char>, int> read(
             size = size_.value();
     }
     auto  out  = mem_chunk<char>::withSize(size);
-    auto& view = out.view;
     if(offset != 0)
     {
         if(fseek(file, offset, SEEK_SET) != 0)

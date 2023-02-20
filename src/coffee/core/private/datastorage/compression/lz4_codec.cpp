@@ -142,7 +142,7 @@ bool compressor::Decompress(
 
     target->resize(header.real_size);
 
-    auto contentChunk = compressed.subspan(sizeof(chunk_header));
+//    auto contentChunk = compressed.subspan(sizeof(chunk_header));
 
     int result = LZ4_decompress_safe(
         C_RCAST<const char*>(compressed.data() + sizeof(chunk_header)),
@@ -150,7 +150,7 @@ bool compressor::Decompress(
         C_FCAST<int>(compressed.size() - sizeof(chunk_header)),
         C_FCAST<int>(target->size));
 
-    if(result > 0 && target->size != result)
+    if(result > 0 && static_cast<int>(target->size) != result)
     {
         ec = error::decompression_mismatch_size;
         return false;

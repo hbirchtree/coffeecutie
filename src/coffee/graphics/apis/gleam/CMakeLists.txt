@@ -1,63 +1,69 @@
 option ( BUILD_DESKTOP_GL "Override for building Desktop GL on f.ex. Android" OFF )
 
 option ( BUILD_GLES_20 "Build against OpenGL ES 2.0 (mutually exclusive)" OFF )
+option ( BUILD_GLES_20_STATIC "Build against OpenGL ES 2.0 (linked, no extensions)" OFF )
 option ( BUILD_GLES "Build library targeting OpenGL ES 3.0+" OFF )
 option ( BUILD_GLES_31 "Build with support for OpenGL ES 3.1 (Only activates when BUILD_GLES is on)" ON )
 option ( BUILD_GLES_32 "Build with support for OpenGL ES 3.2 (Only activates when BUILD_GLES is on)" ON )
+option ( BUILD_GL_SOFTWARE_BCN "Build software-decode for BCn using bcdec" OFF )
 
 if(WIN32 AND WIN_UWP)
     option ( BUILD_ANGLE "Build on ANGLE as backend for OpenGL ES" ON )
 endif()
 
-if (
-    (NOT IOS AND
-     NOT ANDROID AND
-     NOT EMSCRIPTEN AND
-     NOT (WIN32 AND WIN_UWP)) OR
-     BUILD_DESKTOP_GL
-    )
+if(BUILD_GL_SOFTWARE_BCN)
+    find_package ( BCDec REQUIRED )
+endif()
+
+if (NOT BUILD_GLES)
     add_library ( GLVersion_Dynamic INTERFACE )
-    if (NOT APPLE)
+    if (APPLE)
         target_compile_definitions ( GLVersion_Dynamic INTERFACE
             -DGLEAM_USE_CORE
-            -DGLEAM_MAX_VERSION=0x460
+            -DGLEAM_MAX_VERSION=0x410
             -DGLEAM_MAX_VERSION_ES=0
             )
     else()
         target_compile_definitions ( GLVersion_Dynamic INTERFACE
             -DGLEAM_USE_CORE
-            -DGLEAM_MAX_VERSION=0x410
+            -DGLEAM_MAX_VERSION=0x460
             -DGLEAM_MAX_VERSION_ES=0
             )
     endif()
     target_link_libraries ( GLVersion_Dynamic INTERFACE GLAD_Core )
     add_export ( GLVersion_Dynamic "" )
 endif()
-if(IOS OR ANDROID OR EMSCRIPTEN OR BUILD_GLES)
+if(IOS OR EMSCRIPTEN OR BUILD_GLES)
     add_library ( GLVersion_ES INTERFACE )
-    if(EMSCRIPTEN OR IOS)
-        target_compile_definitions ( GLVersion_ES INTERFACE
+
+    set ( MAX_VERSION 0x300 )
+    if(BUILD_GLES_31 AND NOT (IOS OR EMSCRIPTEN))
+        set ( MAX_VERSION 0x310 )
+    endif()
+    if(BUILD_GLES_32 AND NOT (IOS OR EMSCRIPTEN))
+        set ( MAX_VERSION 0x320 )
+    endif()
+    if(BUILD_GLES_20)
+        set ( MAX_VERSION 0x200 )
+    endif()
+    target_compile_definitions ( GLVersion_ES INTERFACE
+        -DGLEAM_USE_ES
+        -DGLEAM_USE_LINKED
+        -DGLEAM_MAX_VERSION=0
+        -DGLEAM_MAX_VERSION_ES=${MAX_VERSION}
+        )
+    add_export ( GLVersion_ES "" )
+
+    if (NOT IOS)
+        add_library ( GLVersion_ESDynamic INTERFACE )
+        target_compile_definitions ( GLVersion_ESDynamic INTERFACE
             -DGLEAM_USE_ES
-            -DGLEAM_USE_LINKED
-            -DGLEAM_MAX_VERSION=0
-            -DGLEAM_MAX_VERSION_ES=0x300
-            )
-    else()
-        set ( MAX_VERSION 0x300 )
-        if(BUILD_GLES_31)
-            set ( MAX_VERSION 0x310 )
-        endif()
-        if(BUILD_GLES_32)
-            set ( MAX_VERSION 0x320 )
-        endif()
-        target_compile_definitions ( GLVersion_ES INTERFACE
-            -DGLEAM_USE_ES
-            -DGLEAM_USE_LINKED
             -DGLEAM_MAX_VERSION=0
             -DGLEAM_MAX_VERSION_ES=${MAX_VERSION}
             )
+        target_link_libraries ( GLVersion_ESDynamic INTERFACE GLAD_ES )
+        add_export ( GLVersion_ESDynamic "" )
     endif()
-    add_export ( GLVersion_ES "" )
 
     add_library ( GLVersion_ES2 INTERFACE )
     target_compile_definitions ( GLVersion_ES2 INTERFACE
@@ -65,28 +71,8 @@ if(IOS OR ANDROID OR EMSCRIPTEN OR BUILD_GLES)
         -DGLEAM_USE_LINKED
         -DGLEAM_MAX_VERSION=0
         -DGLEAM_MAX_VERSION_ES=0x200
-        -DGLEAM_RESTRICT_ES=0x200
         )
     add_export ( GLVersion_ES2 "" )
-    if (NOT APPLE)
-        add_library ( GLVersion_ESDynamic INTERFACE )
-        target_compile_definitions ( GLVersion_ESDynamic INTERFACE
-            -DGLEAM_USE_ES
-            -DGLEAM_MAX_VERSION=0
-            -DGLEAM_MAX_VERSION_ES=0x320
-            )
-        target_link_libraries ( GLVersion_ESDynamic INTERFACE GLAD_ES )
-        add_export ( GLVersion_ESDynamic "" )
-        add_library ( GLVersion_ES2Dynamic INTERFACE )
-        target_compile_definitions ( GLVersion_ES2Dynamic INTERFACE
-            -DGLEAM_USE_ES
-            -DGLEAM_MAX_VERSION=0
-            -DGLEAM_MAX_VERSION_ES=0x200
-            -DGLEAM_RESTRICT_ES=0x200
-            )
-        target_link_libraries ( GLVersion_ES2Dynamic INTERFACE GLAD_ES )
-        add_export ( GLVersion_ES2Dynamic "" )
-    endif()
 endif()
 
 function ( GEN_GLEAM_TARGET GLVERSION SUFFIX )
@@ -100,6 +86,7 @@ function ( GEN_GLEAM_TARGET GLVERSION SUFFIX )
         LIBRARIES
         Core
         Image
+        ComponentApp
         GraphicsAPI
         GraphicsInterface
         ${GLVERSION}
@@ -124,6 +111,17 @@ function ( GEN_GLEAM_TARGET GLVERSION SUFFIX )
 
             HEADER_DIRS
             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+            )
+    endif()
+    if(BUILD_GL_SOFTWARE_BCN)
+        target_compile_definitions ( GLeamRHI_${SUFFIX} PUBLIC
+            -DGLEAM_ENABLE_SOFTWARE_BCN
+            )
+        target_sources ( GLeamRHI_${SUFFIX} PRIVATE
+            private/rhi/rhi_texture.cpp
+            )
+        target_include_directories ( GLeamRHI_${SUFFIX} PRIVATE
+            ${BCDec_INCLUDE_DIR}
             )
     endif()
 
@@ -175,7 +173,7 @@ function ( GEN_GLEAM_TARGET GLVERSION SUFFIX )
     endif()
 endfunction()
 
-foreach ( VER Dynamic ES ES2 ESDynamic ES2Dynamic )
+foreach ( VER Dynamic ES ESDynamic ES2 )
     if (NOT TARGET GLVersion_${VER} )
         continue()
     endif()

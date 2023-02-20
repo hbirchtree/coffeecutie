@@ -1,4 +1,6 @@
-foreach(GLIMPL Dynamic ESDynamic ES2Dynamic)
+option ( BUILD_GLAD_GETPROC "Force use of config-defined GetProc for GL" OFF )
+
+foreach(GLIMPL Dynamic ESDynamic)
     coffee_library (
         TARGET GLADComponent_${GLIMPL}
         SOURCES private/glad_comp.cpp
@@ -21,6 +23,11 @@ foreach(GLIMPL Dynamic ESDynamic ES2Dynamic)
             )
         target_compile_definitions ( GLADComponent_${GLIMPL} PRIVATE
             -DGLADCOMP_COMPILE_CORE
+            )
+    endif()
+    if(BUILD_GLAD_GETPROC)
+        target_compile_definitions ( GLADComponent_${GLIMPL} PRIVATE
+            -DGLADCOMP_USE_GETPROC
             )
     endif()
 endforeach()

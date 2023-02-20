@@ -16,17 +16,17 @@ constexpr libc_types::u32 fog_coordinate_array         = 0x8457;
 } // namespace values
 template<class span_const_void>
 requires(semantic::concepts::Span<span_const_void>)
-/*!
- * \brief Part of GL_EXT_fog_coord
- * \param type GLenum
- * \param stride GLsizei
- * \param pointer const void *
- * \return void
- */
-STATICINLINE void fog_coord_pointer(
-    group::fog_pointer_type_ext type,
-    i32                         stride,
-    span_const_void const&      pointer)
+    /*!
+     * \brief Part of GL_EXT_fog_coord
+     * \param type GLenum
+     * \param stride GLsizei
+     * \param pointer const void *
+     * \return void
+     */
+    STATICINLINE void fog_coord_pointer(
+        group::fog_pointer_type_ext type,
+        i32                         stride,
+        span_const_void const&      pointer)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -58,17 +58,15 @@ STATICINLINE void fog_coordd(f64 coord)
 }
 
 template<class span_const_f64>
-requires(
-    semantic::concepts::Span<span_const_f64> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_f64::value_type>,
-        std::decay_t<f64>>)
-/*!
- * \brief Part of GL_EXT_fog_coord
- * \param coord const GLdouble *
- * \return void
- */
-STATICINLINE void fog_coorddv(span_const_f64 const& coord)
+requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
+         std::decay_t<typename span_const_f64::value_type>,
+         std::decay_t<f64>>)
+    /*!
+     * \brief Part of GL_EXT_fog_coord
+     * \param coord const GLdouble *
+     * \return void
+     */
+    STATICINLINE void fog_coorddv(span_const_f64 const& coord)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -98,17 +96,15 @@ STATICINLINE void fog_coordf(f32 coord)
 }
 
 template<class span_const_f32>
-requires(
-    semantic::concepts::Span<span_const_f32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_f32::value_type>,
-        std::decay_t<f32>>)
-/*!
- * \brief Part of GL_EXT_fog_coord
- * \param coord const GLfloat *
- * \return void
- */
-STATICINLINE void fog_coordfv(span_const_f32 const& coord)
+requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+         std::decay_t<typename span_const_f32::value_type>,
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_EXT_fog_coord
+     * \param coord const GLfloat *
+     * \return void
+     */
+    STATICINLINE void fog_coordfv(span_const_f32 const& coord)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

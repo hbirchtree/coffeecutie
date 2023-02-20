@@ -5,6 +5,9 @@
 
 #include <peripherals/libc/types.h>
 
+#include <concepts>
+#include <type_traits>
+
 #define _USE_MATH_DEFINES
 #include <cmath>
 #include <math.h>
@@ -50,15 +53,26 @@ constexpr f64 e    = M_E;
 #endif
 
 template<typename T>
-inline T radians(const T& degrees)
+inline constexpr T radians(const T& degrees)
 {
     return (degrees * math::pi) / T(180);
 }
 
 template<typename T>
-inline T mix(T a, T b, T f)
+inline constexpr T mix(T a, T b, T f)
 {
     return a * (T(1) - f) + b * f;
+}
+
+template<typename T>
+requires std::is_floating_point_v<T>
+inline T cubic_in_out(T a, T b, T f)
+{
+    constexpr auto v_pi = static_cast<T>(pi);
+    auto v = std::sin(f * v_pi - v_pi / 2);
+    v /= T(2);
+    v += T(0.5);
+    return mix(a, b, v);
 }
 
 template<

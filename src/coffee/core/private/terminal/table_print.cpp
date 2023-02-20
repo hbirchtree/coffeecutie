@@ -32,7 +32,7 @@ CString TablePrinter_Basic::GenTable(
         sz                = head[i].size();
         for(ColSize j = 0; j < col.size(); j++)
         {
-            sz = CMath::max(col[j].size(), sz);
+            sz = std::max(col[j].size(), sz);
         }
         sz += header_pad;
         acc += sz;

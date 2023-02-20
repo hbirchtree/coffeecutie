@@ -28,7 +28,8 @@ FORCEDINLINE void MemCpy(T1 const& src, T2& target)
 {
     auto src_begin = std::cbegin(src);
     auto src_end = std::cend(src);
-    if(target.view.size() < src_end - src_begin)
+    auto src_size = src_end - src_begin;
+    if(target.view.size() < static_cast<typename T2::size_type>(src_size))
         Throw(std::out_of_range("mem_chunk not big enough"));
 
     std::copy(

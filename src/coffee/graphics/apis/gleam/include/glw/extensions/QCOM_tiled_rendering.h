@@ -23,22 +23,21 @@ STATICINLINE void end_tiling(group::buffer_bit_qcom preserveMask)
 }
 
 template<class size_2_u32, class vec_2_u32>
-requires(
-    semantic::concepts::Vector<vec_2_u32, u32, 2> &&
-    semantic::concepts::Size2D<size_2_u32, u32>)
-/*!
- * \brief Part of GL_QCOM_tiled_rendering
- * \param x GLuint
- * \param y GLuint
- * \param width GLuint
- * \param height GLuint
- * \param preserveMask GLbitfield
- * \return void
- */
-STATICINLINE void start_tiling(
-    vec_2_u32 const&       x,
-    size_2_u32 const&      width,
-    group::buffer_bit_qcom preserveMask)
+requires(semantic::concepts::Vector<vec_2_u32, u32, 2>&&
+             semantic::concepts::Size2D<size_2_u32, u32>)
+    /*!
+     * \brief Part of GL_QCOM_tiled_rendering
+     * \param x GLuint
+     * \param y GLuint
+     * \param width GLuint
+     * \param height GLuint
+     * \param preserveMask GLbitfield
+     * \return void
+     */
+    STATICINLINE void start_tiling(
+        vec_2_u32 const&       x,
+        size_2_u32 const&      width,
+        group::buffer_bit_qcom preserveMask)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

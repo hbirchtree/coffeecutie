@@ -3,7 +3,6 @@
 #include <coffee/core/CDebug>
 #include <coffee/core/debug/logging.h>
 #include <coffee/core/printing/log_interface.h>
-#include <coffee/foreign/foreign.h>
 #include <platforms/argument_parse.h>
 #include <platforms/environment.h>
 #include <platforms/profiling/jsonprofile.h>
@@ -354,7 +353,7 @@ void ResourcePrefix(cstring prefix)
     State::ISTATE->resource_prefix = prefix;
 }
 
-std::optional<std::string> ResourcePrefix(bool fallback)
+std::optional<std::string> ResourcePrefix(bool /*fallback*/)
 {
     if(!State::ISTATE)
         return std::nullopt;
@@ -374,9 +373,9 @@ std::optional<std::string> ResourcePrefix(bool fallback)
  * Pointer to main() function to be used
  * This storage is for non-standard platforms
  */
-#if defined(COFFEE_CUSTOM_MAIN)
-MainWithArgs coffee_main_function_ptr = nullptr;
-#endif
+//#if defined(COFFEE_CUSTOM_MAIN)
+//Coffee::MainWithArgs coffee_main_function_ptr = nullptr;
+//#endif
 
 #if defined(COFFEE_APPLE_MOBILE)
 void* uikit_appdelegate = nullptr;

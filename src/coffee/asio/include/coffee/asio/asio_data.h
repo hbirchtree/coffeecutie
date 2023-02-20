@@ -1,7 +1,5 @@
 #pragma once
 
-#include <coffee/core/base.h>
-
 #include <asio.hpp>
 #if defined(ASIO_USE_SSL)
 #include <asio/ssl.hpp>
@@ -10,8 +8,7 @@
 #include <peripherals/libc/types.h>
 #include <peripherals/stl/types.h>
 
-namespace Coffee {
-namespace ASIO {
+namespace Coffee::ASIO {
 
 struct Service
 {
@@ -20,13 +17,13 @@ struct Service
 #if defined(ASIO_USE_SSL)
         sslctxt(asio::ssl::context::sslv23),
 #endif
-        statistics(MkShared<stats>())
+        statistics(std::make_shared<stats>())
     {
 #if defined(ASIO_USE_SSL) && !defined(COFFEE_ANDROID)
         asio::error_code ec;
         sslctxt.set_default_verify_paths(ec);
         C_ERROR_CHECK(ec);
-//        sslctxt.set_verify_mode(asio::ssl::verify_none, ec);
+        //        sslctxt.set_verify_mode(asio::ssl::verify_none, ec);
         C_ERROR_CHECK(ec);
 #endif
     }
@@ -44,23 +41,22 @@ struct Service
 
     struct stats
     {
-        u32 received = 0;
-        u32 transmitted = 0;
-        u32 sockets_created = 0;
-        u32 sockets_closed = 0;
+        libc_types::u32 received        = 0;
+        libc_types::u32 transmitted     = 0;
+        libc_types::u32 sockets_created = 0;
+        libc_types::u32 sockets_closed  = 0;
     };
 
-    ShPtr<stats> statistics;
+    std::shared_ptr<stats> statistics;
 };
 
-extern ShPtr<ASIO::Service> global_service;
+extern std::shared_ptr<ASIO::Service> global_service;
 
-STATICINLINE ShPtr<ASIO::Service> InitService()
+STATICINLINE std::shared_ptr<ASIO::Service> InitService()
 {
     if(!global_service)
-        global_service = MkShared<ASIO::Service>();
+        global_service = std::make_shared<ASIO::Service>();
     return global_service;
 }
 
-} // namespace ASIO
-} // namespace Coffee
+} // namespace Coffee::ASIO

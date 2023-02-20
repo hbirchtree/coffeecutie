@@ -9,17 +9,27 @@ namespace glad {
 
 void Binding::load(entity_container& e, comp_app::app_error& ec)
 {
+    [[maybe_unused]] auto loader = e.service<comp_app::AppLoader>()
+                      ->config<comp_app::GraphicsBindingConfig>()
+                      .loader;
 #if defined(GLADCOMP_COMPILE_CORE)
     (void)e;
-
     if(!gladLoadGL())
     {
         ec = comp_app::AppError::BindingFailed;
+    } else
+        return;
+#if defined(GLADCOMP_USE_GETPROC)
+    if(!gladLoadGLLoader(loader))
+    {
+        ec = comp_app::AppError::BindingFailed;
+    } else
+    {
+        ec = comp_app::AppError::None;
+        return;
     }
+#endif
 #elif defined(GLADCOMP_COMPILE_ES)
-    auto loader = e.service<comp_app::AppLoader>()
-                      ->config<comp_app::GraphicsBindingConfig>()
-                      .loader;
 
     if(!loader)
     {

@@ -3,6 +3,8 @@
 #include <peripherals/libc/types.h>
 #include <peripherals/stl/any_of.h>
 
+#include "cblam_base_types.h"
+
 namespace blam {
 namespace hsc::bc {
 
@@ -21,16 +23,22 @@ struct xbox_version_t
 {
     using bytecode_type = hsc::bc::v1;
     using bytecode_pointer_t = hsc::bytecode_pointer<bytecode_type>;
+
+    static constexpr auto version_v = version_t::xbox;
 };
 struct pc_version_t
 {
     using bytecode_type = hsc::bc::v2;
     using bytecode_pointer_t = hsc::bytecode_pointer<bytecode_type>;
+
+    static constexpr auto version_v = version_t::pc;
 };
 struct custom_version_t
 {
     using bytecode_type = hsc::bc::v2;
     using bytecode_pointer_t = hsc::bytecode_pointer<bytecode_type>;
+
+    static constexpr auto version_v = version_t::custom_edition;
 };
 
 template<typename T>

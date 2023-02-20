@@ -4,7 +4,6 @@
 #include <coffee/core/CJSONParser>
 #include <coffee/core/CProfiling>
 #include <coffee/core/argument_handling.h>
-#include <coffee/core/base.h>
 #include <coffee/core/coffee.h>
 #include <coffee/core/internal_state.h>
 #include <coffee/core/platform_data.h>
@@ -324,7 +323,6 @@ void ExitRoutine()
 
     /* Verify if we should export profiler data */
     {
-        const constexpr cstring disable_flag = "COFFEE_NO_PROFILER_EXPORT";
         if(auto flag = env::var("COFFEE_NO_PROFILER_EXPORT");
            flag.has_value() && flag.value() == "1")
         {

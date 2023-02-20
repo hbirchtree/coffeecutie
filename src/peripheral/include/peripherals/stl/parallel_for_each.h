@@ -25,9 +25,9 @@ STATICINLINE void parallel_for_each(
     auto num_items = end - start;
     if(num_items <= 0)
         return;
-    if(num_items < workers && num_items > 1)
+    if(num_items < static_cast<decltype(num_items)>(workers) && num_items > 1)
         workers = num_items;
-    auto per_worker = num_items / workers;
+    auto per_worker = num_items / static_cast<decltype(num_items)>(workers);
 
     std::list<std::thread> threads;
     for(auto i : stl_types::Range<>(std::max(workers - 1, 1u)))

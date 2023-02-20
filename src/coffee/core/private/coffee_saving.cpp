@@ -56,34 +56,36 @@ struct DataStatus
     Status              status{Uninitialized};
 };
 
-static void emscripten_callback_load(void* arg, void* data, int size)
-{
-    auto* status = C_RCAST<DataStatus*>(arg);
-    cDebug("Loaded file");
-    MemCpy(Bytes::ofBytes(data, size), status->data);
-    status->output.set_value(size);
-    status->status = DataStatus::Success;
-}
-static void emscripten_callback_store(void* arg)
-{
-    auto* status = C_RCAST<DataStatus*>(arg);
-    cDebug("Stored file");
-    status->output.set_value(status->data.size);
-    status->status = DataStatus::Success;
-}
-static void emscripten_callback_error(void* arg)
-{
-    auto* status = C_RCAST<DataStatus*>(arg);
-    cDebug("Failed to do something with file :(");
-    status->output.set_value(0);
-    status->status = DataStatus::Failure;
-}
+#if defined(COFFEE_EMSCRIPTEN)
+//static void emscripten_callback_load(void* arg, void* data, int size)
+//{
+//    auto* status = C_RCAST<DataStatus*>(arg);
+//    cDebug("Loaded file");
+//    MemCpy(Bytes::ofBytes(data, size), status->data);
+//    status->output.set_value(size);
+//    status->status = DataStatus::Success;
+//}
+//static void emscripten_callback_store(void* arg)
+//{
+//    auto* status = C_RCAST<DataStatus*>(arg);
+//    cDebug("Stored file");
+//    status->output.set_value(status->data.size);
+//    status->status = DataStatus::Success;
+//}
+//static void emscripten_callback_error(void* arg)
+//{
+//    auto* status = C_RCAST<DataStatus*>(arg);
+//    cDebug("Failed to do something with file :(");
+//    status->output.set_value(0);
+//    status->status = DataStatus::Failure;
+//}
+#endif
 
-static CString CreateSaveString(u16 slot)
-{
-    return Strings::cStringFormat(
-        "{0}-{1}.data", GetCurrentApp().application_name, slot);
-}
+//static CString CreateSaveString(u16 slot)
+//{
+//    return Strings::cStringFormat(
+//        "{0}-{1}.data", GetCurrentApp().application_name, slot);
+//}
 
 static Url CreateSaveUrl(u16 slot)
 {
@@ -100,18 +102,18 @@ Future<szptr> FilesystemApi::restore(Bytes&& data, slot_count_t slot)
     if(!data.data)
         return out.get_future();
 
-#if defined(COFFEE_EMSCRIPTEN)
-    CString save_file = CreateSaveString(slot);
+#if defined(COFFEE_EMSCRIPTEN) && 0
+//    CString save_file = CreateSaveString(slot);
 
     auto       out_fut = out.get_future();
-    DataStatus data_status
-        = {std::move(data), std::move(out), DataStatus::Waiting};
-    //    emscripten_idb_async_load(
-    //        m_app.organization_name.c_str(),
-    //        save_file.c_str(),
-    //        &data_status,
-    //        emscripten_callback_load,
-    //        emscripten_callback_error);
+//    DataStatus data_status
+//        = {std::move(data), std::move(out), DataStatus::Waiting};
+//    //    emscripten_idb_async_load(
+//    //        m_app.organization_name.c_str(),
+//    //        save_file.c_str(),
+//    //        &data_status,
+//    //        emscripten_callback_load,
+//    //        emscripten_callback_error);
 
     return out_fut;
 #else
@@ -146,19 +148,19 @@ Future<szptr> FilesystemApi::save(Bytes const& data, slot_count_t slot)
 {
     std::promise<szptr> out;
 
-#if defined(COFFEE_EMSCRIPTEN)
-    CString    save_file   = CreateSaveString(slot);
+#if defined(COFFEE_EMSCRIPTEN) && 0
+//    CString    save_file   = CreateSaveString(slot);
     auto       out_fut     = out.get_future();
-    DataStatus data_status = {*data.at(0), std::move(out), DataStatus::Waiting};
+//    DataStatus data_status = {*data.at(0), std::move(out), DataStatus::Waiting};
 
-    //    emscripten_idb_async_store(
-    //        m_app.organization_name.c_str(),
-    //        save_file.c_str(),
-    //        reinterpret_cast<void*>(data.data),
-    //        data.size,
-    //        &data_status,
-    //        emscripten_callback_store,
-    //        emscripten_callback_error);
+//    //    emscripten_idb_async_store(
+//    //        m_app.organization_name.c_str(),
+//    //        save_file.c_str(),
+//    //        reinterpret_cast<void*>(data.data),
+//    //        data.size,
+//    //        &data_status,
+//    //        emscripten_callback_store,
+//    //        emscripten_callback_error);
 
     return out_fut;
 #else

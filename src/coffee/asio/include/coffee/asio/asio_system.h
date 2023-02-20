@@ -29,13 +29,13 @@ struct Subsystem : Components::SubsystemBase
 
     auto create_download(std::future<Url>&& source)
     {
-        return rq::dependent_task<Url, mem_chunk<u8>>::CreateTask(
+        return rq::dependent_task<Url, mem_chunk<const u8>>::CreateProcessor(
             std::move(source),
             [this](Url* source) {
-                auto rsc = Net::Resource(this->context(), *source);
-                if (!rsc.fetch())
-                    return mem_chunk<u8>();
-                return rsc.move();
+                auto rsc = net::Resource(this->context(), *source);
+                if (auto error = rsc.fetch())
+                    return mem_chunk<const u8>();
+                return rsc.move_const().value();
             });
     }
 

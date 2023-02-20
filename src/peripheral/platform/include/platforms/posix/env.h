@@ -35,7 +35,7 @@ FORCEDINLINE Optional<posix_error> set_var(
 {
     if(val.has_value())
     {
-        if(auto res = ::setenv(var.c_str(), val.value().c_str(), 1))
+        if(::setenv(var.c_str(), val.value().c_str(), 1))
             return std::nullopt;
     } else
         ::unsetenv(var.c_str());

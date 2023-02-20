@@ -233,7 +233,7 @@ bool FilePull(Resource& resc)
         Profiler::DeepProfile(CFILES_TAG "File read failed");
         return false;
     } else
-        data = rd.value();
+        data = rd.value().as<libc_types::u8>();
 
     resc.data_rw = data;
     resc.data_ro = data;

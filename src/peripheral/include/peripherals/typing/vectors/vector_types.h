@@ -9,10 +9,12 @@
 
 #include <peripherals/libc/types.h>
 
-namespace typing {
-namespace vector_types {
+namespace typing::vector_types {
 
-using namespace ::libc_types;
+using libc_types::f32;
+using libc_types::f64;
+using libc_types::i32;
+using libc_types::u32;
 
 namespace decompose {
 using namespace typing::vectors::decompose;
@@ -77,5 +79,4 @@ using Matd3_2 = tmnmatrix<f64, 3, 2>;
 using Matd4_2 = tmnmatrix<f64, 4, 2>;
 using Matd4_3 = tmnmatrix<f64, 4, 3>;
 
-} // namespace vector_types
-} // namespace typing
+} // namespace typing::vector_types

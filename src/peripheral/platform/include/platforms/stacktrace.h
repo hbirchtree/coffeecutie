@@ -11,7 +11,7 @@
 
 #if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_ANDROID) || defined(COFFEE_BEAGLEBONE)
 // Nothing...
-#elif defined(COFFEE_APPLE)
+#elif defined(COFFEE_APPLE) || defined(COFFEE_NO_LIB_BACKTRACE)
 #define BOOST_STACKTRACE_USE_LIBC_BACKTRACE_FUNCTION
 #elif defined(COFFEE_UNIXPLAT)
 #define BOOST_STACKTRACE_USE_BACKTRACE
@@ -108,29 +108,3 @@ void print_exception(
     typing::logging::StackWriterEx             stack_writer);
 
 } // namespace platform::stacktrace
-
-namespace platform::env {
-
-struct Stacktracer
-{
-    C_DEPRECATED_S("using platform::stacktrace::frames_of")
-    STATICINLINE void ExceptionStacktrace(
-        std::exception_ptr const&          exc,
-        typing::logging::LogInterfaceBasic log,
-        typing::logging::StackWriter       stackw = nullptr)
-    {
-    }
-
-    C_DEPRECATED_S("using platform::stacktrace::demangle::name")
-    STATICINLINE std::string DemangleSymbol(const char* symbol)
-    {
-        return platform::stacktrace::demangle::name(symbol);
-    }
-
-    C_DEPRECATED_S("use platform::stacktrace::frames")
-    STATICINLINE void Backtrace(typing::logging::LogInterfaceBasic = nullptr)
-    {
-    }
-};
-
-} // namespace platform::env

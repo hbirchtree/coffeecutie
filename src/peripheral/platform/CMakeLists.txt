@@ -20,13 +20,37 @@ coffee_library (
     $<INSTALL_INTERFACE:include>
     )
 
-if((${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE) AND NOT EMSCRIPTEN AND NOT ANDROID)
+if((${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE))
     find_library ( BACKTRACE_LIBRARY backtrace )
-    if (BACKTRACE_LIBRARY)
+    if (BACKTRACE_LIBRARY AND NOT EMSCRIPTEN AND NOT ANDROID)
         target_link_libraries ( PeripheralPlatform PUBLIC
             ${BACKTRACE_LIBRARY}
             )
+    else()
+        target_compile_definitions ( PeripheralPlatform PUBLIC
+            -DCOFFEE_NO_LIB_BACKTRACE
+            )
     endif()
+else()
+    target_compile_definitions ( PeripheralPlatform PUBLIC
+        -DCOFFEE_NO_LIB_BACKTRACE
+        )
+endif()
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR
+    CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    target_compile_options( PeripheralPlatform PUBLIC
+        -Werror
+        -Wall
+#        -Wpedantic
+        -Wextra
+        -Winit-self
+        -Wreturn-type
+        -Wpointer-arith
+        -Wexpansion-to-defined
+        # Misfires on code that is ifdef'd
+        -Wno-misleading-indentation
+        )
 endif()
 
 #
@@ -66,7 +90,7 @@ if(ANDROID)
     set ( ANDROID_SOURCES_DIR "${ANDROID_NDK}/sources/android" )
 
     target_sources ( PeripheralPlatform PRIVATE
-        platforms/android/sensor.cpp
+#        platforms/android/sensor.cpp
 #        platforms/android/file.cpp
         platforms/android/sysinfo.cpp
 #        platforms/linux/file.cpp
@@ -75,8 +99,6 @@ if(ANDROID)
 
         platforms/android/jnipp.cpp
         platforms/android/JNIHelper.cpp
-        ${ANDROID_SOURCES_DIR}/ndk_helper/gestureDetector.cpp
-        ${ANDROID_SOURCES_DIR}/cpufeatures/cpu-features.c
         )
 
     target_compile_definitions ( PeripheralPlatform PUBLIC
@@ -89,10 +111,10 @@ if(ANDROID)
         )
 
     target_include_directories ( PeripheralPlatform PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/platforms/android/include>
         $<BUILD_INTERFACE:${ANDROID_SOURCES_DIR}/native_app_glue>
         $<BUILD_INTERFACE:${ANDROID_SOURCES_DIR}/ndk_helper>
         $<BUILD_INTERFACE:${ANDROID_SOURCES_DIR}/cpufeatures>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/platforms/android/include>
         )
     header_install (
         PeripheralPlatform

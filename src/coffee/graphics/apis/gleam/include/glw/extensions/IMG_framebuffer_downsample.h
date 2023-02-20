@@ -34,7 +34,8 @@ STATICINLINE void framebuffer_texture_2d_downsample(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(FramebufferTexture2DDownsampleIMG)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
 #endif
@@ -74,7 +75,8 @@ STATICINLINE void framebuffer_texture_layer_downsample(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(FramebufferTextureLayerDownsampleIMG)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsTexture)
             glIsTexture(texture);
 #endif

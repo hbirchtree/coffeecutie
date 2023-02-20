@@ -211,20 +211,11 @@ extern image<u8> Resize(
 extern image<scalar> Resize(
     image<scalar> const& img, const Size& target, int channels);
 
-STATICINLINE bool LoadData(
+inline bool LoadData(
     image_rw* target, BytesConst const& src, PixCmp comp = PixCmp::RGBA)
 {
     stb_error ec;
     auto out = LoadData(target, src, ec, comp);
-    C_ERROR_CHECK(ec)
-    return out;
-}
-
-STATICINLINE bool LoadData(
-    image_rw* target, Bytes const& src, PixCmp comp = PixCmp::RGBA)
-{
-    stb_error ec;
-    auto      out = LoadData(target, C_OCAST<BytesConst>(src), ec, comp);
     C_ERROR_CHECK(ec)
     return out;
 }
@@ -270,7 +261,7 @@ extern bool SaveJPG(
 namespace IMG {
 using stb::stb_error;
 
-STATICINLINE bool Load(
+inline bool Load(
     BytesConst& r, PixCmp cmp, BitFmt& fmt, Bytes& data, Size& res)
 {
     stb_error ec;
@@ -288,7 +279,7 @@ STATICINLINE bool Load(
     return stat;
 }
 
-STATICINLINE bool Load(
+inline bool Load(
     BytesConst&& r, PixCmp cmp, BitFmt& fmt, Bytes& data, Size& res)
 {
     return Load(r, cmp, fmt, data, res);
@@ -306,7 +297,7 @@ using stb::stb_error;
  */
 extern Bytes Save(stb::image_const const& im, stb_error& ec);
 
-STATICINLINE Bytes Save(stb::image_const const& im)
+inline Bytes Save(stb::image_const const& im)
 {
     stb_error ec;
     return Save(im, ec);
@@ -325,7 +316,7 @@ using stb::stb_error;
  */
 extern Bytes Save(stb::image_const const& im, stb_error& ec);
 
-STATICINLINE Bytes Save(stb::image_const const& im)
+inline Bytes Save(stb::image_const const& im)
 {
     stb_error ec;
     return Save(im, ec);
@@ -336,7 +327,7 @@ namespace JPG {
 using stb::stb_error;
 extern Bytes Save(stb::image_const const& src, stb_error& ec, int qual = 80);
 
-STATICINLINE Bytes Save(stb::image_const const& src, int qual = 80)
+inline Bytes Save(stb::image_const const& src, int qual = 80)
 {
     stb_error ec;
     return Save(src, ec, qual);

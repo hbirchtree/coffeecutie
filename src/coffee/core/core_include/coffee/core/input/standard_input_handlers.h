@@ -5,10 +5,11 @@
 
 #include <algorithm>
 
-namespace Coffee {
-namespace StandardInput {
+namespace Coffee::StandardInput {
 
 using namespace Input;
+using typing::vector_types::Quatf;
+using typing::vectors::normalize_quat;
 
 template<typename InputRegister, const CIEvent::EventType EventType>
 /*!
@@ -29,8 +30,7 @@ bool StandardKeyRegister(
 
     switch(e.type)
     {
-    case CIEvent::Keyboard:
-    {
+    case CIEvent::Keyboard: {
         auto const& ev = *C_RCAST<CIKeyEvent const*>(data);
 
         if(ev.mod & CIKeyEvent::RepeatedModifier)
@@ -42,8 +42,7 @@ bool StandardKeyRegister(
         keyRegister[ev.key] = pressed | (v ^ (v & 0x1));
         break;
     }
-    case CIEvent::MouseButton:
-    {
+    case CIEvent::MouseButton: {
         auto const& ev = *C_RCAST<CIMouseButtonEvent const*>(data);
 
         bool pressed = ev.mod & CIMouseButtonEvent::Pressed;
@@ -113,15 +112,15 @@ struct StandardCamera
         {
         }
 
-        void operator()(CIEvent const& e, CIMouseMoveEvent const* ev)
+        void operator()(CIEvent const&, CIMouseMoveEvent const* ev)
         {
             if(ev->btn != m_button)
                 return;
 
             auto& cqt = (*m_container).rotation;
 
-            auto yaw   = 0.01f * ev->delta.y;
-            auto pitch = 0.01f * ev->delta.x;
+            auto yaw   = 0.01f * ev->delta.y();
+            auto pitch = 0.01f * ev->delta.x();
 
             cqt = normalize_quat(Quatf(1, 0, pitch, 0) * cqt);
 
@@ -161,8 +160,8 @@ struct StandardCamera
         if(it == m_reg.end())
             return;
 
-        auto camDirection =
-            quaternion_to_direction<CameraDirection::Forward>(c.rotation);
+        auto camDirection
+            = quaternion_to_direction<CameraDirection::Forward>(c.rotation);
         auto   camRight     = cross(up_direction, camDirection);
         scalar acceleration = 5.f;
 
@@ -210,9 +209,9 @@ struct ControllerOpts
     ControllerOpts()
     {
         deadzone    = 6000;
-        curve       = 19.f;
+        curve       = 200.f;
         sens.move.x = sens.move.y = 0.15f;
-        sens.look.x = sens.look.y = 0.005f;
+        sens.look.x = sens.look.y = 2.f;
 
         invertYLook();
     }
@@ -221,16 +220,16 @@ struct ControllerOpts
     {
         struct
         {
-            scalar x, y;
+            f32 x, y;
         } move;
         struct
         {
-            scalar x, y;
+            f32 x, y;
         } look;
     } sens;
 
-    i16    deadzone;
-    scalar curve;
+    i16 deadzone;
+    f32 curve;
 
     FORCEDINLINE bool isYLookInverted() const
     {
@@ -251,30 +250,33 @@ struct ControllerCamera
     {
     }
 
-    void operator()(CIControllerState const& state)
+    void operator()(CIControllerState const& state, compo::duration const& t)
     {
         using namespace typing::vectors;
+        using stl_types::Chrono::to_float;
 
         Vecf3& position = (*m_camera).position;
         Quatf& rotation = (*m_camera).rotation;
 
-        const auto forward =
-            quaternion_to_direction<CameraDirection::Forward>(rotation);
-        const auto right =
-            quaternion_to_direction<CameraDirection::Right>(rotation);
+        const auto forward
+            = quaternion_to_direction<CameraDirection::Forward>(rotation);
+        const auto right
+            = quaternion_to_direction<CameraDirection::Right>(rotation);
 
         auto const& opt = opts();
 
-        const auto acceleration =
-            1.f + convert_i16_f(state.axes.e.t_l) * opt.curve;
+        const auto acceleration
+            = 1.f + convert_i16_f(state.axes.e.t_l) * opt.curve * to_float(t);
 
-        position += right * acceleration *
-                    FilterJoystickInput(state.axes.e.l_x, opt.sens.move.x);
-        position += forward * acceleration *
-                    FilterJoystickInput(state.axes.e.l_y, opt.sens.move.y);
+        position += right * acceleration
+                    * FilterJoystickInput(state.axes.e.l_x, opt.sens.move.x);
+        position += forward * acceleration
+                    * FilterJoystickInput(state.axes.e.l_y, opt.sens.move.y);
 
-        auto pitch = FilterJoystickInput(state.axes.e.r_x, opt.sens.look.x);
-        auto yaw   = FilterJoystickInput(state.axes.e.r_y, opt.sens.look.y);
+        auto pitch = FilterJoystickInput(state.axes.e.r_x, opt.sens.look.x)
+                     * to_float(t);
+        auto yaw = FilterJoystickInput(state.axes.e.r_y, opt.sens.look.y)
+                   * to_float(t);
 
         rotation = normalize_quat(Quatf(1, 0, pitch, 0) * rotation);
         rotation = normalize_quat(Quatf(1, yaw, 0, 0) * rotation);
@@ -286,7 +288,7 @@ struct ControllerCamera
     }
 
   private:
-    FORCEDINLINE scalar FilterJoystickInput(i16 raw, scalar sens)
+    FORCEDINLINE f32 FilterJoystickInput(i16 raw, f32 sens)
     {
         if(raw > opts().deadzone || (-raw) > opts().deadzone)
         {
@@ -299,5 +301,4 @@ struct ControllerCamera
     OptsPtr   m_opts;
 };
 
-} // namespace StandardInput
-} // namespace Coffee
+} // namespace Coffee::StandardInput

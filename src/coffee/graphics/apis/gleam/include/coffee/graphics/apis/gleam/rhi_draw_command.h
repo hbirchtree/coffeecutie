@@ -25,9 +25,9 @@ struct view_state
     using depth_range = std::optional<typing::vector_types::Vecd2>;
 
     bool        indexed{false};
-    rect        view;
-    rect        scissor;
-    depth_range depth;
+    rect        view{};
+    rect        scissor{};
+    depth_range depth{};
 };
 
 struct cull_state
@@ -43,9 +43,9 @@ template<typename UType>
 struct uniform_pair
 {
     template<typename SpanType>
-    uniform_pair(uniform_key&& key, SpanType&& data)
-        : key(key), data(data)
-    {}
+    uniform_pair(uniform_key&& key, SpanType&& data) : key(key), data(data)
+    {
+    }
 
     uniform_key           key;
     semantic::Span<UType> data;
@@ -71,8 +71,10 @@ inline auto make_uniform_list(
             std::move(stage), std::move(uniforms)...);
 }
 
-using buffer_definition_t
-    = std::tuple<typing::graphics::ShaderStage, uniform_key, buffer_slice_t>;
+using buffer_definition_t = std::tuple<
+    typing::graphics::ShaderStage,
+    uniform_key,
+    buffer_slice_t>;
 
 template<typename... Buffers>
 requires(std::is_same_v<Buffers, buffer_definition_t>&&...)
@@ -91,6 +93,16 @@ using sampler_definition_t = std::tuple<
     uniform_key,
     std::shared_ptr<sampler_t>>;
 
+struct raw_texture_t
+{
+    textures::type            type;
+    u32                       handle{0};
+    features::textures const& m_features;
+};
+
+using raw_texture_definition_t
+    = std::tuple<typing::graphics::ShaderStage, uniform_key, raw_texture_t>;
+
 template<typename... Samplers>
 requires(std::is_same_v<Samplers, sampler_definition_t>&&...)
     //
@@ -102,6 +114,18 @@ requires(std::is_same_v<Samplers, sampler_definition_t>&&...)
 }
 
 using sampler_list = declreturntype(make_sampler_list<>);
+
+template<typename... Textures>
+requires(std::is_same_v<Textures, raw_texture_definition_t>&&...)
+    //
+    inline auto make_texture_list(Textures&&... defs)
+{
+    std::vector<raw_texture_definition_t> definitions;
+    (definitions.emplace_back(std::move(defs)), ...);
+    return definitions;
+}
+
+using texture_list = declreturntype(make_texture_list<>);
 
 struct draw_command
 {
@@ -118,9 +142,9 @@ struct draw_command
         null_query_t;
 #endif
 
-    stl_types::WkPtr<program_t>      program;
-    stl_types::WkPtr<vertex_type>    vertices;
-    stl_types::WkPtr<rendertarget_t> render_target;
+    std::weak_ptr<program_t>      program;
+    std::weak_ptr<vertex_type>    vertices;
+    std::weak_ptr<rendertarget_t> render_target{};
     struct call_spec_t
     {
         bool indexed{false};
@@ -133,7 +157,7 @@ struct draw_command
         struct
         {
             u32 count{0}, offset{0};
-        } arrays;
+        } arrays{};
         struct
         {
             u32 count{0};
@@ -141,16 +165,16 @@ struct draw_command
             u64 vertex_offset{0};
 
             semantic::TypeEnum type{semantic::TypeEnum::UInt};
-        } elements;
+        } elements{};
         struct
         {
             u32 count{1}, offset{0};
-        } instances;
+        } instances{};
     };
-    stl_types::Vector<data_t>  data;
-    stl_types::ShPtr<buffer_t> data_indirect;
+    std::vector<data_t>       data;
+    std::shared_ptr<buffer_t> data_indirect{};
 
-    stl_types::WkPtr<query_type> conditional_query;
+    std::weak_ptr<query_type> conditional_query{};
 };
 
 } // namespace gleam

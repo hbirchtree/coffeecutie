@@ -7,9 +7,12 @@ enum class error
     none,
 
     no_program,
+    no_data,
 
     refuse_bad_es20_impl,
     refuse_version_too_low,
+    no_emulation_native_version_low,
+    no_emulation_compiled_version_low,
 
     sampler_state_invalid,
 
@@ -25,7 +28,9 @@ struct features
     struct buffers
     {
         bool dsa{false};
+        bool invalidate{false};
         bool mapping{true};
+        bool pbo{true};
         bool persistence{false};
         bool storage{false};
         bool ssbo{false};
@@ -33,8 +38,20 @@ struct features
 
         struct
         {
-            bool mapbuffer;
+            bool mapbuffer{false};
         } oes;
+        struct
+        {
+            bool invalidate{false};
+        } arb;
+    };
+    struct debugging
+    {
+        bool debug{false};
+        struct
+        {
+            bool debug{false};
+        } khr;
     };
     struct drawing
     {
@@ -73,12 +90,19 @@ struct features
         {
             bool discard_framebuffer{false};
         } ext;
+        struct
+        {
+            bool shading_rate_image{false};
+        } nv;
     };
     struct textures
     {
         bool anisotropy{false};
         bool bindless_handles{false};
         bool dsa{false};
+        bool image_copy{false};
+        bool image_texture{false};
+        bool max_level{false};
         bool multibind{false};
         bool samplers{true};
         bool storage{false};
@@ -157,14 +181,13 @@ struct features
     };
 
     buffers       buffer{};
+    debugging     debug{};
     drawing       draw{};
     programs      program{};
     queries       query{};
     rendertargets rendertarget{};
     textures      texture{};
     vertices      vertex{};
-
-    bool khr_debug{false};
 };
 
 struct workarounds
@@ -174,7 +197,12 @@ struct workarounds
         bool emulated_instance_id{false};
         bool emulated_base_instance{false};
         bool emulated_vertex_offset{false};
+        bool force_vertex_attrib_names{false};
     } draw;
+    struct
+    {
+        bool emulated_mapbuffer{false};
+    } buffer;
 
     bool ignore_all_warnings{false};
 };

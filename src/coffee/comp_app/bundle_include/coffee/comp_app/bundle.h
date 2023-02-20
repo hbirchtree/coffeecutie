@@ -8,10 +8,11 @@ extern detail::EntityContainer& createContainer();
 
 extern void configureDefaults(AppLoader& loader);
 
-inline void configureDefaults(detail::EntityContainer& container)
+inline auto& configureDefaults(detail::EntityContainer& container)
 {
     auto& loader = AppLoader::register_service(container);
     configureDefaults(loader);
+    return loader;
 }
 
 extern void addDefaults(

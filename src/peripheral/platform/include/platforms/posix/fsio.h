@@ -176,9 +176,7 @@ FORCEDINLINE Optional<posix_error> truncate(posix_fd_t const& file)
 }
 
 FORCEDINLINE Optional<posix_error> link(
-    Url const&             source,
-    Url const&             destination,
-    create_params_t const& params = {})
+    Url const& source, Url const& destination, create_params_t const& = {})
 {
     auto src_resolved = *source;
     auto dst_resolved = *destination;
@@ -229,7 +227,7 @@ FORCEDINLINE result<Url, posix_error> dereference(Url const& path)
 {
     auto        unresolved = path.internUrl.c_str();
     struct stat link_info  = {};
-    if(auto status = lstat(unresolved, &link_info))
+    if(auto status = lstat(unresolved, &link_info); status == 0)
         return detail::posix_failure();
     stl_types::String output(link_info.st_size, 0);
     if(auto size = readlink(unresolved, output.data(), output.size()); size < 0)
@@ -241,16 +239,14 @@ FORCEDINLINE result<Url, posix_error> dereference(Url const& path)
 FORCEDINLINE result<Url, posix_error> executable()
 {
     using namespace url::constructors;
-#if defined(COFFEE_LINUX)
+#if defined(COFFEE_LINUX) || defined(COFFEE_ANDROID)
     return path::canon(MkSysUrl("/proc/self/exe"));
-#elif defined(COFFEE_ANDROID)
-//    return path::canon()
 #elif defined(COFFEE_IOS)
     return path::canon(MkUrl("App"));
 #elif defined(COFFEE_MACOS)
     std::string path(PATH_MAX, '\0');
-    auto res = proc_pidpath(
-       getpid(), path.data(), static_cast<int>(path.size()));
+    auto        res
+        = proc_pidpath(getpid(), path.data(), static_cast<int>(path.size()));
     return MkSysUrl("");
 #elif defined(COFFEE_EMSCRIPTEN)
     return MkSysUrl("/app");
@@ -283,6 +279,16 @@ FORCEDINLINE result<Url, posix_error> current_dir()
         ::free(res);
         return success(out);
     }
+}
+
+FORCEDINLINE result<mode_t, posix_error> exists(Url const& path)
+{
+    if(auto dir = open(path.internUrl.c_str(), O_DIRECTORY | O_PATH); dir != -1)
+    {
+        close(dir);
+        return success(mode_t::directory);
+    } else
+        return detail::posix_failure();
 }
 
 } // namespace path

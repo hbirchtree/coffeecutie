@@ -13,9 +13,12 @@
 #define NETRSC_TAG "NetRsc::"
 
 using namespace ::semantic;
+using namespace Coffee::Logging;
+using Coffee::DProfContext;
+using Coffee::Profiler;
+using platform::url::UrlParse;
 
-namespace Coffee {
-namespace Net {
+namespace net {
 
 using namespace ::enum_helpers;
 
@@ -43,12 +46,13 @@ void Resource::initRsc(const Url& url)
             port = 80;
     }
 
-//    if((secure() && protocol == "https") || (!secure() && protocol == "http"))
-//    {
-//        m_request.header.resource = "/" + resource;
-//        return;
-//    } else
-//        close();
+    //    if((secure() && protocol == "https") || (!secure() && protocol ==
+    //    "http"))
+    //    {
+    //        m_request.header.resource = "/" + resource;
+    //        return;
+    //    } else
+    //        close();
 
     m_request.host            = host;
     m_request.header.resource = "/" + resource;
@@ -97,14 +101,14 @@ void Resource::initRsc(const Url& url)
     m_response = {};
 }
 
-void Resource::close()
+std::optional<asio::error_code> Resource::close()
 {
     asio::error_code ec;
 #if defined(ASIO_USE_SSL)
     if(secure())
     {
         if(!ssl)
-            return;
+            return std::nullopt;
 
         ec = ssl->disconnect();
         ssl.release();
@@ -112,16 +116,16 @@ void Resource::close()
 #endif
     {
         if(!normal)
-            return;
+            return std::nullopt;
 
         ec = normal->disconnect();
         normal.release();
     }
 
-    // C_ERROR_CHECK(ec)
+    return ec ? std::make_optional(ec) : std::nullopt;
 }
 
-Resource::Resource(ShPtr<ASIO::Service> ctxt, const Url& url) :
+Resource::Resource(ShPtr<Coffee::ASIO::Service> ctxt, const Url& url) :
     m_resource(url), m_ctxt(ctxt), m_access(url.netflags)
 {
     using namespace http::header::to_string;
@@ -154,7 +158,7 @@ bool Resource::connected() const
     return !m_error;
 }
 
-ErrCode Resource::errorCode() const
+asio::error_code Resource::connectError() const
 {
     return m_error;
 }
@@ -191,17 +195,19 @@ http::request_t& Resource::request()
     return m_request;
 }
 
-http::response_t const& Resource::response() const
+std::optional<http::response_t> Resource::response() const
 {
-    return m_response;
+    if(isResponseReady())
+        return m_response;
+    return std::nullopt;
 }
 
-bool Resource::fetch()
+std::optional<asio::error_code> Resource::fetch()
 {
-    return push(http::method_t::get, BytesConst());
+    return push(http::method_t::get, const_chunk_u8());
 }
 
-bool Resource::push(const BytesConst& data)
+std::optional<asio::error_code> Resource::push(const const_chunk_u8& data)
 {
     using method_t = http::method_t;
 
@@ -232,7 +238,8 @@ bool Resource::push(const BytesConst& data)
     return push(meth, data);
 }
 
-void Resource::readResponseHeader(net_buffer& buffer, szptr& consumed)
+std::optional<asio::error_code> Resource::readResponseHeader(
+    net_buffer& buffer, libc_types::szptr& consumed)
 {
     asio::error_code ec;
 
@@ -262,7 +269,7 @@ void Resource::readResponseHeader(net_buffer& buffer, szptr& consumed)
         {
             DProfContext __(NETRSC_TAG "Parsing response");
             consumed = http::buffer::read_response(
-                m_response.header, Bytes::ofContainer(buffer).view);
+                m_response.header, chunk_u8::ofContainer(buffer).view);
         }
 
     if constexpr(compile_info::debug_mode)
@@ -282,9 +289,10 @@ void Resource::readResponseHeader(net_buffer& buffer, szptr& consumed)
         for(auto const& header : m_response.header.fields)
             cVerbose(12, NETRSC_TAG "-- {0}: {1}", header.first, header.second);
     }
+    return std::nullopt;
 }
 
-void Resource::readResponsePayload(net_buffer& buffer)
+std::optional<asio::error_code> Resource::readResponsePayload(net_buffer& buffer)
 {
     using namespace http;
 
@@ -293,13 +301,13 @@ void Resource::readResponsePayload(net_buffer& buffer)
     auto content_len_it = response_fields.find(header_field::content_length);
 
     if(content_len_it == response_fields.end())
-        return;
+        return asio::error_code();
 
     {
         DProfContext __(NETRSC_TAG "Reading payload");
         auto         content_len = cast_string<u64>(content_len_it->second);
 
-        cVerbose(12, NETRSC_TAG "Reading {0} bytes...", content_len);
+        cVerbose(12, NETRSC_TAG "Reading {0} chunk_u8...", content_len);
 
         m_response.payload.insert(
             m_response.payload.begin(), buffer.begin(), buffer.end());
@@ -309,20 +317,21 @@ void Resource::readResponsePayload(net_buffer& buffer)
         if(content_len == buffer.size())
         {
             cVerbose(12, NETRSC_TAG "All data ready");
-            return;
+            return asio::error_code();
         }
 
-        if(auto view = Bytes::ofContainer(m_response.payload).at(buffer.size()))
+        if(auto view
+           = chunk_u8::ofContainer(m_response.payload).at(buffer.size()))
         {
-            szptr read;
 #if defined(ASIO_USE_SSL)
             if(secure())
             {
-                read = ssl->read(*view, ec);
+                ssl->read(view->view, ec);
             } else
 #endif
-                read = normal->read(*view, ec);
-            C_ERROR_CHECK(ec)
+                normal->read(view->view, ec);
+            if(ec)
+                return ec;
 
             cVerbose(12, NETRSC_TAG "Read complete");
         } else
@@ -332,9 +341,11 @@ void Resource::readResponsePayload(net_buffer& buffer)
     }
 
     cVerbose(10, NETRSC_TAG "Payload size: {0}", m_response.payload.size());
+    return std::nullopt;
 }
 
-bool Resource::push(http::method_t method, BytesConst const& data)
+std::optional<asio::error_code> Resource::push(
+    http::method_t method, const_chunk_u8 const& data)
 {
     using namespace http;
 
@@ -345,7 +356,7 @@ bool Resource::push(http::method_t method, BytesConst const& data)
     if(!isRequestReady())
     {
         Profiler::DeepProfile(NETRSC_TAG "Resource not ready");
-        return false;
+        return asio::error_code(asio::error::basic_errors::invalid_argument);
     }
 
     asio::error_code ec;
@@ -375,14 +386,14 @@ bool Resource::push(http::method_t method, BytesConst const& data)
 
     Profiler::DeepPushContext(NETRSC_TAG "Writing header");
 
-    szptr written = 0;
 #if defined(ASIO_USE_SSL)
     if(secure())
-        written = ssl->write(BytesConst::ofContainer(header), ec);
+        ssl->write(const_chunk_u8::ofContainer(header).view, ec);
     else
 #endif
-        written = normal->write(BytesConst::ofContainer(header), ec);
-    C_ERROR_CHECK(ec)
+        normal->write(const_chunk_u8::ofContainer(header).view, ec);
+    if(ec)
+        return ec;
 
     szptr      consumed = 0;
     Vector<u8> recv_buf;
@@ -421,7 +432,7 @@ bool Resource::push(http::method_t method, BytesConst const& data)
             }
 
             close();
-            return false;
+            return ec;
         }
     }
     recv_buf.clear();
@@ -437,15 +448,16 @@ bool Resource::push(http::method_t method, BytesConst const& data)
 #if defined(ASIO_USE_SSL)
         if(secure())
         {
-            ssl->write(data, ec);
+            ssl->write(data.view, ec);
             ssl->flush();
         } else
 #endif
         {
-            normal->write(data, ec);
+            normal->write(data.view, ec);
             normal->flush();
         }
-        C_ERROR_CHECK(ec)
+        if(ec)
+            return ec;
     }
 
     consumed = 0;
@@ -473,17 +485,19 @@ bool Resource::push(http::method_t method, BytesConst const& data)
     }
 
     close();
-    return response_code == response_class::success;
+    if(response_code == response_class::success)
+        return std::nullopt;
+    return ec;
 }
 
-std::string Resource::mimeType() const
+std::optional<std::string> Resource::mimeType() const
 {
     using field = http::header_field;
 
     auto const it = m_response.header.standard_fields.find(field::content_type);
 
     if(it != m_response.header.standard_fields.end())
-        return {};
+        return std::nullopt;
 
     return it->second;
 }
@@ -493,18 +507,27 @@ u32 Resource::responseCode() const
     return m_response.header.code;
 }
 
-BytesConst Resource::data() const
+std::optional<const_chunk_u8> Resource::data() const
 {
-    Profiler::DeepProfile(NETRSC_TAG "Retrieving data");
-
-    return BytesConst::ofContainer(m_response.payload);
+    if(!isResponseReady())
+        return std::nullopt;
+    return const_chunk_u8::ofContainer(m_response.payload);
 }
 
-Bytes Resource::move()
+std::optional<chunk_u8> Resource::move()
 {
-    auto out = Bytes::move(std::move(m_response.payload));
+    if(!isResponseReady())
+        return std::nullopt;
+    auto out = chunk_u8::move(std::move(m_response.payload));
     return out;
 }
 
-} // namespace Net
-} // namespace Coffee
+std::optional<const_chunk_u8> Resource::move_const() const
+{
+    if(!isResponseReady())
+        return std::nullopt;
+    auto out = const_chunk_u8::move(std::move(m_response.payload));
+    return out;
+}
+
+} // namespace net

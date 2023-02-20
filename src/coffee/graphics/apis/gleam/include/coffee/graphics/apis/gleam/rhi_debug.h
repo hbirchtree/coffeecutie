@@ -3,6 +3,10 @@
 #include "rhi_features.h"
 #include "rhi_translate.h"
 
+#include <glw/extensions/KHR_debug.h>
+
+#include <peripherals/stl/source_location.h>
+
 namespace gleam::debug {
 
 struct null_api
@@ -16,7 +20,7 @@ struct null_api
     {
     }
 
-    inline auto scope(std::string_view const&)
+    inline auto scope(std::string_view const& = {})
     {
         return nullptr;
     }
@@ -26,69 +30,153 @@ struct null_api
     }
 };
 
-#if GLEAM_MAX_VERSION >= 0x430 || GLEAM_MAX_VERSION_ES >= 0x320
-
+#if GLEAM_MAX_VERSION >= 0x430 || GLEAM_MAX_VERSION_ES >= 0x320 \
+    || defined(GL_KHR_debug)
 struct scope
 {
-    scope(std::string_view const& name)
+    scope(features::debugging debug, std::string_view const& name) : ext(debug)
     {
-        cmd::push_debug_group(
-            group::debug_source::application, 0, name.size(), name);
+#if GLEAM_MAX_VERSION >= 0x430 || GLEAM_MAX_VERSION_ES >= 0x320
+        if(ext.debug)
+        {
+            cmd::push_debug_group(
+                group::debug_source::application, 0, name.size(), name);
+            return;
+        }
+#endif
+#if defined(GL_KHR_debug)
+        if(ext.khr.debug)
+            gl::khr::debug::push_debug_group(
+                group::debug_source::application, 0, name.size(), name);
+#endif
     }
     ~scope()
     {
-        cmd::pop_debug_group();
+#if GLEAM_MAX_VERSION >= 0x430 || GLEAM_MAX_VERSION_ES >= 0x320
+        if(ext.debug)
+        {
+            cmd::pop_debug_group();
+            return;
+        }
+#endif
+#if defined(GL_KHR_debug)
+        if(ext.khr.debug)
+        {
+            gl::khr::debug::pop_debug_group();
+            return;
+        }
+#endif
     }
+
+    features::debugging ext;
 };
 
 struct api
 {
-    inline auto scope(std::string_view const& name)
+    api(features::debugging& debug) : ext(debug)
     {
-        return stl_types::MkUq<debug::scope>(name);
+    }
+
+    inline auto scope(
+        std::string_view const& name
+        = stl_types::source_location().function_name())
+    {
+        return stl_types::MkUq<debug::scope>(std::ref(ext), name);
     }
 
     inline void message(std::string_view const& msg)
     {
-        cmd::debug_message_insert(
-            group::debug_source::application,
-            group::debug_type::performance,
-            0,
-            group::debug_severity::notification,
-            msg.size(),
-            msg);
+#if GLEAM_MAX_VERSION >= 0x430 || GLEAM_MAX_VERSION_ES >= 0x320
+        if(ext.debug)
+        {
+            cmd::debug_message_insert(
+                group::debug_source::application,
+                group::debug_type::performance,
+                0,
+                group::debug_severity::notification,
+                msg.size(),
+                msg);
+            return;
+        }
+#endif
+#if defined(GL_KHR_debug)
+        if(ext.khr.debug)
+        {
+            gl::khr::debug::debug_message_insert(
+                group::debug_source::application,
+                group::debug_type::performance,
+                0,
+                group::debug_severity::notification,
+                msg.size(),
+                msg);
+            return;
+        }
+#endif
     }
 
     inline void enable()
     {
         auto _ = scope(__PRETTY_FUNCTION__);
-        cmd::enable(group::enable_cap::debug_output_synchronous);
-        cmd::debug_message_callback(
-            [](GLenum        source,
-               GLenum        type,
-               GLuint        id,
-               GLenum        severity,
-               GLsizei       length,
-               const GLchar* message,
-               const void*   userParam) {
-                using namespace group;
-                auto self = reinterpret_cast<const api*>(userParam);
+#if GLEAM_MAX_VERSION >= 0x430 || GLEAM_MAX_VERSION_ES >= 0x320
+        if(ext.debug)
+        {
+            cmd::enable(group::enable_cap::debug_output_synchronous);
+            cmd::debug_message_callback(
+                [](GLenum        source,
+                   GLenum        type,
+                   GLuint        id,
+                   GLenum        severity,
+                   GLsizei       length,
+                   const GLchar* message,
+                   const void*   userParam) {
+                    using namespace group;
+                    auto self = reinterpret_cast<const api*>(userParam);
 
-                for(auto const& callback : self->m_debugFunc)
-                    callback(
-                        static_cast<debug_source>(source),
-                        static_cast<debug_type>(type),
-                        id,
-                        static_cast<debug_severity>(severity),
-                        std::string_view(message, length));
-            },
-            semantic::Span<const api>(this, 1));
-//        cmd::debug_message_control(
-//            group::debug_source::dont_care,
-//            group::debug_type::dont_care,
-//            group::debug_severity::dont_care,
-//            null_span<u32>{},
-//            true);
+                    for(auto const& callback : self->m_debugFunc)
+                        callback(
+                            static_cast<debug_source>(source),
+                            static_cast<debug_type>(type),
+                            id,
+                            static_cast<debug_severity>(severity),
+                            std::string_view(message, length));
+                },
+                semantic::Span<const api>(this, 1));
+            cmd::debug_message_control(
+                group::debug_source::dont_care,
+                group::debug_type::dont_care,
+                group::debug_severity::dont_care,
+                null_span<u32>{},
+                true);
+            return;
+        }
+#endif
+#if defined(GL_KHR_debug)
+            if(ext.khr.debug)
+        {
+            cmd::enable(group::enable_cap::debug_output_synchronous_khr);
+            gl::khr::debug::debug_message_callback(
+                [](GLenum        source,
+                   GLenum        type,
+                   GLuint        id,
+                   GLenum        severity,
+                   GLsizei       length,
+                   const GLchar* message,
+                   const void*   userParam) {
+                    using namespace group;
+                    auto self = reinterpret_cast<const api*>(userParam);
+
+                    for(auto const& callback : self->m_debugFunc)
+                        callback(
+                            static_cast<debug_source>(source),
+                            static_cast<debug_type>(type),
+                            id,
+                            static_cast<debug_severity>(severity),
+                            std::string_view(message, length));
+                },
+                semantic::Span<const api>(this, 1));
+            return;
+        }
+#endif
     }
 
     using debug_function  = stl_types::Function<void(
@@ -102,11 +190,15 @@ struct api
 
     inline void add_callback(debug_function&& func)
     {
+        if(!ext.debug && !ext.khr.debug)
+            return;
         m_debugFunc.emplace_back(std::move(func));
     }
 
     inline void add_callback(simple_function&& func)
     {
+        if(!ext.debug && !ext.khr.debug)
+            return;
         m_debugFunc.emplace_back(
             [func](
                 group::debug_source,
@@ -116,7 +208,8 @@ struct api
                 std::string_view const& message) { func(severity, message); });
     }
 
-    stl_types::Vector<debug_function> m_debugFunc;
+    std::vector<debug_function> m_debugFunc;
+    features::debugging&        ext;
 };
 
 constexpr bool api_available = true;

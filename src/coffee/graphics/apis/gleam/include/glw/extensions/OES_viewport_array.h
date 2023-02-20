@@ -13,19 +13,17 @@ constexpr libc_types::u32 viewport_bounds_range           = 0x825D;
 constexpr libc_types::u32 viewport_index_provoking_vertex = 0x825F;
 } // namespace values
 template<class span_const_f32>
-requires(
-    semantic::concepts::Span<span_const_f32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_f32::value_type>,
-        std::decay_t<f32>>)
-/*!
- * \brief Part of GL_OES_viewport_array
- * \param first GLuint
- * \param count GLsizei
- * \param v const GLfloat *
- * \return void
- */
-STATICINLINE
+requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+         std::decay_t<typename span_const_f32::value_type>,
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_OES_viewport_array
+     * \param first GLuint
+     * \param count GLsizei
+     * \param v const GLfloat *
+     * \return void
+     */
+    STATICINLINE
     void depth_range_arrayfv(u32 first, i32 count, span_const_f32 const& v)
 {
     using namespace std::string_view_literals;
@@ -93,19 +91,18 @@ STATICINLINE void enablei(group::enable_cap target, u32 index)
 }
 
 template<class span_f32>
-requires(
-    semantic::concepts::Span<span_f32> &&
-    std::is_same_v<
-        std::decay_t<typename span_f32::value_type>,
-        std::decay_t<f32>>)
-/*!
- * \brief Part of GL_OES_viewport_array
- * \param target GLenum
- * \param index GLuint
- * \param data GLfloat *
- * \return void
- */
-STATICINLINE void get_floati_v(group::get_prop target, u32 index, span_f32 data)
+requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+         std::decay_t<typename span_f32::value_type>,
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_OES_viewport_array
+     * \param target GLenum
+     * \param index GLuint
+     * \param data GLfloat *
+     * \return void
+     */
+    STATICINLINE
+    void get_floati_v(group::get_prop target, u32 index, span_f32 data)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -138,19 +135,18 @@ STATICINLINE GLboolean is_enabledi(group::enable_cap target, u32 index)
 }
 
 template<class span_const_i32>
-requires(
-    semantic::concepts::Span<span_const_i32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_i32::value_type>,
-        std::decay_t<i32>>)
-/*!
- * \brief Part of GL_OES_viewport_array
- * \param first GLuint
- * \param count GLsizei
- * \param v const GLint *
- * \return void
- */
-STATICINLINE void scissor_arrayv(u32 first, i32 count, span_const_i32 const& v)
+requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
+         std::decay_t<typename span_const_i32::value_type>,
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_OES_viewport_array
+     * \param first GLuint
+     * \param count GLsizei
+     * \param v const GLint *
+     * \return void
+     */
+    STATICINLINE
+    void scissor_arrayv(u32 first, i32 count, span_const_i32 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -166,17 +162,17 @@ STATICINLINE void scissor_arrayv(u32 first, i32 count, span_const_i32 const& v)
 
 template<class size_2_i32>
 requires(semantic::concepts::Size2D<size_2_i32, i32>)
-/*!
- * \brief Part of GL_OES_viewport_array
- * \param index GLuint
- * \param left GLint
- * \param bottom GLint
- * \param width GLsizei
- * \param height GLsizei
- * \return void
- */
-STATICINLINE void scissor_indexed(
-    u32 index, i32 left, i32 bottom, size_2_i32 const& width)
+    /*!
+     * \brief Part of GL_OES_viewport_array
+     * \param index GLuint
+     * \param left GLint
+     * \param bottom GLint
+     * \param width GLsizei
+     * \param height GLsizei
+     * \return void
+     */
+    STATICINLINE void scissor_indexed(
+        u32 index, i32 left, i32 bottom, size_2_i32 const& width)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -188,18 +184,16 @@ STATICINLINE void scissor_indexed(
 }
 
 template<class span_const_i32>
-requires(
-    semantic::concepts::Span<span_const_i32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_i32::value_type>,
-        std::decay_t<i32>>)
-/*!
- * \brief Part of GL_OES_viewport_array
- * \param index GLuint
- * \param v const GLint *
- * \return void
- */
-STATICINLINE void scissor_indexedv(u32 index, span_const_i32 const& v)
+requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
+         std::decay_t<typename span_const_i32::value_type>,
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_OES_viewport_array
+     * \param index GLuint
+     * \param v const GLint *
+     * \return void
+     */
+    STATICINLINE void scissor_indexedv(u32 index, span_const_i32 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -212,19 +206,18 @@ STATICINLINE void scissor_indexedv(u32 index, span_const_i32 const& v)
 }
 
 template<class span_const_f32>
-requires(
-    semantic::concepts::Span<span_const_f32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_f32::value_type>,
-        std::decay_t<f32>>)
-/*!
- * \brief Part of GL_OES_viewport_array
- * \param first GLuint
- * \param count GLsizei
- * \param v const GLfloat *
- * \return void
- */
-STATICINLINE void viewport_arrayv(u32 first, i32 count, span_const_f32 const& v)
+requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+         std::decay_t<typename span_const_f32::value_type>,
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_OES_viewport_array
+     * \param first GLuint
+     * \param count GLsizei
+     * \param v const GLfloat *
+     * \return void
+     */
+    STATICINLINE
+    void viewport_arrayv(u32 first, i32 count, span_const_f32 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -239,19 +232,18 @@ STATICINLINE void viewport_arrayv(u32 first, i32 count, span_const_f32 const& v)
 }
 
 template<class size_2_f32, class vec_2_f32>
-requires(
-    semantic::concepts::Vector<vec_2_f32, f32, 2> &&
-    semantic::concepts::Size2D<size_2_f32, f32>)
-/*!
- * \brief Part of GL_OES_viewport_array
- * \param index GLuint
- * \param x GLfloat
- * \param y GLfloat
- * \param w GLfloat
- * \param h GLfloat
- * \return void
- */
-STATICINLINE
+requires(semantic::concepts::Vector<vec_2_f32, f32, 2>&&
+             semantic::concepts::Size2D<size_2_f32, f32>)
+    /*!
+     * \brief Part of GL_OES_viewport_array
+     * \param index GLuint
+     * \param x GLfloat
+     * \param y GLfloat
+     * \param w GLfloat
+     * \param h GLfloat
+     * \return void
+     */
+    STATICINLINE
     void viewport_indexedf(u32 index, vec_2_f32 const& x, size_2_f32 const& w)
 {
     using namespace std::string_view_literals;
@@ -264,18 +256,16 @@ STATICINLINE
 }
 
 template<class span_const_f32>
-requires(
-    semantic::concepts::Span<span_const_f32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_f32::value_type>,
-        std::decay_t<f32>>)
-/*!
- * \brief Part of GL_OES_viewport_array
- * \param index GLuint
- * \param v const GLfloat *
- * \return void
- */
-STATICINLINE void viewport_indexedfv(u32 index, span_const_f32 const& v)
+requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+         std::decay_t<typename span_const_f32::value_type>,
+         std::decay_t<f32>>)
+    /*!
+     * \brief Part of GL_OES_viewport_array
+     * \param index GLuint
+     * \param v const GLfloat *
+     * \return void
+     */
+    STATICINLINE void viewport_indexedfv(u32 index, span_const_f32 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

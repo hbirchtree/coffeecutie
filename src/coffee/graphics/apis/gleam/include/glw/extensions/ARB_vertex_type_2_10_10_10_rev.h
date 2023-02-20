@@ -34,24 +34,22 @@ STATICINLINE void vertex_attrib_p1ui(
 }
 
 template<class span_const_u32>
-requires(
-    semantic::concepts::Span<span_const_u32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_u32::value_type>,
-        std::decay_t<u32>>)
-/*!
- * \brief Part of GL_ARB_vertex_type_2_10_10_10_rev
- * \param index GLuint
- * \param type GLenum
- * \param normalized GLboolean
- * \param value const GLuint *
- * \return void
- */
-STATICINLINE void vertex_attrib_p1uiv(
-    u32                               index,
-    group::vertex_attrib_pointer_type type,
-    bool                              normalized,
-    span_const_u32 const&             value)
+requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+         std::decay_t<typename span_const_u32::value_type>,
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_ARB_vertex_type_2_10_10_10_rev
+     * \param index GLuint
+     * \param type GLenum
+     * \param normalized GLboolean
+     * \param value const GLuint *
+     * \return void
+     */
+    STATICINLINE void vertex_attrib_p1uiv(
+        u32                               index,
+        group::vertex_attrib_pointer_type type,
+        bool                              normalized,
+        span_const_u32 const&             value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -90,23 +88,21 @@ STATICINLINE void vertex_attrib_p2ui(
 }
 
 template<class span_const_vec_2_u32>
-requires(
-    semantic::concepts::Span<span_const_vec_2_u32> &&
-    semantic::concepts::
-        Vector<typename span_const_vec_2_u32::value_type, u32, 2>)
-/*!
- * \brief Part of GL_ARB_vertex_type_2_10_10_10_rev
- * \param index GLuint
- * \param type GLenum
- * \param normalized GLboolean
- * \param value const GLuint *
- * \return void
- */
-STATICINLINE void vertex_attrib_p2uiv(
-    u32                               index,
-    group::vertex_attrib_pointer_type type,
-    bool                              normalized,
-    span_const_vec_2_u32 const&       value)
+requires(semantic::concepts::Span<span_const_vec_2_u32>&& semantic::concepts::
+             Vector<typename span_const_vec_2_u32::value_type, u32, 2>)
+    /*!
+     * \brief Part of GL_ARB_vertex_type_2_10_10_10_rev
+     * \param index GLuint
+     * \param type GLenum
+     * \param normalized GLboolean
+     * \param value const GLuint *
+     * \return void
+     */
+    STATICINLINE void vertex_attrib_p2uiv(
+        u32                               index,
+        group::vertex_attrib_pointer_type type,
+        bool                              normalized,
+        span_const_vec_2_u32 const&       value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -145,23 +141,21 @@ STATICINLINE void vertex_attrib_p3ui(
 }
 
 template<class span_const_vec_3_u32>
-requires(
-    semantic::concepts::Span<span_const_vec_3_u32> &&
-    semantic::concepts::
-        Vector<typename span_const_vec_3_u32::value_type, u32, 3>)
-/*!
- * \brief Part of GL_ARB_vertex_type_2_10_10_10_rev
- * \param index GLuint
- * \param type GLenum
- * \param normalized GLboolean
- * \param value const GLuint *
- * \return void
- */
-STATICINLINE void vertex_attrib_p3uiv(
-    u32                               index,
-    group::vertex_attrib_pointer_type type,
-    bool                              normalized,
-    span_const_vec_3_u32 const&       value)
+requires(semantic::concepts::Span<span_const_vec_3_u32>&& semantic::concepts::
+             Vector<typename span_const_vec_3_u32::value_type, u32, 3>)
+    /*!
+     * \brief Part of GL_ARB_vertex_type_2_10_10_10_rev
+     * \param index GLuint
+     * \param type GLenum
+     * \param normalized GLboolean
+     * \param value const GLuint *
+     * \return void
+     */
+    STATICINLINE void vertex_attrib_p3uiv(
+        u32                               index,
+        group::vertex_attrib_pointer_type type,
+        bool                              normalized,
+        span_const_vec_3_u32 const&       value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -200,23 +194,21 @@ STATICINLINE void vertex_attrib_p4ui(
 }
 
 template<class span_const_vec_4_u32>
-requires(
-    semantic::concepts::Span<span_const_vec_4_u32> &&
-    semantic::concepts::
-        Vector<typename span_const_vec_4_u32::value_type, u32, 4>)
-/*!
- * \brief Part of GL_ARB_vertex_type_2_10_10_10_rev
- * \param index GLuint
- * \param type GLenum
- * \param normalized GLboolean
- * \param value const GLuint *
- * \return void
- */
-STATICINLINE void vertex_attrib_p4uiv(
-    u32                               index,
-    group::vertex_attrib_pointer_type type,
-    bool                              normalized,
-    span_const_vec_4_u32 const&       value)
+requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
+             Vector<typename span_const_vec_4_u32::value_type, u32, 4>)
+    /*!
+     * \brief Part of GL_ARB_vertex_type_2_10_10_10_rev
+     * \param index GLuint
+     * \param type GLenum
+     * \param normalized GLboolean
+     * \param value const GLuint *
+     * \return void
+     */
+    STATICINLINE void vertex_attrib_p4uiv(
+        u32                               index,
+        group::vertex_attrib_pointer_type type,
+        bool                              normalized,
+        span_const_vec_4_u32 const&       value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -252,18 +244,16 @@ STATICINLINE void color_p3ui(group::color_pointer_type type, u32 color)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_vec_3_u32>
-requires(
-    semantic::concepts::Span<span_const_vec_3_u32> &&
-    semantic::concepts::
-        Vector<typename span_const_vec_3_u32::value_type, u32, 3>)
-/*!
- * \brief Part of GL_ARB_vertex_type_2_10_10_10_rev
- * \param type GLenum
- * \param color const GLuint *
- * \return void
- */
-STATICINLINE void color_p3uiv(
-    group::color_pointer_type type, span_const_vec_3_u32 const& color)
+requires(semantic::concepts::Span<span_const_vec_3_u32>&& semantic::concepts::
+             Vector<typename span_const_vec_3_u32::value_type, u32, 3>)
+    /*!
+     * \brief Part of GL_ARB_vertex_type_2_10_10_10_rev
+     * \param type GLenum
+     * \param color const GLuint *
+     * \return void
+     */
+    STATICINLINE void color_p3uiv(
+        group::color_pointer_type type, span_const_vec_3_u32 const& color)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -298,18 +288,16 @@ STATICINLINE void color_p4ui(group::color_pointer_type type, u32 color)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_vec_4_u32>
-requires(
-    semantic::concepts::Span<span_const_vec_4_u32> &&
-    semantic::concepts::
-        Vector<typename span_const_vec_4_u32::value_type, u32, 4>)
-/*!
- * \brief Part of GL_ARB_vertex_type_2_10_10_10_rev
- * \param type GLenum
- * \param color const GLuint *
- * \return void
- */
-STATICINLINE void color_p4uiv(
-    group::color_pointer_type type, span_const_vec_4_u32 const& color)
+requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
+             Vector<typename span_const_vec_4_u32::value_type, u32, 4>)
+    /*!
+     * \brief Part of GL_ARB_vertex_type_2_10_10_10_rev
+     * \param type GLenum
+     * \param color const GLuint *
+     * \return void
+     */
+    STATICINLINE void color_p4uiv(
+        group::color_pointer_type type, span_const_vec_4_u32 const& color)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -347,22 +335,20 @@ STATICINLINE void multi_tex_coord_p1ui(
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_u32>
-requires(
-    semantic::concepts::Span<span_const_u32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_u32::value_type>,
-        std::decay_t<u32>>)
-/*!
- * \brief Part of GL_ARB_vertex_type_2_10_10_10_rev
- * \param texture GLenum
- * \param type GLenum
- * \param coords const GLuint *
- * \return void
- */
-STATICINLINE void multi_tex_coord_p1uiv(
-    group::texture_unit           texture,
-    group::tex_coord_pointer_type type,
-    span_const_u32 const&         coords)
+requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+         std::decay_t<typename span_const_u32::value_type>,
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_ARB_vertex_type_2_10_10_10_rev
+     * \param texture GLenum
+     * \param type GLenum
+     * \param coords const GLuint *
+     * \return void
+     */
+    STATICINLINE void multi_tex_coord_p1uiv(
+        group::texture_unit           texture,
+        group::tex_coord_pointer_type type,
+        span_const_u32 const&         coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -401,21 +387,19 @@ STATICINLINE void multi_tex_coord_p2ui(
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_vec_2_u32>
-requires(
-    semantic::concepts::Span<span_const_vec_2_u32> &&
-    semantic::concepts::
-        Vector<typename span_const_vec_2_u32::value_type, u32, 2>)
-/*!
- * \brief Part of GL_ARB_vertex_type_2_10_10_10_rev
- * \param texture GLenum
- * \param type GLenum
- * \param coords const GLuint *
- * \return void
- */
-STATICINLINE void multi_tex_coord_p2uiv(
-    group::texture_unit           texture,
-    group::tex_coord_pointer_type type,
-    span_const_vec_2_u32 const&   coords)
+requires(semantic::concepts::Span<span_const_vec_2_u32>&& semantic::concepts::
+             Vector<typename span_const_vec_2_u32::value_type, u32, 2>)
+    /*!
+     * \brief Part of GL_ARB_vertex_type_2_10_10_10_rev
+     * \param texture GLenum
+     * \param type GLenum
+     * \param coords const GLuint *
+     * \return void
+     */
+    STATICINLINE void multi_tex_coord_p2uiv(
+        group::texture_unit           texture,
+        group::tex_coord_pointer_type type,
+        span_const_vec_2_u32 const&   coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -454,21 +438,19 @@ STATICINLINE void multi_tex_coord_p3ui(
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_vec_3_u32>
-requires(
-    semantic::concepts::Span<span_const_vec_3_u32> &&
-    semantic::concepts::
-        Vector<typename span_const_vec_3_u32::value_type, u32, 3>)
-/*!
- * \brief Part of GL_ARB_vertex_type_2_10_10_10_rev
- * \param texture GLenum
- * \param type GLenum
- * \param coords const GLuint *
- * \return void
- */
-STATICINLINE void multi_tex_coord_p3uiv(
-    group::texture_unit           texture,
-    group::tex_coord_pointer_type type,
-    span_const_vec_3_u32 const&   coords)
+requires(semantic::concepts::Span<span_const_vec_3_u32>&& semantic::concepts::
+             Vector<typename span_const_vec_3_u32::value_type, u32, 3>)
+    /*!
+     * \brief Part of GL_ARB_vertex_type_2_10_10_10_rev
+     * \param texture GLenum
+     * \param type GLenum
+     * \param coords const GLuint *
+     * \return void
+     */
+    STATICINLINE void multi_tex_coord_p3uiv(
+        group::texture_unit           texture,
+        group::tex_coord_pointer_type type,
+        span_const_vec_3_u32 const&   coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -507,21 +489,19 @@ STATICINLINE void multi_tex_coord_p4ui(
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_vec_4_u32>
-requires(
-    semantic::concepts::Span<span_const_vec_4_u32> &&
-    semantic::concepts::
-        Vector<typename span_const_vec_4_u32::value_type, u32, 4>)
-/*!
- * \brief Part of GL_ARB_vertex_type_2_10_10_10_rev
- * \param texture GLenum
- * \param type GLenum
- * \param coords const GLuint *
- * \return void
- */
-STATICINLINE void multi_tex_coord_p4uiv(
-    group::texture_unit           texture,
-    group::tex_coord_pointer_type type,
-    span_const_vec_4_u32 const&   coords)
+requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
+             Vector<typename span_const_vec_4_u32::value_type, u32, 4>)
+    /*!
+     * \brief Part of GL_ARB_vertex_type_2_10_10_10_rev
+     * \param texture GLenum
+     * \param type GLenum
+     * \param coords const GLuint *
+     * \return void
+     */
+    STATICINLINE void multi_tex_coord_p4uiv(
+        group::texture_unit           texture,
+        group::tex_coord_pointer_type type,
+        span_const_vec_4_u32 const&   coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -557,18 +537,16 @@ STATICINLINE void normal_p3ui(group::normal_pointer_type type, u32 coords)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_vec_3_u32>
-requires(
-    semantic::concepts::Span<span_const_vec_3_u32> &&
-    semantic::concepts::
-        Vector<typename span_const_vec_3_u32::value_type, u32, 3>)
-/*!
- * \brief Part of GL_ARB_vertex_type_2_10_10_10_rev
- * \param type GLenum
- * \param coords const GLuint *
- * \return void
- */
-STATICINLINE void normal_p3uiv(
-    group::normal_pointer_type type, span_const_vec_3_u32 const& coords)
+requires(semantic::concepts::Span<span_const_vec_3_u32>&& semantic::concepts::
+             Vector<typename span_const_vec_3_u32::value_type, u32, 3>)
+    /*!
+     * \brief Part of GL_ARB_vertex_type_2_10_10_10_rev
+     * \param type GLenum
+     * \param coords const GLuint *
+     * \return void
+     */
+    STATICINLINE void normal_p3uiv(
+        group::normal_pointer_type type, span_const_vec_3_u32 const& coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -604,18 +582,16 @@ STATICINLINE void secondary_color_p3ui(
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_vec_3_u32>
-requires(
-    semantic::concepts::Span<span_const_vec_3_u32> &&
-    semantic::concepts::
-        Vector<typename span_const_vec_3_u32::value_type, u32, 3>)
-/*!
- * \brief Part of GL_ARB_vertex_type_2_10_10_10_rev
- * \param type GLenum
- * \param color const GLuint *
- * \return void
- */
-STATICINLINE void secondary_color_p3uiv(
-    group::color_pointer_type type, span_const_vec_3_u32 const& color)
+requires(semantic::concepts::Span<span_const_vec_3_u32>&& semantic::concepts::
+             Vector<typename span_const_vec_3_u32::value_type, u32, 3>)
+    /*!
+     * \brief Part of GL_ARB_vertex_type_2_10_10_10_rev
+     * \param type GLenum
+     * \param color const GLuint *
+     * \return void
+     */
+    STATICINLINE void secondary_color_p3uiv(
+        group::color_pointer_type type, span_const_vec_3_u32 const& color)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -650,19 +626,17 @@ STATICINLINE void tex_coord_p1ui(group::tex_coord_pointer_type type, u32 coords)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_u32>
-requires(
-    semantic::concepts::Span<span_const_u32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_u32::value_type>,
-        std::decay_t<u32>>)
-/*!
- * \brief Part of GL_ARB_vertex_type_2_10_10_10_rev
- * \param type GLenum
- * \param coords const GLuint *
- * \return void
- */
-STATICINLINE void tex_coord_p1uiv(
-    group::tex_coord_pointer_type type, span_const_u32 const& coords)
+requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+         std::decay_t<typename span_const_u32::value_type>,
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_ARB_vertex_type_2_10_10_10_rev
+     * \param type GLenum
+     * \param coords const GLuint *
+     * \return void
+     */
+    STATICINLINE void tex_coord_p1uiv(
+        group::tex_coord_pointer_type type, span_const_u32 const& coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -697,18 +671,16 @@ STATICINLINE void tex_coord_p2ui(group::tex_coord_pointer_type type, u32 coords)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_vec_2_u32>
-requires(
-    semantic::concepts::Span<span_const_vec_2_u32> &&
-    semantic::concepts::
-        Vector<typename span_const_vec_2_u32::value_type, u32, 2>)
-/*!
- * \brief Part of GL_ARB_vertex_type_2_10_10_10_rev
- * \param type GLenum
- * \param coords const GLuint *
- * \return void
- */
-STATICINLINE void tex_coord_p2uiv(
-    group::tex_coord_pointer_type type, span_const_vec_2_u32 const& coords)
+requires(semantic::concepts::Span<span_const_vec_2_u32>&& semantic::concepts::
+             Vector<typename span_const_vec_2_u32::value_type, u32, 2>)
+    /*!
+     * \brief Part of GL_ARB_vertex_type_2_10_10_10_rev
+     * \param type GLenum
+     * \param coords const GLuint *
+     * \return void
+     */
+    STATICINLINE void tex_coord_p2uiv(
+        group::tex_coord_pointer_type type, span_const_vec_2_u32 const& coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -743,18 +715,16 @@ STATICINLINE void tex_coord_p3ui(group::tex_coord_pointer_type type, u32 coords)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_vec_3_u32>
-requires(
-    semantic::concepts::Span<span_const_vec_3_u32> &&
-    semantic::concepts::
-        Vector<typename span_const_vec_3_u32::value_type, u32, 3>)
-/*!
- * \brief Part of GL_ARB_vertex_type_2_10_10_10_rev
- * \param type GLenum
- * \param coords const GLuint *
- * \return void
- */
-STATICINLINE void tex_coord_p3uiv(
-    group::tex_coord_pointer_type type, span_const_vec_3_u32 const& coords)
+requires(semantic::concepts::Span<span_const_vec_3_u32>&& semantic::concepts::
+             Vector<typename span_const_vec_3_u32::value_type, u32, 3>)
+    /*!
+     * \brief Part of GL_ARB_vertex_type_2_10_10_10_rev
+     * \param type GLenum
+     * \param coords const GLuint *
+     * \return void
+     */
+    STATICINLINE void tex_coord_p3uiv(
+        group::tex_coord_pointer_type type, span_const_vec_3_u32 const& coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -789,18 +759,16 @@ STATICINLINE void tex_coord_p4ui(group::tex_coord_pointer_type type, u32 coords)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_vec_4_u32>
-requires(
-    semantic::concepts::Span<span_const_vec_4_u32> &&
-    semantic::concepts::
-        Vector<typename span_const_vec_4_u32::value_type, u32, 4>)
-/*!
- * \brief Part of GL_ARB_vertex_type_2_10_10_10_rev
- * \param type GLenum
- * \param coords const GLuint *
- * \return void
- */
-STATICINLINE void tex_coord_p4uiv(
-    group::tex_coord_pointer_type type, span_const_vec_4_u32 const& coords)
+requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
+             Vector<typename span_const_vec_4_u32::value_type, u32, 4>)
+    /*!
+     * \brief Part of GL_ARB_vertex_type_2_10_10_10_rev
+     * \param type GLenum
+     * \param coords const GLuint *
+     * \return void
+     */
+    STATICINLINE void tex_coord_p4uiv(
+        group::tex_coord_pointer_type type, span_const_vec_4_u32 const& coords)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -835,18 +803,16 @@ STATICINLINE void vertex_p2ui(group::vertex_pointer_type type, u32 value)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_vec_2_u32>
-requires(
-    semantic::concepts::Span<span_const_vec_2_u32> &&
-    semantic::concepts::
-        Vector<typename span_const_vec_2_u32::value_type, u32, 2>)
-/*!
- * \brief Part of GL_ARB_vertex_type_2_10_10_10_rev
- * \param type GLenum
- * \param value const GLuint *
- * \return void
- */
-STATICINLINE void vertex_p2uiv(
-    group::vertex_pointer_type type, span_const_vec_2_u32 const& value)
+requires(semantic::concepts::Span<span_const_vec_2_u32>&& semantic::concepts::
+             Vector<typename span_const_vec_2_u32::value_type, u32, 2>)
+    /*!
+     * \brief Part of GL_ARB_vertex_type_2_10_10_10_rev
+     * \param type GLenum
+     * \param value const GLuint *
+     * \return void
+     */
+    STATICINLINE void vertex_p2uiv(
+        group::vertex_pointer_type type, span_const_vec_2_u32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -881,18 +847,16 @@ STATICINLINE void vertex_p3ui(group::vertex_pointer_type type, u32 value)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_vec_3_u32>
-requires(
-    semantic::concepts::Span<span_const_vec_3_u32> &&
-    semantic::concepts::
-        Vector<typename span_const_vec_3_u32::value_type, u32, 3>)
-/*!
- * \brief Part of GL_ARB_vertex_type_2_10_10_10_rev
- * \param type GLenum
- * \param value const GLuint *
- * \return void
- */
-STATICINLINE void vertex_p3uiv(
-    group::vertex_pointer_type type, span_const_vec_3_u32 const& value)
+requires(semantic::concepts::Span<span_const_vec_3_u32>&& semantic::concepts::
+             Vector<typename span_const_vec_3_u32::value_type, u32, 3>)
+    /*!
+     * \brief Part of GL_ARB_vertex_type_2_10_10_10_rev
+     * \param type GLenum
+     * \param value const GLuint *
+     * \return void
+     */
+    STATICINLINE void vertex_p3uiv(
+        group::vertex_pointer_type type, span_const_vec_3_u32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -927,18 +891,16 @@ STATICINLINE void vertex_p4ui(group::vertex_pointer_type type, u32 value)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_vec_4_u32>
-requires(
-    semantic::concepts::Span<span_const_vec_4_u32> &&
-    semantic::concepts::
-        Vector<typename span_const_vec_4_u32::value_type, u32, 4>)
-/*!
- * \brief Part of GL_ARB_vertex_type_2_10_10_10_rev
- * \param type GLenum
- * \param value const GLuint *
- * \return void
- */
-STATICINLINE void vertex_p4uiv(
-    group::vertex_pointer_type type, span_const_vec_4_u32 const& value)
+requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
+             Vector<typename span_const_vec_4_u32::value_type, u32, 4>)
+    /*!
+     * \brief Part of GL_ARB_vertex_type_2_10_10_10_rev
+     * \param type GLenum
+     * \param value const GLuint *
+     * \return void
+     */
+    STATICINLINE void vertex_p4uiv(
+        group::vertex_pointer_type type, span_const_vec_4_u32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

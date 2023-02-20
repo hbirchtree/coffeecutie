@@ -174,6 +174,8 @@ C_DEPRECATED FORCEDINLINE bool FileCommit(
  */
 extern bool FileMkdir(const Url& dirname, bool recursive);
 
+namespace resource_literals {
+
 FORCEDINLINE Resource operator"" _rsc(const char* fn, size_t)
 {
     return Resource(fn, RSCA::AssetFile);
@@ -194,4 +196,7 @@ FORCEDINLINE Resource operator"" _tmpfile(const char* fn, size_t)
     return Resource(fn, RSCA::TempFile);
 }
 
+}
+
+using namespace resource_literals;
 } // namespace Coffee

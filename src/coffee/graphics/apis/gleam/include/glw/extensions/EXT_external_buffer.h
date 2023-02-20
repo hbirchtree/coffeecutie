@@ -50,7 +50,8 @@ STATICINLINE void named_buffer_storage_external(
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(NamedBufferStorageExternalEXT)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
 #endif

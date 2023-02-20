@@ -1,6 +1,7 @@
 #pragma once
 
 #include <peripherals/identify/quirks.h>
+#include <peripherals/identify/compiler/debug_break.h>
 
 #include <limits>
 #include <stdint.h>
@@ -52,7 +53,7 @@ template<typename T>
 template<typename T>
 [[noreturn]] inline void Throw(T&& exception)
 {
-#if MODE_DEBUG && defined(COFFEE_EMSCRIPTEN)
+#if MODE_DEBUG
     C_BREAK();
 #endif
     throw std::move(exception);

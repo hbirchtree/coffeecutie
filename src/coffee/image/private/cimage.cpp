@@ -192,7 +192,7 @@ bool LoadData(
     }
 
     target->bpp        = scomp;
-    target->data_owner = mem_chunk<f32>::ofBytes(
+    target->data_owner = mem_chunk<libc_types::u8>::ofBytes(
         target->data, C_FCAST<szptr>(target->size.area() * target->bpp));
 
     if(!target->data)

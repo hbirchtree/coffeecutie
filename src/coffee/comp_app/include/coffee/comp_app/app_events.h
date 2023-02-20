@@ -22,6 +22,11 @@ struct NavigationEvent
     {
         None,
         Back = 1,
+
+        Left,
+        Right,
+        Up,
+        Down,
     };
 
     Type navigation_type;

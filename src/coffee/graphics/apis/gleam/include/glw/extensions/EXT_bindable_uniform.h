@@ -22,7 +22,8 @@ STATICINLINE GLint get_uniform_buffer_size(u32 program, i32 location)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetUniformBufferSizeEXT)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -44,7 +45,8 @@ STATICINLINE GLintptr get_uniform_offset(u32 program, i32 location)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(GetUniformOffsetEXT)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
@@ -67,11 +69,13 @@ STATICINLINE void uniform_buffer(u32 program, i32 location, u32 buffer)
     if constexpr(compile_info::debug_mode)
     {
         GLW_FPTR_CHECK(UniformBufferEXT)
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsProgram)
             glIsProgram(program);
 #endif
-#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+#if(defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && \
+    !defined(GLEAM_USE_LINKED)
         if(glIsBuffer)
             glIsBuffer(buffer);
 #endif

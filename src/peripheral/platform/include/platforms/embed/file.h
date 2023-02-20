@@ -2,7 +2,6 @@
 
 #include <peripherals/base.h>
 #include <peripherals/semantic/chunk.h>
-#include <platforms/base/file.h>
 
 namespace platform::file::embed {
 

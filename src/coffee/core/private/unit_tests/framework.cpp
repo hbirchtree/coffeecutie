@@ -322,7 +322,7 @@ int run_tests(u32 num, Test const* tests, int argc, char** argv)
     ExtraData::Add("testing:title", GetCurrentApp().application_name);
     ExtraData::Add("testing:bmark", cast_pod(time_accum));
     ExtraData::Add("testing:result", Strings::fmt("{0},{1}", suc, num));
-    ExtraData::Add("testing:mem", cast_pod(ProcessProperty::Mem(0)));
+    ExtraData::Add("testing:mem", cast_pod(0));
 
     for(auto i : Range<>(test_results.size()))
     {
@@ -348,7 +348,7 @@ int run_tests(u32 num, Test const* tests, int argc, char** argv)
         ExtraData::Add("testing:jsonresult", buf.GetString());
     }
 
-    cDebug("Memory consumption: {0} kB", ProcessProperty::Mem(0));
+    cDebug("Memory consumption: {0} kB", 0);
 
     /* For verbosity, we write it as this */
     return (fail) ? 1 : 0;

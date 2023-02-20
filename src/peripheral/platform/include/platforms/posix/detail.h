@@ -104,7 +104,7 @@ STATICINLINE constexpr libc_types::u32 permission_to_native(
            ((p & execute) ? 01 : 0);
     // clang-format on
 }
-FORCEDINLINE libc_types::u32 permissions_to_native(permissions_t const& perms)
+FORCEDINLINE int permissions_to_native(permissions_t const& perms)
 {
     using namespace permission_t;
     static_assert(
@@ -128,8 +128,7 @@ FORCEDINLINE void close_fd(int fd)
         return;
     if(close(fd) != 0)
     {
-        auto error = common::posix::get_error();
-        Throw(undefined_behavior("closed file with error"));
+        Throw(common::posix::posix_runtime_error(common::posix::get_error()));
     }
 }
 

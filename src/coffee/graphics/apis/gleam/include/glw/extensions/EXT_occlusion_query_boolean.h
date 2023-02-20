@@ -27,18 +27,16 @@ STATICINLINE void begin_query(group::query_target target, u32 id)
 }
 
 template<class span_const_u32>
-requires(
-    semantic::concepts::Span<span_const_u32> &&
-    std::is_same_v<
-        std::decay_t<typename span_const_u32::value_type>,
-        std::decay_t<u32>>)
-/*!
- * \brief Part of GL_EXT_occlusion_query_boolean
- * \param n GLsizei
- * \param ids const GLuint *
- * \return void
- */
-STATICINLINE void delete_queries(span_const_u32 const& ids)
+requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+         std::decay_t<typename span_const_u32::value_type>,
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_EXT_occlusion_query_boolean
+     * \param n GLsizei
+     * \param ids const GLuint *
+     * \return void
+     */
+    STATICINLINE void delete_queries(span_const_u32 const& ids)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -68,18 +66,16 @@ STATICINLINE void end_query(group::query_target target)
 }
 
 template<class span_u32>
-requires(
-    semantic::concepts::Span<span_u32> &&
-    std::is_same_v<
-        std::decay_t<typename span_u32::value_type>,
-        std::decay_t<u32>>)
-/*!
- * \brief Part of GL_EXT_occlusion_query_boolean
- * \param n GLsizei
- * \param ids GLuint *
- * \return void
- */
-STATICINLINE void gen_queries(span_u32 ids)
+requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+         std::decay_t<typename span_u32::value_type>,
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_EXT_occlusion_query_boolean
+     * \param n GLsizei
+     * \param ids GLuint *
+     * \return void
+     */
+    STATICINLINE void gen_queries(span_u32 ids)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -93,20 +89,18 @@ STATICINLINE void gen_queries(span_u32 ids)
 }
 
 template<class span_u32>
-requires(
-    semantic::concepts::Span<span_u32> &&
-    std::is_same_v<
-        std::decay_t<typename span_u32::value_type>,
-        std::decay_t<u32>>)
-/*!
- * \brief Part of GL_EXT_occlusion_query_boolean
- * \param id GLuint
- * \param pname GLenum
- * \param params GLuint *
- * \return void
- */
-STATICINLINE void get_query_objectuiv(
-    u32 id, group::query_object_parameter_name pname, span_u32 params)
+requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+         std::decay_t<typename span_u32::value_type>,
+         std::decay_t<u32>>)
+    /*!
+     * \brief Part of GL_EXT_occlusion_query_boolean
+     * \param id GLuint
+     * \param pname GLenum
+     * \param params GLuint *
+     * \return void
+     */
+    STATICINLINE void get_query_objectuiv(
+        u32 id, group::query_object_parameter_name pname, span_u32 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -121,22 +115,20 @@ STATICINLINE void get_query_objectuiv(
 }
 
 template<class span_i32>
-requires(
-    semantic::concepts::Span<span_i32> &&
-    std::is_same_v<
-        std::decay_t<typename span_i32::value_type>,
-        std::decay_t<i32>>)
-/*!
- * \brief Part of GL_EXT_occlusion_query_boolean
- * \param target GLenum
- * \param pname GLenum
- * \param params GLint *
- * \return void
- */
-STATICINLINE void get_queryiv(
-    group::query_target         target,
-    group::query_parameter_name pname,
-    span_i32                    params)
+requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+         std::decay_t<typename span_i32::value_type>,
+         std::decay_t<i32>>)
+    /*!
+     * \brief Part of GL_EXT_occlusion_query_boolean
+     * \param target GLenum
+     * \param pname GLenum
+     * \param params GLint *
+     * \return void
+     */
+    STATICINLINE void get_queryiv(
+        group::query_target         target,
+        group::query_parameter_name pname,
+        span_i32                    params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

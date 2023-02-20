@@ -1,8 +1,9 @@
 coffee_library (
     TARGET ComponentApp
     SOURCES
-    private/subsystems.cpp
     private/comp_app.cpp
+    private/fps_counter.cpp
+    private/subsystems.cpp
 
     LIBRARIES
     EntComp

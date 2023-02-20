@@ -12,6 +12,7 @@
 
 #if defined(COFFEE_UNIXPLAT)
 #include <signal.h>
+#include <sys/resource.h>
 #include <unistd.h>
 
 #if defined(COFFEE_ANDROID) || defined(COFFEE_LINUX)
@@ -29,7 +30,7 @@
 #include <emscripten.h>
 #endif
 
-namespace posix {
+namespace platform::common::posix {
 
 using posix_ec = platform::common::posix::posix_error_code;
 using fd_t     = int;
@@ -38,10 +39,11 @@ using platform::common::posix::collect_error;
 
 namespace fd {
 
-FORCEDINLINE void close(int fd, posix_ec& ec)
+[[nodiscard]] FORCEDINLINE std::optional<posix_error> close(int fd)
 {
-    ::close(fd);
-    collect_error(ec);
+    if(::close(fd) == -1)
+        return get_error();
+    return std::nullopt;
 }
 
 struct pipe_pair
@@ -50,15 +52,19 @@ struct pipe_pair
     fd_t write;
 };
 
-FORCEDINLINE void pipe(pipe_pair& pipe_fd, posix_ec& ec)
+[[nodiscard]] FORCEDINLINE std::optional<posix_error> pipe(pipe_pair& pipe_fd)
 {
-    ::pipe(reinterpret_cast<int*>(&pipe_fd));
-    collect_error(ec);
+    pipe_fd = { .read = -1, .write = -1 };
+    if(::pipe(reinterpret_cast<int*>(&pipe_fd)) == -1)
+        return get_error();
+    return std::nullopt;
 }
 
-FORCEDINLINE void replace_fd(fd_t target, fd_t source, posix_ec& ec)
+[[nodiscard]] FORCEDINLINE std::optional<posix_error> replace_fd(fd_t target, fd_t source)
 {
-    ::dup2(target, source);
+    if(::dup2(target, source) == -1)
+        return get_error();
+    return std::nullopt;
 }
 
 } // namespace fd
@@ -88,7 +94,7 @@ FORCEDINLINE pid_t wait_by_to_value(wait_by cond, pid_t target)
 
 #if !defined(COFFEE_NO_WAITPID)
 FORCEDINLINE pid_t
-             wait_for(wait_by flag, posix_ec& ec, pid_t target = 0, int* status = nullptr)
+wait_for(wait_by flag, posix_ec& ec, pid_t target = 0, int* status = nullptr)
 {
     pid_t out = ::waitpid(wait_by_to_value(flag, target), status, 0);
 
@@ -190,33 +196,34 @@ spawn_info spawn(exec_info<ArgType> const& exec)
     fd::pipe_pair in;
 
     /* Create redirection pipes */
-    fd::pipe(out, ec);
-    C_ERROR_CHECK(ec);
-    fd::pipe(err, ec);
-    C_ERROR_CHECK(ec);
-
+    if(auto e = fd::pipe(out))
+        Throw(posix_runtime_error(*e));
+    if(auto e = fd::pipe(err))
+        Throw(posix_runtime_error(*e));
+    if(auto e = fd::pipe(in))
+        Throw(posix_runtime_error(*e));
     if(fork(childPid, ec) == fork_process::child)
     {
         ec = 0;
 
-        auto                       working_dir = exec.working_dir;
+        auto working_dir = exec.working_dir;
         if(!working_dir.isLocal())
             working_dir = MkUrl(".");
         platform::path::change_dir(working_dir);
 
-        fd::close(STDOUT_FILENO, ec);
-        C_ERROR_CHECK(ec);
-        fd::close(STDERR_FILENO, ec);
-        C_ERROR_CHECK(ec);
-        fd::close(STDIN_FILENO, ec);
-        C_ERROR_CHECK(ec);
+        if(auto e = fd::close(STDOUT_FILENO))
+            Throw(posix_runtime_error(*e));
+        if(auto e = fd::close(STDERR_FILENO))
+            Throw(posix_runtime_error(*e));
+        if(auto e = fd::close(STDIN_FILENO))
+            Throw(posix_runtime_error(*e));
 
-        fd::replace_fd(out.write, STDOUT_FILENO, ec);
-        C_ERROR_CHECK(ec);
-        fd::replace_fd(err.write, STDERR_FILENO, ec);
-        C_ERROR_CHECK(ec);
-        fd::replace_fd(in.read, STDIN_FILENO, ec);
-        C_ERROR_CHECK(ec);
+        if(auto e = fd::replace_fd(out.write, STDOUT_FILENO))
+            Throw(posix_runtime_error(*e));
+        if(auto e = fd::replace_fd(err.write, STDERR_FILENO))
+            Throw(posix_runtime_error(*e));
+        if(auto e = fd::replace_fd(in.read, STDIN_FILENO))
+            Throw(posix_runtime_error(*e));
 
         proc::execv(exec.program, ec, exec.args);
         C_ERROR_CHECK(ec);
@@ -226,12 +233,10 @@ spawn_info spawn(exec_info<ArgType> const& exec)
     }
     C_ERROR_CHECK(ec);
 
-    fd::close(out.write, ec);
-    C_ERROR_CHECK(ec);
-    fd::close(err.write, ec);
-    C_ERROR_CHECK(ec);
-
-    C_ERROR_CHECK(ec);
+    if(auto e = fd::close(out.write))
+        Throw(posix_runtime_error(*e));
+    if(auto e = fd::close(err.write))
+        Throw(posix_runtime_error(*e));
 
     return {out.read, err.read, in.write, childPid};
 }
@@ -282,8 +287,8 @@ inline const char* code_to_string(int exit_code)
 inline void breakpoint()
 {
 #if defined(COFFEE_LINUX) || defined(COFFEE_APPLE)
-//    if(getenv("DEBUG_BREAK"))
-        std::raise(SIGINT);
+    //    if(getenv("DEBUG_BREAK"))
+    std::raise(SIGINT);
 #elif defined(COFFEE_EMSCRIPTEN)
     emscripten_debugger();
 #endif
@@ -291,6 +296,13 @@ inline void breakpoint()
     /* TODO: Reimplement Windows breakpoints */
 }
 
+inline void core_dump_enable()
+{
+    struct rlimit lim;
+    lim.rlim_cur = lim.rlim_max = RLIM_INFINITY;
+    setrlimit(RLIMIT_CORE, &lim);
+}
+
 } // namespace proc
-} // namespace posix
+} // namespace platform::common::posix
 #endif

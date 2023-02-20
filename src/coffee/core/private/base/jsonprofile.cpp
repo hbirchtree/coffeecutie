@@ -60,7 +60,7 @@ struct ProfileWriter : GlobalState
 
         if(auto error = platform::file::write(
                logfile,
-               BytesConst::ofString(
+               mem_chunk<const char>::ofString(
                    R"({"displayTimeUnit": "ms","traceEvents":[)"));
            error.has_value())
             return;
@@ -70,7 +70,7 @@ struct ProfileWriter : GlobalState
     ShPtr<GlobalState>             threadState;
     ShPtr<platform::info::AppData> appData;
     AtomicUInt64                   event_count;
-    bool                           block_writes;
+    bool                           block_writes{false};
 
     virtual ~ProfileWriter();
 
@@ -78,7 +78,8 @@ struct ProfileWriter : GlobalState
     {
         if(block_writes && blockable_write)
             return;
-        if(auto error = platform::file::write(logfile, data); error.has_value())
+        if(auto error = platform::file::write(logfile, data.as<const char>());
+           error.has_value())
             return;
     }
 };
@@ -194,8 +195,8 @@ void Push(profiling::ThreadState& tdata, profiling::DataPoint const& point)
         break;
     }
 
-    auto thread_name =
-        is_explicit_thread ? ThreadGetName(point.tid) : point.thread_name;
+    auto thread_name
+        = is_explicit_thread ? ThreadGetName(point.tid) : point.thread_name;
 
     if(thread_name.empty())
         thread_name = str::print::pointerify(point.tid);
@@ -210,7 +211,7 @@ void Push(profiling::ThreadState& tdata, profiling::DataPoint const& point)
 
     event = str::transform::printclean(event);
 
-    profileData->write(Bytes::ofContainer(event), true);
+    profileData->write(BytesConst::ofContainer(event), true);
     profileData->event_count++;
 }
 
@@ -244,10 +245,10 @@ extern void CaptureMetrics(
 
     using namespace Chrono;
 
-    auto out =
-        Coffee::Strings::fmt(metric_format, data.id, value, ts.count(), index);
+    auto out = Coffee::Strings::fmt(
+        metric_format, data.id, value, ts.count(), index);
 
-    profiler.write(Bytes::ofContainer(out));
+    profiler.write(BytesConst::ofContainer(out));
 }
 
 void CaptureMetrics(

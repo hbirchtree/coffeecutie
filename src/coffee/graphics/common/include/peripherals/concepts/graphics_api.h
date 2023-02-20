@@ -271,9 +271,7 @@ concept Texture = requires(T v)
 
     {v.view(
         textures::d2,
-        std::declval<textures::view_params>(),
-        std::declval<typing::vector_types::Vecui2>(),
-        std::declval<typing::geometry::size_2d<u32>>())};
+        std::declval<textures::view_params>())};
 }
 &&
     //    (Size2D<stl_types::mem_function_traits(&T::size)::result_type, u32>/*

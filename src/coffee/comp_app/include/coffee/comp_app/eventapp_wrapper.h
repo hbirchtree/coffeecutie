@@ -1,6 +1,5 @@
 #pragma once
 
-#include <coffee/core/types/display/properties.h>
 #include <platforms/pimpl_state.h>
 
 #include "app_main.h"
@@ -27,8 +26,8 @@ struct EventapplicationWrapper : AppService<EventapplicationWrapper<R, D>>,
         {
         }
         EventConfig(
-            stl_types::ShPtr<R>& r,
-            stl_types::ShPtr<D>& d,
+            std::shared_ptr<R>& r,
+            std::shared_ptr<D>& d,
             loop_fun&&           s,
             loop_fun&&           l,
             loop_fun&&           c) :
@@ -38,8 +37,8 @@ struct EventapplicationWrapper : AppService<EventapplicationWrapper<R, D>>,
         {
         }
 
-        stl_types::ShPtr<R> m_renderer;
-        stl_types::ShPtr<D> m_data;
+        std::shared_ptr<R> m_renderer;
+        std::shared_ptr<D> m_data;
         loop_fun            m_setup, m_loop, m_cleanup;
     };
 
@@ -47,7 +46,7 @@ struct EventapplicationWrapper : AppService<EventapplicationWrapper<R, D>>,
     {
     }
 
-    virtual void load(entity_container& e, app_error& ec) final
+    virtual void load(entity_container& e, app_error& /*ec*/) final
     {
         auto& config = AppLoader::config<EventConfig>(e);
 
@@ -60,7 +59,7 @@ struct EventapplicationWrapper : AppService<EventapplicationWrapper<R, D>>,
         m_config.m_setup(*m_config.m_renderer, m_config.m_data.get());
         m_loaded = true;
     }
-    virtual void unload(entity_container& e, app_error& ec) final
+    virtual void unload(entity_container& /*e*/, app_error& /*ec*/) final
     {
         m_config.m_cleanup(*m_config.m_renderer, m_config.m_data.get());
         m_loaded = false;
@@ -104,80 +103,4 @@ static void addContainer(stl_types::ShPtr<R>&, detail::EntityContainer&)
 }
 
 } // namespace detail
-
-template<typename D = int, typename R = int>
-struct AutoExecEx
-{
-    using presetup_fun = stl_types::Function<void(
-        stl_types::ShPtr<R>,
-        stl_types::ShPtr<D>,
-        Coffee::Display::Properties&)>;
-    using loop_fun     = stl_types::Function<void(R&, D*)>;
-
-    static void addTo(
-        detail::EntityContainer& container,
-        presetup_fun&&           presetup,
-        loop_fun&&               setup,
-        loop_fun&&               loop,
-        loop_fun&&               cleanup)
-    {
-        using EventAppType = EventapplicationWrapper<R, D>;
-
-        auto app      = container.service<AppLoader>();
-        auto renderer = stl_types::MkShared<R>();
-        auto data     = stl_types::MkShared<D>();
-
-        auto& config =
-            app->addConfig(stl_types::MkUq<typename EventAppType::EventConfig>(
-                std::ref(renderer),
-                std::ref(data),
-                std::move(setup),
-                std::move(loop),
-                std::move(cleanup)));
-
-        EventAppType::template register_service<EventAppType>(container);
-
-        auto& windowConfig = app->config<WindowConfig>();
-        auto& glConfig     = app->config<GLConfig>();
-
-        Coffee::Display::Properties props;
-
-        props.title            = windowConfig.title.c_str();
-        props.size             = windowConfig.size.convert<libc_types::u32>();
-        props.gl.version.major = glConfig.version.major;
-        props.gl.version.minor = glConfig.version.minor;
-
-        detail::addContainer<R>(renderer, container);
-        presetup(config.m_renderer, config.m_data, props);
-
-        windowConfig.title     = props.title;
-        windowConfig.size      = props.size.convert<libc_types::i32>();
-        glConfig.version.major = props.gl.version.major;
-        glConfig.version.minor = props.gl.version.minor;
-
-        auto service = container.service<EventAppType>();
-        container.register_subsystem_services<AppServiceTraits<AppMain>>(
-            service);
-    }
-
-    static void addTo(
-        detail::EntityContainer& container,
-        loop_fun&&               setup,
-        loop_fun&&               loop,
-        loop_fun&&               cleanup)
-    {
-        addTo(
-            std::ref(container),
-            [](stl_types::ShPtr<R>,
-               stl_types::ShPtr<D>,
-               Coffee::Display::Properties&) {},
-            std::move(setup),
-            std::move(loop),
-            std::move(cleanup));
-    }
-};
-
-template<typename R, typename D>
-using AutoExec = AutoExecEx<D, R>;
-
 } // namespace comp_app

@@ -10,8 +10,9 @@
 #include <coffee/interfaces/byte_provider.h>
 #include <peripherals/semantic/enum/http_access.h>
 
-namespace Coffee {
-namespace Net {
+namespace net {
+
+using platform::url::Url;
 
 struct net_error : resource_error
 {
@@ -29,17 +30,20 @@ FORCEDINLINE bool Supported()
 
 #if defined(FEATURE_ENABLE_ASIO)
 
-struct Resource : semantic::ByteProvider
+using chunk_u8       = semantic::mem_chunk<libc_types::u8>;
+using const_chunk_u8 = semantic::mem_chunk<const libc_types::u8>;
+
+struct Resource
 {
-    using net_buffer = Vector<u8>;
+    using net_buffer = std::vector<libc_types::u8>;
 
   private:
-    Url                  m_resource;
-    ShPtr<ASIO::Service> m_ctxt;
+    Url                                    m_resource;
+    std::shared_ptr<Coffee::ASIO::Service> m_ctxt;
 #if defined(ASIO_USE_SSL)
-    UqPtr<net::tcp::ssl_socket> ssl;
+    std::unique_ptr<net::tcp::ssl_socket> ssl;
 #endif
-    UqPtr<net::tcp::raw_socket> normal;
+    std::unique_ptr<net::tcp::raw_socket> normal;
 
     http::request_t  m_request;
     http::response_t m_response;
@@ -48,22 +52,22 @@ struct Resource : semantic::ByteProvider
 
     asio::error_code m_error;
 
-    void initRsc(Url const& url);
-    void close();
+    void                            initRsc(Url const& url);
+    std::optional<asio::error_code> close();
 
-    void readResponseHeader(net_buffer& buffer, szptr& consumed);
-    void readResponsePayload(net_buffer& buffer);
+    std::optional<asio::error_code> readResponseHeader(
+        net_buffer& buffer, libc_types::szptr& consumed);
+    std::optional<asio::error_code> readResponsePayload(net_buffer& buffer);
 
   public:
-    Resource(ShPtr<ASIO::Service> ctxt, Url const& url);
+    Resource(std::shared_ptr<Coffee::ASIO::Service> ctxt, Url const& url);
     ~Resource();
 
     C_MOVE_CONSTRUCTOR(Resource);
 
-    bool secure() const;
-    bool connected() const;
-
-    ErrCode errorCode() const;
+    bool             secure() const;
+    bool             connected() const;
+    asio::error_code connectError() const;
 
     Url resource() const;
 
@@ -77,66 +81,52 @@ struct Resource : semantic::ByteProvider
     void setHeaderField(http::header_field field, std::string const& value);
     void setHeaderField(std::string const& field, std::string const& value);
 
-    http::request_t&        request();
-    http::response_t const& response() const;
+    http::request_t&                request();
+    std::optional<http::response_t> response() const;
 
-    bool fetch();
-    bool push(BytesConst const& data);
-    bool push(http::method_t method, BytesConst const& data);
+    std::optional<asio::error_code> fetch();
+    std::optional<asio::error_code> push(const_chunk_u8 const& data);
+    std::optional<asio::error_code> push(
+        http::method_t method, const_chunk_u8 const& data);
 
-    std::string mimeType() const;
-    u32     responseCode() const;
-    BytesConst   data() const;
+    std::optional<std::string>    mimeType() const;
+    libc_types::u32               responseCode() const;
+    std::optional<const_chunk_u8> data() const;
 
-    Bytes move();
+    std::optional<chunk_u8>       move();
+    std::optional<const_chunk_u8> move_const() const;
 
-    operator BytesConst()
+    operator platform::url::Path() const
     {
-        if(!isResponseReady() && !fetch())
-            return Bytes();
-
-        return data();
-    }
-
-    operator BytesConst() const
-    {
-        if(!isResponseReady())
-            return BytesConst();
-
-        return data();
-    }
-
-    operator Path() const
-    {
-        return Path(m_request.header.resource);
+        return platform::url::Path(m_request.header.resource);
     }
 };
 
 FORCEDINLINE Url MkUrl(
-    std::string const&       url,
+    std::string const&   url,
     semantic::HTTPAccess access = semantic::HTTPAccess::DefaultAccess)
 {
     return {url, Url::Networked, semantic::RSCA::None, access};
 }
 
-} // namespace Net
-
 #endif
 
+namespace url_literals {
 FORCEDINLINE platform::url::Url operator"" _http(const char* url, size_t)
 {
-    return Net::MkUrl(url, semantic::HTTPAccess::GET);
+    return net::MkUrl(url, semantic::HTTPAccess::GET);
 }
 
 FORCEDINLINE platform::url::Url operator"" _https(const char* url, size_t)
 {
-    return Net::MkUrl(
+    return net::MkUrl(
         url, semantic::HTTPAccess::GET | semantic::HTTPAccess::Secure);
 }
 
 FORCEDINLINE platform::url::Url operator"" _web(const char* url, size_t)
 {
-    return Net::MkUrl(url, semantic::HTTPAccess::DefaultAccess);
+    return net::MkUrl(url, semantic::HTTPAccess::DefaultAccess);
 }
 
-} // namespace Coffee
+} // namespace url_literals
+} // namespace net

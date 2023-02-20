@@ -68,8 +68,8 @@ struct program_t
     using stage_map_t = stl_types::Map<stage_t, stl_types::ShPtr<shader_t>>;
 
     using compile_error_t = std::tuple<stl_types::String>;
-    using compile_log_t =
-        std::tuple<stl_types::String /* log text*/, int /* ??? */>;
+    using compile_log_t
+        = std::tuple<stl_types::String /* log text*/, int /* ??? */>;
 
     program_t(features::programs features, debug::api& debug) :
         m_features(features), m_debug(debug)
@@ -107,7 +107,7 @@ struct program_t
 
     NO_DISCARD semantic::result<compile_log_t, compile_error_t> compile()
     {
-        auto _ = m_debug.scope(__PRETTY_FUNCTION__);
+        [[maybe_unused]] auto _ = m_debug.scope(__PRETTY_FUNCTION__);
 #if GLEAM_MAX_VERSION >= 0x430 || GLEAM_MAX_VERSION_ES >= 0x310
         if(m_features.separable_programs)
         {
@@ -211,6 +211,8 @@ struct program_t
     debug::api         m_debug;
     stage_map_t        m_stages;
     hnd                m_handle;
+
+    std::vector<std::pair<std::string_view, u32>> m_attribute_names;
 };
 
 } // namespace gleam

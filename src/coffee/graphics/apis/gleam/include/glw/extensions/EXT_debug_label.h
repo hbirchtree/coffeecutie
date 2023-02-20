@@ -16,22 +16,20 @@ constexpr libc_types::u32 query_object            = 0x9153;
 constexpr libc_types::u32 vertex_array_object     = 0x9154;
 } // namespace values
 template<class span_GLchar>
-requires(
-    semantic::concepts::Span<span_GLchar> &&
-    std::is_same_v<
-        std::decay_t<typename span_GLchar::value_type>,
-        std::decay_t<GLchar>>)
-/*!
- * \brief Part of GL_EXT_debug_label
- * \param type GLenum
- * \param object GLuint
- * \param bufSize GLsizei
- * \param length GLsizei *
- * \param label GLchar *
- * \return void
- */
-STATICINLINE void get_object_label(
-    GLenum type, u32 object, i32& length, span_GLchar label)
+requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
+         std::decay_t<typename span_GLchar::value_type>,
+         std::decay_t<GLchar>>)
+    /*!
+     * \brief Part of GL_EXT_debug_label
+     * \param type GLenum
+     * \param object GLuint
+     * \param bufSize GLsizei
+     * \param length GLsizei *
+     * \param label GLchar *
+     * \return void
+     */
+    STATICINLINE void get_object_label(
+        GLenum type, u32 object, i32& length, span_GLchar label)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
