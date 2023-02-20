@@ -26,9 +26,10 @@ case $1 in
     ${0} $(echo $2 | cut -d: -f 1)-build ${@:2}
 ;;
 "desktop-build")
-    if [ -z "$2" ]; then
+    if [ -z "$2" ] || [ "$2" = "list" ] || [ "$2" = "help" ]; then
         echo "No target specified, example targets:
-  beaglebone:arm-buildroot-linux-gnueabihf:null
+  beaglebone:arm-buildroot-linux-gnueabihf:nullws
+  generic:arm-buildroot-linux-gnueabihf:wayland
   desktop:x86_64-buildroot-linux-gnu:multi
   raspberry:arm-buildroot-linux-gnueabihf:vc
 "
@@ -36,7 +37,7 @@ case $1 in
     native_build ${@:2}
 ;;
 "web-build")
-    if [ -z "$2" ]; then
+    if [ -z "$2" ] || [ "$2" = "list" ] || [ "$2" = "help" ]; then
         echo "No target specified, example targets:
   web:wasm32-emscripten:webgl2
   web:wasm32-emscripten:webgl1
@@ -49,10 +50,11 @@ case $1 in
     xcode_build ${@:2}
 ;;
 "android-build")
-    if [ -z "$2" ]; then
+    if [ -z "$2" ] || [ "$2" = "list" ] || [ "$2" = "help" ]; then
         echo "No target specified, example targets:
   android:arm64:32 (Targeting Android 13)
   android:arm64:29 (Targeting Android 10)
+  android:arm-neon:19 (Targeting Android 4.4)
 "
     fi
     android_build ${@:2}
