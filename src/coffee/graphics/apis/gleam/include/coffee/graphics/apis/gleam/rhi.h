@@ -28,9 +28,9 @@
 #include <glw/extensions/KHR_debug.h>
 
 namespace gleam {
-using stl_types::Optional;
-using stl_types::String;
-using stl_types::Tup;
+using std::optional;
+using std::string;
+using std::tuple;
 
 struct api
 {
@@ -54,7 +54,8 @@ struct api
     requires Buffer<buffer_t, buffer_slice_t>
     inline auto alloc_buffer(T, semantic::RSCA access)
     {
-        return MkShared<buffer_t>(m_features.buffer, m_workarounds, T::value, access);
+        return MkShared<buffer_t>(
+            m_features.buffer, m_workarounds, T::value, access);
     }
 
     inline auto alloc_program()
@@ -79,6 +80,15 @@ struct api
         T&& data, shader_t::constants_t const& constants = {})
     {
         return MkShared<shader_t>(std::move(data), constants);
+    }
+    template<typename T>
+    inline auto alloc_shader(
+        programs::shader_format_t    fmt,
+        T&&                          data,
+        shader_t::constants_t const& constants  = {},
+        std::string_view             entrypoint = detail::default_entrypoint)
+    {
+        return MkShared<shader_t>(std::move(data), fmt, constants, entrypoint);
     }
 
     template<class T>
@@ -199,7 +209,7 @@ struct api
     {
         if(!m_framebuffer)
         {
-            m_framebuffer = stl_types::MkShared<rendertarget_type>(
+            m_framebuffer = std::make_shared<rendertarget_type>(
                 m_features.rendertarget, std::ref(m_rendertargetCurrency));
 
             if constexpr(compile_info::debug_mode)
@@ -246,7 +256,8 @@ struct api
 
     inline auto& debug()
     {
-#if GLEAM_MAX_VERSION >= 0x430 || GLEAM_MAX_VERSION_ES >= 0x320
+#if GLEAM_MAX_VERSION >= 0x430 || GLEAM_MAX_VERSION_ES >= 0x320 \
+    || defined(GL_KHR_debug)
         if(!m_debug)
             m_debug = std::make_unique<debug::api>(std::ref(m_features.debug));
         return *m_debug;
@@ -267,46 +278,47 @@ struct api
     }
 
     template<typename... UList>
-    Optional<Tup<error, std::string_view>> submit(
+    optional<tuple<error, std::string_view>> submit(
         draw_command const& command, UList&&... uniforms);
 
-    using extensions_set = stl_types::Set<String>;
+    using extensions_set = std::set<string>;
     struct load_options_t
     {
-        Optional<u32>            api_version;
-        Optional<api_type_t>     api_type;
-        Optional<extensions_set> api_extensions{};
-        Optional<features>       api_features{};
-        Optional<workarounds>    api_workarounds{};
+        optional<u32>            api_version;
+        optional<api_type_t>     api_type;
+        optional<extensions_set> api_extensions{};
+        optional<features>       api_features{};
+        optional<workarounds>    api_workarounds{};
     };
 
     static const load_options_t default_options;
 
-    static Tup<features, api_type_t, u32> query_native_api_features(
-        extensions_set const& extensions, load_options_t options = default_options);
-    static api_type_t     query_native_api();
-    static Tup<u32, u32>  query_native_version();
-    static Tup<u32, u32>  query_compiled_version();
-    static extensions_set query_native_extensions();
+    static tuple<features, api_type_t, u32> query_native_api_features(
+        extensions_set const& extensions,
+        load_options_t        options = default_options);
+    static api_type_t      query_native_api();
+    static tuple<u32, u32> query_native_version();
+    static tuple<u32, u32> query_compiled_version();
+    static extensions_set  query_native_extensions();
 
-    STATICINLINE u32 version_tuple_to_u32(Tup<u32, u32> const& ver)
+    STATICINLINE u32 version_tuple_to_u32(tuple<u32, u32> const& ver)
     {
         auto [major, minor] = ver;
         return ((major << 8) & 0xF00) | ((minor << 4) & 0x0F0);
     }
 
-    std::string_view    api_name();
-    api_type_t          api_type();
-    Tup<u32, u32>       api_version();
-    String              shaderlang_name();
-    api_type_t          shaderlang_type();
-    Tup<u32, u32>       shaderlang_version();
-    Tup<String, String> device();
-    Optional<String>    device_driver();
+    std::string_view      api_name();
+    api_type_t            api_type();
+    tuple<u32, u32>       api_version();
+    string                shaderlang_name();
+    api_type_t            shaderlang_type();
+    tuple<u32, u32>       shaderlang_version();
+    tuple<string, string> device();
+    optional<string>      device_driver();
 
     void collect_info(comp_app::interfaces::AppInfo& appInfo);
 
-    Optional<error> load(load_options_t options = default_options);
+    optional<error> load(load_options_t options = default_options);
     void            unload();
 
     enum class queues
@@ -323,17 +335,17 @@ struct api
             return m_main_queue;
     }
 
+    using debug_api
+        = std::conditional_t<debug::api_available, debug::api, debug::null_api>;
+
   private:
     static bool supports_extension(
-        stl_types::Set<String> const& extensions, String const& ext);
-    bool supports_extension(String const& ext);
+        std::set<string> const& extensions, string const& ext);
+    bool supports_extension(string const& ext);
 
-    stl_types::ShPtr<rendertarget_type> m_framebuffer;
-    stl_types::UqPtr<
-        std::conditional<debug::api_available, debug::api, debug::null_api>::
-            type>
-                 m_debug;
-    context::api m_context_state;
+    std::shared_ptr<rendertarget_type> m_framebuffer;
+    std::unique_ptr<debug_api>       m_debug;
+    context::api                       m_context_state;
 
     rendertarget_currency m_rendertargetCurrency;
     features              m_features;
@@ -367,7 +379,7 @@ inline void test_buffer()
 
 inline void test_query()
 {
-    api  ap;
+    api                   ap;
     [[maybe_unused]] auto a = ap.alloc_query(queries::time);
 }
 

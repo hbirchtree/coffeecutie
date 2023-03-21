@@ -409,7 +409,7 @@ i32 CoffeeMain(MainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
     {
         Profiler::PopContext();
 
-        cBasicPrint(
+        cDebug(
             "Execution time: {0}",
             Chrono::duration_cast<Chrono::seconds_double>(
                 Chrono::high_resolution_clock::now() - start_time)

@@ -80,35 +80,46 @@ struct api_limits
             .element_index        = get_limit(prop::max_element_index),
             .element_vertex_count = get_limit(prop::max_elements_vertices),
 
-            .instance_count = std::numeric_limits<i32>::max(),
+            .instance_count  = std::numeric_limits<i32>::max(),
             .instance_offset = std::numeric_limits<i32>::max(),
         };
-        buffers = {
-            .ssbo_size = std::numeric_limits<i32>::max(),
-            .ubo_size = get_limit(prop::max_uniform_block_size),
-
-            .ssbo_vertex = get_limit(prop::max_vertex_shader_storage_blocks),
-            .ssbo_fragment = get_limit(prop::max_fragment_shader_storage_blocks),
-            .ssbo_compute = get_limit(prop::max_compute_shader_storage_blocks),
-
-            .ubo_vertex = get_limit(prop::max_vertex_uniform_blocks),
-            .ubo_fragment = get_limit(prop::max_fragment_uniform_blocks),
-            .ubo_compute = get_limit(prop::max_compute_uniform_blocks),
-        };
+        buffers = {};
+        if(m_features.buffer.ubo)
+        {
+            buffers = {
+                .ubo_size     = get_limit(prop::max_uniform_block_size),
+                .ubo_vertex   = get_limit(prop::max_vertex_uniform_blocks),
+                .ubo_fragment = get_limit(prop::max_fragment_uniform_blocks),
+            };
+        }
+        if(m_features.buffer.ssbo)
+        {
+            buffers.ssbo_size = std::numeric_limits<i32>::max();
+            buffers.ssbo_vertex
+                = get_limit(prop::max_vertex_shader_storage_blocks);
+            buffers.ssbo_fragment
+                = get_limit(prop::max_fragment_shader_storage_blocks);
+        }
+        if(m_features.program.compute)
+        {
+            buffers.ssbo_compute
+                = get_limit(prop::max_compute_shader_storage_blocks);
+            buffers.ubo_compute = get_limit(prop::max_compute_uniform_blocks);
+        }
     }
 
     struct
     {
-        u32 ssbo_size;
-        u32 ubo_size;
+        u32 ssbo_size{0};
+        u32 ubo_size{0};
 
-        u32 ssbo_vertex;
-        u32 ssbo_fragment;
-        u32 ssbo_compute;
+        u32 ssbo_vertex{0};
+        u32 ssbo_fragment{0};
+        u32 ssbo_compute{0};
 
-        u32 ubo_vertex;
-        u32 ubo_fragment;
-        u32 ubo_compute;
+        u32 ubo_vertex{0};
+        u32 ubo_fragment{0};
+        u32 ubo_compute{0};
     } buffers;
     struct
     {
@@ -122,7 +133,7 @@ struct api_limits
     struct
     {
         u32 d2_size;
-        u32 d3_size;
+        u32 d3_size{0};
         u32 cube_size;
     } textures;
 

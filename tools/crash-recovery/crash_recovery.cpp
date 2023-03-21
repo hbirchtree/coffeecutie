@@ -30,8 +30,9 @@
 #endif
 
 using namespace ::Coffee;
+using namespace libc_types::size_literals;
 
-CString read_output(posix::fd_t stream)
+CString read_output(platform::common::posix::fd_t stream)
 {
     size_t numBytes = 0;
     ioctl(stream, FIONREAD, &numBytes);
@@ -48,7 +49,7 @@ i32 crash_main(i32, cstring_w*)
     using platform::url::Url;
     using platform::url::constructors::MkUrl;
     using namespace libc;
-    using namespace posix;
+    using namespace platform::common::posix;
     using namespace platform;
 
     CString stdoutBuf;
@@ -70,7 +71,7 @@ i32 crash_main(i32, cstring_w*)
         return -1;
     }
 
-    Vector<CString> apitrace_args;
+    std::vector<CString> apitrace_args;
 
     posix_ec ec;
     Url      workingDir;
@@ -90,28 +91,27 @@ i32 crash_main(i32, cstring_w*)
 
 #if defined(COFFEE_APPLE)
     if(!workingDir.isLocal())
-        workingDir =
-            platform::file::DirFun::Dirname(
-                *platform::file::DirFun::Dirname(args.at(0), fec), fec) +
-            platform::url::Path("Resources");
+        workingDir = platform::file::DirFun::Dirname(
+                         *platform::file::DirFun::Dirname(args.at(0), fec), fec)
+                     + platform::url::Path("Resources");
 #endif
 
     cDebug("Spawning child");
-    auto spawnInfo = posix::proc::spawn<char*>({args.at(0), args, workingDir});
+    auto spawnInfo = proc::spawn<char*>({args.at(0), args, workingDir});
 
-    posix::fd::close(STDIN_FILENO, ec);
-    C_ERROR_CHECK(ec)
-    posix::fd::replace_fd(spawnInfo.in, STDIN_FILENO, ec);
-    C_ERROR_CHECK(ec)
+    if(auto e = fd::close(STDIN_FILENO))
+        Throw(posix_runtime_error(*e));
+    if(auto e = fd::replace_fd(spawnInfo.in, STDIN_FILENO))
+        Throw(posix_runtime_error(*e));
 
-    Vector<pollfd> handles(2);
+    std::vector<pollfd> handles(2);
 
     handles.push_back({spawnInfo.out, POLL_IN, 0});
     handles.push_back({spawnInfo.err, POLL_IN, 0});
 
     int exitCode = -1;
 
-    while(!posix::proc::is_exited(spawnInfo.child, &exitCode))
+    while(!proc::is_exited(spawnInfo.child, &exitCode))
     {
         int ret = poll(handles.data(), handles.size(), 500);
 
@@ -150,11 +150,11 @@ i32 crash_main(i32, cstring_w*)
     cDebug("Waiting...");
     if(exitCode == -1)
     {
-        posix::proc::wait_for(posix::proc::wait_by::any, ec, 0, &exitCode);
+        proc::wait_for(proc::wait_by::any, ec, 0, &exitCode);
         C_ERROR_CHECK(ec);
     }
 
-    cDebug("Child exited with: {0}", posix::proc::code_to_string(exitCode));
+    cDebug("Child exited with: {0}", proc::code_to_string(exitCode));
 
     if(exitCode == 0)
         return 0;
@@ -176,17 +176,15 @@ i32 crash_main(i32, cstring_w*)
         {
             auto appName = stdoutBuf.substr(0, appNameIdx);
 
-            profileLocation = MkUrl(
-                Path("..") / appName / "profile.json",
-                semantic::RSCA::TempFile);
-            machineProfileLocation = MkUrl(
-                Path("..") / appName /
-                    (platform::path::base(MkUrl(args.at(0))).value().internUrl +
-                     "-chrome.json"),
-                semantic::RSCA::TempFile);
-            stacktraceLocation = MkUrl(
-                Path("..") / appName / "stacktrace.json",
-                semantic::RSCA::TempFile);
+            profileLocation
+                = (Path("..") / appName / "profile.json").url(RSCA::TempFile);
+            machineProfileLocation
+                = (Path("..") / appName
+                   / (platform::path::base(MkUrl(args.at(0))).value().internUrl
+                      + "-chrome.json"))
+                      .url(RSCA::TempFile);
+            stacktraceLocation = (Path("..") / appName / "stacktrace.json")
+                                     .url(RSCA::TempFile);
         }
     }
 
@@ -197,7 +195,7 @@ i32 crash_main(i32, cstring_w*)
 
         multipart.add(
             "profile",
-            C_OCAST<Bytes>(profileResource),
+            C_OCAST<BytesConst>(profileResource),
             {{"Content-Type", "text/plain"}});
     }
 
@@ -208,7 +206,7 @@ i32 crash_main(i32, cstring_w*)
 
         multipart.add(
             "machineProfile",
-            C_OCAST<Bytes>(machineProfile),
+            C_OCAST<BytesConst>(machineProfile),
             {{"Content-Type", "text/plain"}});
     }
 
@@ -219,7 +217,7 @@ i32 crash_main(i32, cstring_w*)
 
         multipart.add(
             "stacktrace",
-            C_OCAST<Bytes>(stacktrace),
+            C_OCAST<BytesConst>(stacktrace),
             {{"Content-Type", "text/plain"}});
     }
 
@@ -246,29 +244,30 @@ i32 crash_main(i32, cstring_w*)
 
     auto worker = ASIO::GenWorker();
 
-    Net::Resource crashPush(
-        worker->context, Net::MkUrl(platform::env::var("CRASH_API").value()));
+    net::Resource crashPush(
+        worker->context, net::MkUrl(platform::env::var("CRASH_API").value()));
 
     crashPush.setHeaderField(
         http::header_field::content_type, multipart.content_type());
 
     crashPush.setHeaderField(
         "X-Coffee-Signature",
-        "sha1=" + hex::encode(net::hmac::digest(
-                      semantic::Span(multipart.m_data),
-                      platform::env::var("COFFEE_HMAC_KEY").value_or("0000"))));
+        "sha1="
+            + hex::encode(net::hmac::digest(
+                semantic::Span<char>(multipart.m_data),
+                platform::env::var("COFFEE_HMAC_KEY").value_or("0000"))));
 
-    if(!crashPush.push(http::method_t::post, multipart))
+    if(auto error = crashPush.push(http::method_t::post, multipart))
     {
-        auto responseData = crashPush.data();
+        auto responseData = crashPush.data().value();
         cWarning("Failed to push crash report: {0}", crashPush.responseCode());
         cWarning("{0}", CString(responseData.begin(), responseData.end()));
-    } else
+    } else if(auto response = crashPush.response().value(); response.code)
     {
-        auto responseData = crashPush.data();
+        auto responseData = crashPush.data().value();
         cDebug("{0}", CString(responseData.begin(), responseData.end()));
 
-        auto const& headers = crashPush.response().header.standard_fields;
+        auto const& headers = response.header.standard_fields;
 
         if(auto loc = headers.find(http::header_field::location);
            loc != headers.end())

@@ -256,6 +256,16 @@ C_FLAGS(primitive, u32);
 
 } // namespace drawing
 
+namespace programs {
+
+enum class shader_format_t
+{
+    source,
+    spv,
+};
+
+}
+
 template<class T>
 concept Texture = requires(T v)
 {

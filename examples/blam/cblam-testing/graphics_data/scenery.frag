@@ -1,12 +1,6 @@
-#version 320 es
+#version 460 core
 
-#extension GL_EXT_shader_io_blocks : enable
-
-precision highp float;
-precision highp int;
-precision highp sampler2DArray;
-
-in FragData {
+layout(location = 0) in FragData {
     vec2 tex;
     flat int instanceId;
 } frag;
@@ -27,11 +21,11 @@ layout(binding = 1, std140) buffer MaterialProperties
     Material instance[];
 } mats;
 
-uniform sampler2DArray bc1_tex;
-uniform sampler2DArray bc3_tex;
-uniform sampler2DArray bc5_tex;
+layout(location = 10) uniform sampler2DArray bc1_tex;
+layout(location = 11) uniform sampler2DArray bc3_tex;
+layout(location = 12) uniform sampler2DArray bc5_tex;
 
-out vec4 out_color;
+layout(location = 0) out vec4 out_color;
 
 void main()
 {

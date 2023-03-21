@@ -67,8 +67,7 @@ stl_types::result<std::vector<libc_types::byte_t>, error> generate(
 
     /* Insert header, calculate file segment offset */
     {
-        auto src
-            = mem_chunk<const u8>::ofBytes(VFSMagic_Encoded, sizeof(u32) * 2);
+        auto src = mem_chunk<const u8>::ofBytes(VFSMagic_Encoded, 2);
         auto dst = mem_chunk<u8>::ofBytes(base_fs.vfs_header, MagicLength);
         std::copy(src.begin(), src.end(), dst.begin());
     }
@@ -126,8 +125,7 @@ stl_types::result<std::vector<libc_types::byte_t>, error> generate(
                     Zlib::compress(in_data, out_data);
                     break;
                 }
-                case compression::codec::zstd:
-                {
+                case compression::codec::zstd: {
                     ZStd::compress(in_data, out_data);
                     break;
                 }
@@ -337,7 +335,7 @@ stl_types::result<std::vector<libc_types::byte_t>, error> generate(
 }
 
 stl_types::result<directory_data_t::result_t, error> fs_t::SearchFile(
-    fs_t const*                             vfs,
+    fs_t const*                           vfs,
     std::string_view                      name,
     search_strategy                       strat,
     directory_data_t::cached_index const* filter)
@@ -365,7 +363,8 @@ stl_types::result<mem_chunk<const u8>, error> fs_t::GetData(
             return {};
 #else
             DProfContext _(VIRTFS_API "Decompressing file");
-            auto writable = data.as<char>();
+            mem_chunk<char> writable;
+            writable.resize(file->rsize);
 
             switch(file->codec)
             {
@@ -378,8 +377,7 @@ stl_types::result<mem_chunk<const u8>, error> fs_t::GetData(
                 Zlib::decompress(srcData, writable);
                 break;
             }
-            case compression::codec::zstd:
-            {
+            case compression::codec::zstd: {
                 ZStd::decompress(srcData, writable);
                 break;
             }
@@ -387,6 +385,12 @@ stl_types::result<mem_chunk<const u8>, error> fs_t::GetData(
                 return error::compression_codec_unsupported;
             }
             }
+
+            std::move(
+                writable.begin(),
+                writable.end(),
+                std::back_inserter(data.allocation));
+            data.ownership = semantic::Ownership::Owned;
 #endif
         } else
         {

@@ -1,8 +1,6 @@
-#version 330 core
+#version 460 core
 
-precision lowp float;
-
-out vec4 out_color;
+layout(location = 0) out vec4 out_color;
 
 void main()
 {

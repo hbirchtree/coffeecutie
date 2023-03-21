@@ -26,7 +26,7 @@ using namespace ::Coffee;
 i32 systeminfo_main(i32, cstring_w*)
 {
 #if defined(FEATURE_ENABLE_ASIO)
-    auto _ = Net::RegisterProfiling();
+    [[maybe_unused]] auto _ = Net::RegisterProfiling();
 #endif
 
 #if defined(HAS_GRAPHICS)

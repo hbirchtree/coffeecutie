@@ -71,8 +71,8 @@ void ImGuiSystem::submit_draws(Proxy& e)
 
     // Avoid rendering when minimized, scale coordinates for retina displays
     // (screen coordinates != framebuffer coordinates)
-    auto         draw_scope = api.debug().scope(IM_API "ImGui render");
-    DProfContext _(IM_API "Rendering draw lists");
+    [[maybe_unused]] auto draw_scope = api.debug().scope(IM_API "ImGui render");
+    DProfContext          _(IM_API "Rendering draw lists");
 
     ImGuiIO& io        = ImGui::GetIO();
     int      fb_width  = (int)(io.DisplaySize.x * io.DisplayFramebufferScale.x);
@@ -128,7 +128,7 @@ void ImGuiSystem::submit_draws(Proxy& e)
         auto cmd_list = draw_data->CmdLists[n];
         auto scope_name
             = std::string(IM_API "Command list ") + cmd_list->_OwnerName;
-        auto draw_scope
+        [[maybe_unused]] auto _
             = api.debug().scope(std::string_view(scope_name.c_str()));
 
         //        data.vertices->commit(to_bytes(cmd_list->VtxBuffer));
@@ -136,7 +136,8 @@ void ImGuiSystem::submit_draws(Proxy& e)
 
         for(auto const& cmd : cmd_list->CmdBuffer)
         {
-            auto draw_scope = api.debug().scope(IM_API "Command buffer");
+            [[maybe_unused]] auto _
+                = api.debug().scope(IM_API "Command buffer");
             union
             {
                 ImTextureID ptr;
@@ -279,7 +280,7 @@ void ImGuiSystem::setup_graphics_data(Proxy& e)
     auto& api  = e.subsystem<gleam::system>();
     auto& data = *m_gfx_data;
 
-    auto a = api.debug().scope(IM_API "Creating device data");
+    [[maybe_unused]] auto a = api.debug().scope(IM_API "Creating device data");
 
     auto needs_v100 = api.api_version() == std::make_tuple(2, 0)
                       && api.api_type() == gleam::api_type_t::es;
@@ -321,10 +322,10 @@ void ImGuiSystem::setup_graphics_data(Proxy& e)
         a             = api.alloc_vertex_array();
         data.vertices = api.alloc_buffer(
             gleam::buffers::vertex,
-            RSCA::ReadOnly | RSCA::WriteOnly | RSCA::Streaming);
+            RSCA::WriteOnly | RSCA::Discard | RSCA::Streaming);
         data.elements = api.alloc_buffer(
             gleam::buffers::element,
-            RSCA::ReadOnly | RSCA::WriteOnly | RSCA::Streaming);
+            RSCA::WriteOnly | RSCA::Discard | RSCA::Streaming);
 
         data.vertices->alloc();
         data.elements->alloc();

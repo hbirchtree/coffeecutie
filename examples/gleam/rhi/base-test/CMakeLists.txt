@@ -16,6 +16,10 @@ coffee_application (
     ${CMAKE_CURRENT_SOURCE_DIR}/basic_test
     )
 
+set_target_properties ( GLeamBaseTest_RHI PROPERTIES
+    EMSCRIPTEN_MAX_HEAP_SIZE 20M
+    )
+
 if(TARGET GpuQuery)
     target_link_libraries ( GLeamBaseTest_RHI PUBLIC GpuQuery )
 endif()

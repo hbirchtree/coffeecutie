@@ -72,6 +72,8 @@ struct features
         bool dsa{false};
         bool separable_programs{false};
         bool uniform_location{false};
+        bool compute{false};
+        bool spirv{false};
     };
     struct queries
     {
@@ -82,6 +84,7 @@ struct features
     {
         bool clearbuffer{true};
         bool dsa{false};
+        bool framebuffer_parameter{true};
         bool framebuffer_texture{true};
         bool indexed{false};
         bool readdraw_buffers{true};
@@ -105,6 +108,7 @@ struct features
         bool max_level{false};
         bool multibind{false};
         bool samplers{true};
+        bool sampler_binding{false};
         bool storage{false};
         bool texture_3d{true};
         bool tex_layer_query{true};
@@ -174,6 +178,7 @@ struct features
         bool format{false};
         bool layout_binding{false};
         bool vertex_arrays{true};
+        bool vertex_offset{true};
         struct
         {
             bool vertex_arrays{false};

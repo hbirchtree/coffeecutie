@@ -62,7 +62,7 @@ def generate_header(includes, lines):
 #define GLW_FPTR_CHECK(functionName) \\
     if constexpr(!gl::is_linked) \\
         if(!gl ## functionName ) \\
-            Throw(undefined_behavior("undefined function" # functionName ));
+            Throw(undefined_behavior("undefined function " # functionName ));
 
 namespace gl {
 
@@ -488,7 +488,7 @@ def add_handle_check(params: list, i: int, debug_lines: list):
     if name in map_names.keys():
         cap_name = map_names[name]
     
-    debug_lines.append(f'''#if defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)
+    debug_lines.append(f'''#if (defined(GL_VERSION_2_0) || defined(GL_ES_VERSION_3_0)) && !defined(GLEAM_USE_LINKED)
     if(glIs{cap_name}) glIs{cap_name}({name});
 #endif''')
 

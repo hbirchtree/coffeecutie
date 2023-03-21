@@ -146,6 +146,9 @@ void texture_t::alloc(size_type const& size, bool create_storage)
                           m_format.c,
                           size_2d<i32>{signed_size.w, signed_size.h})
                       * signed_size.d;
+#if defined(COFFEE_EMSCRIPTEN)
+                std::vector<libc_types::u8> black(alloc_size, 0);
+#endif
                 switch(m_type)
                 {
                 case type::d2:
@@ -155,7 +158,13 @@ void texture_t::alloc(size_type const& size, bool create_storage)
                         ifmt,
                         size_2d<i32>{signed_size.w, signed_size.h},
                         0,
-                        null_span<>{alloc_size});
+#if defined(COFFEE_EMSCRIPTEN)
+                        semantic::SpanOver<libc_types::u8>(
+                            black.begin(), black.end())
+#else
+                        null_span<>{alloc_size}
+#endif
+                        );
                     break;
 #if GLEAM_MAX_VERSION >= 0x120 || GLEAM_MAX_VERSION_ES >= 0x300
                 case type::d3:
@@ -166,7 +175,13 @@ void texture_t::alloc(size_type const& size, bool create_storage)
                         ifmt,
                         signed_size,
                         0,
-                        null_span<>{alloc_size});
+#if defined(COFFEE_EMSCRIPTEN)
+                        semantic::SpanOver<libc_types::u8>(
+                            black.begin(), black.end())
+#else
+                        null_span<>{alloc_size}
+#endif
+                        );
                     break;
 #endif
                 default:
@@ -327,7 +342,7 @@ size_3d<u32> texture_t::size()
 api::api() noexcept = default;
 api::api(api&&)     = default;
 
-Tup<features, api_type_t, u32> api::query_native_api_features(
+tuple<features, api_type_t, u32> api::query_native_api_features(
     api::extensions_set const& extensions, load_options_t options)
 {
     features   out{};
@@ -364,14 +379,17 @@ Tup<features, api_type_t, u32> api::query_native_api_features(
         out.texture.tex.gl.bptc   = api_version >= 0x420;
         out.vertex.layout_binding = api_version >= 0x420;
 
-        out.buffer.ssbo              = api_version >= 0x430;
-        out.debug.debug              = api_version >= 0x430;
-        out.draw.multi_indirect      = api_version >= 0x430;
-        out.program.uniform_location = api_version >= 0x430;
-        out.texture.image_copy       = api_version >= 0x430;
-        out.texture.tex.gl.etc2      = api_version >= 0x430;
-        out.texture.views            = api_version >= 0x430;
-        out.vertex.format            = api_version >= 0x430;
+        out.buffer.ssbo                        = api_version >= 0x430;
+        out.debug.debug                        = api_version >= 0x430;
+        out.draw.multi_indirect                = api_version >= 0x430;
+        out.program.compute                    = api_version >= 0x430;
+        out.program.uniform_location           = api_version >= 0x430;
+        out.rendertarget.framebuffer_parameter = api_version >= 0x430;
+        out.texture.image_copy                 = api_version >= 0x430;
+        out.texture.sampler_binding            = api_version >= 0x430;
+        out.texture.tex.gl.etc2                = api_version >= 0x430;
+        out.texture.views                      = api_version >= 0x430;
+        out.vertex.format                      = api_version >= 0x430;
 
         out.buffer.persistence = api_version >= 0x440;
         out.buffer.storage     = api_version >= 0x440;
@@ -386,6 +404,7 @@ Tup<features, api_type_t, u32> api::query_native_api_features(
         out.vertex.dsa       = dsa_mode;
 
         out.draw.shader_base_instance = api_version >= 0x460;
+        out.program.spirv             = api_version >= 0x460;
 
         out.draw.arb.shader_draw_parameters
             = supports_extension(extensions, arb::shader_draw_parameters::name);
@@ -405,18 +424,23 @@ Tup<features, api_type_t, u32> api::query_native_api_features(
         out.vertex.attribute_binding      = api_version >= 0x300;
         out.vertex.vertex_arrays          = api_version >= 0x300;
 
-        out.buffer.ssbo              = api_version >= 0x310;
-        out.draw.indirect            = api_version >= 0x310;
-        out.texture.image_texture    = api_version >= 0x310;
-        out.vertex.format            = api_version >= 0x310;
-        out.program.uniform_location = api_version >= 0x310;
-        out.vertex.layout_binding    = api_version >= 0x310;
+        out.buffer.ssbo                        = api_version >= 0x310;
+        out.draw.indirect                      = api_version >= 0x310;
+        out.program.compute                    = api_version >= 0x310;
+        out.program.uniform_location           = api_version >= 0x310;
+        out.rendertarget.framebuffer_parameter = api_version >= 0x310;
+        out.texture.image_texture              = api_version >= 0x310;
+        out.vertex.format                      = api_version >= 0x310;
+        out.vertex.layout_binding              = api_version >= 0x310;
 
         out.debug.debug                      = api_version >= 0x320;
         out.draw.vertex_offset               = api_version >= 0x320;
         out.rendertarget.framebuffer_texture = api_version >= 0x320;
         out.texture.image_copy               = api_version >= 0x320;
+        out.texture.sampler_binding          = api_version >= 0x320;
         out.texture.tex.gl.astc              = api_version >= 0x320;
+
+        out.vertex.vertex_offset = out.draw.vertex_offset;
 
 #if defined(GL_OES_mapbuffer)
         out.buffer.oes.mapbuffer
@@ -455,10 +479,12 @@ Tup<features, api_type_t, u32> api::query_native_api_features(
     out.texture.tex.ext.rgtc
         = supports_extension(extensions, ext::texture_compression_rgtc::name);
     out.texture.tex.ext.s3tc
-        = supports_extension(extensions, ext::texture_compression_s3tc::name);
+        = supports_extension(extensions, ext::texture_compression_s3tc::name) ||
+        supports_extension(extensions, "WEBGL_compressed_texture_s3tc");
 
     out.texture.tex.oes.etc1 = supports_extension(
-        extensions, oes::compressed_etc1_rgb8_texture::name);
+        extensions, oes::compressed_etc1_rgb8_texture::name) ||
+        supports_extension(extensions, "WEBGL_compressed_texture_etc");
     out.texture.tex.oes.rgba8
         = supports_extension(extensions, oes::rgb8_rgba8::name);
 
@@ -502,18 +528,18 @@ static auto version_regex()
     return pattern;
 }
 
-Tup<u32, u32> api::query_native_version()
+tuple<u32, u32> api::query_native_version()
 {
     using stl_types::cast_string;
-    auto version = cmd::get_string(group::string_name::version);
-    stl_types::Vector<String> elements;
+    auto                version = cmd::get_string(group::string_name::version);
+    std::vector<string> elements;
     if(!stl_types::regex::match(version_regex(), version, elements))
         return {0, 0};
 
     return {cast_string<u32>(elements[2]), cast_string<u32>(elements[3])};
 }
 
-Tup<u32, u32> api::query_compiled_version()
+tuple<u32, u32> api::query_compiled_version()
 {
     constexpr u32 version_basis =
 #if GLEAM_MAX_VERSION_ES > 0x0
@@ -526,9 +552,9 @@ Tup<u32, u32> api::query_compiled_version()
     return {major, minor};
 }
 
-stl_types::Set<String> api::query_native_extensions()
+std::set<string> api::query_native_extensions()
 {
-    stl_types::Set<String> out;
+    std::set<string> out;
 
 #if GLEAM_MAX_VERSION >= 0x300
     if(compiled_api == api_type_t::core)
@@ -541,23 +567,23 @@ stl_types::Set<String> api::query_native_extensions()
     } else
 #endif
     {
-        String extensions = cmd::get_string(group::string_name::extensions);
+        string extensions = cmd::get_string(group::string_name::extensions);
         for(auto ext : stl_types::str::split::str<char>(extensions, ' '))
-            out.insert(String(ext.begin(), ext.end()));
+            out.insert(string(ext.begin(), ext.end()));
     }
 
 #if defined(EGL_VERSION_1_0)
     {
         auto edisplay = eglGetCurrentDisplay();
         /* Get display extensions */
-        auto extensions = eglQueryString(edisplay, EGL_EXTENSIONS);
+        auto extensions = eglQuerystring(edisplay, EGL_EXTENSIONS);
         for(auto ext : stl_types::str::split::str<char>(extensions, ' '))
-            out.insert(String(ext.begin(), ext.end()));
+            out.insert(string(ext.begin(), ext.end()));
 #if defined(EGL_VERSION_1_5)
         /* Get client API extensions */
-        extensions = eglQueryString(EGL_NO_DISPLAY, EGL_EXTENSIONS);
+        extensions = eglQuerystring(EGL_NO_DISPLAY, EGL_EXTENSIONS);
         for(auto ext : stl_types::str::split::str<char>(extensions, ' '))
-            out.insert(String(ext.begin(), ext.end()));
+            out.insert(string(ext.begin(), ext.end()));
 #endif
     }
 #endif
@@ -579,7 +605,7 @@ api_type_t api::api_type()
     return m_api_type;
 }
 
-Tup<u32, u32> api::api_version()
+tuple<u32, u32> api::api_version()
 {
     return {(m_api_version & 0xF00) >> 8, (m_api_version & 0x0F0) >> 4};
 }
@@ -599,11 +625,11 @@ static auto shaderlang_regex()
     return pattern;
 }
 
-stl_types::String api::shaderlang_name()
+string api::shaderlang_name()
 {
     auto version
         = cmd::get_string(group::string_name::shading_language_version);
-    stl_types::Vector<String> elements;
+    stl_types::Vector<string> elements;
     if(!stl_types::regex::match(shaderlang_regex(), version, elements))
         return "Unknown GLSL";
 
@@ -616,29 +642,29 @@ api_type_t api::shaderlang_type()
                                               : api_type_t::core;
 }
 
-Tup<u32, u32> api::shaderlang_version()
+tuple<u32, u32> api::shaderlang_version()
 {
     using stl_types::cast_string;
     auto version
         = cmd::get_string(group::string_name::shading_language_version);
-    stl_types::Vector<String> elements;
+    stl_types::Vector<string> elements;
     if(!stl_types::regex::match(shaderlang_regex(), version, elements))
         return {0, 0};
 
     return {cast_string<u32>(elements[2]), cast_string<u32>(elements[3])};
 }
 
-Tup<stl_types::String, stl_types::String> api::device()
+tuple<string, string> api::device()
 {
     auto vendor = cmd::get_string(group::string_name::vendor);
     auto device = cmd::get_string(group::string_name::renderer);
     return {vendor, device};
 }
 
-Optional<String> api::device_driver()
+optional<string> api::device_driver()
 {
     auto version = cmd::get_string(group::string_name::version);
-    stl_types::Vector<String> elements;
+    stl_types::Vector<string> elements;
     if(!stl_types::regex::match(version_regex(), version, elements))
         return std::nullopt;
     return elements[5];
@@ -683,7 +709,7 @@ void api::collect_info(comp_app::interfaces::AppInfo& appInfo)
     appInfo.add("gl:extensions", exts_list);
 }
 
-Optional<error> api::load(load_options_t options)
+optional<error> api::load(load_options_t options)
 {
     m_main_queue = rq::runtime_queue::GetCurrentQueue().value();
 
@@ -741,10 +767,12 @@ Optional<error> api::load(load_options_t options)
 
     if(m_features.draw.instancing)
         m_workarounds.draw.emulated_instance_id = false;
-//    if(m_features.draw.shader_base_instance)
-//        m_workarounds.draw.emulated_base_instance = false;
+    //    if(m_features.draw.shader_base_instance)
+    //        m_workarounds.draw.emulated_base_instance = false;
     if(m_features.draw.vertex_offset)
         m_workarounds.draw.emulated_vertex_offset = false;
+    if(m_features.draw.shader_base_instance)
+        m_workarounds.draw.emulated_base_instance = false;
     if(m_features.buffer.mapping || m_features.buffer.oes.mapbuffer)
         m_workarounds.buffer.emulated_mapbuffer = false;
 
@@ -785,13 +813,13 @@ Optional<error> api::load(load_options_t options)
     {
         auto compiled_ver = version_tuple_to_u32(query_compiled_version());
         auto native_ver   = version_tuple_to_u32(query_native_version());
-//        auto [native_features, _, __]
-//            = query_native_api_features(query_native_extensions());
+        //        auto [native_features, _, __]
+        //            = query_native_api_features(query_native_extensions());
 
-//        Coffee::Logging::cDebug(
-//            "\nNative extensions:\n{0}\nEmulated extensions:\n{1}",
-//            query_native_extensions(),
-//            m_extensions);
+        //        Coffee::Logging::cDebug(
+        //            "\nNative extensions:\n{0}\nEmulated extensions:\n{1}",
+        //            query_native_extensions(),
+        //            m_extensions);
 
         /* Emulating OpenGL ES on desktop requires specific versions */
         if(compiled_ver < 0x410 && m_api_version >= 0x200)
@@ -813,10 +841,10 @@ Optional<error> api::load(load_options_t options)
         while(m_api_version >= 0x320)
         {
             /* ASTC has some problems on GL core, might need software decode */
-//            if(!native_features.texture.tex.khr.astc)
-//                return error::no_emulation_native_version_low;
-//            else
-//                m_features.texture.tex.khr.astc = true;
+            //            if(!native_features.texture.tex.khr.astc)
+            //                return error::no_emulation_native_version_low;
+            //            else
+            //                m_features.texture.tex.khr.astc = true;
             break;
         }
     }
@@ -837,13 +865,12 @@ void api::unload()
 }
 
 bool api::supports_extension(
-    const stl_types::Set<stl_types::String>& extensions,
-    const stl_types::String&                 ext)
+    const std::set<string>& extensions, const string& ext)
 {
     return extensions.contains(ext);
 }
 
-bool api::supports_extension(String const& ext)
+bool api::supports_extension(string const& ext)
 {
     return m_extensions.contains(ext);
 }

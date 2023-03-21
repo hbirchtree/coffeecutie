@@ -32,6 +32,8 @@ struct sampler_t;
 
 struct texture_t : std::enable_shared_from_this<texture_t>
 {
+    static constexpr auto debug_identifier = group::object_identifier::texture;
+
     using size_type = size_3d<u32>;
 
     texture_t(

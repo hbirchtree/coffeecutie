@@ -306,7 +306,7 @@ FORCEDINLINE std::basic_string<CharType> str_impl(
         if(pos == decltype(out)::npos)
             break;
         out.erase(pos, query.size());
-        out.insert(pos, replacement);
+        out.insert(out.begin() + pos, replacement.begin(), replacement.end());
     }
     return out;
 }

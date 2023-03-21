@@ -46,6 +46,7 @@ using memory_budget = std::conditional_t<
 
 void create_resources(compo::EntityContainer& e);
 void create_shaders(compo::EntityContainer& e);
+void set_resource_labels(compo::EntityContainer& e);
 void create_camera(
     compo::EntityContainer&                              e,
     const semantic::Span<const blam::scn::player_spawn>& spawns);

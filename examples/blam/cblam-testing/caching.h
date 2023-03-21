@@ -409,9 +409,9 @@ struct BitmapCache
         if(size.w % 4 != 0 || size.h % 4 != 0)
             return;
 
-        i32 mip_pad = bucket.surface->m_format.pixfmt != PixFmt::RGB565
-                          ? 2 << (mips - mipmap)
-                          : 0;
+        i32 mip_pad = 0; //bucket.surface->m_format.pixfmt != PixFmt::RGB565
+                          //? 2 << (mips - mipmap)
+                          //: 0;
 
         Veci2 pool_offset = Veci2(img.image.offset.x(), img.image.offset.y());
         Veci2 tex_offset
@@ -600,8 +600,8 @@ struct BitmapCache
             auto&       surface = tex_buckets[bitm.second.image.bucket].surface;
 
             u32 mipmaps = surface->m_mipmaps;
-            u32 pad
-                = surface->m_format.pixfmt != PixFmt::RGB565 ? 4 << mipmaps : 0;
+            u32 pad = 0;
+//                = surface->m_format.pixfmt != PixFmt::RGB565 ? 4 << mipmaps : 0;
 
             pool.num++;
             pool.max.w = std::max<u32>(pool.max.w, imsize.w + pad);
@@ -626,7 +626,7 @@ struct BitmapCache
             u32 layer   = 0;
             u32 mipmaps = surface->m_mipmaps;
             u32 max_pad
-                = surface->m_format.pixfmt != PixFmt::RGB565 ? 4 << mipmaps : 0;
+                = 0; // surface->m_format.pixfmt != PixFmt::RGB565 ? 4 << mipmaps : 0;
 
             for(auto [id, fmt] : pool.images)
             {

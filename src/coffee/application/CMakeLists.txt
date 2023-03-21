@@ -8,7 +8,7 @@ coffee_library (
     private/coffee.cpp
     private/application_start.cpp
 
-    LIBRARIES PeripheralPlatform Core CoreState ComponentApp
+    LIBRARIES PeripheralPlatform Core CoreState
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>

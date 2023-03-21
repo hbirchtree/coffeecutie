@@ -59,6 +59,14 @@ case $1 in
     fi
     android_build ${@:2}
 ;;
+"windows-build")
+    if [ -z "$2" ] || [ "$2" = "list" ] || [ "$2" = "help" ]; then
+        echo "No target specified, example targets:
+  windows:x86_64-w64-mingw32:win32
+"
+    fi
+    mingw_build ${@:2}
+;;
 "compress-usr-dir")
     echo "::group::Compressing install directory"
     INSTALL_DIR=$PWD/build/install

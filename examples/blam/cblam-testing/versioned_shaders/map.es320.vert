@@ -19,7 +19,7 @@ layout(location=1) uniform int g_BaseInstance;
 //out vec2 frag_light_tex;
 //flat out int frag_instanceId;
 
-out FragData {
+layout(location=0) out FragData {
     vec3 world_pos;
     vec2 tex;
     vec3 normal;
@@ -28,6 +28,10 @@ out FragData {
     vec2 light_tex;
     flat int instanceId;
 } frag;
+
+layout(location=1) out gl_PerVertex {
+    vec4 gl_Position;
+};
 
 void main()
 {

@@ -19,6 +19,12 @@ T cast_string(CWString const& val)
 }
 
 template<typename T>
+T cast_string_view(std::string_view val)
+{
+    return cast_string<T>(std::string(val.begin(), val.end()));
+}
+
+template<typename T>
 requires(
     (std::is_integral<T>::value || std::is_floating_point<T>::value) &&
     !std::is_same_v<T, bool>)

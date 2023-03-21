@@ -59,7 +59,7 @@ static_assert(sizeof(model_tracker_t) == 4);
 struct MeshTrackingData
 {
     using value_type = MeshTrackingData;
-    using type = compo::alloc::VectorContainer<value_type>;
+    using type       = compo::alloc::VectorContainer<value_type>;
 
     model_tracker_t model_id;
 };
@@ -173,6 +173,7 @@ struct alignas(32) lightmap_data
     Vecf2 atlas_scale;
     Vecf2 atlas_offset;
     u32   layer;
+    u32   material;
 };
 
 struct alignas(16) basic
@@ -233,13 +234,15 @@ struct ShaderData
         using tc = blam::tag_class_t;
         using namespace enum_helpers;
 
-//        auto const& shader_ = get_shader(cache);
-//        auto        name    = shader_tag->to_name().to_string(cache.magic);
+        //        auto const& shader_ = get_shader(cache);
+        //        auto        name    =
+        //        shader_tag->to_name().to_string(cache.magic);
 
         switch(shader_tag->tagclass_e[0])
         {
         case tc::senv: {
-//            auto const* shader = shader_data<blam::shader::shader_env>();
+            //            auto const* shader =
+            //            shader_data<blam::shader::shader_env>();
 
             return Pass_EnvMicro;
             //            return shader->diffuse.micro.map.valid() ?

@@ -11,6 +11,11 @@
 using namespace libc_types::size_literals;
 using namespace std::string_view_literals;
 
+constexpr auto bsp_batch_size
+    = compile_info::platform::is_32bit ? 64_kB : 512_kB;
+constexpr auto model_batch_size
+    = compile_info::platform::is_32bit ? 64_kB : 1024_kB;
+
 namespace detail {
 
 inline Tup<PixFmt, CompFlags> get_bitm_hash(BitmapItem const& bitm)
@@ -193,10 +198,7 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         this->priority = 3072;
 
         for(auto& pass : m_bsp)
-            pass.command.program = resources.wireframe_pipeline;
-        m_bsp[Pass_EnvMicro].command.program = resources.senv_micro_pipeline;
-        //        m_bsp[Pass_Wireframe].command.program =
-        //        resources.wireframe_pipeline;
+            pass.command.program = resources.bsp_pipeline;
         for(auto& pass : m_model)
             pass.command.program = resources.model_pipeline;
 
@@ -243,18 +245,19 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         u32 base = 0;
         for(Pass& pass : m_bsp)
         {
-            pass.material_buffer = material_buf.slice(base, 512_kB);
-            base += 512_kB;
+            pass.material_buffer = material_buf.slice(base, bsp_batch_size);
+            base += bsp_batch_size;
         }
-        base         = 4_MB;
+        base         = m_bsp.size() * bsp_batch_size;
         u32 base_mat = 0;
         for(Pass& pass : m_model)
         {
-            pass.material_buffer = material_buf.slice(base, 1024_kB);
-            pass.matrix_buffer   = matrix_buf.slice(base_mat, 1024_kB);
+            pass.material_buffer = material_buf.slice(base, model_batch_size);
+            pass.matrix_buffer
+                = matrix_buf.slice(base_mat, model_batch_size / 4);
 
-            base += 1024_kB;
-            base_mat += 1024_kB;
+            base += model_batch_size;
+            base_mat += model_batch_size / 4;
         }
     }
 
@@ -306,6 +309,42 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         detail::assign_map(map, bitmap);
         return bitmap;
     }
+    u32 get_bitm_fmt_id(generation_idx_t bitm)
+    {
+        BitmapItem const* bitmap = get_bitm(bitm);
+        if(!bitmap)
+            return 0x0;
+        switch(bitmap->image.fmt.pixfmt)
+        {
+        case PixFmt::BCn: {
+            switch(bitmap->image.fmt.cmpflg)
+            {
+            case typing::pixels::CompFlags::BC1:
+                return 0x01000000;
+            case typing::pixels::CompFlags::BC2:
+                return 0x02000000;
+            case typing::pixels::CompFlags::BC3:
+                return 0x03000000;
+            default:
+                break;
+            }
+            break;
+        }
+        case PixFmt::RGB565:
+            return 0x04000000;
+        case PixFmt::R8:
+            return 0x05000000;
+        case PixFmt::RG8:
+            return 0x06000000;
+        case PixFmt::RGBA4:
+            return 0x07000000;
+        case PixFmt::RGBA8:
+            return 0x08000000;
+        default:
+            break;
+        }
+        return 0x0;
+    }
 
     void setup_textures(
         std::vector<gfx::sampler_definition_t>& samplers,
@@ -315,103 +354,158 @@ struct MeshRenderer : Components::RestrictedSubsystem<
 
         samplers.push_back(gleam::sampler_definition_t{
             typing::graphics::ShaderStage::Fragment,
-            {"lightmaps"sv},
+            {"lightmaps"sv, 4},
             bitm_cache
                 .template get_bucket<gfx::texture_2da_t>(
                     PixDesc(PixFmt::RGB565))
                 .sampler});
+        samplers.push_back(gleam::sampler_definition_t{
+            typing::graphics::ShaderStage::Fragment,
+            {"source_bc1"sv, 0},
+            bitm_cache
+                .template get_bucket<gfx::texture_2da_t>(
+                    CompFmt(PixFmt::BCn, CompFlags::BC1))
+                .sampler});
+        samplers.push_back(gleam::sampler_definition_t{
+            typing::graphics::ShaderStage::Fragment,
+            {"source_bc2"sv, 1},
+            bitm_cache
+                .template get_bucket<gfx::texture_2da_t>(
+                    CompFmt(PixFmt::BCn, CompFlags::BC2))
+                .sampler});
+        samplers.push_back(gleam::sampler_definition_t{
+            typing::graphics::ShaderStage::Fragment,
+            {"source_bc3"sv, 2},
+            bitm_cache
+                .template get_bucket<gfx::texture_2da_t>(
+                    CompFmt(PixFmt::BCn, CompFlags::BC3))
+                .sampler});
+        samplers.push_back(gleam::sampler_definition_t{
+            typing::graphics::ShaderStage::Fragment,
+            {"source_rgb565"sv, 3},
+            bitm_cache
+                .template get_bucket<gfx::texture_2da_t>(
+                    PixDesc(PixFmt::RGB565))
+                .sampler});
+        samplers.push_back(gleam::sampler_definition_t{
+            typing::graphics::ShaderStage::Fragment,
+            {"source_r8"sv, 5},
+            bitm_cache
+                .template get_bucket<gfx::texture_2da_t>(PixDesc(PixFmt::R8))
+                .sampler});
+        samplers.push_back(gleam::sampler_definition_t{
+            typing::graphics::ShaderStage::Fragment,
+            {"source_rg8"sv, 6},
+            bitm_cache
+                .template get_bucket<gfx::texture_2da_t>(PixDesc(PixFmt::RG8))
+                .sampler});
+        samplers.push_back(gleam::sampler_definition_t{
+            typing::graphics::ShaderStage::Fragment,
+            {"source_rgba4"sv, 7},
+            bitm_cache
+                .template get_bucket<gfx::texture_2da_t>(PixDesc(PixFmt::RGBA4))
+                .sampler});
+        samplers.push_back(gleam::sampler_definition_t{
+            typing::graphics::ShaderStage::Fragment,
+            {"source_rgba8"sv, 8},
+            bitm_cache
+                .template get_bucket<gfx::texture_2da_t>(PixDesc(PixFmt::RGBA8))
+                .sampler});
 
-        switch(shader->tag->tagclass_e[0])
-        {
-        case blam::tag_class_t::senv: {
-            samplers.push_back(gleam::sampler_definition_t{
-                typing::graphics::ShaderStage::Fragment,
-                {"base"sv},
-                get_bitm_bucket<gfx::texture_2da_t>(shader->senv.base_bitm),
-            });
-            // For micro textures
-            samplers.push_back(gleam::sampler_definition_t{
-                typing::graphics::ShaderStage::Fragment,
-                {"micro"sv},
-                get_bitm_bucket<gfx::texture_2da_t>(shader->senv.micro_bitm),
-            });
-            // Additional diffuse textures
-            samplers.push_back(gleam::sampler_definition_t{
-                typing::graphics::ShaderStage::Fragment,
-                {"primary"sv},
-                get_bitm_bucket<gfx::texture_2da_t>(shader->senv.primary_bitm),
-            });
-            samplers.push_back(gleam::sampler_definition_t{
-                typing::graphics::ShaderStage::Fragment,
-                {"secondary"sv},
-                get_bitm_bucket<gfx::texture_2da_t>(
-                    shader->senv.secondary_bitm),
-            });
+        //        switch(shader->tag->tagclass_e[0])
+        //        {
+        //        case blam::tag_class_t::senv: {
+        //            samplers.push_back(gleam::sampler_definition_t{
+        //                typing::graphics::ShaderStage::Fragment,
+        //                {"base"sv, 0},
+        //                get_bitm_bucket<gfx::texture_2da_t>(shader->senv.base_bitm),
+        //            });
+        //            // For micro textures
+        //            samplers.push_back(gleam::sampler_definition_t{
+        //                typing::graphics::ShaderStage::Fragment,
+        //                {"micro"sv, 1},
+        //                get_bitm_bucket<gfx::texture_2da_t>(shader->senv.micro_bitm),
+        //            });
+        //            // Additional diffuse textures
+        //            samplers.push_back(gleam::sampler_definition_t{
+        //                typing::graphics::ShaderStage::Fragment,
+        //                {"primary"sv, 2},
+        //                get_bitm_bucket<gfx::texture_2da_t>(shader->senv.primary_bitm),
+        //            });
+        //            samplers.push_back(gleam::sampler_definition_t{
+        //                typing::graphics::ShaderStage::Fragment,
+        //                {"secondary"sv, 3},
+        //                get_bitm_bucket<gfx::texture_2da_t>(
+        //                    shader->senv.secondary_bitm),
+        //            });
 
-            break;
-        }
-        case blam::tag_class_t::schi: {
-            samplers.push_back(gleam::sampler_definition_t{
-                typing::graphics::ShaderStage::Fragment,
-                {"base"sv},
-                get_bitm_bucket<gfx::texture_2da_t>(shader->schi.map1),
-            });
-            //            samplers.push_back(gleam::sampler_definition_t{
-            //                typing::graphics::ShaderStage::Fragment,
-            //                {"micro"sv},
-            //                get_bitm_bucket<gfx::texture_2da_t>(shader->schi.map2),
-            //            });
-            break;
-        }
-        case blam::tag_class_t::scex: {
-            samplers.push_back(gleam::sampler_definition_t{
-                typing::graphics::ShaderStage::Fragment,
-                {"base"sv},
-                get_bitm_bucket<gfx::texture_2da_t>(shader->scex.layers.at(0)),
-            });
-            //            samplers.push_back(gleam::sampler_definition_t{
-            //                typing::graphics::ShaderStage::Fragment,
-            //                {"micro"sv},
-            //                get_bitm_bucket<gfx::texture_2da_t>(shader->scex.layers.at(1)),
-            //            });
-            break;
-        }
-        case blam::tag_class_t::swat: {
-            samplers.push_back(gleam::sampler_definition_t{
-                typing::graphics::ShaderStage::Fragment,
-                {"base"sv},
-                get_bitm_bucket<gfx::texture_2da_t>(shader->color_bitm),
-            });
-            //            samplers.push_back(gleam::sampler_definition_t{
-            //                typing::graphics::ShaderStage::Fragment,
-            //                {"micro"sv},
-            //                get_bitm_bucket<gfx::texture_2da_t>(shader->scex.layers.at(1)),
-            //            });
-            break;
-        }
-        case blam::tag_class_t::sgla: {
-            samplers.push_back(gleam::sampler_definition_t{
-                typing::graphics::ShaderStage::Fragment,
-                {"base"sv},
-                get_bitm_bucket<gfx::texture_2da_t>(shader->color_bitm),
-            });
-            //            samplers.push_back(gleam::sampler_definition_t{
-            //                typing::graphics::ShaderStage::Fragment,
-            //                {"micro"sv},
-            //                get_bitm_bucket<gfx::texture_2da_t>(shader->scex.layers.at(1)),
-            //            });
-            break;
-        }
-        default:
-            cDebug("Unknown tag type: {0}", shader->tag->tagclass[0].str());
-            break;
-        }
+        //            break;
+        //        }
+        //        case blam::tag_class_t::schi: {
+        //            samplers.push_back(gleam::sampler_definition_t{
+        //                typing::graphics::ShaderStage::Fragment,
+        //                {"base"sv, 0},
+        //                get_bitm_bucket<gfx::texture_2da_t>(shader->schi.map1),
+        //            });
+        //            // samplers.push_back(gleam::sampler_definition_t{
+        //            //                typing::graphics::ShaderStage::Fragment,
+        //            //                {"micro"sv},
+        //            // get_bitm_bucket<gfx::texture_2da_t>(shader->schi.map2),
+        //            //            });
+        //            break;
+        //        }
+        //        case blam::tag_class_t::scex: {
+        //            samplers.push_back(gleam::sampler_definition_t{
+        //                typing::graphics::ShaderStage::Fragment,
+        //                {"base"sv, 0},
+        //                get_bitm_bucket<gfx::texture_2da_t>(shader->scex.layers.at(0)),
+        //            });
+        //            // samplers.push_back(gleam::sampler_definition_t{
+        //            //                typing::graphics::ShaderStage::Fragment,
+        //            //                {"micro"sv},
+        //            //
+        //            get_bitm_bucket<gfx::texture_2da_t>(shader->scex.layers.at(1)),
+        //            //            });
+        //            break;
+        //        }
+        //        case blam::tag_class_t::swat: {
+        //            samplers.push_back(gleam::sampler_definition_t{
+        //                typing::graphics::ShaderStage::Fragment,
+        //                {"base"sv, 0},
+        //                get_bitm_bucket<gfx::texture_2da_t>(shader->color_bitm),
+        //            });
+        //            // samplers.push_back(gleam::sampler_definition_t{
+        //            //                typing::graphics::ShaderStage::Fragment,
+        //            //                {"micro"sv},
+        //            //
+        //            get_bitm_bucket<gfx::texture_2da_t>(shader->scex.layers.at(1)),
+        //            //            });
+        //            break;
+        //        }
+        //        case blam::tag_class_t::sgla: {
+        //            samplers.push_back(gleam::sampler_definition_t{
+        //                typing::graphics::ShaderStage::Fragment,
+        //                {"base"sv, 0},
+        //                get_bitm_bucket<gfx::texture_2da_t>(shader->color_bitm),
+        //            });
+        //            // samplers.push_back(gleam::sampler_definition_t{
+        //            //                typing::graphics::ShaderStage::Fragment,
+        //            //                {"micro"sv},
+        //            //
+        //            get_bitm_bucket<gfx::texture_2da_t>(shader->scex.layers.at(1)),
+        //            //            });
+        //            break;
+        //        }
+        //        default:
+        //            cDebug("Unknown tag type: {0}",
+        //            shader->tag->tagclass[0].str()); break;
+        //        }
     }
 
     auto get_view_state()
     {
-        using typing::vector_types::Veci4;
         using typing::vector_types::Vecd2;
+        using typing::vector_types::Veci4;
         return gfx::view_state{
             .view  = Veci4{
                 0, 0,
@@ -429,7 +523,7 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         auto vertex_u = gfx::make_uniform_list(
             typing::graphics::ShaderStage::Vertex,
             gfx::uniform_pair{
-                {"camera"sv},
+                {"camera"sv, 0},
                 semantic::SpanOne<const Matf4>(m_camera.camera_matrix)});
         auto buffers = gfx::make_buffer_list(
             gfx::buffer_definition_t{
@@ -457,7 +551,8 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         }
     }
 
-    void render_bsp_pass(Proxy&, Pass const& pass)
+    template<typename... Args>
+    void render_bsp_pass(Proxy&, Pass const& pass, Args&&... extra)
     {
         using namespace typing::vector_types;
 
@@ -467,13 +562,14 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         auto vertex_u = gfx::make_uniform_list(
             typing::graphics::ShaderStage::Vertex,
             gfx::uniform_pair{
-                {"camera"sv},
+                {"camera"sv, 1},
                 semantic::SpanOne<const Matf4>(m_camera.camera_matrix)});
-        auto fragment_u = gfx::make_uniform_list(
-            typing::graphics::ShaderStage::Fragment,
-            gfx::uniform_pair{
-                {"render_distance"},
-                semantic::SpanOne<const f32>(m_camera.wireframe_distance)});
+        //        auto fragment_u = gfx::make_uniform_list(
+        //            typing::graphics::ShaderStage::Fragment,
+        //            gfx::uniform_pair{
+        //                {"render_distance", 2},
+        //                semantic::SpanOne<const
+        //                f32>(m_camera.wireframe_distance)});
         auto buffers = gfx::make_buffer_list(
             gfx::buffer_definition_t{
                 typing::graphics::ShaderStage::Vertex,
@@ -507,13 +603,14 @@ struct MeshRenderer : Components::RestrictedSubsystem<
                     .data          = draw,
                 },
                 vertex_u,
-                fragment_u,
+                //                fragment_u,
                 buffers,
                 get_view_state(),
                 gfx::cull_state{
                     .front_face = true,
                 },
-                samplers);
+                samplers,
+                std::forward<Args&&>(extra)...);
 
             if(res.has_value())
             {
@@ -573,7 +670,7 @@ struct MeshRenderer : Components::RestrictedSubsystem<
                 gfx::make_uniform_list(
                     typing::graphics::ShaderStage::Vertex,
                     gfx::uniform_pair{
-                        {"camera"sv},
+                        {"camera"sv, 0},
                         semantic::SpanOne<const Matf4>(
                             m_camera.camera_matrix),
                     }),
@@ -615,13 +712,13 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             render_pass(p, pass);
 
         render_pass(p, m_model[Pass_Glass]);
-        render_bsp_pass(p, m_bsp[Pass_Glass]);
+        render_bsp_pass(p, m_bsp[Pass_Glass], gfx::blend_state{});
         render_pass(p, m_model[Pass_Lights]);
         render_bsp_pass(p, m_bsp[Pass_Lights]);
 
         render_bsp_pass(p, m_bsp[Pass_Wireframe]);
 
-        render_bsp_portals(p);
+        //        render_bsp_portals(p);
     }
 
     void end_restricted(Proxy& /*p*/, time_point const& /*time*/)
@@ -765,17 +862,46 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         case blam::tag_class_t::senv: {
             materials::senv_micro& mat
                 = pass.template material_of<materials::senv_micro>(i);
-            auto const* info  = shader->header->as<blam::shader::shader_env>();
-            auto        base  = assign_bitm(shader->senv.base_bitm, mat.base);
+            auto const* info = shader->header->as<blam::shader::shader_env>();
+
+            auto base         = assign_bitm(shader->senv.base_bitm, mat.base);
             mat.base.uv_scale = {1};
             mat.base.bias     = base->image.bias;
-            auto micro        = assign_bitm(shader->senv.micro_bitm, mat.micro);
+            mat.base.layer |= get_bitm_fmt_id(shader->senv.base_bitm);
+
+            auto primary = assign_bitm(shader->senv.primary_bitm, mat.primary);
+            if(primary)
+            {
+                mat.primary.uv_scale = {info->diffuse.primary.scale};
+                mat.primary.bias     = primary->image.bias;
+                mat.primary.layer |= get_bitm_fmt_id(shader->senv.primary_bitm);
+            }
+
+            auto secondary
+                = assign_bitm(shader->senv.secondary_bitm, mat.secondary);
+            if(secondary)
+            {
+                mat.secondary.uv_scale = {info->diffuse.secondary.scale};
+                mat.secondary.bias     = secondary->image.bias;
+                mat.secondary.layer
+                    |= get_bitm_fmt_id(shader->senv.secondary_bitm);
+            }
+
+            auto micro = assign_bitm(shader->senv.micro_bitm, mat.micro);
             mat.micro.uv_scale = {info->diffuse.micro.scale};
             if(micro)
                 mat.micro.bias = micro->image.bias;
+            mat.micro.layer |= get_bitm_fmt_id(shader->senv.micro_bitm);
+
             assign_bitm(ref.lightmap, mat.lightmap);
+
+            mat.lightmap.material = 0x1;
+
             break;
         }
+        case blam::tag_class_t::soso:
+        case blam::tag_class_t::schi:
+        case blam::tag_class_t::scex:
         case blam::tag_class_t::swat: {
             materials::senv_micro& mat
                 = pass.template material_of<materials::senv_micro>(i);
@@ -785,14 +911,29 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             assign_bitm(shader->color_bitm, mat.micro);
             mat.base.uv_scale  = {1};
             mat.base.bias      = 0;
+            mat.base.layer |= get_bitm_fmt_id(shader->color_bitm);
             mat.micro.uv_scale = {1};
             mat.micro.bias     = 0;
+
+            mat.lightmap.material = 0x2;
+
+            break;
+        }
+        case blam::tag_class_t::sgla: {
+            materials::senv_micro& mat
+                = pass.template material_of<materials::senv_micro>(i);
+            assign_bitm(shader->color_bitm, mat.base);
+            mat.base.uv_scale  = {1};
+            mat.base.bias      = 0;
+            mat.base.layer |= get_bitm_fmt_id(shader->color_bitm);
+
+            mat.lightmap.material = 0x3;
             break;
         }
         default:
-            //            cDebug(
-            //                "Unhandled bsp shader type: {0}",
-            //                shader->tag->tagclass[0].str());
+            cDebug(
+                "Unhandled bsp shader type: {0}",
+                shader->tag->tagclass[0].str());
             break;
         }
     }
@@ -1184,8 +1325,11 @@ struct ScreenClear
 
     void end_restricted(Proxy& e, time_point const&)
     {
-        auto& api = e.subsystem<gfx::system>();
+        auto& api       = e.subsystem<gfx::system>();
+        auto& resources = e.subsystem<BlamResources>();
 
+        if(api.default_rendertarget() == resources.offscreen)
+            return;
         if(!quad_program)
         {
             load_resources(api, e.subsystem<BlamResources>());
@@ -1203,7 +1347,7 @@ struct ScreenClear
             },
             gfx::make_sampler_list(gfx::sampler_definition_t{
                 typing::graphics::ShaderStage::Fragment,
-                {"source"sv},
+                {"source"sv, 0},
                 offscreen_sampler
             }));
         // clang-format on
@@ -1261,7 +1405,7 @@ varying vec2 in_tex;
 uniform sampler2D source;
 void main()
 {
-    gl_FragColor = vec4(texture2D(source, in_tex).rgb, 1.0);
+    gl_FragColor = vec4(pow(texture2D(source, in_tex).rgb, vec3(1.0 / 1.5)), 1.0);
 }
 )";
 

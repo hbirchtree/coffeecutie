@@ -50,7 +50,7 @@ inline auto powervr_sgx530()
         // clang-format on
     };
 }
-}
+} // namespace img
 
 namespace arm {
 inline auto mali_400mp()
@@ -197,7 +197,7 @@ inline auto mali_g710()
         // clang-format on
     };
 }
-}
+} // namespace arm
 
 namespace qcom {
 inline auto adreno_320()
@@ -456,6 +456,48 @@ inline auto adreno_620()
             "GL_QCOM_texture_foveated_subsampled_layout",
             "GL_QCOM_tiled_rendering",
             "GL_QCOM_validate_shader_binary",
+        },
+        // clang-format on
+    };
+}
+} // namespace qcom
+
+namespace webgl {
+inline auto mobile()
+{
+    return api::load_options_t{
+        .api_version = 0x300,
+        .api_type = api_type_t::es,
+        // clang-format off
+        .api_extensions = std::set<std::string>{
+            "EXT_color_buffer_float",
+            "EXT_color_buffer_half_float",
+            "EXT_texture_filter_anisotropic",
+            "WEBGL_compressed_texture_astc",
+            "WEBGL_compressed_texture_etc",
+            "WEBGL_compressed_texture_etc1",
+            "WEBGL_multi_draw",
+        },
+        // clang-format on
+    };
+}
+inline auto desktop()
+{
+    return api::load_options_t{
+        .api_version = 0x300,
+        .api_type = api_type_t::es,
+        // clang-format off
+        .api_extensions = std::set<std::string>{
+            "EXT_color_buffer_float",
+            "EXT_color_buffer_half_float",
+            "EXT_texture_filter_anisotropic",
+            "WEBGL_compressed_texture_astc",
+            "WEBGL_compressed_texture_etc",
+            "WEBGL_compressed_texture_etc1",
+            "WEBGL_compressed_texture_s3tc",
+            "WEBGL_draw_instanced_base_vertex_base_instance",
+            "WEBGL_multi_draw",
+            "WEBGL_multi_draw_instanced_base_vertex_base_instance",
         },
         // clang-format on
     };

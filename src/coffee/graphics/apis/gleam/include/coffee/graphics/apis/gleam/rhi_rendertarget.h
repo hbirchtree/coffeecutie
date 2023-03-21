@@ -63,6 +63,9 @@ struct rendertarget_currency
 
 struct rendertarget_t
 {
+    static constexpr auto debug_identifier
+        = group::object_identifier::framebuffer;
+
     rendertarget_t(
         features::rendertargets const& features,
         rendertarget_currency&         currency) :
@@ -150,7 +153,6 @@ struct rendertarget_t
 
     void resize(typing::geometry::rect<i32> const& size, u32 = 0)
     {
-
         auto target = internal_collapse_target(
 #if GLEAM_MAX_VERSION > 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
             group::framebuffer_target::draw_framebuffer
@@ -164,14 +166,17 @@ struct rendertarget_t
             return;
         }
 #if GLEAM_MAX_VERSION >= 0x430 || GLEAM_MAX_VERSION_ES >= 0x310
-        cmd::framebuffer_parameter(
-            target,
-            group::framebuffer_parameter_name::framebuffer_default_width,
-            size.w);
-        cmd::framebuffer_parameter(
-            target,
-            group::framebuffer_parameter_name::framebuffer_default_width,
-            size.h);
+        if(m_features.framebuffer_parameter)
+        {
+            cmd::framebuffer_parameter(
+                target,
+                group::framebuffer_parameter_name::framebuffer_default_width,
+                size.w);
+            cmd::framebuffer_parameter(
+                target,
+                group::framebuffer_parameter_name::framebuffer_default_width,
+                size.h);
+        }
 #endif
     }
 

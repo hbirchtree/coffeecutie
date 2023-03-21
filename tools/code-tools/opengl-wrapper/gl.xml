@@ -1979,8 +1979,8 @@ typedef unsigned int GLhandleARB;
         <enum value="0x8240" name="GL_SYNC_CL_EVENT_ARB"/>
         <enum value="0x8241" name="GL_SYNC_CL_EVENT_COMPLETE_ARB"/>
         <enum value="0x8242" name="GL_DEBUG_OUTPUT_SYNCHRONOUS" group="EnableCap"/>
-        <enum value="0x8242" name="GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB"/>
-        <enum value="0x8242" name="GL_DEBUG_OUTPUT_SYNCHRONOUS_KHR"/>
+        <enum value="0x8242" name="GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB" group="EnableCap"/>
+        <enum value="0x8242" name="GL_DEBUG_OUTPUT_SYNCHRONOUS_KHR" group="EnableCap"/>
         <enum value="0x8243" name="GL_DEBUG_NEXT_LOGGED_MESSAGE_LENGTH"/>
         <enum value="0x8243" name="GL_DEBUG_NEXT_LOGGED_MESSAGE_LENGTH_ARB"/>
         <enum value="0x8243" name="GL_DEBUG_NEXT_LOGGED_MESSAGE_LENGTH_KHR"/>
@@ -1994,61 +1994,61 @@ typedef unsigned int GLhandleARB;
         <enum value="0x8246" name="GL_DEBUG_SOURCE_API_ARB"/>
         <enum value="0x8246" name="GL_DEBUG_SOURCE_API_KHR"/>
         <enum value="0x8247" name="GL_DEBUG_SOURCE_WINDOW_SYSTEM" group="DebugSource"/>
-        <enum value="0x8247" name="GL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB"/>
-        <enum value="0x8247" name="GL_DEBUG_SOURCE_WINDOW_SYSTEM_KHR"/>
+        <enum value="0x8247" name="GL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB" group="DebugSource"/>
+        <enum value="0x8247" name="GL_DEBUG_SOURCE_WINDOW_SYSTEM_KHR" group="DebugSource"/>
         <enum value="0x8248" name="GL_DEBUG_SOURCE_SHADER_COMPILER" group="DebugSource"/>
-        <enum value="0x8248" name="GL_DEBUG_SOURCE_SHADER_COMPILER_ARB"/>
-        <enum value="0x8248" name="GL_DEBUG_SOURCE_SHADER_COMPILER_KHR"/>
+        <enum value="0x8248" name="GL_DEBUG_SOURCE_SHADER_COMPILER_ARB" group="DebugSource"/>
+        <enum value="0x8248" name="GL_DEBUG_SOURCE_SHADER_COMPILER_KHR" group="DebugSource"/>
         <enum value="0x8249" name="GL_DEBUG_SOURCE_THIRD_PARTY" group="DebugSource"/>
-        <enum value="0x8249" name="GL_DEBUG_SOURCE_THIRD_PARTY_ARB"/>
-        <enum value="0x8249" name="GL_DEBUG_SOURCE_THIRD_PARTY_KHR"/>
+        <enum value="0x8249" name="GL_DEBUG_SOURCE_THIRD_PARTY_ARB" group="DebugSource"/>
+        <enum value="0x8249" name="GL_DEBUG_SOURCE_THIRD_PARTY_KHR" group="DebugSource"/>
         <enum value="0x824A" name="GL_DEBUG_SOURCE_APPLICATION" group="DebugSource"/>
-        <enum value="0x824A" name="GL_DEBUG_SOURCE_APPLICATION_ARB"/>
-        <enum value="0x824A" name="GL_DEBUG_SOURCE_APPLICATION_KHR"/>
+        <enum value="0x824A" name="GL_DEBUG_SOURCE_APPLICATION_ARB" group="DebugSource"/>
+        <enum value="0x824A" name="GL_DEBUG_SOURCE_APPLICATION_KHR" group="DebugSource"/>
         <enum value="0x824B" name="GL_DEBUG_SOURCE_OTHER" group="DebugSource"/>
-        <enum value="0x824B" name="GL_DEBUG_SOURCE_OTHER_ARB"/>
-        <enum value="0x824B" name="GL_DEBUG_SOURCE_OTHER_KHR"/>
+        <enum value="0x824B" name="GL_DEBUG_SOURCE_OTHER_ARB" group="DebugSource"/>
+        <enum value="0x824B" name="GL_DEBUG_SOURCE_OTHER_KHR" group="DebugSource"/>
         <enum value="0x824C" name="GL_DEBUG_TYPE_ERROR" group="DebugType"/>
-        <enum value="0x824C" name="GL_DEBUG_TYPE_ERROR_ARB"/>
-        <enum value="0x824C" name="GL_DEBUG_TYPE_ERROR_KHR"/>
+        <enum value="0x824C" name="GL_DEBUG_TYPE_ERROR_ARB" group="DebugType"/>
+        <enum value="0x824C" name="GL_DEBUG_TYPE_ERROR_KHR" group="DebugType"/>
         <enum value="0x824D" name="GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR" group="DebugType"/>
-        <enum value="0x824D" name="GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB"/>
-        <enum value="0x824D" name="GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_KHR"/>
+        <enum value="0x824D" name="GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB" group="DebugType"/>
+        <enum value="0x824D" name="GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_KHR" group="DebugType"/>
         <enum value="0x824E" name="GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR" group="DebugType"/>
-        <enum value="0x824E" name="GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB"/>
-        <enum value="0x824E" name="GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_KHR"/>
+        <enum value="0x824E" name="GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB" group="DebugType"/>
+        <enum value="0x824E" name="GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_KHR" group="DebugType"/>
         <enum value="0x824F" name="GL_DEBUG_TYPE_PORTABILITY" group="DebugType"/>
-        <enum value="0x824F" name="GL_DEBUG_TYPE_PORTABILITY_ARB"/>
-        <enum value="0x824F" name="GL_DEBUG_TYPE_PORTABILITY_KHR"/>
+        <enum value="0x824F" name="GL_DEBUG_TYPE_PORTABILITY_ARB" group="DebugType"/>
+        <enum value="0x824F" name="GL_DEBUG_TYPE_PORTABILITY_KHR" group="DebugType"/>
         <enum value="0x8250" name="GL_DEBUG_TYPE_PERFORMANCE" group="DebugType"/>
-        <enum value="0x8250" name="GL_DEBUG_TYPE_PERFORMANCE_ARB"/>
-        <enum value="0x8250" name="GL_DEBUG_TYPE_PERFORMANCE_KHR"/>
+        <enum value="0x8250" name="GL_DEBUG_TYPE_PERFORMANCE_ARB" group="DebugType"/>
+        <enum value="0x8250" name="GL_DEBUG_TYPE_PERFORMANCE_KHR" group="DebugType"/>
         <enum value="0x8251" name="GL_DEBUG_TYPE_OTHER" group="DebugType"/>
-        <enum value="0x8251" name="GL_DEBUG_TYPE_OTHER_ARB"/>
-        <enum value="0x8251" name="GL_DEBUG_TYPE_OTHER_KHR"/>
+        <enum value="0x8251" name="GL_DEBUG_TYPE_OTHER_ARB" group="DebugType"/>
+        <enum value="0x8251" name="GL_DEBUG_TYPE_OTHER_KHR" group="DebugType"/>
         <enum value="0x8252" name="GL_LOSE_CONTEXT_ON_RESET"/>
         <enum value="0x8252" name="GL_LOSE_CONTEXT_ON_RESET_ARB"/>
         <enum value="0x8252" name="GL_LOSE_CONTEXT_ON_RESET_EXT"/>
         <enum value="0x8252" name="GL_LOSE_CONTEXT_ON_RESET_KHR"/>
         <enum value="0x8253" name="GL_GUILTY_CONTEXT_RESET" group="GraphicsResetStatus"/>
-        <enum value="0x8253" name="GL_GUILTY_CONTEXT_RESET_ARB"/>
-        <enum value="0x8253" name="GL_GUILTY_CONTEXT_RESET_EXT"/>
-        <enum value="0x8253" name="GL_GUILTY_CONTEXT_RESET_KHR"/>
+        <enum value="0x8253" name="GL_GUILTY_CONTEXT_RESET_ARB" group="GraphicsResetStatus"/>
+        <enum value="0x8253" name="GL_GUILTY_CONTEXT_RESET_EXT" group="GraphicsResetStatus"/>
+        <enum value="0x8253" name="GL_GUILTY_CONTEXT_RESET_KHR" group="GraphicsResetStatus"/>
         <enum value="0x8254" name="GL_INNOCENT_CONTEXT_RESET" group="GraphicsResetStatus"/>
-        <enum value="0x8254" name="GL_INNOCENT_CONTEXT_RESET_ARB"/>
-        <enum value="0x8254" name="GL_INNOCENT_CONTEXT_RESET_EXT"/>
-        <enum value="0x8254" name="GL_INNOCENT_CONTEXT_RESET_KHR"/>
+        <enum value="0x8254" name="GL_INNOCENT_CONTEXT_RESET_ARB" group="GraphicsResetStatus"/>
+        <enum value="0x8254" name="GL_INNOCENT_CONTEXT_RESET_EXT" group="GraphicsResetStatus"/>
+        <enum value="0x8254" name="GL_INNOCENT_CONTEXT_RESET_KHR" group="GraphicsResetStatus"/>
         <enum value="0x8255" name="GL_UNKNOWN_CONTEXT_RESET" group="GraphicsResetStatus"/>
-        <enum value="0x8255" name="GL_UNKNOWN_CONTEXT_RESET_ARB"/>
-        <enum value="0x8255" name="GL_UNKNOWN_CONTEXT_RESET_EXT"/>
-        <enum value="0x8255" name="GL_UNKNOWN_CONTEXT_RESET_KHR"/>
+        <enum value="0x8255" name="GL_UNKNOWN_CONTEXT_RESET_ARB" group="GraphicsResetStatus"/>
+        <enum value="0x8255" name="GL_UNKNOWN_CONTEXT_RESET_EXT" group="GraphicsResetStatus"/>
+        <enum value="0x8255" name="GL_UNKNOWN_CONTEXT_RESET_KHR" group="GraphicsResetStatus"/>
         <enum value="0x8256" name="GL_RESET_NOTIFICATION_STRATEGY"/>
         <enum value="0x8256" name="GL_RESET_NOTIFICATION_STRATEGY_ARB"/>
         <enum value="0x8256" name="GL_RESET_NOTIFICATION_STRATEGY_EXT"/>
         <enum value="0x8256" name="GL_RESET_NOTIFICATION_STRATEGY_KHR"/>
         <enum value="0x8257" name="GL_PROGRAM_BINARY_RETRIEVABLE_HINT" group="ProgramParameterPName,HintTarget"/>
         <enum value="0x8258" name="GL_PROGRAM_SEPARABLE" group="ProgramParameterPName"/>
-        <enum value="0x8258" name="GL_PROGRAM_SEPARABLE_EXT"/>
+        <enum value="0x8258" name="GL_PROGRAM_SEPARABLE_EXT" group="ProgramParameterPName"/>
         <enum value="0x8259" name="GL_ACTIVE_PROGRAM" group="PipelineParameterName"/>
         <enum value="0x8259" api="gles2" name="GL_ACTIVE_PROGRAM_EXT" comment="For the OpenGL ES version of EXT_separate_shader_objects"/>
         <enum value="0x825A" name="GL_PROGRAM_PIPELINE_BINDING" group="GetPName"/>
@@ -2085,13 +2085,13 @@ typedef unsigned int GLhandleARB;
         <enum value="0x8266" name="GL_MAX_COMBINED_COMPUTE_UNIFORM_COMPONENTS" group="GetPName"/>
         <enum value="0x8267" name="GL_COMPUTE_WORK_GROUP_SIZE" group="ProgramPropertyARB"/>
         <enum value="0x8268" name="GL_DEBUG_TYPE_MARKER" group="DebugType"/>
-        <enum value="0x8268" name="GL_DEBUG_TYPE_MARKER_KHR"/>
+        <enum value="0x8268" name="GL_DEBUG_TYPE_MARKER_KHR" group="DebugType"/>
         <enum value="0x8269" name="GL_DEBUG_TYPE_PUSH_GROUP" group="DebugType"/>
-        <enum value="0x8269" name="GL_DEBUG_TYPE_PUSH_GROUP_KHR"/>
+        <enum value="0x8269" name="GL_DEBUG_TYPE_PUSH_GROUP_KHR" group="DebugType"/>
         <enum value="0x826A" name="GL_DEBUG_TYPE_POP_GROUP" group="DebugType"/>
-        <enum value="0x826A" name="GL_DEBUG_TYPE_POP_GROUP_KHR"/>
+        <enum value="0x826A" name="GL_DEBUG_TYPE_POP_GROUP_KHR" group="DebugType"/>
         <enum value="0x826B" name="GL_DEBUG_SEVERITY_NOTIFICATION" group="DebugSeverity"/>
-        <enum value="0x826B" name="GL_DEBUG_SEVERITY_NOTIFICATION_KHR"/>
+        <enum value="0x826B" name="GL_DEBUG_SEVERITY_NOTIFICATION_KHR" group="DebugSeverity"/>
         <enum value="0x826C" name="GL_MAX_DEBUG_GROUP_STACK_DEPTH" group="GetPName"/>
         <enum value="0x826C" name="GL_MAX_DEBUG_GROUP_STACK_DEPTH_KHR"/>
         <enum value="0x826D" name="GL_DEBUG_GROUP_STACK_DEPTH" group="GetPName"/>
@@ -2755,15 +2755,15 @@ typedef unsigned int GLhandleARB;
         <enum value="0x84FA" name="GL_UNSIGNED_INT_24_8_OES" group="PixelType"/>
             <unused start="0x84FB" end="0x84FC" vendor="NV"/>
         <enum value="0x84FD" name="GL_MAX_TEXTURE_LOD_BIAS" group="GetPName"/>
-        <enum value="0x84FD" name="GL_MAX_TEXTURE_LOD_BIAS_EXT"/>
+        <enum value="0x84FD" name="GL_MAX_TEXTURE_LOD_BIAS_EXT" group="GetPName"/>
         <enum value="0x84FE" name="GL_TEXTURE_MAX_ANISOTROPY" group="SamplerParameterF,TextureParameterName"/>
-        <enum value="0x84FE" name="GL_TEXTURE_MAX_ANISOTROPY_EXT" group="SamplerParameterF,TextureParameterName" alias="GL_TEXTURE_MAX_ANISOTROPY"/>
+        <enum value="0x84FE" name="GL_TEXTURE_MAX_ANISOTROPY_EXT" alias="GL_TEXTURE_MAX_ANISOTROPY" group="SamplerParameterF,TextureParameterName"/>
         <enum value="0x84FF" name="GL_MAX_TEXTURE_MAX_ANISOTROPY" group="GetPName"/>
         <enum value="0x84FF" name="GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT" alias="GL_MAX_TEXTURE_MAX_ANISOTROPY" group="GetPName"/>
         <enum value="0x8500" name="GL_TEXTURE_FILTER_CONTROL"/>
         <enum value="0x8500" name="GL_TEXTURE_FILTER_CONTROL_EXT"/>
         <enum value="0x8501" name="GL_TEXTURE_LOD_BIAS" group="TextureParameterName,SamplerParameterF"/>
-        <enum value="0x8501" name="GL_TEXTURE_LOD_BIAS_EXT"/>
+        <enum value="0x8501" name="GL_TEXTURE_LOD_BIAS_EXT" group="TextureParameterName,SamplerParameterF"/>
         <enum value="0x8502" name="GL_MODELVIEW1_STACK_DEPTH_EXT"/>
         <enum value="0x8503" name="GL_COMBINE4_NV"/>
         <enum value="0x8504" name="GL_MAX_SHININESS_NV"/>
@@ -6096,17 +6096,17 @@ typedef unsigned int GLhandleARB;
         <enum value="0x9145" name="GL_DEBUG_LOGGED_MESSAGES_ARB"/>
         <enum value="0x9145" name="GL_DEBUG_LOGGED_MESSAGES_KHR"/>
         <enum value="0x9146" name="GL_DEBUG_SEVERITY_HIGH" group="DebugSeverity"/>
-        <enum value="0x9146" name="GL_DEBUG_SEVERITY_HIGH_AMD"/>
-        <enum value="0x9146" name="GL_DEBUG_SEVERITY_HIGH_ARB"/>
-        <enum value="0x9146" name="GL_DEBUG_SEVERITY_HIGH_KHR"/>
+        <enum value="0x9146" name="GL_DEBUG_SEVERITY_HIGH_AMD" group="DebugSeverity"/>
+        <enum value="0x9146" name="GL_DEBUG_SEVERITY_HIGH_ARB" group="DebugSeverity"/>
+        <enum value="0x9146" name="GL_DEBUG_SEVERITY_HIGH_KHR" group="DebugSeverity"/>
         <enum value="0x9147" name="GL_DEBUG_SEVERITY_MEDIUM" group="DebugSeverity"/>
-        <enum value="0x9147" name="GL_DEBUG_SEVERITY_MEDIUM_AMD"/>
-        <enum value="0x9147" name="GL_DEBUG_SEVERITY_MEDIUM_ARB"/>
-        <enum value="0x9147" name="GL_DEBUG_SEVERITY_MEDIUM_KHR"/>
+        <enum value="0x9147" name="GL_DEBUG_SEVERITY_MEDIUM_AMD" group="DebugSeverity"/>
+        <enum value="0x9147" name="GL_DEBUG_SEVERITY_MEDIUM_ARB" group="DebugSeverity"/>
+        <enum value="0x9147" name="GL_DEBUG_SEVERITY_MEDIUM_KHR" group="DebugSeverity"/>
         <enum value="0x9148" name="GL_DEBUG_SEVERITY_LOW" group="DebugSeverity"/>
-        <enum value="0x9148" name="GL_DEBUG_SEVERITY_LOW_AMD"/>
-        <enum value="0x9148" name="GL_DEBUG_SEVERITY_LOW_ARB"/>
-        <enum value="0x9148" name="GL_DEBUG_SEVERITY_LOW_KHR"/>
+        <enum value="0x9148" name="GL_DEBUG_SEVERITY_LOW_AMD" group="DebugSeverity"/>
+        <enum value="0x9148" name="GL_DEBUG_SEVERITY_LOW_ARB" group="DebugSeverity"/>
+        <enum value="0x9148" name="GL_DEBUG_SEVERITY_LOW_KHR" group="DebugSeverity"/>
         <enum value="0x9149" name="GL_DEBUG_CATEGORY_API_ERROR_AMD"/>
         <enum value="0x914A" name="GL_DEBUG_CATEGORY_WINDOW_SYSTEM_AMD"/>
         <enum value="0x914B" name="GL_DEBUG_CATEGORY_DEPRECATION_AMD"/>
@@ -13560,7 +13560,7 @@ typedef unsigned int GLhandleARB;
         <command>
             <proto>void <name>glGetFramebufferParameteriv</name></proto>
             <param group="FramebufferTarget"><ptype>GLenum</ptype> <name>target</name></param>
-            <param group="FramebufferAttachmentParameterName"><ptype>GLenum</ptype> <name>pname</name></param>
+            <param group="GetFramebufferParameter"><ptype>GLenum</ptype> <name>pname</name></param>
             <param len="COMPSIZE(pname)"><ptype>GLint</ptype> *<name>params</name></param>
         </command>
         <command>
@@ -29476,7 +29476,7 @@ typedef unsigned int GLhandleARB;
         <command>
             <proto>void <name>glGetFramebufferParameterivMESA</name></proto>
             <param group="FramebufferTarget"><ptype>GLenum</ptype> <name>target</name></param>
-            <param group="FramebufferAttachmentParameterName"><ptype>GLenum</ptype> <name>pname</name></param>
+            <param group="GetFramebufferParameter"><ptype>GLenum</ptype> <name>pname</name></param>
             <param len="COMPSIZE(pname)"><ptype>GLint</ptype> *<name>params</name></param>
         </command>
 

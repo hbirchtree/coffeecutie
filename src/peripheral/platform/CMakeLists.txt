@@ -1,3 +1,5 @@
+option ( BUILD_WITH_WERROR ON "Build with warnings as errors" )
+
 coffee_library (
     TARGET PeripheralPlatform
 
@@ -37,8 +39,9 @@ else()
         )
 endif()
 
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR
-    CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+if((CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR
+    CMAKE_CXX_COMPILER_ID STREQUAL "GNU") AND
+   BUILD_WITH_WERROR)
     target_compile_options( PeripheralPlatform PUBLIC
         -Werror
         -Wall
@@ -50,33 +53,6 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR
         -Wexpansion-to-defined
         # Misfires on code that is ifdef'd
         -Wno-misleading-indentation
-        )
-endif()
-
-#
-#
-# SDL power management info
-#
-#
-if(BUILD_SDL2 AND NOT POWERPC AND NOT IOS AND
-        (${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE OR WIN32) AND NOT EMSCRIPTEN)
-
-    if(NOT TARGET SDL2)
-        find_package ( SDL2 CONFIG QUIET )
-    endif()
-
-    coffee_library (
-        TARGET SDLPowerInfo
-        SOURCES private/sdlpowerinfo.cpp
-        LIBRARIES PeripheralLib SDL2::SDL2-static
-        HEADER_DIRS
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        )
-
-    dependency_link (
-        TARGET SDLPowerInfo
-        DEPENDENCIES
-            sdl2
         )
 endif()
 

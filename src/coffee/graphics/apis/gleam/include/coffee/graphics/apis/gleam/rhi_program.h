@@ -13,9 +13,11 @@ namespace detail {
 inline stl_types::String shader_log(u32 handle)
 {
     using shader_param = group::shader_parameter_name;
-    stl_types::String info;
-    i32               info_len{0};
+    std::string info;
+    i32         info_len{0};
     cmd::get_shaderiv(handle, shader_param::info_log_length, SpanOne(info_len));
+    if(info_len == 0)
+        return {};
     info.resize(info_len);
     cmd::get_shader_info_log(
         handle, info_len, semantic::Span<char>(info.data(), info.size()));
@@ -25,8 +27,8 @@ inline stl_types::String shader_log(u32 handle)
 inline stl_types::String program_log(u32 handle)
 {
     using program_param = group::program_property_arb;
-    stl_types::String info;
-    i32               info_len{0};
+    std::string info;
+    i32         info_len{0};
     cmd::get_programiv(
         handle, program_param::info_log_length, SpanOne(info_len));
     info.resize(info_len);
@@ -35,11 +37,17 @@ inline stl_types::String program_log(u32 handle)
     return info;
 }
 
+using namespace std::string_view_literals;
+
+constexpr auto default_entrypoint = "main"sv;
+
 } // namespace detail
+
+using shader_format_t = semantic::concepts::graphics::programs::shader_format_t;
 
 struct shader_t
 {
-    using constants_t = stl_types::Map<stl_types::String, stl_types::String>;
+    using constants_t = stl_types::Map<std::string, std::string>;
 
     template<typename CharType>
     shader_t(
@@ -57,15 +65,30 @@ struct shader_t
     {
     }
 
+    template<class span_data>
+    requires semantic::concepts::Span<span_data> shader_t(
+        span_data const&   data,
+        shader_format_t    format,
+        constants_t const& constants  = {},
+        std::string_view   entrypoint = detail::default_entrypoint) :
+        m_data(reinterpret_cast<const char*>(data.data()), data.size()),
+        m_constants(constants), m_entrypoint(entrypoint), m_format(format)
+    {
+    }
+
     semantic::Span<const char> m_data;
     constants_t                m_constants;
+    std::string_view           m_entrypoint;
     hnd                        m_handle;
+    shader_format_t            m_format{shader_format_t::source};
 };
 
 struct program_t
 {
+    static constexpr auto debug_identifier = group::object_identifier::program;
+
     using stage_t     = typing::graphics::ShaderStage;
-    using stage_map_t = stl_types::Map<stage_t, stl_types::ShPtr<shader_t>>;
+    using stage_map_t = stl_types::Map<stage_t, std::shared_ptr<shader_t>>;
 
     using compile_error_t = std::tuple<stl_types::String>;
     using compile_log_t
@@ -108,6 +131,63 @@ struct program_t
     NO_DISCARD semantic::result<compile_log_t, compile_error_t> compile()
     {
         [[maybe_unused]] auto _ = m_debug.scope(__PRETTY_FUNCTION__);
+#if GLEAM_MAX_VERSION >= 0x460
+        while(m_features.spirv)
+        {
+            using shader_def  = std::pair<stage_t, std::shared_ptr<shader_t>>;
+            auto contains_spv = std::any_of(
+                m_stages.begin(), m_stages.end(), [](shader_def const& shader) {
+                    return shader.second->m_format == shader_format_t::spv;
+                });
+
+            if(!contains_spv)
+                break;
+
+            m_handle = cmd::create_program();
+
+            for(auto const& [stage, shader] : m_stages)
+            {
+                shader->m_handle = cmd::create_shader(
+                    convert::to<group::shader_type>(stage));
+                cmd::shader_binary(
+                    semantic::SpanOne<u32>(shader->m_handle),
+                    group::shader_binary_format::spir_v,
+                    shader->m_data,
+                    shader->m_data.size());
+                cmd::specialize_shader(
+                    shader->m_handle,
+                    shader->m_entrypoint,
+                    null_span<u32>{},
+                    null_span<u32>{});
+                i32 status{0};
+                cmd::get_shaderiv(
+                    shader->m_handle,
+                    group::shader_parameter_name::compile_status,
+                    SpanOne(status));
+                if(!status)
+                {
+                    return stl_types::failure(
+                        compile_error_t{detail::shader_log(shader->m_handle)});
+                }
+                cmd::attach_shader(m_handle, shader->m_handle);
+            }
+
+            cmd::link_program(m_handle);
+            i32 status{0};
+            cmd::get_programiv(
+                m_handle,
+                group::program_property_arb::link_status,
+                SpanOne(status));
+            if(!status)
+            {
+                return stl_types::failure(
+                    compile_error_t{detail::program_log(m_handle)});
+            }
+
+            return stl_types::success(compile_log_t{});
+        }
+#endif
+
 #if GLEAM_MAX_VERSION >= 0x430 || GLEAM_MAX_VERSION_ES >= 0x310
         if(m_features.separable_programs)
         {
@@ -144,7 +224,7 @@ struct program_t
             i32 log_len{0};
             cmd::get_program_pipelineiv(
                 m_handle, pip_param::info_log_length, SpanOne(log_len));
-            stl_types::String log;
+            std::string log;
             log.resize(log_len);
             cmd::get_program_pipeline_info_log(
                 m_handle,

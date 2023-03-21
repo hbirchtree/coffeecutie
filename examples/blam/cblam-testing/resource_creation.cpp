@@ -46,10 +46,13 @@ void create_resources(compo::EntityContainer& e)
 
     auto access = RSCA::ReadWrite | RSCA::Persistent | RSCA::Immutable;
 
+    if constexpr(compile_info::platform::is_emscripten)
+        access = RSCA::WriteOnly | RSCA::Immutable | RSCA::Discard;
+
     resources.bsp_buf = api.alloc_buffer(gfx::buffers::vertex, access);
     resources.bsp_buf->alloc();
     resources.bsp_buf->commit(memory_budget::bsp_buffer);
-    resources.bsp_index = api.alloc_buffer(gfx::buffers::vertex, access);
+    resources.bsp_index = api.alloc_buffer(gfx::buffers::element, access);
     resources.bsp_index->alloc();
     resources.bsp_index->commit(memory_budget::bsp_elements);
     resources.bsp_light_buf = api.alloc_buffer(gfx::buffers::vertex, access);
@@ -59,7 +62,7 @@ void create_resources(compo::EntityContainer& e)
     resources.model_buf = api.alloc_buffer(gfx::buffers::vertex, access);
     resources.model_buf->alloc();
     resources.model_buf->commit(memory_budget::mesh_buffer);
-    resources.model_index = api.alloc_buffer(gfx::buffers::vertex, access);
+    resources.model_index = api.alloc_buffer(gfx::buffers::element, access);
     resources.model_index->alloc();
     resources.model_index->commit(memory_budget::mesh_elements);
 
@@ -200,7 +203,213 @@ void create_resources(compo::EntityContainer& e)
             gfx::render_targets::attachment::depth, *resources.depth, 0);
         auto& size_i = resources.offscreen_size;
         resources.offscreen->resize({0, 0, size_i.w, size_i.h});
+
+        if constexpr(compile_info::platform::is_emscripten)
+            resources.offscreen = api.default_rendertarget();
     }
+}
+
+static void create_shader_program(
+    gfx::api&                        api,
+    Resource&&                       blob,
+    std::string_view                 vertex_entrypoint,
+    std::string_view                 fragment_entrypoint,
+    std::shared_ptr<gfx::program_t>& result,
+    std::string_view                 label,
+    gfx::shader_format_t             format = gfx::shader_format_t::source)
+{
+    result = api.alloc_program();
+    result->add(
+        gleam::program_t::stage_t::Vertex,
+        api.alloc_shader(
+            gfx::shader_format_t::spv, blob.data(), {}, vertex_entrypoint));
+    result->add(
+        gleam::program_t::stage_t::Fragment,
+        api.alloc_shader(
+            gfx::shader_format_t::spv, blob.data(), {}, fragment_entrypoint));
+    if(auto res = result->compile(); res.has_error())
+    {
+        auto [msg] = res.error();
+        cFatal("Failed to compile {0} shader: {1}", label, msg);
+        result = {};
+    }
+}
+
+static void create_spv_shaders(gfx::api& api, BlamResources& resources)
+{
+    using namespace std::string_view_literals;
+
+    auto _ = api.debug().scope();
+
+    create_shader_program(
+        api,
+        "debug_lines.spv"_rsc,
+        "debug_lines_main"sv,
+        "debug_lines_main"sv,
+        resources.debug_lines_pipeline,
+        "debug_lines",
+        gfx::shader_format_t::spv);
+    create_shader_program(
+        api,
+        "scenery.spv"_rsc,
+        "scenery_main"sv,
+        "scenery_main"sv,
+        resources.model_pipeline,
+        "scenery",
+        gfx::shader_format_t::spv);
+    create_shader_program(
+        api,
+        "map_uber.spv"_rsc,
+        "map_main"sv,
+        "map_uber_main"sv,
+        resources.bsp_pipeline,
+        "bsp",
+        gfx::shader_format_t::spv);
+    create_shader_program(
+        api,
+        "map_uber.spv"_rsc,
+        "map_main"sv,
+        "map_uber_main"sv,
+        resources.senv_micro_pipeline,
+        "bsp_senv_micro",
+        gfx::shader_format_t::spv);
+    create_shader_program(
+        api,
+        "map_uber.spv"_rsc,
+        "map_main"sv,
+        "wireframe_main"sv,
+        resources.wireframe_pipeline,
+        "map_wireframe",
+        gfx::shader_format_t::spv);
+}
+
+struct shader_pair_t
+{
+    std::string_view                 vertex_file;
+    std::string_view                 fragment_file;
+    std::shared_ptr<gfx::program_t>& shader;
+};
+
+template<size_t N>
+static void create_shaders(gfx::api& api, std::array<shader_pair_t, N>&& shaders)
+{
+    using namespace std::string_view_literals;
+    using platform::url::constructors::MkUrl;
+
+    std::string_view variant;
+
+    if(api.api_type() == gfx::api_type_t::es)
+    {
+        if(api.api_version() == std::make_tuple(3u, 2u))
+            variant = "es320"sv;
+        else
+            variant = "es300"sv;
+    } else
+    {
+        if(api.api_version() == std::make_tuple(4u, 6u))
+            variant = "core460"sv;
+        else
+        if(api.api_version() >= std::make_tuple(4u, 3u))
+            variant = "core430"sv;
+        else if(api.api_version() >= std::make_tuple(4u, 1u))
+            variant = "core410"sv;
+        else
+            variant = "core330"sv;
+    }
+
+    if(variant.empty())
+        Throw(std::runtime_error("no shader variant selected, good night"));
+
+    for(shader_pair_t& shader : shaders)
+    {
+        auto vertex_url
+            = MkUrl(Strings::fmt(shader.vertex_file, variant), RSCA::AssetFile);
+        auto fragment_url = MkUrl(
+            Strings::fmt(shader.fragment_file, variant), RSCA::AssetFile);
+
+        auto pipeline = api.alloc_program();
+        pipeline->add(
+            gfx::program_t::stage_t::Vertex,
+            api.alloc_shader(Resource(vertex_url).data()));
+        pipeline->add(
+            gfx::program_t::stage_t::Fragment,
+            api.alloc_shader(Resource(fragment_url).data()));
+        if(auto res = pipeline->compile(); res.has_error())
+        {
+            auto [msg] = res.error();
+            cFatal("Failed to compile bsp shader: {0}", msg);
+        }
+        shader.shader = pipeline;
+    }
+}
+
+static void create_uber_shaders(gfx::api& api, BlamResources& resources)
+{
+    using namespace std::string_view_literals;
+    using platform::url::constructors::MkUrl;
+
+    std::array<shader_pair_t, 4> shaders = {{
+        {
+            .vertex_file   = "debug_lines.{0}.vert"sv,
+            .fragment_file = "debug_lines.{0}.frag"sv,
+            .shader        = resources.debug_lines_pipeline,
+        },
+        {
+            .vertex_file   = "scenery.{0}.vert"sv,
+            .fragment_file = "scenery.{0}.frag"sv,
+            .shader        = resources.model_pipeline,
+        },
+        {
+            .vertex_file   = "map.{0}.vert"sv,
+            .fragment_file = "map_uber.{0}.frag"sv,
+            .shader        = resources.bsp_pipeline,
+        },
+        {
+            .vertex_file   = "map.{0}.vert"sv,
+            .fragment_file = "wireframe.{0}.frag"sv,
+            .shader        = resources.wireframe_pipeline,
+        },
+    }};
+
+    create_shaders(api, std::move(shaders));
+
+    resources.senv_micro_pipeline = resources.bsp_pipeline;
+}
+
+static void create_standard_shaders(gfx::api& api, BlamResources& resources)
+{
+    using namespace std::string_view_literals;
+    using platform::url::constructors::MkUrl;
+
+    std::array<shader_pair_t, 5> shaders = {{
+        {
+            .vertex_file   = "debug_lines.{0}.vert"sv,
+            .fragment_file = "debug_lines.{0}.frag"sv,
+            .shader        = resources.debug_lines_pipeline,
+        },
+        {
+            .vertex_file   = "scenery.{0}.vert"sv,
+            .fragment_file = "scenery.{0}.frag"sv,
+            .shader        = resources.model_pipeline,
+        },
+        {
+            .vertex_file   = "map.{0}.vert"sv,
+            .fragment_file = "map.{0}.frag"sv,
+            .shader        = resources.bsp_pipeline,
+        },
+        {
+            .vertex_file   = "map.{0}.vert"sv,
+            .fragment_file = "map_senv.{0}.frag"sv,
+            .shader        = resources.senv_micro_pipeline,
+        },
+        {
+            .vertex_file   = "map.{0}.vert"sv,
+            .fragment_file = "wireframe.{0}.frag"sv,
+            .shader        = resources.wireframe_pipeline,
+        },
+    }};
+
+    create_shaders(api, std::move(shaders));
 }
 
 void create_shaders(compo::EntityContainer& e)
@@ -208,12 +417,47 @@ void create_shaders(compo::EntityContainer& e)
     gfx::api&      gfx       = e.subsystem_cast<gfx::system>();
     BlamResources& resources = e.subsystem_cast<BlamResources>();
 
-    const bool use_old_shaders
-        = gfx.api_version() != std::make_tuple<u32>(4, 6);
-    const bool use_es_shaders = gfx.api_type() == gleam::api_type_t::es;
-    auto       map_shader     = use_es_shaders    ? "map.es320.vert"_rsc
-                                : use_old_shaders ? "map.410.vert"_rsc
-                                                  : "map.vert"_rsc;
+    auto _ = gfx.debug().scope();
+
+    const bool     use_spv  = gfx.feature_info().program.spirv;
+    constexpr bool use_uber = true;
+
+    if(use_spv && false)
+    {
+        create_spv_shaders(gfx, resources);
+        return;
+    }
+
+    if(use_uber && !compile_info::platform::is_emscripten)
+    {
+        create_uber_shaders(gfx, resources);
+        return;
+    }
+
+    create_standard_shaders(gfx, resources);
+    return;
+
+    const bool use_410 = gfx.api_version() == std::make_tuple<u32>(4, 1);
+    const bool use_320 = gfx.api_version() == std::make_tuple<u32>(3, 2);
+
+    auto map_shader = use_320   ? "map.es320.vert"_rsc
+                      : use_410 ? "map.core410.vert"_rsc
+                                : "map.core460.vert"_rsc;
+    auto wireframe  = use_320   ? "white.es320.frag"_rsc
+                      : use_410 ? "wireframe.core410.frag"_rsc
+                                : "wireframe.core460.frag"_rsc;
+    auto map_senv   = use_320   ? "map_senv.es320.frag"_rsc
+                      : use_410 ? "map_senv.core410.frag"_rsc
+                                : "map_senv.core460.frag"_rsc;
+    auto white      = use_320   ? "white.es320.frag"_rsc
+                      : use_410 ? "scenery.core410.frag"_rsc
+                                : "scenery.core460.frag"_rsc;
+    auto scenery    = use_320   ? "scenery.es320.vert"_rsc
+                      : use_410 ? "scenery.core410.vert"_rsc
+                                : "scenery.core460.vert"_rsc;
+    auto map_basic  = use_320   ? "map.es320.frag"_rsc
+                      : use_410 ? "map.core410.frag"_rsc
+                                : "map.core460.frag"_rsc;
     {
         auto pipeline = gfx.alloc_program();
         pipeline->add(
@@ -221,10 +465,7 @@ void create_shaders(compo::EntityContainer& e)
             gfx.alloc_shader(map_shader.data()));
         pipeline->add(
             gfx::program_t::stage_t::Fragment,
-            gfx.alloc_shader((use_es_shaders    ? "map.frag"_rsc
-                              : use_old_shaders ? "map.410.frag"_rsc
-                                                : "map.frag"_rsc)
-                                 .data())
+            gfx.alloc_shader(map_basic.data())
             //
         );
         if(auto res = pipeline->compile(); res.has_error())
@@ -237,20 +478,9 @@ void create_shaders(compo::EntityContainer& e)
     {
         auto pipeline = gfx.alloc_program();
         pipeline->add(
-            gfx::program_t::stage_t::Vertex,
-            gfx.alloc_shader((use_es_shaders    ? "scenery.es320.vert"_rsc
-                              : use_old_shaders ? "scenery.410.vert"_rsc
-                                                : "scenery.vert"_rsc)
-                                 .data()));
+            gfx::program_t::stage_t::Vertex, gfx.alloc_shader(scenery.data()));
         pipeline->add(
-            gfx::program_t::stage_t::Fragment,
-            //                    gfx.alloc_shader("white.frag"_rsc.data())
-            gfx.alloc_shader((use_es_shaders    ? "white.es.frag"_rsc
-                              : use_old_shaders ? "scenery.410.frag"_rsc
-                                                : "scenery.frag"_rsc)
-                                 .data())
-            //
-        );
+            gfx::program_t::stage_t::Fragment, gfx.alloc_shader(white.data()));
         if(auto res = pipeline->compile(); res.has_error())
         {
             auto [msg] = res.error();
@@ -265,13 +495,25 @@ void create_shaders(compo::EntityContainer& e)
             gfx.alloc_shader(map_shader.data()));
         pipeline->add(
             gfx::program_t::stage_t::Fragment,
+            gfx.alloc_shader(wireframe.data())
+            //
+        );
+        if(auto res = pipeline->compile(); res.has_error())
+        {
+            auto [msg] = res.error();
+            cFatal("Failed to compile bsp shader: {0}", msg);
+        }
+        resources.wireframe_pipeline = pipeline;
+    }
+    {
+        auto pipeline = gfx.alloc_program();
+        pipeline->add(
+            gfx::program_t::stage_t::Vertex,
+            gfx.alloc_shader(map_shader.data()));
+        pipeline->add(
+            gfx::program_t::stage_t::Fragment,
             gfx.alloc_shader(
-                //                        "white.frag"_rsc.data(),
-                //                                            gfx.alloc_shader(
-                (use_es_shaders    ? "map_senv.frag"_rsc
-                 : use_old_shaders ? "map_senv.410.frag"_rsc
-                                   : "map_senv.frag"_rsc)
-                    .data(),
+                map_senv.data(),
                 {{"MICRO_BLEND", "1"}, {"PRIMARY_BLEND", "1"}}));
         if(auto res = pipeline->compile(); res.has_error())
         {
@@ -288,10 +530,7 @@ void create_shaders(compo::EntityContainer& e)
         pipeline->add(
             gfx::program_t::stage_t::Fragment,
             //                    gfx.alloc_shader("white.frag"_rsc.data())
-            gfx.alloc_shader((use_es_shaders    ? "white.es.frag"_rsc
-                              : use_old_shaders ? "wireframe.410.frag"_rsc
-                                                : "wireframe.frag"_rsc)
-                                 .data())
+            gfx.alloc_shader(wireframe.data())
             //
         );
         if(auto res = pipeline->compile(); res.has_error())
@@ -302,14 +541,20 @@ void create_shaders(compo::EntityContainer& e)
         resources.debug_lines_pipeline = pipeline;
     }
 
+    auto debug_vert = use_320   ? "debug_lines.es320.vert"_rsc
+                      : use_410 ? "debug_lines.core410.vert"_rsc
+                                : "debug_lines.core460.vert"_rsc;
+    auto debug_frag = use_320   ? "debug_lines.es320.frag"_rsc
+                      : use_410 ? "debug_lines.core410.frag"_rsc
+                                : "debug_lines.core460.frag"_rsc;
     {
         auto pipeline = gfx.alloc_program();
         pipeline->add(
             gfx::program_t::stage_t::Vertex,
-            gfx.alloc_shader("debug_lines.vert"_rsc.data()));
+            gfx.alloc_shader(debug_vert.data()));
         pipeline->add(
             gfx::program_t::stage_t::Fragment,
-            gfx.alloc_shader("debug_lines.frag"_rsc.data()));
+            gfx.alloc_shader(debug_frag.data()));
         if(auto res = pipeline->compile(); res.has_error())
         {
             auto [msg] = res.error();
@@ -317,6 +562,39 @@ void create_shaders(compo::EntityContainer& e)
         }
         resources.debug_lines_pipeline = pipeline;
     }
+}
+
+void set_resource_labels(EntityContainer& e)
+{
+    if constexpr(!compile_info::debug_mode)
+        return;
+    gfx::api& api     = e.subsystem_cast<gfx::system>();
+    gfx::debug::api& debug     = api.debug();
+    BlamResources&   resources = e.subsystem_cast<BlamResources>();
+
+    debug.annotate(*resources.bsp_pipeline, "map_basic");
+    debug.annotate(*resources.senv_micro_pipeline, "map_senv");
+    debug.annotate(*resources.model_pipeline, "scenery");
+    debug.annotate(*resources.debug_lines_pipeline, "debug_lines");
+    debug.annotate(*resources.wireframe_pipeline, "wireframe");
+
+    debug.annotate(*resources.bsp_attr, "bsp_vao");
+    debug.annotate(*resources.bsp_buf, "bsp_vertex_buf");
+    debug.annotate(*resources.bsp_light_buf, "bsp_light_buf");
+    debug.annotate(*resources.bsp_index, "bsp_index_buf");
+
+    debug.annotate(*resources.model_attr, "model_vao");
+    debug.annotate(*resources.model_buf, "model_vertex_buf");
+    debug.annotate(*resources.model_index, "model_index_buf");
+
+    debug.annotate(*resources.material_store, "material_buffer");
+    debug.annotate(*resources.model_matrix_store, "model_matrices");
+
+    debug.annotate(*resources.debug_attr, "debug_vao");
+    debug.annotate(*resources.debug_lines, "debug_vertices");
+
+    if(api.default_rendertarget() != resources.offscreen)
+        debug.annotate(*resources.offscreen, "offscreen");
 }
 
 void create_camera(

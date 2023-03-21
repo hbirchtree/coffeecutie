@@ -13,6 +13,8 @@ struct buffer_slice_t;
 
 struct buffer_t : std::enable_shared_from_this<buffer_t>
 {
+    static constexpr auto debug_identifier = group::object_identifier::buffer;
+
     buffer_t(
         features::buffers features,
         workarounds       workarounds,

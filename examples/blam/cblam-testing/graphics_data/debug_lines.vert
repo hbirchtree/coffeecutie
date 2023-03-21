@@ -1,10 +1,7 @@
-#version 100
+#version 460 core
 
-precision lowp float;
-
-attribute vec3 position;
-
-uniform mat4 camera;
+layout(location=0) in vec3 position;
+layout(location=0) uniform mat4 camera;
 
 void main()
 {

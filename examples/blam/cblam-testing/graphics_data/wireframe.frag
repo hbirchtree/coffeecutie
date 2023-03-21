@@ -1,20 +1,18 @@
-#version 320 es
+#version 460 core
 
-#extension GL_EXT_shader_io_blocks : enable
-
-precision highp float;
-precision highp int;
-
-in FragData {
+layout(location = 0) in FragData {
     vec3 world_pos;
     vec2 tex;
+    vec3 normal;
+    vec3 binormal;
+    vec3 tangent;
     vec2 light_tex;
     flat int instanceId;
 } frag;
 
-uniform float render_distance;
+layout(location = 15) uniform float render_distance;
 
-out vec4 out_color;
+layout(location = 0) out vec4 out_color;
 
 void main()
 {

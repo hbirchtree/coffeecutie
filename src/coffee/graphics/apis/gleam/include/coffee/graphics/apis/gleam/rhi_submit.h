@@ -285,7 +285,7 @@ inline void multi_indirect_draw(
 } // namespace detail
 
 template<typename... MList>
-inline Optional<Tup<error, std::string_view>> api::submit(
+inline optional<tuple<error, std::string_view>> api::submit(
     draw_command const& command, MList&&... modifiers)
 {
     using namespace std::string_view_literals;
@@ -341,10 +341,13 @@ inline Optional<Tup<error, std::string_view>> api::submit(
 
     std::shared_ptr<buffer_t> element_buf;
 #if GLEAM_MAX_VERSION_ES != 0x200
-    if(m_features.vertex.vertex_arrays && m_features.vertex.attribute_binding)
+    if(m_features.vertex.layout_binding)
+    {
+        cmd::bind_vertex_array(vao->m_handle);
+    } else if(m_features.vertex.vertex_arrays)
     {
         while(!m_features.vertex.layout_binding
-           || m_workarounds.draw.force_vertex_attrib_names)
+              || m_workarounds.draw.force_vertex_attrib_names)
         {
             if(program->m_attribute_names == vao->m_attribute_names)
                 break;
@@ -397,24 +400,25 @@ inline Optional<Tup<error, std::string_view>> api::submit(
     detail::shader_bookkeeping_t bookkeeping{};
     (detail::apply_command_modifier(*program, bookkeeping, modifiers), ...);
 
-    std::function<void()> apply_instance_id   = []() {};
-    std::function<void()> apply_base_instance = []() {};
+    std::function<void()>    apply_instance_id   = []() {};
+    std::function<void()>    apply_base_instance = []() {};
+    std::function<void(u32)> apply_vertex_offset = [](u32) {};
 
     if(m_workarounds.draw.emulated_instance_id)
     {
         if constexpr(compile_info::debug_mode)
         {
             auto loc = detail::get_program_uniform_location(
-                *program, program_t::stage_t::Vertex, {"g_InstanceID"sv});
+                *program, program_t::stage_t::Vertex, {"glw_InstanceID"sv});
             if(loc == invalid_uniform)
                 debug().message(
-                    "uniform 'g_InstanceID' not located with emulated InstanceID enabled"sv);
+                    "uniform 'glw_InstanceID' not located with emulated InstanceID enabled"sv);
         }
         apply_instance_id = [&bookkeeping, &program]() {
             auto instanceUniform = make_uniform_list(
                 typing::graphics::ShaderStage::Vertex,
                 uniform_pair{
-                    {"g_InstanceID"sv},
+                    {"glw_InstanceID"sv},
                     SpanOne<const i32>(bookkeeping.instanceId),
                 });
             detail::apply_command_modifier(
@@ -426,19 +430,32 @@ inline Optional<Tup<error, std::string_view>> api::submit(
         if constexpr(compile_info::debug_mode)
         {
             auto loc = detail::get_program_uniform_location(
-                *program, program_t::stage_t::Vertex, {"g_BaseInstance"sv});
+                *program, program_t::stage_t::Vertex, {"glw_BaseInstance"sv});
             if(loc == invalid_uniform)
                 debug().message(
-                    "uniform 'g_BaseInstance' not located with emulated BaseInstance enabled"sv);
+                    "uniform 'glw_BaseInstance' not located with emulated BaseInstance enabled"sv);
         }
         apply_base_instance = [&bookkeeping, &program]() {
             auto baseUniform = make_uniform_list(
                 typing::graphics::ShaderStage::Vertex,
                 uniform_pair{
-                    {"g_BaseInstance"sv},
+                    {"glw_BaseInstance"sv},
                     SpanOne<const i32>(bookkeeping.baseInstance),
                 });
             detail::apply_command_modifier(*program, bookkeeping, baseUniform);
+        };
+    }
+    if(m_workarounds.draw.emulated_vertex_offset && uses_vertex_offset)
+    {
+        apply_vertex_offset = [&bookkeeping, &vao](u32 offset) {
+            for(auto const& attrib : vao->m_attributes)
+            {
+                cmd::bind_buffer(
+                    gl::group::buffer_target_arb::array_buffer,
+                    vao->m_buffers.at(attrib.buffer.id).lock()->m_handle);
+                detail::vertex_setup_attribute(
+                    attrib, offset * attrib.value.stride);
+            }
         };
     }
 
@@ -469,7 +486,7 @@ inline Optional<Tup<error, std::string_view>> api::submit(
         auto log = detail::program_log(program->m_handle);
         if(auto error = detail::evaluate_draw_state(m_limits, command);
            error.has_value())
-            return std::make_tuple(*error, String());
+            return std::make_tuple(*error, string());
     }
 
     if(multi_indirect_supported && (!call.indexed || has_uniform_element_type))
@@ -489,6 +506,7 @@ inline Optional<Tup<error, std::string_view>> api::submit(
         {
             bookkeeping.baseInstance = d.instances.offset;
             apply_base_instance();
+            apply_vertex_offset(call.indexed ? d.elements.vertex_offset : 0);
             detail::direct_draw(call, d, bookkeeping, m_workarounds);
         }
     } else
@@ -532,16 +550,12 @@ inline Optional<Tup<error, std::string_view>> api::submit(
         }
     }
 
-    if(!m_features.vertex.vertex_arrays || !m_features.vertex.attribute_binding)
+    if(!m_features.vertex.vertex_arrays)
         for(auto const& attrib : vao->m_attributes)
             cmd::disable_vertex_attrib_array(attrib.index);
 
     if(element_buf)
-    {
-        cmd::bind_buffer(
-            group::buffer_target_arb::element_array_buffer,
-            element_buf->m_handle);
-    }
+        cmd::bind_buffer(group::buffer_target_arb::element_array_buffer, 0);
 
     if(m_features.vertex.vertex_arrays)
         cmd::bind_vertex_array(0);

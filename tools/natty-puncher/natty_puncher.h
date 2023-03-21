@@ -160,7 +160,7 @@ FORCEDINLINE void asio_noop(asio::error_code ec, size_t){C_ERROR_CHECK(ec)}
 
 FORCEDINLINE void establish_test_connection(
     test_connect_data_t&           data,
-    command_t const&               command,
+    command_t const&               /*command*/,
     asio::ip::udp::endpoint const& sender,
     member_t                       member)
 {

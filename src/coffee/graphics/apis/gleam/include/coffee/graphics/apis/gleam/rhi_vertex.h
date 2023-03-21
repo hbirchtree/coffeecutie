@@ -206,6 +206,8 @@ inline void vertex_setup_attribute(vertex_attribute const& attr, u32 offset = 0)
     || defined(GL_OES_vertex_array_object)
 struct vertex_array_t
 {
+    static constexpr auto debug_identifier
+        = group::object_identifier::vertex_array;
     using attribute_type = vertex_attribute;
 
     vertex_array_t(features::vertices& features, debug::api& debug) :
@@ -359,10 +361,12 @@ struct vertex_array_t
             if(attribute.buffer.id != binding)
                 continue;
 
-            [[maybe_unused]] bool packed = attribute.value.flags
-                          & vertex_attribute::attribute_flags::packed;
-            [[maybe_unused]] bool instanced = attribute.value.flags
-                             & vertex_attribute::attribute_flags::instanced;
+            [[maybe_unused]] bool packed
+                = attribute.value.flags
+                  & vertex_attribute::attribute_flags::packed;
+            [[maybe_unused]] bool instanced
+                = attribute.value.flags
+                  & vertex_attribute::attribute_flags::instanced;
             packed = packed && detail::vertex_is_int_type(attribute.value.type);
 
 #if GLEAM_MAX_VERSION >= 0x450
@@ -409,7 +413,9 @@ struct vertex_array_t
                 else
 #endif
                     detail::vertex_setup_attribute(attribute);
-            } else
+            }
+
+            if(!m_features.vertex_offset)
                 m_buffers.insert({binding, buffer});
         }
         if(!m_features.dsa)
@@ -454,8 +460,8 @@ struct vertex_array_t
             cmd::bind_buffer(
                 group::buffer_target_arb::element_array_buffer,
                 buffer->m_handle);
-        } else
-            m_element_buffer = buffer;
+        }
+        m_element_buffer = buffer;
 
         if(!m_features.dsa)
         {

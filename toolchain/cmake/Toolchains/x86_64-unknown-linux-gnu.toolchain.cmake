@@ -13,6 +13,7 @@ set ( CMAKE_CXX_COMPILER "${TOOLCHAIN_ROOT}/bin/${TOOLCHAIN_TOOL}g++" CACHE FILE
 add_link_options (
     -static-libstdc++
     -static-libgcc
+    -lssp_nonshared
     -Wl,-rpath-link,../lib
     )
 

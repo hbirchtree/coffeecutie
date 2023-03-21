@@ -1,12 +1,6 @@
-#version 320 es
+#version 460 core
 
-#extension GL_EXT_shader_io_blocks : enable
-
-precision highp float;
-precision highp int;
-precision highp sampler2DArray;
-
-in FragData {
+layout(location = 0) in FragData {
     vec3 world_pos;
     vec2 tex;
     vec3 normal;
@@ -39,20 +33,19 @@ struct Material
     Lightmap lightmap;
 };
 
-uniform sampler2DArray base;
-uniform sampler2DArray primary;
-uniform sampler2DArray secondary;
-uniform sampler2DArray micro;
-uniform sampler2DArray lightmaps;
-
-uniform float render_distance;
+layout(location = 10, binding = 0) uniform sampler2DArray base;
+layout(location = 11, binding = 1) uniform sampler2DArray primary;
+layout(location = 12, binding = 2) uniform sampler2DArray secondary;
+layout(location = 13, binding = 3) uniform sampler2DArray micro;
+layout(location = 14, binding = 4) uniform sampler2DArray lightmaps;
+layout(location = 15) uniform float render_distance;
 
 layout(binding = 1, std140) buffer MaterialProperties
 {
-    Material instance[400];
+    Material instance[];
 } mats;
 
-out vec4 out_color;
+layout(location = 0) out vec4 final_color;
 
 const uint base_map_id  = 0U;
 const uint micro_map_id = 1U;
@@ -101,12 +94,12 @@ void main()
 
     float map_mix = color.a;
 
-    out_color.rgb =
+    vec3 out_color =
             color.rgb *
-//            (
-//                (primary.rgb * map_mix) +
-//                (secondary.rgb * (1.0 - map_mix))
-//            ) *
+            (
+                (primary.rgb * map_mix) +
+                (secondary.rgb * (1.0 - map_mix))
+            ) *
             micro_col.rgb *
             lightmap.rgb
             ;
@@ -119,5 +112,7 @@ void main()
 //    out_color.rgb = abs(frag.normal);
 
 //    out_color.rgb = texture(primary, vec3(frag.tex, frag.instanceId)).rgb;
-    out_color.a = 1.0;
+
+    out_color.rgb = frag.tex.xyy;
+    final_color = vec4(out_color.rgb, 1.0);
 }

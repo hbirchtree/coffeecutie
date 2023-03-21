@@ -16,7 +16,6 @@
 #include <coffee/core/platform_data.h>
 #include <coffee/core/types/chunk.h>
 #include <coffee/core/types/display/event.h>
-#include <coffee/graphics/apis/gleam/rhi.h>
 #include <peripherals/libc/memory_ops.h>
 #include <peripherals/typing/vectors/vectors.h>
 

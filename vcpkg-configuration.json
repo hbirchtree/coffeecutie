@@ -6,18 +6,12 @@
         "./toolchain/vcpkg/ports/discord-rpc",
         "./toolchain/vcpkg/ports/sdl2",
         "./toolchain/vcpkg/ports/sdl2-wayland",
+        "./toolchain/vcpkg/ports/shaderc",
+        "./toolchain/vcpkg/ports/spirv-tools",
         "./toolchain/vcpkg/ports/squashfuse",
         "./toolchain/vcpkg/ports/stb"
     ],
     "overlay-triplets": [
         "./toolchain/vcpkg/triplets"
-    ],
-    "registries": [
-        {
-            "kind": "git",
-            "repository": "https://github.com/hbirchtree/appimage-vcpkg-registry",
-            "baseline": "master",
-            "packages": ["appimage-runtime", "squashfuse"]
-        }
     ]
 }

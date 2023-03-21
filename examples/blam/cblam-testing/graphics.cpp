@@ -100,7 +100,7 @@ static void reinit_map(
     shaders.load_from(data.map_container);
 
     load_scenario_bsp(e, data);
-    //    load_scenario_scenery(e, data);
+    load_scenario_scenery(e, data);
 
     create_camera(
         e, data.scenario->mp.player_spawns.data(files->map_magic).value());
@@ -139,7 +139,8 @@ i32 blam_main(i32, cstring_w*)
 #if defined(SELECT_API_OPENGL)
     auto& glConfig        = loader.config<comp_app::GLConfig>();
     glConfig.swapInterval = 1;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(
+        compile_info::debug_mode && !compile_info::platform::is_emscripten)
         glConfig.profile |= comp_app::GLConfig::Debug;
 #endif
 
@@ -156,8 +157,15 @@ i32 blam_main(i32, cstring_w*)
            time_point const&) {
             ProfContext _(__FUNCTION__);
 
-            auto& gfx        = e.register_subsystem_inplace<gfx::system>();
-            auto  load_error = gfx.load(gleam::emulation::arm::mali_g710());
+            auto& gfx = e.register_subsystem_inplace<gfx::system>();
+            auto  load_error
+                = gfx.load(/*gfx::emulation::qcom::adreno_320()*/
+                           //            {
+                           //                .api_version = 0x410,
+                           //                .api_type    =
+                           //                gleam::api_type_t::core,
+                           //            }
+                );
 
             if(load_error)
             {
@@ -227,6 +235,7 @@ i32 blam_main(i32, cstring_w*)
 
             create_resources(e);
             create_shaders(e);
+            set_resource_labels(e);
             alloc_renderer(e);
 
             using namespace ::platform::url::constructors;
@@ -234,9 +243,11 @@ i32 blam_main(i32, cstring_w*)
             Url map_filename;
             Url map_dir;
 
-            if constexpr(compile_info::platform::is_android)
+            if constexpr(
+                compile_info::platform::is_android
+                || compile_info::platform::is_emscripten)
             {
-                map_filename = "b40.map"_asset;
+                map_filename = "beavercreek.map"_asset;
                 map_dir      = "."_asset;
             } else if(!GetInitArgs().arguments().empty())
             {

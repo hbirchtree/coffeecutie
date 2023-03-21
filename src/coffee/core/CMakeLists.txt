@@ -170,19 +170,6 @@ coffee_library (
     LIBRARIES CoreCommon
     )
 
-coffee_library (
-    TARGET CoreObject
-
-    SOURCES
-    private/base/cobject.cpp
-
-    LIBRARIES CoreCommon
-
-    HEADER_DIRS
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/core/object>
-    HEADER_BASE coffee/core
-    )
-
 #
 # Profiling export to Chrome trace format
 #
@@ -197,15 +184,6 @@ coffee_library (
     HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/core/profiler>
     HEADER_BASE coffee/core
-    )
-
-#
-# Custom INI reader/writer
-#
-coffee_library (
-    TARGET INI
-    LIBRARIES CoreCommon
-    SOURCES private/datastorage/text/ini/ciniparser.cpp
     )
 
 #
@@ -224,17 +202,19 @@ target_precompile_headers ( EntComp PUBLIC
     $<$<COMPILE_LANGUAGE:CXX>:coffee/components/components.h>
     )
 
-#
-# Unit test librar that dies properly when a test fails
-#
-coffee_library (
-    TARGET Testing
-    SOURCES private/unit_tests/framework.cpp
-    LIBRARIES CoreTerminal CoreCommon
-    HEADER_DIRS
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/core/unit_tests>
-    HEADER_BASE coffee/core
-    )
+if(BUILD_TESTS)
+    #
+    # Unit test library that dies properly when a test fails
+    #
+    coffee_library (
+        TARGET Testing
+        SOURCES private/unit_tests/framework.cpp
+        LIBRARIES CoreTerminal CoreCommon
+        HEADER_DIRS
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/core/unit_tests>
+        HEADER_BASE coffee/core
+        )
+endif()
 
 if(LOWFAT_BUILD)
     target_compile_definitions (  CoreCommon INTERFACE

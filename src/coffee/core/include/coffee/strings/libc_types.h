@@ -53,7 +53,7 @@ inline CString to_string(std::basic_string_view<CharT> const& v)
 {
     if(v.empty())
         return {};
-    return CString(v.data(), v.length());
+    return CString(v.begin(), v.end());
 }
 #endif
 

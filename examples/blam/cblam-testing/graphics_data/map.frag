@@ -1,14 +1,15 @@
-#version 320 es
-
-#extension GL_EXT_shader_io_blocks : enable
+#version 460 core
 
 precision highp float;
 precision highp int;
 precision highp sampler2DArray;
 
-in FragData {
+layout(location = 0) in FragData {
     vec3 world_pos;
     vec2 tex;
+    vec3 normal;
+    vec3 binormal;
+    vec3 tangent;
     vec2 light_tex;
     flat int instanceId;
 } frag;
@@ -23,16 +24,16 @@ struct Material
     float bias;
 };
 
-uniform sampler2DArray bc1_tex;
-uniform sampler2DArray bc3_tex;
-uniform sampler2DArray bc5_tex;
+layout(location = 16, binding = 0) uniform sampler2DArray bc1_tex;
+layout(location = 17, binding = 1) uniform sampler2DArray bc3_tex;
+layout(location = 18, binding = 2) uniform sampler2DArray bc5_tex;
 
 layout(binding = 1, std140) buffer MaterialProperties
 {
     Material instance[];
 } mats;
 
-out vec4 out_color;
+layout(location = 0) out vec4 out_color;
 
 void main()
 {
@@ -50,5 +51,7 @@ void main()
     else if(mats.instance[frag.instanceId].source == 2)
         out_color = texture(bc5_tex, vec3(sample_pos, layer));
 
+    out_color.rgb = frag.tex.xyy;
     out_color.rgb = pow(out_color.rgb, vec3(1.0 / 0.8));
+    out_color.a = 1.0;
 }

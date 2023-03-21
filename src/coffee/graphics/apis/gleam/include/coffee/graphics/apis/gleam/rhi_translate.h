@@ -305,7 +305,8 @@ inline Tup<T, group::pixel_type, group::pixel_format> to(
         /* Special formats */
         {P::Depth16,
          {f::depth_component16, b::unsigned_short, p::depth_component}},
-//        {P::Depth16F, {f::depth_component, b::half_float, p::depth_component}},
+//        {P::Depth16F, {f::depth_component, b::half_float,
+//        p::depth_component}},
 #if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
         {P::Depth32F, {f::depth_component32f, b::float_, p::depth_component}},
         {P::Depth24Stencil8,
@@ -529,7 +530,8 @@ inline T to(render_targets::attachment attachment, u32 i)
 template<typename T = group::buffer_usage_arb>
 requires stl_types::
     is_any_of<T, group::buffer_usage_arb, group::vertex_buffer_object_usage>
-inline T to(features::buffers const& features, semantic::RSCA flags)
+inline T to(
+    [[maybe_unused]] features::buffers const& features, semantic::RSCA flags)
 {
     using enum_helpers::feval;
     using semantic::RSCA;
@@ -597,7 +599,8 @@ inline group::buffer_storage_mask to(semantic::RSCA flags)
 template<typename T>
 requires std::is_same_v<T, group::buffer_access_arb>
 inline group::buffer_access_arb to(
-    features::buffers const& features, [[maybe_unused]] semantic::RSCA flags)
+    [[maybe_unused]] features::buffers const& features,
+    [[maybe_unused]] semantic::RSCA           flags)
 {
     using enum_helpers::feval;
     using semantic::RSCA;

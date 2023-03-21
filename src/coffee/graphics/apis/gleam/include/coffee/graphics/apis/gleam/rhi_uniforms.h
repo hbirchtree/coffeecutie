@@ -199,6 +199,8 @@ inline bool apply_command_modifier(
         {
             auto blk_idx
                 = cmd::get_uniform_block_index(program.m_handle, key.name);
+            if(blk_idx == std::numeric_limits<u32>::max())
+                continue;
             cmd::uniform_block_binding(program.m_handle, blk_idx, binding);
         }
 
@@ -268,7 +270,7 @@ inline bool apply_command_modifier(
         = std::get<2>(samplers.at(0))->m_source.lock()->m_features;
 
 #if GLEAM_MAX_VERSION >= 0x450
-    if(features.dsa)
+    if(features.dsa && false)
     {
         using typing::vector_types::Vecui2;
 
@@ -297,7 +299,12 @@ inline bool apply_command_modifier(
     {
         auto [stage, locinfo, sampler_hnd] = sampler;
         auto& texture                      = *sampler_hnd->m_source.lock();
-        auto  index                        = bookkeeping.sampler_idx++;
+        u32   index;
+        if(features.sampler_binding)
+            index = locinfo.location != -1 ? locinfo.location
+                                           : bookkeeping.sampler_idx++;
+        else
+            index = bookkeeping.sampler_idx++;
         cmd::active_texture(group::texture_unit::texture0 + index);
         cmd::bind_texture(convert::to(texture.m_type), texture.m_handle);
 #if GLEAM_MAX_VERSION_ES != 0x200
@@ -309,7 +316,8 @@ inline bool apply_command_modifier(
             apply_texture_filtering_opts(
                 texture.m_type, sampler_hnd->m_min, sampler_hnd->m_mag);
         }
-        apply_sampler_uniform(program, stage, locinfo, index);
+        if(!features.sampler_binding)
+            apply_sampler_uniform(program, stage, locinfo, index);
     }
     return true;
 }

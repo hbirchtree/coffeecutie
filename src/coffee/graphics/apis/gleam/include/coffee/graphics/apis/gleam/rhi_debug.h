@@ -3,6 +3,7 @@
 #include "rhi_features.h"
 #include "rhi_translate.h"
 
+#include <glw/enums/ObjectIdentifier.h>
 #include <glw/extensions/KHR_debug.h>
 
 #include <peripherals/stl/source_location.h>
@@ -26,6 +27,10 @@ struct null_api
     }
 
     inline void message(std::string_view const&)
+    {
+    }
+
+    inline void annotate(u32, std::string_view const&)
     {
     }
 };
@@ -151,7 +156,7 @@ struct api
         }
 #endif
 #if defined(GL_KHR_debug)
-            if(ext.khr.debug)
+        if(ext.khr.debug)
         {
             cmd::enable(group::enable_cap::debug_output_synchronous_khr);
             gl::khr::debug::debug_message_callback(
@@ -177,6 +182,31 @@ struct api
             return;
         }
 #endif
+    }
+
+    inline void annotate(
+        group::object_identifier identifier,
+        u32                      hnd,
+        std::string_view const&  label)
+    {
+#if GLEAM_MAX_VERSION >= 0x430 || GLEAM_MAX_VERSION_ES >= 0x320
+        if(ext.debug)
+        {
+            cmd::object_label(identifier, hnd, label.size(), label);
+        }
+#endif
+#if defined(GL_KHR_debug)
+        if(ext.khr.debug)
+        {
+            gl::khr::debug::object_label(identifier, hnd, label.size(), label);
+        }
+#endif
+    }
+
+    template<typename T>
+    inline void annotate(T& object, std::string_view const& label)
+    {
+        annotate(T::debug_identifier, object.m_handle, label);
     }
 
     using debug_function  = stl_types::Function<void(

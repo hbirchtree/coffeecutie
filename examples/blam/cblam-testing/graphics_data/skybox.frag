@@ -6,7 +6,7 @@ precision highp float;
 precision highp int;
 precision highp samplerCubeArray;
 
-in FragData {
+layout(location = 0) in FragData {
     vec2 tex;
     flat int instanceId;
 } frag;
@@ -19,9 +19,11 @@ struct
     uint layer;
 };
 
-uniform samplerCubeArray base;
+layout(location = 10) uniform samplerCubeArray base;
+
+layout(location = 0) out vec4 out_color;
 
 void main()
 {
-
+    out_color = vec4(texture(base, vec4(vec3(frag.tex, 0.0 ), 0.0)).rgb, 1.0);
 }
