@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // ObjectIdentifier
-enum class object_identifier : ::libc_types::u32
+enum class object_identifier : u32
 {
 #ifdef GL_BUFFER
     buffer = GL_BUFFER,

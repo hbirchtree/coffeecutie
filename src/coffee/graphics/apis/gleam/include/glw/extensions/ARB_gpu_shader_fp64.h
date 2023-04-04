@@ -96,8 +96,7 @@ requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
      * \param value const GLdouble *
      * \return void
      */
-    STATICINLINE
-    void uniform(i32 location, i32 count, span_const_f64 const& value)
+    STATICINLINE void uniform(i32 location, span_const_f64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -105,7 +104,9 @@ requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
         GLW_FPTR_CHECK(Uniform1dv)
     }
     glUniform1dv(
-        location, count, reinterpret_cast<const GLdouble*>(value.data()));
+        location,
+        value.size(),
+        reinterpret_cast<const GLdouble*>(value.data()));
     detail::error_check("Uniform1dv"sv);
 }
 
@@ -139,8 +140,7 @@ requires(semantic::concepts::Span<span_const_vec_2_f64>&& semantic::concepts::
      * \param value const GLdouble *
      * \return void
      */
-    STATICINLINE
-    void uniform(i32 location, i32 count, span_const_vec_2_f64 const& value)
+    STATICINLINE void uniform(i32 location, span_const_vec_2_f64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -148,7 +148,9 @@ requires(semantic::concepts::Span<span_const_vec_2_f64>&& semantic::concepts::
         GLW_FPTR_CHECK(Uniform2dv)
     }
     glUniform2dv(
-        location, count, reinterpret_cast<const GLdouble*>(value.data()));
+        location,
+        value.size(),
+        reinterpret_cast<const GLdouble*>(value.data()));
     detail::error_check("Uniform2dv"sv);
 }
 
@@ -183,8 +185,7 @@ requires(semantic::concepts::Span<span_const_vec_3_f64>&& semantic::concepts::
      * \param value const GLdouble *
      * \return void
      */
-    STATICINLINE
-    void uniform(i32 location, i32 count, span_const_vec_3_f64 const& value)
+    STATICINLINE void uniform(i32 location, span_const_vec_3_f64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -192,7 +193,9 @@ requires(semantic::concepts::Span<span_const_vec_3_f64>&& semantic::concepts::
         GLW_FPTR_CHECK(Uniform3dv)
     }
     glUniform3dv(
-        location, count, reinterpret_cast<const GLdouble*>(value.data()));
+        location,
+        value.size(),
+        reinterpret_cast<const GLdouble*>(value.data()));
     detail::error_check("Uniform3dv"sv);
 }
 
@@ -228,8 +231,7 @@ requires(semantic::concepts::Span<span_const_vec_4_f64>&& semantic::concepts::
      * \param value const GLdouble *
      * \return void
      */
-    STATICINLINE
-    void uniform(i32 location, i32 count, span_const_vec_4_f64 const& value)
+    STATICINLINE void uniform(i32 location, span_const_vec_4_f64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -237,7 +239,9 @@ requires(semantic::concepts::Span<span_const_vec_4_f64>&& semantic::concepts::
         GLW_FPTR_CHECK(Uniform4dv)
     }
     glUniform4dv(
-        location, count, reinterpret_cast<const GLdouble*>(value.data()));
+        location,
+        value.size(),
+        reinterpret_cast<const GLdouble*>(value.data()));
     detail::error_check("Uniform4dv"sv);
 }
 
@@ -253,10 +257,7 @@ requires(semantic::concepts::Span<span_const_mat_2x2_f64>&& semantic::concepts::
      * \return void
      */
     STATICINLINE void uniform(
-        i32                           location,
-        i32                           count,
-        bool                          transpose,
-        span_const_mat_2x2_f64 const& value)
+        i32 location, bool transpose, span_const_mat_2x2_f64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -265,7 +266,7 @@ requires(semantic::concepts::Span<span_const_mat_2x2_f64>&& semantic::concepts::
     }
     glUniformMatrix2dv(
         location,
-        count,
+        value.size(),
         transpose,
         reinterpret_cast<const GLdouble*>(value.data()));
     detail::error_check("UniformMatrix2dv"sv);
@@ -283,10 +284,7 @@ requires(semantic::concepts::Span<span_const_mat_2x3_f64>&& semantic::concepts::
      * \return void
      */
     STATICINLINE void uniform(
-        i32                           location,
-        i32                           count,
-        bool                          transpose,
-        span_const_mat_2x3_f64 const& value)
+        i32 location, bool transpose, span_const_mat_2x3_f64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -295,7 +293,7 @@ requires(semantic::concepts::Span<span_const_mat_2x3_f64>&& semantic::concepts::
     }
     glUniformMatrix2x3dv(
         location,
-        count,
+        value.size(),
         transpose,
         reinterpret_cast<const GLdouble*>(value.data()));
     detail::error_check("UniformMatrix2x3dv"sv);
@@ -313,10 +311,7 @@ requires(semantic::concepts::Span<span_const_mat_2x4_f64>&& semantic::concepts::
      * \return void
      */
     STATICINLINE void uniform(
-        i32                           location,
-        i32                           count,
-        bool                          transpose,
-        span_const_mat_2x4_f64 const& value)
+        i32 location, bool transpose, span_const_mat_2x4_f64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -325,7 +320,7 @@ requires(semantic::concepts::Span<span_const_mat_2x4_f64>&& semantic::concepts::
     }
     glUniformMatrix2x4dv(
         location,
-        count,
+        value.size(),
         transpose,
         reinterpret_cast<const GLdouble*>(value.data()));
     detail::error_check("UniformMatrix2x4dv"sv);
@@ -343,10 +338,7 @@ requires(semantic::concepts::Span<span_const_mat_3x3_f64>&& semantic::concepts::
      * \return void
      */
     STATICINLINE void uniform(
-        i32                           location,
-        i32                           count,
-        bool                          transpose,
-        span_const_mat_3x3_f64 const& value)
+        i32 location, bool transpose, span_const_mat_3x3_f64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -355,7 +347,7 @@ requires(semantic::concepts::Span<span_const_mat_3x3_f64>&& semantic::concepts::
     }
     glUniformMatrix3dv(
         location,
-        count,
+        value.size(),
         transpose,
         reinterpret_cast<const GLdouble*>(value.data()));
     detail::error_check("UniformMatrix3dv"sv);
@@ -373,10 +365,7 @@ requires(semantic::concepts::Span<span_const_mat_3x2_f64>&& semantic::concepts::
      * \return void
      */
     STATICINLINE void uniform(
-        i32                           location,
-        i32                           count,
-        bool                          transpose,
-        span_const_mat_3x2_f64 const& value)
+        i32 location, bool transpose, span_const_mat_3x2_f64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -385,7 +374,7 @@ requires(semantic::concepts::Span<span_const_mat_3x2_f64>&& semantic::concepts::
     }
     glUniformMatrix3x2dv(
         location,
-        count,
+        value.size(),
         transpose,
         reinterpret_cast<const GLdouble*>(value.data()));
     detail::error_check("UniformMatrix3x2dv"sv);
@@ -403,10 +392,7 @@ requires(semantic::concepts::Span<span_const_mat_3x4_f64>&& semantic::concepts::
      * \return void
      */
     STATICINLINE void uniform(
-        i32                           location,
-        i32                           count,
-        bool                          transpose,
-        span_const_mat_3x4_f64 const& value)
+        i32 location, bool transpose, span_const_mat_3x4_f64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -415,7 +401,7 @@ requires(semantic::concepts::Span<span_const_mat_3x4_f64>&& semantic::concepts::
     }
     glUniformMatrix3x4dv(
         location,
-        count,
+        value.size(),
         transpose,
         reinterpret_cast<const GLdouble*>(value.data()));
     detail::error_check("UniformMatrix3x4dv"sv);
@@ -433,10 +419,7 @@ requires(semantic::concepts::Span<span_const_mat_4x4_f64>&& semantic::concepts::
      * \return void
      */
     STATICINLINE void uniform(
-        i32                           location,
-        i32                           count,
-        bool                          transpose,
-        span_const_mat_4x4_f64 const& value)
+        i32 location, bool transpose, span_const_mat_4x4_f64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -445,7 +428,7 @@ requires(semantic::concepts::Span<span_const_mat_4x4_f64>&& semantic::concepts::
     }
     glUniformMatrix4dv(
         location,
-        count,
+        value.size(),
         transpose,
         reinterpret_cast<const GLdouble*>(value.data()));
     detail::error_check("UniformMatrix4dv"sv);
@@ -463,10 +446,7 @@ requires(semantic::concepts::Span<span_const_mat_4x2_f64>&& semantic::concepts::
      * \return void
      */
     STATICINLINE void uniform(
-        i32                           location,
-        i32                           count,
-        bool                          transpose,
-        span_const_mat_4x2_f64 const& value)
+        i32 location, bool transpose, span_const_mat_4x2_f64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -475,7 +455,7 @@ requires(semantic::concepts::Span<span_const_mat_4x2_f64>&& semantic::concepts::
     }
     glUniformMatrix4x2dv(
         location,
-        count,
+        value.size(),
         transpose,
         reinterpret_cast<const GLdouble*>(value.data()));
     detail::error_check("UniformMatrix4x2dv"sv);
@@ -493,10 +473,7 @@ requires(semantic::concepts::Span<span_const_mat_4x3_f64>&& semantic::concepts::
      * \return void
      */
     STATICINLINE void uniform(
-        i32                           location,
-        i32                           count,
-        bool                          transpose,
-        span_const_mat_4x3_f64 const& value)
+        i32 location, bool transpose, span_const_mat_4x3_f64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -505,7 +482,7 @@ requires(semantic::concepts::Span<span_const_mat_4x3_f64>&& semantic::concepts::
     }
     glUniformMatrix4x3dv(
         location,
-        count,
+        value.size(),
         transpose,
         reinterpret_cast<const GLdouble*>(value.data()));
     detail::error_check("UniformMatrix4x3dv"sv);

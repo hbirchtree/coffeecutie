@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // PrimitiveType
-enum class primitive_type : ::libc_types::u32
+enum class primitive_type : u32
 {
 #ifdef GL_LINES
     lines = GL_LINES,

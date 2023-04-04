@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // PathCoverMode
-enum class path_cover_mode : ::libc_types::u32
+enum class path_cover_mode : u32
 {
 #ifdef GL_BOUNDING_BOX_NV
     bounding_box_nv = GL_BOUNDING_BOX_NV,

@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // ConvolutionBorderModeEXT
-enum class convolution_border_mode_ext : ::libc_types::u32
+enum class convolution_border_mode_ext : u32
 {
 #ifdef GL_REDUCE
     reduce = GL_REDUCE,

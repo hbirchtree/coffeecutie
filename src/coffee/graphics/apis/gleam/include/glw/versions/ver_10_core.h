@@ -353,7 +353,7 @@ requires(MinimumVersion<Current, Version<1, 0>>)
 
      * \return ErrorCode
      */
-    STATICINLINE GLenum get_error()
+    STATICINLINE group::error_code get_error()
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -362,7 +362,7 @@ requires(MinimumVersion<Current, Version<1, 0>>)
     }
     auto out = glGetError();
     detail::error_check("GetError"sv);
-    return out;
+    return static_cast<group::error_code>(out);
 }
 
 template<class span_f32>
@@ -420,7 +420,7 @@ requires(MinimumVersion<Current, Version<1, 0>>)
      * \param name GLenum
      * \return String
      */
-    STATICINLINE stl_types::String get_string(group::string_name name)
+    STATICINLINE std::string get_string(group::string_name name)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -613,7 +613,7 @@ requires(MinimumVersion<Current, Version<1, 0>>)
      * \param cap GLenum
      * \return Boolean
      */
-    STATICINLINE GLboolean is_enabled(group::enable_cap cap)
+    STATICINLINE bool is_enabled(group::enable_cap cap)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -622,7 +622,7 @@ requires(MinimumVersion<Current, Version<1, 0>>)
     }
     auto out = glIsEnabled(static_cast<GLenum>(cap));
     detail::error_check("IsEnabled"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 template<typename Dummy = void>

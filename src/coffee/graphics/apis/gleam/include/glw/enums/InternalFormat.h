@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // InternalFormat
-enum class internal_format : ::libc_types::u32
+enum class internal_format : u32
 {
 #ifdef GL_ALPHA12
     alpha12 = GL_ALPHA12,

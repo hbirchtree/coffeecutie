@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // TextureLayout
-enum class texture_layout : ::libc_types::u32
+enum class texture_layout : u32
 {
 #ifdef GL_LAYOUT_COLOR_ATTACHMENT_EXT
     layout_color_attachment_ext = GL_LAYOUT_COLOR_ATTACHMENT_EXT,

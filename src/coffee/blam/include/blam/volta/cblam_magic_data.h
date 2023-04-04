@@ -18,7 +18,6 @@ struct magic_data_t
     {
         base_ptr = data.data();
     }
-
     inline magic_data_t& operator=(semantic::Bytes const& data)
     {
         base_ptr     = data.data;
@@ -27,15 +26,17 @@ struct magic_data_t
 
         return *this;
     }
-
+    auto data() const
+    {
+        return semantic::Span<const byte_t>(base_ptr, max_size);
+    }
     inline version_t map_version() const
     {
         return header_ptr->version;
     }
-
     inline magic_data_t no_magic() const
     {
-        return magic_data_t();
+        return magic_data_t(data());
     }
 
     union

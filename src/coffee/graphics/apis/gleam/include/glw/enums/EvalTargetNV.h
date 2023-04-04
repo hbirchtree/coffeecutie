@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // EvalTargetNV
-enum class eval_target_nv : ::libc_types::u32
+enum class eval_target_nv : u32
 {
 #ifdef GL_EVAL_2D_NV
     eval_2d_nv = GL_EVAL_2D_NV,

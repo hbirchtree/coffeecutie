@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // SyncStatus
-enum class sync_status : ::libc_types::u32
+enum class sync_status : u32
 {
 #ifdef GL_ALREADY_SIGNALED
     already_signaled = GL_ALREADY_SIGNALED,

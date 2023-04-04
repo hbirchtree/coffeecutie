@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // InvalidateFramebufferAttachment
-enum class invalidate_framebuffer_attachment : ::libc_types::u32
+enum class invalidate_framebuffer_attachment : u32
 {
 #ifdef GL_COLOR
     color = GL_COLOR,

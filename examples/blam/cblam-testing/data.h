@@ -104,3 +104,19 @@ struct BlamResources : compo::SubsystemBase
     std::shared_ptr<gfx::texture_2d_t>         color;
     std::shared_ptr<gfx::texture_2d_t>         depth;
 };
+
+struct PostProcessParameters : compo::SubsystemBase
+{
+    using type = PostProcessParameters;
+
+    f32 exposure{1.5f};
+    f32 gamma{1.6f};
+    bool auto_expose{true};
+};
+
+struct RenderingParameters : compo::SubsystemBase
+{
+    using type = RenderingParameters;
+
+    bool render_scenery{true};
+};

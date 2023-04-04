@@ -36,11 +36,13 @@ struct rng
 
     i32 irand()
     {
-        return rand<i32>(Int32_Min, Int32_Max);
+        using i32_lim = std::numeric_limits<i32>;
+        return rand<i32>(i32_lim::min(), i32_lim::max());
     }
     u32 urand()
     {
-        return rand<u32>(0, UInt32_Max);
+        using u32_lim = std::numeric_limits<u32>;
+        return rand<u32>(u32_lim::min(), u32_lim::min());
     }
 
     scalar frand()

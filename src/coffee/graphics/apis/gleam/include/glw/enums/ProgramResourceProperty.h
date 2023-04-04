@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // ProgramResourceProperty
-enum class program_resource_property : ::libc_types::u32
+enum class program_resource_property : u32
 {
 #ifdef GL_ACTIVE_VARIABLES
     active_variables = GL_ACTIVE_VARIABLES,

@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // ProgramInterface
-enum class program_interface : ::libc_types::u32
+enum class program_interface : u32
 {
 #ifdef GL_BUFFER_VARIABLE
     buffer_variable = GL_BUFFER_VARIABLE,

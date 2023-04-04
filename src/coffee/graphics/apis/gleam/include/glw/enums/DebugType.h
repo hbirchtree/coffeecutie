@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // DebugType
-enum class debug_type : ::libc_types::u32
+enum class debug_type : u32
 {
 #ifdef GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR
     deprecated_behavior = GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR,

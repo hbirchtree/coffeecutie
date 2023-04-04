@@ -1,6 +1,28 @@
-#include "materials.glsl"
+struct Map
+{
+    vec2 atlas_scale;
+    vec2 atlas_offset;
+    vec2 uv_scale;
+    int  layer;
+    float bias;
+};
 
-layout(location = 14, binding = 4) uniform sampler2DArray lightmaps;
+struct Lightmap
+{
+    vec2 atlas_scale;
+    vec2 atlas_offset;
+    int layer;
+    int material_id;
+    int extension;
+    int padding;
+};
+
+struct Material
+{
+    Map      maps[4];
+    Lightmap lightmap;
+};
+
 layout(binding = 1, std140) buffer MaterialProperties
 {
     Material instance[];
@@ -23,18 +45,22 @@ vec4 get_map(in uint map_id, in sampler2DArray sampler, in vec2 tex_coord, in in
     return texture(sampler, vec3(tc * scale + offset, layer & 0xFFFF));
 }
 
+uint get_material_id(in uint instance)
+{
+    return mats.instance[instance].lightmap.material_id;
+}
+
+#if USE_BSP_SHADERS == 1
+layout(location = 14, binding = 4) uniform sampler2DArray lightmaps;
+
 vec4 get_light(in uint instance, in vec2 light_tex)
 {
     vec2 light_scale = mats.instance[instance].lightmap.atlas_scale;
     vec2 light_offset = mats.instance[instance].lightmap.atlas_offset;
-    int light_layer = mats.instance[instance].lightmap.layer;
+    int light_layer = mats.instance[instance].lightmap.layer & 0xFFFF;
 
     return texture(lightmaps, vec3(
                 light_tex * light_scale + light_offset,
                 light_layer), -100.0);
 }
-
-uint get_material_id(in uint instance)
-{
-    return mats.instance[instance].lightmap.material_id;
-}
+#endif

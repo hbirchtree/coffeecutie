@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // SecondaryColorPointerTypeIBM
-enum class secondary_color_pointer_type_ibm : ::libc_types::u32
+enum class secondary_color_pointer_type_ibm : u32
 {
 #ifdef GL_DOUBLE
     double_ = GL_DOUBLE,

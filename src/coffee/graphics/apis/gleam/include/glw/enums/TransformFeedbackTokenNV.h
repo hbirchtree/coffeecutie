@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // TransformFeedbackTokenNV
-enum class transform_feedback_token_nv : ::libc_types::u32
+enum class transform_feedback_token_nv : u32
 {
 #ifdef GL_NEXT_BUFFER_NV
     next_buffer_nv = GL_NEXT_BUFFER_NV,

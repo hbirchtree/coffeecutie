@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // BlendingFactor
-enum class blending_factor : ::libc_types::u32
+enum class blending_factor : u32
 {
 #ifdef GL_CONSTANT_ALPHA
     constant_alpha = GL_CONSTANT_ALPHA,

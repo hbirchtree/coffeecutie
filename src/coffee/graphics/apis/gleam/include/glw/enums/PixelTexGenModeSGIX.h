@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // PixelTexGenModeSGIX
-enum class pixel_tex_gen_mode_sgix : ::libc_types::u32
+enum class pixel_tex_gen_mode_sgix : u32
 {
 #ifdef GL_ALPHA
     alpha = GL_ALPHA,

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <peripherals/libc/types.h>
-#include <peripherals/stl/math.h>
 #include <peripherals/stl/type_safety.h>
 #include <peripherals/typing/vectors/vectors.h>
 
@@ -49,8 +48,8 @@ struct point_2d : base_point
 
     FORCEDINLINE T distance(const point_2d<T>& p)
     {
-        return sqrt(
-            pow(this->x - p.x, 2) + pow(this->y - p.y, 2));
+        return std::sqrt(
+            std::pow(this->x - p.x, 2) + std::pow(this->y - p.y, 2));
     }
 
     template<typename T2>

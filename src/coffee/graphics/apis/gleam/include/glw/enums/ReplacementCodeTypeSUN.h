@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // ReplacementCodeTypeSUN
-enum class replacement_code_type_sun : ::libc_types::u32
+enum class replacement_code_type_sun : u32
 {
 #ifdef GL_UNSIGNED_BYTE
     unsigned_byte = GL_UNSIGNED_BYTE,

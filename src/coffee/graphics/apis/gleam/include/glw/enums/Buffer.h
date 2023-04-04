@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // Buffer
-enum class buffer : ::libc_types::u32
+enum class buffer : u32
 {
 #ifdef GL_COLOR
     color = GL_COLOR,

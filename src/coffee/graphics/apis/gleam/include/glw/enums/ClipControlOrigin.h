@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // ClipControlOrigin
-enum class clip_control_origin : ::libc_types::u32
+enum class clip_control_origin : u32
 {
 #ifdef GL_LOWER_LEFT
     lower_left = GL_LOWER_LEFT,

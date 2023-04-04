@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // SyncObjectMask
-enum class sync_object_mask : ::libc_types::u32
+enum class sync_object_mask : u32
 {
 #ifdef GL_SYNC_FLUSH_COMMANDS_BIT
     sync_flush_commands_bit = GL_SYNC_FLUSH_COMMANDS_BIT,

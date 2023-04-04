@@ -95,12 +95,11 @@ inline bool apply_single_uniform(
         cmd::program_uniform(
             program.m_stages.find(stage)->second->m_handle,
             ulocation,
-            data.size(),
             false,
             std::move(data));
     else
 #endif
-        cmd::uniform(ulocation, data.size(), false, std::move(data));
+        cmd::uniform(ulocation, false, std::move(data));
     return true;
 }
 
@@ -146,7 +145,7 @@ requires(std::is_floating_point_v<T> || std::is_integral_v<T>)
             program.m_stages.find(stage)->second->m_handle, ulocation, data);
     else
 #endif
-        cmd::uniform(ulocation, data.size(), data);
+        cmd::uniform(ulocation, data);
     return true;
 }
 
@@ -520,12 +519,18 @@ inline void undo_command_modifier(
 inline bool apply_command_modifier(
     program_t const& /*program*/,
     shader_bookkeeping_t& /*bookkeeping*/,
-    blend_state& /*view_info*/)
+    blend_state& view_info)
 {
     cmd::enable(group::enable_cap::blend);
-    cmd::blend_func(
-        group::blending_factor::src_alpha,
-        group::blending_factor::one_minus_src_alpha);
+    if(view_info.additive)
+    {
+        cmd::blend_func(
+            group::blending_factor::src_alpha,
+            group::blending_factor::one);
+    } else
+        cmd::blend_func(
+            group::blending_factor::src_alpha,
+            group::blending_factor::one_minus_src_alpha);
     return true;
 }
 

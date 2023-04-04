@@ -87,7 +87,7 @@ requires(semantic::concepts::Span<span_const_void>)
  * \param surface GLvdpauSurfaceNV
  * \return Boolean
  */
-STATICINLINE GLboolean vdpau_is_surface(GLvdpauSurfaceNV surface)
+STATICINLINE bool vdpau_is_surface(GLvdpauSurfaceNV surface)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -96,7 +96,7 @@ STATICINLINE GLboolean vdpau_is_surface(GLvdpauSurfaceNV surface)
     }
     auto out = glVDPAUIsSurfaceNV(surface);
     detail::error_check("VDPAUIsSurfaceNV"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 template<class span_const_GLvdpauSurfaceNV>

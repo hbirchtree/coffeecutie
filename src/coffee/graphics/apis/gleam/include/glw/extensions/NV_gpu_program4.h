@@ -234,7 +234,6 @@ requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
     STATICINLINE void program_env_parameters_i4iv(
         group::program_target       target,
         u32                         index,
-        i32                         count,
         span_const_vec_4_i32 const& params)
 {
     using namespace std::string_view_literals;
@@ -245,7 +244,7 @@ requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
     glProgramEnvParametersI4ivNV(
         static_cast<GLenum>(target),
         index,
-        count,
+        params.size(),
         reinterpret_cast<const GLint*>(params.data()));
     detail::error_check("ProgramEnvParametersI4ivNV"sv);
 }
@@ -264,7 +263,6 @@ requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
     STATICINLINE void program_env_parameters_i4uiv(
         group::program_target       target,
         u32                         index,
-        i32                         count,
         span_const_vec_4_u32 const& params)
 {
     using namespace std::string_view_literals;
@@ -275,7 +273,7 @@ requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
     glProgramEnvParametersI4uivNV(
         static_cast<GLenum>(target),
         index,
-        count,
+        params.size(),
         reinterpret_cast<const GLuint*>(params.data()));
     detail::error_check("ProgramEnvParametersI4uivNV"sv);
 }
@@ -398,7 +396,6 @@ requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
     STATICINLINE void program_local_parameters_i4iv(
         group::program_target       target,
         u32                         index,
-        i32                         count,
         span_const_vec_4_i32 const& params)
 {
     using namespace std::string_view_literals;
@@ -409,7 +406,7 @@ requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
     glProgramLocalParametersI4ivNV(
         static_cast<GLenum>(target),
         index,
-        count,
+        params.size(),
         reinterpret_cast<const GLint*>(params.data()));
     detail::error_check("ProgramLocalParametersI4ivNV"sv);
 }
@@ -428,7 +425,6 @@ requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
     STATICINLINE void program_local_parameters_i4uiv(
         group::program_target       target,
         u32                         index,
-        i32                         count,
         span_const_vec_4_u32 const& params)
 {
     using namespace std::string_view_literals;
@@ -439,7 +435,7 @@ requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
     glProgramLocalParametersI4uivNV(
         static_cast<GLenum>(target),
         index,
-        count,
+        params.size(),
         reinterpret_cast<const GLuint*>(params.data()));
     detail::error_check("ProgramLocalParametersI4uivNV"sv);
 }

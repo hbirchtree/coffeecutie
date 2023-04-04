@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // TransformFeedbackPName
-enum class transform_feedback_prop : ::libc_types::u32
+enum class transform_feedback_prop : u32
 {
 #ifdef GL_TRANSFORM_FEEDBACK_ACTIVE
     transform_feedback_active = GL_TRANSFORM_FEEDBACK_ACTIVE,

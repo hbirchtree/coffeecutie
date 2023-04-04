@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // TextureEnvMode
-enum class texture_env_mode : ::libc_types::u32
+enum class texture_env_mode : u32
 {
 #ifdef GL_ADD
     add = GL_ADD,

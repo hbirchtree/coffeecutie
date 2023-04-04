@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // SamplerParameterF
-enum class sampler_parameter_f : ::libc_types::u32
+enum class sampler_parameter_f : u32
 {
 #ifdef GL_TEXTURE_BORDER_COLOR
     texture_border_color = GL_TEXTURE_BORDER_COLOR,

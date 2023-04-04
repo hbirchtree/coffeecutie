@@ -628,7 +628,7 @@ requires(semantic::concepts::Span<span_const_void>)
  * \param buffer GLuint
  * \return Boolean
  */
-STATICINLINE GLboolean unmap_named_buffer(u32 buffer)
+STATICINLINE bool unmap_named_buffer(u32 buffer)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -642,7 +642,7 @@ STATICINLINE GLboolean unmap_named_buffer(u32 buffer)
     }
     auto out = glUnmapNamedBuffer(buffer);
     detail::error_check("UnmapNamedBuffer"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 /*!
@@ -702,7 +702,7 @@ STATICINLINE void blit_named_framebuffer(
  * \param target GLenum
  * \return FramebufferStatus
  */
-STATICINLINE GLenum check_named_framebuffer_status(
+STATICINLINE group::framebuffer_status check_named_framebuffer_status(
     u32 framebuffer, group::framebuffer_target target)
 {
     using namespace std::string_view_literals;
@@ -718,7 +718,7 @@ STATICINLINE GLenum check_named_framebuffer_status(
     auto out =
         glCheckNamedFramebufferStatus(framebuffer, static_cast<GLenum>(target));
     detail::error_check("CheckNamedFramebufferStatus"sv);
-    return out;
+    return static_cast<group::framebuffer_status>(out);
 }
 
 /*!

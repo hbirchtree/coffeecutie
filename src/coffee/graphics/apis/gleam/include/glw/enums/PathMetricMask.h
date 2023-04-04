@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // PathMetricMask
-enum class path_metric_mask : ::libc_types::u32
+enum class path_metric_mask : u32
 {
 #ifdef GL_FONT_ASCENDER_BIT_NV
     font_ascender_bit_nv = GL_FONT_ASCENDER_BIT_NV,

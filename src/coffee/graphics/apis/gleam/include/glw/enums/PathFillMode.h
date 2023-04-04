@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // PathFillMode
-enum class path_fill_mode : ::libc_types::u32
+enum class path_fill_mode : u32
 {
 #ifdef GL_COUNT_DOWN_NV
     count_down_nv = GL_COUNT_DOWN_NV,

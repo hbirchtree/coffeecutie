@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // VertexShaderParameterEXT
-enum class vertex_shader_parameter_ext : ::libc_types::u32
+enum class vertex_shader_parameter_ext : u32
 {
 #ifdef GL_CURRENT_VERTEX_EXT
     current_vertex_ext = GL_CURRENT_VERTEX_EXT,

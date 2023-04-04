@@ -35,8 +35,14 @@ class ShaderIncluder : public shaderc::CompileOptions::IncluderInterface
                    .access = semantic::RSCA::ReadOnly,
                });
            mapping.has_error())
-            return nullptr;
-        else
+        {
+            fprintf(
+                stderr,
+                "%s:0: file \"%s\" not found\n",
+                requesting_source,
+                requested_source);
+            return &error;
+        } else
         {
             auto const& data = mapping.value().view;
             m_cache.push_back(include_data{
@@ -57,7 +63,14 @@ class ShaderIncluder : public shaderc::CompileOptions::IncluderInterface
                     res.result.source_name_length = res.filename.size();
                     return &res.result;
                 }
-            return nullptr;
+            {
+                fprintf(
+                    stderr,
+                    "%s:0: file \"%s\" not found\n",
+                    requesting_source,
+                    requested_source);
+                return &error;
+            }
         }
     }
     void ReleaseInclude(shaderc_include_result* data)
@@ -72,6 +85,7 @@ class ShaderIncluder : public shaderc::CompileOptions::IncluderInterface
 
   private:
     std::list<include_data> m_cache;
+    shaderc_include_result error{};
 };
 
 } // namespace
@@ -121,6 +135,8 @@ stl_types::result<spv_blob, spv_error> compile(
     options.SetOptimizationLevel(shaderc_optimization_level_performance);
     options.SetGenerateDebugInfo();
     options.SetIncluder(std::make_unique<ShaderIncluder>());
+    for(auto const& [name, value] : shader.defines)
+        options.AddMacroDefinition(name, value);
 
     std::string path(shader.path.begin(), shader.path.end());
 

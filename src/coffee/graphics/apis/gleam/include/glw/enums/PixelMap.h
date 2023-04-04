@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // PixelMap
-enum class pixel_map : ::libc_types::u32
+enum class pixel_map : u32
 {
 #ifdef GL_PIXEL_MAP_A_TO_A
     a_to_a = GL_PIXEL_MAP_A_TO_A,

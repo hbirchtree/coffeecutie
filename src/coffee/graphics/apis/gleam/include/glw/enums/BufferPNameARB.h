@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // BufferPNameARB
-enum class buffer_prop_arb : ::libc_types::u32
+enum class buffer_prop_arb : u32
 {
 #ifdef GL_BUFFER_ACCESS
     buffer_access = GL_BUFFER_ACCESS,

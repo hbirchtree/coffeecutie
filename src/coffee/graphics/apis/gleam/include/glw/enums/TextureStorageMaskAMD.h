@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // TextureStorageMaskAMD
-enum class texture_storage_mask_amd : ::libc_types::u32
+enum class texture_storage_mask_amd : u32
 {
 #ifdef GL_TEXTURE_STORAGE_SPARSE_BIT_AMD
     texture_storage_sparse_bit_amd = GL_TEXTURE_STORAGE_SPARSE_BIT_AMD,

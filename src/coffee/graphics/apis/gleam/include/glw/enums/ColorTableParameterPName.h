@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // ColorTableParameterPName
-enum class color_table_parameter_prop : ::libc_types::u32
+enum class color_table_parameter_prop : u32
 {
 #ifdef GL_COLOR_TABLE_ALPHA_SIZE
     color_table_alpha_size = GL_COLOR_TABLE_ALPHA_SIZE,

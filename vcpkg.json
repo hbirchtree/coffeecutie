@@ -85,7 +85,9 @@
         "pressure-cooker": {
             "description": "Asset packing utilities",
             "dependencies": [
+                { "name": "etc2comp", "platform": "(linux & x64) | osx | windows" },
                 { "name": "glslang", "platform": "(linux & x64) | osx | windows" },
+                { "name": "ktx", "platform": "(linux & x64) | osx | windows" },
                 { "name": "libsquish", "platform": "(linux & x64) | osx | windows" },
                 { "name": "shaderc", "platform": "(linux & x64) | osx | windows" },
                 { "name": "spirv-cross", "platform": "(linux & x64) | osx | windows" }

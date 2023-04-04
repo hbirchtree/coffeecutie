@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // CombinerBiasNV
-enum class combiner_bias_nv : ::libc_types::u32
+enum class combiner_bias_nv : u32
 {
 #ifdef GL_BIAS_BY_NEGATIVE_ONE_HALF_NV
     bias_by_negative_one_half_nv = GL_BIAS_BY_NEGATIVE_ONE_HALF_NV,

@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // ShaderParameterName
-enum class shader_parameter_name : ::libc_types::u32
+enum class shader_parameter_name : u32
 {
 #ifdef GL_COMPILE_STATUS
     compile_status = GL_COMPILE_STATUS,

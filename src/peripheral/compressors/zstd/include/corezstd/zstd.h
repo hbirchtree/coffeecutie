@@ -39,12 +39,12 @@ struct codec
 
     static std::optional<error_t> compress(
         semantic::Span<const libc_types::u8> const& input,
-        semantic::mem_chunk<char>&                  output,
+        std::vector<char>&                          output,
         options_t&&                                 options = options_t());
 
     static std::optional<error_t> decompress(
         semantic::Span<const libc_types::u8> const& input,
-        semantic::mem_chunk<char>&                  output,
+        std::vector<char>&                          output,
         options_t&&                                 options = {});
 };
 

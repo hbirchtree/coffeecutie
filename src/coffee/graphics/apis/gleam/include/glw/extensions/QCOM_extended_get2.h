@@ -100,7 +100,7 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
  * \param program GLuint
  * \return Boolean
  */
-STATICINLINE GLboolean ext_is_program_binary(u32 program)
+STATICINLINE bool ext_is_program_binary(u32 program)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -114,7 +114,7 @@ STATICINLINE GLboolean ext_is_program_binary(u32 program)
     }
     auto out = glExtIsProgramBinaryQCOM(program);
     detail::error_check("ExtIsProgramBinaryQCOM"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 } // namespace gl::qcom::extended_get2

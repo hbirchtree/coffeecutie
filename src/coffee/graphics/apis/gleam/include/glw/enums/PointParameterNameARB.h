@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // PointParameterNameARB
-enum class point_parameter_name_arb : ::libc_types::u32
+enum class point_parameter_name_arb : u32
 {
 #ifdef GL_DISTANCE_ATTENUATION_EXT
     distance_attenuation_ext = GL_DISTANCE_ATTENUATION_EXT,

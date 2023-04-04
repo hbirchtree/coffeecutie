@@ -12,7 +12,7 @@ from parse import extensions_supported_by
 from parse import features_of
 from parse import parse_registry
 
-from codegen import enum_create_name, generate_enum, generate_function, generate_header, map_function_name, snakeify, snakeify_underscores
+from codegen import enum_create_name, generate_enum, generate_function, generate_header, snakeify_underscores
 
 
 def clear_file(filename: str):

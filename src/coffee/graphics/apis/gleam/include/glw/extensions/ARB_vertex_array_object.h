@@ -79,7 +79,7 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
  * \param array GLuint
  * \return Boolean
  */
-STATICINLINE GLboolean is_vertex_array(u32 array)
+STATICINLINE bool is_vertex_array(u32 array)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -93,7 +93,7 @@ STATICINLINE GLboolean is_vertex_array(u32 array)
     }
     auto out = glIsVertexArray(array);
     detail::error_check("IsVertexArray"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 } // namespace gl::arb::vertex_array_object

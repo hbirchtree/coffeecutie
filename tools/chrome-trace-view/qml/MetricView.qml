@@ -3,6 +3,8 @@ import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
 import QtQuick.Shapes 1.12
 
+import dev.birchy.models 1.0
+
 Item {
     id: root
 
@@ -55,7 +57,11 @@ Item {
         sourceComponent: Repeater {
             model: metric
             Repeater {
-                model: phase
+                model: TimeLimitedModel {
+                    model: phase
+                    viewStart: timeView.contentX * timePerPixel
+                    viewEnd: (timeView.contentX + timeView.width) * timePerPixel
+                }
                 Shape {
                     anchors.fill: parent
                     anchors.topMargin: spacing
@@ -123,7 +129,11 @@ Item {
         sourceComponent: Repeater {
             model: metric
             Repeater {
-                model: phase
+                model: TimeLimitedModel {
+                    model: phase
+                    viewStart: timeView.contentX * timePerPixel
+                    viewEnd: (timeView.contentX + timeView.width) * timePerPixel
+                }
                 Shape {
                     anchors.fill: parent
                     anchors.topMargin: spacing

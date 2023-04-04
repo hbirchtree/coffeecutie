@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // PathStringFormat
-enum class path_string_format : ::libc_types::u32
+enum class path_string_format : u32
 {
 #ifdef GL_PATH_FORMAT_PS_NV
     path_format_ps_nv = GL_PATH_FORMAT_PS_NV,

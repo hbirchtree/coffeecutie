@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // DrawBufferMode
-enum class draw_buffer_mode : ::libc_types::u32
+enum class draw_buffer_mode : u32
 {
 #ifdef GL_AUX0
     aux0 = GL_AUX0,

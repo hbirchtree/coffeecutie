@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // PixelCopyType
-enum class pixel_copy_type : ::libc_types::u32
+enum class pixel_copy_type : u32
 {
 #ifdef GL_COLOR
     color = GL_COLOR,

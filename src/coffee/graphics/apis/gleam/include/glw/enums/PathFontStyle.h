@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // PathFontStyle
-enum class path_font_style : ::libc_types::u32
+enum class path_font_style : u32
 {
 #ifdef GL_BOLD_BIT_NV
     bold_bit_nv = GL_BOLD_BIT_NV,

@@ -12,12 +12,13 @@ using MeshRendererManifest = Components::SubsystemManifest<
         ModelCache<V>,
         BSPCache<V>,
         ShaderCache<V>,
-        BlamFiles>,
+        BlamFiles,
+        RenderingParameters>,
     empty_list_t>;
 
 using ScreenClearManifest = compo::SubsystemManifest<
     empty_list_t,
-    type_list_t<gfx::system, BlamResources>,
+    type_list_t<gfx::system, BlamResources, PostProcessParameters>,
     type_list_t<comp_app::Windowing>>;
 
 void alloc_renderer(compo::EntityContainer& container);

@@ -57,46 +57,6 @@ using ptroff = intptr_t; /*!< Signed offset into data */
 using intptr  = intptr_t;
 using uintptr = uintptr_t;
 
-#if defined(INT8_MAX) && defined(UINT8_MAX)
-constexpr i8 Int8_Max  = (INT8_MAX);
-constexpr i8 Int8_Min  = (INT8_MIN);
-constexpr u8 UInt8_Max = (UINT8_MAX);
-#else
-constexpr int8   Int8_Max   = (127);
-constexpr int8   Int8_Min   = (127) - 1;
-constexpr uint8  UInt8_Max  = (255);
-#endif
-
-#if defined(INT16_MAX) && defined(UINT16_MAX)
-constexpr i16 Int16_Max  = (INT16_MAX);
-constexpr i16 Int16_Min  = (INT16_MIN);
-constexpr u16 UInt16_Max = (UINT16_MAX);
-#else
-constexpr int16  Int16_Max  = (32767);
-constexpr int16  Int16_Min  = (-32767) + 1;
-constexpr uint16 UInt16_Max = 65535;
-#endif
-
-#if defined(INT32_MAX) && defined(UINT32_MAX)
-constexpr i32 Int32_Max  = (INT32_MAX);
-constexpr i32 Int32_Min  = (INT32_MIN);
-constexpr u32 UInt32_Max = (UINT32_MAX);
-#else
-constexpr int32  Int32_Max  = 2147483647;
-constexpr int32  Int32_Min  = (-2147483647) - 1;
-constexpr uint32 UInt32_Max = 4294967295;
-#endif
-
-#if defined(INT64_MAX) && defined(UINT64_MAX)
-constexpr i64 Int64_Max  = (INT64_MAX);
-constexpr i64 Int64_Min  = (INT64_MIN);
-constexpr u64 UInt64_Max = (UINT64_MAX);
-#else
-constexpr int64  Int64_Max  = (9223372036854775807LL);
-constexpr int64  Int64_Min  = (-9223372036854775807LL) - 1;
-constexpr uint64 UInt64_Max = (18446744073709551615ULL);
-#endif
-
 using c_cptr = const void*;
 using c_ptr  = void*;
 
@@ -142,7 +102,7 @@ using u24 = uint24;
 
 FORCEDINLINE scalar convert_i16_f(i16 v)
 {
-    return static_cast<scalar>(v) / Int16_Max;
+    return static_cast<scalar>(v) / std::numeric_limits<i16>::max();
 }
 
 template<typename T>

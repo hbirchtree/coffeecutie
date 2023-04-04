@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // ContainerType
-enum class container_type : ::libc_types::u32
+enum class container_type : u32
 {
 #ifdef GL_PROGRAM_OBJECT_ARB
     program_object_arb = GL_PROGRAM_OBJECT_ARB,

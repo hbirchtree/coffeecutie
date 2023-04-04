@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // FramebufferStatus
-enum class framebuffer_status : ::libc_types::u32
+enum class framebuffer_status : u32
 {
 #ifdef GL_FRAMEBUFFER_COMPLETE
     framebuffer_complete = GL_FRAMEBUFFER_COMPLETE,

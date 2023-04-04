@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // SubgroupSupportedFeatures
-enum class subgroup_supported_features : ::libc_types::u32
+enum class subgroup_supported_features : u32
 {
 #ifdef GL_SUBGROUP_FEATURE_ARITHMETIC_BIT_KHR
     subgroup_feature_arithmetic_bit_khr =

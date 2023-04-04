@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // ErrorCode
-enum class error_code : ::libc_types::u32
+enum class error_code : u32
 {
 #ifdef GL_INVALID_ENUM
     invalid_enum = GL_INVALID_ENUM,

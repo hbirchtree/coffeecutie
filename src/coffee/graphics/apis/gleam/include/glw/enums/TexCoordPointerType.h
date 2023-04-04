@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // TexCoordPointerType
-enum class tex_coord_pointer_type : ::libc_types::u32
+enum class tex_coord_pointer_type : u32
 {
 #ifdef GL_DOUBLE
     double_ = GL_DOUBLE,

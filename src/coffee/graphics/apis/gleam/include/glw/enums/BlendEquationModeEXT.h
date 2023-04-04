@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // BlendEquationModeEXT
-enum class blend_equation_mode_ext : ::libc_types::u32
+enum class blend_equation_mode_ext : u32
 {
 #ifdef GL_ALPHA_MAX_SGIX
     alpha_max_sgix = GL_ALPHA_MAX_SGIX,

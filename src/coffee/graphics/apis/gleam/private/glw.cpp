@@ -10,7 +10,7 @@ namespace gl::detail {
 void error_check(std::string_view cmd_name)
 {
     using gl::group::error_code;
-    if constexpr(compile_info::debug_mode)
+    if constexpr(compile_info::debug_mode && !compile_info::platform::is_emscripten)
     {
         if(auto error = static_cast<error_code>(glGetError());
            error != error_code::no_error)

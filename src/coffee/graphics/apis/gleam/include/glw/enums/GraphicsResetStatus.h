@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // GraphicsResetStatus
-enum class graphics_reset_status : ::libc_types::u32
+enum class graphics_reset_status : u32
 {
 #ifdef GL_GUILTY_CONTEXT_RESET
     guilty_context_reset = GL_GUILTY_CONTEXT_RESET,

@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // LogicOp
-enum class logic_op : ::libc_types::u32
+enum class logic_op : u32
 {
 #ifdef GL_AND
     and_ = GL_AND,

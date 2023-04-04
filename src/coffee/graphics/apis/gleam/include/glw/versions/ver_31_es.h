@@ -525,7 +525,7 @@ requires(MinimumVersion<Current, Version<3, 1>>)
      * \param pipeline GLuint
      * \return Boolean
      */
-    STATICINLINE GLboolean is_program_pipeline(u32 pipeline)
+    STATICINLINE bool is_program_pipeline(u32 pipeline)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -539,7 +539,7 @@ requires(MinimumVersion<Current, Version<3, 1>>)
     }
     auto out = glIsProgramPipeline(pipeline);
     detail::error_check("IsProgramPipeline"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 template<typename Dummy = void>
@@ -761,7 +761,7 @@ requires(
      * \return void
      */
     STATICINLINE void program_uniform(
-        u32 program, i32 location, i32 count, span_const_vec_2_f32 const& value)
+        u32 program, i32 location, span_const_vec_2_f32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -776,7 +776,7 @@ requires(
     glProgramUniform2fv(
         program,
         location,
-        count,
+        value.size(),
         reinterpret_cast<const GLfloat*>(value.data()));
     detail::error_check("ProgramUniform2fv"sv);
 }
@@ -823,7 +823,7 @@ requires(
      * \return void
      */
     STATICINLINE void program_uniform(
-        u32 program, i32 location, i32 count, span_const_vec_2_i32 const& value)
+        u32 program, i32 location, span_const_vec_2_i32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -836,7 +836,10 @@ requires(
 #endif
     }
     glProgramUniform2iv(
-        program, location, count, reinterpret_cast<const GLint*>(value.data()));
+        program,
+        location,
+        value.size(),
+        reinterpret_cast<const GLint*>(value.data()));
     detail::error_check("ProgramUniform2iv"sv);
 }
 
@@ -882,7 +885,7 @@ requires(
      * \return void
      */
     STATICINLINE void program_uniform(
-        u32 program, i32 location, i32 count, span_const_vec_2_u32 const& value)
+        u32 program, i32 location, span_const_vec_2_u32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -897,7 +900,7 @@ requires(
     glProgramUniform2uiv(
         program,
         location,
-        count,
+        value.size(),
         reinterpret_cast<const GLuint*>(value.data()));
     detail::error_check("ProgramUniform2uiv"sv);
 }
@@ -945,7 +948,7 @@ requires(
      * \return void
      */
     STATICINLINE void program_uniform(
-        u32 program, i32 location, i32 count, span_const_vec_3_f32 const& value)
+        u32 program, i32 location, span_const_vec_3_f32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -960,7 +963,7 @@ requires(
     glProgramUniform3fv(
         program,
         location,
-        count,
+        value.size(),
         reinterpret_cast<const GLfloat*>(value.data()));
     detail::error_check("ProgramUniform3fv"sv);
 }
@@ -1008,7 +1011,7 @@ requires(
      * \return void
      */
     STATICINLINE void program_uniform(
-        u32 program, i32 location, i32 count, span_const_vec_3_i32 const& value)
+        u32 program, i32 location, span_const_vec_3_i32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1021,7 +1024,10 @@ requires(
 #endif
     }
     glProgramUniform3iv(
-        program, location, count, reinterpret_cast<const GLint*>(value.data()));
+        program,
+        location,
+        value.size(),
+        reinterpret_cast<const GLint*>(value.data()));
     detail::error_check("ProgramUniform3iv"sv);
 }
 
@@ -1068,7 +1074,7 @@ requires(
      * \return void
      */
     STATICINLINE void program_uniform(
-        u32 program, i32 location, i32 count, span_const_vec_3_u32 const& value)
+        u32 program, i32 location, span_const_vec_3_u32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1083,7 +1089,7 @@ requires(
     glProgramUniform3uiv(
         program,
         location,
-        count,
+        value.size(),
         reinterpret_cast<const GLuint*>(value.data()));
     detail::error_check("ProgramUniform3uiv"sv);
 }
@@ -1132,7 +1138,7 @@ requires(
      * \return void
      */
     STATICINLINE void program_uniform(
-        u32 program, i32 location, i32 count, span_const_vec_4_f32 const& value)
+        u32 program, i32 location, span_const_vec_4_f32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1147,7 +1153,7 @@ requires(
     glProgramUniform4fv(
         program,
         location,
-        count,
+        value.size(),
         reinterpret_cast<const GLfloat*>(value.data()));
     detail::error_check("ProgramUniform4fv"sv);
 }
@@ -1196,7 +1202,7 @@ requires(
      * \return void
      */
     STATICINLINE void program_uniform(
-        u32 program, i32 location, i32 count, span_const_vec_4_i32 const& value)
+        u32 program, i32 location, span_const_vec_4_i32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1209,7 +1215,10 @@ requires(
 #endif
     }
     glProgramUniform4iv(
-        program, location, count, reinterpret_cast<const GLint*>(value.data()));
+        program,
+        location,
+        value.size(),
+        reinterpret_cast<const GLint*>(value.data()));
     detail::error_check("ProgramUniform4iv"sv);
 }
 
@@ -1257,7 +1266,7 @@ requires(
      * \return void
      */
     STATICINLINE void program_uniform(
-        u32 program, i32 location, i32 count, span_const_vec_4_u32 const& value)
+        u32 program, i32 location, span_const_vec_4_u32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1272,7 +1281,7 @@ requires(
     glProgramUniform4uiv(
         program,
         location,
-        count,
+        value.size(),
         reinterpret_cast<const GLuint*>(value.data()));
     detail::error_check("ProgramUniform4uiv"sv);
 }
@@ -1294,7 +1303,6 @@ requires(
     STATICINLINE void program_uniform(
         u32                           program,
         i32                           location,
-        i32                           count,
         bool                          transpose,
         span_const_mat_2x2_f32 const& value)
 {
@@ -1311,7 +1319,7 @@ requires(
     glProgramUniformMatrix2fv(
         program,
         location,
-        count,
+        value.size(),
         transpose,
         reinterpret_cast<const GLfloat*>(value.data()));
     detail::error_check("ProgramUniformMatrix2fv"sv);
@@ -1334,7 +1342,6 @@ requires(
     STATICINLINE void program_uniform(
         u32                           program,
         i32                           location,
-        i32                           count,
         bool                          transpose,
         span_const_mat_2x3_f32 const& value)
 {
@@ -1351,7 +1358,7 @@ requires(
     glProgramUniformMatrix2x3fv(
         program,
         location,
-        count,
+        value.size(),
         transpose,
         reinterpret_cast<const GLfloat*>(value.data()));
     detail::error_check("ProgramUniformMatrix2x3fv"sv);
@@ -1374,7 +1381,6 @@ requires(
     STATICINLINE void program_uniform(
         u32                           program,
         i32                           location,
-        i32                           count,
         bool                          transpose,
         span_const_mat_2x4_f32 const& value)
 {
@@ -1391,7 +1397,7 @@ requires(
     glProgramUniformMatrix2x4fv(
         program,
         location,
-        count,
+        value.size(),
         transpose,
         reinterpret_cast<const GLfloat*>(value.data()));
     detail::error_check("ProgramUniformMatrix2x4fv"sv);
@@ -1414,7 +1420,6 @@ requires(
     STATICINLINE void program_uniform(
         u32                           program,
         i32                           location,
-        i32                           count,
         bool                          transpose,
         span_const_mat_3x3_f32 const& value)
 {
@@ -1431,7 +1436,7 @@ requires(
     glProgramUniformMatrix3fv(
         program,
         location,
-        count,
+        value.size(),
         transpose,
         reinterpret_cast<const GLfloat*>(value.data()));
     detail::error_check("ProgramUniformMatrix3fv"sv);
@@ -1454,7 +1459,6 @@ requires(
     STATICINLINE void program_uniform(
         u32                           program,
         i32                           location,
-        i32                           count,
         bool                          transpose,
         span_const_mat_3x2_f32 const& value)
 {
@@ -1471,7 +1475,7 @@ requires(
     glProgramUniformMatrix3x2fv(
         program,
         location,
-        count,
+        value.size(),
         transpose,
         reinterpret_cast<const GLfloat*>(value.data()));
     detail::error_check("ProgramUniformMatrix3x2fv"sv);
@@ -1494,7 +1498,6 @@ requires(
     STATICINLINE void program_uniform(
         u32                           program,
         i32                           location,
-        i32                           count,
         bool                          transpose,
         span_const_mat_3x4_f32 const& value)
 {
@@ -1511,7 +1514,7 @@ requires(
     glProgramUniformMatrix3x4fv(
         program,
         location,
-        count,
+        value.size(),
         transpose,
         reinterpret_cast<const GLfloat*>(value.data()));
     detail::error_check("ProgramUniformMatrix3x4fv"sv);
@@ -1534,7 +1537,6 @@ requires(
     STATICINLINE void program_uniform(
         u32                           program,
         i32                           location,
-        i32                           count,
         bool                          transpose,
         span_const_mat_4x4_f32 const& value)
 {
@@ -1551,7 +1553,7 @@ requires(
     glProgramUniformMatrix4fv(
         program,
         location,
-        count,
+        value.size(),
         transpose,
         reinterpret_cast<const GLfloat*>(value.data()));
     detail::error_check("ProgramUniformMatrix4fv"sv);
@@ -1574,7 +1576,6 @@ requires(
     STATICINLINE void program_uniform(
         u32                           program,
         i32                           location,
-        i32                           count,
         bool                          transpose,
         span_const_mat_4x2_f32 const& value)
 {
@@ -1591,7 +1592,7 @@ requires(
     glProgramUniformMatrix4x2fv(
         program,
         location,
-        count,
+        value.size(),
         transpose,
         reinterpret_cast<const GLfloat*>(value.data()));
     detail::error_check("ProgramUniformMatrix4x2fv"sv);
@@ -1614,7 +1615,6 @@ requires(
     STATICINLINE void program_uniform(
         u32                           program,
         i32                           location,
-        i32                           count,
         bool                          transpose,
         span_const_mat_4x3_f32 const& value)
 {
@@ -1631,7 +1631,7 @@ requires(
     glProgramUniformMatrix4x3fv(
         program,
         location,
-        count,
+        value.size(),
         transpose,
         reinterpret_cast<const GLfloat*>(value.data()));
     detail::error_check("ProgramUniformMatrix4x3fv"sv);

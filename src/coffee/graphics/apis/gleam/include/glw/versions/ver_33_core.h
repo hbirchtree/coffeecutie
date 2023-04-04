@@ -257,7 +257,7 @@ requires(MinimumVersion<Current, Version<3, 3>>)
      * \param sampler GLuint
      * \return Boolean
      */
-    STATICINLINE GLboolean is_sampler(u32 sampler)
+    STATICINLINE bool is_sampler(u32 sampler)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -271,7 +271,7 @@ requires(MinimumVersion<Current, Version<3, 3>>)
     }
     auto out = glIsSampler(sampler);
     detail::error_check("IsSampler"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 template<class span_const_i32>

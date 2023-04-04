@@ -622,7 +622,7 @@ STATICINLINE void insert_component(u32 res, u32 src, u32 num)
  * \param cap GLenum
  * \return Boolean
  */
-STATICINLINE GLboolean is_variant_enabled(u32 id, group::variant_cap_ext cap)
+STATICINLINE bool is_variant_enabled(u32 id, group::variant_cap_ext cap)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -631,7 +631,7 @@ STATICINLINE GLboolean is_variant_enabled(u32 id, group::variant_cap_ext cap)
     }
     auto out = glIsVariantEnabledEXT(id, static_cast<GLenum>(cap));
     detail::error_check("IsVariantEnabledEXT"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 template<class span_const_void>

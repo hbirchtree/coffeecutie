@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // ParameterRangeEXT
-enum class parameter_range_ext : ::libc_types::u32
+enum class parameter_range_ext : u32
 {
 #ifdef GL_FULL_RANGE_EXT
     full_range_ext = GL_FULL_RANGE_EXT,

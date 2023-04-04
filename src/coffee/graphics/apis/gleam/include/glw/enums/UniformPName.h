@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // UniformPName
-enum class uniform_prop : ::libc_types::u32
+enum class uniform_prop : u32
 {
 #ifdef GL_UNIFORM_ARRAY_STRIDE
     uniform_array_stride = GL_UNIFORM_ARRAY_STRIDE,

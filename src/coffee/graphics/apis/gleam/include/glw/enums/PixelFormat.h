@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // PixelFormat
-enum class pixel_format : ::libc_types::u32
+enum class pixel_format : u32
 {
 #ifdef GL_ABGR_EXT
     abgr_ext = GL_ABGR_EXT,

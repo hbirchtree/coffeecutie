@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // ElementPointerTypeATI
-enum class element_pointer_type_ati : ::libc_types::u32
+enum class element_pointer_type_ati : u32
 {
 #ifdef GL_UNSIGNED_BYTE
     unsigned_byte = GL_UNSIGNED_BYTE,

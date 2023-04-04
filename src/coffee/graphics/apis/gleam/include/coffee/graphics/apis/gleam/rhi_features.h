@@ -1,5 +1,7 @@
 #pragma once
 
+#include <peripherals/libc/types.h>
+
 namespace gleam {
 
 enum class error
@@ -102,6 +104,7 @@ struct features
     {
         bool anisotropy{false};
         bool bindless_handles{false};
+        bool cube_array{false};
         bool dsa{false};
         bool image_copy{false};
         bool image_texture{false};
@@ -210,6 +213,34 @@ struct workarounds
     } buffer;
 
     bool ignore_all_warnings{false};
+};
+
+using libc_types::u32;
+using libc_types::u64;
+
+struct usage
+{
+    struct
+    {
+        u32 draws{0};
+        u32 instances{0};
+    } draw;
+    struct
+    {
+        u32 buffer_uploads{0};
+    } buffers;
+    struct
+    {
+        u32 texture_uploads{0};
+    } texture;
+    struct
+    {
+        u32 buffers{0};
+        u64 buffer_size{0};
+        u32 texture_binds{0};
+        u32 values{0};
+        u64 value_size{0};
+    } uniforms;
 };
 
 } // namespace gleam

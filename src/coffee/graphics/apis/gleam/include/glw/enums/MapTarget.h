@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // MapTarget
-enum class map_target : ::libc_types::u32
+enum class map_target : u32
 {
 #ifdef GL_GEOMETRY_DEFORMATION_SGIX
     geometry_deformation_sgix = GL_GEOMETRY_DEFORMATION_SGIX,

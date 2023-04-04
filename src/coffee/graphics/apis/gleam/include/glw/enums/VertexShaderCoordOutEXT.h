@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // VertexShaderCoordOutEXT
-enum class vertex_shader_coord_out_ext : ::libc_types::u32
+enum class vertex_shader_coord_out_ext : u32
 {
 #ifdef GL_NEGATIVE_ONE_EXT
     negative_one_ext = GL_NEGATIVE_ONE_EXT,

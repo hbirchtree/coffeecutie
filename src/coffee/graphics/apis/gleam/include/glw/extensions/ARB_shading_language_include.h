@@ -121,7 +121,7 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
  * \param name const GLchar *
  * \return Boolean
  */
-STATICINLINE GLboolean is_named_string(std::string_view const& name)
+STATICINLINE bool is_named_string(std::string_view const& name)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -130,7 +130,7 @@ STATICINLINE GLboolean is_named_string(std::string_view const& name)
     }
     auto out = glIsNamedStringARB(name.size(), name.data());
     detail::error_check("IsNamedStringARB"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 /*!

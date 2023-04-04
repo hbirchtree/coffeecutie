@@ -14,6 +14,10 @@ find_package(Threads REQUIRED)
 
 add_executable(${PROJECT_NAME}
     src/main.cpp
+
+    src/extrainfo.cpp
+    src/metrics.cpp
+    src/timelimitedmodel.cpp
     src/tracemodel.cpp
     src/screenshotprovider.cpp
 

@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // UniformBlockPName
-enum class uniform_block_prop : ::libc_types::u32
+enum class uniform_block_prop : u32
 {
 #ifdef GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS
     uniform_block_active_uniforms = GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS,

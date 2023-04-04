@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // SamplerParameterI
-enum class sampler_parameter_i : ::libc_types::u32
+enum class sampler_parameter_i : u32
 {
 #ifdef GL_TEXTURE_COMPARE_FUNC
     texture_compare_func = GL_TEXTURE_COMPARE_FUNC,

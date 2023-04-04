@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // EnableCap
-enum class enable_cap : ::libc_types::u32
+enum class enable_cap : u32
 {
 #ifdef GL_ALPHA_TEST
     alpha_test = GL_ALPHA_TEST,

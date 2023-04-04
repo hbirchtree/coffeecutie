@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // TriangleFace
-enum class triangle_face : ::libc_types::u32
+enum class triangle_face : u32
 {
 #ifdef GL_BACK
     back = GL_BACK,

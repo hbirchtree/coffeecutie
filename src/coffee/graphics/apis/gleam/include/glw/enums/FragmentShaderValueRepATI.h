@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // FragmentShaderValueRepATI
-enum class fragment_shader_value_rep_ati : ::libc_types::u32
+enum class fragment_shader_value_rep_ati : u32
 {
 #ifdef GL_ALPHA
     alpha = GL_ALPHA,

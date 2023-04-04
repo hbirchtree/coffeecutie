@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // CombinerScaleNV
-enum class combiner_scale_nv : ::libc_types::u32
+enum class combiner_scale_nv : u32
 {
 #ifdef GL_NONE
     none = GL_NONE,

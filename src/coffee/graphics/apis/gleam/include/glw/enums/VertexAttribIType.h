@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // VertexAttribIType
-enum class vertex_attrib_int : ::libc_types::u32
+enum class vertex_attrib_int : u32
 {
 #ifdef GL_BYTE
     byte_ = GL_BYTE,

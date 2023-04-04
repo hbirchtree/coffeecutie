@@ -19,12 +19,9 @@ using Components::EntityContainer;
 enum Passes
 {
     Pass_Opaque,
-    Pass_Env = Pass_Opaque,
-    Pass_EnvMicro,
-    Pass_Metal,
     Pass_Alphatest,
-    Pass_LastOpaque,
-    Pass_Lights = Pass_LastOpaque,
+    Pass_LastOpaque = Pass_Alphatest,
+    Pass_Lights,
     Pass_Glass,
 
     Pass_Wireframe,
@@ -166,59 +163,13 @@ struct ShaderTemplate
     using source_type = SourceType;
 };
 
-namespace materials {
-
-struct alignas(32) lightmap_data
-{
-    Vecf2 atlas_scale;
-    Vecf2 atlas_offset;
-    u32   layer;
-    u32   material;
-};
-
-struct alignas(16) basic
-{
-    Vecf2 atlas_scale;
-    Vecf2 uv_scale;
-    Vecf2 atlas_offset;
-    i32   source;
-    u32   layer;
-    f32   bias;
-};
-
-struct alignas(32) map_data
-{
-    Vecf2 atlas_scale;
-    Vecf2 atlas_offset;
-    Vecf2 uv_scale;
-    u32   layer;
-    f32   bias;
-};
-
-struct alignas(32) senv
-{
-    map_data      base;
-    lightmap_data lightmap;
-};
-
-struct alignas(32) senv_micro
-{
-    map_data      base;
-    map_data      micro;
-    map_data      primary;
-    map_data      secondary;
-    lightmap_data lightmap;
-};
-
-} // namespace materials
-
 struct ShaderData
 {
     using value_type = ShaderData;
     using type       = compo::alloc::VectorContainer<value_type>;
 
-    blam::tag_t const*               shader_tag;
-    blam::shader::shader_base const* shader;
+    blam::tag_t const*                        shader_tag;
+    blam::shader::radiosity_properties const* shader;
 
     generation_idx_t shader_id;
 
@@ -229,35 +180,54 @@ struct ShaderData
     }
 
     template<typename V>
-    inline Passes get_render_pass(ShaderCache<V>& /*cache*/) const
+    inline Passes get_render_pass(ShaderCache<V>& cache) const
     {
         using tc = blam::tag_class_t;
         using namespace enum_helpers;
+        using namespace blam::shader;
 
-        //        auto const& shader_ = get_shader(cache);
-        //        auto        name    =
-        //        shader_tag->to_name().to_string(cache.magic);
+        auto const& shader_ = get_shader(cache);
+        auto        name    = shader_tag->to_name().to_string(cache.magic);
 
         switch(shader_tag->tagclass_e[0])
         {
-        case tc::senv: {
-            //            auto const* shader =
-            //            shader_data<blam::shader::shader_env>();
-
-            return Pass_EnvMicro;
-            //            return shader->diffuse.micro.map.valid() ?
-            //            Pass_EnvMicro : Pass_Env;
-        }
         case tc::soso: {
-            auto flags       = shader_data<blam::shader::shader_model>()->flags;
-            bool transparent = feval(
-                flags, blam::shader::shader_model::model_flags::no_alpha_test);
-            return transparent ? Pass_Glass : Pass_Env;
+//            auto info  = shader_data<shader_model>();
+//            auto flags = info->flags;
+//            bool transparent
+//                = !feval(flags, shader_model::model_flags::no_alpha_test);
+//            return transparent ? Pass_Alphatest : Pass_Opaque;
+            return Pass_Glass;
+        }
+        case tc::schi: {
+            using blam::shader::chicago::flags_t;
+            shader_chicago<V> const* info   = shader_data<shader_chicago<V>>();
+            auto                     maps   = info->maps.data(cache.magic);
+            auto                     layers = info->layers.data(cache.magic);
+            auto is_decal = feval(info->transparent.flags & flags_t::decal);
+            auto is_alpha
+                = feval(info->transparent.flags & flags_t::alpha_testing);
+
+//            return is_decal ? Pass_Lights : is_alpha ? Pass_Glass : Pass_Opaque;
+            return Pass_Lights;
+        }
+        case tc::scex: {
+            shader_chicago_extended<V> const* info
+                = shader_data<shader_chicago_extended<V>>();
+            auto maps_2 = info->maps_2stage.data(cache.magic);
+            auto maps_4 = info->maps_4stage.data(cache.magic);
+            auto layers = info->layers.data(cache.magic);
+            return Pass_Glass;
         }
         case tc::swat:
-            return Pass_Glass;
         case tc::sgla:
             return Pass_Glass;
+        case tc::senv: {
+            shader_env const* info = shader_data<shader_env>();
+            return feval(info->flags & shader_env::flags_t::alpha_tested)
+                       ? Pass_Glass
+                       : Pass_Opaque;
+        }
         case tc::smet:
             return Pass_Opaque;
         default:

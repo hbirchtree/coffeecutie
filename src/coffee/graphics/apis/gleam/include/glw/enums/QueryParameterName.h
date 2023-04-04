@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // QueryParameterName
-enum class query_parameter_name : ::libc_types::u32
+enum class query_parameter_name : u32
 {
 #ifdef GL_CURRENT_QUERY
     current_query = GL_CURRENT_QUERY,

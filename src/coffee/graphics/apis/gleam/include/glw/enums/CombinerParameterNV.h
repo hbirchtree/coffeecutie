@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // CombinerParameterNV
-enum class combiner_parameter_nv : ::libc_types::u32
+enum class combiner_parameter_nv : u32
 {
 #ifdef GL_COMBINER_COMPONENT_USAGE_NV
     combiner_component_usage_nv = GL_COMBINER_COMPONENT_USAGE_NV,

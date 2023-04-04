@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // TextureSwizzle
-enum class texture_swizzle : ::libc_types::u32
+enum class texture_swizzle : u32
 {
 #ifdef GL_ALPHA
     alpha = GL_ALPHA,

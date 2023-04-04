@@ -36,7 +36,6 @@ void load_scenario_bsp(compo::EntityContainer& e, BlamData<Version>& data)
     for(auto const& bsp : scenario->bsp_info.data(magic).value())
     {
         bsp_meshes.push_back(bsp_cache.predict(bsp));
-        break;
     }
 
     gpu.bsp_buf->unmap();
@@ -72,7 +71,6 @@ void load_scenario_bsp(compo::EntityContainer& e, BlamData<Version>& data)
                 bsp_ref.bsp      = mesh_id;
                 bsp_ref.visible  = true;
                 bsp_ref.draw.data.push_back(mesh.draw);
-                bsp_ref.current_pass = Pass_Opaque;
                 bsp_ref.draw.call    = {
                        .indexed   = true,
                        .instanced = true,
@@ -327,7 +325,7 @@ void load_scenario_scenery(EntityContainer& e, BlamData<Version>& data)
         e,
         ObjectLightFixture | ObjectGC);
 
-    load_multiplayer_equipment(data, e, ObjectEquipment | ObjectGC);
+//    load_multiplayer_equipment(data, e, ObjectEquipment | ObjectGC);
 
     blam::tag_index_view index(data.map_container);
 
@@ -351,6 +349,7 @@ void load_scenario_scenery(EntityContainer& e, BlamData<Version>& data)
 
     for(auto const& skybox : data.scenario->info.skyboxes.data(magic).value())
     {
+        break;
         auto        skybox_tag = &(*index.find(skybox));
         auto const& skybox_
             = skybox_tag->template data<blam::scn::skybox>(magic).value()[0];

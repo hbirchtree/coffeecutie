@@ -430,8 +430,7 @@ requires(MinimumVersion<Current, Version<3, 0>>)
      * \param index GLuint
      * \return String
      */
-    STATICINLINE stl_types::String
-    get_stringi(group::string_name name, u32 index)
+    STATICINLINE std::string get_stringi(group::string_name name, u32 index)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -619,7 +618,7 @@ requires(MinimumVersion<Current, Version<3, 0>>)
      * \param index GLuint
      * \return Boolean
      */
-    STATICINLINE GLboolean is_enabledi(group::enable_cap target, u32 index)
+    STATICINLINE bool is_enabledi(group::enable_cap target, u32 index)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -628,7 +627,7 @@ requires(MinimumVersion<Current, Version<3, 0>>)
     }
     auto out = glIsEnabledi(static_cast<GLenum>(target), index);
     detail::error_check("IsEnabledi"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 template<class span_const_i32>
@@ -754,8 +753,7 @@ requires(MinimumVersion<Current, Version<3, 0>>&&
      * \param value const GLuint *
      * \return void
      */
-    STATICINLINE
-    void uniform(i32 location, i32 count, span_const_u32 const& value)
+    STATICINLINE void uniform(i32 location, span_const_u32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -763,7 +761,7 @@ requires(MinimumVersion<Current, Version<3, 0>>&&
         GLW_FPTR_CHECK(Uniform1uiv)
     }
     glUniform1uiv(
-        location, count, reinterpret_cast<const GLuint*>(value.data()));
+        location, value.size(), reinterpret_cast<const GLuint*>(value.data()));
     detail::error_check("Uniform1uiv"sv);
 }
 
@@ -800,8 +798,7 @@ requires(
      * \param value const GLuint *
      * \return void
      */
-    STATICINLINE
-    void uniform(i32 location, i32 count, span_const_vec_2_u32 const& value)
+    STATICINLINE void uniform(i32 location, span_const_vec_2_u32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -809,7 +806,7 @@ requires(
         GLW_FPTR_CHECK(Uniform2uiv)
     }
     glUniform2uiv(
-        location, count, reinterpret_cast<const GLuint*>(value.data()));
+        location, value.size(), reinterpret_cast<const GLuint*>(value.data()));
     detail::error_check("Uniform2uiv"sv);
 }
 
@@ -847,8 +844,7 @@ requires(
      * \param value const GLuint *
      * \return void
      */
-    STATICINLINE
-    void uniform(i32 location, i32 count, span_const_vec_3_u32 const& value)
+    STATICINLINE void uniform(i32 location, span_const_vec_3_u32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -856,7 +852,7 @@ requires(
         GLW_FPTR_CHECK(Uniform3uiv)
     }
     glUniform3uiv(
-        location, count, reinterpret_cast<const GLuint*>(value.data()));
+        location, value.size(), reinterpret_cast<const GLuint*>(value.data()));
     detail::error_check("Uniform3uiv"sv);
 }
 
@@ -895,8 +891,7 @@ requires(
      * \param value const GLuint *
      * \return void
      */
-    STATICINLINE
-    void uniform(i32 location, i32 count, span_const_vec_4_u32 const& value)
+    STATICINLINE void uniform(i32 location, span_const_vec_4_u32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -904,7 +899,7 @@ requires(
         GLW_FPTR_CHECK(Uniform4uiv)
     }
     glUniform4uiv(
-        location, count, reinterpret_cast<const GLuint*>(value.data()));
+        location, value.size(), reinterpret_cast<const GLuint*>(value.data()));
     detail::error_check("Uniform4uiv"sv);
 }
 
@@ -1490,7 +1485,7 @@ requires(MinimumVersion<Current, Version<3, 0>>)
      * \param target GLenum
      * \return FramebufferStatus
      */
-    STATICINLINE GLenum
+    STATICINLINE group::framebuffer_status
     check_framebuffer_status(group::framebuffer_target target)
 {
     using namespace std::string_view_literals;
@@ -1500,7 +1495,7 @@ requires(MinimumVersion<Current, Version<3, 0>>)
     }
     auto out = glCheckFramebufferStatus(static_cast<GLenum>(target));
     detail::error_check("CheckFramebufferStatus"sv);
-    return out;
+    return static_cast<group::framebuffer_status>(out);
 }
 
 template<class span_const_u32>
@@ -1871,7 +1866,7 @@ requires(MinimumVersion<Current, Version<3, 0>>)
      * \param framebuffer GLuint
      * \return Boolean
      */
-    STATICINLINE GLboolean is_framebuffer(u32 framebuffer)
+    STATICINLINE bool is_framebuffer(u32 framebuffer)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1885,7 +1880,7 @@ requires(MinimumVersion<Current, Version<3, 0>>)
     }
     auto out = glIsFramebuffer(framebuffer);
     detail::error_check("IsFramebuffer"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 template<typename Dummy = void>
@@ -1895,7 +1890,7 @@ requires(MinimumVersion<Current, Version<3, 0>>)
      * \param renderbuffer GLuint
      * \return Boolean
      */
-    STATICINLINE GLboolean is_renderbuffer(u32 renderbuffer)
+    STATICINLINE bool is_renderbuffer(u32 renderbuffer)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1909,7 +1904,7 @@ requires(MinimumVersion<Current, Version<3, 0>>)
     }
     auto out = glIsRenderbuffer(renderbuffer);
     detail::error_check("IsRenderbuffer"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 template<class size_2_i32>
@@ -2100,7 +2095,7 @@ requires(MinimumVersion<Current, Version<3, 0>>)
      * \param array GLuint
      * \return Boolean
      */
-    STATICINLINE GLboolean is_vertex_array(u32 array)
+    STATICINLINE bool is_vertex_array(u32 array)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2114,7 +2109,7 @@ requires(MinimumVersion<Current, Version<3, 0>>)
     }
     auto out = glIsVertexArray(array);
     detail::error_check("IsVertexArray"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 #endif // GL_VERSION_3_0

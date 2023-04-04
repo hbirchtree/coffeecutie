@@ -87,7 +87,7 @@ STATICINLINE GLuint64 get_texture_sampler_handle(u32 texture, u32 sampler)
  * \param handle GLuint64
  * \return Boolean
  */
-STATICINLINE GLboolean is_image_handle_resident(u64 handle)
+STATICINLINE bool is_image_handle_resident(u64 handle)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -96,7 +96,7 @@ STATICINLINE GLboolean is_image_handle_resident(u64 handle)
     }
     auto out = glIsImageHandleResidentNV(handle);
     detail::error_check("IsImageHandleResidentNV"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 /*!
@@ -104,7 +104,7 @@ STATICINLINE GLboolean is_image_handle_resident(u64 handle)
  * \param handle GLuint64
  * \return Boolean
  */
-STATICINLINE GLboolean is_texture_handle_resident(u64 handle)
+STATICINLINE bool is_texture_handle_resident(u64 handle)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -113,7 +113,7 @@ STATICINLINE GLboolean is_texture_handle_resident(u64 handle)
     }
     auto out = glIsTextureHandleResidentNV(handle);
     detail::error_check("IsTextureHandleResidentNV"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 /*!

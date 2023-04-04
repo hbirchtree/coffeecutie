@@ -173,7 +173,7 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
  * \param id GLuint
  * \return Boolean
  */
-STATICINLINE GLboolean is_query(u32 id)
+STATICINLINE bool is_query(u32 id)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -182,7 +182,7 @@ STATICINLINE GLboolean is_query(u32 id)
     }
     auto out = glIsQueryARB(id);
     detail::error_check("IsQueryARB"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 } // namespace gl::arb::occlusion_query

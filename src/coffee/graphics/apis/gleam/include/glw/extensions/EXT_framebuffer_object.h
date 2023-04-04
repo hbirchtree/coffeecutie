@@ -82,7 +82,8 @@ STATICINLINE void bind_renderbuffer(
  * \param target GLenum
  * \return FramebufferStatus
  */
-STATICINLINE GLenum check_framebuffer_status(group::framebuffer_target target)
+STATICINLINE group::framebuffer_status check_framebuffer_status(
+    group::framebuffer_target target)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -91,7 +92,7 @@ STATICINLINE GLenum check_framebuffer_status(group::framebuffer_target target)
     }
     auto out = glCheckFramebufferStatusEXT(static_cast<GLenum>(target));
     detail::error_check("CheckFramebufferStatusEXT"sv);
-    return out;
+    return static_cast<group::framebuffer_status>(out);
 }
 
 template<class span_const_u32>
@@ -412,7 +413,7 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
  * \param framebuffer GLuint
  * \return Boolean
  */
-STATICINLINE GLboolean is_framebuffer(u32 framebuffer)
+STATICINLINE bool is_framebuffer(u32 framebuffer)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -426,7 +427,7 @@ STATICINLINE GLboolean is_framebuffer(u32 framebuffer)
     }
     auto out = glIsFramebufferEXT(framebuffer);
     detail::error_check("IsFramebufferEXT"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 /*!
@@ -434,7 +435,7 @@ STATICINLINE GLboolean is_framebuffer(u32 framebuffer)
  * \param renderbuffer GLuint
  * \return Boolean
  */
-STATICINLINE GLboolean is_renderbuffer(u32 renderbuffer)
+STATICINLINE bool is_renderbuffer(u32 renderbuffer)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -448,7 +449,7 @@ STATICINLINE GLboolean is_renderbuffer(u32 renderbuffer)
     }
     auto out = glIsRenderbufferEXT(renderbuffer);
     detail::error_check("IsRenderbufferEXT"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 template<class size_2_i32>

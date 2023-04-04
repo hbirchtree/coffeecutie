@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // AtomicCounterBufferPName
-enum class atomic_counter_buffer_prop : ::libc_types::u32
+enum class atomic_counter_buffer_prop : u32
 {
 #ifdef GL_ATOMIC_COUNTER_BUFFER_ACTIVE_ATOMIC_COUNTERS
     atomic_counter_buffer_active_atomic_counters =

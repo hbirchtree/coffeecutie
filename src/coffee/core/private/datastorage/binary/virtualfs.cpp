@@ -122,11 +122,11 @@ stl_types::result<std::vector<libc_types::byte_t>, error> generate(
                 case compression::codec::deflate:
 #endif
                 {
-                    Zlib::compress(in_data, out_data);
+                    Zlib::compress(in_data, out_data.allocation);
                     break;
                 }
                 case compression::codec::zstd: {
-                    ZStd::compress(in_data, out_data);
+                    ZStd::compress(in_data, out_data.allocation);
                     break;
                 }
                 default: {
@@ -374,11 +374,11 @@ stl_types::result<mem_chunk<const u8>, error> fs_t::GetData(
             case compression::codec::deflate:
 #endif
             {
-                Zlib::decompress(srcData, writable);
+                Zlib::decompress(srcData, writable.allocation);
                 break;
             }
             case compression::codec::zstd: {
-                ZStd::decompress(srcData, writable);
+                ZStd::decompress(srcData, writable.allocation);
                 break;
             }
             default: {

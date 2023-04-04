@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // VertexShaderStorageTypeEXT
-enum class vertex_shader_storage_type_ext : ::libc_types::u32
+enum class vertex_shader_storage_type_ext : u32
 {
 #ifdef GL_INVARIANT_EXT
     invariant_ext = GL_INVARIANT_EXT,

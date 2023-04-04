@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // GetMultisamplePNameNV
-enum class get_multisample_prop_nv : ::libc_types::u32
+enum class get_multisample_prop_nv : u32
 {
 #ifdef GL_PROGRAMMABLE_SAMPLE_LOCATION_ARB
     programmable_sample_location_arb = GL_PROGRAMMABLE_SAMPLE_LOCATION_ARB,

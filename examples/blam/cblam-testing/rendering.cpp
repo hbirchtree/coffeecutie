@@ -6,69 +6,17 @@
 
 #include "caching.h"
 #include "data.h"
+#include "resource_creation.h"
 #include "selected_version.h"
 
 using namespace libc_types::size_literals;
 using namespace std::string_view_literals;
-
-constexpr auto bsp_batch_size
-    = compile_info::platform::is_32bit ? 64_kB : 512_kB;
-constexpr auto model_batch_size
-    = compile_info::platform::is_32bit ? 64_kB : 1024_kB;
 
 namespace detail {
 
 inline Tup<PixFmt, CompFlags> get_bitm_hash(BitmapItem const& bitm)
 {
     return std::make_tuple(bitm.image.fmt.pixfmt, bitm.image.fmt.cmpflg);
-}
-
-template<typename Version>
-inline u64 shader_hash(ShaderItem const& shader, ShaderCache<Version>& cache)
-{
-    using blam::tag_class_t;
-
-    auto& bitm = cache.bitm_cache;
-
-    //    switch(shader.tag->tagclass_e[0])
-    switch(tag_class_t::senv)
-    {
-    case tag_class_t::senv: {
-        BitmapItem const& base = bitm.find(shader.senv.base_bitm)->second;
-
-        Array<Tup<PixFmt, CompFlags>, 3> maps = {};
-
-        if(shader.senv.micro_bitm.valid())
-        {
-            BitmapItem const& map = bitm.find(shader.senv.micro_bitm)->second;
-            maps[0]               = get_bitm_hash(map);
-        }
-        if(shader.senv.primary_bitm.valid())
-        {
-            BitmapItem const& map = bitm.find(shader.senv.primary_bitm)->second;
-            maps[1]               = get_bitm_hash(map);
-        }
-        if(shader.senv.secondary_bitm.valid())
-        {
-            BitmapItem const& map
-                = bitm.find(shader.senv.secondary_bitm)->second;
-            maps[2] = get_bitm_hash(map);
-        }
-
-        auto fmt_hash
-            = std::make_tuple(get_bitm_hash(base), maps[0], maps[1], maps[2]);
-        return std::hash<decltype(fmt_hash)>()(fmt_hash);
-    }
-    default:
-        break;
-    }
-
-    /* Default: use format of color bitmap */
-    {
-        auto fmt_hash = std::make_tuple(
-            get_bitm_hash(bitm.find(shader.color_bitm)->second));
-        return std::hash<decltype(fmt_hash)>()(fmt_hash);
-    }
 }
 
 template<typename MapType>
@@ -121,7 +69,6 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         //        Map<u64, PIP_PARAM> format_states;
         gfx::draw_command                       command;
         std::map<u64, std::vector<draw_data_t>> draws;
-        std::map<u64, ShaderItem const*>        shaders;
 
         gfx::buffer_slice_t material_buffer;
         gfx::buffer_slice_t matrix_buffer;
@@ -160,7 +107,6 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         {
             //            command.data.clear();
             draws.clear();
-            shaders.clear();
         }
 
         template<typename T>
@@ -202,45 +148,12 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         for(auto& pass : m_model)
             pass.command.program = resources.model_pipeline;
 
-        //        {
-        //            GFX::RASTSTATE& rast = bsp[Pass_Opaque].source.raster;
-        //            rast.m_doCull        = true;
-        //            rast.m_culling       =
-        //            (u32)typing::graphics::VertexFace::Front;
-        //        }
-        //        {
-        //            GFX::RASTSTATE& rast = model[Pass_Opaque].source.raster;
-        //            rast.m_doCull        = true;
-        //            rast.m_culling       =
-        //            (u32)typing::graphics::VertexFace::Front;
-        //        }
-
-        //        {
-        //            GFX::BLNDSTATE& blend = bsp[Pass_Glass].source.blend;
-        //            blend.m_doBlend       = true;
-        //        }
-        //        {
-        //            GFX::BLNDSTATE& blend = model[Pass_Glass].source.blend;
-        //            blend.m_doBlend       = true;
-        //        }
-        //        {
-        //            GFX::BLNDSTATE& blend = bsp[Pass_Lights].source.blend;
-        //            blend.m_doBlend       = true;
-        //            blend.m_lighten       = true;
-        //        }
-        //        {
-        //            GFX::BLNDSTATE& blend = model[Pass_Lights].source.blend;
-        //            blend.m_doBlend       = true;
-        //            blend.m_lighten       = true;
-        //        }
-
-        //        {
-        //            GFX::BLNDSTATE& blend = bsp[Pass_Wireframe].source.blend;
-        //            blend.m_doBlend       = true;
-        //        }
-
         gfx::buffer_t& material_buf = *resources.material_store;
         gfx::buffer_t& matrix_buf   = *resources.model_matrix_store;
+
+        const auto uses_ubo         = !api->feature_info().buffer.ssbo;
+        const auto bsp_batch_size   = uses_ubo ? 64_kB : 1024_kB;
+        const auto model_batch_size = uses_ubo ? 64_kB : 2048_kB;
 
         u32 base = 0;
         for(Pass& pass : m_bsp)
@@ -254,10 +167,10 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         {
             pass.material_buffer = material_buf.slice(base, model_batch_size);
             pass.matrix_buffer
-                = matrix_buf.slice(base_mat, model_batch_size / 4);
+                = matrix_buf.slice(base_mat, model_batch_size / 2);
 
             base += model_batch_size;
-            base_mat += model_batch_size / 4;
+            base_mat += model_batch_size / 2;
         }
     }
 
@@ -290,7 +203,8 @@ struct MeshRenderer : Components::RestrictedSubsystem<
     template<class T>
     std::shared_ptr<gfx::sampler_t> get_bitm_bucket(generation_idx_t bitm)
     {
-        return bitm_cache.template get_bucket<T>(get_bitm_format(bitm)).sampler;
+        return bitm_cache.template get_bucket<T>(get_bitm(bitm)->image.fmt)
+            .sampler;
     }
     BSPItem const* get_bsp(generation_idx_t bsp)
     {
@@ -302,53 +216,7 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         return &it->second;
     }
 
-    template<class T>
-    BitmapItem const* assign_bitm(generation_idx_t bitm, T& map)
-    {
-        BitmapItem const* bitmap = get_bitm(bitm);
-        detail::assign_map(map, bitmap);
-        return bitmap;
-    }
-    u32 get_bitm_fmt_id(generation_idx_t bitm)
-    {
-        BitmapItem const* bitmap = get_bitm(bitm);
-        if(!bitmap)
-            return 0x0;
-        switch(bitmap->image.fmt.pixfmt)
-        {
-        case PixFmt::BCn: {
-            switch(bitmap->image.fmt.cmpflg)
-            {
-            case typing::pixels::CompFlags::BC1:
-                return 0x01000000;
-            case typing::pixels::CompFlags::BC2:
-                return 0x02000000;
-            case typing::pixels::CompFlags::BC3:
-                return 0x03000000;
-            default:
-                break;
-            }
-            break;
-        }
-        case PixFmt::RGB565:
-            return 0x04000000;
-        case PixFmt::R8:
-            return 0x05000000;
-        case PixFmt::RG8:
-            return 0x06000000;
-        case PixFmt::RGBA4:
-            return 0x07000000;
-        case PixFmt::RGBA8:
-            return 0x08000000;
-        default:
-            break;
-        }
-        return 0x0;
-    }
-
-    void setup_textures(
-        std::vector<gfx::sampler_definition_t>& samplers,
-        ShaderItem const*                       shader)
+    void setup_textures(std::vector<gfx::sampler_definition_t>& samplers)
     {
         samplers.clear();
 
@@ -411,95 +279,6 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             bitm_cache
                 .template get_bucket<gfx::texture_2da_t>(PixDesc(PixFmt::RGBA8))
                 .sampler});
-
-        //        switch(shader->tag->tagclass_e[0])
-        //        {
-        //        case blam::tag_class_t::senv: {
-        //            samplers.push_back(gleam::sampler_definition_t{
-        //                typing::graphics::ShaderStage::Fragment,
-        //                {"base"sv, 0},
-        //                get_bitm_bucket<gfx::texture_2da_t>(shader->senv.base_bitm),
-        //            });
-        //            // For micro textures
-        //            samplers.push_back(gleam::sampler_definition_t{
-        //                typing::graphics::ShaderStage::Fragment,
-        //                {"micro"sv, 1},
-        //                get_bitm_bucket<gfx::texture_2da_t>(shader->senv.micro_bitm),
-        //            });
-        //            // Additional diffuse textures
-        //            samplers.push_back(gleam::sampler_definition_t{
-        //                typing::graphics::ShaderStage::Fragment,
-        //                {"primary"sv, 2},
-        //                get_bitm_bucket<gfx::texture_2da_t>(shader->senv.primary_bitm),
-        //            });
-        //            samplers.push_back(gleam::sampler_definition_t{
-        //                typing::graphics::ShaderStage::Fragment,
-        //                {"secondary"sv, 3},
-        //                get_bitm_bucket<gfx::texture_2da_t>(
-        //                    shader->senv.secondary_bitm),
-        //            });
-
-        //            break;
-        //        }
-        //        case blam::tag_class_t::schi: {
-        //            samplers.push_back(gleam::sampler_definition_t{
-        //                typing::graphics::ShaderStage::Fragment,
-        //                {"base"sv, 0},
-        //                get_bitm_bucket<gfx::texture_2da_t>(shader->schi.map1),
-        //            });
-        //            // samplers.push_back(gleam::sampler_definition_t{
-        //            //                typing::graphics::ShaderStage::Fragment,
-        //            //                {"micro"sv},
-        //            // get_bitm_bucket<gfx::texture_2da_t>(shader->schi.map2),
-        //            //            });
-        //            break;
-        //        }
-        //        case blam::tag_class_t::scex: {
-        //            samplers.push_back(gleam::sampler_definition_t{
-        //                typing::graphics::ShaderStage::Fragment,
-        //                {"base"sv, 0},
-        //                get_bitm_bucket<gfx::texture_2da_t>(shader->scex.layers.at(0)),
-        //            });
-        //            // samplers.push_back(gleam::sampler_definition_t{
-        //            //                typing::graphics::ShaderStage::Fragment,
-        //            //                {"micro"sv},
-        //            //
-        //            get_bitm_bucket<gfx::texture_2da_t>(shader->scex.layers.at(1)),
-        //            //            });
-        //            break;
-        //        }
-        //        case blam::tag_class_t::swat: {
-        //            samplers.push_back(gleam::sampler_definition_t{
-        //                typing::graphics::ShaderStage::Fragment,
-        //                {"base"sv, 0},
-        //                get_bitm_bucket<gfx::texture_2da_t>(shader->color_bitm),
-        //            });
-        //            // samplers.push_back(gleam::sampler_definition_t{
-        //            //                typing::graphics::ShaderStage::Fragment,
-        //            //                {"micro"sv},
-        //            //
-        //            get_bitm_bucket<gfx::texture_2da_t>(shader->scex.layers.at(1)),
-        //            //            });
-        //            break;
-        //        }
-        //        case blam::tag_class_t::sgla: {
-        //            samplers.push_back(gleam::sampler_definition_t{
-        //                typing::graphics::ShaderStage::Fragment,
-        //                {"base"sv, 0},
-        //                get_bitm_bucket<gfx::texture_2da_t>(shader->color_bitm),
-        //            });
-        //            // samplers.push_back(gleam::sampler_definition_t{
-        //            //                typing::graphics::ShaderStage::Fragment,
-        //            //                {"micro"sv},
-        //            //
-        //            get_bitm_bucket<gfx::texture_2da_t>(shader->scex.layers.at(1)),
-        //            //            });
-        //            break;
-        //        }
-        //        default:
-        //            cDebug("Unknown tag type: {0}",
-        //            shader->tag->tagclass[0].str()); break;
-        //        }
     }
 
     auto get_view_state()
@@ -516,7 +295,8 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         };
     }
 
-    void render_pass(Proxy&, Pass const& pass)
+    template<typename... Args>
+    void render_pass(Proxy&, Pass const& pass, Args&&... extra)
     {
         using namespace typing::vector_types;
 
@@ -535,6 +315,9 @@ struct MeshRenderer : Components::RestrictedSubsystem<
                 {"MaterialProperties"sv, 1},
                 pass.material_buffer});
 
+        std::vector<gfx::sampler_definition_t> samplers;
+        setup_textures(samplers);
+
         for(auto const& [fmt, draw] : pass.draws)
         {
             m_api->submit(
@@ -547,7 +330,9 @@ struct MeshRenderer : Components::RestrictedSubsystem<
                 },
                 vertex_u,
                 buffers,
-                get_view_state());
+                get_view_state(),
+                samplers,
+                std::forward<Args&&>(extra)...);
         }
     }
 
@@ -556,20 +341,17 @@ struct MeshRenderer : Components::RestrictedSubsystem<
     {
         using namespace typing::vector_types;
 
-        std::vector<gfx::sampler_definition_t> samplers;
-
         /* Step 1: Set up shared uniform state + buffers */
         auto vertex_u = gfx::make_uniform_list(
             typing::graphics::ShaderStage::Vertex,
             gfx::uniform_pair{
                 {"camera"sv, 1},
                 semantic::SpanOne<const Matf4>(m_camera.camera_matrix)});
-        //        auto fragment_u = gfx::make_uniform_list(
-        //            typing::graphics::ShaderStage::Fragment,
-        //            gfx::uniform_pair{
-        //                {"render_distance", 2},
-        //                semantic::SpanOne<const
-        //                f32>(m_camera.wireframe_distance)});
+        [[maybe_unused]] auto fragment_u = gfx::make_uniform_list(
+            typing::graphics::ShaderStage::Fragment,
+            gfx::uniform_pair{
+                {"camera_position", 20},
+                semantic::SpanOne<const Vecf3>(m_camera.camera.position)});
         auto buffers = gfx::make_buffer_list(
             gfx::buffer_definition_t{
                 typing::graphics::ShaderStage::Vertex,
@@ -580,19 +362,12 @@ struct MeshRenderer : Components::RestrictedSubsystem<
                 {"MaterialProperties"sv, 1},
                 pass.material_buffer});
 
+        /* Step 2: Set up all the textures */
+        std::vector<gfx::sampler_definition_t> samplers;
+        setup_textures(samplers);
+
         for(auto const& [fmt, draw] : pass.draws)
         {
-            /* Step 2: Set up the shader's required textures
-             * These are sorted into buckets by generate_draws()
-             */
-            auto shader_it = pass.shaders.find(fmt);
-            if(shader_it == pass.shaders.end())
-            {
-                cDebug("Failed to draw: shader not found");
-                continue;
-            }
-            ShaderItem const* shader = shader_it->second;
-            setup_textures(samplers, shader);
             /* Step 3: DRAW */
             auto res = m_api->submit(
                 {
@@ -703,18 +478,34 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             last_update = time;
         }
 
-        for(auto const& pass : slice_num(m_bsp, Pass_LastOpaque))
+        RenderingParameters const* rendering_props;
+        p.subsystem(rendering_props);
+
+        for(auto const& pass : slice_num(m_bsp, Pass_LastOpaque + 1))
         {
             render_bsp_pass(p, pass);
         }
 
-        for(auto const& pass : slice_num(m_model, Pass_LastOpaque))
-            render_pass(p, pass);
+        if(rendering_props->render_scenery)
+            for(auto const& pass : slice_num(m_model, Pass_LastOpaque + 1))
+                render_pass(p, pass);
 
-        render_pass(p, m_model[Pass_Glass]);
+        if(rendering_props->render_scenery)
+            render_pass(
+                p,
+                m_model[Pass_Lights],
+                gfx::blend_state{
+                    .additive = true,
+                });
+        if(rendering_props->render_scenery)
+            render_pass(p, m_model[Pass_Glass], gfx::blend_state{});
+        render_bsp_pass(
+            p,
+            m_bsp[Pass_Lights],
+            gfx::blend_state{
+                .additive = true,
+            });
         render_bsp_pass(p, m_bsp[Pass_Glass], gfx::blend_state{});
-        render_pass(p, m_model[Pass_Lights]);
-        render_bsp_pass(p, m_bsp[Pass_Lights]);
 
         render_bsp_pass(p, m_bsp[Pass_Wireframe]);
 
@@ -730,8 +521,8 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         ProfContext _;
         //        BitmapCache<Version>& bitm
         //            = p.template subsystem<BitmapCache<Version>>();
-        ShaderCache<Version>& shaders
-            = p.template subsystem<ShaderCache<Version>>();
+        //        ShaderCache<Version>& shaders
+        //            = p.template subsystem<ShaderCache<Version>>();
 
         i32 instance_offset = 0;
 
@@ -758,8 +549,8 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             if(!bsp.visible)
                 continue;
 
-            auto& shader = *shaders.find(bsp.shader);
-            auto  bucket = detail::shader_hash(shader.second, shader_cache);
+            //            auto& shader = *shaders.find(bsp.shader);
+            auto bucket = 0;
 
             Pass& wf            = m_bsp[bsp.current_pass];
             wf.command.vertices = m_resources.bsp_attr;
@@ -768,7 +559,6 @@ struct MeshRenderer : Components::RestrictedSubsystem<
                     .instanced = true,
                     .mode      = gfx::drawing::primitive::triangle,
             };
-            wf.shaders[bucket] = &shader.second;
             populate_bsp_material(bsp, instance_offset);
             wf.draw(bucket).push_back(bsp.draw.data.front());
             draw_data_t& draw     = wf.draw(bucket).back();
@@ -782,16 +572,15 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             SubModel&         model = ref.template get<SubModel>();
             MeshTrackingData& track = ref.template get<MeshTrackingData>();
 
-            auto& shader = *shaders.find(model.shader);
+            //            auto& shader = *shaders.find(model.shader);
 
             Pass& wf            = m_model[model.current_pass];
             wf.command.vertices = m_resources.model_attr;
             wf.command.call     = {
                     .indexed   = true,
                     .instanced = true,
-                    .mode      = gfx::drawing::primitive::line_strip,
+                    .mode      = gfx::drawing::primitive::triangle_strip,
             };
-            wf.shaders[0]  = &shader.second;
             track.model_id = wf.insert_draw(model.draw.data.front(), 0);
         }
 
@@ -833,20 +622,10 @@ struct MeshRenderer : Components::RestrictedSubsystem<
 
         m_resources.material_store->unmap();
 
-        BlamFiles const& files = p.template subsystem<BlamFiles>();
-
         cDebug("Summary of generation:");
         for(Pass const& pass : m_bsp)
         {
-            cDebug(
-                " - Pass: {0} buckets, {1} shaders",
-                pass.draws.size(),
-                pass.shaders.size());
-            for(auto [_, shader] : pass.shaders)
-            {
-                auto name = shader->tag->to_name().to_string(files.map_magic);
-                cDebug("    - Shader: {0}", name);
-            }
+            cDebug(" - Pass: {0} buckets", pass.draws.size());
         }
 
         //        m_bsp[Pass_EnvMicro].draws().resize(10);
@@ -854,454 +633,20 @@ struct MeshRenderer : Components::RestrictedSubsystem<
 
     void populate_bsp_material(BspReference& ref, size_t i = 0)
     {
-        Pass&             pass   = m_bsp[ref.current_pass];
-        ShaderItem const* shader = get_shader(ref.shader);
-
-        switch(shader->tag->tagclass_e.front())
-        {
-        case blam::tag_class_t::senv: {
-            materials::senv_micro& mat
-                = pass.template material_of<materials::senv_micro>(i);
-            auto const* info = shader->header->as<blam::shader::shader_env>();
-
-            auto base         = assign_bitm(shader->senv.base_bitm, mat.base);
-            mat.base.uv_scale = {1};
-            mat.base.bias     = base->image.bias;
-            mat.base.layer |= get_bitm_fmt_id(shader->senv.base_bitm);
-
-            auto primary = assign_bitm(shader->senv.primary_bitm, mat.primary);
-            if(primary)
-            {
-                mat.primary.uv_scale = {info->diffuse.primary.scale};
-                mat.primary.bias     = primary->image.bias;
-                mat.primary.layer |= get_bitm_fmt_id(shader->senv.primary_bitm);
-            }
-
-            auto secondary
-                = assign_bitm(shader->senv.secondary_bitm, mat.secondary);
-            if(secondary)
-            {
-                mat.secondary.uv_scale = {info->diffuse.secondary.scale};
-                mat.secondary.bias     = secondary->image.bias;
-                mat.secondary.layer
-                    |= get_bitm_fmt_id(shader->senv.secondary_bitm);
-            }
-
-            auto micro = assign_bitm(shader->senv.micro_bitm, mat.micro);
-            mat.micro.uv_scale = {info->diffuse.micro.scale};
-            if(micro)
-                mat.micro.bias = micro->image.bias;
-            mat.micro.layer |= get_bitm_fmt_id(shader->senv.micro_bitm);
-
-            assign_bitm(ref.lightmap, mat.lightmap);
-
-            mat.lightmap.material = 0x1;
-
-            break;
-        }
-        case blam::tag_class_t::soso:
-        case blam::tag_class_t::schi:
-        case blam::tag_class_t::scex:
-        case blam::tag_class_t::swat: {
-            materials::senv_micro& mat
-                = pass.template material_of<materials::senv_micro>(i);
-            //            auto const* info  =
-            //            shader->header->as<blam::shader::shader_glass>();
-            assign_bitm(shader->color_bitm, mat.base);
-            assign_bitm(shader->color_bitm, mat.micro);
-            mat.base.uv_scale  = {1};
-            mat.base.bias      = 0;
-            mat.base.layer |= get_bitm_fmt_id(shader->color_bitm);
-            mat.micro.uv_scale = {1};
-            mat.micro.bias     = 0;
-
-            mat.lightmap.material = 0x2;
-
-            break;
-        }
-        case blam::tag_class_t::sgla: {
-            materials::senv_micro& mat
-                = pass.template material_of<materials::senv_micro>(i);
-            assign_bitm(shader->color_bitm, mat.base);
-            mat.base.uv_scale  = {1};
-            mat.base.bias      = 0;
-            mat.base.layer |= get_bitm_fmt_id(shader->color_bitm);
-
-            mat.lightmap.material = 0x3;
-            break;
-        }
-        default:
-            cDebug(
-                "Unhandled bsp shader type: {0}",
-                shader->tag->tagclass[0].str());
-            break;
-        }
+        Pass&                  pass = m_bsp[ref.current_pass];
+        materials::senv_micro& material
+            = pass.template material_of<materials::senv_micro>(i);
+        shader_cache.populate_material(material, ref.shader);
+        bitm_cache.assign_atlas_data(material.lightmap, ref.lightmap);
     }
 
-    void populate_mod2_material(SubModel& sub, size_t /*i*/ = 0)
+    void populate_mod2_material(SubModel& sub, size_t i = 0)
     {
-        //        Pass&             pass   = m_model[sub.current_pass];
-        ShaderItem const* shader = get_shader(sub.shader);
-
-        switch(shader->tag->tagclass_e.front())
-        {
-        default:
-            cDebug(
-                "Unhandled mod2 shader type: {0}",
-                shader->tag->tagclass[0].str());
-            break;
-        }
+        Pass&                  pass = m_model[sub.current_pass];
+        materials::senv_micro& material
+            = pass.template material_of<materials::senv_micro>(i);
+        shader_cache.populate_material(material, sub.shader);
     }
-
-    //    void setup_state(
-    //        ShaderItem const& shader, PIP_PARAM& source, PIP_PARAM& params)
-    //    {
-    //        using blam::tag_class_t;
-
-    //        BitmapCache& bitm = m_data.bitm_cache;
-
-    //        params.set_constant("camera", Bytes::From(m_data.camera_matrix));
-
-    //        auto dist_constant = std::find_if(
-    //            params.constants_begin(),
-    //            params.constants_end(),
-    //            params.constant_by_name("render_distance"));
-
-    //        if(dist_constant != params.constants_end())
-    //            params.set_constant(
-    //                *dist_constant, Bytes::From(m_data.wireframe_distance));
-
-    //        switch(shader.tag->tagclass_e[0])
-    //        {
-    //        case tag_class_t::senv: {
-    //            BitmapItem const& base =
-    //            bitm.find(shader.senv.base_bitm)->second;
-
-    //            params.set_sampler(
-    //                "base",
-    //                bitm.get_bucket(base.image.fmt).sampler->handle().bind(0));
-
-    //            if(shader.senv.micro_bitm.valid())
-    //            {
-    //                BitmapItem const& micro =
-    //                    bitm.find(shader.senv.micro_bitm)->second;
-
-    //                params.set_sampler(
-    //                    "micro",
-    //                    bitm.get_bucket(micro.image.fmt).sampler->handle().bind(1));
-    //                params.set_sampler(
-    //                    "lightmaps",
-    //                    bitm.get_bucket(PixDesc(PixFmt::RGB565))
-    //                        .sampler->handle()
-    //                        .bind(2));
-    //            }
-
-    //            if(shader.senv.primary_bitm.valid())
-    //            {
-    //                BitmapItem const& primary =
-    //                    bitm.find(shader.senv.primary_bitm)->second;
-    //                params.set_sampler(
-    //                    "primary",
-    //                    bitm.get_bucket(primary.image.fmt)
-    //                        .sampler->handle()
-    //                        .bind(3));
-    //            }
-
-    //            if(shader.senv.secondary_bitm.valid())
-    //            {
-    //                BitmapItem const& secondary =
-    //                    bitm.find(shader.senv.secondary_bitm)->second;
-    //                params.set_sampler(
-    //                    "secondary",
-    //                    bitm.get_bucket(secondary.image.fmt)
-    //                        .sampler->handle()
-    //                        .bind(4));
-    //            }
-
-    //            break;
-    //        }
-    //        default: {
-    //            params.set_sampler(
-    //                "bc1_tex",
-    //                bitm.get_bucket(PixDesc(CompFmt(PixFmt::DXTn,
-    //                CompFlags::DXT1)))
-    //                    .sampler->handle()
-    //                    .bind(0));
-    //            params.set_sampler(
-    //                "bc3_tex",
-    //                bitm.get_bucket(PixDesc(CompFmt(PixFmt::DXTn,
-    //                CompFlags::DXT3)))
-    //                    .sampler->handle()
-    //                    .bind(1));
-    //            params.set_sampler(
-    //                "bc5_tex",
-    //                bitm.get_bucket(PixDesc(CompFmt(PixFmt::DXTn,
-    //                CompFlags::DXT5)))
-    //                    .sampler->handle()
-    //                    .bind(2));
-    //            break;
-    //        }
-    //        }
-
-    //        params.build_state();
-    //    }
-
-    //    void update_draws(Proxy& p, time_point const&)
-    //    {
-    //        ProfContext _("Updating draw calls");
-
-    //        for(Pass& pass : bsp)
-    //            pass.clear();
-    //        for(Pass& pass : model)
-    //            pass.clear();
-
-    //        BitmapCache& bitm_cache = m_data.bitm_cache;
-
-    //        /* Update draws */
-    //        for(auto& ent : p.select(ObjectBsp))
-    //        {
-    //            auto          ref     = p.template ref<Proxy>(ent);
-    //            BspReference& bsp_ref = ref.template get<BspTag>();
-
-    //            if(!bsp_ref.visible)
-    //                continue;
-
-    //            Pass& pass        = bsp[bsp_ref.current_pass];
-    //            auto  target_pass = &pass.draws();
-
-    //            ShaderItem const& shader =
-    //                m_data.shader_cache.find(bsp_ref.shader)->second;
-
-    //            auto state_hash = detail::shader_hash(shader,
-    //            m_data.shader_cache); auto state      =
-    //            pass.format_states.find(state_hash);
-
-    //            if(state == pass.format_states.end())
-    //            {
-    //                state = pass.format_states.insert({state_hash,
-    //                *pass.pipeline})
-    //                            .first;
-
-    //                PIP_PARAM& state_ = state->second;
-    //                setup_state(shader, *pass.pipeline, state_);
-    //            }
-
-    //            bsp_ref.draw_idx = target_pass->size();
-    //            target_pass->push_back(
-    //                {m_data.bsp_attr,
-    //                 &state->second.get_state(),
-    //                 bsp_ref.draw.call,
-    //                 bsp_ref.draw.draw});
-
-    //            bsp[Pass_Wireframe].draws().push_back(
-    //                {m_data.bsp_attr,
-    //                 &bsp[Pass_Wireframe].pipeline->get_state(),
-    //                 GFX::D_CALL().withIndexing().withInstancing().withLineStrip(),
-    //                 bsp_ref.draw.draw});
-    //        }
-
-    //        for(auto& ent : p.select(ObjectMod2))
-    //        {
-    //            auto      ref     = p.template ref<Proxy>(ent);
-    //            SubModel& mod_ref = ref.template get<SubModelTag>();
-
-    //            if(!test_visible(mod_ref.parent.get<ModelTag>().transform))
-    //                continue;
-
-    //            auto target_pass = &model[mod_ref.current_pass].draws();
-
-    //            mod_ref.draw_idx = target_pass->size();
-    //            target_pass->push_back(
-    //                {m_data.model_attr,
-    //                 &m_data.model_pipeline->get_state(),
-    //                 mod_ref.draw.call,
-    //                 mod_ref.draw.draw});
-    //        }
-
-    //        for(auto i : Range<>(Pass_Count))
-    //        {
-    //            GFX::OptimizeRenderPass(bsp[i].source, bsp[i].draw);
-    //            GFX::OptimizeRenderPass(model[i].source, model[i].draw);
-    //        }
-
-    //        /* Update transforms and texture references */
-
-    //        auto material_store = m_data.material_store->map();
-    //        auto matrix_store   = m_data.model_matrix_store->map();
-
-    //        auto material_store_base = *material_store.at(0);
-    //        material_store           = *material_store.at(0, 4_MB);
-
-    //        for(Pass& pass : bsp)
-    //            pass.material_buffer = *material_store.at(
-    //                pass.material_buffer_range.first,
-    //                pass.material_buffer_range.second);
-
-    //        for(Pass& pass : model)
-    //        {
-    //            pass.material_buffer = *material_store_base.at(
-    //                pass.material_buffer_range.first,
-    //                pass.material_buffer_range.second);
-
-    //            pass.matrix_buffer = (*matrix_store.at(
-    //                                      pass.matrix_buffer_range.first,
-    //                                      pass.matrix_buffer_range.second))
-    //                                     .template as<Matf4>();
-    //        }
-
-    //        for(auto& ent : p.select(ObjectMod2))
-    //        {
-    //            auto      ref     = p.template ref<Proxy>(ent);
-    //            SubModel& mod_ref = ref.template get<SubModelTag>();
-
-    //            if(!test_visible(mod_ref.parent.get<ModelTag>().transform))
-    //                continue;
-
-    //            auto& draw_data =
-    //                model[mod_ref.current_pass].draws().at(mod_ref.draw_idx).d_data;
-
-    //            Pass& pass = model[mod_ref.current_pass];
-    //            pass.matrix_buffer[draw_data.m_ioff] =
-    //                mod_ref.parent.get<ModelTag>().transform;
-
-    //            ModelItem& mod2 =
-    //            m_data.model_cache.find(mod_ref.model)->second; auto mod_name
-    //            =
-    //                mod2.tag->to_name().to_string(m_data.map_container.magic);
-
-    //            if(!mod_ref.shader.valid())
-    //                continue;
-
-    //            ShaderItem const* shader = get_shader(mod_ref.shader);
-
-    //            if(!shader->color_bitm.valid())
-    //                continue;
-
-    //            BitmapItem& bitmap =
-    //                m_data.bitm_cache.find(shader->color_bitm)->second;
-
-    //            materials::basic& mat =
-    //                pass.material_buffer
-    //                    .template as<materials::basic>()[draw_data.m_ioff];
-
-    //            mat.layer        = bitmap.image.layer;
-    //            mat.atlas_offset = bitmap.image.offset;
-    //            mat.atlas_scale  = bitmap.image.scale;
-    //            mat.uv_scale     = mod2.uvscale;
-    //            mat.bias         = bitmap.image.bias;
-
-    //            auto comp_flags = std::get<4>(bitmap.image.bucket);
-    //            switch(comp_flags)
-    //            {
-    //            case CompFlags::DXT1:
-    //                mat.source = 0;
-    //                break;
-    //            case CompFlags::DXT3:
-    //                mat.source = 1;
-    //                break;
-    //            case CompFlags::DXT5:
-    //                mat.source = 2;
-    //                break;
-    //            default:
-    //                break;
-    //            }
-    //        }
-
-    //        for(auto& ent : p.select(ObjectBsp))
-    //        {
-    //            auto          ref     = p.template ref<Proxy>(ent);
-    //            BspReference& bsp_ref = ref.template get<BspTag>();
-
-    //            if(!bsp_ref.visible)
-    //                continue;
-
-    //            auto& draw_data =
-    //                bsp[bsp_ref.current_pass].draws().at(bsp_ref.draw_idx).d_data;
-
-    //            if(!bsp_ref.shader.valid())
-    //                continue;
-
-    //            ShaderItem const* shader = get_shader(bsp_ref.shader);
-
-    //            if(!shader->color_bitm.valid())
-    //                continue;
-
-    //            Pass& pass = bsp[bsp_ref.current_pass];
-    //            switch(bsp_ref.current_pass)
-    //            {
-    //            case Pass_EnvMicro: {
-    //                auto shader_data =
-    //                    C_RCAST<blam::shader_env const*>(shader->header);
-    //                materials::senv_micro& mat =
-    //                    pass.template
-    //                    material_of<materials::senv_micro>(draw_data);
-
-    //                BitmapItem const* base  =
-    //                get_bitm(shader->senv.base_bitm); BitmapItem const* micro
-    //                = get_bitm(shader->senv.micro_bitm); BitmapItem const*
-    //                prim  = get_bitm(shader->senv.primary_bitm); BitmapItem
-    //                const* seco  = get_bitm(shader->senv.secondary_bitm);
-    //                BitmapItem const* lightmap = get_bitm(bsp_ref.lightmap);
-
-    //                detail::assign_map(mat.base, base);
-    //                mat.base.uv_scale = {1};
-    //                mat.base.bias     = base->image.bias;
-
-    //                detail::assign_map(mat.micro, micro);
-    //                mat.micro.uv_scale = {shader_data->diffuse.micro.scale};
-    //                if(micro)
-    //                    mat.micro.bias = micro->image.bias;
-
-    //                detail::assign_map(mat.primary, prim);
-    //                mat.primary.uv_scale =
-    //                {shader_data->diffuse.primary.scale}; if(prim)
-    //                    mat.primary.bias = prim->image.bias;
-
-    //                detail::assign_map(mat.secondary, seco);
-    //                mat.secondary.uv_scale =
-    //                {shader_data->diffuse.secondary.scale}; if(seco)
-    //                    mat.secondary.bias = seco->image.bias;
-
-    //                detail::assign_map(mat.lightmap, lightmap);
-
-    //                break;
-    //            }
-    //            default: {
-    //                materials::basic& mat =
-    //                    pass.material_buffer
-    //                        .template
-    //                        as<materials::basic>()[draw_data.m_ioff];
-
-    //                BitmapItem& bitmap =
-    //                    m_data.bitm_cache.find(shader->color_bitm)->second;
-    //                mat.layer        = bitmap.image.layer;
-    //                mat.atlas_offset = bitmap.image.offset;
-    //                mat.atlas_scale  = bitmap.image.scale;
-    //                mat.uv_scale     = {1};
-
-    //                auto comp_flags = std::get<4>(bitmap.image.bucket);
-    //                switch(comp_flags)
-    //                {
-    //                case CompFlags::DXT1:
-    //                    mat.source = 0;
-    //                    break;
-    //                case CompFlags::DXT3:
-    //                    mat.source = 1;
-    //                    break;
-    //                case CompFlags::DXT5:
-    //                    mat.source = 2;
-    //                    break;
-    //                default:
-    //                    break;
-    //                }
-    //                break;
-    //            }
-    //            }
-    //        }
-
-    //        m_data.material_store->unmap();
-    //        m_data.model_matrix_store->unmap();
-    //    }
 };
 
 struct ScreenClear
@@ -1325,8 +670,9 @@ struct ScreenClear
 
     void end_restricted(Proxy& e, time_point const&)
     {
-        auto& api       = e.subsystem<gfx::system>();
-        auto& resources = e.subsystem<BlamResources>();
+        auto& api         = e.subsystem<gfx::system>();
+        auto& resources   = e.subsystem<BlamResources>();
+        auto& postprocess = e.subsystem<PostProcessParameters>();
 
         if(api.default_rendertarget() == resources.offscreen)
             return;
@@ -1334,6 +680,11 @@ struct ScreenClear
         {
             load_resources(api, e.subsystem<BlamResources>());
         }
+
+        auto params = gfx::make_uniform_list(
+            typing::graphics::ShaderStage::Fragment,
+            gfx::uniform_pair{{"gamma"sv}, SpanOne(postprocess.gamma)},
+            gfx::uniform_pair{{"exposure"sv}, SpanOne(postprocess.exposure)});
 
         // clang-format off
         api.submit(gfx::draw_command{
@@ -1347,9 +698,10 @@ struct ScreenClear
             },
             gfx::make_sampler_list(gfx::sampler_definition_t{
                 typing::graphics::ShaderStage::Fragment,
-                {"source"sv, 0},
+                {"source"sv},
                 offscreen_sampler
-            }));
+            }),
+            std::move(params));
         // clang-format on
     }
 
@@ -1403,9 +755,14 @@ precision highp float;
 precision highp sampler2D;
 varying vec2 in_tex;
 uniform sampler2D source;
+uniform float gamma;
+uniform float exposure;
 void main()
 {
-    gl_FragColor = vec4(pow(texture2D(source, in_tex).rgb, vec3(1.0 / 1.5)), 1.0);
+    vec3 color = texture2D(source, in_tex).rgb;
+    color = color / (color + vec3(1.0));
+    color = pow(exposure * color, vec3(1.0 / gamma));
+    gl_FragColor = vec4(color, 1.0);
 }
 )";
 

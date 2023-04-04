@@ -25,7 +25,7 @@ void fix_base_instance(spirv_cross::CompilerGLSL& compiler)
         "#define gl_InstanceID (gl_BaseInstance + gl_InstanceID)");
 }
 
-void add_instance_definition(spirv_cross::CompilerGLSL& compiler)
+void add_instance_definition(spirv_cross::CompilerGLSL& /*compiler*/)
 {
     //    compiler.add_header_line("#define gl_InstanceID glw_InstanceID");
     //    compiler.add_header_line("uniform int glw_InstanceID;");

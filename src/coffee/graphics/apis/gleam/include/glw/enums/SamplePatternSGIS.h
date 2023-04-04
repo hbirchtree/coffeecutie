@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // SamplePatternSGIS
-enum class sample_pattern_sgis : ::libc_types::u32
+enum class sample_pattern_sgis : u32
 {
 #ifdef GL_1PASS_EXT
     1pass_ext = GL_1PASS_EXT,

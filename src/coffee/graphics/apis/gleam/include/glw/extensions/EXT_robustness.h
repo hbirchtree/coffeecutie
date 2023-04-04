@@ -19,7 +19,7 @@ constexpr libc_types::u32 context_robust_access       = 0x90F3;
 
  * \return GraphicsResetStatus
  */
-STATICINLINE GLenum get_graphics_reset_status()
+STATICINLINE group::graphics_reset_status get_graphics_reset_status()
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -28,7 +28,7 @@ STATICINLINE GLenum get_graphics_reset_status()
     }
     auto out = glGetGraphicsResetStatusEXT();
     detail::error_check("GetGraphicsResetStatusEXT"sv);
-    return out;
+    return static_cast<group::graphics_reset_status>(out);
 }
 
 template<class span_f32>

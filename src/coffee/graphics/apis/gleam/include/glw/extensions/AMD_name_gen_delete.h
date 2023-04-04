@@ -66,7 +66,7 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
  * \param name GLuint
  * \return Boolean
  */
-STATICINLINE GLboolean is_name(GLenum identifier, u32 name)
+STATICINLINE bool is_name(GLenum identifier, u32 name)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -75,7 +75,7 @@ STATICINLINE GLboolean is_name(GLenum identifier, u32 name)
     }
     auto out = glIsNameAMD(identifier, name);
     detail::error_check("IsNameAMD"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 } // namespace gl::amd::name_gen_delete

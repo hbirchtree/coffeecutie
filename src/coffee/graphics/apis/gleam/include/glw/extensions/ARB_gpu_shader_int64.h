@@ -287,7 +287,7 @@ requires(semantic::concepts::Span<span_const_vec_2_i64>&& semantic::concepts::
      * \return void
      */
     STATICINLINE void program_uniform(
-        u32 program, i32 location, i32 count, span_const_vec_2_i64 const& value)
+        u32 program, i32 location, span_const_vec_2_i64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -302,7 +302,7 @@ requires(semantic::concepts::Span<span_const_vec_2_i64>&& semantic::concepts::
     glProgramUniform2i64vARB(
         program,
         location,
-        count,
+        value.size(),
         reinterpret_cast<const GLint64*>(value.data()));
     detail::error_check("ProgramUniform2i64vARB"sv);
 }
@@ -346,7 +346,7 @@ requires(semantic::concepts::Span<span_const_vec_2_u64>&& semantic::concepts::
      * \return void
      */
     STATICINLINE void program_uniform(
-        u32 program, i32 location, i32 count, span_const_vec_2_u64 const& value)
+        u32 program, i32 location, span_const_vec_2_u64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -361,7 +361,7 @@ requires(semantic::concepts::Span<span_const_vec_2_u64>&& semantic::concepts::
     glProgramUniform2ui64vARB(
         program,
         location,
-        count,
+        value.size(),
         reinterpret_cast<const GLuint64*>(value.data()));
     detail::error_check("ProgramUniform2ui64vARB"sv);
 }
@@ -406,7 +406,7 @@ requires(semantic::concepts::Span<span_const_vec_3_i64>&& semantic::concepts::
      * \return void
      */
     STATICINLINE void program_uniform(
-        u32 program, i32 location, i32 count, span_const_vec_3_i64 const& value)
+        u32 program, i32 location, span_const_vec_3_i64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -421,7 +421,7 @@ requires(semantic::concepts::Span<span_const_vec_3_i64>&& semantic::concepts::
     glProgramUniform3i64vARB(
         program,
         location,
-        count,
+        value.size(),
         reinterpret_cast<const GLint64*>(value.data()));
     detail::error_check("ProgramUniform3i64vARB"sv);
 }
@@ -466,7 +466,7 @@ requires(semantic::concepts::Span<span_const_vec_3_u64>&& semantic::concepts::
      * \return void
      */
     STATICINLINE void program_uniform(
-        u32 program, i32 location, i32 count, span_const_vec_3_u64 const& value)
+        u32 program, i32 location, span_const_vec_3_u64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -481,7 +481,7 @@ requires(semantic::concepts::Span<span_const_vec_3_u64>&& semantic::concepts::
     glProgramUniform3ui64vARB(
         program,
         location,
-        count,
+        value.size(),
         reinterpret_cast<const GLuint64*>(value.data()));
     detail::error_check("ProgramUniform3ui64vARB"sv);
 }
@@ -527,7 +527,7 @@ requires(semantic::concepts::Span<span_const_vec_4_i64>&& semantic::concepts::
      * \return void
      */
     STATICINLINE void program_uniform(
-        u32 program, i32 location, i32 count, span_const_vec_4_i64 const& value)
+        u32 program, i32 location, span_const_vec_4_i64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -542,7 +542,7 @@ requires(semantic::concepts::Span<span_const_vec_4_i64>&& semantic::concepts::
     glProgramUniform4i64vARB(
         program,
         location,
-        count,
+        value.size(),
         reinterpret_cast<const GLint64*>(value.data()));
     detail::error_check("ProgramUniform4i64vARB"sv);
 }
@@ -588,7 +588,7 @@ requires(semantic::concepts::Span<span_const_vec_4_u64>&& semantic::concepts::
      * \return void
      */
     STATICINLINE void program_uniform(
-        u32 program, i32 location, i32 count, span_const_vec_4_u64 const& value)
+        u32 program, i32 location, span_const_vec_4_u64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -603,7 +603,7 @@ requires(semantic::concepts::Span<span_const_vec_4_u64>&& semantic::concepts::
     glProgramUniform4ui64vARB(
         program,
         location,
-        count,
+        value.size(),
         reinterpret_cast<const GLuint64*>(value.data()));
     detail::error_check("ProgramUniform4ui64vARB"sv);
 }
@@ -636,8 +636,7 @@ requires(semantic::concepts::Span<span_const_i64>&& std::is_same_v<
      * \param value const GLint64 *
      * \return void
      */
-    STATICINLINE
-    void uniform(i32 location, i32 count, span_const_i64 const& value)
+    STATICINLINE void uniform(i32 location, span_const_i64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -645,7 +644,7 @@ requires(semantic::concepts::Span<span_const_i64>&& std::is_same_v<
         GLW_FPTR_CHECK(Uniform1i64vARB)
     }
     glUniform1i64vARB(
-        location, count, reinterpret_cast<const GLint64*>(value.data()));
+        location, value.size(), reinterpret_cast<const GLint64*>(value.data()));
     detail::error_check("Uniform1i64vARB"sv);
 }
 
@@ -677,8 +676,7 @@ requires(semantic::concepts::Span<span_const_u64>&& std::is_same_v<
      * \param value const GLuint64 *
      * \return void
      */
-    STATICINLINE
-    void uniform(i32 location, i32 count, span_const_u64 const& value)
+    STATICINLINE void uniform(i32 location, span_const_u64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -686,7 +684,9 @@ requires(semantic::concepts::Span<span_const_u64>&& std::is_same_v<
         GLW_FPTR_CHECK(Uniform1ui64vARB)
     }
     glUniform1ui64vARB(
-        location, count, reinterpret_cast<const GLuint64*>(value.data()));
+        location,
+        value.size(),
+        reinterpret_cast<const GLuint64*>(value.data()));
     detail::error_check("Uniform1ui64vARB"sv);
 }
 
@@ -720,8 +720,7 @@ requires(semantic::concepts::Span<span_const_vec_2_i64>&& semantic::concepts::
      * \param value const GLint64 *
      * \return void
      */
-    STATICINLINE
-    void uniform(i32 location, i32 count, span_const_vec_2_i64 const& value)
+    STATICINLINE void uniform(i32 location, span_const_vec_2_i64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -729,7 +728,7 @@ requires(semantic::concepts::Span<span_const_vec_2_i64>&& semantic::concepts::
         GLW_FPTR_CHECK(Uniform2i64vARB)
     }
     glUniform2i64vARB(
-        location, count, reinterpret_cast<const GLint64*>(value.data()));
+        location, value.size(), reinterpret_cast<const GLint64*>(value.data()));
     detail::error_check("Uniform2i64vARB"sv);
 }
 
@@ -763,8 +762,7 @@ requires(semantic::concepts::Span<span_const_vec_2_u64>&& semantic::concepts::
      * \param value const GLuint64 *
      * \return void
      */
-    STATICINLINE
-    void uniform(i32 location, i32 count, span_const_vec_2_u64 const& value)
+    STATICINLINE void uniform(i32 location, span_const_vec_2_u64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -772,7 +770,9 @@ requires(semantic::concepts::Span<span_const_vec_2_u64>&& semantic::concepts::
         GLW_FPTR_CHECK(Uniform2ui64vARB)
     }
     glUniform2ui64vARB(
-        location, count, reinterpret_cast<const GLuint64*>(value.data()));
+        location,
+        value.size(),
+        reinterpret_cast<const GLuint64*>(value.data()));
     detail::error_check("Uniform2ui64vARB"sv);
 }
 
@@ -807,8 +807,7 @@ requires(semantic::concepts::Span<span_const_vec_3_i64>&& semantic::concepts::
      * \param value const GLint64 *
      * \return void
      */
-    STATICINLINE
-    void uniform(i32 location, i32 count, span_const_vec_3_i64 const& value)
+    STATICINLINE void uniform(i32 location, span_const_vec_3_i64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -816,7 +815,7 @@ requires(semantic::concepts::Span<span_const_vec_3_i64>&& semantic::concepts::
         GLW_FPTR_CHECK(Uniform3i64vARB)
     }
     glUniform3i64vARB(
-        location, count, reinterpret_cast<const GLint64*>(value.data()));
+        location, value.size(), reinterpret_cast<const GLint64*>(value.data()));
     detail::error_check("Uniform3i64vARB"sv);
 }
 
@@ -851,8 +850,7 @@ requires(semantic::concepts::Span<span_const_vec_3_u64>&& semantic::concepts::
      * \param value const GLuint64 *
      * \return void
      */
-    STATICINLINE
-    void uniform(i32 location, i32 count, span_const_vec_3_u64 const& value)
+    STATICINLINE void uniform(i32 location, span_const_vec_3_u64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -860,7 +858,9 @@ requires(semantic::concepts::Span<span_const_vec_3_u64>&& semantic::concepts::
         GLW_FPTR_CHECK(Uniform3ui64vARB)
     }
     glUniform3ui64vARB(
-        location, count, reinterpret_cast<const GLuint64*>(value.data()));
+        location,
+        value.size(),
+        reinterpret_cast<const GLuint64*>(value.data()));
     detail::error_check("Uniform3ui64vARB"sv);
 }
 
@@ -896,8 +896,7 @@ requires(semantic::concepts::Span<span_const_vec_4_i64>&& semantic::concepts::
      * \param value const GLint64 *
      * \return void
      */
-    STATICINLINE
-    void uniform(i32 location, i32 count, span_const_vec_4_i64 const& value)
+    STATICINLINE void uniform(i32 location, span_const_vec_4_i64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -905,7 +904,7 @@ requires(semantic::concepts::Span<span_const_vec_4_i64>&& semantic::concepts::
         GLW_FPTR_CHECK(Uniform4i64vARB)
     }
     glUniform4i64vARB(
-        location, count, reinterpret_cast<const GLint64*>(value.data()));
+        location, value.size(), reinterpret_cast<const GLint64*>(value.data()));
     detail::error_check("Uniform4i64vARB"sv);
 }
 
@@ -941,8 +940,7 @@ requires(semantic::concepts::Span<span_const_vec_4_u64>&& semantic::concepts::
      * \param value const GLuint64 *
      * \return void
      */
-    STATICINLINE
-    void uniform(i32 location, i32 count, span_const_vec_4_u64 const& value)
+    STATICINLINE void uniform(i32 location, span_const_vec_4_u64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -950,7 +948,9 @@ requires(semantic::concepts::Span<span_const_vec_4_u64>&& semantic::concepts::
         GLW_FPTR_CHECK(Uniform4ui64vARB)
     }
     glUniform4ui64vARB(
-        location, count, reinterpret_cast<const GLuint64*>(value.data()));
+        location,
+        value.size(),
+        reinterpret_cast<const GLuint64*>(value.data()));
     detail::error_check("Uniform4ui64vARB"sv);
 }
 

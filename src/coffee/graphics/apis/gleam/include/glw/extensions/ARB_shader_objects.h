@@ -471,8 +471,7 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
      * \param value const GLfloat *
      * \return void
      */
-    STATICINLINE
-    void uniform(i32 location, i32 count, span_const_f32 const& value)
+    STATICINLINE void uniform(i32 location, span_const_f32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -480,7 +479,7 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
         GLW_FPTR_CHECK(Uniform1fvARB)
     }
     glUniform1fvARB(
-        location, count, reinterpret_cast<const GLfloat*>(value.data()));
+        location, value.size(), reinterpret_cast<const GLfloat*>(value.data()));
     detail::error_check("Uniform1fvARB"sv);
 }
 
@@ -512,8 +511,7 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
      * \param value const GLint *
      * \return void
      */
-    STATICINLINE
-    void uniform(i32 location, i32 count, span_const_i32 const& value)
+    STATICINLINE void uniform(i32 location, span_const_i32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -521,7 +519,7 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
         GLW_FPTR_CHECK(Uniform1ivARB)
     }
     glUniform1ivARB(
-        location, count, reinterpret_cast<const GLint*>(value.data()));
+        location, value.size(), reinterpret_cast<const GLint*>(value.data()));
     detail::error_check("Uniform1ivARB"sv);
 }
 
@@ -555,8 +553,7 @@ requires(semantic::concepts::Span<span_const_vec_2_f32>&& semantic::concepts::
      * \param value const GLfloat *
      * \return void
      */
-    STATICINLINE
-    void uniform(i32 location, i32 count, span_const_vec_2_f32 const& value)
+    STATICINLINE void uniform(i32 location, span_const_vec_2_f32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -564,7 +561,7 @@ requires(semantic::concepts::Span<span_const_vec_2_f32>&& semantic::concepts::
         GLW_FPTR_CHECK(Uniform2fvARB)
     }
     glUniform2fvARB(
-        location, count, reinterpret_cast<const GLfloat*>(value.data()));
+        location, value.size(), reinterpret_cast<const GLfloat*>(value.data()));
     detail::error_check("Uniform2fvARB"sv);
 }
 
@@ -598,8 +595,7 @@ requires(semantic::concepts::Span<span_const_vec_2_i32>&& semantic::concepts::
      * \param value const GLint *
      * \return void
      */
-    STATICINLINE
-    void uniform(i32 location, i32 count, span_const_vec_2_i32 const& value)
+    STATICINLINE void uniform(i32 location, span_const_vec_2_i32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -607,7 +603,7 @@ requires(semantic::concepts::Span<span_const_vec_2_i32>&& semantic::concepts::
         GLW_FPTR_CHECK(Uniform2ivARB)
     }
     glUniform2ivARB(
-        location, count, reinterpret_cast<const GLint*>(value.data()));
+        location, value.size(), reinterpret_cast<const GLint*>(value.data()));
     detail::error_check("Uniform2ivARB"sv);
 }
 
@@ -642,8 +638,7 @@ requires(semantic::concepts::Span<span_const_vec_3_f32>&& semantic::concepts::
      * \param value const GLfloat *
      * \return void
      */
-    STATICINLINE
-    void uniform(i32 location, i32 count, span_const_vec_3_f32 const& value)
+    STATICINLINE void uniform(i32 location, span_const_vec_3_f32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -651,7 +646,7 @@ requires(semantic::concepts::Span<span_const_vec_3_f32>&& semantic::concepts::
         GLW_FPTR_CHECK(Uniform3fvARB)
     }
     glUniform3fvARB(
-        location, count, reinterpret_cast<const GLfloat*>(value.data()));
+        location, value.size(), reinterpret_cast<const GLfloat*>(value.data()));
     detail::error_check("Uniform3fvARB"sv);
 }
 
@@ -686,8 +681,7 @@ requires(semantic::concepts::Span<span_const_vec_3_i32>&& semantic::concepts::
      * \param value const GLint *
      * \return void
      */
-    STATICINLINE
-    void uniform(i32 location, i32 count, span_const_vec_3_i32 const& value)
+    STATICINLINE void uniform(i32 location, span_const_vec_3_i32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -695,7 +689,7 @@ requires(semantic::concepts::Span<span_const_vec_3_i32>&& semantic::concepts::
         GLW_FPTR_CHECK(Uniform3ivARB)
     }
     glUniform3ivARB(
-        location, count, reinterpret_cast<const GLint*>(value.data()));
+        location, value.size(), reinterpret_cast<const GLint*>(value.data()));
     detail::error_check("Uniform3ivARB"sv);
 }
 
@@ -731,8 +725,7 @@ requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
      * \param value const GLfloat *
      * \return void
      */
-    STATICINLINE
-    void uniform(i32 location, i32 count, span_const_vec_4_f32 const& value)
+    STATICINLINE void uniform(i32 location, span_const_vec_4_f32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -740,7 +733,7 @@ requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
         GLW_FPTR_CHECK(Uniform4fvARB)
     }
     glUniform4fvARB(
-        location, count, reinterpret_cast<const GLfloat*>(value.data()));
+        location, value.size(), reinterpret_cast<const GLfloat*>(value.data()));
     detail::error_check("Uniform4fvARB"sv);
 }
 
@@ -776,8 +769,7 @@ requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
      * \param value const GLint *
      * \return void
      */
-    STATICINLINE
-    void uniform(i32 location, i32 count, span_const_vec_4_i32 const& value)
+    STATICINLINE void uniform(i32 location, span_const_vec_4_i32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -785,7 +777,7 @@ requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
         GLW_FPTR_CHECK(Uniform4ivARB)
     }
     glUniform4ivARB(
-        location, count, reinterpret_cast<const GLint*>(value.data()));
+        location, value.size(), reinterpret_cast<const GLint*>(value.data()));
     detail::error_check("Uniform4ivARB"sv);
 }
 
@@ -801,10 +793,7 @@ requires(semantic::concepts::Span<span_const_mat_2x2_f32>&& semantic::concepts::
      * \return void
      */
     STATICINLINE void uniform(
-        i32                           location,
-        i32                           count,
-        bool                          transpose,
-        span_const_mat_2x2_f32 const& value)
+        i32 location, bool transpose, span_const_mat_2x2_f32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -813,7 +802,7 @@ requires(semantic::concepts::Span<span_const_mat_2x2_f32>&& semantic::concepts::
     }
     glUniformMatrix2fvARB(
         location,
-        count,
+        value.size(),
         transpose,
         reinterpret_cast<const GLfloat*>(value.data()));
     detail::error_check("UniformMatrix2fvARB"sv);
@@ -831,10 +820,7 @@ requires(semantic::concepts::Span<span_const_mat_3x3_f32>&& semantic::concepts::
      * \return void
      */
     STATICINLINE void uniform(
-        i32                           location,
-        i32                           count,
-        bool                          transpose,
-        span_const_mat_3x3_f32 const& value)
+        i32 location, bool transpose, span_const_mat_3x3_f32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -843,7 +829,7 @@ requires(semantic::concepts::Span<span_const_mat_3x3_f32>&& semantic::concepts::
     }
     glUniformMatrix3fvARB(
         location,
-        count,
+        value.size(),
         transpose,
         reinterpret_cast<const GLfloat*>(value.data()));
     detail::error_check("UniformMatrix3fvARB"sv);
@@ -861,10 +847,7 @@ requires(semantic::concepts::Span<span_const_mat_4x4_f32>&& semantic::concepts::
      * \return void
      */
     STATICINLINE void uniform(
-        i32                           location,
-        i32                           count,
-        bool                          transpose,
-        span_const_mat_4x4_f32 const& value)
+        i32 location, bool transpose, span_const_mat_4x4_f32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -873,7 +856,7 @@ requires(semantic::concepts::Span<span_const_mat_4x4_f32>&& semantic::concepts::
     }
     glUniformMatrix4fvARB(
         location,
-        count,
+        value.size(),
         transpose,
         reinterpret_cast<const GLfloat*>(value.data()));
     detail::error_check("UniformMatrix4fvARB"sv);

@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // ProgramPropertyARB
-enum class program_property_arb : ::libc_types::u32
+enum class program_property_arb : u32
 {
 #ifdef GL_ACTIVE_ATOMIC_COUNTER_BUFFERS
     active_atomic_counter_buffers = GL_ACTIVE_ATOMIC_COUNTER_BUFFERS,

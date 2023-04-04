@@ -5,6 +5,7 @@
 #include <QQuickStyle>
 
 #include "screenshotprovider.h"
+#include "timelimitedmodel.h"
 #include "tracemodel.h"
 
 int main(int argc, char* argv[])
@@ -32,6 +33,8 @@ int main(int argc, char* argv[])
 #else
     context->setContextProperty("isEmscripten", true);
 #endif
+
+    qmlRegisterType<TimeLimitedModel>("dev.birchy.models", 1, 0, "TimeLimitedModel");
 
     QObject::connect(
         &engine,

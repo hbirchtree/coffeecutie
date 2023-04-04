@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // AttribMask
-enum class attrib_mask : ::libc_types::u32
+enum class attrib_mask : u32
 {
 #ifdef GL_ACCUM_BUFFER_BIT
     accum_buffer_bit = GL_ACCUM_BUFFER_BIT,

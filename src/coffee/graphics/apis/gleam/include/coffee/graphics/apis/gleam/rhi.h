@@ -289,6 +289,7 @@ struct api
         optional<extensions_set> api_extensions{};
         optional<features>       api_features{};
         optional<workarounds>    api_workarounds{};
+        optional<size_t>         indirect_buffer_size{};
     };
 
     static const load_options_t default_options;
@@ -315,6 +316,7 @@ struct api
     tuple<u32, u32>       shaderlang_version();
     tuple<string, string> device();
     optional<string>      device_driver();
+    extensions_set        extensions();
 
     void collect_info(comp_app::interfaces::AppInfo& appInfo);
 
@@ -344,18 +346,19 @@ struct api
     bool supports_extension(string const& ext);
 
     std::shared_ptr<rendertarget_type> m_framebuffer;
-    std::unique_ptr<debug_api>       m_debug;
+    std::unique_ptr<debug_api>         m_debug;
     context::api                       m_context_state;
 
-    rendertarget_currency m_rendertargetCurrency;
-    features              m_features;
-    api_limits            m_limits;
-    workarounds           m_workarounds;
-    extensions_set        m_extensions;
-    api_type_t            m_api_type{api_type_t::none};
-    u32                   m_api_version{0};
-    rq::runtime_queue*    m_main_queue{nullptr};
-    rq::runtime_queue*    m_texture_decode_queue{nullptr};
+    rendertarget_currency              m_rendertargetCurrency;
+    features                           m_features;
+    api_limits                         m_limits;
+    workarounds                        m_workarounds;
+    extensions_set                     m_extensions;
+    api_type_t                         m_api_type{api_type_t::none};
+    u32                                m_api_version{0};
+    rq::runtime_queue*                 m_main_queue{nullptr};
+    rq::runtime_queue*                 m_texture_decode_queue{nullptr};
+    std::unique_ptr<circular_buffer_t> m_indirect_buffer;
 };
 
 inline void test_t2d()

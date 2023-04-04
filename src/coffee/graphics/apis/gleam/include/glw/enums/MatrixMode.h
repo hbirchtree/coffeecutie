@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // MatrixMode
-enum class matrix_mode : ::libc_types::u32
+enum class matrix_mode : u32
 {
 #ifdef GL_MODELVIEW
     modelview = GL_MODELVIEW,

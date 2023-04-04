@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // PathParameter
-enum class path_parameter : ::libc_types::u32
+enum class path_parameter : u32
 {
 #ifdef GL_PATH_CLIENT_LENGTH_NV
     path_client_length_nv = GL_PATH_CLIENT_LENGTH_NV,

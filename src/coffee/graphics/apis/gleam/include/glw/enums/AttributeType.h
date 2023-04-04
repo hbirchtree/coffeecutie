@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // AttributeType
-enum class attribute_type : ::libc_types::u32
+enum class attribute_type : u32
 {
 #ifdef GL_BOOL
     bool_ = GL_BOOL,

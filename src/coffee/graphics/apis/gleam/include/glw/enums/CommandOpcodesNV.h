@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // CommandOpcodesNV
-enum class command_opcodes_nv : ::libc_types::u32
+enum class command_opcodes_nv : u32
 {
 #ifdef GL_ALPHA_REF_COMMAND_NV
     alpha_ref_command_nv = GL_ALPHA_REF_COMMAND_NV,

@@ -167,7 +167,7 @@ requires(semantic::concepts::Span<span_u8>&& std::is_same_v<
  * \param memoryObject GLuint
  * \return Boolean
  */
-STATICINLINE GLboolean is_memory_object(u32 memoryObject)
+STATICINLINE bool is_memory_object(u32 memoryObject)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -176,7 +176,7 @@ STATICINLINE GLboolean is_memory_object(u32 memoryObject)
     }
     auto out = glIsMemoryObjectEXT(memoryObject);
     detail::error_check("IsMemoryObjectEXT"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 template<class span_const_i32>

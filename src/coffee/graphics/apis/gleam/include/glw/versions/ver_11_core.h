@@ -278,7 +278,7 @@ requires(MinimumVersion<Current, Version<1, 1>>)
      * \param texture GLuint
      * \return Boolean
      */
-    STATICINLINE GLboolean is_texture(u32 texture)
+    STATICINLINE bool is_texture(u32 texture)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -292,7 +292,7 @@ requires(MinimumVersion<Current, Version<1, 1>>)
     }
     auto out = glIsTexture(texture);
     detail::error_check("IsTexture"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 template<typename Dummy = void>

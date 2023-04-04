@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // DataTypeEXT
-enum class data_type_ext : ::libc_types::u32
+enum class data_type_ext : u32
 {
 #ifdef GL_MATRIX_EXT
     matrix_ext = GL_MATRIX_EXT,

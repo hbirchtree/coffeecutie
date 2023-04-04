@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // TextureCoordName
-enum class texture_coord_name : ::libc_types::u32
+enum class texture_coord_name : u32
 {
 #ifdef GL_Q
     q = GL_Q,

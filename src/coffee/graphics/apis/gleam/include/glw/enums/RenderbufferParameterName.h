@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // RenderbufferParameterName
-enum class renderbuffer_parameter_name : ::libc_types::u32
+enum class renderbuffer_parameter_name : u32
 {
 #ifdef GL_RENDERBUFFER_ALPHA_SIZE
     renderbuffer_alpha_size = GL_RENDERBUFFER_ALPHA_SIZE,

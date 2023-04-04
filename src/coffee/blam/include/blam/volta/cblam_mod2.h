@@ -8,8 +8,8 @@ namespace blam {
 
 struct uvscale_t
 {
-    scalar u;
-    scalar v;
+    f32 u;
+    f32 v;
 };
 
 namespace mod2 {
@@ -81,7 +81,7 @@ struct submesh_header
     u8               prev_idx;
     u8               next_idx;
     Array<u16, 2>    centroids;
-    Array<scalar, 2> centroid_weights;
+    Array<f32, 2> centroid_weights;
     Vecf3            centroid;
 
     u32 pad_[4];
@@ -183,8 +183,8 @@ struct bone
     u16       unknown;
     Vecf3     translation;
     Quatf     rotation;
-    scalar    offset;
-    scalar    unknown_[21];
+    f32    offset;
+    f32    unknown_[21];
 };
 
 /*!

@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // WeightPointerTypeARB
-enum class weight_pointer_type_arb : ::libc_types::u32
+enum class weight_pointer_type_arb : u32
 {
 #ifdef GL_BYTE
     byte_ = GL_BYTE,

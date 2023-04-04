@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // GetVariantValueEXT
-enum class get_variant_value_ext : ::libc_types::u32
+enum class get_variant_value_ext : u32
 {
 #ifdef GL_VARIANT_ARRAY_STRIDE_EXT
     variant_array_stride_ext = GL_VARIANT_ARRAY_STRIDE_EXT,

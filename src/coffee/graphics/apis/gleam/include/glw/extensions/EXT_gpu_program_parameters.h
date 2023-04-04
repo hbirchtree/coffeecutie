@@ -18,7 +18,6 @@ requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
     STATICINLINE void program_env_parameters4fv(
         group::program_target       target,
         u32                         index,
-        i32                         count,
         span_const_vec_4_f32 const& params)
 {
     using namespace std::string_view_literals;
@@ -29,7 +28,7 @@ requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
     glProgramEnvParameters4fvEXT(
         static_cast<GLenum>(target),
         index,
-        count,
+        params.size(),
         reinterpret_cast<const GLfloat*>(params.data()));
     detail::error_check("ProgramEnvParameters4fvEXT"sv);
 }
@@ -48,7 +47,6 @@ requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
     STATICINLINE void program_local_parameters4fv(
         group::program_target       target,
         u32                         index,
-        i32                         count,
         span_const_vec_4_f32 const& params)
 {
     using namespace std::string_view_literals;
@@ -59,7 +57,7 @@ requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
     glProgramLocalParameters4fvEXT(
         static_cast<GLenum>(target),
         index,
-        count,
+        params.size(),
         reinterpret_cast<const GLfloat*>(params.data()));
     detail::error_check("ProgramLocalParameters4fvEXT"sv);
 }

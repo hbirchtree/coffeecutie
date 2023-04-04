@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // QueryTarget
-enum class query_target : ::libc_types::u32
+enum class query_target : u32
 {
 #ifdef GL_ANY_SAMPLES_PASSED
     any_samples_passed = GL_ANY_SAMPLES_PASSED,

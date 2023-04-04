@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // PipelineParameterName
-enum class pipeline_parameter_name : ::libc_types::u32
+enum class pipeline_parameter_name : u32
 {
 #ifdef GL_ACTIVE_PROGRAM
     active_program = GL_ACTIVE_PROGRAM,

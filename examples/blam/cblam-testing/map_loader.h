@@ -41,8 +41,8 @@ struct BlamMapBrowser
                         try_load_map(map);
                     }
                 }
+                ImGui::EndListBox();
             }
-            ImGui::EndListBox();
 
             if(m_info)
             {

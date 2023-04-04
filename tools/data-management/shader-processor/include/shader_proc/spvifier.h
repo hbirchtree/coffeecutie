@@ -18,6 +18,8 @@ struct shader_input
     std::string_view              path;
     uint32_t                      version;
     profile_t                     profile;
+
+    std::map<std::string, std::string> defines;
 };
 
 struct output_options

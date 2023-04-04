@@ -102,7 +102,7 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
  * \param fence GLuint
  * \return Boolean
  */
-STATICINLINE GLboolean is_fence(u32 fence)
+STATICINLINE bool is_fence(u32 fence)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -111,7 +111,7 @@ STATICINLINE GLboolean is_fence(u32 fence)
     }
     auto out = glIsFenceNV(fence);
     detail::error_check("IsFenceNV"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 /*!
@@ -136,7 +136,7 @@ STATICINLINE void set_fence(u32 fence, group::fence_condition_nv condition)
  * \param fence GLuint
  * \return Boolean
  */
-STATICINLINE GLboolean test_fence(u32 fence)
+STATICINLINE bool test_fence(u32 fence)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -145,7 +145,7 @@ STATICINLINE GLboolean test_fence(u32 fence)
     }
     auto out = glTestFenceNV(fence);
     detail::error_check("TestFenceNV"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 } // namespace gl::nv::fence

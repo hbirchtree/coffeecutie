@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // NormalPointerType
-enum class normal_pointer_type : ::libc_types::u32
+enum class normal_pointer_type : u32
 {
 #ifdef GL_BYTE
     byte_ = GL_BYTE,

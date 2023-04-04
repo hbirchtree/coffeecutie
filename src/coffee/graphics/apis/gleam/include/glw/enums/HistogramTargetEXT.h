@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // HistogramTargetEXT
-enum class histogram_target_ext : ::libc_types::u32
+enum class histogram_target_ext : u32
 {
 #ifdef GL_HISTOGRAM
     histogram = GL_HISTOGRAM,

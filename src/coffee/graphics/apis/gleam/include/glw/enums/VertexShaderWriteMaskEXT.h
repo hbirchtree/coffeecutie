@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // VertexShaderWriteMaskEXT
-enum class vertex_shader_write_mask_ext : ::libc_types::u32
+enum class vertex_shader_write_mask_ext : u32
 {
 #ifdef GL_FALSE
     false_ = GL_FALSE,

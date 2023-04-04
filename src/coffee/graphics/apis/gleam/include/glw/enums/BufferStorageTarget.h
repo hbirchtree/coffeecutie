@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // BufferStorageTarget
-enum class buffer_storage_target : ::libc_types::u32
+enum class buffer_storage_target : u32
 {
 #ifdef GL_ARRAY_BUFFER
     array_buffer = GL_ARRAY_BUFFER,

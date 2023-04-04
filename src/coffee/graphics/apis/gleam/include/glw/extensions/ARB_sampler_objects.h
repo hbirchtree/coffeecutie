@@ -204,7 +204,7 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
  * \param sampler GLuint
  * \return Boolean
  */
-STATICINLINE GLboolean is_sampler(u32 sampler)
+STATICINLINE bool is_sampler(u32 sampler)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -218,7 +218,7 @@ STATICINLINE GLboolean is_sampler(u32 sampler)
     }
     auto out = glIsSampler(sampler);
     detail::error_check("IsSampler"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 template<class span_const_i32>

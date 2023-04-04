@@ -19,6 +19,7 @@
 #include <coffee/core/CDebug>
 
 #include "blam_files.h"
+#include "materials.h"
 #include "selected_version.h"
 
 using gfx_api = gleam::api;
@@ -141,8 +142,8 @@ struct BitmapItem
 
 struct ShaderItem
 {
-    blam::shader::shader_base const* header{nullptr};
-    blam::tag_t const*               tag{nullptr};
+    blam::shader::radiosity_properties const* header{nullptr};
+    blam::tag_t const*                        tag{nullptr};
 
     inline blam::tag_class_t type()
     {
@@ -173,15 +174,19 @@ struct ShaderItem
     };
     struct schi_t
     {
-        generation_idx_t map1;
-        generation_idx_t map2;
+        std::array<generation_idx_t, 4> maps;
+        std::array<generation_idx_t, 4> layers;
     };
     struct scex_t
     {
-        Array<generation_idx_t, 4> maps_4;
-        Array<generation_idx_t, 4> maps_2;
-        Array<generation_idx_t, 4> layers;
-        generation_idx_t           lens_flare;
+        std::array<generation_idx_t, 4> maps;
+        std::array<generation_idx_t, 4> layers;
+        generation_idx_t                lens_flare;
+    };
+    struct swat_t
+    {
+        generation_idx_t base;
+        generation_idx_t reflection;
     };
 
     union
@@ -192,13 +197,11 @@ struct ShaderItem
         senv_t senv;
         schi_t schi;
         scex_t scex;
+        swat_t swat;
 
         struct
         {
         } smet;
-        struct
-        {
-        } swat;
         struct
         {
         } sgla;
@@ -291,8 +294,9 @@ struct BitmapCache
         ShPtr<gfx::texture_t> surface;
         ShPtr<gfx::sampler_t> sampler;
 
-        u32     ptr;
-        PixDesc fmt;
+        u32                ptr;
+        PixDesc            fmt;
+        blam::bitm::type_t type;
 
         template<typename T>
         auto& texture_as()
@@ -355,6 +359,12 @@ struct BitmapCache
     {
         return gfx::textures::d3;
     }
+    template<typename T>
+    requires std::is_same_v<T, gfx::texture_cube_array_t>
+    auto bucket_to_type()
+    {
+        return gfx::textures::cube_array;
+    }
 
     template<typename T>
     TextureBucket& get_bucket(
@@ -372,14 +382,15 @@ struct BitmapCache
 
         auto& bucket = tex_buckets.insert({hash, {}}).first->second;
 
-        bucket.ptr     = 0;
-        bucket.fmt     = fmt;
-        bucket.surface = allocator->alloc_texture(
-            bucket_to_type<T>(), fmt, fmt.pixfmt == PixFmt::RGB565 ? 2 : 5);
-        if(std::is_same_v<T, gfx::texture_2da_t>)
+        bucket.ptr = 0;
+        bucket.fmt = fmt;
+        if(std::is_same_v<T, gfx::texture_cube_array_t>)
+            bucket.surface
+                = allocator->alloc_texture(gfx::textures::cube_array, fmt, 5);
+        else
             bucket.surface = std::make_shared<gfx::compat::texture_2da_t>(
                 allocator, fmt, fmt.pixfmt == PixFmt::RGB565 ? 2 : 5);
-
+        bucket.type    = type;
         bucket.sampler = bucket.surface->sampler();
 
         bucket.sampler->alloc();
@@ -409,9 +420,9 @@ struct BitmapCache
         if(size.w % 4 != 0 || size.h % 4 != 0)
             return;
 
-        i32 mip_pad = 0; //bucket.surface->m_format.pixfmt != PixFmt::RGB565
-                          //? 2 << (mips - mipmap)
-                          //: 0;
+        i32 mip_pad = 0; // bucket.surface->m_format.pixfmt != PixFmt::RGB565
+                         //? 2 << (mips - mipmap)
+                         //: 0;
 
         Veci2 pool_offset = Veci2(img.image.offset.x(), img.image.offset.y());
         Veci2 tex_offset
@@ -421,17 +432,31 @@ struct BitmapCache
         (tex_offset.x() >>= 2) <<= 2;
         (tex_offset.y() >>= 2) <<= 2;
 
-        gfx::compat::texture_2da_t& texture
-            = bucket.template texture_as<gfx::compat::texture_2da_t>();
+        if(bucket.type == blam::bitm::type_t::tex_cube)
+        {
+            gfx::texture_cube_array_t& texture
+                = bucket.template texture_as<gfx::texture_cube_array_t>();
+            auto img_data = img.image.mip->data(magic, mipmap);
+            cDebug(
+                "Cube map: {0}x{1}x6 -> {2} bytes",
+                img.image.mip->isize.w,
+                img.image.mip->isize.h,
+                img_data.size_bytes());
+            //            texture.upload();
+        } else
+        {
+            gfx::compat::texture_2da_t& texture
+                = bucket.template texture_as<gfx::compat::texture_2da_t>();
 
-        texture.upload(
-            img.image.mip->data(magic, mipmap),
-            Veci3{
-                tex_offset.x() + mip_pad,
-                tex_offset.y() + mip_pad,
-                static_cast<i32>(img.image.layer)},
-            size_3d<i32>{size.w, size.h, 1},
-            mipmap);
+            texture.upload(
+                img.image.mip->data(magic, mipmap),
+                Veci3{
+                    tex_offset.x() + mip_pad,
+                    tex_offset.y() + mip_pad,
+                    static_cast<i32>(img.image.layer)},
+                size_3d<i32>{size.w, size.h, 1},
+                mipmap);
+        }
 
         //        bucket.surface->upload(
         //            img.image.fmt,
@@ -543,11 +568,7 @@ struct BitmapCache
 
         C_UNUSED(auto name) = img.tag->to_name().to_string(magic);
 
-        auto bmagic
-            = (img.tag->storage == blam::image_storage_t::internal
-               && index.file()->version == blam::version_t::custom_edition)
-                  ? magic.no_magic()
-                  : bitm_magic;
+        auto bmagic = img.image.mip->shared() ? bitm_magic : magic.no_magic();
 
         for(auto i : Range<u16>(img.image.mip->mipmaps))
         {
@@ -600,8 +621,9 @@ struct BitmapCache
             auto&       surface = tex_buckets[bitm.second.image.bucket].surface;
 
             u32 mipmaps = surface->m_mipmaps;
-            u32 pad = 0;
-//                = surface->m_format.pixfmt != PixFmt::RGB565 ? 4 << mipmaps : 0;
+            u32 pad     = 0;
+            //                = surface->m_format.pixfmt != PixFmt::RGB565 ? 4
+            //                << mipmaps : 0;
 
             pool.num++;
             pool.max.w = std::max<u32>(pool.max.w, imsize.w + pad);
@@ -625,8 +647,8 @@ struct BitmapCache
 
             u32 layer   = 0;
             u32 mipmaps = surface->m_mipmaps;
-            u32 max_pad
-                = 0; // surface->m_format.pixfmt != PixFmt::RGB565 ? 4 << mipmaps : 0;
+            u32 max_pad = 0; // surface->m_format.pixfmt != PixFmt::RGB565 ? 4
+                             // << mipmaps : 0;
 
             for(auto [id, fmt] : pool.images)
             {
@@ -696,9 +718,10 @@ struct BitmapCache
         /* Allocate the surfaces */
         for(auto& bucket : tex_buckets)
         {
-            auto&        props = bucket.second;
-            auto&        pool  = fmt_count[bucket.first];
-            size_3d<i32> size{pool.max.w, pool.max.h, C_CAST<i32>(pool.layers)};
+            auto&        props  = bucket.second;
+            auto&        pool   = fmt_count[bucket.first];
+            u32          layers = C_CAST<i32>(pool.layers);
+            size_3d<i32> size{pool.max.w, pool.max.h, layers};
             props.surface->alloc(size.convert<u32>());
         }
 
@@ -791,18 +814,20 @@ struct BitmapCache
         if(auto image_ = bitm.images.data(curr_magic); image_.has_value())
         {
             auto& im = image_.value();
-            if(im[0].type != blam::bitm::type_t::tex_2d)
-            {
-                cDebug(
-                    "unimplemented texture type: {0}",
-#if C_HAS_INCLUDE(<string_view>)
-                    magic_enum::enum_name(im[0].type)
-#else
-                    "[unknown]"
-#endif
-                );
+            if(im.size() == 0)
                 return {};
-            }
+            //            if(im[0].type != blam::bitm::type_t::tex_2d)
+            //            {
+            //                cDebug(
+            //                    "unimplemented texture type: {0}",
+            //#if C_HAS_INCLUDE(<string_view>)
+            //                    magic_enum::enum_name(im[0].type)
+            //#else
+            //                    "[unknown]"
+            //#endif
+            //                );
+            //                return {};
+            //            }
 
             auto const& image = im[idx];
 
@@ -822,11 +847,35 @@ struct BitmapCache
                 std::tie(fmt.bfmt, fmt.comp) = image.to_fmt();
             }
 
-            auto& bucket = get_bucket<gfx::texture_2da_t>(fmt, img.mip->type);
-            img.bucket   = create_hash(fmt, img.mip->type);
-            img.fmt      = fmt;
+            img.bucket = create_hash(fmt, img.mip->type);
+            img.fmt    = fmt;
 
-            img.layer = bucket.ptr++;
+            switch(im[0].type)
+            {
+            case blam::bitm::type_t::tex_2d: {
+                auto& bucket
+                    = get_bucket<gfx::texture_2da_t>(fmt, img.mip->type);
+                img.layer = bucket.ptr++;
+                break;
+            }
+            case blam::bitm::type_t::tex_cube: {
+                auto& bucket
+                    = get_bucket<gfx::texture_cube_array_t>(fmt, img.mip->type);
+                img.layer = bucket.ptr++;
+                break;
+            }
+            default:
+                cDebug(
+                    "unimplemented texture type: {0}",
+#if C_HAS_INCLUDE(<string_view>)
+                    magic_enum::enum_name(im[0].type)
+#else
+                    "[unknown]"
+#endif
+                );
+                return {};
+            }
+
         } else
             return {};
 
@@ -850,6 +899,58 @@ struct BitmapCache
     generation_idx_t resolve(blam::tagref_t const& array, i16 idx = 0)
     {
         return predict(array, idx);
+    }
+
+    u32 type_mask(BitmapItem const& bitm)
+    {
+        using typing::pixels::PixFmt;
+        switch(bitm.image.fmt.pixfmt)
+        {
+        case PixFmt::BCn: {
+            switch(bitm.image.fmt.cmpflg)
+            {
+            case typing::pixels::CompFlags::BC1:
+                return 0x01000000;
+            case typing::pixels::CompFlags::BC2:
+                return 0x02000000;
+            case typing::pixels::CompFlags::BC3:
+                return 0x03000000;
+            default:
+                break;
+            }
+            break;
+        }
+        case PixFmt::RGB565:
+            return 0x04000000;
+        case PixFmt::R8:
+            return 0x05000000;
+        case PixFmt::RG8:
+            return 0x06000000;
+        case PixFmt::RGBA4:
+            return 0x07000000;
+        case PixFmt::RGBA8:
+            return 0x08000000;
+        default:
+            break;
+        }
+    }
+
+    template<typename T>
+    BitmapItem const* assign_atlas_data(T& out, generation_idx_t bitm)
+    {
+        if(!bitm.valid())
+            return nullptr;
+        auto bitmit = find(bitm);
+        if(bitmit == m_cache.end())
+            return nullptr;
+        BitmapItem const& bitmap = bitmit->second;
+        out.atlas_offset         = bitmap.image.offset;
+        out.atlas_scale          = bitmap.image.scale;
+        /* We encode the type of texture here. This lets the shader
+         * pick out BC1, BC2, BC3 and etc. by itself.
+         * Massive benefits to batching without doing bindless textures! */
+        out.layer = type_mask(bitmap) | bitmap.image.layer;
+        return &bitmap;
     }
 
     void start_restricted(Proxy&, time_point const&)
@@ -906,6 +1007,7 @@ struct ShaderCache
         auto _ = bitm_cache.allocator->debug().scope("ShaderCache");
 
         using blam::tag_class_t;
+        using namespace blam::shader;
 
         if(!shader.valid())
             return {};
@@ -918,13 +1020,12 @@ struct ShaderCache
 
         ShaderItem out = {};
         out.tag        = &(*it);
-        out.header     = extract_shader<blam::shader::shader_base>(it);
+        out.header     = extract_shader<blam::shader::radiosity_properties>(it);
 
         switch(shader.tag_class)
         {
         case tag_class_t::senv: {
-            auto const& shader_model
-                = *extract_shader<blam::shader::shader_env>(it);
+            auto const& shader_model = *extract_shader<shader_env>(it);
 
             out.senv.base_bitm = get_bitm_idx(shader_model.diffuse.base);
             out.senv.primary_bitm
@@ -951,79 +1052,85 @@ struct ShaderCache
             break;
         }
         case tag_class_t::schi: {
-            auto const& shader_model
-                = *extract_shader<blam::shader::shader_chicago<V>>(it);
+            auto const& shader_model = *extract_shader<shader_chicago<V>>(it);
 
             if(auto maps = shader_model.maps.data(magic); maps.has_value())
             {
-                //                auto const& map1 = maps.value()[0];
-                out.schi.map1 = get_bitm_idx(maps.value()[0].map.map);
+                u8 i = 0;
+                for(chicago::map_t const& map : maps.value())
+                    out.schi.maps.at(i++) = get_bitm_idx(map.map.map);
+            }
+            if(auto layers = shader_model.layers.data(magic);
+               layers.has_value())
+            {
+                u8 i = 0;
+                for(auto const& layer : layers.value())
+                    out.schi.layers.at(i++) = predict(layer.to_plain());
             }
 
             break;
         }
         case tag_class_t::scex: {
             auto const& shader_model
-                = *extract_shader<blam::shader::shader_chicago_extended<V>>(it);
+                = *extract_shader<shader_chicago_extended<V>>(it);
 
-            if(auto maps4_ = shader_model.maps_4stage.data(magic);
-               maps4_.has_value())
+            if(auto maps4 = shader_model.maps_4stage.data(magic);
+               maps4.has_value())
             {
-                auto maps4 = maps4_.value();
-                for(auto i : Range<u32>(maps4.size()))
-                    out.scex.maps_4.at(i) = get_bitm_idx(maps4[i].map.map);
+                u8 i = 0;
+                for(chicago::map_t const& map : maps4.value())
+                    out.scex.maps.at(i++) = get_bitm_idx(map.map.map);
             }
-            if(auto layers_ = shader_model.layers.data(magic);
-               layers_.has_value())
+            if(auto layers = shader_model.layers.data(magic);
+               layers.has_value())
             {
-                auto layers = layers_.value();
-                for(auto i : Range<u32>(layers.size()))
-                    out.scex.layers.at(i) = predict(layers[i].to_plain());
-
-                for(auto const& layer : layers)
-                {
-                    if(!layer.valid())
-                        Throw(undefined_behavior("invalid layer!"));
-                }
+                u8 i = 0;
+                for(auto const& layer : layers.value())
+                    out.scex.layers.at(i++) = predict(layer.to_plain());
             }
 
             break;
         }
         case tag_class_t::sgla: {
-            auto const& shader_model
-                = *extract_shader<blam::shader::shader_glass>(it);
+            shader_glass const& shader_model
+                = *extract_shader<shader_glass>(it);
 
             out.color_bitm = get_bitm_idx(shader_model.diffuse.map.map);
 
             break;
         }
         case tag_class_t::swat: {
-            auto const& shader_model
-                = *extract_shader<blam::shader::shader_water<V>>(it);
+            shader_water<V> const& shader_model
+                = *extract_shader<shader_water<V>>(it);
 
-            out.color_bitm = get_bitm_idx(shader_model.base);
+            out.swat.base       = get_bitm_idx(shader_model.base);
+            out.swat.reflection = get_bitm_idx(shader_model.reflection_map);
 
             break;
         }
         case tag_class_t::spla: {
-            auto const& shader_model
-                = *extract_shader<blam::shader::shader_plasma>(it);
+            auto const& shader_model = *extract_shader<shader_plasma>(it);
 
             out.color_bitm = get_bitm_idx(shader_model.primary_noise.noise.map);
 
             break;
         }
         case tag_class_t::smet: {
-            auto const& shader_model
-                = *extract_shader<blam::shader::shader_meter>(it);
+            auto const& shader_model = *extract_shader<shader_meter>(it);
 
             out.color_bitm = get_bitm_idx(shader_model.map);
 
             break;
         }
         case tag_class_t::sotr: {
-            //            auto const& shader_model
-            //                = *extract_shader<blam::shader::shader_base>(it);
+            blam::shader::shader_transparent<V> const& shader_model
+                = *extract_shader<blam::shader::shader_transparent<V>>(it);
+
+            if(auto maps = shader_model.maps.data(magic); maps.has_value())
+            {
+                for(chicago::map_t const& map : maps.value())
+                    out.color_bitm = get_bitm_idx(map.map.map);
+            }
 
             break;
         }
@@ -1036,6 +1143,116 @@ struct ShaderCache
 
         return out;
     }
+
+    void populate_material(
+        materials::senv_micro& mat, generation_idx_t const& shader_id)
+    {
+        using blam::tag_class_t;
+
+        ShaderItem const& shader = find(shader_id)->second;
+
+        mat = {};
+
+        switch(shader.tag->tag_class())
+        {
+        case tag_class_t::scex: {
+            mat.lightmap.material = materials::id::scex;
+            break;
+        }
+        case tag_class_t::schi: {
+            blam::shader::shader_chicago<V> const* info
+                = shader.header->as<blam::shader::shader_chicago<V>>();
+            auto& base = *bitm_cache.assign_atlas_data(
+                mat.base, shader.schi.maps.at(0));
+            mat.base.uv_scale = {1};
+            mat.base.bias     = base.image.bias;
+
+            mat.lightmap.material = materials::id::schi;
+            break;
+        }
+        case tag_class_t::senv: {
+            auto const* info = shader.header->as<blam::shader::shader_env>();
+
+            auto& base = *bitm_cache.assign_atlas_data(
+                mat.base, shader.senv.base_bitm);
+            mat.base.uv_scale = {1};
+            mat.base.bias     = base.image.bias;
+
+            auto* primary = bitm_cache.assign_atlas_data(
+                mat.primary, shader.senv.primary_bitm);
+            if(primary)
+            {
+                mat.primary.uv_scale = {info->diffuse.primary.scale};
+                mat.primary.bias     = primary->image.bias;
+            }
+
+            auto* secondary = bitm_cache.assign_atlas_data(
+                mat.secondary, shader.senv.secondary_bitm);
+            if(secondary)
+            {
+                mat.secondary.uv_scale = {info->diffuse.secondary.scale};
+                mat.secondary.bias     = secondary->image.bias;
+            }
+
+            auto* micro = bitm_cache.assign_atlas_data(
+                mat.micro, shader.senv.micro_bitm);
+            mat.micro.uv_scale = {info->diffuse.micro.scale};
+            if(micro)
+                mat.micro.bias = micro->image.bias;
+
+            mat.lightmap.material = materials::id::senv;
+            break;
+        }
+        case tag_class_t::swat: {
+            //            auto const* info =
+            //            shader.header->as<blam::shader::shader_glass>();
+            bitm_cache.assign_atlas_data(mat.base, shader.color_bitm);
+            mat.base.uv_scale = {1};
+            mat.base.bias     = 0;
+
+            mat.lightmap.material = materials::id::swat;
+            break;
+        }
+        case tag_class_t::sgla: {
+            //            auto const* info =
+            //            shader.header->as<blam::shader::shader_glass>();
+            bitm_cache.assign_atlas_data(mat.base, shader.color_bitm);
+            mat.base.uv_scale = {1};
+            mat.base.bias     = 0;
+
+            mat.lightmap.material = materials::id::sgla;
+            break;
+        }
+        case tag_class_t::smet: {
+            mat.lightmap.material = materials::id::smet;
+            break;
+        }
+        case tag_class_t::sotr: {
+            bitm_cache.assign_atlas_data(mat.base, shader.color_bitm);
+            mat.base.uv_scale = {1};
+            mat.base.bias     = 0;
+
+            mat.lightmap.material = materials::id::sotr;
+            break;
+        }
+        case tag_class_t::soso: {
+            bitm_cache.assign_atlas_data(mat.base, shader.color_bitm);
+            mat.base.uv_scale = {1};
+            mat.base.bias = 0;
+
+            mat.lightmap.material = materials::id::soso;
+            break;
+        }
+        default: {
+            cDebug(
+                "Material not set up: {0}/{1}",
+                shader.tag->tagclass.at(0).str(),
+                shader.tag->to_name().to_string(magic));
+            break;
+        }
+        }
+    }
+
     u32 get_id(blam::tagref_t const& args)
     {
         return args.tag_id;
@@ -1210,7 +1427,7 @@ struct ModelCache
                 //                elements[1]}};
 
                 vert_ptr += vertices.size_bytes();
-                element_ptr += elements.size_bytes() + 2;
+                element_ptr += elements.size_bytes();
             }
         }
 

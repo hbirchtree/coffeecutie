@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // TextureTarget
-enum class texture_target : ::libc_types::u32
+enum class texture_target : u32
 {
 #ifdef GL_DETAIL_TEXTURE_2D_SGIS
     detail_texture_2d_sgis = GL_DETAIL_TEXTURE_2D_SGIS,

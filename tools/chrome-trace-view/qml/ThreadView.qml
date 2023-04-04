@@ -2,6 +2,8 @@ import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Window 2.12
 
+import dev.birchy.models 1.0
+
 Item {
     id: root
 
@@ -68,7 +70,11 @@ Item {
         z: -1
 
         Repeater {
-            model: threadEvents
+            model: TimeLimitedModel {
+                model: threadEvents
+                viewStart: timeView.contentX * timePerPixel
+                viewEnd: (timeView.contentX + timeView.width) * timePerPixel
+            }
             Scope {
                 property bool highlighted: false
                 property color baseColor: fillColor

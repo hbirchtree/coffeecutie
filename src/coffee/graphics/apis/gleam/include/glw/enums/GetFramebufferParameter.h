@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // GetFramebufferParameter
-enum class get_framebuffer_parameter : ::libc_types::u32
+enum class get_framebuffer_parameter : u32
 {
 #ifdef GL_DOUBLEBUFFER
     doublebuffer = GL_DOUBLEBUFFER,

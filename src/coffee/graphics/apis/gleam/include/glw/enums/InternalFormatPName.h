@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // InternalFormatPName
-enum class internal_format_prop : ::libc_types::u32
+enum class internal_format_prop : u32
 {
 #ifdef GL_AUTO_GENERATE_MIPMAP
     auto_generate_mipmap = GL_AUTO_GENERATE_MIPMAP,

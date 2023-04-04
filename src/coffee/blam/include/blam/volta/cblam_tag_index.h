@@ -79,14 +79,18 @@ struct alignas(4) tag_t
         return false;
     }
 
+    inline tag_class_t tag_class() const
+    {
+        return tagclass_e[0];
+    }
+
     inline bool valid() const
     {
         return padding == 0;
     }
 
     template<typename T>
-    inline result<T const*, error_msg> data(
-        magic_data_t const& magic) const
+    inline result<T const*, error_msg> data(magic_data_t const& magic) const
     {
         if(storage == image_storage_t::external && matches(tag_class_t::bitm))
         {
@@ -124,14 +128,14 @@ template<typename V>
  */
 struct alignas(4) tag_index_t : stl_types::non_copy
 {
-    using vertex_array =
-        reflexive_t<vert::mod2_vertex<vert::uncompressed>, xbox_t>;
+    using vertex_array
+        = reflexive_t<vert::mod2_vertex<vert::uncompressed>, xbox_t>;
     using index_array = reflexive_t<vert::idx_t, xbox_t>;
 
     i32          index_magic;    /*!< Number used to adjust indexes*/
     u32          base_tag;       /*!< Base tag, smallest tag id */
     u32          vertex_size;    /*!< Size of vertex data*/
-    u32          tag_count;       /*!< Number of tags*/
+    u32          tag_count;      /*!< Number of tags*/
     vertex_array vertex_objects; /*!< Number of vertex objects*/
     index_array  index_objects;  /*!< Number of index objects*/
     union
@@ -141,15 +145,17 @@ struct alignas(4) tag_index_t : stl_types::non_copy
     };
     bl_tag pc_tag_sentinel; /*!< Says "tags" */
 
-    inline magic_data_t get_magic(file_header_t const* base) const
+    inline magic_data_t get_magic(
+        file_header_t const* base, u32 file_size) const
     {
         byte_t const* base_ptr   = C_RCAST<byte_t const*>(base);
         u32           index_size = base->version == version_t::xbox
                                        ? sizeof(tag_index_t) - sizeof(u32)
                                        : sizeof(tag_index_t);
 
+        u32 max_size = std::max(file_size, base->decomp_len);
         return magic_data_t{
-            {base_ptr, base->decomp_len},
+            {base_ptr, max_size},
             index_magic - (base->tag_index_offset + index_size)};
     }
 

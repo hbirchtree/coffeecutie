@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // PixelStoreParameter
-enum class pixel_store_parameter : ::libc_types::u32
+enum class pixel_store_parameter : u32
 {
 #ifdef GL_PACK_ALIGNMENT
     pack_alignment = GL_PACK_ALIGNMENT,

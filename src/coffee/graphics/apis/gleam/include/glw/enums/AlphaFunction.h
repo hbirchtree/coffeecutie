@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // AlphaFunction
-enum class alpha_function : ::libc_types::u32
+enum class alpha_function : u32
 {
 #ifdef GL_ALWAYS
     always = GL_ALWAYS,

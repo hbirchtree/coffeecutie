@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // BufferStorageMask
-enum class buffer_storage_mask : ::libc_types::u32
+enum class buffer_storage_mask : u32
 {
 #ifdef GL_CLIENT_STORAGE_BIT
     client_storage_bit = GL_CLIENT_STORAGE_BIT,

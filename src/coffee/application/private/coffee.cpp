@@ -70,6 +70,7 @@ enum StartFlags
 };
 
 MainStorage main_functions;
+static bool silent_init{false};
 
 void CaptureMainFunction(MainWithArgs mainfun)
 {
@@ -218,7 +219,7 @@ static void PrintLicenseInfo()
     }
 }
 
-static void CoffeeInit_Internal(u32 flags)
+static void CoffeeInit_Internal(u32)
 {
     if constexpr(compile_info::lowfat_mode)
         return;
@@ -241,7 +242,7 @@ static void CoffeeInit_Internal(u32 flags)
     } else
         Coffee::PrintingVerbosityLevel() = 1;
 
-    if(!(flags & SilentInit))
+    if(!silent_init)
     {
         PrintVersionInfo();
         PrintBuildInfo();
@@ -330,10 +331,12 @@ i32 CoffeeMain(MainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
     /* Set the program arguments so that we can look at them later */
     GetInitArgs() = ::platform::args::AppArg::Clone(argc, argv);
 
+    silent_init = (flags & SilentInit) == SilentInit;
+
     if constexpr(!compile_info::lowfat_mode)
     {
 #if !defined(COFFEE_CUSTOM_EXIT_HANDLING)
-        if(!(flags & DiscardArgumentHandler))
+        if((flags & DiscardArgumentHandler) == 0)
         {
             auto parser = BaseArgParser::GetBase();
             auto args   = parser.parseArguments(GetInitArgs());
@@ -361,7 +364,7 @@ i32 CoffeeMain(MainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
                 profilerState->flags.deep_enabled = true;
         }
 
-        if(!(flags & SilentInit))
+        if(!silent_init)
             cVerbose(
                 1, "Verbosity level: {0}", Coffee::PrintingVerbosityLevel());
 
@@ -369,7 +372,8 @@ i32 CoffeeMain(MainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
          */
         libc::signal::register_atexit(CoffeeTerminate);
 
-        cVerbose(8, "Entering main function");
+        if(!silent_init)
+            cVerbose(8, "Entering main function");
         Profiler::PushContext("main()");
     }
 
@@ -409,11 +413,12 @@ i32 CoffeeMain(MainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
     {
         Profiler::PopContext();
 
-        cDebug(
-            "Execution time: {0}",
-            Chrono::duration_cast<Chrono::seconds_double>(
-                Chrono::high_resolution_clock::now() - start_time)
-                .count());
+        if(!silent_init)
+            cDebug(
+                "Execution time: {0}",
+                Chrono::duration_cast<Chrono::seconds_double>(
+                    Chrono::high_resolution_clock::now() - start_time)
+                    .count());
     }
 
     if constexpr(
@@ -430,7 +435,8 @@ void CoffeeTerminate()
     using namespace ::platform::file;
     using namespace ::platform::url::constructors;
 
-    cVerbose(5, "Terminating");
+    if(!silent_init)
+        cVerbose(5, "Terminating");
 
     if constexpr(compile_info::lowfat_mode)
         return;

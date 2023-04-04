@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // MatrixIndexPointerTypeARB
-enum class matrix_index_pointer_type_arb : ::libc_types::u32
+enum class matrix_index_pointer_type_arb : u32
 {
 #ifdef GL_UNSIGNED_BYTE
     unsigned_byte = GL_UNSIGNED_BYTE,

@@ -390,7 +390,7 @@ requires(MinimumVersion<Current, Version<1, 5>>)
      * \param buffer GLuint
      * \return Boolean
      */
-    STATICINLINE GLboolean is_buffer(u32 buffer)
+    STATICINLINE bool is_buffer(u32 buffer)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -404,7 +404,7 @@ requires(MinimumVersion<Current, Version<1, 5>>)
     }
     auto out = glIsBuffer(buffer);
     detail::error_check("IsBuffer"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 template<typename Dummy = void>
@@ -414,7 +414,7 @@ requires(MinimumVersion<Current, Version<1, 5>>)
      * \param id GLuint
      * \return Boolean
      */
-    STATICINLINE GLboolean is_query(u32 id)
+    STATICINLINE bool is_query(u32 id)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -423,7 +423,7 @@ requires(MinimumVersion<Current, Version<1, 5>>)
     }
     auto out = glIsQuery(id);
     detail::error_check("IsQuery"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 template<typename Dummy = void>
@@ -455,7 +455,7 @@ requires(MinimumVersion<Current, Version<1, 5>>)
      * \param target GLenum
      * \return Boolean
      */
-    STATICINLINE GLboolean unmap_buffer(group::buffer_target_arb target)
+    STATICINLINE bool unmap_buffer(group::buffer_target_arb target)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -464,7 +464,7 @@ requires(MinimumVersion<Current, Version<1, 5>>)
     }
     auto out = glUnmapBuffer(static_cast<GLenum>(target));
     detail::error_check("UnmapBuffer"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 #endif // GL_VERSION_1_5

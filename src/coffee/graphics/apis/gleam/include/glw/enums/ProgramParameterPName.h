@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // ProgramParameterPName
-enum class program_parameter_prop : ::libc_types::u32
+enum class program_parameter_prop : u32
 {
 #ifdef GL_PROGRAM_BINARY_RETRIEVABLE_HINT
     program_binary_retrievable_hint = GL_PROGRAM_BINARY_RETRIEVABLE_HINT,

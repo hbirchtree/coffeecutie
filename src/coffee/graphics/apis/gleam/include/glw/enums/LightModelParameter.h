@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // LightModelParameter
-enum class light_model_parameter : ::libc_types::u32
+enum class light_model_parameter : u32
 {
 #ifdef GL_LIGHT_MODEL_AMBIENT
     light_model_ambient = GL_LIGHT_MODEL_AMBIENT,

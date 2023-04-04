@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // IndexFunctionEXT
-enum class index_function_ext : ::libc_types::u32
+enum class index_function_ext : u32
 {
 #ifdef GL_ALWAYS
     always = GL_ALWAYS,

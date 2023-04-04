@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // TextureUnit
-enum class texture_unit : ::libc_types::u32
+enum class texture_unit : u32
 {
 #ifdef GL_TEXTURE0
     texture0 = GL_TEXTURE0,

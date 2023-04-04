@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // TransformFeedbackBufferMode
-enum class transform_feedback_buffer_mode : ::libc_types::u32
+enum class transform_feedback_buffer_mode : u32
 {
 #ifdef GL_INTERLEAVED_ATTRIBS
     interleaved_attribs = GL_INTERLEAVED_ATTRIBS,

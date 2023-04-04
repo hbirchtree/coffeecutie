@@ -37,6 +37,7 @@ struct cull_state
 
 struct blend_state
 {
+    bool additive{false};
 };
 
 template<typename UType>

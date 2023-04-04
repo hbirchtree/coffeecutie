@@ -161,7 +161,7 @@ requires(MinimumVersion<Current, Version<3, 2>>)
      * \param timeout GLuint64
      * \return SyncStatus
      */
-    STATICINLINE GLenum
+    STATICINLINE group::sync_status
     client_wait_sync(GLsync sync, group::sync_object_mask flags, u64 timeout)
 {
     using namespace std::string_view_literals;
@@ -171,7 +171,7 @@ requires(MinimumVersion<Current, Version<3, 2>>)
     }
     auto out = glClientWaitSync(sync, static_cast<GLenum>(flags), timeout);
     detail::error_check("ClientWaitSync"sv);
-    return out;
+    return static_cast<group::sync_status>(out);
 }
 
 template<typename Dummy = void>
@@ -279,7 +279,7 @@ requires(MinimumVersion<Current, Version<3, 2>>)
      * \param sync GLsync
      * \return Boolean
      */
-    STATICINLINE GLboolean is_sync(GLsync sync)
+    STATICINLINE bool is_sync(GLsync sync)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -288,7 +288,7 @@ requires(MinimumVersion<Current, Version<3, 2>>)
     }
     auto out = glIsSync(sync);
     detail::error_check("IsSync"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 template<typename Dummy = void>

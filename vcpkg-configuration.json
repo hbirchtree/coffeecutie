@@ -1,9 +1,12 @@
 {
     "overlay-ports": [
         "./toolchain/vcpkg/ports/appimage-runtime",
+        "./toolchain/vcpkg/ports/astcenc",
+        "./toolchain/vcpkg/ports/bc7enc",
         "./toolchain/vcpkg/ports/bcdec",
         "./toolchain/vcpkg/ports/bullet2",
         "./toolchain/vcpkg/ports/discord-rpc",
+        "./toolchain/vcpkg/ports/etc2comp",
         "./toolchain/vcpkg/ports/sdl2",
         "./toolchain/vcpkg/ports/sdl2-wayland",
         "./toolchain/vcpkg/ports/shaderc",

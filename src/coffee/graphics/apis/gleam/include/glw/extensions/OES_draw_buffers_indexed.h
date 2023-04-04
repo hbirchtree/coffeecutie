@@ -170,7 +170,7 @@ STATICINLINE void enablei(group::enable_cap target, u32 index)
  * \param index GLuint
  * \return Boolean
  */
-STATICINLINE GLboolean is_enabledi(group::enable_cap target, u32 index)
+STATICINLINE bool is_enabledi(group::enable_cap target, u32 index)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -179,7 +179,7 @@ STATICINLINE GLboolean is_enabledi(group::enable_cap target, u32 index)
     }
     auto out = glIsEnablediOES(static_cast<GLenum>(target), index);
     detail::error_check("IsEnablediOES"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 } // namespace gl::oes::draw_buffers_indexed

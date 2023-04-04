@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // CombinerMappingNV
-enum class combiner_mapping_nv : ::libc_types::u32
+enum class combiner_mapping_nv : u32
 {
 #ifdef GL_EXPAND_NEGATE_NV
     expand_negate_nv = GL_EXPAND_NEGATE_NV,

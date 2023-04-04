@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // HintTarget
-enum class hint_target : ::libc_types::u32
+enum class hint_target : u32
 {
 #ifdef GL_ALLOW_DRAW_FRG_HINT_PGI
     allow_draw_frg_hint_pgi = GL_ALLOW_DRAW_FRG_HINT_PGI,

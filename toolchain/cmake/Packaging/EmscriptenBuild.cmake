@@ -20,17 +20,16 @@ function ( EMSCRIPTEN_PACKAGE )
         set ( RSC_FLAGS --preload-file=${RSC}@/assets/ ${RSC_FLAGS} )
     endforeach()
 
-    set ( THREAD_FLAG "" )
-    if(NOT "${EM_THREADS}" STREQUAL "")
-        set ( THREAD_FLAG "-sPTHREAD_POOL_SIZE=${EM_THREADS}" )
-    endif()
+    set_target_properties ( ${EM_TARGET} PROPERTIES
+        EMSCRIPTEN_THREADPOOL_SIZE 1
+        )
     if("${EM_SHELL}" STREQUAL "")
         set ( EM_SHELL "${COFFEE_DESKTOP_DIRECTORY}/emscripten/template.html" )
     endif()
     target_link_options ( ${EM_TARGET} PUBLIC
         --shell-file "${EM_SHELL}"
         ${RSC_FLAGS}
-        ${THREAD_FLAG}
+        -sPTHREAD_POOL_SIZE=$<TARGET_PROPERTY:${EM_TARGET},EMSCRIPTEN_THREADPOOL_SIZE>
         )
     add_custom_target ( ${EM_TARGET}WebTemplate
         DEPENDS ${EM_SHELL}

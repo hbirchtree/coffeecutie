@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // SyncParameterName
-enum class sync_parameter_name : ::libc_types::u32
+enum class sync_parameter_name : u32
 {
 #ifdef GL_OBJECT_TYPE
     object_type = GL_OBJECT_TYPE,

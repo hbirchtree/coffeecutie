@@ -180,8 +180,8 @@ struct image
 using image_rw    = image<u8>;
 using image_const = image<u8 const>;
 
-using image_float       = image<scalar>;
-using image_float_const = image<scalar>;
+using image_float       = image<f32>;
+using image_float_const = image<f32 const>;
 
 using CStbImage      = image_rw;
 using CStbImageConst = image_const;

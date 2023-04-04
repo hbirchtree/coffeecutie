@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // LightParameter
-enum class light_parameter : ::libc_types::u32
+enum class light_parameter : u32
 {
 #ifdef GL_CONSTANT_ATTENUATION
     constant_attenuation = GL_CONSTANT_ATTENUATION,

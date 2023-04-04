@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // BinormalPointerTypeEXT
-enum class binormal_pointer_type_ext : ::libc_types::u32
+enum class binormal_pointer_type_ext : u32
 {
 #ifdef GL_BYTE
     byte_ = GL_BYTE,

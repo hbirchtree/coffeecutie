@@ -15,7 +15,7 @@ concept is_compressor = std::is_same_v<
 {
     {T::compress(
         std::declval<semantic::Span<const InType> const&>(),
-        std::declval<semantic::mem_chunk<char>&>(),
+        std::declval<std::vector<char>&>(),
         std::declval<typename T::options_t&&>())};
 };
 
@@ -26,7 +26,7 @@ concept is_decompressor = std::is_same_v<
 {
     {T::decompress(
         std::declval<semantic::Span<const libc_types::u8> const&>(),
-        std::declval<semantic::mem_chunk<OutType>&>(),
+        std::declval<std::vector<char>&>(),
         std::declval<typename T::options_t&&>())};
 };
 
@@ -75,36 +75,31 @@ struct codec_stream_adapter
 
     static std::optional<error_t> compress(
         semantic::Span<const InType> const& input,
-        semantic::mem_chunk<char>&          output,
+        std::vector<char>&                  output,
         options_t&&                         options = options_t())
     {
-        auto out_it = std::back_inserter(output.allocation);
-
         return Codec::compress(
             input,
-            [&out_it](semantic::Span<char>&& data) {
-                std::copy(data.begin(), data.end(), out_it);
+            [out
+             = std::back_insert_iterator(output)](semantic::Span<char>&& data) {
+                std::copy(data.begin(), data.end(), out);
             },
             std::move(options));
     }
 
     static std::optional<error_t> decompress(
         semantic::Span<const libc_types::u8> const& input,
-        semantic::mem_chunk<OutType>&               output,
+        std::vector<char>&                          output,
         options_t&&                                 options = {})
     {
-        if(output.ownership != Ownership::Owned)
-            Throw(std::runtime_error("mem_chunk must be owned"));
-        std::vector<OutType>& out = output.allocation;
-
-        auto caster = [&out](semantic::Span<char>&& data) {
-            if(data.size_bytes() % sizeof(OutType) == 0)
+        auto caster = [out = std::back_insert_iterator(output)](
+                          semantic::Span<char>&& data) {
+            if(data.size_bytes() % sizeof(OutType) != 0)
                 Throw(undefined_behavior("partial object received"));
             auto casted = semantic::mem_chunk<OutType>::ofContainer(data).view;
-            std::copy(casted.begin(), casted.end(), std::back_inserter(out));
+            std::copy(casted.begin(), casted.end(), out);
         };
         auto err = Codec::decompress(input, caster, std::move(options));
-        output.updatePointers(semantic::Ownership::Owned);
         return err;
     }
 };

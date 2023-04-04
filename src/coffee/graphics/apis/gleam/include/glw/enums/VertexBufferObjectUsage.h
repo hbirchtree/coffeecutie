@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // VertexBufferObjectUsage
-enum class vertex_buffer_object_usage : ::libc_types::u32
+enum class vertex_buffer_object_usage : u32
 {
 #ifdef GL_DYNAMIC_COPY
     dynamic_copy = GL_DYNAMIC_COPY,

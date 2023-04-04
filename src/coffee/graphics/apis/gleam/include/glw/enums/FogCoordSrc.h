@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // FogCoordSrc
-enum class fog_coord_src : ::libc_types::u32
+enum class fog_coord_src : u32
 {
 #ifdef GL_FOG_COORD
     fog_coord = GL_FOG_COORD,

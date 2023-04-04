@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // ShadingRate
-enum class shading_rate : ::libc_types::u32
+enum class shading_rate : u32
 {
 #ifdef GL_SHADING_RATE_1X1_PIXELS_EXT
     1x1_pixels_ext = GL_SHADING_RATE_1X1_PIXELS_EXT,

@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // LightTextureModeEXT
-enum class light_texture_mode_ext : ::libc_types::u32
+enum class light_texture_mode_ext : u32
 {
 #ifdef GL_FRAGMENT_COLOR_EXT
     fragment_color_ext = GL_FRAGMENT_COLOR_EXT,

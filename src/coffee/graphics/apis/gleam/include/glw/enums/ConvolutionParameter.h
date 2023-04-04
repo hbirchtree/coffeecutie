@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // ConvolutionParameter
-enum class convolution_parameter : ::libc_types::u32
+enum class convolution_parameter : u32
 {
 #ifdef GL_CONVOLUTION_BORDER_COLOR
     convolution_border_color = GL_CONVOLUTION_BORDER_COLOR,

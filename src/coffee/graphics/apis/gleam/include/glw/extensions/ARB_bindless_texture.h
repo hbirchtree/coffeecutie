@@ -118,7 +118,7 @@ requires(semantic::concepts::Span<span_GLuint64EXT>&& std::is_same_v<
  * \param handle GLuint64
  * \return Boolean
  */
-STATICINLINE GLboolean is_image_handle_resident(u64 handle)
+STATICINLINE bool is_image_handle_resident(u64 handle)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -127,7 +127,7 @@ STATICINLINE GLboolean is_image_handle_resident(u64 handle)
     }
     auto out = glIsImageHandleResidentARB(handle);
     detail::error_check("IsImageHandleResidentARB"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 /*!
@@ -135,7 +135,7 @@ STATICINLINE GLboolean is_image_handle_resident(u64 handle)
  * \param handle GLuint64
  * \return Boolean
  */
-STATICINLINE GLboolean is_texture_handle_resident(u64 handle)
+STATICINLINE bool is_texture_handle_resident(u64 handle)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -144,7 +144,7 @@ STATICINLINE GLboolean is_texture_handle_resident(u64 handle)
     }
     auto out = glIsTextureHandleResidentARB(handle);
     detail::error_check("IsTextureHandleResidentARB"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 /*!

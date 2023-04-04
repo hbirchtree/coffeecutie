@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // DebugSeverity
-enum class debug_severity : ::libc_types::u32
+enum class debug_severity : u32
 {
 #ifdef GL_DEBUG_SEVERITY_HIGH
     high = GL_DEBUG_SEVERITY_HIGH,

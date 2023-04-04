@@ -102,8 +102,8 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
      * \param residences GLboolean *
      * \return Boolean
      */
-    STATICINLINE GLboolean
-    are_programs_resident(span_const_u32 const& programs, span_bool residences)
+    STATICINLINE bool are_programs_resident(
+        span_const_u32 const& programs, span_bool residences)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -117,7 +117,7 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
         residences.size() ? reinterpret_cast<GLboolean*>(residences.data())
                           : nullptr);
     detail::error_check("AreProgramsResidentNV"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 /*!
@@ -440,7 +440,7 @@ STATICINLINE void get_vertex_attribiv(
  * \param id GLuint
  * \return Boolean
  */
-STATICINLINE GLboolean is_program(u32 id)
+STATICINLINE bool is_program(u32 id)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -449,7 +449,7 @@ STATICINLINE GLboolean is_program(u32 id)
     }
     auto out = glIsProgramNV(id);
     detail::error_check("IsProgramNV"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 template<class span_const_u8>
@@ -601,7 +601,6 @@ requires(semantic::concepts::Span<span_const_vec_4_f64>&& semantic::concepts::
     STATICINLINE void program_parameters4dv(
         group::vertex_attrib_enum_nv target,
         u32                          index,
-        i32                          count,
         span_const_vec_4_f64 const&  v)
 {
     using namespace std::string_view_literals;
@@ -612,7 +611,7 @@ requires(semantic::concepts::Span<span_const_vec_4_f64>&& semantic::concepts::
     glProgramParameters4dvNV(
         static_cast<GLenum>(target),
         index,
-        count,
+        v.size(),
         reinterpret_cast<const GLdouble*>(v.data()));
     detail::error_check("ProgramParameters4dvNV"sv);
 }
@@ -631,7 +630,6 @@ requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
     STATICINLINE void program_parameters4fv(
         group::vertex_attrib_enum_nv target,
         u32                          index,
-        i32                          count,
         span_const_vec_4_f32 const&  v)
 {
     using namespace std::string_view_literals;
@@ -642,7 +640,7 @@ requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
     glProgramParameters4fvNV(
         static_cast<GLenum>(target),
         index,
-        count,
+        v.size(),
         reinterpret_cast<const GLfloat*>(v.data()));
     detail::error_check("ProgramParameters4fvNV"sv);
 }
@@ -1338,7 +1336,7 @@ requires(semantic::concepts::Span<span_const_vec_2_f64>&& semantic::concepts::
      * \return void
      */
     STATICINLINE
-    void vertex_attribs2dv(u32 index, i32 count, span_const_vec_2_f64 const& v)
+    void vertex_attribs2dv(u32 index, span_const_vec_2_f64 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1346,7 +1344,7 @@ requires(semantic::concepts::Span<span_const_vec_2_f64>&& semantic::concepts::
         GLW_FPTR_CHECK(VertexAttribs2dvNV)
     }
     glVertexAttribs2dvNV(
-        index, count, reinterpret_cast<const GLdouble*>(v.data()));
+        index, v.size(), reinterpret_cast<const GLdouble*>(v.data()));
     detail::error_check("VertexAttribs2dvNV"sv);
 }
 
@@ -1361,7 +1359,7 @@ requires(semantic::concepts::Span<span_const_vec_2_f32>&& semantic::concepts::
      * \return void
      */
     STATICINLINE
-    void vertex_attribs2fv(u32 index, i32 count, span_const_vec_2_f32 const& v)
+    void vertex_attribs2fv(u32 index, span_const_vec_2_f32 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1369,7 +1367,7 @@ requires(semantic::concepts::Span<span_const_vec_2_f32>&& semantic::concepts::
         GLW_FPTR_CHECK(VertexAttribs2fvNV)
     }
     glVertexAttribs2fvNV(
-        index, count, reinterpret_cast<const GLfloat*>(v.data()));
+        index, v.size(), reinterpret_cast<const GLfloat*>(v.data()));
     detail::error_check("VertexAttribs2fvNV"sv);
 }
 
@@ -1384,7 +1382,7 @@ requires(semantic::concepts::Span<span_const_vec_2_i16>&& semantic::concepts::
      * \return void
      */
     STATICINLINE
-    void vertex_attribs2sv(u32 index, i32 count, span_const_vec_2_i16 const& v)
+    void vertex_attribs2sv(u32 index, span_const_vec_2_i16 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1392,7 +1390,7 @@ requires(semantic::concepts::Span<span_const_vec_2_i16>&& semantic::concepts::
         GLW_FPTR_CHECK(VertexAttribs2svNV)
     }
     glVertexAttribs2svNV(
-        index, count, reinterpret_cast<const GLshort*>(v.data()));
+        index, v.size(), reinterpret_cast<const GLshort*>(v.data()));
     detail::error_check("VertexAttribs2svNV"sv);
 }
 
@@ -1407,7 +1405,7 @@ requires(semantic::concepts::Span<span_const_vec_3_f64>&& semantic::concepts::
      * \return void
      */
     STATICINLINE
-    void vertex_attribs3dv(u32 index, i32 count, span_const_vec_3_f64 const& v)
+    void vertex_attribs3dv(u32 index, span_const_vec_3_f64 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1415,7 +1413,7 @@ requires(semantic::concepts::Span<span_const_vec_3_f64>&& semantic::concepts::
         GLW_FPTR_CHECK(VertexAttribs3dvNV)
     }
     glVertexAttribs3dvNV(
-        index, count, reinterpret_cast<const GLdouble*>(v.data()));
+        index, v.size(), reinterpret_cast<const GLdouble*>(v.data()));
     detail::error_check("VertexAttribs3dvNV"sv);
 }
 
@@ -1430,7 +1428,7 @@ requires(semantic::concepts::Span<span_const_vec_3_f32>&& semantic::concepts::
      * \return void
      */
     STATICINLINE
-    void vertex_attribs3fv(u32 index, i32 count, span_const_vec_3_f32 const& v)
+    void vertex_attribs3fv(u32 index, span_const_vec_3_f32 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1438,7 +1436,7 @@ requires(semantic::concepts::Span<span_const_vec_3_f32>&& semantic::concepts::
         GLW_FPTR_CHECK(VertexAttribs3fvNV)
     }
     glVertexAttribs3fvNV(
-        index, count, reinterpret_cast<const GLfloat*>(v.data()));
+        index, v.size(), reinterpret_cast<const GLfloat*>(v.data()));
     detail::error_check("VertexAttribs3fvNV"sv);
 }
 
@@ -1453,7 +1451,7 @@ requires(semantic::concepts::Span<span_const_vec_3_i16>&& semantic::concepts::
      * \return void
      */
     STATICINLINE
-    void vertex_attribs3sv(u32 index, i32 count, span_const_vec_3_i16 const& v)
+    void vertex_attribs3sv(u32 index, span_const_vec_3_i16 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1461,7 +1459,7 @@ requires(semantic::concepts::Span<span_const_vec_3_i16>&& semantic::concepts::
         GLW_FPTR_CHECK(VertexAttribs3svNV)
     }
     glVertexAttribs3svNV(
-        index, count, reinterpret_cast<const GLshort*>(v.data()));
+        index, v.size(), reinterpret_cast<const GLshort*>(v.data()));
     detail::error_check("VertexAttribs3svNV"sv);
 }
 
@@ -1476,7 +1474,7 @@ requires(semantic::concepts::Span<span_const_vec_4_f64>&& semantic::concepts::
      * \return void
      */
     STATICINLINE
-    void vertex_attribs4dv(u32 index, i32 count, span_const_vec_4_f64 const& v)
+    void vertex_attribs4dv(u32 index, span_const_vec_4_f64 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1484,7 +1482,7 @@ requires(semantic::concepts::Span<span_const_vec_4_f64>&& semantic::concepts::
         GLW_FPTR_CHECK(VertexAttribs4dvNV)
     }
     glVertexAttribs4dvNV(
-        index, count, reinterpret_cast<const GLdouble*>(v.data()));
+        index, v.size(), reinterpret_cast<const GLdouble*>(v.data()));
     detail::error_check("VertexAttribs4dvNV"sv);
 }
 
@@ -1499,7 +1497,7 @@ requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
      * \return void
      */
     STATICINLINE
-    void vertex_attribs4fv(u32 index, i32 count, span_const_vec_4_f32 const& v)
+    void vertex_attribs4fv(u32 index, span_const_vec_4_f32 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1507,7 +1505,7 @@ requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
         GLW_FPTR_CHECK(VertexAttribs4fvNV)
     }
     glVertexAttribs4fvNV(
-        index, count, reinterpret_cast<const GLfloat*>(v.data()));
+        index, v.size(), reinterpret_cast<const GLfloat*>(v.data()));
     detail::error_check("VertexAttribs4fvNV"sv);
 }
 
@@ -1522,7 +1520,7 @@ requires(semantic::concepts::Span<span_const_vec_4_i16>&& semantic::concepts::
      * \return void
      */
     STATICINLINE
-    void vertex_attribs4sv(u32 index, i32 count, span_const_vec_4_i16 const& v)
+    void vertex_attribs4sv(u32 index, span_const_vec_4_i16 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1530,7 +1528,7 @@ requires(semantic::concepts::Span<span_const_vec_4_i16>&& semantic::concepts::
         GLW_FPTR_CHECK(VertexAttribs4svNV)
     }
     glVertexAttribs4svNV(
-        index, count, reinterpret_cast<const GLshort*>(v.data()));
+        index, v.size(), reinterpret_cast<const GLshort*>(v.data()));
     detail::error_check("VertexAttribs4svNV"sv);
 }
 

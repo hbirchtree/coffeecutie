@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // ListNameType
-enum class list_name_type : ::libc_types::u32
+enum class list_name_type : u32
 {
 #ifdef GL_2_BYTES
     2_bytes = GL_2_BYTES,

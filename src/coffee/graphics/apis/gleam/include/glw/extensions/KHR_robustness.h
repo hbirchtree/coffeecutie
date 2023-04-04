@@ -46,7 +46,7 @@ constexpr libc_types::u32 context_robust_access = 0x90F3;
 
  * \return GraphicsResetStatus
  */
-STATICINLINE GLenum get_graphics_reset_status()
+STATICINLINE group::graphics_reset_status get_graphics_reset_status()
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -55,7 +55,7 @@ STATICINLINE GLenum get_graphics_reset_status()
     }
     auto out = glGetGraphicsResetStatus();
     detail::error_check("GetGraphicsResetStatus"sv);
-    return out;
+    return static_cast<group::graphics_reset_status>(out);
 }
 
 #endif
@@ -212,7 +212,7 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
 
  * \return GraphicsResetStatus
  */
-STATICINLINE GLenum get_graphics_reset_status()
+STATICINLINE group::graphics_reset_status get_graphics_reset_status()
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -221,7 +221,7 @@ STATICINLINE GLenum get_graphics_reset_status()
     }
     auto out = glGetGraphicsResetStatusKHR();
     detail::error_check("GetGraphicsResetStatusKHR"sv);
-    return out;
+    return static_cast<group::graphics_reset_status>(out);
 }
 
 #endif

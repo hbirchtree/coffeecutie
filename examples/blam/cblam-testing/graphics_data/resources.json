@@ -10,6 +10,7 @@
             "map_uber.frag",
             "scenery.vert",
             "scenery.frag",
+            "scenery_uber.frag",
             "white.frag",
             "wireframe.frag"
         ],
@@ -19,6 +20,7 @@
             "core:430",
             "core:460",
             "es:300",
+            "es:310",
             "es:320"
         ],
         "strip_assemblies": true,
@@ -42,7 +44,40 @@
             "scenery": [
                 "scenery.vert",
                 "scenery.frag"
+            ],
+            "scenery_uber": [
+                "scenery.vert",
+                "scenery_uber.frag"
             ]
+        },
+        "matrix": {
+            "Android": ["spv", "es:", "core:460"],
+            "Darwin": ["core:410"],
+            "Emscripten": ["es:300"]
+        }
+    },
+    "textures": {
+        "files": [
+            {
+                "source": "controller_atlas.svg",
+                "formats": ["rgba"],
+                "mipmap_range": [2048, 512],
+                "punchthrough_color": "0xFF00FF"
+            }
+        ],
+        "variants": {
+            "astc": ["rgba"],
+            "etc2": ["rgba"],
+            "bc7": ["rgba"],
+            "bc3": ["rgba"],
+            "pvrtc1": ["rgba"],
+            "etc1": ["rgba"]
+        },
+        "matrix": {
+            "Android": ["astc", "bc3", "etc1", "etc2", "pvrtc1"],
+            "Darwin": ["bc1", "bc3"],
+            "Linux": ["bc3", "bc7", "etc2"],
+            "Emscripten": ["bc3", "etc2"]
         }
     }
 }

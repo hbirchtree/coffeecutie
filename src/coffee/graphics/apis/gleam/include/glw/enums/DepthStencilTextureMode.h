@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // DepthStencilTextureMode
-enum class depth_stencil_texture_mode : ::libc_types::u32
+enum class depth_stencil_texture_mode : u32
 {
 #ifdef GL_DEPTH_COMPONENT
     depth_component = GL_DEPTH_COMPONENT,

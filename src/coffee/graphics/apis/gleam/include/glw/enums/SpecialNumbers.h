@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // SpecialNumbers
-enum class special_numbers : ::libc_types::u32
+enum class special_numbers : u32
 {
 #ifdef GL_ALL_PIXELS_AMD
     all_pixels_amd = GL_ALL_PIXELS_AMD,

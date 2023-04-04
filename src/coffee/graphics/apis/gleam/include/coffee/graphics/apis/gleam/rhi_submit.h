@@ -208,6 +208,22 @@ union alignas(4) indirect_command_buffer
     } arrays;
 };
 
+inline size_t element_size(draw_command::data_t const& data)
+{
+    using semantic::TypeEnum;
+    switch(data.elements.type)
+    {
+    case TypeEnum::UByte:
+        return 1;
+    case TypeEnum::UShort:
+        return 2;
+    case TypeEnum::UInt:
+        return 4;
+    default:
+        Throw(std::runtime_error("unsupported element type"));
+    }
+}
+
 inline void create_draw(
     draw_command::call_spec_t const& call,
     draw_command::data_t const&      data,
@@ -217,14 +233,15 @@ inline void create_draw(
         buffer->elements = {
             .count         = data.elements.count,
             .instanceCount = data.instances.count,
-            .first         = static_cast<u32>(data.elements.offset),
-            .baseVertex    = static_cast<i32>(data.elements.vertex_offset),
-            .baseInstance  = data.instances.offset,
+            .first
+            = static_cast<u32>(data.elements.offset / element_size(data)),
+            .baseVertex   = static_cast<i32>(data.elements.vertex_offset),
+            .baseInstance = data.instances.offset,
         };
     else
         buffer->arrays = {
             .count         = data.arrays.count,
-            .instanceCount = data.instances.offset,
+            .instanceCount = data.instances.count,
             .first         = data.arrays.offset,
             .baseInstance  = data.instances.offset,
         };
@@ -232,25 +249,33 @@ inline void create_draw(
 
 inline void indirect_draw(
     [[maybe_unused]] draw_command::call_spec_t const& call,
-    [[maybe_unused]] draw_command::data_t const&      data)
+    [[maybe_unused]] draw_command::data_t const&      data,
+    [[maybe_unused]] circular_buffer_t&                  buffer)
 {
 #if GLEAM_MAX_VERSION >= 0x400 || GLEAM_MAX_VERSION_ES >= 0x310
     indirect_command_buffer cmd{};
     create_draw(call, data, &cmd);
+
+    buffer.buffer().commit(SpanOne(cmd));
+    cmd::bind_buffer(
+        group::buffer_target_arb::draw_indirect_buffer,
+        buffer.buffer().handle());
+
     if(call.indexed)
         cmd::draw_elements_indirect(
             convert::to(call.mode),
             convert::to<group::draw_elements_type>(data.elements.type),
-            reinterpret_cast<uintptr_t>(&cmd.elements));
+            0);
     else
-        cmd::draw_arrays_indirect(
-            convert::to(call.mode), reinterpret_cast<uintptr_t>(&cmd.arrays));
+        cmd::draw_arrays_indirect(convert::to(call.mode), 0);
+    cmd::bind_buffer(group::buffer_target_arb::draw_indirect_buffer, 0);
 #endif
 }
 
 inline void multi_indirect_draw(
     [[maybe_unused]] draw_command::call_spec_t const&    call,
-    [[maybe_unused]] decltype(draw_command::data) const& data)
+    [[maybe_unused]] decltype(draw_command::data) const& data,
+    [[maybe_unused]] circular_buffer_t&                  buffer)
 {
 #if GLEAM_MAX_VERSION >= 0x430
     std::vector<indirect_command_buffer> cmds;
@@ -260,25 +285,34 @@ inline void multi_indirect_draw(
         create_draw(call, d, &cmds.at(i++));
     });
 
-    // TODO: Push commands into circular GPU buffer
+    auto commands
+        = semantic::SpanOver<indirect_command_buffer>(cmds.begin(), cmds.end());
+    //    auto fence = buffer.push(buffer.move_fences(commands), commands);
 
+    buffer.buffer().commit(commands);
+
+    cmd::bind_buffer(
+        group::buffer_target_arb::draw_indirect_buffer,
+        buffer.buffer().handle());
     if(call.indexed)
     {
         auto element_type = data.at(0).elements.type;
         cmd::multi_draw_elements_indirect(
             convert::to(call.mode),
             convert::to<group::draw_elements_type>(element_type),
-            reinterpret_cast<uintptr_t>(cmds.data()),
+            reinterpret_cast<uintptr_t>(0ul /*fence.start*/),
             cmds.size(),
             sizeof(decltype(cmds)::value_type));
     } else
     {
         cmd::multi_draw_arrays_indirect(
             convert::to(call.mode),
-            reinterpret_cast<uintptr_t>(cmds.data()),
+            reinterpret_cast<uintptr_t>(0ul /*fence.start*/),
             cmds.size(),
-            sizeof(decltype(cmds)::value_type));
+            sizeof(indirect_command_buffer));
     }
+    cmd::bind_buffer(group::buffer_target_arb::draw_indirect_buffer, 0);
+//    buffer.add_fence(std::move(fence));
 #endif
 }
 
@@ -447,7 +481,7 @@ inline optional<tuple<error, std::string_view>> api::submit(
     }
     if(m_workarounds.draw.emulated_vertex_offset && uses_vertex_offset)
     {
-        apply_vertex_offset = [&bookkeeping, &vao](u32 offset) {
+        apply_vertex_offset = [&vao](u32 offset) {
             for(auto const& attrib : vao->m_attributes)
             {
                 cmd::bind_buffer(
@@ -459,17 +493,17 @@ inline optional<tuple<error, std::string_view>> api::submit(
         };
     }
 
-    const bool indirect_supported = false;
-    //        = m_api_type == api_type_t::core
-    //              ? (uses_baseinstance ? m_api_version >= 0x420
-    //                                   : m_api_version >= 0x400)
-    //              : m_api_version >= 0x310;
+    const bool indirect_supported //= false;
+        = m_api_type == api_type_t::core
+              ? (uses_baseinstance ? m_api_version >= 0x420
+                                   : m_api_version >= 0x400)
+              : m_api_version >= 0x310;
     const bool has_uniform_element_type
         = call.indexed && stl_types::all_of(data, [&data](auto const& d) {
               return d.elements.type == data.at(0).elements.type;
           });
-    const bool multi_indirect_supported = false;
-    //        = m_api_type == api_type_t::core ? m_api_version >= 0x430 : false;
+    const bool multi_indirect_supported //= false;
+        = m_api_type == api_type_t::core ? m_api_version >= 0x430 : false;
     const bool legacy_draw_only
         = m_api_type == api_type_t::es && m_api_version == 0x200;
 
@@ -491,14 +525,14 @@ inline optional<tuple<error, std::string_view>> api::submit(
 
     if(multi_indirect_supported && (!call.indexed || has_uniform_element_type))
     {
-        detail::multi_indirect_draw(call, data);
+        detail::multi_indirect_draw(call, data, *m_indirect_buffer);
     } else if(indirect_supported)
     {
         for(auto const& d : data)
         {
             bookkeeping.baseInstance = d.instances.offset;
             apply_base_instance();
-            detail::indirect_draw(call, d);
+            detail::indirect_draw(call, d, *m_indirect_buffer);
         }
     } else if(!legacy_draw_only)
     {

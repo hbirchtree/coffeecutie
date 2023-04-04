@@ -116,7 +116,7 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
  * \param index GLuint
  * \return Boolean
  */
-STATICINLINE GLboolean is_enabled_indexed(group::enable_cap target, u32 index)
+STATICINLINE bool is_enabled_indexed(group::enable_cap target, u32 index)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -125,7 +125,7 @@ STATICINLINE GLboolean is_enabled_indexed(group::enable_cap target, u32 index)
     }
     auto out = glIsEnabledIndexedEXT(static_cast<GLenum>(target), index);
     detail::error_check("IsEnabledIndexedEXT"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 } // namespace gl::ext::draw_buffers2

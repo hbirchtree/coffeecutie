@@ -11,7 +11,12 @@ struct BlamBspWidget;
 template<typename V>
 using BlamBspWidgetManifest = Components::SubsystemManifest<
     type_list_t<BspReference, ShaderData, SubModel>,
-    type_list_t<ShaderCache<V>, BSPCache<V>, BlamCamera>,
+    type_list_t<
+        ShaderCache<V>,
+        BSPCache<V>,
+        BlamCamera,
+        PostProcessParameters,
+        RenderingParameters>,
     empty_list_t>;
 
 template<typename V>
@@ -80,6 +85,11 @@ struct BlamBspWidget
 
         if(ImGui::Begin("Sectors"))
         {
+            RenderingParameters* rendering;
+            e.subsystem(rendering);
+
+            ImGui::Checkbox("Render scenery", &rendering->render_scenery);
+
             String name;
             for(auto& region : m_bsps)
             {
@@ -91,17 +101,24 @@ struct BlamBspWidget
         }
         ImGui::End();
 
-        if(ImGui::Begin("Camera"))
+        if(ImGui::Begin("Graphics"))
         {
-            BlamCamera const& camera = e.template subsystem<BlamCamera>();
+            BlamCamera const*      camera;
+            PostProcessParameters* postprocess;
+            e.subsystem(postprocess);
+            e.subsystem(camera);
+
+            ImGui::Text("Camera properties");
             ImGui::Columns(2);
             ImGui::Text("Position");
             ImGui::NextColumn();
             ImGui::Text(
                 "vec3(%f, %f, %f)",
-                camera.camera.position.x(),
-                camera.camera.position.y(),
-                camera.camera.position.z());
+                camera->camera.position.x(),
+                camera->camera.position.y(),
+                camera->camera.position.z());
+            ImGui::SliderFloat("Gamma", &postprocess->gamma, 0.1, 5.0);
+            ImGui::SliderFloat("Exposure", &postprocess->exposure, -10.f, 10.f);
             ImGui::Columns();
         }
         ImGui::End();

@@ -1,7 +1,8 @@
 #pragma once
 
-#include "cblam_base_types.h"
-#include "cblam_tag_index.h"
+#include <blam/volta/blam_tag_classes.h>
+#include <blam/volta/cblam_base_types.h>
+#include <blam/volta/cblam_tag_index.h>
 
 namespace blam::shader {
 struct mod2_shader
@@ -16,22 +17,59 @@ struct shader_desc
     u32      unknown[4];
 };
 
-struct alignas(4) shader_base /* aka shdr */
+enum class detail_map_function : u32
 {
-    enum class radiosity_flags : u32
+    biased_multiply,
+    multiply,
+    biased_add,
+};
+enum class animation_function : u16
+{
+    one,
+    zero,
+    cosine,
+    cosine_variable,
+    diagonal,
+    diagonal_period,
+    slide,
+    slide_variable,
+    noise,
+    jitter,
+    wander,
+    spark,
+};
+enum class animation_src : u16
+{
+    none,
+    A_out,
+    B_out,
+    C_out,
+    D_out,
+};
+enum class reflection_map_type : u32
+{
+    none,
+    bumped_cube,
+    flat_cube,
+    bumped_radiosity,
+};
+
+struct alignas(4) radiosity_properties /* aka shdr */
+{
+    enum class radiosity_flags : u16
     {
         simple_params   = 0x1,
         ignore_normals  = 0x2,
         transparent_lit = 0x4,
     };
-    enum class radiosity_lod : u32
+    enum class radiosity_lod : u16
     {
         high,
         medium,
         low,
         turd,
     };
-    enum class physics_material : u32
+    enum class physics_material : u16
     {
         dirt,
         sand,
@@ -67,48 +105,20 @@ struct alignas(4) shader_base /* aka shdr */
         ice,
         hunter_shield,
     };
-    enum class detail_map_function : u32
-    {
-        biased_multiply,
-        multiply,
-        biased_add,
-    };
-    enum class animation_function : u16
-    {
-        none,
-    };
-    enum class animation_src : u16
-    {
-        none,
-        A_out,
-        B_out,
-        C_out,
-        D_out,
-    };
-    enum class reflection_map_type : u32
-    {
-        none,
-        bumped_cube,
-        flat_cube,
-        bumped_radiosity,
-    };
-
-    struct detail_map
-    {
-        scalar                            scale;
-        tagref_typed_t<tag_class_t::bitm> map;
-    };
 
     struct view_props
     {
-        scalar brightness;
-        Vecf3  tint_color;
+        f32   brightness;
+        Vecf3 tint_color;
     };
 
-    radiosity_flags  flags;
-    radiosity_lod    detail_level;
-    Vecf3            emission;
-    Vecf3            tint;
+    radiosity_flags flags;
+    radiosity_lod   detail_level;
+    f32             power;
+    Vecf3           emission;
+    Vecf3           tint;
+
+    u16              physics_flags;
     physics_material physics;
 
     template<class T>
@@ -122,12 +132,12 @@ struct texture_scrolling_animation
 {
     struct texture_anim_properties
     {
-        shader_base::animation_src      source;
-        shader_base::animation_function function;
+        animation_src      source;
+        animation_function function;
 
-        scalar period;
-        scalar phase;
-        scalar repeats;
+        f32 period;
+        f32 phase;
+        f32 scale;
     };
 
     texture_anim_properties u;
@@ -138,8 +148,14 @@ struct texture_scrolling_animation
     Vecf2 rotation_center;
 };
 
+struct detail_map
+{
+    f32                               scale;
+    tagref_typed_t<tag_class_t::bitm> map;
+};
+
 namespace chicago {
-enum class flags : u16
+enum class flags_t : u8
 {
     none                          = 0x0,
     alpha_testing                 = 0x1,
@@ -184,9 +200,26 @@ enum class framebuffer_blending : u16
     alpha_multiply_add,
 };
 
-struct lens_flares_t
+enum class color_function : u16
 {
-    scalar                            spacing;
+    current,
+    next_map,
+    multiply,
+    double_multiply,
+    add,
+    add_signed_current,
+    add_signed_next_map,
+    subtract_current,
+    subtract_next_map,
+    blend_current_alpha,
+    blend_current_alpha_inverse,
+    blend_next_map_alpha,
+    blend_next_map_alpha_inverse,
+};
+
+struct alignas(4) lens_flares_t
+{
+    f32                               spacing;
     tagref_typed_t<tag_class_t::lens> lens_flare;
 };
 enum class extra_flags : u32
@@ -207,46 +240,49 @@ struct map_t
 {
     u32 padding_1[11];
 
-    map_flags flags;
-    u16       color_function;
-    u16       alpha_function;
-    u16       padding_2;
+    map_flags      flags;
+    color_function color_func;
+    color_function alpha_func;
+    u16            padding_2;
 
     u32 padding_3[8];
 
     struct
     {
-        Vecf2  uv_scale;
-        Vecf2  uv_offset;
-        scalar rotation;
-        scalar mip_bias;
+        Vecf2 uv_scale;
+        Vecf2 uv_offset;
+        f32   rotation;
+        f32   mip_bias;
 
         tagref_typed_t<tag_class_t::bitm> map;
     } map;
 
-    u32 padding_4[8];
+    u32 padding_4[7];
 
     texture_scrolling_animation anim_2d;
 
-    u32 padding_5[2];
+    u32 padding_5[3];
 };
 
-C_FLAGS(flags, u32)
+static_assert(sizeof(map_t) == 220);
 
-} // namespace chicago
-
-template<typename V>
-struct alignas(4) shader_chicago : shader_base /* aka schi */
+struct alignas(4) base
 {
+    u32 padding__;
     u8                             numeric_counter_limit;
-    chicago::flags                 flags;
+    chicago::flags_t               flags;
     chicago::map_type              first_map_type;
     chicago::framebuffer_blending  blend_function;
     chicago::framebuffer_fade_mode fade_mode;
     chicago::framebuffer_fade_src  fade_src;
+};
 
-    u32 padding_1;
+} // namespace chicago
 
+template<typename V>
+struct alignas(4) shader_chicago : radiosity_properties /* aka schi */
+{
+    chicago::base          transparent;
     chicago::lens_flares_t lens_flares;
 
     reflexive_t<tagref_typed_t<tag_class_t::shdr>, V> layers;
@@ -256,41 +292,32 @@ struct alignas(4) shader_chicago : shader_base /* aka schi */
     chicago::extra_flags ex_flags;
 };
 
+static_assert(offsetof(shader_chicago<pc_version_t>, lens_flares) == 52);
+
 struct reflection_properties
 {
-    shader_base::reflection_map_type  type;
-    shader_base::view_props           perpendicular;
-    shader_base::view_props           parallel;
+    reflection_map_type               type;
+    radiosity_properties::view_props  perpendicular;
+    radiosity_properties::view_props  parallel;
     tagref_typed_t<tag_class_t::bitm> map;
-    shader_base::detail_map           bump_map;
+    detail_map                        bump_map;
 };
 
 template<typename V>
-struct alignas(4) shader_chicago_extended : shader_base /* aka scex */
+struct alignas(4) shader_chicago_extended : radiosity_properties /* aka scex */
 {
-    u8                counter_limit;
-    u8                padding_1;
-    chicago::flags    flags;
-    chicago::map_type first_map_type;
-
-    chicago::framebuffer_blending  blend_mode;
-    chicago::framebuffer_fade_mode fade_mode;
-    chicago::framebuffer_fade_src  fade_src;
-
-    u32 padding_2;
-
-    chicago::lens_flares_t lens_flares;
-
-    u32 padding_3[3];
-
+    chicago::base                                     transparent;
+    chicago::lens_flares_t                            lens_flares;
     reflexive_t<tagref_typed_t<tag_class_t::shdr>, V> layers;
-
-    reflexive_t<chicago::map_t, V> maps_4stage;
-    reflexive_t<chicago::map_t, V> maps_2stage;
-    chicago::extra_flags           extra_flags;
+    reflexive_t<chicago::map_t, V>                    maps_4stage;
+    reflexive_t<chicago::map_t, V>                    maps_2stage;
+    chicago::extra_flags                              extra_flags;
 };
 
-struct alignas(4) shader_glass : shader_base /* aka sgla */
+static_assert(
+    offsetof(shader_chicago_extended<pc_version_t>, lens_flares) == 52);
+
+struct alignas(32) shader_glass : radiosity_properties /* aka sgla */
 {
     enum class glass_flags : u32
     {
@@ -339,7 +366,7 @@ struct alignas(4) shader_glass : shader_base /* aka sgla */
     } specular;
 };
 
-struct alignas(64) shader_meter : shader_base /* aka smet, TODO */
+struct alignas(64) shader_meter : radiosity_properties /* aka smet, TODO */
 {
     enum class meter_flags : u32
     {
@@ -361,13 +388,13 @@ struct alignas(64) shader_meter : shader_base /* aka smet, TODO */
 
     struct alignas(32)
     {
-        Vecf3  gradient_min;
-        Vecf3  gradient_max;
-        Vecf3  background;
-        Vecf3  flash;
-        Vecf3  tint;
-        scalar transparency;
-        scalar background_transparency;
+        Vecf3 gradient_min;
+        Vecf3 gradient_max;
+        Vecf3 background;
+        Vecf3 flash;
+        Vecf3 tint;
+        f32   transparency;
+        f32   background_transparency;
     } colors;
 
     struct alignas(32)
@@ -381,19 +408,20 @@ struct alignas(64) shader_meter : shader_base /* aka smet, TODO */
 };
 
 template<typename V>
-struct alignas(4) shader_water : shader_base /* aka swat */
+struct alignas(4) shader_water : radiosity_properties /* aka swat */
 {
-    enum class water_flags : u32
+    enum class water_flags : u16
     {
         none                                = 0x0,
         base_map_alpha_modulates_reflect    = 0x1,
         base_map_color_modulates_background = 0x2,
-        atmospheric_fod                     = 0x4,
+        atmospheric_fog                     = 0x4,
         draw_before_fog                     = 0x8,
     };
 
     u32         unknown_;
     water_flags flags;
+    u16         padding__;
     u32         padding_[8];
 
     tagref_typed_t<tag_class_t::bitm> base;
@@ -409,27 +437,27 @@ struct alignas(4) shader_water : shader_base /* aka swat */
 
     struct ripple_t /* TODO: Find the correct layout of this structure */
     {
-        scalar contribution;
-        scalar anim_angle;
-        scalar anim_velocity;
-        Vecf2  map_offset;
-        u32    map_repeats;
-        u32    map_index;
+        f32   contribution;
+        f32   anim_angle;
+        f32   anim_velocity;
+        Vecf2 map_offset;
+        u32   map_repeats;
+        u32   map_index;
     };
 
     u32 padding_4[4];
 
     struct
     {
-        scalar anim_angle;
-        scalar anim_velocity;
-        scalar scale;
+        f32 anim_angle;
+        f32 anim_velocity;
+        f32 scale;
 
         tagref_typed_t<tag_class_t::bitm> maps;
 
-        u32    mipmap_levels;
-        scalar fade_factor;
-        scalar mipmap_bias;
+        u32 mipmap_levels;
+        f32 fade_factor;
+        f32 mipmap_bias;
 
         u32 padding_[16];
 
@@ -437,13 +465,18 @@ struct alignas(4) shader_water : shader_base /* aka swat */
     } ripple;
 };
 
-struct alignas(4) shader_env : shader_base /* aka senv */
+struct alignas(4) shader_env : radiosity_properties /* aka senv */
 {
-    enum class env_shader_type : u32
+    enum class flags_t : u16
     {
-        unknown,
-
-        normal = 1,
+        none                      = 0x0,
+        alpha_tested              = 0x1,
+        bump_map_is_specular_mask = 0x2,
+        true_atmospheric_fog      = 0x4,
+    };
+    enum class env_shader_type : u16
+    {
+        normal,
         blended,
         blended_base_specular,
     };
@@ -454,19 +487,20 @@ struct alignas(4) shader_env : shader_base /* aka senv */
         rescale_bump_map    = 0x2,
     };
 
-    env_shader_type shader_type;
+    u32 padding_2;
 
-    u32 padding_;
+    flags_t         flags;
+    env_shader_type shader_type;
 
     struct
     {
-        scalar                            spacing;
+        f32                               spacing;
         tagref_typed_t<tag_class_t::lens> lens_flare;
 
         u32 unknown_2[17];
     } lens_flare;
 
-    struct
+    struct diffuse_map_t
     {
         diffuse_flags                     flags;
         tagref_typed_t<tag_class_t::bitm> base;
@@ -488,18 +522,18 @@ struct alignas(4) shader_env : shader_base /* aka senv */
 
     detail_map bump;
 
-    scalar unknown_1[2];
-    u32    padding_2[4];
+    f32 unknown_1[2];
+    u32 padding_3[4];
 
     struct
     {
         animation_function u_anim;
-        scalar             u_period;
-        scalar             u_scale;
+        f32                u_period;
+        f32                u_scale;
 
         animation_function v_anim;
-        scalar             v_period;
-        scalar             v_scale;
+        f32                v_period;
+        f32                v_scale;
 
         u32 padding_[2];
     } scrolling;
@@ -516,8 +550,8 @@ struct alignas(4) shader_env : shader_base /* aka senv */
         Vecf3              on_color;
         Vecf3              off_color;
         animation_function anim;
-        scalar             period;
-        scalar             phase;
+        f32                period;
+        f32                phase;
 
         u32 padding_[1];
     };
@@ -535,7 +569,7 @@ struct alignas(4) shader_env : shader_base /* aka senv */
         detail_map map;
     } self_illum;
 
-    u32 padding_3[4];
+    u32 padding_4[4];
 
     enum class specular_flags : u32
     {
@@ -550,13 +584,13 @@ struct alignas(4) shader_env : shader_base /* aka senv */
         u32            unknown_;
         specular_flags flags;
         u32            padding_[4];
-        scalar         brightness;
+        f32            brightness;
         Vecf3          perpendicular_color;
         Vecf3          parallel_color;
 
     } specular;
 
-    u32 padding_4[26];
+    u32 padding_5[26];
 
     enum class reflection_flags : u32
     {
@@ -568,15 +602,20 @@ struct alignas(4) shader_env : shader_base /* aka senv */
     {
         reflection_flags    flags;
         reflection_map_type type;
-        scalar              lightmap_brightness;
-        scalar              perpendicular_brightness;
-        scalar              parallel_brightness;
+        f32                 lightmap_brightness;
+        f32                 perpendicular_brightness;
+        f32                 parallel_brightness;
 
         tagref_typed_t<tag_class_t::bitm> reflection;
     } reflection;
 };
 
-struct alignas(4) shader_model : shader_base /* aka soso */
+static_assert(offsetof(shader_env, lens_flare) == 44);
+static_assert(
+    offsetof(shader_env, diffuse) + offsetof(shader_env::diffuse_map_t, base)
+    == 136);
+
+struct alignas(4) shader_model : radiosity_properties /* aka soso */
 {
     enum class model_flags : u32
     {
@@ -602,7 +641,7 @@ struct alignas(4) shader_model : shader_base /* aka soso */
     };
 
     model_flags flags;
-    scalar      translucency;
+    f32         translucency;
 
     struct
     {
@@ -616,10 +655,10 @@ struct alignas(4) shader_model : shader_base /* aka soso */
         self_illum_flags   flags;
         color_src          color_source;
         animation_function anim_func;
-        scalar             anim_period;
+        f32                anim_period;
         Vecf3              anim_color_lower_bound;
         Vecf3              anim_color_upper_bound;
-    } self_illum;
+    } animation;
 
     u32 padding_2[3];
 
@@ -636,39 +675,39 @@ struct alignas(4) shader_model : shader_base /* aka soso */
         {
             u16                               function;
             u16                               mask;
-            scalar                            scale;
+            f32                               scale;
             tagref_typed_t<tag_class_t::bipd> map;
-            scalar                            v_scale;
+            f32                               v_scale;
         } detail;
     } maps;
 
     texture_scrolling_animation anim_2d;
 };
 
-struct alignas(4) shader_plasma : shader_base /* TODO */
+struct alignas(4) shader_plasma : radiosity_properties /* aka spla */
 {
     u32 padding_1[2];
 
     struct
     {
         animation_src source;
-        scalar        exponent;
+        f32           exponent;
     } intensity;
 
     struct
     {
         animation_src source;
-        scalar        amount;
-        scalar        exponent;
+        f32           amount;
+        f32           exponent;
     } offset;
 
     u32 padding_2[9];
 
     struct
     {
-        scalar        perpendicular_brightness;
+        f32           perpendicular_brightness;
         Vecf3         perpendicular_tint;
-        scalar        parallel_brightness;
+        f32           parallel_brightness;
         Vecf3         parellel_tint;
         animation_src tint_src;
     } color;
@@ -677,7 +716,7 @@ struct alignas(4) shader_plasma : shader_base /* TODO */
 
     struct noise_map
     {
-        scalar     anim_period;
+        f32        anim_period;
         Vecf3      anim_dir;
         detail_map noise;
     };
@@ -687,6 +726,148 @@ struct alignas(4) shader_plasma : shader_base /* TODO */
     noise_map secondary_noise;
 };
 
+enum class transparent_flags : u16
+{
+    none,
+    color_mux                  = 0x1,
+    alpha_mux                  = 0x2,
+    a_out_controls_color0_anim = 0x4,
+};
+
+enum class color_input : u16
+{
+    zero,
+    one,
+    one_half,
+    negative_one,
+    negative_one_half,
+    map_alpha_0,
+    map_alpha_1,
+    map_alpha_2,
+    map_alpha_3,
+    vertex_alpha_0,
+    vertex_alpha_1,
+    scratch_alpha_0,
+    scratch_alpha_1,
+    constant_alpha_0,
+    constant_alpha_1,
+    map_blue_0,
+    map_blue_1,
+    map_blue_2,
+    map_blue_3,
+    vertex_blue_0,
+    vertex_blue_1,
+    scratch_blue_0,
+    scratch_blue_1,
+    constant_blue_0,
+    constant_blue_1,
+};
+
+enum class color_mapping : u16
+{
+    clamp,
+    clamp_inverse,
+    squared_clamp_minus_one,
+    one_minus_square_clamp,
+    clamp_minus_half,
+    one,
+    minus_one,
+};
+
+enum class color_output : u16
+{
+    discard,
+    final_color,
+    scratch_color_0 = final_color,
+    scratch_color_1,
+    vertex_color_0,
+    vertex_color_1,
+    map_color_0,
+    map_color_1,
+    map_color_2,
+    map_color_3,
+};
+
+enum class color_output_function : u16
+{
+    multiply,
+    dot_product,
+};
+
+enum class color_output_mapping : u16
+{
+    identity,
+    scale_half,
+    scale_2,
+    scale_4,
+    subtract_half, /* subtract 1/2 */
+    expand_normal, /* normalize? */
+};
+
+struct transparent_stage
+{
+    transparent_flags flags;
+
+    /* constants and animation */
+    struct
+    {
+        animation_src      color0_src;
+        animation_function color0_function;
+        animation_src      color0_period;
+        Vecf3              color0_lower_bound;
+        Vecf3              color0_upper_bound;
+        Vecf3              color1;
+        u16                padding[2];
+    } animation;
+
+    struct inputs_t
+    {
+        color_input a;
+        color_input a_mapping;
+        color_input b;
+        color_input b_mapping;
+        color_input c;
+        color_input c_mapping;
+        color_input d;
+        color_input d_mapping;
+    };
+
+    inputs_t color_inputs;
+    struct
+    {
+        color_output          ab;
+        color_output_function ab_function;
+        color_output          cd;
+        color_output_function cd_function;
+        color_output          abcd_mux_sum;
+        color_output_mapping  mapping;
+        u16                   padding[2];
+    } color_outputs;
+
+    inputs_t alpha_inputs;
+    struct
+    {
+        color_output         ab;
+        color_output         cd;
+        color_output         abcd_mux_sum;
+        color_output_mapping mapping;
+        u32                  padding[2];
+    } alpha_outputs;
+};
+
+template<typename V>
+struct alignas(32) shader_transparent : radiosity_properties /* aka sotr */
+{
+    chicago::base          transparent;
+    chicago::lens_flares_t lens_flares;
+
+    reflexive_t<tagref_typed_t<tag_class_t::shdr>, V> layers;
+    reflexive_t<chicago::map_t, V>                    maps;
+    reflexive_t<chicago::map_t, V>                    stages;
+};
+
+C_FLAGS(chicago::flags_t, u32)
+C_FLAGS(shader_env::flags_t, u32)
 C_FLAGS(shader_model::model_flags, u32)
 
-} // namespace shader
+} // namespace blam::shader

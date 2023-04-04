@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // SamplePatternEXT
-enum class sample_pattern_ext : ::libc_types::u32
+enum class sample_pattern_ext : u32
 {
 #ifdef GL_1PASS_EXT
     1pass_ext = GL_1PASS_EXT,

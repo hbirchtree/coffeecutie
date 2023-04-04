@@ -296,18 +296,31 @@ FORCEDINLINE std::basic_string<CharType> str_impl(
     std::basic_string_view<CharType> const& query,
     std::basic_string_view<CharType> const& replacement)
 {
-    if(query.size() == 0)
-        return std::basic_string<CharType>(target.begin(), target.end());
+//    if(query.size() == 0)
+//        return std::basic_string<CharType>(target.begin(), target.end());
 
+//    std::basic_string<CharType> out(target.begin(), target.end());
+//    for(size_t pos = 0;; pos += replacement.size())
+//    {
+//        pos = out.find(query, pos);
+//        if(pos == decltype(out)::npos || pos >= out.size())
+//            break;
+//        out.erase(pos, query.size());
+//        out.insert(out.begin() + pos, replacement.begin(), replacement.end());
+//        out.replace();
+//    }
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wrestrict"
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
     std::basic_string<CharType> out(target.begin(), target.end());
     for(size_t pos = 0;; pos += replacement.size())
     {
         pos = out.find(query, pos);
         if(pos == decltype(out)::npos)
             break;
-        out.erase(pos, query.size());
-        out.insert(out.begin() + pos, replacement.begin(), replacement.end());
+        out.replace(pos, query.size(), replacement);
     }
+#pragma GCC diagnostic pop
     return out;
 }
 

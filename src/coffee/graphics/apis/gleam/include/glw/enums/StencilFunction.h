@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // StencilFunction
-enum class stencil_function : ::libc_types::u32
+enum class stencil_function : u32
 {
 #ifdef GL_ALWAYS
     always = GL_ALWAYS,

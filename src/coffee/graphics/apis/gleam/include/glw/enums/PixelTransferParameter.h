@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // PixelTransferParameter
-enum class pixel_transfer_parameter : ::libc_types::u32
+enum class pixel_transfer_parameter : u32
 {
 #ifdef GL_ALPHA_BIAS
     alpha_bias = GL_ALPHA_BIAS,

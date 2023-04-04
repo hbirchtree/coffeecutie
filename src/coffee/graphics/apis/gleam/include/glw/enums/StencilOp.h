@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // StencilOp
-enum class stencil_op : ::libc_types::u32
+enum class stencil_op : u32
 {
 #ifdef GL_DECR
     decr = GL_DECR,

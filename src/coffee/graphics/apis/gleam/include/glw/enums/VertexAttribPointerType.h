@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // VertexAttribPointerType
-enum class vertex_attrib_pointer_type : ::libc_types::u32
+enum class vertex_attrib_pointer_type : u32
 {
 #ifdef GL_BYTE
     byte_ = GL_BYTE,

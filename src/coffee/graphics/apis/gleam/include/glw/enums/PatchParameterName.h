@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // PatchParameterName
-enum class patch_parameter_name : ::libc_types::u32
+enum class patch_parameter_name : u32
 {
 #ifdef GL_PATCH_DEFAULT_INNER_LEVEL
     patch_default_inner_level = GL_PATCH_DEFAULT_INNER_LEVEL,

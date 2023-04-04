@@ -11,8 +11,7 @@ namespace values {
  * \param timeout GLuint
  * \return Boolean
  */
-STATICINLINE GLboolean
-acquire_keyed_mutex_win32(u32 memory, u64 key, u32 timeout)
+STATICINLINE bool acquire_keyed_mutex_win32(u32 memory, u64 key, u32 timeout)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -21,7 +20,7 @@ acquire_keyed_mutex_win32(u32 memory, u64 key, u32 timeout)
     }
     auto out = glAcquireKeyedMutexWin32EXT(memory, key, timeout);
     detail::error_check("AcquireKeyedMutexWin32EXT"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 /*!
@@ -30,7 +29,7 @@ acquire_keyed_mutex_win32(u32 memory, u64 key, u32 timeout)
  * \param key GLuint64
  * \return Boolean
  */
-STATICINLINE GLboolean release_keyed_mutex_win32(u32 memory, u64 key)
+STATICINLINE bool release_keyed_mutex_win32(u32 memory, u64 key)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -39,7 +38,7 @@ STATICINLINE GLboolean release_keyed_mutex_win32(u32 memory, u64 key)
     }
     auto out = glReleaseKeyedMutexWin32EXT(memory, key);
     detail::error_check("ReleaseKeyedMutexWin32EXT"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 } // namespace gl::ext::win32_keyed_mutex

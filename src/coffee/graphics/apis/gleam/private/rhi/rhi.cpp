@@ -162,9 +162,9 @@ void texture_t::alloc(size_type const& size, bool create_storage)
                         semantic::SpanOver<libc_types::u8>(
                             black.begin(), black.end())
 #else
-                        null_span<>{alloc_size}
+                        null_span<> { alloc_size }
 #endif
-                        );
+                    );
                     break;
 #if GLEAM_MAX_VERSION >= 0x120 || GLEAM_MAX_VERSION_ES >= 0x300
                 case type::d3:
@@ -179,9 +179,9 @@ void texture_t::alloc(size_type const& size, bool create_storage)
                         semantic::SpanOver<libc_types::u8>(
                             black.begin(), black.end())
 #else
-                        null_span<>{alloc_size}
+                        null_span<> { alloc_size }
 #endif
-                        );
+                    );
                     break;
 #endif
                 default:
@@ -263,6 +263,24 @@ void texture_t::alloc(size_type const& size, bool create_storage)
                         i,
                         static_cast<internal_format_t>(old_fmt),
                         s,
+                        0,
+                        pfmt,
+                        ptype,
+                        null_span);
+                };
+                break;
+#endif
+#if GLEAM_MAX_VERSION >= 0x400 || GLEAM_MAX_VERSION_ES >= 0x320
+            case type::cube_array:
+                create_level = [&](size_3d<i32> const& s, i32 i) {
+                    auto [old_fmt, ptype, pfmt]
+                        = convert::to<group::internal_format>(
+                            alloc_format, m_features);
+                    cmd::tex_image_3d(
+                        target,
+                        i,
+                        static_cast<i32>(old_fmt),
+                        size_3d<i32>(s.w, s.h, s.d * 6),
                         0,
                         pfmt,
                         ptype,
@@ -372,6 +390,8 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
         out.texture.max_level   = true;
         out.texture.tex.gl.rgtc = true;
 
+        out.texture.cube_array = api_version >= 0x400;
+
         out.draw.indirect         = api_version >= 0x420;
         out.draw.base_instance    = api_version >= 0x420;
         out.texture.image_texture = api_version >= 0x420;
@@ -439,6 +459,7 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
         out.texture.image_copy               = api_version >= 0x320;
         out.texture.sampler_binding          = api_version >= 0x320;
         out.texture.tex.gl.astc              = api_version >= 0x320;
+        out.texture.cube_array               = api_version >= 0x320;
 
         out.vertex.vertex_offset = out.draw.vertex_offset;
 
@@ -479,12 +500,13 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
     out.texture.tex.ext.rgtc
         = supports_extension(extensions, ext::texture_compression_rgtc::name);
     out.texture.tex.ext.s3tc
-        = supports_extension(extensions, ext::texture_compression_s3tc::name) ||
-        supports_extension(extensions, "WEBGL_compressed_texture_s3tc");
+        = supports_extension(extensions, ext::texture_compression_s3tc::name)
+          || supports_extension(extensions, "WEBGL_compressed_texture_s3tc");
 
-    out.texture.tex.oes.etc1 = supports_extension(
-        extensions, oes::compressed_etc1_rgb8_texture::name) ||
-        supports_extension(extensions, "WEBGL_compressed_texture_etc");
+    out.texture.tex.oes.etc1
+        = supports_extension(
+              extensions, oes::compressed_etc1_rgb8_texture::name)
+          || supports_extension(extensions, "WEBGL_compressed_texture_etc");
     out.texture.tex.oes.rgba8
         = supports_extension(extensions, oes::rgb8_rgba8::name);
 
@@ -668,6 +690,11 @@ optional<string> api::device_driver()
     if(!stl_types::regex::match(version_regex(), version, elements))
         return std::nullopt;
     return elements[5];
+}
+
+api::extensions_set api::extensions()
+{
+    return m_extensions;
 }
 
 void api::collect_info(comp_app::interfaces::AppInfo& appInfo)
@@ -854,6 +881,17 @@ optional<error> api::load(load_options_t options)
     cmd::front_face(group::front_face_direction::ccw);
 
     debug().message("gleam::api::load");
+
+    if(m_features.draw.indirect)
+    {
+        using semantic::RSCA;
+        auto buffer
+            = alloc_buffer(buffers::draw, RSCA::ReadWrite | RSCA::Streaming);
+        buffer->alloc();
+        buffer->commit(options.indirect_buffer_size.value_or(16 * 1024));
+        m_indirect_buffer = std::make_unique<circular_buffer_t>(
+            std::ref(debug()), std::move(buffer));
+    }
 
     return std::nullopt;
 }

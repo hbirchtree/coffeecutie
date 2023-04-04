@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // BufferAccessARB
-enum class buffer_access_arb : ::libc_types::u32
+enum class buffer_access_arb : u32
 {
 #ifdef GL_READ_ONLY
     read_only = GL_READ_ONLY,

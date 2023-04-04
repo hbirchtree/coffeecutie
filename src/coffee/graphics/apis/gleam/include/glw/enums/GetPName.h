@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // GetPName
-enum class get_prop : ::libc_types::u32
+enum class get_prop : u32
 {
 #ifdef GL_ACCUM_ALPHA_BITS
     accum_alpha_bits = GL_ACCUM_ALPHA_BITS,

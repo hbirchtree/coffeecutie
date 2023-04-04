@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // CopyBufferSubDataTarget
-enum class copy_buffer_sub_data_target : ::libc_types::u32
+enum class copy_buffer_sub_data_target : u32
 {
 #ifdef GL_ARRAY_BUFFER
     array_buffer = GL_ARRAY_BUFFER,

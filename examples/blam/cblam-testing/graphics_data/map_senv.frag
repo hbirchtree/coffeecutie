@@ -104,8 +104,6 @@ void main()
             lightmap.rgb
             ;
 
-    out_color.rgb = pow(out_color.rgb, vec3(1.0 / 1.5));
-
 //    out_color.rgb *= 0.01;
 //    out_color.rgb = lightmap.rgb;
 

@@ -103,7 +103,7 @@ requires(MinimumVersion<Current, Version<4, 5>>)
      * core 4.5 \param framebuffer GLuint \param target GLenum \return
      * FramebufferStatus
      */
-    STATICINLINE GLenum check_named_framebuffer_status(
+    STATICINLINE group::framebuffer_status check_named_framebuffer_status(
         u32 framebuffer, group::framebuffer_target target)
 {
     using namespace std::string_view_literals;
@@ -119,7 +119,7 @@ requires(MinimumVersion<Current, Version<4, 5>>)
     auto out =
         glCheckNamedFramebufferStatus(framebuffer, static_cast<GLenum>(target));
     detail::error_check("CheckNamedFramebufferStatus"sv);
-    return out;
+    return static_cast<group::framebuffer_status>(out);
 }
 
 template<class span_const_void>
@@ -2930,7 +2930,7 @@ requires(MinimumVersion<Current, Version<4, 5>>)
      * \param buffer GLuint
      * \return Boolean
      */
-    STATICINLINE GLboolean unmap_named_buffer(u32 buffer)
+    STATICINLINE bool unmap_named_buffer(u32 buffer)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2944,7 +2944,7 @@ requires(MinimumVersion<Current, Version<4, 5>>)
     }
     auto out = glUnmapNamedBuffer(buffer);
     detail::error_check("UnmapNamedBuffer"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 template<typename Dummy = void>
@@ -3346,7 +3346,7 @@ requires(MinimumVersion<Current, Version<4, 5>>)
 
      * \return GraphicsResetStatus
      */
-    STATICINLINE GLenum get_graphics_reset_status()
+    STATICINLINE group::graphics_reset_status get_graphics_reset_status()
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -3355,7 +3355,7 @@ requires(MinimumVersion<Current, Version<4, 5>>)
     }
     auto out = glGetGraphicsResetStatus();
     detail::error_check("GetGraphicsResetStatus"sv);
-    return out;
+    return static_cast<group::graphics_reset_status>(out);
 }
 
 template<class span_void>

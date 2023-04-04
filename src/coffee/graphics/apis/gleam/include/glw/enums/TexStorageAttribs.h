@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // TexStorageAttribs
-enum class tex_storage_attribs : ::libc_types::u32
+enum class tex_storage_attribs : u32
 {
 #ifdef GL_SURFACE_COMPRESSION_EXT
     surface_compression_ext = GL_SURFACE_COMPRESSION_EXT,

@@ -586,7 +586,7 @@ requires(MinimumVersion<Current, Version<3, 2>>)
      * \param index GLuint
      * \return Boolean
      */
-    STATICINLINE GLboolean is_enabledi(group::enable_cap target, u32 index)
+    STATICINLINE bool is_enabledi(group::enable_cap target, u32 index)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -595,7 +595,7 @@ requires(MinimumVersion<Current, Version<3, 2>>)
     }
     auto out = glIsEnabledi(static_cast<GLenum>(target), index);
     detail::error_check("IsEnabledi"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 template<typename Dummy = void>
@@ -770,7 +770,7 @@ requires(MinimumVersion<Current, Version<3, 2>>)
 
      * \return GraphicsResetStatus
      */
-    STATICINLINE GLenum get_graphics_reset_status()
+    STATICINLINE group::graphics_reset_status get_graphics_reset_status()
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -779,7 +779,7 @@ requires(MinimumVersion<Current, Version<3, 2>>)
     }
     auto out = glGetGraphicsResetStatus();
     detail::error_check("GetGraphicsResetStatus"sv);
-    return out;
+    return static_cast<group::graphics_reset_status>(out);
 }
 
 template<class span_f32>

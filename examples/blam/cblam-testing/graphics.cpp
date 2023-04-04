@@ -186,6 +186,7 @@ i32 blam_main(i32, cstring_w*)
                 auto size = e.service<comp_app::Windowing>()->size();
                 cDebug("Window size: {0}x{1}", size.w, size.h);
             }
+            cDebug("GL extensions: {0}", gfx.extensions());
 
             e.register_component_inplace<Model>();
             e.register_component_inplace<SubModel>();
@@ -247,7 +248,7 @@ i32 blam_main(i32, cstring_w*)
                 compile_info::platform::is_android
                 || compile_info::platform::is_emscripten)
             {
-                map_filename = "beavercreek.map"_asset;
+                map_filename = "b30.map"_asset;
                 map_dir      = "."_asset;
             } else if(!GetInitArgs().arguments().empty())
             {

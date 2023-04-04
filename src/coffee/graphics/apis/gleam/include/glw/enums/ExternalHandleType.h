@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // ExternalHandleType
-enum class external_handle_type : ::libc_types::u32
+enum class external_handle_type : u32
 {
 #ifdef GL_HANDLE_TYPE_D3D11_IMAGE_EXT
     handle_type_d3d11_image_ext = GL_HANDLE_TYPE_D3D11_IMAGE_EXT,

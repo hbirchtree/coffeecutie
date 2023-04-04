@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // FramebufferAttachmentParameterName
-enum class framebuffer_attachment_parameter_name : ::libc_types::u32
+enum class framebuffer_attachment_parameter_name : u32
 {
 #ifdef GL_FRAMEBUFFER_ATTACHMENT_ALPHA_SIZE
     framebuffer_attachment_alpha_size = GL_FRAMEBUFFER_ATTACHMENT_ALPHA_SIZE,

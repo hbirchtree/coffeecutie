@@ -94,7 +94,7 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
  * \param id GLuint
  * \return Boolean
  */
-STATICINLINE GLboolean is_transform_feedback(u32 id)
+STATICINLINE bool is_transform_feedback(u32 id)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -103,7 +103,7 @@ STATICINLINE GLboolean is_transform_feedback(u32 id)
     }
     auto out = glIsTransformFeedbackNV(id);
     detail::error_check("IsTransformFeedbackNV"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 /*!

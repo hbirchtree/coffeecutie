@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // LightName
-enum class light_name : ::libc_types::u32
+enum class light_name : u32
 {
 #ifdef GL_FRAGMENT_LIGHT0_SGIX
     fragment_light0_sgix = GL_FRAGMENT_LIGHT0_SGIX,

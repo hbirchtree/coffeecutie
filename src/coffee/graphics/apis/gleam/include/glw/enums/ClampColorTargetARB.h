@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // ClampColorTargetARB
-enum class clamp_color_target_arb : ::libc_types::u32
+enum class clamp_color_target_arb : u32
 {
 #ifdef GL_CLAMP_FRAGMENT_COLOR_ARB
     clamp_fragment_color_arb = GL_CLAMP_FRAGMENT_COLOR_ARB,

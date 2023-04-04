@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // ColorBuffer
-enum class color_buffer : ::libc_types::u32
+enum class color_buffer : u32
 {
 #ifdef GL_BACK
     back = GL_BACK,

@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // GetMinmaxParameterPNameEXT
-enum class get_minmax_parameter_prop_ext : ::libc_types::u32
+enum class get_minmax_parameter_prop_ext : u32
 {
 #ifdef GL_MINMAX_FORMAT
     minmax_format = GL_MINMAX_FORMAT,

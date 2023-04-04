@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // IndexPointerType
-enum class index_pointer_type : ::libc_types::u32
+enum class index_pointer_type : u32
 {
 #ifdef GL_DOUBLE
     double_ = GL_DOUBLE,

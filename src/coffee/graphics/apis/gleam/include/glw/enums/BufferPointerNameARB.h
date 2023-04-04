@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // BufferPointerNameARB
-enum class buffer_pointer_name_arb : ::libc_types::u32
+enum class buffer_pointer_name_arb : u32
 {
 #ifdef GL_BUFFER_MAP_POINTER
     buffer_map_pointer = GL_BUFFER_MAP_POINTER,

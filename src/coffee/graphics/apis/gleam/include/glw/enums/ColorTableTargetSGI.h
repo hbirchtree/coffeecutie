@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // ColorTableTargetSGI
-enum class color_table_target_sgi : ::libc_types::u32
+enum class color_table_target_sgi : u32
 {
 #ifdef GL_COLOR_TABLE
     color_table = GL_COLOR_TABLE,

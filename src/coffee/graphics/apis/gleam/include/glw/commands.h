@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <peripherals/concepts/span.h>
 #include <peripherals/concepts/vector.h>
+#include <peripherals/libc/types.h>
 #include <string_view>
 #include <tuple>
 #include <vector>
@@ -14,7 +15,7 @@
 #define GLW_FPTR_CHECK(functionName) \
     if constexpr(!gl::is_linked)     \
         if(!gl##functionName)        \
-            Throw(undefined_behavior("undefined function" #functionName));
+            Throw(undefined_behavior("undefined function " #functionName));
 
 namespace gl {
 
@@ -51,40 +52,30 @@ inline void assert_equal(T1 const& v1, T2 const& v2)
 
 } // namespace detail
 
-static_assert(
-    std::is_same_v<GLubyte, ::libc_types::u8>, "GLubyte does not match u8");
+static_assert(std::is_same_v<GLubyte, u8>, "GLubyte does not match u8");
 using ::libc_types::u8;
-static_assert(
-    std::is_same_v<GLbyte, ::libc_types::i8>, "GLbyte does not match i8");
+static_assert(std::is_same_v<GLbyte, i8>, "GLbyte does not match i8");
 using ::libc_types::i8;
-static_assert(
-    std::is_same_v<GLushort, ::libc_types::u16>, "GLushort does not match u16");
+static_assert(std::is_same_v<GLushort, u16>, "GLushort does not match u16");
 using ::libc_types::u16;
-static_assert(
-    std::is_same_v<GLshort, ::libc_types::i16>, "GLshort does not match i16");
+static_assert(std::is_same_v<GLshort, i16>, "GLshort does not match i16");
 using ::libc_types::i16;
-static_assert(
-    std::is_same_v<GLuint, ::libc_types::u32>, "GLuint does not match u32");
+static_assert(std::is_same_v<GLuint, u32>, "GLuint does not match u32");
 using ::libc_types::u32;
-static_assert(
-    std::is_same_v<GLint, ::libc_types::i32>, "GLint does not match i32");
+static_assert(std::is_same_v<GLint, i32>, "GLint does not match i32");
 using ::libc_types::i32;
 #if defined(GL_VERSION_4_1) || defined(GL_ES_VERSION_3_2)
-static_assert(
-    std::is_same_v<GLuint64, ::libc_types::u64>, "GLuint64 does not match u64");
+static_assert(std::is_same_v<GLuint64, u64>, "GLuint64 does not match u64");
 using ::libc_types::u64;
 #endif
 #if defined(GL_VERSION_4_1) || defined(GL_ES_VERSION_3_2)
-static_assert(
-    std::is_same_v<GLint64, ::libc_types::i64>, "GLint64 does not match i64");
+static_assert(std::is_same_v<GLint64, i64>, "GLint64 does not match i64");
 using ::libc_types::i64;
 #endif
-static_assert(
-    std::is_same_v<GLfloat, ::libc_types::f32>, "GLfloat does not match f32");
+static_assert(std::is_same_v<GLfloat, f32>, "GLfloat does not match f32");
 using ::libc_types::f32;
 #if defined(GL_VERSION_4_1)
-static_assert(
-    std::is_same_v<GLdouble, ::libc_types::f64>, "GLdouble does not match f64");
+static_assert(std::is_same_v<GLdouble, f64>, "GLdouble does not match f64");
 using ::libc_types::f64;
 #endif
 

@@ -60,7 +60,7 @@ STATICINLINE void* map_buffer(
  * \param target GLenum
  * \return Boolean
  */
-STATICINLINE GLboolean unmap_buffer(group::buffer_target_arb target)
+STATICINLINE bool unmap_buffer(group::buffer_target_arb target)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -69,7 +69,7 @@ STATICINLINE GLboolean unmap_buffer(group::buffer_target_arb target)
     }
     auto out = glUnmapBufferOES(static_cast<GLenum>(target));
     detail::error_check("UnmapBufferOES"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 } // namespace gl::oes::mapbuffer

@@ -92,7 +92,7 @@ ApplicationWindow {
         if(isEmscripten)
             processes.emscriptenAuto();
         else
-            processes.source = "/tmp/Blam Graphics/profile.json";
+            processes.filesystemAuto();
     }
 
     DropArea {
@@ -162,25 +162,6 @@ ApplicationWindow {
         function onStartingParse(ss) {
             busy.open();
             console.log("Starting parse");
-        }
-    }
-
-    Timer {
-        id: viewUpdate
-        interval: 200
-        running: true
-        repeat: true
-        onTriggered: {
-            var oldStart = processes.viewStart;
-            var oldEnd = processes.viewEnd;
-            processes.viewStart = timeView.contentX * timePerPixel;
-            processes.viewEnd = (timeView.contentX + timeView.width) * timePerPixel;
-            processes.timePerPixel = timePerPixel;
-
-            if(oldStart != processes.viewStart || oldEnd != processes.viewEnd)
-            {
-                processes.viewUpdated();
-            }
         }
     }
 
@@ -280,16 +261,18 @@ ApplicationWindow {
         anchors.fill: parent
         anchors.bottomMargin: drawer.opened ? drawer.height : 0
         contentWidth: processes.totalDuration * Math.pow(10, timelineScale + 2) * (Screen.pixelDensity / 4) + threadWidth + spacing * 4
-        contentHeight: headerHeight
+        contentHeight: headerHeight + timelineColumn.height
         boundsBehavior: Flickable.StopAtBounds
 
         ScrollBar.horizontal: ScrollBar {
             policy: ScrollBar.AlwaysOn
         }
         ScrollBar.vertical: ScrollBar {
+            policy: ScrollBar.AlwaysOn
         }
 
-        Column {
+        ColumnLayout {
+            id: timelineColumn
             anchors.left: parent.left
             anchors.top: parent.top
             anchors.topMargin: headerHeight
@@ -314,13 +297,6 @@ ApplicationWindow {
                             function onZoomOut() {
                                 updateTimescale(0.1);
                             }
-                        }
-
-                        Component.onCompleted: {
-                            timeView.contentHeight = timeView.contentHeight +
-                                    computedHeight +
-                                    root.spacing
-                            updateTimescale(1);
                         }
 
                         width: computedWidth
@@ -365,12 +341,7 @@ ApplicationWindow {
                         drawer.focusItem = item;
                         drawer.event = model;
                     }
-
-                    Component.onCompleted: {
-                        timeView.contentHeight = timeView.contentHeight +
-                                height +
-                                root.spacing;
-                    }
+                    Component.onCompleted: console.log('metric', x, y, height)
                 }
             }
         }

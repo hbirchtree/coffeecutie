@@ -6,27 +6,17 @@
 #    Blam Core Image
 #    DropinRenderer GLeamRHI
 #    )
-include ( AssetPreprocessor )
 
-#coffee_process_assets(
-#    TARGET BlamGraphics.Assets
-#    INPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/graphics_data"
-#    OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/assets"
-#    SHADER_VERSIONS
-#        "es/300"
-#        "es/320"
-#        "core/410"
-#        "core/430"
-#        "core/460"
-#        "spv"
-#    )
-#add_dependencies ( BlamGraphics.Assets ShaderCooker )
 add_custom_target( BlamGraphics.Assets
     COMMAND
         ${CMAKE_SOURCE_DIR}/toolchain/desktop/resource_compile.py
-            -p ${CMAKE_CURRENT_SOURCE_DIR}/graphics_data
-            -o ${CMAKE_CURRENT_BINARY_DIR}/assets
-            -P ShaderCooker=${HOST_TOOLS_BINARY_DIR}/ShaderCooker
+            --path ${CMAKE_CURRENT_SOURCE_DIR}/graphics_data
+            --output ${CMAKE_CURRENT_BINARY_DIR}/assets
+            --cache ${CMAKE_CURRENT_BINARY_DIR}/asset_cache
+            --program ShaderCooker=${HOST_TOOLS_BINARY_DIR}/ShaderCooker
+            --program Inkscape=inkscape
+            --program TextureCompressor=${HOST_TOOLS_BINARY_DIR}/TextureCompressor
+            --target ${CMAKE_SYSTEM_NAME}
     )
 
 coffee_application (
@@ -50,6 +40,9 @@ add_dependencies ( BlamGraphics BlamGraphics.Assets )
 target_precompile_headers ( BlamGraphics PRIVATE
     $<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/caching.h>
     $<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/components.h>
+    )
+set_target_properties ( BlamGraphics PROPERTIES
+    EMSCRIPTEN_THREADPOOL_SIZE 2
     )
 
 if(TARGET ASIO)

@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // PathElementType
-enum class path_element_type : ::libc_types::u32
+enum class path_element_type : u32
 {
 #ifdef GL_UTF16_NV
     utf16_nv = GL_UTF16_NV,

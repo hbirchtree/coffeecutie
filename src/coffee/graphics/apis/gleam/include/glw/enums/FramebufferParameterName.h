@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // FramebufferParameterName
-enum class framebuffer_parameter_name : ::libc_types::u32
+enum class framebuffer_parameter_name : u32
 {
 #ifdef GL_FRAMEBUFFER_DEFAULT_FIXED_SAMPLE_LOCATIONS
     framebuffer_default_fixed_sample_locations =

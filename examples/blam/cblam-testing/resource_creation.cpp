@@ -43,6 +43,8 @@ void create_resources(compo::EntityContainer& e)
 
     gfx::api&      api       = e.subsystem_cast<gfx::system>();
     BlamResources& resources = e.register_subsystem_inplace<BlamResources>();
+    e.register_subsystem_inplace<PostProcessParameters>();
+    e.register_subsystem_inplace<RenderingParameters>();
 
     auto access = RSCA::ReadWrite | RSCA::Persistent | RSCA::Immutable;
 
@@ -215,8 +217,7 @@ static void create_shader_program(
     std::string_view                 vertex_entrypoint,
     std::string_view                 fragment_entrypoint,
     std::shared_ptr<gfx::program_t>& result,
-    std::string_view                 label,
-    gfx::shader_format_t             format = gfx::shader_format_t::source)
+    std::string_view                 label)
 {
     result = api.alloc_program();
     result->add(
@@ -247,40 +248,35 @@ static void create_spv_shaders(gfx::api& api, BlamResources& resources)
         "debug_lines_main"sv,
         "debug_lines_main"sv,
         resources.debug_lines_pipeline,
-        "debug_lines",
-        gfx::shader_format_t::spv);
+        "debug_lines");
     create_shader_program(
         api,
-        "scenery.spv"_rsc,
+        "scenery_uber.spv"_rsc,
         "scenery_main"sv,
-        "scenery_main"sv,
+        "scenery_uber_main"sv,
         resources.model_pipeline,
-        "scenery",
-        gfx::shader_format_t::spv);
+        "scenery");
     create_shader_program(
         api,
         "map_uber.spv"_rsc,
         "map_main"sv,
         "map_uber_main"sv,
         resources.bsp_pipeline,
-        "bsp",
-        gfx::shader_format_t::spv);
+        "bsp");
     create_shader_program(
         api,
         "map_uber.spv"_rsc,
         "map_main"sv,
         "map_uber_main"sv,
         resources.senv_micro_pipeline,
-        "bsp_senv_micro",
-        gfx::shader_format_t::spv);
+        "bsp_senv_micro");
     create_shader_program(
         api,
         "map_uber.spv"_rsc,
         "map_main"sv,
         "wireframe_main"sv,
         resources.wireframe_pipeline,
-        "map_wireframe",
-        gfx::shader_format_t::spv);
+        "map_wireframe");
 }
 
 struct shader_pair_t
@@ -337,7 +333,7 @@ static void create_shaders(gfx::api& api, std::array<shader_pair_t, N>&& shaders
         if(auto res = pipeline->compile(); res.has_error())
         {
             auto [msg] = res.error();
-            cFatal("Failed to compile bsp shader: {0}", msg);
+            cFatal("Failed to compile shader: {0}", msg);
         }
         shader.shader = pipeline;
     }
@@ -356,7 +352,7 @@ static void create_uber_shaders(gfx::api& api, BlamResources& resources)
         },
         {
             .vertex_file   = "scenery.{0}.vert"sv,
-            .fragment_file = "scenery.{0}.frag"sv,
+            .fragment_file = "scenery_uber.{0}.frag"sv,
             .shader        = resources.model_pipeline,
         },
         {
@@ -419,149 +415,22 @@ void create_shaders(compo::EntityContainer& e)
 
     auto _ = gfx.debug().scope();
 
-    const bool     use_spv  = gfx.feature_info().program.spirv;
+    const bool     use_spv  = gfx.feature_info().program.spirv && false;
     constexpr bool use_uber = true;
 
-    if(use_spv && false)
+    if(use_spv)
     {
         create_spv_shaders(gfx, resources);
         return;
     }
 
-    if(use_uber && !compile_info::platform::is_emscripten)
+    if(use_uber && !lowspec_hardware)
     {
         create_uber_shaders(gfx, resources);
         return;
     }
 
     create_standard_shaders(gfx, resources);
-    return;
-
-    const bool use_410 = gfx.api_version() == std::make_tuple<u32>(4, 1);
-    const bool use_320 = gfx.api_version() == std::make_tuple<u32>(3, 2);
-
-    auto map_shader = use_320   ? "map.es320.vert"_rsc
-                      : use_410 ? "map.core410.vert"_rsc
-                                : "map.core460.vert"_rsc;
-    auto wireframe  = use_320   ? "white.es320.frag"_rsc
-                      : use_410 ? "wireframe.core410.frag"_rsc
-                                : "wireframe.core460.frag"_rsc;
-    auto map_senv   = use_320   ? "map_senv.es320.frag"_rsc
-                      : use_410 ? "map_senv.core410.frag"_rsc
-                                : "map_senv.core460.frag"_rsc;
-    auto white      = use_320   ? "white.es320.frag"_rsc
-                      : use_410 ? "scenery.core410.frag"_rsc
-                                : "scenery.core460.frag"_rsc;
-    auto scenery    = use_320   ? "scenery.es320.vert"_rsc
-                      : use_410 ? "scenery.core410.vert"_rsc
-                                : "scenery.core460.vert"_rsc;
-    auto map_basic  = use_320   ? "map.es320.frag"_rsc
-                      : use_410 ? "map.core410.frag"_rsc
-                                : "map.core460.frag"_rsc;
-    {
-        auto pipeline = gfx.alloc_program();
-        pipeline->add(
-            gfx::program_t::stage_t::Vertex,
-            gfx.alloc_shader(map_shader.data()));
-        pipeline->add(
-            gfx::program_t::stage_t::Fragment,
-            gfx.alloc_shader(map_basic.data())
-            //
-        );
-        if(auto res = pipeline->compile(); res.has_error())
-        {
-            auto [msg] = res.error();
-            cFatal("Failed to compile bsp shader: {0}", msg);
-        }
-        resources.bsp_pipeline = pipeline;
-    }
-    {
-        auto pipeline = gfx.alloc_program();
-        pipeline->add(
-            gfx::program_t::stage_t::Vertex, gfx.alloc_shader(scenery.data()));
-        pipeline->add(
-            gfx::program_t::stage_t::Fragment, gfx.alloc_shader(white.data()));
-        if(auto res = pipeline->compile(); res.has_error())
-        {
-            auto [msg] = res.error();
-            cFatal("Failed to compile scenery shader: {0}", msg);
-        }
-        resources.model_pipeline = pipeline;
-    }
-    {
-        auto pipeline = gfx.alloc_program();
-        pipeline->add(
-            gfx::program_t::stage_t::Vertex,
-            gfx.alloc_shader(map_shader.data()));
-        pipeline->add(
-            gfx::program_t::stage_t::Fragment,
-            gfx.alloc_shader(wireframe.data())
-            //
-        );
-        if(auto res = pipeline->compile(); res.has_error())
-        {
-            auto [msg] = res.error();
-            cFatal("Failed to compile bsp shader: {0}", msg);
-        }
-        resources.wireframe_pipeline = pipeline;
-    }
-    {
-        auto pipeline = gfx.alloc_program();
-        pipeline->add(
-            gfx::program_t::stage_t::Vertex,
-            gfx.alloc_shader(map_shader.data()));
-        pipeline->add(
-            gfx::program_t::stage_t::Fragment,
-            gfx.alloc_shader(
-                map_senv.data(),
-                {{"MICRO_BLEND", "1"}, {"PRIMARY_BLEND", "1"}}));
-        if(auto res = pipeline->compile(); res.has_error())
-        {
-            auto [msg] = res.error();
-            cFatal("Failed to compile senv shader: {0}", msg);
-        }
-        resources.senv_micro_pipeline = pipeline;
-    }
-    {
-        auto pipeline = gfx.alloc_program();
-        pipeline->add(
-            gfx::program_t::stage_t::Vertex,
-            gfx.alloc_shader(map_shader.data()));
-        pipeline->add(
-            gfx::program_t::stage_t::Fragment,
-            //                    gfx.alloc_shader("white.frag"_rsc.data())
-            gfx.alloc_shader(wireframe.data())
-            //
-        );
-        if(auto res = pipeline->compile(); res.has_error())
-        {
-            auto [msg] = res.error();
-            cFatal("Failed to compile wireframe shader: {0}", msg);
-        }
-        resources.debug_lines_pipeline = pipeline;
-    }
-
-    auto debug_vert = use_320   ? "debug_lines.es320.vert"_rsc
-                      : use_410 ? "debug_lines.core410.vert"_rsc
-                                : "debug_lines.core460.vert"_rsc;
-    auto debug_frag = use_320   ? "debug_lines.es320.frag"_rsc
-                      : use_410 ? "debug_lines.core410.frag"_rsc
-                                : "debug_lines.core460.frag"_rsc;
-    {
-        auto pipeline = gfx.alloc_program();
-        pipeline->add(
-            gfx::program_t::stage_t::Vertex,
-            gfx.alloc_shader(debug_vert.data()));
-        pipeline->add(
-            gfx::program_t::stage_t::Fragment,
-            gfx.alloc_shader(debug_frag.data()));
-        if(auto res = pipeline->compile(); res.has_error())
-        {
-            auto [msg] = res.error();
-            cFatal("Failed to compile debug lines shader: {0}", msg);
-        }
-        resources.debug_lines_pipeline = pipeline;
-    }
 }
 
 void set_resource_labels(EntityContainer& e)

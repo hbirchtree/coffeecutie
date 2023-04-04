@@ -23,32 +23,43 @@ struct map_container
 
         file_header_t const* header
             = file_header_t::from_data(map, ver).value();
-        semantic::Bytes decompressed;
 
-        if(header->version == version_t::xbox)
+        if(header->version != version_t::xbox)
         {
-            using namespace libc_types::size_literals;
-            using zlib = ::zlib::codec;
-
-            auto compressed_segment = *map.at(
-                sizeof(file_header_t),
-                (map.size - sizeof(file_header_t) - header->trailing_space));
-
-            /* Time to decompress! */
-            decompressed.resize(sizeof(file_header_t));
-            header->copy_to(decompressed.as<file_header_t>()[0]);
-            decompressed.allocation.reserve(header->decomp_len);
-
-            auto decompress_chars = decompressed.as<char>();
-            auto err              = zlib::decompress(
-                compressed_segment.view,
-                decompress_chars,
-                zlib::options_t{.chunk_size = 10_MB});
-            if(err)
-                return map_load_error::decompression_error;
-
-            header = file_header_t::from_data(decompressed, ver).value();
+            if(!header)
+                return map_load_error::not_a_map;
+            auto const* tags_index = &tag_index_t<Ver>::from_header(header);
+            return map_container{
+                .map   = header,
+                .tags  = tags_index,
+                .magic = tags_index->get_magic(header, map.size),
+                .store = map,
+            };
         }
+
+        semantic::mem_chunk<char> decompressed;
+        using namespace libc_types::size_literals;
+        using zlib = ::zlib::codec;
+
+        auto compressed_segment = *map.at(
+            sizeof(file_header_t),
+            (map.size - sizeof(file_header_t) - header->trailing_space));
+
+        /* Time to decompress! */
+        decompressed
+            = semantic::mem_chunk<char>::withSize(sizeof(file_header_t));
+        header->copy_to(decompressed.as<file_header_t>()[0]);
+        auto map_data = std::move(decompressed.allocation);
+        map_data.reserve(header->decomp_len);
+
+        auto err = zlib::decompress(
+            compressed_segment.view,
+            map_data,
+            zlib::options_t{.chunk_size = 10_MB});
+        if(err)
+            return map_load_error::decompression_error;
+        decompressed = semantic::mem_chunk<char>::ofContainer(map_data);
+        header       = file_header_t::from_data(decompressed, ver).value();
 
         if(!header)
             return map_load_error::not_a_map;
@@ -56,10 +67,11 @@ struct map_container
         auto const* tags_index = &tag_index_t<Ver>::from_header(header);
 
         return map_container{
-            .map                = header,
-            .tags               = tags_index,
-            .magic              = tags_index->get_magic(header),
-            .decompressed_store = std::move(decompressed),
+            .map          = header,
+            .tags         = tags_index,
+            .magic        = tags_index->get_magic(header, map.size),
+            .store        = decompressed,
+            .decompressed = std::move(map_data),
         };
     }
 
@@ -67,7 +79,8 @@ struct map_container
     tag_index_t<Ver> const* tags{nullptr};
     magic_data_t            magic;
 
-    semantic::Bytes decompressed_store;
+    semantic::mem_chunk<const char> store;
+    std::vector<char>               decompressed;
 
     inline std::string_view name() const
     {
@@ -253,11 +266,11 @@ class tag_index_view
             else
                 size = size / 2 + 1;
             auto remaining = std::distance(it, end()) - 1;
-            size = std::min<i32>(size, remaining);
+            size           = std::min<i32>(size, remaining);
 
-            auto mid       = it + size;
-            auto mid_tag   = (*mid).tag_id;
-            auto odd_tag   = (*it).tag_id;
+            auto mid     = it + size;
+            auto mid_tag = (*mid).tag_id;
+            auto odd_tag = (*it).tag_id;
 
             if(mid_tag == tag_id)
                 return mid;

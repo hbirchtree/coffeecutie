@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // FoveationConfigBitQCOM
-enum class foveation_config_bit_qcom : ::libc_types::u32
+enum class foveation_config_bit_qcom : u32
 {
 #ifdef GL_FOVEATION_ENABLE_BIT_QCOM
     foveation_enable_bit_qcom = GL_FOVEATION_ENABLE_BIT_QCOM,

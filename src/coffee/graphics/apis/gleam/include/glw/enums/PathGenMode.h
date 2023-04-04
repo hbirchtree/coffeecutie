@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // PathGenMode
-enum class path_gen_mode : ::libc_types::u32
+enum class path_gen_mode : u32
 {
 #ifdef GL_CONSTANT
     constant = GL_CONSTANT,

@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // TextureWrapMode
-enum class texture_wrap_mode : ::libc_types::u32
+enum class texture_wrap_mode : u32
 {
 #ifdef GL_CLAMP
     clamp = GL_CLAMP,

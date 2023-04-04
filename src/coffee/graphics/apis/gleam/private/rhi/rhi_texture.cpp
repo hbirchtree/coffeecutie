@@ -85,6 +85,7 @@ static std::vector<char> software_decode_bcn(
     std::vector<char> out(out_size, 0);
     bcdec_transform_t transform = nullptr;
     auto              blk_size  = BCDEC_BC1_BLOCK_SIZE;
+
     switch(m_format.cmpflg)
     {
     case CompFlags::BC1:

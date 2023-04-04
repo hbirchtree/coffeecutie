@@ -81,14 +81,14 @@ std::optional<stream_codec::error_t> stream_codec::decompress(
 
 std::optional<codec::error_t> codec::compress(
     const semantic::Span<const libc_types::u8>& input,
-    semantic::mem_chunk<char>&                  output,
+    std::vector<char>&                  output,
     options_t&&                                 options)
 {
     output.resize(ZSTD_compressBound(input.size_bytes()));
 
     auto written = ZSTD_compress(
-        output.data,
-        output.size,
+        output.data(),
+        output.size(),
         input.data(),
         input.size_bytes(),
         options.level);
@@ -104,7 +104,7 @@ std::optional<codec::error_t> codec::compress(
 
 std::optional<codec::error_t> codec::decompress(
     const semantic::Span<const libc_types::u8>& input,
-    semantic::mem_chunk<char>&                  output,
+    std::vector<char>&                  output,
     options_t&&                                 options)
 {
     auto to_decompress
@@ -115,7 +115,7 @@ std::optional<codec::error_t> codec::decompress(
     output.resize(to_decompress);
 
     auto written = ZSTD_decompress(
-        output.data, output.size, input.data(), input.size_bytes());
+        output.data(), output.size(), input.data(), input.size_bytes());
 
     /* TODO: Find way of collecting error message */
     if(ZSTD_isError(written))

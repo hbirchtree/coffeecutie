@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // PathFontTarget
-enum class path_font_target : ::libc_types::u32
+enum class path_font_target : u32
 {
 #ifdef GL_FILE_NAME_NV
     file_name_nv = GL_FILE_NAME_NV,

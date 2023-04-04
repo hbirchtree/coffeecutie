@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // GetMapQuery
-enum class get_map_query : ::libc_types::u32
+enum class get_map_query : u32
 {
 #ifdef GL_COEFF
     coeff = GL_COEFF,

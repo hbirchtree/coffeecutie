@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // FogPointerTypeEXT
-enum class fog_pointer_type_ext : ::libc_types::u32
+enum class fog_pointer_type_ext : u32
 {
 #ifdef GL_DOUBLE
     double_ = GL_DOUBLE,

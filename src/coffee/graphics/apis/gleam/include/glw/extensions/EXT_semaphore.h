@@ -138,7 +138,7 @@ requires(semantic::concepts::Span<span_u8>&& std::is_same_v<
  * \param semaphore GLuint
  * \return Boolean
  */
-STATICINLINE GLboolean is_semaphore(u32 semaphore)
+STATICINLINE bool is_semaphore(u32 semaphore)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -147,7 +147,7 @@ STATICINLINE GLboolean is_semaphore(u32 semaphore)
     }
     auto out = glIsSemaphoreEXT(semaphore);
     detail::error_check("IsSemaphoreEXT"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 template<class span_const_u64>

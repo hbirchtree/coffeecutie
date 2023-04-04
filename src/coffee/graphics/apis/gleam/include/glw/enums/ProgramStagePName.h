@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // ProgramStagePName
-enum class program_stage_prop : ::libc_types::u32
+enum class program_stage_prop : u32
 {
 #ifdef GL_ACTIVE_SUBROUTINES
     active_subroutines = GL_ACTIVE_SUBROUTINES,

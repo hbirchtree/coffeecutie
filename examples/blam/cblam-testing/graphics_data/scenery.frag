@@ -21,9 +21,9 @@ layout(binding = 1, std140) buffer MaterialProperties
     Material instance[];
 } mats;
 
-layout(location = 10) uniform sampler2DArray bc1_tex;
-layout(location = 11) uniform sampler2DArray bc3_tex;
-layout(location = 12) uniform sampler2DArray bc5_tex;
+layout(location = 10, binding = 0) uniform sampler2DArray bc1_tex;
+layout(location = 11, binding = 1) uniform sampler2DArray bc3_tex;
+layout(location = 12, binding = 2) uniform sampler2DArray bc5_tex;
 
 layout(location = 0) out vec4 out_color;
 
@@ -47,6 +47,8 @@ void main()
 
 //    out_color.rgb *= 0.01;
 //    out_color.rgb += vec3(frag.tex.xy, float(layer) / 30.0);
+
+//    out_color = vec4(frag.tex, 0.0, 1.0);
 
     if(out_color.a < 0.5)
         discard;

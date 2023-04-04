@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // FragmentShaderGenericSourceATI
-enum class fragment_shader_generic_source_ati : ::libc_types::u32
+enum class fragment_shader_generic_source_ati : u32
 {
 #ifdef GL_CON_0_ATI
     con_0_ati = GL_CON_0_ATI,

@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // MapTextureFormatINTEL
-enum class map_texture_format_intel : ::libc_types::u32
+enum class map_texture_format_intel : u32
 {
 #ifdef GL_LAYOUT_DEFAULT_INTEL
     layout_default_intel = GL_LAYOUT_DEFAULT_INTEL,

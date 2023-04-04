@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // LightModelColorControl
-enum class light_model_color_control : ::libc_types::u32
+enum class light_model_color_control : u32
 {
 #ifdef GL_SEPARATE_SPECULAR_COLOR
     separate_specular_color = GL_SEPARATE_SPECULAR_COLOR,

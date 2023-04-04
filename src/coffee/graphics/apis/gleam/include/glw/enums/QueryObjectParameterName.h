@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // QueryObjectParameterName
-enum class query_object_parameter_name : ::libc_types::u32
+enum class query_object_parameter_name : u32
 {
 #ifdef GL_QUERY_RESULT
     query_result = GL_QUERY_RESULT,

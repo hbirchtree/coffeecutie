@@ -48,7 +48,7 @@ FORCEDINLINE void cBasicPrint(std::string_view fmt, Arg... args)
         Strings::fmt(fmt, std::forward<Arg>(args)...),
         Severity::Information,
         1,
-        print_context | print_newline);
+        print_newline);
 }
 
 template<typename... Arg>

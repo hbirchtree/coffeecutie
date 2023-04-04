@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // SeparableTargetEXT
-enum class separable_target_ext : ::libc_types::u32
+enum class separable_target_ext : u32
 {
 #ifdef GL_SEPARABLE_2D
     separable_2d = GL_SEPARABLE_2D,

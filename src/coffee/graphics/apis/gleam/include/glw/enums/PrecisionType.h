@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // PrecisionType
-enum class precision_type : ::libc_types::u32
+enum class precision_type : u32
 {
 #ifdef GL_HIGH_FLOAT
     high_float = GL_HIGH_FLOAT,

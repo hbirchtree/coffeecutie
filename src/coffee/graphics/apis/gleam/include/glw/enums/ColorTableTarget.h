@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // ColorTableTarget
-enum class color_table_target : ::libc_types::u32
+enum class color_table_target : u32
 {
 #ifdef GL_COLOR_TABLE
     color_table = GL_COLOR_TABLE,

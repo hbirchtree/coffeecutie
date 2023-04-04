@@ -127,7 +127,7 @@ requires(semantic::concepts::Span<span_GLuint64EXT>&& std::is_same_v<
  * \param target GLenum
  * \return Boolean
  */
-STATICINLINE GLboolean is_buffer_resident(GLenum target)
+STATICINLINE bool is_buffer_resident(GLenum target)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -136,7 +136,7 @@ STATICINLINE GLboolean is_buffer_resident(GLenum target)
     }
     auto out = glIsBufferResidentNV(target);
     detail::error_check("IsBufferResidentNV"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 /*!
@@ -144,7 +144,7 @@ STATICINLINE GLboolean is_buffer_resident(GLenum target)
  * \param buffer GLuint
  * \return Boolean
  */
-STATICINLINE GLboolean is_named_buffer_resident(u32 buffer)
+STATICINLINE bool is_named_buffer_resident(u32 buffer)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -158,7 +158,7 @@ STATICINLINE GLboolean is_named_buffer_resident(u32 buffer)
     }
     auto out = glIsNamedBufferResidentNV(buffer);
     detail::error_check("IsNamedBufferResidentNV"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 /*!

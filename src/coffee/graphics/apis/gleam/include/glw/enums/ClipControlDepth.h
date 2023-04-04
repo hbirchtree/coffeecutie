@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // ClipControlDepth
-enum class clip_control_depth : ::libc_types::u32
+enum class clip_control_depth : u32
 {
 #ifdef GL_NEGATIVE_ONE_TO_ONE
     negative_one_to_one = GL_NEGATIVE_ONE_TO_ONE,

@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // ShaderBinaryFormat
-enum class shader_binary_format : ::libc_types::u32
+enum class shader_binary_format : u32
 {
 #ifdef GL_GCCSO_SHADER_BINARY_FJ
     gccso_shader_binary_fj = GL_GCCSO_SHADER_BINARY_FJ,

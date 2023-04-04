@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // CombinerRegisterNV
-enum class combiner_register_nv : ::libc_types::u32
+enum class combiner_register_nv : u32
 {
 #ifdef GL_DISCARD_NV
     discard_nv = GL_DISCARD_NV,

@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // LightTexturePNameEXT
-enum class light_texture_prop_ext : ::libc_types::u32
+enum class light_texture_prop_ext : u32
 {
 #ifdef GL_ATTENUATION_EXT
     attenuation_ext = GL_ATTENUATION_EXT,

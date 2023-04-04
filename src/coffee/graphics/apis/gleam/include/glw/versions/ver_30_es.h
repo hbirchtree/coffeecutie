@@ -322,7 +322,7 @@ requires(MinimumVersion<Current, Version<3, 0>>)
      * \param timeout GLuint64
      * \return SyncStatus
      */
-    STATICINLINE GLenum
+    STATICINLINE group::sync_status
     client_wait_sync(GLsync sync, group::sync_object_mask flags, u64 timeout)
 {
     using namespace std::string_view_literals;
@@ -332,7 +332,7 @@ requires(MinimumVersion<Current, Version<3, 0>>)
     }
     auto out = glClientWaitSync(sync, static_cast<GLenum>(flags), timeout);
     detail::error_check("ClientWaitSync"sv);
-    return out;
+    return static_cast<group::sync_status>(out);
 }
 
 template<class size_3_i32, class span_const_void>
@@ -1424,8 +1424,7 @@ requires(MinimumVersion<Current, Version<3, 0>>)
      * \param index GLuint
      * \return String
      */
-    STATICINLINE stl_types::String
-    get_stringi(group::string_name name, u32 index)
+    STATICINLINE std::string get_stringi(group::string_name name, u32 index)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1731,7 +1730,7 @@ requires(MinimumVersion<Current, Version<3, 0>>)
      * \param id GLuint
      * \return Boolean
      */
-    STATICINLINE GLboolean is_query(u32 id)
+    STATICINLINE bool is_query(u32 id)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1740,7 +1739,7 @@ requires(MinimumVersion<Current, Version<3, 0>>)
     }
     auto out = glIsQuery(id);
     detail::error_check("IsQuery"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 template<typename Dummy = void>
@@ -1750,7 +1749,7 @@ requires(MinimumVersion<Current, Version<3, 0>>)
      * \param sampler GLuint
      * \return Boolean
      */
-    STATICINLINE GLboolean is_sampler(u32 sampler)
+    STATICINLINE bool is_sampler(u32 sampler)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1764,7 +1763,7 @@ requires(MinimumVersion<Current, Version<3, 0>>)
     }
     auto out = glIsSampler(sampler);
     detail::error_check("IsSampler"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 template<typename Dummy = void>
@@ -1774,7 +1773,7 @@ requires(MinimumVersion<Current, Version<3, 0>>)
      * \param sync GLsync
      * \return Boolean
      */
-    STATICINLINE GLboolean is_sync(GLsync sync)
+    STATICINLINE bool is_sync(GLsync sync)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1783,7 +1782,7 @@ requires(MinimumVersion<Current, Version<3, 0>>)
     }
     auto out = glIsSync(sync);
     detail::error_check("IsSync"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 template<typename Dummy = void>
@@ -1793,7 +1792,7 @@ requires(MinimumVersion<Current, Version<3, 0>>)
      * \param id GLuint
      * \return Boolean
      */
-    STATICINLINE GLboolean is_transform_feedback(u32 id)
+    STATICINLINE bool is_transform_feedback(u32 id)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1802,7 +1801,7 @@ requires(MinimumVersion<Current, Version<3, 0>>)
     }
     auto out = glIsTransformFeedback(id);
     detail::error_check("IsTransformFeedback"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 template<typename Dummy = void>
@@ -1812,7 +1811,7 @@ requires(MinimumVersion<Current, Version<3, 0>>)
      * \param array GLuint
      * \return Boolean
      */
-    STATICINLINE GLboolean is_vertex_array(u32 array)
+    STATICINLINE bool is_vertex_array(u32 array)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1826,7 +1825,7 @@ requires(MinimumVersion<Current, Version<3, 0>>)
     }
     auto out = glIsVertexArray(array);
     detail::error_check("IsVertexArray"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 template<typename Dummy = void>
@@ -2351,8 +2350,7 @@ requires(MinimumVersion<Current, Version<3, 0>>&&
      * \param value const GLuint *
      * \return void
      */
-    STATICINLINE
-    void uniform(i32 location, i32 count, span_const_u32 const& value)
+    STATICINLINE void uniform(i32 location, span_const_u32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2360,7 +2358,7 @@ requires(MinimumVersion<Current, Version<3, 0>>&&
         GLW_FPTR_CHECK(Uniform1uiv)
     }
     glUniform1uiv(
-        location, count, reinterpret_cast<const GLuint*>(value.data()));
+        location, value.size(), reinterpret_cast<const GLuint*>(value.data()));
     detail::error_check("Uniform1uiv"sv);
 }
 
@@ -2397,8 +2395,7 @@ requires(
      * \param value const GLuint *
      * \return void
      */
-    STATICINLINE
-    void uniform(i32 location, i32 count, span_const_vec_2_u32 const& value)
+    STATICINLINE void uniform(i32 location, span_const_vec_2_u32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2406,7 +2403,7 @@ requires(
         GLW_FPTR_CHECK(Uniform2uiv)
     }
     glUniform2uiv(
-        location, count, reinterpret_cast<const GLuint*>(value.data()));
+        location, value.size(), reinterpret_cast<const GLuint*>(value.data()));
     detail::error_check("Uniform2uiv"sv);
 }
 
@@ -2444,8 +2441,7 @@ requires(
      * \param value const GLuint *
      * \return void
      */
-    STATICINLINE
-    void uniform(i32 location, i32 count, span_const_vec_3_u32 const& value)
+    STATICINLINE void uniform(i32 location, span_const_vec_3_u32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2453,7 +2449,7 @@ requires(
         GLW_FPTR_CHECK(Uniform3uiv)
     }
     glUniform3uiv(
-        location, count, reinterpret_cast<const GLuint*>(value.data()));
+        location, value.size(), reinterpret_cast<const GLuint*>(value.data()));
     detail::error_check("Uniform3uiv"sv);
 }
 
@@ -2492,8 +2488,7 @@ requires(
      * \param value const GLuint *
      * \return void
      */
-    STATICINLINE
-    void uniform(i32 location, i32 count, span_const_vec_4_u32 const& value)
+    STATICINLINE void uniform(i32 location, span_const_vec_4_u32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2501,7 +2496,7 @@ requires(
         GLW_FPTR_CHECK(Uniform4uiv)
     }
     glUniform4uiv(
-        location, count, reinterpret_cast<const GLuint*>(value.data()));
+        location, value.size(), reinterpret_cast<const GLuint*>(value.data()));
     detail::error_check("Uniform4uiv"sv);
 }
 
@@ -2545,10 +2540,7 @@ requires(
      * \return void
      */
     STATICINLINE void uniform(
-        i32                           location,
-        i32                           count,
-        bool                          transpose,
-        span_const_mat_2x3_f32 const& value)
+        i32 location, bool transpose, span_const_mat_2x3_f32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2557,7 +2549,7 @@ requires(
     }
     glUniformMatrix2x3fv(
         location,
-        count,
+        value.size(),
         transpose,
         reinterpret_cast<const GLfloat*>(value.data()));
     detail::error_check("UniformMatrix2x3fv"sv);
@@ -2577,10 +2569,7 @@ requires(
      * \return void
      */
     STATICINLINE void uniform(
-        i32                           location,
-        i32                           count,
-        bool                          transpose,
-        span_const_mat_2x4_f32 const& value)
+        i32 location, bool transpose, span_const_mat_2x4_f32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2589,7 +2578,7 @@ requires(
     }
     glUniformMatrix2x4fv(
         location,
-        count,
+        value.size(),
         transpose,
         reinterpret_cast<const GLfloat*>(value.data()));
     detail::error_check("UniformMatrix2x4fv"sv);
@@ -2609,10 +2598,7 @@ requires(
      * \return void
      */
     STATICINLINE void uniform(
-        i32                           location,
-        i32                           count,
-        bool                          transpose,
-        span_const_mat_3x2_f32 const& value)
+        i32 location, bool transpose, span_const_mat_3x2_f32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2621,7 +2607,7 @@ requires(
     }
     glUniformMatrix3x2fv(
         location,
-        count,
+        value.size(),
         transpose,
         reinterpret_cast<const GLfloat*>(value.data()));
     detail::error_check("UniformMatrix3x2fv"sv);
@@ -2641,10 +2627,7 @@ requires(
      * \return void
      */
     STATICINLINE void uniform(
-        i32                           location,
-        i32                           count,
-        bool                          transpose,
-        span_const_mat_3x4_f32 const& value)
+        i32 location, bool transpose, span_const_mat_3x4_f32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2653,7 +2636,7 @@ requires(
     }
     glUniformMatrix3x4fv(
         location,
-        count,
+        value.size(),
         transpose,
         reinterpret_cast<const GLfloat*>(value.data()));
     detail::error_check("UniformMatrix3x4fv"sv);
@@ -2673,10 +2656,7 @@ requires(
      * \return void
      */
     STATICINLINE void uniform(
-        i32                           location,
-        i32                           count,
-        bool                          transpose,
-        span_const_mat_4x2_f32 const& value)
+        i32 location, bool transpose, span_const_mat_4x2_f32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2685,7 +2665,7 @@ requires(
     }
     glUniformMatrix4x2fv(
         location,
-        count,
+        value.size(),
         transpose,
         reinterpret_cast<const GLfloat*>(value.data()));
     detail::error_check("UniformMatrix4x2fv"sv);
@@ -2705,10 +2685,7 @@ requires(
      * \return void
      */
     STATICINLINE void uniform(
-        i32                           location,
-        i32                           count,
-        bool                          transpose,
-        span_const_mat_4x3_f32 const& value)
+        i32 location, bool transpose, span_const_mat_4x3_f32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2717,7 +2694,7 @@ requires(
     }
     glUniformMatrix4x3fv(
         location,
-        count,
+        value.size(),
         transpose,
         reinterpret_cast<const GLfloat*>(value.data()));
     detail::error_check("UniformMatrix4x3fv"sv);
@@ -2730,7 +2707,7 @@ requires(MinimumVersion<Current, Version<3, 0>>)
      * \param target GLenum
      * \return Boolean
      */
-    STATICINLINE GLboolean unmap_buffer(group::buffer_target_arb target)
+    STATICINLINE bool unmap_buffer(group::buffer_target_arb target)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2739,7 +2716,7 @@ requires(MinimumVersion<Current, Version<3, 0>>)
     }
     auto out = glUnmapBuffer(static_cast<GLenum>(target));
     detail::error_check("UnmapBuffer"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 template<typename Dummy = void>

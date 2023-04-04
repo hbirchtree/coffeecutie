@@ -52,6 +52,7 @@ def generate_header(includes, lines):
     includes.append('tuple')
     includes.append('string_view')
     includes.append('vector')
+    includes.append('peripherals/libc/types.h')
     includes.append('peripherals/concepts/span.h')
     includes.append('peripherals/concepts/vector.h')
 
@@ -107,7 +108,7 @@ inline void assert_equal(T1 const& v1, T2 const& v2)
         if gl_type in type_guards:
             guard = type_guards[gl_type]
             lines.append(f'#if {guard}')
-        lines.append(f'static_assert(std::is_same_v<{gl_type}, ::libc_types::{m_type}>, "{gl_type} does not match {m_type}");')
+        lines.append(f'static_assert(std::is_same_v<{gl_type}, {m_type}>, "{gl_type} does not match {m_type}");')
         lines.append(f'using ::libc_types::{m_type};')
         if gl_type in type_guards:
             lines.append('#endif')
@@ -311,11 +312,12 @@ def static_array_transform(params: list, i: int, static_size: str, output: list,
     name, type, meta = params[i]
     const, pod_type = extract_type(type)
 
-    count_element = [ x for x in output if x[0] == meta[1] ]
+    count_element = [ x for x in output if meta[1] is not None and meta[1].startswith(x[0]) ]
+    print(f'// {meta[1]}')
     if len(count_element) == 1:
         count_element = count_element[0]
         output.remove(count_element)
-        inputs[inputs.index(meta[1])] = f'{name}.size()'
+        inputs[inputs.index(count_element[0])] = f'{name}.size()'
 
     size = static_size.split('x')
 
@@ -567,6 +569,10 @@ def map_function_name(func_name: str):
     return func_name
 
 
+def is_object_type(value_type: str):
+    return value_type.startswith('GL') and value_type != 'GLenum'
+
+
 def generate_function(command, usages: dict, version: tuple = None, override_name: str = None):
     func_name, return_data, params = command
     return_type, return_group = return_data
@@ -575,8 +581,14 @@ def generate_function(command, usages: dict, version: tuple = None, override_nam
     if return_type is None:
         return_type = 'void'
     if return_group == 'String':
-        return_type = 'stl_types::String'
+        return_type = 'std::string'
         return_var = f'reinterpret_cast<const char*>({return_var})'
+    elif return_group == 'Boolean':
+        return_type = 'bool'
+        return_var = f'{return_var} == GL_TRUE ? true : false'
+    elif return_group is not None and not is_object_type(return_type):
+        return_type = f'group::{snakeify(return_group)}'
+        return_var = f'static_cast<{return_type}>({return_var})'
     return_type = return_type.strip()
 
     inputs = []
@@ -697,7 +709,7 @@ def generate_enum(enum: tuple, usages: dict, deprecated_symbols: set):
     snake_name = enum_create_name(name)
     yield f'''
 // {name}
-enum class {snake_name} : ::libc_types::u32 {{'''
+enum class {snake_name} : u32 {{'''
 
     # Remove duplicates, they happen?
     unique_values = set()

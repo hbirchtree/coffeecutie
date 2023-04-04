@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // TextureGenParameter
-enum class texture_gen_parameter : ::libc_types::u32
+enum class texture_gen_parameter : u32
 {
 #ifdef GL_EYE_LINE_SGIS
     eye_line_sgis = GL_EYE_LINE_SGIS,

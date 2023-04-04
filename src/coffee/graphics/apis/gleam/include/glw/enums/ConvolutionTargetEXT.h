@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // ConvolutionTargetEXT
-enum class convolution_target_ext : ::libc_types::u32
+enum class convolution_target_ext : u32
 {
 #ifdef GL_CONVOLUTION_1D
     convolution_1d = GL_CONVOLUTION_1D,

@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // PathColorFormat
-enum class path_color_format : ::libc_types::u32
+enum class path_color_format : u32
 {
 #ifdef GL_ALPHA
     alpha = GL_ALPHA,

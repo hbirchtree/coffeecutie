@@ -2725,7 +2725,7 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
  * \param index GLuint
  * \return Boolean
  */
-STATICINLINE GLboolean is_enabled_indexed(group::enable_cap target, u32 index)
+STATICINLINE bool is_enabled_indexed(group::enable_cap target, u32 index)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2734,7 +2734,7 @@ STATICINLINE GLboolean is_enabled_indexed(group::enable_cap target, u32 index)
     }
     auto out = glIsEnabledIndexedEXT(static_cast<GLenum>(target), index);
     detail::error_check("IsEnabledIndexedEXT"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 template<class span_const_void>
@@ -3650,7 +3650,7 @@ requires(semantic::concepts::Span<span_const_void>)
  * \param buffer GLuint
  * \return Boolean
  */
-STATICINLINE GLboolean unmap_named_buffer(u32 buffer)
+STATICINLINE bool unmap_named_buffer(u32 buffer)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -3664,7 +3664,7 @@ STATICINLINE GLboolean unmap_named_buffer(u32 buffer)
     }
     auto out = glUnmapNamedBufferEXT(buffer);
     detail::error_check("UnmapNamedBufferEXT"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 /*!
@@ -3818,7 +3818,7 @@ requires(semantic::concepts::Span<span_const_vec_2_f32>&& semantic::concepts::
      * \return void
      */
     STATICINLINE void program_uniform(
-        u32 program, i32 location, i32 count, span_const_vec_2_f32 const& value)
+        u32 program, i32 location, span_const_vec_2_f32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -3833,7 +3833,7 @@ requires(semantic::concepts::Span<span_const_vec_2_f32>&& semantic::concepts::
     glProgramUniform2fvEXT(
         program,
         location,
-        count,
+        value.size(),
         reinterpret_cast<const GLfloat*>(value.data()));
     detail::error_check("ProgramUniform2fvEXT"sv);
 }
@@ -3877,7 +3877,7 @@ requires(semantic::concepts::Span<span_const_vec_2_i32>&& semantic::concepts::
      * \return void
      */
     STATICINLINE void program_uniform(
-        u32 program, i32 location, i32 count, span_const_vec_2_i32 const& value)
+        u32 program, i32 location, span_const_vec_2_i32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -3890,7 +3890,10 @@ requires(semantic::concepts::Span<span_const_vec_2_i32>&& semantic::concepts::
 #endif
     }
     glProgramUniform2ivEXT(
-        program, location, count, reinterpret_cast<const GLint*>(value.data()));
+        program,
+        location,
+        value.size(),
+        reinterpret_cast<const GLint*>(value.data()));
     detail::error_check("ProgramUniform2ivEXT"sv);
 }
 
@@ -3934,7 +3937,7 @@ requires(semantic::concepts::Span<span_const_vec_3_f32>&& semantic::concepts::
      * \return void
      */
     STATICINLINE void program_uniform(
-        u32 program, i32 location, i32 count, span_const_vec_3_f32 const& value)
+        u32 program, i32 location, span_const_vec_3_f32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -3949,7 +3952,7 @@ requires(semantic::concepts::Span<span_const_vec_3_f32>&& semantic::concepts::
     glProgramUniform3fvEXT(
         program,
         location,
-        count,
+        value.size(),
         reinterpret_cast<const GLfloat*>(value.data()));
     detail::error_check("ProgramUniform3fvEXT"sv);
 }
@@ -3994,7 +3997,7 @@ requires(semantic::concepts::Span<span_const_vec_3_i32>&& semantic::concepts::
      * \return void
      */
     STATICINLINE void program_uniform(
-        u32 program, i32 location, i32 count, span_const_vec_3_i32 const& value)
+        u32 program, i32 location, span_const_vec_3_i32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -4007,7 +4010,10 @@ requires(semantic::concepts::Span<span_const_vec_3_i32>&& semantic::concepts::
 #endif
     }
     glProgramUniform3ivEXT(
-        program, location, count, reinterpret_cast<const GLint*>(value.data()));
+        program,
+        location,
+        value.size(),
+        reinterpret_cast<const GLint*>(value.data()));
     detail::error_check("ProgramUniform3ivEXT"sv);
 }
 
@@ -4052,7 +4058,7 @@ requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
      * \return void
      */
     STATICINLINE void program_uniform(
-        u32 program, i32 location, i32 count, span_const_vec_4_f32 const& value)
+        u32 program, i32 location, span_const_vec_4_f32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -4067,7 +4073,7 @@ requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
     glProgramUniform4fvEXT(
         program,
         location,
-        count,
+        value.size(),
         reinterpret_cast<const GLfloat*>(value.data()));
     detail::error_check("ProgramUniform4fvEXT"sv);
 }
@@ -4113,7 +4119,7 @@ requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
      * \return void
      */
     STATICINLINE void program_uniform(
-        u32 program, i32 location, i32 count, span_const_vec_4_i32 const& value)
+        u32 program, i32 location, span_const_vec_4_i32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -4126,7 +4132,10 @@ requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
 #endif
     }
     glProgramUniform4ivEXT(
-        program, location, count, reinterpret_cast<const GLint*>(value.data()));
+        program,
+        location,
+        value.size(),
+        reinterpret_cast<const GLint*>(value.data()));
     detail::error_check("ProgramUniform4ivEXT"sv);
 }
 
@@ -4145,7 +4154,6 @@ requires(semantic::concepts::Span<span_const_mat_2x2_f32>&& semantic::concepts::
     STATICINLINE void program_uniform(
         u32                           program,
         i32                           location,
-        i32                           count,
         bool                          transpose,
         span_const_mat_2x2_f32 const& value)
 {
@@ -4162,7 +4170,7 @@ requires(semantic::concepts::Span<span_const_mat_2x2_f32>&& semantic::concepts::
     glProgramUniformMatrix2fvEXT(
         program,
         location,
-        count,
+        value.size(),
         transpose,
         reinterpret_cast<const GLfloat*>(value.data()));
     detail::error_check("ProgramUniformMatrix2fvEXT"sv);
@@ -4183,7 +4191,6 @@ requires(semantic::concepts::Span<span_const_mat_3x3_f32>&& semantic::concepts::
     STATICINLINE void program_uniform(
         u32                           program,
         i32                           location,
-        i32                           count,
         bool                          transpose,
         span_const_mat_3x3_f32 const& value)
 {
@@ -4200,7 +4207,7 @@ requires(semantic::concepts::Span<span_const_mat_3x3_f32>&& semantic::concepts::
     glProgramUniformMatrix3fvEXT(
         program,
         location,
-        count,
+        value.size(),
         transpose,
         reinterpret_cast<const GLfloat*>(value.data()));
     detail::error_check("ProgramUniformMatrix3fvEXT"sv);
@@ -4221,7 +4228,6 @@ requires(semantic::concepts::Span<span_const_mat_4x4_f32>&& semantic::concepts::
     STATICINLINE void program_uniform(
         u32                           program,
         i32                           location,
-        i32                           count,
         bool                          transpose,
         span_const_mat_4x4_f32 const& value)
 {
@@ -4238,7 +4244,7 @@ requires(semantic::concepts::Span<span_const_mat_4x4_f32>&& semantic::concepts::
     glProgramUniformMatrix4fvEXT(
         program,
         location,
-        count,
+        value.size(),
         transpose,
         reinterpret_cast<const GLfloat*>(value.data()));
     detail::error_check("ProgramUniformMatrix4fvEXT"sv);
@@ -4259,7 +4265,6 @@ requires(semantic::concepts::Span<span_const_mat_2x3_f32>&& semantic::concepts::
     STATICINLINE void program_uniform(
         u32                           program,
         i32                           location,
-        i32                           count,
         bool                          transpose,
         span_const_mat_2x3_f32 const& value)
 {
@@ -4276,7 +4281,7 @@ requires(semantic::concepts::Span<span_const_mat_2x3_f32>&& semantic::concepts::
     glProgramUniformMatrix2x3fvEXT(
         program,
         location,
-        count,
+        value.size(),
         transpose,
         reinterpret_cast<const GLfloat*>(value.data()));
     detail::error_check("ProgramUniformMatrix2x3fvEXT"sv);
@@ -4297,7 +4302,6 @@ requires(semantic::concepts::Span<span_const_mat_2x4_f32>&& semantic::concepts::
     STATICINLINE void program_uniform(
         u32                           program,
         i32                           location,
-        i32                           count,
         bool                          transpose,
         span_const_mat_2x4_f32 const& value)
 {
@@ -4314,7 +4318,7 @@ requires(semantic::concepts::Span<span_const_mat_2x4_f32>&& semantic::concepts::
     glProgramUniformMatrix2x4fvEXT(
         program,
         location,
-        count,
+        value.size(),
         transpose,
         reinterpret_cast<const GLfloat*>(value.data()));
     detail::error_check("ProgramUniformMatrix2x4fvEXT"sv);
@@ -4335,7 +4339,6 @@ requires(semantic::concepts::Span<span_const_mat_3x2_f32>&& semantic::concepts::
     STATICINLINE void program_uniform(
         u32                           program,
         i32                           location,
-        i32                           count,
         bool                          transpose,
         span_const_mat_3x2_f32 const& value)
 {
@@ -4352,7 +4355,7 @@ requires(semantic::concepts::Span<span_const_mat_3x2_f32>&& semantic::concepts::
     glProgramUniformMatrix3x2fvEXT(
         program,
         location,
-        count,
+        value.size(),
         transpose,
         reinterpret_cast<const GLfloat*>(value.data()));
     detail::error_check("ProgramUniformMatrix3x2fvEXT"sv);
@@ -4373,7 +4376,6 @@ requires(semantic::concepts::Span<span_const_mat_3x4_f32>&& semantic::concepts::
     STATICINLINE void program_uniform(
         u32                           program,
         i32                           location,
-        i32                           count,
         bool                          transpose,
         span_const_mat_3x4_f32 const& value)
 {
@@ -4390,7 +4392,7 @@ requires(semantic::concepts::Span<span_const_mat_3x4_f32>&& semantic::concepts::
     glProgramUniformMatrix3x4fvEXT(
         program,
         location,
-        count,
+        value.size(),
         transpose,
         reinterpret_cast<const GLfloat*>(value.data()));
     detail::error_check("ProgramUniformMatrix3x4fvEXT"sv);
@@ -4411,7 +4413,6 @@ requires(semantic::concepts::Span<span_const_mat_4x2_f32>&& semantic::concepts::
     STATICINLINE void program_uniform(
         u32                           program,
         i32                           location,
-        i32                           count,
         bool                          transpose,
         span_const_mat_4x2_f32 const& value)
 {
@@ -4428,7 +4429,7 @@ requires(semantic::concepts::Span<span_const_mat_4x2_f32>&& semantic::concepts::
     glProgramUniformMatrix4x2fvEXT(
         program,
         location,
-        count,
+        value.size(),
         transpose,
         reinterpret_cast<const GLfloat*>(value.data()));
     detail::error_check("ProgramUniformMatrix4x2fvEXT"sv);
@@ -4449,7 +4450,6 @@ requires(semantic::concepts::Span<span_const_mat_4x3_f32>&& semantic::concepts::
     STATICINLINE void program_uniform(
         u32                           program,
         i32                           location,
-        i32                           count,
         bool                          transpose,
         span_const_mat_4x3_f32 const& value)
 {
@@ -4466,7 +4466,7 @@ requires(semantic::concepts::Span<span_const_mat_4x3_f32>&& semantic::concepts::
     glProgramUniformMatrix4x3fvEXT(
         program,
         location,
-        count,
+        value.size(),
         transpose,
         reinterpret_cast<const GLfloat*>(value.data()));
     detail::error_check("ProgramUniformMatrix4x3fvEXT"sv);
@@ -4908,7 +4908,7 @@ requires(semantic::concepts::Span<span_const_vec_2_u32>&& semantic::concepts::
      * \return void
      */
     STATICINLINE void program_uniform(
-        u32 program, i32 location, i32 count, span_const_vec_2_u32 const& value)
+        u32 program, i32 location, span_const_vec_2_u32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -4923,7 +4923,7 @@ requires(semantic::concepts::Span<span_const_vec_2_u32>&& semantic::concepts::
     glProgramUniform2uivEXT(
         program,
         location,
-        count,
+        value.size(),
         reinterpret_cast<const GLuint*>(value.data()));
     detail::error_check("ProgramUniform2uivEXT"sv);
 }
@@ -4968,7 +4968,7 @@ requires(semantic::concepts::Span<span_const_vec_3_u32>&& semantic::concepts::
      * \return void
      */
     STATICINLINE void program_uniform(
-        u32 program, i32 location, i32 count, span_const_vec_3_u32 const& value)
+        u32 program, i32 location, span_const_vec_3_u32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -4983,7 +4983,7 @@ requires(semantic::concepts::Span<span_const_vec_3_u32>&& semantic::concepts::
     glProgramUniform3uivEXT(
         program,
         location,
-        count,
+        value.size(),
         reinterpret_cast<const GLuint*>(value.data()));
     detail::error_check("ProgramUniform3uivEXT"sv);
 }
@@ -5029,7 +5029,7 @@ requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
      * \return void
      */
     STATICINLINE void program_uniform(
-        u32 program, i32 location, i32 count, span_const_vec_4_u32 const& value)
+        u32 program, i32 location, span_const_vec_4_u32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -5044,7 +5044,7 @@ requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
     glProgramUniform4uivEXT(
         program,
         location,
-        count,
+        value.size(),
         reinterpret_cast<const GLuint*>(value.data()));
     detail::error_check("ProgramUniform4uivEXT"sv);
 }
@@ -5065,7 +5065,6 @@ requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
         u32                         program,
         group::program_target       target,
         u32                         index,
-        i32                         count,
         span_const_vec_4_f32 const& params)
 {
     using namespace std::string_view_literals;
@@ -5082,7 +5081,7 @@ requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
         program,
         static_cast<GLenum>(target),
         index,
-        count,
+        params.size(),
         reinterpret_cast<const GLfloat*>(params.data()));
     detail::error_check("NamedProgramLocalParameters4fvEXT"sv);
 }
@@ -5319,7 +5318,6 @@ requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
         u32                         program,
         group::program_target       target,
         u32                         index,
-        i32                         count,
         span_const_vec_4_i32 const& params)
 {
     using namespace std::string_view_literals;
@@ -5336,7 +5334,7 @@ requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
         program,
         static_cast<GLenum>(target),
         index,
-        count,
+        params.size(),
         reinterpret_cast<const GLint*>(params.data()));
     detail::error_check("NamedProgramLocalParametersI4ivEXT"sv);
 }
@@ -5357,7 +5355,6 @@ requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
         u32                         program,
         group::program_target       target,
         u32                         index,
-        i32                         count,
         span_const_vec_4_u32 const& params)
 {
     using namespace std::string_view_literals;
@@ -5374,7 +5371,7 @@ requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
         program,
         static_cast<GLenum>(target),
         index,
-        count,
+        params.size(),
         reinterpret_cast<const GLuint*>(params.data()));
     detail::error_check("NamedProgramLocalParametersI4uivEXT"sv);
 }
@@ -5951,7 +5948,7 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>)
  * \param target GLenum
  * \return FramebufferStatus
  */
-STATICINLINE GLenum check_named_framebuffer_status(
+STATICINLINE group::framebuffer_status check_named_framebuffer_status(
     u32 framebuffer, group::framebuffer_target target)
 {
     using namespace std::string_view_literals;
@@ -5967,7 +5964,7 @@ STATICINLINE GLenum check_named_framebuffer_status(
     auto out = glCheckNamedFramebufferStatusEXT(
         framebuffer, static_cast<GLenum>(target));
     detail::error_check("CheckNamedFramebufferStatusEXT"sv);
-    return out;
+    return static_cast<group::framebuffer_status>(out);
 }
 
 template<class span_i32>
@@ -7469,7 +7466,7 @@ requires(semantic::concepts::Span<span_const_vec_2_f64>&& semantic::concepts::
      * \return void
      */
     STATICINLINE void program_uniform(
-        u32 program, i32 location, i32 count, span_const_vec_2_f64 const& value)
+        u32 program, i32 location, span_const_vec_2_f64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -7484,7 +7481,7 @@ requires(semantic::concepts::Span<span_const_vec_2_f64>&& semantic::concepts::
     glProgramUniform2dvEXT(
         program,
         location,
-        count,
+        value.size(),
         reinterpret_cast<const GLdouble*>(value.data()));
     detail::error_check("ProgramUniform2dvEXT"sv);
 }
@@ -7529,7 +7526,7 @@ requires(semantic::concepts::Span<span_const_vec_3_f64>&& semantic::concepts::
      * \return void
      */
     STATICINLINE void program_uniform(
-        u32 program, i32 location, i32 count, span_const_vec_3_f64 const& value)
+        u32 program, i32 location, span_const_vec_3_f64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -7544,7 +7541,7 @@ requires(semantic::concepts::Span<span_const_vec_3_f64>&& semantic::concepts::
     glProgramUniform3dvEXT(
         program,
         location,
-        count,
+        value.size(),
         reinterpret_cast<const GLdouble*>(value.data()));
     detail::error_check("ProgramUniform3dvEXT"sv);
 }
@@ -7590,7 +7587,7 @@ requires(semantic::concepts::Span<span_const_vec_4_f64>&& semantic::concepts::
      * \return void
      */
     STATICINLINE void program_uniform(
-        u32 program, i32 location, i32 count, span_const_vec_4_f64 const& value)
+        u32 program, i32 location, span_const_vec_4_f64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -7605,7 +7602,7 @@ requires(semantic::concepts::Span<span_const_vec_4_f64>&& semantic::concepts::
     glProgramUniform4dvEXT(
         program,
         location,
-        count,
+        value.size(),
         reinterpret_cast<const GLdouble*>(value.data()));
     detail::error_check("ProgramUniform4dvEXT"sv);
 }
@@ -7625,7 +7622,6 @@ requires(semantic::concepts::Span<span_const_mat_2x2_f64>&& semantic::concepts::
     STATICINLINE void program_uniform(
         u32                           program,
         i32                           location,
-        i32                           count,
         bool                          transpose,
         span_const_mat_2x2_f64 const& value)
 {
@@ -7642,7 +7638,7 @@ requires(semantic::concepts::Span<span_const_mat_2x2_f64>&& semantic::concepts::
     glProgramUniformMatrix2dvEXT(
         program,
         location,
-        count,
+        value.size(),
         transpose,
         reinterpret_cast<const GLdouble*>(value.data()));
     detail::error_check("ProgramUniformMatrix2dvEXT"sv);
@@ -7663,7 +7659,6 @@ requires(semantic::concepts::Span<span_const_mat_2x3_f64>&& semantic::concepts::
     STATICINLINE void program_uniform(
         u32                           program,
         i32                           location,
-        i32                           count,
         bool                          transpose,
         span_const_mat_2x3_f64 const& value)
 {
@@ -7680,7 +7675,7 @@ requires(semantic::concepts::Span<span_const_mat_2x3_f64>&& semantic::concepts::
     glProgramUniformMatrix2x3dvEXT(
         program,
         location,
-        count,
+        value.size(),
         transpose,
         reinterpret_cast<const GLdouble*>(value.data()));
     detail::error_check("ProgramUniformMatrix2x3dvEXT"sv);
@@ -7701,7 +7696,6 @@ requires(semantic::concepts::Span<span_const_mat_2x4_f64>&& semantic::concepts::
     STATICINLINE void program_uniform(
         u32                           program,
         i32                           location,
-        i32                           count,
         bool                          transpose,
         span_const_mat_2x4_f64 const& value)
 {
@@ -7718,7 +7712,7 @@ requires(semantic::concepts::Span<span_const_mat_2x4_f64>&& semantic::concepts::
     glProgramUniformMatrix2x4dvEXT(
         program,
         location,
-        count,
+        value.size(),
         transpose,
         reinterpret_cast<const GLdouble*>(value.data()));
     detail::error_check("ProgramUniformMatrix2x4dvEXT"sv);
@@ -7739,7 +7733,6 @@ requires(semantic::concepts::Span<span_const_mat_3x3_f64>&& semantic::concepts::
     STATICINLINE void program_uniform(
         u32                           program,
         i32                           location,
-        i32                           count,
         bool                          transpose,
         span_const_mat_3x3_f64 const& value)
 {
@@ -7756,7 +7749,7 @@ requires(semantic::concepts::Span<span_const_mat_3x3_f64>&& semantic::concepts::
     glProgramUniformMatrix3dvEXT(
         program,
         location,
-        count,
+        value.size(),
         transpose,
         reinterpret_cast<const GLdouble*>(value.data()));
     detail::error_check("ProgramUniformMatrix3dvEXT"sv);
@@ -7777,7 +7770,6 @@ requires(semantic::concepts::Span<span_const_mat_3x2_f64>&& semantic::concepts::
     STATICINLINE void program_uniform(
         u32                           program,
         i32                           location,
-        i32                           count,
         bool                          transpose,
         span_const_mat_3x2_f64 const& value)
 {
@@ -7794,7 +7786,7 @@ requires(semantic::concepts::Span<span_const_mat_3x2_f64>&& semantic::concepts::
     glProgramUniformMatrix3x2dvEXT(
         program,
         location,
-        count,
+        value.size(),
         transpose,
         reinterpret_cast<const GLdouble*>(value.data()));
     detail::error_check("ProgramUniformMatrix3x2dvEXT"sv);
@@ -7815,7 +7807,6 @@ requires(semantic::concepts::Span<span_const_mat_3x4_f64>&& semantic::concepts::
     STATICINLINE void program_uniform(
         u32                           program,
         i32                           location,
-        i32                           count,
         bool                          transpose,
         span_const_mat_3x4_f64 const& value)
 {
@@ -7832,7 +7823,7 @@ requires(semantic::concepts::Span<span_const_mat_3x4_f64>&& semantic::concepts::
     glProgramUniformMatrix3x4dvEXT(
         program,
         location,
-        count,
+        value.size(),
         transpose,
         reinterpret_cast<const GLdouble*>(value.data()));
     detail::error_check("ProgramUniformMatrix3x4dvEXT"sv);
@@ -7853,7 +7844,6 @@ requires(semantic::concepts::Span<span_const_mat_4x4_f64>&& semantic::concepts::
     STATICINLINE void program_uniform(
         u32                           program,
         i32                           location,
-        i32                           count,
         bool                          transpose,
         span_const_mat_4x4_f64 const& value)
 {
@@ -7870,7 +7860,7 @@ requires(semantic::concepts::Span<span_const_mat_4x4_f64>&& semantic::concepts::
     glProgramUniformMatrix4dvEXT(
         program,
         location,
-        count,
+        value.size(),
         transpose,
         reinterpret_cast<const GLdouble*>(value.data()));
     detail::error_check("ProgramUniformMatrix4dvEXT"sv);
@@ -7891,7 +7881,6 @@ requires(semantic::concepts::Span<span_const_mat_4x2_f64>&& semantic::concepts::
     STATICINLINE void program_uniform(
         u32                           program,
         i32                           location,
-        i32                           count,
         bool                          transpose,
         span_const_mat_4x2_f64 const& value)
 {
@@ -7908,7 +7897,7 @@ requires(semantic::concepts::Span<span_const_mat_4x2_f64>&& semantic::concepts::
     glProgramUniformMatrix4x2dvEXT(
         program,
         location,
-        count,
+        value.size(),
         transpose,
         reinterpret_cast<const GLdouble*>(value.data()));
     detail::error_check("ProgramUniformMatrix4x2dvEXT"sv);
@@ -7929,7 +7918,6 @@ requires(semantic::concepts::Span<span_const_mat_4x3_f64>&& semantic::concepts::
     STATICINLINE void program_uniform(
         u32                           program,
         i32                           location,
-        i32                           count,
         bool                          transpose,
         span_const_mat_4x3_f64 const& value)
 {
@@ -7946,7 +7934,7 @@ requires(semantic::concepts::Span<span_const_mat_4x3_f64>&& semantic::concepts::
     glProgramUniformMatrix4x3dvEXT(
         program,
         location,
-        count,
+        value.size(),
         transpose,
         reinterpret_cast<const GLdouble*>(value.data()));
     detail::error_check("ProgramUniformMatrix4x3dvEXT"sv);

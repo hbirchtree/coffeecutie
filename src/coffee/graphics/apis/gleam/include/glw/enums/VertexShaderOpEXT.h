@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // VertexShaderOpEXT
-enum class vertex_shader_op_ext : ::libc_types::u32
+enum class vertex_shader_op_ext : u32
 {
 #ifdef GL_OP_ADD_EXT
     op_add_ext = GL_OP_ADD_EXT,

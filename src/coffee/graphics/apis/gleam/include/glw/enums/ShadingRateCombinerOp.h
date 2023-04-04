@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // ShadingRateCombinerOp
-enum class shading_rate_combiner_op : ::libc_types::u32
+enum class shading_rate_combiner_op : u32
 {
 #ifdef GL_FRAGMENT_SHADING_RATE_COMBINER_OP_KEEP_EXT
     fragment_shading_rate_combiner_op_keep_ext =

@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // PolygonMode
-enum class polygon_mode : ::libc_types::u32
+enum class polygon_mode : u32
 {
 #ifdef GL_FILL
     fill = GL_FILL,

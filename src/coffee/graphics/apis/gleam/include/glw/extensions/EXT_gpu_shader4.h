@@ -139,8 +139,7 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
      * \param value const GLuint *
      * \return void
      */
-    STATICINLINE
-    void uniform(i32 location, i32 count, span_const_u32 const& value)
+    STATICINLINE void uniform(i32 location, span_const_u32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -148,7 +147,7 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
         GLW_FPTR_CHECK(Uniform1uivEXT)
     }
     glUniform1uivEXT(
-        location, count, reinterpret_cast<const GLuint*>(value.data()));
+        location, value.size(), reinterpret_cast<const GLuint*>(value.data()));
     detail::error_check("Uniform1uivEXT"sv);
 }
 
@@ -182,8 +181,7 @@ requires(semantic::concepts::Span<span_const_vec_2_u32>&& semantic::concepts::
      * \param value const GLuint *
      * \return void
      */
-    STATICINLINE
-    void uniform(i32 location, i32 count, span_const_vec_2_u32 const& value)
+    STATICINLINE void uniform(i32 location, span_const_vec_2_u32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -191,7 +189,7 @@ requires(semantic::concepts::Span<span_const_vec_2_u32>&& semantic::concepts::
         GLW_FPTR_CHECK(Uniform2uivEXT)
     }
     glUniform2uivEXT(
-        location, count, reinterpret_cast<const GLuint*>(value.data()));
+        location, value.size(), reinterpret_cast<const GLuint*>(value.data()));
     detail::error_check("Uniform2uivEXT"sv);
 }
 
@@ -226,8 +224,7 @@ requires(semantic::concepts::Span<span_const_vec_3_u32>&& semantic::concepts::
      * \param value const GLuint *
      * \return void
      */
-    STATICINLINE
-    void uniform(i32 location, i32 count, span_const_vec_3_u32 const& value)
+    STATICINLINE void uniform(i32 location, span_const_vec_3_u32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -235,7 +232,7 @@ requires(semantic::concepts::Span<span_const_vec_3_u32>&& semantic::concepts::
         GLW_FPTR_CHECK(Uniform3uivEXT)
     }
     glUniform3uivEXT(
-        location, count, reinterpret_cast<const GLuint*>(value.data()));
+        location, value.size(), reinterpret_cast<const GLuint*>(value.data()));
     detail::error_check("Uniform3uivEXT"sv);
 }
 
@@ -271,8 +268,7 @@ requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
      * \param value const GLuint *
      * \return void
      */
-    STATICINLINE
-    void uniform(i32 location, i32 count, span_const_vec_4_u32 const& value)
+    STATICINLINE void uniform(i32 location, span_const_vec_4_u32 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -280,7 +276,7 @@ requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
         GLW_FPTR_CHECK(Uniform4uivEXT)
     }
     glUniform4uivEXT(
-        location, count, reinterpret_cast<const GLuint*>(value.data()));
+        location, value.size(), reinterpret_cast<const GLuint*>(value.data()));
     detail::error_check("Uniform4uivEXT"sv);
 }
 

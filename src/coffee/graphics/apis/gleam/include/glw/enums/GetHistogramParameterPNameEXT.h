@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // GetHistogramParameterPNameEXT
-enum class get_histogram_parameter_prop_ext : ::libc_types::u32
+enum class get_histogram_parameter_prop_ext : u32
 {
 #ifdef GL_HISTOGRAM_ALPHA_SIZE
     histogram_alpha_size = GL_HISTOGRAM_ALPHA_SIZE,

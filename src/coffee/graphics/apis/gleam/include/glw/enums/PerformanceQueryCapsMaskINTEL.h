@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // PerformanceQueryCapsMaskINTEL
-enum class performance_query_caps_mask_intel : ::libc_types::u32
+enum class performance_query_caps_mask_intel : u32
 {
 #ifdef GL_PERFQUERY_GLOBAL_CONTEXT_INTEL
     perfquery_global_context_intel = GL_PERFQUERY_GLOBAL_CONTEXT_INTEL,

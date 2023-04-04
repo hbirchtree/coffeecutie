@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // CombinerComponentUsageNV
-enum class combiner_component_usage_nv : ::libc_types::u32
+enum class combiner_component_usage_nv : u32
 {
 #ifdef GL_ALPHA
     alpha = GL_ALPHA,

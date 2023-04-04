@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // RenderbufferTarget
-enum class renderbuffer_target : ::libc_types::u32
+enum class renderbuffer_target : u32
 {
 #ifdef GL_RENDERBUFFER
     renderbuffer = GL_RENDERBUFFER,

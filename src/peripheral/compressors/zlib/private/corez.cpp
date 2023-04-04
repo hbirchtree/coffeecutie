@@ -51,6 +51,7 @@ std::optional<codec::error_t> compression_routine(
     z_stream strm = {};
 
     std::vector<unsigned char> chunk;
+    chunk.resize(chunk_size);
 
     strm.avail_out = chunk.size();
     strm.next_out  = chunk.data();

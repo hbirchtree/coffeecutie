@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // HintMode
-enum class hint_mode : ::libc_types::u32
+enum class hint_mode : u32
 {
 #ifdef GL_DONT_CARE
     dont_care = GL_DONT_CARE,

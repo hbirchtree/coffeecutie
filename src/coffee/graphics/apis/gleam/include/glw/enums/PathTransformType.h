@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // PathTransformType
-enum class path_transform_type : ::libc_types::u32
+enum class path_transform_type : u32
 {
 #ifdef GL_AFFINE_2D_NV
     affine_2d_nv = GL_AFFINE_2D_NV,

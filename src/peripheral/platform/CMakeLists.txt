@@ -56,6 +56,13 @@ if((CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR
         )
 endif()
 
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    # For enabling full C++20 support, such as <ranges>
+    target_compile_options( PeripheralPlatform PUBLIC
+        -fexperimental-library
+        )
+endif()
+
 #
 #
 # Android, there's a lot of weird stuff here because NativeActivity sucks

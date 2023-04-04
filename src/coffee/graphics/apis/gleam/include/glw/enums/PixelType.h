@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // PixelType
-enum class pixel_type : ::libc_types::u32
+enum class pixel_type : u32
 {
 #ifdef GL_BITMAP
     bitmap = GL_BITMAP,

@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // VertexAttribEnum
-enum class vertex_attrib_enum : ::libc_types::u32
+enum class vertex_attrib_enum : u32
 {
 #ifdef GL_CURRENT_VERTEX_ATTRIB
     current_vertex_attrib = GL_CURRENT_VERTEX_ATTRIB,

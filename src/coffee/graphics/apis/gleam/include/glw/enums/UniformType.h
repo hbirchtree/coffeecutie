@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // UniformType
-enum class uniform_type : ::libc_types::u32
+enum class uniform_type : u32
 {
 #ifdef GL_BOOL
     bool_ = GL_BOOL,

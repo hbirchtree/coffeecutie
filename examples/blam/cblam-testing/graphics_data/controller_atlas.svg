@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="1024"
+   height="1024"
+   viewBox="0 0 1024 1024"
+   version="1.1"
+   id="svg5"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs2">
+    <linearGradient
+       id="linearGradient3935">
+      <stop
+         style="stop-color:#8d5bff;stop-opacity:1;"
+         offset="0"
+         id="stop3931" />
+      <stop
+         style="stop-color:#290578;stop-opacity:1"
+         offset="0.5"
+         id="stop3937" />
+      <stop
+         style="stop-color:#4800eb;stop-opacity:1"
+         offset="1"
+         id="stop3933" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient2080-6">
+      <stop
+         style="stop-color:#8d5bff;stop-opacity:1;"
+         offset="0"
+         id="stop2076" />
+      <stop
+         style="stop-color:#4800eb;stop-opacity:1"
+         offset="1"
+         id="stop2078" />
+    </linearGradient>
+    <linearGradient
+       xlink:href="#linearGradient2080-6"
+       id="linearGradient2534"
+       x1="759.73486"
+       y1="12.205991"
+       x2="803.43188"
+       y2="196.4678"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       xlink:href="#linearGradient3935"
+       id="linearGradient3323"
+       x1="-414.04919"
+       y1="469.84198"
+       x2="-180.52858"
+       y2="57.748119"
+       gradientUnits="userSpaceOnUse" />
+  </defs>
+  <g
+     id="layer1">
+    <ellipse
+       style="fill:none;stroke:url(#linearGradient3323);stroke-width:22.5902;stroke-linecap:round;stroke-linejoin:round;fill-opacity:1"
+       id="path846"
+       ry="244.70491"
+       rx="244.7049"
+       cy="276"
+       cx="-276"
+       transform="scale(-1,1)" />
+    <ellipse
+       style="fill:url(#linearGradient2534);fill-opacity:1;stroke:none;stroke-width:31.2494;stroke-linecap:round;stroke-linejoin:round"
+       id="path950"
+       cx="680"
+       cy="148"
+       rx="112.37531"
+       ry="112.3753" />
+  </g>
+</svg>

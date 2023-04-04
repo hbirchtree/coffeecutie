@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // VertexWeightPointerTypeEXT
-enum class vertex_weight_pointer_type_ext : ::libc_types::u32
+enum class vertex_weight_pointer_type_ext : u32
 {
 #ifdef GL_FLOAT
     float_ = GL_FLOAT,

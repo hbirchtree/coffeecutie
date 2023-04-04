@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // SubroutineParameterName
-enum class subroutine_parameter_name : ::libc_types::u32
+enum class subroutine_parameter_name : u32
 {
 #ifdef GL_COMPATIBLE_SUBROUTINES
     compatible_subroutines = GL_COMPATIBLE_SUBROUTINES,

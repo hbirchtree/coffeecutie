@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // TextureEnvParameter
-enum class texture_env_parameter : ::libc_types::u32
+enum class texture_env_parameter : u32
 {
 #ifdef GL_ADD_SIGNED
     add_signed = GL_ADD_SIGNED,

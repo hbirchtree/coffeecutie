@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // ReadBufferMode
-enum class read_buffer_mode : ::libc_types::u32
+enum class read_buffer_mode : u32
 {
 #ifdef GL_AUX0
     aux0 = GL_AUX0,

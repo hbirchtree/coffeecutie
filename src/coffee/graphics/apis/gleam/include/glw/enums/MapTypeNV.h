@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // MapTypeNV
-enum class map_type_nv : ::libc_types::u32
+enum class map_type_nv : u32
 {
 #ifdef GL_DOUBLE
     double_ = GL_DOUBLE,

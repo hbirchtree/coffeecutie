@@ -6,8 +6,8 @@
 
 namespace compo {
 
-using type_safety::type_list_t;
 using type_safety::empty_list_t;
+using type_safety::type_list_t;
 using type_safety::type_list::type_in_list_v;
 
 struct ContainerProxy : stl_types::non_copy
@@ -133,6 +133,22 @@ struct ConstrainedProxy : ContainerProxy
         FORCEDINLINE typename SubsystemType::type& subsystem()
     {
         return m_container.subsystem_cast<SubsystemType>();
+    }
+
+    template<is_tag_type SubsystemType>
+    requires type_in_list_v<SubsystemType, SubsystemList>
+        //
+        FORCEDINLINE void subsystem(SubsystemType*& target)
+    {
+        target = &m_container.subsystem_cast<SubsystemType>();
+    }
+
+    template<is_tag_type SubsystemType>
+    requires type_in_list_v<SubsystemType, SubsystemList>
+        //
+        FORCEDINLINE void subsystem(SubsystemType const*& target)
+    {
+        target = &m_container.subsystem_cast<SubsystemType>();
     }
 
     template<is_tag_type Service>

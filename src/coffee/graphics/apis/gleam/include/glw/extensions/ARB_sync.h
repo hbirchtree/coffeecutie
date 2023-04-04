@@ -26,8 +26,8 @@ constexpr libc_types::u32 signaled   = 0x9119;
  * \param timeout GLuint64
  * \return SyncStatus
  */
-STATICINLINE GLenum
-client_wait_sync(GLsync sync, group::sync_object_mask flags, u64 timeout)
+STATICINLINE group::sync_status client_wait_sync(
+    GLsync sync, group::sync_object_mask flags, u64 timeout)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -36,7 +36,7 @@ client_wait_sync(GLsync sync, group::sync_object_mask flags, u64 timeout)
     }
     auto out = glClientWaitSync(sync, static_cast<GLenum>(flags), timeout);
     detail::error_check("ClientWaitSync"sv);
-    return out;
+    return static_cast<group::sync_status>(out);
 }
 
 /*!
@@ -136,7 +136,7 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
  * \param sync GLsync
  * \return Boolean
  */
-STATICINLINE GLboolean is_sync(GLsync sync)
+STATICINLINE bool is_sync(GLsync sync)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -145,7 +145,7 @@ STATICINLINE GLboolean is_sync(GLsync sync)
     }
     auto out = glIsSync(sync);
     detail::error_check("IsSync"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 /*!

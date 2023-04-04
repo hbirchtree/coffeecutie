@@ -72,6 +72,17 @@
 
 namespace gl {
 
+using libc_types::f32;
+using libc_types::f64;
+using libc_types::i16;
+using libc_types::i32;
+using libc_types::i64;
+using libc_types::i8;
+using libc_types::u16;
+using libc_types::u32;
+using libc_types::u64;
+using libc_types::u8;
+
 constexpr bool is_linked =
 #if defined(GLEAM_USE_LINKED)
     true

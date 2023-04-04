@@ -150,7 +150,7 @@ enum class tag_class_t : u32
     part = 0x70617274, // trap 1885434484 Particle
     pctl = 0x7063746c, // ltcp 1885566060 Particle system
     phys = 0x70687973, // syhp 1885895027 Physics
-    pphy = 0x70706879, // yhpp 1886414969 Particle physics
+    pphy = 0x70706879, // yhpp 1886414969 Point physics
     proj = 0x70726f6a, // jorp 1886547818 Projectile
     rain = 0x7261696e, // niar 1918986606 Rain effect
     sbsp = 0x73627370, // psbs 1935831920 Structured BSP

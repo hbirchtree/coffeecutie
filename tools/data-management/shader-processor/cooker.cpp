@@ -125,6 +125,10 @@ libc_types::i32 cooker_main()
          "Output file when using single files and -M",
          cxxopts::value<std::string>())
         //
+        ("D,define",
+         "Add preprocessor defines before compiling",
+         cxxopts::value<std::string>())
+        //
         ("f,force", "Overwrite output files if already existing")
         //
         ("B,spirv", "Generate SPIR-V binary from input files")
@@ -164,6 +168,22 @@ libc_types::i32 cooker_main()
     for(auto const& file : res.unmatched())
         inputs.push_back(std::make_pair(from_stage_string({}, file), file));
 
+    std::map<std::string, std::string> defines;
+    for(auto const& arg : res)
+    {
+        using namespace std::string_view_literals;
+        if(arg.key() != "define")
+            continue;
+        std::string define = arg.value();
+        if(auto separator = define.find('='); separator != std::string::npos)
+        {
+            std::string name  = define.substr(0, separator);
+            std::string value = define.substr(separator + 1);
+            defines.insert(std::make_pair(name, value));
+        } else
+            defines.insert(std::make_pair(define, "1"));
+    }
+
     std::vector<shader_proc::spv_blob> blobs;
     for(auto const& [stage, file] : inputs)
     {
@@ -182,11 +202,12 @@ libc_types::i32 cooker_main()
             .path    = file,
             .version = version,
             .profile = profile,
+            .defines = defines,
         });
 
         if(spv.has_error())
         {
-            cFatal("Error message: {0}", std::get<1>(spv.error()));
+            cBasicPrint("{0}: {1}", file, std::get<1>(spv.error()));
             return 1;
         }
         blobs.push_back(std::move(spv.value()));
@@ -227,8 +248,7 @@ libc_types::i32 cooker_main()
 
             if(optimized.has_error())
             {
-                cFatal(
-                    "Failed to optimize SPIR-V binary: {0}", optimized.error());
+                cBasicPrint("{0}: {1}", inputs[i].second, optimized.error());
                 return 1;
             } else if(create_module)
             {
@@ -244,7 +264,8 @@ libc_types::i32 cooker_main()
             Coffee::Resource out_spv(out_file);
             if(Coffee::FileExists(out_spv) && res.count("force") == 0)
             {
-                cFatal("File {0} exists, but -f is not specified", out_file);
+                cBasicPrint(
+                    "File {0} exists, but -f is not specified", out_file);
                 return 1;
             }
             out_spv = semantic::BytesConst::ofContainer(optimized.value());
@@ -261,7 +282,7 @@ libc_types::i32 cooker_main()
         auto lib = shader_proc::spirv::link(std::move(linkables));
         if(lib.has_error())
         {
-            cFatal("Failed to link SPIR-V library: {0}", lib.error());
+            cBasicPrint("{0}", lib.error());
             return 1;
         }
         if(auto opt = shader_proc::opt::perform_optimization(
@@ -276,7 +297,7 @@ libc_types::i32 cooker_main()
                });
            opt.has_error())
         {
-            cFatal("Failed post-link optimization: {0}", opt.error());
+            cBasicPrint("{0}", opt.error());
             return 1;
         } else
             lib = opt.value();
@@ -284,7 +305,7 @@ libc_types::i32 cooker_main()
 
         if(Coffee::FileExists(out_spv) && !res.count("force"))
         {
-            cFatal(
+            cBasicPrint(
                 "File {0} exists, but -f is not specified",
                 res["output"].as<std::string>());
             return 1;
@@ -320,7 +341,11 @@ libc_types::i32 cooker_main()
             if(glsl.has_error())
             {
                 auto [error, src] = glsl.error();
-                cFatal("Error in generating GLSL: {0}\n{1}", error, src);
+                cBasicPrint(
+                    "{0}:0: {1}\n^~~ After emitting:\n{2}",
+                    outputs[i],
+                    error,
+                    src);
                 return 1;
             } else
             {
@@ -330,7 +355,7 @@ libc_types::i32 cooker_main()
                     = res.count("force") ? RSCA::Discard : RSCA::None;
                 if(Coffee::FileExists(output) && overwrite_flag == RSCA::None)
                 {
-                    cFatal(
+                    cBasicPrint(
                         "File {0} exists, but -f is not specified", outputs[i]);
                     return 1;
                 }

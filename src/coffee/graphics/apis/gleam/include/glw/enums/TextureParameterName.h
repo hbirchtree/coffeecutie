@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // TextureParameterName
-enum class texture_parameter_name : ::libc_types::u32
+enum class texture_parameter_name : u32
 {
 #ifdef GL_DEPTH_STENCIL_TEXTURE_MODE
     depth_stencil_texture_mode = GL_DEPTH_STENCIL_TEXTURE_MODE,

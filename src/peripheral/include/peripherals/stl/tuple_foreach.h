@@ -5,18 +5,17 @@
 namespace stl_types::tuple {
 namespace detail {
 
-template<std::size_t I, typename T, typename... U>
-requires(sizeof...(U) == 0)
+template<std::size_t I, typename... T>
+requires(sizeof...(T) == I)
     //
-    inline void tuple_for_each(std::tuple<T, U...>& src, auto&& predicate)
+    inline void tuple_for_each(std::tuple<T...>&, auto&&)
 {
-    predicate(std::get<I>(src));
 }
 
-template<std::size_t I, typename T, typename... U>
-requires(sizeof...(U) > 0)
+template<std::size_t I, typename... T>
+requires(sizeof...(T) > I)
     //
-    inline void tuple_for_each(std::tuple<T, U...>& src, auto&& predicate)
+    inline void tuple_for_each(std::tuple<T...>& src, auto&& predicate)
 {
     predicate(std::get<I>(src));
     tuple_for_each<I + 1>(src, std::move(predicate));

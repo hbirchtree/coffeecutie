@@ -1,11 +1,14 @@
 #pragma once
 
+#include "rhi_debug.h"
 #include "rhi_features.h"
 #include "rhi_translate.h"
 #include "rhi_versioning.h"
 
 #include <glw/extensions/ARB_invalidate_subdata.h>
 #include <glw/extensions/OES_mapbuffer.h>
+
+#include <ranges>
 
 namespace gleam {
 
@@ -128,9 +131,26 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
         if(m_workarounds.buffer.emulated_mapbuffer)
         {
             /* Populate the client-side storage with the same data, for sync */
-            auto bytes = semantic::mem_chunk<const char>::ofContainer(data).view;
+            auto bytes
+                = semantic::mem_chunk<const char>::ofContainer(data).view;
             m_allocation.resize(bytes.size());
             std::copy(bytes.begin(), bytes.end(), m_allocation.begin());
+        }
+    }
+
+    template<typename Span>
+    requires semantic::concepts::Span<Span>
+    inline void update(size_t offset, Span const& data)
+    {
+#if GLEAM_MAX_VERSION >= 0x450
+        if(m_features.dsa)
+        {
+            cmd::named_buffer_sub_data(m_handle, offset, data);
+        } else
+#endif
+        {
+            cmd::bind_buffer(convert::to(m_type), m_handle);
+            cmd::buffer_sub_data(convert::to(m_type), offset, data);
         }
     }
 
@@ -331,7 +351,7 @@ struct buffer_slice_t
     template<typename T>
     inline Span<T> buffer_cast()
     {
-        auto slice  = buffer();
+        auto slice = buffer();
         return mem_chunk<T>::ofContainer(slice).view;
     }
     inline auto unmap()
@@ -365,5 +385,127 @@ inline buffer_slice_t buffer_t::slice(size_t offset, std::optional<size_t> size)
         .m_size   = size.value_or(this->size()),
     };
 }
+
+struct circular_buffer_t
+{
+    enum class sync_status
+    {
+        fail,
+        ok,
+    };
+
+    circular_buffer_t(
+        debug::api&                 debug,
+        std::shared_ptr<buffer_t>&& buffer,
+        u64                         timeout = 5000) :
+        m_debug(debug),
+        m_buffer(std::move(buffer)), m_buffer_size(m_buffer->size()),
+        m_timeout(timeout)
+    {
+    }
+    circular_buffer_t(circular_buffer_t&&) = default;
+
+    struct fence_options
+    {
+        fence_options(size_t start, size_t end) : start(start), ptr(end)
+        {
+        }
+        fence_options(fence_options&& other) :
+            start(other.start), ptr(other.ptr), used(other.used)
+        {
+            other.used = true;
+        }
+        ~fence_options()
+        {
+            if(!used)
+                Throw(undefined_behavior("fence was not set"));
+        }
+
+        size_t start{0};
+        size_t ptr;
+        bool   used{false};
+    };
+
+    template<typename Span>
+    requires semantic::concepts::Span<Span>
+    //
+    [[nodiscard]] sync_status move_fences(Span const& data)
+    {
+        // TODO: Check for available writable space according to fences
+        auto required_end = m_current_write + data.size();
+        // ...
+        auto remaining_space = m_buffer_size - m_current_write;
+        if(remaining_space >= data.size())
+            // There's enough space at the end of the buffer to write
+            return sync_status::ok;
+        // There's not enough space at the end,
+        // so we'll write it at the start of the buffer
+        // We'll start by finding a large enough region and checking its fence
+        auto fence_it
+            = std::ranges::find_if(m_fences, [&data](auto const& fence) {
+                  return fence.first >= data.size();
+              });
+        if(fence_it == m_fences.end())
+            return sync_status::fail;
+        GLsync             target_fence = fence_it->second;
+        group::sync_status status;
+        u64                timeout = 0;
+        while(true)
+        {
+            status = cmd::client_wait_sync(
+                target_fence,
+                group::sync_object_mask::sync_flush_commands_bit,
+                timeout);
+            switch(status)
+            {
+            case group::sync_status::already_signaled:
+            case group::sync_status::condition_satisfied:
+                m_current_write = 0;
+                return sync_status::ok;
+            case group::sync_status::wait_failed:
+                return sync_status::fail;
+            case group::sync_status::timeout_expired:
+                timeout = m_timeout;
+                break;
+            }
+            m_debug.message("circular buffer waiting on reset, consider "
+                            "increasing buffer size");
+        }
+    }
+
+    template<typename Span>
+    requires semantic::concepts::Span<Span>
+    //
+    [[nodiscard]] fence_options push(sync_status /*status*/, Span const& data)
+    {
+        m_buffer->update(m_current_write, data);
+        auto written_size = data.size() * sizeof(typename Span::value_type);
+        m_current_write += written_size;
+        return fence_options(m_current_write - written_size, m_current_write);
+    }
+
+    void add_fence(fence_options&& ptr)
+    {
+        m_fences.push_back(std::make_pair(
+            ptr.ptr,
+            cmd::fence_sync(
+                group::sync_condition::sync_gpu_commands_complete,
+                group::sync_behavior_flags::none)));
+        ptr.used = true;
+    }
+
+    buffer_t& buffer()
+    {
+        return *m_buffer;
+    }
+
+  private:
+    debug::api&                            m_debug;
+    std::shared_ptr<buffer_t>              m_buffer;
+    size_t                                 m_current_write{0};
+    size_t                                 m_buffer_size{0};
+    std::vector<std::pair<size_t, GLsync>> m_fences;
+    u64                                    m_timeout{0};
+};
 
 } // namespace gleam

@@ -59,7 +59,7 @@ enum class flags_t : u16
     v16u16     = 0x20,
 
     unknown_1 = 0x80,
-    unknown_2 = 0x100,
+    shared    = 0x100,
 };
 
 C_FLAGS(flags_t, u16);
@@ -189,6 +189,10 @@ struct image_t
     inline bool compressed() const
     {
         return enum_helpers::feval(flags & flags_t::compressed);
+    }
+    inline bool shared() const
+    {
+        return enum_helpers::feval(flags & flags_t::shared);
     }
 
     inline stl_types::Tup<BitFmt, PixCmp> to_fmt() const

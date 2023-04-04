@@ -25,8 +25,8 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
      * \param residences GLboolean *
      * \return Boolean
      */
-    STATICINLINE GLboolean
-    are_textures_resident(span_const_u32 const& textures, span_bool residences)
+    STATICINLINE bool are_textures_resident(
+        span_const_u32 const& textures, span_bool residences)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -40,7 +40,7 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
         residences.size() ? reinterpret_cast<GLboolean*>(residences.data())
                           : nullptr);
     detail::error_check("AreTexturesResidentEXT"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 /*!
@@ -117,7 +117,7 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
  * \param texture GLuint
  * \return Boolean
  */
-STATICINLINE GLboolean is_texture(u32 texture)
+STATICINLINE bool is_texture(u32 texture)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -131,7 +131,7 @@ STATICINLINE GLboolean is_texture(u32 texture)
     }
     auto out = glIsTextureEXT(texture);
     detail::error_check("IsTextureEXT"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 template<class span_const_GLclampf, class span_const_u32>

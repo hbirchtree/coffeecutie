@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // OcclusionQueryEventMaskAMD
-enum class occlusion_query_event_mask_amd : ::libc_types::u32
+enum class occlusion_query_event_mask_amd : u32
 {
 #ifdef GL_QUERY_ALL_EVENT_BITS_AMD
     query_all_event_bits_amd = GL_QUERY_ALL_EVENT_BITS_AMD,

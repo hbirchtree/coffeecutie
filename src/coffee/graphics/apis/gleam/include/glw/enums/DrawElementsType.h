@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // DrawElementsType
-enum class draw_elements_type : ::libc_types::u32
+enum class draw_elements_type : u32
 {
 #ifdef GL_UNSIGNED_BYTE
     unsigned_byte = GL_UNSIGNED_BYTE,

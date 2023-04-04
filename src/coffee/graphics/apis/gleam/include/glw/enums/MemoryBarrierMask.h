@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // MemoryBarrierMask
-enum class memory_barrier_mask : ::libc_types::u32
+enum class memory_barrier_mask : u32
 {
 #ifdef GL_ALL_BARRIER_BITS
     all_barrier_bits = GL_ALL_BARRIER_BITS,

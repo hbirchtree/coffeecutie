@@ -556,7 +556,7 @@ STATICINLINE void interpolate_paths(
  * \param path GLuint
  * \return Boolean
  */
-STATICINLINE GLboolean is_path(u32 path)
+STATICINLINE bool is_path(u32 path)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -565,7 +565,7 @@ STATICINLINE GLboolean is_path(u32 path)
     }
     auto out = glIsPathNV(path);
     detail::error_check("IsPathNV"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 template<class vec_2_f32>
@@ -578,8 +578,8 @@ requires(semantic::concepts::Vector<vec_2_f32, f32, 2>)
      * \param y GLfloat
      * \return Boolean
      */
-    STATICINLINE GLboolean
-    is_point_in_fill_path(u32 path, u32 mask, vec_2_f32 const& x)
+    STATICINLINE
+    bool is_point_in_fill_path(u32 path, u32 mask, vec_2_f32 const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -588,7 +588,7 @@ requires(semantic::concepts::Vector<vec_2_f32, f32, 2>)
     }
     auto out = glIsPointInFillPathNV(path, mask, x.x(), x.y());
     detail::error_check("IsPointInFillPathNV"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 template<class vec_2_f32>
@@ -600,7 +600,7 @@ requires(semantic::concepts::Vector<vec_2_f32, f32, 2>)
      * \param y GLfloat
      * \return Boolean
      */
-    STATICINLINE GLboolean is_point_in_stroke_path(u32 path, vec_2_f32 const& x)
+    STATICINLINE bool is_point_in_stroke_path(u32 path, vec_2_f32 const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -609,7 +609,7 @@ requires(semantic::concepts::Vector<vec_2_f32, f32, 2>)
     }
     auto out = glIsPointInStrokePathNV(path, x.x(), x.y());
     detail::error_check("IsPointInStrokePathNV"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 template<class span_const_u8, class span_const_void>
@@ -1060,7 +1060,7 @@ requires(semantic::concepts::Vector<vec_2_f32, f32, 2>)
      * \param tangentY GLfloat *
      * \return Boolean
      */
-    STATICINLINE GLboolean point_along_path(
+    STATICINLINE bool point_along_path(
         u32              path,
         i32              startSegment,
         i32              numSegments,
@@ -1084,7 +1084,7 @@ requires(semantic::concepts::Vector<vec_2_f32, f32, 2>)
         &tangentX,
         &tangentY);
     detail::error_check("PointAlongPathNV"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 template<class span_const_f32, class span_const_void>

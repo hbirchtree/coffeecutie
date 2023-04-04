@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // DepthFunction
-enum class depth_function : ::libc_types::u32
+enum class depth_function : u32
 {
 #ifdef GL_ALWAYS
     always = GL_ALWAYS,

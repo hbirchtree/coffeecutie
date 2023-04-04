@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // MinmaxTargetEXT
-enum class minmax_target_ext : ::libc_types::u32
+enum class minmax_target_ext : u32
 {
 #ifdef GL_MINMAX
     minmax = GL_MINMAX,

@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // PathCoordType
-enum class path_coord_type : ::libc_types::u32
+enum class path_coord_type : u32
 {
 #ifdef GL_ARC_TO_NV
     arc_to_nv = GL_ARC_TO_NV,

@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // GetTextureParameter
-enum class get_texture_parameter : ::libc_types::u32
+enum class get_texture_parameter : u32
 {
 #ifdef GL_DETAIL_TEXTURE_FUNC_POINTS_SGIS
     detail_texture_func_points_sgis = GL_DETAIL_TEXTURE_FUNC_POINTS_SGIS,

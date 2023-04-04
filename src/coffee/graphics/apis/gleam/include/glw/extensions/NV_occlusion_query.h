@@ -143,7 +143,7 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
  * \param id GLuint
  * \return Boolean
  */
-STATICINLINE GLboolean is_occlusion_query(u32 id)
+STATICINLINE bool is_occlusion_query(u32 id)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -152,7 +152,7 @@ STATICINLINE GLboolean is_occlusion_query(u32 id)
     }
     auto out = glIsOcclusionQueryNV(id);
     detail::error_check("IsOcclusionQueryNV"sv);
-    return out;
+    return out == GL_TRUE ? true : false;
 }
 
 } // namespace gl::nv::occlusion_query

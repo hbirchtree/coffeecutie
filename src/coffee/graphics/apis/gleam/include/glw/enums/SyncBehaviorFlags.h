@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // SyncBehaviorFlags
-enum class sync_behavior_flags : ::libc_types::u32
+enum class sync_behavior_flags : u32
 {
 #ifdef GL_NONE
     none = GL_NONE,

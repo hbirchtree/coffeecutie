@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // FenceParameterNameNV
-enum class fence_parameter_name_nv : ::libc_types::u32
+enum class fence_parameter_name_nv : u32
 {
 #ifdef GL_FENCE_CONDITION_NV
     fence_condition_nv = GL_FENCE_CONDITION_NV,

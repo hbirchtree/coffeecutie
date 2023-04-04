@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // ClientAttribMask
-enum class client_attrib_mask : ::libc_types::u32
+enum class client_attrib_mask : u32
 {
 #ifdef GL_CLIENT_ALL_ATTRIB_BITS
     client_all_attrib_bits = GL_CLIENT_ALL_ATTRIB_BITS,

@@ -5,7 +5,7 @@
 namespace gl::group {
 
 // PixelTransformPNameEXT
-enum class pixel_transform_prop_ext : ::libc_types::u32
+enum class pixel_transform_prop_ext : u32
 {
 #ifdef GL_PIXEL_CUBIC_WEIGHT_EXT
     pixel_cubic_weight_ext = GL_PIXEL_CUBIC_WEIGHT_EXT,
