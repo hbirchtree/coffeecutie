@@ -48,6 +48,8 @@ function identify_target()
     ARCHITECTURE="$(echo $1 | cut -d: -f2)"
     SYSROOT="$(echo $1 | cut -d: -f3)"
     TARGET="$(echo $1 | cut -d: -f4)"
+    [[ "${ARCHITECTURE}" = *"linux"* ]] && IS_LINUX=1 || IS_LINUX=0
+    [[ "${ARCHITECTURE}" = *"osx"* ]] && IS_MACOS=1 || IS_MACOS=0
 }
 
 function install_dependencies()
@@ -137,7 +139,7 @@ function native_build()
 
     echo " * Selected platform ${PLATFORM}:${ARCHITECTURE}:${SYSROOT}"
 
-    if [[ "$DEFAULT_ROOT" = "$TOOLCHAIN_ROOT" ]] && [[ "$(cat compiler-ver)" != "$TOOLCHAIN_VER" ]]; then
+    if [[ "$DEFAULT_ROOT" = "$TOOLCHAIN_ROOT" ]] && [[ "$(cat compiler-ver)" != "$TOOLCHAIN_VER" ]] && [[ $IS_LINUX = "1" ]]; then
         echo "::group::Getting compiler"
         TOOLCHAIN_REPO=$($SELF build-info toolchain source)
 
@@ -162,7 +164,6 @@ function native_build()
     export CONFIGURATION=${CONFIGURATION:-Debug}
     export CMAKE_SOURCE_DIR=${BASE_DIR}
     export CMAKE_INSTALL_DIR=${INSTALL_DIR:-$PWD/install}
-    export
 
     export PATH=$PATH:$TOOLCHAIN_ROOT/bin
 
@@ -179,12 +180,14 @@ function native_build()
 
     TOOLCHAIN_SYSROOT="${TOOLCHAIN_ROOT}/${ARCHITECTURE}/sysroot"
 
-    echo "::info::Installing stdc++ libs"
-    mkdir -p lib/
-    for f in ${TOOLCHAIN_SYSROOT}/lib/libstdc++.so.6 ${TOOLCHAIN_SYSROOT}/lib/libssp.so.0 ${TOOLCHAIN_SYSROOT}/usr/lib/libbacktrace.so.0; do
-        rm "lib/$(basename $f)"
-        ln -s "$f" lib/
-    done
+    if [[ $IS_LINUX = "1" ]]; then
+        echo "::info::Installing stdc++ libs"
+        mkdir -p lib/
+        for f in ${TOOLCHAIN_SYSROOT}/lib/libstdc++.so.6 ${TOOLCHAIN_SYSROOT}/lib/libssp.so.0 ${TOOLCHAIN_SYSROOT}/usr/lib/libbacktrace.so.0; do
+            rm "lib/$(basename $f)"
+            ln -s "$f" lib/
+        done
+    fi
 
     if [ "${ENTER_ENV:-0}" = "1" ]; then
         exec $SHELL
@@ -202,24 +205,41 @@ function native_build()
         echo "::error::Preload file not found"
         return
     fi
-    cmake_debug \
-        -GNinja \
-        -C${PRELOAD_FILE} \
-        -DCMAKE_C_COMPILER=${TOOLCHAIN_ROOT}/bin/${ARCHITECTURE}-gcc \
-        -DCMAKE_CXX_COMPILER=${TOOLCHAIN_ROOT}/bin/${ARCHITECTURE}-g++ \
-        -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
-        -DCMAKE_INSTALL_PREFIX=$PWD/install \
-        -DCMAKE_MAKE_PROGRAM=$(which ninja) \
-        -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake \
-        -DTOOLCHAIN_ROOT="${TOOLCHAIN_ROOT}" \
-        -DTOOLCHAIN_PREFIX=${TOOLCHAIN_PREFIX} \
-        -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=${VCPKG_CHAINLOAD_TOOLCHAIN_FILE} \
-        -DVCPKG_DEP_INFO_OVERRIDE_VARS=${VCPKG_DEP_INFO_OVERRIDE_VARS} \
-        -DVCPKG_TARGET_TRIPLET=${PLATFORM}-${TOOLCHAIN_PREFIX} \
-        -DAPPIMAGE_EXTRA_LIBRARIES="${APPIMAGE_EXTRAS}" \
-        -DAPPIMAGE_RUNTIME_BINARY="${APPIMAGE_RUNTIME}" \
-        -DHOST_TOOLS_BINARY_DIR=$HOST_TOOLS_BINARY_DIR \
-        ${BASE_DIR} ${@:2}
+    TARGET_TRIPLET=${PLATFORM}-${TOOLCHAIN_PREFIX}
+    [[ $IS_MACOS = "1" ]] && TARGET_TRIPLET=${TOOLCHAIN_PREFIX}
+    if [[ $IS_LINUX = "1" ]]; then
+        cmake_debug \
+            -GNinja \
+            -C${PRELOAD_FILE} \
+            -DCMAKE_C_COMPILER=${TOOLCHAIN_ROOT}/bin/${ARCHITECTURE}-gcc \
+            -DCMAKE_CXX_COMPILER=${TOOLCHAIN_ROOT}/bin/${ARCHITECTURE}-g++ \
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+            -DCMAKE_INSTALL_PREFIX=$PWD/install \
+            -DCMAKE_MAKE_PROGRAM=$(which ninja) \
+            -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake \
+            -DTOOLCHAIN_ROOT="${TOOLCHAIN_ROOT}" \
+            -DTOOLCHAIN_PREFIX=${TOOLCHAIN_PREFIX} \
+            -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=${VCPKG_CHAINLOAD_TOOLCHAIN_FILE} \
+            -DVCPKG_DEP_INFO_OVERRIDE_VARS=${VCPKG_DEP_INFO_OVERRIDE_VARS} \
+            -DVCPKG_TARGET_TRIPLET=${PLATFORM}-${TOOLCHAIN_PREFIX} \
+            -DAPPIMAGE_EXTRA_LIBRARIES="${APPIMAGE_EXTRAS}" \
+            -DAPPIMAGE_RUNTIME_BINARY="${APPIMAGE_RUNTIME}" \
+            -DHOST_TOOLS_BINARY_DIR=$HOST_TOOLS_BINARY_DIR \
+            ${BASE_DIR} ${@:2}
+    elif [[ $IS_MACOS = "1" ]]; then
+        cmake_debug \
+            -GNinja \
+            -C${PRELOAD_FILE} \
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+            -DCMAKE_INSTALL_PREFIX=$PWD/install \
+            -DCMAKE_MAKE_PROGRAM=$(which ninja) \
+            -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake \
+            -DVCPKG_DEP_INFO_OVERRIDE_VARS=${VCPKG_DEP_INFO_OVERRIDE_VARS} \
+            -DVCPKG_TARGET_TRIPLET=${TOOLCHAIN_PREFIX} \
+            -DHOST_TOOLS_BINARY_DIR=$HOST_TOOLS_BINARY_DIR \
+            ${BASE_DIR} ${@:2}
+
+    fi
     echo "::endgroup::"
 
     echo "::group::Building project"

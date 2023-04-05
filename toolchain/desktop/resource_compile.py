@@ -23,7 +23,7 @@ def needs_update(output: str, dependencies: list):
 def run(program, *args):
     program = PROGRAMS[program]
     process_args = [program, *args]
-#    print(' '.join(process_args))
+    print(' '.join(process_args))
     subprocess.call(process_args)
 
 
@@ -32,7 +32,8 @@ def compile_shaders(
         cache_directory: str,
         root_directory: str,
         out_directory: str,
-        target: str):
+        target: str,
+        extra_dependencies: list):
     files = values['files']
     variants = values['variants']
     assemblies = values['assemblies']
@@ -49,7 +50,7 @@ def compile_shaders(
             stem_name, extension = file.split('.')
             in_file = f'{root_directory}/{file}'
             out_file = f'{out_directory}/{stem_name}.{profile}{version}.{extension}'
-            if not needs_update(out_file, [in_file]):
+            if not needs_update(out_file, [in_file] + extra_dependencies):
                 continue
             print(f' * Emitting {file} as {profile} {version}')
             run(
@@ -65,7 +66,7 @@ def compile_shaders(
         out_file = f'{out_directory}/{assembly}.spv'
         shaders = assemblies[assembly]
         file_args = []
-        in_files = []
+        in_files = [] + extra_dependencies
         for file in shaders:
             _, extension = file.split('.')
             in_file = f'{root_directory}/{file}'
@@ -93,7 +94,8 @@ def encode_textures(
         cache_directory: str,
         root_directory: str,
         out_directory: str,
-        target: str):
+        target: str,
+        extra_dependencies: list):
     variants = values['variants']
     if 'matrix' in values and target in values['matrix']:
         to_remove = []
@@ -156,12 +158,16 @@ def encode_textures(
         _process_file(**file, codecs=codecs, resolutions=resolutions)
 
 
-def process_resources(definition: dict, **kwargs):
+def process_resources(definition: dict, extra_dependencies: list, **kwargs):
     for key in definition:
         if key == 'shaders':
-            compile_shaders(definition[key], **kwargs)
+            compile_shaders(definition[key],
+                            extra_dependencies=extra_dependencies + [PROGRAMS['ShaderCooker']],
+                            **kwargs)
         if key == 'textures':
-            encode_textures(definition[key], **kwargs)
+            encode_textures(definition[key],
+                            extra_dependencies=extra_dependencies + [PROGRAMS['TextureCompressor']],
+                            **kwargs)
 
 
 if __name__ == '__main__':
@@ -184,9 +190,11 @@ if __name__ == '__main__':
             root_dir = dirname(resource_def)
             root_dir = '.' if root_dir == '' else root_dir
             definitions = json.load(open(resource_def))
+            # Add files and tools to dependencies
             process_resources(
                 definitions,
                 cache_directory=args.cache_dir,
                 root_directory=root_dir,
                 out_directory=args.output,
-                target=args.target)
+                target=args.target,
+                extra_dependencies=[resource_def])

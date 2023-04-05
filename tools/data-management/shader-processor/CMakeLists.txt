@@ -19,6 +19,7 @@ find_package (Threads REQUIRED )
 coffee_library(
     TARGET ShaderProcessor
     NO_COMPONENT_APP
+    USE_CMD
     SOURCES
         private/compatibility_pass.cpp
         private/glslifier.cpp
@@ -46,6 +47,8 @@ coffee_library(
 
 coffee_application(
     TARGET ShaderCooker
+    NO_COMPONENT_APP
+    USE_CMD
     SOURCES
         cooker.cpp
     LIBRARIES
@@ -53,6 +56,8 @@ coffee_application(
         ShaderProcessor
     )
 
-target_link_options ( ShaderCooker PRIVATE
-    -Wl,-rpath=../lib,-rpath=${CMAKE_BINARY_DIR}/lib
-    )
+if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+    target_link_options ( ShaderCooker PRIVATE
+        -Wl,-rpath=../lib,-rpath=${CMAKE_BINARY_DIR}/lib
+        )
+endif()

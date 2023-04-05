@@ -533,18 +533,18 @@ void InstallDefaultSigHandlers()
     if constexpr(compile_info::platform::is_android)
         return;
 
-    std::set_terminate([]() {
 #if !defined(COFFEE_CUSTOM_STACKTRACE)
+    std::set_terminate([]() {
         if(auto frames = platform::stacktrace::exception_frames();
            frames.has_value())
             platform::stacktrace::print_exception(
                 std::move(frames.value()),
                 typing::logging::fprintf_logger,
                 stack_writer);
-#endif
         platform::common::posix::proc::breakpoint();
         libc::signal::exit(libc::signal::sig::kill);
     });
+#endif
 
 #if !defined(COFFEE_CUSTOM_STACKTRACE)
     using libc::signal::sig;

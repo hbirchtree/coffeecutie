@@ -2,8 +2,17 @@
 
 #extension GL_GOOGLE_include_directive : enable
 
-#include "fragments/map_fragment_input.glsl"
 #include "fragments/map_sampling.glsl"
+
+layout(location = 0) in FragData {
+    vec3 world_pos;
+    vec2 tex;
+    vec3 normal;
+    vec3 binormal;
+    vec3 tangent;
+    vec2 light_tex;
+    flat int instanceId;
+} frag;
 
 layout(location = 16, binding = 0) uniform sampler2DArray bc1_tex;
 layout(location = 17, binding = 1) uniform sampler2DArray bc3_tex;

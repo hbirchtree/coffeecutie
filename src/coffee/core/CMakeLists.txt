@@ -1,6 +1,5 @@
 find_package ( RapidJSON CONFIG REQUIRED )
 find_package ( tinyxml2 CONFIG REQUIRED )
-find_package ( PkgConfig )
 
 add_library ( CoreCommon INTERFACE )
 

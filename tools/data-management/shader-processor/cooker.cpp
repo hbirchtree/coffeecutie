@@ -62,7 +62,7 @@ shader_proc::profile_t from_profile_string(std::string_view profile)
 shader_proc::profile_t from_profile_string(std::string const& profile)
 {
     return from_profile_string(
-        std::string_view(profile.begin(), profile.end()));
+        std::string_view(profile.data(), profile.size()));
 }
 
 std::optional<std::pair<uint32_t, shader_proc::profile_t>> from_source(

@@ -189,7 +189,8 @@ void EntityContainer::exec()
 
         if constexpr(wrap_exceptions)
             ENT_DBG_TYPE(Verbose_Subsystems, "subsystem:start:", subsys)
-        DProfContext _(typeid(subsys).name() + std::string("::start_frame"));
+        auto frame_name = typeid(subsys).name() + std::string("::start_frame");
+        DProfContext _(frame_name);
 
         if constexpr(wrap_exceptions)
             wrap_exception<std::exception>(
@@ -209,7 +210,8 @@ void EntityContainer::exec()
 
         if constexpr(wrap_exceptions)
             ENT_DBG_TYPE(Verbose_Visitors, "visitor:dispatch:", visitor)
-        DProfContext _(typeid(visitor).name() + std::string("::dispatch"));
+        auto frame_name = typeid(visitor).name() + std::string("::dispatch");
+        DProfContext _(frame_name);
 
         if constexpr(wrap_exceptions)
             wrap_exception<std::exception>(
@@ -228,7 +230,8 @@ void EntityContainer::exec()
 
         if constexpr(wrap_exceptions)
             ENT_DBG_TYPE(Verbose_Subsystems, "subsystem:end:", subsys)
-        DProfContext _(typeid(subsys).name() + std::string("::end_frame"));
+        auto frame_name = typeid(subsys).name() + std::string("::end_frame");
+        DProfContext _(frame_name);
 
         if constexpr(wrap_exceptions)
             wrap_exception<std::exception>(

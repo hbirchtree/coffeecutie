@@ -116,6 +116,10 @@ if(BUILD_COMPONENT_APP)
     add_export ( ComponentBundle "" )
     add_export ( GraphicsBundle "" )
     add_export ( MobileBundle    "" )
+else()
+    # Things to build that might be interesting for tools
+    # GLAD is useful for GL headers
+    add_subdirectory(graphics/binding)
 endif()
 
 if(BUILD_ASIO)

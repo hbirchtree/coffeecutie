@@ -1,6 +1,6 @@
 #include "encoder.h"
 
-#include <GL/gl.h>
+#include <glad/glad.h>
 #include <ktx.h>
 #include <magic_enum.hpp>
 

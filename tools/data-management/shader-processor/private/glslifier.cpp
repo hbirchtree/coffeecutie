@@ -37,6 +37,12 @@ void remove_decorator_location(spirv_cross::CompilerGLSL& compiler)
     for(spirv_cross::Resource const& buffer : resources.uniform_buffers)
     {
         compiler.unset_decoration(buffer.id, spv::DecorationBinding);
+        compiler.unset_decoration(buffer.id, spv::DecorationLocation);
+    }
+    for(spirv_cross::Resource const& sampler : resources.sampled_images)
+    {
+        compiler.unset_decoration(sampler.id, spv::DecorationBinding);
+        compiler.unset_decoration(sampler.id, spv::DecorationLocation);
     }
 
     auto interface_variables = compiler.get_active_interface_variables();

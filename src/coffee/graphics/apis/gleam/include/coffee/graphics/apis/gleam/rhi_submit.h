@@ -495,8 +495,7 @@ inline optional<tuple<error, std::string_view>> api::submit(
 
     const bool indirect_supported //= false;
         = m_api_type == api_type_t::core
-              ? (uses_baseinstance ? m_api_version >= 0x420
-                                   : m_api_version >= 0x400)
+              ? m_api_version >= 0x430
               : m_api_version >= 0x310;
     const bool has_uniform_element_type
         = call.indexed && stl_types::all_of(data, [&data](auto const& d) {

@@ -283,11 +283,20 @@ FORCEDINLINE result<Url, posix_error> current_dir()
 
 FORCEDINLINE result<mode_t, posix_error> exists(Url const& path)
 {
+#if defined(COFFEE_LINUX)
+    /* O_PATH is only on Linux */
     if(auto dir = open(path.internUrl.c_str(), O_DIRECTORY | O_PATH); dir != -1)
     {
         close(dir);
         return success(mode_t::directory);
-    } else
+    }
+#else
+    struct stat dirstat{};
+    if(auto res = stat(path.internUrl.c_str(), &dirstat);
+       res == 0 && S_ISDIR(dirstat.st_mode))
+        return mode_t::directory;
+#endif
+    else
         return detail::posix_failure();
 }
 

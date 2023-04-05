@@ -720,7 +720,7 @@ struct BitmapCache
         {
             auto&        props  = bucket.second;
             auto&        pool   = fmt_count[bucket.first];
-            u32          layers = C_CAST<i32>(pool.layers);
+            i32          layers = C_CAST<i32>(pool.layers);
             size_3d<i32> size{pool.max.w, pool.max.h, layers};
             props.surface->alloc(size.convert<u32>());
         }

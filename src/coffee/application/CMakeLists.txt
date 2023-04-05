@@ -6,7 +6,6 @@ coffee_library (
 
     SOURCES
     private/coffee.cpp
-    private/application_start.cpp
 
     LIBRARIES PeripheralPlatform Core CoreState
     HEADER_DIRS

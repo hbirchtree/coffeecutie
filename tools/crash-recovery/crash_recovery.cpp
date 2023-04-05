@@ -91,9 +91,10 @@ i32 crash_main(i32, cstring_w*)
 
 #if defined(COFFEE_APPLE)
     if(!workingDir.isLocal())
-        workingDir = platform::file::DirFun::Dirname(
-                         *platform::file::DirFun::Dirname(args.at(0), fec), fec)
-                     + platform::url::Path("Resources");
+        workingDir =
+            platform::path::dir(platform::path::dir(MkUrl(args.at(0))).value())
+                .value() +
+            platform::url::Path("Resources");
 #endif
 
     cDebug("Spawning child");

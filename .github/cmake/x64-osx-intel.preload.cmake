@@ -1,1 +1,1 @@
-x64-osx-universal.preload.cmake
+desktop-x64-osx-intel.preload.cmake

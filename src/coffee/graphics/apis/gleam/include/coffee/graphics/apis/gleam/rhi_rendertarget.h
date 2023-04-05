@@ -204,7 +204,7 @@ struct rendertarget_t
                 SpanOne(out.h));
         } else
 #endif
-#if GLEAM_MAX_VERSION >= 0x320 || GLEAM_MAX_VERSION_ES >= 0x320
+#if GLEAM_MAX_VERSION >= 0x430 || GLEAM_MAX_VERSION_ES >= 0x320
             if(m_features.framebuffer_texture)
         {
             cmd::get_framebuffer_parameter(

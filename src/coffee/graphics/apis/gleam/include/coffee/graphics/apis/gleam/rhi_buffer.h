@@ -442,7 +442,8 @@ struct circular_buffer_t
         // so we'll write it at the start of the buffer
         // We'll start by finding a large enough region and checking its fence
         auto fence_it
-            = std::ranges::find_if(m_fences, [&data](auto const& fence) {
+            = std::find_if(m_fences.begin(), m_fences.end(),
+                           [&data](auto const& fence) {
                   return fence.first >= data.size();
               });
         if(fence_it == m_fences.end())

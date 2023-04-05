@@ -280,7 +280,7 @@ void texture_t::alloc(size_type const& size, bool create_storage)
                         target,
                         i,
                         static_cast<i32>(old_fmt),
-                        size_3d<i32>(s.w, s.h, s.d * 6),
+                        size_3d<i32>{s.w, s.h, s.d * 6},
                         0,
                         pfmt,
                         ptype,

@@ -203,13 +203,19 @@ void ImGuiSystem::setup_graphics_data(Proxy& e)
     DProfContext _(IM_API "Creating device data");
 
     constexpr std::string_view vertex_shader =
-#ifdef GLEAM_USE_CORE
-        "#version 330\n"
+#if defined(GLEAM_USE_CORE) && GLEAM_MAX_VERSION >= 0x420
+        "#version 420\n"
         "#extension GL_ARB_explicit_uniform_location : enable\n"
         "layout(location=1) uniform mat4 ProjMtx;\n"
         "layout(location=0) in vec2 Position;\n"
         "layout(location=1) in vec2 UV;\n"
         "layout(location=2) in vec4 Color;\n"
+#elif defined(GLEAM_USE_CORE)
+        "#version 330\n"
+        "uniform mat4 ProjMtx;\n"
+        "in vec2 Position;\n"
+        "in vec2 UV;\n"
+        "in vec4 Color;\n"
 #else
         "#version 300 es\n"
         "precision mediump float;\n"
@@ -244,10 +250,13 @@ void ImGuiSystem::setup_graphics_data(Proxy& e)
           "}\n";
 
     constexpr std::string_view fragment_shader =
-#ifdef GLEAM_USE_CORE
-        "#version 330\n"
+#if defined(GLEAM_USE_CORE) && GLEAM_MAX_VERSION >= 0x420
+        "#version 420\n"
         "#extension GL_ARB_explicit_uniform_location : enable\n"
         "layout(location=0) uniform sampler2D Texture;\n"
+#elif defined(GLEAM_USE_CORE)
+        "#version 330\n"
+        "uniform sampler2D Texture;\n"
 #else
         "#version 300 es\n"
         "precision mediump float;\n"
