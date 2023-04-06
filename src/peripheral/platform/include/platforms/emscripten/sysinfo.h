@@ -41,21 +41,6 @@ extern char* platform();
 
 } // namespace detail
 
-// inline stl_types::Optional<std::string_view> name()
-//{
-//     using namespace std::literals;
-//     return "Emscripten"sv;
-// }
-
-// inline constexpr stl_types::Optional<std::string_view> version()
-//{
-//     using namespace std::literals;
-//     return std::make_optional<std::string_view>(
-//         C_STR(__EMSCRIPTEN_major__) "." C_STR(__EMSCRIPTEN_minor__) "."
-//         C_STR(
-//             __EMSCRIPTEN_tiny__) ""sv);
-// }
-
 inline constexpr std::string_view kernel()
 {
     using namespace std::literals;
