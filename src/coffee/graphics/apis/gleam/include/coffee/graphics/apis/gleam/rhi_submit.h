@@ -8,49 +8,8 @@
 namespace gleam {
 namespace detail {
 
-inline std::optional<error> evaluate_draw_state(
-    api_limits const& limits, draw_command const& command)
-{
-    auto const& call = command.call;
-    auto const& data = command.data;
-    if(call.indexed)
-    {
-        i32 current_binding{0};
-        cmd::get_integerv(
-            group::get_prop::element_array_buffer_binding,
-            SpanOne(current_binding));
-        if(current_binding == 0)
-            return error::draw_no_element_buffer;
-        if(stl_types::any_of(
-               data, [](auto const& d) { return d.elements.count == 0; }))
-            return error::draw_no_elements;
-        for(auto const& d : data)
-        {
-            if(d.elements.count > limits.draws.element_count
-               /*|| d.elements.offset > 1024 * 1024*/)
-                return error::draw_unsupported_call;
-            /* We can't check if we exceed the max index vertex */
-        }
-    } else
-    {
-        if(stl_types::any_of(
-               data, [](auto const& d) { return d.arrays.count == 0; }))
-            return error::draw_no_arrays;
-        for(auto const& d : data)
-            if(d.arrays.count > 1024 * 1024 || d.arrays.offset > 1024 * 1024)
-                return error::draw_unsupported_call;
-    }
-
-    if(call.instanced)
-    {
-        for(auto const& d : data)
-            if(d.instances.count > limits.draws.instance_count
-               || d.instances.offset > limits.draws.instance_offset)
-                return error::draw_unsupported_call;
-    }
-
-    return std::nullopt;
-}
+std::optional<error> evaluate_draw_state(
+    api_limits const& limits, draw_command const& command);
 
 inline constexpr auto unsupported_drawcall()
 {
@@ -60,134 +19,20 @@ inline constexpr auto unsupported_drawcall()
         "draw call not implemented on this api"sv);
 }
 
-inline std::optional<std::tuple<error, std::string_view>> legacy_draw(
-    draw_command::call_spec_t const& call, draw_command::data_t const& data)
-{
-    if(call.indexed)
-    {
-        cmd::draw_elements(
-            convert::to(call.mode),
-            data.elements.count,
-            convert::to<group::draw_elements_type>(data.elements.type),
-            data.elements.offset);
-    } else
-    {
-        cmd::draw_arrays(
-            convert::to(call.mode), data.arrays.offset, data.arrays.count);
-    }
-    return std::nullopt;
-}
+void compute_ubo_instance(
+    buffer_list*          buffers,
+    std::pair<u32, u32>&  span,
+    shader_bookkeeping_t& bookkeeping,
+    u32                   ubo_alignment);
 
-inline std::optional<std::tuple<error, std::string_view>> direct_draw(
+std::optional<std::tuple<error, std::string_view>> legacy_draw(
+    draw_command::call_spec_t const& call, draw_command::data_t const& data);
+
+std::optional<std::tuple<error, std::string_view>> direct_draw(
     draw_command::call_spec_t const& call,
     draw_command::data_t const&      data,
     shader_bookkeeping_t&            bookkeeping,
-    workarounds const&               workarounds)
-{
-    [[maybe_unused]] const auto base_instance
-        = data.instances.offset != 0
-          && !workarounds.draw.emulated_base_instance;
-    const auto instanced = call.instanced || data.instances.offset > 0
-                           || (call.indexed && data.elements.vertex_offset > 0);
-
-    if(call.indexed)
-    {
-        [[maybe_unused]] const auto base_vertex
-            = data.elements.vertex_offset != 0
-              && !workarounds.draw.emulated_vertex_offset;
-        if(instanced)
-        {
-            bookkeeping.baseInstance = data.instances.offset;
-#if GLEAM_MAX_VERSION_ES >= 0x300 || GLEAM_MAX_VERSION > 0
-            if(base_instance && base_vertex)
-            {
-#if GLEAM_MAX_VERSION >= 0x420
-                cmd::draw_elements_instanced_base_vertex_base_instance(
-                    convert::to(call.mode),
-                    data.elements.count,
-                    convert::to<group::draw_elements_type>(data.elements.type),
-                    data.elements.offset,
-                    data.instances.count,
-                    data.elements.vertex_offset,
-                    data.instances.offset);
-                return std::nullopt;
-#endif
-            } else if(base_instance)
-            {
-#if GLEAM_MAX_VERSION >= 0x420
-                cmd::draw_elements_instanced_base_instance(
-                    convert::to(call.mode),
-                    data.elements.count,
-                    convert::to<group::draw_elements_type>(data.elements.type),
-                    data.elements.offset,
-                    data.instances.count,
-                    data.instances.offset);
-                return std::nullopt;
-#endif
-            } else if(base_vertex)
-            {
-#if GLEAM_MAX_VERSION >= 0x320 || GLEAM_MAX_VERSION_ES >= 0x320
-                cmd::draw_elements_instanced_base_vertex(
-                    convert::to(call.mode),
-                    data.elements.count,
-                    convert::to<group::draw_elements_type>(data.elements.type),
-                    data.elements.offset,
-                    data.instances.count,
-                    data.elements.vertex_offset);
-                return std::nullopt;
-#endif
-            } else
-            {
-                cmd::draw_elements_instanced(
-                    convert::to(call.mode),
-                    data.elements.count,
-                    convert::to<group::draw_elements_type>(data.elements.type),
-                    data.elements.offset,
-                    data.instances.count);
-                return std::nullopt;
-            }
-#endif
-            return detail::unsupported_drawcall();
-        } else
-            cmd::draw_elements(
-                convert::to(call.mode),
-                data.elements.count,
-                convert::to<group::draw_elements_type>(data.elements.type),
-                data.elements.offset);
-    } else
-    {
-        if(instanced)
-        {
-            bookkeeping.baseInstance = data.instances.offset;
-#if GLEAM_MAX_VERSION_ES != 0x200
-            if(base_instance)
-            {
-#if GLEAM_MAX_VERSION >= 0x420
-                cmd::draw_arrays_instanced_base_instance(
-                    convert::to(call.mode),
-                    data.arrays.offset,
-                    data.arrays.count,
-                    data.instances.count,
-                    data.instances.offset);
-                return std::nullopt;
-#endif
-            } else
-            {
-                cmd::draw_arrays_instanced(
-                    convert::to(call.mode),
-                    data.arrays.offset,
-                    data.arrays.count,
-                    data.instances.count);
-                return std::nullopt;
-            }
-#endif
-            return detail::unsupported_drawcall();
-        } else
-            cmd::draw_arrays(
-                convert::to(call.mode), data.arrays.offset, data.arrays.count);
-    }
-    return std::nullopt;
-}
+    workarounds const&               workarounds);
 
 union alignas(4) indirect_command_buffer
 {
@@ -208,113 +53,22 @@ union alignas(4) indirect_command_buffer
     } arrays;
 };
 
-inline size_t element_size(draw_command::data_t const& data)
-{
-    using semantic::TypeEnum;
-    switch(data.elements.type)
-    {
-    case TypeEnum::UByte:
-        return 1;
-    case TypeEnum::UShort:
-        return 2;
-    case TypeEnum::UInt:
-        return 4;
-    default:
-        Throw(std::runtime_error("unsupported element type"));
-    }
-}
+size_t element_size(draw_command::data_t const& data);
 
-inline void create_draw(
+void create_draw(
     draw_command::call_spec_t const& call,
     draw_command::data_t const&      data,
-    indirect_command_buffer*         buffer)
-{
-    if(call.indexed)
-        buffer->elements = {
-            .count         = data.elements.count,
-            .instanceCount = data.instances.count,
-            .first
-            = static_cast<u32>(data.elements.offset / element_size(data)),
-            .baseVertex   = static_cast<i32>(data.elements.vertex_offset),
-            .baseInstance = data.instances.offset,
-        };
-    else
-        buffer->arrays = {
-            .count         = data.arrays.count,
-            .instanceCount = data.instances.count,
-            .first         = data.arrays.offset,
-            .baseInstance  = data.instances.offset,
-        };
-}
+    indirect_command_buffer*         buffer);
 
-inline void indirect_draw(
+void indirect_draw(
     [[maybe_unused]] draw_command::call_spec_t const& call,
     [[maybe_unused]] draw_command::data_t const&      data,
-    [[maybe_unused]] circular_buffer_t&                  buffer)
-{
-#if GLEAM_MAX_VERSION >= 0x400 || GLEAM_MAX_VERSION_ES >= 0x310
-    indirect_command_buffer cmd{};
-    create_draw(call, data, &cmd);
+    [[maybe_unused]] circular_buffer_t&               buffer);
 
-    buffer.buffer().commit(SpanOne(cmd));
-    cmd::bind_buffer(
-        group::buffer_target_arb::draw_indirect_buffer,
-        buffer.buffer().handle());
-
-    if(call.indexed)
-        cmd::draw_elements_indirect(
-            convert::to(call.mode),
-            convert::to<group::draw_elements_type>(data.elements.type),
-            0);
-    else
-        cmd::draw_arrays_indirect(convert::to(call.mode), 0);
-    cmd::bind_buffer(group::buffer_target_arb::draw_indirect_buffer, 0);
-#endif
-}
-
-inline void multi_indirect_draw(
+void multi_indirect_draw(
     [[maybe_unused]] draw_command::call_spec_t const&    call,
     [[maybe_unused]] decltype(draw_command::data) const& data,
-    [[maybe_unused]] circular_buffer_t&                  buffer)
-{
-#if GLEAM_MAX_VERSION >= 0x430
-    std::vector<indirect_command_buffer> cmds;
-    cmds.resize(data.size());
-    size_t i = 0;
-    stl_types::for_each(data, [&call, &cmds, &i](auto const& d) {
-        create_draw(call, d, &cmds.at(i++));
-    });
-
-    auto commands
-        = semantic::SpanOver<indirect_command_buffer>(cmds.begin(), cmds.end());
-    //    auto fence = buffer.push(buffer.move_fences(commands), commands);
-
-    buffer.buffer().commit(commands);
-
-    cmd::bind_buffer(
-        group::buffer_target_arb::draw_indirect_buffer,
-        buffer.buffer().handle());
-    if(call.indexed)
-    {
-        auto element_type = data.at(0).elements.type;
-        cmd::multi_draw_elements_indirect(
-            convert::to(call.mode),
-            convert::to<group::draw_elements_type>(element_type),
-            reinterpret_cast<uintptr_t>(0ul /*fence.start*/),
-            cmds.size(),
-            sizeof(decltype(cmds)::value_type));
-    } else
-    {
-        cmd::multi_draw_arrays_indirect(
-            convert::to(call.mode),
-            reinterpret_cast<uintptr_t>(0ul /*fence.start*/),
-            cmds.size(),
-            sizeof(indirect_command_buffer));
-    }
-    cmd::bind_buffer(group::buffer_target_arb::draw_indirect_buffer, 0);
-//    buffer.add_fence(std::move(fence));
-#endif
-}
+    [[maybe_unused]] circular_buffer_t&                  buffer);
 
 } // namespace detail
 
@@ -434,9 +188,10 @@ inline optional<tuple<error, std::string_view>> api::submit(
     detail::shader_bookkeeping_t bookkeeping{};
     (detail::apply_command_modifier(*program, bookkeeping, modifiers), ...);
 
-    std::function<void()>    apply_instance_id   = []() {};
-    std::function<void()>    apply_base_instance = []() {};
-    std::function<void(u32)> apply_vertex_offset = [](u32) {};
+    std::function<void()>         apply_instance_id   = []() {};
+    std::function<void()>         apply_base_instance = []() {};
+    std::function<void(u32)>      apply_vertex_offset = [](u32) {};
+    std::function<void(u32, u32)> apply_ubo_offset    = [](u32, u32) {};
 
     if(m_workarounds.draw.emulated_instance_id)
     {
@@ -492,11 +247,33 @@ inline optional<tuple<error, std::string_view>> api::submit(
             }
         };
     }
+    if(m_workarounds.draw.advance_ubos_by_baseinstance)
+    {
+        std::vector<buffer_list*> buffer_defs;
+        stl_types::for_each_if_type<buffer_list>(
+            [&buffer_defs](buffer_list& list) { buffer_defs.push_back(&list); },
+            modifiers...);
+        apply_ubo_offset =
+            [this, buffer_defs = std::move(buffer_defs), &program, &bookkeeping]
+            //
+            (u32 first_instance, u32 count_instances) {
+                for(auto buffer_def : buffer_defs)
+                {
+                    auto span = std::make_pair(first_instance, count_instances);
+                    detail::compute_ubo_instance(
+                        buffer_def,
+                        std::ref(span),
+                        std::ref(bookkeeping),
+                        m_limits.buffers.ubo_alignment);
+                    detail::apply_command_modifier(
+                        *program, bookkeeping, *buffer_def, span);
+                }
+            };
+    }
 
     const bool indirect_supported //= false;
-        = m_api_type == api_type_t::core
-              ? m_api_version >= 0x430
-              : m_api_version >= 0x310;
+        = m_api_type == api_type_t::core ? m_api_version >= 0x430
+                                         : m_api_version >= 0x310;
     const bool has_uniform_element_type
         = call.indexed && stl_types::all_of(data, [&data](auto const& d) {
               return d.elements.type == data.at(0).elements.type;
@@ -538,6 +315,7 @@ inline optional<tuple<error, std::string_view>> api::submit(
         for(auto const& d : data)
         {
             bookkeeping.baseInstance = d.instances.offset;
+            apply_ubo_offset(d.instances.offset, d.instances.count);
             apply_base_instance();
             apply_vertex_offset(call.indexed ? d.elements.vertex_offset : 0);
             detail::direct_draw(call, d, bookkeeping, m_workarounds);

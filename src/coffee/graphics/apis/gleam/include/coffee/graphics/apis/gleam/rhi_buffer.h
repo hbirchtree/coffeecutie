@@ -8,8 +8,6 @@
 #include <glw/extensions/ARB_invalidate_subdata.h>
 #include <glw/extensions/OES_mapbuffer.h>
 
-#include <ranges>
-
 namespace gleam {
 
 struct buffer_slice_t;
@@ -333,12 +331,12 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
 
 struct buffer_slice_t
 {
-    inline bool valid()
+    inline bool valid() const
     {
         return !m_parent.expired() && m_size > 0;
     }
 
-    inline hnd& handle()
+    inline hnd& handle() const
     {
         auto parent = m_parent.lock();
         return parent->handle();

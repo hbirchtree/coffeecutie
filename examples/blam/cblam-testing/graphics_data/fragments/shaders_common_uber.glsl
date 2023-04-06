@@ -72,6 +72,92 @@ const uint micro_map_id     = 1u;
 const uint primary_map_id   = 2u;
 const uint secondary_map_id = 3u;
 
+vec4 shader_dummy()
+{
+    return get_color(base_map_id);
+}
+
+vec4 shader_environment()
+{
+    const int TYPE_NORMAL           = 1;
+    const int TYPE_BLENDED          = 2;
+    const int TYPE_BLENDED_SPECULAR = 3;
+
+    int type = (mats.instance[frag.instanceId].material.flags >> 4) & 0x3;
+
+    vec4 base = get_color(base_map_id);
+    vec4 micro = get_color(micro_map_id);
+    vec4 primary = get_color(primary_map_id);
+    vec4 secondary = get_color(secondary_map_id);
+#if USE_BSP_SHADERS == 1 && USE_LIGHTMAPS == 1
+    vec4 lightmap = get_light(frag.instanceId, frag.light_tex);
+#endif
+
+    float factor = type == TYPE_NORMAL ? secondary.a : base.a;
+    vec4 blend = ((primary * factor) + (secondary * (1.0 - factor)));
+    float specular = type == TYPE_BLENDED_SPECULAR
+        ? base.a * micro.a : blend.a * micro.a;
+
+    float camera_angle = dot(normalize(camera_position - frag.world_pos), frag.normal);
+    specular = specular * 1.0 + 0.0001 * camera_angle;
+    specular = 1.0;
+
+    return vec4(
+        base.rgb *
+        micro.rgb *
+        blend.rgb *
+#if USE_BSP_SHADERS == 1 && USE_LIGHTMAPS == 1
+        lightmap.rgb *
+#endif
+        vec3(1.0) * (specular * 0.01 + 0.99),
+//            base.a
+        1.0
+        );
+}
+
+vec4 shader_chicago()
+{
+    return shader_dummy();
+}
+
+vec4 shader_chicago_extended()
+{
+    return shader_dummy();
+}
+
+vec4 shader_transparent()
+{
+    return vec4(shader_dummy().rgb, 1.0);
+}
+
+vec4 shader_model()
+{
+    vec4 color = get_color(base_map_id);
+    if(color.a < 0.5)
+        discard;
+    return color;
+}
+
+vec4 shader_glass()
+{
+    return shader_dummy();
+}
+
+vec4 shader_metal()
+{
+    return vec4(shader_dummy().rgb, 1.0);
+}
+
+vec4 shader_plasma()
+{
+    return vec4(shader_dummy().rgb, 1.0);
+}
+
+vec4 shader_water()
+{
+    return vec4(0, 0, 1, get_color(base_map_id).r);
+}
+
 const uint MATERIAL_SENV = 1u;
 const uint MATERIAL_SWAT = 2u;
 const uint MATERIAL_SGLA = 3u;
@@ -86,74 +172,32 @@ void main()
 {
     uint material_id = get_material_id(frag.instanceId);
 
-    vec3 camera_distance = frag.world_pos * camera_position;
-
     if(material_id == MATERIAL_SENV)
     {
-        const uint TYPE_NORMAL           = 1u;
-        const uint TYPE_BLENDED          = 2u;
-        const uint TYPE_BLENDED_SPECULAR = 3u;
-
-        const uint type = TYPE_BLENDED_SPECULAR;
-
-        vec4 base = get_color(base_map_id);
-        vec4 micro = get_color(micro_map_id);
-        vec4 primary = get_color(primary_map_id);
-        vec4 secondary = get_color(secondary_map_id);
-#if USE_BSP_SHADERS == 1
-        vec4 lightmap = get_light(frag.instanceId, frag.light_tex);
-#endif
-
-        float factor = type == TYPE_NORMAL ? secondary.a : base.a;
-        vec4 blend = ((primary * factor) + (secondary * (1.0 - factor)));
-        float specular = type == TYPE_BLENDED_SPECULAR
-            ? base.a * micro.a : blend.a * micro.a;
-
-        float camera_angle = dot(camera_distance, frag.normal);
-        specular = specular * 1.0 + 0.0001 * camera_angle;
-        specular = 1.0;
-
-        final_color = vec4(
-            base.rgb *
-            micro.rgb *
-            blend.rgb *
-#if USE_BSP_SHADERS == 1
-            lightmap.rgb *
-#endif
-            vec3(1.0) * (specular * 0.01 + 0.99),
-//            base.a
-            1.0
-            );
-    } else if(material_id == MATERIAL_SWAT)
-    {
-        vec4 base = get_color(base_map_id);
-        final_color = vec4(0, 0, 1, base.r);
-//        final_color = vec4(base.rgb, 0.1);
-    } else if(material_id == MATERIAL_SGLA)
-    {
-        vec4 base = get_color(base_map_id);
-//        final_color = vec4(1, 0, 0, 0.3);
-        final_color = vec4(base.rgba);
-    } else if(material_id == MATERIAL_SMET)
-    {
-        final_color = vec4(vec3(0.3), 1);
-    } else if(material_id == MATERIAL_SCHI)
-    {
-        vec4 base = get_color(base_map_id);
-        final_color = vec4(base.rgba);
-    } else if(material_id == MATERIAL_SCEX)
-    {
-        vec4 base = get_color(base_map_id);
-        final_color = base;
-//        final_color = vec4(1, 1, 0, 1);
+        final_color = shader_environment();
 #if USE_MODEL_SHADERS == 1
     } else if(material_id == MATERIAL_SOSO)
     {
-        vec4 base = get_color(base_map_id);
-        if(base.a < 0.5)
-            discard;
-        final_color = vec4(base.rgba);
+        final_color = shader_model();
 #endif
+    } else if(material_id == MATERIAL_SCHI)
+    {
+        final_color = shader_chicago();
+    } else if(material_id == MATERIAL_SCEX)
+    {
+        final_color = shader_chicago_extended();
+    } else if(material_id == MATERIAL_SWAT)
+    {
+        final_color = shader_water();
+    } else if(material_id == MATERIAL_SGLA)
+    {
+        final_color = shader_glass();
+    } else if(material_id == MATERIAL_SMET)
+    {
+        final_color = vec4(vec3(0.3), 1);
+    } else if(material_id == MATERIAL_SOTR)
+    {
+        final_color = shader_transparent();
     } else
         final_color = vec4(0, 1, 0, 1);
 }

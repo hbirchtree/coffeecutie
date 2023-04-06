@@ -309,9 +309,6 @@ FORCEDINLINE std::basic_string<CharType> str_impl(
 //        out.insert(out.begin() + pos, replacement.begin(), replacement.end());
 //        out.replace();
 //    }
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wrestrict"
-#pragma GCC diagnostic ignored "-Wstringop-overflow"
     std::basic_string<CharType> out(target.begin(), target.end());
     for(size_t pos = 0;; pos += replacement.size())
     {
@@ -320,7 +317,6 @@ FORCEDINLINE std::basic_string<CharType> str_impl(
             break;
         out.replace(pos, query.size(), replacement);
     }
-#pragma GCC diagnostic pop
     return out;
 }
 

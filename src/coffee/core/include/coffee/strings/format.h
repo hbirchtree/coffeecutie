@@ -74,13 +74,9 @@ FORCEDINLINE CString cStringFormat(String fmt, Arg... args)
 {
     size_t i = 0;
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wrestrict"
-#pragma GCC diagnostic ignored "-Wstringop-overflow"
     ((fmt = stl_types::str::replace::str<char>(
           fmt, "{" + std::to_string(i++) + "}", to_string(args))),
      ...);
-#pragma GCC diagnostic pop
 
     return fmt;
 }

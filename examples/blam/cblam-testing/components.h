@@ -102,7 +102,7 @@ template<
         type* = nullptr>
 static Vecf3 spawn_rotation_to_euler(SpawnType const* spawn)
 {
-    return spawn->rot;
+    return Vecf3(spawn->rot.x(), spawn->rot.y(), -spawn->rot.z());
 }
 template<
     typename SpawnType,

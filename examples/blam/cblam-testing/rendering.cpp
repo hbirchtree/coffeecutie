@@ -151,7 +151,7 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         gfx::buffer_t& material_buf = *resources.material_store;
         gfx::buffer_t& matrix_buf   = *resources.model_matrix_store;
 
-        const auto uses_ubo         = !api->feature_info().buffer.ssbo;
+        const auto uses_ubo         = !api->feature_info().buffer.ssbo && false;
         const auto bsp_batch_size   = uses_ubo ? 64_kB : 1024_kB;
         const auto model_batch_size = uses_ubo ? 64_kB : 2048_kB;
 
@@ -309,11 +309,15 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             gfx::buffer_definition_t{
                 typing::graphics::ShaderStage::Vertex,
                 {"MatrixStore"sv, 0},
-                pass.matrix_buffer},
+                pass.matrix_buffer,
+                sizeof(Matf4),
+            },
             gfx::buffer_definition_t{
                 typing::graphics::ShaderStage::Vertex,
                 {"MaterialProperties"sv, 1},
-                pass.material_buffer});
+                pass.material_buffer,
+                sizeof(materials::senv_micro),
+            });
 
         std::vector<gfx::sampler_definition_t> samplers;
         setup_textures(samplers);
@@ -355,12 +359,10 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         auto buffers = gfx::make_buffer_list(
             gfx::buffer_definition_t{
                 typing::graphics::ShaderStage::Vertex,
-                {"MatrixStore"sv, 0},
-                pass.matrix_buffer},
-            gfx::buffer_definition_t{
-                typing::graphics::ShaderStage::Vertex,
                 {"MaterialProperties"sv, 1},
-                pass.material_buffer});
+                pass.material_buffer,
+                sizeof(materials::senv_micro),
+            });
 
         /* Step 2: Set up all the textures */
         std::vector<gfx::sampler_definition_t> samplers;
@@ -483,28 +485,22 @@ struct MeshRenderer : Components::RestrictedSubsystem<
 
         for(auto const& pass : slice_num(m_bsp, Pass_LastOpaque + 1))
         {
-            render_bsp_pass(p, pass);
+            render_bsp_pass(p, pass, gfx::cull_state{.front_face = true});
         }
 
         if(rendering_props->render_scenery)
             for(auto const& pass : slice_num(m_model, Pass_LastOpaque + 1))
-                render_pass(p, pass);
+                render_pass(p, pass, gfx::cull_state{.front_face = true});
 
         if(rendering_props->render_scenery)
             render_pass(
                 p,
                 m_model[Pass_Lights],
-                gfx::blend_state{
-                    .additive = true,
-                });
+                gfx::blend_state{.multiplicative = true});
         if(rendering_props->render_scenery)
             render_pass(p, m_model[Pass_Glass], gfx::blend_state{});
         render_bsp_pass(
-            p,
-            m_bsp[Pass_Lights],
-            gfx::blend_state{
-                .additive = true,
-            });
+            p, m_bsp[Pass_Lights], gfx::blend_state{.multiplicative = true});
         render_bsp_pass(p, m_bsp[Pass_Glass], gfx::blend_state{});
 
         render_bsp_pass(p, m_bsp[Pass_Wireframe]);

@@ -12,15 +12,20 @@ struct Lightmap
     vec2 atlas_scale;
     vec2 atlas_offset;
     int layer;
-    int material_id;
-    int extension;
-    int padding;
+};
+
+struct MaterialData
+{
+    int id;
+    int flags;
 };
 
 struct Material
 {
-    Map      maps[4];
-    Lightmap lightmap;
+    Map          maps[4];
+    Lightmap     lightmap;
+    MaterialData material;
+    int padding[5];
 };
 
 layout(binding = 1, std140) buffer MaterialProperties
@@ -47,7 +52,7 @@ vec4 get_map(in uint map_id, in sampler2DArray sampler, in vec2 tex_coord, in in
 
 uint get_material_id(in uint instance)
 {
-    return mats.instance[instance].lightmap.material_id;
+    return mats.instance[instance].material.id;
 }
 
 #if USE_BSP_SHADERS == 1

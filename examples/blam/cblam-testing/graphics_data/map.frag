@@ -23,7 +23,7 @@ layout(location = 0) out vec4 out_color;
 
 void main()
 {
-    out_color = vec4(get_light(frag.instanceId, frag.light_tex).rgb, 1.0);
+//    out_color = vec4(get_light(frag.instanceId, frag.light_tex).rgb, 1.0);
 
 //    vec2 tex_ = frag.tex - floor(frag.tex);
 
@@ -39,7 +39,6 @@ void main()
 //    else if(mats.instance[frag.instanceId].source == 2)
 //        out_color = texture(bc5_tex, vec3(sample_pos, layer));
 
-//    out_color.rgb = frag.tex.xyy;
-//    out_color.rgb = pow(out_color.rgb, vec3(1.0 / 0.8));
-//    out_color.a = 1.0;
+    out_color = vec4(frag.tex.xyy, 1.0);
+    //    out_color.rgb = pow(out_color.rgb, vec3(1.0 / 0.8));
 }

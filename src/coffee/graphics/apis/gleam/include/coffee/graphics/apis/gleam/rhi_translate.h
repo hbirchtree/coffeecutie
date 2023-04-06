@@ -50,7 +50,7 @@ constexpr Array<Pair<textures::type, group::texture_target>, 5> tex_type = {{
 #endif
 }};
 
-constexpr Array<Pair<buffers::type, group::buffer_target_arb>, 6> buf_type = {{
+constexpr Array<Pair<buffers::type, group::buffer_target_arb>, 7> buf_type = {{
     {buffers::type::vertex, group::buffer_target_arb::array_buffer},
     {buffers::type::element, group::buffer_target_arb::element_array_buffer},
 #if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
@@ -62,10 +62,12 @@ constexpr Array<Pair<buffers::type, group::buffer_target_arb>, 6> buf_type = {{
 #if GLEAM_MAX_VERSION >= 0x430 || GLEAM_MAX_VERSION_ES >= 0x310
     {buffers::type::shader_writable,
      group::buffer_target_arb::shader_storage_buffer},
+    {buffers::type::draw,
+     group::buffer_target_arb::draw_indirect_buffer},
 #endif
 }};
 
-constexpr Array<Pair<buffers::type, group::buffer_storage_target>, 6>
+constexpr Array<Pair<buffers::type, group::buffer_storage_target>, 7>
     buf_storage_type = {{
         {buffers::type::vertex, group::buffer_storage_target::array_buffer},
         {buffers::type::element,
@@ -81,6 +83,8 @@ constexpr Array<Pair<buffers::type, group::buffer_storage_target>, 6>
 #if GLEAM_MAX_VERSION >= 0x430 || GLEAM_MAX_VERSION_ES >= 0x310
         {buffers::type::shader_writable,
          group::buffer_storage_target::shader_storage_buffer},
+        {buffers::type::draw,
+         group::buffer_storage_target::draw_indirect_buffer},
 #endif
     }};
 

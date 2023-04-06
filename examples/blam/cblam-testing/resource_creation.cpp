@@ -159,6 +159,10 @@ void create_resources(compo::EntityContainer& e)
         gfx::vertex_attribute::from_member(&model_vertex_type::tangent),
     }};
 
+    if constexpr(std::is_same_v<halo_version, blam::xbox_version_t>)
+        common_attributes.at(1) = gfx::vertex_attribute::from_member(
+            &model_vertex_type::texcoord, gfx::vertex_float_type);
+
     for(auto i : Range<u32>(5))
     {
         common_attributes.at(i).index = i;
@@ -287,7 +291,8 @@ struct shader_pair_t
 };
 
 template<size_t N>
-static void create_shaders(gfx::api& api, std::array<shader_pair_t, N>&& shaders)
+static void create_shaders(
+    gfx::api& api, std::array<shader_pair_t, N>&& shaders)
 {
     using namespace std::string_view_literals;
     using platform::url::constructors::MkUrl;
@@ -304,8 +309,7 @@ static void create_shaders(gfx::api& api, std::array<shader_pair_t, N>&& shaders
     {
         if(api.api_version() == std::make_tuple(4u, 6u))
             variant = "core460"sv;
-        else
-        if(api.api_version() >= std::make_tuple(4u, 3u))
+        else if(api.api_version() >= std::make_tuple(4u, 3u))
             variant = "core430"sv;
         else if(api.api_version() >= std::make_tuple(4u, 1u))
             variant = "core410"sv;
@@ -424,7 +428,7 @@ void create_shaders(compo::EntityContainer& e)
         return;
     }
 
-    if(use_uber && !lowspec_hardware)
+    if(use_uber && !lowspec_hardware && !compile_info::platform::is_emscripten)
     {
         create_uber_shaders(gfx, resources);
         return;
@@ -437,7 +441,7 @@ void set_resource_labels(EntityContainer& e)
 {
     if constexpr(!compile_info::debug_mode)
         return;
-    gfx::api& api     = e.subsystem_cast<gfx::system>();
+    gfx::api&        api       = e.subsystem_cast<gfx::system>();
     gfx::debug::api& debug     = api.debug();
     BlamResources&   resources = e.subsystem_cast<BlamResources>();
 

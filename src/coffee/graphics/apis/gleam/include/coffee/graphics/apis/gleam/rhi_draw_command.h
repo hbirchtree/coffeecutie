@@ -38,6 +38,7 @@ struct cull_state
 struct blend_state
 {
     bool additive{false};
+    bool multiplicative{false};
 };
 
 template<typename UType>
@@ -72,10 +73,13 @@ inline auto make_uniform_list(
             std::move(stage), std::move(uniforms)...);
 }
 
-using buffer_definition_t = std::tuple<
-    typing::graphics::ShaderStage,
-    uniform_key,
-    buffer_slice_t>;
+struct buffer_definition_t
+{
+    typing::graphics::ShaderStage stage;
+    uniform_key                   key;
+    buffer_slice_t                buffer;
+    size_t                        stride;
+};
 
 template<typename... Buffers>
 requires(std::is_same_v<Buffers, buffer_definition_t>&&...)

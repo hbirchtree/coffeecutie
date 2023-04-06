@@ -90,6 +90,8 @@ struct api_limits
                 .ubo_size     = get_limit(prop::max_uniform_block_size),
                 .ubo_vertex   = get_limit(prop::max_vertex_uniform_blocks),
                 .ubo_fragment = get_limit(prop::max_fragment_uniform_blocks),
+                .ubo_alignment
+                = get_limit(prop::uniform_buffer_offset_alignment),
             };
         }
         if(m_features.buffer.ssbo)
@@ -120,6 +122,8 @@ struct api_limits
         u32 ubo_vertex{0};
         u32 ubo_fragment{0};
         u32 ubo_compute{0};
+
+        u32 ubo_alignment{0};
     } buffers;
     struct
     {

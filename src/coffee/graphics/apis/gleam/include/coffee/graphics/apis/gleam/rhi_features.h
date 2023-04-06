@@ -206,6 +206,7 @@ struct workarounds
         bool emulated_base_instance{false};
         bool emulated_vertex_offset{false};
         bool force_vertex_attrib_names{false};
+        bool advance_ubos_by_baseinstance{false};
     } draw;
     struct
     {

@@ -89,6 +89,8 @@ void load_scenario_bsp(compo::EntityContainer& e, BlamData<Version>& data)
     }
 }
 
+constexpr auto model_lod = blam::mod2::lod_medium;
+
 template<typename T, typename Version>
 void load_objects(
     blam::scn::reflex_group<T> const& group,
@@ -144,7 +146,7 @@ void load_objects(
             = instance_tag->template data<blam::scn::object>(magic).value();
 
         ModelAssembly mesh_data = model_cache.predict_regions(
-            instance_obj[0].model.to_plain(), blam::mod2::lod_low_ext);
+            instance_obj[0].model.to_plain(), model_lod);
 
         auto         parent_ = e.create_entity(parent);
         Model&       model   = parent_.get<Model>();
@@ -158,7 +160,7 @@ void load_objects(
         for(auto const& model_ : mesh_data.models)
         {
             ModelItem<Version> const& modelit
-                = model_cache.find(model_.at(blam::mod2::lod_low_ext))->second;
+                = model_cache.find(model_.at(model_lod))->second;
 
             for(auto const& sub : modelit.mesh.sub)
             {
@@ -171,7 +173,7 @@ void load_objects(
 
                 submod_.parent = parent_.id();
                 submod_.initialize<Version>(
-                    model_.at(blam::mod2::lod_low_ext), sub);
+                    model_.at(model_lod), sub);
 
                 ShaderData&       shader_ = submod.get<ShaderData>();
                 ShaderItem const& shader_it
@@ -255,12 +257,12 @@ void load_multiplayer_equipment(
                 model_.tag = &(*index.find(item.model));
 
                 ModelAssembly models = model_cache.predict_regions(
-                    item.model.to_plain(), blam::mod2::lod_low_ext);
+                    item.model.to_plain(), model_lod);
 
                 for(auto const& model : models.models)
                 {
                     ModelItem<Version> const& modelit
-                        = model_cache.find(model.at(blam::mod2::lod_low_ext))
+                        = model_cache.find(model.at(model_lod))
                               ->second;
 
                     for(auto const& sub : modelit.mesh.sub)
@@ -270,7 +272,7 @@ void load_multiplayer_equipment(
                         SubModel& submod_ = submod.get<SubModel>();
                         submod_.parent    = set.id();
                         submod_.initialize<Version>(
-                            model.at(blam::mod2::lod_low_ext), sub);
+                            model.at(model_lod), sub);
 
                         ShaderData&       shader_ = submod.get<ShaderData>();
                         ShaderItem const& shader_it

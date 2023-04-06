@@ -160,11 +160,11 @@ i32 blam_main(i32, cstring_w*)
             auto& gfx = e.register_subsystem_inplace<gfx::system>();
             auto  load_error
                 = gfx.load(/*gfx::emulation::qcom::adreno_320()*/
-                           //            {
-                           //                .api_version = 0x410,
-                           //                .api_type    =
-                           //                gleam::api_type_t::core,
-                           //            }
+//                                       {
+//                                           .api_version = 0x410,
+//                                           .api_type    =
+//                                           gleam::api_type_t::core,
+//                                       }
                 );
 
             if(load_error)
@@ -250,8 +250,13 @@ i32 blam_main(i32, cstring_w*)
                 compile_info::platform::is_android
                 || compile_info::platform::is_emscripten)
             {
-                map_filename = "b30.map"_asset;
+#if defined(COFFEE_ANDROID)
+                map_filename = MkUrl("", RSCA::AssetFile);
                 map_dir      = "."_asset;
+#else
+                map_filename = "beavercreek.map"_asset;
+                map_dir      = "."_asset;
+#endif
             } else if(!GetInitArgs().arguments().empty())
             {
                 map_filename
@@ -288,10 +293,14 @@ i32 blam_main(i32, cstring_w*)
             camera.camera.zVals = {0.00000001f, 500.f};
 
             camera.camera_matrix
-                = GenPerspective(camera.camera) * GenTransform(camera.camera)
-                //                  * typing::vectors::scale(Matf4(), Vecf3(10))
-                //                  * typing::vectors::matrixify(typing::vectors::normalize_quat(
-                //                        Quatf(1, -math::pi_f / 4, 0, 0)))
+                = GenPerspective(camera.camera)
+                  /* * GenTransform(camera.camera)*/
+                  //
+                  * typing::vectors::matrixify(typing::vectors::normalize_quat(
+                        camera.camera.rotation))
+                  * typing::vectors::scale(Matf4(), Vecf3(10))
+                  * typing::vectors::translation(Matf4(), camera.camera.position)
+                //
                 ;
         },
         [](EntityContainer&, BlamData<halo_version>&, time_point const&) {

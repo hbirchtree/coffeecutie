@@ -183,34 +183,43 @@ inline void undo_command_modifier(
 inline bool apply_command_modifier(
     program_t const& program,
     shader_bookkeeping_t& /*bookkeeping*/,
-    [[maybe_unused]] buffer_list& buffer_info)
+    [[maybe_unused]] buffer_list&                       buffer_info,
+    [[maybe_unused]] std::optional<std::pair<u32, u32>> span = {})
 {
 #if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
     for(auto const& buffer_def : buffer_info)
     {
-        auto [stage, key, buffer] = buffer_def;
-        auto binding              = key.location;
+        auto  binding = buffer_def.key.location;
+        auto& buffer  = buffer_def.buffer;
 
         if(!buffer.valid())
             continue;
 
         if(buffer.m_type == buffers::type::constants)
         {
-            auto blk_idx
-                = cmd::get_uniform_block_index(program.m_handle, key.name);
+            auto blk_idx = cmd::get_uniform_block_index(
+                program.m_handle, buffer_def.key.name);
             if(blk_idx == std::numeric_limits<u32>::max())
                 continue;
             cmd::uniform_block_binding(program.m_handle, blk_idx, binding);
+        }
+
+        auto offset = buffer.m_offset;
+        auto size   = buffer.m_size;
+
+        if(span.has_value() && buffer.m_type == buffers::type::constants)
+        {
+            auto span_ = *span;
+            offset += buffer_def.stride * span_.first;
+            size = buffer_def.stride * span_.second;
         }
 
         cmd::bind_buffer_range(
             convert::to<group::buffer_target_arb>(buffer.m_type),
             binding,
             buffer.handle(),
-            buffer.m_offset,
-            buffer.m_size);
-        //        apply_single_uniform<u32>(program, stage, {key,
-        //        SpanOne(binding)});
+            offset,
+            size);
     }
     return true;
 #else
@@ -525,8 +534,12 @@ inline bool apply_command_modifier(
     if(view_info.additive)
     {
         cmd::blend_func(
-            group::blending_factor::src_alpha,
-            group::blending_factor::one);
+            group::blending_factor::src_alpha, group::blending_factor::one);
+    } else if(view_info.multiplicative)
+    {
+        cmd::blend_func(
+            group::blending_factor::dst_color,
+            group::blending_factor::one_minus_src_alpha);
     } else
         cmd::blend_func(
             group::blending_factor::src_alpha,

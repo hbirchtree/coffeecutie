@@ -104,6 +104,7 @@ function ( GEN_GLEAM_TARGET GLVERSION SUFFIX )
             SOURCES
 
             private/rhi/rhi.cpp
+            private/rhi/rhi_submit.cpp
             private/rhi/rhi_translate.cpp
 
             LIBRARIES

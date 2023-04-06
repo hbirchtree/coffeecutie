@@ -71,12 +71,13 @@
             "bc7": ["rgba"],
             "bc3": ["rgba"],
             "pvrtc1": ["rgba"],
-            "etc1": ["rgba"]
+            "etc1": ["rgba"],
+            "png": ["rgba"]
         },
         "matrix": {
             "Android": ["astc", "bc3", "etc1", "etc2", "pvrtc1"],
             "Darwin": ["bc1", "bc3"],
-            "Linux": ["bc3", "bc7", "etc2"],
+            "Linux": ["bc3", "bc7", "etc2", "png"],
             "Emscripten": ["bc3", "etc2"]
         }
     }

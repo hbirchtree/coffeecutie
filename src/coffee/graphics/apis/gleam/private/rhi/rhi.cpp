@@ -773,6 +773,7 @@ optional<error> api::load(load_options_t options)
             .emulated_base_instance = true,
             .emulated_vertex_offset = true,
             .force_vertex_attrib_names = m_api_type == api_type_t::es,
+            .advance_ubos_by_baseinstance = true,
         },
         .buffer = {
             .emulated_mapbuffer = true,
@@ -800,6 +801,8 @@ optional<error> api::load(load_options_t options)
         m_workarounds.draw.emulated_vertex_offset = false;
     if(m_features.draw.shader_base_instance)
         m_workarounds.draw.emulated_base_instance = false;
+    if(m_features.buffer.ssbo)
+        m_workarounds.draw.advance_ubos_by_baseinstance = false;
     if(m_features.buffer.mapping || m_features.buffer.oes.mapbuffer)
         m_workarounds.buffer.emulated_mapbuffer = false;
 

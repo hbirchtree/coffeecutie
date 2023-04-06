@@ -359,12 +359,14 @@ struct BitmapCache
     {
         return gfx::textures::d3;
     }
+#if GLEAM_MAX_VERSION >= 0x400 || GLEAM_MAX_VERSION >= 0x320
     template<typename T>
     requires std::is_same_v<T, gfx::texture_cube_array_t>
     auto bucket_to_type()
     {
         return gfx::textures::cube_array;
     }
+#endif
 
     template<typename T>
     TextureBucket& get_bucket(
@@ -384,10 +386,12 @@ struct BitmapCache
 
         bucket.ptr = 0;
         bucket.fmt = fmt;
+#if GLEAM_MAX_VERSION >= 0x400 || GLEAM_MAX_VERSION >= 0x320
         if(std::is_same_v<T, gfx::texture_cube_array_t>)
             bucket.surface
                 = allocator->alloc_texture(gfx::textures::cube_array, fmt, 5);
         else
+#endif
             bucket.surface = std::make_shared<gfx::compat::texture_2da_t>(
                 allocator, fmt, fmt.pixfmt == PixFmt::RGB565 ? 2 : 5);
         bucket.type    = type;
@@ -432,6 +436,7 @@ struct BitmapCache
         (tex_offset.x() >>= 2) <<= 2;
         (tex_offset.y() >>= 2) <<= 2;
 
+#if GLEAM_MAX_VERSION >= 0x400 || GLEAM_MAX_VERSION >= 0x320
         if(bucket.type == blam::bitm::type_t::tex_cube)
         {
             gfx::texture_cube_array_t& texture
@@ -444,6 +449,7 @@ struct BitmapCache
                 img_data.size_bytes());
             //            texture.upload();
         } else
+#endif
         {
             gfx::compat::texture_2da_t& texture
                 = bucket.template texture_as<gfx::compat::texture_2da_t>();
@@ -858,20 +864,18 @@ struct BitmapCache
                 img.layer = bucket.ptr++;
                 break;
             }
+#if GLEAM_MAX_VERSION >= 0x400 || GLEAM_MAX_VERSION >= 0x320
             case blam::bitm::type_t::tex_cube: {
                 auto& bucket
                     = get_bucket<gfx::texture_cube_array_t>(fmt, img.mip->type);
                 img.layer = bucket.ptr++;
                 break;
             }
+#endif
             default:
                 cDebug(
                     "unimplemented texture type: {0}",
-#if C_HAS_INCLUDE(<string_view>)
                     magic_enum::enum_name(im[0].type)
-#else
-                    "[unknown]"
-#endif
                 );
                 return {};
             }
@@ -1156,7 +1160,7 @@ struct ShaderCache
         switch(shader.tag->tag_class())
         {
         case tag_class_t::scex: {
-            mat.lightmap.material = materials::id::scex;
+            mat.material.material = materials::id::scex;
             break;
         }
         case tag_class_t::schi: {
@@ -1167,7 +1171,7 @@ struct ShaderCache
             mat.base.uv_scale = {1};
             mat.base.bias     = base.image.bias;
 
-            mat.lightmap.material = materials::id::schi;
+            mat.material.material = materials::id::schi;
             break;
         }
         case tag_class_t::senv: {
@@ -1200,7 +1204,9 @@ struct ShaderCache
             if(micro)
                 mat.micro.bias = micro->image.bias;
 
-            mat.lightmap.material = materials::id::senv;
+            mat.material.material = materials::id::senv;
+            mat.material.flags    = static_cast<u32>(info->flags)
+                                 | static_cast<u32>(info->shader_type) << 4;
             break;
         }
         case tag_class_t::swat: {
@@ -1210,7 +1216,7 @@ struct ShaderCache
             mat.base.uv_scale = {1};
             mat.base.bias     = 0;
 
-            mat.lightmap.material = materials::id::swat;
+            mat.material.material = materials::id::swat;
             break;
         }
         case tag_class_t::sgla: {
@@ -1220,11 +1226,11 @@ struct ShaderCache
             mat.base.uv_scale = {1};
             mat.base.bias     = 0;
 
-            mat.lightmap.material = materials::id::sgla;
+            mat.material.material = materials::id::sgla;
             break;
         }
         case tag_class_t::smet: {
-            mat.lightmap.material = materials::id::smet;
+            mat.material.material = materials::id::smet;
             break;
         }
         case tag_class_t::sotr: {
@@ -1232,15 +1238,15 @@ struct ShaderCache
             mat.base.uv_scale = {1};
             mat.base.bias     = 0;
 
-            mat.lightmap.material = materials::id::sotr;
+            mat.material.material = materials::id::sotr;
             break;
         }
         case tag_class_t::soso: {
             bitm_cache.assign_atlas_data(mat.base, shader.color_bitm);
             mat.base.uv_scale = {1};
-            mat.base.bias = 0;
+            mat.base.bias     = 0;
 
-            mat.lightmap.material = materials::id::soso;
+            mat.material.material = materials::id::soso;
             break;
         }
         default: {
