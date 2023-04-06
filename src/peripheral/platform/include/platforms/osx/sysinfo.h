@@ -19,7 +19,7 @@ inline auto sysctl_by_name(const char* name)
 {
     size_t len = 0;
     sysctlbyname(name, nullptr, &len, nullptr, 0);
-    std::string out(len, '\0');
+    std::string out(len - 1, '\0');
     sysctlbyname(name, out.data(), &len, nullptr, 0);
     return out;
 }
@@ -69,10 +69,23 @@ inline u32 thread_count(u32 = 0, u32 = 0)
 {
     return info::apple::sysctl_by_name<u64>("machdep.cpu.thread_count");
 }
+
+inline u32 frequency(bool /*current*/ = false, u32 /*cpu*/ = 0, u32 /*node*/ = 0)
+{
+    return static_cast<u32>(
+        info::apple::sysctl_by_name<u64>("machdep.tsc.frequency"));
+}
+
 }
 namespace device::apple {
 
 DeviceType variant();
+
+inline std::optional<std::pair<std::string, std::string>> device()
+{
+    return std::make_pair(
+        "Apple", info::apple::sysctl_by_name<std::string>("hw.model"));
+}
 
 }
 namespace display::apple {

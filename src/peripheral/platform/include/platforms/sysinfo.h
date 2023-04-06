@@ -46,6 +46,13 @@ using emscripten::cpu_count;
 using emscripten::node_count;
 using emscripten::thread_count;
 
+#elif defined(COFFEE_MACOS)
+
+using apple::core_count;
+using apple::cpu_count;
+using apple::node_count;
+using apple::thread_count;
+
 #else
 
 inline libc_types::u32 core_count(libc_types::u32 = 0)
@@ -71,6 +78,12 @@ constexpr bool has_cpuinfo = true;
 
 using linux_::frequency;
 using linux_::model;
+
+#elif defined(COFFEE_MACOS)
+
+using apple::frequency;
+using apple::model;
+
 #else
 constexpr bool has_cpuinfo = false;
 
@@ -221,6 +234,8 @@ using emscripten::device;
 using linux_::device;
 #elif defined(COFFEE_WINDOWS)
 using win32::device;
+#elif defined(COFFEE_MACOS)
+using apple::device;
 #else
 inline stl_types::Optional<
     stl_types::Pair<stl_types::String, stl_types::String>>

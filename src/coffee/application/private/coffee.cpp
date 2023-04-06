@@ -368,14 +368,15 @@ i32 CoffeeMain(MainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
             cVerbose(
                 1, "Verbosity level: {0}", Coffee::PrintingVerbosityLevel());
 
-        /* This is a bit more versatile than simple procedures
-         */
         libc::signal::register_atexit(CoffeeTerminate);
 
         if(!silent_init)
             cVerbose(8, "Entering main function");
         Profiler::PushContext("main()");
     }
+
+    if constexpr(compile_info::platform::is_macos)
+        libc::signal::register_atexit(Profiling::ExitRoutine);
 
     i32 result = -1;
 

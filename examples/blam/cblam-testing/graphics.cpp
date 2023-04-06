@@ -174,6 +174,8 @@ i32 blam_main(i32, cstring_w*)
                     magic_enum::enum_name(load_error.value()));
             }
 
+            gfx.collect_info(*e.service<comp_app::AppInfo>());
+
             gfx.debug().enable();
             gfx.debug().add_callback([](gfx::group::debug_severity sev,
                                         std::string_view const&    msg) {
