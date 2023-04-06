@@ -5,7 +5,7 @@
 	path = tools/automation
 	url = https://github.com/hbirchtree/coffeecutie-automation-tools.git
 [submodule "include/coffee/jni"]
-	path = src/peripheral/platform/platforms/android/include/coffee/jni
+	path = src/peripheral/platform/android/include/coffee/jni
 	url = https://github.com/hbirchtree/inline-jni.git
 [submodule "tools/data-management/pressure-cooker/etc2comp"]
 	path = tools/data-management/pressure-cooker/etc2comp
