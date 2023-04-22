@@ -10,7 +10,7 @@ namespace TexCompress {
 
 static void CompressDXT(
     common_tools_t&                      t,
-    Pair<CString, ImageProcessor> const& file,
+    Pair<std::string, ImageProcessor> const& file,
     Size const&                          size,
     Bytes const&                         inputData,
     Path const&                          outName)

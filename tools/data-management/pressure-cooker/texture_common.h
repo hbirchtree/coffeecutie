@@ -52,11 +52,11 @@ struct texture_settings_t : settings_visitor
     u32            formats;
     stb::ImageHint flags;
 
-    virtual CString type()
+    virtual std::string type()
     {
         return "texture";
     }
-    virtual void visit(CString const& member, json::Value const& value)
+    virtual void visit(std::string const& member, json::Value const& value)
     {
         if(member == "max_size")
             max_size = value.GetInt();
@@ -70,19 +70,19 @@ struct texture_settings_t : settings_visitor
 
             for(auto const& m : value.GetArray())
             {
-                if(m.GetString() == CString("DXT"))
+                if(m.GetString() == std::string("DXT"))
                     formats |= Compress_DXT;
-                else if(m.GetString() == CString("BC7"))
+                else if(m.GetString() == std::string("BC7"))
                     formats |= Compress_BC7;
-                else if(m.GetString() == CString("ASTC"))
+                else if(m.GetString() == std::string("ASTC"))
                     formats |= Compress_ASTC;
-                else if(m.GetString() == CString("ETC"))
+                else if(m.GetString() == std::string("ETC"))
                     formats |= Compress_ETC;
-                else if(m.GetString() == CString("ATC"))
+                else if(m.GetString() == std::string("ATC"))
                     formats |= Compress_ATC;
-                else if(m.GetString() == CString("PVRTC"))
+                else if(m.GetString() == std::string("PVRTC"))
                     formats |= Compress_PVRTC;
-                else if(m.GetString() == CString("RAW"))
+                else if(m.GetString() == std::string("RAW"))
                     formats |= Compress_RAW;
             }
         } else if(member == "hints")
@@ -91,7 +91,7 @@ struct texture_settings_t : settings_visitor
 
             for(auto const& m : value.GetArray())
             {
-                if(m.GetString() == CString("normal"))
+                if(m.GetString() == std::string("normal"))
                     flags |= stb::ImageHint::NormalMap;
             }
         }
@@ -106,7 +106,7 @@ struct common_tools_t
     Vector<VirtFS::VirtDesc>& files;
 };
 
-static Vector<CString> imageExtensions = {"PNG",
+static Vector<std::string> imageExtensions = {"PNG",
                                           "JPG",
                                           "JPEG",
                                           "TGA",

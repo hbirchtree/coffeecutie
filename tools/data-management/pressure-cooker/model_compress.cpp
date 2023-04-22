@@ -3,7 +3,7 @@
 #include <coffee/assimp/assimp_material_iterators.h>
 #include <coffee/assimp/cassimpimporters.h>
 #include <coffee/core/CFiles>
-#include <coffee/core/stl_types.h>
+#include <peripherals/stl/types.h>
 //#include <coffee/interfaces/cgraphics_api.h>
 #include <coffee/interfaces/content_pipeline.h>
 #include <coffee/interfaces/content_settings.h>
@@ -23,9 +23,9 @@ using namespace Coffee;
 
 static Array<cstring, 2> assimpExtensions = {{"FBX", "DAE"}};
 
-static Vector<CString> const* baseDirs = nullptr;
+static Vector<std::string> const* baseDirs = nullptr;
 
-bool supported(CString const& otherExt)
+bool supported(std::string const& otherExt)
 {
     for(auto ext : assimpExtensions)
         if(ext && libc::str::cmp<libc::str::comp_nocase>(ext, otherExt.c_str()))
@@ -37,11 +37,11 @@ using at = ASSIMP::MeshLoader::AttrType;
 
 struct model_settings_t : settings_visitor
 {
-    static const Map<CString, aiTextureType>                texture_map;
-    static const Map<CString, ASSIMP::MeshLoader::AttrType> attribute_map;
-    static const Map<CString, ASSIMP::MaterialParser::PropertyClass> prop_map;
+    static const Map<std::string, aiTextureType>                texture_map;
+    static const Map<std::string, ASSIMP::MeshLoader::AttrType> attribute_map;
+    static const Map<std::string, ASSIMP::MaterialParser::PropertyClass> prop_map;
 
-    ASSIMP::MeshLoader::Attr stringToAttribute(CString const& v_)
+    ASSIMP::MeshLoader::Attr stringToAttribute(std::string const& v_)
     {
         auto attr = attribute_map.find(v_.substr(0, 3));
 
@@ -51,11 +51,11 @@ struct model_settings_t : settings_visitor
         return {attr->second, cast_string<u32>(v_.substr(3))};
     }
 
-    virtual CString type()
+    virtual std::string type()
     {
         return "mesh";
     }
-    virtual void visit(CString const& name, json::Value const& value)
+    virtual void visit(std::string const& name, json::Value const& value)
     {
         if(name == "attributes")
         {
@@ -77,7 +77,7 @@ struct model_settings_t : settings_visitor
                 if(tex == texture_map.end())
                     Throw(implementation_error(
                         PRESSURE_LIB "unsupported texture type: " +
-                        CString(m.GetString())));
+                        std::string(m.GetString())));
 
                 textures.push_back(tex->second);
             }
@@ -93,7 +93,7 @@ struct model_settings_t : settings_visitor
                 if(prop == prop_map.end())
                     Throw(implementation_error(
                         PRESSURE_LIB "unsupported material property: " +
-                        CString(m.GetString())));
+                        std::string(m.GetString())));
 
                 properties.push_back(prop->second);
             }
@@ -105,7 +105,7 @@ struct model_settings_t : settings_visitor
     Vector<ASSIMP::MaterialParser::PropertyClass> properties;
 };
 
-const Map<CString, ASSIMP::MeshLoader::AttrType>
+const Map<std::string, ASSIMP::MeshLoader::AttrType>
     model_settings_t::attribute_map = {
         {"POS", at::Position},
         {"TEX", at::TexCoord},
@@ -114,7 +114,7 @@ const Map<CString, ASSIMP::MeshLoader::AttrType>
         {"BIT", at::Bitangent},
         {"TAN", at::Tangent},
 };
-const Map<CString, aiTextureType> model_settings_t::texture_map = {
+const Map<std::string, aiTextureType> model_settings_t::texture_map = {
     {"SURFACE", aiTextureType_SHININESS},
     {"DIFFUSE", aiTextureType_DIFFUSE},
     {"EMISSIVE", aiTextureType_EMISSIVE},
@@ -125,7 +125,7 @@ const Map<CString, aiTextureType> model_settings_t::texture_map = {
 
     {"LIGHTMAP", aiTextureType_LIGHTMAP},
 };
-const Map<CString, ASSIMP::MaterialParser::PropertyClass>
+const Map<std::string, ASSIMP::MaterialParser::PropertyClass>
     model_settings_t::prop_map = {
         {"DIFFUSE", ASSIMP::MaterialParser::PDiffuse},
         {"AMBIENT", ASSIMP::MaterialParser::PAmbient},
@@ -138,7 +138,7 @@ struct AssimpProcessor : FileProcessor
     virtual void process(
         Vector<VirtFS::VirtDesc>& files, TerminalCursor& cursor);
 
-    virtual void setBaseDirectories(const Vector<CString>& dirs);
+    virtual void setBaseDirectories(const Vector<std::string>& dirs);
 
     virtual cstring name() const
     {
@@ -156,7 +156,7 @@ void AssimpProcessor::process(
 {
     using MP = ASSIMP::MaterialParser;
 
-    Vector<CString> targets;
+    Vector<std::string> targets;
 
     for(auto& file : files)
     {
@@ -197,7 +197,7 @@ void AssimpProcessor::process(
     Mutex files_lock;
 
     //    for(auto file : targets)
-    Function<void(CString&)> fileWorker = [&](CString& file) {
+    Function<void(std::string&)> fileWorker = [&](std::string& file) {
         DProfContext _(PRESSURE_LIB "Processing file");
 
         auto filePath = Path(file);
@@ -321,7 +321,7 @@ void AssimpProcessor::process(
     files.erase(removeIt, files.end());
 }
 
-void AssimpProcessor::setBaseDirectories(const Vector<CString>& dirs)
+void AssimpProcessor::setBaseDirectories(const Vector<std::string>& dirs)
 {
     baseDirs = &dirs;
 }

@@ -9,7 +9,7 @@ namespace TexCompress {
 
 bool TiffDecode(
     FileProcessor*                       cooker,
-    Pair<CString, ImageProcessor> const& file,
+    Pair<std::string, ImageProcessor> const& file,
     PixCmp                               cmp,
     BitFmt&                              bfmt,
     Size&                                size,

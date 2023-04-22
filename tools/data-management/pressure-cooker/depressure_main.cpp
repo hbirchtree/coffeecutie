@@ -42,7 +42,7 @@ static void pretty_print(VirtFS::vfs_view& vfsView)
     cOutputPrintNoNL("{0}", Table::GenTable(table, tableCols));
 }
 
-static CString humanize_size(szptr size)
+static std::string humanize_size(szptr size)
 {
     if(size > 1_GB)
         return cast_pod(size / 1_GB) + "G";
@@ -54,7 +54,7 @@ static CString humanize_size(szptr size)
         return cast_pod(size / 1_GB) + "B";
 }
 
-static CString srpad(CString src, szptr len)
+static std::string srpad(std::string src, szptr len)
 {
     return str::pad::right(src, ' ', len);
 }
@@ -134,8 +134,8 @@ static void normal_printing(
 
 static i32 extract_file(
     VirtFS::VirtualFS const* vfs,
-    CString                  source_file,
-    CString                  output_file,
+    std::string                  source_file,
+    std::string                  output_file,
     RSCA                     write_flags)
 {
     using namespace ::enum_helpers;
@@ -175,7 +175,7 @@ static i32 extract_file(
     return 0;
 }
 
-static i32 query_file(VirtFS::VirtualFS const* vfs, CString const& pattern)
+static i32 query_file(VirtFS::VirtualFS const* vfs, std::string const& pattern)
 {
     VirtFS::vfs_error_code ec;
 
@@ -233,7 +233,7 @@ DENYINLINE void sequential_bench(VirtFS::vfs_view& vfsView, szptr& thing)
     ProfContext a2("Sequential search");
     for(C_UNUSED(auto _) : Range<>(1000))
     {
-        CString              query("textures/stuff/C++-kildefil.cpp");
+        std::string              query("textures/stuff/C++-kildefil.cpp");
         VirtFS::VFile const* file = nullptr;
         for(auto it = vfsView.begin(); it != vfsView.end(); ++it)
             if((*it).name == query)

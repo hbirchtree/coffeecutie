@@ -74,7 +74,7 @@ i32 systeminfo_main(i32, cstring_w*)
 
 #endif
 
-    CString profile;
+    std::string profile;
     Profiling::ExportChromeTracerData(profile);
 
     cOutputPrint("{0}", profile);

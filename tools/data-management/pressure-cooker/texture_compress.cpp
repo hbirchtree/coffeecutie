@@ -17,7 +17,7 @@ struct TextureCooker : FileProcessor
     virtual void process(
         Vector<VirtFS::VirtDesc>& files, TerminalCursor& cursor);
 
-    virtual void setBaseDirectories(const Vector<CString>&);
+    virtual void setBaseDirectories(const Vector<std::string>&);
 
     virtual cstring name() const
     {
@@ -34,7 +34,7 @@ struct TextureCooker : FileProcessor
 
 bool StbDecode(
     FileProcessor*,
-    Pair<CString, ImageProcessor> const&,
+    Pair<std::string, ImageProcessor> const&,
     PixCmp    cmp,
     BitFmt&   bfmt,
     Size&     size,
@@ -49,7 +49,7 @@ static Map<
     ImageProcessor,
     bool (*)(
         FileProcessor*,
-        Pair<CString, ImageProcessor> const&,
+        Pair<std::string, ImageProcessor> const&,
         PixCmp,
         BitFmt&,
         Size&,
@@ -83,7 +83,7 @@ static Size ScaleSize(Size const& size, i32 target_size)
     return target_size_.convert<u32>();
 }
 
-static Tup<Bytes, Size> ScaleImage(
+static std::tuple<Bytes, Size> ScaleImage(
     Bytes&& image, Size const& size, i32 target_size, stb::ImageHint hint)
 {
     auto target_size_ = ScaleSize(size, target_size);
@@ -100,7 +100,7 @@ static Tup<Bytes, Size> ScaleImage(
 
 static void CompressTextureSet(
     Vector<VirtFS::VirtDesc>&            files,
-    Pair<CString, ImageProcessor> const& file,
+    Pair<std::string, ImageProcessor> const& file,
     FileProcessor*                       cooker,
     TerminalCursor&                      cursor)
 {
@@ -184,7 +184,7 @@ static void CompressTextureSet(
 void TextureCooker::process(
     Vector<VirtFS::VirtDesc>& files, TerminalCursor& cursor)
 {
-    using FileElement   = Pair<CString, ImageProcessor>;
+    using FileElement   = Pair<std::string, ImageProcessor>;
     using FileContainer = Vector<FileElement>;
 
     FileContainer targets;
@@ -257,7 +257,7 @@ void TextureCooker::process(
 #endif
 }
 
-void TextureCooker::setBaseDirectories(const Vector<CString>&)
+void TextureCooker::setBaseDirectories(const Vector<std::string>&)
 {
 }
 

@@ -35,11 +35,11 @@ struct shader_settings_t : settings_visitor
     Vector<u32> shader_versions;
     Path        target_file;
 
-    virtual CString type()
+    virtual std::string type()
     {
         return "shader";
     }
-    virtual void visit(CString const& member, json::Value const& value)
+    virtual void visit(std::string const& member, json::Value const& value)
     {
         if(member == "versions")
         {
@@ -59,10 +59,10 @@ struct shader_settings_t : settings_visitor
 using Pass      = spvtools::opt::Pass;
 using PassToken = spvtools::Optimizer::PassToken;
 
-static Vector<CString> shader_extensions = {
+static Vector<std::string> shader_extensions = {
     "vert", "frag", "geom", "tesc", "tese", "comp"};
 
-static Map<CString, shaderc_shader_kind> shader_mapping = {
+static Map<std::string, shaderc_shader_kind> shader_mapping = {
     {"vert", shaderc_glsl_vertex_shader},
     {"frag", shaderc_glsl_fragment_shader},
     {"geom", shaderc_glsl_geometry_shader},
@@ -96,8 +96,8 @@ struct CoffeeIncluder : shaderc::CompileOptions::IncluderInterface
             Path request_file(requesting_source);
             request_file = request_file.dirname() + requested_source;
 
-            UqPtr<Resource> r =
-                MkUq<Resource>(MkUrl(request_file, RSCA::AssetFile));
+            std::unique_ptr<Resource> r =
+                std::make_unique<Resource>(MkUrl(request_file, RSCA::AssetFile));
 
             if(!FileExists(*r))
             {
@@ -306,7 +306,7 @@ struct LegacyTransform : Pass
             operands[2].type      = SPV_OPERAND_TYPE_ID;
             words[2] = user->GetInOperand(addressOperand).words.at(0);
 
-            auto castInstruction = MkUq<ir::Instruction>(context, convertOp);
+            auto castInstruction = std::make_unique<ir::Instruction>(context, convertOp);
 
             auto& storeSourceOp       = user->GetInOperand(addressOperand);
             storeSourceOp.words.at(0) = newId;
@@ -465,7 +465,7 @@ struct LegacyTransform : Pass
 static Vector<u32> CompileSpirV(
     TerminalCursor&            cursor,
     shaderc::Compiler&         compiler,
-    CString const&             entrypoint,
+    std::string const&             entrypoint,
     Bytes const&               source,
     Path const&                path,
     shaderc_optimization_level level,
@@ -474,7 +474,7 @@ static Vector<u32> CompileSpirV(
 {
     shaderc::CompileOptions options;
 
-    options.SetIncluder(MkUq<CoffeeIncluder>());
+    options.SetIncluder(std::make_unique<CoffeeIncluder>());
     options.SetOptimizationLevel(level);
     options.SetSourceLanguage(shaderc_source_language_glsl);
 
@@ -549,7 +549,7 @@ static Vector<u32> TransformToLegacy(Vector<u32> const& source)
         .RegisterPass(spvtools::CreateMergeReturnPass())
 #if C_HAS_INCLUDE(<spirv-tools/opt/pass.h>)
         .RegisterPass(PassToken::CreateWrap(
-            UqPtr<Pass>(dynamic_cast<Pass*>(new LegacyTransform))))
+            std::unique_ptr<Pass>(dynamic_cast<Pass*>(new LegacyTransform))))
 #endif
         ;
 
@@ -557,7 +557,7 @@ static Vector<u32> TransformToLegacy(Vector<u32> const& source)
     if(!opt.Run(source.data(), source.size(), &output))
         cWarning("Failure!");
 
-    //    CString dism;
+    //    std::string dism;
     //    if(core.Disassemble(output, &dism))
     //        cDebug("\n{0}", dism);
 
@@ -626,7 +626,7 @@ static void GenerateGLSL(
 
     compiler.set_common_options(opts);
 
-    CString glsl;
+    std::string glsl;
 
     /* Compilation may fail for various reasons.
      *  We will report the error and not emit any GLSL. */
@@ -689,7 +689,7 @@ struct ShaderProcessor : FileProcessor
     virtual void process(
         Vector<VirtFS::VirtDesc>& files, TerminalCursor& cursor);
 
-    virtual void setBaseDirectories(const Vector<CString>&)
+    virtual void setBaseDirectories(const Vector<std::string>&)
     {
     }
 

@@ -11,7 +11,7 @@
 using namespace natty;
 using namespace Coffee;
 
-static ShPtr<ASIO::Service> service;
+static std::shared_ptr<ASIO::Service> service;
 
 void client_connector(ASIO::Service& service, String const& host)
 {

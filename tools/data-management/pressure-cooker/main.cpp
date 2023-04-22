@@ -21,7 +21,7 @@
 using namespace Coffee;
 using namespace platform::url::constructors;
 
-static Vector<CString> compressFilter = {"fbx",
+static Vector<std::string> compressFilter = {"fbx",
                                          "bin",
                                          "vert",
                                          "frag",
@@ -36,12 +36,12 @@ static Vector<CString> compressFilter = {"fbx",
                                          "jpg",
                                          "png"};
 
-static Vector<CString> ignoreFiler = {
+static Vector<std::string> ignoreFiler = {
     "kra", "kra~", "blend", "blend1", "zbin", "bin"};
 
-static Vector<CString> baseDirs = {};
+static Vector<std::string> baseDirs = {};
 
-static Vector<UqPtr<CoffeePipeline::FileProcessor>> extProcessors;
+static Vector<std::unique_ptr<CoffeePipeline::FileProcessor>> extProcessors;
 
 void recurse_directories(
     Path const&               prepath,
@@ -100,21 +100,21 @@ void recurse_directories(
     }
 }
 
-void csv_parse(CString const& v, Vector<CString>& out)
+void csv_parse(std::string const& v, Vector<std::string>& out)
 {
     auto it = v.find(",");
 
-    if(v.size() > 0 && it == CString::npos)
+    if(v.size() > 0 && it == std::string::npos)
         out.push_back(v);
     else
         out.push_back(v.substr(0, it));
 
-    while(it != CString::npos)
+    while(it != std::string::npos)
     {
         auto next = v.find(",", it + 1);
 
-        CString ext;
-        if(next == CString::npos)
+        std::string ext;
+        if(next == std::string::npos)
             ext = v.substr(it + 1, v.size() - it - 1);
         else
             ext = v.substr(it + 1, next - it - 1);
@@ -160,7 +160,7 @@ void parse_args(ArgumentResult& args)
             csv_parse(arg.second, compressFilter);
         } else if(arg.first == "extensions")
         {
-            Vector<CString> extensions;
+            Vector<std::string> extensions;
             csv_parse(arg.second, extensions);
 
             for(auto const& ext : extensions)
@@ -308,7 +308,7 @@ i32 coffee_main(i32, cstring_w*)
             "List loaded extensions (for troubleshooting)");
 
 #if !defined(COFFEE_NO_COMPRESSION)
-        CString codec_help = "Compression codec, one of [";
+        std::string codec_help = "Compression codec, one of [";
 
         codec_help += "zlib";
 
@@ -401,7 +401,7 @@ i32 coffee_main(i32, cstring_w*)
             totalSize /= 1_kB;
         }
 
-        CString progress = Strings::cStringFormat(
+        std::string progress = Strings::cStringFormat(
             "{0} files/{1}{2}: ", descriptors.size(), totalSize, ext);
 
         return progress;
