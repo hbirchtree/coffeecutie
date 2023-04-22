@@ -415,9 +415,9 @@ requires(MinimumVersion<Current, Version<3, 0>>&&
     glCompressedTexSubImage3D(
         static_cast<GLenum>(target),
         level,
-        xoffset.x(),
-        xoffset.y(),
-        xoffset.z(),
+        xoffset[0],
+        xoffset[1],
+        xoffset[2],
         width[0],
         width[1],
         width[2],
@@ -493,11 +493,11 @@ requires(MinimumVersion<Current, Version<3, 0>>&&
     glCopyTexSubImage3D(
         static_cast<GLenum>(target),
         level,
-        xoffset.x(),
-        xoffset.y(),
-        xoffset.z(),
-        x.x(),
-        x.y(),
+        xoffset[0],
+        xoffset[1],
+        xoffset[2],
+        x[0],
+        x[1],
         width[0],
         width[1]);
     detail::error_check("CopyTexSubImage3D"sv);
@@ -1716,8 +1716,8 @@ requires(
         attachments.size(),
         attachments.size() ? reinterpret_cast<const GLenum*>(attachments.data())
                            : nullptr,
-        x.x(),
-        x.y(),
+        x[0],
+        x[1],
         width[0],
         width[1]);
     detail::error_check("InvalidateSubFramebuffer"sv);
@@ -2272,9 +2272,9 @@ requires(MinimumVersion<Current, Version<3, 0>>&&
     glTexSubImage3D(
         static_cast<GLenum>(target),
         level,
-        xoffset.x(),
-        xoffset.y(),
-        xoffset.z(),
+        xoffset[0],
+        xoffset[1],
+        xoffset[2],
         width[0],
         width[1],
         width[2],
@@ -2379,7 +2379,7 @@ requires(MinimumVersion<Current, Version<3, 0>>&&
     {
         GLW_FPTR_CHECK(Uniform2ui)
     }
-    glUniform2ui(location, v0.x(), v0.y());
+    glUniform2ui(location, v0[0], v0[1]);
     detail::error_check("Uniform2ui"sv);
 }
 
@@ -2425,7 +2425,7 @@ requires(MinimumVersion<Current, Version<3, 0>>&&
     {
         GLW_FPTR_CHECK(Uniform3ui)
     }
-    glUniform3ui(location, v0.x(), v0.y(), v0.z());
+    glUniform3ui(location, v0[0], v0[1], v0[2]);
     detail::error_check("Uniform3ui"sv);
 }
 
@@ -2472,7 +2472,7 @@ requires(MinimumVersion<Current, Version<3, 0>>&&
     {
         GLW_FPTR_CHECK(Uniform4ui)
     }
-    glUniform4ui(location, v0.x(), v0.y(), v0.z(), v0.w());
+    glUniform4ui(location, v0[0], v0[1], v0[2], v0[3]);
     detail::error_check("Uniform4ui"sv);
 }
 
@@ -2757,7 +2757,7 @@ requires(MinimumVersion<Current, Version<3, 0>>&&
     {
         GLW_FPTR_CHECK(VertexAttribI4i)
     }
-    glVertexAttribI4i(index, x.x(), x.y(), x.z(), x.w());
+    glVertexAttribI4i(index, x[0], x[1], x[2], x[3]);
     detail::error_check("VertexAttribI4i"sv);
 }
 
@@ -2803,7 +2803,7 @@ requires(MinimumVersion<Current, Version<3, 0>>&&
     {
         GLW_FPTR_CHECK(VertexAttribI4ui)
     }
-    glVertexAttribI4ui(index, x.x(), x.y(), x.z(), x.w());
+    glVertexAttribI4ui(index, x[0], x[1], x[2], x[3]);
     detail::error_check("VertexAttribI4ui"sv);
 }
 

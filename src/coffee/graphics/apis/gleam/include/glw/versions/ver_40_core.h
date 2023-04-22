@@ -254,7 +254,7 @@ requires(MinimumVersion<Current, Version<4, 0>>&&
     {
         GLW_FPTR_CHECK(Uniform2d)
     }
-    glUniform2d(location, x.x(), x.y());
+    glUniform2d(location, x[0], x[1]);
     detail::error_check("Uniform2d"sv);
 }
 
@@ -302,7 +302,7 @@ requires(MinimumVersion<Current, Version<4, 0>>&&
     {
         GLW_FPTR_CHECK(Uniform3d)
     }
-    glUniform3d(location, x.x(), x.y(), x.z());
+    glUniform3d(location, x[0], x[1], x[2]);
     detail::error_check("Uniform3d"sv);
 }
 
@@ -351,7 +351,7 @@ requires(MinimumVersion<Current, Version<4, 0>>&&
     {
         GLW_FPTR_CHECK(Uniform4d)
     }
-    glUniform4d(location, x.x(), x.y(), x.z(), x.w());
+    glUniform4d(location, x[0], x[1], x[2], x[3]);
     detail::error_check("Uniform4d"sv);
 }
 

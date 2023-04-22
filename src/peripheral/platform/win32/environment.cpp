@@ -12,7 +12,7 @@ using namespace stl_types;
 namespace platform {
 namespace env {
 namespace win32 {
-CString WindowsEnvFun::ExecutableName(cstring_w)
+std::string WindowsEnvFun::ExecutableName(cstring_w)
 {
     CWString excname;
     excname.resize(MAX_PATH);
@@ -25,9 +25,9 @@ CString WindowsEnvFun::ExecutableName(cstring_w)
     return str::encode::to<char>(excname);
 }
 
-CString WindowsEnvFun::GetVar(cstring v)
+std::string WindowsEnvFun::GetVar(cstring v)
 {
-    CString out;
+    std::string out;
 
 #ifndef COFFEE_WINDOWS_UWP
     cstring_w var = getenv(v);
@@ -51,7 +51,7 @@ WindowsEnvFun::Variables WindowsEnvFun::Environment()
 
     while(env[0] != TCHAR(0))
     {
-        CString p_r;
+        std::string p_r;
 
         p_r = env;
 
@@ -95,7 +95,7 @@ Url WindowsEnvFun::GetUserData(cstring org, cstring app)
         app = platform::state->GetAppData()->application_name.c_str();
     }
 
-    CString out;
+    std::string out;
     out = GetUserHome().internUrl;
     out = ConcatPath(out.c_str(), "AppData");
     out = ConcatPath(out.c_str(), "Local");

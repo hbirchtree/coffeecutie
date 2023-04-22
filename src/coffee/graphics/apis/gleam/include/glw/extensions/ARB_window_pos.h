@@ -19,7 +19,7 @@ requires(semantic::concepts::Vector<vec_2_f64, f64, 2>)
     {
         GLW_FPTR_CHECK(WindowPos2dARB)
     }
-    glWindowPos2dARB(x.x(), x.y());
+    glWindowPos2dARB(x[0], x[1]);
     detail::error_check("WindowPos2dARB"sv);
 }
 
@@ -57,7 +57,7 @@ requires(semantic::concepts::Vector<vec_2_f32, f32, 2>)
     {
         GLW_FPTR_CHECK(WindowPos2fARB)
     }
-    glWindowPos2fARB(x.x(), x.y());
+    glWindowPos2fARB(x[0], x[1]);
     detail::error_check("WindowPos2fARB"sv);
 }
 
@@ -95,7 +95,7 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
     {
         GLW_FPTR_CHECK(WindowPos2iARB)
     }
-    glWindowPos2iARB(x.x(), x.y());
+    glWindowPos2iARB(x[0], x[1]);
     detail::error_check("WindowPos2iARB"sv);
 }
 
@@ -133,7 +133,7 @@ requires(semantic::concepts::Vector<vec_2_i16, i16, 2>)
     {
         GLW_FPTR_CHECK(WindowPos2sARB)
     }
-    glWindowPos2sARB(x.x(), x.y());
+    glWindowPos2sARB(x[0], x[1]);
     detail::error_check("WindowPos2sARB"sv);
 }
 
@@ -172,7 +172,7 @@ requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
     {
         GLW_FPTR_CHECK(WindowPos3dARB)
     }
-    glWindowPos3dARB(x.x(), x.y(), x.z());
+    glWindowPos3dARB(x[0], x[1], x[2]);
     detail::error_check("WindowPos3dARB"sv);
 }
 
@@ -211,7 +211,7 @@ requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
     {
         GLW_FPTR_CHECK(WindowPos3fARB)
     }
-    glWindowPos3fARB(x.x(), x.y(), x.z());
+    glWindowPos3fARB(x[0], x[1], x[2]);
     detail::error_check("WindowPos3fARB"sv);
 }
 
@@ -250,7 +250,7 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>)
     {
         GLW_FPTR_CHECK(WindowPos3iARB)
     }
-    glWindowPos3iARB(x.x(), x.y(), x.z());
+    glWindowPos3iARB(x[0], x[1], x[2]);
     detail::error_check("WindowPos3iARB"sv);
 }
 
@@ -289,7 +289,7 @@ requires(semantic::concepts::Vector<vec_3_i16, i16, 3>)
     {
         GLW_FPTR_CHECK(WindowPos3sARB)
     }
-    glWindowPos3sARB(x.x(), x.y(), x.z());
+    glWindowPos3sARB(x[0], x[1], x[2]);
     detail::error_check("WindowPos3sARB"sv);
 }
 

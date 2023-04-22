@@ -29,15 +29,17 @@
 #include <unistd.h>
 #endif
 
-using namespace ::Coffee;
+using namespace Coffee;
+using namespace semantic;
+using namespace semantic;
 using namespace libc_types::size_literals;
 
-CString read_output(platform::common::posix::fd_t stream)
+std::string read_output(platform::common::posix::fd_t stream)
 {
     size_t numBytes = 0;
     ioctl(stream, FIONREAD, &numBytes);
 
-    CString out(numBytes, '\0');
+    std::string out(numBytes, '\0');
     ::read(stream, &out[0], numBytes);
 
     return out;
@@ -52,8 +54,8 @@ i32 crash_main(i32, cstring_w*)
     using namespace platform::common::posix;
     using namespace platform;
 
-    CString stdoutBuf;
-    CString stderrBuf;
+    std::string stdoutBuf;
+    std::string stderrBuf;
 
     errno = 0;
 
@@ -71,7 +73,7 @@ i32 crash_main(i32, cstring_w*)
         return -1;
     }
 
-    std::vector<CString> apitrace_args;
+    std::vector<std::string> apitrace_args;
 
     posix_ec ec;
     Url      workingDir;
@@ -122,7 +124,7 @@ i32 crash_main(i32, cstring_w*)
             {
                 if(fd.revents & POLL_IN)
                 {
-                    CString* buf = nullptr;
+                    std::string* buf = nullptr;
 
                     if(fd.fd == spawnInfo.out)
                         buf = &stdoutBuf;
@@ -173,7 +175,7 @@ i32 crash_main(i32, cstring_w*)
     {
         auto appNameIdx = stdoutBuf.find(",");
 
-        if(appNameIdx != CString::npos)
+        if(appNameIdx != std::string::npos)
         {
             auto appName = stdoutBuf.substr(0, appNameIdx);
 
@@ -262,11 +264,11 @@ i32 crash_main(i32, cstring_w*)
     {
         auto responseData = crashPush.data().value();
         cWarning("Failed to push crash report: {0}", crashPush.responseCode());
-        cWarning("{0}", CString(responseData.begin(), responseData.end()));
+        cWarning("{0}", std::string(responseData.begin(), responseData.end()));
     } else if(auto response = crashPush.response().value(); response.code)
     {
         auto responseData = crashPush.data().value();
-        cDebug("{0}", CString(responseData.begin(), responseData.end()));
+        cDebug("{0}", std::string(responseData.begin(), responseData.end()));
 
         auto const& headers = response.header.standard_fields;
 

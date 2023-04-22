@@ -47,7 +47,7 @@ struct AppContainer : AppService<AppContainer<DataType>>, AppMain
         Args&&... args) :
         m_setup(setup),
         m_loop(loop), m_cleanup(cleanup),
-        m_data(stl_types::MkShared<DataType>(std::forward<Args>(args)...))
+        m_data(std::make_shared<DataType>(std::forward<Args>(args)...))
     {
         detail::SubsystemBase::priority = 8192 * 1024;
     }
@@ -67,7 +67,7 @@ struct AppContainer : AppService<AppContainer<DataType>>, AppMain
             type::get_container(p),
             *m_data,
             t,
-            stl_types::Chrono::duration_cast<duration>(t - m_previousTime));
+            std::chrono::duration_cast<duration>(t - m_previousTime));
         m_previousTime = t;
     }
 
@@ -76,7 +76,7 @@ struct AppContainer : AppService<AppContainer<DataType>>, AppMain
     loop_func  m_loop;
     time_point m_previousTime;
 
-    stl_types::ShPtr<DataType> m_data;
+    std::shared_ptr<DataType> m_data;
 };
 
 } // namespace comp_app

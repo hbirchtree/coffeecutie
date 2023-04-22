@@ -37,17 +37,17 @@ AppArg AppArg::Clone(i32 argc, cstring_w* argv)
     return arg;
 }
 
-CString AppArg::programName() const
+std::string AppArg::programName() const
 {
     return m_programName;
 }
 
-Vector<cstring_w> const& AppArg::arguments() const
+std::vector<cstring_w> const& AppArg::arguments() const
 {
     return m_ptrStorage;
 }
 
-Vector<CString> const& AppArg::originalArguments() const
+std::vector<std::string> const& AppArg::originalArguments() const
 {
     return m_storage;
 }
@@ -97,7 +97,7 @@ ArgumentResult ArgumentParser::parseArguments(AppArg& args)
     szptr num_positionals = 0;
     szptr arg_idx         = 0;
 
-    Vector<bool> consumed;
+    std::vector<bool> consumed;
     consumed.resize(args.m_ptrStorage.size());
 
     for(cstring_w arg : args.m_ptrStorage)
@@ -108,7 +108,7 @@ ArgumentResult ArgumentParser::parseArguments(AppArg& args)
             continue;
 
         auto    is_consumed = consumed.at(arg_idx - 1);
-        CString arg_w       = arg;
+        std::string arg_w       = arg;
 
         if(consumer)
         {
@@ -191,11 +191,11 @@ ArgumentResult ArgumentParser::parseArguments(AppArg& args)
     return result;
 }
 
-CString ArgumentParser::helpMessage() const
+std::string ArgumentParser::helpMessage() const
 {
     auto out = path::executable().value().internUrl;
 
-    CString desc = {};
+    std::string desc = {};
 
     if(posargs.size())
         desc += "\nPositional arguments";
@@ -263,7 +263,7 @@ CString ArgumentParser::helpMessage() const
     return out + desc;
 }
 
-CString ArgumentResult::of(CString const& name) const
+std::string ArgumentResult::of(std::string const& name) const
 {
     auto it = arguments.find(name);
 
@@ -273,7 +273,7 @@ CString ArgumentResult::of(CString const& name) const
     return it->second;
 }
 
-CString ArgumentResult::pos(CString const& name) const
+std::string ArgumentResult::pos(std::string const& name) const
 {
     auto it = positional.find(name);
 

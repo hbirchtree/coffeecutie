@@ -233,11 +233,9 @@ static void CoffeeInit_Internal(u32)
 
         if constexpr(compile_info::profiler::enabled)
         {
-            WkPtrUnwrap<platform::profiling::PContext> store(
-                State::GetProfilerStore());
-            store([](platform::profiling::PContext* context) {
+            auto context = State::GetProfilerStore();
+            if(context)
                 context->enable();
-            });
         }
     } else
         Coffee::PrintingVerbosityLevel() = 1;
@@ -278,7 +276,7 @@ void CoffeeInit(bool)
 
 i32 CoffeeMain(MainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
 {
-    auto start_time = Chrono::high_resolution_clock::now();
+    auto start_time = std::chrono::high_resolution_clock::now();
 
     if constexpr(compile_info::debug_mode)
         InstallDefaultSigHandlers();
@@ -303,7 +301,7 @@ i32 CoffeeMain(MainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
         if(auto appData = State::GetAppData())
         {
             SetApplicationData(*appData);
-            CurrentThread::SetName(appData->application_name);
+            stl_types::CurrentThread::SetName(appData->application_name);
         }
 
     InstallStacktraceWriter();
@@ -314,7 +312,7 @@ i32 CoffeeMain(MainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
 #if defined(COFFEE_CUSTOM_EXIT_HANDLING)
     /* On Android and iOS, we want to terminate the profiler early */
     libc::signal::register_atexit([]() {
-        State::SwapState("jsonProfiler", ShPtr<State::GlobalState>());
+        State::SwapState("jsonProfiler", std::shared_ptr<State::GlobalState>());
     });
 #endif
 
@@ -391,7 +389,7 @@ i32 CoffeeMain(MainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
             Logging::log(
                 libc::io::io_handles::err,
                 "Main",
-                String("Exception encountered: ") + ex.what(),
+                std::string("Exception encountered: ") + ex.what(),
                 semantic::debug::Severity::Fatal);
             try
             {
@@ -401,7 +399,7 @@ i32 CoffeeMain(MainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
                 Logging::log(
                     libc::io::io_handles::err,
                     "Main",
-                    String("Further information: ") + ex2.what(),
+                    std::string("Further information: ") + ex2.what(),
                     semantic::debug::Severity::Fatal);
             } catch(...)
             {
@@ -417,8 +415,8 @@ i32 CoffeeMain(MainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
         if(!silent_init)
             cDebug(
                 "Execution time: {0}",
-                Chrono::duration_cast<Chrono::seconds_double>(
-                    Chrono::high_resolution_clock::now() - start_time)
+                std::chrono::duration_cast<stl_types::Chrono::seconds_double>(
+                    std::chrono::high_resolution_clock::now() - start_time)
                     .count());
     }
 
@@ -442,43 +440,6 @@ void CoffeeTerminate()
     if constexpr(compile_info::lowfat_mode)
         return;
 
-#if MODE_DEBUG && defined(COFFEE_LINUX) && 0
-    /* Do runtime leak checks for POSIX resources,
-     *  useful when debugging resource APIs */
-
-    Vector<DirFun::DirItem_t> file_descs;
-    auto                      procFd = Path("/proc/self/fd");
-
-    file_error ec;
-
-    cDebug("Open POSIX file descriptors:");
-    if(DirFun::Ls(MkUrl(procFd, RSCA::SystemFile), file_descs, ec))
-        for(auto const& f : file_descs)
-        {
-            cBasicPrint("{0} : {1}", f.name, (procFd + f.name).canonical());
-        }
-
-    using MMAP = env::Linux::MemMap;
-
-    MMAP::ProcMap mem_map;
-    MMAP::GetProcMap(ProcessProperty::Pid(), mem_map);
-
-    cDebug("Open POSIX mmap() regions:");
-    for(auto const& e : mem_map)
-    {
-        /* Shared libraries are not our concern most of the time */
-        if(e.name.find(".so") != CString::npos)
-            continue;
-
-        cBasicPrint(
-            "{0} => {1}+{2}, {3}",
-            e.name.size() ? e.name : "[anon]",
-            str::print::pointerify(e.start),
-            e.end - e.start,
-            str::print::pointerify(C_CAST<u32>(e.access)));
-    }
-#endif
-
 #ifndef COFFEE_CUSTOM_EXIT_HANDLING
     Profiling::ExitRoutine();
 #endif
@@ -498,13 +459,13 @@ static void stack_writer(
     std::string_view filename,
     u32              line)
 {
-    auto out = Strings::fmt(
+    auto out = Coffee::Strings::fmt(
         R"({"frame": "{0}", "ip": "{1}", "file": "{2}", "line": {3}},)",
         frame,
         ip,
         filename,
         line);
-    if(auto error = file::write(stack_file, Bytes::ofContainer(out)))
+    if(auto error = file::write(stack_file, semantic::Bytes::ofContainer(out)))
         Throw(undefined_behavior(
             platform::file::error_message(error).value_or("")));
 }
@@ -542,8 +503,9 @@ void InstallDefaultSigHandlers()
                 std::move(frames.value()),
                 typing::logging::fprintf_logger,
                 stack_writer);
-        platform::common::posix::proc::breakpoint();
-        libc::signal::exit(libc::signal::sig::kill);
+//        platform::common::posix::proc::breakpoint();
+        std::quick_exit(SIGINT);
+//        libc::signal::exit(libc::signal::sig::terminate);
     });
 #endif
 
@@ -556,13 +518,9 @@ void InstallDefaultSigHandlers()
     libc::signal::install(sig::fpe, generic_stacktrace);
     libc::signal::install(sig::segfault, generic_stacktrace);
 
-    libc::signal::install(sig::terminate, [](i32) {
-        CoffeeTerminate();
-        libc::signal::exit(sig::terminate);
-    });
     libc::signal::install(sig::interrupt, [](i32) {
-        CoffeeTerminate();
-        libc::signal::exit(sig::interrupt);
+//        CoffeeTerminate();
+        libc::signal::exit(sig::terminate);
     });
 #endif
 }
@@ -583,10 +541,10 @@ void InstallStacktraceWriter()
     } else
         stack_file = std::move(fd.value());
     file::truncate("stacktrace.json"_tmp);
-    file::write(stack_file, BytesConst::ofString("["));
+    file::write(stack_file, semantic::BytesConst::ofString("["));
 
     libc::signal::register_atexit([]() {
-        file::write(stack_file, BytesConst::ofString("{}]"));
+        file::write(stack_file, semantic::BytesConst::ofString("{}]"));
         stack_file = {};
     });
 #endif

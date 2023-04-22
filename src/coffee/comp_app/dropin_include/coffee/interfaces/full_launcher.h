@@ -12,7 +12,7 @@
 
 //template<typename R, typename D>
 //using PresetupFunc =
-//    stl_types::Function<void(ShPtr<R>, ShPtr<D>, Display::Properties&)>;
+//    stl_types::Function<void(std::shared_ptr<R>, std::shared_ptr<D>, Display::Properties&)>;
 
 //template<typename R, typename D>
 //using LoopFunc = stl_types::Function<void(R&, D*)>;
@@ -52,7 +52,7 @@
 //    LoopFunc<R, D>&& setup, LoopFunc<R, D>&& loop, LoopFunc<R, D>&& cleanup)
 //{
 //    return AutoExec<GAPI, R, D>(
-//        [](ShPtr<R>, ShPtr<D>, Display::Properties&) {},
+//        [](std::shared_ptr<R>, std::shared_ptr<D>, Display::Properties&) {},
 //        std::move(setup),
 //        std::move(loop),
 //        std::move(cleanup));

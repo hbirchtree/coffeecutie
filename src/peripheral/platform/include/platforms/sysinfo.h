@@ -91,9 +91,8 @@ inline u32 frequency(u32 = 0, u32 = 0)
 {
     return 0;
 }
-inline stl_types::Optional<
-    stl_types::Pair<stl_types::String, stl_types::String>>
-    model(u32 = 0, u32 = 0)
+inline std::optional<std::pair<std::string, std::string>> model(
+    u32 = 0, u32 = 0)
 {
     return {};
 }
@@ -131,15 +130,15 @@ using win32::kernel;
 using win32::kernel_version;
 
 #else
-inline stl_types::String kernel()
+inline std::string kernel()
 {
     return {};
 }
-inline stl_types::String kernel_version()
+inline std::string kernel_version()
 {
     return {};
 }
-inline stl_types::String architecture()
+inline std::string architecture()
 {
     return {};
 }
@@ -166,11 +165,11 @@ using win32::wine_version;
 
 #else
 
-inline stl_types::Optional<stl_types::String> name()
+inline std::optional<std::string> name()
 {
     return {};
 }
-inline stl_types::Optional<stl_types::String> version()
+inline std::optional<std::string> version()
 {
     return {};
 }
@@ -237,9 +236,7 @@ using win32::device;
 #elif defined(COFFEE_MACOS)
 using apple::device;
 #else
-inline stl_types::Optional<
-    stl_types::Pair<stl_types::String, stl_types::String>>
-device()
+inline std::optional<std::pair<std::string, std::string>> device()
 {
     return {};
 }
@@ -252,9 +249,7 @@ using linux_::motherboard;
 #elif defined(COFFEE_WINDOWS)
 using win32::motherboard;
 #else
-inline stl_types::Optional<
-    stl_types::Pair<stl_types::String, stl_types::String>>
-motherboard()
+inline std::optional<std::pair<std::string, std::string>> motherboard()
 {
     return {};
 }
@@ -267,9 +262,7 @@ using linux_::chassis;
 #elif defined(COFFEE_WINDOWS)
 using win32::chassis;
 #else
-inline stl_types::Optional<
-    stl_types::Pair<stl_types::String, stl_types::String>>
-chassis()
+inline std::optional<std::pair<std::string, std::string>> chassis()
 {
     return {};
 }
@@ -278,7 +271,7 @@ chassis()
 #if defined(COFFEE_ANDROID)
 inline DeviceType variant()
 {
-  return DevicePhone;
+    return DevicePhone;
 }
 
 #elif defined(COFFEE_LINUX)
@@ -291,8 +284,8 @@ using apple::variant;
 inline DeviceType variant()
 {
     if constexpr(
-        compile_info::platform::is_android || compile_info::platform::is_ios ||
-        compile_info::platform::is_maemo)
+        compile_info::platform::is_android || compile_info::platform::is_ios
+        || compile_info::platform::is_maemo)
         return DevicePhone;
 
     /* TODO: Add better identification for Emscripten */
@@ -310,18 +303,17 @@ inline DeviceType variant()
 }
 #endif
 
-
 namespace display {
 
 #if defined(COFFEE_EMSCRIPTEN)
-//using emscripten::dpi;
+// using emscripten::dpi;
 #elif defined(COFFEE_IOS) || defined(COFFEE_MACOS)
 using info::display::apple::dpi;
 #else
 
 #endif
 
-}
+} // namespace display
 
 } // namespace device
 

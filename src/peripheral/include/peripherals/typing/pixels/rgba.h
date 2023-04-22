@@ -31,24 +31,10 @@ union rgba_t
     {
     }
 
-    libc_types::u32 rgba() const
-    {
-#if defined(COFFEE_LIL_ENDIAN)
-        rgba_t t;
-        t.r = b;
-        t.g = g;
-        t.b = r;
-        t.a = a;
-        return t.i;
-#elif defined(COFFEE_BIG_ENDIAN)
-        return i;
-#endif
-    }
-
     libc_types::u32 i;
     struct
     {
-        u8 r, g, b, a;
+        libc_types::u8 r, g, b, a;
     };
 };
 

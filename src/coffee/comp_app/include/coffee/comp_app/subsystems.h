@@ -2,7 +2,7 @@
 
 #include <coffee/components/components.h>
 #include <coffee/core/libc_types.h>
-#include <coffee/core/stl_types.h>
+#include <peripherals/stl/types.h>
 #include <coffee/core/types/display/event.h>
 
 #include "services.h"
@@ -131,7 +131,7 @@ struct AppLoader : AppService<AppLoader>
     }
 
     template<class Config>
-    Config& addConfig(stl_types::UqPtr<Config>&& ptr)
+    Config& addConfig(std::unique_ptr<Config>&& ptr)
     {
         auto const type_id = type_hash_v<Config>();
 
@@ -149,7 +149,7 @@ struct AppLoader : AppService<AppLoader>
         template<typename T>
         void operator()()
         {
-            ldr.addConfig(stl_types::MkUq<T>());
+            ldr.addConfig(std::make_unique<T>());
         }
 
         AppLoader& ldr;
@@ -183,8 +183,8 @@ struct AppLoader : AppService<AppLoader>
         return *ptr;
     }
 
-    stl_types::Vector<stl_types::UqPtr<detail::SubsystemBase>> m_configStore;
-    stl_types::Map<detail::type_hash, detail::SubsystemBase*>  m_configs;
+    std::vector<std::unique_ptr<detail::SubsystemBase>> m_configStore;
+    std::map<detail::type_hash, detail::SubsystemBase*>  m_configs;
 
     template<class Config>
     static Config& config(detail::EntityContainer& container)

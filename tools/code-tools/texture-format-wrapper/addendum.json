@@ -1,0 +1,23 @@
+[
+    {
+        "glInternalFormat": "GL_ETC1_RGB8_OES",
+        "vkFormat": "VK_FORMAT_ETC2_R8G8B8_UNORM_BLOCK",
+        "blockWidth": 4,
+        "blockHeight": 4,
+        "glVersion": null,
+        "glEsVersion": null,
+        "glWebVersion": null,
+        "glExtensions": null,
+        "glEsExtensions": [
+            [
+                "GL_OES_compressed_ETC1_RGB8_texture"
+            ]
+        ],
+        "glWebExtensions": [
+            [
+                "WEBGL_compressed_texture_etc1",
+                "WEBGL_compressed_texture_etc"
+            ]
+        ]
+    }
+]

@@ -27,7 +27,7 @@ requires(semantic::concepts::Vector<vec_3_i8, i8, 3>)
     {
         GLW_FPTR_CHECK(SecondaryColor3bEXT)
     }
-    glSecondaryColor3bEXT(red.x(), red.y(), red.z());
+    glSecondaryColor3bEXT(red[0], red[1], red[2]);
     detail::error_check("SecondaryColor3bEXT"sv);
 }
 
@@ -68,7 +68,7 @@ requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
     {
         GLW_FPTR_CHECK(SecondaryColor3dEXT)
     }
-    glSecondaryColor3dEXT(red.x(), red.y(), red.z());
+    glSecondaryColor3dEXT(red[0], red[1], red[2]);
     detail::error_check("SecondaryColor3dEXT"sv);
 }
 
@@ -107,7 +107,7 @@ requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
     {
         GLW_FPTR_CHECK(SecondaryColor3fEXT)
     }
-    glSecondaryColor3fEXT(red.x(), red.y(), red.z());
+    glSecondaryColor3fEXT(red[0], red[1], red[2]);
     detail::error_check("SecondaryColor3fEXT"sv);
 }
 
@@ -146,7 +146,7 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>)
     {
         GLW_FPTR_CHECK(SecondaryColor3iEXT)
     }
-    glSecondaryColor3iEXT(red.x(), red.y(), red.z());
+    glSecondaryColor3iEXT(red[0], red[1], red[2]);
     detail::error_check("SecondaryColor3iEXT"sv);
 }
 
@@ -185,7 +185,7 @@ requires(semantic::concepts::Vector<vec_3_i16, i16, 3>)
     {
         GLW_FPTR_CHECK(SecondaryColor3sEXT)
     }
-    glSecondaryColor3sEXT(red.x(), red.y(), red.z());
+    glSecondaryColor3sEXT(red[0], red[1], red[2]);
     detail::error_check("SecondaryColor3sEXT"sv);
 }
 
@@ -224,7 +224,7 @@ requires(semantic::concepts::Vector<vec_3_u8, u8, 3>)
     {
         GLW_FPTR_CHECK(SecondaryColor3ubEXT)
     }
-    glSecondaryColor3ubEXT(red.x(), red.y(), red.z());
+    glSecondaryColor3ubEXT(red[0], red[1], red[2]);
     detail::error_check("SecondaryColor3ubEXT"sv);
 }
 
@@ -265,7 +265,7 @@ requires(semantic::concepts::Vector<vec_3_u32, u32, 3>)
     {
         GLW_FPTR_CHECK(SecondaryColor3uiEXT)
     }
-    glSecondaryColor3uiEXT(red.x(), red.y(), red.z());
+    glSecondaryColor3uiEXT(red[0], red[1], red[2]);
     detail::error_check("SecondaryColor3uiEXT"sv);
 }
 
@@ -304,7 +304,7 @@ requires(semantic::concepts::Vector<vec_3_u16, u16, 3>)
     {
         GLW_FPTR_CHECK(SecondaryColor3usEXT)
     }
-    glSecondaryColor3usEXT(red.x(), red.y(), red.z());
+    glSecondaryColor3usEXT(red[0], red[1], red[2]);
     detail::error_check("SecondaryColor3usEXT"sv);
 }
 

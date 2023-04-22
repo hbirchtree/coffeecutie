@@ -1,14 +1,27 @@
 #pragma once
 
+#if 0
+
 #include <coffee/core/CMath>
 
-#include <coffee/core/types/pixel_components.h>
-#include <coffee/core/types/pixel_transform.h>
+#include <peripherals/typing/enum/pixels/format.h>
+#include <peripherals/typing/enum/pixels/format_transform.h>
 #include <coffee/core/types/size.h>
 
 #include <peripherals/stl/any_of.h>
 
 namespace Coffee {
+
+using typing::PixCmp;
+using typing::pixels::BitFmt;
+using typing::pixels::CompFlags;
+using typing::pixels::CompFmt;
+using typing::pixels::PixDesc;
+using typing::pixels::PixFlg;
+using typing::pixels::PixFmt;
+using libc_types::szptr;
+using libc_types::f32;
+using libc_types::u32;
 
 FORCEDINLINE szptr GetPixSize(BitFmt fmt, PixCmp comp, szptr pixels)
 {
@@ -181,7 +194,7 @@ FORCEDINLINE constexpr szptr GetPixCompressedSize(
     return 0;
 }
 
-FORCEDINLINE cstring GetPixCompressedExtension(CompFmt fmt)
+FORCEDINLINE std::string_view GetPixCompressedExtension(CompFmt fmt)
 {
     switch(fmt.base_fmt)
     {
@@ -229,3 +242,4 @@ FORCEDINLINE constexpr szptr PixDescSize(
 }
 
 } // namespace Coffee
+#endif

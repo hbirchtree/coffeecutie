@@ -2,9 +2,9 @@
 
 #include <coffee/core/base_state.h>
 #include <coffee/core/libc_types.h>
-#include <coffee/core/stl_types.h>
 #include <peripherals/build/application.h>
 #include <peripherals/stl/thread_types.h>
+#include <peripherals/stl/types.h>
 
 namespace Coffee {
 
@@ -15,10 +15,10 @@ struct ThreadState;
 
 struct BuildInfo
 {
-    CString default_window_name;
+    std::string default_window_name;
 
 #if defined(COFFEE_ANDROID)
-    CString plat_tmp_string;
+    std::string plat_tmp_string;
 #endif
 };
 
@@ -28,7 +28,7 @@ struct InternalState;
 struct InternalThreadState;
 
 template<typename T>
-using P = ShPtr<T>;
+using P = std::shared_ptr<T>;
 
 extern P<InternalState>                    internal_state;
 extern thread_local P<InternalThreadState> thread_state;
@@ -76,9 +76,9 @@ extern P<InternalThreadState>& GetInternalThreadState();
  *
  */
 
-extern ThreadId& GetCurrentThreadId();
+extern stl_types::ThreadId& GetCurrentThreadId();
 
-extern Mutex& GetPrinterLock();
+extern stl_types::Mutex& GetPrinterLock();
 
 extern BuildInfo& GetBuildInfo();
 

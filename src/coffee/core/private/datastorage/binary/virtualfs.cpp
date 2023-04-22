@@ -5,6 +5,7 @@
 
 #include <peripherals/concepts/data_codec.h>
 #include <peripherals/stl/parallel_for_each.h>
+#include <peripherals/semantic/chunk_ops.h>
 
 #include "directory_index.h"
 
@@ -13,6 +14,9 @@ using Coffee::Profiler;
 
 using Zlib = semantic::codec_stream_adapter<zlib::stream_codec>;
 using ZStd = zstd::codec;
+
+using namespace semantic;
+using namespace semantic::chunk_ops;
 
 namespace vfs {
 
@@ -403,66 +407,6 @@ stl_types::result<mem_chunk<const u8>, error> fs_t::GetData(
     data.updatePointers(data.ownership);
 
     return data;
-}
-
-Coffee::ResourceResolver<Resource> fs_t::GetResolver(const fs_t* vfs)
-{
-    using namespace platform::url;
-
-    if(!vfs)
-        Throw(undefined_behavior(VIRTFS_API "got null vfs!"));
-
-    return {
-        [=](Url const& path) { return Resource(vfs, path); },
-        [=](Path const& query, Vector<Url>& output) {
-            DProfContext _(DTEXT(VIRTFS_API "Resolving filesystem"));
-
-            if(vfs->supportsIndex(index_t::index_type::directory_tree))
-            {
-                auto index = fs_t::SearchFile(
-                                 vfs,
-                                 query.internUrl.c_str(),
-                                 search_strategy::earliest)
-                                 .value();
-
-                DProfContext __(DTEXT(VIRTFS_API "Checking files"));
-
-                /* Every child node necessarily has a lower index than its
-                 * parent
-                 */
-                auto node_start = index.index.sub_root;
-                auto files      = vfs->files();
-                auto nodes      = index.index.nodes();
-
-                for(auto i :
-                    Range<>(index.index.node_match.size() - node_start))
-                {
-                    auto const idx = node_start + i;
-
-                    if(!index.index.node_match.at(idx))
-                        continue;
-
-                    if(!nodes[idx].is_leaf())
-                        continue;
-
-                    auto const& node = files[nodes[idx].leaf.fileIdx];
-
-                    output.push_back(constructors::MkUrl(node.name().data()));
-                }
-            } else
-            {
-                vfs::view view = vfs::view::of(BytesConst::ofBytes(*vfs).view);
-
-                auto it = view.begin();
-                while((it = view.starting_with(query, it)) != view.end())
-                {
-                    output.push_back(constructors::MkUrl((*it).name().data()));
-                    ++it;
-                }
-            }
-
-            return true;
-        }};
 }
 
 } // namespace vfs

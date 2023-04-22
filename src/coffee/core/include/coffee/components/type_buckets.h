@@ -1,7 +1,7 @@
 #pragma once
 
-#include <coffee/core/libc_types.h>
-#include <coffee/core/stl_types.h>
+#include <peripherals/libc/types.h>
+#include <peripherals/stl/types.h>
 
 namespace compo::timedivide {
 

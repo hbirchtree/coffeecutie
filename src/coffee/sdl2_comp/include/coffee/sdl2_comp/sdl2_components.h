@@ -188,11 +188,11 @@ struct ControllerInput
     libc_types::i16 rescale(libc_types::i16 value) const;
     int             controllerDisconnect(int device);
 
-    libc_types::scalar m_axisScale;
+    libc_types::f32 m_axisScale;
     libc_types::i16    m_axisDeadzone;
 
-    stl_types::Map<int, void*> m_controllers;
-    stl_types::Map<int, void*> m_playerIndex;
+    std::map<int, void*> m_controllers;
+    std::map<int, void*> m_playerIndex;
 };
 
 struct KeyboardInput

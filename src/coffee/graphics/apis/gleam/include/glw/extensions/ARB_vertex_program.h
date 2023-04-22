@@ -487,7 +487,7 @@ requires(semantic::concepts::Vector<vec_4_f64, f64, 4>)
         GLW_FPTR_CHECK(ProgramEnvParameter4dARB)
     }
     glProgramEnvParameter4dARB(
-        static_cast<GLenum>(target), index, x.x(), x.y(), x.z(), x.w());
+        static_cast<GLenum>(target), index, x[0], x[1], x[2], x[3]);
     detail::error_check("ProgramEnvParameter4dARB"sv);
 }
 
@@ -539,7 +539,7 @@ requires(semantic::concepts::Vector<vec_4_f32, f32, 4>)
         GLW_FPTR_CHECK(ProgramEnvParameter4fARB)
     }
     glProgramEnvParameter4fARB(
-        static_cast<GLenum>(target), index, x.x(), x.y(), x.z(), x.w());
+        static_cast<GLenum>(target), index, x[0], x[1], x[2], x[3]);
     detail::error_check("ProgramEnvParameter4fARB"sv);
 }
 
@@ -591,7 +591,7 @@ requires(semantic::concepts::Vector<vec_4_f64, f64, 4>)
         GLW_FPTR_CHECK(ProgramLocalParameter4dARB)
     }
     glProgramLocalParameter4dARB(
-        static_cast<GLenum>(target), index, x.x(), x.y(), x.z(), x.w());
+        static_cast<GLenum>(target), index, x[0], x[1], x[2], x[3]);
     detail::error_check("ProgramLocalParameter4dARB"sv);
 }
 
@@ -643,7 +643,7 @@ requires(semantic::concepts::Vector<vec_4_f32, f32, 4>)
         GLW_FPTR_CHECK(ProgramLocalParameter4fARB)
     }
     glProgramLocalParameter4fARB(
-        static_cast<GLenum>(target), index, x.x(), x.y(), x.z(), x.w());
+        static_cast<GLenum>(target), index, x[0], x[1], x[2], x[3]);
     detail::error_check("ProgramLocalParameter4fARB"sv);
 }
 
@@ -833,7 +833,7 @@ requires(semantic::concepts::Vector<vec_2_f64, f64, 2>)
     {
         GLW_FPTR_CHECK(VertexAttrib2dARB)
     }
-    glVertexAttrib2dARB(index, x.x(), x.y());
+    glVertexAttrib2dARB(index, x[0], x[1]);
     detail::error_check("VertexAttrib2dARB"sv);
 }
 
@@ -873,7 +873,7 @@ requires(semantic::concepts::Vector<vec_2_f32, f32, 2>)
     {
         GLW_FPTR_CHECK(VertexAttrib2fARB)
     }
-    glVertexAttrib2fARB(index, x.x(), x.y());
+    glVertexAttrib2fARB(index, x[0], x[1]);
     detail::error_check("VertexAttrib2fARB"sv);
 }
 
@@ -913,7 +913,7 @@ requires(semantic::concepts::Vector<vec_2_i16, i16, 2>)
     {
         GLW_FPTR_CHECK(VertexAttrib2sARB)
     }
-    glVertexAttrib2sARB(index, x.x(), x.y());
+    glVertexAttrib2sARB(index, x[0], x[1]);
     detail::error_check("VertexAttrib2sARB"sv);
 }
 
@@ -954,7 +954,7 @@ requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
     {
         GLW_FPTR_CHECK(VertexAttrib3dARB)
     }
-    glVertexAttrib3dARB(index, x.x(), x.y(), x.z());
+    glVertexAttrib3dARB(index, x[0], x[1], x[2]);
     detail::error_check("VertexAttrib3dARB"sv);
 }
 
@@ -995,7 +995,7 @@ requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
     {
         GLW_FPTR_CHECK(VertexAttrib3fARB)
     }
-    glVertexAttrib3fARB(index, x.x(), x.y(), x.z());
+    glVertexAttrib3fARB(index, x[0], x[1], x[2]);
     detail::error_check("VertexAttrib3fARB"sv);
 }
 
@@ -1036,7 +1036,7 @@ requires(semantic::concepts::Vector<vec_3_i16, i16, 3>)
     {
         GLW_FPTR_CHECK(VertexAttrib3sARB)
     }
-    glVertexAttrib3sARB(index, x.x(), x.y(), x.z());
+    glVertexAttrib3sARB(index, x[0], x[1], x[2]);
     detail::error_check("VertexAttrib3sARB"sv);
 }
 
@@ -1144,7 +1144,7 @@ requires(semantic::concepts::Vector<vec_4_u8, u8, 4>)
     {
         GLW_FPTR_CHECK(VertexAttrib4NubARB)
     }
-    glVertexAttrib4NubARB(index, x.x(), x.y(), x.z(), x.w());
+    glVertexAttrib4NubARB(index, x[0], x[1], x[2], x[3]);
     detail::error_check("VertexAttrib4NubARB"sv);
 }
 
@@ -1255,7 +1255,7 @@ requires(semantic::concepts::Vector<vec_4_f64, f64, 4>)
     {
         GLW_FPTR_CHECK(VertexAttrib4dARB)
     }
-    glVertexAttrib4dARB(index, x.x(), x.y(), x.z(), x.w());
+    glVertexAttrib4dARB(index, x[0], x[1], x[2], x[3]);
     detail::error_check("VertexAttrib4dARB"sv);
 }
 
@@ -1297,7 +1297,7 @@ requires(semantic::concepts::Vector<vec_4_f32, f32, 4>)
     {
         GLW_FPTR_CHECK(VertexAttrib4fARB)
     }
-    glVertexAttrib4fARB(index, x.x(), x.y(), x.z(), x.w());
+    glVertexAttrib4fARB(index, x[0], x[1], x[2], x[3]);
     detail::error_check("VertexAttrib4fARB"sv);
 }
 
@@ -1359,7 +1359,7 @@ requires(semantic::concepts::Vector<vec_4_i16, i16, 4>)
     {
         GLW_FPTR_CHECK(VertexAttrib4sARB)
     }
-    glVertexAttrib4sARB(index, x.x(), x.y(), x.z(), x.w());
+    glVertexAttrib4sARB(index, x[0], x[1], x[2], x[3]);
     detail::error_check("VertexAttrib4sARB"sv);
 }
 

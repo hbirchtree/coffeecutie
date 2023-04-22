@@ -126,7 +126,7 @@ requires(semantic::concepts::Vector<vec_2_f64, f64, 2>)
     {
         GLW_FPTR_CHECK(Uniform2d)
     }
-    glUniform2d(location, x.x(), x.y());
+    glUniform2d(location, x[0], x[1]);
     detail::error_check("Uniform2d"sv);
 }
 
@@ -171,7 +171,7 @@ requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
     {
         GLW_FPTR_CHECK(Uniform3d)
     }
-    glUniform3d(location, x.x(), x.y(), x.z());
+    glUniform3d(location, x[0], x[1], x[2]);
     detail::error_check("Uniform3d"sv);
 }
 
@@ -217,7 +217,7 @@ requires(semantic::concepts::Vector<vec_4_f64, f64, 4>)
     {
         GLW_FPTR_CHECK(Uniform4d)
     }
-    glUniform4d(location, x.x(), x.y(), x.z(), x.w());
+    glUniform4d(location, x[0], x[1], x[2], x[3]);
     detail::error_check("Uniform4d"sv);
 }
 

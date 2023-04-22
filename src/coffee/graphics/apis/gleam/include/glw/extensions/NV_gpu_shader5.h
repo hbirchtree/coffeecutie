@@ -167,7 +167,7 @@ requires(semantic::concepts::Vector<vec_2_GLint64EXT, GLint64EXT, 2>)
     {
         GLW_FPTR_CHECK(Uniform2i64NV)
     }
-    glUniform2i64NV(location, x.x(), x.y());
+    glUniform2i64NV(location, x[0], x[1]);
     detail::error_check("Uniform2i64NV"sv);
 }
 
@@ -213,7 +213,7 @@ requires(semantic::concepts::Vector<vec_2_GLuint64EXT, GLuint64EXT, 2>)
     {
         GLW_FPTR_CHECK(Uniform2ui64NV)
     }
-    glUniform2ui64NV(location, x.x(), x.y());
+    glUniform2ui64NV(location, x[0], x[1]);
     detail::error_check("Uniform2ui64NV"sv);
 }
 
@@ -262,7 +262,7 @@ requires(semantic::concepts::Vector<vec_3_GLint64EXT, GLint64EXT, 3>)
     {
         GLW_FPTR_CHECK(Uniform3i64NV)
     }
-    glUniform3i64NV(location, x.x(), x.y(), x.z());
+    glUniform3i64NV(location, x[0], x[1], x[2]);
     detail::error_check("Uniform3i64NV"sv);
 }
 
@@ -309,7 +309,7 @@ requires(semantic::concepts::Vector<vec_3_GLuint64EXT, GLuint64EXT, 3>)
     {
         GLW_FPTR_CHECK(Uniform3ui64NV)
     }
-    glUniform3ui64NV(location, x.x(), x.y(), x.z());
+    glUniform3ui64NV(location, x[0], x[1], x[2]);
     detail::error_check("Uniform3ui64NV"sv);
 }
 
@@ -359,7 +359,7 @@ requires(semantic::concepts::Vector<vec_4_GLint64EXT, GLint64EXT, 4>)
     {
         GLW_FPTR_CHECK(Uniform4i64NV)
     }
-    glUniform4i64NV(location, x.x(), x.y(), x.z(), x.w());
+    glUniform4i64NV(location, x[0], x[1], x[2], x[3]);
     detail::error_check("Uniform4i64NV"sv);
 }
 
@@ -407,7 +407,7 @@ requires(semantic::concepts::Vector<vec_4_GLuint64EXT, GLuint64EXT, 4>)
     {
         GLW_FPTR_CHECK(Uniform4ui64NV)
     }
-    glUniform4ui64NV(location, x.x(), x.y(), x.z(), x.w());
+    glUniform4ui64NV(location, x[0], x[1], x[2], x[3]);
     detail::error_check("Uniform4ui64NV"sv);
 }
 
@@ -574,7 +574,7 @@ requires(semantic::concepts::Vector<vec_2_GLint64EXT, GLint64EXT, 2>)
             glIsProgram(program);
 #endif
     }
-    glProgramUniform2i64NV(program, location, x.x(), x.y());
+    glProgramUniform2i64NV(program, location, x[0], x[1]);
     detail::error_check("ProgramUniform2i64NV"sv);
 }
 
@@ -634,7 +634,7 @@ requires(semantic::concepts::Vector<vec_2_GLuint64EXT, GLuint64EXT, 2>)
             glIsProgram(program);
 #endif
     }
-    glProgramUniform2ui64NV(program, location, x.x(), x.y());
+    glProgramUniform2ui64NV(program, location, x[0], x[1]);
     detail::error_check("ProgramUniform2ui64NV"sv);
 }
 
@@ -697,7 +697,7 @@ requires(semantic::concepts::Vector<vec_3_GLint64EXT, GLint64EXT, 3>)
             glIsProgram(program);
 #endif
     }
-    glProgramUniform3i64NV(program, location, x.x(), x.y(), x.z());
+    glProgramUniform3i64NV(program, location, x[0], x[1], x[2]);
     detail::error_check("ProgramUniform3i64NV"sv);
 }
 
@@ -758,7 +758,7 @@ requires(semantic::concepts::Vector<vec_3_GLuint64EXT, GLuint64EXT, 3>)
             glIsProgram(program);
 #endif
     }
-    glProgramUniform3ui64NV(program, location, x.x(), x.y(), x.z());
+    glProgramUniform3ui64NV(program, location, x[0], x[1], x[2]);
     detail::error_check("ProgramUniform3ui64NV"sv);
 }
 
@@ -822,7 +822,7 @@ requires(semantic::concepts::Vector<vec_4_GLint64EXT, GLint64EXT, 4>)
             glIsProgram(program);
 #endif
     }
-    glProgramUniform4i64NV(program, location, x.x(), x.y(), x.z(), x.w());
+    glProgramUniform4i64NV(program, location, x[0], x[1], x[2], x[3]);
     detail::error_check("ProgramUniform4i64NV"sv);
 }
 
@@ -884,7 +884,7 @@ requires(semantic::concepts::Vector<vec_4_GLuint64EXT, GLuint64EXT, 4>)
             glIsProgram(program);
 #endif
     }
-    glProgramUniform4ui64NV(program, location, x.x(), x.y(), x.z(), x.w());
+    glProgramUniform4ui64NV(program, location, x[0], x[1], x[2], x[3]);
     detail::error_check("ProgramUniform4ui64NV"sv);
 }
 

@@ -85,7 +85,7 @@ class ShaderIncluder : public shaderc::CompileOptions::IncluderInterface
 
   private:
     std::list<include_data> m_cache;
-    shaderc_include_result error{};
+    shaderc_include_result  error{};
 };
 
 } // namespace
@@ -120,7 +120,9 @@ shaderc_profile to_shaderc(profile_t profile)
 }
 
 stl_types::result<spv_blob, spv_error> compile(
-    shader_input&& shader, output_options const& opts)
+    shader_input&&              shader,
+    output_options const&       opts,
+    optimization_options const& opt_opts)
 {
     static thread_local shaderc::Compiler compiler;
 
@@ -132,11 +134,23 @@ stl_types::result<spv_blob, spv_error> compile(
     options.SetWarningsAsErrors();
     options.SetSourceLanguage(shaderc_source_language_glsl);
     options.SetForcedVersionProfile(shader.version, to_shaderc(shader.profile));
-    options.SetOptimizationLevel(shaderc_optimization_level_performance);
     options.SetGenerateDebugInfo();
     options.SetIncluder(std::make_unique<ShaderIncluder>());
     for(auto const& [name, value] : shader.defines)
         options.AddMacroDefinition(name, value);
+
+    switch(opt_opts.opt_level)
+    {
+    case shader_proc::opt::optimization_level::fast:
+        options.SetOptimizationLevel(shaderc_optimization_level_performance);
+        break;
+    case shader_proc::opt::optimization_level::size:
+        options.SetOptimizationLevel(shaderc_optimization_level_size);
+        break;
+    default:
+        options.SetOptimizationLevel(shaderc_optimization_level_zero);
+        break;
+    }
 
     std::string path(shader.path.begin(), shader.path.end());
 

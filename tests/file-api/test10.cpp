@@ -4,7 +4,7 @@
 #include <coffee/core/CFiles>
 #include <coffee/strings/url_types.h>
 
-#include <coffee/core/CStringFormat>
+#include <coffee/core/std::stringFormat>
 #include <coffee/core/CUnitTesting>
 
 using namespace assertion;

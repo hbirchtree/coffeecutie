@@ -1,7 +1,7 @@
 #include <coffee/audio/openal/copenal.h>
 
-#include <coffee/core/stl_types.h>
-#include <coffee/core/types/chunk.h>
+#include <peripherals/stl/types.h>
+#include <peripherals/semantic/chunk.h>
 #include <coffee/core/types/map.h>
 #include <peripherals/stl/string_casting.h>
 #include <peripherals/stl/string_ops.h>
@@ -597,16 +597,16 @@ void capture_grab_samples(CALCaptureDevice* dev, AudioSample& sample)
 } // namespace CAudio
 
 namespace Strings {
-CString to_string(CAudio::COpenAL::CALBuffer const& buf)
+std::string to_string(CAudio::COpenAL::CALBuffer const& buf)
 {
     return "CALBuffer(" + str::print::pointerify(buf.handle) + "," +
-           ((buf.handle) ? cast_pod(buf.handle->handle) : CString("0x0")) + ")";
+           ((buf.handle) ? cast_pod(buf.handle->handle) : std::string("0x0")) + ")";
 }
 
-CString to_string(CAudio::COpenAL::CALSource const& src)
+std::string to_string(CAudio::COpenAL::CALSource const& src)
 {
     return "CALSource(" + str::print::pointerify(src.handle) + "," +
-           ((src.handle) ? cast_pod(src.handle->handle) : CString("0x0")) + ")";
+           ((src.handle) ? cast_pod(src.handle->handle) : std::string("0x0")) + ")";
 }
 } // namespace Strings
 } // namespace Coffee

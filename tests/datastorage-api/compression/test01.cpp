@@ -24,12 +24,12 @@ static const char uncompressed[] =
 
 using namespace Coffee;
 
-static UqPtr<Resource> shared_source;
+static std::unique_ptr<Resource> shared_source;
 static semantic::Bytes shared_input;
 
 bool alloc_shared_data()
 {
-    shared_source = MkUq<Resource>("tree.blend"_rsc);
+    shared_source = std::make_unique<Resource>("tree.blend"_rsc);
     shared_input  = C_OCAST<semantic::Bytes>(*shared_source);
 
     return true;

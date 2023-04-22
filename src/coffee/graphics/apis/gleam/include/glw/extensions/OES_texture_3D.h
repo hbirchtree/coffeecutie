@@ -92,9 +92,9 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
     glCompressedTexSubImage3DOES(
         static_cast<GLenum>(target),
         level,
-        xoffset.x(),
-        xoffset.y(),
-        xoffset.z(),
+        xoffset[0],
+        xoffset[1],
+        xoffset[2],
         width[0],
         width[1],
         width[2],
@@ -137,11 +137,11 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
     glCopyTexSubImage3DOES(
         target,
         level,
-        xoffset.x(),
-        xoffset.y(),
-        xoffset.z(),
-        x.x(),
-        x.y(),
+        xoffset[0],
+        xoffset[1],
+        xoffset[2],
+        x[0],
+        x[1],
         width[0],
         width[1]);
     detail::error_check("CopyTexSubImage3DOES"sv);
@@ -267,9 +267,9 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
     glTexSubImage3DOES(
         static_cast<GLenum>(target),
         level,
-        xoffset.x(),
-        xoffset.y(),
-        xoffset.z(),
+        xoffset[0],
+        xoffset[1],
+        xoffset[2],
         width[0],
         width[1],
         width[2],

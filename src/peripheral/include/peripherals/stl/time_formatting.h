@@ -7,28 +7,29 @@
 
 namespace stl_types {
 
-template<typename Clock = Chrono::system_clock>
+template<typename Clock = std::chrono::system_clock>
 struct Time
 {
-    template<typename Period = Chrono::milliseconds>
+    template<typename Period = std::chrono::milliseconds>
     STATICINLINE typename Period::rep CurrentTimestamp()
     {
-        return Chrono::duration_cast<Period>(Clock::now().time_since_epoch())
+        return std::chrono::duration_cast<Period>(
+                   Clock::now().time_since_epoch())
             .count();
     }
 
-    STATICINLINE Chrono::microseconds::rep Microsecond()
+    STATICINLINE std::chrono::microseconds::rep Microsecond()
     {
-        return CurrentTimestamp<Chrono::microseconds>();
+        return CurrentTimestamp<std::chrono::microseconds>();
     }
 
-    STATICINLINE Chrono::microseconds::rep Millisecond()
+    STATICINLINE std::chrono::microseconds::rep Millisecond()
     {
-        return CurrentTimestamp<Chrono::milliseconds>();
+        return CurrentTimestamp<std::chrono::milliseconds>();
     }
 };
 
-template<typename Clock = Chrono::system_clock, typename CharT = char>
+template<typename Clock = std::chrono::system_clock, typename CharT = char>
 struct TimeFormatter
 {
     STATICINLINE typename std::basic_string<CharT> String(const CharT* fmt)
@@ -50,4 +51,4 @@ struct TimeFormatter
     }
 };
 
-}
+} // namespace stl_types

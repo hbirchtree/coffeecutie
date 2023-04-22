@@ -1,11 +1,10 @@
 #pragma once
 
 #include <coffee/compression/standard.h>
-#include <coffee/core/types/chunk.h>
 #include <coffee/core/url.h>
-#include <coffee/interfaces/byte_provider.h>
-#include <coffee/interfaces/file_resolver.h>
+#include <peripherals/error/result.h>
 #include <peripherals/libc/types.h>
+#include <peripherals/semantic/chunk.h>
 #include <peripherals/stl/bit_vector.h>
 
 #if !defined(COFFEE_NO_ENDIAN_OPS)
@@ -84,7 +83,7 @@ enum class error : int
  * \brief In-memory wrapper that handles opening
  *  the VirtualFile from a fs, while complying with ByteProvider.
  */
-struct Resource : semantic::ByteProvider
+struct Resource
 {
   private:
     fs_t const*   filesystem;
@@ -92,8 +91,7 @@ struct Resource : semantic::ByteProvider
 
   public:
     Resource(fs_t const* base, Url const& url);
-
-    C_MOVE_CONSTRUCTOR(Resource);
+    Resource(Resource&&) = default;
 
     /*!
      * \brief Check validity of resource and/or data it returns
@@ -461,7 +459,7 @@ struct fs_t
      * \return
      */
     template<typename T>
-    static stl_types::result<const fs_t*, error> open(Span<T> const& src)
+    static stl_types::result<const fs_t*, error> open(semantic::Span<T> const& src)
     {
         static_assert(
             MagicLength == MagicLength_Encoded * sizeof(u32),
@@ -642,8 +640,6 @@ struct fs_t
      */
     static stl_types::result<mem_chunk<const u8>, error> GetData(
         fs_t const* vfs, file_t const* file);
-
-    static Coffee::ResourceResolver<vfs::Resource> GetResolver(fs_t const* vfs);
 
   private:
     static stl_types::result<file_t const*, error> GetFileLinear(

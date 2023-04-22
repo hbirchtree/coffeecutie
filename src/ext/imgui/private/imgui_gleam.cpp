@@ -5,6 +5,8 @@
 #include <coffee/interfaces/cgraphics_pixops.h>
 #include <peripherals/typing/vectors/vector_types.h>
 
+#include <glw/texture_formats.h>
+
 #include <coffee/strings/libc_types.h>
 
 #include <coffee/core/CDebug>
@@ -22,7 +24,7 @@ using libc_types::u16;
 using libc_types::u32;
 using libc_types::u8;
 using semantic::mem_chunk;
-using stl_types::ShPtr;
+using std::shared_ptr;
 using typing::geometry::size_2d;
 using typing::geometry::size_3d;
 
@@ -36,16 +38,16 @@ static auto to_bytes(ImVector<T>& data)
 
 struct ImGuiGraphicsData
 {
-    ShPtr<gfx::vertex_array_t> vao;
-    ShPtr<gfx::program_t>      pipeline;
-    ShPtr<gfx::buffer_t>       vertices;
-    ShPtr<gfx::buffer_t>       elements;
+    std::shared_ptr<gfx::vertex_array_t> vao;
+    std::shared_ptr<gfx::program_t>      pipeline;
+    std::shared_ptr<gfx::buffer_t>       vertices;
+    std::shared_ptr<gfx::buffer_t>       elements;
 
-    ShPtr<gfx::texture_2d_t> font_atlas;
-    ShPtr<gfx::sampler_t>    font_sampler;
+    std::shared_ptr<gfx::texture_2d_t> font_atlas;
+    std::shared_ptr<gfx::sampler_t>    font_sampler;
 
-    ShPtr<gfx::texture_2d_t> shell_texture;
-    ShPtr<gfx::sampler_t>    shell_sampler;
+    std::shared_ptr<gfx::texture_2d_t> shell_texture;
+    std::shared_ptr<gfx::sampler_t>    shell_sampler;
 
     Matf4 projection_matrix;
 };
@@ -81,10 +83,10 @@ void ImGuiSystem::submit_draws(Proxy& e)
         return;
     draw_data->ScaleClipRects(io.DisplayFramebufferScale);
 
-    data.projection_matrix.d[0] = Vecf4{2.f / io.DisplaySize.x, 0, 0, 0};
-    data.projection_matrix.d[1] = Vecf4{0, 2.f / -io.DisplaySize.y, 0, 0};
-    data.projection_matrix.d[2] = Vecf4{0, 0, -1.f, 0};
-    data.projection_matrix.d[3] = Vecf4{-1.f, 1.f, 0, 1.f};
+    data.projection_matrix[0] = Vecf4{2.f / io.DisplaySize.x, 0, 0, 0};
+    data.projection_matrix[1] = Vecf4{0, 2.f / -io.DisplaySize.y, 0, 0};
+    data.projection_matrix[2] = Vecf4{0, 0, -1.f, 0};
+    data.projection_matrix[3] = Vecf4{-1.f, 1.f, 0, 1.f};
 
     auto const& ro_projection = data.projection_matrix;
 
@@ -358,6 +360,7 @@ void ImGuiSystem::setup_graphics_data(Proxy& e)
             {"UV"sv, 1},
             {"Color"sv, 2},
         });
+        a->force_attribute_names();
     } while(false);
 
     {
@@ -369,24 +372,29 @@ void ImGuiSystem::setup_graphics_data(Proxy& e)
         ImGuiIO&       io = ImGui::GetIO();
         unsigned char* pixels;
         int            width, height;
-        io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
+        io.Fonts->GetTexDataAsAlpha8(&pixels, &width, &height);
 
         using typing::PixCmp;
         using typing::pixels::BitFmt;
-        auto pixelDataSize = Coffee::GetPixSize(
-            BitFmt::UByte, PixCmp::RGBA, C_FCAST<u32>(width * height));
+        auto pixelDataSize = gl::tex::format_of(typing::pixels::PixFmt::R8)
+                                 .data_size(Veci2{width, height});
 
         auto surface_size = size_2d<i32>{width, height}.convert<u32>();
 
         data.font_atlas = api.alloc_texture(
             gleam::textures::d2,
-            typing::pixels::PixDesc(typing::pixels::PixFmt::RGBA8),
+            typing::pixels::PixDesc(typing::pixels::PixFmt::R8),
             1);
         data.font_atlas->alloc(size_3d<u32>{surface_size.w, surface_size.h, 1});
         data.font_atlas->upload(
             mem_chunk<byte_t const>::ofBytes(pixels, pixelDataSize).view,
             Veci2(0, 0),
             size_2d<i32>{width, height});
+        data.font_atlas->set_swizzle(
+            gfx::textures::swizzle_t::red,
+            gfx::textures::swizzle_t::red,
+            gfx::textures::swizzle_t::red,
+            gfx::textures::swizzle_t::red);
 
         data.font_sampler = data.font_atlas->sampler();
         data.font_sampler->alloc();

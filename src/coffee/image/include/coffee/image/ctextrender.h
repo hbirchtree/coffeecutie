@@ -1,7 +1,7 @@
 #pragma once
 
 #include "cimage.h"
-#include <coffee/core/types/chunk.h>
+#include <peripherals/semantic/chunk.h>
 #include <peripherals/libc/types.h>
 
 namespace Coffee {
@@ -31,7 +31,7 @@ struct StbFontRenderer : TrueType::FontRendererDef
         void operator()(FontData* data);
     };
 
-    using FontPtr = UqPtr<FontData, DataDeleter>;
+    using FontPtr = std::unique_ptr<FontData, DataDeleter>;
 
     static FontPtr LoadFontConfig(Bytes&& p);
     static void    UnloadFontConfig(FontPtr&& d);

@@ -5,10 +5,10 @@ namespace imgui::widgets {
 using compo::duration;
 using compo::EntityContainer;
 using compo::time_point;
-using Coffee::Chrono::duration_cast;
-using Coffee::Chrono::seconds_float;
-using libc_types::szptr;
 using libc_types::f32;
+using libc_types::szptr;
+using std::chrono::duration_cast;
+using stl_types::Chrono::seconds_float;
 
 ImGuiWidget StatsMenu()
 {

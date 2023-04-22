@@ -21,8 +21,8 @@ using profiler_compile_opts = ::profiler::options::compile_default;
 using profiler_compile_opts = ::profiler::options::compile<true, true>;
 #endif
 
-using PClock     = Chrono::high_resolution_clock;
-using PExtraData = Map<CString, CString>;
+using PClock     = std::chrono::high_resolution_clock;
+using PExtraData = std::map<std::string, std::string>;
 
 struct ThreadInternalState
 {
@@ -52,8 +52,8 @@ struct PContext
 
     struct
     {
-        atomic_bool enabled;
-        atomic_bool deep_enabled;
+        std::atomic_bool enabled;
+        std::atomic_bool deep_enabled;
     } flags;
 
     void enable()
@@ -154,7 +154,7 @@ using DataPoint = Profiler::datapoint;
 struct ExtraDataImpl
 {
     STATICINLINE void Add(
-        UNUSED_PARAM(CString const&, k),
+        UNUSED_PARAM(std::string const&, k),
         UNUSED_PARAM(std::string_view const&, v))
     {
         if constexpr(!compile_info::profiler::enabled)
@@ -166,7 +166,7 @@ struct ExtraDataImpl
 
         Lock _(context->access);
 
-        context->extra_data[k] = String(v.begin(), v.end());
+        context->extra_data[k] = std::string(v.begin(), v.end());
     }
 
     STATICINLINE PExtraData Get()
@@ -384,9 +384,10 @@ struct GpuProfilerContext
         Profiler::datapoint event;
         event.flags.type
             = offset ? Profiler::datapoint::Pop : Profiler::datapoint::Push;
-        event.ts   = (m_start + Chrono::nanoseconds(offset)).time_since_epoch();
-        event.name = name;
-        event.tid  = m_thread;
+        event.ts
+            = (m_start + std::chrono::nanoseconds(offset)).time_since_epoch();
+        event.name      = name;
+        event.tid       = m_thread;
         event.component = COFFEE_COMPONENT_NAME;
 
         props.push(*props.context, event);

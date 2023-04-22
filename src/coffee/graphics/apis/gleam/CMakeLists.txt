@@ -105,6 +105,7 @@ function ( GEN_GLEAM_TARGET GLVERSION SUFFIX )
 
             private/rhi/rhi.cpp
             private/rhi/rhi_submit.cpp
+            private/rhi/rhi_texture.cpp
             private/rhi/rhi_translate.cpp
 
             LIBRARIES
@@ -120,7 +121,7 @@ function ( GEN_GLEAM_TARGET GLVERSION SUFFIX )
             -DGLEAM_ENABLE_SOFTWARE_BCN
             )
         target_sources ( GLeamRHI_${SUFFIX} PRIVATE
-            private/rhi/rhi_texture.cpp
+            private/rhi/rhi_texture_soft_decode.cpp
             )
         target_include_directories ( GLeamRHI_${SUFFIX} PRIVATE
             ${BCDec_INCLUDE_DIR}
@@ -161,6 +162,7 @@ function ( GEN_GLEAM_TARGET GLVERSION SUFFIX )
                 )
         elseif(EMSCRIPTEN)
             target_link_options ( GLeamCommon_${SUFFIX} PUBLIC
+                -sMIN_WEBGL_VERSION=2
                 -sMAX_WEBGL_VERSION=2
                 -sFULL_ES3
                 )
@@ -194,3 +196,5 @@ if ( TARGET GLVersion_ESDynamic OR TARGET GLVersion_ES2Dynamic )
         HEADER_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/gles_include/glad_es"
         )
 endif()
+
+add_subdirectory (defines)

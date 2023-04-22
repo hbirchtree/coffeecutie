@@ -14,7 +14,7 @@ using Mesh = memory_mesh;
 namespace ASSIMP {
 
 struct AssimpData;
-using AssimpPtr = UqPtr<AssimpData>;
+using AssimpPtr = std::unique_ptr<AssimpData>;
 
 struct Node : public MultiParentObject
 {
@@ -34,7 +34,7 @@ struct NodeList : public LinkList<Node>
 };
 
 extern bool LoadScene(
-    UqPtr<AssimpData>& target, Bytes const& source, cstring hint = nullptr);
+    std::unique_ptr<AssimpData>& target, Bytes const& source, cstring hint = nullptr);
 
 struct ObjectDesc
 {
@@ -60,7 +60,7 @@ struct Object
 };
 
 extern bool GetSceneObjects(
-    UqPtr<AssimpData> const& scene, Vector<ObjectDesc>& objects);
+    std::unique_ptr<AssimpData> const& scene, Vector<ObjectDesc>& objects);
 
 /*!
  * \brief Get pre-multiplied scene nodes.
@@ -72,7 +72,7 @@ extern bool GetSceneObjects(
  * \return
  */
 extern bool GetSceneRoot(
-    UqPtr<AssimpData> const& scene, Node** root, NodeList& nodes);
+    std::unique_ptr<AssimpData> const& scene, Node** root, NodeList& nodes);
 
 /*!
  * \brief Like GetSceneRoot(), but does not accumulate matrices.
@@ -82,12 +82,12 @@ extern bool GetSceneRoot(
  * \return
  */
 extern bool GetRawSceneRoot(
-    UqPtr<AssimpData> const& scene, Node** root, NodeList& nodes);
+    std::unique_ptr<AssimpData> const& scene, Node** root, NodeList& nodes);
 
 extern bool GetMeshData(
-    UqPtr<AssimpData> const& scene, i32 node, Mesh& output_mesh);
+    std::unique_ptr<AssimpData> const& scene, i32 node, Mesh& output_mesh);
 
-extern bool GetMeshCount(UqPtr<AssimpData> const& scene, i32& count);
+extern bool GetMeshCount(std::unique_ptr<AssimpData> const& scene, i32& count);
 
 } // namespace ASSIMP
 

@@ -1,5 +1,5 @@
 #include <coffee/core/CUnitTesting>
-#include <coffee/core/types/chunk.h>
+#include <peripherals/semantic/chunk.h>
 #include <coffee/core/types/rgba.h>
 #include <coffee/core/unit_tests/graphics_framework.h>
 
@@ -13,7 +13,7 @@ bool framebuffer_read()
 {
     GFX::DefaultFramebuffer()->clear(0, Vecf4(0.0, 1.0, 0.0, 1.0));
 
-    Vector<byte_t> framebuffer;
+    std::vector<byte_t> framebuffer;
     GFX::DumpFramebuffer(
         *GFX::DefaultFramebuffer(), PixFmt::RGBA8, BitFmt::UByte, framebuffer);
 

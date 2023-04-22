@@ -1,6 +1,6 @@
 #include <coffee/core/CFiles>
-#include <coffee/core/stl_types.h>
-#include <coffee/core/types/chunk.h>
+#include <peripherals/stl/types.h>
+#include <peripherals/semantic/chunk.h>
 #include <coffee/strings/libc_types.h>
 #include <peripherals/stl/string_ops.h>
 

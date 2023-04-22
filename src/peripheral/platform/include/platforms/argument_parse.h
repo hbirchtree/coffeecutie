@@ -20,26 +20,26 @@ struct AppArg
 
     static AppArg Clone(i32 argc, cstring_w* argv);
 
-    CString programName() const;
+    std::string programName() const;
 
-    Vector<cstring_w> const& arguments() const;
-    Vector<CString> const&   originalArguments() const;
+    std::vector<cstring_w> const& arguments() const;
+    std::vector<std::string> const&   originalArguments() const;
 
-    Vector<cstring_w> m_ptrStorage;
+    std::vector<cstring_w> m_ptrStorage;
 
   private:
     cstring_w       m_programName;
-    Vector<CString> m_storage;
+    std::vector<std::string> m_storage;
 };
 
 struct ArgumentResult
 {
-    Map<CString, u32>     switches;
-    Map<CString, CString> arguments;
-    Map<CString, CString> positional;
+    std::map<std::string, u32>     switches;
+    std::map<std::string, std::string> arguments;
+    std::map<std::string, std::string> positional;
 
-    CString of(CString const& name) const;
-    CString pos(CString const& name) const;
+    std::string of(std::string const& name) const;
+    std::string pos(std::string const& name) const;
 };
 
 struct ArgumentParser
@@ -67,11 +67,11 @@ struct ArgumentParser
 
     ArgumentResult parseArguments(AppArg& args);
 
-    CString helpMessage() const;
+    std::string helpMessage() const;
 
-    Vector<aargswitch> switches;
-    Vector<aargswitch> arguments;
-    Vector<apos>       posargs;
+    std::vector<aargswitch> switches;
+    std::vector<aargswitch> arguments;
+    std::vector<apos>       posargs;
 };
 
 } // namespace args

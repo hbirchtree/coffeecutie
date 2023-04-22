@@ -1,12 +1,11 @@
 #pragma once
 
-#include <coffee/core/stl_types.h>
 #include <peripherals/typing/geometry/bounding_box.h>
+#include <string>
 
-namespace Coffee {
-namespace Strings {
+namespace Coffee::Strings {
 
-extern CString to_string(
+extern std::string to_string(
     typing::geometry::boundingbox<libc_types::i32> const& box);
 }
-} // namespace Coffee
+

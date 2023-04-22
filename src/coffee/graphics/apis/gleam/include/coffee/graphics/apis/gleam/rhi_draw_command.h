@@ -19,15 +19,21 @@ struct uniform_key
     libc_types::i32  location{invalid_uniform};
 };
 
+struct depth_state
+{
+    using depth_range = std::optional<typing::vector_types::Vecd2>;
+    depth_range range;
+    bool reversed{false};
+};
+
 struct view_state
 {
     using rect        = std::optional<typing::vector_types::Veci4>;
-    using depth_range = std::optional<typing::vector_types::Vecd2>;
 
     bool        indexed{false};
     rect        view{};
     rect        scissor{};
-    depth_range depth{};
+    std::optional<depth_state> depth{std::nullopt};
 };
 
 struct cull_state
@@ -38,7 +44,7 @@ struct cull_state
 struct blend_state
 {
     bool additive{false};
-    bool multiplicative{false};
+    bool multiply{false};
 };
 
 template<typename UType>

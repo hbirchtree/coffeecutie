@@ -148,12 +148,12 @@ coffee_library (
     TARGET CoreTerminal
 
     SOURCES
-    private/terminal/table_print.cpp
+#    private/terminal/table_print.cpp
 
     LIBRARIES CoreCommon
 
     HEADER_DIRS
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/core/terminal>
+#    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/core/terminal>
     HEADER_BASE coffee/core
     )
 

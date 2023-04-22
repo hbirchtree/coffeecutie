@@ -1,6 +1,6 @@
 #pragma once
 
-#include <coffee/core/types/chunk.h>
+#include <peripherals/semantic/chunk.h>
 #include <coffee/core/url.h>
 #include <coffee/interfaces/cgraphics_api_basic.h>
 #include <coffee/interfaces/file_resolver.h>
@@ -35,7 +35,7 @@ struct SerializedData
     Bytes const*                      elements;
 };
 
-using ResolveResource = Function<Bytes(Url const&, CString const&)>;
+using ResolveResource = Function<Bytes(Url const&, std::string const&)>;
 
 template<typename API>
 static bool LoadModel(

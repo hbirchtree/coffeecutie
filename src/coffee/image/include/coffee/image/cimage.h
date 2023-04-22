@@ -2,14 +2,19 @@
 
 #include <coffee/core/CFiles>
 #include <coffee/core/libc_types.h>
-#include <coffee/core/types/pixel_components.h>
-#include <coffee/core/types/pixel_format.h>
-#include <coffee/core/types/pixel_transform.h>
-#include <coffee/core/types/rgba.h>
 #include <coffee/core/types/size.h>
+#include <peripherals/semantic/enum/rsca.h>
+#include <peripherals/typing/enum/pixels/format.h>
+#include <peripherals/typing/enum/pixels/format_transform.h>
+#include <peripherals/typing/pixels/rgba.h>
 
 namespace Coffee {
 namespace IMG {
+
+using namespace typing::pixels;
+using typing::PixCmp;
+using semantic::Bytes;
+using semantic::BytesConst;
 
 /*!
  * \brief For the cases when you need to store an image descriptor
@@ -82,6 +87,11 @@ struct serial_image
  */
 namespace stb {
 
+using namespace typing::pixels;
+using typing::PixCmp;
+using semantic::Bytes;
+using semantic::BytesConst;
+
 enum class ImageHint : u16
 {
     Undefined = 0x0,
@@ -100,18 +110,18 @@ enum class STBError
     ResizeError,
 };
 
-struct stb_error_category : error_category
+struct stb_error_category : std::error_category
 {
     virtual const char* name() const noexcept;
     virtual std::string message(int error_code) const;
 };
 
-using stb_error = domain_error_code<STBError, stb_error_category>;
+using stb_error = stl_types::domain_error_code<STBError, stb_error_category>;
 
 template<typename PixType>
 struct image
 {
-    Bytes data_owner;
+    semantic::Bytes data_owner;
 
     PixType* data;
     Size     size;
@@ -192,7 +202,7 @@ extern bool LoadData(
     stb_error&        ec,
     PixCmp            comp = PixCmp::RGBA);
 extern bool LoadData(
-    image<scalar>*    target,
+    image<f32>*    target,
     BytesConst const& src,
     stb_error&        ec,
     PixCmp            comp = PixCmp::RGBA);
@@ -208,14 +218,14 @@ extern image<u8> Resize(
     const Size&      target,
     int              channels,
     ImageHint        hint = ImageHint::Undefined);
-extern image<scalar> Resize(
-    image<scalar> const& img, const Size& target, int channels);
+extern image<f32> Resize(
+    image<f32> const& img, const Size& target, int channels);
 
 inline bool LoadData(
     image_rw* target, BytesConst const& src, PixCmp comp = PixCmp::RGBA)
 {
     stb_error ec;
-    auto out = LoadData(target, src, ec, comp);
+    auto      out = LoadData(target, src, ec, comp);
     C_ERROR_CHECK(ec)
     return out;
 }
@@ -261,8 +271,7 @@ extern bool SaveJPG(
 namespace IMG {
 using stb::stb_error;
 
-inline bool Load(
-    BytesConst& r, PixCmp cmp, BitFmt& fmt, Bytes& data, Size& res)
+inline bool Load(BytesConst& r, PixCmp cmp, BitFmt& fmt, Bytes& data, Size& res)
 {
     stb_error ec;
 
@@ -288,7 +297,9 @@ inline bool Load(
 } // namespace IMG
 
 namespace PNG {
+using semantic::Bytes;
 using stb::stb_error;
+
 /*!
  * \brief Save image data from RGBA8 format into PNG data
  * \param src
@@ -306,6 +317,8 @@ inline Bytes Save(stb::image_const const& im)
 } // namespace PNG
 
 namespace TGA {
+
+using semantic::Bytes;
 using stb::stb_error;
 /*!
  * \brief Save image data from RGBA8, RGB8, RG8 or R8 into TGA data
@@ -324,7 +337,9 @@ inline Bytes Save(stb::image_const const& im)
 } // namespace TGA
 
 namespace JPG {
+using semantic::Bytes;
 using stb::stb_error;
+
 extern Bytes Save(stb::image_const const& src, stb_error& ec, int qual = 80);
 
 inline Bytes Save(stb::image_const const& src, int qual = 80)

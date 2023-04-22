@@ -15,7 +15,7 @@
 
 namespace net {
 
-using stl_types::UqPtr;
+using std::unique_ptr;
 
 using libc_types::u16;
 using libc_types::u32;

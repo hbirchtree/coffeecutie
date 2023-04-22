@@ -504,7 +504,7 @@ requires(semantic::concepts::Vector<vec_4_f64, f64, 4>)
         GLW_FPTR_CHECK(ProgramParameter4dNV)
     }
     glProgramParameter4dNV(
-        static_cast<GLenum>(target), index, x.x(), x.y(), x.z(), x.w());
+        static_cast<GLenum>(target), index, x[0], x[1], x[2], x[3]);
     detail::error_check("ProgramParameter4dNV"sv);
 }
 
@@ -556,7 +556,7 @@ requires(semantic::concepts::Vector<vec_4_f32, f32, 4>)
         GLW_FPTR_CHECK(ProgramParameter4fNV)
     }
     glProgramParameter4fNV(
-        static_cast<GLenum>(target), index, x.x(), x.y(), x.z(), x.w());
+        static_cast<GLenum>(target), index, x[0], x[1], x[2], x[3]);
     detail::error_check("ProgramParameter4fNV"sv);
 }
 
@@ -826,7 +826,7 @@ requires(semantic::concepts::Vector<vec_2_f64, f64, 2>)
     {
         GLW_FPTR_CHECK(VertexAttrib2dNV)
     }
-    glVertexAttrib2dNV(index, x.x(), x.y());
+    glVertexAttrib2dNV(index, x[0], x[1]);
     detail::error_check("VertexAttrib2dNV"sv);
 }
 
@@ -866,7 +866,7 @@ requires(semantic::concepts::Vector<vec_2_f32, f32, 2>)
     {
         GLW_FPTR_CHECK(VertexAttrib2fNV)
     }
-    glVertexAttrib2fNV(index, x.x(), x.y());
+    glVertexAttrib2fNV(index, x[0], x[1]);
     detail::error_check("VertexAttrib2fNV"sv);
 }
 
@@ -906,7 +906,7 @@ requires(semantic::concepts::Vector<vec_2_i16, i16, 2>)
     {
         GLW_FPTR_CHECK(VertexAttrib2sNV)
     }
-    glVertexAttrib2sNV(index, x.x(), x.y());
+    glVertexAttrib2sNV(index, x[0], x[1]);
     detail::error_check("VertexAttrib2sNV"sv);
 }
 
@@ -947,7 +947,7 @@ requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
     {
         GLW_FPTR_CHECK(VertexAttrib3dNV)
     }
-    glVertexAttrib3dNV(index, x.x(), x.y(), x.z());
+    glVertexAttrib3dNV(index, x[0], x[1], x[2]);
     detail::error_check("VertexAttrib3dNV"sv);
 }
 
@@ -988,7 +988,7 @@ requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
     {
         GLW_FPTR_CHECK(VertexAttrib3fNV)
     }
-    glVertexAttrib3fNV(index, x.x(), x.y(), x.z());
+    glVertexAttrib3fNV(index, x[0], x[1], x[2]);
     detail::error_check("VertexAttrib3fNV"sv);
 }
 
@@ -1029,7 +1029,7 @@ requires(semantic::concepts::Vector<vec_3_i16, i16, 3>)
     {
         GLW_FPTR_CHECK(VertexAttrib3sNV)
     }
-    glVertexAttrib3sNV(index, x.x(), x.y(), x.z());
+    glVertexAttrib3sNV(index, x[0], x[1], x[2]);
     detail::error_check("VertexAttrib3sNV"sv);
 }
 
@@ -1071,7 +1071,7 @@ requires(semantic::concepts::Vector<vec_4_f64, f64, 4>)
     {
         GLW_FPTR_CHECK(VertexAttrib4dNV)
     }
-    glVertexAttrib4dNV(index, x.x(), x.y(), x.z(), x.w());
+    glVertexAttrib4dNV(index, x[0], x[1], x[2], x[3]);
     detail::error_check("VertexAttrib4dNV"sv);
 }
 
@@ -1113,7 +1113,7 @@ requires(semantic::concepts::Vector<vec_4_f32, f32, 4>)
     {
         GLW_FPTR_CHECK(VertexAttrib4fNV)
     }
-    glVertexAttrib4fNV(index, x.x(), x.y(), x.z(), x.w());
+    glVertexAttrib4fNV(index, x[0], x[1], x[2], x[3]);
     detail::error_check("VertexAttrib4fNV"sv);
 }
 
@@ -1155,7 +1155,7 @@ requires(semantic::concepts::Vector<vec_4_i16, i16, 4>)
     {
         GLW_FPTR_CHECK(VertexAttrib4sNV)
     }
-    glVertexAttrib4sNV(index, x.x(), x.y(), x.z(), x.w());
+    glVertexAttrib4sNV(index, x[0], x[1], x[2], x[3]);
     detail::error_check("VertexAttrib4sNV"sv);
 }
 
@@ -1197,7 +1197,7 @@ requires(semantic::concepts::Vector<vec_4_u8, u8, 4>)
     {
         GLW_FPTR_CHECK(VertexAttrib4ubNV)
     }
-    glVertexAttrib4ubNV(index, x.x(), x.y(), x.z(), x.w());
+    glVertexAttrib4ubNV(index, x[0], x[1], x[2], x[3]);
     detail::error_check("VertexAttrib4ubNV"sv);
 }
 

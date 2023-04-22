@@ -20,5 +20,5 @@ state_pimpl::state_pimpl() :
 
 } // namespace detail
 
-UqPtr<detail::state_pimpl> state = MkUq<detail::state_pimpl>();
+std::unique_ptr<detail::state_pimpl> state = std::make_unique<detail::state_pimpl>();
 } // namespace platform

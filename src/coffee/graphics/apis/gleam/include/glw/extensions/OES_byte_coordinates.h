@@ -406,7 +406,7 @@ requires(semantic::concepts::Vector<vec_2_i8, i8, 2>)
     {
         GLW_FPTR_CHECK(Vertex2bOES)
     }
-    glVertex2bOES(x.x(), x.y());
+    glVertex2bOES(x[0], x[1]);
     detail::error_check("Vertex2bOES"sv);
 }
 
@@ -452,7 +452,7 @@ requires(semantic::concepts::Vector<vec_3_i8, i8, 3>)
     {
         GLW_FPTR_CHECK(Vertex3bOES)
     }
-    glVertex3bOES(x.x(), x.y(), x.z());
+    glVertex3bOES(x[0], x[1], x[2]);
     detail::error_check("Vertex3bOES"sv);
 }
 
@@ -499,7 +499,7 @@ requires(semantic::concepts::Vector<vec_4_i8, i8, 4>)
     {
         GLW_FPTR_CHECK(Vertex4bOES)
     }
-    glVertex4bOES(x.x(), x.y(), x.z(), x.w());
+    glVertex4bOES(x[0], x[1], x[2], x[3]);
     detail::error_check("Vertex4bOES"sv);
 }
 

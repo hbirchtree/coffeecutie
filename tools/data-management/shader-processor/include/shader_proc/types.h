@@ -38,6 +38,7 @@ struct target_options
     std::string_view                        entrypoint{"main"sv};
     std::map<std::string_view, std::string> specializations{};
     bool strip_debug{false};
+    bool targets_spv{false};
 };
 
 } // namespace shader_proc

@@ -65,7 +65,7 @@ bool test_url_version(RSCA access)
     {
         Url test = MkUrl("test", access);
 
-        CString test_string = *test;
+        std::string test_string = *test;
 
         cDebug(
             "URL mapping({1}): test -> {0}",

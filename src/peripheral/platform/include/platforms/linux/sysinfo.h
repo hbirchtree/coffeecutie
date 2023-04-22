@@ -20,7 +20,6 @@ namespace platform::info::proc::linux_::detail {
 using libc_types::u32;
 using std::set;
 using std::string;
-using stl_types::Vector;
 
 using libc_types::u16;
 using stl_types::failure;
@@ -57,7 +56,7 @@ inline auto read_cpu(std::string_view const& id, url::Path const& path)
     return read_sysfs(url::Path{"/sys/devices/system/cpu"} / cpu_id / path);
 }
 
-inline stl_types::Vector<u16> online_cores()
+inline std::vector<u16> online_cores()
 {
     using namespace url::constructors;
 
@@ -73,8 +72,8 @@ inline stl_types::Vector<u16> online_cores()
         auto data = content.value();
         auto view = std::string_view(data.data(), data.size() - 1);
         view      = view.substr(0, view.find('\n'));
-        auto                   listings = spliterator(view, ',');
-        stl_types::Vector<u16> out;
+        auto             listings = spliterator(view, ',');
+        std::vector<u16> out;
         do
         {
             auto id = *listings;
@@ -100,7 +99,6 @@ inline void foreach_cpuinfo(stl_types::Function<bool(
     using namespace stl_types::str;
     using namespace std::literals::string_view_literals;
     using namespace url::constructors;
-    using stl_types::Vector;
 
     if(auto lines = file::libc::read_lines("/proc/cpuinfo"_sys);
        lines.has_value())
@@ -111,7 +109,8 @@ inline void foreach_cpuinfo(stl_types::Function<bool(
         do
         {
             auto comps = stl_types::str::split::str(*it, ':');
-            Vector<std::string_view> components(comps.begin(), comps.end());
+            std::vector<std::string_view> components(
+                comps.begin(), comps.end());
             if(components.size() < 2)
                 continue;
             auto field_key   = trim::right(components.at(0));
@@ -122,7 +121,7 @@ inline void foreach_cpuinfo(stl_types::Function<bool(
                 proc_id = field_value;
                 if(auto physid = read_cpu(
                        proc_id, url::Path{"topology/physical_package_id"});
-                    physid.has_value() && physid.value().size() > 1)
+                   physid.has_value() && physid.value().size() > 1)
                 {
                     phys_id = physid.value();
                     if(phys_id == "-1"sv)
@@ -145,9 +144,6 @@ using namespace proc::linux_::detail;
 
 using libc_types::i32;
 using libc_types::u32;
-using std::set;
-using std::string;
-using stl_types::Vector;
 
 inline u32 node_count()
 {
@@ -198,7 +194,7 @@ inline u32 thread_count(u32 cpu = 0, [[maybe_unused]] u32 /*node*/ = 0)
     using url::Path;
 
     std::string             selected_cpu = std::to_string(cpu);
-    Vector<libc_types::u16> thread_ids;
+    std::vector<libc_types::u16> thread_ids;
     for(auto const& id : detail::online_cores())
     {
         if(auto die_id
@@ -222,7 +218,6 @@ inline std::optional<std::pair<std::string, std::string>> model(
 {
     using namespace url::constructors;
     using namespace stl_types::str;
-    using stl_types::Vector;
 
     std::string vendor, model;
     std::string implementer, variant, part;
@@ -262,7 +257,7 @@ inline std::optional<std::pair<std::string, std::string>> model(
 }
 
 template<typename T>
-using topological_map = stl_types::Map<i32, stl_types::Map<u32, T>>;
+using topological_map = std::map<i32, std::map<u32, T>>;
 
 inline topological_map<u32> topo_frequency()
 {
@@ -453,7 +448,7 @@ inline std::optional<std::pair<std::string, std::string>> motherboard()
     return std::pair{vendor, model};
 }
 
-inline std::optional<stl_types::Pair<std::string, std::string>> chassis()
+inline std::optional<std::pair<std::string, std::string>> chassis()
 {
     using namespace url::constructors;
     std::string vendor, model = "Chassis";

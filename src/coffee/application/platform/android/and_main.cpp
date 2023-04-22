@@ -29,7 +29,7 @@
 #include <sys/sysinfo.h>
 
 namespace libc::signal {
-extern stl_types::Vector<exit_handler> global_exit_handlers;
+extern std::vector<exit_handler> global_exit_handlers;
 }
 
 using namespace jnipp;
@@ -195,6 +195,15 @@ std::map<std::string, std::string> intent::extras()
     return out;
 }
 
+std::optional<std::string> intent::extra(const std::string &key)
+{
+    auto extras_ = extras();
+    auto value_it = extras_.find(key);
+    if(value_it == extras_.end())
+        return std::nullopt;
+    return value_it->second;
+}
+
 int intent::flags()
 {
     if(!java::objects::not_null(m_intent))
@@ -254,7 +263,7 @@ Url app_info::external_data_path()
     }
 }
 
-stl_types::Optional<::jnipp::java::object> app_info::get_service(
+std::optional<::jnipp::java::object> app_info::get_service(
     std::string const& service)
 {
     auto Context          = "android.content.Context"_jclass;
@@ -344,7 +353,7 @@ std::optional<network_stats::result_t> network_stats::query(network_class net)
     return out;
 }
 
-stl_types::Optional<activity_manager::memory_info> activity_manager::
+std::optional<activity_manager::memory_info> activity_manager::
     get_mem_info()
 {
     auto Activity      = "android.app.ActivityManager"_jclass;
@@ -372,7 +381,7 @@ stl_types::Optional<activity_manager::memory_info> activity_manager::
     };
 }
 
-stl_types::Optional<activity_manager::config_info> activity_manager::
+std::optional<activity_manager::config_info> activity_manager::
     get_config_info()
 {
     auto Activity   = "android.app.ActivityManager"_jclass;
@@ -384,7 +393,7 @@ stl_types::Optional<activity_manager::config_info> activity_manager::
     return {};
 }
 
-stl_types::Optional<activity_manager::window_info> activity_manager::window()
+std::optional<activity_manager::window_info> activity_manager::window()
 {
     return window_info{
         .activity        = Coffee::coffee_app->activity,

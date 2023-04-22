@@ -94,7 +94,7 @@ FORCEDINLINE result<std::vector<file_entry_t>, posix::posix_error> list(
     return files;
 }
 
-FORCEDINLINE Optional<posix::posix_error> truncate(Url const& file)
+FORCEDINLINE std::optional<posix::posix_error> truncate(Url const& file)
 {
     if(detail::is_asset(file, RSCA::ReadOnly))
         return posix::posix_error{EACCES};
@@ -102,7 +102,7 @@ FORCEDINLINE Optional<posix::posix_error> truncate(Url const& file)
         return posix::truncate(file);
 }
 
-FORCEDINLINE Optional<posix::posix_error> truncate(
+FORCEDINLINE std::optional<posix::posix_error> truncate(
     detail::android_fd_t const& file)
 {
     if(detail::is_asset(file))

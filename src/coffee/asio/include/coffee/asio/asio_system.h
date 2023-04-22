@@ -17,7 +17,7 @@ struct Subsystem : Components::SubsystemBase
         m_worker = GenWorker();
     }
 
-    ShPtr<ASIO::Service> context()
+    std::shared_ptr<ASIO::Service> context()
     {
         return m_worker->context;
     }
@@ -46,7 +46,7 @@ struct Subsystem : Components::SubsystemBase
         return create_download(source_promise.get_future());
     }
 
-    ShPtr<Worker> m_worker;
+    std::shared_ptr<Worker> m_worker;
 };
 
 } // namespace ASIO

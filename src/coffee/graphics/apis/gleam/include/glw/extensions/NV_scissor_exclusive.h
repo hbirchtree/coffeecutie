@@ -51,7 +51,7 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
     {
         GLW_FPTR_CHECK(ScissorExclusiveNV)
     }
-    glScissorExclusiveNV(x.x(), x.y(), width[0], width[1]);
+    glScissorExclusiveNV(x[0], x[1], width[0], width[1]);
     detail::error_check("ScissorExclusiveNV"sv);
 }
 

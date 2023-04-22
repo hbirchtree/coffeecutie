@@ -125,25 +125,25 @@ FORCEDINLINE bool is_exited(pid_t target, int* exitCode)
 #endif
 
 FORCEDINLINE void execv(
-    stl_types::CString const&       program,
+    std::string const&       program,
     posix_ec&                       ec,
-    stl_types::Vector<char*> const& args = {})
+    std::vector<char*> const& args = {})
 {
     ::execv(program.c_str(), args.data());
     collect_error(ec);
 }
 
 FORCEDINLINE void execv(
-    stl_types::CString const&                    program,
+    std::string const&                    program,
     posix_ec&                                    ec,
-    stl_types::Vector<stl_types::CString> const& args = {})
+    std::vector<std::string> const& args = {})
 {
-    stl_types::Vector<char*> arg_list = {};
+    std::vector<char*> arg_list = {};
     std::transform(
         args.begin(),
         args.end(),
         std::back_inserter(arg_list),
-        [](stl_types::CString const& arg) {
+        [](std::string const& arg) {
             return C_CCAST<char*>(arg.c_str());
         });
     arg_list.push_back(nullptr);
@@ -168,8 +168,8 @@ enum class spawn_mode
 template<typename ArgType>
 struct exec_info
 {
-    stl_types::CString         program;
-    stl_types::Vector<ArgType> args;
+    std::string         program;
+    std::vector<ArgType> args;
     platform::url::Url         working_dir;
 };
 

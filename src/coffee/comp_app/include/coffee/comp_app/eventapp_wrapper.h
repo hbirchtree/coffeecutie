@@ -91,14 +91,14 @@ struct DummyData
 template<
     typename R,
     typename std::enable_if<std::is_class<R>::value>::type* = nullptr>
-static void addContainer(stl_types::ShPtr<R>& ptr, detail::EntityContainer& cnt)
+static void addContainer(std::shared_ptr<R>& ptr, detail::EntityContainer& cnt)
 {
     ptr->m_container = &cnt;
 }
 template<
     typename R,
     typename std::enable_if<!std::is_class<R>::value>::type* = nullptr>
-static void addContainer(stl_types::ShPtr<R>&, detail::EntityContainer&)
+static void addContainer(std::shared_ptr<R>&, detail::EntityContainer&)
 {
 }
 

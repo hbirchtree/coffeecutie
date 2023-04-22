@@ -215,8 +215,8 @@ requires(MinimumVersion<Current, Version<1, 3>>&&
     glCompressedTexSubImage2D(
         static_cast<GLenum>(target),
         level,
-        xoffset.x(),
-        xoffset.y(),
+        xoffset[0],
+        xoffset[1],
         width[0],
         width[1],
         static_cast<GLenum>(format),
@@ -262,9 +262,9 @@ requires(MinimumVersion<Current, Version<1, 3>>&&
     glCompressedTexSubImage3D(
         static_cast<GLenum>(target),
         level,
-        xoffset.x(),
-        xoffset.y(),
-        xoffset.z(),
+        xoffset[0],
+        xoffset[1],
+        xoffset[2],
         width[0],
         width[1],
         width[2],

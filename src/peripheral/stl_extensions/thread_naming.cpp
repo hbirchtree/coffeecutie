@@ -15,7 +15,7 @@ struct ThreadNames : platform::GlobalState
 {
     virtual ~ThreadNames();
 
-    Map<ThreadId::Hash, CString> names;
+    std::map<ThreadId::Hash, std::string> names;
 };
 
 ThreadNames::~ThreadNames()
@@ -28,14 +28,14 @@ STATICINLINE ThreadNames& GetContext(platform::GlobalState* context = nullptr)
 
     platform::GlobalState* castablePtr = context;
 
-    ShPtr<GlobalState> ptr;
+    std::shared_ptr<GlobalState> ptr;
 
     if(!castablePtr)
     {
         ptr = state->PeekState("threadNames");
         if(!ptr)
         {
-            ptr = MkShared<ThreadNames>();
+            ptr = std::make_shared<ThreadNames>();
             state->SwapState("threadNames", ptr);
         }
         castablePtr = ptr.get();
@@ -50,7 +50,7 @@ STATICINLINE ThreadNames& GetContext(platform::GlobalState* context = nullptr)
     return *threadNames;
 }
 
-STATICINLINE void SaveThreadName(ThreadId::Hash hs, CString const& name)
+STATICINLINE void SaveThreadName(ThreadId::Hash hs, std::string const& name)
 {
     C_UNUSED(auto state) = platform::state->LockState("threadNames");
     auto& context        = GetContext();
@@ -70,7 +70,7 @@ STATICINLINE std::string_view LoadThreadName(ThreadId::Hash hs)
 }
 
 namespace Threads {
-bool SetName(Thread& t, CString const& name)
+bool SetName(std::thread& t, std::string const& name)
 {
     SaveThreadName(ThreadId(t.get_id()).hash(), name);
 
@@ -85,10 +85,10 @@ bool SetName(Thread& t, CString const& name)
 #endif
 }
 
-std::string_view GetName(Thread& t)
+std::string_view GetName(std::thread& t)
 {
 #if defined(COFFEE_UNIXPLAT) && !defined(COFFEE_NO_PTHREAD_GETNAME_NP) && 0
-    CString out;
+    std::string out;
     out.resize(17);
     int stat = pthread_getname_np(t.native_handle(), &out[0], out.size());
     if(stat != 0)
@@ -100,7 +100,7 @@ std::string_view GetName(Thread& t)
 #endif
 }
 
-bool SetName(ThreadId::Hash t, CString const& name)
+bool SetName(ThreadId::Hash t, std::string const& name)
 {
     SaveThreadName(t, name);
     return true;
@@ -111,7 +111,7 @@ std::string_view GetName(ThreadId::Hash t)
     return LoadThreadName(t);
 }
 
-Map<ThreadId::Hash, CString> GetNames(platform::GlobalState* context)
+std::map<ThreadId::Hash, std::string> GetNames(platform::GlobalState* context)
 {
     C_UNUSED(auto state) = platform::state->LockState(*context);
     return GetContext(context).names;
@@ -120,11 +120,11 @@ Map<ThreadId::Hash, CString> GetNames(platform::GlobalState* context)
 
 namespace CurrentThread {
 
-bool SetName(CString const& name)
+bool SetName(std::string const& name)
 {
     SaveThreadName(ThreadId().hash(), name);
 
-    CString cpy = name;
+    std::string cpy = name;
     if(name.size() >= 16)
         cpy.resize(15);
 #if defined(COFFEE_APPLE)
@@ -141,7 +141,7 @@ bool SetName(CString const& name)
 std::string_view GetName()
 {
 #if defined(COFFEE_UNIXPLAT) && !defined(COFFEE_NO_PTHREAD_GETNAME_NP) && 0
-    CString out;
+    std::string out;
     out.resize(17);
     int stat = pthread_getname_np(pthread_self(), &out[0], out.size());
     if(stat != 0)
@@ -149,7 +149,7 @@ std::string_view GetName()
     out.resize(out.find('\0', 0));
     return out;
 #elif defined(COFFEE_ANDROID) && 0
-    CString out;
+    std::string out;
     out.resize(17);
     int stat = prctl(PR_GET_NAME, &out[0], 0, 0, 0);
     out.resize(out.find('\0', 0));

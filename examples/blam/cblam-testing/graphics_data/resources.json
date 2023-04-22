@@ -8,9 +8,11 @@
             "map_senv.frag",
             "map_senv_base.frag",
             "map_uber.frag",
+            "map_uber_lite.frag",
             "scenery.vert",
             "scenery.frag",
             "scenery_uber.frag",
+            "scenery_uber_lite.frag",
             "white.frag",
             "wireframe.frag"
         ],
@@ -24,17 +26,9 @@
             "es:320"
         ],
         "strip_assemblies": true,
+        "optimization_level": "none",
         "assemblies": {
             "debug_lines": [ "debug_lines.vert", "debug_lines.frag" ],
-            "map": [
-                "map.vert",
-                "map.frag",
-                "map_senv.frag",
-                "map_senv_base.frag",
-                "map_water.frag",
-                "white.frag",
-                "wireframe.frag"
-            ],
             "map_uber": [
                 "map.vert",
                 "map_uber.frag",
@@ -44,10 +38,6 @@
             "scenery": [
                 "scenery.vert",
                 "scenery.frag"
-            ],
-            "scenery_uber": [
-                "scenery.vert",
-                "scenery_uber.frag"
             ]
         },
         "matrix": {

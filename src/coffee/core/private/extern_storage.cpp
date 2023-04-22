@@ -21,12 +21,13 @@ namespace State {
 
 struct InternalState
 {
-    using StateStorage = Map<std::string_view, ShPtr<State::GlobalState>>;
+    using StateStorage
+        = std::map<std::string_view, std::shared_ptr<State::GlobalState>>;
 
     InternalState() :
-        current_app(MkShared<platform::info::AppData>()),
+        current_app(std::make_shared<platform::info::AppData>()),
 #if PERIPHERAL_PROFILER_ENABLED
-        profiler_store(MkShared<profiling::PContext>()),
+        profiler_store(std::make_shared<profiling::PContext>()),
 #endif
         bits()
     {
@@ -35,21 +36,21 @@ struct InternalState
     DebugFun::LogInterface logger = {Logging::log};
 
 #ifndef COFFEE_LOWFAT
-    Mutex printer_lock;
+    stl_types::Mutex printer_lock;
 #endif
 
     /* Resources */
-    CString resource_prefix;
+    std::string resource_prefix;
 
     /* Application info */
-    ShPtr<platform::info::AppData> current_app;
+    std::shared_ptr<platform::info::AppData> current_app;
 
     BuildInfo build = {};
 
     platform::args::AppArg initial_args = {};
 
 #if PERIPHERAL_PROFILER_ENABLED
-    ShPtr<profiling::PContext> profiler_store;
+    std::shared_ptr<profiling::PContext> profiler_store;
 #endif
 
     StateStorage pointer_storage;
@@ -74,19 +75,20 @@ struct InternalThreadState
 {
 #if PERIPHERAL_PROFILER_ENABLED
     InternalThreadState() :
-        current_thread_id(), profiler_data(MkShared<profiling::ThreadState>())
+        current_thread_id(),
+        profiler_data(std::make_shared<profiling::ThreadState>())
     {
         using RuntimeProperties = profiling::Profiler::runtime_options;
-        auto runtimeProps       = MkUq<RuntimeProperties>();
+        auto runtimeProps       = std::make_unique<RuntimeProperties>();
 
         runtimeProps->push               = profiling::json::Push;
         runtimeProps->context            = profiler_data;
         runtimeProps->context->thread_id = current_thread_id.hash();
 
-        Lock _(State::internal_state->profiler_store->access);
+        std::lock_guard _(State::internal_state->profiler_store->access);
 
-        auto& globalState =
-            State::internal_state->profiler_store->thread_states;
+        auto& globalState
+            = State::internal_state->profiler_store->thread_states;
 
         globalState[current_thread_id.hash()] = profiler_data;
 
@@ -98,8 +100,8 @@ struct InternalThreadState
     {
         using RuntimeOptions = profiling::Profiler::runtime_options;
 
-        RuntimeOptions* internal_state =
-            C_DCAST<RuntimeOptions>(profiler_data->internal_state.get());
+        RuntimeOptions* internal_state
+            = C_DCAST<RuntimeOptions>(profiler_data->internal_state.get());
 
         if(internal_state)
             internal_state->context.reset();
@@ -107,8 +109,8 @@ struct InternalThreadState
         profiler_data->internal_state = {};
     }
 
-    ThreadId                      current_thread_id;
-    ShPtr<profiling::ThreadState> profiler_data;
+    stl_types::ThreadId                     current_thread_id;
+    std::shared_ptr<profiling::ThreadState> profiler_data;
 #endif
 };
 
@@ -120,12 +122,12 @@ thread_local P<InternalThreadState> thread_state;
 
 P<InternalState> CreateNewState()
 {
-    return MkShared<InternalState>();
+    return std::make_shared<InternalState>();
 }
 
 P<InternalThreadState> CreateNewThreadState()
 {
-    return MkShared<InternalThreadState>();
+    return std::make_shared<InternalThreadState>();
 }
 
 void SetInternalState(P<InternalState> state)
@@ -152,12 +154,12 @@ STATICINLINE void RegisterProfilerThreadState()
 #if PERIPHERAL_PROFILER_ENABLED
     if(ISTATE)
     {
-        auto tid   = ThreadId().hash();
+        auto tid   = stl_types::ThreadId().hash();
         auto store = GetProfilerStore();
 
         C_PTR_CHECK(store);
 
-        Lock _(store->access);
+        std::lock_guard _(store->access);
         store->thread_states[tid] = TSTATE->profiler_data;
     }
 #endif
@@ -191,7 +193,7 @@ BuildInfo& GetBuildInfo()
     return ISTATE->build;
 }
 
-ShPtr<info::AppData> GetAppData()
+std::shared_ptr<info::AppData> GetAppData()
 {
     if(!ISTATE)
         return {};
@@ -203,7 +205,7 @@ bool ProfilerEnabled()
     return compile_info::profiler::enabled;
 }
 
-ShPtr<profiling::PContext> GetProfilerStore()
+std::shared_ptr<profiling::PContext> GetProfilerStore()
 {
 #if PERIPHERAL_PROFILER_ENABLED
     if(!ISTATE)
@@ -215,7 +217,7 @@ ShPtr<profiling::PContext> GetProfilerStore()
 #endif
 }
 
-ShPtr<platform::profiling::ThreadState> GetProfilerTStore()
+std::shared_ptr<platform::profiling::ThreadState> GetProfilerTStore()
 {
     if constexpr(!compile_info::profiler::enabled)
         Throw(implementation_error("profiler disabled"));
@@ -230,7 +232,7 @@ ShPtr<platform::profiling::ThreadState> GetProfilerTStore()
 #endif
 }
 
-Mutex& GetPrinterLock()
+stl_types::Mutex& GetPrinterLock()
 {
     if constexpr(compile_info::lowfat_mode)
         Throw(releasemode_error("not available in this mode"));
@@ -239,7 +241,7 @@ Mutex& GetPrinterLock()
     return ISTATE->printer_lock;
 }
 
-ThreadId& GetCurrentThreadId()
+stl_types::ThreadId& GetCurrentThreadId()
 {
     if constexpr(!compile_info::profiler::enabled)
         Throw(releasemode_error("thread ID is not available"));
@@ -255,26 +257,28 @@ ThreadId& GetCurrentThreadId()
 #endif
 }
 
-stl_types::UqLock LockState(std::string_view key)
+std::unique_lock<std::mutex> LockState(std::string_view key)
 {
     C_PTR_CHECK(ISTATE);
 
     if(ISTATE->pointer_storage.find(key) == ISTATE->pointer_storage.end())
-        return stl_types::UqLock();
+        return std::unique_lock<std::mutex>();
 
-    return UqLock(ISTATE->pointer_storage[key]->access);
+    return std::unique_lock(ISTATE->pointer_storage[key]->access);
 }
 
-ShPtr<GlobalState> SwapState(std::string_view key, ShPtr<GlobalState> const& ptr)
+std::shared_ptr<GlobalState> SwapState(
+    std::string_view key, std::shared_ptr<GlobalState> const& ptr)
 {
     C_PTR_CHECK(ISTATE);
 
-    ShPtr<GlobalState> current   = std::move(ISTATE->pointer_storage[key]);
+    std::shared_ptr<GlobalState> current
+        = std::move(ISTATE->pointer_storage[key]);
     ISTATE->pointer_storage[key] = std::move(ptr);
     return current;
 }
 
-const ShPtr<GlobalState>& PeekState(std::string_view key)
+const std::shared_ptr<GlobalState>& PeekState(std::string_view key)
 {
     C_PTR_CHECK(ISTATE);
     return ISTATE->pointer_storage[key];
@@ -374,7 +378,7 @@ std::optional<std::string> ResourcePrefix(bool /*fallback*/)
  * This storage is for non-standard platforms
  */
 //#if defined(COFFEE_CUSTOM_MAIN)
-//Coffee::MainWithArgs coffee_main_function_ptr = nullptr;
+// Coffee::MainWithArgs coffee_main_function_ptr = nullptr;
 //#endif
 
 #if defined(COFFEE_APPLE_MOBILE)

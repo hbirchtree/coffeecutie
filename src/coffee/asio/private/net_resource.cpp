@@ -1,8 +1,6 @@
 #include <coffee/asio/net_resource.h>
 
 #include <coffee/core/CProfiling>
-#include <coffee/core/CRegex>
-#include <coffee/core/types/chunk.h>
 #include <peripherals/enum/helpers.h>
 #include <peripherals/stl/string_casting.h>
 
@@ -76,14 +74,14 @@ void Resource::initRsc(const Url& url)
 #if defined(ASIO_USE_SSL)
         if(secure())
         {
-            ssl = MkUq<net::tcp::ssl_socket>(std::ref(*m_ctxt));
+            ssl = std::make_unique<net::tcp::ssl_socket>(std::ref(*m_ctxt));
 
             m_error = ssl->connect(m_request.host, m_request.port);
 
         } else
 #endif
         {
-            normal = MkUq<net::tcp::raw_socket>(std::ref(*m_ctxt));
+            normal = std::make_unique<net::tcp::raw_socket>(std::ref(*m_ctxt));
 
             m_error = normal->connect(m_request.host, m_request.port);
         }
@@ -125,7 +123,7 @@ std::optional<asio::error_code> Resource::close()
     return ec ? std::make_optional(ec) : std::nullopt;
 }
 
-Resource::Resource(ShPtr<Coffee::ASIO::Service> ctxt, const Url& url) :
+Resource::Resource(std::shared_ptr<Coffee::ASIO::Service> ctxt, const Url& url) :
     m_resource(url), m_ctxt(ctxt), m_access(url.netflags)
 {
     using namespace http::header::to_string;
@@ -292,7 +290,8 @@ std::optional<asio::error_code> Resource::readResponseHeader(
     return std::nullopt;
 }
 
-std::optional<asio::error_code> Resource::readResponsePayload(net_buffer& buffer)
+std::optional<asio::error_code> Resource::readResponsePayload(
+    net_buffer& buffer)
 {
     using namespace http;
 
@@ -396,7 +395,7 @@ std::optional<asio::error_code> Resource::push(
         return ec;
 
     szptr      consumed = 0;
-    Vector<u8> recv_buf;
+    std::vector<u8> recv_buf;
     if(should_expect)
     {
         readResponseHeader(recv_buf, consumed);

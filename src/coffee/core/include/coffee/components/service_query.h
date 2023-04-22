@@ -2,7 +2,7 @@
 
 #include "entity_container.h"
 
-#include <coffee/core/stl_types.h>
+#include <peripherals/stl/types.h>
 
 namespace compo {
 

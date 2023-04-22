@@ -10,7 +10,7 @@
 namespace gleam {
 namespace detail {
 
-inline stl_types::String shader_log(u32 handle)
+inline std::string shader_log(u32 handle)
 {
     using shader_param = group::shader_parameter_name;
     std::string info;
@@ -24,7 +24,7 @@ inline stl_types::String shader_log(u32 handle)
     return info;
 }
 
-inline stl_types::String program_log(u32 handle)
+inline std::string program_log(u32 handle)
 {
     using program_param = group::program_property_arb;
     std::string info;
@@ -47,7 +47,7 @@ using shader_format_t = semantic::concepts::graphics::programs::shader_format_t;
 
 struct shader_t
 {
-    using constants_t = stl_types::Map<std::string, std::string>;
+    using constants_t = std::map<std::string, std::string>;
 
     template<typename CharType>
     shader_t(
@@ -88,18 +88,18 @@ struct program_t
     static constexpr auto debug_identifier = group::object_identifier::program;
 
     using stage_t     = typing::graphics::ShaderStage;
-    using stage_map_t = stl_types::Map<stage_t, std::shared_ptr<shader_t>>;
+    using stage_map_t = std::map<stage_t, std::shared_ptr<shader_t>>;
 
-    using compile_error_t = std::tuple<stl_types::String>;
+    using compile_error_t = std::tuple<std::string>;
     using compile_log_t
-        = std::tuple<stl_types::String /* log text*/, int /* ??? */>;
+        = std::tuple<std::string /* log text*/, int /* ??? */>;
 
     program_t(features::programs features, debug::api& debug) :
         m_features(features), m_debug(debug)
     {
     }
 
-    void add(stage_t stage, stl_types::ShPtr<shader_t> shader)
+    void add(stage_t stage, std::shared_ptr<shader_t> shader)
     {
         m_stages.insert({stage, shader});
     }

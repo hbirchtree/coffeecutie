@@ -25,10 +25,10 @@ static constexpr std::string_view test_txt_content = "TEST DATA LOL"
                                                      "TEST DATA LOL";
 
 bool gen_dummy_virtfs(
-    Vector<byte_t>&    outputData,
-    Vector<vfs::desc>& inputData,
-    vfs::fs_t const**    vfs,
-    compression::codec compress_codec = compression::codec::deflate)
+    std::vector<byte_t>&    outputData,
+    std::vector<vfs::desc>& inputData,
+    vfs::fs_t const**       vfs,
+    compression::codec      compress_codec = compression::codec::deflate)
 {
     inputData.emplace_back(
         "test.txt",
@@ -59,7 +59,7 @@ bool virtfs_serialize()
 {
     std::vector<byte_t>    outputData;
     std::vector<vfs::desc> inputData;
-    vfs::fs_t const*         readVfs = nullptr;
+    vfs::fs_t const*       readVfs = nullptr;
 
     if(!gen_dummy_virtfs(outputData, inputData, &readVfs))
         return false;
@@ -96,7 +96,7 @@ bool virtfs_serialize_zstd()
 {
     std::vector<byte_t>    outputData;
     std::vector<vfs::desc> inputData;
-    vfs::fs_t const*         readVfs = nullptr;
+    vfs::fs_t const*       readVfs = nullptr;
 
     if(!gen_dummy_virtfs(
            outputData, inputData, &readVfs, compression::codec::zstd))
@@ -132,9 +132,9 @@ bool virtfs_serialize_zstd()
 
 bool virtfs_iterator()
 {
-    Vector<byte_t>    outputData;
-    Vector<vfs::desc> inputData;
-    vfs::fs_t const*    readVfs = nullptr;
+    std::vector<byte_t>    outputData;
+    std::vector<vfs::desc> inputData;
+    vfs::fs_t const*  readVfs = nullptr;
 
     if(!gen_dummy_virtfs(outputData, inputData, &readVfs))
         return false;

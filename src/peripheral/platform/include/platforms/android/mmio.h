@@ -53,7 +53,7 @@ FORCEDINLINE result<detail::android_mapping_t, posix::posix_error> map(
         return res.error();
 }
 
-FORCEDINLINE Optional<posix::posix_error> unmap(
+FORCEDINLINE std::optional<posix::posix_error> unmap(
     detail::android_mapping_t&& mapping)
 {
     if(mapping.asset)

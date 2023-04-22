@@ -201,17 +201,17 @@ void ImGuiSystem::setup_inputs(Proxy& e)
         0, [](CIEvent& e, CIScrollEvent* scroll) {
             ImGuiIO& io = ImGui::GetIO();
 
-            io.MouseWheel = scroll->delta.x();
+            io.MouseWheel = scroll->delta[0];
             e.type        = CIEvent::NoneType;
         });
     ibus->addEventFunction<CIMouseMoveEvent>(
-        0, [](CIEvent& e, CIMouseMoveEvent* mouse) {
+        0, [](CIEvent& /*e*/, CIMouseMoveEvent* mouse) {
             ImGuiIO& io = ImGui::GetIO();
             io.AddMousePosEvent(
-                mouse->origin.x() + mouse->delta.x(),
-                mouse->origin.y() + mouse->delta.y());
-            if(io.WantCaptureMouseUnlessPopupClose)
-                e.type = CIEvent::NoneType;
+                mouse->origin[0] + mouse->delta[0],
+                mouse->origin[1] + mouse->delta[1]);
+//            if(io.WantCaptureMouseUnlessPopupClose)
+//                e.type = CIEvent::NoneType;
         });
     ibus->addEventFunction<CIMouseButtonEvent>(
         0, [](CIEvent& e, CIMouseButtonEvent* mouse) {
@@ -253,7 +253,7 @@ void ImGuiSystem::setup_inputs(Proxy& e)
             //                io.MouseDoubleClicked[index] = double_press;
             //                io.MouseDoubleClickTime      = ImGui::GetTime();
             //            }
-            io.AddMousePosEvent(mouse->pos.x(), mouse->pos.y());
+            io.AddMousePosEvent(mouse->pos[0], mouse->pos[1]);
             io.AddMouseButtonEvent(index, pressed);
             if(io.WantCaptureMouseUnlessPopupClose)
                 e.type = CIEvent::NoneType;

@@ -250,6 +250,10 @@ struct vertex_array_t
     {
         m_attribute_names = std::move(attributes);
     }
+    void force_attribute_names()
+    {
+        m_forced_attribute_names = true;
+    }
 
     void add(attribute_type attribute)
     {
@@ -342,7 +346,7 @@ struct vertex_array_t
     template<class T>
     requires(T::value == buffers::type::vertex)
         //
-        void set_buffer(T, stl_types::ShPtr<buffer_t> buffer, u32 binding)
+        void set_buffer(T, std::shared_ptr<buffer_t> buffer, u32 binding)
     {
         [[maybe_unused]] auto _ = m_debug.scope(__PRETTY_FUNCTION__);
         if(!m_features.dsa)
@@ -435,7 +439,7 @@ struct vertex_array_t
     template<class T>
     requires(T::value == buffers::type::element)
         //
-        void set_buffer(T, stl_types::ShPtr<buffer_t> buffer)
+        void set_buffer(T, std::shared_ptr<buffer_t> buffer)
     {
         if(!m_features.dsa)
         {
@@ -482,6 +486,7 @@ struct vertex_array_t
     std::map<u32, std::weak_ptr<buffer_t>>        m_buffers;
     std::weak_ptr<buffer_t>                       m_element_buffer;
     hnd                                           m_handle;
+    bool m_forced_attribute_names{false};
 };
 #endif
 
@@ -509,7 +514,7 @@ struct vertex_array_legacy_t
     template<class T>
     requires(T::value == buffers::type::vertex)
         //
-        void set_buffer(T, stl_types::ShPtr<buffer_t> buffer, u32 binding)
+        void set_buffer(T, std::shared_ptr<buffer_t> buffer, u32 binding)
     {
         m_buffers.insert({binding, buffer});
     }
@@ -517,7 +522,7 @@ struct vertex_array_legacy_t
     template<class T>
     requires(T::value == buffers::type::element)
         //
-        void set_buffer(T, stl_types::ShPtr<buffer_t> buffer)
+        void set_buffer(T, std::shared_ptr<buffer_t> buffer)
     {
         m_element_buffer = buffer;
     }

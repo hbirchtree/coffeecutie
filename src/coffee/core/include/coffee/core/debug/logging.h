@@ -120,10 +120,10 @@ requires(
 
 constexpr libc_types::u32 context_len = 4 + 2 * 3 + 3;
 
-inline stl_types::String context_string(semantic::debug::Severity severity)
+inline std::string context_string(semantic::debug::Severity severity)
 {
     using S = semantic::debug::Severity;
-    stl_types::String context{};
+    std::string context{};
     context.reserve(context_len);
 
     if(severity == S::Verbose)
@@ -139,7 +139,7 @@ inline stl_types::String context_string(semantic::debug::Severity severity)
 
     context.append(":");
     auto clock = stl_types::TimeFormatter<>::String("%H:%M:%S");
-    if(auto end = clock.find('\0'); end != stl_types::String::npos)
+    if(auto end = clock.find('\0'); end != std::string::npos)
         context.append(clock.begin(), clock.begin() + end);
     else
         context.append(clock);
@@ -176,7 +176,7 @@ requires(!compile_info::lowfat_mode)
         return;
     }
 
-    stl_types::String output;
+    std::string output;
 
     bool has_context
         = (flags & print_context) && !compile_info::printing::is_simple;
@@ -209,9 +209,9 @@ template<typename Dummy = void>
 requires(compile_info::lowfat_mode)
     //
     void log(
-        libc::io::output_fd      stream,
-        cstring                  tag,
-        stl_types::String const& message,
+        libc::io::output_fd stream,
+        cstring             tag,
+        std::string const&  message,
         semantic::debug::Severity,
         u32,
         u32 flags)

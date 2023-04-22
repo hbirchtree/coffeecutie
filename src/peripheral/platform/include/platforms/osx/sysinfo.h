@@ -14,7 +14,8 @@ namespace platform::info {
 namespace apple {
 using libc_types::u64;
 
-template<typename T> requires std::is_same_v<T, std::string>
+template<typename T>
+requires std::is_same_v<T, std::string>
 inline auto sysctl_by_name(const char* name)
 {
     size_t len = 0;
@@ -24,31 +25,31 @@ inline auto sysctl_by_name(const char* name)
     return out;
 }
 
-template<typename T> requires std::is_same_v<T, u64>
+template<typename T>
+requires std::is_same_v<T, u64>
 inline auto sysctl_by_name(const char* name)
 {
-    u64 out;
+    u64    out;
     size_t len = sizeof(out);
     sysctlbyname(name, &out, &len, nullptr, 0);
     return out;
 }
 
-}
+} // namespace apple
 namespace os::apple {
 
 }
 namespace proc::apple {
 using libc_types::u32;
 using libc_types::u64;
-using stl_types::String;
 
-inline stl_types::Optional<stl_types::Pair<String, String>> model(
+inline std::optional<std::pair<std::string, std::string>> model(
     u32 = 0, u32 = 0)
 {
 #if defined(COFFEE_IOS)
-    return stl_types::Pair<String, String>("Apple", "A");
+    return std::pair<std::string, std::string>("Apple", "A");
 #else
-    return stl_types::Pair<String, String>(
+    return std::make_pair(
         info::apple::sysctl_by_name<std::string>("machdep.cpu.vendor"),
         info::apple::sysctl_by_name<std::string>("machdep.cpu.brand_string"));
 #endif
@@ -70,13 +71,14 @@ inline u32 thread_count(u32 = 0, u32 = 0)
     return info::apple::sysctl_by_name<u64>("machdep.cpu.thread_count");
 }
 
-inline u32 frequency(bool /*current*/ = false, u32 /*cpu*/ = 0, u32 /*node*/ = 0)
+inline u32 frequency(
+    bool /*current*/ = false, u32 /*cpu*/ = 0, u32 /*node*/ = 0)
 {
     return static_cast<u32>(
         info::apple::sysctl_by_name<u64>("machdep.tsc.frequency"));
 }
 
-}
+} // namespace proc::apple
 namespace device::apple {
 
 DeviceType variant();
@@ -87,12 +89,12 @@ inline std::optional<std::pair<std::string, std::string>> device()
         "Apple", info::apple::sysctl_by_name<std::string>("hw.model"));
 }
 
-}
+} // namespace device::apple
 namespace display::apple {
 
 libc_types::f32 dpi();
 
 }
-}
+} // namespace platform::info
 
 #endif

@@ -22,7 +22,7 @@ requires(semantic::concepts::Vector<vec_3_GLhalfNV, GLhalfNV, 3>)
     {
         GLW_FPTR_CHECK(Color3hNV)
     }
-    glColor3hNV(red.x(), red.y(), red.z());
+    glColor3hNV(red[0], red[1], red[2]);
     detail::error_check("Color3hNV"sv);
 }
 
@@ -64,7 +64,7 @@ requires(semantic::concepts::Vector<vec_4_GLhalfNV, GLhalfNV, 4>)
     {
         GLW_FPTR_CHECK(Color4hNV)
     }
-    glColor4hNV(red.x(), red.y(), red.z(), red.w());
+    glColor4hNV(red[0], red[1], red[2], red[3]);
     detail::error_check("Color4hNV"sv);
 }
 
@@ -354,7 +354,7 @@ requires(semantic::concepts::Vector<vec_3_GLhalfNV, GLhalfNV, 3>)
     {
         GLW_FPTR_CHECK(SecondaryColor3hNV)
     }
-    glSecondaryColor3hNV(red.x(), red.y(), red.z());
+    glSecondaryColor3hNV(red[0], red[1], red[2]);
     detail::error_check("SecondaryColor3hNV"sv);
 }
 
@@ -548,7 +548,7 @@ requires(semantic::concepts::Vector<vec_2_GLhalfNV, GLhalfNV, 2>)
     {
         GLW_FPTR_CHECK(Vertex2hNV)
     }
-    glVertex2hNV(x.x(), x.y());
+    glVertex2hNV(x[0], x[1]);
     detail::error_check("Vertex2hNV"sv);
 }
 
@@ -589,7 +589,7 @@ requires(semantic::concepts::Vector<vec_3_GLhalfNV, GLhalfNV, 3>)
     {
         GLW_FPTR_CHECK(Vertex3hNV)
     }
-    glVertex3hNV(x.x(), x.y(), x.z());
+    glVertex3hNV(x[0], x[1], x[2]);
     detail::error_check("Vertex3hNV"sv);
 }
 
@@ -631,7 +631,7 @@ requires(semantic::concepts::Vector<vec_4_GLhalfNV, GLhalfNV, 4>)
     {
         GLW_FPTR_CHECK(Vertex4hNV)
     }
-    glVertex4hNV(x.x(), x.y(), x.z(), x.w());
+    glVertex4hNV(x[0], x[1], x[2], x[3]);
     detail::error_check("Vertex4hNV"sv);
 }
 
@@ -712,7 +712,7 @@ requires(semantic::concepts::Vector<vec_2_GLhalfNV, GLhalfNV, 2>)
     {
         GLW_FPTR_CHECK(VertexAttrib2hNV)
     }
-    glVertexAttrib2hNV(index, x.x(), x.y());
+    glVertexAttrib2hNV(index, x[0], x[1]);
     detail::error_check("VertexAttrib2hNV"sv);
 }
 
@@ -756,7 +756,7 @@ requires(semantic::concepts::Vector<vec_3_GLhalfNV, GLhalfNV, 3>)
     {
         GLW_FPTR_CHECK(VertexAttrib3hNV)
     }
-    glVertexAttrib3hNV(index, x.x(), x.y(), x.z());
+    glVertexAttrib3hNV(index, x[0], x[1], x[2]);
     detail::error_check("VertexAttrib3hNV"sv);
 }
 
@@ -801,7 +801,7 @@ requires(semantic::concepts::Vector<vec_4_GLhalfNV, GLhalfNV, 4>)
     {
         GLW_FPTR_CHECK(VertexAttrib4hNV)
     }
-    glVertexAttrib4hNV(index, x.x(), x.y(), x.z(), x.w());
+    glVertexAttrib4hNV(index, x[0], x[1], x[2], x[3]);
     detail::error_check("VertexAttrib4hNV"sv);
 }
 

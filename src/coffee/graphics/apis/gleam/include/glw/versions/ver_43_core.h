@@ -376,8 +376,8 @@ requires(
         attachments.size(),
         attachments.size() ? reinterpret_cast<const GLenum*>(attachments.data())
                            : nullptr,
-        x.x(),
-        x.y(),
+        x[0],
+        x[1],
         width[0],
         width[1]);
     detail::error_check("InvalidateSubFramebuffer"sv);
@@ -442,9 +442,9 @@ requires(MinimumVersion<Current, Version<4, 3>>&&
     glInvalidateTexSubImage(
         texture,
         level,
-        xoffset.x(),
-        xoffset.y(),
-        xoffset.z(),
+        xoffset[0],
+        xoffset[1],
+        xoffset[2],
         width[0],
         width[1],
         width[2]);

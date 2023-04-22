@@ -36,7 +36,7 @@ requires(semantic::concepts::Vector<vec_4_i32, i32, 4>)
     {
         GLW_FPTR_CHECK(ClearColorIiEXT)
     }
-    glClearColorIiEXT(red.x(), red.y(), red.z(), red.w());
+    glClearColorIiEXT(red[0], red[1], red[2], red[3]);
     detail::error_check("ClearColorIiEXT"sv);
 }
 
@@ -57,7 +57,7 @@ requires(semantic::concepts::Vector<vec_4_u32, u32, 4>)
     {
         GLW_FPTR_CHECK(ClearColorIuiEXT)
     }
-    glClearColorIuiEXT(red.x(), red.y(), red.z(), red.w());
+    glClearColorIuiEXT(red[0], red[1], red[2], red[3]);
     detail::error_check("ClearColorIuiEXT"sv);
 }
 

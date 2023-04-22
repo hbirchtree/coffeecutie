@@ -586,7 +586,7 @@ requires(semantic::concepts::Vector<vec_2_f32, f32, 2>)
     {
         GLW_FPTR_CHECK(IsPointInFillPathNV)
     }
-    auto out = glIsPointInFillPathNV(path, mask, x.x(), x.y());
+    auto out = glIsPointInFillPathNV(path, mask, x[0], x[1]);
     detail::error_check("IsPointInFillPathNV"sv);
     return out == GL_TRUE ? true : false;
 }
@@ -607,7 +607,7 @@ requires(semantic::concepts::Vector<vec_2_f32, f32, 2>)
     {
         GLW_FPTR_CHECK(IsPointInStrokePathNV)
     }
-    auto out = glIsPointInStrokePathNV(path, x.x(), x.y());
+    auto out = glIsPointInStrokePathNV(path, x[0], x[1]);
     detail::error_check("IsPointInStrokePathNV"sv);
     return out == GL_TRUE ? true : false;
 }
@@ -1079,8 +1079,8 @@ requires(semantic::concepts::Vector<vec_2_f32, f32, 2>)
         startSegment,
         numSegments,
         distance,
-        x.x(),
-        x.y(),
+        x[0],
+        x[1],
         &tangentX,
         &tangentY);
     detail::error_check("PointAlongPathNV"sv);
@@ -2290,7 +2290,7 @@ requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
     {
         GLW_FPTR_CHECK(MatrixRotatedEXT)
     }
-    glMatrixRotatedEXT(static_cast<GLenum>(mode), angle, x.x(), x.y(), x.z());
+    glMatrixRotatedEXT(static_cast<GLenum>(mode), angle, x[0], x[1], x[2]);
     detail::error_check("MatrixRotatedEXT"sv);
 }
 
@@ -2313,7 +2313,7 @@ requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
     {
         GLW_FPTR_CHECK(MatrixRotatefEXT)
     }
-    glMatrixRotatefEXT(static_cast<GLenum>(mode), angle, x.x(), x.y(), x.z());
+    glMatrixRotatefEXT(static_cast<GLenum>(mode), angle, x[0], x[1], x[2]);
     detail::error_check("MatrixRotatefEXT"sv);
 }
 
@@ -2335,7 +2335,7 @@ requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
     {
         GLW_FPTR_CHECK(MatrixScaledEXT)
     }
-    glMatrixScaledEXT(static_cast<GLenum>(mode), x.x(), x.y(), x.z());
+    glMatrixScaledEXT(static_cast<GLenum>(mode), x[0], x[1], x[2]);
     detail::error_check("MatrixScaledEXT"sv);
 }
 
@@ -2357,7 +2357,7 @@ requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
     {
         GLW_FPTR_CHECK(MatrixScalefEXT)
     }
-    glMatrixScalefEXT(static_cast<GLenum>(mode), x.x(), x.y(), x.z());
+    glMatrixScalefEXT(static_cast<GLenum>(mode), x[0], x[1], x[2]);
     detail::error_check("MatrixScalefEXT"sv);
 }
 
@@ -2379,7 +2379,7 @@ requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
     {
         GLW_FPTR_CHECK(MatrixTranslatedEXT)
     }
-    glMatrixTranslatedEXT(static_cast<GLenum>(mode), x.x(), x.y(), x.z());
+    glMatrixTranslatedEXT(static_cast<GLenum>(mode), x[0], x[1], x[2]);
     detail::error_check("MatrixTranslatedEXT"sv);
 }
 
@@ -2401,7 +2401,7 @@ requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
     {
         GLW_FPTR_CHECK(MatrixTranslatefEXT)
     }
-    glMatrixTranslatefEXT(static_cast<GLenum>(mode), x.x(), x.y(), x.z());
+    glMatrixTranslatefEXT(static_cast<GLenum>(mode), x[0], x[1], x[2]);
     detail::error_check("MatrixTranslatefEXT"sv);
 }
 

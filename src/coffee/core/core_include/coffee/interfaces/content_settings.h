@@ -2,7 +2,7 @@
 
 #include <coffee/core/CFiles>
 #include <coffee/core/datastorage/text/json/json.h>
-#include <coffee/core/types/chunk.h>
+#include <peripherals/semantic/chunk.h>
 
 namespace Coffee {
 
@@ -57,9 +57,9 @@ struct settings_visitor
         return m_basename;
     }
 
-    virtual CString type() = 0;
+    virtual std::string type() = 0;
 
-    virtual void visit(CString const& name, json::Value const& value) = 0;
+    virtual void visit(std::string const& name, json::Value const& value) = 0;
 
   private:
     Path m_dirname;

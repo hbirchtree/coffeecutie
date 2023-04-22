@@ -8,13 +8,16 @@ layout(location = 4) in vec3 tangent;
 layout(location = 5) in vec2 light_tex;
 
 layout(location = 1) uniform mat4 camera;
+layout(location = 2) uniform mat3 cameraRotation;
+layout(location = 3) uniform vec3 camera_position;
+layout(location = 4) uniform vec3 sun_position;
 
 layout(location = 0) out FragData {
-    vec3 world_pos;
+    vec3 tbn_direction;
+    vec3 eye_direction;
+    vec3 position;
     vec2 tex;
-    vec3 normal;
-    vec3 binormal;
-    vec3 tangent;
+    mat3 tbn;
     vec2 light_tex;
     flat int instanceId;
 } frag;
@@ -25,12 +28,20 @@ out gl_PerVertex {
 
 void main()
 {
-    frag.tex = tex;
-    frag.normal = normal;
-    frag.binormal = binormal;
-    frag.tangent = tangent;
-    frag.light_tex = light_tex;
+    frag.tex        = tex;
+    frag.light_tex  = light_tex;
     frag.instanceId = gl_InstanceID;
-    gl_Position = camera * vec4(position.xyz, 1);
-    frag.world_pos = position;
+    gl_Position = camera * vec4(position, 1);
+
+    mat3 tbn = mat3(-tangent, -binormal, -normal);
+    frag.tbn = tbn;
+    frag.position = position * -1;
+//    frag.eye_direction = normalize(camera_position - (position.xyz * -1));
+//    frag.eye_direction = normalize(
+//        tbn * normalize(camera_position - (position * -1))
+//        );
+//    frag.tbn_direction = normalize(
+//        tbn *
+//        (normalize(camera_position - (position * -1)))
+//        );
 }

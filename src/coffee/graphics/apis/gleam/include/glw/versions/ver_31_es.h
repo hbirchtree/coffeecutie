@@ -743,7 +743,7 @@ requires(MinimumVersion<Current, Version<3, 1>>&&
             glIsProgram(program);
 #endif
     }
-    glProgramUniform2f(program, location, v0.x(), v0.y());
+    glProgramUniform2f(program, location, v0[0], v0[1]);
     detail::error_check("ProgramUniform2f"sv);
 }
 
@@ -805,7 +805,7 @@ requires(MinimumVersion<Current, Version<3, 1>>&&
             glIsProgram(program);
 #endif
     }
-    glProgramUniform2i(program, location, v0.x(), v0.y());
+    glProgramUniform2i(program, location, v0[0], v0[1]);
     detail::error_check("ProgramUniform2i"sv);
 }
 
@@ -867,7 +867,7 @@ requires(MinimumVersion<Current, Version<3, 1>>&&
             glIsProgram(program);
 #endif
     }
-    glProgramUniform2ui(program, location, v0.x(), v0.y());
+    glProgramUniform2ui(program, location, v0[0], v0[1]);
     detail::error_check("ProgramUniform2ui"sv);
 }
 
@@ -930,7 +930,7 @@ requires(MinimumVersion<Current, Version<3, 1>>&&
             glIsProgram(program);
 #endif
     }
-    glProgramUniform3f(program, location, v0.x(), v0.y(), v0.z());
+    glProgramUniform3f(program, location, v0[0], v0[1], v0[2]);
     detail::error_check("ProgramUniform3f"sv);
 }
 
@@ -993,7 +993,7 @@ requires(MinimumVersion<Current, Version<3, 1>>&&
             glIsProgram(program);
 #endif
     }
-    glProgramUniform3i(program, location, v0.x(), v0.y(), v0.z());
+    glProgramUniform3i(program, location, v0[0], v0[1], v0[2]);
     detail::error_check("ProgramUniform3i"sv);
 }
 
@@ -1056,7 +1056,7 @@ requires(MinimumVersion<Current, Version<3, 1>>&&
             glIsProgram(program);
 #endif
     }
-    glProgramUniform3ui(program, location, v0.x(), v0.y(), v0.z());
+    glProgramUniform3ui(program, location, v0[0], v0[1], v0[2]);
     detail::error_check("ProgramUniform3ui"sv);
 }
 
@@ -1120,7 +1120,7 @@ requires(MinimumVersion<Current, Version<3, 1>>&&
             glIsProgram(program);
 #endif
     }
-    glProgramUniform4f(program, location, v0.x(), v0.y(), v0.z(), v0.w());
+    glProgramUniform4f(program, location, v0[0], v0[1], v0[2], v0[3]);
     detail::error_check("ProgramUniform4f"sv);
 }
 
@@ -1184,7 +1184,7 @@ requires(MinimumVersion<Current, Version<3, 1>>&&
             glIsProgram(program);
 #endif
     }
-    glProgramUniform4i(program, location, v0.x(), v0.y(), v0.z(), v0.w());
+    glProgramUniform4i(program, location, v0[0], v0[1], v0[2], v0[3]);
     detail::error_check("ProgramUniform4i"sv);
 }
 
@@ -1248,7 +1248,7 @@ requires(MinimumVersion<Current, Version<3, 1>>&&
             glIsProgram(program);
 #endif
     }
-    glProgramUniform4ui(program, location, v0.x(), v0.y(), v0.z(), v0.w());
+    glProgramUniform4ui(program, location, v0[0], v0[1], v0[2], v0[3]);
     detail::error_check("ProgramUniform4ui"sv);
 }
 

@@ -5,7 +5,7 @@
 namespace libc {
 namespace signal {
 
-stl_types::Vector<exit_handler> global_exit_handlers;
+std::vector<exit_handler> global_exit_handlers;
 
 void register_atexit(exit_handler hnd)
 {

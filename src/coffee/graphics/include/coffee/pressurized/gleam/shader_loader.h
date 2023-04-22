@@ -13,9 +13,9 @@ STATICINLINE UrlResolver ShaderResolver(APILevel level)
     UrlResolver::SingleResolver sres = [=](Url const& urlPath) {
         Path path = urlPath;
 
-        CString api_name     = "core";
-        CString ext          = path.extension();
-        CString glsl_version = cast_pod(GLSLVersionFromAPI(level));
+        std::string api_name     = "core";
+        std::string ext          = path.extension();
+        std::string glsl_version = cast_pod(GLSLVersionFromAPI(level));
 
         if(GLEAMAPI::LevelIsOfClass(level, APIClass::GLES))
             api_name = "es";

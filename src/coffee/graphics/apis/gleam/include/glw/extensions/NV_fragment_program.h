@@ -99,10 +99,10 @@ requires(semantic::concepts::Span<span_const_vec_4_u8>&& semantic::concepts::
         id,
         len,
         reinterpret_cast<const GLubyte*>(name.data()),
-        x.x(),
-        x.y(),
-        x.z(),
-        x.w());
+        x[0],
+        x[1],
+        x[2],
+        x[3]);
     detail::error_check("ProgramNamedParameter4dNV"sv);
 }
 
@@ -167,10 +167,10 @@ requires(semantic::concepts::Span<span_const_vec_4_u8>&& semantic::concepts::
         id,
         len,
         reinterpret_cast<const GLubyte*>(name.data()),
-        x.x(),
-        x.y(),
-        x.z(),
-        x.w());
+        x[0],
+        x[1],
+        x[2],
+        x[3]);
     detail::error_check("ProgramNamedParameter4fNV"sv);
 }
 

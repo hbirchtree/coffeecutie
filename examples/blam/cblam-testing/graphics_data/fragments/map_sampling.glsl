@@ -12,20 +12,24 @@ struct Lightmap
     vec2 atlas_scale;
     vec2 atlas_offset;
     int layer;
+    int reflection;
 };
 
 struct MaterialData
 {
     int id;
     int flags;
+    vec2 input1;
+    vec4 input2;
+    vec4 input3;
+    vec4 input4;
 };
 
 struct Material
 {
-    Map          maps[4];
+    Map          maps[5];
     Lightmap     lightmap;
     MaterialData material;
-    int padding[5];
 };
 
 layout(binding = 1, std140) buffer MaterialProperties
@@ -50,12 +54,31 @@ vec4 get_map(in uint map_id, in sampler2DArray sampler, in vec2 tex_coord, in in
     return texture(sampler, vec3(tc * scale + offset, layer & 0xFFFF));
 }
 
+#if USE_REFLECTIONS == 1
+vec4 get_cube_map(
+#if USE_ARRAY_CUBEMAP == 1
+    in samplerCubeArray sampler,
+#else
+    in samplerCube sampler,
+#endif
+    in vec3 tex_coord,
+    in int instance)
+{
+#if USE_ARRAY_CUBEMAP == 1
+    int layer = mats.instance[instance].lightmap.reflection;
+    return texture(sampler, vec4(tex_coord, layer & 0xFFFF));
+#else
+    return texture(sampler, vec3(tex_coord));
+#endif
+}
+#endif
+
 uint get_material_id(in uint instance)
 {
     return mats.instance[instance].material.id;
 }
 
-#if USE_BSP_SHADERS == 1
+#if USE_LIGHTMAPS == 1
 layout(location = 14, binding = 4) uniform sampler2DArray lightmaps;
 
 vec4 get_light(in uint instance, in vec2 light_tex)

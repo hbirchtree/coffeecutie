@@ -287,6 +287,7 @@ class LegacyCompatibilityPass : public spvtools::opt::Pass
         Status out = Status::SuccessWithoutChange;
         if(options.ssbo_as_ubo && out != Status::Failure)
             out = translate_ssbo_as_ubo(instruction).value_or(out);
+        /* TODO: UBO data as uniforms */
         if(options.remove_flat_qualifier && out != Status::Failure)
             out = remove_flat_qualifier(instruction).value_or(out);
         if(options.unsigned_to_signed_int && out != Status::Failure)

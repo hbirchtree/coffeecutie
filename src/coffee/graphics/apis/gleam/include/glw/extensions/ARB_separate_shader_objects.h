@@ -485,7 +485,7 @@ requires(semantic::concepts::Vector<vec_2_f64, f64, 2>)
             glIsProgram(program);
 #endif
     }
-    glProgramUniform2d(program, location, v0.x(), v0.y());
+    glProgramUniform2d(program, location, v0[0], v0[1]);
     detail::error_check("ProgramUniform2d"sv);
 }
 
@@ -544,7 +544,7 @@ requires(semantic::concepts::Vector<vec_2_f32, f32, 2>)
             glIsProgram(program);
 #endif
     }
-    glProgramUniform2f(program, location, v0.x(), v0.y());
+    glProgramUniform2f(program, location, v0[0], v0[1]);
     detail::error_check("ProgramUniform2f"sv);
 }
 
@@ -603,7 +603,7 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
             glIsProgram(program);
 #endif
     }
-    glProgramUniform2i(program, location, v0.x(), v0.y());
+    glProgramUniform2i(program, location, v0[0], v0[1]);
     detail::error_check("ProgramUniform2i"sv);
 }
 
@@ -662,7 +662,7 @@ requires(semantic::concepts::Vector<vec_2_u32, u32, 2>)
             glIsProgram(program);
 #endif
     }
-    glProgramUniform2ui(program, location, v0.x(), v0.y());
+    glProgramUniform2ui(program, location, v0[0], v0[1]);
     detail::error_check("ProgramUniform2ui"sv);
 }
 
@@ -722,7 +722,7 @@ requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
             glIsProgram(program);
 #endif
     }
-    glProgramUniform3d(program, location, v0.x(), v0.y(), v0.z());
+    glProgramUniform3d(program, location, v0[0], v0[1], v0[2]);
     detail::error_check("ProgramUniform3d"sv);
 }
 
@@ -782,7 +782,7 @@ requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
             glIsProgram(program);
 #endif
     }
-    glProgramUniform3f(program, location, v0.x(), v0.y(), v0.z());
+    glProgramUniform3f(program, location, v0[0], v0[1], v0[2]);
     detail::error_check("ProgramUniform3f"sv);
 }
 
@@ -842,7 +842,7 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>)
             glIsProgram(program);
 #endif
     }
-    glProgramUniform3i(program, location, v0.x(), v0.y(), v0.z());
+    glProgramUniform3i(program, location, v0[0], v0[1], v0[2]);
     detail::error_check("ProgramUniform3i"sv);
 }
 
@@ -902,7 +902,7 @@ requires(semantic::concepts::Vector<vec_3_u32, u32, 3>)
             glIsProgram(program);
 #endif
     }
-    glProgramUniform3ui(program, location, v0.x(), v0.y(), v0.z());
+    glProgramUniform3ui(program, location, v0[0], v0[1], v0[2]);
     detail::error_check("ProgramUniform3ui"sv);
 }
 
@@ -963,7 +963,7 @@ requires(semantic::concepts::Vector<vec_4_f64, f64, 4>)
             glIsProgram(program);
 #endif
     }
-    glProgramUniform4d(program, location, v0.x(), v0.y(), v0.z(), v0.w());
+    glProgramUniform4d(program, location, v0[0], v0[1], v0[2], v0[3]);
     detail::error_check("ProgramUniform4d"sv);
 }
 
@@ -1024,7 +1024,7 @@ requires(semantic::concepts::Vector<vec_4_f32, f32, 4>)
             glIsProgram(program);
 #endif
     }
-    glProgramUniform4f(program, location, v0.x(), v0.y(), v0.z(), v0.w());
+    glProgramUniform4f(program, location, v0[0], v0[1], v0[2], v0[3]);
     detail::error_check("ProgramUniform4f"sv);
 }
 
@@ -1085,7 +1085,7 @@ requires(semantic::concepts::Vector<vec_4_i32, i32, 4>)
             glIsProgram(program);
 #endif
     }
-    glProgramUniform4i(program, location, v0.x(), v0.y(), v0.z(), v0.w());
+    glProgramUniform4i(program, location, v0[0], v0[1], v0[2], v0[3]);
     detail::error_check("ProgramUniform4i"sv);
 }
 
@@ -1146,7 +1146,7 @@ requires(semantic::concepts::Vector<vec_4_u32, u32, 4>)
             glIsProgram(program);
 #endif
     }
-    glProgramUniform4ui(program, location, v0.x(), v0.y(), v0.z(), v0.w());
+    glProgramUniform4ui(program, location, v0[0], v0[1], v0[2], v0[3]);
     detail::error_check("ProgramUniform4ui"sv);
 }
 

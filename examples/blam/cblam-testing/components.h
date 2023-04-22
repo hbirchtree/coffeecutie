@@ -21,10 +21,11 @@ enum Passes
     Pass_Opaque,
     Pass_Alphatest,
     Pass_LastOpaque = Pass_Alphatest,
-    Pass_Lights,
+    Pass_Additive,
+    Pass_Multiply,
     Pass_Glass,
 
-    Pass_Wireframe,
+    //    Pass_Wireframe,
 
     Pass_Count,
 
@@ -48,10 +49,12 @@ struct BspReference
 
 struct model_tracker_t
 {
+    u16 bucket;
     u16 draw;
     u16 instance;
 };
-static_assert(sizeof(model_tracker_t) == 4);
+
+static_assert(sizeof(model_tracker_t) == 6);
 
 struct MeshTrackingData
 {
@@ -95,23 +98,21 @@ struct SubModel
     }
 };
 
-template<
-    typename SpawnType,
-    typename std::enable_if<
-        !std::is_same<SpawnType, blam::scn::multiplayer_equipment>::value>::
-        type* = nullptr>
-static Vecf3 spawn_rotation_to_euler(SpawnType const* spawn)
+template<typename SpawnType>
+requires(!std::is_same_v<SpawnType, blam::scn::multiplayer_equipment>)
+    //
+    static Quatf spawn_rotation_to_quat(SpawnType const* spawn)
 {
-    return Vecf3(spawn->rot.x(), spawn->rot.y(), -spawn->rot.z());
+    return Quatf(Vecf3(0, 0, 1) * spawn->rot.x)
+           * Quatf(Vecf3(0, 1, 0) * spawn->rot.y)
+           * Quatf(Vecf3(1, 0, 0) * -spawn->rot.z);
 }
-template<
-    typename SpawnType,
-    typename std::enable_if<
-        std::is_same<SpawnType, blam::scn::multiplayer_equipment>::value>::
-        type* = nullptr>
-static Vecf3 spawn_rotation_to_euler(SpawnType const* spawn)
+template<typename SpawnType>
+requires std::is_same_v<SpawnType, blam::scn::multiplayer_equipment>
+//
+static Quatf spawn_rotation_to_quat(SpawnType const* spawn)
 {
-    return Vecf3(spawn->facing, 0, 0);
+    return Quatf(Vecf3(0, 0, spawn->facing));
 }
 
 struct Model
@@ -122,16 +123,15 @@ struct Model
 
     Matf4 transform;
 
-    Vector<ERef>                        models;
-    mem_chunk<blam::mod2::region const> regions;
-    blam::tag_t const*                  tag = nullptr;
+    std::vector<ERef>                             models;
+    semantic::mem_chunk<blam::mod2::region const> regions;
+    blam::tag_t const*                            tag = nullptr;
 
     template<typename T>
     void initialize(T const* spawn)
     {
-        transform = typing::vectors::translation(Matf4(), spawn->pos)
-                    * typing::vectors::matrixify(
-                        typing::vectors::euler(spawn_rotation_to_euler(spawn)));
+        transform = glm::translate(Matf4(1), spawn->pos)
+                    * glm::mat4_cast(spawn_rotation_to_quat(spawn));
     }
 };
 
@@ -192,11 +192,12 @@ struct ShaderData
         switch(shader_tag->tagclass_e[0])
         {
         case tc::soso: {
-//            auto info  = shader_data<shader_model>();
-//            auto flags = info->flags;
-//            bool transparent
-//                = !feval(flags, shader_model::model_flags::no_alpha_test);
-//            return transparent ? Pass_Alphatest : Pass_Opaque;
+            //            auto info  = shader_data<shader_model>();
+            //            auto flags = info->flags;
+            //            bool transparent
+            //                = !feval(flags,
+            //                shader_model::model_flags::no_alpha_test);
+            //            return transparent ? Pass_Alphatest : Pass_Opaque;
             return Pass_Glass;
         }
         case tc::schi: {
@@ -204,12 +205,20 @@ struct ShaderData
             shader_chicago<V> const* info   = shader_data<shader_chicago<V>>();
             auto                     maps   = info->maps.data(cache.magic);
             auto                     layers = info->layers.data(cache.magic);
-            auto is_decal = feval(info->transparent.flags & flags_t::decal);
+
+            auto is_multiplied = info->transparent.blend_function
+                                 == chicago::framebuffer_blending::multiply;
+            auto is_add = info->transparent.blend_function
+                          == chicago::framebuffer_blending::add;
             auto is_alpha
                 = feval(info->transparent.flags & flags_t::alpha_testing);
 
-//            return is_decal ? Pass_Lights : is_alpha ? Pass_Glass : Pass_Opaque;
-            return Pass_Lights;
+            if(is_multiplied)
+                return Pass_Multiply;
+            if(is_add)
+                return Pass_Additive;
+
+            return Pass_Alphatest;
         }
         case tc::scex: {
             shader_chicago_extended<V> const* info
@@ -255,6 +264,33 @@ struct ShaderData
     }
 };
 
+struct DebugDraw
+{
+    using value_type = DebugDraw;
+    using type       = compo::alloc::VectorContainer<value_type>;
+
+    gfx::draw_command::data_t data{};
+};
+
+struct TriggerVolume
+{
+    using value_type = TriggerVolume;
+    using type       = compo::alloc::VectorContainer<value_type>;
+
+    blam::scn::trigger_volume const* trigger_volume{nullptr};
+};
+
+struct Light
+{
+    using value_type = Light;
+    using type       = compo::alloc::VectorContainer<value_type>;
+
+    blam::scn::skybox::light const* light{nullptr};
+    blam::mod2::marker const* positioning{nullptr};
+
+    Matf4 transform;
+};
+
 enum ObjectTags : u32
 {
     ObjectScenery      = 0x1,
@@ -269,8 +305,11 @@ enum ObjectTags : u32
     ObjectObject = 0x1000,
     ObjectUnit   = ObjectObject << 1,
 
-    ObjectMod2 = 0x100000,
+    ObjectMod2 = 0x10000,
     ObjectBsp  = ObjectMod2 << 1,
+
+    ObjectScriptObject  = 0x100000,
+    ObjectTriggerVolume = ObjectScriptObject << 1,
 
     /* For objects that should be removed after loading a new map */
     ObjectGC = 0x800000,

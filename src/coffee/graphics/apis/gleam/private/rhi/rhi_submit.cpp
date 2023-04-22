@@ -261,8 +261,12 @@ void compute_ubo_instance(
      */
     u32 smallest_stride{ubo_alignment};
     for(auto const& buffer : *buffers)
+    {
+        if(buffer.stride == 0)
+            continue;
         smallest_stride
             = std::min<u32>(static_cast<u32>(buffer.stride), smallest_stride);
+    }
 
     u32 skip = ubo_alignment / smallest_stride;
 

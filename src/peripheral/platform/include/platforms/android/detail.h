@@ -5,9 +5,6 @@
 #include <coffee/android/android_main.h>
 #include <peripherals/error/result.h>
 
-#include "/home/havard/.local/android-sdk-linux/ndk/25.1.8937393/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include/android/asset_manager.h"
-#include "/home/havard/Code/coffeecutie/src/peripheral/platform/platforms/android/include/coffee/android/android_main.h"
-
 namespace platform::file::android {
 using libc_types::szptr;
 namespace detail {

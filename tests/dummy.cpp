@@ -6,7 +6,7 @@
 #include <coffee/core/CFiles>
 #include <coffee/core/CMath>
 #include <coffee/core/CThreading>
-#include <coffee/core/types/chunk.h>
+#include <peripherals/semantic/chunk.h>
 #include <peripherals/stl/string_casting.h>
 
 /* Graphics API interfaces */

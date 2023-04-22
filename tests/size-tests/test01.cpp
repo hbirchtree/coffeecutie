@@ -3,7 +3,7 @@
 #include <peripherals/stl/string_casting.h>
 #include <platforms/stacktrace.h>
 
-#include <coffee/core/CStringFormat>
+#include <coffee/core/std::stringFormat>
 #include <coffee/core/CUnitTesting>
 #include <coffee/core/terminal/table.h>
 
@@ -162,9 +162,9 @@ bool data_unit_tests()
 }
 
 template<typename T>
-static void CheckSize(Vector<CString>& names, Vector<szptr>& sizes)
+static void CheckSize(Vector<std::string>& names, Vector<szptr>& sizes)
 {
-    CString type_name =
+    std::string type_name =
         platform::env::Stacktracer::DemangleSymbol(typeid(T).name());
     names.push_back(type_name);
     sizes.push_back(sizeof(T));
@@ -179,8 +179,8 @@ bool input_size_tests()
     Table::Header head = {"Type name", "Size"};
     Table::Table  table(head);
 
-    Vector<CString> typenames;
-    Vector<szptr>   typesizes;
+    std::vector<std::string> typenames;
+    std::vector<szptr>   typesizes;
 
     CheckSize<CIEvent>(typenames, typesizes);
 

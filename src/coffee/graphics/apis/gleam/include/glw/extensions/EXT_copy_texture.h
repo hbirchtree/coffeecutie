@@ -34,8 +34,8 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
         static_cast<GLenum>(target),
         level,
         static_cast<GLenum>(internalformat),
-        x.x(),
-        x.y(),
+        x[0],
+        x[1],
         width,
         border);
     detail::error_check("CopyTexImage1DEXT"sv);
@@ -73,8 +73,8 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
         static_cast<GLenum>(target),
         level,
         static_cast<GLenum>(internalformat),
-        x.x(),
-        x.y(),
+        x[0],
+        x[1],
         width[0],
         width[1],
         border);
@@ -106,7 +106,7 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
         GLW_FPTR_CHECK(CopyTexSubImage1DEXT)
     }
     glCopyTexSubImage1DEXT(
-        static_cast<GLenum>(target), level, xoffset, x.x(), x.y(), width);
+        static_cast<GLenum>(target), level, xoffset, x[0], x[1], width);
     detail::error_check("CopyTexSubImage1DEXT"sv);
 }
 
@@ -140,10 +140,10 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
     glCopyTexSubImage2DEXT(
         static_cast<GLenum>(target),
         level,
-        xoffset.x(),
-        xoffset.y(),
-        x.x(),
-        x.y(),
+        xoffset[0],
+        xoffset[1],
+        x[0],
+        x[1],
         width[0],
         width[1]);
     detail::error_check("CopyTexSubImage2DEXT"sv);
@@ -181,11 +181,11 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
     glCopyTexSubImage3DEXT(
         static_cast<GLenum>(target),
         level,
-        xoffset.x(),
-        xoffset.y(),
-        xoffset.z(),
-        x.x(),
-        x.y(),
+        xoffset[0],
+        xoffset[1],
+        xoffset[2],
+        x[0],
+        x[1],
         width[0],
         width[1]);
     detail::error_check("CopyTexSubImage3DEXT"sv);

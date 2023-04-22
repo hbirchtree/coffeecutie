@@ -1,11 +1,11 @@
 #pragma once
 
-#include <coffee/core/libc_types.h>
-#include <coffee/core/stl_types.h>
 #include <peripherals/enum/helpers.h>
-#include <peripherals/stl/functional_types.h>
+#include <peripherals/libc/types.h>
+#include <peripherals/stl/decl_member_function.h>
 #include <peripherals/stl/time_types.h>
 #include <peripherals/stl/type_list.h>
+#include <peripherals/stl/types.h>
 
 #define ENTCOMP_CREATE_TAG(name)      \
     struct name                       \
@@ -15,12 +15,12 @@
 
 namespace compo {
 
-using libc_types::u32;
 using libc_types::i32;
-using libc_types::u64;
 using libc_types::i64;
-using libc_types::szptr;
 using libc_types::ptroff;
+using libc_types::szptr;
+using libc_types::u32;
+using libc_types::u64;
 using clock      = std::chrono::high_resolution_clock;
 using duration   = std::chrono::microseconds;
 using time_point = std::chrono::time_point<clock>;
@@ -66,7 +66,7 @@ C_FLAGS(VisitorFlags, u32);
 struct EntityRecipe
 {
     std::vector<size_t> components;
-    u32            tags{0};
+    u32                 tags{0};
 };
 
 struct Entity : stl_types::non_copy
@@ -107,8 +107,8 @@ struct EntityVisitorBase : stl_types::non_copy
 
     virtual ~EntityVisitorBase();
 
-    virtual bool dispatch(
-        EntityContainer& container, const time_point& current) = 0;
+    virtual bool dispatch(EntityContainer& container, const time_point& current)
+        = 0;
 };
 
 template<class T>
@@ -116,8 +116,8 @@ concept is_subsystem = true;
 // concept is_subsystem = std::is_convertible_v<T&, SubsystemBase&>;
 
 template<class T>
-concept is_component = std::is_convertible_v<T&, ComponentContainerBase&> &&
-    requires(T v)
+concept is_component
+    = std::is_convertible_v<T&, ComponentContainerBase&> && requires(T v)
 {
     typename T::value_type;
 };

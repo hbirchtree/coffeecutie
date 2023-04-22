@@ -76,8 +76,8 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
     glTexSubImage2DEXT(
         static_cast<GLenum>(target),
         level,
-        xoffset.x(),
-        xoffset.y(),
+        xoffset[0],
+        xoffset[1],
         width[0],
         width[1],
         static_cast<GLenum>(format),

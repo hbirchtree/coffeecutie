@@ -539,7 +539,7 @@ requires(semantic::concepts::Vector<vec_2_f32, f32, 2>)
     {
         GLW_FPTR_CHECK(Uniform2fARB)
     }
-    glUniform2fARB(location, v0.x(), v0.y());
+    glUniform2fARB(location, v0[0], v0[1]);
     detail::error_check("Uniform2fARB"sv);
 }
 
@@ -581,7 +581,7 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
     {
         GLW_FPTR_CHECK(Uniform2iARB)
     }
-    glUniform2iARB(location, v0.x(), v0.y());
+    glUniform2iARB(location, v0[0], v0[1]);
     detail::error_check("Uniform2iARB"sv);
 }
 
@@ -624,7 +624,7 @@ requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
     {
         GLW_FPTR_CHECK(Uniform3fARB)
     }
-    glUniform3fARB(location, v0.x(), v0.y(), v0.z());
+    glUniform3fARB(location, v0[0], v0[1], v0[2]);
     detail::error_check("Uniform3fARB"sv);
 }
 
@@ -667,7 +667,7 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>)
     {
         GLW_FPTR_CHECK(Uniform3iARB)
     }
-    glUniform3iARB(location, v0.x(), v0.y(), v0.z());
+    glUniform3iARB(location, v0[0], v0[1], v0[2]);
     detail::error_check("Uniform3iARB"sv);
 }
 
@@ -711,7 +711,7 @@ requires(semantic::concepts::Vector<vec_4_f32, f32, 4>)
     {
         GLW_FPTR_CHECK(Uniform4fARB)
     }
-    glUniform4fARB(location, v0.x(), v0.y(), v0.z(), v0.w());
+    glUniform4fARB(location, v0[0], v0[1], v0[2], v0[3]);
     detail::error_check("Uniform4fARB"sv);
 }
 
@@ -755,7 +755,7 @@ requires(semantic::concepts::Vector<vec_4_i32, i32, 4>)
     {
         GLW_FPTR_CHECK(Uniform4iARB)
     }
-    glUniform4iARB(location, v0.x(), v0.y(), v0.z(), v0.w());
+    glUniform4iARB(location, v0[0], v0[1], v0[2], v0[3]);
     detail::error_check("Uniform4iARB"sv);
 }
 

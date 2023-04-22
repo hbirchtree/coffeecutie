@@ -13,19 +13,19 @@ struct Worker : State::GlobalState
 {
     virtual ~Worker();
 
-    ShPtr<ASIO::Service> context;
+    std::shared_ptr<ASIO::Service> context;
 
     void stop();
 };
 
-STATICINLINE ShPtr<Worker> GenWorker()
+STATICINLINE std::shared_ptr<Worker> GenWorker()
 {
     auto worker = std::dynamic_pointer_cast<Worker>(
                                     State::PeekState(context_name));
     if(worker)
         return worker;
 
-    worker          = MkShared<Worker>();
+    worker          = std::make_shared<Worker>();
     worker->context = ASIO::InitService();
 
     State::SwapState(context_name, worker);
@@ -33,7 +33,7 @@ STATICINLINE ShPtr<Worker> GenWorker()
     return worker;
 }
 
-STATICINLINE ShPtr<ASIO::Service> GetContext()
+STATICINLINE std::shared_ptr<ASIO::Service> GetContext()
 {
     auto ptr = State::PeekState(context_name);
     if(!ptr)

@@ -125,7 +125,7 @@ FORCEDINLINE void wait()
     io::get<input_type::character>();
 }
 
-FORCEDINLINE stl_types::Pair<libc_types::u32, libc_types::u32> size()
+FORCEDINLINE std::pair<libc_types::u32, libc_types::u32> size()
 {
 #if defined(COFFEE_LINUX)
     struct winsize size;

@@ -83,7 +83,7 @@ void ProfilingExport()
             http::header_field::accept,
             http::header::to_string::content_type(http::content_type::json));
 
-        CString target_chrome;
+        std::string target_chrome;
         Profiling::ExportChromeTracerData(target_chrome);
 
         out.add(

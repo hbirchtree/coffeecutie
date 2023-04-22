@@ -30,7 +30,7 @@ bool readwrite_file()
     Profiler::Profile("Reading time");
 
     Resource rsc(testFileDupe);
-    CString  docData = INI::Write(doc2);
+    std::string  docData = INI::Write(doc2);
     rsc              = BytesConst::ofString(docData.c_str());
 
     FileCommit(rsc, RSCA::Discard | RSCA::NewFile);
@@ -69,7 +69,7 @@ bool write_file()
 
     Resource rsc(testfile);
     Profiler::Profile("File object");
-    CString docData = INI::Write(doc);
+    std::string docData = INI::Write(doc);
     rsc             = BytesConst::ofString(docData.c_str());
     Profiler::Profile("Writing object to file");
     FileCommit(rsc, RSCA::WriteOnly | RSCA::Discard | RSCA::NewFile);

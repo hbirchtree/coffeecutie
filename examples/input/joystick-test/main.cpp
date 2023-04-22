@@ -1,7 +1,7 @@
 #include <coffee/core/CApplication>
 #include <coffee/core/CFiles>
 #include <coffee/core/input/eventhandlers.h>
-#include <coffee/core/types/chunk.h>
+#include <peripherals/semantic/chunk.h>
 
 #include <coffee/image/cimage.h>
 #include <coffee/sdl2/CSDL2Dialog>
@@ -68,9 +68,9 @@ i32 coffee_main(i32, cstring_w*)
     auto visual = GetDefaultVisual(majGL, minGL);
     RHI::GLEAM::GLEAM_API::GetDefaultProperties(visual);
 
-    CString err;
+    std::string err;
 
-    auto winhost_ptr = MkShared<BasicWindow>();
+    auto winhost_ptr = std::make_shared<BasicWindow>();
     auto& winhost = *winhost_ptr;
     if(!winhost.init(visual, &err))
     {

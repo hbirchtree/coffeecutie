@@ -3,7 +3,7 @@
 #include <coffee/core/internal_state.h>
 #include <coffee/core/profiler/profiling-export.h>
 #include <coffee/core/task_queue/task.h>
-#include <coffee/core/types/chunk.h>
+#include <peripherals/semantic/chunk.h>
 #include <peripherals/libc/types.h>
 #include <peripherals/stl/string_casting.h>
 #include <peripherals/stl/types.h>
@@ -88,7 +88,7 @@ void WriteJsonData(
                 root.String(tests[i].title);
             else
             {
-                CString fmt = Strings::cStringFormat("Test {0}", i);
+                std::string fmt = Strings::cStringFormat("Test {0}", i);
                 root.String(fmt.c_str());
             }
 
@@ -119,7 +119,7 @@ void WriteJsonData(
                     root.String(o.title);
                 else
                 {
-                    CString fmt = Strings::cStringFormat("Test {0}", i);
+                    std::string fmt = Strings::cStringFormat("Test {0}", i);
                     root.String(fmt.c_str());
                 }
 

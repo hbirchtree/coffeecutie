@@ -9,7 +9,7 @@ using namespace Library;
 
 const constexpr cstring TargetLibrary = "EnvLibraryLoadTester";
 
-static CString _error;
+static std::string _error;
 static FunctionLoader::Library* _library_object;
 
 bool dlopen_test()

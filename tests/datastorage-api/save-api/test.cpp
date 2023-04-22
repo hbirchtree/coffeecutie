@@ -1,6 +1,6 @@
 #include <coffee/strings/libc_types.h>
 
-#include <coffee/core/CStringFormat>
+#include <coffee/core/std::stringFormat>
 #include <coffee/core/CUnitTesting>
 #include <coffee/core/coffee_saving.h>
 
@@ -23,7 +23,7 @@ struct TestStructure
     {
         return !(*this == b);
     }
-    operator CString()
+    operator std::string()
     {
         return cStringFormat(
             "TestStructure({0}, {1}, {2}, {3})",
@@ -43,7 +43,7 @@ bool save_to_disk()
     cVerbose(5, "Separate operation");
     storeApi->save(Bytes::ofBytes(data));
 
-    cDebug("On-disk: {0}", C_CAST<CString>(data));
+    cDebug("On-disk: {0}", C_CAST<std::string>(data));
 
     data.big_integer_test     = UInt32_Max * 4;
     data.smaller_integer_test = UInt16_Max * 2;
@@ -61,8 +61,8 @@ bool save_to_disk()
     if(storeApi->restore(Bytes::ofBytes(data)) != sizeof(data))
         return false;
 
-    cDebug("In-memory: {0}", C_CAST<CString>(data_cpy));
-    cDebug("On-disk: {0}", C_CAST<CString>(data));
+    cDebug("In-memory: {0}", C_CAST<std::string>(data_cpy));
+    cDebug("On-disk: {0}", C_CAST<std::string>(data));
 
     return data_cpy == data;
 }

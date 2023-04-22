@@ -105,9 +105,9 @@ struct BlamTextureBrowser : Components::RestrictedSubsystem<
 
         m_view->m_format = m_selected.image.fmt;
         m_view->alloc(
-            size_3d<i32>{img->isize.w, img->isize.h, 1u}.convert<u32>());
+            size_3d<i32>{img->isize.x, img->isize.y, 1u}.convert<u32>());
         m_view->upload(
-            img->data(magic), Veci2{}, Veci2{img->isize.w, img->isize.h});
+            img->data(magic), Veci2{}, Veci2{img->isize.x, img->isize.y});
     }
 
     void show_texture_imgui()
@@ -126,10 +126,10 @@ struct BlamTextureBrowser : Components::RestrictedSubsystem<
         ImGui::Text("Format: %.*s", static_cast<int>(fmt.size()), fmt.data());
         ImGui::Text(
             "Size: %ix%i",
-            m_selected.image.mip->isize.w,
-            m_selected.image.mip->isize.h);
-        auto aspect_ratio = static_cast<f32>(m_selected.image.mip->isize.w)
-                            / m_selected.image.mip->isize.h;
+            m_selected.image.mip->isize.x,
+            m_selected.image.mip->isize.y);
+        auto aspect_ratio = static_cast<f32>(m_selected.image.mip->isize.x)
+                            / m_selected.image.mip->isize.y;
         auto uv1 = m_selected.image.offset;
         auto uv2 = uv1 + m_selected.image.scale;
         if(!m_view->m_features.image_copy)
@@ -137,8 +137,8 @@ struct BlamTextureBrowser : Components::RestrictedSubsystem<
         ImGui::Image(
             tex_handle.ptr,
             ImVec2{512, 512 / aspect_ratio},
-            ImVec2{uv1.x(), uv1.y()},
-            ImVec2{uv2.x(), uv2.y()});
+            ImVec2{uv1[0], uv1[1]},
+            ImVec2{uv2[0], uv2[1]});
     }
 
     void list_textures(Proxy& e)

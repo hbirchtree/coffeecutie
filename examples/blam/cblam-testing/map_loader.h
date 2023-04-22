@@ -1,6 +1,7 @@
 #pragma once
 
 #include "data.h"
+#include "selected_version.h"
 
 #include <coffee/core/files/cfiles.h>
 #include <coffee/imgui/imgui_binding.h>

@@ -5,7 +5,7 @@
 namespace Coffee {
 namespace ASIO {
 
-ShPtr<ASIO::Service> global_service;
+std::shared_ptr<ASIO::Service> global_service;
 
 void Worker::stop()
 {

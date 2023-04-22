@@ -2,7 +2,7 @@
 
 #include <coffee/core/base/files/url.h>
 
-namespace Coffee{
+namespace Coffee {
 
 enum class NotificationState
 {
@@ -14,16 +14,18 @@ enum class NotificationState
 struct NotificationInfo
 {
     Url               image;
-    CString           text;
-    CString           descriptiveText;
+    std::string       text;
+    std::string       descriptiveText;
     NotificationState state;
 };
 
 class Notifications
 {
-public:
+  public:
     virtual void persistent(NotificationInfo&&) = 0;
-    virtual void temporary(NotificationInfo&&, Chrono::duration) = 0;
+    virtual void temporary(
+        NotificationInfo&&, std::chrono::system_clock::duration)
+        = 0;
 };
 
-}
+} // namespace Coffee

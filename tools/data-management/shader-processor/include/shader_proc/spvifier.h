@@ -1,5 +1,6 @@
 #pragma once
 
+#include "optimizer.h"
 #include "types.h"
 
 #include <peripherals/error/result.h>
@@ -28,10 +29,17 @@ struct output_options
     uint32_t      version{450};
 };
 
+struct optimization_options
+{
+    opt::optimization_level opt_level{opt::optimization_level::fast};
+};
+
 constexpr auto default_output = output_options{};
 
 stl_types::result<spv_blob, spv_error> compile(
-    shader_input&& shader, output_options const& opts = default_output);
+    shader_input&&              shader,
+    output_options const&       opts     = default_output,
+    optimization_options const& opt_opts = {});
 
 stl_types::result<spv_blob, spv_error> link(std::vector<spv_blob>&& blobs);
 

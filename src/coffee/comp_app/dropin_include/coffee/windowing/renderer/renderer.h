@@ -77,10 +77,10 @@ struct CSDL2Renderer
         return 0;
     }
     void popErrorMessage(
-        semantic::debug::Severity, CString const&, CString const&) const
+        semantic::debug::Severity, std::string const&, std::string const&) const
     {
     }
-    void setWindowTitle(CString const& title)
+    void setWindowTitle(std::string const& title)
     {
         auto winInfo = m_container->service<comp_app::WindowInfo>();
         if(winInfo)

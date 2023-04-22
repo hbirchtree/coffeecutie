@@ -4,7 +4,7 @@
 
 #include <coffee/core/CThreading>
 #include <coffee/core/task_queue/task.h>
-#include <coffee/core/types/chunk.h>
+#include <peripherals/semantic/chunk.h>
 #include <coffee/strings/libc_types.h>
 #include <coffee/strings/time_types.h>
 
@@ -35,7 +35,7 @@ bool workload_test()
     };
 
     Vector<Chrono::microseconds> timing;
-    Vector<CString>              titles;
+    Vector<std::string>              titles;
     titles.push_back("Parallel");
     titles.push_back("Serial");
 

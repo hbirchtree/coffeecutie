@@ -21,10 +21,10 @@ template<
     typename is_pod<T>::type* = nullptr
 
     >
-static inline CString vector_to_string(
+static inline std::string vector_to_string(
     typing::vectors::tvector<T, num> const& value)
 {
-    CString out;
+    std::string out;
 
     out += v;
     out += '(';
@@ -41,16 +41,12 @@ static inline CString vector_to_string(
     return out;
 }
 
-template<
-    typename T,
-    size_t num,
-    char   v
-    >
-requires (std::is_standard_layout_v<T> && std::is_trivial_v<T>)
-static inline CString matrix_to_string(
-    typing::vectors::tmatrix<T, num> const& value)
+template<typename T, size_t num, char v>
+requires(std::is_standard_layout_v<T>&&
+             std::is_trivial_v<T>) static inline std::string
+    matrix_to_string(typing::vectors::tmatrix<T, num> const& value)
 {
-    CString out;
+    std::string out;
 
     out += v;
     out += '(';
@@ -65,32 +61,37 @@ static inline CString matrix_to_string(
     return out;
 }
 
-CString to_string(typing::vector_types::Quatf const& v)
+std::string to_string(typing::vector_types::Quatf const& v)
 {
-    return vector_to_string<scalar, 4, 'q'>(v);
+    using namespace std::literals::string_literals;
+    return "q(" +
+        cast_pod(v.x) + ", " +
+        cast_pod(v.y) + ", " +
+        cast_pod(v.z) + ", " +
+        cast_pod(v.w) + ")";
 }
 
-CString to_string(typing::vector_types::Vecf4 const& v)
+std::string to_string(typing::vector_types::Vecf4 const& v)
 {
     return vector_to_string<scalar, 4, 'v'>(v);
 }
 
-CString to_string(typing::vector_types::Vecf3 const& v)
+std::string to_string(typing::vector_types::Vecf3 const& v)
 {
     return vector_to_string<scalar, 3, 'v'>(v);
 }
 
-CString to_string(typing::vector_types::Vecf2 const& v)
+std::string to_string(typing::vector_types::Vecf2 const& v)
 {
     return vector_to_string<scalar, 2, 'v'>(v);
 }
 
-CString to_string(typing::vector_types::Matf4 const& v)
+std::string to_string(typing::vector_types::Matf4 const& v)
 {
     return matrix_to_string<scalar, 4, 'm'>(v);
 }
 
-CString to_string(typing::vector_types::Matf3 const& v)
+std::string to_string(typing::vector_types::Matf3 const& v)
 {
     return matrix_to_string<scalar, 3, 'm'>(v);
 }
@@ -169,9 +170,9 @@ std::string_view to_string(const Component& comp)
     return "";
 }
 
-CString to_string(const platform::args::AppArg& args)
+std::string to_string(const platform::args::AppArg& args)
 {
-    CString out = "AppArg(";
+    std::string out = "AppArg(";
 #ifndef COFFEE_LOWFAT
 
     bool touched = false;

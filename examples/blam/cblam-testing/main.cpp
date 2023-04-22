@@ -5,7 +5,7 @@
 #include <coffee/core/CFiles>
 #include <coffee/core/CProfiling>
 #include <coffee/core/base/renderer/eventapplication.h>
-#include <coffee/core/stl_types.h>
+#include <peripherals/stl/types.h>
 #include <coffee/image/cimage.h>
 #include <coffee/interfaces/full_launcher.h>
 #include <coffee/strings/libc_types.h>
@@ -25,7 +25,7 @@ namespace Coffee {
 namespace Strings {
 
 // template<typename BC>
-// inline CString to_string(blam::hsc::opcode_layout<BC> const& opcode)
+// inline std::string to_string(blam::hsc::opcode_layout<BC> const& opcode)
 //{
 //    return fmt(
 //        "{0}"
@@ -73,9 +73,9 @@ void inspect_model(blam::map_container const& map, blam::tag_t const& tag)
     auto indices      = map.tags->index_base().data(vert_magic);
     auto vertex_magic = map.tags->vertex_magic(map.magic);
 
-    CString output_name =
+    std::string output_name =
         str::replace::str<char>(tag.name.to_string(map.magic), "\\", "+") +
-        CString("_");
+        std::string("_");
 
     auto bones = model[0].bones.data(map.magic);
     for(auto const& bone : bones)
@@ -145,7 +145,7 @@ void inspect_model(blam::map_container const& map, blam::tag_t const& tag)
                 mesh.data.index_segment(*map.tags).data(vertex_magic);
             cDebug("Mesh!");
 
-            CString out_name = output_name + str::convert::to_string(i) + "_" +
+            std::string out_name = output_name + str::convert::to_string(i) + "_" +
                                str::convert::to_string(j) + ".obj";
 
             auto out = fopen(out_name.c_str(), "w+");
@@ -404,11 +404,11 @@ void examine_map(Resource&& mapfile, T version)
     {
         ptroff  start;
         szptr   size;
-        CString type;
-        CString label;
+        std::string type;
+        std::string label;
     };
 
-    Vector<mem_map> mapping;
+    std::vector<mem_map> mapping;
 
     auto add_mem_map = [&](auto ptr, cstring label) {
         byte_t const* base_ptr = C_OCAST<Bytes>(mapfile).data;
@@ -936,7 +936,7 @@ void examine_map(Resource&& mapfile, T version)
                 for(auto const& sub_string : data.sub_strings.data(map.magic))
                 {
                     auto str = sub_string.str(map.magic);
-                    cDebug("Sub string: {0}", CString(str.begin(), str.end()));
+                    cDebug("Sub string: {0}", std::string(str.begin(), str.end()));
                 }
                 cDebug("Data found");
             }
@@ -997,12 +997,12 @@ void examine_map(Resource&& mapfile, T version)
                 {
                     auto str =
                         data.text.str(map.magic, data.str_offset(map.magic, i));
-                    cDebug("Text: {0}", CString(str.begin(), str.end()));
+                    cDebug("Text: {0}", std::string(str.begin(), str.end()));
                 }
 
                 auto str = data.text.str(map.magic);
                 cDebug(
-                    "Hud message data: {0}", CString(str.begin(), str.end()));
+                    "Hud message data: {0}", std::string(str.begin(), str.end()));
             }
         }
 
@@ -1098,7 +1098,7 @@ void examine_map(Resource&& mapfile, T version)
 
     return;
 
-    Vector<blam::tag_t const*> texture_vec;
+    std::vector<blam::tag_t const*> texture_vec;
 
     auto it = index_view.begin();
     while(it != index_view.end())

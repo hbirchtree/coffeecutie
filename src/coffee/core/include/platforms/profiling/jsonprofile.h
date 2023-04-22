@@ -16,34 +16,34 @@ enum class MetricVariant
 
 namespace json {
 
-extern ShPtr<GlobalState> CreateProfiler();
+extern std::shared_ptr<GlobalState> CreateProfiler();
 
 extern void Push(
     profiling::ThreadState& tdata, profiling::DataPoint const& point);
 
 extern void CaptureMetrics(
-    profiling::ThreadState& tdata,
-    cstring                 name,
-    MetricVariant           variant,
-    CString const&          value,
-    Chrono::microseconds    ts,
-    u32                     index = 0);
+    profiling::ThreadState&   tdata,
+    std::string_view          name,
+    MetricVariant             variant,
+    std::string const&        value,
+    std::chrono::microseconds ts,
+    u32                       index = 0);
 
 extern void CaptureMetrics(
-    profiling::ThreadState& tdata,
-    cstring                 name,
-    MetricVariant           variant,
-    f32                     value,
-    Chrono::microseconds    ts,
-    u32                     index = 0);
+    profiling::ThreadState&   tdata,
+    std::string_view          name,
+    MetricVariant             variant,
+    f32                       value,
+    std::chrono::microseconds ts,
+    u32                       index = 0);
 
 template<typename T>
 FORCEDINLINE void CaptureMetrics(
-    cstring              name,
-    MetricVariant        variant,
-    T const&             value,
-    Chrono::microseconds ts,
-    u32                  index = 0)
+    cstring                   name,
+    MetricVariant             variant,
+    T const&                  value,
+    std::chrono::microseconds ts,
+    u32                       index = 0)
 {
     if constexpr(!compile_info::profiler::enabled)
         return;

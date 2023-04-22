@@ -86,7 +86,7 @@ struct api
         std::string_view const& name
         = stl_types::source_location().function_name())
     {
-        return stl_types::MkUq<debug::scope>(std::ref(ext), name);
+        return std::make_unique<debug::scope>(std::ref(ext), name);
     }
 
     inline void message(std::string_view const& msg)

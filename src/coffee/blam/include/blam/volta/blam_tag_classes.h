@@ -145,6 +145,7 @@ enum class tag_class_t : u32
     metr = 0x6d657472, // rtem 1835365490 Meter, as in weapon meter
     mgs2 = 0x6d677332, // 2sgm 1835496242 Light volume
     mod2 = 0x6d6f6432, // 2dom 1836016690 Model
+    mode = 0x6d6f6465, // edom 1836016690 Model
     mply = 0x6d706c79, // ylpm 1836084345 Multiplayer scenario
     obje = 0x6f626a65, // ejbo            Object
     part = 0x70617274, // trap 1885434484 Particle

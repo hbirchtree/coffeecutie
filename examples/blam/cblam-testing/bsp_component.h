@@ -44,8 +44,8 @@ struct BlamBspWidget
 
         if(ImGui::Begin("Static models"))
         {
-            CString current_bsp;
-            bool    current_hidden = true;
+            std::string current_bsp;
+            bool        current_hidden = true;
 
             for(Entity& bsp_ : bsps)
             {
@@ -89,8 +89,11 @@ struct BlamBspWidget
             e.subsystem(rendering);
 
             ImGui::Checkbox("Render scenery", &rendering->render_scenery);
+            ImGui::Checkbox("Clear before draw", &rendering->debug_clear);
+            ImGui::Checkbox("Show portals", &rendering->debug_portals);
+            ImGui::Checkbox("Show trigger volumes", &rendering->debug_triggers);
 
-            String name;
+            std::string name;
             for(auto& region : m_bsps)
             {
                 name.clear();
@@ -103,7 +106,7 @@ struct BlamBspWidget
 
         if(ImGui::Begin("Graphics"))
         {
-            BlamCamera const*      camera;
+            BlamCamera*            camera;
             PostProcessParameters* postprocess;
             e.subsystem(postprocess);
             e.subsystem(camera);
@@ -114,11 +117,14 @@ struct BlamBspWidget
             ImGui::NextColumn();
             ImGui::Text(
                 "vec3(%f, %f, %f)",
-                camera->camera.position.x(),
-                camera->camera.position.y(),
-                camera->camera.position.z());
+                camera->camera.position[0],
+                camera->camera.position[1],
+                camera->camera.position[2]);
+            ImGui::SliderFloat("FOV", &camera->camera.fieldOfView, 10.f, 120.f);
             ImGui::SliderFloat("Gamma", &postprocess->gamma, 0.1, 5.0);
             ImGui::SliderFloat("Exposure", &postprocess->exposure, -10.f, 10.f);
+            if(ImGui::Checkbox("Doom mode", &postprocess->doom_mode))
+                postprocess->scale = postprocess->doom_mode ? 0.25f : 1.f;
             ImGui::Columns();
         }
         ImGui::End();
@@ -129,5 +135,5 @@ struct BlamBspWidget
 
     blam::map_container<V> const* m_map;
 
-    Map<std::string_view, bool> m_bsps;
+    std::map<std::string_view, bool> m_bsps;
 };

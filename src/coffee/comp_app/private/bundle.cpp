@@ -271,12 +271,12 @@ struct app_loadable_matcher
 
 detail::EntityContainer& createContainer()
 {
-    static stl_types::ShPtr<detail::EntityContainer> container;
+    static std::shared_ptr<detail::EntityContainer> container;
 
     if(container)
         return *container;
 
-    container = stl_types::MkShared<detail::EntityContainer>();
+    container = std::make_shared<detail::EntityContainer>();
 
     if constexpr(
         compile_info::platform::is_unix
@@ -574,13 +574,15 @@ void PerformanceMonitor::start_restricted(proxy_type& p, time_point const& time)
 {
     using namespace platform::profiling;
 
-    auto timestamp
-        = Chrono::duration_cast<Chrono::microseconds>(time.time_since_epoch());
+    auto timestamp = std::chrono::duration_cast<std::chrono::microseconds>(
+        time.time_since_epoch());
 
     json::CaptureMetrics(
         "Frametime",
         MetricVariant::Value,
-        Chrono::duration_cast<Chrono::seconds_float>(time - m_prevFrame).count()
+        std::chrono::duration_cast<stl_types::Chrono::seconds_float>(
+            time - m_prevFrame)
+                .count()
             * 1000.f,
         timestamp);
     m_prevFrame = time;
@@ -588,7 +590,7 @@ void PerformanceMonitor::start_restricted(proxy_type& p, time_point const& time)
     if(time < m_nextTime)
         return;
 
-    m_nextTime = time + Coffee::Chrono::seconds(5);
+    m_nextTime = time + std::chrono::seconds(5);
 
     auto clock    = p.service<CPUClockProvider>();
     auto cpu_temp = p.service<CPUTempProvider>();
@@ -672,8 +674,8 @@ void PerformanceMonitor::end_restricted(proxy_type& p, time_point const& time)
     using namespace platform::profiling;
     using namespace Coffee::resource_literals;
 
-    auto timestamp
-        = Chrono::duration_cast<Chrono::microseconds>(time.time_since_epoch());
+    auto timestamp = std::chrono::duration_cast<std::chrono::microseconds>(
+        time.time_since_epoch());
 
     if constexpr(compile_info::debug_mode)
         do
@@ -685,12 +687,14 @@ void PerformanceMonitor::end_restricted(proxy_type& p, time_point const& time)
 
             using namespace Coffee;
 
-            m_nextScreenshot        = time + Chrono::seconds(10);
+            m_nextScreenshot        = time + std::chrono::seconds(10);
             auto             pixels = screenshot->pixels();
-            Bytes            encoded;
+            semantic::Bytes  encoded;
             stb::stb_error   ec;
             stb::image_const source = stb::image_const::From(
-                pixels.as<Bytes::value_type>(), screenshot->size(), 4);
+                pixels.as<semantic::Bytes::value_type>(),
+                screenshot->size(),
+                4);
 
             if(!stb::SaveJPG(encoded, source, ec, 50))
             {
@@ -722,7 +726,7 @@ void PerformanceMonitor::end_restricted(proxy_type& p, time_point const& time)
         "VSYNC",
         MetricVariant::Marker,
         0,
-        Chrono::duration_cast<Chrono::microseconds>(
+        std::chrono::duration_cast<std::chrono::microseconds>(
             Profiler::clock::now().time_since_epoch()));
 }
 

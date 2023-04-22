@@ -76,7 +76,7 @@ i32 coffee_main(i32, cstring_w*)
         //        } else
         //        {
         //            cDebug("Total time: {0}", tim.elapsed());
-        //            for(std::pair<CString, CString> const& v : resp.header)
+        //            for(std::pair<std::string, std::string> const& v : resp.header)
         //                cDebug("{0} : {1}", v.first, v.second);
         //            cDebug("Payload:\n{0}", (cstring)resp.payload.data());
         //        }
@@ -306,7 +306,7 @@ i32 coffee_main(i32, cstring_w*)
             {
                 asio::ip::udp::resolver::query q("localhost", "10240");
                 auto    it = net_context->resolver_udp.resolve(q);
-                CString test_log;
+                std::string test_log;
                 Profiling::ExportProfilerData(test_log);
 
                 //                test_log.resize(4096);
@@ -318,7 +318,7 @@ i32 coffee_main(i32, cstring_w*)
                 test_socket.send_to(asio::buffer(test_log), *it);
                 cDebug("{0}", Time<>::Microsecond());
                 //                }
-                //            CString recv;
+                //            std::string recv;
                 //            recv.resize(20);
                 //            asio::ip::udp::endpoint endpoint;
                 //            test_socket.receive_from(asio::buffer(recv),

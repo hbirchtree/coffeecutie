@@ -1,6 +1,6 @@
 #pragma once
 
-#include <coffee/core/types/chunk.h>
+#include <peripherals/semantic/chunk.h>
 #include <peripherals/libc/types.h>
 
 namespace Coffee {

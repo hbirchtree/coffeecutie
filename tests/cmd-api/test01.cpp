@@ -19,7 +19,7 @@ bool altscreen_test()
 bool input_test()
 {
     /* Testing interactive command line */
-    CString ts;
+    std::string ts;
     ts.resize(100);
 
     while(!StrCmp(&ts[0],"quit\n"))

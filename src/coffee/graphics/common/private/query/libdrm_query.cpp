@@ -21,7 +21,7 @@ namespace GpuInfo{
 
 int device(gpucount_t i)
 {
-    CString dev_name = "/dev/dri/card" + cast_pod(i);
+    std::string dev_name = "/dev/dri/card" + cast_pod(i);
     return open(dev_name.c_str(), 0);
 }
 
@@ -53,7 +53,7 @@ HWDeviceInfo GetModel(gpucount_t i)
     drmDevicePtr dev_ptr;
     drmGetDevice(dev, &dev_ptr);
 
-    CString dev_id =
+    std::string dev_id =
             cStringFormat(
                 "{0}:{1}",
                 StrUtil::pointerify(dev_ptr->deviceinfo.pci->vendor_id),

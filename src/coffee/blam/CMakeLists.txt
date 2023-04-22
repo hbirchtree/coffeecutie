@@ -1,7 +1,8 @@
 coffee_library (
     TARGET Blam
     SOURCES
-    private/volta/cblam_map.cpp
+    private/volta/blam_bitm.cpp
+    private/volta/blam_map.cpp
 
     LIBRARIES Image CoreZ
 
@@ -12,4 +13,7 @@ coffee_library (
 
 target_precompile_headers ( Blam PUBLIC
     $<$<COMPILE_LANGUAGE:CXX>:blam/cblam.h>
+    )
+target_link_libraries ( Blam PRIVATE
+    GraphicsDefines
     )

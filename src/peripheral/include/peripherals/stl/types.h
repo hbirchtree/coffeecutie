@@ -47,19 +47,7 @@ namespace stl_types {
 
 using namespace type_safety;
 
-using CString  = std::string; /*!< Typical string object */
-using CWString = std::wstring;
-
-using String   = CString;
-using WString  = CWString;
-using U8String = tiny_utf8::utf8_string;
-
 using u8string  = tiny_utf8::utf8_string;
-using u16string = std::basic_string<char16_t>;
-
-using string_view    = std::string_view;
-using u8string_view  = std::basic_string_view<char8_t>;
-using u16string_view = std::basic_string_view<char16_t>;
 
 #if defined(COFFEE_NO_THREADLIB)
 struct Mutex
@@ -197,81 +185,6 @@ using CondVar   = std::condition_variable;
 using cv_status = std::cv_status;
 #endif
 
-using ErrCode = std::error_code;
-
-template<typename T>
-using Atomic = std::atomic<T>;
-
-using AtomicInt8  = std::atomic_int_fast8_t;
-using AtomicInt16 = std::atomic_int_fast16_t;
-using AtomicInt32 = std::atomic_int;
-using AtomicInt64 = std::atomic_int_fast64_t;
-
-using AtomicUInt8  = std::atomic_uint_fast8_t;
-using AtomicUInt16 = std::atomic_uint_fast16_t;
-using AtomicUInt32 = std::atomic_uint;
-using AtomicUInt64 = std::atomic_uint_fast64_t;
-
-using AtomicBool = std::atomic_bool;
-
-using atomic_bool = std::atomic_bool;
-using atomic_i8   = std::atomic_int_fast8_t;
-using atomic_i16  = std::atomic_int_fast16_t;
-using atomic_i32  = std::atomic_int_fast32_t;
-using atomic_i64  = std::atomic_int_fast64_t;
-
-using atomic_u8  = std::atomic_uint_fast8_t;
-using atomic_u16 = std::atomic_uint_fast16_t;
-using atomic_u32 = std::atomic_uint_fast32_t;
-using atomic_u64 = std::atomic_uint_fast64_t;
-
-template<typename T>
-using Queue = std::queue<T>;
-
-template<typename T>
-using Deque = std::deque<T>;
-
-template<typename T>
-using LinkList = std::list<T>;
-template<typename T>
-using List = std::list<T>;
-
-template<typename T>
-using Vector = std::vector<T>;
-template<typename T, size_t Size>
-using Array = std::array<T, Size>;
-
-template<typename T1, typename T2>
-using Map = std::map<T1, T2>;
-
-template<typename T1, typename T2>
-using MultiMap = std::multimap<T1, T2>;
-
-template<typename T>
-using ShPtr = std::shared_ptr<T>;
-
-template<typename T, class Deleter = std::default_delete<T>>
-using UqPtr = std::unique_ptr<T, Deleter>;
-
-template<typename T>
-using WkPtr = std::weak_ptr<T>;
-
-template<typename T>
-using Complex = std::complex<T>;
-
-template<typename T>
-using Set = std::set<T>;
-
-template<typename T1, typename T2>
-using Pair = std::pair<T1, T2>;
-
-template<typename... Args>
-using Tup = std::tuple<Args...>;
-
-using ByteVector = Vector<uint8_t>;
-
-using ExceptionPtr = std::exception_ptr;
-
 template<typename T>
 using NonConst = typename std::remove_const<T>::type;
 
@@ -288,71 +201,10 @@ struct Iterator
 
 using ForwardIteratorTag = std::forward_iterator_tag;
 
-template<typename T, typename... Args>
-/*!
- * \brief A lot of our platforms only support C++11. std::make_unique is
- *      C++14 only. This is a helper function.
- * \param a
- * \return
- */
-inline UqPtr<T> MkUq(Args... a)
-{
-#if __cplusplus >= 201703L
-    return std::make_unique<T>(std::forward<Args>(a)...);
-#else
-    return UqPtr<T>(new T(std::forward<Args>(a)...));
-#endif
-}
-
-template<typename T>
-inline UqPtr<T> MkUqFrom(T* ptr)
-{
-    return UqPtr<T>(ptr);
-}
 template<typename T, class Deleter, typename... Args>
-inline UqPtr<T, Deleter> MkUqDST(Args... a)
+inline std::unique_ptr<T, Deleter> make_unique_with_destructor(Args... a)
 {
-    return UqPtr<T, Deleter>(new T(std::forward<Args>(a)...));
-}
-
-template<typename T, typename... Args>
-inline ShPtr<T> MkShared(Args... a)
-{
-    return std::make_shared<T>(std::forward<Args>(a)...);
-}
-
-template<typename T>
-inline ShPtr<T> MkSharedMove(T&& v)
-{
-    return ShPtr<T>(new T(std::move(v)));
-}
-
-namespace detail_array {
-
-template<typename ArrayT, typename T>
-constexpr inline void insert_packed(ArrayT& out, size_t i, T item)
-{
-    out.at(i) = item;
-}
-
-template<typename ArrayT, typename T, typename... Items>
-constexpr inline void insert_packed(
-    ArrayT& out, size_t i, T item, Items... items)
-{
-    insert_packed<ArrayT, T>(out, i, item);
-    insert_packed<ArrayT, Items...>(out, ++i, items...);
-}
-
-} // namespace detail_array
-
-template<typename... Items, size_t Count = sizeof...(Items)>
-constexpr inline auto MkArray(Items... items)
-{
-    using out_type =
-        std::remove_reference_t<decltype(std::get<0>(std::tuple<Items...>()))>;
-    Array<out_type, Count> out = {items...};
-
-    return out;
+    return std::unique_ptr<T, Deleter>(new T(std::forward<Args>(a)...));
 }
 
 /*
@@ -360,6 +212,13 @@ constexpr inline auto MkArray(Items... items)
  * Here comes a couple of custom classes and wrappers
  *
  */
+
+template<typename T, typename... Items>
+requires (std::is_same_v<T, Items> && ...)
+inline constexpr auto make_array(Items&&... items)
+{
+    return std::array<T, sizeof...(Items)>{{std::move(items)...}};
+}
 
 template<bool Reversed>
 struct range_params
@@ -575,9 +434,9 @@ using error_category = std::error_category;
 
 struct error_code : std::error_code
 {
-    CString error_message;
+    std::string error_message;
 
-    error_code& operator=(CString error_msg)
+    error_code& operator=(std::string error_msg)
     {
         this->error_message = error_msg;
         return *this;
@@ -771,38 +630,20 @@ struct nested_empty_error_code
     using nested_error_type = NestedError;
 };
 
-template<typename T>
-using Optional = std::optional<T>;
-
-template<typename T>
-inline ShPtr<T> unwrap_ptr(WkPtr<T> const& ptr)
-{
-#if MODE_DEBUG
-    auto ptr_lock = ptr.lock();
-
-    if(!ptr_lock)
-        Throw(undefined_behavior("failed to lock WkPtr"));
-
-    return ptr_lock;
-#else
-    return ptr.lock();
-#endif
-}
-
 } // namespace stl_types
 
 namespace type_safety {
 
 template<typename D, typename T>
-FORCEDINLINE typename stl_types::ShPtr<D> C_DCAST(
-    typename stl_types::ShPtr<T> const& from)
+FORCEDINLINE typename std::shared_ptr<D> C_DCAST(
+    typename std::shared_ptr<T> const& from)
 {
     return std::dynamic_pointer_cast<D>(from);
 }
 
 template<typename D, typename T>
-FORCEDINLINE typename stl_types::ShPtr<D> C_PCAST(
-    typename stl_types::ShPtr<T> const& from)
+FORCEDINLINE typename std::shared_ptr<D> C_PCAST(
+    typename std::shared_ptr<T> const& from)
 {
     return std::static_pointer_cast<D>(from);
 }
@@ -851,3 +692,5 @@ FORCEDINLINE typename stl_types::ShPtr<D> C_PCAST(
 #else
 #define CASSERT(condition)
 #endif
+
+using stl_types::non_copy;

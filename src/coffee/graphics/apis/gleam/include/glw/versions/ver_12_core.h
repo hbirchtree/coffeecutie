@@ -32,11 +32,11 @@ requires(MinimumVersion<Current, Version<1, 2>>&&
     glCopyTexSubImage3D(
         static_cast<GLenum>(target),
         level,
-        xoffset.x(),
-        xoffset.y(),
-        xoffset.z(),
-        x.x(),
-        x.y(),
+        xoffset[0],
+        xoffset[1],
+        xoffset[2],
+        x[0],
+        x[1],
         width[0],
         width[1]);
     detail::error_check("CopyTexSubImage3D"sv);
@@ -163,9 +163,9 @@ requires(MinimumVersion<Current, Version<1, 2>>&&
     glTexSubImage3D(
         static_cast<GLenum>(target),
         level,
-        xoffset.x(),
-        xoffset.y(),
-        xoffset.z(),
+        xoffset[0],
+        xoffset[1],
+        xoffset[2],
         width[0],
         width[1],
         width[2],

@@ -21,7 +21,6 @@ option ( BUILD_HEADFUL  "Build with graphics/windowing support"     ON )
 add_subdirectory(application)
 
 add_subdirectory(core)
-add_subdirectory(image)
 
 set ( CEAGL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/windowing/private/graphics/ceagl" )
 
@@ -120,7 +119,10 @@ else()
     # Things to build that might be interesting for tools
     # GLAD is useful for GL headers
     add_subdirectory(graphics/binding)
+    add_subdirectory(graphics/apis/gleam/defines)
 endif()
+
+add_subdirectory(image)
 
 if(BUILD_ASIO)
     add_subdirectory(asio)

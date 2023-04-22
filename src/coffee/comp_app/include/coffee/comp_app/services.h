@@ -21,8 +21,8 @@ template<typename T>
 using tag_t = detail::TagType<T>;
 } // namespace detail
 
-using text_type   = Coffee::CString const&;
-using text_type_t = Coffee::CString;
+using text_type   = std::string const&;
+using text_type_t = std::string;
 using position_t  = typing::geometry::point_2d<libc_types::i32>;
 using size_2d_t   = typing::geometry::size_2d<libc_types::i32>;
 using PixFmt      = typing::pixels::PixFmt;
@@ -119,8 +119,8 @@ struct StaticWindowing : Windowing
 
 struct Dialogs
 {
-    using prompt_callback  = Coffee::Function<void(text_type)>;
-    using confirm_callback = Coffee::Function<void(bool)>;
+    using prompt_callback  = std::function<void(text_type)>;
+    using confirm_callback = std::function<void(bool)>;
 
     virtual void info(text_type title, text_type message)  = 0;
     virtual void warn(text_type title, text_type message)  = 0;
@@ -294,7 +294,7 @@ struct KeyboardInput
 struct BasicKeyboardInput : KeyboardInput
 {
     using KeyModifiers  = Coffee::Input::CIKeyEvent::KeyModifiers;
-    using register_type = stl_types::Map<libc_types::u32, KeyModifiers>;
+    using register_type = std::map<libc_types::u32, KeyModifiers>;
 
     struct EventHandler
     {
@@ -317,7 +317,7 @@ struct BasicKeyboardInput : KeyboardInput
     }
 
   protected:
-    stl_types::Map<libc_types::u32, KeyModifiers> m_register;
+    std::map<libc_types::u32, KeyModifiers> m_register;
 };
 
 struct ControllerInput

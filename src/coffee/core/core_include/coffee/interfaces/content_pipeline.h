@@ -4,8 +4,8 @@
 #include <coffee/core/VirtualFS>
 #include <coffee/core/internal_state.h>
 #include <coffee/core/libc_types.h>
-#include <coffee/core/stl_types.h>
 #include <peripherals/stl/string_ops.h>
+#include <peripherals/stl/types.h>
 
 namespace Coffee {
 struct TerminalCursor;
@@ -17,9 +17,9 @@ using namespace Coffee;
 
 struct FileProcessor
 {
-    stl_types::Map<Path, Resource> cachedFiles;
-    Url                            cacheBaseDir;
-    u32                            numWorkers;
+    std::map<Path, Resource> cachedFiles;
+    Url                      cacheBaseDir;
+    u32                      numWorkers;
 
     virtual ~FileProcessor()
     {
@@ -39,13 +39,13 @@ struct FileProcessor
      * \param files
      * \return
      */
-    virtual void process(
-        Vector<VirtFS::VirtDesc>& files, TerminalCursor& cursor) = 0;
+    virtual void process(std::vector<vfs::desc>& files, TerminalCursor& cursor)
+        = 0;
 
     virtual void setInternalState(
-        ShPtr<State::InternalState>                 state,
-        ShPtr<State::InternalThreadState>           tstate,
-        UqPtr<platform::detail::state_pimpl> const& pimpl)
+        std::shared_ptr<State::InternalState>                 state,
+        std::shared_ptr<State::InternalThreadState>           tstate,
+        std::unique_ptr<platform::detail::state_pimpl> const& pimpl)
     {
         State::SetInternalState(state);
         State::SetInternalThreadState(tstate);
@@ -53,48 +53,49 @@ struct FileProcessor
         *platform::state = *pimpl;
     }
 
-    virtual void setBaseDirectories(Vector<CString> const& dirs) = 0;
+    virtual void setBaseDirectories(std::vector<std::string> const& dirs) = 0;
 
     virtual void setCacheBaseDirectory(Path const& basedir)
     {
-        cacheBaseDir = MkUrl(basedir);
+        cacheBaseDir = basedir.url();
     }
 
     virtual Url cacheTransform(Path const& f)
     {
-        return cacheBaseDir +
-               Path(str::replace::str<char>(f.internUrl, "/", "_"));
+        return cacheBaseDir
+               + Path(
+                   stl_types::str::replace::str<char>(f.internUrl, "/", "_"));
     }
 
     virtual bool isCached(Path const& file)
     {
-        Resource test(MkUrl(cacheTransform(file)));
+        Resource test(cacheTransform(file));
         return FileExists(test);
     }
 
-    virtual Bytes getCached(Path const& file)
+    virtual semantic::Bytes getCached(Path const& file)
     {
         if(auto it = cachedFiles.find(file); it != cachedFiles.end())
             return it->second;
         else
         {
-            auto out =
-                cachedFiles.insert({file, Resource(cacheTransform(file))});
-            return C_OCAST<Bytes>(out.first->second);
+            auto out
+                = cachedFiles.insert({file, Resource(cacheTransform(file))});
+            return C_OCAST<semantic::Bytes>(out.first->second);
         }
     }
 
-    virtual void cacheFile(Path const& file, Bytes const& content)
+    virtual void cacheFile(Path const& file, semantic::Bytes const& content)
     {
         platform::file::create(
-            MkUrl(cacheBaseDir),
+            cacheBaseDir,
             {
                 .mode      = platform::file::mode_t::directory,
                 .recursive = true,
             });
         Path outputPath = cacheTransform(file);
 
-        Resource output(MkUrl(outputPath));
+        Resource output(outputPath.url());
         output = content;
         FileCommit(output, RSCA::Discard);
     }

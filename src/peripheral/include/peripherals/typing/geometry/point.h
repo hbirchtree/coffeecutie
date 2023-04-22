@@ -2,7 +2,8 @@
 
 #include <peripherals/libc/types.h>
 #include <peripherals/stl/type_safety.h>
-#include <peripherals/typing/vectors/vectors.h>
+
+#include <cmath>
 
 namespace typing {
 namespace geometry {
@@ -34,9 +35,6 @@ struct point_2d : base_point
     using value_type = T;
     static constexpr size_t row_size = 2;
 
-    point_2d(vectors::tvector<T, 2> const& src) : x(src.x()), y(src.y())
-    {
-    }
     point_2d(T x, T y) : x(x), y(y)
     {
     }
@@ -60,12 +58,6 @@ struct point_2d : base_point
         out.y = y;
         return out;
     }
-
-    template<typename T2>
-    vectors::tvector<T2, 2> toVector() const
-    {
-        return {static_cast<T2>(x), static_cast<T2>(y)};
-    }
 };
 
 template<
@@ -79,10 +71,6 @@ struct point_3d : base_point
     using value_type = T;
     static constexpr size_t row_size = 3;
 
-    point_3d(vectors::tvector<T, 3> const& src) :
-        x(src.x()), y(src.y()), z(src.z())
-    {
-    }
     point_3d(T x, T y, T z) : x(x), y(y), z(z)
     {
     }
@@ -94,12 +82,6 @@ struct point_3d : base_point
     point_3d<U> convert() const
     {
         return point_3d<U>(x, y, z);
-    }
-
-    template<typename T2>
-    vectors::tvector<T2, 3> toVector() const
-    {
-        return {x, y, z};
     }
 
     T x, y, z;

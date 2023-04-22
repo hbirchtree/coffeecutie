@@ -72,27 +72,30 @@ struct all_subsystems_in
 } // namespace matchers
 
 template<class T>
-concept is_matcher =
-    std::is_same_v<decltype(T::match(std::declval<SubsystemBase>())), bool>;
+concept is_matcher
+    = std::is_same_v<decltype(T::match(std::declval<SubsystemBase>())), bool>;
 
 template<typename BaseType>
 using service_sort_predicate = std::function<bool(BaseType*, BaseType*)>;
 
 template<class T>
-concept has_priority =
-    requires(T& a) { std::is_integral_v<decltype(a.priority)>; };
+concept has_priority = requires(T& a)
+{
+    std::is_integral_v<decltype(a.priority)>;
+};
 
-namespace sorter {
+namespace sorter
+{
 
-template<class BaseType, class CompType>
+    template<class BaseType, class CompType>
     requires has_priority<CompType>
-constexpr bool (*priority_ranked)(BaseType*, BaseType*) =
-    [](BaseType* left, BaseType* right) {
-        return dynamic_cast<CompType*>(left)->priority <
-               dynamic_cast<CompType*>(right)->priority;
-    };
+    constexpr bool (*priority_ranked)(BaseType*, BaseType*)
+        = [](BaseType* left, BaseType* right) {
+              return dynamic_cast<CompType*>(left)->priority
+                     < dynamic_cast<CompType*>(right)->priority;
+          };
 
-}
+} // namespace sorter
 
 struct EntityContainer : stl_types::non_copy
 {
@@ -247,8 +250,8 @@ struct EntityContainer : stl_types::non_copy
         typename OutputType,
         typename AllocType = typename OutputType::type,
         typename... Args>
-        requires std::is_convertible_v<AllocType*, typename OutputType::type*>
-    AllocType& register_subsystem_inplace(Args... args)
+    requires std::is_convertible_v<AllocType*, typename OutputType::type*>
+        AllocType& register_subsystem_inplace(Args... args)
     {
         register_subsystem<OutputType>(
             std::make_unique<AllocType>(std::forward<Args>(args)...));

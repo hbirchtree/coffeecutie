@@ -65,7 +65,7 @@ FORCEDINLINE result<mem_chunk<char>, posix_error> read(
     return success(std::move(output));
 }
 
-FORCEDINLINE Optional<posix_error> write(
+FORCEDINLINE std::optional<posix_error> write(
     posix_fd_t const&                 file,
     semantic::Span<const char> const& data,
     write_params_t const&             params = {})

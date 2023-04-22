@@ -9,6 +9,7 @@
 #endif
 
 #include "data.h"
+#include "selected_version.h"
 
 void install_imgui_widgets(
     compo::EntityContainer&           e,

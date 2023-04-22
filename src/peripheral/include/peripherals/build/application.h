@@ -11,8 +11,8 @@ using namespace ::stl_types;
 
 struct AppData
 {
-    CString organization_name;
-    CString application_name;
+    std::string organization_name;
+    std::string application_name;
     u32     version_code;
 };
 

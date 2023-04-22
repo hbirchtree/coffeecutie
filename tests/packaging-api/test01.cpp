@@ -1,5 +1,5 @@
 #include <coffee/core/CFiles>
-#include <coffee/core/types/chunk.h>
+#include <peripherals/semantic/chunk.h>
 #include <coffee/strings/libc_types.h>
 
 #include <coffee/core/CUnitTesting>

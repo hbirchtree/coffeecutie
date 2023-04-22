@@ -25,7 +25,7 @@
 namespace Coffee {
 namespace Strings {
 
-static CString to_string(
+static std::string to_string(
     comp_app::interfaces::ControllerInput::controller_map const& box)
 {
     return fmt(
@@ -157,10 +157,10 @@ i32 coffee_main(i32, cstring_w*)
     struct APIData
     {
         gfx                      context;
-        ShPtr<gfx::buffer_type>  vertex;
-        ShPtr<gfx::vertex_type>  verts;
-        ShPtr<gfx::program_type> color;
-        ShPtr<gfx::program_type> simple;
+        std::shared_ptr<gfx::buffer_type>  vertex;
+        std::shared_ptr<gfx::vertex_type>  verts;
+        std::shared_ptr<gfx::program_type> color;
+        std::shared_ptr<gfx::program_type> simple;
 
         i32 load_idx{0};
         f32 load_basis{0};
@@ -178,7 +178,7 @@ i32 coffee_main(i32, cstring_w*)
         f32        idx;
     };
 
-    static Vector<vertex_t> vertex_data;
+    static std::vector<vertex_t> vertex_data;
 
     constexpr f32 i_d  = 0.628f;
     f32           v_id = 0;

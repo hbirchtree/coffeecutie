@@ -25,7 +25,7 @@ class User
   public:
     virtual ~User();
     virtual u64     identifier()  = 0;
-    virtual CString displayName() = 0;
+    virtual std::string displayName() = 0;
     virtual Url     image()       = 0;
 };
 
@@ -34,7 +34,7 @@ class Achievement
   public:
     virtual ~Achievement();
     virtual u64     identifier()  = 0;
-    virtual CString displayName() = 0;
+    virtual std::string displayName() = 0;
     virtual Url     image()       = 0;
 };
 
@@ -42,7 +42,7 @@ class Friend
 {
   public:
     virtual ~Friend();
-    virtual ShPtr<User>  getUnderlyingUser() = 0;
+    virtual std::shared_ptr<User>  getUnderlyingUser() = 0;
     virtual FriendStatus state()             = 0;
 };
 
@@ -58,24 +58,24 @@ class Party
     virtual u64 userLimit() = 0;
     virtual u64 count()     = 0;
 
-    virtual CString secret() = 0;
+    virtual std::string secret() = 0;
 
     virtual bool    maySpectate()    = 0;
-    virtual CString spectateSecret() = 0;
+    virtual std::string spectateSecret() = 0;
 };
 
 struct PartyDesc
 {
-    CString partyId;
+    std::string partyId;
     i32     curPlayers, maxPlayers;
 
     struct
     {
-        CString secret;
+        std::string secret;
     } spectate;
     struct
     {
-        CString secret;
+        std::string secret;
     } join;
 };
 
@@ -86,7 +86,7 @@ class AchievementDelegate
 
     virtual ~AchievementDelegate();
 
-    virtual void notifyAchievement(ShPtr<Achievement> const& achievment) = 0;
+    virtual void notifyAchievement(std::shared_ptr<Achievement> const& achievment) = 0;
 
     virtual AchievementContainer getAchievements() = 0;
 
@@ -97,18 +97,18 @@ class FriendDelegate
 {
   public:
     using PartyContainer  = void;
-    using FriendContainer = Vector<Friend>;
+    using FriendContainer = std::vector<Friend>;
     struct FriendQuery
     {
         FriendStatus state;
-        CString      name;
+        std::string      name;
     };
 
     virtual ~FriendDelegate();
 
     virtual FriendContainer getFriends(FriendQuery query = {}) = 0;
 
-    virtual ShPtr<Friend> fromUser(ShPtr<User> const&) = 0;
+    virtual std::shared_ptr<Friend> fromUser(std::shared_ptr<User> const&) = 0;
 
     virtual PartyContainer parties() = 0;
 };
@@ -133,13 +133,13 @@ class GameDelegate
         Builder()
         {
         }
-        Builder(CString const& name, CString const& activity, Url const& img) :
+        Builder(std::string const& name, std::string const& activity, Url const& img) :
             gameName(name), activity(activity), gameImage(img)
         {
         }
 
-        CString gameName;
-        CString activity;
+        std::string gameName;
+        std::string activity;
         Url     gameImage;
     };
 
@@ -159,10 +159,10 @@ class Service
   public:
     virtual ~Service();
 
-    virtual ShPtr<GameDelegate>        getGame()         = 0;
-    virtual ShPtr<PresenceDelegate>    getPresence()     = 0;
-    virtual ShPtr<AchievementDelegate> getAchievements() = 0;
-    virtual ShPtr<FriendDelegate>      getFriends()      = 0;
+    virtual std::shared_ptr<GameDelegate>        getGame()         = 0;
+    virtual std::shared_ptr<PresenceDelegate>    getPresence()     = 0;
+    virtual std::shared_ptr<AchievementDelegate> getAchievements() = 0;
+    virtual std::shared_ptr<FriendDelegate>      getFriends()      = 0;
 
     virtual void poll() = 0;
 };

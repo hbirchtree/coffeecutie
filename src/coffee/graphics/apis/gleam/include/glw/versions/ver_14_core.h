@@ -201,7 +201,7 @@ requires(MinimumVersion<Current, Version<1, 4>>&&
     {
         GLW_FPTR_CHECK(BlendColor)
     }
-    glBlendColor(red.x(), red.y(), red.z(), red.w());
+    glBlendColor(red[0], red[1], red[2], red[3]);
     detail::error_check("BlendColor"sv);
 }
 

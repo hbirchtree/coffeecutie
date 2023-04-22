@@ -14,11 +14,11 @@ using Function = std::function<FunSignature>;
 template<typename T>
 struct WkPtrUnwrap
 {
-    WkPtrUnwrap(WkPtr<T>&& ptr)
+    WkPtrUnwrap(std::weak_ptr<T>&& ptr)
     {
         lock = ptr.lock();
     }
-    WkPtrUnwrap(WkPtr<T>& ptr)
+    WkPtrUnwrap(std::weak_ptr<T>& ptr)
     {
         lock = ptr.lock();
     }
@@ -36,7 +36,7 @@ struct WkPtrUnwrap
         return static_cast<bool>(lock);
     }
 
-    ShPtr<T> lock;
+    std::shared_ptr<T> lock;
 };
 
 template<typename PtrType>
@@ -72,7 +72,7 @@ template<
     typename std::enable_if<std::is_same<Ret, void>::value>::type* = nullptr>
 Function<void(Args...)> func(
     ClassName* this_ref,
-    Ret (ClassName::*func_ref)(Tup<IncludedArgs...>, Args...),
+    Ret (ClassName::*func_ref)(std::tuple<IncludedArgs...>, Args...),
     IncludedArgs... iargs)
 {
     return [=](Args... args) {
@@ -88,7 +88,7 @@ template<
     typename std::enable_if<!std::is_same<Ret, void>::value>::type* = nullptr>
 Function<Ret(Args...)> func(
     ClassName* this_ref,
-    Ret (ClassName::*func_ref)(Tup<IncludedArgs...>, Args...),
+    Ret (ClassName::*func_ref)(std::tuple<IncludedArgs...>, Args...),
     std::tuple<IncludedArgs...> iargs)
 {
     return [=](Args... args) { return (*this_ref.*func_ref)(iargs, args...); };

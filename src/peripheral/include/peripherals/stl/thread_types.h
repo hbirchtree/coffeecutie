@@ -9,8 +9,9 @@
 #include <functional>
 #include <future>
 
-#if defined(COFFEE_ANDROID) && (defined(COFFEE_NO_PTHREAD_GETNAME_NP) || \
-                                defined(COFFEE_NO_PTHREAD_SETNAME_NP))
+#if defined(COFFEE_ANDROID)                   \
+    && (defined(COFFEE_NO_PTHREAD_GETNAME_NP) \
+        || defined(COFFEE_NO_PTHREAD_SETNAME_NP))
 #include <sys/prctl.h>
 #endif
 
@@ -40,14 +41,11 @@ enum class FutureStatus
     deferred
 };
 #else
-template<typename RType>
-using Future = std::future<RType>;
+// template<typename RType>
+// using Future = std::future<RType>;
 
-using FutureStatus = std::future_status;
+// using FutureStatus = std::future_status;
 #endif
-
-template<typename RType>
-using SharedFuture = std::shared_future<RType>;
 
 #if defined(COFFEE_NO_THREADLIB)
 struct Thread
@@ -57,8 +55,8 @@ struct Thread
     Thread(std::function<void()> f);
     template<
         typename TFun,
-        typename std::enable_if<std::is_pointer<TFun>::value, bool>::type* =
-            nullptr,
+        typename std::enable_if<std::is_pointer<TFun>::value, bool>::
+            type* = nullptr,
         typename... Args>
     Thread(TFun fptr, Args... args) : Thread([&]() { fptr(args...); })
     {
@@ -79,10 +77,10 @@ struct Thread
 #endif
 };
 #else
-using Thread       = std::thread;
+// using Thread       = std::thread;
 #endif
 
-using ThreadId = threads::ThreadId_t<Thread>;
+using ThreadId = threads::ThreadId_t<std::thread>;
 
 namespace CurrentThread {
 #if defined(COFFEE_NO_THREADLIB)
@@ -91,11 +89,11 @@ STATICINLINE void sleep_for(const std::chrono::duration<Rep, Period>& dura)
 {
 #if defined(COFFEE_GEKKO)
     struct timespec sleepyTime;
-    sleepyTime.tv_sec =
-        std::chrono::duration_cast<std::chrono::seconds>(dura).count();
-    sleepyTime.tv_nsec =
-        std::chrono::duration_cast<std::chrono::nanoseconds>(dura).count() %
-        1000000000;
+    sleepyTime.tv_sec
+        = std::chrono::duration_cast<std::chrono::seconds>(dura).count();
+    sleepyTime.tv_nsec
+        = std::chrono::duration_cast<std::chrono::nanoseconds>(dura).count()
+          % 1000000000;
     nanosleep(&sleepyTime, nullptr);
 #endif
 }
@@ -114,89 +112,19 @@ extern Thread::id get_id();
 using namespace std::this_thread;
 #endif
 
-extern bool    SetName(CString const& name);
+extern bool             SetName(std::string const& name);
 extern std::string_view GetName();
 } // namespace CurrentThread
 
 namespace Threads {
-extern bool SetName(Thread& t, CString const& name);
-extern bool SetName(ThreadId::Hash const& t, CString const& name);
 
-extern std::string_view GetName(Thread& t);
+extern bool SetName(std::thread& t, std::string const& name);
+extern bool SetName(ThreadId::Hash const& t, std::string const& name);
+
+extern std::string_view GetName(std::thread& t);
 extern std::string_view GetName(ThreadId::Hash t);
 
-extern Map<ThreadId::Hash, CString> GetNames(
+extern std::map<ThreadId::Hash, std::string> GetNames(
     platform::GlobalState* context = nullptr);
 } // namespace Threads
-
-FORCEDINLINE bool ThreadSetName(Thread& t, CString const& name)
-{
-    return Threads::SetName(t, name);
-}
-FORCEDINLINE std::string_view ThreadGetName(Thread& t)
-{
-    return Threads::GetName(t);
-}
-
-FORCEDINLINE bool ThreadSetName(ThreadId::Hash t, CString const& name)
-{
-    return Threads::SetName(t, name);
-}
-FORCEDINLINE std::string_view ThreadGetName(ThreadId::Hash t)
-{
-    return Threads::GetName(t);
-}
-
-/*!
- * \brief single-fire conditional
- */
-struct concurrent_notif
-{
-    Mutex   awaiter;
-    CondVar variable;
-
-    Mutex prep_lock;
-
-    FORCEDINLINE Mutex& prepare_lock()
-    {
-        prep_lock.lock();
-        return prep_lock;
-    }
-
-    FORCEDINLINE void await()
-    {
-        UqLock lock(awaiter);
-
-        prep_lock.unlock();
-
-        variable.wait(lock);
-    }
-
-    template<typename Dur>
-    FORCEDINLINE cv_status await(Dur const& dur)
-    {
-        UqLock lock(awaiter);
-
-        prep_lock.unlock();
-
-        return variable.wait_for(lock, dur);
-    }
-
-    FORCEDINLINE void notify()
-    {
-        (void)notify(Chrono::seconds(1));
-    }
-
-    template<typename Dur = Chrono::system_clock::duration>
-    NO_DISCARD FORCEDINLINE bool notify(Dur const&)
-    {
-        UqLock _(prep_lock, std::try_to_lock);
-
-        if(!_.owns_lock())
-            return false;
-
-        variable.notify_all();
-        return true;
-    }
-};
 } // namespace stl_types

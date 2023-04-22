@@ -78,7 +78,7 @@ inline i32 get_program_buffer_location(
         + std::string(key.name.begin(), key.name.end())));
 }
 
-template<typename T, size_t Num>
+template<typename T, int Num>
 inline bool apply_single_uniform(
     program_t const&                                            program,
     typing::graphics::ShaderStage                               stage,
@@ -103,7 +103,7 @@ inline bool apply_single_uniform(
     return true;
 }
 
-template<typename T, size_t Num>
+template<typename T, int Num>
 inline bool apply_single_uniform(
     program_t const&                                            program,
     typing::graphics::ShaderStage                               stage,
@@ -197,6 +197,7 @@ inline bool apply_command_modifier(
 
         if(buffer.m_type == buffers::type::constants)
         {
+            /* TODO: Cache blk_idx, slap it in a map<pair<prog, name>, idx> */
             auto blk_idx = cmd::get_uniform_block_index(
                 program.m_handle, buffer_def.key.name);
             if(blk_idx == std::numeric_limits<u32>::max())
@@ -207,7 +208,7 @@ inline bool apply_command_modifier(
         auto offset = buffer.m_offset;
         auto size   = buffer.m_size;
 
-        if(span.has_value() && buffer.m_type == buffers::type::constants)
+        if(span.has_value() && buffer_def.stride != 0)
         {
             auto span_ = *span;
             offset += buffer_def.stride * span_.first;
@@ -427,22 +428,22 @@ inline bool apply_command_modifier(
         if(auto view = view_info.view; view)
             cmd::viewport_indexedf(
                 bookkeeping.view_idx,
-                Vecf2(view->x(), view->y()),
-                Vecf2(view->z(), view->w()));
+                Vecf2(view->x, view->y),
+                Vecf2(view->z, view->w));
         if(auto view = view_info.scissor; view)
         {
             cmd::enable(group::enable_cap::scissor_test);
             cmd::scissor_indexed(
                 bookkeeping.view_idx,
-                view->x(),
-                view->y(),
-                Veci2{view->z(), view->w()});
+                view->x,
+                view->y,
+                Veci2{view->z, view->w});
         }
         if(auto depth = view_info.depth; depth)
         {
             cmd::enable(group::enable_cap::depth_test);
             cmd::depth_range_indexed(
-                bookkeeping.view_idx, depth->x(), depth->y());
+                bookkeeping.view_idx, depth->range->x, depth->range->y);
         }
         bookkeeping.view_idx++;
     } else
@@ -453,22 +454,33 @@ inline bool apply_command_modifier(
             cmd::get_integerv(
                 group::get_prop::viewport,
                 Span<i32>(&bookkeeping.previous_viewport[0], 4));
-            cmd::viewport(
-                Veci2{view->x(), view->y()}, Veci2{view->z(), view->w()});
+            cmd::viewport(Veci2{view->x, view->y}, Veci2{view->z, view->w});
         }
         if(auto view = view_info.scissor; view)
         {
             cmd::enable(group::enable_cap::scissor_test);
-            cmd::scissor(
-                Veci2{view->x(), view->y()}, Veci2{view->z(), view->w()});
+            cmd::scissor(Veci2{view->x, view->y}, Veci2{view->z, view->w});
         }
-        if(auto depth = view_info.depth; depth)
+        if(auto depth_ = view_info.depth; depth_.has_value())
         {
+            auto const& depth = *depth_;
             cmd::enable(group::enable_cap::depth_test);
+            if(depth.range)
+            {
 #if GLEAM_MAX_VERSION >= 0x100
-            cmd::depth_range(depth->x(), depth->y());
+                cmd::depth_range(depth.range->x, depth.range->y);
 #else
-            cmd::depth_rangef(depth->x(), depth->y());
+                cmd::depth_rangef(depth.range->x, depth.range->y);
+#endif
+            }
+            cmd::depth_func(
+                depth.reversed ? group::depth_function::gequal
+                               : group::depth_function::less);
+#if GLEAM_MAX_VERSION >= 0x450
+            if(depth.reversed)
+                cmd::clip_control(
+                    group::clip_control_origin::lower_left,
+                    group::clip_control_depth::zero_to_one);
 #endif
         }
     }
@@ -495,8 +507,8 @@ inline void undo_command_modifier(
         cmd::viewport(
             Veci2{},
             Veci2{
-                bookkeeping.previous_viewport.z(),
-                bookkeeping.previous_viewport.w()});
+                bookkeeping.previous_viewport[2],
+                bookkeeping.previous_viewport[3]});
 }
 
 inline bool apply_command_modifier(
@@ -535,7 +547,7 @@ inline bool apply_command_modifier(
     {
         cmd::blend_func(
             group::blending_factor::src_alpha, group::blending_factor::one);
-    } else if(view_info.multiplicative)
+    } else if(view_info.multiply)
     {
         cmd::blend_func(
             group::blending_factor::dst_color,

@@ -25,10 +25,10 @@ C_FLAGS(texture_usage_hint_t, u32);
 struct texture_2da_t : texture_array_base_t
 {
     texture_2da_t(
-        api*                api_,
-        PixDesc const&      fmt,
-        u32                 mips,
-        textures::property  properties = textures::property::none) :
+        api*               api_,
+        PixDesc const&     fmt,
+        u32                mips,
+        textures::property properties = textures::property::none) :
         texture_array_base_t(
             api_->feature_info().texture,
             api_->queue<api::queues::texture_decode>(),
@@ -73,16 +73,15 @@ struct texture_2da_t : texture_array_base_t
         if(size[2] > 1)
             Throw(std::out_of_range(
                 "compat::texture_2da_t: does not support multi-layer uploads"));
-        if(offset.z() >= static_cast<i32>(m_textures.size()))
+        if(offset[2] >= static_cast<i32>(m_textures.size()))
             Throw(std::out_of_range(
                 "compat::texture_2da_t: offset out of range"));
 
-        m_textures.at(offset.z())
-            ->upload(
-                data,
-                typing::vector_types::Veci2{offset.x(), offset.y()},
-                size_2d<i32>{size[0], size[1]},
-                level);
+        m_textures.at(offset[2])->upload(
+            data,
+            typing::vector_types::Veci2{offset[0], offset[1]},
+            size_2d<i32>{size[0], size[1]},
+            level);
     }
 
     void set_usage_hint(texture_usage_hint_t hint)

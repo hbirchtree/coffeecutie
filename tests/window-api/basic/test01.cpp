@@ -72,7 +72,7 @@ Mtx view, projection;
 {
     return new ::EventLoop{
         Display::CreateRendererUq(),
-        MkUq<WindowData>(),
+        std::make_unique<WindowData>(),
         [](R& r, D*) {
             cDebug("Setup");
 
@@ -193,7 +193,7 @@ bool basic_window_test()
 
     auto win = Display::CreateRendererSh();
 
-    ShPtr<::EventLoop> eld = MkSharedMove<::EventLoop>(std::move(*GenELoop()));
+    std::shared_ptr<::EventLoop> eld = std::make_sharedMove<::EventLoop>(std::move(*GenELoop()));
 
     eld->flags    = ::EventLoop::TimeLimited;
     eld->time.max = 1;
@@ -203,7 +203,7 @@ bool basic_window_test()
 
     auto visual = GetDefaultVisual<API>();
 
-    CString err;
+    std::string err;
     int     status = 
         EventApplication::execEventLoop(std::move(eld), visual, err);
 

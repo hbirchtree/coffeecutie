@@ -21,10 +21,10 @@ struct ControllerInput
   private:
     struct state_t
     {
-        stl_types::String name;
+        std::string name;
         controller_map    state;
     };
-    stl_types::Map<libc_types::u32, state_t> m_controllers;
+    std::map<libc_types::u32, state_t> m_controllers;
 };
 
 struct BatteryProvider

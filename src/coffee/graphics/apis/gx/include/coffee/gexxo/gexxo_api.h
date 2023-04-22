@@ -143,11 +143,11 @@ struct Pipeline : Coffee::RHI::GraphicsAPI::Pipeline
 
     Shader& storeShader(Shader&& shader)
     {
-        stored_shaders.emplace_back(stl_types::MkUq<Shader>(std::move(shader)));
+        stored_shaders.emplace_back(std::make_unique<Shader>(std::move(shader)));
         return *stored_shaders.back();
     }
 
-    stl_types::Vector<stl_types::UqPtr<Shader>> stored_shaders;
+    stl_types::Vector<std::unique_ptr<Shader>> stored_shaders;
 
     stl_types::Map<typing::graphics::ShaderStage, Shader*> shaders;
 };

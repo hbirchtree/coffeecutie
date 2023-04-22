@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include <coffee/core/input/standard_input_handlers.h>
+#include <peripherals/semantic/chunk.h>
 #include <peripherals/typing/vectors/camera.h>
 #include <peripherals/typing/vectors/vector_types.h>
 
@@ -10,6 +11,7 @@
 using namespace Coffee::StandardInput;
 
 using libc_types::f32;
+using semantic::Span;
 using typing::vector_types::Matf4;
 using camera_t     = typing::vectors::scene::camera<f32>;
 using std_camera_t = StandardCamera<camera_t*, StandardCameraOpts*>;
@@ -57,19 +59,21 @@ struct BlamCamera : compo::SubsystemBase
 
     BlamCamera() :
         std_camera(std::make_shared<std_camera_t>(&camera, &camera_opts)),
-        controller_camera(&camera, &controller_opts)
+        controller_camera(std_camera, &controller_opts)
     {
     }
 
     camera_t                      camera;
     Matf4                         camera_matrix;
+    Matf4                         rotation_matrix;
     StandardCameraOpts            camera_opts;
     std::shared_ptr<std_camera_t> std_camera;
 
     f32 wireframe_distance{100.f};
 
-    ControllerOpts                               controller_opts;
-    ControllerCamera<camera_t*, ControllerOpts*> controller_camera;
+    ControllerOpts controller_opts;
+    ControllerCamera<std::shared_ptr<std_camera_t>, ControllerOpts*>
+        controller_camera;
 };
 
 struct BlamResources : compo::SubsystemBase
@@ -98,25 +102,33 @@ struct BlamResources : compo::SubsystemBase
     std::vector<Matf4>             model_mats;
     std::shared_ptr<gfx::buffer_t> model_matrix_store;
     std::shared_ptr<gfx::buffer_t> material_store;
+    std::shared_ptr<gfx::buffer_t> world_store;
 
-    typing::geometry::size_2d<libc_types::i32> offscreen_size{1920, 1080};
-    std::shared_ptr<gfx::rendertarget_t>       offscreen;
-    std::shared_ptr<gfx::texture_2d_t>         color;
-    std::shared_ptr<gfx::texture_2d_t>         depth;
+    typing::vector_types::Veci2          offscreen_size{1920, 1080};
+    std::shared_ptr<gfx::rendertarget_t> offscreen;
+    std::shared_ptr<gfx::texture_2d_t>   color;
+    std::shared_ptr<gfx::texture_2d_t>   depth;
 };
 
 struct PostProcessParameters : compo::SubsystemBase
 {
     using type = PostProcessParameters;
 
-    f32 exposure{1.5f};
-    f32 gamma{1.6f};
+    f32  exposure{1.5f};
+    f32  gamma{1.6f};
+    f32  scale{1.f};
     bool auto_expose{true};
+
+    bool doom_mode{false};
 };
 
 struct RenderingParameters : compo::SubsystemBase
 {
     using type = RenderingParameters;
 
-    bool render_scenery{true};
+    bool render_scenery{false};
+    bool debug_clear{true};
+
+    bool debug_portals{false};
+    bool debug_triggers{false};
 };

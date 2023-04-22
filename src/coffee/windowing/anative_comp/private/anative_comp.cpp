@@ -5,6 +5,7 @@
 #include <peripherals/stl/magic_enum.hpp>
 
 #include <coffee/strings/libc_types.h>
+#include <coffee/strings/vector_types.h>
 
 #include <coffee/core/CDebug>
 
@@ -18,15 +19,6 @@
 #pragma GCC diagnostic ignored "-Wdeprecated-copy-with-user-provided-copy"
 #include <gestureDetector.h>
 #pragma GCC diagnostic pop
-
-//#if 0
-#include "/home/havard/.local/android-sdk-linux/ndk/25.1.8937393/sources/android/native_app_glue/android_native_app_glue.h"
-#include "/home/havard/.local/android-sdk-linux/ndk/25.1.8937393/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include/android/input.h"
-#include "/home/havard/.local/android-sdk-linux/ndk/25.1.8937393/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include/android/keycodes.h"
-#include "/home/havard/.local/android-sdk-linux/ndk/25.1.8937393/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include/android/native_activity.h"
-#include "/home/havard/.local/android-sdk-linux/ndk/25.1.8937393/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include/android/native_window.h"
-#include "peripherals/stl/magic_enum.hpp"
-//#endif
 
 namespace anative {
 
@@ -152,6 +144,9 @@ void AndroidEventBus::load(entity_container& e, comp_app::app_error&)
 
     m_tapDetector->SetConfiguration(android::app_info().configuration());
     m_doubleDetector->SetConfiguration(android::app_info().configuration());
+
+    m_touchConfig = &m_container->service<comp_app::AppLoader>()
+                         ->config<comp_app::TouchConfig>();
 }
 
 void AndroidEventBus::handleMouseEvent(AInputEvent* event)
@@ -227,10 +222,11 @@ void AndroidEventBus::handleMouseEvent(AInputEvent* event)
 
 using libc_types::i16;
 
-static std::pair<i16, i16> trigger_values(AInputEvent *event)
+static std::pair<i16, i16> trigger_values(AInputEvent* event)
 {
     /* Trigger values are fucked up.
-     * Stolen logic from: https://github.com/moonlight-stream/moonlight-android/blob/master/app/src/main/java/com/limelight/binding/input/ControllerHandler.java
+     * Stolen logic from:
+     * https://github.com/moonlight-stream/moonlight-android/blob/master/app/src/main/java/com/limelight/binding/input/ControllerHandler.java
      */
 
     using libc_types::convert_f32;
@@ -241,12 +237,18 @@ static std::pair<i16, i16> trigger_values(AInputEvent *event)
         AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_LTRIGGER, 0));
     out.second = convert_f32<i16>(
         AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_RTRIGGER, 0));
-    out.first = std::max(out.first, convert_f32<i16>(
-        AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_BRAKE, 0)));
-    out.second = std::max(out.second, convert_f32<i16>(
-        AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_GAS, 0)));
-    out.second = std::max(out.second, convert_f32<i16>(
-        AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_THROTTLE, 0)));
+    out.first = std::max(
+        out.first,
+        convert_f32<i16>(
+            AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_BRAKE, 0)));
+    out.second = std::max(
+        out.second,
+        convert_f32<i16>(
+            AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_GAS, 0)));
+    out.second = std::max(
+        out.second,
+        convert_f32<i16>(
+            AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_THROTTLE, 0)));
 
     if(out.first > 0 || out.second > 0)
         return out;
@@ -427,6 +429,9 @@ void AndroidEventBus::handleMotionEvent(AInputEvent* event)
     i32                  source   = AInputEvent_getSource(event);
     [[maybe_unused]] i32 deviceId = AInputEvent_getDeviceId(event);
 
+    const bool mouseMapping
+        = m_touchConfig->options & comp_app::TouchConfig::TouchToMouse;
+
     if(feval<i32>(source, AINPUT_SOURCE_DPAD))
     {
         [[maybe_unused]] float x
@@ -443,6 +448,9 @@ void AndroidEventBus::handleMotionEvent(AInputEvent* event)
     {
         [[maybe_unused]] i32 edgeFlags = AMotionEvent_getEdgeFlags(event);
         filterTouchEvent(event);
+    } else if(feval<i32>(source, AINPUT_SOURCE_MOUSE))
+    {
+        handleMouseEvent(event);
     }
 }
 
@@ -453,12 +461,6 @@ void AndroidEventBus::handleInputEvent(AInputEvent* event)
 
     i32 type   = AInputEvent_getType(event);
     i32 source = AInputEvent_getSource(event);
-
-    if(source & AINPUT_SOURCE_MOUSE)
-    {
-        handleMouseEvent(event);
-        return;
-    }
 
     if(source & AINPUT_SOURCE_GAMEPAD || source & AINPUT_SOURCE_JOYSTICK)
     {
@@ -491,16 +493,12 @@ bool AndroidEventBus::filterTouchEvent(AInputEvent* event)
     using namespace Coffee::Input;
     using namespace typing::vector_types;
 
-    comp_app::TouchConfig& touchConfig
-        = m_container->service<comp_app::AppLoader>()
-              ->config<comp_app::TouchConfig>();
-
     using IBus       = comp_app::BasicEventBus<CIEvent>;
     IBus*   inputBus = m_container->service<IBus>();
     CIEvent out;
 
     const bool mouseMapping
-        = touchConfig.options & comp_app::TouchConfig::TouchToMouse;
+        = m_touchConfig->options & comp_app::TouchConfig::TouchToMouse;
 
     if(m_pinchDetector->Detect(event) != GESTURE_STATE_NONE)
     {
@@ -515,37 +513,38 @@ bool AndroidEventBus::filterTouchEvent(AInputEvent* event)
     }
     if(auto state = m_dragDetector->Detect(event); state != GESTURE_STATE_NONE)
     {
-        Vec2 pos_;
+        Vec2  pos_;
         Vecf2 pos;
         m_dragDetector->GetPointer(pos_);
-        pos_.Value(pos.x(), pos.y());
+        pos_.Value(pos.x, pos.y);
         if(mouseMapping)
         {
             out.type = CIMouseMoveEvent::event_type;
             CIMouseMoveEvent move;
-            move.origin = pos;
+            move.origin.x = AMotionEvent_getHistoricalX(event, 0, 0);
+            move.origin.y = AMotionEvent_getHistoricalY(event, 0, 0);
+            move.delta = pos - move.origin;
             move.btn    = CIMouseButtonEvent::LeftButton;
+            if(state == GESTURE_STATE_END)
+                move.btn = 0;
+            inputBus->inject(out, &move);
         }
-        Coffee::cDebug("Drag");
     }
     if(m_doubleDetector->Detect(event) != GESTURE_STATE_NONE)
     {
         CITouchTapEvent tap;
         tap.pos = {AMotionEvent_getX(event, 0), AMotionEvent_getY(event, 0)};
         tap.pressed = true;
-        out.type = CITouchTapEvent::event_type;
+        out.type    = CITouchTapEvent::event_type;
         inputBus->inject(out, &tap);
-        Coffee::cDebug("Double tap");
     }
-    if(m_tapDetector->Detect(event) != GESTURE_STATE_NONE)
+    if(auto state = m_tapDetector->Detect(event); state != GESTURE_STATE_NONE)
     {
         CITouchTapEvent tap;
         tap.pos = {AMotionEvent_getX(event, 0), AMotionEvent_getY(event, 0)};
-        tap.pressed = true;
-        out.type = CITouchTapEvent::event_type;
+        tap.pressed = state != GESTURE_STATE_END;
+        out.type    = CITouchTapEvent::event_type;
         inputBus->inject(out, &tap);
-        /* TODO: Emit release event */
-        Coffee::cDebug("Tap");
     }
 
     return false;

@@ -136,6 +136,16 @@ enum class type
 };
 C_FLAGS(type, u32);
 
+enum class swizzle_t
+{
+    red,
+    green,
+    blue,
+    alpha,
+    one,
+    zero,
+};
+
 template<type v>
 struct texture_type
 {
@@ -359,7 +369,7 @@ concept Pipeline = requires(T v)
     {v.dealloc()};
 
     {v.attach(
-        std::declval<stl_types::ShPtr<ShaderT>>(),
+        std::declval<std::shared_ptr<ShaderT>>(),
         typing::graphics::ShaderStage::Vertex)};
     {v.compile()};
 };
@@ -383,7 +393,7 @@ concept RenderTarget = requires(T v)
     {v.copy(
         *std::declval<T*>(),
         std::declval<typing::geometry::rect<u32>>(),
-        std::declval<typing::geometry::point_2d<u32>>(),
+        std::declval<typing::vector_types::tvec2<u32>>(),
         render_targets::attachment::color,
         render_targets::attachment::color,
         0,
@@ -423,8 +433,8 @@ concept VertexArray = requires(T v)
     {v.dealloc()};
 
     {v.add(std::declval<typename T::attribute_type>())};
-    {v.set_buffer(buffers::vertex, stl_types::ShPtr<BufferT>(), 0)};
-    {v.set_buffer(buffers::element, stl_types::ShPtr<BufferT>())};
+    {v.set_buffer(buffers::vertex, std::shared_ptr<BufferT>(), 0)};
+    {v.set_buffer(buffers::element, std::shared_ptr<BufferT>())};
 };
 
 template<class T>

@@ -27,7 +27,7 @@ requires(semantic::concepts::Vector<vec_4_f32, f32, 4>)
     {
         GLW_FPTR_CHECK(BlendColorEXT)
     }
-    glBlendColorEXT(red.x(), red.y(), red.z(), red.w());
+    glBlendColorEXT(red[0], red[1], red[2], red[3]);
     detail::error_check("BlendColorEXT"sv);
 }
 

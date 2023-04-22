@@ -229,16 +229,16 @@ def coordinate_transform(params: list, i: int, output: list, inputs: list, templ
     name, type, _ = params[i]
     _, pod_type = extract_type(type)
     num = 1
-    inputs.append(f'{name}.x()')
+    inputs.append(f'{name}[0]')
     try:
         if params[i+1][0] in ['y', 'v1', 'yoffset', 'green']:
-            inputs.append(f'{name}.y()')
+            inputs.append(f'{name}[1]')
             num += 1
         if params[i+2][0] in ['z', 'v2', 'zoffset', 'blue']:
-            inputs.append(f'{name}.z()')
+            inputs.append(f'{name}[2]')
             num += 1
         if params[i+3][0] in ['w', 'v3', 'alpha']:
-            inputs.append(f'{name}.w()')
+            inputs.append(f'{name}[3]')
             num += 1
     except:
         pass
@@ -313,7 +313,6 @@ def static_array_transform(params: list, i: int, static_size: str, output: list,
     const, pod_type = extract_type(type)
 
     count_element = [ x for x in output if meta[1] is not None and meta[1].startswith(x[0]) ]
-    print(f'// {meta[1]}')
     if len(count_element) == 1:
         count_element = count_element[0]
         output.remove(count_element)

@@ -117,7 +117,7 @@ DebugFun::LogInterface SetupJsonLogger(platform::url::Url const& jsonFilename)
     platform::file::write(
         jsonFile.value(), mem_chunk<const char>::ofString("[\n  "));
 
-    auto jsonState    = MkShared<JsonLogState>();
+    auto jsonState    = std::make_shared<JsonLogState>();
     jsonState->handle = std::move(jsonFile.value());
     State::SwapState("jsonLog", jsonState);
     ::libc::signal::register_atexit(JsonLoggerExit);

@@ -1,0 +1,5617 @@
+[
+    {
+        "type": "PACKED",
+        "vkFormat": "VK_FORMAT_R4G4_UNORM_PACK8",
+        "typeSize": 1,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": null,
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": null,
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "PACKED",
+        "vkFormat": "VK_FORMAT_R4G4B4A4_UNORM_PACK16",
+        "typeSize": 2,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RGBA4",
+        "glFormat": "GL_RGBA",
+        "glType": "GL_UNSIGNED_SHORT_4_4_4_4",
+        "glVersion": "1.2",
+        "glExtensions": [
+            [
+                "GL_EXT_packed_pixels"
+            ]
+        ],
+        "glEsVersion": "1.0",
+        "glEsExtensions": null,
+        "glWebVersion": "1.0",
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatABGR4Unorm"
+    },
+    {
+        "type": "PACKED",
+        "vkFormat": "VK_FORMAT_B4G4R4A4_UNORM_PACK16",
+        "typeSize": 2,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RGBA4",
+        "glFormat": "GL_BGRA",
+        "glType": "GL_UNSIGNED_SHORT_4_4_4_4",
+        "glVersion": "1.2",
+        "glExtensions": [
+            [
+                "GL_EXT_bgra",
+                "GL_EXT_packed_pixels"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": null,
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "PACKED",
+        "vkFormat": "VK_FORMAT_R5G6B5_UNORM_PACK16",
+        "typeSize": 2,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RGB565",
+        "glFormat": "GL_RGB",
+        "glType": "GL_UNSIGNED_SHORT_5_6_5",
+        "glVersion": "1.2",
+        "glExtensions": null,
+        "glEsVersion": "1.0",
+        "glEsExtensions": null,
+        "glWebVersion": "1.0",
+        "glWebExtensions": null,
+        "dxgiFormat": "DXGI_FORMAT_B5G6R5_UNORM",
+        "mtlFormat": "MTLPixelFormatB5G6R5Unorm"
+    },
+    {
+        "type": "PACKED",
+        "vkFormat": "VK_FORMAT_B5G6R5_UNORM_PACK16",
+        "typeSize": 2,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RGB565",
+        "glFormat": "GL_RGB",
+        "glType": "GL_UNSIGNED_SHORT_5_6_5_REV",
+        "glVersion": "1.2",
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": null,
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "PACKED",
+        "vkFormat": "VK_FORMAT_R5G5B5A1_UNORM_PACK16",
+        "typeSize": 2,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RGB5_A1",
+        "glFormat": "GL_RGBA",
+        "glType": "GL_UNSIGNED_SHORT_5_5_5_1",
+        "glVersion": "1.2",
+        "glExtensions": [
+            [
+                "GL_EXT_packed_pixels"
+            ]
+        ],
+        "glEsVersion": "1.0",
+        "glEsExtensions": null,
+        "glWebVersion": "1.0",
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatA1BGR5Unorm"
+    },
+    {
+        "type": "PACKED",
+        "vkFormat": "VK_FORMAT_B5G5R5A1_UNORM_PACK16",
+        "typeSize": 2,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RGB5_A1",
+        "glFormat": "GL_BGRA",
+        "glType": "GL_UNSIGNED_SHORT_5_5_5_1",
+        "glVersion": "1.2",
+        "glExtensions": [
+            [
+                "GL_EXT_bgra",
+                "GL_EXT_packed_pixels"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": null,
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "PACKED",
+        "vkFormat": "VK_FORMAT_A1R5G5B5_UNORM_PACK16",
+        "typeSize": 2,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RGB5_A1",
+        "glFormat": "GL_BGRA",
+        "glType": "GL_UNSIGNED_SHORT_1_5_5_5_REV",
+        "glVersion": "1.2",
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": null,
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": "DXGI_FORMAT_B5G5R5A1_UNORM",
+        "mtlFormat": "MTLPixelFormatBGR5A1Unorm"
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R8_UNORM",
+        "typeSize": 1,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_R8",
+        "glFormat": "GL_RED",
+        "glType": "GL_UNSIGNED_BYTE",
+        "glVersion": "3.0",
+        "glExtensions": [
+            [
+                "GL_ARB_texture_rg"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": [
+            [
+                "GL_EXT_texture_rg"
+            ]
+        ],
+        "glWebVersion": "2.0",
+        "glWebExtensions": null,
+        "dxgiFormat": "DXGI_FORMAT_R8_UNORM",
+        "mtlFormat": "MTLPixelFormatR8Unorm"
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R8_SNORM",
+        "typeSize": 1,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_R8_SNORM",
+        "glFormat": "GL_RED",
+        "glType": "GL_BYTE",
+        "glVersion": "3.1",
+        "glExtensions": [
+            [
+                "GL_EXT_texture_snorm"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": null,
+        "glWebVersion": "2.0",
+        "glWebExtensions": null,
+        "dxgiFormat": "DXGI_FORMAT_R8_SNORM",
+        "mtlFormat": "MTLPixelFormatR8Snorm"
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R8_UINT",
+        "typeSize": 1,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_R8UI",
+        "glFormat": "GL_RED_INTEGER",
+        "glType": "GL_UNSIGNED_BYTE",
+        "glVersion": "3.0",
+        "glExtensions": [
+            [
+                "GL_ARB_texture_rg",
+                "GL_EXT_texture_integer"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": null,
+        "glWebVersion": "2.0",
+        "glWebExtensions": null,
+        "dxgiFormat": "DXGI_FORMAT_R8_UINT",
+        "mtlFormat": "MTLPixelFormatR8Uint"
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R8_SINT",
+        "typeSize": 1,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_R8I",
+        "glFormat": "GL_RED_INTEGER",
+        "glType": "GL_BYTE",
+        "glVersion": "3.0",
+        "glExtensions": [
+            [
+                "GL_ARB_texture_rg",
+                "GL_EXT_texture_integer"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": null,
+        "glWebVersion": "2.0",
+        "glWebExtensions": null,
+        "dxgiFormat": "DXGI_FORMAT_R8_SINT",
+        "mtlFormat": "MTLPixelFormatR8Sint"
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R8_SRGB",
+        "typeSize": 1,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_SR8_EXT",
+        "glFormat": "GL_RED",
+        "glType": "GL_UNSIGNED_BYTE",
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_EXT_texture_sRGB_R8"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_EXT_texture_sRGB_R8"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatR8Unorm_sRGB"
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R8G8_UNORM",
+        "typeSize": 1,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RG8",
+        "glFormat": "GL_RG",
+        "glType": "GL_UNSIGNED_BYTE",
+        "glVersion": "3.0",
+        "glExtensions": [
+            [
+                "GL_ARB_texture_rg"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": [
+            [
+                "GL_EXT_texture_rg"
+            ]
+        ],
+        "glWebVersion": "2.0",
+        "glWebExtensions": null,
+        "dxgiFormat": "DXGI_FORMAT_R8G8_UNORM",
+        "mtlFormat": "MTLPixelFormatRG8Unorm"
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R8G8_SNORM",
+        "typeSize": 1,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RG8_SNORM",
+        "glFormat": "GL_RG",
+        "glType": "GL_BYTE",
+        "glVersion": "3.1",
+        "glExtensions": [
+            [
+                "GL_EXT_texture_snorm"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": null,
+        "glWebVersion": "2.0",
+        "glWebExtensions": null,
+        "dxgiFormat": "DXGI_FORMAT_R8G8_SNORM",
+        "mtlFormat": "MTLPixelFormatRG8Snorm"
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R8G8_UINT",
+        "typeSize": 1,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RG8UI",
+        "glFormat": "GL_RG_INTEGER",
+        "glType": "GL_UNSIGNED_BYTE",
+        "glVersion": "3.0",
+        "glExtensions": [
+            [
+                "GL_ARB_texture_rg",
+                "GL_EXT_texture_integer"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": null,
+        "glWebVersion": "2.0",
+        "glWebExtensions": null,
+        "dxgiFormat": "DXGI_FORMAT_R8G8_UINT",
+        "mtlFormat": "MTLPixelFormatRG8Uint"
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R8G8_SINT",
+        "typeSize": 1,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RG8I",
+        "glFormat": "GL_RG_INTEGER",
+        "glType": "GL_BYTE",
+        "glVersion": "3.0",
+        "glExtensions": [
+            [
+                "GL_ARB_texture_rg",
+                "GL_EXT_texture_integer"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": null,
+        "glWebVersion": "2.0",
+        "glWebExtensions": null,
+        "dxgiFormat": "DXGI_FORMAT_R8G8_SINT",
+        "mtlFormat": "MTLPixelFormatRG8Sint"
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R8G8_SRGB",
+        "typeSize": 1,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_SRG8_EXT",
+        "glFormat": "GL_RG",
+        "glType": "GL_UNSIGNED_BYTE",
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_EXT_texture_sRGB_RG8"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_EXT_texture_sRGB_RG8"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatRG8Unorm_sRGB"
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R8G8B8_UNORM",
+        "typeSize": 1,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RGB8",
+        "glFormat": "GL_RGB",
+        "glType": "GL_UNSIGNED_BYTE",
+        "glVersion": "1.0",
+        "glExtensions": null,
+        "glEsVersion": "1.0",
+        "glEsExtensions": null,
+        "glWebVersion": "1.0",
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R8G8B8_SNORM",
+        "typeSize": 1,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RGB8_SNORM",
+        "glFormat": "GL_RGB",
+        "glType": "GL_BYTE",
+        "glVersion": "3.1",
+        "glExtensions": [
+            [
+                "GL_EXT_texture_snorm"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": null,
+        "glWebVersion": "2.0",
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R8G8B8_UINT",
+        "typeSize": 1,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RGB8UI",
+        "glFormat": "GL_RGB_INTEGER",
+        "glType": "GL_UNSIGNED_BYTE",
+        "glVersion": "3.0",
+        "glExtensions": [
+            [
+                "GL_EXT_texture_integer"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": null,
+        "glWebVersion": "2.0",
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R8G8B8_SINT",
+        "typeSize": 1,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RGB8I",
+        "glFormat": "GL_RGB_INTEGER",
+        "glType": "GL_BYTE",
+        "glVersion": "3.0",
+        "glExtensions": [
+            [
+                "GL_EXT_texture_integer"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": null,
+        "glWebVersion": "2.0",
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R8G8B8_SRGB",
+        "typeSize": 1,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_SRGB8",
+        "glFormat": "GL_RGB",
+        "glType": "GL_UNSIGNED_BYTE",
+        "glVersion": "2.1",
+        "glExtensions": [
+            [
+                "GL_EXT_texture_sRGB"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": [
+            [
+                "GL_EXT_sRGB"
+            ]
+        ],
+        "glWebVersion": "2.0",
+        "glWebExtensions": [
+            [
+                "EXT_sRGB"
+            ]
+        ],
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_B8G8R8_UNORM",
+        "typeSize": 1,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RGB8",
+        "glFormat": "GL_BGR",
+        "glType": "GL_UNSIGNED_BYTE",
+        "glVersion": "1.2",
+        "glExtensions": [
+            [
+                "GL_EXT_bgra"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_EXT_bgra"
+            ],
+            [
+                "GL_NV_bgr"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_B8G8R8_SNORM",
+        "typeSize": 1,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RGB8_SNORM",
+        "glFormat": "GL_BGR",
+        "glType": "GL_BYTE",
+        "glVersion": "3.1",
+        "glExtensions": [
+            [
+                "GL_EXT_texture_snorm"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": null,
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_B8G8R8_UINT",
+        "typeSize": 1,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RGB8UI",
+        "glFormat": "GL_BGR_INTEGER",
+        "glType": "GL_UNSIGNED_BYTE",
+        "glVersion": "3.0",
+        "glExtensions": [
+            [
+                "GL_EXT_texture_integer"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": null,
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_B8G8R8_SINT",
+        "typeSize": 1,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RGB8I",
+        "glFormat": "GL_BGR_INTEGER",
+        "glType": "GL_BYTE",
+        "glVersion": "3.0",
+        "glExtensions": [
+            [
+                "GL_EXT_texture_integer"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": null,
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_B8G8R8_SRGB",
+        "typeSize": 1,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_SRGB8",
+        "glFormat": "GL_BGR",
+        "glType": "GL_UNSIGNED_BYTE",
+        "glVersion": "2.1",
+        "glExtensions": [
+            [
+                "GL_EXT_texture_sRGB"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": null,
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R8G8B8A8_UNORM",
+        "typeSize": 1,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RGBA8",
+        "glFormat": "GL_RGBA",
+        "glType": "GL_UNSIGNED_BYTE",
+        "glVersion": "1.0",
+        "glExtensions": null,
+        "glEsVersion": "1.0",
+        "glEsExtensions": null,
+        "glWebVersion": "1.0",
+        "glWebExtensions": null,
+        "dxgiFormat": "DXGI_FORMAT_R8G8B8A8_UNORM",
+        "mtlFormat": "MTLPixelFormatRGBA8Unorm"
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R8G8B8A8_SNORM",
+        "typeSize": 1,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RGBA8_SNORM",
+        "glFormat": "GL_RGBA",
+        "glType": "GL_BYTE",
+        "glVersion": "3.1",
+        "glExtensions": [
+            [
+                "GL_EXT_texture_snorm"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": null,
+        "glWebVersion": "2.0",
+        "glWebExtensions": null,
+        "dxgiFormat": "DXGI_FORMAT_R8G8B8A8_SNORM",
+        "mtlFormat": "MTLPixelFormatRGBA8Snorm"
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R8G8B8A8_UINT",
+        "typeSize": 1,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RGBA8UI",
+        "glFormat": "GL_RGBA_INTEGER",
+        "glType": "GL_UNSIGNED_BYTE",
+        "glVersion": "3.0",
+        "glExtensions": [
+            [
+                "GL_EXT_texture_integer"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": null,
+        "glWebVersion": "2.0",
+        "glWebExtensions": null,
+        "dxgiFormat": "DXGI_FORMAT_R8G8B8A8_UINT",
+        "mtlFormat": "MTLPixelFormatRGBA8Uint"
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R8G8B8A8_SINT",
+        "typeSize": 1,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RGBA8I",
+        "glFormat": "GL_RGBA_INTEGER",
+        "glType": "GL_BYTE",
+        "glVersion": "3.0",
+        "glExtensions": [
+            [
+                "GL_EXT_texture_integer"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": null,
+        "glWebVersion": "2.0",
+        "glWebExtensions": null,
+        "dxgiFormat": "DXGI_FORMAT_R8G8B8A8_SINT",
+        "mtlFormat": "MTLPixelFormatRGBA8Sint"
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R8G8B8A8_SRGB",
+        "typeSize": 1,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_SRGB8_ALPHA8",
+        "glFormat": "GL_RGBA",
+        "glType": "GL_UNSIGNED_BYTE",
+        "glVersion": "2.1",
+        "glExtensions": [
+            [
+                "GL_EXT_texture_sRGB"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": [
+            [
+                "GL_EXT_sRGB"
+            ]
+        ],
+        "glWebVersion": "2.0",
+        "glWebExtensions": [
+            [
+                "EXT_sRGB"
+            ]
+        ],
+        "dxgiFormat": "DXGI_FORMAT_R8G8B8A8_UNORM_SRGB",
+        "mtlFormat": "MTLPixelFormatRGBA8Unorm_sRGB"
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_B8G8R8A8_UNORM",
+        "typeSize": 1,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RGBA8",
+        "glFormat": "GL_BGRA",
+        "glType": "GL_UNSIGNED_BYTE",
+        "glVersion": "1.2",
+        "glExtensions": [
+            [
+                "GL_EXT_bgra"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_APPLE_texture_format_BGRA8888"
+            ],
+            [
+                "GL_EXT_bgra"
+            ],
+            [
+                "GL_EXT_texture_format_BGRA8888"
+            ],
+            [
+                "GL_IMG_texture_format_BGRA8888"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": "DXGI_FORMAT_B8G8R8A8_UNORM",
+        "mtlFormat": "MTLPixelFormatBGRA8Unorm"
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_B8G8R8A8_SNORM",
+        "typeSize": 1,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RGBA8_SNORM",
+        "glFormat": "GL_BGRA",
+        "glType": "GL_BYTE",
+        "glVersion": "3.1",
+        "glExtensions": [
+            [
+                "GL_EXT_texture_snorm"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": null,
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_B8G8R8A8_UINT",
+        "typeSize": 1,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RGBA8UI",
+        "glFormat": "GL_BGRA_INTEGER",
+        "glType": "GL_UNSIGNED_BYTE",
+        "glVersion": "3.0",
+        "glExtensions": [
+            [
+                "GL_EXT_texture_integer"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": null,
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_B8G8R8A8_SINT",
+        "typeSize": 1,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RGBA8I",
+        "glFormat": "GL_BGRA_INTEGER",
+        "glType": "GL_BYTE",
+        "glVersion": "3.0",
+        "glExtensions": [
+            [
+                "GL_EXT_texture_integer"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": null,
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_B8G8R8A8_SRGB",
+        "typeSize": 1,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_SRGB8_ALPHA8",
+        "glFormat": "GL_BGRA",
+        "glType": "GL_UNSIGNED_BYTE",
+        "glVersion": "2.1",
+        "glExtensions": [
+            [
+                "GL_EXT_texture_sRGB"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": null,
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": "DXGI_FORMAT_B8G8R8A8_UNORM_SRGB",
+        "mtlFormat": "MTLPixelFormatBGRA8Unorm_sRGB"
+    },
+    {
+        "type": "PACKED",
+        "vkFormat": "VK_FORMAT_A2R10G10B10_UNORM_PACK32",
+        "typeSize": 4,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RGB10_A2",
+        "glFormat": "GL_BGRA",
+        "glType": "GL_UNSIGNED_INT_2_10_10_10_REV",
+        "glVersion": "1.2",
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": null,
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatBGR10A2Unorm"
+    },
+    {
+        "type": "PACKED",
+        "vkFormat": "VK_FORMAT_A2R10G10B10_SNORM_PACK32",
+        "typeSize": 4,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": null,
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": null,
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "PACKED",
+        "vkFormat": "VK_FORMAT_A2R10G10B10_UINT_PACK32",
+        "typeSize": 4,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RGB10_A2UI",
+        "glFormat": "GL_BGRA_INTEGER",
+        "glType": "GL_UNSIGNED_INT_2_10_10_10_REV",
+        "glVersion": "3.3",
+        "glExtensions": [
+            [
+                "GL_ARB_texture_rgb10_a2ui"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": null,
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "PACKED",
+        "vkFormat": "VK_FORMAT_A2R10G10B10_SINT_PACK32",
+        "typeSize": 4,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": null,
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": null,
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "PACKED",
+        "vkFormat": "VK_FORMAT_A2B10G10R10_UNORM_PACK32",
+        "typeSize": 4,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RGB10_A2",
+        "glFormat": "GL_RGBA",
+        "glType": "GL_UNSIGNED_INT_2_10_10_10_REV",
+        "glVersion": "1.2",
+        "glExtensions": null,
+        "glEsVersion": "3.0",
+        "glEsExtensions": null,
+        "glWebVersion": "2.0",
+        "glWebExtensions": null,
+        "dxgiFormat": "DXGI_FORMAT_R10G10B10A2_UNORM",
+        "mtlFormat": "MTLPixelFormatRGB10A2Unorm"
+    },
+    {
+        "type": "PACKED",
+        "vkFormat": "VK_FORMAT_A2B10G10R10_SNORM_PACK32",
+        "typeSize": 4,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": null,
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": null,
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "PACKED",
+        "vkFormat": "VK_FORMAT_A2B10G10R10_UINT_PACK32",
+        "typeSize": 4,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RGB10_A2UI",
+        "glFormat": "GL_RGBA_INTEGER",
+        "glType": "GL_UNSIGNED_INT_2_10_10_10_REV",
+        "glVersion": "3.3",
+        "glExtensions": [
+            [
+                "GL_ARB_texture_rgb10_a2ui"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": null,
+        "glWebVersion": "2.0",
+        "glWebExtensions": null,
+        "dxgiFormat": "DXGI_FORMAT_R10G10B10A2_UINT",
+        "mtlFormat": "MTLPixelFormatRGB10A2Uint"
+    },
+    {
+        "type": "PACKED",
+        "vkFormat": "VK_FORMAT_A2B10G10R10_SINT_PACK32",
+        "typeSize": 4,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": null,
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": null,
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R16_UNORM",
+        "typeSize": 2,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_R16",
+        "glFormat": "GL_RED",
+        "glType": "GL_UNSIGNED_SHORT",
+        "glVersion": "3.0",
+        "glExtensions": [
+            [
+                "GL_ARB_texture_rg"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_EXT_texture_norm16"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [
+            [
+                "EXT_texture_norm16"
+            ]
+        ],
+        "dxgiFormat": "DXGI_FORMAT_R16_UNORM",
+        "mtlFormat": "MTLPixelFormatR16Unorm"
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R16_SNORM",
+        "typeSize": 2,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_R16_SNORM",
+        "glFormat": "GL_RED",
+        "glType": "GL_SHORT",
+        "glVersion": "3.1",
+        "glExtensions": [
+            [
+                "GL_EXT_texture_snorm"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_EXT_texture_norm16"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [
+            [
+                "EXT_texture_norm16"
+            ]
+        ],
+        "dxgiFormat": "DXGI_FORMAT_R16_SNORM",
+        "mtlFormat": "MTLPixelFormatR16Snorm"
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R16_UINT",
+        "typeSize": 2,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_R16UI",
+        "glFormat": "GL_RED_INTEGER",
+        "glType": "GL_UNSIGNED_SHORT",
+        "glVersion": "3.0",
+        "glExtensions": [
+            [
+                "GL_ARB_texture_rg",
+                "GL_EXT_texture_integer"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": null,
+        "glWebVersion": "2.0",
+        "glWebExtensions": null,
+        "dxgiFormat": "DXGI_FORMAT_R16_UINT",
+        "mtlFormat": "MTLPixelFormatR16Uint"
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R16_SINT",
+        "typeSize": 2,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_R16I",
+        "glFormat": "GL_RED_INTEGER",
+        "glType": "GL_SHORT",
+        "glVersion": "3.0",
+        "glExtensions": [
+            [
+                "GL_ARB_texture_rg",
+                "GL_EXT_texture_integer"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": null,
+        "glWebVersion": "2.0",
+        "glWebExtensions": null,
+        "dxgiFormat": "DXGI_FORMAT_R16_SINT",
+        "mtlFormat": "MTLPixelFormatR16Sint"
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R16_SFLOAT",
+        "typeSize": 2,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_R16F",
+        "glFormat": "GL_RED",
+        "glType": "GL_HALF_FLOAT",
+        "glVersion": "3.0",
+        "glExtensions": [
+            [
+                "GL_ARB_half_float_pixel",
+                "GL_ARB_texture_float",
+                "GL_ARB_texture_rg"
+            ],
+            [
+                "GL_ARB_texture_float",
+                "GL_ARB_texture_rg",
+                "GL_NV_half_float"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": null,
+        "glWebVersion": "2.0",
+        "glWebExtensions": null,
+        "dxgiFormat": "DXGI_FORMAT_R16_FLOAT",
+        "mtlFormat": "MTLPixelFormatR16Float"
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R16G16_UNORM",
+        "typeSize": 2,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RG16",
+        "glFormat": "GL_RG",
+        "glType": "GL_UNSIGNED_SHORT",
+        "glVersion": "3.0",
+        "glExtensions": [
+            [
+                "GL_ARB_texture_rg"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_EXT_texture_norm16"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [
+            [
+                "EXT_texture_norm16"
+            ]
+        ],
+        "dxgiFormat": "DXGI_FORMAT_R16G16_UNORM",
+        "mtlFormat": "MTLPixelFormatRG16Unorm"
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R16G16_SNORM",
+        "typeSize": 2,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RG16_SNORM",
+        "glFormat": "GL_RG",
+        "glType": "GL_SHORT",
+        "glVersion": "3.1",
+        "glExtensions": [
+            [
+                "GL_EXT_texture_snorm"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_EXT_texture_norm16"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [
+            [
+                "EXT_texture_norm16"
+            ]
+        ],
+        "dxgiFormat": "DXGI_FORMAT_R16G16_SNORM",
+        "mtlFormat": "MTLPixelFormatRG16Snorm"
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R16G16_UINT",
+        "typeSize": 2,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RG16UI",
+        "glFormat": "GL_RG_INTEGER",
+        "glType": "GL_UNSIGNED_SHORT",
+        "glVersion": "3.0",
+        "glExtensions": [
+            [
+                "GL_ARB_texture_rg",
+                "GL_EXT_texture_integer"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": null,
+        "glWebVersion": "2.0",
+        "glWebExtensions": null,
+        "dxgiFormat": "DXGI_FORMAT_R16G16_UINT",
+        "mtlFormat": "MTLPixelFormatRG16Uint"
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R16G16_SINT",
+        "typeSize": 2,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RG16I",
+        "glFormat": "GL_RG_INTEGER",
+        "glType": "GL_SHORT",
+        "glVersion": "3.0",
+        "glExtensions": [
+            [
+                "GL_ARB_texture_rg",
+                "GL_EXT_texture_integer"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": null,
+        "glWebVersion": "2.0",
+        "glWebExtensions": null,
+        "dxgiFormat": "DXGI_FORMAT_R16G16_SINT",
+        "mtlFormat": "MTLPixelFormatRG16Sint"
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R16G16_SFLOAT",
+        "typeSize": 2,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RG16F",
+        "glFormat": "GL_RG",
+        "glType": "GL_HALF_FLOAT",
+        "glVersion": "3.0",
+        "glExtensions": [
+            [
+                "GL_ARB_half_float_pixel",
+                "GL_ARB_texture_float",
+                "GL_ARB_texture_rg"
+            ],
+            [
+                "GL_ARB_texture_float",
+                "GL_ARB_texture_rg",
+                "GL_NV_half_float"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": null,
+        "glWebVersion": "2.0",
+        "glWebExtensions": null,
+        "dxgiFormat": "DXGI_FORMAT_R16G16_FLOAT",
+        "mtlFormat": "MTLPixelFormatRG16Float"
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R16G16B16_UNORM",
+        "typeSize": 2,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RGB16",
+        "glFormat": "GL_RGB",
+        "glType": "GL_UNSIGNED_SHORT",
+        "glVersion": "1.0",
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_EXT_texture_norm16"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [
+            [
+                "EXT_texture_norm16"
+            ]
+        ],
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R16G16B16_SNORM",
+        "typeSize": 2,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RGB16_SNORM",
+        "glFormat": "GL_RGB",
+        "glType": "GL_SHORT",
+        "glVersion": "3.1",
+        "glExtensions": [
+            [
+                "GL_EXT_texture_snorm"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_EXT_texture_norm16"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [
+            [
+                "EXT_texture_norm16"
+            ]
+        ],
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R16G16B16_UINT",
+        "typeSize": 2,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RGB16UI",
+        "glFormat": "GL_RGB_INTEGER",
+        "glType": "GL_UNSIGNED_SHORT",
+        "glVersion": "3.0",
+        "glExtensions": [
+            [
+                "GL_EXT_texture_integer"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": null,
+        "glWebVersion": "2.0",
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R16G16B16_SINT",
+        "typeSize": 2,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RGB16I",
+        "glFormat": "GL_RGB_INTEGER",
+        "glType": "GL_SHORT",
+        "glVersion": "3.0",
+        "glExtensions": [
+            [
+                "GL_EXT_texture_integer"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": null,
+        "glWebVersion": "2.0",
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R16G16B16_SFLOAT",
+        "typeSize": 2,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RGB16F",
+        "glFormat": "GL_RGB",
+        "glType": "GL_HALF_FLOAT",
+        "glVersion": "3.0",
+        "glExtensions": [
+            [
+                "GL_APPLE_float_pixels"
+            ],
+            [
+                "GL_ARB_half_float_pixel",
+                "GL_ARB_texture_float"
+            ],
+            [
+                "GL_ARB_half_float_pixel",
+                "GL_ATI_texture_float"
+            ],
+            [
+                "GL_NV_half_float",
+                "GL_ARB_texture_float"
+            ],
+            [
+                "GL_NV_half_float",
+                "GL_ATI_texture_float"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": [
+            [
+                "GL_OES_texture_half_float"
+            ]
+        ],
+        "glWebVersion": "2.0",
+        "glWebExtensions": [
+            [
+                "OES_texture_half_float"
+            ]
+        ],
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R16G16B16A16_UNORM",
+        "typeSize": 2,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RGBA16",
+        "glFormat": "GL_RGBA",
+        "glType": "GL_UNSIGNED_SHORT",
+        "glVersion": "1.0",
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_EXT_texture_norm16"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [
+            [
+                "EXT_texture_norm16"
+            ]
+        ],
+        "dxgiFormat": "DXGI_FORMAT_R16G16B16A16_UNORM",
+        "mtlFormat": "MTLPixelFormatRGBA16Unorm"
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R16G16B16A16_SNORM",
+        "typeSize": 2,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RGBA16_SNORM",
+        "glFormat": "GL_RGBA",
+        "glType": "GL_SHORT",
+        "glVersion": "3.1",
+        "glExtensions": [
+            [
+                "GL_EXT_texture_snorm"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_EXT_texture_norm16"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [
+            [
+                "EXT_texture_norm16"
+            ]
+        ],
+        "dxgiFormat": "DXGI_FORMAT_R16G16B16A16_SNORM",
+        "mtlFormat": "MTLPixelFormatRGBA16Snorm"
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R16G16B16A16_UINT",
+        "typeSize": 2,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RGBA16UI",
+        "glFormat": "GL_RGBA_INTEGER",
+        "glType": "GL_UNSIGNED_SHORT",
+        "glVersion": "3.0",
+        "glExtensions": [
+            [
+                "GL_EXT_texture_integer"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": null,
+        "glWebVersion": "2.0",
+        "glWebExtensions": null,
+        "dxgiFormat": "DXGI_FORMAT_R16G16B16A16_UINT",
+        "mtlFormat": "MTLPixelFormatRGBA16Uint"
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R16G16B16A16_SINT",
+        "typeSize": 2,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RGBA16I",
+        "glFormat": "GL_RGBA_INTEGER",
+        "glType": "GL_SHORT",
+        "glVersion": "3.0",
+        "glExtensions": [
+            [
+                "GL_EXT_texture_integer"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": null,
+        "glWebVersion": "2.0",
+        "glWebExtensions": null,
+        "dxgiFormat": "DXGI_FORMAT_R16G16B16A16_SINT",
+        "mtlFormat": "MTLPixelFormatRGBA16Sint"
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R16G16B16A16_SFLOAT",
+        "typeSize": 2,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RGBA16F",
+        "glFormat": "GL_RGBA",
+        "glType": "GL_HALF_FLOAT",
+        "glVersion": "3.0",
+        "glExtensions": [
+            [
+                "GL_APPLE_float_pixels"
+            ],
+            [
+                "GL_ARB_half_float_pixel",
+                "GL_ARB_texture_float"
+            ],
+            [
+                "GL_ARB_half_float_pixel",
+                "GL_ATI_texture_float"
+            ],
+            [
+                "GL_NV_half_float",
+                "GL_ARB_texture_float"
+            ],
+            [
+                "GL_NV_half_float",
+                "GL_ATI_texture_float"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": [
+            [
+                "GL_OES_texture_half_float"
+            ]
+        ],
+        "glWebVersion": "2.0",
+        "glWebExtensions": [
+            [
+                "OES_texture_half_float"
+            ]
+        ],
+        "dxgiFormat": "DXGI_FORMAT_R16G16B16A16_FLOAT",
+        "mtlFormat": "MTLPixelFormatRGBA16Float"
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R32_UINT",
+        "typeSize": 4,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_R32UI",
+        "glFormat": "GL_RED_INTEGER",
+        "glType": "GL_UNSIGNED_INT",
+        "glVersion": "3.0",
+        "glExtensions": [
+            [
+                "GL_ARB_texture_rg",
+                "GL_EXT_texture_integer"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": null,
+        "glWebVersion": "2.0",
+        "glWebExtensions": null,
+        "dxgiFormat": "DXGI_FORMAT_R32_UINT",
+        "mtlFormat": "MTLPixelFormatR32Uint"
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R32_SINT",
+        "typeSize": 4,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_R32I",
+        "glFormat": "GL_RED_INTEGER",
+        "glType": "GL_INT",
+        "glVersion": "3.0",
+        "glExtensions": [
+            [
+                "GL_ARB_texture_rg",
+                "GL_EXT_texture_integer"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": null,
+        "glWebVersion": "2.0",
+        "glWebExtensions": null,
+        "dxgiFormat": "DXGI_FORMAT_R32_SINT",
+        "mtlFormat": "MTLPixelFormatR32Sint"
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R32_SFLOAT",
+        "typeSize": 4,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_R32F",
+        "glFormat": "GL_RED",
+        "glType": "GL_FLOAT",
+        "glVersion": "3.0",
+        "glExtensions": [
+            [
+                "GL_ARB_texture_float",
+                "GL_ARB_texture_rg"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": null,
+        "glWebVersion": "2.0",
+        "glWebExtensions": null,
+        "dxgiFormat": "DXGI_FORMAT_R32_FLOAT",
+        "mtlFormat": "MTLPixelFormatR32Float"
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R32G32_UINT",
+        "typeSize": 4,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RG32UI",
+        "glFormat": "GL_RG_INTEGER",
+        "glType": "GL_UNSIGNED_INT",
+        "glVersion": "3.0",
+        "glExtensions": [
+            [
+                "GL_ARB_texture_rg",
+                "GL_EXT_texture_integer"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": null,
+        "glWebVersion": "2.0",
+        "glWebExtensions": null,
+        "dxgiFormat": "DXGI_FORMAT_R32G32_UINT",
+        "mtlFormat": "MTLPixelFormatRG32Uint"
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R32G32_SINT",
+        "typeSize": 4,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RG32I",
+        "glFormat": "GL_RG_INTEGER",
+        "glType": "GL_INT",
+        "glVersion": "3.0",
+        "glExtensions": [
+            [
+                "GL_ARB_texture_rg",
+                "GL_EXT_texture_integer"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": null,
+        "glWebVersion": "2.0",
+        "glWebExtensions": null,
+        "dxgiFormat": "DXGI_FORMAT_R32G32_SINT",
+        "mtlFormat": "MTLPixelFormatRG32Sint"
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R32G32_SFLOAT",
+        "typeSize": 4,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RG32F",
+        "glFormat": "GL_RG",
+        "glType": "GL_FLOAT",
+        "glVersion": "3.0",
+        "glExtensions": [
+            [
+                "GL_ARB_texture_float",
+                "GL_ARB_texture_rg"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": null,
+        "glWebVersion": "2.0",
+        "glWebExtensions": null,
+        "dxgiFormat": "DXGI_FORMAT_R32G32_FLOAT",
+        "mtlFormat": "MTLPixelFormatRG32Float"
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R32G32B32_UINT",
+        "typeSize": 4,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RGB32UI",
+        "glFormat": "GL_RGB_INTEGER",
+        "glType": "GL_UNSIGNED_INT",
+        "glVersion": "3.0",
+        "glExtensions": [
+            [
+                "GL_EXT_texture_integer"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": null,
+        "glWebVersion": "2.0",
+        "glWebExtensions": null,
+        "dxgiFormat": "DXGI_FORMAT_R32G32B32_UINT",
+        "mtlFormat": null
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R32G32B32_SINT",
+        "typeSize": 4,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RGB32I",
+        "glFormat": "GL_RGB_INTEGER",
+        "glType": "GL_INT",
+        "glVersion": "3.0",
+        "glExtensions": [
+            [
+                "GL_EXT_texture_integer"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": null,
+        "glWebVersion": "2.0",
+        "glWebExtensions": null,
+        "dxgiFormat": "DXGI_FORMAT_R32G32B32_SINT",
+        "mtlFormat": null
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R32G32B32_SFLOAT",
+        "typeSize": 4,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RGB32F",
+        "glFormat": "GL_RGB",
+        "glType": "GL_FLOAT",
+        "glVersion": "3.0",
+        "glExtensions": [
+            [
+                "GL_APPLE_float_pixels"
+            ],
+            [
+                "GL_ARB_texture_float"
+            ],
+            [
+                "GL_ATI_texture_float"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": [
+            [
+                "GL_OES_texture_float"
+            ]
+        ],
+        "glWebVersion": "2.0",
+        "glWebExtensions": [
+            [
+                "OES_texture_float"
+            ]
+        ],
+        "dxgiFormat": "DXGI_FORMAT_R32G32B32_FLOAT",
+        "mtlFormat": null
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R32G32B32A32_UINT",
+        "typeSize": 4,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RGBA32UI",
+        "glFormat": "GL_RGBA_INTEGER",
+        "glType": "GL_UNSIGNED_INT",
+        "glVersion": "3.0",
+        "glExtensions": [
+            [
+                "GL_EXT_texture_integer"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": null,
+        "glWebVersion": "2.0",
+        "glWebExtensions": null,
+        "dxgiFormat": "DXGI_FORMAT_R32G32B32A32_UINT",
+        "mtlFormat": "MTLPixelFormatRGBA32Uint"
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R32G32B32A32_SINT",
+        "typeSize": 4,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RGBA32I",
+        "glFormat": "GL_RGBA_INTEGER",
+        "glType": "GL_INT",
+        "glVersion": "3.0",
+        "glExtensions": [
+            [
+                "GL_EXT_texture_integer"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": null,
+        "glWebVersion": "2.0",
+        "glWebExtensions": null,
+        "dxgiFormat": "DXGI_FORMAT_R32G32B32A32_SINT",
+        "mtlFormat": "MTLPixelFormatRGBA32Sint"
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R32G32B32A32_SFLOAT",
+        "typeSize": 4,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RGBA32F",
+        "glFormat": "GL_RGBA",
+        "glType": "GL_FLOAT",
+        "glVersion": "3.0",
+        "glExtensions": [
+            [
+                "GL_APPLE_float_pixels"
+            ],
+            [
+                "GL_ARB_texture_float"
+            ],
+            [
+                "GL_ATI_texture_float"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": [
+            [
+                "GL_OES_texture_float"
+            ]
+        ],
+        "glWebVersion": "2.0",
+        "glWebExtensions": [
+            [
+                "OES_texture_float"
+            ]
+        ],
+        "dxgiFormat": "DXGI_FORMAT_R32G32B32A32_FLOAT",
+        "mtlFormat": "MTLPixelFormatRGBA32Float"
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R64_UINT",
+        "typeSize": 8,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": null,
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": null,
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R64_SINT",
+        "typeSize": 8,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": null,
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": null,
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R64_SFLOAT",
+        "typeSize": 8,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": null,
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": null,
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R64G64_UINT",
+        "typeSize": 8,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": null,
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": null,
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R64G64_SINT",
+        "typeSize": 8,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": null,
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": null,
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R64G64_SFLOAT",
+        "typeSize": 8,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": null,
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": null,
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R64G64B64_UINT",
+        "typeSize": 8,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": null,
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": null,
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R64G64B64_SINT",
+        "typeSize": 8,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": null,
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": null,
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R64G64B64_SFLOAT",
+        "typeSize": 8,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": null,
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": null,
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R64G64B64A64_UINT",
+        "typeSize": 8,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": null,
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": null,
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R64G64B64A64_SINT",
+        "typeSize": 8,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": null,
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": null,
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_R64G64B64A64_SFLOAT",
+        "typeSize": 8,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": null,
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": null,
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "PACKED",
+        "vkFormat": "VK_FORMAT_B10G11R11_UFLOAT_PACK32",
+        "typeSize": 4,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_R11F_G11F_B10F",
+        "glFormat": "GL_RGB",
+        "glType": "GL_UNSIGNED_INT_10F_11F_11F_REV",
+        "glVersion": "3.0",
+        "glExtensions": [
+            [
+                "GL_EXT_packed_float"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": [
+            [
+                "GL_APPLE_texture_packed_float"
+            ],
+            [
+                "GL_NV_packed_float"
+            ]
+        ],
+        "glWebVersion": "2.0",
+        "glWebExtensions": null,
+        "dxgiFormat": "DXGI_FORMAT_R11G11B10_FLOAT",
+        "mtlFormat": "MTLPixelFormatRG11B10Float"
+    },
+    {
+        "type": "PACKED",
+        "vkFormat": "VK_FORMAT_E5B9G9R9_UFLOAT_PACK32",
+        "typeSize": 4,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RGB9_E5",
+        "glFormat": "GL_RGB",
+        "glType": "GL_UNSIGNED_INT_5_9_9_9_REV",
+        "glVersion": "3.0",
+        "glExtensions": [
+            [
+                "GL_EXT_texture_shared_exponent"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": [
+            [
+                "GL_APPLE_texture_packed_float"
+            ]
+        ],
+        "glWebVersion": "2.0",
+        "glWebExtensions": null,
+        "dxgiFormat": "DXGI_FORMAT_R9G9B9E5_SHAREDEXP",
+        "mtlFormat": "MTLPixelFormatRGB9E5Float"
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_D16_UNORM",
+        "typeSize": 2,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_DEPTH_COMPONENT16",
+        "glFormat": "GL_DEPTH_COMPONENT",
+        "glType": "GL_UNSIGNED_SHORT",
+        "glVersion": "1.4",
+        "glExtensions": [
+            [
+                "GL_ARB_depth_texture"
+            ],
+            [
+                "GL_SGIX_depth_texture"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": [
+            [
+                "GL_OES_depth_texture"
+            ]
+        ],
+        "glWebVersion": "2.0",
+        "glWebExtensions": [
+            [
+                "WEBGL_depth_texture"
+            ]
+        ],
+        "dxgiFormat": "DXGI_FORMAT_D16_UNORM",
+        "mtlFormat": "MTLPixelFormatDepth16Unorm"
+    },
+    {
+        "type": "PACKED",
+        "vkFormat": "VK_FORMAT_X8_D24_UNORM_PACK32",
+        "typeSize": 4,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": null,
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": null,
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_D32_SFLOAT",
+        "typeSize": 4,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_DEPTH_COMPONENT32F",
+        "glFormat": "GL_DEPTH_COMPONENT",
+        "glType": "GL_FLOAT",
+        "glVersion": "3.0",
+        "glExtensions": [
+            [
+                "GL_ARB_depth_buffer_float"
+            ],
+            [
+                "GL_NV_depth_buffer_float"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": null,
+        "glWebVersion": "2.0",
+        "glWebExtensions": null,
+        "dxgiFormat": "DXGI_FORMAT_D32_FLOAT",
+        "mtlFormat": "MTLPixelFormatDepth32Float"
+    },
+    {
+        "type": "RAW",
+        "vkFormat": "VK_FORMAT_S8_UINT",
+        "typeSize": 1,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_STENCIL_INDEX8",
+        "glFormat": "GL_STENCIL_INDEX",
+        "glType": "GL_UNSIGNED_BYTE",
+        "glVersion": "4.4",
+        "glExtensions": [
+            [
+                "GL_ARB_texture_stencil8"
+            ]
+        ],
+        "glEsVersion": "3.2",
+        "glEsExtensions": [
+            [
+                "GL_OES_texture_stencil8"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatStencil8"
+    },
+    {
+        "type": "PACKED",
+        "vkFormat": "VK_FORMAT_D16_UNORM_S8_UINT",
+        "typeSize": 2,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": null,
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": null,
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "PACKED",
+        "vkFormat": "VK_FORMAT_D24_UNORM_S8_UINT",
+        "typeSize": 4,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_DEPTH24_STENCIL8",
+        "glFormat": "GL_DEPTH_STENCIL",
+        "glType": "GL_UNSIGNED_INT_24_8",
+        "glVersion": "3.0",
+        "glExtensions": [
+            [
+                "GL_ARB_framebuffer_object"
+            ],
+            [
+                "GL_EXT_packed_depth_stencil"
+            ],
+            [
+                "GL_NV_packed_depth_stencil"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": [
+            [
+                "GL_OES_packed_depth_stencil"
+            ]
+        ],
+        "glWebVersion": "2.0",
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "PACKED",
+        "vkFormat": "VK_FORMAT_D32_SFLOAT_S8_UINT",
+        "typeSize": 4,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_DEPTH32F_STENCIL8",
+        "glFormat": "GL_DEPTH_STENCIL",
+        "glType": "GL_FLOAT_32_UNSIGNED_INT_24_8_REV",
+        "glVersion": "3.0",
+        "glExtensions": [
+            [
+                "GL_ARB_depth_buffer_float"
+            ],
+            [
+                "GL_NV_depth_buffer_float"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": null,
+        "glWebVersion": "2.0",
+        "glWebExtensions": null,
+        "dxgiFormat": "DXGI_FORMAT_D32_FLOAT_S8X24_UINT",
+        "mtlFormat": "MTLPixelFormatDepth32Float_Stencil8"
+    },
+    {
+        "type": "BC",
+        "vkFormat": "VK_FORMAT_BC1_RGB_UNORM_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 4,
+        "blockHeight": 4,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_RGB_S3TC_DXT1_EXT",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_EXT_texture_compression_s3tc"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_ANGLE_texture_compression_dxt1"
+            ],
+            [
+                "GL_EXT_texture_compression_dxt1"
+            ],
+            [
+                "GL_EXT_texture_compression_s3tc"
+            ],
+            [
+                "GL_NV_texture_compression_s3tc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [
+            [
+                "WEBGL_compressed_texture_s3tc"
+            ]
+        ],
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "BC",
+        "vkFormat": "VK_FORMAT_BC1_RGB_SRGB_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 4,
+        "blockHeight": 4,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_SRGB_S3TC_DXT1_EXT",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_EXT_texture_compression_s3tc",
+                "GL_EXT_texture_sRGB"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_EXT_texture_compression_s3tc_srgb"
+            ],
+            [
+                "GL_EXT_texture_compression_s3tc",
+                "GL_NV_sRGB_formats"
+            ],
+            [
+                "GL_NV_texture_compression_s3tc",
+                "GL_NV_sRGB_formats"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [
+            [
+                "WEBGL_compressed_texture_s3tc_srgb"
+            ]
+        ],
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "BC",
+        "vkFormat": "VK_FORMAT_BC1_RGBA_UNORM_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 4,
+        "blockHeight": 4,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_S3TC_DXT1_EXT",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_EXT_texture_compression_s3tc"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_ANGLE_texture_compression_dxt1"
+            ],
+            [
+                "GL_EXT_texture_compression_dxt1"
+            ],
+            [
+                "GL_EXT_texture_compression_s3tc"
+            ],
+            [
+                "GL_NV_texture_compression_s3tc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [
+            [
+                "WEBGL_compressed_texture_s3tc"
+            ]
+        ],
+        "dxgiFormat": "DXGI_FORMAT_BC1_UNORM",
+        "mtlFormat": "MTLPixelFormatBC1_RGBA"
+    },
+    {
+        "type": "BC",
+        "vkFormat": "VK_FORMAT_BC1_RGBA_SRGB_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 4,
+        "blockHeight": 4,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_EXT_texture_compression_s3tc",
+                "GL_EXT_texture_sRGB"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_EXT_texture_compression_s3tc_srgb"
+            ],
+            [
+                "GL_EXT_texture_compression_s3tc",
+                "GL_NV_sRGB_formats"
+            ],
+            [
+                "GL_NV_texture_compression_s3tc",
+                "GL_NV_sRGB_formats"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [
+            [
+                "WEBGL_compressed_texture_s3tc_srgb"
+            ]
+        ],
+        "dxgiFormat": "DXGI_FORMAT_BC1_UNORM_SRGB",
+        "mtlFormat": "MTLPixelFormatBC1_RGBA_sRGB"
+    },
+    {
+        "type": "BC",
+        "vkFormat": "VK_FORMAT_BC2_UNORM_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 4,
+        "blockHeight": 4,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_S3TC_DXT3_EXT",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_EXT_texture_compression_s3tc"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_ANGLE_texture_compression_dxt3"
+            ],
+            [
+                "GL_EXT_texture_compression_s3tc"
+            ],
+            [
+                "GL_NV_texture_compression_s3tc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [
+            [
+                "WEBGL_compressed_texture_s3tc"
+            ]
+        ],
+        "dxgiFormat": "DXGI_FORMAT_BC2_UNORM",
+        "mtlFormat": "MTLPixelFormatBC2_RGBA"
+    },
+    {
+        "type": "BC",
+        "vkFormat": "VK_FORMAT_BC2_SRGB_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 4,
+        "blockHeight": 4,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_EXT_texture_compression_s3tc",
+                "GL_EXT_texture_sRGB"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_EXT_texture_compression_s3tc_srgb"
+            ],
+            [
+                "GL_EXT_texture_compression_s3tc",
+                "GL_NV_sRGB_formats"
+            ],
+            [
+                "GL_NV_texture_compression_s3tc",
+                "GL_NV_sRGB_formats"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [
+            [
+                "WEBGL_compressed_texture_s3tc_srgb"
+            ]
+        ],
+        "dxgiFormat": "DXGI_FORMAT_BC2_UNORM_SRGB",
+        "mtlFormat": "MTLPixelFormatBC2_RGBA_sRGB"
+    },
+    {
+        "type": "BC",
+        "vkFormat": "VK_FORMAT_BC3_UNORM_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 4,
+        "blockHeight": 4,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_S3TC_DXT5_EXT",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_EXT_texture_compression_s3tc"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_ANGLE_texture_compression_dxt3"
+            ],
+            [
+                "GL_EXT_texture_compression_s3tc"
+            ],
+            [
+                "GL_NV_texture_compression_s3tc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [
+            [
+                "WEBGL_compressed_texture_s3tc"
+            ]
+        ],
+        "dxgiFormat": "DXGI_FORMAT_BC3_UNORM",
+        "mtlFormat": "MTLPixelFormatBC3_RGBA"
+    },
+    {
+        "type": "BC",
+        "vkFormat": "VK_FORMAT_BC3_SRGB_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 4,
+        "blockHeight": 4,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_EXT_texture_compression_s3tc",
+                "GL_EXT_texture_sRGB"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_EXT_texture_compression_s3tc_srgb"
+            ],
+            [
+                "GL_EXT_texture_compression_s3tc",
+                "GL_NV_sRGB_formats"
+            ],
+            [
+                "GL_NV_texture_compression_s3tc",
+                "GL_NV_sRGB_formats"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [
+            [
+                "WEBGL_compressed_texture_s3tc_srgb"
+            ]
+        ],
+        "dxgiFormat": "DXGI_FORMAT_BC3_UNORM_SRGB",
+        "mtlFormat": "MTLPixelFormatBC3_RGBA_sRGB"
+    },
+    {
+        "type": "BC",
+        "vkFormat": "VK_FORMAT_BC4_UNORM_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 4,
+        "blockHeight": 4,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_RED_RGTC1_EXT",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": "3.0",
+        "glExtensions": [
+            [
+                "GL_ARB_texture_compression_rgtc"
+            ],
+            [
+                "GL_EXT_texture_compression_rgtc"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_EXT_texture_compression_rgtc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [
+            [
+                "EXT_texture_compression_rgtc"
+            ]
+        ],
+        "dxgiFormat": "DXGI_FORMAT_BC4_UNORM",
+        "mtlFormat": "MTLPixelFormatBC4_RUnorm"
+    },
+    {
+        "type": "BC",
+        "vkFormat": "VK_FORMAT_BC4_SNORM_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 4,
+        "blockHeight": 4,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_SIGNED_RED_RGTC1_EXT",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": "3.0",
+        "glExtensions": [
+            [
+                "GL_ARB_texture_compression_rgtc"
+            ],
+            [
+                "GL_EXT_texture_compression_rgtc"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_EXT_texture_compression_rgtc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [
+            [
+                "EXT_texture_compression_rgtc"
+            ]
+        ],
+        "dxgiFormat": "DXGI_FORMAT_BC4_SNORM",
+        "mtlFormat": "MTLPixelFormatBC4_RSnorm"
+    },
+    {
+        "type": "BC",
+        "vkFormat": "VK_FORMAT_BC5_UNORM_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 4,
+        "blockHeight": 4,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_RED_GREEN_RGTC2_EXT",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": "3.0",
+        "glExtensions": [
+            [
+                "GL_ARB_texture_compression_rgtc"
+            ],
+            [
+                "GL_EXT_texture_compression_rgtc"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_EXT_texture_compression_rgtc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [
+            [
+                "EXT_texture_compression_rgtc"
+            ]
+        ],
+        "dxgiFormat": "DXGI_FORMAT_BC5_UNORM",
+        "mtlFormat": "MTLPixelFormatBC5_RGUnorm"
+    },
+    {
+        "type": "BC",
+        "vkFormat": "VK_FORMAT_BC5_SNORM_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 4,
+        "blockHeight": 4,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_SIGNED_RED_GREEN_RGTC2_EXT",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": "3.0",
+        "glExtensions": [
+            [
+                "GL_ARB_texture_compression_rgtc"
+            ],
+            [
+                "GL_EXT_texture_compression_rgtc"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_EXT_texture_compression_rgtc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [
+            [
+                "EXT_texture_compression_rgtc"
+            ]
+        ],
+        "dxgiFormat": "DXGI_FORMAT_BC5_SNORM",
+        "mtlFormat": "MTLPixelFormatBC5_RGSnorm"
+    },
+    {
+        "type": "BC",
+        "vkFormat": "VK_FORMAT_BC6H_UFLOAT_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 4,
+        "blockHeight": 4,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_ARB",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": "4.2",
+        "glExtensions": [
+            [
+                "GL_ARB_texture_compression_bptc"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_EXT_texture_compression_bptc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [
+            [
+                "EXT_texture_compression_bptc"
+            ]
+        ],
+        "dxgiFormat": "DXGI_FORMAT_BC6H_UF16",
+        "mtlFormat": "MTLPixelFormatBC6H_RGBUfloat"
+    },
+    {
+        "type": "BC",
+        "vkFormat": "VK_FORMAT_BC6H_SFLOAT_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 4,
+        "blockHeight": 4,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT_ARB",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": "4.2",
+        "glExtensions": [
+            [
+                "GL_ARB_texture_compression_bptc"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_EXT_texture_compression_bptc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [
+            [
+                "EXT_texture_compression_bptc"
+            ]
+        ],
+        "dxgiFormat": "DXGI_FORMAT_BC6H_SF16",
+        "mtlFormat": "MTLPixelFormatBC6H_RGBFloat"
+    },
+    {
+        "type": "BC",
+        "vkFormat": "VK_FORMAT_BC7_UNORM_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 4,
+        "blockHeight": 4,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_BPTC_UNORM_ARB",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": "4.2",
+        "glExtensions": [
+            [
+                "GL_ARB_texture_compression_bptc"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_EXT_texture_compression_bptc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [
+            [
+                "EXT_texture_compression_bptc"
+            ]
+        ],
+        "dxgiFormat": "DXGI_FORMAT_BC7_UNORM",
+        "mtlFormat": "MTLPixelFormatBC7_RGBAUnorm"
+    },
+    {
+        "type": "BC",
+        "vkFormat": "VK_FORMAT_BC7_SRGB_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 4,
+        "blockHeight": 4,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_ARB",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": "4.2",
+        "glExtensions": [
+            [
+                "GL_ARB_texture_compression_bptc"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_EXT_texture_compression_bptc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [
+            [
+                "EXT_texture_compression_bptc"
+            ]
+        ],
+        "dxgiFormat": "DXGI_FORMAT_BC7_UNORM_SRGB",
+        "mtlFormat": "MTLPixelFormatBC7_RGBAUnorm_sRGB"
+    },
+    {
+        "type": "ETC",
+        "vkFormat": "VK_FORMAT_ETC2_R8G8B8_UNORM_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 4,
+        "blockHeight": 4,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_RGB8_ETC2",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": "4.3",
+        "glExtensions": [
+            [
+                "GL_ARB_ES3_compatibility"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": null,
+        "glWebVersion": null,
+        "glWebExtensions": [
+            [
+                "WEBGL_compressed_texture_etc"
+            ]
+        ],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatETC2_RGB8"
+    },
+    {
+        "type": "ETC",
+        "vkFormat": "VK_FORMAT_ETC2_R8G8B8_SRGB_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 4,
+        "blockHeight": 4,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_SRGB8_ETC2",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": "4.3",
+        "glExtensions": [
+            [
+                "GL_ARB_ES3_compatibility"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": null,
+        "glWebVersion": null,
+        "glWebExtensions": [
+            [
+                "WEBGL_compressed_texture_etc"
+            ]
+        ],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatETC2_RGB8_sRGB"
+    },
+    {
+        "type": "ETC",
+        "vkFormat": "VK_FORMAT_ETC2_R8G8B8A1_UNORM_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 4,
+        "blockHeight": 4,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": "4.3",
+        "glExtensions": [
+            [
+                "GL_ARB_ES3_compatibility"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": null,
+        "glWebVersion": null,
+        "glWebExtensions": [
+            [
+                "WEBGL_compressed_texture_etc"
+            ]
+        ],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatETC2_RGB8A1"
+    },
+    {
+        "type": "ETC",
+        "vkFormat": "VK_FORMAT_ETC2_R8G8B8A1_SRGB_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 4,
+        "blockHeight": 4,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": "4.3",
+        "glExtensions": [
+            [
+                "GL_ARB_ES3_compatibility"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": null,
+        "glWebVersion": null,
+        "glWebExtensions": [
+            [
+                "WEBGL_compressed_texture_etc"
+            ]
+        ],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatETC2_RGB8A1_sRGB"
+    },
+    {
+        "type": "ETC",
+        "vkFormat": "VK_FORMAT_ETC2_R8G8B8A8_UNORM_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 4,
+        "blockHeight": 4,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_RGBA8_ETC2_EAC",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": "4.3",
+        "glExtensions": [
+            [
+                "GL_ARB_ES3_compatibility"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": null,
+        "glWebVersion": null,
+        "glWebExtensions": [
+            [
+                "WEBGL_compressed_texture_etc"
+            ]
+        ],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatEAC_RGBA8"
+    },
+    {
+        "type": "ETC",
+        "vkFormat": "VK_FORMAT_ETC2_R8G8B8A8_SRGB_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 4,
+        "blockHeight": 4,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": "4.3",
+        "glExtensions": [
+            [
+                "GL_ARB_ES3_compatibility"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": null,
+        "glWebVersion": null,
+        "glWebExtensions": [
+            [
+                "WEBGL_compressed_texture_etc"
+            ]
+        ],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatEAC_RGBA8_sRGB"
+    },
+    {
+        "type": "ETC",
+        "vkFormat": "VK_FORMAT_EAC_R11_UNORM_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 4,
+        "blockHeight": 4,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_R11_EAC",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": "4.3",
+        "glExtensions": [
+            [
+                "GL_ARB_ES3_compatibility"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": null,
+        "glWebVersion": null,
+        "glWebExtensions": [
+            [
+                "WEBGL_compressed_texture_etc"
+            ]
+        ],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatEAC_R11Unorm"
+    },
+    {
+        "type": "ETC",
+        "vkFormat": "VK_FORMAT_EAC_R11_SNORM_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 4,
+        "blockHeight": 4,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_SIGNED_R11_EAC",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": "4.3",
+        "glExtensions": [
+            [
+                "GL_ARB_ES3_compatibility"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": null,
+        "glWebVersion": null,
+        "glWebExtensions": [
+            [
+                "WEBGL_compressed_texture_etc"
+            ]
+        ],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatEAC_R11Snorm"
+    },
+    {
+        "type": "ETC",
+        "vkFormat": "VK_FORMAT_EAC_R11G11_UNORM_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 4,
+        "blockHeight": 4,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_RG11_EAC",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": "4.3",
+        "glExtensions": [
+            [
+                "GL_ARB_ES3_compatibility"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": null,
+        "glWebVersion": null,
+        "glWebExtensions": [
+            [
+                "WEBGL_compressed_texture_etc"
+            ]
+        ],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatEAC_RG11Unorm"
+    },
+    {
+        "type": "ETC",
+        "vkFormat": "VK_FORMAT_EAC_R11G11_SNORM_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 4,
+        "blockHeight": 4,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_SIGNED_RG11_EAC",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": "4.3",
+        "glExtensions": [
+            [
+                "GL_ARB_ES3_compatibility"
+            ]
+        ],
+        "glEsVersion": "3.0",
+        "glEsExtensions": null,
+        "glWebVersion": null,
+        "glWebExtensions": [
+            [
+                "WEBGL_compressed_texture_etc"
+            ]
+        ],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatEAC_RG11Snorm"
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_4x4_UNORM_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 4,
+        "blockHeight": 4,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_ASTC_4x4_KHR",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ],
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [["WEBGL_compressed_texture_astc"]],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatASTC_4x4_LDR"
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_4x4_SRGB_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 4,
+        "blockHeight": 4,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4_KHR",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ],
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [["WEBGL_compressed_texture_astc"]],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatASTC_4x4_sRGB"
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_4x4_SFLOAT_BLOCK_EXT",
+        "typeSize": 1,
+        "blockWidth": 4,
+        "blockHeight": 4,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_ASTC_4x4_KHR",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ],
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [["WEBGL_compressed_texture_astc"]],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatASTC_4x4_HDR"
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_5x4_UNORM_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 5,
+        "blockHeight": 4,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_ASTC_5x4_KHR",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ],
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [["WEBGL_compressed_texture_astc"]],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatASTC_5x4_LDR"
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_5x4_SRGB_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 5,
+        "blockHeight": 4,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x4_KHR",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ],
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [["WEBGL_compressed_texture_astc"]],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatASTC_5x4_sRGB"
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_5x4_SFLOAT_BLOCK_EXT",
+        "typeSize": 1,
+        "blockWidth": 5,
+        "blockHeight": 4,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_ASTC_5x4_KHR",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ],
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [["WEBGL_compressed_texture_astc"]],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatASTC_5x4_HDR"
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_5x5_UNORM_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 5,
+        "blockHeight": 5,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_ASTC_5x5_KHR",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ],
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [["WEBGL_compressed_texture_astc"]],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatASTC_5x5_LDR"
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_5x5_SRGB_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 5,
+        "blockHeight": 5,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x5_KHR",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ],
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [["WEBGL_compressed_texture_astc"]],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatASTC_5x5_sRGB"
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_5x5_SFLOAT_BLOCK_EXT",
+        "typeSize": 1,
+        "blockWidth": 5,
+        "blockHeight": 5,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_ASTC_5x5_KHR",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ],
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [["WEBGL_compressed_texture_astc"]],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatASTC_5x5_HDR"
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_6x5_UNORM_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 6,
+        "blockHeight": 5,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_ASTC_6x5_KHR",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ],
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [["WEBGL_compressed_texture_astc"]],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatASTC_6x5_LDR"
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_6x5_SRGB_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 6,
+        "blockHeight": 5,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x5_KHR",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ],
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [["WEBGL_compressed_texture_astc"]],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatASTC_6x5_sRGB"
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_6x5_SFLOAT_BLOCK_EXT",
+        "typeSize": 1,
+        "blockWidth": 6,
+        "blockHeight": 5,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_ASTC_6x5_KHR",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ],
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [["WEBGL_compressed_texture_astc"]],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatASTC_6x5_HDR"
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_6x6_UNORM_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 6,
+        "blockHeight": 6,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_ASTC_6x6_KHR",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ],
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [["WEBGL_compressed_texture_astc"]],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatASTC_6x6_LDR"
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_6x6_SRGB_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 6,
+        "blockHeight": 6,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x6_KHR",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ],
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [["WEBGL_compressed_texture_astc"]],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatASTC_6x6_sRGB"
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_6x6_SFLOAT_BLOCK_EXT",
+        "typeSize": 1,
+        "blockWidth": 6,
+        "blockHeight": 6,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_ASTC_6x6_KHR",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ],
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [["WEBGL_compressed_texture_astc"]],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatASTC_6x6_HDR"
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_8x5_UNORM_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 8,
+        "blockHeight": 5,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_ASTC_8x5_KHR",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ],
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [["WEBGL_compressed_texture_astc"]],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatASTC_8x5_LDR"
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_8x5_SRGB_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 8,
+        "blockHeight": 5,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x5_KHR",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ],
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [["WEBGL_compressed_texture_astc"]],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatASTC_8x5_sRGB"
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_8x5_SFLOAT_BLOCK_EXT",
+        "typeSize": 1,
+        "blockWidth": 8,
+        "blockHeight": 5,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_ASTC_8x5_KHR",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ],
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [["WEBGL_compressed_texture_astc"]],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatASTC_8x5_HDR"
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_8x6_UNORM_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 8,
+        "blockHeight": 6,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_ASTC_8x6_KHR",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ],
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [["WEBGL_compressed_texture_astc"]],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatASTC_8x6_LDR"
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_8x6_SRGB_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 8,
+        "blockHeight": 6,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x6_KHR",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ],
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [["WEBGL_compressed_texture_astc"]],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatASTC_8x6_sRGB"
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_8x6_SFLOAT_BLOCK_EXT",
+        "typeSize": 1,
+        "blockWidth": 8,
+        "blockHeight": 6,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_ASTC_8x6_KHR",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ],
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [["WEBGL_compressed_texture_astc"]],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatASTC_8x6_HDR"
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_8x8_UNORM_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 8,
+        "blockHeight": 8,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_ASTC_8x8_KHR",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ],
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [["WEBGL_compressed_texture_astc"]],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatASTC_8x8_LDR"
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_8x8_SRGB_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 8,
+        "blockHeight": 8,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x8_KHR",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ],
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [["WEBGL_compressed_texture_astc"]],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatASTC_8x8_sRGB"
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_8x8_SFLOAT_BLOCK_EXT",
+        "typeSize": 1,
+        "blockWidth": 8,
+        "blockHeight": 8,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_ASTC_8x8_KHR",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ],
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [["WEBGL_compressed_texture_astc"]],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatASTC_8x8_HDR"
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_10x5_UNORM_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 10,
+        "blockHeight": 5,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_ASTC_10x5_KHR",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ],
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [["WEBGL_compressed_texture_astc"]],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatASTC_10x5_LDR"
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_10x5_SRGB_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 10,
+        "blockHeight": 5,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x5_KHR",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ],
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [["WEBGL_compressed_texture_astc"]],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatASTC_10x5_sRGB"
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_10x5_SFLOAT_BLOCK_EXT",
+        "typeSize": 1,
+        "blockWidth": 10,
+        "blockHeight": 5,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_ASTC_10x5_KHR",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ],
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [["WEBGL_compressed_texture_astc"]],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatASTC_10x5_HDR"
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_10x6_UNORM_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 10,
+        "blockHeight": 6,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_ASTC_10x6_KHR",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ],
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [["WEBGL_compressed_texture_astc"]],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatASTC_10x6_LDR"
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_10x6_SRGB_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 10,
+        "blockHeight": 6,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x6_KHR",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ],
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [["WEBGL_compressed_texture_astc"]],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatASTC_10x6_sRGB"
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_10x6_SFLOAT_BLOCK_EXT",
+        "typeSize": 1,
+        "blockWidth": 10,
+        "blockHeight": 6,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_ASTC_10x6_KHR",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ],
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [["WEBGL_compressed_texture_astc"]],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatASTC_10x6_HDR"
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_10x8_UNORM_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 10,
+        "blockHeight": 8,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_ASTC_10x8_KHR",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ],
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [["WEBGL_compressed_texture_astc"]],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatASTC_10x8_LDR"
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_10x8_SRGB_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 10,
+        "blockHeight": 8,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x8_KHR",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ],
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [["WEBGL_compressed_texture_astc"]],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatASTC_10x8_sRGB"
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_10x8_SFLOAT_BLOCK_EXT",
+        "typeSize": 1,
+        "blockWidth": 10,
+        "blockHeight": 8,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_ASTC_10x8_KHR",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ],
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [["WEBGL_compressed_texture_astc"]],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatASTC_10x8_HDR"
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_10x10_UNORM_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 10,
+        "blockHeight": 10,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_ASTC_10x10_KHR",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ],
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [["WEBGL_compressed_texture_astc"]],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatASTC_10x10_LDR"
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_10x10_SRGB_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 10,
+        "blockHeight": 10,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x10_KHR",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ],
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [["WEBGL_compressed_texture_astc"]],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatASTC_10x10_sRGB"
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_10x10_SFLOAT_BLOCK_EXT",
+        "typeSize": 1,
+        "blockWidth": 10,
+        "blockHeight": 10,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_ASTC_10x10_KHR",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ],
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [["WEBGL_compressed_texture_astc"]],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatASTC_10x10_HDR"
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_12x10_UNORM_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 12,
+        "blockHeight": 10,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_ASTC_12x10_KHR",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ],
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [["WEBGL_compressed_texture_astc"]],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatASTC_12x10_LDR"
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_12x10_SRGB_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 12,
+        "blockHeight": 10,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x10_KHR",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ],
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [["WEBGL_compressed_texture_astc"]],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatASTC_12x10_sRGB"
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_12x10_SFLOAT_BLOCK_EXT",
+        "typeSize": 1,
+        "blockWidth": 12,
+        "blockHeight": 10,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_ASTC_12x10_KHR",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ],
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [["WEBGL_compressed_texture_astc"]],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatASTC_12x10_HDR"
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_12x12_UNORM_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 12,
+        "blockHeight": 12,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_ASTC_12x12_KHR",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ],
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [["WEBGL_compressed_texture_astc"]],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatASTC_12x12_LDR"
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_12x12_SRGB_BLOCK",
+        "typeSize": 1,
+        "blockWidth": 12,
+        "blockHeight": 12,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x12_KHR",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_ldr"
+            ],
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ],
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [["WEBGL_compressed_texture_astc"]],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatASTC_12x12_sRGB"
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_12x12_SFLOAT_BLOCK_EXT",
+        "typeSize": 1,
+        "blockWidth": 12,
+        "blockHeight": 12,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_ASTC_12x12_KHR",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ]
+        ],
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_KHR_texture_compression_astc_hdr"
+            ],
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [["WEBGL_compressed_texture_astc"]],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatASTC_12x12_HDR"
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_3x3x3_UNORM_BLOCK_EXT",
+        "typeSize": 1,
+        "blockWidth": 3,
+        "blockHeight": 3,
+        "blockDepth": 3,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_ASTC_3x3x3_OES",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_3x3x3_SRGB_BLOCK_EXT",
+        "typeSize": 1,
+        "blockWidth": 3,
+        "blockHeight": 3,
+        "blockDepth": 3,
+        "glInternalFormat": "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_3x3x3_OES",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_3x3x3_SFLOAT_BLOCK_EXT",
+        "typeSize": 1,
+        "blockWidth": 3,
+        "blockHeight": 3,
+        "blockDepth": 3,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_ASTC_3x3x3_OES",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_4x3x3_UNORM_BLOCK_EXT",
+        "typeSize": 1,
+        "blockWidth": 4,
+        "blockHeight": 3,
+        "blockDepth": 3,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_ASTC_4x3x3_OES",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_4x3x3_SRGB_BLOCK_EXT",
+        "typeSize": 1,
+        "blockWidth": 4,
+        "blockHeight": 3,
+        "blockDepth": 3,
+        "glInternalFormat": "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x3x3_OES",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_4x3x3_SFLOAT_BLOCK_EXT",
+        "typeSize": 1,
+        "blockWidth": 4,
+        "blockHeight": 3,
+        "blockDepth": 3,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_ASTC_4x3x3_OES",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_4x4x3_UNORM_BLOCK_EXT",
+        "typeSize": 1,
+        "blockWidth": 4,
+        "blockHeight": 4,
+        "blockDepth": 3,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_ASTC_4x4x3_OES",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_4x4x3_SRGB_BLOCK_EXT",
+        "typeSize": 1,
+        "blockWidth": 4,
+        "blockHeight": 4,
+        "blockDepth": 3,
+        "glInternalFormat": "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4x3_OES",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_4x4x3_SFLOAT_BLOCK_EXT",
+        "typeSize": 1,
+        "blockWidth": 4,
+        "blockHeight": 4,
+        "blockDepth": 3,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_ASTC_4x4x3_OES",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_4x4x4_UNORM_BLOCK_EXT",
+        "typeSize": 1,
+        "blockWidth": 4,
+        "blockHeight": 4,
+        "blockDepth": 4,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_ASTC_4x4x4_OES",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_4x4x4_SRGB_BLOCK_EXT",
+        "typeSize": 1,
+        "blockWidth": 4,
+        "blockHeight": 4,
+        "blockDepth": 4,
+        "glInternalFormat": "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4x4_OES",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_4x4x4_SFLOAT_BLOCK_EXT",
+        "typeSize": 1,
+        "blockWidth": 4,
+        "blockHeight": 4,
+        "blockDepth": 4,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_ASTC_4x4x4_OES",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_5x4x4_UNORM_BLOCK_EXT",
+        "typeSize": 1,
+        "blockWidth": 5,
+        "blockHeight": 4,
+        "blockDepth": 4,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_ASTC_5x4x4_OES",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_5x4x4_SRGB_BLOCK_EXT",
+        "typeSize": 1,
+        "blockWidth": 5,
+        "blockHeight": 4,
+        "blockDepth": 4,
+        "glInternalFormat": "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x4x4_OES",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_5x4x4_SFLOAT_BLOCK_EXT",
+        "typeSize": 1,
+        "blockWidth": 5,
+        "blockHeight": 4,
+        "blockDepth": 4,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_ASTC_5x4x4_OES",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_5x5x4_UNORM_BLOCK_EXT",
+        "typeSize": 1,
+        "blockWidth": 5,
+        "blockHeight": 5,
+        "blockDepth": 4,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_ASTC_5x5x4_OES",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_5x5x4_SRGB_BLOCK_EXT",
+        "typeSize": 1,
+        "blockWidth": 5,
+        "blockHeight": 5,
+        "blockDepth": 4,
+        "glInternalFormat": "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x5x4_OES",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_5x5x4_SFLOAT_BLOCK_EXT",
+        "typeSize": 1,
+        "blockWidth": 5,
+        "blockHeight": 5,
+        "blockDepth": 4,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_ASTC_5x5x4_OES",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_5x5x5_UNORM_BLOCK_EXT",
+        "typeSize": 1,
+        "blockWidth": 5,
+        "blockHeight": 5,
+        "blockDepth": 5,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_ASTC_5x5x5_OES",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_5x5x5_SRGB_BLOCK_EXT",
+        "typeSize": 1,
+        "blockWidth": 5,
+        "blockHeight": 5,
+        "blockDepth": 5,
+        "glInternalFormat": "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x5x5_OES",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_5x5x5_SFLOAT_BLOCK_EXT",
+        "typeSize": 1,
+        "blockWidth": 5,
+        "blockHeight": 5,
+        "blockDepth": 5,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_ASTC_5x5x5_OES",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_6x5x5_UNORM_BLOCK_EXT",
+        "typeSize": 1,
+        "blockWidth": 6,
+        "blockHeight": 5,
+        "blockDepth": 5,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_ASTC_6x5x5_OES",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_6x5x5_SRGB_BLOCK_EXT",
+        "typeSize": 1,
+        "blockWidth": 6,
+        "blockHeight": 5,
+        "blockDepth": 5,
+        "glInternalFormat": "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x5x5_OES",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_6x5x5_SFLOAT_BLOCK_EXT",
+        "typeSize": 1,
+        "blockWidth": 6,
+        "blockHeight": 5,
+        "blockDepth": 5,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_ASTC_6x5x5_OES",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_6x6x5_UNORM_BLOCK_EXT",
+        "typeSize": 1,
+        "blockWidth": 6,
+        "blockHeight": 6,
+        "blockDepth": 5,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_ASTC_6x6x5_OES",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_6x6x5_SRGB_BLOCK_EXT",
+        "typeSize": 1,
+        "blockWidth": 6,
+        "blockHeight": 6,
+        "blockDepth": 5,
+        "glInternalFormat": "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x6x5_OES",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_6x6x5_SFLOAT_BLOCK_EXT",
+        "typeSize": 1,
+        "blockWidth": 6,
+        "blockHeight": 6,
+        "blockDepth": 5,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_ASTC_6x6x5_OES",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_6x6x6_UNORM_BLOCK_EXT",
+        "typeSize": 1,
+        "blockWidth": 6,
+        "blockHeight": 6,
+        "blockDepth": 6,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_ASTC_6x6x6_OES",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_6x6x6_SRGB_BLOCK_EXT",
+        "typeSize": 1,
+        "blockWidth": 6,
+        "blockHeight": 6,
+        "blockDepth": 6,
+        "glInternalFormat": "GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x6x6_OES",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "ASTC",
+        "vkFormat": "VK_FORMAT_ASTC_6x6x6_SFLOAT_BLOCK_EXT",
+        "typeSize": 1,
+        "blockWidth": 6,
+        "blockHeight": 6,
+        "blockDepth": 6,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_ASTC_6x6x6_OES",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_OES_texture_compression_astc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "PVRTC",
+        "vkFormat": "VK_FORMAT_PVRTC1_2BPP_UNORM_BLOCK_IMG",
+        "typeSize": 1,
+        "blockWidth": 8,
+        "blockHeight": 4,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_IMG_texture_compression_pvrtc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [["WEBGL_compressed_texture_pvrtc"]],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatPVRTC_RGBA_2BPP"
+    },
+    {
+        "type": "PVRTC",
+        "vkFormat": "VK_FORMAT_PVRTC1_4BPP_UNORM_BLOCK_IMG",
+        "typeSize": 1,
+        "blockWidth": 4,
+        "blockHeight": 4,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_IMG_texture_compression_pvrtc"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": [["WEBGL_compressed_texture_pvrtc"]],
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatPVRTC_RGBA_4BPP"
+    },
+    {
+        "type": "PVRTC",
+        "vkFormat": "VK_FORMAT_PVRTC2_2BPP_UNORM_BLOCK_IMG",
+        "typeSize": 1,
+        "blockWidth": 8,
+        "blockHeight": 4,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_PVRTC_2BPPV2_IMG",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_IMG_texture_compression_pvrtc2"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "PVRTC",
+        "vkFormat": "VK_FORMAT_PVRTC2_4BPP_UNORM_BLOCK_IMG",
+        "typeSize": 1,
+        "blockWidth": 4,
+        "blockHeight": 4,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_RGBA_PVRTC_4BPPV2_IMG",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_IMG_texture_compression_pvrtc2"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "PVRTC",
+        "vkFormat": "VK_FORMAT_PVRTC1_2BPP_SRGB_BLOCK_IMG",
+        "typeSize": 1,
+        "blockWidth": 8,
+        "blockHeight": 4,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_SRGB_ALPHA_PVRTC_2BPPV1_EXT",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_EXT_pvrtc_sRGB"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatPVRTC_RGBA_2BPP_sRGB"
+    },
+    {
+        "type": "PVRTC",
+        "vkFormat": "VK_FORMAT_PVRTC1_4BPP_SRGB_BLOCK_IMG",
+        "typeSize": 1,
+        "blockWidth": 4,
+        "blockHeight": 4,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_SRGB_ALPHA_PVRTC_4BPPV1_EXT",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_EXT_pvrtc_sRGB"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": "MTLPixelFormatPVRTC_RGBA_4BPP_sRGB"
+    },
+    {
+        "type": "PVRTC",
+        "vkFormat": "VK_FORMAT_PVRTC2_2BPP_SRGB_BLOCK_IMG",
+        "typeSize": 1,
+        "blockWidth": 8,
+        "blockHeight": 4,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_SRGB_ALPHA_PVRTC_2BPPV2_IMG",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_EXT_pvrtc_sRGB",
+                "GL_IMG_texture_compression_pvrtc2"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "PVRTC",
+        "vkFormat": "VK_FORMAT_PVRTC2_4BPP_SRGB_BLOCK_IMG",
+        "typeSize": 1,
+        "blockWidth": 4,
+        "blockHeight": 4,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_COMPRESSED_SRGB_ALPHA_PVRTC_4BPPV2_IMG",
+        "glFormat": null,
+        "glType": null,
+        "glVersion": null,
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": [
+            [
+                "GL_EXT_pvrtc_sRGB",
+                "GL_IMG_texture_compression_pvrtc2"
+            ]
+        ],
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    },
+    {
+        "type": "PACKED",
+        "vkFormat": "VK_FORMAT_A4R4G4B4_UNORM_PACK16_EXT",
+        "typeSize": 2,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RGBA4",
+        "glFormat": "GL_BGRA",
+        "glType": "GL_UNSIGNED_SHORT_4_4_4_4_REV",
+        "glVersion": "1.2",
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": null,
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": "DXGI_FORMAT_B4G4R4A4_UNORM",
+        "mtlFormat": null
+    },
+    {
+        "type": "PACKED",
+        "vkFormat": "VK_FORMAT_A4B4G4R4_UNORM_PACK16_EXT",
+        "typeSize": 2,
+        "blockWidth": 1,
+        "blockHeight": 1,
+        "blockDepth": 1,
+        "glInternalFormat": "GL_RGBA4",
+        "glFormat": "GL_RGBA",
+        "glType": "GL_UNSIGNED_SHORT_4_4_4_4_REV",
+        "glVersion": "1.2",
+        "glExtensions": null,
+        "glEsVersion": null,
+        "glEsExtensions": null,
+        "glWebVersion": null,
+        "glWebExtensions": null,
+        "dxgiFormat": null,
+        "mtlFormat": null
+    }
+]

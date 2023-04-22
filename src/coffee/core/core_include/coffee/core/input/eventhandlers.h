@@ -1,9 +1,9 @@
 #pragma once
 
-#include <coffee/core/stl_types.h>
 #include <coffee/core/types/display/event.h>
 #include <coffee/core/types/input/event_types.h>
 #include <coffee/core/types/rect.h>
+#include <peripherals/stl/types.h>
 
 #if defined(FEATURE_ENABLE_ComponentApp)
 #include <coffee/comp_app/services.h>
@@ -12,9 +12,7 @@
 #include "../base/renderer/windowmanagerclient.h"
 #endif
 
-namespace Coffee {
-namespace Display {
-namespace EventHandlers {
+namespace Coffee::Display::EventHandlers {
 
 using namespace Input;
 
@@ -22,7 +20,8 @@ struct WindowResize
 {
     using event_type = ResizeEvent;
 
-    WindowResize(Function<void(u32, u32)>&& action) : m_action(std::move(action))
+    WindowResize(std::function<void(u32, u32)>&& action) :
+        m_action(std::move(action))
     {
     }
 
@@ -32,7 +31,7 @@ struct WindowResize
     }
 
   private:
-    Function<void(u32, u32)> m_action;
+    std::function<void(u32, u32)> m_action;
 };
 
 struct OnQuit
@@ -53,7 +52,7 @@ struct ExitOn
         Input::BaseEvent<CIEvent::QuitSign>,
         CIKeyEvent>;
 
-    ExitOn(Function<void()>&& action) : m_action(action)
+    ExitOn(std::function<void()>&& action) : m_action(action)
     {
     }
 
@@ -67,8 +66,8 @@ struct ExitOn
     }
 
     template<typename Event_ = Event>
-    requires (!std::is_same_v<Event, OnQuit>)
-    void operator()(CIEvent const&, CIKeyEvent const* ev)
+    requires(!std::is_same_v<Event, OnQuit>) void operator()(
+        CIEvent const&, CIKeyEvent const* ev)
     {
         if(ev->key != Event::key)
             return;
@@ -76,7 +75,7 @@ struct ExitOn
     }
 
   private:
-    Function<void()> m_action;
+    std::function<void()> m_action;
 };
 
 template<
@@ -95,9 +94,10 @@ STATICINLINE bool check_key(CIKeyEvent const& keyEvent)
 {
     constexpr auto mods = K::modifiers;
 
-    return (keyEvent.mod & (CIKeyEvent::PressedModifier |
-                            CIKeyEvent::RepeatedModifier)) == 0 &&
-           keyEvent.key == K::key && (keyEvent.mod & mods) == mods;
+    return (keyEvent.mod
+            & (CIKeyEvent::PressedModifier | CIKeyEvent::RepeatedModifier))
+               == 0
+           && keyEvent.key == K::key && (keyEvent.mod & mods) == mods;
 }
 
 template<
@@ -125,7 +125,10 @@ struct FullscreenOn
 {
     using event_type = CIKeyEvent;
 
-    FullscreenOn(Function<void(bool)>&& action, Function<bool()>&& getter) : m_action(std::move(action)), m_getter(std::move(getter))
+    FullscreenOn(
+        std::function<void(bool)>&& action, std::function<bool()>&& getter) :
+        m_action(std::move(action)),
+        m_getter(std::move(getter))
     {
     }
 
@@ -141,10 +144,8 @@ struct FullscreenOn
     }
 
   private:
-    Function<void(bool)> m_action;
-    Function<bool()> m_getter;
+    std::function<void(bool)> m_action;
+    std::function<bool()>     m_getter;
 };
 
-} // namespace EventHandlers
-} // namespace Display
-} // namespace Coffee
+} // namespace Coffee::Display::EventHandlers

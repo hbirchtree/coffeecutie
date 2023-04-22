@@ -188,7 +188,7 @@ requires(MinimumVersion<Current, Version<2, 0>>&&
     {
         GLW_FPTR_CHECK(BlendColor)
     }
-    glBlendColor(red.x(), red.y(), red.z(), red.w());
+    glBlendColor(red[0], red[1], red[2], red[3]);
     detail::error_check("BlendColor"sv);
 }
 
@@ -397,7 +397,7 @@ requires(MinimumVersion<Current, Version<2, 0>>&&
     {
         GLW_FPTR_CHECK(ClearColor)
     }
-    glClearColor(red.x(), red.y(), red.z(), red.w());
+    glClearColor(red[0], red[1], red[2], red[3]);
     detail::error_check("ClearColor"sv);
 }
 
@@ -455,7 +455,7 @@ requires(MinimumVersion<Current, Version<2, 0>>&&
     {
         GLW_FPTR_CHECK(ColorMask)
     }
-    glColorMask(red.x(), red.y(), red.z(), red.w());
+    glColorMask(red[0], red[1], red[2], red[3]);
     detail::error_check("ColorMask"sv);
 }
 
@@ -558,8 +558,8 @@ requires(MinimumVersion<Current, Version<2, 0>>&&
     glCompressedTexSubImage2D(
         static_cast<GLenum>(target),
         level,
-        xoffset.x(),
-        xoffset.y(),
+        xoffset[0],
+        xoffset[1],
         width[0],
         width[1],
         static_cast<GLenum>(format),
@@ -602,8 +602,8 @@ requires(MinimumVersion<Current, Version<2, 0>>&&
         static_cast<GLenum>(target),
         level,
         static_cast<GLenum>(internalformat),
-        x.x(),
-        x.y(),
+        x[0],
+        x[1],
         width[0],
         width[1],
         border);
@@ -641,10 +641,10 @@ requires(MinimumVersion<Current, Version<2, 0>>&&
     glCopyTexSubImage2D(
         static_cast<GLenum>(target),
         level,
-        xoffset.x(),
-        xoffset.y(),
-        x.x(),
-        x.y(),
+        xoffset[0],
+        xoffset[1],
+        x[0],
+        x[1],
         width[0],
         width[1]);
     detail::error_check("CopyTexSubImage2D"sv);
@@ -2340,8 +2340,8 @@ requires(MinimumVersion<Current, Version<2, 0>>&&
         GLW_FPTR_CHECK(ReadPixels)
     }
     glReadPixels(
-        x.x(),
-        x.y(),
+        x[0],
+        x[1],
         width[0],
         width[1],
         static_cast<GLenum>(format),
@@ -2435,7 +2435,7 @@ requires(MinimumVersion<Current, Version<2, 0>>&&
     {
         GLW_FPTR_CHECK(Scissor)
     }
-    glScissor(x.x(), x.y(), width[0], width[1]);
+    glScissor(x[0], x[1], width[0], width[1]);
     detail::error_check("Scissor"sv);
 }
 
@@ -2840,8 +2840,8 @@ requires(MinimumVersion<Current, Version<2, 0>>&&
     glTexSubImage2D(
         static_cast<GLenum>(target),
         level,
-        xoffset.x(),
-        xoffset.y(),
+        xoffset[0],
+        xoffset[1],
         width[0],
         width[1],
         static_cast<GLenum>(format),
@@ -2953,7 +2953,7 @@ requires(MinimumVersion<Current, Version<2, 0>>&&
     {
         GLW_FPTR_CHECK(Uniform2f)
     }
-    glUniform2f(location, v0.x(), v0.y());
+    glUniform2f(location, v0[0], v0[1]);
     detail::error_check("Uniform2f"sv);
 }
 
@@ -2998,7 +2998,7 @@ requires(MinimumVersion<Current, Version<2, 0>>&&
     {
         GLW_FPTR_CHECK(Uniform2i)
     }
-    glUniform2i(location, v0.x(), v0.y());
+    glUniform2i(location, v0[0], v0[1]);
     detail::error_check("Uniform2i"sv);
 }
 
@@ -3044,7 +3044,7 @@ requires(MinimumVersion<Current, Version<2, 0>>&&
     {
         GLW_FPTR_CHECK(Uniform3f)
     }
-    glUniform3f(location, v0.x(), v0.y(), v0.z());
+    glUniform3f(location, v0[0], v0[1], v0[2]);
     detail::error_check("Uniform3f"sv);
 }
 
@@ -3090,7 +3090,7 @@ requires(MinimumVersion<Current, Version<2, 0>>&&
     {
         GLW_FPTR_CHECK(Uniform3i)
     }
-    glUniform3i(location, v0.x(), v0.y(), v0.z());
+    glUniform3i(location, v0[0], v0[1], v0[2]);
     detail::error_check("Uniform3i"sv);
 }
 
@@ -3137,7 +3137,7 @@ requires(MinimumVersion<Current, Version<2, 0>>&&
     {
         GLW_FPTR_CHECK(Uniform4f)
     }
-    glUniform4f(location, v0.x(), v0.y(), v0.z(), v0.w());
+    glUniform4f(location, v0[0], v0[1], v0[2], v0[3]);
     detail::error_check("Uniform4f"sv);
 }
 
@@ -3184,7 +3184,7 @@ requires(MinimumVersion<Current, Version<2, 0>>&&
     {
         GLW_FPTR_CHECK(Uniform4i)
     }
-    glUniform4i(location, v0.x(), v0.y(), v0.z(), v0.w());
+    glUniform4i(location, v0[0], v0[1], v0[2], v0[3]);
     detail::error_check("Uniform4i"sv);
 }
 
@@ -3403,7 +3403,7 @@ requires(MinimumVersion<Current, Version<2, 0>>&&
     {
         GLW_FPTR_CHECK(VertexAttrib2f)
     }
-    glVertexAttrib2f(index, x.x(), x.y());
+    glVertexAttrib2f(index, x[0], x[1]);
     detail::error_check("VertexAttrib2f"sv);
 }
 
@@ -3447,7 +3447,7 @@ requires(MinimumVersion<Current, Version<2, 0>>&&
     {
         GLW_FPTR_CHECK(VertexAttrib3f)
     }
-    glVertexAttrib3f(index, x.x(), x.y(), x.z());
+    glVertexAttrib3f(index, x[0], x[1], x[2]);
     detail::error_check("VertexAttrib3f"sv);
 }
 
@@ -3492,7 +3492,7 @@ requires(MinimumVersion<Current, Version<2, 0>>&&
     {
         GLW_FPTR_CHECK(VertexAttrib4f)
     }
-    glVertexAttrib4f(index, x.x(), x.y(), x.z(), x.w());
+    glVertexAttrib4f(index, x[0], x[1], x[2], x[3]);
     detail::error_check("VertexAttrib4f"sv);
 }
 
@@ -3574,7 +3574,7 @@ requires(MinimumVersion<Current, Version<2, 0>>&&
     {
         GLW_FPTR_CHECK(Viewport)
     }
-    glViewport(x.x(), x.y(), width[0], width[1]);
+    glViewport(x[0], x[1], width[0], width[1]);
     detail::error_check("Viewport"sv);
 }
 

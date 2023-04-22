@@ -31,7 +31,7 @@ struct DisplayHandle : comp_app::AppService<DisplayHandle>,
 
     detail::EGLData& context();
 
-    stl_types::UqPtr<detail::EGLData, detail::EGLDataDeleter> m_data;
+    std::unique_ptr<detail::EGLData, detail::EGLDataDeleter> m_data;
 
     libc_types::i32 m_major{}, m_minor{};
 };
@@ -61,9 +61,10 @@ struct GraphicsContext : comp_app::interfaces::GraphicsContext,
     } feature_flags;
 };
 
-struct GraphicsFramebuffer : comp_app::interfaces::GraphicsFramebuffer,
-                             comp_app::AppService<GraphicsFramebuffer>,
-                             comp_app::AppLoadableService
+struct GraphicsFramebuffer
+    : comp_app::interfaces::GraphicsFramebuffer,
+      comp_app::AppService<GraphicsFramebuffer, comp_app::GraphicsFramebuffer>,
+      comp_app::AppLoadableService
 {
     GraphicsFramebuffer()
     {

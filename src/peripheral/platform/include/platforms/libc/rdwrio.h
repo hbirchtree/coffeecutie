@@ -11,7 +11,7 @@ using url::Url;
 
 namespace detail {
 
-FORCEDINLINE bool requires_delimiters(stl_types::String const& filename)
+FORCEDINLINE bool requires_delimiters(std::string const& filename)
 {
     return filename.starts_with("/proc/");
 }
@@ -44,7 +44,7 @@ FORCEDINLINE result<mem_chunk<char>, int> read(
 
 struct line_iterator
 {
-    line_iterator(file_t&& fd) : fd(stl_types::MkShared<file_t>(std::move(fd)))
+    line_iterator(file_t&& fd) : fd(std::make_shared<file_t>(std::move(fd)))
     {
     }
     line_iterator()
@@ -90,13 +90,12 @@ struct line_iterator
         current_line = current_line.substr(0, current_line.find('\n'));
     }
 
-    stl_types::ShPtr<file_t> fd;
-    stl_types::String        current_line;
+    std::shared_ptr<file_t> fd;
+    std::string        current_line;
 };
 
 FORCEDINLINE result<line_iterator, int> read_lines(Url const& file)
 {
-    using stl_types::String;
     using stl_types::str::split::spliterator;
 
     if(auto fd = open_file(file); fd.has_error())
@@ -105,7 +104,7 @@ FORCEDINLINE result<line_iterator, int> read_lines(Url const& file)
         return success(line_iterator(std::move(fd.value())));
 }
 
-FORCEDINLINE Optional<int> write(
+FORCEDINLINE std::optional<int> write(
     file_t const&                file,
     mem_chunk<const char> const& data,
     write_params_t const&        params = {})

@@ -167,7 +167,7 @@ requires(semantic::concepts::Vector<vec_2_u32, u32, 2>)
     {
         GLW_FPTR_CHECK(Uniform2uiEXT)
     }
-    glUniform2uiEXT(location, v0.x(), v0.y());
+    glUniform2uiEXT(location, v0[0], v0[1]);
     detail::error_check("Uniform2uiEXT"sv);
 }
 
@@ -210,7 +210,7 @@ requires(semantic::concepts::Vector<vec_3_u32, u32, 3>)
     {
         GLW_FPTR_CHECK(Uniform3uiEXT)
     }
-    glUniform3uiEXT(location, v0.x(), v0.y(), v0.z());
+    glUniform3uiEXT(location, v0[0], v0[1], v0[2]);
     detail::error_check("Uniform3uiEXT"sv);
 }
 
@@ -254,7 +254,7 @@ requires(semantic::concepts::Vector<vec_4_u32, u32, 4>)
     {
         GLW_FPTR_CHECK(Uniform4uiEXT)
     }
-    glUniform4uiEXT(location, v0.x(), v0.y(), v0.z(), v0.w());
+    glUniform4uiEXT(location, v0[0], v0[1], v0[2], v0[3]);
     detail::error_check("Uniform4uiEXT"sv);
 }
 
@@ -410,7 +410,7 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
     {
         GLW_FPTR_CHECK(VertexAttribI2iEXT)
     }
-    glVertexAttribI2iEXT(index, x.x(), x.y());
+    glVertexAttribI2iEXT(index, x[0], x[1]);
     detail::error_check("VertexAttribI2iEXT"sv);
 }
 
@@ -451,7 +451,7 @@ requires(semantic::concepts::Vector<vec_2_u32, u32, 2>)
     {
         GLW_FPTR_CHECK(VertexAttribI2uiEXT)
     }
-    glVertexAttribI2uiEXT(index, x.x(), x.y());
+    glVertexAttribI2uiEXT(index, x[0], x[1]);
     detail::error_check("VertexAttribI2uiEXT"sv);
 }
 
@@ -493,7 +493,7 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>)
     {
         GLW_FPTR_CHECK(VertexAttribI3iEXT)
     }
-    glVertexAttribI3iEXT(index, x.x(), x.y(), x.z());
+    glVertexAttribI3iEXT(index, x[0], x[1], x[2]);
     detail::error_check("VertexAttribI3iEXT"sv);
 }
 
@@ -535,7 +535,7 @@ requires(semantic::concepts::Vector<vec_3_u32, u32, 3>)
     {
         GLW_FPTR_CHECK(VertexAttribI3uiEXT)
     }
-    glVertexAttribI3uiEXT(index, x.x(), x.y(), x.z());
+    glVertexAttribI3uiEXT(index, x[0], x[1], x[2]);
     detail::error_check("VertexAttribI3uiEXT"sv);
 }
 
@@ -600,7 +600,7 @@ requires(semantic::concepts::Vector<vec_4_i32, i32, 4>)
     {
         GLW_FPTR_CHECK(VertexAttribI4iEXT)
     }
-    glVertexAttribI4iEXT(index, x.x(), x.y(), x.z(), x.w());
+    glVertexAttribI4iEXT(index, x[0], x[1], x[2], x[3]);
     detail::error_check("VertexAttribI4iEXT"sv);
 }
 
@@ -686,7 +686,7 @@ requires(semantic::concepts::Vector<vec_4_u32, u32, 4>)
     {
         GLW_FPTR_CHECK(VertexAttribI4uiEXT)
     }
-    glVertexAttribI4uiEXT(index, x.x(), x.y(), x.z(), x.w());
+    glVertexAttribI4uiEXT(index, x[0], x[1], x[2], x[3]);
     detail::error_check("VertexAttribI4uiEXT"sv);
 }
 

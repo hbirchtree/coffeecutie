@@ -1,8 +1,7 @@
 #pragma once
 
-#include "cblam_map.h"
-#include "cblam_scenario.h"
-#include "cblam_structures.h"
+#include "blam_scenario.h"
+#include "blam_structures.h"
 
 #include <algorithm>
 #include <corez/zlib.h>

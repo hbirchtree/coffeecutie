@@ -3,25 +3,24 @@
 #include <peripherals/concepts/resource.h>
 
 #include <coffee/core/libc_types.h>
-#include <coffee/core/stl_types.h>
-#include <coffee/core/types/chunk.h>
-#include <coffee/core/types/rsca.h>
-#include <coffee/interfaces/byte_provider.h>
+
 #include <peripherals/enum/helpers.h>
 #include <peripherals/semantic/chunk.h>
+#include <peripherals/stl/types.h>
 #include <url/url.h>
 
 namespace Coffee {
 
 using Url  = platform::url::Url;
 using Path = platform::url::Path;
+using semantic::RSCA;
 
 /*!
  * \brief A data resource which location cannot be changed.
  */
 class Resource
 {
-    CString m_resource; /*!< URL for the resource*/
+    std::string m_resource; /*!< URL for the resource*/
 
     struct ResourceData;
 
@@ -30,7 +29,7 @@ class Resource
         void operator()(ResourceData* data);
     };
 
-    UqPtr<ResourceData, RscData_deleter> m_platform_data;
+    std::unique_ptr<ResourceData, RscData_deleter> m_platform_data;
 
   public:
     friend bool FilePull(Resource& resc);
@@ -62,7 +61,7 @@ class Resource
 
     semantic::Span<const char> data()
     {
-        return C_OCAST<BytesConst>(*this).as<const char>().view;
+        return C_OCAST<semantic::BytesConst>(*this).as<const char>().view;
     }
 
     /*!
@@ -70,21 +69,21 @@ class Resource
      * \param data
      * \return
      */
-    Resource& operator=(Bytes&& data);
+    Resource& operator=(semantic::Bytes&& data);
 
     /*!
      * \brief Borrowing data assignment
      * \param data
      * \return
      */
-    FORCEDINLINE Resource& operator=(Bytes const& data)
+    FORCEDINLINE Resource& operator=(semantic::Bytes const& data)
     {
         this->data_rw = data;
         this->data_ro = data;
         return *this;
     }
 
-    FORCEDINLINE Resource& operator=(BytesConst const& data)
+    FORCEDINLINE Resource& operator=(semantic::BytesConst const& data)
     {
         this->data_rw = {};
         this->data_ro = data;
@@ -106,8 +105,8 @@ class Resource
         return *this;
     }
 
-    operator Bytes();
-    operator BytesConst();
+    operator semantic::Bytes();
+    operator semantic::BytesConst();
 
     operator Path() const;
 
@@ -196,7 +195,7 @@ FORCEDINLINE Resource operator"" _tmpfile(const char* fn, size_t)
     return Resource(fn, RSCA::TempFile);
 }
 
-}
+} // namespace resource_literals
 
 using namespace resource_literals;
 } // namespace Coffee

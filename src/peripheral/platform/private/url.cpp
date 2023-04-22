@@ -63,7 +63,7 @@ Url GetAppleStoragePath()
         CFStringRef pathstr =
             CFURLCopyFileSystemPath(path, kCFURLPOSIXPathStyle);
         CFStringEncoding enc      = CFStringGetSystemEncoding();
-        const char*      pathcstr = CFStringGetCStringPtr(pathstr, enc);
+        const char*      pathcstr = CFStringGetstd::stringPtr(pathstr, enc);
         if(!pathcstr)
             break;
         std::string outStr = pathcstr;
@@ -167,7 +167,7 @@ STATICINLINE SystemPaths& GetSystemPaths()
     auto appdata = pkg.InstalledLocation().Path();
 
     std::string bs =
-        StrUtil::convertformat<char, wchar_t>(CWString(appdata.data()));
+        StrUtil::convertformat<char, wchar_t>(std::wstring(appdata.data()));
 
     paths.assetDir = MkUrl(bs.c_str(), RSCA::SystemFile);
 #endif
@@ -287,7 +287,7 @@ std::string Url::operator*() const
     {
     case Local:
     {
-        String derefPath = DereferenceLocalPath();
+        std::string derefPath = DereferenceLocalPath();
 #if defined(COFFEE_UNIXPLAT) && !defined(COFFEE_EMSCRIPTEN)
         derefPath = str::replace::str<char>(derefPath, "//", "/");
         if(feval(flags, RSCA::NoDereference))
@@ -436,9 +436,9 @@ Path Path::dirname() const
     return p;
 }
 
-Vector<Path> Path::components() const
+std::vector<Path> Path::components() const
 {
-    Vector<Path> out;
+    std::vector<Path> out;
 
     Path base = *this;
 
@@ -536,7 +536,7 @@ const UrlParse UrlParse::from(const Url& url)
 
 #if !defined(COFFEE_IOS)
 
-    Vector<std::string> matches;
+    std::vector<std::string> matches;
 
     {
         DProfContext _(URLPARSE_TAG "Regex");

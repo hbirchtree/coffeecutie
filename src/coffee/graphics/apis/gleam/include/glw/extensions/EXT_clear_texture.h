@@ -82,9 +82,9 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
     glClearTexSubImageEXT(
         texture,
         level,
-        xoffset.x(),
-        xoffset.y(),
-        xoffset.z(),
+        xoffset[0],
+        xoffset[1],
+        xoffset[2],
         width[0],
         width[1],
         width[2],

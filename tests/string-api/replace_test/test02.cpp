@@ -1,7 +1,7 @@
 #include <coffee/core/CArgParser>
 #include <coffee/core/coffee.h>
-#include <coffee/core/stl_types.h>
-#include <coffee/core/types/chunk.h>
+#include <peripherals/stl/types.h>
+#include <peripherals/semantic/chunk.h>
 #include <coffee/core/types/debug/component.h>
 #include <coffee/core/types/debug/severity.h>
 #include <coffee/core/types/debug/type.h>
@@ -19,7 +19,7 @@
 #include <coffee/strings/libc_types.h>
 #include <coffee/strings/vector_types.h>
 
-#include <coffee/core/CStringFormat>
+#include <coffee/core/std::stringFormat>
 #include <coffee/core/CUnitTesting>
 
 using namespace Coffee;
@@ -27,18 +27,18 @@ using namespace Coffee::debug;
 
 bool basic_format()
 {
-    CString real = "HELLO World! ÆØÅ";
-    CString test = cStringFormat("{0}", real);
+    std::string real = "HELLO World! ÆØÅ";
+    std::string test = cStringFormat("{0}", real);
     return real == test;
 }
 
 bool string_format()
 {
-    CString real = "HELLO World! ÆØÅ";
+    std::string real = "HELLO World! ÆØÅ";
 
-    CString str1 = "HELLO";
-    CString str2 = "ÆØÅ";
-    CString test = cStringFormat("{0} World! {1}", str1, str2);
+    std::string str1 = "HELLO";
+    std::string str2 = "ÆØÅ";
+    std::string test = cStringFormat("{0} World! {1}", str1, str2);
 
     if(real != test)
     {
@@ -50,11 +50,11 @@ bool string_format()
 
 bool cstring_format()
 {
-    CString real = "HELLO World! ÆØÅ";
+    std::string real = "HELLO World! ÆØÅ";
 
     cstring str1 = "HELLO";
     cstring str2 = "ÆØÅ";
-    CString test = cStringFormat("{0} World! {1}", str1, str2);
+    std::string test = cStringFormat("{0} World! {1}", str1, str2);
 
     if(real != test)
     {
@@ -66,8 +66,8 @@ bool cstring_format()
 
 bool integer_decimal_format()
 {
-    CString real = "Number: 1024";
-    CString test = cStringFormat("Number: {0}", 1024);
+    std::string real = "Number: 1024";
+    std::string test = cStringFormat("Number: {0}", 1024);
     if(real != test)
     {
         cDebug("Formatting error: {0} != {1}", real, test);
@@ -78,8 +78,8 @@ bool integer_decimal_format()
 
 bool integer_hex_format()
 {
-    CString real = "Number: 400";
-    CString test = cStringFormat("Number: {0}", str::convert::hexify(1024));
+    std::string real = "Number: 400";
+    std::string test = cStringFormat("Number: {0}", str::convert::hexify(1024));
     if(real != test)
     {
         cDebug("Formatting error: {0} != {1}", real, test);
@@ -92,8 +92,8 @@ bool pointer_format()
 {
     c_cptr ptr = (c_cptr)0x4004;
 
-    CString real = "Pointer: 0x4004";
-    CString test = cStringFormat("Pointer: {0}", ptr);
+    std::string real = "Pointer: 0x4004";
+    std::string test = cStringFormat("Pointer: {0}", ptr);
     if(real != test)
     {
         cWarning("Formatting error: {0} != {1}", real, test);
@@ -108,14 +108,14 @@ bool pointer_allocated_format()
 
     c_cptr ptr = ptr_f.data;
 
-    CString real;
+    std::string real;
     real.resize(100);
 
     snprintf(&real[0], real.size(), "Pointer: %p", ptr);
 
     real.resize(libc::str::find(real.c_str(), '\0') - real.c_str());
 
-    CString test = cStringFormat("Pointer: {0}", ptr);
+    std::string test = cStringFormat("Pointer: {0}", ptr);
     if(real != test)
     {
         cWarning("Formatting error: {0} != {1}", real, test);
@@ -126,8 +126,8 @@ bool pointer_allocated_format()
 
 bool floating_point_format()
 {
-    CString real = "Number: 1000.1";
-    CString test = cStringFormat("Number: {0:1}", 1000.1);
+    std::string real = "Number: 1000.1";
+    std::string test = cStringFormat("Number: {0:1}", 1000.1);
     if(real != test)
     {
         cWarning("Formatting error: {0} != {1}", real, test);
@@ -140,8 +140,8 @@ bool vector_format()
 {
     Vecf3 vec(1);
 
-    CString real = "v(1.,1.,1.)";
-    CString test = cStringFormat("{0}", vec);
+    std::string real = "v(1.,1.,1.)";
+    std::string test = cStringFormat("{0}", vec);
     if(real != test)
     {
         cWarning("Formatting error: {0} != {1}", real, test);

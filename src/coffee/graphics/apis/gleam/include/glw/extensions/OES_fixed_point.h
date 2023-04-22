@@ -39,7 +39,7 @@ requires(semantic::concepts::Vector<vec_4_GLfixed, GLfixed, 4>)
     {
         GLW_FPTR_CHECK(ClearColorxOES)
     }
-    glClearColorxOES(red.x(), red.y(), red.z(), red.w());
+    glClearColorxOES(red[0], red[1], red[2], red[3]);
     detail::error_check("ClearColorxOES"sv);
 }
 
@@ -101,7 +101,7 @@ requires(semantic::concepts::Vector<vec_4_GLfixed, GLfixed, 4>)
     {
         GLW_FPTR_CHECK(Color4xOES)
     }
-    glColor4xOES(red.x(), red.y(), red.z(), red.w());
+    glColor4xOES(red[0], red[1], red[2], red[3]);
     detail::error_check("Color4xOES"sv);
 }
 
@@ -624,7 +624,7 @@ requires(semantic::concepts::Vector<vec_3_GLfixed, GLfixed, 3>)
     {
         GLW_FPTR_CHECK(RotatexOES)
     }
-    glRotatexOES(angle, x.x(), x.y(), x.z());
+    glRotatexOES(angle, x[0], x[1], x[2]);
     detail::error_check("RotatexOES"sv);
 }
 
@@ -644,7 +644,7 @@ requires(semantic::concepts::Vector<vec_3_GLfixed, GLfixed, 3>)
     {
         GLW_FPTR_CHECK(ScalexOES)
     }
-    glScalexOES(x.x(), x.y(), x.z());
+    glScalexOES(x[0], x[1], x[2]);
     detail::error_check("ScalexOES"sv);
 }
 
@@ -766,7 +766,7 @@ requires(semantic::concepts::Vector<vec_3_GLfixed, GLfixed, 3>)
     {
         GLW_FPTR_CHECK(TranslatexOES)
     }
-    glTranslatexOES(x.x(), x.y(), x.z());
+    glTranslatexOES(x[0], x[1], x[2]);
     detail::error_check("TranslatexOES"sv);
 }
 
@@ -949,7 +949,7 @@ requires(semantic::concepts::Vector<vec_4_GLfixed, GLfixed, 4>)
     {
         GLW_FPTR_CHECK(BlendColorxOES)
     }
-    glBlendColorxOES(red.x(), red.y(), red.z(), red.w());
+    glBlendColorxOES(red[0], red[1], red[2], red[3]);
     detail::error_check("BlendColorxOES"sv);
 }
 
@@ -972,7 +972,7 @@ requires(semantic::concepts::Vector<vec_4_GLfixed, GLfixed, 4>)
     {
         GLW_FPTR_CHECK(ClearAccumxOES)
     }
-    glClearAccumxOES(red.x(), red.y(), red.z(), red.w());
+    glClearAccumxOES(red[0], red[1], red[2], red[3]);
     detail::error_check("ClearAccumxOES"sv);
 }
 
@@ -994,7 +994,7 @@ requires(semantic::concepts::Vector<vec_3_GLfixed, GLfixed, 3>)
     {
         GLW_FPTR_CHECK(Color3xOES)
     }
-    glColor3xOES(red.x(), red.y(), red.z());
+    glColor3xOES(red[0], red[1], red[2]);
     detail::error_check("Color3xOES"sv);
 }
 
@@ -2000,7 +2000,7 @@ requires(semantic::concepts::Vector<vec_2_GLfixed, GLfixed, 2>)
     {
         GLW_FPTR_CHECK(RasterPos2xOES)
     }
-    glRasterPos2xOES(x.x(), x.y());
+    glRasterPos2xOES(x[0], x[1]);
     detail::error_check("RasterPos2xOES"sv);
 }
 
@@ -2046,7 +2046,7 @@ requires(semantic::concepts::Vector<vec_3_GLfixed, GLfixed, 3>)
     {
         GLW_FPTR_CHECK(RasterPos3xOES)
     }
-    glRasterPos3xOES(x.x(), x.y(), x.z());
+    glRasterPos3xOES(x[0], x[1], x[2]);
     detail::error_check("RasterPos3xOES"sv);
 }
 
@@ -2093,7 +2093,7 @@ requires(semantic::concepts::Vector<vec_4_GLfixed, GLfixed, 4>)
     {
         GLW_FPTR_CHECK(RasterPos4xOES)
     }
-    glRasterPos4xOES(x.x(), x.y(), x.z(), x.w());
+    glRasterPos4xOES(x[0], x[1], x[2], x[3]);
     detail::error_check("RasterPos4xOES"sv);
 }
 
@@ -2455,7 +2455,7 @@ requires(semantic::concepts::Vector<vec_2_GLfixed, GLfixed, 2>)
     {
         GLW_FPTR_CHECK(Vertex3xOES)
     }
-    glVertex3xOES(x.x(), x.y());
+    glVertex3xOES(x[0], x[1]);
     detail::error_check("Vertex3xOES"sv);
 }
 
@@ -2501,7 +2501,7 @@ requires(semantic::concepts::Vector<vec_3_GLfixed, GLfixed, 3>)
     {
         GLW_FPTR_CHECK(Vertex4xOES)
     }
-    glVertex4xOES(x.x(), x.y(), x.z());
+    glVertex4xOES(x[0], x[1], x[2]);
     detail::error_check("Vertex4xOES"sv);
 }
 

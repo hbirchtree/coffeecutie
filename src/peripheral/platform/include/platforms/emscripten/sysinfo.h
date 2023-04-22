@@ -65,13 +65,13 @@ inline std::string architecture()
     return COFFEE_ARCH;
 }
 
-inline stl_types::Optional<stl_types::String> name()
+inline std::optional<std::string> name()
 {
     if(auto ua_ = os::emscripten::detail::user_agent())
     {
-        std::string_view ua = ua_;
-        auto start_id = ua.find('(');
-        auto end_id   = ua.find(')');
+        std::string_view ua       = ua_;
+        auto             start_id = ua.find('(');
+        auto             end_id   = ua.find(')');
         if(start_id != std::string::npos && end_id != std::string::npos)
         {
             ua = ua.substr(start_id, end_id - start_id);
@@ -80,7 +80,7 @@ inline stl_types::Optional<stl_types::String> name()
             {
                 if(!last.empty())
                 {
-                    id = stl_types::str::trim::left(id);
+                    id       = stl_types::str::trim::left(id);
                     auto out = std::string(id.begin(), id.end());
                     ::free(ua_);
                     return out;
@@ -93,9 +93,9 @@ inline stl_types::Optional<stl_types::String> name()
     return std::nullopt;
 }
 
-inline stl_types::Optional<std::string_view> version()
+inline std::optional<std::string_view> version()
 {
-    using namespace std::literals;
+    using namespace std::string_view_literals;
     return ""sv;
 }
 
@@ -103,13 +103,11 @@ inline stl_types::Optional<std::string_view> version()
 
 namespace platform::info::device::emscripten {
 
-inline stl_types::Optional<
-    stl_types::Pair<stl_types::String, stl_types::String>>
-device()
+inline std::optional<std::pair<std::string, std::string>> device()
 {
     if(auto plat = os::emscripten::detail::platform())
     {
-        stl_types::String out = plat;
+        std::string out = plat;
         ::free(plat);
         return std::pair<std::string, std::string>{"<unknown>", out};
     }

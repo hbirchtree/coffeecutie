@@ -1,19 +1,21 @@
 #pragma once
 
 #include "camera.h"
-#include "matrices.h"
 #include "transform.h"
 
 namespace typing {
 namespace vectors {
 namespace scene {
 
+#if defined(USE_HOMEGROWN_VECTORS)
 using namespace stl_types::math;
+#endif
 
 template<typename T>
 FORCEDINLINE tmatrix<T, 4> GenOrthographic(
     geometry::rect<T> const& view, const geometry::range<T>& zfield)
 {
+#if defined(USE_HOMEGROWN_VECTORS)
     tmatrix<T, 4> mat;
 
     mat[0][0] = T(2) / (view.right() - view.left());
@@ -25,6 +27,9 @@ FORCEDINLINE tmatrix<T, 4> GenOrthographic(
     mat[3][2] = -(zfield.far_ + zfield.near_) / (zfield.far_ - zfield.near_);
 
     return mat;
+#else
+    return tmatrix<T, 4>();
+#endif
 }
 
 template<typename T>
@@ -35,7 +40,7 @@ FORCEDINLINE tmatrix<T, 4> GenInfinitePerspective(
 
     T foc = 1. / tan(fov / 2.);
 
-    T e = std::numeric_limits<scalar>::epsilon();
+    T e = std::numeric_limits<T>::epsilon();
 
     out[0] = {foc, 0, 0, 0};
     out[1] = {0, foc / aspect, 0, 0};
@@ -49,7 +54,8 @@ template<typename T>
 FORCEDINLINE tmatrix<T, 4> GenPerspective(
     const T& fov, const T& aspect, const geometry::range<T>& zfield)
 {
-    CASSERT(abs(aspect - numeric_limits<T>::epsilon()) > T(0));
+#if defined(USE_HOMEGROWN_VECTORS)
+    CASSERT(abs(aspect - std::numeric_limits<T>::epsilon()) > T(0));
 
     tmatrix<T, 4> matrix;
 
@@ -59,10 +65,14 @@ FORCEDINLINE tmatrix<T, 4> GenPerspective(
     matrix[1][1] = T(1) / (thalffov);
     matrix[2][2] = -(zfield.far_ + zfield.near_) / (zfield.far_ - zfield.near_);
     matrix[2][3] = T(-1);
-    matrix[3][2] =
-        (T(-2) * zfield.far_ * zfield.near_) / (zfield.far_ - zfield.near_);
+    matrix[3][2]
+        = (T(-2) * zfield.far_ * zfield.near_) / (zfield.far_ - zfield.near_);
 
     return matrix;
+#else
+    return glm::perspective(
+        glm::radians(fov), aspect, zfield.near_, zfield.far_);
+#endif
 }
 
 template<typename T>
@@ -96,8 +106,8 @@ FORCEDINLINE void GenUserClipSpaceScale(
     const tmatrix<T, 4>& perspective,
     tvector<T, 4>&       corner)
 {
-    corner =
-        tvector<T, 4>(signbit(clipPlane.x()), signbit(clipPlane.y()), 1.f, 1.f);
+    corner = tvector<T, 4>(
+        signbit(clipPlane.x()), signbit(clipPlane.y()), 1.f, 1.f);
 
     corner = corner * inverse(perspective);
 }
@@ -115,6 +125,7 @@ FORCEDINLINE tmatrix<T, 4> GenTransform(
     tvector<T, 3> const&  scl,
     tquaternion<T> const& rot)
 {
+#if defined(USE_HOMEGROWN_VECTORS)
     tmatrix<T, 4> mat;
 
     mat = matrixify(normalize_quat(rot));
@@ -122,6 +133,9 @@ FORCEDINLINE tmatrix<T, 4> GenTransform(
     mat = translation(mat, pos);
 
     return mat;
+#else
+    return glm::translate(glm::scale(glm::mat4_cast(rot), scl), pos);
+#endif
 }
 
 template<typename T>

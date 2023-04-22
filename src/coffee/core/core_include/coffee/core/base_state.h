@@ -27,22 +27,22 @@ inline stl_types::UqLock LockState(GlobalState& state)
     return stl_types::UqLock(state.access);
 }
 
-extern stl_types::ShPtr<GlobalState> SwapState(
-    std::string_view key, stl_types::ShPtr<GlobalState> const& ptr);
-extern stl_types::ShPtr<GlobalState> const& PeekState(std::string_view key);
+extern std::shared_ptr<GlobalState> SwapState(
+    std::string_view key, std::shared_ptr<GlobalState> const& ptr);
+extern std::shared_ptr<GlobalState> const& PeekState(std::string_view key);
 
 template<typename T>
-inline stl_types::ShPtr<T> CastState(std::string_view key)
+inline std::shared_ptr<T> CastState(std::string_view key)
 {
     return std::dynamic_pointer_cast<T>(PeekState(key));
 }
 
 extern bool ProfilerEnabled();
 
-extern stl_types::ShPtr<platform::profiling::PContext>    GetProfilerStore();
-extern stl_types::ShPtr<platform::profiling::ThreadState> GetProfilerTStore();
+extern std::shared_ptr<platform::profiling::PContext>    GetProfilerStore();
+extern std::shared_ptr<platform::profiling::ThreadState> GetProfilerTStore();
 
-extern stl_types::ShPtr<platform::info::AppData> GetAppData();
+extern std::shared_ptr<platform::info::AppData> GetAppData();
 
 } // namespace State
 } // namespace Coffee

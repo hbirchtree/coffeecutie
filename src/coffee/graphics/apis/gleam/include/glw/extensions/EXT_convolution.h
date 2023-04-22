@@ -218,8 +218,8 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
     glCopyConvolutionFilter1DEXT(
         static_cast<GLenum>(target),
         static_cast<GLenum>(internalformat),
-        x.x(),
-        x.y(),
+        x[0],
+        x[1],
         width);
     detail::error_check("CopyConvolutionFilter1DEXT"sv);
 }
@@ -251,8 +251,8 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
     glCopyConvolutionFilter2DEXT(
         static_cast<GLenum>(target),
         static_cast<GLenum>(internalformat),
-        x.x(),
-        x.y(),
+        x[0],
+        x[1],
         width[0],
         width[1]);
     detail::error_check("CopyConvolutionFilter2DEXT"sv);

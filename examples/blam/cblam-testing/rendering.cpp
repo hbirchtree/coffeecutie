@@ -12,9 +12,12 @@
 using namespace libc_types::size_literals;
 using namespace std::string_view_literals;
 
+using typing::pixels::CompFmt;
+using typing::pixels::PixDesc;
+
 namespace detail {
 
-inline Tup<PixFmt, CompFlags> get_bitm_hash(BitmapItem const& bitm)
+inline std::tuple<PixFmt, CompFlags> get_bitm_hash(BitmapItem const& bitm)
 {
     return std::make_tuple(bitm.image.fmt.pixfmt, bitm.image.fmt.cmpflg);
 }
@@ -41,48 +44,35 @@ struct MeshRenderer : Components::RestrictedSubsystem<
                           MeshRenderer<Version>,
                           MeshRendererManifest<Version>>
 {
-    using type = MeshRenderer;
-
-    //    using parent_type = Components::RestrictedSubsystem<
-    //        Components::TagType<MeshRenderer<Version>>,
-    //        type_list_t<
-    //            BspTag,
-    //            SubModelTag,
-    //            ModelTag,
-    //            ObjectSpawnTag,
-    //            MultiplayerSpawnTag>,
-    //        empty_list_t>;
-
-    using Proxy = Components::proxy_of<MeshRendererManifest<Version>>;
-
+    using type        = MeshRenderer;
+    using Proxy       = Components::proxy_of<MeshRendererManifest<Version>>;
     using draw_data_t = gfx::draw_command::data_t;
 
     struct Pass
     {
         Pass()
         {
+            draws.emplace_back();
         }
 
-        //        GFX::RenderPass     source;
-        //        GFX::OPT_DRAW       draw;
-        //        PIP_PARAM*          pipeline;
-        //        Map<u64, PIP_PARAM> format_states;
-        gfx::draw_command                       command;
-        std::map<u64, std::vector<draw_data_t>> draws;
+        gfx::draw_command                     command;
+        std::vector<std::vector<draw_data_t>> draws;
 
         gfx::buffer_slice_t material_buffer;
         gfx::buffer_slice_t matrix_buffer;
         Span<char>          material_mapping;
         Span<Matf4>         matrix_mapping;
 
-        auto& draw(u64 fmt)
+        model_tracker_t insert_draw(draw_data_t const& draw)
         {
-            return draws[fmt];
-        }
+            size_t num_draws = 0;
+            for(auto const& draw : draws.back())
+                num_draws += draw.instances.count;
 
-        model_tracker_t insert_draw(draw_data_t const& draw, u64 bucket = 0)
-        {
-            auto& bucket_ = draws[bucket];
+            if(num_draws >= 256 || (num_draws + draw.instances.count) > 256)
+                draws.emplace_back();
+
+            auto& bucket_ = draws.back();
             auto  it      = std::find_if(
                 bucket_.begin(), bucket_.end(), [&draw](draw_data_t const& d) {
                     return d.elements.offset == draw.elements.offset;
@@ -90,6 +80,7 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             if(it != bucket_.end())
             {
                 return model_tracker_t{
+                    .bucket   = static_cast<u16>(draws.size() - 1),
                     .draw     = static_cast<u16>(it - bucket_.begin()),
                     .instance = static_cast<u16>(it->instances.count++),
                 };
@@ -97,6 +88,7 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             {
                 bucket_.push_back(draw);
                 return model_tracker_t{
+                    .bucket   = static_cast<u16>(draws.size() - 1),
                     .draw     = static_cast<u16>(bucket_.size() - 1),
                     .instance = 0,
                 };
@@ -107,12 +99,14 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         {
             //            command.data.clear();
             draws.clear();
+            draws.emplace_back();
         }
 
         template<typename T>
         inline T& material_of(size_t idx)
         {
-            auto material = mem_chunk<T>::ofContainer(material_mapping);
+            auto material
+                = semantic::mem_chunk<T>::ofContainer(material_mapping);
             return material[idx];
         }
     };
@@ -127,8 +121,8 @@ struct MeshRenderer : Components::RestrictedSubsystem<
     BitmapCache<Version>& bitm_cache;
     BSPCache<Version>&    bsp_cache;
 
-    Array<Pass, Pass_Count> m_bsp;
-    Array<Pass, Pass_Count> m_model;
+    std::array<Pass, Pass_Count> m_bsp;
+    std::array<Pass, Pass_Count> m_model;
 
     MeshRenderer(
         gfx::api*             api,
@@ -279,19 +273,56 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             bitm_cache
                 .template get_bucket<gfx::texture_2da_t>(PixDesc(PixFmt::RGBA8))
                 .sampler});
+#if GLEAM_MAX_VERSION >= 0x400 || GLEAM_MAX_VERSION_ES >= 0x320
+        samplers.push_back(gleam::sampler_definition_t{
+            typing::graphics::ShaderStage::Fragment,
+            {"source_cube_bc1"sv, 9},
+            bitm_cache
+                .template get_bucket<gfx::texture_cube_array_t>(
+                    CompFmt(PixFmt::BCn, CompFlags::BC1),
+                    blam::bitm::type_t::tex_cube)
+                .sampler});
+        samplers.push_back(gleam::sampler_definition_t{
+            typing::graphics::ShaderStage::Fragment,
+            {"source_cube_rgb565"sv, 10},
+            bitm_cache
+                .template get_bucket<gfx::texture_cube_array_t>(
+                    PixDesc(PixFmt::RGB565), blam::bitm::type_t::tex_cube)
+                .sampler});
+        samplers.push_back(gleam::sampler_definition_t{
+            typing::graphics::ShaderStage::Fragment,
+            {"source_cube_rgba8"sv, 11},
+            bitm_cache
+                .template get_bucket<gfx::texture_cube_array_t>(
+                    PixDesc(PixFmt::RGBA8), blam::bitm::type_t::tex_cube)
+                .sampler});
+#endif
     }
 
     auto get_view_state()
     {
         using typing::vector_types::Vecd2;
         using typing::vector_types::Veci4;
+
+        const auto depth = gfx::depth_state{
+            .range    = Vecd2{0.1, 1000.},
+            .reversed = true,
+        };
+
+        if constexpr(compile_info::platform::is_emscripten)
+            return gfx::view_state{
+                .depth = gfx::depth_state{
+                    .range    = depth.range,
+                    .reversed = true,
+                }};
+
         return gfx::view_state{
             .view  = Veci4{
                 0, 0,
-                m_resources.offscreen_size.w,
-                m_resources.offscreen_size.h,
+                m_resources.offscreen_size.x,
+                m_resources.offscreen_size.y,
             },
-            .depth = Vecd2{0.000001, 100.},
+            .depth = depth,
         };
     }
 
@@ -303,8 +334,22 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         auto vertex_u = gfx::make_uniform_list(
             typing::graphics::ShaderStage::Vertex,
             gfx::uniform_pair{
-                {"camera"sv, 0},
-                semantic::SpanOne<const Matf4>(m_camera.camera_matrix)});
+                {"camera"sv, 1},
+                semantic::SpanOne<const Matf4>(m_camera.camera_matrix)}
+            //            gfx::uniform_pair{
+            //                {"cameraRotation"sv, 2},
+            //                semantic::SpanOne<const
+            //                Matf3>(m_camera.rotation_matrix)},
+            //            ,gfx::uniform_pair{
+            //                {"camera_position", 3},
+            //                semantic::SpanOne<const
+            //                Vecf3>(m_camera.camera.position)}
+        );
+        auto fragment_u = gfx::make_uniform_list(
+            typing::graphics::ShaderStage::Fragment,
+            gfx::uniform_pair{
+                {"camera_position", 21},
+                semantic::SpanOne<const Vecf3>(m_camera.camera.position)});
         auto buffers = gfx::make_buffer_list(
             gfx::buffer_definition_t{
                 typing::graphics::ShaderStage::Vertex,
@@ -317,12 +362,18 @@ struct MeshRenderer : Components::RestrictedSubsystem<
                 {"MaterialProperties"sv, 1},
                 pass.material_buffer,
                 sizeof(materials::senv_micro),
+            },
+            gfx::buffer_definition_t{
+                typing::graphics::ShaderStage::Fragment,
+                {"WorldProperties"sv, 2},
+                m_resources.world_store->slice(0),
+                0,
             });
 
         std::vector<gfx::sampler_definition_t> samplers;
         setup_textures(samplers);
 
-        for(auto const& [fmt, draw] : pass.draws)
+        for(auto const& draw : pass.draws)
         {
             m_api->submit(
                 {
@@ -333,6 +384,7 @@ struct MeshRenderer : Components::RestrictedSubsystem<
                     .data          = draw,
                 },
                 vertex_u,
+                fragment_u,
                 buffers,
                 get_view_state(),
                 samplers,
@@ -350,28 +402,47 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             typing::graphics::ShaderStage::Vertex,
             gfx::uniform_pair{
                 {"camera"sv, 1},
-                semantic::SpanOne<const Matf4>(m_camera.camera_matrix)});
-        [[maybe_unused]] auto fragment_u = gfx::make_uniform_list(
+                semantic::SpanOne<const Matf4>(m_camera.camera_matrix)}
+            //            ,gfx::uniform_pair{
+            //                {"cameraRotation"sv, 2},
+            //                semantic::SpanOne<const
+            //                Matf3>(m_camera.rotation_matrix)},
+            //            ,gfx::uniform_pair{
+            //                {"camera_position", 3},
+            //                semantic::SpanOne<const
+            //                Vecf3>(m_camera.camera.position)}
+            //                ,
+            //            ,gfx::uniform_pair{
+            //                {"sun_position", 4},
+            //                semantic::SpanOne<const Vecf3>(sun)}
+        );
+        auto fragment_u = gfx::make_uniform_list(
             typing::graphics::ShaderStage::Fragment,
             gfx::uniform_pair{
-                {"camera_position", 20},
+                {"camera_position", 21},
                 semantic::SpanOne<const Vecf3>(m_camera.camera.position)});
         auto buffers = gfx::make_buffer_list(
             gfx::buffer_definition_t{
-                typing::graphics::ShaderStage::Vertex,
+                typing::graphics::ShaderStage::Fragment,
                 {"MaterialProperties"sv, 1},
                 pass.material_buffer,
                 sizeof(materials::senv_micro),
+            },
+            gfx::buffer_definition_t{
+                typing::graphics::ShaderStage::Fragment,
+                {"WorldProperties"sv, 2},
+                m_resources.world_store->slice(0),
+                0,
             });
 
         /* Step 2: Set up all the textures */
         std::vector<gfx::sampler_definition_t> samplers;
         setup_textures(samplers);
 
-        for(auto const& [fmt, draw] : pass.draws)
+        for(auto const& draw : pass.draws)
         {
             /* Step 3: DRAW */
-            auto res = m_api->submit(
+            m_api->submit(
                 {
                     .program       = pass.command.program,
                     .vertices      = pass.command.vertices,
@@ -380,7 +451,7 @@ struct MeshRenderer : Components::RestrictedSubsystem<
                     .data          = draw,
                 },
                 vertex_u,
-                //                fragment_u,
+                fragment_u,
                 buffers,
                 get_view_state(),
                 gfx::cull_state{
@@ -388,71 +459,53 @@ struct MeshRenderer : Components::RestrictedSubsystem<
                 },
                 samplers,
                 std::forward<Args&&>(extra)...);
-
-            if(res.has_value())
-            {
-                //                auto [error, msg] = res.value();
-                //                cFatal(
-                //                    "Draw error: {0}: {1}: {2}",
-                //                    0
-                //                    /*pass.shader->tag->to_name().to_string(
-                //                        m_data.map_container.magic)*/
-                //                    ,
-                //                    magic_enum::enum_name(error),
-                //                    msg);
-            }
         }
-        //        if(!pass.source.pipeline.lock())
-        //            return;
-
-        //        GFX::ERROR ec;
-
-        //        if(pass.matrix_buffer_range.second)
-        //            m_data.model_matrix_store->bindrange(
-        //                0,
-        //                pass.matrix_buffer_range.first,
-        //                pass.matrix_buffer_range.second,
-        //                ec);
-        //        C_ERROR_CHECK(ec);
-        //        m_data.material_store->bindrange(
-        //            1,
-        //            pass.material_buffer_range.first,
-        //            pass.material_buffer_range.second,
-        //            ec);
-        //        C_ERROR_CHECK(ec);
-
-        //        GFX::SetRasterizerState(pass.source.raster);
-        //        GFX::SetBlendState(pass.source.blend);
-        //        GFX::MultiDraw(*pass.source.pipeline.lock(), pass.draw);
     }
 
-    void render_bsp_portals(Proxy& e)
+    void render_debug_lines(Proxy& e)
     {
+        std::vector<gfx::draw_command::data_t> groups;
+        RenderingParameters*                   params;
+        e.subsystem(params);
+
         for(auto& ent : e.select(ObjectBsp))
         {
+            if(!params->debug_portals)
+                break;
             auto           ref  = e.template ref<Proxy>(ent);
             BspReference&  bsp_ = ref.template get<BspReference>();
             BSPItem const* bsp  = get_bsp(bsp_.bsp);
 
-            m_api->submit({
-                    .program = m_resources.debug_lines_pipeline,
-                    .vertices = m_resources.debug_attr,
-                    .render_target = m_resources.offscreen,
-                    .call = gfx::draw_command::call_spec_t{
-                        .indexed = false,
-                        .mode = gfx::drawing::primitive::line_strip,
-                    },
-                    .data = bsp->portals,
-                },
-                gfx::make_uniform_list(
-                    typing::graphics::ShaderStage::Vertex,
-                    gfx::uniform_pair{
-                        {"camera"sv, 0},
-                        semantic::SpanOne<const Matf4>(
-                            m_camera.camera_matrix),
-                    }),
-                get_view_state());
+            groups.insert(
+                groups.end(), bsp->portals.begin(), bsp->portals.end());
         }
+        for(auto& ent : e.select(ObjectTriggerVolume))
+        {
+            if(!params->debug_triggers)
+                break;
+            auto             ref  = e.template ref<Proxy>(ent);
+            DebugDraw const& draw = ref.template get<DebugDraw>();
+            groups.push_back(draw.data);
+        }
+
+        m_api->submit({
+                .program = m_resources.debug_lines_pipeline,
+                .vertices = m_resources.debug_attr,
+                .render_target = m_resources.offscreen,
+                .call = gfx::draw_command::call_spec_t{
+                    .indexed = false,
+                    .mode = gfx::drawing::primitive::line_strip,
+                },
+                .data = groups,
+            },
+            gfx::make_uniform_list(
+                typing::graphics::ShaderStage::Vertex,
+                gfx::uniform_pair{
+                    {"camera"sv, 0},
+                    semantic::SpanOne<const Matf4>(
+                        m_camera.camera_matrix),
+                }),
+            get_view_state());
     }
 
     bool test_visible(Matf4 const& mat)
@@ -460,13 +513,12 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         Vecf4 probe = {0, 0, 0, 1};
         Vecf4 out   = probe * (m_camera.camera_matrix * mat);
 
-        Vecf3 norm = {out.x() / out.w(), out.y() / out.w(), out.z() / out.w()};
+        Vecf3 norm = {out.x / out.w, out.y / out.w, out.z / out.w};
 
         scalar margin = 1.f;
 
-        return norm.x() < margin && norm.y() < margin && norm.z() < margin
-               && norm.x() > -margin && norm.y() > -margin
-               && norm.z() > -margin;
+        return norm.x < margin && norm.y < margin && norm.z < margin
+               && norm.x > -margin && norm.y > -margin && norm.z > -margin;
     }
 
     void start_restricted(Proxy& p, time_point const& time)
@@ -474,7 +526,7 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         ProfContext _;
         bool        invalidated
             = p.template subsystem<BlamFiles>().last_updated > last_update;
-        if(time - last_update > Chrono::seconds(5) || invalidated)
+        if(time - last_update > std::chrono::seconds(5) || invalidated)
         {
             generate_draws(p);
             last_update = time;
@@ -483,29 +535,35 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         RenderingParameters const* rendering_props;
         p.subsystem(rendering_props);
 
-        for(auto const& pass : slice_num(m_bsp, Pass_LastOpaque + 1))
+        if(rendering_props->debug_clear)
+            m_resources.offscreen->clear(Vecf4(0, 0, 0, 1));
+
+        for(auto const& pass : stl_types::slice_num(m_bsp, Pass_LastOpaque + 1))
         {
             render_bsp_pass(p, pass, gfx::cull_state{.front_face = true});
         }
 
         if(rendering_props->render_scenery)
-            for(auto const& pass : slice_num(m_model, Pass_LastOpaque + 1))
+            for(auto const& pass :
+                stl_types::slice_num(m_model, Pass_LastOpaque + 1))
                 render_pass(p, pass, gfx::cull_state{.front_face = true});
 
         if(rendering_props->render_scenery)
+        {
             render_pass(
-                p,
-                m_model[Pass_Lights],
-                gfx::blend_state{.multiplicative = true});
+                p, m_model[Pass_Additive], gfx::blend_state{.additive = true});
+            render_pass(
+                p, m_model[Pass_Multiply], gfx::blend_state{.multiply = true});
+        }
         if(rendering_props->render_scenery)
             render_pass(p, m_model[Pass_Glass], gfx::blend_state{});
         render_bsp_pass(
-            p, m_bsp[Pass_Lights], gfx::blend_state{.multiplicative = true});
+            p, m_bsp[Pass_Additive], gfx::blend_state{.additive = true});
         render_bsp_pass(p, m_bsp[Pass_Glass], gfx::blend_state{});
 
-        render_bsp_pass(p, m_bsp[Pass_Wireframe]);
+        //        render_bsp_pass(p, m_bsp[Pass_Wireframe]);
 
-        //        render_bsp_portals(p);
+        render_debug_lines(p);
     }
 
     void end_restricted(Proxy& /*p*/, time_point const& /*time*/)
@@ -519,8 +577,6 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         //            = p.template subsystem<BitmapCache<Version>>();
         //        ShaderCache<Version>& shaders
         //            = p.template subsystem<ShaderCache<Version>>();
-
-        i32 instance_offset = 0;
 
         for(Pass& pass : m_bsp)
         {
@@ -537,6 +593,7 @@ struct MeshRenderer : Components::RestrictedSubsystem<
                 = pass.matrix_buffer.template buffer_cast<Matf4>();
         }
 
+        std::map<Passes, i32> instance_offsets;
         for(auto& ent : p.select(ObjectBsp))
         {
             auto          ref = p.template ref<Proxy>(ent);
@@ -545,21 +602,19 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             if(!bsp.visible)
                 continue;
 
-            //            auto& shader = *shaders.find(bsp.shader);
-            auto bucket = 0;
-
-            Pass& wf            = m_bsp[bsp.current_pass];
-            wf.command.vertices = m_resources.bsp_attr;
-            wf.command.call     = {
-                    .indexed   = true,
-                    .instanced = true,
-                    .mode      = gfx::drawing::primitive::triangle,
+            Pass& wf              = m_bsp[bsp.current_pass];
+            i32&  instance_offset = instance_offsets[bsp.current_pass];
+            wf.command.vertices   = m_resources.bsp_attr;
+            wf.command.call       = {
+                      .indexed   = true,
+                      .instanced = true,
+                      .mode      = gfx::drawing::primitive::triangle,
             };
             populate_bsp_material(bsp, instance_offset);
-            wf.draw(bucket).push_back(bsp.draw.data.front());
-            draw_data_t& draw     = wf.draw(bucket).back();
-            draw.instances.offset = instance_offset;
-            instance_offset += draw.instances.count;
+            bsp.draw.data.front().instances.offset = instance_offset;
+            instance_offset += bsp.draw.data.front().instances.count;
+            //            wf.insert_draw(bsp.draw.data.front());
+            wf.draws[0].push_back(bsp.draw.data.front());
         }
 
         for(auto& ent : p.select(ObjectMod2))
@@ -577,14 +632,14 @@ struct MeshRenderer : Components::RestrictedSubsystem<
                     .instanced = true,
                     .mode      = gfx::drawing::primitive::triangle_strip,
             };
-            track.model_id = wf.insert_draw(model.draw.data.front(), 0);
+            track.model_id = wf.insert_draw(model.draw.data.front());
         }
 
         cDebug("Models:");
         for(Pass const& pass : m_model)
         {
             cDebug(" - Pass: {0} buckets", pass.draws.size());
-            for(auto const& [_, bucket] : pass.draws)
+            for(auto const& bucket : pass.draws)
                 for(draw_data_t const& draw : bucket)
                     cDebug(
                         "    - offset={0} count={1}",
@@ -592,15 +647,16 @@ struct MeshRenderer : Components::RestrictedSubsystem<
                         draw.instances.count);
         }
 
-        instance_offset = 0;
-
         for(Pass& pass : m_model)
-            for(auto& [fmt, bucket] : pass.draws)
+        {
+            i32 instance_offset = 0;
+            for(auto& bucket : pass.draws)
                 for(draw_data_t& draw : bucket)
                 {
                     draw.instances.offset = instance_offset;
                     instance_offset += draw.instances.count;
                 }
+        }
 
         for(auto& ent : p.select(ObjectMod2))
         {
@@ -610,7 +666,8 @@ struct MeshRenderer : Components::RestrictedSubsystem<
                 = p.template ref<Proxy>(smodel.parent).template get<Model>();
             MeshTrackingData&  track = ref.template get<MeshTrackingData>();
             Pass&              pass  = m_model[smodel.current_pass];
-            draw_data_t const& draw  = pass.draws[0].at(track.model_id.draw);
+            draw_data_t const& draw
+                = pass.draws[track.model_id.bucket].at(track.model_id.draw);
             auto instance_id = draw.instances.offset + track.model_id.instance;
             pass.matrix_mapping[instance_id] = model.transform;
             populate_mod2_material(smodel, instance_id);
@@ -645,144 +702,197 @@ struct MeshRenderer : Components::RestrictedSubsystem<
     }
 };
 
-struct ScreenClear
-    : compo::RestrictedSubsystem<ScreenClear, ScreenClearManifest>
+void ScreenClear::start_restricted(Proxy& e, const time_point&)
 {
-    using type  = ScreenClear;
-    using Proxy = compo::proxy_of<ScreenClearManifest>;
+    auto fb = e.subsystem<gfx::system>().default_rendertarget();
+    //        fb->clear(Vecf4{Vecf3{0.1f}, 1.f}, 1.0, 0);
 
-    ScreenClear()
+    e.subsystem<BlamResources>().offscreen->clear(0.0);
+}
+
+void ScreenClear::end_restricted(Proxy& e, const time_point&)
+{
+    auto& api         = e.subsystem<gfx::system>();
+    auto& resources   = e.subsystem<BlamResources>();
+    auto& postprocess = e.subsystem<PostProcessParameters>();
+
+    if(api.default_rendertarget() == resources.offscreen)
+        return;
+    if(!quad_program)
     {
-        priority = 1536;
+        load_resources(api, e.subsystem<BlamResources>());
     }
 
-    void start_restricted(Proxy& e, time_point const&)
+    f32 display_scale = postprocess.scale;
+
+    Matf4 transform = glm::scale(
+        glm::translate(glm::identity<Matf4>(), Vecf3{-1, -1, 0}),
+        Vecf3{2, 2, 1});
+    transform = glm::scale(transform, Vecf3{display_scale, display_scale, 1.f});
+    Vecf2 uvscale{1.f, 1.f};
+    Vecf2 offset{0, 0};
+
+    auto params_v = gfx::make_uniform_list(
+        typing::graphics::ShaderStage::Vertex,
+        gfx::uniform_pair{{"transform"sv}, semantic::SpanOne(transform)});
+    auto params_f = gfx::make_uniform_list(
+        typing::graphics::ShaderStage::Fragment,
+        gfx::uniform_pair{{"gamma"sv}, semantic::SpanOne(postprocess.gamma)},
+        gfx::uniform_pair{{"scale"sv}, semantic::SpanOne(uvscale)},
+        gfx::uniform_pair{{"offset"sv}, semantic::SpanOne(offset)},
+        gfx::uniform_pair{
+            {"exposure"sv}, semantic::SpanOne(postprocess.exposure)});
+
+    // clang-format off
+    api.submit(gfx::draw_command{
+                    .program = quad_program,
+                    .vertices = quad_vao,
+                    .call = {
+                         .indexed = false,
+                         .mode = gfx::drawing::primitive::triangle_fan,
+                    },
+                    .data = {{ .arrays = { .count = 4, }}},
+                },
+                gfx::make_sampler_list(gfx::sampler_definition_t{
+                    typing::graphics::ShaderStage::Fragment,
+                    {"source"sv},
+                    offscreen_sampler,
+                }),
+                params_v,
+                std::move(params_f));
+    // clang-format on
+
+    comp_app::interfaces::GraphicsFramebuffer* framebuffer
+        = e.service<comp_app::GraphicsFramebuffer>();
+
+    Vecf2 item_scale{2.f / framebuffer->size().w, 2.f / framebuffer->size().h};
+    f32   one = 1.f;
+
+    params_f = gfx::make_uniform_list(
+        typing::graphics::ShaderStage::Fragment,
+        gfx::uniform_pair{{"gamma"sv}, semantic::SpanOne(one)},
+        gfx::uniform_pair{{"scale"sv}, semantic::SpanOne(uvscale)},
+        gfx::uniform_pair{{"offset"sv}, semantic::SpanOne(offset)},
+        gfx::uniform_pair{{"exposure"sv}, semantic::SpanOne(one)});
+
+    for(screen_quad_t const& draw : extra_quads)
     {
-        auto fb = e.subsystem<gfx::system>().default_rendertarget();
-        //        fb->clear(Vecf4{Vecf3{0.1f}, 1.f}, 1.0, 0);
+        if(draw.sampler.expired())
+            continue;
 
-        e.subsystem<BlamResources>().offscreen->clear(1.0);
-    }
+        Vecf3 translation(Vecf2(draw.position) * item_scale - 1.f, 0.f);
+        Vecf3 scale(
+            draw.size.x * item_scale.x, draw.size.y * item_scale.y, 1.f);
 
-    void end_restricted(Proxy& e, time_point const&)
-    {
-        auto& api         = e.subsystem<gfx::system>();
-        auto& resources   = e.subsystem<BlamResources>();
-        auto& postprocess = e.subsystem<PostProcessParameters>();
+        uvscale = draw.atlas_scale;
+        offset  = draw.atlas_offset;
 
-        if(api.default_rendertarget() == resources.offscreen)
-            return;
-        if(!quad_program)
-        {
-            load_resources(api, e.subsystem<BlamResources>());
-        }
-
-        auto params = gfx::make_uniform_list(
-            typing::graphics::ShaderStage::Fragment,
-            gfx::uniform_pair{{"gamma"sv}, SpanOne(postprocess.gamma)},
-            gfx::uniform_pair{{"exposure"sv}, SpanOne(postprocess.exposure)});
-
+        transform = glm::scale(
+            glm::translate(glm::identity<Matf4>(), translation), scale);
         // clang-format off
         api.submit(gfx::draw_command{
-                .program = quad_program,
-                .vertices = quad_vao,
-                .call = {
-                    .indexed = false,
-                    .mode = gfx::drawing::primitive::triangle_fan,
+                    .program = quad_program,
+                    .vertices = quad_vao,
+                    .call = {
+                         .indexed = false,
+                         .mode = gfx::drawing::primitive::triangle_fan,
+                    },
+                    .data = {{ .arrays = { .count = 4 }}},
                 },
-                .data = {{ .arrays = { .count = 4, }}},
-            },
-            gfx::make_sampler_list(gfx::sampler_definition_t{
-                typing::graphics::ShaderStage::Fragment,
-                {"source"sv},
-                offscreen_sampler
-            }),
-            std::move(params));
+                gfx::make_sampler_list(gfx::sampler_definition_t{
+                    typing::graphics::ShaderStage::Fragment,
+                    {"source"sv},
+                    draw.sampler.lock()
+                }),
+                params_v,
+                params_f,
+                gfx::blend_state{});
         // clang-format on
     }
 
-    void load_resources(gfx::system& api, BlamResources& resources)
+    extra_quads.clear();
+}
+
+void ScreenClear::load_resources(gleam::system& api, BlamResources& resources)
+{
+    using vecb4 = typing::vectors::tvector<i8, 4>;
+    using vecb2 = typing::vectors::tvector<i8, 2>;
+    struct vertex_t
     {
-        using vecb4 = typing::vectors::tvector<i8, 4>;
-        using vecb2 = typing::vectors::tvector<i8, 2>;
-        struct vertex_t
-        {
-            vecb2 pos;
-            vecb2 tex;
-        };
+        vecb2 pos;
+        vecb2 tex;
+    };
 
-        quad_vbo = api.alloc_buffer(gfx::buffers::vertex, RSCA::ReadOnly);
-        quad_vbo->alloc();
-        std::array<vecb4, 6> vbo = {{
-            vecb4{-127, -127, 0, 0},
-            vecb4{127, -127, 127, 0},
-            vecb4{127, 127, 127, 127},
-            vecb4{-127, 127, 0, 127},
+    quad_vbo = api.alloc_buffer(gfx::buffers::vertex, RSCA::ReadOnly);
+    quad_vbo->alloc();
+    std::array<vecb4, 6> vbo = {{
+        vecb4{0, 0, 0, 0},
+        vecb4{127, 0, 127, 0},
+        vecb4{127, 127, 127, 127},
+        vecb4{0, 127, 0, 127},
 
-        }};
-        quad_vbo->commit(vbo);
-        quad_vao = api.alloc_vertex_array();
-        quad_vao->alloc();
-        quad_vao->add(gfx::vertex_attribute::from_member(
-            &vertex_t::pos, gfx::vertex_float_type));
-        auto tex = gfx::vertex_attribute::from_member(
-            &vertex_t::tex, gfx::vertex_float_type);
-        tex.index = 1;
-        quad_vao->add(tex);
-        quad_vao->set_buffer(gfx::buffers::vertex, quad_vbo, 0);
-        quad_vao->set_attribute_names({
-            {"pos", 0},
-            {"tex", 1},
-        });
+    }};
+    quad_vbo->commit(vbo);
+    quad_vao = api.alloc_vertex_array();
+    quad_vao->alloc();
+    quad_vao->add(gfx::vertex_attribute::from_member(
+        &vertex_t::pos, gfx::vertex_float_type));
+    auto tex = gfx::vertex_attribute::from_member(
+        &vertex_t::tex, gfx::vertex_float_type);
+    tex.index = 1;
+    quad_vao->add(tex);
+    quad_vao->set_buffer(gfx::buffers::vertex, quad_vbo, 0);
+    quad_vao->set_attribute_names({
+        {"pos", 0},
+        {"tex", 1},
+    });
+    quad_vao->force_attribute_names();
 
-        constexpr std::string_view vertex_shader   = R"(#version 100
+    constexpr std::string_view vertex_shader   = R"(#version 100
 precision highp float;
 attribute vec2 pos;
 attribute vec2 tex;
 varying vec2 in_tex;
+uniform mat4 transform;
 void main()
 {
     in_tex = tex;
-    gl_Position = vec4(pos.x, pos.y, 0.0, 1.0);
+    gl_Position = transform * vec4(pos.x, pos.y, 0.0, 1.0);
 }
 )";
-        constexpr std::string_view fragment_shader = R"(#version 100
+    constexpr std::string_view fragment_shader = R"(#version 100
 precision highp float;
 precision highp sampler2D;
 varying vec2 in_tex;
 uniform sampler2D source;
 uniform float gamma;
 uniform float exposure;
+uniform vec2 offset;
+uniform vec2 scale;
 void main()
 {
-    vec3 color = texture2D(source, in_tex).rgb;
-    color = color / (color + vec3(1.0));
-    color = pow(exposure * color, vec3(1.0 / gamma));
-    gl_FragColor = vec4(color, 1.0);
+    vec4 color = texture2D(source, offset + in_tex * scale).rgba;
+    color.rgb = color.rgb / (color.rgb + vec3(1.0));
+    color.rgb = pow(exposure * color.rgb, vec3(1.0 / gamma));
+    gl_FragColor = color;
 }
 )";
 
-        quad_program = api.alloc_program();
-        quad_program->add(
-            gfx::program_t::stage_t::Vertex,
-            api.alloc_shader(
-                mem_chunk<const char>::ofContainer(vertex_shader)));
-        quad_program->add(
-            gfx::program_t::stage_t::Fragment,
-            api.alloc_shader(
-                mem_chunk<const char>::ofContainer(fragment_shader)));
-        if(auto res = quad_program->compile(); res.has_error())
-            cDebug("Error compiling quad shader: {0}", res.error());
+    quad_program = api.alloc_program();
+    quad_program->add(
+        gfx::program_t::stage_t::Vertex,
+        api.alloc_shader(
+            semantic::mem_chunk<const char>::ofContainer(vertex_shader)));
+    quad_program->add(
+        gfx::program_t::stage_t::Fragment,
+        api.alloc_shader(
+            semantic::mem_chunk<const char>::ofContainer(fragment_shader)));
+    if(auto res = quad_program->compile(); res.has_error())
+        cDebug("Error compiling quad shader: {0}", res.error());
 
-        offscreen_sampler = resources.color->sampler();
-        offscreen_sampler->alloc();
-    }
-
-    std::shared_ptr<gfx::buffer_t>       quad_vbo;
-    std::shared_ptr<gfx::vertex_array_t> quad_vao;
-    std::shared_ptr<gfx::program_t>      quad_program;
-    std::shared_ptr<gfx::sampler_t>      offscreen_sampler;
-};
+    offscreen_sampler = resources.color->sampler();
+    offscreen_sampler->alloc();
+}
 
 void alloc_renderer(EntityContainer& container)
 {

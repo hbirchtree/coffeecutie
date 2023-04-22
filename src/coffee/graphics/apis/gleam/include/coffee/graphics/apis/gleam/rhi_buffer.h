@@ -290,6 +290,8 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
 
     inline size_t size() const
     {
+        /* TODO: Cache the size, Emscripten is slow on this */
+
         if(m_workarounds.buffer.emulated_mapbuffer && m_allocation.size())
             return m_allocation.size();
         i32 out{0};
@@ -368,10 +370,10 @@ struct buffer_slice_t
         };
     }
 
-    stl_types::WkPtr<gleam::buffer_t> m_parent;
-    buffers::type                     m_type{buffers::type::vertex};
-    size_t                            m_offset{0};
-    size_t                            m_size{0};
+    std::weak_ptr<gleam::buffer_t> m_parent;
+    buffers::type                  m_type{buffers::type::vertex};
+    size_t                         m_offset{0};
+    size_t                         m_size{0};
 };
 
 inline buffer_slice_t buffer_t::slice(size_t offset, std::optional<size_t> size)
@@ -439,11 +441,10 @@ struct circular_buffer_t
         // There's not enough space at the end,
         // so we'll write it at the start of the buffer
         // We'll start by finding a large enough region and checking its fence
-        auto fence_it
-            = std::find_if(m_fences.begin(), m_fences.end(),
-                           [&data](auto const& fence) {
-                  return fence.first >= data.size();
-              });
+        auto fence_it = std::find_if(
+            m_fences.begin(), m_fences.end(), [&data](auto const& fence) {
+                return fence.first >= data.size();
+            });
         if(fence_it == m_fences.end())
             return sync_status::fail;
         GLsync             target_fence = fence_it->second;

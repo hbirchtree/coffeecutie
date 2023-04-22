@@ -1048,7 +1048,7 @@ requires(MinimumVersion<Current, Version<2, 0>>&&
     {
         GLW_FPTR_CHECK(Uniform2f)
     }
-    glUniform2f(location, v0.x(), v0.y());
+    glUniform2f(location, v0[0], v0[1]);
     detail::error_check("Uniform2f"sv);
 }
 
@@ -1093,7 +1093,7 @@ requires(MinimumVersion<Current, Version<2, 0>>&&
     {
         GLW_FPTR_CHECK(Uniform2i)
     }
-    glUniform2i(location, v0.x(), v0.y());
+    glUniform2i(location, v0[0], v0[1]);
     detail::error_check("Uniform2i"sv);
 }
 
@@ -1139,7 +1139,7 @@ requires(MinimumVersion<Current, Version<2, 0>>&&
     {
         GLW_FPTR_CHECK(Uniform3f)
     }
-    glUniform3f(location, v0.x(), v0.y(), v0.z());
+    glUniform3f(location, v0[0], v0[1], v0[2]);
     detail::error_check("Uniform3f"sv);
 }
 
@@ -1185,7 +1185,7 @@ requires(MinimumVersion<Current, Version<2, 0>>&&
     {
         GLW_FPTR_CHECK(Uniform3i)
     }
-    glUniform3i(location, v0.x(), v0.y(), v0.z());
+    glUniform3i(location, v0[0], v0[1], v0[2]);
     detail::error_check("Uniform3i"sv);
 }
 
@@ -1232,7 +1232,7 @@ requires(MinimumVersion<Current, Version<2, 0>>&&
     {
         GLW_FPTR_CHECK(Uniform4f)
     }
-    glUniform4f(location, v0.x(), v0.y(), v0.z(), v0.w());
+    glUniform4f(location, v0[0], v0[1], v0[2], v0[3]);
     detail::error_check("Uniform4f"sv);
 }
 
@@ -1279,7 +1279,7 @@ requires(MinimumVersion<Current, Version<2, 0>>&&
     {
         GLW_FPTR_CHECK(Uniform4i)
     }
-    glUniform4i(location, v0.x(), v0.y(), v0.z(), v0.w());
+    glUniform4i(location, v0[0], v0[1], v0[2], v0[3]);
     detail::error_check("Uniform4i"sv);
 }
 
@@ -1580,7 +1580,7 @@ requires(MinimumVersion<Current, Version<2, 0>>&&
     {
         GLW_FPTR_CHECK(VertexAttrib2d)
     }
-    glVertexAttrib2d(index, x.x(), x.y());
+    glVertexAttrib2d(index, x[0], x[1]);
     detail::error_check("VertexAttrib2d"sv);
 }
 
@@ -1623,7 +1623,7 @@ requires(MinimumVersion<Current, Version<2, 0>>&&
     {
         GLW_FPTR_CHECK(VertexAttrib2f)
     }
-    glVertexAttrib2f(index, x.x(), x.y());
+    glVertexAttrib2f(index, x[0], x[1]);
     detail::error_check("VertexAttrib2f"sv);
 }
 
@@ -1666,7 +1666,7 @@ requires(MinimumVersion<Current, Version<2, 0>>&&
     {
         GLW_FPTR_CHECK(VertexAttrib2s)
     }
-    glVertexAttrib2s(index, x.x(), x.y());
+    glVertexAttrib2s(index, x[0], x[1]);
     detail::error_check("VertexAttrib2s"sv);
 }
 
@@ -1710,7 +1710,7 @@ requires(MinimumVersion<Current, Version<2, 0>>&&
     {
         GLW_FPTR_CHECK(VertexAttrib3d)
     }
-    glVertexAttrib3d(index, x.x(), x.y(), x.z());
+    glVertexAttrib3d(index, x[0], x[1], x[2]);
     detail::error_check("VertexAttrib3d"sv);
 }
 
@@ -1754,7 +1754,7 @@ requires(MinimumVersion<Current, Version<2, 0>>&&
     {
         GLW_FPTR_CHECK(VertexAttrib3f)
     }
-    glVertexAttrib3f(index, x.x(), x.y(), x.z());
+    glVertexAttrib3f(index, x[0], x[1], x[2]);
     detail::error_check("VertexAttrib3f"sv);
 }
 
@@ -1798,7 +1798,7 @@ requires(MinimumVersion<Current, Version<2, 0>>&&
     {
         GLW_FPTR_CHECK(VertexAttrib3s)
     }
-    glVertexAttrib3s(index, x.x(), x.y(), x.z());
+    glVertexAttrib3s(index, x[0], x[1], x[2]);
     detail::error_check("VertexAttrib3s"sv);
 }
 
@@ -1912,7 +1912,7 @@ requires(MinimumVersion<Current, Version<2, 0>>&&
     {
         GLW_FPTR_CHECK(VertexAttrib4Nub)
     }
-    glVertexAttrib4Nub(index, x.x(), x.y(), x.z(), x.w());
+    glVertexAttrib4Nub(index, x[0], x[1], x[2], x[3]);
     detail::error_check("VertexAttrib4Nub"sv);
 }
 
@@ -2028,7 +2028,7 @@ requires(MinimumVersion<Current, Version<2, 0>>&&
     {
         GLW_FPTR_CHECK(VertexAttrib4d)
     }
-    glVertexAttrib4d(index, x.x(), x.y(), x.z(), x.w());
+    glVertexAttrib4d(index, x[0], x[1], x[2], x[3]);
     detail::error_check("VertexAttrib4d"sv);
 }
 
@@ -2073,7 +2073,7 @@ requires(MinimumVersion<Current, Version<2, 0>>&&
     {
         GLW_FPTR_CHECK(VertexAttrib4f)
     }
-    glVertexAttrib4f(index, x.x(), x.y(), x.z(), x.w());
+    glVertexAttrib4f(index, x[0], x[1], x[2], x[3]);
     detail::error_check("VertexAttrib4f"sv);
 }
 
@@ -2140,7 +2140,7 @@ requires(MinimumVersion<Current, Version<2, 0>>&&
     {
         GLW_FPTR_CHECK(VertexAttrib4s)
     }
-    glVertexAttrib4s(index, x.x(), x.y(), x.z(), x.w());
+    glVertexAttrib4s(index, x[0], x[1], x[2], x[3]);
     detail::error_check("VertexAttrib4s"sv);
 }
 

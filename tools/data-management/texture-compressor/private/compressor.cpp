@@ -78,12 +78,13 @@ i32 cooker_main(i32 argc, char** argv)
         } else if(arg.key() == "punchthrough-color")
             punchthrough_color = arg.value();
         else if(arg.key() == "output")
-            out_format = arg.value();
+            out_format = stl_types::str::trim::both(arg.value());
     }
 
     if(resolutions.empty() || codecs.empty())
     {
         cFatal("No resolutions or codecs specified");
+        return 1;
     }
 
     using Coffee::Resource;
@@ -117,16 +118,26 @@ i32 cooker_main(i32 argc, char** argv)
         if(!res)
         {
             cBasicPrint("Failed to encode image {0}", file);
-            continue;
+            return 1;
         }
 
         auto out_name = replace::str<char>(out_format, "{resolution}", "all");
         out_name      = replace::str<char>(out_name, "{codec}", "etc2");
 
+        auto out_stream = fopen(out_name.c_str(), "wb+");
+
+        if(!out_stream)
+        {
+            cBasicPrint("Failed to open for writing: {0}", out_name);
+            return 1;
+        }
+
         auto error
-            = ktxTexture_WriteToNamedFile(ktxTexture(*res), out_name.c_str());
+            = ktxTexture_WriteToStdioStream(ktxTexture(*res), out_stream);
         if(error != ktx_error_code_e::KTX_SUCCESS)
             cBasicPrint("Error writing KTX: {0}", magic_enum::enum_name(error));
+
+        fclose(out_stream);
     }
 
     return 0;

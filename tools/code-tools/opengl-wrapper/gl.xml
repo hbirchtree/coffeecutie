@@ -4349,10 +4349,10 @@ typedef unsigned int GLhandleARB;
         <enum value="0x8A51" name="GL_RGB_RAW_422_APPLE"/>
         <enum value="0x8A52" name="GL_FRAGMENT_SHADER_DISCARDS_SAMPLES_EXT"/>
         <enum value="0x8A53" name="GL_SYNC_OBJECT_APPLE"/>
-        <enum value="0x8A54" name="GL_COMPRESSED_SRGB_PVRTC_2BPPV1_EXT"/>
-        <enum value="0x8A55" name="GL_COMPRESSED_SRGB_PVRTC_4BPPV1_EXT"/>
-        <enum value="0x8A56" name="GL_COMPRESSED_SRGB_ALPHA_PVRTC_2BPPV1_EXT"/>
-        <enum value="0x8A57" name="GL_COMPRESSED_SRGB_ALPHA_PVRTC_4BPPV1_EXT"/>
+        <enum value="0x8A54" name="GL_COMPRESSED_SRGB_PVRTC_2BPPV1_EXT" group="InternalFormat,SizedInternalFormat"/>
+        <enum value="0x8A55" name="GL_COMPRESSED_SRGB_PVRTC_4BPPV1_EXT" group="InternalFormat,SizedInternalFormat"/>
+        <enum value="0x8A56" name="GL_COMPRESSED_SRGB_ALPHA_PVRTC_2BPPV1_EXT" group="InternalFormat,SizedInternalFormat"/>
+        <enum value="0x8A57" name="GL_COMPRESSED_SRGB_ALPHA_PVRTC_4BPPV1_EXT" group="InternalFormat,SizedInternalFormat"/>
             <unused start="0x8A58" end="0x8A7F" vendor="APPLE"/>
     </enums>
 
@@ -4565,10 +4565,10 @@ typedef unsigned int GLhandleARB;
     </enums>
 
     <enums namespace="GL" start="0x8C00" end="0x8C0F" vendor="IMG">
-        <enum value="0x8C00" name="GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG"/>
-        <enum value="0x8C01" name="GL_COMPRESSED_RGB_PVRTC_2BPPV1_IMG"/>
-        <enum value="0x8C02" name="GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG"/>
-        <enum value="0x8C03" name="GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG"/>
+        <enum value="0x8C00" name="GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG" group="InternalFormat,SizedInternalFormat"/>
+        <enum value="0x8C01" name="GL_COMPRESSED_RGB_PVRTC_2BPPV1_IMG" group="InternalFormat,SizedInternalFormat"/>
+        <enum value="0x8C02" name="GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG" group="InternalFormat,SizedInternalFormat"/>
+        <enum value="0x8C03" name="GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG" group="InternalFormat,SizedInternalFormat"/>
         <enum value="0x8C04" name="GL_MODULATE_COLOR_IMG"/>
         <enum value="0x8C05" name="GL_RECIP_ADD_SIGNED_ALPHA_IMG"/>
         <enum value="0x8C06" name="GL_TEXTURE_ALPHA_MODULATE_IMG"/>
@@ -6070,8 +6070,8 @@ typedef unsigned int GLhandleARB;
         <enum value="0x9134" name="GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE_IMG"/>
         <enum value="0x9135" name="GL_MAX_SAMPLES_IMG"/>
         <enum value="0x9136" name="GL_TEXTURE_SAMPLES_IMG"/>
-        <enum value="0x9137" name="GL_COMPRESSED_RGBA_PVRTC_2BPPV2_IMG"/>
-        <enum value="0x9138" name="GL_COMPRESSED_RGBA_PVRTC_4BPPV2_IMG"/>
+        <enum value="0x9137" name="GL_COMPRESSED_RGBA_PVRTC_2BPPV2_IMG" group="InternalFormat,SizedInternalFormat"/>
+        <enum value="0x9138" name="GL_COMPRESSED_RGBA_PVRTC_4BPPV2_IMG" group="InternalFormat,SizedInternalFormat"/>
         <enum value="0x9139" name="GL_CUBIC_IMG"/>
         <enum value="0x913A" name="GL_CUBIC_MIPMAP_NEAREST_IMG"/>
         <enum value="0x913B" name="GL_CUBIC_MIPMAP_LINEAR_IMG"/>
@@ -6691,8 +6691,8 @@ typedef unsigned int GLhandleARB;
     </enums>
 
     <enums namespace="GL" start="0x93F0" end="0x94EF" vendor="APPLE" comment="Khronos bug 10233">
-        <enum value="0x93F0" name="GL_COMPRESSED_SRGB_ALPHA_PVRTC_2BPPV2_IMG"/>
-        <enum value="0x93F1" name="GL_COMPRESSED_SRGB_ALPHA_PVRTC_4BPPV2_IMG"/>
+        <enum value="0x93F0" name="GL_COMPRESSED_SRGB_ALPHA_PVRTC_2BPPV2_IMG" group="InternalFormat,SizedInternalFormat"/>
+        <enum value="0x93F1" name="GL_COMPRESSED_SRGB_ALPHA_PVRTC_4BPPV2_IMG" group="InternalFormat,SizedInternalFormat"/>
             <unused start="0x93F2" end="0x94EF" vendor="APPLE"/>
     </enums>
 

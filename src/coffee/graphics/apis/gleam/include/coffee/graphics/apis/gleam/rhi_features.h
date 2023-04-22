@@ -108,6 +108,7 @@ struct features
         bool dsa{false};
         bool image_copy{false};
         bool image_texture{false};
+        bool internal_format_query{false};
         bool max_level{false};
         bool multibind{false};
         bool samplers{true};
@@ -117,7 +118,7 @@ struct features
         bool tex_layer_query{true};
         bool views{false};
 
-        struct
+        struct texture_support_t
         {
             struct
             {
@@ -137,9 +138,7 @@ struct features
             } ext;
             struct
             {
-                bool dxt1{false};
-                bool dxt3{false};
-                bool dxt5{false};
+                bool s3tc{false};
             } angle;
             struct
             {
@@ -159,6 +158,7 @@ struct features
                 bool astc{false};
             } gl;
         } tex;
+        texture_support_t software_decoded{};
         struct
         {
             bool texture_view{false};

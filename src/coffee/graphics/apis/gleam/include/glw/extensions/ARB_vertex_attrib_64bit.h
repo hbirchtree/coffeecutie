@@ -92,7 +92,7 @@ requires(semantic::concepts::Vector<vec_2_f64, f64, 2>)
     {
         GLW_FPTR_CHECK(VertexAttribL2d)
     }
-    glVertexAttribL2d(index, x.x(), x.y());
+    glVertexAttribL2d(index, x[0], x[1]);
     detail::error_check("VertexAttribL2d"sv);
 }
 
@@ -134,7 +134,7 @@ requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
     {
         GLW_FPTR_CHECK(VertexAttribL3d)
     }
-    glVertexAttribL3d(index, x.x(), x.y(), x.z());
+    glVertexAttribL3d(index, x[0], x[1], x[2]);
     detail::error_check("VertexAttribL3d"sv);
 }
 
@@ -177,7 +177,7 @@ requires(semantic::concepts::Vector<vec_4_f64, f64, 4>)
     {
         GLW_FPTR_CHECK(VertexAttribL4d)
     }
-    glVertexAttribL4d(index, x.x(), x.y(), x.z(), x.w());
+    glVertexAttribL4d(index, x[0], x[1], x[2], x[3]);
     detail::error_check("VertexAttribL4d"sv);
 }
 

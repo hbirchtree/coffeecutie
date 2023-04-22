@@ -22,10 +22,10 @@ struct BlamScript
     static constexpr u32 max_log_lines = 1024;
 
     template<typename T>
-    static CString enum_to_string(T v)
+    static std::string enum_to_string(T v)
     {
         auto val = magic_enum::enum_name(v);
-        return CString(val.begin(), val.end());
+        return std::string(val.begin(), val.end());
     }
 
     static ImVec4 status_to_color(blam::hsc::script_status s)
@@ -69,7 +69,7 @@ struct BlamScript
     }
 
     template<typename V>
-    static CString layout_to_string(V const& v, blam::hsc::type_t type)
+    static std::string layout_to_string(V const& v, blam::hsc::type_t type)
     {
         using blam::hsc::type_t;
 
@@ -88,7 +88,7 @@ struct BlamScript
         }
     }
 
-    void log_line(CString const& line)
+    void log_line(std::string const& line)
     {
         if(m_log.size() >= max_log_lines)
             m_log.erase(m_log.begin());
@@ -147,7 +147,7 @@ struct BlamScript
                 switch(curr.opcode)
                 {
                 case op::print_: {
-                    auto output = CString(
+                    auto output = std::string(
                         m_strings.at(ptr.param(t::string_).to_ptr()).str());
                     log_line("print: " + output);
                     cDebug("Debug output: {0}", output);
@@ -175,7 +175,7 @@ struct BlamScript
                     auto sym  = m_strings.at(help_text.data_ptr).str();
                     auto text = hud_texts[0].symbol_find(m_magic, sym).value();
 
-                    String text_(text.begin(), text.end());
+                    std::string text_(text.begin(), text.end());
 
                     cDebug(" - sym: {0} -> {1}", sym, text_);
                     log_line("HUD text: " + text_);
@@ -323,6 +323,6 @@ struct BlamScript
     blam::hsc::bytecode_pointer<typename Version::bytecode_type> m_script;
     blam::hsc::script_environment                                m_env;
     blam::string_segment_ref                                     m_strings;
-    Vector<CString>                                              m_log;
+    std::vector<std::string>                                     m_log;
     bool                                                         m_running;
 };

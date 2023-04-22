@@ -1,7 +1,12 @@
 #pragma once
 
 #include <peripherals/identify/identify.h>
-#include <peripherals/stl/types.h>
+
+#include <type_traits>
+#include <utility>
+#include <vector>
+
+#include <stdint.h>
 
 namespace type_safety {
 namespace type_list {
@@ -23,10 +28,10 @@ template<typename T, typename... Types>
 struct type_list
 {
     using head = T;
-    using tail = typename std::conditional<
+    using tail = typename std::conditional_t<
         sizeof...(Types) >= 1,
         detail::list_creator<Types...>,
-        detail::empty_list>::type::type;
+        detail::empty_list>::type;
 };
 
 namespace detail {
@@ -100,7 +105,7 @@ struct list_inspector
 
 struct collect_operator
 {
-    collect_operator(stl_types::Vector<size_t>& hashes) : hashes(hashes)
+    collect_operator(std::vector<size_t>& hashes) : hashes(hashes)
     {
     }
     template<typename T>
@@ -109,7 +114,7 @@ struct collect_operator
         hashes.push_back(typeid(T).hash_code());
     }
 
-    stl_types::Vector<size_t>& hashes;
+    std::vector<size_t>& hashes;
 };
 
 } // namespace detail
@@ -126,7 +131,7 @@ using concat_lists = typename decltype(list_inspector<T1>::concat_list(
     std::declval<T2>()))::type;
 
 template<typename List>
-FORCEDINLINE void collect(stl_types::Vector<size_t>& type_hashes)
+FORCEDINLINE void collect(std::vector<size_t>& type_hashes)
 {
     using for_each = typename list_inspector<List>::template for_each<
         detail::collect_operator>;
@@ -134,9 +139,9 @@ FORCEDINLINE void collect(stl_types::Vector<size_t>& type_hashes)
 }
 
 template<typename Types>
-FORCEDINLINE stl_types::Vector<size_t> collect_list()
+FORCEDINLINE std::vector<size_t> collect_list()
 {
-    stl_types::Vector<size_t> out;
+    std::vector<size_t> out;
     collect<Types>(out);
     return out;
 }

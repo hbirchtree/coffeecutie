@@ -66,7 +66,7 @@ FORCEDINLINE result<mem_mapping_t, posix_error> map(
     });
 }
 
-FORCEDINLINE Optional<posix_error> unmap(mem_mapping_t&& mapping)
+FORCEDINLINE std::optional<posix_error> unmap(mem_mapping_t&& mapping)
 {
     if(auto& view = mapping.view; munmap(view.data(), view.size()) != 0)
     {

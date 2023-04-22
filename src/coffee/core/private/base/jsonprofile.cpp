@@ -3,7 +3,10 @@
 #include <coffee/core/base_state.h>
 #include <coffee/core/coffee.h>
 #include <peripherals/stl/string_ops.h>
+#include <platforms/environment.h>
 #include <platforms/file.h>
+
+#include <atomic>
 
 #include <coffee/core/profiler/profiling-export.h>
 
@@ -22,6 +25,7 @@ namespace json {
 using namespace ::platform::file;
 using semantic::Bytes;
 using semantic::BytesConst;
+using semantic::RSCA;
 
 static constexpr cstring event_format =
     R"({"ts":{0},"name":"{1}","pid":1,"tid":{2},"cat":"{3}","ph":"{4}","s":"t"},
@@ -34,8 +38,8 @@ struct MetricData
 };
 
 namespace metrics {
-static Map<cstring, MetricData> data;
-static u32                      count;
+static std::map<std::string_view, MetricData> data;
+static u32                                    count;
 } // namespace metrics
 
 struct ProfileWriter : GlobalState
@@ -64,13 +68,18 @@ struct ProfileWriter : GlobalState
                    R"({"displayTimeUnit": "ms","traceEvents":[)"));
            error.has_value())
             return;
+        if(auto disable = platform::env::var("COFFEE_DISABLE_PROFILER");
+           disable.has_value() && disable.value() == "1")
+            disable_frequent = true;
+        disable_frequent = true;
     }
 
     declreturntype(platform::file::open_file)::value_type logfile;
-    ShPtr<GlobalState>             threadState;
-    ShPtr<platform::info::AppData> appData;
-    AtomicUInt64                   event_count;
-    bool                           block_writes{false};
+    std::shared_ptr<GlobalState>             threadState;
+    std::shared_ptr<platform::info::AppData> appData;
+    std::atomic_uint64_t                     event_count;
+    bool                                     block_writes{false};
+    bool                                     disable_frequent{false};
 
     virtual ~ProfileWriter();
 
@@ -117,10 +126,11 @@ ProfileWriter::~ProfileWriter()
 
     write(BytesConst::ofString("{}],"));
 
-    CString chromeInfo;
+    std::string chromeInfo;
     Coffee::Profiling::ExportChromeTracerData(chromeInfo);
 
-    if(auto idx = chromeInfo.find(R"(,"traceEvents")"); idx != CString::npos)
+    if(auto idx = chromeInfo.find(R"(,"traceEvents")");
+       idx != std::string::npos)
     {
         chromeInfo.resize(idx);
     }
@@ -136,7 +146,7 @@ ProfileWriter::~ProfileWriter()
     logfile = {};
 }
 
-ShPtr<Coffee::State::GlobalState> CreateProfiler()
+std::shared_ptr<Coffee::State::GlobalState> CreateProfiler()
 {
     if constexpr(!compile_info::profiler::enabled)
         return {};
@@ -145,7 +155,7 @@ ShPtr<Coffee::State::GlobalState> CreateProfiler()
 
     /* TODO: Truncate? */
 
-    return MkShared<ProfileWriter>(profile);
+    return std::make_shared<ProfileWriter>(profile);
 }
 
 static void platform_trace_begin(
@@ -172,7 +182,7 @@ void Push(profiling::ThreadState& tdata, profiling::DataPoint const& point)
 
     auto profileData = C_DCAST<ProfileWriter>(tdata.writer);
 
-    if(!profileData)
+    if(!profileData || profileData->disable_frequent)
         return;
 
     const char* eventType   = "i";
@@ -195,15 +205,16 @@ void Push(profiling::ThreadState& tdata, profiling::DataPoint const& point)
         break;
     }
 
-    auto thread_name
-        = is_explicit_thread ? ThreadGetName(point.tid) : point.thread_name;
+    auto thread_name = is_explicit_thread
+                           ? stl_types::Threads::GetName(point.tid)
+                           : point.thread_name;
 
     if(thread_name.empty())
         thread_name = str::print::pointerify(point.tid);
 
     auto event = Coffee::Strings::fmt(
         event_format,
-        Chrono::duration_cast<Chrono::microseconds>(point.ts).count(),
+        std::chrono::duration_cast<std::chrono::microseconds>(point.ts).count(),
         point.name,
         point.tid,
         point.component,
@@ -216,14 +227,19 @@ void Push(profiling::ThreadState& tdata, profiling::DataPoint const& point)
 }
 
 extern void CaptureMetrics(
-    profiling::ThreadState& tdata,
-    cstring                 name,
-    MetricVariant           variant,
-    CString const&          value,
-    Chrono::microseconds    ts,
-    u32                     index)
+    profiling::ThreadState&   tdata,
+    std::string_view          name,
+    MetricVariant             variant,
+    std::string const&        value,
+    std::chrono::microseconds ts,
+    u32                       index)
 {
     if constexpr(!compile_info::profiler::enabled)
+        return;
+
+    auto& profiler = *C_DCAST<ProfileWriter>(tdata.writer);
+
+    if(profiler.disable_frequent)
         return;
 
     auto it = metrics::data.find(name);
@@ -236,14 +252,11 @@ extern void CaptureMetrics(
         data.variant = variant;
     }
 
-    auto const& data     = it->second;
-    auto&       profiler = *C_DCAST<ProfileWriter>(tdata.writer);
+    auto const& data = it->second;
 
     constexpr auto metric_format =
         R"({"ts":{2},"ph":"m","i":{3},"id":{0},"v":"{1}"},
 )";
-
-    using namespace Chrono;
 
     auto out = Coffee::Strings::fmt(
         metric_format, data.id, value, ts.count(), index);
@@ -252,12 +265,12 @@ extern void CaptureMetrics(
 }
 
 void CaptureMetrics(
-    profiling::ThreadState& tdata,
-    cstring                 name,
-    MetricVariant           variant,
-    f32                     value,
-    Chrono::microseconds    ts,
-    u32                     index)
+    profiling::ThreadState&   tdata,
+    std::string_view          name,
+    MetricVariant             variant,
+    f32                       value,
+    std::chrono::microseconds ts,
+    u32                       index)
 {
     CaptureMetrics(tdata, name, variant, cast_pod(value), ts, index);
 }

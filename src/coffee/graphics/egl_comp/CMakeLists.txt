@@ -21,6 +21,8 @@ else()
     target_link_libraries ( EGLComponent PUBLIC ${EGL_LIB} )
 endif()
 
+target_link_libraries ( EGLComponent PRIVATE GraphicsDefines )
+
 if(BUILD_EGL_DOUBLE_GETPROC)
     #
     # Workaround for ImTec's weird EGL loader

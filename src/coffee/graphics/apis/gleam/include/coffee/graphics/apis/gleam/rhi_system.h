@@ -65,6 +65,8 @@ class system : public compo::RestrictedSubsystem<system, system_manifest>,
 
         display_bus->addEventFunction<ResizeEvent>(
             0, [this](Event&, ResizeEvent* resize) {
+                if constexpr(compile_info::platform::is_emscripten)
+                    return;
                 auto new_size = resize->convert<i32>();
                 if(new_size.w == 0)
                     m_viewport_not_set = true;
@@ -74,6 +76,9 @@ class system : public compo::RestrictedSubsystem<system, system_manifest>,
 
     void activate_resize(Proxy& e)
     {
+        if constexpr(compile_info::platform::is_emscripten)
+            return;
+
         if(auto fb = e.service<comp_app::GraphicsFramebuffer>())
         {
             auto size = fb->size();

@@ -9,20 +9,20 @@
 #include <platforms/environment.h>
 
 #include <coffee/core/CDebug>
-#include <coffee/core/CStringFormat>
+#include <coffee/core/std::stringFormat>
 
 #define DISCORD_EP "https://cdn.discordapp.com"
 #define DISCORD_TAG "DiscordRPC: "
 
-namespace Coffee {
-namespace Discord {
+namespace discord {
 
 using namespace platform;
-
-static constexpr cstring DiscordAvatarFmt
+namespace {
+constexpr std::string_view DiscordAvatarFmt
     = DISCORD_EP "/avatars/{0}/{1}.{2}?size={3}";
-static constexpr cstring DiscordDefaultFmt
+constexpr std::string_view DiscordDefaultFmt
     = DISCORD_EP "/embed/avatars/{0}.{1}?size={2}";
+} // namespace
 
 STATICINLINE void ClearPresence(DiscordRichPresence& p)
 {
@@ -42,28 +42,28 @@ STATICINLINE void ClearPresence(DiscordRichPresence& p)
     p.instance    = 0;
 }
 
-struct DiscordService : online::Service, State::GlobalState
+struct DiscordService : online::Service, Coffee::State::GlobalState
 {
     DiscordRichPresence m_cachedPresence;
     DiscordOptions      m_options;
 
-    ShPtr<online::GameDelegate>     game;
-    ShPtr<online::PresenceDelegate> presence;
-    ShPtr<DiscordDelegate>          m_delegate;
+    std::shared_ptr<online::GameDelegate>     game;
+    std::shared_ptr<online::PresenceDelegate> presence;
+    std::shared_ptr<DiscordDelegate>          m_delegate;
 
-    DiscordService(ShPtr<DiscordDelegate> delegate);
+    DiscordService(std::shared_ptr<DiscordDelegate> delegate);
 
     void initialize(DiscordOptions const& options);
 
     virtual ~DiscordService();
 
-    virtual ShPtr<online::GameDelegate>        getGame();
-    virtual ShPtr<online::PresenceDelegate>    getPresence();
-    virtual ShPtr<online::AchievementDelegate> getAchievements()
+    virtual std::shared_ptr<online::GameDelegate>        getGame();
+    virtual std::shared_ptr<online::PresenceDelegate>    getPresence();
+    virtual std::shared_ptr<online::AchievementDelegate> getAchievements()
     {
         return {};
     }
-    virtual ShPtr<online::FriendDelegate> getFriends()
+    virtual std::shared_ptr<online::FriendDelegate> getFriends()
     {
         return {};
     }
@@ -78,9 +78,9 @@ struct DiscordService : online::Service, State::GlobalState
 
 static PlayerInfo InfoFromDiscordUser(DiscordUser const* user, u32 imgSize)
 {
-    auto discriminator = cast_string<u32>(user->discriminator);
+    auto discriminator = stl_types::cast_string<u32>(user->discriminator);
 
-    Url avatarUrl = net::MkUrl(
+    platform::url::Url avatarUrl = net::MkUrl(
         (strlen(user->avatar) > 0)
             ? fmt(DiscordAvatarFmt, user->userId, user->avatar, "jpg", imgSize)
             : fmt(DiscordDefaultFmt, discriminator % 5, "png", imgSize));
@@ -104,10 +104,10 @@ static DiscordService& GetService()
     return *ptr;
 }
 
-ShPtr<online::Service> CreateService(
-    DiscordOptions&& options, ShPtr<DiscordDelegate> delegate)
+std::shared_ptr<online::Service> CreateService(
+    DiscordOptions&& options, std::shared_ptr<DiscordDelegate> delegate)
 {
-    auto discordService = MkShared<DiscordService>(delegate);
+    auto discordService = std::make_shared<DiscordService>(delegate);
 
     State::SwapState("discordService", discordService);
 
@@ -126,15 +126,15 @@ ShPtr<online::Service> CreateService(
     return discordService;
 }
 
-DiscordService::DiscordService(ShPtr<DiscordDelegate> delegate) :
+DiscordService::DiscordService(std::shared_ptr<DiscordDelegate> delegate) :
     m_options(""), m_delegate(delegate)
 {
 }
 
 void DiscordService::initialize(DiscordOptions const& options)
 {
-    cstring steamId = nullptr;
-    m_options       = options;
+    std::string steamId;
+    m_options = options;
 
     if(options.steamId.size())
         steamId = options.steamId.c_str();
@@ -152,37 +152,31 @@ void DiscordService::initialize(DiscordOptions const& options)
         if(delegate.ready)
             delegate.ready(std::move(info));
     };
-    handlers.disconnected = [](int err, cstring message) {
-        discord_error ec;
-        ec = err;
-        ec = message;
-
+    handlers.disconnected = [](int err, const char* message) {
+        Coffee::cVerbose(8, DISCORD_TAG "Disconnecting: {0}", message);
         auto& delegate = GetService().delegate();
-
-        cVerbose(8, DISCORD_TAG "Disconnecting: {0}", message);
-
         if(delegate.disconnected)
-            delegate.disconnected(ec);
+            delegate.disconnected({
+                .error_code = err,
+                .message    = message,
+            });
     };
-    handlers.errored = [](int err, cstring message) {
-        discord_error ec;
-        ec = err;
-        ec = message;
-
+    handlers.errored = [](int err, const char* message) {
+        Coffee::cVerbose(8, DISCORD_TAG "Error occurred: {0}", message);
         auto& delegate = GetService().delegate();
-
-        cVerbose(8, DISCORD_TAG "Error occurred: {0}", message);
-
         if(delegate.error)
-            delegate.error(ec);
+            delegate.error({
+                .error_code = err,
+                .message    = message,
+            });
     };
-    handlers.joinGame = [](cstring secret) {
+    handlers.joinGame = [](const char* secret) {
         auto& delegate = GetService().delegate();
 
         if(delegate.joinGame)
             delegate.joinGame(secret);
     };
-    handlers.spectateGame = [](cstring secret) {
+    handlers.spectateGame = [](const char* secret) {
         auto& delegate = GetService().delegate();
 
         if(delegate.spectate)
@@ -203,29 +197,30 @@ void DiscordService::initialize(DiscordOptions const& options)
         Discord_Respond(playerInfo.userId.c_str(), reply);
     };
 
-    Discord_Initialize(options.appId.c_str(), &handlers, 1, steamId);
+    Discord_Initialize(options.appId.c_str(), &handlers, 1, steamId.data());
 
     ClearPresence(m_cachedPresence);
 
     m_cachedPresence.startTimestamp
-        = Chrono::seconds(std::time(nullptr)).count();
+        = std::chrono::seconds(std::time(nullptr)).count();
 
-    presence = MkShared<DiscordPresenceDelegate>(options, &m_cachedPresence);
-    game     = MkShared<DiscordGameDelegate>(options, &m_cachedPresence);
+    presence
+        = std::make_shared<DiscordPresenceDelegate>(options, &m_cachedPresence);
+    game = std::make_shared<DiscordGameDelegate>(options, &m_cachedPresence);
 }
 
 DiscordService::~DiscordService()
 {
-    cVerbose(8, DISCORD_TAG "Unloading Discord");
+    Coffee::cVerbose(8, DISCORD_TAG "Unloading Discord");
     Discord_Shutdown();
 }
 
-ShPtr<online::GameDelegate> DiscordService::getGame()
+std::shared_ptr<online::GameDelegate> DiscordService::getGame()
 {
     return game;
 }
 
-ShPtr<online::PresenceDelegate> DiscordService::getPresence()
+std::shared_ptr<online::PresenceDelegate> DiscordService::getPresence()
 {
     return presence;
 }
@@ -287,7 +282,7 @@ void DiscordPresenceDelegate::put(online::PartyDesc&& party)
     Discord_UpdatePresence(m_presence);
 }
 
-void DiscordPresenceDelegate::putState(const CString& state)
+void DiscordPresenceDelegate::putState(const std::string& state)
 {
     extra.state = std::move(state);
 
@@ -301,15 +296,4 @@ void DiscordPresenceDelegate::disable()
     Discord_ClearPresence();
 }
 
-const char* discord_error_category::name() const noexcept
-{
-    return "discord_error_code";
-}
-
-std::string discord_error_category::message(int error_code) const
-{
-    return cast_pod(error_code);
-}
-
-} // namespace Discord
-} // namespace Coffee
+} // namespace discord

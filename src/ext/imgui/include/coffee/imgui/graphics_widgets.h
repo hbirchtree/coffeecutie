@@ -35,11 +35,11 @@ inline RendererViewer GetRendererViewer()
 
         ImGui::Begin("Renderer info");
 
-        CString       api_name;
+        std::string       api_name;
         SWVersionInfo api_version;
         HWDeviceInfo  renderer_info;
         SWVersionInfo driver_info;
-        CString       sl_lang_name;
+        std::string       sl_lang_name;
         SWVersionInfo sl_lang_version;
 
         api_name = GFX::GetAPIName(d);
@@ -49,15 +49,15 @@ inline RendererViewer GetRendererViewer()
         sl_lang_name = GFX::GetShaderLanguageName(c);
         GFX::GetShaderLanguageVersion(c, &sl_lang_version);
 
-        CString api_ver_str = cStringFormat(
+        std::string api_ver_str = cStringFormat(
             "{0}.{1}/{2}",
             api_version.major,
             api_version.minor,
             api_version.build);
-        CString renderer_str = cStringFormat(
+        std::string renderer_str = cStringFormat(
             "{0} {1}", renderer_info.manufacturer, renderer_info.model);
-        CString driver_str      = cStringFormat("{0}", driver_info.name);
-        CString sl_lang_ver_str = cStringFormat(
+        std::string driver_str      = cStringFormat("{0}", driver_info.name);
+        std::string sl_lang_ver_str = cStringFormat(
             "{0}.{1}", sl_lang_version.major, sl_lang_version.minor);
 
         ImGui::Text("API: %s", api_name.c_str());

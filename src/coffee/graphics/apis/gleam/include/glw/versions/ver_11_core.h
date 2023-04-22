@@ -54,8 +54,8 @@ requires(MinimumVersion<Current, Version<1, 1>>&&
         static_cast<GLenum>(target),
         level,
         static_cast<GLenum>(internalformat),
-        x.x(),
-        x.y(),
+        x[0],
+        x[1],
         width,
         border);
     detail::error_check("CopyTexImage1D"sv);
@@ -94,8 +94,8 @@ requires(MinimumVersion<Current, Version<1, 1>>&&
         static_cast<GLenum>(target),
         level,
         static_cast<GLenum>(internalformat),
-        x.x(),
-        x.y(),
+        x[0],
+        x[1],
         width[0],
         width[1],
         border);
@@ -128,7 +128,7 @@ requires(MinimumVersion<Current, Version<1, 1>>&&
         GLW_FPTR_CHECK(CopyTexSubImage1D)
     }
     glCopyTexSubImage1D(
-        static_cast<GLenum>(target), level, xoffset, x.x(), x.y(), width);
+        static_cast<GLenum>(target), level, xoffset, x[0], x[1], width);
     detail::error_check("CopyTexSubImage1D"sv);
 }
 
@@ -163,10 +163,10 @@ requires(MinimumVersion<Current, Version<1, 1>>&&
     glCopyTexSubImage2D(
         static_cast<GLenum>(target),
         level,
-        xoffset.x(),
-        xoffset.y(),
-        x.x(),
-        x.y(),
+        xoffset[0],
+        xoffset[1],
+        x[0],
+        x[1],
         width[0],
         width[1]);
     detail::error_check("CopyTexSubImage2D"sv);
@@ -388,8 +388,8 @@ requires(MinimumVersion<Current, Version<1, 1>>&&
     glTexSubImage2D(
         static_cast<GLenum>(target),
         level,
-        xoffset.x(),
-        xoffset.y(),
+        xoffset[0],
+        xoffset[1],
         width[0],
         width[1],
         static_cast<GLenum>(format),

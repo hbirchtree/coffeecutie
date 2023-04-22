@@ -157,7 +157,7 @@ requires(semantic::concepts::Vector<vec_2_GLint64EXT, GLint64EXT, 2>)
     {
         GLW_FPTR_CHECK(VertexAttribL2i64NV)
     }
-    glVertexAttribL2i64NV(index, x.x(), x.y());
+    glVertexAttribL2i64NV(index, x[0], x[1]);
     detail::error_check("VertexAttribL2i64NV"sv);
 }
 
@@ -201,7 +201,7 @@ requires(semantic::concepts::Vector<vec_2_GLuint64EXT, GLuint64EXT, 2>)
     {
         GLW_FPTR_CHECK(VertexAttribL2ui64NV)
     }
-    glVertexAttribL2ui64NV(index, x.x(), x.y());
+    glVertexAttribL2ui64NV(index, x[0], x[1]);
     detail::error_check("VertexAttribL2ui64NV"sv);
 }
 
@@ -247,7 +247,7 @@ requires(semantic::concepts::Vector<vec_3_GLint64EXT, GLint64EXT, 3>)
     {
         GLW_FPTR_CHECK(VertexAttribL3i64NV)
     }
-    glVertexAttribL3i64NV(index, x.x(), x.y(), x.z());
+    glVertexAttribL3i64NV(index, x[0], x[1], x[2]);
     detail::error_check("VertexAttribL3i64NV"sv);
 }
 
@@ -292,7 +292,7 @@ requires(semantic::concepts::Vector<vec_3_GLuint64EXT, GLuint64EXT, 3>)
     {
         GLW_FPTR_CHECK(VertexAttribL3ui64NV)
     }
-    glVertexAttribL3ui64NV(index, x.x(), x.y(), x.z());
+    glVertexAttribL3ui64NV(index, x[0], x[1], x[2]);
     detail::error_check("VertexAttribL3ui64NV"sv);
 }
 
@@ -339,7 +339,7 @@ requires(semantic::concepts::Vector<vec_4_GLint64EXT, GLint64EXT, 4>)
     {
         GLW_FPTR_CHECK(VertexAttribL4i64NV)
     }
-    glVertexAttribL4i64NV(index, x.x(), x.y(), x.z(), x.w());
+    glVertexAttribL4i64NV(index, x[0], x[1], x[2], x[3]);
     detail::error_check("VertexAttribL4i64NV"sv);
 }
 
@@ -385,7 +385,7 @@ requires(semantic::concepts::Vector<vec_4_GLuint64EXT, GLuint64EXT, 4>)
     {
         GLW_FPTR_CHECK(VertexAttribL4ui64NV)
     }
-    glVertexAttribL4ui64NV(index, x.x(), x.y(), x.z(), x.w());
+    glVertexAttribL4ui64NV(index, x[0], x[1], x[2], x[3]);
     detail::error_check("VertexAttribL4ui64NV"sv);
 }
 

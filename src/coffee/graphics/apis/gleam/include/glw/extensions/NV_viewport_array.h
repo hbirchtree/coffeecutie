@@ -251,7 +251,7 @@ requires(semantic::concepts::Vector<vec_2_f32, f32, 2>&&
     {
         GLW_FPTR_CHECK(ViewportIndexedfNV)
     }
-    glViewportIndexedfNV(index, x.x(), x.y(), w[0], w[1]);
+    glViewportIndexedfNV(index, x[0], x[1], w[0], w[1]);
     detail::error_check("ViewportIndexedfNV"sv);
 }
 

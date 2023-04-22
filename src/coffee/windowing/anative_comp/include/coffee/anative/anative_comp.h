@@ -45,8 +45,8 @@ struct ControllerInput
     {
     }
 
-    stl_types::Vector<controller_map>                m_cache;
-    stl_types::Map<libc_types::i32, libc_types::u32> m_mapping;
+    std::vector<controller_map>                m_cache;
+    std::map<libc_types::i32, libc_types::u32> m_mapping;
 
     virtual libc_types::u32       count() const override;
     virtual controller_map        state(libc_types::u32 idx) const override;
@@ -96,6 +96,8 @@ struct AndroidEventBus : comp_app::AppService<AndroidEventBus>,
     ndk_helper::DoubletapDetector* m_doubleDetector;
     ndk_helper::PinchDetector*     m_pinchDetector;
     ndk_helper::DragDetector*      m_dragDetector;
+
+    comp_app::TouchConfig* m_touchConfig;
 };
 
 using Services = comp_app::detail::TypeList<

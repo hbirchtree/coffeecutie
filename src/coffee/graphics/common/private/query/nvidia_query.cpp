@@ -25,7 +25,7 @@ nvmlDevice_t device(gpucount_t i)
 /* Implementation functions */
 SWVersionInfo GetDriver()
 {
-    CString driver_ver;
+    std::string driver_ver;
     driver_ver.resize(NVML_SYSTEM_DRIVER_VERSION_BUFFER_SIZE);
 
     nvmlSystemGetDriverVersion(
@@ -33,8 +33,8 @@ SWVersionInfo GetDriver()
 
     driver_ver.resize(driver_ver.find('\0'));
 
-    CString major = driver_ver.substr(0, driver_ver.find('.'));
-    CString minor =
+    std::string major = driver_ver.substr(0, driver_ver.find('.'));
+    std::string minor =
         driver_ver.substr(driver_ver.find('.') + 1, driver_ver.length());
 
     return SWVersionInfo(
@@ -54,12 +54,12 @@ HWDeviceInfo GetModel(gpucount_t i)
 {
     auto dev = device(i);
 
-    CString name;
+    std::string name;
     name.resize(NVML_DEVICE_NAME_BUFFER_SIZE);
     auto r = nvmlDeviceGetName(dev, &name[0], C_CAST<uint32>(name.size()));
     error_print(r);
 
-    CString bios;
+    std::string bios;
     bios.resize(NVML_DEVICE_VBIOS_VERSION_BUFFER_SIZE);
     r = nvmlDeviceGetVbiosVersion(dev, &bios[0], C_CAST<uint32>(bios.size()));
     error_print(r);

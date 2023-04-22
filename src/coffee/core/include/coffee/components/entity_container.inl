@@ -8,6 +8,7 @@
 #include <coffee/core/debug/logging.h>
 
 #include <platforms/stacktrace.h>
+#include <peripherals/stl/type_list.h>
 
 #include <algorithm>
 

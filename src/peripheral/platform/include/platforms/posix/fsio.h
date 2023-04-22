@@ -69,17 +69,17 @@ requires(std::is_same_v<T, Url> || std::is_same_v<T, posix_fd_t>)
         return success(info.value().size);
 }
 
-FORCEDINLINE result<stl_types::Vector<file_entry_t>, posix_error> list(
+FORCEDINLINE result<std::vector<file_entry_t>, posix_error> list(
     Url const& dir)
 {
     auto resolved  = *dir;
     auto directory = opendir(resolved.c_str());
     if(!directory)
         return detail::posix_failure();
-    stl_types::Vector<file_entry_t> result;
+    std::vector<file_entry_t> result;
     while(auto direntry = readdir(directory))
     {
-        if(auto name = stl_types::String(direntry->d_name);
+        if(auto name = std::string(direntry->d_name);
            name == "." || name == "..")
             continue;
         result.push_back(file_entry_t{
@@ -107,7 +107,7 @@ STATICINLINE result<posix_fd_t, posix_error> create_file(
 
 } // namespace detail
 
-FORCEDINLINE Optional<posix_error> create_directory(
+FORCEDINLINE std::optional<posix_error> create_directory(
     Url const& file, create_params_t const& params)
 {
     auto resolved = *file;
@@ -132,7 +132,7 @@ FORCEDINLINE Optional<posix_error> create_directory(
     return std::nullopt;
 }
 
-FORCEDINLINE Optional<posix_error> create(
+FORCEDINLINE std::optional<posix_error> create(
     Url const& file, create_params_t const& params)
 {
     auto resolved = *file;
@@ -152,7 +152,7 @@ FORCEDINLINE Optional<posix_error> create(
     return std::nullopt;
 }
 
-FORCEDINLINE Optional<posix_error> remove(Url const& file)
+FORCEDINLINE std::optional<posix_error> remove(Url const& file)
 {
     auto resolved = *file;
     if(auto status = ::remove(resolved.c_str()); status != 0)
@@ -160,7 +160,7 @@ FORCEDINLINE Optional<posix_error> remove(Url const& file)
     return std::nullopt;
 }
 
-FORCEDINLINE Optional<posix_error> truncate(Url const& file)
+FORCEDINLINE std::optional<posix_error> truncate(Url const& file)
 {
     auto resolved = *file;
     if(auto status = ::truncate(resolved.c_str(), 0); status != 0)
@@ -168,14 +168,14 @@ FORCEDINLINE Optional<posix_error> truncate(Url const& file)
     return std::nullopt;
 }
 
-FORCEDINLINE Optional<posix_error> truncate(posix_fd_t const& file)
+FORCEDINLINE std::optional<posix_error> truncate(posix_fd_t const& file)
 {
     if(auto status = ::ftruncate(file, 0); status != 0)
         return detail::posix_failure().error();
     return std::nullopt;
 }
 
-FORCEDINLINE Optional<posix_error> link(
+FORCEDINLINE std::optional<posix_error> link(
     Url const& source, Url const& destination, create_params_t const& = {})
 {
     auto src_resolved = *source;
@@ -188,7 +188,7 @@ FORCEDINLINE Optional<posix_error> link(
 
 namespace path {
 
-FORCEDINLINE Optional<posix_error> change_dir(Url const& path)
+FORCEDINLINE std::optional<posix_error> change_dir(Url const& path)
 {
     auto newdir = *path;
     if(auto res = chdir(newdir.c_str()); res != 0)
@@ -202,7 +202,7 @@ FORCEDINLINE result<Url, posix_error> canon(Url const& path)
         return detail::posix_failure();
     else
     {
-        stl_types::String output(result);
+        std::string output(result);
         ::free(result);
         return success(url::constructors::MkUrl(output));
     }
@@ -229,7 +229,7 @@ FORCEDINLINE result<Url, posix_error> dereference(Url const& path)
     struct stat link_info  = {};
     if(auto status = lstat(unresolved, &link_info); status == 0)
         return detail::posix_failure();
-    stl_types::String output(link_info.st_size, 0);
+    std::string output(link_info.st_size, 0);
     if(auto size = readlink(unresolved, output.data(), output.size()); size < 0)
         return detail::posix_failure();
     else

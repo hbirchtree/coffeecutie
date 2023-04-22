@@ -52,7 +52,7 @@ template<
 bool match(
     typename RegexTraits::regex_type const&    pattern,
     typename RegexTraits::string_type const&   input,
-    Vector<typename RegexTraits::string_type>& output)
+    std::vector<typename RegexTraits::string_type>& output)
 {
     std::match_results<typename RegexTraits::string_type::const_iterator> match;
 

@@ -2,6 +2,9 @@
 
 #include <coffee/components/types.h>
 
+#include <map>
+#include <vector>
+
 namespace compo::alloc {
 
 template<

@@ -1,6 +1,7 @@
 #include "resource_creation.h"
 
 #include "components.h"
+#include "touch_overlay.h"
 
 #include <coffee/core/input/eventhandlers.h>
 
@@ -31,7 +32,17 @@ void create_resources(compo::EntityContainer& e)
         eventhandler->addEventHandler(
             1024, std_camera_t::KeyboardInput(camera.std_camera));
         eventhandler->addEventHandler(
-            1024, std_camera_t::MouseInput(&camera.camera));
+            1024, std_camera_t::MouseInput(camera.std_camera));
+
+        auto& overlay = e.subsystem_cast<TouchOverlay>();
+        eventhandler->addEventFunction<CIMouseMoveEvent>(
+            768, [&overlay](CIEvent& ev, CIMouseMoveEvent* event) {
+                overlay(ev, event);
+            });
+        eventhandler->addEventFunction<CITouchMotionEvent>(
+            768, [&overlay](CIEvent& ev, CITouchMotionEvent* event) {
+                overlay(ev, event);
+            });
 
         auto eventhandler_w = e.service<comp_app::BasicEventBus<Event>>();
 
@@ -68,16 +79,16 @@ void create_resources(compo::EntityContainer& e)
     resources.model_index->alloc();
     resources.model_index->commit(memory_budget::mesh_elements);
 
+    resources.model_matrix_store
+        = api.alloc_buffer(gfx::buffers::constants, access);
     if(api.feature_info().buffer.ssbo)
     {
-        resources.model_matrix_store
-            = api.alloc_buffer(gfx::buffers::shader_writable, access);
+        //        resources.model_matrix_store
+        //            = api.alloc_buffer(gfx::buffers::shader_writable, access);
         resources.material_store
             = api.alloc_buffer(gfx::buffers::shader_writable, access);
     } else if(api.feature_info().buffer.ubo)
     {
-        resources.model_matrix_store
-            = api.alloc_buffer(gfx::buffers::constants, access);
         resources.material_store
             = api.alloc_buffer(gfx::buffers::constants, access);
     } else
@@ -86,11 +97,15 @@ void create_resources(compo::EntityContainer& e)
             = api.alloc_buffer(gfx::buffers::vertex, access);
         resources.material_store
             = api.alloc_buffer(gfx::buffers::vertex, access);
-    }
+    }    
     resources.model_matrix_store->alloc();
     resources.model_matrix_store->commit(memory_budget::matrix_buffer);
     resources.material_store->alloc();
     resources.material_store->commit(memory_budget::material_buffer);
+
+    resources.world_store = api.alloc_buffer(gfx::buffers::constants, access);
+    resources.world_store->alloc();
+    resources.world_store->commit(sizeof(materials::world_data));
 
     resources.bsp_attr             = api.alloc_vertex_array();
     gfx::vertex_array_t& bsp_array = *resources.bsp_attr;
@@ -118,12 +133,6 @@ void create_resources(compo::EntityContainer& e)
     {
         auto& light     = common_attributes.back();
         light.buffer.id = 1;
-        if constexpr(std::is_same_v<halo_version, blam::xbox_version_t>)
-            light.value.flags
-                = gfx::vertex_attribute::attribute_flags::normalized
-                  | gfx::vertex_attribute::attribute_flags::packed;
-        else
-            light.value.flags = gfx::vertex_attribute::attribute_flags::none;
     }
     for(auto i : Range<u32>(6))
     {
@@ -173,6 +182,9 @@ void create_resources(compo::EntityContainer& e)
     mod2_array.set_attribute_names({
         {"position", 0},
         {"tex", 1},
+        {"normal", 2},
+        {"binormal", 3},
+        {"tangent", 4},
     });
 
     resources.debug_lines = api.alloc_buffer(gfx::buffers::vertex, access);
@@ -199,16 +211,21 @@ void create_resources(compo::EntityContainer& e)
         resources.depth = api.alloc_texture(
             gfx::textures::d2, PixDesc(PixFmt::Depth32F), 1);
         resources.offscreen->alloc();
-        auto size_u = resources.offscreen_size.convert<u32>();
-        resources.color->alloc({size_u.w, size_u.h});
-        resources.depth->alloc({size_u.w, size_u.h});
+        auto const& size = resources.offscreen_size;
+        resources.color->alloc(size_3d<i32>{size.x, size.y}.convert<u32>());
+        resources.depth->alloc(size_3d<i32>{size.x, size.y}.convert<u32>());
 
         resources.offscreen->attach(
             gfx::render_targets::attachment::color, *resources.color, 0);
         resources.offscreen->attach(
             gfx::render_targets::attachment::depth, *resources.depth, 0);
-        auto& size_i = resources.offscreen_size;
-        resources.offscreen->resize({0, 0, size_i.w, size_i.h});
+        resources.offscreen->resize({0, 0, size.x, size.y});
+
+        resources.color->set_swizzle(
+            gfx::textures::swizzle_t::red,
+            gfx::textures::swizzle_t::green,
+            gfx::textures::swizzle_t::blue,
+            gfx::textures::swizzle_t::one);
 
         if constexpr(compile_info::platform::is_emscripten)
             resources.offscreen = api.default_rendertarget();
@@ -376,6 +393,39 @@ static void create_uber_shaders(gfx::api& api, BlamResources& resources)
     resources.senv_micro_pipeline = resources.bsp_pipeline;
 }
 
+static void create_uber_lite_shaders(gfx::api& api, BlamResources& resources)
+{
+    using namespace std::string_view_literals;
+    using platform::url::constructors::MkUrl;
+
+    std::array<shader_pair_t, 4> shaders = {{
+        {
+            .vertex_file   = "debug_lines.{0}.vert"sv,
+            .fragment_file = "debug_lines.{0}.frag"sv,
+            .shader        = resources.debug_lines_pipeline,
+        },
+        {
+            .vertex_file   = "scenery.{0}.vert"sv,
+            .fragment_file = "scenery_uber_lite.{0}.frag"sv,
+            .shader        = resources.model_pipeline,
+        },
+        {
+            .vertex_file   = "map.{0}.vert"sv,
+            .fragment_file = "map_uber_lite.{0}.frag"sv,
+            .shader        = resources.bsp_pipeline,
+        },
+        {
+            .vertex_file   = "map.{0}.vert"sv,
+            .fragment_file = "wireframe.{0}.frag"sv,
+            .shader        = resources.wireframe_pipeline,
+        },
+    }};
+
+    create_shaders(api, std::move(shaders));
+
+    resources.senv_micro_pipeline = resources.bsp_pipeline;
+}
+
 static void create_standard_shaders(gfx::api& api, BlamResources& resources)
 {
     using namespace std::string_view_literals;
@@ -419,8 +469,10 @@ void create_shaders(compo::EntityContainer& e)
 
     auto _ = gfx.debug().scope();
 
-    const bool     use_spv  = gfx.feature_info().program.spirv && false;
-    constexpr bool use_uber = true;
+    const bool     use_spv = gfx.feature_info().program.spirv && false;
+    constexpr bool use_uber
+        = !compile_info::platform::is_emscripten && !lowspec_hardware;
+    constexpr bool use_uber_lite = !lowspec_hardware;
 
     if(use_spv)
     {
@@ -428,9 +480,15 @@ void create_shaders(compo::EntityContainer& e)
         return;
     }
 
-    if(use_uber && !lowspec_hardware && !compile_info::platform::is_emscripten)
+    if constexpr(use_uber)
     {
         create_uber_shaders(gfx, resources);
+        return;
+    }
+
+    if constexpr(use_uber_lite)
+    {
+        create_uber_lite_shaders(gfx, resources);
         return;
     }
 
@@ -493,13 +551,15 @@ void create_camera(
             //                -1.f*/) * transform;
             // TODO: Fix facing of camera here
             cDebug("Facing of player: {0}", location.rot);
-            camera.camera.rotation = typing::vectors::euler(Vecf3{
+            camera.camera.rotation = glm::normalize(glm::quat(Vecf3{
                 0,
                 location.rot,
-                -math::pi / 2.f,
-            });
+                //                0,
+                glm::pi<f32>() / 2.f,
+            }));
         }
     }
 
-    camera.std_camera->up_direction = {0, 0, 1};
+    camera.controller_opts.sens.move = {.1f, .1f};
+    camera.camera_opts.accel.alt = 50.f;
 }

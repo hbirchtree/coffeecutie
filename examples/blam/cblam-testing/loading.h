@@ -29,10 +29,54 @@ void load_scenario_bsp(compo::EntityContainer& e, BlamData<Version>& data)
             = semantic::mem_chunk<Vecf3>::ofContainer(lines);
     }
 
-    Vector<generation_idx_t> bsp_meshes;
+    std::vector<generation_idx_t> bsp_meshes;
 
     /* Start loading up vertex data */
     blam::scn::scenario<Version> const* scenario = data.scenario;
+
+    EntityRecipe trigger_obj;
+    trigger_obj.components = {
+        type_hash_v<TriggerVolume>(),
+        type_hash_v<DebugDraw>(),
+    };
+    trigger_obj.tags = ObjectScriptObject | ObjectTriggerVolume;
+
+    for(blam::scn::trigger_volume const& trigger :
+        scenario->mp.trigger_volumes.data(magic).value())
+    {
+        Vecf3 const& origin = trigger.box.origin;
+        Vecf3 const& second = trigger.box.origin + trigger.box.extents;
+
+        std::array<Vecf3, 10> points = {{
+            origin,
+            origin + Vecf3{second.x, 0, 0},
+            origin + Vecf3{second.x, second.y, 0},
+            origin + Vecf3{0, second.y, 0},
+            origin,
+            origin + Vecf3{0, 0, second.z},
+            origin + Vecf3{second.x, 0, second.z},
+            origin + Vecf3{second.x, second.y, second.z},
+            origin + Vecf3{0, second.y, second.z},
+            origin + Vecf3{0, 0, second.z},
+        }};
+
+        auto vertices
+            = bsp_cache.portal_buffer.view.subspan(bsp_cache.portal_ptr, 10);
+        std::copy(points.begin(), points.end(), vertices.begin());
+
+        auto           trig   = e.create_entity(trigger_obj);
+        TriggerVolume& volume = trig.get<TriggerVolume>();
+        DebugDraw&     draw   = trig.get<DebugDraw>();
+
+        volume.trigger_volume = &trigger;
+        draw.data
+            = {.arrays = {
+                   .count  = 10,
+                   .offset = bsp_cache.portal_ptr,
+               }};
+        bsp_cache.portal_ptr += 10;
+    }
+
     for(auto const& bsp : scenario->bsp_info.data(magic).value())
     {
         bsp_meshes.push_back(bsp_cache.predict(bsp));
@@ -71,9 +115,9 @@ void load_scenario_bsp(compo::EntityContainer& e, BlamData<Version>& data)
                 bsp_ref.bsp      = mesh_id;
                 bsp_ref.visible  = true;
                 bsp_ref.draw.data.push_back(mesh.draw);
-                bsp_ref.draw.call    = {
-                       .indexed   = true,
-                       .instanced = true,
+                bsp_ref.draw.call = {
+                    .indexed   = true,
+                    .instanced = true,
                 };
                 bsp_ref.shader = mesh.shader;
 
@@ -89,7 +133,7 @@ void load_scenario_bsp(compo::EntityContainer& e, BlamData<Version>& data)
     }
 }
 
-constexpr auto model_lod = blam::mod2::lod_medium;
+constexpr auto model_lod = blam::mod2::lod_high_ext;
 
 template<typename T, typename Version>
 void load_objects(
@@ -160,7 +204,7 @@ void load_objects(
         for(auto const& model_ : mesh_data.models)
         {
             ModelItem<Version> const& modelit
-                = model_cache.find(model_.at(model_lod))->second;
+                = model_cache.find(model_)->second;
 
             for(auto const& sub : modelit.mesh.sub)
             {
@@ -172,8 +216,7 @@ void load_objects(
                 SubModel& submod_ = submod.get<SubModel>();
 
                 submod_.parent = parent_.id();
-                submod_.initialize<Version>(
-                    model_.at(model_lod), sub);
+                submod_.initialize<Version>(model_, sub);
 
                 ShaderData&       shader_ = submod.get<ShaderData>();
                 ShaderItem const& shader_it
@@ -262,8 +305,7 @@ void load_multiplayer_equipment(
                 for(auto const& model : models.models)
                 {
                     ModelItem<Version> const& modelit
-                        = model_cache.find(model.at(model_lod))
-                              ->second;
+                        = model_cache.find(model)->second;
 
                     for(auto const& sub : modelit.mesh.sub)
                     {
@@ -271,8 +313,7 @@ void load_multiplayer_equipment(
                         model_.models.push_back(submod);
                         SubModel& submod_ = submod.get<SubModel>();
                         submod_.parent    = set.id();
-                        submod_.initialize<Version>(
-                            model.at(model_lod), sub);
+                        submod_.initialize<Version>(model, sub);
 
                         ShaderData&       shader_ = submod.get<ShaderData>();
                         ShaderItem const& shader_it
@@ -327,7 +368,10 @@ void load_scenario_scenery(EntityContainer& e, BlamData<Version>& data)
         e,
         ObjectLightFixture | ObjectGC);
 
-//    load_multiplayer_equipment(data, e, ObjectEquipment | ObjectGC);
+    if(data.map_container.map->map_type == blam::maptype_t::multiplayer)
+    {
+        load_multiplayer_equipment(data, e, ObjectEquipment | ObjectGC);
+    }
 
     blam::tag_index_view index(data.map_container);
 
@@ -337,6 +381,7 @@ void load_scenario_scenery(EntityContainer& e, BlamData<Version>& data)
     skybox_base.tags       = ObjectSkybox | ObjectGC;
     skybox_base.components = {
         type_hash_v<Model>(),
+        type_hash_v<Light>(),
     };
     EntityRecipe skybox_model;
     skybox_model.tags       = ObjectSkybox | ObjectMod2 | ObjectGC;
@@ -349,16 +394,40 @@ void load_scenario_scenery(EntityContainer& e, BlamData<Version>& data)
     auto   skybox_ent = e.create_entity(skybox_base);
     Model& skybox_mod = skybox_ent.get<Model>();
 
+    Span<materials::world_data> world_data
+        = gpu.world_store->map<materials::world_data>(0);
+
     for(auto const& skybox : data.scenario->info.skyboxes.data(magic).value())
     {
-        break;
-        auto        skybox_tag = &(*index.find(skybox));
-        auto const& skybox_
+        auto                     skybox_tag = &(*index.find(skybox));
+        blam::scn::skybox const& skybox_
             = skybox_tag->template data<blam::scn::skybox>(magic).value()[0];
+
+        Span<const blam::scn::skybox::light> lights
+            = skybox_.lights.data(magic).value();
+
+        for([[maybe_unused]] auto const& light : lights)
+        {
+            cDebug("Light: {0}", light.marker_name.str());
+            Vecf3 rotation
+                = glm::mat3_cast(
+                      glm::quat(Vecf3{0, 0, light.radiosity.direction.x})
+                      * glm::quat(Vecf3{0, light.radiosity.direction.y, 0}))
+                  * Vecf3{0, 0, 1};
+            world_data[0].lighting[0].light_direction = Vecf4{
+                rotation,
+                light.radiosity.test_distance,
+            };
+            world_data[0].lighting[0].light_color = Vecf4{
+                light.radiosity.color,
+                light.radiosity.power,
+            };
+        }
 
         skybox_mod.tag = skybox_tag;
 
-        auto model = model_cache.predict(skybox_.model.to_plain(), 0);
+        auto model = model_cache.predict(
+            skybox_.model.to_plain(), blam::mod2::mod2_lod::lod_high_ext);
 
         if(!model.valid())
         {
@@ -388,4 +457,5 @@ void load_scenario_scenery(EntityContainer& e, BlamData<Version>& data)
 
     gpu.model_buf->unmap();
     gpu.model_index->unmap();
+    gpu.world_store->unmap();
 }

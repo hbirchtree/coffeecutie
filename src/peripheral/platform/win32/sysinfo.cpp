@@ -113,7 +113,7 @@ WindowsSysInfo::proc_info WindowsSysInfo::GetProcInfo()
     return info;
 }
 
-stl_types::Optional<CString> GetWineVersion()
+std::optional<std::string> GetWineVersion()
 {
     if constexpr(compile_info::platform::is_windows_uwp)
         return {};
@@ -136,14 +136,14 @@ stl_types::Optional<CString> GetWineVersion()
             return {};
     }
 
-    CString out = pwine_get_version();
+    std::string out = pwine_get_version();
     return out;
 }
 
-stl_types::Optional<CString> GetRegistryString(
-    HKEY key, libc_types::cstring subKey, libc_types::cstring valueKey, CString::size_type size)
+std::optional<std::string> GetRegistryString(
+    HKEY key, libc_types::cstring subKey, libc_types::cstring valueKey, std::string::size_type size)
 {
-    CString value;
+    std::string value;
     value.resize(size);
     DWORD valueLen = value.size();
 
@@ -245,7 +245,7 @@ platform::info::HardwareDevice WindowsSysInfo::Processor()
         }
     }
 
-    CString brand = CPUBrandString;
+    std::string brand = CPUBrandString;
     str::trim::both(brand);
     cstring brand_find = libc::str::find(brand.c_str(), '\0');
     if(brand_find)
@@ -302,7 +302,7 @@ bool WindowsSysInfo::HasHyperThreading()
 #endif
 }
 
-CString WindowsSysInfo::GetSystemVersion()
+std::string WindowsSysInfo::GetSystemVersion()
 {
     using namespace stl_types;
 
@@ -323,7 +323,7 @@ CString WindowsSysInfo::GetSystemVersion()
     GetVersionEx(&a);
 #endif
 
-    CString out = cast_pod(a.dwMajorVersion) + "." + cast_pod(a.dwMinorVersion);
+    std::string out = cast_pod(a.dwMajorVersion) + "." + cast_pod(a.dwMinorVersion);
 
     if(auto version = env::win32::GetRegistryString(
            HKEY_LOCAL_MACHINE,
@@ -338,9 +338,9 @@ CString WindowsSysInfo::GetSystemVersion()
 
 platform::info::HardwareDevice WindowsSysInfo::DeviceName()
 {
-    CString dev_manuf;
-    CString dev_desc;
-    CString dev_fw;
+    std::string dev_manuf;
+    std::string dev_desc;
+    std::string dev_fw;
     WMI_Query("SELECT * FROM CIM_Product", L"Vendor", dev_manuf);
     WMI_Query("SELECT * FROM CIM_Product", L"Version", dev_desc);
     WMI_Query("SELECT * FROM CIM_Product", L"SKUNumber", dev_fw);

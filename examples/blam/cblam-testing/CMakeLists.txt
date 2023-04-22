@@ -25,9 +25,9 @@ coffee_application (
     SOURCES
         graphics.cpp
 
-        caching.cpp
         rendering.cpp
         resource_creation.cpp
+        touch_overlay.cpp
         widgets.cpp
     LIBRARIES
     Blam Core Image GLeamRHI ImGui
@@ -43,6 +43,8 @@ target_precompile_headers ( BlamGraphics PRIVATE
     )
 set_target_properties ( BlamGraphics PROPERTIES
     EMSCRIPTEN_THREADPOOL_SIZE 2
+    EMSCRIPTEN_GROWABLE_MEMORY ON
+    EMSCRIPTEN_HEAP_SIZE 512
     )
 
 if(TARGET ASIO)

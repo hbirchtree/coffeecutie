@@ -24,8 +24,8 @@ using TagMatf4 = TagType<Matf4, i32>;
 
 struct MatrixContainer : ComponentContainer<TagMatf4>
 {
-    Map<u64, szptr> mapping;
-    Vector<Matf4>   matrices;
+    std::map<u64, szptr> mapping;
+    std::vector<Matf4>   matrices;
 
     virtual ~MatrixContainer()
     {
@@ -65,7 +65,7 @@ i32 coffee_main(i32, cstring_w*)
 
     Profiler::PushContext("Register component");
 
-    entities.register_component<TagMatf4>(MkUq<MatrixContainer>());
+    entities.register_component<TagMatf4>(std::make_unique<MatrixContainer>());
     Profiler::PopContext();
 
     Profiler::PushContext("Create 200 entities");

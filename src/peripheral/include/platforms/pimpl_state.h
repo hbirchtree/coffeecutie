@@ -19,7 +19,7 @@ struct GlobalState
     virtual ~GlobalState();
 };
 
-using global_state_ptr = stl_types::ShPtr<GlobalState>;
+using global_state_ptr = std::shared_ptr<GlobalState>;
 
 using lock_state_fn = std::function<stl_types::UqLock(std::string_view)>;
 using swap_state_fn =
@@ -27,11 +27,11 @@ using swap_state_fn =
 using peek_state_fn = std::function<global_state_ptr const&(std::string_view)>;
 
 using profiler_enabled_fn = bool (*)();
-using profiler_store_fn = stl_types::ShPtr<platform::profiling::PContext> (*)();
+using profiler_store_fn = std::shared_ptr<platform::profiling::PContext> (*)();
 using thread_store_fn =
-    stl_types::ShPtr<platform::profiling::ThreadState> (*)();
+    std::shared_ptr<platform::profiling::ThreadState> (*)();
 
-using app_data_fn = stl_types::ShPtr<platform::info::AppData> (*)();
+using app_data_fn = std::shared_ptr<platform::info::AppData> (*)();
 
 struct state_pimpl
 {
@@ -61,7 +61,7 @@ struct state_pimpl
 
 } // namespace detail
 
-extern stl_types::UqPtr<detail::state_pimpl> state;
+extern std::unique_ptr<detail::state_pimpl> state;
 using GlobalState = detail::GlobalState;
 
 } // namespace platform

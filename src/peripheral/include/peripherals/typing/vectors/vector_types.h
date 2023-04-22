@@ -1,16 +1,25 @@
 #pragma once
 
+#if defined(USE_HOMEGROWN_VECTORS)
+
 #include <peripherals/typing/vectors/matrices.h>
 #include <peripherals/typing/vectors/quaternion.h>
 #include <peripherals/typing/vectors/vectors.h>
 
+#include <peripherals/libc/types.h>
 #include <peripherals/typing/vectors/matrices_decompose.h>
 #include <peripherals/typing/vectors/quaternion_matrix_ops.h>
 
-#include <peripherals/libc/types.h>
+#else
+
+#include "glm_vector_types.h"
+
+#endif
+
 
 namespace typing::vector_types {
 
+#if defined(USE_HOMEGROWN_VECTORS)
 using libc_types::f32;
 using libc_types::f64;
 using libc_types::i32;
@@ -78,5 +87,7 @@ using Matd3_4 = tmnmatrix<f64, 3, 4>;
 using Matd3_2 = tmnmatrix<f64, 3, 2>;
 using Matd4_2 = tmnmatrix<f64, 4, 2>;
 using Matd4_3 = tmnmatrix<f64, 4, 3>;
+#endif
 
 } // namespace typing::vector_types
+

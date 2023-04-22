@@ -54,18 +54,18 @@ struct api
     requires Buffer<buffer_t, buffer_slice_t>
     inline auto alloc_buffer(T, semantic::RSCA access)
     {
-        return MkShared<buffer_t>(
+        return std::make_shared<buffer_t>(
             m_features.buffer, m_workarounds, T::value, access);
     }
 
     inline auto alloc_program()
     {
-        return MkShared<program_t>(m_features.program, std::ref(*m_debug));
+        return std::make_shared<program_t>(m_features.program, std::ref(*m_debug));
     }
 
     inline auto alloc_rendertarget()
     {
-        return MkShared<rendertarget_t>(
+        return std::make_shared<rendertarget_t>(
             m_features.rendertarget, std::ref(m_rendertargetCurrency));
     }
 
@@ -73,13 +73,13 @@ struct api
     inline auto alloc_shader(
         T const& data, shader_t::constants_t const& constants = {})
     {
-        return MkShared<shader_t>(std::ref(data), constants);
+        return std::make_shared<shader_t>(std::ref(data), constants);
     }
     template<typename T>
     inline auto alloc_shader(
         T&& data, shader_t::constants_t const& constants = {})
     {
-        return MkShared<shader_t>(std::move(data), constants);
+        return std::make_shared<shader_t>(std::move(data), constants);
     }
     template<typename T>
     inline auto alloc_shader(
@@ -88,7 +88,7 @@ struct api
         shader_t::constants_t const& constants  = {},
         std::string_view             entrypoint = detail::default_entrypoint)
     {
-        return MkShared<shader_t>(std::move(data), fmt, constants, entrypoint);
+        return std::make_shared<shader_t>(std::move(data), fmt, constants, entrypoint);
     }
 
     template<class T>
@@ -114,7 +114,7 @@ struct api
 
         if constexpr(T::value == textures::type::d2)
         {
-            return MkShared<texture_2d_t>(
+            return std::make_shared<texture_2d_t>(
                 m_features.texture,
                 std::ref(m_texture_decode_queue),
                 std::ref(*m_debug),
@@ -128,7 +128,7 @@ struct api
         {
             if(no_3d_textures)
                 return std::shared_ptr<texture_2da_t>();
-            return MkShared<texture_2da_t>(
+            return std::make_shared<texture_2da_t>(
                 m_features.texture,
                 std::ref(m_texture_decode_queue),
                 std::ref(*m_debug),
@@ -140,7 +140,7 @@ struct api
         {
             if(no_3d_textures)
                 return std::shared_ptr<texture_3d_t>();
-            return MkShared<texture_3d_t>(
+            return std::make_shared<texture_3d_t>(
                 m_features.texture,
                 std::ref(m_texture_decode_queue),
                 std::ref(*m_debug),
@@ -154,7 +154,7 @@ struct api
         {
             if(no_3d_textures)
                 return std::shared_ptr<texture_cube_array_t>();
-            return MkShared<texture_cube_array_t>(
+            return std::make_shared<texture_cube_array_t>(
                 m_features.texture,
                 std::ref(m_texture_decode_queue),
                 std::ref(*m_debug),
@@ -171,7 +171,7 @@ struct api
     requires VertexArray<vertex_type, buffer_type>
     inline auto alloc_vertex_array()
     {
-        return MkShared<vertex_type>(
+        return std::make_shared<vertex_type>(
             std::ref(m_features.vertex), std::ref(*m_debug));
     }
 
@@ -189,16 +189,16 @@ struct api
         if constexpr(T::value == queries::type::fragments)
         {
 #if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
-            return MkShared<query_t>(m_features.query, T::value);
+            return std::make_shared<query_t>(m_features.query, T::value);
 #else
-            return MkShared<null_query_t>(m_features.query, T::value);
+            return std::make_shared<null_query_t>(m_features.query, T::value);
 #endif
         }
 #if 0
         if constexpr(T::value == queries::type::time)
-            return MkShared<query_t>(m_features.query, T::value);
+            return std::make_shared<query_t>(m_features.query, T::value);
         if constexpr(T::value == queries::type::timestamp)
-            return MkShared<timestamp_query>(m_features.query, T::value);
+            return std::make_shared<timestamp_query>(m_features.query, T::value);
 #endif
         return nullptr;
     }

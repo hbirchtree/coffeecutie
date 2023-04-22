@@ -6,7 +6,7 @@
 
 namespace platform::info::os::posix {
 
-inline stl_types::String kernel()
+inline std::string kernel()
 {
     utsname data{};
     if(uname(&data) != 0)
@@ -14,7 +14,7 @@ inline stl_types::String kernel()
     return data.sysname;
 }
 
-inline stl_types::String kernel_version()
+inline std::string kernel_version()
 {
     utsname data{};
     if(uname(&data) != 0)
@@ -22,7 +22,7 @@ inline stl_types::String kernel_version()
     return data.release;
 }
 
-inline stl_types::String architecture()
+inline std::string architecture()
 {
     utsname data{};
     if(uname(&data) != 0)

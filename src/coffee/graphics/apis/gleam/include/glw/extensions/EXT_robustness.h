@@ -126,8 +126,8 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
         GLW_FPTR_CHECK(ReadnPixelsEXT)
     }
     glReadnPixelsEXT(
-        x.x(),
-        x.y(),
+        x[0],
+        x[1],
         width[0],
         width[1],
         static_cast<GLenum>(format),

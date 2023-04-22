@@ -1,167 +1,129 @@
+#define MAGIC_ENUM_RANGE_MIN 0x8000
+#define MAGIC_ENUM_RANGE_MAX 0x9FFF
+#include <magic_enum.hpp>
+
 #include <coffee/graphics/apis/gleam/rhi_texture.h>
 
-#include <functional>
-
-#if defined(GLEAM_ENABLE_SOFTWARE_BCN)
-#define BCDEC_IMPLEMENTATION
-#define BCDEC_STATIC
-#include <bcdec.h>
-#endif
-
-#define NOT_SUPPORTED " not supported by hardware and no software fallback"
-
-#include <coffee/strings/libc_types.h>
-
-#include <coffee/core/debug/formatting.h>
+#include <glw/texture_formats.h>
 
 namespace gleam {
 
-struct texture_decode_not_available : std::runtime_error
+gl::tex::texture_format_t const& texture_t::format_description() const
 {
-    using std::runtime_error::runtime_error;
-};
+    return gl::tex::format_of(m_format);
+}
 
-struct texture_decode_not_implemented : std::runtime_error
+#if GLEAM_MAX_VERSION >= 0x420
+inline bool is_sw(group::internal_format fmt)
 {
-    using std::runtime_error::runtime_error;
-};
-
-using typing::pixels::PixFmt;
-
-bool texture_t::requires_software_decode()
-{
-    using Comp = typing::pixels::CompFlags;
-
-    if(m_format.pixfmt == PixFmt::BCn)
-    {
-        const auto s3tc_support = m_features.tex.ext.s3tc;
-        const auto rgtc_support = m_features.tex.gl.rgtc
-                                  || m_features.tex.arb.rgtc
-                                  || m_features.tex.ext.rgtc;
-        const auto bptc_support = m_features.tex.gl.bptc
-                                  || m_features.tex.arb.bptc
-                                  || m_features.tex.ext.bptc;
-#if defined(GLEAM_ENABLE_SOFTWARE_BCN)
-        if(stl_types::any_of(m_format.cmpflg, Comp::BC1, Comp::BC2, Comp::BC3)
-           && !s3tc_support)
-            return true;
-        if(stl_types::any_of(m_format.cmpflg, Comp::BC4, Comp::BC5)
-           && !rgtc_support)
-            return true;
-        if(stl_types::any_of(m_format.cmpflg, Comp::BC6H, Comp::BC7)
-           && !bptc_support)
-            return true;
-#else
-        Throw(texture_decode_not_available("BCn" NOT_SUPPORTED));
+    i32 preferred{0};
+    cmd::get_internalformativ(
+        group::texture_target::texture_2d,
+        fmt,
+        group::internal_format_prop::internalformat_preferred,
+        SpanOne(preferred));
+    return preferred != static_cast<i32>(fmt);
+}
 #endif
-    }
-    if(m_format.pixfmt == PixFmt::ASTC && !m_features.tex.gl.astc
-       && !m_features.tex.khr.astc)
-        Throw(texture_decode_not_available("ASTC" NOT_SUPPORTED));
 
-    if(m_format.pixfmt == PixFmt::ETC1 && !m_features.tex.oes.etc1)
-        Throw(texture_decode_not_available("ETC1" NOT_SUPPORTED));
-    if(m_format.pixfmt == PixFmt::ETC2 && !m_features.tex.gl.etc2)
-        Throw(texture_decode_not_available("ETC2" NOT_SUPPORTED));
-    return false;
-}
-
-std::optional<PixDesc> texture_t::software_decode_format()
+std::vector<std::string> enumerate_compressed_formats(
+    features::textures& features)
 {
-    if(m_format.pixfmt == PixFmt::BCn && requires_software_decode())
-        return PixDesc(PixFmt::RGBA8);
-    return std::nullopt;
-}
-
-static std::vector<char> software_decode_bcn(
-    PixDesc const&               m_format,
-    semantic::Span<const char>&& data,
-    size_3d<i32> const&          size)
-{
-    using typing::pixels::CompFlags;
-    using bcdec_transform_t     = void (*)(const void*, void*, int);
-    auto              out_size  = size.volume() * 4u;
-    auto              out_pitch = size.w * 4u;
-    std::vector<char> out(out_size, 0);
-    bcdec_transform_t transform = nullptr;
-    auto              blk_size  = BCDEC_BC1_BLOCK_SIZE;
-
-    switch(m_format.cmpflg)
+    std::vector<std::string> format_strings;
+#if GLEAM_MAX_VERSION >= 0x420
+    if(features.internal_format_query)
     {
-    case CompFlags::BC1:
-        transform = bcdec_bc1;
-        break;
-    case CompFlags::BC2:
-        transform = bcdec_bc2;
-        blk_size  = BCDEC_BC2_BLOCK_SIZE;
-        break;
-    case CompFlags::BC3:
-        transform = bcdec_bc3;
-        blk_size  = BCDEC_BC3_BLOCK_SIZE;
-        break;
-    case CompFlags::BC7:
-        transform = bcdec_bc7;
-        blk_size  = BCDEC_BC7_BLOCK_SIZE;
-        break;
-    default:
-        break;
-    }
+        using fmt_t = group::internal_format;
 
-    if(!transform)
-        Throw(texture_decode_not_implemented(
-            "this variation of BCn not implemented"));
+        std::array<fmt_t, 20> internal_formats = {{
+            fmt_t::compressed_rgba_astc_4x4_khr,
+            fmt_t::compressed_rgba_astc_8x8_khr,
 
-    auto blk_pitch = size.w / 4;
-    for(auto y : stl_types::range<int>(size.h / 4))
-        for(auto x : stl_types::range<int>(blk_pitch))
+            fmt_t::compressed_rgb_s3tc_dxt1_ext,
+            fmt_t::compressed_rgba_s3tc_dxt1_ext,
+            fmt_t::compressed_rgba_s3tc_dxt3_ext,
+            fmt_t::compressed_rgba_s3tc_dxt5_ext,
+
+            fmt_t::compressed_red_rgtc1,
+            fmt_t::compressed_rg_rgtc2,
+
+            fmt_t::compressed_rgb_bptc_signed_float,
+            fmt_t::compressed_rgb_bptc_unsigned_float,
+            fmt_t::compressed_rgba_bptc_unorm,
+            fmt_t::compressed_srgb_alpha_bptc_unorm,
+
+            fmt_t::compressed_r11_eac,
+            fmt_t::compressed_rg11_eac,
+            fmt_t::compressed_rgb8_etc2,
+            fmt_t::compressed_rgba8_etc2_eac,
+            fmt_t::compressed_rgb8_punchthrough_alpha1_etc2,
+        }};
+        for(auto const& fmt : internal_formats)
         {
-            auto blk_idx = (y * blk_pitch + x) * blk_size;
-            transform(
-                data.subspan(blk_idx, blk_size).data(),
-                &out.at((y * size.w + x) * 16),
-                out_pitch);
+            i32 supported{};
+            cmd::get_internalformativ(
+                group::texture_target::texture_2d,
+                fmt,
+                group::internal_format_prop::internalformat_supported,
+                SpanOne(supported));
+            if(!supported)
+                continue;
+            std::string_view name = magic_enum::enum_name(fmt);
+            format_strings.push_back(std::string(name.begin(), name.end()));
         }
 
-    Coffee::cDebug(
-        "Expanded BCn image from {0} bytes to {1} bytes",
-        data.size_bytes(),
-        out.size());
-    return out;
-}
+        features::textures::texture_support_t& sw = features.software_decoded;
+        sw.gl.rgtc = sw.arb.rgtc = sw.ext.rgtc
+            = is_sw(fmt_t::compressed_red_rgtc1);
+        sw.gl.etc2 = is_sw(fmt_t::compressed_rgba8_etc2_eac);
+        sw.gl.bptc = sw.arb.bptc = sw.ext.bptc
+            = is_sw(fmt_t::compressed_rgba_bptc_unorm);
+        sw.gl.astc = sw.khr.astc = is_sw(fmt_t::compressed_rgba_astc_4x4_khr);
 
-std::future<std::vector<char>> texture_t::software_decode(
-    semantic::Span<const char>&& data, size_3d<i32> const& size)
-{
-    using typing::pixels::CompFlags;
+        sw.ext.s3tc = is_sw(fmt_t::compressed_rgb_s3tc_dxt1_ext);
 
-    if(!m_decoder_queue)
+#if defined(GLEAM_ENABLE_SOFTWARE_BCN)
+        if(!features.tex.ext.s3tc)
+            sw.ext.s3tc = true;
+#endif
+
+#if GLEAM_MAX_VERSION_ES >= 0x200
+        sw.oes.etc1 = is_sw(fmt_t::etc1_rgb8_oes);
+
+        sw.img.pvrtc  = is_sw(fmt_t::compressed_rgba_pvrtc_2bppv1_img);
+        sw.img.pvrtc2 = is_sw(fmt_t::compressed_rgba_pvrtc_2bppv2_img);
+#endif
+    } else
+#endif
     {
-        if(auto res = rq::runtime_queue::CreateNewThreadQueue(
-               "gleam::Texture Decoder Queue");
-           res.has_error())
-            Throw(
-                texture_decode_not_available("failed to spawn decoder queue"));
-        else
-            m_decoder_queue = res.value();
-    }
+        i32 num_formats{};
+        cmd::get_integerv(
+            group::get_prop::num_compressed_texture_formats,
+            SpanOne(num_formats));
+        std::vector<i32> formats;
+        formats.resize(num_formats);
+        format_strings.reserve(num_formats);
 
-    if(m_format.pixfmt == PixFmt::BCn)
-    {
-        auto task = rq::dependent_task<void, std::vector<char>>::CreateSource(
-                [fmt = m_format, data, size]() mutable {
-                    return software_decode_bcn(fmt, std::move(data), size);
-                });
-        auto fut = task->output.get_future();
-        auto res = rq::runtime_queue::Queue(
-            m_decoder_queue,
-            std::move(task));
-        if(res.has_error())
-            Throw(rq::runtime_queue_error(""));
-        return fut;
-    }
+        cmd::get_integerv(
+            group::get_prop::compressed_texture_formats,
+            semantic::SpanOver<i32>(formats.begin(), formats.end()));
+        for(auto const& fmt : formats)
+        {
+            auto             tex_fmt = static_cast<group::internal_format>(fmt);
+            std::string_view name    = magic_enum::enum_name(tex_fmt);
+            if(name.empty())
+                continue;
+            format_strings.push_back(std::string(name.begin(), name.end()));
+        }
 
-    Throw(texture_decode_not_implemented(
-        "attempted doing software decode, but no implementation found"));
+        features::textures::texture_support_t& sw = features.software_decoded;
+
+#if defined(GLEAM_ENABLE_SOFTWARE_BCN)
+        if(!features.tex.ext.s3tc)
+            sw.ext.s3tc = true;
+#endif
+    }
+    return format_strings;
 }
 
 } // namespace gleam

@@ -25,45 +25,45 @@ using namespace ::stl_types;
 
 namespace platform {
 
-//using namespace Coffee;
+// using namespace Coffee;
 
 #if defined(COFFEE_LINUX) || defined(COFFEE_ANDROID)
-//namespace env {
-//namespace Linux {
-//extern CString          get_kern_name();
-//extern CString          get_kern_arch();
-//extern CString          get_kern_ver();
-//extern lsb_data         get_lsb_release();
-//extern info::DeviceType get_device_variant();
-//} // namespace Linux
-//} // namespace env
+// namespace env {
+// namespace Linux {
+// extern std::string          get_kern_name();
+// extern std::string          get_kern_arch();
+// extern std::string          get_kern_ver();
+// extern lsb_data         get_lsb_release();
+// extern info::DeviceType get_device_variant();
+// } // namespace Linux
+// } // namespace env
 #endif
 
 #if defined(COFFEE_WINDOWS)
 namespace env {
 namespace win32 {
 
-extern stl_types::Optional<CString> GetWineVersion();
-stl_types::Optional<CString>        GetRegistryString(
-           HKEY                key,
-           libc_types::cstring subKey,
-           libc_types::cstring valueKey,
-           CString::size_type  size);
+extern std::optional<std::string> GetWineVersion();
+std::optional<std::string>        GetRegistryString(
+           HKEY                   key,
+           libc_types::cstring    subKey,
+           libc_types::cstring    valueKey,
+           std::string::size_type size);
 
-}
+} // namespace win32
 } // namespace env
 #endif
 
 namespace info {
 
-CString system_name()
+std::string system_name()
 {
 #ifndef COFFEE_LOWFAT
     //    const constexpr cstring _fmt = "%s %s %u-bit (%s ";
-//    CString sys_ver   = SysInfo::GetSystemVersion();
-    CString sys_ver = {};
-    CString sys_name  = C_SYSTEM_STRING;
-    CString curr_arch = COFFEE_ARCH;
+    //    std::string sys_ver   = SysInfo::GetSystemVersion();
+    std::string sys_ver   = {};
+    std::string sys_name  = C_SYSTEM_STRING;
+    std::string curr_arch = COFFEE_ARCH;
 #if defined(COFFEE_ANDROID)
     sys_name = "Android"; // Override this for clarity
 #elif defined(COFFEE_LINUX)
@@ -76,7 +76,7 @@ CString system_name()
 //    curr_arch = env::Linux::get_kern_arch();
 #endif
 
-    CString base = sys_name + " " + sys_ver + " (" + curr_arch + ")";
+    std::string base = sys_name + " " + sys_ver + " (" + curr_arch + ")";
 
 #if defined(COFFEE_WINDOWS) && !defined(COFFEE_WINDOWS_UWP)
     typedef BOOL(WINAPI * LPFN_ISWOW64PROCESS)(HANDLE, PBOOL);

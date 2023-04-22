@@ -1029,8 +1029,8 @@ requires(semantic::concepts::Span<span_const_framebuffer_attachment>&&
         attachments.size(),
         attachments.size() ? reinterpret_cast<const GLenum*>(attachments.data())
                            : nullptr,
-        x.x(),
-        x.y(),
+        x[0],
+        x[1],
         width[0],
         width[1]);
     detail::error_check("InvalidateNamedFramebufferSubData"sv);
@@ -1471,8 +1471,8 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
     glCompressedTextureSubImage2D(
         texture,
         level,
-        xoffset.x(),
-        xoffset.y(),
+        xoffset[0],
+        xoffset[1],
         width[0],
         width[1],
         static_cast<GLenum>(format),
@@ -1522,9 +1522,9 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
     glCompressedTextureSubImage3D(
         texture,
         level,
-        xoffset.x(),
-        xoffset.y(),
-        xoffset.z(),
+        xoffset[0],
+        xoffset[1],
+        xoffset[2],
         width[0],
         width[1],
         width[2],
@@ -1560,7 +1560,7 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
             glIsTexture(texture);
 #endif
     }
-    glCopyTextureSubImage1D(texture, level, xoffset, x.x(), x.y(), width);
+    glCopyTextureSubImage1D(texture, level, xoffset, x[0], x[1], width);
     detail::error_check("CopyTextureSubImage1D"sv);
 }
 
@@ -1597,14 +1597,7 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
 #endif
     }
     glCopyTextureSubImage2D(
-        texture,
-        level,
-        xoffset.x(),
-        xoffset.y(),
-        x.x(),
-        x.y(),
-        width[0],
-        width[1]);
+        texture, level, xoffset[0], xoffset[1], x[0], x[1], width[0], width[1]);
     detail::error_check("CopyTextureSubImage2D"sv);
 }
 
@@ -1645,11 +1638,11 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
     glCopyTextureSubImage3D(
         texture,
         level,
-        xoffset.x(),
-        xoffset.y(),
-        xoffset.z(),
-        x.x(),
-        x.y(),
+        xoffset[0],
+        xoffset[1],
+        xoffset[2],
+        x[0],
+        x[1],
         width[0],
         width[1]);
     detail::error_check("CopyTextureSubImage3D"sv);
@@ -2481,8 +2474,8 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
     glTextureSubImage2D(
         texture,
         level,
-        xoffset.x(),
-        xoffset.y(),
+        xoffset[0],
+        xoffset[1],
         width[0],
         width[1],
         static_cast<GLenum>(format),
@@ -2532,9 +2525,9 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
     glTextureSubImage3D(
         texture,
         level,
-        xoffset.x(),
-        xoffset.y(),
-        xoffset.z(),
+        xoffset[0],
+        xoffset[1],
+        xoffset[2],
         width[0],
         width[1],
         width[2],

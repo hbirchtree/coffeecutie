@@ -11,14 +11,12 @@
 namespace platform::env::posix {
 
 using stl_types::failure;
-using stl_types::Optional;
 using stl_types::result;
-using stl_types::String;
 using stl_types::success;
 
 using posix_error = int;
 
-FORCEDINLINE Optional<String> var(String const& var)
+FORCEDINLINE std::optional<std::string> var(std::string const& var)
 {
 #if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_APPLE) || \
     defined(COFFEE_ANDROID)
@@ -30,8 +28,8 @@ FORCEDINLINE Optional<String> var(String const& var)
     return std::nullopt;
 }
 
-FORCEDINLINE Optional<posix_error> set_var(
-    String const& var, Optional<String> const& val)
+FORCEDINLINE std::optional<posix_error> set_var(
+    std::string const& var, std::optional<std::string> const& val)
 {
     if(val.has_value())
     {

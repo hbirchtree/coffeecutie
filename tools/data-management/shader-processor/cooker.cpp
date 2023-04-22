@@ -135,6 +135,12 @@ libc_types::i32 cooker_main()
         //
         ("strip-debug", "Strip debug information from SPIR-V binary")
         //
+        ("O0", "Build with no optimizations")
+        //
+        ("Ofast", "Build with performance optimizations (default)")
+        //
+        ("Osize", "Build with size optimizations")
+        //
         ("M,library",
          "Combine SPIR-V binaries into a large module (only if -B is "
          "specified)");
@@ -155,6 +161,12 @@ libc_types::i32 cooker_main()
     if(res.unmatched().size() != res.count("stage"))
     {
         cFatal("Number of stages does not match number of files");
+        for(auto const& unmatched : res.unmatched())
+            cDebug(" - {0}", unmatched);
+        cDebug("--");
+        for(auto const& arg : res)
+            if(arg.key() == "stage")
+                cDebug(" - {0}", arg.value());
         return 1;
     }
     if(res.unmatched().size() != res.count("output")
@@ -184,6 +196,15 @@ libc_types::i32 cooker_main()
             defines.insert(std::make_pair(define, "1"));
     }
 
+    shader_proc::opt::optimization_level opt_level{
+        shader_proc::opt::optimization_level::fast};
+    if(res.count("O0"))
+        opt_level = shader_proc::opt::optimization_level::none;
+    else if(res.count("Osize"))
+        opt_level = shader_proc::opt::optimization_level::size;
+    else if(res.count("Ofast"))
+        opt_level = shader_proc::opt::optimization_level::fast;
+
     std::vector<shader_proc::spv_blob> blobs;
     for(auto const& [stage, file] : inputs)
     {
@@ -196,14 +217,19 @@ libc_types::i32 cooker_main()
                   .value_or(std::make_pair(460u, shader_proc::profile_t::core));
 
         // First, compile to SPV
-        auto spv = shader_proc::spirv::compile({
-            .stage   = stage,
-            .content = source_code,
-            .path    = file,
-            .version = version,
-            .profile = profile,
-            .defines = defines,
-        });
+        auto spv = shader_proc::spirv::compile(
+            {
+                .stage   = stage,
+                .content = source_code,
+                .path    = file,
+                .version = version,
+                .profile = profile,
+                .defines = defines,
+            },
+            shader_proc::spirv::default_output,
+            {
+                .opt_level = opt_level,
+            });
 
         if(spv.has_error())
         {
@@ -241,9 +267,11 @@ libc_types::i32 cooker_main()
                     .profile     = shader_proc::profile_t::core,
                     .version     = 460,
                     .strip_debug = static_cast<bool>(res.count("strip-debug")),
+                    .targets_spv = true,
                 },
                 {
                     .rename_entrypoint = std::string_view(entrypoint.c_str()),
+                    .opt_level         = opt_level,
                 });
 
             if(optimized.has_error())
@@ -294,6 +322,9 @@ libc_types::i32 cooker_main()
                    .profile     = shader_proc::profile_t::core,
                    .version     = 460,
                    .strip_debug = false,
+               },
+               {
+                   .opt_level = opt_level,
                });
            opt.has_error())
         {

@@ -100,7 +100,7 @@ PACKEDSTRUCT(uint24 { u32 d : 24; });
 
 using u24 = uint24;
 
-FORCEDINLINE scalar convert_i16_f(i16 v)
+FORCEDINLINE f32 convert_i16_f(i16 v)
 {
     return static_cast<scalar>(v) / std::numeric_limits<i16>::max();
 }

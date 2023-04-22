@@ -14,10 +14,11 @@
 #include <coffee/core/CProfiling>
 #include <coffee/core/base_state.h>
 #include <coffee/core/platform_data.h>
-#include <coffee/core/types/chunk.h>
 #include <coffee/core/types/display/event.h>
+
 #include <peripherals/libc/memory_ops.h>
-#include <peripherals/typing/vectors/vectors.h>
+#include <peripherals/semantic/chunk.h>
+#include <peripherals/typing/vectors/vector_types.h>
 
 #include <coffee/strings/libc_types.h>
 
@@ -32,8 +33,8 @@ using libc_types::u16;
 using libc_types::u32;
 using semantic::mem_chunk;
 using semantic::RSCA;
+using std::shared_ptr;
 using stl_types::Range;
-using stl_types::ShPtr;
 
 using namespace typing::vector_types;
 using namespace Coffee::Input;
@@ -236,7 +237,7 @@ void ImGuiSystem::load(entity_container& e, comp_app::app_error&)
     io.ConfigDockingWithShift    = true;
     io.ConfigDockingAlwaysTabBar = true;
 
-    m_logFilename = *"imgui.log"_tmp;
+    m_logFilename    = *"imgui.log"_tmp;
     m_configFilename = *"imgui.ini"_config;
 
     io.LogFilename = m_logFilename.c_str();

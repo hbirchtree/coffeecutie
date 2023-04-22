@@ -173,7 +173,7 @@ elseif(EMSCRIPTEN)
         --no-heap-copy
         -sLLD_REPORT_UNDEFINED
 #        -sSAFE_HEAP=1
-        -sALLOW_MEMORY_GROWTH
+#        -sALLOW_MEMORY_GROWTH
        )
     if("${CMAKE_BUILD_TYPE}" MATCHES "Deb")
         target_link_options( PeripheralLib PUBLIC

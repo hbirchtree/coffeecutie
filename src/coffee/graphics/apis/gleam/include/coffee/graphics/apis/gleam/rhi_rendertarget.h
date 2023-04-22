@@ -13,16 +13,16 @@ struct rendertarget_t;
 
 namespace detail {
 void rendertarget_copy(
-    features::rendertargets&        features,
-    rendertarget_t&                 source,
-    rendertarget_t&                 dest,
-    typing::geometry::rect<u32>     srcRect,
-    typing::geometry::point_2d<u32> dstCoord,
-    render_targets::attachment      srcAttachment,
-    render_targets::attachment      dstAttachment,
-    u32                             level,
-    u32                             srci,
-    u32                             dsti);
+    features::rendertargets&    features,
+    rendertarget_t&             source,
+    rendertarget_t&             dest,
+    typing::geometry::rect<u32> srcRect,
+    Vecui2                      dstCoord,
+    render_targets::attachment  srcAttachment,
+    render_targets::attachment  dstAttachment,
+    u32                         level,
+    u32                         srci,
+    u32                         dsti);
 } // namespace detail
 
 struct rendertarget_currency
@@ -129,14 +129,14 @@ struct rendertarget_t
     }
 
     void copy(
-        rendertarget_t&                 source,
-        typing::geometry::rect<u32>     srcRect,
-        typing::geometry::point_2d<u32> dstCoord,
-        render_targets::attachment      srcAttachment,
-        render_targets::attachment      dstAttachment,
-        u32                             level = 0,
-        u32                             srci  = 0,
-        u32                             dsti  = 0)
+        rendertarget_t&             source,
+        typing::geometry::rect<u32> srcRect,
+        Vecui2                      dstCoord,
+        render_targets::attachment  srcAttachment,
+        render_targets::attachment  dstAttachment,
+        u32                         level = 0,
+        u32                         srci  = 0,
+        u32                         dsti  = 0)
     {
         detail::rendertarget_copy(
             m_features,
@@ -221,7 +221,7 @@ struct rendertarget_t
             typing::vector_types::Veci4 viewport;
             cmd::get_integerv(
                 group::get_prop::viewport, SpanOne<i32>(viewport));
-            out = {viewport.z(), viewport.w()};
+            out = {viewport[2], viewport[3]};
         }
         return out;
     }
@@ -423,76 +423,78 @@ struct rendertarget_t
 };
 
 inline void detail::rendertarget_copy(
-    [[maybe_unused]] features::rendertargets&   features,
-    rendertarget_t&                             source,
-    rendertarget_t&                             dest,
-    typing::geometry::rect<u32>                 srcRect,
-    typing::geometry::point_2d<u32>             dstCoord,
-    [[maybe_unused]] render_targets::attachment srcAttachment,
-    render_targets::attachment                  dstAttachment,
-    u32                                         level,
-    [[maybe_unused]] u32                        srci,
-    u32                                         dsti)
+    [[maybe_unused]] features::rendertargets&   /*features*/,
+    rendertarget_t&                             /*source*/,
+    rendertarget_t&                             /*dest*/,
+    typing::geometry::rect<u32>                 /*srcRect*/,
+    Vecui2                                      /*dstCoord*/,
+    [[maybe_unused]] render_targets::attachment /*srcAttachment*/,
+    render_targets::attachment                  /*dstAttachment*/,
+    u32                                         /*level*/,
+    [[maybe_unused]] u32                        /*srci*/,
+    u32                                         /*dsti*/)
 {
-    using param = group::framebuffer_attachment_parameter_name;
+    //    using param = group::framebuffer_attachment_parameter_name;
 
-    i32 dstTexture = 0;
-    i32 dstTarget  = 0;
-#if GLEAM_MAX_VERSION >= 0x450
-    if(features.dsa)
-    {
-        cmd::get_named_framebuffer_attachment_parameter(
-            dest.m_handle,
-            convert::to(dstAttachment, dsti),
-            param::framebuffer_attachment_object_name,
-            SpanOne(dstTexture));
-        cmd::get_named_framebuffer_attachment_parameter(
-            dest.m_handle,
-            convert::to(dstAttachment, dsti),
-            param::framebuffer_attachment_texture_cube_map_face,
-            SpanOne(dstTarget));
-        cmd::named_framebuffer_read_buffer(
-            source.m_handle,
-            convert::to<group::color_buffer>(srcAttachment, srci));
-        cmd::copy_texture_sub_image_2d(
-            dstTexture,
-            level,
-            dstCoord.toVector<i32>(),
-            srcRect.bottomleft().toVector<i32>(),
-            srcRect.size().convert<i32>());
-    } else
-#endif
-    {
-        cmd::bind_framebuffer(
-            group::framebuffer_target::framebuffer, dest.m_handle);
-        cmd::get_framebuffer_attachment_parameter(
-            group::framebuffer_target::framebuffer,
-            convert::to(dstAttachment, dsti),
-            param::framebuffer_attachment_object_name,
-            SpanOne(dstTexture));
-        cmd::get_framebuffer_attachment_parameter(
-            group::framebuffer_target::framebuffer,
-            convert::to(dstAttachment, dsti),
-            param::framebuffer_attachment_texture_cube_map_face,
-            SpanOne(dstTarget));
-        cmd::bind_framebuffer(
-            group::framebuffer_target::framebuffer, source.m_handle);
-#if GLEAM_MAX_VERSION >= 0x200 || GLEAM_MAX_VERSION_ES >= 0x300
-        if(features.readdraw_buffers)
-            cmd::read_buffer(
-                convert::to<group::read_buffer_mode>(srcAttachment, srci));
-#endif
-        group::texture_target texTarget
-            = dstTarget == 0 ? group::texture_target::texture_2d
-                             : static_cast<group::texture_target>(dstTarget);
-        cmd::bind_texture(texTarget, dstTexture);
-        cmd::copy_tex_sub_image_2d(
-            texTarget,
-            level,
-            dstCoord.toVector<i32>(),
-            srcRect.bottomleft().toVector<i32>(),
-            srcRect.size().convert<i32>());
-    }
+    //    i32 dstTexture = 0;
+    //    i32 dstTarget  = 0;
+    //#if GLEAM_MAX_VERSION >= 0x450
+    //    if(features.dsa)
+    //    {
+    //        cmd::get_named_framebuffer_attachment_parameter(
+    //            dest.m_handle,
+    //            convert::to(dstAttachment, dsti),
+    //            param::framebuffer_attachment_object_name,
+    //            SpanOne(dstTexture));
+    //        cmd::get_named_framebuffer_attachment_parameter(
+    //            dest.m_handle,
+    //            convert::to(dstAttachment, dsti),
+    //            param::framebuffer_attachment_texture_cube_map_face,
+    //            SpanOne(dstTarget));
+    //        cmd::named_framebuffer_read_buffer(
+    //            source.m_handle,
+    //            convert::to<group::color_buffer>(srcAttachment, srci));
+    //        cmd::copy_texture_sub_image_2d(
+    //            dstTexture,
+    //            level,
+    //            dstCoord,
+    //            srcRect.bottomleft().toVector<i32>(),
+    //            srcRect.size().convert<i32>());
+    //    } else
+    //#endif
+    //    {
+    //        cmd::bind_framebuffer(
+    //            group::framebuffer_target::framebuffer, dest.m_handle);
+    //        cmd::get_framebuffer_attachment_parameter(
+    //            group::framebuffer_target::framebuffer,
+    //            convert::to(dstAttachment, dsti),
+    //            param::framebuffer_attachment_object_name,
+    //            SpanOne(dstTexture));
+    //        cmd::get_framebuffer_attachment_parameter(
+    //            group::framebuffer_target::framebuffer,
+    //            convert::to(dstAttachment, dsti),
+    //            param::framebuffer_attachment_texture_cube_map_face,
+    //            SpanOne(dstTarget));
+    //        cmd::bind_framebuffer(
+    //            group::framebuffer_target::framebuffer, source.m_handle);
+    //#if GLEAM_MAX_VERSION >= 0x200 || GLEAM_MAX_VERSION_ES >= 0x300
+    //        if(features.readdraw_buffers)
+    //            cmd::read_buffer(
+    //                convert::to<group::read_buffer_mode>(srcAttachment,
+    //                srci));
+    //#endif
+    //        group::texture_target texTarget
+    //            = dstTarget == 0 ? group::texture_target::texture_2d
+    //                             :
+    //                             static_cast<group::texture_target>(dstTarget);
+    //        cmd::bind_texture(texTarget, dstTexture);
+    //        cmd::copy_tex_sub_image_2d(
+    //            texTarget,
+    //            level,
+    //            Veci2{dstCoord[0], dstCoord[1]},
+    //            srcRect.bottomleft(),
+    //            srcRect.size().convert<i32>());
+    //    }
 }
 
 } // namespace gleam

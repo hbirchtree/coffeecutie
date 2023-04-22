@@ -19,24 +19,24 @@ extern std::string_view to_string(debug::Type const& arg);
 extern std::string_view to_string(debug::Severity const& arg);
 
 template<typename T>
-inline CString to_string(point_2d<T> const& v)
+inline std::string to_string(point_2d<T> const& v)
 {
     return fmt("p({0},{1})", v.x, v.y);
 }
 
 template<typename T>
-inline CString to_string(size_2d<T> const& v)
+inline std::string to_string(size_2d<T> const& v)
 {
     return fmt("sz({0},{1})", v.w, v.h);
 }
 
-inline CString to_string(Size const& v)
+inline std::string to_string(Size const& v)
 {
     return fmt("sz({0},{1})", v.w, v.h);
 }
 
 template<typename T>
-inline CString to_string(size_3d<T> const& v)
+inline std::string to_string(size_3d<T> const& v)
 {
     return fmt("sz({0},{1},{2}})", v.width, v.height, v.depth);
 }

@@ -687,7 +687,7 @@ requires(MinimumVersion<Current, Version<4, 1>>&&
             glIsProgram(program);
 #endif
     }
-    glProgramUniform2d(program, location, v0.x(), v0.y());
+    glProgramUniform2d(program, location, v0[0], v0[1]);
     detail::error_check("ProgramUniform2d"sv);
 }
 
@@ -749,7 +749,7 @@ requires(MinimumVersion<Current, Version<4, 1>>&&
             glIsProgram(program);
 #endif
     }
-    glProgramUniform2f(program, location, v0.x(), v0.y());
+    glProgramUniform2f(program, location, v0[0], v0[1]);
     detail::error_check("ProgramUniform2f"sv);
 }
 
@@ -811,7 +811,7 @@ requires(MinimumVersion<Current, Version<4, 1>>&&
             glIsProgram(program);
 #endif
     }
-    glProgramUniform2i(program, location, v0.x(), v0.y());
+    glProgramUniform2i(program, location, v0[0], v0[1]);
     detail::error_check("ProgramUniform2i"sv);
 }
 
@@ -873,7 +873,7 @@ requires(MinimumVersion<Current, Version<4, 1>>&&
             glIsProgram(program);
 #endif
     }
-    glProgramUniform2ui(program, location, v0.x(), v0.y());
+    glProgramUniform2ui(program, location, v0[0], v0[1]);
     detail::error_check("ProgramUniform2ui"sv);
 }
 
@@ -936,7 +936,7 @@ requires(MinimumVersion<Current, Version<4, 1>>&&
             glIsProgram(program);
 #endif
     }
-    glProgramUniform3d(program, location, v0.x(), v0.y(), v0.z());
+    glProgramUniform3d(program, location, v0[0], v0[1], v0[2]);
     detail::error_check("ProgramUniform3d"sv);
 }
 
@@ -999,7 +999,7 @@ requires(MinimumVersion<Current, Version<4, 1>>&&
             glIsProgram(program);
 #endif
     }
-    glProgramUniform3f(program, location, v0.x(), v0.y(), v0.z());
+    glProgramUniform3f(program, location, v0[0], v0[1], v0[2]);
     detail::error_check("ProgramUniform3f"sv);
 }
 
@@ -1062,7 +1062,7 @@ requires(MinimumVersion<Current, Version<4, 1>>&&
             glIsProgram(program);
 #endif
     }
-    glProgramUniform3i(program, location, v0.x(), v0.y(), v0.z());
+    glProgramUniform3i(program, location, v0[0], v0[1], v0[2]);
     detail::error_check("ProgramUniform3i"sv);
 }
 
@@ -1125,7 +1125,7 @@ requires(MinimumVersion<Current, Version<4, 1>>&&
             glIsProgram(program);
 #endif
     }
-    glProgramUniform3ui(program, location, v0.x(), v0.y(), v0.z());
+    glProgramUniform3ui(program, location, v0[0], v0[1], v0[2]);
     detail::error_check("ProgramUniform3ui"sv);
 }
 
@@ -1189,7 +1189,7 @@ requires(MinimumVersion<Current, Version<4, 1>>&&
             glIsProgram(program);
 #endif
     }
-    glProgramUniform4d(program, location, v0.x(), v0.y(), v0.z(), v0.w());
+    glProgramUniform4d(program, location, v0[0], v0[1], v0[2], v0[3]);
     detail::error_check("ProgramUniform4d"sv);
 }
 
@@ -1253,7 +1253,7 @@ requires(MinimumVersion<Current, Version<4, 1>>&&
             glIsProgram(program);
 #endif
     }
-    glProgramUniform4f(program, location, v0.x(), v0.y(), v0.z(), v0.w());
+    glProgramUniform4f(program, location, v0[0], v0[1], v0[2], v0[3]);
     detail::error_check("ProgramUniform4f"sv);
 }
 
@@ -1317,7 +1317,7 @@ requires(MinimumVersion<Current, Version<4, 1>>&&
             glIsProgram(program);
 #endif
     }
-    glProgramUniform4i(program, location, v0.x(), v0.y(), v0.z(), v0.w());
+    glProgramUniform4i(program, location, v0[0], v0[1], v0[2], v0[3]);
     detail::error_check("ProgramUniform4i"sv);
 }
 
@@ -1381,7 +1381,7 @@ requires(MinimumVersion<Current, Version<4, 1>>&&
             glIsProgram(program);
 #endif
     }
-    glProgramUniform4ui(program, location, v0.x(), v0.y(), v0.z(), v0.w());
+    glProgramUniform4ui(program, location, v0[0], v0[1], v0[2], v0[3]);
     detail::error_check("ProgramUniform4ui"sv);
 }
 
@@ -2236,7 +2236,7 @@ requires(MinimumVersion<Current, Version<4, 1>>&&
     {
         GLW_FPTR_CHECK(VertexAttribL2d)
     }
-    glVertexAttribL2d(index, x.x(), x.y());
+    glVertexAttribL2d(index, x[0], x[1]);
     detail::error_check("VertexAttribL2d"sv);
 }
 
@@ -2281,7 +2281,7 @@ requires(MinimumVersion<Current, Version<4, 1>>&&
     {
         GLW_FPTR_CHECK(VertexAttribL3d)
     }
-    glVertexAttribL3d(index, x.x(), x.y(), x.z());
+    glVertexAttribL3d(index, x[0], x[1], x[2]);
     detail::error_check("VertexAttribL3d"sv);
 }
 
@@ -2327,7 +2327,7 @@ requires(MinimumVersion<Current, Version<4, 1>>&&
     {
         GLW_FPTR_CHECK(VertexAttribL4d)
     }
-    glVertexAttribL4d(index, x.x(), x.y(), x.z(), x.w());
+    glVertexAttribL4d(index, x[0], x[1], x[2], x[3]);
     detail::error_check("VertexAttribL4d"sv);
 }
 
@@ -2611,7 +2611,7 @@ requires(MinimumVersion<Current, Version<4, 1>>&&
     {
         GLW_FPTR_CHECK(ViewportIndexedf)
     }
-    glViewportIndexedf(index, x.x(), x.y(), w[0], w[1]);
+    glViewportIndexedf(index, x[0], x[1], w[0], w[1]);
     detail::error_check("ViewportIndexedf"sv);
 }
 

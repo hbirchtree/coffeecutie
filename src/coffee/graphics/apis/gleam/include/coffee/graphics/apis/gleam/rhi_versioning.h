@@ -75,8 +75,8 @@ using namespace semantic::concepts::graphics;
 using semantic::mem_chunk;
 using semantic::Span;
 using semantic::SpanOne;
-using stl_types::MkShared;
-using stl_types::ShPtr;
+using std::make_shared;
+using std::shared_ptr;
 using typing::geometry::size_2d;
 using typing::geometry::size_3d;
 using typing::pixels::PixDesc;
@@ -126,9 +126,18 @@ enum class api_type_t
     none,
     core,
     es,
+    webgl,
 };
 constexpr api_type_t compiled_api =
 #if GLEAM_MAX_VERSION != 0
+    api_type_t::core;
+#else
+    api_type_t::es;
+#endif
+constexpr api_type_t platform_api =
+#if defined(COFFEE_EMSCRIPTEN)
+    api_type_t::webgl;
+#elif GLEAM_MAX_VERSION != 0
     api_type_t::core;
 #else
     api_type_t::es;

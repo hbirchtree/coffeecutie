@@ -24,11 +24,11 @@ using LogInterfaceTagged = void (*)(
     libc_types::u32  /* flags */
 );
 using StackWriter = void (*)(
-    stl_types::CString const&, /* frame name */
-    stl_types::CString const&  /* instruction pointer (hex format) */
+    std::string const&, /* frame name */
+    std::string const&  /* instruction pointer (hex format) */
 );
 
-using StackWriterEx = stl_types::Function<void(
+using StackWriterEx = std::function<void(
     std::string_view, /* frame name */
     std::string_view, /* instruction pointer */
     std::string_view, /* source file */

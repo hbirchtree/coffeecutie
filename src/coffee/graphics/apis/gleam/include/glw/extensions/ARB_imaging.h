@@ -78,7 +78,7 @@ requires(semantic::concepts::Vector<vec_4_f32, f32, 4>)
     {
         GLW_FPTR_CHECK(BlendColor)
     }
-    glBlendColor(red.x(), red.y(), red.z(), red.w());
+    glBlendColor(red[0], red[1], red[2], red[3]);
     detail::error_check("BlendColor"sv);
 }
 
@@ -444,8 +444,7 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
     {
         GLW_FPTR_CHECK(CopyColorSubTable)
     }
-    glCopyColorSubTable(
-        static_cast<GLenum>(target), start, x.x(), x.y(), width);
+    glCopyColorSubTable(static_cast<GLenum>(target), start, x[0], x[1], width);
     detail::error_check("CopyColorSubTable"sv);
 }
 
@@ -476,8 +475,8 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
     glCopyColorTable(
         static_cast<GLenum>(target),
         static_cast<GLenum>(internalformat),
-        x.x(),
-        x.y(),
+        x[0],
+        x[1],
         width);
     detail::error_check("CopyColorTable"sv);
 }
@@ -509,8 +508,8 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
     glCopyConvolutionFilter1D(
         static_cast<GLenum>(target),
         static_cast<GLenum>(internalformat),
-        x.x(),
-        x.y(),
+        x[0],
+        x[1],
         width);
     detail::error_check("CopyConvolutionFilter1D"sv);
 }
@@ -544,8 +543,8 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
     glCopyConvolutionFilter2D(
         static_cast<GLenum>(target),
         static_cast<GLenum>(internalformat),
-        x.x(),
-        x.y(),
+        x[0],
+        x[1],
         width[0],
         width[1]);
     detail::error_check("CopyConvolutionFilter2D"sv);

@@ -1,5 +1,5 @@
-#include <coffee/core/stl_types.h>
-#include <coffee/core/types/chunk.h>
+#include <peripherals/stl/types.h>
+#include <peripherals/semantic/chunk.h>
 #include <coffee/strings/libc_types.h>
 #include <peripherals/stl/string_ops.h>
 
@@ -12,7 +12,7 @@ const constexpr cstring original = "Hello World!";
 
 bool encode_test()
 {
-    CString b64_data = b64::encode(semantic::Bytes::CreateString(original));
+    std::string b64_data = b64::encode(semantic::Bytes::CreateString(original));
 
     if(b64_data != complete)
         cDebug("Wrong data: {0} != {1}", b64_data, complete);

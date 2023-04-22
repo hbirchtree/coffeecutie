@@ -37,6 +37,7 @@ def compile_shaders(
     files = values['files']
     variants = values['variants']
     assemblies = values['assemblies']
+    opt_level = '--O0'
     if 'matrix' in values and target in values['matrix']:
         allowed_variants = [ x for x in values['matrix'][target] ]
         variants = [ x
@@ -44,6 +45,12 @@ def compile_shaders(
         ]
         if 'spv' not in allowed_variants:
             assemblies = []
+    if 'optimization_level' in values:
+        level = values['optimization_level']
+        if level == 'fast':
+            opt_level = '--Ofast'
+        if level == 'size':
+            opt_level = '--Osize'
     for variant in variants:
         profile, version = variant.split(':')
         for file in files:
@@ -57,9 +64,10 @@ def compile_shaders(
                 'ShaderCooker',
                 '-f',
                 in_file,
-                '-p', f'{profile}',
-                '-V', f'{version}',
-                '-s', f'{extension}',
+                opt_level,
+                '-p', profile,
+                '-V', version,
+                '-s', extension,
                 '-o', out_file
             )
     for assembly in assemblies:
@@ -83,6 +91,7 @@ def compile_shaders(
             '-f',
             '-M',
             '-B',
+            opt_level,
             *extra_args,
             *file_args,
             '-o', out_file

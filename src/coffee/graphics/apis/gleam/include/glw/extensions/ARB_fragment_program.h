@@ -349,7 +349,7 @@ requires(semantic::concepts::Vector<vec_4_f64, f64, 4>)
         GLW_FPTR_CHECK(ProgramEnvParameter4dARB)
     }
     glProgramEnvParameter4dARB(
-        static_cast<GLenum>(target), index, x.x(), x.y(), x.z(), x.w());
+        static_cast<GLenum>(target), index, x[0], x[1], x[2], x[3]);
     detail::error_check("ProgramEnvParameter4dARB"sv);
 }
 
@@ -401,7 +401,7 @@ requires(semantic::concepts::Vector<vec_4_f32, f32, 4>)
         GLW_FPTR_CHECK(ProgramEnvParameter4fARB)
     }
     glProgramEnvParameter4fARB(
-        static_cast<GLenum>(target), index, x.x(), x.y(), x.z(), x.w());
+        static_cast<GLenum>(target), index, x[0], x[1], x[2], x[3]);
     detail::error_check("ProgramEnvParameter4fARB"sv);
 }
 
@@ -453,7 +453,7 @@ requires(semantic::concepts::Vector<vec_4_f64, f64, 4>)
         GLW_FPTR_CHECK(ProgramLocalParameter4dARB)
     }
     glProgramLocalParameter4dARB(
-        static_cast<GLenum>(target), index, x.x(), x.y(), x.z(), x.w());
+        static_cast<GLenum>(target), index, x[0], x[1], x[2], x[3]);
     detail::error_check("ProgramLocalParameter4dARB"sv);
 }
 
@@ -505,7 +505,7 @@ requires(semantic::concepts::Vector<vec_4_f32, f32, 4>)
         GLW_FPTR_CHECK(ProgramLocalParameter4fARB)
     }
     glProgramLocalParameter4fARB(
-        static_cast<GLenum>(target), index, x.x(), x.y(), x.z(), x.w());
+        static_cast<GLenum>(target), index, x[0], x[1], x[2], x[3]);
     detail::error_check("ProgramLocalParameter4fARB"sv);
 }
 

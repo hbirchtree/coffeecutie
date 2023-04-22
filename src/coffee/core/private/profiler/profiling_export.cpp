@@ -37,7 +37,7 @@ namespace Profiling {
 
 using namespace ::platform::profiling;
 
-static CString AnonymizePath(CString const& p)
+static std::string AnonymizePath(std::string const& p)
 {
     if(auto home = env::home_dir(); home.has_value())
         return str::replace::str<char>(
@@ -47,7 +47,7 @@ static CString AnonymizePath(CString const& p)
     return p;
 }
 
-static CString AnonymizePath(Url const& p)
+static std::string AnonymizePath(Url const& p)
 {
     return AnonymizePath(p.internUrl);
 }
@@ -150,7 +150,7 @@ STATICINLINE void PutRuntimeInfo(json::ObjectBuilder& target)
     if(auto sysname = platform::info::os::name())
         if(auto sysver = platform::info::os::version())
         {
-            stl_types::String system_string(sysname->begin(), sysname->end());
+            std::string system_string(sysname->begin(), sysname->end());
             system_string.append(" ");
             system_string.append(sysver->begin(), sysver->end());
             runtime.put("system", system_string);
@@ -263,7 +263,7 @@ STATICINLINE void PutRuntimeInfo(json::ObjectBuilder& target)
 
 } // namespace CT_Stuff
 
-void ExportChromeTracerData(CString& target)
+void ExportChromeTracerData(std::string& target)
 {
     using namespace CT_Stuff;
 
@@ -276,13 +276,19 @@ void ExportChromeTracerData(CString& target)
 
     json::ObjectBuilder application(root.allocator());
 
-    auto appd = GetCurrentApp();
-    application.put("name", appd.application_name)
-        .put("organization", appd.organization_name)
-        .put("version", appd.version_code);
+    try {
+        auto appd = GetCurrentApp();
+        application.put("name", appd.application_name)
+            .put("organization", appd.organization_name)
+            .put("version", appd.version_code);
 
-    root.put("application", application.eject())
-        .put("extra", extraData.eject());
+        root.put("application", application.eject())
+            .put("extra", extraData.eject());
+    } catch(undefined_behavior const&)
+    {
+        // Uhoh... Forget about that :)
+    }
+
     PutRuntimeInfo(root);
 
     auto rootDoc = root.eject();
@@ -295,14 +301,14 @@ void ExportChromeTracerData(CString& target)
     target = json::Serialize(doc);
 }
 
-void ExportStringToFile(const CString& data, const Url& outfile)
+void ExportStringToFile(const std::string& data, const Url& outfile)
 {
     if constexpr(compile_info::lowfat_mode)
         return;
 
     cVerbose(6, "Creating filename");
     Resource out(outfile);
-    out = mem_chunk<const byte_t>::ofContainer(data);
+    out = semantic::mem_chunk<const byte_t>::ofContainer(data);
     cVerbose(6, "Retrieving data pointers");
 
     if(!FileCommit(out, RSCA::Discard | RSCA::WriteOnly | RSCA::NewFile))
@@ -339,7 +345,7 @@ void ExitRoutine()
                 log_url +
                 Path(log_name.internUrl + "-chrome").addExtension("json");
 
-            CString target_chrome;
+            std::string target_chrome;
             Profiling::ExportChromeTracerData(target_chrome);
             Profiling::ExportStringToFile(target_chrome + " ", log_url2);
 

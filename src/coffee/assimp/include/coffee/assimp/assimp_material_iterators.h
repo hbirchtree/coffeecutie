@@ -4,7 +4,7 @@
 #include "cassimpimporters.h"
 #include <assimp/material.h>
 #include <assimp/scene.h>
-#include <coffee/core/stl_types.h>
+#include <peripherals/stl/types.h>
 #include <coffee/core/types/rsca.h>
 #include <peripherals/stl/string_ops.h>
 #include <peripherals/typing/enum/pixels/wrapping.h>
@@ -90,7 +90,7 @@ struct MaterialParser
             return C_RCAST<cstring>(&basePtr[total_offset]);
         }
 
-        Tup<Property const*, u64> propertyBase(
+        std::tuple<Property const*, u64> propertyBase(
             MaterialCollection const& col) const
         {
             byte_t const* basePtr =
@@ -323,11 +323,11 @@ struct MaterialParser
     static void ProcessTextureType(
         aiMaterial const&      material,
         Vector<byte_t>&        textureMaterials,
-        Vector<CString>&       stringStore,
+        Vector<std::string>&       stringStore,
         Vector<Property>&      properties,
         szptr&                 stringStoreSize,
         u32                    materialIdx,
-        Vector<CString> const& baseDirs,
+        Vector<std::string> const& baseDirs,
         aiTextureType          texType = aiTextureType_DIFFUSE)
     {
         aiString         t_path;
@@ -372,7 +372,7 @@ struct MaterialParser
             properties.push_back(
                 {dataStoreSize, materialIdx, TranslateTexType(texType), 0});
 
-            CString path = t_path.C_Str();
+            std::string path = t_path.C_Str();
 
             for(auto const& bdir : baseDirs)
                 path = str::replace::str<char>(path, bdir, "");
@@ -428,7 +428,7 @@ struct MaterialParser
         MaterialSerializer&          materialsData,
         Vector<aiTextureType> const& textureTypes,
         Vector<PropertyClass> const& materialProps,
-        Vector<CString> const&       baseDirs = {})
+        Vector<std::string> const&       baseDirs = {})
     {
         szptr stringStoreSize = 0;
 
@@ -436,7 +436,7 @@ struct MaterialParser
 
         Vector<Property>     properties;
         Vector<Material>     materialStore;
-        Vector<CString>      string_store;
+        Vector<std::string>      string_store;
         Vector<MaterialMesh> materialMeshConnection;
 
         for(auto i : Range<>(scene->scene->mNumMeshes))

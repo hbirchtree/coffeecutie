@@ -62,7 +62,7 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
         GLW_FPTR_CHECK(CopyColorSubTableEXT)
     }
     glCopyColorSubTableEXT(
-        static_cast<GLenum>(target), start, x.x(), x.y(), width);
+        static_cast<GLenum>(target), start, x[0], x[1], width);
     detail::error_check("CopyColorSubTableEXT"sv);
 }
 

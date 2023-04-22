@@ -230,7 +230,7 @@ requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
     {
         GLW_FPTR_CHECK(MatrixRotatedEXT)
     }
-    glMatrixRotatedEXT(static_cast<GLenum>(mode), angle, x.x(), x.y(), x.z());
+    glMatrixRotatedEXT(static_cast<GLenum>(mode), angle, x[0], x[1], x[2]);
     detail::error_check("MatrixRotatedEXT"sv);
 }
 
@@ -253,7 +253,7 @@ requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
     {
         GLW_FPTR_CHECK(MatrixRotatefEXT)
     }
-    glMatrixRotatefEXT(static_cast<GLenum>(mode), angle, x.x(), x.y(), x.z());
+    glMatrixRotatefEXT(static_cast<GLenum>(mode), angle, x[0], x[1], x[2]);
     detail::error_check("MatrixRotatefEXT"sv);
 }
 
@@ -274,7 +274,7 @@ requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
     {
         GLW_FPTR_CHECK(MatrixScaledEXT)
     }
-    glMatrixScaledEXT(static_cast<GLenum>(mode), x.x(), x.y(), x.z());
+    glMatrixScaledEXT(static_cast<GLenum>(mode), x[0], x[1], x[2]);
     detail::error_check("MatrixScaledEXT"sv);
 }
 
@@ -295,7 +295,7 @@ requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
     {
         GLW_FPTR_CHECK(MatrixScalefEXT)
     }
-    glMatrixScalefEXT(static_cast<GLenum>(mode), x.x(), x.y(), x.z());
+    glMatrixScalefEXT(static_cast<GLenum>(mode), x[0], x[1], x[2]);
     detail::error_check("MatrixScalefEXT"sv);
 }
 
@@ -317,7 +317,7 @@ requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
     {
         GLW_FPTR_CHECK(MatrixTranslatedEXT)
     }
-    glMatrixTranslatedEXT(static_cast<GLenum>(mode), x.x(), x.y(), x.z());
+    glMatrixTranslatedEXT(static_cast<GLenum>(mode), x[0], x[1], x[2]);
     detail::error_check("MatrixTranslatedEXT"sv);
 }
 
@@ -339,7 +339,7 @@ requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
     {
         GLW_FPTR_CHECK(MatrixTranslatefEXT)
     }
-    glMatrixTranslatefEXT(static_cast<GLenum>(mode), x.x(), x.y(), x.z());
+    glMatrixTranslatefEXT(static_cast<GLenum>(mode), x[0], x[1], x[2]);
     detail::error_check("MatrixTranslatefEXT"sv);
 }
 
@@ -413,8 +413,8 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
         static_cast<GLenum>(target),
         level,
         static_cast<GLenum>(internalformat),
-        x.x(),
-        x.y(),
+        x[0],
+        x[1],
         width,
         border);
     detail::error_check("CopyTextureImage1DEXT"sv);
@@ -460,8 +460,8 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
         static_cast<GLenum>(target),
         level,
         static_cast<GLenum>(internalformat),
-        x.x(),
-        x.y(),
+        x[0],
+        x[1],
         width[0],
         width[1],
         border);
@@ -504,8 +504,8 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
         static_cast<GLenum>(target),
         level,
         xoffset,
-        x.x(),
-        x.y(),
+        x[0],
+        x[1],
         width);
     detail::error_check("CopyTextureSubImage1DEXT"sv);
 }
@@ -548,10 +548,10 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
         texture,
         static_cast<GLenum>(target),
         level,
-        xoffset.x(),
-        xoffset.y(),
-        x.x(),
-        x.y(),
+        xoffset[0],
+        xoffset[1],
+        x[0],
+        x[1],
         width[0],
         width[1]);
     detail::error_check("CopyTextureSubImage2DEXT"sv);
@@ -1074,8 +1074,8 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
         texture,
         static_cast<GLenum>(target),
         level,
-        xoffset.x(),
-        xoffset.y(),
+        xoffset[0],
+        xoffset[1],
         width[0],
         width[1],
         static_cast<GLenum>(format),
@@ -1124,11 +1124,11 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
         texture,
         static_cast<GLenum>(target),
         level,
-        xoffset.x(),
-        xoffset.y(),
-        xoffset.z(),
-        x.x(),
-        x.y(),
+        xoffset[0],
+        xoffset[1],
+        xoffset[2],
+        x[0],
+        x[1],
         width[0],
         width[1]);
     detail::error_check("CopyTextureSubImage3DEXT"sv);
@@ -1232,9 +1232,9 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
         texture,
         static_cast<GLenum>(target),
         level,
-        xoffset.x(),
-        xoffset.y(),
-        xoffset.z(),
+        xoffset[0],
+        xoffset[1],
+        xoffset[2],
         width[0],
         width[1],
         width[2],
@@ -1302,8 +1302,8 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
         static_cast<GLenum>(target),
         level,
         static_cast<GLenum>(internalformat),
-        x.x(),
-        x.y(),
+        x[0],
+        x[1],
         width,
         border);
     detail::error_check("CopyMultiTexImage1DEXT"sv);
@@ -1344,8 +1344,8 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
         static_cast<GLenum>(target),
         level,
         static_cast<GLenum>(internalformat),
-        x.x(),
-        x.y(),
+        x[0],
+        x[1],
         width[0],
         width[1],
         border);
@@ -1383,8 +1383,8 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
         static_cast<GLenum>(target),
         level,
         xoffset,
-        x.x(),
-        x.y(),
+        x[0],
+        x[1],
         width);
     detail::error_check("CopyMultiTexSubImage1DEXT"sv);
 }
@@ -1422,10 +1422,10 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
         static_cast<GLenum>(texunit),
         static_cast<GLenum>(target),
         level,
-        xoffset.x(),
-        xoffset.y(),
-        x.x(),
-        x.y(),
+        xoffset[0],
+        xoffset[1],
+        x[0],
+        x[1],
         width[0],
         width[1]);
     detail::error_check("CopyMultiTexSubImage2DEXT"sv);
@@ -1466,11 +1466,11 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
         static_cast<GLenum>(texunit),
         static_cast<GLenum>(target),
         level,
-        xoffset.x(),
-        xoffset.y(),
-        xoffset.z(),
-        x.x(),
-        x.y(),
+        xoffset[0],
+        xoffset[1],
+        xoffset[2],
+        x[0],
+        x[1],
         width[0],
         width[1]);
     detail::error_check("CopyMultiTexSubImage3DEXT"sv);
@@ -2460,8 +2460,8 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
         static_cast<GLenum>(texunit),
         static_cast<GLenum>(target),
         level,
-        xoffset.x(),
-        xoffset.y(),
+        xoffset[0],
+        xoffset[1],
         width[0],
         width[1],
         static_cast<GLenum>(format),
@@ -2509,9 +2509,9 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
         static_cast<GLenum>(texunit),
         static_cast<GLenum>(target),
         level,
-        xoffset.x(),
-        xoffset.y(),
-        xoffset.z(),
+        xoffset[0],
+        xoffset[1],
+        xoffset[2],
         width[0],
         width[1],
         width[2],
@@ -2970,8 +2970,8 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
         texture,
         static_cast<GLenum>(target),
         level,
-        xoffset.x(),
-        xoffset.y(),
+        xoffset[0],
+        xoffset[1],
         width[0],
         width[1],
         static_cast<GLenum>(format),
@@ -3024,9 +3024,9 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
         texture,
         static_cast<GLenum>(target),
         level,
-        xoffset.x(),
-        xoffset.y(),
-        xoffset.z(),
+        xoffset[0],
+        xoffset[1],
+        xoffset[2],
         width[0],
         width[1],
         width[2],
@@ -3276,8 +3276,8 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
         static_cast<GLenum>(texunit),
         static_cast<GLenum>(target),
         level,
-        xoffset.x(),
-        xoffset.y(),
+        xoffset[0],
+        xoffset[1],
         width[0],
         width[1],
         static_cast<GLenum>(format),
@@ -3325,9 +3325,9 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
         static_cast<GLenum>(texunit),
         static_cast<GLenum>(target),
         level,
-        xoffset.x(),
-        xoffset.y(),
-        xoffset.z(),
+        xoffset[0],
+        xoffset[1],
+        xoffset[2],
         width[0],
         width[1],
         width[2],
@@ -3802,7 +3802,7 @@ requires(semantic::concepts::Vector<vec_2_f32, f32, 2>)
             glIsProgram(program);
 #endif
     }
-    glProgramUniform2fEXT(program, location, v0.x(), v0.y());
+    glProgramUniform2fEXT(program, location, v0[0], v0[1]);
     detail::error_check("ProgramUniform2fEXT"sv);
 }
 
@@ -3861,7 +3861,7 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
             glIsProgram(program);
 #endif
     }
-    glProgramUniform2iEXT(program, location, v0.x(), v0.y());
+    glProgramUniform2iEXT(program, location, v0[0], v0[1]);
     detail::error_check("ProgramUniform2iEXT"sv);
 }
 
@@ -3921,7 +3921,7 @@ requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
             glIsProgram(program);
 #endif
     }
-    glProgramUniform3fEXT(program, location, v0.x(), v0.y(), v0.z());
+    glProgramUniform3fEXT(program, location, v0[0], v0[1], v0[2]);
     detail::error_check("ProgramUniform3fEXT"sv);
 }
 
@@ -3981,7 +3981,7 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>)
             glIsProgram(program);
 #endif
     }
-    glProgramUniform3iEXT(program, location, v0.x(), v0.y(), v0.z());
+    glProgramUniform3iEXT(program, location, v0[0], v0[1], v0[2]);
     detail::error_check("ProgramUniform3iEXT"sv);
 }
 
@@ -4042,7 +4042,7 @@ requires(semantic::concepts::Vector<vec_4_f32, f32, 4>)
             glIsProgram(program);
 #endif
     }
-    glProgramUniform4fEXT(program, location, v0.x(), v0.y(), v0.z(), v0.w());
+    glProgramUniform4fEXT(program, location, v0[0], v0[1], v0[2], v0[3]);
     detail::error_check("ProgramUniform4fEXT"sv);
 }
 
@@ -4103,7 +4103,7 @@ requires(semantic::concepts::Vector<vec_4_i32, i32, 4>)
             glIsProgram(program);
 #endif
     }
-    glProgramUniform4iEXT(program, location, v0.x(), v0.y(), v0.z(), v0.w());
+    glProgramUniform4iEXT(program, location, v0[0], v0[1], v0[2], v0[3]);
     detail::error_check("ProgramUniform4iEXT"sv);
 }
 
@@ -4892,7 +4892,7 @@ requires(semantic::concepts::Vector<vec_2_u32, u32, 2>)
             glIsProgram(program);
 #endif
     }
-    glProgramUniform2uiEXT(program, location, v0.x(), v0.y());
+    glProgramUniform2uiEXT(program, location, v0[0], v0[1]);
     detail::error_check("ProgramUniform2uiEXT"sv);
 }
 
@@ -4952,7 +4952,7 @@ requires(semantic::concepts::Vector<vec_3_u32, u32, 3>)
             glIsProgram(program);
 #endif
     }
-    glProgramUniform3uiEXT(program, location, v0.x(), v0.y(), v0.z());
+    glProgramUniform3uiEXT(program, location, v0[0], v0[1], v0[2]);
     detail::error_check("ProgramUniform3uiEXT"sv);
 }
 
@@ -5013,7 +5013,7 @@ requires(semantic::concepts::Vector<vec_4_u32, u32, 4>)
             glIsProgram(program);
 #endif
     }
-    glProgramUniform4uiEXT(program, location, v0.x(), v0.y(), v0.z(), v0.w());
+    glProgramUniform4uiEXT(program, location, v0[0], v0[1], v0[2], v0[3]);
     detail::error_check("ProgramUniform4uiEXT"sv);
 }
 
@@ -5182,13 +5182,7 @@ requires(semantic::concepts::Vector<vec_4_i32, i32, 4>)
 #endif
     }
     glNamedProgramLocalParameterI4iEXT(
-        program,
-        static_cast<GLenum>(target),
-        index,
-        x.x(),
-        x.y(),
-        x.z(),
-        x.w());
+        program, static_cast<GLenum>(target), index, x[0], x[1], x[2], x[3]);
     detail::error_check("NamedProgramLocalParameterI4iEXT"sv);
 }
 
@@ -5257,13 +5251,7 @@ requires(semantic::concepts::Vector<vec_4_u32, u32, 4>)
 #endif
     }
     glNamedProgramLocalParameterI4uiEXT(
-        program,
-        static_cast<GLenum>(target),
-        index,
-        x.x(),
-        x.y(),
-        x.z(),
-        x.w());
+        program, static_cast<GLenum>(target), index, x[0], x[1], x[2], x[3]);
     detail::error_check("NamedProgramLocalParameterI4uiEXT"sv);
 }
 
@@ -5647,13 +5635,7 @@ requires(semantic::concepts::Vector<vec_4_f64, f64, 4>)
 #endif
     }
     glNamedProgramLocalParameter4dEXT(
-        program,
-        static_cast<GLenum>(target),
-        index,
-        x.x(),
-        x.y(),
-        x.z(),
-        x.w());
+        program, static_cast<GLenum>(target), index, x[0], x[1], x[2], x[3]);
     detail::error_check("NamedProgramLocalParameter4dEXT"sv);
 }
 
@@ -5722,13 +5704,7 @@ requires(semantic::concepts::Vector<vec_4_f32, f32, 4>)
 #endif
     }
     glNamedProgramLocalParameter4fEXT(
-        program,
-        static_cast<GLenum>(target),
-        index,
-        x.x(),
-        x.y(),
-        x.z(),
-        x.w());
+        program, static_cast<GLenum>(target), index, x[0], x[1], x[2], x[3]);
     detail::error_check("NamedProgramLocalParameter4fEXT"sv);
 }
 
@@ -7450,7 +7426,7 @@ requires(semantic::concepts::Vector<vec_2_f64, f64, 2>)
             glIsProgram(program);
 #endif
     }
-    glProgramUniform2dEXT(program, location, x.x(), x.y());
+    glProgramUniform2dEXT(program, location, x[0], x[1]);
     detail::error_check("ProgramUniform2dEXT"sv);
 }
 
@@ -7510,7 +7486,7 @@ requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
             glIsProgram(program);
 #endif
     }
-    glProgramUniform3dEXT(program, location, x.x(), x.y(), x.z());
+    glProgramUniform3dEXT(program, location, x[0], x[1], x[2]);
     detail::error_check("ProgramUniform3dEXT"sv);
 }
 
@@ -7571,7 +7547,7 @@ requires(semantic::concepts::Vector<vec_4_f64, f64, 4>)
             glIsProgram(program);
 #endif
     }
-    glProgramUniform4dEXT(program, location, x.x(), x.y(), x.z(), x.w());
+    glProgramUniform4dEXT(program, location, x[0], x[1], x[2], x[3]);
     detail::error_check("ProgramUniform4dEXT"sv);
 }
 
@@ -8436,9 +8412,9 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
     glTexturePageCommitmentEXT(
         texture,
         level,
-        xoffset.x(),
-        xoffset.y(),
-        xoffset.z(),
+        xoffset[0],
+        xoffset[1],
+        xoffset[2],
         width[0],
         width[1],
         width[2],

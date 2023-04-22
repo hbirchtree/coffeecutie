@@ -507,8 +507,8 @@ extern cstring context_device_default();
 } // namespace CAudio
 namespace Strings {
 
-extern CString to_string(CAudio::COpenAL::CALBuffer const& buf);
-extern CString to_string(CAudio::COpenAL::CALSource const& src);
+extern std::string to_string(CAudio::COpenAL::CALBuffer const& buf);
+extern std::string to_string(CAudio::COpenAL::CALSource const& src);
 
 } // namespace Strings
 } // namespace Coffee

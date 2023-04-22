@@ -27,7 +27,7 @@ bool interpret_integers()
 
 bool convert_string()
 {
-    CString test;
+    std::string test;
     do
     {
         test = cast_pod(123);

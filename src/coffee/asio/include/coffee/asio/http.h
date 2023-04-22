@@ -1222,7 +1222,7 @@ struct builder
     void add(
         string const&                         name,
         semantic::BytesConst const&           data,
-        stl_types::Map<string, string> const& extra_headers)
+        std::map<string, string> const& extra_headers)
     {
         /* TODO: Avoid copying the content here */
         m_data += "--";

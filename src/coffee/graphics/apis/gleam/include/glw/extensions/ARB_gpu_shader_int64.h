@@ -271,7 +271,7 @@ requires(semantic::concepts::Vector<vec_2_i64, i64, 2>)
             glIsProgram(program);
 #endif
     }
-    glProgramUniform2i64ARB(program, location, x.x(), x.y());
+    glProgramUniform2i64ARB(program, location, x[0], x[1]);
     detail::error_check("ProgramUniform2i64ARB"sv);
 }
 
@@ -330,7 +330,7 @@ requires(semantic::concepts::Vector<vec_2_u64, u64, 2>)
             glIsProgram(program);
 #endif
     }
-    glProgramUniform2ui64ARB(program, location, x.x(), x.y());
+    glProgramUniform2ui64ARB(program, location, x[0], x[1]);
     detail::error_check("ProgramUniform2ui64ARB"sv);
 }
 
@@ -390,7 +390,7 @@ requires(semantic::concepts::Vector<vec_3_i64, i64, 3>)
             glIsProgram(program);
 #endif
     }
-    glProgramUniform3i64ARB(program, location, x.x(), x.y(), x.z());
+    glProgramUniform3i64ARB(program, location, x[0], x[1], x[2]);
     detail::error_check("ProgramUniform3i64ARB"sv);
 }
 
@@ -450,7 +450,7 @@ requires(semantic::concepts::Vector<vec_3_u64, u64, 3>)
             glIsProgram(program);
 #endif
     }
-    glProgramUniform3ui64ARB(program, location, x.x(), x.y(), x.z());
+    glProgramUniform3ui64ARB(program, location, x[0], x[1], x[2]);
     detail::error_check("ProgramUniform3ui64ARB"sv);
 }
 
@@ -511,7 +511,7 @@ requires(semantic::concepts::Vector<vec_4_i64, i64, 4>)
             glIsProgram(program);
 #endif
     }
-    glProgramUniform4i64ARB(program, location, x.x(), x.y(), x.z(), x.w());
+    glProgramUniform4i64ARB(program, location, x[0], x[1], x[2], x[3]);
     detail::error_check("ProgramUniform4i64ARB"sv);
 }
 
@@ -572,7 +572,7 @@ requires(semantic::concepts::Vector<vec_4_u64, u64, 4>)
             glIsProgram(program);
 #endif
     }
-    glProgramUniform4ui64ARB(program, location, x.x(), x.y(), x.z(), x.w());
+    glProgramUniform4ui64ARB(program, location, x[0], x[1], x[2], x[3]);
     detail::error_check("ProgramUniform4ui64ARB"sv);
 }
 
@@ -706,7 +706,7 @@ requires(semantic::concepts::Vector<vec_2_i64, i64, 2>)
     {
         GLW_FPTR_CHECK(Uniform2i64ARB)
     }
-    glUniform2i64ARB(location, x.x(), x.y());
+    glUniform2i64ARB(location, x[0], x[1]);
     detail::error_check("Uniform2i64ARB"sv);
 }
 
@@ -748,7 +748,7 @@ requires(semantic::concepts::Vector<vec_2_u64, u64, 2>)
     {
         GLW_FPTR_CHECK(Uniform2ui64ARB)
     }
-    glUniform2ui64ARB(location, x.x(), x.y());
+    glUniform2ui64ARB(location, x[0], x[1]);
     detail::error_check("Uniform2ui64ARB"sv);
 }
 
@@ -793,7 +793,7 @@ requires(semantic::concepts::Vector<vec_3_i64, i64, 3>)
     {
         GLW_FPTR_CHECK(Uniform3i64ARB)
     }
-    glUniform3i64ARB(location, x.x(), x.y(), x.z());
+    glUniform3i64ARB(location, x[0], x[1], x[2]);
     detail::error_check("Uniform3i64ARB"sv);
 }
 
@@ -836,7 +836,7 @@ requires(semantic::concepts::Vector<vec_3_u64, u64, 3>)
     {
         GLW_FPTR_CHECK(Uniform3ui64ARB)
     }
-    glUniform3ui64ARB(location, x.x(), x.y(), x.z());
+    glUniform3ui64ARB(location, x[0], x[1], x[2]);
     detail::error_check("Uniform3ui64ARB"sv);
 }
 
@@ -882,7 +882,7 @@ requires(semantic::concepts::Vector<vec_4_i64, i64, 4>)
     {
         GLW_FPTR_CHECK(Uniform4i64ARB)
     }
-    glUniform4i64ARB(location, x.x(), x.y(), x.z(), x.w());
+    glUniform4i64ARB(location, x[0], x[1], x[2], x[3]);
     detail::error_check("Uniform4i64ARB"sv);
 }
 
@@ -926,7 +926,7 @@ requires(semantic::concepts::Vector<vec_4_u64, u64, 4>)
     {
         GLW_FPTR_CHECK(Uniform4ui64ARB)
     }
-    glUniform4ui64ARB(location, x.x(), x.y(), x.z(), x.w());
+    glUniform4ui64ARB(location, x[0], x[1], x[2], x[3]);
     detail::error_check("Uniform4ui64ARB"sv);
 }
 

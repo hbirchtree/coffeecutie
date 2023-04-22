@@ -99,6 +99,20 @@ inline optional<tuple<error, std::string_view>> api::submit(
 
     const bool uses_baseinstance = stl_types::any_of(
         data, [](auto const& d) { return d.instances.offset > 0; });
+    const bool uses_ubo_advancing = [&modifiers...]() {
+        bool result = false;
+        stl_types::for_each_if_type<buffer_list>(
+            [&result](buffer_list const& list) {
+                for(auto const& buffer : list)
+                    if(buffer.buffer.m_type == buffers::type::constants)
+                    {
+                        result = true;
+                        break;
+                    }
+            },
+            modifiers...);
+        return result;
+    }() && m_workarounds.draw.advance_ubos_by_baseinstance;
     const bool uses_vertex_offset
         = call.indexed && stl_types::any_of(data, [](auto const& d) {
               return d.elements.vertex_offset > 0;
@@ -129,13 +143,14 @@ inline optional<tuple<error, std::string_view>> api::submit(
 
     std::shared_ptr<buffer_t> element_buf;
 #if GLEAM_MAX_VERSION_ES != 0x200
-    if(m_features.vertex.layout_binding)
+    if(m_features.vertex.layout_binding && !vao->m_forced_attribute_names)
     {
         cmd::bind_vertex_array(vao->m_handle);
     } else if(m_features.vertex.vertex_arrays)
     {
         while(!m_features.vertex.layout_binding
-              || m_workarounds.draw.force_vertex_attrib_names)
+              || m_workarounds.draw.force_vertex_attrib_names
+              || vao->m_forced_attribute_names)
         {
             if(program->m_attribute_names == vao->m_attribute_names)
                 break;
@@ -188,8 +203,12 @@ inline optional<tuple<error, std::string_view>> api::submit(
     detail::shader_bookkeeping_t bookkeeping{};
     (detail::apply_command_modifier(*program, bookkeeping, modifiers), ...);
 
-    std::function<void()>         apply_instance_id   = []() {};
-    std::function<void()>         apply_base_instance = []() {};
+    std::function<void()> apply_instance_id = []() {};
+    std::function<draw_command::data_t(draw_command::data_t const&)>
+        apply_base_instance
+        = [](draw_command::data_t const& d) -> draw_command::data_t {
+        return d;
+    };
     std::function<void(u32)>      apply_vertex_offset = [](u32) {};
     std::function<void(u32, u32)> apply_ubo_offset    = [](u32, u32) {};
 
@@ -214,7 +233,8 @@ inline optional<tuple<error, std::string_view>> api::submit(
                 *program, bookkeeping, instanceUniform);
         };
     }
-    if(m_workarounds.draw.emulated_base_instance && uses_baseinstance)
+    if((m_workarounds.draw.emulated_base_instance || uses_ubo_advancing)
+       && uses_baseinstance)
     {
         if constexpr(compile_info::debug_mode)
         {
@@ -224,7 +244,8 @@ inline optional<tuple<error, std::string_view>> api::submit(
                 debug().message(
                     "uniform 'glw_BaseInstance' not located with emulated BaseInstance enabled"sv);
         }
-        apply_base_instance = [&bookkeeping, &program]() {
+        apply_base_instance = [&bookkeeping,
+                               &program](draw_command::data_t const& data) {
             auto baseUniform = make_uniform_list(
                 typing::graphics::ShaderStage::Vertex,
                 uniform_pair{
@@ -232,6 +253,9 @@ inline optional<tuple<error, std::string_view>> api::submit(
                     SpanOne<const i32>(bookkeeping.baseInstance),
                 });
             detail::apply_command_modifier(*program, bookkeeping, baseUniform);
+            auto data_updated             = data;
+            data_updated.instances.offset = bookkeeping.baseInstance;
+            return data_updated;
         };
     }
     if(m_workarounds.draw.emulated_vertex_offset && uses_vertex_offset)
@@ -247,7 +271,7 @@ inline optional<tuple<error, std::string_view>> api::submit(
             }
         };
     }
-    if(m_workarounds.draw.advance_ubos_by_baseinstance)
+    if(uses_ubo_advancing)
     {
         std::vector<buffer_list*> buffer_defs;
         stl_types::for_each_if_type<buffer_list>(
@@ -279,7 +303,9 @@ inline optional<tuple<error, std::string_view>> api::submit(
               return d.elements.type == data.at(0).elements.type;
           });
     const bool multi_indirect_supported //= false;
-        = m_api_type == api_type_t::core ? m_api_version >= 0x430 : false;
+        = !uses_ubo_advancing && m_api_type == api_type_t::core
+              ? m_api_version >= 0x430
+              : false;
     const bool legacy_draw_only
         = m_api_type == api_type_t::es && m_api_version == 0x200;
 
@@ -304,32 +330,33 @@ inline optional<tuple<error, std::string_view>> api::submit(
         detail::multi_indirect_draw(call, data, *m_indirect_buffer);
     } else if(indirect_supported)
     {
-        for(auto const& d : data)
+        for(auto d : data)
         {
             bookkeeping.baseInstance = d.instances.offset;
-            apply_base_instance();
+            apply_ubo_offset(d.instances.offset, d.instances.count);
+            d = apply_base_instance(d);
             detail::indirect_draw(call, d, *m_indirect_buffer);
         }
     } else if(!legacy_draw_only)
     {
-        for(auto const& d : data)
+        for(auto d : data)
         {
             bookkeeping.baseInstance = d.instances.offset;
             apply_ubo_offset(d.instances.offset, d.instances.count);
-            apply_base_instance();
+            d = apply_base_instance(d);
             apply_vertex_offset(call.indexed ? d.elements.vertex_offset : 0);
             detail::direct_draw(call, d, bookkeeping, m_workarounds);
         }
     } else
     {
         using stl_types::range;
-        for(auto const& d : data)
+        for(auto d : data)
         {
             [[maybe_unused]] auto _
                 = debug().scope("legacy_draw::base_instance");
             auto       num_instances    = std::max(d.instances.count, 1u);
             auto const base_sampler_idx = bookkeeping.sampler_idx;
-            apply_base_instance();
+            d                           = apply_base_instance(d);
             if(call.indexed && d.elements.vertex_offset > 0)
                 for(auto const& attrib : vao->m_attributes)
                 {

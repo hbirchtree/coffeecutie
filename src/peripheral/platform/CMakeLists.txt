@@ -66,15 +66,9 @@ if(ANDROID)
     set ( ANDROID_SOURCES_DIR "${ANDROID_NDK}/sources/android" )
 
     target_sources ( PeripheralPlatform PRIVATE
-#        platforms/android/sensor.cpp
-#        platforms/android/file.cpp
-        platforms/android/sysinfo.cpp
-#        platforms/linux/file.cpp
-#        platforms/linux/process.cpp
-#        platforms/linux/sysinfo.cpp
-
-        platforms/android/jnipp.cpp
-        platforms/android/JNIHelper.cpp
+        android/sysinfo.cpp
+        android/jnipp.cpp
+        android/JNIHelper.cpp
         )
 
     target_compile_definitions ( PeripheralPlatform PUBLIC
@@ -87,14 +81,14 @@ if(ANDROID)
         )
 
     target_include_directories ( PeripheralPlatform PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/platforms/android/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/android/include>
         $<BUILD_INTERFACE:${ANDROID_SOURCES_DIR}/native_app_glue>
         $<BUILD_INTERFACE:${ANDROID_SOURCES_DIR}/ndk_helper>
         $<BUILD_INTERFACE:${ANDROID_SOURCES_DIR}/cpufeatures>
         )
     header_install (
         PeripheralPlatform
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/platforms/android/include/coffee/jni>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/android/include/coffee/jni>
         coffee
         )
 endif()
@@ -109,9 +103,7 @@ if(APPLE)
         #
         # System information queries
         #
-        platforms/osx/sysinfo.mm
-        # Some functions are exposed by Obj-C
-        platforms/osx/system_interface.mm
+        osx/sysinfo.mm
         )
     if (IOS)
         target_link_libraries ( PeripheralPlatform PRIVATE
@@ -131,33 +123,6 @@ endif()
 #
 #
 if((${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE OR ANDROID))
-#    target_sources ( PeripheralPlatform PRIVATE
-
-        #
-        # POSIX environment functions
-        #
-#        platforms/posix/environment.cpp
-
-        #
-        # Stacktrace using libunwind
-        #
-#        platforms/posix/stacktrace.cpp
-
-        #
-        # File management
-        #
-#        platforms/posix/file.cpp
-#        )
-
-    if(NOT IOS)
-#        target_sources ( PeripheralPlatform PRIVATE
-            #
-            # Dynamic linking (libdl)
-            #
-#            platforms/posix/loader.cpp
-#            )
-    endif()
-
     if(APPLE)
         target_compile_definitions( PeripheralPlatform PUBLIC
             -D_GNU_SOURCE)
@@ -184,17 +149,6 @@ endif()
 #
 #
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
-    target_sources ( PeripheralPlatform PRIVATE
-        #
-        # Linux-specific system calls and behavior all around
-        #
-#        platforms/linux/environment.cpp
-#        platforms/linux/process.cpp
-#        platforms/linux/sysinfo.cpp
-
-#        platforms/linux/file.cpp
-        )
-
     coffee_library (
         TARGET EmbedFileStub
         LIBRARIES PeripheralLib
@@ -224,35 +178,7 @@ if(EMSCRIPTEN)
         #
 #        platforms/posix/environment.cpp
 #        platforms/posix/file.cpp
-        platforms/emscripten/sysinfo.cpp
-        )
-endif()
-
-#
-#
-# Raspberry Pi-specific code
-#
-#
-#if(RASPBERRY)
-#    target_sources ( PeripheralPlatform PRIVATE
-#        #
-#        # Extracts Raspberry Pi board name
-#        #
-##        devices/raspberry/sysinfo.cpp
-#        )
-#endif()
-
-#
-#
-# Maemo-specific code
-#
-#
-if(MAEMO)
-    target_sources ( PeripheralPlatform PRIVATE
-        #
-        # Accelerometers, light sensors and etc.
-        #
-        devices/maemo/sensors.cpp
+        emscripten/sysinfo.cpp
         )
 endif()
 
@@ -264,17 +190,17 @@ endif()
 if(WIN32)
     target_sources ( PeripheralPlatform PRIVATE
 #        platforms/win32/environment.cpp
-        platforms/win32/sysinfo.cpp
+        win32/sysinfo.cpp
 
 #        platforms/win32/file.cpp
         )
     if(WIN_UWP)
         target_sources ( PeripheralPlatform PRIVATE
-            platforms/win32/wmi_uwp.cpp
+            win32/wmi_uwp.cpp
             )
     else()
         target_sources ( PeripheralPlatform PRIVATE
-            platforms/win32/wmi_win32.cpp
+            win32/wmi_win32.cpp
             )
     endif()
 endif()
@@ -288,6 +214,6 @@ if(GAMECUBE OR WII)
     target_sources ( PeripheralPlatform PRIVATE
 #        platforms/posix/environment.cpp
 #        platforms/posix/file.cpp
-        platforms/posix/stacktrace.cpp
+#        platforms/posix/stacktrace.cpp
         )
 endif()

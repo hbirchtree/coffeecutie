@@ -110,13 +110,13 @@ DWORD WinFileApi::GetMappingViewFlags(RSCA acc)
     return view_fl;
 }
 
-CString create_rsc_name(cstring fn)
+std::string create_rsc_name(cstring fn)
 {
     if(!fn)
         return {};
 
     /* Transform the filename to correspond with  */
-    CString wrap = fn;
+    std::string wrap = fn;
     wrap         = '"' + wrap + '"';
     wrap         = str::replace::str(wrap, "_", "___");
     wrap         = str::replace::str(wrap, "/", "_");
@@ -126,7 +126,7 @@ CString create_rsc_name(cstring fn)
 
 HRSRC open_rsc(cstring fn, WinFileFun::file_error& ec)
 {
-    CString wrap = create_rsc_name(fn);
+    std::string wrap = create_rsc_name(fn);
 #if !defined(COFFEE_WINDOWS_UWP)
     return FindResourceEx(nullptr, coffee_rsc_tag, wrap.c_str(), 1033);
     ec.as<platform::win32::error_code>() = GetLastError();
@@ -652,14 +652,14 @@ bool WinDirFun::MkDir(Url const& dname, bool parent, file_error& ec)
 
 bool WinDirFun::RmDir(Url const& fn, file_error& ec)
 {
-    CString deref = *fn;
+    std::string deref = *fn;
 
     return RemoveDirectoryA(deref.c_str()) == TRUE;
 }
 
 bool WinDirFun::Ls(Url const& fn, DirList& outl, file_error& ec)
 {
-    CString deref = *fn;
+    std::string deref = *fn;
 
     WIN32_FIND_DATAA ffd;
 
@@ -685,9 +685,9 @@ bool WinDirFun::Ls(Url const& fn, DirList& outl, file_error& ec)
     return true;
 }
 
-Url WinDirFun::Dirname(CString const& fn, file_error& ec)
+Url WinDirFun::Dirname(std::string const& fn, file_error& ec)
 {
-    CString fn_ = fn;
+    std::string fn_ = fn;
 
     fn_ = str::replace::str(fn_, "\\", "/");
 
@@ -701,7 +701,7 @@ Url WinDirFun::Dirname(CString const& fn, file_error& ec)
 
         auto idx = fn_.rfind('/');
 
-        if(idx != CString::npos)
+        if(idx != std::string::npos)
             fn_ = fn_.substr(0, idx);
         else
             fn_ = "."; // For cases of "something" with no slashes
@@ -711,11 +711,11 @@ Url WinDirFun::Dirname(CString const& fn, file_error& ec)
     return url::constructors::MkUrl(fn_, RSCA::SystemFile);
 }
 
-Url WinDirFun::Basename(CString const& fn, file_error& ec)
+Url WinDirFun::Basename(std::string const& fn, file_error& ec)
 {
     const constexpr cstring sep = "/";
 
-    CString out = fn;
+    std::string out = fn;
 
     do
     {
@@ -730,7 +730,7 @@ Url WinDirFun::Basename(CString const& fn, file_error& ec)
 
         auto idx = out.rfind(sep);
 
-        if(idx == CString::npos)
+        if(idx == std::string::npos)
             break;
 
         out = out.substr(idx + 1, out.size() - idx - 1);

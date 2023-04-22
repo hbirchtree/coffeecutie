@@ -16,9 +16,9 @@ enum class digest_type
 };
 
 template<typename T>
-stl_types::String digest(
+std::string digest(
     semantic::Span<T> const& data,
-    stl_types::String const& key,
+    std::string const&       key,
     digest_type              type = digest_type::sha256)
 {
     EVP_MD const* hashing = nullptr;
@@ -40,7 +40,7 @@ stl_types::String digest(
         break;
     }
 
-    stl_types::String out;
+    std::string out;
     out.resize(C_FCAST<libc_types::u32>(EVP_MD_size(hashing)));
     unsigned int md_size = 0;
 

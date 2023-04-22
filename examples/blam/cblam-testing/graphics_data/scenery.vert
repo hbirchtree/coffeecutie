@@ -6,19 +6,21 @@ layout(location = 2) in vec3 normal;
 layout(location = 3) in vec3 binormal;
 layout(location = 4) in vec3 tangent;
 
-layout(binding = 0, std140) buffer MatrixStore
+layout(binding = 0, std140) uniform MatrixStore
 {
-    mat4 transform[];
+    mat4 transform[256];
 } matrices;
 
-layout(location = 0) uniform mat4 camera;
+layout(location = 1) uniform mat4 camera;
+//layout(location = 2) uniform mat3 cameraRotation;
+//layout(location = 3) uniform vec3 camera_position;
 
 layout(location = 0) out FragData {
-    vec3 world_pos;
+    vec3 tbn_direction;
+    vec3 eye_direction;
+    vec3 position;
     vec2 tex;
-    vec3 normal;
-    vec3 binormal;
-    vec3 tangent;
+    mat3 tbn;
     flat int instanceId;
 } frag;
 
@@ -28,13 +30,22 @@ out gl_PerVertex {
 
 void main()
 {
-    frag.tex = tex;
-    frag.normal = normal;
-    frag.binormal = binormal;
-    frag.tangent = tangent;
-    frag.instanceId = gl_InstanceID;
     mat4 transform = matrices.transform[gl_InstanceID];
+    mat3 rotation = transform;
+    mat3 tbn = mat3(tangent, binormal, normal);
     vec4 world_pos = transform * vec4(position.xyz, 1);
-    frag.world_pos = world_pos.xyz;
+    frag.tex = tex;
+    frag.instanceId = gl_InstanceID;
+    frag.tbn = tbn;
+    frag.position = world_pos.xyz * -1;
     gl_Position = camera * world_pos;
+//    frag.eye_direction = normalize(
+//        tbn * normalize(camera_position - (world_pos.xyz * -1)).xyz
+//        );
+//    frag.tbn_direction = normalize(
+//        tbn *
+//        (
+//            normalize(camera_position - (world_pos.xyz * -1)).xyz *
+//            vec3(1, -1, -1))
+//        );
 }

@@ -28,9 +28,9 @@ struct SharedData
     Timestamp  frame_ts{0};
     gleam::api api;
 
-    stl_types::ShPtr<gleam::texture_2d_t>   tex;
-    stl_types::ShPtr<gleam::texture_2d_t>   depth_tex;
-    stl_types::ShPtr<gleam::rendertarget_t> offscreen;
+    std::shared_ptr<gleam::texture_2d_t>   tex;
+    std::shared_ptr<gleam::texture_2d_t>   depth_tex;
+    std::shared_ptr<gleam::rendertarget_t> offscreen;
 };
 
 void setup_fun(CDRenderer& renderer, SharedData* data)
@@ -138,11 +138,11 @@ i32 coffee_main(i32, cstring_w*)
     cDebug("Installing net profiler");
 #endif
 
-    CString err;
+    std::string err;
 
     return AutoExec<RHI::GLEAM::GLEAM_API, CDRenderer, SharedData>(
-        [](ShPtr<CDRenderer> r,
-           ShPtr<SharedData>,
+        [](std::shared_ptr<CDRenderer> r,
+           std::shared_ptr<SharedData>,
            Display::Properties& visual) {
             visual.flags ^= Properties::Windowed;
             visual.flags |= Properties::WindowedFullScreen;

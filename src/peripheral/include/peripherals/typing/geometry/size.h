@@ -2,7 +2,6 @@
 
 #include <peripherals/libc/types.h>
 #include <peripherals/stl/types.h>
-#include <peripherals/typing/vectors/vectors.h>
 
 namespace typing {
 namespace geometry {
@@ -16,14 +15,12 @@ requires std::is_trivial<T>::value struct size_2d
     using value_type = T;
     static constexpr size_t row_size = 2;
 
+    static constexpr size_t length() { return 2; }
+
     template<typename Self, typename U>
     STATICINLINE Self from_values(U w, U h)
     {
         return Self{static_cast<T>(w), static_cast<T>(h)};
-    }
-    STATICINLINE size_2d from_vector(vectors::tvector<T, 2> const& src)
-    {
-        return {src[0], src[1]};
     }
 
     T w{0}, h{0};
@@ -108,10 +105,7 @@ requires std::is_trivial<T>::value struct size_3d
     using value_type = T;
     static constexpr size_t row_size = 3;
 
-    STATICINLINE size_3d from_vector(vectors::tvector<T, 3> const& src)
-    {
-        return {src[0], src[1], src[2]};
-    }
+    static constexpr size_t length() { return 2; }
 
     template<typename U>
     inline size_3d<U> convert() const

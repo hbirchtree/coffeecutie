@@ -6,6 +6,8 @@ namespace gleam::emulation {
 namespace img {
 inline auto powervr_sgx530()
 {
+    // Renderer string: PowerVR SGX 530
+    // Vendor string:   Imagination Technologies
     return api::load_options_t{
         .api_version = 0x200,
         .api_type    = api_type_t::es,
@@ -490,18 +492,104 @@ inline auto desktop()
         .api_extensions = std::set<std::string>{
             "EXT_color_buffer_float",
             "EXT_color_buffer_half_float",
+            "EXT_texture_compression_bptc",
+            "EXT_texture_compression_rgtc",
             "EXT_texture_filter_anisotropic",
             "WEBGL_compressed_texture_astc",
             "WEBGL_compressed_texture_etc",
             "WEBGL_compressed_texture_etc1",
             "WEBGL_compressed_texture_s3tc",
+            "WEBGL_debug_renderer_info",
             "WEBGL_draw_instanced_base_vertex_base_instance",
+            "WEBGL_lose_context",
             "WEBGL_multi_draw",
             "WEBGL_multi_draw_instanced_base_vertex_base_instance",
         },
         // clang-format on
     };
 }
+inline auto desktop_macos()
+{
+    return api::load_options_t{
+        .api_version = 0x300,
+        .api_type = api_type_t::es,
+        // clang-format off
+        .api_extensions = std::set<std::string>{
+            "EXT_color_buffer_float",
+            "EXT_color_buffer_half_float",
+            "EXT_texture_compression_rgtc",
+            "EXT_texture_filter_anisotropic",
+            "WEBGL_compressed_texture_etc1",
+            "WEBGL_compressed_texture_s3tc",
+            "WEBGL_debug_renderer_info",
+            "WEBGL_draw_instanced_base_vertex_base_instance",
+            "WEBGL_lose_context",
+            "WEBGL_multi_draw",
+            "WEBGL_multi_draw_instanced_base_vertex_base_instance",
+        },
+        // clang-format on
+    };
 }
+} // namespace webgl
+
+namespace amd {
+inline auto rx560_pro()
+{
+    return api::load_options_t{
+        .api_version = 410,
+        .api_type = api_type_t::core,
+        // clang-format off
+        .api_extensions = std::set<std::string>{
+            "GL_APPLE_client_storage",
+            "GL_APPLE_container_object_shareable",
+            "GL_APPLE_flush_render",
+            "GL_APPLE_object_purgeable",
+            "GL_APPLE_rgb_422",
+            "GL_APPLE_row_bytes",
+            "GL_APPLE_texture_range",
+            "GL_ARB_ES2_compatibility",
+            "GL_ARB_blend_func_extended",
+            "GL_ARB_draw_buffers_blend",
+            "GL_ARB_draw_indirect",
+            "GL_ARB_explicit_attrib_location",
+            "GL_ARB_gpu_shader5",
+            "GL_ARB_gpu_shader_fp64",
+            "GL_ARB_instanced_arrays",
+            "GL_ARB_internalformat_query",
+            "GL_ARB_occlusion_query2",
+            "GL_ARB_sample_shading",
+            "GL_ARB_sampler_objects",
+            "GL_ARB_separate_shader_objects",
+            "GL_ARB_shader_bit_encoding",
+            "GL_ARB_shader_subroutine",
+            "GL_ARB_shading_language_include",
+            "GL_ARB_tessellation_shader",
+            "GL_ARB_texture_buffer_object_rgb32",
+            "GL_ARB_texture_cube_map_array",
+            "GL_ARB_texture_gather",
+            "GL_ARB_texture_query_lod",
+            "GL_ARB_texture_rgb10_a2ui",
+            "GL_ARB_texture_storage",
+            "GL_ARB_texture_swizzle",
+            "GL_ARB_timer_query",
+            "GL_ARB_transform_feedback2",
+            "GL_ARB_transform_feedback3",
+            "GL_ARB_vertex_attrib_64bit",
+            "GL_ARB_vertex_type_2_10_10_10_rev",
+            "GL_ARB_viewport_array",
+            "GL_ATI_texture_mirror_once",
+            "GL_EXT_debug_label",
+            "GL_EXT_debug_marker",
+            "GL_EXT_depth_bounds_test",
+            "GL_EXT_texture_compression_s3tc",
+            "GL_EXT_texture_filter_anisotropic",
+            "GL_EXT_texture_mirror_clamp",
+            "GL_EXT_texture_sRGB_decode",
+            "GL_NV_texture_barrier",
+        },
+        // clang-format on
+    };
+}
+} // namespace amd
 
 } // namespace gleam::emulation

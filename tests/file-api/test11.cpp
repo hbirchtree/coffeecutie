@@ -1,7 +1,7 @@
 #include <coffee/core/CApplication>
 #include <coffee/core/CFiles>
 #include <coffee/core/CUnitTesting>
-#include <coffee/core/types/chunk.h>
+#include <peripherals/semantic/chunk.h>
 #include <coffee/core/types/vector_types.h>
 
 using namespace Coffee;
@@ -40,7 +40,7 @@ bool span_vector()
 {
     using SpanT = Span<i32>;
 
-    Vector<i32> test_data;
+    std::vector<i32> test_data;
     test_data.resize(100);
 
     auto wrapper = SpanT::CreateFrom(test_data);
@@ -77,7 +77,7 @@ bool memcpy_variable()
 
 bool memcpy_stl_variable()
 {
-    Vector<byte_t> source;
+    std::vector<byte_t> source;
     Bytes          target = Bytes::Alloc(100);
 
     source.resize(100);
@@ -95,7 +95,7 @@ bool memcpy_stl_variable()
 bool memcpy_to_stl_variable()
 {
     Bytes          source = Bytes::Alloc(100);
-    Vector<byte_t> target;
+    std::vector<byte_t> target;
 
     target.reserve(100);
 
@@ -111,8 +111,8 @@ bool memcpy_to_stl_variable()
 
 bool memcpy_tofrom_stl_variable()
 {
-    Vector<byte_t> target;
-    Vector<byte_t> source;
+    std::vector<byte_t> target;
+    std::vector<byte_t> source;
 
     target.reserve(100);
     source.resize(100);

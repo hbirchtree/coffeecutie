@@ -25,6 +25,12 @@
         inputBus->process(inputEv, &data); \
     }
 
+#if defined(COFFEE_EMSCRIPTEN)
+#define SUPPORTS_WINDOW_ACTIONS 0
+#else
+#define SUPPORTS_WINDOW_ACTIONS 1
+#endif
+
 namespace sdl2 {
 
 struct current_config_t
@@ -68,8 +74,10 @@ static constexpr std::array<std::pair<Uint32, F>, 8> window_flag_mapping = {{
     {SDL_WINDOW_FULLSCREEN_DESKTOP, F::fullscreen_window},
     {SDL_WINDOW_FULLSCREEN, F::fullscreen},
 
+#if SUPPORTS_WINDOW_ACTIONS == 1
     {SDL_WINDOW_MINIMIZED, F::minimized},
     {SDL_WINDOW_MAXIMIZED, F::maximized},
+#endif
     {SDL_WINDOW_RESIZABLE, F::resizable},
     {SDL_WINDOW_BORDERLESS, F::undecorated},
     {SDL_WINDOW_ALLOW_HIGHDPI, F::high_dpi},
@@ -274,9 +282,11 @@ comp_app::size_2d_t Windowing::size() const
     return out;
 }
 
-void Windowing::resize(const comp_app::size_2d_t& newSize)
+void Windowing::resize([[maybe_unused]] const comp_app::size_2d_t& newSize)
 {
+#if SUPPORTS_WINDOW_ACTIONS == 1
     SDL_SetWindowSize(m_window, newSize.w, newSize.h);
+#endif
 }
 
 comp_app::position_t Windowing::position() const
@@ -301,10 +311,12 @@ void Windowing::setState(comp_app::window_flags_t state)
     if(enum_helpers::feval(state & F::visible))
         SDL_ShowWindow(m_window);
 
+#if SUPPORTS_WINDOW_ACTIONS == 1
     if(enum_helpers::feval(state & F::minimized))
         SDL_MinimizeWindow(m_window);
     if(enum_helpers::feval(state & F::maximized))
         SDL_MaximizeWindow(m_window);
+#endif
 
     if(enum_helpers::feval(state & F::fullscreen))
         SDL_SetWindowFullscreen(m_window, SDL_WINDOW_FULLSCREEN);
@@ -598,7 +610,7 @@ void ControllerInput::load(entity_container& c, comp_app::app_error& ec)
         constexpr auto max_val  = std::numeric_limits<libc_types::i16>::max();
         auto           dead_val = max_val - config.deadzone;
 
-        m_axisScale    = max_val / libc_types::scalar(dead_val);
+        m_axisScale    = max_val / libc_types::f32(dead_val);
         m_axisDeadzone = config.deadzone;
     }
 }
@@ -753,9 +765,9 @@ comp_app::text_type_t ControllerInput::name(libc_types::u32 idx) const
         auto name
             = SDL_GameControllerName(C_RCAST<SDL_GameController*>(it->second));
 
-        return name ? name : CString();
+        return name ? name : std::string();
     } else
-        return CString();
+        return std::string();
 }
 
 libc_types::i16 ControllerInput::rescale(libc_types::i16 value) const

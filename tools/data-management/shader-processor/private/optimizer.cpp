@@ -14,19 +14,17 @@ stl_types::result<spv_blob, std::string> perform_optimization(
     spvtools::Optimizer        opt(SPV_ENV_OPENGL_4_0);
     spvtools::OptimizerOptions options;
     options.set_preserve_bindings(true);
+    options.set_preserve_spec_constants(true);
     {
         spvtools::ValidatorOptions validation;
         validation.SetFriendlyNames(true);
         validation.SetUniformBufferStandardLayout(true);
         options.set_validator_options(validation);
     }
-    opt.RegisterPass(spvtools::CreateAggressiveDCEPass())
-        .RegisterPass(spvtools::CreateCCPPass())
-        .RegisterPass(spvtools::CreateDeadBranchElimPass())
-        .RegisterPass(spvtools::CreateDeadVariableEliminationPass())
-        .RegisterPass(spvtools::CreateEliminateDeadConstantPass())
-        .RegisterPass(spvtools::CreateLoopUnrollPass(true))
-        .RegisterPass(spvtools::CreateMergeReturnPass());
+    if(optimizations.opt_level == optimization_level::fast)
+        opt.RegisterPerformancePasses();
+    else if(optimizations.opt_level == optimization_level::size)
+        opt.RegisterSizePasses();
 
     passes::compatibility_options comp_options = {};
     if((out_options.profile == profile_t::core && out_options.version < 430)
@@ -46,8 +44,12 @@ stl_types::result<spv_blob, std::string> perform_optimization(
 
     if(out_options.strip_debug)
     {
+        opt.RegisterPass(spvtools::CreateStripDebugInfoPass());
+    }
+
+    if(out_options.targets_spv)
+    {
         opt.RegisterPass(spvtools::CreateStripNonSemanticInfoPass())
-            .RegisterPass(spvtools::CreateStripDebugInfoPass())
             .RegisterPass(spvtools::CreateStripReflectInfoPass());
     }
 

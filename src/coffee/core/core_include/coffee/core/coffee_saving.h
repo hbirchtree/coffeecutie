@@ -1,13 +1,12 @@
 #pragma once
 
-#include <coffee/core/libc_types.h>
-#include <coffee/core/stl_types.h>
-#include <coffee/core/types/chunk.h>
 #include <peripherals/build/application.h>
+#include <peripherals/libc/types.h>
+#include <peripherals/semantic/chunk.h>
 #include <peripherals/stl/thread_types.h>
+#include <peripherals/stl/types.h>
 
-namespace Coffee {
-namespace Store {
+namespace Coffee::Store {
 
 /* Save functionality!
  * All we are doing is dumping the in-memory structures to disk.
@@ -16,7 +15,7 @@ namespace Store {
 struct SaveApi
 {
   public:
-    using slot_count_t = u16;
+    using slot_count_t = libc_types::u16;
 
     virtual ~SaveApi();
     /*!
@@ -24,7 +23,7 @@ struct SaveApi
      * Some systems (eg. Steam Cloud) will restrict the amount of storage
      * available. \return The total amount of memory available
      */
-    virtual u64 availableMemory() = 0;
+    virtual libc_types::u64 availableMemory() = 0;
     /*!
      * \brief Available save slots in the system, if applicable
      * \return The total amount of save slots available
@@ -37,14 +36,18 @@ struct SaveApi
      * can be null to retrieve size preemptively) \param data_size Target data
      * size \param slot If applicable, which data slot
      */
-    virtual Future<szptr> restore(Bytes&& data, slot_count_t slot = 0) = 0;
+    virtual std::future<size_t> restore(
+        semantic::Bytes&& data, slot_count_t slot = 0)
+        = 0;
     /*!
      * \brief Save memory to storage
      * \param data_ptr Source data pointer
      * \param data_size Source data size
      * \param slot If applicable, which data slot
      */
-    virtual Future<szptr> save(Bytes const& data, slot_count_t slot = 0) = 0;
+    virtual std::future<size_t> save(
+        semantic::Bytes const& data, slot_count_t slot = 0)
+        = 0;
 };
 
 struct FilesystemApi : SaveApi
@@ -53,31 +56,31 @@ struct FilesystemApi : SaveApi
 
     virtual ~FilesystemApi();
 
-    u64                availableMemory();
-    slot_count_t       availableSlots();
+    libc_types::u64 availableMemory();
+    slot_count_t    availableSlots();
 
-    Future<szptr> restore(Bytes&& data, slot_count_t slot = 0);
-    Future<szptr> save(Bytes const& data, slot_count_t slot = 0);
+    std::future<size_t> restore(semantic::Bytes&& data, slot_count_t slot = 0);
+    std::future<size_t> save(
+        semantic::Bytes const& data, slot_count_t slot = 0);
 
     AppData const& m_app;
 
     FilesystemApi();
     FilesystemApi(AppData const& app);
 
-    friend ShPtr<SaveApi> CreateDefaultSave();
-    friend ShPtr<SaveApi> CreateDefaultSave(AppData const&);
+    friend std::shared_ptr<SaveApi> CreateDefaultSave();
+    friend std::shared_ptr<SaveApi> CreateDefaultSave(AppData const&);
 };
 
-FORCEDINLINE ShPtr<SaveApi> CreateDefaultSave()
+FORCEDINLINE std::shared_ptr<SaveApi> CreateDefaultSave()
 {
-    return MkShared<FilesystemApi>();
+    return std::make_shared<FilesystemApi>();
 }
 
-FORCEDINLINE ShPtr<SaveApi> CreateDefaultSave(
+FORCEDINLINE std::shared_ptr<SaveApi> CreateDefaultSave(
     platform::info::AppData const& app)
 {
-    return MkShared<FilesystemApi>(app);
+    return std::make_shared<FilesystemApi>(app);
 }
 
-} // namespace Store
-} // namespace Coffee
+} // namespace Coffee::Store

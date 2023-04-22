@@ -527,9 +527,8 @@ FORCEDINLINE std::string encode(semantic::Span<T> const& data_)
 namespace hex {
 
 using namespace ::libc_types;
-using ::stl_types::String;
 
-FORCEDINLINE String encode(String const& from)
+FORCEDINLINE std::string encode(std::string const& from)
 {
     return stl_types::str::print::hexdump(
         semantic::mem_chunk<const char>::ofContainer(from), false);

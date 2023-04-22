@@ -9,7 +9,7 @@
 
 extern "C" GpuQueryFunction* GetGpuQuery();
 
-bool HasExtension(C_UNUSED(Coffee::CString const& ext_name))
+bool HasExtension(C_UNUSED(Coffee::std::string const& ext_name))
 {
     using namespace Coffee;
     using namespace CGL;

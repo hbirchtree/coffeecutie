@@ -5,9 +5,9 @@
 #include <coffee/asio/tcp_socket.h>
 #endif
 
-#include <coffee/core/types/chunk.h>
 #include <coffee/core/url.h>
 #include <coffee/interfaces/byte_provider.h>
+#include <peripherals/semantic/chunk.h>
 #include <peripherals/semantic/enum/http_access.h>
 
 namespace net {

@@ -6,7 +6,7 @@
 #include <coffee/core/coffee_saving.h>
 #include <coffee/core/platform_data.h>
 #include <coffee/core/task_queue/task.h>
-#include <coffee/core/types/chunk.h>
+#include <peripherals/semantic/chunk.h>
 #include <coffee/core/url.h>
 
 #include <coffee/image/image_coder_system.h>
@@ -103,7 +103,7 @@ struct TransformContainer : compo::alloc::VectorContainer<TransformTag>
 
 struct MatrixContainer : compo::alloc::VectorBaseContainer<MatrixTag>
 {
-    Vector<Matf4> m_matrices;
+    std::vector<Matf4> m_matrices;
 
     virtual void register_entity(u64 id)
     {
@@ -305,7 +305,7 @@ struct RendererState
     }
 
     // State that can be loaded from disk
-    ShPtr<Store::SaveApi> saving;
+    std::shared_ptr<Store::SaveApi> saving;
     rq::runtime_queue*    online_queue;
 
     gleam::api gfx;
@@ -606,12 +606,12 @@ void SetupRendering(
     {
         using Components::VisitorFlags;
 
-        e.register_component<TransformTag>(MkUq<TransformContainer>());
-        e.register_component<MatrixTag>(MkUq<MatrixContainer>());
+        e.register_component<TransformTag>(std::make_unique<TransformContainer>());
+        e.register_component<MatrixTag>(std::make_unique<MatrixContainer>());
 
-        e.register_system(MkUq<TransformVisitor>());
-        e.register_system(MkUq<FloorVisitor>());
-        e.register_system(MkUq<BaseItemVisitor>());
+        e.register_system(std::make_unique<TransformVisitor>());
+        e.register_system(std::make_unique<FloorVisitor>());
+        e.register_system(std::make_unique<BaseItemVisitor>());
 
         e.register_subsystem_inplace<StateTag>();
         e.register_subsystem_inplace<comp_app::FrameTag>();

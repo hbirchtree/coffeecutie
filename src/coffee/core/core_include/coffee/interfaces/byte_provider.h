@@ -42,7 +42,7 @@ struct ByteProvider
 
 struct DataTimestamp
 {
-    operator stl_types::Chrono::steady_clock::time_point() const
+    operator std::chrono::steady_clock::time_point() const
     {
         return {};
     }

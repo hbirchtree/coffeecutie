@@ -19,11 +19,11 @@ struct Context
     void* gxFifo = nullptr;
 };
 
-static stl_types::ShPtr<Context> currentContext;
+static std::shared_ptr<Context> currentContext;
 
 void initialize()
 {
-    currentContext = stl_types::MkShared<Context>();
+    currentContext = std::make_shared<Context>();
 
     VIDEO_Init();
 
@@ -313,7 +313,7 @@ void Pipeline::bind()
 {
     for(auto const& shader : shaders)
     {
-        stl_types::CString variant = shader.second->variant
+        std::string variant = shader.second->variant
                 ? shader.second->variant
                 : "nullptr";
 

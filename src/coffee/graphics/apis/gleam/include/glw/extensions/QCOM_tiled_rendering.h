@@ -45,7 +45,7 @@ requires(semantic::concepts::Vector<vec_2_u32, u32, 2>&&
         GLW_FPTR_CHECK(StartTilingQCOM)
     }
     glStartTilingQCOM(
-        x.x(), x.y(), width[0], width[1], static_cast<GLenum>(preserveMask));
+        x[0], x[1], width[0], width[1], static_cast<GLenum>(preserveMask));
     detail::error_check("StartTilingQCOM"sv);
 }
 

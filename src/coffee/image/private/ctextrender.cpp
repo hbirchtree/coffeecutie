@@ -19,7 +19,7 @@ StbFontRenderer::FontPtr StbFontRenderer::LoadFontConfig(Bytes&& p)
     if(!p)
         Throw(undefined_behavior("failed to load font data"));
 
-    auto data = MkUqDST<FontData, DataDeleter>();
+    auto data = make_unique_with_destructor<FontData, DataDeleter>();
 
     if(!stbtt_InitFont(&data->info, p.data, 0))
         return FontPtr();

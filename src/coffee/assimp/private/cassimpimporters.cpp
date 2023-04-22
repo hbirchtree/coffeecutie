@@ -27,18 +27,18 @@ void Importer_deleter::operator()(::Assimp::Importer* imp)
     delete imp;
 }
 
-bool LoadScene(UqPtr<AssimpData>& target, const Bytes& source, cstring hint)
+bool LoadScene(std::unique_ptr<AssimpData>& target, const Bytes& source, cstring hint)
 {
     auto& data = target;
 
-    data = MkUq<AssimpData>();
+    data = std::make_unique<AssimpData>();
 
     u32 aiFlags = aiProcess_CalcTangentSpace | aiProcess_Triangulate |
                   aiProcess_OptimizeMeshes | aiProcess_SortByPType |
                   aiProcess_ValidateDataStructure |
                   aiProcess_RemoveRedundantMaterials | aiProcess_FindInstances;
 
-    data->importer = MkUqDST<::Assimp::Importer, Importer_deleter>();
+    data->importer = make_unique_with_destructor<::Assimp::Importer, Importer_deleter>();
 
     data->scene = data->importer->ReadFileFromMemory(
         source.data, source.size, aiFlags, hint);
@@ -54,7 +54,7 @@ bool LoadScene(UqPtr<AssimpData>& target, const Bytes& source, cstring hint)
 }
 
 bool GetSceneObjects(
-    const UqPtr<AssimpData>& scene, Vector<ObjectDesc>& objects)
+    const std::unique_ptr<AssimpData>& scene, Vector<ObjectDesc>& objects)
 {
     if(!scene || !scene->scene)
         return false;
@@ -127,7 +127,7 @@ static void get_scene_nodes(
     }
 }
 
-bool GetSceneRoot(UqPtr<AssimpData> const& scene, Node** root, NodeList& nodes)
+bool GetSceneRoot(std::unique_ptr<AssimpData> const& scene, Node** root, NodeList& nodes)
 {
     if(!scene || !scene->scene)
         return false;
@@ -144,7 +144,7 @@ bool GetSceneRoot(UqPtr<AssimpData> const& scene, Node** root, NodeList& nodes)
 }
 
 bool GetRawSceneRoot(
-    const UqPtr<AssimpData>& scene, Node** root, NodeList& nodes)
+    const std::unique_ptr<AssimpData>& scene, Node** root, NodeList& nodes)
 {
     if(!scene || !scene->scene)
         return false;
@@ -160,14 +160,14 @@ bool GetRawSceneRoot(
     return nodes.size() > 0;
 }
 
-static aiMesh* get_mesh(UqPtr<AssimpData> const& scene, i32 node)
+static aiMesh* get_mesh(std::unique_ptr<AssimpData> const& scene, i32 node)
 {
     if(node < 0 || node >= C_CAST<i32>(scene->scene->mNumMeshes))
         return nullptr;
     return scene->scene->mMeshes[node];
 }
 
-bool GetMeshData(const UqPtr<AssimpData>& scene, i32 node, Mesh& output_mesh)
+bool GetMeshData(const std::unique_ptr<AssimpData>& scene, i32 node, Mesh& output_mesh)
 {
     auto mesh = get_mesh(scene, node);
 
@@ -231,7 +231,7 @@ bool GetMeshData(const UqPtr<AssimpData>& scene, i32 node, Mesh& output_mesh)
     return true;
 }
 
-bool GetMeshCount(const UqPtr<AssimpData>& scene, i32& count)
+bool GetMeshCount(const std::unique_ptr<AssimpData>& scene, i32& count)
 {
     if(!scene || !scene->scene)
         return false;

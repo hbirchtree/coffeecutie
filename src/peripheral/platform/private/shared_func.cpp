@@ -8,6 +8,7 @@
 #include <peripherals/stl/string_casting.h>
 
 namespace platform::stacktrace {
+using namespace std::literals::string_literals;
 
 void print_frames(
     stacktrace&&                       frames,
@@ -20,23 +21,23 @@ void print_frames(
         // clang-format off
         detail::print(
             print,
-            stl_types::String(" >> ") +
-            "exec(" + frame.name() + ") [0x????] " +
+            " >> "s +
+            "exec("s + frame.name() + ") [0x????] "s +
             (frame.source_file().empty() ?
                 std::string() :
-                frame.source_file() + ":" + std::to_string(frame.source_line()))
+                frame.source_file() + ":"s + std::to_string(frame.source_line()))
         );
         // clang-format on
     }
 }
 
 void print_exception(
-    stl_types::Pair<std::string, stacktrace>&& exception,
-    typing::logging::LogInterfaceBasic         print,
-    typing::logging::StackWriterEx             stack_writer)
+    std::pair<std::string, stacktrace>&& exception,
+    typing::logging::LogInterfaceBasic   print,
+    typing::logging::StackWriterEx       stack_writer)
 {
     detail::print(print, "exception encountered:");
-    detail::print(print, " >> " + exception.first);
+    detail::print(print, " >> "s + exception.first);
 
     print_frames(std::move(exception.second), print, stack_writer);
 }

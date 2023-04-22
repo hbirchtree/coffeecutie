@@ -464,7 +464,7 @@ struct MeshLoader
         };
 
         Vector<NodeData> nodes;
-        Vector<CString>  stringStore;
+        Vector<std::string>  stringStore;
         u64              rootNode;
 
         szptr size()

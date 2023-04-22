@@ -1,6 +1,6 @@
 #pragma once
 
-#include "quaternion.h"
+#include "vector_types.h"
 
 namespace typing {
 namespace vectors {

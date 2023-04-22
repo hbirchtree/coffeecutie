@@ -5,6 +5,8 @@
 #include "selected_version.h"
 #include <coffee/graphics/apis/gleam/rhi_emulation.h>
 
+#include "touch_overlay.h"
+
 #if defined(FEATURE_ENABLE_ASIO)
 #include <coffee/asio/net_profiling.h>
 #endif
@@ -75,10 +77,12 @@ static void reinit_map(
     auto& bsps    = e.subsystem_cast<BSPCache<halo_version>>();
     auto& models  = e.subsystem_cast<ModelCache<halo_version>>();
     auto& shaders = e.subsystem_cast<ShaderCache<halo_version>>();
+    auto& fonts   = e.subsystem_cast<FontCache<halo_version>>();
 
     /* clear entities, evict cache entries */
-    e.remove_entity_if(
-        [](compo::Entity const& e) { return any_flag_of(e.tags, ObjectGC); });
+    e.remove_entity_if([](compo::Entity const& e) {
+        return stl_types::any_flag_of(e.tags, ObjectGC);
+    });
 
     data.map_container = blam::map_container<halo_version>::from_bytes(
                              *files->map_file, halo_version_v)
@@ -88,19 +92,32 @@ static void reinit_map(
     files->map_magic = data.map_container.magic;
     data.tags_view   = std::make_unique<blam::tag_index_view<halo_version>>(
         std::ref(data.map_container));
-    data.scenario = data.map_container.tags->scenario(data.map_container.map)
-                        .value()
-                        ->data<blam::scn::scenario<halo_version>>(
-                            data.map_container.magic)
-                        .value();
+    data.scenario
+        = data.map_container.tags
+              ->scenario(data.map_container.map, data.map_container.magic)
+              .value();
 
     bitmaps.load_from(data.map_container, files->bitm_magic);
     bsps.load_from(data.map_container);
     models.load_from(data.map_container);
     shaders.load_from(data.map_container);
+    fonts.load_from(data.map_container);
 
     load_scenario_bsp(e, data);
-    load_scenario_scenery(e, data);
+    if constexpr(std::is_same_v<halo_version, blam::pc_version_t>)
+        load_scenario_scenery(e, data);
+
+    // For debugging: go through all the bitmaps
+    if(false)
+        for(blam::tag_t const& tag : *data.tags_view)
+        {
+            if(!tag.matches(blam::tag_class_t::bitm))
+                continue;
+            cDebug(
+                "Loading bitmap {0}",
+                tag.to_name().to_string(data.map_container.magic));
+            bitmaps.predict(tag.as_ref(), 0);
+        }
 
     create_camera(
         e, data.scenario->mp.player_spawns.data(files->map_magic).value());
@@ -138,7 +155,7 @@ i32 blam_main(i32, cstring_w*)
 
 #if defined(SELECT_API_OPENGL)
     auto& glConfig        = loader.config<comp_app::GLConfig>();
-    glConfig.swapInterval = 1;
+    glConfig.swapInterval = 0;
     if constexpr(
         compile_info::debug_mode && !compile_info::platform::is_emscripten)
         glConfig.profile |= comp_app::GLConfig::Debug;
@@ -157,15 +174,15 @@ i32 blam_main(i32, cstring_w*)
            time_point const&) {
             ProfContext _(__FUNCTION__);
 
-            auto& gfx = e.register_subsystem_inplace<gfx::system>();
-            auto  load_error
-                = gfx.load(/*gfx::emulation::qcom::adreno_320()*/
-//                                       {
-//                                           .api_version = 0x410,
-//                                           .api_type    =
-//                                           gleam::api_type_t::core,
-//                                       }
-                );
+            auto& gfx        = e.register_subsystem_inplace<gfx::system>();
+            auto  load_error = gfx.load(
+                //
+                //                gfx::emulation::webgl::desktop()
+                // gfx::emulation::qcom::adreno_320()
+                //                 gfx::emulation::arm::mali_g710()
+                // gfx::emulation::amd::rx560_pro()
+                //
+            );
 
             if(load_error)
             {
@@ -197,6 +214,9 @@ i32 blam_main(i32, cstring_w*)
             e.register_component_inplace<MultiplayerSpawn>();
             e.register_component_inplace<ShaderData>();
             e.register_component_inplace<MeshTrackingData>();
+            e.register_component_inplace<DebugDraw>();
+            e.register_component_inplace<TriggerVolume>();
+            e.register_component_inplace<Light>();
 
             e.register_subsystem_inplace<comp_app::FrameTag>();
 
@@ -215,14 +235,11 @@ i32 blam_main(i32, cstring_w*)
                 auto& shader_cache
                     = e.register_subsystem_inplace<ShaderCache<halo_version>>(
                         std::ref(bitm_cache));
-                auto& model_cache
-                    = e.register_subsystem_inplace<ModelCache<halo_version>>(
-                        std::ref(bitm_cache), std::ref(shader_cache), &gfx);
+                e.register_subsystem_inplace<ModelCache<halo_version>>(
+                    std::ref(bitm_cache), std::ref(shader_cache), &gfx);
                 e.register_subsystem_inplace<BSPCache<halo_version>>(
-                    std::ref(bitm_cache),
-                    std::ref(shader_cache),
-                    std::ref(model_cache));
-                //                auto& model_cache =
+                    std::ref(bitm_cache), std::ref(shader_cache));
+                e.register_subsystem_inplace<FontCache<halo_version>>(&gfx);
             }
 
             //            auto& magic = data.map_container.magic;
@@ -236,6 +253,7 @@ i32 blam_main(i32, cstring_w*)
                 window->setName("Blam!");
             }
 
+            create_touch_overlay(e);
             create_resources(e);
             create_shaders(e);
             set_resource_labels(e);
@@ -251,8 +269,10 @@ i32 blam_main(i32, cstring_w*)
                 || compile_info::platform::is_emscripten)
             {
 #if defined(COFFEE_ANDROID)
-                map_filename = MkUrl("", RSCA::AssetFile);
-                map_dir      = "."_asset;
+                map_filename = MkUrl(
+                    android::intent().extra("map").value_or("beavercreek.map"),
+                    RSCA::AssetFile);
+                map_dir = "."_asset;
 #else
                 map_filename = "beavercreek.map"_asset;
                 map_dir      = "."_asset;
@@ -281,27 +301,28 @@ i32 blam_main(i32, cstring_w*)
             auto& camera = e.subsystem_cast<BlamCamera>();
 
             /* Update camera position */
-            camera.std_camera->tick();
+            camera.std_camera->tick(t);
             if(e.service<comp_app::ControllerInput>())
                 camera.controller_camera(
                     e.service<comp_app::ControllerInput>()->state(0), t);
             using namespace typing::vectors::scene;
-            camera.camera.aspect = 16.f / 9.f;
-            //                =
-            //                e.service<comp_app::Windowing>()->size().aspect();
-            //            camera.camera.aspect = 1.6f;
-            camera.camera.zVals = {0.00000001f, 500.f};
+            camera.camera.aspect
+                = e.service<comp_app::Windowing>()->size().aspect();
+            camera.camera.zVals = {1500.f, 0.001f};
 
-            camera.camera_matrix
-                = GenPerspective(camera.camera)
-                  /* * GenTransform(camera.camera)*/
-                  //
-                  * typing::vectors::matrixify(typing::vectors::normalize_quat(
-                        camera.camera.rotation))
-                  * typing::vectors::scale(Matf4(), Vecf3(10))
-                  * typing::vectors::translation(Matf4(), camera.camera.position)
-                //
-                ;
+            Matf4 view_matrix = glm::translate(
+                glm::scale(glm::identity<glm::mat4>(), glm::vec3(1))
+                    * glm::mat4_cast(camera.camera.rotation),
+                camera.camera.position);
+
+            camera.camera_matrix = GenPerspective(camera.camera);
+            camera.camera_matrix[2][2] = 0.f;
+            camera.camera_matrix[2][3] = -1.f;
+            camera.camera_matrix[3][2] = 0.001f;
+            camera.camera_matrix = camera.camera_matrix * view_matrix;
+            //            camera.rotation_matrix =
+            //            glm::mat3_cast(camera.camera.rotation);
+            camera.rotation_matrix = glm::mat3_cast(camera.camera.rotation);
         },
         [](EntityContainer&, BlamData<halo_version>&, time_point const&) {
 

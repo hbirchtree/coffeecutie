@@ -4,8 +4,7 @@
 #include <peripherals/typing/geometry/range.h>
 #include <peripherals/typing/geometry/rect.h>
 
-#include "quaternion.h"
-#include "vectors.h"
+#include <peripherals/typing/vectors/vector_types.h>
 
 namespace typing {
 namespace vectors {

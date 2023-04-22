@@ -1,18 +1,18 @@
 #pragma once
 
 #include <coffee/core/libc_types.h>
-#include <coffee/core/stl_types.h>
 #include <coffee/core/types/application_main.h>
 #include <peripherals/build/application.h>
 #include <peripherals/identify/compiler/function_export.h>
+#include <peripherals/stl/types.h>
 
 namespace Coffee {
 
 /*!
  * \brief This function handles initial program startup
  */
-COFFEE_APP_FUNC i32 CoffeeMain(
-    MainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags = 0);
+COFFEE_APP_FUNC i32
+CoffeeMain(MainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags = 0);
 
 /*!
  * \brief Initializes process state before running. Mainly core dumping.

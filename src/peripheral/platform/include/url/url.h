@@ -33,7 +33,7 @@ struct Path
 
     Path dirname() const;
 
-    Vector<Path> components() const;
+    std::vector<Path> components() const;
 
     Path operator/(std::string_view const& component) const;
     Path operator/(Path const& path) const;
@@ -106,7 +106,7 @@ struct Url
         return *this + path;
     }
 
-    FORCEDINLINE Url operator/(String const& path) const
+    FORCEDINLINE Url operator/(std::string const& path) const
     {
         return *this + Path(path);
     }
@@ -127,7 +127,7 @@ struct Url
         return internUrl.c_str();
     }
 
-    explicit operator String() const
+    explicit operator std::string() const
     {
         return internUrl;
     }

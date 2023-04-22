@@ -184,7 +184,7 @@ function native_build()
         echo "::info::Installing stdc++ libs"
         mkdir -p lib/
         for f in ${TOOLCHAIN_SYSROOT}/lib/libstdc++.so.6 ${TOOLCHAIN_SYSROOT}/lib/libssp.so.0 ${TOOLCHAIN_SYSROOT}/usr/lib/libbacktrace.so.0; do
-            rm "lib/$(basename $f)"
+            rm -f "lib/$(basename $f)"
             ln -s "$f" lib/
         done
     fi

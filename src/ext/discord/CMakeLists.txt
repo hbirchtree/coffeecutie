@@ -1,6 +1,3 @@
-set ( BUILD_EXAMPLES OFF )
-set ( ENABLE_IO_THREAD OFF )
-
 find_package ( discord-rpc REQUIRED )
 
 coffee_library (

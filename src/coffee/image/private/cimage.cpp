@@ -1,6 +1,7 @@
-#include <coffee/core/CProfiling>
-#include <coffee/core/types/chunk.h>
 #include <coffee/image/cimage.h>
+
+#include <coffee/core/CProfiling>
+#include <peripherals/semantic/chunk.h>
 
 #include <coffee/core/CDebug>
 
@@ -13,12 +14,15 @@
 
 #define STB_ABI "STB::"
 
+using namespace semantic;
+using namespace typing::pixels;
+
 namespace Coffee {
 namespace stb {
 
 void _stbi_write_data(void* ctxt, void* data, int size)
 {
-    auto* target = C_RCAST<stl_types::Vector<char>*>(ctxt);
+    auto* target = C_RCAST<std::vector<char>*>(ctxt);
 
     semantic::Span<char> source(C_RCAST<char*>(data), size);
     std::copy(source.begin(), source.end(), std::back_inserter(*target));
@@ -80,8 +84,8 @@ static void NearestNeighborResize(
     const auto pixel_ratio_w = srcSize.w / outSize.h;
     const auto pixel_ratio_h = srcSize.h / outSize.h;
 
-    for(auto y : Range<>(outSize.h))
-        for(auto x : Range<>(outSize.w))
+    for(auto y : stl_types::Range<>(outSize.h))
+        for(auto x : stl_types::Range<>(outSize.w))
         {
             auto src_x = x * pixel_ratio_w;
             auto src_y = y * pixel_ratio_h;
@@ -103,9 +107,9 @@ bool ResizeImage(
 
 template<>
 bool ResizeImage(
-    image<scalar> const& img,
+    image<f32> const& img,
     Size const&          target,
-    image<scalar>&       data,
+    image<f32>&       data,
     int                  req_comp,
     stb_error&           ec)
 {
@@ -192,7 +196,7 @@ bool LoadData(
     }
 
     target->bpp        = scomp;
-    target->data_owner = mem_chunk<libc_types::u8>::ofBytes(
+    target->data_owner = semantic::mem_chunk<libc_types::u8>::ofBytes(
         target->data, C_FCAST<szptr>(target->size.area() * target->bpp));
 
     if(!target->data)
@@ -293,7 +297,7 @@ bool LoadData(
     return stb_templates::LoadData(target, src, ec, comp);
 }
 bool LoadData(
-    image<scalar>* target, BytesConst const& src, stb_error& ec, PixCmp comp)
+    image<f32>* target, BytesConst const& src, stb_error& ec, PixCmp comp)
 {
     return stb_templates::LoadData(target, src, ec, comp);
 }
@@ -302,7 +306,7 @@ image<u8> Resize(
 {
     return stb_templates::Resize(img, target, channels, hint);
 }
-image<scalar> Resize(image<scalar> const& img, const Size& target, int channels)
+image<f32> Resize(image<f32> const& img, const Size& target, int channels)
 {
     return stb_templates::Resize(img, target, channels, ImageHint::Undefined);
 }
@@ -387,12 +391,12 @@ image_float ToFloat(const image_const& image)
 {
     image_float out = image_float::From(
         Bytes::withSize(
-            C_FCAST<szptr>(image.size.area() * image.bpp) * sizeof(scalar)),
+            C_FCAST<szptr>(image.size.area() * image.bpp) * sizeof(f32)),
         image.size,
         image.bpp);
 
     using source_type = u8;
-    using target_type = scalar;
+    using target_type = f32;
 
     source_type const* src_ptr = image.data;
     target_type*       out_ptr = out.data;

@@ -1,10 +1,12 @@
 #pragma once
 
 #ifdef GL_IMG_texture_compression_pvrtc2
+#include "../enums/InternalFormat.h"
+#include "../enums/SizedInternalFormat.h"
 namespace gl::img::texture_compression_pvrtc2 {
+using gl::group::internal_format;
+using gl::group::sized_internal_format;
 namespace values {
-constexpr libc_types::u32 compressed_rgba_pvrtc_2bppv2 = 0x9137;
-constexpr libc_types::u32 compressed_rgba_pvrtc_4bppv2 = 0x9138;
 } // namespace values
 } // namespace gl::img::texture_compression_pvrtc2
 #endif // GL_IMG_texture_compression_pvrtc2

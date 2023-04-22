@@ -3,9 +3,9 @@
 #include <coffee/comp_app/gl_config.h>
 #include <coffee/comp_app/subsystems.h>
 #include <coffee/core/CProfiling>
+#include <glw/texture_formats.h>
 #include <peripherals/error/result.h>
 #include <peripherals/stl/string_casting.h>
-#include <peripherals/typing/enum/pixels/format_transform.h>
 
 #include <coffee/core/debug/formatting.h>
 
@@ -91,7 +91,8 @@ void DisplayHandle::load(entity_container& e, comp_app::app_error& ec)
     auto& config  = comp_app::AppLoader::config<comp_app::GLConfig>(e);
     auto& appInfo = *e.service<comp_app::AppInfo>();
 
-    m_data = stl_types::MkUqDST<detail::EGLData, detail::EGLDataDeleter>();
+    m_data = stl_types::
+        make_unique_with_destructor<detail::EGLData, detail::EGLDataDeleter>();
 
     m_data->display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
 
@@ -187,8 +188,8 @@ detail::EGLData& DisplayHandle::context()
 static stl_types::result<EGLConfig, std::string> eglTryConfig(
     EGLDisplay                                         display,
     comp_app::GLConfig const&                          config,
-    typing::pixels::properties::layout_t const&        color,
-    typing::pixels::properties::layout_t const&        depth,
+    gl::tex::texture_format_t::bit_layout_t const&     color,
+    gl::tex::texture_format_t::bit_layout_t const&     depth,
     [[maybe_unused]] std::set<std::string_view> const& extensions)
 {
     using Profile = comp_app::GLConfig::Profile;
@@ -230,7 +231,7 @@ static stl_types::result<EGLConfig, std::string> eglTryConfig(
 #endif
 
 #if defined(EGL_VERSION_1_5) && defined(EGL_EXT_pixel_format_float)
-    if(properties::get<properties::is_floating_point>(config.framebufferFmt))
+    if(gl::tex::format_of(config.framebufferFmt).raw_format->floating_point)
     {
         surfaceConfig.push_back(
             {EGL_COLOR_COMPONENT_TYPE_EXT, EGL_COLOR_COMPONENT_TYPE_FLOAT_EXT});
@@ -316,15 +317,20 @@ static attrib_list create_context_attribs(
     return attribs;
 }
 
+inline auto layout_of(comp_app::PixFmt fmt)
+{
+    return gl::tex::format_of(fmt).raw_format->bit_layout;
+}
+
 void GraphicsContext::load(entity_container& e, comp_app::app_error& ec)
 {
     using namespace typing::pixels;
 
-    auto&          config = comp_app::AppLoader::config<comp_app::GLConfig>(e);
-    DisplayHandle& handle = *e.service<DisplayHandle>();
-    auto color   = properties::get<properties::layout>(config.framebufferFmt);
-    auto depth   = properties::get<properties::layout>(config.depthFmt);
-    auto display = handle.context().display;
+    auto&          config  = comp_app::AppLoader::config<comp_app::GLConfig>(e);
+    DisplayHandle& handle  = *e.service<DisplayHandle>();
+    auto           color   = layout_of(config.framebufferFmt);
+    auto           depth   = layout_of(config.depthFmt);
+    auto           display = handle.context().display;
 
     std::set<std::string_view> extensions;
     if(auto display_extensions = eglQueryString(display, EGL_EXTENSIONS))
@@ -357,7 +363,7 @@ void GraphicsContext::load(entity_container& e, comp_app::app_error& ec)
     }
 
 #if defined(EGL_VERSION_1_5) && defined(EGL_EXT_pixel_format_float)
-    if(properties::get<properties::is_floating_point>(config.framebufferFmt))
+    if(gl::tex::format_of(config.framebufferFmt).raw_format->floating_point)
     {
         if(extensions.contains("EGL_EXT_pixel_format_float"))
         {
@@ -366,7 +372,7 @@ void GraphicsContext::load(entity_container& e, comp_app::app_error& ec)
         {
             /* Unsupported */
             config.framebufferFmt = PixFmt::RGB565;
-            color = properties::get<properties::layout>(config.framebufferFmt);
+            color                 = layout_of(config.framebufferFmt);
         }
     }
 #endif

@@ -137,7 +137,7 @@ requires(semantic::concepts::Vector<vec_4_i32, i32, 4>)
         GLW_FPTR_CHECK(ProgramEnvParameterI4iNV)
     }
     glProgramEnvParameterI4iNV(
-        static_cast<GLenum>(target), index, x.x(), x.y(), x.z(), x.w());
+        static_cast<GLenum>(target), index, x[0], x[1], x[2], x[3]);
     detail::error_check("ProgramEnvParameterI4iNV"sv);
 }
 
@@ -189,7 +189,7 @@ requires(semantic::concepts::Vector<vec_4_u32, u32, 4>)
         GLW_FPTR_CHECK(ProgramEnvParameterI4uiNV)
     }
     glProgramEnvParameterI4uiNV(
-        static_cast<GLenum>(target), index, x.x(), x.y(), x.z(), x.w());
+        static_cast<GLenum>(target), index, x[0], x[1], x[2], x[3]);
     detail::error_check("ProgramEnvParameterI4uiNV"sv);
 }
 
@@ -299,7 +299,7 @@ requires(semantic::concepts::Vector<vec_4_i32, i32, 4>)
         GLW_FPTR_CHECK(ProgramLocalParameterI4iNV)
     }
     glProgramLocalParameterI4iNV(
-        static_cast<GLenum>(target), index, x.x(), x.y(), x.z(), x.w());
+        static_cast<GLenum>(target), index, x[0], x[1], x[2], x[3]);
     detail::error_check("ProgramLocalParameterI4iNV"sv);
 }
 
@@ -351,7 +351,7 @@ requires(semantic::concepts::Vector<vec_4_u32, u32, 4>)
         GLW_FPTR_CHECK(ProgramLocalParameterI4uiNV)
     }
     glProgramLocalParameterI4uiNV(
-        static_cast<GLenum>(target), index, x.x(), x.y(), x.z(), x.w());
+        static_cast<GLenum>(target), index, x[0], x[1], x[2], x[3]);
     detail::error_check("ProgramLocalParameterI4uiNV"sv);
 }
 

@@ -35,7 +35,7 @@ namespace Coffee {
 struct UrlResolver
 {
     using SingleResolver = Function<Url(Url const&)>;
-    using MultiResolver  = Function<Url(Url const&, CString const&)>;
+    using MultiResolver  = Function<Url(Url const&, std::string const&)>;
 
     /*!
      * \brief Basic resolver for changing extensions and etc.
@@ -51,7 +51,7 @@ struct UrlResolver
         return url;
     }
 
-    static Url DefaultMulti(Url const& path, CString const& ext)
+    static Url DefaultMulti(Url const& path, std::string const& ext)
     {
         using namespace platform::url;
 
@@ -67,13 +67,11 @@ struct UrlResolver
     }
 };
 
-template<
-    typename Resource,
-    typename implements<semantic::ByteProvider, Resource>::type* = nullptr>
+template<typename Resource>
 struct ResourceResolver
 {
-    using Resolver  = Function<Resource(Url const&)>;
-    using FileQuery = Function<bool(Path const&, Vector<Url>&)>;
+    using Resolver  = std::function<Resource(Url const&)>;
+    using FileQuery = std::function<bool(Path const&, std::vector<Url>&)>;
 
     Resolver  resolveResource;
     FileQuery resourceQuery;
@@ -96,7 +94,7 @@ struct ResourceResolver
 struct BytesResolver
 {
     using Resolver    = Function<Bytes(Url const&)>;
-    using ExtResolver = Function<Bytes(Url const&, CString const&)>;
+    using ExtResolver = Function<Bytes(Url const&, std::string const&)>;
 
     Resolver    resolver;
     ExtResolver extResolver;
@@ -107,7 +105,7 @@ struct BytesResolver
         return {[rr, ur](Url const& url) {
                     return rr.resolveResource(ur.resolve(url));
                 },
-                [rr, ur](Url const& url, CString const& ext) {
+                [rr, ur](Url const& url, std::string const& ext) {
                     return rr.resolveResource(ur.multiplexResolve(url, ext));
                 }};
     }

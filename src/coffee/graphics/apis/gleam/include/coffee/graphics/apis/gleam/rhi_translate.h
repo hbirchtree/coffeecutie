@@ -35,10 +35,10 @@ inline texture_unit operator+(texture_unit base_unit, libc_types::u32 index)
 
 namespace gleam::convert {
 namespace mappings {
-using stl_types::Array;
-using stl_types::Pair;
+using std::array;
+using std::pair;
 
-constexpr Array<Pair<textures::type, group::texture_target>, 5> tex_type = {{
+constexpr array<pair<textures::type, group::texture_target>, 5> tex_type = {{
     {textures::type::d2, group::texture_target::texture_2d},
     {textures::type::cube, group::texture_target::texture_cube_map},
 #if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
@@ -50,7 +50,7 @@ constexpr Array<Pair<textures::type, group::texture_target>, 5> tex_type = {{
 #endif
 }};
 
-constexpr Array<Pair<buffers::type, group::buffer_target_arb>, 7> buf_type = {{
+constexpr array<pair<buffers::type, group::buffer_target_arb>, 7> buf_type = {{
     {buffers::type::vertex, group::buffer_target_arb::array_buffer},
     {buffers::type::element, group::buffer_target_arb::element_array_buffer},
 #if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
@@ -67,7 +67,7 @@ constexpr Array<Pair<buffers::type, group::buffer_target_arb>, 7> buf_type = {{
 #endif
 }};
 
-constexpr Array<Pair<buffers::type, group::buffer_storage_target>, 7>
+constexpr array<pair<buffers::type, group::buffer_storage_target>, 7>
     buf_storage_type = {{
         {buffers::type::vertex, group::buffer_storage_target::array_buffer},
         {buffers::type::element,
@@ -88,7 +88,7 @@ constexpr Array<Pair<buffers::type, group::buffer_storage_target>, 7>
 #endif
     }};
 
-constexpr Array<Pair<queries::type, group::query_target>, 5> query_type = {{
+constexpr array<pair<queries::type, group::query_target>, 5> query_type = {{
 #if GLEAM_MAX_VERSION >= 0x300
     {queries::type::time, group::query_target::time_elapsed},
     {queries::type::fragments, group::query_target::samples_passed},
@@ -113,8 +113,6 @@ constexpr Array<Pair<queries::type, group::query_target>, 5> query_type = {{
 } // namespace mappings
 
 using namespace semantic::concepts::graphics;
-using stl_types::Pair;
-using stl_types::Tup;
 
 template<typename T = group::texture_target>
 requires std::is_same_v<T, group::texture_target>
@@ -210,7 +208,7 @@ namespace detail {
 
 template<typename T>
 requires std::is_same_v<T, group::internal_format>
-inline Tup<group::internal_format, group::pixel_type, group::pixel_format>
+inline std::tuple<group::internal_format, group::pixel_type, group::pixel_format>
 to_internal(PixDesc const& fmt)
 {
     using f = group::internal_format;
@@ -236,7 +234,7 @@ to_internal(PixDesc const& fmt)
 
 template<typename T>
 requires std::is_same_v<T, group::sized_internal_format>
-inline Tup<group::sized_internal_format, group::pixel_type, group::pixel_format>
+inline std::tuple<group::sized_internal_format, group::pixel_type, group::pixel_format>
 to_internal(PixDesc const&)
 {
     return {};
@@ -249,7 +247,7 @@ template<typename T>
 requires std::is_same_v<T, group::sized_internal_format> || std::
     is_same_v<T, group::internal_format>
         //
-Tup<T, group::pixel_type, group::pixel_format> to(
+std::tuple<T, group::pixel_type, group::pixel_format> to(
     PixDesc const& fmt, [[maybe_unused]] features::textures const& features);
 // clang-format on
 
@@ -633,6 +631,26 @@ inline GLenum to(
         break;
     }
     return GL_NEAREST;
+}
+
+inline GLenum to(textures::swizzle_t channel)
+{
+    switch(channel)
+    {
+    case textures::swizzle_t::red:
+        return GL_RED;
+    case textures::swizzle_t::green:
+        return GL_GREEN;
+    case textures::swizzle_t::blue:
+        return GL_BLUE;
+    case textures::swizzle_t::alpha:
+        return GL_ALPHA;
+    case textures::swizzle_t::one:
+        return GL_ONE;
+    case textures::swizzle_t::zero:
+        return GL_ZERO;
+    }
+    __builtin_unreachable();
 }
 
 } // namespace gleam::convert

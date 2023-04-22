@@ -22,6 +22,8 @@
 #include <glw/extensions/OES_rgb8_rgba8.h>
 #include <glw/extensions/OES_vertex_array_object.h>
 
+#include <glw/texture_formats.h>
+
 #if defined(FEATURE_ENABLE_CEAGL)
 #include <CEAGL/eagl.h>
 #elif defined(FEATURE_ENABLE_EGLComponent)
@@ -76,11 +78,34 @@ void texture_t::alloc(size_type const& size, bool create_storage)
             detail::texture_alloc<lowest_version>(m_type, m_handle);
     }
 
+    if constexpr(compile_info::debug_mode)
+    {
+        using P = typing::pixels::PixFmt;
+        using C = typing::pixels::CompFlags;
+
+        bool sw_decoded = requires_software_decode();
+        if(!sw_decoded)
+        {
+            auto const& sw = m_features.software_decoded;
+            if(m_format.pixfmt == P::BCn
+               && stl_types::any_of(m_format.cmpflg, C::BC1, C::BC2, C::BC3))
+                sw_decoded = sw.ext.s3tc;
+            if(m_format.pixfmt == P::ASTC)
+                sw_decoded = sw.gl.astc || sw.khr.astc;
+            if(m_format.pixfmt == P::ETC2)
+                sw_decoded = sw.gl.etc2;
+        }
+        if(sw_decoded)
+            Coffee::cWarning(
+                "Format {0} is software decoded",
+                magic_enum::enum_name(m_format.pixfmt));
+    }
+
     if(create_storage)
     {
         [[maybe_unused]] auto glsize = size.convert<i32>();
-        auto                  is_compressed
-            = m_format.compressed() && !requires_software_decode();
+        auto is_compressed           = format_description().is_compressed()
+                             && !requires_software_decode();
         [[maybe_unused]] auto is_immutable
             = feval(m_flags, textures::property::immutable);
 
@@ -130,7 +155,6 @@ void texture_t::alloc(size_type const& size, bool create_storage)
 #endif
             if(is_compressed)
         {
-            using Coffee::GetPixCompressedSize;
             using typing::pixels::CompFmt;
 
             auto [ifmt, type, layout]
@@ -142,8 +166,7 @@ void texture_t::alloc(size_type const& size, bool create_storage)
             for(auto i : stl_types::Range<>(m_mipmaps))
             {
                 auto alloc_size
-                    = GetPixCompressedSize(
-                          m_format.c,
+                    = gl::tex::format_of(m_format).data_size(
                           size_2d<i32>{signed_size.w, signed_size.h})
                       * signed_size.d;
 #if defined(COFFEE_EMSCRIPTEN)
@@ -184,6 +207,15 @@ void texture_t::alloc(size_type const& size, bool create_storage)
                     );
                     break;
 #endif
+                case type::cube_array:
+                    cmd::compressed_tex_image_3d(
+                        convert::to(m_type),
+                        i,
+                        ifmt,
+                        signed_size,
+                        0,
+                        null_span<>{alloc_size});
+                    break;
                 default:
                     break;
                 }
@@ -199,6 +231,21 @@ void texture_t::alloc(size_type const& size, bool create_storage)
                     group::texture_parameter_name::texture_max_level,
                     static_cast<i32>(m_mipmaps - 1u));
 #endif
+            if(m_type == textures::type::cube_array)
+            {
+                cmd::tex_parameter(
+                    convert::to(m_type),
+                    group::texture_parameter_name::texture_wrap_r,
+                    static_cast<i32>(group::texture_wrap_mode::clamp_to_edge));
+                cmd::tex_parameter(
+                    convert::to(m_type),
+                    group::texture_parameter_name::texture_wrap_s,
+                    static_cast<i32>(group::texture_wrap_mode::clamp_to_edge));
+                cmd::tex_parameter(
+                    convert::to(m_type),
+                    group::texture_parameter_name::texture_wrap_t,
+                    static_cast<i32>(group::texture_wrap_mode::clamp_to_edge));
+            }
             cmd::bind_texture(convert::to(m_type), 0);
         } else
         {
@@ -392,12 +439,13 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
 
         out.texture.cube_array = api_version >= 0x400;
 
-        out.draw.indirect         = api_version >= 0x420;
-        out.draw.base_instance    = api_version >= 0x420;
-        out.texture.image_texture = api_version >= 0x420;
-        out.texture.storage       = api_version >= 0x420;
-        out.texture.tex.gl.bptc   = api_version >= 0x420;
-        out.vertex.layout_binding = api_version >= 0x420;
+        out.draw.indirect                 = api_version >= 0x420;
+        out.draw.base_instance            = api_version >= 0x420;
+        out.texture.image_texture         = api_version >= 0x420;
+        out.texture.internal_format_query = api_version >= 0x420;
+        out.texture.storage               = api_version >= 0x420;
+        out.texture.tex.gl.bptc           = api_version >= 0x420;
+        out.vertex.layout_binding         = api_version >= 0x420;
 
         out.buffer.ssbo                        = api_version >= 0x430;
         out.debug.debug                        = api_version >= 0x430;
@@ -436,6 +484,7 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
         out.draw.instancing               = api_version >= 0x300;
         out.rendertarget.clearbuffer      = api_version >= 0x300;
         out.rendertarget.readdraw_buffers = api_version >= 0x300;
+        out.texture.internal_format_query = api_version >= 0x300;
         out.texture.max_level             = api_version >= 0x300;
         out.texture.samplers              = api_version >= 0x300;
         out.texture.texture_3d            = api_version >= 0x300;
@@ -588,10 +637,24 @@ std::set<string> api::query_native_extensions()
             out.insert(cmd::get_stringi(group::string_name::extensions, i));
     } else
 #endif
+        if(platform_api == api_type_t::webgl)
+    {
+        string extensions = cmd::get_string(group::string_name::extensions);
+        size_t prev_idx   = 0;
+        size_t idx        = extensions.find(' ');
+        while(idx != string::npos)
+        {
+            out.insert(extensions.substr(prev_idx, idx - prev_idx));
+            prev_idx = idx + 1;
+            idx      = extensions.find(' ', prev_idx);
+        }
+    } else
     {
         string extensions = cmd::get_string(group::string_name::extensions);
         for(auto ext : stl_types::str::split::str<char>(extensions, ' '))
+        {
             out.insert(string(ext.begin(), ext.end()));
+        }
     }
 
 #if defined(EGL_VERSION_1_0)
@@ -651,7 +714,7 @@ string api::shaderlang_name()
 {
     auto version
         = cmd::get_string(group::string_name::shading_language_version);
-    stl_types::Vector<string> elements;
+    std::vector<std::string> elements;
     if(!stl_types::regex::match(shaderlang_regex(), version, elements))
         return "Unknown GLSL";
 
@@ -669,7 +732,7 @@ tuple<u32, u32> api::shaderlang_version()
     using stl_types::cast_string;
     auto version
         = cmd::get_string(group::string_name::shading_language_version);
-    stl_types::Vector<string> elements;
+    std::vector<std::string> elements;
     if(!stl_types::regex::match(shaderlang_regex(), version, elements))
         return {0, 0};
 
@@ -686,7 +749,7 @@ tuple<string, string> api::device()
 optional<string> api::device_driver()
 {
     auto version = cmd::get_string(group::string_name::version);
-    stl_types::Vector<string> elements;
+    std::vector<std::string> elements;
     if(!stl_types::regex::match(version_regex(), version, elements))
         return std::nullopt;
     return elements[5];
@@ -696,6 +759,9 @@ api::extensions_set api::extensions()
 {
     return m_extensions;
 }
+
+std::vector<std::string> enumerate_compressed_formats(
+    features::textures& features);
 
 void api::collect_info(comp_app::interfaces::AppInfo& appInfo)
 {
@@ -733,7 +799,19 @@ void api::collect_info(comp_app::interfaces::AppInfo& appInfo)
             exts_list.push_back(' ');
         exts_list.insert(exts_list.end(), ext.begin(), ext.end());
     }
+    exts = {};
     appInfo.add("gl:extensions", exts_list);
+    exts_list.clear();
+    auto        fmts = enumerate_compressed_formats(m_features.texture);
+    std::string formats_list;
+    for(auto const& fmt : fmts)
+    {
+        if(!formats_list.empty())
+            formats_list.push_back(' ');
+        formats_list.insert(formats_list.end(), fmt.begin(), fmt.end());
+    }
+    fmts = {};
+    appInfo.add("gl:compressedFormats", formats_list);
 }
 
 optional<error> api::load(load_options_t options)
@@ -801,8 +879,8 @@ optional<error> api::load(load_options_t options)
         m_workarounds.draw.emulated_vertex_offset = false;
     if(m_features.draw.shader_base_instance)
         m_workarounds.draw.emulated_base_instance = false;
-    if(m_features.buffer.ssbo)
-        m_workarounds.draw.advance_ubos_by_baseinstance = false;
+    //    if(m_features.buffer.ssbo)
+    //        m_workarounds.draw.advance_ubos_by_baseinstance = false;
     if(m_features.buffer.mapping || m_features.buffer.oes.mapbuffer)
         m_workarounds.buffer.emulated_mapbuffer = false;
 
@@ -882,6 +960,10 @@ optional<error> api::load(load_options_t options)
     //    cmd::enable(group::enable_cap::cull_face);
     cmd::cull_face(group::triangle_face::back);
     cmd::front_face(group::front_face_direction::ccw);
+
+#if GLEAM_MAX_VERSION >= 0x320
+    cmd::enable(group::enable_cap::texture_cube_map_seamless);
+#endif
 
     debug().message("gleam::api::load");
 

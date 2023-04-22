@@ -55,7 +55,7 @@ requires(MinimumVersion<Current, Version<1, 0>>&&
     {
         GLW_FPTR_CHECK(ClearColor)
     }
-    glClearColor(red.x(), red.y(), red.z(), red.w());
+    glClearColor(red[0], red[1], red[2], red[3]);
     detail::error_check("ClearColor"sv);
 }
 
@@ -113,7 +113,7 @@ requires(MinimumVersion<Current, Version<1, 0>>&&
     {
         GLW_FPTR_CHECK(ColorMask)
     }
-    glColorMask(red.x(), red.y(), red.z(), red.w());
+    glColorMask(red[0], red[1], red[2], red[3]);
     detail::error_check("ColorMask"sv);
 }
 
@@ -786,8 +786,8 @@ requires(MinimumVersion<Current, Version<1, 0>>&&
         GLW_FPTR_CHECK(ReadPixels)
     }
     glReadPixels(
-        x.x(),
-        x.y(),
+        x[0],
+        x[1],
         width[0],
         width[1],
         static_cast<GLenum>(format),
@@ -815,7 +815,7 @@ requires(MinimumVersion<Current, Version<1, 0>>&&
     {
         GLW_FPTR_CHECK(Scissor)
     }
-    glScissor(x.x(), x.y(), width[0], width[1]);
+    glScissor(x[0], x[1], width[0], width[1]);
     detail::error_check("Scissor"sv);
 }
 
@@ -1098,7 +1098,7 @@ requires(MinimumVersion<Current, Version<1, 0>>&&
     {
         GLW_FPTR_CHECK(Viewport)
     }
-    glViewport(x.x(), x.y(), width[0], width[1]);
+    glViewport(x[0], x[1], width[0], width[1]);
     detail::error_check("Viewport"sv);
 }
 

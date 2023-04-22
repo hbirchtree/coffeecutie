@@ -3,7 +3,7 @@
 #include <coffee/comp_app/services.h>
 #include <coffee/comp_app/subsystems.h>
 #include <coffee/core/libc_types.h>
-#include <coffee/core/stl_types.h>
+#include <peripherals/stl/types.h>
 #include <peripherals/stl/string_ops.h>
 
 #include <coffee/graphics/apis/gleam/rhi_system.h>

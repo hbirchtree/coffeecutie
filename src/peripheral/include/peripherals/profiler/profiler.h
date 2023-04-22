@@ -45,9 +45,10 @@ using u32     = ::uint32_t;
 #endif
 
 template<typename T>
-using ptr                   = ::stl_types::ShPtr<T>;
-using clock                 = ::stl_types::Chrono::steady_clock;
-using thread                = ::stl_types::Thread;
+using ptr                   = std::shared_ptr<T>;
+using clock                 = std::chrono::steady_clock;
+using thread                = std::thread;
+
 using thread_id             = ::stl_types::ThreadId::Hash;
 using thread_id_constructor = ::stl_types::ThreadId;
 

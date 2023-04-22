@@ -14,7 +14,6 @@ using libc_types::szptr;
 using semantic::mem_chunk;
 using semantic::RSCA;
 using stl_types::failure;
-using stl_types::Optional;
 using stl_types::result;
 using stl_types::success;
 using url::Url;
@@ -87,7 +86,7 @@ struct create_params_t
 struct file_entry_t
 {
     mode_t            mode;
-    stl_types::String name;
+    std::string name;
 };
 
 } // namespace platform::file

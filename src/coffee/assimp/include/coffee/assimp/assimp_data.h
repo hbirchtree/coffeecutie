@@ -1,6 +1,6 @@
 #pragma once
 
-#include <coffee/core/stl_types.h>
+#include <peripherals/stl/types.h>
 
 struct aiScene;
 
@@ -28,7 +28,7 @@ struct Importer_deleter
 
 struct AssimpData
 {
-    UqPtr<::Assimp::Importer, Importer_deleter> importer;
+    std::unique_ptr<::Assimp::Importer, Importer_deleter> importer;
     const ::aiScene*                            scene;
 };
 

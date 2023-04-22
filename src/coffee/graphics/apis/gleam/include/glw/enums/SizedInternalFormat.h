@@ -216,6 +216,18 @@ enum class sized_internal_format : u32
 #ifdef GL_COMPRESSED_RGBA_BPTC_UNORM_EXT
     compressed_rgba_bptc_unorm_ext = GL_COMPRESSED_RGBA_BPTC_UNORM_EXT,
 #endif
+#ifdef GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG
+    compressed_rgba_pvrtc_2bppv1_img = GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG,
+#endif
+#ifdef GL_COMPRESSED_RGBA_PVRTC_2BPPV2_IMG
+    compressed_rgba_pvrtc_2bppv2_img = GL_COMPRESSED_RGBA_PVRTC_2BPPV2_IMG,
+#endif
+#ifdef GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG
+    compressed_rgba_pvrtc_4bppv1_img = GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG,
+#endif
+#ifdef GL_COMPRESSED_RGBA_PVRTC_4BPPV2_IMG
+    compressed_rgba_pvrtc_4bppv2_img = GL_COMPRESSED_RGBA_PVRTC_4BPPV2_IMG,
+#endif
 #ifdef GL_COMPRESSED_RGBA_S3TC_DXT1_EXT
     compressed_rgba_s3tc_dxt1_ext = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,
 #endif
@@ -252,6 +264,12 @@ enum class sized_internal_format : u32
 #ifdef GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_EXT
     compressed_rgb_bptc_unsigned_float_ext =
         GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_EXT,
+#endif
+#ifdef GL_COMPRESSED_RGB_PVRTC_2BPPV1_IMG
+    compressed_rgb_pvrtc_2bppv1_img = GL_COMPRESSED_RGB_PVRTC_2BPPV1_IMG,
+#endif
+#ifdef GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG
+    compressed_rgb_pvrtc_4bppv1_img = GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG,
 #endif
 #ifdef GL_COMPRESSED_RGB_S3TC_DXT1_EXT
     compressed_rgb_s3tc_dxt1_ext = GL_COMPRESSED_RGB_S3TC_DXT1_EXT,
@@ -454,6 +472,22 @@ enum class sized_internal_format : u32
     compressed_srgb_alpha_bptc_unorm_ext =
         GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_EXT,
 #endif
+#ifdef GL_COMPRESSED_SRGB_ALPHA_PVRTC_2BPPV1_EXT
+    compressed_srgb_alpha_pvrtc_2bppv1_ext =
+        GL_COMPRESSED_SRGB_ALPHA_PVRTC_2BPPV1_EXT,
+#endif
+#ifdef GL_COMPRESSED_SRGB_ALPHA_PVRTC_2BPPV2_IMG
+    compressed_srgb_alpha_pvrtc_2bppv2_img =
+        GL_COMPRESSED_SRGB_ALPHA_PVRTC_2BPPV2_IMG,
+#endif
+#ifdef GL_COMPRESSED_SRGB_ALPHA_PVRTC_4BPPV1_EXT
+    compressed_srgb_alpha_pvrtc_4bppv1_ext =
+        GL_COMPRESSED_SRGB_ALPHA_PVRTC_4BPPV1_EXT,
+#endif
+#ifdef GL_COMPRESSED_SRGB_ALPHA_PVRTC_4BPPV2_IMG
+    compressed_srgb_alpha_pvrtc_4bppv2_img =
+        GL_COMPRESSED_SRGB_ALPHA_PVRTC_4BPPV2_IMG,
+#endif
 #ifdef GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT
     compressed_srgb_alpha_s3tc_dxt1_ext =
         GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT,
@@ -474,6 +508,12 @@ enum class sized_internal_format : u32
 #endif
 #ifdef GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_NV
     compressed_srgb_alpha_s3tc_dxt5_nv = GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_NV,
+#endif
+#ifdef GL_COMPRESSED_SRGB_PVRTC_2BPPV1_EXT
+    compressed_srgb_pvrtc_2bppv1_ext = GL_COMPRESSED_SRGB_PVRTC_2BPPV1_EXT,
+#endif
+#ifdef GL_COMPRESSED_SRGB_PVRTC_4BPPV1_EXT
+    compressed_srgb_pvrtc_4bppv1_ext = GL_COMPRESSED_SRGB_PVRTC_4BPPV1_EXT,
 #endif
 #ifdef GL_COMPRESSED_SRGB_S3TC_DXT1_EXT
     compressed_srgb_s3tc_dxt1_ext = GL_COMPRESSED_SRGB_S3TC_DXT1_EXT,

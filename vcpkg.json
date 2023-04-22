@@ -8,6 +8,8 @@
         "boost-stacktrace",
         "cppcodec",
         "cxxopts",
+        "glm",
+        { "name": "ktx", "features": ["vulkan"] },
         "magic-enum",
         "ms-gsl",
         "lz4",
@@ -17,6 +19,7 @@
         "tinyxml2",
         "tinyutf8",
         { "name": "zlib-ng", "platform": "(linux & x64) | osx | windows" },
+        "vulkan-headers",
         "zstd"
     ],
     "features": {
@@ -50,7 +53,8 @@
             "dependencies": [
                 { "name": "angle", "platform": "windows & uwp" },
                 "bcdec",
-                { "name": "imgui", "features": ["docking-experimental"]}
+                { "name": "imgui", "features": ["docking-experimental"]},
+                "vulkan-headers"
             ]
         },
         "image": {
@@ -98,14 +102,12 @@
         "assimp",
         "audio",
         "blam",
-        "crash-recovery",
         "headful",
         "gleam",
         "image",
         "media",
         "network",
         "openssl",
-        "physics",
-        "pressure-cooker"
+        "physics"
     ]
 }

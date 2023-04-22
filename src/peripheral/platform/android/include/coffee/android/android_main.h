@@ -90,6 +90,8 @@ struct intent
 
     std::map<std::string, std::string> extras();
 
+    std::optional<std::string> extra(std::string const& key);
+
     int flags();
 
   private:

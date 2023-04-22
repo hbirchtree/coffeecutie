@@ -9,7 +9,8 @@
 #include <typeinfo>
 #include <utility>
 
-#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_ANDROID) || defined(COFFEE_BEAGLEBONE)
+#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_ANDROID) \
+    || defined(COFFEE_BEAGLEBONE)
 // Nothing...
 #elif defined(COFFEE_APPLE) || defined(COFFEE_NO_LIB_BACKTRACE)
 #define BOOST_STACKTRACE_USE_LIBC_BACKTRACE_FUNCTION
@@ -74,7 +75,7 @@ FORCEDINLINE auto frames()
 
 FORCEDINLINE
 std::optional<std::pair<std::string, stacktrace>> frames_of(
-    stl_types::ExceptionPtr const& exc)
+    std::exception_ptr const& exc)
 {
     if constexpr(!supports_stacktrace)
         return std::nullopt;
@@ -103,8 +104,8 @@ void print_frames(
     typing::logging::StackWriterEx     stack_writer);
 
 void print_exception(
-    stl_types::Pair<std::string, stacktrace>&& exception,
-    typing::logging::LogInterfaceBasic         print,
-    typing::logging::StackWriterEx             stack_writer);
+    std::pair<std::string, stacktrace>&& exception,
+    typing::logging::LogInterfaceBasic   print,
+    typing::logging::StackWriterEx       stack_writer);
 
 } // namespace platform::stacktrace

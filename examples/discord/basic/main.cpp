@@ -1,6 +1,6 @@
 #include <coffee/core/CApplication>
 #include <coffee/core/CFiles>
-#include <coffee/core/stl_types.h>
+#include <peripherals/stl/types.h>
 #include <coffee/discord/discord_binding.h>
 #include <coffee/strings/libc_types.h>
 #include <coffee/strings/url_types.h>
@@ -14,7 +14,7 @@ i32 cmain(i32 argc, cstring_w* argv)
 {
     using namespace platform::online;
 
-    auto delegate   = MkShared<Discord::DiscordDelegate>();
+    auto delegate   = std::make_shared<Discord::DiscordDelegate>();
     delegate->ready = [](Discord::PlayerInfo const& player) {
         cDebug("{0} {1}", player.avatarUrl, player.userTag);
     };

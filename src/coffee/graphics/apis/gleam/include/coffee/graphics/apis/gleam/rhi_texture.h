@@ -26,6 +26,11 @@
 #include <glw/extensions/KHR_texture_compression_astc_ldr.h>
 #include <glw/extensions/OES_compressed_ETC1_RGB8_texture.h>
 
+#include <glw/texture_format.h>
+
+#include <coffee/core/task_queue/task.h>
+#include <future>
+
 namespace gleam {
 
 struct sampler_t;
@@ -73,7 +78,7 @@ struct texture_t : std::enable_shared_from_this<texture_t>
     std::future<std::vector<char>> software_decode(
         semantic::Span<const char>&& data, size_3d<i32> const& size);
     template<class Data, class SizeT>
-    requires(SizeT::row_size == 3)
+    requires(SizeT::length() == 3)
         //
         inline auto software_decode_cast(Data&& data, SizeT const& size)
     {
@@ -83,7 +88,7 @@ struct texture_t : std::enable_shared_from_this<texture_t>
             size_3d<i32>{size[0], size[1], size[2]});
     }
     template<class Data, class SizeT>
-    requires(SizeT::row_size == 2)
+    requires(SizeT::length() == 2)
         //
         inline auto software_decode_cast(Data&& data, SizeT const& size)
     {
@@ -108,6 +113,47 @@ struct texture_t : std::enable_shared_from_this<texture_t>
     }
 #endif
 
+    gl::tex::texture_format_t const& format_description() const;
+
+    inline void set_channel_swizzle(
+        group::texture_parameter_name      channel,
+        std::optional<textures::swizzle_t> value)
+    {
+        if(!value.has_value())
+            return;
+#if GLEAM_MAX_VERSION >= 0x450
+        if(m_features.dsa)
+        {
+            cmd::texture_parameter(
+                m_handle, channel, static_cast<i32>(convert::to(*value)));
+        } else
+#endif
+        {
+            cmd::bind_texture(convert::to(m_type), m_handle);
+            cmd::tex_parameter(
+                convert::to(m_type),
+                channel,
+                static_cast<i32>(convert::to(*value)));
+            cmd::bind_texture(convert::to(m_type), 0);
+        }
+    }
+
+    inline void set_swizzle(
+        std::optional<textures::swizzle_t> red,
+        std::optional<textures::swizzle_t> green,
+        std::optional<textures::swizzle_t> blue,
+        std::optional<textures::swizzle_t> alpha)
+    {
+        set_channel_swizzle(
+            group::texture_parameter_name::texture_swizzle_r, red);
+        set_channel_swizzle(
+            group::texture_parameter_name::texture_swizzle_g, green);
+        set_channel_swizzle(
+            group::texture_parameter_name::texture_swizzle_b, blue);
+        set_channel_swizzle(
+            group::texture_parameter_name::texture_swizzle_a, alpha);
+    }
+
     features::textures  m_features{};
     debug::api&         m_debug;
     rq::runtime_queue*& m_decoder_queue;
@@ -122,7 +168,7 @@ struct texture_t : std::enable_shared_from_this<texture_t>
 
 struct sampler_t
 {
-    sampler_t(stl_types::ShPtr<texture_t> const& source) :
+    sampler_t(std::shared_ptr<texture_t> const& source) :
         m_source(source), m_features(source->m_features), m_type(source->m_type)
     {
     }
@@ -161,11 +207,11 @@ struct sampler_t
             cmd::sampler_parameter(
                 m_handle,
                 group::sampler_parameter_f::texture_min_lod,
-                SpanOne(range.x()));
+                SpanOne(range[0]));
             cmd::sampler_parameter(
                 m_handle,
                 group::sampler_parameter_f::texture_max_lod,
-                SpanOne(range.y()));
+                SpanOne(range[1]));
         } else
 #endif
         {
@@ -177,7 +223,7 @@ struct sampler_t
     {
         [[maybe_unused]] auto _         = m_source.lock()->m_debug.scope();
         [[maybe_unused]] i32  max_aniso = 0;
-#if GLEAM_MAX_VERSION != 0
+#if GLEAM_MAX_VERSION >= 0x460
         if(m_features.anisotropy)
         {
             cmd::get_integerv(
@@ -193,7 +239,7 @@ struct sampler_t
             return;
         }
 #endif
-#if GLEAM_MAX_VERSION_ES != 0x200 && defined(GL_EXT_texture_filter_anisotropic)
+#if defined(GL_EXT_texture_filter_anisotropic)
         if(m_features.ext.texture_anisotropic)
         {
             cmd::get_integerv(
@@ -235,7 +281,7 @@ struct sampler_t
         }
     }
 
-    stl_types::WkPtr<texture_t> m_source;
+    std::weak_ptr<texture_t>    m_source;
     features::textures          m_features;
     hnd                         m_handle;
     textures::type              m_type{textures::type::d2};
@@ -255,8 +301,8 @@ struct texture_2d_t : texture_t
     {
         auto [ifmt1, type, layout] = convert::to<group::internal_format>(
             software_decode_format().value_or(m_format), m_features);
-        auto is_compressed
-            = m_format.compressed() && !requires_software_decode();
+        auto is_compressed = format_description().is_compressed()
+                             && !requires_software_decode();
 
 #if GLEAM_MAX_VERSION >= 0x450
         if(m_features.dsa && is_compressed)
@@ -274,7 +320,8 @@ struct texture_2d_t : texture_t
                         std::vector<char>* bits) {
                         cmd::texture_sub_image_2d(
                             m_handle, level, offset, size, layout, type, *bits);
-                    })).has_value();
+                    }))
+                .has_value();
         } else if(m_features.dsa)
         {
             cmd::texture_sub_image_2d(
@@ -312,7 +359,8 @@ struct texture_2d_t : texture_t
                             type,
                             *bits);
                         cmd::bind_texture(group::texture_target::texture_2d, 0);
-                    })).has_value();
+                    }))
+                .has_value();
         } else
         {
             cmd::bind_texture(group::texture_target::texture_2d, m_handle);
@@ -341,8 +389,8 @@ struct texture_2da_t : texture_t
     {
         auto [ifmt1, type, layout] = convert::to<group::internal_format>(
             software_decode_format().value_or(m_format), m_features);
-        auto is_compressed
-            = m_format.compressed() && !requires_software_decode();
+        auto is_compressed = format_description().is_compressed()
+                             && !requires_software_decode();
 
 #if GLEAM_MAX_VERSION >= 0x450
         if(m_features.dsa && is_compressed)
@@ -360,7 +408,8 @@ struct texture_2da_t : texture_t
                         std::vector<char>* bits) {
                         cmd::texture_sub_image_3d(
                             m_handle, level, offset, size, layout, type, *bits);
-                    })).has_value();
+                    }))
+                .has_value();
         } else if(m_features.dsa)
         {
             cmd::texture_sub_image_3d(
@@ -400,7 +449,8 @@ struct texture_2da_t : texture_t
                             *bits);
                         cmd::bind_texture(
                             group::texture_target::texture_2d_array, 0);
-                    })).has_value();
+                    }))
+                .has_value();
         } else
         {
             cmd::bind_texture(
@@ -429,7 +479,7 @@ struct texture_3d_t : texture_t
     {
         auto [ifmt1, type, layout]
             = convert::to<group::internal_format>(m_format, m_features);
-        auto is_compressed = m_format.compressed();
+        auto is_compressed = format_description().is_compressed();
 #if GLEAM_MAX_VERSION >= 0x450
         if(m_features.dsa && is_compressed)
         {
@@ -481,20 +531,21 @@ struct texture_cube_array_t : texture_t
     {
         auto [ifmt1, type, layout]
             = convert::to<group::internal_format>(m_format, m_features);
-        auto    is_compressed = m_format.compressed();
-        VectorT offset_mul    = offset;
-        offset_mul[2]         = offset_mul[2] * 6;
+        auto is_compressed = format_description().is_compressed()
+                             && !requires_software_decode();
+        VectorT offset_mul = offset;
+        offset_mul[2]      = offset_mul[2] * 6;
         for(auto const& face : data)
         {
 #if GLEAM_MAX_VERSION >= 0x450
             if(m_features.dsa && is_compressed)
             {
                 cmd::compressed_texture_sub_image_3d(
-                    m_handle, level, offset_mul, size, ifmt1, data);
+                    m_handle, level, offset_mul, size, ifmt1, face);
             } else if(m_features.dsa)
             {
                 cmd::texture_sub_image_3d(
-                    m_handle, level, offset_mul, size, layout, type, data);
+                    m_handle, level, offset_mul, size, layout, type, face);
             } else
 #endif
                 if(is_compressed)
@@ -507,9 +558,38 @@ struct texture_cube_array_t : texture_t
                     offset_mul,
                     size,
                     ifmt1,
-                    data);
+                    face);
                 cmd::bind_texture(
                     group::texture_target::texture_cube_map_array, 0);
+            } else if(requires_software_decode())
+            {
+                auto bits = software_decode_cast(std::move(data), size);
+                rq::runtime_queue::Queue(
+                    rq::runtime_queue::GetCurrentQueue().value(),
+                    rq::dependent_task<std::vector<char>, void>::CreateSink(
+                        std::move(bits),
+                        [this,
+                         offset,
+                         size,
+                         level,
+                         layout = layout,
+                         type   = type](std::vector<char>* bits) {
+                            cmd::bind_texture(
+                                group::texture_target::texture_cube_map_array,
+                                m_handle);
+                            cmd::tex_sub_image_3d(
+                                group::texture_target::texture_cube_map_array,
+                                level,
+                                offset,
+                                size,
+                                layout,
+                                type,
+                                *bits);
+                            cmd::bind_texture(
+                                group::texture_target::texture_cube_map_array,
+                                0);
+                        }))
+                    .has_value();
             } else
             {
                 cmd::bind_texture(
@@ -521,10 +601,11 @@ struct texture_cube_array_t : texture_t
                     size,
                     layout,
                     type,
-                    data);
+                    face);
                 cmd::bind_texture(
                     group::texture_target::texture_cube_map_array, 0);
             }
+            offset_mul[2] += 1;
         }
         return std::nullopt;
     }
@@ -614,7 +695,7 @@ inline auto make_texture_view(
     if(auto view = existing_view.lock(); view)
         out = view;
     else
-        out = MkShared<output_type>(
+        out = std::make_shared<output_type>(
             origin.m_features,
             std::ref(origin.m_decoder_queue),
             std::ref(origin.m_debug),
@@ -705,7 +786,7 @@ auto texture_t::view(
 
 inline auto texture_t::sampler()
 {
-    return stl_types::MkShared<sampler_t>(this->shared_from_this());
+    return std::make_shared<sampler_t>(this->shared_from_this());
 }
 
 enum class pbo_error

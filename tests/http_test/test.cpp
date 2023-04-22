@@ -38,7 +38,7 @@ bool url_parsing()
 
 bool url_query_parsing()
 {
-    CString baseUrl = "http://def.ghi/abc";
+    std::string baseUrl = "http://def.ghi/abc";
 
     http::resource::add_query(baseUrl, "search", "values123");
     assertEquals(baseUrl, "http://def.ghi/abc?search=values123");
@@ -88,8 +88,8 @@ X-Some-Extension: abc; charset=utf8
 
 bool response_process()
 {
-    const auto encoded_header =
-        str::replace::str<char>(test_header_response, "\n", "\r\n");
+    const auto encoded_header
+        = str::replace::str<char>(test_header_response, "\n", "\r\n");
 
     std::istringstream header_socket(encoded_header);
 
@@ -130,8 +130,8 @@ bool response_read_payload()
 {
     using field = http::header_field;
 
-    const auto encoded_response =
-        str::replace::str<char>(test_header_with_body, "\n", "\r\n");
+    const auto encoded_response
+        = str::replace::str<char>(test_header_with_body, "\n", "\r\n");
 
     {
         std::istringstream socket(encoded_response);
@@ -148,8 +148,8 @@ bool response_read_payload()
 
         auto header = http::stream::read_response(socket);
 
-        auto payload_size =
-            cast_string<szptr>(header.standard_fields[field::content_length]);
+        auto payload_size
+            = cast_string<szptr>(header.standard_fields[field::content_length]);
 
         assertEquals(payload_size, 85);
 
@@ -185,13 +185,13 @@ don't read this
 
 bool multipart_process()
 {
-    const auto encoded_response =
-        str::replace::str<char>(test_multipart_body, "\n", "\r\n");
+    const auto encoded_response
+        = str::replace::str<char>(test_multipart_body, "\n", "\r\n");
 
-    Vector<char> payload(encoded_response.begin(), encoded_response.end());
+    std::vector<char> payload(encoded_response.begin(), encoded_response.end());
 
-    auto parser =
-        http::multipart::parser("--------------abc", std::move(payload));
+    auto parser
+        = http::multipart::parser("--------------abc", std::move(payload));
 
     size_t num_parts = 0;
 

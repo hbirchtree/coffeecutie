@@ -14,8 +14,8 @@ using clock      = std::chrono::steady_clock;
 using time_point = clock::time_point;
 using duration   = clock::duration;
 
-using thread          = stl_types::Thread;
-using thread_id       = libc_types::u64;
+using thread          = std::thread;
+using thread_id       = stl_types::ThreadId::Hash;
 using mutex           = stl_types::Mutex;
 using recursive_mutex = stl_types::RecMutex;
 
@@ -42,16 +42,22 @@ inline void on_thread_created()
 }
 
 template<typename R, typename... Args>
-requires std::is_same_v<R, void> STATICINLINE void set_promise_value(
-    std::promise<void>& out, std::function<void(Args...)>& fun, Args... args)
+requires std::is_same_v<R, void>
+    //
+    STATICINLINE void set_promise_value(
+        std::promise<void>&           out,
+        std::function<void(Args...)>& fun,
+        Args... args)
 {
     fun(args...);
     out.set_value();
 }
 
 template<typename R, typename... Args>
-requires(!std::is_same_v<R, void>) STATICINLINE void set_promise_value(
-    std::promise<R>& out, std::function<R(Args...)>& fun, Args... args)
+requires(!std::is_same_v<R, void>)
+    //
+    STATICINLINE void set_promise_value(
+        std::promise<R>& out, std::function<R(Args...)>& fun, Args... args)
 {
     out.set_value(fun(args...));
 }
@@ -279,7 +285,7 @@ class runtime_queue
         std::map<u64, detail::thread> queue_threads;
         /*!
          * \brief Contains all data necessary to manage a worker thread.
-         * Needs to be a ShPtr<T> in order to avoid early destruction.
+         * Needs to be a std::shared_ptr<T> in order to avoid early destruction.
          */
         std::map<u64, std::shared_ptr<semaphore_t>> queue_flags;
     };

@@ -914,8 +914,8 @@ requires(MinimumVersion<Current, Version<3, 2>>&&
         GLW_FPTR_CHECK(ReadnPixels)
     }
     glReadnPixels(
-        x.x(),
-        x.y(),
+        x[0],
+        x[1],
         width[0],
         width[1],
         static_cast<GLenum>(format),

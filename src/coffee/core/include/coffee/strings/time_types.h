@@ -1,6 +1,6 @@
 #pragma once
 
-#include <coffee/core/stl_types.h>
+#include <peripherals/stl/types.h>
 #include <coffee/core/stlstring_ops.h>
 #include <peripherals/stl/time_types.h>
 
@@ -13,11 +13,11 @@ template<
     typename std::enable_if<
         std::is_signed<Rep>::value && std::is_integral<Rep>::value>::type* =
         nullptr>
-inline CString to_string(Chrono::duration<Rep, Ratio> const& duration)
+inline std::string to_string(Chrono::duration<Rep, Ratio> const& duration)
 {
     using namespace str::convert;
 
-    CString out = "duration(";
+    std::string out = "duration(";
 
     ((out += "rep=") += typeid(Rep).name()) += ", ";
     ((out += "ratio=") += to_string(Ratio::num)) += "/";

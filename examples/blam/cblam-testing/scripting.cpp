@@ -44,7 +44,7 @@ i32 coffee_main(i32, cstring_w*)
     auto        string_seg     = scenario[0].string_segment(map.magic);
 
     auto val_to_string =
-        [&string_seg](script_types::layout_t const& v) -> CString {
+        [&string_seg](script_types::layout_t const& v) -> std::string {
         using t = blam::hsc::type_t;
         using blam::hsc::expression_t;
 
@@ -85,7 +85,7 @@ i32 coffee_main(i32, cstring_w*)
                 if(prg_name.at(prg_name.size() - 1) == '_')
                     prg_name = prg_name.substr(0, prg_name.find('_'));
 
-                CString comp;
+                std::string comp;
                 comp.append(prg_name);
                 (comp += " ?= ") += map_name.str();
                 comp += " = ";

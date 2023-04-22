@@ -1,15 +1,18 @@
 #pragma once
 
-#include <coffee/core/types/direction.h>
 #include <coffee/core/types/input/event_types.h>
+#include <peripherals/stl/time_types.h>
+#include <peripherals/typing/enum/graphics/direction.h>
 
 #include <algorithm>
+#include <map>
+#include <memory>
+#include <set>
 
 namespace Coffee::StandardInput {
 
 using namespace Input;
 using typing::vector_types::Quatf;
-using typing::vectors::normalize_quat;
 
 template<typename InputRegister, const CIEvent::EventType EventType>
 /*!
@@ -61,17 +64,11 @@ bool StandardKeyRegister(
 
 struct StandardCameraOpts
 {
-    StandardCameraOpts()
-    {
-        accel.base = 5.f;
-        accel.alt  = 10.f;
-
-        up = {0, 1, 0};
-    }
-
     struct
     {
-        scalar base, alt;
+        f32 base{5.f};
+        f32 alt{10.f};
+        f32 fast{100.f};
     } accel;
 
     Vecf3 up;
@@ -85,12 +82,13 @@ template<typename CameraPtr, typename CameraOptsPtr>
  * \return true when Camera reference is updated
  */
 struct StandardCamera
+    : std::enable_shared_from_this<StandardCamera<CameraPtr, CameraOptsPtr>>
 {
     struct KeyboardInput
     {
         using event_type = CIKeyEvent;
 
-        KeyboardInput(WkPtr<StandardCamera> cam) : m_container(cam)
+        KeyboardInput(std::weak_ptr<StandardCamera> cam) : m_container(cam)
         {
         }
 
@@ -100,15 +98,18 @@ struct StandardCamera
                 m_container.lock().get()->m_reg, e, ev);
         }
 
-        WkPtr<StandardCamera> m_container;
+        std::weak_ptr<StandardCamera> m_container;
     };
 
     struct MouseInput
     {
         using event_type = CIMouseMoveEvent;
 
-        MouseInput(CameraPtr cam, u32 button = CIMouseButtonEvent::LeftButton) :
-            m_button(button), m_container(cam)
+        MouseInput(
+            std::shared_ptr<StandardCamera> cam,
+            u32 button = CIMouseButtonEvent::LeftButton) :
+            m_button(button),
+            m_container(cam)
         {
         }
 
@@ -116,25 +117,19 @@ struct StandardCamera
         {
             if(ev->btn != m_button)
                 return;
-
-            auto& cqt = (*m_container).rotation;
-
-            auto yaw   = 0.01f * ev->delta.y();
-            auto pitch = 0.01f * ev->delta.x();
-
-            cqt = normalize_quat(Quatf(1, 0, pitch, 0) * cqt);
-
-            cqt = normalize_quat(Quatf(1, yaw, 0, 0) * cqt);
+            auto yaw   = 0.01f * ev->delta.y;
+            auto pitch = 0.01f * ev->delta.x;
+            m_container->rotate(-pitch, -yaw);
         }
 
-        u32       m_button;
-        CameraPtr m_container;
+        u32                             m_button;
+        std::shared_ptr<StandardCamera> m_container;
     };
 
-    using Reg = Map<u16, u16>;
+    using Reg = std::map<u16, u16>;
 
     StandardCamera(CameraPtr cam, CameraOptsPtr opts) :
-        m_opts(opts), m_camera(cam), up_direction(Vecf3(0, 1, 0))
+        m_opts(opts), m_camera(cam)
     {
     }
 
@@ -145,63 +140,79 @@ struct StandardCamera
         return it != m_reg.end() && (it->second & 0x1);
     }
 
-    void tick()
+    inline void move(f32 forward, f32 right, f32 up, f32 accel = 5.f)
+    {
+        m_camera->position += forward * cached.forward * movement_speed * accel;
+        m_camera->position += right * cached.right * movement_speed * accel;
+        m_camera->position += up * cached.up * movement_speed * accel;
+    }
+    inline void rotate(f32 pitch, f32 yaw)
+    {
+        auto& rotation = m_camera->rotation;
+        rotation       = glm::normalize(
+            rotation * glm::quat(cached.right * yaw * -1.f)
+            * glm::quat(cached.up * pitch * -1.f));
+    }
+
+    void tick(std::chrono::system_clock::duration const& t)
     {
         using namespace typing::vectors;
-        static const Set<u16> keys = {CK_w, CK_s, CK_a, CK_d, CK_q, CK_e};
+        static const std::set<u16> keys = {CK_w, CK_s, CK_a, CK_d, CK_q, CK_e};
 
-        Reg::const_iterator it = std::find_if(
-            m_reg.cbegin(), m_reg.cend(), [](Pair<const u16, u16> const& p) {
-                return keys.find(p.first) != keys.cend();
-            });
+        auto& rotation = cached.rotation = glm::mat3_cast(m_camera->rotation);
 
-        auto& c = *m_camera;
-
-        if(it == m_reg.end())
-            return;
-
-        auto camDirection
-            = quaternion_to_direction<CameraDirection::Forward>(c.rotation);
-        auto   camRight     = cross(up_direction, camDirection);
-        scalar acceleration = 5.f;
+        cached.forward = Vecf3{rotation[0][2], rotation[1][2], rotation[2][2]};
+        cached.right   = Vecf3{rotation[0][0], rotation[1][0], rotation[2][0]};
+        cached.up      = cross(cached.forward, cached.right);
+        f32 acceleration = m_opts->accel.base;
 
         if(has_key(CK_LShift))
-            acceleration = 10.f;
+            acceleration = m_opts->accel.alt;
         if(has_key(CK_LCtrl))
-            acceleration = 100.f;
+            acceleration = m_opts->accel.fast;
 
-        while(it != m_reg.end())
+        acceleration *= stl_types::Chrono::to_float(t);
+
+        for(auto const& [key, mod] : m_reg)
         {
-            if((*it).second & 0x1)
-                switch((*it).first)
-                {
-                case CK_w:
-                    c.position -= camDirection * 0.05f * acceleration;
-                    break;
-                case CK_s:
-                    c.position += camDirection * 0.05f * acceleration;
-                    break;
-                case CK_a:
-                    c.position -= camRight * 0.05f * acceleration;
-                    break;
-                case CK_d:
-                    c.position += camRight * 0.05f * acceleration;
-                    break;
-                case CK_q:
-                    c.position += up_direction * 0.05f * acceleration;
-                    break;
-                case CK_e:
-                    c.position -= up_direction * 0.05f * acceleration;
-                    break;
-                }
-            it++;
+            if((mod & 0x1) == 0)
+                continue;
+            switch(key)
+            {
+            case CK_w:
+                move(1, 0, 0, acceleration);
+                break;
+            case CK_s:
+                move(-1, 0, 0, acceleration);
+                break;
+            case CK_a:
+                move(0, 1, 0, acceleration);
+                break;
+            case CK_d:
+                move(0, -1, 0, acceleration);
+                break;
+            case CK_q:
+                move(0, 0, 1, acceleration);
+                break;
+            case CK_e:
+                move(0, 0, -1, acceleration);
+                break;
+            }
         }
     }
 
     CameraOptsPtr m_opts;
     CameraPtr     m_camera;
     Reg           m_reg;
-    Vecf3         up_direction;
+    f32           movement_speed{0.4f};
+
+    struct
+    {
+        glm::mat3 rotation;
+        glm::vec3 forward;
+        glm::vec3 right;
+        glm::vec3 up;
+    } cached;
 };
 
 struct ControllerOpts
@@ -209,8 +220,8 @@ struct ControllerOpts
     ControllerOpts()
     {
         deadzone    = 6000;
-        curve       = 200.f;
-        sens.move.x = sens.move.y = 0.15f;
+        curve       = 600.f;
+        sens.move.x = sens.move.y = 1.f;
         sens.look.x = sens.look.y = 2.f;
 
         invertYLook();
@@ -250,36 +261,22 @@ struct ControllerCamera
     {
     }
 
-    void operator()(CIControllerState const& state, compo::duration const& t)
+    void operator()(
+        CIControllerState const&                   state,
+        std::chrono::system_clock::duration const& t)
     {
-        using namespace typing::vectors;
         using stl_types::Chrono::to_float;
-
-        Vecf3& position = (*m_camera).position;
-        Quatf& rotation = (*m_camera).rotation;
-
-        const auto forward
-            = quaternion_to_direction<CameraDirection::Forward>(rotation);
-        const auto right
-            = quaternion_to_direction<CameraDirection::Right>(rotation);
-
         auto const& opt = opts();
-
-        const auto acceleration
+        const auto  acceleration
             = 1.f + convert_i16_f(state.axes.e.t_l) * opt.curve * to_float(t);
-
-        position += right * acceleration
-                    * FilterJoystickInput(state.axes.e.l_x, opt.sens.move.x);
-        position += forward * acceleration
-                    * FilterJoystickInput(state.axes.e.l_y, opt.sens.move.y);
-
-        auto pitch = FilterJoystickInput(state.axes.e.r_x, opt.sens.look.x)
-                     * to_float(t);
-        auto yaw = FilterJoystickInput(state.axes.e.r_y, opt.sens.look.y)
-                   * to_float(t);
-
-        rotation = normalize_quat(Quatf(1, 0, pitch, 0) * rotation);
-        rotation = normalize_quat(Quatf(1, yaw, 0, 0) * rotation);
+        m_camera->move(
+            filter(state.axes.e.l_y, opt.sens.move.y) * -1.f,
+            filter(state.axes.e.l_x, opt.sens.move.x) * -1.f,
+            0.f,
+            acceleration);
+        m_camera->rotate(
+            filter(state.axes.e.r_x, opt.sens.look.x) * to_float(t) * -1.f,
+            filter(state.axes.e.r_y, opt.sens.look.y) * to_float(t) * -1.f);
     }
 
     ControllerOpts& opts()
@@ -288,13 +285,9 @@ struct ControllerCamera
     }
 
   private:
-    FORCEDINLINE f32 FilterJoystickInput(i16 raw, f32 sens)
+    FORCEDINLINE f32 filter(i16 raw, f32 sens)
     {
-        if(raw > opts().deadzone || (-raw) > opts().deadzone)
-        {
-            return convert_i16_f(raw) * sens;
-        }
-        return 0.f;
+        return convert_i16_f(raw) * sens;
     }
 
     CameraPtr m_camera;

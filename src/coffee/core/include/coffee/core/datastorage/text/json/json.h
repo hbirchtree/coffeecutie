@@ -46,7 +46,7 @@ STATICINLINE Document Read(semantic::BytesConst const& data)
     doc.Parse(data.as<const char>().data);
     return doc;
 }
-STATICINLINE stl_types::CString Serialize(Document const& doc)
+STATICINLINE std::string Serialize(Document const& doc)
 {
     WriteBuf buf;
     buf.Clear();
