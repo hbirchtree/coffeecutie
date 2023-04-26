@@ -34,16 +34,6 @@ void create_resources(compo::EntityContainer& e)
         eventhandler->addEventHandler(
             1024, std_camera_t::MouseInput(camera.std_camera));
 
-        auto& overlay = e.subsystem_cast<TouchOverlay>();
-        eventhandler->addEventFunction<CIMouseMoveEvent>(
-            768, [&overlay](CIEvent& ev, CIMouseMoveEvent* event) {
-                overlay(ev, event);
-            });
-        eventhandler->addEventFunction<CITouchMotionEvent>(
-            768, [&overlay](CIEvent& ev, CITouchMotionEvent* event) {
-                overlay(ev, event);
-            });
-
         auto eventhandler_w = e.service<comp_app::BasicEventBus<Event>>();
 
         eventhandler_w->addEventFunction<ResizeEvent>(

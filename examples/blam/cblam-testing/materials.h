@@ -31,6 +31,8 @@ struct alignas(16) lightmap_data
     Vecf2 atlas_offset;
     u32   layer;
     u32   reflection;
+    u32   meta1;
+    u32   meta2;
     /* 8 bytes of padding left */
 };
 

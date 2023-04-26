@@ -31,7 +31,7 @@ out gl_PerVertex {
 void main()
 {
     mat4 transform = matrices.transform[gl_InstanceID];
-    mat3 rotation = transform;
+    mat3 rotation = mat3(transform);
     mat3 tbn = mat3(tangent, binormal, normal);
     vec4 world_pos = transform * vec4(position.xyz, 1);
     frag.tex = tex;

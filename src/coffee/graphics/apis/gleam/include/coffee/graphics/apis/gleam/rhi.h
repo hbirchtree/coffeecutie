@@ -358,7 +358,9 @@ struct api
     u32                                m_api_version{0};
     rq::runtime_queue*                 m_main_queue{nullptr};
     rq::runtime_queue*                 m_texture_decode_queue{nullptr};
+#if GLEAM_MAX_VERSION_ES != 0x200
     std::unique_ptr<circular_buffer_t> m_indirect_buffer;
+#endif
 };
 
 inline void test_t2d()

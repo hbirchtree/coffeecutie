@@ -239,7 +239,7 @@ struct sampler_t
             return;
         }
 #endif
-#if defined(GL_EXT_texture_filter_anisotropic)
+#if defined(GL_EXT_texture_filter_anisotropic) && GLEAM_MAX_VERSION_ES != 0x200
         if(m_features.ext.texture_anisotropic)
         {
             cmd::get_integerv(
@@ -670,8 +670,9 @@ inline void make_copied_view(
 
 } // namespace detail
 
-#if GLEAM_MAX_VERSION >= 0x430 || defined(GL_EXT_texture_view) \
-    || defined(GL_OES_texture_view)
+#if GLEAM_MAX_VERSION_ES != 0x200                                  \
+    && (GLEAM_MAX_VERSION >= 0x430 || defined(GL_EXT_texture_view) \
+        || defined(GL_OES_texture_view))
 template<
     class TypeT,
     class OutputType = typename std::conditional_t<

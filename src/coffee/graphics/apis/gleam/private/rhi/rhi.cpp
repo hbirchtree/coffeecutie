@@ -207,6 +207,7 @@ void texture_t::alloc(size_type const& size, bool create_storage)
                     );
                     break;
 #endif
+#if GLEAM_MAX_VERSION >= 0x120 || GLEAM_MAX_VERSION_ES >= 0x300
                 case type::cube_array:
                     cmd::compressed_tex_image_3d(
                         convert::to(m_type),
@@ -216,6 +217,7 @@ void texture_t::alloc(size_type const& size, bool create_storage)
                         0,
                         null_span<>{alloc_size});
                     break;
+#endif
                 default:
                     break;
                 }
@@ -967,6 +969,7 @@ optional<error> api::load(load_options_t options)
 
     debug().message("gleam::api::load");
 
+#if GLEAM_MAX_VERSION_ES != 0x200
     if(m_features.draw.indirect)
     {
         using semantic::RSCA;
@@ -977,6 +980,7 @@ optional<error> api::load(load_options_t options)
         m_indirect_buffer = std::make_unique<circular_buffer_t>(
             std::ref(debug()), std::move(buffer));
     }
+#endif
 
     return std::nullopt;
 }

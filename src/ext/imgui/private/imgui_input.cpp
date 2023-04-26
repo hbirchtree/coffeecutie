@@ -205,13 +205,13 @@ void ImGuiSystem::setup_inputs(Proxy& e)
             e.type        = CIEvent::NoneType;
         });
     ibus->addEventFunction<CIMouseMoveEvent>(
-        0, [](CIEvent& /*e*/, CIMouseMoveEvent* mouse) {
+        0, [](CIEvent& e, CIMouseMoveEvent* mouse) {
             ImGuiIO& io = ImGui::GetIO();
             io.AddMousePosEvent(
                 mouse->origin[0] + mouse->delta[0],
                 mouse->origin[1] + mouse->delta[1]);
-//            if(io.WantCaptureMouseUnlessPopupClose)
-//                e.type = CIEvent::NoneType;
+            if(io.WantCaptureMouseUnlessPopupClose)
+                e.type = CIEvent::NoneType;
         });
     ibus->addEventFunction<CIMouseButtonEvent>(
         0, [](CIEvent& e, CIMouseButtonEvent* mouse) {

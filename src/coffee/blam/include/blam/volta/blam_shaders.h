@@ -247,25 +247,26 @@ enum class map_flags : u16
 };
 struct map_t
 {
-    u32 padding_1[11];
-
+    u32 padding_1[10];
     map_flags      flags;
+    u16 padding;
+
     color_function color_func;
     color_function alpha_func;
     u16            padding_2;
 
     u32 padding_3[8];
-
     bitm_reference_t map;
 
-    u32 padding_4[7];
+    u32 padding_5[10];
 
     texture_scrolling_animation anim_2d;
-
-    u32 padding_5[3];
 };
 
 static_assert(sizeof(map_t) == 220);
+static_assert(offsetof(map_t, color_func) == 44);
+static_assert(offsetof(map_t, map) == 84);
+static_assert(offsetof(map_t, anim_2d) == 164);
 
 struct alignas(4) base
 {
@@ -453,7 +454,7 @@ struct alignas(4) shader_water : radiosity_properties /* aka swat */
         f32 anim_velocity;
         f32 scale;
 
-        tagref_typed_t<tag_class_t::bitm> maps;
+        tagref_typed_t<tag_class_t::bitm> map;
 
         u32 mipmap_levels;
         f32 fade_factor;

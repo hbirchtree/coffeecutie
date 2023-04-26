@@ -111,6 +111,7 @@ struct EntityContainer : stl_types::non_copy
 
     EntityContainer() : entity_counter(0), debug_flags(0)
     {
+        time_offset = std::chrono::system_clock::now().time_since_epoch();
     }
 
     struct entity_query
@@ -449,6 +450,12 @@ struct EntityContainer : stl_types::non_copy
     EntityRef<EntityContainer> create_entity(EntityRecipe const& recipe);
     void remove_entity_if(std::function<bool(Entity const&)>&& predicate);
 
+    /* Time tracking */
+    clock::time_point relative_timestamp() const
+    {
+        return clock::now() - time_offset;
+    }
+
     /* For optimizations */
     using visitor_graph = std::set<std::vector<bool>>;
 
@@ -462,6 +469,8 @@ struct EntityContainer : stl_types::non_copy
     std::map<type_hash, std::unique_ptr<SubsystemBase>>          subsystems;
     std::vector<std::unique_ptr<EntityVisitorBase>>              visitors;
     std::map<type_hash, SubsystemBase*>                          services;
+
+    clock::duration time_offset;
 
   public:
     u32 debug_flags;

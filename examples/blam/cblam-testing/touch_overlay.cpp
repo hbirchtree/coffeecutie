@@ -153,4 +153,17 @@ void TouchOverlay::operator()(CIEvent& /*ev*/, CITouchMotionEvent* /*event*/)
 void create_touch_overlay(compo::EntityContainer& container)
 {
     container.register_subsystem_inplace<TouchOverlay>();
+
+    auto eventhandler
+        = container.service<comp_app::BasicEventBus<Input::CIEvent>>();
+
+    auto& overlay = container.subsystem_cast<TouchOverlay>();
+    eventhandler->addEventFunction<CIMouseMoveEvent>(
+        768, [&overlay](CIEvent& ev, CIMouseMoveEvent* event) {
+            overlay(ev, event);
+        });
+    eventhandler->addEventFunction<CITouchMotionEvent>(
+        768, [&overlay](CIEvent& ev, CITouchMotionEvent* event) {
+            overlay(ev, event);
+        });
 }

@@ -126,7 +126,7 @@ struct RenderingParameters : compo::SubsystemBase
 {
     using type = RenderingParameters;
 
-    bool render_scenery{false};
+    bool render_scenery{true};
     bool debug_clear{true};
 
     bool debug_portals{false};

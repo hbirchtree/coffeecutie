@@ -210,15 +210,15 @@ struct ShaderData
                                  == chicago::framebuffer_blending::multiply;
             auto is_add = info->transparent.blend_function
                           == chicago::framebuffer_blending::add;
-            auto is_alpha
-                = feval(info->transparent.flags & flags_t::alpha_testing);
+            auto is_alpha = info->transparent.blend_function
+                            == chicago::framebuffer_blending::alpha_blend;
 
             if(is_multiplied)
                 return Pass_Multiply;
             if(is_add)
                 return Pass_Additive;
 
-            return Pass_Alphatest;
+            return Pass_Glass;
         }
         case tc::scex: {
             shader_chicago_extended<V> const* info
@@ -229,6 +229,7 @@ struct ShaderData
             return Pass_Glass;
         }
         case tc::swat:
+            return Pass_Additive;
         case tc::sgla:
             return Pass_Glass;
         case tc::senv: {
@@ -286,7 +287,7 @@ struct Light
     using type       = compo::alloc::VectorContainer<value_type>;
 
     blam::scn::skybox::light const* light{nullptr};
-    blam::mod2::marker const* positioning{nullptr};
+    blam::mod2::marker const*       positioning{nullptr};
 
     Matf4 transform;
 };

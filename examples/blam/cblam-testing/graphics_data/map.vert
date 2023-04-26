@@ -10,7 +10,6 @@ layout(location = 5) in vec2 light_tex;
 layout(location = 1) uniform mat4 camera;
 layout(location = 2) uniform mat3 cameraRotation;
 layout(location = 3) uniform vec3 camera_position;
-layout(location = 4) uniform vec3 sun_position;
 
 layout(location = 0) out FragData {
     vec3 tbn_direction;

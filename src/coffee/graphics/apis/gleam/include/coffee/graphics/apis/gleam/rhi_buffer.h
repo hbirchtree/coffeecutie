@@ -386,6 +386,7 @@ inline buffer_slice_t buffer_t::slice(size_t offset, std::optional<size_t> size)
     };
 }
 
+#if GLEAM_MAX_VERSION_ES != 0x200
 struct circular_buffer_t
 {
     enum class sync_status
@@ -476,7 +477,8 @@ struct circular_buffer_t
     template<typename Span>
     requires semantic::concepts::Span<Span>
     //
-    [[nodiscard]] fence_options push(sync_status /*status*/, Span const& data)
+    [[nodiscard]] fence_options push(
+        sync_status /*status*/, [[maybe_unused]] Span const& data)
     {
         m_buffer->update(m_current_write, data);
         auto written_size = data.size() * sizeof(typename Span::value_type);
@@ -484,7 +486,7 @@ struct circular_buffer_t
         return fence_options(m_current_write - written_size, m_current_write);
     }
 
-    void add_fence(fence_options&& ptr)
+    void add_fence([[maybe_unused]] fence_options&& ptr)
     {
         m_fences.push_back(std::make_pair(
             ptr.ptr,
@@ -507,5 +509,6 @@ struct circular_buffer_t
     std::vector<std::pair<size_t, GLsync>> m_fences;
     u64                                    m_timeout{0};
 };
+#endif
 
 } // namespace gleam

@@ -13,6 +13,8 @@ struct Lightmap
     vec2 atlas_offset;
     int layer;
     int reflection;
+    int meta1;
+    int meta2;
 };
 
 struct MaterialData
@@ -48,6 +50,7 @@ vec4 get_map(in uint map_id, in sampler2DArray sampler, in vec2 tex_coord, in in
     vec2 uvscale = mats.instance[instance].maps[map_id].uv_scale;
     vec2 offset  = mats.instance[instance].maps[map_id].atlas_offset;
 
+//    vec2 tc = (tex_coord - floor(tex_coord)) * uvscale;
     vec2 tc = tex_coord * uvscale;
     tc = tc - floor(tc);
 

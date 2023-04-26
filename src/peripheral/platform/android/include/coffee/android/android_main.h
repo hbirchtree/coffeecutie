@@ -115,6 +115,17 @@ struct app_info
     AConfiguration*  configuration() const;
     AInputQueue*     input_queue() const;
     ALooper*         looper() const;
+
+    enum class device_type
+    {
+        unknown,
+
+        phone,
+        tv,
+        vr_headset,
+    };
+
+    device_type device_type() const;
 };
 
 struct network_stats

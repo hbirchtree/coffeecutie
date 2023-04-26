@@ -206,7 +206,11 @@ function native_build()
         return
     fi
     TARGET_TRIPLET=${PLATFORM}-${TOOLCHAIN_PREFIX}
+    TARGET_FEATURES=""
+
+    [[ $PLATFORM = "desktop" ]] && TARGET_FEATURES="crash-recovery\;pressure-cooker"
     [[ $IS_MACOS = "1" ]] && TARGET_TRIPLET=${TOOLCHAIN_PREFIX}
+
     if [[ $IS_LINUX = "1" ]]; then
         cmake_debug \
             -GNinja \
@@ -221,6 +225,7 @@ function native_build()
             -DTOOLCHAIN_PREFIX=${TOOLCHAIN_PREFIX} \
             -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=${VCPKG_CHAINLOAD_TOOLCHAIN_FILE} \
             -DVCPKG_DEP_INFO_OVERRIDE_VARS=${VCPKG_DEP_INFO_OVERRIDE_VARS} \
+            -DVCPKG_MANIFEST_FEATURES=${TARGET_FEATURES} \
             -DVCPKG_TARGET_TRIPLET=${PLATFORM}-${TOOLCHAIN_PREFIX} \
             -DAPPIMAGE_EXTRA_LIBRARIES="${APPIMAGE_EXTRAS}" \
             -DAPPIMAGE_RUNTIME_BINARY="${APPIMAGE_RUNTIME}" \
@@ -235,6 +240,7 @@ function native_build()
             -DCMAKE_MAKE_PROGRAM=$(which ninja) \
             -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake \
             -DVCPKG_DEP_INFO_OVERRIDE_VARS=${VCPKG_DEP_INFO_OVERRIDE_VARS} \
+            -DVCPKG_MANIFEST_FEATURES=${TARGET_FEATURES} \
             -DVCPKG_TARGET_TRIPLET=${TOOLCHAIN_PREFIX} \
             -DHOST_TOOLS_BINARY_DIR=$HOST_TOOLS_BINARY_DIR \
             ${BASE_DIR} ${@:2}

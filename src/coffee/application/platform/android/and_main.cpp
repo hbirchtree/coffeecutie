@@ -298,6 +298,21 @@ ALooper* app_info::looper() const
     return coffee_app->looper;
 }
 
+device_type app_info::device_type() const
+{
+    switch(AConfiguration_getUiModeType(configuration()))
+    {
+    case ACONFIGURATION_UI_MODE_TYPE_NORMAL:
+        return device_type::phone;
+    case ACONFIGURATION_UI_MODE_TYPE_TELEVISION:
+        return device_type::tv;
+    case ACONFIGURATION_UI_MODE_TYPE_VR_HEADSET:
+        return device_type::vr_headset;
+    default:
+        return device_type::unknown;
+    }
+}
+
 std::optional<network_stats::result_t> network_stats::query(network_class net)
 {
     if(coffee_app->activity->sdkVersion < 23)

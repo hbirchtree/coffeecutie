@@ -132,7 +132,7 @@ static void reinit_map(
         bitmaps.allocate_storage();
     }
 
-    files->last_updated = compo::clock::now();
+    files->last_updated = e.relative_timestamp();
 }
 
 i32 blam_main(i32, cstring_w*)
@@ -253,7 +253,17 @@ i32 blam_main(i32, cstring_w*)
                 window->setName("Blam!");
             }
 
-            create_touch_overlay(e);
+            {
+#if defined(COFFEE_ANDROID)
+                using android::app_info;
+                const bool use_touch
+                    = app_info::device_type() == app_info::device_type::phone;
+#else
+                constexpr bool use_touch = false;
+#endif
+                if(use_touch)
+                    create_touch_overlay(e);
+            }
             create_resources(e);
             create_shaders(e);
             set_resource_labels(e);
@@ -315,11 +325,11 @@ i32 blam_main(i32, cstring_w*)
                     * glm::mat4_cast(camera.camera.rotation),
                 camera.camera.position);
 
-            camera.camera_matrix = GenPerspective(camera.camera);
+            camera.camera_matrix       = GenPerspective(camera.camera);
             camera.camera_matrix[2][2] = 0.f;
             camera.camera_matrix[2][3] = -1.f;
             camera.camera_matrix[3][2] = 0.001f;
-            camera.camera_matrix = camera.camera_matrix * view_matrix;
+            camera.camera_matrix       = camera.camera_matrix * view_matrix;
             //            camera.rotation_matrix =
             //            glm::mat3_cast(camera.camera.rotation);
             camera.rotation_matrix = glm::mat3_cast(camera.camera.rotation);

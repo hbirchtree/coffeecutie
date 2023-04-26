@@ -193,6 +193,7 @@ struct ShaderItem
     {
         generation_idx_t base;
         generation_idx_t reflection;
+        generation_idx_t bump;
     };
 
     union
@@ -286,23 +287,17 @@ struct BitmapCache
     }
 
     template<typename T>
-    requires std::is_same_v<T, gfx::texture_2da_t>
-    auto bucket_to_type()
-    {
-        return gfx::textures::d2_array;
-    }
-    template<typename T>
     requires std::is_same_v<T, gfx::compat::texture_2da_t>
     auto bucket_to_type()
     {
         return gfx::textures::d2_array;
     }
-    template<typename T>
-    requires std::is_same_v<T, gfx::texture_3d_t>
-    auto bucket_to_type()
-    {
-        return gfx::textures::d3;
-    }
+//    template<typename T>
+//    requires std::is_same_v<T, gfx::texture_3d_t>
+//    auto bucket_to_type()
+//    {
+//        return gfx::textures::d3;
+//    }
 #if GLEAM_MAX_VERSION >= 0x400 || GLEAM_MAX_VERSION >= 0x320
     template<typename T>
     requires std::is_same_v<T, gfx::texture_cube_array_t>
@@ -703,7 +698,7 @@ struct BitmapCache
 
         /* Commit the textures */
         for(auto& bitm : m_cache)
-            commit_bitmap<gfx::texture_2da_t>(bitm.second);
+            commit_bitmap<gfx::compat::texture_2da_t>(bitm.second);
 
         for(auto& [_, pool] : fmt_count)
             for(auto [image_id, fmt] : pool.images)
@@ -800,7 +795,7 @@ struct BitmapCache
             {
             case blam::bitm::type_t::tex_2d: {
                 auto& bucket
-                    = get_bucket<gfx::texture_2da_t>(fmt, img.mip->type);
+                    = get_bucket<gfx::compat::texture_2da_t>(fmt, img.mip->type);
                 img.layer = bucket.ptr++;
                 break;
             }
@@ -1024,7 +1019,11 @@ struct ShaderCache
             {
                 u8 i = 0;
                 for(chicago::map_t const& map : maps.value())
+                {
+                    if(!map.map.map.valid())
+                        continue;
                     out.schi.maps.at(i++) = get_bitm_idx(map.map.map);
+                }
             }
             if(auto layers = shader_model.layers.data(magic);
                layers.has_value())
@@ -1071,6 +1070,7 @@ struct ShaderCache
 
             out.swat.base       = get_bitm_idx(shader_model.base);
             out.swat.reflection = get_bitm_idx(shader_model.reflection_map);
+            out.swat.bump       = get_bitm_idx(shader_model.ripple.map);
 
             break;
         }
@@ -1125,14 +1125,23 @@ struct ShaderCache
         case tag_class_t::scex: {
             shader_chicago_extended<V> const* info
                 = shader.header->as<blam::shader::shader_chicago_extended<V>>();
-            auto& base = *bitm_cache.assign_atlas_data(
-                mat.maps[0], shader.scex.maps.at(0));
-            mat.maps[0].uv_scale = Vecf2(1);
-            mat.maps[0].bias     = base.image.bias;
 
-            bitm_cache.assign_atlas_data(mat.maps[1], shader.scex.maps.at(1));
-            bitm_cache.assign_atlas_data(mat.maps[2], shader.scex.maps.at(2));
-            bitm_cache.assign_atlas_data(mat.maps[3], shader.scex.maps.at(3));
+            auto maps = info->maps_4stage.data(magic).value();
+            for(auto i : Range<>(4))
+            {
+                auto id = shader.schi.maps.at(i);
+                if(!shader.schi.maps.at(i).valid())
+                    continue;
+                BitmapItem const& bitm
+                    = *bitm_cache.assign_atlas_data(mat.maps[i], id);
+                chicago::map_t const& map = maps[i];
+                mat.maps[i].uv_scale      = map.map.uv_scale;
+                mat.maps[i].bias          = bitm.image.bias;
+
+                u16 flags = static_cast<u8>(map.color_func)
+                            | (static_cast<u8>(map.alpha_func) << 4);
+                mat.lightmap.meta1 |= flags << (i * 8);
+            }
 
             mat.material.material = materials::id::scex;
             break;
@@ -1140,10 +1149,23 @@ struct ShaderCache
         case tag_class_t::schi: {
             shader_chicago<V> const* info
                 = shader.header->as<blam::shader::shader_chicago<V>>();
-            auto& base = *bitm_cache.assign_atlas_data(
-                mat.maps[0], shader.schi.maps.at(0));
-            mat.maps[0].uv_scale = Vecf2{1};
-            mat.maps[0].bias     = base.image.bias;
+
+            auto maps = info->maps.data(magic).value();
+            for(auto i : Range<>(4))
+            {
+                auto id = shader.schi.maps.at(i);
+                if(!shader.schi.maps.at(i).valid())
+                    continue;
+                BitmapItem const& bitm
+                    = *bitm_cache.assign_atlas_data(mat.maps[i], id);
+                chicago::map_t const& map = maps[i];
+                mat.maps[i].uv_scale      = map.map.uv_scale;
+                mat.maps[i].bias          = bitm.image.bias;
+
+                u16 flags = static_cast<u8>(map.color_func)
+                            | (static_cast<u8>(map.alpha_func) << 4);
+                mat.lightmap.meta1 |= flags << (i * 8);
+            }
 
             mat.material.material = materials::id::schi;
             break;
@@ -1210,6 +1232,25 @@ struct ShaderCache
                 mat.material.flags |= static_cast<u32>(reflection.type) << 7;
             }
 
+            /* Allocation of flag bits:
+             * 0-3:   Top-level flags (senv::flags)
+             * 4-5:   Shader type
+             *
+             * Reflection properties:
+             * 6:     Reflection toggle
+             * 7-8:   Reflection map type
+             *
+             * Blending properties:
+             * 9-10:  Detail map function
+             * 10-11: Micro map function
+             *
+             * Texture scrolling animation:
+             * 12-15: U-animation function
+             * 16-19: V-animation function
+             *
+             *
+             */
+
             break;
         }
         case tag_class_t::swat: {
@@ -1218,17 +1259,18 @@ struct ShaderCache
             mat.maps[0].uv_scale = Vecf2(1);
             mat.maps[0].bias     = 0;
 
-            BitmapItem const* reflection = bitm_cache.assign_atlas_data(
-                mat.maps[1], shader.swat.reflection);
-            if(reflection)
-            {
-                mat.maps[1].uv_scale    = {reflection->image.scale};
-                mat.maps[1].bias        = reflection->image.bias;
-                mat.lightmap.reflection = mat.maps[1].layer;
-            }
+            bitm_cache.assign_atlas_data(mat.maps[1], shader.swat.reflection);
+            mat.lightmap.reflection = mat.maps[1].layer;
+
+            bitm_cache.assign_atlas_data(mat.maps[1], shader.swat.bump);
+            mat.maps[1].uv_scale = Vecf2{info->ripple.scale};
+            mat.maps[1].bias     = 2.f;
 
             mat.material.material = materials::id::swat;
             mat.material.flags    = static_cast<u32>(info->flags);
+            mat.material.inputs1  = Vecf2{
+                glm::radians(info->ripple.anim_angle),
+                info->ripple.anim_velocity};
             mat.material.inputs2
                 = Vecf4(info->parallel.tint_color, info->parallel.brightness);
             mat.material.inputs3 = Vecf4(

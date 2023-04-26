@@ -18,6 +18,7 @@ std::size_t element_size(const draw_command::data_t& data)
     }
 }
 
+#if GLEAM_MAX_VERSION_ES != 0x200
 void create_draw(
     const draw_command::call_spec_t& call,
     const draw_command::data_t&      data,
@@ -109,6 +110,7 @@ void multi_indirect_draw(
 //    buffer.add_fence(std::move(fence));
 #endif
 }
+#endif
 
 std::optional<std::tuple<error, std::string_view>> direct_draw(
     const draw_command::call_spec_t& call,

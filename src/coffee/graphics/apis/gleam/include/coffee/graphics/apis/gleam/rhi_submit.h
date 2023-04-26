@@ -34,6 +34,9 @@ std::optional<std::tuple<error, std::string_view>> direct_draw(
     shader_bookkeeping_t&            bookkeeping,
     workarounds const&               workarounds);
 
+size_t element_size(draw_command::data_t const& data);
+
+#if GLEAM_MAX_VERSION_ES != 0x200
 union alignas(4) indirect_command_buffer
 {
     struct elements_indirect_t
@@ -53,7 +56,6 @@ union alignas(4) indirect_command_buffer
     } arrays;
 };
 
-size_t element_size(draw_command::data_t const& data);
 
 void create_draw(
     draw_command::call_spec_t const& call,
@@ -69,6 +71,7 @@ void multi_indirect_draw(
     [[maybe_unused]] draw_command::call_spec_t const&    call,
     [[maybe_unused]] decltype(draw_command::data) const& data,
     [[maybe_unused]] circular_buffer_t&                  buffer);
+#endif
 
 } // namespace detail
 
@@ -106,6 +109,9 @@ inline optional<tuple<error, std::string_view>> api::submit(
                 for(auto const& buffer : list)
                     if(buffer.buffer.m_type == buffers::type::constants)
                     {
+                        if(buffer.stride == 0)
+                            continue;
+
                         result = true;
                         break;
                     }
@@ -325,6 +331,7 @@ inline optional<tuple<error, std::string_view>> api::submit(
             return std::make_tuple(*error, string());
     }
 
+#if GLEAM_MAX_VERSION_ES != 0x200
     if(multi_indirect_supported && (!call.indexed || has_uniform_element_type))
     {
         detail::multi_indirect_draw(call, data, *m_indirect_buffer);
@@ -348,6 +355,7 @@ inline optional<tuple<error, std::string_view>> api::submit(
             detail::direct_draw(call, d, bookkeeping, m_workarounds);
         }
     } else
+#endif
     {
         using stl_types::range;
         for(auto d : data)
@@ -395,8 +403,10 @@ inline optional<tuple<error, std::string_view>> api::submit(
     if(element_buf)
         cmd::bind_buffer(group::buffer_target_arb::element_array_buffer, 0);
 
+#if GLEAM_MAX_VERSION_ES != 0x200
     if(m_features.vertex.vertex_arrays)
         cmd::bind_vertex_array(0);
+#endif
 
     (detail::undo_command_modifier(*program, bookkeeping, std::move(modifiers)),
      ...);

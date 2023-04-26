@@ -7,8 +7,8 @@
 #include <coffee/core/CProfiling>
 #include <coffee/core/debug/logging.h>
 
-#include <platforms/stacktrace.h>
 #include <peripherals/stl/type_list.h>
+#include <platforms/stacktrace.h>
 
 #include <algorithm>
 
@@ -160,7 +160,13 @@ void EntityContainer::exec()
 {
     constexpr auto wrap_exceptions = compile_info::debug_mode && false;
 
-    time_point     time_now = clock::now();
+    /* This timestamp is relative to the starting time, so that it becomes
+     * useful for different operations that only need to keep track of time in
+     * some manner
+     * It should be suitable for running timers, and scheduling work
+     * X seconds in the future and similar
+     */
+    time_point     time_now = relative_timestamp();
     ContainerProxy proxy(*this);
 
     std::vector<SubsystemBase*> subsystems_;

@@ -33,6 +33,7 @@ layout(location = 30, binding = 11) uniform samplerCube source_cube_rgba8;
 #endif
 
 layout(location = 21) uniform vec3 camera_position;
+layout(location = 22) uniform float time;
 
 struct LightProperties
 {
@@ -48,9 +49,21 @@ layout(binding = 2, std140) uniform WorldProperties
 const uint INTERIOR_LIGHTING = 0u;
 const uint EXTERIOR_LIGHTING = 1u;
 
-vec4 sample_map(in uint map_id, sampler2DArray sampler)
+vec3 view_direction()
 {
-    return get_map(map_id, sampler, frag.tex, frag.instanceId);
+    return normalize(frag.tbn * (camera_position - frag.position));
+}
+vec3 light_direction()
+{
+    vec3 direction = world.lighting[INTERIOR_LIGHTING].light_direction.xyz;
+    return normalize(
+        transpose(frag.tbn) *
+        direction * -1);
+}
+
+vec4 sample_map(in uint map_id, in sampler2DArray sampler, in vec2 offset)
+{
+    return get_map(map_id, sampler, frag.tex + offset, frag.instanceId);
 }
 
 const uint TEX_BC1    = 1u;
@@ -62,31 +75,32 @@ const uint TEX_RG8    = 6u;
 const uint TEX_RGBA4  = 7u;
 const uint TEX_RGBA8  = 8u;
 
-vec4 get_color(in uint map_id)
+vec4 get_color_with_offset(in uint map_id, in vec2 offset)
 {
     int tex_id = mats.instance[frag.instanceId].maps[map_id].layer;
     uint source = tex_id >> 24;
     if(source == TEX_BC1)
-    {
-        vec4 color = sample_map(map_id, source_bc1);
-//        vec3 background_color = texture(source_bc1, vec3(0, 0, tex_id)).rgb;
-//        color.a = length(background_color - color.rgb) < 0.1 ? 0.0 : 1.0;
-        return color;
-    } else if(source == TEX_BC2)
-        return sample_map(map_id, source_bc2);
+        return sample_map(map_id, source_bc1, offset);
+    else if(source == TEX_BC2)
+        return sample_map(map_id, source_bc2, offset);
     else if(source == TEX_BC3)
-        return sample_map(map_id, source_bc3);
+        return sample_map(map_id, source_bc3, offset);
     else if(source == TEX_R8)
-        return sample_map(map_id, source_r8);
+        return sample_map(map_id, source_r8, offset);
     else if(source == TEX_RG8)
-        return sample_map(map_id, source_rg8);
+        return sample_map(map_id, source_rg8, offset);
     else if(source == TEX_RGB565)
-        return sample_map(map_id, source_rgb565).bgra;
+        return sample_map(map_id, source_rgb565, offset).bgra;
     else if(source == TEX_RGBA4)
-        return sample_map(map_id, source_rgba4).bgra;
+        return sample_map(map_id, source_rgba4, offset).bgra;
     else if(source == TEX_RGBA8)
-        return sample_map(map_id, source_rgba8).bgra;
+        return sample_map(map_id, source_rgba8, offset).bgra;
     return vec4(vec3(1.0, 1.0, 1.0), 1.0);
+}
+
+vec4 get_color(in uint map_id)
+{
+    return get_color_with_offset(map_id, vec2(0));
 }
 
 #if USE_REFLECTIONS == 1
@@ -101,23 +115,20 @@ vec4 get_cube_color(in vec3 tex_coord)
     else if(source == TEX_RGBA8)
         return get_cube_map(source_cube_rgba8, tex_coord, frag.instanceId);
     else
-        return vec4(vec3(1, 0, 1), 1.0);
+        return vec4(1);
+}
+#endif
+
+#if USE_NORMALMAP == 1
+vec4 get_bump(in uint map_id, in vec2 offset)
+{
+    vec3 normal = normalize(get_color_with_offset(map_id, offset).rgb * 2.0 - 1.0);
+    normal = frag.tbn * normal;
+    return vec4(normal, dot(normal, -light_direction()));
 }
 #endif
 
 const uint base_map_id      = 0u;
-
-vec3 view_direction()
-{
-    return normalize(frag.tbn * (camera_position - frag.position));
-}
-vec3 light_direction()
-{
-    vec3 direction = world.lighting[INTERIOR_LIGHTING].light_direction.xyz;
-    return normalize(
-        transpose(frag.tbn) *
-        direction * -1);
-}
 
 vec4 shader_dummy()
 {
@@ -152,9 +163,7 @@ vec4 shader_environment()
         ? base.a * micro.a : blend.a * micro.a;
 
 #if USE_NORMALMAP == 1
-    vec3 normal = normalize(get_color(bump_map_id).rgb * 2.0 - 1.0);
-    normal = frag.tbn * normal;
-    float normal_factor = dot(normal, -light_direction());
+    vec4 normal = get_bump(bump_map_id, vec2(0));
 #endif
 
 #if USE_REFLECTIONS == 1
@@ -171,9 +180,16 @@ vec4 shader_environment()
         reflection_tint = mix(
             perp_color.rgb * perp_color.a,
             parallel_color.rgb * parallel_color.a,
-            dot(normal, view_direction()));
+            dot(normal.rgb, -view_direction()));
     }
 #endif
+
+//    if(type == TYPE_NORMAL)
+//        return vec4(vec3(base.a * micro.a), 1);
+//    else if(type == TYPE_BLENDED)
+//        return vec4(vec3(secondary.a), 1);
+//    else
+//        return vec4(1, 0, 0, 1);
 
     return vec4(
         base.rgb *
@@ -185,26 +201,104 @@ vec4 shader_environment()
 #if USE_REFLECTIONS == 1
         mix(reflection, vec3(1), base.a) *
 //        reflection_tint *
+//        1 +
 #endif
 #if USE_NORMALMAP == 1
-        max(0.1, normal_factor) *
-        specular *
+        max(0.1, normal.a) *
 #endif
         vec3(1),
         1.0
         );
 }
 
+void combine_map(
+    inout vec4 out_color,
+    in vec4 color,
+    in vec4 next_color,
+    in int flags)
+{
+    const int F_CURRENT            = 0;
+    const int F_NEXT               = 1;
+    const int F_MUL                = 2;
+    const int F_DOUBLE_MUL         = 3;
+    const int F_ADD                = 4;
+    const int F_ADD_SIGNED_CURRENT = 5;
+    const int F_ADD_SIGNED_NEXT    = 6;
+    const int F_SUB_SIGNED_CURRENT = 7;
+    const int F_SUB_SIGNED_NEXT    = 8;
+
+    const int F_BLEND_CURRENT_ALPHA         = 9;
+    const int F_BLEND_CURRENT_ALPHA_INVERSE = 10;
+    const int F_BLEND_NEXT_ALPHA            = 11;
+    const int F_BLEND_NEXT_ALPHA_INVERSE    = 12;
+
+    int color_func = flags & 0xF;
+    int alpha_func = flags >> 4;
+
+    if(color_func == F_CURRENT)
+        out_color.rgb = color.rgb;
+    else if(color_func == F_NEXT)
+        out_color.rgb = next_color.rgb;
+    else if(color_func == F_MUL)
+        out_color.rgb = out_color.rgb * color.rgb;
+    else if(color_func == F_DOUBLE_MUL)
+        out_color.rgb = out_color.rgb * color.rgb * color.rgb;
+    else if(color_func == F_ADD || color_func == F_ADD_SIGNED_CURRENT)
+        out_color.rgb = out_color.rgb + color.rgb;
+    else if(color_func == F_ADD_SIGNED_NEXT)
+        out_color.rgb = out_color.rgb + next_color.rgb;
+    else if(color_func == F_SUB_SIGNED_CURRENT)
+        out_color.rgb = out_color.rgb - color.rgb;
+    else if(color_func == F_SUB_SIGNED_NEXT)
+        out_color.rgb = out_color.rgb - next_color.rgb;
+    else if(color_func == F_BLEND_CURRENT_ALPHA)
+        out_color.rgb = out_color.rgb + color.rgb * color.a;
+    else if(color_func == F_BLEND_CURRENT_ALPHA_INVERSE)
+        out_color.rgb = out_color.rgb + color.rgb * (1 - color.a);
+    else if(color_func == F_BLEND_NEXT_ALPHA)
+        out_color.rgb = out_color.rgb + color.rgb * next_color.a;
+    else if(color_func == F_BLEND_NEXT_ALPHA_INVERSE)
+        out_color.rgb = out_color.rgb + color.rgb * (1 - next_color.a);
+    else
+        out_color.rgb = vec3(1, 0, 1);
+
+    if(alpha_func == F_ADD)
+        out_color.a = out_color.a + color.a;
+    else if(alpha_func == F_MUL)
+        out_color.a = out_color.a * color.a;
+    else if(alpha_func == F_BLEND_CURRENT_ALPHA)
+        out_color.a = out_color.a + color.a;
+    else if(alpha_func == F_BLEND_CURRENT_ALPHA_INVERSE)
+        out_color.a = out_color.a + (1 - color.a);
+    else if(alpha_func == F_BLEND_NEXT_ALPHA)
+        out_color.a = out_color.a + next_color.a;
+    else if(alpha_func == F_BLEND_NEXT_ALPHA_INVERSE)
+        out_color.a = out_color.a + (1 - next_color.a);
+}
+
 vec4 shader_chicago()
 {
-//    return shader_dummy();
-    return vec4(1, 0, 1, 1);
+    vec4 out_color = vec4(vec3(1), 0);
+
+    vec4 c1 = get_color(0u);
+    vec4 c2 = get_color(1u);
+    vec4 c3 = get_color(2u);
+    vec4 c4 = get_color(3u);
+
+    int flags = mats.instance[frag.instanceId].lightmap.meta1;
+
+    combine_map(out_color, c1, c2, (flags >> 0)  & 0xFF);
+    combine_map(out_color, c2, c3, (flags >> 8) & 0xFF);
+    combine_map(out_color, c3, c4, (flags >> 16) & 0xFF);
+    combine_map(out_color, c4, vec4(0), (flags >> 24)  & 0xFF);
+
+    return vec4(out_color.rgb, out_color.a);
 }
 
 vec4 shader_chicago_extended()
 {
-//    return shader_dummy();
-    return vec4(1, 0, 1, 1);
+    return shader_chicago();
+//    return vec4(1, 0, 1, 1);
 }
 
 vec4 shader_transparent()
@@ -217,41 +311,67 @@ vec4 shader_model()
     const uint multi_map_id  = 1u;
     const uint detail_map_id = 2u;
 
+    float alpha_ref = 0.5;
     vec4 color = get_color(base_map_id);
-    vec4 multi = get_color(multi_map_id);
-    vec4 detail = get_color(detail_map_id);
+    if(color.a < alpha_ref)
+        discard;
+
+    /* These are shamelessly stolen from the original shader */
+    vec4 primary_change_color = vec4(1) - vec4(vec3(1), 0); // cb[0]
+    vec4 fog_color_correction_0 = vec4(0, 0, 0, 1); // cb[1]
+    vec4 fog_color_correction_E = vec4(0, 0, 0, 1); // cb[2]
+    vec4 fog_color_correction_1 = vec4(0, 0, 0, 1); // cb[3]
+    vec4 self_illum_color = vec4(0); // cb[4]
+    vec4 fog_color = vec4(0); // cb[5]
+
+    vec4 coloring = vec4(1) * primary_change_color;
+
+    vec4 multi = get_color(multi_map_id).bgra;
+    // HLSL does some vec4 -> vec2 cast here, so this might be wrong
+    vec3 specular = vec3(multi.xz - multi.zw, 0); // add r3.xy, -r2.zwzz, r2.xzxx
+    multi.xz = fog_color_correction_1.x * specular.xy + multi.zw; // mad r1.xyz, fog_color_correction_1.w, r3.xxyx, r2.zzwz
+    specular.xyz = clamp(multi.y * self_illum_color.rgb + 1, 0, 1);
+    coloring.rgb = coloring.rgb * multi.z + 1;
+    float specular_contribution = 0.8;
+    coloring.a = multi.r * specular_contribution;
+    coloring.rgb = coloring.rgb * specular.xyz;
+
 #if USE_REFLECTIONS == 1
     vec3 reflection = get_cube_color(view_direction()).rgb;
-    float reflection_factor = 0;
-    if((mats.instance[frag.instanceId].material.flags & 0x1) != 0)
-        reflection_factor = multi.b;
-    reflection_factor = 1;
+#else
+    vec3 reflection = vec3(1);
 #endif
 
-    if(color.a < 0.5)
-        discard;
+    // mul r2.xyz, r2.xyz, v2.xyz
+    reflection = reflection * coloring.a;
+    color.rgb = clamp(color.rgb * coloring.rgb + reflection.rgb, 0, 1);
+
+    vec4 detail = get_color(detail_map_id);
+//    color.rgb = detail.rgb * 2 + color.rgb;
+//    color.rgb = clamp(color.rgb - 1, 0, 1);
+
     return vec4(
         color.rgb *
         detail.rgb *
 #if USE_REFLECTIONS == 1
-        mix(vec3(1), reflection, reflection_factor) *
+//        mix(vec3(1), reflection, reflection_factor) *
 #endif
-        1, 1);
+        1, color.a);
 }
 
 vec4 shader_glass()
 {
-    return shader_dummy();
+    return shader_dummy() * time * 0.00001;
 }
 
-vec4 shader_metal()
+vec4 shader_meter()
 {
     return vec4(shader_dummy().rgb, 1.0);
 }
 
 vec4 shader_plasma()
 {
-    return vec4(shader_dummy().rgba);
+    return shader_dummy();
 }
 
 vec4 shader_water()
@@ -259,23 +379,56 @@ vec4 shader_water()
     const int ALPHA_MODULATES_REFLECT    = 0x1;
     const int COLOR_MODULATES_BACKGROUND = 0x2;
 
-    const uint reflection_map_id = 1u;
+    const uint bump_map_id = 1u;
 
     int flags = mats.instance[frag.instanceId].material.flags & 0x3;
 
     vec4 base = get_color(base_map_id);
 #if USE_REFLECTIONS == 1
     vec4 reflection = get_cube_color(view_direction());
-
-    if((flags & ALPHA_MODULATES_REFLECT) != 0)
-        reflection.rgb = reflection.rgb * base.a;
-    if((flags & COLOR_MODULATES_BACKGROUND) != 0)
-        reflection.rgb = reflection.rgb * base.rgb;
-
-    return vec4(reflection.rgb, base.r);
 #else
-    return vec4(0, 0, 1, base.r);
+    vec4 reflection = vec4(1);
 #endif
+#if USE_NORMALMAP == 1
+    float angle_rad = mats.instance[frag.instanceId].material.input1.x;
+    vec2 angle = vec2(sin(angle_rad), cos(angle_rad));
+    float velocity = mats.instance[frag.instanceId].material.input1.y;
+    vec4 normal = get_bump(bump_map_id, angle * velocity * time);
+#endif
+    vec4 parallel = mats.instance[frag.instanceId].material.input2;
+    vec4 perpendicular = mats.instance[frag.instanceId].material.input3;
+
+    velocity = 0.001;
+    vec3 normal_1 = get_bump(bump_map_id, vec2(sin(1), cos(1)) * (velocity + 0.001) * time).rgb;
+    vec3 normal_2 = get_bump(bump_map_id, vec2(sin(0), cos(0)) * (velocity - 0.005) * time).rgb;
+    vec3 normal_3 = get_bump(bump_map_id, vec2(sin(2), cos(2)) * (velocity + 0.005) * time).rgb;
+    vec3 normal_4 = get_bump(bump_map_id, vec2(sin(3), cos(3)) * (velocity - 0.010) * time).rgb;
+
+    /* TODO: This is very broken, does not look right */
+
+    normal.xyz = normal_1 * normal_2 * normal_3 * normal_4;
+    normal.w = dot(normal.xyz, -view_direction());
+
+    float camera_angle = 1 - dot(normal.xyz, view_direction());
+
+    if((flags & COLOR_MODULATES_BACKGROUND) != 0)
+    {
+//        reflection.rgb = reflection.rgb * base.rgb;
+        reflection.a = base.a * normal.w;
+    }
+    if((flags & ALPHA_MODULATES_REFLECT) != 0)
+        reflection.a = base.a *
+            camera_angle *
+            1;
+
+    return vec4(
+        mix(pow(reflection.rgb, vec3(8)),
+            reflection.rgb,
+            mix(parallel.rgb,
+                perpendicular.rgb,
+                (parallel.a + perpendicular.a) / 2)) *
+        vec3(reflection.a),
+        0.5);
 }
 
 const uint MATERIAL_SENV = 1u;
@@ -316,7 +469,7 @@ void main()
         final_color = shader_glass();
     } else if(material_id == MATERIAL_SMET)
     {
-        final_color = vec4(vec3(0.3), 1);
+        final_color = shader_meter();
     } else if(material_id == MATERIAL_SOTR)
     {
         final_color = shader_transparent();

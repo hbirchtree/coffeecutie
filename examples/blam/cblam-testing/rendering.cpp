@@ -218,60 +218,60 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             typing::graphics::ShaderStage::Fragment,
             {"lightmaps"sv, 4},
             bitm_cache
-                .template get_bucket<gfx::texture_2da_t>(
+                .template get_bucket<gfx::compat::texture_2da_t>(
                     PixDesc(PixFmt::RGB565))
                 .sampler});
         samplers.push_back(gleam::sampler_definition_t{
             typing::graphics::ShaderStage::Fragment,
             {"source_bc1"sv, 0},
             bitm_cache
-                .template get_bucket<gfx::texture_2da_t>(
+                .template get_bucket<gfx::compat::texture_2da_t>(
                     CompFmt(PixFmt::BCn, CompFlags::BC1))
                 .sampler});
         samplers.push_back(gleam::sampler_definition_t{
             typing::graphics::ShaderStage::Fragment,
             {"source_bc2"sv, 1},
             bitm_cache
-                .template get_bucket<gfx::texture_2da_t>(
+                .template get_bucket<gfx::compat::texture_2da_t>(
                     CompFmt(PixFmt::BCn, CompFlags::BC2))
                 .sampler});
         samplers.push_back(gleam::sampler_definition_t{
             typing::graphics::ShaderStage::Fragment,
             {"source_bc3"sv, 2},
             bitm_cache
-                .template get_bucket<gfx::texture_2da_t>(
+                .template get_bucket<gfx::compat::texture_2da_t>(
                     CompFmt(PixFmt::BCn, CompFlags::BC3))
                 .sampler});
         samplers.push_back(gleam::sampler_definition_t{
             typing::graphics::ShaderStage::Fragment,
             {"source_rgb565"sv, 3},
             bitm_cache
-                .template get_bucket<gfx::texture_2da_t>(
+                .template get_bucket<gfx::compat::texture_2da_t>(
                     PixDesc(PixFmt::RGB565))
                 .sampler});
         samplers.push_back(gleam::sampler_definition_t{
             typing::graphics::ShaderStage::Fragment,
             {"source_r8"sv, 5},
             bitm_cache
-                .template get_bucket<gfx::texture_2da_t>(PixDesc(PixFmt::R8))
+                .template get_bucket<gfx::compat::texture_2da_t>(PixDesc(PixFmt::R8))
                 .sampler});
         samplers.push_back(gleam::sampler_definition_t{
             typing::graphics::ShaderStage::Fragment,
             {"source_rg8"sv, 6},
             bitm_cache
-                .template get_bucket<gfx::texture_2da_t>(PixDesc(PixFmt::RG8))
+                .template get_bucket<gfx::compat::texture_2da_t>(PixDesc(PixFmt::RG8))
                 .sampler});
         samplers.push_back(gleam::sampler_definition_t{
             typing::graphics::ShaderStage::Fragment,
             {"source_rgba4"sv, 7},
             bitm_cache
-                .template get_bucket<gfx::texture_2da_t>(PixDesc(PixFmt::RGBA4))
+                .template get_bucket<gfx::compat::texture_2da_t>(PixDesc(PixFmt::RGBA4))
                 .sampler});
         samplers.push_back(gleam::sampler_definition_t{
             typing::graphics::ShaderStage::Fragment,
             {"source_rgba8"sv, 8},
             bitm_cache
-                .template get_bucket<gfx::texture_2da_t>(PixDesc(PixFmt::RGBA8))
+                .template get_bucket<gfx::compat::texture_2da_t>(PixDesc(PixFmt::RGBA8))
                 .sampler});
 #if GLEAM_MAX_VERSION >= 0x400 || GLEAM_MAX_VERSION_ES >= 0x320
         samplers.push_back(gleam::sampler_definition_t{
@@ -327,7 +327,7 @@ struct MeshRenderer : Components::RestrictedSubsystem<
     }
 
     template<typename... Args>
-    void render_pass(Proxy&, Pass const& pass, Args&&... extra)
+    void render_pass(Proxy&, f32 t, Pass const& pass, Args&&... extra)
     {
         using namespace typing::vector_types;
 
@@ -349,7 +349,12 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             typing::graphics::ShaderStage::Fragment,
             gfx::uniform_pair{
                 {"camera_position", 21},
-                semantic::SpanOne<const Vecf3>(m_camera.camera.position)});
+                semantic::SpanOne<const Vecf3>(m_camera.camera.position),
+            },
+            gfx::uniform_pair{
+                {"time", 22},
+                semantic::SpanOne<const f32>(t),
+            });
         auto buffers = gfx::make_buffer_list(
             gfx::buffer_definition_t{
                 typing::graphics::ShaderStage::Vertex,
@@ -393,7 +398,7 @@ struct MeshRenderer : Components::RestrictedSubsystem<
     }
 
     template<typename... Args>
-    void render_bsp_pass(Proxy&, Pass const& pass, Args&&... extra)
+    void render_bsp_pass(Proxy&, f32 t, Pass const& pass, Args&&... extra)
     {
         using namespace typing::vector_types;
 
@@ -420,7 +425,12 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             typing::graphics::ShaderStage::Fragment,
             gfx::uniform_pair{
                 {"camera_position", 21},
-                semantic::SpanOne<const Vecf3>(m_camera.camera.position)});
+                semantic::SpanOne<const Vecf3>(m_camera.camera.position),
+            },
+            gfx::uniform_pair{
+                {"time", 22},
+                semantic::SpanOne<const f32>(t),
+            });
         auto buffers = gfx::make_buffer_list(
             gfx::buffer_definition_t{
                 typing::graphics::ShaderStage::Fragment,
@@ -524,7 +534,8 @@ struct MeshRenderer : Components::RestrictedSubsystem<
     void start_restricted(Proxy& p, time_point const& time)
     {
         ProfContext _;
-        bool        invalidated
+
+        bool invalidated
             = p.template subsystem<BlamFiles>().last_updated > last_update;
         if(time - last_update > std::chrono::seconds(5) || invalidated)
         {
@@ -538,28 +549,36 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         if(rendering_props->debug_clear)
             m_resources.offscreen->clear(Vecf4(0, 0, 0, 1));
 
+        f32 t = stl_types::Chrono::to_float(time);
+
         for(auto const& pass : stl_types::slice_num(m_bsp, Pass_LastOpaque + 1))
         {
-            render_bsp_pass(p, pass, gfx::cull_state{.front_face = true});
+            render_bsp_pass(p, t, pass, gfx::cull_state{.front_face = true});
         }
 
         if(rendering_props->render_scenery)
             for(auto const& pass :
                 stl_types::slice_num(m_model, Pass_LastOpaque + 1))
-                render_pass(p, pass, gfx::cull_state{.front_face = true});
+                render_pass(p, t, pass, gfx::cull_state{.front_face = true});
 
         if(rendering_props->render_scenery)
         {
             render_pass(
-                p, m_model[Pass_Additive], gfx::blend_state{.additive = true});
+                p,
+                t,
+                m_model[Pass_Additive],
+                gfx::blend_state{.additive = true});
             render_pass(
-                p, m_model[Pass_Multiply], gfx::blend_state{.multiply = true});
+                p,
+                t,
+                m_model[Pass_Multiply],
+                gfx::blend_state{.multiply = true});
         }
         if(rendering_props->render_scenery)
-            render_pass(p, m_model[Pass_Glass], gfx::blend_state{});
+            render_pass(p, t, m_model[Pass_Glass], gfx::blend_state{});
         render_bsp_pass(
-            p, m_bsp[Pass_Additive], gfx::blend_state{.additive = true});
-        render_bsp_pass(p, m_bsp[Pass_Glass], gfx::blend_state{});
+            p, t, m_bsp[Pass_Additive], gfx::blend_state{.additive = true});
+        render_bsp_pass(p, t, m_bsp[Pass_Glass], gfx::blend_state{});
 
         //        render_bsp_pass(p, m_bsp[Pass_Wireframe]);
 

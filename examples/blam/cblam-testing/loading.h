@@ -422,35 +422,64 @@ void load_scenario_scenery(EntityContainer& e, BlamData<Version>& data)
                 light.radiosity.color,
                 light.radiosity.power,
             };
+            // TODO: Find out how objects are identified as being
+            // interior or exterior in the world
         }
 
-        skybox_mod.tag = skybox_tag;
+        skybox_mod.tag       = skybox_tag;
+        skybox_mod.transform = glm::identity<Matf4>();
 
-        auto model = model_cache.predict(
+        ModelAssembly assem = model_cache.predict_regions(
             skybox_.model.to_plain(), blam::mod2::mod2_lod::lod_high_ext);
 
-        if(!model.valid())
+        if(assem.models.empty())
         {
             cDebug("Invalid skybox");
             continue;
         }
 
-        ModelItem<Version>& model_ = model_cache.find(model)->second;
-
-        for(auto const& sub : model_.mesh.sub)
+        for(auto const& part_id : assem.models)
         {
-            auto      submod  = e.create_entity(skybox_model);
-            SubModel& submod_ = submod.get<SubModel>();
+            ModelItem<Version> const& part = model_cache.find(part_id)->second;
 
-            submod_.initialize<Version>(model, sub);
-            skybox_mod.models.push_back(submod);
-            submod_.parent = skybox_ent.id();
+            for(typename ModelItem<Version>::SubModel const& region :
+                part.mesh.sub)
+            {
+                if(!region.shader.valid())
+                    continue;
 
-            ShaderData& shader  = submod.get<ShaderData>();
-            ShaderItem& shader_ = shader_cache.find(sub.shader)->second;
+                auto submod = e.create_entity(skybox_model);
+                skybox_mod.models.push_back(submod);
+                SubModel& submodel = submod.get<SubModel>();
+                submodel.parent    = skybox_ent.id();
+                submodel.initialize<Version>(part_id, region);
 
-            shader.initialize(shader_, submod_);
+                ShaderData&       shader_ = submod.get<ShaderData>();
+                ShaderItem const& shader_it
+                    = shader_cache.find(region.shader)->second;
+                shader_.initialize(shader_it, submodel);
+
+                submodel.current_pass = shader_.get_render_pass(shader_cache);
+            }
         }
+
+        //        ModelItem<Version>& model_ = model_cache.find(model)->second;
+
+        //        for(auto const& sub : model_.mesh.sub)
+        //        {
+        //            auto      submod  = e.create_entity(skybox_model);
+        //            SubModel& submod_ = submod.get<SubModel>();
+
+        //            submod_.initialize<Version>(model, sub);
+        //            skybox_mod.models.push_back(submod);
+        //            submod_.parent = skybox_ent.id();
+
+        //            ShaderData& shader  = submod.get<ShaderData>();
+        //            ShaderItem& shader_ =
+        //            shader_cache.find(sub.shader)->second;
+
+        //            shader.initialize(shader_, submod_);
+        //        }
 
         cDebug("Skybox");
     }
