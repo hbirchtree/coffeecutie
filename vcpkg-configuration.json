@@ -16,5 +16,27 @@
     ],
     "overlay-triplets": [
         "./toolchain/vcpkg/triplets"
+    ],
+    "registries": [
+        {
+            "kind": "git",
+            "repository": "https://github.com/hbirchtree/vcpkg-graphics.git",
+            "baseline": "9cd86d751a5851c1842eb5cdede3bebcc98e781c",
+            "packages": [
+                "bcdec",
+                "etc2comp",
+                "shaderc",
+                "spirv-tools"
+            ]
+        },
+        {
+            "kind": "git",
+            "repository": "https://github.com/hbirchtree/vcpkg-appimage.git",
+            "baseline": "1ddaaf6b77295456ba0aabbb37d2e1b119f29252",
+            "packages": [
+                "appimage-runtime",
+                "squashfuse"
+            ]
+        }
     ]
 }
