@@ -126,6 +126,7 @@ struct program_t
             }
         }
         m_handle.release();
+        m_stages.clear();
     }
 
     NO_DISCARD semantic::result<compile_log_t, compile_error_t> compile()

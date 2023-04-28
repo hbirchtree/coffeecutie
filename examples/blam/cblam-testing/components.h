@@ -186,9 +186,6 @@ struct ShaderData
         using namespace enum_helpers;
         using namespace blam::shader;
 
-        auto const& shader_ = get_shader(cache);
-        auto        name    = shader_tag->to_name().to_string(cache.magic);
-
         switch(shader_tag->tagclass_e[0])
         {
         case tc::soso: {
@@ -206,19 +203,19 @@ struct ShaderData
             auto                     maps   = info->maps.data(cache.magic);
             auto                     layers = info->layers.data(cache.magic);
 
-            auto is_multiplied = info->transparent.blend_function
-                                 == chicago::framebuffer_blending::multiply;
-            auto is_add = info->transparent.blend_function
-                          == chicago::framebuffer_blending::add;
-            auto is_alpha = info->transparent.blend_function
-                            == chicago::framebuffer_blending::alpha_blend;
+//            auto is_multiplied = info->transparent.blend_function
+//                                 == chicago::framebuffer_blending::multiply;
+//            auto is_add = info->transparent.blend_function
+//                          == chicago::framebuffer_blending::add;
+//            auto is_alpha = info->transparent.blend_function
+//                            == chicago::framebuffer_blending::alpha_blend;
 
-            if(is_multiplied)
-                return Pass_Multiply;
-            if(is_add)
-                return Pass_Additive;
+            //            if(is_multiplied)
+            //                return Pass_Multiply;
+            //            if(is_add)
+            return Pass_Additive;
 
-            return Pass_Glass;
+            //            return Pass_Glass;
         }
         case tc::scex: {
             shader_chicago_extended<V> const* info
@@ -226,7 +223,8 @@ struct ShaderData
             auto maps_2 = info->maps_2stage.data(cache.magic);
             auto maps_4 = info->maps_4stage.data(cache.magic);
             auto layers = info->layers.data(cache.magic);
-            return Pass_Glass;
+            //            return Pass_Glass;
+            return Pass_Additive;
         }
         case tc::swat:
             return Pass_Additive;

@@ -215,28 +215,28 @@ void combine_map(
     inout vec4 out_color,
     in vec4 color,
     in vec4 next_color,
-    in int flags)
+    in uint flags)
 {
-    const int F_CURRENT            = 0;
-    const int F_NEXT               = 1;
-    const int F_MUL                = 2;
-    const int F_DOUBLE_MUL         = 3;
-    const int F_ADD                = 4;
-    const int F_ADD_SIGNED_CURRENT = 5;
-    const int F_ADD_SIGNED_NEXT    = 6;
-    const int F_SUB_SIGNED_CURRENT = 7;
-    const int F_SUB_SIGNED_NEXT    = 8;
+    const uint F_CURRENT            = 0;
+    const uint F_NEXT               = 1;
+    const uint F_MUL                = 2;
+    const uint F_DOUBLE_MUL         = 3;
+    const uint F_ADD                = 4;
+    const uint F_ADD_SIGNED_CURRENT = 5;
+    const uint F_ADD_SIGNED_NEXT    = 6;
+    const uint F_SUB_SIGNED_CURRENT = 7;
+    const uint F_SUB_SIGNED_NEXT    = 8;
 
-    const int F_BLEND_CURRENT_ALPHA         = 9;
-    const int F_BLEND_CURRENT_ALPHA_INVERSE = 10;
-    const int F_BLEND_NEXT_ALPHA            = 11;
-    const int F_BLEND_NEXT_ALPHA_INVERSE    = 12;
+    const uint F_BLEND_CURRENT_ALPHA         = 9;
+    const uint F_BLEND_CURRENT_ALPHA_INVERSE = 10;
+    const uint F_BLEND_NEXT_ALPHA            = 11;
+    const uint F_BLEND_NEXT_ALPHA_INVERSE    = 12;
 
-    int color_func = flags & 0xF;
-    int alpha_func = flags >> 4;
+    uint color_func = flags & 0x1F;
+    uint alpha_func = flags >> 5;
 
     if(color_func == F_CURRENT)
-        out_color.rgb = color.rgb;
+        ;
     else if(color_func == F_NEXT)
         out_color.rgb = next_color.rgb;
     else if(color_func == F_MUL)
@@ -262,10 +262,12 @@ void combine_map(
     else
         out_color.rgb = vec3(1, 0, 1);
 
+    if(alpha_func == F_CURRENT)
+        ;
     if(alpha_func == F_ADD)
         out_color.a = out_color.a + color.a;
     else if(alpha_func == F_MUL)
-        out_color.a = out_color.a * color.a;
+        out_color.a = out_color.a + color.a;
     else if(alpha_func == F_BLEND_CURRENT_ALPHA)
         out_color.a = out_color.a + color.a;
     else if(alpha_func == F_BLEND_CURRENT_ALPHA_INVERSE)
@@ -274,23 +276,114 @@ void combine_map(
         out_color.a = out_color.a + next_color.a;
     else if(alpha_func == F_BLEND_NEXT_ALPHA_INVERSE)
         out_color.a = out_color.a + (1 - next_color.a);
+    else
+        out_color.rgb = vec3(1, 1, 0);
+}
+
+void combine_map_v2(
+    inout vec4 dst,
+    in vec4 color,
+    in vec4 next_color,
+    in uint flags)
+{
+    const uint F_CURRENT            = 0;
+    const uint F_NEXT               = 1;
+    const uint F_MUL                = 2;
+    const uint F_DOUBLE_MUL         = 3;
+    const uint F_ADD                = 4;
+    const uint F_ADD_SIGNED_CURRENT = 5;
+    const uint F_ADD_SIGNED_NEXT    = 6;
+    const uint F_SUB_SIGNED_CURRENT = 7;
+    const uint F_SUB_SIGNED_NEXT    = 8;
+
+    if(flags == 0)
+        return;
+
+    uint color_func = flags & 0x1F;
+
+    vec4 src = vec4(0);
+    src.a = color.a;
+
+    if(color_func == F_CURRENT)
+        ;
+    else if(color_func == F_NEXT)
+        ;
+    else if(color_func == F_MUL)
+        src.rgb = next_color.rgb;
+    else if(color_func == F_DOUBLE_MUL)
+        src.rgb = color.rgb * color.rgb;
+    else if(color_func == F_ADD)
+        src.rgb = color.rgb + next_color.rgb;
+    else if(color_func == F_ADD_SIGNED_CURRENT)
+        src.rgb = color.rgb;
+    else if(color_func == F_ADD_SIGNED_NEXT)
+        src.rgb = next_color.rgb;
+    else if(color_func == F_SUB_SIGNED_CURRENT)
+        src.rgb = color.rgb;
+    else if(color_func == F_SUB_SIGNED_NEXT)
+        src.rgb = next_color.rgb;
+    else
+        src.rgb = vec3(1, 0, 1);
+
+    if(color_func == F_MUL)
+        dst.rgb = dst.rgb + src.rgb;
+    else if(color_func == F_DOUBLE_MUL)
+        dst.rgb = dst.rgb * src.rgb;
+    else if(color_func == F_ADD ||
+            color_func == F_ADD_SIGNED_CURRENT ||
+            color_func == F_ADD_SIGNED_NEXT)
+        dst.rgb = dst.rgb + src.rgb;
+    else if(color_func == F_SUB_SIGNED_CURRENT ||
+            color_func == F_SUB_SIGNED_NEXT)
+        dst.rgb = dst.rgb - src.rgb;
+//    else
+//        dst = vec4(0, 0, 1, 1);
+
+    const uint F_BLEND_CURRENT_ALPHA         = 9;
+    const uint F_BLEND_CURRENT_ALPHA_INVERSE = 10;
+    const uint F_BLEND_NEXT_ALPHA            = 11;
+    const uint F_BLEND_NEXT_ALPHA_INVERSE    = 12;
+
+    uint alpha_func = flags >> 5;
+
+    if(alpha_func == F_MUL)
+        dst = dst * src;
+    else if(alpha_func == F_ADD)
+        dst.a = dst.a + src.a;
+    else if(alpha_func == F_BLEND_CURRENT_ALPHA)
+        dst.a = dst.a * (1 - src.a) + src.a;
+    else if(alpha_func == F_BLEND_CURRENT_ALPHA_INVERSE)
+        dst.a = dst.a * src.a + (1 - src.a);
+    else if(alpha_func == F_BLEND_NEXT_ALPHA)
+        dst.a = dst.a + next_color.a;
+    else if(alpha_func == F_BLEND_NEXT_ALPHA_INVERSE)
+        dst.a = dst.a + (1 - next_color.a);
+//    else
+//        dst = vec4(0, 0, 1, 1);
 }
 
 vec4 shader_chicago()
 {
-    vec4 out_color = vec4(vec3(1), 0);
+    vec4 out_color = vec4(vec3(0), 1);
 
-    vec4 c1 = get_color(0u);
-    vec4 c2 = get_color(1u);
+    vec4 c1 = get_color_with_offset(0u, vec2(0)/*vec2(time * 0.01) * vec2(-1, 1)*/);
+    vec4 c2 = get_color_with_offset(1u, vec2(0)/*vec2(time * 0.05) * vec2(1, -1)*/);
     vec4 c3 = get_color(2u);
     vec4 c4 = get_color(3u);
 
-    int flags = mats.instance[frag.instanceId].lightmap.meta1;
+    uint flags = uint(mats.instance[frag.instanceId].lightmap.meta1);
 
-    combine_map(out_color, c1, c2, (flags >> 0)  & 0xFF);
-    combine_map(out_color, c2, c3, (flags >> 8) & 0xFF);
-    combine_map(out_color, c3, c4, (flags >> 16) & 0xFF);
-    combine_map(out_color, c4, vec4(0), (flags >> 24)  & 0xFF);
+    if(flags == 0u)
+        return c1;
+
+    uint flags2 = uint(mats.instance[frag.instanceId].lightmap.meta1);
+
+    combine_map_v2(out_color, c1, c2, (flags >> 0)       & 0x3FF);
+    combine_map_v2(out_color, c2, c3, (flags >> 10)      & 0x3FF);
+    combine_map_v2(out_color, c3, c4, (flags >> 20)      & 0x3FF);
+//    combine_map_v2(out_color, c4, vec4(0), flags2 & 0x3FF);
+
+//    out_color = max(out_color, vec4(0.1));
 
     return vec4(out_color.rgb, out_color.a);
 }

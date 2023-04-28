@@ -116,7 +116,7 @@ struct app_info
     AInputQueue*     input_queue() const;
     ALooper*         looper() const;
 
-    enum class device_type
+    enum class device_type_t
     {
         unknown,
 
@@ -125,7 +125,7 @@ struct app_info
         vr_headset,
     };
 
-    device_type device_type() const;
+    device_type_t device_type() const;
 };
 
 struct network_stats

@@ -55,12 +55,14 @@ bool texture_t::requires_software_decode()
         Throw(texture_decode_not_available("BCn" NOT_SUPPORTED));
 #endif
     }
+    if(m_format.pixfmt == PixFmt::ETC1 && !m_features.tex.oes.etc1)
+        Throw(texture_decode_not_available("ETC1" NOT_SUPPORTED));
+    if(m_format.pixfmt == PixFmt::PVRTC && !m_features.tex.img.pvrtc)
+        Throw(texture_decode_not_available("PVRTC" NOT_SUPPORTED));
+
     if(m_format.pixfmt == PixFmt::ASTC && !m_features.tex.gl.astc
        && !m_features.tex.khr.astc)
         Throw(texture_decode_not_available("ASTC" NOT_SUPPORTED));
-
-    if(m_format.pixfmt == PixFmt::ETC1 && !m_features.tex.oes.etc1)
-        Throw(texture_decode_not_available("ETC1" NOT_SUPPORTED));
     if(m_format.pixfmt == PixFmt::ETC2 && !m_features.tex.gl.etc2)
         Throw(texture_decode_not_available("ETC2" NOT_SUPPORTED));
     return false;

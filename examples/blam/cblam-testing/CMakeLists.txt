@@ -38,8 +38,8 @@ coffee_application (
 add_dependencies ( BlamGraphics BlamGraphics.Assets )
 
 target_precompile_headers ( BlamGraphics PRIVATE
-    $<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/caching.h>
-    $<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/components.h>
+#    $<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/caching.h>
+#    $<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/components.h>
     )
 set_target_properties ( BlamGraphics PROPERTIES
     EMSCRIPTEN_THREADPOOL_SIZE 2

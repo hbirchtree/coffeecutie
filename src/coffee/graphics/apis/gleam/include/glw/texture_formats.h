@@ -140,6 +140,18 @@ inline texture_format_t const& format_of(PixDesc const& desc)
         }
         break;
 #endif
+#if defined(GL_COMPRESSED_RGB_PVRTC_2BPPV1_IMG)
+    case P::PVRTC:
+        return format_of(
+            desc.cmpflg == C::bpp_2
+                ? desc.pixflg == F::RGB
+                      ? format_t::compressed_rgb_pvrtc_2bppv1_img
+                      : format_t::compressed_rgba_pvrtc_2bppv1_img
+            : desc.pixflg == F::RGB
+                ? format_t::compressed_rgb_pvrtc_4bppv1_img
+                : format_t::compressed_rgba_pvrtc_4bppv1_img);
+        break;
+#endif
 #if defined(GL_R16)
     /* For some reason, ES does not have these 16-bit formats */
     case P::R16:

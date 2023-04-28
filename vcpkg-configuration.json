@@ -1,38 +1,41 @@
 {
     "overlay-ports": [
-        "./toolchain/vcpkg/ports/appimage-runtime",
-        "./toolchain/vcpkg/ports/astcenc",
-        "./toolchain/vcpkg/ports/bc7enc",
-        "./toolchain/vcpkg/ports/bcdec",
         "./toolchain/vcpkg/ports/bullet2",
         "./toolchain/vcpkg/ports/discord-rpc",
-        "./toolchain/vcpkg/ports/etc2comp",
+        "./toolchain/vcpkg/ports/pvrtcdec",
         "./toolchain/vcpkg/ports/sdl2",
         "./toolchain/vcpkg/ports/sdl2-wayland",
-        "./toolchain/vcpkg/ports/shaderc",
-        "./toolchain/vcpkg/ports/spirv-tools",
-        "./toolchain/vcpkg/ports/squashfuse",
         "./toolchain/vcpkg/ports/stb"
     ],
     "overlay-triplets": [
         "./toolchain/vcpkg/triplets"
     ],
+    "default-registry": null,
     "registries": [
         {
             "kind": "git",
-            "repository": "https://github.com/hbirchtree/vcpkg-graphics.git",
-            "baseline": "9cd86d751a5851c1842eb5cdede3bebcc98e781c",
+            "repository": "https://github.com/Microsoft/vcpkg",
+            "baseline": "959f8e317599dd439bc86f5cb5f0aca648d88c3f",
+            "packages": [
+                "*"
+            ]
+        },
+        {
+            "kind": "git",
+            "repository": "https://github.com/hbirchtree/vcpkg-graphics",
+            "baseline": "169e605d9d47d85764b7d749db45f0a4ad1a02b5",
             "packages": [
                 "bcdec",
                 "etc2comp",
+                "ktx",
                 "shaderc",
                 "spirv-tools"
             ]
         },
         {
             "kind": "git",
-            "repository": "https://github.com/hbirchtree/vcpkg-appimage.git",
-            "baseline": "1ddaaf6b77295456ba0aabbb37d2e1b119f29252",
+            "repository": "https://github.com/hbirchtree/vcpkg-appimage",
+            "baseline": "db3ac277cb50fc27bc9c8740a42570348db43f0c",
             "packages": [
                 "appimage-runtime",
                 "squashfuse"

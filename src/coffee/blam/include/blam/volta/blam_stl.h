@@ -79,7 +79,7 @@ struct map_container
     magic_data_t            magic;
 
     semantic::mem_chunk<const char> store;
-    std::vector<char>               decompressed;
+    std::vector<char>               decompressed{};
 
     inline std::string_view name() const
     {
@@ -269,7 +269,6 @@ class tag_index_view
 
             auto mid     = it + size;
             auto mid_tag = (*mid).tag_id;
-            auto odd_tag = (*it).tag_id;
 
             if(mid_tag == tag_id)
                 return mid;

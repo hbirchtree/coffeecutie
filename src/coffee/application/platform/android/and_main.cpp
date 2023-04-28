@@ -298,18 +298,18 @@ ALooper* app_info::looper() const
     return coffee_app->looper;
 }
 
-device_type app_info::device_type() const
+app_info::device_type_t app_info::device_type() const
 {
     switch(AConfiguration_getUiModeType(configuration()))
     {
     case ACONFIGURATION_UI_MODE_TYPE_NORMAL:
-        return device_type::phone;
+        return device_type_t::phone;
     case ACONFIGURATION_UI_MODE_TYPE_TELEVISION:
-        return device_type::tv;
+        return device_type_t::tv;
     case ACONFIGURATION_UI_MODE_TYPE_VR_HEADSET:
-        return device_type::vr_headset;
+        return device_type_t::vr_headset;
     default:
-        return device_type::unknown;
+        return device_type_t::unknown;
     }
 }
 

@@ -573,7 +573,7 @@ struct BitmapCache
                 fmt.cmpflg);
             auto&       pool    = fmt_count[hash];
             auto const& imsize  = bitm.second.image.mip->isize;
-            auto&       surface = tex_buckets[bitm.second.image.bucket].surface;
+//            auto&       surface = tex_buckets[bitm.second.image.bucket].surface;
 
             //            u32 mipmaps = surface->m_mipmaps;
             u32 pad = 0;
@@ -598,7 +598,7 @@ struct BitmapCache
 
             Veci2 offset = {0, 0};
 
-            auto& surface = tex_buckets[pool_.first].surface;
+//            auto& surface = tex_buckets[pool_.first].surface;
 
             u32 layer = 0;
             //            u32 mipmaps = surface->m_mipmaps;
@@ -767,7 +767,7 @@ struct BitmapCache
         if(auto image_ = bitm.images.data(curr_magic); image_.has_value())
         {
             auto& im = image_.value();
-            if(idx >= im.size())
+            if(static_cast<u16>(idx) >= im.size())
                 return {};
 
             auto const& image = im[idx];
@@ -879,6 +879,7 @@ struct BitmapCache
         default:
             break;
         }
+        return 0x0;
     }
 
     u32 get_atlas_layer(generation_idx_t bitm)
@@ -1020,8 +1021,6 @@ struct ShaderCache
                 u8 i = 0;
                 for(chicago::map_t const& map : maps.value())
                 {
-                    if(!map.map.map.valid())
-                        continue;
                     out.schi.maps.at(i++) = get_bitm_idx(map.map.map);
                 }
             }
@@ -1139,8 +1138,11 @@ struct ShaderCache
                 mat.maps[i].bias          = bitm.image.bias;
 
                 u16 flags = static_cast<u8>(map.color_func)
-                            | (static_cast<u8>(map.alpha_func) << 4);
-                mat.lightmap.meta1 |= flags << (i * 8);
+                            | (static_cast<u8>(map.alpha_func) << 5);
+                if(i < 3)
+                    mat.lightmap.meta1 |= flags << (i * 10);
+                else
+                    mat.lightmap.meta2 |= flags;
             }
 
             mat.material.material = materials::id::scex;
@@ -1163,8 +1165,11 @@ struct ShaderCache
                 mat.maps[i].bias          = bitm.image.bias;
 
                 u16 flags = static_cast<u8>(map.color_func)
-                            | (static_cast<u8>(map.alpha_func) << 4);
-                mat.lightmap.meta1 |= flags << (i * 8);
+                            | (static_cast<u8>(map.alpha_func) << 5);
+                if(i < 3)
+                    mat.lightmap.meta1 |= flags << (i * 10);
+                else
+                    mat.lightmap.meta2 |= flags;
             }
 
             mat.material.material = materials::id::schi;
@@ -1808,6 +1813,7 @@ struct FontCache
         blam::font const* font = get_id(font_tag);
         return FontItem{
             .font = font,
+            .atlas_layer = 0,
         };
     }
 

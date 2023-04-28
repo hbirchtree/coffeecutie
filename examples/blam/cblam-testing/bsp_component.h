@@ -3,6 +3,8 @@
 #include "caching.h"
 #include "components.h"
 #include "data.h"
+#include "resource_creation.h"
+
 #include <coffee/imgui/imgui_binding.h>
 
 template<typename Version>
@@ -125,6 +127,10 @@ struct BlamBspWidget
             ImGui::SliderFloat("Exposure", &postprocess->exposure, -10.f, 10.f);
             if(ImGui::Checkbox("Doom mode", &postprocess->doom_mode))
                 postprocess->scale = postprocess->doom_mode ? 0.25f : 1.f;
+            if(ImGui::Button("Reload shaders from disk"))
+            {
+                create_shaders(e.underlying());
+            }
             ImGui::Columns();
         }
         ImGui::End();

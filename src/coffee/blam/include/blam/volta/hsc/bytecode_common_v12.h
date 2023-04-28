@@ -147,14 +147,14 @@ enum class type_t : i16
     scenery_name,
 };
 
-struct global : stl_types::non_copy
+struct global
 {
     bl_string name;
     type_t    type;
-    u16       _pad1[3] = {};
+    u16       pad1[3] = {};
     u16       index{0};
     u16       salt{0};
-    u32       _pad2[12] = {};
+    u32       pad2[12] = {};
 };
 
 struct function_declaration : stl_types::non_copy
@@ -164,7 +164,7 @@ struct function_declaration : stl_types::non_copy
     type_t        type;
     u16           index;
     u16           salt;
-    u8            padding[52];
+    u8            padding[52] = {};
 
     inline bool is_callable() const
     {

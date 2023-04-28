@@ -256,8 +256,8 @@ i32 blam_main(i32, cstring_w*)
             {
 #if defined(COFFEE_ANDROID)
                 using android::app_info;
-                const bool use_touch
-                    = app_info::device_type() == app_info::device_type::phone;
+                const bool use_touch = app_info().device_type()
+                                       == app_info::device_type_t::phone;
 #else
                 constexpr bool use_touch = false;
 #endif
@@ -284,8 +284,8 @@ i32 blam_main(i32, cstring_w*)
                     RSCA::AssetFile);
                 map_dir = "."_asset;
 #else
-                map_filename = "beavercreek.map"_asset;
-                map_dir      = "."_asset;
+                map_filename             = "beavercreek.map"_asset;
+                map_dir                  = "."_asset;
 #endif
             } else if(!GetInitArgs().arguments().empty())
             {

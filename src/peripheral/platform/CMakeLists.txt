@@ -53,6 +53,7 @@ if((CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR
         -Wexpansion-to-defined
         # Misfires on code that is ifdef'd
         -Wno-misleading-indentation
+        $<$<COMPILE_LANGUAGE:CXX>:-Wno-invalid-offsetof>
         )
 endif()
 

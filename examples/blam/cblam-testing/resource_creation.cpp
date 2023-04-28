@@ -329,12 +329,17 @@ static void create_shaders(
 
     for(shader_pair_t& shader : shaders)
     {
+        if(shader.shader)
+        {
+            shader.shader->dealloc();
+        }
+
         auto vertex_url
             = MkUrl(Strings::fmt(shader.vertex_file, variant), RSCA::AssetFile);
         auto fragment_url = MkUrl(
             Strings::fmt(shader.fragment_file, variant), RSCA::AssetFile);
 
-        auto pipeline = api.alloc_program();
+        auto pipeline = shader.shader ? shader.shader : api.alloc_program();
         pipeline->add(
             gfx::program_t::stage_t::Vertex,
             api.alloc_shader(Resource(vertex_url).data()));
