@@ -309,7 +309,7 @@ void combine_map_v2(
     else if(color_func == F_NEXT)
         ;
     else if(color_func == F_MUL)
-        src.rgb = next_color.rgb;
+        src.rgb = color.rgb * next_color.rgb;
     else if(color_func == F_DOUBLE_MUL)
         src.rgb = color.rgb * color.rgb;
     else if(color_func == F_ADD)
@@ -355,9 +355,9 @@ void combine_map_v2(
     else if(alpha_func == F_BLEND_CURRENT_ALPHA_INVERSE)
         dst.a = dst.a * src.a + (1 - src.a);
     else if(alpha_func == F_BLEND_NEXT_ALPHA)
-        dst.a = dst.a + next_color.a;
+        dst.a = dst.a * (1 - next_color.a) + next_color.a;
     else if(alpha_func == F_BLEND_NEXT_ALPHA_INVERSE)
-        dst.a = dst.a + (1 - next_color.a);
+        dst.a = dst.a * next_color.a + (1 - next_color.a);
 //    else
 //        dst = vec4(0, 0, 1, 1);
 }
