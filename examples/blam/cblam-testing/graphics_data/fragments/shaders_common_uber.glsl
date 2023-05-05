@@ -103,7 +103,7 @@ vec4 get_color_explicit_with_offset(in uint map_id, in int tex_id, in vec2 offse
         return sample_map(map_id, tex_id, source_rgba4, offset).bgra;
     else if(source == TEX_RGBA8)
         return sample_map(map_id, tex_id, source_rgba8, offset).bgra;
-    return vec4(vec3(1.0, 1.0, 1.0), 1.0);
+    return vec4(vec3(1), 1);
 }
 
 vec4 get_color_with_offset(in uint map_id, in vec2 offset)
@@ -165,11 +165,14 @@ vec4 shader_environment()
     const uint secondary_map_id = 3u;
     const uint bump_map_id      = 4u;
 
-    int flags = mats.instance[frag.instanceId].material.flags & 0x7;
-    int type = (mats.instance[frag.instanceId].material.flags >> 4) & 0x3;
+    uint flags = uint(mats.instance[frag.instanceId].material.flags & 0x7);
+    uint type = uint((mats.instance[frag.instanceId].material.flags >> 4) & 0x3);
+
+    int detailed = (mats.instance[frag.instanceId].material.flags >> 9) & 0x1;
+    int has_micro = (mats.instance[frag.instanceId].material.flags >> 10) & 0x1;
 
     vec4 base = get_color(base_map_id);
-    vec4 micro = get_color(micro_map_id);
+    vec4 micro = has_micro == 1 ? get_color(micro_map_id) : vec4(1);
     vec4 primary = get_color(primary_map_id);
     vec4 secondary = get_color(secondary_map_id);
 #if USE_LIGHTMAPS == 1
@@ -177,7 +180,9 @@ vec4 shader_environment()
 #endif
 
     float factor = type == TYPE_NORMAL ? secondary.a : base.a;
-    vec4 blend = ((primary * factor) + (secondary * (1.0 - factor)));
+    vec4 blend = detailed == 1
+        ? ((primary * factor) + (secondary * (1.0 - factor)))
+        : vec4(1);
     float specular = type == TYPE_BLENDED_SPECULAR
         ? base.a * micro.a : blend.a * micro.a;
 
@@ -186,12 +191,12 @@ vec4 shader_environment()
 #endif
 
 #if USE_REFLECTIONS == 1
-    int reflective = mats.instance[frag.instanceId].material.flags & 0x40;
+    int reflective = (mats.instance[frag.instanceId].material.flags >> 6) & 0x1;
     vec3 reflection = vec3(1.0);
     vec3 reflection_tint = vec3(1.0);
     if(reflective > 0)
     {
-        int reflect_flags = (mats.instance[frag.instanceId].material.flags >> 6) & 0x3;
+        uint reflect_flags = uint((mats.instance[frag.instanceId].material.flags >> 7) & 0x3);
         reflection = get_cube_color(view_direction() * vec3(1, -1, 1)).rgb;
 
         vec4 perp_color = mats.instance[frag.instanceId].material.input2;

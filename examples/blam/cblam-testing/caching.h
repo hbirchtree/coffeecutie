@@ -1196,6 +1196,8 @@ struct ShaderCache
                 mat.maps[3].bias     = secondary->image.bias;
             }
 
+            mat.material.flags |= (primary && secondary ? 1 : 0) << 9;
+
             auto* micro = bitm_cache.assign_atlas_data(
                 mat.maps[1], shader.senv.micro_bitm);
             if(micro)
@@ -1203,6 +1205,8 @@ struct ShaderCache
                 mat.maps[1].uv_scale = Vecf2(info->diffuse.micro.scale);
                 mat.maps[1].bias     = micro->image.bias;
             }
+
+            mat.material.flags |= (micro ? 1 : 0) << 10;
 
             mat.lightmap.meta1
                 = bitm_cache.get_atlas_layer(shader.senv.self_illum);
