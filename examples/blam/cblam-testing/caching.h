@@ -108,7 +108,6 @@ struct ModelItem
     blam::mod2::header<V> const* header{nullptr};
     blam::tag_t const*           tag{nullptr};
     LOD                          mesh;
-    Vecf2                        uvscale;
 
     inline bool valid() const
     {
@@ -571,9 +570,10 @@ struct BitmapCache
                 fmt.comp,
                 fmt.bfmt,
                 fmt.cmpflg);
-            auto&       pool    = fmt_count[hash];
-            auto const& imsize  = bitm.second.image.mip->isize;
-//            auto&       surface = tex_buckets[bitm.second.image.bucket].surface;
+            auto&       pool   = fmt_count[hash];
+            auto const& imsize = bitm.second.image.mip->isize;
+            //            auto&       surface =
+            //            tex_buckets[bitm.second.image.bucket].surface;
 
             //            u32 mipmaps = surface->m_mipmaps;
             u32 pad = 0;
@@ -598,7 +598,7 @@ struct BitmapCache
 
             Veci2 offset = {0, 0};
 
-//            auto& surface = tex_buckets[pool_.first].surface;
+            //            auto& surface = tex_buckets[pool_.first].surface;
 
             u32 layer = 0;
             //            u32 mipmaps = surface->m_mipmaps;
@@ -794,8 +794,8 @@ struct BitmapCache
             switch(im[0].type)
             {
             case blam::bitm::type_t::tex_2d: {
-                auto& bucket
-                    = get_bucket<gfx::compat::texture_2da_t>(fmt, img.mip->type);
+                auto& bucket = get_bucket<gfx::compat::texture_2da_t>(
+                    fmt, img.mip->type);
                 img.layer = bucket.ptr++;
                 break;
             }
@@ -1110,7 +1110,9 @@ struct ShaderCache
     }
 
     void populate_material(
-        materials::senv_micro& mat, generation_idx_t const& shader_id)
+        materials::senv_micro&  mat,
+        generation_idx_t const& shader_id,
+        Vecf2 const&            base_map_scale)
     {
         using blam::tag_class_t;
         using namespace blam::shader;
@@ -1128,21 +1130,18 @@ struct ShaderCache
             auto maps = info->maps_4stage.data(magic).value();
             for(auto i : Range<>(4))
             {
-                auto id = shader.schi.maps.at(i);
+                auto id = shader.scex.maps.at(i);
                 if(!shader.schi.maps.at(i).valid())
                     continue;
                 BitmapItem const& bitm
                     = *bitm_cache.assign_atlas_data(mat.maps[i], id);
                 chicago::map_t const& map = maps[i];
-                mat.maps[i].uv_scale      = map.map.uv_scale;
+                mat.maps[i].uv_scale      = map.map.uv_scale * base_map_scale;
                 mat.maps[i].bias          = bitm.image.bias;
 
                 u16 flags = static_cast<u8>(map.color_func)
-                            | (static_cast<u8>(map.alpha_func) << 5);
-                if(i < 3)
-                    mat.lightmap.meta1 |= flags << (i * 10);
-                else
-                    mat.lightmap.meta2 |= flags;
+                            | (static_cast<u8>(map.alpha_func) << 4);
+                mat.lightmap.meta1 |= flags << (i * 8);
             }
 
             mat.material.material = materials::id::scex;
@@ -1161,15 +1160,12 @@ struct ShaderCache
                 BitmapItem const& bitm
                     = *bitm_cache.assign_atlas_data(mat.maps[i], id);
                 chicago::map_t const& map = maps[i];
-                mat.maps[i].uv_scale      = map.map.uv_scale;
+                mat.maps[i].uv_scale      = map.map.uv_scale * base_map_scale;
                 mat.maps[i].bias          = bitm.image.bias;
 
                 u16 flags = static_cast<u8>(map.color_func)
-                            | (static_cast<u8>(map.alpha_func) << 5);
-                if(i < 3)
-                    mat.lightmap.meta1 |= flags << (i * 10);
-                else
-                    mat.lightmap.meta2 |= flags;
+                            | (static_cast<u8>(map.alpha_func) << 4);
+                mat.lightmap.meta1 |= flags << (i * 8);
             }
 
             mat.material.material = materials::id::schi;
@@ -1207,6 +1203,9 @@ struct ShaderCache
                 mat.maps[1].uv_scale = Vecf2(info->diffuse.micro.scale);
                 mat.maps[1].bias     = micro->image.bias;
             }
+
+            mat.lightmap.meta1
+                = bitm_cache.get_atlas_layer(shader.senv.self_illum);
 
             auto* bump
                 = bitm_cache.assign_atlas_data(mat.maps[4], shader.senv.bump);
@@ -1308,7 +1307,7 @@ struct ShaderCache
             shader_model const* info
                 = shader.header->as<blam::shader::shader_model>();
             bitm_cache.assign_atlas_data(mat.maps[0], shader.soso.base_bitm);
-            mat.maps[0].uv_scale = Vecf2(1);
+            mat.maps[0].uv_scale = base_map_scale;
             mat.maps[0].bias     = 2;
 
             bitm_cache.assign_atlas_data(mat.maps[1], shader.soso.multi_bitm);
@@ -1338,6 +1337,118 @@ struct ShaderCache
                 shader.tag->to_name().to_string(magic));
             break;
         }
+        }
+    }
+
+    template<typename PropertyAnim>
+    requires stl_types::is_any_of<
+        PropertyAnim,
+        blam::shader::texture_property_anim,
+        blam::shader::simple_tex_property_anim>
+        //
+        f32 tex_animation(PropertyAnim const& anim, f32 const& time)
+    {
+        using namespace blam::shader;
+        switch(anim.function)
+        {
+        case animation_function::slide:
+        case animation_function::slide_variable:
+            return std::fmod(time, anim.period);
+        case animation_function::cosine:
+        case animation_function::cosine_variable:
+            return glm::cos(time * anim.period + anim.phase) * anim.scale;
+        default:
+            return 0;
+        }
+    }
+
+    template<typename Anim>
+    requires stl_types::is_any_of<
+        Anim,
+        blam::shader::texture_uv_rotation_animation,
+        blam::shader::simple_texture_uv_animation>
+        //
+        Vecf2 uv_animation(Anim const& anim, f32 const& time)
+    {
+        return Vecf2{tex_animation(anim.u, time), tex_animation(anim.v, time)};
+    }
+
+    void update_uv_animations(
+        materials::senv_micro&  mat,
+        generation_idx_t const& shader_id,
+        time_point const&       time)
+    {
+        using namespace blam::shader;
+
+        ShaderItem const& shader = find(shader_id)->second;
+
+        f32 t = stl_types::Chrono::to_float(time) / 10.f;
+
+        switch(shader.tag_class)
+        {
+        case blam::tag_class_t::scex: {
+            shader_chicago_extended<V> const* info
+                = shader.header->as<blam::shader::shader_chicago_extended<V>>();
+            auto maps = info->maps_4stage.data(magic).value();
+            u32  i    = 0;
+            for(chicago::map_t const& map : maps)
+            {
+                auto        uv = uv_animation(map.anim_2d, t);
+                auto const& i2 = mat.material.inputs2;
+                switch(i)
+                {
+                case 0:
+                    mat.material.inputs1 = uv;
+                    break;
+                case 1:
+                    mat.material.inputs2 = Vecf4(uv, 0, 0);
+                    break;
+                case 2:
+                    mat.material.inputs2 = Vecf4(i2.x, i2.y, uv.x, uv.y);
+                    break;
+                case 3:
+                    mat.material.inputs3 = Vecf4(uv, 0, 0);
+                    break;
+                }
+                i++;
+            }
+            break;
+        }
+        case blam::tag_class_t::schi: {
+            shader_chicago_extended<V> const* info
+                = shader.header->as<shader_chicago_extended<V>>();
+            auto maps = info->maps_4stage.data(magic).value();
+            u32  i    = 0;
+            for(chicago::map_t const& map : maps)
+            {
+                auto        uv = uv_animation(map.anim_2d, t);
+                auto const& i2 = mat.material.inputs2;
+                switch(i)
+                {
+                case 0:
+                    mat.material.inputs1 = uv;
+                    break;
+                case 1:
+                    mat.material.inputs2 = Vecf4(uv, 0, 0);
+                    break;
+                case 2:
+                    mat.material.inputs2 = Vecf4(i2.x, i2.y, uv.x, uv.y);
+                    break;
+                case 3:
+                    mat.material.inputs3 = Vecf4(uv, 0, 0);
+                    break;
+                }
+                i++;
+            }
+            break;
+        }
+        case blam::tag_class_t::senv: {
+            shader_env const* info = shader.header->as<shader_env>();
+            (void)info;
+            break;
+        }
+        default:
+            break;
         }
     }
 
@@ -1422,21 +1533,11 @@ struct ModelCache
 
     inline auto vertex_data(blam::mod2::part const& model)
     {
-        if constexpr(std::is_same_v<V, blam::xbox_version_t>)
-        {
-            auto const& vertex_ref = model.xbox_vertex_ref()
-                                         .data(magic, blam::single_value)
-                                         .value();
-            return vertex_ref->vertices(model.vert_count).data(vertex_magic);
-        } else
-            return model.vertex_segment(*tags).data(vertex_magic);
+        return model.vertex_segment(*tags, magic).data(vertex_magic);
     }
     inline auto index_data(blam::mod2::part const& model)
     {
-        if constexpr(std::is_same_v<V, blam::xbox_version_t>)
-            return model.xbox_index_segment().data(vertex_magic);
-        else
-            return model.index_segment(*tags).data(vertex_magic);
+        return model.index_segment(*tags).data(vertex_magic);
     }
 
     virtual ModelItem<V> predict_impl(
@@ -1452,10 +1553,9 @@ struct ModelCache
             return {};
 
         ModelItem<V> out;
-        out.mesh    = {};
-        out.header  = header;
-        out.tag     = &(*index.find(mod2));
-        out.uvscale = header->uvscale;
+        out.mesh   = {};
+        out.header = header;
+        out.tag    = &(*index.find(mod2));
 
         Span<const blam::shader::shader_desc> shaders;
         if(auto const& shaders_ = header->shaders.data(magic);
@@ -1812,7 +1912,7 @@ struct FontCache
     {
         blam::font const* font = get_id(font_tag);
         return FontItem{
-            .font = font,
+            .font        = font,
             .atlas_layer = 0,
         };
     }

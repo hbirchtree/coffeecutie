@@ -186,7 +186,7 @@ void load_objects(
         if(!instance_tag->valid())
             continue;
 
-        auto instance_obj
+        blam::scn::object const* instance_obj
             = instance_tag->template data<blam::scn::object>(magic).value();
 
         ModelAssembly mesh_data = model_cache.predict_regions(
@@ -199,6 +199,7 @@ void load_objects(
         spawn.tag    = instance_tag;
         spawn.header = &instance;
         model.tag    = &(*index.find(instance_obj[0].model.to_plain()));
+        model.model  = mesh_data.models.at(0);
         model.initialize(&instance);
 
         for(auto const& model_ : mesh_data.models)
@@ -212,7 +213,7 @@ void load_objects(
                     continue;
 
                 auto submod = e.create_entity(submodel);
-                model.models.push_back(submod);
+                model.parts.push_back(submod);
                 SubModel& submod_ = submod.get<SubModel>();
 
                 submod_.parent = parent_.id();
@@ -306,11 +307,14 @@ void load_multiplayer_equipment(
                 {
                     ModelItem<Version> const& modelit
                         = model_cache.find(model)->second;
+                    model_.model = model;
 
                     for(auto const& sub : modelit.mesh.sub)
                     {
+                        if(!sub.shader.valid())
+                            continue;
                         auto submod = e.create_entity(submodel);
-                        model_.models.push_back(submod);
+                        model_.parts.push_back(submod);
                         SubModel& submod_ = submod.get<SubModel>();
                         submod_.parent    = set.id();
                         submod_.initialize<Version>(model, sub);
@@ -438,9 +442,12 @@ void load_scenario_scenery(EntityContainer& e, BlamData<Version>& data)
             continue;
         }
 
+        skybox_mod.model  = assem.models.at(0);
+
         for(auto const& part_id : assem.models)
         {
             ModelItem<Version> const& part = model_cache.find(part_id)->second;
+            skybox_mod.model               = part_id;
 
             for(typename ModelItem<Version>::SubModel const& region :
                 part.mesh.sub)
@@ -449,7 +456,7 @@ void load_scenario_scenery(EntityContainer& e, BlamData<Version>& data)
                     continue;
 
                 auto submod = e.create_entity(skybox_model);
-                skybox_mod.models.push_back(submod);
+                skybox_mod.parts.push_back(submod);
                 SubModel& submodel = submod.get<SubModel>();
                 submodel.parent    = skybox_ent.id();
                 submodel.initialize<Version>(part_id, region);

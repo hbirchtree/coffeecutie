@@ -39,10 +39,8 @@ layout(binding = 1, std140) buffer MaterialProperties
     Material instance[];
 } mats;
 
-vec4 get_map(in uint map_id, in sampler2DArray sampler, in vec2 tex_coord, in int instance)
+vec4 get_map(in uint map_id, in int layer, in sampler2DArray sampler, in vec2 tex_coord, in int instance)
 {
-    int layer = mats.instance[instance].maps[map_id].layer;
-
     if(layer == -1)
         return vec4(1.0);
 

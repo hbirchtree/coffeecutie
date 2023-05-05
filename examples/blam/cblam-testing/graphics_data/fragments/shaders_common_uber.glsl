@@ -6,7 +6,7 @@ layout(location = 0) in FragData {
     vec3 position;
     vec2 tex;
     mat3 tbn;
-#if USE_BSP_SHADERS == 1
+#if USE_LIGHTMAPS == 1
     vec2 light_tex;
 #endif
     flat int instanceId;
@@ -61,9 +61,18 @@ vec3 light_direction()
         direction * -1);
 }
 
-vec4 sample_map(in uint map_id, in sampler2DArray sampler, in vec2 offset)
+vec4 sample_map(
+    in uint map_id,
+    in int layer,
+    in sampler2DArray sampler,
+    in vec2 offset)
 {
-    return get_map(map_id, sampler, frag.tex + offset, frag.instanceId);
+    return get_map(
+        map_id,
+        layer,
+        sampler,
+        frag.tex + offset,
+        frag.instanceId);
 }
 
 const uint TEX_BC1    = 1u;
@@ -75,30 +84,40 @@ const uint TEX_RG8    = 6u;
 const uint TEX_RGBA4  = 7u;
 const uint TEX_RGBA8  = 8u;
 
-vec4 get_color_with_offset(in uint map_id, in vec2 offset)
+vec4 get_color_explicit_with_offset(in uint map_id, in int tex_id, in vec2 offset)
 {
-    int tex_id = mats.instance[frag.instanceId].maps[map_id].layer;
     uint source = tex_id >> 24;
     if(source == TEX_BC1)
-        return sample_map(map_id, source_bc1, offset);
+        return sample_map(map_id, tex_id, source_bc1, offset);
     else if(source == TEX_BC2)
-        return sample_map(map_id, source_bc2, offset);
+        return sample_map(map_id, tex_id, source_bc2, offset);
     else if(source == TEX_BC3)
-        return sample_map(map_id, source_bc3, offset);
+        return sample_map(map_id, tex_id, source_bc3, offset);
     else if(source == TEX_R8)
-        return sample_map(map_id, source_r8, offset);
+        return sample_map(map_id, tex_id, source_r8, offset);
     else if(source == TEX_RG8)
-        return sample_map(map_id, source_rg8, offset);
+        return sample_map(map_id, tex_id, source_rg8, offset);
     else if(source == TEX_RGB565)
-        return sample_map(map_id, source_rgb565, offset).bgra;
+        return sample_map(map_id, tex_id, source_rgb565, offset).bgra;
     else if(source == TEX_RGBA4)
-        return sample_map(map_id, source_rgba4, offset).bgra;
+        return sample_map(map_id, tex_id, source_rgba4, offset).bgra;
     else if(source == TEX_RGBA8)
-        return sample_map(map_id, source_rgba8, offset).bgra;
+        return sample_map(map_id, tex_id, source_rgba8, offset).bgra;
     return vec4(vec3(1.0, 1.0, 1.0), 1.0);
 }
 
+vec4 get_color_with_offset(in uint map_id, in vec2 offset)
+{
+    int tex_id = mats.instance[frag.instanceId].maps[map_id].layer;
+    return get_color_explicit_with_offset(map_id, tex_id, offset);
+}
+
 vec4 get_color(in uint map_id)
+{
+    return get_color_with_offset(map_id, vec2(0));
+}
+
+vec4 get_color_explicit(in uint map_id, in int layer)
 {
     return get_color_with_offset(map_id, vec2(0));
 }
@@ -183,6 +202,10 @@ vec4 shader_environment()
             dot(normal.rgb, -view_direction()));
     }
 #endif
+#if USE_SELF_ILLUMINATION == 1
+    int self_illum_layer = mats.instance[frag.instanceId].lightmap.meta1;
+    vec4 self_illum = get_color_explicit(base_map_id, self_illum_layer);
+#endif
 
 //    if(type == TYPE_NORMAL)
 //        return vec4(vec3(base.a * micro.a), 1);
@@ -210,6 +233,9 @@ vec4 shader_environment()
         1.0
         );
 }
+
+#if USE_CHICAGO == 1
+#define CHICAGO_DEBUG 1
 
 void combine_map(
     inout vec4 out_color,
@@ -280,40 +306,84 @@ void combine_map(
         out_color.rgb = vec3(1, 1, 0);
 }
 
+const uint F_CURRENT            = 0;
+const uint F_NEXT               = 1;
+const uint F_MUL                = 2;
+const uint F_DOUBLE_MUL         = 3;
+const uint F_ADD                = 4;
+const uint F_ADD_SIGNED_CURRENT = 5;
+const uint F_ADD_SIGNED_NEXT    = 6;
+const uint F_SUB_SIGNED_CURRENT = 7;
+const uint F_SUB_SIGNED_NEXT    = 8;
+
+const uint F_BLEND_CURRENT_ALPHA         = 9;
+const uint F_BLEND_CURRENT_ALPHA_INVERSE = 10;
+const uint F_BLEND_NEXT_ALPHA            = 11;
+const uint F_BLEND_NEXT_ALPHA_INVERSE    = 12;
+
+void init_map_v2(
+    inout vec4 dst,
+    in vec4 color,
+    in vec4 next_color,
+    in uint flags)
+{
+    uint color_func = flags & 0xF;
+    uint alpha_func = flags >> 4;
+
+    if(color_func == F_CURRENT)
+        dst.rgb = color.rgb;
+    else if(color_func == F_NEXT)
+        dst.rgb = next_color.rgb;
+    else if(color_func == F_MUL)
+        dst.rgb = color.rgb * next_color.rgb;
+    else if(color_func == F_DOUBLE_MUL)
+        dst.rgb = color.rgb * next_color.rgb * next_color.rgb;
+    else if(color_func == F_ADD)
+        dst.rgb = color.rgb * next_color.rgb;
+#if CHICAGO_DEBUG == 1
+    else
+        dst.rgb = vec3(1, 0, 1);
+#endif
+
+    if(alpha_func == F_CURRENT)
+        dst.a = color.a;
+    if(alpha_func == F_MUL)
+        dst.a = color.a * next_color.a;
+    if(alpha_func == F_ADD)
+        dst.a = color.a;
+    if(alpha_func == F_DOUBLE_MUL)
+        dst.a = color.a * next_color.a * next_color.a;
+    else if(alpha_func == F_BLEND_CURRENT_ALPHA)
+        dst.a = color.a;
+    else if(alpha_func == F_BLEND_CURRENT_ALPHA_INVERSE)
+//        dst.a = (1 - color.a) + next_color.a;
+        dst.a = (1 - next_color.a);
+    else if(alpha_func == F_BLEND_NEXT_ALPHA)
+        dst.a = (color.a * (1 - next_color.a)) + next_color.a;
+    else if(alpha_func == F_BLEND_NEXT_ALPHA_INVERSE)
+        dst.a = (1 - next_color.a);
+}
+
 void combine_map_v2(
     inout vec4 dst,
     in vec4 color,
     in vec4 next_color,
     in uint flags)
 {
-    const uint F_CURRENT            = 0;
-    const uint F_NEXT               = 1;
-    const uint F_MUL                = 2;
-    const uint F_DOUBLE_MUL         = 3;
-    const uint F_ADD                = 4;
-    const uint F_ADD_SIGNED_CURRENT = 5;
-    const uint F_ADD_SIGNED_NEXT    = 6;
-    const uint F_SUB_SIGNED_CURRENT = 7;
-    const uint F_SUB_SIGNED_NEXT    = 8;
+    uint color_func = flags & 0xF;
 
-    if(flags == 0)
-        return;
-
-    uint color_func = flags & 0x1F;
-
-    vec4 src = vec4(0);
-    src.a = color.a;
+    vec3 src = vec3(0);
 
     if(color_func == F_CURRENT)
         ;
     else if(color_func == F_NEXT)
-        ;
+        src.rgb = next_color.rgb;
     else if(color_func == F_MUL)
-        src.rgb = color.rgb * next_color.rgb;
+        src.rgb = next_color.rgb;
     else if(color_func == F_DOUBLE_MUL)
-        src.rgb = color.rgb * color.rgb;
+        src.rgb = next_color.rgb;
     else if(color_func == F_ADD)
-        src.rgb = color.rgb + next_color.rgb;
+        src.rgb = next_color.rgb;
     else if(color_func == F_ADD_SIGNED_CURRENT)
         src.rgb = color.rgb;
     else if(color_func == F_ADD_SIGNED_NEXT)
@@ -322,13 +392,19 @@ void combine_map_v2(
         src.rgb = color.rgb;
     else if(color_func == F_SUB_SIGNED_NEXT)
         src.rgb = next_color.rgb;
-    else
-        src.rgb = vec3(1, 0, 1);
+#if CHICAGO_DEBUG == 1
+//    else
+//        src.rgb = vec3(1, 0, 1);
+#endif
 
-    if(color_func == F_MUL)
-        dst.rgb = dst.rgb + src.rgb;
-    else if(color_func == F_DOUBLE_MUL)
+    uint alpha_func = flags >> 4;
+
+    if(color_func == F_CURRENT)
+        ;
+    else if(color_func == F_MUL)
         dst.rgb = dst.rgb * src.rgb;
+    else if(color_func == F_DOUBLE_MUL)
+        dst.rgb = dst.rgb * src.rgb * src.rgb;
     else if(color_func == F_ADD ||
             color_func == F_ADD_SIGNED_CURRENT ||
             color_func == F_ADD_SIGNED_NEXT)
@@ -336,56 +412,65 @@ void combine_map_v2(
     else if(color_func == F_SUB_SIGNED_CURRENT ||
             color_func == F_SUB_SIGNED_NEXT)
         dst.rgb = dst.rgb - src.rgb;
+    else if(color_func == F_BLEND_CURRENT_ALPHA)
+        dst.rgb = dst.rgb * (1 - color.a) + color.rgb * color.a;
+//    else if(color_func == F_BLEND_CURRENT_ALPHA_INVERSE)
+//        dst.rgb = dst.rgb * color.a + src.rgb * (1 - color.a);
+//    else if(color_func == F_BLEND_NEXT_ALPHA)
+//        dst.rgb = dst.rgb * (1 - color.a) + src.rgb * color.a;
+//    else if(color_func == F_BLEND_NEXT_ALPHA_INVERSE)
+//        dst.rgb = dst.rgb * next_color.a + src.rgb * (1 - next_color.a);
+#if CHICAGO_DEBUG == 1
 //    else
-//        dst = vec4(0, 0, 1, 1);
+//        dst = vec4(1, 0, 1, 1);
+#endif
 
-    const uint F_BLEND_CURRENT_ALPHA         = 9;
-    const uint F_BLEND_CURRENT_ALPHA_INVERSE = 10;
-    const uint F_BLEND_NEXT_ALPHA            = 11;
-    const uint F_BLEND_NEXT_ALPHA_INVERSE    = 12;
 
-    uint alpha_func = flags >> 5;
-
-    if(alpha_func == F_MUL)
-        dst = dst * src;
+    if(alpha_func == F_CURRENT)
+        ;
+    else if(alpha_func == F_MUL)
+        dst.a = dst.a * next_color.a;
     else if(alpha_func == F_ADD)
-        dst.a = dst.a + src.a;
+        dst.a = dst.a + next_color.a;
     else if(alpha_func == F_BLEND_CURRENT_ALPHA)
-        dst.a = dst.a * (1 - src.a) + src.a;
+        dst.a = dst.a * (1 - color.a) + color.a;
     else if(alpha_func == F_BLEND_CURRENT_ALPHA_INVERSE)
-        dst.a = dst.a * src.a + (1 - src.a);
+        dst.a = dst.a * color.a + (1 - color.a);
     else if(alpha_func == F_BLEND_NEXT_ALPHA)
         dst.a = dst.a * (1 - next_color.a) + next_color.a;
     else if(alpha_func == F_BLEND_NEXT_ALPHA_INVERSE)
         dst.a = dst.a * next_color.a + (1 - next_color.a);
-//    else
-//        dst = vec4(0, 0, 1, 1);
+#if CHICAGO_DEBUG == 1
+    else
+        dst = vec4(1, 0, 1, 1);
+#endif
 }
 
 vec4 shader_chicago()
 {
-    vec4 out_color = vec4(vec3(0), 1);
+    vec4 out_color = vec4(vec3(0), 0);
 
-    vec4 c1 = get_color_with_offset(0u, vec2(0)/*vec2(time * 0.01) * vec2(-1, 1)*/);
-    vec4 c2 = get_color_with_offset(1u, vec2(0)/*vec2(time * 0.05) * vec2(1, -1)*/);
-    vec4 c3 = get_color(2u);
-    vec4 c4 = get_color(3u);
+    vec2 o1 = mats.instance[frag.instanceId].material.input1.xy;
+    vec2 o2 = mats.instance[frag.instanceId].material.input2.xy;
+    vec2 o3 = mats.instance[frag.instanceId].material.input2.zw;
+    vec2 o4 = mats.instance[frag.instanceId].material.input3.xy;
+
+    vec4 c1 = get_color_with_offset(0u, o1);
+    vec4 c2 = get_color_with_offset(1u, o2);
+    vec4 c3 = get_color_with_offset(2u, o3);
+    vec4 c4 = get_color_with_offset(3u, o4);
 
     uint flags = uint(mats.instance[frag.instanceId].lightmap.meta1);
+    uint flags2 = uint(mats.instance[frag.instanceId].lightmap.meta2);
 
-    if(flags == 0u)
-        return c1;
-
-    uint flags2 = uint(mats.instance[frag.instanceId].lightmap.meta1);
-
-    combine_map_v2(out_color, c1, c2, (flags >> 0)       & 0x3FF);
-    combine_map_v2(out_color, c2, c3, (flags >> 10)      & 0x3FF);
-    combine_map_v2(out_color, c3, c4, (flags >> 20)      & 0x3FF);
-//    combine_map_v2(out_color, c4, vec4(0), flags2 & 0x3FF);
+    init_map_v2(out_color, c1, c2, flags & 0xFF);
+    combine_map_v2(out_color, c2, c3, (flags >> 8) & 0xFF);
+    combine_map_v2(out_color, c3, c4, (flags >> 16)      & 0xFF);
+    combine_map_v2(out_color, c4, vec4(0), (flags >> 24) & 0xFF);
 
 //    out_color = max(out_color, vec4(0.1));
 
-    return vec4(out_color.rgb, out_color.a);
+    return vec4(out_color.rgb, out_color.a /*1*/);
 }
 
 vec4 shader_chicago_extended()
@@ -393,6 +478,20 @@ vec4 shader_chicago_extended()
     return shader_chicago();
 //    return vec4(1, 0, 1, 1);
 }
+
+#else
+
+vec4 shader_chicago()
+{
+    return vec4(shader_dummy().rgb, 1.0);
+}
+
+vec4 shader_chicago_extended()
+{
+    return vec4(shader_dummy().rgb, 1.0);
+}
+
+#endif
 
 vec4 shader_transparent()
 {
@@ -437,7 +536,7 @@ vec4 shader_model()
 
     // mul r2.xyz, r2.xyz, v2.xyz
     reflection = reflection * coloring.a;
-    color.rgb = clamp(color.rgb * coloring.rgb + reflection.rgb, 0, 1);
+    color.rgb = clamp(color.rgb /** coloring.rgb*/ + reflection.rgb, 0, 1);
 
     vec4 detail = get_color(detail_map_id);
 //    color.rgb = detail.rgb * 2 + color.rgb;
@@ -454,7 +553,7 @@ vec4 shader_model()
 
 vec4 shader_glass()
 {
-    return shader_dummy() * time * 0.00001;
+    return shader_dummy();
 }
 
 vec4 shader_meter()
@@ -515,13 +614,13 @@ vec4 shader_water()
             1;
 
     return vec4(
-        mix(pow(reflection.rgb, vec3(8)),
+        max(mix(pow(reflection.rgb, vec3(8)),
             reflection.rgb,
             mix(parallel.rgb,
                 perpendicular.rgb,
                 (parallel.a + perpendicular.a) / 2)) *
-        vec3(reflection.a),
-        0.5);
+        vec3(reflection.a), vec3(0)),
+        reflection.a);
 }
 
 const uint MATERIAL_SENV = 1u;

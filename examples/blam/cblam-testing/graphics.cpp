@@ -104,7 +104,7 @@ static void reinit_map(
     fonts.load_from(data.map_container);
 
     load_scenario_bsp(e, data);
-    if constexpr(std::is_same_v<halo_version, blam::pc_version_t>)
+//    if constexpr(std::is_same_v<halo_version, blam::pc_version_t>)
         load_scenario_scenery(e, data);
 
     // For debugging: go through all the bitmaps
@@ -155,7 +155,7 @@ i32 blam_main(i32, cstring_w*)
 
 #if defined(SELECT_API_OPENGL)
     auto& glConfig        = loader.config<comp_app::GLConfig>();
-    glConfig.swapInterval = 0;
+    glConfig.swapInterval = 1;
     if constexpr(
         compile_info::debug_mode && !compile_info::platform::is_emscripten)
         glConfig.profile |= comp_app::GLConfig::Debug;

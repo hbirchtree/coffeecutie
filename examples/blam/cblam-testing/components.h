@@ -123,7 +123,8 @@ struct Model
 
     Matf4 transform;
 
-    std::vector<ERef>                             models;
+    generation_idx_t                              model;
+    std::vector<ERef>                             parts;
     semantic::mem_chunk<blam::mod2::region const> regions;
     blam::tag_t const*                            tag = nullptr;
 
@@ -186,10 +187,13 @@ struct ShaderData
         using namespace enum_helpers;
         using namespace blam::shader;
 
+        [[maybe_unused]] auto name
+            = shader_tag->to_name().to_string(cache.magic);
+
         switch(shader_tag->tagclass_e[0])
         {
         case tc::soso: {
-            //            auto info  = shader_data<shader_model>();
+            [[maybe_unused]] auto info = shader_data<shader_model>();
             //            auto flags = info->flags;
             //            bool transparent
             //                = !feval(flags,
@@ -203,19 +207,19 @@ struct ShaderData
             auto                     maps   = info->maps.data(cache.magic);
             auto                     layers = info->layers.data(cache.magic);
 
-//            auto is_multiplied = info->transparent.blend_function
-//                                 == chicago::framebuffer_blending::multiply;
-//            auto is_add = info->transparent.blend_function
-//                          == chicago::framebuffer_blending::add;
-//            auto is_alpha = info->transparent.blend_function
-//                            == chicago::framebuffer_blending::alpha_blend;
+            auto is_multiplied = info->transparent.blend_function
+                                 == chicago::framebuffer_blending::multiply;
+            auto is_add = info->transparent.blend_function
+                          == chicago::framebuffer_blending::add;
+            //            auto is_alpha = info->transparent.blend_function
+            //                            ==
+            //                            chicago::framebuffer_blending::alpha_blend;
 
-            //            if(is_multiplied)
-            //                return Pass_Multiply;
-            //            if(is_add)
-            return Pass_Additive;
-
-            //            return Pass_Glass;
+            if(is_multiplied)
+                return Pass_Multiply;
+            if(is_add)
+                return Pass_Additive;
+            return Pass_Glass;
         }
         case tc::scex: {
             shader_chicago_extended<V> const* info
@@ -223,11 +227,22 @@ struct ShaderData
             auto maps_2 = info->maps_2stage.data(cache.magic);
             auto maps_4 = info->maps_4stage.data(cache.magic);
             auto layers = info->layers.data(cache.magic);
-            //            return Pass_Glass;
-            return Pass_Additive;
+
+            auto is_multiplied = info->transparent.blend_function
+                                 == chicago::framebuffer_blending::multiply;
+            auto is_add = info->transparent.blend_function
+                          == chicago::framebuffer_blending::add;
+            //            auto is_alpha = info->transparent.blend_function
+            //                            ==
+            //                            chicago::framebuffer_blending::alpha_blend;
+            if(is_multiplied)
+                return Pass_Multiply;
+            if(is_add)
+                return Pass_Additive;
+            return Pass_Glass;
         }
         case tc::swat:
-            return Pass_Additive;
+            return Pass_Glass;
         case tc::sgla:
             return Pass_Glass;
         case tc::senv: {

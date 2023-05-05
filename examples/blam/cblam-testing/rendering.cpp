@@ -253,25 +253,29 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             typing::graphics::ShaderStage::Fragment,
             {"source_r8"sv, 5},
             bitm_cache
-                .template get_bucket<gfx::compat::texture_2da_t>(PixDesc(PixFmt::R8))
+                .template get_bucket<gfx::compat::texture_2da_t>(
+                    PixDesc(PixFmt::R8))
                 .sampler});
         samplers.push_back(gleam::sampler_definition_t{
             typing::graphics::ShaderStage::Fragment,
             {"source_rg8"sv, 6},
             bitm_cache
-                .template get_bucket<gfx::compat::texture_2da_t>(PixDesc(PixFmt::RG8))
+                .template get_bucket<gfx::compat::texture_2da_t>(
+                    PixDesc(PixFmt::RG8))
                 .sampler});
         samplers.push_back(gleam::sampler_definition_t{
             typing::graphics::ShaderStage::Fragment,
             {"source_rgba4"sv, 7},
             bitm_cache
-                .template get_bucket<gfx::compat::texture_2da_t>(PixDesc(PixFmt::RGBA4))
+                .template get_bucket<gfx::compat::texture_2da_t>(
+                    PixDesc(PixFmt::RGBA4))
                 .sampler});
         samplers.push_back(gleam::sampler_definition_t{
             typing::graphics::ShaderStage::Fragment,
             {"source_rgba8"sv, 8},
             bitm_cache
-                .template get_bucket<gfx::compat::texture_2da_t>(PixDesc(PixFmt::RGBA8))
+                .template get_bucket<gfx::compat::texture_2da_t>(
+                    PixDesc(PixFmt::RGBA8))
                 .sampler});
 #if GLEAM_MAX_VERSION >= 0x400 || GLEAM_MAX_VERSION_ES >= 0x320
         samplers.push_back(gleam::sampler_definition_t{
@@ -543,6 +547,8 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             last_update = time;
         }
 
+        update_materials(p, time);
+
         RenderingParameters const* rendering_props;
         p.subsystem(rendering_props);
 
@@ -556,29 +562,32 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             render_bsp_pass(p, t, pass, gfx::cull_state{.front_face = true});
         }
 
-        if(rendering_props->render_scenery)
-            for(auto const& pass :
-                stl_types::slice_num(m_model, Pass_LastOpaque + 1))
-                render_pass(p, t, pass, gfx::cull_state{.front_face = true});
+        for(auto const& pass :
+            stl_types::slice_num(m_model, Pass_LastOpaque + 1))
+            render_pass(p, t, pass, gfx::cull_state{.front_face = true});
 
-        if(rendering_props->render_scenery)
-        {
-            render_pass(
-                p,
-                t,
-                m_model[Pass_Additive],
-                gfx::blend_state{.additive = true});
-            render_pass(
-                p,
-                t,
-                m_model[Pass_Multiply],
-                gfx::blend_state{.multiply = true});
-        }
-        if(rendering_props->render_scenery)
-            render_pass(p, t, m_model[Pass_Glass], gfx::blend_state{});
+        gfx::depth_extended_state nowrite = {.depth_write = true};
+
+        render_pass(
+            p,
+            t,
+            m_model[Pass_Additive],
+            gfx::blend_state{.additive = true},
+            nowrite);
+        render_pass(
+            p,
+            t,
+            m_model[Pass_Multiply],
+            gfx::blend_state{.multiply = true},
+            nowrite);
+        render_pass(p, t, m_model[Pass_Glass], gfx::blend_state{}, nowrite);
         render_bsp_pass(
-            p, t, m_bsp[Pass_Additive], gfx::blend_state{.additive = true});
-        render_bsp_pass(p, t, m_bsp[Pass_Glass], gfx::blend_state{});
+            p,
+            t,
+            m_bsp[Pass_Additive],
+            gfx::blend_state{.additive = true},
+            nowrite);
+        render_bsp_pass(p, t, m_bsp[Pass_Glass], gfx::blend_state{}, nowrite);
 
         //        render_bsp_pass(p, m_bsp[Pass_Wireframe]);
 
@@ -589,27 +598,13 @@ struct MeshRenderer : Components::RestrictedSubsystem<
     {
     }
 
-    void generate_draws(Proxy& p)
+    void generate_static_draws(Proxy& p)
     {
-        ProfContext _;
-        //        BitmapCache<Version>& bitm
-        //            = p.template subsystem<BitmapCache<Version>>();
-        //        ShaderCache<Version>& shaders
-        //            = p.template subsystem<ShaderCache<Version>>();
-
         for(Pass& pass : m_bsp)
         {
             pass.clear();
             pass.material_mapping
                 = pass.material_buffer.template buffer_cast<char>();
-        }
-        for(Pass& pass : m_model)
-        {
-            pass.clear();
-            pass.material_mapping
-                = pass.material_buffer.template buffer_cast<char>();
-            pass.matrix_mapping
-                = pass.matrix_buffer.template buffer_cast<Matf4>();
         }
 
         std::map<Passes, i32> instance_offsets;
@@ -635,9 +630,38 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             //            wf.insert_draw(bsp.draw.data.front());
             wf.draws[0].push_back(bsp.draw.data.front());
         }
+    }
 
-        for(auto& ent : p.select(ObjectMod2))
+    void generate_draws(Proxy& p)
+    {
+        ProfContext _;
+        //        BitmapCache<Version>& bitm
+        //            = p.template subsystem<BitmapCache<Version>>();
+        //        ShaderCache<Version>& shaders
+        //            = p.template subsystem<ShaderCache<Version>>();
+
+        RenderingParameters* rendering_params;
+        p.subsystem(rendering_params);
+
+        ModelCache<Version>* model_cache;
+        p.subsystem(model_cache);
+
+        generate_static_draws(p);
+
+        for(Pass& pass : m_model)
         {
+            pass.clear();
+            pass.material_mapping
+                = pass.material_buffer.template buffer_cast<char>();
+            pass.matrix_mapping
+                = pass.matrix_buffer.template buffer_cast<Matf4>();
+        }
+
+        for(compo::Entity const& ent : p.select(ObjectMod2))
+        {
+            if(!rendering_params->render_scenery
+               && (ent.tags & ObjectSkybox) == 0)
+                continue;
             auto              ref   = p.template ref<Proxy>(ent);
             SubModel&         model = ref.template get<SubModel>();
             MeshTrackingData& track = ref.template get<MeshTrackingData>();
@@ -679,6 +703,9 @@ struct MeshRenderer : Components::RestrictedSubsystem<
 
         for(auto& ent : p.select(ObjectMod2))
         {
+            if(!rendering_params->render_scenery
+               && (ent.tags & ObjectSkybox) == 0)
+                continue;
             auto      ref    = p.template ref<Proxy>(ent);
             SubModel& smodel = ref.template get<SubModel>();
             Model&    model
@@ -689,7 +716,8 @@ struct MeshRenderer : Components::RestrictedSubsystem<
                 = pass.draws[track.model_id.bucket].at(track.model_id.draw);
             auto instance_id = draw.instances.offset + track.model_id.instance;
             pass.matrix_mapping[instance_id] = model.transform;
-            populate_mod2_material(smodel, instance_id);
+            populate_mod2_material(
+                smodel, model_cache->find(model.model)->second, instance_id);
         }
 
         m_resources.material_store->unmap();
@@ -703,21 +731,96 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         //        m_bsp[Pass_EnvMicro].draws().resize(10);
     }
 
+    void update_materials(Proxy& p, time_point const& time)
+    {
+        for(Pass& pass : m_bsp)
+        {
+            pass.material_mapping
+                = pass.material_buffer.template buffer_cast<char>();
+        }
+        for(Pass& pass : m_model)
+        {
+            pass.material_mapping
+                = pass.material_buffer.template buffer_cast<char>();
+        }
+
+        RenderingParameters* rendering_params;
+        p.subsystem(rendering_params);
+
+        ModelCache<Version>* model_cache;
+        p.subsystem(model_cache);
+
+        for(auto& ent : p.select(ObjectMod2))
+        {
+            if(!rendering_params->render_scenery
+               && (ent.tags & ObjectSkybox) == 0)
+                continue;
+            auto              ref    = p.template ref<Proxy>(ent);
+            SubModel&         smodel = ref.template get<SubModel>();
+            MeshTrackingData& track  = ref.template get<MeshTrackingData>();
+            Pass&             pass   = m_model[smodel.current_pass];
+            auto&             bucket = pass.draws[track.model_id.bucket];
+            if(bucket.empty())
+                continue;
+            draw_data_t const& draw = bucket.at(track.model_id.draw);
+            auto instance_id = draw.instances.offset + track.model_id.instance;
+            update_animations(
+                material_of(smodel, instance_id), smodel.shader, time);
+        }
+
+        for(auto& ent : p.select(ObjectBsp))
+        {
+            auto          ref = p.template ref<Proxy>(ent);
+            BspReference& bsp = ref.template get<BspReference>();
+
+            if(!bsp.visible)
+                continue;
+
+            i32 instance_offset = bsp.draw.data.front().instances.offset;
+            update_animations(
+                material_of(bsp, instance_offset), bsp.shader, time);
+        }
+
+        m_resources.material_store->unmap();
+    }
+
+    materials::senv_micro& material_of(SubModel& sub, size_t i)
+    {
+        Pass& pass = m_model[sub.current_pass];
+        return pass.template material_of<materials::senv_micro>(i);
+    }
+
+    materials::senv_micro& material_of(BspReference& bsp, size_t i)
+    {
+        Pass& pass = m_bsp[bsp.current_pass];
+        return pass.template material_of<materials::senv_micro>(i);
+    }
+
     void populate_bsp_material(BspReference& ref, size_t i = 0)
     {
         Pass&                  pass = m_bsp[ref.current_pass];
         materials::senv_micro& material
             = pass.template material_of<materials::senv_micro>(i);
-        shader_cache.populate_material(material, ref.shader);
+        shader_cache.populate_material(material, ref.shader, Vecf2{1, 1});
         bitm_cache.assign_atlas_data(material.lightmap, ref.lightmap);
     }
 
-    void populate_mod2_material(SubModel& sub, size_t i = 0)
+    void populate_mod2_material(
+        SubModel const& sub, ModelItem<Version> const& model, size_t i = 0)
     {
         Pass&                  pass = m_model[sub.current_pass];
         materials::senv_micro& material
             = pass.template material_of<materials::senv_micro>(i);
-        shader_cache.populate_material(material, sub.shader);
+        shader_cache.populate_material(
+            material, sub.shader, model.header->uvscale);
+    }
+
+    void update_animations(
+        materials::senv_micro&  material,
+        generation_idx_t const& shader,
+        time_point const&       time)
+    {
+        shader_cache.update_uv_animations(material, shader, time);
     }
 };
 
