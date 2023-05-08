@@ -262,15 +262,26 @@ void compute_ubo_instance(
      * For a 64-byte structure we only move it every 4 instances and so on
      */
     u32 smallest_stride{ubo_alignment};
+    u32 biggest_stride{0};
     for(auto const& buffer : *buffers)
     {
         if(buffer.stride == 0)
             continue;
         smallest_stride
             = std::min<u32>(static_cast<u32>(buffer.stride), smallest_stride);
+        biggest_stride
+            = std::max<u32>(static_cast<u32>(buffer.stride), biggest_stride);
     }
 
     u32 skip = ubo_alignment / smallest_stride;
+
+    if((biggest_stride % ubo_alignment) != 0)
+    {
+        u32 big_skip_stride = biggest_stride;
+        while((big_skip_stride % ubo_alignment) != 0)
+            big_skip_stride *= 2;
+        skip = std::max(big_skip_stride / biggest_stride, skip);
+    }
 
     if(skip == 1)
     {
@@ -284,8 +295,8 @@ void compute_ubo_instance(
 
     /* Set the end of the buffer range */
     u32 end_instance = span.first + span.second;
-    u32 pad = skip - (end_instance - (end_instance / skip) * skip);
-    u32 num_blocks = (end_instance + pad) / skip - num_skips;
+    u32 pad          = skip - (end_instance - (end_instance / skip) * skip);
+    u32 num_blocks   = (end_instance + pad) / skip - num_skips;
 
     bookkeeping.baseInstance = static_cast<i32>(base_instance);
     span.first               = num_skips * skip;

@@ -514,6 +514,32 @@ inline void undo_command_modifier(
 inline bool apply_command_modifier(
     program_t const& /*program*/,
     shader_bookkeeping_t& /*bookkeeping*/,
+    depth_extended_state& depth_info)
+{
+    if(depth_info.depth_write.has_value())
+        cmd::depth_mask(depth_info.depth_write.value());
+    return true;
+}
+
+inline bool apply_command_modifier_per_call(
+    program_t const&, shader_bookkeeping_t&, depth_extended_state&, u32, u32)
+{
+    return true;
+}
+
+inline bool undo_command_modifier(
+    program_t const& /*program*/,
+    shader_bookkeeping_t& /*bookkeeping*/,
+    depth_extended_state&& depth_info)
+{
+    if(depth_info.depth_write.has_value())
+        cmd::depth_mask(true);
+    return true;
+}
+
+inline bool apply_command_modifier(
+    program_t const& /*program*/,
+    shader_bookkeeping_t& /*bookkeeping*/,
     cull_state& view_info)
 {
     cmd::enable(group::enable_cap::cull_face);

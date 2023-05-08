@@ -13,7 +13,7 @@
         "lz4",
         "magic-enum",
         "ms-gsl",
-        { "name": "pvrtcdec", "platform": "android | emscripten | (linux & !x64)" },
+        { "name": "pvrtcdec", "platform": "android | emscripten | linux" },
         "rapidjson",
         "sqlite3",
         "stb",

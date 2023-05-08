@@ -127,22 +127,42 @@ struct alignas(4) radiosity_properties /* aka shdr */
     }
 };
 
-struct texture_scrolling_animation
+struct simple_tex_property_anim
 {
-    struct texture_anim_properties
-    {
-        animation_src      source;
-        animation_function function;
+    animation_src      source;
+    animation_function function;
+    f32                period;
+    f32                scale;
+};
 
-        f32 period;
-        f32 phase;
-        f32 scale;
-    };
+struct color_animation
+{
+    Vecf3                    color_on;
+    Vecf3                    color_off;
+    simple_tex_property_anim anim;
+};
 
-    texture_anim_properties u;
-    texture_anim_properties v;
+struct simple_texture_uv_animation
+{
+    simple_tex_property_anim u;
+    simple_tex_property_anim v;
+};
 
-    texture_anim_properties rot; /* rotation-animation */
+struct texture_property_anim
+{
+    animation_src      source;
+    animation_function function;
+
+    f32 period;
+    f32 phase;
+    f32 scale;
+};
+
+struct texture_uv_rotation_animation
+{
+    texture_property_anim u;
+    texture_property_anim v;
+    texture_property_anim rot; /* rotation-animation */
 
     Vecf2 rotation_center;
 };
@@ -247,20 +267,20 @@ enum class map_flags : u16
 };
 struct map_t
 {
-    u32 padding_1[10];
-    map_flags      flags;
-    u16 padding;
+    u32       padding_1[10];
+    map_flags flags;
+    u16       padding;
 
     color_function color_func;
     color_function alpha_func;
     u16            padding_2;
 
-    u32 padding_3[8];
+    u32              padding_3[8];
     bitm_reference_t map;
 
     u32 padding_5[10];
 
-    texture_scrolling_animation anim_2d;
+    texture_uv_rotation_animation anim_2d;
 };
 
 static_assert(sizeof(map_t) == 220);
@@ -526,7 +546,10 @@ struct alignas(4) shader_env : radiosity_properties /* aka senv */
     f32 unknown_1[2];
     u32 padding_3[4];
 
-    texture_scrolling_animation scrolling;
+    struct scrolling_t : simple_texture_uv_animation
+    {
+        u32 padding[6];
+    } scrolling;
 
     /* EVERYTHING BELOW IS NOT WORKING */
 
@@ -535,28 +558,24 @@ struct alignas(4) shader_env : radiosity_properties /* aka senv */
         none       = 0x0,
         unfiltered = 0x1,
     };
-    struct illumination_props
+    struct illumination_props : color_animation
     {
-        Vecf3              on_color;
-        Vecf3              off_color;
-        animation_function anim;
-        f32                period;
-        f32                phase;
-
-        u32 padding_[1];
+        u32 padding_[6];
     };
 
     struct self_illumination_t
     {
         illum_flags flags;
 
+        u32 padding1[6];
+
         illumination_props primary;
         illumination_props secondary;
         illumination_props plasma;
 
-        u32 padding_2[25];
-
         detail_map map;
+
+        u32 padding2[15];
     } self_illum;
 
     enum class specular_flags : u16
@@ -566,8 +585,6 @@ struct alignas(4) shader_env : radiosity_properties /* aka senv */
         extra_shiny       = 0x2,
         lightmap_specular = 0x4,
     };
-
-    u32 padding_5[9];
 
     struct specular_t
     {
@@ -607,6 +624,9 @@ static_assert(
     offsetof(shader_env, diffuse) + offsetof(shader_env::diffuse_map_t, base)
     == 136);
 static_assert(offsetof(shader_env, scrolling) == 336);
+static_assert(offsetof(shader_env, self_illum) == 384);
+static_assert(offsetof(shader_env, self_illum) + offsetof(shader_env::self_illumination_t, primary) == 412);
+static_assert(offsetof(shader_env, self_illum) + offsetof(shader_env::self_illumination_t, map) == 592);
 static_assert(
     offsetof(shader_env, specular)
         + offsetof(shader_env::specular_t, perpendicular_color)
@@ -887,9 +907,9 @@ struct alignas(32) shader_transparent : radiosity_properties /* aka sotr */
 
     struct map_t
     {
-        u16              flags;
-        bitm_reference_t map;
-        texture_scrolling_animation animation;
+        u16                           flags;
+        bitm_reference_t              map;
+        texture_uv_rotation_animation animation;
     };
 
     reflexive_t<map_t> maps;

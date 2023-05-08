@@ -22,8 +22,13 @@ struct uniform_key
 struct depth_state
 {
     using depth_range = std::optional<typing::vector_types::Vecd2>;
-    depth_range range;
+    depth_range range{};
     bool reversed{false};
+};
+
+struct depth_extended_state
+{
+    std::optional<bool> depth_write{true};
 };
 
 struct view_state

@@ -8,6 +8,10 @@
 #include <bcdec.h>
 #endif
 
+#if defined(GLEAM_ENABLE_SOFTWARE_PVRTC)
+#include <pvrtcdec/PVRTDecompress.h>
+#endif
+
 #define NOT_SUPPORTED " not supported by hardware and no software fallback"
 
 #include <coffee/strings/libc_types.h>
@@ -55,10 +59,17 @@ bool texture_t::requires_software_decode()
         Throw(texture_decode_not_available("BCn" NOT_SUPPORTED));
 #endif
     }
+#if defined(GLEAM_ENABLE_SOFTWARE_PVRTC)
+    if(m_format.pixfmt == PixFmt::ETC1 && !m_features.tex.oes.etc1)
+        return true;
+    if(m_format.pixfmt == PixFmt::PVRTC && !m_features.tex.img.pvrtc)
+        return true;
+#else
     if(m_format.pixfmt == PixFmt::ETC1 && !m_features.tex.oes.etc1)
         Throw(texture_decode_not_available("ETC1" NOT_SUPPORTED));
     if(m_format.pixfmt == PixFmt::PVRTC && !m_features.tex.img.pvrtc)
         Throw(texture_decode_not_available("PVRTC" NOT_SUPPORTED));
+#endif
 
     if(m_format.pixfmt == PixFmt::ASTC && !m_features.tex.gl.astc
        && !m_features.tex.khr.astc)
@@ -75,6 +86,7 @@ std::optional<PixDesc> texture_t::software_decode_format()
     return std::nullopt;
 }
 
+#if defined(GLEAM_ENABLE_SOFTWARE_BCN)
 static std::vector<char> software_decode_bcn(
     PixDesc const&               m_format,
     semantic::Span<const char>&& data,
@@ -130,9 +142,31 @@ static std::vector<char> software_decode_bcn(
         out.size());
     return out;
 }
+#endif
+
+#if defined(GLEAM_ENABLE_SOFTWARE_PVRTC)
+static std::vector<char> software_decode_pvrtc_etc1(
+    PixDesc const&               fmt,
+    semantic::Span<const char>&& data,
+    size_3d<i32> const&          size)
+{
+    std::vector<char> out;
+    out.resize(size.w * size.h * 4);
+    if(fmt.pixfmt == PixFmt::PVRTC)
+        pvr::PVRTDecompressPVRTC(
+            data.data(),
+            fmt.cmpflg == typing::pixels::CompFlags::bpp_2 ? 1 : 0,
+            size.w,
+            size.h,
+            reinterpret_cast<uint8_t*>(out.data()));
+    else if(fmt.pixfmt == PixFmt::ETC1)
+        pvr::PVRTDecompressETC(data.data(), size.w, size.h, out.data(), 0);
+    return out;
+}
+#endif
 
 std::future<std::vector<char>> texture_t::software_decode(
-    semantic::Span<const char>&& data, size_3d<i32> const& size)
+    semantic::Span<const char>&& data, size_3d<i32> size, i32 mipmap)
 {
     using typing::pixels::CompFlags;
 
@@ -147,20 +181,36 @@ std::future<std::vector<char>> texture_t::software_decode(
             m_decoder_queue = res.value();
     }
 
+    (void)mipmap;
+
+#if defined(GLEAM_ENABLE_SOFTWARE_BCN)
     if(m_format.pixfmt == PixFmt::BCn)
     {
         auto task = rq::dependent_task<void, std::vector<char>>::CreateSource(
-                [fmt = m_format, data, size]() mutable {
-                    return software_decode_bcn(fmt, std::move(data), size);
-                });
+            [fmt = m_format, data, size]() mutable {
+                return software_decode_bcn(fmt, std::move(data), size);
+            });
         auto fut = task->output.get_future();
-        auto res = rq::runtime_queue::Queue(
-            m_decoder_queue,
-            std::move(task));
+        auto res = rq::runtime_queue::Queue(m_decoder_queue, std::move(task));
         if(res.has_error())
-            Throw(rq::runtime_queue_error(""));
+            Throw(rq::runtime_queue_error("failed to queue BCn decode"));
         return fut;
     }
+#endif
+#if defined(GLEAM_ENABLE_SOFTWARE_PVRTC)
+    if(stl_types::any_of(m_format.pixfmt, PixFmt::PVRTC, PixFmt::ETC1))
+    {
+        auto task = rq::dependent_task<void, std::vector<char>>::CreateSource(
+            [fmt = m_format, data, size]() mutable {
+                return software_decode_pvrtc_etc1(fmt, std::move(data), size);
+            });
+        auto fut = task->output.get_future();
+        auto res = rq::runtime_queue::Queue(m_decoder_queue, std::move(task));
+        if(res.has_error())
+            Throw(rq::runtime_queue_error("failed to queue PVRTC/ETC1 decode"));
+        return fut;
+    }
+#endif
 
     Throw(texture_decode_not_implemented(
         "attempted doing software decode, but no implementation found"));

@@ -25,6 +25,15 @@ struct MaterialData
     vec4 input2;
     vec4 input3;
     vec4 input4;
+
+    vec4 input5;
+    vec4 input6;
+    vec4 input7;
+    vec4 input8;
+    vec4 input9;
+    vec4 input10;
+    vec4 input11;
+    vec4 input12;
 };
 
 struct Material

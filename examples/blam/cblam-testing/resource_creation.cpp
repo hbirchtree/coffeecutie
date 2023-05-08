@@ -73,8 +73,8 @@ void create_resources(compo::EntityContainer& e)
         = api.alloc_buffer(gfx::buffers::constants, access);
     if(api.feature_info().buffer.ssbo)
     {
-        //        resources.model_matrix_store
-        //            = api.alloc_buffer(gfx::buffers::shader_writable, access);
+//        resources.model_matrix_store
+//            = api.alloc_buffer(gfx::buffers::shader_writable, access);
         resources.material_store
             = api.alloc_buffer(gfx::buffers::shader_writable, access);
     } else if(api.feature_info().buffer.ubo)
@@ -87,7 +87,7 @@ void create_resources(compo::EntityContainer& e)
             = api.alloc_buffer(gfx::buffers::vertex, access);
         resources.material_store
             = api.alloc_buffer(gfx::buffers::vertex, access);
-    }    
+    }
     resources.model_matrix_store->alloc();
     resources.model_matrix_store->commit(memory_budget::matrix_buffer);
     resources.material_store->alloc();
@@ -464,10 +464,12 @@ void create_shaders(compo::EntityContainer& e)
 
     auto _ = gfx.debug().scope();
 
-    const bool     use_spv = gfx.feature_info().program.spirv && false;
-    constexpr bool use_uber
-        = !compile_info::platform::is_emscripten && !lowspec_hardware;
-    constexpr bool use_uber_lite = !lowspec_hardware;
+    auto const& features = gfx.feature_info();
+
+    const bool use_spv  = gfx.feature_info().program.spirv && false;
+    const bool use_uber = features.texture.cube_array && features.buffer.ssbo
+                          && !lowspec_hardware;
+    const bool use_uber_lite = features.buffer.ubo;
 
     if(use_spv)
     {
@@ -475,13 +477,13 @@ void create_shaders(compo::EntityContainer& e)
         return;
     }
 
-    if constexpr(use_uber)
+    if(use_uber)
     {
         create_uber_shaders(gfx, resources);
         return;
     }
 
-    if constexpr(use_uber_lite)
+    if(use_uber_lite)
     {
         create_uber_lite_shaders(gfx, resources);
         return;
@@ -556,5 +558,5 @@ void create_camera(
     }
 
     camera.controller_opts.sens.move = {.1f, .1f};
-    camera.camera_opts.accel.alt = 50.f;
+    camera.camera_opts.accel.alt     = 50.f;
 }

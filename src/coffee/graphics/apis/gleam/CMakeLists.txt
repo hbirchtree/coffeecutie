@@ -6,6 +6,7 @@ option ( BUILD_GLES "Build library targeting OpenGL ES 3.0+" OFF )
 option ( BUILD_GLES_31 "Build with support for OpenGL ES 3.1 (Only activates when BUILD_GLES is on)" ON )
 option ( BUILD_GLES_32 "Build with support for OpenGL ES 3.2 (Only activates when BUILD_GLES is on)" ON )
 option ( BUILD_GL_SOFTWARE_BCN "Build software-decode for BCn using bcdec" OFF )
+option ( BUILD_GL_SOFTWARE_PVRTC "Build software-decode for PVRTC" OFF )
 
 if(WIN32 AND WIN_UWP)
     option ( BUILD_ANGLE "Build on ANGLE as backend for OpenGL ES" ON )
@@ -116,15 +117,26 @@ function ( GEN_GLEAM_TARGET GLVERSION SUFFIX )
             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
             )
     endif()
+    if(BUILD_GL_SOFTWARE_BCN OR BUILD_GL_SOFTWARE_PVRTC)
+        target_sources ( GLeamRHI_${SUFFIX} PRIVATE
+            private/rhi/rhi_texture_soft_decode.cpp
+            )
+    endif()
     if(BUILD_GL_SOFTWARE_BCN)
         target_compile_definitions ( GLeamRHI_${SUFFIX} PUBLIC
             -DGLEAM_ENABLE_SOFTWARE_BCN
             )
-        target_sources ( GLeamRHI_${SUFFIX} PRIVATE
-            private/rhi/rhi_texture_soft_decode.cpp
-            )
         target_include_directories ( GLeamRHI_${SUFFIX} PRIVATE
             ${BCDec_INCLUDE_DIR}
+            )
+    endif()
+    if(BUILD_GL_SOFTWARE_PVRTC)
+        find_package(pvrtcdec CONFIG REQUIRED)
+        target_compile_definitions( GLeamRHI_${SUFFIX} PUBLIC
+            -DGLEAM_ENABLE_SOFTWARE_PVRTC
+            )
+        target_link_libraries( GLeamRHI_${SUFFIX} PRIVATE
+            pvrtcdec::pvrtcdec
             )
     endif()
 

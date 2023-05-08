@@ -69,7 +69,7 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             for(auto const& draw : draws.back())
                 num_draws += draw.instances.count;
 
-            if(num_draws >= 256 || (num_draws + draw.instances.count) > 256)
+            if(num_draws >= 128 || (num_draws + draw.instances.count) > 128)
                 draws.emplace_back();
 
             auto& bucket_ = draws.back();
@@ -145,9 +145,9 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         gfx::buffer_t& material_buf = *resources.material_store;
         gfx::buffer_t& matrix_buf   = *resources.model_matrix_store;
 
-        const auto uses_ubo         = !api->feature_info().buffer.ssbo && false;
-        const auto bsp_batch_size   = uses_ubo ? 64_kB : 1024_kB;
-        const auto model_batch_size = uses_ubo ? 64_kB : 2048_kB;
+        const auto bsp_batch_size       = 1024_kB;
+        const auto model_batch_size     = 1024_kB;
+        const auto model_mat_batch_size = 256_kB;
 
         u32 base = 0;
         for(Pass& pass : m_bsp)
@@ -161,10 +161,10 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         {
             pass.material_buffer = material_buf.slice(base, model_batch_size);
             pass.matrix_buffer
-                = matrix_buf.slice(base_mat, model_batch_size / 2);
+                = matrix_buf.slice(base_mat, model_mat_batch_size);
 
             base += model_batch_size;
-            base_mat += model_batch_size / 2;
+            base_mat += model_mat_batch_size;
         }
     }
 

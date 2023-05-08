@@ -66,14 +66,13 @@ C_FLAGS(VisitorFlags, u32);
 struct EntityRecipe
 {
     std::vector<size_t> components;
-    u32                 tags{0};
+    u64                 tags{0};
 };
 
 struct Entity : stl_types::non_copy
 {
     u64 id;
-    u32 tags;
-    u32 _pad{0};
+    u64 tags;
 };
 
 struct ComponentContainerBase : stl_types::non_copy

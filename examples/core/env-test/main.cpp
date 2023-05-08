@@ -3,7 +3,6 @@
 #include <coffee/core/CFiles>
 #include <coffee/core/CPlatform>
 #include <coffee/core/coffee.h>
-#include <platforms/sensor.h>
 #include <platforms/sysinfo.h>
 
 #if defined(FEATURE_ENABLE_MediaFfmpeg)

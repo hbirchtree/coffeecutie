@@ -50,9 +50,7 @@ struct alignas(16) material_data
     id    material; /* ID of the material */
     u32   flags;    /* Material-dependent flags */
     Vecf2 inputs1;
-    Vecf4 inputs2;
-    Vecf4 inputs3;
-    Vecf4 inputs4;
+    Vecf4 inputs[11];
 };
 
 struct alignas(16) senv_micro
@@ -64,7 +62,7 @@ struct alignas(16) senv_micro
 
 static_assert(offsetof(senv_micro, lightmap) == 160);
 static_assert(offsetof(senv_micro, material) == 192);
-static_assert(sizeof(senv_micro) == 256);
+static_assert(sizeof(senv_micro) == 384);
 
 struct alignas(16) light_properties
 {

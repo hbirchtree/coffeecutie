@@ -29,6 +29,11 @@ struct EntityRef
         return m_id;
     }
 
+    u64 tags() const
+    {
+        return container->tags_of(m_id);
+    }
+
     template<typename T>
     typename T::value_type const& get() const
     {

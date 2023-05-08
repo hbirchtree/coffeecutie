@@ -177,9 +177,9 @@ i32 blam_main(i32, cstring_w*)
             auto& gfx        = e.register_subsystem_inplace<gfx::system>();
             auto  load_error = gfx.load(
                 //
-                //                gfx::emulation::webgl::desktop()
+//                gfx::emulation::webgl::desktop()
                 // gfx::emulation::qcom::adreno_320()
-                //                 gfx::emulation::arm::mali_g710()
+                gfx::emulation::arm::mali_g710()
                 // gfx::emulation::amd::rx560_pro()
                 //
             );

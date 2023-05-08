@@ -111,7 +111,7 @@ struct EntityContainer : stl_types::non_copy
 
     EntityContainer() : entity_counter(0), debug_flags(0)
     {
-        time_offset = std::chrono::system_clock::now().time_since_epoch();
+        time_offset = clock::now() - clock::time_point();
     }
 
     struct entity_query
@@ -120,7 +120,7 @@ struct EntityContainer : stl_types::non_copy
         using size_type        = szptr;
         using entity_predicate = std::function<bool(Entity const&)>;
 
-        entity_query(EntityContainer& c, u32 tags) :
+        entity_query(EntityContainer& c, u64 tags) :
             pred([=](Entity const& e) { return (e.tags & tags) == tags; }),
             m_container(&c)
         {
@@ -286,7 +286,7 @@ struct EntityContainer : stl_types::non_copy
      *
      */
 
-    quick_container<entity_query> select(u32 tags)
+    quick_container<entity_query> select(u64 tags)
     {
         return quick_container<entity_query>(
             [this, tags]() { return entity_query(*this, tags); },
@@ -420,7 +420,7 @@ struct EntityContainer : stl_types::non_copy
         return container<ComponentType>().get(id);
     }
 
-    EntityRef<EntityContainer> ref(Entity& entity);
+    EntityRef<EntityContainer> ref(Entity const& entity);
     EntityRef<EntityContainer> ref(u64 entity);
 
     template<is_tag_type ComponentTag>
@@ -450,10 +450,13 @@ struct EntityContainer : stl_types::non_copy
     EntityRef<EntityContainer> create_entity(EntityRecipe const& recipe);
     void remove_entity_if(std::function<bool(Entity const&)>&& predicate);
 
+    u64 tags_of(u64 id) const;
+
     /* Time tracking */
     clock::time_point relative_timestamp() const
     {
-        return clock::now() - time_offset;
+        auto current_time = clock::now();
+        return current_time - time_offset;
     }
 
     /* For optimizations */

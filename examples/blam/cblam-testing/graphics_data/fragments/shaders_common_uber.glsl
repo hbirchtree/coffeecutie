@@ -170,6 +170,8 @@ vec4 shader_environment()
 
     int detailed = (mats.instance[frag.instanceId].material.flags >> 9) & 0x1;
     int has_micro = (mats.instance[frag.instanceId].material.flags >> 10) & 0x1;
+    detailed = 1;
+    has_micro = 1;
 
     vec4 base = get_color(base_map_id);
     vec4 micro = has_micro == 1 ? get_color(micro_map_id) : vec4(1);
@@ -210,6 +212,9 @@ vec4 shader_environment()
 #if USE_SELF_ILLUMINATION == 1
     int self_illum_layer = mats.instance[frag.instanceId].lightmap.meta1;
     vec4 self_illum = get_color_explicit(base_map_id, self_illum_layer);
+
+    // get power on/off colors for prim/secondary/plasma
+    // that's 3 * 2 * 3 values
 #endif
 
 //    if(type == TYPE_NORMAL)
@@ -344,7 +349,7 @@ void init_map_v2(
     else if(color_func == F_DOUBLE_MUL)
         dst.rgb = color.rgb * next_color.rgb * next_color.rgb;
     else if(color_func == F_ADD)
-        dst.rgb = color.rgb * next_color.rgb;
+        dst.rgb = color.rgb + next_color.rgb;
 #if CHICAGO_DEBUG == 1
     else
         dst.rgb = vec3(1, 0, 1);
@@ -355,14 +360,14 @@ void init_map_v2(
     if(alpha_func == F_MUL)
         dst.a = color.a * next_color.a;
     if(alpha_func == F_ADD)
-        dst.a = color.a;
+        dst.a = color.a + next_color.a;
     if(alpha_func == F_DOUBLE_MUL)
         dst.a = color.a * next_color.a * next_color.a;
     else if(alpha_func == F_BLEND_CURRENT_ALPHA)
         dst.a = color.a;
     else if(alpha_func == F_BLEND_CURRENT_ALPHA_INVERSE)
 //        dst.a = (1 - color.a) + next_color.a;
-        dst.a = (1 - next_color.a);
+        dst.a = next_color.a * (1 - color.a) + next_color.a;
     else if(alpha_func == F_BLEND_NEXT_ALPHA)
         dst.a = (color.a * (1 - next_color.a)) + next_color.a;
     else if(alpha_func == F_BLEND_NEXT_ALPHA_INVERSE)
@@ -380,15 +385,15 @@ void combine_map_v2(
     vec3 src = vec3(0);
 
     if(color_func == F_CURRENT)
-        ;
+        src.rgb = color.rgb;
     else if(color_func == F_NEXT)
         src.rgb = next_color.rgb;
     else if(color_func == F_MUL)
-        src.rgb = next_color.rgb;
+        src.rgb = color.rgb;
     else if(color_func == F_DOUBLE_MUL)
-        src.rgb = next_color.rgb;
+        src.rgb = color.rgb;
     else if(color_func == F_ADD)
-        src.rgb = next_color.rgb;
+        src.rgb = color.rgb;
     else if(color_func == F_ADD_SIGNED_CURRENT)
         src.rgb = color.rgb;
     else if(color_func == F_ADD_SIGNED_NEXT)
@@ -434,13 +439,13 @@ void combine_map_v2(
     if(alpha_func == F_CURRENT)
         ;
     else if(alpha_func == F_MUL)
-        dst.a = dst.a * next_color.a;
+        dst.a = dst.a * color.a;
     else if(alpha_func == F_ADD)
-        dst.a = dst.a + next_color.a;
+        dst.a = dst.a + color.a;
     else if(alpha_func == F_BLEND_CURRENT_ALPHA)
-        dst.a = dst.a * (1 - color.a) + color.a;
+        dst.a = dst.a + color.a;
     else if(alpha_func == F_BLEND_CURRENT_ALPHA_INVERSE)
-        dst.a = dst.a * color.a + (1 - color.a);
+        dst.a = dst.a + (1 - color.a);
     else if(alpha_func == F_BLEND_NEXT_ALPHA)
         dst.a = dst.a * (1 - next_color.a) + next_color.a;
     else if(alpha_func == F_BLEND_NEXT_ALPHA_INVERSE)
@@ -469,13 +474,13 @@ vec4 shader_chicago()
     uint flags2 = uint(mats.instance[frag.instanceId].lightmap.meta2);
 
     init_map_v2(out_color, c1, c2, flags & 0xFF);
-    combine_map_v2(out_color, c2, c3, (flags >> 8) & 0xFF);
-    combine_map_v2(out_color, c3, c4, (flags >> 16)      & 0xFF);
-    combine_map_v2(out_color, c4, vec4(0), (flags >> 24) & 0xFF);
+//    combine_map_v2(out_color, c2, c3, (flags >> 8) & 0xFF);
+    combine_map_v2(out_color, c3, c4, (flags >> 8)      & 0xFF);
+//    combine_map_v2(out_color, c4, vec4(0), (flags >> 24) & 0xFF);
 
 //    out_color = max(out_color, vec4(0.1));
 
-    return vec4(out_color.rgb, out_color.a /*1*/);
+    return vec4(out_color.rgb, out_color.a);
 }
 
 vec4 shader_chicago_extended()

@@ -198,13 +198,14 @@ struct part
 
     reflexive_t<vert::idx_t, xbox_t> indices;
 
+    u32 pad2;
+
     vertex_type_t vertex_type;
     union
     {
         reflexive_t<vert::compressed> vertices;
         struct
         {
-            u32 unknown_count2;
             u32 vert_count;
             u32 zero;
             u32 raw_offset_behavior;
@@ -213,20 +214,24 @@ struct part
     };
 
     template<typename V>
-    inline auto vertex_segment(tag_index_t<V> const& base) const
+    inline auto vertex_segment(
+        tag_index_t<V> const& base, magic_data_t const& magic) const
     {
-        auto cpy = base.vertex_base();
-        cpy.offset += vertex_ref_offset;
-        cpy.count = vert_count;
-        return cpy;
-    }
-
-    inline reflexive_t<xbox_ref> xbox_vertex_ref() const
-    {
-        reflexive_t<xbox_ref> out;
-        out.count  = 1;
-        out.offset = vertex_ref_offset;
-        return out;
+        if constexpr(std::is_same_v<V, xbox_version_t>)
+        {
+            reflexive_t<xbox_ref> out;
+            out.count  = 1;
+            out.offset = vertex_ref_offset;
+            return out.data(magic, blam::single_value)
+                .value()
+                ->vertices(vert_count);
+        } else
+        {
+            auto cpy = base.vertex_base();
+            cpy.offset += vertex_ref_offset;
+            cpy.count = vert_count;
+            return cpy;
+        }
     }
 
     template<typename V>
@@ -237,15 +242,16 @@ struct part
      */
     inline auto index_segment(tag_index_t<V> const& base) const
     {
-        auto cpy = base.index_base();
-        cpy.offset += indices.offset;
-        cpy.count = indices.count + 2;
-        return cpy;
-    }
-
-    inline auto xbox_index_segment() const
-    {
-        return indices;
+        if constexpr(std::is_same_v<V, xbox_version_t>)
+        {
+            return indices;
+        } else
+        {
+            auto cpy = base.index_base();
+            cpy.offset += indices.offset;
+            cpy.count = indices.count + 2;
+            return cpy;
+        }
     }
 };
 
@@ -298,18 +304,23 @@ inline std::optional<model_data_t> header<V>::model_at(
     auto geom_ptr = geometries.data(magic);
     if(!geom_ptr.has_value())
         return std::nullopt;
-    semantic::Span<const geometry_header<V>>  geometry = geom_ptr.value();
-    semantic::Span<const region>              regions_ = regions_ptr.value();
-    std::vector<part const*> meshes;
+    semantic::Span<const geometry_header<V>> geometry = geom_ptr.value();
+    semantic::Span<const region>             regions_ = regions_ptr.value();
+    std::vector<part const*>                 meshes;
     for(region const& reg : regions_)
     {
         auto permutations = reg.permutations.data(magic).value();
         for(region_permutation const& per : permutations)
         {
             auto perm_idx = per.meshindex_lod.at(4u - lod);
-            auto parts = geometry[perm_idx].meshes(magic);
+            auto parts    = geometry[perm_idx].meshes(magic);
             for(part_wrap_header<V> const& part : parts)
             {
+                if(!stl_types::any_of(
+                       part.data.vertex_type,
+                       part::vertex_type_t::mod2_compressed_vertex,
+                       part::vertex_type_t::mod2_uncompressed_vertex))
+                    continue;
                 meshes.push_back(&part.data);
             }
             break;

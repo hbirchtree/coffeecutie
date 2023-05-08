@@ -315,7 +315,8 @@ void EntityContainer::register_subsystem_services(SubsystemType* subsystem)
     }
 }
 
-FORCEDINLINE EntityRef<EntityContainer> EntityContainer::ref(Entity& entity)
+FORCEDINLINE EntityRef<EntityContainer> EntityContainer::ref(
+    Entity const& entity)
 {
     return EntityRef<EntityContainer>(entity.id, this);
 }
@@ -355,6 +356,17 @@ FORCEDINLINE void EntityContainer::remove_entity_if(
             component.second->unregister_entity(entity.id);
     }
     entities.erase(remove_it, entities.end());
+}
+
+inline u64 EntityContainer::tags_of(u64 id) const
+{
+    auto it = std::find_if(
+        entities.begin(), entities.end(), [id](Entity const& entity) {
+            return entity.id == id;
+        });
+    if(it == entities.end())
+        return 0;
+    return it->tags;
 }
 
 template<is_tag_type ComponentTag>

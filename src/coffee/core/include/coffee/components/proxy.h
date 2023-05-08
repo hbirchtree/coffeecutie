@@ -18,7 +18,7 @@ struct ContainerProxy : stl_types::non_copy
     friend struct SubsystemBase;
 
     FORCEDINLINE
-    quick_container<EntityContainer::entity_query> select(u32 tags)
+    quick_container<EntityContainer::entity_query> select(u64 tags)
     {
         return m_container.select(tags);
     }
@@ -36,7 +36,7 @@ struct ContainerProxy : stl_types::non_copy
     }
 
     template<typename ContainerType>
-    FORCEDINLINE EntityRef<ContainerType> ref(Entity& e)
+    FORCEDINLINE EntityRef<ContainerType> ref(Entity const& e)
     {
         return EntityRef<ContainerType>(e.id, C_CAST<ContainerType*>(this));
     }
@@ -76,7 +76,7 @@ struct ConstrainedProxy : ContainerProxy
     {
     }
 
-    FORCEDINLINE quick_container<EntityContainer::entity_query> select(u32 tags)
+    FORCEDINLINE quick_container<EntityContainer::entity_query> select(u64 tags)
     {
         return m_container.select(tags);
     }

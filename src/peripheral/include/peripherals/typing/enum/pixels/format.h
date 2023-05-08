@@ -159,40 +159,41 @@ enum class PixFmt : u8
  * GL_ARB_texture_compression_bptc
  *
  */
-enum class CompFlags : u8
+enum class CompFlags : u16
 {
-    CompressionNone,
+    None,
+    CompressionNone = None,
 
-    ASTC_4x4,
-    ASTC_5x4,
-    ASTC_5x5,
-    ASTC_6x5,
-    ASTC_6x6,
-    ASTC_8x5,
-    ASTC_8x6,
-    ASTC_8x8,
-    ASTC_10x5,
-    ASTC_10x6,
-    ASTC_10x8,
-    ASTC_10x10,
-    ASTC_12x10,
-    ASTC_12x12,
+    ASTC_4x4   = 0x1,
+    ASTC_5x4   = 0x2,
+    ASTC_5x5   = 0x4,
+    ASTC_6x5   = 0x8,
+    ASTC_6x6   = 0x10,
+    ASTC_8x5   = 0x20,
+    ASTC_8x6   = 0x40,
+    ASTC_8x8   = 0x80,
+    ASTC_10x5  = 0x100,
+    ASTC_10x6  = 0x200,
+    ASTC_10x8  = 0x400,
+    ASTC_10x10 = 0x800,
+    ASTC_12x10 = 0x1000,
+    ASTC_12x12 = 0x2000,
 
-    BC1, /* 8-bit RGB/RGBA, aka DXT1, 6bpp, 64 bits */
-    BC2, /* 8-bit RGBA, aka DXT3, 8bpp, 128 bits */
-    BC3, /* 8-bit RGBA, aka DXT5, 8bpp, 128 bits */
-    BC4,  /* 8-bit R, aka RGTC, 4bpp, 64 bits */
-    BC5,  /* 8-bit RG, aka RGTC, 8bpp, 128 bits */
-    BC6H, /* RGBA half-precision float, aka BPTC, 128 bits */
-    BC7,  /* 8-bit RGBA, aka BPTC, 128 bits */
+    BC1  = 0x1,  /* 8-bit RGB/RGBA, aka DXT1, 6bpp, 64 bits */
+    BC2  = 0x2,  /* 8-bit RGBA, aka DXT3, 8bpp, 128 bits */
+    BC3  = 0x4,  /* 8-bit RGBA, aka DXT5, 8bpp, 128 bits */
+    BC4  = 0x8,  /* 8-bit R, aka RGTC, 4bpp, 64 bits */
+    BC5  = 0x10, /* 8-bit RG, aka RGTC, 8bpp, 128 bits */
+    BC6H = 0x20, /* RGBA half-precision float, aka BPTC, 128 bits */
+    BC7  = 0x40, /* 8-bit RGBA, aka BPTC, 128 bits */
 
     /* BPP specification, meant for PVRTC */
-    bpp_2,
-    bpp_4,
+    bpp_2 = 0x2,
+    bpp_4 = 0x4,
 
     Undefined = CompressionNone,
 };
-C_FLAGS(CompFlags, u8);
+C_FLAGS(CompFlags, u16);
 
 enum class BitFmt : u8
 {

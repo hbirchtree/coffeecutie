@@ -278,6 +278,8 @@ struct BitmapCache
 
     std::map<bitm_format_hash, TextureBucket> tex_buckets;
 
+    u32 max_mipmap{5};
+
     static inline bitm_format_hash create_hash(
         PixDesc const& fmt, blam::bitm::type_t type)
     {
@@ -326,12 +328,12 @@ struct BitmapCache
         bucket.fmt = fmt;
 #if GLEAM_MAX_VERSION >= 0x400 || GLEAM_MAX_VERSION >= 0x320
         if(std::is_same_v<T, gfx::texture_cube_array_t>)
-            bucket.surface
-                = allocator->alloc_texture(gfx::textures::cube_array, fmt, 5);
+            bucket.surface = allocator->alloc_texture(
+                gfx::textures::cube_array, fmt, max_mipmap);
         else
 #endif
             bucket.surface = std::make_shared<gfx::compat::texture_2da_t>(
-                allocator, fmt, fmt.pixfmt == PixFmt::RGB565 ? 1 : 5);
+                allocator, fmt, fmt.pixfmt == PixFmt::RGB565 ? 1 : max_mipmap);
         bucket.type    = type;
         bucket.sampler = bucket.surface->sampler();
 
@@ -1228,10 +1230,10 @@ struct ShaderCache
             auto& reflection = info->reflection;
             if(shader.senv.reflection_bitm.valid())
             {
-                mat.material.inputs2 = Vecf4(
+                mat.material.inputs[0] = Vecf4(
                     info->specular.perpendicular_color,
                     reflection.perpendicular_brightness);
-                mat.material.inputs3 = Vecf4(
+                mat.material.inputs[1] = Vecf4(
                     info->specular.parallel_color,
                     reflection.parallel_brightness);
                 mat.lightmap.reflection
@@ -1279,9 +1281,9 @@ struct ShaderCache
             mat.material.inputs1  = Vecf2{
                 glm::radians(info->ripple.anim_angle),
                 info->ripple.anim_velocity};
-            mat.material.inputs2
+            mat.material.inputs[0]
                 = Vecf4(info->parallel.tint_color, info->parallel.brightness);
-            mat.material.inputs3 = Vecf4(
+            mat.material.inputs[1] = Vecf4(
                 info->perpendicular.tint_color, info->perpendicular.brightness);
             break;
         }
@@ -1377,6 +1379,37 @@ struct ShaderCache
         return Vecf2{tex_animation(anim.u, time), tex_animation(anim.v, time)};
     }
 
+    void populate_chicago_uv_anims(
+        materials::senv_micro&                          mat,
+        Span<blam::shader::chicago::map_t const> const& maps,
+        f32                                             t)
+    {
+        using namespace blam::shader;
+
+        u32 i = 0;
+        for(chicago::map_t const& map : maps)
+        {
+            auto        uv = uv_animation(map.anim_2d, t);
+            auto const& i2 = mat.material.inputs[0];
+            switch(i)
+            {
+            case 0:
+                mat.material.inputs1 = uv;
+                break;
+            case 1:
+                mat.material.inputs[0] = Vecf4(uv, 0, 0);
+                break;
+            case 2:
+                mat.material.inputs[0] = Vecf4(i2.x, i2.y, uv.x, uv.y);
+                break;
+            case 3:
+                mat.material.inputs[1] = Vecf4(uv, 0, 0);
+                break;
+            }
+            i++;
+        }
+    }
+
     void update_uv_animations(
         materials::senv_micro&  mat,
         generation_idx_t const& shader_id,
@@ -1394,56 +1427,14 @@ struct ShaderCache
             shader_chicago_extended<V> const* info
                 = shader.header->as<blam::shader::shader_chicago_extended<V>>();
             auto maps = info->maps_4stage.data(magic).value();
-            u32  i    = 0;
-            for(chicago::map_t const& map : maps)
-            {
-                auto        uv = uv_animation(map.anim_2d, t);
-                auto const& i2 = mat.material.inputs2;
-                switch(i)
-                {
-                case 0:
-                    mat.material.inputs1 = uv;
-                    break;
-                case 1:
-                    mat.material.inputs2 = Vecf4(uv, 0, 0);
-                    break;
-                case 2:
-                    mat.material.inputs2 = Vecf4(i2.x, i2.y, uv.x, uv.y);
-                    break;
-                case 3:
-                    mat.material.inputs3 = Vecf4(uv, 0, 0);
-                    break;
-                }
-                i++;
-            }
+            populate_chicago_uv_anims(mat, maps, t);
             break;
         }
         case blam::tag_class_t::schi: {
-            shader_chicago_extended<V> const* info
-                = shader.header->as<shader_chicago_extended<V>>();
-            auto maps = info->maps_4stage.data(magic).value();
-            u32  i    = 0;
-            for(chicago::map_t const& map : maps)
-            {
-                auto        uv = uv_animation(map.anim_2d, t);
-                auto const& i2 = mat.material.inputs2;
-                switch(i)
-                {
-                case 0:
-                    mat.material.inputs1 = uv;
-                    break;
-                case 1:
-                    mat.material.inputs2 = Vecf4(uv, 0, 0);
-                    break;
-                case 2:
-                    mat.material.inputs2 = Vecf4(i2.x, i2.y, uv.x, uv.y);
-                    break;
-                case 3:
-                    mat.material.inputs3 = Vecf4(uv, 0, 0);
-                    break;
-                }
-                i++;
-            }
+            shader_chicago<V> const* info
+                = shader.header->as<shader_chicago<V>>();
+            auto maps = info->maps.data(magic).value();
+            populate_chicago_uv_anims(mat, maps, t);
             break;
         }
         case blam::tag_class_t::senv: {

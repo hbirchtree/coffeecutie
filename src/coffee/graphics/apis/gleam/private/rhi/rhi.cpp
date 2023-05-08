@@ -155,8 +155,6 @@ void texture_t::alloc(size_type const& size, bool create_storage)
 #endif
             if(is_compressed)
         {
-            using typing::pixels::CompFmt;
-
             auto [ifmt, type, layout]
                 = convert::to<group::internal_format>(m_format, m_features);
             auto signed_size = size.convert<i32>();

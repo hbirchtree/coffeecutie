@@ -76,26 +76,30 @@ struct texture_t : std::enable_shared_from_this<texture_t>
     std::optional<PixDesc> software_decode_format();
 
     std::future<std::vector<char>> software_decode(
-        semantic::Span<const char>&& data, size_3d<i32> const& size);
+        semantic::Span<const char>&& data, size_3d<i32> size, i32 mipmap);
     template<class Data, class SizeT>
     requires(SizeT::length() == 3)
         //
-        inline auto software_decode_cast(Data&& data, SizeT const& size)
+        inline auto software_decode_cast(
+            Data&& data, SizeT const& size, i32 mipmap)
     {
         return software_decode(
             semantic::mem_chunk<const char>::ofBytes(data.data(), data.size())
                 .view,
-            size_3d<i32>{size[0], size[1], size[2]});
+            size_3d<i32>{size[0], size[1], size[2]},
+            mipmap);
     }
     template<class Data, class SizeT>
     requires(SizeT::length() == 2)
         //
-        inline auto software_decode_cast(Data&& data, SizeT const& size)
+        inline auto software_decode_cast(
+            Data&& data, SizeT const& size, i32 mipmap)
     {
         return software_decode(
             semantic::mem_chunk<const char>::ofBytes(data.data(), data.size())
                 .view,
-            size_3d<i32>{size[0], size[1], 1});
+            size_3d<i32>{size[0], size[1], 1},
+            mipmap);
     }
 #else
     constexpr bool requires_software_decode()
@@ -107,7 +111,7 @@ struct texture_t : std::enable_shared_from_this<texture_t>
         return std::nullopt;
     }
     template<class Data, class SizeT>
-    inline auto software_decode_cast(Data&&, SizeT const&)
+    inline auto software_decode_cast(Data&&, SizeT const&, i32)
     {
         return std::future<std::vector<char>>();
     }
@@ -311,7 +315,7 @@ struct texture_2d_t : texture_t
                 m_handle, level, offset, size, ifmt1, data);
         } else if(m_features.dsa && requires_software_decode())
         {
-            auto bits = software_decode_cast(std::move(data), size);
+            auto bits = software_decode_cast(std::move(data), size, level);
             rq::runtime_queue::Queue(
                 rq::runtime_queue::GetCurrentQueue().value(),
                 rq::dependent_task<std::vector<char>, void>::CreateSink(
@@ -341,7 +345,7 @@ struct texture_2d_t : texture_t
             cmd::bind_texture(group::texture_target::texture_2d, 0);
         } else if(requires_software_decode())
         {
-            auto bits = software_decode_cast(std::move(data), size);
+            auto bits = software_decode_cast(std::move(data), size, level);
             rq::runtime_queue::Queue(
                 rq::runtime_queue::GetCurrentQueue().value(),
                 rq::dependent_task<std::vector<char>, void>::CreateSink(
@@ -399,7 +403,7 @@ struct texture_2da_t : texture_t
                 m_handle, level, offset, size, ifmt1, data);
         } else if(m_features.dsa && requires_software_decode())
         {
-            auto bits = software_decode_cast(std::move(data), size);
+            auto bits = software_decode_cast(std::move(data), size, level);
             rq::runtime_queue::Queue(
                 rq::runtime_queue::GetCurrentQueue().value(),
                 rq::dependent_task<std::vector<char>, void>::CreateSink(
@@ -430,7 +434,7 @@ struct texture_2da_t : texture_t
             cmd::bind_texture(group::texture_target::texture_2d_array, 0);
         } else if(requires_software_decode())
         {
-            auto bits = software_decode_cast(std::move(data), size);
+            auto bits = software_decode_cast(std::move(data), size, level);
             rq::runtime_queue::Queue(
                 rq::runtime_queue::GetCurrentQueue().value(),
                 rq::dependent_task<std::vector<char>, void>::CreateSink(
@@ -477,8 +481,8 @@ struct texture_3d_t : texture_t
     std::optional<error> upload(
         T const& data, VectorT const& offset, SizeT const& size, i32 level = 0)
     {
-        auto [ifmt1, type, layout]
-            = convert::to<group::internal_format>(m_format, m_features);
+        auto [ifmt1, type, layout] = convert::to<group::internal_format>(
+            software_decode_format().value_or(m_format), m_features);
         auto is_compressed = format_description().is_compressed();
 #if GLEAM_MAX_VERSION >= 0x450
         if(m_features.dsa && is_compressed)
@@ -529,8 +533,8 @@ struct texture_cube_array_t : texture_t
         SizeT const&            size,
         i32                     level = 0)
     {
-        auto [ifmt1, type, layout]
-            = convert::to<group::internal_format>(m_format, m_features);
+        auto [ifmt1, type, layout] = convert::to<group::internal_format>(
+            software_decode_format().value_or(m_format), m_features);
         auto is_compressed = format_description().is_compressed()
                              && !requires_software_decode();
         VectorT offset_mul = offset;
@@ -563,7 +567,7 @@ struct texture_cube_array_t : texture_t
                     group::texture_target::texture_cube_map_array, 0);
             } else if(requires_software_decode())
             {
-                auto bits = software_decode_cast(std::move(data), size);
+                auto bits = software_decode_cast(std::move(face), size, level);
                 rq::runtime_queue::Queue(
                     rq::runtime_queue::GetCurrentQueue().value(),
                     rq::dependent_task<std::vector<char>, void>::CreateSink(
