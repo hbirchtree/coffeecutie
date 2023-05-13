@@ -109,7 +109,6 @@ inline void assert_equal(T1 const& v1, T2 const& v2)
             guard = type_guards[gl_type]
             lines.append(f'#if {guard}')
         lines.append(f'static_assert(std::is_same_v<{gl_type}, {m_type}>, "{gl_type} does not match {m_type}");')
-        lines.append(f'using ::libc_types::{m_type};')
         if gl_type in type_guards:
             lines.append('#endif')
         added.append(m_type)
@@ -295,7 +294,7 @@ def pointer_transform(params: list, i: int, output: list, inputs: list, template
         pod_type = 'group::' + enum_create_name(meta[0])
 
     span_type = 'span_' + gen_concept_type(pod_type, const == 'const')
-    add_concept(template, span_type, f'Span<{span_type}>')
+    add_concept(template, span_type, f'span<{span_type}>')
     if 'void' not in pod_type:
         template.append([None, f'std::is_same_v<std::decay_t<typename {span_type}::value_type>, std::decay_t<{pod_type}>>'])
     
@@ -330,7 +329,7 @@ def static_array_transform(params: list, i: int, static_size: str, output: list,
         dim = f'{size[0]}'
 
     concept_type = 'span_' + gen_concept_type(pod_type, const == 'const', cls, dim)
-    add_concept(template, concept_type, f'Span<{concept_type}>')
+    add_concept(template, concept_type, f'span<{concept_type}>')
     if cls == 'mat':
         template.append([None, f'semantic::concepts::Matrix<typename {concept_type}::value_type, {pod_type}, {size[0]}, {size[1]}>'])
     elif cls == 'vec':
@@ -379,7 +378,7 @@ def string_transform(params: list, i: int, output: list, inputs: list, lines: li
     elif meta[1] is not None:
         const, pod_type = extract_type(type)
         span_type = 'span_' + gen_concept_type(pod_type, const == 'const')
-        add_concept(template, span_type, f'Span<{span_type}>')
+        add_concept(template, span_type, f'span<{span_type}>')
         template.append([None, f'std::is_same_v<std::decay_t<typename {span_type}::value_type>, std::decay_t<{pod_type}>>'])
         output.append([name, span_type, meta])
         inputs.append(f'{name}.data()')
@@ -394,7 +393,7 @@ def handle_transform(params: list, i: int, inputs: list, output: list, template:
 
     if '*' in type:
         span_type = 'span_' + gen_concept_type(pod_type, const == 'const')
-        add_concept(template, span_type, f'Span<{span_type}>')
+        add_concept(template, span_type, f'span<{span_type}>')
         template.append([None, f'std::is_same_v<std::decay_t<typename {span_type}::value_type>, std::decay_t<{pod_type}>>'])
         output.append([name, f'{span_type}', meta])
         inputs.append(f'{name}.data()')
@@ -441,7 +440,7 @@ def draw_transform(params: list, inputs: list, lines: list, template: list, usag
         if has_arrays and param in arrays:
             lines.append(f'detail::assert_equal({name}.size(), {count[0]});')
             span_type = 'span_' + gen_concept_type(pod_type, const == 'const')
-            add_concept(template, span_type, f'Span<{span_type}>')
+            add_concept(template, span_type, f'span<{span_type}>')
             template.append([None, f'std::is_same_v<std::decay_t<typename {span_type}::value_type>, std::decay_t<{pod_type}>>'])
             inputs.append(f'{name}.data()')
             output.append([name, span_type, meta])
@@ -750,7 +749,7 @@ enum class {snake_name} : u32 {{'''
     yield f'''}}; // enum class {snake_name}'''
 
     if meta[0] == 'bitmask':
-        yield f'C_FLAGS({snake_name}, ::libc_types::u32);'
+        yield f'C_FLAGS({snake_name}, u32);'
 
     for value in overflow_values:
         snake_value = snakeify_underscores(value)

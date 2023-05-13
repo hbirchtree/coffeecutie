@@ -51,6 +51,8 @@ def segment_command_name(func_name):
 def commands_for(requirements, registry):
     all_commands = registry.find('commands')
     for req in requirements:
+        if req.get('profile') == 'compatibility':
+            continue
         all_version_commands = [ value.get('name') for value in req.findall('command') ]
         api = req.get('api')
         for command in all_commands.findall('command'):

@@ -211,7 +211,7 @@ namespace gl {''')
                 elif meta[1] != 'all':
                     guard = 'GL_ES_VERSION_2_0' if meta[1] == 'gles2' else 'GL_VERSION_1_0'
                     append_file(current_file, f'#if defined({guard})')
-                append_file(current_file, f'constexpr libc_types::u32 {name} = {value};')
+                append_file(current_file, f'constexpr u32 {name} = {value};')
                 if meta[1] != 'all':
                     append_file(current_file, '#endif')
             append_file(current_file, '} // values')
