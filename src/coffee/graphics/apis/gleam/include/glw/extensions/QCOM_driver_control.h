@@ -37,10 +37,10 @@ STATICINLINE void enable_driver_control(u32 driverControl)
 }
 
 template<class span_GLchar, class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>&& semantic::concepts::Span<span_GLchar>&&
-                              std::is_same_v<
+         std::decay_t<i32>>&& concepts::span<span_GLchar>&&
+                                    std::is_same_v<
                  std::decay_t<typename span_GLchar::value_type>,
                  std::decay_t<GLchar>>)
     /*!
@@ -68,10 +68,10 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_i32, class span_u32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>&& semantic::concepts::Span<span_u32>&&
-                              std::is_same_v<
+         std::decay_t<i32>>&& concepts::span<span_u32>&&
+                                    std::is_same_v<
                  std::decay_t<typename span_u32::value_type>,
                  std::decay_t<u32>>)
     /*!

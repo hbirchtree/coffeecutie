@@ -3,20 +3,20 @@
 #ifdef GL_EXT_coordinate_frame
 namespace gl::ext::coordinate_frame {
 namespace values {
-constexpr libc_types::u32 tangent_array          = 0x8439;
-constexpr libc_types::u32 binormal_array         = 0x843A;
-constexpr libc_types::u32 current_tangent        = 0x843B;
-constexpr libc_types::u32 current_binormal       = 0x843C;
-constexpr libc_types::u32 tangent_array_type     = 0x843E;
-constexpr libc_types::u32 tangent_array_stride   = 0x843F;
-constexpr libc_types::u32 binormal_array_type    = 0x8440;
-constexpr libc_types::u32 binormal_array_stride  = 0x8441;
-constexpr libc_types::u32 tangent_array_pointer  = 0x8442;
-constexpr libc_types::u32 binormal_array_pointer = 0x8443;
-constexpr libc_types::u32 map1_tangent           = 0x8444;
-constexpr libc_types::u32 map2_tangent           = 0x8445;
-constexpr libc_types::u32 map1_binormal          = 0x8446;
-constexpr libc_types::u32 map2_binormal          = 0x8447;
+constexpr u32 tangent_array          = 0x8439;
+constexpr u32 binormal_array         = 0x843A;
+constexpr u32 current_tangent        = 0x843B;
+constexpr u32 current_binormal       = 0x843C;
+constexpr u32 tangent_array_type     = 0x843E;
+constexpr u32 tangent_array_stride   = 0x843F;
+constexpr u32 binormal_array_type    = 0x8440;
+constexpr u32 binormal_array_stride  = 0x8441;
+constexpr u32 tangent_array_pointer  = 0x8442;
+constexpr u32 binormal_array_pointer = 0x8443;
+constexpr u32 map1_tangent           = 0x8444;
+constexpr u32 map2_tangent           = 0x8445;
+constexpr u32 map1_binormal          = 0x8446;
+constexpr u32 map2_binormal          = 0x8447;
 } // namespace values
 /*!
  * \brief Part of GL_EXT_coordinate_frame
@@ -37,7 +37,7 @@ STATICINLINE void binormal3b(i8 bx, i8 by, i8 bz)
 }
 
 template<class span_const_i8>
-requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
+requires(concepts::span<span_const_i8>&& std::is_same_v<
          std::decay_t<typename span_const_i8::value_type>,
          std::decay_t<i8>>)
     /*!
@@ -76,8 +76,9 @@ STATICINLINE void binormal3d(f64 bx, f64 by, f64 bz)
 }
 
 template<class span_const_vec_3_f64>
-requires(semantic::concepts::Span<span_const_vec_3_f64>&& semantic::concepts::
-             Vector<typename span_const_vec_3_f64::value_type, f64, 3>)
+requires(
+    concepts::span<span_const_vec_3_f64>&&
+        concepts::vector<typename span_const_vec_3_f64::value_type, f64, 3>)
     /*!
      * \brief Part of GL_EXT_coordinate_frame
      * \param v const GLdouble *
@@ -113,8 +114,9 @@ STATICINLINE void binormal3f(f32 bx, f32 by, f32 bz)
 }
 
 template<class span_const_vec_3_f32>
-requires(semantic::concepts::Span<span_const_vec_3_f32>&& semantic::concepts::
-             Vector<typename span_const_vec_3_f32::value_type, f32, 3>)
+requires(
+    concepts::span<span_const_vec_3_f32>&&
+        concepts::vector<typename span_const_vec_3_f32::value_type, f32, 3>)
     /*!
      * \brief Part of GL_EXT_coordinate_frame
      * \param v const GLfloat *
@@ -150,8 +152,9 @@ STATICINLINE void binormal3i(i32 bx, i32 by, i32 bz)
 }
 
 template<class span_const_vec_3_i32>
-requires(semantic::concepts::Span<span_const_vec_3_i32>&& semantic::concepts::
-             Vector<typename span_const_vec_3_i32::value_type, i32, 3>)
+requires(
+    concepts::span<span_const_vec_3_i32>&&
+        concepts::vector<typename span_const_vec_3_i32::value_type, i32, 3>)
     /*!
      * \brief Part of GL_EXT_coordinate_frame
      * \param v const GLint *
@@ -187,8 +190,9 @@ STATICINLINE void binormal3s(i16 bx, i16 by, i16 bz)
 }
 
 template<class span_const_vec_3_i16>
-requires(semantic::concepts::Span<span_const_vec_3_i16>&& semantic::concepts::
-             Vector<typename span_const_vec_3_i16::value_type, i16, 3>)
+requires(
+    concepts::span<span_const_vec_3_i16>&&
+        concepts::vector<typename span_const_vec_3_i16::value_type, i16, 3>)
     /*!
      * \brief Part of GL_EXT_coordinate_frame
      * \param v const GLshort *
@@ -206,7 +210,7 @@ requires(semantic::concepts::Span<span_const_vec_3_i16>&& semantic::concepts::
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_coordinate_frame
      * \param type GLenum
@@ -251,7 +255,7 @@ STATICINLINE void tangent3b(i8 tx, i8 ty, i8 tz)
 }
 
 template<class span_const_i8>
-requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
+requires(concepts::span<span_const_i8>&& std::is_same_v<
          std::decay_t<typename span_const_i8::value_type>,
          std::decay_t<i8>>)
     /*!
@@ -290,8 +294,9 @@ STATICINLINE void tangent3d(f64 tx, f64 ty, f64 tz)
 }
 
 template<class span_const_vec_3_f64>
-requires(semantic::concepts::Span<span_const_vec_3_f64>&& semantic::concepts::
-             Vector<typename span_const_vec_3_f64::value_type, f64, 3>)
+requires(
+    concepts::span<span_const_vec_3_f64>&&
+        concepts::vector<typename span_const_vec_3_f64::value_type, f64, 3>)
     /*!
      * \brief Part of GL_EXT_coordinate_frame
      * \param v const GLdouble *
@@ -327,8 +332,9 @@ STATICINLINE void tangent3f(f32 tx, f32 ty, f32 tz)
 }
 
 template<class span_const_vec_3_f32>
-requires(semantic::concepts::Span<span_const_vec_3_f32>&& semantic::concepts::
-             Vector<typename span_const_vec_3_f32::value_type, f32, 3>)
+requires(
+    concepts::span<span_const_vec_3_f32>&&
+        concepts::vector<typename span_const_vec_3_f32::value_type, f32, 3>)
     /*!
      * \brief Part of GL_EXT_coordinate_frame
      * \param v const GLfloat *
@@ -364,8 +370,9 @@ STATICINLINE void tangent3i(i32 tx, i32 ty, i32 tz)
 }
 
 template<class span_const_vec_3_i32>
-requires(semantic::concepts::Span<span_const_vec_3_i32>&& semantic::concepts::
-             Vector<typename span_const_vec_3_i32::value_type, i32, 3>)
+requires(
+    concepts::span<span_const_vec_3_i32>&&
+        concepts::vector<typename span_const_vec_3_i32::value_type, i32, 3>)
     /*!
      * \brief Part of GL_EXT_coordinate_frame
      * \param v const GLint *
@@ -401,8 +408,9 @@ STATICINLINE void tangent3s(i16 tx, i16 ty, i16 tz)
 }
 
 template<class span_const_vec_3_i16>
-requires(semantic::concepts::Span<span_const_vec_3_i16>&& semantic::concepts::
-             Vector<typename span_const_vec_3_i16::value_type, i16, 3>)
+requires(
+    concepts::span<span_const_vec_3_i16>&&
+        concepts::vector<typename span_const_vec_3_i16::value_type, i16, 3>)
     /*!
      * \brief Part of GL_EXT_coordinate_frame
      * \param v const GLshort *
@@ -420,7 +428,7 @@ requires(semantic::concepts::Span<span_const_vec_3_i16>&& semantic::concepts::
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_coordinate_frame
      * \param type GLenum

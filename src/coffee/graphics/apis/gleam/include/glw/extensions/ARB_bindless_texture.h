@@ -87,7 +87,7 @@ STATICINLINE GLuint64 get_texture_sampler_handle(u32 texture, u32 sampler)
 }
 
 template<class span_GLuint64EXT>
-requires(semantic::concepts::Span<span_GLuint64EXT>&& std::is_same_v<
+requires(concepts::span<span_GLuint64EXT>&& std::is_same_v<
          std::decay_t<typename span_GLuint64EXT::value_type>,
          std::decay_t<GLuint64EXT>>)
     /*!
@@ -236,7 +236,7 @@ STATICINLINE void program_uniform_handle(u32 program, i32 location, u64 value)
 }
 
 template<class span_const_u64>
-requires(semantic::concepts::Span<span_const_u64>&& std::is_same_v<
+requires(concepts::span<span_const_u64>&& std::is_same_v<
          std::decay_t<typename span_const_u64::value_type>,
          std::decay_t<u64>>)
     /*!
@@ -287,7 +287,7 @@ STATICINLINE void uniform_handle(i32 location, u64 value)
 }
 
 template<class span_const_u64>
-requires(semantic::concepts::Span<span_const_u64>&& std::is_same_v<
+requires(concepts::span<span_const_u64>&& std::is_same_v<
          std::decay_t<typename span_const_u64::value_type>,
          std::decay_t<u64>>)
     /*!
@@ -330,7 +330,7 @@ STATICINLINE void vertex_attrib_l1ui64(u32 index, GLuint64EXT x)
 }
 
 template<class span_const_GLuint64EXT>
-requires(semantic::concepts::Span<span_const_GLuint64EXT>&& std::is_same_v<
+requires(concepts::span<span_const_GLuint64EXT>&& std::is_same_v<
          std::decay_t<typename span_const_GLuint64EXT::value_type>,
          std::decay_t<GLuint64EXT>>)
     /*!

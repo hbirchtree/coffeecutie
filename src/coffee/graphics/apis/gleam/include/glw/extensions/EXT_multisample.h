@@ -9,15 +9,15 @@ using gl::group::attrib_mask;
 using gl::group::sample_pattern_ext;
 using gl::group::sample_pattern_sgis;
 namespace values {
-constexpr libc_types::u32 multisample          = 0x809D;
-constexpr libc_types::u32 sample_alpha_to_mask = 0x809E;
-constexpr libc_types::u32 sample_alpha_to_one  = 0x809F;
-constexpr libc_types::u32 sample_mask          = 0x80A0;
-constexpr libc_types::u32 sample_buffers       = 0x80A8;
-constexpr libc_types::u32 samples              = 0x80A9;
-constexpr libc_types::u32 sample_mask_value    = 0x80AA;
-constexpr libc_types::u32 sample_mask_invert   = 0x80AB;
-constexpr libc_types::u32 sample_pattern       = 0x80AC;
+constexpr u32 multisample          = 0x809D;
+constexpr u32 sample_alpha_to_mask = 0x809E;
+constexpr u32 sample_alpha_to_one  = 0x809F;
+constexpr u32 sample_mask          = 0x80A0;
+constexpr u32 sample_buffers       = 0x80A8;
+constexpr u32 samples              = 0x80A9;
+constexpr u32 sample_mask_value    = 0x80AA;
+constexpr u32 sample_mask_invert   = 0x80AB;
+constexpr u32 sample_pattern       = 0x80AC;
 } // namespace values
 /*!
  * \brief Part of GL_EXT_multisample

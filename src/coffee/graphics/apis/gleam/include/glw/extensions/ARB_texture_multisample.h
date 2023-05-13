@@ -17,12 +17,12 @@ using gl::group::get_prop;
 using gl::group::texture_target;
 using gl::group::uniform_type;
 namespace values {
-constexpr libc_types::u32 sample_mask_value              = 0x8E52;
-constexpr libc_types::u32 texture_samples                = 0x9106;
-constexpr libc_types::u32 texture_fixed_sample_locations = 0x9107;
+constexpr u32 sample_mask_value              = 0x8E52;
+constexpr u32 texture_samples                = 0x9106;
+constexpr u32 texture_fixed_sample_locations = 0x9107;
 } // namespace values
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+requires(concepts::span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -65,7 +65,7 @@ STATICINLINE void sample_maski(u32 maskNumber, GLbitfield mask)
 }
 
 template<class size_2_i32>
-requires(semantic::concepts::Size2D<size_2_i32, i32>)
+requires(concepts::size_2d<size_2_i32, i32>)
     /*!
      * \brief Part of GL_ARB_texture_multisample
      * \param target GLenum
@@ -99,7 +99,7 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>)
 }
 
 template<class size_3_i32>
-requires(semantic::concepts::Size2D<size_3_i32, i32>)
+requires(concepts::size_2d<size_3_i32, i32>)
     /*!
      * \brief Part of GL_ARB_texture_multisample
      * \param target GLenum

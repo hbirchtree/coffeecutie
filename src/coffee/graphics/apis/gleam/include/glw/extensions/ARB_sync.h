@@ -15,9 +15,9 @@ using gl::group::sync_object_mask;
 using gl::group::sync_parameter_name;
 using gl::group::sync_status;
 namespace values {
-constexpr libc_types::u32 sync_fence = 0x9116;
-constexpr libc_types::u32 unsignaled = 0x9118;
-constexpr libc_types::u32 signaled   = 0x9119;
+constexpr u32 sync_fence = 0x9116;
+constexpr u32 unsignaled = 0x9118;
+constexpr u32 signaled   = 0x9119;
 } // namespace values
 /*!
  * \brief Part of GL_ARB_sync
@@ -76,7 +76,7 @@ fence_sync(group::sync_condition condition, group::sync_behavior_flags flags)
 }
 
 template<class span_i64>
-requires(semantic::concepts::Span<span_i64>&& std::is_same_v<
+requires(concepts::span<span_i64>&& std::is_same_v<
          std::decay_t<typename span_i64::value_type>,
          std::decay_t<i64>>)
     /*!
@@ -99,7 +99,7 @@ requires(semantic::concepts::Span<span_i64>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!

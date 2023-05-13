@@ -3,10 +3,10 @@
 #ifdef GL_EXT_blend_func_separate
 namespace gl::ext::blend_func_separate {
 namespace values {
-constexpr libc_types::u32 blend_dst_rgb   = 0x80C8;
-constexpr libc_types::u32 blend_src_rgb   = 0x80C9;
-constexpr libc_types::u32 blend_dst_alpha = 0x80CA;
-constexpr libc_types::u32 blend_src_alpha = 0x80CB;
+constexpr u32 blend_dst_rgb   = 0x80C8;
+constexpr u32 blend_src_rgb   = 0x80C9;
+constexpr u32 blend_dst_alpha = 0x80CA;
+constexpr u32 blend_src_alpha = 0x80CB;
 } // namespace values
 /*!
  * \brief Part of GL_EXT_blend_func_separate

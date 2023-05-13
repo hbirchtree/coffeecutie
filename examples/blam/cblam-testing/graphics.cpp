@@ -179,7 +179,7 @@ i32 blam_main(i32, cstring_w*)
                 //
 //                gfx::emulation::webgl::desktop()
                 // gfx::emulation::qcom::adreno_320()
-                gfx::emulation::arm::mali_g710()
+//                gfx::emulation::arm::mali_g710()
                 // gfx::emulation::amd::rx560_pro()
                 //
             );

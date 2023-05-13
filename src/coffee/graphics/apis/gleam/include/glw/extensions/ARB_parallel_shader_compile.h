@@ -3,8 +3,8 @@
 #ifdef GL_ARB_parallel_shader_compile
 namespace gl::arb::parallel_shader_compile {
 namespace values {
-constexpr libc_types::u32 max_shader_compiler_threads = 0x91B0;
-constexpr libc_types::u32 completion_status           = 0x91B1;
+constexpr u32 max_shader_compiler_threads = 0x91B0;
+constexpr u32 completion_status           = 0x91B1;
 } // namespace values
 /*!
  * \brief Part of GL_ARB_parallel_shader_compile

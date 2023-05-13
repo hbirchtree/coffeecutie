@@ -14,6 +14,6 @@ enum class performance_query_caps_mask_intel : u32
     perfquery_single_context_intel = GL_PERFQUERY_SINGLE_CONTEXT_INTEL,
 #endif
 }; // enum class performance_query_caps_mask_intel
-C_FLAGS(performance_query_caps_mask_intel, ::libc_types::u32);
+C_FLAGS(performance_query_caps_mask_intel, u32);
 
 } // namespace gl::group

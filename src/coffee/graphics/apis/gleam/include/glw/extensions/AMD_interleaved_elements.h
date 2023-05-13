@@ -21,8 +21,8 @@ using gl::group::pixel_tex_gen_mode_sgix;
 using gl::group::sized_internal_format;
 using gl::group::texture_swizzle;
 namespace values {
-constexpr libc_types::u32 vertex_element_swizzle = 0x91A4;
-constexpr libc_types::u32 vertex_id_swizzle      = 0x91A5;
+constexpr u32 vertex_element_swizzle = 0x91A4;
+constexpr u32 vertex_id_swizzle      = 0x91A5;
 } // namespace values
 /*!
  * \brief Part of GL_AMD_interleaved_elements

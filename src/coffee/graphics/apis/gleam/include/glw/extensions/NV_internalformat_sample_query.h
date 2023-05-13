@@ -11,13 +11,13 @@ using gl::group::object_identifier;
 using gl::group::renderbuffer_target;
 using gl::group::texture_target;
 namespace values {
-constexpr libc_types::u32 multisamples        = 0x9371;
-constexpr libc_types::u32 supersample_scale_x = 0x9372;
-constexpr libc_types::u32 supersample_scale_y = 0x9373;
-constexpr libc_types::u32 conformant          = 0x9374;
+constexpr u32 multisamples        = 0x9371;
+constexpr u32 supersample_scale_x = 0x9372;
+constexpr u32 supersample_scale_y = 0x9373;
+constexpr u32 conformant          = 0x9374;
 } // namespace values
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!

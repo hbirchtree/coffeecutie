@@ -3,7 +3,7 @@
 #ifdef GL_OES_texture_half_float
 namespace gl::oes::texture_half_float {
 namespace values {
-constexpr libc_types::u32 half_float = 0x8D61;
+constexpr u32 half_float = 0x8D61;
 } // namespace values
 } // namespace gl::oes::texture_half_float
 #endif // GL_OES_texture_half_float

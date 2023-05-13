@@ -37,61 +37,61 @@ using gl::group::path_string_format;
 using gl::group::path_transform_type;
 using gl::group::texture_env_parameter;
 namespace values {
-constexpr libc_types::u32 path_modelview_stack_depth      = 0x0BA3;
-constexpr libc_types::u32 path_projection_stack_depth     = 0x0BA4;
-constexpr libc_types::u32 path_modelview_matrix           = 0x0BA6;
-constexpr libc_types::u32 path_projection_matrix          = 0x0BA7;
-constexpr libc_types::u32 path_max_modelview_stack_depth  = 0x0D36;
-constexpr libc_types::u32 path_max_projection_stack_depth = 0x0D38;
+constexpr u32 path_modelview_stack_depth      = 0x0BA3;
+constexpr u32 path_projection_stack_depth     = 0x0BA4;
+constexpr u32 path_modelview_matrix           = 0x0BA6;
+constexpr u32 path_projection_matrix          = 0x0BA7;
+constexpr u32 path_max_modelview_stack_depth  = 0x0D36;
+constexpr u32 path_max_projection_stack_depth = 0x0D38;
 #if defined(GL_VERSION_1_0)
-constexpr libc_types::u32 n2_bytes = 0x1407;
+constexpr u32 n2_bytes = 0x1407;
 #endif
 #if defined(GL_VERSION_1_0)
-constexpr libc_types::u32 n3_bytes = 0x1408;
+constexpr u32 n3_bytes = 0x1408;
 #endif
 #if defined(GL_VERSION_1_0)
-constexpr libc_types::u32 n4_bytes = 0x1409;
+constexpr u32 n4_bytes = 0x1409;
 #endif
-constexpr libc_types::u32 path_modelview  = 0x1700;
-constexpr libc_types::u32 path_projection = 0x1701;
+constexpr u32 path_modelview  = 0x1700;
+constexpr u32 path_projection = 0x1701;
 #if defined(GL_VERSION_1_0)
-constexpr libc_types::u32 eye_linear = 0x2400;
+constexpr u32 eye_linear = 0x2400;
 #endif
 #if defined(GL_VERSION_1_0)
-constexpr libc_types::u32 object_linear = 0x2401;
+constexpr u32 object_linear = 0x2401;
 #endif
-constexpr libc_types::u32 path_transpose_modelview_matrix  = 0x84E3;
-constexpr libc_types::u32 path_transpose_projection_matrix = 0x84E4;
-constexpr libc_types::u32 square                           = 0x90A3;
-constexpr libc_types::u32 round                            = 0x90A4;
-constexpr libc_types::u32 triangular                       = 0x90A5;
-constexpr libc_types::u32 bevel                            = 0x90A6;
-constexpr libc_types::u32 miter_revert                     = 0x90A7;
-constexpr libc_types::u32 miter_truncate                   = 0x90A8;
-constexpr libc_types::u32 path_error_position              = 0x90AB;
+constexpr u32 path_transpose_modelview_matrix  = 0x84E3;
+constexpr u32 path_transpose_projection_matrix = 0x84E4;
+constexpr u32 square                           = 0x90A3;
+constexpr u32 round                            = 0x90A4;
+constexpr u32 triangular                       = 0x90A5;
+constexpr u32 bevel                            = 0x90A6;
+constexpr u32 miter_revert                     = 0x90A7;
+constexpr u32 miter_truncate                   = 0x90A8;
+constexpr u32 path_error_position              = 0x90AB;
 #if defined(GL_VERSION_1_0)
-constexpr libc_types::u32 path_fog_gen_mode = 0x90AC;
+constexpr u32 path_fog_gen_mode = 0x90AC;
 #endif
-constexpr libc_types::u32 path_gen_mode  = 0x90B0;
-constexpr libc_types::u32 path_gen_coeff = 0x90B1;
+constexpr u32 path_gen_mode  = 0x90B0;
+constexpr u32 path_gen_coeff = 0x90B1;
 #if defined(GL_VERSION_1_0)
-constexpr libc_types::u32 path_gen_color_format = 0x90B2;
+constexpr u32 path_gen_color_format = 0x90B2;
 #endif
-constexpr libc_types::u32 path_gen_components              = 0x90B3;
-constexpr libc_types::u32 move_to_resets                   = 0x90B5;
-constexpr libc_types::u32 move_to_continues                = 0x90B6;
-constexpr libc_types::u32 path_stencil_func                = 0x90B7;
-constexpr libc_types::u32 path_stencil_ref                 = 0x90B8;
-constexpr libc_types::u32 path_stencil_value_mask          = 0x90B9;
-constexpr libc_types::u32 path_stencil_depth_offset_factor = 0x90BD;
-constexpr libc_types::u32 path_stencil_depth_offset_units  = 0x90BE;
-constexpr libc_types::u32 path_cover_depth_func            = 0x90BF;
-constexpr libc_types::u32 font_glyphs_available            = 0x9368;
-constexpr libc_types::u32 font_target_unavailable          = 0x9369;
-constexpr libc_types::u32 font_unavailable                 = 0x936A;
-constexpr libc_types::u32 font_unintelligible              = 0x936B;
-constexpr libc_types::u32 standard_font_format             = 0x936C;
-constexpr libc_types::u32 fragment_input                   = 0x936D;
+constexpr u32 path_gen_components              = 0x90B3;
+constexpr u32 move_to_resets                   = 0x90B5;
+constexpr u32 move_to_continues                = 0x90B6;
+constexpr u32 path_stencil_func                = 0x90B7;
+constexpr u32 path_stencil_ref                 = 0x90B8;
+constexpr u32 path_stencil_value_mask          = 0x90B9;
+constexpr u32 path_stencil_depth_offset_factor = 0x90BD;
+constexpr u32 path_stencil_depth_offset_units  = 0x90BE;
+constexpr u32 path_cover_depth_func            = 0x90BF;
+constexpr u32 font_glyphs_available            = 0x9368;
+constexpr u32 font_target_unavailable          = 0x9369;
+constexpr u32 font_unavailable                 = 0x936A;
+constexpr u32 font_unintelligible              = 0x936B;
+constexpr u32 standard_font_format             = 0x936C;
+constexpr u32 fragment_input                   = 0x936D;
 } // namespace values
 /*!
  * \brief Part of GL_NV_path_rendering
@@ -111,8 +111,8 @@ STATICINLINE void copy_path(u32 resultPath, u32 srcPath)
 }
 
 template<class span_const_f32, class span_const_void>
-requires(semantic::concepts::Span<span_const_void>&&
-             semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+requires(concepts::span<span_const_void>&& concepts::span<span_const_f32>&&
+                                           std::is_same_v<
                  std::decay_t<typename span_const_f32::value_type>,
                  std::decay_t<f32>>)
     /*!
@@ -171,8 +171,8 @@ STATICINLINE void cover_fill_path(u32 path, group::path_cover_mode coverMode)
 }
 
 template<class span_const_f32, class span_const_void>
-requires(semantic::concepts::Span<span_const_void>&&
-             semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+requires(concepts::span<span_const_void>&& concepts::span<span_const_f32>&&
+                                           std::is_same_v<
                  std::decay_t<typename span_const_f32::value_type>,
                  std::decay_t<f32>>)
     /*!
@@ -265,7 +265,7 @@ STATICINLINE GLuint gen_paths(i32 range)
 }
 
 template<class span_u8>
-requires(semantic::concepts::Span<span_u8>&& std::is_same_v<
+requires(concepts::span<span_u8>&& std::is_same_v<
          std::decay_t<typename span_u8::value_type>,
          std::decay_t<u8>>)
     /*!
@@ -289,7 +289,7 @@ requires(semantic::concepts::Span<span_u8>&& std::is_same_v<
 }
 
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+requires(concepts::span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -312,7 +312,7 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 }
 
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+requires(concepts::span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -356,7 +356,7 @@ get_path_length(u32 path, i32 startSegment, i32 numSegments)
 }
 
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+requires(concepts::span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -390,10 +390,10 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 }
 
 template<class span_const_void, class span_f32>
-requires(semantic::concepts::Span<span_const_void>&&
-             semantic::concepts::Span<span_f32>&& std::is_same_v<
-                 std::decay_t<typename span_f32::value_type>,
-                 std::decay_t<f32>>)
+requires(
+    concepts::span<span_const_void>&& concepts::span<span_f32>&& std::is_same_v<
+        std::decay_t<typename span_f32::value_type>,
+        std::decay_t<f32>>)
     /*!
      * \brief Part of GL_NV_path_rendering
      * \param metricQueryMask GLbitfield
@@ -431,7 +431,7 @@ requires(semantic::concepts::Span<span_const_void>&&
 }
 
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+requires(concepts::span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -457,7 +457,7 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -483,10 +483,10 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_const_void, class span_f32>
-requires(semantic::concepts::Span<span_const_void>&&
-             semantic::concepts::Span<span_f32>&& std::is_same_v<
-                 std::decay_t<typename span_f32::value_type>,
-                 std::decay_t<f32>>)
+requires(
+    concepts::span<span_const_void>&& concepts::span<span_f32>&& std::is_same_v<
+        std::decay_t<typename span_f32::value_type>,
+        std::decay_t<f32>>)
     /*!
      * \brief Part of GL_NV_path_rendering
      * \param pathListMode GLenum
@@ -569,7 +569,7 @@ STATICINLINE bool is_path(u32 path)
 }
 
 template<class vec_2_f32>
-requires(semantic::concepts::Vector<vec_2_f32, f32, 2>)
+requires(concepts::vector<vec_2_f32, f32, 2>)
     /*!
      * \brief Part of GL_NV_path_rendering
      * \param path GLuint
@@ -592,7 +592,7 @@ requires(semantic::concepts::Vector<vec_2_f32, f32, 2>)
 }
 
 template<class vec_2_f32>
-requires(semantic::concepts::Vector<vec_2_f32, f32, 2>)
+requires(concepts::vector<vec_2_f32, f32, 2>)
     /*!
      * \brief Part of GL_NV_path_rendering
      * \param path GLuint
@@ -613,9 +613,9 @@ requires(semantic::concepts::Vector<vec_2_f32, f32, 2>)
 }
 
 template<class span_const_u8, class span_const_void>
-requires(semantic::concepts::Span<span_const_u8>&& std::is_same_v<
+requires(concepts::span<span_const_u8>&& std::is_same_v<
          std::decay_t<typename span_const_u8::value_type>,
-         std::decay_t<u8>>&& semantic::concepts::Span<span_const_void>)
+         std::decay_t<u8>>&& concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_NV_path_rendering
      * \param path GLuint
@@ -650,7 +650,7 @@ requires(semantic::concepts::Span<span_const_u8>&& std::is_same_v<
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_NV_path_rendering
      * \param path GLuint
@@ -695,7 +695,7 @@ STATICINLINE void path_cover_depth_func(group::depth_function func)
 }
 
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+requires(concepts::span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -721,7 +721,7 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_NV_path_rendering
      * \param firstPathName GLuint
@@ -766,7 +766,7 @@ requires(semantic::concepts::Span<span_const_void>)
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_NV_path_rendering
      * \param firstPathName GLuint
@@ -834,7 +834,7 @@ STATICINLINE void path_parameter(
 }
 
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+requires(concepts::span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -880,7 +880,7 @@ STATICINLINE void path_parameter(
 }
 
 template<class span_const_i32>
-requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
+requires(concepts::span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -942,7 +942,7 @@ STATICINLINE void path_stencil_func(
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_NV_path_rendering
      * \param path GLuint
@@ -972,9 +972,9 @@ requires(semantic::concepts::Span<span_const_void>)
 }
 
 template<class span_const_u8, class span_const_void>
-requires(semantic::concepts::Span<span_const_u8>&& std::is_same_v<
+requires(concepts::span<span_const_u8>&& std::is_same_v<
          std::decay_t<typename span_const_u8::value_type>,
-         std::decay_t<u8>>&& semantic::concepts::Span<span_const_void>)
+         std::decay_t<u8>>&& concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_NV_path_rendering
      * \param path GLuint
@@ -1015,7 +1015,7 @@ requires(semantic::concepts::Span<span_const_u8>&& std::is_same_v<
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_NV_path_rendering
      * \param path GLuint
@@ -1047,7 +1047,7 @@ requires(semantic::concepts::Span<span_const_void>)
 }
 
 template<class vec_2_f32>
-requires(semantic::concepts::Vector<vec_2_f32, f32, 2>)
+requires(concepts::vector<vec_2_f32, f32, 2>)
     /*!
      * \brief Part of GL_NV_path_rendering
      * \param path GLuint
@@ -1088,8 +1088,8 @@ requires(semantic::concepts::Vector<vec_2_f32, f32, 2>)
 }
 
 template<class span_const_f32, class span_const_void>
-requires(semantic::concepts::Span<span_const_void>&&
-             semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+requires(concepts::span<span_const_void>&& concepts::span<span_const_f32>&&
+                                           std::is_same_v<
                  std::decay_t<typename span_const_f32::value_type>,
                  std::decay_t<f32>>)
     /*!
@@ -1153,8 +1153,8 @@ STATICINLINE void stencil_fill_path(
 }
 
 template<class span_const_f32, class span_const_void>
-requires(semantic::concepts::Span<span_const_void>&&
-             semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+requires(concepts::span<span_const_void>&& concepts::span<span_const_f32>&&
+                                           std::is_same_v<
                  std::decay_t<typename span_const_f32::value_type>,
                  std::decay_t<f32>>)
     /*!
@@ -1217,7 +1217,7 @@ STATICINLINE void stencil_stroke_path(u32 path, i32 reference, u32 mask)
 }
 
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+requires(concepts::span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -1250,10 +1250,10 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
 }
 
 template<class span_const_f32, class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+requires(concepts::span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>&& semantic::concepts::Span<span_const_f32>&&
-                              std::is_same_v<
+         std::decay_t<u32>>&& concepts::span<span_const_f32>&&
+                                          std::is_same_v<
                  std::decay_t<typename span_const_f32::value_type>,
                  std::decay_t<f32>>)
     /*!
@@ -1284,8 +1284,8 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
 }
 
 template<class span_const_mat_3x2_f32>
-requires(semantic::concepts::Span<span_const_mat_3x2_f32>&& semantic::concepts::
-             Matrix<typename span_const_mat_3x2_f32::value_type, f32, 3, 2>)
+requires(concepts::span<span_const_mat_3x2_f32>&& concepts::
+             matrix<typename span_const_mat_3x2_f32::value_type, f32, 3, 2>)
     /*!
      * \brief Part of GL_NV_path_rendering
      * \param matrixMode GLenum
@@ -1305,8 +1305,8 @@ requires(semantic::concepts::Span<span_const_mat_3x2_f32>&& semantic::concepts::
 }
 
 template<class span_const_mat_3x3_f32>
-requires(semantic::concepts::Span<span_const_mat_3x3_f32>&& semantic::concepts::
-             Matrix<typename span_const_mat_3x3_f32::value_type, f32, 3, 3>)
+requires(concepts::span<span_const_mat_3x3_f32>&& concepts::
+             matrix<typename span_const_mat_3x3_f32::value_type, f32, 3, 3>)
     /*!
      * \brief Part of GL_NV_path_rendering
      * \param matrixMode GLenum
@@ -1326,8 +1326,8 @@ requires(semantic::concepts::Span<span_const_mat_3x3_f32>&& semantic::concepts::
 }
 
 template<class span_const_mat_3x3_f32>
-requires(semantic::concepts::Span<span_const_mat_3x3_f32>&& semantic::concepts::
-             Matrix<typename span_const_mat_3x3_f32::value_type, f32, 3, 3>)
+requires(concepts::span<span_const_mat_3x3_f32>&& concepts::
+             matrix<typename span_const_mat_3x3_f32::value_type, f32, 3, 3>)
     /*!
      * \brief Part of GL_NV_path_rendering
      * \param matrixMode GLenum
@@ -1348,8 +1348,8 @@ requires(semantic::concepts::Span<span_const_mat_3x3_f32>&& semantic::concepts::
 }
 
 template<class span_const_mat_3x2_f32>
-requires(semantic::concepts::Span<span_const_mat_3x2_f32>&& semantic::concepts::
-             Matrix<typename span_const_mat_3x2_f32::value_type, f32, 3, 2>)
+requires(concepts::span<span_const_mat_3x2_f32>&& concepts::
+             matrix<typename span_const_mat_3x2_f32::value_type, f32, 3, 2>)
     /*!
      * \brief Part of GL_NV_path_rendering
      * \param matrixMode GLenum
@@ -1369,8 +1369,8 @@ requires(semantic::concepts::Span<span_const_mat_3x2_f32>&& semantic::concepts::
 }
 
 template<class span_const_mat_3x3_f32>
-requires(semantic::concepts::Span<span_const_mat_3x3_f32>&& semantic::concepts::
-             Matrix<typename span_const_mat_3x3_f32::value_type, f32, 3, 3>)
+requires(concepts::span<span_const_mat_3x3_f32>&& concepts::
+             matrix<typename span_const_mat_3x3_f32::value_type, f32, 3, 3>)
     /*!
      * \brief Part of GL_NV_path_rendering
      * \param matrixMode GLenum
@@ -1390,8 +1390,8 @@ requires(semantic::concepts::Span<span_const_mat_3x3_f32>&& semantic::concepts::
 }
 
 template<class span_const_mat_3x3_f32>
-requires(semantic::concepts::Span<span_const_mat_3x3_f32>&& semantic::concepts::
-             Matrix<typename span_const_mat_3x3_f32::value_type, f32, 3, 3>)
+requires(concepts::span<span_const_mat_3x3_f32>&& concepts::
+             matrix<typename span_const_mat_3x3_f32::value_type, f32, 3, 3>)
     /*!
      * \brief Part of GL_NV_path_rendering
      * \param matrixMode GLenum
@@ -1412,10 +1412,10 @@ requires(semantic::concepts::Span<span_const_mat_3x3_f32>&& semantic::concepts::
 }
 
 template<class span_const_void, class span_u32>
-requires(semantic::concepts::Span<span_const_void>&&
-             semantic::concepts::Span<span_u32>&& std::is_same_v<
-                 std::decay_t<typename span_u32::value_type>,
-                 std::decay_t<u32>>)
+requires(
+    concepts::span<span_const_void>&& concepts::span<span_u32>&& std::is_same_v<
+        std::decay_t<typename span_u32::value_type>,
+        std::decay_t<u32>>)
     /*!
      * \brief Part of GL_NV_path_rendering
      * \param fontTarget GLenum
@@ -1453,8 +1453,8 @@ requires(semantic::concepts::Span<span_const_void>&&
 }
 
 template<class span_const_f32, class span_const_void>
-requires(semantic::concepts::Span<span_const_void>&&
-             semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+requires(concepts::span<span_const_void>&& concepts::span<span_const_f32>&&
+                                           std::is_same_v<
                  std::decay_t<typename span_const_f32::value_type>,
                  std::decay_t<f32>>)
     /*!
@@ -1522,8 +1522,8 @@ STATICINLINE void stencil_then_cover_fill_path(
 }
 
 template<class span_const_f32, class span_const_void>
-requires(semantic::concepts::Span<span_const_void>&&
-             semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+requires(concepts::span<span_const_void>&& concepts::span<span_const_f32>&&
+                                           std::is_same_v<
                  std::decay_t<typename span_const_f32::value_type>,
                  std::decay_t<f32>>)
     /*!
@@ -1591,10 +1591,10 @@ STATICINLINE void stencil_then_cover_stroke_path(
 }
 
 template<class span_const_GLenum, class span_f32>
-requires(semantic::concepts::Span<span_const_GLenum>&& std::is_same_v<
+requires(concepts::span<span_const_GLenum>&& std::is_same_v<
          std::decay_t<typename span_const_GLenum::value_type>,
-         std::decay_t<GLenum>>&& semantic::concepts::Span<span_f32>&&
-                                 std::is_same_v<
+         std::decay_t<GLenum>>&& concepts::span<span_f32>&&
+                                             std::is_same_v<
                  std::decay_t<typename span_f32::value_type>,
                  std::decay_t<f32>>)
     /*!
@@ -1641,7 +1641,7 @@ requires(semantic::concepts::Span<span_const_GLenum>&& std::is_same_v<
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_NV_path_rendering
      * \param firstPathName GLuint
@@ -1684,7 +1684,7 @@ requires(semantic::concepts::Span<span_const_void>)
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_NV_path_rendering
      * \param firstPathName GLuint
@@ -1730,7 +1730,7 @@ requires(semantic::concepts::Span<span_const_void>)
 }
 
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+requires(concepts::span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -1769,208 +1769,6 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
     detail::error_check("ProgramPathFragmentInputGenNV"sv);
 }
 
-#if defined(GL_VERSION_1_0)
-template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
-         std::decay_t<typename span_f32::value_type>,
-         std::decay_t<f32>>)
-    /*!
-     * \brief Part of GL_NV_path_rendering
-     * \param color GLenum
-     * \param pname GLenum
-     * \param value GLfloat *
-     * \return void
-     */
-    STATICINLINE void get_path_color_genfv(
-        group::path_color color, group::path_gen_mode pname, span_f32 value)
-{
-    using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
-    {
-        GLW_FPTR_CHECK(GetPathColorGenfvNV)
-    }
-    glGetPathColorGenfvNV(
-        static_cast<GLenum>(color),
-        static_cast<GLenum>(pname),
-        value.size() ? reinterpret_cast<GLfloat*>(value.data()) : nullptr);
-    detail::error_check("GetPathColorGenfvNV"sv);
-}
-
-#endif
-#if defined(GL_VERSION_1_0)
-template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
-         std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>)
-    /*!
-     * \brief Part of GL_NV_path_rendering
-     * \param color GLenum
-     * \param pname GLenum
-     * \param value GLint *
-     * \return void
-     */
-    STATICINLINE void get_path_color_geniv(
-        group::path_color color, group::path_gen_mode pname, span_i32 value)
-{
-    using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
-    {
-        GLW_FPTR_CHECK(GetPathColorGenivNV)
-    }
-    glGetPathColorGenivNV(
-        static_cast<GLenum>(color),
-        static_cast<GLenum>(pname),
-        value.size() ? reinterpret_cast<GLint*>(value.data()) : nullptr);
-    detail::error_check("GetPathColorGenivNV"sv);
-}
-
-#endif
-#if defined(GL_VERSION_1_0)
-template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
-         std::decay_t<typename span_f32::value_type>,
-         std::decay_t<f32>>)
-    /*!
-     * \brief Part of GL_NV_path_rendering
-     * \param texCoordSet GLenum
-     * \param pname GLenum
-     * \param value GLfloat *
-     * \return void
-     */
-    STATICINLINE void get_path_tex_genfv(
-        group::texture_unit  texCoordSet,
-        group::path_gen_mode pname,
-        span_f32             value)
-{
-    using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
-    {
-        GLW_FPTR_CHECK(GetPathTexGenfvNV)
-    }
-    glGetPathTexGenfvNV(
-        static_cast<GLenum>(texCoordSet),
-        static_cast<GLenum>(pname),
-        value.size() ? reinterpret_cast<GLfloat*>(value.data()) : nullptr);
-    detail::error_check("GetPathTexGenfvNV"sv);
-}
-
-#endif
-#if defined(GL_VERSION_1_0)
-template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
-         std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>)
-    /*!
-     * \brief Part of GL_NV_path_rendering
-     * \param texCoordSet GLenum
-     * \param pname GLenum
-     * \param value GLint *
-     * \return void
-     */
-    STATICINLINE void get_path_tex_geniv(
-        group::texture_unit  texCoordSet,
-        group::path_gen_mode pname,
-        span_i32             value)
-{
-    using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
-    {
-        GLW_FPTR_CHECK(GetPathTexGenivNV)
-    }
-    glGetPathTexGenivNV(
-        static_cast<GLenum>(texCoordSet),
-        static_cast<GLenum>(pname),
-        value.size() ? reinterpret_cast<GLint*>(value.data()) : nullptr);
-    detail::error_check("GetPathTexGenivNV"sv);
-}
-
-#endif
-#if defined(GL_VERSION_1_0)
-template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
-         std::decay_t<typename span_const_f32::value_type>,
-         std::decay_t<f32>>)
-    /*!
-     * \brief Part of GL_NV_path_rendering
-     * \param color GLenum
-     * \param genMode GLenum
-     * \param colorFormat GLenum
-     * \param coeffs const GLfloat *
-     * \return void
-     */
-    STATICINLINE void path_color_gen(
-        group::path_color        color,
-        group::path_gen_mode     genMode,
-        group::path_color_format colorFormat,
-        span_const_f32 const&    coeffs)
-{
-    using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
-    {
-        GLW_FPTR_CHECK(PathColorGenNV)
-    }
-    glPathColorGenNV(
-        static_cast<GLenum>(color),
-        static_cast<GLenum>(genMode),
-        static_cast<GLenum>(colorFormat),
-        coeffs.size() ? reinterpret_cast<const GLfloat*>(coeffs.data())
-                      : nullptr);
-    detail::error_check("PathColorGenNV"sv);
-}
-
-#endif
-#if defined(GL_VERSION_1_0)
-/*!
- * \brief Part of GL_NV_path_rendering
- * \param genMode GLenum
- * \return void
- */
-STATICINLINE void path_fog_gen(group::path_gen_mode genMode)
-{
-    using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
-    {
-        GLW_FPTR_CHECK(PathFogGenNV)
-    }
-    glPathFogGenNV(static_cast<GLenum>(genMode));
-    detail::error_check("PathFogGenNV"sv);
-}
-
-#endif
-#if defined(GL_VERSION_1_0)
-template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
-         std::decay_t<typename span_const_f32::value_type>,
-         std::decay_t<f32>>)
-    /*!
-     * \brief Part of GL_NV_path_rendering
-     * \param texCoordSet GLenum
-     * \param genMode GLenum
-     * \param components GLint
-     * \param coeffs const GLfloat *
-     * \return void
-     */
-    STATICINLINE void path_tex_gen(
-        group::path_color     texCoordSet,
-        group::path_gen_mode  genMode,
-        i32                   components,
-        span_const_f32 const& coeffs)
-{
-    using namespace std::string_view_literals;
-    if constexpr(compile_info::debug_mode)
-    {
-        GLW_FPTR_CHECK(PathTexGenNV)
-    }
-    glPathTexGenNV(
-        static_cast<GLenum>(texCoordSet),
-        static_cast<GLenum>(genMode),
-        components,
-        coeffs.size() ? reinterpret_cast<const GLfloat*>(coeffs.data())
-                      : nullptr);
-    detail::error_check("PathTexGenNV"sv);
-}
-
-#endif
 /*!
  * \brief Part of GL_NV_path_rendering
  * \param mode GLenum
@@ -2018,7 +1816,7 @@ STATICINLINE void matrix_load_identity_ext(group::matrix_mode mode)
 }
 
 template<class span_const_f64>
-requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
+requires(concepts::span<span_const_f64>&& std::is_same_v<
          std::decay_t<typename span_const_f64::value_type>,
          std::decay_t<f64>>)
     /*!
@@ -2042,7 +1840,7 @@ requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
 }
 
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+requires(concepts::span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -2066,7 +1864,7 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
 }
 
 template<class span_const_f64>
-requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
+requires(concepts::span<span_const_f64>&& std::is_same_v<
          std::decay_t<typename span_const_f64::value_type>,
          std::decay_t<f64>>)
     /*!
@@ -2090,7 +1888,7 @@ requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
 }
 
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+requires(concepts::span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -2114,7 +1912,7 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
 }
 
 template<class span_const_f64>
-requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
+requires(concepts::span<span_const_f64>&& std::is_same_v<
          std::decay_t<typename span_const_f64::value_type>,
          std::decay_t<f64>>)
     /*!
@@ -2138,7 +1936,7 @@ requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
 }
 
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+requires(concepts::span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -2162,7 +1960,7 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
 }
 
 template<class span_const_f64>
-requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
+requires(concepts::span<span_const_f64>&& std::is_same_v<
          std::decay_t<typename span_const_f64::value_type>,
          std::decay_t<f64>>)
     /*!
@@ -2186,7 +1984,7 @@ requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
 }
 
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+requires(concepts::span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -2272,7 +2070,7 @@ STATICINLINE void matrix_push_ext(group::matrix_mode mode)
 }
 
 template<class vec_3_f64>
-requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
+requires(concepts::vector<vec_3_f64, f64, 3>)
     /*!
      * \brief Part of GL_NV_path_rendering
      * \param mode GLenum
@@ -2295,7 +2093,7 @@ requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
 }
 
 template<class vec_3_f32>
-requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
+requires(concepts::vector<vec_3_f32, f32, 3>)
     /*!
      * \brief Part of GL_NV_path_rendering
      * \param mode GLenum
@@ -2318,7 +2116,7 @@ requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
 }
 
 template<class vec_3_f64>
-requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
+requires(concepts::vector<vec_3_f64, f64, 3>)
     /*!
      * \brief Part of GL_NV_path_rendering
      * \param mode GLenum
@@ -2340,7 +2138,7 @@ requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
 }
 
 template<class vec_3_f32>
-requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
+requires(concepts::vector<vec_3_f32, f32, 3>)
     /*!
      * \brief Part of GL_NV_path_rendering
      * \param mode GLenum
@@ -2362,7 +2160,7 @@ requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
 }
 
 template<class vec_3_f64>
-requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
+requires(concepts::vector<vec_3_f64, f64, 3>)
     /*!
      * \brief Part of GL_NV_path_rendering
      * \param mode GLenum
@@ -2384,7 +2182,7 @@ requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
 }
 
 template<class vec_3_f32>
-requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
+requires(concepts::vector<vec_3_f32, f32, 3>)
     /*!
      * \brief Part of GL_NV_path_rendering
      * \param mode GLenum

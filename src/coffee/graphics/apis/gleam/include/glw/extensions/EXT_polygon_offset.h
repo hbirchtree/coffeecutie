@@ -5,8 +5,8 @@
 namespace gl::ext::polygon_offset {
 using gl::group::get_prop;
 namespace values {
-constexpr libc_types::u32 polygon_offset        = 0x8037;
-constexpr libc_types::u32 polygon_offset_factor = 0x8038;
+constexpr u32 polygon_offset        = 0x8037;
+constexpr u32 polygon_offset_factor = 0x8038;
 } // namespace values
 /*!
  * \brief Part of GL_EXT_polygon_offset

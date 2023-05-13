@@ -7,20 +7,20 @@ namespace gl::ext::texture_integer {
 using gl::group::internal_format;
 using gl::group::sized_internal_format;
 namespace values {
-constexpr libc_types::u32 red_integer             = 0x8D94;
-constexpr libc_types::u32 green_integer           = 0x8D95;
-constexpr libc_types::u32 blue_integer            = 0x8D96;
-constexpr libc_types::u32 alpha_integer           = 0x8D97;
-constexpr libc_types::u32 rgb_integer             = 0x8D98;
-constexpr libc_types::u32 rgba_integer            = 0x8D99;
-constexpr libc_types::u32 bgr_integer             = 0x8D9A;
-constexpr libc_types::u32 bgra_integer            = 0x8D9B;
-constexpr libc_types::u32 luminance_integer       = 0x8D9C;
-constexpr libc_types::u32 luminance_alpha_integer = 0x8D9D;
-constexpr libc_types::u32 rgba_integer_mode       = 0x8D9E;
+constexpr u32 red_integer             = 0x8D94;
+constexpr u32 green_integer           = 0x8D95;
+constexpr u32 blue_integer            = 0x8D96;
+constexpr u32 alpha_integer           = 0x8D97;
+constexpr u32 rgb_integer             = 0x8D98;
+constexpr u32 rgba_integer            = 0x8D99;
+constexpr u32 bgr_integer             = 0x8D9A;
+constexpr u32 bgra_integer            = 0x8D9B;
+constexpr u32 luminance_integer       = 0x8D9C;
+constexpr u32 luminance_alpha_integer = 0x8D9D;
+constexpr u32 rgba_integer_mode       = 0x8D9E;
 } // namespace values
 template<class vec_4_i32>
-requires(semantic::concepts::Vector<vec_4_i32, i32, 4>)
+requires(concepts::vector<vec_4_i32, i32, 4>)
     /*!
      * \brief Part of GL_EXT_texture_integer
      * \param red GLint
@@ -41,7 +41,7 @@ requires(semantic::concepts::Vector<vec_4_i32, i32, 4>)
 }
 
 template<class vec_4_u32>
-requires(semantic::concepts::Vector<vec_4_u32, u32, 4>)
+requires(concepts::vector<vec_4_u32, u32, 4>)
     /*!
      * \brief Part of GL_EXT_texture_integer
      * \param red GLuint
@@ -62,7 +62,7 @@ requires(semantic::concepts::Vector<vec_4_u32, u32, 4>)
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -90,7 +90,7 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(concepts::span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -118,7 +118,7 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 }
 
 template<class span_const_i32>
-requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
+requires(concepts::span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -147,7 +147,7 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
 }
 
 template<class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+requires(concepts::span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
          std::decay_t<u32>>)
     /*!

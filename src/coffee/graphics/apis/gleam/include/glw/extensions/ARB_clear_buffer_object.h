@@ -5,7 +5,7 @@ namespace gl::arb::clear_buffer_object {
 namespace values {
 } // namespace values
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_ARB_clear_buffer_object
      * \param target GLenum
@@ -37,7 +37,7 @@ requires(semantic::concepts::Span<span_const_void>)
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_ARB_clear_buffer_object
      * \param target GLenum

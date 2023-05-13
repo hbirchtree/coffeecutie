@@ -5,12 +5,12 @@
 namespace gl::ext::blend_func_extended {
 using gl::group::texture_env_parameter;
 namespace values {
-constexpr libc_types::u32 src_alpha_saturate           = 0x0308;
-constexpr libc_types::u32 src1_color                   = 0x88F9;
-constexpr libc_types::u32 one_minus_src1_color         = 0x88FA;
-constexpr libc_types::u32 one_minus_src1_alpha         = 0x88FB;
-constexpr libc_types::u32 max_dual_source_draw_buffers = 0x88FC;
-constexpr libc_types::u32 location_index               = 0x930F;
+constexpr u32 src_alpha_saturate           = 0x0308;
+constexpr u32 src1_color                   = 0x88F9;
+constexpr u32 one_minus_src1_color         = 0x88FA;
+constexpr u32 one_minus_src1_alpha         = 0x88FB;
+constexpr u32 max_dual_source_draw_buffers = 0x88FC;
+constexpr u32 location_index               = 0x930F;
 } // namespace values
 /*!
  * \brief Part of GL_EXT_blend_func_extended

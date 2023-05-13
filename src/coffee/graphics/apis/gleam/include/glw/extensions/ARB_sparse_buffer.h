@@ -5,7 +5,7 @@
 namespace gl::arb::sparse_buffer {
 using gl::group::buffer_storage_mask;
 namespace values {
-constexpr libc_types::u32 sparse_buffer_page_size = 0x82F8;
+constexpr u32 sparse_buffer_page_size = 0x82F8;
 } // namespace values
 /*!
  * \brief Part of GL_ARB_sparse_buffer

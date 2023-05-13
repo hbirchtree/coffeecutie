@@ -3,7 +3,7 @@
 #ifdef GL_ARB_texture_mirror_clamp_to_edge
 namespace gl::arb::texture_mirror_clamp_to_edge {
 namespace values {
-constexpr libc_types::u32 mirror_clamp_to_edge = 0x8743;
+constexpr u32 mirror_clamp_to_edge = 0x8743;
 } // namespace values
 } // namespace gl::arb::texture_mirror_clamp_to_edge
 #endif // GL_ARB_texture_mirror_clamp_to_edge

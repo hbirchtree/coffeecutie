@@ -3,8 +3,8 @@
 #ifdef GL_EXT_compiled_vertex_array
 namespace gl::ext::compiled_vertex_array {
 namespace values {
-constexpr libc_types::u32 array_element_lock_first = 0x81A8;
-constexpr libc_types::u32 array_element_lock_count = 0x81A9;
+constexpr u32 array_element_lock_first = 0x81A8;
+constexpr u32 array_element_lock_count = 0x81A9;
 } // namespace values
 /*!
  * \brief Part of GL_EXT_compiled_vertex_array

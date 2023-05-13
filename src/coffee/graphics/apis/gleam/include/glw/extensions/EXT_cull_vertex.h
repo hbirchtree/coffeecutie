@@ -5,10 +5,10 @@
 namespace gl::ext::cull_vertex {
 using gl::group::cull_parameter_ext;
 namespace values {
-constexpr libc_types::u32 cull_vertex = 0x81AA;
+constexpr u32 cull_vertex = 0x81AA;
 } // namespace values
 template<class span_f64>
-requires(semantic::concepts::Span<span_f64>&& std::is_same_v<
+requires(concepts::span<span_f64>&& std::is_same_v<
          std::decay_t<typename span_f64::value_type>,
          std::decay_t<f64>>)
     /*!
@@ -32,7 +32,7 @@ requires(semantic::concepts::Span<span_f64>&& std::is_same_v<
 }
 
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+requires(concepts::span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
          std::decay_t<f32>>)
     /*!

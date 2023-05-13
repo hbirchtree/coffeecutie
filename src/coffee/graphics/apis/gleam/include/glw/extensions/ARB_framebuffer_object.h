@@ -41,13 +41,13 @@ using gl::group::renderbuffer_target;
 using gl::group::sized_internal_format;
 using gl::group::texture_target;
 namespace values {
-constexpr libc_types::u32 framebuffer_default = 0x8218;
+constexpr u32 framebuffer_default = 0x8218;
 #if defined(GL_VERSION_1_0)
-constexpr libc_types::u32 index = 0x8222;
+constexpr u32 index = 0x8222;
 #endif
-constexpr libc_types::u32 texture_stencil_size = 0x88F1;
-constexpr libc_types::u32 unsigned_normalized  = 0x8C17;
-constexpr libc_types::u32 max_samples          = 0x8D57;
+constexpr u32 texture_stencil_size = 0x88F1;
+constexpr u32 unsigned_normalized  = 0x8C17;
+constexpr u32 max_samples          = 0x8D57;
 } // namespace values
 /*!
  * \brief Part of GL_ARB_framebuffer_object
@@ -159,7 +159,7 @@ STATICINLINE group::framebuffer_status check_framebuffer_status(
 }
 
 template<class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+requires(concepts::span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -184,7 +184,7 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
 }
 
 template<class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+requires(concepts::span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -384,7 +384,7 @@ STATICINLINE void framebuffer_texture_layer(
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(concepts::span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -408,7 +408,7 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(concepts::span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -448,7 +448,7 @@ STATICINLINE void generate_mipmap(group::texture_target target)
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -479,7 +479,7 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -551,7 +551,7 @@ STATICINLINE bool is_renderbuffer(u32 renderbuffer)
 }
 
 template<class size_2_i32>
-requires(semantic::concepts::Size2D<size_2_i32, i32>)
+requires(concepts::size_2d<size_2_i32, i32>)
     /*!
      * \brief Part of GL_ARB_framebuffer_object
      * \param target GLenum
@@ -579,7 +579,7 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>)
 }
 
 template<class size_2_i32>
-requires(semantic::concepts::Size2D<size_2_i32, i32>)
+requires(concepts::size_2d<size_2_i32, i32>)
     /*!
      * \brief Part of GL_ARB_framebuffer_object
      * \param target GLenum

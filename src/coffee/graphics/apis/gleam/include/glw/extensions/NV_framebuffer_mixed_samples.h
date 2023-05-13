@@ -3,20 +3,20 @@
 #ifdef GL_NV_framebuffer_mixed_samples
 namespace gl::nv::framebuffer_mixed_samples {
 namespace values {
-constexpr libc_types::u32 color_samples                         = 0x8E20;
-constexpr libc_types::u32 raster_multisample_ext                = 0x9327;
-constexpr libc_types::u32 raster_samples_ext                    = 0x9328;
-constexpr libc_types::u32 max_raster_samples_ext                = 0x9329;
-constexpr libc_types::u32 raster_fixed_sample_locations_ext     = 0x932A;
-constexpr libc_types::u32 multisample_rasterization_allowed_ext = 0x932B;
-constexpr libc_types::u32 effective_raster_samples_ext          = 0x932C;
-constexpr libc_types::u32 depth_samples                         = 0x932D;
-constexpr libc_types::u32 stencil_samples                       = 0x932E;
-constexpr libc_types::u32 mixed_depth_samples_supported         = 0x932F;
-constexpr libc_types::u32 mixed_stencil_samples_supported       = 0x9330;
-constexpr libc_types::u32 coverage_modulation_table             = 0x9331;
-constexpr libc_types::u32 coverage_modulation                   = 0x9332;
-constexpr libc_types::u32 coverage_modulation_table_size        = 0x9333;
+constexpr u32 color_samples                         = 0x8E20;
+constexpr u32 raster_multisample_ext                = 0x9327;
+constexpr u32 raster_samples_ext                    = 0x9328;
+constexpr u32 max_raster_samples_ext                = 0x9329;
+constexpr u32 raster_fixed_sample_locations_ext     = 0x932A;
+constexpr u32 multisample_rasterization_allowed_ext = 0x932B;
+constexpr u32 effective_raster_samples_ext          = 0x932C;
+constexpr u32 depth_samples                         = 0x932D;
+constexpr u32 stencil_samples                       = 0x932E;
+constexpr u32 mixed_depth_samples_supported         = 0x932F;
+constexpr u32 mixed_stencil_samples_supported       = 0x9330;
+constexpr u32 coverage_modulation_table             = 0x9331;
+constexpr u32 coverage_modulation                   = 0x9332;
+constexpr u32 coverage_modulation_table_size        = 0x9333;
 } // namespace values
 /*!
  * \brief Part of GL_NV_framebuffer_mixed_samples
@@ -35,7 +35,7 @@ STATICINLINE void coverage_modulation(GLenum components)
 }
 
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+requires(concepts::span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -58,7 +58,7 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
 }
 
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+requires(concepts::span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
          std::decay_t<f32>>)
     /*!

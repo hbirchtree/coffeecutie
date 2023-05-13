@@ -7,15 +7,15 @@ namespace gl::ext::fog_coord {
 using gl::group::fog_coord_src;
 using gl::group::light_texture_mode_ext;
 namespace values {
-constexpr libc_types::u32 fog_coordinate_source        = 0x8450;
-constexpr libc_types::u32 current_fog_coordinate       = 0x8453;
-constexpr libc_types::u32 fog_coordinate_array_type    = 0x8454;
-constexpr libc_types::u32 fog_coordinate_array_stride  = 0x8455;
-constexpr libc_types::u32 fog_coordinate_array_pointer = 0x8456;
-constexpr libc_types::u32 fog_coordinate_array         = 0x8457;
+constexpr u32 fog_coordinate_source        = 0x8450;
+constexpr u32 current_fog_coordinate       = 0x8453;
+constexpr u32 fog_coordinate_array_type    = 0x8454;
+constexpr u32 fog_coordinate_array_stride  = 0x8455;
+constexpr u32 fog_coordinate_array_pointer = 0x8456;
+constexpr u32 fog_coordinate_array         = 0x8457;
 } // namespace values
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_fog_coord
      * \param type GLenum
@@ -58,7 +58,7 @@ STATICINLINE void fog_coordd(f64 coord)
 }
 
 template<class span_const_f64>
-requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
+requires(concepts::span<span_const_f64>&& std::is_same_v<
          std::decay_t<typename span_const_f64::value_type>,
          std::decay_t<f64>>)
     /*!
@@ -96,7 +96,7 @@ STATICINLINE void fog_coordf(f32 coord)
 }
 
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+requires(concepts::span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
          std::decay_t<f32>>)
     /*!

@@ -73,8 +73,8 @@ void create_resources(compo::EntityContainer& e)
         = api.alloc_buffer(gfx::buffers::constants, access);
     if(api.feature_info().buffer.ssbo)
     {
-//        resources.model_matrix_store
-//            = api.alloc_buffer(gfx::buffers::shader_writable, access);
+        //        resources.model_matrix_store
+        //            = api.alloc_buffer(gfx::buffers::shader_writable, access);
         resources.material_store
             = api.alloc_buffer(gfx::buffers::shader_writable, access);
     } else if(api.feature_info().buffer.ubo)
@@ -180,6 +180,10 @@ void create_resources(compo::EntityContainer& e)
     resources.debug_lines = api.alloc_buffer(gfx::buffers::vertex, access);
     resources.debug_lines->alloc();
     resources.debug_lines->commit(memory_budget::debug_buffer / 2);
+    resources.debug_line_colors
+        = api.alloc_buffer(gfx::buffers::vertex, access);
+    resources.debug_line_colors->alloc();
+    resources.debug_line_colors->commit(memory_budget::debug_buffer / 2);
     {
         struct debug_vertex
         {
@@ -189,8 +193,16 @@ void create_resources(compo::EntityContainer& e)
         debug_attr       = api.alloc_vertex_array();
         debug_attr->alloc();
         debug_attr->add(gfx::vertex_attribute::from_member(&debug_vertex::pos));
+        auto color_vtx = gfx::vertex_attribute::from_member(&debug_vertex::pos);
+        color_vtx.index     = 1;
+        color_vtx.buffer.id = 1;
+        color_vtx.value.flags
+            = gfx::vertex_attribute::attribute_flags::instanced;
+        debug_attr->add(color_vtx);
         debug_attr->set_buffer(gfx::buffers::vertex, resources.debug_lines, 0);
-        debug_attr->set_attribute_names({{"position", 0}});
+        debug_attr->set_buffer(
+            gfx::buffers::vertex, resources.debug_line_colors, 1);
+        debug_attr->set_attribute_names({{"position", 0}, {"color", 1}});
     }
 
     //    if constexpr(compile_info::platform::is_android)

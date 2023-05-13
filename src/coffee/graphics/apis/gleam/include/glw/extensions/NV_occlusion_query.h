@@ -5,8 +5,8 @@
 namespace gl::nv::occlusion_query {
 using gl::group::occlusion_query_parameter_name_nv;
 namespace values {
-constexpr libc_types::u32 pixel_counter_bits         = 0x8864;
-constexpr libc_types::u32 current_occlusion_query_id = 0x8865;
+constexpr u32 pixel_counter_bits         = 0x8864;
+constexpr u32 current_occlusion_query_id = 0x8865;
 } // namespace values
 /*!
  * \brief Part of GL_NV_occlusion_query
@@ -25,7 +25,7 @@ STATICINLINE void begin_occlusion_query(u32 id)
 }
 
 template<class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+requires(concepts::span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -64,7 +64,7 @@ STATICINLINE void end_occlusion_query()
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(concepts::span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -87,7 +87,7 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -113,7 +113,7 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(concepts::span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
          std::decay_t<u32>>)
     /*!

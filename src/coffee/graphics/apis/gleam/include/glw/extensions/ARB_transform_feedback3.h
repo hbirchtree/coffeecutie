@@ -3,8 +3,8 @@
 #ifdef GL_ARB_transform_feedback3
 namespace gl::arb::transform_feedback3 {
 namespace values {
-constexpr libc_types::u32 max_transform_feedback_buffers = 0x8E70;
-constexpr libc_types::u32 max_vertex_streams             = 0x8E71;
+constexpr u32 max_transform_feedback_buffers = 0x8E70;
+constexpr u32 max_vertex_streams             = 0x8E71;
 } // namespace values
 /*!
  * \brief Part of GL_ARB_transform_feedback3
@@ -62,7 +62,7 @@ STATICINLINE void end_query_indexed(group::query_target target, u32 index)
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!

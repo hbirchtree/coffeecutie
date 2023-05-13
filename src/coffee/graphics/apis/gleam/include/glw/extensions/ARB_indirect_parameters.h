@@ -3,8 +3,8 @@
 #ifdef GL_ARB_indirect_parameters
 namespace gl::arb::indirect_parameters {
 namespace values {
-constexpr libc_types::u32 parameter_buffer         = 0x80EE;
-constexpr libc_types::u32 parameter_buffer_binding = 0x80EF;
+constexpr u32 parameter_buffer         = 0x80EE;
+constexpr u32 parameter_buffer_binding = 0x80EF;
 } // namespace values
 /*!
  * \brief Part of GL_ARB_indirect_parameters
@@ -17,7 +17,7 @@ constexpr libc_types::u32 parameter_buffer_binding = 0x80EF;
  */
 STATICINLINE void multi_draw_arrays_indirect_count(
     group::primitive_type mode,
-    ptroff                indirect,
+    intptr_t              indirect,
     GLintptr              drawcount,
     i32                   maxdrawcount,
     i32                   stride)
@@ -49,7 +49,7 @@ STATICINLINE void multi_draw_arrays_indirect_count(
 STATICINLINE void multi_draw_elements_indirect_count(
     group::primitive_type     mode,
     group::draw_elements_type type,
-    ptroff                    indirect,
+    intptr_t                  indirect,
     GLintptr                  drawcount,
     i32                       maxdrawcount,
     i32                       stride)

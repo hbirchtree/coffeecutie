@@ -11,11 +11,11 @@ using gl::group::program_stage_prop;
 using gl::group::subroutine_parameter_name;
 using gl::group::uniform_prop;
 namespace values {
-constexpr libc_types::u32 max_subroutines                  = 0x8DE7;
-constexpr libc_types::u32 max_subroutine_uniform_locations = 0x8DE8;
+constexpr u32 max_subroutines                  = 0x8DE7;
+constexpr u32 max_subroutine_uniform_locations = 0x8DE8;
 } // namespace values
 template<class span_GLchar>
-requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
+requires(concepts::span<span_GLchar>&& std::is_same_v<
          std::decay_t<typename span_GLchar::value_type>,
          std::decay_t<GLchar>>)
     /*!
@@ -56,7 +56,7 @@ requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
 }
 
 template<class span_GLchar>
-requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
+requires(concepts::span<span_GLchar>&& std::is_same_v<
          std::decay_t<typename span_GLchar::value_type>,
          std::decay_t<GLchar>>)
     /*!
@@ -97,7 +97,7 @@ requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -240,7 +240,7 @@ STATICINLINE void get_uniform_subroutineuiv(
 }
 
 template<class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+requires(concepts::span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
          std::decay_t<u32>>)
     /*!

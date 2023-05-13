@@ -3,7 +3,7 @@
 #ifdef GL_NV_instanced_arrays
 namespace gl::nv::instanced_arrays {
 namespace values {
-constexpr libc_types::u32 vertex_attrib_array_divisor = 0x88FE;
+constexpr u32 vertex_attrib_array_divisor = 0x88FE;
 } // namespace values
 /*!
  * \brief Part of GL_NV_instanced_arrays

@@ -17,6 +17,6 @@ enum class path_font_style : u32
     none = GL_NONE,
 #endif
 }; // enum class path_font_style
-C_FLAGS(path_font_style, ::libc_types::u32);
+C_FLAGS(path_font_style, u32);
 
 } // namespace gl::group

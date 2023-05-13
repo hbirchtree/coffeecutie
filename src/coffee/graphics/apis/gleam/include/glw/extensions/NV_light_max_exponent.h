@@ -3,8 +3,8 @@
 #ifdef GL_NV_light_max_exponent
 namespace gl::nv::light_max_exponent {
 namespace values {
-constexpr libc_types::u32 max_shininess     = 0x8504;
-constexpr libc_types::u32 max_spot_exponent = 0x8505;
+constexpr u32 max_shininess     = 0x8504;
+constexpr u32 max_spot_exponent = 0x8505;
 } // namespace values
 } // namespace gl::nv::light_max_exponent
 #endif // GL_NV_light_max_exponent

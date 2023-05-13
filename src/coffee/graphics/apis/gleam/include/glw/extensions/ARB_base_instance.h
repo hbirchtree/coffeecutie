@@ -44,7 +44,7 @@ STATICINLINE void draw_elements_instanced_base_instance(
     group::primitive_type     mode,
     i32                       count,
     group::draw_elements_type type,
-    ptroff                    indices,
+    intptr_t                  indices,
     i32                       instancecount,
     u32                       baseinstance)
 {
@@ -78,7 +78,7 @@ STATICINLINE void draw_elements_instanced_base_vertex_base_instance(
     group::primitive_type     mode,
     i32                       count,
     group::draw_elements_type type,
-    ptroff                    indices,
+    intptr_t                  indices,
     i32                       instancecount,
     i32                       basevertex,
     u32                       baseinstance)

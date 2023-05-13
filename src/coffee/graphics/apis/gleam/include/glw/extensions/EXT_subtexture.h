@@ -5,7 +5,7 @@ namespace gl::ext::subtexture {
 namespace values {
 } // namespace values
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_subtexture
      * \param target GLenum
@@ -43,9 +43,9 @@ requires(semantic::concepts::Span<span_const_void>)
 }
 
 template<class size_2_i32, class span_const_void, class vec_2_i32>
-requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
-                 semantic::concepts::Size2D<size_2_i32, i32>&&
-                 semantic::concepts::Span<span_const_void>)
+requires(
+    concepts::vector<vec_2_i32, i32, 2>&& concepts::size_2d<size_2_i32, i32>&&
+                                          concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_subtexture
      * \param target GLenum

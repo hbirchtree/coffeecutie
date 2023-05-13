@@ -11,7 +11,7 @@ using gl::group::special_numbers;
 namespace values {
 } // namespace values
 template<class span_void>
-requires(semantic::concepts::Span<span_void>)
+requires(concepts::span<span_void>)
     /*!
      * \brief Part of GL_EXT_memory_object_win32
      * \param memory GLuint
@@ -40,7 +40,7 @@ requires(semantic::concepts::Span<span_void>)
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_memory_object_win32
      * \param memory GLuint

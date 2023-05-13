@@ -5,7 +5,7 @@ namespace gl::nv::copy_image {
 namespace values {
 } // namespace values
 template<class size_3_i32>
-requires(semantic::concepts::Size2D<size_3_i32, i32>)
+requires(concepts::size_2d<size_3_i32, i32>)
     /*!
      * \brief Part of GL_NV_copy_image
      * \param srcName GLuint

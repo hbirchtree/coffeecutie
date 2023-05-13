@@ -3,16 +3,16 @@
 #ifdef GL_NV_memory_attachment
 namespace gl::nv::memory_attachment {
 namespace values {
-constexpr libc_types::u32 attached_memory_object      = 0x95A4;
-constexpr libc_types::u32 attached_memory_offset      = 0x95A5;
-constexpr libc_types::u32 memory_attachable_alignment = 0x95A6;
-constexpr libc_types::u32 memory_attachable_size      = 0x95A7;
-constexpr libc_types::u32 memory_attachable           = 0x95A8;
-constexpr libc_types::u32 detached_memory_incarnation = 0x95A9;
-constexpr libc_types::u32 detached_textures           = 0x95AA;
-constexpr libc_types::u32 detached_buffers            = 0x95AB;
-constexpr libc_types::u32 max_detached_textures       = 0x95AC;
-constexpr libc_types::u32 max_detached_buffers        = 0x95AD;
+constexpr u32 attached_memory_object      = 0x95A4;
+constexpr u32 attached_memory_offset      = 0x95A5;
+constexpr u32 memory_attachable_alignment = 0x95A6;
+constexpr u32 memory_attachable_size      = 0x95A7;
+constexpr u32 memory_attachable           = 0x95A8;
+constexpr u32 detached_memory_incarnation = 0x95A9;
+constexpr u32 detached_textures           = 0x95AA;
+constexpr u32 detached_buffers            = 0x95AB;
+constexpr u32 max_detached_textures       = 0x95AC;
+constexpr u32 max_detached_buffers        = 0x95AD;
 } // namespace values
 /*!
  * \brief Part of GL_NV_memory_attachment
@@ -34,7 +34,7 @@ STATICINLINE void buffer_attach_memory(
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(concepts::span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
          std::decay_t<u32>>)
     /*!

@@ -17,19 +17,19 @@ using gl::group::invalidate_framebuffer_attachment;
 using gl::group::renderbuffer_parameter_name;
 using gl::group::sized_internal_format;
 namespace values {
-constexpr libc_types::u32 max_renderbuffer_size                     = 0x84E8;
-constexpr libc_types::u32 framebuffer_binding                       = 0x8CA6;
-constexpr libc_types::u32 renderbuffer_binding                      = 0x8CA7;
-constexpr libc_types::u32 framebuffer_complete                      = 0x8CD5;
-constexpr libc_types::u32 framebuffer_incomplete_attachment         = 0x8CD6;
-constexpr libc_types::u32 framebuffer_incomplete_missing_attachment = 0x8CD7;
-constexpr libc_types::u32 framebuffer_incomplete_dimensions         = 0x8CD9;
-constexpr libc_types::u32 framebuffer_incomplete_formats            = 0x8CDA;
-constexpr libc_types::u32 framebuffer_incomplete_draw_buffer        = 0x8CDB;
-constexpr libc_types::u32 framebuffer_incomplete_read_buffer        = 0x8CDC;
-constexpr libc_types::u32 framebuffer_unsupported                   = 0x8CDD;
-constexpr libc_types::u32 framebuffer                               = 0x8D40;
-constexpr libc_types::u32 renderbuffer                              = 0x8D41;
+constexpr u32 max_renderbuffer_size                     = 0x84E8;
+constexpr u32 framebuffer_binding                       = 0x8CA6;
+constexpr u32 renderbuffer_binding                      = 0x8CA7;
+constexpr u32 framebuffer_complete                      = 0x8CD5;
+constexpr u32 framebuffer_incomplete_attachment         = 0x8CD6;
+constexpr u32 framebuffer_incomplete_missing_attachment = 0x8CD7;
+constexpr u32 framebuffer_incomplete_dimensions         = 0x8CD9;
+constexpr u32 framebuffer_incomplete_formats            = 0x8CDA;
+constexpr u32 framebuffer_incomplete_draw_buffer        = 0x8CDB;
+constexpr u32 framebuffer_incomplete_read_buffer        = 0x8CDC;
+constexpr u32 framebuffer_unsupported                   = 0x8CDD;
+constexpr u32 framebuffer                               = 0x8D40;
+constexpr u32 renderbuffer                              = 0x8D41;
 } // namespace values
 /*!
  * \brief Part of GL_EXT_framebuffer_object
@@ -96,7 +96,7 @@ STATICINLINE group::framebuffer_status check_framebuffer_status(
 }
 
 template<class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+requires(concepts::span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -121,7 +121,7 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
 }
 
 template<class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+requires(concepts::span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -286,7 +286,7 @@ STATICINLINE void framebuffer_texture_3d(
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(concepts::span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -310,7 +310,7 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(concepts::span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -350,7 +350,7 @@ STATICINLINE void generate_mipmap(group::texture_target target)
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -381,7 +381,7 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -453,7 +453,7 @@ STATICINLINE bool is_renderbuffer(u32 renderbuffer)
 }
 
 template<class size_2_i32>
-requires(semantic::concepts::Size2D<size_2_i32, i32>)
+requires(concepts::size_2d<size_2_i32, i32>)
     /*!
      * \brief Part of GL_EXT_framebuffer_object
      * \param target GLenum

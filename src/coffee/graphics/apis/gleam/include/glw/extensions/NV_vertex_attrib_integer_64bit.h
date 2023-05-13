@@ -9,7 +9,7 @@ using gl::group::vertex_attrib_pointer_type;
 namespace values {
 } // namespace values
 template<class span_GLint64EXT>
-requires(semantic::concepts::Span<span_GLint64EXT>&& std::is_same_v<
+requires(concepts::span<span_GLint64EXT>&& std::is_same_v<
          std::decay_t<typename span_GLint64EXT::value_type>,
          std::decay_t<GLint64EXT>>)
     /*!
@@ -35,7 +35,7 @@ requires(semantic::concepts::Span<span_GLint64EXT>&& std::is_same_v<
 }
 
 template<class span_GLuint64EXT>
-requires(semantic::concepts::Span<span_GLuint64EXT>&& std::is_same_v<
+requires(concepts::span<span_GLuint64EXT>&& std::is_same_v<
          std::decay_t<typename span_GLuint64EXT::value_type>,
          std::decay_t<GLuint64EXT>>)
     /*!
@@ -79,7 +79,7 @@ STATICINLINE void vertex_attrib_l1i64(u32 index, GLint64EXT x)
 }
 
 template<class span_const_GLint64EXT>
-requires(semantic::concepts::Span<span_const_GLint64EXT>&& std::is_same_v<
+requires(concepts::span<span_const_GLint64EXT>&& std::is_same_v<
          std::decay_t<typename span_const_GLint64EXT::value_type>,
          std::decay_t<GLint64EXT>>)
     /*!
@@ -119,7 +119,7 @@ STATICINLINE void vertex_attrib_l1ui64(u32 index, GLuint64EXT x)
 }
 
 template<class span_const_GLuint64EXT>
-requires(semantic::concepts::Span<span_const_GLuint64EXT>&& std::is_same_v<
+requires(concepts::span<span_const_GLuint64EXT>&& std::is_same_v<
          std::decay_t<typename span_const_GLuint64EXT::value_type>,
          std::decay_t<GLuint64EXT>>)
     /*!
@@ -142,7 +142,7 @@ requires(semantic::concepts::Span<span_const_GLuint64EXT>&& std::is_same_v<
 }
 
 template<class vec_2_GLint64EXT>
-requires(semantic::concepts::Vector<vec_2_GLint64EXT, GLint64EXT, 2>)
+requires(concepts::vector<vec_2_GLint64EXT, GLint64EXT, 2>)
     /*!
      * \brief Part of GL_NV_vertex_attrib_integer_64bit
      * \param index GLuint
@@ -163,8 +163,8 @@ requires(semantic::concepts::Vector<vec_2_GLint64EXT, GLint64EXT, 2>)
 
 template<class span_const_vec_2_GLint64EXT>
 requires(
-    semantic::concepts::Span<span_const_vec_2_GLint64EXT>&& semantic::concepts::
-        Vector<typename span_const_vec_2_GLint64EXT::value_type, GLint64EXT, 2>)
+    concepts::span<span_const_vec_2_GLint64EXT>&& concepts::
+        vector<typename span_const_vec_2_GLint64EXT::value_type, GLint64EXT, 2>)
     /*!
      * \brief Part of GL_NV_vertex_attrib_integer_64bit
      * \param index GLuint
@@ -185,7 +185,7 @@ requires(
 }
 
 template<class vec_2_GLuint64EXT>
-requires(semantic::concepts::Vector<vec_2_GLuint64EXT, GLuint64EXT, 2>)
+requires(concepts::vector<vec_2_GLuint64EXT, GLuint64EXT, 2>)
     /*!
      * \brief Part of GL_NV_vertex_attrib_integer_64bit
      * \param index GLuint
@@ -206,11 +206,10 @@ requires(semantic::concepts::Vector<vec_2_GLuint64EXT, GLuint64EXT, 2>)
 }
 
 template<class span_const_vec_2_GLuint64EXT>
-requires(semantic::concepts::Span<span_const_vec_2_GLuint64EXT>&&
-             semantic::concepts::Vector<
-                 typename span_const_vec_2_GLuint64EXT::value_type,
-                 GLuint64EXT,
-                 2>)
+requires(concepts::span<span_const_vec_2_GLuint64EXT>&& concepts::vector<
+         typename span_const_vec_2_GLuint64EXT::value_type,
+         GLuint64EXT,
+         2>)
     /*!
      * \brief Part of GL_NV_vertex_attrib_integer_64bit
      * \param index GLuint
@@ -231,7 +230,7 @@ requires(semantic::concepts::Span<span_const_vec_2_GLuint64EXT>&&
 }
 
 template<class vec_3_GLint64EXT>
-requires(semantic::concepts::Vector<vec_3_GLint64EXT, GLint64EXT, 3>)
+requires(concepts::vector<vec_3_GLint64EXT, GLint64EXT, 3>)
     /*!
      * \brief Part of GL_NV_vertex_attrib_integer_64bit
      * \param index GLuint
@@ -253,8 +252,8 @@ requires(semantic::concepts::Vector<vec_3_GLint64EXT, GLint64EXT, 3>)
 
 template<class span_const_vec_3_GLint64EXT>
 requires(
-    semantic::concepts::Span<span_const_vec_3_GLint64EXT>&& semantic::concepts::
-        Vector<typename span_const_vec_3_GLint64EXT::value_type, GLint64EXT, 3>)
+    concepts::span<span_const_vec_3_GLint64EXT>&& concepts::
+        vector<typename span_const_vec_3_GLint64EXT::value_type, GLint64EXT, 3>)
     /*!
      * \brief Part of GL_NV_vertex_attrib_integer_64bit
      * \param index GLuint
@@ -275,7 +274,7 @@ requires(
 }
 
 template<class vec_3_GLuint64EXT>
-requires(semantic::concepts::Vector<vec_3_GLuint64EXT, GLuint64EXT, 3>)
+requires(concepts::vector<vec_3_GLuint64EXT, GLuint64EXT, 3>)
     /*!
      * \brief Part of GL_NV_vertex_attrib_integer_64bit
      * \param index GLuint
@@ -297,11 +296,10 @@ requires(semantic::concepts::Vector<vec_3_GLuint64EXT, GLuint64EXT, 3>)
 }
 
 template<class span_const_vec_3_GLuint64EXT>
-requires(semantic::concepts::Span<span_const_vec_3_GLuint64EXT>&&
-             semantic::concepts::Vector<
-                 typename span_const_vec_3_GLuint64EXT::value_type,
-                 GLuint64EXT,
-                 3>)
+requires(concepts::span<span_const_vec_3_GLuint64EXT>&& concepts::vector<
+         typename span_const_vec_3_GLuint64EXT::value_type,
+         GLuint64EXT,
+         3>)
     /*!
      * \brief Part of GL_NV_vertex_attrib_integer_64bit
      * \param index GLuint
@@ -322,7 +320,7 @@ requires(semantic::concepts::Span<span_const_vec_3_GLuint64EXT>&&
 }
 
 template<class vec_4_GLint64EXT>
-requires(semantic::concepts::Vector<vec_4_GLint64EXT, GLint64EXT, 4>)
+requires(concepts::vector<vec_4_GLint64EXT, GLint64EXT, 4>)
     /*!
      * \brief Part of GL_NV_vertex_attrib_integer_64bit
      * \param index GLuint
@@ -345,8 +343,8 @@ requires(semantic::concepts::Vector<vec_4_GLint64EXT, GLint64EXT, 4>)
 
 template<class span_const_vec_4_GLint64EXT>
 requires(
-    semantic::concepts::Span<span_const_vec_4_GLint64EXT>&& semantic::concepts::
-        Vector<typename span_const_vec_4_GLint64EXT::value_type, GLint64EXT, 4>)
+    concepts::span<span_const_vec_4_GLint64EXT>&& concepts::
+        vector<typename span_const_vec_4_GLint64EXT::value_type, GLint64EXT, 4>)
     /*!
      * \brief Part of GL_NV_vertex_attrib_integer_64bit
      * \param index GLuint
@@ -367,7 +365,7 @@ requires(
 }
 
 template<class vec_4_GLuint64EXT>
-requires(semantic::concepts::Vector<vec_4_GLuint64EXT, GLuint64EXT, 4>)
+requires(concepts::vector<vec_4_GLuint64EXT, GLuint64EXT, 4>)
     /*!
      * \brief Part of GL_NV_vertex_attrib_integer_64bit
      * \param index GLuint
@@ -390,11 +388,10 @@ requires(semantic::concepts::Vector<vec_4_GLuint64EXT, GLuint64EXT, 4>)
 }
 
 template<class span_const_vec_4_GLuint64EXT>
-requires(semantic::concepts::Span<span_const_vec_4_GLuint64EXT>&&
-             semantic::concepts::Vector<
-                 typename span_const_vec_4_GLuint64EXT::value_type,
-                 GLuint64EXT,
-                 4>)
+requires(concepts::span<span_const_vec_4_GLuint64EXT>&& concepts::vector<
+         typename span_const_vec_4_GLuint64EXT::value_type,
+         GLuint64EXT,
+         4>)
     /*!
      * \brief Part of GL_NV_vertex_attrib_integer_64bit
      * \param index GLuint

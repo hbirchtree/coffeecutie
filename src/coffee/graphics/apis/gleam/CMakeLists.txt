@@ -1,10 +1,9 @@
-option ( BUILD_DESKTOP_GL "Override for building Desktop GL on f.ex. Android" OFF )
-
 option ( BUILD_GLES_20 "Build against OpenGL ES 2.0 (mutually exclusive)" OFF )
 option ( BUILD_GLES_20_STATIC "Build against OpenGL ES 2.0 (linked, no extensions)" OFF )
 option ( BUILD_GLES "Build library targeting OpenGL ES 3.0+" OFF )
 option ( BUILD_GLES_31 "Build with support for OpenGL ES 3.1 (Only activates when BUILD_GLES is on)" ON )
 option ( BUILD_GLES_32 "Build with support for OpenGL ES 3.2 (Only activates when BUILD_GLES is on)" ON )
+
 option ( BUILD_GL_SOFTWARE_BCN "Build software-decode for BCn using bcdec" OFF )
 option ( BUILD_GL_SOFTWARE_PVRTC "Build software-decode for PVRTC" OFF )
 
@@ -31,7 +30,7 @@ if (NOT BUILD_GLES)
             -DGLEAM_MAX_VERSION_ES=0
             )
     endif()
-    target_link_libraries ( GLVersion_Dynamic INTERFACE GLAD_Core )
+    target_link_libraries ( GLVersion_Dynamic INTERFACE GLAD )
     add_export ( GLVersion_Dynamic "" )
 endif()
 if(IOS OR EMSCRIPTEN OR BUILD_GLES)
@@ -62,7 +61,7 @@ if(IOS OR EMSCRIPTEN OR BUILD_GLES)
             -DGLEAM_MAX_VERSION=0
             -DGLEAM_MAX_VERSION_ES=${MAX_VERSION}
             )
-        target_link_libraries ( GLVersion_ESDynamic INTERFACE GLAD_ES )
+        target_link_libraries ( GLVersion_ESDynamic INTERFACE GLAD )
         add_export ( GLVersion_ESDynamic "" )
     endif()
 
@@ -166,6 +165,8 @@ function ( GEN_GLEAM_TARGET GLVERSION SUFFIX )
         target_link_libraries ( GLeamCommon_${SUFFIX} PUBLIC AngleEGL AngleGLESv2 )
     elseif(APPLE AND ${GLVERSION} MATCHES "_Dynamic")
         target_link_libraries ( GLeamCommon_${SUFFIX} PUBLIC "-framework OpenGL" )
+    elseif(${GLVERSION} MATCHES "_ESDynamic")
+        # No-op
     elseif(${GLVERSION} MATCHES "_ES")
         if(ANDROID AND NOT BUILD_GLES_20)
             # On Android, GLES 3.x is used through a different library

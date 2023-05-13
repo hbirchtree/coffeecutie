@@ -9,10 +9,10 @@ using gl::group::fog_coord_src;
 using gl::group::light_texture_mode_ext;
 using gl::group::light_texture_prop_ext;
 namespace values {
-constexpr libc_types::u32 texture_application_mode   = 0x834F;
-constexpr libc_types::u32 texture_light              = 0x8350;
-constexpr libc_types::u32 texture_material_face      = 0x8351;
-constexpr libc_types::u32 texture_material_parameter = 0x8352;
+constexpr u32 texture_application_mode   = 0x834F;
+constexpr u32 texture_light              = 0x8350;
+constexpr u32 texture_material_face      = 0x8351;
+constexpr u32 texture_material_parameter = 0x8352;
 } // namespace values
 /*!
  * \brief Part of GL_EXT_light_texture

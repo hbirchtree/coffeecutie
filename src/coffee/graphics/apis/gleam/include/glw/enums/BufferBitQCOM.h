@@ -104,6 +104,6 @@ enum class buffer_bit_qcom : u32
     stencil_buffer_bit7_qcom = GL_STENCIL_BUFFER_BIT7_QCOM,
 #endif
 }; // enum class buffer_bit_qcom
-C_FLAGS(buffer_bit_qcom, ::libc_types::u32);
+C_FLAGS(buffer_bit_qcom, u32);
 
 } // namespace gl::group

@@ -7,7 +7,7 @@ namespace gl::arb::fragment_shader {
 using gl::group::hint_target;
 using gl::group::shader_type;
 namespace values {
-constexpr libc_types::u32 max_fragment_uniform_components = 0x8B49;
+constexpr u32 max_fragment_uniform_components = 0x8B49;
 } // namespace values
 } // namespace gl::arb::fragment_shader
 #endif // GL_ARB_fragment_shader

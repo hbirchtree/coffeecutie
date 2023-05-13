@@ -11,4 +11,4 @@ enum class vk_format_t : libc_types::u32
 #include "vk_formats.inl"
 };
 
-}
+} // namespace gl::tex

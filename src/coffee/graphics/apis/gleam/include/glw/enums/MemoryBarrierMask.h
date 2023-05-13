@@ -105,6 +105,6 @@ enum class memory_barrier_mask : u32
         GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT_EXT,
 #endif
 }; // enum class memory_barrier_mask
-C_FLAGS(memory_barrier_mask, ::libc_types::u32);
+C_FLAGS(memory_barrier_mask, u32);
 
 } // namespace gl::group

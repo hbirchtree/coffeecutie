@@ -3,11 +3,11 @@
 #ifdef GL_ARB_texture_view
 namespace gl::arb::texture_view {
 namespace values {
-constexpr libc_types::u32 texture_view_min_level   = 0x82DB;
-constexpr libc_types::u32 texture_view_num_levels  = 0x82DC;
-constexpr libc_types::u32 texture_view_min_layer   = 0x82DD;
-constexpr libc_types::u32 texture_view_num_layers  = 0x82DE;
-constexpr libc_types::u32 texture_immutable_levels = 0x82DF;
+constexpr u32 texture_view_min_level   = 0x82DB;
+constexpr u32 texture_view_num_levels  = 0x82DC;
+constexpr u32 texture_view_min_layer   = 0x82DD;
+constexpr u32 texture_view_num_layers  = 0x82DE;
+constexpr u32 texture_immutable_levels = 0x82DF;
 } // namespace values
 /*!
  * \brief Part of GL_ARB_texture_view

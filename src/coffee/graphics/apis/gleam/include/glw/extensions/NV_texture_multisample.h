@@ -3,11 +3,11 @@
 #ifdef GL_NV_texture_multisample
 namespace gl::nv::texture_multisample {
 namespace values {
-constexpr libc_types::u32 texture_coverage_samples = 0x9045;
-constexpr libc_types::u32 texture_color_samples    = 0x9046;
+constexpr u32 texture_coverage_samples = 0x9045;
+constexpr u32 texture_color_samples    = 0x9046;
 } // namespace values
 template<class size_2_i32>
-requires(semantic::concepts::Size2D<size_2_i32, i32>)
+requires(concepts::size_2d<size_2_i32, i32>)
     /*!
      * \brief Part of GL_NV_texture_multisample
      * \param target GLenum
@@ -44,7 +44,7 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>)
 }
 
 template<class size_3_i32>
-requires(semantic::concepts::Size2D<size_3_i32, i32>)
+requires(concepts::size_2d<size_3_i32, i32>)
     /*!
      * \brief Part of GL_NV_texture_multisample
      * \param target GLenum
@@ -83,7 +83,7 @@ requires(semantic::concepts::Size2D<size_3_i32, i32>)
 }
 
 template<class size_2_i32>
-requires(semantic::concepts::Size2D<size_2_i32, i32>)
+requires(concepts::size_2d<size_2_i32, i32>)
     /*!
      * \brief Part of GL_NV_texture_multisample
      * \param texture GLuint
@@ -128,7 +128,7 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>)
 }
 
 template<class size_2_i32>
-requires(semantic::concepts::Size2D<size_2_i32, i32>)
+requires(concepts::size_2d<size_2_i32, i32>)
     /*!
      * \brief Part of GL_NV_texture_multisample
      * \param texture GLuint
@@ -170,7 +170,7 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>)
 }
 
 template<class size_3_i32>
-requires(semantic::concepts::Size2D<size_3_i32, i32>)
+requires(concepts::size_2d<size_3_i32, i32>)
     /*!
      * \brief Part of GL_NV_texture_multisample
      * \param texture GLuint
@@ -217,7 +217,7 @@ requires(semantic::concepts::Size2D<size_3_i32, i32>)
 }
 
 template<class size_3_i32>
-requires(semantic::concepts::Size2D<size_3_i32, i32>)
+requires(concepts::size_2d<size_3_i32, i32>)
     /*!
      * \brief Part of GL_NV_texture_multisample
      * \param texture GLuint

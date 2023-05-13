@@ -7,7 +7,7 @@ namespace gl::arb::color_buffer_float {
 using gl::group::clamp_color_mode_arb;
 using gl::group::clamp_color_target_arb;
 namespace values {
-constexpr libc_types::u32 rgba_float_mode = 0x8820;
+constexpr u32 rgba_float_mode = 0x8820;
 } // namespace values
 /*!
  * \brief Part of GL_ARB_color_buffer_float

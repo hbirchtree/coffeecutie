@@ -22,11 +22,14 @@ void load_scenario_bsp(compo::EntityContainer& e, BlamData<Version>& data)
         auto index               = gpu.bsp_index->map(0);
         auto light               = gpu.bsp_light_buf->map(0);
         auto lines               = gpu.debug_lines->map(0);
+        auto line_colors         = gpu.debug_line_colors->map(0);
         bsp_cache.vert_buffer    = Bytes::ofContainer(vert);
         bsp_cache.element_buffer = Bytes::ofContainer(index);
         bsp_cache.light_buffer   = Bytes::ofContainer(light);
         bsp_cache.portal_buffer
             = semantic::mem_chunk<Vecf3>::ofContainer(lines);
+        bsp_cache.portal_color_buffer
+            = semantic::mem_chunk<Vecf3>::ofContainer(line_colors);
     }
 
     std::vector<generation_idx_t> bsp_meshes;
@@ -63,6 +66,7 @@ void load_scenario_bsp(compo::EntityContainer& e, BlamData<Version>& data)
         auto vertices
             = bsp_cache.portal_buffer.view.subspan(bsp_cache.portal_ptr, 10);
         std::copy(points.begin(), points.end(), vertices.begin());
+        bsp_cache.portal_color_buffer[bsp_cache.portal_color_ptr] = Vecf3(1);
 
         auto           trig   = e.create_entity(trigger_obj);
         TriggerVolume& volume = trig.get<TriggerVolume>();
@@ -74,7 +78,9 @@ void load_scenario_bsp(compo::EntityContainer& e, BlamData<Version>& data)
                    .count  = 10,
                    .offset = bsp_cache.portal_ptr,
                }};
+        draw.color_ptr = bsp_cache.portal_color_ptr;
         bsp_cache.portal_ptr += 10;
+        bsp_cache.portal_color_ptr ++;
     }
 
     for(auto const& bsp : scenario->bsp_info.data(magic).value())
@@ -86,6 +92,7 @@ void load_scenario_bsp(compo::EntityContainer& e, BlamData<Version>& data)
     gpu.bsp_index->unmap();
     gpu.bsp_light_buf->unmap();
     gpu.debug_lines->unmap();
+    gpu.debug_line_colors->unmap();
 
     EntityRecipe bsp;
     bsp.components = {
@@ -442,7 +449,7 @@ void load_scenario_scenery(EntityContainer& e, BlamData<Version>& data)
             continue;
         }
 
-        skybox_mod.model  = assem.models.at(0);
+        skybox_mod.model = assem.models.at(0);
 
         for(auto const& part_id : assem.models)
         {

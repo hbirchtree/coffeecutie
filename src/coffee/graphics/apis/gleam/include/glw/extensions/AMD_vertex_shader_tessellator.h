@@ -3,13 +3,13 @@
 #ifdef GL_AMD_vertex_shader_tessellator
 namespace gl::amd::vertex_shader_tessellator {
 namespace values {
-constexpr libc_types::u32 sampler_buffer              = 0x9001;
-constexpr libc_types::u32 int_sampler_buffer          = 0x9002;
-constexpr libc_types::u32 unsigned_int_sampler_buffer = 0x9003;
-constexpr libc_types::u32 tessellation_mode           = 0x9004;
-constexpr libc_types::u32 tessellation_factor         = 0x9005;
-constexpr libc_types::u32 discrete                    = 0x9006;
-constexpr libc_types::u32 continuous                  = 0x9007;
+constexpr u32 sampler_buffer              = 0x9001;
+constexpr u32 int_sampler_buffer          = 0x9002;
+constexpr u32 unsigned_int_sampler_buffer = 0x9003;
+constexpr u32 tessellation_mode           = 0x9004;
+constexpr u32 tessellation_factor         = 0x9005;
+constexpr u32 discrete                    = 0x9006;
+constexpr u32 continuous                  = 0x9007;
 } // namespace values
 /*!
  * \brief Part of GL_AMD_vertex_shader_tessellator

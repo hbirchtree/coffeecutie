@@ -16,7 +16,7 @@ namespace values {
  */
 STATICINLINE void multi_draw_arrays_indirect_bindless_count(
     group::primitive_type mode,
-    ptroff                indirect,
+    intptr_t              indirect,
     i32                   drawCount,
     i32                   maxDrawCount,
     i32                   stride,
@@ -51,7 +51,7 @@ STATICINLINE void multi_draw_arrays_indirect_bindless_count(
 STATICINLINE void multi_draw_elements_indirect_bindless_count(
     group::primitive_type     mode,
     group::draw_elements_type type,
-    ptroff                    indirect,
+    intptr_t                  indirect,
     i32                       drawCount,
     i32                       maxDrawCount,
     i32                       stride,

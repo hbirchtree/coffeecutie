@@ -5,17 +5,17 @@
 namespace gl::amd::sparse_texture {
 using gl::group::texture_storage_mask_amd;
 namespace values {
-constexpr libc_types::u32 virtual_page_size_x             = 0x9195;
-constexpr libc_types::u32 virtual_page_size_y             = 0x9196;
-constexpr libc_types::u32 virtual_page_size_z             = 0x9197;
-constexpr libc_types::u32 max_sparse_texture_size         = 0x9198;
-constexpr libc_types::u32 max_sparse_3d_texture_size      = 0x9199;
-constexpr libc_types::u32 max_sparse_array_texture_layers = 0x919A;
-constexpr libc_types::u32 min_sparse_level                = 0x919B;
-constexpr libc_types::u32 min_lod_warning                 = 0x919C;
+constexpr u32 virtual_page_size_x             = 0x9195;
+constexpr u32 virtual_page_size_y             = 0x9196;
+constexpr u32 virtual_page_size_z             = 0x9197;
+constexpr u32 max_sparse_texture_size         = 0x9198;
+constexpr u32 max_sparse_3d_texture_size      = 0x9199;
+constexpr u32 max_sparse_array_texture_layers = 0x919A;
+constexpr u32 min_sparse_level                = 0x919B;
+constexpr u32 min_lod_warning                 = 0x919C;
 } // namespace values
 template<class size_3_i32>
-requires(semantic::concepts::Size2D<size_3_i32, i32>)
+requires(concepts::size_2d<size_3_i32, i32>)
     /*!
      * \brief Part of GL_AMD_sparse_texture
      * \param target GLenum
@@ -51,7 +51,7 @@ requires(semantic::concepts::Size2D<size_3_i32, i32>)
 }
 
 template<class size_3_i32>
-requires(semantic::concepts::Size2D<size_3_i32, i32>)
+requires(concepts::size_2d<size_3_i32, i32>)
     /*!
      * \brief Part of GL_AMD_sparse_texture
      * \param texture GLuint

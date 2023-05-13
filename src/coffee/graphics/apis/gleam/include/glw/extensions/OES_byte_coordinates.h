@@ -45,7 +45,7 @@ STATICINLINE void multi_tex_coord1b(group::texture_unit texture, i8 s)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_i8>
-requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
+requires(concepts::span<span_const_i8>&& std::is_same_v<
          std::decay_t<typename span_const_i8::value_type>,
          std::decay_t<i8>>)
     /*!
@@ -92,7 +92,7 @@ STATICINLINE void multi_tex_coord2b(group::texture_unit texture, i8 s, i8 t)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_i8>
-requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
+requires(concepts::span<span_const_i8>&& std::is_same_v<
          std::decay_t<typename span_const_i8::value_type>,
          std::decay_t<i8>>)
     /*!
@@ -141,7 +141,7 @@ STATICINLINE void multi_tex_coord3b(
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_i8>
-requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
+requires(concepts::span<span_const_i8>&& std::is_same_v<
          std::decay_t<typename span_const_i8::value_type>,
          std::decay_t<i8>>)
     /*!
@@ -191,7 +191,7 @@ STATICINLINE void multi_tex_coord4b(
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_i8>
-requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
+requires(concepts::span<span_const_i8>&& std::is_same_v<
          std::decay_t<typename span_const_i8::value_type>,
          std::decay_t<i8>>)
     /*!
@@ -236,7 +236,7 @@ STATICINLINE void tex_coord1b(i8 s)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_i8>
-requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
+requires(concepts::span<span_const_i8>&& std::is_same_v<
          std::decay_t<typename span_const_i8::value_type>,
          std::decay_t<i8>>)
     /*!
@@ -279,7 +279,7 @@ STATICINLINE void tex_coord2b(i8 s, i8 t)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_i8>
-requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
+requires(concepts::span<span_const_i8>&& std::is_same_v<
          std::decay_t<typename span_const_i8::value_type>,
          std::decay_t<i8>>)
     /*!
@@ -323,7 +323,7 @@ STATICINLINE void tex_coord3b(i8 s, i8 t, i8 r)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_i8>
-requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
+requires(concepts::span<span_const_i8>&& std::is_same_v<
          std::decay_t<typename span_const_i8::value_type>,
          std::decay_t<i8>>)
     /*!
@@ -368,7 +368,7 @@ STATICINLINE void tex_coord4b(i8 s, i8 t, i8 r, i8 q)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_i8>
-requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
+requires(concepts::span<span_const_i8>&& std::is_same_v<
          std::decay_t<typename span_const_i8::value_type>,
          std::decay_t<i8>>)
     /*!
@@ -392,7 +392,7 @@ requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
 #endif
 #if defined(GL_VERSION_1_0)
 template<class vec_2_i8>
-requires(semantic::concepts::Vector<vec_2_i8, i8, 2>)
+requires(concepts::vector<vec_2_i8, i8, 2>)
     /*!
      * \brief Part of GL_OES_byte_coordinates
      * \param x GLbyte
@@ -413,7 +413,7 @@ requires(semantic::concepts::Vector<vec_2_i8, i8, 2>)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_i8>
-requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
+requires(concepts::span<span_const_i8>&& std::is_same_v<
          std::decay_t<typename span_const_i8::value_type>,
          std::decay_t<i8>>)
     /*!
@@ -437,7 +437,7 @@ requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
 #endif
 #if defined(GL_VERSION_1_0)
 template<class vec_3_i8>
-requires(semantic::concepts::Vector<vec_3_i8, i8, 3>)
+requires(concepts::vector<vec_3_i8, i8, 3>)
     /*!
      * \brief Part of GL_OES_byte_coordinates
      * \param x GLbyte
@@ -459,7 +459,7 @@ requires(semantic::concepts::Vector<vec_3_i8, i8, 3>)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_i8>
-requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
+requires(concepts::span<span_const_i8>&& std::is_same_v<
          std::decay_t<typename span_const_i8::value_type>,
          std::decay_t<i8>>)
     /*!
@@ -483,7 +483,7 @@ requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
 #endif
 #if defined(GL_VERSION_1_0)
 template<class vec_4_i8>
-requires(semantic::concepts::Vector<vec_4_i8, i8, 4>)
+requires(concepts::vector<vec_4_i8, i8, 4>)
     /*!
      * \brief Part of GL_OES_byte_coordinates
      * \param x GLbyte
@@ -506,7 +506,7 @@ requires(semantic::concepts::Vector<vec_4_i8, i8, 4>)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_i8>
-requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
+requires(concepts::span<span_const_i8>&& std::is_same_v<
          std::decay_t<typename span_const_i8::value_type>,
          std::decay_t<i8>>)
     /*!

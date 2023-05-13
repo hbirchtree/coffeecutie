@@ -3,11 +3,11 @@
 #ifdef GL_ARB_texture_buffer_object
 namespace gl::arb::texture_buffer_object {
 namespace values {
-constexpr libc_types::u32 texture_buffer                    = 0x8C2A;
-constexpr libc_types::u32 max_texture_buffer_size           = 0x8C2B;
-constexpr libc_types::u32 texture_binding_buffer            = 0x8C2C;
-constexpr libc_types::u32 texture_buffer_data_store_binding = 0x8C2D;
-constexpr libc_types::u32 texture_buffer_format             = 0x8C2E;
+constexpr u32 texture_buffer                    = 0x8C2A;
+constexpr u32 max_texture_buffer_size           = 0x8C2B;
+constexpr u32 texture_binding_buffer            = 0x8C2C;
+constexpr u32 texture_buffer_data_store_binding = 0x8C2D;
+constexpr u32 texture_buffer_format             = 0x8C2E;
 } // namespace values
 /*!
  * \brief Part of GL_ARB_texture_buffer_object

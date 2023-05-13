@@ -3,11 +3,11 @@
 #ifdef GL_NV_scissor_exclusive
 namespace gl::nv::scissor_exclusive {
 namespace values {
-constexpr libc_types::u32 scissor_test_exclusive = 0x9555;
-constexpr libc_types::u32 scissor_box_exclusive  = 0x9556;
+constexpr u32 scissor_test_exclusive = 0x9555;
+constexpr u32 scissor_box_exclusive  = 0x9556;
 } // namespace values
 template<class span_const_i32>
-requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
+requires(concepts::span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -33,8 +33,8 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
 }
 
 template<class size_2_i32, class vec_2_i32>
-requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
-             semantic::concepts::Size2D<size_2_i32, i32>)
+requires(
+    concepts::vector<vec_2_i32, i32, 2>&& concepts::size_2d<size_2_i32, i32>)
     /*!
      * \brief Part of GL_NV_scissor_exclusive
      * \param x GLint

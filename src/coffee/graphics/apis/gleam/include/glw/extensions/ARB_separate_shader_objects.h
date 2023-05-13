@@ -84,7 +84,7 @@ STATICINLINE GLuint create_shader_programv(
 }
 
 template<class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+requires(concepts::span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -108,7 +108,7 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(concepts::span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -132,7 +132,7 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 }
 
 template<class span_GLchar>
-requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
+requires(concepts::span<span_GLchar>&& std::is_same_v<
          std::decay_t<typename span_GLchar::value_type>,
          std::decay_t<GLchar>>)
     /*!
@@ -162,7 +162,7 @@ requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -262,7 +262,7 @@ STATICINLINE void program_uniform(u32 program, i32 location, f64 v0)
 }
 
 template<class span_const_f64>
-requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
+requires(concepts::span<span_const_f64>&& std::is_same_v<
          std::decay_t<typename span_const_f64::value_type>,
          std::decay_t<f64>>)
     /*!
@@ -318,7 +318,7 @@ STATICINLINE void program_uniform(u32 program, i32 location, f32 v0)
 }
 
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+requires(concepts::span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -374,7 +374,7 @@ STATICINLINE void program_uniform(u32 program, i32 location, i32 v0)
 }
 
 template<class span_const_i32>
-requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
+requires(concepts::span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -430,7 +430,7 @@ STATICINLINE void program_uniform(u32 program, i32 location, u32 v0)
 }
 
 template<class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+requires(concepts::span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -463,7 +463,7 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
 }
 
 template<class vec_2_f64>
-requires(semantic::concepts::Vector<vec_2_f64, f64, 2>)
+requires(concepts::vector<vec_2_f64, f64, 2>)
     /*!
      * \brief Part of GL_ARB_separate_shader_objects
      * \param program GLuint
@@ -490,8 +490,9 @@ requires(semantic::concepts::Vector<vec_2_f64, f64, 2>)
 }
 
 template<class span_const_vec_2_f64>
-requires(semantic::concepts::Span<span_const_vec_2_f64>&& semantic::concepts::
-             Vector<typename span_const_vec_2_f64::value_type, f64, 2>)
+requires(
+    concepts::span<span_const_vec_2_f64>&&
+        concepts::vector<typename span_const_vec_2_f64::value_type, f64, 2>)
     /*!
      * \brief Part of GL_ARB_separate_shader_objects
      * \param program GLuint
@@ -522,7 +523,7 @@ requires(semantic::concepts::Span<span_const_vec_2_f64>&& semantic::concepts::
 }
 
 template<class vec_2_f32>
-requires(semantic::concepts::Vector<vec_2_f32, f32, 2>)
+requires(concepts::vector<vec_2_f32, f32, 2>)
     /*!
      * \brief Part of GL_ARB_separate_shader_objects
      * \param program GLuint
@@ -549,8 +550,9 @@ requires(semantic::concepts::Vector<vec_2_f32, f32, 2>)
 }
 
 template<class span_const_vec_2_f32>
-requires(semantic::concepts::Span<span_const_vec_2_f32>&& semantic::concepts::
-             Vector<typename span_const_vec_2_f32::value_type, f32, 2>)
+requires(
+    concepts::span<span_const_vec_2_f32>&&
+        concepts::vector<typename span_const_vec_2_f32::value_type, f32, 2>)
     /*!
      * \brief Part of GL_ARB_separate_shader_objects
      * \param program GLuint
@@ -581,7 +583,7 @@ requires(semantic::concepts::Span<span_const_vec_2_f32>&& semantic::concepts::
 }
 
 template<class vec_2_i32>
-requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
+requires(concepts::vector<vec_2_i32, i32, 2>)
     /*!
      * \brief Part of GL_ARB_separate_shader_objects
      * \param program GLuint
@@ -608,8 +610,9 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
 }
 
 template<class span_const_vec_2_i32>
-requires(semantic::concepts::Span<span_const_vec_2_i32>&& semantic::concepts::
-             Vector<typename span_const_vec_2_i32::value_type, i32, 2>)
+requires(
+    concepts::span<span_const_vec_2_i32>&&
+        concepts::vector<typename span_const_vec_2_i32::value_type, i32, 2>)
     /*!
      * \brief Part of GL_ARB_separate_shader_objects
      * \param program GLuint
@@ -640,7 +643,7 @@ requires(semantic::concepts::Span<span_const_vec_2_i32>&& semantic::concepts::
 }
 
 template<class vec_2_u32>
-requires(semantic::concepts::Vector<vec_2_u32, u32, 2>)
+requires(concepts::vector<vec_2_u32, u32, 2>)
     /*!
      * \brief Part of GL_ARB_separate_shader_objects
      * \param program GLuint
@@ -667,8 +670,9 @@ requires(semantic::concepts::Vector<vec_2_u32, u32, 2>)
 }
 
 template<class span_const_vec_2_u32>
-requires(semantic::concepts::Span<span_const_vec_2_u32>&& semantic::concepts::
-             Vector<typename span_const_vec_2_u32::value_type, u32, 2>)
+requires(
+    concepts::span<span_const_vec_2_u32>&&
+        concepts::vector<typename span_const_vec_2_u32::value_type, u32, 2>)
     /*!
      * \brief Part of GL_ARB_separate_shader_objects
      * \param program GLuint
@@ -699,7 +703,7 @@ requires(semantic::concepts::Span<span_const_vec_2_u32>&& semantic::concepts::
 }
 
 template<class vec_3_f64>
-requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
+requires(concepts::vector<vec_3_f64, f64, 3>)
     /*!
      * \brief Part of GL_ARB_separate_shader_objects
      * \param program GLuint
@@ -727,8 +731,9 @@ requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
 }
 
 template<class span_const_vec_3_f64>
-requires(semantic::concepts::Span<span_const_vec_3_f64>&& semantic::concepts::
-             Vector<typename span_const_vec_3_f64::value_type, f64, 3>)
+requires(
+    concepts::span<span_const_vec_3_f64>&&
+        concepts::vector<typename span_const_vec_3_f64::value_type, f64, 3>)
     /*!
      * \brief Part of GL_ARB_separate_shader_objects
      * \param program GLuint
@@ -759,7 +764,7 @@ requires(semantic::concepts::Span<span_const_vec_3_f64>&& semantic::concepts::
 }
 
 template<class vec_3_f32>
-requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
+requires(concepts::vector<vec_3_f32, f32, 3>)
     /*!
      * \brief Part of GL_ARB_separate_shader_objects
      * \param program GLuint
@@ -787,8 +792,9 @@ requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
 }
 
 template<class span_const_vec_3_f32>
-requires(semantic::concepts::Span<span_const_vec_3_f32>&& semantic::concepts::
-             Vector<typename span_const_vec_3_f32::value_type, f32, 3>)
+requires(
+    concepts::span<span_const_vec_3_f32>&&
+        concepts::vector<typename span_const_vec_3_f32::value_type, f32, 3>)
     /*!
      * \brief Part of GL_ARB_separate_shader_objects
      * \param program GLuint
@@ -819,7 +825,7 @@ requires(semantic::concepts::Span<span_const_vec_3_f32>&& semantic::concepts::
 }
 
 template<class vec_3_i32>
-requires(semantic::concepts::Vector<vec_3_i32, i32, 3>)
+requires(concepts::vector<vec_3_i32, i32, 3>)
     /*!
      * \brief Part of GL_ARB_separate_shader_objects
      * \param program GLuint
@@ -847,8 +853,9 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>)
 }
 
 template<class span_const_vec_3_i32>
-requires(semantic::concepts::Span<span_const_vec_3_i32>&& semantic::concepts::
-             Vector<typename span_const_vec_3_i32::value_type, i32, 3>)
+requires(
+    concepts::span<span_const_vec_3_i32>&&
+        concepts::vector<typename span_const_vec_3_i32::value_type, i32, 3>)
     /*!
      * \brief Part of GL_ARB_separate_shader_objects
      * \param program GLuint
@@ -879,7 +886,7 @@ requires(semantic::concepts::Span<span_const_vec_3_i32>&& semantic::concepts::
 }
 
 template<class vec_3_u32>
-requires(semantic::concepts::Vector<vec_3_u32, u32, 3>)
+requires(concepts::vector<vec_3_u32, u32, 3>)
     /*!
      * \brief Part of GL_ARB_separate_shader_objects
      * \param program GLuint
@@ -907,8 +914,9 @@ requires(semantic::concepts::Vector<vec_3_u32, u32, 3>)
 }
 
 template<class span_const_vec_3_u32>
-requires(semantic::concepts::Span<span_const_vec_3_u32>&& semantic::concepts::
-             Vector<typename span_const_vec_3_u32::value_type, u32, 3>)
+requires(
+    concepts::span<span_const_vec_3_u32>&&
+        concepts::vector<typename span_const_vec_3_u32::value_type, u32, 3>)
     /*!
      * \brief Part of GL_ARB_separate_shader_objects
      * \param program GLuint
@@ -939,7 +947,7 @@ requires(semantic::concepts::Span<span_const_vec_3_u32>&& semantic::concepts::
 }
 
 template<class vec_4_f64>
-requires(semantic::concepts::Vector<vec_4_f64, f64, 4>)
+requires(concepts::vector<vec_4_f64, f64, 4>)
     /*!
      * \brief Part of GL_ARB_separate_shader_objects
      * \param program GLuint
@@ -968,8 +976,9 @@ requires(semantic::concepts::Vector<vec_4_f64, f64, 4>)
 }
 
 template<class span_const_vec_4_f64>
-requires(semantic::concepts::Span<span_const_vec_4_f64>&& semantic::concepts::
-             Vector<typename span_const_vec_4_f64::value_type, f64, 4>)
+requires(
+    concepts::span<span_const_vec_4_f64>&&
+        concepts::vector<typename span_const_vec_4_f64::value_type, f64, 4>)
     /*!
      * \brief Part of GL_ARB_separate_shader_objects
      * \param program GLuint
@@ -1000,7 +1009,7 @@ requires(semantic::concepts::Span<span_const_vec_4_f64>&& semantic::concepts::
 }
 
 template<class vec_4_f32>
-requires(semantic::concepts::Vector<vec_4_f32, f32, 4>)
+requires(concepts::vector<vec_4_f32, f32, 4>)
     /*!
      * \brief Part of GL_ARB_separate_shader_objects
      * \param program GLuint
@@ -1029,8 +1038,9 @@ requires(semantic::concepts::Vector<vec_4_f32, f32, 4>)
 }
 
 template<class span_const_vec_4_f32>
-requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
-             Vector<typename span_const_vec_4_f32::value_type, f32, 4>)
+requires(
+    concepts::span<span_const_vec_4_f32>&&
+        concepts::vector<typename span_const_vec_4_f32::value_type, f32, 4>)
     /*!
      * \brief Part of GL_ARB_separate_shader_objects
      * \param program GLuint
@@ -1061,7 +1071,7 @@ requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
 }
 
 template<class vec_4_i32>
-requires(semantic::concepts::Vector<vec_4_i32, i32, 4>)
+requires(concepts::vector<vec_4_i32, i32, 4>)
     /*!
      * \brief Part of GL_ARB_separate_shader_objects
      * \param program GLuint
@@ -1090,8 +1100,9 @@ requires(semantic::concepts::Vector<vec_4_i32, i32, 4>)
 }
 
 template<class span_const_vec_4_i32>
-requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
-             Vector<typename span_const_vec_4_i32::value_type, i32, 4>)
+requires(
+    concepts::span<span_const_vec_4_i32>&&
+        concepts::vector<typename span_const_vec_4_i32::value_type, i32, 4>)
     /*!
      * \brief Part of GL_ARB_separate_shader_objects
      * \param program GLuint
@@ -1122,7 +1133,7 @@ requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
 }
 
 template<class vec_4_u32>
-requires(semantic::concepts::Vector<vec_4_u32, u32, 4>)
+requires(concepts::vector<vec_4_u32, u32, 4>)
     /*!
      * \brief Part of GL_ARB_separate_shader_objects
      * \param program GLuint
@@ -1151,8 +1162,9 @@ requires(semantic::concepts::Vector<vec_4_u32, u32, 4>)
 }
 
 template<class span_const_vec_4_u32>
-requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
-             Vector<typename span_const_vec_4_u32::value_type, u32, 4>)
+requires(
+    concepts::span<span_const_vec_4_u32>&&
+        concepts::vector<typename span_const_vec_4_u32::value_type, u32, 4>)
     /*!
      * \brief Part of GL_ARB_separate_shader_objects
      * \param program GLuint
@@ -1183,8 +1195,8 @@ requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
 }
 
 template<class span_const_mat_2x2_f64>
-requires(semantic::concepts::Span<span_const_mat_2x2_f64>&& semantic::concepts::
-             Matrix<typename span_const_mat_2x2_f64::value_type, f64, 2, 2>)
+requires(concepts::span<span_const_mat_2x2_f64>&& concepts::
+             matrix<typename span_const_mat_2x2_f64::value_type, f64, 2, 2>)
     /*!
      * \brief Part of GL_ARB_separate_shader_objects
      * \param program GLuint
@@ -1220,8 +1232,8 @@ requires(semantic::concepts::Span<span_const_mat_2x2_f64>&& semantic::concepts::
 }
 
 template<class span_const_mat_2x2_f32>
-requires(semantic::concepts::Span<span_const_mat_2x2_f32>&& semantic::concepts::
-             Matrix<typename span_const_mat_2x2_f32::value_type, f32, 2, 2>)
+requires(concepts::span<span_const_mat_2x2_f32>&& concepts::
+             matrix<typename span_const_mat_2x2_f32::value_type, f32, 2, 2>)
     /*!
      * \brief Part of GL_ARB_separate_shader_objects
      * \param program GLuint
@@ -1257,8 +1269,8 @@ requires(semantic::concepts::Span<span_const_mat_2x2_f32>&& semantic::concepts::
 }
 
 template<class span_const_mat_2x3_f64>
-requires(semantic::concepts::Span<span_const_mat_2x3_f64>&& semantic::concepts::
-             Matrix<typename span_const_mat_2x3_f64::value_type, f64, 2, 3>)
+requires(concepts::span<span_const_mat_2x3_f64>&& concepts::
+             matrix<typename span_const_mat_2x3_f64::value_type, f64, 2, 3>)
     /*!
      * \brief Part of GL_ARB_separate_shader_objects
      * \param program GLuint
@@ -1294,8 +1306,8 @@ requires(semantic::concepts::Span<span_const_mat_2x3_f64>&& semantic::concepts::
 }
 
 template<class span_const_mat_2x3_f32>
-requires(semantic::concepts::Span<span_const_mat_2x3_f32>&& semantic::concepts::
-             Matrix<typename span_const_mat_2x3_f32::value_type, f32, 2, 3>)
+requires(concepts::span<span_const_mat_2x3_f32>&& concepts::
+             matrix<typename span_const_mat_2x3_f32::value_type, f32, 2, 3>)
     /*!
      * \brief Part of GL_ARB_separate_shader_objects
      * \param program GLuint
@@ -1331,8 +1343,8 @@ requires(semantic::concepts::Span<span_const_mat_2x3_f32>&& semantic::concepts::
 }
 
 template<class span_const_mat_2x4_f64>
-requires(semantic::concepts::Span<span_const_mat_2x4_f64>&& semantic::concepts::
-             Matrix<typename span_const_mat_2x4_f64::value_type, f64, 2, 4>)
+requires(concepts::span<span_const_mat_2x4_f64>&& concepts::
+             matrix<typename span_const_mat_2x4_f64::value_type, f64, 2, 4>)
     /*!
      * \brief Part of GL_ARB_separate_shader_objects
      * \param program GLuint
@@ -1368,8 +1380,8 @@ requires(semantic::concepts::Span<span_const_mat_2x4_f64>&& semantic::concepts::
 }
 
 template<class span_const_mat_2x4_f32>
-requires(semantic::concepts::Span<span_const_mat_2x4_f32>&& semantic::concepts::
-             Matrix<typename span_const_mat_2x4_f32::value_type, f32, 2, 4>)
+requires(concepts::span<span_const_mat_2x4_f32>&& concepts::
+             matrix<typename span_const_mat_2x4_f32::value_type, f32, 2, 4>)
     /*!
      * \brief Part of GL_ARB_separate_shader_objects
      * \param program GLuint
@@ -1405,8 +1417,8 @@ requires(semantic::concepts::Span<span_const_mat_2x4_f32>&& semantic::concepts::
 }
 
 template<class span_const_mat_3x3_f64>
-requires(semantic::concepts::Span<span_const_mat_3x3_f64>&& semantic::concepts::
-             Matrix<typename span_const_mat_3x3_f64::value_type, f64, 3, 3>)
+requires(concepts::span<span_const_mat_3x3_f64>&& concepts::
+             matrix<typename span_const_mat_3x3_f64::value_type, f64, 3, 3>)
     /*!
      * \brief Part of GL_ARB_separate_shader_objects
      * \param program GLuint
@@ -1442,8 +1454,8 @@ requires(semantic::concepts::Span<span_const_mat_3x3_f64>&& semantic::concepts::
 }
 
 template<class span_const_mat_3x3_f32>
-requires(semantic::concepts::Span<span_const_mat_3x3_f32>&& semantic::concepts::
-             Matrix<typename span_const_mat_3x3_f32::value_type, f32, 3, 3>)
+requires(concepts::span<span_const_mat_3x3_f32>&& concepts::
+             matrix<typename span_const_mat_3x3_f32::value_type, f32, 3, 3>)
     /*!
      * \brief Part of GL_ARB_separate_shader_objects
      * \param program GLuint
@@ -1479,8 +1491,8 @@ requires(semantic::concepts::Span<span_const_mat_3x3_f32>&& semantic::concepts::
 }
 
 template<class span_const_mat_3x2_f64>
-requires(semantic::concepts::Span<span_const_mat_3x2_f64>&& semantic::concepts::
-             Matrix<typename span_const_mat_3x2_f64::value_type, f64, 3, 2>)
+requires(concepts::span<span_const_mat_3x2_f64>&& concepts::
+             matrix<typename span_const_mat_3x2_f64::value_type, f64, 3, 2>)
     /*!
      * \brief Part of GL_ARB_separate_shader_objects
      * \param program GLuint
@@ -1516,8 +1528,8 @@ requires(semantic::concepts::Span<span_const_mat_3x2_f64>&& semantic::concepts::
 }
 
 template<class span_const_mat_3x2_f32>
-requires(semantic::concepts::Span<span_const_mat_3x2_f32>&& semantic::concepts::
-             Matrix<typename span_const_mat_3x2_f32::value_type, f32, 3, 2>)
+requires(concepts::span<span_const_mat_3x2_f32>&& concepts::
+             matrix<typename span_const_mat_3x2_f32::value_type, f32, 3, 2>)
     /*!
      * \brief Part of GL_ARB_separate_shader_objects
      * \param program GLuint
@@ -1553,8 +1565,8 @@ requires(semantic::concepts::Span<span_const_mat_3x2_f32>&& semantic::concepts::
 }
 
 template<class span_const_mat_3x4_f64>
-requires(semantic::concepts::Span<span_const_mat_3x4_f64>&& semantic::concepts::
-             Matrix<typename span_const_mat_3x4_f64::value_type, f64, 3, 4>)
+requires(concepts::span<span_const_mat_3x4_f64>&& concepts::
+             matrix<typename span_const_mat_3x4_f64::value_type, f64, 3, 4>)
     /*!
      * \brief Part of GL_ARB_separate_shader_objects
      * \param program GLuint
@@ -1590,8 +1602,8 @@ requires(semantic::concepts::Span<span_const_mat_3x4_f64>&& semantic::concepts::
 }
 
 template<class span_const_mat_3x4_f32>
-requires(semantic::concepts::Span<span_const_mat_3x4_f32>&& semantic::concepts::
-             Matrix<typename span_const_mat_3x4_f32::value_type, f32, 3, 4>)
+requires(concepts::span<span_const_mat_3x4_f32>&& concepts::
+             matrix<typename span_const_mat_3x4_f32::value_type, f32, 3, 4>)
     /*!
      * \brief Part of GL_ARB_separate_shader_objects
      * \param program GLuint
@@ -1627,8 +1639,8 @@ requires(semantic::concepts::Span<span_const_mat_3x4_f32>&& semantic::concepts::
 }
 
 template<class span_const_mat_4x4_f64>
-requires(semantic::concepts::Span<span_const_mat_4x4_f64>&& semantic::concepts::
-             Matrix<typename span_const_mat_4x4_f64::value_type, f64, 4, 4>)
+requires(concepts::span<span_const_mat_4x4_f64>&& concepts::
+             matrix<typename span_const_mat_4x4_f64::value_type, f64, 4, 4>)
     /*!
      * \brief Part of GL_ARB_separate_shader_objects
      * \param program GLuint
@@ -1664,8 +1676,8 @@ requires(semantic::concepts::Span<span_const_mat_4x4_f64>&& semantic::concepts::
 }
 
 template<class span_const_mat_4x4_f32>
-requires(semantic::concepts::Span<span_const_mat_4x4_f32>&& semantic::concepts::
-             Matrix<typename span_const_mat_4x4_f32::value_type, f32, 4, 4>)
+requires(concepts::span<span_const_mat_4x4_f32>&& concepts::
+             matrix<typename span_const_mat_4x4_f32::value_type, f32, 4, 4>)
     /*!
      * \brief Part of GL_ARB_separate_shader_objects
      * \param program GLuint
@@ -1701,8 +1713,8 @@ requires(semantic::concepts::Span<span_const_mat_4x4_f32>&& semantic::concepts::
 }
 
 template<class span_const_mat_4x2_f64>
-requires(semantic::concepts::Span<span_const_mat_4x2_f64>&& semantic::concepts::
-             Matrix<typename span_const_mat_4x2_f64::value_type, f64, 4, 2>)
+requires(concepts::span<span_const_mat_4x2_f64>&& concepts::
+             matrix<typename span_const_mat_4x2_f64::value_type, f64, 4, 2>)
     /*!
      * \brief Part of GL_ARB_separate_shader_objects
      * \param program GLuint
@@ -1738,8 +1750,8 @@ requires(semantic::concepts::Span<span_const_mat_4x2_f64>&& semantic::concepts::
 }
 
 template<class span_const_mat_4x2_f32>
-requires(semantic::concepts::Span<span_const_mat_4x2_f32>&& semantic::concepts::
-             Matrix<typename span_const_mat_4x2_f32::value_type, f32, 4, 2>)
+requires(concepts::span<span_const_mat_4x2_f32>&& concepts::
+             matrix<typename span_const_mat_4x2_f32::value_type, f32, 4, 2>)
     /*!
      * \brief Part of GL_ARB_separate_shader_objects
      * \param program GLuint
@@ -1775,8 +1787,8 @@ requires(semantic::concepts::Span<span_const_mat_4x2_f32>&& semantic::concepts::
 }
 
 template<class span_const_mat_4x3_f64>
-requires(semantic::concepts::Span<span_const_mat_4x3_f64>&& semantic::concepts::
-             Matrix<typename span_const_mat_4x3_f64::value_type, f64, 4, 3>)
+requires(concepts::span<span_const_mat_4x3_f64>&& concepts::
+             matrix<typename span_const_mat_4x3_f64::value_type, f64, 4, 3>)
     /*!
      * \brief Part of GL_ARB_separate_shader_objects
      * \param program GLuint
@@ -1812,8 +1824,8 @@ requires(semantic::concepts::Span<span_const_mat_4x3_f64>&& semantic::concepts::
 }
 
 template<class span_const_mat_4x3_f32>
-requires(semantic::concepts::Span<span_const_mat_4x3_f32>&& semantic::concepts::
-             Matrix<typename span_const_mat_4x3_f32::value_type, f32, 4, 3>)
+requires(concepts::span<span_const_mat_4x3_f32>&& concepts::
+             matrix<typename span_const_mat_4x3_f32::value_type, f32, 4, 3>)
     /*!
      * \brief Part of GL_ARB_separate_shader_objects
      * \param program GLuint

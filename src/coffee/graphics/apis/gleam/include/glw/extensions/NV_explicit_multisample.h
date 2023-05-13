@@ -3,19 +3,19 @@
 #ifdef GL_NV_explicit_multisample
 namespace gl::nv::explicit_multisample {
 namespace values {
-constexpr libc_types::u32 sample_position                         = 0x8E50;
-constexpr libc_types::u32 sample_mask                             = 0x8E51;
-constexpr libc_types::u32 sample_mask_value                       = 0x8E52;
-constexpr libc_types::u32 texture_binding_renderbuffer            = 0x8E53;
-constexpr libc_types::u32 texture_renderbuffer_data_store_binding = 0x8E54;
-constexpr libc_types::u32 texture_renderbuffer                    = 0x8E55;
-constexpr libc_types::u32 sampler_renderbuffer                    = 0x8E56;
-constexpr libc_types::u32 int_sampler_renderbuffer                = 0x8E57;
-constexpr libc_types::u32 unsigned_int_sampler_renderbuffer       = 0x8E58;
-constexpr libc_types::u32 max_sample_mask_words                   = 0x8E59;
+constexpr u32 sample_position                         = 0x8E50;
+constexpr u32 sample_mask                             = 0x8E51;
+constexpr u32 sample_mask_value                       = 0x8E52;
+constexpr u32 texture_binding_renderbuffer            = 0x8E53;
+constexpr u32 texture_renderbuffer_data_store_binding = 0x8E54;
+constexpr u32 texture_renderbuffer                    = 0x8E55;
+constexpr u32 sampler_renderbuffer                    = 0x8E56;
+constexpr u32 int_sampler_renderbuffer                = 0x8E57;
+constexpr u32 unsigned_int_sampler_renderbuffer       = 0x8E58;
+constexpr u32 max_sample_mask_words                   = 0x8E59;
 } // namespace values
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+requires(concepts::span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
          std::decay_t<f32>>)
     /*!

@@ -5,19 +5,19 @@
 namespace gl::arb::texture_compression {
 using gl::group::hint_target;
 namespace values {
-constexpr libc_types::u32 compressed_alpha               = 0x84E9;
-constexpr libc_types::u32 compressed_luminance           = 0x84EA;
-constexpr libc_types::u32 compressed_luminance_alpha     = 0x84EB;
-constexpr libc_types::u32 compressed_intensity           = 0x84EC;
-constexpr libc_types::u32 compressed_rgb                 = 0x84ED;
-constexpr libc_types::u32 compressed_rgba                = 0x84EE;
-constexpr libc_types::u32 texture_compressed_image_size  = 0x86A0;
-constexpr libc_types::u32 texture_compressed             = 0x86A1;
-constexpr libc_types::u32 num_compressed_texture_formats = 0x86A2;
-constexpr libc_types::u32 compressed_texture_formats     = 0x86A3;
+constexpr u32 compressed_alpha               = 0x84E9;
+constexpr u32 compressed_luminance           = 0x84EA;
+constexpr u32 compressed_luminance_alpha     = 0x84EB;
+constexpr u32 compressed_intensity           = 0x84EC;
+constexpr u32 compressed_rgb                 = 0x84ED;
+constexpr u32 compressed_rgba                = 0x84EE;
+constexpr u32 texture_compressed_image_size  = 0x86A0;
+constexpr u32 texture_compressed             = 0x86A1;
+constexpr u32 num_compressed_texture_formats = 0x86A2;
+constexpr u32 compressed_texture_formats     = 0x86A3;
 } // namespace values
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_ARB_texture_compression
      * \param target GLenum
@@ -55,8 +55,7 @@ requires(semantic::concepts::Span<span_const_void>)
 }
 
 template<class size_2_i32, class span_const_void>
-requires(semantic::concepts::Size2D<size_2_i32, i32>&&
-             semantic::concepts::Span<span_const_void>)
+requires(concepts::size_2d<size_2_i32, i32>&& concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_ARB_texture_compression
      * \param target GLenum
@@ -96,8 +95,7 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>&&
 }
 
 template<class size_3_i32, class span_const_void>
-requires(semantic::concepts::Size2D<size_3_i32, i32>&&
-             semantic::concepts::Span<span_const_void>)
+requires(concepts::size_2d<size_3_i32, i32>&& concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_ARB_texture_compression
      * \param target GLenum
@@ -139,7 +137,7 @@ requires(semantic::concepts::Size2D<size_3_i32, i32>&&
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_ARB_texture_compression
      * \param target GLenum
@@ -177,9 +175,9 @@ requires(semantic::concepts::Span<span_const_void>)
 }
 
 template<class size_2_i32, class span_const_void, class vec_2_i32>
-requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
-                 semantic::concepts::Size2D<size_2_i32, i32>&&
-                 semantic::concepts::Span<span_const_void>)
+requires(
+    concepts::vector<vec_2_i32, i32, 2>&& concepts::size_2d<size_2_i32, i32>&&
+                                          concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_ARB_texture_compression
      * \param target GLenum
@@ -221,9 +219,9 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
 }
 
 template<class size_3_i32, class span_const_void, class vec_3_i32>
-requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
-                 semantic::concepts::Size2D<size_3_i32, i32>&&
-                 semantic::concepts::Span<span_const_void>)
+requires(
+    concepts::vector<vec_3_i32, i32, 3>&& concepts::size_2d<size_3_i32, i32>&&
+                                          concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_ARB_texture_compression
      * \param target GLenum
@@ -269,7 +267,7 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
 }
 
 template<class span_void>
-requires(semantic::concepts::Span<span_void>)
+requires(concepts::span<span_void>)
     /*!
      * \brief Part of GL_ARB_texture_compression
      * \param target GLenum

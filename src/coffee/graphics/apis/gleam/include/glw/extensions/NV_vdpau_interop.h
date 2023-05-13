@@ -3,10 +3,10 @@
 #ifdef GL_NV_vdpau_interop
 namespace gl::nv::vdpau_interop {
 namespace values {
-constexpr libc_types::u32 surface_state      = 0x86EB;
-constexpr libc_types::u32 surface_registered = 0x86FD;
-constexpr libc_types::u32 surface_mapped     = 0x8700;
-constexpr libc_types::u32 write_discard      = 0x88BE;
+constexpr u32 surface_state      = 0x86EB;
+constexpr u32 surface_registered = 0x86FD;
+constexpr u32 surface_mapped     = 0x8700;
+constexpr u32 write_discard      = 0x88BE;
 } // namespace values
 /*!
  * \brief Part of GL_NV_vdpau_interop
@@ -25,7 +25,7 @@ STATICINLINE void vdpau_fini()
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -58,7 +58,7 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_NV_vdpau_interop
      * \param vdpDevice const void *
@@ -100,7 +100,7 @@ STATICINLINE bool vdpau_is_surface(GLvdpauSurfaceNV surface)
 }
 
 template<class span_const_GLvdpauSurfaceNV>
-requires(semantic::concepts::Span<span_const_GLvdpauSurfaceNV>&& std::is_same_v<
+requires(concepts::span<span_const_GLvdpauSurfaceNV>&& std::is_same_v<
          std::decay_t<typename span_const_GLvdpauSurfaceNV::value_type>,
          std::decay_t<GLvdpauSurfaceNV>>)
     /*!
@@ -126,8 +126,8 @@ requires(semantic::concepts::Span<span_const_GLvdpauSurfaceNV>&& std::is_same_v<
 }
 
 template<class span_const_u32, class span_const_void>
-requires(semantic::concepts::Span<span_const_void>&&
-             semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+requires(concepts::span<span_const_void>&& concepts::span<span_const_u32>&&
+                                           std::is_same_v<
                  std::decay_t<typename span_const_u32::value_type>,
                  std::decay_t<u32>>)
     /*!
@@ -161,8 +161,8 @@ requires(semantic::concepts::Span<span_const_void>&&
 }
 
 template<class span_const_u32, class span_const_void>
-requires(semantic::concepts::Span<span_const_void>&&
-             semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+requires(concepts::span<span_const_void>&& concepts::span<span_const_u32>&&
+                                           std::is_same_v<
                  std::decay_t<typename span_const_u32::value_type>,
                  std::decay_t<u32>>)
     /*!
@@ -213,7 +213,7 @@ STATICINLINE void vdpau_surface_access(GLvdpauSurfaceNV surface, GLenum access)
 }
 
 template<class span_const_GLvdpauSurfaceNV>
-requires(semantic::concepts::Span<span_const_GLvdpauSurfaceNV>&& std::is_same_v<
+requires(concepts::span<span_const_GLvdpauSurfaceNV>&& std::is_same_v<
          std::decay_t<typename span_const_GLvdpauSurfaceNV::value_type>,
          std::decay_t<GLvdpauSurfaceNV>>)
     /*!

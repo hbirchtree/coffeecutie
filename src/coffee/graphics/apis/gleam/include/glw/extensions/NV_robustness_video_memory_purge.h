@@ -3,7 +3,7 @@
 #ifdef GL_NV_robustness_video_memory_purge
 namespace gl::nv::robustness_video_memory_purge {
 namespace values {
-constexpr libc_types::u32 purged_context_reset = 0x92BB;
+constexpr u32 purged_context_reset = 0x92BB;
 } // namespace values
 } // namespace gl::nv::robustness_video_memory_purge
 #endif // GL_NV_robustness_video_memory_purge

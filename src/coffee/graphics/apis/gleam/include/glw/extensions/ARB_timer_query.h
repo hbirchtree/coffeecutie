@@ -11,7 +11,7 @@ using gl::group::query_target;
 namespace values {
 } // namespace values
 template<class span_i64>
-requires(semantic::concepts::Span<span_i64>&& std::is_same_v<
+requires(concepts::span<span_i64>&& std::is_same_v<
          std::decay_t<typename span_i64::value_type>,
          std::decay_t<i64>>)
     /*!
@@ -37,7 +37,7 @@ requires(semantic::concepts::Span<span_i64>&& std::is_same_v<
 }
 
 template<class span_u64>
-requires(semantic::concepts::Span<span_u64>&& std::is_same_v<
+requires(concepts::span<span_u64>&& std::is_same_v<
          std::decay_t<typename span_u64::value_type>,
          std::decay_t<u64>>)
     /*!

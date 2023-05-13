@@ -9,11 +9,11 @@ using gl::group::buffer_storage_mask;
 using gl::group::map_buffer_access_mask;
 using gl::group::memory_barrier_mask;
 namespace values {
-constexpr libc_types::u32 buffer_immutable_storage = 0x821F;
-constexpr libc_types::u32 buffer_storage_flags     = 0x8220;
+constexpr u32 buffer_immutable_storage = 0x821F;
+constexpr u32 buffer_storage_flags     = 0x8220;
 } // namespace values
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_buffer_storage
      * \param target GLenum

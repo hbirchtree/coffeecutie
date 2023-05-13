@@ -79,6 +79,6 @@ enum class path_metric_mask : u32
     glyph_width_bit_nv = GL_GLYPH_WIDTH_BIT_NV,
 #endif
 }; // enum class path_metric_mask
-C_FLAGS(path_metric_mask, ::libc_types::u32);
+C_FLAGS(path_metric_mask, u32);
 
 } // namespace gl::group

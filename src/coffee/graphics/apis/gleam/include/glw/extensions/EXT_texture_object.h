@@ -7,15 +7,15 @@ namespace gl::ext::texture_object {
 using gl::group::get_prop;
 using gl::group::texture_parameter_name;
 namespace values {
-constexpr libc_types::u32 texture_resident   = 0x8067;
-constexpr libc_types::u32 texture_1d_binding = 0x8068;
-constexpr libc_types::u32 texture_2d_binding = 0x8069;
+constexpr u32 texture_resident   = 0x8067;
+constexpr u32 texture_1d_binding = 0x8068;
+constexpr u32 texture_2d_binding = 0x8069;
 } // namespace values
 template<class span_bool, class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+requires(concepts::span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>&& semantic::concepts::Span<span_bool>&&
-                              std::is_same_v<
+         std::decay_t<u32>>&& concepts::span<span_bool>&&
+                                          std::is_same_v<
                  std::decay_t<typename span_bool::value_type>,
                  std::decay_t<bool>>)
     /*!
@@ -66,7 +66,7 @@ STATICINLINE void bind_texture(group::texture_target target, u32 texture)
 }
 
 template<class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+requires(concepts::span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -90,7 +90,7 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(concepts::span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -135,10 +135,10 @@ STATICINLINE bool is_texture(u32 texture)
 }
 
 template<class span_const_GLclampf, class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+requires(concepts::span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>&& semantic::concepts::Span<span_const_GLclampf>&&
-                              std::is_same_v<
+         std::decay_t<u32>>&& concepts::span<span_const_GLclampf>&&
+                                          std::is_same_v<
                  std::decay_t<typename span_const_GLclampf::value_type>,
                  std::decay_t<GLclampf>>)
     /*!

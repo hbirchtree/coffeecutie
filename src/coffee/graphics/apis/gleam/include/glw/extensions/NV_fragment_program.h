@@ -3,18 +3,18 @@
 #ifdef GL_NV_fragment_program
 namespace gl::nv::fragment_program {
 namespace values {
-constexpr libc_types::u32 max_fragment_program_local_parameters = 0x8868;
-constexpr libc_types::u32 fragment_program                      = 0x8870;
-constexpr libc_types::u32 max_texture_coords                    = 0x8871;
-constexpr libc_types::u32 max_texture_image_units               = 0x8872;
-constexpr libc_types::u32 fragment_program_binding              = 0x8873;
-constexpr libc_types::u32 program_error_string                  = 0x8874;
+constexpr u32 max_fragment_program_local_parameters = 0x8868;
+constexpr u32 fragment_program                      = 0x8870;
+constexpr u32 max_texture_coords                    = 0x8871;
+constexpr u32 max_texture_image_units               = 0x8872;
+constexpr u32 fragment_program_binding              = 0x8873;
+constexpr u32 program_error_string                  = 0x8874;
 } // namespace values
 template<class span_const_u8, class span_f64>
-requires(semantic::concepts::Span<span_const_u8>&& std::is_same_v<
+requires(concepts::span<span_const_u8>&& std::is_same_v<
          std::decay_t<typename span_const_u8::value_type>,
-         std::decay_t<u8>>&& semantic::concepts::Span<span_f64>&&
-                             std::is_same_v<
+         std::decay_t<u8>>&& concepts::span<span_f64>&&
+                                         std::is_same_v<
                  std::decay_t<typename span_f64::value_type>,
                  std::decay_t<f64>>)
     /*!
@@ -42,10 +42,10 @@ requires(semantic::concepts::Span<span_const_u8>&& std::is_same_v<
 }
 
 template<class span_const_u8, class span_f32>
-requires(semantic::concepts::Span<span_const_u8>&& std::is_same_v<
+requires(concepts::span<span_const_u8>&& std::is_same_v<
          std::decay_t<typename span_const_u8::value_type>,
-         std::decay_t<u8>>&& semantic::concepts::Span<span_f32>&&
-                             std::is_same_v<
+         std::decay_t<u8>>&& concepts::span<span_f32>&&
+                                         std::is_same_v<
                  std::decay_t<typename span_f32::value_type>,
                  std::decay_t<f32>>)
     /*!
@@ -73,9 +73,9 @@ requires(semantic::concepts::Span<span_const_u8>&& std::is_same_v<
 }
 
 template<class span_const_vec_4_u8, class vec_4_f64>
-requires(semantic::concepts::Span<span_const_vec_4_u8>&& semantic::concepts::
-             Vector<typename span_const_vec_4_u8::value_type, u8, 4>&&
-                 semantic::concepts::Vector<vec_4_f64, f64, 4>)
+requires(concepts::span<span_const_vec_4_u8>&&
+             concepts::vector<typename span_const_vec_4_u8::value_type, u8, 4>&&
+                 concepts::vector<vec_4_f64, f64, 4>)
     /*!
      * \brief Part of GL_NV_fragment_program
      * \param id GLuint
@@ -107,12 +107,10 @@ requires(semantic::concepts::Span<span_const_vec_4_u8>&& semantic::concepts::
 }
 
 template<class span_const_vec_4_f64, class span_const_vec_4_u8>
-requires(
-    semantic::concepts::Span<span_const_vec_4_u8>&& semantic::concepts::Vector<
-        typename span_const_vec_4_u8::value_type,
-        u8,
-        4>&& semantic::concepts::Span<span_const_vec_4_f64>&& semantic::
-        concepts::Vector<typename span_const_vec_4_f64::value_type, f64, 4>)
+requires(concepts::span<span_const_vec_4_u8>&&
+             concepts::vector<typename span_const_vec_4_u8::value_type, u8, 4>&&
+                 concepts::span<span_const_vec_4_f64>&& concepts::
+                     vector<typename span_const_vec_4_f64::value_type, f64, 4>)
     /*!
      * \brief Part of GL_NV_fragment_program
      * \param id GLuint
@@ -141,9 +139,9 @@ requires(
 }
 
 template<class span_const_vec_4_u8, class vec_4_f32>
-requires(semantic::concepts::Span<span_const_vec_4_u8>&& semantic::concepts::
-             Vector<typename span_const_vec_4_u8::value_type, u8, 4>&&
-                 semantic::concepts::Vector<vec_4_f32, f32, 4>)
+requires(concepts::span<span_const_vec_4_u8>&&
+             concepts::vector<typename span_const_vec_4_u8::value_type, u8, 4>&&
+                 concepts::vector<vec_4_f32, f32, 4>)
     /*!
      * \brief Part of GL_NV_fragment_program
      * \param id GLuint
@@ -175,12 +173,10 @@ requires(semantic::concepts::Span<span_const_vec_4_u8>&& semantic::concepts::
 }
 
 template<class span_const_vec_4_f32, class span_const_vec_4_u8>
-requires(
-    semantic::concepts::Span<span_const_vec_4_u8>&& semantic::concepts::Vector<
-        typename span_const_vec_4_u8::value_type,
-        u8,
-        4>&& semantic::concepts::Span<span_const_vec_4_f32>&& semantic::
-        concepts::Vector<typename span_const_vec_4_f32::value_type, f32, 4>)
+requires(concepts::span<span_const_vec_4_u8>&&
+             concepts::vector<typename span_const_vec_4_u8::value_type, u8, 4>&&
+                 concepts::span<span_const_vec_4_f32>&& concepts::
+                     vector<typename span_const_vec_4_f32::value_type, f32, 4>)
     /*!
      * \brief Part of GL_NV_fragment_program
      * \param id GLuint

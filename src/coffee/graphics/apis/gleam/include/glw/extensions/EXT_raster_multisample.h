@@ -3,12 +3,12 @@
 #ifdef GL_EXT_raster_multisample
 namespace gl::ext::raster_multisample {
 namespace values {
-constexpr libc_types::u32 raster_multisample                = 0x9327;
-constexpr libc_types::u32 raster_samples                    = 0x9328;
-constexpr libc_types::u32 max_raster_samples                = 0x9329;
-constexpr libc_types::u32 raster_fixed_sample_locations     = 0x932A;
-constexpr libc_types::u32 multisample_rasterization_allowed = 0x932B;
-constexpr libc_types::u32 effective_raster_samples          = 0x932C;
+constexpr u32 raster_multisample                = 0x9327;
+constexpr u32 raster_samples                    = 0x9328;
+constexpr u32 max_raster_samples                = 0x9329;
+constexpr u32 raster_fixed_sample_locations     = 0x932A;
+constexpr u32 multisample_rasterization_allowed = 0x932B;
+constexpr u32 effective_raster_samples          = 0x932C;
 } // namespace values
 /*!
  * \brief Part of GL_EXT_raster_multisample

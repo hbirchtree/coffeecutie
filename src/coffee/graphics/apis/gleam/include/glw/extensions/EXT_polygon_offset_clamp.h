@@ -3,7 +3,7 @@
 #ifdef GL_EXT_polygon_offset_clamp
 namespace gl::ext::polygon_offset_clamp {
 namespace values {
-constexpr libc_types::u32 polygon_offset_clamp = 0x8E1B;
+constexpr u32 polygon_offset_clamp = 0x8E1B;
 } // namespace values
 /*!
  * \brief Part of GL_EXT_polygon_offset_clamp

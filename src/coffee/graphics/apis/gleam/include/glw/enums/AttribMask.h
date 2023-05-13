@@ -83,6 +83,6 @@ enum class attrib_mask : u32
     viewport_bit = GL_VIEWPORT_BIT,
 #endif
 }; // enum class attrib_mask
-C_FLAGS(attrib_mask, ::libc_types::u32);
+C_FLAGS(attrib_mask, u32);
 
 } // namespace gl::group

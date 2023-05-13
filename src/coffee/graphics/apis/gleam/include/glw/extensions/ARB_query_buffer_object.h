@@ -13,7 +13,7 @@ using gl::group::copy_buffer_sub_data_target;
 using gl::group::memory_barrier_mask;
 using gl::group::query_object_parameter_name;
 namespace values {
-constexpr libc_types::u32 query_buffer_binding = 0x9193;
+constexpr u32 query_buffer_binding = 0x9193;
 } // namespace values
 } // namespace gl::arb::query_buffer_object
 #endif // GL_ARB_query_buffer_object

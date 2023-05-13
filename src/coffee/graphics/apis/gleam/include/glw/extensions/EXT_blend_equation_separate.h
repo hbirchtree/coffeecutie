@@ -3,8 +3,8 @@
 #ifdef GL_EXT_blend_equation_separate
 namespace gl::ext::blend_equation_separate {
 namespace values {
-constexpr libc_types::u32 blend_equation_rgb   = 0x8009;
-constexpr libc_types::u32 blend_equation_alpha = 0x883D;
+constexpr u32 blend_equation_rgb   = 0x8009;
+constexpr u32 blend_equation_alpha = 0x883D;
 } // namespace values
 /*!
  * \brief Part of GL_EXT_blend_equation_separate

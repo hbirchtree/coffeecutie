@@ -5,7 +5,7 @@
 namespace gl::amd::occlusion_query_event {
 using gl::group::occlusion_query_event_mask_amd;
 namespace values {
-constexpr libc_types::u32 occlusion_query_event_mask = 0x874F;
+constexpr u32 occlusion_query_event_mask = 0x874F;
 } // namespace values
 /*!
  * \brief Part of GL_AMD_occlusion_query_event

@@ -5,10 +5,10 @@ namespace gl::nvx::progress_fence {
 namespace values {
 } // namespace values
 template<class span_const_u32, class span_const_u64>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+requires(concepts::span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>&& semantic::concepts::Span<span_const_u64>&&
-                              std::is_same_v<
+         std::decay_t<u32>>&& concepts::span<span_const_u64>&&
+                                          std::is_same_v<
                  std::decay_t<typename span_const_u64::value_type>,
                  std::decay_t<u64>>)
     /*!
@@ -56,10 +56,10 @@ STATICINLINE GLuint create_progress_fence()
 }
 
 template<class span_const_u32, class span_const_u64>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+requires(concepts::span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>&& semantic::concepts::Span<span_const_u64>&&
-                              std::is_same_v<
+         std::decay_t<u32>>&& concepts::span<span_const_u64>&&
+                                          std::is_same_v<
                  std::decay_t<typename span_const_u64::value_type>,
                  std::decay_t<u64>>)
     /*!
@@ -93,10 +93,10 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
 }
 
 template<class span_const_u32, class span_const_u64>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+requires(concepts::span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>&& semantic::concepts::Span<span_const_u64>&&
-                              std::is_same_v<
+         std::decay_t<u32>>&& concepts::span<span_const_u64>&&
+                                          std::is_same_v<
                  std::decay_t<typename span_const_u64::value_type>,
                  std::decay_t<u64>>)
     /*!

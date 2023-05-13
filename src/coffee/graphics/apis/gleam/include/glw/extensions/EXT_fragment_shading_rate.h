@@ -54,7 +54,7 @@ STATICINLINE void framebuffer_shading_rate(
 }
 
 template<class span_shading_rate>
-requires(semantic::concepts::Span<span_shading_rate>&& std::is_same_v<
+requires(concepts::span<span_shading_rate>&& std::is_same_v<
          std::decay_t<typename span_shading_rate::value_type>,
          std::decay_t<group::shading_rate>>)
     /*!

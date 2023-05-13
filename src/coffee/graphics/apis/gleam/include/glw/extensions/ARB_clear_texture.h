@@ -7,7 +7,7 @@ using gl::group::internal_format_prop;
 namespace values {
 } // namespace values
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_ARB_clear_texture
      * \param texture GLuint
@@ -44,9 +44,9 @@ requires(semantic::concepts::Span<span_const_void>)
 }
 
 template<class size_3_i32, class span_const_void, class vec_3_i32>
-requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
-                 semantic::concepts::Size2D<size_3_i32, i32>&&
-                 semantic::concepts::Span<span_const_void>)
+requires(
+    concepts::vector<vec_3_i32, i32, 3>&& concepts::size_2d<size_3_i32, i32>&&
+                                          concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_ARB_clear_texture
      * \param texture GLuint

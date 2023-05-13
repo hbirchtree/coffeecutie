@@ -3,12 +3,12 @@
 #ifdef GL_OES_get_program_binary
 namespace gl::oes::get_program_binary {
 namespace values {
-constexpr libc_types::u32 program_binary_length      = 0x8741;
-constexpr libc_types::u32 num_program_binary_formats = 0x87FE;
-constexpr libc_types::u32 program_binary_formats     = 0x87FF;
+constexpr u32 program_binary_length      = 0x8741;
+constexpr u32 num_program_binary_formats = 0x87FE;
+constexpr u32 program_binary_formats     = 0x87FF;
 } // namespace values
 template<class span_void>
-requires(semantic::concepts::Span<span_void>)
+requires(concepts::span<span_void>)
     /*!
      * \brief Part of GL_OES_get_program_binary
      * \param program GLuint
@@ -41,7 +41,7 @@ requires(semantic::concepts::Span<span_void>)
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_OES_get_program_binary
      * \param program GLuint

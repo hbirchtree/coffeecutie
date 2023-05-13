@@ -19,7 +19,7 @@ using gl::group::minmax_target_ext;
 namespace values {
 } // namespace values
 template<class span_void>
-requires(semantic::concepts::Span<span_void>)
+requires(concepts::span<span_void>)
     /*!
      * \brief Part of GL_EXT_histogram
      * \param target GLenum
@@ -51,7 +51,7 @@ requires(semantic::concepts::Span<span_void>)
 }
 
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+requires(concepts::span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -79,7 +79,7 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -107,7 +107,7 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_void>
-requires(semantic::concepts::Span<span_void>)
+requires(concepts::span<span_void>)
     /*!
      * \brief Part of GL_EXT_histogram
      * \param target GLenum
@@ -139,7 +139,7 @@ requires(semantic::concepts::Span<span_void>)
 }
 
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+requires(concepts::span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -167,7 +167,7 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!

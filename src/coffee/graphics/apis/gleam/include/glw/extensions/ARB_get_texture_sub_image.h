@@ -5,9 +5,8 @@ namespace gl::arb::get_texture_sub_image {
 namespace values {
 } // namespace values
 template<class size_3_i32, class span_void, class vec_3_i32>
-requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
-                 semantic::concepts::Size2D<size_3_i32, i32>&&
-                 semantic::concepts::Span<span_void>)
+requires(concepts::vector<vec_3_i32, i32, 3>&&
+             concepts::size_2d<size_3_i32, i32>&& concepts::span<span_void>)
     /*!
      * \brief Part of GL_ARB_get_texture_sub_image
      * \param texture GLuint
@@ -54,9 +53,8 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
 }
 
 template<class size_3_i32, class span_void, class vec_3_i32>
-requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
-                 semantic::concepts::Size2D<size_3_i32, i32>&&
-                 semantic::concepts::Span<span_void>)
+requires(concepts::vector<vec_3_i32, i32, 3>&&
+             concepts::size_2d<size_3_i32, i32>&& concepts::span<span_void>)
     /*!
      * \brief Part of GL_ARB_get_texture_sub_image
      * \param texture GLuint

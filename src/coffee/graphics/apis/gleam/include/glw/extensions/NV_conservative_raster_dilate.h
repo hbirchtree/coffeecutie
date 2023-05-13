@@ -3,9 +3,9 @@
 #ifdef GL_NV_conservative_raster_dilate
 namespace gl::nv::conservative_raster_dilate {
 namespace values {
-constexpr libc_types::u32 conservative_raster_dilate             = 0x9379;
-constexpr libc_types::u32 conservative_raster_dilate_range       = 0x937A;
-constexpr libc_types::u32 conservative_raster_dilate_granularity = 0x937B;
+constexpr u32 conservative_raster_dilate             = 0x9379;
+constexpr u32 conservative_raster_dilate_range       = 0x937A;
+constexpr u32 conservative_raster_dilate_granularity = 0x937B;
 } // namespace values
 /*!
  * \brief Part of GL_NV_conservative_raster_dilate

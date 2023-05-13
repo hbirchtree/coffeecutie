@@ -34,7 +34,7 @@ STATICINLINE void tex_storage_1d(
 }
 
 template<class size_2_i32>
-requires(semantic::concepts::Size2D<size_2_i32, i32>)
+requires(concepts::size_2d<size_2_i32, i32>)
     /*!
      * \brief Part of GL_ARB_texture_storage
      * \param target GLenum
@@ -65,7 +65,7 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>)
 }
 
 template<class size_3_i32>
-requires(semantic::concepts::Size2D<size_3_i32, i32>)
+requires(concepts::size_2d<size_3_i32, i32>)
     /*!
      * \brief Part of GL_ARB_texture_storage
      * \param target GLenum

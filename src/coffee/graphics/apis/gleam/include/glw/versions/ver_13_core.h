@@ -18,8 +18,8 @@ requires(MinimumVersion<Current, Version<1, 3>>)
 }
 
 template<class span_const_void>
-requires(MinimumVersion<Current, Version<1, 3>>&&
-             semantic::concepts::Span<span_const_void>)
+requires(
+    MinimumVersion<Current, Version<1, 3>>&& concepts::span<span_const_void>)
     /*!
      * \brief Wraps around glCompressedTexImage1D. Introduced in GL core 1.3
      * \param target GLenum
@@ -57,9 +57,9 @@ requires(MinimumVersion<Current, Version<1, 3>>&&
 }
 
 template<class size_2_i32, class span_const_void>
-requires(MinimumVersion<Current, Version<1, 3>>&&
-                 semantic::concepts::Size2D<size_2_i32, i32>&&
-                 semantic::concepts::Span<span_const_void>)
+requires(
+    MinimumVersion<Current, Version<1, 3>>&&
+        concepts::size_2d<size_2_i32, i32>&& concepts::span<span_const_void>)
     /*!
      * \brief Wraps around glCompressedTexImage2D. Introduced in GL core 1.3
      * \param target GLenum
@@ -99,9 +99,9 @@ requires(MinimumVersion<Current, Version<1, 3>>&&
 }
 
 template<class size_3_i32, class span_const_void>
-requires(MinimumVersion<Current, Version<1, 3>>&&
-                 semantic::concepts::Size2D<size_3_i32, i32>&&
-                 semantic::concepts::Span<span_const_void>)
+requires(
+    MinimumVersion<Current, Version<1, 3>>&&
+        concepts::size_2d<size_3_i32, i32>&& concepts::span<span_const_void>)
     /*!
      * \brief Wraps around glCompressedTexImage3D. Introduced in GL core 1.3
      * \param target GLenum
@@ -143,8 +143,8 @@ requires(MinimumVersion<Current, Version<1, 3>>&&
 }
 
 template<class span_const_void>
-requires(MinimumVersion<Current, Version<1, 3>>&&
-             semantic::concepts::Span<span_const_void>)
+requires(
+    MinimumVersion<Current, Version<1, 3>>&& concepts::span<span_const_void>)
     /*!
      * \brief Wraps around glCompressedTexSubImage1D. Introduced in GL core 1.3
      * \param target GLenum
@@ -183,9 +183,9 @@ requires(MinimumVersion<Current, Version<1, 3>>&&
 
 template<class size_2_i32, class span_const_void, class vec_2_i32>
 requires(MinimumVersion<Current, Version<1, 3>>&&
-                     semantic::concepts::Vector<vec_2_i32, i32, 2>&&
-                     semantic::concepts::Size2D<size_2_i32, i32>&&
-                     semantic::concepts::Span<span_const_void>)
+                     concepts::vector<vec_2_i32, i32, 2>&&
+                     concepts::size_2d<size_2_i32, i32>&&
+                     concepts::span<span_const_void>)
     /*!
      * \brief Wraps around glCompressedTexSubImage2D. Introduced in GL core 1.3
      * \param target GLenum
@@ -228,9 +228,9 @@ requires(MinimumVersion<Current, Version<1, 3>>&&
 
 template<class size_3_i32, class span_const_void, class vec_3_i32>
 requires(MinimumVersion<Current, Version<1, 3>>&&
-                     semantic::concepts::Vector<vec_3_i32, i32, 3>&&
-                     semantic::concepts::Size2D<size_3_i32, i32>&&
-                     semantic::concepts::Span<span_const_void>)
+                     concepts::vector<vec_3_i32, i32, 3>&&
+                     concepts::size_2d<size_3_i32, i32>&&
+                     concepts::span<span_const_void>)
     /*!
      * \brief Wraps around glCompressedTexSubImage3D. Introduced in GL core 1.3
      * \param target GLenum
@@ -276,8 +276,7 @@ requires(MinimumVersion<Current, Version<1, 3>>&&
 }
 
 template<class span_void>
-requires(MinimumVersion<Current, Version<1, 3>>&&
-             semantic::concepts::Span<span_void>)
+requires(MinimumVersion<Current, Version<1, 3>>&& concepts::span<span_void>)
     /*!
      * \brief Wraps around glGetCompressedTexImage. Introduced in GL core 1.3
      * \param target GLenum

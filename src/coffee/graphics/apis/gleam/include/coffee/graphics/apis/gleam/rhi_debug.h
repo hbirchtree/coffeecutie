@@ -158,7 +158,7 @@ struct api
 #if defined(GL_KHR_debug)
         if(ext.khr.debug)
         {
-            cmd::enable(group::enable_cap::debug_output_synchronous_khr);
+            cmd::enable(group::enable_cap::debug_output_synchronous);
             gl::khr::debug::debug_message_callback(
                 [](GLenum        source,
                    GLenum        type,

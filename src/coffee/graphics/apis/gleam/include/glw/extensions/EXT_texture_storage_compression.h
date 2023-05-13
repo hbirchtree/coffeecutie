@@ -11,8 +11,8 @@ using gl::group::tex_storage_attribs;
 namespace values {
 } // namespace values
 template<class size_2_i32, class span_const_i32>
-requires(semantic::concepts::Size2D<size_2_i32, i32>&&
-             semantic::concepts::Span<span_const_i32>&& std::is_same_v<
+requires(concepts::size_2d<size_2_i32, i32>&& concepts::span<span_const_i32>&&
+                                              std::is_same_v<
                  std::decay_t<typename span_const_i32::value_type>,
                  std::decay_t<i32>>)
     /*!
@@ -49,8 +49,8 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>&&
 }
 
 template<class size_3_i32, class span_const_i32>
-requires(semantic::concepts::Size2D<size_3_i32, i32>&&
-             semantic::concepts::Span<span_const_i32>&& std::is_same_v<
+requires(concepts::size_2d<size_3_i32, i32>&& concepts::span<span_const_i32>&&
+                                              std::is_same_v<
                  std::decay_t<typename span_const_i32::value_type>,
                  std::decay_t<i32>>)
     /*!

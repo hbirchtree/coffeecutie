@@ -9,35 +9,35 @@ using gl::group::attribute_type;
 using gl::group::primitive_type;
 using gl::group::vertex_attrib_pointer_type;
 namespace values {
-constexpr libc_types::u32 int8                = 0x8FE0;
-constexpr libc_types::u32 int8_vec2           = 0x8FE1;
-constexpr libc_types::u32 int8_vec3           = 0x8FE2;
-constexpr libc_types::u32 int8_vec4           = 0x8FE3;
-constexpr libc_types::u32 int16               = 0x8FE4;
-constexpr libc_types::u32 int16_vec2          = 0x8FE5;
-constexpr libc_types::u32 int16_vec3          = 0x8FE6;
-constexpr libc_types::u32 int16_vec4          = 0x8FE7;
-constexpr libc_types::u32 int64_vec2          = 0x8FE9;
-constexpr libc_types::u32 int64_vec3          = 0x8FEA;
-constexpr libc_types::u32 int64_vec4          = 0x8FEB;
-constexpr libc_types::u32 unsigned_int8       = 0x8FEC;
-constexpr libc_types::u32 unsigned_int8_vec2  = 0x8FED;
-constexpr libc_types::u32 unsigned_int8_vec3  = 0x8FEE;
-constexpr libc_types::u32 unsigned_int8_vec4  = 0x8FEF;
-constexpr libc_types::u32 unsigned_int16      = 0x8FF0;
-constexpr libc_types::u32 unsigned_int16_vec2 = 0x8FF1;
-constexpr libc_types::u32 unsigned_int16_vec3 = 0x8FF2;
-constexpr libc_types::u32 unsigned_int16_vec4 = 0x8FF3;
-constexpr libc_types::u32 unsigned_int64_vec2 = 0x8FF5;
-constexpr libc_types::u32 unsigned_int64_vec3 = 0x8FF6;
-constexpr libc_types::u32 unsigned_int64_vec4 = 0x8FF7;
-constexpr libc_types::u32 float16             = 0x8FF8;
-constexpr libc_types::u32 float16_vec2        = 0x8FF9;
-constexpr libc_types::u32 float16_vec3        = 0x8FFA;
-constexpr libc_types::u32 float16_vec4        = 0x8FFB;
+constexpr u32 int8                = 0x8FE0;
+constexpr u32 int8_vec2           = 0x8FE1;
+constexpr u32 int8_vec3           = 0x8FE2;
+constexpr u32 int8_vec4           = 0x8FE3;
+constexpr u32 int16               = 0x8FE4;
+constexpr u32 int16_vec2          = 0x8FE5;
+constexpr u32 int16_vec3          = 0x8FE6;
+constexpr u32 int16_vec4          = 0x8FE7;
+constexpr u32 int64_vec2          = 0x8FE9;
+constexpr u32 int64_vec3          = 0x8FEA;
+constexpr u32 int64_vec4          = 0x8FEB;
+constexpr u32 unsigned_int8       = 0x8FEC;
+constexpr u32 unsigned_int8_vec2  = 0x8FED;
+constexpr u32 unsigned_int8_vec3  = 0x8FEE;
+constexpr u32 unsigned_int8_vec4  = 0x8FEF;
+constexpr u32 unsigned_int16      = 0x8FF0;
+constexpr u32 unsigned_int16_vec2 = 0x8FF1;
+constexpr u32 unsigned_int16_vec3 = 0x8FF2;
+constexpr u32 unsigned_int16_vec4 = 0x8FF3;
+constexpr u32 unsigned_int64_vec2 = 0x8FF5;
+constexpr u32 unsigned_int64_vec3 = 0x8FF6;
+constexpr u32 unsigned_int64_vec4 = 0x8FF7;
+constexpr u32 float16             = 0x8FF8;
+constexpr u32 float16_vec2        = 0x8FF9;
+constexpr u32 float16_vec3        = 0x8FFA;
+constexpr u32 float16_vec4        = 0x8FFB;
 } // namespace values
 template<class span_GLint64EXT>
-requires(semantic::concepts::Span<span_GLint64EXT>&& std::is_same_v<
+requires(concepts::span<span_GLint64EXT>&& std::is_same_v<
          std::decay_t<typename span_GLint64EXT::value_type>,
          std::decay_t<GLint64EXT>>)
     /*!
@@ -85,7 +85,7 @@ STATICINLINE void uniform(i32 location, GLint64EXT x)
 }
 
 template<class span_const_GLint64EXT>
-requires(semantic::concepts::Span<span_const_GLint64EXT>&& std::is_same_v<
+requires(concepts::span<span_const_GLint64EXT>&& std::is_same_v<
          std::decay_t<typename span_const_GLint64EXT::value_type>,
          std::decay_t<GLint64EXT>>)
     /*!
@@ -127,7 +127,7 @@ STATICINLINE void uniform(i32 location, GLuint64EXT x)
 }
 
 template<class span_const_GLuint64EXT>
-requires(semantic::concepts::Span<span_const_GLuint64EXT>&& std::is_same_v<
+requires(concepts::span<span_const_GLuint64EXT>&& std::is_same_v<
          std::decay_t<typename span_const_GLuint64EXT::value_type>,
          std::decay_t<GLuint64EXT>>)
     /*!
@@ -152,7 +152,7 @@ requires(semantic::concepts::Span<span_const_GLuint64EXT>&& std::is_same_v<
 }
 
 template<class vec_2_GLint64EXT>
-requires(semantic::concepts::Vector<vec_2_GLint64EXT, GLint64EXT, 2>)
+requires(concepts::vector<vec_2_GLint64EXT, GLint64EXT, 2>)
     /*!
      * \brief Part of GL_NV_gpu_shader5
      * \param location GLint
@@ -173,8 +173,8 @@ requires(semantic::concepts::Vector<vec_2_GLint64EXT, GLint64EXT, 2>)
 
 template<class span_const_vec_2_GLint64EXT>
 requires(
-    semantic::concepts::Span<span_const_vec_2_GLint64EXT>&& semantic::concepts::
-        Vector<typename span_const_vec_2_GLint64EXT::value_type, GLint64EXT, 2>)
+    concepts::span<span_const_vec_2_GLint64EXT>&& concepts::
+        vector<typename span_const_vec_2_GLint64EXT::value_type, GLint64EXT, 2>)
     /*!
      * \brief Part of GL_NV_gpu_shader5
      * \param location GLint
@@ -198,7 +198,7 @@ requires(
 }
 
 template<class vec_2_GLuint64EXT>
-requires(semantic::concepts::Vector<vec_2_GLuint64EXT, GLuint64EXT, 2>)
+requires(concepts::vector<vec_2_GLuint64EXT, GLuint64EXT, 2>)
     /*!
      * \brief Part of GL_NV_gpu_shader5
      * \param location GLint
@@ -218,11 +218,10 @@ requires(semantic::concepts::Vector<vec_2_GLuint64EXT, GLuint64EXT, 2>)
 }
 
 template<class span_const_vec_2_GLuint64EXT>
-requires(semantic::concepts::Span<span_const_vec_2_GLuint64EXT>&&
-             semantic::concepts::Vector<
-                 typename span_const_vec_2_GLuint64EXT::value_type,
-                 GLuint64EXT,
-                 2>)
+requires(concepts::span<span_const_vec_2_GLuint64EXT>&& concepts::vector<
+         typename span_const_vec_2_GLuint64EXT::value_type,
+         GLuint64EXT,
+         2>)
     /*!
      * \brief Part of GL_NV_gpu_shader5
      * \param location GLint
@@ -246,7 +245,7 @@ requires(semantic::concepts::Span<span_const_vec_2_GLuint64EXT>&&
 }
 
 template<class vec_3_GLint64EXT>
-requires(semantic::concepts::Vector<vec_3_GLint64EXT, GLint64EXT, 3>)
+requires(concepts::vector<vec_3_GLint64EXT, GLint64EXT, 3>)
     /*!
      * \brief Part of GL_NV_gpu_shader5
      * \param location GLint
@@ -268,8 +267,8 @@ requires(semantic::concepts::Vector<vec_3_GLint64EXT, GLint64EXT, 3>)
 
 template<class span_const_vec_3_GLint64EXT>
 requires(
-    semantic::concepts::Span<span_const_vec_3_GLint64EXT>&& semantic::concepts::
-        Vector<typename span_const_vec_3_GLint64EXT::value_type, GLint64EXT, 3>)
+    concepts::span<span_const_vec_3_GLint64EXT>&& concepts::
+        vector<typename span_const_vec_3_GLint64EXT::value_type, GLint64EXT, 3>)
     /*!
      * \brief Part of GL_NV_gpu_shader5
      * \param location GLint
@@ -293,7 +292,7 @@ requires(
 }
 
 template<class vec_3_GLuint64EXT>
-requires(semantic::concepts::Vector<vec_3_GLuint64EXT, GLuint64EXT, 3>)
+requires(concepts::vector<vec_3_GLuint64EXT, GLuint64EXT, 3>)
     /*!
      * \brief Part of GL_NV_gpu_shader5
      * \param location GLint
@@ -314,11 +313,10 @@ requires(semantic::concepts::Vector<vec_3_GLuint64EXT, GLuint64EXT, 3>)
 }
 
 template<class span_const_vec_3_GLuint64EXT>
-requires(semantic::concepts::Span<span_const_vec_3_GLuint64EXT>&&
-             semantic::concepts::Vector<
-                 typename span_const_vec_3_GLuint64EXT::value_type,
-                 GLuint64EXT,
-                 3>)
+requires(concepts::span<span_const_vec_3_GLuint64EXT>&& concepts::vector<
+         typename span_const_vec_3_GLuint64EXT::value_type,
+         GLuint64EXT,
+         3>)
     /*!
      * \brief Part of GL_NV_gpu_shader5
      * \param location GLint
@@ -342,7 +340,7 @@ requires(semantic::concepts::Span<span_const_vec_3_GLuint64EXT>&&
 }
 
 template<class vec_4_GLint64EXT>
-requires(semantic::concepts::Vector<vec_4_GLint64EXT, GLint64EXT, 4>)
+requires(concepts::vector<vec_4_GLint64EXT, GLint64EXT, 4>)
     /*!
      * \brief Part of GL_NV_gpu_shader5
      * \param location GLint
@@ -365,8 +363,8 @@ requires(semantic::concepts::Vector<vec_4_GLint64EXT, GLint64EXT, 4>)
 
 template<class span_const_vec_4_GLint64EXT>
 requires(
-    semantic::concepts::Span<span_const_vec_4_GLint64EXT>&& semantic::concepts::
-        Vector<typename span_const_vec_4_GLint64EXT::value_type, GLint64EXT, 4>)
+    concepts::span<span_const_vec_4_GLint64EXT>&& concepts::
+        vector<typename span_const_vec_4_GLint64EXT::value_type, GLint64EXT, 4>)
     /*!
      * \brief Part of GL_NV_gpu_shader5
      * \param location GLint
@@ -390,7 +388,7 @@ requires(
 }
 
 template<class vec_4_GLuint64EXT>
-requires(semantic::concepts::Vector<vec_4_GLuint64EXT, GLuint64EXT, 4>)
+requires(concepts::vector<vec_4_GLuint64EXT, GLuint64EXT, 4>)
     /*!
      * \brief Part of GL_NV_gpu_shader5
      * \param location GLint
@@ -412,11 +410,10 @@ requires(semantic::concepts::Vector<vec_4_GLuint64EXT, GLuint64EXT, 4>)
 }
 
 template<class span_const_vec_4_GLuint64EXT>
-requires(semantic::concepts::Span<span_const_vec_4_GLuint64EXT>&&
-             semantic::concepts::Vector<
-                 typename span_const_vec_4_GLuint64EXT::value_type,
-                 GLuint64EXT,
-                 4>)
+requires(concepts::span<span_const_vec_4_GLuint64EXT>&& concepts::vector<
+         typename span_const_vec_4_GLuint64EXT::value_type,
+         GLuint64EXT,
+         4>)
     /*!
      * \brief Part of GL_NV_gpu_shader5
      * \param location GLint
@@ -463,7 +460,7 @@ STATICINLINE void program_uniform(u32 program, i32 location, GLint64EXT x)
 }
 
 template<class span_const_GLint64EXT>
-requires(semantic::concepts::Span<span_const_GLint64EXT>&& std::is_same_v<
+requires(concepts::span<span_const_GLint64EXT>&& std::is_same_v<
          std::decay_t<typename span_const_GLint64EXT::value_type>,
          std::decay_t<GLint64EXT>>)
     /*!
@@ -519,7 +516,7 @@ STATICINLINE void program_uniform(u32 program, i32 location, GLuint64EXT x)
 }
 
 template<class span_const_GLuint64EXT>
-requires(semantic::concepts::Span<span_const_GLuint64EXT>&& std::is_same_v<
+requires(concepts::span<span_const_GLuint64EXT>&& std::is_same_v<
          std::decay_t<typename span_const_GLuint64EXT::value_type>,
          std::decay_t<GLuint64EXT>>)
     /*!
@@ -552,7 +549,7 @@ requires(semantic::concepts::Span<span_const_GLuint64EXT>&& std::is_same_v<
 }
 
 template<class vec_2_GLint64EXT>
-requires(semantic::concepts::Vector<vec_2_GLint64EXT, GLint64EXT, 2>)
+requires(concepts::vector<vec_2_GLint64EXT, GLint64EXT, 2>)
     /*!
      * \brief Part of GL_NV_gpu_shader5
      * \param program GLuint
@@ -580,8 +577,8 @@ requires(semantic::concepts::Vector<vec_2_GLint64EXT, GLint64EXT, 2>)
 
 template<class span_const_vec_2_GLint64EXT>
 requires(
-    semantic::concepts::Span<span_const_vec_2_GLint64EXT>&& semantic::concepts::
-        Vector<typename span_const_vec_2_GLint64EXT::value_type, GLint64EXT, 2>)
+    concepts::span<span_const_vec_2_GLint64EXT>&& concepts::
+        vector<typename span_const_vec_2_GLint64EXT::value_type, GLint64EXT, 2>)
     /*!
      * \brief Part of GL_NV_gpu_shader5
      * \param program GLuint
@@ -612,7 +609,7 @@ requires(
 }
 
 template<class vec_2_GLuint64EXT>
-requires(semantic::concepts::Vector<vec_2_GLuint64EXT, GLuint64EXT, 2>)
+requires(concepts::vector<vec_2_GLuint64EXT, GLuint64EXT, 2>)
     /*!
      * \brief Part of GL_NV_gpu_shader5
      * \param program GLuint
@@ -639,11 +636,10 @@ requires(semantic::concepts::Vector<vec_2_GLuint64EXT, GLuint64EXT, 2>)
 }
 
 template<class span_const_vec_2_GLuint64EXT>
-requires(semantic::concepts::Span<span_const_vec_2_GLuint64EXT>&&
-             semantic::concepts::Vector<
-                 typename span_const_vec_2_GLuint64EXT::value_type,
-                 GLuint64EXT,
-                 2>)
+requires(concepts::span<span_const_vec_2_GLuint64EXT>&& concepts::vector<
+         typename span_const_vec_2_GLuint64EXT::value_type,
+         GLuint64EXT,
+         2>)
     /*!
      * \brief Part of GL_NV_gpu_shader5
      * \param program GLuint
@@ -674,7 +670,7 @@ requires(semantic::concepts::Span<span_const_vec_2_GLuint64EXT>&&
 }
 
 template<class vec_3_GLint64EXT>
-requires(semantic::concepts::Vector<vec_3_GLint64EXT, GLint64EXT, 3>)
+requires(concepts::vector<vec_3_GLint64EXT, GLint64EXT, 3>)
     /*!
      * \brief Part of GL_NV_gpu_shader5
      * \param program GLuint
@@ -703,8 +699,8 @@ requires(semantic::concepts::Vector<vec_3_GLint64EXT, GLint64EXT, 3>)
 
 template<class span_const_vec_3_GLint64EXT>
 requires(
-    semantic::concepts::Span<span_const_vec_3_GLint64EXT>&& semantic::concepts::
-        Vector<typename span_const_vec_3_GLint64EXT::value_type, GLint64EXT, 3>)
+    concepts::span<span_const_vec_3_GLint64EXT>&& concepts::
+        vector<typename span_const_vec_3_GLint64EXT::value_type, GLint64EXT, 3>)
     /*!
      * \brief Part of GL_NV_gpu_shader5
      * \param program GLuint
@@ -735,7 +731,7 @@ requires(
 }
 
 template<class vec_3_GLuint64EXT>
-requires(semantic::concepts::Vector<vec_3_GLuint64EXT, GLuint64EXT, 3>)
+requires(concepts::vector<vec_3_GLuint64EXT, GLuint64EXT, 3>)
     /*!
      * \brief Part of GL_NV_gpu_shader5
      * \param program GLuint
@@ -763,11 +759,10 @@ requires(semantic::concepts::Vector<vec_3_GLuint64EXT, GLuint64EXT, 3>)
 }
 
 template<class span_const_vec_3_GLuint64EXT>
-requires(semantic::concepts::Span<span_const_vec_3_GLuint64EXT>&&
-             semantic::concepts::Vector<
-                 typename span_const_vec_3_GLuint64EXT::value_type,
-                 GLuint64EXT,
-                 3>)
+requires(concepts::span<span_const_vec_3_GLuint64EXT>&& concepts::vector<
+         typename span_const_vec_3_GLuint64EXT::value_type,
+         GLuint64EXT,
+         3>)
     /*!
      * \brief Part of GL_NV_gpu_shader5
      * \param program GLuint
@@ -798,7 +793,7 @@ requires(semantic::concepts::Span<span_const_vec_3_GLuint64EXT>&&
 }
 
 template<class vec_4_GLint64EXT>
-requires(semantic::concepts::Vector<vec_4_GLint64EXT, GLint64EXT, 4>)
+requires(concepts::vector<vec_4_GLint64EXT, GLint64EXT, 4>)
     /*!
      * \brief Part of GL_NV_gpu_shader5
      * \param program GLuint
@@ -828,8 +823,8 @@ requires(semantic::concepts::Vector<vec_4_GLint64EXT, GLint64EXT, 4>)
 
 template<class span_const_vec_4_GLint64EXT>
 requires(
-    semantic::concepts::Span<span_const_vec_4_GLint64EXT>&& semantic::concepts::
-        Vector<typename span_const_vec_4_GLint64EXT::value_type, GLint64EXT, 4>)
+    concepts::span<span_const_vec_4_GLint64EXT>&& concepts::
+        vector<typename span_const_vec_4_GLint64EXT::value_type, GLint64EXT, 4>)
     /*!
      * \brief Part of GL_NV_gpu_shader5
      * \param program GLuint
@@ -860,7 +855,7 @@ requires(
 }
 
 template<class vec_4_GLuint64EXT>
-requires(semantic::concepts::Vector<vec_4_GLuint64EXT, GLuint64EXT, 4>)
+requires(concepts::vector<vec_4_GLuint64EXT, GLuint64EXT, 4>)
     /*!
      * \brief Part of GL_NV_gpu_shader5
      * \param program GLuint
@@ -889,11 +884,10 @@ requires(semantic::concepts::Vector<vec_4_GLuint64EXT, GLuint64EXT, 4>)
 }
 
 template<class span_const_vec_4_GLuint64EXT>
-requires(semantic::concepts::Span<span_const_vec_4_GLuint64EXT>&&
-             semantic::concepts::Vector<
-                 typename span_const_vec_4_GLuint64EXT::value_type,
-                 GLuint64EXT,
-                 4>)
+requires(concepts::span<span_const_vec_4_GLuint64EXT>&& concepts::vector<
+         typename span_const_vec_4_GLuint64EXT::value_type,
+         GLuint64EXT,
+         4>)
     /*!
      * \brief Part of GL_NV_gpu_shader5
      * \param program GLuint

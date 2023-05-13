@@ -3,11 +3,11 @@
 #ifdef GL_EXT_draw_range_elements
 namespace gl::ext::draw_range_elements {
 namespace values {
-constexpr libc_types::u32 max_elements_vertices = 0x80E8;
-constexpr libc_types::u32 max_elements_indices  = 0x80E9;
+constexpr u32 max_elements_vertices = 0x80E8;
+constexpr u32 max_elements_indices  = 0x80E9;
 } // namespace values
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_draw_range_elements
      * \param mode GLenum

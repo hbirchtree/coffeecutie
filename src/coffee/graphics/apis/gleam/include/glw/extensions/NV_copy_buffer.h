@@ -3,8 +3,8 @@
 #ifdef GL_NV_copy_buffer
 namespace gl::nv::copy_buffer {
 namespace values {
-constexpr libc_types::u32 copy_read_buffer  = 0x8F36;
-constexpr libc_types::u32 copy_write_buffer = 0x8F37;
+constexpr u32 copy_read_buffer  = 0x8F36;
+constexpr u32 copy_write_buffer = 0x8F37;
 } // namespace values
 /*!
  * \brief Part of GL_NV_copy_buffer

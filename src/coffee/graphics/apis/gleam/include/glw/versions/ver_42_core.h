@@ -39,7 +39,7 @@ requires(MinimumVersion<Current, Version<4, 2>>)
         group::primitive_type     mode,
         i32                       count,
         group::draw_elements_type type,
-        ptroff                    indices,
+        intptr_t                  indices,
         i32                       instancecount,
         u32                       baseinstance)
 {
@@ -72,7 +72,7 @@ requires(MinimumVersion<Current, Version<4, 2>>)
         group::primitive_type     mode,
         i32                       count,
         group::draw_elements_type type,
-        ptroff                    indices,
+        intptr_t                  indices,
         i32                       instancecount,
         i32                       basevertex,
         u32                       baseinstance)
@@ -94,8 +94,8 @@ requires(MinimumVersion<Current, Version<4, 2>>)
 }
 
 template<class span_i32>
-requires(MinimumVersion<Current, Version<4, 2>>&&
-             semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(MinimumVersion<Current, Version<4, 2>>&& concepts::span<span_i32>&&
+                                                  std::is_same_v<
                  std::decay_t<typename span_i32::value_type>,
                  std::decay_t<i32>>)
     /*!
@@ -128,8 +128,8 @@ requires(MinimumVersion<Current, Version<4, 2>>&&
 }
 
 template<class span_i32>
-requires(MinimumVersion<Current, Version<4, 2>>&&
-             semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(MinimumVersion<Current, Version<4, 2>>&& concepts::span<span_i32>&&
+                                                  std::is_same_v<
                  std::decay_t<typename span_i32::value_type>,
                  std::decay_t<i32>>)
     /*!
@@ -252,8 +252,8 @@ requires(MinimumVersion<Current, Version<4, 2>>)
 }
 
 template<class size_2_i32>
-requires(MinimumVersion<Current, Version<4, 2>>&&
-             semantic::concepts::Size2D<size_2_i32, i32>)
+requires(
+    MinimumVersion<Current, Version<4, 2>>&& concepts::size_2d<size_2_i32, i32>)
     /*!
      * \brief Wraps around glTexStorage2D. Introduced in GL core 4.2
      * \param target GLenum
@@ -284,8 +284,8 @@ requires(MinimumVersion<Current, Version<4, 2>>&&
 }
 
 template<class size_3_i32>
-requires(MinimumVersion<Current, Version<4, 2>>&&
-             semantic::concepts::Size2D<size_3_i32, i32>)
+requires(
+    MinimumVersion<Current, Version<4, 2>>&& concepts::size_2d<size_3_i32, i32>)
     /*!
      * \brief Wraps around glTexStorage3D. Introduced in GL core 4.2
      * \param target GLenum

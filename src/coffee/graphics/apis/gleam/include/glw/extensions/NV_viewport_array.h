@@ -7,13 +7,13 @@ namespace gl::nv::viewport_array {
 using gl::group::enable_cap;
 using gl::group::get_prop;
 namespace values {
-constexpr libc_types::u32 max_viewports                   = 0x825B;
-constexpr libc_types::u32 viewport_subpixel_bits          = 0x825C;
-constexpr libc_types::u32 viewport_bounds_range           = 0x825D;
-constexpr libc_types::u32 viewport_index_provoking_vertex = 0x825F;
+constexpr u32 max_viewports                   = 0x825B;
+constexpr u32 viewport_subpixel_bits          = 0x825C;
+constexpr u32 viewport_bounds_range           = 0x825D;
+constexpr u32 viewport_index_provoking_vertex = 0x825F;
 } // namespace values
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+requires(concepts::span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -91,7 +91,7 @@ STATICINLINE void enablei(group::enable_cap target, u32 index)
 }
 
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+requires(concepts::span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -135,7 +135,7 @@ STATICINLINE bool is_enabledi(group::enable_cap target, u32 index)
 }
 
 template<class span_const_i32>
-requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
+requires(concepts::span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -161,7 +161,7 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
 }
 
 template<class size_2_i32>
-requires(semantic::concepts::Size2D<size_2_i32, i32>)
+requires(concepts::size_2d<size_2_i32, i32>)
     /*!
      * \brief Part of GL_NV_viewport_array
      * \param index GLuint
@@ -184,7 +184,7 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>)
 }
 
 template<class span_const_i32>
-requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
+requires(concepts::span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -206,7 +206,7 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
 }
 
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+requires(concepts::span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -232,8 +232,8 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
 }
 
 template<class size_2_f32, class vec_2_f32>
-requires(semantic::concepts::Vector<vec_2_f32, f32, 2>&&
-             semantic::concepts::Size2D<size_2_f32, f32>)
+requires(
+    concepts::vector<vec_2_f32, f32, 2>&& concepts::size_2d<size_2_f32, f32>)
     /*!
      * \brief Part of GL_NV_viewport_array
      * \param index GLuint
@@ -256,7 +256,7 @@ requires(semantic::concepts::Vector<vec_2_f32, f32, 2>&&
 }
 
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+requires(concepts::span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
          std::decay_t<f32>>)
     /*!

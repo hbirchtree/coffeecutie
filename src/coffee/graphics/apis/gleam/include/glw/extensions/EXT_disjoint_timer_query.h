@@ -7,12 +7,12 @@ namespace gl::ext::disjoint_timer_query {
 using gl::group::get_prop;
 using gl::group::query_counter_target;
 namespace values {
-constexpr libc_types::u32 query_counter_bits     = 0x8864;
-constexpr libc_types::u32 current_query          = 0x8865;
-constexpr libc_types::u32 query_result           = 0x8866;
-constexpr libc_types::u32 query_result_available = 0x8867;
-constexpr libc_types::u32 time_elapsed           = 0x88BF;
-constexpr libc_types::u32 gpu_disjoint           = 0x8FBB;
+constexpr u32 query_counter_bits     = 0x8864;
+constexpr u32 current_query          = 0x8865;
+constexpr u32 query_result           = 0x8866;
+constexpr u32 query_result_available = 0x8867;
+constexpr u32 time_elapsed           = 0x88BF;
+constexpr u32 gpu_disjoint           = 0x8FBB;
 } // namespace values
 /*!
  * \brief Part of GL_EXT_disjoint_timer_query
@@ -32,7 +32,7 @@ STATICINLINE void begin_query(group::query_target target, u32 id)
 }
 
 template<class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+requires(concepts::span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -71,7 +71,7 @@ STATICINLINE void end_query(group::query_target target)
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(concepts::span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -94,7 +94,7 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 }
 
 template<class span_i64>
-requires(semantic::concepts::Span<span_i64>&& std::is_same_v<
+requires(concepts::span<span_i64>&& std::is_same_v<
          std::decay_t<typename span_i64::value_type>,
          std::decay_t<i64>>)
     /*!
@@ -117,7 +117,7 @@ requires(semantic::concepts::Span<span_i64>&& std::is_same_v<
 }
 
 template<class span_i64>
-requires(semantic::concepts::Span<span_i64>&& std::is_same_v<
+requires(concepts::span<span_i64>&& std::is_same_v<
          std::decay_t<typename span_i64::value_type>,
          std::decay_t<i64>>)
     /*!
@@ -143,7 +143,7 @@ requires(semantic::concepts::Span<span_i64>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -169,7 +169,7 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_u64>
-requires(semantic::concepts::Span<span_u64>&& std::is_same_v<
+requires(concepts::span<span_u64>&& std::is_same_v<
          std::decay_t<typename span_u64::value_type>,
          std::decay_t<u64>>)
     /*!
@@ -195,7 +195,7 @@ requires(semantic::concepts::Span<span_u64>&& std::is_same_v<
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(concepts::span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -221,7 +221,7 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!

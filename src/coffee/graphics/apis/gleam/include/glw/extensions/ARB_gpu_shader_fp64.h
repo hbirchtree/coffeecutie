@@ -39,7 +39,7 @@ using gl::group::weight_pointer_type_arb;
 namespace values {
 } // namespace values
 template<class span_f64>
-requires(semantic::concepts::Span<span_f64>&& std::is_same_v<
+requires(concepts::span<span_f64>&& std::is_same_v<
          std::decay_t<typename span_f64::value_type>,
          std::decay_t<f64>>)
     /*!
@@ -86,7 +86,7 @@ STATICINLINE void uniform(i32 location, f64 x)
 }
 
 template<class span_const_f64>
-requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
+requires(concepts::span<span_const_f64>&& std::is_same_v<
          std::decay_t<typename span_const_f64::value_type>,
          std::decay_t<f64>>)
     /*!
@@ -111,7 +111,7 @@ requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
 }
 
 template<class vec_2_f64>
-requires(semantic::concepts::Vector<vec_2_f64, f64, 2>)
+requires(concepts::vector<vec_2_f64, f64, 2>)
     /*!
      * \brief Part of GL_ARB_gpu_shader_fp64
      * \param location GLint
@@ -131,8 +131,9 @@ requires(semantic::concepts::Vector<vec_2_f64, f64, 2>)
 }
 
 template<class span_const_vec_2_f64>
-requires(semantic::concepts::Span<span_const_vec_2_f64>&& semantic::concepts::
-             Vector<typename span_const_vec_2_f64::value_type, f64, 2>)
+requires(
+    concepts::span<span_const_vec_2_f64>&&
+        concepts::vector<typename span_const_vec_2_f64::value_type, f64, 2>)
     /*!
      * \brief Part of GL_ARB_gpu_shader_fp64
      * \param location GLint
@@ -155,7 +156,7 @@ requires(semantic::concepts::Span<span_const_vec_2_f64>&& semantic::concepts::
 }
 
 template<class vec_3_f64>
-requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
+requires(concepts::vector<vec_3_f64, f64, 3>)
     /*!
      * \brief Part of GL_ARB_gpu_shader_fp64
      * \param location GLint
@@ -176,8 +177,9 @@ requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
 }
 
 template<class span_const_vec_3_f64>
-requires(semantic::concepts::Span<span_const_vec_3_f64>&& semantic::concepts::
-             Vector<typename span_const_vec_3_f64::value_type, f64, 3>)
+requires(
+    concepts::span<span_const_vec_3_f64>&&
+        concepts::vector<typename span_const_vec_3_f64::value_type, f64, 3>)
     /*!
      * \brief Part of GL_ARB_gpu_shader_fp64
      * \param location GLint
@@ -200,7 +202,7 @@ requires(semantic::concepts::Span<span_const_vec_3_f64>&& semantic::concepts::
 }
 
 template<class vec_4_f64>
-requires(semantic::concepts::Vector<vec_4_f64, f64, 4>)
+requires(concepts::vector<vec_4_f64, f64, 4>)
     /*!
      * \brief Part of GL_ARB_gpu_shader_fp64
      * \param location GLint
@@ -222,8 +224,9 @@ requires(semantic::concepts::Vector<vec_4_f64, f64, 4>)
 }
 
 template<class span_const_vec_4_f64>
-requires(semantic::concepts::Span<span_const_vec_4_f64>&& semantic::concepts::
-             Vector<typename span_const_vec_4_f64::value_type, f64, 4>)
+requires(
+    concepts::span<span_const_vec_4_f64>&&
+        concepts::vector<typename span_const_vec_4_f64::value_type, f64, 4>)
     /*!
      * \brief Part of GL_ARB_gpu_shader_fp64
      * \param location GLint
@@ -246,8 +249,8 @@ requires(semantic::concepts::Span<span_const_vec_4_f64>&& semantic::concepts::
 }
 
 template<class span_const_mat_2x2_f64>
-requires(semantic::concepts::Span<span_const_mat_2x2_f64>&& semantic::concepts::
-             Matrix<typename span_const_mat_2x2_f64::value_type, f64, 2, 2>)
+requires(concepts::span<span_const_mat_2x2_f64>&& concepts::
+             matrix<typename span_const_mat_2x2_f64::value_type, f64, 2, 2>)
     /*!
      * \brief Part of GL_ARB_gpu_shader_fp64
      * \param location GLint
@@ -273,8 +276,8 @@ requires(semantic::concepts::Span<span_const_mat_2x2_f64>&& semantic::concepts::
 }
 
 template<class span_const_mat_2x3_f64>
-requires(semantic::concepts::Span<span_const_mat_2x3_f64>&& semantic::concepts::
-             Matrix<typename span_const_mat_2x3_f64::value_type, f64, 2, 3>)
+requires(concepts::span<span_const_mat_2x3_f64>&& concepts::
+             matrix<typename span_const_mat_2x3_f64::value_type, f64, 2, 3>)
     /*!
      * \brief Part of GL_ARB_gpu_shader_fp64
      * \param location GLint
@@ -300,8 +303,8 @@ requires(semantic::concepts::Span<span_const_mat_2x3_f64>&& semantic::concepts::
 }
 
 template<class span_const_mat_2x4_f64>
-requires(semantic::concepts::Span<span_const_mat_2x4_f64>&& semantic::concepts::
-             Matrix<typename span_const_mat_2x4_f64::value_type, f64, 2, 4>)
+requires(concepts::span<span_const_mat_2x4_f64>&& concepts::
+             matrix<typename span_const_mat_2x4_f64::value_type, f64, 2, 4>)
     /*!
      * \brief Part of GL_ARB_gpu_shader_fp64
      * \param location GLint
@@ -327,8 +330,8 @@ requires(semantic::concepts::Span<span_const_mat_2x4_f64>&& semantic::concepts::
 }
 
 template<class span_const_mat_3x3_f64>
-requires(semantic::concepts::Span<span_const_mat_3x3_f64>&& semantic::concepts::
-             Matrix<typename span_const_mat_3x3_f64::value_type, f64, 3, 3>)
+requires(concepts::span<span_const_mat_3x3_f64>&& concepts::
+             matrix<typename span_const_mat_3x3_f64::value_type, f64, 3, 3>)
     /*!
      * \brief Part of GL_ARB_gpu_shader_fp64
      * \param location GLint
@@ -354,8 +357,8 @@ requires(semantic::concepts::Span<span_const_mat_3x3_f64>&& semantic::concepts::
 }
 
 template<class span_const_mat_3x2_f64>
-requires(semantic::concepts::Span<span_const_mat_3x2_f64>&& semantic::concepts::
-             Matrix<typename span_const_mat_3x2_f64::value_type, f64, 3, 2>)
+requires(concepts::span<span_const_mat_3x2_f64>&& concepts::
+             matrix<typename span_const_mat_3x2_f64::value_type, f64, 3, 2>)
     /*!
      * \brief Part of GL_ARB_gpu_shader_fp64
      * \param location GLint
@@ -381,8 +384,8 @@ requires(semantic::concepts::Span<span_const_mat_3x2_f64>&& semantic::concepts::
 }
 
 template<class span_const_mat_3x4_f64>
-requires(semantic::concepts::Span<span_const_mat_3x4_f64>&& semantic::concepts::
-             Matrix<typename span_const_mat_3x4_f64::value_type, f64, 3, 4>)
+requires(concepts::span<span_const_mat_3x4_f64>&& concepts::
+             matrix<typename span_const_mat_3x4_f64::value_type, f64, 3, 4>)
     /*!
      * \brief Part of GL_ARB_gpu_shader_fp64
      * \param location GLint
@@ -408,8 +411,8 @@ requires(semantic::concepts::Span<span_const_mat_3x4_f64>&& semantic::concepts::
 }
 
 template<class span_const_mat_4x4_f64>
-requires(semantic::concepts::Span<span_const_mat_4x4_f64>&& semantic::concepts::
-             Matrix<typename span_const_mat_4x4_f64::value_type, f64, 4, 4>)
+requires(concepts::span<span_const_mat_4x4_f64>&& concepts::
+             matrix<typename span_const_mat_4x4_f64::value_type, f64, 4, 4>)
     /*!
      * \brief Part of GL_ARB_gpu_shader_fp64
      * \param location GLint
@@ -435,8 +438,8 @@ requires(semantic::concepts::Span<span_const_mat_4x4_f64>&& semantic::concepts::
 }
 
 template<class span_const_mat_4x2_f64>
-requires(semantic::concepts::Span<span_const_mat_4x2_f64>&& semantic::concepts::
-             Matrix<typename span_const_mat_4x2_f64::value_type, f64, 4, 2>)
+requires(concepts::span<span_const_mat_4x2_f64>&& concepts::
+             matrix<typename span_const_mat_4x2_f64::value_type, f64, 4, 2>)
     /*!
      * \brief Part of GL_ARB_gpu_shader_fp64
      * \param location GLint
@@ -462,8 +465,8 @@ requires(semantic::concepts::Span<span_const_mat_4x2_f64>&& semantic::concepts::
 }
 
 template<class span_const_mat_4x3_f64>
-requires(semantic::concepts::Span<span_const_mat_4x3_f64>&& semantic::concepts::
-             Matrix<typename span_const_mat_4x3_f64::value_type, f64, 4, 3>)
+requires(concepts::span<span_const_mat_4x3_f64>&& concepts::
+             matrix<typename span_const_mat_4x3_f64::value_type, f64, 4, 3>)
     /*!
      * \brief Part of GL_ARB_gpu_shader_fp64
      * \param location GLint

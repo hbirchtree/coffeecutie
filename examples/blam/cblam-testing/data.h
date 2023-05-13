@@ -96,6 +96,7 @@ struct BlamResources : compo::SubsystemBase
     std::shared_ptr<gfx::vertex_array_t> model_attr;
 
     std::shared_ptr<gfx::buffer_t>       debug_lines;
+    std::shared_ptr<gfx::buffer_t>       debug_line_colors;
     std::shared_ptr<gfx::vertex_array_t> debug_attr;
     std::shared_ptr<gfx::program_t>      debug_lines_pipeline;
 

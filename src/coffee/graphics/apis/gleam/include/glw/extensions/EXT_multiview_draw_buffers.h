@@ -5,15 +5,15 @@
 namespace gl::ext::multiview_draw_buffers {
 using gl::group::get_prop;
 namespace values {
-constexpr libc_types::u32 color_attachment      = 0x90F0;
-constexpr libc_types::u32 multiview             = 0x90F1;
-constexpr libc_types::u32 max_multiview_buffers = 0x90F2;
+constexpr u32 color_attachment      = 0x90F0;
+constexpr u32 multiview             = 0x90F1;
+constexpr u32 max_multiview_buffers = 0x90F2;
 } // namespace values
 template<class span_const_GLenum, class span_const_i32>
-requires(semantic::concepts::Span<span_const_GLenum>&& std::is_same_v<
+requires(concepts::span<span_const_GLenum>&& std::is_same_v<
          std::decay_t<typename span_const_GLenum::value_type>,
-         std::decay_t<GLenum>>&& semantic::concepts::Span<span_const_i32>&&
-                                 std::is_same_v<
+         std::decay_t<GLenum>>&& concepts::span<span_const_i32>&&
+                                             std::is_same_v<
                  std::decay_t<typename span_const_i32::value_type>,
                  std::decay_t<i32>>)
     /*!
@@ -41,7 +41,7 @@ requires(semantic::concepts::Span<span_const_GLenum>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!

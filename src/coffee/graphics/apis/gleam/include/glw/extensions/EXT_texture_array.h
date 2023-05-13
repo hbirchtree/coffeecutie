@@ -7,12 +7,12 @@ namespace gl::ext::texture_array {
 using gl::group::framebuffer_attachment_parameter_name;
 using gl::group::texture_target;
 namespace values {
-constexpr libc_types::u32 compare_ref_depth_to_texture = 0x884E;
-constexpr libc_types::u32 max_array_texture_layers     = 0x88FF;
-constexpr libc_types::u32 texture_1d_array             = 0x8C18;
-constexpr libc_types::u32 texture_2d_array             = 0x8C1A;
-constexpr libc_types::u32 texture_binding_1d_array     = 0x8C1C;
-constexpr libc_types::u32 texture_binding_2d_array     = 0x8C1D;
+constexpr u32 compare_ref_depth_to_texture = 0x884E;
+constexpr u32 max_array_texture_layers     = 0x88FF;
+constexpr u32 texture_1d_array             = 0x8C18;
+constexpr u32 texture_2d_array             = 0x8C1A;
+constexpr u32 texture_binding_1d_array     = 0x8C1C;
+constexpr u32 texture_binding_2d_array     = 0x8C1D;
 } // namespace values
 /*!
  * \brief Part of GL_EXT_texture_array

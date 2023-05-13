@@ -38,6 +38,6 @@ enum class subgroup_supported_features : u32
     subgroup_feature_vote_bit_khr = GL_SUBGROUP_FEATURE_VOTE_BIT_KHR,
 #endif
 }; // enum class subgroup_supported_features
-C_FLAGS(subgroup_supported_features, ::libc_types::u32);
+C_FLAGS(subgroup_supported_features, u32);
 
 } // namespace gl::group

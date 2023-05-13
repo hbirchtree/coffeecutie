@@ -3,8 +3,8 @@
 #ifdef GL_EXT_depth_bounds_test
 namespace gl::ext::depth_bounds_test {
 namespace values {
-constexpr libc_types::u32 depth_bounds_test = 0x8890;
-constexpr libc_types::u32 depth_bounds      = 0x8891;
+constexpr u32 depth_bounds_test = 0x8890;
+constexpr u32 depth_bounds      = 0x8891;
 } // namespace values
 /*!
  * \brief Part of GL_EXT_depth_bounds_test

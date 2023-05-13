@@ -3,7 +3,7 @@
 #ifdef GL_NV_vertex_program3
 namespace gl::nv::vertex_program3 {
 namespace values {
-constexpr libc_types::u32 max_vertex_texture_image_units_arb = 0x8B4C;
+constexpr u32 max_vertex_texture_image_units_arb = 0x8B4C;
 } // namespace values
 } // namespace gl::nv::vertex_program3
 #endif // GL_NV_vertex_program3

@@ -3,8 +3,8 @@
 #ifdef GL_NV_primitive_restart
 namespace gl::nv::primitive_restart {
 namespace values {
-constexpr libc_types::u32 primitive_restart       = 0x8558;
-constexpr libc_types::u32 primitive_restart_index = 0x8559;
+constexpr u32 primitive_restart       = 0x8558;
+constexpr u32 primitive_restart_index = 0x8559;
 } // namespace values
 /*!
  * \brief Part of GL_NV_primitive_restart

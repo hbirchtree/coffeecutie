@@ -1,7 +1,10 @@
 #pragma once
 
+#include <peripherals/concepts/span.h>
+#include <peripherals/concepts/vector.h>
 #include <peripherals/identify/compiler/variable_attributes.h>
 #include <peripherals/libc/types.h>
+#include <peripherals/semantic/chunk.h>
 #include <peripherals/stl/string_ops.h>
 
 // clang-format off
@@ -13,12 +16,12 @@
 
 #define GL_BASE_ES_VERSION 0x000
 
-#include <glad/KHR/khrplatform.h>
-#include <glad/glad.h>
+#include <KHR/khrplatform.h>
+#include <glad/gl.h>
 
 #define GL_BASE_CORE_VERSION 0x460
 
-#elif defined(GLEAM_USE_ES)
+#elif defined(GLEAM_USE_ES) // defined(GLEAM_USE_CORE)
 
 #ifndef GLEAM_RESTRICT_ES
 #define GLEAM_RESTRICT_ES 0x400
@@ -27,6 +30,7 @@
 #define GL_BASE_CORE_VERSION 0x000
 
 #if defined(GLEAM_USE_LINKED)
+/* Profile functions */
 #if C_HAS_INCLUDE(<GLES3/gl32.h>) && GLEAM_RESTRICT_ES >= 0x320
 #include <GLES3/gl32.h>
 #define GL_BASE_ES_VERSION 0x320
@@ -51,19 +55,20 @@
 #error Configured for linked GLES headers, but none found
 #endif
 
+/* Extension functions */
 #if C_HAS_INCLUDE(<GLES3/gl3ext.h>)
 #include <GLES3/gl3ext.h>
 #elif C_HAS_INCLUDE(<GLES2/gl2ext.h>)
 #include <GLES2/gl2ext.h>
-#endif
+#endif // C_HAS_INCLUDE(<GLES3/gl3ext.h>)
 
-#else
+#else // defined(GLEAM_USE_LINKED)
 
-#include <glad/glad.h>
+#include <glad/gles2.h>
 #define GL_BASE_ES_VERSION 0x320
 
-#endif
-#endif
+#endif // defined(GLEAM_USE_LINKED)
+#endif // defined(GLEAM_USE_ES)
 
 // clang-format on
 
@@ -71,6 +76,21 @@
     GL_BASE_CORE_VERSION >= CORE_VER || GL_BASE_ES_VERSION >= ES_VER
 
 namespace gl {
+namespace concepts {
+
+template<class T, typename E, size_t M, size_t N>
+concept matrix = semantic::concepts::Matrix<T, E, M, N>;
+template<class T, typename E>
+concept size_2d = semantic::concepts::Size2D<T, E>;
+template<class T, typename E>
+concept size_3d = semantic::concepts::Size2D<T, E>;
+template<class T, typename E, size_t N>
+concept vector = semantic::concepts::Vector<T, E, N>;
+
+template<class T>
+concept span = semantic::concepts::Span<T>;
+
+} // namespace concepts
 
 using libc_types::f32;
 using libc_types::f64;
@@ -82,6 +102,8 @@ using libc_types::u16;
 using libc_types::u32;
 using libc_types::u64;
 using libc_types::u8;
+
+using gsl::span;
 
 constexpr bool is_linked =
 #if defined(GLEAM_USE_LINKED)
@@ -108,16 +130,15 @@ concept MaximumVersion = Current::major < Maximum::major ||
                          (Current::major == Maximum::major &&
                           Current::minor <= Maximum::minor);
 
-using ::libc_types::ptroff;
-
-namespace detail {
-
-inline std::string error_to_hex(auto error)
+namespace detail
 {
-    return stl_types::str::print::pointerify(error);
-}
 
-void error_check(std::string_view cmd_name);
+    inline std::string error_to_hex(auto error)
+    {
+        return stl_types::str::print::pointerify(error);
+    }
+
+    void error_check(std::string_view cmd_name);
 
 } // namespace detail
 } // namespace gl

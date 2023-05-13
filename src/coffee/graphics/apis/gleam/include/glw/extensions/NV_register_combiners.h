@@ -33,22 +33,22 @@ using gl::group::special_numbers;
 using gl::group::stencil_op;
 using gl::group::texture_swizzle;
 namespace values {
-constexpr libc_types::u32 register_combiners          = 0x8522;
-constexpr libc_types::u32 constant_color0             = 0x852A;
-constexpr libc_types::u32 constant_color1             = 0x852B;
-constexpr libc_types::u32 e_times_f                   = 0x8531;
-constexpr libc_types::u32 spare0_plus_secondary_color = 0x8532;
-constexpr libc_types::u32 combiner_ab_dot_product     = 0x8545;
-constexpr libc_types::u32 combiner_cd_dot_product     = 0x8546;
-constexpr libc_types::u32 combiner_mux_sum            = 0x8547;
-constexpr libc_types::u32 combiner_scale              = 0x8548;
-constexpr libc_types::u32 combiner_bias               = 0x8549;
-constexpr libc_types::u32 combiner_ab_output          = 0x854A;
-constexpr libc_types::u32 combiner_cd_output          = 0x854B;
-constexpr libc_types::u32 combiner_sum_output         = 0x854C;
-constexpr libc_types::u32 max_general_combiners       = 0x854D;
-constexpr libc_types::u32 num_general_combiners       = 0x854E;
-constexpr libc_types::u32 color_sum_clamp             = 0x854F;
+constexpr u32 register_combiners          = 0x8522;
+constexpr u32 constant_color0             = 0x852A;
+constexpr u32 constant_color1             = 0x852B;
+constexpr u32 e_times_f                   = 0x8531;
+constexpr u32 spare0_plus_secondary_color = 0x8532;
+constexpr u32 combiner_ab_dot_product     = 0x8545;
+constexpr u32 combiner_cd_dot_product     = 0x8546;
+constexpr u32 combiner_mux_sum            = 0x8547;
+constexpr u32 combiner_scale              = 0x8548;
+constexpr u32 combiner_bias               = 0x8549;
+constexpr u32 combiner_ab_output          = 0x854A;
+constexpr u32 combiner_cd_output          = 0x854B;
+constexpr u32 combiner_sum_output         = 0x854C;
+constexpr u32 max_general_combiners       = 0x854D;
+constexpr u32 num_general_combiners       = 0x854E;
+constexpr u32 color_sum_clamp             = 0x854F;
 } // namespace values
 /*!
  * \brief Part of GL_NV_register_combiners
@@ -147,7 +147,7 @@ STATICINLINE void combiner_parameter(
 }
 
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+requires(concepts::span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -190,7 +190,7 @@ STATICINLINE void combiner_parameter(
 }
 
 template<class span_const_i32>
-requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
+requires(concepts::span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -242,7 +242,7 @@ STATICINLINE void final_combiner_input(
 }
 
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+requires(concepts::span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -276,7 +276,7 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -310,7 +310,7 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+requires(concepts::span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -341,7 +341,7 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -372,7 +372,7 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+requires(concepts::span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -400,7 +400,7 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!

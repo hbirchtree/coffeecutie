@@ -3,10 +3,10 @@
 #ifdef GL_AMD_stencil_operation_extended
 namespace gl::amd::stencil_operation_extended {
 namespace values {
-constexpr libc_types::u32 set                   = 0x874A;
-constexpr libc_types::u32 replace_value         = 0x874B;
-constexpr libc_types::u32 stencil_op_value      = 0x874C;
-constexpr libc_types::u32 stencil_back_op_value = 0x874D;
+constexpr u32 set                   = 0x874A;
+constexpr u32 replace_value         = 0x874B;
+constexpr u32 stencil_op_value      = 0x874C;
+constexpr u32 stencil_back_op_value = 0x874D;
 } // namespace values
 /*!
  * \brief Part of GL_AMD_stencil_operation_extended

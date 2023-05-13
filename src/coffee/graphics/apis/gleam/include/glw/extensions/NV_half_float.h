@@ -7,7 +7,7 @@ using gl::group::pixel_type;
 namespace values {
 } // namespace values
 template<class vec_3_GLhalfNV>
-requires(semantic::concepts::Vector<vec_3_GLhalfNV, GLhalfNV, 3>)
+requires(concepts::vector<vec_3_GLhalfNV, GLhalfNV, 3>)
     /*!
      * \brief Part of GL_NV_half_float
      * \param red GLhalfNV
@@ -27,7 +27,7 @@ requires(semantic::concepts::Vector<vec_3_GLhalfNV, GLhalfNV, 3>)
 }
 
 template<class span_const_GLhalfNV>
-requires(semantic::concepts::Span<span_const_GLhalfNV>&& std::is_same_v<
+requires(concepts::span<span_const_GLhalfNV>&& std::is_same_v<
          std::decay_t<typename span_const_GLhalfNV::value_type>,
          std::decay_t<GLhalfNV>>)
     /*!
@@ -48,7 +48,7 @@ requires(semantic::concepts::Span<span_const_GLhalfNV>&& std::is_same_v<
 }
 
 template<class vec_4_GLhalfNV>
-requires(semantic::concepts::Vector<vec_4_GLhalfNV, GLhalfNV, 4>)
+requires(concepts::vector<vec_4_GLhalfNV, GLhalfNV, 4>)
     /*!
      * \brief Part of GL_NV_half_float
      * \param red GLhalfNV
@@ -69,7 +69,7 @@ requires(semantic::concepts::Vector<vec_4_GLhalfNV, GLhalfNV, 4>)
 }
 
 template<class span_const_GLhalfNV>
-requires(semantic::concepts::Span<span_const_GLhalfNV>&& std::is_same_v<
+requires(concepts::span<span_const_GLhalfNV>&& std::is_same_v<
          std::decay_t<typename span_const_GLhalfNV::value_type>,
          std::decay_t<GLhalfNV>>)
     /*!
@@ -106,7 +106,7 @@ STATICINLINE void fog_coordh(GLhalfNV fog)
 }
 
 template<class span_const_GLhalfNV>
-requires(semantic::concepts::Span<span_const_GLhalfNV>&& std::is_same_v<
+requires(concepts::span<span_const_GLhalfNV>&& std::is_same_v<
          std::decay_t<typename span_const_GLhalfNV::value_type>,
          std::decay_t<GLhalfNV>>)
     /*!
@@ -144,7 +144,7 @@ STATICINLINE void multi_tex_coord1h(group::texture_unit target, GLhalfNV s)
 }
 
 template<class span_const_GLhalfNV>
-requires(semantic::concepts::Span<span_const_GLhalfNV>&& std::is_same_v<
+requires(concepts::span<span_const_GLhalfNV>&& std::is_same_v<
          std::decay_t<typename span_const_GLhalfNV::value_type>,
          std::decay_t<GLhalfNV>>)
     /*!
@@ -187,7 +187,7 @@ STATICINLINE void multi_tex_coord2h(
 }
 
 template<class span_const_GLhalfNV>
-requires(semantic::concepts::Span<span_const_GLhalfNV>&& std::is_same_v<
+requires(concepts::span<span_const_GLhalfNV>&& std::is_same_v<
          std::decay_t<typename span_const_GLhalfNV::value_type>,
          std::decay_t<GLhalfNV>>)
     /*!
@@ -231,7 +231,7 @@ STATICINLINE void multi_tex_coord3h(
 }
 
 template<class span_const_GLhalfNV>
-requires(semantic::concepts::Span<span_const_GLhalfNV>&& std::is_same_v<
+requires(concepts::span<span_const_GLhalfNV>&& std::is_same_v<
          std::decay_t<typename span_const_GLhalfNV::value_type>,
          std::decay_t<GLhalfNV>>)
     /*!
@@ -276,7 +276,7 @@ STATICINLINE void multi_tex_coord4h(
 }
 
 template<class span_const_GLhalfNV>
-requires(semantic::concepts::Span<span_const_GLhalfNV>&& std::is_same_v<
+requires(concepts::span<span_const_GLhalfNV>&& std::is_same_v<
          std::decay_t<typename span_const_GLhalfNV::value_type>,
          std::decay_t<GLhalfNV>>)
     /*!
@@ -318,7 +318,7 @@ STATICINLINE void normal3h(GLhalfNV nx, GLhalfNV ny, GLhalfNV nz)
 }
 
 template<class span_const_GLhalfNV>
-requires(semantic::concepts::Span<span_const_GLhalfNV>&& std::is_same_v<
+requires(concepts::span<span_const_GLhalfNV>&& std::is_same_v<
          std::decay_t<typename span_const_GLhalfNV::value_type>,
          std::decay_t<GLhalfNV>>)
     /*!
@@ -339,7 +339,7 @@ requires(semantic::concepts::Span<span_const_GLhalfNV>&& std::is_same_v<
 }
 
 template<class vec_3_GLhalfNV>
-requires(semantic::concepts::Vector<vec_3_GLhalfNV, GLhalfNV, 3>)
+requires(concepts::vector<vec_3_GLhalfNV, GLhalfNV, 3>)
     /*!
      * \brief Part of GL_NV_half_float
      * \param red GLhalfNV
@@ -359,7 +359,7 @@ requires(semantic::concepts::Vector<vec_3_GLhalfNV, GLhalfNV, 3>)
 }
 
 template<class span_const_GLhalfNV>
-requires(semantic::concepts::Span<span_const_GLhalfNV>&& std::is_same_v<
+requires(concepts::span<span_const_GLhalfNV>&& std::is_same_v<
          std::decay_t<typename span_const_GLhalfNV::value_type>,
          std::decay_t<GLhalfNV>>)
     /*!
@@ -396,7 +396,7 @@ STATICINLINE void tex_coord1h(GLhalfNV s)
 }
 
 template<class span_const_GLhalfNV>
-requires(semantic::concepts::Span<span_const_GLhalfNV>&& std::is_same_v<
+requires(concepts::span<span_const_GLhalfNV>&& std::is_same_v<
          std::decay_t<typename span_const_GLhalfNV::value_type>,
          std::decay_t<GLhalfNV>>)
     /*!
@@ -434,7 +434,7 @@ STATICINLINE void tex_coord2h(GLhalfNV s, GLhalfNV t)
 }
 
 template<class span_const_GLhalfNV>
-requires(semantic::concepts::Span<span_const_GLhalfNV>&& std::is_same_v<
+requires(concepts::span<span_const_GLhalfNV>&& std::is_same_v<
          std::decay_t<typename span_const_GLhalfNV::value_type>,
          std::decay_t<GLhalfNV>>)
     /*!
@@ -473,7 +473,7 @@ STATICINLINE void tex_coord3h(GLhalfNV s, GLhalfNV t, GLhalfNV r)
 }
 
 template<class span_const_GLhalfNV>
-requires(semantic::concepts::Span<span_const_GLhalfNV>&& std::is_same_v<
+requires(concepts::span<span_const_GLhalfNV>&& std::is_same_v<
          std::decay_t<typename span_const_GLhalfNV::value_type>,
          std::decay_t<GLhalfNV>>)
     /*!
@@ -513,7 +513,7 @@ STATICINLINE void tex_coord4h(GLhalfNV s, GLhalfNV t, GLhalfNV r, GLhalfNV q)
 }
 
 template<class span_const_GLhalfNV>
-requires(semantic::concepts::Span<span_const_GLhalfNV>&& std::is_same_v<
+requires(concepts::span<span_const_GLhalfNV>&& std::is_same_v<
          std::decay_t<typename span_const_GLhalfNV::value_type>,
          std::decay_t<GLhalfNV>>)
     /*!
@@ -534,7 +534,7 @@ requires(semantic::concepts::Span<span_const_GLhalfNV>&& std::is_same_v<
 }
 
 template<class vec_2_GLhalfNV>
-requires(semantic::concepts::Vector<vec_2_GLhalfNV, GLhalfNV, 2>)
+requires(concepts::vector<vec_2_GLhalfNV, GLhalfNV, 2>)
     /*!
      * \brief Part of GL_NV_half_float
      * \param x GLhalfNV
@@ -553,7 +553,7 @@ requires(semantic::concepts::Vector<vec_2_GLhalfNV, GLhalfNV, 2>)
 }
 
 template<class span_const_GLhalfNV>
-requires(semantic::concepts::Span<span_const_GLhalfNV>&& std::is_same_v<
+requires(concepts::span<span_const_GLhalfNV>&& std::is_same_v<
          std::decay_t<typename span_const_GLhalfNV::value_type>,
          std::decay_t<GLhalfNV>>)
     /*!
@@ -574,7 +574,7 @@ requires(semantic::concepts::Span<span_const_GLhalfNV>&& std::is_same_v<
 }
 
 template<class vec_3_GLhalfNV>
-requires(semantic::concepts::Vector<vec_3_GLhalfNV, GLhalfNV, 3>)
+requires(concepts::vector<vec_3_GLhalfNV, GLhalfNV, 3>)
     /*!
      * \brief Part of GL_NV_half_float
      * \param x GLhalfNV
@@ -594,7 +594,7 @@ requires(semantic::concepts::Vector<vec_3_GLhalfNV, GLhalfNV, 3>)
 }
 
 template<class span_const_GLhalfNV>
-requires(semantic::concepts::Span<span_const_GLhalfNV>&& std::is_same_v<
+requires(concepts::span<span_const_GLhalfNV>&& std::is_same_v<
          std::decay_t<typename span_const_GLhalfNV::value_type>,
          std::decay_t<GLhalfNV>>)
     /*!
@@ -615,7 +615,7 @@ requires(semantic::concepts::Span<span_const_GLhalfNV>&& std::is_same_v<
 }
 
 template<class vec_4_GLhalfNV>
-requires(semantic::concepts::Vector<vec_4_GLhalfNV, GLhalfNV, 4>)
+requires(concepts::vector<vec_4_GLhalfNV, GLhalfNV, 4>)
     /*!
      * \brief Part of GL_NV_half_float
      * \param x GLhalfNV
@@ -636,7 +636,7 @@ requires(semantic::concepts::Vector<vec_4_GLhalfNV, GLhalfNV, 4>)
 }
 
 template<class span_const_GLhalfNV>
-requires(semantic::concepts::Span<span_const_GLhalfNV>&& std::is_same_v<
+requires(concepts::span<span_const_GLhalfNV>&& std::is_same_v<
          std::decay_t<typename span_const_GLhalfNV::value_type>,
          std::decay_t<GLhalfNV>>)
     /*!
@@ -674,7 +674,7 @@ STATICINLINE void vertex_attrib1h(u32 index, GLhalfNV x)
 }
 
 template<class span_const_GLhalfNV>
-requires(semantic::concepts::Span<span_const_GLhalfNV>&& std::is_same_v<
+requires(concepts::span<span_const_GLhalfNV>&& std::is_same_v<
          std::decay_t<typename span_const_GLhalfNV::value_type>,
          std::decay_t<GLhalfNV>>)
     /*!
@@ -697,7 +697,7 @@ requires(semantic::concepts::Span<span_const_GLhalfNV>&& std::is_same_v<
 }
 
 template<class vec_2_GLhalfNV>
-requires(semantic::concepts::Vector<vec_2_GLhalfNV, GLhalfNV, 2>)
+requires(concepts::vector<vec_2_GLhalfNV, GLhalfNV, 2>)
     /*!
      * \brief Part of GL_NV_half_float
      * \param index GLuint
@@ -717,7 +717,7 @@ requires(semantic::concepts::Vector<vec_2_GLhalfNV, GLhalfNV, 2>)
 }
 
 template<class span_const_GLhalfNV>
-requires(semantic::concepts::Span<span_const_GLhalfNV>&& std::is_same_v<
+requires(concepts::span<span_const_GLhalfNV>&& std::is_same_v<
          std::decay_t<typename span_const_GLhalfNV::value_type>,
          std::decay_t<GLhalfNV>>)
     /*!
@@ -740,7 +740,7 @@ requires(semantic::concepts::Span<span_const_GLhalfNV>&& std::is_same_v<
 }
 
 template<class vec_3_GLhalfNV>
-requires(semantic::concepts::Vector<vec_3_GLhalfNV, GLhalfNV, 3>)
+requires(concepts::vector<vec_3_GLhalfNV, GLhalfNV, 3>)
     /*!
      * \brief Part of GL_NV_half_float
      * \param index GLuint
@@ -761,7 +761,7 @@ requires(semantic::concepts::Vector<vec_3_GLhalfNV, GLhalfNV, 3>)
 }
 
 template<class span_const_GLhalfNV>
-requires(semantic::concepts::Span<span_const_GLhalfNV>&& std::is_same_v<
+requires(concepts::span<span_const_GLhalfNV>&& std::is_same_v<
          std::decay_t<typename span_const_GLhalfNV::value_type>,
          std::decay_t<GLhalfNV>>)
     /*!
@@ -784,7 +784,7 @@ requires(semantic::concepts::Span<span_const_GLhalfNV>&& std::is_same_v<
 }
 
 template<class vec_4_GLhalfNV>
-requires(semantic::concepts::Vector<vec_4_GLhalfNV, GLhalfNV, 4>)
+requires(concepts::vector<vec_4_GLhalfNV, GLhalfNV, 4>)
     /*!
      * \brief Part of GL_NV_half_float
      * \param index GLuint
@@ -806,7 +806,7 @@ requires(semantic::concepts::Vector<vec_4_GLhalfNV, GLhalfNV, 4>)
 }
 
 template<class span_const_GLhalfNV>
-requires(semantic::concepts::Span<span_const_GLhalfNV>&& std::is_same_v<
+requires(concepts::span<span_const_GLhalfNV>&& std::is_same_v<
          std::decay_t<typename span_const_GLhalfNV::value_type>,
          std::decay_t<GLhalfNV>>)
     /*!
@@ -829,7 +829,7 @@ requires(semantic::concepts::Span<span_const_GLhalfNV>&& std::is_same_v<
 }
 
 template<class span_const_GLhalfNV>
-requires(semantic::concepts::Span<span_const_GLhalfNV>&& std::is_same_v<
+requires(concepts::span<span_const_GLhalfNV>&& std::is_same_v<
          std::decay_t<typename span_const_GLhalfNV::value_type>,
          std::decay_t<GLhalfNV>>)
     /*!
@@ -854,7 +854,7 @@ requires(semantic::concepts::Span<span_const_GLhalfNV>&& std::is_same_v<
 }
 
 template<class span_const_GLhalfNV>
-requires(semantic::concepts::Span<span_const_GLhalfNV>&& std::is_same_v<
+requires(concepts::span<span_const_GLhalfNV>&& std::is_same_v<
          std::decay_t<typename span_const_GLhalfNV::value_type>,
          std::decay_t<GLhalfNV>>)
     /*!
@@ -879,7 +879,7 @@ requires(semantic::concepts::Span<span_const_GLhalfNV>&& std::is_same_v<
 }
 
 template<class span_const_GLhalfNV>
-requires(semantic::concepts::Span<span_const_GLhalfNV>&& std::is_same_v<
+requires(concepts::span<span_const_GLhalfNV>&& std::is_same_v<
          std::decay_t<typename span_const_GLhalfNV::value_type>,
          std::decay_t<GLhalfNV>>)
     /*!
@@ -904,7 +904,7 @@ requires(semantic::concepts::Span<span_const_GLhalfNV>&& std::is_same_v<
 }
 
 template<class span_const_GLhalfNV>
-requires(semantic::concepts::Span<span_const_GLhalfNV>&& std::is_same_v<
+requires(concepts::span<span_const_GLhalfNV>&& std::is_same_v<
          std::decay_t<typename span_const_GLhalfNV::value_type>,
          std::decay_t<GLhalfNV>>)
     /*!
@@ -945,7 +945,7 @@ STATICINLINE void vertex_weighth(GLhalfNV weight)
 }
 
 template<class span_const_GLhalfNV>
-requires(semantic::concepts::Span<span_const_GLhalfNV>&& std::is_same_v<
+requires(concepts::span<span_const_GLhalfNV>&& std::is_same_v<
          std::decay_t<typename span_const_GLhalfNV::value_type>,
          std::decay_t<GLhalfNV>>)
     /*!

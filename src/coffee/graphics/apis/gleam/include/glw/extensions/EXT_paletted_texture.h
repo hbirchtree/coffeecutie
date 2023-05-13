@@ -3,16 +3,16 @@
 #ifdef GL_EXT_paletted_texture
 namespace gl::ext::paletted_texture {
 namespace values {
-constexpr libc_types::u32 color_index1       = 0x80E2;
-constexpr libc_types::u32 color_index2       = 0x80E3;
-constexpr libc_types::u32 color_index4       = 0x80E4;
-constexpr libc_types::u32 color_index8       = 0x80E5;
-constexpr libc_types::u32 color_index12      = 0x80E6;
-constexpr libc_types::u32 color_index16      = 0x80E7;
-constexpr libc_types::u32 texture_index_size = 0x80ED;
+constexpr u32 color_index1       = 0x80E2;
+constexpr u32 color_index2       = 0x80E3;
+constexpr u32 color_index4       = 0x80E4;
+constexpr u32 color_index8       = 0x80E5;
+constexpr u32 color_index12      = 0x80E6;
+constexpr u32 color_index16      = 0x80E7;
+constexpr u32 texture_index_size = 0x80ED;
 } // namespace values
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_paletted_texture
      * \param target GLenum
@@ -47,7 +47,7 @@ requires(semantic::concepts::Span<span_const_void>)
 }
 
 template<class span_void>
-requires(semantic::concepts::Span<span_void>)
+requires(concepts::span<span_void>)
     /*!
      * \brief Part of GL_EXT_paletted_texture
      * \param target GLenum
@@ -76,7 +76,7 @@ requires(semantic::concepts::Span<span_void>)
 }
 
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+requires(concepts::span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -104,7 +104,7 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!

@@ -52,7 +52,7 @@ STATICINLINE void depth_rangef(f32 n, f32 f)
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -99,9 +99,9 @@ STATICINLINE void release_shader_compiler()
 }
 
 template<class span_const_u32, class span_const_void>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+requires(concepts::span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>&& semantic::concepts::Span<span_const_void>)
+         std::decay_t<u32>>&& concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_ARB_ES2_compatibility
      * \param count GLsizei

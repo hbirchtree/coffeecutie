@@ -8,6 +8,7 @@
         "boost-stacktrace",
         "cppcodec",
         "cxxopts",
+        "fmt",
         "glm",
         { "name": "ktx", "features": ["vulkan"] },
         "lz4",

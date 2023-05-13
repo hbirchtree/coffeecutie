@@ -3,8 +3,8 @@
 #ifdef GL_NV_fragment_coverage_to_color
 namespace gl::nv::fragment_coverage_to_color {
 namespace values {
-constexpr libc_types::u32 fragment_coverage_to_color = 0x92DD;
-constexpr libc_types::u32 fragment_coverage_color    = 0x92DE;
+constexpr u32 fragment_coverage_to_color = 0x92DD;
+constexpr u32 fragment_coverage_color    = 0x92DE;
 } // namespace values
 /*!
  * \brief Part of GL_NV_fragment_coverage_to_color

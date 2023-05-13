@@ -3,10 +3,10 @@
 #ifdef GL_NV_register_combiners2
 namespace gl::nv::register_combiners2 {
 namespace values {
-constexpr libc_types::u32 per_stage_constants = 0x8535;
+constexpr u32 per_stage_constants = 0x8535;
 } // namespace values
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+requires(concepts::span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -35,7 +35,7 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
 }
 
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+requires(concepts::span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
          std::decay_t<f32>>)
     /*!

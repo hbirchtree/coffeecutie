@@ -1,7 +1,7 @@
 #ifdef GL_VERSION_4_4
 template<class span_const_void>
-requires(MinimumVersion<Current, Version<4, 4>>&&
-             semantic::concepts::Span<span_const_void>)
+requires(
+    MinimumVersion<Current, Version<4, 4>>&& concepts::span<span_const_void>)
     /*!
      * \brief Wraps around glBufferStorage. Introduced in GL core 4.4
      * \param target GLenum
@@ -30,8 +30,8 @@ requires(MinimumVersion<Current, Version<4, 4>>&&
 }
 
 template<class span_const_void>
-requires(MinimumVersion<Current, Version<4, 4>>&&
-             semantic::concepts::Span<span_const_void>)
+requires(
+    MinimumVersion<Current, Version<4, 4>>&& concepts::span<span_const_void>)
     /*!
      * \brief Wraps around glClearTexImage. Introduced in GL core 4.4
      * \param texture GLuint
@@ -69,9 +69,9 @@ requires(MinimumVersion<Current, Version<4, 4>>&&
 
 template<class size_3_i32, class span_const_void, class vec_3_i32>
 requires(MinimumVersion<Current, Version<4, 4>>&&
-                     semantic::concepts::Vector<vec_3_i32, i32, 3>&&
-                     semantic::concepts::Size2D<size_3_i32, i32>&&
-                     semantic::concepts::Span<span_const_void>)
+                     concepts::vector<vec_3_i32, i32, 3>&&
+                     concepts::size_2d<size_3_i32, i32>&&
+                     concepts::span<span_const_void>)
     /*!
      * \brief Wraps around glClearTexSubImage. Introduced in GL core 4.4
      * \param texture GLuint
@@ -123,7 +123,7 @@ requires(MinimumVersion<Current, Version<4, 4>>&&
 
 template<class span_const_u32>
 requires(MinimumVersion<Current, Version<4, 4>>&&
-             semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+             concepts::span<span_const_u32>&& std::is_same_v<
                  std::decay_t<typename span_const_u32::value_type>,
                  std::decay_t<u32>>)
     /*!
@@ -158,14 +158,14 @@ template<
     class span_const_GLsizeiptr,
     class span_const_u32>
 requires(
-    MinimumVersion<Current, Version<4, 4>>&&
-        semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+    MinimumVersion<Current, Version<4, 4>>&& concepts::span<span_const_u32>&&
+                                             std::is_same_v<
             std::decay_t<typename span_const_u32::value_type>,
-            std::decay_t<u32>>&& semantic::concepts::Span<span_const_GLintptr>&&
+            std::decay_t<u32>>&& concepts::span<span_const_GLintptr>&&
                                  std::is_same_v<
                 std::decay_t<typename span_const_GLintptr::value_type>,
-                std::decay_t<GLintptr>>&&     semantic::concepts::
-                Span<span_const_GLsizeiptr>&& std::is_same_v<
+                std::decay_t<GLintptr>>&&
+                concepts::span<span_const_GLsizeiptr>&& std::is_same_v<
                     std::decay_t<typename span_const_GLsizeiptr::value_type>,
                     std::decay_t<GLsizeiptr>>)
     /*!
@@ -205,7 +205,7 @@ requires(
 
 template<class span_const_u32>
 requires(MinimumVersion<Current, Version<4, 4>>&&
-             semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+             concepts::span<span_const_u32>&& std::is_same_v<
                  std::decay_t<typename span_const_u32::value_type>,
                  std::decay_t<u32>>)
     /*!
@@ -233,7 +233,7 @@ requires(MinimumVersion<Current, Version<4, 4>>&&
 
 template<class span_const_u32>
 requires(MinimumVersion<Current, Version<4, 4>>&&
-             semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+             concepts::span<span_const_u32>&& std::is_same_v<
                  std::decay_t<typename span_const_u32::value_type>,
                  std::decay_t<u32>>)
     /*!
@@ -260,7 +260,7 @@ requires(MinimumVersion<Current, Version<4, 4>>&&
 
 template<class span_const_u32>
 requires(MinimumVersion<Current, Version<4, 4>>&&
-             semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+             concepts::span<span_const_u32>&& std::is_same_v<
                  std::decay_t<typename span_const_u32::value_type>,
                  std::decay_t<u32>>)
     /*!
@@ -287,13 +287,13 @@ requires(MinimumVersion<Current, Version<4, 4>>&&
 
 template<class span_const_GLintptr, class span_const_i32, class span_const_u32>
 requires(MinimumVersion<Current, Version<4, 4>>&&
-             semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+             concepts::span<span_const_u32>&& std::is_same_v<
                  std::decay_t<typename span_const_u32::value_type>,
-                 std::decay_t<u32>>&&
-                 semantic::concepts::Span<span_const_GLintptr>&& std::is_same_v<
+                 std::decay_t<u32>>&& concepts::span<span_const_GLintptr>&&
+                                      std::is_same_v<
                      std::decay_t<typename span_const_GLintptr::value_type>,
-                     std::decay_t<GLintptr>>&&
-                     semantic::concepts::Span<span_const_i32>&& std::is_same_v<
+                     std::decay_t<GLintptr>>&& concepts::span<span_const_i32>&&
+                                               std::is_same_v<
                          std::decay_t<typename span_const_i32::value_type>,
                          std::decay_t<i32>>)
     /*!

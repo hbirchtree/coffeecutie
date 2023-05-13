@@ -5,10 +5,10 @@
 namespace gl::nv::pixel_data_range {
 using gl::group::pixel_data_range_target_nv;
 namespace values {
-constexpr libc_types::u32 write_pixel_data_range_length  = 0x887A;
-constexpr libc_types::u32 read_pixel_data_range_length   = 0x887B;
-constexpr libc_types::u32 write_pixel_data_range_pointer = 0x887C;
-constexpr libc_types::u32 read_pixel_data_range_pointer  = 0x887D;
+constexpr u32 write_pixel_data_range_length  = 0x887A;
+constexpr u32 read_pixel_data_range_length   = 0x887B;
+constexpr u32 write_pixel_data_range_pointer = 0x887C;
+constexpr u32 read_pixel_data_range_pointer  = 0x887D;
 } // namespace values
 /*!
  * \brief Part of GL_NV_pixel_data_range
@@ -28,7 +28,7 @@ STATICINLINE void flush_pixel_data_range(
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_NV_pixel_data_range
      * \param target GLenum

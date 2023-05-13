@@ -19,7 +19,7 @@ using gl::group::separable_target_ext;
 namespace values {
 } // namespace values
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_convolution
      * \param target GLenum
@@ -54,8 +54,7 @@ requires(semantic::concepts::Span<span_const_void>)
 }
 
 template<class size_2_i32, class span_const_void>
-requires(semantic::concepts::Size2D<size_2_i32, i32>&&
-             semantic::concepts::Span<span_const_void>)
+requires(concepts::size_2d<size_2_i32, i32>&& concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_convolution
      * \param target GLenum
@@ -114,7 +113,7 @@ STATICINLINE void convolution_parameter(
 }
 
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+requires(concepts::span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -165,7 +164,7 @@ STATICINLINE void convolution_parameter(
 }
 
 template<class span_const_i32>
-requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
+requires(concepts::span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -194,7 +193,7 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
 }
 
 template<class vec_2_i32>
-requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
+requires(concepts::vector<vec_2_i32, i32, 2>)
     /*!
      * \brief Part of GL_EXT_convolution
      * \param target GLenum
@@ -225,8 +224,8 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
 }
 
 template<class size_2_i32, class vec_2_i32>
-requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
-             semantic::concepts::Size2D<size_2_i32, i32>)
+requires(
+    concepts::vector<vec_2_i32, i32, 2>&& concepts::size_2d<size_2_i32, i32>)
     /*!
      * \brief Part of GL_EXT_convolution
      * \param target GLenum
@@ -259,7 +258,7 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
 }
 
 template<class span_void>
-requires(semantic::concepts::Span<span_void>)
+requires(concepts::span<span_void>)
     /*!
      * \brief Part of GL_EXT_convolution
      * \param target GLenum
@@ -288,7 +287,7 @@ requires(semantic::concepts::Span<span_void>)
 }
 
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+requires(concepts::span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -316,7 +315,7 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -344,7 +343,7 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_void>
-requires(semantic::concepts::Span<span_void>)
+requires(concepts::span<span_void>)
     /*!
      * \brief Part of GL_EXT_convolution
      * \param target GLenum
@@ -379,8 +378,7 @@ requires(semantic::concepts::Span<span_void>)
 }
 
 template<class size_2_i32, class span_const_void>
-requires(semantic::concepts::Size2D<size_2_i32, i32>&&
-             semantic::concepts::Span<span_const_void>)
+requires(concepts::size_2d<size_2_i32, i32>&& concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_convolution
      * \param target GLenum

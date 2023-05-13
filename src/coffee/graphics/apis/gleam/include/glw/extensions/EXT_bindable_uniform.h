@@ -3,12 +3,12 @@
 #ifdef GL_EXT_bindable_uniform
 namespace gl::ext::bindable_uniform {
 namespace values {
-constexpr libc_types::u32 max_vertex_bindable_uniforms   = 0x8DE2;
-constexpr libc_types::u32 max_fragment_bindable_uniforms = 0x8DE3;
-constexpr libc_types::u32 max_geometry_bindable_uniforms = 0x8DE4;
-constexpr libc_types::u32 max_bindable_uniform_size      = 0x8DED;
-constexpr libc_types::u32 uniform_buffer                 = 0x8DEE;
-constexpr libc_types::u32 uniform_buffer_binding         = 0x8DEF;
+constexpr u32 max_vertex_bindable_uniforms   = 0x8DE2;
+constexpr u32 max_fragment_bindable_uniforms = 0x8DE3;
+constexpr u32 max_geometry_bindable_uniforms = 0x8DE4;
+constexpr u32 max_bindable_uniform_size      = 0x8DED;
+constexpr u32 uniform_buffer                 = 0x8DEE;
+constexpr u32 uniform_buffer_binding         = 0x8DEF;
 } // namespace values
 /*!
  * \brief Part of GL_EXT_bindable_uniform

@@ -3,14 +3,14 @@
 #ifdef GL_OES_texture_storage_multisample_2d_array
 namespace gl::oes::texture_storage_multisample_2d_array {
 namespace values {
-constexpr libc_types::u32 texture_2d_multisample_array              = 0x9102;
-constexpr libc_types::u32 texture_binding_2d_multisample_array      = 0x9105;
-constexpr libc_types::u32 sampler_2d_multisample_array              = 0x910B;
-constexpr libc_types::u32 int_sampler_2d_multisample_array          = 0x910C;
-constexpr libc_types::u32 unsigned_int_sampler_2d_multisample_array = 0x910D;
+constexpr u32 texture_2d_multisample_array              = 0x9102;
+constexpr u32 texture_binding_2d_multisample_array      = 0x9105;
+constexpr u32 sampler_2d_multisample_array              = 0x910B;
+constexpr u32 int_sampler_2d_multisample_array          = 0x910C;
+constexpr u32 unsigned_int_sampler_2d_multisample_array = 0x910D;
 } // namespace values
 template<class size_3_i32>
-requires(semantic::concepts::Size2D<size_3_i32, i32>)
+requires(concepts::size_2d<size_3_i32, i32>)
     /*!
      * \brief Part of GL_OES_texture_storage_multisample_2d_array
      * \param target GLenum

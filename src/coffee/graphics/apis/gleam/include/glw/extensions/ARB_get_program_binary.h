@@ -13,7 +13,7 @@ using gl::group::program_property_arb;
 namespace values {
 } // namespace values
 template<class span_void>
-requires(semantic::concepts::Span<span_void>)
+requires(concepts::span<span_void>)
     /*!
      * \brief Part of GL_ARB_get_program_binary
      * \param program GLuint
@@ -46,7 +46,7 @@ requires(semantic::concepts::Span<span_void>)
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_ARB_get_program_binary
      * \param program GLuint

@@ -19,65 +19,65 @@ using gl::group::vertex_shader_op_ext;
 using gl::group::vertex_shader_parameter_ext;
 using gl::group::vertex_shader_storage_type_ext;
 namespace values {
-constexpr libc_types::u32 vertex_shader                               = 0x8780;
-constexpr libc_types::u32 vertex_shader_binding                       = 0x8781;
-constexpr libc_types::u32 output_vertex                               = 0x879A;
-constexpr libc_types::u32 output_color0                               = 0x879B;
-constexpr libc_types::u32 output_color1                               = 0x879C;
-constexpr libc_types::u32 output_texture_coord0                       = 0x879D;
-constexpr libc_types::u32 output_texture_coord1                       = 0x879E;
-constexpr libc_types::u32 output_texture_coord2                       = 0x879F;
-constexpr libc_types::u32 output_texture_coord3                       = 0x87A0;
-constexpr libc_types::u32 output_texture_coord4                       = 0x87A1;
-constexpr libc_types::u32 output_texture_coord5                       = 0x87A2;
-constexpr libc_types::u32 output_texture_coord6                       = 0x87A3;
-constexpr libc_types::u32 output_texture_coord7                       = 0x87A4;
-constexpr libc_types::u32 output_texture_coord8                       = 0x87A5;
-constexpr libc_types::u32 output_texture_coord9                       = 0x87A6;
-constexpr libc_types::u32 output_texture_coord10                      = 0x87A7;
-constexpr libc_types::u32 output_texture_coord11                      = 0x87A8;
-constexpr libc_types::u32 output_texture_coord12                      = 0x87A9;
-constexpr libc_types::u32 output_texture_coord13                      = 0x87AA;
-constexpr libc_types::u32 output_texture_coord14                      = 0x87AB;
-constexpr libc_types::u32 output_texture_coord15                      = 0x87AC;
-constexpr libc_types::u32 output_texture_coord16                      = 0x87AD;
-constexpr libc_types::u32 output_texture_coord17                      = 0x87AE;
-constexpr libc_types::u32 output_texture_coord18                      = 0x87AF;
-constexpr libc_types::u32 output_texture_coord19                      = 0x87B0;
-constexpr libc_types::u32 output_texture_coord20                      = 0x87B1;
-constexpr libc_types::u32 output_texture_coord21                      = 0x87B2;
-constexpr libc_types::u32 output_texture_coord22                      = 0x87B3;
-constexpr libc_types::u32 output_texture_coord23                      = 0x87B4;
-constexpr libc_types::u32 output_texture_coord24                      = 0x87B5;
-constexpr libc_types::u32 output_texture_coord25                      = 0x87B6;
-constexpr libc_types::u32 output_texture_coord26                      = 0x87B7;
-constexpr libc_types::u32 output_texture_coord27                      = 0x87B8;
-constexpr libc_types::u32 output_texture_coord28                      = 0x87B9;
-constexpr libc_types::u32 output_texture_coord29                      = 0x87BA;
-constexpr libc_types::u32 output_texture_coord30                      = 0x87BB;
-constexpr libc_types::u32 output_texture_coord31                      = 0x87BC;
-constexpr libc_types::u32 output_fog                                  = 0x87BD;
-constexpr libc_types::u32 max_vertex_shader_instructions              = 0x87C5;
-constexpr libc_types::u32 max_vertex_shader_variants                  = 0x87C6;
-constexpr libc_types::u32 max_vertex_shader_invariants                = 0x87C7;
-constexpr libc_types::u32 max_vertex_shader_local_constants           = 0x87C8;
-constexpr libc_types::u32 max_vertex_shader_locals                    = 0x87C9;
-constexpr libc_types::u32 max_optimized_vertex_shader_instructions    = 0x87CA;
-constexpr libc_types::u32 max_optimized_vertex_shader_variants        = 0x87CB;
-constexpr libc_types::u32 max_optimized_vertex_shader_local_constants = 0x87CC;
-constexpr libc_types::u32 max_optimized_vertex_shader_invariants      = 0x87CD;
-constexpr libc_types::u32 max_optimized_vertex_shader_locals          = 0x87CE;
-constexpr libc_types::u32 vertex_shader_instructions                  = 0x87CF;
-constexpr libc_types::u32 vertex_shader_variants                      = 0x87D0;
-constexpr libc_types::u32 vertex_shader_invariants                    = 0x87D1;
-constexpr libc_types::u32 vertex_shader_local_constants               = 0x87D2;
-constexpr libc_types::u32 vertex_shader_locals                        = 0x87D3;
-constexpr libc_types::u32 vertex_shader_optimized                     = 0x87D4;
-constexpr libc_types::u32 variant_array_pointer                       = 0x87E9;
-constexpr libc_types::u32 invariant_value                             = 0x87EA;
-constexpr libc_types::u32 invariant_datatype                          = 0x87EB;
-constexpr libc_types::u32 local_constant_value                        = 0x87EC;
-constexpr libc_types::u32 local_constant_datatype                     = 0x87ED;
+constexpr u32 vertex_shader                               = 0x8780;
+constexpr u32 vertex_shader_binding                       = 0x8781;
+constexpr u32 output_vertex                               = 0x879A;
+constexpr u32 output_color0                               = 0x879B;
+constexpr u32 output_color1                               = 0x879C;
+constexpr u32 output_texture_coord0                       = 0x879D;
+constexpr u32 output_texture_coord1                       = 0x879E;
+constexpr u32 output_texture_coord2                       = 0x879F;
+constexpr u32 output_texture_coord3                       = 0x87A0;
+constexpr u32 output_texture_coord4                       = 0x87A1;
+constexpr u32 output_texture_coord5                       = 0x87A2;
+constexpr u32 output_texture_coord6                       = 0x87A3;
+constexpr u32 output_texture_coord7                       = 0x87A4;
+constexpr u32 output_texture_coord8                       = 0x87A5;
+constexpr u32 output_texture_coord9                       = 0x87A6;
+constexpr u32 output_texture_coord10                      = 0x87A7;
+constexpr u32 output_texture_coord11                      = 0x87A8;
+constexpr u32 output_texture_coord12                      = 0x87A9;
+constexpr u32 output_texture_coord13                      = 0x87AA;
+constexpr u32 output_texture_coord14                      = 0x87AB;
+constexpr u32 output_texture_coord15                      = 0x87AC;
+constexpr u32 output_texture_coord16                      = 0x87AD;
+constexpr u32 output_texture_coord17                      = 0x87AE;
+constexpr u32 output_texture_coord18                      = 0x87AF;
+constexpr u32 output_texture_coord19                      = 0x87B0;
+constexpr u32 output_texture_coord20                      = 0x87B1;
+constexpr u32 output_texture_coord21                      = 0x87B2;
+constexpr u32 output_texture_coord22                      = 0x87B3;
+constexpr u32 output_texture_coord23                      = 0x87B4;
+constexpr u32 output_texture_coord24                      = 0x87B5;
+constexpr u32 output_texture_coord25                      = 0x87B6;
+constexpr u32 output_texture_coord26                      = 0x87B7;
+constexpr u32 output_texture_coord27                      = 0x87B8;
+constexpr u32 output_texture_coord28                      = 0x87B9;
+constexpr u32 output_texture_coord29                      = 0x87BA;
+constexpr u32 output_texture_coord30                      = 0x87BB;
+constexpr u32 output_texture_coord31                      = 0x87BC;
+constexpr u32 output_fog                                  = 0x87BD;
+constexpr u32 max_vertex_shader_instructions              = 0x87C5;
+constexpr u32 max_vertex_shader_variants                  = 0x87C6;
+constexpr u32 max_vertex_shader_invariants                = 0x87C7;
+constexpr u32 max_vertex_shader_local_constants           = 0x87C8;
+constexpr u32 max_vertex_shader_locals                    = 0x87C9;
+constexpr u32 max_optimized_vertex_shader_instructions    = 0x87CA;
+constexpr u32 max_optimized_vertex_shader_variants        = 0x87CB;
+constexpr u32 max_optimized_vertex_shader_local_constants = 0x87CC;
+constexpr u32 max_optimized_vertex_shader_invariants      = 0x87CD;
+constexpr u32 max_optimized_vertex_shader_locals          = 0x87CE;
+constexpr u32 vertex_shader_instructions                  = 0x87CF;
+constexpr u32 vertex_shader_variants                      = 0x87D0;
+constexpr u32 vertex_shader_invariants                    = 0x87D1;
+constexpr u32 vertex_shader_local_constants               = 0x87D2;
+constexpr u32 vertex_shader_locals                        = 0x87D3;
+constexpr u32 vertex_shader_optimized                     = 0x87D4;
+constexpr u32 variant_array_pointer                       = 0x87E9;
+constexpr u32 invariant_value                             = 0x87EA;
+constexpr u32 invariant_datatype                          = 0x87EB;
+constexpr u32 local_constant_value                        = 0x87EC;
+constexpr u32 local_constant_datatype                     = 0x87ED;
 } // namespace values
 /*!
  * \brief Part of GL_EXT_vertex_shader
@@ -341,7 +341,7 @@ STATICINLINE GLuint gen_vertex_shaders(u32 range)
 }
 
 template<class span_bool>
-requires(semantic::concepts::Span<span_bool>&& std::is_same_v<
+requires(concepts::span<span_bool>&& std::is_same_v<
          std::decay_t<typename span_bool::value_type>,
          std::decay_t<bool>>)
     /*!
@@ -367,7 +367,7 @@ requires(semantic::concepts::Span<span_bool>&& std::is_same_v<
 }
 
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+requires(concepts::span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -393,7 +393,7 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -419,7 +419,7 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_bool>
-requires(semantic::concepts::Span<span_bool>&& std::is_same_v<
+requires(concepts::span<span_bool>&& std::is_same_v<
          std::decay_t<typename span_bool::value_type>,
          std::decay_t<bool>>)
     /*!
@@ -445,7 +445,7 @@ requires(semantic::concepts::Span<span_bool>&& std::is_same_v<
 }
 
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+requires(concepts::span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -471,7 +471,7 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -497,7 +497,7 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_bool>
-requires(semantic::concepts::Span<span_bool>&& std::is_same_v<
+requires(concepts::span<span_bool>&& std::is_same_v<
          std::decay_t<typename span_bool::value_type>,
          std::decay_t<bool>>)
     /*!
@@ -523,7 +523,7 @@ requires(semantic::concepts::Span<span_bool>&& std::is_same_v<
 }
 
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+requires(concepts::span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -549,7 +549,7 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -575,7 +575,7 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_void>
-requires(semantic::concepts::Span<span_void>)
+requires(concepts::span<span_void>)
     /*!
      * \brief Part of GL_EXT_vertex_shader
      * \param id GLuint
@@ -635,7 +635,7 @@ STATICINLINE bool is_variant_enabled(u32 id, group::variant_cap_ext cap)
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_vertex_shader
      * \param id GLuint
@@ -659,7 +659,7 @@ requires(semantic::concepts::Span<span_const_void>)
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_vertex_shader
      * \param id GLuint
@@ -775,7 +775,7 @@ STATICINLINE void swizzle(
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_vertex_shader
      * \param id GLuint
@@ -804,7 +804,7 @@ requires(semantic::concepts::Span<span_const_void>)
 }
 
 template<class span_const_i8>
-requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
+requires(concepts::span<span_const_i8>&& std::is_same_v<
          std::decay_t<typename span_const_i8::value_type>,
          std::decay_t<i8>>)
     /*!
@@ -827,7 +827,7 @@ requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
 }
 
 template<class span_const_f64>
-requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
+requires(concepts::span<span_const_f64>&& std::is_same_v<
          std::decay_t<typename span_const_f64::value_type>,
          std::decay_t<f64>>)
     /*!
@@ -850,7 +850,7 @@ requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
 }
 
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+requires(concepts::span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -873,7 +873,7 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
 }
 
 template<class span_const_i32>
-requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
+requires(concepts::span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -896,7 +896,7 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
 }
 
 template<class span_const_i16>
-requires(semantic::concepts::Span<span_const_i16>&& std::is_same_v<
+requires(concepts::span<span_const_i16>&& std::is_same_v<
          std::decay_t<typename span_const_i16::value_type>,
          std::decay_t<i16>>)
     /*!
@@ -919,7 +919,7 @@ requires(semantic::concepts::Span<span_const_i16>&& std::is_same_v<
 }
 
 template<class span_const_u8>
-requires(semantic::concepts::Span<span_const_u8>&& std::is_same_v<
+requires(concepts::span<span_const_u8>&& std::is_same_v<
          std::decay_t<typename span_const_u8::value_type>,
          std::decay_t<u8>>)
     /*!
@@ -942,7 +942,7 @@ requires(semantic::concepts::Span<span_const_u8>&& std::is_same_v<
 }
 
 template<class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+requires(concepts::span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -965,7 +965,7 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
 }
 
 template<class span_const_u16>
-requires(semantic::concepts::Span<span_const_u16>&& std::is_same_v<
+requires(concepts::span<span_const_u16>&& std::is_same_v<
          std::decay_t<typename span_const_u16::value_type>,
          std::decay_t<u16>>)
     /*!

@@ -3,10 +3,10 @@
 #ifdef GL_EXT_timer_query
 namespace gl::ext::timer_query {
 namespace values {
-constexpr libc_types::u32 time_elapsed = 0x88BF;
+constexpr u32 time_elapsed = 0x88BF;
 } // namespace values
 template<class span_i64>
-requires(semantic::concepts::Span<span_i64>&& std::is_same_v<
+requires(concepts::span<span_i64>&& std::is_same_v<
          std::decay_t<typename span_i64::value_type>,
          std::decay_t<i64>>)
     /*!
@@ -32,7 +32,7 @@ requires(semantic::concepts::Span<span_i64>&& std::is_same_v<
 }
 
 template<class span_u64>
-requires(semantic::concepts::Span<span_u64>&& std::is_same_v<
+requires(concepts::span<span_u64>&& std::is_same_v<
          std::decay_t<typename span_u64::value_type>,
          std::decay_t<u64>>)
     /*!

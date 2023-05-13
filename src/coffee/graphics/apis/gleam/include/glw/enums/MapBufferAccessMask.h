@@ -56,6 +56,6 @@ enum class map_buffer_access_mask : u32
     map_write_bit_ext = GL_MAP_WRITE_BIT_EXT,
 #endif
 }; // enum class map_buffer_access_mask
-C_FLAGS(map_buffer_access_mask, ::libc_types::u32);
+C_FLAGS(map_buffer_access_mask, u32);
 
 } // namespace gl::group

@@ -9,24 +9,23 @@ using gl::group::attribute_type;
 using gl::group::internal_format_prop;
 using gl::group::memory_barrier_mask;
 namespace values {
-constexpr libc_types::u32 max_image_units = 0x8F38;
-constexpr libc_types::u32 max_combined_image_units_and_fragment_outputs =
-    0x8F39;
-constexpr libc_types::u32 image_binding_name                  = 0x8F3A;
-constexpr libc_types::u32 image_binding_level                 = 0x8F3B;
-constexpr libc_types::u32 image_binding_layered               = 0x8F3C;
-constexpr libc_types::u32 image_binding_layer                 = 0x8F3D;
-constexpr libc_types::u32 image_binding_access                = 0x8F3E;
-constexpr libc_types::u32 max_image_samples                   = 0x906D;
-constexpr libc_types::u32 image_binding_format                = 0x906E;
-constexpr libc_types::u32 image_format_compatibility_by_size  = 0x90C8;
-constexpr libc_types::u32 image_format_compatibility_by_class = 0x90C9;
-constexpr libc_types::u32 max_vertex_image_uniforms           = 0x90CA;
-constexpr libc_types::u32 max_tess_control_image_uniforms     = 0x90CB;
-constexpr libc_types::u32 max_tess_evaluation_image_uniforms  = 0x90CC;
-constexpr libc_types::u32 max_geometry_image_uniforms         = 0x90CD;
-constexpr libc_types::u32 max_fragment_image_uniforms         = 0x90CE;
-constexpr libc_types::u32 max_combined_image_uniforms         = 0x90CF;
+constexpr u32 max_image_units                               = 0x8F38;
+constexpr u32 max_combined_image_units_and_fragment_outputs = 0x8F39;
+constexpr u32 image_binding_name                            = 0x8F3A;
+constexpr u32 image_binding_level                           = 0x8F3B;
+constexpr u32 image_binding_layered                         = 0x8F3C;
+constexpr u32 image_binding_layer                           = 0x8F3D;
+constexpr u32 image_binding_access                          = 0x8F3E;
+constexpr u32 max_image_samples                             = 0x906D;
+constexpr u32 image_binding_format                          = 0x906E;
+constexpr u32 image_format_compatibility_by_size            = 0x90C8;
+constexpr u32 image_format_compatibility_by_class           = 0x90C9;
+constexpr u32 max_vertex_image_uniforms                     = 0x90CA;
+constexpr u32 max_tess_control_image_uniforms               = 0x90CB;
+constexpr u32 max_tess_evaluation_image_uniforms            = 0x90CC;
+constexpr u32 max_geometry_image_uniforms                   = 0x90CD;
+constexpr u32 max_fragment_image_uniforms                   = 0x90CE;
+constexpr u32 max_combined_image_uniforms                   = 0x90CF;
 } // namespace values
 /*!
  * \brief Part of GL_ARB_shader_image_load_store

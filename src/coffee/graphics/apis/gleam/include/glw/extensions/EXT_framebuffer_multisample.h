@@ -5,11 +5,11 @@
 namespace gl::ext::framebuffer_multisample {
 using gl::group::renderbuffer_parameter_name;
 namespace values {
-constexpr libc_types::u32 framebuffer_incomplete_multisample = 0x8D56;
-constexpr libc_types::u32 max_samples                        = 0x8D57;
+constexpr u32 framebuffer_incomplete_multisample = 0x8D56;
+constexpr u32 max_samples                        = 0x8D57;
 } // namespace values
 template<class size_2_i32>
-requires(semantic::concepts::Size2D<size_2_i32, i32>)
+requires(concepts::size_2d<size_2_i32, i32>)
     /*!
      * \brief Part of GL_EXT_framebuffer_multisample
      * \param target GLenum

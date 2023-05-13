@@ -7,7 +7,7 @@ namespace gl::arb::texture_env_combine {
 using gl::group::fragment_shader_generic_source_ati;
 using gl::group::texture_env_parameter;
 namespace values {
-constexpr libc_types::u32 subtract = 0x84E7;
+constexpr u32 subtract = 0x84E7;
 } // namespace values
 } // namespace gl::arb::texture_env_combine
 #endif // GL_ARB_texture_env_combine

@@ -3,7 +3,7 @@
 #ifdef GL_EXT_instanced_arrays
 namespace gl::ext::instanced_arrays {
 namespace values {
-constexpr libc_types::u32 vertex_attrib_array_divisor = 0x88FE;
+constexpr u32 vertex_attrib_array_divisor = 0x88FE;
 } // namespace values
 /*!
  * \brief Part of GL_EXT_instanced_arrays
@@ -39,7 +39,7 @@ STATICINLINE void draw_elements_instanced(
     group::primitive_type     mode,
     i32                       count,
     group::draw_elements_type type,
-    ptroff                    indices,
+    intptr_t                  indices,
     i32                       primcount)
 {
     using namespace std::string_view_literals;

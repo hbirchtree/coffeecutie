@@ -19,6 +19,6 @@ enum class foveation_config_bit_qcom : u32
         GL_FOVEATION_SUBSAMPLED_LAYOUT_METHOD_BIT_QCOM,
 #endif
 }; // enum class foveation_config_bit_qcom
-C_FLAGS(foveation_config_bit_qcom, ::libc_types::u32);
+C_FLAGS(foveation_config_bit_qcom, u32);
 
 } // namespace gl::group

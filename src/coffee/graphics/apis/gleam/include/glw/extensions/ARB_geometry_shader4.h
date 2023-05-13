@@ -9,19 +9,19 @@ using gl::group::framebuffer_attachment_parameter_name;
 using gl::group::get_prop;
 using gl::group::primitive_type;
 namespace values {
-constexpr libc_types::u32 program_point_size                   = 0x8642;
-constexpr libc_types::u32 max_geometry_texture_image_units     = 0x8C29;
-constexpr libc_types::u32 framebuffer_incomplete_layer_targets = 0x8DA8;
-constexpr libc_types::u32 framebuffer_incomplete_layer_count   = 0x8DA9;
-constexpr libc_types::u32 geometry_shader                      = 0x8DD9;
-constexpr libc_types::u32 geometry_vertices_out                = 0x8DDA;
-constexpr libc_types::u32 geometry_input_type                  = 0x8DDB;
-constexpr libc_types::u32 geometry_output_type                 = 0x8DDC;
-constexpr libc_types::u32 max_geometry_varying_components      = 0x8DDD;
-constexpr libc_types::u32 max_vertex_varying_components        = 0x8DDE;
-constexpr libc_types::u32 max_geometry_uniform_components      = 0x8DDF;
-constexpr libc_types::u32 max_geometry_output_vertices         = 0x8DE0;
-constexpr libc_types::u32 max_geometry_total_output_components = 0x8DE1;
+constexpr u32 program_point_size                   = 0x8642;
+constexpr u32 max_geometry_texture_image_units     = 0x8C29;
+constexpr u32 framebuffer_incomplete_layer_targets = 0x8DA8;
+constexpr u32 framebuffer_incomplete_layer_count   = 0x8DA9;
+constexpr u32 geometry_shader                      = 0x8DD9;
+constexpr u32 geometry_vertices_out                = 0x8DDA;
+constexpr u32 geometry_input_type                  = 0x8DDB;
+constexpr u32 geometry_output_type                 = 0x8DDC;
+constexpr u32 max_geometry_varying_components      = 0x8DDD;
+constexpr u32 max_vertex_varying_components        = 0x8DDE;
+constexpr u32 max_geometry_uniform_components      = 0x8DDF;
+constexpr u32 max_geometry_output_vertices         = 0x8DE0;
+constexpr u32 max_geometry_total_output_components = 0x8DE1;
 } // namespace values
 /*!
  * \brief Part of GL_ARB_geometry_shader4

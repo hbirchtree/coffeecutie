@@ -33,8 +33,8 @@ STATICINLINE void buffer_page_commitment_mem(
 }
 
 template<class size_3_i32, class vec_3_i32>
-requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
-             semantic::concepts::Size2D<size_3_i32, i32>)
+requires(
+    concepts::vector<vec_3_i32, i32, 3>&& concepts::size_2d<size_3_i32, i32>)
     /*!
      * \brief Part of GL_NV_memory_object_sparse
      * \param target GLenum
@@ -116,8 +116,8 @@ STATICINLINE void named_buffer_page_commitment_mem(
 }
 
 template<class size_3_i32, class vec_3_i32>
-requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
-             semantic::concepts::Size2D<size_3_i32, i32>)
+requires(
+    concepts::vector<vec_3_i32, i32, 3>&& concepts::size_2d<size_3_i32, i32>)
     /*!
      * \brief Part of GL_NV_memory_object_sparse
      * \param texture GLuint

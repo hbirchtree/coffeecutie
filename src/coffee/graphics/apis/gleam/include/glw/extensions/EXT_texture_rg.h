@@ -9,7 +9,7 @@ using gl::group::internal_format;
 using gl::group::pixel_format;
 using gl::group::sized_internal_format;
 namespace values {
-constexpr libc_types::u32 rg = 0x8227;
+constexpr u32 rg = 0x8227;
 } // namespace values
 } // namespace gl::ext::texture_rg
 #endif // GL_EXT_texture_rg

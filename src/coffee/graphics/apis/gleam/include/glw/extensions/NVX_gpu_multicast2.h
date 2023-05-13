@@ -3,13 +3,13 @@
 #ifdef GL_NVX_gpu_multicast2
 namespace gl::nvx::gpu_multicast2 {
 namespace values {
-constexpr libc_types::u32 upload_gpu_mask = 0x954A;
+constexpr u32 upload_gpu_mask = 0x954A;
 } // namespace values
 template<class span_const_u32, class span_const_u64>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+requires(concepts::span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>&& semantic::concepts::Span<span_const_u64>&&
-                              std::is_same_v<
+         std::decay_t<u32>>&& concepts::span<span_const_u64>&&
+                                          std::is_same_v<
                  std::decay_t<typename span_const_u64::value_type>,
                  std::decay_t<u64>>)
     /*!
@@ -74,10 +74,10 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
 }
 
 template<class span_const_u32, class span_const_u64>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+requires(concepts::span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>&& semantic::concepts::Span<span_const_u64>&&
-                              std::is_same_v<
+         std::decay_t<u32>>&& concepts::span<span_const_u64>&&
+                                          std::is_same_v<
                  std::decay_t<typename span_const_u64::value_type>,
                  std::decay_t<u64>>)
     /*!
@@ -172,7 +172,7 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
 }
 
 template<class span_const_i32>
-requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
+requires(concepts::span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -200,7 +200,7 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
 }
 
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+requires(concepts::span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
          std::decay_t<f32>>)
     /*!

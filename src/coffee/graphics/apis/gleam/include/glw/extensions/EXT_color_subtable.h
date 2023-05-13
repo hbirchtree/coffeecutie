@@ -5,7 +5,7 @@ namespace gl::ext::color_subtable {
 namespace values {
 } // namespace values
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_color_subtable
      * \param target GLenum
@@ -40,7 +40,7 @@ requires(semantic::concepts::Span<span_const_void>)
 }
 
 template<class vec_2_i32>
-requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
+requires(concepts::vector<vec_2_i32, i32, 2>)
     /*!
      * \brief Part of GL_EXT_color_subtable
      * \param target GLenum

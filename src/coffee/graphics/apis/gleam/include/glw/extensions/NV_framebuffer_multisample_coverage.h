@@ -5,11 +5,11 @@
 namespace gl::nv::framebuffer_multisample_coverage {
 using gl::group::renderbuffer_parameter_name;
 namespace values {
-constexpr libc_types::u32 max_multisample_coverage_modes = 0x8E11;
-constexpr libc_types::u32 multisample_coverage_modes     = 0x8E12;
+constexpr u32 max_multisample_coverage_modes = 0x8E11;
+constexpr u32 multisample_coverage_modes     = 0x8E12;
 } // namespace values
 template<class size_2_i32>
-requires(semantic::concepts::Size2D<size_2_i32, i32>)
+requires(concepts::size_2d<size_2_i32, i32>)
     /*!
      * \brief Part of GL_NV_framebuffer_multisample_coverage
      * \param target GLenum

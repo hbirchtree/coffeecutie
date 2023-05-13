@@ -17,6 +17,6 @@ enum class client_attrib_mask : u32
     client_vertex_array_bit = GL_CLIENT_VERTEX_ARRAY_BIT,
 #endif
 }; // enum class client_attrib_mask
-C_FLAGS(client_attrib_mask, ::libc_types::u32);
+C_FLAGS(client_attrib_mask, u32);
 
 } // namespace gl::group

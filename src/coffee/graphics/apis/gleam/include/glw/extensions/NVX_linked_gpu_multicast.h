@@ -5,10 +5,10 @@
 namespace gl::nvx::linked_gpu_multicast {
 using gl::group::buffer_storage_mask;
 namespace values {
-constexpr libc_types::u32 max_lgpu_gpus = 0x92BA;
+constexpr u32 max_lgpu_gpus = 0x92BA;
 } // namespace values
 template<class size_3_i32>
-requires(semantic::concepts::Size2D<size_3_i32, i32>)
+requires(concepts::size_2d<size_3_i32, i32>)
     /*!
      * \brief Part of GL_NVX_linked_gpu_multicast
      * \param sourceGpu GLuint
@@ -90,7 +90,7 @@ STATICINLINE void lgpu_interlock()
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_NVX_linked_gpu_multicast
      * \param gpuMask GLbitfield

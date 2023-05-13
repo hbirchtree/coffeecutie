@@ -3,10 +3,10 @@
 #ifdef GL_NV_transform_feedback2
 namespace gl::nv::transform_feedback2 {
 namespace values {
-constexpr libc_types::u32 transform_feedback               = 0x8E22;
-constexpr libc_types::u32 transform_feedback_buffer_paused = 0x8E23;
-constexpr libc_types::u32 transform_feedback_buffer_active = 0x8E24;
-constexpr libc_types::u32 transform_feedback_binding       = 0x8E25;
+constexpr u32 transform_feedback               = 0x8E22;
+constexpr u32 transform_feedback_buffer_paused = 0x8E23;
+constexpr u32 transform_feedback_buffer_active = 0x8E24;
+constexpr u32 transform_feedback_binding       = 0x8E25;
 } // namespace values
 /*!
  * \brief Part of GL_NV_transform_feedback2
@@ -27,7 +27,7 @@ STATICINLINE void bind_transform_feedback(
 }
 
 template<class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+requires(concepts::span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -67,7 +67,7 @@ STATICINLINE void draw_transform_feedback(group::primitive_type mode, u32 id)
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(concepts::span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
          std::decay_t<u32>>)
     /*!

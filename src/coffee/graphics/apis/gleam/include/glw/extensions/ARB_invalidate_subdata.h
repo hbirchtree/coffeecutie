@@ -51,7 +51,7 @@ STATICINLINE void invalidate_buffer_sub_data(
 
 template<class span_const_invalidate_framebuffer_attachment>
 requires(
-    semantic::concepts::Span<span_const_invalidate_framebuffer_attachment>&&
+    concepts::span<span_const_invalidate_framebuffer_attachment>&&
         std::is_same_v<
             std::decay_t<typename span_const_invalidate_framebuffer_attachment::
                              value_type>,
@@ -85,13 +85,13 @@ template<
     class span_const_invalidate_framebuffer_attachment,
     class vec_2_i32>
 requires(
-    semantic::concepts::Span<span_const_invalidate_framebuffer_attachment>&&
+    concepts::span<span_const_invalidate_framebuffer_attachment>&&
         std::is_same_v<
             std::decay_t<typename span_const_invalidate_framebuffer_attachment::
                              value_type>,
             std::decay_t<group::invalidate_framebuffer_attachment>>&&
-                semantic::concepts::Vector<vec_2_i32, i32, 2>&&
-                semantic::concepts::Size2D<size_2_i32, i32>)
+                concepts::vector<vec_2_i32, i32, 2>&&
+                concepts::size_2d<size_2_i32, i32>)
     /*!
      * \brief Part of GL_ARB_invalidate_subdata
      * \param target GLenum
@@ -149,8 +149,8 @@ STATICINLINE void invalidate_tex_image(u32 texture, i32 level)
 }
 
 template<class size_3_i32, class vec_3_i32>
-requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
-             semantic::concepts::Size2D<size_3_i32, i32>)
+requires(
+    concepts::vector<vec_3_i32, i32, 3>&& concepts::size_2d<size_3_i32, i32>)
     /*!
      * \brief Part of GL_ARB_invalidate_subdata
      * \param texture GLuint

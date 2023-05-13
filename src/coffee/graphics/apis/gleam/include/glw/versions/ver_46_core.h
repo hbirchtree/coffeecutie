@@ -1,7 +1,7 @@
 #ifdef GL_VERSION_4_6
 template<class span_const_u32>
 requires(MinimumVersion<Current, Version<4, 6>>&&
-             semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+             concepts::span<span_const_u32>&& std::is_same_v<
                  std::decay_t<typename span_const_u32::value_type>,
                  std::decay_t<u32>>)
     /*!
@@ -51,7 +51,7 @@ requires(MinimumVersion<Current, Version<4, 6>>)
      */
     STATICINLINE void multi_draw_arrays_indirect_count(
         group::primitive_type mode,
-        ptroff                indirect,
+        intptr_t              indirect,
         GLintptr              drawcount,
         i32                   maxdrawcount,
         i32                   stride)
@@ -81,7 +81,7 @@ requires(MinimumVersion<Current, Version<4, 6>>)
     STATICINLINE void multi_draw_elements_indirect_count(
         group::primitive_type     mode,
         group::draw_elements_type type,
-        ptroff                    indirect,
+        intptr_t                  indirect,
         GLintptr                  drawcount,
         i32                       maxdrawcount,
         i32                       stride)

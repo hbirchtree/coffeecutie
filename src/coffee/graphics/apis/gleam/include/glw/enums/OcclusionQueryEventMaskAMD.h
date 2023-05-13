@@ -24,6 +24,6 @@ enum class occlusion_query_event_mask_amd : u32
     query_stencil_fail_event_bit_amd = GL_QUERY_STENCIL_FAIL_EVENT_BIT_AMD,
 #endif
 }; // enum class occlusion_query_event_mask_amd
-C_FLAGS(occlusion_query_event_mask_amd, ::libc_types::u32);
+C_FLAGS(occlusion_query_event_mask_amd, u32);
 
 } // namespace gl::group

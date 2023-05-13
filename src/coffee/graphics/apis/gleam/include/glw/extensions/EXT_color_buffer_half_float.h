@@ -9,7 +9,7 @@ using gl::group::framebuffer_attachment_parameter_name;
 using gl::group::internal_format;
 using gl::group::sized_internal_format;
 namespace values {
-constexpr libc_types::u32 unsigned_normalized = 0x8C17;
+constexpr u32 unsigned_normalized = 0x8C17;
 } // namespace values
 } // namespace gl::ext::color_buffer_half_float
 #endif // GL_EXT_color_buffer_half_float

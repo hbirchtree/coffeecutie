@@ -3,13 +3,13 @@
 #ifdef GL_AMD_performance_monitor
 namespace gl::amd::performance_monitor {
 namespace values {
-constexpr libc_types::u32 counter_type             = 0x8BC0;
-constexpr libc_types::u32 counter_range            = 0x8BC1;
-constexpr libc_types::u32 unsigned_int64           = 0x8BC2;
-constexpr libc_types::u32 percentage               = 0x8BC3;
-constexpr libc_types::u32 perfmon_result_available = 0x8BC4;
-constexpr libc_types::u32 perfmon_result_size      = 0x8BC5;
-constexpr libc_types::u32 perfmon_result           = 0x8BC6;
+constexpr u32 counter_type             = 0x8BC0;
+constexpr u32 counter_range            = 0x8BC1;
+constexpr u32 unsigned_int64           = 0x8BC2;
+constexpr u32 percentage               = 0x8BC3;
+constexpr u32 perfmon_result_available = 0x8BC4;
+constexpr u32 perfmon_result_size      = 0x8BC5;
+constexpr u32 perfmon_result           = 0x8BC6;
 } // namespace values
 /*!
  * \brief Part of GL_AMD_performance_monitor
@@ -28,7 +28,7 @@ STATICINLINE void begin_perf_monitor(u32 monitor)
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(concepts::span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -67,7 +67,7 @@ STATICINLINE void end_perf_monitor(u32 monitor)
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(concepts::span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -90,7 +90,7 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(concepts::span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -124,7 +124,7 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 }
 
 template<class span_void>
-requires(semantic::concepts::Span<span_void>)
+requires(concepts::span<span_void>)
     /*!
      * \brief Part of GL_AMD_performance_monitor
      * \param group GLuint
@@ -150,7 +150,7 @@ requires(semantic::concepts::Span<span_void>)
 }
 
 template<class span_GLchar>
-requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
+requires(concepts::span<span_GLchar>&& std::is_same_v<
          std::decay_t<typename span_GLchar::value_type>,
          std::decay_t<GLchar>>)
     /*!
@@ -176,7 +176,7 @@ requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(concepts::span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -206,7 +206,7 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 }
 
 template<class span_GLchar>
-requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
+requires(concepts::span<span_GLchar>&& std::is_same_v<
          std::decay_t<typename span_GLchar::value_type>,
          std::decay_t<GLchar>>)
     /*!
@@ -231,7 +231,7 @@ requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(concepts::span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -256,7 +256,7 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(concepts::span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
          std::decay_t<u32>>)
     /*!

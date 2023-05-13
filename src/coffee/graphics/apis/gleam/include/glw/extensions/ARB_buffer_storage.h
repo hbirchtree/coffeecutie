@@ -13,7 +13,7 @@ using gl::group::memory_barrier_mask;
 namespace values {
 } // namespace values
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_ARB_buffer_storage
      * \param target GLenum

@@ -9,25 +9,25 @@ using gl::group::eval_target_nv;
 using gl::group::map_attrib_parameter_nv;
 using gl::group::map_parameter_nv;
 namespace values {
-constexpr libc_types::u32 eval_fractional_tessellation = 0x86C5;
-constexpr libc_types::u32 eval_vertex_attrib0          = 0x86C6;
-constexpr libc_types::u32 eval_vertex_attrib1          = 0x86C7;
-constexpr libc_types::u32 eval_vertex_attrib2          = 0x86C8;
-constexpr libc_types::u32 eval_vertex_attrib3          = 0x86C9;
-constexpr libc_types::u32 eval_vertex_attrib4          = 0x86CA;
-constexpr libc_types::u32 eval_vertex_attrib5          = 0x86CB;
-constexpr libc_types::u32 eval_vertex_attrib6          = 0x86CC;
-constexpr libc_types::u32 eval_vertex_attrib7          = 0x86CD;
-constexpr libc_types::u32 eval_vertex_attrib8          = 0x86CE;
-constexpr libc_types::u32 eval_vertex_attrib9          = 0x86CF;
-constexpr libc_types::u32 eval_vertex_attrib10         = 0x86D0;
-constexpr libc_types::u32 eval_vertex_attrib11         = 0x86D1;
-constexpr libc_types::u32 eval_vertex_attrib12         = 0x86D2;
-constexpr libc_types::u32 eval_vertex_attrib13         = 0x86D3;
-constexpr libc_types::u32 eval_vertex_attrib14         = 0x86D4;
-constexpr libc_types::u32 eval_vertex_attrib15         = 0x86D5;
-constexpr libc_types::u32 max_map_tessellation         = 0x86D6;
-constexpr libc_types::u32 max_rational_eval_order      = 0x86D7;
+constexpr u32 eval_fractional_tessellation = 0x86C5;
+constexpr u32 eval_vertex_attrib0          = 0x86C6;
+constexpr u32 eval_vertex_attrib1          = 0x86C7;
+constexpr u32 eval_vertex_attrib2          = 0x86C8;
+constexpr u32 eval_vertex_attrib3          = 0x86C9;
+constexpr u32 eval_vertex_attrib4          = 0x86CA;
+constexpr u32 eval_vertex_attrib5          = 0x86CB;
+constexpr u32 eval_vertex_attrib6          = 0x86CC;
+constexpr u32 eval_vertex_attrib7          = 0x86CD;
+constexpr u32 eval_vertex_attrib8          = 0x86CE;
+constexpr u32 eval_vertex_attrib9          = 0x86CF;
+constexpr u32 eval_vertex_attrib10         = 0x86D0;
+constexpr u32 eval_vertex_attrib11         = 0x86D1;
+constexpr u32 eval_vertex_attrib12         = 0x86D2;
+constexpr u32 eval_vertex_attrib13         = 0x86D3;
+constexpr u32 eval_vertex_attrib14         = 0x86D4;
+constexpr u32 eval_vertex_attrib15         = 0x86D5;
+constexpr u32 max_map_tessellation         = 0x86D6;
+constexpr u32 max_rational_eval_order      = 0x86D7;
 } // namespace values
 /*!
  * \brief Part of GL_NV_evaluators
@@ -48,7 +48,7 @@ STATICINLINE void eval_maps(
 }
 
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+requires(concepts::span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -79,7 +79,7 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -110,7 +110,7 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_void>
-requires(semantic::concepts::Span<span_void>)
+requires(concepts::span<span_void>)
     /*!
      * \brief Part of GL_NV_evaluators
      * \param target GLenum
@@ -148,7 +148,7 @@ requires(semantic::concepts::Span<span_void>)
 }
 
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+requires(concepts::span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -176,7 +176,7 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -204,7 +204,7 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_NV_evaluators
      * \param target GLenum
@@ -248,7 +248,7 @@ requires(semantic::concepts::Span<span_const_void>)
 }
 
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+requires(concepts::span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -277,7 +277,7 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
 }
 
 template<class span_const_i32>
-requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
+requires(concepts::span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
          std::decay_t<i32>>)
     /*!

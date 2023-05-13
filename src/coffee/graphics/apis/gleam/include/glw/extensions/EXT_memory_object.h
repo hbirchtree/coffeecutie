@@ -11,10 +11,10 @@ using gl::group::memory_object_parameter_name;
 using gl::group::special_numbers;
 using gl::group::texture_parameter_name;
 namespace values {
-constexpr libc_types::u32 num_tiling_types = 0x9582;
-constexpr libc_types::u32 tiling_types     = 0x9583;
-constexpr libc_types::u32 optimal_tiling   = 0x9584;
-constexpr libc_types::u32 linear_tiling    = 0x9585;
+constexpr u32 num_tiling_types = 0x9582;
+constexpr u32 tiling_types     = 0x9583;
+constexpr u32 optimal_tiling   = 0x9584;
+constexpr u32 linear_tiling    = 0x9585;
 } // namespace values
 /*!
  * \brief Part of GL_EXT_memory_object
@@ -37,7 +37,7 @@ STATICINLINE void buffer_storage_mem(
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(concepts::span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -61,7 +61,7 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 }
 
 template<class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+requires(concepts::span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -86,7 +86,7 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -114,7 +114,7 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_u8>
-requires(semantic::concepts::Span<span_u8>&& std::is_same_v<
+requires(concepts::span<span_u8>&& std::is_same_v<
          std::decay_t<typename span_u8::value_type>,
          std::decay_t<u8>>)
     /*!
@@ -137,7 +137,7 @@ requires(semantic::concepts::Span<span_u8>&& std::is_same_v<
 }
 
 template<class span_u8>
-requires(semantic::concepts::Span<span_u8>&& std::is_same_v<
+requires(concepts::span<span_u8>&& std::is_same_v<
          std::decay_t<typename span_u8::value_type>,
          std::decay_t<u8>>)
     /*!
@@ -180,7 +180,7 @@ STATICINLINE bool is_memory_object(u32 memoryObject)
 }
 
 template<class span_const_i32>
-requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
+requires(concepts::span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -209,7 +209,7 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
 }
 
 template<class size_2_i32>
-requires(semantic::concepts::Size2D<size_2_i32, i32>)
+requires(concepts::size_2d<size_2_i32, i32>)
     /*!
      * \brief Part of GL_EXT_memory_object
      * \param target GLenum
@@ -246,7 +246,7 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>)
 }
 
 template<class size_2_i32>
-requires(semantic::concepts::Size2D<size_2_i32, i32>)
+requires(concepts::size_2d<size_2_i32, i32>)
     /*!
      * \brief Part of GL_EXT_memory_object
      * \param target GLenum
@@ -286,7 +286,7 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>)
 }
 
 template<class size_3_i32>
-requires(semantic::concepts::Size2D<size_3_i32, i32>)
+requires(concepts::size_2d<size_3_i32, i32>)
     /*!
      * \brief Part of GL_EXT_memory_object
      * \param target GLenum
@@ -325,7 +325,7 @@ requires(semantic::concepts::Size2D<size_3_i32, i32>)
 }
 
 template<class size_3_i32>
-requires(semantic::concepts::Size2D<size_3_i32, i32>)
+requires(concepts::size_2d<size_3_i32, i32>)
     /*!
      * \brief Part of GL_EXT_memory_object
      * \param target GLenum
@@ -392,7 +392,7 @@ STATICINLINE void named_buffer_storage_mem(
 }
 
 template<class size_2_i32>
-requires(semantic::concepts::Size2D<size_2_i32, i32>)
+requires(concepts::size_2d<size_2_i32, i32>)
     /*!
      * \brief Part of GL_EXT_memory_object
      * \param texture GLuint
@@ -434,7 +434,7 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>)
 }
 
 template<class size_2_i32>
-requires(semantic::concepts::Size2D<size_2_i32, i32>)
+requires(concepts::size_2d<size_2_i32, i32>)
     /*!
      * \brief Part of GL_EXT_memory_object
      * \param texture GLuint
@@ -479,7 +479,7 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>)
 }
 
 template<class size_3_i32>
-requires(semantic::concepts::Size2D<size_3_i32, i32>)
+requires(concepts::size_2d<size_3_i32, i32>)
     /*!
      * \brief Part of GL_EXT_memory_object
      * \param texture GLuint
@@ -523,7 +523,7 @@ requires(semantic::concepts::Size2D<size_3_i32, i32>)
 }
 
 template<class size_3_i32>
-requires(semantic::concepts::Size2D<size_3_i32, i32>)
+requires(concepts::size_2d<size_3_i32, i32>)
     /*!
      * \brief Part of GL_EXT_memory_object
      * \param texture GLuint

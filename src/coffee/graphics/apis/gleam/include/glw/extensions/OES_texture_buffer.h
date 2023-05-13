@@ -3,20 +3,20 @@
 #ifdef GL_OES_texture_buffer
 namespace gl::oes::texture_buffer {
 namespace values {
-constexpr libc_types::u32 texture_buffer                    = 0x8C2A;
-constexpr libc_types::u32 texture_buffer_binding            = 0x8C2A;
-constexpr libc_types::u32 max_texture_buffer_size           = 0x8C2B;
-constexpr libc_types::u32 texture_binding_buffer            = 0x8C2C;
-constexpr libc_types::u32 texture_buffer_data_store_binding = 0x8C2D;
-constexpr libc_types::u32 sampler_buffer                    = 0x8DC2;
-constexpr libc_types::u32 int_sampler_buffer                = 0x8DD0;
-constexpr libc_types::u32 unsigned_int_sampler_buffer       = 0x8DD8;
-constexpr libc_types::u32 image_buffer                      = 0x9051;
-constexpr libc_types::u32 int_image_buffer                  = 0x905C;
-constexpr libc_types::u32 unsigned_int_image_buffer         = 0x9067;
-constexpr libc_types::u32 texture_buffer_offset             = 0x919D;
-constexpr libc_types::u32 texture_buffer_size               = 0x919E;
-constexpr libc_types::u32 texture_buffer_offset_alignment   = 0x919F;
+constexpr u32 texture_buffer                    = 0x8C2A;
+constexpr u32 texture_buffer_binding            = 0x8C2A;
+constexpr u32 max_texture_buffer_size           = 0x8C2B;
+constexpr u32 texture_binding_buffer            = 0x8C2C;
+constexpr u32 texture_buffer_data_store_binding = 0x8C2D;
+constexpr u32 sampler_buffer                    = 0x8DC2;
+constexpr u32 int_sampler_buffer                = 0x8DD0;
+constexpr u32 unsigned_int_sampler_buffer       = 0x8DD8;
+constexpr u32 image_buffer                      = 0x9051;
+constexpr u32 int_image_buffer                  = 0x905C;
+constexpr u32 unsigned_int_image_buffer         = 0x9067;
+constexpr u32 texture_buffer_offset             = 0x919D;
+constexpr u32 texture_buffer_size               = 0x919E;
+constexpr u32 texture_buffer_offset_alignment   = 0x919F;
 } // namespace values
 /*!
  * \brief Part of GL_OES_texture_buffer

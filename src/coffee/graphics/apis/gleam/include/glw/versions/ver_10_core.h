@@ -39,7 +39,7 @@ requires(MinimumVersion<Current, Version<1, 0>>)
 
 template<class vec_4_f32>
 requires(MinimumVersion<Current, Version<1, 0>>&&
-             semantic::concepts::Vector<vec_4_f32, f32, 4>)
+             concepts::vector<vec_4_f32, f32, 4>)
     /*!
      * \brief Wraps around glClearColor. Introduced in GL core 1.0
      * \param red GLfloat
@@ -97,7 +97,7 @@ requires(MinimumVersion<Current, Version<1, 0>>)
 
 template<class vec_4_bool>
 requires(MinimumVersion<Current, Version<1, 0>>&&
-             semantic::concepts::Vector<vec_4_bool, bool, 4>)
+             concepts::vector<vec_4_bool, bool, 4>)
     /*!
      * \brief Wraps around glColorMask. Introduced in GL core 1.0
      * \param red GLboolean
@@ -299,8 +299,8 @@ requires(MinimumVersion<Current, Version<1, 0>>)
 }
 
 template<class span_bool>
-requires(MinimumVersion<Current, Version<1, 0>>&&
-             semantic::concepts::Span<span_bool>&& std::is_same_v<
+requires(MinimumVersion<Current, Version<1, 0>>&& concepts::span<span_bool>&&
+                                                  std::is_same_v<
                  std::decay_t<typename span_bool::value_type>,
                  std::decay_t<bool>>)
     /*!
@@ -323,8 +323,8 @@ requires(MinimumVersion<Current, Version<1, 0>>&&
 }
 
 template<class span_f64>
-requires(MinimumVersion<Current, Version<1, 0>>&&
-             semantic::concepts::Span<span_f64>&& std::is_same_v<
+requires(MinimumVersion<Current, Version<1, 0>>&& concepts::span<span_f64>&&
+                                                  std::is_same_v<
                  std::decay_t<typename span_f64::value_type>,
                  std::decay_t<f64>>)
     /*!
@@ -366,8 +366,8 @@ requires(MinimumVersion<Current, Version<1, 0>>)
 }
 
 template<class span_f32>
-requires(MinimumVersion<Current, Version<1, 0>>&&
-             semantic::concepts::Span<span_f32>&& std::is_same_v<
+requires(MinimumVersion<Current, Version<1, 0>>&& concepts::span<span_f32>&&
+                                                  std::is_same_v<
                  std::decay_t<typename span_f32::value_type>,
                  std::decay_t<f32>>)
     /*!
@@ -390,8 +390,8 @@ requires(MinimumVersion<Current, Version<1, 0>>&&
 }
 
 template<class span_i32>
-requires(MinimumVersion<Current, Version<1, 0>>&&
-             semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(MinimumVersion<Current, Version<1, 0>>&& concepts::span<span_i32>&&
+                                                  std::is_same_v<
                  std::decay_t<typename span_i32::value_type>,
                  std::decay_t<i32>>)
     /*!
@@ -433,8 +433,7 @@ requires(MinimumVersion<Current, Version<1, 0>>)
 }
 
 template<class span_void>
-requires(MinimumVersion<Current, Version<1, 0>>&&
-             semantic::concepts::Span<span_void>)
+requires(MinimumVersion<Current, Version<1, 0>>&& concepts::span<span_void>)
     /*!
      * \brief Wraps around glGetTexImage. Introduced in GL core 1.0
      * \param target GLenum
@@ -466,8 +465,8 @@ requires(MinimumVersion<Current, Version<1, 0>>&&
 }
 
 template<class span_f32>
-requires(MinimumVersion<Current, Version<1, 0>>&&
-             semantic::concepts::Span<span_f32>&& std::is_same_v<
+requires(MinimumVersion<Current, Version<1, 0>>&& concepts::span<span_f32>&&
+                                                  std::is_same_v<
                  std::decay_t<typename span_f32::value_type>,
                  std::decay_t<f32>>)
     /*!
@@ -498,8 +497,8 @@ requires(MinimumVersion<Current, Version<1, 0>>&&
 }
 
 template<class span_i32>
-requires(MinimumVersion<Current, Version<1, 0>>&&
-             semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(MinimumVersion<Current, Version<1, 0>>&& concepts::span<span_i32>&&
+                                                  std::is_same_v<
                  std::decay_t<typename span_i32::value_type>,
                  std::decay_t<i32>>)
     /*!
@@ -530,8 +529,8 @@ requires(MinimumVersion<Current, Version<1, 0>>&&
 }
 
 template<class span_f32>
-requires(MinimumVersion<Current, Version<1, 0>>&&
-             semantic::concepts::Span<span_f32>&& std::is_same_v<
+requires(MinimumVersion<Current, Version<1, 0>>&& concepts::span<span_f32>&&
+                                                  std::is_same_v<
                  std::decay_t<typename span_f32::value_type>,
                  std::decay_t<f32>>)
     /*!
@@ -559,8 +558,8 @@ requires(MinimumVersion<Current, Version<1, 0>>&&
 }
 
 template<class span_i32>
-requires(MinimumVersion<Current, Version<1, 0>>&&
-             semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(MinimumVersion<Current, Version<1, 0>>&& concepts::span<span_i32>&&
+                                                  std::is_same_v<
                  std::decay_t<typename span_i32::value_type>,
                  std::decay_t<i32>>)
     /*!
@@ -759,9 +758,8 @@ requires(MinimumVersion<Current, Version<1, 0>>)
 
 template<class size_2_i32, class span_void, class vec_2_i32>
 requires(MinimumVersion<Current, Version<1, 0>>&&
-                     semantic::concepts::Vector<vec_2_i32, i32, 2>&&
-                     semantic::concepts::Size2D<size_2_i32, i32>&&
-                     semantic::concepts::Span<span_void>)
+                 concepts::vector<vec_2_i32, i32, 2>&&
+                 concepts::size_2d<size_2_i32, i32>&& concepts::span<span_void>)
     /*!
      * \brief Wraps around glReadPixels. Introduced in GL core 1.0
      * \param x GLint
@@ -798,8 +796,8 @@ requires(MinimumVersion<Current, Version<1, 0>>&&
 
 template<class size_2_i32, class vec_2_i32>
 requires(MinimumVersion<Current, Version<1, 0>>&&
-                 semantic::concepts::Vector<vec_2_i32, i32, 2>&&
-                 semantic::concepts::Size2D<size_2_i32, i32>)
+                 concepts::vector<vec_2_i32, i32, 2>&&
+                 concepts::size_2d<size_2_i32, i32>)
     /*!
      * \brief Wraps around glScissor. Introduced in GL core 1.0
      * \param x GLint
@@ -885,8 +883,8 @@ requires(MinimumVersion<Current, Version<1, 0>>)
 }
 
 template<class span_const_void>
-requires(MinimumVersion<Current, Version<1, 0>>&&
-             semantic::concepts::Span<span_const_void>)
+requires(
+    MinimumVersion<Current, Version<1, 0>>&& concepts::span<span_const_void>)
     /*!
      * \brief Wraps around glTexImage1D. Introduced in GL core 1.0
      * \param target GLenum
@@ -927,9 +925,9 @@ requires(MinimumVersion<Current, Version<1, 0>>&&
 }
 
 template<class size_2_i32, class span_const_void>
-requires(MinimumVersion<Current, Version<1, 0>>&&
-                 semantic::concepts::Size2D<size_2_i32, i32>&&
-                 semantic::concepts::Span<span_const_void>)
+requires(
+    MinimumVersion<Current, Version<1, 0>>&&
+        concepts::size_2d<size_2_i32, i32>&& concepts::span<span_const_void>)
     /*!
      * \brief Wraps around glTexImage2D. Introduced in GL core 1.0
      * \param target GLenum
@@ -997,7 +995,7 @@ requires(MinimumVersion<Current, Version<1, 0>>)
 
 template<class span_const_f32>
 requires(MinimumVersion<Current, Version<1, 0>>&&
-             semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+             concepts::span<span_const_f32>&& std::is_same_v<
                  std::decay_t<typename span_const_f32::value_type>,
                  std::decay_t<f32>>)
     /*!
@@ -1051,7 +1049,7 @@ requires(MinimumVersion<Current, Version<1, 0>>)
 
 template<class span_const_i32>
 requires(MinimumVersion<Current, Version<1, 0>>&&
-             semantic::concepts::Span<span_const_i32>&& std::is_same_v<
+             concepts::span<span_const_i32>&& std::is_same_v<
                  std::decay_t<typename span_const_i32::value_type>,
                  std::decay_t<i32>>)
     /*!
@@ -1081,8 +1079,8 @@ requires(MinimumVersion<Current, Version<1, 0>>&&
 
 template<class size_2_i32, class vec_2_i32>
 requires(MinimumVersion<Current, Version<1, 0>>&&
-                 semantic::concepts::Vector<vec_2_i32, i32, 2>&&
-                 semantic::concepts::Size2D<size_2_i32, i32>)
+                 concepts::vector<vec_2_i32, i32, 2>&&
+                 concepts::size_2d<size_2_i32, i32>)
     /*!
      * \brief Wraps around glViewport. Introduced in GL core 1.0
      * \param x GLint

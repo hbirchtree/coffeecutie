@@ -10,34 +10,34 @@ using gl::group::graphics_reset_status;
 using gl::group::special_numbers;
 namespace values {
 #if defined(GL_VERSION_1_0)
-constexpr libc_types::u32 context_lost = 0x0507;
+constexpr u32 context_lost = 0x0507;
 #endif
 #if defined(GL_ES_VERSION_2_0)
-constexpr libc_types::u32 context_lost = 0x0507;
+constexpr u32 context_lost = 0x0507;
 #endif
 #if defined(GL_VERSION_1_0)
-constexpr libc_types::u32 lose_context_on_reset = 0x8252;
+constexpr u32 lose_context_on_reset = 0x8252;
 #endif
 #if defined(GL_ES_VERSION_2_0)
-constexpr libc_types::u32 lose_context_on_reset = 0x8252;
+constexpr u32 lose_context_on_reset = 0x8252;
 #endif
 #if defined(GL_VERSION_1_0)
-constexpr libc_types::u32 reset_notification_strategy = 0x8256;
+constexpr u32 reset_notification_strategy = 0x8256;
 #endif
 #if defined(GL_ES_VERSION_2_0)
-constexpr libc_types::u32 reset_notification_strategy = 0x8256;
+constexpr u32 reset_notification_strategy = 0x8256;
 #endif
 #if defined(GL_VERSION_1_0)
-constexpr libc_types::u32 no_reset_notification = 0x8261;
+constexpr u32 no_reset_notification = 0x8261;
 #endif
 #if defined(GL_ES_VERSION_2_0)
-constexpr libc_types::u32 no_reset_notification = 0x8261;
+constexpr u32 no_reset_notification = 0x8261;
 #endif
 #if defined(GL_VERSION_1_0)
-constexpr libc_types::u32 context_robust_access = 0x90F3;
+constexpr u32 context_robust_access = 0x90F3;
 #endif
 #if defined(GL_ES_VERSION_2_0)
-constexpr libc_types::u32 context_robust_access = 0x90F3;
+constexpr u32 context_robust_access = 0x90F3;
 #endif
 } // namespace values
 #if defined(GL_VERSION_1_0)
@@ -61,7 +61,7 @@ STATICINLINE group::graphics_reset_status get_graphics_reset_status()
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+requires(concepts::span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -96,7 +96,7 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -131,7 +131,7 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(concepts::span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -166,9 +166,8 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 #endif
 #if defined(GL_VERSION_1_0)
 template<class size_2_i32, class span_void, class vec_2_i32>
-requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
-                 semantic::concepts::Size2D<size_2_i32, i32>&&
-                 semantic::concepts::Span<span_void>)
+requires(concepts::vector<vec_2_i32, i32, 2>&&
+             concepts::size_2d<size_2_i32, i32>&& concepts::span<span_void>)
     /*!
      * \brief Part of GL_KHR_robustness
      * \param x GLint
@@ -227,7 +226,7 @@ STATICINLINE group::graphics_reset_status get_graphics_reset_status()
 #endif
 #if defined(GL_ES_VERSION_2_0)
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+requires(concepts::span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -262,7 +261,7 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 #endif
 #if defined(GL_ES_VERSION_2_0)
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -297,7 +296,7 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 #endif
 #if defined(GL_ES_VERSION_2_0)
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(concepts::span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -332,9 +331,8 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 #endif
 #if defined(GL_ES_VERSION_2_0)
 template<class size_2_i32, class span_void, class vec_2_i32>
-requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
-                 semantic::concepts::Size2D<size_2_i32, i32>&&
-                 semantic::concepts::Span<span_void>)
+requires(concepts::vector<vec_2_i32, i32, 2>&&
+             concepts::size_2d<size_2_i32, i32>&& concepts::span<span_void>)
     /*!
      * \brief Part of GL_KHR_robustness
      * \param x GLint

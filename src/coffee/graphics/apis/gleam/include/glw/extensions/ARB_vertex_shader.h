@@ -45,26 +45,26 @@ using gl::group::vertex_pointer_type;
 using gl::group::vertex_weight_pointer_type_ext;
 using gl::group::weight_pointer_type_arb;
 namespace values {
-constexpr libc_types::u32 vertex_attrib_array_enabled        = 0x8622;
-constexpr libc_types::u32 vertex_attrib_array_size           = 0x8623;
-constexpr libc_types::u32 vertex_attrib_array_stride         = 0x8624;
-constexpr libc_types::u32 vertex_attrib_array_type           = 0x8625;
-constexpr libc_types::u32 current_vertex_attrib              = 0x8626;
-constexpr libc_types::u32 vertex_program_point_size          = 0x8642;
-constexpr libc_types::u32 vertex_program_two_side            = 0x8643;
-constexpr libc_types::u32 max_vertex_attribs                 = 0x8869;
-constexpr libc_types::u32 vertex_attrib_array_normalized     = 0x886A;
-constexpr libc_types::u32 max_texture_coords                 = 0x8871;
-constexpr libc_types::u32 max_texture_image_units            = 0x8872;
-constexpr libc_types::u32 max_vertex_uniform_components      = 0x8B4A;
-constexpr libc_types::u32 max_varying_floats                 = 0x8B4B;
-constexpr libc_types::u32 max_vertex_texture_image_units     = 0x8B4C;
-constexpr libc_types::u32 max_combined_texture_image_units   = 0x8B4D;
-constexpr libc_types::u32 object_active_attributes           = 0x8B89;
-constexpr libc_types::u32 object_active_attribute_max_length = 0x8B8A;
+constexpr u32 vertex_attrib_array_enabled        = 0x8622;
+constexpr u32 vertex_attrib_array_size           = 0x8623;
+constexpr u32 vertex_attrib_array_stride         = 0x8624;
+constexpr u32 vertex_attrib_array_type           = 0x8625;
+constexpr u32 current_vertex_attrib              = 0x8626;
+constexpr u32 vertex_program_point_size          = 0x8642;
+constexpr u32 vertex_program_two_side            = 0x8643;
+constexpr u32 max_vertex_attribs                 = 0x8869;
+constexpr u32 vertex_attrib_array_normalized     = 0x886A;
+constexpr u32 max_texture_coords                 = 0x8871;
+constexpr u32 max_texture_image_units            = 0x8872;
+constexpr u32 max_vertex_uniform_components      = 0x8B4A;
+constexpr u32 max_varying_floats                 = 0x8B4B;
+constexpr u32 max_vertex_texture_image_units     = 0x8B4C;
+constexpr u32 max_combined_texture_image_units   = 0x8B4D;
+constexpr u32 object_active_attributes           = 0x8B89;
+constexpr u32 object_active_attribute_max_length = 0x8B8A;
 } // namespace values
 template<class span_const_GLcharARB>
-requires(semantic::concepts::Span<span_const_GLcharARB>&& std::is_same_v<
+requires(concepts::span<span_const_GLcharARB>&& std::is_same_v<
          std::decay_t<typename span_const_GLcharARB::value_type>,
          std::decay_t<GLcharARB>>)
     /*!
@@ -123,7 +123,7 @@ STATICINLINE void enable_vertex_attrib_array(u32 index)
 }
 
 template<class span_GLcharARB>
-requires(semantic::concepts::Span<span_GLcharARB>&& std::is_same_v<
+requires(concepts::span<span_GLcharARB>&& std::is_same_v<
          std::decay_t<typename span_GLcharARB::value_type>,
          std::decay_t<GLcharARB>>)
     /*!
@@ -162,7 +162,7 @@ requires(semantic::concepts::Span<span_GLcharARB>&& std::is_same_v<
 }
 
 template<class span_const_GLcharARB>
-requires(semantic::concepts::Span<span_const_GLcharARB>&& std::is_same_v<
+requires(concepts::span<span_const_GLcharARB>&& std::is_same_v<
          std::decay_t<typename span_const_GLcharARB::value_type>,
          std::decay_t<GLcharARB>>)
     /*!
@@ -188,7 +188,7 @@ requires(semantic::concepts::Span<span_const_GLcharARB>&& std::is_same_v<
 }
 
 template<class span_void>
-requires(semantic::concepts::Span<span_void>)
+requires(concepts::span<span_void>)
     /*!
      * \brief Part of GL_ARB_vertex_shader
      * \param index GLuint
@@ -214,7 +214,7 @@ requires(semantic::concepts::Span<span_void>)
 }
 
 template<class span_f64>
-requires(semantic::concepts::Span<span_f64>&& std::is_same_v<
+requires(concepts::span<span_f64>&& std::is_same_v<
          std::decay_t<typename span_f64::value_type>,
          std::decay_t<f64>>)
     /*!
@@ -240,7 +240,7 @@ requires(semantic::concepts::Span<span_f64>&& std::is_same_v<
 }
 
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+requires(concepts::span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -266,7 +266,7 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -309,7 +309,7 @@ STATICINLINE void vertex_attrib1d(u32 index, f64 x)
 }
 
 template<class span_const_f64>
-requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
+requires(concepts::span<span_const_f64>&& std::is_same_v<
          std::decay_t<typename span_const_f64::value_type>,
          std::decay_t<f64>>)
     /*!
@@ -347,7 +347,7 @@ STATICINLINE void vertex_attrib1f(u32 index, f32 x)
 }
 
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+requires(concepts::span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -385,7 +385,7 @@ STATICINLINE void vertex_attrib1s(u32 index, i16 x)
 }
 
 template<class span_const_i16>
-requires(semantic::concepts::Span<span_const_i16>&& std::is_same_v<
+requires(concepts::span<span_const_i16>&& std::is_same_v<
          std::decay_t<typename span_const_i16::value_type>,
          std::decay_t<i16>>)
     /*!
@@ -406,7 +406,7 @@ requires(semantic::concepts::Span<span_const_i16>&& std::is_same_v<
 }
 
 template<class vec_2_f64>
-requires(semantic::concepts::Vector<vec_2_f64, f64, 2>)
+requires(concepts::vector<vec_2_f64, f64, 2>)
     /*!
      * \brief Part of GL_ARB_vertex_shader
      * \param index GLuint
@@ -426,8 +426,9 @@ requires(semantic::concepts::Vector<vec_2_f64, f64, 2>)
 }
 
 template<class span_const_vec_2_f64>
-requires(semantic::concepts::Span<span_const_vec_2_f64>&& semantic::concepts::
-             Vector<typename span_const_vec_2_f64::value_type, f64, 2>)
+requires(
+    concepts::span<span_const_vec_2_f64>&&
+        concepts::vector<typename span_const_vec_2_f64::value_type, f64, 2>)
     /*!
      * \brief Part of GL_ARB_vertex_shader
      * \param index GLuint
@@ -446,7 +447,7 @@ requires(semantic::concepts::Span<span_const_vec_2_f64>&& semantic::concepts::
 }
 
 template<class vec_2_f32>
-requires(semantic::concepts::Vector<vec_2_f32, f32, 2>)
+requires(concepts::vector<vec_2_f32, f32, 2>)
     /*!
      * \brief Part of GL_ARB_vertex_shader
      * \param index GLuint
@@ -466,8 +467,9 @@ requires(semantic::concepts::Vector<vec_2_f32, f32, 2>)
 }
 
 template<class span_const_vec_2_f32>
-requires(semantic::concepts::Span<span_const_vec_2_f32>&& semantic::concepts::
-             Vector<typename span_const_vec_2_f32::value_type, f32, 2>)
+requires(
+    concepts::span<span_const_vec_2_f32>&&
+        concepts::vector<typename span_const_vec_2_f32::value_type, f32, 2>)
     /*!
      * \brief Part of GL_ARB_vertex_shader
      * \param index GLuint
@@ -486,7 +488,7 @@ requires(semantic::concepts::Span<span_const_vec_2_f32>&& semantic::concepts::
 }
 
 template<class vec_2_i16>
-requires(semantic::concepts::Vector<vec_2_i16, i16, 2>)
+requires(concepts::vector<vec_2_i16, i16, 2>)
     /*!
      * \brief Part of GL_ARB_vertex_shader
      * \param index GLuint
@@ -506,8 +508,9 @@ requires(semantic::concepts::Vector<vec_2_i16, i16, 2>)
 }
 
 template<class span_const_vec_2_i16>
-requires(semantic::concepts::Span<span_const_vec_2_i16>&& semantic::concepts::
-             Vector<typename span_const_vec_2_i16::value_type, i16, 2>)
+requires(
+    concepts::span<span_const_vec_2_i16>&&
+        concepts::vector<typename span_const_vec_2_i16::value_type, i16, 2>)
     /*!
      * \brief Part of GL_ARB_vertex_shader
      * \param index GLuint
@@ -526,7 +529,7 @@ requires(semantic::concepts::Span<span_const_vec_2_i16>&& semantic::concepts::
 }
 
 template<class vec_3_f64>
-requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
+requires(concepts::vector<vec_3_f64, f64, 3>)
     /*!
      * \brief Part of GL_ARB_vertex_shader
      * \param index GLuint
@@ -547,8 +550,9 @@ requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
 }
 
 template<class span_const_vec_3_f64>
-requires(semantic::concepts::Span<span_const_vec_3_f64>&& semantic::concepts::
-             Vector<typename span_const_vec_3_f64::value_type, f64, 3>)
+requires(
+    concepts::span<span_const_vec_3_f64>&&
+        concepts::vector<typename span_const_vec_3_f64::value_type, f64, 3>)
     /*!
      * \brief Part of GL_ARB_vertex_shader
      * \param index GLuint
@@ -567,7 +571,7 @@ requires(semantic::concepts::Span<span_const_vec_3_f64>&& semantic::concepts::
 }
 
 template<class vec_3_f32>
-requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
+requires(concepts::vector<vec_3_f32, f32, 3>)
     /*!
      * \brief Part of GL_ARB_vertex_shader
      * \param index GLuint
@@ -588,8 +592,9 @@ requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
 }
 
 template<class span_const_vec_3_f32>
-requires(semantic::concepts::Span<span_const_vec_3_f32>&& semantic::concepts::
-             Vector<typename span_const_vec_3_f32::value_type, f32, 3>)
+requires(
+    concepts::span<span_const_vec_3_f32>&&
+        concepts::vector<typename span_const_vec_3_f32::value_type, f32, 3>)
     /*!
      * \brief Part of GL_ARB_vertex_shader
      * \param index GLuint
@@ -608,7 +613,7 @@ requires(semantic::concepts::Span<span_const_vec_3_f32>&& semantic::concepts::
 }
 
 template<class vec_3_i16>
-requires(semantic::concepts::Vector<vec_3_i16, i16, 3>)
+requires(concepts::vector<vec_3_i16, i16, 3>)
     /*!
      * \brief Part of GL_ARB_vertex_shader
      * \param index GLuint
@@ -629,8 +634,9 @@ requires(semantic::concepts::Vector<vec_3_i16, i16, 3>)
 }
 
 template<class span_const_vec_3_i16>
-requires(semantic::concepts::Span<span_const_vec_3_i16>&& semantic::concepts::
-             Vector<typename span_const_vec_3_i16::value_type, i16, 3>)
+requires(
+    concepts::span<span_const_vec_3_i16>&&
+        concepts::vector<typename span_const_vec_3_i16::value_type, i16, 3>)
     /*!
      * \brief Part of GL_ARB_vertex_shader
      * \param index GLuint
@@ -649,7 +655,7 @@ requires(semantic::concepts::Span<span_const_vec_3_i16>&& semantic::concepts::
 }
 
 template<class span_const_i8>
-requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
+requires(concepts::span<span_const_i8>&& std::is_same_v<
          std::decay_t<typename span_const_i8::value_type>,
          std::decay_t<i8>>)
     /*!
@@ -671,7 +677,7 @@ requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
 }
 
 template<class span_const_i32>
-requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
+requires(concepts::span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -693,7 +699,7 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
 }
 
 template<class span_const_i16>
-requires(semantic::concepts::Span<span_const_i16>&& std::is_same_v<
+requires(concepts::span<span_const_i16>&& std::is_same_v<
          std::decay_t<typename span_const_i16::value_type>,
          std::decay_t<i16>>)
     /*!
@@ -715,7 +721,7 @@ requires(semantic::concepts::Span<span_const_i16>&& std::is_same_v<
 }
 
 template<class vec_4_u8>
-requires(semantic::concepts::Vector<vec_4_u8, u8, 4>)
+requires(concepts::vector<vec_4_u8, u8, 4>)
     /*!
      * \brief Part of GL_ARB_vertex_shader
      * \param index GLuint
@@ -737,7 +743,7 @@ requires(semantic::concepts::Vector<vec_4_u8, u8, 4>)
 }
 
 template<class span_const_u8>
-requires(semantic::concepts::Span<span_const_u8>&& std::is_same_v<
+requires(concepts::span<span_const_u8>&& std::is_same_v<
          std::decay_t<typename span_const_u8::value_type>,
          std::decay_t<u8>>)
     /*!
@@ -759,7 +765,7 @@ requires(semantic::concepts::Span<span_const_u8>&& std::is_same_v<
 }
 
 template<class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+requires(concepts::span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -781,7 +787,7 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
 }
 
 template<class span_const_u16>
-requires(semantic::concepts::Span<span_const_u16>&& std::is_same_v<
+requires(concepts::span<span_const_u16>&& std::is_same_v<
          std::decay_t<typename span_const_u16::value_type>,
          std::decay_t<u16>>)
     /*!
@@ -804,7 +810,7 @@ requires(semantic::concepts::Span<span_const_u16>&& std::is_same_v<
 }
 
 template<class span_const_i8>
-requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
+requires(concepts::span<span_const_i8>&& std::is_same_v<
          std::decay_t<typename span_const_i8::value_type>,
          std::decay_t<i8>>)
     /*!
@@ -826,7 +832,7 @@ requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
 }
 
 template<class vec_4_f64>
-requires(semantic::concepts::Vector<vec_4_f64, f64, 4>)
+requires(concepts::vector<vec_4_f64, f64, 4>)
     /*!
      * \brief Part of GL_ARB_vertex_shader
      * \param index GLuint
@@ -848,8 +854,9 @@ requires(semantic::concepts::Vector<vec_4_f64, f64, 4>)
 }
 
 template<class span_const_vec_4_f64>
-requires(semantic::concepts::Span<span_const_vec_4_f64>&& semantic::concepts::
-             Vector<typename span_const_vec_4_f64::value_type, f64, 4>)
+requires(
+    concepts::span<span_const_vec_4_f64>&&
+        concepts::vector<typename span_const_vec_4_f64::value_type, f64, 4>)
     /*!
      * \brief Part of GL_ARB_vertex_shader
      * \param index GLuint
@@ -868,7 +875,7 @@ requires(semantic::concepts::Span<span_const_vec_4_f64>&& semantic::concepts::
 }
 
 template<class vec_4_f32>
-requires(semantic::concepts::Vector<vec_4_f32, f32, 4>)
+requires(concepts::vector<vec_4_f32, f32, 4>)
     /*!
      * \brief Part of GL_ARB_vertex_shader
      * \param index GLuint
@@ -890,8 +897,9 @@ requires(semantic::concepts::Vector<vec_4_f32, f32, 4>)
 }
 
 template<class span_const_vec_4_f32>
-requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
-             Vector<typename span_const_vec_4_f32::value_type, f32, 4>)
+requires(
+    concepts::span<span_const_vec_4_f32>&&
+        concepts::vector<typename span_const_vec_4_f32::value_type, f32, 4>)
     /*!
      * \brief Part of GL_ARB_vertex_shader
      * \param index GLuint
@@ -910,8 +918,9 @@ requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
 }
 
 template<class span_const_vec_4_i32>
-requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
-             Vector<typename span_const_vec_4_i32::value_type, i32, 4>)
+requires(
+    concepts::span<span_const_vec_4_i32>&&
+        concepts::vector<typename span_const_vec_4_i32::value_type, i32, 4>)
     /*!
      * \brief Part of GL_ARB_vertex_shader
      * \param index GLuint
@@ -930,7 +939,7 @@ requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
 }
 
 template<class vec_4_i16>
-requires(semantic::concepts::Vector<vec_4_i16, i16, 4>)
+requires(concepts::vector<vec_4_i16, i16, 4>)
     /*!
      * \brief Part of GL_ARB_vertex_shader
      * \param index GLuint
@@ -952,8 +961,9 @@ requires(semantic::concepts::Vector<vec_4_i16, i16, 4>)
 }
 
 template<class span_const_vec_4_i16>
-requires(semantic::concepts::Span<span_const_vec_4_i16>&& semantic::concepts::
-             Vector<typename span_const_vec_4_i16::value_type, i16, 4>)
+requires(
+    concepts::span<span_const_vec_4_i16>&&
+        concepts::vector<typename span_const_vec_4_i16::value_type, i16, 4>)
     /*!
      * \brief Part of GL_ARB_vertex_shader
      * \param index GLuint
@@ -972,7 +982,7 @@ requires(semantic::concepts::Span<span_const_vec_4_i16>&& semantic::concepts::
 }
 
 template<class span_const_u8>
-requires(semantic::concepts::Span<span_const_u8>&& std::is_same_v<
+requires(concepts::span<span_const_u8>&& std::is_same_v<
          std::decay_t<typename span_const_u8::value_type>,
          std::decay_t<u8>>)
     /*!
@@ -994,8 +1004,9 @@ requires(semantic::concepts::Span<span_const_u8>&& std::is_same_v<
 }
 
 template<class span_const_vec_4_u32>
-requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
-             Vector<typename span_const_vec_4_u32::value_type, u32, 4>)
+requires(
+    concepts::span<span_const_vec_4_u32>&&
+        concepts::vector<typename span_const_vec_4_u32::value_type, u32, 4>)
     /*!
      * \brief Part of GL_ARB_vertex_shader
      * \param index GLuint
@@ -1015,8 +1026,9 @@ requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
 }
 
 template<class span_const_vec_4_u16>
-requires(semantic::concepts::Span<span_const_vec_4_u16>&& semantic::concepts::
-             Vector<typename span_const_vec_4_u16::value_type, u16, 4>)
+requires(
+    concepts::span<span_const_vec_4_u16>&&
+        concepts::vector<typename span_const_vec_4_u16::value_type, u16, 4>)
     /*!
      * \brief Part of GL_ARB_vertex_shader
      * \param index GLuint
@@ -1036,7 +1048,7 @@ requires(semantic::concepts::Span<span_const_vec_4_u16>&& semantic::concepts::
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_ARB_vertex_shader
      * \param index GLuint

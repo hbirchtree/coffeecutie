@@ -156,11 +156,11 @@ requires std::is_same_v<T, group::sized_internal_format> || std::
         switch(fmt.cmpflg)
         {
         case M::BC1: {
-            if(feval(fmt.pixflg & F::sRGB))
-            {
-                return {
-                    f::compressed_srgb_s3tc_dxt1_ext, b::unsigned_byte, p::rgb};
-            }
+//            if(feval(fmt.pixflg & F::sRGB))
+//            {
+//                return {
+//                    f::compressed_srgb_s3tc_dxt1_ext, b::unsigned_byte, p::rgb};
+//            }
             switch(fmt.comp)
             {
             case C::RGB:

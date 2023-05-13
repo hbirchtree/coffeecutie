@@ -9,7 +9,7 @@ using gl::group::internal_format;
 using gl::group::pixel_type;
 using gl::group::sized_internal_format;
 namespace values {
-constexpr libc_types::u32 depth_buffer_float_mode = 0x8DAF;
+constexpr u32 depth_buffer_float_mode = 0x8DAF;
 } // namespace values
 /*!
  * \brief Part of GL_NV_depth_buffer_float

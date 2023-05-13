@@ -7,8 +7,8 @@ namespace gl::arb::clip_control {
 using gl::group::clip_control_depth;
 using gl::group::clip_control_origin;
 namespace values {
-constexpr libc_types::u32 clip_origin     = 0x935C;
-constexpr libc_types::u32 clip_depth_mode = 0x935D;
+constexpr u32 clip_origin     = 0x935C;
+constexpr u32 clip_depth_mode = 0x935D;
 } // namespace values
 /*!
  * \brief Part of GL_ARB_clip_control

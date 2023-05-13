@@ -11,24 +11,15 @@
 
 #if defined(FEATURE_ENABLE_CEAGL)
 #include <CEAGL/eagl.h>
-#else
+#elif defined(EGL_USE_DYNAMIC)
+#include <glad/egl.h>
+#elif defined(EGL_USE_LINKED)
 #include <EGL/egl.h>
-
-#if defined(COFFEE_ANDROID)
 #include <EGL/eglext.h>
-#endif
 #endif
 
 #if !defined(EGL_VERSION_1_3)
 #error EGL version 1.3 is required for OpenGL ES 2.0
-#endif
-
-#if defined(COFFEE_ANDROID)
-namespace android_egl {
-static PFNEGLGETCOMPOSITORTIMINGSUPPORTEDANDROIDPROC
-                                            GetCompositorTimingSupported;
-static PFNEGLGETCOMPOSITORTIMINGANDROIDPROC GetCompositorTiming;
-} // namespace android_egl
 #endif
 
 namespace egl {
@@ -231,7 +222,8 @@ static stl_types::result<EGLConfig, std::string> eglTryConfig(
 #endif
 
 #if defined(EGL_VERSION_1_5) && defined(EGL_EXT_pixel_format_float)
-    if(gl::tex::format_of(config.framebufferFmt).raw_format->floating_point)
+    if(gl::tex::format_of(config.framebufferFmt).raw_format->floating_point &&
+        extensions.contains("EGL_EXT_pixel_format_float"))
     {
         surfaceConfig.push_back(
             {EGL_COLOR_COMPONENT_TYPE_EXT, EGL_COLOR_COMPONENT_TYPE_FLOAT_EXT});
@@ -518,24 +510,24 @@ void GraphicsFramebuffer::load(entity_container& e, comp_app::app_error& ec)
     }
 
 #if defined(EGL_ANDROID_get_frame_timestamps)
-    auto& feature_flags = e.service<GraphicsContext>()->feature_flags;
+//    auto& feature_flags = e.service<GraphicsContext>()->feature_flags;
 
-    android_egl::GetCompositorTimingSupported
-        = reinterpret_cast<PFNEGLGETCOMPOSITORTIMINGSUPPORTEDANDROIDPROC>(
-            eglGetProcAddress("eglGetCompositorTimingSupportedANDROID"));
-    android_egl::GetCompositorTiming
-        = reinterpret_cast<PFNEGLGETCOMPOSITORTIMINGANDROIDPROC>(
-            eglGetProcAddress("eglGetCompositorTimingANDROID"));
+//    android_egl::GetCompositorTimingSupported
+//        = reinterpret_cast<PFNEGLGETCOMPOSITORTIMINGSUPPORTEDANDROIDPROC>(
+//            eglGetProcAddress("eglGetCompositorTimingSupportedANDROID"));
+//    android_egl::GetCompositorTiming
+//        = reinterpret_cast<PFNEGLGETCOMPOSITORTIMINGANDROIDPROC>(
+//            eglGetProcAddress("eglGetCompositorTimingANDROID"));
 
-    if(android_egl::GetCompositorTimingSupported)
-    {
-        feature_flags.android_composite_deadline
-            = android_egl::GetCompositorTimingSupported(
-                display, m_surface, EGL_COMPOSITE_DEADLINE_ANDROID);
-        feature_flags.android_present_latency
-            = android_egl::GetCompositorTimingSupported(
-                display, m_surface, EGL_COMPOSITE_TO_PRESENT_LATENCY_ANDROID);
-    }
+//    if(android_egl::GetCompositorTimingSupported)
+//    {
+//        feature_flags.android_composite_deadline
+//            = android_egl::GetCompositorTimingSupported(
+//                display, m_surface, EGL_COMPOSITE_DEADLINE_ANDROID);
+//        feature_flags.android_present_latency
+//            = android_egl::GetCompositorTimingSupported(
+//                display, m_surface, EGL_COMPOSITE_TO_PRESENT_LATENCY_ANDROID);
+//    }
 #endif
 }
 

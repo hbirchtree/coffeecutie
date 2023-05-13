@@ -59,7 +59,7 @@ STATICINLINE void enable_indexed(group::enable_cap target, u32 index)
 }
 
 template<class span_bool>
-requires(semantic::concepts::Span<span_bool>&& std::is_same_v<
+requires(concepts::span<span_bool>&& std::is_same_v<
          std::decay_t<typename span_bool::value_type>,
          std::decay_t<bool>>)
     /*!
@@ -85,7 +85,7 @@ requires(semantic::concepts::Span<span_bool>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!

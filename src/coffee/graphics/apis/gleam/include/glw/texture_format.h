@@ -96,10 +96,11 @@ struct texture_format_t
         if(compression.has_value())
         {
             auto const& compression = *this->compression;
-            return (size[0] / static_cast<value_type>(compression.block_width))
-                   * (size[1]
-                      / static_cast<value_type>(compression.block_height))
-                   * compression.block_size;
+            return (size[0] /
+                    static_cast<value_type>(compression.block_width)) *
+                   (size[1] /
+                    static_cast<value_type>(compression.block_height)) *
+                   compression.block_size;
         } else
         {
             auto const& raw_format = *this->raw_format;

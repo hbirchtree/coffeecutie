@@ -25,7 +25,7 @@ requires(MinimumVersion<Current, Version<1, 1>>)
 
 template<class vec_2_i32>
 requires(MinimumVersion<Current, Version<1, 1>>&&
-             semantic::concepts::Vector<vec_2_i32, i32, 2>)
+             concepts::vector<vec_2_i32, i32, 2>)
     /*!
      * \brief Wraps around glCopyTexImage1D. Introduced in GL core 1.1
      * \param target GLenum
@@ -63,8 +63,8 @@ requires(MinimumVersion<Current, Version<1, 1>>&&
 
 template<class size_2_i32, class vec_2_i32>
 requires(MinimumVersion<Current, Version<1, 1>>&&
-                 semantic::concepts::Vector<vec_2_i32, i32, 2>&&
-                 semantic::concepts::Size2D<size_2_i32, i32>)
+                 concepts::vector<vec_2_i32, i32, 2>&&
+                 concepts::size_2d<size_2_i32, i32>)
     /*!
      * \brief Wraps around glCopyTexImage2D. Introduced in GL core 1.1
      * \param target GLenum
@@ -104,7 +104,7 @@ requires(MinimumVersion<Current, Version<1, 1>>&&
 
 template<class vec_2_i32>
 requires(MinimumVersion<Current, Version<1, 1>>&&
-             semantic::concepts::Vector<vec_2_i32, i32, 2>)
+             concepts::vector<vec_2_i32, i32, 2>)
     /*!
      * \brief Wraps around glCopyTexSubImage1D. Introduced in GL core 1.1
      * \param target GLenum
@@ -134,8 +134,8 @@ requires(MinimumVersion<Current, Version<1, 1>>&&
 
 template<class size_2_i32, class vec_2_i32>
 requires(MinimumVersion<Current, Version<1, 1>>&&
-                 semantic::concepts::Vector<vec_2_i32, i32, 2>&&
-                 semantic::concepts::Size2D<size_2_i32, i32>)
+                 concepts::vector<vec_2_i32, i32, 2>&&
+                 concepts::size_2d<size_2_i32, i32>)
     /*!
      * \brief Wraps around glCopyTexSubImage2D. Introduced in GL core 1.1
      * \param target GLenum
@@ -174,7 +174,7 @@ requires(MinimumVersion<Current, Version<1, 1>>&&
 
 template<class span_const_u32>
 requires(MinimumVersion<Current, Version<1, 1>>&&
-             semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+             concepts::span<span_const_u32>&& std::is_same_v<
                  std::decay_t<typename span_const_u32::value_type>,
                  std::decay_t<u32>>)
     /*!
@@ -232,7 +232,7 @@ requires(MinimumVersion<Current, Version<1, 1>>)
         group::primitive_type     mode,
         i32                       count,
         group::draw_elements_type type,
-        ptroff                    indices)
+        intptr_t                  indices)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -248,8 +248,8 @@ requires(MinimumVersion<Current, Version<1, 1>>)
 }
 
 template<class span_u32>
-requires(MinimumVersion<Current, Version<1, 1>>&&
-             semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(MinimumVersion<Current, Version<1, 1>>&& concepts::span<span_u32>&&
+                                                  std::is_same_v<
                  std::decay_t<typename span_u32::value_type>,
                  std::decay_t<u32>>)
     /*!
@@ -315,8 +315,8 @@ requires(MinimumVersion<Current, Version<1, 1>>)
 }
 
 template<class span_const_void>
-requires(MinimumVersion<Current, Version<1, 1>>&&
-             semantic::concepts::Span<span_const_void>)
+requires(
+    MinimumVersion<Current, Version<1, 1>>&& concepts::span<span_const_void>)
     /*!
      * \brief Wraps around glTexSubImage1D. Introduced in GL core 1.1
      * \param target GLenum
@@ -355,9 +355,9 @@ requires(MinimumVersion<Current, Version<1, 1>>&&
 
 template<class size_2_i32, class span_const_void, class vec_2_i32>
 requires(MinimumVersion<Current, Version<1, 1>>&&
-                     semantic::concepts::Vector<vec_2_i32, i32, 2>&&
-                     semantic::concepts::Size2D<size_2_i32, i32>&&
-                     semantic::concepts::Span<span_const_void>)
+                     concepts::vector<vec_2_i32, i32, 2>&&
+                     concepts::size_2d<size_2_i32, i32>&&
+                     concepts::span<span_const_void>)
     /*!
      * \brief Wraps around glTexSubImage2D. Introduced in GL core 1.1
      * \param target GLenum

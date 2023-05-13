@@ -5,12 +5,12 @@
 namespace gl::amd::framebuffer_sample_positions {
 using gl::group::special_numbers;
 namespace values {
-constexpr libc_types::u32 subsample_distance          = 0x883F;
-constexpr libc_types::u32 pixels_per_sample_pattern_x = 0x91AE;
-constexpr libc_types::u32 pixels_per_sample_pattern_y = 0x91AF;
+constexpr u32 subsample_distance          = 0x883F;
+constexpr u32 pixels_per_sample_pattern_x = 0x91AE;
+constexpr u32 pixels_per_sample_pattern_y = 0x91AF;
 } // namespace values
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+requires(concepts::span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -42,7 +42,7 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
 }
 
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+requires(concepts::span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -79,7 +79,7 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 }
 
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+requires(concepts::span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -121,7 +121,7 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 }
 
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+requires(concepts::span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
          std::decay_t<f32>>)
     /*!

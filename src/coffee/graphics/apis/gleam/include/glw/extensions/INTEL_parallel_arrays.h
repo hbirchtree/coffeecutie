@@ -3,14 +3,14 @@
 #ifdef GL_INTEL_parallel_arrays
 namespace gl::intel::parallel_arrays {
 namespace values {
-constexpr libc_types::u32 parallel_arrays                       = 0x83F4;
-constexpr libc_types::u32 vertex_array_parallel_pointers        = 0x83F5;
-constexpr libc_types::u32 normal_array_parallel_pointers        = 0x83F6;
-constexpr libc_types::u32 color_array_parallel_pointers         = 0x83F7;
-constexpr libc_types::u32 texture_coord_array_parallel_pointers = 0x83F8;
+constexpr u32 parallel_arrays                       = 0x83F4;
+constexpr u32 vertex_array_parallel_pointers        = 0x83F5;
+constexpr u32 normal_array_parallel_pointers        = 0x83F6;
+constexpr u32 color_array_parallel_pointers         = 0x83F7;
+constexpr u32 texture_coord_array_parallel_pointers = 0x83F8;
 } // namespace values
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_INTEL_parallel_arrays
      * \param size GLint
@@ -37,7 +37,7 @@ requires(semantic::concepts::Span<span_const_void>)
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_INTEL_parallel_arrays
      * \param type GLenum
@@ -60,7 +60,7 @@ requires(semantic::concepts::Span<span_const_void>)
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_INTEL_parallel_arrays
      * \param size GLint
@@ -87,7 +87,7 @@ requires(semantic::concepts::Span<span_const_void>)
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_INTEL_parallel_arrays
      * \param size GLint

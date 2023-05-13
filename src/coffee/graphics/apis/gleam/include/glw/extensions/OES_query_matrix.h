@@ -5,10 +5,10 @@ namespace gl::oes::query_matrix {
 namespace values {
 } // namespace values
 template<class span_GLfixed, class span_i32>
-requires(semantic::concepts::Span<span_GLfixed>&& std::is_same_v<
+requires(concepts::span<span_GLfixed>&& std::is_same_v<
          std::decay_t<typename span_GLfixed::value_type>,
-         std::decay_t<GLfixed>>&& semantic::concepts::Span<span_i32>&&
-                                  std::is_same_v<
+         std::decay_t<GLfixed>>&& concepts::span<span_i32>&&
+                                        std::is_same_v<
                  std::decay_t<typename span_i32::value_type>,
                  std::decay_t<i32>>)
     /*!

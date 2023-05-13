@@ -5,10 +5,10 @@
 namespace gl::nv::gpu_multicast {
 using gl::group::buffer_storage_mask;
 namespace values {
-constexpr libc_types::u32 multicast_gpus                         = 0x92BA;
-constexpr libc_types::u32 per_gpu_storage                        = 0x9548;
-constexpr libc_types::u32 multicast_programmable_sample_location = 0x9549;
-constexpr libc_types::u32 render_gpu_mask                        = 0x9558;
+constexpr u32 multicast_gpus                         = 0x92BA;
+constexpr u32 per_gpu_storage                        = 0x9548;
+constexpr u32 multicast_programmable_sample_location = 0x9549;
+constexpr u32 render_gpu_mask                        = 0x9558;
 } // namespace values
 /*!
  * \brief Part of GL_NV_gpu_multicast
@@ -78,7 +78,7 @@ STATICINLINE void multicast_blit_framebuffer(
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_NV_gpu_multicast
      * \param gpuMask GLbitfield
@@ -217,7 +217,7 @@ STATICINLINE void multicast_copy_image_sub_data(
 }
 
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+requires(concepts::span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -252,7 +252,7 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
 }
 
 template<class span_i64>
-requires(semantic::concepts::Span<span_i64>&& std::is_same_v<
+requires(concepts::span<span_i64>&& std::is_same_v<
          std::decay_t<typename span_i64::value_type>,
          std::decay_t<i64>>)
     /*!
@@ -280,7 +280,7 @@ requires(semantic::concepts::Span<span_i64>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -308,7 +308,7 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_u64>
-requires(semantic::concepts::Span<span_u64>&& std::is_same_v<
+requires(concepts::span<span_u64>&& std::is_same_v<
          std::decay_t<typename span_u64::value_type>,
          std::decay_t<u64>>)
     /*!
@@ -336,7 +336,7 @@ requires(semantic::concepts::Span<span_u64>&& std::is_same_v<
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(concepts::span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
          std::decay_t<u32>>)
     /*!

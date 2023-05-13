@@ -3,12 +3,12 @@
 #ifdef GL_ARB_shading_language_include
 namespace gl::arb::shading_language_include {
 namespace values {
-constexpr libc_types::u32 shader_include      = 0x8DAE;
-constexpr libc_types::u32 named_string_length = 0x8DE9;
-constexpr libc_types::u32 named_string_type   = 0x8DEA;
+constexpr u32 shader_include      = 0x8DAE;
+constexpr u32 named_string_length = 0x8DE9;
+constexpr u32 named_string_type   = 0x8DEA;
 } // namespace values
 template<class span_const_i32>
-requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
+requires(concepts::span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -62,7 +62,7 @@ STATICINLINE void delete_named_string(std::string_view const& name)
 }
 
 template<class span_GLchar>
-requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
+requires(concepts::span<span_GLchar>&& std::is_same_v<
          std::decay_t<typename span_GLchar::value_type>,
          std::decay_t<GLchar>>)
     /*!
@@ -88,7 +88,7 @@ requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!

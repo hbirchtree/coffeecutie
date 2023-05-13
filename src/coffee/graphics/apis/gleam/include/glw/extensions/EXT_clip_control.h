@@ -3,12 +3,12 @@
 #ifdef GL_EXT_clip_control
 namespace gl::ext::clip_control {
 namespace values {
-constexpr libc_types::u32 lower_left          = 0x8CA1;
-constexpr libc_types::u32 upper_left          = 0x8CA2;
-constexpr libc_types::u32 clip_origin         = 0x935C;
-constexpr libc_types::u32 clip_depth_mode     = 0x935D;
-constexpr libc_types::u32 negative_one_to_one = 0x935E;
-constexpr libc_types::u32 zero_to_one         = 0x935F;
+constexpr u32 lower_left          = 0x8CA1;
+constexpr u32 upper_left          = 0x8CA2;
+constexpr u32 clip_origin         = 0x935C;
+constexpr u32 clip_depth_mode     = 0x935D;
+constexpr u32 negative_one_to_one = 0x935E;
+constexpr u32 zero_to_one         = 0x935F;
 } // namespace values
 /*!
  * \brief Part of GL_EXT_clip_control

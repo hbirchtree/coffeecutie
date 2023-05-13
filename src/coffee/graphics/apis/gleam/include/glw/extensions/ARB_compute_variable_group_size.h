@@ -3,10 +3,10 @@
 #ifdef GL_ARB_compute_variable_group_size
 namespace gl::arb::compute_variable_group_size {
 namespace values {
-constexpr libc_types::u32 max_compute_fixed_group_invocations    = 0x90EB;
-constexpr libc_types::u32 max_compute_fixed_group_size           = 0x91BF;
-constexpr libc_types::u32 max_compute_variable_group_invocations = 0x9344;
-constexpr libc_types::u32 max_compute_variable_group_size        = 0x9345;
+constexpr u32 max_compute_fixed_group_invocations    = 0x90EB;
+constexpr u32 max_compute_fixed_group_size           = 0x91BF;
+constexpr u32 max_compute_variable_group_invocations = 0x9344;
+constexpr u32 max_compute_variable_group_size        = 0x9345;
 } // namespace values
 /*!
  * \brief Part of GL_ARB_compute_variable_group_size

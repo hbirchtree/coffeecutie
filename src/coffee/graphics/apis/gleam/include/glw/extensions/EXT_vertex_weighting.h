@@ -7,19 +7,19 @@ namespace gl::ext::vertex_weighting {
 using gl::group::get_prop;
 using gl::group::matrix_mode;
 namespace values {
-constexpr libc_types::u32 modelview1_stack_depth      = 0x8502;
-constexpr libc_types::u32 modelview1_matrix           = 0x8506;
-constexpr libc_types::u32 vertex_weighting            = 0x8509;
-constexpr libc_types::u32 modelview1                  = 0x850A;
-constexpr libc_types::u32 current_vertex_weight       = 0x850B;
-constexpr libc_types::u32 vertex_weight_array         = 0x850C;
-constexpr libc_types::u32 vertex_weight_array_size    = 0x850D;
-constexpr libc_types::u32 vertex_weight_array_type    = 0x850E;
-constexpr libc_types::u32 vertex_weight_array_stride  = 0x850F;
-constexpr libc_types::u32 vertex_weight_array_pointer = 0x8510;
+constexpr u32 modelview1_stack_depth      = 0x8502;
+constexpr u32 modelview1_matrix           = 0x8506;
+constexpr u32 vertex_weighting            = 0x8509;
+constexpr u32 modelview1                  = 0x850A;
+constexpr u32 current_vertex_weight       = 0x850B;
+constexpr u32 vertex_weight_array         = 0x850C;
+constexpr u32 vertex_weight_array_size    = 0x850D;
+constexpr u32 vertex_weight_array_type    = 0x850E;
+constexpr u32 vertex_weight_array_stride  = 0x850F;
+constexpr u32 vertex_weight_array_pointer = 0x8510;
 } // namespace values
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_vertex_weighting
      * \param size GLint
@@ -65,7 +65,7 @@ STATICINLINE void vertex_weightf(f32 weight)
 }
 
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+requires(concepts::span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
          std::decay_t<f32>>)
     /*!

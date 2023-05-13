@@ -3,14 +3,14 @@
 #ifdef GL_AMD_name_gen_delete
 namespace gl::amd::name_gen_delete {
 namespace values {
-constexpr libc_types::u32 data_buffer         = 0x9151;
-constexpr libc_types::u32 performance_monitor = 0x9152;
-constexpr libc_types::u32 query_object        = 0x9153;
-constexpr libc_types::u32 vertex_array_object = 0x9154;
-constexpr libc_types::u32 sampler_object      = 0x9155;
+constexpr u32 data_buffer         = 0x9151;
+constexpr u32 performance_monitor = 0x9152;
+constexpr u32 query_object        = 0x9153;
+constexpr u32 vertex_array_object = 0x9154;
+constexpr u32 sampler_object      = 0x9155;
 } // namespace values
 template<class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+requires(concepts::span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -36,7 +36,7 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(concepts::span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
          std::decay_t<u32>>)
     /*!

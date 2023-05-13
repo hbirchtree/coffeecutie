@@ -3,12 +3,12 @@
 #ifdef GL_NV_shader_buffer_load
 namespace gl::nv::shader_buffer_load {
 namespace values {
-constexpr libc_types::u32 buffer_gpu_address        = 0x8F1D;
-constexpr libc_types::u32 gpu_address               = 0x8F34;
-constexpr libc_types::u32 max_shader_buffer_address = 0x8F35;
+constexpr u32 buffer_gpu_address        = 0x8F1D;
+constexpr u32 gpu_address               = 0x8F34;
+constexpr u32 max_shader_buffer_address = 0x8F35;
 } // namespace values
 template<class span_GLuint64EXT>
-requires(semantic::concepts::Span<span_GLuint64EXT>&& std::is_same_v<
+requires(concepts::span<span_GLuint64EXT>&& std::is_same_v<
          std::decay_t<typename span_GLuint64EXT::value_type>,
          std::decay_t<GLuint64EXT>>)
     /*!
@@ -35,7 +35,7 @@ requires(semantic::concepts::Span<span_GLuint64EXT>&& std::is_same_v<
 }
 
 template<class span_GLuint64EXT>
-requires(semantic::concepts::Span<span_GLuint64EXT>&& std::is_same_v<
+requires(concepts::span<span_GLuint64EXT>&& std::is_same_v<
          std::decay_t<typename span_GLuint64EXT::value_type>,
          std::decay_t<GLuint64EXT>>)
     /*!
@@ -59,7 +59,7 @@ requires(semantic::concepts::Span<span_GLuint64EXT>&& std::is_same_v<
 }
 
 template<class span_GLuint64EXT>
-requires(semantic::concepts::Span<span_GLuint64EXT>&& std::is_same_v<
+requires(concepts::span<span_GLuint64EXT>&& std::is_same_v<
          std::decay_t<typename span_GLuint64EXT::value_type>,
          std::decay_t<GLuint64EXT>>)
     /*!
@@ -91,7 +91,7 @@ requires(semantic::concepts::Span<span_GLuint64EXT>&& std::is_same_v<
 }
 
 template<class span_GLuint64EXT>
-requires(semantic::concepts::Span<span_GLuint64EXT>&& std::is_same_v<
+requires(concepts::span<span_GLuint64EXT>&& std::is_same_v<
          std::decay_t<typename span_GLuint64EXT::value_type>,
          std::decay_t<GLuint64EXT>>)
     /*!
@@ -261,7 +261,7 @@ STATICINLINE void program_uniform(u32 program, i32 location, GLuint64EXT value)
 }
 
 template<class span_const_GLuint64EXT>
-requires(semantic::concepts::Span<span_const_GLuint64EXT>&& std::is_same_v<
+requires(concepts::span<span_const_GLuint64EXT>&& std::is_same_v<
          std::decay_t<typename span_const_GLuint64EXT::value_type>,
          std::decay_t<GLuint64EXT>>)
     /*!
@@ -312,7 +312,7 @@ STATICINLINE void uniform(i32 location, GLuint64EXT value)
 }
 
 template<class span_const_GLuint64EXT>
-requires(semantic::concepts::Span<span_const_GLuint64EXT>&& std::is_same_v<
+requires(concepts::span<span_const_GLuint64EXT>&& std::is_same_v<
          std::decay_t<typename span_const_GLuint64EXT::value_type>,
          std::decay_t<GLuint64EXT>>)
     /*!

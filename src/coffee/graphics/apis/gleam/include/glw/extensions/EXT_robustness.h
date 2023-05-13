@@ -9,10 +9,10 @@ using gl::group::error_code;
 using gl::group::graphics_reset_status;
 using gl::group::special_numbers;
 namespace values {
-constexpr libc_types::u32 lose_context_on_reset       = 0x8252;
-constexpr libc_types::u32 reset_notification_strategy = 0x8256;
-constexpr libc_types::u32 no_reset_notification       = 0x8261;
-constexpr libc_types::u32 context_robust_access       = 0x90F3;
+constexpr u32 lose_context_on_reset       = 0x8252;
+constexpr u32 reset_notification_strategy = 0x8256;
+constexpr u32 no_reset_notification       = 0x8261;
+constexpr u32 context_robust_access       = 0x90F3;
 } // namespace values
 /*!
  * \brief Part of GL_EXT_robustness
@@ -32,7 +32,7 @@ STATICINLINE group::graphics_reset_status get_graphics_reset_status()
 }
 
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+requires(concepts::span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -65,7 +65,7 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -98,9 +98,8 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class size_2_i32, class span_void, class vec_2_i32>
-requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
-                 semantic::concepts::Size2D<size_2_i32, i32>&&
-                 semantic::concepts::Span<span_void>)
+requires(concepts::vector<vec_2_i32, i32, 2>&&
+             concepts::size_2d<size_2_i32, i32>&& concepts::span<span_void>)
     /*!
      * \brief Part of GL_EXT_robustness
      * \param x GLint

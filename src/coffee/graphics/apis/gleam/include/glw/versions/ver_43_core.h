@@ -1,7 +1,7 @@
 #ifdef GL_VERSION_4_3
 template<class span_const_void>
-requires(MinimumVersion<Current, Version<4, 3>>&&
-             semantic::concepts::Span<span_const_void>)
+requires(
+    MinimumVersion<Current, Version<4, 3>>&& concepts::span<span_const_void>)
     /*!
      * \brief Wraps around glClearBufferData. Introduced in GL core 4.3
      * \param target GLenum
@@ -33,8 +33,8 @@ requires(MinimumVersion<Current, Version<4, 3>>&&
 }
 
 template<class span_const_void>
-requires(MinimumVersion<Current, Version<4, 3>>&&
-             semantic::concepts::Span<span_const_void>)
+requires(
+    MinimumVersion<Current, Version<4, 3>>&& concepts::span<span_const_void>)
     /*!
      * \brief Wraps around glClearBufferSubData. Introduced in GL core 4.3
      * \param target GLenum
@@ -197,8 +197,8 @@ requires(MinimumVersion<Current, Version<4, 3>>)
 }
 
 template<class span_i32>
-requires(MinimumVersion<Current, Version<4, 3>>&&
-             semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(MinimumVersion<Current, Version<4, 3>>&& concepts::span<span_i32>&&
+                                                  std::is_same_v<
                  std::decay_t<typename span_i32::value_type>,
                  std::decay_t<i32>>)
     /*!
@@ -224,8 +224,8 @@ requires(MinimumVersion<Current, Version<4, 3>>&&
 }
 
 template<class span_i64>
-requires(MinimumVersion<Current, Version<4, 3>>&&
-             semantic::concepts::Span<span_i64>&& std::is_same_v<
+requires(MinimumVersion<Current, Version<4, 3>>&& concepts::span<span_i64>&&
+                                                  std::is_same_v<
                  std::decay_t<typename span_i64::value_type>,
                  std::decay_t<i64>>)
     /*!
@@ -308,8 +308,8 @@ requires(MinimumVersion<Current, Version<4, 3>>)
 
 template<class span_const_invalidate_framebuffer_attachment>
 requires(
-    MinimumVersion<Current, Version<4, 3>>&& semantic::concepts::
-        Span<span_const_invalidate_framebuffer_attachment>&& std::is_same_v<
+    MinimumVersion<Current, Version<4, 3>>&&                 concepts::
+        span<span_const_invalidate_framebuffer_attachment>&& std::is_same_v<
             std::decay_t<typename span_const_invalidate_framebuffer_attachment::
                              value_type>,
             std::decay_t<group::invalidate_framebuffer_attachment>>)
@@ -342,13 +342,13 @@ template<
     class span_const_invalidate_framebuffer_attachment,
     class vec_2_i32>
 requires(
-    MinimumVersion<Current, Version<4, 3>>&& semantic::concepts::
-        Span<span_const_invalidate_framebuffer_attachment>&& std::is_same_v<
+    MinimumVersion<Current, Version<4, 3>>&&                 concepts::
+        span<span_const_invalidate_framebuffer_attachment>&& std::is_same_v<
             std::decay_t<typename span_const_invalidate_framebuffer_attachment::
                              value_type>,
             std::decay_t<group::invalidate_framebuffer_attachment>>&&
-                semantic::concepts::Vector<vec_2_i32, i32, 2>&&
-                semantic::concepts::Size2D<size_2_i32, i32>)
+                concepts::vector<vec_2_i32, i32, 2>&&
+                concepts::size_2d<size_2_i32, i32>)
     /*!
      * \brief Wraps around glInvalidateSubFramebuffer. Introduced in GL core 4.3
      * \param target GLenum
@@ -409,8 +409,8 @@ requires(MinimumVersion<Current, Version<4, 3>>)
 
 template<class size_3_i32, class vec_3_i32>
 requires(MinimumVersion<Current, Version<4, 3>>&&
-                 semantic::concepts::Vector<vec_3_i32, i32, 3>&&
-                 semantic::concepts::Size2D<size_3_i32, i32>)
+                 concepts::vector<vec_3_i32, i32, 3>&&
+                 concepts::size_2d<size_3_i32, i32>)
     /*!
      * \brief Wraps around glInvalidateTexSubImage. Introduced in GL core 4.3
      * \param texture GLuint
@@ -462,7 +462,10 @@ requires(MinimumVersion<Current, Version<4, 3>>)
      * \return void
      */
     STATICINLINE void multi_draw_arrays_indirect(
-        group::primitive_type mode, ptroff indirect, i32 drawcount, i32 stride)
+        group::primitive_type mode,
+        intptr_t              indirect,
+        i32                   drawcount,
+        i32                   stride)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -487,7 +490,7 @@ requires(MinimumVersion<Current, Version<4, 3>>)
     STATICINLINE void multi_draw_elements_indirect(
         group::primitive_type     mode,
         group::draw_elements_type type,
-        ptroff                    indirect,
+        intptr_t                  indirect,
         i32                       drawcount,
         i32                       stride)
 {
@@ -506,8 +509,8 @@ requires(MinimumVersion<Current, Version<4, 3>>)
 }
 
 template<class span_i32>
-requires(MinimumVersion<Current, Version<4, 3>>&&
-             semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(MinimumVersion<Current, Version<4, 3>>&& concepts::span<span_i32>&&
+                                                  std::is_same_v<
                  std::decay_t<typename span_i32::value_type>,
                  std::decay_t<i32>>)
     /*!
@@ -629,8 +632,8 @@ requires(MinimumVersion<Current, Version<4, 3>>)
 }
 
 template<class span_GLchar>
-requires(MinimumVersion<Current, Version<4, 3>>&&
-             semantic::concepts::Span<span_GLchar>&& std::is_same_v<
+requires(MinimumVersion<Current, Version<4, 3>>&& concepts::span<span_GLchar>&&
+                                                  std::is_same_v<
                  std::decay_t<typename span_GLchar::value_type>,
                  std::decay_t<GLchar>>)
     /*!
@@ -671,14 +674,15 @@ requires(MinimumVersion<Current, Version<4, 3>>&&
 }
 
 template<class span_const_program_resource_property, class span_i32>
-requires(MinimumVersion<Current, Version<4, 3>>&&         semantic::concepts::
-             Span<span_const_program_resource_property>&& std::is_same_v<
-                 std::decay_t<
-                     typename span_const_program_resource_property::value_type>,
-                 std::decay_t<group::program_resource_property>>&&
-                 semantic::concepts::Span<span_i32>&& std::is_same_v<
-                     std::decay_t<typename span_i32::value_type>,
-                     std::decay_t<i32>>)
+requires(
+    MinimumVersion<Current, Version<4, 3>>&&
+        concepts::span<span_const_program_resource_property>&& std::is_same_v<
+            std::decay_t<
+                typename span_const_program_resource_property::value_type>,
+            std::decay_t<group::program_resource_property>>&&
+            concepts::span<span_i32>&& std::is_same_v<
+                std::decay_t<typename span_i32::value_type>,
+                std::decay_t<i32>>)
     /*!
      * \brief Wraps around glGetProgramResourceiv. Introduced in GL core 4.3
      * \param program GLuint
@@ -784,8 +788,8 @@ requires(MinimumVersion<Current, Version<4, 3>>)
 }
 
 template<class size_2_i32>
-requires(MinimumVersion<Current, Version<4, 3>>&&
-             semantic::concepts::Size2D<size_2_i32, i32>)
+requires(
+    MinimumVersion<Current, Version<4, 3>>&& concepts::size_2d<size_2_i32, i32>)
     /*!
      * \brief Wraps around glTexStorage2DMultisample. Introduced in GL core 4.3
      * \param target GLenum
@@ -819,8 +823,8 @@ requires(MinimumVersion<Current, Version<4, 3>>&&
 }
 
 template<class size_3_i32>
-requires(MinimumVersion<Current, Version<4, 3>>&&
-             semantic::concepts::Size2D<size_3_i32, i32>)
+requires(
+    MinimumVersion<Current, Version<4, 3>>&& concepts::size_2d<size_3_i32, i32>)
     /*!
      * \brief Wraps around glTexStorage3DMultisample. Introduced in GL core 4.3
      * \param target GLenum
@@ -1051,8 +1055,8 @@ requires(MinimumVersion<Current, Version<4, 3>>)
 }
 
 template<class span_const_void>
-requires(MinimumVersion<Current, Version<4, 3>>&&
-             semantic::concepts::Span<span_const_void>)
+requires(
+    MinimumVersion<Current, Version<4, 3>>&& concepts::span<span_const_void>)
     /*!
      * \brief Wraps around glDebugMessageCallback. Introduced in GL core 4.3
      * \param callback GLDEBUGPROC
@@ -1076,7 +1080,7 @@ requires(MinimumVersion<Current, Version<4, 3>>&&
 
 template<class span_const_u32>
 requires(MinimumVersion<Current, Version<4, 3>>&&
-             semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+             concepts::span<span_const_u32>&& std::is_same_v<
                  std::decay_t<typename span_const_u32::value_type>,
                  std::decay_t<u32>>)
     /*!
@@ -1154,23 +1158,23 @@ template<
     class span_i32,
     class span_u32>
 requires(
-    MinimumVersion<Current, Version<4, 3>>&&
-        semantic::concepts::Span<span_debug_source>&& std::is_same_v<
+    MinimumVersion<Current, Version<4, 3>>&& concepts::span<span_debug_source>&&
+                                             std::is_same_v<
             std::decay_t<typename span_debug_source::value_type>,
             std::decay_t<group::debug_source>>&&
-            semantic::concepts::Span<span_debug_type>&& std::is_same_v<
+            concepts::span<span_debug_type>&&      std::is_same_v<
                 std::decay_t<typename span_debug_type::value_type>,
-                std::decay_t<group::debug_type>>&&
-                semantic::concepts::Span<span_u32>&& std::is_same_v<
+                std::decay_t<group::debug_type>>&& concepts::span<span_u32>&&
+                                                   std::is_same_v<
                     std::decay_t<typename span_u32::value_type>,
-                    std::decay_t<u32>>&& semantic::concepts::
-                    Span<span_debug_severity>&&      std::is_same_v<
+                    std::decay_t<u32>>&& concepts::span<span_debug_severity>&&
+                                         std::is_same_v<
                         std::decay_t<typename span_debug_severity::value_type>,
                         std::decay_t<group::debug_severity>>&&
-                        semantic::concepts::Span<span_i32>&& std::is_same_v<
+                        concepts::span<span_i32>&& std::is_same_v<
                             std::decay_t<typename span_i32::value_type>,
-                            std::decay_t<i32>>&& semantic::concepts::
-                            Span<span_GLchar>&&  std::is_same_v<
+                            std::decay_t<i32>>&& concepts::span<span_GLchar>&&
+                                                   std::is_same_v<
                                 std::decay_t<typename span_GLchar::value_type>,
                                 std::decay_t<GLchar>>)
     /*!
@@ -1213,8 +1217,8 @@ requires(
 }
 
 template<class span_GLchar>
-requires(MinimumVersion<Current, Version<4, 3>>&&
-             semantic::concepts::Span<span_GLchar>&& std::is_same_v<
+requires(MinimumVersion<Current, Version<4, 3>>&& concepts::span<span_GLchar>&&
+                                                  std::is_same_v<
                  std::decay_t<typename span_GLchar::value_type>,
                  std::decay_t<GLchar>>)
     /*!
@@ -1247,11 +1251,11 @@ requires(MinimumVersion<Current, Version<4, 3>>&&
 }
 
 template<class span_GLchar, class span_const_void>
-requires(MinimumVersion<Current, Version<4, 3>>&&
-                 semantic::concepts::Span<span_const_void>&&
-                 semantic::concepts::Span<span_GLchar>&& std::is_same_v<
-                     std::decay_t<typename span_GLchar::value_type>,
-                     std::decay_t<GLchar>>)
+requires(
+    MinimumVersion<Current, Version<4, 3>>&& concepts::span<span_const_void>&&
+        concepts::span<span_GLchar>&& std::is_same_v<
+            std::decay_t<typename span_GLchar::value_type>,
+            std::decay_t<GLchar>>)
     /*!
      * \brief Wraps around glGetObjectPtrLabel. Introduced in GL core 4.3
      * \param ptr const void *
@@ -1302,8 +1306,8 @@ requires(MinimumVersion<Current, Version<4, 3>>)
 }
 
 template<class span_const_void>
-requires(MinimumVersion<Current, Version<4, 3>>&&
-             semantic::concepts::Span<span_const_void>)
+requires(
+    MinimumVersion<Current, Version<4, 3>>&& concepts::span<span_const_void>)
     /*!
      * \brief Wraps around glObjectPtrLabel. Introduced in GL core 4.3
      * \param ptr const void *

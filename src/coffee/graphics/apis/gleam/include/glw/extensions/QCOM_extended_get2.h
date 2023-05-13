@@ -5,10 +5,10 @@ namespace gl::qcom::extended_get2 {
 namespace values {
 } // namespace values
 template<class span_GLchar, class span_i32>
-requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
+requires(concepts::span<span_GLchar>&& std::is_same_v<
          std::decay_t<typename span_GLchar::value_type>,
-         std::decay_t<GLchar>>&& semantic::concepts::Span<span_i32>&&
-                                 std::is_same_v<
+         std::decay_t<GLchar>>&& concepts::span<span_i32>&&
+                                       std::is_same_v<
                  std::decay_t<typename span_i32::value_type>,
                  std::decay_t<i32>>)
     /*!
@@ -44,7 +44,7 @@ requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(concepts::span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -70,7 +70,7 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(concepts::span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
          std::decay_t<u32>>)
     /*!

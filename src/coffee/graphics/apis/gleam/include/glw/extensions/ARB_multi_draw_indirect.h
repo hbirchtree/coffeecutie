@@ -13,7 +13,7 @@ namespace values {
  * \return void
  */
 STATICINLINE void multi_draw_arrays_indirect(
-    group::primitive_type mode, ptroff indirect, i32 drawcount, i32 stride)
+    group::primitive_type mode, intptr_t indirect, i32 drawcount, i32 stride)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -40,7 +40,7 @@ STATICINLINE void multi_draw_arrays_indirect(
 STATICINLINE void multi_draw_elements_indirect(
     group::primitive_type     mode,
     group::draw_elements_type type,
-    ptroff                    indirect,
+    intptr_t                  indirect,
     i32                       drawcount,
     i32                       stride)
 {

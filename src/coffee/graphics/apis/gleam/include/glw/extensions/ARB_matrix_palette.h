@@ -3,16 +3,16 @@
 #ifdef GL_ARB_matrix_palette
 namespace gl::arb::matrix_palette {
 namespace values {
-constexpr libc_types::u32 matrix_palette                 = 0x8840;
-constexpr libc_types::u32 max_matrix_palette_stack_depth = 0x8841;
-constexpr libc_types::u32 max_palette_matrices           = 0x8842;
-constexpr libc_types::u32 current_palette_matrix         = 0x8843;
-constexpr libc_types::u32 matrix_index_array             = 0x8844;
-constexpr libc_types::u32 current_matrix_index           = 0x8845;
-constexpr libc_types::u32 matrix_index_array_size        = 0x8846;
-constexpr libc_types::u32 matrix_index_array_type        = 0x8847;
-constexpr libc_types::u32 matrix_index_array_stride      = 0x8848;
-constexpr libc_types::u32 matrix_index_array_pointer     = 0x8849;
+constexpr u32 matrix_palette                 = 0x8840;
+constexpr u32 max_matrix_palette_stack_depth = 0x8841;
+constexpr u32 max_palette_matrices           = 0x8842;
+constexpr u32 current_palette_matrix         = 0x8843;
+constexpr u32 matrix_index_array             = 0x8844;
+constexpr u32 current_matrix_index           = 0x8845;
+constexpr u32 matrix_index_array_size        = 0x8846;
+constexpr u32 matrix_index_array_type        = 0x8847;
+constexpr u32 matrix_index_array_stride      = 0x8848;
+constexpr u32 matrix_index_array_pointer     = 0x8849;
 } // namespace values
 /*!
  * \brief Part of GL_ARB_matrix_palette
@@ -31,7 +31,7 @@ STATICINLINE void current_palette_matrix(i32 index)
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_ARB_matrix_palette
      * \param size GLint
@@ -61,7 +61,7 @@ requires(semantic::concepts::Span<span_const_void>)
 }
 
 template<class span_const_u8>
-requires(semantic::concepts::Span<span_const_u8>&& std::is_same_v<
+requires(concepts::span<span_const_u8>&& std::is_same_v<
          std::decay_t<typename span_const_u8::value_type>,
          std::decay_t<u8>>)
     /*!
@@ -85,7 +85,7 @@ requires(semantic::concepts::Span<span_const_u8>&& std::is_same_v<
 }
 
 template<class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+requires(concepts::span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -109,7 +109,7 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
 }
 
 template<class span_const_u16>
-requires(semantic::concepts::Span<span_const_u16>&& std::is_same_v<
+requires(concepts::span<span_const_u16>&& std::is_same_v<
          std::decay_t<typename span_const_u16::value_type>,
          std::decay_t<u16>>)
     /*!

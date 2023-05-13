@@ -7,18 +7,18 @@ namespace gl::arb::shader_objects {
 using gl::group::attribute_type;
 using gl::group::container_type;
 namespace values {
-constexpr libc_types::u32 shader_object                    = 0x8B48;
-constexpr libc_types::u32 object_type                      = 0x8B4E;
-constexpr libc_types::u32 object_subtype                   = 0x8B4F;
-constexpr libc_types::u32 object_delete_status             = 0x8B80;
-constexpr libc_types::u32 object_compile_status            = 0x8B81;
-constexpr libc_types::u32 object_link_status               = 0x8B82;
-constexpr libc_types::u32 object_validate_status           = 0x8B83;
-constexpr libc_types::u32 object_info_log_length           = 0x8B84;
-constexpr libc_types::u32 object_attached_objects          = 0x8B85;
-constexpr libc_types::u32 object_active_uniforms           = 0x8B86;
-constexpr libc_types::u32 object_active_uniform_max_length = 0x8B87;
-constexpr libc_types::u32 object_shader_source_length      = 0x8B88;
+constexpr u32 shader_object                    = 0x8B48;
+constexpr u32 object_type                      = 0x8B4E;
+constexpr u32 object_subtype                   = 0x8B4F;
+constexpr u32 object_delete_status             = 0x8B80;
+constexpr u32 object_compile_status            = 0x8B81;
+constexpr u32 object_link_status               = 0x8B82;
+constexpr u32 object_validate_status           = 0x8B83;
+constexpr u32 object_info_log_length           = 0x8B84;
+constexpr u32 object_attached_objects          = 0x8B85;
+constexpr u32 object_active_uniforms           = 0x8B86;
+constexpr u32 object_active_uniform_max_length = 0x8B87;
+constexpr u32 object_shader_source_length      = 0x8B88;
 } // namespace values
 /*!
  * \brief Part of GL_ARB_shader_objects
@@ -122,7 +122,7 @@ STATICINLINE void detach_object(
 }
 
 template<class span_GLcharARB>
-requires(semantic::concepts::Span<span_GLcharARB>&& std::is_same_v<
+requires(concepts::span<span_GLcharARB>&& std::is_same_v<
          std::decay_t<typename span_GLcharARB::value_type>,
          std::decay_t<GLcharARB>>)
     /*!
@@ -161,7 +161,7 @@ requires(semantic::concepts::Span<span_GLcharARB>&& std::is_same_v<
 }
 
 template<class span_GLhandleARB>
-requires(semantic::concepts::Span<span_GLhandleARB>&& std::is_same_v<
+requires(concepts::span<span_GLhandleARB>&& std::is_same_v<
          std::decay_t<typename span_GLhandleARB::value_type>,
          std::decay_t<GLhandleARB>>)
     /*!
@@ -206,7 +206,7 @@ STATICINLINE GLhandleARB get_handle(group::container_type pname)
 }
 
 template<class span_GLcharARB>
-requires(semantic::concepts::Span<span_GLcharARB>&& std::is_same_v<
+requires(concepts::span<span_GLcharARB>&& std::is_same_v<
          std::decay_t<typename span_GLcharARB::value_type>,
          std::decay_t<GLcharARB>>)
     /*!
@@ -235,7 +235,7 @@ requires(semantic::concepts::Span<span_GLcharARB>&& std::is_same_v<
 }
 
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+requires(concepts::span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -261,7 +261,7 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -287,7 +287,7 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_GLcharARB>
-requires(semantic::concepts::Span<span_GLcharARB>&& std::is_same_v<
+requires(concepts::span<span_GLcharARB>&& std::is_same_v<
          std::decay_t<typename span_GLcharARB::value_type>,
          std::decay_t<GLcharARB>>)
     /*!
@@ -315,7 +315,7 @@ requires(semantic::concepts::Span<span_GLcharARB>&& std::is_same_v<
 }
 
 template<class span_const_GLcharARB>
-requires(semantic::concepts::Span<span_const_GLcharARB>&& std::is_same_v<
+requires(concepts::span<span_const_GLcharARB>&& std::is_same_v<
          std::decay_t<typename span_const_GLcharARB::value_type>,
          std::decay_t<GLcharARB>>)
     /*!
@@ -341,7 +341,7 @@ requires(semantic::concepts::Span<span_const_GLcharARB>&& std::is_same_v<
 }
 
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+requires(concepts::span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -367,7 +367,7 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -409,10 +409,10 @@ STATICINLINE void link_program(GLhandleARB programObj)
 }
 
 template<class span_const_GLcharARB, class span_const_i32>
-requires(semantic::concepts::Span<span_const_GLcharARB>&& std::is_same_v<
+requires(concepts::span<span_const_GLcharARB>&& std::is_same_v<
          std::decay_t<typename span_const_GLcharARB::value_type>,
-         std::decay_t<GLcharARB>>&& semantic::concepts::Span<span_const_i32>&&
-                                    std::is_same_v<
+         std::decay_t<GLcharARB>>&& concepts::span<span_const_i32>&&
+                                                std::is_same_v<
                  std::decay_t<typename span_const_i32::value_type>,
                  std::decay_t<i32>>)
     /*!
@@ -461,7 +461,7 @@ STATICINLINE void uniform(i32 location, f32 v0)
 }
 
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+requires(concepts::span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -501,7 +501,7 @@ STATICINLINE void uniform(i32 location, i32 v0)
 }
 
 template<class span_const_i32>
-requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
+requires(concepts::span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -524,7 +524,7 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
 }
 
 template<class vec_2_f32>
-requires(semantic::concepts::Vector<vec_2_f32, f32, 2>)
+requires(concepts::vector<vec_2_f32, f32, 2>)
     /*!
      * \brief Part of GL_ARB_shader_objects
      * \param location GLint
@@ -544,8 +544,9 @@ requires(semantic::concepts::Vector<vec_2_f32, f32, 2>)
 }
 
 template<class span_const_vec_2_f32>
-requires(semantic::concepts::Span<span_const_vec_2_f32>&& semantic::concepts::
-             Vector<typename span_const_vec_2_f32::value_type, f32, 2>)
+requires(
+    concepts::span<span_const_vec_2_f32>&&
+        concepts::vector<typename span_const_vec_2_f32::value_type, f32, 2>)
     /*!
      * \brief Part of GL_ARB_shader_objects
      * \param location GLint
@@ -566,7 +567,7 @@ requires(semantic::concepts::Span<span_const_vec_2_f32>&& semantic::concepts::
 }
 
 template<class vec_2_i32>
-requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
+requires(concepts::vector<vec_2_i32, i32, 2>)
     /*!
      * \brief Part of GL_ARB_shader_objects
      * \param location GLint
@@ -586,8 +587,9 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
 }
 
 template<class span_const_vec_2_i32>
-requires(semantic::concepts::Span<span_const_vec_2_i32>&& semantic::concepts::
-             Vector<typename span_const_vec_2_i32::value_type, i32, 2>)
+requires(
+    concepts::span<span_const_vec_2_i32>&&
+        concepts::vector<typename span_const_vec_2_i32::value_type, i32, 2>)
     /*!
      * \brief Part of GL_ARB_shader_objects
      * \param location GLint
@@ -608,7 +610,7 @@ requires(semantic::concepts::Span<span_const_vec_2_i32>&& semantic::concepts::
 }
 
 template<class vec_3_f32>
-requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
+requires(concepts::vector<vec_3_f32, f32, 3>)
     /*!
      * \brief Part of GL_ARB_shader_objects
      * \param location GLint
@@ -629,8 +631,9 @@ requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
 }
 
 template<class span_const_vec_3_f32>
-requires(semantic::concepts::Span<span_const_vec_3_f32>&& semantic::concepts::
-             Vector<typename span_const_vec_3_f32::value_type, f32, 3>)
+requires(
+    concepts::span<span_const_vec_3_f32>&&
+        concepts::vector<typename span_const_vec_3_f32::value_type, f32, 3>)
     /*!
      * \brief Part of GL_ARB_shader_objects
      * \param location GLint
@@ -651,7 +654,7 @@ requires(semantic::concepts::Span<span_const_vec_3_f32>&& semantic::concepts::
 }
 
 template<class vec_3_i32>
-requires(semantic::concepts::Vector<vec_3_i32, i32, 3>)
+requires(concepts::vector<vec_3_i32, i32, 3>)
     /*!
      * \brief Part of GL_ARB_shader_objects
      * \param location GLint
@@ -672,8 +675,9 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>)
 }
 
 template<class span_const_vec_3_i32>
-requires(semantic::concepts::Span<span_const_vec_3_i32>&& semantic::concepts::
-             Vector<typename span_const_vec_3_i32::value_type, i32, 3>)
+requires(
+    concepts::span<span_const_vec_3_i32>&&
+        concepts::vector<typename span_const_vec_3_i32::value_type, i32, 3>)
     /*!
      * \brief Part of GL_ARB_shader_objects
      * \param location GLint
@@ -694,7 +698,7 @@ requires(semantic::concepts::Span<span_const_vec_3_i32>&& semantic::concepts::
 }
 
 template<class vec_4_f32>
-requires(semantic::concepts::Vector<vec_4_f32, f32, 4>)
+requires(concepts::vector<vec_4_f32, f32, 4>)
     /*!
      * \brief Part of GL_ARB_shader_objects
      * \param location GLint
@@ -716,8 +720,9 @@ requires(semantic::concepts::Vector<vec_4_f32, f32, 4>)
 }
 
 template<class span_const_vec_4_f32>
-requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
-             Vector<typename span_const_vec_4_f32::value_type, f32, 4>)
+requires(
+    concepts::span<span_const_vec_4_f32>&&
+        concepts::vector<typename span_const_vec_4_f32::value_type, f32, 4>)
     /*!
      * \brief Part of GL_ARB_shader_objects
      * \param location GLint
@@ -738,7 +743,7 @@ requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
 }
 
 template<class vec_4_i32>
-requires(semantic::concepts::Vector<vec_4_i32, i32, 4>)
+requires(concepts::vector<vec_4_i32, i32, 4>)
     /*!
      * \brief Part of GL_ARB_shader_objects
      * \param location GLint
@@ -760,8 +765,9 @@ requires(semantic::concepts::Vector<vec_4_i32, i32, 4>)
 }
 
 template<class span_const_vec_4_i32>
-requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
-             Vector<typename span_const_vec_4_i32::value_type, i32, 4>)
+requires(
+    concepts::span<span_const_vec_4_i32>&&
+        concepts::vector<typename span_const_vec_4_i32::value_type, i32, 4>)
     /*!
      * \brief Part of GL_ARB_shader_objects
      * \param location GLint
@@ -782,8 +788,8 @@ requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
 }
 
 template<class span_const_mat_2x2_f32>
-requires(semantic::concepts::Span<span_const_mat_2x2_f32>&& semantic::concepts::
-             Matrix<typename span_const_mat_2x2_f32::value_type, f32, 2, 2>)
+requires(concepts::span<span_const_mat_2x2_f32>&& concepts::
+             matrix<typename span_const_mat_2x2_f32::value_type, f32, 2, 2>)
     /*!
      * \brief Part of GL_ARB_shader_objects
      * \param location GLint
@@ -809,8 +815,8 @@ requires(semantic::concepts::Span<span_const_mat_2x2_f32>&& semantic::concepts::
 }
 
 template<class span_const_mat_3x3_f32>
-requires(semantic::concepts::Span<span_const_mat_3x3_f32>&& semantic::concepts::
-             Matrix<typename span_const_mat_3x3_f32::value_type, f32, 3, 3>)
+requires(concepts::span<span_const_mat_3x3_f32>&& concepts::
+             matrix<typename span_const_mat_3x3_f32::value_type, f32, 3, 3>)
     /*!
      * \brief Part of GL_ARB_shader_objects
      * \param location GLint
@@ -836,8 +842,8 @@ requires(semantic::concepts::Span<span_const_mat_3x3_f32>&& semantic::concepts::
 }
 
 template<class span_const_mat_4x4_f32>
-requires(semantic::concepts::Span<span_const_mat_4x4_f32>&& semantic::concepts::
-             Matrix<typename span_const_mat_4x4_f32::value_type, f32, 4, 4>)
+requires(concepts::span<span_const_mat_4x4_f32>&& concepts::
+             matrix<typename span_const_mat_4x4_f32::value_type, f32, 4, 4>)
     /*!
      * \brief Part of GL_ARB_shader_objects
      * \param location GLint

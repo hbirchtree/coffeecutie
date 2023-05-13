@@ -17,20 +17,20 @@ using gl::group::get_prop;
 using gl::group::program_property_arb;
 using gl::group::uniform_prop;
 namespace values {
-constexpr libc_types::u32 atomic_counter_buffer_start                = 0x92C2;
-constexpr libc_types::u32 atomic_counter_buffer_size                 = 0x92C3;
-constexpr libc_types::u32 max_vertex_atomic_counter_buffers          = 0x92CC;
-constexpr libc_types::u32 max_tess_control_atomic_counter_buffers    = 0x92CD;
-constexpr libc_types::u32 max_tess_evaluation_atomic_counter_buffers = 0x92CE;
-constexpr libc_types::u32 max_geometry_atomic_counter_buffers        = 0x92CF;
-constexpr libc_types::u32 max_fragment_atomic_counter_buffers        = 0x92D0;
-constexpr libc_types::u32 max_combined_atomic_counter_buffers        = 0x92D1;
-constexpr libc_types::u32 max_atomic_counter_buffer_size             = 0x92D8;
-constexpr libc_types::u32 unsigned_int_atomic_counter                = 0x92DB;
-constexpr libc_types::u32 max_atomic_counter_buffer_bindings         = 0x92DC;
+constexpr u32 atomic_counter_buffer_start                = 0x92C2;
+constexpr u32 atomic_counter_buffer_size                 = 0x92C3;
+constexpr u32 max_vertex_atomic_counter_buffers          = 0x92CC;
+constexpr u32 max_tess_control_atomic_counter_buffers    = 0x92CD;
+constexpr u32 max_tess_evaluation_atomic_counter_buffers = 0x92CE;
+constexpr u32 max_geometry_atomic_counter_buffers        = 0x92CF;
+constexpr u32 max_fragment_atomic_counter_buffers        = 0x92D0;
+constexpr u32 max_combined_atomic_counter_buffers        = 0x92D1;
+constexpr u32 max_atomic_counter_buffer_size             = 0x92D8;
+constexpr u32 unsigned_int_atomic_counter                = 0x92DB;
+constexpr u32 max_atomic_counter_buffer_bindings         = 0x92DC;
 } // namespace values
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!

@@ -62,6 +62,6 @@ enum class use_program_stage_mask : u32
     vertex_shader_bit_ext = GL_VERTEX_SHADER_BIT_EXT,
 #endif
 }; // enum class use_program_stage_mask
-C_FLAGS(use_program_stage_mask, ::libc_types::u32);
+C_FLAGS(use_program_stage_mask, u32);
 
 } // namespace gl::group

@@ -3,15 +3,15 @@
 #ifdef GL_NV_query_resource
 namespace gl::nv::query_resource {
 namespace values {
-constexpr libc_types::u32 query_resource_type_vidmem_alloc = 0x9540;
-constexpr libc_types::u32 query_resource_memtype_vidmem    = 0x9542;
-constexpr libc_types::u32 query_resource_sys_reserved      = 0x9544;
-constexpr libc_types::u32 query_resource_texture           = 0x9545;
-constexpr libc_types::u32 query_resource_renderbuffer      = 0x9546;
-constexpr libc_types::u32 query_resource_bufferobject      = 0x9547;
+constexpr u32 query_resource_type_vidmem_alloc = 0x9540;
+constexpr u32 query_resource_memtype_vidmem    = 0x9542;
+constexpr u32 query_resource_sys_reserved      = 0x9544;
+constexpr u32 query_resource_texture           = 0x9545;
+constexpr u32 query_resource_renderbuffer      = 0x9546;
+constexpr u32 query_resource_bufferobject      = 0x9547;
 } // namespace values
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!

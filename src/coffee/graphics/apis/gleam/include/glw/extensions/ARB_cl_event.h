@@ -3,14 +3,14 @@
 #ifdef GL_ARB_cl_event
 namespace gl::arb::cl_event {
 namespace values {
-constexpr libc_types::u32 sync_cl_event          = 0x8240;
-constexpr libc_types::u32 sync_cl_event_complete = 0x8241;
+constexpr u32 sync_cl_event          = 0x8240;
+constexpr u32 sync_cl_event_complete = 0x8241;
 } // namespace values
 template<class span__cl_context, class span__cl_event>
-requires(semantic::concepts::Span<span__cl_context>&& std::is_same_v<
+requires(concepts::span<span__cl_context>&& std::is_same_v<
          std::decay_t<typename span__cl_context::value_type>,
-         std::decay_t<_cl_context>>&& semantic::concepts::Span<span__cl_event>&&
-                                      std::is_same_v<
+         std::decay_t<_cl_context>>&& concepts::span<span__cl_event>&&
+                                            std::is_same_v<
                  std::decay_t<typename span__cl_event::value_type>,
                  std::decay_t<_cl_event>>)
     /*!

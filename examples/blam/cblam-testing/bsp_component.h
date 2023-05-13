@@ -12,7 +12,7 @@ struct BlamBspWidget;
 
 template<typename V>
 using BlamBspWidgetManifest = Components::SubsystemManifest<
-    type_list_t<BspReference, ShaderData, SubModel>,
+    type_list_t<BspReference, ShaderData, SubModel, TriggerVolume, DebugDraw>,
     type_list_t<
         ShaderCache<V>,
         BSPCache<V>,
@@ -41,6 +41,7 @@ struct BlamBspWidget
 
         auto  bsps         = e.template select<BspReference>();
         auto  models       = e.template select<SubModel>();
+        auto  triggers     = e.template select<TriggerVolume>();
         auto& shader_cache = e.template subsystem<ShaderCache<V>>();
         auto& bsp_cache    = e.template subsystem<BSPCache<V>>();
 
@@ -85,7 +86,7 @@ struct BlamBspWidget
         }
         ImGui::End();
 
-        if(ImGui::Begin("Sectors"))
+        if(ImGui::Begin("BSP debugging"))
         {
             RenderingParameters* rendering;
             e.subsystem(rendering);
@@ -95,13 +96,34 @@ struct BlamBspWidget
             ImGui::Checkbox("Show portals", &rendering->debug_portals);
             ImGui::Checkbox("Show trigger volumes", &rendering->debug_triggers);
 
-            std::string name;
-            for(auto& region : m_bsps)
+            if(ImGui::BeginTabBar(""))
             {
-                name.clear();
-                name.insert(
-                    name.begin(), region.first.begin(), region.first.end());
-                ImGui::Checkbox(name.c_str(), &region.second);
+                if(ImGui::BeginTabItem("BSP"))
+                {
+                    for(auto& region : m_bsps)
+                    {
+                        std::string name(
+                            region.first.begin(), region.first.end());
+                        ImGui::Checkbox(name.c_str(), &region.second);
+                    }
+                    ImGui::EndTabItem();
+                }
+                if(ImGui::BeginTabItem("Trigger volumes"))
+                {
+                    for(Entity& trigger : triggers)
+                    {
+                        auto t = e.template ref<Proxy>(trigger);
+
+                        DebugDraw&     draw = t.template get<DebugDraw>();
+                        TriggerVolume& trig = t.template get<TriggerVolume>();
+
+                        ImGui::Checkbox(
+                            trig.trigger_volume->name.str().data(),
+                            &draw.selected);
+                    }
+                    ImGui::EndTabItem();
+                }
+                ImGui::EndTabBar();
             }
         }
         ImGui::End();

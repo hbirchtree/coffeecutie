@@ -6,7 +6,7 @@ coffee_library(
     )
 target_include_directories ( GraphicsDefines PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../../binding/glad_core/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../../binding/include>
     )
 target_compile_definitions ( GraphicsDefines PUBLIC
     -DGLEAM_USE_CORE

@@ -3,27 +3,27 @@
 #ifdef GL_NV_shading_rate_image
 namespace gl::nv::shading_rate_image {
 namespace values {
-constexpr libc_types::u32 shading_rate_image_binding               = 0x955B;
-constexpr libc_types::u32 shading_rate_image_texel_width           = 0x955C;
-constexpr libc_types::u32 shading_rate_image_texel_height          = 0x955D;
-constexpr libc_types::u32 shading_rate_image_palette_size          = 0x955E;
-constexpr libc_types::u32 max_coarse_fragment_samples              = 0x955F;
-constexpr libc_types::u32 shading_rate_image                       = 0x9563;
-constexpr libc_types::u32 shading_rate_no_invocations              = 0x9564;
-constexpr libc_types::u32 shading_rate_1_invocation_per_pixel      = 0x9565;
-constexpr libc_types::u32 shading_rate_1_invocation_per_1x2_pixels = 0x9566;
-constexpr libc_types::u32 shading_rate_1_invocation_per_2x1_pixels = 0x9567;
-constexpr libc_types::u32 shading_rate_1_invocation_per_2x2_pixels = 0x9568;
-constexpr libc_types::u32 shading_rate_1_invocation_per_2x4_pixels = 0x9569;
-constexpr libc_types::u32 shading_rate_1_invocation_per_4x2_pixels = 0x956A;
-constexpr libc_types::u32 shading_rate_1_invocation_per_4x4_pixels = 0x956B;
-constexpr libc_types::u32 shading_rate_2_invocations_per_pixel     = 0x956C;
-constexpr libc_types::u32 shading_rate_4_invocations_per_pixel     = 0x956D;
-constexpr libc_types::u32 shading_rate_8_invocations_per_pixel     = 0x956E;
-constexpr libc_types::u32 shading_rate_16_invocations_per_pixel    = 0x956F;
-constexpr libc_types::u32 shading_rate_sample_order_default        = 0x95AE;
-constexpr libc_types::u32 shading_rate_sample_order_pixel_major    = 0x95AF;
-constexpr libc_types::u32 shading_rate_sample_order_sample_major   = 0x95B0;
+constexpr u32 shading_rate_image_binding               = 0x955B;
+constexpr u32 shading_rate_image_texel_width           = 0x955C;
+constexpr u32 shading_rate_image_texel_height          = 0x955D;
+constexpr u32 shading_rate_image_palette_size          = 0x955E;
+constexpr u32 max_coarse_fragment_samples              = 0x955F;
+constexpr u32 shading_rate_image                       = 0x9563;
+constexpr u32 shading_rate_no_invocations              = 0x9564;
+constexpr u32 shading_rate_1_invocation_per_pixel      = 0x9565;
+constexpr u32 shading_rate_1_invocation_per_1x2_pixels = 0x9566;
+constexpr u32 shading_rate_1_invocation_per_2x1_pixels = 0x9567;
+constexpr u32 shading_rate_1_invocation_per_2x2_pixels = 0x9568;
+constexpr u32 shading_rate_1_invocation_per_2x4_pixels = 0x9569;
+constexpr u32 shading_rate_1_invocation_per_4x2_pixels = 0x956A;
+constexpr u32 shading_rate_1_invocation_per_4x4_pixels = 0x956B;
+constexpr u32 shading_rate_2_invocations_per_pixel     = 0x956C;
+constexpr u32 shading_rate_4_invocations_per_pixel     = 0x956D;
+constexpr u32 shading_rate_8_invocations_per_pixel     = 0x956E;
+constexpr u32 shading_rate_16_invocations_per_pixel    = 0x956F;
+constexpr u32 shading_rate_sample_order_default        = 0x95AE;
+constexpr u32 shading_rate_sample_order_pixel_major    = 0x95AF;
+constexpr u32 shading_rate_sample_order_sample_major   = 0x95B0;
 } // namespace values
 /*!
  * \brief Part of GL_NV_shading_rate_image
@@ -66,7 +66,7 @@ STATICINLINE void get_shading_rate_image_palette(
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -110,7 +110,7 @@ STATICINLINE void shading_rate_image_barrier(bool synchronize)
 }
 
 template<class span_const_GLenum>
-requires(semantic::concepts::Span<span_const_GLenum>&& std::is_same_v<
+requires(concepts::span<span_const_GLenum>&& std::is_same_v<
          std::decay_t<typename span_const_GLenum::value_type>,
          std::decay_t<GLenum>>)
     /*!
@@ -154,7 +154,7 @@ STATICINLINE void shading_rate_sample_order(GLenum order)
 }
 
 template<class span_const_i32>
-requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
+requires(concepts::span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
          std::decay_t<i32>>)
     /*!

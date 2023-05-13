@@ -7,7 +7,7 @@ namespace gl::arb::provoking_vertex {
 using gl::group::get_prop;
 using gl::group::vertex_provoking_mode;
 namespace values {
-constexpr libc_types::u32 quads_follow_provoking_vertex_convention = 0x8E4C;
+constexpr u32 quads_follow_provoking_vertex_convention = 0x8E4C;
 } // namespace values
 /*!
  * \brief Part of GL_ARB_provoking_vertex

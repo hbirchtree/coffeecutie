@@ -5,8 +5,9 @@ namespace gl::ext::gpu_program_parameters {
 namespace values {
 } // namespace values
 template<class span_const_vec_4_f32>
-requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
-             Vector<typename span_const_vec_4_f32::value_type, f32, 4>)
+requires(
+    concepts::span<span_const_vec_4_f32>&&
+        concepts::vector<typename span_const_vec_4_f32::value_type, f32, 4>)
     /*!
      * \brief Part of GL_EXT_gpu_program_parameters
      * \param target GLenum
@@ -34,8 +35,9 @@ requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
 }
 
 template<class span_const_vec_4_f32>
-requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
-             Vector<typename span_const_vec_4_f32::value_type, f32, 4>)
+requires(
+    concepts::span<span_const_vec_4_f32>&&
+        concepts::vector<typename span_const_vec_4_f32::value_type, f32, 4>)
     /*!
      * \brief Part of GL_EXT_gpu_program_parameters
      * \param target GLenum

@@ -3,17 +3,17 @@
 #ifdef GL_NV_gpu_program4
 namespace gl::nv::gpu_program4 {
 namespace values {
-constexpr libc_types::u32 min_program_texel_offset      = 0x8904;
-constexpr libc_types::u32 max_program_texel_offset      = 0x8905;
-constexpr libc_types::u32 program_attrib_components     = 0x8906;
-constexpr libc_types::u32 program_result_components     = 0x8907;
-constexpr libc_types::u32 max_program_attrib_components = 0x8908;
-constexpr libc_types::u32 max_program_result_components = 0x8909;
-constexpr libc_types::u32 max_program_generic_attribs   = 0x8DA5;
-constexpr libc_types::u32 max_program_generic_results   = 0x8DA6;
+constexpr u32 min_program_texel_offset      = 0x8904;
+constexpr u32 max_program_texel_offset      = 0x8905;
+constexpr u32 program_attrib_components     = 0x8906;
+constexpr u32 program_result_components     = 0x8907;
+constexpr u32 max_program_attrib_components = 0x8908;
+constexpr u32 max_program_result_components = 0x8909;
+constexpr u32 max_program_generic_attribs   = 0x8DA5;
+constexpr u32 max_program_generic_results   = 0x8DA6;
 } // namespace values
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -39,7 +39,7 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(concepts::span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -65,7 +65,7 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -91,7 +91,7 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(concepts::span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -117,7 +117,7 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 }
 
 template<class vec_4_i32>
-requires(semantic::concepts::Vector<vec_4_i32, i32, 4>)
+requires(concepts::vector<vec_4_i32, i32, 4>)
     /*!
      * \brief Part of GL_NV_gpu_program4
      * \param target GLenum
@@ -142,8 +142,9 @@ requires(semantic::concepts::Vector<vec_4_i32, i32, 4>)
 }
 
 template<class span_const_vec_4_i32>
-requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
-             Vector<typename span_const_vec_4_i32::value_type, i32, 4>)
+requires(
+    concepts::span<span_const_vec_4_i32>&&
+        concepts::vector<typename span_const_vec_4_i32::value_type, i32, 4>)
     /*!
      * \brief Part of GL_NV_gpu_program4
      * \param target GLenum
@@ -169,7 +170,7 @@ requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
 }
 
 template<class vec_4_u32>
-requires(semantic::concepts::Vector<vec_4_u32, u32, 4>)
+requires(concepts::vector<vec_4_u32, u32, 4>)
     /*!
      * \brief Part of GL_NV_gpu_program4
      * \param target GLenum
@@ -194,8 +195,9 @@ requires(semantic::concepts::Vector<vec_4_u32, u32, 4>)
 }
 
 template<class span_const_vec_4_u32>
-requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
-             Vector<typename span_const_vec_4_u32::value_type, u32, 4>)
+requires(
+    concepts::span<span_const_vec_4_u32>&&
+        concepts::vector<typename span_const_vec_4_u32::value_type, u32, 4>)
     /*!
      * \brief Part of GL_NV_gpu_program4
      * \param target GLenum
@@ -221,8 +223,9 @@ requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
 }
 
 template<class span_const_vec_4_i32>
-requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
-             Vector<typename span_const_vec_4_i32::value_type, i32, 4>)
+requires(
+    concepts::span<span_const_vec_4_i32>&&
+        concepts::vector<typename span_const_vec_4_i32::value_type, i32, 4>)
     /*!
      * \brief Part of GL_NV_gpu_program4
      * \param target GLenum
@@ -250,8 +253,9 @@ requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
 }
 
 template<class span_const_vec_4_u32>
-requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
-             Vector<typename span_const_vec_4_u32::value_type, u32, 4>)
+requires(
+    concepts::span<span_const_vec_4_u32>&&
+        concepts::vector<typename span_const_vec_4_u32::value_type, u32, 4>)
     /*!
      * \brief Part of GL_NV_gpu_program4
      * \param target GLenum
@@ -279,7 +283,7 @@ requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
 }
 
 template<class vec_4_i32>
-requires(semantic::concepts::Vector<vec_4_i32, i32, 4>)
+requires(concepts::vector<vec_4_i32, i32, 4>)
     /*!
      * \brief Part of GL_NV_gpu_program4
      * \param target GLenum
@@ -304,8 +308,9 @@ requires(semantic::concepts::Vector<vec_4_i32, i32, 4>)
 }
 
 template<class span_const_vec_4_i32>
-requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
-             Vector<typename span_const_vec_4_i32::value_type, i32, 4>)
+requires(
+    concepts::span<span_const_vec_4_i32>&&
+        concepts::vector<typename span_const_vec_4_i32::value_type, i32, 4>)
     /*!
      * \brief Part of GL_NV_gpu_program4
      * \param target GLenum
@@ -331,7 +336,7 @@ requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
 }
 
 template<class vec_4_u32>
-requires(semantic::concepts::Vector<vec_4_u32, u32, 4>)
+requires(concepts::vector<vec_4_u32, u32, 4>)
     /*!
      * \brief Part of GL_NV_gpu_program4
      * \param target GLenum
@@ -356,8 +361,9 @@ requires(semantic::concepts::Vector<vec_4_u32, u32, 4>)
 }
 
 template<class span_const_vec_4_u32>
-requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
-             Vector<typename span_const_vec_4_u32::value_type, u32, 4>)
+requires(
+    concepts::span<span_const_vec_4_u32>&&
+        concepts::vector<typename span_const_vec_4_u32::value_type, u32, 4>)
     /*!
      * \brief Part of GL_NV_gpu_program4
      * \param target GLenum
@@ -383,8 +389,9 @@ requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
 }
 
 template<class span_const_vec_4_i32>
-requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
-             Vector<typename span_const_vec_4_i32::value_type, i32, 4>)
+requires(
+    concepts::span<span_const_vec_4_i32>&&
+        concepts::vector<typename span_const_vec_4_i32::value_type, i32, 4>)
     /*!
      * \brief Part of GL_NV_gpu_program4
      * \param target GLenum
@@ -412,8 +419,9 @@ requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
 }
 
 template<class span_const_vec_4_u32>
-requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
-             Vector<typename span_const_vec_4_u32::value_type, u32, 4>)
+requires(
+    concepts::span<span_const_vec_4_u32>&&
+        concepts::vector<typename span_const_vec_4_u32::value_type, u32, 4>)
     /*!
      * \brief Part of GL_NV_gpu_program4
      * \param target GLenum

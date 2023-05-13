@@ -3,11 +3,11 @@
 #ifdef GL_NV_vertex_array_range
 namespace gl::nv::vertex_array_range {
 namespace values {
-constexpr libc_types::u32 vertex_array_range             = 0x851D;
-constexpr libc_types::u32 vertex_array_range_length      = 0x851E;
-constexpr libc_types::u32 vertex_array_range_valid       = 0x851F;
-constexpr libc_types::u32 max_vertex_array_range_element = 0x8520;
-constexpr libc_types::u32 vertex_array_range_pointer     = 0x8521;
+constexpr u32 vertex_array_range             = 0x851D;
+constexpr u32 vertex_array_range_length      = 0x851E;
+constexpr u32 vertex_array_range_valid       = 0x851F;
+constexpr u32 max_vertex_array_range_element = 0x8520;
+constexpr u32 vertex_array_range_pointer     = 0x8521;
 } // namespace values
 /*!
  * \brief Part of GL_NV_vertex_array_range
@@ -26,7 +26,7 @@ STATICINLINE void flush_vertex_array_range()
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_NV_vertex_array_range
      * \param length GLsizei

@@ -34,6 +34,6 @@ enum class context_flag_mask : u32
     context_flag_robust_access_bit_arb = GL_CONTEXT_FLAG_ROBUST_ACCESS_BIT_ARB,
 #endif
 }; // enum class context_flag_mask
-C_FLAGS(context_flag_mask, ::libc_types::u32);
+C_FLAGS(context_flag_mask, u32);
 
 } // namespace gl::group

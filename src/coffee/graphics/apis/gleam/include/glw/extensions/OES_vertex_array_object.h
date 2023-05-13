@@ -3,7 +3,7 @@
 #ifdef GL_OES_vertex_array_object
 namespace gl::oes::vertex_array_object {
 namespace values {
-constexpr libc_types::u32 vertex_array_binding = 0x85B5;
+constexpr u32 vertex_array_binding = 0x85B5;
 } // namespace values
 /*!
  * \brief Part of GL_OES_vertex_array_object
@@ -27,7 +27,7 @@ STATICINLINE void bind_vertex_array(u32 array)
 }
 
 template<class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+requires(concepts::span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -51,7 +51,7 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(concepts::span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
          std::decay_t<u32>>)
     /*!

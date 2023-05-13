@@ -7,32 +7,32 @@ namespace gl::arb::vertex_buffer_object {
 using gl::group::buffer_pointer_name_arb;
 using gl::group::buffer_prop_arb;
 namespace values {
-constexpr libc_types::u32 array_buffer                         = 0x8892;
-constexpr libc_types::u32 element_array_buffer                 = 0x8893;
-constexpr libc_types::u32 array_buffer_binding                 = 0x8894;
-constexpr libc_types::u32 element_array_buffer_binding         = 0x8895;
-constexpr libc_types::u32 vertex_array_buffer_binding          = 0x8896;
-constexpr libc_types::u32 normal_array_buffer_binding          = 0x8897;
-constexpr libc_types::u32 color_array_buffer_binding           = 0x8898;
-constexpr libc_types::u32 index_array_buffer_binding           = 0x8899;
-constexpr libc_types::u32 texture_coord_array_buffer_binding   = 0x889A;
-constexpr libc_types::u32 edge_flag_array_buffer_binding       = 0x889B;
-constexpr libc_types::u32 secondary_color_array_buffer_binding = 0x889C;
-constexpr libc_types::u32 fog_coordinate_array_buffer_binding  = 0x889D;
-constexpr libc_types::u32 weight_array_buffer_binding          = 0x889E;
-constexpr libc_types::u32 vertex_attrib_array_buffer_binding   = 0x889F;
-constexpr libc_types::u32 read_only                            = 0x88B8;
-constexpr libc_types::u32 write_only                           = 0x88B9;
-constexpr libc_types::u32 read_write                           = 0x88BA;
-constexpr libc_types::u32 stream_draw                          = 0x88E0;
-constexpr libc_types::u32 stream_read                          = 0x88E1;
-constexpr libc_types::u32 stream_copy                          = 0x88E2;
-constexpr libc_types::u32 static_draw                          = 0x88E4;
-constexpr libc_types::u32 static_read                          = 0x88E5;
-constexpr libc_types::u32 static_copy                          = 0x88E6;
-constexpr libc_types::u32 dynamic_draw                         = 0x88E8;
-constexpr libc_types::u32 dynamic_read                         = 0x88E9;
-constexpr libc_types::u32 dynamic_copy                         = 0x88EA;
+constexpr u32 array_buffer                         = 0x8892;
+constexpr u32 element_array_buffer                 = 0x8893;
+constexpr u32 array_buffer_binding                 = 0x8894;
+constexpr u32 element_array_buffer_binding         = 0x8895;
+constexpr u32 vertex_array_buffer_binding          = 0x8896;
+constexpr u32 normal_array_buffer_binding          = 0x8897;
+constexpr u32 color_array_buffer_binding           = 0x8898;
+constexpr u32 index_array_buffer_binding           = 0x8899;
+constexpr u32 texture_coord_array_buffer_binding   = 0x889A;
+constexpr u32 edge_flag_array_buffer_binding       = 0x889B;
+constexpr u32 secondary_color_array_buffer_binding = 0x889C;
+constexpr u32 fog_coordinate_array_buffer_binding  = 0x889D;
+constexpr u32 weight_array_buffer_binding          = 0x889E;
+constexpr u32 vertex_attrib_array_buffer_binding   = 0x889F;
+constexpr u32 read_only                            = 0x88B8;
+constexpr u32 write_only                           = 0x88B9;
+constexpr u32 read_write                           = 0x88BA;
+constexpr u32 stream_draw                          = 0x88E0;
+constexpr u32 stream_read                          = 0x88E1;
+constexpr u32 stream_copy                          = 0x88E2;
+constexpr u32 static_draw                          = 0x88E4;
+constexpr u32 static_read                          = 0x88E5;
+constexpr u32 static_copy                          = 0x88E6;
+constexpr u32 dynamic_draw                         = 0x88E8;
+constexpr u32 dynamic_read                         = 0x88E9;
+constexpr u32 dynamic_copy                         = 0x88EA;
 } // namespace values
 /*!
  * \brief Part of GL_ARB_vertex_buffer_object
@@ -57,7 +57,7 @@ STATICINLINE void bind_buffer(group::buffer_target_arb target, u32 buffer)
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_ARB_vertex_buffer_object
      * \param target GLenum
@@ -86,7 +86,7 @@ requires(semantic::concepts::Span<span_const_void>)
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_ARB_vertex_buffer_object
      * \param target GLenum
@@ -115,7 +115,7 @@ requires(semantic::concepts::Span<span_const_void>)
 }
 
 template<class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+requires(concepts::span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -139,7 +139,7 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(concepts::span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -162,7 +162,7 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -190,7 +190,7 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_void>
-requires(semantic::concepts::Span<span_void>)
+requires(concepts::span<span_void>)
     /*!
      * \brief Part of GL_ARB_vertex_buffer_object
      * \param target GLenum
@@ -216,7 +216,7 @@ requires(semantic::concepts::Span<span_void>)
 }
 
 template<class span_void>
-requires(semantic::concepts::Span<span_void>)
+requires(concepts::span<span_void>)
     /*!
      * \brief Part of GL_ARB_vertex_buffer_object
      * \param target GLenum

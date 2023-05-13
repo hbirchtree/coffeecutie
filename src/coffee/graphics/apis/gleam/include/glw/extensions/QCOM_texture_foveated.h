@@ -5,11 +5,11 @@
 namespace gl::qcom::texture_foveated {
 using gl::group::foveation_config_bit_qcom;
 namespace values {
-constexpr libc_types::u32 texture_foveated_feature_bits           = 0x8BFB;
-constexpr libc_types::u32 texture_foveated_min_pixel_density      = 0x8BFC;
-constexpr libc_types::u32 texture_foveated_feature_query          = 0x8BFD;
-constexpr libc_types::u32 texture_foveated_num_focal_points_query = 0x8BFE;
-constexpr libc_types::u32 framebuffer_incomplete_foveation        = 0x8BFF;
+constexpr u32 texture_foveated_feature_bits           = 0x8BFB;
+constexpr u32 texture_foveated_min_pixel_density      = 0x8BFC;
+constexpr u32 texture_foveated_feature_query          = 0x8BFD;
+constexpr u32 texture_foveated_num_focal_points_query = 0x8BFE;
+constexpr u32 framebuffer_incomplete_foveation        = 0x8BFF;
 } // namespace values
 /*!
  * \brief Part of GL_QCOM_texture_foveated

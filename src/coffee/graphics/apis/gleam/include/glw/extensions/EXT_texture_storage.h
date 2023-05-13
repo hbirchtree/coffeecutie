@@ -7,14 +7,14 @@ namespace gl::ext::texture_storage {
 using gl::group::internal_format;
 using gl::group::sized_internal_format;
 namespace values {
-constexpr libc_types::u32 alpha32f                 = 0x8816;
-constexpr libc_types::u32 luminance32f             = 0x8818;
-constexpr libc_types::u32 luminance_alpha32f       = 0x8819;
-constexpr libc_types::u32 alpha16f                 = 0x881C;
-constexpr libc_types::u32 luminance16f             = 0x881E;
-constexpr libc_types::u32 luminance_alpha16f       = 0x881F;
-constexpr libc_types::u32 texture_immutable_format = 0x912F;
-constexpr libc_types::u32 bgra8                    = 0x93A1;
+constexpr u32 alpha32f                 = 0x8816;
+constexpr u32 luminance32f             = 0x8818;
+constexpr u32 luminance_alpha32f       = 0x8819;
+constexpr u32 alpha16f                 = 0x881C;
+constexpr u32 luminance16f             = 0x881E;
+constexpr u32 luminance_alpha16f       = 0x881F;
+constexpr u32 texture_immutable_format = 0x912F;
+constexpr u32 bgra8                    = 0x93A1;
 } // namespace values
 /*!
  * \brief Part of GL_EXT_texture_storage
@@ -44,7 +44,7 @@ STATICINLINE void tex_storage_1d(
 }
 
 template<class size_2_i32>
-requires(semantic::concepts::Size2D<size_2_i32, i32>)
+requires(concepts::size_2d<size_2_i32, i32>)
     /*!
      * \brief Part of GL_EXT_texture_storage
      * \param target GLenum
@@ -75,7 +75,7 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>)
 }
 
 template<class size_3_i32>
-requires(semantic::concepts::Size2D<size_3_i32, i32>)
+requires(concepts::size_2d<size_3_i32, i32>)
     /*!
      * \brief Part of GL_EXT_texture_storage
      * \param target GLenum
@@ -139,7 +139,7 @@ STATICINLINE void texture_storage_1d(
 }
 
 template<class size_2_i32>
-requires(semantic::concepts::Size2D<size_2_i32, i32>)
+requires(concepts::size_2d<size_2_i32, i32>)
     /*!
      * \brief Part of GL_EXT_texture_storage
      * \param texture GLuint
@@ -178,7 +178,7 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>)
 }
 
 template<class size_3_i32>
-requires(semantic::concepts::Size2D<size_3_i32, i32>)
+requires(concepts::size_2d<size_3_i32, i32>)
     /*!
      * \brief Part of GL_EXT_texture_storage
      * \param texture GLuint

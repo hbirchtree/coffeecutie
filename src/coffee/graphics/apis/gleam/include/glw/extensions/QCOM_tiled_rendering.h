@@ -23,8 +23,8 @@ STATICINLINE void end_tiling(group::buffer_bit_qcom preserveMask)
 }
 
 template<class size_2_u32, class vec_2_u32>
-requires(semantic::concepts::Vector<vec_2_u32, u32, 2>&&
-             semantic::concepts::Size2D<size_2_u32, u32>)
+requires(
+    concepts::vector<vec_2_u32, u32, 2>&& concepts::size_2d<size_2_u32, u32>)
     /*!
      * \brief Part of GL_QCOM_tiled_rendering
      * \param x GLuint

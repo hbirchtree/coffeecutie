@@ -5,7 +5,7 @@ namespace gl::ext::multi_draw_arrays {
 namespace values {
 } // namespace values
 template<class span_const_i32>
-requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
+requires(concepts::span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -32,7 +32,7 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
 }
 
 template<class span_const_i32>
-requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
+requires(concepts::span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -48,7 +48,7 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
         group::primitive_type     mode,
         span_const_i32            count,
         group::draw_elements_type type,
-        ptroff                    indices)
+        intptr_t                  indices)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

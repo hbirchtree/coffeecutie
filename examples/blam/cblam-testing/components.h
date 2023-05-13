@@ -284,6 +284,8 @@ struct DebugDraw
     using type       = compo::alloc::VectorContainer<value_type>;
 
     gfx::draw_command::data_t data{};
+    u32                       color_ptr;
+    bool selected{false};
 };
 
 struct TriggerVolume

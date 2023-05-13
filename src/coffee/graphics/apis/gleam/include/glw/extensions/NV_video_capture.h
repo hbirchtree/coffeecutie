@@ -3,35 +3,35 @@
 #ifdef GL_NV_video_capture
 namespace gl::nv::video_capture {
 namespace values {
-constexpr libc_types::u32 video_buffer                          = 0x9020;
-constexpr libc_types::u32 video_buffer_binding                  = 0x9021;
-constexpr libc_types::u32 field_upper                           = 0x9022;
-constexpr libc_types::u32 field_lower                           = 0x9023;
-constexpr libc_types::u32 num_video_capture_streams             = 0x9024;
-constexpr libc_types::u32 next_video_capture_buffer_status      = 0x9025;
-constexpr libc_types::u32 video_capture_to_422_supported        = 0x9026;
-constexpr libc_types::u32 last_video_capture_status             = 0x9027;
-constexpr libc_types::u32 video_buffer_pitch                    = 0x9028;
-constexpr libc_types::u32 video_color_conversion_matrix         = 0x9029;
-constexpr libc_types::u32 video_color_conversion_max            = 0x902A;
-constexpr libc_types::u32 video_color_conversion_min            = 0x902B;
-constexpr libc_types::u32 video_color_conversion_offset         = 0x902C;
-constexpr libc_types::u32 video_buffer_internal_format          = 0x902D;
-constexpr libc_types::u32 partial_success                       = 0x902E;
-constexpr libc_types::u32 success                               = 0x902F;
-constexpr libc_types::u32 failure                               = 0x9030;
-constexpr libc_types::u32 ycbycr8_422                           = 0x9031;
-constexpr libc_types::u32 ycbaycr8a_4224                        = 0x9032;
-constexpr libc_types::u32 z6y10z6cb10z6y10z6cr10_422            = 0x9033;
-constexpr libc_types::u32 z6y10z6cb10z6a10z6y10z6cr10z6a10_4224 = 0x9034;
-constexpr libc_types::u32 z4y12z4cb12z4y12z4cr12_422            = 0x9035;
-constexpr libc_types::u32 z4y12z4cb12z4a12z4y12z4cr12z4a12_4224 = 0x9036;
-constexpr libc_types::u32 z4y12z4cb12z4cr12_444                 = 0x9037;
-constexpr libc_types::u32 video_capture_frame_width             = 0x9038;
-constexpr libc_types::u32 video_capture_frame_height            = 0x9039;
-constexpr libc_types::u32 video_capture_field_upper_height      = 0x903A;
-constexpr libc_types::u32 video_capture_field_lower_height      = 0x903B;
-constexpr libc_types::u32 video_capture_surface_origin          = 0x903C;
+constexpr u32 video_buffer                          = 0x9020;
+constexpr u32 video_buffer_binding                  = 0x9021;
+constexpr u32 field_upper                           = 0x9022;
+constexpr u32 field_lower                           = 0x9023;
+constexpr u32 num_video_capture_streams             = 0x9024;
+constexpr u32 next_video_capture_buffer_status      = 0x9025;
+constexpr u32 video_capture_to_422_supported        = 0x9026;
+constexpr u32 last_video_capture_status             = 0x9027;
+constexpr u32 video_buffer_pitch                    = 0x9028;
+constexpr u32 video_color_conversion_matrix         = 0x9029;
+constexpr u32 video_color_conversion_max            = 0x902A;
+constexpr u32 video_color_conversion_min            = 0x902B;
+constexpr u32 video_color_conversion_offset         = 0x902C;
+constexpr u32 video_buffer_internal_format          = 0x902D;
+constexpr u32 partial_success                       = 0x902E;
+constexpr u32 success                               = 0x902F;
+constexpr u32 failure                               = 0x9030;
+constexpr u32 ycbycr8_422                           = 0x9031;
+constexpr u32 ycbaycr8a_4224                        = 0x9032;
+constexpr u32 z6y10z6cb10z6y10z6cr10_422            = 0x9033;
+constexpr u32 z6y10z6cb10z6a10z6y10z6cr10z6a10_4224 = 0x9034;
+constexpr u32 z4y12z4cb12z4y12z4cr12_422            = 0x9035;
+constexpr u32 z4y12z4cb12z4a12z4y12z4cr12z4a12_4224 = 0x9036;
+constexpr u32 z4y12z4cb12z4cr12_444                 = 0x9037;
+constexpr u32 video_capture_frame_width             = 0x9038;
+constexpr u32 video_capture_frame_height            = 0x9039;
+constexpr u32 video_capture_field_upper_height      = 0x903A;
+constexpr u32 video_capture_field_lower_height      = 0x903B;
+constexpr u32 video_capture_surface_origin          = 0x903C;
 } // namespace values
 /*!
  * \brief Part of GL_NV_video_capture
@@ -118,7 +118,7 @@ STATICINLINE void end_video_capture(u32 video_capture_slot)
 }
 
 template<class span_f64>
-requires(semantic::concepts::Span<span_f64>&& std::is_same_v<
+requires(concepts::span<span_f64>&& std::is_same_v<
          std::decay_t<typename span_f64::value_type>,
          std::decay_t<f64>>)
     /*!
@@ -146,7 +146,7 @@ requires(semantic::concepts::Span<span_f64>&& std::is_same_v<
 }
 
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+requires(concepts::span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -174,7 +174,7 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -202,7 +202,7 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -228,10 +228,10 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_GLuint64EXT, class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(concepts::span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>&& semantic::concepts::Span<span_GLuint64EXT>&&
-                              std::is_same_v<
+         std::decay_t<u32>>&& concepts::span<span_GLuint64EXT>&&
+                                    std::is_same_v<
                  std::decay_t<typename span_GLuint64EXT::value_type>,
                  std::decay_t<GLuint64EXT>>)
     /*!
@@ -263,7 +263,7 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 }
 
 template<class span_const_f64>
-requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
+requires(concepts::span<span_const_f64>&& std::is_same_v<
          std::decay_t<typename span_const_f64::value_type>,
          std::decay_t<f64>>)
     /*!
@@ -295,7 +295,7 @@ requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
 }
 
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+requires(concepts::span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -327,7 +327,7 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
 }
 
 template<class span_const_i32>
-requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
+requires(concepts::span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
          std::decay_t<i32>>)
     /*!

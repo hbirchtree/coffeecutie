@@ -7,26 +7,26 @@ namespace gl::ext::vertex_array {
 using gl::group::get_pointerv_prop;
 using gl::group::get_prop;
 namespace values {
-constexpr libc_types::u32 vertex_array               = 0x8074;
-constexpr libc_types::u32 normal_array               = 0x8075;
-constexpr libc_types::u32 color_array                = 0x8076;
-constexpr libc_types::u32 index_array                = 0x8077;
-constexpr libc_types::u32 texture_coord_array        = 0x8078;
-constexpr libc_types::u32 edge_flag_array            = 0x8079;
-constexpr libc_types::u32 vertex_array_size          = 0x807A;
-constexpr libc_types::u32 vertex_array_type          = 0x807B;
-constexpr libc_types::u32 vertex_array_stride        = 0x807C;
-constexpr libc_types::u32 normal_array_type          = 0x807E;
-constexpr libc_types::u32 normal_array_stride        = 0x807F;
-constexpr libc_types::u32 color_array_size           = 0x8081;
-constexpr libc_types::u32 color_array_type           = 0x8082;
-constexpr libc_types::u32 color_array_stride         = 0x8083;
-constexpr libc_types::u32 index_array_type           = 0x8085;
-constexpr libc_types::u32 index_array_stride         = 0x8086;
-constexpr libc_types::u32 texture_coord_array_size   = 0x8088;
-constexpr libc_types::u32 texture_coord_array_type   = 0x8089;
-constexpr libc_types::u32 texture_coord_array_stride = 0x808A;
-constexpr libc_types::u32 edge_flag_array_stride     = 0x808C;
+constexpr u32 vertex_array               = 0x8074;
+constexpr u32 normal_array               = 0x8075;
+constexpr u32 color_array                = 0x8076;
+constexpr u32 index_array                = 0x8077;
+constexpr u32 texture_coord_array        = 0x8078;
+constexpr u32 edge_flag_array            = 0x8079;
+constexpr u32 vertex_array_size          = 0x807A;
+constexpr u32 vertex_array_type          = 0x807B;
+constexpr u32 vertex_array_stride        = 0x807C;
+constexpr u32 normal_array_type          = 0x807E;
+constexpr u32 normal_array_stride        = 0x807F;
+constexpr u32 color_array_size           = 0x8081;
+constexpr u32 color_array_type           = 0x8082;
+constexpr u32 color_array_stride         = 0x8083;
+constexpr u32 index_array_type           = 0x8085;
+constexpr u32 index_array_stride         = 0x8086;
+constexpr u32 texture_coord_array_size   = 0x8088;
+constexpr u32 texture_coord_array_type   = 0x8089;
+constexpr u32 texture_coord_array_stride = 0x808A;
+constexpr u32 edge_flag_array_stride     = 0x808C;
 } // namespace values
 /*!
  * \brief Part of GL_EXT_vertex_array
@@ -45,7 +45,7 @@ STATICINLINE void array_element(i32 i)
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_vertex_array
      * \param size GLint
@@ -96,7 +96,7 @@ STATICINLINE void draw_arrays(group::primitive_type mode, i32 first, i32 count)
 }
 
 template<class span_const_bool>
-requires(semantic::concepts::Span<span_const_bool>&& std::is_same_v<
+requires(concepts::span<span_const_bool>&& std::is_same_v<
          std::decay_t<typename span_const_bool::value_type>,
          std::decay_t<bool>>)
     /*!
@@ -123,7 +123,7 @@ requires(semantic::concepts::Span<span_const_bool>&& std::is_same_v<
 }
 
 template<class span_void>
-requires(semantic::concepts::Span<span_void>)
+requires(concepts::span<span_void>)
     /*!
      * \brief Part of GL_EXT_vertex_array
      * \param pname GLenum
@@ -145,7 +145,7 @@ requires(semantic::concepts::Span<span_void>)
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_vertex_array
      * \param type GLenum
@@ -175,7 +175,7 @@ requires(semantic::concepts::Span<span_const_void>)
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_vertex_array
      * \param type GLenum
@@ -205,7 +205,7 @@ requires(semantic::concepts::Span<span_const_void>)
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_vertex_array
      * \param size GLint
@@ -238,7 +238,7 @@ requires(semantic::concepts::Span<span_const_void>)
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_vertex_array
      * \param size GLint

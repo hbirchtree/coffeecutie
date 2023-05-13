@@ -5,33 +5,33 @@
 namespace gl::ext::gpu_shader4 {
 using gl::group::vertex_attrib_property_arb;
 namespace values {
-constexpr libc_types::u32 min_program_texel_offset      = 0x8904;
-constexpr libc_types::u32 max_program_texel_offset      = 0x8905;
-constexpr libc_types::u32 sampler_1d_array              = 0x8DC0;
-constexpr libc_types::u32 sampler_2d_array              = 0x8DC1;
-constexpr libc_types::u32 sampler_buffer                = 0x8DC2;
-constexpr libc_types::u32 sampler_1d_array_shadow       = 0x8DC3;
-constexpr libc_types::u32 sampler_2d_array_shadow       = 0x8DC4;
-constexpr libc_types::u32 sampler_cube_shadow           = 0x8DC5;
-constexpr libc_types::u32 unsigned_int_vec2             = 0x8DC6;
-constexpr libc_types::u32 unsigned_int_vec3             = 0x8DC7;
-constexpr libc_types::u32 unsigned_int_vec4             = 0x8DC8;
-constexpr libc_types::u32 int_sampler_1d                = 0x8DC9;
-constexpr libc_types::u32 int_sampler_2d                = 0x8DCA;
-constexpr libc_types::u32 int_sampler_3d                = 0x8DCB;
-constexpr libc_types::u32 int_sampler_cube              = 0x8DCC;
-constexpr libc_types::u32 int_sampler_2d_rect           = 0x8DCD;
-constexpr libc_types::u32 int_sampler_1d_array          = 0x8DCE;
-constexpr libc_types::u32 int_sampler_2d_array          = 0x8DCF;
-constexpr libc_types::u32 int_sampler_buffer            = 0x8DD0;
-constexpr libc_types::u32 unsigned_int_sampler_1d       = 0x8DD1;
-constexpr libc_types::u32 unsigned_int_sampler_2d       = 0x8DD2;
-constexpr libc_types::u32 unsigned_int_sampler_3d       = 0x8DD3;
-constexpr libc_types::u32 unsigned_int_sampler_cube     = 0x8DD4;
-constexpr libc_types::u32 unsigned_int_sampler_2d_rect  = 0x8DD5;
-constexpr libc_types::u32 unsigned_int_sampler_1d_array = 0x8DD6;
-constexpr libc_types::u32 unsigned_int_sampler_2d_array = 0x8DD7;
-constexpr libc_types::u32 unsigned_int_sampler_buffer   = 0x8DD8;
+constexpr u32 min_program_texel_offset      = 0x8904;
+constexpr u32 max_program_texel_offset      = 0x8905;
+constexpr u32 sampler_1d_array              = 0x8DC0;
+constexpr u32 sampler_2d_array              = 0x8DC1;
+constexpr u32 sampler_buffer                = 0x8DC2;
+constexpr u32 sampler_1d_array_shadow       = 0x8DC3;
+constexpr u32 sampler_2d_array_shadow       = 0x8DC4;
+constexpr u32 sampler_cube_shadow           = 0x8DC5;
+constexpr u32 unsigned_int_vec2             = 0x8DC6;
+constexpr u32 unsigned_int_vec3             = 0x8DC7;
+constexpr u32 unsigned_int_vec4             = 0x8DC8;
+constexpr u32 int_sampler_1d                = 0x8DC9;
+constexpr u32 int_sampler_2d                = 0x8DCA;
+constexpr u32 int_sampler_3d                = 0x8DCB;
+constexpr u32 int_sampler_cube              = 0x8DCC;
+constexpr u32 int_sampler_2d_rect           = 0x8DCD;
+constexpr u32 int_sampler_1d_array          = 0x8DCE;
+constexpr u32 int_sampler_2d_array          = 0x8DCF;
+constexpr u32 int_sampler_buffer            = 0x8DD0;
+constexpr u32 unsigned_int_sampler_1d       = 0x8DD1;
+constexpr u32 unsigned_int_sampler_2d       = 0x8DD2;
+constexpr u32 unsigned_int_sampler_3d       = 0x8DD3;
+constexpr u32 unsigned_int_sampler_cube     = 0x8DD4;
+constexpr u32 unsigned_int_sampler_2d_rect  = 0x8DD5;
+constexpr u32 unsigned_int_sampler_1d_array = 0x8DD6;
+constexpr u32 unsigned_int_sampler_2d_array = 0x8DD7;
+constexpr u32 unsigned_int_sampler_buffer   = 0x8DD8;
 } // namespace values
 /*!
  * \brief Part of GL_EXT_gpu_shader4
@@ -82,7 +82,7 @@ get_frag_data_location(u32 program, std::string_view const& name)
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(concepts::span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -129,7 +129,7 @@ STATICINLINE void uniform(i32 location, u32 v0)
 }
 
 template<class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+requires(concepts::span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -152,7 +152,7 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
 }
 
 template<class vec_2_u32>
-requires(semantic::concepts::Vector<vec_2_u32, u32, 2>)
+requires(concepts::vector<vec_2_u32, u32, 2>)
     /*!
      * \brief Part of GL_EXT_gpu_shader4
      * \param location GLint
@@ -172,8 +172,9 @@ requires(semantic::concepts::Vector<vec_2_u32, u32, 2>)
 }
 
 template<class span_const_vec_2_u32>
-requires(semantic::concepts::Span<span_const_vec_2_u32>&& semantic::concepts::
-             Vector<typename span_const_vec_2_u32::value_type, u32, 2>)
+requires(
+    concepts::span<span_const_vec_2_u32>&&
+        concepts::vector<typename span_const_vec_2_u32::value_type, u32, 2>)
     /*!
      * \brief Part of GL_EXT_gpu_shader4
      * \param location GLint
@@ -194,7 +195,7 @@ requires(semantic::concepts::Span<span_const_vec_2_u32>&& semantic::concepts::
 }
 
 template<class vec_3_u32>
-requires(semantic::concepts::Vector<vec_3_u32, u32, 3>)
+requires(concepts::vector<vec_3_u32, u32, 3>)
     /*!
      * \brief Part of GL_EXT_gpu_shader4
      * \param location GLint
@@ -215,8 +216,9 @@ requires(semantic::concepts::Vector<vec_3_u32, u32, 3>)
 }
 
 template<class span_const_vec_3_u32>
-requires(semantic::concepts::Span<span_const_vec_3_u32>&& semantic::concepts::
-             Vector<typename span_const_vec_3_u32::value_type, u32, 3>)
+requires(
+    concepts::span<span_const_vec_3_u32>&&
+        concepts::vector<typename span_const_vec_3_u32::value_type, u32, 3>)
     /*!
      * \brief Part of GL_EXT_gpu_shader4
      * \param location GLint
@@ -237,7 +239,7 @@ requires(semantic::concepts::Span<span_const_vec_3_u32>&& semantic::concepts::
 }
 
 template<class vec_4_u32>
-requires(semantic::concepts::Vector<vec_4_u32, u32, 4>)
+requires(concepts::vector<vec_4_u32, u32, 4>)
     /*!
      * \brief Part of GL_EXT_gpu_shader4
      * \param location GLint
@@ -259,8 +261,9 @@ requires(semantic::concepts::Vector<vec_4_u32, u32, 4>)
 }
 
 template<class span_const_vec_4_u32>
-requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
-             Vector<typename span_const_vec_4_u32::value_type, u32, 4>)
+requires(
+    concepts::span<span_const_vec_4_u32>&&
+        concepts::vector<typename span_const_vec_4_u32::value_type, u32, 4>)
     /*!
      * \brief Part of GL_EXT_gpu_shader4
      * \param location GLint
@@ -336,7 +339,7 @@ STATICINLINE void vertex_attrib_i1i(u32 index, i32 x)
 }
 
 template<class span_const_i32>
-requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
+requires(concepts::span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -374,7 +377,7 @@ STATICINLINE void vertex_attrib_i1ui(u32 index, u32 x)
 }
 
 template<class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+requires(concepts::span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -395,7 +398,7 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
 }
 
 template<class vec_2_i32>
-requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
+requires(concepts::vector<vec_2_i32, i32, 2>)
     /*!
      * \brief Part of GL_EXT_gpu_shader4
      * \param index GLuint
@@ -415,8 +418,9 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
 }
 
 template<class span_const_vec_2_i32>
-requires(semantic::concepts::Span<span_const_vec_2_i32>&& semantic::concepts::
-             Vector<typename span_const_vec_2_i32::value_type, i32, 2>)
+requires(
+    concepts::span<span_const_vec_2_i32>&&
+        concepts::vector<typename span_const_vec_2_i32::value_type, i32, 2>)
     /*!
      * \brief Part of GL_EXT_gpu_shader4
      * \param index GLuint
@@ -436,7 +440,7 @@ requires(semantic::concepts::Span<span_const_vec_2_i32>&& semantic::concepts::
 }
 
 template<class vec_2_u32>
-requires(semantic::concepts::Vector<vec_2_u32, u32, 2>)
+requires(concepts::vector<vec_2_u32, u32, 2>)
     /*!
      * \brief Part of GL_EXT_gpu_shader4
      * \param index GLuint
@@ -456,8 +460,9 @@ requires(semantic::concepts::Vector<vec_2_u32, u32, 2>)
 }
 
 template<class span_const_vec_2_u32>
-requires(semantic::concepts::Span<span_const_vec_2_u32>&& semantic::concepts::
-             Vector<typename span_const_vec_2_u32::value_type, u32, 2>)
+requires(
+    concepts::span<span_const_vec_2_u32>&&
+        concepts::vector<typename span_const_vec_2_u32::value_type, u32, 2>)
     /*!
      * \brief Part of GL_EXT_gpu_shader4
      * \param index GLuint
@@ -477,7 +482,7 @@ requires(semantic::concepts::Span<span_const_vec_2_u32>&& semantic::concepts::
 }
 
 template<class vec_3_i32>
-requires(semantic::concepts::Vector<vec_3_i32, i32, 3>)
+requires(concepts::vector<vec_3_i32, i32, 3>)
     /*!
      * \brief Part of GL_EXT_gpu_shader4
      * \param index GLuint
@@ -498,8 +503,9 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>)
 }
 
 template<class span_const_vec_3_i32>
-requires(semantic::concepts::Span<span_const_vec_3_i32>&& semantic::concepts::
-             Vector<typename span_const_vec_3_i32::value_type, i32, 3>)
+requires(
+    concepts::span<span_const_vec_3_i32>&&
+        concepts::vector<typename span_const_vec_3_i32::value_type, i32, 3>)
     /*!
      * \brief Part of GL_EXT_gpu_shader4
      * \param index GLuint
@@ -519,7 +525,7 @@ requires(semantic::concepts::Span<span_const_vec_3_i32>&& semantic::concepts::
 }
 
 template<class vec_3_u32>
-requires(semantic::concepts::Vector<vec_3_u32, u32, 3>)
+requires(concepts::vector<vec_3_u32, u32, 3>)
     /*!
      * \brief Part of GL_EXT_gpu_shader4
      * \param index GLuint
@@ -540,8 +546,9 @@ requires(semantic::concepts::Vector<vec_3_u32, u32, 3>)
 }
 
 template<class span_const_vec_3_u32>
-requires(semantic::concepts::Span<span_const_vec_3_u32>&& semantic::concepts::
-             Vector<typename span_const_vec_3_u32::value_type, u32, 3>)
+requires(
+    concepts::span<span_const_vec_3_u32>&&
+        concepts::vector<typename span_const_vec_3_u32::value_type, u32, 3>)
     /*!
      * \brief Part of GL_EXT_gpu_shader4
      * \param index GLuint
@@ -561,7 +568,7 @@ requires(semantic::concepts::Span<span_const_vec_3_u32>&& semantic::concepts::
 }
 
 template<class span_const_i8>
-requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
+requires(concepts::span<span_const_i8>&& std::is_same_v<
          std::decay_t<typename span_const_i8::value_type>,
          std::decay_t<i8>>)
     /*!
@@ -583,7 +590,7 @@ requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
 }
 
 template<class vec_4_i32>
-requires(semantic::concepts::Vector<vec_4_i32, i32, 4>)
+requires(concepts::vector<vec_4_i32, i32, 4>)
     /*!
      * \brief Part of GL_EXT_gpu_shader4
      * \param index GLuint
@@ -605,8 +612,9 @@ requires(semantic::concepts::Vector<vec_4_i32, i32, 4>)
 }
 
 template<class span_const_vec_4_i32>
-requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
-             Vector<typename span_const_vec_4_i32::value_type, i32, 4>)
+requires(
+    concepts::span<span_const_vec_4_i32>&&
+        concepts::vector<typename span_const_vec_4_i32::value_type, i32, 4>)
     /*!
      * \brief Part of GL_EXT_gpu_shader4
      * \param index GLuint
@@ -626,8 +634,9 @@ requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
 }
 
 template<class span_const_vec_4_i16>
-requires(semantic::concepts::Span<span_const_vec_4_i16>&& semantic::concepts::
-             Vector<typename span_const_vec_4_i16::value_type, i16, 4>)
+requires(
+    concepts::span<span_const_vec_4_i16>&&
+        concepts::vector<typename span_const_vec_4_i16::value_type, i16, 4>)
     /*!
      * \brief Part of GL_EXT_gpu_shader4
      * \param index GLuint
@@ -647,7 +656,7 @@ requires(semantic::concepts::Span<span_const_vec_4_i16>&& semantic::concepts::
 }
 
 template<class span_const_u8>
-requires(semantic::concepts::Span<span_const_u8>&& std::is_same_v<
+requires(concepts::span<span_const_u8>&& std::is_same_v<
          std::decay_t<typename span_const_u8::value_type>,
          std::decay_t<u8>>)
     /*!
@@ -669,7 +678,7 @@ requires(semantic::concepts::Span<span_const_u8>&& std::is_same_v<
 }
 
 template<class vec_4_u32>
-requires(semantic::concepts::Vector<vec_4_u32, u32, 4>)
+requires(concepts::vector<vec_4_u32, u32, 4>)
     /*!
      * \brief Part of GL_EXT_gpu_shader4
      * \param index GLuint
@@ -691,8 +700,9 @@ requires(semantic::concepts::Vector<vec_4_u32, u32, 4>)
 }
 
 template<class span_const_vec_4_u32>
-requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
-             Vector<typename span_const_vec_4_u32::value_type, u32, 4>)
+requires(
+    concepts::span<span_const_vec_4_u32>&&
+        concepts::vector<typename span_const_vec_4_u32::value_type, u32, 4>)
     /*!
      * \brief Part of GL_EXT_gpu_shader4
      * \param index GLuint
@@ -712,8 +722,9 @@ requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
 }
 
 template<class span_const_vec_4_u16>
-requires(semantic::concepts::Span<span_const_vec_4_u16>&& semantic::concepts::
-             Vector<typename span_const_vec_4_u16::value_type, u16, 4>)
+requires(
+    concepts::span<span_const_vec_4_u16>&&
+        concepts::vector<typename span_const_vec_4_u16::value_type, u16, 4>)
     /*!
      * \brief Part of GL_EXT_gpu_shader4
      * \param index GLuint
@@ -733,7 +744,7 @@ requires(semantic::concepts::Span<span_const_vec_4_u16>&& semantic::concepts::
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_gpu_shader4
      * \param index GLuint

@@ -5,20 +5,20 @@
 namespace gl::amd::debug_output {
 using gl::group::debug_severity;
 namespace values {
-constexpr libc_types::u32 max_debug_message_length          = 0x9143;
-constexpr libc_types::u32 max_debug_logged_messages         = 0x9144;
-constexpr libc_types::u32 debug_logged_messages             = 0x9145;
-constexpr libc_types::u32 debug_category_api_error          = 0x9149;
-constexpr libc_types::u32 debug_category_window_system      = 0x914A;
-constexpr libc_types::u32 debug_category_deprecation        = 0x914B;
-constexpr libc_types::u32 debug_category_undefined_behavior = 0x914C;
-constexpr libc_types::u32 debug_category_performance        = 0x914D;
-constexpr libc_types::u32 debug_category_shader_compiler    = 0x914E;
-constexpr libc_types::u32 debug_category_application        = 0x914F;
-constexpr libc_types::u32 debug_category_other              = 0x9150;
+constexpr u32 max_debug_message_length          = 0x9143;
+constexpr u32 max_debug_logged_messages         = 0x9144;
+constexpr u32 debug_logged_messages             = 0x9145;
+constexpr u32 debug_category_api_error          = 0x9149;
+constexpr u32 debug_category_window_system      = 0x914A;
+constexpr u32 debug_category_deprecation        = 0x914B;
+constexpr u32 debug_category_undefined_behavior = 0x914C;
+constexpr u32 debug_category_performance        = 0x914D;
+constexpr u32 debug_category_shader_compiler    = 0x914E;
+constexpr u32 debug_category_application        = 0x914F;
+constexpr u32 debug_category_other              = 0x9150;
 } // namespace values
 template<class span_void>
-requires(semantic::concepts::Span<span_void>)
+requires(concepts::span<span_void>)
     /*!
      * \brief Part of GL_AMD_debug_output
      * \param callback GLDEBUGPROCAMD
@@ -40,7 +40,7 @@ requires(semantic::concepts::Span<span_void>)
 }
 
 template<class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+requires(concepts::span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -103,19 +103,19 @@ template<
     class span_debug_severity,
     class span_i32,
     class span_u32>
-requires(semantic::concepts::Span<span_GLenum>&& std::is_same_v<
+requires(concepts::span<span_GLenum>&& std::is_same_v<
          std::decay_t<typename span_GLenum::value_type>,
-         std::decay_t<GLenum>>&& semantic::concepts::Span<span_debug_severity>&&
-                                 std::is_same_v<
+         std::decay_t<GLenum>>&& concepts::span<span_debug_severity>&&
+                                       std::is_same_v<
                  std::decay_t<typename span_debug_severity::value_type>,
                  std::decay_t<group::debug_severity>>&&
-                 semantic::concepts::Span<span_u32>&& std::is_same_v<
+                 concepts::span<span_u32>&&   std::is_same_v<
                      std::decay_t<typename span_u32::value_type>,
-                     std::decay_t<u32>>&& semantic::concepts::Span<span_i32>&&
-                                          std::is_same_v<
+                     std::decay_t<u32>>&& concepts::span<span_i32>&&
+                                              std::is_same_v<
                          std::decay_t<typename span_i32::value_type>,
-                         std::decay_t<i32>>&&
-                         semantic::concepts::Span<span_GLchar>&& std::is_same_v<
+                         std::decay_t<i32>>&& concepts::span<span_GLchar>&&
+                                              std::is_same_v<
                              std::decay_t<typename span_GLchar::value_type>,
                              std::decay_t<GLchar>>)
     /*!

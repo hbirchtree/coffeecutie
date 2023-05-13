@@ -56,7 +56,7 @@ STATICINLINE void compile_command_list(u32 list)
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(concepts::span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -79,7 +79,7 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(concepts::span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -102,7 +102,7 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 }
 
 template<class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+requires(concepts::span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -125,7 +125,7 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
 }
 
 template<class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+requires(concepts::span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -149,10 +149,10 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
 }
 
 template<class span_const_i32, class span_const_u64>
-requires(semantic::concepts::Span<span_const_u64>&& std::is_same_v<
+requires(concepts::span<span_const_u64>&& std::is_same_v<
          std::decay_t<typename span_const_u64::value_type>,
-         std::decay_t<u64>>&& semantic::concepts::Span<span_const_i32>&&
-                              std::is_same_v<
+         std::decay_t<u64>>&& concepts::span<span_const_i32>&&
+                                          std::is_same_v<
                  std::decay_t<typename span_const_i32::value_type>,
                  std::decay_t<i32>>)
     /*!
@@ -184,10 +184,10 @@ requires(semantic::concepts::Span<span_const_u64>&& std::is_same_v<
 }
 
 template<class span_const_GLintptr, class span_const_i32>
-requires(semantic::concepts::Span<span_const_GLintptr>&& std::is_same_v<
+requires(concepts::span<span_const_GLintptr>&& std::is_same_v<
          std::decay_t<typename span_const_GLintptr::value_type>,
-         std::decay_t<GLintptr>>&& semantic::concepts::Span<span_const_i32>&&
-                                   std::is_same_v<
+         std::decay_t<GLintptr>>&& concepts::span<span_const_i32>&&
+                                               std::is_same_v<
                  std::decay_t<typename span_const_i32::value_type>,
                  std::decay_t<i32>>)
     /*!
@@ -227,13 +227,13 @@ requires(semantic::concepts::Span<span_const_GLintptr>&& std::is_same_v<
 }
 
 template<class span_const_i32, class span_const_u32, class span_const_u64>
-requires(semantic::concepts::Span<span_const_u64>&& std::is_same_v<
+requires(concepts::span<span_const_u64>&& std::is_same_v<
          std::decay_t<typename span_const_u64::value_type>,
-         std::decay_t<u64>>&&         semantic::concepts::Span<span_const_i32>&&
-                                      std::is_same_v<
+         std::decay_t<u64>>&& concepts::span<span_const_i32>&&
+                                          std::is_same_v<
                  std::decay_t<typename span_const_i32::value_type>,
-                 std::decay_t<i32>>&& semantic::concepts::Span<span_const_u32>&&
-                                      std::is_same_v<
+                 std::decay_t<i32>>&& concepts::span<span_const_u32>&&
+                                          std::is_same_v<
                      std::decay_t<typename span_const_u32::value_type>,
                      std::decay_t<u32>>)
     /*!
@@ -269,13 +269,13 @@ requires(semantic::concepts::Span<span_const_u64>&& std::is_same_v<
 }
 
 template<class span_const_GLintptr, class span_const_i32, class span_const_u32>
-requires(semantic::concepts::Span<span_const_GLintptr>&& std::is_same_v<
+requires(concepts::span<span_const_GLintptr>&& std::is_same_v<
          std::decay_t<typename span_const_GLintptr::value_type>,
-         std::decay_t<GLintptr>>&&    semantic::concepts::Span<span_const_i32>&&
-                                      std::is_same_v<
+         std::decay_t<GLintptr>>&& concepts::span<span_const_i32>&&
+                                               std::is_same_v<
                  std::decay_t<typename span_const_i32::value_type>,
-                 std::decay_t<i32>>&& semantic::concepts::Span<span_const_u32>&&
-                                      std::is_same_v<
+                 std::decay_t<i32>>&& concepts::span<span_const_u32>&&
+                                               std::is_same_v<
                      std::decay_t<typename span_const_u32::value_type>,
                      std::decay_t<u32>>)
     /*!
@@ -389,11 +389,11 @@ STATICINLINE bool is_state(u32 state)
 }
 
 template<class span_const_i32, class span_const_u32, class span_const_void>
-requires(semantic::concepts::Span<span_const_void>&&
-             semantic::concepts::Span<span_const_i32>&& std::is_same_v<
+requires(concepts::span<span_const_void>&& concepts::span<span_const_i32>&&
+                                           std::is_same_v<
                  std::decay_t<typename span_const_i32::value_type>,
-                 std::decay_t<i32>>&& semantic::concepts::Span<span_const_u32>&&
-                                      std::is_same_v<
+                 std::decay_t<i32>>&& concepts::span<span_const_u32>&&
+                                           std::is_same_v<
                      std::decay_t<typename span_const_u32::value_type>,
                      std::decay_t<u32>>)
     /*!

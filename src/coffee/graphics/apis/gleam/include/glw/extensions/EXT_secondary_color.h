@@ -3,16 +3,16 @@
 #ifdef GL_EXT_secondary_color
 namespace gl::ext::secondary_color {
 namespace values {
-constexpr libc_types::u32 color_sum                     = 0x8458;
-constexpr libc_types::u32 current_secondary_color       = 0x8459;
-constexpr libc_types::u32 secondary_color_array_size    = 0x845A;
-constexpr libc_types::u32 secondary_color_array_type    = 0x845B;
-constexpr libc_types::u32 secondary_color_array_stride  = 0x845C;
-constexpr libc_types::u32 secondary_color_array_pointer = 0x845D;
-constexpr libc_types::u32 secondary_color_array         = 0x845E;
+constexpr u32 color_sum                     = 0x8458;
+constexpr u32 current_secondary_color       = 0x8459;
+constexpr u32 secondary_color_array_size    = 0x845A;
+constexpr u32 secondary_color_array_type    = 0x845B;
+constexpr u32 secondary_color_array_stride  = 0x845C;
+constexpr u32 secondary_color_array_pointer = 0x845D;
+constexpr u32 secondary_color_array         = 0x845E;
 } // namespace values
 template<class vec_3_i8>
-requires(semantic::concepts::Vector<vec_3_i8, i8, 3>)
+requires(concepts::vector<vec_3_i8, i8, 3>)
     /*!
      * \brief Part of GL_EXT_secondary_color
      * \param red GLbyte
@@ -32,7 +32,7 @@ requires(semantic::concepts::Vector<vec_3_i8, i8, 3>)
 }
 
 template<class span_const_i8>
-requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
+requires(concepts::span<span_const_i8>&& std::is_same_v<
          std::decay_t<typename span_const_i8::value_type>,
          std::decay_t<i8>>)
     /*!
@@ -53,7 +53,7 @@ requires(semantic::concepts::Span<span_const_i8>&& std::is_same_v<
 }
 
 template<class vec_3_f64>
-requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
+requires(concepts::vector<vec_3_f64, f64, 3>)
     /*!
      * \brief Part of GL_EXT_secondary_color
      * \param red GLdouble
@@ -73,8 +73,9 @@ requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
 }
 
 template<class span_const_vec_3_f64>
-requires(semantic::concepts::Span<span_const_vec_3_f64>&& semantic::concepts::
-             Vector<typename span_const_vec_3_f64::value_type, f64, 3>)
+requires(
+    concepts::span<span_const_vec_3_f64>&&
+        concepts::vector<typename span_const_vec_3_f64::value_type, f64, 3>)
     /*!
      * \brief Part of GL_EXT_secondary_color
      * \param v const GLdouble *
@@ -92,7 +93,7 @@ requires(semantic::concepts::Span<span_const_vec_3_f64>&& semantic::concepts::
 }
 
 template<class vec_3_f32>
-requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
+requires(concepts::vector<vec_3_f32, f32, 3>)
     /*!
      * \brief Part of GL_EXT_secondary_color
      * \param red GLfloat
@@ -112,8 +113,9 @@ requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
 }
 
 template<class span_const_vec_3_f32>
-requires(semantic::concepts::Span<span_const_vec_3_f32>&& semantic::concepts::
-             Vector<typename span_const_vec_3_f32::value_type, f32, 3>)
+requires(
+    concepts::span<span_const_vec_3_f32>&&
+        concepts::vector<typename span_const_vec_3_f32::value_type, f32, 3>)
     /*!
      * \brief Part of GL_EXT_secondary_color
      * \param v const GLfloat *
@@ -131,7 +133,7 @@ requires(semantic::concepts::Span<span_const_vec_3_f32>&& semantic::concepts::
 }
 
 template<class vec_3_i32>
-requires(semantic::concepts::Vector<vec_3_i32, i32, 3>)
+requires(concepts::vector<vec_3_i32, i32, 3>)
     /*!
      * \brief Part of GL_EXT_secondary_color
      * \param red GLint
@@ -151,8 +153,9 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>)
 }
 
 template<class span_const_vec_3_i32>
-requires(semantic::concepts::Span<span_const_vec_3_i32>&& semantic::concepts::
-             Vector<typename span_const_vec_3_i32::value_type, i32, 3>)
+requires(
+    concepts::span<span_const_vec_3_i32>&&
+        concepts::vector<typename span_const_vec_3_i32::value_type, i32, 3>)
     /*!
      * \brief Part of GL_EXT_secondary_color
      * \param v const GLint *
@@ -170,7 +173,7 @@ requires(semantic::concepts::Span<span_const_vec_3_i32>&& semantic::concepts::
 }
 
 template<class vec_3_i16>
-requires(semantic::concepts::Vector<vec_3_i16, i16, 3>)
+requires(concepts::vector<vec_3_i16, i16, 3>)
     /*!
      * \brief Part of GL_EXT_secondary_color
      * \param red GLshort
@@ -190,8 +193,9 @@ requires(semantic::concepts::Vector<vec_3_i16, i16, 3>)
 }
 
 template<class span_const_vec_3_i16>
-requires(semantic::concepts::Span<span_const_vec_3_i16>&& semantic::concepts::
-             Vector<typename span_const_vec_3_i16::value_type, i16, 3>)
+requires(
+    concepts::span<span_const_vec_3_i16>&&
+        concepts::vector<typename span_const_vec_3_i16::value_type, i16, 3>)
     /*!
      * \brief Part of GL_EXT_secondary_color
      * \param v const GLshort *
@@ -209,7 +213,7 @@ requires(semantic::concepts::Span<span_const_vec_3_i16>&& semantic::concepts::
 }
 
 template<class vec_3_u8>
-requires(semantic::concepts::Vector<vec_3_u8, u8, 3>)
+requires(concepts::vector<vec_3_u8, u8, 3>)
     /*!
      * \brief Part of GL_EXT_secondary_color
      * \param red GLubyte
@@ -229,7 +233,7 @@ requires(semantic::concepts::Vector<vec_3_u8, u8, 3>)
 }
 
 template<class span_const_u8>
-requires(semantic::concepts::Span<span_const_u8>&& std::is_same_v<
+requires(concepts::span<span_const_u8>&& std::is_same_v<
          std::decay_t<typename span_const_u8::value_type>,
          std::decay_t<u8>>)
     /*!
@@ -250,7 +254,7 @@ requires(semantic::concepts::Span<span_const_u8>&& std::is_same_v<
 }
 
 template<class vec_3_u32>
-requires(semantic::concepts::Vector<vec_3_u32, u32, 3>)
+requires(concepts::vector<vec_3_u32, u32, 3>)
     /*!
      * \brief Part of GL_EXT_secondary_color
      * \param red GLuint
@@ -270,8 +274,9 @@ requires(semantic::concepts::Vector<vec_3_u32, u32, 3>)
 }
 
 template<class span_const_vec_3_u32>
-requires(semantic::concepts::Span<span_const_vec_3_u32>&& semantic::concepts::
-             Vector<typename span_const_vec_3_u32::value_type, u32, 3>)
+requires(
+    concepts::span<span_const_vec_3_u32>&&
+        concepts::vector<typename span_const_vec_3_u32::value_type, u32, 3>)
     /*!
      * \brief Part of GL_EXT_secondary_color
      * \param v const GLuint *
@@ -289,7 +294,7 @@ requires(semantic::concepts::Span<span_const_vec_3_u32>&& semantic::concepts::
 }
 
 template<class vec_3_u16>
-requires(semantic::concepts::Vector<vec_3_u16, u16, 3>)
+requires(concepts::vector<vec_3_u16, u16, 3>)
     /*!
      * \brief Part of GL_EXT_secondary_color
      * \param red GLushort
@@ -309,8 +314,9 @@ requires(semantic::concepts::Vector<vec_3_u16, u16, 3>)
 }
 
 template<class span_const_vec_3_u16>
-requires(semantic::concepts::Span<span_const_vec_3_u16>&& semantic::concepts::
-             Vector<typename span_const_vec_3_u16::value_type, u16, 3>)
+requires(
+    concepts::span<span_const_vec_3_u16>&&
+        concepts::vector<typename span_const_vec_3_u16::value_type, u16, 3>)
     /*!
      * \brief Part of GL_EXT_secondary_color
      * \param v const GLushort *
@@ -328,7 +334,7 @@ requires(semantic::concepts::Span<span_const_vec_3_u16>&& semantic::concepts::
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_secondary_color
      * \param size GLint

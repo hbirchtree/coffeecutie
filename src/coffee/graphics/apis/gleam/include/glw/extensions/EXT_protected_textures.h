@@ -5,7 +5,7 @@
 namespace gl::ext::protected_textures {
 using gl::group::context_flag_mask;
 namespace values {
-constexpr libc_types::u32 texture_protected = 0x8BFA;
+constexpr u32 texture_protected = 0x8BFA;
 } // namespace values
 } // namespace gl::ext::protected_textures
 #endif // GL_EXT_protected_textures

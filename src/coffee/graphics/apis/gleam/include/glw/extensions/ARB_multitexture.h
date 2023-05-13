@@ -5,39 +5,39 @@
 namespace gl::arb::multitexture {
 using gl::group::combiner_register_nv;
 namespace values {
-constexpr libc_types::u32 texture2              = 0x84C2;
-constexpr libc_types::u32 texture3              = 0x84C3;
-constexpr libc_types::u32 texture4              = 0x84C4;
-constexpr libc_types::u32 texture5              = 0x84C5;
-constexpr libc_types::u32 texture6              = 0x84C6;
-constexpr libc_types::u32 texture7              = 0x84C7;
-constexpr libc_types::u32 texture8              = 0x84C8;
-constexpr libc_types::u32 texture9              = 0x84C9;
-constexpr libc_types::u32 texture10             = 0x84CA;
-constexpr libc_types::u32 texture11             = 0x84CB;
-constexpr libc_types::u32 texture12             = 0x84CC;
-constexpr libc_types::u32 texture13             = 0x84CD;
-constexpr libc_types::u32 texture14             = 0x84CE;
-constexpr libc_types::u32 texture15             = 0x84CF;
-constexpr libc_types::u32 texture16             = 0x84D0;
-constexpr libc_types::u32 texture17             = 0x84D1;
-constexpr libc_types::u32 texture18             = 0x84D2;
-constexpr libc_types::u32 texture19             = 0x84D3;
-constexpr libc_types::u32 texture20             = 0x84D4;
-constexpr libc_types::u32 texture21             = 0x84D5;
-constexpr libc_types::u32 texture22             = 0x84D6;
-constexpr libc_types::u32 texture23             = 0x84D7;
-constexpr libc_types::u32 texture24             = 0x84D8;
-constexpr libc_types::u32 texture25             = 0x84D9;
-constexpr libc_types::u32 texture26             = 0x84DA;
-constexpr libc_types::u32 texture27             = 0x84DB;
-constexpr libc_types::u32 texture28             = 0x84DC;
-constexpr libc_types::u32 texture29             = 0x84DD;
-constexpr libc_types::u32 texture30             = 0x84DE;
-constexpr libc_types::u32 texture31             = 0x84DF;
-constexpr libc_types::u32 active_texture        = 0x84E0;
-constexpr libc_types::u32 client_active_texture = 0x84E1;
-constexpr libc_types::u32 max_texture_units     = 0x84E2;
+constexpr u32 texture2              = 0x84C2;
+constexpr u32 texture3              = 0x84C3;
+constexpr u32 texture4              = 0x84C4;
+constexpr u32 texture5              = 0x84C5;
+constexpr u32 texture6              = 0x84C6;
+constexpr u32 texture7              = 0x84C7;
+constexpr u32 texture8              = 0x84C8;
+constexpr u32 texture9              = 0x84C9;
+constexpr u32 texture10             = 0x84CA;
+constexpr u32 texture11             = 0x84CB;
+constexpr u32 texture12             = 0x84CC;
+constexpr u32 texture13             = 0x84CD;
+constexpr u32 texture14             = 0x84CE;
+constexpr u32 texture15             = 0x84CF;
+constexpr u32 texture16             = 0x84D0;
+constexpr u32 texture17             = 0x84D1;
+constexpr u32 texture18             = 0x84D2;
+constexpr u32 texture19             = 0x84D3;
+constexpr u32 texture20             = 0x84D4;
+constexpr u32 texture21             = 0x84D5;
+constexpr u32 texture22             = 0x84D6;
+constexpr u32 texture23             = 0x84D7;
+constexpr u32 texture24             = 0x84D8;
+constexpr u32 texture25             = 0x84D9;
+constexpr u32 texture26             = 0x84DA;
+constexpr u32 texture27             = 0x84DB;
+constexpr u32 texture28             = 0x84DC;
+constexpr u32 texture29             = 0x84DD;
+constexpr u32 texture30             = 0x84DE;
+constexpr u32 texture31             = 0x84DF;
+constexpr u32 active_texture        = 0x84E0;
+constexpr u32 client_active_texture = 0x84E1;
+constexpr u32 max_texture_units     = 0x84E2;
 } // namespace values
 /*!
  * \brief Part of GL_ARB_multitexture
@@ -89,7 +89,7 @@ STATICINLINE void multi_tex_coord1d(group::texture_unit target, f64 s)
 }
 
 template<class span_const_f64>
-requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
+requires(concepts::span<span_const_f64>&& std::is_same_v<
          std::decay_t<typename span_const_f64::value_type>,
          std::decay_t<f64>>)
     /*!
@@ -130,7 +130,7 @@ STATICINLINE void multi_tex_coord1f(group::texture_unit target, f32 s)
 }
 
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+requires(concepts::span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -171,7 +171,7 @@ STATICINLINE void multi_tex_coord1i(group::texture_unit target, i32 s)
 }
 
 template<class span_const_i32>
-requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
+requires(concepts::span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -211,7 +211,7 @@ STATICINLINE void multi_tex_coord1s(group::texture_unit target, i16 s)
 }
 
 template<class span_const_i16>
-requires(semantic::concepts::Span<span_const_i16>&& std::is_same_v<
+requires(concepts::span<span_const_i16>&& std::is_same_v<
          std::decay_t<typename span_const_i16::value_type>,
          std::decay_t<i16>>)
     /*!
@@ -253,8 +253,9 @@ STATICINLINE void multi_tex_coord2d(group::texture_unit target, f64 s, f64 t)
 }
 
 template<class span_const_vec_2_f64>
-requires(semantic::concepts::Span<span_const_vec_2_f64>&& semantic::concepts::
-             Vector<typename span_const_vec_2_f64::value_type, f64, 2>)
+requires(
+    concepts::span<span_const_vec_2_f64>&&
+        concepts::vector<typename span_const_vec_2_f64::value_type, f64, 2>)
     /*!
      * \brief Part of GL_ARB_multitexture
      * \param target GLenum
@@ -294,8 +295,9 @@ STATICINLINE void multi_tex_coord2f(group::texture_unit target, f32 s, f32 t)
 }
 
 template<class span_const_vec_2_f32>
-requires(semantic::concepts::Span<span_const_vec_2_f32>&& semantic::concepts::
-             Vector<typename span_const_vec_2_f32::value_type, f32, 2>)
+requires(
+    concepts::span<span_const_vec_2_f32>&&
+        concepts::vector<typename span_const_vec_2_f32::value_type, f32, 2>)
     /*!
      * \brief Part of GL_ARB_multitexture
      * \param target GLenum
@@ -335,8 +337,9 @@ STATICINLINE void multi_tex_coord2i(group::texture_unit target, i32 s, i32 t)
 }
 
 template<class span_const_vec_2_i32>
-requires(semantic::concepts::Span<span_const_vec_2_i32>&& semantic::concepts::
-             Vector<typename span_const_vec_2_i32::value_type, i32, 2>)
+requires(
+    concepts::span<span_const_vec_2_i32>&&
+        concepts::vector<typename span_const_vec_2_i32::value_type, i32, 2>)
     /*!
      * \brief Part of GL_ARB_multitexture
      * \param target GLenum
@@ -375,8 +378,9 @@ STATICINLINE void multi_tex_coord2s(group::texture_unit target, i16 s, i16 t)
 }
 
 template<class span_const_vec_2_i16>
-requires(semantic::concepts::Span<span_const_vec_2_i16>&& semantic::concepts::
-             Vector<typename span_const_vec_2_i16::value_type, i16, 2>)
+requires(
+    concepts::span<span_const_vec_2_i16>&&
+        concepts::vector<typename span_const_vec_2_i16::value_type, i16, 2>)
     /*!
      * \brief Part of GL_ARB_multitexture
      * \param target GLenum
@@ -418,8 +422,9 @@ STATICINLINE void multi_tex_coord3d(
 }
 
 template<class span_const_vec_3_f64>
-requires(semantic::concepts::Span<span_const_vec_3_f64>&& semantic::concepts::
-             Vector<typename span_const_vec_3_f64::value_type, f64, 3>)
+requires(
+    concepts::span<span_const_vec_3_f64>&&
+        concepts::vector<typename span_const_vec_3_f64::value_type, f64, 3>)
     /*!
      * \brief Part of GL_ARB_multitexture
      * \param target GLenum
@@ -461,8 +466,9 @@ STATICINLINE void multi_tex_coord3f(
 }
 
 template<class span_const_vec_3_f32>
-requires(semantic::concepts::Span<span_const_vec_3_f32>&& semantic::concepts::
-             Vector<typename span_const_vec_3_f32::value_type, f32, 3>)
+requires(
+    concepts::span<span_const_vec_3_f32>&&
+        concepts::vector<typename span_const_vec_3_f32::value_type, f32, 3>)
     /*!
      * \brief Part of GL_ARB_multitexture
      * \param target GLenum
@@ -504,8 +510,9 @@ STATICINLINE void multi_tex_coord3i(
 }
 
 template<class span_const_vec_3_i32>
-requires(semantic::concepts::Span<span_const_vec_3_i32>&& semantic::concepts::
-             Vector<typename span_const_vec_3_i32::value_type, i32, 3>)
+requires(
+    concepts::span<span_const_vec_3_i32>&&
+        concepts::vector<typename span_const_vec_3_i32::value_type, i32, 3>)
     /*!
      * \brief Part of GL_ARB_multitexture
      * \param target GLenum
@@ -546,8 +553,9 @@ STATICINLINE void multi_tex_coord3s(
 }
 
 template<class span_const_vec_3_i16>
-requires(semantic::concepts::Span<span_const_vec_3_i16>&& semantic::concepts::
-             Vector<typename span_const_vec_3_i16::value_type, i16, 3>)
+requires(
+    concepts::span<span_const_vec_3_i16>&&
+        concepts::vector<typename span_const_vec_3_i16::value_type, i16, 3>)
     /*!
      * \brief Part of GL_ARB_multitexture
      * \param target GLenum
@@ -590,8 +598,9 @@ STATICINLINE void multi_tex_coord4d(
 }
 
 template<class span_const_vec_4_f64>
-requires(semantic::concepts::Span<span_const_vec_4_f64>&& semantic::concepts::
-             Vector<typename span_const_vec_4_f64::value_type, f64, 4>)
+requires(
+    concepts::span<span_const_vec_4_f64>&&
+        concepts::vector<typename span_const_vec_4_f64::value_type, f64, 4>)
     /*!
      * \brief Part of GL_ARB_multitexture
      * \param target GLenum
@@ -634,8 +643,9 @@ STATICINLINE void multi_tex_coord4f(
 }
 
 template<class span_const_vec_4_f32>
-requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
-             Vector<typename span_const_vec_4_f32::value_type, f32, 4>)
+requires(
+    concepts::span<span_const_vec_4_f32>&&
+        concepts::vector<typename span_const_vec_4_f32::value_type, f32, 4>)
     /*!
      * \brief Part of GL_ARB_multitexture
      * \param target GLenum
@@ -678,8 +688,9 @@ STATICINLINE void multi_tex_coord4i(
 }
 
 template<class span_const_vec_4_i32>
-requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
-             Vector<typename span_const_vec_4_i32::value_type, i32, 4>)
+requires(
+    concepts::span<span_const_vec_4_i32>&&
+        concepts::vector<typename span_const_vec_4_i32::value_type, i32, 4>)
     /*!
      * \brief Part of GL_ARB_multitexture
      * \param target GLenum
@@ -721,8 +732,9 @@ STATICINLINE void multi_tex_coord4s(
 }
 
 template<class span_const_vec_4_i16>
-requires(semantic::concepts::Span<span_const_vec_4_i16>&& semantic::concepts::
-             Vector<typename span_const_vec_4_i16::value_type, i16, 4>)
+requires(
+    concepts::span<span_const_vec_4_i16>&&
+        concepts::vector<typename span_const_vec_4_i16::value_type, i16, 4>)
     /*!
      * \brief Part of GL_ARB_multitexture
      * \param target GLenum

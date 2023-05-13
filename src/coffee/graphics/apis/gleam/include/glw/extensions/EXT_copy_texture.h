@@ -5,7 +5,7 @@ namespace gl::ext::copy_texture {
 namespace values {
 } // namespace values
 template<class vec_2_i32>
-requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
+requires(concepts::vector<vec_2_i32, i32, 2>)
     /*!
      * \brief Part of GL_EXT_copy_texture
      * \param target GLenum
@@ -42,8 +42,8 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
 }
 
 template<class size_2_i32, class vec_2_i32>
-requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
-             semantic::concepts::Size2D<size_2_i32, i32>)
+requires(
+    concepts::vector<vec_2_i32, i32, 2>&& concepts::size_2d<size_2_i32, i32>)
     /*!
      * \brief Part of GL_EXT_copy_texture
      * \param target GLenum
@@ -82,7 +82,7 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
 }
 
 template<class vec_2_i32>
-requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
+requires(concepts::vector<vec_2_i32, i32, 2>)
     /*!
      * \brief Part of GL_EXT_copy_texture
      * \param target GLenum
@@ -111,8 +111,8 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
 }
 
 template<class size_2_i32, class vec_2_i32>
-requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
-             semantic::concepts::Size2D<size_2_i32, i32>)
+requires(
+    concepts::vector<vec_2_i32, i32, 2>&& concepts::size_2d<size_2_i32, i32>)
     /*!
      * \brief Part of GL_EXT_copy_texture
      * \param target GLenum
@@ -150,9 +150,9 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
 }
 
 template<class size_2_i32, class vec_2_i32, class vec_3_i32>
-requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
-                 semantic::concepts::Vector<vec_2_i32, i32, 2>&&
-                 semantic::concepts::Size2D<size_2_i32, i32>)
+requires(
+    concepts::vector<vec_3_i32, i32, 3>&& concepts::vector<vec_2_i32, i32, 2>&&
+                                          concepts::size_2d<size_2_i32, i32>)
     /*!
      * \brief Part of GL_EXT_copy_texture
      * \param target GLenum

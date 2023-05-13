@@ -3,20 +3,20 @@
 #ifdef GL_QCOM_extended_get
 namespace gl::qcom::extended_get {
 namespace values {
-constexpr libc_types::u32 texture_width           = 0x8BD2;
-constexpr libc_types::u32 texture_height          = 0x8BD3;
-constexpr libc_types::u32 texture_depth           = 0x8BD4;
-constexpr libc_types::u32 texture_internal_format = 0x8BD5;
-constexpr libc_types::u32 texture_format          = 0x8BD6;
-constexpr libc_types::u32 texture_type            = 0x8BD7;
-constexpr libc_types::u32 texture_image_valid     = 0x8BD8;
-constexpr libc_types::u32 texture_num_levels      = 0x8BD9;
-constexpr libc_types::u32 texture_target          = 0x8BDA;
-constexpr libc_types::u32 texture_object_valid    = 0x8BDB;
-constexpr libc_types::u32 state_restore           = 0x8BDC;
+constexpr u32 texture_width           = 0x8BD2;
+constexpr u32 texture_height          = 0x8BD3;
+constexpr u32 texture_depth           = 0x8BD4;
+constexpr u32 texture_internal_format = 0x8BD5;
+constexpr u32 texture_format          = 0x8BD6;
+constexpr u32 texture_type            = 0x8BD7;
+constexpr u32 texture_image_valid     = 0x8BD8;
+constexpr u32 texture_num_levels      = 0x8BD9;
+constexpr u32 texture_target          = 0x8BDA;
+constexpr u32 texture_object_valid    = 0x8BDB;
+constexpr u32 state_restore           = 0x8BDC;
 } // namespace values
 template<class span_void>
-requires(semantic::concepts::Span<span_void>)
+requires(concepts::span<span_void>)
     /*!
      * \brief Part of GL_QCOM_extended_get
      * \param target GLenum
@@ -37,7 +37,7 @@ requires(semantic::concepts::Span<span_void>)
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(concepts::span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -63,7 +63,7 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(concepts::span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -90,7 +90,7 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(concepts::span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -117,7 +117,7 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -152,9 +152,8 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class size_3_i32, class span_void, class vec_3_i32>
-requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
-                 semantic::concepts::Size2D<size_3_i32, i32>&&
-                 semantic::concepts::Span<span_void>)
+requires(concepts::vector<vec_3_i32, i32, 3>&&
+             concepts::size_2d<size_3_i32, i32>&& concepts::span<span_void>)
     /*!
      * \brief Part of GL_QCOM_extended_get
      * \param target GLenum
@@ -200,10 +199,10 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
 }
 
 template<class span_i32, class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(concepts::span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>&& semantic::concepts::Span<span_i32>&&
-                              std::is_same_v<
+         std::decay_t<u32>>&& concepts::span<span_i32>&&
+                                    std::is_same_v<
                  std::decay_t<typename span_i32::value_type>,
                  std::decay_t<i32>>)
     /*!

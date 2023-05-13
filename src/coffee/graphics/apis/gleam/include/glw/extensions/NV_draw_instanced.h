@@ -37,7 +37,7 @@ STATICINLINE void draw_elements_instanced(
     group::primitive_type     mode,
     i32                       count,
     group::draw_elements_type type,
-    ptroff                    indices,
+    intptr_t                  indices,
     i32                       primcount)
 {
     using namespace std::string_view_literals;

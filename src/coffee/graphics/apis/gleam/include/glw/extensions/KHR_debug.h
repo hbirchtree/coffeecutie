@@ -22,84 +22,84 @@ using gl::group::get_prop;
 using gl::group::object_identifier;
 namespace values {
 #if defined(GL_ES_VERSION_2_0)
-constexpr libc_types::u32 stack_overflow = 0x0503;
+constexpr u32 stack_overflow = 0x0503;
 #endif
 #if defined(GL_ES_VERSION_2_0)
-constexpr libc_types::u32 stack_underflow = 0x0504;
+constexpr u32 stack_underflow = 0x0504;
 #endif
 #if defined(GL_ES_VERSION_2_0)
-constexpr libc_types::u32 vertex_array = 0x8074;
+constexpr u32 vertex_array = 0x8074;
 #endif
 #if defined(GL_VERSION_1_0)
-constexpr libc_types::u32 debug_next_logged_message_length = 0x8243;
+constexpr u32 debug_next_logged_message_length = 0x8243;
 #endif
 #if defined(GL_ES_VERSION_2_0)
-constexpr libc_types::u32 debug_next_logged_message_length = 0x8243;
+constexpr u32 debug_next_logged_message_length = 0x8243;
 #endif
 #if defined(GL_ES_VERSION_2_0)
-constexpr libc_types::u32 debug_callback_function = 0x8244;
+constexpr u32 debug_callback_function = 0x8244;
 #endif
 #if defined(GL_ES_VERSION_2_0)
-constexpr libc_types::u32 debug_callback_user_param = 0x8245;
+constexpr u32 debug_callback_user_param = 0x8245;
 #endif
 #if defined(GL_ES_VERSION_2_0)
-constexpr libc_types::u32 debug_source_api = 0x8246;
+constexpr u32 debug_source_api = 0x8246;
 #endif
 #if defined(GL_ES_VERSION_2_0)
-constexpr libc_types::u32 max_debug_group_stack_depth = 0x826C;
+constexpr u32 max_debug_group_stack_depth = 0x826C;
 #endif
 #if defined(GL_ES_VERSION_2_0)
-constexpr libc_types::u32 debug_group_stack_depth = 0x826D;
+constexpr u32 debug_group_stack_depth = 0x826D;
 #endif
 #if defined(GL_ES_VERSION_2_0)
-constexpr libc_types::u32 buffer = 0x82E0;
+constexpr u32 buffer = 0x82E0;
 #endif
 #if defined(GL_ES_VERSION_2_0)
-constexpr libc_types::u32 shader = 0x82E1;
+constexpr u32 shader = 0x82E1;
 #endif
 #if defined(GL_ES_VERSION_2_0)
-constexpr libc_types::u32 program = 0x82E2;
+constexpr u32 program = 0x82E2;
 #endif
 #if defined(GL_ES_VERSION_2_0)
-constexpr libc_types::u32 query = 0x82E3;
+constexpr u32 query = 0x82E3;
 #endif
 #if defined(GL_ES_VERSION_2_0)
-constexpr libc_types::u32 program_pipeline = 0x82E4;
+constexpr u32 program_pipeline = 0x82E4;
 #endif
 #if defined(GL_ES_VERSION_2_0)
-constexpr libc_types::u32 sampler = 0x82E6;
+constexpr u32 sampler = 0x82E6;
 #endif
 #if defined(GL_VERSION_1_0)
-constexpr libc_types::u32 display_list = 0x82E7;
+constexpr u32 display_list = 0x82E7;
 #endif
 #if defined(GL_ES_VERSION_2_0)
-constexpr libc_types::u32 max_label_length = 0x82E8;
+constexpr u32 max_label_length = 0x82E8;
 #endif
 #if defined(GL_VERSION_1_0)
-constexpr libc_types::u32 max_debug_message_length = 0x9143;
+constexpr u32 max_debug_message_length = 0x9143;
 #endif
 #if defined(GL_ES_VERSION_2_0)
-constexpr libc_types::u32 max_debug_message_length = 0x9143;
+constexpr u32 max_debug_message_length = 0x9143;
 #endif
 #if defined(GL_VERSION_1_0)
-constexpr libc_types::u32 max_debug_logged_messages = 0x9144;
+constexpr u32 max_debug_logged_messages = 0x9144;
 #endif
 #if defined(GL_ES_VERSION_2_0)
-constexpr libc_types::u32 max_debug_logged_messages = 0x9144;
+constexpr u32 max_debug_logged_messages = 0x9144;
 #endif
 #if defined(GL_VERSION_1_0)
-constexpr libc_types::u32 debug_logged_messages = 0x9145;
+constexpr u32 debug_logged_messages = 0x9145;
 #endif
 #if defined(GL_ES_VERSION_2_0)
-constexpr libc_types::u32 debug_logged_messages = 0x9145;
+constexpr u32 debug_logged_messages = 0x9145;
 #endif
 #if defined(GL_ES_VERSION_2_0)
-constexpr libc_types::u32 debug_output = 0x92E0;
+constexpr u32 debug_output = 0x92E0;
 #endif
 } // namespace values
 #if defined(GL_VERSION_1_0)
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_KHR_debug
      * \param callback GLDEBUGPROC
@@ -124,7 +124,7 @@ requires(semantic::concepts::Span<span_const_void>)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+requires(concepts::span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -203,25 +203,24 @@ template<
     class span_debug_type,
     class span_i32,
     class span_u32>
-requires(
-    semantic::concepts::Span<span_debug_source>&& std::is_same_v<
-        std::decay_t<typename span_debug_source::value_type>,
-        std::decay_t<group::debug_source>>&&
-        semantic::concepts::Span<span_debug_type>&& std::is_same_v<
-            std::decay_t<typename span_debug_type::value_type>,
-            std::decay_t<group::debug_type>>&&
-            semantic::concepts::Span<span_u32>&& std::is_same_v<
-                std::decay_t<typename span_u32::value_type>,
-                std::decay_t<u32>>&&
-                semantic::concepts::Span<span_debug_severity>&& std::is_same_v<
-                    std::decay_t<typename span_debug_severity::value_type>,
-                    std::decay_t<group::debug_severity>>&&
-                    semantic::concepts::Span<span_i32>&& std::is_same_v<
-                        std::decay_t<typename span_i32::value_type>,
-                        std::decay_t<i32>>&&
-                        semantic::concepts::Span<span_GLchar>&& std::is_same_v<
-                            std::decay_t<typename span_GLchar::value_type>,
-                            std::decay_t<GLchar>>)
+requires(concepts::span<span_debug_source>&&  std::is_same_v<
+         std::decay_t<typename span_debug_source::value_type>,
+         std::decay_t<group::debug_source>>&& concepts::span<span_debug_type>&&
+                                              std::is_same_v<
+                 std::decay_t<typename span_debug_type::value_type>,
+                 std::decay_t<group::debug_type>>&& concepts::span<span_u32>&&
+                                                    std::is_same_v<
+                     std::decay_t<typename span_u32::value_type>,
+                     std::decay_t<u32>>&& concepts::span<span_debug_severity>&&
+                                          std::is_same_v<
+                         std::decay_t<typename span_debug_severity::value_type>,
+                         std::decay_t<group::debug_severity>>&&
+                         concepts::span<span_i32>&& std::is_same_v<
+                             std::decay_t<typename span_i32::value_type>,
+                             std::decay_t<i32>>&& concepts::span<span_GLchar>&&
+                                                  std::is_same_v<
+                                 std::decay_t<typename span_GLchar::value_type>,
+                                 std::decay_t<GLchar>>)
     /*!
      * \brief Part of GL_KHR_debug
      * \param count GLuint
@@ -264,7 +263,7 @@ requires(
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_GLchar>
-requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
+requires(concepts::span<span_GLchar>&& std::is_same_v<
          std::decay_t<typename span_GLchar::value_type>,
          std::decay_t<GLchar>>)
     /*!
@@ -299,8 +298,8 @@ requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_GLchar, class span_const_void>
-requires(semantic::concepts::Span<span_const_void>&&
-             semantic::concepts::Span<span_GLchar>&& std::is_same_v<
+requires(concepts::span<span_const_void>&& concepts::span<span_GLchar>&&
+                                           std::is_same_v<
                  std::decay_t<typename span_GLchar::value_type>,
                  std::decay_t<GLchar>>)
     /*!
@@ -330,7 +329,7 @@ requires(semantic::concepts::Span<span_const_void>&&
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_void>
-requires(semantic::concepts::Span<span_void>)
+requires(concepts::span<span_void>)
     /*!
      * \brief Part of GL_KHR_debug
      * \param pname GLenum
@@ -379,7 +378,7 @@ STATICINLINE void object_label(
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_KHR_debug
      * \param ptr const void *
@@ -448,7 +447,7 @@ STATICINLINE void push_debug_group(
 #endif
 #if defined(GL_ES_VERSION_2_0)
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_KHR_debug
      * \param callback GLDEBUGPROCKHR
@@ -473,7 +472,7 @@ requires(semantic::concepts::Span<span_const_void>)
 #endif
 #if defined(GL_ES_VERSION_2_0)
 template<class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+requires(concepts::span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -553,25 +552,24 @@ template<
     class span_debug_type,
     class span_i32,
     class span_u32>
-requires(
-    semantic::concepts::Span<span_debug_source>&& std::is_same_v<
-        std::decay_t<typename span_debug_source::value_type>,
-        std::decay_t<group::debug_source>>&&
-        semantic::concepts::Span<span_debug_type>&& std::is_same_v<
-            std::decay_t<typename span_debug_type::value_type>,
-            std::decay_t<group::debug_type>>&&
-            semantic::concepts::Span<span_u32>&& std::is_same_v<
-                std::decay_t<typename span_u32::value_type>,
-                std::decay_t<u32>>&&
-                semantic::concepts::Span<span_debug_severity>&& std::is_same_v<
-                    std::decay_t<typename span_debug_severity::value_type>,
-                    std::decay_t<group::debug_severity>>&&
-                    semantic::concepts::Span<span_i32>&& std::is_same_v<
-                        std::decay_t<typename span_i32::value_type>,
-                        std::decay_t<i32>>&&
-                        semantic::concepts::Span<span_GLchar>&& std::is_same_v<
-                            std::decay_t<typename span_GLchar::value_type>,
-                            std::decay_t<GLchar>>)
+requires(concepts::span<span_debug_source>&&  std::is_same_v<
+         std::decay_t<typename span_debug_source::value_type>,
+         std::decay_t<group::debug_source>>&& concepts::span<span_debug_type>&&
+                                              std::is_same_v<
+                 std::decay_t<typename span_debug_type::value_type>,
+                 std::decay_t<group::debug_type>>&& concepts::span<span_u32>&&
+                                                    std::is_same_v<
+                     std::decay_t<typename span_u32::value_type>,
+                     std::decay_t<u32>>&& concepts::span<span_debug_severity>&&
+                                          std::is_same_v<
+                         std::decay_t<typename span_debug_severity::value_type>,
+                         std::decay_t<group::debug_severity>>&&
+                         concepts::span<span_i32>&& std::is_same_v<
+                             std::decay_t<typename span_i32::value_type>,
+                             std::decay_t<i32>>&& concepts::span<span_GLchar>&&
+                                                  std::is_same_v<
+                                 std::decay_t<typename span_GLchar::value_type>,
+                                 std::decay_t<GLchar>>)
     /*!
      * \brief Part of GL_KHR_debug
      * \param count GLuint
@@ -614,10 +612,10 @@ requires(
 #endif
 #if defined(GL_ES_VERSION_2_0)
 template<class span_GLchar, class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>&& semantic::concepts::Span<span_GLchar>&&
-                              std::is_same_v<
+         std::decay_t<i32>>&& concepts::span<span_GLchar>&&
+                                    std::is_same_v<
                  std::decay_t<typename span_GLchar::value_type>,
                  std::decay_t<GLchar>>)
     /*!
@@ -649,8 +647,8 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 #endif
 #if defined(GL_ES_VERSION_2_0)
 template<class span_GLchar, class span_const_void>
-requires(semantic::concepts::Span<span_const_void>&&
-             semantic::concepts::Span<span_GLchar>&& std::is_same_v<
+requires(concepts::span<span_const_void>&& concepts::span<span_GLchar>&&
+                                           std::is_same_v<
                  std::decay_t<typename span_GLchar::value_type>,
                  std::decay_t<GLchar>>)
     /*!
@@ -680,7 +678,7 @@ requires(semantic::concepts::Span<span_const_void>&&
 #endif
 #if defined(GL_ES_VERSION_2_0)
 template<class span_void>
-requires(semantic::concepts::Span<span_void>)
+requires(concepts::span<span_void>)
     /*!
      * \brief Part of GL_KHR_debug
      * \param pname GLenum
@@ -729,7 +727,7 @@ STATICINLINE void object_label(
 #endif
 #if defined(GL_ES_VERSION_2_0)
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_KHR_debug
      * \param ptr const void *

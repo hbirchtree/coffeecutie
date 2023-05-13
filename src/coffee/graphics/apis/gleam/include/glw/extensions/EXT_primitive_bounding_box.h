@@ -3,7 +3,7 @@
 #ifdef GL_EXT_primitive_bounding_box
 namespace gl::ext::primitive_bounding_box {
 namespace values {
-constexpr libc_types::u32 primitive_bounding_box = 0x92BE;
+constexpr u32 primitive_bounding_box = 0x92BE;
 } // namespace values
 /*!
  * \brief Part of GL_EXT_primitive_bounding_box

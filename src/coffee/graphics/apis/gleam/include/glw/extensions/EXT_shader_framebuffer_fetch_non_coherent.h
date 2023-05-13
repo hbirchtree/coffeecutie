@@ -3,7 +3,7 @@
 #ifdef GL_EXT_shader_framebuffer_fetch_non_coherent
 namespace gl::ext::shader_framebuffer_fetch_non_coherent {
 namespace values {
-constexpr libc_types::u32 fragment_shader_discards_samples = 0x8A52;
+constexpr u32 fragment_shader_discards_samples = 0x8A52;
 } // namespace values
 /*!
  * \brief Part of GL_EXT_shader_framebuffer_fetch_non_coherent

@@ -37,7 +37,7 @@ requires(MinimumVersion<Current, Version<3, 1>>)
         group::primitive_type     mode,
         i32                       count,
         group::draw_elements_type type,
-        ptroff                    indices,
+        intptr_t                  indices,
         i32                       instancecount)
 {
     using namespace std::string_view_literals;
@@ -136,8 +136,8 @@ requires(MinimumVersion<Current, Version<3, 1>>)
 }
 
 template<class span_GLchar>
-requires(MinimumVersion<Current, Version<3, 1>>&&
-             semantic::concepts::Span<span_GLchar>&& std::is_same_v<
+requires(MinimumVersion<Current, Version<3, 1>>&& concepts::span<span_GLchar>&&
+                                                  std::is_same_v<
                  std::decay_t<typename span_GLchar::value_type>,
                  std::decay_t<GLchar>>)
     /*!
@@ -172,8 +172,8 @@ requires(MinimumVersion<Current, Version<3, 1>>&&
 }
 
 template<class span_i32>
-requires(MinimumVersion<Current, Version<3, 1>>&&
-             semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(MinimumVersion<Current, Version<3, 1>>&& concepts::span<span_i32>&&
+                                                  std::is_same_v<
                  std::decay_t<typename span_i32::value_type>,
                  std::decay_t<i32>>)
     /*!
@@ -209,8 +209,8 @@ requires(MinimumVersion<Current, Version<3, 1>>&&
 }
 
 template<class span_GLchar>
-requires(MinimumVersion<Current, Version<3, 1>>&&
-             semantic::concepts::Span<span_GLchar>&& std::is_same_v<
+requires(MinimumVersion<Current, Version<3, 1>>&& concepts::span<span_GLchar>&&
+                                                  std::is_same_v<
                  std::decay_t<typename span_GLchar::value_type>,
                  std::decay_t<GLchar>>)
     /*!
@@ -242,10 +242,10 @@ requires(MinimumVersion<Current, Version<3, 1>>&&
 
 template<class span_const_u32, class span_i32>
 requires(MinimumVersion<Current, Version<3, 1>>&&
-             semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+             concepts::span<span_const_u32>&& std::is_same_v<
                  std::decay_t<typename span_const_u32::value_type>,
-                 std::decay_t<u32>>&& semantic::concepts::Span<span_i32>&&
-                                      std::is_same_v<
+                 std::decay_t<u32>>&& concepts::span<span_i32>&&
+                                              std::is_same_v<
                      std::decay_t<typename span_i32::value_type>,
                      std::decay_t<i32>>)
     /*!
@@ -311,8 +311,8 @@ requires(MinimumVersion<Current, Version<3, 1>>)
 }
 
 template<class span_u32>
-requires(MinimumVersion<Current, Version<3, 1>>&&
-             semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(MinimumVersion<Current, Version<3, 1>>&& concepts::span<span_u32>&&
+                                                  std::is_same_v<
                  std::decay_t<typename span_u32::value_type>,
                  std::decay_t<u32>>)
     /*!

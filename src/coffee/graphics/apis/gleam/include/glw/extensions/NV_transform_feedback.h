@@ -5,33 +5,32 @@
 namespace gl::nv::transform_feedback {
 using gl::group::transform_feedback_token_nv;
 namespace values {
-constexpr libc_types::u32 back_primary_color                         = 0x8C77;
-constexpr libc_types::u32 back_secondary_color                       = 0x8C78;
-constexpr libc_types::u32 texture_coord                              = 0x8C79;
-constexpr libc_types::u32 clip_distance                              = 0x8C7A;
-constexpr libc_types::u32 vertex_id                                  = 0x8C7B;
-constexpr libc_types::u32 primitive_id                               = 0x8C7C;
-constexpr libc_types::u32 generic_attrib                             = 0x8C7D;
-constexpr libc_types::u32 transform_feedback_attribs                 = 0x8C7E;
-constexpr libc_types::u32 transform_feedback_buffer_mode             = 0x8C7F;
-constexpr libc_types::u32 max_transform_feedback_separate_components = 0x8C80;
-constexpr libc_types::u32 active_varyings                            = 0x8C81;
-constexpr libc_types::u32 active_varying_max_length                  = 0x8C82;
-constexpr libc_types::u32 transform_feedback_varyings                = 0x8C83;
-constexpr libc_types::u32 transform_feedback_buffer_start            = 0x8C84;
-constexpr libc_types::u32 transform_feedback_buffer_size             = 0x8C85;
-constexpr libc_types::u32 transform_feedback_record                  = 0x8C86;
-constexpr libc_types::u32 primitives_generated                       = 0x8C87;
-constexpr libc_types::u32 transform_feedback_primitives_written      = 0x8C88;
-constexpr libc_types::u32 rasterizer_discard                         = 0x8C89;
-constexpr libc_types::u32 max_transform_feedback_interleaved_components =
-    0x8C8A;
-constexpr libc_types::u32 max_transform_feedback_separate_attribs = 0x8C8B;
-constexpr libc_types::u32 interleaved_attribs                     = 0x8C8C;
-constexpr libc_types::u32 separate_attribs                        = 0x8C8D;
-constexpr libc_types::u32 transform_feedback_buffer               = 0x8C8E;
-constexpr libc_types::u32 transform_feedback_buffer_binding       = 0x8C8F;
-constexpr libc_types::u32 layer                                   = 0x8DAA;
+constexpr u32 back_primary_color                            = 0x8C77;
+constexpr u32 back_secondary_color                          = 0x8C78;
+constexpr u32 texture_coord                                 = 0x8C79;
+constexpr u32 clip_distance                                 = 0x8C7A;
+constexpr u32 vertex_id                                     = 0x8C7B;
+constexpr u32 primitive_id                                  = 0x8C7C;
+constexpr u32 generic_attrib                                = 0x8C7D;
+constexpr u32 transform_feedback_attribs                    = 0x8C7E;
+constexpr u32 transform_feedback_buffer_mode                = 0x8C7F;
+constexpr u32 max_transform_feedback_separate_components    = 0x8C80;
+constexpr u32 active_varyings                               = 0x8C81;
+constexpr u32 active_varying_max_length                     = 0x8C82;
+constexpr u32 transform_feedback_varyings                   = 0x8C83;
+constexpr u32 transform_feedback_buffer_start               = 0x8C84;
+constexpr u32 transform_feedback_buffer_size                = 0x8C85;
+constexpr u32 transform_feedback_record                     = 0x8C86;
+constexpr u32 primitives_generated                          = 0x8C87;
+constexpr u32 transform_feedback_primitives_written         = 0x8C88;
+constexpr u32 rasterizer_discard                            = 0x8C89;
+constexpr u32 max_transform_feedback_interleaved_components = 0x8C8A;
+constexpr u32 max_transform_feedback_separate_attribs       = 0x8C8B;
+constexpr u32 interleaved_attribs                           = 0x8C8C;
+constexpr u32 separate_attribs                              = 0x8C8D;
+constexpr u32 transform_feedback_buffer                     = 0x8C8E;
+constexpr u32 transform_feedback_buffer_binding             = 0x8C8F;
+constexpr u32 layer                                         = 0x8DAA;
 } // namespace values
 /*!
  * \brief Part of GL_NV_transform_feedback
@@ -168,7 +167,7 @@ STATICINLINE void end_transform_feedback()
 }
 
 template<class span_GLchar>
-requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
+requires(concepts::span<span_GLchar>&& std::is_same_v<
          std::decay_t<typename span_GLchar::value_type>,
          std::decay_t<GLchar>>)
     /*!
@@ -254,7 +253,7 @@ get_varying_location(u32 program, std::string_view const& name)
 }
 
 template<class span_const_i32>
-requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
+requires(concepts::span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -281,7 +280,7 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
 }
 
 template<class span_const_i32>
-requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
+requires(concepts::span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -317,7 +316,7 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
 }
 
 template<class span_const_i32>
-requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
+requires(concepts::span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
          std::decay_t<i32>>)
     /*!

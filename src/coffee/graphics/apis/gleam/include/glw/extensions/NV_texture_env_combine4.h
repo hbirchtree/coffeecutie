@@ -5,7 +5,7 @@
 namespace gl::nv::texture_env_combine4 {
 using gl::group::texture_env_parameter;
 namespace values {
-constexpr libc_types::u32 combine4 = 0x8503;
+constexpr u32 combine4 = 0x8503;
 } // namespace values
 } // namespace gl::nv::texture_env_combine4
 #endif // GL_NV_texture_env_combine4

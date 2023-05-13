@@ -3,10 +3,10 @@
 #ifdef GL_EXT_provoking_vertex
 namespace gl::ext::provoking_vertex {
 namespace values {
-constexpr libc_types::u32 quads_follow_provoking_vertex_convention = 0x8E4C;
-constexpr libc_types::u32 first_vertex_convention                  = 0x8E4D;
-constexpr libc_types::u32 last_vertex_convention                   = 0x8E4E;
-constexpr libc_types::u32 provoking_vertex                         = 0x8E4F;
+constexpr u32 quads_follow_provoking_vertex_convention = 0x8E4C;
+constexpr u32 first_vertex_convention                  = 0x8E4D;
+constexpr u32 last_vertex_convention                   = 0x8E4E;
+constexpr u32 provoking_vertex                         = 0x8E4F;
 } // namespace values
 /*!
  * \brief Part of GL_EXT_provoking_vertex

@@ -625,21 +625,32 @@ inline void make_immutable_view(
 {
 #if GLEAM_MAX_VERSION >= 0x430
     if(texture.m_features.views)
+    {
         std::apply<decltype(cmd::texture_view<>)>(
             cmd::texture_view<>, std::move(arguments));
-    else
+        return;
+    }
 #endif
 #if defined(GL_ARB_texture_view)
-        if(texture.m_features.arb.texture_view)
+    if(texture.m_features.arb.texture_view)
+    {
         std::apply(gl::arb::texture_view::texture_view, arguments);
+        return;
+    }
 #endif
 #if defined(GL_EXT_texture_view)
     if(texture.m_features.ext.texture_view)
+    {
         std::apply(gl::ext::texture_view::texture_view, arguments);
+        return;
+    }
 #endif
 #if defined(GL_OES_texture_view)
-    else if(texture.m_features.oes.texture_view)
+    if(texture.m_features.oes.texture_view)
+    {
         std::apply(gl::oes::texture_view::texture_view, arguments);
+        return;
+    }
 #endif
 }
 

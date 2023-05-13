@@ -3,15 +3,15 @@
 #ifdef GL_NV_present_video
 namespace gl::nv::present_video {
 namespace values {
-constexpr libc_types::u32 frame            = 0x8E26;
-constexpr libc_types::u32 fields           = 0x8E27;
-constexpr libc_types::u32 current_time     = 0x8E28;
-constexpr libc_types::u32 num_fill_streams = 0x8E29;
-constexpr libc_types::u32 present_time     = 0x8E2A;
-constexpr libc_types::u32 present_duration = 0x8E2B;
+constexpr u32 frame            = 0x8E26;
+constexpr u32 fields           = 0x8E27;
+constexpr u32 current_time     = 0x8E28;
+constexpr u32 num_fill_streams = 0x8E29;
+constexpr u32 present_time     = 0x8E2A;
+constexpr u32 present_duration = 0x8E2B;
 } // namespace values
 template<class span_GLint64EXT>
-requires(semantic::concepts::Span<span_GLint64EXT>&& std::is_same_v<
+requires(concepts::span<span_GLint64EXT>&& std::is_same_v<
          std::decay_t<typename span_GLint64EXT::value_type>,
          std::decay_t<GLint64EXT>>)
     /*!
@@ -37,7 +37,7 @@ requires(semantic::concepts::Span<span_GLint64EXT>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -62,7 +62,7 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_GLuint64EXT>
-requires(semantic::concepts::Span<span_GLuint64EXT>&& std::is_same_v<
+requires(concepts::span<span_GLuint64EXT>&& std::is_same_v<
          std::decay_t<typename span_GLuint64EXT::value_type>,
          std::decay_t<GLuint64EXT>>)
     /*!
@@ -89,7 +89,7 @@ requires(semantic::concepts::Span<span_GLuint64EXT>&& std::is_same_v<
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(concepts::span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
          std::decay_t<u32>>)
     /*!

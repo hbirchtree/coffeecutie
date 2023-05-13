@@ -5,13 +5,13 @@
 namespace gl::ext::blend_color {
 using gl::group::get_prop;
 namespace values {
-constexpr libc_types::u32 constant_color           = 0x8001;
-constexpr libc_types::u32 one_minus_constant_color = 0x8002;
-constexpr libc_types::u32 constant_alpha           = 0x8003;
-constexpr libc_types::u32 one_minus_constant_alpha = 0x8004;
+constexpr u32 constant_color           = 0x8001;
+constexpr u32 one_minus_constant_color = 0x8002;
+constexpr u32 constant_alpha           = 0x8003;
+constexpr u32 one_minus_constant_alpha = 0x8004;
 } // namespace values
 template<class vec_4_f32>
-requires(semantic::concepts::Vector<vec_4_f32, f32, 4>)
+requires(concepts::vector<vec_4_f32, f32, 4>)
     /*!
      * \brief Part of GL_EXT_blend_color
      * \param red GLfloat

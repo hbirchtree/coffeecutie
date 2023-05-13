@@ -10,7 +10,7 @@ namespace values {
 } // namespace values
 template<class span_const_invalidate_framebuffer_attachment>
 requires(
-    semantic::concepts::Span<span_const_invalidate_framebuffer_attachment>&&
+    concepts::span<span_const_invalidate_framebuffer_attachment>&&
         std::is_same_v<
             std::decay_t<typename span_const_invalidate_framebuffer_attachment::
                              value_type>,

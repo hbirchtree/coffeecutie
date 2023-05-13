@@ -21,8 +21,8 @@ using gl::group::shader_type;
 using gl::group::uniform_block_prop;
 using gl::group::use_program_stage_mask;
 namespace values {
-constexpr libc_types::u32 max_compute_shared_memory_size = 0x8262;
-constexpr libc_types::u32 max_compute_image_uniforms     = 0x91BD;
+constexpr u32 max_compute_shared_memory_size = 0x8262;
+constexpr u32 max_compute_image_uniforms     = 0x91BD;
 } // namespace values
 /*!
  * \brief Part of GL_ARB_compute_shader

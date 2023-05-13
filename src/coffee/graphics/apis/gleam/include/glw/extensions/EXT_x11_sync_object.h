@@ -3,7 +3,7 @@
 #ifdef GL_EXT_x11_sync_object
 namespace gl::ext::x11_sync_object {
 namespace values {
-constexpr libc_types::u32 sync_x11_fence = 0x90E1;
+constexpr u32 sync_x11_fence = 0x90E1;
 } // namespace values
 /*!
  * \brief Part of GL_EXT_x11_sync_object

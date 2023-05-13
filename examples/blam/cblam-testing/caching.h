@@ -83,6 +83,7 @@ struct BSPItem
     blam::tag_t const*                       tag{nullptr};
     std::vector<Group>                       groups;
     std::vector<gleam::draw_command::data_t> portals;
+    std::vector<u32>                         portal_color_ptrs;
 
     inline bool valid() const
     {
@@ -1700,7 +1701,8 @@ struct BSPCache
     {
         index    = blam::tag_index_view(map);
         magic    = map.magic;
-        vert_ptr = 0, element_ptr = 0, light_ptr = 0, portal_ptr = 0;
+        vert_ptr = 0, element_ptr = 0, light_ptr = 0, portal_ptr = 0,
+        portal_color_ptr = 0;
         evict_all();
     }
 
@@ -1711,8 +1713,8 @@ struct BSPCache
     blam::magic_data_t      magic;
 
     Bytes                      vert_buffer, element_buffer, light_buffer;
-    semantic::mem_chunk<Vecf3> portal_buffer;
-    u32                        vert_ptr, element_ptr, light_ptr, portal_ptr;
+    semantic::mem_chunk<Vecf3> portal_buffer, portal_color_buffer;
+    u32 vert_ptr, element_ptr, light_ptr, portal_ptr, portal_color_ptr;
 
     virtual BSPItem predict_impl(blam::bsp::info const& bsp) override
     {
@@ -1742,13 +1744,17 @@ struct BSPCache
                 vertices.begin(),
                 vertices.end(),
                 portal_buffer.begin() + portal_ptr);
+            portal_color_buffer[portal_color_ptr] = Vecf3(1);
             out.portals.push_back({
                 .arrays = {
                      .count  = static_cast<u32>(vertices.size()),
                      .offset = static_cast<u32>(portal_ptr),
                 },
             });
+            out.portal_color_ptrs.push_back(portal_color_ptr);
+
             portal_ptr += vertices.size();
+            portal_color_ptr++;
         }
 
         for(auto const& group : section.submesh_groups.data(bsp_magic).value())

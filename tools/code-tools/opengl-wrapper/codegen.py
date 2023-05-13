@@ -221,7 +221,7 @@ def gen_concept_type(pod_type: str, const: bool = False, cls: str = None, dim: s
 
 
 def add_concept(templates: list, type: str, concept_name: str):
-    templates.append([f'class {type}', f'semantic::concepts::{concept_name}'])
+    templates.append([f'class {type}', f'concepts::{concept_name}'])
 
 
 def coordinate_transform(params: list, i: int, output: list, inputs: list, template: list):
@@ -248,7 +248,7 @@ def coordinate_transform(params: list, i: int, output: list, inputs: list, templ
         return 1
 
     vector_type = gen_concept_type(pod_type, False, 'vec', num)
-    template.append([f'class {vector_type}', f'semantic::concepts::Vector<{vector_type}, {pod_type}, {num}>'])
+    template.append([f'class {vector_type}', f'concepts::vector<{vector_type}, {pod_type}, {num}>'])
     output.append([name, f'{vector_type} const&', None])
     return num
 
@@ -275,9 +275,9 @@ def dimensions_transform(params: list, i: int, output: list, inputs: list, templ
 
     vector_type = gen_concept_type(pod_type, False, 'size', num)
     if num == 2:
-        template.append([f'class {vector_type}', f'semantic::concepts::Size2D<{vector_type}, {pod_type}>'])
+        template.append([f'class {vector_type}', f'concepts::size_2d<{vector_type}, {pod_type}>'])
     elif num == 3:
-        template.append([f'class {vector_type}', f'semantic::concepts::Size2D<{vector_type}, {pod_type}>'])
+        template.append([f'class {vector_type}', f'concepts::size_2d<{vector_type}, {pod_type}>'])
     else:
         raise RuntimeError('dimension structure > 3 elements')
     output.append([name, f'{vector_type} const&', None])
@@ -331,9 +331,9 @@ def static_array_transform(params: list, i: int, static_size: str, output: list,
     concept_type = 'span_' + gen_concept_type(pod_type, const == 'const', cls, dim)
     add_concept(template, concept_type, f'span<{concept_type}>')
     if cls == 'mat':
-        template.append([None, f'semantic::concepts::Matrix<typename {concept_type}::value_type, {pod_type}, {size[0]}, {size[1]}>'])
+        template.append([None, f'concepts::matrix<typename {concept_type}::value_type, {pod_type}, {size[0]}, {size[1]}>'])
     elif cls == 'vec':
-        template.append([None, f'semantic::concepts::Vector<typename {concept_type}::value_type, {pod_type}, {size[0]}>'])
+        template.append([None, f'concepts::vector<typename {concept_type}::value_type, {pod_type}, {size[0]}>'])
     else:
         template.append([None, f'std::is_same_v<std::decay_t<typename {concept_type}::value_type>, std::decay_t<{pod_type}>>'])
     const = 'const&' if const != '' else ''
@@ -434,7 +434,7 @@ def draw_transform(params: list, inputs: list, lines: list, template: list, usag
         
         if i == offset_idx:
             inputs.append(f'reinterpret_cast<const void*>({name})')
-            output.append([name, 'ptroff', meta])
+            output.append([name, 'intptr_t', meta])
             continue
 
         if has_arrays and param in arrays:

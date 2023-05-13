@@ -3,11 +3,11 @@
 #ifdef GL_ARB_gl_spirv
 namespace gl::arb::gl_spirv {
 namespace values {
-constexpr libc_types::u32 shader_binary_format_spir_v = 0x9551;
-constexpr libc_types::u32 spir_v_binary               = 0x9552;
+constexpr u32 shader_binary_format_spir_v = 0x9551;
+constexpr u32 spir_v_binary               = 0x9552;
 } // namespace values
 template<class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+requires(concepts::span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
          std::decay_t<u32>>)
     /*!

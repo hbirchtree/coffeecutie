@@ -107,6 +107,8 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         {
             auto material
                 = semantic::mem_chunk<T>::ofContainer(material_mapping);
+            if(idx >= material.size)
+                Throw(std::out_of_range("material index out of range"));
             return material[idx];
         }
     };
@@ -482,6 +484,8 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         RenderingParameters*                   params;
         e.subsystem(params);
 
+        Span<Vecf3> colors = m_resources.debug_line_colors->map<Vecf3>(0);
+
         for(auto& ent : e.select(ObjectBsp))
         {
             if(!params->debug_portals)
@@ -500,7 +504,11 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             auto             ref  = e.template ref<Proxy>(ent);
             DebugDraw const& draw = ref.template get<DebugDraw>();
             groups.push_back(draw.data);
+            groups.back().instances.offset = draw.color_ptr;
+            colors[draw.color_ptr] = draw.selected ? Vecf3{0, 1, 0} : Vecf3{1};
         }
+
+        m_resources.debug_line_colors->unmap();
 
         m_api->submit({
                 .program = m_resources.debug_lines_pipeline,

@@ -13,10 +13,9 @@ using gl::group::copy_buffer_sub_data_target;
 using gl::group::get_prop;
 using gl::group::memory_barrier_mask;
 namespace values {
-constexpr libc_types::u32 max_combined_image_units_and_fragment_outputs =
-    0x8F39;
-constexpr libc_types::u32 max_combined_shader_output_resources = 0x8F39;
-constexpr libc_types::u32 max_shader_storage_block_size        = 0x90DE;
+constexpr u32 max_combined_image_units_and_fragment_outputs = 0x8F39;
+constexpr u32 max_combined_shader_output_resources          = 0x8F39;
+constexpr u32 max_shader_storage_block_size                 = 0x90DE;
 } // namespace values
 /*!
  * \brief Part of GL_ARB_shader_storage_buffer_object

@@ -9,14 +9,14 @@ using gl::group::bind_transform_feedback_target;
 using gl::group::container_type;
 using gl::group::object_identifier;
 namespace values {
-constexpr libc_types::u32 program_pipeline_object = 0x8A4F;
-constexpr libc_types::u32 shader_object           = 0x8B48;
-constexpr libc_types::u32 buffer_object           = 0x9151;
-constexpr libc_types::u32 query_object            = 0x9153;
-constexpr libc_types::u32 vertex_array_object     = 0x9154;
+constexpr u32 program_pipeline_object = 0x8A4F;
+constexpr u32 shader_object           = 0x8B48;
+constexpr u32 buffer_object           = 0x9151;
+constexpr u32 query_object            = 0x9153;
+constexpr u32 vertex_array_object     = 0x9154;
 } // namespace values
 template<class span_GLchar>
-requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
+requires(concepts::span<span_GLchar>&& std::is_same_v<
          std::decay_t<typename span_GLchar::value_type>,
          std::decay_t<GLchar>>)
     /*!

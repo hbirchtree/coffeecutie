@@ -5,8 +5,8 @@
 namespace gl::arb::texture_buffer_range {
 using gl::group::get_prop;
 namespace values {
-constexpr libc_types::u32 texture_buffer_offset = 0x919D;
-constexpr libc_types::u32 texture_buffer_size   = 0x919E;
+constexpr u32 texture_buffer_offset = 0x919D;
+constexpr u32 texture_buffer_size   = 0x919E;
 } // namespace values
 /*!
  * \brief Part of GL_ARB_texture_buffer_range

@@ -5,94 +5,94 @@
 namespace gl::nv::vertex_program {
 using gl::group::vertex_attrib_enum_nv;
 namespace values {
-constexpr libc_types::u32 vertex_program               = 0x8620;
-constexpr libc_types::u32 vertex_state_program         = 0x8621;
-constexpr libc_types::u32 attrib_array_size            = 0x8623;
-constexpr libc_types::u32 attrib_array_stride          = 0x8624;
-constexpr libc_types::u32 attrib_array_type            = 0x8625;
-constexpr libc_types::u32 current_attrib               = 0x8626;
-constexpr libc_types::u32 program_length               = 0x8627;
-constexpr libc_types::u32 program_string               = 0x8628;
-constexpr libc_types::u32 modelview_projection         = 0x8629;
-constexpr libc_types::u32 identity                     = 0x862A;
-constexpr libc_types::u32 inverse                      = 0x862B;
-constexpr libc_types::u32 transpose                    = 0x862C;
-constexpr libc_types::u32 inverse_transpose            = 0x862D;
-constexpr libc_types::u32 max_track_matrix_stack_depth = 0x862E;
-constexpr libc_types::u32 max_track_matrices           = 0x862F;
-constexpr libc_types::u32 matrix0                      = 0x8630;
-constexpr libc_types::u32 matrix1                      = 0x8631;
-constexpr libc_types::u32 matrix2                      = 0x8632;
-constexpr libc_types::u32 matrix3                      = 0x8633;
-constexpr libc_types::u32 matrix4                      = 0x8634;
-constexpr libc_types::u32 matrix5                      = 0x8635;
-constexpr libc_types::u32 matrix6                      = 0x8636;
-constexpr libc_types::u32 matrix7                      = 0x8637;
-constexpr libc_types::u32 current_matrix_stack_depth   = 0x8640;
-constexpr libc_types::u32 current_matrix               = 0x8641;
-constexpr libc_types::u32 vertex_program_point_size    = 0x8642;
-constexpr libc_types::u32 vertex_program_two_side      = 0x8643;
-constexpr libc_types::u32 attrib_array_pointer         = 0x8645;
-constexpr libc_types::u32 program_target               = 0x8646;
-constexpr libc_types::u32 program_resident             = 0x8647;
-constexpr libc_types::u32 track_matrix                 = 0x8648;
-constexpr libc_types::u32 track_matrix_transform       = 0x8649;
-constexpr libc_types::u32 vertex_program_binding       = 0x864A;
-constexpr libc_types::u32 program_error_position       = 0x864B;
-constexpr libc_types::u32 vertex_attrib_array0         = 0x8650;
-constexpr libc_types::u32 vertex_attrib_array1         = 0x8651;
-constexpr libc_types::u32 vertex_attrib_array2         = 0x8652;
-constexpr libc_types::u32 vertex_attrib_array3         = 0x8653;
-constexpr libc_types::u32 vertex_attrib_array4         = 0x8654;
-constexpr libc_types::u32 vertex_attrib_array5         = 0x8655;
-constexpr libc_types::u32 vertex_attrib_array6         = 0x8656;
-constexpr libc_types::u32 vertex_attrib_array7         = 0x8657;
-constexpr libc_types::u32 vertex_attrib_array8         = 0x8658;
-constexpr libc_types::u32 vertex_attrib_array9         = 0x8659;
-constexpr libc_types::u32 vertex_attrib_array10        = 0x865A;
-constexpr libc_types::u32 vertex_attrib_array11        = 0x865B;
-constexpr libc_types::u32 vertex_attrib_array12        = 0x865C;
-constexpr libc_types::u32 vertex_attrib_array13        = 0x865D;
-constexpr libc_types::u32 vertex_attrib_array14        = 0x865E;
-constexpr libc_types::u32 vertex_attrib_array15        = 0x865F;
-constexpr libc_types::u32 map1_vertex_attrib0_4        = 0x8660;
-constexpr libc_types::u32 map1_vertex_attrib1_4        = 0x8661;
-constexpr libc_types::u32 map1_vertex_attrib2_4        = 0x8662;
-constexpr libc_types::u32 map1_vertex_attrib3_4        = 0x8663;
-constexpr libc_types::u32 map1_vertex_attrib4_4        = 0x8664;
-constexpr libc_types::u32 map1_vertex_attrib5_4        = 0x8665;
-constexpr libc_types::u32 map1_vertex_attrib6_4        = 0x8666;
-constexpr libc_types::u32 map1_vertex_attrib7_4        = 0x8667;
-constexpr libc_types::u32 map1_vertex_attrib8_4        = 0x8668;
-constexpr libc_types::u32 map1_vertex_attrib9_4        = 0x8669;
-constexpr libc_types::u32 map1_vertex_attrib10_4       = 0x866A;
-constexpr libc_types::u32 map1_vertex_attrib11_4       = 0x866B;
-constexpr libc_types::u32 map1_vertex_attrib12_4       = 0x866C;
-constexpr libc_types::u32 map1_vertex_attrib13_4       = 0x866D;
-constexpr libc_types::u32 map1_vertex_attrib14_4       = 0x866E;
-constexpr libc_types::u32 map1_vertex_attrib15_4       = 0x866F;
-constexpr libc_types::u32 map2_vertex_attrib0_4        = 0x8670;
-constexpr libc_types::u32 map2_vertex_attrib1_4        = 0x8671;
-constexpr libc_types::u32 map2_vertex_attrib2_4        = 0x8672;
-constexpr libc_types::u32 map2_vertex_attrib3_4        = 0x8673;
-constexpr libc_types::u32 map2_vertex_attrib4_4        = 0x8674;
-constexpr libc_types::u32 map2_vertex_attrib5_4        = 0x8675;
-constexpr libc_types::u32 map2_vertex_attrib6_4        = 0x8676;
-constexpr libc_types::u32 map2_vertex_attrib7_4        = 0x8677;
-constexpr libc_types::u32 map2_vertex_attrib8_4        = 0x8678;
-constexpr libc_types::u32 map2_vertex_attrib9_4        = 0x8679;
-constexpr libc_types::u32 map2_vertex_attrib10_4       = 0x867A;
-constexpr libc_types::u32 map2_vertex_attrib11_4       = 0x867B;
-constexpr libc_types::u32 map2_vertex_attrib12_4       = 0x867C;
-constexpr libc_types::u32 map2_vertex_attrib13_4       = 0x867D;
-constexpr libc_types::u32 map2_vertex_attrib14_4       = 0x867E;
-constexpr libc_types::u32 map2_vertex_attrib15_4       = 0x867F;
+constexpr u32 vertex_program               = 0x8620;
+constexpr u32 vertex_state_program         = 0x8621;
+constexpr u32 attrib_array_size            = 0x8623;
+constexpr u32 attrib_array_stride          = 0x8624;
+constexpr u32 attrib_array_type            = 0x8625;
+constexpr u32 current_attrib               = 0x8626;
+constexpr u32 program_length               = 0x8627;
+constexpr u32 program_string               = 0x8628;
+constexpr u32 modelview_projection         = 0x8629;
+constexpr u32 identity                     = 0x862A;
+constexpr u32 inverse                      = 0x862B;
+constexpr u32 transpose                    = 0x862C;
+constexpr u32 inverse_transpose            = 0x862D;
+constexpr u32 max_track_matrix_stack_depth = 0x862E;
+constexpr u32 max_track_matrices           = 0x862F;
+constexpr u32 matrix0                      = 0x8630;
+constexpr u32 matrix1                      = 0x8631;
+constexpr u32 matrix2                      = 0x8632;
+constexpr u32 matrix3                      = 0x8633;
+constexpr u32 matrix4                      = 0x8634;
+constexpr u32 matrix5                      = 0x8635;
+constexpr u32 matrix6                      = 0x8636;
+constexpr u32 matrix7                      = 0x8637;
+constexpr u32 current_matrix_stack_depth   = 0x8640;
+constexpr u32 current_matrix               = 0x8641;
+constexpr u32 vertex_program_point_size    = 0x8642;
+constexpr u32 vertex_program_two_side      = 0x8643;
+constexpr u32 attrib_array_pointer         = 0x8645;
+constexpr u32 program_target               = 0x8646;
+constexpr u32 program_resident             = 0x8647;
+constexpr u32 track_matrix                 = 0x8648;
+constexpr u32 track_matrix_transform       = 0x8649;
+constexpr u32 vertex_program_binding       = 0x864A;
+constexpr u32 program_error_position       = 0x864B;
+constexpr u32 vertex_attrib_array0         = 0x8650;
+constexpr u32 vertex_attrib_array1         = 0x8651;
+constexpr u32 vertex_attrib_array2         = 0x8652;
+constexpr u32 vertex_attrib_array3         = 0x8653;
+constexpr u32 vertex_attrib_array4         = 0x8654;
+constexpr u32 vertex_attrib_array5         = 0x8655;
+constexpr u32 vertex_attrib_array6         = 0x8656;
+constexpr u32 vertex_attrib_array7         = 0x8657;
+constexpr u32 vertex_attrib_array8         = 0x8658;
+constexpr u32 vertex_attrib_array9         = 0x8659;
+constexpr u32 vertex_attrib_array10        = 0x865A;
+constexpr u32 vertex_attrib_array11        = 0x865B;
+constexpr u32 vertex_attrib_array12        = 0x865C;
+constexpr u32 vertex_attrib_array13        = 0x865D;
+constexpr u32 vertex_attrib_array14        = 0x865E;
+constexpr u32 vertex_attrib_array15        = 0x865F;
+constexpr u32 map1_vertex_attrib0_4        = 0x8660;
+constexpr u32 map1_vertex_attrib1_4        = 0x8661;
+constexpr u32 map1_vertex_attrib2_4        = 0x8662;
+constexpr u32 map1_vertex_attrib3_4        = 0x8663;
+constexpr u32 map1_vertex_attrib4_4        = 0x8664;
+constexpr u32 map1_vertex_attrib5_4        = 0x8665;
+constexpr u32 map1_vertex_attrib6_4        = 0x8666;
+constexpr u32 map1_vertex_attrib7_4        = 0x8667;
+constexpr u32 map1_vertex_attrib8_4        = 0x8668;
+constexpr u32 map1_vertex_attrib9_4        = 0x8669;
+constexpr u32 map1_vertex_attrib10_4       = 0x866A;
+constexpr u32 map1_vertex_attrib11_4       = 0x866B;
+constexpr u32 map1_vertex_attrib12_4       = 0x866C;
+constexpr u32 map1_vertex_attrib13_4       = 0x866D;
+constexpr u32 map1_vertex_attrib14_4       = 0x866E;
+constexpr u32 map1_vertex_attrib15_4       = 0x866F;
+constexpr u32 map2_vertex_attrib0_4        = 0x8670;
+constexpr u32 map2_vertex_attrib1_4        = 0x8671;
+constexpr u32 map2_vertex_attrib2_4        = 0x8672;
+constexpr u32 map2_vertex_attrib3_4        = 0x8673;
+constexpr u32 map2_vertex_attrib4_4        = 0x8674;
+constexpr u32 map2_vertex_attrib5_4        = 0x8675;
+constexpr u32 map2_vertex_attrib6_4        = 0x8676;
+constexpr u32 map2_vertex_attrib7_4        = 0x8677;
+constexpr u32 map2_vertex_attrib8_4        = 0x8678;
+constexpr u32 map2_vertex_attrib9_4        = 0x8679;
+constexpr u32 map2_vertex_attrib10_4       = 0x867A;
+constexpr u32 map2_vertex_attrib11_4       = 0x867B;
+constexpr u32 map2_vertex_attrib12_4       = 0x867C;
+constexpr u32 map2_vertex_attrib13_4       = 0x867D;
+constexpr u32 map2_vertex_attrib14_4       = 0x867E;
+constexpr u32 map2_vertex_attrib15_4       = 0x867F;
 } // namespace values
 template<class span_bool, class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+requires(concepts::span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>&& semantic::concepts::Span<span_bool>&&
-                              std::is_same_v<
+         std::decay_t<u32>>&& concepts::span<span_bool>&&
+                                          std::is_same_v<
                  std::decay_t<typename span_bool::value_type>,
                  std::decay_t<bool>>)
     /*!
@@ -138,7 +138,7 @@ STATICINLINE void bind_program(group::vertex_attrib_enum_nv target, u32 id)
 }
 
 template<class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+requires(concepts::span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -162,7 +162,7 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
 }
 
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+requires(concepts::span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -191,7 +191,7 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(concepts::span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -214,7 +214,7 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 }
 
 template<class span_f64>
-requires(semantic::concepts::Span<span_f64>&& std::is_same_v<
+requires(concepts::span<span_f64>&& std::is_same_v<
          std::decay_t<typename span_f64::value_type>,
          std::decay_t<f64>>)
     /*!
@@ -245,7 +245,7 @@ requires(semantic::concepts::Span<span_f64>&& std::is_same_v<
 }
 
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+requires(concepts::span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -276,7 +276,7 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 }
 
 template<class span_u8>
-requires(semantic::concepts::Span<span_u8>&& std::is_same_v<
+requires(concepts::span<span_u8>&& std::is_same_v<
          std::decay_t<typename span_u8::value_type>,
          std::decay_t<u8>>)
     /*!
@@ -302,7 +302,7 @@ requires(semantic::concepts::Span<span_u8>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -355,7 +355,7 @@ STATICINLINE void get_track_matrixiv(
 }
 
 template<class span_void>
-requires(semantic::concepts::Span<span_void>)
+requires(concepts::span<span_void>)
     /*!
      * \brief Part of GL_NV_vertex_program
      * \param index GLuint
@@ -453,7 +453,7 @@ STATICINLINE bool is_program(u32 id)
 }
 
 template<class span_const_u8>
-requires(semantic::concepts::Span<span_const_u8>&& std::is_same_v<
+requires(concepts::span<span_const_u8>&& std::is_same_v<
          std::decay_t<typename span_const_u8::value_type>,
          std::decay_t<u8>>)
     /*!
@@ -484,7 +484,7 @@ requires(semantic::concepts::Span<span_const_u8>&& std::is_same_v<
 }
 
 template<class vec_4_f64>
-requires(semantic::concepts::Vector<vec_4_f64, f64, 4>)
+requires(concepts::vector<vec_4_f64, f64, 4>)
     /*!
      * \brief Part of GL_NV_vertex_program
      * \param target GLenum
@@ -509,8 +509,9 @@ requires(semantic::concepts::Vector<vec_4_f64, f64, 4>)
 }
 
 template<class span_const_vec_4_f64>
-requires(semantic::concepts::Span<span_const_vec_4_f64>&& semantic::concepts::
-             Vector<typename span_const_vec_4_f64::value_type, f64, 4>)
+requires(
+    concepts::span<span_const_vec_4_f64>&&
+        concepts::vector<typename span_const_vec_4_f64::value_type, f64, 4>)
     /*!
      * \brief Part of GL_NV_vertex_program
      * \param target GLenum
@@ -536,7 +537,7 @@ requires(semantic::concepts::Span<span_const_vec_4_f64>&& semantic::concepts::
 }
 
 template<class vec_4_f32>
-requires(semantic::concepts::Vector<vec_4_f32, f32, 4>)
+requires(concepts::vector<vec_4_f32, f32, 4>)
     /*!
      * \brief Part of GL_NV_vertex_program
      * \param target GLenum
@@ -561,8 +562,9 @@ requires(semantic::concepts::Vector<vec_4_f32, f32, 4>)
 }
 
 template<class span_const_vec_4_f32>
-requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
-             Vector<typename span_const_vec_4_f32::value_type, f32, 4>)
+requires(
+    concepts::span<span_const_vec_4_f32>&&
+        concepts::vector<typename span_const_vec_4_f32::value_type, f32, 4>)
     /*!
      * \brief Part of GL_NV_vertex_program
      * \param target GLenum
@@ -588,8 +590,9 @@ requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
 }
 
 template<class span_const_vec_4_f64>
-requires(semantic::concepts::Span<span_const_vec_4_f64>&& semantic::concepts::
-             Vector<typename span_const_vec_4_f64::value_type, f64, 4>)
+requires(
+    concepts::span<span_const_vec_4_f64>&&
+        concepts::vector<typename span_const_vec_4_f64::value_type, f64, 4>)
     /*!
      * \brief Part of GL_NV_vertex_program
      * \param target GLenum
@@ -617,8 +620,9 @@ requires(semantic::concepts::Span<span_const_vec_4_f64>&& semantic::concepts::
 }
 
 template<class span_const_vec_4_f32>
-requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
-             Vector<typename span_const_vec_4_f32::value_type, f32, 4>)
+requires(
+    concepts::span<span_const_vec_4_f32>&&
+        concepts::vector<typename span_const_vec_4_f32::value_type, f32, 4>)
     /*!
      * \brief Part of GL_NV_vertex_program
      * \param target GLenum
@@ -646,7 +650,7 @@ requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
 }
 
 template<class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+requires(concepts::span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -714,7 +718,7 @@ STATICINLINE void vertex_attrib1d(u32 index, f64 x)
 }
 
 template<class span_const_f64>
-requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
+requires(concepts::span<span_const_f64>&& std::is_same_v<
          std::decay_t<typename span_const_f64::value_type>,
          std::decay_t<f64>>)
     /*!
@@ -752,7 +756,7 @@ STATICINLINE void vertex_attrib1f(u32 index, f32 x)
 }
 
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+requires(concepts::span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -790,7 +794,7 @@ STATICINLINE void vertex_attrib1s(u32 index, i16 x)
 }
 
 template<class span_const_i16>
-requires(semantic::concepts::Span<span_const_i16>&& std::is_same_v<
+requires(concepts::span<span_const_i16>&& std::is_same_v<
          std::decay_t<typename span_const_i16::value_type>,
          std::decay_t<i16>>)
     /*!
@@ -811,7 +815,7 @@ requires(semantic::concepts::Span<span_const_i16>&& std::is_same_v<
 }
 
 template<class vec_2_f64>
-requires(semantic::concepts::Vector<vec_2_f64, f64, 2>)
+requires(concepts::vector<vec_2_f64, f64, 2>)
     /*!
      * \brief Part of GL_NV_vertex_program
      * \param index GLuint
@@ -831,8 +835,9 @@ requires(semantic::concepts::Vector<vec_2_f64, f64, 2>)
 }
 
 template<class span_const_vec_2_f64>
-requires(semantic::concepts::Span<span_const_vec_2_f64>&& semantic::concepts::
-             Vector<typename span_const_vec_2_f64::value_type, f64, 2>)
+requires(
+    concepts::span<span_const_vec_2_f64>&&
+        concepts::vector<typename span_const_vec_2_f64::value_type, f64, 2>)
     /*!
      * \brief Part of GL_NV_vertex_program
      * \param index GLuint
@@ -851,7 +856,7 @@ requires(semantic::concepts::Span<span_const_vec_2_f64>&& semantic::concepts::
 }
 
 template<class vec_2_f32>
-requires(semantic::concepts::Vector<vec_2_f32, f32, 2>)
+requires(concepts::vector<vec_2_f32, f32, 2>)
     /*!
      * \brief Part of GL_NV_vertex_program
      * \param index GLuint
@@ -871,8 +876,9 @@ requires(semantic::concepts::Vector<vec_2_f32, f32, 2>)
 }
 
 template<class span_const_vec_2_f32>
-requires(semantic::concepts::Span<span_const_vec_2_f32>&& semantic::concepts::
-             Vector<typename span_const_vec_2_f32::value_type, f32, 2>)
+requires(
+    concepts::span<span_const_vec_2_f32>&&
+        concepts::vector<typename span_const_vec_2_f32::value_type, f32, 2>)
     /*!
      * \brief Part of GL_NV_vertex_program
      * \param index GLuint
@@ -891,7 +897,7 @@ requires(semantic::concepts::Span<span_const_vec_2_f32>&& semantic::concepts::
 }
 
 template<class vec_2_i16>
-requires(semantic::concepts::Vector<vec_2_i16, i16, 2>)
+requires(concepts::vector<vec_2_i16, i16, 2>)
     /*!
      * \brief Part of GL_NV_vertex_program
      * \param index GLuint
@@ -911,8 +917,9 @@ requires(semantic::concepts::Vector<vec_2_i16, i16, 2>)
 }
 
 template<class span_const_vec_2_i16>
-requires(semantic::concepts::Span<span_const_vec_2_i16>&& semantic::concepts::
-             Vector<typename span_const_vec_2_i16::value_type, i16, 2>)
+requires(
+    concepts::span<span_const_vec_2_i16>&&
+        concepts::vector<typename span_const_vec_2_i16::value_type, i16, 2>)
     /*!
      * \brief Part of GL_NV_vertex_program
      * \param index GLuint
@@ -931,7 +938,7 @@ requires(semantic::concepts::Span<span_const_vec_2_i16>&& semantic::concepts::
 }
 
 template<class vec_3_f64>
-requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
+requires(concepts::vector<vec_3_f64, f64, 3>)
     /*!
      * \brief Part of GL_NV_vertex_program
      * \param index GLuint
@@ -952,8 +959,9 @@ requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
 }
 
 template<class span_const_vec_3_f64>
-requires(semantic::concepts::Span<span_const_vec_3_f64>&& semantic::concepts::
-             Vector<typename span_const_vec_3_f64::value_type, f64, 3>)
+requires(
+    concepts::span<span_const_vec_3_f64>&&
+        concepts::vector<typename span_const_vec_3_f64::value_type, f64, 3>)
     /*!
      * \brief Part of GL_NV_vertex_program
      * \param index GLuint
@@ -972,7 +980,7 @@ requires(semantic::concepts::Span<span_const_vec_3_f64>&& semantic::concepts::
 }
 
 template<class vec_3_f32>
-requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
+requires(concepts::vector<vec_3_f32, f32, 3>)
     /*!
      * \brief Part of GL_NV_vertex_program
      * \param index GLuint
@@ -993,8 +1001,9 @@ requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
 }
 
 template<class span_const_vec_3_f32>
-requires(semantic::concepts::Span<span_const_vec_3_f32>&& semantic::concepts::
-             Vector<typename span_const_vec_3_f32::value_type, f32, 3>)
+requires(
+    concepts::span<span_const_vec_3_f32>&&
+        concepts::vector<typename span_const_vec_3_f32::value_type, f32, 3>)
     /*!
      * \brief Part of GL_NV_vertex_program
      * \param index GLuint
@@ -1013,7 +1022,7 @@ requires(semantic::concepts::Span<span_const_vec_3_f32>&& semantic::concepts::
 }
 
 template<class vec_3_i16>
-requires(semantic::concepts::Vector<vec_3_i16, i16, 3>)
+requires(concepts::vector<vec_3_i16, i16, 3>)
     /*!
      * \brief Part of GL_NV_vertex_program
      * \param index GLuint
@@ -1034,8 +1043,9 @@ requires(semantic::concepts::Vector<vec_3_i16, i16, 3>)
 }
 
 template<class span_const_vec_3_i16>
-requires(semantic::concepts::Span<span_const_vec_3_i16>&& semantic::concepts::
-             Vector<typename span_const_vec_3_i16::value_type, i16, 3>)
+requires(
+    concepts::span<span_const_vec_3_i16>&&
+        concepts::vector<typename span_const_vec_3_i16::value_type, i16, 3>)
     /*!
      * \brief Part of GL_NV_vertex_program
      * \param index GLuint
@@ -1054,7 +1064,7 @@ requires(semantic::concepts::Span<span_const_vec_3_i16>&& semantic::concepts::
 }
 
 template<class vec_4_f64>
-requires(semantic::concepts::Vector<vec_4_f64, f64, 4>)
+requires(concepts::vector<vec_4_f64, f64, 4>)
     /*!
      * \brief Part of GL_NV_vertex_program
      * \param index GLuint
@@ -1076,8 +1086,9 @@ requires(semantic::concepts::Vector<vec_4_f64, f64, 4>)
 }
 
 template<class span_const_vec_4_f64>
-requires(semantic::concepts::Span<span_const_vec_4_f64>&& semantic::concepts::
-             Vector<typename span_const_vec_4_f64::value_type, f64, 4>)
+requires(
+    concepts::span<span_const_vec_4_f64>&&
+        concepts::vector<typename span_const_vec_4_f64::value_type, f64, 4>)
     /*!
      * \brief Part of GL_NV_vertex_program
      * \param index GLuint
@@ -1096,7 +1107,7 @@ requires(semantic::concepts::Span<span_const_vec_4_f64>&& semantic::concepts::
 }
 
 template<class vec_4_f32>
-requires(semantic::concepts::Vector<vec_4_f32, f32, 4>)
+requires(concepts::vector<vec_4_f32, f32, 4>)
     /*!
      * \brief Part of GL_NV_vertex_program
      * \param index GLuint
@@ -1118,8 +1129,9 @@ requires(semantic::concepts::Vector<vec_4_f32, f32, 4>)
 }
 
 template<class span_const_vec_4_f32>
-requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
-             Vector<typename span_const_vec_4_f32::value_type, f32, 4>)
+requires(
+    concepts::span<span_const_vec_4_f32>&&
+        concepts::vector<typename span_const_vec_4_f32::value_type, f32, 4>)
     /*!
      * \brief Part of GL_NV_vertex_program
      * \param index GLuint
@@ -1138,7 +1150,7 @@ requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
 }
 
 template<class vec_4_i16>
-requires(semantic::concepts::Vector<vec_4_i16, i16, 4>)
+requires(concepts::vector<vec_4_i16, i16, 4>)
     /*!
      * \brief Part of GL_NV_vertex_program
      * \param index GLuint
@@ -1160,8 +1172,9 @@ requires(semantic::concepts::Vector<vec_4_i16, i16, 4>)
 }
 
 template<class span_const_vec_4_i16>
-requires(semantic::concepts::Span<span_const_vec_4_i16>&& semantic::concepts::
-             Vector<typename span_const_vec_4_i16::value_type, i16, 4>)
+requires(
+    concepts::span<span_const_vec_4_i16>&&
+        concepts::vector<typename span_const_vec_4_i16::value_type, i16, 4>)
     /*!
      * \brief Part of GL_NV_vertex_program
      * \param index GLuint
@@ -1180,7 +1193,7 @@ requires(semantic::concepts::Span<span_const_vec_4_i16>&& semantic::concepts::
 }
 
 template<class vec_4_u8>
-requires(semantic::concepts::Vector<vec_4_u8, u8, 4>)
+requires(concepts::vector<vec_4_u8, u8, 4>)
     /*!
      * \brief Part of GL_NV_vertex_program
      * \param index GLuint
@@ -1202,7 +1215,7 @@ requires(semantic::concepts::Vector<vec_4_u8, u8, 4>)
 }
 
 template<class span_const_u8>
-requires(semantic::concepts::Span<span_const_u8>&& std::is_same_v<
+requires(concepts::span<span_const_u8>&& std::is_same_v<
          std::decay_t<typename span_const_u8::value_type>,
          std::decay_t<u8>>)
     /*!
@@ -1224,7 +1237,7 @@ requires(semantic::concepts::Span<span_const_u8>&& std::is_same_v<
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_NV_vertex_program
      * \param index GLuint
@@ -1257,7 +1270,7 @@ requires(semantic::concepts::Span<span_const_void>)
 }
 
 template<class span_const_f64>
-requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
+requires(concepts::span<span_const_f64>&& std::is_same_v<
          std::decay_t<typename span_const_f64::value_type>,
          std::decay_t<f64>>)
     /*!
@@ -1280,7 +1293,7 @@ requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
 }
 
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+requires(concepts::span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -1303,7 +1316,7 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
 }
 
 template<class span_const_i16>
-requires(semantic::concepts::Span<span_const_i16>&& std::is_same_v<
+requires(concepts::span<span_const_i16>&& std::is_same_v<
          std::decay_t<typename span_const_i16::value_type>,
          std::decay_t<i16>>)
     /*!
@@ -1326,8 +1339,9 @@ requires(semantic::concepts::Span<span_const_i16>&& std::is_same_v<
 }
 
 template<class span_const_vec_2_f64>
-requires(semantic::concepts::Span<span_const_vec_2_f64>&& semantic::concepts::
-             Vector<typename span_const_vec_2_f64::value_type, f64, 2>)
+requires(
+    concepts::span<span_const_vec_2_f64>&&
+        concepts::vector<typename span_const_vec_2_f64::value_type, f64, 2>)
     /*!
      * \brief Part of GL_NV_vertex_program
      * \param index GLuint
@@ -1349,8 +1363,9 @@ requires(semantic::concepts::Span<span_const_vec_2_f64>&& semantic::concepts::
 }
 
 template<class span_const_vec_2_f32>
-requires(semantic::concepts::Span<span_const_vec_2_f32>&& semantic::concepts::
-             Vector<typename span_const_vec_2_f32::value_type, f32, 2>)
+requires(
+    concepts::span<span_const_vec_2_f32>&&
+        concepts::vector<typename span_const_vec_2_f32::value_type, f32, 2>)
     /*!
      * \brief Part of GL_NV_vertex_program
      * \param index GLuint
@@ -1372,8 +1387,9 @@ requires(semantic::concepts::Span<span_const_vec_2_f32>&& semantic::concepts::
 }
 
 template<class span_const_vec_2_i16>
-requires(semantic::concepts::Span<span_const_vec_2_i16>&& semantic::concepts::
-             Vector<typename span_const_vec_2_i16::value_type, i16, 2>)
+requires(
+    concepts::span<span_const_vec_2_i16>&&
+        concepts::vector<typename span_const_vec_2_i16::value_type, i16, 2>)
     /*!
      * \brief Part of GL_NV_vertex_program
      * \param index GLuint
@@ -1395,8 +1411,9 @@ requires(semantic::concepts::Span<span_const_vec_2_i16>&& semantic::concepts::
 }
 
 template<class span_const_vec_3_f64>
-requires(semantic::concepts::Span<span_const_vec_3_f64>&& semantic::concepts::
-             Vector<typename span_const_vec_3_f64::value_type, f64, 3>)
+requires(
+    concepts::span<span_const_vec_3_f64>&&
+        concepts::vector<typename span_const_vec_3_f64::value_type, f64, 3>)
     /*!
      * \brief Part of GL_NV_vertex_program
      * \param index GLuint
@@ -1418,8 +1435,9 @@ requires(semantic::concepts::Span<span_const_vec_3_f64>&& semantic::concepts::
 }
 
 template<class span_const_vec_3_f32>
-requires(semantic::concepts::Span<span_const_vec_3_f32>&& semantic::concepts::
-             Vector<typename span_const_vec_3_f32::value_type, f32, 3>)
+requires(
+    concepts::span<span_const_vec_3_f32>&&
+        concepts::vector<typename span_const_vec_3_f32::value_type, f32, 3>)
     /*!
      * \brief Part of GL_NV_vertex_program
      * \param index GLuint
@@ -1441,8 +1459,9 @@ requires(semantic::concepts::Span<span_const_vec_3_f32>&& semantic::concepts::
 }
 
 template<class span_const_vec_3_i16>
-requires(semantic::concepts::Span<span_const_vec_3_i16>&& semantic::concepts::
-             Vector<typename span_const_vec_3_i16::value_type, i16, 3>)
+requires(
+    concepts::span<span_const_vec_3_i16>&&
+        concepts::vector<typename span_const_vec_3_i16::value_type, i16, 3>)
     /*!
      * \brief Part of GL_NV_vertex_program
      * \param index GLuint
@@ -1464,8 +1483,9 @@ requires(semantic::concepts::Span<span_const_vec_3_i16>&& semantic::concepts::
 }
 
 template<class span_const_vec_4_f64>
-requires(semantic::concepts::Span<span_const_vec_4_f64>&& semantic::concepts::
-             Vector<typename span_const_vec_4_f64::value_type, f64, 4>)
+requires(
+    concepts::span<span_const_vec_4_f64>&&
+        concepts::vector<typename span_const_vec_4_f64::value_type, f64, 4>)
     /*!
      * \brief Part of GL_NV_vertex_program
      * \param index GLuint
@@ -1487,8 +1507,9 @@ requires(semantic::concepts::Span<span_const_vec_4_f64>&& semantic::concepts::
 }
 
 template<class span_const_vec_4_f32>
-requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
-             Vector<typename span_const_vec_4_f32::value_type, f32, 4>)
+requires(
+    concepts::span<span_const_vec_4_f32>&&
+        concepts::vector<typename span_const_vec_4_f32::value_type, f32, 4>)
     /*!
      * \brief Part of GL_NV_vertex_program
      * \param index GLuint
@@ -1510,8 +1531,9 @@ requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
 }
 
 template<class span_const_vec_4_i16>
-requires(semantic::concepts::Span<span_const_vec_4_i16>&& semantic::concepts::
-             Vector<typename span_const_vec_4_i16::value_type, i16, 4>)
+requires(
+    concepts::span<span_const_vec_4_i16>&&
+        concepts::vector<typename span_const_vec_4_i16::value_type, i16, 4>)
     /*!
      * \brief Part of GL_NV_vertex_program
      * \param index GLuint
@@ -1533,7 +1555,7 @@ requires(semantic::concepts::Span<span_const_vec_4_i16>&& semantic::concepts::
 }
 
 template<class span_const_u8>
-requires(semantic::concepts::Span<span_const_u8>&& std::is_same_v<
+requires(concepts::span<span_const_u8>&& std::is_same_v<
          std::decay_t<typename span_const_u8::value_type>,
          std::decay_t<u8>>)
     /*!

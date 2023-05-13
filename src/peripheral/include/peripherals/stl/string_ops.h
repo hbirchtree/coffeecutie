@@ -310,12 +310,14 @@ FORCEDINLINE std::basic_string<CharType> str_impl(
 //        out.replace();
 //    }
     std::basic_string<CharType> out(target.begin(), target.end());
+    if(query.empty())
+        return out;
     for(size_t pos = 0;; pos += replacement.size())
     {
         pos = out.find(query, pos);
         if(pos == decltype(out)::npos)
             break;
-        out.replace(pos, query.size(), replacement);
+        out.replace(pos, query.size(), replacement.data(), replacement.size());
     }
     return out;
 }

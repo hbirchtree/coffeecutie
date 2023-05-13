@@ -5,24 +5,24 @@
 namespace gl::intel::performance_query {
 using gl::group::performance_query_caps_mask_intel;
 namespace values {
-constexpr libc_types::u32 perfquery_donot_flush             = 0x83F9;
-constexpr libc_types::u32 perfquery_flush                   = 0x83FA;
-constexpr libc_types::u32 perfquery_wait                    = 0x83FB;
-constexpr libc_types::u32 perfquery_counter_event           = 0x94F0;
-constexpr libc_types::u32 perfquery_counter_duration_norm   = 0x94F1;
-constexpr libc_types::u32 perfquery_counter_duration_raw    = 0x94F2;
-constexpr libc_types::u32 perfquery_counter_throughput      = 0x94F3;
-constexpr libc_types::u32 perfquery_counter_raw             = 0x94F4;
-constexpr libc_types::u32 perfquery_counter_timestamp       = 0x94F5;
-constexpr libc_types::u32 perfquery_counter_data_uint32     = 0x94F8;
-constexpr libc_types::u32 perfquery_counter_data_uint64     = 0x94F9;
-constexpr libc_types::u32 perfquery_counter_data_float      = 0x94FA;
-constexpr libc_types::u32 perfquery_counter_data_double     = 0x94FB;
-constexpr libc_types::u32 perfquery_counter_data_bool32     = 0x94FC;
-constexpr libc_types::u32 perfquery_query_name_length_max   = 0x94FD;
-constexpr libc_types::u32 perfquery_counter_name_length_max = 0x94FE;
-constexpr libc_types::u32 perfquery_counter_desc_length_max = 0x94FF;
-constexpr libc_types::u32 perfquery_gpa_extended_counters   = 0x9500;
+constexpr u32 perfquery_donot_flush             = 0x83F9;
+constexpr u32 perfquery_flush                   = 0x83FA;
+constexpr u32 perfquery_wait                    = 0x83FB;
+constexpr u32 perfquery_counter_event           = 0x94F0;
+constexpr u32 perfquery_counter_duration_norm   = 0x94F1;
+constexpr u32 perfquery_counter_duration_raw    = 0x94F2;
+constexpr u32 perfquery_counter_throughput      = 0x94F3;
+constexpr u32 perfquery_counter_raw             = 0x94F4;
+constexpr u32 perfquery_counter_timestamp       = 0x94F5;
+constexpr u32 perfquery_counter_data_uint32     = 0x94F8;
+constexpr u32 perfquery_counter_data_uint64     = 0x94F9;
+constexpr u32 perfquery_counter_data_float      = 0x94FA;
+constexpr u32 perfquery_counter_data_double     = 0x94FB;
+constexpr u32 perfquery_counter_data_bool32     = 0x94FC;
+constexpr u32 perfquery_query_name_length_max   = 0x94FD;
+constexpr u32 perfquery_counter_name_length_max = 0x94FE;
+constexpr u32 perfquery_counter_desc_length_max = 0x94FF;
+constexpr u32 perfquery_gpa_extended_counters   = 0x9500;
 } // namespace values
 /*!
  * \brief Part of GL_INTEL_performance_query
@@ -41,7 +41,7 @@ STATICINLINE void begin_perf_query(u32 queryHandle)
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(concepts::span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -97,7 +97,7 @@ STATICINLINE void end_perf_query(u32 queryHandle)
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(concepts::span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -118,7 +118,7 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(concepts::span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -142,13 +142,13 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 }
 
 template<class span_GLchar, class span_u32, class span_u64>
-requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
+requires(concepts::span<span_GLchar>&& std::is_same_v<
          std::decay_t<typename span_GLchar::value_type>,
-         std::decay_t<GLchar>>&&      semantic::concepts::Span<span_u32>&&
-                                      std::is_same_v<
+         std::decay_t<GLchar>>&& concepts::span<span_u32>&&
+                                       std::is_same_v<
                  std::decay_t<typename span_u32::value_type>,
-                 std::decay_t<u32>>&& semantic::concepts::Span<span_u64>&&
-                                      std::is_same_v<
+                 std::decay_t<u32>>&& concepts::span<span_u64>&&
+                                       std::is_same_v<
                      std::decay_t<typename span_u64::value_type>,
                      std::decay_t<u64>>)
     /*!
@@ -207,10 +207,9 @@ requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
 }
 
 template<class span_u32, class span_void>
-requires(semantic::concepts::Span<span_void>&&
-             semantic::concepts::Span<span_u32>&& std::is_same_v<
-                 std::decay_t<typename span_u32::value_type>,
-                 std::decay_t<u32>>)
+requires(concepts::span<span_void>&& concepts::span<span_u32>&& std::is_same_v<
+         std::decay_t<typename span_u32::value_type>,
+         std::decay_t<u32>>)
     /*!
      * \brief Part of GL_INTEL_performance_query
      * \param queryHandle GLuint
@@ -243,7 +242,7 @@ requires(semantic::concepts::Span<span_void>&&
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(concepts::span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -265,10 +264,10 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 }
 
 template<class span_GLchar, class span_u32>
-requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
+requires(concepts::span<span_GLchar>&& std::is_same_v<
          std::decay_t<typename span_GLchar::value_type>,
-         std::decay_t<GLchar>>&& semantic::concepts::Span<span_u32>&&
-                                 std::is_same_v<
+         std::decay_t<GLchar>>&& concepts::span<span_u32>&&
+                                       std::is_same_v<
                  std::decay_t<typename span_u32::value_type>,
                  std::decay_t<u32>>)
     /*!

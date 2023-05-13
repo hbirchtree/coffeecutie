@@ -9,7 +9,7 @@ using gl::group::enable_cap;
 using gl::group::get_prop;
 using gl::group::texture_target;
 namespace values {
-constexpr libc_types::u32 max_rectangle_texture_size = 0x84F8;
+constexpr u32 max_rectangle_texture_size = 0x84F8;
 } // namespace values
 } // namespace gl::nv::texture_rectangle
 #endif // GL_NV_texture_rectangle

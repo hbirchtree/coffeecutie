@@ -3,10 +3,10 @@
 #ifdef GL_AMD_sample_positions
 namespace gl::amd::sample_positions {
 namespace values {
-constexpr libc_types::u32 subsample_distance = 0x883F;
+constexpr u32 subsample_distance = 0x883F;
 } // namespace values
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+requires(concepts::span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
          std::decay_t<f32>>)
     /*!

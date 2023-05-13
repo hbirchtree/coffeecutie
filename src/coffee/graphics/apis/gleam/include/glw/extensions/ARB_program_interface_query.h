@@ -19,7 +19,7 @@ using gl::group::subroutine_parameter_name;
 namespace values {
 } // namespace values
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -139,7 +139,7 @@ STATICINLINE GLint get_program_resource_location_index(
 }
 
 template<class span_GLchar>
-requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
+requires(concepts::span<span_GLchar>&& std::is_same_v<
          std::decay_t<typename span_GLchar::value_type>,
          std::decay_t<GLchar>>)
     /*!
@@ -180,14 +180,13 @@ requires(semantic::concepts::Span<span_GLchar>&& std::is_same_v<
 }
 
 template<class span_const_program_resource_property, class span_i32>
-requires(semantic::concepts::Span<span_const_program_resource_property>&&
-             std::is_same_v<
-                 std::decay_t<
-                     typename span_const_program_resource_property::value_type>,
-                 std::decay_t<group::program_resource_property>>&&
-                 semantic::concepts::Span<span_i32>&& std::is_same_v<
-                     std::decay_t<typename span_i32::value_type>,
-                     std::decay_t<i32>>)
+requires(
+    concepts::span<span_const_program_resource_property>&& std::is_same_v<
+        std::decay_t<typename span_const_program_resource_property::value_type>,
+        std::decay_t<group::program_resource_property>>&&
+        concepts::span<span_i32>&& std::is_same_v<
+            std::decay_t<typename span_i32::value_type>,
+            std::decay_t<i32>>)
     /*!
      * \brief Part of GL_ARB_program_interface_query
      * \param program GLuint

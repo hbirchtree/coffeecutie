@@ -56,6 +56,6 @@ enum class buffer_storage_mask : u32
     sparse_storage_bit_arb = GL_SPARSE_STORAGE_BIT_ARB,
 #endif
 }; // enum class buffer_storage_mask
-C_FLAGS(buffer_storage_mask, ::libc_types::u32);
+C_FLAGS(buffer_storage_mask, u32);
 
 } // namespace gl::group

@@ -9,7 +9,7 @@ using gl::group::internal_format;
 using gl::group::pixel_type;
 using gl::group::sized_internal_format;
 namespace values {
-constexpr libc_types::u32 rgba_signed_components = 0x8C3C;
+constexpr u32 rgba_signed_components = 0x8C3C;
 } // namespace values
 } // namespace gl::ext::packed_float
 #endif // GL_EXT_packed_float

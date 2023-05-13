@@ -3,10 +3,10 @@
 #ifdef GL_NV_alpha_to_coverage_dither_control
 namespace gl::nv::alpha_to_coverage_dither_control {
 namespace values {
-constexpr libc_types::u32 alpha_to_coverage_dither_mode    = 0x92BF;
-constexpr libc_types::u32 alpha_to_coverage_dither_default = 0x934D;
-constexpr libc_types::u32 alpha_to_coverage_dither_enable  = 0x934E;
-constexpr libc_types::u32 alpha_to_coverage_dither_disable = 0x934F;
+constexpr u32 alpha_to_coverage_dither_mode    = 0x92BF;
+constexpr u32 alpha_to_coverage_dither_default = 0x934D;
+constexpr u32 alpha_to_coverage_dither_enable  = 0x934E;
+constexpr u32 alpha_to_coverage_dither_disable = 0x934F;
 } // namespace values
 /*!
  * \brief Part of GL_NV_alpha_to_coverage_dither_control

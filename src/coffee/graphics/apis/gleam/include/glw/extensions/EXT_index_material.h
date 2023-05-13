@@ -3,9 +3,9 @@
 #ifdef GL_EXT_index_material
 namespace gl::ext::index_material {
 namespace values {
-constexpr libc_types::u32 index_material           = 0x81B8;
-constexpr libc_types::u32 index_material_parameter = 0x81B9;
-constexpr libc_types::u32 index_material_face      = 0x81BA;
+constexpr u32 index_material           = 0x81B8;
+constexpr u32 index_material_parameter = 0x81B9;
+constexpr u32 index_material_face      = 0x81BA;
 } // namespace values
 /*!
  * \brief Part of GL_EXT_index_material

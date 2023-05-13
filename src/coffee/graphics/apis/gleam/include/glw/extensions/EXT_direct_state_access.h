@@ -3,9 +3,9 @@
 #ifdef GL_EXT_direct_state_access
 namespace gl::ext::direct_state_access {
 namespace values {
-constexpr libc_types::u32 program_matrix             = 0x8E2D;
-constexpr libc_types::u32 transpose_program_matrix   = 0x8E2E;
-constexpr libc_types::u32 program_matrix_stack_depth = 0x8E2F;
+constexpr u32 program_matrix             = 0x8E2D;
+constexpr u32 transpose_program_matrix   = 0x8E2E;
+constexpr u32 program_matrix_stack_depth = 0x8E2F;
 } // namespace values
 /*!
  * \brief Part of GL_EXT_direct_state_access
@@ -54,7 +54,7 @@ STATICINLINE void matrix_load_identity(group::matrix_mode mode)
 }
 
 template<class span_const_f64>
-requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
+requires(concepts::span<span_const_f64>&& std::is_same_v<
          std::decay_t<typename span_const_f64::value_type>,
          std::decay_t<f64>>)
     /*!
@@ -78,7 +78,7 @@ requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
 }
 
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+requires(concepts::span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -102,7 +102,7 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
 }
 
 template<class span_const_f64>
-requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
+requires(concepts::span<span_const_f64>&& std::is_same_v<
          std::decay_t<typename span_const_f64::value_type>,
          std::decay_t<f64>>)
     /*!
@@ -126,7 +126,7 @@ requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
 }
 
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+requires(concepts::span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -212,7 +212,7 @@ STATICINLINE void matrix_push(group::matrix_mode mode)
 }
 
 template<class vec_3_f64>
-requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
+requires(concepts::vector<vec_3_f64, f64, 3>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param mode GLenum
@@ -235,7 +235,7 @@ requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
 }
 
 template<class vec_3_f32>
-requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
+requires(concepts::vector<vec_3_f32, f32, 3>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param mode GLenum
@@ -258,7 +258,7 @@ requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
 }
 
 template<class vec_3_f64>
-requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
+requires(concepts::vector<vec_3_f64, f64, 3>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param mode GLenum
@@ -279,7 +279,7 @@ requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
 }
 
 template<class vec_3_f32>
-requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
+requires(concepts::vector<vec_3_f32, f32, 3>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param mode GLenum
@@ -300,7 +300,7 @@ requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
 }
 
 template<class vec_3_f64>
-requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
+requires(concepts::vector<vec_3_f64, f64, 3>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param mode GLenum
@@ -322,7 +322,7 @@ requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
 }
 
 template<class vec_3_f32>
-requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
+requires(concepts::vector<vec_3_f32, f32, 3>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param mode GLenum
@@ -376,7 +376,7 @@ STATICINLINE void push_client_attrib_default(group::client_attrib_mask mask)
 }
 
 template<class vec_2_i32>
-requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
+requires(concepts::vector<vec_2_i32, i32, 2>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param texture GLuint
@@ -421,8 +421,8 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
 }
 
 template<class size_2_i32, class vec_2_i32>
-requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
-             semantic::concepts::Size2D<size_2_i32, i32>)
+requires(
+    concepts::vector<vec_2_i32, i32, 2>&& concepts::size_2d<size_2_i32, i32>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param texture GLuint
@@ -469,7 +469,7 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
 }
 
 template<class vec_2_i32>
-requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
+requires(concepts::vector<vec_2_i32, i32, 2>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param texture GLuint
@@ -511,8 +511,8 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
 }
 
 template<class size_2_i32, class vec_2_i32>
-requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
-             semantic::concepts::Size2D<size_2_i32, i32>)
+requires(
+    concepts::vector<vec_2_i32, i32, 2>&& concepts::size_2d<size_2_i32, i32>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param texture GLuint
@@ -558,7 +558,7 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
 }
 
 template<class span_void>
-requires(semantic::concepts::Span<span_void>)
+requires(concepts::span<span_void>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param texture GLuint
@@ -598,7 +598,7 @@ requires(semantic::concepts::Span<span_void>)
 }
 
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+requires(concepts::span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -637,7 +637,7 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -676,7 +676,7 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+requires(concepts::span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -712,7 +712,7 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -748,7 +748,7 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param texture GLuint
@@ -797,8 +797,7 @@ requires(semantic::concepts::Span<span_const_void>)
 }
 
 template<class size_2_i32, class span_const_void>
-requires(semantic::concepts::Size2D<size_2_i32, i32>&&
-             semantic::concepts::Span<span_const_void>)
+requires(concepts::size_2d<size_2_i32, i32>&& concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param texture GLuint
@@ -881,7 +880,7 @@ STATICINLINE void texture_parameter(
 }
 
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+requires(concepts::span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -950,7 +949,7 @@ STATICINLINE void texture_parameter(
 }
 
 template<class span_const_i32>
-requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
+requires(concepts::span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -987,7 +986,7 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param texture GLuint
@@ -1033,9 +1032,9 @@ requires(semantic::concepts::Span<span_const_void>)
 }
 
 template<class size_2_i32, class span_const_void, class vec_2_i32>
-requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
-                 semantic::concepts::Size2D<size_2_i32, i32>&&
-                 semantic::concepts::Span<span_const_void>)
+requires(
+    concepts::vector<vec_2_i32, i32, 2>&& concepts::size_2d<size_2_i32, i32>&&
+                                          concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param texture GLuint
@@ -1085,9 +1084,9 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
 }
 
 template<class size_2_i32, class vec_2_i32, class vec_3_i32>
-requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
-                 semantic::concepts::Vector<vec_2_i32, i32, 2>&&
-                 semantic::concepts::Size2D<size_2_i32, i32>)
+requires(
+    concepts::vector<vec_3_i32, i32, 3>&& concepts::vector<vec_2_i32, i32, 2>&&
+                                          concepts::size_2d<size_2_i32, i32>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param texture GLuint
@@ -1135,8 +1134,7 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
 }
 
 template<class size_3_i32, class span_const_void>
-requires(semantic::concepts::Size2D<size_3_i32, i32>&&
-             semantic::concepts::Span<span_const_void>)
+requires(concepts::size_2d<size_3_i32, i32>&& concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param texture GLuint
@@ -1189,9 +1187,9 @@ requires(semantic::concepts::Size2D<size_3_i32, i32>&&
 }
 
 template<class size_3_i32, class span_const_void, class vec_3_i32>
-requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
-                 semantic::concepts::Size2D<size_3_i32, i32>&&
-                 semantic::concepts::Span<span_const_void>)
+requires(
+    concepts::vector<vec_3_i32, i32, 3>&& concepts::size_2d<size_3_i32, i32>&&
+                                          concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param texture GLuint
@@ -1270,7 +1268,7 @@ STATICINLINE void bind_multi_texture(
 }
 
 template<class vec_2_i32>
-requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
+requires(concepts::vector<vec_2_i32, i32, 2>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param texunit GLenum
@@ -1310,8 +1308,8 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
 }
 
 template<class size_2_i32, class vec_2_i32>
-requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
-             semantic::concepts::Size2D<size_2_i32, i32>)
+requires(
+    concepts::vector<vec_2_i32, i32, 2>&& concepts::size_2d<size_2_i32, i32>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param texunit GLenum
@@ -1353,7 +1351,7 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
 }
 
 template<class vec_2_i32>
-requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
+requires(concepts::vector<vec_2_i32, i32, 2>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param texunit GLenum
@@ -1390,8 +1388,8 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
 }
 
 template<class size_2_i32, class vec_2_i32>
-requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
-             semantic::concepts::Size2D<size_2_i32, i32>)
+requires(
+    concepts::vector<vec_2_i32, i32, 2>&& concepts::size_2d<size_2_i32, i32>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param texunit GLenum
@@ -1432,9 +1430,9 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
 }
 
 template<class size_2_i32, class vec_2_i32, class vec_3_i32>
-requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
-                 semantic::concepts::Vector<vec_2_i32, i32, 2>&&
-                 semantic::concepts::Size2D<size_2_i32, i32>)
+requires(
+    concepts::vector<vec_3_i32, i32, 3>&& concepts::vector<vec_2_i32, i32, 2>&&
+                                          concepts::size_2d<size_2_i32, i32>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param texunit GLenum
@@ -1477,7 +1475,7 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
 }
 
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+requires(concepts::span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -1508,7 +1506,7 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -1539,7 +1537,7 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_f64>
-requires(semantic::concepts::Span<span_f64>&& std::is_same_v<
+requires(concepts::span<span_f64>&& std::is_same_v<
          std::decay_t<typename span_f64::value_type>,
          std::decay_t<f64>>)
     /*!
@@ -1570,7 +1568,7 @@ requires(semantic::concepts::Span<span_f64>&& std::is_same_v<
 }
 
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+requires(concepts::span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -1601,7 +1599,7 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -1632,7 +1630,7 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_void>
-requires(semantic::concepts::Span<span_void>)
+requires(concepts::span<span_void>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param texunit GLenum
@@ -1667,7 +1665,7 @@ requires(semantic::concepts::Span<span_void>)
 }
 
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+requires(concepts::span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -1701,7 +1699,7 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -1735,7 +1733,7 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+requires(concepts::span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -1766,7 +1764,7 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -1797,7 +1795,7 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param texunit GLenum
@@ -1857,7 +1855,7 @@ STATICINLINE void multi_tex_envf(
 }
 
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+requires(concepts::span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -1916,7 +1914,7 @@ STATICINLINE void multi_tex_envi(
 }
 
 template<class span_const_i32>
-requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
+requires(concepts::span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -1975,7 +1973,7 @@ STATICINLINE void multi_tex_gend(
 }
 
 template<class span_const_f64>
-requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
+requires(concepts::span<span_const_f64>&& std::is_same_v<
          std::decay_t<typename span_const_f64::value_type>,
          std::decay_t<f64>>)
     /*!
@@ -2034,7 +2032,7 @@ STATICINLINE void multi_tex_genf(
 }
 
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+requires(concepts::span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -2093,7 +2091,7 @@ STATICINLINE void multi_tex_geni(
 }
 
 template<class span_const_i32>
-requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
+requires(concepts::span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -2125,7 +2123,7 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param texunit GLenum
@@ -2169,8 +2167,7 @@ requires(semantic::concepts::Span<span_const_void>)
 }
 
 template<class size_2_i32, class span_const_void>
-requires(semantic::concepts::Size2D<size_2_i32, i32>&&
-             semantic::concepts::Span<span_const_void>)
+requires(concepts::size_2d<size_2_i32, i32>&& concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param texunit GLenum
@@ -2216,8 +2213,7 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>&&
 }
 
 template<class size_3_i32, class span_const_void>
-requires(semantic::concepts::Size2D<size_3_i32, i32>&&
-             semantic::concepts::Span<span_const_void>)
+requires(concepts::size_2d<size_3_i32, i32>&& concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param texunit GLenum
@@ -2292,7 +2288,7 @@ STATICINLINE void multi_tex_parameter(
 }
 
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+requires(concepts::span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -2351,7 +2347,7 @@ STATICINLINE void multi_tex_parameter(
 }
 
 template<class span_const_i32>
-requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
+requires(concepts::span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -2383,7 +2379,7 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param texunit GLenum
@@ -2424,9 +2420,9 @@ requires(semantic::concepts::Span<span_const_void>)
 }
 
 template<class size_2_i32, class span_const_void, class vec_2_i32>
-requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
-                 semantic::concepts::Size2D<size_2_i32, i32>&&
-                 semantic::concepts::Span<span_const_void>)
+requires(
+    concepts::vector<vec_2_i32, i32, 2>&& concepts::size_2d<size_2_i32, i32>&&
+                                          concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param texunit GLenum
@@ -2471,9 +2467,9 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
 }
 
 template<class size_3_i32, class span_const_void, class vec_3_i32>
-requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
-                 semantic::concepts::Size2D<size_3_i32, i32>&&
-                 semantic::concepts::Span<span_const_void>)
+requires(
+    concepts::vector<vec_3_i32, i32, 3>&& concepts::size_2d<size_3_i32, i32>&&
+                                          concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param texunit GLenum
@@ -2558,7 +2554,7 @@ STATICINLINE void enable_client_state_indexed(
 }
 
 template<class span_f64>
-requires(semantic::concepts::Span<span_f64>&& std::is_same_v<
+requires(concepts::span<span_f64>&& std::is_same_v<
          std::decay_t<typename span_f64::value_type>,
          std::decay_t<f64>>)
     /*!
@@ -2584,7 +2580,7 @@ requires(semantic::concepts::Span<span_f64>&& std::is_same_v<
 }
 
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+requires(concepts::span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -2610,7 +2606,7 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 }
 
 template<class span_void>
-requires(semantic::concepts::Span<span_void>)
+requires(concepts::span<span_void>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param target GLenum
@@ -2668,7 +2664,7 @@ STATICINLINE void enable_indexed(group::enable_cap target, u32 index)
 }
 
 template<class span_bool>
-requires(semantic::concepts::Span<span_bool>&& std::is_same_v<
+requires(concepts::span<span_bool>&& std::is_same_v<
          std::decay_t<typename span_bool::value_type>,
          std::decay_t<bool>>)
     /*!
@@ -2694,7 +2690,7 @@ requires(semantic::concepts::Span<span_bool>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -2738,7 +2734,7 @@ STATICINLINE bool is_enabled_indexed(group::enable_cap target, u32 index)
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param texture GLuint
@@ -2784,8 +2780,7 @@ requires(semantic::concepts::Span<span_const_void>)
 }
 
 template<class size_2_i32, class span_const_void>
-requires(semantic::concepts::Size2D<size_2_i32, i32>&&
-             semantic::concepts::Span<span_const_void>)
+requires(concepts::size_2d<size_2_i32, i32>&& concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param texture GLuint
@@ -2833,8 +2828,7 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>&&
 }
 
 template<class size_3_i32, class span_const_void>
-requires(semantic::concepts::Size2D<size_3_i32, i32>&&
-             semantic::concepts::Span<span_const_void>)
+requires(concepts::size_2d<size_3_i32, i32>&& concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param texture GLuint
@@ -2884,7 +2878,7 @@ requires(semantic::concepts::Size2D<size_3_i32, i32>&&
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param texture GLuint
@@ -2930,9 +2924,9 @@ requires(semantic::concepts::Span<span_const_void>)
 }
 
 template<class size_2_i32, class span_const_void, class vec_2_i32>
-requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
-                 semantic::concepts::Size2D<size_2_i32, i32>&&
-                 semantic::concepts::Span<span_const_void>)
+requires(
+    concepts::vector<vec_2_i32, i32, 2>&& concepts::size_2d<size_2_i32, i32>&&
+                                          concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param texture GLuint
@@ -2982,9 +2976,9 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
 }
 
 template<class size_3_i32, class span_const_void, class vec_3_i32>
-requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
-                 semantic::concepts::Size2D<size_3_i32, i32>&&
-                 semantic::concepts::Span<span_const_void>)
+requires(
+    concepts::vector<vec_3_i32, i32, 3>&& concepts::size_2d<size_3_i32, i32>&&
+                                          concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param texture GLuint
@@ -3038,7 +3032,7 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
 }
 
 template<class span_void>
-requires(semantic::concepts::Span<span_void>)
+requires(concepts::span<span_void>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param texture GLuint
@@ -3069,7 +3063,7 @@ requires(semantic::concepts::Span<span_void>)
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param texunit GLenum
@@ -3110,8 +3104,7 @@ requires(semantic::concepts::Span<span_const_void>)
 }
 
 template<class size_2_i32, class span_const_void>
-requires(semantic::concepts::Size2D<size_2_i32, i32>&&
-             semantic::concepts::Span<span_const_void>)
+requires(concepts::size_2d<size_2_i32, i32>&& concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param texunit GLenum
@@ -3154,8 +3147,7 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>&&
 }
 
 template<class size_3_i32, class span_const_void>
-requires(semantic::concepts::Size2D<size_3_i32, i32>&&
-             semantic::concepts::Span<span_const_void>)
+requires(concepts::size_2d<size_3_i32, i32>&& concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param texunit GLenum
@@ -3200,7 +3192,7 @@ requires(semantic::concepts::Size2D<size_3_i32, i32>&&
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param texunit GLenum
@@ -3241,9 +3233,9 @@ requires(semantic::concepts::Span<span_const_void>)
 }
 
 template<class size_2_i32, class span_const_void, class vec_2_i32>
-requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
-                 semantic::concepts::Size2D<size_2_i32, i32>&&
-                 semantic::concepts::Span<span_const_void>)
+requires(
+    concepts::vector<vec_2_i32, i32, 2>&& concepts::size_2d<size_2_i32, i32>&&
+                                          concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param texunit GLenum
@@ -3288,9 +3280,9 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>&&
 }
 
 template<class size_3_i32, class span_const_void, class vec_3_i32>
-requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
-                 semantic::concepts::Size2D<size_3_i32, i32>&&
-                 semantic::concepts::Span<span_const_void>)
+requires(
+    concepts::vector<vec_3_i32, i32, 3>&& concepts::size_2d<size_3_i32, i32>&&
+                                          concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param texunit GLenum
@@ -3339,7 +3331,7 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
 }
 
 template<class span_void>
-requires(semantic::concepts::Span<span_void>)
+requires(concepts::span<span_void>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param texunit GLenum
@@ -3368,7 +3360,7 @@ requires(semantic::concepts::Span<span_void>)
 }
 
 template<class span_const_f64>
-requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
+requires(concepts::span<span_const_f64>&& std::is_same_v<
          std::decay_t<typename span_const_f64::value_type>,
          std::decay_t<f64>>)
     /*!
@@ -3392,7 +3384,7 @@ requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
 }
 
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+requires(concepts::span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -3416,7 +3408,7 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
 }
 
 template<class span_const_f64>
-requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
+requires(concepts::span<span_const_f64>&& std::is_same_v<
          std::decay_t<typename span_const_f64::value_type>,
          std::decay_t<f64>>)
     /*!
@@ -3440,7 +3432,7 @@ requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
 }
 
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+requires(concepts::span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -3464,7 +3456,7 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -3495,7 +3487,7 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_void>
-requires(semantic::concepts::Span<span_void>)
+requires(concepts::span<span_void>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param buffer GLuint
@@ -3524,7 +3516,7 @@ requires(semantic::concepts::Span<span_void>)
 }
 
 template<class span_void>
-requires(semantic::concepts::Span<span_void>)
+requires(concepts::span<span_void>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param buffer GLuint
@@ -3578,7 +3570,7 @@ STATICINLINE void* map_named_buffer(u32 buffer, group::buffer_access_arb access)
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param buffer GLuint
@@ -3612,7 +3604,7 @@ requires(semantic::concepts::Span<span_const_void>)
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param buffer GLuint
@@ -3691,7 +3683,7 @@ STATICINLINE void program_uniform(u32 program, i32 location, f32 v0)
 }
 
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+requires(concepts::span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -3747,7 +3739,7 @@ STATICINLINE void program_uniform(u32 program, i32 location, i32 v0)
 }
 
 template<class span_const_i32>
-requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
+requires(concepts::span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -3780,7 +3772,7 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
 }
 
 template<class vec_2_f32>
-requires(semantic::concepts::Vector<vec_2_f32, f32, 2>)
+requires(concepts::vector<vec_2_f32, f32, 2>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -3807,8 +3799,9 @@ requires(semantic::concepts::Vector<vec_2_f32, f32, 2>)
 }
 
 template<class span_const_vec_2_f32>
-requires(semantic::concepts::Span<span_const_vec_2_f32>&& semantic::concepts::
-             Vector<typename span_const_vec_2_f32::value_type, f32, 2>)
+requires(
+    concepts::span<span_const_vec_2_f32>&&
+        concepts::vector<typename span_const_vec_2_f32::value_type, f32, 2>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -3839,7 +3832,7 @@ requires(semantic::concepts::Span<span_const_vec_2_f32>&& semantic::concepts::
 }
 
 template<class vec_2_i32>
-requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
+requires(concepts::vector<vec_2_i32, i32, 2>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -3866,8 +3859,9 @@ requires(semantic::concepts::Vector<vec_2_i32, i32, 2>)
 }
 
 template<class span_const_vec_2_i32>
-requires(semantic::concepts::Span<span_const_vec_2_i32>&& semantic::concepts::
-             Vector<typename span_const_vec_2_i32::value_type, i32, 2>)
+requires(
+    concepts::span<span_const_vec_2_i32>&&
+        concepts::vector<typename span_const_vec_2_i32::value_type, i32, 2>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -3898,7 +3892,7 @@ requires(semantic::concepts::Span<span_const_vec_2_i32>&& semantic::concepts::
 }
 
 template<class vec_3_f32>
-requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
+requires(concepts::vector<vec_3_f32, f32, 3>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -3926,8 +3920,9 @@ requires(semantic::concepts::Vector<vec_3_f32, f32, 3>)
 }
 
 template<class span_const_vec_3_f32>
-requires(semantic::concepts::Span<span_const_vec_3_f32>&& semantic::concepts::
-             Vector<typename span_const_vec_3_f32::value_type, f32, 3>)
+requires(
+    concepts::span<span_const_vec_3_f32>&&
+        concepts::vector<typename span_const_vec_3_f32::value_type, f32, 3>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -3958,7 +3953,7 @@ requires(semantic::concepts::Span<span_const_vec_3_f32>&& semantic::concepts::
 }
 
 template<class vec_3_i32>
-requires(semantic::concepts::Vector<vec_3_i32, i32, 3>)
+requires(concepts::vector<vec_3_i32, i32, 3>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -3986,8 +3981,9 @@ requires(semantic::concepts::Vector<vec_3_i32, i32, 3>)
 }
 
 template<class span_const_vec_3_i32>
-requires(semantic::concepts::Span<span_const_vec_3_i32>&& semantic::concepts::
-             Vector<typename span_const_vec_3_i32::value_type, i32, 3>)
+requires(
+    concepts::span<span_const_vec_3_i32>&&
+        concepts::vector<typename span_const_vec_3_i32::value_type, i32, 3>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -4018,7 +4014,7 @@ requires(semantic::concepts::Span<span_const_vec_3_i32>&& semantic::concepts::
 }
 
 template<class vec_4_f32>
-requires(semantic::concepts::Vector<vec_4_f32, f32, 4>)
+requires(concepts::vector<vec_4_f32, f32, 4>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -4047,8 +4043,9 @@ requires(semantic::concepts::Vector<vec_4_f32, f32, 4>)
 }
 
 template<class span_const_vec_4_f32>
-requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
-             Vector<typename span_const_vec_4_f32::value_type, f32, 4>)
+requires(
+    concepts::span<span_const_vec_4_f32>&&
+        concepts::vector<typename span_const_vec_4_f32::value_type, f32, 4>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -4079,7 +4076,7 @@ requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
 }
 
 template<class vec_4_i32>
-requires(semantic::concepts::Vector<vec_4_i32, i32, 4>)
+requires(concepts::vector<vec_4_i32, i32, 4>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -4108,8 +4105,9 @@ requires(semantic::concepts::Vector<vec_4_i32, i32, 4>)
 }
 
 template<class span_const_vec_4_i32>
-requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
-             Vector<typename span_const_vec_4_i32::value_type, i32, 4>)
+requires(
+    concepts::span<span_const_vec_4_i32>&&
+        concepts::vector<typename span_const_vec_4_i32::value_type, i32, 4>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -4140,8 +4138,8 @@ requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
 }
 
 template<class span_const_mat_2x2_f32>
-requires(semantic::concepts::Span<span_const_mat_2x2_f32>&& semantic::concepts::
-             Matrix<typename span_const_mat_2x2_f32::value_type, f32, 2, 2>)
+requires(concepts::span<span_const_mat_2x2_f32>&& concepts::
+             matrix<typename span_const_mat_2x2_f32::value_type, f32, 2, 2>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -4177,8 +4175,8 @@ requires(semantic::concepts::Span<span_const_mat_2x2_f32>&& semantic::concepts::
 }
 
 template<class span_const_mat_3x3_f32>
-requires(semantic::concepts::Span<span_const_mat_3x3_f32>&& semantic::concepts::
-             Matrix<typename span_const_mat_3x3_f32::value_type, f32, 3, 3>)
+requires(concepts::span<span_const_mat_3x3_f32>&& concepts::
+             matrix<typename span_const_mat_3x3_f32::value_type, f32, 3, 3>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -4214,8 +4212,8 @@ requires(semantic::concepts::Span<span_const_mat_3x3_f32>&& semantic::concepts::
 }
 
 template<class span_const_mat_4x4_f32>
-requires(semantic::concepts::Span<span_const_mat_4x4_f32>&& semantic::concepts::
-             Matrix<typename span_const_mat_4x4_f32::value_type, f32, 4, 4>)
+requires(concepts::span<span_const_mat_4x4_f32>&& concepts::
+             matrix<typename span_const_mat_4x4_f32::value_type, f32, 4, 4>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -4251,8 +4249,8 @@ requires(semantic::concepts::Span<span_const_mat_4x4_f32>&& semantic::concepts::
 }
 
 template<class span_const_mat_2x3_f32>
-requires(semantic::concepts::Span<span_const_mat_2x3_f32>&& semantic::concepts::
-             Matrix<typename span_const_mat_2x3_f32::value_type, f32, 2, 3>)
+requires(concepts::span<span_const_mat_2x3_f32>&& concepts::
+             matrix<typename span_const_mat_2x3_f32::value_type, f32, 2, 3>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -4288,8 +4286,8 @@ requires(semantic::concepts::Span<span_const_mat_2x3_f32>&& semantic::concepts::
 }
 
 template<class span_const_mat_2x4_f32>
-requires(semantic::concepts::Span<span_const_mat_2x4_f32>&& semantic::concepts::
-             Matrix<typename span_const_mat_2x4_f32::value_type, f32, 2, 4>)
+requires(concepts::span<span_const_mat_2x4_f32>&& concepts::
+             matrix<typename span_const_mat_2x4_f32::value_type, f32, 2, 4>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -4325,8 +4323,8 @@ requires(semantic::concepts::Span<span_const_mat_2x4_f32>&& semantic::concepts::
 }
 
 template<class span_const_mat_3x2_f32>
-requires(semantic::concepts::Span<span_const_mat_3x2_f32>&& semantic::concepts::
-             Matrix<typename span_const_mat_3x2_f32::value_type, f32, 3, 2>)
+requires(concepts::span<span_const_mat_3x2_f32>&& concepts::
+             matrix<typename span_const_mat_3x2_f32::value_type, f32, 3, 2>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -4362,8 +4360,8 @@ requires(semantic::concepts::Span<span_const_mat_3x2_f32>&& semantic::concepts::
 }
 
 template<class span_const_mat_3x4_f32>
-requires(semantic::concepts::Span<span_const_mat_3x4_f32>&& semantic::concepts::
-             Matrix<typename span_const_mat_3x4_f32::value_type, f32, 3, 4>)
+requires(concepts::span<span_const_mat_3x4_f32>&& concepts::
+             matrix<typename span_const_mat_3x4_f32::value_type, f32, 3, 4>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -4399,8 +4397,8 @@ requires(semantic::concepts::Span<span_const_mat_3x4_f32>&& semantic::concepts::
 }
 
 template<class span_const_mat_4x2_f32>
-requires(semantic::concepts::Span<span_const_mat_4x2_f32>&& semantic::concepts::
-             Matrix<typename span_const_mat_4x2_f32::value_type, f32, 4, 2>)
+requires(concepts::span<span_const_mat_4x2_f32>&& concepts::
+             matrix<typename span_const_mat_4x2_f32::value_type, f32, 4, 2>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -4436,8 +4434,8 @@ requires(semantic::concepts::Span<span_const_mat_4x2_f32>&& semantic::concepts::
 }
 
 template<class span_const_mat_4x3_f32>
-requires(semantic::concepts::Span<span_const_mat_4x3_f32>&& semantic::concepts::
-             Matrix<typename span_const_mat_4x3_f32::value_type, f32, 4, 3>)
+requires(concepts::span<span_const_mat_4x3_f32>&& concepts::
+             matrix<typename span_const_mat_4x3_f32::value_type, f32, 4, 3>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -4542,7 +4540,7 @@ STATICINLINE void texture_buffer(
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -4573,7 +4571,7 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(concepts::span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -4604,7 +4602,7 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -4640,7 +4638,7 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(concepts::span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -4676,7 +4674,7 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 }
 
 template<class span_const_i32>
-requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
+requires(concepts::span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -4708,7 +4706,7 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
 }
 
 template<class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+requires(concepts::span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -4740,7 +4738,7 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
 }
 
 template<class span_const_i32>
-requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
+requires(concepts::span<span_const_i32>&& std::is_same_v<
          std::decay_t<typename span_const_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -4777,7 +4775,7 @@ requires(semantic::concepts::Span<span_const_i32>&& std::is_same_v<
 }
 
 template<class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+requires(concepts::span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -4837,7 +4835,7 @@ STATICINLINE void program_uniform(u32 program, i32 location, u32 v0)
 }
 
 template<class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+requires(concepts::span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -4870,7 +4868,7 @@ requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
 }
 
 template<class vec_2_u32>
-requires(semantic::concepts::Vector<vec_2_u32, u32, 2>)
+requires(concepts::vector<vec_2_u32, u32, 2>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -4897,8 +4895,9 @@ requires(semantic::concepts::Vector<vec_2_u32, u32, 2>)
 }
 
 template<class span_const_vec_2_u32>
-requires(semantic::concepts::Span<span_const_vec_2_u32>&& semantic::concepts::
-             Vector<typename span_const_vec_2_u32::value_type, u32, 2>)
+requires(
+    concepts::span<span_const_vec_2_u32>&&
+        concepts::vector<typename span_const_vec_2_u32::value_type, u32, 2>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -4929,7 +4928,7 @@ requires(semantic::concepts::Span<span_const_vec_2_u32>&& semantic::concepts::
 }
 
 template<class vec_3_u32>
-requires(semantic::concepts::Vector<vec_3_u32, u32, 3>)
+requires(concepts::vector<vec_3_u32, u32, 3>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -4957,8 +4956,9 @@ requires(semantic::concepts::Vector<vec_3_u32, u32, 3>)
 }
 
 template<class span_const_vec_3_u32>
-requires(semantic::concepts::Span<span_const_vec_3_u32>&& semantic::concepts::
-             Vector<typename span_const_vec_3_u32::value_type, u32, 3>)
+requires(
+    concepts::span<span_const_vec_3_u32>&&
+        concepts::vector<typename span_const_vec_3_u32::value_type, u32, 3>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -4989,7 +4989,7 @@ requires(semantic::concepts::Span<span_const_vec_3_u32>&& semantic::concepts::
 }
 
 template<class vec_4_u32>
-requires(semantic::concepts::Vector<vec_4_u32, u32, 4>)
+requires(concepts::vector<vec_4_u32, u32, 4>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -5018,8 +5018,9 @@ requires(semantic::concepts::Vector<vec_4_u32, u32, 4>)
 }
 
 template<class span_const_vec_4_u32>
-requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
-             Vector<typename span_const_vec_4_u32::value_type, u32, 4>)
+requires(
+    concepts::span<span_const_vec_4_u32>&&
+        concepts::vector<typename span_const_vec_4_u32::value_type, u32, 4>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -5050,8 +5051,9 @@ requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
 }
 
 template<class span_const_vec_4_f32>
-requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
-             Vector<typename span_const_vec_4_f32::value_type, f32, 4>)
+requires(
+    concepts::span<span_const_vec_4_f32>&&
+        concepts::vector<typename span_const_vec_4_f32::value_type, f32, 4>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -5087,7 +5089,7 @@ requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -5120,7 +5122,7 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(concepts::span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -5153,7 +5155,7 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 }
 
 template<class vec_4_i32>
-requires(semantic::concepts::Vector<vec_4_i32, i32, 4>)
+requires(concepts::vector<vec_4_i32, i32, 4>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -5187,8 +5189,9 @@ requires(semantic::concepts::Vector<vec_4_i32, i32, 4>)
 }
 
 template<class span_const_vec_4_i32>
-requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
-             Vector<typename span_const_vec_4_i32::value_type, i32, 4>)
+requires(
+    concepts::span<span_const_vec_4_i32>&&
+        concepts::vector<typename span_const_vec_4_i32::value_type, i32, 4>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -5222,7 +5225,7 @@ requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
 }
 
 template<class vec_4_u32>
-requires(semantic::concepts::Vector<vec_4_u32, u32, 4>)
+requires(concepts::vector<vec_4_u32, u32, 4>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -5256,8 +5259,9 @@ requires(semantic::concepts::Vector<vec_4_u32, u32, 4>)
 }
 
 template<class span_const_vec_4_u32>
-requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
-             Vector<typename span_const_vec_4_u32::value_type, u32, 4>)
+requires(
+    concepts::span<span_const_vec_4_u32>&&
+        concepts::vector<typename span_const_vec_4_u32::value_type, u32, 4>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -5291,8 +5295,9 @@ requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
 }
 
 template<class span_const_vec_4_i32>
-requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
-             Vector<typename span_const_vec_4_i32::value_type, i32, 4>)
+requires(
+    concepts::span<span_const_vec_4_i32>&&
+        concepts::vector<typename span_const_vec_4_i32::value_type, i32, 4>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -5328,8 +5333,9 @@ requires(semantic::concepts::Span<span_const_vec_4_i32>&& semantic::concepts::
 }
 
 template<class span_const_vec_4_u32>
-requires(semantic::concepts::Span<span_const_vec_4_u32>&& semantic::concepts::
-             Vector<typename span_const_vec_4_u32::value_type, u32, 4>)
+requires(
+    concepts::span<span_const_vec_4_u32>&&
+        concepts::vector<typename span_const_vec_4_u32::value_type, u32, 4>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -5399,7 +5405,7 @@ STATICINLINE void enable_client_statei(group::enable_cap array, u32 index)
 }
 
 template<class span_f64>
-requires(semantic::concepts::Span<span_f64>&& std::is_same_v<
+requires(concepts::span<span_f64>&& std::is_same_v<
          std::decay_t<typename span_f64::value_type>,
          std::decay_t<f64>>)
     /*!
@@ -5425,7 +5431,7 @@ requires(semantic::concepts::Span<span_f64>&& std::is_same_v<
 }
 
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+requires(concepts::span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -5451,7 +5457,7 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 }
 
 template<class span_void>
-requires(semantic::concepts::Span<span_void>)
+requires(concepts::span<span_void>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param pname GLenum
@@ -5474,7 +5480,7 @@ requires(semantic::concepts::Span<span_void>)
 }
 
 template<class span_f64>
-requires(semantic::concepts::Span<span_f64>&& std::is_same_v<
+requires(concepts::span<span_f64>&& std::is_same_v<
          std::decay_t<typename span_f64::value_type>,
          std::decay_t<f64>>)
     /*!
@@ -5507,7 +5513,7 @@ requires(semantic::concepts::Span<span_f64>&& std::is_same_v<
 }
 
 template<class span_f32>
-requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
+requires(concepts::span<span_f32>&& std::is_same_v<
          std::decay_t<typename span_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -5540,7 +5546,7 @@ requires(semantic::concepts::Span<span_f32>&& std::is_same_v<
 }
 
 template<class span_void>
-requires(semantic::concepts::Span<span_void>)
+requires(concepts::span<span_void>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -5606,7 +5612,7 @@ STATICINLINE void get_named_programiv(
 }
 
 template<class vec_4_f64>
-requires(semantic::concepts::Vector<vec_4_f64, f64, 4>)
+requires(concepts::vector<vec_4_f64, f64, 4>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -5640,8 +5646,9 @@ requires(semantic::concepts::Vector<vec_4_f64, f64, 4>)
 }
 
 template<class span_const_vec_4_f64>
-requires(semantic::concepts::Span<span_const_vec_4_f64>&& semantic::concepts::
-             Vector<typename span_const_vec_4_f64::value_type, f64, 4>)
+requires(
+    concepts::span<span_const_vec_4_f64>&&
+        concepts::vector<typename span_const_vec_4_f64::value_type, f64, 4>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -5675,7 +5682,7 @@ requires(semantic::concepts::Span<span_const_vec_4_f64>&& semantic::concepts::
 }
 
 template<class vec_4_f32>
-requires(semantic::concepts::Vector<vec_4_f32, f32, 4>)
+requires(concepts::vector<vec_4_f32, f32, 4>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -5709,8 +5716,9 @@ requires(semantic::concepts::Vector<vec_4_f32, f32, 4>)
 }
 
 template<class span_const_vec_4_f32>
-requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
-             Vector<typename span_const_vec_4_f32::value_type, f32, 4>)
+requires(
+    concepts::span<span_const_vec_4_f32>&&
+        concepts::vector<typename span_const_vec_4_f32::value_type, f32, 4>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -5744,7 +5752,7 @@ requires(semantic::concepts::Span<span_const_vec_4_f32>&& semantic::concepts::
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -5781,7 +5789,7 @@ requires(semantic::concepts::Span<span_const_void>)
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -5814,7 +5822,7 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class size_2_i32>
-requires(semantic::concepts::Size2D<size_2_i32, i32>)
+requires(concepts::size_2d<size_2_i32, i32>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param renderbuffer GLuint
@@ -5844,7 +5852,7 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>)
 }
 
 template<class size_2_i32>
-requires(semantic::concepts::Size2D<size_2_i32, i32>)
+requires(concepts::size_2d<size_2_i32, i32>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param renderbuffer GLuint
@@ -5880,7 +5888,7 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>)
 }
 
 template<class size_2_i32>
-requires(semantic::concepts::Size2D<size_2_i32, i32>)
+requires(concepts::size_2d<size_2_i32, i32>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param renderbuffer GLuint
@@ -5944,7 +5952,7 @@ STATICINLINE group::framebuffer_status check_named_framebuffer_status(
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -6205,7 +6213,7 @@ STATICINLINE void framebuffer_draw_buffer(
 }
 
 template<class span_const_draw_buffer_mode>
-requires(semantic::concepts::Span<span_const_draw_buffer_mode>&& std::is_same_v<
+requires(concepts::span<span_const_draw_buffer_mode>&& std::is_same_v<
          std::decay_t<typename span_const_draw_buffer_mode::value_type>,
          std::decay_t<group::draw_buffer_mode>>)
     /*!
@@ -6259,7 +6267,7 @@ STATICINLINE void framebuffer_read_buffer(
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -6998,7 +7006,7 @@ STATICINLINE void enable_vertex_array_attrib(u32 vaobj, u32 index)
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -7031,7 +7039,7 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -7062,7 +7070,7 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_void>
-requires(semantic::concepts::Span<span_void>)
+requires(concepts::span<span_void>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param vaobj GLuint
@@ -7093,7 +7101,7 @@ requires(semantic::concepts::Span<span_void>)
 }
 
 template<class span_void>
-requires(semantic::concepts::Span<span_void>)
+requires(concepts::span<span_void>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param vaobj GLuint
@@ -7176,7 +7184,7 @@ STATICINLINE void* map_named_buffer_range(
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param buffer GLuint
@@ -7210,7 +7218,7 @@ requires(semantic::concepts::Span<span_const_void>)
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param buffer GLuint
@@ -7247,7 +7255,7 @@ requires(semantic::concepts::Span<span_const_void>)
 }
 
 template<class span_const_void>
-requires(semantic::concepts::Span<span_const_void>)
+requires(concepts::span<span_const_void>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param buffer GLuint
@@ -7290,7 +7298,7 @@ requires(semantic::concepts::Span<span_const_void>)
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -7371,7 +7379,7 @@ STATICINLINE void program_uniform(u32 program, i32 location, f64 x)
 }
 
 template<class span_const_f64>
-requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
+requires(concepts::span<span_const_f64>&& std::is_same_v<
          std::decay_t<typename span_const_f64::value_type>,
          std::decay_t<f64>>)
     /*!
@@ -7404,7 +7412,7 @@ requires(semantic::concepts::Span<span_const_f64>&& std::is_same_v<
 }
 
 template<class vec_2_f64>
-requires(semantic::concepts::Vector<vec_2_f64, f64, 2>)
+requires(concepts::vector<vec_2_f64, f64, 2>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -7431,8 +7439,9 @@ requires(semantic::concepts::Vector<vec_2_f64, f64, 2>)
 }
 
 template<class span_const_vec_2_f64>
-requires(semantic::concepts::Span<span_const_vec_2_f64>&& semantic::concepts::
-             Vector<typename span_const_vec_2_f64::value_type, f64, 2>)
+requires(
+    concepts::span<span_const_vec_2_f64>&&
+        concepts::vector<typename span_const_vec_2_f64::value_type, f64, 2>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -7463,7 +7472,7 @@ requires(semantic::concepts::Span<span_const_vec_2_f64>&& semantic::concepts::
 }
 
 template<class vec_3_f64>
-requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
+requires(concepts::vector<vec_3_f64, f64, 3>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -7491,8 +7500,9 @@ requires(semantic::concepts::Vector<vec_3_f64, f64, 3>)
 }
 
 template<class span_const_vec_3_f64>
-requires(semantic::concepts::Span<span_const_vec_3_f64>&& semantic::concepts::
-             Vector<typename span_const_vec_3_f64::value_type, f64, 3>)
+requires(
+    concepts::span<span_const_vec_3_f64>&&
+        concepts::vector<typename span_const_vec_3_f64::value_type, f64, 3>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -7523,7 +7533,7 @@ requires(semantic::concepts::Span<span_const_vec_3_f64>&& semantic::concepts::
 }
 
 template<class vec_4_f64>
-requires(semantic::concepts::Vector<vec_4_f64, f64, 4>)
+requires(concepts::vector<vec_4_f64, f64, 4>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -7552,8 +7562,9 @@ requires(semantic::concepts::Vector<vec_4_f64, f64, 4>)
 }
 
 template<class span_const_vec_4_f64>
-requires(semantic::concepts::Span<span_const_vec_4_f64>&& semantic::concepts::
-             Vector<typename span_const_vec_4_f64::value_type, f64, 4>)
+requires(
+    concepts::span<span_const_vec_4_f64>&&
+        concepts::vector<typename span_const_vec_4_f64::value_type, f64, 4>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -7584,8 +7595,8 @@ requires(semantic::concepts::Span<span_const_vec_4_f64>&& semantic::concepts::
 }
 
 template<class span_const_mat_2x2_f64>
-requires(semantic::concepts::Span<span_const_mat_2x2_f64>&& semantic::concepts::
-             Matrix<typename span_const_mat_2x2_f64::value_type, f64, 2, 2>)
+requires(concepts::span<span_const_mat_2x2_f64>&& concepts::
+             matrix<typename span_const_mat_2x2_f64::value_type, f64, 2, 2>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -7621,8 +7632,8 @@ requires(semantic::concepts::Span<span_const_mat_2x2_f64>&& semantic::concepts::
 }
 
 template<class span_const_mat_2x3_f64>
-requires(semantic::concepts::Span<span_const_mat_2x3_f64>&& semantic::concepts::
-             Matrix<typename span_const_mat_2x3_f64::value_type, f64, 2, 3>)
+requires(concepts::span<span_const_mat_2x3_f64>&& concepts::
+             matrix<typename span_const_mat_2x3_f64::value_type, f64, 2, 3>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -7658,8 +7669,8 @@ requires(semantic::concepts::Span<span_const_mat_2x3_f64>&& semantic::concepts::
 }
 
 template<class span_const_mat_2x4_f64>
-requires(semantic::concepts::Span<span_const_mat_2x4_f64>&& semantic::concepts::
-             Matrix<typename span_const_mat_2x4_f64::value_type, f64, 2, 4>)
+requires(concepts::span<span_const_mat_2x4_f64>&& concepts::
+             matrix<typename span_const_mat_2x4_f64::value_type, f64, 2, 4>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -7695,8 +7706,8 @@ requires(semantic::concepts::Span<span_const_mat_2x4_f64>&& semantic::concepts::
 }
 
 template<class span_const_mat_3x3_f64>
-requires(semantic::concepts::Span<span_const_mat_3x3_f64>&& semantic::concepts::
-             Matrix<typename span_const_mat_3x3_f64::value_type, f64, 3, 3>)
+requires(concepts::span<span_const_mat_3x3_f64>&& concepts::
+             matrix<typename span_const_mat_3x3_f64::value_type, f64, 3, 3>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -7732,8 +7743,8 @@ requires(semantic::concepts::Span<span_const_mat_3x3_f64>&& semantic::concepts::
 }
 
 template<class span_const_mat_3x2_f64>
-requires(semantic::concepts::Span<span_const_mat_3x2_f64>&& semantic::concepts::
-             Matrix<typename span_const_mat_3x2_f64::value_type, f64, 3, 2>)
+requires(concepts::span<span_const_mat_3x2_f64>&& concepts::
+             matrix<typename span_const_mat_3x2_f64::value_type, f64, 3, 2>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -7769,8 +7780,8 @@ requires(semantic::concepts::Span<span_const_mat_3x2_f64>&& semantic::concepts::
 }
 
 template<class span_const_mat_3x4_f64>
-requires(semantic::concepts::Span<span_const_mat_3x4_f64>&& semantic::concepts::
-             Matrix<typename span_const_mat_3x4_f64::value_type, f64, 3, 4>)
+requires(concepts::span<span_const_mat_3x4_f64>&& concepts::
+             matrix<typename span_const_mat_3x4_f64::value_type, f64, 3, 4>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -7806,8 +7817,8 @@ requires(semantic::concepts::Span<span_const_mat_3x4_f64>&& semantic::concepts::
 }
 
 template<class span_const_mat_4x4_f64>
-requires(semantic::concepts::Span<span_const_mat_4x4_f64>&& semantic::concepts::
-             Matrix<typename span_const_mat_4x4_f64::value_type, f64, 4, 4>)
+requires(concepts::span<span_const_mat_4x4_f64>&& concepts::
+             matrix<typename span_const_mat_4x4_f64::value_type, f64, 4, 4>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -7843,8 +7854,8 @@ requires(semantic::concepts::Span<span_const_mat_4x4_f64>&& semantic::concepts::
 }
 
 template<class span_const_mat_4x2_f64>
-requires(semantic::concepts::Span<span_const_mat_4x2_f64>&& semantic::concepts::
-             Matrix<typename span_const_mat_4x2_f64::value_type, f64, 4, 2>)
+requires(concepts::span<span_const_mat_4x2_f64>&& concepts::
+             matrix<typename span_const_mat_4x2_f64::value_type, f64, 4, 2>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -7880,8 +7891,8 @@ requires(semantic::concepts::Span<span_const_mat_4x2_f64>&& semantic::concepts::
 }
 
 template<class span_const_mat_4x3_f64>
-requires(semantic::concepts::Span<span_const_mat_4x3_f64>&& semantic::concepts::
-             Matrix<typename span_const_mat_4x3_f64::value_type, f64, 4, 3>)
+requires(concepts::span<span_const_mat_4x3_f64>&& concepts::
+             matrix<typename span_const_mat_4x3_f64::value_type, f64, 4, 3>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param program GLuint
@@ -7991,7 +8002,7 @@ STATICINLINE void texture_storage_1d(
 }
 
 template<class size_2_i32>
-requires(semantic::concepts::Size2D<size_2_i32, i32>)
+requires(concepts::size_2d<size_2_i32, i32>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param texture GLuint
@@ -8030,7 +8041,7 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>)
 }
 
 template<class size_3_i32>
-requires(semantic::concepts::Size2D<size_3_i32, i32>)
+requires(concepts::size_2d<size_3_i32, i32>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param texture GLuint
@@ -8071,7 +8082,7 @@ requires(semantic::concepts::Size2D<size_3_i32, i32>)
 }
 
 template<class size_2_i32>
-requires(semantic::concepts::Size2D<size_2_i32, i32>)
+requires(concepts::size_2d<size_2_i32, i32>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param texture GLuint
@@ -8113,7 +8124,7 @@ requires(semantic::concepts::Size2D<size_2_i32, i32>)
 }
 
 template<class size_3_i32>
-requires(semantic::concepts::Size2D<size_3_i32, i32>)
+requires(concepts::size_2d<size_3_i32, i32>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param texture GLuint
@@ -8377,8 +8388,8 @@ STATICINLINE void vertex_array_vertex_attrib_l_offset(
 }
 
 template<class size_3_i32, class vec_3_i32>
-requires(semantic::concepts::Vector<vec_3_i32, i32, 3>&&
-             semantic::concepts::Size2D<size_3_i32, i32>)
+requires(
+    concepts::vector<vec_3_i32, i32, 3>&& concepts::size_2d<size_3_i32, i32>)
     /*!
      * \brief Part of GL_EXT_direct_state_access
      * \param texture GLuint

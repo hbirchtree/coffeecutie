@@ -123,7 +123,7 @@ requires(MinimumVersion<Current, Version<4, 0>>)
      * \return void
      */
     STATICINLINE
-    void draw_arrays_indirect(group::primitive_type mode, ptroff indirect)
+    void draw_arrays_indirect(group::primitive_type mode, intptr_t indirect)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -147,7 +147,7 @@ requires(MinimumVersion<Current, Version<4, 0>>)
     STATICINLINE void draw_elements_indirect(
         group::primitive_type     mode,
         group::draw_elements_type type,
-        ptroff                    indirect)
+        intptr_t                  indirect)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -162,8 +162,8 @@ requires(MinimumVersion<Current, Version<4, 0>>)
 }
 
 template<class span_f64>
-requires(MinimumVersion<Current, Version<4, 0>>&&
-             semantic::concepts::Span<span_f64>&& std::is_same_v<
+requires(MinimumVersion<Current, Version<4, 0>>&& concepts::span<span_f64>&&
+                                                  std::is_same_v<
                  std::decay_t<typename span_f64::value_type>,
                  std::decay_t<f64>>)
     /*!
@@ -213,7 +213,7 @@ requires(MinimumVersion<Current, Version<4, 0>>)
 
 template<class span_const_f64>
 requires(MinimumVersion<Current, Version<4, 0>>&&
-             semantic::concepts::Span<span_const_f64>&& std::is_same_v<
+             concepts::span<span_const_f64>&& std::is_same_v<
                  std::decay_t<typename span_const_f64::value_type>,
                  std::decay_t<f64>>)
     /*!
@@ -239,7 +239,7 @@ requires(MinimumVersion<Current, Version<4, 0>>&&
 
 template<class vec_2_f64>
 requires(MinimumVersion<Current, Version<4, 0>>&&
-             semantic::concepts::Vector<vec_2_f64, f64, 2>)
+             concepts::vector<vec_2_f64, f64, 2>)
     /*!
      * \brief Wraps around glUniform2d. Introduced in GL core 4.0
      * \param location GLint
@@ -261,8 +261,8 @@ requires(MinimumVersion<Current, Version<4, 0>>&&
 template<class span_const_vec_2_f64>
 requires(
     MinimumVersion<Current, Version<4, 0>>&&
-        semantic::concepts::Span<span_const_vec_2_f64>&& semantic::concepts::
-            Vector<typename span_const_vec_2_f64::value_type, f64, 2>)
+            concepts::span<span_const_vec_2_f64>&&
+            concepts::vector<typename span_const_vec_2_f64::value_type, f64, 2>)
     /*!
      * \brief Wraps around glUniform2dv. Introduced in GL core 4.0
      * \param location GLint
@@ -286,7 +286,7 @@ requires(
 
 template<class vec_3_f64>
 requires(MinimumVersion<Current, Version<4, 0>>&&
-             semantic::concepts::Vector<vec_3_f64, f64, 3>)
+             concepts::vector<vec_3_f64, f64, 3>)
     /*!
      * \brief Wraps around glUniform3d. Introduced in GL core 4.0
      * \param location GLint
@@ -309,8 +309,8 @@ requires(MinimumVersion<Current, Version<4, 0>>&&
 template<class span_const_vec_3_f64>
 requires(
     MinimumVersion<Current, Version<4, 0>>&&
-        semantic::concepts::Span<span_const_vec_3_f64>&& semantic::concepts::
-            Vector<typename span_const_vec_3_f64::value_type, f64, 3>)
+            concepts::span<span_const_vec_3_f64>&&
+            concepts::vector<typename span_const_vec_3_f64::value_type, f64, 3>)
     /*!
      * \brief Wraps around glUniform3dv. Introduced in GL core 4.0
      * \param location GLint
@@ -334,7 +334,7 @@ requires(
 
 template<class vec_4_f64>
 requires(MinimumVersion<Current, Version<4, 0>>&&
-             semantic::concepts::Vector<vec_4_f64, f64, 4>)
+             concepts::vector<vec_4_f64, f64, 4>)
     /*!
      * \brief Wraps around glUniform4d. Introduced in GL core 4.0
      * \param location GLint
@@ -358,8 +358,8 @@ requires(MinimumVersion<Current, Version<4, 0>>&&
 template<class span_const_vec_4_f64>
 requires(
     MinimumVersion<Current, Version<4, 0>>&&
-        semantic::concepts::Span<span_const_vec_4_f64>&& semantic::concepts::
-            Vector<typename span_const_vec_4_f64::value_type, f64, 4>)
+            concepts::span<span_const_vec_4_f64>&&
+            concepts::vector<typename span_const_vec_4_f64::value_type, f64, 4>)
     /*!
      * \brief Wraps around glUniform4dv. Introduced in GL core 4.0
      * \param location GLint
@@ -382,10 +382,9 @@ requires(
 }
 
 template<class span_const_mat_2x2_f64>
-requires(
-    MinimumVersion<Current, Version<4, 0>>&&
-        semantic::concepts::Span<span_const_mat_2x2_f64>&& semantic::concepts::
-            Matrix<typename span_const_mat_2x2_f64::value_type, f64, 2, 2>)
+requires(MinimumVersion<Current, Version<4, 0>>&&
+             concepts::span<span_const_mat_2x2_f64>&& concepts::
+                 matrix<typename span_const_mat_2x2_f64::value_type, f64, 2, 2>)
     /*!
      * \brief Wraps around glUniformMatrix2dv. Introduced in GL core 4.0
      * \param location GLint
@@ -411,10 +410,9 @@ requires(
 }
 
 template<class span_const_mat_2x3_f64>
-requires(
-    MinimumVersion<Current, Version<4, 0>>&&
-        semantic::concepts::Span<span_const_mat_2x3_f64>&& semantic::concepts::
-            Matrix<typename span_const_mat_2x3_f64::value_type, f64, 2, 3>)
+requires(MinimumVersion<Current, Version<4, 0>>&&
+             concepts::span<span_const_mat_2x3_f64>&& concepts::
+                 matrix<typename span_const_mat_2x3_f64::value_type, f64, 2, 3>)
     /*!
      * \brief Wraps around glUniformMatrix2x3dv. Introduced in GL core 4.0
      * \param location GLint
@@ -440,10 +438,9 @@ requires(
 }
 
 template<class span_const_mat_2x4_f64>
-requires(
-    MinimumVersion<Current, Version<4, 0>>&&
-        semantic::concepts::Span<span_const_mat_2x4_f64>&& semantic::concepts::
-            Matrix<typename span_const_mat_2x4_f64::value_type, f64, 2, 4>)
+requires(MinimumVersion<Current, Version<4, 0>>&&
+             concepts::span<span_const_mat_2x4_f64>&& concepts::
+                 matrix<typename span_const_mat_2x4_f64::value_type, f64, 2, 4>)
     /*!
      * \brief Wraps around glUniformMatrix2x4dv. Introduced in GL core 4.0
      * \param location GLint
@@ -469,10 +466,9 @@ requires(
 }
 
 template<class span_const_mat_3x3_f64>
-requires(
-    MinimumVersion<Current, Version<4, 0>>&&
-        semantic::concepts::Span<span_const_mat_3x3_f64>&& semantic::concepts::
-            Matrix<typename span_const_mat_3x3_f64::value_type, f64, 3, 3>)
+requires(MinimumVersion<Current, Version<4, 0>>&&
+             concepts::span<span_const_mat_3x3_f64>&& concepts::
+                 matrix<typename span_const_mat_3x3_f64::value_type, f64, 3, 3>)
     /*!
      * \brief Wraps around glUniformMatrix3dv. Introduced in GL core 4.0
      * \param location GLint
@@ -498,10 +494,9 @@ requires(
 }
 
 template<class span_const_mat_3x2_f64>
-requires(
-    MinimumVersion<Current, Version<4, 0>>&&
-        semantic::concepts::Span<span_const_mat_3x2_f64>&& semantic::concepts::
-            Matrix<typename span_const_mat_3x2_f64::value_type, f64, 3, 2>)
+requires(MinimumVersion<Current, Version<4, 0>>&&
+             concepts::span<span_const_mat_3x2_f64>&& concepts::
+                 matrix<typename span_const_mat_3x2_f64::value_type, f64, 3, 2>)
     /*!
      * \brief Wraps around glUniformMatrix3x2dv. Introduced in GL core 4.0
      * \param location GLint
@@ -527,10 +522,9 @@ requires(
 }
 
 template<class span_const_mat_3x4_f64>
-requires(
-    MinimumVersion<Current, Version<4, 0>>&&
-        semantic::concepts::Span<span_const_mat_3x4_f64>&& semantic::concepts::
-            Matrix<typename span_const_mat_3x4_f64::value_type, f64, 3, 4>)
+requires(MinimumVersion<Current, Version<4, 0>>&&
+             concepts::span<span_const_mat_3x4_f64>&& concepts::
+                 matrix<typename span_const_mat_3x4_f64::value_type, f64, 3, 4>)
     /*!
      * \brief Wraps around glUniformMatrix3x4dv. Introduced in GL core 4.0
      * \param location GLint
@@ -556,10 +550,9 @@ requires(
 }
 
 template<class span_const_mat_4x4_f64>
-requires(
-    MinimumVersion<Current, Version<4, 0>>&&
-        semantic::concepts::Span<span_const_mat_4x4_f64>&& semantic::concepts::
-            Matrix<typename span_const_mat_4x4_f64::value_type, f64, 4, 4>)
+requires(MinimumVersion<Current, Version<4, 0>>&&
+             concepts::span<span_const_mat_4x4_f64>&& concepts::
+                 matrix<typename span_const_mat_4x4_f64::value_type, f64, 4, 4>)
     /*!
      * \brief Wraps around glUniformMatrix4dv. Introduced in GL core 4.0
      * \param location GLint
@@ -585,10 +578,9 @@ requires(
 }
 
 template<class span_const_mat_4x2_f64>
-requires(
-    MinimumVersion<Current, Version<4, 0>>&&
-        semantic::concepts::Span<span_const_mat_4x2_f64>&& semantic::concepts::
-            Matrix<typename span_const_mat_4x2_f64::value_type, f64, 4, 2>)
+requires(MinimumVersion<Current, Version<4, 0>>&&
+             concepts::span<span_const_mat_4x2_f64>&& concepts::
+                 matrix<typename span_const_mat_4x2_f64::value_type, f64, 4, 2>)
     /*!
      * \brief Wraps around glUniformMatrix4x2dv. Introduced in GL core 4.0
      * \param location GLint
@@ -614,10 +606,9 @@ requires(
 }
 
 template<class span_const_mat_4x3_f64>
-requires(
-    MinimumVersion<Current, Version<4, 0>>&&
-        semantic::concepts::Span<span_const_mat_4x3_f64>&& semantic::concepts::
-            Matrix<typename span_const_mat_4x3_f64::value_type, f64, 4, 3>)
+requires(MinimumVersion<Current, Version<4, 0>>&&
+             concepts::span<span_const_mat_4x3_f64>&& concepts::
+                 matrix<typename span_const_mat_4x3_f64::value_type, f64, 4, 3>)
     /*!
      * \brief Wraps around glUniformMatrix4x3dv. Introduced in GL core 4.0
      * \param location GLint
@@ -643,8 +634,8 @@ requires(
 }
 
 template<class span_GLchar>
-requires(MinimumVersion<Current, Version<4, 0>>&&
-             semantic::concepts::Span<span_GLchar>&& std::is_same_v<
+requires(MinimumVersion<Current, Version<4, 0>>&& concepts::span<span_GLchar>&&
+                                                  std::is_same_v<
                  std::decay_t<typename span_GLchar::value_type>,
                  std::decay_t<GLchar>>)
     /*!
@@ -685,8 +676,8 @@ requires(MinimumVersion<Current, Version<4, 0>>&&
 }
 
 template<class span_GLchar>
-requires(MinimumVersion<Current, Version<4, 0>>&&
-             semantic::concepts::Span<span_GLchar>&& std::is_same_v<
+requires(MinimumVersion<Current, Version<4, 0>>&& concepts::span<span_GLchar>&&
+                                                  std::is_same_v<
                  std::decay_t<typename span_GLchar::value_type>,
                  std::decay_t<GLchar>>)
     /*!
@@ -723,8 +714,8 @@ requires(MinimumVersion<Current, Version<4, 0>>&&
 }
 
 template<class span_i32>
-requires(MinimumVersion<Current, Version<4, 0>>&&
-             semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(MinimumVersion<Current, Version<4, 0>>&& concepts::span<span_i32>&&
+                                                  std::is_same_v<
                  std::decay_t<typename span_i32::value_type>,
                  std::decay_t<i32>>)
     /*!
@@ -874,7 +865,7 @@ requires(MinimumVersion<Current, Version<4, 0>>)
 
 template<class span_const_u32>
 requires(MinimumVersion<Current, Version<4, 0>>&&
-             semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+             concepts::span<span_const_u32>&& std::is_same_v<
                  std::decay_t<typename span_const_u32::value_type>,
                  std::decay_t<u32>>)
     /*!
@@ -902,7 +893,7 @@ requires(MinimumVersion<Current, Version<4, 0>>&&
 
 template<class span_const_f32>
 requires(MinimumVersion<Current, Version<4, 0>>&&
-             semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+             concepts::span<span_const_f32>&& std::is_same_v<
                  std::decay_t<typename span_const_f32::value_type>,
                  std::decay_t<f32>>)
     /*!
@@ -968,7 +959,7 @@ requires(MinimumVersion<Current, Version<4, 0>>)
 
 template<class span_const_u32>
 requires(MinimumVersion<Current, Version<4, 0>>&&
-             semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+             concepts::span<span_const_u32>&& std::is_same_v<
                  std::decay_t<typename span_const_u32::value_type>,
                  std::decay_t<u32>>)
     /*!
@@ -1011,8 +1002,8 @@ requires(MinimumVersion<Current, Version<4, 0>>)
 }
 
 template<class span_u32>
-requires(MinimumVersion<Current, Version<4, 0>>&&
-             semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(MinimumVersion<Current, Version<4, 0>>&& concepts::span<span_u32>&&
+                                                  std::is_same_v<
                  std::decay_t<typename span_u32::value_type>,
                  std::decay_t<u32>>)
     /*!
@@ -1149,8 +1140,8 @@ requires(MinimumVersion<Current, Version<4, 0>>)
 }
 
 template<class span_i32>
-requires(MinimumVersion<Current, Version<4, 0>>&&
-             semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(MinimumVersion<Current, Version<4, 0>>&& concepts::span<span_i32>&&
+                                                  std::is_same_v<
                  std::decay_t<typename span_i32::value_type>,
                  std::decay_t<i32>>)
     /*!

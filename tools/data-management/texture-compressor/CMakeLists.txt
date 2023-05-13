@@ -14,7 +14,7 @@ coffee_library(
     LIBRARIES
         Image
         PeripheralPlatform
-        GLAD_Core
+        GraphicsDefines
         Etc2Comp::EtcLib
         KTX::ktx
         Threads::Threads

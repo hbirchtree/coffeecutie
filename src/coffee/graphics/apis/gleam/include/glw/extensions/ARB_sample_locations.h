@@ -5,12 +5,12 @@
 namespace gl::arb::sample_locations {
 using gl::group::get_multisample_prop_nv;
 namespace values {
-constexpr libc_types::u32 sample_location_subpixel_bits             = 0x933D;
-constexpr libc_types::u32 sample_location_pixel_grid_width          = 0x933E;
-constexpr libc_types::u32 sample_location_pixel_grid_height         = 0x933F;
-constexpr libc_types::u32 programmable_sample_location_table_size   = 0x9340;
-constexpr libc_types::u32 framebuffer_programmable_sample_locations = 0x9342;
-constexpr libc_types::u32 framebuffer_sample_location_pixel_grid    = 0x9343;
+constexpr u32 sample_location_subpixel_bits             = 0x933D;
+constexpr u32 sample_location_pixel_grid_width          = 0x933E;
+constexpr u32 sample_location_pixel_grid_height         = 0x933F;
+constexpr u32 programmable_sample_location_table_size   = 0x9340;
+constexpr u32 framebuffer_programmable_sample_locations = 0x9342;
+constexpr u32 framebuffer_sample_location_pixel_grid    = 0x9343;
 } // namespace values
 /*!
  * \brief Part of GL_ARB_sample_locations
@@ -29,7 +29,7 @@ STATICINLINE void evaluate_depth_values()
 }
 
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+requires(concepts::span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
          std::decay_t<f32>>)
     /*!
@@ -60,7 +60,7 @@ requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
 }
 
 template<class span_const_f32>
-requires(semantic::concepts::Span<span_const_f32>&& std::is_same_v<
+requires(concepts::span<span_const_f32>&& std::is_same_v<
          std::decay_t<typename span_const_f32::value_type>,
          std::decay_t<f32>>)
     /*!

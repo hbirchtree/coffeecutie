@@ -3,11 +3,11 @@
 #ifdef GL_ARB_occlusion_query
 namespace gl::arb::occlusion_query {
 namespace values {
-constexpr libc_types::u32 query_counter_bits     = 0x8864;
-constexpr libc_types::u32 current_query          = 0x8865;
-constexpr libc_types::u32 query_result           = 0x8866;
-constexpr libc_types::u32 query_result_available = 0x8867;
-constexpr libc_types::u32 samples_passed         = 0x8914;
+constexpr u32 query_counter_bits     = 0x8864;
+constexpr u32 current_query          = 0x8865;
+constexpr u32 query_result           = 0x8866;
+constexpr u32 query_result_available = 0x8867;
+constexpr u32 samples_passed         = 0x8914;
 } // namespace values
 /*!
  * \brief Part of GL_ARB_occlusion_query
@@ -27,7 +27,7 @@ STATICINLINE void begin_query(group::query_target target, u32 id)
 }
 
 template<class span_const_u32>
-requires(semantic::concepts::Span<span_const_u32>&& std::is_same_v<
+requires(concepts::span<span_const_u32>&& std::is_same_v<
          std::decay_t<typename span_const_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -66,7 +66,7 @@ STATICINLINE void end_query(group::query_target target)
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(concepts::span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -89,7 +89,7 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
@@ -115,7 +115,7 @@ requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
 }
 
 template<class span_u32>
-requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
+requires(concepts::span<span_u32>&& std::is_same_v<
          std::decay_t<typename span_u32::value_type>,
          std::decay_t<u32>>)
     /*!
@@ -141,7 +141,7 @@ requires(semantic::concepts::Span<span_u32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(semantic::concepts::Span<span_i32>&& std::is_same_v<
+requires(concepts::span<span_i32>&& std::is_same_v<
          std::decay_t<typename span_i32::value_type>,
          std::decay_t<i32>>)
     /*!
