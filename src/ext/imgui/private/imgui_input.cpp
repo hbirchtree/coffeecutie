@@ -3,8 +3,6 @@
 #include <coffee/core/types/input/event_types.h>
 #include <coffee/core/types/input/keymap.h>
 
-#include <coffee/strings/libc_types.h>
-
 #include <coffee/core/CDebug>
 
 namespace imgui::detail {

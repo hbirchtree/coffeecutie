@@ -7,10 +7,7 @@
 #include <peripherals/stl/string_casting.h>
 #include <platforms/environment.h>
 
-#include <coffee/strings/libc_types.h>
-
 #include <coffee/core/CDebug>
-#include <coffee/strings/format.h>
 
 namespace Coffee::Store {
 

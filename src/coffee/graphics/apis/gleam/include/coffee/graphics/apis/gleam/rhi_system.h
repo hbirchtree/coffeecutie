@@ -76,8 +76,8 @@ class system : public compo::RestrictedSubsystem<system, system_manifest>,
 
     void activate_resize(Proxy& e)
     {
-        if constexpr(compile_info::platform::is_emscripten)
-            return;
+//        if constexpr(compile_info::platform::is_emscripten)
+//            return;
 
         if(auto fb = e.service<comp_app::GraphicsFramebuffer>())
         {

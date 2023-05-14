@@ -5,7 +5,7 @@ precision mediump float;
 attribute vec3 pos;
 attribute vec2 tex;
 
-uniform mat4 transform[6];
+uniform mat4 transform[8];
 
 uniform int g_InstanceID;
 

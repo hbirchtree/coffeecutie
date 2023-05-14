@@ -18,7 +18,7 @@ out VS_OUT
 } vs_out;
 #endif
 
-uniform mat4 transform[128];
+uniform mat4 transform[8];
 uniform vec2 tex_mul[2];
 
 void main(void)

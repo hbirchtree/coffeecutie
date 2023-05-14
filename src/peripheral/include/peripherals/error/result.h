@@ -5,7 +5,7 @@
 namespace stl_types {
 
 template<typename T, typename E>
-using result = boost::outcome_v2::std_result<T, E, boost::outcome_v2::policy::terminate>;
+using result = boost::outcome_v2::std_checked<T, E>;
 using boost::outcome_v2::success;
 using boost::outcome_v2::failure;
 

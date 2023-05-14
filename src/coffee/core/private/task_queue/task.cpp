@@ -4,8 +4,6 @@
 #include <coffee/core/CProfiling>
 #include <coffee/core/internal_state.h>
 
-#include <coffee/strings/libc_types.h>
-
 #include <coffee/core/CDebug>
 
 #define RQ_API "runtime_queue::"

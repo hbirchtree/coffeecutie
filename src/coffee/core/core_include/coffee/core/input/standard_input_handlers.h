@@ -71,7 +71,7 @@ struct StandardCameraOpts
         f32 fast{100.f};
     } accel;
 
-    Vecf3 up;
+    Vecf3 up{};
 };
 
 template<typename CameraPtr, typename CameraOptsPtr>

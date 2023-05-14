@@ -31,11 +31,7 @@ coffee_library (
     TARGET CoreDebug
 
     SOURCES
-
-    #
-    # to_string(...) functions
-    #
-    private/strings.cpp
+#        private/strings.cpp
 
     LIBRARIES CoreCommon PeripheralThreadNaming
 

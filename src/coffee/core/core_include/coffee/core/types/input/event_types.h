@@ -449,10 +449,6 @@ struct CITouchTapEvent : BaseEvent<CIEvent::TouchTap>
 
 struct CITouchMotionEvent : BaseEvent<CIEvent::TouchMotion>
 {
-    enum TouchType
-    {
-        Hover = 0x1,
-    };
     Vecf2 origin;
     Vecf2 delta;
     union

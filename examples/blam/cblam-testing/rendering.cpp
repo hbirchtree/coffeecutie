@@ -169,39 +169,6 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             base_mat += model_mat_batch_size;
         }
     }
-
-    ShaderItem const* get_shader(generation_idx_t shader)
-    {
-        if(!shader.valid())
-            return nullptr;
-        auto it = shader_cache.find(shader);
-        if(it == shader_cache.m_cache.end())
-            return nullptr;
-        return &it->second;
-    }
-    BitmapItem const* get_bitm(generation_idx_t bitm)
-    {
-        if(!bitm.valid())
-            return nullptr;
-        auto it = bitm_cache.find(bitm);
-        if(it == bitm_cache.m_cache.end())
-            return nullptr;
-        return &it->second;
-    }
-    PixDesc get_bitm_format(generation_idx_t bitm)
-    {
-        BitmapItem const* item = get_bitm(bitm);
-        if(!item)
-            return PixDesc();
-        else
-            return item->image.fmt;
-    }
-    template<class T>
-    std::shared_ptr<gfx::sampler_t> get_bitm_bucket(generation_idx_t bitm)
-    {
-        return bitm_cache.template get_bucket<T>(get_bitm(bitm)->image.fmt)
-            .sampler;
-    }
     BSPItem const* get_bsp(generation_idx_t bsp)
     {
         if(!bsp.valid())

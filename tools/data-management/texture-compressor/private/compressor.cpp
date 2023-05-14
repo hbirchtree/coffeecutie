@@ -1,6 +1,5 @@
 #include <coffee/application/application_start.h>
-#include <coffee/strings/libc_types.h>
-#include <coffee/strings/url_types.h>
+#include <fmt_extensions/url_types.h>
 #include <peripherals/stl/string_ops.h>
 
 #include <cxxopts.hpp>

@@ -171,9 +171,7 @@ struct AppLoader : AppService<AppLoader>
         auto it = m_configs.find(type_id);
 
         if(it == m_configs.end())
-            Throw(undefined_behavior(
-                std::string("failed to find config: ")
-                + typeid(Config).name()));
+            Throw(undefined_behavior("failed to find config"));
 
         auto ptr = C_DCAST<Config>(it->second);
 

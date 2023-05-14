@@ -64,8 +64,8 @@ struct BlamCamera : compo::SubsystemBase
     }
 
     camera_t                      camera;
-    Matf4                         camera_matrix;
-    Matf4                         rotation_matrix;
+    Matf4                         camera_matrix{};
+    Matf4                         rotation_matrix{};
     StandardCameraOpts            camera_opts;
     std::shared_ptr<std_camera_t> std_camera;
 

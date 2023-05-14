@@ -43,6 +43,9 @@ struct ValueTag
     using value_type = ValueType;
 };
 
+template<typename SystemType, typename ValueType>
+using value_tag = ValueTag<SystemType, ValueType>;
+
 template<typename WrappedType, typename Tagging = void>
 struct TagType
 {

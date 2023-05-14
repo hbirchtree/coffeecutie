@@ -241,6 +241,7 @@ endif()
 # Platform layer
 ############################################################
 
+add_subdirectory ( format )
 add_subdirectory ( platform )
 
 add_subdirectory ( compressors/zlib )

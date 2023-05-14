@@ -11,8 +11,6 @@
 #include <peripherals/stl/string_casting.h>
 #include <peripherals/stl/string_ops.h>
 
-#include <coffee/strings/libc_types.h>
-
 #include <coffee/core/debug/formatting.h>
 
 #include <glw/extensions/ARB_shader_draw_parameters.h>

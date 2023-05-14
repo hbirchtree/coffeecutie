@@ -104,8 +104,8 @@ static void reinit_map(
     fonts.load_from(data.map_container);
 
     load_scenario_bsp(e, data);
-//    if constexpr(std::is_same_v<halo_version, blam::pc_version_t>)
-        load_scenario_scenery(e, data);
+    //    if constexpr(std::is_same_v<halo_version, blam::pc_version_t>)
+    load_scenario_scenery(e, data);
 
     // For debugging: go through all the bitmaps
     if(false)
@@ -150,6 +150,8 @@ i32 blam_main(i32, cstring_w*)
     auto& window = loader.config<comp_app::WindowConfig>();
     window.flags = comp_app::window_flags_t::windowed
                    | comp_app::window_flags_t::resizable;
+    if constexpr(compile_info::platform::is_emscripten)
+        window.flags = comp_app::window_flags_t::resizable;
     auto& touch = loader.config<comp_app::TouchConfig>();
     touch.options |= comp_app::TouchConfig::TouchToMouse;
 
@@ -178,7 +180,7 @@ i32 blam_main(i32, cstring_w*)
             auto  load_error = gfx.load(
                 //
 //                gfx::emulation::webgl::desktop()
-                // gfx::emulation::qcom::adreno_320()
+                 gfx::emulation::qcom::adreno_320()
 //                gfx::emulation::arm::mali_g710()
                 // gfx::emulation::amd::rx560_pro()
                 //

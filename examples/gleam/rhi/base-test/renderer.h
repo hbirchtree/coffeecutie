@@ -6,11 +6,10 @@
 #include <coffee/core/coffee_saving.h>
 #include <coffee/core/platform_data.h>
 #include <coffee/core/task_queue/task.h>
-#include <peripherals/semantic/chunk.h>
 #include <coffee/core/url.h>
+#include <peripherals/semantic/chunk.h>
 
 #include <coffee/image/image_coder_system.h>
-#include <coffee/windowing/renderer/renderer.h>
 #include <peripherals/stl/magic_enum.hpp>
 #include <peripherals/typing/vectors/camera.h>
 #include <peripherals/typing/vectors/matrix_functions.h>
@@ -34,14 +33,14 @@
 #endif
 
 #if defined(FEATURE_ENABLE_DiscordLatte)
-#include <coffee/discord/discord_system.h>
+#include <discord/discord_system.h>
 #endif
 
 #include <coffee/comp_app/bundle.h>
 #include <coffee/comp_app/fps_counter.h>
 
-#include <coffee/strings/info.h>
-#include <coffee/strings/libc_types.h>
+#include <fmt_extensions/info.h>
+#include <fmt_extensions/vector_types.h>
 
 #include <coffee/core/CDebug>
 
@@ -67,47 +66,27 @@ struct RuntimeState
 
 struct TransformPair
 {
+    using value_type = TransformPair;
+    using type       = compo::alloc::VectorContainer<TransformPair>;
+
     typing::vectors::scene::transform<f32> first;
     Matf4                                  second;
     Vecf3                                  mask;
 };
 
-struct CameraData
-{
-    typing::vectors::scene::camera<f32> camera_source;
-
-    Matf4 projection;
-    Matf4 transform;
-
-    const f32 eye_distance = 0.1f;
-};
-
-struct TransformContainer;
-struct MatrixContainer;
-class CameraContainer;
-class TimeSystem;
-struct RuntimeStateSystem;
-
-using TransformTag = Components::ValueTag<TransformContainer, TransformPair>;
-using MatrixTag = Components::ValueTag<MatrixContainer, Pair<Matf4*, Matf4*>>;
-using CameraTag = Components::ValueTag<CameraContainer, CameraData>;
-using TimeTag   = Components::ValueTag<TimeSystem, Chrono::seconds_float>;
-using StateTag  = Components::ValueTag<RuntimeStateSystem, RuntimeState>;
-
 static constexpr u32 FloorTag    = 0x1;
 static constexpr u32 BaseItemTag = 0x2;
 
-struct TransformContainer : compo::alloc::VectorContainer<TransformTag>
-{
-};
+struct MatrixContainer;
+using matrix_tag = compo::value_tag<MatrixContainer, std::pair<Matf4*, Matf4*>>;
 
-struct MatrixContainer : compo::alloc::VectorBaseContainer<MatrixTag>
+struct MatrixContainer : compo::alloc::VectorBaseContainer<matrix_tag>
 {
     std::vector<Matf4> m_matrices;
 
     virtual void register_entity(u64 id)
     {
-        compo::alloc::VectorBaseContainer<MatrixTag>::register_entity(id);
+        compo::alloc::VectorBaseContainer<matrix_tag>::register_entity(id);
 
         m_matrices.push_back({});
         m_matrices.push_back({});
@@ -134,9 +113,11 @@ struct MatrixContainer : compo::alloc::VectorBaseContainer<MatrixTag>
     }
 };
 
-class CameraContainer : public compo::globals::ValueSubsystem<CameraTag>
+class CameraContainer : public compo::SubsystemBase
 {
   public:
+    using type = CameraContainer;
+
     CameraContainer()
     {
         reset();
@@ -144,24 +125,31 @@ class CameraContainer : public compo::globals::ValueSubsystem<CameraTag>
 
     void reset()
     {
-        get().camera_source.aspect      = 1.6f;
-        get().camera_source.fieldOfView = 90.f;
-        get().camera_source.zVals.far_  = 100.f;
-
-        get().camera_source.position = {0, 0, -10};
+        camera_source.aspect      = 1.6f;
+        camera_source.fieldOfView = 90.f;
+        camera_source.zVals.far_  = 100.f;
+        camera_source.position    = {0, 0, -10};
     }
 
     virtual void start_frame(ContainerProxy&, time_point const&)
     {
-        get().projection = GenPerspective<f32>(get().camera_source);
-        get().transform  = GenTransform<f32>(get().camera_source);
+        projection = GenPerspective<f32>(camera_source);
+        transform  = GenTransform<f32>(camera_source);
     }
+
+    typing::vectors::scene::camera<f32> camera_source;
+
+    Matf4 projection;
+    Matf4 transform;
+
+    const f32 eye_distance = 0.1f;
 };
 
 class TimeSystem : public Components::SubsystemBase
 {
   public:
-    using system_clock = Chrono::high_resolution_clock;
+    using type         = TimeSystem;
+    using system_clock = compo::clock;
 
     TimeSystem(system_clock::time_point const& start) :
         start_time(start), prev_time(start)
@@ -201,12 +189,14 @@ class TimeSystem : public Components::SubsystemBase
 
 struct RuntimeStateSystem : Components::SubsystemBase
 {
+    using type = RuntimeStateSystem;
+
     RuntimeState state;
 };
 
 class TransformVisitor : public Components::EntityVisitor<
-                             Components::TypeList<TransformTag, MatrixTag>,
-                             Components::TypeList<CameraTag>>
+                             Components::TypeList<TransformPair, matrix_tag>,
+                             Components::TypeList<CameraContainer>>
 {
   public:
     TransformVisitor()
@@ -220,32 +210,34 @@ class TransformVisitor : public Components::EntityVisitor<
     {
         using typing::vectors::scene::GenTransform;
 
-        auto camera        = c.subsystem<CameraTag>().get();
-        auto camera_source = camera.camera_source;
+        auto& camera        = c.subsystem<CameraContainer>();
+        auto& camera_source = camera.camera_source;
 
-        camera_source.position.x() -= camera.eye_distance;
+        camera_source.position.x -= camera.eye_distance;
 
-        auto& object_matrix = c.get<TransformTag>().second;
+        auto& object_matrix = c.get<TransformPair>().second;
 
         auto output_matrix = camera.projection
                              * GenTransform<f32>(camera_source) * object_matrix;
 
-        auto& mats = c.get<MatrixTag>();
+        auto& mats = c.get<matrix_tag>();
 
         *mats.first = output_matrix;
 
-        camera_source.position.x() += camera.eye_distance * 2;
+        camera_source.position.x += camera.eye_distance * 2;
 
         *mats.second = camera.projection * GenTransform<f32>(camera_source)
                        * object_matrix;
+
+        camera_source.position.x -= camera.eye_distance;
 
         return true;
     }
 };
 
 class FloorVisitor : public Components::EntityVisitor<
-                         Components::TypeList<TransformTag>,
-                         Components::TypeList<TimeTag>>
+                         Components::TypeList<TransformPair>,
+                         Components::TypeList<TimeSystem>>
 {
   public:
     FloorVisitor() : VisitorType(FloorTag)
@@ -257,15 +249,15 @@ class FloorVisitor : public Components::EntityVisitor<
         const Components::Entity&,
         const Components::time_point&) override
     {
-        auto& xf = c.get<TransformTag>();
+        auto& xf = c.get<TransformPair>();
 
-        auto& time = c.subsystem<TimeTag>().get_time();
+        auto& time = c.subsystem<TimeSystem>().get_time();
 
-        xf.first.position.x() = std::sin(time / 4000.f) * xf.mask.x();
-        xf.first.position.y() = std::cos(time / 4000.f) * xf.mask.y();
+        xf.first.position.x = std::sin(time / 4000.f) * xf.mask.x;
+        xf.first.position.y = std::cos(time / 4000.f) * xf.mask.y;
 
-        xf.first.rotation.y() = std::sin(time / 4000.f);
-        xf.first.rotation     = normalize_quat(xf.first.rotation);
+        xf.first.rotation.y = std::sin(time / 4000.f);
+        xf.first.rotation   = glm::normalize(xf.first.rotation);
 
         xf.second = GenTransform<f32>(xf.first);
 
@@ -274,8 +266,8 @@ class FloorVisitor : public Components::EntityVisitor<
 };
 
 class BaseItemVisitor : public Components::EntityVisitor<
-                            Components::TypeList<TransformTag>,
-                            Components::TypeList<TimeTag>>
+                            Components::TypeList<TransformPair>,
+                            Components::TypeList<TimeSystem>>
 {
   public:
     BaseItemVisitor() : VisitorType(BaseItemTag)
@@ -287,10 +279,10 @@ class BaseItemVisitor : public Components::EntityVisitor<
         const Components::Entity&,
         const Components::time_point&) override
     {
-        auto& xf   = c.get<TransformTag>();
-        auto  time = c.subsystem<TimeTag>().get_time();
+        auto& xf   = c.get<TransformPair>();
+        auto  time = c.subsystem<TimeSystem>().get_time();
 
-        xf.first.position.x() = std::sin(time / 4000.f);
+        xf.first.position.x = std::sin(time / 4000.f);
 
         xf.second = GenTransform<f32>(xf.first);
 
@@ -306,7 +298,7 @@ struct RendererState
 
     // State that can be loaded from disk
     std::shared_ptr<Store::SaveApi> saving;
-    rq::runtime_queue*    online_queue;
+    rq::runtime_queue*              online_queue;
 
     gleam::api gfx;
 
@@ -343,8 +335,8 @@ void SetupRendering(
        worker.has_value())
     {
 #if defined(FEATURE_ENABLE_DiscordLatte)
-        e.register_subsystem_inplace<Discord::Subsystem>(
-            worker.value(), Discord::DiscordOptions{"468164529617109002", 256});
+        e.register_subsystem_inplace<discord::Subsystem>(
+            worker.value(), discord::DiscordOptions{"468164529617109002", 256});
 #endif
         d.online_queue = worker.value();
     } else
@@ -362,14 +354,14 @@ void SetupRendering(
 
     ProfContext a("Renderer setup");
 
-    const constexpr Array<std::string_view, 4> textures = {{
+    const constexpr std::array<std::string_view, 4> textures = {{
         "circle_red.png",
         "circle_blue.png",
         "circle_alpha.png",
         "floor-tile.png",
     }};
 
-    constexpr Array<f32, 30> vertexdata = {{
+    constexpr std::array<f32, 30> vertexdata = {{
         -1.f, -1.f, 0.f, 0.f,
 
         1.f,  -1.f, 1.f, 0.f,
@@ -483,10 +475,10 @@ void SetupRendering(
         auto program = d.g_data.program = d.gfx.alloc_program();
         program->add(
             gleam::program_t::stage_t::Vertex,
-            d.gfx.alloc_shader(C_OCAST<Bytes>(v_rsc)));
+            d.gfx.alloc_shader(C_OCAST<semantic::Bytes>(v_rsc)));
         program->add(
             gleam::program_t::stage_t::Fragment,
-            d.gfx.alloc_shader(C_OCAST<Bytes>(f_rsc)));
+            d.gfx.alloc_shader(C_OCAST<semantic::Bytes>(f_rsc)));
         if(auto res = program->compile(); res.has_error())
         {
             auto [error_msg] = res.error();
@@ -508,7 +500,9 @@ void SetupRendering(
 
         ProfContext _("Texture loading");
         auto        fmt = typing::pixels::PixDesc(
-            PixFmt::RGBA8, BitFmt::UByte, PixCmp::RGBA);
+            typing::pixels::PixFmt::RGBA8,
+            typing::pixels::BitFmt::UByte,
+            typing::PixCmp::RGBA);
 
         auto texture = d.g_data.tex
             = std::make_shared<gleam::compat::texture_2da_t>(&d.gfx, fmt, 1);
@@ -526,10 +520,10 @@ void SetupRendering(
         {
             Resource      tex_src(textures.at(i), RSCA::AssetFile);
             stb::image_rw tex_img;
-            stb::LoadData(&tex_img, C_OCAST<BytesConst>(tex_src));
+            stb::LoadData(&tex_img, C_OCAST<semantic::BytesConst>(tex_src));
 
             texture->upload(
-                C_OCAST<Bytes>(tex_img).view,
+                C_OCAST<semantic::Bytes>(tex_img).view,
                 Veci3{0, 0, i},
                 size_3d<i32>{1024, 1024, 1});
         }
@@ -549,7 +543,7 @@ void SetupRendering(
         auto img_download = e.subsystem_cast<ASIO::Subsystem>().create_download(
             "http://i.imgur.com/nQdOmCJ.png"_http);
         auto img_decode = IMG::create_decoder(
-            img_download->output.get_future(), PixCmp::RGBA);
+            img_download->output.get_future(), typing::PixCmp::RGBA);
         auto img_upload
             = rq::dependent_task<stb::image_rw, void>::CreateProcessor(
                 img_decode->output.get_future(),
@@ -572,11 +566,11 @@ void SetupRendering(
     {
         ProfContext _("Downloading Discord profile picture");
 
-        auto& discord = e.subsystem_cast<Discord::Subsystem>();
+        auto& discord = e.subsystem_cast<discord::Subsystem>();
 
         auto img_data = e.subsystem_cast<ASIO::Subsystem>().create_download(
-            e.subsystem_cast<Discord::Subsystem>().on_started<Url>(
-                [](Discord::Subsystem& system) {
+            e.subsystem_cast<discord::Subsystem>().on_started<Url>(
+                [](discord::Subsystem& system) {
                     return system.playerInfo().avatarUrl;
                 }));
         auto decoded_img = IMG::create_decoder(img_data->output.get_future());
@@ -606,26 +600,27 @@ void SetupRendering(
     {
         using Components::VisitorFlags;
 
-        e.register_component<TransformTag>(std::make_unique<TransformContainer>());
-        e.register_component<MatrixTag>(std::make_unique<MatrixContainer>());
+        e.register_component_inplace<TransformPair>();
+        e.register_component_inplace<matrix_tag>();
 
         e.register_system(std::make_unique<TransformVisitor>());
         e.register_system(std::make_unique<FloorVisitor>());
         e.register_system(std::make_unique<BaseItemVisitor>());
 
-        e.register_subsystem_inplace<StateTag>();
+        e.register_subsystem_inplace<RuntimeStateSystem>();
         e.register_subsystem_inplace<comp_app::FrameTag>();
-        e.register_subsystem_inplace<CameraTag>();
+        e.register_subsystem_inplace<CameraContainer>();
     }
 
     {
         RuntimeState state = {};
         d.saving           = Store::CreateDefaultSave();
 
-        d.saving->restore(Bytes::ofBytes(state));
-        e.register_subsystem_inplace<TimeTag>(TimeSystem::system_clock::now());
+        d.saving->restore(semantic::Bytes::ofBytes(state));
+        e.register_subsystem_inplace<TimeSystem>(
+            TimeSystem::system_clock::now());
 
-        e.subsystem_cast<StateTag>().state = state;
+        e.subsystem_cast<RuntimeStateSystem>().state = state;
     }
 
     {
@@ -633,8 +628,8 @@ void SetupRendering(
         Components::EntityRecipe base_object;
 
         floor_object.components = {
-            typeid(TransformTag).hash_code(),
-            typeid(MatrixTag).hash_code(),
+            typeid(TransformPair).hash_code(),
+            typeid(matrix_tag).hash_code(),
         };
         base_object = floor_object;
 
@@ -647,24 +642,24 @@ void SetupRendering(
 
     for(auto& entity : e.select(FloorTag))
     {
-        auto& xf = *e.get<TransformTag>(entity.id);
+        auto& xf = *e.get<TransformPair>(entity.id);
 
         xf.first.position = {0, 0, 5};
-        xf.first.scale    = {2.5};
+        xf.first.scale    = Vecf3{2.5f};
 
-        xf.mask.x() = 2;
-        xf.mask.y() = 2;
+        xf.mask.x = 2;
+        xf.mask.y = 2;
     }
 
     for(auto& entity : e.select(BaseItemTag))
     {
-        auto& xf = *e.get<TransformTag>(entity.id);
+        auto& xf = *e.get<TransformPair>(entity.id);
 
         xf.first.position = {0, 0, 5};
-        xf.first.scale    = {1.5};
+        xf.first.scale    = Vecf3{1.5f};
 
-        xf.mask.x() = 1;
-        xf.mask.y() = 0.2f;
+        xf.mask.x = 1;
+        xf.mask.y = 0.2f;
     }
 
 #if defined(FEATURE_ENABLE_GpuQuery)
@@ -701,7 +696,7 @@ void RendererLoop(
         //        d.gfx.default_rendertarget()->discard();
         d.gfx.default_rendertarget()->clear(Vecf4{.5f, 0.f, .5f, 1.f}, 1.f, 0);
 
-        auto const& xf = e.container_cast<MatrixTag>().m_matrices;
+        auto const& xf = e.container_cast<matrix_tag>().m_matrices;
         auto err = d.gfx.submit(
             {
                 .program  = g.program,
@@ -755,24 +750,25 @@ void RendererCleanup(
     entities.subsystem_cast<ASIO::Subsystem>().stop();
 #endif
 #if defined(FEATURE_ENABLE_DiscordLatte)
-    entities.subsystem_cast<Discord::Subsystem>().stop();
+    entities.subsystem_cast<discord::Subsystem>().stop();
 #endif
 
     Profiler::PopContext();
 
-    auto& state = entities.subsystem_cast<StateTag>().state;
+    auto& state = entities.subsystem_cast<RuntimeStateSystem>().state;
 
     Profiler::PushContext("Saving time");
     cDebug("Saving time: {0}", state.time_base);
 
-    state.time_base = Chrono::duration_cast<Chrono::milliseconds>(
-                          (entities.subsystem_cast<TimeTag>().get_start()
-                           + entities.subsystem_cast<TimeTag>().get_current())
-                              .time_since_epoch())
-                          .count();
+    state.time_base
+        = std::chrono::duration_cast<std::chrono::milliseconds>(
+              (entities.subsystem_cast<TimeSystem>().get_start()
+               + entities.subsystem_cast<TimeSystem>().get_current())
+                  .time_since_epoch())
+              .count();
 
-    state.camera = entities.subsystem_cast<CameraTag>().get().camera_source;
-    d.saving->save(Bytes::ofBytes(state));
+    state.camera = entities.subsystem_cast<CameraContainer>().camera_source;
+    d.saving->save(semantic::Bytes::ofBytes(state));
 
     Profiler::PopContext();
 

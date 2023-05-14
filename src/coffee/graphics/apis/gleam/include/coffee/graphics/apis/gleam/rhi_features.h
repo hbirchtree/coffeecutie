@@ -212,6 +212,11 @@ struct workarounds
     {
         bool emulated_mapbuffer{false};
     } buffer;
+    struct
+    {
+        bool adreno_3xx; /*!< Adreno 3xx drivers seemingly
+                          *   can't handle complex shaders */
+    } bugs;
 
     bool ignore_all_warnings{false};
 };

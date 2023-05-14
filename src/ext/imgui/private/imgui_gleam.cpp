@@ -7,8 +7,6 @@
 
 #include <glw/texture_formats.h>
 
-#include <coffee/strings/libc_types.h>
-
 #include <coffee/core/CDebug>
 
 namespace imgui::detail {

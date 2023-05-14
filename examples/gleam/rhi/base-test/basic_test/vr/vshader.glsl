@@ -17,7 +17,7 @@ out VS_OUT{
     flat int instance;
 } vs_out;
 
-uniform mat4 transform[102];
+uniform mat4 transform[8];
 uniform vec2 tex_mul[2];
 
 void main(void)

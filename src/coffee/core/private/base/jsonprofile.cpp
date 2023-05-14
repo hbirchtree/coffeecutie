@@ -2,6 +2,7 @@
 
 #include <coffee/core/base_state.h>
 #include <coffee/core/coffee.h>
+#include <peripherals/stl/string_casting.h>
 #include <peripherals/stl/string_ops.h>
 #include <platforms/environment.h>
 #include <platforms/file.h>
@@ -10,9 +11,7 @@
 
 #include <coffee/core/profiler/profiling-export.h>
 
-#include <coffee/strings/libc_types.h>
-
-#include <coffee/core/formatting.h>
+#include <coffee/strings/format.h>
 
 #if defined(COFFEE_ANDROID)
 #include <android/trace.h>
@@ -28,7 +27,7 @@ using semantic::BytesConst;
 using semantic::RSCA;
 
 static constexpr cstring event_format =
-    R"({"ts":{0},"name":"{1}","pid":1,"tid":{2},"cat":"{3}","ph":"{4}","s":"t"},
+    R"({{"ts":{0},"name":"{1}","pid":1,"tid":{2},"cat":"{3}","ph":"{4}","s":"t"}},
 )";
 
 struct MetricData
@@ -101,14 +100,14 @@ ProfileWriter::~ProfileWriter()
     block_writes = true;
 
     auto thread_name = Coffee::Strings::fmt(
-        R"({"name":"process_name","ph":"M","pid":1,"args":{"name":"{0}"}},)",
+        R"({{"name":"process_name","ph":"M","pid":1,"args":{{"name":"{0}"}}}},)",
         appData ? appData->application_name : "Coffee App");
     write(BytesConst::ofContainer(thread_name));
 
     for(auto const& thread : stl_types::Threads::GetNames(threadState.get()))
     {
         thread_name = Coffee::Strings::fmt(
-            R"({"name":"thread_name","ph":"M","pid":1,"tid":{0},"args":{"name":"{1}"}},)",
+            R"({{"name":"thread_name","ph":"M","pid":1,"tid":{0},"args":{{"name":"{1}"}}}},)",
             thread.first,
             thread.second);
         write(BytesConst::ofContainer(thread_name));
@@ -117,7 +116,7 @@ ProfileWriter::~ProfileWriter()
     for(auto const& metric : metrics::data)
     {
         auto out = Coffee::Strings::fmt(
-            R"({"name":"metric_name","ph":"M","id":{0},"args":{"name":"{1}","type":{2}}},)",
+            R"({{"name":"metric_name","ph":"M","id":{0},"args":{{"name":"{1}","type":{2}}}}},)",
             metric.second.id,
             metric.first,
             C_CAST<int>(metric.second.variant));
@@ -255,7 +254,7 @@ extern void CaptureMetrics(
     auto const& data = it->second;
 
     constexpr auto metric_format =
-        R"({"ts":{2},"ph":"m","i":{3},"id":{0},"v":"{1}"},
+        R"({{"ts":{2},"ph":"m","i":{3},"id":{0},"v":"{1}"}},
 )";
 
     auto out = Coffee::Strings::fmt(
@@ -272,6 +271,7 @@ void CaptureMetrics(
     std::chrono::microseconds ts,
     u32                       index)
 {
+    using stl_types::cast_pod;
     CaptureMetrics(tdata, name, variant, cast_pod(value), ts, index);
 }
 

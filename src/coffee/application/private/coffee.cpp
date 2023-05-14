@@ -23,9 +23,9 @@
 #include <platforms/stacktrace.h>
 #include <platforms/sysinfo.h>
 
-#include <coffee/strings/info.h>
-#include <coffee/strings/libc_types.h>
-#include <coffee/strings/url_types.h>
+#include <fmt_extensions/info.h>
+#include <fmt_extensions/libc_types.h>
+#include <fmt_extensions/url_types.h>
 
 #include <coffee/core/CDebug>
 
@@ -460,7 +460,7 @@ static void stack_writer(
     u32              line)
 {
     auto out = Coffee::Strings::fmt(
-        R"({"frame": "{0}", "ip": "{1}", "file": "{2}", "line": {3}},)",
+        R"({{"frame": "{0}", "ip": "{1}", "file": "{2}", "line": {3}}},)",
         frame,
         ip,
         filename,
@@ -503,8 +503,8 @@ void InstallDefaultSigHandlers()
                 std::move(frames.value()),
                 typing::logging::fprintf_logger,
                 stack_writer);
-//        platform::common::posix::proc::breakpoint();
-        std::quick_exit(SIGINT);
+        platform::common::posix::proc::breakpoint();
+//        std::quick_exit(SIGINT);
 //        libc::signal::exit(libc::signal::sig::terminate);
     });
 #endif

@@ -52,7 +52,10 @@ struct DataCache
         T          item = predict_impl(param...);
 
         if(!item.valid())
+        {
+//            Throw(data_cache_error("prediction failed"));
             return {invalid_id, 0};
+        }
 
         m_cache.insert({out, std::move(item)});
         m_cache_key.emplace(item_id, out);
@@ -66,6 +69,10 @@ struct DataCache
             Throw(data_cache_error("stale reference"));
 
         return m_cache.find(id.i);
+    }
+    auto end()
+    {
+        return m_cache.end();
     }
 
     void evict_all()

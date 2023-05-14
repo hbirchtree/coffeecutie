@@ -20,8 +20,6 @@
 #include <peripherals/semantic/chunk.h>
 #include <peripherals/typing/vectors/vector_types.h>
 
-#include <coffee/strings/libc_types.h>
-
 #include <coffee/core/CDebug>
 
 using namespace imgui::detail;

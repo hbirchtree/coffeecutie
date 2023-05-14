@@ -21,8 +21,6 @@
 #include <platforms/environment.h>
 #include <platforms/stacktrace.h>
 
-#include <coffee/strings/libc_types.h>
-
 #include <coffee/core/debug/formatting.h>
 #include <coffee/strings/format.h>
 

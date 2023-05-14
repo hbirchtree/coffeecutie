@@ -4,8 +4,7 @@
 #include <coffee/comp_app/app_events.h>
 #include <peripherals/stl/magic_enum.hpp>
 
-#include <coffee/strings/libc_types.h>
-#include <coffee/strings/vector_types.h>
+#include <fmt_extensions/vector_types.h>
 
 #include <coffee/core/CDebug>
 

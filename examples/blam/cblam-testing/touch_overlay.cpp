@@ -2,8 +2,6 @@
 
 #include <glm/gtx/matrix_transform_2d.hpp>
 
-#include <coffee/strings/libc_types.h>
-
 #include <coffee/core/CDebug>
 
 void TouchOverlay::start_restricted(Proxy& proxy, const time_point&)

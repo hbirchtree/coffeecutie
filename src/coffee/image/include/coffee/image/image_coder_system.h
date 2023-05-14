@@ -8,11 +8,13 @@ namespace Coffee {
 namespace IMG {
 
 template<typename... Args>
-auto create_decoder(std::future<mem_chunk<const u8>>&& source, Args... args)
+auto create_decoder(
+    std::future<semantic::mem_chunk<const u8>>&& source, Args... args)
 {
-    return rq::dependent_task<mem_chunk<const u8>, stb::image_rw>::
+    return rq::dependent_task<semantic::mem_chunk<const u8>, stb::image_rw>::
         CreateProcessor(
-            std::move(source), [args...](mem_chunk<const u8>* source) {
+            std::move(source),
+            [args...](semantic::mem_chunk<const u8>* source) {
                 stb::stb_error ec;
                 stb::image_rw  img;
                 if(!stb::LoadData(&img, *source, ec, args...))

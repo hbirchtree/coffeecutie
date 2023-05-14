@@ -12,8 +12,6 @@
 
 #include <SDL.h>
 
-#include <coffee/strings/libc_types.h>
-
 #include <coffee/core/debug/formatting.h>
 
 #define NOT_ZERO(v) (v < 0)
@@ -43,6 +41,8 @@ struct current_config_t
 
 inline void print_current_config()
 {
+    SDL_version ver;
+    SDL_GetVersion(&ver);
     current_config_t config;
     SDL_GL_GetAttribute(SDL_GL_RED_SIZE, &config.r);
     SDL_GL_GetAttribute(SDL_GL_GREEN_SIZE, &config.g);
@@ -62,7 +62,9 @@ inline void print_current_config()
         config.depth,
         config.stencil,
         config.srgb == SDL_TRUE,
-        !!(config.profile & SDL_GL_CONTEXT_PROFILE_CORE));
+        !!(config.profile & SDL_GL_CONTEXT_PROFILE_CORE),
+        ver.major,
+        ver.minor);
 }
 
 using F      = comp_app::window_flags_t;
@@ -284,9 +286,7 @@ comp_app::size_2d_t Windowing::size() const
 
 void Windowing::resize([[maybe_unused]] const comp_app::size_2d_t& newSize)
 {
-#if SUPPORTS_WINDOW_ACTIONS == 1
     SDL_SetWindowSize(m_window, newSize.w, newSize.h);
-#endif
 }
 
 comp_app::position_t Windowing::position() const

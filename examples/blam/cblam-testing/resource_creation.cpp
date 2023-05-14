@@ -39,6 +39,7 @@ void create_resources(compo::EntityContainer& e)
         eventhandler_w->addEventFunction<ResizeEvent>(
             0, [&camera](Event&, ResizeEvent* resize) {
                 camera.camera.aspect = static_cast<f32>(resize->w) / resize->h;
+                cDebug("Window resize: {}x{}", resize->w, resize->h);
             });
     }
 
@@ -346,10 +347,12 @@ static void create_shaders(
             shader.shader->dealloc();
         }
 
-        auto vertex_url
-            = MkUrl(Strings::fmt(shader.vertex_file, variant), RSCA::AssetFile);
+        auto vertex_url = MkUrl(
+            Strings::fmt("{0}.{1}.vert", shader.vertex_file, variant),
+            RSCA::AssetFile);
         auto fragment_url = MkUrl(
-            Strings::fmt(shader.fragment_file, variant), RSCA::AssetFile);
+            Strings::fmt("{0}.{1}.frag", shader.fragment_file, variant),
+            RSCA::AssetFile);
 
         auto pipeline = shader.shader ? shader.shader : api.alloc_program();
         pipeline->add(
@@ -374,23 +377,23 @@ static void create_uber_shaders(gfx::api& api, BlamResources& resources)
 
     std::array<shader_pair_t, 4> shaders = {{
         {
-            .vertex_file   = "debug_lines.{0}.vert"sv,
-            .fragment_file = "debug_lines.{0}.frag"sv,
+            .vertex_file   = "debug_lines"sv,
+            .fragment_file = "debug_lines"sv,
             .shader        = resources.debug_lines_pipeline,
         },
         {
-            .vertex_file   = "scenery.{0}.vert"sv,
-            .fragment_file = "scenery_uber.{0}.frag"sv,
+            .vertex_file   = "scenery"sv,
+            .fragment_file = "scenery_uber"sv,
             .shader        = resources.model_pipeline,
         },
         {
-            .vertex_file   = "map.{0}.vert"sv,
-            .fragment_file = "map_uber.{0}.frag"sv,
+            .vertex_file   = "map"sv,
+            .fragment_file = "map_uber"sv,
             .shader        = resources.bsp_pipeline,
         },
         {
-            .vertex_file   = "map.{0}.vert"sv,
-            .fragment_file = "wireframe.{0}.frag"sv,
+            .vertex_file   = "map"sv,
+            .fragment_file = "wireframe"sv,
             .shader        = resources.wireframe_pipeline,
         },
     }};
@@ -407,23 +410,23 @@ static void create_uber_lite_shaders(gfx::api& api, BlamResources& resources)
 
     std::array<shader_pair_t, 4> shaders = {{
         {
-            .vertex_file   = "debug_lines.{0}.vert"sv,
-            .fragment_file = "debug_lines.{0}.frag"sv,
+            .vertex_file   = "debug_lines"sv,
+            .fragment_file = "debug_lines"sv,
             .shader        = resources.debug_lines_pipeline,
         },
         {
-            .vertex_file   = "scenery.{0}.vert"sv,
-            .fragment_file = "scenery_uber_lite.{0}.frag"sv,
+            .vertex_file   = "scenery"sv,
+            .fragment_file = "scenery_uber_lite"sv,
             .shader        = resources.model_pipeline,
         },
         {
-            .vertex_file   = "map.{0}.vert"sv,
-            .fragment_file = "map_uber_lite.{0}.frag"sv,
+            .vertex_file   = "map"sv,
+            .fragment_file = "map_uber_lite"sv,
             .shader        = resources.bsp_pipeline,
         },
         {
-            .vertex_file   = "map.{0}.vert"sv,
-            .fragment_file = "wireframe.{0}.frag"sv,
+            .vertex_file   = "map"sv,
+            .fragment_file = "wireframe"sv,
             .shader        = resources.wireframe_pipeline,
         },
     }};
@@ -440,28 +443,28 @@ static void create_standard_shaders(gfx::api& api, BlamResources& resources)
 
     std::array<shader_pair_t, 5> shaders = {{
         {
-            .vertex_file   = "debug_lines.{0}.vert"sv,
-            .fragment_file = "debug_lines.{0}.frag"sv,
+            .vertex_file   = "debug_lines"sv,
+            .fragment_file = "debug_lines"sv,
             .shader        = resources.debug_lines_pipeline,
         },
         {
-            .vertex_file   = "scenery.{0}.vert"sv,
-            .fragment_file = "scenery.{0}.frag"sv,
+            .vertex_file   = "scenery"sv,
+            .fragment_file = "scenery"sv,
             .shader        = resources.model_pipeline,
         },
         {
-            .vertex_file   = "map.{0}.vert"sv,
-            .fragment_file = "map.{0}.frag"sv,
+            .vertex_file   = "map"sv,
+            .fragment_file = "map"sv,
             .shader        = resources.bsp_pipeline,
         },
         {
-            .vertex_file   = "map.{0}.vert"sv,
-            .fragment_file = "map_senv.{0}.frag"sv,
+            .vertex_file   = "map"sv,
+            .fragment_file = "map_senv"sv,
             .shader        = resources.senv_micro_pipeline,
         },
         {
-            .vertex_file   = "map.{0}.vert"sv,
-            .fragment_file = "wireframe.{0}.frag"sv,
+            .vertex_file   = "map"sv,
+            .fragment_file = "wireframe"sv,
             .shader        = resources.wireframe_pipeline,
         },
     }};
@@ -478,7 +481,7 @@ void create_shaders(compo::EntityContainer& e)
 
     auto const& features = gfx.feature_info();
 
-    const bool use_spv  = gfx.feature_info().program.spirv && false;
+    const bool use_spv  = features.program.spirv && false;
     const bool use_uber = features.texture.cube_array && features.buffer.ssbo
                           && !lowspec_hardware;
     const bool use_uber_lite = features.buffer.ubo;

@@ -16,21 +16,21 @@ struct NetStats
     {
     }
 
-    WkPtr<Service::stats> source;
+    std::weak_ptr<Service::stats> source;
 
-    virtual u32 received() const final
+    virtual libc_types::u32 received() const final
     {
         if(auto stats = source.lock(); stats)
             return stats->received;
         return 0;
     }
-    virtual u32 transmitted() const final
+    virtual libc_types::u32 transmitted() const final
     {
         if(auto stats = source.lock(); stats)
             return stats->transmitted;
         return 0;
     }
-    virtual u32 connections() const final
+    virtual libc_types::u32 connections() const final
     {
         if(auto stats = source.lock(); stats)
             return stats->sockets_created;

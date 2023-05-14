@@ -8,9 +8,9 @@ coffee_application (
 
     LIBRARIES
     GLeamRHI
-    DropinRenderer
     Core
     EntComp
+    ComponentBundleSetup
 
     RESOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/basic_test

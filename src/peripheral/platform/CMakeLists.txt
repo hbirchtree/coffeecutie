@@ -4,22 +4,23 @@ coffee_library (
     TARGET PeripheralPlatform
 
     LIBRARIES
-    PeripheralLib
+        PeripheralLib
+        PeripheralFormat
 
     SOURCES
-    private/argument_parse.cpp
-    private/platform_data.cpp
-    private/shared_func.cpp
-    private/url.cpp
+        private/argument_parse.cpp
+        private/platform_data.cpp
+        private/shared_func.cpp
+        private/url.cpp
 
-    #
-    # This one is pretty important, let's keep it here
-    #
-    private/profiling.cpp
+        #
+        # This one is pretty important, let's keep it here
+        #
+        private/profiling.cpp
 
     HEADER_DIRS
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
     )
 
 if((${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE))

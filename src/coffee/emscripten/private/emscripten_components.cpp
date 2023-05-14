@@ -27,7 +27,7 @@ ControllerInput::controller_map ControllerInput::state(
     controller_map out = {};
     if(!state.connected || state.numButtons < 11)
         return out;
-    constexpr stl_types::Array<stl_types::Pair<u8, u8>, 16> mapping = {{
+    constexpr std::array<std::pair<u8, u8>, 16> mapping = {{
         {0, 0}, // A
         {1, 1}, // B
         {2, 2}, // X

@@ -4,8 +4,6 @@
 #include <peripherals/enum/helpers.h>
 #include <peripherals/stl/string_casting.h>
 
-#include <coffee/strings/libc_types.h>
-
 #include <coffee/core/CDebug>
 
 #define NETRSC_TAG "NetRsc::"

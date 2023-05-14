@@ -165,6 +165,12 @@ function ( GEN_GLEAM_TARGET GLVERSION SUFFIX )
         target_link_libraries ( GLeamCommon_${SUFFIX} PUBLIC AngleEGL AngleGLESv2 )
     elseif(APPLE AND ${GLVERSION} MATCHES "_Dynamic")
         target_link_libraries ( GLeamCommon_${SUFFIX} PUBLIC "-framework OpenGL" )
+    elseif(EMSCRIPTEN)
+        target_link_options ( GLeamCommon_${SUFFIX} PUBLIC
+            -sMIN_WEBGL_VERSION=2
+            -sMAX_WEBGL_VERSION=2
+            -sFULL_ES3
+            )
     elseif(${GLVERSION} MATCHES "_ESDynamic")
         # No-op
     elseif(${GLVERSION} MATCHES "_ES")
@@ -172,12 +178,6 @@ function ( GEN_GLEAM_TARGET GLVERSION SUFFIX )
             # On Android, GLES 3.x is used through a different library
             target_link_libraries ( GLeamCommon_${SUFFIX} PUBLIC
                 GLESv3
-                )
-        elseif(EMSCRIPTEN)
-            target_link_options ( GLeamCommon_${SUFFIX} PUBLIC
-                -sMIN_WEBGL_VERSION=2
-                -sMAX_WEBGL_VERSION=2
-                -sFULL_ES3
                 )
         else()
             find_library ( GLESV2_LIB GLESv2 )

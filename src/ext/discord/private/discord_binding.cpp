@@ -1,15 +1,15 @@
+#include <discord/discord_binding.h>
+
+#include <discord_register.h>
+#include <discord_rpc.h>
+
 #include <coffee/asio/net_resource.h>
 #include <coffee/core/CFiles>
 #include <coffee/core/internal_state.h>
-#include <coffee/discord/discord_binding.h>
-#include <coffee/strings/info.h>
-#include <coffee/strings/libc_types.h>
-#include <discord_register.h>
-#include <discord_rpc.h>
+#include <fmt_extensions/info.h>
 #include <platforms/environment.h>
 
 #include <coffee/core/CDebug>
-#include <coffee/core/std::stringFormat>
 
 #define DISCORD_EP "https://cdn.discordapp.com"
 #define DISCORD_TAG "DiscordRPC: "
@@ -17,12 +17,6 @@
 namespace discord {
 
 using namespace platform;
-namespace {
-constexpr std::string_view DiscordAvatarFmt
-    = DISCORD_EP "/avatars/{0}/{1}.{2}?size={3}";
-constexpr std::string_view DiscordDefaultFmt
-    = DISCORD_EP "/embed/avatars/{0}.{1}?size={2}";
-} // namespace
 
 STATICINLINE void ClearPresence(DiscordRichPresence& p)
 {
@@ -82,22 +76,31 @@ static PlayerInfo InfoFromDiscordUser(DiscordUser const* user, u32 imgSize)
 
     platform::url::Url avatarUrl = net::MkUrl(
         (strlen(user->avatar) > 0)
-            ? fmt(DiscordAvatarFmt, user->userId, user->avatar, "jpg", imgSize)
-            : fmt(DiscordDefaultFmt, discriminator % 5, "png", imgSize));
+            ? fmt::format(
+                DISCORD_EP "/avatars/{0}/{1}.{2}?size={3}",
+                user->userId,
+                user->avatar,
+                "jpg",
+                imgSize)
+            : fmt::format(
+                DISCORD_EP "/embed/avatars/{0}.{1}?size={2}",
+                discriminator % 5,
+                "png",
+                imgSize));
 
     PlayerInfo info;
     info.avatarUrl = avatarUrl;
-    info.userTag   = fmt("{0}#{1}", user->username, user->discriminator);
-    info.username  = user->username;
-    info.userId    = user->userId;
+    info.userTag  = fmt::format("{0}#{1}", user->username, user->discriminator);
+    info.username = user->username;
+    info.userId   = user->userId;
 
     return info;
 }
 
 static DiscordService& GetService()
 {
-    auto ptr
-        = C_DCAST<DiscordService>(State::PeekState("discordService").get());
+    auto ptr = C_DCAST<DiscordService>(
+        Coffee::State::PeekState("discordService").get());
 
     C_PTR_CHECK(ptr);
 
@@ -109,7 +112,7 @@ std::shared_ptr<online::Service> CreateService(
 {
     auto discordService = std::make_shared<DiscordService>(delegate);
 
-    State::SwapState("discordService", discordService);
+    Coffee::State::SwapState("discordService", discordService);
 
     discordService->initialize(options);
 

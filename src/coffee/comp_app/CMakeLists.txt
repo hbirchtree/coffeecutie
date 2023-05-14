@@ -31,11 +31,3 @@ target_precompile_headers ( ComponentBundleSetup PUBLIC
     $<$<COMPILE_LANGUAGE:CXX>:coffee/comp_app/app_wrap.h>
     $<$<COMPILE_LANGUAGE:CXX>:coffee/comp_app/AppWrap>
     )
-
-coffee_library (
-    TARGET DropinRenderer
-    SOURCES private/dropin_stub.cpp
-    LIBRARIES ComponentBundleSetup
-    HEADER_DIRS
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/dropin_include>
-    )

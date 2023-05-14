@@ -32,8 +32,6 @@ void load_scenario_bsp(compo::EntityContainer& e, BlamData<Version>& data)
             = semantic::mem_chunk<Vecf3>::ofContainer(line_colors);
     }
 
-    std::vector<generation_idx_t> bsp_meshes;
-
     /* Start loading up vertex data */
     blam::scn::scenario<Version> const* scenario = data.scenario;
 
@@ -83,10 +81,10 @@ void load_scenario_bsp(compo::EntityContainer& e, BlamData<Version>& data)
         bsp_cache.portal_color_ptr ++;
     }
 
-    for(auto const& bsp : scenario->bsp_info.data(magic).value())
-    {
-        bsp_meshes.push_back(bsp_cache.predict(bsp));
-    }
+    std::vector<generation_idx_t> bsp_meshes;
+    if(auto bsps = scenario->bsp_info.data(magic); bsps.has_value())
+        for(auto const& bsp : bsps.value())
+            bsp_meshes.push_back(bsp_cache.predict(bsp));
 
     gpu.bsp_buf->unmap();
     gpu.bsp_index->unmap();
@@ -103,17 +101,17 @@ void load_scenario_bsp(compo::EntityContainer& e, BlamData<Version>& data)
 
     for(auto const& mesh_id : bsp_meshes)
     {
-        if(!mesh_id.valid())
+        auto mesh_it = bsp_cache.find(mesh_id);
+        if(mesh_it == bsp_cache.end())
+        {
+            cDebug("Failed to find BSP mesh: {}:{}", mesh_id.gen, mesh_id.i);
             continue;
-
-        auto const& mesh = bsp_cache.find(mesh_id)->second;
+        }
+        auto const& mesh = mesh_it->second;
 
         for(auto const& group : mesh.groups)
             for(BSPItem::Mesh const& mesh : group.meshes)
             {
-                if(!mesh.shader.valid())
-                    continue;
-
                 auto          mesh_ent = e.create_entity(bsp);
                 BspReference& bsp_ref  = mesh_ent.get<BspReference>();
 

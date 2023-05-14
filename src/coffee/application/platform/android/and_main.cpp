@@ -14,9 +14,8 @@
 #include <peripherals/stl/types.h>
 #include <platforms/environment.h>
 
-#include <coffee/strings/info.h>
-#include <coffee/strings/libc_types.h>
-#include <coffee/strings/vector_types.h>
+#include <fmt_extensions/info.h>
+#include <fmt_extensions/vector_types.h>
 
 #include <coffee/core/CDebug>
 #include <coffee/strings/format.h>

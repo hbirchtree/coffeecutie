@@ -8,13 +8,10 @@
 #include <peripherals/stl/time_types.h>
 #include <platforms/file.h>
 
-/* to_string functions for formatting */
-#include <coffee/strings/info.h>
-#include <coffee/strings/libc_types.h>
-
-#include <coffee/core/formatting.h>
+#include <fmt_extensions/info.h>
 
 #include <coffee/core/printing/outputprinter.h>
+#include <coffee/strings/format.h>
 
 namespace Coffee {
 
@@ -29,16 +26,6 @@ struct JsonLogState : State::GlobalState
 
     platform::file::file_handle handle;
 };
-
-static const cstring JsonTaggedFormat =
-    R"({
-    "message": "{0}",
-    "severity": "{1}",
-    "pipe": "{2}",
-    "level": "{3}",
-    "tag": "{4}",
-    "time": "{5}"
-  },)";
 
 // static const cstring JsonFormat =
 //     R"({
@@ -78,9 +65,16 @@ static void JsonTagLogger(
     auto& jsonLog          = GetLogState().handle;
 
     auto json_msg = Strings::fmt(
-        JsonTaggedFormat,
+        R"({{
+          "message": "{0}",
+          "severity": "{1}",
+          "pipe": "{2}",
+          "level": "{3}",
+          "tag": "{4}",
+          "time": "{5}"
+        }},)",
         filtered_message,
-        Strings::to_string(sev),
+        sev,
         fileno(pipe),
         level,
         tag,

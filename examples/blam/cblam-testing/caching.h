@@ -18,8 +18,7 @@
 #include <coffee/graphics/apis/gleam/rhi.h>
 #include <coffee/graphics/apis/gleam/rhi_compat.h>
 
-#include <coffee/strings/libc_types.h>
-#include <coffee/strings/vector_types.h>
+#include <fmt_extensions/vector_types.h>
 
 #include <coffee/core/CDebug>
 
@@ -1723,9 +1722,14 @@ struct BSPCache
         //        GFX::DBG::SCOPE _("BSPCache");
 
         auto        bsp_magic = bsp.bsp_magic(magic);
-        auto const& section_  = bsp.to_bsp(bsp_magic);
-        auto const& section
-            = *section_.to_header().data(bsp_magic, blam::single_value).value();
+        auto const& section_  = bsp.to_bsp(bsp_magic).to_header().data(
+            bsp_magic, blam::single_value);
+        if(section_.has_error())
+        {
+            cDebug("Failed to find BSP section");
+            return {};
+        }
+        auto const& section = *section_.value();
 
         BSPItem out;
         out.mesh = &section;
@@ -1757,12 +1761,23 @@ struct BSPCache
             portal_color_ptr++;
         }
 
-        for(auto const& group : section.submesh_groups.data(bsp_magic).value())
+        auto submeshes = section.submesh_groups.data(bsp_magic);
+
+        if(submeshes.has_error())
         {
+            cDebug("Error finding submeshes");
+            return {};
+        }
+
+        for(auto const& group : submeshes.value())
+        {
+            auto meshes = group.material.data(bsp_magic);
+            if(meshes.has_error())
+                continue;
             out.groups.emplace_back();
             auto& group_data = out.groups.back();
             group_data.group = &group;
-            for(auto const& mesh : group.material.data(bsp_magic).value())
+            for(auto const& mesh : meshes.value())
             {
                 group_data.meshes.emplace_back();
                 auto& mesh_data = group_data.meshes.back();

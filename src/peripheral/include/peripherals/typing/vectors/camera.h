@@ -13,24 +13,16 @@ namespace scene {
 template<typename T>
 struct camera_base
 {
-    FORCEDINLINE camera_base() : rotation(), position(T(0)), zVals(T(1), T(100))
-    {
-    }
-
-    tquaternion<T>     rotation;
-    tvector<T, 3>      position;
-    geometry::range<T> zVals;
+    tquaternion<T>     rotation{};
+    tvector<T, 3>      position{};
+    geometry::range<T> zVals{T(1), T(100)};
 };
 
 template<typename T>
 struct camera : camera_base<T>
 {
-    FORCEDINLINE camera() : fieldOfView(T(85)), aspect(T(1))
-    {
-    }
-
-    T fieldOfView;
-    T aspect;
+    T fieldOfView{85};
+    T aspect{1};
 };
 
 template<typename T>

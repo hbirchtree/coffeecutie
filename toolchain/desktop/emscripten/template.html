@@ -3,6 +3,9 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <title>Emscripten</title>
     <style>
+      html {
+        height: 100%;
+      }
       body {
         font-family: arial;
         margin: 0;
@@ -11,6 +14,7 @@
         background-color: #101010;
         display: flex;
         flex-direction: column;
+        height: 100%;
       }
 
       .emscripten { padding-right: 0; display: block; }
@@ -99,7 +103,8 @@
         border-right: 0px;
         padding-left: 0px;
         padding-right: 0px;
-        display: block;
+        display: flex;
+        flex-grow: 1;
         background-color: black;
         color: white;
         font-family: 'Lucida Console', Monaco, monospace;

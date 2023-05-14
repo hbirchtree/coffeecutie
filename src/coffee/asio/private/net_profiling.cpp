@@ -10,8 +10,7 @@
 #include <coffee/ssl/hmac.h>
 #endif
 
-#include <coffee/strings/libc_types.h>
-#include <coffee/strings/url_types.h>
+#include <fmt_extensions/url_types.h>
 
 #include <coffee/core/CDebug>
 

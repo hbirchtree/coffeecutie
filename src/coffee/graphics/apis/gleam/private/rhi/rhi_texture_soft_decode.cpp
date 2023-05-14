@@ -14,8 +14,6 @@
 
 #define NOT_SUPPORTED " not supported by hardware and no software fallback"
 
-#include <coffee/strings/libc_types.h>
-
 #include <coffee/core/debug/formatting.h>
 
 namespace gleam {

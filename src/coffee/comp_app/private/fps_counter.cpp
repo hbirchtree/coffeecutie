@@ -1,7 +1,5 @@
 #include <coffee/comp_app/fps_counter.h>
 
-#include <coffee/strings/libc_types.h>
-
 #include <coffee/core/debug/formatting.h>
 
 namespace comp_app {
