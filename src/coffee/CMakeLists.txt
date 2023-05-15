@@ -1,7 +1,7 @@
 option(BUILD_ASIO     "Build with ASIO networking"                ON)
 option(BUILD_AUDIO    "Build with audio support"                  OFF)
 option(BUILD_BLAM     "Build Blam! data readers"                  ON)
-option(BUILD_MEDIA    "Build with media decode/encode support"    ON)
+option(BUILD_MEDIA    "Build with media decode/encode support"    OFF)
 option(BUILD_SDL2     "Build with SDL2 graphics backend"          ON)
 option(BUILD_COMPONENT_APP "Build component-based application"    ON)
 

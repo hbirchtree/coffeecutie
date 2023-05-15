@@ -33,6 +33,10 @@ struct null_api
     inline void annotate(u32, std::string_view const&)
     {
     }
+    template<typename T>
+    inline void annotate(T&, std::string_view const&)
+    {
+    }
 };
 
 #if GLEAM_MAX_VERSION >= 0x430 || GLEAM_MAX_VERSION_ES >= 0x320 \

@@ -11,7 +11,7 @@ struct ControllerInput
     virtual ~ControllerInput() = default;
 
     virtual void start_frame(
-        comp_app::detail::ContainerProxy&,
+        comp_app::detail::ContainerProxy& c,
         const comp_app::detail::time_point&) final;
 
     virtual libc_types::u32       count() const final;
@@ -25,6 +25,9 @@ struct ControllerInput
         controller_map    state;
     };
     std::map<libc_types::u32, state_t> m_controllers;
+
+    libc_types::i16 m_deadzone;
+    libc_types::f32 m_scale;
 };
 
 struct BatteryProvider

@@ -13,6 +13,8 @@
 
 #include "app_error.h"
 
+#include <fmt/format.h>
+
 namespace comp_app {
 namespace detail {
 using namespace Coffee::Components;
@@ -740,5 +742,50 @@ struct PtrNativeWindowInfoService : interfaces::PtrNativeWindowInfo,
 };
 
 } // namespace comp_app
+
+template<>
+struct fmt::formatter<Coffee::Input::CIControllerState>
+{
+    template<typename ParseCtx>
+    constexpr auto parse(ParseCtx& ctx)
+    {
+        return ctx.begin();
+    }
+
+    template<typename FormatCtx>
+    auto format(Coffee::Input::CIControllerState const& s, FormatCtx& ctx)
+    {
+        return fmt::format_to(
+            ctx.out(),
+            "controller("
+            "a={}, b={}, x={}, y={}, "
+            "bumper_l={}, bumper_r{}, "
+            "stick_l={}, stick_r={}, "
+            "start={}, back={}, "
+            "left={}|{}, right={}|{}, "
+            "triggers={}|{}, "
+            "dpad={}|{}|{}|{})",
+            s.buttons.e.a,
+            s.buttons.e.b,
+            s.buttons.e.x,
+            s.buttons.e.y,
+            s.buttons.e.b_l,
+            s.buttons.e.b_r,
+            s.buttons.e.s_l,
+            s.buttons.e.s_r,
+            s.buttons.e.start,
+            s.buttons.e.back,
+            s.axes.e.l_x,
+            s.axes.e.l_y,
+            s.axes.e.r_x,
+            s.axes.e.r_y,
+            s.axes.e.t_l,
+            s.axes.e.t_r,
+            s.buttons.e.p_left,
+            s.buttons.e.p_right,
+            s.buttons.e.p_up,
+            s.buttons.e.p_down);
+    }
+};
 
 #include "services.inl"

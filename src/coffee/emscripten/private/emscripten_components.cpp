@@ -7,8 +7,19 @@
 namespace emscripten {
 
 void ControllerInput::start_frame(
-    comp_app::detail::ContainerProxy&, const comp_app::detail::time_point&)
+    comp_app::detail::ContainerProxy& c, const comp_app::detail::time_point&)
 {
+    using libc_types::f32;
+    using libc_types::i16;
+
+    auto& config = comp_app::AppLoader::config<comp_app::ControllerConfig>(
+        c.underlying());
+    constexpr auto max_val  = std::numeric_limits<i16>::max();
+    auto           dead_val = max_val - config.deadzone;
+
+    m_scale    = max_val / f32(dead_val);
+    m_deadzone = config.deadzone;
+
     emscripten_sample_gamepad_data();
 }
 
@@ -19,6 +30,7 @@ libc_types::u32 ControllerInput::count() const
 ControllerInput::controller_map ControllerInput::state(
     libc_types::u32 idx) const
 {
+    using libc_types::i16;
     using libc_types::u8;
 
     EmscriptenGamepadEvent state;
@@ -51,6 +63,31 @@ ControllerInput::controller_map ControllerInput::state(
 
     for(auto const& map : mapping)
         out.buttons.d |= state.digitalButton[map.first] << map.second;
+
+    constexpr std::array<std::pair<u8, u8>, 6> axes = {{
+        {0, 0}, /* Left stick X */
+        {1, 1}, /* Left stick Y */
+        {3, 2}, /* Right stick X */
+        {4, 3}, /* Right stick Y */
+        {2, 4}, /* Left trigger */
+        {5, 5}, /* Right trigger */
+    }};
+
+    for(auto const& map : axes)
+    {
+        i16 value = static_cast<i16>(
+            state.axis[map.first] * std::numeric_limits<i16>::max());
+        if(map.second >= 4)
+            value = value / 2 + std::numeric_limits<i16>::max() / 2;
+        if(value < m_deadzone && value > -m_deadzone)
+            out.axes.d[map.second] = 0;
+        else
+        {
+            auto offset = value > 0 ? -m_deadzone : m_deadzone;
+//            out.axes.d[map.second] = (value + m_deadzone) * m_scale;
+            out.axes.d[map.second] = value + offset;
+        }
+    }
 
     return out;
 }
