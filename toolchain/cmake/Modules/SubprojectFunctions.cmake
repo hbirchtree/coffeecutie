@@ -31,30 +31,12 @@ macro(INIT_SUBPROJECT)
       "${CMAKE_SOURCE_DIR}/toolchain/internal/templates"
   )
   set(COFFEE_SOURCE_TEMPLATE_DIRECTORY "${COFFEE_SOURCE_TEMPLATE_DIR}")
-  set(COFFEE_CMAKE_TEMPLATE_DIR "${CMAKE_SOURCE_DIR}/toolchain/cmake/Templates")
-
-  # ############################################################################
-  # Platform-specific CMake modules
-  # ############################################################################
-
-  if(ANDROID)
-    set(CMAKE_MODULE_PATH # ${CMAKE_SOURCE_DIR}/cmake/Find_Android
-        ${CMAKE_MODULE_PATH}
-    )
-  elseif(WIN32)
-    set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/Find_Windows
-                          ${CMAKE_MODULE_PATH}
-    )
-  endif()
 
   # ############################################################################
   # CMake scripting paths
   # ############################################################################
 
-  set(CMAKE_PREFIX_PATH ${COFFEE_ROOT_DIR}/share)
-
   set(CMAKE_MODULE_PATH
-      ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/toolchain/cmake/Find
       ${CMAKE_SOURCE_DIR}/toolchain/cmake/Modules
       ${CMAKE_SOURCE_DIR}/toolchain/cmake/Packaging
   )
@@ -95,8 +77,6 @@ macro(INIT_SUBPROJECT)
     option(BUILD_UBSAN "Build with undefined behavior sanitizer" OFF)
   endif()
 
-  option(BUILD_CPP11 "Build as C++11 code" OFF)
-  option(BUILD_CPP14 "Build as C++14 code" OFF)
   option(BUILD_CPP17 "Build as C++17 code" OFF)
 
   # Enable coverage when requested
