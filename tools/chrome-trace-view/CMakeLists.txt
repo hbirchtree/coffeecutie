@@ -8,26 +8,29 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt5 COMPONENTS Core Quick QuickControls2 Widgets REQUIRED)
+find_package(
+  Qt5
+  COMPONENTS Core Quick QuickControls2 Widgets
+  REQUIRED
+)
 
 find_package(Threads REQUIRED)
 
-add_executable(${PROJECT_NAME}
-    src/main.cpp
-
-    src/extrainfo.cpp
-    src/metrics.cpp
-    src/timelimitedmodel.cpp
-    src/tracemodel.cpp
-    src/screenshotprovider.cpp
-
-    qml/qml.qrc
-    )
-target_compile_definitions(${PROJECT_NAME} PRIVATE
-    $<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:QT_QML_DEBUG>
-    )
-target_link_libraries(${PROJECT_NAME} PRIVATE
-    Qt5::Core Qt5::Quick Qt5::QuickControls2
-    Qt5::Widgets
-    Threads::Threads
-    )
+add_executable(
+  ${PROJECT_NAME}
+  qml/qml.qrc
+  src/extrainfo.cpp
+  src/main.cpp
+  src/metrics.cpp
+  src/screenshotprovider.cpp
+  src/timelimitedmodel.cpp
+  src/tracemodel.cpp
+)
+target_compile_definitions(
+  ${PROJECT_NAME}
+  PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:QT_QML_DEBUG>
+)
+target_link_libraries(
+  ${PROJECT_NAME} PRIVATE Qt5::Core Qt5::Quick Qt5::QuickControls2 Qt5::Widgets
+                          Threads::Threads
+)

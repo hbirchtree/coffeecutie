@@ -1,7 +1,7 @@
-include ( BuildGenerators )
-include ( InstallConvenience )
-include ( CMakeConvenience )
+include(BuildGenerators)
+include(InstallConvenience)
+include(CMakeConvenience)
 
-include ( BuildLibrary )
-include ( BuildPackaging )
-include ( BuildTesting )
+include(BuildLibrary)
+include(BuildPackaging)
+include(BuildTesting)
