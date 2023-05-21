@@ -161,6 +161,12 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
         if(offset + actual_size > buffer_size)
             Throw(std::out_of_range("offset out of range of buffer"));
 
+#if GLEAM_MAX_VERSION >= 0x420 || GLEAM_MAX_VERSION_ES >= 0x310
+        if(m_features.barrier)
+            cmd::memory_barrier(
+                group::memory_barrier_mask::client_mapped_buffer_barrier_bit);
+#endif
+
         void* pointer = nullptr;
         do
         {

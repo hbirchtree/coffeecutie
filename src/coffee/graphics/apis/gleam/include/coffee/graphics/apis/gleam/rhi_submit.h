@@ -206,6 +206,14 @@ inline optional<tuple<error, std::string_view>> api::submit(
                 vertex_program, attrib.second, attrib.first);
     }
 
+    if constexpr(compile_info::debug_mode)
+    {
+        auto log = detail::program_log(program->m_handle);
+        if(auto error = detail::evaluate_draw_state(m_limits, command);
+           error.has_value())
+            return std::make_tuple(*error, string());
+    }
+
     detail::shader_bookkeeping_t bookkeeping{};
     (detail::apply_command_modifier(*program, bookkeeping, modifiers), ...);
 
@@ -321,14 +329,6 @@ inline optional<tuple<error, std::string_view>> api::submit(
            && !has_uniform_element_type)
             debug().message(
                 "varying element types prevents use of MultiDrawIndirect"sv);
-    }
-
-    if constexpr(compile_info::debug_mode)
-    {
-        auto log = detail::program_log(program->m_handle);
-        if(auto error = detail::evaluate_draw_state(m_limits, command);
-           error.has_value())
-            return std::make_tuple(*error, string());
     }
 
 #if GLEAM_MAX_VERSION_ES != 0x200

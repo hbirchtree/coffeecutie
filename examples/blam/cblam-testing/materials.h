@@ -70,11 +70,21 @@ struct alignas(16) light_properties
     Vecf4 light_color;
 };
 
+struct alignas(16) fog_properties
+{
+    Vecf4 indoor_color;
+    Vecf4 indoor_ambient;
+    Vecf4 outdoor_color;
+    Vecf4 outdoor_ambient;
+    Vecf4 distances; /* xy = indoor range, zw = outdoor range */
+};
+
 struct alignas(16) world_data
 {
     light_properties lighting[2];
+    fog_properties fog;
 };
 
-static_assert(sizeof(world_data) == 64);
+static_assert(sizeof(world_data) == 144);
 
 } // namespace materials

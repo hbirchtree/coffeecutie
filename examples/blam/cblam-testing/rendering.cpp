@@ -83,6 +83,7 @@ struct MeshRenderer : Components::RestrictedSubsystem<
                     .bucket   = static_cast<u16>(draws.size() - 1),
                     .draw     = static_cast<u16>(it - bucket_.begin()),
                     .instance = static_cast<u16>(it->instances.count++),
+                    .enabled  = true,
                 };
             } else
             {
@@ -91,6 +92,7 @@ struct MeshRenderer : Components::RestrictedSubsystem<
                     .bucket   = static_cast<u16>(draws.size() - 1),
                     .draw     = static_cast<u16>(bucket_.size() - 1),
                     .instance = 0,
+                    .enabled  = true,
                 };
             }
         }
@@ -110,6 +112,15 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             if(idx >= material.size)
                 Throw(std::out_of_range("material index out of range"));
             return material[idx];
+        }
+
+        inline u32 num_objects() const
+        {
+            u32 total = 0;
+            for(auto const& bucket : draws)
+                for(auto const& draw : bucket)
+                    total += draw.instances.count;
+            return total;
         }
     };
 
@@ -308,16 +319,7 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             typing::graphics::ShaderStage::Vertex,
             gfx::uniform_pair{
                 {"camera"sv, 1},
-                semantic::SpanOne<const Matf4>(m_camera.camera_matrix)}
-            //            gfx::uniform_pair{
-            //                {"cameraRotation"sv, 2},
-            //                semantic::SpanOne<const
-            //                Matf3>(m_camera.rotation_matrix)},
-            //            ,gfx::uniform_pair{
-            //                {"camera_position", 3},
-            //                semantic::SpanOne<const
-            //                Vecf3>(m_camera.camera.position)}
-        );
+                semantic::SpanOne<const Matf4>(m_camera.camera_matrix)});
         auto fragment_u = gfx::make_uniform_list(
             typing::graphics::ShaderStage::Fragment,
             gfx::uniform_pair{
@@ -380,20 +382,7 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             typing::graphics::ShaderStage::Vertex,
             gfx::uniform_pair{
                 {"camera"sv, 1},
-                semantic::SpanOne<const Matf4>(m_camera.camera_matrix)}
-            //            ,gfx::uniform_pair{
-            //                {"cameraRotation"sv, 2},
-            //                semantic::SpanOne<const
-            //                Matf3>(m_camera.rotation_matrix)},
-            //            ,gfx::uniform_pair{
-            //                {"camera_position", 3},
-            //                semantic::SpanOne<const
-            //                Vecf3>(m_camera.camera.position)}
-            //                ,
-            //            ,gfx::uniform_pair{
-            //                {"sun_position", 4},
-            //                semantic::SpanOne<const Vecf3>(sun)}
-        );
+                semantic::SpanOne<const Matf4>(m_camera.camera_matrix)});
         auto fragment_u = gfx::make_uniform_list(
             typing::graphics::ShaderStage::Fragment,
             gfx::uniform_pair{
@@ -464,15 +453,17 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             groups.insert(
                 groups.end(), bsp->portals.begin(), bsp->portals.end());
         }
-        for(auto& ent : e.select(ObjectTriggerVolume))
+        for(auto& ent : e.template select<DebugDraw>())
         {
-            if(!params->debug_triggers)
-                break;
+            if(!params->debug_triggers && ent.tags & ObjectTriggerVolume)
+                continue;
             auto             ref  = e.template ref<Proxy>(ent);
             DebugDraw const& draw = ref.template get<DebugDraw>();
             groups.push_back(draw.data);
             groups.back().instances.offset = draw.color_ptr;
-            colors[draw.color_ptr] = draw.selected ? Vecf3{0, 1, 0} : Vecf3{1};
+            if(ent.tags & ObjectTriggerVolume)
+                colors[draw.color_ptr]
+                    = draw.selected ? Vecf3{0, 1, 0} : Vecf3{1};
         }
 
         m_resources.debug_line_colors->unmap();
@@ -516,6 +507,7 @@ struct MeshRenderer : Components::RestrictedSubsystem<
 
         bool invalidated
             = p.template subsystem<BlamFiles>().last_updated > last_update;
+        invalidated = true;
         if(time - last_update > std::chrono::seconds(5) || invalidated)
         {
             generate_draws(p);
@@ -523,6 +515,8 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         }
 
         update_materials(p, time);
+
+        m_resources.material_store->unmap();
 
         RenderingParameters const* rendering_props;
         p.subsystem(rendering_props);
@@ -602,7 +596,6 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             populate_bsp_material(bsp, instance_offset);
             bsp.draw.data.front().instances.offset = instance_offset;
             instance_offset += bsp.draw.data.front().instances.count;
-            //            wf.insert_draw(bsp.draw.data.front());
             wf.draws[0].push_back(bsp.draw.data.front());
         }
     }
@@ -634,14 +627,19 @@ struct MeshRenderer : Components::RestrictedSubsystem<
 
         for(compo::Entity const& ent : p.select(ObjectMod2))
         {
-            if(!rendering_params->render_scenery
-               && (ent.tags & ObjectSkybox) == 0)
-                continue;
-            auto              ref   = p.template ref<Proxy>(ent);
-            SubModel&         model = ref.template get<SubModel>();
-            MeshTrackingData& track = ref.template get<MeshTrackingData>();
+            auto              ref    = p.template ref<Proxy>(ent);
+            SubModel&         model  = ref.template get<SubModel>();
+            MeshTrackingData& track  = ref.template get<MeshTrackingData>();
+            auto              parent = p.template ref<Proxy>(model.parent);
+            Model&            mod    = parent.template get<Model>();
 
-            //            auto& shader = *shaders.find(model.shader);
+            if(!mod.visible
+               || (!rendering_params->render_scenery
+                   && (ent.tags & ObjectSkybox) == 0))
+            {
+                track.model_id = {};
+                continue;
+            }
 
             Pass& wf            = m_model[model.current_pass];
             wf.command.vertices = m_resources.model_attr;
@@ -685,8 +683,12 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             SubModel& smodel = ref.template get<SubModel>();
             Model&    model
                 = p.template ref<Proxy>(smodel.parent).template get<Model>();
-            MeshTrackingData&  track = ref.template get<MeshTrackingData>();
-            Pass&              pass  = m_model[smodel.current_pass];
+            MeshTrackingData& track = ref.template get<MeshTrackingData>();
+
+            if(!track.model_id.enabled)
+                continue;
+
+            Pass&              pass = m_model[smodel.current_pass];
             draw_data_t const& draw
                 = pass.draws[track.model_id.bucket].at(track.model_id.draw);
             auto instance_id = draw.instances.offset + track.model_id.instance;
@@ -695,7 +697,7 @@ struct MeshRenderer : Components::RestrictedSubsystem<
                 smodel, model_cache->find(model.model)->second, instance_id);
         }
 
-        m_resources.material_store->unmap();
+        m_resources.model_matrix_store->unmap();
 
         cDebug("Summary of generation:");
         for(Pass const& pass : m_bsp)
@@ -755,8 +757,6 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             update_animations(
                 material_of(bsp, instance_offset), bsp.shader, time);
         }
-
-        m_resources.material_store->unmap();
     }
 
     materials::senv_micro& material_of(SubModel& sub, size_t i)

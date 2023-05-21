@@ -20,36 +20,6 @@ coverage: true
 display_name: Coffeecutie
 makefile_location: toolchain/makers
 name: Coffee
-platforms:
-  android:
-  - armv7a.v27
-  - armv7a.v21
-  - armv7a.v19
-  - armv8a.v29
-  - armv8a.v27
-  emscripten:
-  - wasm
-  fedora:
-  - amd64
-  gamecube:
-  - .
-  ios:
-  - x86_64
-  osx:
-  - .
-  raspberry:
-  - armhf
-  beaglebone:
-  - .
-  testing:
-  - linux
-  ubuntu:
-    amd64:
-    - .
-  uwp:
-  - amd64
-  win32:
-  - amd64
 script_location: toolchain/ci
 template_location: toolchain/cmake/Templates
 toolchain:

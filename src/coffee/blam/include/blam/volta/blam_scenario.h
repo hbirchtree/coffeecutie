@@ -704,6 +704,7 @@ struct skybox
     struct fog_opts
     {
         Vecf3 color;
+        u32   padding[2];
         f32   density;
         f32   start_distance;
         f32   opaque_distance;
@@ -718,10 +719,7 @@ struct skybox
     radiosity_opts outdoor_ambient;
     fog_opts       outdoor_fog;
     fog_opts       indoor_fog;
-
-    u32 padding_2[4];
-
-    tagref_t indoor_fog_screen;
+    tagref_t       indoor_fog_screen;
 
     u32 padding_3[1];
 

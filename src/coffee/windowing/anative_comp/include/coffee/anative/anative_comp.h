@@ -98,6 +98,10 @@ struct AndroidEventBus : comp_app::AppService<AndroidEventBus>,
     ndk_helper::DragDetector*      m_dragDetector;
 
     comp_app::TouchConfig* m_touchConfig;
+    comp_app::BasicEventBus<Coffee::Input::CIEvent>* m_inputBus;
+    comp_app::BasicEventBus<comp_app::AppEvent>* m_appBus;
+
+    std::optional<Coffee::Input::CIMouseButtonEvent> m_tapButtonEvent;
 };
 
 using Services = comp_app::detail::TypeList<

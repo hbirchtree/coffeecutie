@@ -49,12 +49,13 @@ struct BspReference
 
 struct model_tracker_t
 {
-    u16 bucket;
-    u16 draw;
-    u16 instance;
+    u16  bucket;
+    u16  draw;
+    u16  instance;
+    bool enabled{false};
 };
 
-static_assert(sizeof(model_tracker_t) == 6);
+static_assert(sizeof(model_tracker_t) == 8);
 
 struct MeshTrackingData
 {
@@ -70,6 +71,7 @@ struct SubModel
     using type       = compo::alloc::VectorContainer<value_type>;
 
     u64 parent;
+    u16 cluster;
 
     generation_idx_t shader;
     generation_idx_t model;
@@ -122,15 +124,19 @@ struct Model
     using tag_type   = value_type;
 
     Matf4 transform;
+    Vecf3 position;
 
     generation_idx_t                              model;
     std::vector<ERef>                             parts;
     semantic::mem_chunk<blam::mod2::region const> regions;
     blam::tag_t const*                            tag = nullptr;
 
+    bool visible{false};
+
     template<typename T>
     void initialize(T const* spawn)
     {
+        position = spawn->pos;
         transform = glm::translate(Matf4(1), spawn->pos)
                     * glm::mat4_cast(spawn_rotation_to_quat(spawn));
     }
@@ -285,7 +291,7 @@ struct DebugDraw
 
     gfx::draw_command::data_t data{};
     u32                       color_ptr;
-    bool selected{false};
+    bool                      selected{false};
 };
 
 struct TriggerVolume
@@ -307,26 +313,51 @@ struct Light
     Matf4 transform;
 };
 
-enum ObjectTags : u32
+struct Cluster
 {
-    ObjectScenery      = 0x1,
-    ObjectEquipment    = 0x2,
-    ObjectVehicle      = 0x4,
-    ObjectBiped        = 0x8,
-    ObjectDevice       = 0x10,
-    ObjectLightFixture = 0x20,
-    ObjectControl      = 0x40,
-    ObjectSkybox       = 0x80,
+    using value_type = Cluster;
+    using type       = compo::alloc::VectorContainer<value_type>;
 
-    ObjectObject = 0x1000,
-    ObjectUnit   = ObjectObject << 1,
+    blam::bsp::cluster const* cluster;
+    u32                       id;
 
-    ObjectMod2 = 0x10000,
-    ObjectBsp  = ObjectMod2 << 1,
+    bool contains(Matf4 const& transform, blam::magic_data_t const& magic) const
+    {
+        auto subclusters_ = cluster->sub_clusters.data(magic);
+        if(!subclusters_.has_value())
+            return false;
+        Span<blam::bsp::subcluster const> subclusters = subclusters_.value();
+        Vecf3 probe = transform * Vecf4(Vecf3(0), 1);
+        for(blam::bsp::subcluster const& cluster : subclusters)
+        {
+            if(!cluster.bounds.contains(probe))
+                continue;
+            return true;
+        }
+        return false;
+    }
+};
 
-    ObjectScriptObject  = 0x100000,
-    ObjectTriggerVolume = ObjectScriptObject << 1,
-
-    /* For objects that should be removed after loading a new map */
-    ObjectGC = 0x800000,
+enum ObjectTags : u64
+{
+    ObjectScenery         = 0x1,
+    ObjectEquipment       = 0x2,
+    ObjectVehicle         = 0x4,
+    ObjectBiped           = 0x8,
+    ObjectDevice          = 0x10,
+    ObjectLightFixture    = 0x20,
+    ObjectControl         = 0x40,
+    ObjectSkybox          = 0x80,
+    ObjectObject          = 0x1000,
+    ObjectUnit            = ObjectObject << 1,
+    ObjectMod2            = 0x10000,
+    ObjectBsp             = ObjectMod2 << 1,
+    ObjectScriptObject    = 0x100000,
+    ObjectTriggerVolume   = ObjectScriptObject << 1,
+    ClusterNode           = ObjectScriptObject << 2,
+    PositioningStatic     = 0x1000000,
+    PositioningDynamic    = PositioningStatic << 1,
+    PositioningBackground = PositioningStatic << 2,
+    ObjectGC              = 0x8000000, /* Erased on map load */
+    SubObjectMask         = 0xFFFFF,
 };

@@ -2,7 +2,6 @@
     "overlay-ports": [
         "./toolchain/vcpkg/ports/bullet2",
         "./toolchain/vcpkg/ports/discord-rpc",
-        "./toolchain/vcpkg/ports/pvrtcdec",
         "./toolchain/vcpkg/ports/sdl2",
         "./toolchain/vcpkg/ports/sdl2-wayland",
         "./toolchain/vcpkg/ports/stb"

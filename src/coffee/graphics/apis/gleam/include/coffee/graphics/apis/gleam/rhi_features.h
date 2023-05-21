@@ -29,6 +29,7 @@ struct features
 {
     struct buffers
     {
+        bool barrier{false};
         bool dsa{false};
         bool invalidate{false};
         bool mapping{true};

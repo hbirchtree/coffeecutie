@@ -45,8 +45,7 @@ void load_scenario_bsp(compo::EntityContainer& e, BlamData<Version>& data)
     for(blam::scn::trigger_volume const& trigger :
         scenario->mp.trigger_volumes.data(magic).value())
     {
-        Vecf3 const& origin = trigger.box.origin;
-        Vecf3 const& second = trigger.box.origin + trigger.box.extents;
+        auto [origin, second] = trigger.box.points();
 
         std::array<Vecf3, 10> points = {{
             origin,
@@ -78,13 +77,17 @@ void load_scenario_bsp(compo::EntityContainer& e, BlamData<Version>& data)
                }};
         draw.color_ptr = bsp_cache.portal_color_ptr;
         bsp_cache.portal_ptr += 10;
-        bsp_cache.portal_color_ptr ++;
+        bsp_cache.portal_color_ptr++;
     }
 
     std::vector<generation_idx_t> bsp_meshes;
     if(auto bsps = scenario->bsp_info.data(magic); bsps.has_value())
-        for(auto const& bsp : bsps.value())
+    {
+        for(blam::bsp::info const& bsp : bsps.value())
+        {
             bsp_meshes.push_back(bsp_cache.predict(bsp));
+        }
+    }
 
     gpu.bsp_buf->unmap();
     gpu.bsp_index->unmap();
@@ -164,7 +167,7 @@ void load_objects(
         type_hash_v<ShaderData>(),
         type_hash_v<MeshTrackingData>(),
     };
-    submodel.tags = tags | ObjectMod2;
+    submodel.tags = (tags & SubObjectMask) | ObjectMod2;
 
     auto& model_cache  = e.subsystem_cast<ModelCache<Version>>();
     auto& shader_cache = e.subsystem_cast<ShaderCache<Version>>();
@@ -268,7 +271,7 @@ void load_multiplayer_equipment(
         type_hash_v<ShaderData>(),
         type_hash_v<MeshTrackingData>(),
     };
-    submodel.tags = tags | ObjectMod2;
+    submodel.tags = (tags & SubObjectMask) | ObjectMod2;
 
     for(blam::scn::multiplayer_equipment const& equipment_ref :
         equipment.value())
@@ -364,22 +367,46 @@ void load_scenario_scenery(EntityContainer& e, BlamData<Version>& data)
 
     auto pipeline = gpu.model_pipeline;
 
-    load_objects(scenario->objects.scenery, data, e, ObjectScenery | ObjectGC);
-    load_objects(scenario->objects.vehicles, data, e, ObjectVehicle | ObjectGC);
-    load_objects(scenario->objects.bipeds, data, e, ObjectBiped | ObjectGC);
-    load_objects(scenario->objects.equips, data, e, ObjectEquipment | ObjectGC);
     load_objects(
-        scenario->objects.weapon_spawns, data, e, ObjectEquipment | ObjectGC);
-    load_objects(scenario->objects.machines, data, e, ObjectDevice | ObjectGC);
+        scenario->objects.scenery,
+        data,
+        e,
+        ObjectScenery | PositioningStatic | ObjectGC);
+    load_objects(
+        scenario->objects.vehicles,
+        data,
+        e,
+        ObjectVehicle | PositioningDynamic | ObjectGC);
+    load_objects(
+        scenario->objects.bipeds,
+        data,
+        e,
+        ObjectBiped | PositioningDynamic | ObjectGC);
+    load_objects(
+        scenario->objects.equips,
+        data,
+        e,
+        ObjectEquipment | PositioningDynamic | ObjectGC);
+    load_objects(
+        scenario->objects.weapon_spawns,
+        data,
+        e,
+        ObjectEquipment | PositioningDynamic | ObjectGC);
+    load_objects(
+        scenario->objects.machines,
+        data,
+        e,
+        ObjectDevice | PositioningStatic | ObjectGC);
     load_objects(
         scenario->objects.light_fixtures,
         data,
         e,
-        ObjectLightFixture | ObjectGC);
+        ObjectLightFixture | PositioningStatic | ObjectGC);
 
     if(data.map_container.map->map_type == blam::maptype_t::multiplayer)
     {
-        load_multiplayer_equipment(data, e, ObjectEquipment | ObjectGC);
+        load_multiplayer_equipment(
+            data, e, ObjectEquipment | PositioningDynamic | ObjectGC);
     }
 
     blam::tag_index_view index(data.map_container);
@@ -434,6 +461,21 @@ void load_scenario_scenery(EntityContainer& e, BlamData<Version>& data)
             // TODO: Find out how objects are identified as being
             // interior or exterior in the world
         }
+
+        world_data[0].fog.indoor_color
+            = Vecf4(skybox_.indoor_fog.color, skybox_.indoor_fog.density);
+        world_data[0].fog.indoor_ambient
+            = Vecf4(skybox_.indoor_ambient.color, skybox_.indoor_ambient.power);
+        world_data[0].fog.outdoor_color
+            = Vecf4(skybox_.outdoor_fog.color, skybox_.outdoor_fog.density);
+        world_data[0].fog.outdoor_ambient = Vecf4(
+            skybox_.outdoor_ambient.color, skybox_.outdoor_ambient.power);
+
+        world_data[0].fog.distances = Vecf4(
+            skybox_.indoor_fog.start_distance,
+            skybox_.indoor_fog.opaque_distance,
+            skybox_.outdoor_fog.start_distance,
+            skybox_.outdoor_fog.opaque_distance);
 
         skybox_mod.tag       = skybox_tag;
         skybox_mod.transform = glm::identity<Matf4>();

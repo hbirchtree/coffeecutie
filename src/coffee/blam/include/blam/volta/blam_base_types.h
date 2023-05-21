@@ -12,9 +12,9 @@
 namespace blam {
 
 using namespace libc_types;
+using semantic::Span;
 using std::optional;
 using stl_types::result;
-using semantic::Span;
 
 using typing::vector_types::Vecf2;
 using typing::vector_types::Vecf3;
@@ -38,12 +38,30 @@ static_assert(sizeof(bl_point_t) == 4, "bl_point_t must be 4 bytes");
  */
 struct bounding_box
 {
-    bounding_box() : origin(0), extents(0)
+    Vecf2 x_range;
+    Vecf2 y_range;
+    Vecf2 z_range;
+
+    inline bool contains(Vecf3 const& point) const
     {
+        auto [o, e] = points();
+
+        auto origin_diff = point - o;
+        auto extent_diff = e - point;
+        bool within_origin
+            = origin_diff.x < 0 && origin_diff.y < 0 && origin_diff.z < 0;
+        bool within_extents
+            = extent_diff.x > 0 && extent_diff.y > 0 && extent_diff.z > 0;
+        return within_origin && within_extents;
     }
 
-    Vecf3 origin;
-    Vecf3 extents;
+    std::pair<Vecf3, Vecf3> points() const
+    {
+        return {
+            Vecf3(x_range.x, y_range.x, z_range.x),
+            Vecf3(x_range.y, y_range.y, z_range.y),
+        };
+    }
 };
 static_assert(sizeof(bounding_box) == 24, "bounding_box must be 24 bytes");
 
@@ -53,8 +71,8 @@ static_assert(sizeof(bounding_box) == 24, "bounding_box must be 24 bytes");
  */
 enum class maptype_t : i32
 {
-    singleplayer =
-        0,           /*!< A single-player map, typically with cutscenes and AI*/
+    singleplayer
+    = 0,             /*!< A single-player map, typically with cutscenes and AI*/
     multiplayer = 1, /*!< A multi-player map, typically with up to 16 players*/
     ui          = 2, /*!< A UI map, used only in the main menu*/
 };

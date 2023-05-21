@@ -60,7 +60,8 @@ struct api
 
     inline auto alloc_program()
     {
-        return std::make_shared<program_t>(m_features.program, std::ref(*m_debug));
+        return std::make_shared<program_t>(
+            m_features.program, std::ref(*m_debug));
     }
 
     inline auto alloc_rendertarget()
@@ -88,7 +89,8 @@ struct api
         shader_t::constants_t const& constants  = {},
         std::string_view             entrypoint = detail::default_entrypoint)
     {
-        return std::make_shared<shader_t>(std::move(data), fmt, constants, entrypoint);
+        return std::make_shared<shader_t>(
+            std::move(data), fmt, constants, entrypoint);
     }
 
     template<class T>
@@ -277,6 +279,11 @@ struct api
         return m_features;
     }
 
+    inline const auto& workarounds() const
+    {
+        return m_workarounds;
+    }
+
     template<typename... UList>
     optional<tuple<error, std::string_view>> submit(
         draw_command const& command, UList&&... uniforms);
@@ -284,12 +291,12 @@ struct api
     using extensions_set = std::set<string>;
     struct load_options_t
     {
-        optional<u32>            api_version;
-        optional<api_type_t>     api_type;
-        optional<extensions_set> api_extensions{};
-        optional<features>       api_features{};
-        optional<workarounds>    api_workarounds{};
-        optional<size_t>         indirect_buffer_size{};
+        optional<u32>                api_version;
+        optional<api_type_t>         api_type;
+        optional<extensions_set>     api_extensions{};
+        optional<features>           api_features{};
+        optional<gleam::workarounds> api_workarounds{};
+        optional<size_t>             indirect_buffer_size{};
     };
 
     static const load_options_t default_options;
@@ -349,15 +356,15 @@ struct api
     std::unique_ptr<debug_api>         m_debug;
     context::api                       m_context_state;
 
-    rendertarget_currency              m_rendertargetCurrency;
-    features                           m_features;
-    api_limits                         m_limits;
-    workarounds                        m_workarounds;
-    extensions_set                     m_extensions;
-    api_type_t                         m_api_type{api_type_t::none};
-    u32                                m_api_version{0};
-    rq::runtime_queue*                 m_main_queue{nullptr};
-    rq::runtime_queue*                 m_texture_decode_queue{nullptr};
+    rendertarget_currency m_rendertargetCurrency;
+    features              m_features;
+    api_limits            m_limits;
+    gleam::workarounds    m_workarounds;
+    extensions_set        m_extensions;
+    api_type_t            m_api_type{api_type_t::none};
+    u32                   m_api_version{0};
+    rq::runtime_queue*    m_main_queue{nullptr};
+    rq::runtime_queue*    m_texture_decode_queue{nullptr};
 #if GLEAM_MAX_VERSION_ES != 0x200
     std::unique_ptr<circular_buffer_t> m_indirect_buffer;
 #endif

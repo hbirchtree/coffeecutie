@@ -1,5 +1,6 @@
 #include "data.h"
 #include "loading.h"
+#include "occluder.h"
 #include "rendering.h"
 #include "resource_creation.h"
 #include "selected_version.h"
@@ -83,6 +84,11 @@ static void reinit_map(
     e.remove_entity_if([](compo::Entity const& e) {
         return stl_types::any_flag_of(e.tags, ObjectGC);
     });
+
+    u32 num = 0;
+    for([[maybe_unused]] auto const& i : e.select(ObjectGC))
+        num++;
+    cDebug("Number of GC entities: {}", num);
 
     data.map_container = blam::map_container<halo_version>::from_bytes(
                              *files->map_file, halo_version_v)
@@ -180,8 +186,8 @@ i32 blam_main(i32, cstring_w*)
             auto  load_error = gfx.load(
                 //
                 //                gfx::emulation::webgl::desktop()
-                gfx::emulation::qcom::adreno_320()
-                //                gfx::emulation::arm::mali_g710()
+//                gfx::emulation::qcom::adreno_320()
+//                gfx::emulation::arm::mali_g710()
                 // gfx::emulation::amd::rx560_pro()
                 //
             );
@@ -229,11 +235,13 @@ i32 blam_main(i32, cstring_w*)
             });
 
             auto& blam_files = e.register_subsystem_inplace<BlamFiles>();
+            auto& params = e.register_subsystem_inplace<RenderingParameters>();
+            params.mipmap_bias = 0;
 
             {
                 auto& bitm_cache
                     = e.register_subsystem_inplace<BitmapCache<halo_version>>(
-                        &blam_files, &gfx);
+                        &blam_files, &gfx, &params);
                 auto& shader_cache
                     = e.register_subsystem_inplace<ShaderCache<halo_version>>(
                         std::ref(bitm_cache));
@@ -270,6 +278,7 @@ i32 blam_main(i32, cstring_w*)
             create_shaders(e);
             set_resource_labels(e);
             alloc_renderer(e);
+            alloc_occluder(e);
 
             using namespace ::platform::url::constructors;
 

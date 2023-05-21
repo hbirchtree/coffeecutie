@@ -1,14 +1,10 @@
 #include "map_sampling.glsl"
 
 layout(location = 0) in FragData {
-    vec3 tbn_direction;
-    vec3 eye_direction;
     vec3 position;
     vec2 tex;
     mat3 tbn;
-#if USE_LIGHTMAPS == 1
     vec2 light_tex;
-#endif
     flat int instanceId;
 } frag;
 
@@ -41,9 +37,19 @@ struct LightProperties
     vec4 light_color;
 };
 
+struct FogProperties
+{
+    vec4 indoor_color;
+    vec4 indoor_ambient;
+    vec4 outdoor_color;
+    vec4 outdoor_ambient;
+    vec4 distances;
+};
+
 layout(binding = 2, std140) uniform WorldProperties
 {
     LightProperties lighting[2];
+    FogProperties fog;
 } world;
 
 const uint INTERIOR_LIGHTING = 0u;
@@ -648,33 +654,42 @@ layout(location = 0) out vec4 final_color;
 void main()
 {
     uint material_id = get_material_id(frag.instanceId);
+    vec4 color;
 
     if(material_id == MATERIAL_SENV)
     {
-        final_color = shader_environment();
+        color = shader_environment();
 #if USE_MODEL_SHADERS == 1
     } else if(material_id == MATERIAL_SOSO)
     {
-        final_color = shader_model();
+        color = shader_model();
 #endif
     } else if(material_id == MATERIAL_SCHI)
     {
         final_color = shader_chicago();
+        return;
     } else if(material_id == MATERIAL_SCEX)
     {
         final_color = shader_chicago_extended();
+        return;
     } else if(material_id == MATERIAL_SWAT)
     {
-        final_color = shader_water();
+        color = shader_water();
     } else if(material_id == MATERIAL_SGLA)
     {
-        final_color = shader_glass();
+        color = shader_glass();
     } else if(material_id == MATERIAL_SMET)
     {
-        final_color = shader_meter();
+        color = shader_meter();
     } else if(material_id == MATERIAL_SOTR)
     {
-        final_color = shader_transparent();
+        color = shader_transparent();
     } else
-        final_color = vec4(0, 1, 0, 1);
+        color = vec4(0, 1, 0, 1);
+
+    vec4 fog_color = vec4(world.fog.outdoor_color.xyz, 1);
+    float fog_distance = length(frag.position - camera_position);
+    fog_distance = (fog_distance - world.fog.distances.z) / world.fog.distances.w;
+    fog_distance = clamp(exp(-fog_distance * world.fog.outdoor_color.w), 0, 1);
+    final_color = mix(color, fog_color, 1 - fog_distance);
 }

@@ -16,11 +16,10 @@ layout(location = 1) uniform mat4 camera;
 //layout(location = 3) uniform vec3 camera_position;
 
 layout(location = 0) out FragData {
-    vec3 tbn_direction;
-    vec3 eye_direction;
     vec3 position;
     vec2 tex;
     mat3 tbn;
+    vec2 light_tex;
     flat int instanceId;
 } frag;
 
@@ -33,19 +32,10 @@ void main()
     mat4 transform = matrices.transform[gl_InstanceID];
     mat3 rotation = mat3(transform);
     mat3 tbn = mat3(tangent, binormal, normal);
-    vec4 world_pos = transform * vec4(position.xyz, 1);
+    vec4 world_pos = transform * vec4(position, 1);
     frag.tex = tex;
     frag.instanceId = gl_InstanceID;
     frag.tbn = tbn;
     frag.position = world_pos.xyz * -1;
     gl_Position = camera * world_pos;
-//    frag.eye_direction = normalize(
-//        tbn * normalize(camera_position - (world_pos.xyz * -1)).xyz
-//        );
-//    frag.tbn_direction = normalize(
-//        tbn *
-//        (
-//            normalize(camera_position - (world_pos.xyz * -1)).xyz *
-//            vec3(1, -1, -1))
-//        );
 }

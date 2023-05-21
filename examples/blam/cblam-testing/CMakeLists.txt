@@ -24,8 +24,13 @@ add_custom_target(
 coffee_application(
   TARGET BlamGraphics
   TITLE "Blam Graphics"
-  SOURCES graphics.cpp rendering.cpp resource_creation.cpp touch_overlay.cpp
-          widgets.cpp
+  SOURCES
+        graphics.cpp
+        occluder.cpp
+        rendering.cpp
+        resource_creation.cpp
+        touch_overlay.cpp
+        widgets.cpp
   LIBRARIES Blam Core Image GLeamRHI ImGui
   RESOURCES "${CMAKE_CURRENT_BINARY_DIR}/assets"
 )

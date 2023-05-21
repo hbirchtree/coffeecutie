@@ -46,7 +46,6 @@ void create_resources(compo::EntityContainer& e)
     gfx::api&      api       = e.subsystem_cast<gfx::system>();
     BlamResources& resources = e.register_subsystem_inplace<BlamResources>();
     e.register_subsystem_inplace<PostProcessParameters>();
-    e.register_subsystem_inplace<RenderingParameters>();
 
     auto access = RSCA::ReadWrite | RSCA::Persistent | RSCA::Immutable;
 
@@ -185,6 +184,67 @@ void create_resources(compo::EntityContainer& e)
         = api.alloc_buffer(gfx::buffers::vertex, access);
     resources.debug_line_colors->alloc();
     resources.debug_line_colors->commit(memory_budget::debug_buffer / 2);
+
+    {
+        auto pos = resources.debug_lines->map<Vecf3>(0);
+        auto col = resources.debug_line_colors->map<Vecf3>(0);
+        pos[0]   = Vecf3(0);
+        pos[1]   = Vecf3(10, 0, 0);
+        pos[2]   = Vecf3(0);
+        pos[3]   = Vecf3(0, 10, 0);
+        pos[4]   = Vecf3(0);
+        pos[5]   = Vecf3(0, 0, 10);
+
+        col[0] = Vecf3(1, 0, 0);
+        col[1] = Vecf3(0, 1, 0);
+        col[2] = Vecf3(0, 0, 1);
+
+        resources.debug_lines->unmap();
+        resources.debug_line_colors->unmap();
+
+        compo::EntityRecipe debug_draw;
+        debug_draw.components = {
+            compo::type_hash_v<DebugDraw>(),
+        };
+        auto x_     = e.create_entity(debug_draw);
+        auto y_     = e.create_entity(debug_draw);
+        auto z_     = e.create_entity(debug_draw);
+        auto& x = x_.get<DebugDraw>();
+        auto& y = y_.get<DebugDraw>();
+        auto& z = z_.get<DebugDraw>();
+        x.color_ptr = 0;
+        x.data = gfx::draw_command::data_t{
+            .arrays = {
+                .count = 2,
+                .offset = 0,
+            },
+        };
+        y.color_ptr = 1;
+        y.data = gfx::draw_command::data_t{
+            .arrays = {
+                .count = 2,
+                .offset = 2,
+            },
+        };
+        z.color_ptr = 2;
+        z.data = gfx::draw_command::data_t{
+            .arrays = {
+                .count = 2,
+                .offset = 4,
+            },
+        };
+
+        auto& camera = e.create_entity(debug_draw).get<DebugDraw>();
+        camera.color_ptr = 3;
+        camera.data = gfx::draw_command::data_t{
+            .arrays = {
+                .count = 6,
+                .offset = 6,
+            },
+        };
+        col[3] = Vecf3{1, 0, 1};
+    }
+
     {
         struct debug_vertex
         {
@@ -480,11 +540,12 @@ void create_shaders(compo::EntityContainer& e)
     auto _ = gfx.debug().scope();
 
     auto const& features = gfx.feature_info();
+    auto const& bugs     = gfx.workarounds().bugs;
 
     const bool use_spv  = features.program.spirv && false;
     const bool use_uber = features.texture.cube_array && features.buffer.ssbo
-                          && !lowspec_hardware;
-    const bool use_uber_lite = features.buffer.ubo;
+                          && !lowspec_hardware && !bugs.adreno_3xx;
+    const bool use_uber_lite = features.buffer.ubo && !bugs.adreno_3xx;
 
     if(use_spv)
     {

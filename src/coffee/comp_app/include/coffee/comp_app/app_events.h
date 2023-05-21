@@ -9,6 +9,7 @@ struct AppEvent
         None,
         LifecycleEvent,
         NavigationEvent,
+        InputModeSwitch,
     };
 
     Type type;
@@ -29,7 +30,7 @@ struct NavigationEvent
         Down,
     };
 
-    Type navigation_type;
+    Type navigation_type{None};
 };
 
 struct LifecycleEvent
@@ -56,7 +57,19 @@ struct LifecycleEvent
         LowMemory,
     };
 
-    Type lifecycle_type;
+    Type lifecycle_type{None};
+};
+
+struct InputModeEvent
+{
+    static constexpr auto event_type = AppEvent::InputModeSwitch;
+    enum Type
+    {
+        Desktop,
+        Gamepad,
+        Touch,
+    };
+    Type mode{Desktop};
 };
 
 }

@@ -45,46 +45,46 @@ struct BlamBspWidget
         auto& shader_cache = e.template subsystem<ShaderCache<V>>();
         auto& bsp_cache    = e.template subsystem<BSPCache<V>>();
 
-        if(ImGui::Begin("Static models"))
-        {
-            std::string current_bsp;
-            bool        current_hidden = true;
+//        if(ImGui::Begin("Static models"))
+//        {
+//            std::string current_bsp;
+//            bool        current_hidden = true;
 
-            for(Entity& bsp_ : bsps)
-            {
-                auto          bsp_e = e.template ref<Proxy>(bsp_);
-                BspReference& bsp   = bsp_e.template get<BspReference>();
+//            for(Entity& bsp_ : bsps)
+//            {
+//                auto          bsp_e = e.template ref<Proxy>(bsp_);
+//                BspReference& bsp   = bsp_e.template get<BspReference>();
 
-                BSPItem const&    bsp_it = bsp_cache.find(bsp.bsp)->second;
-                ShaderItem const& shader
-                    = shader_cache.find(bsp.shader)->second;
+//                BSPItem const&    bsp_it = bsp_cache.find(bsp.bsp)->second;
+//                ShaderItem const& shader
+//                    = shader_cache.find(bsp.shader)->second;
 
-                auto bsp_name    = m_map->get_name(bsp_it.tag);
-                auto shader_name = m_map->get_name(shader.tag);
+//                auto bsp_name    = m_map->get_name(bsp_it.tag);
+//                auto shader_name = m_map->get_name(shader.tag);
 
-                if(current_bsp != bsp_name)
-                {
-                    if(!current_bsp.empty() && !current_hidden)
-                        ImGui::TreePop();
-                    current_bsp    = bsp_name;
-                    current_hidden = !ImGui::TreeNode(current_bsp.c_str());
-                }
+//                if(current_bsp != bsp_name)
+//                {
+//                    if(!current_bsp.empty() && !current_hidden)
+//                        ImGui::TreePop();
+//                    current_bsp    = bsp_name;
+//                    current_hidden = !ImGui::TreeNode(current_bsp.c_str());
+//                }
 
-                if(auto it = m_bsps.find(bsp_name); it == m_bsps.end())
-                    m_bsps.insert({bsp_name, true});
+//                if(auto it = m_bsps.find(bsp_name); it == m_bsps.end())
+//                    m_bsps.insert({bsp_name, true});
 
-                bsp.visible = m_bsps.at(bsp_name);
+//                bsp.visible = m_bsps.at(bsp_name);
 
-                if(current_hidden)
-                    continue;
+//                if(current_hidden)
+//                    continue;
 
-                ImGui::Checkbox(shader_name.data(), &m_bsps.at(bsp_name));
-            }
+//                ImGui::Checkbox(shader_name.data(), &m_bsps.at(bsp_name));
+//            }
 
-            if(!current_bsp.empty() && !current_hidden)
-                ImGui::TreePop();
-        }
-        ImGui::End();
+//            if(!current_bsp.empty() && !current_hidden)
+//                ImGui::TreePop();
+//        }
+//        ImGui::End();
 
         if(ImGui::Begin("BSP debugging"))
         {
@@ -93,6 +93,7 @@ struct BlamBspWidget
 
             ImGui::Checkbox("Render scenery", &rendering->render_scenery);
             ImGui::Checkbox("Clear before draw", &rendering->debug_clear);
+            ImGui::Checkbox("Show clusters", &rendering->debug_clusters);
             ImGui::Checkbox("Show portals", &rendering->debug_portals);
             ImGui::Checkbox("Show trigger volumes", &rendering->debug_triggers);
 

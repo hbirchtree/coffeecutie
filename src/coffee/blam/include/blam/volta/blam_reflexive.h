@@ -17,7 +17,7 @@ struct single_value_t
 
 constexpr single_value_t single_value;
 
-template<typename T, typename V = grbx_t>
+template<typename T, typename V = grbx_t, typename MagicTag = void>
 /*!
  * \brief Points to a chunk of memory within the file
  */

@@ -16,6 +16,76 @@ using libc_types::i32;
 using libc_types::u32;
 using libc_types::u8;
 
+namespace {
+
+constexpr fmt::format_string<std::string, u32, std::string> out_format
+    = "{}.{}.{}";
+
+inline std::string create_output_name(
+    std::string const&      source_file,
+    u32                     resolution,
+    std::string_view const& extension)
+{
+    auto base_name
+        = platform::url::Path(source_file).fileBasename().removeExt().internUrl;
+    return fmt::format("{}.{}.{}", source_file, resolution, extension);
+}
+
+} // namespace
+
+bool etc2_compress(
+    std::string const&      file,
+    std::vector<u32> const& resolutions,
+    typing::PixCmp          format)
+{
+    compressor::rgbaf_image_t imagef;
+    {
+        Coffee::stb::stb_error img_err;
+        if(!compressor::LoadData(
+               &imagef,
+               Coffee::Resource(platform::url::constructors::MkSysUrl(file)),
+               img_err,
+               format))
+        {
+            cBasicPrint("Failed to decode image to rgba32f");
+            return false;
+        }
+    }
+    auto res = compressor::etc2::encode(
+        imagef,
+        compressor::etc2::format_t::RGB8A1,
+        compressor::settings_t{
+            .quality = 1.f,
+            .mipmaps = static_cast<uint32_t>(resolutions.size()),
+        });
+
+    if(!res)
+    {
+        cBasicPrint("Failed to encode image {0}", file);
+        return false;
+    }
+
+    //        auto out_name = replace::str<char>(out_format, "{resolution}",
+    //        "all"); out_name      = replace::str<char>(out_name, "{codec}",
+    //        "etc2");
+    auto out_name = create_output_name(file, 0, "etc2");
+
+    auto out_stream = fopen(out_name.c_str(), "wb+");
+
+    if(!out_stream)
+    {
+        cBasicPrint("Failed to open for writing: {0}", out_name);
+        return false;
+    }
+
+    auto error = ktxTexture_WriteToStdioStream(ktxTexture(*res), out_stream);
+    if(error != ktx_error_code_e::KTX_SUCCESS)
+        cBasicPrint("Error writing KTX: {0}", magic_enum::enum_name(error));
+
+    fclose(out_stream);
+    return true;
+}
+
 i32 cooker_main(i32 argc, char** argv)
 {
     cxxopts::Options opts(
@@ -53,10 +123,6 @@ i32 cooker_main(i32 argc, char** argv)
     std::vector<u32>                                 resolutions;
     std::vector<std::pair<std::string, std::string>> codecs;
     std::string punchthrough_color = "0xFF00FF";
-    std::string out_format = platform::url::Path(res.unmatched().front())
-                                 .removeExt()
-                                 .addExtension("{resolution}.{codec}")
-                                 .internUrl;
 
     for(cxxopts::KeyValue const& arg : res.arguments())
     {
@@ -76,8 +142,6 @@ i32 cooker_main(i32 argc, char** argv)
             codecs.push_back(std::make_pair(codec, format));
         } else if(arg.key() == "punchthrough-color")
             punchthrough_color = arg.value();
-        else if(arg.key() == "output")
-            out_format = stl_types::str::trim::both(arg.value());
     }
 
     if(resolutions.empty() || codecs.empty())
@@ -86,57 +150,18 @@ i32 cooker_main(i32 argc, char** argv)
         return 1;
     }
 
-    using Coffee::Resource;
-    using Coffee::stb::stb_error;
-    using typing::PixCmp;
-    using namespace platform::url::constructors;
-    using namespace stl_types::str;
-
     for(auto const& file : res.unmatched())
     {
         cBasicPrint("Processing {0} -> {1} x {2}", file, codecs, resolutions);
 
-        compressor::rgbaf_image_t imagef;
+        for(auto [codec, format] : codecs)
         {
-            stb_error img_err;
-            if(!compressor::LoadData(
-                   &imagef, Resource(MkSysUrl(file)), img_err, PixCmp::RGBA))
-            {
-                cBasicPrint("Failed to decode image to rgba32f");
-                return 1;
-            }
+            auto pixcmp
+                = format == "rgba" ? typing::PixCmp::RGBA : typing::PixCmp::RGB;
+
+            if(codec == "etc2")
+                etc2_compress(file, resolutions, pixcmp);
         }
-        auto res = compressor::etc2::encode(
-            imagef,
-            compressor::etc2::format_t::RGB8A1,
-            compressor::settings_t{
-                .quality = 1.f,
-                .mipmaps = static_cast<uint32_t>(resolutions.size()),
-            });
-
-        if(!res)
-        {
-            cBasicPrint("Failed to encode image {0}", file);
-            return 1;
-        }
-
-        auto out_name = replace::str<char>(out_format, "{resolution}", "all");
-        out_name      = replace::str<char>(out_name, "{codec}", "etc2");
-
-        auto out_stream = fopen(out_name.c_str(), "wb+");
-
-        if(!out_stream)
-        {
-            cBasicPrint("Failed to open for writing: {0}", out_name);
-            return 1;
-        }
-
-        auto error
-            = ktxTexture_WriteToStdioStream(ktxTexture(*res), out_stream);
-        if(error != ktx_error_code_e::KTX_SUCCESS)
-            cBasicPrint("Error writing KTX: {0}", magic_enum::enum_name(error));
-
-        fclose(out_stream);
     }
 
     return 0;

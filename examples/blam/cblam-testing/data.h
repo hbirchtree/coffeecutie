@@ -127,9 +127,12 @@ struct RenderingParameters : compo::SubsystemBase
 {
     using type = RenderingParameters;
 
-    bool render_scenery{false};
+    libc_types::u32 mipmap_bias{0};
+
+    bool render_scenery{true};
     bool debug_clear{true};
 
     bool debug_portals{false};
+    bool debug_clusters{false};
     bool debug_triggers{false};
 };

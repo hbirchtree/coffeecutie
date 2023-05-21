@@ -157,7 +157,6 @@ struct StandardCamera
     void tick(std::chrono::system_clock::duration const& t)
     {
         using namespace typing::vectors;
-        static const std::set<u16> keys = {CK_w, CK_s, CK_a, CK_d, CK_q, CK_e};
 
         auto& rotation = cached.rotation = glm::mat3_cast(m_camera->rotation);
 

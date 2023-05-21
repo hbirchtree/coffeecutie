@@ -131,7 +131,7 @@ function(ANDROIDAPK_PACKAGE)
   )
 
   #
-  # Execute manifest config Allows us to pull in target properties
+  # Execute manifest config - Allows us to pull in target properties
   #
   add_custom_command(
     TARGET ${AAPK_TARGET}.project

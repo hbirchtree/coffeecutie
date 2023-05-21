@@ -437,6 +437,7 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
 
         out.texture.cube_array = api_version >= 0x400;
 
+        out.buffer.barrier                = api_version >= 0x420;
         out.draw.indirect                 = api_version >= 0x420;
         out.draw.base_instance            = api_version >= 0x420;
         out.texture.image_texture         = api_version >= 0x420;
@@ -491,6 +492,7 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
         out.vertex.attribute_binding      = api_version >= 0x300;
         out.vertex.vertex_arrays          = api_version >= 0x300;
 
+        out.buffer.barrier                     = api_version >= 0x310;
         out.buffer.ssbo                        = api_version >= 0x310;
         out.draw.indirect                      = api_version >= 0x310;
         out.program.compute                    = api_version >= 0x310;
@@ -503,10 +505,10 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
         out.debug.debug                      = api_version >= 0x320;
         out.draw.vertex_offset               = api_version >= 0x320;
         out.rendertarget.framebuffer_texture = api_version >= 0x320;
+        out.texture.cube_array               = api_version >= 0x320;
         out.texture.image_copy               = api_version >= 0x320;
         out.texture.sampler_binding          = api_version >= 0x320;
         out.texture.tex.gl.astc              = api_version >= 0x320;
-        out.texture.cube_array               = api_version >= 0x320;
 
         out.vertex.vertex_offset = out.draw.vertex_offset;
 
@@ -842,7 +844,7 @@ optional<error> api::load(load_options_t options)
     else
         m_api_type = native_api;
 
-    workarounds default_workarounds = {
+    gleam::workarounds default_workarounds = {
     // clang-format off
         .draw = {
             .emulated_instance_id   = true,
@@ -853,6 +855,9 @@ optional<error> api::load(load_options_t options)
         },
         .buffer = {
             .emulated_mapbuffer = true,
+        },
+        .bugs = {
+            .adreno_3xx = false,
         },
     // clang-format on
     };
@@ -881,6 +886,12 @@ optional<error> api::load(load_options_t options)
     //        m_workarounds.draw.advance_ubos_by_baseinstance = false;
     if(m_features.buffer.mapping || m_features.buffer.oes.mapbuffer)
         m_workarounds.buffer.emulated_mapbuffer = false;
+
+    {
+        auto [vendor, renderer] = device();
+        if(vendor.starts_with("Qualcomm") && renderer.starts_with("Adreno (TM) 3"))
+            m_workarounds.bugs.adreno_3xx = true;
+    }
 
     /* Let's skip ES 2.0 implementations that don't fulfill a minimum */
     if(m_api_type == api_type_t::es)

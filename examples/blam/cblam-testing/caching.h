@@ -23,6 +23,7 @@
 #include <coffee/core/CDebug>
 
 #include "blam_files.h"
+#include "data.h"
 #include "data_cache.h"
 #include "materials.h"
 
@@ -67,26 +68,60 @@ struct BSPItem
 {
     struct Mesh
     {
-        blam::bsp::submesh_header const* mesh{nullptr};
-        gleam::draw_command::data_t      draw;
-        generation_idx_t                 light_bitm;
-        generation_idx_t                 shader;
+        blam::bsp::material const*  mesh{nullptr};
+        gleam::draw_command::data_t draw;
+        generation_idx_t            light_bitm;
+        generation_idx_t            shader;
     };
     struct Group
     {
-        blam::bsp::submesh_group const* group{nullptr};
-        std::vector<Mesh>               meshes;
+        blam::bsp::lightmap const* group{nullptr};
+        std::vector<Mesh>          meshes;
+    };
+    struct Subcluster
+    {
+        blam::bsp::subcluster const* cluster{nullptr};
+        Span<u32 const>              indices;
+        u32                          debug_color_idx{0};
+    };
+    struct Cluster
+    {
+        blam::bsp::cluster const*                     cluster{nullptr};
+        std::vector<Subcluster>                       sub;
+        std::vector<blam::bsp::cluster_portal const*> portals;
     };
 
     blam::bsp::header const*                 mesh{nullptr};
     blam::tag_t const*                       tag{nullptr};
     std::vector<Group>                       groups;
+    std::vector<Cluster>                     clusters;
     std::vector<gleam::draw_command::data_t> portals;
     std::vector<u32>                         portal_color_ptrs;
 
     inline bool valid() const
     {
         return mesh;
+    }
+
+    inline std::optional<std::pair<u32, u32>> find_cluster(
+        Vecf3 const& point) const
+    {
+        u32 cluster_id = 0;
+        for(auto const& cluster : clusters)
+        {
+            u32 sub_id = 0;
+            for(auto const& sub : cluster.sub)
+            {
+                if(!sub.cluster->bounds.contains(point))
+                {
+                    sub_id++;
+                    continue;
+                }
+                return std::pair{cluster_id, sub_id};
+            }
+            cluster_id++;
+        }
+        return std::nullopt;
     }
 };
 
@@ -137,6 +172,11 @@ struct BitmapItem
         Vecf2 scale{};
         f32   bias{0.f};
     } image;
+    struct
+    {
+        u32 base{0};
+        u32 last{5};
+    } mipmaps;
 
     inline bool valid() const
     {
@@ -242,6 +282,8 @@ struct BitmapCache
         PixDesc            fmt;
         blam::bitm::type_t type;
 
+        u32 mip_bias{0};
+
         template<typename T>
         auto& texture_as()
         {
@@ -249,8 +291,12 @@ struct BitmapCache
         }
     };
 
-    BitmapCache(BlamFiles const* files, gfx_api* allocator) :
-        files(files), allocator(allocator)
+    BitmapCache(
+        BlamFiles const*           files,
+        gfx_api*                   allocator,
+        RenderingParameters const* params) :
+        files(files),
+        allocator(allocator), params(params)
     {
     }
 
@@ -268,9 +314,10 @@ struct BitmapCache
         evict_all();
     }
 
-    blam::tag_index_view<V> index;
-    BlamFiles const*        files;
-    gfx_api*                allocator;
+    blam::tag_index_view<V>    index;
+    BlamFiles const*           files;
+    gfx_api*                   allocator;
+    RenderingParameters const* params;
 
     blam::magic_data_t            magic;
     blam::magic_data_t            bitm_magic;
@@ -278,7 +325,7 @@ struct BitmapCache
 
     std::map<bitm_format_hash, TextureBucket> tex_buckets;
 
-    u32 max_mipmap{5};
+    u32 max_mipmap{3};
 
     static inline bitm_format_hash create_hash(
         PixDesc const& fmt, blam::bitm::type_t type)
@@ -326,6 +373,11 @@ struct BitmapCache
 
         bucket.ptr = 0;
         bucket.fmt = fmt;
+
+        bool no_mipmap = fmt.pixfmt == PixFmt::RGB565;
+
+        bucket.mip_bias = no_mipmap ? 0 : params->mipmap_bias;
+
 #if GLEAM_MAX_VERSION >= 0x400 || GLEAM_MAX_VERSION >= 0x320
         if(std::is_same_v<T, gfx::texture_cube_array_t>)
             bucket.surface = allocator->alloc_texture(
@@ -333,7 +385,7 @@ struct BitmapCache
         else
 #endif
             bucket.surface = std::make_shared<gfx::compat::texture_2da_t>(
-                allocator, fmt, fmt.pixfmt == PixFmt::RGB565 ? 1 : max_mipmap);
+                allocator, fmt, no_mipmap ? 1 : (max_mipmap - bucket.mip_bias));
         bucket.type    = type;
         bucket.sampler = bucket.surface->sampler();
 
@@ -354,12 +406,12 @@ struct BitmapCache
     {
         u32 mips = bucket.surface->m_mipmaps;
 
-        if(mipmap >= mips)
+        if(mipmap >= mips || mipmap > img.image.mip->mipmaps)
             return;
 
         auto size = img.image.mip->isize;
-        size.x >>= mipmap;
-        size.y >>= mipmap;
+        size.x >>= img.mipmaps.base + mipmap;
+        size.y >>= img.mipmaps.base + mipmap;
 
         if(size.x % 4 != 0 || size.y % 4 != 0)
             return;
@@ -375,6 +427,8 @@ struct BitmapCache
 
         (tex_offset[0] >>= 2) <<= 2;
         (tex_offset[1] >>= 2) <<= 2;
+
+        mipmap += img.mipmaps.base;
 
 #if GLEAM_MAX_VERSION >= 0x400 || GLEAM_MAX_VERSION >= 0x320
         if(bucket.type == blam::bitm::type_t::tex_cube)
@@ -395,7 +449,7 @@ struct BitmapCache
                 faces,
                 Veci3{0, 0, img.image.layer},
                 Veci3{size.x, size.y, 1},
-                mipmap);
+                mipmap - img.mipmaps.base);
         } else
 #endif
         {
@@ -409,107 +463,8 @@ struct BitmapCache
                     tex_offset.y + mip_pad,
                     static_cast<i32>(img.image.layer)},
                 Veci3{size.x, size.y, 1},
-                mipmap);
+                mipmap - img.mipmaps.base);
         }
-
-        //        bucket.surface->upload(
-        //            img.image.fmt,
-        //            size_3d<i32>{size.w, size.h, 1},
-        //            img.image.mip->data(magic, mipmap),
-        //            ec,
-        //            Point3(
-        //                tex_offset.x() + mip_pad,
-        //                tex_offset.y() + mip_pad,
-        //                img.image.layer),
-        //            mipmap);
-
-        if(mip_pad == 0)
-            return;
-
-        /*
-         * Image padding:
-         *
-         * We insert the pixels marked as X from the other side of the image.
-         * 4x4 blocks are the basis for padding because DXT* uses it
-         *
-         *        XXXXXXXXXXXXXXXXXX
-         *       X|----------------|X
-         *       X|                |X
-         *       X|                |X
-         *       X|                |X
-         *       X|                |X
-         *       X|                |X
-         *       X|                |X
-         *       X|                |X
-         *       X|----------------|X
-         *        XXXXXXXXXXXXXXXXXX
-         *
-         */
-
-        //        texture.upload(
-        //            img.image.mip->data(magic, mipmap),
-        //            point_3d<i32>(
-        //                tex_offset.x() + mip_pad,
-        //                tex_offset.x() + mip_pad,
-        //                img.image.layer),
-        //            size_3d<u32>{size.w, 4, 1},
-        //            mipmap);
-        //        bucket.surface->upload(
-        //            img.image.fmt,
-        //            size_3d<i32>{size.w, 4, 1},
-        //            *img.image.mip->data(magic, mipmap)
-        //                 .at(PixDescSize(img.image.fmt, {size.w, size.h - 4}),
-        //                     PixDescSize(img.image.fmt, {size.w, 4})),
-        //            ec,
-        //            Point3(
-        //                tex_offset.x() + mip_pad,
-        //                tex_offset.y() + mip_pad - 4,
-        //                img.image.layer),
-        //            mipmap);
-
-        //        bucket.surface->upload(
-        //            img.image.fmt,
-        //            size_3d<i32>{size.w, 4, 1},
-        //            *img.image.mip->data(magic, mipmap)
-        //                 .at(0, PixDescSize(img.image.fmt, {size.w, 4})),
-        //            ec,
-        //            Point3(
-        //                tex_offset.x() + mip_pad,
-        //                tex_offset.y() + size.h + mip_pad,
-        //                img.image.layer),
-        //            mipmap);
-
-        /* TODO: Fix vertical padding */
-
-        //        bucket.surface->upload(
-        //            img.image.fmt,
-        //            size_3d<i32>(4, size.h, 1),
-        //            *img.image.mip->data(magic, mipmap)
-        //                 .at_lazy(
-        //                     PixDescSize(img.image.fmt, {size.w - 4, 1}),
-        //                     PixDescSize(img.image.fmt, size)),
-        //            ec,
-        //            Point3(
-        //                tex_offset.x() + mip_pad - 4,
-        //                tex_offset.y() + mip_pad,
-        //                img.image.layer),
-        //            mipmap,
-        //            size.w);
-
-        //        bucket.surface->upload(
-        //            img.image.fmt,
-        //            size_3d<i32>(4, size.h, 1),
-        //            *img.image.mip->data(magic, mipmap)
-        //                 .at_lazy(0, PixDescSize(img.image.fmt, size)),
-        //            ec,
-        //            Point3(
-        //                tex_offset.x() + size.w + mip_pad,
-        //                tex_offset.y() + mip_pad,
-        //                img.image.layer),
-        //            mipmap,
-        //            size.w);
-
-        /* TODO: Add corner padding */
     }
 
     template<typename BucketType>
@@ -524,10 +479,8 @@ struct BitmapCache
 
         auto bmagic = img.image.mip->shared() ? bitm_magic : magic.no_magic();
 
-        for(auto i : Range<u16>(img.image.mip->mipmaps))
+        for(auto i : Range<u16>(img.mipmaps.last - img.mipmaps.base))
         {
-            if((img.image.mip->isize.x >> i) < 4)
-                break;
             auto offset = Veci2(img.image.offset[0], img.image.offset[1]);
             if(offset.x % 4 != 0 || offset.y % 4 != 0)
                 break;
@@ -535,11 +488,12 @@ struct BitmapCache
             upload_mipmap<BucketType>(bucket, img, bmagic, i);
         }
 
-        img.image.bias = std::max<f32>(
+        img.image.bias = 10;
+        //        img.image.bias = std::max<f32>(
 
-            static_cast<f32>(bucket.surface->m_mipmaps)
-                - static_cast<f32>(img.image.mip->mipmaps),
-            0);
+        //            static_cast<f32>(bucket.surface->m_mipmaps)
+        //                - static_cast<f32>(img.image.mip->mipmaps),
+        //            0);
 
         /* Lightmaps do not use mipmapping */
         if(img.image.mip->mipmaps == 0)
@@ -572,8 +526,10 @@ struct BitmapCache
                 fmt.comp,
                 fmt.bfmt,
                 fmt.cmpflg);
-            auto&       pool   = fmt_count[hash];
-            auto const& imsize = bitm.second.image.mip->isize;
+            auto& pool   = fmt_count[hash];
+            auto  imsize = bitm.second.image.mip->isize;
+            if(bitm.second.image.mip->mipmaps > params->mipmap_bias)
+                imsize >>= params->mipmap_bias;
             //            auto&       surface =
             //            tex_buckets[bitm.second.image.bucket].surface;
 
@@ -612,6 +568,21 @@ struct BitmapCache
                 BitmapItem* img    = &m_cache.find(id)->second;
                 auto        imsize = img->image.mip->isize;
 
+                if(params->mipmap_bias > 0
+                   && img->image.mip->mipmaps > params->mipmap_bias)
+                {
+                    imsize >>= params->mipmap_bias;
+                    img->mipmaps.base = params->mipmap_bias;
+                    img->mipmaps.last
+                        = params->mipmap_bias
+                          + std::min<i32>(
+                              5, img->image.mip->mipmaps - params->mipmap_bias);
+                } else
+                {
+                    img->mipmaps.base = 0;
+                    img->mipmaps.last = img->image.mip->mipmaps;
+                }
+
                 if(img->header->type == blam::bitm::bitmap_type_t::cube)
                 {
                     img->image.layer = layer++;
@@ -630,10 +601,6 @@ struct BitmapCache
                 };
 
                 bool fits_width = (offset.x + imsize.x) <= pool.max.x;
-                //                i32  height_diff = offset.h - imsize.h;
-
-                //                if(height_diff < 0)
-                //                    offset.h += -height_diff;
 
                 if(fits_width)
                 {
@@ -657,23 +624,6 @@ struct BitmapCache
                     C_CAST<f32>(imsize.x - max_pad),
                     C_CAST<f32>(imsize.y - max_pad),
                 };
-
-                //                img->image.scale.x() /= pool.max.w;
-                //                img->image.scale.y() /= pool.max.h;
-                //                img->image.offset.x() /= pool.max.w;
-                //                img->image.offset.y() /= pool.max.h;
-
-                continue;
-                cDebug(
-                    "{0}x{1} - {2}x{3} @ {4} ({5},{6}) padding of {7}",
-                    img_offset.x,
-                    img_offset.y,
-                    offset.x,
-                    offset.y,
-                    img_layer,
-                    imsize.x,
-                    imsize.y,
-                    max_pad);
             }
 
             pool.layers = layer + 1;
@@ -1700,8 +1650,8 @@ struct BSPCache
     {
         index    = blam::tag_index_view(map);
         magic    = map.magic;
-        vert_ptr = 0, element_ptr = 0, light_ptr = 0, portal_ptr = 0,
-        portal_color_ptr = 0;
+        vert_ptr = 0, element_ptr = 0, light_ptr = 0, portal_ptr = 12,
+        portal_color_ptr = 4;
         evict_all();
     }
 
@@ -1740,28 +1690,77 @@ struct BSPCache
 
         //        auto shader = section.shaders.data(bsp_magic);
 
-        for(auto const& portal :
-            section.cluster_portals.data(bsp_magic).value())
-        {
-            auto vertices = portal.vertices.data(bsp_magic).value();
-            std::copy(
-                vertices.begin(),
-                vertices.end(),
-                portal_buffer.begin() + portal_ptr);
-            portal_color_buffer[portal_color_ptr] = Vecf3(1);
-            out.portals.push_back({
-                .arrays = {
-                     .count  = static_cast<u32>(vertices.size()),
-                     .offset = static_cast<u32>(portal_ptr),
-                },
-            });
-            out.portal_color_ptrs.push_back(portal_color_ptr);
+        Span<blam::bsp::cluster_portal const> portals
+            = section.cluster_portals.data(bsp_magic).value();
 
-            portal_ptr += vertices.size();
-            portal_color_ptr++;
+        //        for(auto const& portal : portals)
+        //        {
+        //            auto vertices = portal.vertices.data(bsp_magic).value();
+        //            std::copy(
+        //                vertices.begin(),
+        //                vertices.end(),
+        //                portal_buffer.begin() + portal_ptr);
+        //            portal_color_buffer[portal_color_ptr] = Vecf3(1);
+        //            out.portals.push_back({
+        //                .arrays = {
+        //                     .count  = static_cast<u32>(vertices.size()),
+        //                     .offset = static_cast<u32>(portal_ptr),
+        //                },
+        //            });
+        //            out.portal_color_ptrs.push_back(portal_color_ptr);
+
+        //            portal_ptr += vertices.size();
+        //            portal_color_ptr++;
+        //        }
+
+        for(blam::bsp::cluster const& cluster :
+            section.clusters.data(bsp_magic).value())
+        {
+            out.clusters.push_back({
+                .cluster = &cluster,
+            });
+            BSPItem::Cluster& it = out.clusters.back();
+            for(auto const& portal_idx :
+                cluster.portals.data(bsp_magic).value())
+                it.portals.push_back(&portals[portal_idx]);
+            for(blam::bsp::subcluster const& sub :
+                cluster.sub_clusters.data(bsp_magic).value())
+            {
+                auto indices    = sub.indices.data(bsp_magic).value();
+                auto [min, max] = sub.bounds.points();
+                std::array<Vecf3, 8> vertices = {{
+                    min,
+                    Vecf3(max.x, min.y, min.z),
+                    Vecf3(max.x, max.y, min.z),
+                    Vecf3(min.x, max.y, min.z),
+                    Vecf3(min.x, max.y, max.z),
+                    Vecf3(min.x, min.y, max.z),
+                    Vecf3(max.x, min.y, max.z),
+                    max,
+                }};
+                std::copy(
+                    vertices.begin(),
+                    vertices.end(),
+                    portal_buffer.begin() + portal_ptr);
+                portal_color_buffer[portal_color_ptr] = Vecf3(0, 1, 0);
+                out.portals.push_back({
+                    .arrays = {
+                        .count  = static_cast<u32>(8),
+                        .offset = static_cast<u32>(portal_ptr),
+                    },
+                });
+                it.sub.push_back(BSPItem::Subcluster{
+                    .cluster = &sub,
+                    .indices = indices,
+                });
+                portal_ptr += 8;
+                portal_color_ptr++;
+            }
         }
 
-        auto submeshes = section.submesh_groups.data(bsp_magic);
+        /* TODO: Find link between indices in cluster and submeshes */
+
+        auto submeshes = section.lightmaps.data(bsp_magic);
 
         if(submeshes.has_error())
         {
@@ -1771,7 +1770,7 @@ struct BSPCache
 
         for(auto const& group : submeshes.value())
         {
-            auto meshes = group.material.data(bsp_magic);
+            auto meshes = group.materials.data(bsp_magic);
             if(meshes.has_error())
                 continue;
             out.groups.emplace_back();
@@ -1786,7 +1785,7 @@ struct BSPCache
                 mesh_data.shader = shader_cache.predict(mesh.shader);
                 if(group.lightmap_idx != -1)
                     mesh_data.light_bitm = bitm_cache.resolve(
-                        section.lightmaps, group.lightmap_idx);
+                        section.lightmap_, group.lightmap_idx);
 
                 /* ... and moving on */
 

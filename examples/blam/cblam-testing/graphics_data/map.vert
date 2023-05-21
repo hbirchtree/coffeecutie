@@ -12,8 +12,6 @@ layout(location = 2) uniform mat3 cameraRotation;
 layout(location = 3) uniform vec3 camera_position;
 
 layout(location = 0) out FragData {
-    vec3 tbn_direction;
-    vec3 eye_direction;
     vec3 position;
     vec2 tex;
     mat3 tbn;
@@ -35,12 +33,4 @@ void main()
     mat3 tbn = mat3(-tangent, -binormal, -normal);
     frag.tbn = tbn;
     frag.position = position * -1;
-//    frag.eye_direction = normalize(camera_position - (position.xyz * -1));
-//    frag.eye_direction = normalize(
-//        tbn * normalize(camera_position - (position * -1))
-//        );
-//    frag.tbn_direction = normalize(
-//        tbn *
-//        (normalize(camera_position - (position * -1)))
-//        );
 }

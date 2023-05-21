@@ -1,8 +1,6 @@
 #version 460 core
 
 layout(location = 0) in FragData {
-    vec3 tbn_direction;
-    vec3 eye_direction;
     vec3 position;
     vec2 tex;
     mat3 tbn;

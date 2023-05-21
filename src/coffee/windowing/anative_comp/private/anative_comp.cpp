@@ -21,6 +21,10 @@
 
 namespace anative {
 
+using Coffee::Input::CIEvent;
+using Coffee::Input::CIKeyEvent;
+using libc_types::i32;
+
 void Windowing::load(entity_container& e, comp_app::app_error& ec)
 {
     auto window_info = android::activity_manager().window();
@@ -146,6 +150,10 @@ void AndroidEventBus::load(entity_container& e, comp_app::app_error&)
 
     m_touchConfig = &m_container->service<comp_app::AppLoader>()
                          ->config<comp_app::TouchConfig>();
+
+    m_inputBus = m_container->service<comp_app::BasicEventBus<CIEvent>>();
+    m_appBus
+        = m_container->service<comp_app::BasicEventBus<comp_app::AppEvent>>();
 }
 
 void AndroidEventBus::handleMouseEvent(AInputEvent* event)
@@ -172,9 +180,9 @@ void AndroidEventBus::handleMouseEvent(AInputEvent* event)
         case AMOTION_EVENT_ACTION_BUTTON_PRESS:
         case AMOTION_EVENT_ACTION_BUTTON_RELEASE: {
             constexpr std::array<std::pair<int, MouseButton>, 3> mapping = {{
-                {0x1, MouseButton::LeftButton},
-                {0x2, MouseButton::RightButton},
-                {0x4, MouseButton::MiddleButton},
+                {AMOTION_EVENT_BUTTON_PRIMARY, MouseButton::LeftButton},
+                {AMOTION_EVENT_BUTTON_SECONDARY, MouseButton::RightButton},
+                {AMOTION_EVENT_BUTTON_TERTIARY, MouseButton::MiddleButton},
             }};
 
             auto currentButtons = AMotionEvent_getButtonState(event);
@@ -366,18 +374,37 @@ bool AndroidEventBus::handleGamepadEvent(AInputEvent* event)
     return false;
 }
 
+inline CIKeyEvent::KeyModifiers meta_to_key_modifier(i32 meta)
+{
+    CIKeyEvent::KeyModifiers mod = CIKeyEvent::NoneModifier;
+    if(meta & AMETA_ALT_LEFT_ON)
+        mod |= CIKeyEvent::LAltModifier;
+    if(meta & AMETA_ALT_RIGHT_ON)
+        mod |= CIKeyEvent::RAltModifier;
+    if(meta & AMETA_SHIFT_LEFT_ON)
+        mod |= CIKeyEvent::LShiftModifier;
+    if(meta & AMETA_SHIFT_RIGHT_ON)
+        mod |= CIKeyEvent::RShiftModifier;
+    if(meta & AMETA_CTRL_LEFT_ON)
+        mod |= CIKeyEvent::LCtrlModifier;
+    if(meta & AMETA_CTRL_RIGHT_ON)
+        mod |= CIKeyEvent::RCtrlModifier;
+    if(meta & AMETA_SYM_ON)
+        mod |= CIKeyEvent::SuperModifier;
+    if(meta & AMETA_CAPS_LOCK_ON)
+        mod |= CIKeyEvent::CapsLockModifier;
+    if(meta & AMETA_NUM_LOCK_ON)
+        mod |= CIKeyEvent::NumLockModifier;
+    return mod;
+}
+
 void AndroidEventBus::handleKeyEvent(AInputEvent* event)
 {
     using namespace libc_types;
+    using namespace Coffee::Input;
 
     i32 source   = AInputEvent_getSource(event);
     i32 deviceId = AInputEvent_getDeviceId(event);
-
-    Coffee::cDebug(
-        "Key event: {0} {1}",
-        source,
-        magic_enum::enum_name(
-            static_cast<decltype(AKEYCODE_A)>(AKeyEvent_getKeyCode(event))));
 
     i32                  button = AKeyEvent_getKeyCode(event);
     i32                  flags  = AKeyEvent_getFlags(event);
@@ -387,14 +414,50 @@ void AndroidEventBus::handleKeyEvent(AInputEvent* event)
     if(flags & AKEY_EVENT_FLAG_WOKE_HERE)
         return;
 
+    if(flags & AKEY_EVENT_FLAG_KEEP_TOUCH_MODE)
+        ;
+    else if(m_appBus)
+    {
+        comp_app::AppEvent       event{comp_app::AppEvent::InputModeSwitch};
+        comp_app::InputModeEvent switch_{comp_app::InputModeEvent::Desktop};
+        m_appBus->inject(event, &switch_);
+    }
+
+    const auto keyEvent = [this, flags, action, meta](u16 button) {
+        CIEvent event;
+        event.type = CIEvent::Keyboard;
+        CIKeyEvent key;
+        key.key = button;
+        key.mod = action == AKEY_EVENT_ACTION_DOWN ? CIKeyEvent::PressedModifier
+                  : action == AKEY_EVENT_ACTION_MULTIPLE
+                      ? CIKeyEvent::RepeatedModifier
+                      : CIKeyEvent::NoneModifier;
+        key.mod |= meta_to_key_modifier(meta);
+        m_inputBus->inject(event, &key);
+    };
+
+    if(button >= AKEYCODE_0 && button <= AKEYCODE_9)
+    {
+        keyEvent(CK_0 + (button - AKEYCODE_0));
+        return;
+    }
+    if(button >= AKEYCODE_A && button <= AKEYCODE_Z)
+    {
+        keyEvent(CK_a + (button - AKEYCODE_A));
+        return;
+    }
+    if(button >= AKEYCODE_F1 && button <= AKEYCODE_F12)
+    {
+        keyEvent(CK_F1 + (button - AKEYCODE_F1));
+        return;
+    }
+
     const auto navEvent = [this](comp_app::NavigationEvent::Type key) {
-        using AppBus    = comp_app::BasicEventBus<comp_app::AppEvent>;
-        AppBus* app_bus = m_container->service<AppBus>();
-        if(!app_bus)
+        if(!m_appBus)
             return;
         comp_app::AppEvent        event{comp_app::AppEvent::NavigationEvent};
         comp_app::NavigationEvent nav{key};
-        app_bus->inject(event, &nav);
+        m_appBus->inject(event, &nav);
     };
 
     switch(button)
@@ -414,6 +477,14 @@ void AndroidEventBus::handleKeyEvent(AInputEvent* event)
     case AKEYCODE_DPAD_DOWN:
         navEvent(comp_app::NavigationEvent::Down);
         break;
+        // clang-format off
+    case AKEYCODE_SHIFT_LEFT: keyEvent(CK_LShift); break;
+    case AKEYCODE_SHIFT_RIGHT: keyEvent(CK_RShift); break;
+    case AKEYCODE_CTRL_LEFT: keyEvent(CK_LCtrl); break;
+    case AKEYCODE_CTRL_RIGHT: keyEvent(CK_RCtrl); break;
+    case AKEYCODE_SPACE: keyEvent(CK_Space); break;
+    case AKEYCODE_ENTER: keyEvent(CK_EnterNL); break;
+        // clang-format on
     default:
         Coffee::cDebug("Keycode: {0} {1} {2}", deviceId, source, button);
         break;
@@ -492,8 +563,6 @@ bool AndroidEventBus::filterTouchEvent(AInputEvent* event)
     using namespace Coffee::Input;
     using namespace typing::vector_types;
 
-    using IBus       = comp_app::BasicEventBus<CIEvent>;
-    IBus*   inputBus = m_container->service<IBus>();
     CIEvent out;
 
     const bool mouseMapping
@@ -522,11 +591,11 @@ bool AndroidEventBus::filterTouchEvent(AInputEvent* event)
             CIMouseMoveEvent move;
             move.origin.x = AMotionEvent_getHistoricalX(event, 0, 0);
             move.origin.y = AMotionEvent_getHistoricalY(event, 0, 0);
-            move.delta = pos - move.origin;
-            move.btn    = CIMouseButtonEvent::LeftButton;
+            move.delta    = pos - move.origin;
+            move.btn      = CIMouseButtonEvent::LeftButton;
             if(state == GESTURE_STATE_END)
                 move.btn = 0;
-            inputBus->inject(out, &move);
+            m_inputBus->inject(out, &move);
         }
     }
     if(m_doubleDetector->Detect(event) != GESTURE_STATE_NONE)
@@ -535,7 +604,7 @@ bool AndroidEventBus::filterTouchEvent(AInputEvent* event)
         tap.pos = {AMotionEvent_getX(event, 0), AMotionEvent_getY(event, 0)};
         tap.pressed = true;
         out.type    = CITouchTapEvent::event_type;
-        inputBus->inject(out, &tap);
+        m_inputBus->inject(out, &tap);
     }
     if(auto state = m_tapDetector->Detect(event); state != GESTURE_STATE_NONE)
     {
@@ -543,7 +612,23 @@ bool AndroidEventBus::filterTouchEvent(AInputEvent* event)
         tap.pos = {AMotionEvent_getX(event, 0), AMotionEvent_getY(event, 0)};
         tap.pressed = state != GESTURE_STATE_END;
         out.type    = CITouchTapEvent::event_type;
-        inputBus->inject(out, &tap);
+        m_inputBus->inject(out, &tap);
+        if(mouseMapping)
+        {
+            out.type = CIMouseButtonEvent::event_type;
+            CIMouseButtonEvent push;
+            push.pos = tap.pos;
+            push.mod = CIMouseButtonEvent::Pressed;
+            push.btn = CIMouseButtonEvent::LeftButton;
+            m_inputBus->inject(out, &push);
+            push.mod = CIMouseButtonEvent::NoneModifier;
+            m_tapButtonEvent = push;
+        }
+    } else if(m_tapButtonEvent.has_value())
+    {
+        out.type = CIMouseButtonEvent::event_type;
+        m_inputBus->inject(out, &m_tapButtonEvent.value());
+        m_tapButtonEvent = std::nullopt;
     }
 
     return false;

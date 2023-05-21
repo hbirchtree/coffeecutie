@@ -85,7 +85,7 @@ static_assert(
     "mod2_vertex<uncompressed> must be 68 bytes");
 
 using idx_t = u16;
-using face  = std::array<idx_t, 3>;
+using face  = typing::vector_types::tvec3<idx_t>;
 
 template<
     typename RType = uncompressed,
