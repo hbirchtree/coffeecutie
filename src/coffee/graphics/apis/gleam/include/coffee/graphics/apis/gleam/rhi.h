@@ -279,6 +279,11 @@ struct api
         return m_features;
     }
 
+    inline const auto& limits() const
+    {
+        return m_limits;
+    }
+
     inline const auto& workarounds() const
     {
         return m_workarounds;

@@ -113,35 +113,66 @@ struct object_spawn
         on_normal = 0x4,
         on_hard   = 0x8,
     };
+    enum bsp_flags_t : u16
+    {
+        none = 0x0,
+    };
 
     i16         ref;
     i16         name;
-    spawn_flags flag;
+    spawn_flags flags;
     u16         permutation;
     Vecf3       pos;
     Vecf3       rot;
+    bsp_flags_t bsp_flags;
 };
 
 struct biped_spawn : object_spawn
 {
-    u32 unknown_[22];
+    u32 padding[9];
+    enum biped_flags_t : u16
+    {
+        none = 0x0,
+        dead = 0x1,
+    };
+    f32           vitality;
+    biped_flags_t biped_flags;
+    u32           padding2[10];
 };
+static_assert(sizeof(biped_spawn) == 120);
+
 struct vehicle_spawn : object_spawn
 {
-    u32 unknown_[22];
+    u32 unknown_[21];
 };
+static_assert(sizeof(vehicle_spawn) == 120);
+
 struct equip_spawn : object_spawn
 {
-    u32 unknown_[2];
+    enum equip_flags_t : u16
+    {
+        none              = 0x0,
+        initially_at_rest = 0x1, /* Not affected by gravity */
+        obsolete          = 0x2, /* Unused? */
+        does_accelerate   = 0x4, /* Not affected by explosions */
+    };
+    equip_flags_t equip_flags;
+    u32           padding2;
 };
+static_assert(sizeof(equip_spawn) == 40);
+
 struct scenery_spawn : object_spawn
 {
-    u32 unknown_[10];
+    u32 unknown_[9];
 };
+static_assert(sizeof(scenery_spawn) == 72);
+
 struct weapon_spawn : object_spawn
 {
-    u32 unknown_[15];
+    u32 unknown_[14];
 };
+static_assert(sizeof(weapon_spawn) == 92);
+
 enum class machine_spawn_flags : u16
 {
     none              = 0x0,
@@ -151,6 +182,7 @@ enum class machine_spawn_flags : u16
     position_reversed = 0x8,
     not_usable        = 0x10,
 };
+
 struct device_machine_spawn : object_spawn
 {
     enum class machine_spawn_flags2 : u16
@@ -166,8 +198,10 @@ struct device_machine_spawn : object_spawn
     machine_spawn_flags  internal_flags;
     machine_spawn_flags2 device_flags;
 
-    u32 padding[6];
+    u32 padding[5];
 };
+static_assert(sizeof(device_machine_spawn) == 64);
+
 struct light_fixture_spawn : object_spawn
 {
     i16                 power_group;
@@ -180,6 +214,7 @@ struct light_fixture_spawn : object_spawn
 
     u32 padding[6];
 };
+static_assert(sizeof(light_fixture_spawn) == 88);
 
 struct palette
 {
@@ -743,15 +778,11 @@ struct starting_equip
     byte_t                  padding3[45];
 };
 
-struct control
+struct control : object_spawn
 {
-    i16    unk1;
-    i16    unk2;
-    byte_t unk3[4];
-    Vecf3  pos;
-    u32    tag_id;
-    byte_t unk[40];
+    u32 padding[7];
 };
+static_assert(sizeof(control) == 64);
 
 struct light_fixture
 {

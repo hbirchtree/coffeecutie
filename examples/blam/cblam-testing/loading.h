@@ -197,6 +197,11 @@ void load_objects(
         blam::scn::object const* instance_obj
             = instance_tag->template data<blam::scn::object>(magic).value();
 
+        auto model_it = index.find(instance_obj[0].model.to_plain());
+
+        if(model_it == index.end())
+            continue;
+
         ModelAssembly mesh_data = model_cache.predict_regions(
             instance_obj[0].model.to_plain(), model_lod);
 
@@ -206,7 +211,7 @@ void load_objects(
 
         spawn.tag    = instance_tag;
         spawn.header = &instance;
-        model.tag    = &(*index.find(instance_obj[0].model.to_plain()));
+        model.tag    = &(*model_it);
         model.model  = mesh_data.models.at(0);
         model.initialize(&instance);
 
@@ -397,6 +402,11 @@ void load_scenario_scenery(EntityContainer& e, BlamData<Version>& data)
         data,
         e,
         ObjectDevice | PositioningStatic | ObjectGC);
+    load_objects(
+        scenario->objects.controls,
+        data,
+        e,
+        ObjectControl | PositioningDynamic | ObjectGC);
     load_objects(
         scenario->objects.light_fixtures,
         data,

@@ -691,5 +691,8 @@ void main()
     float fog_distance = length(frag.position - camera_position);
     fog_distance = (fog_distance - world.fog.distances.z) / world.fog.distances.w;
     fog_distance = clamp(exp(-fog_distance * world.fog.outdoor_color.w), 0, 1);
-    final_color = mix(color, fog_color, 1 - fog_distance);
+    final_color = mix(
+        color,
+        fog_color,
+        1 - fog_distance);
 }

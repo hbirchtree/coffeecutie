@@ -58,10 +58,10 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         gfx::draw_command                     command;
         std::vector<std::vector<draw_data_t>> draws;
 
-        gfx::buffer_slice_t material_buffer;
-        gfx::buffer_slice_t matrix_buffer;
-        Span<char>          material_mapping;
-        Span<Matf4>         matrix_mapping;
+        gfx::buffer_slice_t         material_buffer;
+        gfx::buffer_slice_t         matrix_buffer;
+        Span<materials::senv_micro> material_mapping;
+        Span<Matf4>                 matrix_mapping;
 
         model_tracker_t insert_draw(draw_data_t const& draw)
         {
@@ -104,23 +104,25 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             draws.emplace_back();
         }
 
-        template<typename T>
-        inline T& material_of(size_t idx)
+        inline materials::senv_micro& material_of(size_t idx)
         {
-            auto material
-                = semantic::mem_chunk<T>::ofContainer(material_mapping);
-            if(idx >= material.size)
+            if(idx >= material_mapping.size())
                 Throw(std::out_of_range("material index out of range"));
-            return material[idx];
+            return material_mapping[idx];
         }
 
-        inline u32 num_objects() const
+        inline size_t required_storage() const
         {
             u32 total = 0;
             for(auto const& bucket : draws)
                 for(auto const& draw : bucket)
                     total += draw.instances.count;
-            return total;
+            return total * sizeof(materials::senv_micro);
+        }
+        inline size_t required_matrix_storage() const
+        {
+            return (required_storage() / sizeof(materials::senv_micro))
+                   * sizeof(Matf4);
         }
     };
 
@@ -154,31 +156,6 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             pass.command.program = resources.bsp_pipeline;
         for(auto& pass : m_model)
             pass.command.program = resources.model_pipeline;
-
-        gfx::buffer_t& material_buf = *resources.material_store;
-        gfx::buffer_t& matrix_buf   = *resources.model_matrix_store;
-
-        const auto bsp_batch_size       = 1024_kB;
-        const auto model_batch_size     = 1024_kB;
-        const auto model_mat_batch_size = 256_kB;
-
-        u32 base = 0;
-        for(Pass& pass : m_bsp)
-        {
-            pass.material_buffer = material_buf.slice(base, bsp_batch_size);
-            base += bsp_batch_size;
-        }
-        base         = m_bsp.size() * bsp_batch_size;
-        u32 base_mat = 0;
-        for(Pass& pass : m_model)
-        {
-            pass.material_buffer = material_buf.slice(base, model_batch_size);
-            pass.matrix_buffer
-                = matrix_buf.slice(base_mat, model_mat_batch_size);
-
-            base += model_batch_size;
-            base_mat += model_mat_batch_size;
-        }
     }
     BSPItem const* get_bsp(generation_idx_t bsp)
     {
@@ -188,6 +165,15 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         if(it == bsp_cache.m_cache.end())
             return nullptr;
         return &it->second;
+    }
+
+    size_t align_for_gpu_padding(size_t size) const
+    {
+        u32 padding        = m_api->limits().buffers.ubo_alignment;
+        u32 mask           = padding - 1;
+        u32 unaligned_size = size & mask;
+        u32 added_padding  = padding - unaligned_size;
+        return size + added_padding;
     }
 
     void setup_textures(std::vector<gfx::sampler_definition_t>& samplers)
@@ -488,19 +474,6 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             get_view_state());
     }
 
-    bool test_visible(Matf4 const& mat)
-    {
-        Vecf4 probe = {0, 0, 0, 1};
-        Vecf4 out   = probe * (m_camera.camera_matrix * mat);
-
-        Vecf3 norm = {out.x / out.w, out.y / out.w, out.z / out.w};
-
-        scalar margin = 1.f;
-
-        return norm.x < margin && norm.y < margin && norm.z < margin
-               && norm.x > -margin && norm.y > -margin && norm.z > -margin;
-    }
-
     void start_restricted(Proxy& p, time_point const& time)
     {
         ProfContext _;
@@ -567,16 +540,14 @@ struct MeshRenderer : Components::RestrictedSubsystem<
     {
     }
 
-    void generate_static_draws(Proxy& p)
+    void generate_static_draws(Proxy& p, size_t& materials_ptr)
     {
-        for(Pass& pass : m_bsp)
-        {
-            pass.clear();
-            pass.material_mapping
-                = pass.material_buffer.template buffer_cast<char>();
-        }
-
+        /* First go through al lthe BSPs, will at the same time count the amount
+         * of material instances we need for the BSP passes */
         std::map<Passes, i32> instance_offsets;
+        for(Pass& pass : m_bsp)
+            pass.clear();
+
         for(auto& ent : p.select(ObjectBsp))
         {
             auto          ref = p.template ref<Proxy>(ent);
@@ -593,10 +564,33 @@ struct MeshRenderer : Components::RestrictedSubsystem<
                       .instanced = true,
                       .mode      = gfx::drawing::primitive::triangle,
             };
-            populate_bsp_material(bsp, instance_offset);
             bsp.draw.data.front().instances.offset = instance_offset;
             instance_offset += bsp.draw.data.front().instances.count;
             wf.draws[0].push_back(bsp.draw.data.front());
+        }
+
+        /* Allocate the material instances from the material pool */
+        for(Pass& pass : m_bsp)
+        {
+            auto material_size = align_for_gpu_padding(pass.required_storage());
+            pass.material_buffer = m_resources.material_store->slice(
+                materials_ptr, material_size);
+            pass.material_mapping
+                = pass.material_buffer
+                      .template buffer_cast<materials::senv_micro>();
+            materials_ptr += material_size;
+        }
+
+        /* Write the static material information, animations are updated later
+         */
+        for(auto& ent : p.select(ObjectBsp))
+        {
+            auto          ref = p.template ref<Proxy>(ent);
+            BspReference& bsp = ref.template get<BspReference>();
+
+            if(!bsp.visible)
+                continue;
+            populate_bsp_material(bsp, bsp.draw.data.front().instances.offset);
         }
     }
 
@@ -614,16 +608,11 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         ModelCache<Version>* model_cache;
         p.subsystem(model_cache);
 
-        generate_static_draws(p);
+        size_t materials_ptr = 0;
+        generate_static_draws(p, materials_ptr);
 
         for(Pass& pass : m_model)
-        {
             pass.clear();
-            pass.material_mapping
-                = pass.material_buffer.template buffer_cast<char>();
-            pass.matrix_mapping
-                = pass.matrix_buffer.template buffer_cast<Matf4>();
-        }
 
         for(compo::Entity const& ent : p.select(ObjectMod2))
         {
@@ -651,18 +640,6 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             track.model_id = wf.insert_draw(model.draw.data.front());
         }
 
-        cDebug("Models:");
-        for(Pass const& pass : m_model)
-        {
-            cDebug(" - Pass: {0} buckets", pass.draws.size());
-            for(auto const& bucket : pass.draws)
-                for(draw_data_t const& draw : bucket)
-                    cDebug(
-                        "    - offset={0} count={1}",
-                        draw.instances.offset,
-                        draw.instances.count);
-        }
-
         for(Pass& pass : m_model)
         {
             i32 instance_offset = 0;
@@ -672,6 +649,25 @@ struct MeshRenderer : Components::RestrictedSubsystem<
                     draw.instances.offset = instance_offset;
                     instance_offset += draw.instances.count;
                 }
+        }
+
+        size_t matrix_ptr = 0;
+        for(Pass& pass : m_model)
+        {
+            auto material_size = align_for_gpu_padding(pass.required_storage());
+            auto matrix_size
+                = align_for_gpu_padding(pass.required_matrix_storage());
+            pass.material_buffer = m_resources.material_store->slice(
+                materials_ptr, material_size);
+            pass.matrix_buffer = m_resources.model_matrix_store->slice(
+                matrix_ptr, matrix_size);
+            pass.material_mapping
+                = pass.material_buffer
+                      .template buffer_cast<materials::senv_micro>();
+            pass.matrix_mapping
+                = pass.matrix_buffer.template buffer_cast<Matf4>();
+            matrix_ptr += matrix_size;
+            materials_ptr += material_size;
         }
 
         for(auto& ent : p.select(ObjectMod2))
@@ -698,14 +694,6 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         }
 
         m_resources.model_matrix_store->unmap();
-
-        cDebug("Summary of generation:");
-        for(Pass const& pass : m_bsp)
-        {
-            cDebug(" - Pass: {0} buckets", pass.draws.size());
-        }
-
-        //        m_bsp[Pass_EnvMicro].draws().resize(10);
     }
 
     void update_materials(Proxy& p, time_point const& time)
@@ -713,12 +701,14 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         for(Pass& pass : m_bsp)
         {
             pass.material_mapping
-                = pass.material_buffer.template buffer_cast<char>();
+                = pass.material_buffer
+                      .template buffer_cast<materials::senv_micro>();
         }
         for(Pass& pass : m_model)
         {
             pass.material_mapping
-                = pass.material_buffer.template buffer_cast<char>();
+                = pass.material_buffer
+                      .template buffer_cast<materials::senv_micro>();
         }
 
         RenderingParameters* rendering_params;
@@ -762,20 +752,19 @@ struct MeshRenderer : Components::RestrictedSubsystem<
     materials::senv_micro& material_of(SubModel& sub, size_t i)
     {
         Pass& pass = m_model[sub.current_pass];
-        return pass.template material_of<materials::senv_micro>(i);
+        return pass.material_of(i);
     }
 
     materials::senv_micro& material_of(BspReference& bsp, size_t i)
     {
         Pass& pass = m_bsp[bsp.current_pass];
-        return pass.template material_of<materials::senv_micro>(i);
+        return pass.material_of(i);
     }
 
     void populate_bsp_material(BspReference& ref, size_t i = 0)
     {
-        Pass&                  pass = m_bsp[ref.current_pass];
-        materials::senv_micro& material
-            = pass.template material_of<materials::senv_micro>(i);
+        Pass&                  pass     = m_bsp[ref.current_pass];
+        materials::senv_micro& material = pass.material_of(i);
         shader_cache.populate_material(material, ref.shader, Vecf2{1, 1});
         bitm_cache.assign_atlas_data(material.lightmap, ref.lightmap);
     }
@@ -783,9 +772,8 @@ struct MeshRenderer : Components::RestrictedSubsystem<
     void populate_mod2_material(
         SubModel const& sub, ModelItem<Version> const& model, size_t i = 0)
     {
-        Pass&                  pass = m_model[sub.current_pass];
-        materials::senv_micro& material
-            = pass.template material_of<materials::senv_micro>(i);
+        Pass&                  pass     = m_model[sub.current_pass];
+        materials::senv_micro& material = pass.material_of(i);
         shader_cache.populate_material(
             material, sub.shader, model.header->uvscale);
     }

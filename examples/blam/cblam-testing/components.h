@@ -131,7 +131,7 @@ struct Model
     semantic::mem_chunk<blam::mod2::region const> regions;
     blam::tag_t const*                            tag = nullptr;
 
-    bool visible{false};
+    bool visible{true};
 
     template<typename T>
     void initialize(T const* spawn)

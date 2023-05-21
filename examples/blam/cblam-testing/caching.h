@@ -1055,9 +1055,6 @@ struct ShaderCache
             Throw(undefined_behavior("unhandled shader type"));
         }
 
-        if(!out.color_bitm.valid())
-            out.header = nullptr;
-
         return out;
     }
 
@@ -1127,10 +1124,23 @@ struct ShaderCache
             shader_env const* info
                 = shader.header->as<blam::shader::shader_env>();
 
-            auto& base = *bitm_cache.assign_atlas_data(
+            auto base = bitm_cache.assign_atlas_data(
                 mat.maps[0], shader.senv.base_bitm);
-            mat.maps[0].uv_scale = Vecf2{1};
-            mat.maps[0].bias     = base.image.bias;
+            if(base)
+            {
+                mat.maps[0].uv_scale = Vecf2{1};
+                mat.maps[0].bias     = base->image.bias;
+            }
+
+            auto* micro = bitm_cache.assign_atlas_data(
+                mat.maps[1], shader.senv.micro_bitm);
+            if(micro)
+            {
+                mat.maps[1].uv_scale = Vecf2(info->diffuse.micro.scale);
+                mat.maps[1].bias     = micro->image.bias;
+            }
+
+            mat.material.flags |= (micro ? 1 : 0) << 10;
 
             auto* primary = bitm_cache.assign_atlas_data(
                 mat.maps[2], shader.senv.primary_bitm);
@@ -1149,16 +1159,6 @@ struct ShaderCache
             }
 
             mat.material.flags |= (primary && secondary ? 1 : 0) << 9;
-
-            auto* micro = bitm_cache.assign_atlas_data(
-                mat.maps[1], shader.senv.micro_bitm);
-            if(micro)
-            {
-                mat.maps[1].uv_scale = Vecf2(info->diffuse.micro.scale);
-                mat.maps[1].bias     = micro->image.bias;
-            }
-
-            mat.material.flags |= (micro ? 1 : 0) << 10;
 
             mat.lightmap.meta1
                 = bitm_cache.get_atlas_layer(shader.senv.self_illum);
@@ -1760,13 +1760,28 @@ struct BSPCache
 
         /* TODO: Find link between indices in cluster and submeshes */
 
-        auto submeshes = section.lightmaps.data(bsp_magic);
+        auto submeshes      = section.lightmaps.data(bsp_magic);
+        auto leaves         = section.leaves.data(bsp_magic);
+        auto leaf_surfaces_ = section.leaf_surfaces.data(bsp_magic);
 
-        if(submeshes.has_error())
+        if(submeshes.has_error() || leaves.has_error()
+           || leaf_surfaces_.has_error())
         {
             cDebug("Error finding submeshes");
             return {};
         }
+
+//        for(auto const& leaf : leaves.value())
+//        {
+//            cDebug("Leaf of cluster {}", leaf.cluster);
+//        }
+//        for(auto const& surface : leaf_surfaces_.value())
+//        {
+//            cDebug(
+//                "Leaf surface {} in node {}",
+//                surface.surface,
+//                surface.node);
+//        }
 
         for(auto const& group : submeshes.value())
         {

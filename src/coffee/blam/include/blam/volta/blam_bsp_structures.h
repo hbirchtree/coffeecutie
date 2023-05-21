@@ -226,6 +226,7 @@ struct material
         u32 all[22];
     };
 
+    C_DEPRECATED_S("not how you get vertices")
     inline reflexive_t<pc_vertex, xbox_t> pc_vertices() const
     {
         //        reflexive_t<pc_vertex, xbox_t> base = pc_vertices_data;
@@ -273,6 +274,7 @@ struct material
         return {};
     }
 
+    C_DEPRECATED_S("not how you get indices")
     inline reflexive_t<vert::idx_t> indices(header const& head) const;
 };
 
@@ -346,8 +348,8 @@ struct leaf
 
 struct leaf_surface
 {
-    reflexive_t<vert::face> surfaces;
-    reflexive_t<node>       nodes;
+    u32 surface;
+    u32 node;
 };
 
 struct alignas(4) lightmap
@@ -457,9 +459,7 @@ struct header
     reflexive_t<node> nodes;
     bounding_box      world_bounds;
     reflexive_t<leaf> leaves;
-    /* Grouping of surfaces, each one a pair of surfaces and node
-     *
-     */
+    /* Grouping of surfaces, each one a pair of surfaces and node */
     reflexive_t<leaf_surface>                      leaf_surfaces;
     reflexive_t<vert::face>                        surfaces;
     reflexive_t<lightmap>                          lightmaps;
