@@ -44,12 +44,8 @@ struct alignas(4) reflexive_t
     };
 
     /*!
-     * \brief Made for simplicity when working with reflexive data. Instead of
-     * several functions performing the same task, this template allows to
-     * access the data much more conveniently. \param basePtr Base pointer of
-     * map in most cases \param magic Magic number from tag index \return A
-     * valid pointer if the reflexive is deemed valid (if the variable zero is
-     * indeed zero)
+     * \brief Function for dereferencing reflexive data. Will do basic error
+     * checking eg. the pointer is within the map file and that count > 0
      */
     result<span_type, std::string_view> data(magic_data_t const& magic) const
     {
@@ -60,7 +56,7 @@ struct alignas(4) reflexive_t
         //            return stl_types::failure("invalid reflexive_t"sv);
 
         if(count == 0)
-            return stl_types::success(span_type{});
+            return stl_types::success(span_type());
 
         if((offset - magic.magic_offset) > magic.max_size)
             return stl_types::failure("reflexive pointer out of bounds"sv);

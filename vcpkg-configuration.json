@@ -3,7 +3,6 @@
         "./toolchain/vcpkg/ports/bullet2",
         "./toolchain/vcpkg/ports/discord-rpc",
         "./toolchain/vcpkg/ports/sdl2",
-        "./toolchain/vcpkg/ports/sdl2-wayland",
         "./toolchain/vcpkg/ports/stb"
     ],
     "overlay-triplets": [
@@ -22,11 +21,12 @@
         {
             "kind": "git",
             "repository": "https://github.com/hbirchtree/vcpkg-graphics",
-            "baseline": "169e605d9d47d85764b7d749db45f0a4ad1a02b5",
+            "baseline": "be522de72259f6cefd01df9c9576f43239b64f69",
             "packages": [
                 "bcdec",
                 "etc2comp",
                 "ktx",
+                "pvrtcdec",
                 "shaderc",
                 "spirv-tools"
             ]
@@ -34,10 +34,19 @@
         {
             "kind": "git",
             "repository": "https://github.com/hbirchtree/vcpkg-appimage",
-            "baseline": "db3ac277cb50fc27bc9c8740a42570348db43f0c",
+            "baseline": "3fc5ca2dc6a69dab0ac6906b23c823b1c81984c3",
             "packages": [
                 "appimage-runtime",
                 "squashfuse"
+            ]
+        },
+        {
+            "kind": "git",
+            "repository": "https://github.com/hbirchtree/vcpkg-devkit",
+            "baseline": "ca9c732dd356f43a9d439d9f79e59560202a58da",
+            "packages": [
+                "gctools",
+                "libogc"
             ]
         }
     ]

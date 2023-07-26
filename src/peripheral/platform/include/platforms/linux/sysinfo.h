@@ -1,7 +1,8 @@
 #pragma once
 
 #include <peripherals/identify/system.h>
-#include <peripherals/stl/string_ops.h>
+#include <peripherals/stl/range.h>
+#include <peripherals/stl/string/trim.h>
 
 #include <platforms/base/device_variant.h>
 #include <platforms/libc/rdwrio.h>

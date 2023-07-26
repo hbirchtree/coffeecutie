@@ -18,18 +18,11 @@ void load_scenario_bsp(compo::EntityContainer& e, BlamData<Version>& data)
     BlamResources& gpu = e.subsystem_cast<BlamResources>();
 
     {
-        auto vert                = gpu.bsp_buf->map(0);
-        auto index               = gpu.bsp_index->map(0);
-        auto light               = gpu.bsp_light_buf->map(0);
-        auto lines               = gpu.debug_lines->map(0);
-        auto line_colors         = gpu.debug_line_colors->map(0);
-        bsp_cache.vert_buffer    = Bytes::ofContainer(vert);
-        bsp_cache.element_buffer = Bytes::ofContainer(index);
-        bsp_cache.light_buffer   = Bytes::ofContainer(light);
-        bsp_cache.portal_buffer
-            = semantic::mem_chunk<Vecf3>::ofContainer(lines);
-        bsp_cache.portal_color_buffer
-            = semantic::mem_chunk<Vecf3>::ofContainer(line_colors);
+        bsp_cache.vert_buffer         = gpu.bsp_buf->map<byte_t>(0);
+        bsp_cache.element_buffer      = gpu.bsp_index->map<blam::vert::face>(0);
+        bsp_cache.light_buffer        = gpu.bsp_light_buf->map<byte_t>(0);
+        bsp_cache.portal_buffer       = gpu.debug_lines->map<Vecf3>(0);
+        bsp_cache.portal_color_buffer = gpu.debug_line_colors->map<Vecf3>(0);
     }
 
     /* Start loading up vertex data */
@@ -40,10 +33,10 @@ void load_scenario_bsp(compo::EntityContainer& e, BlamData<Version>& data)
         type_hash_v<TriggerVolume>(),
         type_hash_v<DebugDraw>(),
     };
-    trigger_obj.tags = ObjectScriptObject | ObjectTriggerVolume;
+    trigger_obj.tags = ObjectScriptObject | ObjectTriggerVolume | ObjectGC;
 
-    for(blam::scn::trigger_volume const& trigger :
-        scenario->mp.trigger_volumes.data(magic).value())
+    auto trigger_vols = scenario->mp.trigger_volumes.data(magic).value();
+    for(blam::scn::trigger_volume const& trigger : trigger_vols)
     {
         auto [origin, second] = trigger.box.points();
 
@@ -61,7 +54,7 @@ void load_scenario_bsp(compo::EntityContainer& e, BlamData<Version>& data)
         }};
 
         auto vertices
-            = bsp_cache.portal_buffer.view.subspan(bsp_cache.portal_ptr, 10);
+            = bsp_cache.portal_buffer.subspan(bsp_cache.portal_ptr, 10);
         std::copy(points.begin(), points.end(), vertices.begin());
         bsp_cache.portal_color_buffer[bsp_cache.portal_color_ptr] = Vecf3(1);
 
@@ -95,12 +88,13 @@ void load_scenario_bsp(compo::EntityContainer& e, BlamData<Version>& data)
     gpu.debug_lines->unmap();
     gpu.debug_line_colors->unmap();
 
-    EntityRecipe bsp;
-    bsp.components = {
+    EntityRecipe bsp_;
+    bsp_.components = {
         type_hash_v<BspReference>(),
         type_hash_v<ShaderData>(),
+        type_hash_v<DepthInfo>(),
     };
-    bsp.tags = ObjectBsp | ObjectGC;
+    bsp_.tags = ObjectBsp | ObjectGC;
 
     for(auto const& mesh_id : bsp_meshes)
     {
@@ -110,12 +104,12 @@ void load_scenario_bsp(compo::EntityContainer& e, BlamData<Version>& data)
             cDebug("Failed to find BSP mesh: {}:{}", mesh_id.gen, mesh_id.i);
             continue;
         }
-        auto const& mesh = mesh_it->second;
+        auto const& bsp = mesh_it->second;
 
-        for(auto const& group : mesh.groups)
+        for(auto const& group : bsp.groups)
             for(BSPItem::Mesh const& mesh : group.meshes)
             {
-                auto          mesh_ent = e.create_entity(bsp);
+                auto          mesh_ent = e.create_entity(bsp_);
                 BspReference& bsp_ref  = mesh_ent.get<BspReference>();
 
                 bsp_ref.shader   = mesh.shader;
@@ -123,11 +117,6 @@ void load_scenario_bsp(compo::EntityContainer& e, BlamData<Version>& data)
                 bsp_ref.bsp      = mesh_id;
                 bsp_ref.visible  = true;
                 bsp_ref.draw.data.push_back(mesh.draw);
-                bsp_ref.draw.call = {
-                    .indexed   = true,
-                    .instanced = true,
-                };
-                bsp_ref.shader = mesh.shader;
 
                 ShaderData&       shader_ = mesh_ent.get<ShaderData>();
                 ShaderItem const& shader_it
@@ -135,6 +124,9 @@ void load_scenario_bsp(compo::EntityContainer& e, BlamData<Version>& data)
                 shader_.shader     = shader_it.header;
                 shader_.shader_tag = shader_it.tag;
                 shader_.shader_id  = mesh.shader;
+
+//                DepthInfo&    depth    = mesh_ent.get<DepthInfo>();
+//                depth.position = bsp.
 
                 bsp_ref.current_pass = shader_.get_render_pass(shader_cache);
             }
@@ -158,6 +150,7 @@ void load_objects(
     parent.components = {
         type_hash_v<Model>(),
         type_hash_v<ObjectSpawn>(),
+        type_hash_v<DepthInfo>(),
     };
     parent.tags = tags;
 
@@ -167,7 +160,7 @@ void load_objects(
         type_hash_v<ShaderData>(),
         type_hash_v<MeshTrackingData>(),
     };
-    submodel.tags = (tags & SubObjectMask) | ObjectMod2;
+    submodel.tags = (tags & SubObjectMask) | ObjectMod2 | ObjectGC;
 
     auto& model_cache  = e.subsystem_cast<ModelCache<Version>>();
     auto& shader_cache = e.subsystem_cast<ShaderCache<Version>>();
@@ -179,7 +172,8 @@ void load_objects(
     auto index   = blam::tag_index_view(data.map_container);
     auto palette = group.palette.data(magic).value();
 
-    for(T const& instance : group.instances.data(magic).value())
+    auto instances = group.instances.data(magic).value();
+    for(T const& instance : instances)
     {
         if(instance.ref == -1 || !palette[instance.ref][0].valid())
             continue;
@@ -208,12 +202,14 @@ void load_objects(
         auto         parent_ = e.create_entity(parent);
         Model&       model   = parent_.get<Model>();
         ObjectSpawn& spawn   = parent_.get<ObjectSpawn>();
+        DepthInfo&   depth   = parent_.get<DepthInfo>();
 
         spawn.tag    = instance_tag;
         spawn.header = &instance;
         model.tag    = &(*model_it);
         model.model  = mesh_data.models.at(0);
         model.initialize(&instance);
+        depth.position = model.position;
 
         for(auto const& model_ : mesh_data.models)
         {
@@ -276,7 +272,7 @@ void load_multiplayer_equipment(
         type_hash_v<ShaderData>(),
         type_hash_v<MeshTrackingData>(),
     };
-    submodel.tags = (tags & SubObjectMask) | ObjectMod2;
+    submodel.tags = (tags & SubObjectMask) | ObjectMod2 | ObjectGC;
 
     for(blam::scn::multiplayer_equipment const& equipment_ref :
         equipment.value())
@@ -291,8 +287,8 @@ void load_multiplayer_equipment(
                   .template data<blam::scn::item_collection>(magic)
                   .value()[0];
 
-        for(blam::scn::item_permutation const& item_perm :
-            item_coll.items.data(magic).value())
+        auto perms = item_coll.items.data(magic).value();
+        for(blam::scn::item_permutation const& item_perm : perms)
         {
             switch(item_perm.item.tag_class)
             {
@@ -376,47 +372,47 @@ void load_scenario_scenery(EntityContainer& e, BlamData<Version>& data)
         scenario->objects.scenery,
         data,
         e,
-        ObjectScenery | PositioningStatic | ObjectGC);
+        ObjectScenery | PositioningStatic);
     load_objects(
         scenario->objects.vehicles,
         data,
         e,
-        ObjectVehicle | PositioningDynamic | ObjectGC);
+        ObjectVehicle | PositioningDynamic);
     load_objects(
         scenario->objects.bipeds,
         data,
         e,
-        ObjectBiped | PositioningDynamic | ObjectGC);
+        ObjectBiped | PositioningDynamic);
     load_objects(
         scenario->objects.equips,
         data,
         e,
-        ObjectEquipment | PositioningDynamic | ObjectGC);
+        ObjectEquipment | PositioningDynamic);
     load_objects(
         scenario->objects.weapon_spawns,
         data,
         e,
-        ObjectEquipment | PositioningDynamic | ObjectGC);
+        ObjectEquipment | PositioningDynamic);
     load_objects(
         scenario->objects.machines,
         data,
         e,
-        ObjectDevice | PositioningStatic | ObjectGC);
+        ObjectDevice | PositioningStatic);
     load_objects(
         scenario->objects.controls,
         data,
         e,
-        ObjectControl | PositioningDynamic | ObjectGC);
+        ObjectControl | PositioningDynamic);
     load_objects(
         scenario->objects.light_fixtures,
         data,
         e,
-        ObjectLightFixture | PositioningStatic | ObjectGC);
+        ObjectLightFixture | PositioningStatic);
 
     if(data.map_container.map->map_type == blam::maptype_t::multiplayer)
     {
         load_multiplayer_equipment(
-            data, e, ObjectEquipment | PositioningDynamic | ObjectGC);
+            data, e, ObjectEquipment | PositioningDynamic);
     }
 
     blam::tag_index_view index(data.map_container);
@@ -443,7 +439,8 @@ void load_scenario_scenery(EntityContainer& e, BlamData<Version>& data)
     Span<materials::world_data> world_data
         = gpu.world_store->map<materials::world_data>(0);
 
-    for(auto const& skybox : data.scenario->info.skyboxes.data(magic).value())
+    auto skyboxes = data.scenario->info.skyboxes.data(magic).value();
+    for(auto const& skybox : skyboxes)
     {
         auto                     skybox_tag = &(*index.find(skybox));
         blam::scn::skybox const& skybox_

@@ -5,6 +5,7 @@
 #include "groups.h"
 
 #include <cstddef>
+#include <peripherals/constants.h>
 #include <peripherals/concepts/span.h>
 #include <peripherals/concepts/vector.h>
 #include <peripherals/libc/types.h>

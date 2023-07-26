@@ -2,7 +2,7 @@
 
 case $(uname) in
 Linux)
-    HOST_TOOLCHAIN_TRIPLET=-linux
+    HOST_TOOLCHAIN_TRIPLET=-linux-native
 ;;
 Darwin)
     HOST_TOOLCHAIN_TRIPLET=-osx
@@ -50,6 +50,11 @@ function identify_target()
     TARGET="$(echo $1 | cut -d: -f4)"
     [[ "${ARCHITECTURE}" = *"linux"* ]] && IS_LINUX=1 || IS_LINUX=0
     [[ "${ARCHITECTURE}" = *"osx"* ]] && IS_MACOS=1 || IS_MACOS=0
+    if [[ "${ARCHITECTURE}" = *"linux"* ]] || [[ "${ARCHITECTURE}" = *"powerpc"* ]]; then
+        IS_DOWNLOADABLE=1
+    else
+        IS_DOWNLOADABLE=0
+    fi
 }
 
 function install_dependencies()
@@ -89,6 +94,8 @@ function host_tools_build()
         -C${PRELOAD_FILE} \
         -DBUILD_WITH_WERROR=OFF \
         -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_C_FLAGS="-march=native" \
+        -DCMAKE_CXX_FLAGS="-march=native" \
         -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
         -DCMAKE_INSTALL_PREFIX=${PWD}/install \
         -DCMAKE_MAKE_PROGRAM=$(which ninja) \
@@ -115,21 +122,21 @@ function native_build()
     identify_target $1
     TOOLCHAIN_DOWNLOAD="${PLATFORM}-${ARCHITECTURE}_${SYSROOT}"
 
-    mkdir -p $BASE_DIR/multi_build/$TOOLCHAIN_DOWNLOAD
-    pushd $BASE_DIR/multi_build/$TOOLCHAIN_DOWNLOAD
+    mkdir -p $BASE_DIR/multi_build/${PLATFORM}-${ARCHITECTURE}_${SYSROOT}
+    pushd $BASE_DIR/multi_build/${PLATFORM}-${ARCHITECTURE}_${SYSROOT}
 
     TOOLCHAIN_VER=$($SELF build-info toolchain version)
     if [[ -z "$TOOLCHAIN_VER" ]]; then
         echo \
     "No compiler version found in .build.yml, add one with:
     toolchain:
-    source: <repo>
-    version: <version>
+        source: <repo>
+        version: <version>
 
     Example:
     toolchain:
-    source: hbirchtree/coffeecutie-automation-tools
-    version: v1.0.18"
+        source: hbirchtree/coffeecutie-automation-tools
+        version: v1.0.18"
         exit 1
     fi
 
@@ -137,16 +144,20 @@ function native_build()
     export TOOLCHAIN_ROOT="${TOOLCHAIN_ROOT:-$DEFAULT_ROOT}"
     export TOOLCHAIN_PREFIX="${ARCHITECTURE}"
 
+    if [[ "${PLATFORM}-${ARCHITECTURE}" = "console-powerpc-eabi"* ]]; then
+        TOOLCHAIN_DOWNLOAD="console-powerpc-eabi"
+        export TOOLCHAIN_PREFIX="powerpc-eabi"
+    fi
+
     echo " * Selected platform ${PLATFORM}:${ARCHITECTURE}:${SYSROOT}"
 
-    if [[ "$DEFAULT_ROOT" = "$TOOLCHAIN_ROOT" ]] && [[ "$(cat compiler-ver)" != "$TOOLCHAIN_VER" ]] && [[ $IS_LINUX = "1" ]]; then
+    if [[ "$DEFAULT_ROOT" = "$TOOLCHAIN_ROOT" ]] && [[ "$(cat compiler-ver)" != "$TOOLCHAIN_VER" ]] && [[ $IS_DOWNLOADABLE = "1" ]]; then
         echo "::group::Getting compiler"
         TOOLCHAIN_REPO=$($SELF build-info toolchain source)
 
         rm $TOOLCHAIN_DOWNLOAD.tar.xz ${PLATFORM}-${ARCHITECTURE}.manifest || true
         gh release download -R "$TOOLCHAIN_REPO" "$TOOLCHAIN_VER" -p "${TOOLCHAIN_DOWNLOAD}.*"
-        gh release download -R "$TOOLCHAIN_REPO" "$TOOLCHAIN_VER" -p "${PLATFORM}-${ARCHITECTURE}.manifest"
-        cat ${PLATFORM}-${ARCHITECTURE}.manifest
+        gh release download -R "$TOOLCHAIN_REPO" "$TOOLCHAIN_VER" -p "${PLATFORM}-${ARCHITECTURE}.manifest" && cat ${PLATFORM}-${ARCHITECTURE}.manifest || true
 
         mkdir -p compiler-$TOOLCHAIN_VER
         pushd compiler-$TOOLCHAIN_VER
@@ -169,7 +180,7 @@ function native_build()
 
     export VCPKG_ROOT=$(dirname $(readlink $(which vcpkg)))
     export VCPKG_CHAINLOAD_TOOLCHAIN_FILE=${BASE_DIR}/toolchain/cmake/Toolchains/${TOOLCHAIN_PREFIX}.toolchain.cmake
-    export VCPKG_DEP_INFO_OVERRIDE_VARS="${PLATFORM};${ARCHITECTURE#-*};${SYSROOT}"
+    export VCPKG_DEP_INFO_OVERRIDE_VARS="${PLATFORM};${ARCHITECTURE%%-*};${SYSROOT}"
 
     TARGET_SPEC=""
     if [ -n "${TARGET}" ]; then
@@ -244,7 +255,26 @@ function native_build()
             -DVCPKG_TARGET_TRIPLET=${TOOLCHAIN_PREFIX} \
             -DHOST_TOOLS_BINARY_DIR=$HOST_TOOLS_BINARY_DIR \
             ${BASE_DIR} ${@:2}
-
+    elif [[ $ARCHITECTURE = *"-cube" ]] || [[ $ARCHITECTURE = *"-wii" ]]; then
+        EXTRA_INFO=gamecube
+        [[ $ARCHITECTURE = *"-wii" ]] && EXTRA_INFO=wii
+        cmake_debug \
+            -GNinja \
+            -C${PRELOAD_FILE} \
+            -DCMAKE_C_COMPILER=${TOOLCHAIN_ROOT}/bin/powerpc-eabi-gcc \
+            -DCMAKE_CXX_COMPILER=${TOOLCHAIN_ROOT}/bin/powerpc-eabi-g++ \
+            -DCMAKE_SYSTEM_NAME=Baremetal \
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+            -DCMAKE_INSTALL_PREFIX=$PWD/install \
+            -DCMAKE_MAKE_PROGRAM=$(which ninja) \
+            -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake \
+            -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=${BASE_DIR}/toolchain/cmake/Toolchains/${ARCHITECTURE}.toolchain.cmake \
+            -DVCPKG_DEP_INFO_OVERRIDE_VARS=${VCPKG_DEP_INFO_OVERRIDE_VARS}:${EXTRA_INFO} \
+            -DVCPKG_MANIFEST_FEATURES=${TARGET_FEATURES} \
+            -DVCPKG_MANIFEST_NO_DEFAULT_FEATURES=ON \
+            -DVCPKG_OVERLAY_PORTS=${BASE_DIR}/toolchain/vcpkg/ports-gamecube/outcome\;${BASE_DIR}/toolchain/vcpkg/ports-gamecube/status-code\;${BASE_DIR}/toolchain/vcpkg/ports-gamecube/zstd \
+            -DVCPKG_TARGET_TRIPLET=$ARCHITECTURE \
+            ${BASE_DIR} ${@:2}
     fi
     echo "::endgroup::"
 

@@ -2,6 +2,7 @@
 
 #include <peripherals/build/application.h>
 #include <peripherals/libc/types.h>
+#include <peripherals/stl/mutex.h>
 #include <peripherals/stl/types.h>
 
 namespace platform {

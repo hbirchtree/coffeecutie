@@ -45,18 +45,18 @@ struct AppContainer : AppService<AppContainer<DataType>>, AppMain
         loop_func&&  loop    = dummy_loop,
         setup_func&& cleanup = dummy_setup,
         Args&&... args) :
-        m_setup(setup),
-        m_loop(loop), m_cleanup(cleanup),
+        m_setup(setup), m_cleanup(cleanup),
+        m_loop(loop),
         m_data(std::make_shared<DataType>(std::forward<Args>(args)...))
     {
         detail::SubsystemBase::priority = 8192 * 1024;
     }
 
-    virtual void load(entity_container& e, app_error& ec) final
+    virtual void load(entity_container& e, app_error&) final
     {
         m_setup(e, *m_data, detail::clock::now());
     }
-    virtual void unload(entity_container& e, app_error& ec) final
+    virtual void unload(entity_container& e, app_error&) final
     {
         m_cleanup(e, *m_data, detail::clock::now());
     }

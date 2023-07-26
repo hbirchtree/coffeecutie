@@ -1,5 +1,7 @@
 #pragma once
 
+#include <coffee/image/ktx_load.h>
+
 #include "caching.h"
 #include "components.h"
 #include "data.h"
@@ -19,10 +21,7 @@ using MeshRendererManifest = Components::SubsystemManifest<
 using ScreenClearManifest = compo::SubsystemManifest<
     empty_list_t,
     type_list_t<gfx::system, BlamResources, PostProcessParameters>,
-    type_list_t<
-        comp_app::Windowing,
-        comp_app::DisplayInfo,
-        comp_app::GraphicsFramebuffer>>;
+    type_list_t<comp_app::GraphicsFramebuffer>>;
 
 struct ScreenClear
     : compo::RestrictedSubsystem<ScreenClear, ScreenClearManifest>
@@ -56,6 +55,34 @@ struct ScreenClear
     };
 
     std::vector<screen_quad_t> extra_quads;
+};
+
+using LoadingScreenManifest = compo::SubsystemManifest<
+    empty_list_t,
+    type_list_t<gfx::system, LoadingStatus, ScreenClear>,
+    type_list_t<comp_app::DisplayInfo, comp_app::GraphicsFramebuffer>>;
+
+struct LoadingScreen
+    : compo::RestrictedSubsystem<LoadingScreen, LoadingScreenManifest>
+{
+    using type = LoadingScreen;
+    using Proxy = compo::proxy_of<LoadingScreenManifest>;
+
+    LoadingScreen()
+    {
+        priority = 1535;
+    }
+
+    void start_restricted(Proxy&, time_point const&);
+    void end_restricted(Proxy& e, time_point const& time);
+
+    void load_resources(gfx::system& api);
+
+    ktx::texture_t spinner;
+
+    std::shared_ptr<gfx::program_t> loading_program;
+    std::shared_ptr<gfx::texture_2d_t> loading_tex;
+    std::shared_ptr<gfx::sampler_t> loading_sampler;
 };
 
 void alloc_renderer(compo::EntityContainer& container);

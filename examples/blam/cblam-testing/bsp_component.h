@@ -42,8 +42,8 @@ struct BlamBspWidget
         auto  bsps         = e.template select<BspReference>();
         auto  models       = e.template select<SubModel>();
         auto  triggers     = e.template select<TriggerVolume>();
-        auto& shader_cache = e.template subsystem<ShaderCache<V>>();
-        auto& bsp_cache    = e.template subsystem<BSPCache<V>>();
+//        auto& shader_cache = e.template subsystem<ShaderCache<V>>();
+//        auto& bsp_cache    = e.template subsystem<BSPCache<V>>();
 
 //        if(ImGui::Begin("Static models"))
 //        {

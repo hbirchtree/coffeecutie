@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <coffee/components/types.h>
 #include <coffee/core/printing/log_interface.h>
+#include <peripherals/stl/quick_container.h>
 
 namespace compo {
 namespace convenience {
@@ -18,6 +19,7 @@ FORCEDINLINE hash_type type_hash_v()
 } // namespace convenience
 
 using convenience::type_hash_v;
+using stl_types::quick_container;
 
 namespace detail {
 struct visitor_path;

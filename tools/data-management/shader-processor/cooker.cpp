@@ -141,7 +141,7 @@ libc_types::i32 cooker_main()
         //
         ("Osize", "Build with size optimizations")
         //
-        ("M,library",
+        ("M,module",
          "Combine SPIR-V binaries into a large module (only if -B is "
          "specified)");
     opts.allow_unrecognised_options();

@@ -16,19 +16,19 @@ target_compile_definitions(
   PeripheralLib PRIVATE -DCOFFEE_BUILD_STRING=${COFFEE_BUILD_STRING}
 )
 
-target_precompile_headers(
-  PeripheralLib
-  PUBLIC
-  # $<$<COMPILE_LANGUAGE:CXX>:peripherals/libc/types.h>
-  # $<$<COMPILE_LANGUAGE:CXX>:peripherals/stl/functional_types.h>
-  # $<$<COMPILE_LANGUAGE:CXX>:peripherals/stl/math.h>
-  # $<$<COMPILE_LANGUAGE:CXX>:peripherals/stl/string_casting.h>
-  # $<$<COMPILE_LANGUAGE:CXX>:peripherals/stl/string_ops.h>
-  # $<$<COMPILE_LANGUAGE:CXX>:peripherals/stl/thread_types.h>
-  # $<$<COMPILE_LANGUAGE:CXX>:peripherals/stl/threads/job_system.h>
-  # $<$<COMPILE_LANGUAGE:CXX>:peripherals/stl/types.h>
-  # $<$<COMPILE_LANGUAGE:CXX>:peripherals/stl/type_list.h>
-)
+#target_precompile_headers(
+#  PeripheralLib
+#  PUBLIC
+#  # $<$<COMPILE_LANGUAGE:CXX>:peripherals/libc/types.h>
+#  # $<$<COMPILE_LANGUAGE:CXX>:peripherals/stl/functional_types.h>
+#  # $<$<COMPILE_LANGUAGE:CXX>:peripherals/stl/math.h>
+#  # $<$<COMPILE_LANGUAGE:CXX>:peripherals/stl/string_casting.h>
+#  # $<$<COMPILE_LANGUAGE:CXX>:peripherals/stl/string_ops.h>
+#  # $<$<COMPILE_LANGUAGE:CXX>:peripherals/stl/thread_types.h>
+#  # $<$<COMPILE_LANGUAGE:CXX>:peripherals/stl/threads/job_system.h>
+#  # $<$<COMPILE_LANGUAGE:CXX>:peripherals/stl/types.h>
+#  # $<$<COMPILE_LANGUAGE:CXX>:peripherals/stl/type_list.h>
+#)
 
 if(BUILD_ASAN)
   target_compile_options(PeripheralLib PUBLIC -fsanitize=address)
@@ -194,8 +194,15 @@ endif()
 add_subdirectory(format)
 add_subdirectory(platform)
 
-add_subdirectory(compressors/zlib)
-add_subdirectory(compressors/zstd)
+option(BUILD_COMPRESS_ZLIB "Build with zlib support" ON)
+option(BUILD_COMPRESS_ZSTD "Build with zstd support" ON)
+
+if(BUILD_COMPRESS_ZLIB)
+    add_subdirectory(compressors/zlib)
+endif()
+if(BUILD_COMPRESS_ZSTD)
+    add_subdirectory(compressors/zstd)
+endif()
 if(WIN32)
   add_subdirectory(compressors/cab)
 endif()

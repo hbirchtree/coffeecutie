@@ -23,9 +23,11 @@ void install_imgui_widgets(
     e.register_subsystem_inplace<BlamMapBrowser>(std::move(map_select));
     e.register_subsystem_inplace<InputDebugWidget>();
 
+    comp_app::app_error ec;
+    imgui.do_load(e, ec);
+
+    if(false)
     {
-        comp_app::app_error ec;
-        imgui.do_load(e, ec);
         auto frame_ui = e.create_entity({
             .components = {
                     typeid(imgui::ImGuiWidget).hash_code(),

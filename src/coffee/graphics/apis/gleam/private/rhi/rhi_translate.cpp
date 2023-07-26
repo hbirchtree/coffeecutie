@@ -122,9 +122,13 @@ requires std::is_same_v<T, group::sized_internal_format> || std::
 #if GLEAM_MAX_VERSION >= 0x430 || GLEAM_MAX_VERSION_ES >= 0x300
     if(fmt.pixfmt == P::ETC2 && features.tex.gl.etc2)
     {
-        if(feval(fmt.pixflg & F::RGB))
+        if(feval(fmt.pixflg & F::R))
+            return {f::compressed_r11_eac, b::unsigned_byte, p::red};
+        else if(feval(fmt.pixflg & F::RG))
+            return {f::compressed_rg11_eac, b::unsigned_byte, p::rg};
+        else if(feval(fmt.pixflg & F::RGB))
             return {f::compressed_rgb8_etc2, b::unsigned_byte, p::rgb};
-        if(feval(fmt.pixflg & F::RGBA_Punchthrough))
+        else if(feval(fmt.pixflg & F::RGBA_Punchthrough))
             return {
                 f::compressed_rgb8_punchthrough_alpha1_etc2,
                 b::unsigned_byte,

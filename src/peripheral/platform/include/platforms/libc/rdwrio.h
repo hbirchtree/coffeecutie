@@ -2,7 +2,7 @@
 
 #include "fsio.h"
 
-#include <peripherals/stl/string_ops.h>
+#include <peripherals/stl/string/split.h>
 #include <platforms/base/rdwrio.h>
 #include <url/url.h>
 

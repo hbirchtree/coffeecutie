@@ -269,7 +269,7 @@ struct CIControllerAtomicEvent : BaseEvent<CIEvent::Controller>
 template<>
 inline f32 CIControllerAtomicEvent::axis_value<f32>() const
 {
-    return C_CAST<f32>(value) / std::numeric_limits<i16>::max();
+    return static_cast<f32>(value) / std::numeric_limits<i16>::max();
 }
 
 template<>

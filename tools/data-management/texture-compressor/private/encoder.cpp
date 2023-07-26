@@ -30,8 +30,25 @@ std::optional<ktxTexture1*> encode(
 
     printf("Encoded image to ETC2 in %i ms\n", encoding_time);
 
+    ktx_uint32_t ktx_fmt = GL_COMPRESSED_RGBA8_ETC2_EAC;
+
+    switch(format)
+    {
+    case format_t::R11:
+        ktx_fmt = GL_COMPRESSED_R11_EAC;
+        break;
+    case format_t::RG11:
+        ktx_fmt = GL_COMPRESSED_RG11_EAC;
+        break;
+    case format_t::RGB8:
+        ktx_fmt = GL_COMPRESSED_RGB8_ETC2;
+        break;
+    default:
+        break;
+    }
+
     ktxTextureCreateInfo info = {
-        .glInternalformat = GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2,
+        .glInternalformat = ktx_fmt,
         .vkFormat         = 0,
         .pDfd             = nullptr,
         .baseWidth        = img.size.w,

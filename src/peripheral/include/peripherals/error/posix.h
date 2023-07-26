@@ -1,5 +1,6 @@
 #pragma once
 
+#include <peripherals/stl/error_code.h>
 #include <peripherals/stl/types.h>
 
 namespace platform::common::posix {

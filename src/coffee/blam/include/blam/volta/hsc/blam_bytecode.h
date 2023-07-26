@@ -1,9 +1,14 @@
 #pragma once
 
+#include <deque>
+
 #include "bytecode_common_v12.h"
 #include "bytecode_signatures_v12.h"
 
 #include <blam/volta/blam_strings.h>
+
+#include <peripherals/stl/iterator.h>
+#include <peripherals/stl/quick_container.h>
 
 namespace blam::hsc {
 

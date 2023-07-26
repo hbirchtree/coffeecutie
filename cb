@@ -56,6 +56,7 @@ case $1 in
   android:arm64:29 (Targeting Android 10)
   android:arm-neon:19 (Targeting Android 4.4)
 "
+        exit 0
     fi
     android_build ${@:2}
 ;;
@@ -66,6 +67,16 @@ case $1 in
 "
     fi
     mingw_build ${@:2}
+;;
+"console-build")
+    if [ -z "$2" ] || [ "$2" = "list" ] || [ "$2" = "help" ]; then
+        echo "Available targets:
+  console:powerpc-eabi:gamecube
+  console:powerpc-eabi:wii
+"
+        exit 0
+    fi
+    native_build ${@:2}
 ;;
 "compress-usr-dir")
     echo "::group::Compressing install directory"
@@ -128,6 +139,11 @@ case $1 in
 "lint")
     echo "::group::Lint"
     echo "NEEDS REIMPLEMENTATION"
+    echo "::endgroup::"
+;;
+"lint-cmake")
+    echo "::group::Linting CMake files"
+    cmake-format -i -c ${BASE_DIR}/.cmake-format ${BASE_DIR}/{examples,src,tests,toolchain,tools}
     echo "::endgroup::"
 ;;
 "lint-file")

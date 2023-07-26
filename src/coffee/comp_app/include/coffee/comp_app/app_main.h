@@ -18,11 +18,12 @@ struct ExecLoop
 {
     static int exec(detail::EntityContainer& container)
     {
-        rq::runtime_queue* queue = nullptr;
+//        rq::runtime_queue* queue = nullptr;
         if(auto r = rq::runtime_queue::CreateNewQueue(
                         platform::state->GetAppData()->application_name);
            r.has_value())
-            queue = r.value();
+           ;
+//            queue = r.value();
         else
             Throw(std::move(r.error()));
 

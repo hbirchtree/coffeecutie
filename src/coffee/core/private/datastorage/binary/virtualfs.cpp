@@ -4,8 +4,9 @@
 #include <corezstd/zstd.h>
 
 #include <peripherals/concepts/data_codec.h>
-#include <peripherals/stl/parallel_for_each.h>
 #include <peripherals/semantic/chunk_ops.h>
+#include <peripherals/stl/parallel_for_each.h>
+#include <peripherals/stl/range.h>
 
 #include "directory_index.h"
 
@@ -17,6 +18,7 @@ using ZStd = zstd::codec;
 
 using namespace semantic;
 using namespace semantic::chunk_ops;
+using stl_types::range;
 
 namespace vfs {
 
@@ -98,8 +100,6 @@ stl_types::result<std::vector<libc_types::byte_t>, error> generate(
     data_arrays.resize(filenames.size());
 
     {
-        using stl_types::Range;
-
         DProfContext __(VIRTFS_API "Compressing files");
 
         std::function<void(szptr)> worker = [&](szptr i) {
@@ -147,7 +147,7 @@ stl_types::result<std::vector<libc_types::byte_t>, error> generate(
             }
         };
         stl_types::parallel_for_each(
-            stl_types::Range<>(filenames.size()),
+            range<>(filenames.size()),
             std::move(worker),
             settings.workers);
     }
@@ -159,7 +159,7 @@ stl_types::result<std::vector<libc_types::byte_t>, error> generate(
         szptr        data_size = 0;
         /* Define the data segment, compress data if necessary */
 
-        for(auto i : stl_types::Range<>(filenames.size()))
+        for(auto i : range<>(filenames.size()))
         {
             auto& file = files[i];
 
@@ -219,7 +219,7 @@ stl_types::result<std::vector<libc_types::byte_t>, error> generate(
 
     Bytes outputView = Bytes::ofContainer(output);
 
-    for(auto i : Range<>(filenames.size()))
+    for(auto i : range<>(filenames.size()))
     {
         DProfContext _(VIRTFS_API "Copying output data");
 

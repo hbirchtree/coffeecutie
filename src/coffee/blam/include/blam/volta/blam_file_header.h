@@ -57,6 +57,9 @@ struct alignas(4) file_header_t
     static result<file_header_t const*, map_load_error> from_data(
         semantic::BytesConst const& data, xbox_version_t);
 
+    static stl_types::result<file_header_t const*, map_load_error> from_data(
+        semantic::BytesConst const& data, mcc_version_t);
+
     inline bool is_xbox() const
     {
         return version == version_t::xbox;

@@ -25,9 +25,6 @@ using clock      = std::chrono::high_resolution_clock;
 using duration   = std::chrono::microseconds;
 using time_point = std::chrono::time_point<clock>;
 
-using stl_types::quick_container;
-using stl_types::Range;
-
 using type_hash = declreturntype(std::type_info::hash_code);
 
 struct EntityContainer;

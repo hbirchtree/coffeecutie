@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <peripherals/libc/string_ops.h>
+#include <peripherals/stl/range.h>
 #include <peripherals/stl/string_ops.h>
 #include <platforms/environment.h>
 

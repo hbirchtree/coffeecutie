@@ -183,6 +183,7 @@ struct runtime_task
 
 struct dependent_task_invoker
 {
+    virtual ~dependent_task_invoker();
     virtual bool ready()   = 0;
     virtual void execute() = 0;
 };
@@ -448,6 +449,29 @@ class runtime_queue
                 task_flags::periodic,
                 0,
             });
+    }
+
+    template<typename... Args>
+    STATICINLINE std::function<void(Args...)> BindToQueue(
+        std::function<void(Args...)> const& func)
+    {
+        using namespace std::chrono_literals;
+
+        auto                         queue = GetCurrentQueue().value();
+        std::function<void(Args...)> out
+            = [queue, func = std::move(func)](Args... args) {
+                  std::function<void()> task = [func, args...]() mutable {
+                      func(std::forward<Args>(args)...);
+                  };
+                  auto res = Queue(
+                      queue,
+                      runtime_task::CreateTask(
+                          std::move(task), task_flags::single_shot, 0ms));
+                  if(res.has_error())
+                      throw rq::runtime_queue_error(
+                          "failed to bind function to thread");
+              };
+        return out;
     }
 
     struct task_data_t

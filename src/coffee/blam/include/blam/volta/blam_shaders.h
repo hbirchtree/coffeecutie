@@ -1,8 +1,8 @@
-#pragma once
+﻿#pragma once
 
 #include "blam_base_types.h"
 #include "blam_tag_classes.h"
-#include "blam_tag_index.h"
+#include "blam_tag_ref.h"
 
 namespace blam::shader {
 struct mod2_shader
@@ -209,14 +209,7 @@ enum class framebuffer_fade_mode : u16
     perpendicular,
     parallel,
 };
-enum class framebuffer_fade_src : u16
-{
-    none,
-    A_out,
-    B_out,
-    C_out,
-    D_out,
-};
+using framebuffer_fade_src = animation_src;
 enum class framebuffer_blending : u16
 {
     alpha_blend,
@@ -625,8 +618,14 @@ static_assert(
     == 136);
 static_assert(offsetof(shader_env, scrolling) == 336);
 static_assert(offsetof(shader_env, self_illum) == 384);
-static_assert(offsetof(shader_env, self_illum) + offsetof(shader_env::self_illumination_t, primary) == 412);
-static_assert(offsetof(shader_env, self_illum) + offsetof(shader_env::self_illumination_t, map) == 592);
+static_assert(
+    offsetof(shader_env, self_illum)
+        + offsetof(shader_env::self_illumination_t, primary)
+    == 412);
+static_assert(
+    offsetof(shader_env, self_illum)
+        + offsetof(shader_env::self_illumination_t, map)
+    == 592);
 static_assert(
     offsetof(shader_env, specular)
         + offsetof(shader_env::specular_t, perpendicular_color)
@@ -769,6 +768,7 @@ enum class transparent_flags : u16
     a_out_controls_color0_anim = 0x4,
 };
 
+/* Requires 5 bits */
 enum class color_input : u16
 {
     zero,
@@ -798,6 +798,7 @@ enum class color_input : u16
     constant_blue_1,
 };
 
+/* Requires 3 bits */
 enum class color_mapping : u16
 {
     clamp,
@@ -809,6 +810,7 @@ enum class color_mapping : u16
     minus_one,
 };
 
+/* Requires 4 bits */
 enum class color_output : u16
 {
     discard,
@@ -897,19 +899,130 @@ struct alignas(32) shader_transparent : radiosity_properties /* aka sotr */
 
     reflexive_t<tagref_typed_t<tag_class_t::shdr>> layers;
 
-    enum class map_flags_t
+    enum class map_flags_t : u16
     {
         none       = 0x0,
         unfiltered = 0x1,
         u_clamped  = 0x2,
         v_clamped  = 0x4,
     };
-
     struct map_t
     {
-        u16                           flags;
+        map_flags_t                   flags;
         bitm_reference_t              map;
         texture_uv_rotation_animation animation;
+    };
+
+    enum class stage_flags_t : u16
+    {
+        none                       = 0x0,
+        color_mux                  = 0x1,
+        alpha_mux                  = 0x2,
+        a_out_controls_color0_anim = 0x4,
+    };
+    /* Requires 5 bits */
+    enum class input_t : u16
+    {
+        zero,
+        one,
+        half,
+        negative_one,
+        negative_half,
+        map_color0,
+        map_color1,
+        map_color2,
+        map_color3,
+        vertex_color0_div_diffuse_light,
+        vertex_color1_div_fade_perpendicular,
+        scratch_color0,
+        scratch_color1,
+        constant_color0,
+        constant_color1,
+        map_alpha0,
+        map_alpha1,
+        map_alpha2,
+        map_alpha3,
+        vertex_alpha0_div_fade_none,
+        vertex_alpha1_div_fade_perpendicular,
+        scratch_alpha0,
+        scratch_alpha1,
+        constant_alpha0,
+        constant_alpha1,
+    };
+    /* Requires 3 bits */
+    enum class mapping_t : u16
+    {
+        clamp,
+        one_minus_clamp,
+        two,
+        one_minus_two,
+        clamp_minus_half,
+        half_minus_clamp,
+        passthrough,
+        negative,
+    };
+    /* Requires 3 bits */
+    enum class output_mapping_t : u16
+    {
+        identity,
+        scale_half,
+        scale_two,
+        scale_four,
+        bias_minus_half,
+        expand_normal,
+    };
+    template<typename InputT>
+    struct color_mapping
+    {
+        InputT    a_input;
+        mapping_t a_mapping;
+        InputT    b_input;
+        mapping_t b_mapping;
+        InputT    c_input;
+        mapping_t c_mapping;
+        InputT    d_input;
+        mapping_t d_mapping;
+    };
+
+    struct alignas(4) stage_t
+    {
+        stage_flags_t flags;
+        u16           pad1;
+
+        animation_src      color0_source;
+        animation_function color0_func;
+        f32                color0_period;
+        Vecf4              color0_lower;
+        Vecf4              color0_upper;
+        Vecf4              color1;
+
+        struct color_mapping_t : color_mapping<input_t>
+        {
+            color_output          ab_output;
+            color_output_function ab_out_func;
+            color_output          cd_output;
+            color_output_function cd_out_func;
+            color_output          ab_cd_mux_sum;
+            output_mapping_t      output_map;
+        } color;
+
+        struct alpha_mapping_t : color_mapping<color_input>
+        {
+            color_output     ab_output;
+            color_output     cd_output;
+            color_output     ab_cd_mux_sum;
+            output_mapping_t output_map;
+        } alpha;
+
+        /* Let's do some storage math:
+         * color_mapping<T> fits into 32 bits
+         * color_mapping_t fits into 32 + 17 bits
+         * alpha_mapping_t fits into 32 + 15 bits
+         * In total this is 3 * 32 bits that we can ship off to a shader
+         * BUT this is *PER STAGE*
+         * If we have 4 stages that's 384 BITS PER OBJECT
+         * YIKES
+         */
     };
 
     reflexive_t<map_t> maps;
@@ -918,6 +1031,7 @@ struct alignas(32) shader_transparent : radiosity_properties /* aka sotr */
 
 static_assert(offsetof(shader_transparent, maps) == 84);
 static_assert(sizeof(shader_transparent::map_t) == 100);
+static_assert(sizeof(shader_transparent::stage_t) == 112);
 
 C_FLAGS(chicago::flags_t, u32)
 C_FLAGS(shader_env::flags_t, u32)

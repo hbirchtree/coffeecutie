@@ -1,4 +1,4 @@
-#define GLM_SWIZZLE 1
+#define GLM_FORCE_SWIZZLE 1
 
 #include "occluder.h"
 
@@ -46,7 +46,7 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         resources->debug_lines->unmap();
 
         BSPItem const* current_bsp{nullptr};
-        u32            current_cluster{0};
+//        u32            current_cluster{0};
 
         for(auto& ent : p.select(ObjectBsp))
         {
@@ -63,7 +63,7 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
             {
                 auto [cluster_, sub_] = cluster.value();
                 current_bsp           = &bsp;
-                current_cluster       = cluster_;
+//                current_cluster       = cluster_;
                 bsp_ref.visible       = true;
                 auto const& sub       = bsp.clusters.at(cluster_).sub.at(sub_);
                 portal_colors[sub.debug_color_idx] = Vecf3(0, 1, 0);

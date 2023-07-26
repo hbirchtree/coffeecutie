@@ -1,6 +1,7 @@
 #include <coffee/core/CFiles>
 #include <coffee/core/CProfiling>
 #include <peripherals/stl/math.h>
+#include <peripherals/stl/string/hex.h>
 #include <peripherals/stl/string_casting.h>
 #include <platforms/environment.h>
 #include <url/url.h>
@@ -283,7 +284,7 @@ namespace Strings {
 std::string to_string(Resource const& r)
 {
     return std::string("rsc(")
-           + stl_types::str::print::pointerify(r.data_ro.data()) + "+"
+           + stl_types::str::fmt::pointerify(r.data_ro.data()) + "+"
            + std::to_string(r.data_ro.size()) + ")";
 }
 } // namespace Strings

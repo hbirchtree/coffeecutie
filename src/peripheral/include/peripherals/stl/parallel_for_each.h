@@ -5,6 +5,7 @@
 #include <peripherals/stl/types.h>
 
 #include <algorithm>
+#include <list>
 #include <thread>
 
 namespace stl_types {
@@ -30,7 +31,7 @@ STATICINLINE void parallel_for_each(
     auto per_worker = num_items / static_cast<decltype(num_items)>(workers);
 
     std::list<std::thread> threads;
-    for(auto i : stl_types::Range<>(std::max(workers - 1, 1u)))
+    for(auto i : stl_types::range<>(std::max(workers - 1, 1u)))
     {
         threads.emplace_back(
             detail::parallel_for_each_predicate<

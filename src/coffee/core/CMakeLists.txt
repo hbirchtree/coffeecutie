@@ -58,10 +58,10 @@ coffee_library(
     HEADER_BASE coffee/core
 )
 
-target_precompile_headers(
-  CoreFile PUBLIC $<$<COMPILE_LANGUAGE:CXX>:coffee/core/CFiles>
-  $<$<COMPILE_LANGUAGE:CXX>:platforms/file.h>
-)
+#target_precompile_headers(
+#  CoreFile PUBLIC $<$<COMPILE_LANGUAGE:CXX>:coffee/core/CFiles>
+#  $<$<COMPILE_LANGUAGE:CXX>:platforms/file.h>
+#)
 
 coffee_library(
   TARGET CoreQueue
@@ -76,9 +76,9 @@ coffee_library(
     coffee/core
 )
 
-target_precompile_headers(
-  CoreQueue PUBLIC $<$<COMPILE_LANGUAGE:CXX>:coffee/core/task_queue/task.h>
-)
+#target_precompile_headers(
+#  CoreQueue PUBLIC $<$<COMPILE_LANGUAGE:CXX>:coffee/core/task_queue/task.h>
+#)
 
 coffee_library(
   TARGET CoreJsonLogger
@@ -146,9 +146,9 @@ coffee_library(
     HEADER_BASE coffee
 )
 
-target_precompile_headers(
-  EntComp PUBLIC $<$<COMPILE_LANGUAGE:CXX>:coffee/components/components.h>
-)
+#target_precompile_headers(
+#  EntComp PUBLIC $<$<COMPILE_LANGUAGE:CXX>:coffee/components/components.h>
+#)
 
 if(BUILD_TESTS)
   #

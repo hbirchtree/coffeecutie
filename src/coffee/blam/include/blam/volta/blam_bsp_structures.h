@@ -189,7 +189,8 @@ struct material
     {
         struct
         {
-            u32                         garbage[3];
+            u32                         garbage[2];
+            vert::vertex_type_t         type;
             u32                         count;
             u32                         padding1[4];
             u32                         count2;
@@ -226,19 +227,27 @@ struct material
         u32 all[22];
     };
 
-    C_DEPRECATED_S("not how you get vertices")
-    inline reflexive_t<pc_vertex, xbox_t> pc_vertices() const
+    inline reflexive_t<byte_t, xbox_t> vertices() const
     {
         //        reflexive_t<pc_vertex, xbox_t> base = pc_vertices_data;
         //        base.offset += pc_vertex_data_offset;
         //        return base;
-        return {
-            .count  = pc.count,
-            .offset = pc.uncompressed_vertices.offset,
-        };
+        /* the max is there because MCC is slightly different */
+        if(pc.type == vert::vertex_type_t::sbsp_uncompressed_vertex)
+            return {
+                .count  = static_cast<u32>(pc.count * sizeof(pc_vertex)),
+                .offset = std::max(
+                    pc.uncompressed_vertices.offset,
+                    pc.uncompressed_vertices.count),
+            };
+        else
+            return {
+                .count  = static_cast<u32>(pc.count * sizeof(xbox_vertex)),
+                .offset = pc.compressed_vertices.offset,
+            };
     }
 
-    inline reflexive_t<pc_light_vertex, xbox_t> pc_light_verts() const
+    inline reflexive_t<byte_t, xbox_t> light_verts() const
     {
         //        reflexive_t<pc_light_vertex, xbox_t> out;
         //        /* Offset to vertex segment */
@@ -247,35 +256,48 @@ struct material
         //        /* Skip normal vertices to find light vertices */
         //        out.offset += sizeof(pc_vertex) * pc_vertices_data.count;
         //        return out;
-        return {
-            .count  = pc.count,
-            .offset = static_cast<u32>(
-                pc.uncompressed_vertices.offset + pc.count * sizeof(pc_vertex)),
-        };
+        auto out = vertices();
+        out.offset += out.count;
+        if(pc.type == vert::vertex_type_t::sbsp_uncompressed_vertex)
+            return {
+                .count  = static_cast<u32>(pc.count * sizeof(pc_light_vertex)),
+                .offset = out.offset,
+            };
+        else
+            return {
+                .count = static_cast<u32>(pc.count * sizeof(xbox_light_vertex)),
+                .offset = out.offset,
+            };
     }
 
-    inline reflexive_t<xbox_light_vertex, xbox_t> xbox_light_verts() const
+    inline u32 vertex_size() const
     {
-        //        reflexive_t<xbox_light_vertex, xbox_t> out;
-        //        /* Offset to vertex segment */
-        //        out.count  = xbox_vertices_data.count;
-        //        out.offset = xbox_vertices_data.offset + vertex_data_offset;
-        //        /* Skip normal vertices to find light vertices */
-        //        out.offset += sizeof(xbox_vertex) * xbox_vertices_data.count;
-        //        return out;
-        return {};
+        if(pc.type == vert::vertex_type_t::sbsp_uncompressed_vertex)
+            return sizeof(pc_vertex);
+        else
+            return sizeof(xbox_vertex);
     }
 
-    inline reflexive_t<xbox_vertex, xbox_t> xbox_vertices() const
-    {
-        //        auto base = xbox_vertices_data;
-        //        base.offset += vertex_data_offset;
-        //        return base;
-        return {};
-    }
+    //    inline reflexive_t<xbox_light_vertex, xbox_t> xbox_light_verts() const
+    //    {
+    //        reflexive_t<xbox_light_vertex, xbox_t> out;
+    //        /* Offset to vertex segment */
+    //        out.count  = xbox_vertices_data.count;
+    //        out.offset = xbox_vertices_data.offset + vertex_data_offset;
+    //        /* Skip normal vertices to find light vertices */
+    //        out.offset += sizeof(xbox_vertex) * xbox_vertices_data.count;
+    //        return out;
+    //    }
 
-    C_DEPRECATED_S("not how you get indices")
-    inline reflexive_t<vert::idx_t> indices(header const& head) const;
+    //    inline reflexive_t<xbox_vertex, xbox_t> xbox_vertices() const
+    //    {
+    //        auto base = xbox_vertices_data;
+    //        base.offset += vertex_data_offset;
+    //        return base;
+    //    }
+
+//    C_DEPRECATED_S("not how you get indices")
+    inline reflexive_t<vert::face> indices(header const& head) const;
 };
 
 using node = bounding_box;
@@ -341,16 +363,23 @@ struct breakable_surface
 
 struct leaf
 {
-    u16                     cluster;
-    u16                     surface_reference_count;
-    reflexive_t<vert::face> surfaces;
+    u16 vertex_0;
+    u16 vertex_1;
+    u16 vertex_2;
+    i16 padding;
+    i16 cluster;
+    u16 surface_reference_count;
+    u16 surface_reference_index;
+    i16 something;
 };
+static_assert(sizeof(leaf) == 16);
 
 struct leaf_surface
 {
     u32 surface;
-    u32 node;
+    i32 node; /* May be -1, indicating no node association? */
 };
+static_assert(sizeof(leaf_surface) == 8);
 
 struct alignas(4) lightmap
 {
@@ -359,6 +388,7 @@ struct alignas(4) lightmap
     u32                   unknown[4];
     reflexive_t<material> materials;
 };
+static_assert(sizeof(lightmap) == 32);
 
 struct lens_flare_marker
 {
@@ -424,7 +454,7 @@ struct detail_object
 {
 };
 
-struct runtime_decals
+struct runtime_decal
 {
 };
 
@@ -489,7 +519,7 @@ struct header
     u32                                    padding5[10];
     reflexive_t<marker>                    markers;
     reflexive_t<detail_object>             detail_objects;
-    reflexive_t<byte_t>                    runtime_decals;
+    reflexive_t<runtime_decal>             runtime_decals;
     reflexive_t<leaf_map_leaf>             leaf_map_leaves;
     reflexive_t<leaf_map_portal>           leaf_map_portals;
     u32                                    unkown4[3];
@@ -499,20 +529,22 @@ struct header
         return surfaces;
     }
 };
+static_assert(offsetof(header, collision_materials) == 164);
+static_assert(offsetof(header, leaves) == 224);
 static_assert(offsetof(header, surfaces) == 248);
 static_assert(offsetof(header, lightmaps) == 260);
 static_assert(offsetof(header, clusters) == 308);
 static_assert(offsetof(header, cluster_portals) == 340);
 static_assert(sizeof(header) == 648);
 
-inline reflexive_t<vert::idx_t> material::indices(header const& head) const
+inline reflexive_t<vert::face> material::indices(header const& head) const
 {
     //    return {
     //        .count  = index_count(),
     //        .offset = index_offset() + head.surfaces.offset,
     //    };
     return {
-        .count  = surfaces.offset * 3u,
+        .count  = surfaces.offset,
         .offset = static_cast<u32>(surfaces.count * sizeof(vert::face))
                   + head.surfaces.offset,
     };

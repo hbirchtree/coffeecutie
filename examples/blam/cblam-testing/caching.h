@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include <blam/volta/blam_bitm.h>
 #include <blam/volta/blam_font.h>
@@ -76,7 +76,7 @@ struct BSPItem
     struct Group
     {
         blam::bsp::lightmap const* group{nullptr};
-        std::vector<Mesh>          meshes;
+        std::vector<Mesh>          meshes{};
     };
     struct Subcluster
     {
@@ -87,8 +87,8 @@ struct BSPItem
     struct Cluster
     {
         blam::bsp::cluster const*                     cluster{nullptr};
-        std::vector<Subcluster>                       sub;
-        std::vector<blam::bsp::cluster_portal const*> portals;
+        std::vector<Subcluster>                       sub{};
+        std::vector<blam::bsp::cluster_portal const*> portals{};
     };
 
     blam::bsp::header const*                 mesh{nullptr};
@@ -234,15 +234,21 @@ struct ShaderItem
         generation_idx_t reflection;
         generation_idx_t bump;
     };
+    struct sotr_t
+    {
+        std::array<generation_idx_t, 4> maps;
+        std::array<generation_idx_t, 4> layers;
+    };
 
     union
     {
         generation_idx_t color_bitm;
 
-        soso_t soso;
-        senv_t senv;
-        schi_t schi;
         scex_t scex;
+        schi_t schi;
+        senv_t senv;
+        soso_t soso;
+        sotr_t sotr;
         swat_t swat;
 
         struct
@@ -593,7 +599,7 @@ struct BitmapCache
                 imsize.y += max_pad;
 
                 auto img_offset = offset;
-                auto img_layer  = layer;
+                //                auto img_layer  = layer;
 
                 [[maybe_unused]] Veci2 slack = {
                     pool.max.x - offset.x,
@@ -612,7 +618,7 @@ struct BitmapCache
                     layer++;
                     offset.x   = imsize.x;
                     img_offset = {};
-                    img_layer  = layer;
+                    //                    img_layer  = layer;
                 }
 
                 img->image.layer  = layer;
@@ -673,6 +679,9 @@ struct BitmapCache
 
         using blam::tag_class_t;
 
+        if(idx == -1)
+            return {};
+
         if(!bitmap.valid() || bitmap.tag_class != tag_class_t::bitm)
             Throw(std::runtime_error("non-bitm tag passed to BitmapCache"));
 
@@ -699,7 +708,8 @@ struct BitmapCache
         out.header = &bitm;
         out.tag    = bitm_tag;
 
-        for(auto const& sequence : bitm.sequences.data(curr_magic).value())
+        auto sequences = bitm.sequences.data(curr_magic).value();
+        for(auto const& sequence : sequences)
         {
             //            if(sequence.name.str().empty())
             continue;
@@ -1045,8 +1055,9 @@ struct ShaderCache
 
             if(auto maps = shader_model.maps.data(magic); maps.has_value())
             {
+                u32 i = 0;
                 for(shader_transparent::map_t const& map : maps.value())
-                    out.color_bitm = get_bitm_idx(map.map.map);
+                    out.sotr.maps.at(i++) = get_bitm_idx(map.map.map);
             }
 
             break;
@@ -1059,7 +1070,7 @@ struct ShaderCache
     }
 
     void populate_material(
-        materials::senv_micro&  mat,
+        materials::shader_data&  mat,
         generation_idx_t const& shader_id,
         Vecf2 const&            base_map_scale)
     {
@@ -1216,14 +1227,14 @@ struct ShaderCache
         case tag_class_t::swat: {
             shader_water const* info = shader.header->as<shader_water>();
             bitm_cache.assign_atlas_data(mat.maps[0], shader.swat.base);
-            mat.maps[0].uv_scale = Vecf2(1);
+            mat.maps[0].uv_scale = base_map_scale;
             mat.maps[0].bias     = 0;
 
             bitm_cache.assign_atlas_data(mat.maps[1], shader.swat.reflection);
             mat.lightmap.reflection = mat.maps[1].layer;
 
             bitm_cache.assign_atlas_data(mat.maps[1], shader.swat.bump);
-            mat.maps[1].uv_scale = Vecf2{info->ripple.scale};
+            mat.maps[1].uv_scale = base_map_scale * info->ripple.scale;
             mat.maps[1].bias     = 2.f;
 
             mat.material.material = materials::id::swat;
@@ -1252,9 +1263,24 @@ struct ShaderCache
             break;
         }
         case tag_class_t::sotr: {
-            bitm_cache.assign_atlas_data(mat.maps[0], shader.color_bitm);
-            mat.maps[0].uv_scale = Vecf2(1);
-            mat.maps[0].bias     = 0;
+            shader_transparent const* info
+                = shader.header->as<shader_transparent>();
+            auto maps   = info->maps.data(magic).value();
+//            auto stages = info->stages.data(magic).value();
+//            auto layers = info->layers.data(magic).value();
+//            cDebug(
+//                "{}: {} maps, {} stages, {} layers",
+//                shader.tag->to_name().to_string(magic),
+//                maps.size(),
+//                stages.size(),
+//                layers.size());
+
+            for(auto i : Range<>(maps.size()))
+            {
+                bitm_cache.assign_atlas_data(mat.maps[i], shader.sotr.maps[i]);
+                mat.maps[i].uv_scale = maps[i].map.uv_scale;
+                mat.maps[i].bias     = maps[i].map.mip_bias;
+            }
 
             mat.material.material = materials::id::sotr;
             break;
@@ -1330,7 +1356,7 @@ struct ShaderCache
     }
 
     void populate_chicago_uv_anims(
-        materials::senv_micro&                          mat,
+        materials::shader_data&                          mat,
         Span<blam::shader::chicago::map_t const> const& maps,
         f32                                             t)
     {
@@ -1361,7 +1387,7 @@ struct ShaderCache
     }
 
     void update_uv_animations(
-        materials::senv_micro&  mat,
+        materials::shader_data&  mat,
         generation_idx_t const& shader_id,
         time_point const&       time)
     {
@@ -1661,8 +1687,12 @@ struct BSPCache
     blam::tag_index_view<V> index;
     blam::magic_data_t      magic;
 
-    Bytes                      vert_buffer, element_buffer, light_buffer;
-    semantic::mem_chunk<Vecf3> portal_buffer, portal_color_buffer;
+    Span<byte_t>           vert_buffer;
+    Span<byte_t>           light_buffer;
+    Span<blam::vert::face> element_buffer;
+
+    Span<Vecf3> portal_buffer, portal_color_buffer;
+
     u32 vert_ptr, element_ptr, light_ptr, portal_ptr, portal_color_ptr;
 
     virtual BSPItem predict_impl(blam::bsp::info const& bsp) override
@@ -1713,18 +1743,18 @@ struct BSPCache
         //            portal_color_ptr++;
         //        }
 
-        for(blam::bsp::cluster const& cluster :
-            section.clusters.data(bsp_magic).value())
+        auto bclusters = section.clusters.data(bsp_magic).value();
+        for(blam::bsp::cluster const& cluster : bclusters)
         {
             out.clusters.push_back({
                 .cluster = &cluster,
             });
             BSPItem::Cluster& it = out.clusters.back();
-            for(auto const& portal_idx :
-                cluster.portals.data(bsp_magic).value())
+            auto portal_idxs = cluster.portals.data(bsp_magic).value();
+            auto subclusters = cluster.sub_clusters.data(bsp_magic).value();
+            for(auto const& portal_idx : portal_idxs)
                 it.portals.push_back(&portals[portal_idx]);
-            for(blam::bsp::subcluster const& sub :
-                cluster.sub_clusters.data(bsp_magic).value())
+            for(blam::bsp::subcluster const& sub : subclusters)
             {
                 auto indices    = sub.indices.data(bsp_magic).value();
                 auto [min, max] = sub.bounds.points();
@@ -1760,138 +1790,275 @@ struct BSPCache
 
         /* TODO: Find link between indices in cluster and submeshes */
 
-        auto submeshes      = section.lightmaps.data(bsp_magic);
-        auto leaves         = section.leaves.data(bsp_magic);
+        //        auto submeshes      = section.lightmaps.data(bsp_magic);
+        auto surfaces_      = section.surfaces.data(bsp_magic);
+        auto lightmaps_     = section.lightmaps.data(bsp_magic);
+        auto leaves_        = section.leaves.data(bsp_magic);
         auto leaf_surfaces_ = section.leaf_surfaces.data(bsp_magic);
+        auto nodes_         = section.nodes.data(bsp_magic);
+        auto clusters_      = section.clusters.data(bsp_magic);
 
-        if(submeshes.has_error() || leaves.has_error()
-           || leaf_surfaces_.has_error())
+        if(surfaces_.has_error())
         {
             cDebug("Error finding submeshes");
             return {};
         }
 
-//        for(auto const& leaf : leaves.value())
-//        {
-//            cDebug("Leaf of cluster {}", leaf.cluster);
-//        }
-//        for(auto const& surface : leaf_surfaces_.value())
-//        {
-//            cDebug(
-//                "Leaf surface {} in node {}",
-//                surface.surface,
-//                surface.node);
-//        }
+        auto surfaces      = surfaces_.value();
+        auto lightmaps     = lightmaps_.value();
+        auto leaves        = leaves_.value();
+        auto leaf_surfaces = leaf_surfaces_.value();
+        auto nodes         = nodes_.value();
+        auto clusters      = clusters_.value();
 
-        for(auto const& group : submeshes.value())
+        std::map<i32, std::vector<blam::vert::face const*>> node_surfaces;
+
+        for(auto const& assoc : leaf_surfaces)
         {
-            auto meshes = group.materials.data(bsp_magic);
-            if(meshes.has_error())
+            if(assoc.surface > surfaces.size())
+                Throw(std::out_of_range("surface idx out of bounds"));
+            node_surfaces[assoc.node].push_back(&surfaces[assoc.surface]);
+        }
+
+        std::map<i32, std::vector<std::pair<u16, u16>>> cluster_surfaces;
+        u16                                             max_reference = 0;
+
+        for(auto const& leaf : leaves)
+        {
+            if(leaf.surface_reference_count < 1)
                 continue;
+            max_reference = std::max<u16>(
+                max_reference,
+                leaf.surface_reference_index + leaf.surface_reference_count);
+            cluster_surfaces[leaf.cluster].push_back(
+                {leaf.surface_reference_index, leaf.surface_reference_count});
+            //            cDebug(
+            //                "Leaf {} contains {}+{} surfaces in cluster {}",
+            //                &leaf - leaves.data(),
+            //                leaf.surface_reference_index,
+            //                leaf.surface_reference_count,
+            //                leaf.cluster);
+        }
+
+        cDebug("Max referenced surface index: {}", max_reference);
+        cDebug("Nodes with surfaces: {}", node_surfaces.size());
+        cDebug("Clusters with surfaces: {}", cluster_surfaces.size());
+
+        /* First, load up the vertices into the vertex buffer
+         * We leave references to where they are in the vertex_ranges map
+         * Later we want to point to them from each of the leaves
+         */
+        std::map<u64, std::pair<u16, u16>> vertex_ranges;
+        std::map<u64, std::pair<u16, u16>> index_ranges;
+        std::map<u64, std::pair<generation_idx_t, generation_idx_t>>
+            lightmap_refs;
+        for(auto const& lightmap : lightmaps)
+        {
+            auto light_bitm
+                = bitm_cache.predict(section.lightmap_, lightmap.lightmap_idx);
+
+            auto materials = lightmap.materials.data(bsp_magic).value();
             out.groups.emplace_back();
-            auto& group_data = out.groups.back();
-            group_data.group = &group;
-            for(auto const& mesh : meshes.value())
+            auto& group = out.groups.back();
+
+            for(blam::bsp::material const& mat : materials)
             {
-                group_data.meshes.emplace_back();
-                auto& mesh_data = group_data.meshes.back();
+                auto shader    = shader_cache.predict(mat.shader.to_plain());
+                auto vertex_id = lightmap.lightmap_idx
+                                 | (static_cast<u64>(mat.shader.tag_id) << 32);
+                auto vertices       = mat.vertices().data(bsp_magic).value();
+                auto light_vertices = mat.light_verts().data(bsp_magic).value();
 
-                /* Just dig up the textures, long process */
-                mesh_data.shader = shader_cache.predict(mesh.shader);
-                if(group.lightmap_idx != -1)
-                    mesh_data.light_bitm = bitm_cache.resolve(
-                        section.lightmap_, group.lightmap_idx);
+                vertex_ranges[vertex_id] = {vert_ptr, vertices.size()};
+                index_ranges[vertex_id]
+                    = {mat.surfaces.count, mat.surfaces.offset};
+                lightmap_refs[vertex_id] = {light_bitm, shader};
 
-                /* ... and moving on */
+                std::copy(
+                    vertices.begin(),
+                    vertices.end(),
+                    vert_buffer.begin() + vert_ptr);
+                std::copy(
+                    light_vertices.begin(),
+                    light_vertices.end(),
+                    light_buffer.begin() + light_ptr);
 
-                if(version == blam::version_t::xbox)
-                {
-                    auto indices
-                        = mesh.indices(section).data(bsp_magic).value();
-                    auto vertices
-                        = mesh.xbox_vertices().data(bsp_magic).value();
-                    auto light_verts
-                        = mesh.xbox_light_verts().data(bsp_magic).value();
-
-                    if(vertices.empty() || indices.empty())
-                    {
-                        group_data.meshes.erase(--group_data.meshes.end());
-                        continue;
-                    }
-
-                    using vertex_type = typename std::remove_const<
-                        typename decltype(vertices)::value_type>::type;
-                    using light_type = typename std::remove_const<
-                        typename decltype(light_verts)::value_type>::type;
-                    using element_type = typename std::remove_const<
-                        typename decltype(indices)::value_type>::type;
-
-                    mesh_data.mesh          = &mesh;
-                    mesh_data.draw.elements = {
-                        .count         = C_FCAST<u32>(indices.size()),
-                        .offset        = element_ptr,
-                        .vertex_offset = vert_ptr / sizeof(vertex_type),
+                auto indices = mat.indices(section).data(bsp_magic).value();
+                std::copy(
+                    indices.begin(),
+                    indices.end(),
+                    element_buffer.begin() + element_ptr);
+                group.meshes.emplace_back();
+                auto& mesh = group.meshes.back();
+                mesh.mesh  = &mat;
+                mesh.draw = {
+                    .elements = {
+                        .count         = static_cast<u32>(indices.size() * 3),
+                        .offset        = element_ptr * sizeof(blam::vert::face),
+                        .vertex_offset = vert_ptr / mat.vertex_size(),
                         .type          = semantic::TypeEnum::UShort,
-                    };
-                    mesh_data.draw.instances.count = 1;
+                    },
+                    .instances = {
+                        .count = 1,
+                    },
+                };
+                mesh.shader     = shader_cache.predict(mat.shader);
+                mesh.light_bitm = light_bitm;
 
-                    MemCpy(
-                        vertices,
-                        (*vert_buffer.at(vert_ptr)).template as<vertex_type>());
-                    MemCpy(
-                        indices,
-                        (*element_buffer.at(element_ptr))
-                            .template as<element_type>());
-                    MemCpy(
-                        light_verts,
-                        (*light_buffer.at(light_ptr))
-                            .template as<light_type>());
-
-                    vert_ptr += vertices.size_bytes();
-                    element_ptr += indices.size_bytes();
-                    light_ptr += light_verts.size_bytes();
-                } else
-                {
-                    auto indices
-                        = mesh.indices(section).data(bsp_magic).value();
-                    auto vertices = mesh.pc_vertices().data(bsp_magic).value();
-                    auto light_verts
-                        = mesh.pc_light_verts().data(bsp_magic).value();
-
-                    using vertex_type = typename std::remove_const<
-                        typename decltype(vertices)::value_type>::type;
-                    using light_type = typename std::remove_const<
-                        typename decltype(light_verts)::value_type>::type;
-                    using element_type = typename std::remove_const<
-                        typename decltype(indices)::value_type>::type;
-
-                    mesh_data.mesh          = &mesh;
-                    mesh_data.draw.elements = {
-                        .count         = C_FCAST<u32>(indices.size()),
-                        .offset        = element_ptr,
-                        .vertex_offset = vert_ptr / sizeof(vertex_type),
-                        .type          = semantic::TypeEnum::UShort,
-                    };
-                    mesh_data.draw.instances.count = 1;
-
-                    MemCpy(
-                        vertices,
-                        (*vert_buffer.at(vert_ptr)).template as<vertex_type>());
-                    MemCpy(
-                        indices,
-                        (*element_buffer.at(element_ptr))
-                            .template as<element_type>());
-                    MemCpy(
-                        light_verts,
-                        (*light_buffer.at(light_ptr))
-                            .template as<light_type>());
-
-                    vert_ptr += vertices.size_bytes();
-                    element_ptr += indices.size_bytes();
-                    light_ptr += light_verts.size_bytes();
-                }
+                vert_ptr += vertices.size_bytes();
+                light_ptr += light_vertices.size_bytes();
+                element_ptr += indices.size();
             }
         }
+
+        cDebug("Vertex ranges: {}", vertex_ranges);
+        cDebug("Index ranges: {}", index_ranges);
+
+        //        for(auto const& cluster : cluster_surfaces)
+        //        {
+        //            out.groups.emplace_back();
+        //            auto& group = out.groups.back();
+        //            cDebug("Cluster: {}", cluster.second);
+        //            for(auto const& surface : cluster.second)
+        //            {
+        //            }
+        //        }
+
+        //        for(auto const& leaf : leaves.value())
+        //        {
+        //            cDebug("Leaf of cluster {}", leaf.cluster);
+        //        }
+        //        for(auto const& surface : leaf_surfaces_.value())
+        //        {
+        //            cDebug(
+        //                "Leaf surface {} in node {}",
+        //                surface.surface,
+        //                surface.node);
+        //        }
+
+        //        for(auto const& group : submeshes.value())
+        //        {
+        //            auto meshes = group.materials.data(bsp_magic);
+        //            if(meshes.has_error())
+        //                continue;
+        //            out.groups.emplace_back();
+        //            auto& group_data = out.groups.back();
+        //            group_data.group = &group;
+        //            for(auto const& mesh : meshes.value())
+        //            {
+        //                group_data.meshes.emplace_back();
+        //                auto& mesh_data = group_data.meshes.back();
+
+        //                /* Just dig up the textures, long process */
+        //                mesh_data.shader = shader_cache.predict(mesh.shader);
+        //                if(group.lightmap_idx != -1)
+        //                    mesh_data.light_bitm = bitm_cache.resolve(
+        //                        section.lightmap_, group.lightmap_idx);
+
+        //                /* ... and moving on */
+
+        //                if(version == blam::version_t::xbox)
+        //                {
+        //                    auto indices
+        //                        =
+        //                        mesh.indices(section).data(bsp_magic).value();
+        //                    auto vertices
+        //                        =
+        //                        mesh.xbox_vertices().data(bsp_magic).value();
+        //                    auto light_verts
+        //                        =
+        //                        mesh.xbox_light_verts().data(bsp_magic).value();
+
+        //                    if(vertices.empty() || indices.empty())
+        //                    {
+        //                        group_data.meshes.erase(--group_data.meshes.end());
+        //                        continue;
+        //                    }
+
+        //                    using vertex_type = typename std::remove_const<
+        //                        typename
+        //                        decltype(vertices)::value_type>::type;
+        //                    using light_type = typename std::remove_const<
+        //                        typename
+        //                        decltype(light_verts)::value_type>::type;
+        //                    using element_type = typename std::remove_const<
+        //                        typename decltype(indices)::value_type>::type;
+
+        //                    mesh_data.mesh          = &mesh;
+        //                    mesh_data.draw.elements = {
+        //                        .count         = C_FCAST<u32>(indices.size()),
+        //                        .offset        = element_ptr,
+        //                        .vertex_offset = vert_ptr /
+        //                        sizeof(vertex_type), .type          =
+        //                        semantic::TypeEnum::UShort,
+        //                    };
+        //                    mesh_data.draw.instances.count = 1;
+
+        //                    MemCpy(
+        //                        vertices,
+        //                        (*vert_buffer.at(vert_ptr)).template
+        //                        as<vertex_type>());
+        //                    MemCpy(
+        //                        indices,
+        //                        (*element_buffer.at(element_ptr))
+        //                            .template as<element_type>());
+        //                    MemCpy(
+        //                        light_verts,
+        //                        (*light_buffer.at(light_ptr))
+        //                            .template as<light_type>());
+
+        //                    vert_ptr += vertices.size_bytes();
+        //                    element_ptr += indices.size_bytes();
+        //                    light_ptr += light_verts.size_bytes();
+        //                } else
+        //                {
+        //                    auto indices
+        //                        =
+        //                        mesh.indices(section).data(bsp_magic).value();
+        //                    auto vertices =
+        //                    mesh.pc_vertices().data(bsp_magic).value(); auto
+        //                    light_verts
+        //                        =
+        //                        mesh.pc_light_verts().data(bsp_magic).value();
+
+        //                    using vertex_type = typename std::remove_const<
+        //                        typename
+        //                        decltype(vertices)::value_type>::type;
+        //                    using light_type = typename std::remove_const<
+        //                        typename
+        //                        decltype(light_verts)::value_type>::type;
+        //                    using element_type = typename std::remove_const<
+        //                        typename decltype(indices)::value_type>::type;
+
+        //                    mesh_data.mesh          = &mesh;
+        //                    mesh_data.draw.elements = {
+        //                        .count         = C_FCAST<u32>(indices.size()),
+        //                        .offset        = element_ptr,
+        //                        .vertex_offset = vert_ptr /
+        //                        sizeof(vertex_type), .type          =
+        //                        semantic::TypeEnum::UShort,
+        //                    };
+        //                    mesh_data.draw.instances.count = 1;
+
+        //                    MemCpy(
+        //                        vertices,
+        //                        (*vert_buffer.at(vert_ptr)).template
+        //                        as<vertex_type>());
+        //                    MemCpy(
+        //                        indices,
+        //                        (*element_buffer.at(element_ptr))
+        //                            .template as<element_type>());
+        //                    MemCpy(
+        //                        light_verts,
+        //                        (*light_buffer.at(light_ptr))
+        //                            .template as<light_type>());
+
+        //                    vert_ptr += vertices.size_bytes();
+        //                    element_ptr += indices.size_bytes();
+        //                    light_ptr += light_verts.size_bytes();
+        //                }
+        //            }
+        //        }
 
         return out;
     }

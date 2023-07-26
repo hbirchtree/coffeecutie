@@ -4,6 +4,8 @@
 #include <coffee/core/CProfiling>
 #include <coffee/core/internal_state.h>
 
+#include <peripherals/stl/range.h>
+
 #include <coffee/core/CDebug>
 
 #define RQ_API "runtime_queue::"
@@ -826,6 +828,10 @@ u64 runtime_queue::enqueue(std::unique_ptr<dependent_task_invoker>&& task)
 void runtime_queue::sortTasks()
 {
     std::sort(m_tasks.begin(), m_tasks.end());
+}
+
+dependent_task_invoker::~dependent_task_invoker()
+{
 }
 
 } // namespace rq

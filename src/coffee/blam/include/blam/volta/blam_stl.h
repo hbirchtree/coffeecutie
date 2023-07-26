@@ -4,6 +4,7 @@
 #include "blam_structures.h"
 
 #include <algorithm>
+#include <coffee/core/task_queue/task.h>
 #include <corez/zlib.h>
 #include <functional>
 #include <iterator>
@@ -14,11 +15,46 @@ namespace blam {
 template<typename Ver>
 struct map_container
 {
+    using result_type = result<map_container, map_load_error>;
+
+    static void null_progress(std::string_view /*label*/, i16 /*progress*/)
+    {
+    }
+
+    STATICINLINE auto from_bytes_async(
+        rq::runtime_queue*                           queue,
+        semantic::BytesConst const&                  map,
+        Ver                                          ver,
+        std::function<void(std::string_view, i16)>&& progress_cb
+        = null_progress)
+    {
+        auto task = rq::dependent_task<void, result_type>::CreateSource(
+            [map = map.view, ver, progress = std::move(progress_cb)]() mutable {
+                return from_bytes(
+                    semantic::BytesConst::ofContainer(map),
+                    ver,
+                    std::move(progress));
+            });
+        auto fut = task->output.get_future();
+        auto res = rq::runtime_queue::Queue(queue, std::move(task));
+        if(res.has_error())
+        {
+            decltype(task->output) error;
+            error.set_value(stl_types::failure(map_load_error::failed_async_launch));
+            return error.get_future();
+        }
+        return fut;
+    }
+
     STATICINLINE result<map_container, map_load_error> from_bytes(
-        semantic::BytesConst const& map, Ver ver)
+        semantic::BytesConst const&                  map,
+        Ver                                          ver,
+        std::function<void(std::string_view, i16)>&& progress = null_progress)
     {
         if(map.size < sizeof(file_header_t))
             return map_load_error::map_file_too_small;
+
+        progress("Reading map header", 0);
 
         file_header_t const* header
             = file_header_t::from_data(map, ver).value();
@@ -27,6 +63,7 @@ struct map_container
         {
             if(!header)
                 return map_load_error::not_a_map;
+            progress("Reading tag index", 100);
             auto const* tags_index = &tag_index_t<Ver>::from_header(header);
             return map_container{
                 .map   = header,
@@ -36,6 +73,7 @@ struct map_container
             };
         }
 
+        progress("Preparing map decompression", 10);
         semantic::mem_chunk<char> decompressed;
         using namespace libc_types::size_literals;
         using zlib = ::zlib::codec;
@@ -44,6 +82,7 @@ struct map_container
             sizeof(file_header_t),
             (map.size - sizeof(file_header_t) - header->trailing_space));
 
+        progress("Copying file header to memory", 15);
         /* Time to decompress! */
         decompressed
             = semantic::mem_chunk<char>::withSize(sizeof(file_header_t));
@@ -51,6 +90,7 @@ struct map_container
         auto map_data = std::move(decompressed.allocation);
         map_data.reserve(header->decomp_len);
 
+        progress("Decompressing map data", 25);
         auto err = zlib::decompress(
             compressed_segment.view,
             map_data,
@@ -63,7 +103,10 @@ struct map_container
         if(!header)
             return map_load_error::not_a_map;
 
+        progress("Reading tag index", 100);
         auto const* tags_index = &tag_index_t<Ver>::from_header(header);
+
+        progress("Complete!", -1);
 
         return map_container{
             .map          = header,

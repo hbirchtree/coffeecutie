@@ -44,7 +44,7 @@ struct AppLoader : AppService<AppLoader>
             if(e.template service<T>())
                 return;
 
-            auto& service = T::template register_service<T>(e);
+            T::template register_service<T>(e);
 
             C_ERROR_CHECK(ec);
         }

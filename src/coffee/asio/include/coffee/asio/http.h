@@ -5,7 +5,7 @@
 #include <peripherals/libc/types.h>
 #include <peripherals/semantic/chunk.h>
 #include <peripherals/stl/string_casting.h>
-#include <peripherals/stl/string_ops.h>
+#include <peripherals/stl/string/trim.h>
 
 #if !defined(COFFEE_WINDOWS) && !defined(COFFEE_GEKKO)
 #define COFFEE_HTTP_MULTIPART
@@ -252,6 +252,9 @@ inline plain_string version(version_t v)
         return "HTTP/1.1";
     case version_t::v20:
         return "HTTP/2.0";
+
+    default:
+        throw std::out_of_range("http version not mapped");
     }
 }
 
@@ -296,6 +299,9 @@ inline plain_string field(header_field f)
 
     case header_field::none:
         return "";
+
+    default:
+        throw std::out_of_range("header field not mapped");
     }
 }
 
@@ -323,6 +329,9 @@ inline plain_string content_type(http::content_type type)
         return "image/*";
     case http::content_type::video:
         return "video/*";
+
+    default:
+        throw std::out_of_range("content type not mapped");
     }
 }
 
@@ -346,6 +355,9 @@ inline plain_string method(method_t meth)
         return "PUT";
     case http::method_t::update:
         return "UPDATE";
+
+    default:
+        throw std::out_of_range("http method not mapped");
     }
 }
 

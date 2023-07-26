@@ -45,6 +45,10 @@ void create_resources(compo::EntityContainer& e)
 
     gfx::api&      api       = e.subsystem_cast<gfx::system>();
     BlamResources& resources = e.register_subsystem_inplace<BlamResources>();
+
+    resources.background_worker
+        = rq::runtime_queue::CreateNewThreadQueue("Background Worker").value();
+
     e.register_subsystem_inplace<PostProcessParameters>();
 
     auto access = RSCA::ReadWrite | RSCA::Persistent | RSCA::Immutable;
@@ -206,12 +210,12 @@ void create_resources(compo::EntityContainer& e)
         debug_draw.components = {
             compo::type_hash_v<DebugDraw>(),
         };
-        auto x_     = e.create_entity(debug_draw);
-        auto y_     = e.create_entity(debug_draw);
-        auto z_     = e.create_entity(debug_draw);
-        auto& x = x_.get<DebugDraw>();
-        auto& y = y_.get<DebugDraw>();
-        auto& z = z_.get<DebugDraw>();
+        auto  x_    = e.create_entity(debug_draw);
+        auto  y_    = e.create_entity(debug_draw);
+        auto  z_    = e.create_entity(debug_draw);
+        auto& x     = x_.get<DebugDraw>();
+        auto& y     = y_.get<DebugDraw>();
+        auto& z     = z_.get<DebugDraw>();
         x.color_ptr = 0;
         x.data = gfx::draw_command::data_t{
             .arrays = {
@@ -234,7 +238,7 @@ void create_resources(compo::EntityContainer& e)
             },
         };
 
-        auto& camera = e.create_entity(debug_draw).get<DebugDraw>();
+        auto& camera     = e.create_entity(debug_draw).get<DebugDraw>();
         camera.color_ptr = 3;
         camera.data = gfx::draw_command::data_t{
             .arrays = {
@@ -542,12 +546,12 @@ void create_shaders(compo::EntityContainer& e)
     auto const& features = gfx.feature_info();
     auto const& bugs     = gfx.workarounds().bugs;
 
-    const bool use_spv  = features.program.spirv && false;
+    const bool use_spv  = features.program.spirv;
     const bool use_uber = features.texture.cube_array && features.buffer.ssbo
                           && !lowspec_hardware && !bugs.adreno_3xx;
     const bool use_uber_lite = features.buffer.ubo && !bugs.adreno_3xx;
 
-    if(use_spv)
+    if(use_spv && false)
     {
         create_spv_shaders(gfx, resources);
         return;

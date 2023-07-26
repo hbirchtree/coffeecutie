@@ -1,6 +1,7 @@
 #include <coffee/graphics/apis/gleam/rhi_texture.h>
 
 #include <functional>
+#include <peripherals/stl/range.h>
 
 #if defined(GLEAM_ENABLE_SOFTWARE_BCN)
 #define BCDEC_IMPLEMENTATION

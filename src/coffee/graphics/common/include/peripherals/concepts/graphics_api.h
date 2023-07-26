@@ -3,6 +3,8 @@
 #include <concepts>
 #include <peripherals/concepts/span.h>
 #include <peripherals/concepts/vector.h>
+#include <peripherals/semantic/enum/rsca.h>
+#include <peripherals/semantic/chunk.h>
 #include <peripherals/stl/functional_types.h>
 #include <peripherals/typing/enum/graphics/buffer_types.h>
 #include <peripherals/typing/enum/graphics/shader_stage.h>

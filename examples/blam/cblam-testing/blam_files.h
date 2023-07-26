@@ -1,6 +1,7 @@
 #pragma once
 
 #include <blam/volta/blam_stl.h>
+#include <coffee/components/components.h>
 #include <coffee/core/files/cfiles.h>
 #include <url/url.h>
 

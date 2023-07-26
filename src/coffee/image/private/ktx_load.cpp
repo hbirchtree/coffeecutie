@@ -5,6 +5,8 @@
 #include <ktx.h>
 #include <ktxvulkan.h>
 
+#include <peripherals/stl/range.h>
+
 void ktxDeleter::operator()(ktxTexture* ptr)
 {
     ktxTexture_Destroy(ptr);

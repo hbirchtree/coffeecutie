@@ -1,6 +1,7 @@
 #include <blam/volta/blam_bitm.h>
 
 #include <glw/texture_formats.h>
+#include <peripherals/stl/range.h>
 
 namespace blam::bitm {
 

@@ -1,0 +1,29 @@
+set(CMAKE_SYSTEM_NAME Baremetal)
+set(CMAKE_SYSTEM_VERSION 1)
+set(CMAKE_SYSTEM_PROCESSOR powerpc)
+set(CMAKE_CROSSCOMPILING 1)
+set(CMAKE_EXECUTABLE_SUFFIX "elf")
+
+set(GAMECUBE ON CACHE BOOL "")
+add_definitions(
+    )
+
+include(${CMAKE_CURRENT_LIST_DIR}/common/toolchain-prefix.cmake)
+
+set(CMAKE_SYSROOT ${TOOLCHAIN_ROOT}/${TOOLCHAIN_PREFIX} CACHE PATH "")
+
+include_directories(AFTER SYSTEM
+    ${TOOLCHAIN_ROOT}/${TOOLCHAIN_PREFIX}/sys-include
+    ${TOOLCHAIN_ROOT}/${TOOLCHAIN_PREFIX}/include
+    )
+
+set(CMAKE_C_COMPILER "${TOOLCHAIN_ROOT}/bin/${TOOLCHAIN_TOOL}gcc")
+set(CMAKE_CXX_COMPILER "${TOOLCHAIN_ROOT}/bin/${TOOLCHAIN_TOOL}g++")
+
+set(CMAKE_C_FLAGS 
+    "-mogc -mcpu=750 -meabi -mhard-float -DHW_DOL -DBIGENDIAN -DGEKKO -D__GEKKO__ -D_HAVE_LONG_DOUBLE -D_LDBL_EQ_DBL"
+    CACHE STRING "")
+set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS}" CACHE STRING "")
+set(CMAKE_EXE_LINKER_FLAGS "-L${TOOLCHAIN_ROOT}/${TOOLCHAIN_PREFIX}/lib -lnosys -lsysbase -lm" CACHE STRING "")
+
+include(${CMAKE_CURRENT_LIST_DIR}/common/configure-paths.cmake)

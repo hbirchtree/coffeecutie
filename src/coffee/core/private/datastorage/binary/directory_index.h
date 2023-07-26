@@ -1,5 +1,8 @@
 #pragma once
 
+#include <deque>
+#include <list>
+
 #include <coffee/core/CEnvironment>
 #include <coffee/core/CMath>
 #include <coffee/core/CProfiling>

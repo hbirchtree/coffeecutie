@@ -5,7 +5,7 @@
 #include <peripherals/identify/compiler/variable_attributes.h>
 #include <peripherals/libc/types.h>
 #include <peripherals/semantic/chunk.h>
-#include <peripherals/stl/string_ops.h>
+#include <peripherals/stl/string/hex.h>
 
 // clang-format off
 
@@ -135,7 +135,7 @@ namespace detail
 
     inline std::string error_to_hex(auto error)
     {
-        return stl_types::str::print::pointerify(error);
+        return stl_types::str::fmt::pointerify(error);
     }
 
     void error_check(std::string_view cmd_name);

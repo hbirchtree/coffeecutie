@@ -172,13 +172,14 @@ struct draw_command
     {
         struct
         {
-            u32 count{0}, offset{0};
+            u32 count{0}; /*!< Count of vertices */
+            u32 offset{0}; /*!< Offset in vertices */
         } arrays{};
         struct
         {
-            u32 count{0};
-            u64 offset{0};
-            u64 vertex_offset{0};
+            u32 count{0}; /*!< Count of elements */
+            u64 offset{0}; /*!< Offset in bytes */
+            u64 vertex_offset{0}; /*!< Offset in vertices */
 
             semantic::TypeEnum type{semantic::TypeEnum::UInt};
         } elements{};

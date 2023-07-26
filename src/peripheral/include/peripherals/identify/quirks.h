@@ -195,16 +195,6 @@
 
 /*
  *
- * Library-bound switches
- *
- */
-
-#if defined(COFFEE_ENABLE_SSL)
-#define ASIO_USE_SSL
-#endif
-
-/*
- *
  * Profiler switches
  *
  */

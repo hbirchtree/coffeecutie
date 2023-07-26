@@ -7,6 +7,7 @@
 #include <coffee/core/CProfiling>
 #include <coffee/core/debug/logging.h>
 
+#include <peripherals/stl/range.h>
 #include <peripherals/stl/type_list.h>
 #include <platforms/stacktrace.h>
 
@@ -125,12 +126,12 @@ FORCEDINLINE EntityContainer::visitor_graph create_visitor_graph(
     }
 
     /* Expand neighbor matrix completely */
-    for(auto i : Range<>(neigh_size))
+    for(auto i : stl_types::Range<>(neigh_size))
         expand_neighbor_matrix(neighbor_matrix, neigh_size, i);
 
     /* De-duplicate neighbor matrix rows to create task queues */
     std::set<std::vector<bool>> unique_rows;
-    for(auto i : Range<>(neigh_size))
+    for(auto i : stl_types::Range<>(neigh_size))
     {
         unique_rows.insert(std::vector<bool>(
             neighbor_matrix.begin() + static_cast<ptroff>(neigh_size * i),

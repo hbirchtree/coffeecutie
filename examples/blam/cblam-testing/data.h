@@ -80,11 +80,12 @@ struct BlamResources : compo::SubsystemBase
 {
     using type = BlamResources;
 
-    std::vector<gfx::draw_command::data_t> bsps;
-    std::shared_ptr<gfx::buffer_t>         bsp_buf;
-    std::shared_ptr<gfx::buffer_t>         bsp_index;
-    std::shared_ptr<gfx::vertex_array_t>   bsp_attr;
-    std::shared_ptr<gfx::buffer_t>         bsp_light_buf;
+    rq::runtime_queue* background_worker{nullptr};
+
+    std::shared_ptr<gfx::buffer_t>       bsp_buf;
+    std::shared_ptr<gfx::buffer_t>       bsp_index;
+    std::shared_ptr<gfx::vertex_array_t> bsp_attr;
+    std::shared_ptr<gfx::buffer_t>       bsp_light_buf;
 
     std::shared_ptr<gfx::program_t> bsp_pipeline;
     std::shared_ptr<gfx::program_t> model_pipeline;
@@ -100,7 +101,6 @@ struct BlamResources : compo::SubsystemBase
     std::shared_ptr<gfx::vertex_array_t> debug_attr;
     std::shared_ptr<gfx::program_t>      debug_lines_pipeline;
 
-    std::vector<Matf4>             model_mats;
     std::shared_ptr<gfx::buffer_t> model_matrix_store;
     std::shared_ptr<gfx::buffer_t> material_store;
     std::shared_ptr<gfx::buffer_t> world_store;
@@ -135,4 +135,12 @@ struct RenderingParameters : compo::SubsystemBase
     bool debug_portals{false};
     bool debug_clusters{false};
     bool debug_triggers{false};
+};
+
+struct LoadingStatus : compo::SubsystemBase
+{
+    using type = LoadingStatus;
+
+    std::string     status;
+    libc_types::i16 progress;
 };

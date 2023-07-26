@@ -5,6 +5,7 @@
 #define MAGIC_ENUM_RANGE_MAX 0x599
 #include <peripherals/stl/magic_enum.hpp>
 
+#include <peripherals/stl/string/hex.h>
 #include <coffee/core/debug/formatting.h>
 
 namespace gl::detail {
@@ -29,7 +30,7 @@ void error_check(std::string_view cmd_name)
             if(!error_name.empty())
                 out.insert(out.end(), error_name.begin(), error_name.end());
             else
-                out.append(stl_types::str::print::pointerify(
+                out.append(stl_types::str::fmt::pointerify(
                     static_cast<libc_types::u32>(error)));
             if constexpr(compile_info::platform::is_emscripten)
                 return;

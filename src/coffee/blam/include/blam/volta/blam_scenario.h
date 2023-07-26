@@ -10,6 +10,8 @@
 #include "blam_vertex.h"
 #include "hsc/blam_bytecode.h"
 
+#include <peripherals/stl/range.h>
+
 namespace blam::scn {
 
 template<typename T>
@@ -103,7 +105,7 @@ struct equipment : item
 {
 };
 
-struct object_spawn
+struct alignas(4) object_spawn
 {
     enum class spawn_flags : u16
     {
@@ -125,6 +127,7 @@ struct object_spawn
     Vecf3       pos;
     Vecf3       rot;
     bsp_flags_t bsp_flags;
+    u16         padding;
 };
 
 struct biped_spawn : object_spawn
@@ -157,7 +160,7 @@ struct equip_spawn : object_spawn
         does_accelerate   = 0x4, /* Not affected by explosions */
     };
     equip_flags_t equip_flags;
-    u32           padding2;
+    u16           padding;
 };
 static_assert(sizeof(equip_spawn) == 40);
 
@@ -212,8 +215,9 @@ struct light_fixture_spawn : object_spawn
     f32                 falloff_angle;
     f32                 cutoff_angle;
 
-    u32 padding[6];
+    u32 padding[5];
 };
+static_assert(offsetof(light_fixture_spawn, power_group) == 36);
 static_assert(sizeof(light_fixture_spawn) == 88);
 
 struct palette

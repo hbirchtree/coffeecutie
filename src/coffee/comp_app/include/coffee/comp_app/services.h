@@ -621,7 +621,7 @@ struct AppService : detail::SubsystemBase
     static InternalType& register_service(
         detail::EntityContainer& container, Args... args)
     {
-        using tag_type = AppServiceTraits<ExposedType>;
+//        using tag_type = AppServiceTraits<ExposedType>;
 
         auto& subsys
             = container.register_subsystem_inplace<ExposedType, InternalType>(

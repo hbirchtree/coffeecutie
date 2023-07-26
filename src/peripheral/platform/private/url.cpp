@@ -6,6 +6,8 @@
 #include <peripherals/stl/regex.h>
 #include <peripherals/stl/stlstring_ops.h>
 #include <peripherals/stl/string_casting.h>
+#include <peripherals/stl/string/hex.h>
+#include <peripherals/stl/string/replace.h>
 #include <platforms/environment.h>
 #include <platforms/file.h>
 #include <platforms/pimpl_state.h>
@@ -607,7 +609,7 @@ std::string to_string(const Path& path)
 std::string to_string(const Url& url)
 {
     return "url(" + url.internUrl + "," +
-           str::print::pointerify(C_CAST<u32>(url.flags)) + ")";
+           stl_types::str::fmt::pointerify(C_CAST<u32>(url.flags)) + ")";
 }
 } // namespace Strings
 } // namespace Coffee

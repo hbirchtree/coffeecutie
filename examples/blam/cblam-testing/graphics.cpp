@@ -69,11 +69,9 @@ static bool load_maps(
     return false;
 }
 
-static void reinit_map(
+static void init_map(
     compo::EntityContainer& e, BlamData<halo_version>& data, BlamFiles* files)
 {
-    ProfContext _;
-
     auto& bitmaps = e.subsystem_cast<BitmapCache<halo_version>>();
     auto& bsps    = e.subsystem_cast<BSPCache<halo_version>>();
     auto& models  = e.subsystem_cast<ModelCache<halo_version>>();
@@ -90,9 +88,6 @@ static void reinit_map(
         num++;
     cDebug("Number of GC entities: {}", num);
 
-    data.map_container = blam::map_container<halo_version>::from_bytes(
-                             *files->map_file, halo_version_v)
-                             .value();
     files->bitm_magic
         = blam::magic_data_t(C_OCAST<BytesConst>(*files->bitmap_file).view);
     files->map_magic = data.map_container.magic;
@@ -141,6 +136,46 @@ static void reinit_map(
     files->last_updated = e.relative_timestamp();
 }
 
+static void open_map(
+    compo::EntityContainer& e, BlamData<halo_version>& data, BlamFiles* files)
+{
+    ProfContext _;
+
+    BlamResources& resources = e.subsystem_cast<BlamResources>();
+
+    using result_type = blam::map_container<halo_version>::result_type;
+
+    LoadingStatus& loading = e.subsystem_cast<LoadingStatus>();
+
+    std::function<void(std::string_view, i16)> progress_cb =
+            [&loading](std::string_view status, i16 progress) {
+        loading.status   = std::string(status.begin(), status.end());
+        loading.progress = progress;
+        cDebug("Map loading status: {}%: {}", progress, status);
+    };
+
+    auto map_data = blam::map_container<halo_version>::from_bytes_async(
+        resources.background_worker,
+        *files->map_file,
+        halo_version_v,
+        rq::runtime_queue::BindToQueue(progress_cb));
+
+    [[maybe_unused]] auto res = rq::runtime_queue::Queue(
+        rq::runtime_queue::GetCurrentQueue().value(),
+        rq::dependent_task<result_type, void>::CreateSink(
+            std::move(map_data), [&e, &data, files](result_type* map) {
+                if(map->has_error())
+                {
+                    cWarning(
+                        "Failed to load map: {}",
+                        magic_enum::enum_name(map->error()));
+                    return;
+                }
+                data.map_container = std::move(map->value());
+                init_map(e, data, files);
+            }));
+}
+
 i32 blam_main(i32, cstring_w*)
 {
     rq::runtime_queue::CreateNewQueue("Blam Graphics!").assume_value();
@@ -186,8 +221,8 @@ i32 blam_main(i32, cstring_w*)
             auto  load_error = gfx.load(
                 //
                 //                gfx::emulation::webgl::desktop()
-//                gfx::emulation::qcom::adreno_320()
-//                gfx::emulation::arm::mali_g710()
+                //                gfx::emulation::qcom::adreno_320()
+                //                gfx::emulation::arm::mali_g710()
                 // gfx::emulation::amd::rx560_pro()
                 //
             );
@@ -226,17 +261,20 @@ i32 blam_main(i32, cstring_w*)
             e.register_component_inplace<TriggerVolume>();
             e.register_component_inplace<Light>();
 
+            e.register_component_inplace<DepthInfo>();
+
             e.register_subsystem_inplace<comp_app::FrameTag>();
 
             install_imgui_widgets(e, data, [&e, &data](Url const& map) {
                 auto& files = e.subsystem_cast<BlamFiles>();
                 load_maps(files, map, std::nullopt);
-                reinit_map(e, data, &files);
+                open_map(e, data, &files);
             });
 
             auto& blam_files = e.register_subsystem_inplace<BlamFiles>();
             auto& params = e.register_subsystem_inplace<RenderingParameters>();
             params.mipmap_bias = 0;
+            e.register_subsystem_inplace<LoadingStatus>();
 
             {
                 auto& bitm_cache
@@ -313,7 +351,7 @@ i32 blam_main(i32, cstring_w*)
                                      : std::nullopt,
                 map_dir);
             if(map_filename.valid())
-                reinit_map(e, data, &blam_files);
+                open_map(e, data, &blam_files);
         },
         [](EntityContainer& e,
            BlamData<halo_version>&,

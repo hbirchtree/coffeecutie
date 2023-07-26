@@ -5,6 +5,8 @@
 #include <coffee/core/CEnvironment>
 #include <coffee/core/CFiles>
 #include <peripherals/libc/signals.h>
+#include <peripherals/stl/string/hex.h>
+#include <peripherals/stl/string_ops.h>
 
 #if defined(COFFEE_ENABLE_SSL)
 #include <coffee/ssl/hmac.h>

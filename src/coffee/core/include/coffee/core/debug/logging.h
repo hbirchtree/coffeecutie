@@ -89,7 +89,7 @@ requires compile_info::platform::is_windows void log(
     UNUSED_PARAM(std::string_view, formatted),
     semantic::debug::Severity)
 {
-    auto formatted_w = stl_types::str::encode::to<wchar_t>(formatted);
+    auto formatted_w = std::basic_string<wchar_t>(formatted.begin(), formatted.end());
     if(platform::env::var("VisualStudioVersion").has_value())
 #if defined(COFFEE_WINDOWS)
         OutputDebugStringW(formatted_w.c_str());

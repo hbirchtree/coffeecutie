@@ -1,0 +1,12 @@
+set ( BUILD_ASIO            OFF CACHE BOOL "" )
+set ( BUILD_AUDIO           OFF CACHE BOOL "" )
+set ( BUILD_COMPRESS_ZLIB   OFF CACHE BOOL "" )
+set ( BUILD_GLEAM           OFF CACHE BOOL "" )
+set ( BUILD_GRAPHICS_COMMON OFF CACHE BOOL "" )
+set ( BUILD_IMGUI           OFF CACHE BOOL "" )
+set ( BUILD_OPENGL          OFF CACHE BOOL "" )
+set ( BUILD_SDL2            OFF CACHE BOOL "" )
+
+set ( BUILD_BLAM            ON CACHE BOOL "" )
+set ( BUILD_GX              ON CACHE BOOL "" )
+set ( BUILD_LIBOGC          ON CACHE BOOL "" )

@@ -10,11 +10,6 @@
 
 namespace libc_types {
 
-#if defined(COFFEE_PLAIN_INT_TYPES)
-using int32_t  = int;
-using uint32_t = unsigned int;
-#endif
-
 using i8  = int8_t;
 using i16 = int16_t;
 using i32 = int32_t;

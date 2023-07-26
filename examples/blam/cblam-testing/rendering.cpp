@@ -3,6 +3,7 @@
 #include <coffee/graphics/apis/gleam/rhi_submit.h>
 #include <coffee/graphics/apis/gleam/rhi_system.h>
 #include <peripherals/stl/tuple_hash.h>
+#include <peripherals/stl/iterator_slice.h>
 
 #include "caching.h"
 #include "data.h"
@@ -60,7 +61,7 @@ struct MeshRenderer : Components::RestrictedSubsystem<
 
         gfx::buffer_slice_t         material_buffer;
         gfx::buffer_slice_t         matrix_buffer;
-        Span<materials::senv_micro> material_mapping;
+        Span<materials::shader_data> material_mapping;
         Span<Matf4>                 matrix_mapping;
 
         model_tracker_t insert_draw(draw_data_t const& draw)
@@ -104,7 +105,7 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             draws.emplace_back();
         }
 
-        inline materials::senv_micro& material_of(size_t idx)
+        inline materials::shader_data& material_of(size_t idx)
         {
             if(idx >= material_mapping.size())
                 Throw(std::out_of_range("material index out of range"));
@@ -117,11 +118,11 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             for(auto const& bucket : draws)
                 for(auto const& draw : bucket)
                     total += draw.instances.count;
-            return total * sizeof(materials::senv_micro);
+            return total * sizeof(materials::shader_data);
         }
         inline size_t required_matrix_storage() const
         {
-            return (required_storage() / sizeof(materials::senv_micro))
+            return (required_storage() / sizeof(materials::shader_data))
                    * sizeof(Matf4);
         }
     };
@@ -327,7 +328,7 @@ struct MeshRenderer : Components::RestrictedSubsystem<
                 typing::graphics::ShaderStage::Vertex,
                 {"MaterialProperties"sv, 1},
                 pass.material_buffer,
-                sizeof(materials::senv_micro),
+                sizeof(materials::shader_data),
             },
             gfx::buffer_definition_t{
                 typing::graphics::ShaderStage::Fragment,
@@ -384,7 +385,7 @@ struct MeshRenderer : Components::RestrictedSubsystem<
                 typing::graphics::ShaderStage::Fragment,
                 {"MaterialProperties"sv, 1},
                 pass.material_buffer,
-                sizeof(materials::senv_micro),
+                sizeof(materials::shader_data),
             },
             gfx::buffer_definition_t{
                 typing::graphics::ShaderStage::Fragment,
@@ -577,7 +578,7 @@ struct MeshRenderer : Components::RestrictedSubsystem<
                 materials_ptr, material_size);
             pass.material_mapping
                 = pass.material_buffer
-                      .template buffer_cast<materials::senv_micro>();
+                      .template buffer_cast<materials::shader_data>();
             materials_ptr += material_size;
         }
 
@@ -663,7 +664,7 @@ struct MeshRenderer : Components::RestrictedSubsystem<
                 matrix_ptr, matrix_size);
             pass.material_mapping
                 = pass.material_buffer
-                      .template buffer_cast<materials::senv_micro>();
+                      .template buffer_cast<materials::shader_data>();
             pass.matrix_mapping
                 = pass.matrix_buffer.template buffer_cast<Matf4>();
             matrix_ptr += matrix_size;
@@ -702,13 +703,13 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         {
             pass.material_mapping
                 = pass.material_buffer
-                      .template buffer_cast<materials::senv_micro>();
+                      .template buffer_cast<materials::shader_data>();
         }
         for(Pass& pass : m_model)
         {
             pass.material_mapping
                 = pass.material_buffer
-                      .template buffer_cast<materials::senv_micro>();
+                      .template buffer_cast<materials::shader_data>();
         }
 
         RenderingParameters* rendering_params;
@@ -749,13 +750,13 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         }
     }
 
-    materials::senv_micro& material_of(SubModel& sub, size_t i)
+    materials::shader_data& material_of(SubModel& sub, size_t i)
     {
         Pass& pass = m_model[sub.current_pass];
         return pass.material_of(i);
     }
 
-    materials::senv_micro& material_of(BspReference& bsp, size_t i)
+    materials::shader_data& material_of(BspReference& bsp, size_t i)
     {
         Pass& pass = m_bsp[bsp.current_pass];
         return pass.material_of(i);
@@ -764,7 +765,7 @@ struct MeshRenderer : Components::RestrictedSubsystem<
     void populate_bsp_material(BspReference& ref, size_t i = 0)
     {
         Pass&                  pass     = m_bsp[ref.current_pass];
-        materials::senv_micro& material = pass.material_of(i);
+        materials::shader_data& material = pass.material_of(i);
         shader_cache.populate_material(material, ref.shader, Vecf2{1, 1});
         bitm_cache.assign_atlas_data(material.lightmap, ref.lightmap);
     }
@@ -773,13 +774,13 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         SubModel const& sub, ModelItem<Version> const& model, size_t i = 0)
     {
         Pass&                  pass     = m_model[sub.current_pass];
-        materials::senv_micro& material = pass.material_of(i);
+        materials::shader_data& material = pass.material_of(i);
         shader_cache.populate_material(
             material, sub.shader, model.header->uvscale);
     }
 
     void update_animations(
-        materials::senv_micro&  material,
+        materials::shader_data&  material,
         generation_idx_t const& shader,
         time_point const&       time)
     {
@@ -979,6 +980,128 @@ void main()
     offscreen_sampler->alloc();
 }
 
+void LoadingScreen::start_restricted(Proxy&, const time_point&)
+{
+}
+
+void LoadingScreen::end_restricted(Proxy& e, const time_point& time)
+{
+    gfx::system* api;
+    ScreenClear* screen_clear;
+    LoadingStatus* status;
+    e.subsystem(api);
+    e.subsystem(screen_clear);
+    e.subsystem(status);
+
+    if(!loading_program)
+        load_resources(*api);
+
+    if(status->progress < 0)
+        return;
+
+    Matf4 transform = glm::translate(
+        glm::scale(glm::identity<Matf4>(), glm::vec3(0.2f)),
+        glm::vec3(4, -5, 0));
+
+    f32 timef = std::chrono::duration_cast<stl_types::Chrono::seconds_float>(
+                    time.time_since_epoch())
+                    .count();
+    timef     = std::fmod(timef, 10.f) / 10.f;
+    f32 start = timef;
+    f32 end   = std::fmod(timef + 0.2f, 1.f);
+
+    api->submit(gfx::draw_command{
+        .program = loading_program,
+        .vertices = screen_clear->quad_vao,
+        .call = {
+            .indexed = false,
+            .mode = gfx::drawing::primitive::triangle_fan,
+        },
+        .data = {{ .arrays = {.count = 4} }},
+    },
+    gfx::make_sampler_list(gfx::sampler_definition_t{
+        typing::graphics::ShaderStage::Fragment,
+        {"source"sv},
+        loading_sampler,
+    }),
+    gfx::make_uniform_list(
+        typing::graphics::ShaderStage::Vertex,
+        gfx::uniform_pair{{"transform"sv}, semantic::SpanOne(transform)}),
+    gfx::make_uniform_list(
+        typing::graphics::ShaderStage::Fragment,
+        gfx::uniform_pair{{"range_start"sv}, semantic::SpanOne(start)},
+        gfx::uniform_pair{{"range_end"sv}, semantic::SpanOne(end)})
+    );
+}
+
+void LoadingScreen::load_resources(gleam::system& api)
+{
+    constexpr std::string_view vertex_shader   = R"(#version 100
+precision highp float;
+attribute vec2 pos;
+attribute vec2 tex;
+varying vec2 in_tex;
+uniform mat4 transform;
+void main()
+{
+    in_tex = tex;
+    gl_Position = transform * vec4(pos.x, pos.y, 0.3, 1.0);
+}
+)";
+    constexpr std::string_view fragment_shader = R"(#version 100
+precision highp float;
+precision highp sampler2D;
+varying vec2 in_tex;
+uniform sampler2D source;
+uniform float range_start;
+uniform float range_end;
+void main()
+{
+    vec2 color = texture2D(source, in_tex).xy;
+    if(color.x < 0.99)
+        discard;
+    if(range_start < range_end)
+    {
+        if(color.y < range_start || color.y > range_end)
+            discard;
+    } else if(color.y < range_start && color.y > range_end)
+    {
+        discard;
+    }
+    gl_FragColor = vec4(vec3(color.x), color.x);
+}
+)";
+
+    loading_program = api.alloc_program();
+    loading_program->add(
+        gfx::program_t::stage_t::Vertex,
+        api.alloc_shader(
+            semantic::mem_chunk<const char>::ofContainer(vertex_shader)));
+    loading_program->add(
+        gfx::program_t::stage_t::Fragment,
+        api.alloc_shader(
+            semantic::mem_chunk<const char>::ofContainer(fragment_shader)));
+    if(auto res = loading_program->compile(); res.has_error())
+        cWarning("Error compiling loader shader: {}", res.error());
+
+    auto tex = ktx::load_from("spinner.0.etc2"_rsc.data());
+    spinner  = std::move(tex.value());
+
+    loading_tex = api.alloc_texture(
+        gfx::textures::d2,
+        CompFmt(PixFmt::ETC2, typing::pixels::PixFlg::RG),
+        3);
+    loading_tex->alloc(size_3d<u32>{512, 256, 1});
+    i32 mip_idx = 0;
+    for(auto const& mip : spinner.mips)
+        loading_tex->upload(mip.data, Veci2{}, Veci2{mip.size}, mip_idx++);
+
+    loading_sampler = loading_tex->sampler();
+    loading_sampler->alloc();
+    loading_sampler->set_filtering(
+        typing::Filtering::Linear, typing::Filtering::Linear);
+}
+
 void alloc_renderer(EntityContainer& container)
 {
     container.register_subsystem_inplace<MeshRenderer<halo_version>>(
@@ -990,4 +1113,5 @@ void alloc_renderer(EntityContainer& container)
         std::ref(container.subsystem_cast<BSPCache<halo_version>>()));
 
     container.register_subsystem_inplace<ScreenClear>();
+    container.register_subsystem_inplace<LoadingScreen>();
 }

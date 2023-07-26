@@ -6,6 +6,7 @@
 #include <peripherals/libc/signals.h>
 #include <peripherals/stl/string_ops.h>
 #include <peripherals/stl/time_types.h>
+#include <peripherals/stl/string/replace.h>
 #include <platforms/file.h>
 
 #include <fmt_extensions/info.h>

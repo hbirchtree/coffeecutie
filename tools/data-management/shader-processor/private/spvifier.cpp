@@ -1,5 +1,7 @@
 #include <shader_proc/spvifier.h>
 
+#include <list>
+
 #include <shaderc/shaderc.hpp>
 #include <spirv-tools/linker.hpp>
 

@@ -6,7 +6,7 @@
 #endif
 
 #include <peripherals/libc/types.h>
-#include <peripherals/stl/types.h>
+#include <peripherals/stl/standard_exceptions.h>
 
 namespace Coffee::ASIO {
 

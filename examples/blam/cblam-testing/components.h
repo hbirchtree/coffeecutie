@@ -136,7 +136,7 @@ struct Model
     template<typename T>
     void initialize(T const* spawn)
     {
-        position = spawn->pos;
+        position  = spawn->pos;
         transform = glm::translate(Matf4(1), spawn->pos)
                     * glm::mat4_cast(spawn_rotation_to_quat(spawn));
     }
@@ -248,7 +248,7 @@ struct ShaderData
             return Pass_Glass;
         }
         case tc::swat:
-            return Pass_Glass;
+        case tc::sotr:
         case tc::sgla:
             return Pass_Glass;
         case tc::senv: {
@@ -313,6 +313,10 @@ struct Light
     Matf4 transform;
 };
 
+/**
+ * Cluster association info
+ * Attaches an object to a cluster, for occlusion purposes
+ */
 struct Cluster
 {
     using value_type = Cluster;
@@ -338,20 +342,41 @@ struct Cluster
     }
 };
 
+/**
+ * Depth info for sorting objects in space relative to the camera
+ * Contains
+ * 1) a position in world-space and
+ * 2) the relative distance to the camera (updated per-frame)
+ * This can help drawing opaque objects more efficiently
+ * based on the depth buffer
+ */
+struct DepthInfo
+{
+    using value_type = DepthInfo;
+    using type       = compo::alloc::VectorContainer<value_type>;
+
+    Vecf3 position;
+    Vecf3 distance;
+
+    bool masked{
+        false}; /*! Objects such as transparent ones need to be drawn anyway */
+};
+
 enum ObjectTags : u64
 {
-    ObjectScenery         = 0x1,
-    ObjectEquipment       = 0x2,
-    ObjectVehicle         = 0x4,
-    ObjectBiped           = 0x8,
-    ObjectDevice          = 0x10,
-    ObjectLightFixture    = 0x20,
-    ObjectControl         = 0x40,
-    ObjectSkybox          = 0x80,
-    ObjectObject          = 0x1000,
-    ObjectUnit            = ObjectObject << 1,
-    ObjectMod2            = 0x10000,
-    ObjectBsp             = ObjectMod2 << 1,
+    ObjectScenery      = 0x1,
+    ObjectEquipment    = 0x2,
+    ObjectVehicle      = 0x4,
+    ObjectBiped        = 0x8,
+    ObjectDevice       = 0x10,
+    ObjectLightFixture = 0x20,
+    ObjectControl      = 0x40,
+    ObjectSkybox       = 0x80,
+    ObjectObject       = 0x1000,
+    ObjectUnit         = ObjectObject << 1,
+    ObjectMod2         = 0x10000,
+    ObjectBsp          = ObjectMod2 << 1,
+
     ObjectScriptObject    = 0x100000,
     ObjectTriggerVolume   = ObjectScriptObject << 1,
     ClusterNode           = ObjectScriptObject << 2,
@@ -359,5 +384,6 @@ enum ObjectTags : u64
     PositioningDynamic    = PositioningStatic << 1,
     PositioningBackground = PositioningStatic << 2,
     ObjectGC              = 0x8000000, /* Erased on map load */
-    SubObjectMask         = 0xFFFFF,
+
+    SubObjectMask      = 0xFFFFF,
 };

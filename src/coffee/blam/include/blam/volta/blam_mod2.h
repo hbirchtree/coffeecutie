@@ -172,16 +172,6 @@ struct xbox_ref
 
 struct part
 {
-    enum class vertex_type_t : u16
-    {
-        sbsp_uncompressed_vertex,
-        sbsp_compressed_vertex,
-        sbsp_uncompressed_light_vertex,
-        sbsp_compressed_light_vertex,
-        mod2_uncompressed_vertex,
-        mod2_compressed_vertex,
-    };
-
     submesh_flags_t    flags;
     u16                shader_idx;
     u8                 prev_idx;
@@ -200,7 +190,7 @@ struct part
 
     u32 pad2;
 
-    vertex_type_t vertex_type;
+    vert::vertex_type_t vertex_type;
     union
     {
         reflexive_t<vert::compressed> vertices;
@@ -318,8 +308,8 @@ inline std::optional<model_data_t> header<V>::model_at(
             {
                 if(!stl_types::any_of(
                        part.data.vertex_type,
-                       part::vertex_type_t::mod2_compressed_vertex,
-                       part::vertex_type_t::mod2_uncompressed_vertex))
+                       vert::vertex_type_t::mod2_compressed_vertex,
+                       vert::vertex_type_t::mod2_uncompressed_vertex))
                     continue;
                 meshes.push_back(&part.data);
             }

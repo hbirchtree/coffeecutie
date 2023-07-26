@@ -6,5 +6,5 @@ coffee_library(
               $<INSTALL_INTERFACE:include>
 )
 
-target_precompile_headers(Blam PUBLIC $<$<COMPILE_LANGUAGE:CXX>:blam/cblam.h>)
+#target_precompile_headers(Blam PUBLIC $<$<COMPILE_LANGUAGE:CXX>:blam/cblam.h>)
 target_link_libraries(Blam PRIVATE GraphicsDefines)

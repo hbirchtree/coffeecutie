@@ -189,7 +189,7 @@ struct ControllerInput
     int             controllerDisconnect(int device);
 
     libc_types::f32 m_axisScale;
-    libc_types::i16    m_axisDeadzone;
+    libc_types::i16 m_axisDeadzone;
 
     std::map<int, void*> m_controllers;
     std::map<int, void*> m_playerIndex;

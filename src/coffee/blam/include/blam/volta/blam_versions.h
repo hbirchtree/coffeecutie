@@ -21,29 +21,36 @@ struct bytecode_pointer;
 
 struct xbox_version_t
 {
-    using bytecode_type = hsc::bc::v1;
+    using bytecode_type      = hsc::bc::v1;
     using bytecode_pointer_t = hsc::bytecode_pointer<bytecode_type>;
 
     static constexpr auto version_v = version_t::xbox;
 };
 struct pc_version_t
 {
-    using bytecode_type = hsc::bc::v2;
+    using bytecode_type      = hsc::bc::v2;
     using bytecode_pointer_t = hsc::bytecode_pointer<bytecode_type>;
 
     static constexpr auto version_v = version_t::pc;
 };
 struct custom_version_t
 {
-    using bytecode_type = hsc::bc::v2;
+    using bytecode_type      = hsc::bc::v2;
     using bytecode_pointer_t = hsc::bytecode_pointer<bytecode_type>;
 
     static constexpr auto version_v = version_t::custom_edition;
 };
+struct mcc_version_t
+{
+    using bytecode_type      = hsc::bc::v2;
+    using bytecode_pointer_t = hsc::bytecode_pointer<bytecode_type>;
+
+    static constexpr auto version_v = version_t::mcc;
+};
 
 template<typename T>
-concept is_game_version
-    = stl_types::is_any_of<T, xbox_version_t, pc_version_t, custom_version_t>;
+concept is_game_version = stl_types::
+    is_any_of<T, xbox_version_t, pc_version_t, custom_version_t, mcc_version_t>;
 
 using xbox_t = xbox_version_t;
 using grbx_t = pc_version_t;
@@ -51,5 +58,6 @@ using grbx_t = pc_version_t;
 constexpr xbox_version_t   xbox_version;
 constexpr pc_version_t     pc_version;
 constexpr custom_version_t custom_version;
+constexpr mcc_version_t    mcc_version;
 
 } // namespace blam

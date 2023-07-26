@@ -7,6 +7,7 @@ from glob import glob
 from os import makedirs
 from os.path import dirname, getmtime, exists
 from shutil import which
+from hashlib import sha256
 
 
 PROGRAMS = {}
@@ -18,6 +19,28 @@ def needs_update(output: str, dependencies: list):
     out_ts = getmtime(output)
     dep_ts = [ getmtime(dep) for dep in dependencies ]
     return sum([ 1 if dep > out_ts else 0 for dep in dep_ts ]) > 0
+
+
+def shader_dependencies(shader_file: str, cache_directory: str):
+    glslang = PROGRAMS['glslang'] if 'glslang' in PROGRAMS else 'glslangValidator'
+    path_hash = sha256(shader_file.encode()).hexdigest()
+    dep_file = f'{cache_directory}/{path_hash}.deps'
+
+    def get_deps():
+        with open(dep_file) as f:
+            deps = f.read().split(': ')[-1].replace('\n', '').split(' ')
+            return deps
+        return []
+
+    if exists(dep_file):
+        return get_deps()
+    subprocess.call([
+        glslang,
+        '--depfile', dep_file,
+        '-G100',
+        shader_file])
+
+    return get_deps()
 
 
 def run(program, *args):
@@ -33,6 +56,7 @@ def compile_shaders(
         root_directory: str,
         out_directory: str,
         target: str,
+        build_mode: str,
         extra_dependencies: list):
     files = values['files']
     variants = values['variants']
@@ -57,7 +81,8 @@ def compile_shaders(
             stem_name, extension = file.split('.')
             in_file = f'{root_directory}/{file}'
             out_file = f'{out_directory}/{stem_name}.{profile}{version}.{extension}'
-            if not needs_update(out_file, [in_file] + extra_dependencies):
+            file_dependencies = shader_dependencies(in_file, cache_directory)
+            if not needs_update(out_file, [in_file] + extra_dependencies + file_dependencies):
                 continue
             print(f' * Emitting {file} as {profile} {version}')
             run(
@@ -80,6 +105,7 @@ def compile_shaders(
             in_file = f'{root_directory}/{file}'
             file_args.extend(['-s', f'{extension}', in_file])
             in_files.append(in_file)
+            in_files = in_files + shader_dependencies(in_file, cache_directory)
         if not needs_update(out_file, in_files):
             continue
         print(f' * Emitting shader assembly {assembly}.spv <- {shaders}')
@@ -88,7 +114,7 @@ def compile_shaders(
             extra_args.append('--strip-debug')
         run(
             'ShaderCooker',
-            '-f',
+            '--force',
             '-M',
             '-B',
             opt_level,
@@ -104,6 +130,7 @@ def encode_textures(
         root_directory: str,
         out_directory: str,
         target: str,
+        build_mode: str,
         extra_dependencies: list):
     variants = values['variants']
     if 'matrix' in values and target in values['matrix']:
@@ -122,6 +149,9 @@ def encode_textures(
             out.append(int(current))
             current = current / 2
         return out
+
+    def _predict_names(basename):
+        return glob(f'{out_directory}/{basename}.*')
 
     def _process_file(
             source: str,
@@ -149,12 +179,21 @@ def encode_textures(
                 )
         else:
             rendered_file = f'{root_directory}/{source}'
+        outputs = _predict_names(basename)
+        res = [needs_update(x, [rendered_file]) for x in outputs]
+        for out_of_date in res:
+            if out_of_date:
+                break
+        else:
+            return
+        compress_mode = 'fast' if 'Deb' in build_mode else 'release'
         run(
             'TextureCompressor',
-            *[ f'-c {codec}:{fmt}' for codec, fmt in codecs ],
-            *[ f'-r {res}' for res in resolutions ],
+            *[ f'--codec={codec}:{fmt}' for codec, fmt in codecs ],
+            *[ f'--resolution={res}' for res in resolutions ],
+            f'--mode={compress_mode}',
             rendered_file,
-            f'-o {out_directory}/{basename}' + '.{resolution}.{codec}'
+            f'--output={out_directory}/'
             )
 
     for file in values['files']:
@@ -186,6 +225,7 @@ if __name__ == '__main__':
     parser.add_argument('--cache', dest='cache_dir', required=True)
     parser.add_argument('-P', '--program', dest='programs', action='append')
     parser.add_argument('-t', '--target', dest='target', required=True)
+    parser.add_argument('-b', '--build-mode', dest='build_mode', required=True)
     args = parser.parse_args()
     for program_pair in args.programs:
         program, path = program_pair.split('=')
@@ -206,4 +246,5 @@ if __name__ == '__main__':
                 root_directory=root_dir,
                 out_directory=args.output,
                 target=args.target,
+                build_mode=args.build_mode,
                 extra_dependencies=[resource_def])

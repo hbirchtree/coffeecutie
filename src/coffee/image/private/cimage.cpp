@@ -2,6 +2,7 @@
 
 #include <coffee/core/CProfiling>
 #include <peripherals/semantic/chunk.h>
+#include <peripherals/stl/range.h>
 
 #include <coffee/core/CDebug>
 

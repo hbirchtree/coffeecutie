@@ -55,4 +55,19 @@ stl_types::result<file_header_t const*, map_load_error> file_header_t::
     return fh;
 }
 
+stl_types::result<file_header_t const*, map_load_error> file_header_t::
+    from_data(semantic::BytesConst const& data, mcc_version_t)
+{
+    file_header_t const* fh = C_RCAST<file_header_t const*>(data.data);
+
+    if(fh->version != version_t::mcc)
+        return map_load_error::incompatible_map_version_expected_mcc;
+
+    if(!stl_types::equal(header_head, fh->id)
+       || !stl_types::equal(header_foot, fh->footer))
+        return map_load_error::incompatible_endianness;
+
+    return fh;
+}
+
 } // namespace blam

@@ -511,7 +511,9 @@ vec4 shader_chicago_extended()
 
 vec4 shader_transparent()
 {
-    return vec4(shader_dummy().rgb, 1.0);
+    vec4 color = shader_dummy();
+//    return vec4(color.rgb, color.a);
+    return color;
 }
 
 vec4 shader_model()
@@ -683,7 +685,8 @@ void main()
         color = shader_meter();
     } else if(material_id == MATERIAL_SOTR)
     {
-        color = shader_transparent();
+        final_color = shader_transparent();
+        return;
     } else
         color = vec4(0, 1, 0, 1);
 

@@ -6,6 +6,7 @@
 #include <peripherals/libc/types.h>
 #include <peripherals/semantic/chunk.h>
 #include <peripherals/stl/bit_vector.h>
+#include <peripherals/stl/range.h>
 
 #if !defined(COFFEE_NO_ENDIAN_OPS)
 #include <peripherals/libc/endian_ops.h>
@@ -532,7 +533,7 @@ struct fs_t
         if(version() == Version::v1)
             return false;
 
-        for(C_UNUSED(auto _) : stl_types::Range<>(ext_index.num))
+        for(C_UNUSED(auto _) : stl_types::range<>(ext_index.num))
             if(indices()[0].kind == type)
                 return true;
 

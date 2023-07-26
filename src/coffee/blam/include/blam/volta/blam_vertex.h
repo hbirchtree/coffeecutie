@@ -14,6 +14,16 @@ struct uncompressed
 {
 };
 
+enum class vertex_type_t : u16
+{
+    sbsp_uncompressed_vertex,
+    sbsp_compressed_vertex,
+    sbsp_uncompressed_light_vertex,
+    sbsp_compressed_light_vertex,
+    mod2_uncompressed_vertex,
+    mod2_compressed_vertex,
+};
+
 template<typename T>
 concept is_vert_compression = stl_types::is_any_of<T, compressed, uncompressed>;
 

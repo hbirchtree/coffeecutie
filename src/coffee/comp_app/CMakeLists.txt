@@ -6,9 +6,9 @@ coffee_library(
               $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/bundle_include>
 )
 
-target_precompile_headers(
-  ComponentApp PUBLIC $<$<COMPILE_LANGUAGE:CXX>:coffee/comp_app/subsystems.h>
-)
+#target_precompile_headers(
+#  ComponentApp PUBLIC $<$<COMPILE_LANGUAGE:CXX>:coffee/comp_app/subsystems.h>
+#)
 
 coffee_library(
   TARGET ComponentBundleSetup
@@ -17,10 +17,10 @@ coffee_library(
   HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/bundle_include>
 )
 
-target_precompile_headers(
-  ComponentBundleSetup
-  PUBLIC
-  $<$<COMPILE_LANGUAGE:CXX>:coffee/comp_app/bundle.h>
-  $<$<COMPILE_LANGUAGE:CXX>:coffee/comp_app/app_wrap.h>
-  $<$<COMPILE_LANGUAGE:CXX>:coffee/comp_app/AppWrap>
-)
+#target_precompile_headers(
+#  ComponentBundleSetup
+#  PUBLIC
+#  $<$<COMPILE_LANGUAGE:CXX>:coffee/comp_app/bundle.h>
+#  $<$<COMPILE_LANGUAGE:CXX>:coffee/comp_app/app_wrap.h>
+#  $<$<COMPILE_LANGUAGE:CXX>:coffee/comp_app/AppWrap>
+#)

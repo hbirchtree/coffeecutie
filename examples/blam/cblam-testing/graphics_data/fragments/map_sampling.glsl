@@ -43,10 +43,20 @@ struct Material
     MaterialData material;
 };
 
+struct TransparentStages
+{
+    uint stages[3 * 5 + 1 /* padding */];
+};
+
 layout(binding = 1, std140) buffer MaterialProperties
 {
     Material instance[];
 } mats;
+
+layout(binding = 3, std140) buffer TransparentProperties
+{
+    TransparentStages instance[];
+} transparent;
 
 vec4 get_map(in uint map_id, in int layer, in sampler2DArray sampler, in vec2 tex_coord, in int instance)
 {

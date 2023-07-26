@@ -4,6 +4,7 @@
 #include <coffee/core/coffee.h>
 #include <peripherals/stl/string_casting.h>
 #include <peripherals/stl/string_ops.h>
+#include <peripherals/stl/string/hex.h>
 #include <platforms/environment.h>
 #include <platforms/file.h>
 
@@ -209,7 +210,7 @@ void Push(profiling::ThreadState& tdata, profiling::DataPoint const& point)
                            : point.thread_name;
 
     if(thread_name.empty())
-        thread_name = str::print::pointerify(point.tid);
+        thread_name = str::fmt::pointerify(point.tid);
 
     auto event = Coffee::Strings::fmt(
         event_format,

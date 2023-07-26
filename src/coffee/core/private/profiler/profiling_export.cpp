@@ -9,6 +9,8 @@
 #include <coffee/core/platform_data.h>
 #include <fmt_extensions/info.h>
 #include <fmt_extensions/url_types.h>
+#include <peripherals/stl/string/hex.h>
+#include <peripherals/stl/string/replace.h>
 #include <peripherals/stl/string_casting.h>
 #include <peripherals/stl/string_ops.h>
 #include <platforms/environment.h>
@@ -97,10 +99,10 @@ STATICINLINE void PutRuntimeInfo(json::ObjectBuilder& target)
         build
             .put(
                 "windowsTarget",
-                stl_types::str::convert::hexify(compile_info::windows::target))
+                stl_types::str::fmt::hexify(compile_info::windows::target))
             .put(
                 "windowsWdk",
-                stl_types::str::convert::hexify(compile_info::windows::wdk))
+                stl_types::str::fmt::hexify(compile_info::windows::wdk))
 #if defined(COFFEE_WINDOWS) && !defined(COFFEE_MINGW64)
             .put("windowsServer", IsWindowsServer() ? true : false)
 #endif

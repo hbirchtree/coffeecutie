@@ -53,11 +53,17 @@
                 "formats": ["rgba"],
                 "mipmap_range": [2048, 512],
                 "punchthrough_color": "0xFF00FF"
+            },
+            {
+                "source": "spinner.svg",
+                "formats": ["ra"],
+                "mipmap_range": [512, 128],
+                "punchthrough_color": "0xFF00FF"
             }
         ],
         "variants": {
             "astc": ["rgba"],
-            "etc2": ["rgba"],
+            "etc2": ["rgba", "ra"],
             "bc7": ["rgba"],
             "bc3": ["rgba"],
             "pvrtc1": ["rgba"],

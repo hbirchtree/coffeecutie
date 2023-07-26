@@ -15,6 +15,7 @@
 #include <coffee/image/cimage.h>
 
 #include <peripherals/libc/signals.h>
+#include <peripherals/stl/base64.h>
 #include <peripherals/stl/magic_enum.hpp>
 #include <peripherals/stl/string_ops.h>
 
