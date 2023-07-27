@@ -18,7 +18,7 @@ using libc_types::u8;
 
 namespace {
 
-constexpr fmt::format_string<std::string, u32, std::string> out_format
+const fmt::format_string<std::string, u32, std::string> out_format
     = "{}.{}.{}";
 
 inline std::string create_output_name(
@@ -105,6 +105,60 @@ bool etc2_compress(
     if(error != ktx_error_code_e::KTX_SUCCESS)
         cBasicPrint("Error writing KTX: {0}", magic_enum::enum_name(error));
     fclose(out_stream);
+    return true;
+}
+
+bool bcn_compress(
+    [[maybe_unused]] platform::url::Path const& base_dir,
+    [[maybe_unused]] std::string const&         file,
+    [[maybe_unused]] std::vector<u32> const&    resolutions,
+    [[maybe_unused]] std::string const&         codec,
+    [[maybe_unused]] typing::PixCmp             format,
+    [[maybe_unused]] std::string const&         channels,
+    [[maybe_unused]] quality_mode               quality)
+{
+    return false;
+}
+
+bool png_compress(
+    platform::url::Path const& base_dir,
+    std::string const&         file,
+    std::vector<u32> const&    resolutions,
+    typing::PixCmp             format,
+    std::string const&         channels,
+    quality_mode               quality)
+{
+    compressor::rgba_image_t image;
+    {
+        Coffee::stb::stb_error img_ec;
+        if(!compressor::LoadData(
+            &image,
+            Coffee::Resource(platform::url::constructors::MkSysUrl(file)),
+            img_ec,
+            typing::PixCmp::RGBA))
+        {
+            cBasicPrint("Failed to decode image to rgba32");
+            return false;
+        }
+    }
+
+    if(format != typing::PixCmp::RGBA)
+    {
+        auto remapped = compressor::map_channels(image, channels);
+        if(!remapped.has_value())
+            return false;
+        image = std::move(remapped.value());
+    }
+
+    Coffee::Resource out(platform::url::constructors::MkSysUrl(create_output_name(base_dir, file, 0, "png")));
+    Coffee::stb::stb_error img_ec;
+    auto png = Coffee::PNG::Save(image, img_ec);
+    out = png;
+    if(img_ec)
+        cBasicPrint("Failed to encode PNG");
+    if(!Coffee::FileCommit(out, semantic::RSCA::NewFile | semantic::RSCA::WriteOnly | semantic::RSCA::Discard))
+        cBasicPrint("Failed to save PNG file, {} bytes, {}x{} {} channels", png.size, image.size.w, image.size.h, image.bpp);
+
     return true;
 }
 
@@ -196,6 +250,23 @@ i32 cooker_main(i32 argc, char** argv)
 
             if(codec == "etc2")
                 etc2_compress(
+                    base_dir,
+                    file,
+                    resolutions,
+                    pixcmp,
+                    format,
+                    release_quality);
+            else if(codec.starts_with("bc"))
+                bcn_compress(
+                    base_dir,
+                    file,
+                    resolutions,
+                    codec,
+                    pixcmp,
+                    format,
+                    release_quality);
+            else if(codec == "png")
+                png_compress(
                     base_dir,
                     file,
                     resolutions,

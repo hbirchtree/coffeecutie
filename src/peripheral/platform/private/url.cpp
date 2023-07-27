@@ -70,7 +70,7 @@ Url GetAppleStoragePath()
         CFStringRef pathstr
             = CFURLCopyFileSystemPath(path, kCFURLPOSIXPathStyle);
         CFStringEncoding enc      = CFStringGetSystemEncoding();
-        const char*      pathcstr = CFStringGetstd::stringPtr(pathstr, enc);
+        const char*      pathcstr = CFStringGetCStringPtr(pathstr, enc);
         if(!pathcstr)
             break;
         std::string outStr = pathcstr;
@@ -79,8 +79,8 @@ Url GetAppleStoragePath()
 #if defined(COFFEE_APPLE_MOBILE)
         out = MkUrl(outStr.c_str(), RSCA::SystemFile);
 #else
-        out = MkUrl(outStr.c_str(), RSCA::SystemFile) + Path{"Contents"}
-              + Path{"Resources"};
+        out = MkUrl(outStr.c_str(), RSCA::SystemFile) / Path{"Contents"} /
+              Path{"Resources"};
 #endif
     } while(false);
     return out;

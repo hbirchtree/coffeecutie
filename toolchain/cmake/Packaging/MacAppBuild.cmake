@@ -130,13 +130,12 @@ macro(
 
   if(NOT IOS)
     add_executable(
-      ${TARGET} MACOSX_BUNDLE ${BUNDLE_FILES} ${OSX_ICON} ${SOURCES}
+      ${TARGET} MACOSX_BUNDLE ${BUNDLE_FILES} ${SOURCES}
     )
   else()
     add_executable(
       ${TARGET}
       ${BUNDLE_FILES}
-      ${OSX_ICON}
       ${SOURCES}
       ${IMAGES}
       ${IOS_DEFAULT_STORYBOARD}
@@ -205,12 +204,41 @@ macro(
                                   ${RESOURCE_DIR}
     )
     add_custom_target(
+        ${TARGET}.iconset
+        COMMAND ${CMAKE_COMMAND} -E make_directory
+            ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.iconset
+    )
+    add_custom_target(
       ${TARGET}.icns
-      DEPENDS ${OSX_ICON} ${TARGET}.resources
-      COMMAND qlmanage -t -s 512 -o . ${OSX_ICON}
-      COMMAND ${COFFEE_DESKTOP_DIRECTORY}/osx/gen_icons.sh ${ICON_BASENAME}.png
-      COMMAND rm ${ICON_BASENAME}.png
-      WORKING_DIRECTORY ${RESOURCE_DIR}
+      DEPENDS ${OSX_ICON} ${TARGET}.resources ${TARGET}.iconset
+      COMMAND qlmanage -t -s 1024 -o . ${OSX_ICON}
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    )
+    foreach(SCALE "1" "2")
+        foreach(SIZE 16 32 128 256 512)
+            set(SCALE_STRING "")
+            if(NOT ${SCALE} STREQUAL "1")
+                set(SCALE_STRING "@${SCALE}")
+            endif()
+            math(EXPR ICON_SIZE "${SCALE} * ${SIZE}")
+            set(OUT_NAME "icon_${SIZE}x${SIZE}${SCALE_STRING}.png")
+            add_custom_command(
+                TARGET ${TARGET}.icns
+                DEPENDS ${TARGET}.iconset
+                COMMAND
+                    sips -z ${ICON_SIZE} ${ICON_SIZE}
+                        "${ICON_BASENAME}.png"
+                        --out ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.iconset/${OUT_NAME}
+                WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+            )
+        endforeach()
+    endforeach()
+    add_custom_command( TARGET ${TARGET}.icns
+        COMMAND
+            iconutil
+                -c icns
+                ${TARGET}.iconset
+                --output ${RESOURCE_DIR}/Coffee.icns
     )
     add_dependencies(${TARGET} ${TARGET}.icns)
   endif()

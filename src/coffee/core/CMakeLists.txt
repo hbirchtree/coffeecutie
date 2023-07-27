@@ -23,19 +23,19 @@ header_install(
 
 target_link_libraries(CoreCommon INTERFACE PeripheralLib PeripheralPlatform)
 
-coffee_library(
-  TARGET CoreDebug
-  SOURCES # private/strings.cpp
-  LIBRARIES CoreCommon PeripheralThreadNaming
-  HEADER_DIRS
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/core/debug>
-    $<INSTALL_INTERFACE:include> HEADER_BASE coffee/core
-)
+#coffee_library(
+#  TARGET CoreDebug
+#  SOURCES # private/strings.cpp
+#  LIBRARIES CoreCommon PeripheralThreadNaming
+#  HEADER_DIRS
+#    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/core/debug>
+#    $<INSTALL_INTERFACE:include> HEADER_BASE coffee/core
+#)
 
-header_install(
-  "CoreDebug"
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/strings> coffee
-)
+#header_install(
+#  "CoreDebug"
+#  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/strings> coffee
+#)
 
 coffee_library(
   TARGET CoreState
@@ -43,7 +43,7 @@ coffee_library(
           # Core functionality, state and etc.
           #
           private/extern_storage.cpp
-  LIBRARIES CoreCommon CoreJsonLogger CoreDebug PeripheralThreadNaming
+  LIBRARIES CoreCommon CoreJsonLogger #[[CoreDebug]] PeripheralThreadNaming
 )
 
 coffee_library(
@@ -83,7 +83,7 @@ coffee_library(
 coffee_library(
   TARGET CoreJsonLogger
   SOURCES private/base/jsonlogger.cpp private/base/jsonprofile.cpp
-  LIBRARIES CoreDebug CoreCommon PeripheralThreadNaming CoreProfiling
+  LIBRARIES #[[CoreDebug]] CoreCommon PeripheralThreadNaming CoreProfiling
   HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/core/logging>
     HEADER_BASE coffee/core
@@ -104,14 +104,14 @@ coffee_library(
 #
 # Utilities for printing in the terminal
 #
-coffee_library(
-  TARGET CoreTerminal
-  SOURCES # private/terminal/table_print.cpp
-  LIBRARIES CoreCommon
-  HEADER_DIRS
-    # $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/core/terminal>
-    HEADER_BASE coffee/core
-)
+#coffee_library(
+#  TARGET CoreTerminal
+#  SOURCES # private/terminal/table_print.cpp
+#  LIBRARIES CoreCommon
+#  HEADER_DIRS
+#    # $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/core/terminal>
+#    HEADER_BASE coffee/core
+#)
 
 #
 # Generic application data storage, for application state
@@ -128,7 +128,7 @@ coffee_library(
 coffee_library(
   TARGET CoreProfiling
   SOURCES private/profiler/profiling_export.cpp
-  LIBRARIES CoreDebug CoreCommon CoreFile
+  LIBRARIES #[[CoreDebug]] CoreCommon CoreFile
   HEADER_DIRS
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/core/profiler>
     HEADER_BASE coffee/core
@@ -157,7 +157,7 @@ if(BUILD_TESTS)
   coffee_library(
     TARGET Testing
     SOURCES private/unit_tests/framework.cpp
-    LIBRARIES CoreTerminal CoreCommon
+    LIBRARIES #[[CoreTerminal]] CoreCommon
     HEADER_DIRS
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/coffee/core/unit_tests>
       HEADER_BASE
@@ -182,7 +182,7 @@ target_link_libraries(
   INTERFACE CoreCommon
             CoreProfiling
             CoreSaving
-            CoreTerminal
+#            CoreTerminal
             CoreQueue
             CoreFile
             CoreState

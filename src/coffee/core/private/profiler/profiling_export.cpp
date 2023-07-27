@@ -14,6 +14,7 @@
 #include <peripherals/stl/string/replace.h>
 #include <peripherals/stl/string_casting.h>
 #include <peripherals/stl/string_ops.h>
+#include <peripherals/stl/range.h>
 #include <platforms/environment.h>
 #include <platforms/file.h>
 #include <platforms/sysinfo.h>
@@ -73,6 +74,7 @@ STATICINLINE void PutExtraData(json::ObjectBuilder& target)
 STATICINLINE void PutRuntimeInfo(json::ObjectBuilder& target)
 {
     using namespace stl_types;
+    using libc_types::u32;
 
     json::ObjectBuilder build(target.allocator());
 

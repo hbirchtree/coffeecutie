@@ -80,7 +80,7 @@ struct api_limits
         buffers = {};
         draws = {
             .element_count        = get_limit(prop::max_elements_indices),
-            .element_index        = get_limit(prop::max_element_index),
+//            .element_index        = get_limit(prop::max_element_index),
             .element_vertex_count = get_limit(prop::max_elements_vertices),
         };
         shaders = {

@@ -58,6 +58,7 @@
             "dependencies": [
                 { "name": "angle", "platform": "windows & uwp" },
                 "bcdec",
+                { "name": "glslang", "features": ["tools"], "host": true },
                 { "name": "imgui", "features": ["docking-experimental"]},
                 "vulkan-headers"
             ]
@@ -100,7 +101,8 @@
                 { "name": "ktx", "platform": "(linux & x64) | osx | windows" },
                 { "name": "libsquish", "platform": "(linux & x64) | osx | windows" },
                 { "name": "shaderc", "platform": "(linux & x64) | osx | windows" },
-                { "name": "spirv-cross", "platform": "(linux & x64) | osx | windows" }
+                { "name": "spirv-cross", "platform": "(linux & x64) | osx | windows" },
+                "vulkan-headers"
             ]
         }
     },

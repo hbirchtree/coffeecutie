@@ -7,7 +7,7 @@
 #include <peripherals/libc/types.h>
 #include <peripherals/stl/type_safety.h>
 
-#if defined(COFFEE_LINUX)
+#if defined(COFFEE_UNIXPLAT)
 #include <unistd.h>
 #endif
 

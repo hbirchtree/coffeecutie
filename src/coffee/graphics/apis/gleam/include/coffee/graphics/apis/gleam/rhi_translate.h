@@ -430,9 +430,11 @@ inline T vertex_type_to(semantic::TypeEnum type)
     {
     case TypeEnum::Scalar:
         return T::float_;
-#if GLEAM_MAX_VERSION >= 0x150
+#if GLEAM_MAX_VERSION >= 0x440
     case TypeEnum::Packed_UFloat:
         return T::unsigned_int_10f_11f_11f_rev;
+#endif
+#if GLEAM_MAX_VERSION >= 0x150
     case TypeEnum::BigScalar:
         return T::double_;
 #endif

@@ -17,7 +17,6 @@
 #endif
 
 #include <coffee/strings/format.h>
-
 #include <coffee/core/CDebug>
 
 #if defined(COFFEE_LINUX) || defined(COFFEE_APPLE)

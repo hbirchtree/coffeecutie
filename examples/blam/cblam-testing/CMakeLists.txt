@@ -2,6 +2,13 @@
 # LIBRARIES Blam Core Image DropinRenderer GLeamRHI )
 
 find_program ( GLSLANG_PROGRAM glslangValidator )
+find_program ( INKSCAPE_PROGRAM inkscape
+    PATHS
+        /usr
+        /usr/local
+    PATH_SUFFIXES
+        bin
+    )
 
 add_custom_target (
   BlamGraphics.Assets
@@ -16,11 +23,13 @@ add_custom_target (
     #
     --program ShaderCooker=${HOST_TOOLS_BINARY_DIR}/ShaderCooker
     #
-    --program Inkscape=inkscape
+    --program Inkscape=${INKSCAPE_PROGRAM}
     #
     --program glslang=${GLSLANG_PROGRAM}
     #
     --program TextureCompressor=${HOST_TOOLS_BINARY_DIR}/TextureCompressor
+    #
+    --program glslang=${GLSLANG_PROGRAM}
     #
     --target ${CMAKE_SYSTEM_NAME}
     #

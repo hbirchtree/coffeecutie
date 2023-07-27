@@ -181,12 +181,13 @@ def encode_textures(
             return [f'{out_directory}/{basename}.0.{codec}' for codec, _ in codecs]
         outputs = _predict_names(basename)
         res = [needs_update(x, [rendered_file]) for x in outputs]
+        print(res)
         for out_of_date in res:
             if out_of_date:
                 break
         else:
-            return
-
+            if len(res) > 0:
+                return
         compress_mode = 'fast' if 'Deb' in build_mode else 'release'
         run(
             'TextureCompressor',
