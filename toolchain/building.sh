@@ -208,7 +208,7 @@ function native_build()
     echo "::group::Configuring project"
     echo "::info::Set up for ${TOOLCHAIN_PREFIX} (${TOOLCHAIN_ROOT})"
     PRELOAD_FILE=${BASE_DIR}/.github/cmake/${PLATFORM}-${ARCHITECTURE}-${SYSROOT}.preload.cmake
-    APPIMAGE_EXTRAS="${TOOLCHAIN_SYSROOT}/lib/libstdc++.so.6;${TOOLCHAIN_SYSROOT}/lib/libssp.so.0;${TOOLCHAIN_ROOT}/usr/lib/libbacktrace.so.0"
+    APPIMAGE_EXTRAS="${TOOLCHAIN_SYSROOT}/lib/libstdc++.so.6;${TOOLCHAIN_SYSROOT}/lib/libssp.so.0;${TOOLCHAIN_SYSROOT}/usr/lib/libbacktrace.so.0"
     APPIMAGE_RUNTIME="${PWD}/vcpkg_installed/${PLATFORM}-${TOOLCHAIN_PREFIX}/bin/runtime"
     echo "::info::Using preload ${PRELOAD_FILE}"
 
@@ -219,7 +219,7 @@ function native_build()
     TARGET_TRIPLET=${PLATFORM}-${TOOLCHAIN_PREFIX}
     TARGET_FEATURES=""
 
-    [[ $PLATFORM = "desktop" ]] && TARGET_FEATURES="crash-recovery\;pressure-cooker"
+    [[ $PLATFORM = "desktop" ]] && TARGET_FEATURES="crash-recovery\\\;pressure-cooker"
     [[ $IS_MACOS = "1" ]] && TARGET_TRIPLET=${TOOLCHAIN_PREFIX}
 
     if [[ $IS_LINUX = "1" ]]; then
@@ -580,7 +580,6 @@ function mingw_build()
     export CONFIGURATION=${CONFIGURATION:-Debug}
     export CMAKE_SOURCE_DIR=${BASE_DIR}
     export CMAKE_INSTALL_DIR=${INSTALL_DIR:-$PWD/install}
-    export
 
     export VCPKG_ROOT=$(dirname $(readlink $(which vcpkg)))
     export VCPKG_DEP_INFO_OVERRIDE_VARS="${PLATFORM};${ARCHITECTURE#-*}:$(echo $ARCHITECTURE | cut -d'-' -f2);${SYSROOT}"

@@ -34,15 +34,21 @@ struct Subsystem : Components::SubsystemBase
                 auto rsc = net::Resource(this->context(), *source);
                 if(auto error = rsc.fetch())
                     return semantic::mem_chunk<const u8>();
-                return rsc.move_const().value();
+                return rsc.move_const().value_or(
+                    semantic::mem_chunk<const u8>());
             });
     }
 
     auto create_download(Url const& source)
     {
-        std::promise<Url> source_promise;
-        source_promise.set_value(source);
-        return create_download(source_promise.get_future());
+        return rq::dependent_task<void, semantic::mem_chunk<const u8>>::
+            CreateSource([this, source]() {
+                auto rsc = net::Resource(this->context(), source);
+                if(auto error = rsc.fetch())
+                    return semantic::mem_chunk<const u8>();
+                return rsc.move_const().value_or(
+                    semantic::mem_chunk<const u8>());
+            });
     }
 
     std::shared_ptr<Worker> m_worker;

@@ -5,6 +5,7 @@
 #include <coffee/core/libc_types.h>
 #include <peripherals/libc/signals.h>
 #include <peripherals/posix/process.h>
+#include <peripherals/stl/string/hex.h>
 #include <platforms/environment.h>
 #include <platforms/file.h>
 
@@ -15,7 +16,7 @@
 #include <coffee/ssl/hmac.h>
 #endif
 
-#include <coffee/strings/libc_types.h>
+#include <coffee/strings/format.h>
 
 #include <coffee/core/CDebug>
 
@@ -93,10 +94,10 @@ i32 crash_main(i32, cstring_w*)
 
 #if defined(COFFEE_APPLE)
     if(!workingDir.isLocal())
-        workingDir =
-            platform::path::dir(platform::path::dir(MkUrl(args.at(0))).value())
-                .value() +
-            platform::url::Path("Resources");
+        workingDir = platform::path::dir(
+                         platform::path::dir(MkUrl(args.at(0))).value())
+                         .value()
+                     + platform::url::Path("Resources");
 #endif
 
     cDebug("Spawning child");

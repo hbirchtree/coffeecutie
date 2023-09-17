@@ -545,7 +545,7 @@ void SetupRendering(
         auto img_decode = IMG::create_decoder(
             img_download->output.get_future(), typing::PixCmp::RGBA);
         auto img_upload
-            = rq::dependent_task<stb::image_rw, void>::CreateProcessor(
+            = rq::dependent_task<stb::image_rw, void>::CreateSink(
                 img_decode->output.get_future(),
                 [texture = d.g_data.tex](stb::image_rw* img) {
                     auto isize = img->size.convert<i32>();
@@ -555,11 +555,11 @@ void SetupRendering(
                         size_3d<i32>{isize.w, isize.h, 1});
                 });
 
-        rq::runtime_queue::Queue(d.online_queue, std::move(img_download))
-            .assume_value();
+        rq::runtime_queue::Queue(std::move(img_upload)).assume_value();
         rq::runtime_queue::Queue(d.online_queue, std::move(img_decode))
             .assume_value();
-        rq::runtime_queue::Queue(std::move(img_upload)).assume_value();
+        rq::runtime_queue::Queue(d.online_queue, std::move(img_download))
+            .assume_value();
     }
 
 #if defined(FEATURE_ENABLE_DiscordLatte)

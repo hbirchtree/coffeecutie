@@ -1026,7 +1026,7 @@ struct alignas(32) shader_transparent : radiosity_properties /* aka sotr */
     };
 
     reflexive_t<map_t> maps;
-    reflexive_t<map_t> stages;
+    reflexive_t<stage_t> stages;
 };
 
 static_assert(offsetof(shader_transparent, maps) == 84);

@@ -321,7 +321,7 @@ struct texture_2d_t : texture_t
                 rq::dependent_task<std::vector<char>, void>::CreateSink(
                     std::move(bits),
                     [this, offset, size, level, layout = layout, type = type](
-                        std::vector<char>* bits) {
+                        std::vector<char> const* bits) {
                         cmd::texture_sub_image_2d(
                             m_handle, level, offset, size, layout, type, *bits);
                     }))
@@ -351,7 +351,7 @@ struct texture_2d_t : texture_t
                 rq::dependent_task<std::vector<char>, void>::CreateSink(
                     std::move(bits),
                     [this, offset, size, level, layout = layout, type = type](
-                        std::vector<char>* bits) {
+                        std::vector<char> const* bits) {
                         cmd::bind_texture(
                             group::texture_target::texture_2d, m_handle);
                         cmd::tex_sub_image_2d(
@@ -409,7 +409,7 @@ struct texture_2da_t : texture_t
                 rq::dependent_task<std::vector<char>, void>::CreateSink(
                     std::move(bits),
                     [this, offset, size, level, layout = layout, type = type](
-                        std::vector<char>* bits) {
+                        std::vector<char> const* bits) {
                         cmd::texture_sub_image_3d(
                             m_handle, level, offset, size, layout, type, *bits);
                     }))
@@ -440,7 +440,7 @@ struct texture_2da_t : texture_t
                 rq::dependent_task<std::vector<char>, void>::CreateSink(
                     std::move(bits),
                     [this, offset, size, level, layout = layout, type = type](
-                        std::vector<char>* bits) {
+                        std::vector<char> const* bits) {
                         cmd::bind_texture(
                             group::texture_target::texture_2d_array, m_handle);
                         cmd::tex_sub_image_3d(
@@ -577,7 +577,7 @@ struct texture_cube_array_t : texture_t
                          size,
                          level,
                          layout = layout,
-                         type   = type](std::vector<char>* bits) {
+                         type   = type](std::vector<char> const* bits) {
                             cmd::bind_texture(
                                 group::texture_target::texture_cube_map_array,
                                 m_handle);

@@ -71,7 +71,7 @@ struct ProfileWriter : GlobalState
         if(auto disable = platform::env::var("COFFEE_DISABLE_PROFILER");
            disable.has_value() && disable.value() == "1")
             disable_frequent = true;
-        disable_frequent = true;
+//        disable_frequent = true;
     }
 
     declreturntype(platform::file::open_file)::value_type logfile;

@@ -81,15 +81,21 @@ void create_resources(compo::EntityContainer& e)
         //            = api.alloc_buffer(gfx::buffers::shader_writable, access);
         resources.material_store
             = api.alloc_buffer(gfx::buffers::shader_writable, access);
+        resources.transparent_store
+            = api.alloc_buffer(gfx::buffers::shader_writable, access);
     } else if(api.feature_info().buffer.ubo)
     {
         resources.material_store
+            = api.alloc_buffer(gfx::buffers::constants, access);
+        resources.transparent_store
             = api.alloc_buffer(gfx::buffers::constants, access);
     } else
     {
         resources.model_matrix_store
             = api.alloc_buffer(gfx::buffers::vertex, access);
         resources.material_store
+            = api.alloc_buffer(gfx::buffers::vertex, access);
+        resources.transparent_store
             = api.alloc_buffer(gfx::buffers::vertex, access);
     }
     resources.model_matrix_store->alloc();

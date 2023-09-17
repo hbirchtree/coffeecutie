@@ -103,6 +103,7 @@ struct BlamResources : compo::SubsystemBase
 
     std::shared_ptr<gfx::buffer_t> model_matrix_store;
     std::shared_ptr<gfx::buffer_t> material_store;
+    std::shared_ptr<gfx::buffer_t> transparent_store;
     std::shared_ptr<gfx::buffer_t> world_store;
 
     typing::vector_types::Veci2          offscreen_size{1920, 1080};

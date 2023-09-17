@@ -184,54 +184,98 @@ struct runtime_task
 struct dependent_task_invoker
 {
     virtual ~dependent_task_invoker();
-    virtual bool ready()   = 0;
+    virtual bool ready() = 0;
+    virtual bool cancelled()
+    {
+        return false;
+    }
     virtual void execute() = 0;
 };
 
-template<typename Dependency, typename Out>
+template<typename Dependency, typename Out, bool Moveable = true>
 struct dependent_task : public dependent_task_invoker
 {
+    using Dep    = std::conditional_t<Moveable, Dependency, Dependency const>;
+    using Future = std::conditional_t<
+        Moveable,
+        std::future<Dependency>,
+        std::shared_future<Dependency>>;
+
     virtual ~dependent_task() = default;
 
+    template<typename This = dependent_task<Dependency, Out, true>>
     STATICINLINE auto CreateProcessor(
         std::future<Dependency>&&         dependency,
         std::function<Out(Dependency*)>&& task)
     {
         if(!dependency.valid())
             Throw(std::runtime_error("dependent_task: invalid dependency"));
-        auto out        = std::make_unique<dependent_task>();
+        auto out        = std::make_unique<This>();
         out->task       = std::move(task);
         out->dependency = std::move(dependency);
         return out;
     }
 
+    template<typename This = dependent_task<Dependency, Out, false>>
+    STATICINLINE auto CreateProcessor(
+        std::shared_future<Dependency> const&   dependency,
+        std::function<Out(Dependency const*)>&& task)
+    {
+        if(!dependency.valid())
+            Throw(std::runtime_error("dependent_task: invalid dependency"));
+        auto out        = std::make_unique<This>();
+        out->task       = std::move(task);
+        out->dependency = dependency;
+        return out;
+    }
+
+    template<typename This = dependent_task<Dependency, Out, true>>
     STATICINLINE auto CreateSource(std::function<Out()>&& task)
     {
-        auto out        = std::make_unique<dependent_task>();
-        out->task       = [task = std::move(task)](void*) { return task(); };
+        auto out  = std::make_unique<This>();
+        out->task = [task = std::move(task)](Dependency*) { return task(); };
         out->dependency = {};
         return out;
     }
 
+    template<typename This = dependent_task<Dependency, Out, true>>
     STATICINLINE auto CreateSink(
         std::future<Dependency>&&          dependency,
         std::function<void(Dependency*)>&& task)
     {
-        auto out        = std::make_unique<dependent_task>();
+        auto out        = std::make_unique<This>();
         out->task       = std::move(task);
         out->dependency = std::move(dependency);
         return out;
     }
 
-    virtual bool ready() override final
+    template<typename This = dependent_task<Dependency, Out, false>>
+    STATICINLINE auto CreateSink(
+        std::shared_future<Dependency> const&    dependency,
+        std::function<void(Dependency const*)>&& task)
     {
-        if(!dependency.valid())
-            return true;
-        using namespace std::chrono_literals;
-        return dependency.wait_for(0ms) == std::future_status::ready;
+        auto out        = std::make_unique<This>();
+        out->task       = std::move(task);
+        out->dependency = dependency;
+        return out;
     }
 
-    virtual void execute() override final
+    bool ready() override
+    {
+        if(!dependency.has_value())
+            return true;
+        using namespace std::chrono_literals;
+        return dependency->wait_for(0ms) == std::future_status::ready;
+    }
+
+    bool cancelled() override
+    {
+        if(dependency.has_value())
+            return !dependency->valid();
+        return false;
+    }
+
+    void execute() override final
     {
         (*this)();
     }
@@ -239,22 +283,24 @@ struct dependent_task : public dependent_task_invoker
     template<typename Dummy = void>
     requires(!std::is_same_v<Dependency, void>) void operator()()
     {
-        Dependency input = dependency.get();
-        detail::set_promise_value<Out, Dependency*>(output, task, &input);
+        std::conditional_t<Moveable, Dependency, Dependency const&> input
+            = dependency->get();
+        detail::set_promise_value<Out, Dep*>(output, task, &input);
     }
 
     template<typename Dummy = void>
     requires std::is_same_v<Dependency, void>
     void operator()()
     {
-        if(dependency.valid())
-            dependency.get();
-        detail::set_promise_value<Out, void*>(output, task, nullptr);
+        if(dependency.has_value())
+            dependency->get();
+        detail::set_promise_value<Out, Dep*>(output, task, nullptr);
     }
 
-    std::function<Out(Dependency*)> task{};
-    std::future<Dependency>         dependency;
-    std::promise<Out>               output;
+    std::function<Out(Dep*)> task{};
+
+    std::optional<Future> dependency{};
+    std::promise<Out>     output{};
 };
 
 class runtime_queue

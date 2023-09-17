@@ -298,6 +298,8 @@ void configureDefaults(AppLoader& loader)
 {
     Coffee::DProfContext _("comp_app::configureDefaults");
 
+    rq::runtime_queue::CreateNewQueue("Main").assume_value();
+
     loader.addConfigs<detail::TypeList<
         WindowConfig,
         ControllerConfig,
@@ -684,41 +686,70 @@ void PerformanceMonitor::end_restricted(proxy_type& p, time_point const& time)
             if(!screenshot || time > m_nextScreenshot)
                 break;
 
+            screenshot->set_worker(m_worker_queue);
+
+            using dump_t = interfaces::ScreenshotProvider::dump_t;
             using namespace Coffee;
 
-            m_nextScreenshot        = time + std::chrono::seconds(10);
-            auto             pixels = screenshot->pixels();
-            semantic::Bytes  encoded;
-            stb::stb_error   ec;
-            stb::image_const source = stb::image_const::From(
-                pixels.as<semantic::Bytes::value_type>(),
-                screenshot->size(),
-                4);
+            m_nextScreenshot = time + std::chrono::seconds(10);
+            auto pixels      = screenshot->pixels();
 
-            if(!stb::SaveJPG(encoded, source, ec, 50))
-            {
-                cWarning("Failed to dump screenshot: {0}", ec.message());
+            /* If we're still waiting for the previous one, don't proceed */
+            if(!pixels.valid())
                 break;
-            }
-            auto screenshot_file = "screenshot.jpg"_tmpfile;
 
-            FileOpenMap(
-                screenshot_file,
-                encoded.size,
-                RSCA::ReadWrite | RSCA::Persistent | RSCA::NewFile
-                    | RSCA::Discard);
-            if(encoded.size == screenshot_file.data_rw.size())
-                std::copy(
-                    encoded.view.begin(),
-                    encoded.view.end(),
-                    screenshot_file.data_rw.begin());
-            FileUnmap(screenshot_file);
+            /* If not, set up JPG encoding + export to file and profiling */
+            auto encode = [](dump_t* dump) {
+                semantic::Bytes  encoded;
+                stb::stb_error   ec;
+                stb::image_const source = stb::image_const::From(
+                    gsl::span(dump->data.data(), dump->data.size()),
+                    dump->size,
+                    4);
 
-            json::CaptureMetrics(
-                "Screenshots",
-                MetricVariant::Image,
-                b64::encode<byte_t>(encoded.view),
-                timestamp);
+                if(!stb::SaveJPG(encoded, source, ec, 30))
+                {
+                    cWarning("Failed to dump screenshot: {0}", ec.message());
+                    return semantic::Bytes();
+                }
+                return encoded;
+            };
+            auto export_file = [](semantic::Bytes const* data) {
+                auto screenshot_file = "screenshot.jpg"_tmpfile;
+                screenshot_file.data_ro
+                    = semantic::BytesConst::ofBytes(data->data, data->size);
+                FileCommit(
+                    screenshot_file,
+                    RSCA::WriteOnly | RSCA::Discard | RSCA::NewFile);
+            };
+            auto export_profile = [timestamp](semantic::Bytes const* data) {
+                json::CaptureMetrics(
+                    "Screenshots",
+                    MetricVariant::Image,
+                    b64::encode<byte_t>(data->view),
+                    timestamp);
+            };
+
+            auto encoder
+                = rq::dependent_task<dump_t, semantic::Bytes>::CreateProcessor(
+                    std::move(pixels), std::move(encode));
+            auto encoder_future
+                = std::shared_future(encoder->output.get_future());
+            auto file_exporter
+                = rq::dependent_task<semantic::Bytes, void>::CreateSink(
+                    encoder_future, std::move(export_file));
+            auto profile_exporter
+                = rq::dependent_task<semantic::Bytes, void>::CreateSink(
+                    encoder_future, std::move(export_profile));
+
+            /* JPG encoding + file export is put off-thread */
+            auto current = rq::runtime_queue::GetCurrentQueue().value();
+            rq::runtime_queue::Queue(m_worker_queue, std::move(encoder))
+                .assume_value();
+            rq::runtime_queue::Queue(m_worker_queue, std::move(file_exporter))
+                .assume_value();
+            rq::runtime_queue::Queue(current, std::move(profile_exporter))
+                .assume_value();
         } while(false);
 
     json::CaptureMetrics(
@@ -731,7 +762,10 @@ void PerformanceMonitor::end_restricted(proxy_type& p, time_point const& time)
 
 void PerformanceMonitor::load(AppLoadableService::entity_container&, app_error&)
 {
-    m_prevFrame = platform::profiling::Profiler::clock::now();
+    m_nextScreenshot = m_prevFrame
+        = platform::profiling::Profiler::clock::now();
+    m_worker_queue = rq::runtime_queue::CreateNewThreadQueue("Profiling worker")
+                         .assume_value();
 }
 
 void PerformanceMonitor::unload(

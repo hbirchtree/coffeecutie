@@ -224,7 +224,6 @@ struct request_t
 
 struct response_t
 {
-    u16       code; /*!< response code for constructed response */
     header_t  header;
     payload_t payload; /*!< payload for constructed response */
 };

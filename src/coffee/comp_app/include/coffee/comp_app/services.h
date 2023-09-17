@@ -15,6 +15,10 @@
 
 #include <fmt/format.h>
 
+namespace rq {
+class runtime_queue;
+}
+
 namespace comp_app {
 namespace detail {
 using namespace Coffee::Components;
@@ -505,8 +509,20 @@ struct BatteryProvider
 
 struct ScreenshotProvider
 {
-    virtual size_2d_t                                   size() const   = 0;
-    virtual semantic::mem_chunk<typing::pixels::rgba_t> pixels() const = 0;
+    struct dump_t
+    {
+        size_2d_t                   size;
+        typing::pixels::PixFmt      format;
+        std::vector<libc_types::u8> data;
+    };
+
+    virtual size_2d_t           size() const = 0;
+    virtual std::future<dump_t> pixels()     = 0;
+
+    /* For cases where the provider might need a worker thread */
+    virtual void set_worker(rq::runtime_queue*)
+    {
+    }
 };
 
 } // namespace interfaces
@@ -621,7 +637,7 @@ struct AppService : detail::SubsystemBase
     static InternalType& register_service(
         detail::EntityContainer& container, Args... args)
     {
-//        using tag_type = AppServiceTraits<ExposedType>;
+        //        using tag_type = AppServiceTraits<ExposedType>;
 
         auto& subsys
             = container.register_subsystem_inplace<ExposedType, InternalType>(

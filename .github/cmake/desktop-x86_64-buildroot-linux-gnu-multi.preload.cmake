@@ -9,3 +9,5 @@ set ( BUILD_SDL2 ON CACHE BOOL "" )
 set ( GENERATE_APPIMAGE ON CACHE BOOL "" )
 
 set ( MKSQUASH_PROGRAM "/usr/bin/mksquashfs" CACHE STRING "" )
+
+set ( BUILD_TESTS OFF CACHE BOOL "" )

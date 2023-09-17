@@ -1070,7 +1070,7 @@ struct ShaderCache
     }
 
     void populate_material(
-        materials::shader_data&  mat,
+        materials::shader_data& mat,
         generation_idx_t const& shader_id,
         Vecf2 const&            base_map_scale)
     {
@@ -1265,15 +1265,15 @@ struct ShaderCache
         case tag_class_t::sotr: {
             shader_transparent const* info
                 = shader.header->as<shader_transparent>();
-            auto maps   = info->maps.data(magic).value();
-//            auto stages = info->stages.data(magic).value();
-//            auto layers = info->layers.data(magic).value();
-//            cDebug(
-//                "{}: {} maps, {} stages, {} layers",
-//                shader.tag->to_name().to_string(magic),
-//                maps.size(),
-//                stages.size(),
-//                layers.size());
+            auto maps = info->maps.data(magic).value();
+            //            auto stages = info->stages.data(magic).value();
+            //            auto layers = info->layers.data(magic).value();
+            //            cDebug(
+            //                "{}: {} maps, {} stages, {} layers",
+            //                shader.tag->to_name().to_string(magic),
+            //                maps.size(),
+            //                stages.size(),
+            //                layers.size());
 
             for(auto i : Range<>(maps.size()))
             {
@@ -1322,6 +1322,21 @@ struct ShaderCache
         }
     }
 
+    void populate_transparent_material(
+        materials::transparent_data& mat, generation_idx_t const& shader_id)
+    {
+        using namespace blam::shader;
+
+        ShaderItem const& shader = find(shader_id)->second;
+        shader_transparent const* info =
+            shader.header->as<shader_transparent>();
+
+        auto stages = info->stages.data(magic).value();
+        u32 i = 0;
+        for(shader_transparent::stage_t const& stage : stages)
+            mat.stages[i++] = materials::transparent_data::from_blam(stage);
+    }
+
     template<typename PropertyAnim>
     requires stl_types::is_any_of<
         PropertyAnim,
@@ -1356,7 +1371,7 @@ struct ShaderCache
     }
 
     void populate_chicago_uv_anims(
-        materials::shader_data&                          mat,
+        materials::shader_data&                         mat,
         Span<blam::shader::chicago::map_t const> const& maps,
         f32                                             t)
     {
@@ -1387,7 +1402,7 @@ struct ShaderCache
     }
 
     void update_uv_animations(
-        materials::shader_data&  mat,
+        materials::shader_data& mat,
         generation_idx_t const& shader_id,
         time_point const&       time)
     {
@@ -1750,8 +1765,8 @@ struct BSPCache
                 .cluster = &cluster,
             });
             BSPItem::Cluster& it = out.clusters.back();
-            auto portal_idxs = cluster.portals.data(bsp_magic).value();
-            auto subclusters = cluster.sub_clusters.data(bsp_magic).value();
+            auto portal_idxs     = cluster.portals.data(bsp_magic).value();
+            auto subclusters     = cluster.sub_clusters.data(bsp_magic).value();
             for(auto const& portal_idx : portal_idxs)
                 it.portals.push_back(&portals[portal_idx]);
             for(blam::bsp::subcluster const& sub : subclusters)

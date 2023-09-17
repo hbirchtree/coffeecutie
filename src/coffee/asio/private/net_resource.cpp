@@ -171,7 +171,7 @@ bool Resource::isRequestReady() const
 
 bool Resource::isResponseReady() const
 {
-    return m_response.code != 0;
+    return m_response.header.code != 0;
 }
 
 void Resource::setHeaderField(

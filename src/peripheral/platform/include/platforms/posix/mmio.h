@@ -32,8 +32,11 @@ FORCEDINLINE result<mem_mapping_t, posix_error> map(
     Url const& file, mapping_params_t params)
 {
     auto       resolved_filename = *file;
+    int        mode              = (params.access & RSCA::NewFile) != RSCA::None
+                                       ? S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH
+                                       : 0;
     posix_fd_t fd(
-        open(resolved_filename.c_str(), detail::openmode(params.access)));
+        open(resolved_filename.c_str(), detail::openmode(params.access), mode));
 
     if(fd < 0)
     {

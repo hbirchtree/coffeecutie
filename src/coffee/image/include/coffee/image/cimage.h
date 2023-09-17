@@ -160,6 +160,18 @@ struct image
         return img;
     }
 
+    template<typename T>
+    STATICINLINE image<PixType> From(
+        gsl::span<T>&& data, Size const& size, int bpp = 4)
+    {
+        image<PixType> img;
+        img.data       = C_RCAST<PixType*>(data.data());
+        img.size       = size;
+        img.bpp        = bpp;
+
+        return img;
+    }
+
     template<
         typename PixType2,
         typename std::enable_if<std::is_same<

@@ -2,8 +2,8 @@
 
 #include <coffee/graphics/apis/gleam/rhi_submit.h>
 #include <coffee/graphics/apis/gleam/rhi_system.h>
-#include <peripherals/stl/tuple_hash.h>
 #include <peripherals/stl/iterator_slice.h>
+#include <peripherals/stl/tuple_hash.h>
 
 #include "caching.h"
 #include "data.h"
@@ -59,10 +59,12 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         gfx::draw_command                     command;
         std::vector<std::vector<draw_data_t>> draws;
 
-        gfx::buffer_slice_t         material_buffer;
-        gfx::buffer_slice_t         matrix_buffer;
-        Span<materials::shader_data> material_mapping;
-        Span<Matf4>                 matrix_mapping;
+        gfx::buffer_slice_t               material_buffer;
+        gfx::buffer_slice_t               transparent_buffer;
+        gfx::buffer_slice_t               matrix_buffer;
+        Span<materials::shader_data>      material_mapping;
+        Span<materials::transparent_data> transparent_mapping;
+        Span<Matf4>                       matrix_mapping;
 
         model_tracker_t insert_draw(draw_data_t const& draw)
         {
@@ -124,6 +126,11 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         {
             return (required_storage() / sizeof(materials::shader_data))
                    * sizeof(Matf4);
+        }
+        inline size_t required_transparent_storage() const
+        {
+            return (required_storage() / sizeof(materials::shader_data))
+                   * sizeof(materials::transparent_data);
         }
     };
 
@@ -677,10 +684,10 @@ struct MeshRenderer : Components::RestrictedSubsystem<
                && (ent.tags & ObjectSkybox) == 0)
                 continue;
             auto      ref    = p.template ref<Proxy>(ent);
-            SubModel& smodel = ref.template get<SubModel>();
-            Model&    model
+            SubModel const& smodel = ref.template get<SubModel>();
+            Model const&    model
                 = p.template ref<Proxy>(smodel.parent).template get<Model>();
-            MeshTrackingData& track = ref.template get<MeshTrackingData>();
+            MeshTrackingData const& track = ref.template get<MeshTrackingData>();
 
             if(!track.model_id.enabled)
                 continue;
@@ -764,7 +771,7 @@ struct MeshRenderer : Components::RestrictedSubsystem<
 
     void populate_bsp_material(BspReference& ref, size_t i = 0)
     {
-        Pass&                  pass     = m_bsp[ref.current_pass];
+        Pass&                   pass     = m_bsp[ref.current_pass];
         materials::shader_data& material = pass.material_of(i);
         shader_cache.populate_material(material, ref.shader, Vecf2{1, 1});
         bitm_cache.assign_atlas_data(material.lightmap, ref.lightmap);
@@ -773,14 +780,14 @@ struct MeshRenderer : Components::RestrictedSubsystem<
     void populate_mod2_material(
         SubModel const& sub, ModelItem<Version> const& model, size_t i = 0)
     {
-        Pass&                  pass     = m_model[sub.current_pass];
+        Pass&                   pass     = m_model[sub.current_pass];
         materials::shader_data& material = pass.material_of(i);
         shader_cache.populate_material(
             material, sub.shader, model.header->uvscale);
     }
 
     void update_animations(
-        materials::shader_data&  material,
+        materials::shader_data& material,
         generation_idx_t const& shader,
         time_point const&       time)
     {
@@ -986,8 +993,8 @@ void LoadingScreen::start_restricted(Proxy&, const time_point&)
 
 void LoadingScreen::end_restricted(Proxy& e, const time_point& time)
 {
-    gfx::system* api;
-    ScreenClear* screen_clear;
+    gfx::system*   api;
+    ScreenClear*   screen_clear;
     LoadingStatus* status;
     e.subsystem(api);
     e.subsystem(screen_clear);

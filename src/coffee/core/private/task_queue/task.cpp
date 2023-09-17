@@ -5,6 +5,7 @@
 #include <coffee/core/internal_state.h>
 
 #include <peripherals/stl/range.h>
+#include <platforms/stacktrace.h>
 
 #include <coffee/core/CDebug>
 
@@ -61,12 +62,12 @@ static std::optional<RQE> VerifyTask(runtime_task const& t)
     if(enum_helpers::feval(
            t.flags, task_flags::single_shot | task_flags::periodic))
         return RQE::InvalidTaskFlags;
-    if(enum_helpers::feval(t.flags, task_flags::single_shot) &&
-       enum_helpers::feval(t.flags, task_flags::periodic))
+    if(enum_helpers::feval(t.flags, task_flags::single_shot)
+       && enum_helpers::feval(t.flags, task_flags::periodic))
         return RQE::InvalidTaskFlags;
-    if(enum_helpers::feval(t.flags, task_flags::single_shot) &&
-       !enum_helpers::feval(t.flags, task_flags::immediate) &&
-       t.time < detail::clock::now())
+    if(enum_helpers::feval(t.flags, task_flags::single_shot)
+       && !enum_helpers::feval(t.flags, task_flags::immediate)
+       && t.time < detail::clock::now())
         return RQE::ExpiredTaskDeadline;
     return std::nullopt;
 }
@@ -101,8 +102,8 @@ static void NotifyThread(
     auto threadFlags = context->queue_flags.find(threadId);
     auto queueRef    = context->queues.find(threadId);
 
-    if(threadFlags == context->queue_flags.end() ||
-       queueRef == context->queues.end())
+    if(threadFlags == context->queue_flags.end()
+       || queueRef == context->queues.end())
         return;
 
     C_PTR_CHECK(threadFlags->second);
@@ -173,9 +174,9 @@ STATICINLINE void ThreadQueueSleep(
 }
 
 static void ImpCreateNewThreadQueue(
-    std::string_view name,
+    std::string_view                            name,
     std::shared_ptr<runtime_queue::semaphore_t> sem,
-    std::promise<void> started)
+    std::promise<void>                          started)
 {
 #ifndef COFFEE_LOWFAT
     try
@@ -239,7 +240,7 @@ detail::result<runtime_queue*, RuntimeQueueVerboseError> runtime_queue::
         DProfContext _(DTEXT(RQ_API "Creating new task queue"));
 
         std::shared_ptr<semaphore_t> sem = std::make_shared<semaphore_t>();
-        std::promise<void> thread_started;
+        std::promise<void>           thread_started;
         std::future<void> thread_started_signal = thread_started.get_future();
 
         sem->running.store(true);
@@ -252,7 +253,7 @@ detail::result<runtime_queue*, RuntimeQueueVerboseError> runtime_queue::
         auto tid = std::hash<detail::thread::id>()(worker.get_id());
 
         /* Wait for the runtime_queue to be created on the thread */
-        if (thread_started_signal.wait_for(10ms) != std::future_status::ready)
+        if(thread_started_signal.wait_for(10ms) != std::future_status::ready)
             return RuntimeQueueVerboseError{
                 RQE::ThreadSpawn, "thread creation timed out"};
 
@@ -367,13 +368,13 @@ detail::result<u64, RuntimeQueueError> runtime_queue::Queue(
 }
 
 detail::result<u64, RuntimeQueueError> runtime_queue::Queue(
-    runtime_queue *queue, std::unique_ptr<dependent_task_invoker> &&task)
+    runtime_queue* queue, std::unique_ptr<dependent_task_invoker>&& task)
 {
     if(context->shutdown_flag.load())
         return RQE::ShuttingDown;
 
     DProfContext _(RQ_API "Adding dependent task to queue");
-    auto& ref = *queue;
+    auto&        ref = *queue;
 
     detail::unique_lock<detail::recursive_mutex> __(queue->m_tasks_lock);
 
@@ -383,9 +384,9 @@ detail::result<u64, RuntimeQueueError> runtime_queue::Queue(
 }
 
 detail::result<u64, RuntimeQueueError> runtime_queue::Queue(
-    std::unique_ptr<dependent_task_invoker> &&task)
+    std::unique_ptr<dependent_task_invoker>&& task)
 {
-    if (auto q = GetCurrentQueue(); q.has_error())
+    if(auto q = GetCurrentQueue(); q.has_error())
         return detail::failure(RQE::InvalidQueue);
     else
         return Queue(q.value(), std::move(task));
@@ -563,8 +564,8 @@ std::optional<RuntimeQueueError> runtime_queue::AwaitTask(
             return RQE::IncompatibleTaskAwait;
 
         /* Do not await a past event */
-        if(!enum_helpers::feval(task->flags, task_flags::immediate) &&
-           detail::clock::now() > task->time)
+        if(!enum_helpers::feval(task->flags, task_flags::immediate)
+           && detail::clock::now() > task->time)
         {
             return RQE::ExpiredTaskDeadline;
         }
@@ -702,9 +703,7 @@ void runtime_queue::execute_tasks()
         }
     }
     std::move(
-        std::begin(m_tasks),
-        std::end(m_tasks),
-        std::back_inserter(tasks));
+        std::begin(m_tasks), std::end(m_tasks), std::back_inserter(tasks));
     m_tasks = std::move(tasks);
 
     auto dependent_tasks = std::move(m_dependent_tasks);
@@ -712,6 +711,11 @@ void runtime_queue::execute_tasks()
     {
         if(!task.alive)
             continue;
+        if(task.task->cancelled())
+        {
+            task.alive = false;
+            continue;
+        }
         if(!task.task->ready())
             continue;
 
@@ -727,23 +731,22 @@ void runtime_queue::execute_tasks()
         std::back_inserter(dependent_tasks));
     m_dependent_tasks = std::move(dependent_tasks);
 
-// TODO: Do this only occasionally
-//    {
-//        auto trimmed_tasks = std::remove_if(
-//            m_dependent_tasks.begin(),
-//            m_dependent_tasks.end(),
-//            [] (dependent_task_data_t const& task) {
-//                return !task.alive;
-//        });
-//        m_dependent_tasks.erase(trimmed_tasks, m_dependent_tasks.end());
-//    }
-//    {
-//        auto trimmed_tasks = std::remove_if(
-//            m_tasks.begin(), m_tasks.end(), [] (task_data_t const& task) {
-//                return !task.to_dispose;
-//        });
-//        m_tasks.erase(trimmed_tasks, m_tasks.end());
-//    }
+    // TODO: Do this only occasionally
+    //    {
+    //        auto trimmed_tasks = std::remove_if(
+    //            m_dependent_tasks.begin(),
+    //            m_dependent_tasks.end(),
+    //            [](dependent_task_data_t const& task) { return !task.alive;
+    //            });
+    //        m_dependent_tasks.erase(trimmed_tasks, m_dependent_tasks.end());
+    //    }
+    //    {
+    //        auto trimmed_tasks = std::remove_if(
+    //            m_tasks.begin(), m_tasks.end(), [] (task_data_t const& task) {
+    //                return !task.to_dispose;
+    //        });
+    //        m_tasks.erase(trimmed_tasks, m_tasks.end());
+    //    }
 }
 
 detail::duration runtime_queue::time_till_next() const

@@ -12,64 +12,8 @@ namespace group {
 using namespace gl::group;
 }
 
-template<typename T = std::byte>
-struct null_span
-{
-    using value_type = T;
-    using size_type  = size_t;
-
-    template<typename T2>
-    static inline null_span of(T2 size)
-    {
-        return {static_cast<size_t>(size)};
-    }
-
-    inline std::byte* data() const
-    {
-        return nullptr;
-    }
-
-    inline size_t size() const
-    {
-        return m_size;
-    }
-
-    inline std::byte const& operator[](size_t) const
-    {
-        return m_zero;
-    }
-
-    size_t    m_size{0};
-    std::byte m_zero{0};
-};
-
-struct offset_span
-{
-    using value_type = std::byte;
-    using size_type  = size_t;
-
-    template<typename T2>
-    static inline offset_span of(T2 offset)
-    {
-        return {static_cast<size_t>(offset)};
-    }
-
-    inline void* data() const
-    {
-        return reinterpret_cast<void*>(m_offset);
-    }
-    inline size_t size() const
-    {
-        return 1;
-    }
-    inline std::byte const& operator[](size_t) const
-    {
-        return m_zero;
-    }
-
-    size_t    m_offset{0};
-    std::byte m_zero{0};
-};
+using semantic::concepts::null_span;
+using semantic::concepts::offset_span;
 
 using namespace semantic::concepts::graphics;
 using semantic::mem_chunk;
