@@ -15,6 +15,7 @@
 #include <peripherals/build/build_info.h>
 #include <peripherals/build/license.h>
 #include <peripherals/libc/signals.h>
+#include <peripherals/stl/range.h>
 #include <peripherals/stl/string_ops.h>
 
 #include <platforms/environment.h>
@@ -200,9 +201,9 @@ FORCEDINLINE void PrintArchitectureInfo()
             info::proc::frequency() / 1000000.f);
 }
 
-FORCEDINLINE void PrintHelpInfo(args::ArgumentParser const& arg)
+FORCEDINLINE void PrintHelpInfo(cxxopts::Options const& arg)
 {
-    cOutputPrint("{0}", arg.helpMessage());
+    cOutputPrint("{0}", arg.help());
 }
 
 static void PrintLicenseInfo()
@@ -327,7 +328,8 @@ i32 CoffeeMain(MainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
 #endif
 
     /* Set the program arguments so that we can look at them later */
-    GetInitArgs() = ::platform::args::AppArg::Clone(argc, argv);
+    for(auto i : stl_types::range(argc))
+        GetInitArgs().push_back(argv[i]);
 
     silent_init = (flags & SilentInit) == SilentInit;
 
@@ -336,9 +338,10 @@ i32 CoffeeMain(MainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
 #if !defined(COFFEE_CUSTOM_EXIT_HANDLING)
         if((flags & DiscardArgumentHandler) == 0)
         {
-            auto parser = BaseArgParser::GetBase();
-            auto args   = parser.parseArguments(GetInitArgs());
-            auto ret    = BaseArgParser::PerformDefaults(parser, args);
+            cxxopts::Options parser(
+                State::GetAppData()->application_name, "A Coffee application");
+            BaseArgParser::GetBase(parser);
+            auto ret = BaseArgParser::PerformDefaults(parser, GetInitArgs());
 
             if(ret > 0)
                 return ret;
@@ -504,8 +507,8 @@ void InstallDefaultSigHandlers()
                 typing::logging::fprintf_logger,
                 stack_writer);
         platform::common::posix::proc::breakpoint();
-//        std::quick_exit(SIGINT);
-//        libc::signal::exit(libc::signal::sig::terminate);
+        //        std::quick_exit(SIGINT);
+        //        libc::signal::exit(libc::signal::sig::terminate);
     });
 #endif
 
@@ -519,7 +522,7 @@ void InstallDefaultSigHandlers()
     libc::signal::install(sig::segfault, generic_stacktrace);
 
     libc::signal::install(sig::interrupt, [](i32) {
-//        CoffeeTerminate();
+        //        CoffeeTerminate();
         libc::signal::exit(sig::terminate);
     });
 #endif
@@ -557,83 +560,54 @@ void SetPrintingVerbosity(C_UNUSED(u8 level))
 
 namespace BaseArgParser {
 
-ArgumentParser& GetBase()
+cxxopts::Options& GetBase(cxxopts::Options& parser)
 {
-    static ArgumentParser parser;
-
-    if(!parser.arguments.size())
-    {
-        parser.addSwitch(
-            "help", "help", "h", "Print help information and exit");
-
-        parser.addSwitch(
-            "version",
-            "version",
-            nullptr,
-            "Print version information and exit");
-
-        parser.addSwitch(
-            "verbose",
-            nullptr,
-            "v",
-            "Print verbose messages to terminal while running");
-
-        parser.addSwitch("quiet", nullptr, "q", "Be quiet");
-
-        parser.addSwitch(
-            "licenses",
-            "licenses",
-            nullptr,
-            "Print license information and exit");
-
-        parser.addSwitch(
-            "dprofile", "deep-profile", nullptr, "Enable deep profiling");
-
-        parser.addSwitch("json", "json", nullptr, "Output information as JSON");
-
-#if !COFFEE_FIXED_RESOURCE_DIR
-        parser.addPositionalArgument(
-            "resource_prefix",
-
-            "Change resource prefix"
-            " (only works if application does not"
-            " override resource prefix)");
-#endif
-    }
+    parser.positional_help("resource prefix")
+        .add_options("engine")
+        //
+        ("h,help", "Print help and exit")
+        //
+        ("version", "Print version information and exit")
+        //
+        ("v", "Increase logging verbosity by 1")
+        //
+        ("q,quiet", "Disable log output")
+        //
+        ("licenses", "Print license information and exit")
+        //
+        ("deep-profile", "Enable deep profiling")
+        //
+        ("json", "Log output as JSON")
+        //
+        ;
 
     return parser;
 }
 
-int PerformDefaults(ArgumentParser& parser, ArgumentResult& args)
+int PerformDefaults(cxxopts::Options& parser, std::vector<const char*>& args)
 {
     using namespace ::platform::url::constructors;
 
-    for(auto const& sw_ : args.switches)
+    auto results = parser.parse(args.size(), args.data());
+    for(auto const& sw : results)
     {
-        auto sw = sw_.first;
-        if(sw == "help")
+        if(sw.key() == "help" && sw.as<bool>())
         {
             PrintVersionInfo();
             PrintHelpInfo(parser);
             return 0;
-        } else if(sw == "verbose")
-        {
-            Coffee::PrintingVerbosityLevel() += sw_.second;
-        } else if(sw == "quiet")
-        {
-            Coffee::PrintingVerbosityLevel() -= sw_.second;
-        } else if(sw == "version")
+        } else if(sw.key() == "version" && sw.as<bool>())
         {
             PrintVersionInfo();
             PrintBuildInfo();
             return 0;
-        } else if(sw == "licenses")
+        } else if(sw.key() == "licenses" && sw.as<bool>())
         {
             PrintLicenseInfo();
             return 0;
         }
 #if MODE_DEBUG
-        else if(sw == "dprofile")
+        else if(sw.key() == "deep-profile" && sw.as<bool>())
         {
             auto profilerState = State::GetProfilerStore();
 
@@ -641,7 +615,7 @@ int PerformDefaults(ArgumentParser& parser, ArgumentResult& args)
                 profilerState->flags.deep_enabled = true;
         }
 #endif
-        else if(sw == "json")
+        else if(sw.key() == "json" && sw.as<bool>())
         {
             if constexpr(!compile_info::lowfat_mode)
                 DebugFun::SetLogInterface(
@@ -649,17 +623,13 @@ int PerformDefaults(ArgumentParser& parser, ArgumentResult& args)
         }
     }
 
-    for(auto const& arg : args.arguments)
-    {
-        if(arg.first == "resource_prefix")
-            file::ResourcePrefix(arg.second.c_str());
-    }
+    if(results.count("verbose"))
+        Coffee::PrintingVerbosityLevel() += results.count("verbose");
+    else if(results.count("quiet"))
+        Coffee::PrintingVerbosityLevel() -= results.count("quiet");
 
-    for(auto const& pos : args.positional)
-    {
-        if(pos.first == "resource_prefix")
-            file::ResourcePrefix(pos.second.c_str());
-    }
+    if(results.unmatched().size() >= 1)
+        file::ResourcePrefix(results.unmatched().front());
 
     return -1;
 }

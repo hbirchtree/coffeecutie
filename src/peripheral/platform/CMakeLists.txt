@@ -3,9 +3,7 @@ option(BUILD_WITH_WERROR ON "Build with warnings as errors")
 coffee_library(
   TARGET PeripheralPlatform
   LIBRARIES PeripheralLib PeripheralFormat
-  SOURCES private/argument_parse.cpp
-          private/platform_data.cpp
-          private/shared_func.cpp
+  SOURCES private/shared_func.cpp
           private/url.cpp
           #
           # This one is pretty important, let's keep it here

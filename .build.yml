@@ -27,6 +27,8 @@ toolchain:
   version: v2.0.0
   emsdk:
     version: 3.1.44
+  android:
+    ndk: '15c'
 version:
   hotfix: 5
   major: 4

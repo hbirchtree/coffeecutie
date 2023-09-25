@@ -26,7 +26,7 @@ union SafeArea
 
 /* High-level properties of the system */
 
-extern std::string system_name();
+//extern std::string system_name();
 
 namespace device::display {
 

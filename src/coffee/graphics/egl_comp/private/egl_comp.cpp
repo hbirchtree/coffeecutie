@@ -24,7 +24,7 @@
 
 namespace egl {
 
-using stl_types::str::convert::hexify;
+using stl_types::str::fmt::hexify;
 
 namespace detail {
 

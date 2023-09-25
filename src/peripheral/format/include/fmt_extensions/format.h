@@ -1,11 +1,10 @@
 #pragma once
 
-//#include <boost/outcome/std_result.hpp>
-#include <outcome/result.hpp>
 #include <fmt/format.h>
 #include <fmt/std.h>
 #include <fmt/ranges.h>
 #include <optional>
+#include <peripherals/error/result.h>
 
 //template<typename T, typename E, typename P>
 //struct fmt::formatter<boost::outcome_v2::std_result<T, E, P>>
@@ -27,8 +26,8 @@
 //};
 
 
-template<typename T, typename E, typename P>
-struct fmt::formatter<outcome_v2::std_result<T, E, P>>
+template<typename T, typename E>
+struct fmt::formatter<stl_types::result<T, E>>
 {
     template<typename ParseCtx>
     constexpr auto parse(ParseCtx& ctx)
@@ -37,7 +36,7 @@ struct fmt::formatter<outcome_v2::std_result<T, E, P>>
     }
 
     template<typename FormatCtx>
-    auto format(outcome_v2::std_result<T, E, P> const& res, FormatCtx& ctx)
+    auto format(stl_types::result<T, E> const& res, FormatCtx& ctx)
     {
         if(res.has_value())
             return fmt::format_to(ctx.out(), "result({0})", res.value());

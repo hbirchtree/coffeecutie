@@ -6,7 +6,6 @@
 #include <coffee/core/resource_prefix.h>
 #include <coffee/core/types/application_main.h>
 #include <peripherals/base.h>
-#include <platforms/argument_parse.h>
 
 #if defined(COFFEE_LOWFAT)
 #include <coffee/core/task_queue/task.h>

@@ -6,7 +6,6 @@
 #include <coffee/comp_app/AppWrap>
 #include <coffee/comp_app/gl_config.h>
 #include <coffee/core/CApplication>
-#include <coffee/core/CArgParser>
 #include <coffee/core/CFiles>
 #include <coffee/core/CProfiling>
 #include <coffee/core/EventHandlers>

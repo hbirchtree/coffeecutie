@@ -21,19 +21,19 @@ if(ANDROID)
   # Misc properties
 
   set(ANDROID_BUILD_TOOLS_VER
-      "30.0.3"
+      "34.0.0"
       CACHE STRING ""
   )
   set(ANDROID_GRADLE_MODULE_VER
-      "7.3.1"
+      "8.1.1"
       CACHE STRING ""
   )
   set(ANDROID_GRADLE_VER
-      "7.4"
+      "8.3"
       CACHE STRING ""
   )
   set(ANDROID_NDK_VER
-      "25.1.8937393"
+      "26.0.10792818"
       CACHE STRING ""
   )
 

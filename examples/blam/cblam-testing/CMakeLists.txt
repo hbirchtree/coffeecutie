@@ -1,6 +1,8 @@
 # coffee_application ( TARGET BlamTesting TITLE "Blam Loader" SOURCES main.cpp
 # LIBRARIES Blam Core Image DropinRenderer GLeamRHI )
 
+find_program ( GLSLANG_PROGRAM glslangValidator )
+
 add_custom_target (
   BlamGraphics.Assets
   COMMAND
@@ -15,6 +17,8 @@ add_custom_target (
     --program ShaderCooker=${HOST_TOOLS_BINARY_DIR}/ShaderCooker
     #
     --program Inkscape=inkscape
+    #
+    --program glslang=${GLSLANG_PROGRAM}
     #
     --program TextureCompressor=${HOST_TOOLS_BINARY_DIR}/TextureCompressor
     #

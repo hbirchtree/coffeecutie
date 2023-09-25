@@ -1,19 +1,26 @@
 #pragma once
 
-//#include <boost/outcome/std_result.hpp>
+#if __has_include(<boost/outcome/std_result.hpp>)
+#include <boost/outcome/std_result.hpp>
+#define USE_BOOST_OUTCOME 1
+#else
 #include <outcome/result.hpp>
+#define USE_BOOST_OUTCOME 0
+#endif
 
 namespace stl_types {
 
-//template<typename T, typename E>
-//using result = boost::outcome_v2::std_checked<T, E>;
-//using boost::outcome_v2::success;
-//using boost::outcome_v2::failure;
-
+#if USE_BOOST_OUTCOME == 1
+template<typename T, typename E>
+using result = boost::outcome_v2::std_checked<T, E>;
+using boost::outcome_v2::success;
+using boost::outcome_v2::failure;
+#else
 template<typename T, typename E>
 using result = outcome_v2::checked<T, E>;
 using outcome_v2::success;
 using outcome_v2::failure;
+#endif
 
 template<typename T, typename E>
 inline T value_or(result<T, E>&& res, T&& v)

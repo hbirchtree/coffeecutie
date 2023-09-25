@@ -150,9 +150,6 @@ def encode_textures(
             current = current / 2
         return out
 
-    def _predict_names(basename):
-        return glob(f'{out_directory}/{basename}.*')
-
     def _process_file(
             source: str,
             punchthrough_color: str,
@@ -179,6 +176,8 @@ def encode_textures(
                 )
         else:
             rendered_file = f'{root_directory}/{source}'
+        def _predict_names(basename):
+            return [f'{out_directory}/{basename}.0.{codec}' for codec, _ in codecs]
         outputs = _predict_names(basename)
         res = [needs_update(x, [rendered_file]) for x in outputs]
         for out_of_date in res:
@@ -186,6 +185,7 @@ def encode_textures(
                 break
         else:
             return
+
         compress_mode = 'fast' if 'Deb' in build_mode else 'release'
         run(
             'TextureCompressor',

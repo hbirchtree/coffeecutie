@@ -3,9 +3,9 @@
 #include <coffee/core/CDebug>
 #include <coffee/core/debug/logging.h>
 #include <coffee/core/printing/log_interface.h>
-#include <platforms/argument_parse.h>
 #include <platforms/environment.h>
 #include <platforms/profiling/jsonprofile.h>
+#include <cxxopts.hpp>
 
 #include <coffee/core/debug/logging.h>
 
@@ -45,9 +45,9 @@ struct InternalState
     /* Application info */
     std::shared_ptr<platform::info::AppData> current_app;
 
-    BuildInfo build = {};
+    BuildInfo build{};
 
-    platform::args::AppArg initial_args = {};
+    std::vector<const char*> initial_args{};
 
 #if PERIPHERAL_PROFILER_ENABLED
     std::shared_ptr<profiling::PContext> profiler_store;
@@ -297,7 +297,7 @@ info::AppData const& GetCurrentApp()
     return *State::ISTATE->current_app;
 }
 
-args::AppArg& GetInitArgs()
+std::vector<const char*>& GetInitArgs()
 {
     C_PTR_CHECK(State::ISTATE);
     return State::ISTATE->initial_args;
@@ -351,7 +351,7 @@ using namespace ::Coffee;
  *
  */
 
-void ResourcePrefix(cstring prefix)
+void ResourcePrefix(std::string prefix)
 {
     C_PTR_CHECK(State::ISTATE);
     State::ISTATE->resource_prefix = prefix;

@@ -12,7 +12,7 @@ namespace file {
  * \param prefix shall always end with '/', if you don't,
  *  santa will give you coal.
  */
-extern void ResourcePrefix(libc_types::cstring prefix);
+extern void ResourcePrefix(std::string prefix);
 
 /*!
  * \brief Get the current file resource prefix

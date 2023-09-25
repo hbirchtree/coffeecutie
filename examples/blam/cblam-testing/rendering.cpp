@@ -7,7 +7,6 @@
 
 #include "caching.h"
 #include "data.h"
-#include "resource_creation.h"
 #include "selected_version.h"
 
 using namespace libc_types::size_literals;
@@ -65,6 +64,8 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         Span<materials::shader_data>      material_mapping;
         Span<materials::transparent_data> transparent_mapping;
         Span<Matf4>                       matrix_mapping;
+
+        std::string name;
 
         model_tracker_t insert_draw(draw_data_t const& draw)
         {
@@ -160,10 +161,22 @@ struct MeshRenderer : Components::RestrictedSubsystem<
     {
         this->priority = 3072;
 
+        u32 i = 0;
         for(auto& pass : m_bsp)
+        {
             pass.command.program = resources.bsp_pipeline;
+
+            pass.name = Strings::fmt(
+                "BSP::{}", magic_enum::enum_name(static_cast<Passes>(i++)));
+        }
+        i = 0;
         for(auto& pass : m_model)
+        {
             pass.command.program = resources.model_pipeline;
+
+            pass.name = Strings::fmt(
+                "MOD::{}", magic_enum::enum_name(static_cast<Passes>(i++)));
+        }
     }
     BSPItem const* get_bsp(generation_idx_t bsp)
     {
@@ -309,6 +322,8 @@ struct MeshRenderer : Components::RestrictedSubsystem<
     {
         using namespace typing::vector_types;
 
+        auto _ = m_api->debug().scope(pass.name);
+
         auto vertex_u = gfx::make_uniform_list(
             typing::graphics::ShaderStage::Vertex,
             gfx::uniform_pair{
@@ -370,6 +385,8 @@ struct MeshRenderer : Components::RestrictedSubsystem<
     void render_bsp_pass(Proxy&, f32 t, Pass const& pass, Args&&... extra)
     {
         using namespace typing::vector_types;
+
+        auto _ = m_api->debug().scope(pass.name);
 
         /* Step 1: Set up shared uniform state + buffers */
         auto vertex_u = gfx::make_uniform_list(
@@ -683,11 +700,12 @@ struct MeshRenderer : Components::RestrictedSubsystem<
             if(!rendering_params->render_scenery
                && (ent.tags & ObjectSkybox) == 0)
                 continue;
-            auto      ref    = p.template ref<Proxy>(ent);
+            auto            ref    = p.template ref<Proxy>(ent);
             SubModel const& smodel = ref.template get<SubModel>();
             Model const&    model
                 = p.template ref<Proxy>(smodel.parent).template get<Model>();
-            MeshTrackingData const& track = ref.template get<MeshTrackingData>();
+            MeshTrackingData const& track
+                = ref.template get<MeshTrackingData>();
 
             if(!track.model_id.enabled)
                 continue;
@@ -811,6 +829,9 @@ void ScreenClear::end_restricted(Proxy& e, const time_point&)
 
     if(api.default_rendertarget() == resources.offscreen)
         return;
+
+    auto _ = api.debug().scope();
+
     if(!quad_program)
     {
         load_resources(api, e.subsystem<BlamResources>());
@@ -1006,6 +1027,8 @@ void LoadingScreen::end_restricted(Proxy& e, const time_point& time)
     if(status->progress < 0)
         return;
 
+    auto _ = api->debug().scope();
+
     Matf4 transform = glm::translate(
         glm::scale(glm::identity<Matf4>(), glm::vec3(0.2f)),
         glm::vec3(4, -5, 0));
@@ -1037,7 +1060,8 @@ void LoadingScreen::end_restricted(Proxy& e, const time_point& time)
     gfx::make_uniform_list(
         typing::graphics::ShaderStage::Fragment,
         gfx::uniform_pair{{"range_start"sv}, semantic::SpanOne(start)},
-        gfx::uniform_pair{{"range_end"sv}, semantic::SpanOne(end)})
+        gfx::uniform_pair{{"range_end"sv}, semantic::SpanOne(end)}),
+    gfx::blend_state{}
     );
 }
 
@@ -1062,20 +1086,31 @@ varying vec2 in_tex;
 uniform sampler2D source;
 uniform float range_start;
 uniform float range_end;
+
+float check_texel(in vec2 coord, in float alpha)
+{
+    vec2 color = texture2D(source, coord).xy;
+    if(color.x < 0.9)
+        alpha = 0.0;
+    else if(range_start < range_end && color.y > range_start && color.y < range_end) {}
+    else if(range_start > range_end && (color.y > range_start || color.y < range_end)) {}
+    else
+        alpha = 0.0;
+    return alpha;
+}
+
 void main()
 {
+    float alpha = 1.0;
+    // Do multiple surrounding samples to make the edges smoother
+    const float x_offset = 0.002;
+    alpha = check_texel(in_tex + vec2(-x_offset, 0     ), alpha);
+    alpha = check_texel(in_tex + vec2( x_offset, 0     ), alpha);
+    const float y_offset = 0.005;
+    alpha = check_texel(in_tex + vec2( 0, -y_offset), alpha);
+    alpha = check_texel(in_tex + vec2( 0,  y_offset), alpha);
     vec2 color = texture2D(source, in_tex).xy;
-    if(color.x < 0.99)
-        discard;
-    if(range_start < range_end)
-    {
-        if(color.y < range_start || color.y > range_end)
-            discard;
-    } else if(color.y < range_start && color.y > range_end)
-    {
-        discard;
-    }
-    gl_FragColor = vec4(vec3(color.x), color.x);
+    gl_FragColor = vec4(vec3(color.x), alpha);
 }
 )";
 
@@ -1092,7 +1127,12 @@ void main()
         cWarning("Error compiling loader shader: {}", res.error());
 
     auto tex = ktx::load_from("spinner.0.etc2"_rsc.data());
-    spinner  = std::move(tex.value());
+    if(tex.has_error())
+    {
+        cWarning("Failed to load image: {}", tex.error());
+        return;
+    }
+    spinner = std::move(tex.value());
 
     loading_tex = api.alloc_texture(
         gfx::textures::d2,
@@ -1100,6 +1140,7 @@ void main()
         3);
     loading_tex->alloc(size_3d<u32>{512, 256, 1});
     i32 mip_idx = 0;
+    spinner.mips.resize(1);
     for(auto const& mip : spinner.mips)
         loading_tex->upload(mip.data, Veci2{}, Veci2{mip.size}, mip_idx++);
 

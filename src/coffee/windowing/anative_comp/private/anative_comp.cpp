@@ -2,6 +2,7 @@
 
 #include <coffee/android/android_main.h>
 #include <coffee/comp_app/app_events.h>
+#include <coffee/comp_app/subsystems.h>
 #include <peripherals/stl/magic_enum.hpp>
 
 #include <fmt_extensions/vector_types.h>

@@ -621,7 +621,7 @@ std::optional<RuntimeQueueError> runtime_queue::TerminateThreads()
     context->shutdown_flag.store(true);
     detail::lock_guard<> _(context->global_lock);
 
-    for(auto t : context->queue_flags)
+    for(auto const& t : context->queue_flags)
     {
         t.second->running.store(false);
         t.second->condition.notify_one();
@@ -762,7 +762,7 @@ detail::duration runtime_queue::time_till_next(detail::time_point current) const
     detail::time_point firstTask;
     bool               taskFound = false;
 
-    for(auto task : m_tasks)
+    for(auto const& task : m_tasks)
         if(task.alive)
         {
             firstTask = task.task.time;

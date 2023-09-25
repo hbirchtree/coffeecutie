@@ -1,10 +1,10 @@
 #pragma once
 
+#include <cxxopts.hpp>
 #include <peripherals/stl/types.h>
-#include <platforms/argument_parse.h>
 
-namespace Coffee{
+namespace Coffee {
 
-extern platform::args::AppArg& GetInitArgs();
+extern std::vector<const char*>& GetInitArgs();
 
 }

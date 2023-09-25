@@ -9,6 +9,7 @@
 #include <coffee/core/platform_data.h>
 #include <fmt_extensions/info.h>
 #include <fmt_extensions/url_types.h>
+#include <peripherals/stl/range.h>
 #include <peripherals/stl/string/hex.h>
 #include <peripherals/stl/string/replace.h>
 #include <peripherals/stl/string_casting.h>
@@ -59,7 +60,7 @@ namespace CT_Stuff {
 
 STATICINLINE void PutArgs(json::ArrayBuilder& target)
 {
-    for(auto const& arg : GetInitArgs().originalArguments())
+    for(auto const& arg : GetInitArgs())
         target.push_back(AnonymizePath(arg));
 }
 
@@ -216,7 +217,7 @@ STATICINLINE void PutRuntimeInfo(json::ObjectBuilder& target)
         json::ArrayBuilder  freq(target.allocator());
         json::ArrayBuilder  clusters(target.allocator());
 
-        for(auto i : stl_types::Range<u32>(platform::info::proc::cpu_count()))
+        for(auto i : stl_types::range<u32>(platform::info::proc::cpu_count()))
         {
             json::ObjectBuilder model_info(target.allocator());
             auto frequency = platform::info::proc::frequency(false, i);

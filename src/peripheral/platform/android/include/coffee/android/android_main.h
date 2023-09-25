@@ -1,8 +1,15 @@
 #pragma once
 
 #include <peripherals/libc/types.h>
+#include <peripherals/stl/error_code.h>
+#include <peripherals/stl/standard_exceptions.h>
 #include <peripherals/stl/types.h>
 #include <url/url.h>
+
+#include <map>
+#include <optional>
+#include <set>
+#include <vector>
 
 #include <coffee/jni/jnipp.h>
 
@@ -26,7 +33,7 @@ namespace android {
 using libc_types::f32;
 using libc_types::u32;
 
-struct jni_error_category : stl_types::error_category
+struct jni_error_category : std::error_category
 {
     virtual const char* name() const noexcept;
     virtual std::string message(int error_code) const;

@@ -49,6 +49,7 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
 
     inline void commit(size_t size)
     {
+        m_cached_size = size;
         if(m_workarounds.buffer.emulated_mapbuffer)
             m_allocation.resize(size);
 #if GLEAM_MAX_VERSION >= 0x450
@@ -95,6 +96,7 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
     requires semantic::concepts::Span<Span>
     inline void commit(Span const& data)
     {
+        m_cached_size = data.size();
 #if GLEAM_MAX_VERSION >= 0x450
         if(m_features.dsa && immutable())
         {
@@ -161,7 +163,7 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
         if(offset + actual_size > buffer_size)
             Throw(std::out_of_range("offset out of range of buffer"));
 
-#if GLEAM_MAX_VERSION >= 0x420 || GLEAM_MAX_VERSION_ES >= 0x310
+#if GLEAM_MAX_VERSION >= 0x420
         if(m_features.barrier)
             cmd::memory_barrier(
                 group::memory_barrier_mask::client_mapped_buffer_barrier_bit);
@@ -294,12 +296,16 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
     {
     }
 
-    inline size_t size() const
+    inline size_t size()
     {
         /* TODO: Cache the size, Emscripten is slow on this */
 
         if(m_workarounds.buffer.emulated_mapbuffer && m_allocation.size())
             return m_allocation.size();
+
+        if(m_cached_size.has_value())
+            return m_cached_size.value();
+
         i32 out{0};
 #if GLEAM_MAX_VERSION >= 0x450
         if(m_features.dsa)
@@ -315,6 +321,7 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
                 group::buffer_prop_arb::buffer_size,
                 SpanOne(out));
         }
+        m_cached_size = static_cast<size_t>(out);
 
         return static_cast<size_t>(out);
     }
@@ -330,6 +337,7 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
     std::vector<char>         m_allocation;
     std::pair<size_t, size_t> m_mapping{0, 0};
     hnd                       m_handle;
+    std::optional<size_t>     m_cached_size;
     features::buffers         m_features;
     workarounds               m_workarounds;
     buffers::type             m_type;

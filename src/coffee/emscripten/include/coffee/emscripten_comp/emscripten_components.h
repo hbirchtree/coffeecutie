@@ -1,6 +1,7 @@
 #pragma once
 
 #include <coffee/comp_app/services.h>
+#include <coffee/comp_app/subsystems.h>
 
 namespace emscripten {
 

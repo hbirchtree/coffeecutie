@@ -1,16 +1,13 @@
 #pragma once
 
-#include <platforms/argument_parse.h>
+#include <cxxopts.hpp>
+#include <peripherals/identify/compiler/function_export.h>
 
-namespace Coffee {
-namespace BaseArgParser {
+namespace Coffee::BaseArgParser {
 
-using namespace ::platform::args;
-
-extern ArgumentParser& GetBase();
+extern cxxopts::Options& GetBase(cxxopts::Options& parser);
 
 COFFEE_APP_FUNC int PerformDefaults(
-    ArgumentParser& parser, ArgumentResult& args);
+    cxxopts::Options& parser, std::vector<const char*>& args);
 
 } // namespace BaseArgParser
-} // namespace Coffee

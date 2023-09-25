@@ -4,7 +4,8 @@
 
 #include <emscripten.h>
 #include <peripherals/libc/types.h>
-#include <peripherals/stl/string_ops.h>
+#include <peripherals/stl/string/split.h>
+#include <peripherals/stl/string/trim.h>
 #include <peripherals/stl/types.h>
 #include <string_view>
 

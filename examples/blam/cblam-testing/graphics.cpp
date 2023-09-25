@@ -4,6 +4,7 @@
 #include "rendering.h"
 #include "resource_creation.h"
 #include "selected_version.h"
+#include <coffee/core/coffee_args.h>
 #include <coffee/graphics/apis/gleam/rhi_emulation.h>
 
 #include "touch_overlay.h"
@@ -147,12 +148,12 @@ static void open_map(
 
     LoadingStatus& loading = e.subsystem_cast<LoadingStatus>();
 
-    std::function<void(std::string_view, i16)> progress_cb =
-            [&loading](std::string_view status, i16 progress) {
-        loading.status   = std::string(status.begin(), status.end());
-        loading.progress = progress;
-        cDebug("Map loading status: {}%: {}", progress, status);
-    };
+    std::function<void(std::string_view, i16)> progress_cb
+        = [&loading](std::string_view status, i16 progress) {
+              loading.status   = std::string(status.begin(), status.end());
+              loading.progress = progress;
+              cDebug("Map loading status: {}%: {}", progress, status);
+          };
 
     auto map_data = blam::map_container<halo_version>::from_bytes_async(
         resources.background_worker,
@@ -176,8 +177,23 @@ static void open_map(
             }));
 }
 
-i32 blam_main(i32, cstring_w*)
+i32 blam_main()
 {
+    cxxopts::ParseResult arguments;
+    if constexpr(
+        !compile_info::platform::is_android
+        && !compile_info::platform::is_emscripten)
+    {
+        cxxopts::Options options(
+            "Blam! Graphics", "A prototype for a Blam! engine");
+        Coffee::BaseArgParser::GetBase(options);
+        options.positional_help("map name or directory");
+        auto& args = GetInitArgs();
+        arguments = options.parse(args.size(), args.data());
+        if(BaseArgParser::PerformDefaults(options, args) >= 0)
+            return 0;
+    }
+
     rq::runtime_queue::CreateNewQueue("Blam Graphics!").assume_value();
 #if defined(FEATURE_ENABLE_ASIO)
     C_UNUSED(auto _ = Net::RegisterProfiling());
@@ -212,7 +228,7 @@ i32 blam_main(i32, cstring_w*)
     comp_app::addDefaults(e, *e.service<comp_app::AppLoader>(), app_ec);
     comp_app::AppContainer<BlamData<halo_version>>::addTo(
         e,
-        [](EntityContainer&        e,
+        [arguments](EntityContainer&        e,
            BlamData<halo_version>& data,
            time_point const&) {
             ProfContext _(__FUNCTION__);
@@ -336,10 +352,10 @@ i32 blam_main(i32, cstring_w*)
                 map_filename             = "beavercreek.map"_asset;
                 map_dir                  = "."_asset;
 #endif
-            } else if(!GetInitArgs().arguments().empty())
+            } else if(arguments.unmatched().size() == 2)
             {
                 map_filename
-                    = MkUrl(GetInitArgs().arguments().at(0), RSCA::SystemFile);
+                    = MkUrl(arguments.unmatched().at(1), RSCA::SystemFile);
                 map_dir = map_filename.path().dirname().url(RSCA::SystemFile);
             } else
             {
@@ -390,4 +406,4 @@ i32 blam_main(i32, cstring_w*)
     return comp_app::ExecLoop<comp_app::BundleData>::exec(e);
 }
 
-COFFEE_APPLICATION_MAIN(blam_main)
+COFFEE_APPLICATION_MAIN_CUSTOM(blam_main, 0x1 | 0x2)

@@ -11,7 +11,7 @@ namespace platform::file::posix {
 
 struct mem_mapping_t
 {
-    using span_type = gsl::span<char, gsl::dynamic_extent>;
+    using span_type = gsl::span<char>;
 
     span_type view;
     RSCA      access;

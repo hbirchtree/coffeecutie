@@ -1,0 +1,362 @@
+{
+    "version": 6,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 25
+    },
+    "configurePresets": [
+        {
+            "name": "vcpkg-base",
+            "hidden": true,
+            "binaryDir": "${sourceDir}/multi_build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/multi_build/${presetName}/install",
+                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+                "HOST_TOOLS_BINARY_DIR": "$env{HOST_TOOLS_BINARY_DIR}",
+                "VCPKG_MANIFEST_FEATURES": "$penv{TARGET_FEATURES}"
+            },
+            "environment": {
+                "HOST_TOOLS_BINARY_DIR": "${sourceDir}/multi_build/host_x64-linux-native/bin",
+                "VCPKG_ROOT": "$penv{VCPKG_ROOT}"
+            }
+        },
+        {
+            "name": "vcpkg-base-linux",
+            "inherits": ["vcpkg-base"],
+            "hidden": true,
+            "generator": "Ninja",
+            "cacheVariables": {
+                "APPIMAGE_EXTRA_LIBRARIES": "$env{TOOLCHAIN_SYSROOT}/lib/libstdc++.so.6;$env{TOOLCHAIN_SYSROOT}/lib/libssp.so.0;$env{TOOLCHAIN_SYSROOT}/usr/lib/libbacktrace.so.0",
+                "APPIMAGE_RUNTIME_BINARY": "${sourceDir}/multi_build/${presetName}/vcpkg_installed/$env{PLATFORM}-$env{TOOLCHAIN_PREFIX}/bin/runtime",
+                "CMAKE_C_COMPILER": "$env{TOOLCHAIN_ROOT}/bin/$env{ARCHITECTURE}-gcc",
+                "CMAKE_CXX_COMPILER": "$env{TOOLCHAIN_ROOT}/bin/$env{ARCHITECTURE}-g++",
+                "CMAKE_MAKE_PROGRAM": "$env{NINJA}",
+                "MKSQUASH_PROGRAM": "$env{MKSQUASH_PROGRAM}",
+                "TOOLCHAIN_PREFIX": "$env{TOOLCHAIN_PREFIX}",
+                "TOOLCHAIN_ROOT": "$env{TOOLCHAIN_ROOT}",
+                "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/toolchain/cmake/Toolchains/$env{TOOLCHAIN_PREFIX}.toolchain.cmake",
+                "VCPKG_TARGET_TRIPLET": "$env{PLATFORM}-$env{TOOLCHAIN_PREFIX}"
+            },
+            "environment": {
+                "MKSQUASH_PROGRAM": "/usr/bin/mksquash",
+                "NINJA": "$penv{NINJA}",
+                "TOOLCHAIN_PREFIX": "$env{ARCHITECTURE}",
+                "TOOLCHAIN_VERSION": "v2.0.0",
+                "TOOLCHAIN_ROOT": "${sourceDir}/multi_build/compilers/$env{PLATFORM}-$env{ARCHITECTURE}/$env{TOOLCHAIN_VERSION}",
+                "TOOLCHAIN_SYSROOT": "$env{TOOLCHAIN_ROOT}/$env{TOOLCHAIN_PREFIX}/sysroot"
+            }
+        },
+        {
+            "name": "vcpkg-base-android",
+            "inherits": ["vcpkg-base"],
+            "hidden": true,
+            "generator": "Ninja",
+            "cacheVariables": {
+                "ANDROID_NDK": "$env{ANDROID_NDK}",
+                "ANDROID_NDK_HOME": "$env{ANDROID_NDK}",
+                "ANDROID_SDK": "$env{ANDROID_SDK}",
+                "ANDROID_PLATFORM": "android-$env{API}",
+                "BUILD_ANATIVE": "ON",
+                "BUILD_EGL": "ON",
+                "BUILD_GLES": "ON",
+                "BUILD_GLES_31": "ON",
+                "BUILD_GLES_32": "ON",
+                "BUILD_GL_SOFTWARE_BCN": "ON",
+                "BUILD_GL_SOFTWARE_PVRTC": "ON",
+                "BUILD_MEDIA": "OFF",
+                "BUILD_SDL2": "OFF",
+                "BUILD_TESTS": "OFF",
+                "CMAKE_MAKE_PROGRAM": "$env{NINJA}",
+                "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/toolchain/vcpkg/toolchains/android.cmake",
+
+                "VCPKG_CMAKE_SYSTEM_VERSION": "$env{API}",
+                "VCPKG_CRT_LINKAGE": "static",
+                "VCPKG_DEP_INFO_OVERRIDE_VARS": "android;arm;arm64",
+                "VCPKG_LIBRARY_LINKAGE": "static",
+                "VCPKG_TARGET_TRIPLET": "$env{ARCHITECTURE}-android"
+            },
+            "environment": {
+                "ANDROID_NDK": "$env{ANDROID_SDK}/ndk/$env{NDK_VERSION}",
+                "ANDROID_NDK_HOME": "$env{ANDROID_SDK}/ndk/$env{NDK_VERSION}",
+                "ANDROID_SDK": "$penv{ANDROID_SDK}",
+                "API": "32",
+                "ARCHITECTURE": "arm64",
+                "NDK_VERSION": "26.0.10792818"
+            }
+        },
+        {
+            "name": "vcpkg-base-wiicube",
+            "inherits": ["vcpkg-base"],
+            "hidden": true,
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "$env{TOOLCHAIN_ROOT}/bin/$env{ARCHITECTURE}-gcc",
+                "CMAKE_CXX_COMPILER": "$env{TOOLCHAIN_ROOT}/bin/$env{ARCHITECTURE}-g++",
+                "CMAKE_MAKE_PROGRAM": "$env{NINJA}",
+                "CMAKE_SYSTEM_NAME": "Baremetal",
+                "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/toolchain/cmake/Toolchains/$env{TOOLCHAIN_PREFIX}.toolchain.cmake",
+                "VCPKG_MANIFEST_NO_DEFAULT_FEATURES": "ON",
+                "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports-gamecube/outcome;${sourceDir}/toolchain/vcpkg/ports-gamecube/status-code;${sourceDir}/toolchain/vcpkg/ports-gamecube/zstd",
+                "VCPKG_TARGET_TRIPLET": "$env{PLATFORM}-$env{TOOLCHAIN_PREFIX}"
+            },
+            "environment": {
+                "ARCHITECTURE": "powerpc-eabi",
+                "TOOLCHAIN_PREFIX": "$env{ARCHITECTURE}",
+                "TOOLCHAIN_ROOT": "${sourceDir}/multi_build/${presetName}/compiler",
+                "TOOLCHAIN_SYSROOT": "$env{TOOLCHAIN_ROOT}/$env{TOOLCHAIN_PREFIX}/sysroot"
+            }
+        },
+        {
+            "name": "vcpkg-base-emscripten",
+            "inherits": ["vcpkg-base"],
+            "hidden": true,
+            "generator": "Ninja",
+            "cacheVariables": {
+                "BUILD_ASIO": "OFF",
+                "BUILD_EMSCRIPTEN": "ON",
+                "BUILD_GLES": "ON",
+                "CMAKE_MAKE_PROGRAM": "$env{NINJA}",
+                "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "$env{EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake",
+                "VCPKG_TARGET_TRIPLET": "wasm32-emscripten"
+            },
+            "environment": {
+                "EMSDK": "$penv{EMSDK}"
+            }
+        },
+        {
+            "name": "vcpkg-base-linux-es20",
+            "inherits": ["vcpkg-base-linux"],
+            "hidden": true,
+            "cacheVariables": {
+                "BUILD_EGL": "ON",
+                "BUILD_EGL_DOUBLE_GETPROC": "ON",
+                "BUILD_GL_SOFTWARE_BCN": "ON",
+                "BUILD_GLES": "ON",
+                "BUILD_GLES_20": "ON",
+                "BUILD_MEDIA": "OFF"
+            },
+            "environment": {
+                "ARCHITECTURE": "arm-buildroot-linux-gnueabihf"
+            }
+        },
+        {
+            "name": "vcpkg-base-linux-egl-es20",
+            "inherits": ["vcpkg-base-linux-es20"],
+            "hidden": true,
+            "cacheVariables": {
+                "BUILD_EGL": "ON",
+                "BUILD_EGL_DOUBLE_GETPROC": "ON",
+                "BUILD_SDL2": "OFF"
+            }
+        },
+        {
+            "name": "host-tools",
+            "inherits": ["vcpkg-base"],
+            "hidden": true,
+            "binaryDir": "${sourceDir}/multi_build/${presetName}",
+            "cacheVariables": {
+                "BUILD_ASIO": "OFF",
+                "BUILD_ASSET_TOOLS": "ON",
+                "BUILD_BLAM": "OFF",
+                "BUILD_COMPONENT_APP": "OFF",
+                "BUILD_EXAMPLES": "OFF",
+                "BUILD_HEADFUL": "OFF",
+                "BUILD_IMGUI": "OFF",
+                "BUILD_MEDIA": "OFF",
+                "BUILD_SDL2": "OFF",
+                "BUILD_TESTS": "OFF",
+                "BUILD_WITH_WERROR": "OFF",
+                "VCPKG_MANIFEST_FEATURES": "network;pressure-cooker",
+                "VCPKG_MANIFEST_NO_DEFAULT_FEATURES": "ON"
+            }
+        },
+        {
+            "name": "android-arm64-32",
+            "displayName": "Android 12 ARM64",
+            "inherits": ["vcpkg-base-android"]
+        },
+        {
+            "name": "android-arm64-30-gl",
+            "displayName": "Android 11 ARM64 Core OpenGL",
+            "inherits": ["vcpkg-base-android"],
+            "cacheVariables": {
+                "BUILD_GLES": "OFF",
+                "BUILD_GLAD_GETPROC": "ON",
+                "BUILD_GL_SOFTWARE_BCN": "OFF"
+            },
+            "environment": {
+                "API": "30"
+            }
+        },
+        {
+            "name": "android-arm-neon-29",
+            "displayName": "Android 10 ARMv7+NEON",
+            "inherits": ["vcpkg-base-android"],
+            "cacheVariables": {
+                "VCPKG_DEP_INFO_OVERRIDE_VARS": "android;arm;arm32;arm_neon"
+            },
+            "environment": {
+                "API": "29",
+                "ARCHITECTURE": "arm-neon"
+            }
+        },
+        {
+            "name": "android-arm64-25",
+            "displayName": "Android 7 ARM64",
+            "inherits": ["vcpkg-base-android"],
+            "environment": {
+                "API": "25"
+            }
+        },
+        {
+            "name": "android-arm-neon-19",
+            "displayName": "Android 4.4 ARMv7+NEON",
+            "inherits": ["vcpkg-base-android"],
+            "cacheVariables": {
+                "VCPKG_DEP_INFO_OVERRIDE_VARS": "android;arm;arm32;arm_neon"
+            },
+            "environment": {
+                "API": "19",
+                "BUILD_GLES_31": "OFF",
+                "BUILD_GLES_32": "OFF",
+                "ARCHITECTURE": "arm-neon",
+                "NDK_VERSION": "25.2.9519653"
+            }
+        },
+        {
+            "name": "beaglebone-arm-buildroot-linux-gnueabihf-ti-sgx",
+            "displayName": "Beaglebone ARMv7 TI-SGX OpenGL ES 2.0 (NullWS)",
+            "inherits": ["vcpkg-base-linux-egl-es20"],
+            "cacheVariables": {
+                "VCPKG_DEP_INFO_OVERRIDE_VARS": "beaglebone;sgx;arm;arm32;linux"
+            },
+            "environment": {
+                "PLATFORM": "beaglebone"
+            }
+        },
+        {
+            "name": "console-powerpc-eabi-cube",
+            "displayName": "Gamecube",
+            "inherits": ["vcpkg-base-wiicube"],
+            "cacheVariables": {
+                "VCPKG_DEP_INFO_OVERRIDE_VARS": "bare;powerpc;cube"
+            }
+        },
+        {
+            "name": "console-powerpc-eabi-wii",
+            "displayName": "Wii",
+            "inherits": ["vcpkg-base-wiicube"],
+            "cacheVariables": {
+                "VCPKG_DEP_INFO_OVERRIDE_VARS": "bare;powerpc;wii"
+            }
+        },
+        {
+            "name": "desktop-x86_64-buildroot-linux-gnu-multi",
+            "displayName": "Linux x86_64 Core OpenGL (SDL2)",
+            "inherits": ["vcpkg-base-linux"],
+            "cacheVariables": {
+                "BUILD_DISCORD_RPC": "ON",
+                "BUILD_GL_SOFTWARE_BCN": "ON",
+                "GENERATE_APPIMAGE": "ON",
+                "VCPKG_DEP_INFO_OVERRIDE_VARS": "desktop;linux;wayland;x11;x64;x86_64"
+            },
+            "environment": {
+                "ARCHITECTURE": "x86_64-buildroot-linux-gnu",
+                "PLATFORM": "desktop"
+            }
+        },
+        {
+            "name": "generic-arm-buildroot-linux-gnueabihf-sdl2",
+            "displayName": "Generic ARMv7 OpenGL ES 2.0 (SDL2)",
+            "inherits": ["vcpkg-base-linux-egl-es20"],
+            "cacheVariables": {
+                "VCPKG_DEP_INFO_OVERRIDE_VARS": "arm;arm32;linux;wayland;x11"
+            },
+            "environment": {
+                "PLATFORM": "generic"
+            }
+        },
+        {
+            "name": "raspberry-arm-buildroot-linux-gnueabihf-vc",
+            "displayName": "Raspberry Pi ARMv7 OpenGL ES 2.0 (DispManX)",
+            "inherits": ["vcpkg-base-linux-egl-es20"],
+            "cacheVariables": {
+                "BUILD_DISPMANX": "ON",
+                "VCPKG_DEP_INFO_OVERRIDE_VARS": "arm;arm32;linux;raspberry;videocore"
+            },
+            "environment": {
+                "PLATFORM": "raspberry"
+            }
+        },
+        {
+            "name": "web-wasm32-emscripten-node",
+            "displayName": "Wasm32 for Node",
+            "inherits": ["vcpkg-base-emscripten"],
+            "cacheVariables": {
+                "VCPKG_DEP_INFO_OVERRIDE_VARS": "emscripten;wasm"
+            }
+        },
+        {
+            "name": "web-wasm32-emscripten-webgl2",
+            "displayName": "Wasm32 for Web + WebGL2 (SDL2)",
+            "inherits": ["vcpkg-base-emscripten"],
+            "cacheVariables": {
+                "VCPKG_DEP_INFO_OVERRIDE_VARS": "emscripten;wasm"
+            }
+        },
+        {
+            "name": "host-x64-linux-native",
+            "displayName": "Host tools for Linux x86_64",
+            "inherits": ["host-tools"],
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_C_FLAGS": "-march=native",
+                "CMAKE_CXX_FLAGS": "-march=native"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "base-linux",
+            "hidden": true,
+            "inheritConfigureEnvironment": true,
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Linux"
+            }
+        },
+        {
+            "name": "beaglebone-arm-buildroot-linux-gnueabihf-ti-sgx-rel",
+            "configuration": "Release",
+            "configurePreset": "beaglebone-arm-buildroot-linux-gnueabihf-ti-sgx",
+            "inherits": "base-linux"
+        },
+        {
+            "name": "beaglebone-arm-buildroot-linux-gnueabihf-ti-sgx-dbg",
+            "configuration": "Debug",
+            "configurePreset": "beaglebone-arm-buildroot-linux-gnueabihf-ti-sgx",
+            "inherits": "base-linux"
+        },
+        {
+            "name": "desktop-x86_64-buildroot-linux-gnu-multi-rel",
+            "configuration": "Release",
+            "configurePreset": "desktop-x86_64-buildroot-linux-gnu-multi",
+            "inherits": "base-linux"
+        },
+        {
+            "name": "desktop-x86_64-buildroot-linux-gnu-multi-dbg",
+            "configuration": "Debug",
+            "configurePreset": "desktop-x86_64-buildroot-linux-gnu-multi",
+            "inherits": "base-linux"
+        },
+        {
+            "name": "host-x64-linux-native-rel",
+            "configuration": "Release",
+            "configurePreset": "host-x64-linux-native",
+            "inherits": "base-linux"
+        }
+    ]
+}

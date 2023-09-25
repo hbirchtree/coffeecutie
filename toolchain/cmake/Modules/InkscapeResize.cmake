@@ -1,4 +1,4 @@
-find_package(Inkscape)
+find_program(INKSCAPE_PROGRAM inkscape)
 
 macro(INKSCAPE_RESIZE_SVG TARGET SOURCE MIPSIZE OUTPUT)
   add_custom_command(

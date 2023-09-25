@@ -1,8 +1,0 @@
-#pragma once
-
-#include <platforms/environment.h>
-
-namespace Coffee {
-//using Env      = platform::Env;
-//using ColorMap = platform::ColorMap;
-} // namespace Coffee

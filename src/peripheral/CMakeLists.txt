@@ -151,8 +151,6 @@ elseif(EMSCRIPTEN)
   if("${CMAKE_BUILD_TYPE}" MATCHES "Deb")
     target_link_options(PeripheralLib PUBLIC)
   endif()
-  # if("${CMAKE_BUILD_TYPE}" MATCHES "Rel") target_compile_options (
-  # PeripheralLib PUBLIC ) target_link_options ( PeripheralLib PUBLIC ) endif()
 elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
   find_package(Threads REQUIRED)
   target_link_libraries(PeripheralLib PUBLIC rt dl m Threads::Threads stdc++fs)

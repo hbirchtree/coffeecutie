@@ -202,7 +202,7 @@ bool FileOpenMap(Resource& resc, szptr size, RSCA acc)
     } else
         resc.m_platform_data->m_mapping = res.value();
 
-    resc.data_rw = resc.m_platform_data->m_mapping.view;
+    resc.data_rw = resc.m_platform_data->m_mapping;
     resc.data_ro = resc.data_rw;
     resc.flags |= Resource::Mapped;
 

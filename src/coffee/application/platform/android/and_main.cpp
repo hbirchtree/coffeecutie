@@ -10,6 +10,7 @@
 #include <peripherals/libc/signals.h>
 #include <peripherals/stl/any_of.h>
 #include <peripherals/stl/magic_enum.hpp>
+#include <peripherals/stl/string/hex.h>
 #include <peripherals/stl/string_casting.h>
 #include <peripherals/stl/types.h>
 #include <platforms/environment.h>
@@ -681,7 +682,7 @@ STATICINLINE void GetExtras()
         for(auto cat : appIntent.categories())
             cDebug("{0}", cat);
 
-        cDebug("App flags: {0}", str::convert::hexify(appIntent.flags()));
+        cDebug("App flags: {0}", str::fmt::hexify(appIntent.flags()));
     }
 }
 
@@ -784,7 +785,7 @@ STATICINLINE void InitializeState(struct android_app* state)
     auto activityName = jnipp::java::objects::get_class(
         jnipp::java::object({}, state->activity->clazz));
 
-    cDebug("State:       {0}", str::print::pointerify(state));
+    cDebug("State:       {0}", str::fmt::pointerify(state));
     cDebug("Activity:    {0}", activityName);
     cDebug("Android API: {0}", state->activity->sdkVersion);
 

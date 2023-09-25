@@ -499,7 +499,7 @@ Url Path::url(HTTPAccess flags) const
 #define URLPARSE_TAG "UrlParse::From"
 #define URLPARSE_CHARS ""
 
-regex::Pattern& GetCache()
+static regex::Pattern& GetCache()
 {
     static std::optional<regex::Pattern> pattern;
 

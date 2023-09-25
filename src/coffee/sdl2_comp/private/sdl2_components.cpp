@@ -31,6 +31,13 @@
 
 namespace sdl2 {
 
+enum class wm_selection_t
+{
+    default_,
+    wayland,
+    x11,
+};
+
 struct current_config_t
 {
     int major_version, minor_version;
@@ -38,6 +45,8 @@ struct current_config_t
     int srgb;
     int profile;
 };
+
+static wm_selection_t get_wm_selection(SDL_Window* window);
 
 inline void print_current_config()
 {
@@ -205,6 +214,24 @@ void Windowing::load(entity_container& c, comp_app::app_error& ec)
 
     if(auto nativeWindowInfo = c.service<comp_app::PtrNativeWindowInfo>())
         getWindow(m_window, *nativeWindowInfo);
+
+    if(auto info = c.service<comp_app::AppInfo>())
+    {
+        std::string wm_selection;
+        switch(get_wm_selection(m_window))
+        {
+        case sdl2::wm_selection_t::wayland:
+            wm_selection = "Wayland";
+            break;
+        case sdl2::wm_selection_t::x11:
+            wm_selection = "X11";
+            break;
+        default:
+            wm_selection = "Default";
+            break;
+        }
+        info->add("sdl2:windowManager", wm_selection);
+    }
 
     m_container = &c;
 }
@@ -1016,6 +1043,27 @@ void getWindow(
 #else
         Throw(std::runtime_error("no video driver was chosen"));
 #endif
+    }
+}
+
+static wm_selection_t get_wm_selection(SDL_Window* window)
+{
+    SDL_SysWMinfo windowInfo;
+    SDL_VERSION(&windowInfo.version)
+    SDL_GetWindowWMInfo(window, &windowInfo);
+
+    switch(windowInfo.subsystem)
+    {
+#if defined(SDL_VIDEO_DRIVER_WAYLAND)
+    case SDL_SYSWM_WAYLAND:
+        return wm_selection_t::wayland;
+#endif
+#if defined(SDL_VIDEO_DRIVER_X11)
+    case SDL_SYSWM_X11:
+        return wm_selection_t::x11;
+#endif
+    default:
+        return wm_selection_t::default_;
     }
 }
 

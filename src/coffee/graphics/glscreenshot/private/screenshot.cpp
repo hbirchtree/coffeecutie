@@ -38,7 +38,7 @@ std::future<ScreenshotProvider::dump_t> ScreenshotProvider::pixels()
     using namespace ::typing::vector_types;
 
     if(m_pbo_fence)
-        return std::future<dump_t>();
+        return {};
 
     Coffee::DProfContext _("glscreenshot::ScreenshotProvider::pixels");
 

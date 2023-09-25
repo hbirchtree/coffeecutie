@@ -22,6 +22,17 @@ function all_source_files()
 }
 
 case $1 in
+"print-env")
+    cmake -N --preset $2 | grep -A512 'Preset environment variables' | grep -v 'Preset environment variables' | sed '/^$/d' | sed -e 's/^\s*//g'
+    echo NINJA=$(which ninja)
+    echo VCPKG_ROOT=$(dirname $(realpath $(which vcpkg)))
+;;
+"env")
+    VARS=$(${0} print-env $2 | tr  '\n' ' ')
+    pushd $BASE_DIR/multi_build/$2
+    eval $VARS $SHELL
+    popd
+;;
 "build")
     ${0} $(echo $2 | cut -d: -f 1)-build ${@:2}
 ;;
