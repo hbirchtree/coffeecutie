@@ -380,6 +380,34 @@ function android_build()
 
     identify_target $1
 
+    export ANDROID_SDK=${ANDROID_SDK:-${BASE_DIR}/multi_build/compilers/android/latest}
+    if [[ ! -d "${ANDROID_SDK}" ]]; then
+        SDKTOOLS_URL="https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip"
+        PTOOLS_URL="https://dl.google.com/android/repository/platform-tools-latest-linux.zip"
+        mkdir -p $(dirname ${ANDROID_SDK})
+        pushd $(dirname ${ANDROID_SDK})
+        wget ${SDKTOOLS_URL} -O android-sdk-tools.zip
+        wget ${PTOOLS_URL} -O android-platform-tools.zip
+        unzip android-sdk-tools.zip
+        unzip android-platform-tools.zip
+        mv cmdline-tools latest
+        mv platform-tools latest/
+        popd
+        pushd ${ANDROID_SDK}
+        printf "y\ny\ny\ny\ny\ny\ny\ny\n" | bin/sdkmanager \
+            --sdk_root=${ANDROID_SDK} \
+            --install build-tools\;34.0.0 \
+            ndk\;25.2.9519653 \
+            ndk\;26.0.10792818 \
+            platforms\;android-19 \
+            platforms\;android-25 \
+            platforms\;android-30 \
+            platforms\;android-32
+        popd
+    else
+        echo "::info::Using preinstalled Android SDK: ${ANDROID_SDK}"
+    fi
+
     echo " * Selected platform ${PLATFORM}:${ARCHITECTURE}:${SYSROOT}"
     echo " * Selected vcpkg triplet ${ARCHITECTURE}-android"
 #    echo " * Selected Android NDK ${ANDROID_NDK} ($(cat ${ANDROID_NDK}/source.properties | grep Pkg.Revision | cut -d= -f2))"
