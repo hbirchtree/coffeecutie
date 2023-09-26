@@ -37,6 +37,10 @@ jobs:
       with:
         submodules: true
         path: source
+    - uses: actions/setup-java@v3
+      with:
+        distribution: 'adopt'
+        java-version: '17'
     - name: Building project
       run: source/cb build ${{matrix.variant}}
     - name: Uploading artifacts
