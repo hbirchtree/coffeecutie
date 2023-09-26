@@ -69,10 +69,14 @@ function host_tools_build()
 {
     echo "::group::Building host tools"
 
+    pushd ${BASE_DIR}
+
     export NINJA=$(which ninja)
     export VCPKG_ROOT=$(dirname $(readlink $(which vcpkg)))
     cmake_debug --preset host-${HOST_TOOLCHAIN_TRIPLET}
     cmake_debug --build --preset host-${HOST_TOOLCHAIN_TRIPLET}-rel
+
+    popd
 
     echo "::endgroup::"
 }
@@ -382,6 +386,7 @@ function android_build()
 
     export ANDROID_SDK=${ANDROID_SDK:-${BASE_DIR}/multi_build/compilers/android/latest}
     if [[ ! -d "${ANDROID_SDK}" ]]; then
+        echo "::group::Fetching Android SDK"
         SDKTOOLS_URL="https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip"
         PTOOLS_URL="https://dl.google.com/android/repository/platform-tools-latest-linux.zip"
         mkdir -p $(dirname ${ANDROID_SDK})
@@ -404,6 +409,7 @@ function android_build()
             platforms\;android-30 \
             platforms\;android-32
         popd
+        echo "::endgroup::"
     else
         echo "::info::Using preinstalled Android SDK: ${ANDROID_SDK}"
     fi
