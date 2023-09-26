@@ -156,6 +156,8 @@ function native_build()
     export NINJA=$(which ninja)
     export VCPKG_ROOT=$(dirname $(readlink $(which vcpkg)))
 
+    pushd $BASE_DIR
+
     if [[ $IS_LINUX = "1" ]]; then
         cmake --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}
 
@@ -207,6 +209,8 @@ function native_build()
     echo "::group::Building project"
     cmake --build --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}-dbg ${TARGET_SPEC}
     echo "::endgroup::"
+
+    popd
 }
 
 function emscripten_build()
@@ -251,6 +255,8 @@ function emscripten_build()
         TARGET_SPEC="--target ${TARGET}"
     fi
 
+    pushd $BASE_DIR
+
     echo "::group::Configuring project"
     echo "::info::Set up for ${TOOLCHAIN_PREFIX} (${TOOLCHAIN_ROOT})"
 
@@ -262,6 +268,8 @@ function emscripten_build()
     echo "::group::Building project"
     cmake --build --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}-dbg ${TARGET_SPEC}
     echo "::endgroup::"
+
+    popd
 }
 
 function xcode_build()
@@ -382,6 +390,8 @@ function android_build()
         TARGET_SPEC="--target ${TARGET}"
     fi
 
+    pushd $BASE_DIR
+
     echo "::group::Configuring project"
     echo "::info::Set up for ${ARCHITECTURE}-${SYSROOT} (${ANDROID_SDK})"
 
@@ -394,6 +404,8 @@ function android_build()
     echo "::group::Building project"
     cmake --build --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}-dbg ${TARGET_SPEC}
     echo "::endgroup::"
+
+    popd
 }
 
 function mingw_build()
