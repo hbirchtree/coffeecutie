@@ -160,6 +160,7 @@ function native_build()
         cmake --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}
 
         echo "::info::Installing stdc++ libs into lib/ directory"
+        mkdir -p $BASE_DIR/multi_build/${PLATFORM}-${ARCHITECTURE}-${SYSROOT}
         pushd $BASE_DIR/multi_build/${PLATFORM}-${ARCHITECTURE}-${SYSROOT}
         mkdir -p lib/
         for f in ${TOOLCHAIN_SYSROOT}/lib/libstdc++.so.6 ${TOOLCHAIN_SYSROOT}/lib/libssp.so.0 ${TOOLCHAIN_SYSROOT}/usr/lib/libbacktrace.so.0; do

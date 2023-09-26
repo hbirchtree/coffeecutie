@@ -36,7 +36,7 @@ case $1 in
 "build")
     ${0} $(echo $2 | cut -d: -f 1)-build ${@:2}
 ;;
-"desktop-build")
+beaglebone-build|desktop-build|generic-build|raspberry-build)
     if [ -z "$2" ] || [ "$2" = "list" ] || [ "$2" = "help" ]; then
         echo "No target specified, example targets:
   beaglebone:arm-buildroot-linux-gnueabihf:nullws
