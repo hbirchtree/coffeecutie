@@ -83,7 +83,8 @@
                 "ANDROID_SDK": "$penv{ANDROID_SDK}",
                 "API": "32",
                 "ARCHITECTURE": "arm64",
-                "NDK_VERSION": "26.0.10792818"
+                "NDK_VERSION": "26.0.10792818",
+                "NINJA": "$penv{NINJA}"
             }
         },
         {
@@ -124,7 +125,8 @@
                 "VCPKG_TARGET_TRIPLET": "wasm32-emscripten"
             },
             "environment": {
-                "EMSDK": "$penv{EMSDK}"
+                "EMSDK": "$penv{EMSDK}",
+                "NINJA": "$penv{NINJA}"
             }
         },
         {
