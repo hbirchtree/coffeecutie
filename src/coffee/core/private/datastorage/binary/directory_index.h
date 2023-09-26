@@ -3,11 +3,11 @@
 #include <deque>
 #include <list>
 
-#include <coffee/core/CEnvironment>
-#include <coffee/core/CMath>
 #include <coffee/core/CProfiling>
 #include <coffee/virtfs/virtualfs.h>
 #include <peripherals/libc/memory_ops.h>
+#include <peripherals/stl/math.h>
+#include <platforms/environment.h>
 
 #include <fmt_extensions/url_types.h>
 

@@ -102,7 +102,7 @@ libc_types::i32 cooker_main()
 
     std::vector<const char*> arguments;
     arguments.push_back("ShaderCooker");
-    for(auto arg : Coffee::GetInitArgs().arguments())
+    for(auto arg : Coffee::GetInitArgs())
         arguments.push_back(arg);
 
     cxxopts::Options opts("ShaderCooker", "SPIR-V shader processor");

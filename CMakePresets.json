@@ -10,6 +10,7 @@
             "hidden": true,
             "binaryDir": "${sourceDir}/multi_build/${presetName}",
             "cacheVariables": {
+                "BUILD_TESTS": "OFF",
                 "CMAKE_BUILD_TYPE": "Debug",
                 "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/multi_build/${presetName}/install",
@@ -18,7 +19,7 @@
                 "VCPKG_MANIFEST_FEATURES": "$penv{TARGET_FEATURES}"
             },
             "environment": {
-                "HOST_TOOLS_BINARY_DIR": "${sourceDir}/multi_build/host_x64-linux-native/bin",
+                "HOST_TOOLS_BINARY_DIR": "${sourceDir}/multi_build/host-x64-linux-native/bin",
                 "VCPKG_ROOT": "$penv{VCPKG_ROOT}"
             }
         },
@@ -67,7 +68,6 @@
                 "BUILD_GL_SOFTWARE_PVRTC": "ON",
                 "BUILD_MEDIA": "OFF",
                 "BUILD_SDL2": "OFF",
-                "BUILD_TESTS": "OFF",
                 "CMAKE_MAKE_PROGRAM": "$env{NINJA}",
                 "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/toolchain/vcpkg/toolchains/android.cmake",
 
@@ -96,16 +96,18 @@
                 "CMAKE_CXX_COMPILER": "$env{TOOLCHAIN_ROOT}/bin/$env{ARCHITECTURE}-g++",
                 "CMAKE_MAKE_PROGRAM": "$env{NINJA}",
                 "CMAKE_SYSTEM_NAME": "Baremetal",
-                "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/toolchain/cmake/Toolchains/$env{TOOLCHAIN_PREFIX}.toolchain.cmake",
+                "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/toolchain/cmake/Toolchains/$env{TOOLCHAIN_PREFIX}-$env{VARIANT}.toolchain.cmake",
                 "VCPKG_MANIFEST_NO_DEFAULT_FEATURES": "ON",
                 "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports-gamecube/outcome;${sourceDir}/toolchain/vcpkg/ports-gamecube/status-code;${sourceDir}/toolchain/vcpkg/ports-gamecube/zstd",
-                "VCPKG_TARGET_TRIPLET": "$env{PLATFORM}-$env{TOOLCHAIN_PREFIX}"
+                "VCPKG_TARGET_TRIPLET": "$env{ARCHITECTURE}-$env{VARIANT}"
             },
             "environment": {
                 "ARCHITECTURE": "powerpc-eabi",
+                "PLATFORM": "console",
                 "TOOLCHAIN_PREFIX": "$env{ARCHITECTURE}",
-                "TOOLCHAIN_ROOT": "${sourceDir}/multi_build/${presetName}/compiler",
-                "TOOLCHAIN_SYSROOT": "$env{TOOLCHAIN_ROOT}/$env{TOOLCHAIN_PREFIX}/sysroot"
+                "TOOLCHAIN_ROOT": "${sourceDir}/multi_build/compilers/$env{PLATFORM}-$env{ARCHITECTURE}/$env{TOOLCHAIN_VERSION}",
+                "TOOLCHAIN_SYSROOT": "$env{TOOLCHAIN_ROOT}/$env{TOOLCHAIN_PREFIX}/sysroot",
+                "TOOLCHAIN_VERSION": "v2.0.0"
             }
         },
         {
@@ -215,12 +217,12 @@
             "displayName": "Android 4.4 ARMv7+NEON",
             "inherits": ["vcpkg-base-android"],
             "cacheVariables": {
+                "BUILD_GLES_31": "OFF",
+                "BUILD_GLES_32": "OFF",
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "android;arm;arm32;arm_neon"
             },
             "environment": {
                 "API": "19",
-                "BUILD_GLES_31": "OFF",
-                "BUILD_GLES_32": "OFF",
                 "ARCHITECTURE": "arm-neon",
                 "NDK_VERSION": "25.2.9519653"
             }
@@ -241,7 +243,10 @@
             "displayName": "Gamecube",
             "inherits": ["vcpkg-base-wiicube"],
             "cacheVariables": {
-                "VCPKG_DEP_INFO_OVERRIDE_VARS": "bare;powerpc;cube"
+                "VCPKG_DEP_INFO_OVERRIDE_VARS": "bare;powerpc;gamecube;cube"
+            },
+            "environment": {
+                "VARIANT": "cube"
             }
         },
         {
@@ -250,6 +255,9 @@
             "inherits": ["vcpkg-base-wiicube"],
             "cacheVariables": {
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "bare;powerpc;wii"
+            },
+            "environment": {
+                "VARIANT": "wii"
             }
         },
         {
@@ -329,6 +337,18 @@
             }
         },
         {
+            "name": "android-arm64-32-rel",
+            "configuration": "Release",
+            "configurePreset": "android-arm64-32",
+            "inherits": "base-linux"
+        },
+        {
+            "name": "android-arm64-32-dbg",
+            "configuration": "Debug",
+            "configurePreset": "android-arm64-32",
+            "inherits": "base-linux"
+        },
+        {
             "name": "beaglebone-arm-buildroot-linux-gnueabihf-ti-sgx-rel",
             "configuration": "Release",
             "configurePreset": "beaglebone-arm-buildroot-linux-gnueabihf-ti-sgx",
@@ -356,6 +376,18 @@
             "name": "host-x64-linux-native-rel",
             "configuration": "Release",
             "configurePreset": "host-x64-linux-native",
+            "inherits": "base-linux"
+        },
+        {
+            "name": "web-wasm32-emscripten-webgl2-rel",
+            "configuration": "Release",
+            "configurePreset": "web-wasm32-emscripten-webgl2",
+            "inherits": "base-linux"
+        },
+        {
+            "name": "web-wasm32-emscripten-webgl2-dbg",
+            "configuration": "Debug",
+            "configurePreset": "web-wasm32-emscripten-webgl2",
             "inherits": "base-linux"
         }
     ]

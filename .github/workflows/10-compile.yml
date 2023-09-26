@@ -26,129 +26,19 @@ jobs:
       fail-fast: false
       matrix:
         variant:
-        - beaglebone-arm-unknown-linux-gnueabihf
-        - beaglebone.black
-        - emscripten.wasm
-        - fedora.amd64
-        - gamecube
-        - raspberry.armhf
-        - testing.linux.lowfat.debug
-        - testing.linux.lowfat.release
-        - testing.linux.release
-        - ubuntu.amd64
+        - android:arm64:32
+        - beaglebone:arm-unknown-linux-gnueabihf:ti-sgx
+        - desktop:x86_64-buildroot-linux-gnu:multi
+        - web:wasm32-emscripten:webgl2
     env:
-      CONFIGURATION: Release
-      GENERATE_PROGRAMS: 'ON'
-      BUILDVARIANT: ${{ matrix.variant }}
-      ACTIONS: '1'
-      MAKEFILE_DIR: toolchain/makers
-      SOURCE_DIR: ${{ github.workspace }}/source
-      BUILD_DIR: ${{ github.workspace }}/build
-      BUILD_REPO_URI: ${{ github.repository }}
-      BUILD_REPO_BRANCH: ${{ github.ref }}
-      BUILD_REPO_EVENT: push
-      BUILD_REPO_ID: ''
-      BUILD_REPO_URL: https://github.com/${{ github.repository }}
-      TRAVIS_COMMIT: ${{ github.sha }}
-      TRAVIS_REPO_SLUG: ${{ github.repository }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      TRAVIS_OS_NAME: linux
     steps:
     - uses: actions/checkout@v2
       with:
         submodules: true
         path: source
     - name: Building project
-      run: source/cb docker-build -GNinja
-    - name: Compress executables
-      run: source/cb compress-usr-dir bin
-    - name: Compress libraries
-      run: source/cb compress-usr-dir libraries
-    - name: Uploading artifacts
-      uses: actions/upload-artifact@v2
-      with:
-        name: ${{matrix.variant}}
-        path: '*.tar.bz2'
-    - name: Uploading assets
-      if: startsWith(github.ref, 'refs/tags/')
-      run: source/cb push-asset tar.bz2
-  Coverage:
-    runs-on: ubuntu-18.04
-    strategy:
-      fail-fast: false
-      matrix:
-        variant:
-        - coverage
-    env:
-      CONFIGURATION: Release
-      GENERATE_PROGRAMS: 'ON'
-      BUILDVARIANT: ${{ matrix.variant }}
-      ACTIONS: '1'
-      MAKEFILE_DIR: toolchain/makers
-      SOURCE_DIR: ${{ github.workspace }}/source
-      BUILD_DIR: ${{ github.workspace }}/build
-      BUILD_REPO_URI: ${{ github.repository }}
-      BUILD_REPO_BRANCH: ${{ github.ref }}
-      BUILD_REPO_EVENT: push
-      BUILD_REPO_ID: ''
-      BUILD_REPO_URL: https://github.com/${{ github.repository }}
-      TRAVIS_COMMIT: ${{ github.sha }}
-      TRAVIS_REPO_SLUG: ${{ github.repository }}
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      TRAVIS_OS_NAME: linux
-    steps:
-    - uses: actions/checkout@v2
-      with:
-        submodules: true
-        path: source
-    - name: Building project
-      run: source/cb docker-build -GNinja
-    - name: Running tests
-      env:
-        BUILD_TARGET: CoverageTest
-      run: source/cb docker-build -GNinja
-    - name: Gathering coverage info
-      uses: codecov/codecov-action@v1
-  Android:
-    runs-on: ubuntu-18.04
-    needs: Release
-    strategy:
-      fail-fast: false
-      matrix:
-        variant:
-        - android.armv7a.v19
-        - android.armv7a.v21
-        - android.armv7a.v27
-        - android.armv8a.v27
-        - android.armv8a.v29
-    env:
-      CONFIGURATION: Release
-      GENERATE_PROGRAMS: 'ON'
-      BUILDVARIANT: ${{ matrix.variant }}
-      ACTIONS: '1'
-      MAKEFILE_DIR: toolchain/makers
-      SOURCE_DIR: ${{ github.workspace }}/source
-      BUILD_DIR: ${{ github.workspace }}/build
-      BUILD_REPO_URI: ${{ github.repository }}
-      BUILD_REPO_BRANCH: ${{ github.ref }}
-      BUILD_REPO_EVENT: push
-      BUILD_REPO_ID: ''
-      BUILD_REPO_URL: https://github.com/${{ github.repository }}
-      TRAVIS_COMMIT: ${{ github.sha }}
-      TRAVIS_REPO_SLUG: ${{ github.repository }}
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      TRAVIS_OS_NAME: linux
-    steps:
-    - uses: actions/checkout@v2
-      with:
-        submodules: true
-        path: source
-    - name: Building project
-      run: source/cb docker-build -GNinja
-    - name: Compress executables
-      run: source/cb compress-usr-dir bin
-    - name: Compress libraries
-      run: source/cb compress-usr-dir libraries
+      run: source/cb build ${{matrix.variant}}
     - name: Uploading artifacts
       uses: actions/upload-artifact@v2
       with:
