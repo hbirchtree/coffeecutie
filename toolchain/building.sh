@@ -76,6 +76,8 @@ function host_tools_build()
     cmake_debug --preset host-${HOST_TOOLCHAIN_TRIPLET}
     cmake_debug --build --preset host-${HOST_TOOLCHAIN_TRIPLET}-rel
 
+    export PATH=$PATH:${BASE_DIR}/multi_build/host-${HOST_TOOLCHAIN_TRIPLET}/vcpkg_installed/x64-linux/tools
+
     popd
 
     echo "::endgroup::"
