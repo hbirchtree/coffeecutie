@@ -6,9 +6,11 @@ function(EMSCRIPTEN_PACKAGE)
   set(BUNDLE_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${EM_TARGET}.bundle)
 
   add_executable(${EM_TARGET} ${EM_SOURCES})
-  set_target_properties(
-    ${EM_TARGET} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${BUNDLE_DIR} SUFFIX
-                                                                   ".html"
+  set_target_properties(${EM_TARGET} PROPERTIES
+        #
+        RUNTIME_OUTPUT_DIRECTORY ${BUNDLE_DIR}
+        #
+        SUFFIX ".html"
   )
 
   set(RSC_FLAGS "")

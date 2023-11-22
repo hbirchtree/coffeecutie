@@ -27,6 +27,10 @@ esac
 
 HOST_TOOLS_BINARY_DIR=$BASE_DIR/multi_build/host_$HOST_TOOLCHAIN_TRIPLET/bin
 
+export PATH=$PATH:${BASE_DIR}/multi_build/host-${HOST_TOOLCHAIN_TRIPLET}/vcpkg_installed/x64-linux/tools/glslang:${BASE_DIR}/multi_build/host-${HOST_TOOLCHAIN_TRIPLET}/vcpkg_installed/x64-linux/tools/spirv-tools/
+export GLSLANG_PROGRAM=$(which glslangValidator)
+export NINJA=$(which ninja)
+
 function die()
 {
     echo " * $@"
@@ -49,6 +53,7 @@ function identify_target()
     SYSROOT="$(echo $1 | cut -d: -f3)"
     TARGET="$(echo $1 | cut -d: -f4)"
     [[ "${ARCHITECTURE}" = *"linux"* ]] && IS_LINUX=1 || IS_LINUX=0
+    [[ "${ARCHITECTURE}" = *"windows"* ]] && IS_WINDOWS=1 || IS_WINDOWS=0
     [[ "${ARCHITECTURE}" = *"osx"* ]] && IS_MACOS=1 || IS_MACOS=0
     if [[ "${ARCHITECTURE}" = *"linux"* ]] || [[ "${ARCHITECTURE}" = *"powerpc"* ]]; then
         IS_DOWNLOADABLE=1
@@ -76,11 +81,43 @@ function host_tools_build()
     cmake_debug --preset host-${HOST_TOOLCHAIN_TRIPLET}
     cmake_debug --build --preset host-${HOST_TOOLCHAIN_TRIPLET}-rel
 
-    export PATH=$PATH:${BASE_DIR}/multi_build/host-${HOST_TOOLCHAIN_TRIPLET}/vcpkg_installed/x64-linux/tools
-
     popd
 
     echo "::endgroup::"
+}
+
+function toolchain_registry()
+{
+    mkdir -p $BASE_DIR/multi_build/compilers/meta
+    VERSION=$($SELF build-info toolchain version)
+    if [[ ! -f "$BASE_DIR/multi_build/compilers/meta/$VERSION.json" ]]; then
+        gh release download \
+            -R "$($SELF build-info toolchain source)" \
+            -D "$BASE_DIR/multi_build/compilers/meta" \
+            "$VERSION" \
+            -p registry.json
+        mv $BASE_DIR/multi_build/compilers/meta/registry.json \
+            "$BASE_DIR/multi_build/compilers/meta/$VERSION.json"
+    fi
+    cat "$BASE_DIR/multi_build/compilers/meta/$VERSION.json"
+}
+
+function toolchain_download()
+{
+    FILE="$(toolchain_registry | jq -r ".[] | select(.name==\""${1%_*}"\") | $2")"
+    if [[ "$FILE" = "" ]]; then
+        echo "Found no toolchain for $1, aborting"
+        return
+    fi
+    gh release download -R "$($SELF build-info toolchain source)" "$($SELF build-info toolchain version)" -p "$FILE"
+    case "$2" in
+    ".compiler")
+        mv "$FILE" "compiler.tar.xz"
+        ;;
+    ".manifest")
+        mv "$FILE" "compiler.manifest"
+        ;;
+    esac
 }
 
 function native_build()
@@ -110,13 +147,15 @@ function native_build()
     fi
 
     DEFAULT_ROOT="${BASE_DIR}/multi_build/compilers/${PLATFORM}-${ARCHITECTURE}/${TOOLCHAIN_VER}"
-    export TOOLCHAIN_ROOT="${TOOLCHAIN_ROOT:-$DEFAULT_ROOT}"
     export TOOLCHAIN_PREFIX="${ARCHITECTURE}"
 
     if [[ "${PLATFORM}-${ARCHITECTURE}" = "console-powerpc-eabi"* ]]; then
         TOOLCHAIN_DOWNLOAD="console-powerpc-eabi"
+        DEFAULT_ROOT="${BASE_DIR}/multi_build/compilers/${TOOLCHAIN_DOWNLOAD}/${TOOLCHAIN_VER}"
         export TOOLCHAIN_PREFIX="powerpc-eabi"
     fi
+
+    export TOOLCHAIN_ROOT="${TOOLCHAIN_ROOT:-$DEFAULT_ROOT}"
 
     echo " * Selected platform ${PLATFORM}:${ARCHITECTURE}:${SYSROOT}"
 
@@ -127,27 +166,20 @@ function native_build()
         pushd ${TOOLCHAIN_ROOT}
 
         rm ${TOOLCHAIN_DOWNLOAD}.manifest ${TOOLCHAIN_DOWNLOAD}.tar.xz || true
-        gh release download -R "$TOOLCHAIN_REPO" "$TOOLCHAIN_VER" -p "${TOOLCHAIN_DOWNLOAD}.*"
-        gh release download -R "$TOOLCHAIN_REPO" "$TOOLCHAIN_VER" -p "${PLATFORM}-${ARCHITECTURE}.manifest" && cat ${PLATFORM}-${ARCHITECTURE}.manifest || true
+        toolchain_download "${TOOLCHAIN_DOWNLOAD}" .compiler
+        toolchain_download "${TOOLCHAIN_DOWNLOAD}" .manifest && cat compiler.manifest
 
         umask 022
-        tar xf $TOOLCHAIN_DOWNLOAD.tar.xz --no-same-owner --no-same-permissions
+        tar xf compiler.tar.xz --no-same-owner --no-same-permissions
         chmod -R u+w $(realpath .)
         popd
 
         echo "::endgroup::"
     fi
 
-    export GENERATE_PROGRAMS=${GENERATE_PROGRAMS:-ON}
-    export CONFIGURATION=${CONFIGURATION:-Debug}
-    export CMAKE_SOURCE_DIR=${BASE_DIR}
-    export CMAKE_INSTALL_DIR=${INSTALL_DIR:-$PWD/install}
-
     export PATH=$PATH:$TOOLCHAIN_ROOT/bin
 
     export VCPKG_ROOT=$(dirname $(readlink $(which vcpkg)))
-    export VCPKG_CHAINLOAD_TOOLCHAIN_FILE=${BASE_DIR}/toolchain/cmake/Toolchains/${TOOLCHAIN_PREFIX}.toolchain.cmake
-    export VCPKG_DEP_INFO_OVERRIDE_VARS="${PLATFORM};${ARCHITECTURE%%-*};${SYSROOT}"
 
     TARGET_SPEC=""
     if [ -n "${TARGET}" ]; then
@@ -176,6 +208,8 @@ function native_build()
             ln -s "$f" lib/
         done
         popd
+    elif [[ $IS_WINDOWS = "1" ]]; then
+        cmake --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}
     elif [[ $IS_MACOS = "1" ]]; then
         echo "TODO"
 #        cmake_debug \
@@ -192,28 +226,14 @@ function native_build()
 #            ${BASE_DIR} ${@:2}
     elif [[ $ARCHITECTURE = *"-cube" ]] || [[ $ARCHITECTURE = *"-wii" ]]; then
         cmake --preset ${PLATFORM}-${ARCHITECTURE}
-#        cmake_debug \
-#            -GNinja \
-#            -C${PRELOAD_FILE} \
-#            -DCMAKE_C_COMPILER=${TOOLCHAIN_ROOT}/bin/powerpc-eabi-gcc \
-#            -DCMAKE_CXX_COMPILER=${TOOLCHAIN_ROOT}/bin/powerpc-eabi-g++ \
-#            -DCMAKE_SYSTEM_NAME=Baremetal \
-#            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
-#            -DCMAKE_INSTALL_PREFIX=$PWD/install \
-#            -DCMAKE_MAKE_PROGRAM=$(which ninja) \
-#            -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake \
-#            -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=${BASE_DIR}/toolchain/cmake/Toolchains/${ARCHITECTURE}.toolchain.cmake \
-#            -DVCPKG_DEP_INFO_OVERRIDE_VARS=${VCPKG_DEP_INFO_OVERRIDE_VARS}:${EXTRA_INFO} \
-#            -DVCPKG_MANIFEST_FEATURES=${TARGET_FEATURES} \
-#            -DVCPKG_MANIFEST_NO_DEFAULT_FEATURES=ON \
-#            -DVCPKG_OVERLAY_PORTS=${BASE_DIR}/toolchain/vcpkg/ports-gamecube/outcome\;${BASE_DIR}/toolchain/vcpkg/ports-gamecube/status-code\;${BASE_DIR}/toolchain/vcpkg/ports-gamecube/zstd \
-#            -DVCPKG_TARGET_TRIPLET=$ARCHITECTURE \
-#            ${BASE_DIR} ${@:2}
     fi
     echo "::endgroup::"
 
     echo "::group::Building project"
-    cmake --build --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}-dbg ${TARGET_SPEC}
+    cmake \
+        --build \
+        --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}-dbg \
+        ${TARGET_SPEC}
     echo "::endgroup::"
 
     popd
@@ -265,7 +285,6 @@ function emscripten_build()
 
     echo "::group::Configuring project"
     echo "::info::Set up for ${TOOLCHAIN_PREFIX} (${TOOLCHAIN_ROOT})"
-
     export NINJA=$(which ninja)
     export VCPKG_ROOT=$(dirname $(readlink $(which vcpkg)))
     cmake --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}
@@ -409,7 +428,8 @@ function android_build()
             platforms\;android-19 \
             platforms\;android-25 \
             platforms\;android-30 \
-            platforms\;android-32
+            platforms\;android-32 \
+            platforms\;android-33
         popd
         echo "::endgroup::"
     else
@@ -471,13 +491,7 @@ function mingw_build()
 
     echo " * Selected platform ${PLATFORM}:${ARCHITECTURE}:${SYSROOT}"
 
-    export GENERATE_PROGRAMS=${GENERATE_PROGRAMS:-ON}
-    export CONFIGURATION=${CONFIGURATION:-Debug}
-    export CMAKE_SOURCE_DIR=${BASE_DIR}
-    export CMAKE_INSTALL_DIR=${INSTALL_DIR:-$PWD/install}
-
     export VCPKG_ROOT=$(dirname $(readlink $(which vcpkg)))
-    export VCPKG_DEP_INFO_OVERRIDE_VARS="${PLATFORM};${ARCHITECTURE#-*}:$(echo $ARCHITECTURE | cut -d'-' -f2);${SYSROOT}"
 
     TARGET_SPEC=""
     if [ -n "${TARGET}" ]; then
@@ -491,32 +505,27 @@ function mingw_build()
 
     echo "::group::Configuring project"
     echo "::info::Set up for ${TOOLCHAIN_PREFIX} (system)"
-    PRELOAD_FILE=${BASE_DIR}/.github/cmake/${PLATFORM}-${ARCHITECTURE}-${SYSROOT}.preload.cmake
-    echo "::info::Using preload ${PRELOAD_FILE}"
 
-    if [ ! -f $PRELOAD_FILE ]; then
-        echo "::error::Preload file not found"
-        return
-    fi
-    cmake_debug \
-        -GNinja \
-        -C${PRELOAD_FILE} \
-        -DCMAKE_C_COMPILER=${TOOLCHAIN_PREFIX}-gcc \
-        -DCMAKE_CXX_COMPILER=${TOOLCHAIN_PREFIX}-g++ \
-        -DCMAKE_INSTALL_PREFIX=$PWD/install \
-        -DCMAKE_MAKE_PROGRAM=$(which ninja) \
-        -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake \
-        -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
-        -DVCPKG_DEP_INFO_OVERRIDE_VARS=${VCPKG_DEP_INFO_OVERRIDE_VARS} \
-        -DVCPKG_TARGET_TRIPLET=x64-mingw-static \
-        -DVCPKG_MANIFEST_NO_DEFAULT_FEATURES=ON \
-        -DVCPKG_MANIFEST_FEATURES='blam;headful;openssl' \
-        -DHOST_TOOLS_BINARY_DIR=$HOST_TOOLS_BINARY_DIR \
-        ${BASE_DIR} ${@:2}
+    cmake --build --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}-dbg ${TARGET_SPEC}
+#    cmake_debug \
+#        -GNinja \
+#        -C${PRELOAD_FILE} \
+#        -DCMAKE_C_COMPILER=${TOOLCHAIN_PREFIX}-gcc \
+#        -DCMAKE_CXX_COMPILER=${TOOLCHAIN_PREFIX}-g++ \
+#        -DCMAKE_INSTALL_PREFIX=$PWD/install \
+#        -DCMAKE_MAKE_PROGRAM=$(which ninja) \
+#        -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake \
+#        -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+#        -DVCPKG_DEP_INFO_OVERRIDE_VARS=${VCPKG_DEP_INFO_OVERRIDE_VARS} \
+#        -DVCPKG_TARGET_TRIPLET=x64-mingw-static \
+#        -DVCPKG_MANIFEST_NO_DEFAULT_FEATURES=ON \
+#        -DVCPKG_MANIFEST_FEATURES='blam;headful;openssl' \
+#        -DHOST_TOOLS_BINARY_DIR=$HOST_TOOLS_BINARY_DIR \
+#        ${BASE_DIR} ${@:2}
     echo "::endgroup::"
 
     echo "::group::Building project"
-    cmake --build . ${TARGET_SPEC}
+    cmake --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}
     echo "::endgroup::"
 
     popd

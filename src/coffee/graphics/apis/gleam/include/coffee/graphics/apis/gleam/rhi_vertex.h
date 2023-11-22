@@ -77,7 +77,7 @@ inline std::tuple<semantic::TypeEnum, vattribute_flags, u32> vector_info_of()
 }
 
 template<typename T>
-requires(std::is_floating_point_v<T>&& std::is_integral_v<T>)
+requires(std::is_floating_point_v<T> || std::is_integral_v<T>)
     //
     inline std::
         tuple<semantic::TypeEnum, vattribute_flags, u32> vector_info_of()
@@ -184,6 +184,28 @@ struct vertex_attribute
         V T::*member, detail::vertex_attribute_float_type)
     {
         return from_member<T, V>(member);
+    }
+
+    inline auto at(u32 index)
+    {
+        auto out  = *this;
+        out.index = index;
+        return out;
+    }
+
+    inline auto with_flags(attribute_flags flags)
+    {
+        auto out = *this;
+        out.value.flags |= flags;
+        return out;
+    }
+
+    inline auto in_buffer(u32 id, size_t offset = 0)
+    {
+        auto out          = *this;
+        out.buffer.id     = id;
+        out.buffer.offset = offset;
+        return out;
     }
 };
 

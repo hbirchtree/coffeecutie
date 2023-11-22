@@ -103,7 +103,7 @@ std::string posix_error_category::message(int error_code) const
  *
  */
 
-#if defined(COFFEE_WINDOWS)
+#if defined(COFFEE_WINDOWS) || defined(COFFEE_WIN32)
 
 #include <peripherals/libc/string_ops.h>
 #include <peripherals/platform/windows.h>
@@ -111,26 +111,49 @@ std::string posix_error_category::message(int error_code) const
 namespace platform {
 namespace win32 {
 
-const char* error_category::name() const noexcept
-{
-    return "win32_error_code";
-}
+// const char* error_category::name() const noexcept
+// {
+//     return "win32_error_code";
+// }
 
-std::string error_category::message(int error_code) const
+// std::string error_category::message(int error_code) const
+// {
+//     LPWSTR msgBuf = nullptr;
+//     size_t size   = FormatMessageW(
+//         FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
+//             FORMAT_MESSAGE_IGNORE_INSERTS,
+//         nullptr,
+//         error_code,
+//         MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+//         (LPWSTR)&msgBuf,
+//         0,
+//         nullptr);
+
+//     LocalFree(msgBuf);
+//     return stl_types::str::encode::to<char>(std::wstring(msgBuf, size));
+// }
+
+std::string error_to_string(libc_types::u32 err)
 {
-    LPWSTR msgBuf = nullptr;
-    size_t size   = FormatMessageW(
+    LPSTR msgBuf = nullptr;
+    size_t size   = FormatMessageA(
         FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
             FORMAT_MESSAGE_IGNORE_INSERTS,
         nullptr,
-        error_code,
+        err,
         MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-        (LPWSTR)&msgBuf,
+        (LPSTR)&msgBuf,
         0,
         nullptr);
 
+    auto out = std::string(msgBuf, size);
     LocalFree(msgBuf);
-    return stl_types::str::encode::to<char>(std::wstring(msgBuf, size));
+    return out;
+}
+
+std::string last_error()
+{
+    return error_to_string(GetLastError());
 }
 
 } // namespace win32

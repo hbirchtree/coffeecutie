@@ -92,7 +92,7 @@ function(COFFEE_APPLICATION)
       APK_TARGET ${NDK_MAX_PLATFORM_LEVEL}
       APK_MIN_TARGET ${ANDROID_NATIVE_API_LEVEL}
     )
-  elseif(WIN32)
+  elseif(WIN32 OR MINGW)
     winpe_package(
       ${APP_TARGET}
       "${APP_PACKAGE_PREFIX}"

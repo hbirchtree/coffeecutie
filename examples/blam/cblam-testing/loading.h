@@ -5,13 +5,14 @@
 #include "data.h"
 
 template<typename Version>
-void load_scenario_bsp(compo::EntityContainer& e, BlamData<Version>& data)
+void load_scenario_bsp(
+    compo::EntityContainer& e, MapChangedEvent<Version>& data)
 {
     ProfContext _(__FUNCTION__);
 
-    using namespace Components;
+    using namespace compo;
 
-    auto&                 magic     = data.map_container.magic;
+    auto&                 magic     = data.container.magic;
     BSPCache<Version>&    bsp_cache = e.subsystem_cast<BSPCache<Version>>();
     ShaderCache<Version>& shader_cache
         = e.subsystem_cast<ShaderCache<Version>>();
@@ -125,8 +126,9 @@ void load_scenario_bsp(compo::EntityContainer& e, BlamData<Version>& data)
                 shader_.shader_tag = shader_it.tag;
                 shader_.shader_id  = mesh.shader;
 
-//                DepthInfo&    depth    = mesh_ent.get<DepthInfo>();
-//                depth.position = bsp.
+                //                DepthInfo&    depth    =
+                //                mesh_ent.get<DepthInfo>(); depth.position =
+                //                bsp.
 
                 bsp_ref.current_pass = shader_.get_render_pass(shader_cache);
             }
@@ -138,13 +140,13 @@ constexpr auto model_lod = blam::mod2::lod_high_ext;
 template<typename T, typename Version>
 void load_objects(
     blam::scn::reflex_group<T> const& group,
-    BlamData<Version>&                data,
+    MapChangedEvent<Version>&         data,
     EntityContainer&                  e,
     u32                               tags)
 {
     ProfContext _(__FUNCTION__);
 
-    using namespace Components;
+    using namespace compo;
 
     EntityRecipe parent;
     parent.components = {
@@ -167,9 +169,9 @@ void load_objects(
 
     //    auto obj_names
     //        =
-    //        data.scenario->objects.object_names.data(data.map_container.magic);
-    auto magic   = data.map_container.magic;
-    auto index   = blam::tag_index_view(data.map_container);
+    //        data.scenario->objects.object_names.data(data.container.magic);
+    auto magic   = data.container.magic;
+    auto index   = blam::tag_index_view(data.container);
     auto palette = group.palette.data(magic).value();
 
     auto instances = group.instances.data(magic).value();
@@ -241,15 +243,12 @@ void load_objects(
 
 template<typename Version>
 void load_multiplayer_equipment(
-    BlamData<Version>& data,
-
-    EntityContainer& e,
-    u32              tags)
+    MapChangedEvent<Version>& data, EntityContainer& e, u32 tags)
 {
-    using namespace Components;
+    using namespace compo;
 
-    blam::tag_index_view index(data.map_container);
-    auto const&          magic = data.map_container.magic;
+    blam::tag_index_view index(data.container);
+    auto const&          magic = data.container.magic;
 
     auto equipment = data.scenario->mp.equipment.data(magic);
 
@@ -347,7 +346,7 @@ void load_multiplayer_equipment(
 }
 
 template<typename Version>
-void load_scenario_scenery(EntityContainer& e, BlamData<Version>& data)
+void load_scenario_scenery(EntityContainer& e, MapChangedEvent<Version>& data)
 {
     ProfContext _(__FUNCTION__);
 
@@ -364,25 +363,19 @@ void load_scenario_scenery(EntityContainer& e, BlamData<Version>& data)
     }
 
     blam::scn::scenario<Version> const* scenario = data.scenario;
-    auto                                magic    = data.map_container.magic;
+    auto                                magic    = data.container.magic;
 
     auto pipeline = gpu.model_pipeline;
 
     load_objects(
-        scenario->objects.scenery,
-        data,
-        e,
-        ObjectScenery | PositioningStatic);
+        scenario->objects.scenery, data, e, ObjectScenery | PositioningStatic);
     load_objects(
         scenario->objects.vehicles,
         data,
         e,
         ObjectVehicle | PositioningDynamic);
     load_objects(
-        scenario->objects.bipeds,
-        data,
-        e,
-        ObjectBiped | PositioningDynamic);
+        scenario->objects.bipeds, data, e, ObjectBiped | PositioningDynamic);
     load_objects(
         scenario->objects.equips,
         data,
@@ -394,10 +387,7 @@ void load_scenario_scenery(EntityContainer& e, BlamData<Version>& data)
         e,
         ObjectEquipment | PositioningDynamic);
     load_objects(
-        scenario->objects.machines,
-        data,
-        e,
-        ObjectDevice | PositioningStatic);
+        scenario->objects.machines, data, e, ObjectDevice | PositioningStatic);
     load_objects(
         scenario->objects.controls,
         data,
@@ -409,15 +399,15 @@ void load_scenario_scenery(EntityContainer& e, BlamData<Version>& data)
         e,
         ObjectLightFixture | PositioningStatic);
 
-    if(data.map_container.map->map_type == blam::maptype_t::multiplayer)
+    if(data.container.map->map_type == blam::maptype_t::multiplayer)
     {
         load_multiplayer_equipment(
             data, e, ObjectEquipment | PositioningDynamic);
     }
 
-    blam::tag_index_view index(data.map_container);
+    blam::tag_index_view index(data.container);
 
-    using namespace Components;
+    using namespace compo;
 
     EntityRecipe skybox_base;
     skybox_base.tags       = ObjectSkybox | ObjectGC;
@@ -520,29 +510,9 @@ void load_scenario_scenery(EntityContainer& e, BlamData<Version>& data)
                     = shader_cache.find(region.shader)->second;
                 shader_.initialize(shader_it, submodel);
 
-                submodel.current_pass = shader_.get_render_pass(shader_cache);
+                submodel.current_pass = Pass_Sky;
             }
         }
-
-        //        ModelItem<Version>& model_ = model_cache.find(model)->second;
-
-        //        for(auto const& sub : model_.mesh.sub)
-        //        {
-        //            auto      submod  = e.create_entity(skybox_model);
-        //            SubModel& submod_ = submod.get<SubModel>();
-
-        //            submod_.initialize<Version>(model, sub);
-        //            skybox_mod.models.push_back(submod);
-        //            submod_.parent = skybox_ent.id();
-
-        //            ShaderData& shader  = submod.get<ShaderData>();
-        //            ShaderItem& shader_ =
-        //            shader_cache.find(sub.shader)->second;
-
-        //            shader.initialize(shader_, submod_);
-        //        }
-
-        cDebug("Skybox");
     }
 
     gpu.model_buf->unmap();

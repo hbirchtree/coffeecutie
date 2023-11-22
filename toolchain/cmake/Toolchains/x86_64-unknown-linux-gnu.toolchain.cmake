@@ -20,7 +20,7 @@ set(CMAKE_CXX_COMPILER
 )
 
 add_link_options(
-  -static-libstdc++ -static-libgcc -lssp_nonshared -Wl,-rpath-link,../lib
+  -static-libstdc++ -static-libgcc -Wl,-rpath-link,../lib
 )
 
 # set ( SHARED_LINK_FLAGS "${CMAKE_SYSROOT}/lib/libstdc++.a" "-static-libssp"

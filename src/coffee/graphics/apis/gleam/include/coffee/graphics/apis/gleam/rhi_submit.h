@@ -334,11 +334,19 @@ inline optional<tuple<error, std::string_view>> api::submit(
 #if GLEAM_MAX_VERSION_ES != 0x200
     if(multi_indirect_supported && (!call.indexed || has_uniform_element_type))
     {
+        m_usage.draw.draws += data.size();
+        m_usage.draw.instances += std::accumulate(
+            std::begin(data), std::end(data), 0u,
+                [](u32 i, draw_command::data_t const& d) {
+            return d.instances.count + i;
+        });
         detail::multi_indirect_draw(call, data, *m_indirect_buffer);
     } else if(indirect_supported)
     {
+        m_usage.draw.draws += data.size();
         for(auto d : data)
         {
+            m_usage.draw.instances += d.instances.count;
             bookkeeping.baseInstance = d.instances.offset;
             apply_ubo_offset(d.instances.offset, d.instances.count);
             d = apply_base_instance(d);
@@ -346,8 +354,10 @@ inline optional<tuple<error, std::string_view>> api::submit(
         }
     } else if(!legacy_draw_only)
     {
+        m_usage.draw.draws += data.size();
         for(auto d : data)
         {
+            m_usage.draw.instances += d.instances.count;
             bookkeeping.baseInstance = d.instances.offset;
             apply_ubo_offset(d.instances.offset, d.instances.count);
             d = apply_base_instance(d);
@@ -365,6 +375,8 @@ inline optional<tuple<error, std::string_view>> api::submit(
             auto       num_instances    = std::max(d.instances.count, 1u);
             auto const base_sampler_idx = bookkeeping.sampler_idx;
             d                           = apply_base_instance(d);
+
+            m_usage.draw.draws += num_instances;
             if(call.indexed && d.elements.vertex_offset > 0)
                 for(auto const& attrib : vao->m_attributes)
                 {
@@ -394,6 +406,7 @@ inline optional<tuple<error, std::string_view>> api::submit(
             }
             bookkeeping.baseInstance++;
         }
+        m_usage.draw.instances = m_usage.draw.draws;
     }
 
     if(!m_features.vertex.vertex_arrays)

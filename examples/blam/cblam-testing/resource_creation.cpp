@@ -1,12 +1,16 @@
 #include "resource_creation.h"
 
 #include "components.h"
+#include "shader_compiler.h"
 #include "touch_overlay.h"
 
 #include <coffee/core/input/eventhandlers.h>
 
 using Coffee::ProfContext;
+using Coffee::Resource;
 using semantic::RSCA;
+
+using namespace Coffee::resource_literals;
 
 void create_resources(compo::EntityContainer& e)
 {
@@ -134,7 +138,7 @@ void create_resources(compo::EntityContainer& e)
         auto& light     = common_attributes.back();
         light.buffer.id = 1;
     }
-    for(auto i : Range<u32>(6))
+    for(auto i : range<u32>(6))
     {
         common_attributes.at(i).index = i;
         bsp_array.add(common_attributes.at(i));
@@ -172,7 +176,7 @@ void create_resources(compo::EntityContainer& e)
         common_attributes.at(1) = gfx::vertex_attribute::from_member(
             &model_vertex_type::texcoord, gfx::vertex_float_type);
 
-    for(auto i : Range<u32>(5))
+    for(auto i : range<u32>(5))
     {
         common_attributes.at(i).index = i;
         mod2_array.add(common_attributes.at(i));
@@ -371,73 +375,6 @@ static void create_spv_shaders(gfx::api& api, BlamResources& resources)
         "wireframe_main"sv,
         resources.wireframe_pipeline,
         "map_wireframe");
-}
-
-struct shader_pair_t
-{
-    std::string_view                 vertex_file;
-    std::string_view                 fragment_file;
-    std::shared_ptr<gfx::program_t>& shader;
-};
-
-template<size_t N>
-static void create_shaders(
-    gfx::api& api, std::array<shader_pair_t, N>&& shaders)
-{
-    using namespace std::string_view_literals;
-    using platform::url::constructors::MkUrl;
-
-    std::string_view variant;
-
-    if(api.api_type() == gfx::api_type_t::es)
-    {
-        if(api.api_version() == std::make_tuple(3u, 2u))
-            variant = "es320"sv;
-        else
-            variant = "es300"sv;
-    } else
-    {
-        if(api.api_version() == std::make_tuple(4u, 6u))
-            variant = "core460"sv;
-        else if(api.api_version() >= std::make_tuple(4u, 3u))
-            variant = "core430"sv;
-        else if(api.api_version() >= std::make_tuple(4u, 1u))
-            variant = "core410"sv;
-        else
-            variant = "core330"sv;
-    }
-
-    if(variant.empty())
-        Throw(std::runtime_error("no shader variant selected, good night"));
-
-    for(shader_pair_t& shader : shaders)
-    {
-        if(shader.shader)
-        {
-            shader.shader->dealloc();
-        }
-
-        auto vertex_url = MkUrl(
-            Strings::fmt("{0}.{1}.vert", shader.vertex_file, variant),
-            RSCA::AssetFile);
-        auto fragment_url = MkUrl(
-            Strings::fmt("{0}.{1}.frag", shader.fragment_file, variant),
-            RSCA::AssetFile);
-
-        auto pipeline = shader.shader ? shader.shader : api.alloc_program();
-        pipeline->add(
-            gfx::program_t::stage_t::Vertex,
-            api.alloc_shader(Resource(vertex_url).data()));
-        pipeline->add(
-            gfx::program_t::stage_t::Fragment,
-            api.alloc_shader(Resource(fragment_url).data()));
-        if(auto res = pipeline->compile(); res.has_error())
-        {
-            auto [msg] = res.error();
-            cFatal("Failed to compile shader: {0}", msg);
-        }
-        shader.shader = pipeline;
-    }
 }
 
 static void create_uber_shaders(gfx::api& api, BlamResources& resources)

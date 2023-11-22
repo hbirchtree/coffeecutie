@@ -78,7 +78,8 @@ struct string_segment_ref
         }
 
 #if defined(COFFEE_WINDOWS)
-        const char* ptr = data.data;
+        const char* ptr = data.data();
+        /* TODO: Find a replacement for ::memmem() */
 #else
         const char* ptr = C_RCAST<const char*>(
             ::memmem(data.data(), data.size(), search.data(), num_chars));

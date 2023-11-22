@@ -14,7 +14,7 @@ macro(TARGET_ENABLE_CXX11 TARGET)
 endmacro()
 
 macro(TARGET_ENABLE_LTO TARGET)
-  if(NOT ANDROID AND NOT IOS)
+  if(NOT ANDROID AND NOT IOS AND NOT MINGW)
     check_ipo_supported(RESULT LTOSupported)
 
     if(LTOSupported)

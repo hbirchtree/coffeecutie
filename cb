@@ -28,8 +28,9 @@ case $1 in
     echo VCPKG_ROOT=$(dirname $(realpath $(which vcpkg)))
 ;;
 "env")
-    VARS=$(${0} print-env $2 | tr  '\n' ' ')
-    pushd $BASE_DIR/multi_build/$2
+    VARS=$(${0} print-env ${2//:/-} | tr  '\n' ' ')
+    pushd $BASE_DIR/multi_build/${2//:/-}
+    echo "Entering env with $VARS"
     eval $VARS $SHELL
     popd
 ;;
@@ -40,7 +41,7 @@ beaglebone-build|desktop-build|generic-build|raspberry-build)
     if [ -z "$2" ] || [ "$2" = "list" ] || [ "$2" = "help" ]; then
         echo "No target specified, example targets:
   beaglebone:arm-buildroot-linux-gnueabihf:nullws
-  generic:arm-buildroot-linux-gnueabihf:wayland
+  desktop:arm-buildroot-linux-gnueabihf:sdl2
   desktop:x86_64-buildroot-linux-gnu:multi
   raspberry:arm-buildroot-linux-gnueabihf:vc
 "
@@ -168,14 +169,6 @@ beaglebone-build|desktop-build|generic-build|raspberry-build)
 
     popd
 ;;
-"list-targets")
-    ls -1 $BASE_DIR/.github/cmake/ | sed 's/.preload.cmake//g'
-    echo "
-To build a target, execute $0 quick-build [target]"
-;;
-"ci")
-    "${TC_DIR}"/configure_ci.py ${@:2}
-;;
 "version")
     "${TC_DIR}"/version.py ${@:2}
 ;;
@@ -184,18 +177,6 @@ To build a target, execute $0 quick-build [target]"
 ;;
 "generate-project")
     "${TC_DIR}"/generate_project.py ${@:2}
-;;
-"gen-release")
-    set -e
-    ${0} version ${@:2}
-    git -C "${BASE_DIR}" add "${BASE_DIR}"/.build.yml
-    git commit --verbose
-    "${TC_DIR}"/git-gen-release.sh none
-;;
-"makefile-generator")
-    pushd "${TC_DIR}"/makers
-    PYTHONPATH=$TC_DIR "${TC_DIR}"/python/make_all.py
-    popd
 ;;
 "format")
     CLANG_FORMAT=$(CLANG_FORMAT:-clang-format)

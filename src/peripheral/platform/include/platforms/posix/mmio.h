@@ -1,6 +1,7 @@
 #pragma once
 
 #include "detail.h"
+#include "platforms/base/rdwrio.h"
 #include "rdwrio.h"
 
 #include <gsl/span>
@@ -16,7 +17,7 @@ struct mem_mapping_t
     span_type view;
     RSCA      access;
 
-    operator posix::mem_mapping_t::span_type()
+    operator posix::mem_mapping_t::span_type() const
     {
         return view;
     }

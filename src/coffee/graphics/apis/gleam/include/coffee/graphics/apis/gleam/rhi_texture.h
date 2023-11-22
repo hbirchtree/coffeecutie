@@ -71,7 +71,7 @@ struct texture_t : std::enable_shared_from_this<texture_t>
 
     inline auto sampler();
 
-#if defined(GLEAM_ENABLE_SOFTWARE_BCN)
+#if defined(GLEAM_ENABLE_SOFTWARE_BCN) || defined(GLEAM_ENABLE_SOFTWARE_PVRTC)
     bool                   requires_software_decode();
     std::optional<PixDesc> software_decode_format();
 

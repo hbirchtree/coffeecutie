@@ -74,7 +74,7 @@ enum class tag_class_t : u32
     sky  = 0x736b7920, //  yks 1936423200 Skybox
     smet = 0x736d6574, // tems 1936549236 Metal shader
     snd  = 0x736e6421, // !dns 1936614433 Sound
-    snde = 0x736e6465, // edns 1936614501 Sound effect
+    snde = 0x736e6465, // edns 1936614501 Sound environment
     soso = 0x736f736f, // osos 1936683887 Shader model
     sotr = 0x736f7472, // sotr            Shader generic transparency
     Soul = 0x536f756c, // luoS 1399813484 UI item collection
@@ -97,6 +97,81 @@ enum class tag_class_t : u32
     devi = devc,
 
     undefined = 0xFFFFFFFF,
+
+    actor                    = actr,
+    actor_variant            = actv,
+    antenna                  = ant,
+    animation_trigger        = antr,
+    biped                    = bipd,
+    bitmap                   = bitm,
+    collision_mesh           = coll,
+    color_group              = colo,
+    contrail                 = cont,
+    control_object           = ctrl,
+    decal                    = deca,
+    ui_element               = DeLa,
+    device                   = devc,
+    detail_object_collection = dobc,
+    effect                   = effe,
+    lightning                = elec,
+    equipment                = eqip,
+    flag_object              = flag,
+    fog_parameters           = fog,
+    // foot?
+    // garb?
+    glow                  = glw,
+    grenade_hud_interface = grhi,
+    hud_message_text      = hmt,
+    hud_number            = hud,
+    hud_global            = hudg,
+    // item = item
+    item_collection         = itmc,
+    damage_descriptor       = jpt,
+    lens_flare              = lens,
+    light_fixture           = lifi,
+    light                   = ligh,
+    machine                 = mach,
+    meter                   = metr,
+    light_volume            = mgs2,
+    model2                  = mod2,
+    model                   = mode,
+    multiplayer_scenario    = mply,
+    object                  = obje,
+    particle                = part,
+    particle_system         = pctl,
+    physics                 = phys,
+    point_physics           = pphy,
+    projectile              = proj,
+    rain_effect             = rain,
+    structured_bsp          = sbsp,
+    scenery_item            = scen,
+    shader_chicago_extended = scex,
+    shader_chicago          = schi,
+    scenario                = scnr,
+    shader_environment      = senv,
+    shader_glass            = sgla,
+    shader_generic          = shdr,
+    skybox                  = sky,
+    shader_meter            = smet,
+    sound                   = snd,
+    sound_environment       = snde,
+    shader_model            = soso,
+    shader_transparent      = sotr,
+    ui_item_collection      = Soul,
+    shader_plasma           = spla,
+    sound_scenery           = ssce,
+    string                  = str,
+    shader_water            = swat,
+    tag_collection          = tagc,
+    camera_track            = trak,
+    unit_dialog             = udlg,
+    unit_hud_interface      = unhi,
+    unicode_string          = ustr,
+    virtual_keyboard        = vcky,
+    vehicle                 = vehi,
+    weapon                  = weap,
+    wind_effect             = wind,
+    weapon_hud_interface    = wphi,
 };
 
 FORCEDINLINE bool tag_class_cmp(tag_class_t v1, tag_class_t v2)

@@ -30,6 +30,7 @@ struct features
     struct buffers
     {
         bool barrier{false};
+
         bool dsa{false};
         bool invalidate{false};
         bool mapping{true};
@@ -212,6 +213,7 @@ struct workarounds
     struct
     {
         bool emulated_mapbuffer{false};
+        bool slow_mapbuffer{false};
     } buffer;
     struct
     {
@@ -235,6 +237,7 @@ struct usage
     struct
     {
         u32 buffer_uploads{0};
+        u32 buffer_mappings{0};
     } buffers;
     struct
     {

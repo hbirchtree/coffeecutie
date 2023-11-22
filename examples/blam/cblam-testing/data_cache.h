@@ -1,12 +1,17 @@
 #pragma once
 
+#include <coffee/components/restricted_subsystem.h>
+#include <coffee/components/subsystem.h>
 #include <peripherals/libc/types.h>
+#include <peripherals/stl/type_list.h>
 #include <peripherals/stl/type_safety.h>
 
 #include <stdexcept>
 #include <map>
 
 using cache_id_t = libc_types::u64;
+using type_safety::empty_list_t;
+using type_safety::type_list_t;
 
 struct generation_idx_t
 {

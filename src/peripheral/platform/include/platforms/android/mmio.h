@@ -11,7 +11,7 @@ struct android_mapping_t
     posix::mem_mapping_t mapping;
     AAsset*              asset{nullptr};
 
-    operator posix::mem_mapping_t::span_type()
+    operator posix::mem_mapping_t::span_type() const
     {
         return mapping.view;
     }

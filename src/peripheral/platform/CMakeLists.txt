@@ -135,7 +135,7 @@ endif()
 #
 # Linux desktop-specific code
 #
-if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID AND NOT MINGW AND NOT WIN32 AND NOT MINGW)
   coffee_library(
     TARGET EmbedFileStub
     LIBRARIES PeripheralLib
@@ -155,25 +155,25 @@ endif()
 # Emscripten-specific code
 #
 if(EMSCRIPTEN)
-  target_sources(
-    PeripheralPlatform
-    PRIVATE #
+    target_sources(
+          PeripheralPlatform
+          PRIVATE
             # Like POSIX, but limited
-            #
-            # platforms/posix/environment.cpp platforms/posix/file.cpp
+            emscripten/emscripten_async.cpp
             emscripten/sysinfo.cpp
-  )
+          )
 endif()
 
 #
 # Windows Win32/UWP-specific code
 #
-if(WIN32)
+if(WIN32 OR MINGW)
   target_sources(
     PeripheralPlatform
-    PRIVATE # platforms/win32/environment.cpp
-            win32/sysinfo.cpp
-            # platforms/win32/file.cpp
+    PRIVATE
+            win32/mmio.cpp
+            win32/sysinfo_ex.cpp
+            win32/wmi_win32.cpp
   )
   if(WIN_UWP)
     target_sources(PeripheralPlatform PRIVATE win32/wmi_uwp.cpp)

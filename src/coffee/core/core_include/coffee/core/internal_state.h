@@ -6,6 +6,8 @@
 #include <peripherals/stl/thread_types.h>
 #include <peripherals/stl/types.h>
 
+#include <mutex>
+
 namespace Coffee {
 
 namespace Profiling {
@@ -78,7 +80,7 @@ extern P<InternalThreadState>& GetInternalThreadState();
 
 extern stl_types::ThreadId& GetCurrentThreadId();
 
-extern stl_types::Mutex& GetPrinterLock();
+extern std::mutex& GetPrinterLock();
 
 extern BuildInfo& GetBuildInfo();
 

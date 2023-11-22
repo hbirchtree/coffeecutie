@@ -51,9 +51,11 @@ macro(GEN_VERSION_HEADER TARGET)
     OUTPUT "${VERSION_FILE_FULL}"
     COMMAND "${CMAKE_COMMAND}" -P
             "${CMAKE_CURRENT_BINARY_DIR}/${TARGET}_Generate.cmake"
-    DEPENDS ${CMAKE_SOURCE_DIR}/.build.yml ${CMAKE_SOURCE_DIR}/.git
+    DEPENDS
+        ${CMAKE_SOURCE_DIR}/.git
+        "${CMAKE_CURRENT_BINARY_DIR}/${TARGET}_Generate.cmake"
   )
-  add_custom_target(${TARGET}_module_version DEPENDS "${VERSION_FILE_FULL}")
+  add_custom_target(${TARGET}_module_version DEPENDS "${VERSION_FILE_FULL}" )
   add_dependencies(${TARGET} "${TARGET}_module_version")
   target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 endmacro()

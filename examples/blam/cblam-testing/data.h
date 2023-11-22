@@ -1,11 +1,12 @@
 ﻿#pragma once
 
+#include <blam/volta/blam_stl.h>
+#include <coffee/comp_app/services.h>
 #include <coffee/core/input/standard_input_handlers.h>
 #include <peripherals/semantic/chunk.h>
 #include <peripherals/typing/vectors/camera.h>
 #include <peripherals/typing/vectors/vector_types.h>
 
-#include "blam_files.h"
 #include "graphics_api.h"
 
 using namespace Coffee::StandardInput;
@@ -21,36 +22,7 @@ struct BlamData
 {
     using type = BlamData<Version>;
 
-    BlamData(/*Url map_filename*/)
-    //#if defined(COFFEE_ANDROID)
-    //        map_file(map_filename), bitmap_file("bitmaps.map"_rsc),
-    //#else
-    //        map_file(map_filename),
-    //        bitmap_file(Resource((map_filename.path().dirname()
-    //                              / (std::is_same_v<Version,
-    //                              blam::pc_version_t>
-    //                                     ? "bitmaps.map"
-    //                                     : "bitmaps_custom.map"))
-    //                                 .url(RSCA::SystemFile)))
-    //#endif
-    {
-        //        auto container
-        //            = blam::map_container<Version>::from_bytes(map_file,
-        //            Version());
-        //        if(container.has_error())
-        //        {
-        //            auto error = magic_enum::enum_name(container.error());
-        //            Throw(undefined_behavior(
-        //                Strings::fmt("failed to load map: {0}", error)));
-        //        }
-        //        map_container = std::move(container.value());
-    }
-
-    /* Blam! data */
     blam::map_container<Version> map_container;
-
-    std::unique_ptr<blam::tag_index_view<Version>> tags_view;
-    blam::scn::scenario<Version> const*            scenario{nullptr};
 };
 
 struct BlamCamera : compo::SubsystemBase
@@ -131,6 +103,7 @@ struct RenderingParameters : compo::SubsystemBase
     libc_types::u32 mipmap_bias{0};
 
     bool render_scenery{true};
+    bool render_ui{true};
     bool debug_clear{true};
 
     bool debug_portals{false};
@@ -144,4 +117,65 @@ struct LoadingStatus : compo::SubsystemBase
 
     std::string     status;
     libc_types::i16 progress;
+    bool            loading{false};
 };
+
+struct GameEvent
+{
+    enum EventType
+    {
+        None,
+        MapLoadStart,
+        MapListing,
+        MapDataLoad,
+        MapLoadFinished,
+        MapChanged,
+    };
+    EventType type{None};
+};
+
+struct MapLoadEvent
+{
+    static constexpr auto event_type = GameEvent::MapLoadStart;
+
+    std::optional<platform::url::Url> directory;
+    std::optional<platform::url::Url> file;
+};
+
+struct MapListingEvent
+{
+    static constexpr auto event_type = GameEvent::MapListing;
+
+    platform::url::Url              directory;
+    std::vector<platform::url::Url> maps;
+    platform::url::Url              bitmap_file;
+};
+
+struct MapDataLoadEvent
+{
+    static constexpr auto event_type = GameEvent::MapDataLoad;
+
+    semantic::BytesConst map;
+    semantic::BytesConst bitmap;
+};
+
+template<typename V>
+struct MapLoadFinishedEvent
+{
+    static constexpr auto event_type = GameEvent::MapLoadFinished;
+
+    blam::map_container<V> container;
+    semantic::BytesConst   bitmap_file;
+};
+
+template<typename V>
+struct MapChangedEvent
+{
+    static constexpr auto event_type = GameEvent::MapChanged;
+
+    blam::map_container<V>&       container;
+    blam::magic_data_t            bitmap_magic;
+    blam::scn::scenario<V> const* scenario{nullptr};
+};
+
+using GameEventBus = comp_app::BasicEventBus<GameEvent>;

@@ -1,18 +1,18 @@
 #include <coffee/core/CApplication>
-#include <coffee/core/CEnvironment>
 #include <coffee/core/CFiles>
-#include <coffee/core/CPlatform>
+#include <coffee/core/CProfiling>
 #include <coffee/core/coffee.h>
+#include <platforms/environment.h>
+#include <platforms/file.h>
 #include <platforms/sysinfo.h>
 
 #if defined(FEATURE_ENABLE_MediaFfmpeg)
 #include <av/decode.h>
 #endif
 
-#include <coffee/strings/info.h>
-#include <coffee/strings/libc_types.h>
-#include <coffee/strings/url_types.h>
-#include <coffee/strings/vector_types.h>
+#include <fmt_extensions/libc_types.h>
+#include <fmt_extensions/url_types.h>
+#include <fmt_extensions/vector_types.h>
 
 #include <coffee/core/CDebug>
 
@@ -30,8 +30,8 @@ i32 coffee_main(i32, cstring_w*)
     C_UNUSED(auto _) = Net::RegisterProfiling();
 #endif
 
-    Profiler::PushContext("Configuration data");
     {
+        ProfContext _("Configuration data");
         /* Check out system directory strings and user data directories */
         Url test_dir = MkUrl("config", RSCA::ConfigFile);
         Profiler::Profile("Get userdata directory");
@@ -54,7 +54,6 @@ i32 coffee_main(i32, cstring_w*)
         }
         Profiler::Profile("Create directory recursively");
     }
-    Profiler::PopContext();
 
     if(auto model = platform::info::proc::model(); model.has_value())
     {
@@ -80,12 +79,12 @@ i32 coffee_main(i32, cstring_w*)
     cBasicPrint("OS name: {0}", platform::info::os::name());
     cBasicPrint("OS version: {0}", platform::info::os::version());
 
-//    cDebug("Sensor gravity: {0}", Sensor::Gravity());
-//    cDebug("Sensor gyro: {0}", Sensor::Gyroscope());
-//    cDebug("Sensor lux: {0}", Sensor::Lux());
-//    cDebug("Sensor steps: {0}", Sensor::StepCounter());
-//    cDebug("Sensor acceleration: {0}", Sensor::Acceleration());
-//    cDebug("Sensor orientation: {0}", Sensor::Orientation());
+    //    cDebug("Sensor gravity: {0}", Sensor::Gravity());
+    //    cDebug("Sensor gyro: {0}", Sensor::Gyroscope());
+    //    cDebug("Sensor lux: {0}", Sensor::Lux());
+    //    cDebug("Sensor steps: {0}", Sensor::StepCounter());
+    //    cDebug("Sensor acceleration: {0}", Sensor::Acceleration());
+    //    cDebug("Sensor orientation: {0}", Sensor::Orientation());
 
     return 0;
 }

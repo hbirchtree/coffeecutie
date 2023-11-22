@@ -36,7 +36,7 @@ struct InternalState
     DebugFun::LogInterface logger = {Logging::log};
 
 #ifndef COFFEE_LOWFAT
-    stl_types::Mutex printer_lock;
+    std::mutex printer_lock;
 #endif
 
     /* Resources */
@@ -232,7 +232,7 @@ std::shared_ptr<platform::profiling::ThreadState> GetProfilerTStore()
 #endif
 }
 
-stl_types::Mutex& GetPrinterLock()
+std::mutex& GetPrinterLock()
 {
     if constexpr(compile_info::lowfat_mode)
         Throw(releasemode_error("not available in this mode"));

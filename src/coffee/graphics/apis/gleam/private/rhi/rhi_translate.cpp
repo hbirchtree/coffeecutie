@@ -42,6 +42,9 @@ requires std::is_same_v<T, group::sized_internal_format> || std::
 #endif
 
     /* RGB */
+#if defined(GL_R3_G3_B2) && defined(GL_UNSIGNED_BYTE)
+            {P::R3G3B2, {f::r3_g3_b2, b::unsigned_byte, p::rgb}},
+#endif
 #if defined(GL_RGB565) && defined(GL_UNSIGNED_SHORT_5_6_5)
             {P::RGB565, {f::rgb565, b::unsigned_short_5_6_5, p::rgb}},
 #endif

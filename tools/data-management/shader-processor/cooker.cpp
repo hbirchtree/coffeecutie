@@ -101,7 +101,6 @@ libc_types::i32 cooker_main()
     using stl_types::cast_string;
 
     std::vector<const char*> arguments;
-    arguments.push_back("ShaderCooker");
     for(auto arg : Coffee::GetInitArgs())
         arguments.push_back(arg);
 
@@ -158,7 +157,8 @@ libc_types::i32 cooker_main()
         cFatal("No outputs specified for SPV binary");
         return 1;
     }
-    if(res.unmatched().size() != res.count("stage"))
+    if(res.unmatched().size() != res.count("stage")
+       && !(res.count("spirv") && res.count("module")))
     {
         cFatal("Number of stages does not match number of files");
         for(auto const& unmatched : res.unmatched())
@@ -170,7 +170,7 @@ libc_types::i32 cooker_main()
         return 1;
     }
     if(res.unmatched().size() != res.count("output")
-       && !(res.count("spirv") && res.count("library")))
+       && !(res.count("spirv") && res.count("module")))
     {
         cFatal("Number of outputs does not match number of files");
         return 1;
@@ -246,7 +246,7 @@ libc_types::i32 cooker_main()
         using namespace std::string_view_literals;
 
         // After successful compilation, optimize the SPV binaries
-        const bool                         create_module = res.count("library");
+        const bool                         create_module = res.count("module");
         std::vector<shader_proc::spv_blob> linkables;
         size_t                             i = 0;
         for(auto&& blob : blobs)
@@ -358,6 +358,7 @@ libc_types::i32 cooker_main()
         for(auto&& blob : blobs)
         {
             auto stage = inputs[i].first;
+            // TODO: Skip if version < 430 on core or version < 310 on ES
             auto glsl  = shader_proc::glsl::generate(
                 {
                      .content = std::move(blob),

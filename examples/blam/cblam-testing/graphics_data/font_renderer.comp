@@ -1,0 +1,38 @@
+#version 460 core
+
+layout(local_size_x = 64) in;
+
+#define ATLAS_WIDTH 256
+
+layout(binding = 0, r8) uniform writeonly image2DArray render;
+
+layout(binding = 0, std430) readonly buffer FontData
+{
+    uint heap[];
+};
+
+layout(binding = 1, std430) readonly buffer FontProperties
+{
+    uint ascend_descend; // ascend_height, descend_height
+    uint leadin; // leadin_height, leadin_width
+    uint data[]; /* Layout: repeating segments of 5 uints:
+        0-16    : character
+        16-32   : character width
+        32-48   : bitmap width
+        48-64   : bitmap height
+        64-96   : origin x, y
+        96-128  : scancode + 16 bits padding
+        128-160 : pixel offset (in pixels of atlas)
+     */
+};
+
+layout(binding = 2, std430) readonly buffer TextInput
+{
+    uint length;
+    uint characters[];
+    uvec2 offset[];
+};
+
+void main()
+{
+}

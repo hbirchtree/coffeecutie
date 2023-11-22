@@ -2,6 +2,8 @@
 
 #include <coffee/comp_app/app_events.h>
 #include <coffee/comp_app/eventapp_wrapper.h>
+#include <coffee/comp_app/file_mapper.h>
+#include <coffee/comp_app/file_watcher.h>
 #include <coffee/comp_app/gl_config.h>
 #include <coffee/comp_app/performance_monitor.h>
 #include <coffee/comp_app/stat_providers.h>
@@ -380,6 +382,8 @@ void addDefaults(
         BasicEventBus<Coffee::Display::Event>,
         BasicEventBus<AppEvent>,
         DefaultAppInfo>>(container, ec);
+    container.register_subsystem_inplace<FileMapper>();
+    container.register_subsystem_inplace<FileWatcher>();
 
 #if defined(FEATURE_ENABLE_ANativeComponent)
     loader.loadAll<subsystem_list<anative::AndroidEventBus>>(container, ec);
@@ -678,7 +682,10 @@ void PerformanceMonitor::end_restricted(proxy_type& p, time_point const& time)
     auto timestamp = std::chrono::duration_cast<std::chrono::microseconds>(
         time.time_since_epoch());
 
-    if constexpr(compile_info::debug_mode)
+    /* Disable screenshots on Emscripten,
+     * there's better ways to debug framebuffers there */
+    if constexpr(
+        compile_info::debug_mode && !compile_info::platform::is_emscripten)
         do
         {
             auto screenshot = p.service<ScreenshotProvider>();
@@ -722,6 +729,7 @@ void PerformanceMonitor::end_restricted(proxy_type& p, time_point const& time)
                     screenshot_file,
                     RSCA::WriteOnly | RSCA::Discard | RSCA::NewFile);
             };
+
             auto export_profile = [timestamp](semantic::Bytes const* data) {
                 json::CaptureMetrics(
                     "Screenshots",
@@ -764,8 +772,11 @@ void PerformanceMonitor::load(AppLoadableService::entity_container&, app_error&)
 {
     m_nextScreenshot = m_prevFrame
         = platform::profiling::Profiler::clock::now();
-    m_worker_queue = rq::runtime_queue::CreateNewThreadQueue("Profiling worker")
-                         .assume_value();
+    if constexpr(
+        compile_info::debug_mode && !compile_info::platform::is_emscripten)
+        m_worker_queue
+            = rq::runtime_queue::CreateNewThreadQueue("Profiling worker")
+                  .assume_value();
 }
 
 void PerformanceMonitor::unload(

@@ -47,6 +47,7 @@
 #define COFFEE_WINDOWS_UWP
 #else
 #define COFFEE_WINDOWS_WIN32
+#define COFFEE_WIN32
 #endif
 #define COFFEE_WINDOWS
 #undef COFFEE_LINUX

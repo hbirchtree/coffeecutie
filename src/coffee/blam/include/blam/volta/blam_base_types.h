@@ -4,6 +4,7 @@
 #include <peripherals/libc/types.h>
 #include <peripherals/semantic/chunk.h>
 #include <peripherals/stl/types.h>
+#include <peripherals/typing/geometry/rect.h>
 #include <peripherals/typing/pixels/rgba.h>
 #include <peripherals/typing/vectors/vector_types.h>
 
@@ -32,6 +33,8 @@ static_assert(sizeof(bl_size_t) == 4, "bl_size_t must be 4 bytes");
  */
 using bl_point_t = typing::vectors::tvector<i16, 2>;
 static_assert(sizeof(bl_point_t) == 4, "bl_point_t must be 4 bytes");
+
+using bl_rect = typing::geometry::rect<i16>;
 
 /*!
  * \brief The blam_bounding_box struct

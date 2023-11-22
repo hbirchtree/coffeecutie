@@ -11,7 +11,7 @@ template<typename Version>
 struct BlamBspWidget;
 
 template<typename V>
-using BlamBspWidgetManifest = Components::SubsystemManifest<
+using BlamBspWidgetManifest = compo::SubsystemManifest<
     type_list_t<BspReference, ShaderData, SubModel, TriggerVolume, DebugDraw>,
     type_list_t<
         ShaderCache<V>,
@@ -23,84 +23,91 @@ using BlamBspWidgetManifest = Components::SubsystemManifest<
 
 template<typename V>
 struct BlamBspWidget
-    : Components::
-          RestrictedSubsystem<BlamBspWidget<V>, BlamBspWidgetManifest<V>>
+    : compo::RestrictedSubsystem<BlamBspWidget<V>, BlamBspWidgetManifest<V>>
 {
     using type  = BlamBspWidget<V>;
-    using Proxy = Components::proxy_of<BlamBspWidgetManifest<V>>;
+    using Proxy = compo::proxy_of<BlamBspWidgetManifest<V>>;
 
-    BlamBspWidget(BlamData<V>* data) : m_map(&data->map_container)
+    BlamBspWidget()
     {
         compo::SubsystemBase::priority = 2048;
     }
 
     void start_restricted(Proxy& e, time_point const&)
     {
-        using Components::Entity;
-        using Components::EntityRef;
+        using compo::Entity;
+        using compo::EntityRef;
 
-        auto  bsps         = e.template select<BspReference>();
-        auto  models       = e.template select<SubModel>();
-        auto  triggers     = e.template select<TriggerVolume>();
-//        auto& shader_cache = e.template subsystem<ShaderCache<V>>();
-//        auto& bsp_cache    = e.template subsystem<BSPCache<V>>();
+        auto bsps     = e.template select<BspReference>();
+        auto models   = e.template select<SubModel>();
+        auto triggers = e.template select<TriggerVolume>();
+        //        auto& shader_cache = e.template subsystem<ShaderCache<V>>();
+        //        auto& bsp_cache    = e.template subsystem<BSPCache<V>>();
 
-//        if(ImGui::Begin("Static models"))
-//        {
-//            std::string current_bsp;
-//            bool        current_hidden = true;
+        //        if(ImGui::Begin("Static models"))
+        //        {
+        //            std::string current_bsp;
+        //            bool        current_hidden = true;
 
-//            for(Entity& bsp_ : bsps)
-//            {
-//                auto          bsp_e = e.template ref<Proxy>(bsp_);
-//                BspReference& bsp   = bsp_e.template get<BspReference>();
+        //            for(Entity& bsp_ : bsps)
+        //            {
+        //                auto          bsp_e = e.template ref<Proxy>(bsp_);
+        //                BspReference& bsp   = bsp_e.template
+        //                get<BspReference>();
 
-//                BSPItem const&    bsp_it = bsp_cache.find(bsp.bsp)->second;
-//                ShaderItem const& shader
-//                    = shader_cache.find(bsp.shader)->second;
+        //                BSPItem const&    bsp_it =
+        //                bsp_cache.find(bsp.bsp)->second; ShaderItem const&
+        //                shader
+        //                    = shader_cache.find(bsp.shader)->second;
 
-//                auto bsp_name    = m_map->get_name(bsp_it.tag);
-//                auto shader_name = m_map->get_name(shader.tag);
+        //                auto bsp_name    = m_map->get_name(bsp_it.tag);
+        //                auto shader_name = m_map->get_name(shader.tag);
 
-//                if(current_bsp != bsp_name)
-//                {
-//                    if(!current_bsp.empty() && !current_hidden)
-//                        ImGui::TreePop();
-//                    current_bsp    = bsp_name;
-//                    current_hidden = !ImGui::TreeNode(current_bsp.c_str());
-//                }
+        //                if(current_bsp != bsp_name)
+        //                {
+        //                    if(!current_bsp.empty() && !current_hidden)
+        //                        ImGui::TreePop();
+        //                    current_bsp    = bsp_name;
+        //                    current_hidden =
+        //                    !ImGui::TreeNode(current_bsp.c_str());
+        //                }
 
-//                if(auto it = m_bsps.find(bsp_name); it == m_bsps.end())
-//                    m_bsps.insert({bsp_name, true});
+        //                if(auto it = m_bsps.find(bsp_name); it ==
+        //                m_bsps.end())
+        //                    m_bsps.insert({bsp_name, true});
 
-//                bsp.visible = m_bsps.at(bsp_name);
+        //                bsp.visible = m_bsps.at(bsp_name);
 
-//                if(current_hidden)
-//                    continue;
+        //                if(current_hidden)
+        //                    continue;
 
-//                ImGui::Checkbox(shader_name.data(), &m_bsps.at(bsp_name));
-//            }
+        //                ImGui::Checkbox(shader_name.data(),
+        //                &m_bsps.at(bsp_name));
+        //            }
 
-//            if(!current_bsp.empty() && !current_hidden)
-//                ImGui::TreePop();
-//        }
-//        ImGui::End();
+        //            if(!current_bsp.empty() && !current_hidden)
+        //                ImGui::TreePop();
+        //        }
+        //        ImGui::End();
 
-        if(ImGui::Begin("BSP debugging"))
+        if(ImGui::Begin("Rendering"))
         {
             RenderingParameters* rendering;
             e.subsystem(rendering);
 
-            ImGui::Checkbox("Render scenery", &rendering->render_scenery);
-            ImGui::Checkbox("Clear before draw", &rendering->debug_clear);
-            ImGui::Checkbox("Show clusters", &rendering->debug_clusters);
-            ImGui::Checkbox("Show portals", &rendering->debug_portals);
-            ImGui::Checkbox("Show trigger volumes", &rendering->debug_triggers);
+            ImGui::Checkbox("Render UI", &rendering->render_ui);
 
             if(ImGui::BeginTabBar(""))
             {
                 if(ImGui::BeginTabItem("BSP"))
                 {
+                    ImGui::Checkbox(
+                        "Render scenery", &rendering->render_scenery);
+                    ImGui::Checkbox(
+                        "Clear before draw", &rendering->debug_clear);
+                    ImGui::Checkbox(
+                        "Show clusters", &rendering->debug_clusters);
+                    ImGui::Checkbox("Show portals", &rendering->debug_portals);
                     for(auto& region : m_bsps)
                     {
                         std::string name(
@@ -111,6 +118,8 @@ struct BlamBspWidget
                 }
                 if(ImGui::BeginTabItem("Trigger volumes"))
                 {
+                    ImGui::Checkbox(
+                        "Show trigger volumes", &rendering->debug_triggers);
                     for(Entity& trigger : triggers)
                     {
                         auto t = e.template ref<Proxy>(trigger);
@@ -124,37 +133,39 @@ struct BlamBspWidget
                     }
                     ImGui::EndTabItem();
                 }
+                if(ImGui::BeginTabItem("Camera"))
+                {
+                    BlamCamera*            camera;
+                    PostProcessParameters* postprocess;
+                    e.subsystem(postprocess);
+                    e.subsystem(camera);
+
+                    ImGui::Text("Camera properties");
+                    ImGui::Columns(2);
+                    ImGui::Text("Position");
+                    ImGui::NextColumn();
+                    ImGui::Text(
+                        "vec3(%f, %f, %f)",
+                        camera->camera.position[0],
+                        camera->camera.position[1],
+                        camera->camera.position[2]);
+                    ImGui::SliderFloat(
+                        "FOV", &camera->camera.fieldOfView, 10.f, 120.f);
+                    ImGui::SliderFloat("Gamma", &postprocess->gamma, 0.1, 5.0);
+                    ImGui::SliderFloat(
+                        "Exposure", &postprocess->exposure, -10.f, 10.f);
+                    if(ImGui::Checkbox("Doom mode", &postprocess->doom_mode))
+                        postprocess->scale
+                            = postprocess->doom_mode ? 0.25f : 1.f;
+                    if(ImGui::Button("Reload shaders from disk"))
+                    {
+                        create_shaders(e.underlying());
+                    }
+                    ImGui::Columns();
+                    ImGui::EndTabItem();
+                }
                 ImGui::EndTabBar();
             }
-        }
-        ImGui::End();
-
-        if(ImGui::Begin("Graphics"))
-        {
-            BlamCamera*            camera;
-            PostProcessParameters* postprocess;
-            e.subsystem(postprocess);
-            e.subsystem(camera);
-
-            ImGui::Text("Camera properties");
-            ImGui::Columns(2);
-            ImGui::Text("Position");
-            ImGui::NextColumn();
-            ImGui::Text(
-                "vec3(%f, %f, %f)",
-                camera->camera.position[0],
-                camera->camera.position[1],
-                camera->camera.position[2]);
-            ImGui::SliderFloat("FOV", &camera->camera.fieldOfView, 10.f, 120.f);
-            ImGui::SliderFloat("Gamma", &postprocess->gamma, 0.1, 5.0);
-            ImGui::SliderFloat("Exposure", &postprocess->exposure, -10.f, 10.f);
-            if(ImGui::Checkbox("Doom mode", &postprocess->doom_mode))
-                postprocess->scale = postprocess->doom_mode ? 0.25f : 1.f;
-            if(ImGui::Button("Reload shaders from disk"))
-            {
-                create_shaders(e.underlying());
-            }
-            ImGui::Columns();
         }
         ImGui::End();
     }
@@ -162,7 +173,7 @@ struct BlamBspWidget
     {
     }
 
-    blam::map_container<V> const* m_map;
+    // blam::map_container<V> const* m_map{nullptr};
 
     std::map<std::string_view, bool> m_bsps;
 };

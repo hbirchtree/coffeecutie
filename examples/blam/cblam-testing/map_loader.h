@@ -3,19 +3,28 @@
 #include "data.h"
 #include "selected_version.h"
 
+#include <coffee/core/debug/formatting.h>
 #include <coffee/core/files/cfiles.h>
 #include <coffee/imgui/imgui_binding.h>
+#include <peripherals/stl/type_list.h>
+#include <url/url.h>
 
 #include <memory>
 
-using BlamMapBrowserManifest = Components::
-    SubsystemManifest<empty_list_t, type_list_t<BlamFiles>, empty_list_t>;
+using platform::url::Url;
+using type_safety::empty_list_t;
+using type_safety::type_list_t;
+
+using Coffee::cDebug;
+
+using BlamMapBrowserManifest = compo::
+    SubsystemManifest<empty_list_t, empty_list_t, empty_list_t>;
 
 struct BlamMapBrowser
-    : Components::RestrictedSubsystem<BlamMapBrowser, BlamMapBrowserManifest>
+    : compo::RestrictedSubsystem<BlamMapBrowser, BlamMapBrowserManifest>
 {
     using type  = BlamMapBrowser;
-    using Proxy = Components::proxy_of<BlamMapBrowserManifest>;
+    using Proxy = compo::proxy_of<BlamMapBrowserManifest>;
 
     BlamMapBrowser(std::function<void(Url const&)>&& map_selected) :
         m_map_selected(std::move(map_selected))
@@ -29,9 +38,7 @@ struct BlamMapBrowser
         {
             if(ImGui::BeginListBox("Maps"))
             {
-                auto const& files = e.subsystem<BlamFiles>();
-
-                for(auto const& map : files.maps)
+                for(auto const& map : m_maps)
                 {
                     auto fname = map.path().fileBasename().removeExt();
                     if(fname.internUrl.empty())
@@ -85,8 +92,8 @@ struct BlamMapBrowser
 
     void try_load_map(Url const& map)
     {
-        m_map  = {};
-        m_info = nullptr;
+        m_map   = {};
+        m_info  = nullptr;
         m_error = std::nullopt;
 
         m_file = map;
@@ -117,4 +124,5 @@ struct BlamMapBrowser
     std::unique_ptr<Coffee::Resource>              m_map;
     blam::file_header_t const*                     m_info{nullptr};
     std::optional<blam::map_load_error>            m_error;
+    std::vector<Url>                               m_maps;
 };

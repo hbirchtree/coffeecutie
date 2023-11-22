@@ -122,7 +122,7 @@ inline void foreach_cpuinfo(stl_types::Function<bool(
                 proc_id = field_value;
                 if(auto physid = read_cpu(
                        proc_id, url::Path{"topology/physical_package_id"});
-                   physid.has_value() && physid.value().size() > 1)
+                   physid.has_value() && physid.value().size())
                 {
                     phys_id = physid.value();
                     if(phys_id == "-1"sv)
@@ -298,10 +298,10 @@ inline u32 frequency(bool current = false, u32 cpu = 0, u32 /*node*/ = 0)
 
         if(cpu_id.has_error()
            || (cpu_id.value() != select_id && cpu_id.value() != "-1"))
-            break;
+            continue;
         auto freq = detail::read_cpu(id, Path{"cpufreq"} / freq_path);
         if(freq.has_error())
-            break;
+            continue;
         return libc::str::from_string<u32>(freq.value().data());
     }
     return 0;

@@ -6,26 +6,29 @@
 #include <coffee/imgui/imgui_binding.h>
 
 template<typename V>
-using BlamTextureBrowserManifest = Components::SubsystemManifest<
+using BlamTextureBrowserManifest = compo::SubsystemManifest<
     empty_list_t,
-    type_list_t<BlamFiles, BitmapCache<V>, gfx::system>,
+    type_list_t<BitmapCache<V>, gfx::system>,
     empty_list_t>;
 
 template<typename V>
-struct BlamTextureBrowser : Components::RestrictedSubsystem<
+struct BlamTextureBrowser : compo::RestrictedSubsystem<
                                 BlamTextureBrowser<V>,
                                 BlamTextureBrowserManifest<V>>
 {
     using type  = BlamTextureBrowser<V>;
-    using Proxy = Components::proxy_of<BlamTextureBrowserManifest<V>>;
+    using Proxy = compo::proxy_of<BlamTextureBrowserManifest<V>>;
 
-    BlamTextureBrowser(BlamData<V>* data) : m_map(&data->map_container)
+    BlamTextureBrowser()
     {
         compo::SubsystemBase::priority = 2048;
     }
 
     void start_restricted(Proxy& e, time_point const&)
     {
+        if(!m_map)
+            return;
+
         auto& api = e.template subsystem<gfx::system>();
 
         if(ImGui::Begin("Textures"))
@@ -163,7 +166,7 @@ struct BlamTextureBrowser : Components::RestrictedSubsystem<
         }
     }
 
-    blam::map_container<V>*            m_map;
+    blam::map_container<V> const*      m_map{nullptr};
     BitmapItem                         m_selected{};
     std::shared_ptr<gfx::texture_2d_t> m_view;
     bool                               m_updated{false};

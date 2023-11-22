@@ -140,7 +140,7 @@ constexpr opcode_iterator_end_t opcode_iterator_end;
 
 template<typename BC>
 struct opcode_iterator
-    : stl_types::Iterator<stl_types::ForwardIteratorTag, opcode_layout<BC>>
+    : std::iterator<std::forward_iterator_tag, opcode_layout<BC>>
 {
     opcode_iterator(semantic::mem_chunk<u8 const>&& script_base);
     opcode_iterator(opcode_iterator_end_t) :
@@ -152,8 +152,12 @@ struct opcode_iterator
     {
         auto code      = *m_data.at(m_offset);
         auto separator = terminator;
+#if !defined(COFFEE_WIN32)
         auto loc
             = ::memmem(code.data, code.size, &separator, sizeof(separator));
+#else
+        void const* loc = nullptr;
+#endif
 
         if(loc)
         {
@@ -550,7 +554,7 @@ struct bytecode_pointer
     };
 
     using opcode_handler_t
-        = stl_types::Function<result_t(bytecode_ptr&, opcode_layout_t const&)>;
+        = std::function<result_t(bytecode_ptr&, opcode_layout_t const&)>;
 
     struct opcode_handlers
     {
@@ -712,7 +716,7 @@ struct bytecode_pointer
 
         u32 start_param = value_stack.size();
 
-        stl_types::Function<bool()> condition
+        std::function<bool()> condition
             = [&]() { return (value_stack.size() - start_param) < num; };
 
         if(num == variable_length_params || num == unknown_opcode_signature)

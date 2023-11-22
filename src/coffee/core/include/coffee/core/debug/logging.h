@@ -89,7 +89,9 @@ requires compile_info::platform::is_windows void log(
     UNUSED_PARAM(std::string_view, formatted),
     semantic::debug::Severity)
 {
-    auto formatted_w = std::basic_string<wchar_t>(formatted.begin(), formatted.end());
+    auto formatted_w
+        = std::basic_string<wchar_t>(formatted.begin(), formatted.end());
+#if !defined(COFFEE_MINGW64)
     if(platform::env::var("VisualStudioVersion").has_value())
 #if defined(COFFEE_WINDOWS)
         OutputDebugStringW(formatted_w.c_str());
@@ -97,6 +99,7 @@ requires compile_info::platform::is_windows void log(
         Throw(unimplemented_path("Visual Studio path not available"));
 #endif
     else
+#endif
         libc::io::put(stream, formatted.data());
 }
 

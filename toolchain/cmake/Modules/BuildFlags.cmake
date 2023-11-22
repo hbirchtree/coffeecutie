@@ -11,19 +11,7 @@ set(COFFEE_LINK_OPT STATIC)
 if(NOT DEFINED COFFEE_BUILD_STRING)
   # Build time strings, embedded within constexpr strings to keep track of when
   # a build was made. Because file timestamps are unreliable.
-  string(TIMESTAMP CBUILDTIME "%y%m%d%H")
-
-  execute_process(
-    COMMAND ${CMAKE_SOURCE_DIR}/toolchain/version.py none --version
-    OUTPUT_VARIABLE COFFEE_VERSION_CODE
-  )
-
-  string(REGEX REPLACE "\n$" "" COFFEE_VERSION_CODE "${COFFEE_VERSION_CODE}")
-
-  set(COFFEE_VERSION_CODE
-      "${COFFEE_VERSION_CODE}"
-      CACHE STRING ""
-  )
+  string(TIMESTAMP BUILDTIME "%y%m%d%H")
 
   # git hash is retrieved
   execute_process(
@@ -32,15 +20,18 @@ if(NOT DEFINED COFFEE_BUILD_STRING)
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
   )
 
+  # git hash to tag mapping
+  execute_process(
+    COMMAND git describe --tags ${GIT_HASH}
+    OUTPUT_VARIABLE GIT_TAG
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  )
+
   string(SUBSTRING "${GIT_HASH}" "" 10 GIT_HASH)
 
   set(COFFEE_BUILD_STRING
-      "${COFFEE_VERSION_CODE}.${CBUILDTIME}-${GIT_HASH}"
+      "${GIT_TAG}-${GIT_HASH}-${BUILDTIME}"
       CACHE STRING ""
-  )
-
-  file(WRITE "${CMAKE_BINARY_DIR}/VERSION.${PROJECT_NAME}"
-       "${COFFEE_VERSION_CODE}"
   )
 endif()
 

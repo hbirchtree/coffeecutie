@@ -11,7 +11,7 @@
 #include "posix/sysinfo.h"
 #endif
 
-#if defined(__GLIBC__) && C_HAS_INCLUDE(<gnu / libc - version.h>)
+#if defined(__GLIBC__) && __has_include(<gnu/libc-version.h>)
 #include "glibc/sysinfo.h"
 #endif
 
@@ -21,6 +21,8 @@
 #include "emscripten/sysinfo.h"
 #elif defined(COFFEE_MACOS) || defined(COFFEE_IOS)
 #include "osx/sysinfo.h"
+#elif defined(COFFEE_WIN32)
+#include "win32/sysinfo.h"
 #else
 #include <thread>
 #endif
@@ -124,7 +126,7 @@ using emscripten::architecture;
 using emscripten::kernel;
 using emscripten::kernel_version;
 
-#elif defined(COFFEE_WINDOWS)
+#elif defined(COFFEE_WIN32)
 using win32::architecture;
 using win32::kernel;
 using win32::kernel_version;
@@ -156,7 +158,7 @@ using linux_::version;
 using emscripten::name;
 using emscripten::version;
 
-#elif defined(COFFEE_WINDOWS)
+#elif defined(COFFEE_WIN32)
 using win32::name;
 using win32::version;
 
@@ -175,7 +177,7 @@ inline std::optional<std::string> version()
 }
 #endif
 
-#if defined(__GLIBC__) && C_HAS_INCLUDE(<gnu / libc - version.h>)
+#if defined(__GLIBC__) && __has_include(<gnu/libc-version.h>)
 constexpr bool has_libc_info = true;
 
 using glibc::libc_version;
@@ -192,7 +194,6 @@ inline std::string_view libc_version()
 
 inline Platform variant()
 {
-    //#if defined(COFFEE_ANDROID)
     if constexpr(compile_info::platform::is_android)
         return PlatformAndroid;
     else if constexpr(compile_info::platform::is_raspberrypi)
@@ -231,7 +232,7 @@ using android::device;
 using emscripten::device;
 #elif defined(COFFEE_LINUX)
 using linux_::device;
-#elif defined(COFFEE_WINDOWS)
+#elif defined(COFFEE_WIN32)
 using win32::device;
 #elif defined(COFFEE_MACOS)
 using apple::device;
@@ -246,7 +247,7 @@ inline std::optional<std::pair<std::string, std::string>> device()
 using android::motherboard;
 #elif defined(COFFEE_LINUX)
 using linux_::motherboard;
-#elif defined(COFFEE_WINDOWS)
+#elif defined(COFFEE_WIN32)
 using win32::motherboard;
 #else
 inline std::optional<std::pair<std::string, std::string>> motherboard()
@@ -259,7 +260,7 @@ inline std::optional<std::pair<std::string, std::string>> motherboard()
 using android::chassis;
 #elif defined(COFFEE_LINUX)
 using linux_::chassis;
-#elif defined(COFFEE_WINDOWS)
+#elif defined(COFFEE_WIN32)
 using win32::chassis;
 #else
 inline std::optional<std::pair<std::string, std::string>> chassis()
@@ -320,7 +321,7 @@ using info::display::apple::dpi;
 namespace traits {
 
 constexpr bool virtualfs =
-#if defined(COFFEE_ANDROID) || defined(COFFEE_WINDOWS)
+#if defined(COFFEE_ANDROID) || defined(COFFEE_WIN32)
     true;
 #else
     false;

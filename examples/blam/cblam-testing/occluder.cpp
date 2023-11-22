@@ -9,7 +9,7 @@
 #include <coffee/core/debug/formatting.h>
 
 template<typename V>
-using OccluderManifest = Components::SubsystemManifest<
+using OccluderManifest = compo::SubsystemManifest<
     type_list_t<BspReference, Model>,
     type_list_t<BSPCache<V>, BlamCamera, BlamResources>,
     empty_list_t>;
@@ -22,7 +22,6 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
 
     void start_restricted(Proxy& p, time_point const&)
     {
-        return;
 
         BSPCache<V>* bsp_cache;
         BlamCamera*  camera;
@@ -32,6 +31,15 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         p.subsystem(resources);
 
         auto camera_pos = -camera->camera.position;
+
+        for(auto& ent : p.select(ObjectBsp))
+        {
+            auto          ref     = p.template ref<Proxy>(ent);
+            BspReference& bsp_ref = ref.template get<BspReference>();
+
+        }
+
+        return;
 
         Span<Vecf3> portal_colors = resources->debug_line_colors->map<Vecf3>(0);
         Span<Vecf3> portal_pos = resources->debug_lines->map<Vecf3>(72, 72);

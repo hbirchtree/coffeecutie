@@ -33,10 +33,13 @@ coffee_application(
   TITLE "Blam Graphics"
   SOURCES
         graphics.cpp
+        map_loading.cpp
         occluder.cpp
         rendering.cpp
         resource_creation.cpp
+        script_component.cpp
         touch_overlay.cpp
+        ui.cpp
         widgets.cpp
   LIBRARIES Blam Core Image GLeamRHI ImGui
   RESOURCES "${CMAKE_CURRENT_BINARY_DIR}/assets"
@@ -50,8 +53,8 @@ add_dependencies(BlamGraphics BlamGraphics.Assets)
 #)
 set_target_properties(
   BlamGraphics
-  PROPERTIES EMSCRIPTEN_THREADPOOL_SIZE 2
-             EMSCRIPTEN_GROWABLE_MEMORY ON
+  PROPERTIES EMSCRIPTEN_THREADPOOL_SIZE 3
+             EMSCRIPTEN_GROWABLE_MEMORY OFF
              EMSCRIPTEN_HEAP_SIZE 512
 )
 
@@ -59,9 +62,9 @@ if(TARGET ASIO)
   target_link_libraries(BlamGraphics PUBLIC ASIO)
 endif()
 
-coffee_application(
-  TARGET BlamScripting
-  TITLE "Blam Scripting"
-  SOURCES scripting.cpp
-  LIBRARIES Blam Core
-)
+# coffee_application(
+#   TARGET BlamScripting
+#   TITLE "Blam Scripting"
+#   SOURCES scripting.cpp
+#   LIBRARIES Blam Core
+# )

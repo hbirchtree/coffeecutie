@@ -1,10 +1,21 @@
 #include <coffee/comp_app/fps_counter.h>
 
 #include <coffee/core/debug/formatting.h>
+#include <coffee/components/proxy.h>
+#include <coffee/comp_app/services.h>
 
 namespace comp_app {
 
-void FrameCounter::start_frame(ContainerProxy &, const time_point &current)
+FrameCounter::FrameCounter()
+{
+    if(auto interval = platform::env::var("FRAMECOUNTER_RUNTIME_SECONDS"))
+    {
+        auto num_seconds = std::stoi(*interval);
+        close_time = compo::clock::now() + std::chrono::seconds(num_seconds);
+    }
+}
+
+void FrameCounter::start_frame(ContainerProxy& p, const time_point &current)
 {
     get()++;
 
@@ -14,6 +25,11 @@ void FrameCounter::start_frame(ContainerProxy &, const time_point &current)
 
         Coffee::cDebug("FPS: {0}", get());
         get() = 0;
+    }
+    if(close_time.has_value() && *close_time < current)
+    {
+        if(auto window = p.underlying().service<comp_app::Windowing>())
+            window->close();
     }
 }
 

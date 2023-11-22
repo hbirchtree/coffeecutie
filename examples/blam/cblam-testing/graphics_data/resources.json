@@ -13,6 +13,8 @@
             "scenery.frag",
             "scenery_uber.frag",
             "scenery_uber_lite.frag",
+            "ui.vert",
+            "ui.frag",
             "white.frag",
             "wireframe.frag"
         ],

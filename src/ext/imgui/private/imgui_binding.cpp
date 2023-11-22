@@ -11,8 +11,10 @@
 
 #include <coffee/imgui/imgui_binding.h>
 
+#include <coffee/comp_app/file_watcher.h>
 #include <coffee/core/CProfiling>
 #include <coffee/core/base_state.h>
+#include <coffee/core/files/cfiles.h>
 #include <coffee/core/platform_data.h>
 #include <coffee/core/types/display/event.h>
 
@@ -239,7 +241,18 @@ void ImGuiSystem::load(entity_container& e, comp_app::app_error&)
     m_configFilename = *"imgui.ini"_config;
 
     io.LogFilename = m_logFilename.c_str();
-    io.IniFilename = m_configFilename.c_str();
+    io.IniFilename = nullptr;
+
+    rq::runtime_queue::Queue(
+        rq::dependent_task<platform::url::Url, void>::CreateSink(
+            e.subsystem_cast<comp_app::FileWatcher>().await(
+                "imgui.ini"_config, std::chrono::seconds(30)),
+            [this](platform::url::Url* config) {
+                cDebug("Restoring ImGui config from {}", **config);
+                ImGui::LoadIniSettingsFromDisk((**config).c_str());
+                m_iniLoaded = true;
+            }))
+        .assume_value();
 
     /* io is statically allocated, this is safe */
     //    e.service<comp_app::BasicEventBus<CIEvent>>()->addEventData(
@@ -336,12 +349,19 @@ void ImGuiSystem::start_restricted(Proxy& p, time_point const& t)
 
     auto delta = duration_cast<duration>(t - m_previousTime);
 
-    {
-        for(auto& widget : p.select<ImGuiWidget>())
-            p.get<ImGuiWidget>(widget.id)->func(get_container(p), t, delta);
-    }
+    for(auto& widget : p.select<ImGuiWidget>())
+        p.get<ImGuiWidget>(widget.id)->func(get_container(p), t, delta);
 
     m_previousTime = t;
+
+    if(m_nextIniSaveTime <= t && m_iniLoaded)
+    {
+        using namespace std::chrono_literals;
+        save_imgui_ini();
+        m_nextIniSaveTime = t
+                            + std::chrono::seconds(
+                                static_cast<int>(ImGui::GetIO().IniSavingRate));
+    }
 }
 
 void ImGuiSystem::end_restricted(Proxy& e, time_point const&)
@@ -354,6 +374,22 @@ void ImGuiSystem::end_restricted(Proxy& e, time_point const&)
 
     ImGui::Render();
     submit_draws(e);
+}
+
+void ImGuiSystem::save_imgui_ini()
+{
+    if constexpr(compile_info::platform::is_emscripten)
+    {
+        using namespace platform::url::constructors;
+        using Coffee::FileCommit;
+        using Coffee::Resource;
+
+        size_t ini_size{0};
+        auto   ini_settings = ImGui::SaveIniSettingsToMemory(&ini_size);
+        auto   ini_file     = Resource("imgui.ini"_config);
+        ini_file            = semantic::BytesConst::ofString(ini_settings);
+        FileCommit(ini_file, RSCA::NewFile | RSCA::Discard | RSCA::WriteOnly);
+    }
 }
 
 } // namespace imgui::detail

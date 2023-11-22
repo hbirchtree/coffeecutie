@@ -31,6 +31,17 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
         return (m_access & semantic::RSCA::Immutable) != semantic::RSCA::None;
     }
 
+    inline bool slow_mapping_optimization()
+    {
+        return m_type == buffers::type::constants
+               && m_workarounds.buffer.slow_mapbuffer;
+    }
+
+    inline bool no_mapping_optimization()
+    {
+        return m_workarounds.buffer.emulated_mapbuffer;
+    }
+
     inline void alloc()
     {
 #if GLEAM_MAX_VERSION >= 0x450
@@ -50,8 +61,11 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
     inline void commit(size_t size)
     {
         m_cached_size = size;
-        if(m_workarounds.buffer.emulated_mapbuffer)
+        if(no_mapping_optimization() || slow_mapping_optimization())
+        {
             m_allocation.resize(size);
+            return;
+        }
 #if GLEAM_MAX_VERSION >= 0x450
         if(m_features.dsa && immutable())
         {
@@ -85,11 +99,6 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
                 null_span<>{size},
                 convert::to<group::buffer_usage_arb>(m_features, m_access));
         }
-        if(m_workarounds.buffer.emulated_mapbuffer)
-        {
-            /* Populate the client-side storage with the same data, for sync */
-            m_allocation.resize(size);
-        }
     }
 
     template<typename Span>
@@ -97,6 +106,14 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
     inline void commit(Span const& data)
     {
         m_cached_size = data.size();
+        if(no_mapping_optimization() || slow_mapping_optimization())
+        {
+            auto bytes
+                = semantic::mem_chunk<const char>::ofContainer(data).view;
+            m_allocation.resize(bytes.size());
+            std::copy(bytes.begin(), bytes.end(), m_allocation.begin());
+            return;
+        }
 #if GLEAM_MAX_VERSION >= 0x450
         if(m_features.dsa && immutable())
         {
@@ -128,14 +145,6 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
             cmd::buffer_data(
                 convert::to(m_type), data, convert::to(m_features, m_access));
         }
-        if(m_workarounds.buffer.emulated_mapbuffer)
-        {
-            /* Populate the client-side storage with the same data, for sync */
-            auto bytes
-                = semantic::mem_chunk<const char>::ofContainer(data).view;
-            m_allocation.resize(bytes.size());
-            std::copy(bytes.begin(), bytes.end(), m_allocation.begin());
-        }
     }
 
     template<typename Span>
@@ -148,9 +157,13 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
             cmd::named_buffer_sub_data(m_handle, offset, data);
         } else
 #endif
+            if(!no_mapping_optimization() && !slow_mapping_optimization())
         {
             cmd::bind_buffer(convert::to(m_type), m_handle);
             cmd::buffer_sub_data(convert::to(m_type), offset, data);
+        } else
+        {
+            // TODO: Implement partial update
         }
     }
 
@@ -184,6 +197,15 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
                 break;
             }
 #endif
+            if(no_mapping_optimization() || slow_mapping_optimization())
+            {
+                if(m_allocation.size() != buffer_size)
+                    Throw(undefined_behavior(
+                        "client-storage desynced from buffer"));
+                m_mapping = {offset, actual_size};
+                pointer   = m_allocation.data() + offset;
+                break;
+            }
 #if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
             if(m_features.mapping)
             {
@@ -211,15 +233,6 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
                 break;
             }
 #endif
-            if(m_workarounds.buffer.emulated_mapbuffer)
-            {
-                if(m_allocation.size() != buffer_size)
-                    Throw(undefined_behavior(
-                        "client-storage desynced from buffer"));
-                m_mapping = {offset, actual_size};
-                pointer   = m_allocation.data() + offset;
-                break;
-            }
             return Span<T>();
         } while(false);
 
@@ -244,6 +257,18 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
             return;
         }
 #endif
+        if(no_mapping_optimization() || slow_mapping_optimization())
+        {
+            // cmd::bind_buffer(convert::to(m_type), m_handle);
+            // cmd::buffer_sub_data(
+            //     convert::to(m_type),
+            //     m_mapping.first,
+            //     semantic::Span<char>(
+            //         m_allocation.data() + m_mapping.first,
+            //         m_mapping.second));
+            m_mapping = {};
+            return;
+        }
 #if GLEAM_MAX_VERSION >= 0x150 || GLEAM_MAX_VERSION_ES >= 0x300
         if(m_features.mapping)
         {
@@ -261,17 +286,6 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
             return;
         }
 #endif
-        if(m_workarounds.buffer.emulated_mapbuffer)
-        {
-            cmd::bind_buffer(convert::to(m_type), m_handle);
-            cmd::buffer_sub_data(
-                convert::to(m_type),
-                m_mapping.first,
-                semantic::Span<char>(
-                    m_allocation.data() + m_mapping.first, m_mapping.second));
-            m_mapping = {};
-            return;
-        }
     }
 
     inline void discard()
@@ -300,7 +314,8 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
     {
         /* TODO: Cache the size, Emscripten is slow on this */
 
-        if(m_workarounds.buffer.emulated_mapbuffer && m_allocation.size())
+        if(no_mapping_optimization() && slow_mapping_optimization()
+           && m_allocation.size())
             return m_allocation.size();
 
         if(m_cached_size.has_value())
@@ -382,6 +397,21 @@ struct buffer_slice_t
             .m_offset = m_offset + offset,
             .m_size   = size.value_or(m_size),
         };
+    }
+
+    inline bool realize_contents()
+    {
+        auto parent = m_parent.lock();
+        if(!parent || !parent->slow_mapping_optimization())
+            return false;
+        cmd::bind_buffer(convert::to(parent->m_type), parent->m_handle);
+        cmd::buffer_data(
+            convert::to(parent->m_type),
+            buffer(),
+            convert::to<group::buffer_usage_arb>(
+                parent->m_features, parent->m_access));
+        cmd::bind_buffer(convert::to(parent->m_type), 0);
+        return true;
     }
 
     std::weak_ptr<gleam::buffer_t> m_parent;

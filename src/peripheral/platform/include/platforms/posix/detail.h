@@ -13,11 +13,20 @@
 
 #include <dirent.h>
 #include <fcntl.h>
-#include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#if !defined(COFFEE_MINGW64)
+#include <sys/mman.h>
+#endif
 
 #include "posix_error.h"
+
+namespace platform::file::emscripten {
+
+void track_file_open(int fd, semantic::RSCA access);
+void notify_file_close(int fd);
+
+}
 
 namespace platform::file::posix {
 
@@ -30,21 +39,23 @@ FORCEDINLINE int openmode(RSCA access)
                : (access & (RSCA::ReadOnly | RSCA::Executable)) != RSCA::None
                    ? O_RDONLY
                : feval(access, RSCA::WriteOnly) ? O_WRONLY
-                                                : 0) |
-              (feval(access, RSCA::Discard) ? O_TRUNC : 0) |
-              (feval(access, RSCA::Append) ? O_APPEND : 0) |
-              (feval(access, RSCA::NewFile) ? O_CREAT : 0)
+                                                : 0)
+              | (feval(access, RSCA::Discard) ? O_TRUNC : 0)
+              | (feval(access, RSCA::Append) ? O_APPEND : 0)
+              | (feval(access, RSCA::NewFile) ? O_CREAT : 0)
 #if defined(O_TMPFILE)
               | (feval(access, RSCA::TempFile) ? O_TMPFILE : 0)
 #endif
         ;
     return out;
 }
+
+#if !defined(COFFEE_MINGW64)
 FORCEDINLINE int protection(RSCA access)
 {
-    return (feval(access, RSCA::ReadOnly) ? PROT_READ : 0) |
-           (feval(access, RSCA::WriteOnly) ? PROT_WRITE : 0) |
-           (feval(access, RSCA::Executable) ? PROT_EXEC : 0);
+    return (feval(access, RSCA::ReadOnly) ? PROT_READ : 0)
+           | (feval(access, RSCA::WriteOnly) ? PROT_WRITE : 0)
+           | (feval(access, RSCA::Executable) ? PROT_EXEC : 0);
 }
 FORCEDINLINE int mapping(RSCA access)
 {
@@ -57,19 +68,25 @@ FORCEDINLINE int mapping(RSCA access)
 #endif
         ;
 }
+#endif
+
 FORCEDINLINE mode_t mode_from_native(::mode_t mode)
 {
     // clang-format off
     if(S_ISDIR(mode)) return mode_t::directory;
     if(S_ISREG(mode)) return mode_t::file;
-    if(S_ISLNK(mode)) return mode_t::link;
     if(S_ISCHR(mode)) return mode_t::character;
     if(S_ISBLK(mode)) return mode_t::block;
-    if(S_ISSOCK(mode)) return mode_t::socket;
     if(S_ISFIFO(mode)) return mode_t::fifo;
+#if !defined(COFFEE_MINGW64)
+    if(S_ISLNK(mode)) return mode_t::link;
+    if(S_ISSOCK(mode)) return mode_t::socket;
+#endif
     return mode_t::none;
     // clang-format on
 }
+
+#if !defined(COFFEE_MINGW64)
 FORCEDINLINE mode_t dirmode_from_native(int mode)
 {
     switch(mode)
@@ -92,6 +109,7 @@ FORCEDINLINE mode_t dirmode_from_native(int mode)
         return mode_t::none;
     }
 }
+#endif
 
 STATICINLINE constexpr libc_types::u32 permission_to_native(
     permission_t::permission_t p)
@@ -111,9 +129,9 @@ FORCEDINLINE int permissions_to_native(permissions_t const& perms)
         0700 == (permission_to_native(read | write | execute) << 6),
         "permission combination wrong");
 
-    return permission_to_native(perms.owner) << 6 |
-           permission_to_native(perms.group) << 3 |
-           permission_to_native(perms.other);
+    return permission_to_native(perms.owner) << 6
+           | permission_to_native(perms.group) << 3
+           | permission_to_native(perms.other);
 }
 
 FORCEDINLINE auto align_offset(szptr offset)
@@ -130,6 +148,9 @@ FORCEDINLINE void close_fd(int fd)
     {
         Throw(common::posix::posix_runtime_error(common::posix::get_error()));
     }
+#if defined(COFFEE_EMSCRIPTEN)
+    emscripten::notify_file_close(fd);
+#endif
 }
 
 FORCEDINLINE auto posix_failure()
@@ -140,9 +161,11 @@ FORCEDINLINE auto posix_failure()
 #if defined(COFFEE_LINUX)
 constexpr auto lseek_ = ::lseek64;
 constexpr auto mmap_  = ::mmap64;
-#else
+#elif !defined(COFFEE_MINGW64)
 constexpr auto lseek_ = ::lseek;
 constexpr auto mmap_  = ::mmap;
+#elif defined(COFFEE_MINGW64)
+constexpr auto lseek_ = ::lseek64;
 #endif
 
 } // namespace detail
@@ -168,7 +191,9 @@ FORCEDINLINE result<posix_fd_t, posix_error> open_file(
     {
         return failure(common::posix::get_error());
     }
-
+#if defined(COFFEE_EMSCRIPTEN)
+    emscripten::track_file_open(fd, file.flags & RSCA::StorageMask);
+#endif
     return success(std::move(fd));
 }
 

@@ -9,6 +9,7 @@
 namespace platform::file::libc {
 using url::Url;
 
+#if !defined(COFFEE_MINGW64)
 namespace detail {
 
 FORCEDINLINE bool requires_delimiters(std::string const& filename)
@@ -103,6 +104,7 @@ FORCEDINLINE result<line_iterator, int> read_lines(Url const& file)
     else
         return success(line_iterator(std::move(fd.value())));
 }
+#endif
 
 FORCEDINLINE std::optional<int> write(
     file_t const&                file,

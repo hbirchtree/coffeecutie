@@ -2,8 +2,8 @@
 
 #include "blam_bytecode_opcodes.h"
 
-#include <blam/volta/blam_structures.h>
 #include <blam/volta/blam_strings.h>
+#include <blam/volta/blam_structures.h>
 
 #include <peripherals/stl/time_types.h>
 
@@ -164,7 +164,7 @@ struct function_declaration : stl_types::non_copy
     type_t        type;
     u16           index;
     u16           salt;
-    u8            padding[52] = {};
+    u32           padding[13] = {};
 
     inline bool is_callable() const
     {

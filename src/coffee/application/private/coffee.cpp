@@ -475,21 +475,27 @@ static void stack_writer(
 
 void generic_stacktrace(int sig)
 {
+    using namespace platform::stacktrace;
+#if !defined(COFFEE_WIN32)
     using platform::common::posix::proc::code_to_string;
     using platform::common::posix::proc::send_sig;
     using semantic::debug::Severity;
     using namespace libc::io;
-    using namespace platform::stacktrace;
 
     auto sig_string = code_to_string(sig);
-
+#else
+    auto sig_string_ = std::to_string(sig);
+    auto sig_string  = sig_string_.c_str();
+#endif
     fprintf(stderr, "signal encountered:\n");
     fprintf(stderr, " >> %s\n", sig_string);
 
     if constexpr(supports_stacktrace)
         print_frames(frames(), typing::logging::fprintf_logger, stack_writer);
 
+#if !defined(COFFEE_WIN32)
     send_sig(getpid(), libc::signal::sig::kill);
+#endif
 }
 #endif
 
@@ -498,7 +504,7 @@ void InstallDefaultSigHandlers()
     if constexpr(compile_info::platform::is_android)
         return;
 
-#if !defined(COFFEE_CUSTOM_STACKTRACE)
+#if !defined(COFFEE_CUSTOM_STACKTRACE) && !defined(COFFEE_SUPPORTS_BREAKPOINT)
     std::set_terminate([]() {
         if(auto frames = platform::stacktrace::exception_frames();
            frames.has_value())
@@ -512,7 +518,7 @@ void InstallDefaultSigHandlers()
     });
 #endif
 
-#if !defined(COFFEE_CUSTOM_STACKTRACE)
+#if !defined(COFFEE_CUSTOM_STACKTRACE) && !defined(COFFEE_WIN32)
     using libc::signal::sig;
 
     libc::signal::install(sig::ill_op, generic_stacktrace);

@@ -80,17 +80,29 @@ inline std::optional<std::string_view> map_cpu_part(
         if(part == "0xd41") return "Cortex-A78";
 
         if(part == "0xd44") return "Cortex-X1";
-        if(part == "0xd48") return "Cortex-X2";
-
-        if(part == "0xd46") return "Cortex-A510";
-        if(part == "0xd47") return "Cortex-A710";
+        if(part == "0xd4c") return "Cortex-X1C";
 
         if(part == "0xd40") return "Neoverse-N1";
-        if(part == "0xd49") return "Neoverse-N2";
         if(part == "0xd4a") return "Neoverse-E1";
 
         /* ARMv8-R */
         if(part == "0xd15") return "Cortex-R82";
+
+        /* ARMv9-A */
+        if(part == "0xd48") return "Cortex-X2";
+        if(part == "0xd4e") return "Cortex-X3";
+
+        if(part == "0xd46") return "Cortex-A510";
+        if(part == "0xd47") return "Cortex-A710";
+
+        if(part == "0xd4d") return "Cortex-A715";
+
+        if(part == "0xd49") return "Neoverse-N2";
+        if(part == "0xd4f") return "Neoverse-V2";
+        /* ARMv9.2-A */
+        if(part == "0xd80") return "Cortex-A520";
+        if(part == "0xd81") return "Cortex-X4";
+        if(part == "0xd81") return "Cortex-A720";
     } else if(imp == "0x4E")
     {
         if(part == "0x000") return "Denver";
@@ -98,9 +110,7 @@ inline std::optional<std::string_view> map_cpu_part(
         if(part == "0x004") return "Carmel";
     } else if(imp == "0x51")
     {
-
         /* From pytorch/cpuinfo/src/arm/uarch.c */
-
         if(part == "0x00f" || part == "0x02d") return "Scorpion";
         if(part == "0x04d") return "Krait 200/300/400 (Dual-core)";
         if(part == "0x06f") return "Krait 200/300/400 (Quad-core)";

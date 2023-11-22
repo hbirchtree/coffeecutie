@@ -2,14 +2,9 @@
 
 #include <peripherals/identify/system.h>
 
-//#include "android/file.h"
-//#include "libc/file.h"
-//#include "linux/file.h"
-//#include "posix/file.h"
-//#include "win32/file.h"
-
 #if defined(COFFEE_LINUX) || defined(COFFEE_ANDROID) || \
-    defined(COFFEE_APPLE) || defined(COFFEE_EMSCRIPTEN)
+    defined(COFFEE_APPLE) || defined(COFFEE_EMSCRIPTEN) || \
+    defined(COFFEE_MINGW64)
 #define USE_POSIX_API 1
 #endif
 
@@ -19,7 +14,16 @@
 #include "android/rdwrio.h"
 #endif
 
-#if defined(USE_POSIX_API)
+#if defined(COFFEE_EMSCRIPTEN)
+#include "emscripten/mmio.h"
+#endif
+
+#if defined(COFFEE_MINGW64)
+#include "posix/fsio.h"
+#include "posix/rdwrio.h"
+#include "win32/fsio.h"
+#include "win32/mmio.h"
+#elif defined(USE_POSIX_API)
 #include "posix/fsio.h"
 #include "posix/mmio.h"
 #include "posix/rdwrio.h"
@@ -57,6 +61,29 @@ using android::truncate;
 using android::list;
 
 using common::posix::error_message;
+#elif defined(COFFEE_MINGW64)
+#define PLATFORM_FILE_SUPPORTS_FS 1
+#define PLATFORM_FILE_SUPPORTS_LIST 1
+#define PLATFORM_FILE_SUPPORTS_MAPPING 1
+
+using posix::open_file;
+using posix::read;
+using posix::write;
+
+using win32::map;
+using win32::unmap;
+
+using posix::create;
+using posix::create_directory;
+using posix::exists;
+using posix::file_info;
+using posix::remove;
+using posix::size;
+using posix::truncate;
+
+using posix::list;
+
+using common::posix::error_message;
 #elif defined(USE_POSIX_API)
 #define PLATFORM_FILE_SUPPORTS_FS 1
 #define PLATFORM_FILE_SUPPORTS_LIST 1
@@ -91,7 +118,9 @@ using libc::write;
 using libc::open_file;
 #endif
 
+#if !defined(COFFEE_MINGW64)
 using libc::read_lines;
+#endif
 
 using file_handle = declreturntype(open_file)::value_type;
 using map_handle  = declreturntype(map)::value_type;
@@ -119,9 +148,14 @@ using file::posix::path::dereference;
 using file::posix::path::base;
 using file::posix::path::dir;
 
-using file::posix::path::app_dir;
 using file::posix::path::current_dir;
+#if defined(COFFEE_MINGW64)
+using file::win32::path::app_dir;
+using file::win32::path::executable;
+#else
+using file::posix::path::app_dir;
 using file::posix::path::executable;
+#endif
 #else
 #define PLATFORM_FILE_SUPPORTS_LINK 0
 #endif

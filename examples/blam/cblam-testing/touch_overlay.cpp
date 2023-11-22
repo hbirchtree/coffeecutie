@@ -4,6 +4,8 @@
 
 #include <coffee/core/CDebug>
 
+using namespace Coffee::resource_literals;
+
 void TouchOverlay::start_restricted(Proxy& proxy, const time_point&)
 {
     if(!controller)
@@ -23,7 +25,7 @@ void TouchOverlay::start_restricted(Proxy& proxy, const time_point&)
             gfx::textures::d2,
             typing::pixels::CompFmt(
                 comp_app::PixFmt::ETC2,
-                typing::pixels::PixFlg::RGBA_Punchthrough),
+                typing::pixels::PixFlg::RGBA),
             1);
 
         atlas_storage = std::move(tex.value());
@@ -150,10 +152,12 @@ void TouchOverlay::operator()(CIEvent& /*ev*/, CITouchMotionEvent* /*event*/)
 
 void create_touch_overlay(compo::EntityContainer& container)
 {
+    using namespace Coffee::Input;
+
     container.register_subsystem_inplace<TouchOverlay>();
 
     auto eventhandler
-        = container.service<comp_app::BasicEventBus<Input::CIEvent>>();
+        = container.service<comp_app::BasicEventBus<CIEvent>>();
 
     auto& overlay = container.subsystem_cast<TouchOverlay>();
     eventhandler->addEventFunction<CIMouseMoveEvent>(

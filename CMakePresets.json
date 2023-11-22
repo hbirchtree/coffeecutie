@@ -16,10 +16,12 @@
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/multi_build/${presetName}/install",
                 "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
                 "HOST_TOOLS_BINARY_DIR": "$env{HOST_TOOLS_BINARY_DIR}",
+                "GLSLANG_PROGRAM": "$env{GLSLANG_PROGRAM}",
                 "VCPKG_MANIFEST_FEATURES": "$penv{TARGET_FEATURES}"
             },
             "environment": {
                 "HOST_TOOLS_BINARY_DIR": "${sourceDir}/multi_build/host-x64-linux-native/bin",
+                "GLSLANG_PROGRAM": "$penv{GLSLANG_PROGRAM}",
                 "VCPKG_ROOT": "$penv{VCPKG_ROOT}"
             }
         },
@@ -44,9 +46,10 @@
                 "MKSQUASH_PROGRAM": "/usr/bin/mksquash",
                 "NINJA": "$penv{NINJA}",
                 "TOOLCHAIN_PREFIX": "$env{ARCHITECTURE}",
-                "TOOLCHAIN_VERSION": "v2.0.0",
+                "TOOLCHAIN_VERSION": "v2.1.0",
                 "TOOLCHAIN_ROOT": "${sourceDir}/multi_build/compilers/$env{PLATFORM}-$env{ARCHITECTURE}/$env{TOOLCHAIN_VERSION}",
-                "TOOLCHAIN_SYSROOT": "$env{TOOLCHAIN_ROOT}/$env{TOOLCHAIN_PREFIX}/sysroot"
+                "TOOLCHAIN_SYSROOT": "$env{TOOLCHAIN_ROOT}/$env{TOOLCHAIN_PREFIX}/sysroot",
+                "VCPKG_INSTALL_DIR": "${sourceDir}/multi_build/${presetName}/vcpkg_installed/$env{PLATFORM}-$env{ARCHITECTURE}"
             }
         },
         {
@@ -80,10 +83,11 @@
             "environment": {
                 "ANDROID_NDK": "$env{ANDROID_SDK}/ndk/$env{NDK_VERSION}",
                 "ANDROID_NDK_HOME": "$env{ANDROID_SDK}/ndk/$env{NDK_VERSION}",
-                "ANDROID_SDK": "$penv{ANDROID_SDK}",
+                "ANDROID_SDK": "${sourceDir}/multi_build/compilers/android/latest",
                 "API": "32",
                 "ARCHITECTURE": "arm64",
-                "NDK_VERSION": "26.0.10792818",
+                "NDK_VERSION_": "26.0.10792818",
+                "NDK_VERSION": "25.2.9519653",
                 "NINJA": "$penv{NINJA}"
             }
         },
@@ -93,6 +97,17 @@
             "hidden": true,
             "generator": "Ninja",
             "cacheVariables": {
+                "BUILD_ASIO": "OFF",
+                "BUILD_AUDIO": "OFF",
+                "BUILD_BLAM": "ON",
+                "BUILD_COMPRESS_ZLIB": "OFF",
+                "BUILD_GLEAM": "OFF",
+                "BUILD_GRAPHICS_COMMON": "OFF",
+                "BUILD_GX": "ON",
+                "BUILD_IMGUI": "OFF",
+                "BUILD_LIBOGC": "ON",
+                "BUILD_OPENGL": "OFF",
+                "BUILD_SDL2": "OFF",
                 "CMAKE_C_COMPILER": "$env{TOOLCHAIN_ROOT}/bin/$env{ARCHITECTURE}-gcc",
                 "CMAKE_CXX_COMPILER": "$env{TOOLCHAIN_ROOT}/bin/$env{ARCHITECTURE}-g++",
                 "CMAKE_MAKE_PROGRAM": "$env{NINJA}",
@@ -108,7 +123,7 @@
                 "TOOLCHAIN_PREFIX": "$env{ARCHITECTURE}",
                 "TOOLCHAIN_ROOT": "${sourceDir}/multi_build/compilers/$env{PLATFORM}-$env{ARCHITECTURE}/$env{TOOLCHAIN_VERSION}",
                 "TOOLCHAIN_SYSROOT": "$env{TOOLCHAIN_ROOT}/$env{TOOLCHAIN_PREFIX}/sysroot",
-                "TOOLCHAIN_VERSION": "v2.0.0"
+                "TOOLCHAIN_VERSION": "v2.1.0"
             }
         },
         {
@@ -125,7 +140,7 @@
                 "VCPKG_TARGET_TRIPLET": "wasm32-emscripten"
             },
             "environment": {
-                "EMSDK": "$penv{EMSDK}",
+                "EMSDK": "${sourceDir}/multi_build/compilers/emsdk/",
                 "NINJA": "$penv{NINJA}"
             }
         },
@@ -278,14 +293,57 @@
             }
         },
         {
-            "name": "generic-arm-buildroot-linux-gnueabihf-sdl2",
-            "displayName": "Generic ARMv7 OpenGL ES 2.0 (SDL2)",
-            "inherits": ["vcpkg-base-linux-egl-es20"],
+            "name": "desktop-aarch64-buildroot-linux-gnu-multi",
+            "displayName": "Linux aarch64 OpenGL ES 3.x (SDL2)",
+            "inherits": ["vcpkg-base-linux"],
             "cacheVariables": {
+                "BUILD_GL_SOFTWARE_BCN": "ON",
+                "BUILD_GLES": "ON",
+                "BUILD_GLES_31": "ON",
+                "BUILD_GLES_32": "ON",
+                "GENERATE_APPIMAGE": "ON",
+                "VCPKG_DEP_INFO_OVERRIDE_VARS": "desktop;linux;wayland;x11;arm64;aarch64"
+            },
+            "environment": {
+                "ARCHITECTURE": "aarch64-buildroot-linux-gnu",
+                "PLATFORM": "desktop"
+            }
+        },
+        {
+            "name": "desktop-x86_64-windows-gnu-win32",
+            "displayName": "Windows x86_64 (SDL2/Win32)",
+            "inherits": ["vcpkg-base"],
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_BUILD_WITH_INSTALL_RPATH": "ON",
+                "CMAKE_C_COMPILER": "$env{TOOLCHAIN_PREFIX}-gcc-posix",
+                "CMAKE_CXX_COMPILER": "$env{TOOLCHAIN_PREFIX}-g++-posix",
+                "CMAKE_C_FLAGS": "-D__MINGW64__ -D_WIN32_WINNT=0x0602",
+                "CMAKE_CXX_FLAGS": "-D__MINGW64__ -D_WIN32_WINNT=0x0602",
+                "CMAKE_MAKE_PROGRAM": "$env{NINJA}",
+                "CMAKE_SYSTEM_NAME": "Windows",
+                "MINGW": "1",
+                "MINGW64": "1",
+                "VCPKG_MANIFEST_NO_DEFAULT_FEATURES": "ON",
+                "VCPKG_MANIFEST_FEATURES": "blam;gleam;headful;network;openssl",
+                "VCPKG_TARGET_TRIPLET": "x64-mingw-static"
+            },
+            "environment": {
+                "TOOLCHAIN_PREFIX": "x86_64-w64-mingw32",
+                "NINJA": "$penv{NINJA}"
+            }
+        },
+        {
+            "name": "desktop-arm-buildroot-linux-gnueabihf-sdl2",
+            "displayName": "Linux ARMv7 OpenGL ES 2.0 (SDL2)",
+            "inherits": ["vcpkg-base-linux-es20"],
+            "cacheVariables": {
+                "BUILD_EGL": "OFF",
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "arm;arm32;linux;wayland;x11"
             },
             "environment": {
-                "PLATFORM": "generic"
+                "ARCHITECTURE": "arm-buildroot-linux-gnueabihf",
+                "PLATFORM": "desktop"
             }
         },
         {
@@ -342,6 +400,18 @@
             }
         },
         {
+            "name": "android-arm64-30-gl-rel",
+            "configuration": "Release",
+            "configurePreset": "android-arm64-30-gl",
+            "inherits": "base-linux"
+        },
+        {
+            "name": "android-arm64-30-gl-dbg",
+            "configuration": "Debug",
+            "configurePreset": "android-arm64-30-gl",
+            "inherits": "base-linux"
+        },
+        {
             "name": "android-arm64-32-rel",
             "configuration": "Release",
             "configurePreset": "android-arm64-32",
@@ -366,6 +436,24 @@
             "inherits": "base-linux"
         },
         {
+            "name": "console-powerpc-eabi-cube-dbg",
+            "configuration": "Debug",
+            "configurePreset": "console-powerpc-eabi-cube",
+            "inherits": "base-linux"
+        },
+        {
+            "name": "desktop-aarch64-buildroot-linux-gnu-multi-rel",
+            "configuration": "Release",
+            "configurePreset": "desktop-aarch64-buildroot-linux-gnu-multi",
+            "inherits": "base-linux"
+        },
+        {
+            "name": "desktop-aarch64-buildroot-linux-gnu-multi-dbg",
+            "configuration": "Debug",
+            "configurePreset": "desktop-aarch64-buildroot-linux-gnu-multi",
+            "inherits": "base-linux"
+        },
+        {
             "name": "desktop-x86_64-buildroot-linux-gnu-multi-rel",
             "configuration": "Release",
             "configurePreset": "desktop-x86_64-buildroot-linux-gnu-multi",
@@ -375,6 +463,30 @@
             "name": "desktop-x86_64-buildroot-linux-gnu-multi-dbg",
             "configuration": "Debug",
             "configurePreset": "desktop-x86_64-buildroot-linux-gnu-multi",
+            "inherits": "base-linux"
+        },
+        {
+            "name": "desktop-x86_64-windows-gnu-win32-rel",
+            "configuration": "Release",
+            "configurePreset": "desktop-x86_64-windows-gnu-win32",
+            "inherits": "base-linux"
+        },
+        {
+            "name": "desktop-x86_64-windows-gnu-win32-dbg",
+            "configuration": "Debug",
+            "configurePreset": "desktop-x86_64-windows-gnu-win32",
+            "inherits": "base-linux"
+        },
+        {
+            "name": "desktop-arm-buildroot-linux-gnueabihf-sdl2-rel",
+            "configuration": "Release",
+            "configurePreset": "desktop-arm-buildroot-linux-gnueabihf-sdl2",
+            "inherits": "base-linux"
+        },
+        {
+            "name": "desktop-arm-buildroot-linux-gnueabihf-sdl2-dbg",
+            "configuration": "Debug",
+            "configurePreset": "desktop-arm-buildroot-linux-gnueabihf-sdl2",
             "inherits": "base-linux"
         },
         {

@@ -248,7 +248,7 @@ void texture_t::alloc(size_type const& size, bool create_storage)
         } else
         {
             auto                  target = convert::to(m_type);
-            Span<const std::byte> null_span;
+            null_span<> null_data;
             std::function<void(size_3d<i32> const&, i32)> create_level;
 
             switch(m_type)
@@ -266,7 +266,7 @@ void texture_t::alloc(size_type const& size, bool create_storage)
                         0,
                         pfmt,
                         ptype,
-                        null_span);
+                        null_data);
                 };
                 break;
 #if GLEAM_MAX_VERSION >= 0x150 || GLEAM_MAX_VERSION_ES >= 0x300 \
@@ -283,7 +283,7 @@ void texture_t::alloc(size_type const& size, bool create_storage)
                     using internal_format_t = group::internal_format;
 #endif
                     using size_type  = std::decay_t<decltype(s)>;
-                    using span_type  = std::decay_t<decltype(null_span)>;
+                    using span_type  = std::decay_t<decltype(null_data)>;
                     using image_3d_t = std::function<
 #if GLEAM_MAX_VERSION >= 0x150 || GLEAM_MAX_VERSION_ES >= 0x300
                         decltype(cmd::tex_image_3d<size_type, span_type>)
@@ -311,7 +311,7 @@ void texture_t::alloc(size_type const& size, bool create_storage)
                         0,
                         pfmt,
                         ptype,
-                        null_span);
+                        null_data);
                 };
                 break;
 #endif
@@ -329,7 +329,7 @@ void texture_t::alloc(size_type const& size, bool create_storage)
                         0,
                         pfmt,
                         ptype,
-                        null_span);
+                        null_data);
                 };
                 break;
 #endif
@@ -752,7 +752,10 @@ optional<string> api::device_driver()
     std::vector<std::string> elements;
     if(!stl_types::regex::match(version_regex(), version, elements))
         return std::nullopt;
-    return elements[5];
+    auto driver = elements[5];
+    if(driver.starts_with("(") && driver.find(") ") != std::string::npos)
+        driver = driver.substr(driver.find(") "));
+    return driver;
 }
 
 api::extensions_set api::extensions()
@@ -964,6 +967,11 @@ optional<error> api::load(load_options_t options)
             //                m_features.texture.tex.khr.astc = true;
             break;
         }
+    }
+
+    if constexpr(gleam::platform_api == api_type_t::webgl)
+    {
+        m_workarounds.buffer.slow_mapbuffer = true;
     }
 
     //    cmd::enable(group::enable_cap::cull_face);

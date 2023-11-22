@@ -164,6 +164,7 @@ static std::vector<char> software_decode_pvrtc_etc1(
 }
 #endif
 
+#if defined(GLEAM_ENABLE_SOFTWARE_BCN) || defined(GLEAM_ENABLE_SOFTWARE_PVRTC)
 std::future<std::vector<char>> texture_t::software_decode(
     semantic::Span<const char>&& data, size_3d<i32> size, i32 mipmap)
 {
@@ -214,5 +215,6 @@ std::future<std::vector<char>> texture_t::software_decode(
     Throw(texture_decode_not_implemented(
         "attempted doing software decode, but no implementation found"));
 }
+#endif
 
 } // namespace gleam

@@ -3,8 +3,8 @@
 #include <coffee/comp_app/services.h>
 #include <coffee/comp_app/subsystems.h>
 #include <coffee/core/libc_types.h>
-#include <peripherals/stl/types.h>
 #include <peripherals/stl/string_ops.h>
+#include <peripherals/stl/types.h>
 
 #include <coffee/graphics/apis/gleam/rhi_system.h>
 
@@ -86,14 +86,18 @@ struct ImGuiSystem : RestrictedSubsystem<ImGuiSystem, ImGuiManifest>,
     void submit_draws(Proxy& e);
     void free_graphics_data(Proxy& e);
 
+    void save_imgui_ini();
+
     std::unique_ptr<ImGuiData, ImGuiDataDeleter>                 m_im_data;
     std::unique_ptr<ImGuiGraphicsData, ImGuiGraphicsDataDeleter> m_gfx_data;
 
-    time_point m_previousTime;
-    bool       m_textInputActive;
+    time_point m_previousTime{};
+    time_point m_nextIniSaveTime{};
+    bool       m_textInputActive{false};
 
     std::string m_logFilename;
     std::string m_configFilename;
+    bool        m_iniLoaded{false};
 };
 
 static_assert(is_restricted_subsystem<ImGuiSystem>);

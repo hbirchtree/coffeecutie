@@ -485,8 +485,8 @@ void SetupRendering(
             cFatal(
                 "Failed to compile shaders: {0}\nSource:\n{1}\n------\n{2}",
                 error_msg,
-                v_rsc.data().data(),
-                f_rsc.data().data());
+                v_rsc.data().data() ? v_rsc.data().data() : "",
+                f_rsc.data().data() ? f_rsc.data().data() : "");
         } else
         {
             auto [info_msg, nothing] = res.value();

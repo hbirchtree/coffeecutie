@@ -101,6 +101,8 @@ struct api_limits
                 = get_limit(prop::max_vertex_shader_storage_blocks);
             buffers.ssbo_fragment
                 = get_limit(prop::max_fragment_shader_storage_blocks);
+            buffers.ssbo_alignment
+                = get_limit(prop::shader_storage_buffer_offset_alignment);
         }
         if(m_features.program.compute)
         {
@@ -124,6 +126,7 @@ struct api_limits
         u32 ubo_compute{0};
 
         u32 ubo_alignment{0};
+        u32 ssbo_alignment{0};
     } buffers;
     struct
     {

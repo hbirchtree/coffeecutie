@@ -219,6 +219,7 @@ struct server
         VALIDATE();
         m_endpoint = *it;
         m_endpoint.port(stl_types::cast_string<u16>(m_port));
+        return ec;
     }
 
   private:

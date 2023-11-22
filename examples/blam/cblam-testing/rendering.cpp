@@ -11,7 +11,9 @@
 
 using namespace libc_types::size_literals;
 using namespace std::string_view_literals;
+using namespace Coffee::resource_literals;
 
+using semantic::RSCA;
 using typing::pixels::CompFmt;
 using typing::pixels::PixDesc;
 
@@ -40,12 +42,12 @@ inline void assign_map(MapType& map, BitmapItem const* bitm)
 } // namespace detail
 
 template<typename Version>
-struct MeshRenderer : Components::RestrictedSubsystem<
+struct MeshRenderer : compo::RestrictedSubsystem<
                           MeshRenderer<Version>,
                           MeshRendererManifest<Version>>
 {
     using type        = MeshRenderer;
-    using Proxy       = Components::proxy_of<MeshRendererManifest<Version>>;
+    using Proxy       = compo::proxy_of<MeshRendererManifest<Version>>;
     using draw_data_t = gfx::draw_command::data_t;
 
     struct Pass
@@ -166,7 +168,7 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         {
             pass.command.program = resources.bsp_pipeline;
 
-            pass.name = Strings::fmt(
+            pass.name = fmt::format(
                 "BSP::{}", magic_enum::enum_name(static_cast<Passes>(i++)));
         }
         i = 0;
@@ -174,7 +176,7 @@ struct MeshRenderer : Components::RestrictedSubsystem<
         {
             pass.command.program = resources.model_pipeline;
 
-            pass.name = Strings::fmt(
+            pass.name = fmt::format(
                 "MOD::{}", magic_enum::enum_name(static_cast<Passes>(i++)));
         }
     }
@@ -191,6 +193,8 @@ struct MeshRenderer : Components::RestrictedSubsystem<
     size_t align_for_gpu_padding(size_t size) const
     {
         u32 padding        = m_api->limits().buffers.ubo_alignment;
+        if((size % padding) == 0)
+            return size;
         u32 mask           = padding - 1;
         u32 unaligned_size = size & mask;
         u32 added_padding  = padding - unaligned_size;
@@ -503,9 +507,7 @@ struct MeshRenderer : Components::RestrictedSubsystem<
     {
         ProfContext _;
 
-        bool invalidated
-            = p.template subsystem<BlamFiles>().last_updated > last_update;
-        invalidated = true;
+        bool invalidated = true;
         if(time - last_update > std::chrono::seconds(5) || invalidated)
         {
             generate_draws(p);
@@ -524,14 +526,58 @@ struct MeshRenderer : Components::RestrictedSubsystem<
 
         f32 t = stl_types::Chrono::to_float(time);
 
+        gfx::cull_state cull_state{.front_face = true};
+
         for(auto const& pass : stl_types::slice_num(m_bsp, Pass_LastOpaque + 1))
         {
-            render_bsp_pass(p, t, pass, gfx::cull_state{.front_face = true});
+            render_bsp_pass(
+                p,
+                t,
+                pass,
+                gfx::cull_state{.front_face = true},
+                gfx::stencil_state{
+                    .depth_pass = gfx::stencil_state::operation_t::write,
+                    .mask       = 0x1,
+                    .reference  = 0x1,
+                });
         }
 
         for(auto const& pass :
             stl_types::slice_num(m_model, Pass_LastOpaque + 1))
-            render_pass(p, t, pass, gfx::cull_state{.front_face = true});
+            render_pass(
+                p,
+                t,
+                pass,
+                cull_state,
+                gfx::stencil_state{
+                    .depth_pass = gfx::stencil_state::operation_t::write,
+                    .mask       = 0x1,
+                    .reference  = 0x1,
+                });
+
+        {
+            gfx::stencil_state stencil_state{
+                .mask      = 0x1,
+                .reference = 0x1,
+                .condition = gfx::stencil_state::condition_t::less,
+            };
+            render_bsp_pass(
+                p,
+                t,
+                m_bsp[Pass_Sky],
+                cull_state,
+                gfx::depth_extended_state{.depth_write = false},
+                stencil_state,
+                gfx::blend_state{});
+            render_pass(
+                p,
+                t,
+                m_model[Pass_Sky],
+                cull_state,
+                gfx::depth_extended_state{.depth_write = false},
+                stencil_state,
+                gfx::blend_state{});
+        }
 
         gfx::depth_extended_state nowrite = {.depth_write = true};
 
@@ -929,8 +975,8 @@ void ScreenClear::end_restricted(Proxy& e, const time_point&)
 
 void ScreenClear::load_resources(gleam::system& api, BlamResources& resources)
 {
-    using vecb4 = typing::vectors::tvector<i8, 4>;
-    using vecb2 = typing::vectors::tvector<i8, 2>;
+    using vecb4 = typing::vectors::tvector<libc_types::i8, 4>;
+    using vecb2 = typing::vectors::tvector<libc_types::i8, 2>;
     struct vertex_t
     {
         vecb2 pos;
@@ -1132,7 +1178,7 @@ void main()
         cWarning("Failed to load image: {}", tex.error());
         return;
     }
-    spinner = std::move(tex.value());
+    ktx::texture_t spinner = std::move(tex.value());
 
     loading_tex = api.alloc_texture(
         gfx::textures::d2,
@@ -1152,13 +1198,14 @@ void main()
 
 void alloc_renderer(EntityContainer& container)
 {
-    container.register_subsystem_inplace<MeshRenderer<halo_version>>(
-        &container.subsystem_cast<gfx::system>(),
-        std::ref(container.subsystem_cast<BlamResources>()),
-        std::ref(container.subsystem_cast<BlamCamera>()),
-        std::ref(container.subsystem_cast<ShaderCache<halo_version>>()),
-        std::ref(container.subsystem_cast<BitmapCache<halo_version>>()),
-        std::ref(container.subsystem_cast<BSPCache<halo_version>>()));
+    auto& renderer
+        = container.register_subsystem_inplace<MeshRenderer<halo_version>>(
+            &container.subsystem_cast<gfx::system>(),
+            std::ref(container.subsystem_cast<BlamResources>()),
+            std::ref(container.subsystem_cast<BlamCamera>()),
+            std::ref(container.subsystem_cast<ShaderCache<halo_version>>()),
+            std::ref(container.subsystem_cast<BitmapCache<halo_version>>()),
+            std::ref(container.subsystem_cast<BSPCache<halo_version>>()));
 
     container.register_subsystem_inplace<ScreenClear>();
     container.register_subsystem_inplace<LoadingScreen>();

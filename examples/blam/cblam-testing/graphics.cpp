@@ -1,181 +1,26 @@
 #include "data.h"
-#include "loading.h"
+#include "map_loading.h"
 #include "occluder.h"
 #include "rendering.h"
 #include "resource_creation.h"
+#include "script_component.h"
 #include "selected_version.h"
+#include "touch_overlay.h"
+#include "ui.h"
+#include "ui_caching.h"
+
+#include <coffee/comp_app/fps_counter.h>
 #include <coffee/core/coffee_args.h>
 #include <coffee/graphics/apis/gleam/rhi_emulation.h>
-
-#include "touch_overlay.h"
 
 #if defined(FEATURE_ENABLE_ASIO)
 #include <coffee/asio/net_profiling.h>
 #endif
 
-#include <coffee/comp_app/fps_counter.h>
+using namespace Coffee;
 
 void install_imgui_widgets(
-    compo::EntityContainer&           e,
-    BlamData<halo_version>&           data,
-    std::function<void(Url const&)>&& map_select);
-
-static void filter_maps(std::vector<platform::file::file_entry_t>& files)
-{
-    auto remove_it
-        = std::remove_if(files.begin(), files.end(), [](auto const& file) {
-              Path filepath(file.name.data());
-              if(filepath.extension() != "map")
-                  return true;
-              return file.name.find("bitmaps") != std::string::npos;
-          });
-    files.erase(remove_it, files.end());
-}
-
-static bool load_maps(
-    BlamFiles& data, std::optional<Url> map_file, std::optional<Url> map_dir)
-{
-    if(map_dir)
-    {
-        data.map_directory = *map_dir;
-        if(auto maps_ = platform::file::list(*map_dir); maps_.has_error())
-        {
-            cDebug("Failed to list maps: {0}", maps_.error());
-        } else
-        {
-            using platform::url::constructors::MkSysUrl;
-
-            auto maps = maps_.value();
-            filter_maps(maps);
-            data.maps.clear();
-            auto base_dir     = data.map_directory.path();
-            auto base_storage = data.map_directory.flags;
-            for(auto const& map : maps)
-                data.maps.push_back((base_dir / map.name).url(base_storage));
-            std::sort(data.maps.begin(), data.maps.end());
-            cDebug("Maps:");
-            for(auto const& map : data.maps)
-                cDebug(" - {0}", map.internUrl);
-        }
-    }
-    if(map_file)
-    {
-        auto map_dir     = (*map_file).path().dirname();
-        data.bitmap_file = std::make_unique<Resource>(
-            (map_dir / "bitmaps.map").url(map_file->flags));
-        data.map_file      = std::make_unique<Resource>(*map_file);
-        data.map_directory = map_dir.url(RSCA::SystemFile);
-        return true;
-    }
-    return false;
-}
-
-static void init_map(
-    compo::EntityContainer& e, BlamData<halo_version>& data, BlamFiles* files)
-{
-    auto& bitmaps = e.subsystem_cast<BitmapCache<halo_version>>();
-    auto& bsps    = e.subsystem_cast<BSPCache<halo_version>>();
-    auto& models  = e.subsystem_cast<ModelCache<halo_version>>();
-    auto& shaders = e.subsystem_cast<ShaderCache<halo_version>>();
-    auto& fonts   = e.subsystem_cast<FontCache<halo_version>>();
-
-    /* clear entities, evict cache entries */
-    e.remove_entity_if([](compo::Entity const& e) {
-        return stl_types::any_flag_of(e.tags, ObjectGC);
-    });
-
-    u32 num = 0;
-    for([[maybe_unused]] auto const& i : e.select(ObjectGC))
-        num++;
-    cDebug("Number of GC entities: {}", num);
-
-    files->bitm_magic
-        = blam::magic_data_t(C_OCAST<BytesConst>(*files->bitmap_file).view);
-    files->map_magic = data.map_container.magic;
-    data.tags_view   = std::make_unique<blam::tag_index_view<halo_version>>(
-        std::ref(data.map_container));
-    data.scenario
-        = data.map_container.tags
-              ->scenario(data.map_container.map, data.map_container.magic)
-              .value();
-
-    bitmaps.load_from(data.map_container, files->bitm_magic);
-    bsps.load_from(data.map_container);
-    models.load_from(data.map_container);
-    shaders.load_from(data.map_container);
-    fonts.load_from(data.map_container);
-
-    load_scenario_bsp(e, data);
-    //    if constexpr(std::is_same_v<halo_version, blam::pc_version_t>)
-    load_scenario_scenery(e, data);
-
-    // For debugging: go through all the bitmaps
-    if(false)
-        for(blam::tag_t const& tag : *data.tags_view)
-        {
-            if(!tag.matches(blam::tag_class_t::bitm))
-                continue;
-            cDebug(
-                "Loading bitmap {0}",
-                tag.to_name().to_string(data.map_container.magic));
-            bitmaps.predict(tag.as_ref(), 0);
-        }
-
-    create_camera(
-        e, data.scenario->mp.player_spawns.data(files->map_magic).value());
-
-    if(auto window_config = e.service<comp_app::WindowInfo>())
-    {
-        auto map_name = data.map_container.map->full_mapname();
-        window_config->setName(Strings::fmt("Blam! : {0}", map_name));
-    }
-    {
-        ProfContext _("Texture allocation");
-        bitmaps.allocate_storage();
-    }
-
-    files->last_updated = e.relative_timestamp();
-}
-
-static void open_map(
-    compo::EntityContainer& e, BlamData<halo_version>& data, BlamFiles* files)
-{
-    ProfContext _;
-
-    BlamResources& resources = e.subsystem_cast<BlamResources>();
-
-    using result_type = blam::map_container<halo_version>::result_type;
-
-    LoadingStatus& loading = e.subsystem_cast<LoadingStatus>();
-
-    std::function<void(std::string_view, i16)> progress_cb
-        = [&loading](std::string_view status, i16 progress) {
-              loading.status   = std::string(status.begin(), status.end());
-              loading.progress = progress;
-              cDebug("Map loading status: {}%: {}", progress, status);
-          };
-
-    auto map_data = blam::map_container<halo_version>::from_bytes_async(
-        resources.background_worker,
-        *files->map_file,
-        halo_version_v,
-        rq::runtime_queue::BindToQueue(progress_cb));
-
-    [[maybe_unused]] auto res = rq::runtime_queue::Queue(
-        rq::runtime_queue::GetCurrentQueue().value(),
-        rq::dependent_task<result_type, void>::CreateSink(
-            std::move(map_data), [&e, &data, files](result_type* map) {
-                if(map->has_error())
-                {
-                    cWarning(
-                        "Failed to load map: {}",
-                        magic_enum::enum_name(map->error()));
-                    return;
-                }
-                data.map_container = std::move(map->value());
-                init_map(e, data, files);
-            }));
-}
+    compo::EntityContainer& e, std::function<void(Url const&)>&& map_select);
 
 i32 blam_main()
 {
@@ -189,7 +34,7 @@ i32 blam_main()
         Coffee::BaseArgParser::GetBase(options);
         options.positional_help("map name or directory");
         auto& args = GetInitArgs();
-        arguments = options.parse(args.size(), args.data());
+        arguments  = options.parse(args.size(), args.data());
         if(BaseArgParser::PerformDefaults(options, args) >= 0)
             return 0;
     }
@@ -228,19 +73,18 @@ i32 blam_main()
     comp_app::addDefaults(e, *e.service<comp_app::AppLoader>(), app_ec);
     comp_app::AppContainer<BlamData<halo_version>>::addTo(
         e,
-        [arguments](EntityContainer&        e,
-           BlamData<halo_version>& data,
-           time_point const&) {
+        [arguments](
+            EntityContainer&        e,
+            BlamData<halo_version>& data,
+            time_point const&) {
             ProfContext _(__FUNCTION__);
 
             auto& gfx        = e.register_subsystem_inplace<gfx::system>();
             auto  load_error = gfx.load(
-                //
-                //                gfx::emulation::webgl::desktop()
-                //                gfx::emulation::qcom::adreno_320()
-                //                gfx::emulation::arm::mali_g710()
+                // gfx::emulation::webgl::desktop()
+                // gfx::emulation::qcom::adreno_320()
+                // gfx::emulation::arm::mali_g710()
                 // gfx::emulation::amd::rx560_pro()
-                //
             );
 
             if(load_error)
@@ -276,18 +120,18 @@ i32 blam_main()
             e.register_component_inplace<DebugDraw>();
             e.register_component_inplace<TriggerVolume>();
             e.register_component_inplace<Light>();
-
             e.register_component_inplace<DepthInfo>();
 
             e.register_subsystem_inplace<comp_app::FrameTag>();
+            e.register_subsystem_inplace<GameEventBus>();
+            e.register_subsystem_inplace<BlamFiles<halo_version>>();
 
-            install_imgui_widgets(e, data, [&e, &data](Url const& map) {
-                auto& files = e.subsystem_cast<BlamFiles>();
-                load_maps(files, map, std::nullopt);
-                open_map(e, data, &files);
+            install_imgui_widgets(e, [&e](Url const& map) {
+                auto&        gbus = e.subsystem_cast<GameEventBus>();
+                GameEvent    ev{GameEvent::MapLoadStart};
+                MapLoadEvent load{.file = map};
+                gbus.inject(ev, &load);
             });
-
-            auto& blam_files = e.register_subsystem_inplace<BlamFiles>();
             auto& params = e.register_subsystem_inplace<RenderingParameters>();
             params.mipmap_bias = 0;
             e.register_subsystem_inplace<LoadingStatus>();
@@ -295,7 +139,7 @@ i32 blam_main()
             {
                 auto& bitm_cache
                     = e.register_subsystem_inplace<BitmapCache<halo_version>>(
-                        &blam_files, &gfx, &params);
+                        &gfx, &params);
                 auto& shader_cache
                     = e.register_subsystem_inplace<ShaderCache<halo_version>>(
                         std::ref(bitm_cache));
@@ -303,14 +147,12 @@ i32 blam_main()
                     std::ref(bitm_cache), std::ref(shader_cache), &gfx);
                 e.register_subsystem_inplace<BSPCache<halo_version>>(
                     std::ref(bitm_cache), std::ref(shader_cache));
-                e.register_subsystem_inplace<FontCache<halo_version>>(&gfx);
+                auto& font_cache
+                    = e.register_subsystem_inplace<FontCache<halo_version>>(
+                        &gfx);
+                e.register_subsystem_inplace<UIElementCache<halo_version>>(
+                    std::ref(bitm_cache), std::ref(font_cache));
             }
-
-            //            auto& magic = data.map_container.magic;
-
-            //            e.register_subsystem_inplace<BlamScript<halo_version>>(
-            //                std::ref(data.map_container), data.scenario,
-            //                magic);
 
             if(auto window = e.service<comp_app::WindowInfo>())
             {
@@ -333,6 +175,9 @@ i32 blam_main()
             set_resource_labels(e);
             alloc_renderer(e);
             alloc_occluder(e);
+            alloc_ui_system(e);
+            alloc_scripting(e);
+            setup_load_eventhandlers(e);
 
             using namespace ::platform::url::constructors;
 
@@ -349,25 +194,32 @@ i32 blam_main()
                     RSCA::AssetFile);
                 map_dir = "."_asset;
 #else
-                map_filename             = "beavercreek.map"_asset;
+                map_filename             = "b30.map"_asset;
                 map_dir                  = "."_asset;
 #endif
             } else if(arguments.unmatched().size() == 2)
             {
-                map_filename
-                    = MkUrl(arguments.unmatched().at(1), RSCA::SystemFile);
-                map_dir = map_filename.path().dirname().url(RSCA::SystemFile);
+                auto url = MkUrl(arguments.unmatched().at(1), RSCA::SystemFile);
+                if(auto info = platform::file::file_info(url);
+                   info.has_value()
+                   && info.value().mode == platform::file::mode_t::file)
+                {
+                    map_filename = url;
+                    map_dir
+                        = map_filename.path().dirname().url(RSCA::SystemFile);
+                } else
+                    map_dir = url;
             } else
             {
                 map_dir = "."_asset;
             }
-            load_maps(
-                blam_files,
-                map_filename.valid() ? std::make_optional(map_filename)
-                                     : std::nullopt,
-                map_dir);
+            GameEvent    event{GameEvent::MapLoadStart};
+            MapLoadEvent load{
+                .directory = map_dir,
+            };
             if(map_filename.valid())
-                open_map(e, data, &blam_files);
+                load.file = map_filename;
+            e.subsystem_cast<GameEventBus>().inject(event, &load);
         },
         [](EntityContainer& e,
            BlamData<halo_version>&,
@@ -395,8 +247,6 @@ i32 blam_main()
             camera.camera_matrix[2][3] = -1.f;
             camera.camera_matrix[3][2] = 0.001f;
             camera.camera_matrix       = camera.camera_matrix * view_matrix;
-            //            camera.rotation_matrix =
-            //            glm::mat3_cast(camera.camera.rotation);
             camera.rotation_matrix = glm::mat3_cast(camera.camera.rotation);
         },
         [](EntityContainer&, BlamData<halo_version>&, time_point const&) {

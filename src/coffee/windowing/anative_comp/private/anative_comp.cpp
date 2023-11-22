@@ -67,7 +67,8 @@ comp_app::size_2d_t Windowing::size() const
 
 comp_app::window_flags_t Windowing::state() const
 {
-    return comp_app::window_flags_t::fullscreen;
+    return comp_app::window_flags_t::fullscreen
+           | comp_app::window_flags_t::focused;
 }
 
 void Windowing::setState(comp_app::window_flags_t /*state*/)
@@ -622,7 +623,7 @@ bool AndroidEventBus::filterTouchEvent(AInputEvent* event)
             push.mod = CIMouseButtonEvent::Pressed;
             push.btn = CIMouseButtonEvent::LeftButton;
             m_inputBus->inject(out, &push);
-            push.mod = CIMouseButtonEvent::NoneModifier;
+            push.mod         = CIMouseButtonEvent::NoneModifier;
             m_tapButtonEvent = push;
         }
     } else if(m_tapButtonEvent.has_value())

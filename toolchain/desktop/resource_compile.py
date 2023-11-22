@@ -17,8 +17,7 @@ def needs_update(output: str, dependencies: list):
     if not exists(output):
         return True
     out_ts = getmtime(output)
-    dep_ts = [ getmtime(dep) for dep in dependencies ]
-    return sum([ 1 if dep > out_ts else 0 for dep in dep_ts ]) > 0
+    return sum([ 1 if getmtime(dep) > out_ts else 0 for dep in dependencies ]) > 0
 
 
 def shader_dependencies(shader_file: str, cache_directory: str):
@@ -47,7 +46,9 @@ def run(program, *args):
     program = PROGRAMS[program]
     process_args = [program, *args]
     print(' '.join(process_args))
-    subprocess.call(process_args)
+    ret = subprocess.run(process_args, capture_output=True)
+    if ret.returncode != 0:
+        print(f'ERROR:\n{ret.stdout}\n{ret.stderr}')
 
 
 def compile_shaders(

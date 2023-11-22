@@ -1,4 +1,4 @@
-find_package(Microsoft.GSL REQUIRED)
+find_package(Microsoft.GSL CONFIG REQUIRED)
 find_package(tinyutf8 CONFIG REQUIRED)
 
 coffee_library(
@@ -11,10 +11,6 @@ coffee_library(
 )
 
 gen_version_header(PeripheralLib)
-
-target_compile_definitions(
-  PeripheralLib PRIVATE -DCOFFEE_BUILD_STRING=${COFFEE_BUILD_STRING}
-)
 
 #target_precompile_headers(
 #  PeripheralLib
@@ -75,6 +71,7 @@ if(MINGW)
            wbemuuid
            netapi32
            mingw32
+           kernel32
            # Requires Windows 8+
            cabinet
   )
@@ -135,7 +132,12 @@ elseif(APPLE)
   )
 elseif(EMSCRIPTEN)
   target_compile_options(
-    PeripheralLib PUBLIC -fwasm-exceptions -fPIC -pthread -flto
+    PeripheralLib
+    PUBLIC
+    -fwasm-exceptions
+    -fPIC
+    -pthread
+    -flto
   )
   target_link_options(
     PeripheralLib
@@ -148,6 +150,11 @@ elseif(EMSCRIPTEN)
     -sLLD_REPORT_UNDEFINED
     # -sSAFE_HEAP=1 -sALLOW_MEMORY_GROWTH
   )
+  target_link_libraries(
+    PeripheralLib
+    PUBLIC
+    idbfs.js
+  )
   if("${CMAKE_BUILD_TYPE}" MATCHES "Deb")
     target_link_options(PeripheralLib PUBLIC)
   endif()
@@ -157,10 +164,6 @@ elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
 elseif(GAMECUBE)
   target_link_libraries(PeripheralLib PUBLIC ogc)
 endif()
-
-# ##############################################################################
-# STL extensions, replacing STL where it does not exist
-# ##############################################################################
 
 # ##############################################################################
 # Backup thread naming - for platforms where thread naming doesn't really exist
@@ -183,6 +186,14 @@ if(GAMECUBE)
     SOURCES stl_replacements/gekko/threads.cpp
   )
   target_link_libraries(PeripheralThreadNaming INTERFACE GeckoThreads)
+endif()
+
+#
+#
+#
+
+if(UNIX OR EMSCRIPTEN)
+    target_compile_definitions(PeripheralLib PUBLIC -DCOFFEE_SUPPORTS_BREAKPOINT)
 endif()
 
 # ##############################################################################

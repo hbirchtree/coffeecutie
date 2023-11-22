@@ -497,27 +497,23 @@ class runtime_queue
             });
     }
 
+    struct await_task_t
+    {
+    };
+    static constexpr await_task_t await_task{};
+
+    template<typename... Args>
+    STATICINLINE std::function<void(Args...)> BindToQueue(
+        await_task_t, std::function<void(Args...)> const& func)
+    {
+        return BindToQueue_Impl(func, true);
+    }
+
     template<typename... Args>
     STATICINLINE std::function<void(Args...)> BindToQueue(
         std::function<void(Args...)> const& func)
     {
-        using namespace std::chrono_literals;
-
-        auto                         queue = GetCurrentQueue().value();
-        std::function<void(Args...)> out
-            = [queue, func = std::move(func)](Args... args) {
-                  std::function<void()> task = [func, args...]() mutable {
-                      func(std::forward<Args>(args)...);
-                  };
-                  auto res = Queue(
-                      queue,
-                      runtime_task::CreateTask(
-                          std::move(task), task_flags::single_shot, 0ms));
-                  if(res.has_error())
-                      throw rq::runtime_queue_error(
-                          "failed to bind function to thread");
-              };
-        return out;
+        return BindToQueue_Impl(func, false);
     }
 
     struct task_data_t
@@ -605,6 +601,28 @@ class runtime_queue
     std::recursive_mutex m_tasks_lock;
 
   private:
+    template<typename... Args>
+    STATICINLINE std::function<void(Args...)> BindToQueue_Impl(
+        std::function<void(Args...)> const& func, bool await)
+    {
+        using namespace std::chrono_literals;
+
+        auto                         queue = GetCurrentQueue().value();
+        std::function<void(Args...)> out
+            = [queue, func = std::move(func), await](Args... args) {
+                  std::function<void()> task = [func, args...]() mutable {
+                      func(std::forward<Args>(args)...);
+                  };
+                  auto res = QueueImmediate(queue, 0ms, std::move(task));
+                  if(res.has_error())
+                      throw rq::runtime_queue_error(
+                          "failed to bind function to thread");
+                  if(await)
+                      AwaitTask(queue->thread_id(), res.value());
+              };
+        return out;
+    }
+
     u64  enqueue(runtime_task&& task);
     u64  enqueue(std::unique_ptr<dependent_task_invoker>&& task);
     void sortTasks();

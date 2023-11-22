@@ -1,30 +1,25 @@
 # Updating MODULE_VERSION
-execute_process (
-    COMMAND "@COFFEE_DESKTOP_DIRECTORY@/version_generate.py"
-    OUTPUT_VARIABLE DATE_VERSION
-    )
-execute_process (
-    COMMAND "@COFFEE_DESKTOP_DIRECTORY@/../version.py" none
-    OUTPUT_VARIABLE RELEASE_VERSION
-    )
-execute_process (
-    COMMAND ${GITCOMMAND} rev-parse HEAD
-    WORKING_DIRECTORY "@COFFEE_DESKTOP_DIRECTORY@"
-    OUTPUT_VARIABLE GIT_VERSION
-    )
+string(TIMESTAMP BUILDTIME "%y%m%d%H")
 
-string ( REPLACE "\n" "" RELEASE_VERSION "${RELEASE_VERSION}" )
-string ( REPLACE "\n" "" DATE_VERSION "${DATE_VERSION}" )
-string ( REPLACE "\n" "" GIT_VERSION "${GIT_VERSION}" )
+# git hash is retrieved
+execute_process(
+  COMMAND git rev-parse HEAD
+  OUTPUT_VARIABLE GIT_HASH
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+)
+string ( REPLACE "\n" "" GIT_HASH "${GIT_HASH}" )
 
-set ( MODULE_VERSION "${RELEASE_VERSION}" )
+# git hash to tag mapping
+execute_process(
+  COMMAND git describe --tags ${GIT_HASH}
+  OUTPUT_VARIABLE GIT_TAG
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+)
+string ( REPLACE "\n" "" GIT_TAG "${GIT_TAG}" )
 
-if(GIT_VERSION)
-    set ( MODULE_VERSION "${MODULE_VERSION}-${GIT_VERSION}" )
-endif()
-if(DATE_VERSION)
-    set ( MODULE_VERSION "${MODULE_VERSION}-${DATE_VERSION}" )
-endif()
+string(SUBSTRING "${GIT_HASH}" "" 10 GIT_HASH)
+
+set ( MODULE_VERSION "${GIT_TAG}-${GIT_HASH}_${BUILDTIME}" )
 
 message ( STATUS "Writing version ${MODULE_VERSION}" )
 

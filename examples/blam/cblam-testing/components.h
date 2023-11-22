@@ -2,7 +2,7 @@
 
 #include "caching.h"
 
-using ERef = Components::EntityRef<Components::EntityContainer>;
+using ERef = compo::EntityRef<compo::EntityContainer>;
 
 using comp_app::detail::duration;
 using comp_app::detail::time_point;
@@ -13,14 +13,15 @@ using xbox_vertex_type = blam::vert::vertex<blam::vert::compressed>;
 using light_vertex_type = blam::vert::light_vertex<blam::vert::uncompressed>;
 using light_xbox_vertex_type = blam::vert::light_vertex<blam::vert::compressed>;
 
-using Components::ComponentRef;
-using Components::EntityContainer;
+using compo::ComponentRef;
+using compo::EntityContainer;
 
 enum Passes
 {
     Pass_Opaque,
     Pass_Alphatest,
     Pass_LastOpaque = Pass_Alphatest,
+    Pass_Sky,
     Pass_Additive,
     Pass_Multiply,
     Pass_Glass,

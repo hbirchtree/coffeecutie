@@ -7,7 +7,7 @@
 #include <peripherals/stl/string_casting.h>
 #include <peripherals/stl/string/trim.h>
 
-#if !defined(COFFEE_WINDOWS) && !defined(COFFEE_GEKKO)
+#if !defined(COFFEE_GEKKO)
 #define COFFEE_HTTP_MULTIPART
 #endif
 
@@ -1085,6 +1085,7 @@ struct missing_terminator : std::out_of_range
     using out_of_range::out_of_range;
 };
 
+#if !defined(COFFEE_WIN32)
 struct part_iterator
 {
     using part = std::pair<header_t, payload_t>;
@@ -1223,6 +1224,7 @@ struct parser
         return m_sentinel;
     }
 };
+#endif
 
 struct builder
 {

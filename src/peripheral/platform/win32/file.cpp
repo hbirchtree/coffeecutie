@@ -1,3 +1,4 @@
+﻿
 #include <platforms/win32/file.h>
 
 #include <peripherals/stl/string_ops.h>

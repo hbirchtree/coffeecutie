@@ -894,11 +894,11 @@ struct scenario
         reflexive_t<scn_chunk>                   ai_conversations;
         u32                                      script_bytecode_size;
         u32                                      unknown_7;
-        reflexive_t<hsc::script_ref<bytecode_t>> scripts;
+        reflexive_t<hsc::script_ref<bytecode_t>> unknown_9;
         u32                                      script_function_table_offset;
         u32                                      script_function_table_size;
         reflexive_t<char>                        script_string_segment;
-        reflexive_t<ai::animation_ref>           ai_animation_refs;
+        reflexive_t<hsc::function_declaration>   scripts;
         reflexive_t<hsc::global>                 globals;
         reflexive_t<ai::recording_ref>           ai_recording_refs;
         reflexive_t<scn_chunk>                   unknown_8;
@@ -917,14 +917,12 @@ struct scenario
     inline Span<hsc::opcode_layout<bytecode_t> const> bytecode(
         magic_data_t const& magic) const
     {
-        auto num_opcodes = (script.script_bytecode_size
-                            - sizeof(hsc::script_ref<bytecode_t>))
-                           / sizeof(hsc::opcode_layout<bytecode_t>);
-        auto const& script_base
-            = script.scripts.data(magic).value()[0].opcode_first();
-        return semantic::mem_chunk<hsc::opcode_layout<bytecode_t> const>::of(
-                   &script_base, num_opcodes)
-            .view;
+        reflexive_t<hsc::opcode_layout<bytecode_t>> data{
+            .count = static_cast<u32>((script.script_bytecode_size - sizeof(hsc::script_ref<bytecode_t>)) / sizeof(hsc::opcode_layout
+            <bytecode_t>)),
+            .offset = script.unknown_9.offset + 36,
+        };
+        return data.data(magic).value();
     }
     inline result<string_segment_ref, error_msg> string_segment(
         magic_data_t const& magic) const
@@ -942,44 +940,7 @@ struct scenario
     inline Span<hsc::function_declaration const> function_table(
         magic_data_t const& magic) const
     {
-        auto string_seg = string_segment(magic).value();
-
-        auto init_ptr
-            = string_seg.data.substr(script.script_function_table_offset);
-        hsc::function_declaration const* func_seg_start = nullptr;
-
-        /* TODO: Find out what the true offset is, for now just look for the
-         * padding */
-        for(auto i : stl_types::Range<u32>(4))
-        {
-            func_seg_start
-                = C_RCAST<decltype(func_seg_start)>(init_ptr.data() + i);
-            if(func_seg_start->padding[0] == 0
-               && func_seg_start->padding[1] == 0)
-                break;
-        }
-
-        if(!func_seg_start)
-            return {};
-
-        auto num_functions
-            = (&string_seg.data.at(script.script_string_segment.count - 1)
-               - init_ptr.data())
-              / sizeof(hsc::function_declaration);
-
-        for(auto i : stl_types::Range<>(num_functions))
-        {
-            num_functions = i;
-            if(func_seg_start[i].padding[0] != 0)
-                break;
-        }
-
-        if(!num_functions)
-            return {};
-
-        return semantic::mem_chunk<hsc::function_declaration const>::of(
-                   func_seg_start, num_functions)
-            .view;
+        return script.scripts.data(magic).value();
     }
 
     struct

@@ -239,7 +239,7 @@ struct mem_chunk
         return as<OtherT>();
     }
 
-    operator bool() const
+    explicit operator bool() const
     {
         return view.data();
     }
@@ -390,7 +390,7 @@ struct mem_chunk
             break;
         }
     }
-}; // namespace semantic
+};
 
 #undef BYTE_API
 
@@ -426,6 +426,13 @@ FORCEDINLINE auto SpanOver(It begin, It end)
 {
     auto ptrBegin = &(*begin), ptrEnd = &(*end);
     return Span<T>(ptrBegin, ptrEnd);
+}
+
+template<typename T>
+FORCEDINLINE auto SpanOver(T& container)
+{
+    return SpanOver<typename T::value_type, typename T::iterator>(
+        std::begin(container), std::end(container));
 }
 
 } // namespace semantic

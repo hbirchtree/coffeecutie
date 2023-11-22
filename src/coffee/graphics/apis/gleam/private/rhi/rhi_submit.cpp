@@ -82,7 +82,8 @@ void multi_indirect_draw(
 
     auto commands
         = semantic::SpanOver<indirect_command_buffer>(cmds.begin(), cmds.end());
-    //    auto fence = buffer.push(buffer.move_fences(commands), commands);
+    // auto fence = buffer.push(buffer.move_fences(commands), commands);
+    uintptr_t fence_start = 0;
 
     buffer.buffer().commit(commands);
 
@@ -95,14 +96,14 @@ void multi_indirect_draw(
         cmd::multi_draw_elements_indirect(
             convert::to(call.mode),
             convert::to<group::draw_elements_type>(element_type),
-            reinterpret_cast<uintptr_t>(0ul /*fence.start*/),
+            reinterpret_cast<uintptr_t>(fence_start),
             cmds.size(),
             sizeof(decltype(cmds)::value_type));
     } else
     {
         cmd::multi_draw_arrays_indirect(
             convert::to(call.mode),
-            reinterpret_cast<uintptr_t>(0ul /*fence.start*/),
+            reinterpret_cast<uintptr_t>(fence_start),
             cmds.size(),
             sizeof(indirect_command_buffer));
     }

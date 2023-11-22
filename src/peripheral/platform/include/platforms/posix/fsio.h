@@ -7,6 +7,9 @@
 #if defined(COFFEE_MACOS)
 #include <libproc.h>
 #endif
+#if defined(COFFEE_MINGW64)
+#include <filesystem>
+#endif
 
 namespace platform::file::posix {
 
@@ -83,7 +86,11 @@ FORCEDINLINE result<std::vector<file_entry_t>, posix_error> list(
            name == "." || name == "..")
             continue;
         result.push_back(file_entry_t{
+#if defined(COFFEE_MINGW64)
+            .mode = mode_t::file,
+#else
             .mode = detail::dirmode_from_native(direntry->d_type),
+#endif
             .name = direntry->d_name,
         });
     }
@@ -122,12 +129,20 @@ FORCEDINLINE std::optional<posix_error> create_directory(
                 = resolved.substr(0, C_FCAST<szptr>(it - resolved.begin()));
             if(current_path == resolved || current_path.empty())
                 break;
+#if defined(COFFEE_MINGW64)
+            if(auto status = mkdir(current_path.c_str()); status != 0)
+#else
             if(auto status = mkdir(current_path.c_str(), perm); status != 0)
+#endif
                 return detail::posix_failure().error();
             it = std::find(it, resolved.end(), '/');
         }
     }
+#if defined(COFFEE_MINGW64)
+    if(auto status = mkdir(resolved.c_str()); status != 0)
+#else
     if(auto status = mkdir(resolved.c_str(), perm); status != 0)
+#endif
         return detail::posix_failure().error();
     return std::nullopt;
 }
@@ -178,12 +193,16 @@ FORCEDINLINE std::optional<posix_error> truncate(posix_fd_t const& file)
 FORCEDINLINE std::optional<posix_error> link(
     Url const& source, Url const& destination, create_params_t const& = {})
 {
+#if defined(COFFEE_MINGW64)
+    return EPERM;
+#else
     auto src_resolved = *source;
     auto dst_resolved = *destination;
     if(auto status = symlink(src_resolved.c_str(), dst_resolved.c_str());
        status != 0)
         return detail::posix_failure().error();
     return std::nullopt;
+#endif
 }
 
 namespace path {
@@ -198,6 +217,14 @@ FORCEDINLINE std::optional<posix_error> change_dir(Url const& path)
 
 FORCEDINLINE result<Url, posix_error> canon(Url const& path)
 {
+#if defined(COFFEE_MINGW64)
+    auto rel = std::filesystem::path(*path);
+    std::error_code ec;
+    auto abs = std::filesystem::absolute(rel, ec);
+    if(ec)
+        return posix::posix_error{ENOENT};
+    return url::constructors::MkUrl(abs.string());
+#else
     if(auto result = realpath(C_OCAST<const char*>(path), nullptr); !result)
         return detail::posix_failure();
     else
@@ -206,6 +233,7 @@ FORCEDINLINE result<Url, posix_error> canon(Url const& path)
         ::free(result);
         return success(url::constructors::MkUrl(output));
     }
+#endif
 }
 FORCEDINLINE result<Url, posix_error> dir(Url const& path)
 {
@@ -225,6 +253,9 @@ FORCEDINLINE result<Url, posix_error> base(Url const& path)
 }
 FORCEDINLINE result<Url, posix_error> dereference(Url const& path)
 {
+#if defined(COFFEE_MINGW64)
+    return path;
+#else
     auto        unresolved = path.internUrl.c_str();
     struct stat link_info  = {};
     if(auto status = lstat(unresolved, &link_info); status == 0)
@@ -234,8 +265,10 @@ FORCEDINLINE result<Url, posix_error> dereference(Url const& path)
         return detail::posix_failure();
     else
         return success(url::constructors::MkUrl(output));
+#endif
 }
 
+#if !defined(COFFEE_MINGW64)
 FORCEDINLINE result<Url, posix_error> executable()
 {
     using namespace url::constructors;
@@ -262,6 +295,7 @@ FORCEDINLINE result<Url, posix_error> app_dir()
     else
         return path::dir(exec.value());
 }
+#endif
 
 FORCEDINLINE result<Url, posix_error> current_dir()
 {

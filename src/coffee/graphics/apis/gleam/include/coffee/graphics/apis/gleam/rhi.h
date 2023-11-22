@@ -289,6 +289,11 @@ struct api
         return m_workarounds;
     }
 
+    inline auto& usage()
+    {
+        return m_usage;
+    }
+
     template<typename... UList>
     optional<tuple<error, std::string_view>> submit(
         draw_command const& command, UList&&... uniforms);
@@ -370,6 +375,7 @@ struct api
     u32                   m_api_version{0};
     rq::runtime_queue*    m_main_queue{nullptr};
     rq::runtime_queue*    m_texture_decode_queue{nullptr};
+    gleam::usage          m_usage{};
 #if GLEAM_MAX_VERSION_ES != 0x200
     std::unique_ptr<circular_buffer_t> m_indirect_buffer;
 #endif

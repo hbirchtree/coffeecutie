@@ -40,7 +40,8 @@ struct map_container
         if(res.has_error())
         {
             decltype(task->output) error;
-            error.set_value(stl_types::failure(map_load_error::failed_async_launch));
+            error.set_value(
+                stl_types::failure(map_load_error::failed_async_launch));
             return error.get_future();
         }
         return fut;
@@ -152,95 +153,6 @@ class tag_index_view
   public:
     using span_type = semantic::Span<const tag_t>;
     using iterator  = span_type::iterator;
-    //    class index_iterator
-    //    {
-    //        using size_type  = i32;
-    //        using value_type = const tag_t*;
-
-    //        friend class tag_index_view;
-
-    //        i32                   i;
-    //        tag_index_view const* idx;
-    //        magic_data_t const*   magic;
-
-    //        auto const* deref()
-    //        {
-    //            return &(idx->tags()->tags(
-    //                C_RCAST<file_header_t const*>(magic->base_ptr))[i]);
-    //        }
-
-    //        auto const* deref() const
-    //        {
-    //            return &(idx->tags()->tags(
-    //                C_RCAST<file_header_t const*>(magic->base_ptr))[i]);
-    //        }
-
-    //        index_iterator(
-    //            tag_index_view const& idx, i32 i, magic_data_t const& magic) :
-    //            i(i),
-    //            idx(&idx), magic(&magic)
-    //        {
-    //        }
-
-    //      public:
-    //        index_iterator& operator=(const index_iterator& other) = default;
-
-    //        bool operator!=(index_iterator const& other) const
-    //        {
-    //            return i != other.i;
-    //        }
-
-    //        bool operator==(index_iterator const& other) const
-    //        {
-    //            return i == other.i;
-    //        }
-
-    //        index_iterator& operator++()
-    //        {
-    //            i++;
-    //            return *this;
-    //        }
-
-    //        index_iterator operator++(int)
-    //        {
-    //            auto cpy = *this;
-    //            i++;
-    //            return cpy;
-    //        }
-
-    //        index_iterator operator+(i32 add)
-    //        {
-    //            auto cpy = *this;
-    //            cpy.i += add;
-    //            return cpy;
-    //        }
-
-    //        index_iterator& operator+=(i32 add)
-    //        {
-    //            i += add;
-    //            return *this;
-    //        }
-
-    //        auto const* operator*()
-    //        {
-    //            return deref();
-    //        }
-
-    //        auto const* operator*() const
-    //        {
-    //            return deref();
-    //        }
-
-    //        operator std::string_view() const
-    //        {
-    //            return idx->tags()
-    //                ->tags(C_RCAST<file_header_t const*>(magic->base_ptr))[i]
-    //                .to_name()
-    //                .to_string(magic);
-    //        }
-    //    };
-
-    //    using iterator = index_iterator;
 
     tag_index_view() : m_idx(nullptr), m_file(nullptr)
     {
@@ -324,6 +236,18 @@ class tag_index_view
         }
 
         return end();
+    }
+
+    template<typename T>
+    std::optional<T const*> data(tagref_t const& tag) const
+    {
+        auto it = find(tag);
+        if(it == end())
+            return std::nullopt;
+        auto out = (*it).template data<T>(m_magic);
+        if(!out.has_value())
+            return std::nullopt;
+        return out.value();
     }
 };
 

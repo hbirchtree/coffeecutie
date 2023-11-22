@@ -178,7 +178,7 @@ static void ImpCreateNewThreadQueue(
     std::shared_ptr<runtime_queue::semaphore_t> sem,
     std::promise<void>                          started)
 {
-#ifndef COFFEE_LOWFAT
+#if !defined(COFFEE_LOWFAT)
     try
     {
 #endif
@@ -211,7 +211,7 @@ static void ImpCreateNewThreadQueue(
                 ThreadQueueSleep(queue, thread_lock, sem.get());
             }
         }
-#ifndef COFFEE_LOWFAT
+#if !defined(COFFEE_LOWFAT)
     } catch(std::exception const& e)
     {
         Coffee::cWarning(RQ_API "Error encountered: {0}", e.what());
@@ -232,6 +232,9 @@ detail::result<runtime_queue*, RuntimeQueueVerboseError> runtime_queue::
     CreateNewThreadQueue(std::string_view name)
 {
     using namespace std::chrono_literals;
+
+    constexpr auto thread_timeout
+        = compile_info::platform::is_emscripten ? 200ms : 10ms;
 
     C_PTR_CHECK(context);
 
@@ -254,8 +257,11 @@ detail::result<runtime_queue*, RuntimeQueueVerboseError> runtime_queue::
 
         /* Wait for the runtime_queue to be created on the thread */
         if(thread_started_signal.wait_for(10ms) != std::future_status::ready)
+        {
+            Coffee::cWarning("Creation of thread {} timed out", name);
             return RuntimeQueueVerboseError{
                 RQE::ThreadSpawn, "thread creation timed out"};
+        }
 
         {
             detail::lock_guard<> _(context->global_lock);
@@ -539,7 +545,7 @@ std::optional<RuntimeQueueError> runtime_queue::AwaitTask(
     if(detail::current_thread_id() == targetThread)
         return RQE::SameThread;
 
-    runtime_queue const* queueRef = nullptr;
+    runtime_queue* queueRef = nullptr;
 
     {
         detail::lock_guard<> _(context->global_lock);
@@ -553,7 +559,7 @@ std::optional<RuntimeQueueError> runtime_queue::AwaitTask(
         queueRef = &queue->second;
     }
 
-    if(auto res = GetTask(queueRef->m_tasks, taskId))
+    if(auto res = GetTask(queueRef->m_tasks, taskId); res.has_error())
         return res.error();
     else
     {
@@ -577,7 +583,22 @@ std::optional<RuntimeQueueError> runtime_queue::AwaitTask(
             DProfContext _(RQ_API "Busy-waiting task");
 
             /* I know this is bad, but we must await the task */
-            while(queueRef->m_tasks[idx].alive)
+            auto taskAlive = [queueRef, taskId] {
+                detail::unique_lock<detail::recursive_mutex> _(
+                    queueRef->m_tasks_lock);
+                auto it = std::find_if(
+                    queueRef->m_tasks.begin(),
+                    queueRef->m_tasks.end(),
+                    [taskId](auto const& task) {
+                        return task.index == taskId;
+                    });
+                if(it == queueRef->m_tasks.end())
+                    return false;
+                return it->alive;
+            };
+            while(taskAlive())
+                /* TODO: Implement waiting on the next time the queue has
+                 * finished a loop */
                 stl_types::CurrentThread::yield();
         }
         return std::nullopt;

@@ -187,13 +187,15 @@ inline bool apply_command_modifier(
     [[maybe_unused]] std::optional<std::pair<u32, u32>> span = {})
 {
 #if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
-    for(auto const& buffer_def : buffer_info)
+    for(auto& buffer_def : buffer_info)
     {
         auto  binding = buffer_def.key.location;
         auto& buffer  = buffer_def.buffer;
 
         if(!buffer.valid())
             continue;
+
+        const bool slow_map_opt = buffer.realize_contents();
 
         if(buffer.m_type == buffers::type::constants)
         {
@@ -214,6 +216,11 @@ inline bool apply_command_modifier(
             offset += buffer_def.stride * span_.first;
             size = buffer_def.stride * span_.second;
         }
+
+        /* In this case, we only put the part we're using in the actual buffer
+         */
+        if(slow_map_opt)
+            offset = 0;
 
         cmd::bind_buffer_range(
             convert::to<group::buffer_target_arb>(buffer.m_type),
@@ -597,6 +604,74 @@ inline void undo_command_modifier(
     blend_state&& /*view_info*/)
 {
     cmd::disable(group::enable_cap::blend);
+}
+
+inline bool apply_command_modifier(
+    program_t const& /*program*/,
+    shader_bookkeeping_t& /*bookkeeping*/,
+    stencil_state& stencil)
+{
+    cmd::enable(group::enable_cap::stencil_test);
+
+    const auto op_to_enum = [](stencil_state::operation_t op) {
+        using op_t = stencil_state::operation_t;
+        switch(op)
+        {
+        case op_t::noop:
+            return group::stencil_op::keep;
+        case op_t::write:
+            return group::stencil_op::replace;
+        case op_t::increment:
+            return group::stencil_op::incr;
+        case op_t::decrement:
+            return group::stencil_op::decr;
+        }
+    };
+    const auto cond_to_enum = [](stencil_state::condition_t cond) {
+        using cond_t = stencil_state::condition_t;
+        switch(cond)
+        {
+        case cond_t::never:
+            return group::stencil_function::never;
+        case cond_t::always:
+            return group::stencil_function::always;
+        case cond_t::less:
+            return group::stencil_function::less;
+        case cond_t::lequal:
+            return group::stencil_function::lequal;
+        case cond_t::equal:
+            return group::stencil_function::equal;
+        case cond_t::gequal:
+            return group::stencil_function::gequal;
+        case cond_t::greater:
+            return group::stencil_function::greater;
+        case cond_t::nequal:
+            return group::stencil_function::notequal;
+        }
+    };
+
+    cmd::stencil_func(
+        cond_to_enum(stencil.condition), stencil.reference, stencil.mask);
+    cmd::stencil_op(
+        op_to_enum(stencil.fail),
+        op_to_enum(stencil.depth_fail),
+        op_to_enum(stencil.depth_pass));
+
+    return true;
+}
+
+inline bool apply_command_modifier_per_call(
+    program_t const&, shader_bookkeeping_t&, stencil_state&, u32, u32)
+{
+    return true;
+}
+
+inline void undo_command_modifier(
+    program_t const& /*program*/,
+    shader_bookkeeping_t& /*bookkeeping*/,
+    stencil_state&& /*view_info*/)
+{
+    cmd::disable(group::enable_cap::stencil_test);
 }
 
 } // namespace gleam::detail

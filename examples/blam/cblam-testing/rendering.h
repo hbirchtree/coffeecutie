@@ -7,20 +7,22 @@
 #include "data.h"
 
 template<typename V>
-using MeshRendererManifest = Components::SubsystemManifest<
+using MeshRendererManifest = compo::SubsystemManifest<
     type_list_t<BspReference, SubModel, Model, MeshTrackingData, DebugDraw>,
     type_list_t<
         BitmapCache<V>,
         ModelCache<V>,
         BSPCache<V>,
         ShaderCache<V>,
-        BlamFiles,
         RenderingParameters>,
     empty_list_t>;
 
 using ScreenClearManifest = compo::SubsystemManifest<
     empty_list_t,
-    type_list_t<gfx::system, BlamResources, PostProcessParameters>,
+    type_list_t<
+        gfx::system,
+        BlamResources,
+        PostProcessParameters>,
     type_list_t<comp_app::GraphicsFramebuffer>>;
 
 struct ScreenClear
@@ -65,7 +67,7 @@ using LoadingScreenManifest = compo::SubsystemManifest<
 struct LoadingScreen
     : compo::RestrictedSubsystem<LoadingScreen, LoadingScreenManifest>
 {
-    using type = LoadingScreen;
+    using type  = LoadingScreen;
     using Proxy = compo::proxy_of<LoadingScreenManifest>;
 
     LoadingScreen()
@@ -78,11 +80,9 @@ struct LoadingScreen
 
     void load_resources(gfx::system& api);
 
-    ktx::texture_t spinner;
-
-    std::shared_ptr<gfx::program_t> loading_program;
+    std::shared_ptr<gfx::program_t>    loading_program;
     std::shared_ptr<gfx::texture_2d_t> loading_tex;
-    std::shared_ptr<gfx::sampler_t> loading_sampler;
+    std::shared_ptr<gfx::sampler_t>    loading_sampler;
 };
 
 void alloc_renderer(compo::EntityContainer& container);

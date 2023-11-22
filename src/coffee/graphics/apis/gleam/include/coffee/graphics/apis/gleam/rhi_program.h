@@ -297,3 +297,5 @@ struct program_t
 };
 
 } // namespace gleam
+
+#define GLSHADER(source) #source

@@ -5,11 +5,11 @@
 
 struct BlamDebugUi;
 
-using BlamDebugUiManifest = Components::
+using BlamDebugUiManifest = compo::
     SubsystemManifest<empty_list_t, type_list_t<LoadingStatus>, empty_list_t>;
 
 struct BlamDebugUi
-    : Components::RestrictedSubsystem<BlamDebugUi, BlamDebugUiManifest>
+    : compo::RestrictedSubsystem<BlamDebugUi, BlamDebugUiManifest>
 {
     using type = BlamDebugUi;
 

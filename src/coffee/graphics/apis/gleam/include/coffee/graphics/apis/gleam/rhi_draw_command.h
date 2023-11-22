@@ -52,6 +52,36 @@ struct blend_state
     bool multiply{false};
 };
 
+struct stencil_state
+{
+    enum class operation_t
+    {
+        noop,
+        write,
+        increment,
+        decrement,
+    };
+    enum class condition_t
+    {
+        never,
+        always,
+        less,
+        lequal,
+        equal,
+        gequal,
+        greater,
+        nequal,
+    };
+
+    operation_t depth_pass{operation_t::noop};
+    operation_t depth_fail{operation_t::noop};
+    operation_t fail{operation_t::noop};
+
+    libc_types::u8 mask{0xFF};
+    libc_types::u8 reference{0x0};
+    condition_t condition{condition_t::always};
+};
+
 template<typename UType>
 struct uniform_pair
 {
