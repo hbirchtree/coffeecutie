@@ -3,7 +3,7 @@
     "license": "MIT",
     "version-string": "4.0",
     "dependencies": [
-        { "name": "appimage-runtime", "platform": "linux & !arm" },
+        { "name": "appimage-runtime", "platform": "linux & (x64)" },
         { "name": "boost-stacktrace", "platform": "!bare" },
         { "name": "boost-outcome", "platform": "android | emscripten | (arm & linux) | windows" },
         { "name": "cppcodec", "platform": "!bare" },

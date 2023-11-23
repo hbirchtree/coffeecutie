@@ -192,6 +192,20 @@
             }
         },
         {
+            "name": "native-linux",
+            "displayName": "Native Linux build",
+            "inherits": ["vcpkg-base"],
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_MAKE_PROGRAM": "$env{NINJA}",
+                "MKSQUASH_PROGRAM": "$env{MKSQUASH_PROGRAM}"
+            },
+            "environment": {
+                "MKSQUASH_PROGRAM": "/usr/bin/mksquash",
+                "NINJA": "$penv{NINJA}"
+            }
+        },
+        {
             "name": "android-arm64-32",
             "displayName": "Android 12 ARM64",
             "inherits": ["vcpkg-base-android"]
@@ -493,6 +507,12 @@
             "name": "host-x64-linux-native-rel",
             "configuration": "Release",
             "configurePreset": "host-x64-linux-native",
+            "inherits": "base-linux"
+        },
+        {
+            "name": "native-linux-dbg",
+            "configuration": "Debug",
+            "configurePreset": "native-linux",
             "inherits": "base-linux"
         },
         {
