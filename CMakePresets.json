@@ -30,6 +30,11 @@
             "inherits": ["vcpkg-base"],
             "hidden": true,
             "generator": "Ninja",
+            "condition": {
+                "lhs": "${hostSystemName}",
+                "type": "equals",
+                "rhs": "Linux"
+            },
             "cacheVariables": {
                 "APPIMAGE_EXTRA_LIBRARIES": "$env{TOOLCHAIN_SYSROOT}/lib/libstdc++.so.6;$env{TOOLCHAIN_SYSROOT}/lib/libssp.so.0;$env{TOOLCHAIN_SYSROOT}/usr/lib/libbacktrace.so.0",
                 "APPIMAGE_RUNTIME_BINARY": "${sourceDir}/multi_build/${presetName}/vcpkg_installed/$env{PLATFORM}-$env{TOOLCHAIN_PREFIX}/bin/runtime",
@@ -53,10 +58,34 @@
             }
         },
         {
+            "name": "vcpkg-base-mac",
+            "inherits": ["vcpkg-base"],
+            "hidden": true,
+            "generator": "Ninja",
+            "condition": {
+                "lhs": "${hostSystemName}",
+                "type": "equals",
+                "rhs": "Darwin"
+            },
+            "cacheVariables": {
+                "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/toolchain/cmake/Toolchains/all-ios.toolchain.cmake",
+                "VCPKG_TARGET_TRIPLET": "$env{ARCHITECTURE}"
+            },
+            "environment": {
+                "HOST_TOOLS_BINARY_DIR": "${sourceDir}/multi_build/host-x64-osx-native/bin",
+                "NINJA": "$penv{NINJA}"
+            }
+        },
+        {
             "name": "vcpkg-base-android",
             "inherits": ["vcpkg-base"],
             "hidden": true,
             "generator": "Ninja",
+            "condition": {
+                "lhs": "${hostSystemName}",
+                "type": "equals",
+                "rhs": "Linux"
+            },
             "cacheVariables": {
                 "ANDROID_NDK": "$env{ANDROID_NDK}",
                 "ANDROID_NDK_HOME": "$env{ANDROID_NDK}",
@@ -96,6 +125,11 @@
             "inherits": ["vcpkg-base"],
             "hidden": true,
             "generator": "Ninja",
+            "condition": {
+                "lhs": "${hostSystemName}",
+                "type": "equals",
+                "rhs": "Linux"
+            },
             "cacheVariables": {
                 "BUILD_ASIO": "OFF",
                 "BUILD_AUDIO": "OFF",
@@ -131,6 +165,11 @@
             "inherits": ["vcpkg-base"],
             "hidden": true,
             "generator": "Ninja",
+            "condition": {
+                "lhs": "${hostSystemName}",
+                "type": "equals",
+                "rhs": "Linux"
+            },
             "cacheVariables": {
                 "BUILD_ASIO": "OFF",
                 "BUILD_EMSCRIPTEN": "ON",
@@ -196,6 +235,11 @@
             "displayName": "Native Linux build",
             "inherits": ["vcpkg-base"],
             "generator": "Ninja",
+            "condition": {
+                "lhs": "${hostSystemName}",
+                "type": "equals",
+                "rhs": "Linux"
+            },
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "gcc",
                 "CMAKE_CXX_COMPILER": "g++",
@@ -326,10 +370,28 @@
             }
         },
         {
+            "name": "desktop-arm-buildroot-linux-gnueabihf-sdl2",
+            "displayName": "Linux ARMv7 OpenGL ES 2.0 (SDL2)",
+            "inherits": ["vcpkg-base-linux-es20"],
+            "cacheVariables": {
+                "BUILD_EGL": "OFF",
+                "VCPKG_DEP_INFO_OVERRIDE_VARS": "arm;arm32;linux;wayland;x11"
+            },
+            "environment": {
+                "ARCHITECTURE": "arm-buildroot-linux-gnueabihf",
+                "PLATFORM": "desktop"
+            }
+        },
+        {
             "name": "desktop-x86_64-windows-gnu-win32",
             "displayName": "Windows x86_64 (SDL2/Win32)",
             "inherits": ["vcpkg-base"],
             "generator": "Ninja",
+            "condition": {
+                "lhs": "${hostSystemName}",
+                "type": "equals",
+                "rhs": "Linux"
+            },
             "cacheVariables": {
                 "CMAKE_BUILD_WITH_INSTALL_RPATH": "ON",
                 "CMAKE_C_COMPILER": "$env{TOOLCHAIN_PREFIX}-gcc-posix",
@@ -350,16 +412,82 @@
             }
         },
         {
-            "name": "desktop-arm-buildroot-linux-gnueabihf-sdl2",
-            "displayName": "Linux ARMv7 OpenGL ES 2.0 (SDL2)",
-            "inherits": ["vcpkg-base-linux-es20"],
+            "name": "desktop-x86_64-darwin-macos",
+            "displayName": "Darwin/macOS x86_64 Core OpenGL (SDL2)",
+            "inherits": ["vcpkg-base-mac"],
             "cacheVariables": {
-                "BUILD_EGL": "OFF",
-                "VCPKG_DEP_INFO_OVERRIDE_VARS": "arm;arm32;linux;wayland;x11"
+                "BUILD_DISCORD_RPC": "ON",
+                "CMAKE_MAKE_PROGRAM": "$env{NINJA}",
+                "PLATFORM": "MAC"
             },
             "environment": {
-                "ARCHITECTURE": "arm-buildroot-linux-gnueabihf",
-                "PLATFORM": "desktop"
+                "ARCHITECTURE": "x64-osx"
+            }
+        },
+        {
+            "name": "desktop-universal-darwin-macos",
+            "displayName": "macOS Universal Core OpenGL (SDL2)",
+            "inherits": ["vcpkg-base-mac"],
+            "generator": "Xcode",
+            "cacheVariables": {
+                "BUILD_DISCORD_RPC": "ON",
+                "PLATFORM": "MAC_CATALYST"
+            },
+            "environment": {
+                "ARCHITECTURE": "x64-osx"
+            }
+        },
+        {
+            "name": "desktop-universal-darwin-catalyst",
+            "displayName": "macOS Catalyst Core OpenGL (SDL2) (Experimental)",
+            "inherits": ["vcpkg-base-mac"],
+            "generator": "Xcode",
+            "cacheVariables": {
+                "BUILD_DISCORD_RPC": "ON",
+                "PLATFORM": "MAC_CATALYST"
+            },
+            "environment": {
+                "ARCHITECTURE": "x64-osx"
+            }
+        },
+        {
+            "name": "ios-arm64-darwin-iphone",
+            "displayName": "iOS ARM64 + UIKit + OpenGL ES",
+            "inherits": ["vcpkg-base-mac"],
+            "generator": "Xcode",
+            "cacheVariables": {
+                "BUILD_DISCORD_RPC": "ON",
+                "CMAKE_MAKE_PROGRAM": "",
+                "PLATFORM": "OS64COMBINED"
+            },
+            "environment": {
+                "ARCHITECTURE": "arm64-ios"
+            }
+        },
+        {
+            "name": "ios-arm64-darwin-tvos",
+            "displayName": "tvOS ARM64 + UIKit + OpenGL ES",
+            "inherits": ["vcpkg-base-mac"],
+            "generator": "Xcode",
+            "cacheVariables": {
+                "BUILD_DISCORD_RPC": "ON",
+                "PLATFORM": "TVOSCOMBINED"
+            },
+            "environment": {
+                "ARCHITECTURE": "arm64-ios"
+            }
+        },
+        {
+            "name": "ios-x86_64-darwin-simulator",
+            "displayName": "iOS Simulator x86_64 + UIKit + OpenGL ES",
+            "inherits": ["vcpkg-base-mac"],
+            "generator": "Xcode",
+            "cacheVariables": {
+                "BUILD_DISCORD_RPC": "ON",
+                "PLATFORM": "SIMULATOR64"
+            },
+            "environment": {
+                "ARCHITECTURE": "x64-osx"
             }
         },
         {
@@ -395,6 +523,29 @@
             "displayName": "Host tools for Linux x86_64",
             "inherits": ["host-tools"],
             "generator": "Ninja",
+            "condition": {
+                "lhs": "${hostSystemName}",
+                "type": "equals",
+                "rhs": "Linux"
+            },
+            "cacheVariables": {
+                "CMAKE_C_FLAGS": "-march=native",
+                "CMAKE_CXX_FLAGS": "-march=native"
+            },
+            "environment": {
+                "NINJA": "$penv{NINJA}"
+            }
+        },
+        {
+            "name": "host-x64-osx-native",
+            "displayName": "Host tools for Darwin/macOS x86_64",
+            "inherits": ["host-tools"],
+            "generator": "Ninja",
+            "condition": {
+                "lhs": "${hostSystemName}",
+                "type": "equals",
+                "rhs": "Darwin"
+            },
             "cacheVariables": {
                 "CMAKE_C_FLAGS": "-march=native",
                 "CMAKE_CXX_FLAGS": "-march=native"
