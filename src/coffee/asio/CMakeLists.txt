@@ -31,4 +31,4 @@ coffee_library(
   HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
 
-target_compile_definitions(ASIO PUBLIC -DASIO_STANDALONE)
+target_compile_definitions(ASIO PUBLIC -DASIO_STANDALONE -DASIO_USE_SSL)

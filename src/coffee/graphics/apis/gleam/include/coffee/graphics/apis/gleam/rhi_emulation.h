@@ -49,6 +49,26 @@ inline auto powervr_sgx530()
             "GL_OES_vertex_array_object",
             "GL_OES_vertex_half_float"
         },
+        .limits = api_limits{
+            .buffers = {},
+            .draws = {
+                .element_count        = 1024 * 64,
+                .element_index        = 1024 * 64,
+                .element_vertex_count = 1024 * 64,
+
+                .instance_count = 1,
+                .instance_offset = 0,
+            },
+            .shaders = {
+                .vertex_uniform_vectors   = 64,
+                .fragment_uniform_vectors = 64,
+            },
+            .textures = {
+                .texture_units = 4,
+                .d2_size       = 2048,
+                .cube_size     = 2048,
+            },
+        },
         // clang-format on
     };
 }

@@ -11,26 +11,17 @@ set(COFFEE_LINK_OPT STATIC)
 if(NOT DEFINED COFFEE_BUILD_STRING)
   # Build time strings, embedded within constexpr strings to keep track of when
   # a build was made. Because file timestamps are unreliable.
-  string(TIMESTAMP BUILDTIME "%y%m%d%H")
+  string(TIMESTAMP BUILDTIME "%y%m%dT%H")
 
-  # git hash is retrieved
+  # summarize git tag, commit and working tree
   execute_process(
-    COMMAND git rev-parse HEAD
-    OUTPUT_VARIABLE GIT_HASH
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-  )
-
-  # git hash to tag mapping
-  execute_process(
-    COMMAND git describe --tags ${GIT_HASH}
+    COMMAND git describe --tags --dirty
     OUTPUT_VARIABLE GIT_TAG
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
   )
 
-  string(SUBSTRING "${GIT_HASH}" "" 10 GIT_HASH)
-
   set(COFFEE_BUILD_STRING
-      "${GIT_TAG}-${GIT_HASH}-${BUILDTIME}"
+      "${GIT_TAG}-${BUILDTIME}"
       CACHE STRING ""
   )
 endif()

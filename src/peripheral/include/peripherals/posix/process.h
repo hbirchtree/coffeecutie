@@ -127,9 +127,9 @@ FORCEDINLINE bool is_exited(pid_t target, int* exitCode)
 FORCEDINLINE void execv(
     std::string const&       program,
     posix_ec&                       ec,
-    std::vector<char*> const& args = {})
+    std::vector<const char*> const& args = {})
 {
-    ::execv(program.c_str(), args.data());
+    ::execv(program.c_str(), const_cast<char* const*>(args.data()));
     collect_error(ec);
 }
 
@@ -138,13 +138,13 @@ FORCEDINLINE void execv(
     posix_ec&                                    ec,
     std::vector<std::string> const& args = {})
 {
-    std::vector<char*> arg_list = {};
+    std::vector<const char*> arg_list = {};
     std::transform(
         args.begin(),
         args.end(),
         std::back_inserter(arg_list),
         [](std::string const& arg) {
-            return C_CCAST<char*>(arg.c_str());
+            return const_cast<char*>(arg.c_str());
         });
     arg_list.push_back(nullptr);
 

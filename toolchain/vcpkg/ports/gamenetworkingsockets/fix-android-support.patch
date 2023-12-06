@@ -1,0 +1,52 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 90899a4..77e4c39 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -157,7 +157,7 @@ function(set_target_common_gns_properties TGT)
+ 		target_compile_options(${TGT} PRIVATE -ffunction-sections -fdata-sections ${TARGET_ARCH_FLAGS})
+ 	endif()
+ 
+-	if(CMAKE_SYSTEM_NAME MATCHES Linux)
++    if(CMAKE_SYSTEM_NAME MATCHES Linux OR CMAKE_SYSTEM_NAME MATCHES Android)
+ 		target_compile_definitions(${TGT} PUBLIC LINUX)
+ 	elseif(CMAKE_SYSTEM_NAME MATCHES Darwin)
+ 		target_compile_definitions(${TGT} PUBLIC OSX)
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+index 393eb7e..855c960 100644
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -280,7 +280,7 @@ macro(set_clientlib_target_properties GNS_TARGET)
+ 		endforeach()
+ 	endif()
+ 
+-	if(CMAKE_SYSTEM_NAME MATCHES Linux)
++    if(CMAKE_SYSTEM_NAME MATCHES Linux OR CMAKE_SYSTEM_NAME MATCHES Android)
+ 		#if(USE_STEAMWEBRTC AND NOT STEAMWEBRTC_USE_STATIC_LIBS)
+ 		#	target_link_libraries(${GNS_TARGET} PRIVATE dl)
+ 		#endif()
+diff --git a/src/tier0/dbg.cpp b/src/tier0/dbg.cpp
+index dd31cc3..1976887 100644
+--- a/src/tier0/dbg.cpp
++++ b/src/tier0/dbg.cpp
+@@ -88,6 +88,8 @@ bool Plat_IsInDebugSession()
+ 	// NDA material
+ #elif IsNintendoSwitch()
+ 	return false;
++#elif IsAndroid()
++    return false;
+ #else
+ 	#error "HALP"
+ #endif
+diff --git a/src/tier1/netadr.cpp b/src/tier1/netadr.cpp
+index e4b64d6..935f02b 100644
+--- a/src/tier1/netadr.cpp
++++ b/src/tier1/netadr.cpp
+@@ -660,7 +660,7 @@ size_t CIPAndPort::ToSockadr(void *addr, size_t addr_size) const
+ 			}
+ 			auto *s = (struct sockaddr_in*)addr;
+ 			s->sin_family = AF_INET;
+-			s->sin_addr.s_addr = BigDWord( INADDR_BROADCAST );
++			s->sin_addr.s_addr = BigDWord( static_cast<uint32_t>(INADDR_BROADCAST) );
+ 			s->sin_port = BigWord( m_usPort );
+ 			struct_size = sizeof(sockaddr_in);
+ 		}

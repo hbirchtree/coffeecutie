@@ -414,7 +414,7 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
 
     using namespace gl;
 
-    api_type    = options.api_type.value_or(compiled_api);
+    api_type    = options.api_type.value_or(query_native_api());
     api_version = options.api_version.value_or(
         version_tuple_to_u32(query_native_version()));
 
@@ -499,6 +499,7 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
         out.program.uniform_location           = api_version >= 0x310;
         out.rendertarget.framebuffer_parameter = api_version >= 0x310;
         out.texture.image_texture              = api_version >= 0x310;
+        out.texture.sampler_binding            = api_version >= 0x310;
         out.vertex.format                      = api_version >= 0x310;
         out.vertex.layout_binding              = api_version >= 0x310;
 
@@ -507,7 +508,6 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
         out.rendertarget.framebuffer_texture = api_version >= 0x320;
         out.texture.cube_array               = api_version >= 0x320;
         out.texture.image_copy               = api_version >= 0x320;
-        out.texture.sampler_binding          = api_version >= 0x320;
         out.texture.tex.gl.astc              = api_version >= 0x320;
 
         out.vertex.vertex_offset = out.draw.vertex_offset;
@@ -815,6 +815,7 @@ void api::collect_info(comp_app::interfaces::AppInfo& appInfo)
     }
     fmts = {};
     appInfo.add("gl:compressedFormats", formats_list);
+    appInfo.add("gl:limits", m_limits.serialize());
 }
 
 optional<error> api::load(load_options_t options)
@@ -875,7 +876,10 @@ optional<error> api::load(load_options_t options)
     else
         m_features = native_features;
 
-    m_limits.set_limits(m_features);
+    if(options.limits)
+        m_limits = options.limits.value();
+    else
+        m_limits.set_limits(m_features);
 
     if(m_features.draw.instancing)
         m_workarounds.draw.emulated_instance_id = false;
@@ -929,7 +933,7 @@ optional<error> api::load(load_options_t options)
         if(m_api_version < 0x330)
             return error::refuse_version_too_low;
     }
-    if(compiled_api == api_type_t::core && m_api_type == api_type_t::es)
+    if(query_native_api() == api_type_t::core && m_api_type == api_type_t::es)
     {
         auto compiled_ver = version_tuple_to_u32(query_compiled_version());
         auto native_ver   = version_tuple_to_u32(query_native_version());

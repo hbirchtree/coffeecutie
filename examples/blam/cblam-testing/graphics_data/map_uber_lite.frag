@@ -3,7 +3,7 @@
 #extension GL_GOOGLE_include_directive : enable
 
 #define USE_MODEL_SHADERS 0
-#define USE_LIGHTMAPS 0
+#define USE_LIGHTMAPS 1
 #define USE_SELF_ILLUMINATION 0
 #define USE_NORMALMAP 1
 #define USE_CHICAGO 1

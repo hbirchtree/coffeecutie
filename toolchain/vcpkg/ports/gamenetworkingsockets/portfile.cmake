@@ -6,6 +6,7 @@ vcpkg_from_github(
     HEAD_REF master
     PATCHES
         fix-depend-protobuf.patch
+        fix-android-support.patch
 )
 
 set(CRYPTO_BACKEND OpenSSL)

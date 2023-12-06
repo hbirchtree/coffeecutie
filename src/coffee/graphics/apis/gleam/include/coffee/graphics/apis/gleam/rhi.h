@@ -306,6 +306,7 @@ struct api
         optional<extensions_set>     api_extensions{};
         optional<features>           api_features{};
         optional<gleam::workarounds> api_workarounds{};
+        optional<api_limits>         limits{};
         optional<size_t>             indirect_buffer_size{};
     };
 

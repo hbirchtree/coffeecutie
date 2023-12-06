@@ -197,6 +197,8 @@
             "inherits": ["vcpkg-base"],
             "generator": "Ninja",
             "cacheVariables": {
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_COMPILER": "g++",
                 "CMAKE_MAKE_PROGRAM": "$env{NINJA}",
                 "MKSQUASH_PROGRAM": "$env{MKSQUASH_PROGRAM}"
             },
@@ -263,6 +265,7 @@
             "displayName": "Beaglebone ARMv7 TI-SGX OpenGL ES 2.0 (NullWS)",
             "inherits": ["vcpkg-base-linux-egl-es20"],
             "cacheVariables": {
+                "APPIMAGE_RUNTIME_BINARY": "${sourceDir}/multi_build/${presetName}/vcpkg_installed/$env{PLATFORM}-$env{TOOLCHAIN_PREFIX}/bin/runtime",
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "beaglebone;sgx;arm;arm32;linux"
             },
             "environment": {
@@ -314,7 +317,6 @@
                 "BUILD_GL_SOFTWARE_BCN": "ON",
                 "BUILD_GLES": "ON",
                 "BUILD_GLES_31": "ON",
-                "BUILD_GLES_32": "ON",
                 "GENERATE_APPIMAGE": "ON",
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "desktop;linux;wayland;x11;arm64;aarch64"
             },

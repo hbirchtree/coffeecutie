@@ -60,9 +60,7 @@ i32 crash_main(i32, cstring_w*)
 
     errno = 0;
 
-    auto args = GetInitArgs().arguments();
-
-    args.push_back(nullptr);
+    auto args = GetInitArgs();
 
     if(args.size() < 2)
     {
@@ -73,6 +71,11 @@ i32 crash_main(i32, cstring_w*)
                      "of child");
         return -1;
     }
+
+    /* Remove the CrashRecovery arg from the list,
+     * everything else is passed to the child */
+    args.erase(args.begin());
+    args.push_back(nullptr);
 
     std::vector<std::string> apitrace_args;
 
@@ -85,7 +88,7 @@ i32 crash_main(i32, cstring_w*)
         apitrace_args.push_back("trace");
 
         for(auto it = apitrace_args.rbegin(); it != apitrace_args.rend(); ++it)
-            args.insert(args.begin(), C_CCAST<cstring_w>(it->c_str()));
+            args.insert(args.begin(), it->c_str());
     }
 
     if(auto working_dir = env::var("CRASH_WORKING_DIR");
@@ -101,7 +104,7 @@ i32 crash_main(i32, cstring_w*)
 #endif
 
     cDebug("Spawning child");
-    auto spawnInfo = proc::spawn<char*>({args.at(0), args, workingDir});
+    auto spawnInfo = proc::spawn<const char*>({args.at(0), args, workingDir});
 
     if(auto e = fd::close(STDIN_FILENO))
         Throw(posix_runtime_error(*e));
@@ -192,7 +195,7 @@ i32 crash_main(i32, cstring_w*)
         }
     }
 
-    if(platform::file::exists(profileLocation))
+    if(profileLocation.valid() && platform::file::exists(profileLocation))
     {
         cDebug("Located profile: {0}", *profileLocation);
         auto profileResource = Resource(profileLocation);
@@ -203,7 +206,8 @@ i32 crash_main(i32, cstring_w*)
             {{"Content-Type", "text/plain"}});
     }
 
-    if(platform::file::exists(machineProfileLocation))
+    if(machineProfileLocation.valid()
+       && platform::file::exists(machineProfileLocation))
     {
         cDebug("Located machine profile: {0}", *machineProfileLocation);
         auto machineProfile = Resource(machineProfileLocation);
@@ -214,7 +218,7 @@ i32 crash_main(i32, cstring_w*)
             {{"Content-Type", "text/plain"}});
     }
 
-    if(platform::file::exists(stacktraceLocation))
+    if(stacktraceLocation.valid() && platform::file::exists(stacktraceLocation))
     {
         cDebug("Located crash stacktrace: {0}", *stacktraceLocation);
         auto stacktrace = Resource(stacktraceLocation);
@@ -266,7 +270,8 @@ i32 crash_main(i32, cstring_w*)
         auto responseData = crashPush.data().value();
         cWarning("Failed to push crash report: {0}", crashPush.responseCode());
         cWarning("{0}", std::string(responseData.begin(), responseData.end()));
-    } else if(auto response = crashPush.response().value(); response.code)
+    } else if(auto response = crashPush.response().value();
+              crashPush.responseCode())
     {
         auto responseData = crashPush.data().value();
         cDebug("{0}", std::string(responseData.begin(), responseData.end()));
@@ -285,4 +290,4 @@ i32 crash_main(i32, cstring_w*)
     return exitCode;
 }
 
-COFFEE_APPLICATION_MAIN_CUSTOM_ARG(crash_main)
+COFFEE_APPLICATION_MAIN_CUSTOM(crash_main, 0x1 | 0x2)

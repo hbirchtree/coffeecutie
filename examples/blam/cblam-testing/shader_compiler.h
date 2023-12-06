@@ -41,6 +41,8 @@ static void create_shaders(
 
     if(variant.empty())
         Throw(std::runtime_error("no shader variant selected, good night"));
+    else
+        Coffee::cDebug("Selected shader variant {}", variant);
 
     for(shader_pair_t& shader : shaders)
     {

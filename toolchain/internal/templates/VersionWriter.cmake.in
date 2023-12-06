@@ -1,25 +1,16 @@
 # Updating MODULE_VERSION
 string(TIMESTAMP BUILDTIME "%y%m%d%H")
 
-# git hash is retrieved
+# git tag + commit + working tree state
 execute_process(
-  COMMAND git rev-parse HEAD
-  OUTPUT_VARIABLE GIT_HASH
-  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-)
-string ( REPLACE "\n" "" GIT_HASH "${GIT_HASH}" )
-
-# git hash to tag mapping
-execute_process(
-  COMMAND git describe --tags ${GIT_HASH}
+  COMMAND git describe --tags --dirty
   OUTPUT_VARIABLE GIT_TAG
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
+
 string ( REPLACE "\n" "" GIT_TAG "${GIT_TAG}" )
 
-string(SUBSTRING "${GIT_HASH}" "" 10 GIT_HASH)
-
-set ( MODULE_VERSION "${GIT_TAG}-${GIT_HASH}_${BUILDTIME}" )
+set ( MODULE_VERSION "${GIT_TAG}_${BUILDTIME}" )
 
 message ( STATUS "Writing version ${MODULE_VERSION}" )
 

@@ -2,6 +2,7 @@
 
 #include <optional>
 #include <string>
+#include <stdint.h>
 
 namespace platform::info::proc::linux_::detail {
 
@@ -61,18 +62,20 @@ inline std::optional<std::string_view> map_cpu_part(
         if(part == "0xc23") return "Cortex-M3";
         if(part == "0xc24") return "Cortex-M4(F)";
 
-        /* ARMv8-A */
+        /* ARMv8.0-A */
         if(part == "0xd02") return "Cortex-A34";
         if(part == "0xd04") return "Cortex-A35";
-
         if(part == "0xd03") return "Cortex-A53";
-        if(part == "0xd05") return "Cortex-A55";
         if(part == "0xd07") return "Cortex-A57";
-
-        if(part == "0xd06") return "Cortex-A65";
-
         if(part == "0xd08") return "Cortex-A72";
         if(part == "0xd09") return "Cortex-A73";
+
+        /* ARMv8.1-A */
+        /* None? */
+
+        /* ARMv8.2-A */
+        if(part == "0xd05") return "Cortex-A55";
+        if(part == "0xd06") return "Cortex-A65";
         if(part == "0xd0a") return "Cortex-A75";
         if(part == "0xd0b") return "Cortex-A76";
         if(part == "0xd0e") return "Cortex-A76AE";
@@ -82,8 +85,11 @@ inline std::optional<std::string_view> map_cpu_part(
         if(part == "0xd44") return "Cortex-X1";
         if(part == "0xd4c") return "Cortex-X1C";
 
-        if(part == "0xd40") return "Neoverse-N1";
+        if(part == "0xd0c") return "Neoverse-N1";
         if(part == "0xd4a") return "Neoverse-E1";
+
+        /* ARMv8.4-A */
+        if(part == "0xd40") return "Neoverse-V1";
 
         /* ARMv8-R */
         if(part == "0xd15") return "Cortex-R82";
@@ -99,35 +105,41 @@ inline std::optional<std::string_view> map_cpu_part(
 
         if(part == "0xd49") return "Neoverse-N2";
         if(part == "0xd4f") return "Neoverse-V2";
+
         /* ARMv9.2-A */
         if(part == "0xd80") return "Cortex-A520";
         if(part == "0xd81") return "Cortex-X4";
         if(part == "0xd81") return "Cortex-A720";
-    } else if(imp == "0x4E")
+    } else if(imp == "0x4E") // NVIDIA
     {
         if(part == "0x000") return "Denver";
         if(part == "0x003") return "Denver2";
         if(part == "0x004") return "Carmel";
-    } else if(imp == "0x51")
+    } else if(imp == "0x51") // QCOM
     {
         /* From pytorch/cpuinfo/src/arm/uarch.c */
-        if(part == "0x00f" || part == "0x02d") return "Scorpion";
-        if(part == "0x04d") return "Krait 200/300/400 (Dual-core)";
+        /* ARMv7-A */
+        if(part == "0x00f") return "Scorpion";
+        if(part == "0x02d") return "Scorpion (Dual-core)";
+        if(part == "0x04d") return "Krait 200/300 (Dual-core)";
         if(part == "0x06f") return "Krait 200/300/400 (Quad-core)";
 
-        if(part == "0x201" || part == "0x211") return "Kryo Silver";
+        /* ARMv8.0-A */
+        if(part == "0x201") return "Kryo Silver";
         if(part == "0x205") return "Kryo Gold";
-
+        if(part == "0x211") return "Kryo Silver (Low-power)";
+        if(part == "0xc00") return "Falkor";
+        if(part == "0xc01") return "Saphira";
         if(part == "0x800") return "Kryo 260/280 Gold";
         if(part == "0x801") return "Kryo 260/280 Silver";
+
+        /* ARMv8.2-A */
         if(part == "0x802") return "Kryo 385 Gold";
         if(part == "0x803") return "Kryo 385 Silver";
         if(part == "0x804") return "Kryo 485 Gold";
         if(part == "0x805") return "Kryo 485 Silver";
 
-        if(part == "0xc00") return "Falkor";
-        if(part == "0xc01") return "Saphira";
-    } else if(imp == "0x53")
+    } else if(imp == "0x53") // Samsung
     {
         if(part == "0x001") return "Exynos-M1";
     }

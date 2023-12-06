@@ -34,6 +34,7 @@ void error_check(std::string_view cmd_name)
                     static_cast<libc_types::u32>(error)));
             if constexpr(compile_info::platform::is_emscripten)
                 return;
+            return;
             Throw(undefined_behavior(out));
         }
     }

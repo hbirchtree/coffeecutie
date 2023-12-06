@@ -47,12 +47,17 @@ function(RWIMAGE_PACKAGE)
 
   set(SPECFILE "${RWIMAGE_DEPLOY}/${RWI_TARGET}.spec")
 
+# cmake-format off
   file(
     WRITE "${SPECFILE}"
-    "/set    type=dir mode=0555 uid=1 gid=1\n" ".       \n" "bin     \n"
-    "lib     \n" "assets  mode=0444\n"
+    "/set    type=dir mode=0555 uid=1 gid=1\n"
+    ".       \n"
+    "bin     \n"
+    "lib     \n"
+    "assets  mode=0444\n"
     "store   type=dir mode=0777 uid=999 gid=999\n"
   )
+# cmake-format on
 
   configure_file(
     "${RWIMAGE_DESKTOP}/launch.sh.in" "${BASE_DIR}/launch.sh" @ONLY

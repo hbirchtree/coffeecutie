@@ -1,11 +1,11 @@
 #pragma once
 
 #include <iterator>
-#include <sstream>
 #include <peripherals/libc/types.h>
 #include <peripherals/semantic/chunk.h>
-#include <peripherals/stl/string_casting.h>
 #include <peripherals/stl/string/trim.h>
+#include <peripherals/stl/string_casting.h>
+#include <sstream>
 
 #if !defined(COFFEE_GEKKO)
 #define COFFEE_HTTP_MULTIPART
@@ -495,8 +495,9 @@ namespace serialize {
 template<typename Traits = header_traits>
 inline string request_line(header_t const& header)
 {
-    return to_string::method(header.method) + string(" ") + header.resource +
-           " " + to_string::version(header.version) + Traits::header_separator;
+    return to_string::method(header.method) + string(" ") + header.resource
+           + " " + to_string::version(header.version)
+           + Traits::header_separator;
 }
 
 /*!
@@ -508,9 +509,9 @@ inline string request_line(header_t const& header)
 template<typename Traits = header_traits>
 inline string response_line(header_t const& header)
 {
-    return to_string::version(header.version) + string(" ") +
-           cast_pod(header.code) + " " + header.message +
-           Traits::header_separator;
+    return to_string::version(header.version) + string(" ")
+           + cast_pod(header.code) + " " + header.message
+           + Traits::header_separator;
 }
 
 template<typename Traits = header_traits>
@@ -579,7 +580,7 @@ template<typename T>
 inline szptr read_value(semantic::Span<T> const& buf, string& target)
 {
     auto start = semantic::mem_chunk<const char>::ofContainer(buf).view;
-    auto end = std::find(start.begin(), start.end(), ' ');
+    auto end   = std::find(start.begin(), start.end(), ' ');
 
     if(end != start.end())
     {
@@ -677,8 +678,8 @@ inline std::pair<string, string> field(string const& line)
     return {key, util::strings::trim(std::move(value))};
 }
 
-using optional_field =
-    std::pair<std::pair<header_field, string>, std::pair<string, string>>;
+using optional_field
+    = std::pair<std::pair<header_field, string>, std::pair<string, string>>;
 
 inline optional_field field_classify(string const& line)
 {
@@ -786,8 +787,8 @@ inline request_t& create_request(request_t& origin)
     auto cont_type = standard_headers.find(header_field::content_type);
     if(cont_type == standard_headers.end() && origin.payload.size())
     {
-        standard_headers[header_field::content_type] =
-            to_string::content_type(content_type::octet_stream);
+        standard_headers[header_field::content_type]
+            = to_string::content_type(content_type::octet_stream);
     }
 
     return origin;
@@ -1042,7 +1043,7 @@ namespace buffer {
 template<typename T>
 inline szptr read_header(header_t& out, semantic::Span<T> const& buf)
 {
-    szptr  offset = 0;
+    szptr offset = 0;
 
     while(offset < buf.size())
     {
@@ -1071,7 +1072,7 @@ inline szptr read_response(header_t& out, semantic::Span<T> const& buf)
 
     offset += header::parse::response_line(out, buf);
     offset += read_header(out, buf.subspan(offset));
-//    offset += 2;
+    //    offset += 2;
 
     return offset;
 }
@@ -1172,8 +1173,8 @@ struct part_iterator
 
         auto first_char = header_strm.peek();
 
-        if(first_char == http::line_separator[0] ||
-           first_char == http::line_separator[1])
+        if(first_char == http::line_separator[0]
+           || first_char == http::line_separator[1])
         {
             string discard;
             std::getline(header_strm, discard);
@@ -1188,8 +1189,8 @@ struct part_iterator
         part_payload.insert(
             part_payload.begin(),
             m_payload.begin() + C_FCAST<off_t>(m_pos + header_len),
-            m_payload.begin() +
-                C_FCAST<off_t>(m_pos + header_len + payload_len));
+            m_payload.begin()
+                + C_FCAST<off_t>(m_pos + header_len + payload_len));
 
         return {header, part_payload};
     }
@@ -1233,16 +1234,23 @@ struct builder
     }
 
     void add(
-        string const&                         name,
-        semantic::BytesConst const&           data,
-        std::map<string, string> const& extra_headers)
+        string const&                   name,
+        semantic::BytesConst const&     data,
+        std::map<string, string> const& extra_headers = {},
+        std::optional<std::string>      filename      = std::nullopt)
     {
+        using namespace std::literals::string_literals;
+
         /* TODO: Avoid copying the content here */
         m_data += "--";
         m_data += m_terminator;
         m_data += line_separator;
+        auto filename_ = filename.has_value()
+                             ? "; filename=\""s + filename.value() + "\""s
+                             : std::string();
         m_data += header::serialize::field(
-            "Content-Disposition", "form-data; name=\"" + (name + "\""));
+            "Content-Disposition",
+            "form-data; name=\""s + name + "\""s + filename_);
         for(auto const& header : extra_headers)
             m_data += header::serialize::field(header.first, header.second);
         m_data += line_separator;
@@ -1266,8 +1274,8 @@ struct builder
     string content_type() const
     {
         return header::to_string::content_type(
-                   http::content_type::multipart_form) +
-               string("; boundary=") + m_terminator;
+                   http::content_type::multipart_form)
+               + string("; boundary=") + m_terminator;
     }
 
     plain_string m_terminator;

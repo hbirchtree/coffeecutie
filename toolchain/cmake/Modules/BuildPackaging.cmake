@@ -1,8 +1,7 @@
 include(AndroidApkBuild)
 include(LinuxAppImageBuild)
-include(LinuxRWImageBuild)
 include(LinuxFlatpakBuild)
-include(LinuxSnappyBuild)
+include(LinuxRWImageBuild)
 include(MacAppBuild)
 include(WindowsImageBuild)
 include(EmscriptenBuild)
@@ -190,22 +189,6 @@ StartupWMClass=${APP_TARGET}
         ""
         "${APP_BUNDLE_LIBRARIES}"
         "${ICON_ASSET}"
-      )
-    endif()
-    if(GENERATE_SNAPPY)
-      snappy_package(
-        ${APP_TARGET}
-        "${APP_TITLE}"
-        "${APP_INFO_STRING}"
-        "${APP_VERSION_CODE}"
-        "${APP_COPYRIGHT}"
-        "${APP_COMPANY}"
-        "${APP_RESOURCES}"
-        ""
-        "${APP_BUNDLE_LIBRARIES}"
-        "${APP_BUNDLE_BINARIES}"
-        "${ICON_ASSET}"
-        "${APP_PERMISSIONS}"
       )
     endif()
     if(GENERATE_RWIMAGE)

@@ -105,8 +105,8 @@ inline void foreach_cpuinfo(stl_types::Function<bool(
        lines.has_value())
     {
         auto             it      = lines.value();
-        std::string_view proc_id = "0"sv;
-        std::string_view phys_id = "0"sv;
+        std::string proc_id = "0";
+        std::string phys_id = "0";
         do
         {
             auto comps = stl_types::str::split::str(*it, ':');
@@ -125,8 +125,8 @@ inline void foreach_cpuinfo(stl_types::Function<bool(
                    physid.has_value() && physid.value().size())
                 {
                     phys_id = physid.value();
-                    if(phys_id == "-1"sv)
-                        phys_id = "0"sv;
+                    if(phys_id == "-1")
+                        phys_id = "0";
                 }
             }
 

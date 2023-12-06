@@ -185,7 +185,7 @@ void ImGuiSystem::submit_draws(Proxy& e)
                 if(ec)
                 {
                     auto [error, message] = ec.value();
-                    Throw(undefined_behavior(message));
+//                    Throw(undefined_behavior(message));
                 }
             }
             data.shell_texture->m_handle.release();
@@ -201,29 +201,31 @@ void ImGuiSystem::setup_graphics_data(Proxy& e)
     using namespace std::string_view_literals;
 
     DProfContext _(IM_API "Creating device data");
+    auto&        api = e.subsystem<gleam::system>();
 
-    constexpr std::string_view vertex_shader =
-#if defined(GLEAM_USE_CORE) && GLEAM_MAX_VERSION >= 0x420
-        "#version 420\n"
-        "#extension GL_ARB_explicit_uniform_location : enable\n"
-        "layout(location=1) uniform mat4 ProjMtx;\n"
-        "layout(location=0) in vec2 Position;\n"
-        "layout(location=1) in vec2 UV;\n"
-        "layout(location=2) in vec4 Color;\n"
-#elif defined(GLEAM_USE_CORE)
-        "#version 330\n"
-        "uniform mat4 ProjMtx;\n"
-        "in vec2 Position;\n"
-        "in vec2 UV;\n"
-        "in vec4 Color;\n"
-#else
-        "#version 300 es\n"
-        "precision mediump float;\n"
-        "uniform mat4 ProjMtx;\n"
-        "in vec2 Position;\n"
-        "in vec2 UV;\n"
-        "in vec4 Color;\n"
-#endif
+    const bool use_420  = api.api_version() >= std::tuple<u32, u32>{0x4u, 0x2u};
+    const bool use_core = api.api_type() == gleam::api_type_t::core;
+
+    const std::string vertex_shader = fmt::format(
+        "{}{}",
+        use_420    ? "#version 420\n"
+                     "#extension GL_ARB_explicit_uniform_location : enable\n"
+                     "layout(location=1) uniform mat4 ProjMtx;\n"
+                     "layout(location=0) in vec2 Position;\n"
+                     "layout(location=1) in vec2 UV;\n"
+                     "layout(location=2) in vec4 Color;\n"
+        : use_core ? "#version 330\n"
+                     "uniform mat4 ProjMtx;\n"
+                     "in vec2 Position;\n"
+                     "in vec2 UV;\n"
+                     "in vec4 Color;\n"
+                   : "#version 300 es\n"
+                     "precision mediump float;\n"
+                     "uniform mat4 ProjMtx;\n"
+                     "in vec2 Position;\n"
+                     "in vec2 UV;\n"
+                     "in vec4 Color;\n",
+        //
         "out vec2 Frag_UV;\n"
         "out vec4 Frag_Color;\n"
         "void main()\n"
@@ -231,9 +233,9 @@ void ImGuiSystem::setup_graphics_data(Proxy& e)
         "	Frag_UV = UV;\n"
         "	Frag_Color = Color;\n"
         "	gl_Position = ProjMtx * vec4(Position.xy,0,1);\n"
-        "}\n";
+        "}\n");
 
-    constexpr std::string_view vertex_shader_100
+    const std::string vertex_shader_100
         = "#version 100\n"
           "precision mediump float;\n"
           "uniform mat4 ProjMtx;\n"
@@ -249,29 +251,27 @@ void ImGuiSystem::setup_graphics_data(Proxy& e)
           "	gl_Position = ProjMtx * vec4(Position.xy,0,1);\n"
           "}\n";
 
-    constexpr std::string_view fragment_shader =
-#if defined(GLEAM_USE_CORE) && GLEAM_MAX_VERSION >= 0x420
-        "#version 420\n"
-        "#extension GL_ARB_explicit_uniform_location : enable\n"
-        "layout(location=0) uniform sampler2D Texture;\n"
-#elif defined(GLEAM_USE_CORE)
-        "#version 330\n"
-        "uniform sampler2D Texture;\n"
-#else
-        "#version 300 es\n"
-        "precision mediump float;\n"
-        "precision mediump sampler2D;\n"
-        "uniform sampler2D Texture;\n"
-#endif
+    const std::string fragment_shader = fmt::format(
+        "{}{}",
+        use_420    ? "#version 420\n"
+                     "#extension GL_ARB_explicit_uniform_location : enable\n"
+                     "layout(location=0) uniform sampler2D Texture;\n"
+        : use_core ? "#version 330\n"
+                     "uniform sampler2D Texture;\n"
+                   : "#version 300 es\n"
+                     "precision mediump float;\n"
+                     "precision mediump sampler2D;\n"
+                     "uniform sampler2D Texture;\n",
+        //
         "in vec2 Frag_UV;\n"
         "in vec4 Frag_Color;\n"
         "out vec4 OutColor;\n"
         "void main()\n"
         "{\n"
         "	OutColor = Frag_Color * texture( Texture, Frag_UV.st);\n"
-        "}\n";
+        "}\n");
 
-    constexpr std::string_view fragment_shader_100
+    const std::string fragment_shader_100
         = "#version 100\n"
           "precision mediump float;\n"
           "precision mediump sampler2D;\n"
@@ -286,7 +286,6 @@ void ImGuiSystem::setup_graphics_data(Proxy& e)
     m_gfx_data = std::unique_ptr<ImGuiGraphicsData, ImGuiGraphicsDataDeleter>(
         new ImGuiGraphicsData);
 
-    auto& api  = e.subsystem<gleam::system>();
     auto& data = *m_gfx_data;
 
     [[maybe_unused]] auto a = api.debug().scope(IM_API "Creating device data");

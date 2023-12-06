@@ -62,7 +62,11 @@ i32 blam_main()
     glConfig.swapInterval = 1;
     if constexpr(
         compile_info::debug_mode && !compile_info::platform::is_emscripten)
+    {
         glConfig.profile |= comp_app::GLConfig::Debug;
+//        glConfig.version.major = 3;
+//        glConfig.version.minor = 2;
+    }
 #endif
 
     cDebug(
@@ -80,7 +84,10 @@ i32 blam_main()
             ProfContext _(__FUNCTION__);
 
             auto& gfx        = e.register_subsystem_inplace<gfx::system>();
-            auto  load_error = gfx.load(
+            auto  load_error = gfx.load(/*{
+                .api_version = 0x300,
+                .api_type = gfx::api_type_t::es,
+            }*/
                 // gfx::emulation::webgl::desktop()
                 // gfx::emulation::qcom::adreno_320()
                 // gfx::emulation::arm::mali_g710()
