@@ -41,7 +41,11 @@ beaglebone-build|desktop-build|generic-build|raspberry-build)
     if [ -z "$2" ] || [ "$2" = "list" ] || [ "$2" = "help" ]; then
         echo "No target specified"
     fi
-    native_build ${@:2}
+    if [ $1 = "desktop-build" ] && [ "$(uname)" = "Darwin" ]; then
+        xcode_build ${@:2}
+    else
+        native_build ${@:2}
+    fi
 ;;
 "web-build")
     if [ -z "$2" ] || [ "$2" = "list" ] || [ "$2" = "help" ]; then
@@ -49,7 +53,7 @@ beaglebone-build|desktop-build|generic-build|raspberry-build)
     fi
     emscripten_build ${@:2}
 ;;
-"xcode-build")
+ios-build|xcode-build)
     xcode_build ${@:2}
 ;;
 "android-build")

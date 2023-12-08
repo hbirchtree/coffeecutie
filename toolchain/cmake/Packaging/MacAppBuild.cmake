@@ -139,7 +139,6 @@ macro(
       ${SOURCES}
       ${IMAGES}
       ${IOS_DEFAULT_STORYBOARD}
-      ${IOS_LOADING_ICON}
       ${IOS_ICON_ASSETS}
     )
   endif()

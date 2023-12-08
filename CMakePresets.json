@@ -72,7 +72,7 @@
                 "VCPKG_TARGET_TRIPLET": "$env{ARCHITECTURE}"
             },
             "environment": {
-                "HOST_TOOLS_BINARY_DIR": "${sourceDir}/multi_build/host-x64-osx-native/bin",
+                "HOST_TOOLS_BINARY_DIR": "${sourceDir}/multi_build/host-x64-osx/bin",
                 "NINJA": "$penv{NINJA}"
             }
         },
@@ -215,7 +215,7 @@
             "hidden": true,
             "binaryDir": "${sourceDir}/multi_build/${presetName}",
             "cacheVariables": {
-                "BUILD_ASIO": "OFF",
+                "BUILD_ASIO": "ON",
                 "BUILD_ASSET_TOOLS": "ON",
                 "BUILD_BLAM": "OFF",
                 "BUILD_COMPONENT_APP": "OFF",
@@ -418,6 +418,7 @@
             "cacheVariables": {
                 "BUILD_DISCORD_RPC": "ON",
                 "CMAKE_MAKE_PROGRAM": "$env{NINJA}",
+                "DEPLOYMENT_TARGET": "10.15",
                 "PLATFORM": "MAC"
             },
             "environment": {
@@ -431,6 +432,7 @@
             "generator": "Xcode",
             "cacheVariables": {
                 "BUILD_DISCORD_RPC": "ON",
+                "DEPLOYMENT_TARGET": "10.15",
                 "PLATFORM": "MAC_CATALYST"
             },
             "environment": {
@@ -537,7 +539,7 @@
             }
         },
         {
-            "name": "host-x64-osx-native",
+            "name": "host-x64-osx",
             "displayName": "Host tools for Darwin/macOS x86_64",
             "inherits": ["host-tools"],
             "generator": "Ninja",
@@ -564,6 +566,16 @@
                 "type": "equals",
                 "lhs": "${hostSystemName}",
                 "rhs": "Linux"
+            }
+        },
+        {
+            "name": "base-mac",
+            "hidden": true,
+            "inheritConfigureEnvironment": true,
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Darwin"
             }
         },
         {
@@ -657,10 +669,28 @@
             "inherits": "base-linux"
         },
         {
+            "name": "desktop-x86_64-darwin-macos-rel",
+            "configuration": "Release",
+            "configurePreset": "desktop-x86_64-darwin-macos",
+            "inherits": "base-mac"
+        },
+        {
+            "name": "desktop-x86_64-darwin-macos-dbg",
+            "configuration": "Debug",
+            "configurePreset": "desktop-x86_64-darwin-macos",
+            "inherits": "base-mac"
+        },
+        {
             "name": "host-x64-linux-native-rel",
             "configuration": "Release",
             "configurePreset": "host-x64-linux-native",
             "inherits": "base-linux"
+        },
+        {
+            "name": "host-x64-osx-rel",
+            "configuration": "Release",
+            "configurePreset": "host-x64-osx",
+            "inherits": "base-mac"
         },
         {
             "name": "native-linux-dbg",

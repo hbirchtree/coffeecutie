@@ -12,7 +12,11 @@ namespace platform::info {
 
 libc_types::u32 proc::apple::core_count(libc_types::u32, libc_types::u32)
 {
+#if defined(COFFEE_IOS)
     return [NSProcessInfo processInfo].activeProcessorCount;
+#else
+    return info::apple::sysctl_by_name<u64>("machdep.cpu.core_count");
+#endif
 }
 
 DeviceType device::apple::variant()
