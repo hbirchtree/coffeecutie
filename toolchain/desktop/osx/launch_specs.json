@@ -52,6 +52,12 @@
         "scale": "1x"
     },
     {
+        "width": 128,
+        "height": 720,
+        "variant": "tv",
+        "scale": "1x"
+    },
+    {
         "width": 2048,
         "height": 1536,
         "variant": "ipad",
