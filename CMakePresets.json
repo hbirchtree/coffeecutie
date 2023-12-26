@@ -40,6 +40,7 @@
                 "APPIMAGE_RUNTIME_BINARY": "${sourceDir}/multi_build/${presetName}/vcpkg_installed/$env{PLATFORM}-$env{TOOLCHAIN_PREFIX}/bin/runtime",
                 "CMAKE_C_COMPILER": "$env{TOOLCHAIN_ROOT}/bin/$env{ARCHITECTURE}-gcc",
                 "CMAKE_CXX_COMPILER": "$env{TOOLCHAIN_ROOT}/bin/$env{ARCHITECTURE}-g++",
+                "FLATPAK_EXTRA_LIBRARIES": "$env{TOOLCHAIN_SYSROOT}/lib/libstdc++.so.6;$env{TOOLCHAIN_SYSROOT}/lib/libssp.so.0;$env{TOOLCHAIN_SYSROOT}/usr/lib/libbacktrace.so.0",
                 "CMAKE_MAKE_PROGRAM": "$env{NINJA}",
                 "MKSQUASH_PROGRAM": "$env{MKSQUASH_PROGRAM}",
                 "TOOLCHAIN_PREFIX": "$env{TOOLCHAIN_PREFIX}",
@@ -48,7 +49,7 @@
                 "VCPKG_TARGET_TRIPLET": "$env{PLATFORM}-$env{TOOLCHAIN_PREFIX}"
             },
             "environment": {
-                "MKSQUASH_PROGRAM": "/usr/bin/mksquash",
+                "MKSQUASH_PROGRAM": "/usr/bin/mksquashfs",
                 "NINJA": "$penv{NINJA}",
                 "TOOLCHAIN_PREFIX": "$env{ARCHITECTURE}",
                 "TOOLCHAIN_VERSION": "v2.1.0",
@@ -310,6 +311,7 @@
             "inherits": ["vcpkg-base-linux-egl-es20"],
             "cacheVariables": {
                 "APPIMAGE_RUNTIME_BINARY": "${sourceDir}/multi_build/${presetName}/vcpkg_installed/$env{PLATFORM}-$env{TOOLCHAIN_PREFIX}/bin/runtime",
+                "GENERATE_FLATPAK": "ON",
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "beaglebone;sgx;arm;arm32;linux"
             },
             "environment": {
@@ -346,6 +348,7 @@
                 "BUILD_DISCORD_RPC": "ON",
                 "BUILD_GL_SOFTWARE_BCN": "ON",
                 "GENERATE_APPIMAGE": "ON",
+                "GENERATE_FLATPAK": "ON",
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "desktop;linux;wayland;x11;x64;x86_64"
             },
             "environment": {
@@ -362,6 +365,7 @@
                 "BUILD_GLES": "ON",
                 "BUILD_GLES_31": "ON",
                 "GENERATE_APPIMAGE": "ON",
+                "GENERATE_FLATPAK": "ON",
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "desktop;linux;wayland;x11;arm64;aarch64"
             },
             "environment": {

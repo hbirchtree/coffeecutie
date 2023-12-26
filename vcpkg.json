@@ -5,7 +5,7 @@
     "dependencies": [
         { "name": "appimage-runtime", "platform": "linux & (x64)" },
         { "name": "boost-stacktrace", "platform": "!bare" },
-        { "name": "boost-outcome", "platform": "android | emscripten | (arm & linux) | windows" },
+        { "name": "boost-outcome", "platform": "android | emscripten | (arm & linux) | (x64 & linux) | windows" },
         { "name": "cppcodec", "platform": "!bare" },
         "cxxopts",
         { "name": "fmt" },
@@ -13,7 +13,7 @@
         { "name": "ktx", "features": ["vulkan"], "platform": "!bare" },
         "magic-enum",
         "ms-gsl",
-        { "name": "outcome", "platform": "!android & !bare & !emscripten & !(arm & linux) & !windows" },
+        { "name": "outcome", "platform": "!android & !bare & !emscripten & !(arm & linux) & !(x64 & linux) & !windows" },
         { "name": "pvrtcdec", "platform": "android | emscripten" },
         "rapidjson",
         { "name": "sqlite3", "platform": "!bare" },
@@ -78,6 +78,8 @@
             "description": "Networking support",
             "dependencies": [
                 "asio",
+                "flatbuffers",
+                { "name": "flatbuffers", "host": true },
                 "gamenetworkingsockets"
             ]
         },

@@ -1,7 +1,7 @@
 [Application]
 name=@FLATPAK_PKG_NAME@
-runtime=org.freedesktop.Platform/@FLATPAK_ARCH@/1.4
-sdk=org.freedesktop.Sdk/@FLATPAK_ARCH@/1.4
+runtime=org.freedesktop.Platform/@FLATPAK_ARCH@/23.08
+sdk=org.freedesktop.Sdk/@FLATPAK_ARCH@/23.08
 command=@FLATPAK_EXEC@
 
 [Environment]
@@ -11,12 +11,12 @@ LD_LIBRARY_PATH=/app/lib
 
 [Context]
 shared=network;ipc;
-sockets=x11;wayland;pulseaudio;
-devices=dri;
-filesystems=~/.local/share/@FLATPAK_CONFIG@;~/.cache/@FLATPAK_CONFIG@;
+sockets=wayland;fallback-x11;pulseaudio;
+devices=dri;input;
+filesystems=~/.local/share/@FLATPAK_CONFIG@:create;~/.cache/@FLATPAK_CONFIG@:create;host-etc:ro
 
 [Extension org.freedesktop.Platform.GL]
-version=1.4
+version=23.08
 directory=lib/GL
 
 [Extension org.freedesktop.Platform.Timezones]

@@ -1,5 +1,6 @@
 #include "data.h"
 #include "map_loading.h"
+#include "networking.h"
 #include "occluder.h"
 #include "rendering.h"
 #include "resource_creation.h"
@@ -38,6 +39,9 @@ i32 blam_main()
         if(BaseArgParser::PerformDefaults(options, args) >= 0)
             return 0;
     }
+    cDebug("Unmatched args:");
+    for(auto const& arg : arguments.unmatched())
+        cDebug(" - {}", arg);
 
     rq::runtime_queue::CreateNewQueue("Blam Graphics!").assume_value();
 #if defined(FEATURE_ENABLE_ASIO)
@@ -63,9 +67,9 @@ i32 blam_main()
     if constexpr(
         compile_info::debug_mode && !compile_info::platform::is_emscripten)
     {
-        glConfig.profile |= comp_app::GLConfig::Debug;
-//        glConfig.version.major = 3;
-//        glConfig.version.minor = 2;
+        // glConfig.profile |= comp_app::GLConfig::Debug;
+        //        glConfig.version.major = 3;
+        //        glConfig.version.minor = 2;
     }
 #endif
 
@@ -85,13 +89,13 @@ i32 blam_main()
 
             auto& gfx        = e.register_subsystem_inplace<gfx::system>();
             auto  load_error = gfx.load(/*{
-                .api_version = 0x300,
-                .api_type = gfx::api_type_t::es,
-            }*/
-                // gfx::emulation::webgl::desktop()
-                // gfx::emulation::qcom::adreno_320()
-                // gfx::emulation::arm::mali_g710()
-                // gfx::emulation::amd::rx560_pro()
+               .api_version = 0x300,
+               .api_type = gfx::api_type_t::es,
+           }*/
+                                       // gfx::emulation::webgl::desktop()
+                                       // gfx::emulation::qcom::adreno_320()
+                                       // gfx::emulation::arm::mali_g710()
+                                       // gfx::emulation::amd::rx560_pro()
             );
 
             if(load_error)
@@ -133,12 +137,7 @@ i32 blam_main()
             e.register_subsystem_inplace<GameEventBus>();
             e.register_subsystem_inplace<BlamFiles<halo_version>>();
 
-            install_imgui_widgets(e, [&e](Url const& map) {
-                auto&        gbus = e.subsystem_cast<GameEventBus>();
-                GameEvent    ev{GameEvent::MapLoadStart};
-                MapLoadEvent load{.file = map};
-                gbus.inject(ev, &load);
-            });
+            install_imgui_widgets(e, [&e](Url const& map) {});
             auto& params = e.register_subsystem_inplace<RenderingParameters>();
             params.mipmap_bias = 0;
             e.register_subsystem_inplace<LoadingStatus>();
@@ -184,6 +183,7 @@ i32 blam_main()
             alloc_occluder(e);
             alloc_ui_system(e);
             alloc_scripting(e);
+            alloc_networking(e);
             setup_load_eventhandlers(e);
 
             using namespace ::platform::url::constructors;
@@ -204,9 +204,10 @@ i32 blam_main()
                 map_filename             = "b30.map"_asset;
                 map_dir                  = "."_asset;
 #endif
-            } else if(arguments.unmatched().size() == 2)
+            } else if(arguments.unmatched().size() >= 2)
             {
-                auto url = MkUrl(arguments.unmatched().at(1), RSCA::SystemFile);
+                auto url
+                    = MkUrl(arguments.unmatched().back(), RSCA::SystemFile);
                 if(auto info = platform::file::file_info(url);
                    info.has_value()
                    && info.value().mode == platform::file::mode_t::file)
@@ -254,7 +255,7 @@ i32 blam_main()
             camera.camera_matrix[2][3] = -1.f;
             camera.camera_matrix[3][2] = 0.001f;
             camera.camera_matrix       = camera.camera_matrix * view_matrix;
-            camera.rotation_matrix = glm::mat3_cast(camera.camera.rotation);
+            camera.rotation_matrix     = glm::mat3_cast(camera.camera.rotation);
         },
         [](EntityContainer&, BlamData<halo_version>&, time_point const&) {
 

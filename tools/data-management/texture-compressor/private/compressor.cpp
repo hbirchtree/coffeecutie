@@ -3,6 +3,7 @@
 #include <peripherals/stl/string_ops.h>
 
 #include <cxxopts.hpp>
+#include <glad/gl.h>
 #include <ktx.h>
 #include <magic_enum.hpp>
 
@@ -15,11 +16,11 @@ using namespace Coffee::Logging;
 using libc_types::i32;
 using libc_types::u32;
 using libc_types::u8;
+using platform::url::constructors::MkSysUrl;
 
 namespace {
 
-const fmt::format_string<std::string, u32, std::string> out_format
-    = "{}.{}.{}";
+const fmt::format_string<std::string, u32, std::string> out_format = "{}.{}.{}";
 
 inline std::string create_output_name(
     platform::url::Path const& base_dir,
@@ -55,7 +56,7 @@ bool etc2_compress(
         Coffee::stb::stb_error img_err;
         if(!compressor::LoadData(
                &imagef,
-               Coffee::Resource(platform::url::constructors::MkSysUrl(file)),
+               Coffee::Resource(MkSysUrl(file)),
                img_err,
                typing::PixCmp::RGBA))
         {
@@ -132,10 +133,10 @@ bool png_compress(
     {
         Coffee::stb::stb_error img_ec;
         if(!compressor::LoadData(
-            &image,
-            Coffee::Resource(platform::url::constructors::MkSysUrl(file)),
-            img_ec,
-            typing::PixCmp::RGBA))
+               &image,
+               Coffee::Resource(platform::url::constructors::MkSysUrl(file)),
+               img_ec,
+               typing::PixCmp::RGBA))
         {
             cBasicPrint("Failed to decode image to rgba32");
             return false;
@@ -150,15 +151,115 @@ bool png_compress(
         image = std::move(remapped.value());
     }
 
-    Coffee::Resource out(platform::url::constructors::MkSysUrl(create_output_name(base_dir, file, 0, "png")));
+    Coffee::Resource       out(platform::url::constructors::MkSysUrl(
+        create_output_name(base_dir, file, 0, "png")));
     Coffee::stb::stb_error img_ec;
-    auto png = Coffee::PNG::Save(image, img_ec);
-    out = png;
+    auto                   png = Coffee::PNG::Save(image, img_ec);
+    out                        = png;
     if(img_ec)
         cBasicPrint("Failed to encode PNG");
-    if(!Coffee::FileCommit(out, semantic::RSCA::NewFile | semantic::RSCA::WriteOnly | semantic::RSCA::Discard))
-        cBasicPrint("Failed to save PNG file, {} bytes, {}x{} {} channels", png.size, image.size.w, image.size.h, image.bpp);
+    if(!Coffee::FileCommit(
+           out,
+           semantic::RSCA::NewFile | semantic::RSCA::WriteOnly
+               | semantic::RSCA::Discard))
+        cBasicPrint(
+            "Failed to save PNG file, {} bytes, {}x{} {} channels",
+            png.size,
+            image.size.w,
+            image.size.h,
+            image.bpp);
 
+    return true;
+}
+
+bool raw_include(
+    platform::url::Path const& base_dir,
+    std::string const&         file,
+    std::vector<u32> const&    resolutions,
+    typing::PixCmp             format,
+    std::string const&         channels)
+{
+    compressor::rgba_image_t image;
+    {
+        Coffee::stb::stb_error ec;
+        if(!compressor::LoadData(
+               &image, Coffee::Resource(MkSysUrl(file)), ec, format))
+        {
+            cBasicPrint("Failed to decode image for raw");
+            return false;
+        }
+    }
+
+    if(format != typing::PixCmp::RGBA)
+    {
+        auto remapped = compressor::map_channels(image, channels);
+        if(!remapped.has_value())
+            return false;
+        image = std::move(remapped.value());
+    }
+
+    ktx_uint32_t ktx_format = GL_RGBA8;
+    switch(format)
+    {
+    case typing::PixCmp::R:
+        ktx_format = GL_R8;
+        break;
+    case typing::PixCmp::RG:
+        ktx_format = GL_RG8;
+        break;
+    case typing::PixCmp::RGB:
+        ktx_format = GL_RGB8;
+        break;
+    default:
+        break;
+    }
+
+    ktxTextureCreateInfo info = {
+        .glInternalformat = ktx_format,
+        .vkFormat         = 0,
+        .pDfd             = nullptr,
+        .baseWidth        = image.size.w,
+        .baseHeight       = image.size.h,
+        .baseDepth        = 1,
+        .numDimensions    = 2,
+        .numLevels        = 1,
+        .numLayers        = 1,
+        .numFaces         = 1,
+        .isArray          = KTX_FALSE,
+        .generateMipmaps  = resolutions.size() > 1 ? KTX_TRUE : KTX_FALSE,
+    };
+
+    ktxTexture1* texture{};
+    auto         error
+        = ktxTexture1_Create(&info, KTX_TEXTURE_CREATE_ALLOC_STORAGE, &texture);
+
+    if(error != ktx_error_code_e::KTX_SUCCESS)
+    {
+        cBasicPrint("Failed to create KTX: {}", magic_enum::enum_name(error));
+        return false;
+    }
+
+    error = ktxTexture_SetImageFromMemory(
+        ktxTexture(texture),
+        0,
+        0,
+        0,
+        image.data,
+        image.size.area() * image.bpp);
+    if(error != ktx_error_code_e::KTX_SUCCESS)
+    {
+        cBasicPrint("Failed to create KTX: {}", magic_enum::enum_name(error));
+        return false;
+    }
+
+    auto out_name = create_output_name(base_dir, file, 0, "raw");
+    error = ktxTexture_WriteToNamedFile(ktxTexture(texture), out_name.c_str());
+    if(error != ktx_error_code_e::KTX_SUCCESS)
+    {
+        cBasicPrint(
+            "Failed to write KTX to file: {}", magic_enum::enum_name(error));
+        return false;
+    }
     return true;
 }
 
@@ -273,6 +374,8 @@ i32 cooker_main(i32 argc, char** argv)
                     pixcmp,
                     format,
                     release_quality);
+            else if(codec == "raw")
+                raw_include(base_dir, file, resolutions, pixcmp, format);
         }
     }
 

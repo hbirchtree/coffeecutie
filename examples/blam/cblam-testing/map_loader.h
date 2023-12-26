@@ -18,7 +18,7 @@ using type_safety::type_list_t;
 using Coffee::cDebug;
 
 using BlamMapBrowserManifest = compo::
-    SubsystemManifest<empty_list_t, empty_list_t, empty_list_t>;
+    SubsystemManifest<empty_list_t, type_list_t<GameEventBus>, empty_list_t>;
 
 struct BlamMapBrowser
     : compo::RestrictedSubsystem<BlamMapBrowser, BlamMapBrowserManifest>
@@ -30,12 +30,29 @@ struct BlamMapBrowser
         m_map_selected(std::move(map_selected))
     {
         priority = 2048;
+        remote_address = "::1:16420";
+        remote_address.resize(64);
     }
 
     void start_restricted(Proxy& e, time_point const&)
     {
-        if(ImGui::Begin("Maps"))
+        if(ImGui::Begin("Game"))
         {
+            ImGui::Columns(2);
+            ImGui::InputText(
+                "Server", remote_address.data(), remote_address.size());
+            ImGui::NextColumn();
+            if(ImGui::Button("Connect"))
+            {
+                auto&              gbus = e.subsystem<GameEventBus>();
+                GameEvent          ev{GameEvent::ServerConnect};
+                ServerConnectEvent connect{
+                    .remote = std::string(remote_address.c_str()),
+                };
+                cDebug("Initiating connection to: {}", connect.remote);
+                gbus.inject(ev, &connect);
+            }
+            ImGui::Columns();
             if(ImGui::BeginListBox("Maps"))
             {
                 for(auto const& map : m_maps)
@@ -71,7 +88,10 @@ struct BlamMapBrowser
 
                 if(ImGui::Button("Load map"))
                 {
-                    m_map_selected(m_file);
+                    auto&        gbus = e.subsystem<GameEventBus>();
+                    GameEvent    ev{GameEvent::MapLoadStart};
+                    MapLoadEvent load{.file = m_file};
+                    gbus.inject(ev, &load);
                 }
             }
             if(m_error)
@@ -125,4 +145,5 @@ struct BlamMapBrowser
     blam::file_header_t const*                     m_info{nullptr};
     std::optional<blam::map_load_error>            m_error;
     std::vector<Url>                               m_maps;
+    std::string                                    remote_address;
 };

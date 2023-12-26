@@ -378,18 +378,15 @@ void ImGuiSystem::end_restricted(Proxy& e, time_point const&)
 
 void ImGuiSystem::save_imgui_ini()
 {
-    if constexpr(compile_info::platform::is_emscripten)
-    {
-        using namespace platform::url::constructors;
-        using Coffee::FileCommit;
-        using Coffee::Resource;
+    using namespace platform::url::constructors;
+    using Coffee::FileCommit;
+    using Coffee::Resource;
 
-        size_t ini_size{0};
-        auto   ini_settings = ImGui::SaveIniSettingsToMemory(&ini_size);
-        auto   ini_file     = Resource("imgui.ini"_config);
-        ini_file            = semantic::BytesConst::ofString(ini_settings);
-        FileCommit(ini_file, RSCA::NewFile | RSCA::Discard | RSCA::WriteOnly);
-    }
+    size_t ini_size{0};
+    auto   ini_settings = ImGui::SaveIniSettingsToMemory(&ini_size);
+    auto   ini_file     = Resource("imgui.ini"_config);
+    ini_file            = semantic::BytesConst::ofString(ini_settings);
+    FileCommit(ini_file, RSCA::NewFile | RSCA::Discard | RSCA::WriteOnly);
 }
 
 } // namespace imgui::detail

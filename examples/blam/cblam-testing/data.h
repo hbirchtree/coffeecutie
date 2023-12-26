@@ -130,6 +130,9 @@ struct GameEvent
         MapDataLoad,
         MapLoadFinished,
         MapChanged,
+
+        ServerConnect,
+        ServerDisconnect,
     };
     EventType type{None};
 };
@@ -176,6 +179,24 @@ struct MapChangedEvent
     blam::map_container<V>&       container;
     blam::magic_data_t            bitmap_magic;
     blam::scn::scenario<V> const* scenario{nullptr};
+};
+
+struct ServerConnectEvent
+{
+    static constexpr auto event_type = GameEvent::ServerConnect;
+
+    enum ConnectType
+    {
+        Peer,
+        Server,
+    };
+    ConnectType type{Server};
+    std::string remote;
+};
+
+struct ServerDisconnectEvent
+{
+    static constexpr auto event_type = GameEvent::ServerDisconnect;
 };
 
 using GameEventBus = comp_app::BasicEventBus<GameEvent>;

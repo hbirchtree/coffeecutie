@@ -92,8 +92,8 @@ static void NearestNeighborResize(
             auto src_y = y * pixel_ratio_h;
 
             auto&       outPix = out[(y * outSize.w + x) * sizeof(PixType)];
-            auto const& srcPix =
-                src[(src_y * srcSize.w + src_x) * sizeof(PixType)];
+            auto const& srcPix
+                = src[(src_y * srcSize.w + src_x) * sizeof(PixType)];
 
             outPix = srcPix;
         }
@@ -109,10 +109,10 @@ bool ResizeImage(
 template<>
 bool ResizeImage(
     image<f32> const& img,
-    Size const&          target,
+    Size const&       target,
     image<f32>&       data,
-    int                  req_comp,
-    stb_error&           ec)
+    int               req_comp,
+    stb_error&        ec)
 {
     auto res = stbir_resize_float(
         img.data,
@@ -204,10 +204,19 @@ bool LoadData(
     {
         ec = STBError::DecodingError;
         ec = stbi_failure_reason();
+        return false;
     } else
+    {
+        auto src           = target->data_owner.view;
+        target->data_owner = semantic::mem_chunk<libc_types::u8>::withSize(
+            target->size.area() * target->bpp * sizeof(PixType));
+        std::copy(
+            src.begin(),
+            src.end(),
+            target->data_owner.view.begin());
+        target->data = reinterpret_cast<PixType*>(target->data_owner.data);
         return true;
-
-    return target->data != nullptr;
+    }
 }
 
 template<typename PixType>
@@ -321,11 +330,11 @@ bool SavePNG(Bytes& target, const image_const& src, stb_error& ec)
     auto res = stbi_write_png_to_func(
         _stbi_write_data,
         &target.allocation,
-        src.size.w * src.bpp,
         src.size.w,
         src.size.h,
+        src.bpp,
         src.data,
-        src.bpp);
+        src.size.w * src.bpp);
     target.updatePointers(semantic::Ownership::Owned);
 
     if(!res)

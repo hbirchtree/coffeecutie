@@ -70,12 +70,13 @@
             "bc3": ["rgba"],
             "pvrtc1": ["rgba"],
             "etc1": ["rgba"],
-            "png": ["rgba", "ra"]
+            "png": ["rgba", "ra"],
+            "raw": ["rgba", "ra"]
         },
         "matrix": {
-            "Android": ["astc", "bc3", "etc1", "etc2", "pvrtc1"],
-            "Darwin": ["bc1", "bc3", "png"],
-            "Linux": ["bc3", "bc7", "etc2", "png"],
+            "Android": ["astc", "bc3", "etc1", "etc2", "pvrtc1", "raw"],
+            "Darwin": ["bc1", "bc3", "raw"],
+            "Linux": ["bc3", "bc7", "etc2", "png", "raw"],
             "Emscripten": ["bc3", "etc2"]
         }
     }

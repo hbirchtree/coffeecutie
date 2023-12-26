@@ -126,6 +126,7 @@ struct Model
 
     Matf4 transform;
     Vecf3 position;
+    Quatf rotation;
 
     generation_idx_t                              model;
     std::vector<ERef>                             parts;
@@ -138,8 +139,13 @@ struct Model
     void initialize(T const* spawn)
     {
         position  = spawn->pos;
-        transform = glm::translate(Matf4(1), spawn->pos)
-                    * glm::mat4_cast(spawn_rotation_to_quat(spawn));
+        rotation = spawn_rotation_to_quat(spawn);
+        update_matrix();
+    }
+    void update_matrix()
+    {
+        transform = glm::translate(Matf4(1), position)
+                    * glm::mat4_cast(rotation);
     }
 };
 
@@ -361,6 +367,30 @@ struct DepthInfo
 
     bool masked{
         false}; /*! Objects such as transparent ones need to be drawn anyway */
+};
+
+struct PhysicsData
+{
+    using value_type = PhysicsData;
+    using type = compo::alloc::VectorContainer<PhysicsData>;
+
+    Vecf3 velocity;
+    Vecf3 acceleration;
+
+    bool enabled{false};
+};
+
+struct NetworkInfo
+{
+    using value_type = NetworkInfo;
+    using type = compo::alloc::VectorContainer<value_type>;
+
+    std::string object_name;
+
+    struct
+    {
+        bool transform:1;
+    } changes;
 };
 
 enum ObjectTags : u64

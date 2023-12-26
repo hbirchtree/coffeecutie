@@ -27,6 +27,8 @@ if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
       FALSE
       CACHE BOOL "Deploy with local, user-only repository"
   )
+
+  set(FLATPAK_EXTRA_LIBRARIES CACHE STRING "")
 endif()
 
 macro(
@@ -72,7 +74,7 @@ macro(
   set(FLATPAK_ICON_REF "${FLATPAK_PKG_NAME}.svg")
 
   set(FLATPAK_BUNDLE_REPO "${FLATPAK_DEPLOY_DIRECTORY}/${TARGET}")
-  set(FLATPAK_BUNDLE_DIR "${FLATPAK_WORKING_DIRECTORY}/${TARGET}.flatpak")
+  set(FLATPAK_BUNDLE_DIR "${COFFEE_PACKAGE_DIRECTORY}/linux-flatpak/${TARGET}.flatpak")
 
   # TODO: Unify this with the in-app information somehow
   set(FLATPAK_CONFIG "${TARGET}")
@@ -88,6 +90,7 @@ macro(
     COMMAND ${CMAKE_COMMAND} -E make_directory "${FLATPAK_LIBRARY_DIR}"
     COMMAND ${CMAKE_COMMAND} -E make_directory "${FLATPAK_EXPORT_DIR}"
     COMMAND ${CMAKE_COMMAND} -E make_directory "${FLATPAK_DEPLOY_DIRECTORY}"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${COFFEE_PACKAGE_DIRECTORY}/linux-flatpak"
   )
 
   # Configure metadata file
@@ -113,7 +116,10 @@ macro(
   endforeach()
 
   # Copy bundled libraries into flatpak
-  foreach(LIB ${BUNDLE_LIBRARIES})
+  foreach(LIB ${BUNDLE_LIBRARIES} ${FLATPAK_EXTRA_LIBRARIES})
+    if(NOT EXISTS ${LIB})
+        continue()
+    endif()
     add_custom_command(
       TARGET ${TARGET}.flatpak
       PRE_BUILD

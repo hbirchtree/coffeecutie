@@ -9,6 +9,7 @@ find_program ( INKSCAPE_PROGRAM inkscape
     PATH_SUFFIXES
         bin
     )
+find_package(GameNetworkingSockets CONFIG REQUIRED)
 
 add_custom_target (
   BlamGraphics.Assets
@@ -43,6 +44,7 @@ coffee_application(
   SOURCES
         graphics.cpp
         map_loading.cpp
+        networking.cpp
         occluder.cpp
         rendering.cpp
         resource_creation.cpp
@@ -50,7 +52,7 @@ coffee_application(
         touch_overlay.cpp
         ui.cpp
         widgets.cpp
-  LIBRARIES Blam Core Image GLeamRHI ImGui
+  LIBRARIES Blam Core Image GLeamRHI ImGui GameNetworkingSockets::GameNetworkingSockets_s
   RESOURCES "${CMAKE_CURRENT_BINARY_DIR}/assets"
 )
 add_dependencies(BlamGraphics BlamGraphics.Assets)

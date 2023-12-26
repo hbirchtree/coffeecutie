@@ -41,11 +41,10 @@ export COFFEE_NO_PROFILER_EXPORT="1"
 
 CRASH="${APPDIR}/CrashRecovery"
 
-# Executing application, we might as well destroy the current bash shell
 if [ -f "$GDB"  ]; then
-    $GDB --args "${APPDIR}/@APPIMAGE_EXEC@" $@
+    $GDB --args "${APPDIR}/@APPIMAGE_EXEC@" ${APPDIR}/assets $@
 elif [ -f "$CRASH" ] && [ -z "$NO_CRASHPAD" ]; then
-    exec "$CRASH" "${APPDIR}/@APPIMAGE_EXEC@" $@
+    "$CRASH" "${APPDIR}/@APPIMAGE_EXEC@" ${APPDIR}/assets $@
 else
-    exec "${APPDIR}/@APPIMAGE_EXEC@" $@
+    "${APPDIR}/@APPIMAGE_EXEC@" ${APPDIR}/assets $@
 fi
