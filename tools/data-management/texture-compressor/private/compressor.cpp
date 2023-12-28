@@ -28,11 +28,48 @@ inline std::string create_output_name(
     u32                        resolution,
     std::string_view const&    extension)
 {
-    auto base_name
-        = (base_dir
-           / platform::url::Path(source_file).fileBasename().removeExt())
-              .internUrl;
+    auto base_name =
+        (base_dir / platform::url::Path(source_file).fileBasename().removeExt())
+            .internUrl;
     return fmt::format("{}.{}.{}", base_name, resolution, extension);
+}
+
+std::map<std::string, compressor::rgba_image_t> image_cache;
+
+inline compressor::rgba_image_t& cache_image(std::string filename)
+{
+    if(auto it = image_cache.find(filename); it != image_cache.end())
+    {
+        cBasicPrint("Cache hit for {}", filename);
+        return it->second;
+    }
+    Coffee::stb::stb_error img_err;
+    if(!compressor::LoadData(
+           &image_cache[filename],
+           Coffee::Resource(MkSysUrl(filename)),
+           img_err,
+           typing::PixCmp::RGBA))
+    {
+        cBasicPrint("Failed to decode image to rgba8");
+        return image_cache[filename];
+    }
+    cBasicPrint("Caching decoded image for {}", filename);
+    return image_cache[filename];
+}
+
+bool save_ktx_to_file(std::string const& out_name, ktxTexture1* texture)
+{
+    auto out_stream = fopen(out_name.c_str(), "wb+");
+    if(!out_stream)
+    {
+        cBasicPrint("Failed to open for writing: {0}", out_name);
+        return false;
+    }
+    auto error = ktxTexture_WriteToStdioStream(ktxTexture(texture), out_stream);
+    if(error != ktx_error_code_e::KTX_SUCCESS)
+        cBasicPrint("Error writing KTX: {0}", magic_enum::enum_name(error));
+    fclose(out_stream);
+    return true;
 }
 
 } // namespace
@@ -95,30 +132,55 @@ bool etc2_compress(
         cBasicPrint("Failed to encode image {0}", file);
         return false;
     }
-    auto out_name   = create_output_name(base_dir, file, 0, "etc2");
-    auto out_stream = fopen(out_name.c_str(), "wb+");
-    if(!out_stream)
-    {
-        cBasicPrint("Failed to open for writing: {0}", out_name);
-        return false;
-    }
-    auto error = ktxTexture_WriteToStdioStream(ktxTexture(*res), out_stream);
-    if(error != ktx_error_code_e::KTX_SUCCESS)
-        cBasicPrint("Error writing KTX: {0}", magic_enum::enum_name(error));
-    fclose(out_stream);
-    return true;
+    return save_ktx_to_file(
+        create_output_name(base_dir, file, 0, "etc2"), *res);
 }
 
 bool bcn_compress(
-    [[maybe_unused]] platform::url::Path const& base_dir,
-    [[maybe_unused]] std::string const&         file,
-    [[maybe_unused]] std::vector<u32> const&    resolutions,
-    [[maybe_unused]] std::string const&         codec,
-    [[maybe_unused]] typing::PixCmp             format,
-    [[maybe_unused]] std::string const&         channels,
-    [[maybe_unused]] quality_mode               quality)
+    platform::url::Path const&               base_dir,
+    std::string const&                       file,
+    [[maybe_unused]] std::vector<u32> const& resolutions,
+    [[maybe_unused]] std::string const&      codec,
+    typing::PixCmp                           format,
+    std::string const&                       channels,
+    [[maybe_unused]] quality_mode            quality)
 {
-    return false;
+    using typing::pixels::CompFlags;
+
+    compressor::rgba_image_t image = cache_image(file).copy();
+
+    if(format != typing::PixCmp::RGBA)
+    {
+        auto remapped = compressor::map_channels(image, channels);
+        if(!remapped.has_value())
+            return false;
+        image = std::move(remapped.value());
+    }
+
+    auto out_name = create_output_name(base_dir, file, 0, "png");
+
+    CompFlags bcn_format = CompFlags::BC1;
+    if(codec == "bc2" || codec == "bc3")
+        bcn_format = CompFlags::BC3;
+    else if(codec == "bc4")
+        bcn_format = CompFlags::BC4;
+    else if(codec == "bc5")
+        bcn_format = CompFlags::BC5;
+    else if(codec == "bc6")
+        bcn_format = CompFlags::BC6H;
+    else if(codec == "bc7")
+        bcn_format = CompFlags::BC7;
+
+    auto res = compressor::bcn::encode(image, bcn_format, format);
+
+    if(!res)
+    {
+        cBasicPrint("Encoding {} to {} failed", file, codec);
+        return false;
+    }
+
+    return save_ktx_to_file(
+        create_output_name(base_dir, file, 0, codec), *res);
 }
 
 bool png_compress(
@@ -129,19 +191,7 @@ bool png_compress(
     std::string const&         channels,
     quality_mode               quality)
 {
-    compressor::rgba_image_t image;
-    {
-        Coffee::stb::stb_error img_ec;
-        if(!compressor::LoadData(
-               &image,
-               Coffee::Resource(platform::url::constructors::MkSysUrl(file)),
-               img_ec,
-               typing::PixCmp::RGBA))
-        {
-            cBasicPrint("Failed to decode image to rgba32");
-            return false;
-        }
-    }
+    compressor::rgba_image_t image = cache_image(file).copy();
 
     if(format != typing::PixCmp::RGBA)
     {
@@ -160,8 +210,8 @@ bool png_compress(
         cBasicPrint("Failed to encode PNG");
     if(!Coffee::FileCommit(
            out,
-           semantic::RSCA::NewFile | semantic::RSCA::WriteOnly
-               | semantic::RSCA::Discard))
+           semantic::RSCA::NewFile | semantic::RSCA::WriteOnly |
+               semantic::RSCA::Discard))
         cBasicPrint(
             "Failed to save PNG file, {} bytes, {}x{} {} channels",
             png.size,
@@ -179,16 +229,7 @@ bool raw_include(
     typing::PixCmp             format,
     std::string const&         channels)
 {
-    compressor::rgba_image_t image;
-    {
-        Coffee::stb::stb_error ec;
-        if(!compressor::LoadData(
-               &image, Coffee::Resource(MkSysUrl(file)), ec, format))
-        {
-            cBasicPrint("Failed to decode image for raw");
-            return false;
-        }
-    }
+    compressor::rgba_image_t image = cache_image(file).copy();
 
     if(format != typing::PixCmp::RGBA)
     {
@@ -230,8 +271,8 @@ bool raw_include(
     };
 
     ktxTexture1* texture{};
-    auto         error
-        = ktxTexture1_Create(&info, KTX_TEXTURE_CREATE_ALLOC_STORAGE, &texture);
+    auto         error =
+        ktxTexture1_Create(&info, KTX_TEXTURE_CREATE_ALLOC_STORAGE, &texture);
 
     if(error != ktx_error_code_e::KTX_SUCCESS)
     {
@@ -377,6 +418,8 @@ i32 cooker_main(i32 argc, char** argv)
             else if(codec == "raw")
                 raw_include(base_dir, file, resolutions, pixcmp, format);
         }
+
+        image_cache.clear();
     }
 
     return 0;

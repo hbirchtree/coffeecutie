@@ -20,8 +20,8 @@
                 "VCPKG_MANIFEST_FEATURES": "$penv{TARGET_FEATURES}"
             },
             "environment": {
-                "HOST_TOOLS_BINARY_DIR": "${sourceDir}/multi_build/host-x64-linux-native/bin",
-                "GLSLANG_PROGRAM": "$penv{GLSLANG_PROGRAM}",
+                "GLSLANG_PROGRAM": "$env{HOST_TOOLS_DIR}/tools/glslang/glslangValidator",
+                "FLATC_PROGRAM": "$env{HOST_TOOLS_DIR}/tools/flatbuffers/flatc",
                 "VCPKG_ROOT": "$penv{VCPKG_ROOT}"
             }
         },
@@ -49,6 +49,8 @@
                 "VCPKG_TARGET_TRIPLET": "$env{PLATFORM}-$env{TOOLCHAIN_PREFIX}"
             },
             "environment": {
+                "HOST_TOOLS_BINARY_DIR": "${sourceDir}/multi_build/host-x64-linux-native/bin",
+                "HOST_TOOLS_DIR": "${sourceDir}/multi_build/host-x64-linux-native/vcpkg_installed/x64-linux/tools",
                 "MKSQUASH_PROGRAM": "/usr/bin/mksquashfs",
                 "NINJA": "$penv{NINJA}",
                 "TOOLCHAIN_PREFIX": "$env{ARCHITECTURE}",
@@ -74,6 +76,7 @@
             },
             "environment": {
                 "HOST_TOOLS_BINARY_DIR": "${sourceDir}/multi_build/host-x64-osx/bin",
+                "HOST_TOOLS_DIR": "${sourceDir}/multi_build/host-x64-osx/vcpkg_installed/x64-osx/tools",
                 "NINJA": "$penv{NINJA}"
             }
         },
@@ -116,6 +119,7 @@
                 "ANDROID_SDK": "${sourceDir}/multi_build/compilers/android/latest",
                 "API": "32",
                 "ARCHITECTURE": "arm64",
+                "HOST_TOOLS_BINARY_DIR": "${sourceDir}/multi_build/host-x64-linux-native/bin",
                 "NDK_VERSION_": "26.0.10792818",
                 "NDK_VERSION": "25.2.9519653",
                 "NINJA": "$penv{NINJA}"
@@ -154,6 +158,7 @@
             },
             "environment": {
                 "ARCHITECTURE": "powerpc-eabi",
+                "HOST_TOOLS_BINARY_DIR": "${sourceDir}/multi_build/host-x64-linux-native/bin",
                 "PLATFORM": "console",
                 "TOOLCHAIN_PREFIX": "$env{ARCHITECTURE}",
                 "TOOLCHAIN_ROOT": "${sourceDir}/multi_build/compilers/$env{PLATFORM}-$env{ARCHITECTURE}/$env{TOOLCHAIN_VERSION}",
@@ -181,6 +186,7 @@
             },
             "environment": {
                 "EMSDK": "${sourceDir}/multi_build/compilers/emsdk/",
+                "HOST_TOOLS_BINARY_DIR": "${sourceDir}/multi_build/host-x64-linux-native/bin",
                 "NINJA": "$penv{NINJA}"
             }
         },

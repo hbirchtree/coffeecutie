@@ -83,6 +83,14 @@ function host_tools_build()
 
     popd
 
+    if [ $(uname) = "Darwin" ]; then
+        TOOLS_DIR=${BASE_DIR}/multi_build/x64-osx/vcpkg_installed/x64-osx/tools
+    elif [ $(uname) = "Linux" ]; then
+        TOOLS_DIR=${BASE_DIR}/multi_build/x64-linux-native/vcpkg_installed/x64-linux/tools
+    fi
+    PROTOC_PROGRAM=${TOOLS_DIR}/protobuf/protoc
+    GLSLANG_PROGRAM=${TOOLS_DIR}/glslang/glslangValidator
+
     echo "::endgroup::"
 }
 

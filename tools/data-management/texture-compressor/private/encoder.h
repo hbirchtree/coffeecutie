@@ -25,3 +25,13 @@ std::optional<ktxTexture1*> encode(
     settings_t&&                     settings = {});
 
 } // namespace compressor::etc2
+
+namespace compressor::bcn {
+
+std::optional<ktxTexture1*> encode(
+    compressor::rgba_image_t const& img,
+    typing::pixels::CompFlags       format,
+    typing::PixCmp                  channels,
+    settings_t&&                    settings = {});
+
+}

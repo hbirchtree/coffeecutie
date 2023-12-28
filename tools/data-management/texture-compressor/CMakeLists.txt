@@ -1,16 +1,17 @@
-# find_package ( bc7enc CONFIG REQUIRED )
+find_package(bc7enc CONFIG REQUIRED)
 find_package(Etc2Comp CONFIG REQUIRED)
 find_package(Ktx CONFIG REQUIRED)
 find_package(Threads REQUIRED)
 find_package(zstd CONFIG REQUIRED)
 
 coffee_library(
-  TARGET TextureCompression NO_COMPONENT_APP USE_CMD
+  TARGET TextureCompression
   SOURCES private/decoder.cpp private/encoder.cpp
   LIBRARIES Image
             PeripheralPlatform
             GraphicsDefines
             Etc2Comp::EtcLib
+            bc7enc::bc7enc
             KTX::ktx
             Threads::Threads
             zstd::libzstd_static

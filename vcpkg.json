@@ -98,6 +98,7 @@
         "pressure-cooker": {
             "description": "Asset packing utilities",
             "dependencies": [
+                { "name": "bc7enc", "platform": "(linux & x64) | osx | windows" },
                 { "name": "etc2comp", "platform": "(linux & x64) | osx | windows" },
                 { "name": "glslang", "platform": "(linux & x64) | osx | windows" },
                 { "name": "ktx", "platform": "(linux & x64) | osx | windows" },

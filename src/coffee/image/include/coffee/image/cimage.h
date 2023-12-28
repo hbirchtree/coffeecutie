@@ -197,6 +197,17 @@ struct image
     {
         data_owner = Bytes();
     }
+
+    image copy()
+    {
+        image out = {
+            .data_owner = Bytes::copy(data_owner.allocation),
+        };
+        out.data = out.data_owner.data;
+        out.size = size;
+        out.bpp = bpp;
+        return out;
+    }
 };
 
 using image_rw    = image<u8>;

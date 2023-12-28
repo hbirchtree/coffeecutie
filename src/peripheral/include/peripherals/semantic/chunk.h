@@ -172,6 +172,7 @@ struct mem_chunk
     {
         mem_chunk out;
         out.allocation = allocation_type(std::begin(c), std::end(c));
+        out.updatePointers(Ownership::Owned);
         return out;
     }
 
