@@ -7,6 +7,8 @@
 
 #include <peripherals/error/result.h>
 
+#include <glw/extensions/KHR_parallel_shader_compile.h>
+
 namespace gleam {
 namespace detail {
 
@@ -91,8 +93,7 @@ struct program_t
     using stage_map_t = std::map<stage_t, std::shared_ptr<shader_t>>;
 
     using compile_error_t = std::tuple<std::string>;
-    using compile_log_t
-        = std::tuple<std::string /* log text*/, int /* ??? */>;
+    using compile_log_t = std::tuple<std::string /* log text*/, int /* ??? */>;
 
     program_t(features::programs features, debug::api& debug) :
         m_features(features), m_debug(debug)
@@ -129,8 +130,41 @@ struct program_t
         m_stages.clear();
     }
 
+    semantic::result<compile_log_t, compile_error_t> validate_shader(
+        shader_t const* stage_info)
+    {
+        auto info = detail::shader_log(stage_info->m_handle);
+
+        i32 status{0};
+        cmd::get_shaderiv(
+            stage_info->m_handle,
+            gl::group::shader_parameter_name::compile_status,
+            SpanOne(status));
+        if(!status)
+            return stl_types::failure(compile_error_t{info});
+        return stl_types::success(compile_log_t{info, 1});
+    }
+
+    semantic::result<compile_log_t, compile_error_t> validate_program()
+    {
+        auto info = detail::program_log(m_handle);
+
+        i32 link_status{0};
+        cmd::get_programiv(
+            m_handle,
+            gl::group::program_property_arb::link_status,
+            SpanOne(link_status));
+        if(!link_status)
+            return stl_types::failure(compile_error_t{info});
+
+        return stl_types::success(compile_log_t{info, 1});
+    }
+
     NO_DISCARD semantic::result<compile_log_t, compile_error_t> compile()
     {
+        m_buffer_locations.clear();
+        m_uniform_locations.clear();
+
         [[maybe_unused]] auto _ = m_debug.scope(__PRETTY_FUNCTION__);
 #if GLEAM_MAX_VERSION >= 0x460
         while(m_features.spirv)
@@ -194,6 +228,8 @@ struct program_t
         {
             using pip_param = group::pipeline_parameter_name;
 
+            // TODO: KHR_parallel_shader_compile
+
 #if GLEAM_MAX_VERSION >= 0x450
             if(m_features.dsa)
                 cmd::create_program_pipelines(SpanOne<u32>(m_handle));
@@ -240,8 +276,6 @@ struct program_t
 
             for(auto const& stage : m_stages)
             {
-                using shader_param = group::shader_parameter_name;
-
                 auto [stage_type, stage_info] = stage;
 
                 if(stage_info->m_handle != 0)
@@ -260,40 +294,79 @@ struct program_t
                     },
                     SpanOne(data_length));
                 cmd::compile_shader(stage_info->m_handle);
-                auto info = detail::shader_log(stage_info->m_handle);
-
-                i32 status{0};
-                cmd::get_shaderiv(
-                    stage_info->m_handle,
-                    shader_param::compile_status,
-                    SpanOne(status));
-                if(!status)
-                    return stl_types::failure(compile_error_t{info});
+                if(!m_features.khr.parallel_shader_compile)
+                {
+                    if(auto res = validate_shader(stage_info.get());
+                       res.has_error())
+                        return res.error();
+                } else
+                    m_async_waiting = true;
 
                 cmd::attach_shader(m_handle, stage_info->m_handle);
             }
 
-            using program_param = group::program_property_arb;
-
             cmd::link_program(m_handle);
-            auto info = detail::program_log(m_handle);
 
-            i32 link_status{0};
-            cmd::get_programiv(
-                m_handle, program_param::link_status, SpanOne(link_status));
-            if(!link_status)
-                return stl_types::failure(compile_error_t{info});
-
-            return stl_types::success(compile_log_t{info, 1});
+            if(!m_features.khr.parallel_shader_compile)
+            {
+                return validate_program();
+            } else
+                return stl_types::success(compile_log_t{
+                    "Waiting with KHR_parallel_shader_compile", 1});
         }
+    }
+
+    stl_types::result<bool, compile_error_t> check_async_ready()
+    {
+        if(!m_features.khr.parallel_shader_compile)
+            return stl_types::success(true);
+#if defined(GL_KHR_parallel_shader_compile)
+        if(m_error_state)
+            return stl_types::failure(compile_error_t{});
+        if(m_features.separable_programs)
+            return stl_types::success(false);
+        else
+        {
+            i32 status = 0;
+            cmd::get_programiv(
+                m_handle,
+                gl::group::program_property_arb::completion_status_khr,
+                semantic::SpanOne(status));
+            if(status == GL_FALSE)
+                return stl_types::success(false);
+            std::string error_log;
+            if(auto res = validate_program(); res.has_value())
+            {
+                m_async_waiting = false;
+                return stl_types::success(true);
+            } else
+                error_log = std::get<0>(res.error());
+            for(auto const& stage : m_stages)
+            {
+                auto [stage_type, stage_info] = stage;
+                if(auto res = validate_shader(stage_info.get());
+                   res.has_error())
+                    error_log += "\nShader log:" + std::get<0>(res.error());
+            }
+            m_error_state = true;
+            return stl_types::failure(compile_error_t{error_log});
+        }
+#else
+        return false;
+#endif
     }
 
     features::programs m_features;
     debug::api         m_debug;
     stage_map_t        m_stages;
     hnd                m_handle;
+    bool               m_async_waiting{false};
+    bool               m_error_state{false};
 
     std::vector<std::pair<std::string_view, u32>> m_attribute_names;
+    /*! Buffer location + queried size*/
+    std::map<std::string, std::pair<u32, i32>> m_buffer_locations;
+    std::map<std::string, u32>                 m_uniform_locations;
 };
 
 } // namespace gleam

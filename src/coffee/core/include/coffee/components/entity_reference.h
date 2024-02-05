@@ -4,6 +4,29 @@
 
 namespace compo {
 
+template<typename ContainerType, typename ComponentType>
+struct ComponentRef
+{
+    ComponentRef() : m_id(0), m_ref(nullptr)
+    {
+    }
+    ComponentRef(u64 id, ContainerType* container) : m_id(id), m_ref(container)
+    {
+    }
+    ComponentRef(ComponentRef&&)      = default;
+    ComponentRef(ComponentRef const&) = default;
+
+    ComponentRef& operator=(ComponentRef const&) = default;
+
+    typename ComponentType::value_type& operator*() const
+    {
+        return *m_ref->template get<ComponentType>(m_id);
+    }
+
+    u64            m_id;
+    ContainerType* m_ref;
+};
+
 template<typename ContainerType>
 struct EntityRef
 {
@@ -46,28 +69,15 @@ struct EntityRef
         return *ptr;
     }
 
+    template<typename T>
+    ComponentRef<ContainerType, T> ref() const
+    {
+        return ComponentRef<ContainerType, T>(m_id, container);
+    }
+
   private:
     u64            m_id;
     ContainerType* container;
-};
-
-template<typename ContainerType, typename ComponentType>
-struct ComponentRef
-{
-    ComponentRef() : m_id(0), m_ref(nullptr)
-    {
-    }
-    ComponentRef(u64 id, ContainerType* container) : m_id(id), m_ref(container)
-    {
-    }
-
-    typename ComponentType::type& operator*() const
-    {
-        return *m_ref->template get<ComponentType>(m_id);
-    }
-
-    u64            m_id;
-    ContainerType* m_ref;
 };
 
 } // namespace compo

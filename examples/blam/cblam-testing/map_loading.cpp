@@ -45,16 +45,14 @@ static void init_map(
     cDebug("Number of GC entities: {}", num);
 
     auto& files = e.subsystem_cast<BlamFiles<halo_version>>();
-    files.container = std::move(finished.container);
 
     GameEvent                     event{GameEvent::MapChanged};
     MapChangedEvent<halo_version> changed{
         .container    = files.container,
         .bitmap_magic = blam::magic_data_t(finished.bitmap_file.view),
-        .scenario
-        = files.container.tags
-              ->scenario(files.container.map, files.container.magic)
-              .value(),
+        .scenario     = files.container.tags
+                        ->scenario(files.container.map, files.container.magic)
+                        .value(),
     };
     e.subsystem_cast<GameEventBus>().inject(event, &changed);
 
@@ -68,13 +66,13 @@ static void init_map(
     load_ui_items(e, changed);
 
     // For debugging: go through all the bitmaps
-    for(blam::tag_t const& tag : blam::tag_index_view(finished.container))
+    for(blam::tag_t const& tag : blam::tag_index_view(files.container))
     {
-        if(tag.matches(blam::tag_class_t::bitm) && false)
+        if(tag.matches(blam::tag_class_t::bitm) && true)
         {
             cDebug(
                 "Loading bitmap {0}",
-                tag.to_name().to_string(finished.container.magic));
+                tag.to_name().to_string(files.container.magic));
             bitmaps.predict(tag.as_ref(), 0);
         }
     }
@@ -86,7 +84,7 @@ static void init_map(
 
     if(auto window_config = e.service<comp_app::WindowInfo>())
     {
-        auto map_name = finished.container.map->full_mapname();
+        auto map_name = files.container.map->full_mapname();
         window_config->setName(fmt::format("Blam! : {0}", map_name));
     }
     {
@@ -147,7 +145,6 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
     if(!load.file)
         return;
 
-    /* TODO: Maybe refactor this to be event-based? */
     ProfContext _;
 
     using result_type = blam::map_container<halo_version>::result_type;
@@ -163,7 +160,7 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
     using AsyncResource = comp_app::FileMapper::Resource;
     auto map_loader     = [&e, bitmap_ = std::move(bitmap_promise)](
                           std::shared_ptr<AsyncResource>* data) mutable {
-        ProfContext _("Launching map decode");
+        ProfContext    _("Launching map decode");
         BlamResources& resources = e.subsystem_cast<BlamResources>();
         LoadingStatus& loading   = e.subsystem_cast<LoadingStatus>();
         auto&          files     = e.subsystem_cast<BlamFiles<halo_version>>();
@@ -196,6 +193,7 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
                         return;
                     }
                     files.bitmap_file = bitmap.get();
+                    files.container   = std::move(map->value());
 
                     auto&            gbus = e.subsystem_cast<GameEventBus>();
                     GameEvent        event{GameEvent::MapDataLoad};
@@ -205,9 +203,12 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
                     };
                     gbus.inject(event, &loaded);
                     event.type = GameEvent::MapLoadFinished;
-                    MapLoadFinishedEvent<halo_version> finished;
-                    finished.container   = std::move(map->value());
-                    finished.bitmap_file = *files.bitmap_file;
+                    MapLoadFinishedEvent<halo_version> finished = {
+                        .container   = &files.container,
+                        .bitmap_file = *files.bitmap_file,
+                    };
+                    finished.map_name  = files.container.internal_name();
+                    finished.map_title = files.container.name();
                     gbus.inject(event, &finished);
                 }));
     };

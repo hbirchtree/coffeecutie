@@ -384,18 +384,9 @@ ServiceRef<Service> EntityContainer::service_ref()
 }
 
 template<class BaseType, bool Reversed>
-quick_container<service_query<BaseType, Reversed>> EntityContainer::
-    services_with()
+service_query<BaseType, Reversed> EntityContainer::services_with()
 {
-    using query_type = service_query<BaseType, Reversed>;
-
-    return {
-        [this]() {
-            return query_type(*this, typename query_type::begin_iterator_t());
-        },
-        [this]() {
-            return query_type(*this, typename query_type::end_iterator_t());
-        }};
+    return service_query<BaseType, Reversed>(*this);
 }
 
 template<class BaseType>
@@ -408,11 +399,8 @@ template<class BaseType>
 auto EntityContainer::services_with(service_sort_predicate<BaseType> sorter)
 {
     auto                   services = services_with<BaseType>();
-    std::vector<BaseType*> out;
-    for(auto& service : services)
-        out.push_back(&service);
-    std::sort(out.begin(), out.end(), std::move(sorter));
-    return out;
+    std::sort(services.begin(), services.end(), std::move(sorter));
+    return services;
 }
 
 FORCEDINLINE EntityContainer& SubsystemBase::get_container(

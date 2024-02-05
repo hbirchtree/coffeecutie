@@ -216,7 +216,7 @@
           Module.setStatus(left ? 'Preparing... (' + (this.totalDependencies-left) + '/' + this.totalDependencies + ')' : 'All downloads complete.');
           statusBar.style.background = "#055";
           statusElement.style.color = "white";
-        }
+        },
       };
       Module.setStatus('Downloading...');
       statusBar.style.background = "#005";
@@ -230,6 +230,14 @@
           if (text) Module.printErr('[post-exception status] ' + text);
         };
       };
+      const canvas = document.querySelector('#canvas');
+      const canvasParent = canvas.closest('body, div, span');
+      const resizeCanvas = () => {
+        canvas.height = canvasParent.offsetHeight;
+        canvas.width = canvasParent.offsetWidth;
+      };
+      new ResizeObserver(resizeCanvas).observe(canvasParent);
+      setTimeout(resizeCanvas, 1000);
     </script>
     {{{ SCRIPT }}}
 </body></html>

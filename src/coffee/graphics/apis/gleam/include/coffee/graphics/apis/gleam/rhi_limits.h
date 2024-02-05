@@ -80,7 +80,7 @@ struct api_limits
         buffers = {};
         draws = {
             .element_count        = get_limit(prop::max_elements_indices),
-//            .element_index        = get_limit(prop::max_element_index),
+            .element_index        = get_limit(prop::max_element_index),
             .element_vertex_count = get_limit(prop::max_elements_vertices),
         };
         shaders = {
@@ -218,11 +218,11 @@ struct api_limits
     struct draw_limits_t
     {
         u32 element_count;
-        u32 element_index;
+        u32 element_index{0};
         u32 element_vertex_count;
 
-        u32 instance_count;
-        u32 instance_offset;
+        u32 instance_count{0};
+        u32 instance_offset{0};
     } draws;
     struct shader_limits_t
     {
@@ -238,7 +238,7 @@ struct api_limits
         u32 cube_size{0};
     } textures;
 
-    features m_features;
+    features m_features{};
 };
 
 } // namespace gleam

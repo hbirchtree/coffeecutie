@@ -12,6 +12,10 @@
 
 #include <SDL.h>
 
+#if defined(COFFEE_EMSCRIPTEN)
+#include <emscripten/html5_webgl.h>
+#endif
+
 #include <coffee/core/debug/formatting.h>
 
 #define NOT_ZERO(v) (v < 0)
@@ -468,7 +472,8 @@ void GLContext::setupAttributes(entity_container& c)
 
         if(glConfig.profile & GLConfig::Robust)
             contextFlags |= SDL_GL_CONTEXT_ROBUST_ACCESS_FLAG;
-        if(glConfig.profile & GLConfig::Debug)
+        if((glConfig.profile & GLConfig::Debug)
+           && !compile_info::platform::is_emscripten)
             contextFlags |= SDL_GL_CONTEXT_DEBUG_FLAG;
 
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, contextFlags);
@@ -558,15 +563,28 @@ void GLContext::load(entity_container& c, comp_app::app_error& ec)
         return;
     }
 
-#if !defined(COFFEE_EMSCRIPTEN)
-    c.service<GLSwapControl>()->setSwapInterval(glConfig.swapInterval);
-#endif
+    /* For Emscripten, setting 0 here seems to crash Firefox
+     * While Chrome really couldn't care less
+     */
+    c.service<GLSwapControl>()->setSwapInterval(
+        compile_info::platform::is_emscripten ? 1 : glConfig.swapInterval);
 
     {
         auto& bindConf
             = comp_app::AppLoader::config<comp_app::GraphicsBindingConfig>(c);
         bindConf.loader = SDL_GL_GetProcAddress;
     }
+
+#if defined(COFFEE_EMSCRIPTEN)
+    if(glConfig.profile & GLConfig::Debug)
+    {
+        auto context_handle = emscripten_webgl_get_current_context();
+        emscripten_webgl_enable_extension(
+            context_handle, "WEBGL_debug_renderer_info");
+        emscripten_webgl_enable_extension(
+            context_handle, "WEBGL_debug_shaders");
+    }
+#endif
 
     m_container = &c;
 }
@@ -686,7 +704,7 @@ void ControllerInput::start_restricted(proxy_type& p, time_point const&)
 
             auto joystick = SDL_GameControllerGetJoystick(controller);
 
-#if SDL_MAJOR_VERSION >= 2 && SDL_MINOR_VERSION >= 0 && SDL_PATCHLEVEL >= 8
+#if SDL_VERSION_ATLEAST(2, 0, 8)
             auto playerIdx = SDL_GameControllerGetPlayerIndex(controller);
 #else
             auto playerIdx = -1;
@@ -700,14 +718,18 @@ void ControllerInput::start_restricted(proxy_type& p, time_point const&)
             m_playerIndex.insert({playerIdx, controller});
             m_controllers.insert({instanceId, controller});
 
-#if SDL_MAJOR_VERSION >= 2 && SDL_MINOR_VERSION >= 0 && SDL_PATCHLEVEL >= 8
+#if SDL_VERSION_ATLEAST(2, 0, 8) && 0
             SDL_GameControllerRumble(controller, 7000, 9000, 200);
 #endif
-
-            event.cdevice.which = playerIdx;
+            Coffee::Logging::cDebug("Player {} connected", playerIdx);
         } else if(event.type == SDL_CONTROLLERDEVICEREMOVED)
         {
-            event.cdevice.which = controllerDisconnect(event.cdevice.which);
+            controllerDisconnect(event.cdevice.which);
+            Coffee::Logging::cDebug(
+                "Player {} disconnected", event.cdevice.which);
+        } else if(event.type == SDL_CONTROLLERDEVICEREMAPPED)
+        {
+            Coffee::Logging::cDebug("Player {} remapped", event.cdevice.which);
         }
 
         EMIT_IEVENT(translate::event<CIControllerAtomicUpdateEvent>(event))
@@ -995,7 +1017,7 @@ void WindowInfo::setName(comp_app::text_type newName)
 namespace sdl2 {
 
 void getWindow(
-    SDL_Window* window,
+    SDL_Window*                                                 window,
     [[maybe_unused]] comp_app::interfaces::PtrNativeWindowInfo& info)
 {
     using namespace comp_app;

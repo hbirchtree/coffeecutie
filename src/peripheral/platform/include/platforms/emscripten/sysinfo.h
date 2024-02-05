@@ -9,6 +9,12 @@
 #include <peripherals/stl/types.h>
 #include <string_view>
 
+namespace emscripten::args {
+
+std::map<std::string, std::string> query_params();
+
+}
+
 namespace platform::info::proc::emscripten {
 
 inline libc_types::u32 node_count()

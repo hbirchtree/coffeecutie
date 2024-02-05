@@ -252,6 +252,30 @@ struct ControllerOpts
     }
 };
 
+template<typename CameraPtr>
+void controller_camera_update(
+    CameraPtr                                  camera,
+    ControllerOpts const&                      opt,
+    CIControllerState const&                   state,
+    std::chrono::system_clock::duration const& t)
+{
+    using stl_types::Chrono::to_float;
+
+    const auto filter
+        = [](i16 raw, f32 sens) { return convert_i16_f(raw) * sens; };
+
+    const auto acceleration
+        = 1.f + convert_i16_f(state.axes.e.t_l) * opt.curve * to_float(t);
+    camera->move(
+        filter(state.axes.e.l_y, opt.sens.move.y) * -1.f,
+        filter(state.axes.e.l_x, opt.sens.move.x) * -1.f,
+        0.f,
+        acceleration);
+    camera->rotate(
+        filter(state.axes.e.r_x, opt.sens.look.x) * to_float(t) * -1.f,
+        filter(state.axes.e.r_y, opt.sens.look.y) * to_float(t) * -1.f);
+}
+
 template<typename CameraPtr, typename OptsPtr>
 struct ControllerCamera
 {
@@ -264,18 +288,7 @@ struct ControllerCamera
         CIControllerState const&                   state,
         std::chrono::system_clock::duration const& t)
     {
-        using stl_types::Chrono::to_float;
-        auto const& opt = opts();
-        const auto  acceleration
-            = 1.f + convert_i16_f(state.axes.e.t_l) * opt.curve * to_float(t);
-        m_camera->move(
-            filter(state.axes.e.l_y, opt.sens.move.y) * -1.f,
-            filter(state.axes.e.l_x, opt.sens.move.x) * -1.f,
-            0.f,
-            acceleration);
-        m_camera->rotate(
-            filter(state.axes.e.r_x, opt.sens.look.x) * to_float(t) * -1.f,
-            filter(state.axes.e.r_y, opt.sens.look.y) * to_float(t) * -1.f);
+        return controller_camera_update(m_camera, opts(), state, t);
     }
 
     ControllerOpts& opts()

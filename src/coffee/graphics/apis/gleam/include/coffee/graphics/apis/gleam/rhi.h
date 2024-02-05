@@ -55,7 +55,11 @@ struct api
     inline auto alloc_buffer(T, semantic::RSCA access)
     {
         return std::make_shared<buffer_t>(
-            m_features.buffer, m_workarounds, T::value, access);
+            m_features.buffer,
+            m_workarounds,
+            std::ref(m_usage),
+            T::value,
+            access);
     }
 
     inline auto alloc_program()
@@ -289,7 +293,7 @@ struct api
         return m_workarounds;
     }
 
-    inline auto& usage()
+    inline gleam::usage& usage()
     {
         return m_usage;
     }
@@ -362,6 +366,7 @@ struct api
     static bool supports_extension(
         std::set<string> const& extensions, string const& ext);
     bool supports_extension(string const& ext);
+    static bool supports_render_format(features const& features, PixDesc const& fmt);
 
     std::shared_ptr<rendertarget_type> m_framebuffer;
     std::unique_ptr<debug_api>         m_debug;

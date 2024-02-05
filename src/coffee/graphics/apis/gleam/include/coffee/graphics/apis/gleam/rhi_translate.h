@@ -62,8 +62,7 @@ constexpr array<pair<buffers::type, group::buffer_target_arb>, 7> buf_type = {{
 #if GLEAM_MAX_VERSION >= 0x430 || GLEAM_MAX_VERSION_ES >= 0x310
     {buffers::type::shader_writable,
      group::buffer_target_arb::shader_storage_buffer},
-    {buffers::type::draw,
-     group::buffer_target_arb::draw_indirect_buffer},
+    {buffers::type::draw, group::buffer_target_arb::draw_indirect_buffer},
 #endif
 }};
 
@@ -208,8 +207,9 @@ namespace detail {
 
 template<typename T>
 requires std::is_same_v<T, group::internal_format>
-inline std::tuple<group::internal_format, group::pixel_type, group::pixel_format>
-to_internal(PixDesc const& fmt)
+inline std::
+    tuple<group::internal_format, group::pixel_type, group::pixel_format>
+    to_internal(PixDesc const& fmt)
 {
     using f = group::internal_format;
     using b = group::pixel_type;
@@ -234,8 +234,9 @@ to_internal(PixDesc const& fmt)
 
 template<typename T>
 requires std::is_same_v<T, group::sized_internal_format>
-inline std::tuple<group::sized_internal_format, group::pixel_type, group::pixel_format>
-to_internal(PixDesc const&)
+inline std::
+    tuple<group::sized_internal_format, group::pixel_type, group::pixel_format>
+    to_internal(PixDesc const&)
 {
     return {};
 }
@@ -408,7 +409,8 @@ requires(std::is_same_v<T, group::map_buffer_access_mask>) inline group::
     if(feval(flags, RSCA::WriteOnly))
         out |= mask::map_write_bit;
 #if GLEAM_MAX_VERSION >= 0x440
-    if(feval(flags, RSCA::Persistent) && features.persistence)
+    if(feval(flags, RSCA::Persistent) && features.persistence
+       && features.storage)
         out |= mask::map_persistent_bit | mask::map_coherent_bit;
 #endif
     if(feval(flags, RSCA::Discard))

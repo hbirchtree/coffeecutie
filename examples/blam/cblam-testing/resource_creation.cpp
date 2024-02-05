@@ -34,15 +34,19 @@ void create_resources(compo::EntityContainer& e)
                 }));
 
         eventhandler->addEventHandler(
-            1024, std_camera_t::KeyboardInput(camera.std_camera));
+            1024, std_camera_t::KeyboardInput(camera.player(0).camera_));
         eventhandler->addEventHandler(
-            1024, std_camera_t::MouseInput(camera.std_camera));
+            1024, std_camera_t::MouseInput(camera.player(0).camera_));
 
         auto eventhandler_w = e.service<comp_app::BasicEventBus<Event>>();
 
         eventhandler_w->addEventFunction<ResizeEvent>(
             0, [&camera](Event&, ResizeEvent* resize) {
-                camera.camera.aspect = static_cast<f32>(resize->w) / resize->h;
+                f32 aspect = static_cast<f32>(resize->w) / resize->h;
+                if(camera.num_players() == 2)
+                    aspect = static_cast<f32>(resize->w) / (resize->h / 2);
+                for(auto& viewport : camera.viewports)
+                    viewport.camera.aspect = aspect;
                 cDebug("Window resize: {}x{}", resize->w, resize->h);
             });
     }
@@ -79,7 +83,7 @@ void create_resources(compo::EntityContainer& e)
 
     resources.model_matrix_store
         = api.alloc_buffer(gfx::buffers::constants, access);
-    if(api.feature_info().buffer.ssbo)
+    if(api.feature_info().buffer.ssbo && false)
     {
         //        resources.model_matrix_store
         //            = api.alloc_buffer(gfx::buffers::shader_writable, access);
@@ -283,19 +287,34 @@ void create_resources(compo::EntityContainer& e)
     //    if constexpr(compile_info::platform::is_android)
     {
         resources.offscreen = api.alloc_rendertarget();
-        resources.color
-            = api.alloc_texture(gfx::textures::d2, PixDesc(PixFmt::RGB16F), 1);
+        resources.color     = api.alloc_texture(
+            gfx::textures::d2,
+            PixDesc(
+                api.feature_info().rendertarget.color_buffer_half_float
+                    ? PixFmt::RGB16F
+                    : PixFmt::RGB8),
+            1);
         resources.depth = api.alloc_texture(
-            gfx::textures::d2, PixDesc(PixFmt::Depth32F), 1);
+            gfx::textures::d2,
+            PixDesc(
+                api.feature_info().rendertarget.depth_32f
+                    ? PixFmt::Depth32F
+                    : PixFmt::Depth24Stencil8),
+            1);
         resources.offscreen->alloc();
         auto const& size = resources.offscreen_size;
         resources.color->alloc(size_3d<i32>{size.x, size.y}.convert<u32>());
         resources.depth->alloc(size_3d<i32>{size.x, size.y}.convert<u32>());
 
+        using gfx::render_targets::attachment;
+
+        resources.offscreen->attach(attachment::color, *resources.color, 0);
         resources.offscreen->attach(
-            gfx::render_targets::attachment::color, *resources.color, 0);
-        resources.offscreen->attach(
-            gfx::render_targets::attachment::depth, *resources.depth, 0);
+            api.feature_info().rendertarget.depth_32f
+                ? attachment::depth
+                : attachment::depth_stencil,
+            *resources.depth,
+            0);
         resources.offscreen->resize({0, 0, size.x, size.y});
 
         resources.color->set_swizzle(
@@ -303,10 +322,8 @@ void create_resources(compo::EntityContainer& e)
             gfx::textures::swizzle_t::green,
             gfx::textures::swizzle_t::blue,
             gfx::textures::swizzle_t::one);
-
-        if constexpr(compile_info::platform::is_emscripten)
-            resources.offscreen = api.default_rendertarget();
     }
+    // resources.offscreen = api.default_rendertarget();
 }
 
 static void create_shader_program(
@@ -365,13 +382,6 @@ static void create_spv_shaders(gfx::api& api, BlamResources& resources)
         api,
         "map_uber.spv"_rsc,
         "map_main"sv,
-        "map_uber_main"sv,
-        resources.senv_micro_pipeline,
-        "bsp_senv_micro");
-    create_shader_program(
-        api,
-        "map_uber.spv"_rsc,
-        "map_main"sv,
         "wireframe_main"sv,
         resources.wireframe_pipeline,
         "map_wireframe");
@@ -406,8 +416,6 @@ static void create_uber_shaders(gfx::api& api, BlamResources& resources)
     }};
 
     create_shaders(api, std::move(shaders));
-
-    resources.senv_micro_pipeline = resources.bsp_pipeline;
 }
 
 static void create_uber_lite_shaders(gfx::api& api, BlamResources& resources)
@@ -439,8 +447,6 @@ static void create_uber_lite_shaders(gfx::api& api, BlamResources& resources)
     }};
 
     create_shaders(api, std::move(shaders));
-
-    resources.senv_micro_pipeline = resources.bsp_pipeline;
 }
 
 static void create_standard_shaders(gfx::api& api, BlamResources& resources)
@@ -448,7 +454,7 @@ static void create_standard_shaders(gfx::api& api, BlamResources& resources)
     using namespace std::string_view_literals;
     using platform::url::constructors::MkUrl;
 
-    std::array<shader_pair_t, 5> shaders = {{
+    std::array<shader_pair_t, 4> shaders = {{
         {
             .vertex_file   = "debug_lines"sv,
             .fragment_file = "debug_lines"sv,
@@ -463,11 +469,6 @@ static void create_standard_shaders(gfx::api& api, BlamResources& resources)
             .vertex_file   = "map"sv,
             .fragment_file = "map"sv,
             .shader        = resources.bsp_pipeline,
-        },
-        {
-            .vertex_file   = "map"sv,
-            .fragment_file = "map_senv"sv,
-            .shader        = resources.senv_micro_pipeline,
         },
         {
             .vertex_file   = "map"sv,
@@ -489,9 +490,10 @@ void create_shaders(compo::EntityContainer& e)
     auto const& features = gfx.feature_info();
     auto const& bugs     = gfx.workarounds().bugs;
 
-    const bool use_spv  = features.program.spirv;
-    const bool use_uber = features.texture.cube_array && features.buffer.ssbo
-                          && !lowspec_hardware && !bugs.adreno_3xx;
+    const bool use_spv = features.program.spirv;
+    const bool use_uber
+        = features.texture.cube_array /*&& features.buffer.ssbo*/
+          && !lowspec_hardware && !bugs.adreno_3xx;
     const bool use_uber_lite = features.buffer.ubo && !bugs.adreno_3xx;
 
     if(use_spv && false)
@@ -524,7 +526,6 @@ void set_resource_labels(EntityContainer& e)
     BlamResources&   resources = e.subsystem_cast<BlamResources>();
 
     debug.annotate(*resources.bsp_pipeline, "map_basic");
-    debug.annotate(*resources.senv_micro_pipeline, "map_senv");
     debug.annotate(*resources.model_pipeline, "scenery");
     debug.annotate(*resources.debug_lines_pipeline, "debug_lines");
     debug.annotate(*resources.wireframe_pipeline, "wireframe");
@@ -554,6 +555,28 @@ void create_camera(
 {
     BlamCamera& camera = e.subsystem_cast<BlamCamera>();
 
+    for(auto& viewport : camera.viewports)
+    {
+        viewport.controller_opts.sens.move = {.1f, .1f};
+        viewport.camera_opts.accel.alt     = 50.f;
+    }
+
+    if(spawns.empty())
+        return;
+
+    for(auto i : range<u32>(4))
+    {
+        auto& location                      = spawns[0];
+        camera.viewports[i].camera.position = location.pos * Vecf3(-1);
+        cDebug("Facing of player: {0}", location.rot);
+        camera.viewports[i].camera.rotation = glm::normalize(glm::quat(Vecf3{
+            0,
+            location.rot,
+            //                0,
+            glm::pi<f32>() / 2.f,
+        }));
+    }
+
     /* Move the camera to a player spawn location */
     {
         //        auto transform
@@ -565,21 +588,6 @@ void create_camera(
 
         if(!spawns.empty())
         {
-            auto& location         = spawns[0];
-            camera.camera.position = location.pos * Vecf3(-1);
-            //                = (Vecf4(location.pos + Vecf3(0, 0, 1), 1) /**
-            //                -1.f*/) * transform;
-            // TODO: Fix facing of camera here
-            cDebug("Facing of player: {0}", location.rot);
-            camera.camera.rotation = glm::normalize(glm::quat(Vecf3{
-                0,
-                location.rot,
-                //                0,
-                glm::pi<f32>() / 2.f,
-            }));
         }
     }
-
-    camera.controller_opts.sens.move = {.1f, .1f};
-    camera.camera_opts.accel.alt     = 50.f;
 }

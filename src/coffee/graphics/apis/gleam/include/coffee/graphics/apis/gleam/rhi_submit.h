@@ -8,6 +8,8 @@
 namespace gleam {
 namespace detail {
 
+std::string_view draw_error_to_string(error e);
+
 std::optional<error> evaluate_draw_state(
     api_limits const& limits, draw_command const& command);
 
@@ -56,7 +58,6 @@ union alignas(4) indirect_command_buffer
     } arrays;
 };
 
-
 void create_draw(
     draw_command::call_spec_t const& call,
     draw_command::data_t const&      data,
@@ -90,6 +91,26 @@ inline optional<tuple<error, std::string_view>> api::submit(
 
     if(data.empty())
         return std::nullopt;
+
+    if(program->m_async_waiting)
+    {
+        if(program->m_error_state)
+        {
+            usage().draw.failed_draws++;
+            return std::make_tuple(
+                error::program_error_state, "program is in error state");
+        }
+        auto res = program->check_async_ready();
+        if(res.has_error())
+        {
+            program->m_error_state      = true;
+            [[maybe_unused]] auto error = std::get<0>(res.error());
+            debug().message(error);
+            usage().draw.failed_draws++;
+            return std::make_tuple(
+                error::async_shader_compile_failed, "program linking failed");
+        }
+    }
 
     [[maybe_unused]] auto _ = debug().scope();
 
@@ -125,27 +146,42 @@ inline optional<tuple<error, std::string_view>> api::submit(
           });
     if(m_api_type == api_type_t::es && uses_baseinstance
        && !m_workarounds.draw.emulated_base_instance)
+    {
+        usage().draw.failed_draws++;
         return std::make_tuple(
             error::no_implementation_for_draw_call,
             "baseinstance not enabled in GL ES"sv);
+    }
     if(m_api_type == api_type_t::es && m_api_version == 0x200 && call.instanced
        && !m_workarounds.draw.emulated_instance_id)
+    {
+        usage().draw.failed_draws++;
         return std::make_tuple(
             error::no_implementation_for_draw_call,
             "instancing not enabled in GL ES 2.0"sv);
+    }
     if(m_api_type == api_type_t::es && m_api_version <= 0x300
        && uses_vertex_offset && !m_workarounds.draw.emulated_vertex_offset)
+    {
+        usage().draw.failed_draws++;
         return std::make_tuple(
             error::no_implementation_for_draw_call,
             "base vertex not enabled in GL ES 3.0 and below"sv);
+    }
 
     if(!program || program->m_handle == 0)
+    {
+        usage().draw.failed_draws++;
         return std::make_tuple(error::no_program, "no program provided");
+    }
 
     auto vao = command.vertices.lock();
 
     if(!vao)
+    {
+        usage().draw.failed_draws++;
         return std::make_tuple(error::no_data, "no vertex data provided");
+    }
 
     std::shared_ptr<buffer_t> element_buf;
 #if GLEAM_MAX_VERSION_ES != 0x200
@@ -211,7 +247,11 @@ inline optional<tuple<error, std::string_view>> api::submit(
         auto log = detail::program_log(program->m_handle);
         if(auto error = detail::evaluate_draw_state(m_limits, command);
            error.has_value())
-            return std::make_tuple(*error, string());
+        {
+            usage().draw.failed_draws++;
+            return std::make_tuple(
+                *error, detail::draw_error_to_string(*error));
+        }
     }
 
     detail::shader_bookkeeping_t bookkeeping{};
@@ -310,16 +350,16 @@ inline optional<tuple<error, std::string_view>> api::submit(
     }
 
     const bool indirect_supported //= false;
-        = m_api_type == api_type_t::core ? m_api_version >= 0x430
-                                         : m_api_version >= 0x310;
+        = m_features.draw.indirect
+          && (m_api_type == api_type_t::core ? m_api_version >= 0x430
+                                             : m_api_version >= 0x310);
     const bool has_uniform_element_type
         = call.indexed && stl_types::all_of(data, [&data](auto const& d) {
               return d.elements.type == data.at(0).elements.type;
           });
     const bool multi_indirect_supported //= false;
-        = !uses_ubo_advancing && m_api_type == api_type_t::core
-              ? m_api_version >= 0x430
-              : false;
+        = !uses_ubo_advancing && m_features.draw.multi_indirect
+          && (m_api_type == api_type_t::core ? m_api_version >= 0x430 : false);
     const bool legacy_draw_only
         = m_api_type == api_type_t::es && m_api_version == 0x200;
 
@@ -331,15 +371,31 @@ inline optional<tuple<error, std::string_view>> api::submit(
                 "varying element types prevents use of MultiDrawIndirect"sv);
     }
 
+    for(auto const& draw : data)
+    {
+        if(call.mode == drawing::primitive::triangle)
+            m_usage.draw.triangles = (draw.arrays.count + draw.elements.count)
+                                     * draw.instances.count;
+        else if(call.mode == drawing::primitive::triangle_strip)
+            m_usage.draw.triangle_strips
+                = (draw.arrays.count + draw.elements.count)
+                  * draw.instances.count;
+        else
+            m_usage.draw.other_prims = (draw.arrays.count + draw.elements.count)
+                                       * draw.instances.count;
+    }
+
 #if GLEAM_MAX_VERSION_ES != 0x200
     if(multi_indirect_supported && (!call.indexed || has_uniform_element_type))
     {
         m_usage.draw.draws += data.size();
         m_usage.draw.instances += std::accumulate(
-            std::begin(data), std::end(data), 0u,
-                [](u32 i, draw_command::data_t const& d) {
-            return d.instances.count + i;
-        });
+            std::begin(data),
+            std::end(data),
+            0u,
+            [](u32 i, draw_command::data_t const& d) {
+                return d.instances.count + i;
+            });
         detail::multi_indirect_draw(call, data, *m_indirect_buffer);
     } else if(indirect_supported)
     {

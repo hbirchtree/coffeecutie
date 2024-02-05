@@ -132,6 +132,7 @@ void load_scenario_bsp(
 
                 bsp_ref.current_pass = shader_.get_render_pass(shader_cache);
             }
+        // break;
     }
 }
 
@@ -151,6 +152,7 @@ void load_objects(
     EntityRecipe parent;
     parent.components = {
         type_hash_v<Model>(),
+        type_hash_v<NetworkInfo>(),
         type_hash_v<ObjectSpawn>(),
         type_hash_v<DepthInfo>(),
     };
@@ -174,13 +176,16 @@ void load_objects(
     auto index   = blam::tag_index_view(data.container);
     auto palette = group.palette.data(magic).value();
 
-    auto instances = group.instances.data(magic).value();
+    auto instances   = group.instances.data(magic).value();
+    u32  instance_id = 0;
     for(T const& instance : instances)
     {
         if(instance.ref == -1 || !palette[instance.ref][0].valid())
             continue;
 
-        auto instance_it = index.find(palette[instance.ref][0]);
+        blam::tagref_t const& tagref = palette[instance.ref][0];
+
+        auto instance_it = index.find(tagref);
 
         if(instance_it == index.end())
             continue;
@@ -212,6 +217,10 @@ void load_objects(
         model.model  = mesh_data.models.at(0);
         model.initialize(&instance);
         depth.position = model.position;
+
+        NetworkInfo& netinfo = parent_.get<NetworkInfo>();
+        netinfo.object       = tagref;
+        netinfo.instance_id  = ++instance_id;
 
         for(auto const& model_ : mesh_data.models)
         {
@@ -261,6 +270,7 @@ void load_multiplayer_equipment(
     EntityRecipe equip;
     equip.components = {
         type_hash_v<Model>(),
+        type_hash_v<NetworkInfo>(),
         type_hash_v<MultiplayerSpawn>(),
     };
     equip.tags = tags;
@@ -273,6 +283,7 @@ void load_multiplayer_equipment(
     };
     submodel.tags = (tags & SubObjectMask) | ObjectMod2 | ObjectGC;
 
+    u32 instance_id = 0;
     for(blam::scn::multiplayer_equipment const& equipment_ref :
         equipment.value())
     {
@@ -307,6 +318,10 @@ void load_multiplayer_equipment(
                 spawn.collection = &item_coll;
                 model_.initialize(&equipment_ref);
                 model_.tag = &(*index.find(item.model));
+
+                NetworkInfo& netinfo = set.get<NetworkInfo>();
+                netinfo.object       = item_perm.item;
+                netinfo.instance_id  = ++instance_id;
 
                 ModelAssembly models = model_cache.predict_regions(
                     item.model.to_plain(), model_lod);
@@ -346,6 +361,27 @@ void load_multiplayer_equipment(
 }
 
 template<typename Version>
+void preload_player_bipeds(EntityContainer& e, MapChangedEvent<Version>& data)
+{
+    blam::tag_index_view tag_index(data.container);
+    ModelCache<Version>* model_cache;
+    e.subsystem(model_cache);
+
+    auto bipeds[2]
+        = {tag_index.find("characters\\cyborg_mp\\cyborg_mp"),
+           tag_index.find("characters\\cyborg\\cyborg")};
+    for(u32 i = 0; i < 2; ++i)
+    {
+        auto it = bipeds[i];
+        if(it == tag_index.end())
+            continue;
+        blam::scn::biped const* biped
+            = (*it).template data<blam::scn::biped>(data.container.magic);
+        model_cache->predict_regions(biped->model);
+    }
+}
+
+template<typename Version>
 void load_scenario_scenery(EntityContainer& e, MapChangedEvent<Version>& data)
 {
     ProfContext _(__FUNCTION__);
@@ -370,6 +406,14 @@ void load_scenario_scenery(EntityContainer& e, MapChangedEvent<Version>& data)
     load_objects(
         scenario->objects.scenery, data, e, ObjectScenery | PositioningStatic);
     load_objects(
+        scenario->objects.light_fixtures,
+        data,
+        e,
+        ObjectLightFixture | PositioningStatic);
+    load_objects(
+        scenario->objects.machines, data, e, ObjectDevice | PositioningStatic);
+
+    load_objects(
         scenario->objects.vehicles,
         data,
         e,
@@ -387,22 +431,16 @@ void load_scenario_scenery(EntityContainer& e, MapChangedEvent<Version>& data)
         e,
         ObjectEquipment | PositioningDynamic);
     load_objects(
-        scenario->objects.machines, data, e, ObjectDevice | PositioningStatic);
-    load_objects(
         scenario->objects.controls,
         data,
         e,
         ObjectControl | PositioningDynamic);
-    load_objects(
-        scenario->objects.light_fixtures,
-        data,
-        e,
-        ObjectLightFixture | PositioningStatic);
 
     if(data.container.map->map_type == blam::maptype_t::multiplayer)
     {
         load_multiplayer_equipment(
             data, e, ObjectEquipment | PositioningDynamic);
+        // scenario->mp.player_start_profiles;
     }
 
     blam::tag_index_view index(data.container);

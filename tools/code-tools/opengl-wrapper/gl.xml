@@ -6180,8 +6180,8 @@ typedef unsigned int GLhandleARB;
         <enum value="0x91AF" name="GL_PIXELS_PER_SAMPLE_PATTERN_Y_AMD"/>
         <enum value="0x91B0" name="GL_MAX_SHADER_COMPILER_THREADS_KHR"/>
         <enum value="0x91B0" name="GL_MAX_SHADER_COMPILER_THREADS_ARB" alias="GL_MAX_SHADER_COMPILER_THREADS_KHR"/>
-        <enum value="0x91B1" name="GL_COMPLETION_STATUS_KHR"/>
-        <enum value="0x91B1" name="GL_COMPLETION_STATUS_ARB" alias="GL_COMPLETION_STATUS_KHR"/>
+        <enum value="0x91B1" name="GL_COMPLETION_STATUS_KHR" group="ProgramPropertyARB"/>
+        <enum value="0x91B1" name="GL_COMPLETION_STATUS_ARB" alias="GL_COMPLETION_STATUS_KHR" group="ProgramPropertyARB"/>
         <enum value="0x91B2" name="GL_RENDERBUFFER_STORAGE_SAMPLES_AMD" group="RenderbufferParameterName"/>
         <enum value="0x91B3" name="GL_MAX_COLOR_FRAMEBUFFER_SAMPLES_AMD"/>
         <enum value="0x91B4" name="GL_MAX_COLOR_FRAMEBUFFER_STORAGE_SAMPLES_AMD"/>

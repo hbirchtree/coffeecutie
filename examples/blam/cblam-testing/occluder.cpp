@@ -22,27 +22,25 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
 
     void start_restricted(Proxy& p, time_point const&)
     {
-
-        BSPCache<V>* bsp_cache;
-        BlamCamera*  camera;
+        BSPCache<V>*   bsp_cache;
+        BlamCamera*    camera;
         BlamResources* resources;
         p.subsystem(bsp_cache);
         p.subsystem(camera);
         p.subsystem(resources);
 
-        auto camera_pos = -camera->camera.position;
+        auto camera_pos = -camera->player(0).camera.position;
 
-        for(auto& ent : p.select(ObjectBsp))
-        {
-            auto          ref     = p.template ref<Proxy>(ent);
-            BspReference& bsp_ref = ref.template get<BspReference>();
-
-        }
+        // for(auto& ent : p.select(ObjectBsp))
+        // {
+        //     auto          ref     = p.template ref<Proxy>(ent);
+        //     BspReference& bsp_ref = ref.template get<BspReference>();
+        // }
 
         return;
 
         Span<Vecf3> portal_colors = resources->debug_line_colors->map<Vecf3>(0);
-        Span<Vecf3> portal_pos = resources->debug_lines->map<Vecf3>(72, 72);
+        Span<Vecf3> portal_pos    = resources->debug_lines->map<Vecf3>(72, 72);
 
         portal_pos[0] = camera_pos;
         portal_pos[1] = camera_pos + Vecf3{5, 0, 5};
@@ -54,7 +52,7 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         resources->debug_lines->unmap();
 
         BSPItem const* current_bsp{nullptr};
-//        u32            current_cluster{0};
+        u32            current_cluster{0};
 
         for(auto& ent : p.select(ObjectBsp))
         {
@@ -66,12 +64,11 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                 for(auto const& sub : cluster.sub)
                     portal_colors[sub.debug_color_idx] = Vecf3(1, 0, 0);
 
-            if(auto cluster = bsp.find_cluster(camera_pos);
-               cluster.has_value())
+            if(auto cluster = bsp.find_cluster(camera_pos); cluster.has_value())
             {
                 auto [cluster_, sub_] = cluster.value();
                 current_bsp           = &bsp;
-//                current_cluster       = cluster_;
+                current_cluster       = cluster_;
                 bsp_ref.visible       = true;
                 auto const& sub       = bsp.clusters.at(cluster_).sub.at(sub_);
                 portal_colors[sub.debug_color_idx] = Vecf3(0, 1, 0);
@@ -93,14 +90,14 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
 
         for(auto& ent : p.select(PositioningStatic))
         {
-            auto   ref      = p.template ref<Proxy>(ent);
-            Model& model    = ref.template get<Model>();
+            auto   ref   = p.template ref<Proxy>(ent);
+            Model& model = ref.template get<Model>();
             if(auto cluster = current_bsp->find_cluster(-model.position);
                !cluster.has_value())
                 model.visible = false;
             else
-//                model.visible = cluster.value().first == current_cluster;
-                model.visible = true;
+                model.visible = cluster.value().first == current_cluster;
+            // model.visible = true;
         }
     }
     void end_restricted(Proxy&, time_point const&)

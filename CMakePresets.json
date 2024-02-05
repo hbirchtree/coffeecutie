@@ -20,8 +20,8 @@
                 "VCPKG_MANIFEST_FEATURES": "$penv{TARGET_FEATURES}"
             },
             "environment": {
-                "GLSLANG_PROGRAM": "$env{HOST_TOOLS_DIR}/tools/glslang/glslangValidator",
-                "FLATC_PROGRAM": "$env{HOST_TOOLS_DIR}/tools/flatbuffers/flatc",
+                "GLSLANG_PROGRAM": "$env{HOST_TOOLS_DIR}/glslang/glslangValidator",
+                "FLATC_PROGRAM": "$env{HOST_TOOLS_DIR}/flatbuffers/flatc",
                 "VCPKG_ROOT": "$penv{VCPKG_ROOT}"
             }
         },
@@ -54,7 +54,7 @@
                 "MKSQUASH_PROGRAM": "/usr/bin/mksquashfs",
                 "NINJA": "$penv{NINJA}",
                 "TOOLCHAIN_PREFIX": "$env{ARCHITECTURE}",
-                "TOOLCHAIN_VERSION": "v2.1.0",
+                "TOOLCHAIN_VERSION": "v2.1.1",
                 "TOOLCHAIN_ROOT": "${sourceDir}/multi_build/compilers/$env{PLATFORM}-$env{ARCHITECTURE}/$env{TOOLCHAIN_VERSION}",
                 "TOOLCHAIN_SYSROOT": "$env{TOOLCHAIN_ROOT}/$env{TOOLCHAIN_PREFIX}/sysroot",
                 "VCPKG_INSTALL_DIR": "${sourceDir}/multi_build/${presetName}/vcpkg_installed/$env{PLATFORM}-$env{ARCHITECTURE}"

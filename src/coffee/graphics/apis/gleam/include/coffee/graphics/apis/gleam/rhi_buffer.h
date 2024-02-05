@@ -19,16 +19,19 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
     buffer_t(
         features::buffers features,
         workarounds       workarounds,
+        usage&            usage,
         buffers::type     type,
         semantic::RSCA    access) :
         m_features(features),
-        m_workarounds(workarounds), m_type(type), m_access(access)
+        m_workarounds(workarounds), m_usage(usage), m_type(type),
+        m_access(access)
     {
     }
 
     inline bool immutable()
     {
-        return (m_access & semantic::RSCA::Immutable) != semantic::RSCA::None;
+        return (m_access & semantic::RSCA::Immutable) != semantic::RSCA::None
+               && !m_workarounds.buffer.disable_immutable_buffers;
     }
 
     inline bool slow_mapping_optimization()
@@ -99,6 +102,7 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
                 null_span<>{size},
                 convert::to<group::buffer_usage_arb>(m_features, m_access));
         }
+        m_usage.buffers.uploads++;
     }
 
     template<typename Span>
@@ -145,6 +149,8 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
             cmd::buffer_data(
                 convert::to(m_type), data, convert::to(m_features, m_access));
         }
+        m_usage.buffers.upload_data += data.size();
+        m_usage.buffers.uploads++;
     }
 
     template<typename Span>
@@ -161,6 +167,8 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
         {
             cmd::bind_buffer(convert::to(m_type), m_handle);
             cmd::buffer_sub_data(convert::to(m_type), offset, data);
+            m_usage.buffers.upload_data += data.size();
+            m_usage.buffers.uploads++;
         } else
         {
             // TODO: Implement partial update
@@ -194,6 +202,8 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
                     actual_size,
                     convert::to<group::map_buffer_access_mask>(
                         m_features, m_access, actual_size == buffer_size));
+                m_usage.buffers.mapped_data += actual_size;
+                m_usage.buffers.mappings++;
                 break;
             }
 #endif
@@ -217,6 +227,8 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
                     actual_size,
                     convert::to<group::map_buffer_access_mask>(
                         m_features, m_access, actual_size == buffer_size));
+                m_usage.buffers.mapped_data += actual_size;
+                m_usage.buffers.mappings++;
                 break;
             }
 #endif
@@ -230,6 +242,8 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
                     convert::to<group::buffer_access_arb>(
                         m_features, m_access));
                 pointer = reinterpret_cast<char*>(pointer) + offset;
+                m_usage.buffers.mapped_data += buffer_size;
+                m_usage.buffers.mappings++;
                 break;
             }
 #endif
@@ -355,6 +369,7 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
     std::optional<size_t>     m_cached_size;
     features::buffers         m_features;
     workarounds               m_workarounds;
+    usage&                    m_usage;
     buffers::type             m_type;
     semantic::RSCA            m_access;
     semantic::Span<std::byte> m_pointer_all;
@@ -401,6 +416,7 @@ struct buffer_slice_t
 
     inline bool realize_contents()
     {
+        /* TODO: Optimize this on WebGL2 as copyBufferSubData? */
         auto parent = m_parent.lock();
         if(!parent || !parent->slow_mapping_optimization())
             return false;
@@ -410,6 +426,8 @@ struct buffer_slice_t
             buffer(),
             convert::to<group::buffer_usage_arb>(
                 parent->m_features, parent->m_access));
+        parent->m_usage.buffers.upload_data += m_size;
+        parent->m_usage.buffers.uploads++;
         cmd::bind_buffer(convert::to(parent->m_type), 0);
         return true;
     }

@@ -138,14 +138,14 @@ struct Model
     template<typename T>
     void initialize(T const* spawn)
     {
-        position  = spawn->pos;
+        position = spawn->pos;
         rotation = spawn_rotation_to_quat(spawn);
         update_matrix();
     }
     void update_matrix()
     {
-        transform = glm::translate(Matf4(1), position)
-                    * glm::mat4_cast(rotation);
+        transform
+            = glm::translate(Matf4(1), position) * glm::mat4_cast(rotation);
     }
 };
 
@@ -372,7 +372,7 @@ struct DepthInfo
 struct PhysicsData
 {
     using value_type = PhysicsData;
-    using type = compo::alloc::VectorContainer<PhysicsData>;
+    using type       = compo::alloc::VectorContainer<PhysicsData>;
 
     Vecf3 velocity;
     Vecf3 acceleration;
@@ -383,14 +383,25 @@ struct PhysicsData
 struct NetworkInfo
 {
     using value_type = NetworkInfo;
-    using type = compo::alloc::VectorContainer<value_type>;
+    using type       = compo::alloc::VectorContainer<value_type>;
 
-    std::string object_name;
+    blam::tagref_t object;
+    u32            instance_id{0};
 
     struct
     {
-        bool transform:1;
+        bool transform : 1;
     } changes;
+};
+
+struct PlayerInfo
+{
+    using value_type = PlayerInfo;
+    using type       = compo::alloc::VectorContainer<value_type>;
+
+    std::string name;
+    std::string remote;
+    /* Maybe stash some more info here in the future */
 };
 
 enum ObjectTags : u64
@@ -415,6 +426,8 @@ enum ObjectTags : u64
     PositioningDynamic    = PositioningStatic << 1,
     PositioningBackground = PositioningStatic << 2,
     ObjectGC              = 0x8000000, /* Erased on map load */
+    PlayerBiped           = 0x10000000,
 
-    SubObjectMask      = 0xFFFFF,
+    SubObjectMask   = 0x00FFFFF,
+    PositioningMask = 0xF000000,
 };

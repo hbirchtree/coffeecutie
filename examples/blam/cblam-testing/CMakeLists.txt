@@ -9,7 +9,7 @@ find_program ( INKSCAPE_PROGRAM inkscape
     PATH_SUFFIXES
         bin
     )
-find_package(GameNetworkingSockets CONFIG REQUIRED)
+find_package(GameNetworkingSockets CONFIG)
 
 add_custom_target (
   BlamGraphics.Assets
@@ -52,7 +52,9 @@ coffee_application(
         touch_overlay.cpp
         ui.cpp
         widgets.cpp
-  LIBRARIES Blam Core Image GLeamRHI ImGui GameNetworkingSockets::GameNetworkingSockets_s
+  LIBRARIES Blam Core Image GLeamRHI ImGui
+  SCHEMES blam halo
+  ICON_ASSET ${CMAKE_CURRENT_SOURCE_DIR}/icon_asset.svg
   RESOURCES "${CMAKE_CURRENT_BINARY_DIR}/assets"
 )
 add_dependencies(BlamGraphics BlamGraphics.Assets)
@@ -66,11 +68,20 @@ set_target_properties(
   BlamGraphics
   PROPERTIES EMSCRIPTEN_THREADPOOL_SIZE 3
              EMSCRIPTEN_GROWABLE_MEMORY OFF
-             EMSCRIPTEN_HEAP_SIZE 512
+             EMSCRIPTEN_HEAP_SIZE 1024
 )
 
 if(TARGET ASIO)
   target_link_libraries(BlamGraphics PUBLIC ASIO)
+endif()
+if(TARGET DiscordLatte)
+    target_link_libraries(BlamGraphics PUBLIC DiscordLatte)
+endif()
+if(GameNetworkingSockets_FOUND)
+    target_link_libraries(BlamGraphics PUBLIC
+        GameNetworkingSockets::GameNetworkingSockets_s
+    )
+    target_compile_definitions(BlamGraphics PUBLIC -DUSE_NETWORKING=1)
 endif()
 
 # coffee_application(

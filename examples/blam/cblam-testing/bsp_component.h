@@ -141,16 +141,36 @@ struct BlamBspWidget
                     e.subsystem(camera);
 
                     ImGui::Text("Camera properties");
+                    if(ImGui::BeginCombo(
+                           "Selected camera",
+                           camera->focused_player == 0   ? "Player 0"
+                           : camera->focused_player == 1 ? "Player 1"
+                           : camera->focused_player == 2 ? "Player 2"
+                           : camera->focused_player == 3 ? "Player 3"
+                                                         : "Unknown"))
+                    {
+                        for(auto i : range<>(4))
+                        {
+                            auto label = fmt::format("Player {}", i);
+                            if(ImGui::Selectable(label.c_str()))
+                            {
+                                camera->focused_player   = i;
+                                camera->player(i).active = true;
+                            }
+                        }
+                        ImGui::EndCombo();
+                    }
                     ImGui::Columns(2);
                     ImGui::Text("Position");
                     ImGui::NextColumn();
+                    auto& player = camera->player(camera->focused_player);
                     ImGui::Text(
                         "vec3(%f, %f, %f)",
-                        camera->camera.position[0],
-                        camera->camera.position[1],
-                        camera->camera.position[2]);
+                        player.camera.position[0],
+                        player.camera.position[1],
+                        player.camera.position[2]);
                     ImGui::SliderFloat(
-                        "FOV", &camera->camera.fieldOfView, 10.f, 120.f);
+                        "FOV", &player.camera.fieldOfView, 10.f, 120.f);
                     ImGui::SliderFloat("Gamma", &postprocess->gamma, 0.1, 5.0);
                     ImGui::SliderFloat(
                         "Exposure", &postprocess->exposure, -10.f, 10.f);

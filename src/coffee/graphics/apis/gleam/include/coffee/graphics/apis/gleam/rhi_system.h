@@ -2,6 +2,7 @@
 
 #include <coffee/comp_app/services.h>
 #include <coffee/components/subsystem.h>
+#include <coffee/core/debug/formatting.h>
 
 #include "rhi.h"
 #include "rhi_context.h"
@@ -38,10 +39,44 @@ class system : public compo::RestrictedSubsystem<system, system_manifest>,
                            == gleam::context::api::strategy::lose_on_reset;
     }
 
-    void start_restricted(Proxy& e, time_point const&)
+    void start_restricted(Proxy& e, time_point const& ts)
     {
+        using namespace std::chrono_literals;
+        using namespace Coffee::Logging;
+
         activate_resize(e);
         check_context();
+
+        if(m_next_stats < ts)
+        {
+            gleam::usage const& usage = this->usage();
+            cDebug(
+                "gleam operations: "
+                "draws: {} draws, {} instances, {} failed draws, "
+                "{} triangles, {} triangle strips, {} other prims; "
+                "buffers: {} transfers, {} bytes transferred, "
+                "{} mappings, {} bytes mapped; "
+                "textures: {} allocations, {} uploads, {} bytes transferred; ",
+                usage.draw.draws,
+                usage.draw.instances,
+                usage.draw.failed_draws,
+                usage.draw.triangles,
+                usage.draw.triangle_strips,
+                usage.draw.other_prims,
+                // buffer info
+                usage.buffers.uploads,
+                usage.buffers.upload_data,
+                usage.buffers.mappings,
+                usage.buffers.mapped_data,
+                // texture info
+                0,
+                usage.texture.texture_uploads,
+                0
+                //
+                );
+            m_next_stats = ts + 1s;
+        }
+        this->usage() = {};
     }
     void end_restricted(Proxy&, time_point const&)
     {
@@ -76,8 +111,8 @@ class system : public compo::RestrictedSubsystem<system, system_manifest>,
 
     void activate_resize(Proxy& e)
     {
-//        if constexpr(compile_info::platform::is_emscripten)
-//            return;
+        //        if constexpr(compile_info::platform::is_emscripten)
+        //            return;
 
         if(auto fb = e.service<comp_app::GraphicsFramebuffer>())
         {
@@ -88,7 +123,7 @@ class system : public compo::RestrictedSubsystem<system, system_manifest>,
                 return;
             default_rendertarget()->resize({0, 0, size.w, size.h});
             m_viewport_not_set = false;
-            m_last_size = size;
+            m_last_size        = size;
         }
     }
 
@@ -102,13 +137,14 @@ class system : public compo::RestrictedSubsystem<system, system_manifest>,
         if(lost_state == reset_status::no_error)
             return;
 
-//        auto state_string = magic_enum::enum_name(lost_state);
+        //        auto state_string = magic_enum::enum_name(lost_state);
         // TODO: Trigger a reload
         Throw(undefined_behavior("context lost"));
-//            std::string(state_string.begin(), state_string.end())));
+        //            std::string(state_string.begin(), state_string.end())));
     }
 
     comp_app::size_2d_t m_last_size;
+    time_point          m_next_stats{};
 };
 
 } // namespace gleam

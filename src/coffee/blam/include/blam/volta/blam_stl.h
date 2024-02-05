@@ -131,9 +131,9 @@ struct map_container
         return map->full_mapname();
     }
 
-    operator std::string_view() const
+    inline std::string_view internal_name() const
     {
-        return name();
+        return map->name;
     }
 
     template<typename T>
@@ -188,6 +188,7 @@ class tag_index_view
     }
 
     template<tag_class_t... Class>
+    /*! Efficient binary search through the tags */
     iterator find(tagref_typed_t<Class...> const& tag) const
     {
         /* TODO: Add tag validation */
@@ -196,6 +197,7 @@ class tag_index_view
         return find(tag_unwrapped);
     }
 
+    /*! Efficient binary search through the tags */
     iterator find(tagref_t const& tag) const
     {
         if(tag.unknown != 0)
@@ -204,6 +206,7 @@ class tag_index_view
         return find(tag.tag_id);
     }
 
+    /*! Efficient binary search through the tags */
     iterator find(u32 tag_id) const
     {
         /* Tag index has sequential tag IDs, allowing binary search */
@@ -238,10 +241,23 @@ class tag_index_view
         return end();
     }
 
-    template<typename T>
-    std::optional<T const*> data(tagref_t const& tag) const
+    /*! Sequential search of tags based on tag name */
+    iterator find(std::string_view name) const
     {
-        auto it = find(tag);
+        for(iterator it = begin(); it != end(); ++it)
+        {
+            auto it_name = (*it).to_name().to_string(m_magic);
+            if(it_name == name)
+                return it;
+        }
+
+        return end();
+    }
+
+    template<typename T, typename Key>
+    std::optional<T const*> data(Key const& key) const
+    {
+        auto it = find(key);
         if(it == end())
             return std::nullopt;
         auto out = (*it).template data<T>(m_magic);

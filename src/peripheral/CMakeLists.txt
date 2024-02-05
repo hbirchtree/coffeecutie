@@ -31,25 +31,6 @@ if(BUILD_ASAN)
   target_link_options(PeripheralLib PUBLIC -fsanitize=address)
 endif()
 
-if(EMSCRIPTEN)
-  if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-    target_compile_options(PeripheralLib PUBLIC -gsource-map)
-    target_link_options(
-      PeripheralLib PUBLIC -gsource-map -sDEMANGLE_SUPPORT=1 -sASSERTIONS=1
-    )
-  elseif("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
-    target_compile_options(
-      PeripheralLib PUBLIC -gsource-map -O1 # -sDEMANGLE_SUPPORT=1
-    )
-    target_link_options(
-      PeripheralLib PUBLIC -gsource-map -O1 -sDEMANGLE_SUPPORT=1 -sASSERTIONS=1
-    )
-  else()
-    target_compile_options(PeripheralLib PUBLIC -O3)
-    target_link_options(PeripheralLib PUBLIC -O3)
-  endif()
-endif()
-
 # ##############################################################################
 # Base system libraries
 # ##############################################################################
@@ -131,9 +112,26 @@ elseif(APPLE)
                          "-framework CoreFoundation" "-framework Foundation" m
   )
 elseif(EMSCRIPTEN)
+  if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+    target_compile_options(PeripheralLib PUBLIC -gsource-map)
+    target_link_options(
+      PeripheralLib PUBLIC -gsource-map -sDEMANGLE_SUPPORT=1 -sASSERTIONS=1
+    )
+  elseif("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
+    target_compile_options(
+      PeripheralLib PUBLIC -gsource-map -O1 # -sDEMANGLE_SUPPORT=1
+    )
+    target_link_options(
+      PeripheralLib PUBLIC -gsource-map -O1 -sDEMANGLE_SUPPORT=1 -sASSERTIONS=1
+    )
+  else()
+    target_compile_options(PeripheralLib PUBLIC -O3)
+    target_link_options(PeripheralLib PUBLIC -O3)
+  endif()
   target_compile_options(
     PeripheralLib
     PUBLIC
+    -msimd128
     -fwasm-exceptions
     -fPIC
     -pthread
@@ -142,6 +140,7 @@ elseif(EMSCRIPTEN)
   target_link_options(
     PeripheralLib
     PUBLIC
+    -msimd128
     -fwasm-exceptions
     -fPIC
     -flto

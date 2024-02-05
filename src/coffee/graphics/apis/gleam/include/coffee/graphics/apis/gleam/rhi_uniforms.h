@@ -35,7 +35,7 @@ struct shader_bookkeeping_t
 };
 
 inline i32 get_program_uniform_location(
-    program_t const&              program,
+    program_t&                    program,
     typing::graphics::ShaderStage stage,
     uniform_key const&            key)
 {
@@ -43,6 +43,10 @@ inline i32 get_program_uniform_location(
     auto const& features  = program.m_features;
     if(ulocation != invalid_uniform && features.uniform_location)
         return ulocation;
+
+    if(auto it = program.m_uniform_locations.find(std::string(key.name));
+       it != program.m_uniform_locations.end())
+        return it->second;
 
     if(features.separable_programs)
     {
@@ -55,6 +59,8 @@ inline i32 get_program_uniform_location(
             stageprogram->second->m_handle, key.name);
     } else
         ulocation = cmd::get_uniform_location(program.m_handle, key.name);
+
+    program.m_uniform_locations[std::string(key.name)] = ulocation;
 
     //    if(ulocation == invalid_uniform)
     //        Throw(uniform_location_undefined(
@@ -80,7 +86,7 @@ inline i32 get_program_buffer_location(
 
 template<typename T, int Num>
 inline bool apply_single_uniform(
-    program_t const&                                            program,
+    program_t&                                                  program,
     typing::graphics::ShaderStage                               stage,
     uniform_pair<const typing::vectors::tmatrix<T, Num>> const& uniform)
 {
@@ -105,7 +111,7 @@ inline bool apply_single_uniform(
 
 template<typename T, int Num>
 inline bool apply_single_uniform(
-    program_t const&                                            program,
+    program_t&                                                  program,
     typing::graphics::ShaderStage                               stage,
     uniform_pair<const typing::vectors::tvector<T, Num>> const& uniform)
 {
@@ -129,7 +135,7 @@ template<typename T>
 requires(std::is_floating_point_v<T> || std::is_integral_v<T>)
     //
     inline bool apply_single_uniform(
-        program_t const&              program,
+        program_t&                    program,
         typing::graphics::ShaderStage stage,
         uniform_pair<const T> const&  uniform)
 {
@@ -152,7 +158,7 @@ requires(std::is_floating_point_v<T> || std::is_integral_v<T>)
 template<typename S, typename... UType>
 requires semantic::concepts::graphics::detail::is_uniform_stage<S, UType...>
 inline bool apply_command_modifier(
-    program_t const& program,
+    program_t& program,
     shader_bookkeeping_t& /*bookkeeping*/,
     std::tuple<S, UType...>& uniforms)
 {
@@ -181,7 +187,7 @@ inline void undo_command_modifier(
 }
 
 inline bool apply_command_modifier(
-    program_t const& program,
+    program_t& program,
     shader_bookkeeping_t& /*bookkeeping*/,
     [[maybe_unused]] buffer_list&                       buffer_info,
     [[maybe_unused]] std::optional<std::pair<u32, u32>> span = {})
@@ -197,24 +203,48 @@ inline bool apply_command_modifier(
 
         const bool slow_map_opt = buffer.realize_contents();
 
+        auto offset = buffer.m_offset;
+        auto size   = buffer.m_size;
+
+        u32 ubo_override_size = 0;
+
         if(buffer.m_type == buffers::type::constants)
         {
-            /* TODO: Cache blk_idx, slap it in a map<pair<prog, name>, idx> */
-            auto blk_idx = cmd::get_uniform_block_index(
-                program.m_handle, buffer_def.key.name);
+            u32 blk_idx  = 0;
+            i32 blk_size = 0;
+            if(auto it = program.m_buffer_locations.find(
+                   std::string(buffer_def.key.name));
+               it == program.m_buffer_locations.end())
+            {
+                blk_idx = cmd::get_uniform_block_index(
+                    program.m_handle, buffer_def.key.name);
+                cmd::get_active_uniform_blockiv(
+                    program.m_handle,
+                    blk_idx,
+                    group::uniform_block_prop::uniform_block_data_size,
+                    semantic::SpanOne(blk_size));
+                program.m_buffer_locations[std::string(buffer_def.key.name)]
+                    = {blk_idx, blk_size};
+            } else
+                std::tie(blk_idx, blk_size) = it->second;
             if(blk_idx == std::numeric_limits<u32>::max())
                 continue;
             cmd::uniform_block_binding(program.m_handle, blk_idx, binding);
-        }
 
-        auto offset = buffer.m_offset;
-        auto size   = buffer.m_size;
+            /* For UBOs it is unspecified to use a size smaller than
+             * what the shader specifies */
+            if(blk_size > 0)
+                ubo_override_size = blk_size;
+        }
 
         if(span.has_value() && buffer_def.stride != 0)
         {
             auto span_ = *span;
             offset += buffer_def.stride * span_.first;
-            size = buffer_def.stride * span_.second;
+            if(ubo_override_size > 0)
+                size = ubo_override_size;
+            else
+                size = buffer_def.stride * span_.second;
         }
 
         /* In this case, we only put the part we're using in the actual buffer
@@ -262,7 +292,7 @@ inline void apply_texture_filtering_opts(
 }
 
 inline void apply_sampler_uniform(
-    program_t const&              program,
+    program_t&                    program,
     typing::graphics::ShaderStage stage,
     uniform_key const&            key,
     u32                           index)
@@ -276,7 +306,7 @@ inline void apply_sampler_uniform(
 }
 
 inline bool apply_command_modifier(
-    program_t const&      program,
+    program_t&            program,
     shader_bookkeeping_t& bookkeeping,
     sampler_list&         samplers)
 {
@@ -355,7 +385,7 @@ inline void undo_command_modifier(
 }
 
 inline bool apply_command_modifier(
-    program_t const&      program,
+    program_t&            program,
     shader_bookkeeping_t& bookkeeping,
     texture_list&         textures)
 {
@@ -625,6 +655,8 @@ inline bool apply_command_modifier(
             return group::stencil_op::incr;
         case op_t::decrement:
             return group::stencil_op::decr;
+        default:
+            return group::stencil_op::keep;
         }
     };
     const auto cond_to_enum = [](stencil_state::condition_t cond) {
@@ -647,6 +679,8 @@ inline bool apply_command_modifier(
             return group::stencil_function::greater;
         case cond_t::nequal:
             return group::stencil_function::notequal;
+        default:
+            return group::stencil_function::always;
         }
     };
 

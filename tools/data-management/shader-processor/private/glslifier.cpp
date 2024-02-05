@@ -97,8 +97,8 @@ stl_types::result<std::string, glsl_error> generate(
         to_execution_model(input.stage));
     spirv_cross::CompilerGLSL::Options opts;
 
-    opts.es      = output.profile == profile_t::es;
-    opts.version = output.version;
+    opts.es                   = output.profile == profile_t::es;
+    opts.version              = output.version;
 
     opts.vertex.support_nonzero_base_instance = false;
 

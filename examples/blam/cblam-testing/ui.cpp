@@ -40,9 +40,9 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
     struct instance_vertex_t
     {
         Vecf4                        color;
-        Vecf4                        tex_scale_offset;
-        typing::vector_types::Vecui4 texture_source;
-        u32                          padding[4];
+        Vecf4                        tex_scale_offset{};
+        typing::vector_types::Vecui4 texture_source{};
+        u32                          padding[4] = {};
     };
     struct atlas_intermediate_t
     {
@@ -212,7 +212,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         }
     }
 
-    void start_restricted(Proxy& e, time_point const&)
+    void start_restricted(Proxy& /*e*/, time_point const&)
     {
     }
 
@@ -237,11 +237,11 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         /* Used for anything that docks to any of the corners/sides
          * TODO: Correct scale for aspect ratio
          */
-        f32  full_screen_basis = (480.f * aspect) / 2.f;
-        auto full_screen_scale = glm::translate(
-            glm::scale(
-                Matf3(1), Vecf2{aspect / full_screen_basis, 1.f / 240.f}),
-            Vecf2{-full_screen_basis, -240.f});
+        // f32  full_screen_basis = (480.f * aspect) / 2.f;
+        // auto full_screen_scale = glm::translate(
+        //     glm::scale(
+        //         Matf3(1), Vecf2{aspect / full_screen_basis, 1.f / 240.f}),
+        //     Vecf2{-full_screen_basis, -240.f});
 
         std::vector<vertex_t>          vertex_data;
         std::vector<instance_vertex_t> instance_vertex_data;
@@ -346,7 +346,7 @@ void load_ui_items(
 {
     auto& fonts       = e.subsystem_cast<FontCache<halo_version>>();
     auto& ui_elements = e.subsystem_cast<UIElementCache<halo_version>>();
-    auto& ui_renderer = e.subsystem_cast<UIRenderer>();
+    // auto& ui_renderer = e.subsystem_cast<UIRenderer>();
 
     fonts.load_from(data.container);
     ui_elements.load_from(data.container);

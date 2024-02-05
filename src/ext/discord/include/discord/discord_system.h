@@ -63,14 +63,16 @@ struct Subsystem : compo::SubsystemBase
         return *m_service;
     }
 
-    platform::online::PresenceDelegate& presence()
+    discord::DiscordPresenceDelegate& presence()
     {
-        return *m_service->getPresence();
+        return *std::static_pointer_cast<DiscordPresenceDelegate>(
+            m_service->getPresence());
     }
 
-    platform::online::GameDelegate& game()
+    discord::DiscordGameDelegate& game()
     {
-        return *m_service->getGame();
+        return *std::static_pointer_cast<DiscordGameDelegate>(
+            m_service->getGame());
     }
 
     platform::online::Service const& service() const

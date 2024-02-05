@@ -408,7 +408,7 @@ struct EntityContainer : stl_types::non_copy
     ServiceRef<Service> service_ref();
 
     template<class BaseType, bool Reversed = false>
-    quick_container<service_query<BaseType, Reversed>> services_with();
+    service_query<BaseType, Reversed> services_with();
 
     template<class BaseType>
     auto services_with(reverse_query_t);
@@ -470,10 +470,10 @@ struct EntityContainer : stl_types::non_copy
     u64                 entity_counter; /*!< For enumerating entities */
     std::vector<Entity> entities;
 
-    std::map<type_hash, std::unique_ptr<ComponentContainerBase>> components;
-    std::map<type_hash, std::unique_ptr<SubsystemBase>>          subsystems;
+    std::unordered_map<type_hash, std::unique_ptr<ComponentContainerBase>> components;
+    std::unordered_map<type_hash, std::unique_ptr<SubsystemBase>>          subsystems;
     std::vector<std::unique_ptr<EntityVisitorBase>>              visitors;
-    std::map<type_hash, SubsystemBase*>                          services;
+    std::unordered_map<type_hash, SubsystemBase*>                          services;
 
     clock::duration time_offset;
 

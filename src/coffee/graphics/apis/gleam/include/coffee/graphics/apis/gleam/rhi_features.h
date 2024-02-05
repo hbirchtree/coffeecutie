@@ -11,6 +11,9 @@ enum class error
     no_program,
     no_data,
 
+    async_shader_compile_failed,
+    program_error_state,
+
     refuse_bad_es20_impl,
     refuse_version_too_low,
     no_emulation_native_version_low,
@@ -21,6 +24,8 @@ enum class error
     draw_no_element_buffer,
     draw_no_elements,
     draw_no_arrays,
+    draw_too_many_elements,
+    draw_too_many_vertices,
     draw_unsupported_call,
     no_implementation_for_draw_call,
 };
@@ -56,6 +61,11 @@ struct features
         {
             bool debug{false};
         } khr;
+        struct
+        {
+            bool unmasked_vendors{false};
+            bool debug_shaders{false};
+        } webgl;
     };
     struct drawing
     {
@@ -78,6 +88,10 @@ struct features
         bool uniform_location{false};
         bool compute{false};
         bool spirv{false};
+        struct
+        {
+            bool parallel_shader_compile{false};
+        } khr;
     };
     struct queries
     {
@@ -88,10 +102,16 @@ struct features
     {
         bool clearbuffer{true};
         bool dsa{false};
-        bool framebuffer_parameter{true};
-        bool framebuffer_texture{true};
+        bool framebuffer_parameter{false};
+        bool framebuffer_texture{false};
         bool indexed{false};
         bool readdraw_buffers{true};
+
+        /* Format support */
+        bool color_buffer_float{false};
+        bool color_buffer_half_float{false};
+        bool depth_16f{false};
+        bool depth_32f{false};
 
         struct
         {
@@ -116,6 +136,7 @@ struct features
         bool samplers{true};
         bool sampler_binding{false};
         bool storage{false};
+        bool swizzle{true};
         bool texture_3d{true};
         bool tex_layer_query{true};
         bool views{false};
@@ -214,6 +235,7 @@ struct workarounds
     {
         bool emulated_mapbuffer{false};
         bool slow_mapbuffer{false};
+        bool disable_immutable_buffers{false};
     } buffer;
     struct
     {
@@ -233,11 +255,19 @@ struct usage
     {
         u32 draws{0};
         u32 instances{0};
+
+        u64 triangles{0};
+        u64 triangle_strips{0};
+        u64 other_prims{0};
+
+        u32 failed_draws{0};
     } draw;
     struct
     {
-        u32 buffer_uploads{0};
-        u32 buffer_mappings{0};
+        u32 uploads{0};
+        u32 mappings{0};
+        u64 upload_data{0};
+        u64 mapped_data{0};
     } buffers;
     struct
     {

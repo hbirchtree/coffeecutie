@@ -32,9 +32,9 @@ void error_check(std::string_view cmd_name)
             else
                 out.append(stl_types::str::fmt::pointerify(
                     static_cast<libc_types::u32>(error)));
-            if constexpr(compile_info::platform::is_emscripten)
-                return;
-            return;
+            // if constexpr(compile_info::platform::is_emscripten)
+            //     return;
+            // return;
             Throw(undefined_behavior(out));
         }
     }

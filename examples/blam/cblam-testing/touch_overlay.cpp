@@ -70,7 +70,7 @@ void TouchOverlay::end_restricted(Proxy& proxy, const time_point&)
     BlamCamera* camera;
     proxy.subsystem(camera);
 
-    camera->std_camera->move(move_displacement.y, -move_displacement.x, 0);
+    camera->player(0).camera_->move(move_displacement.y, -move_displacement.x, 0);
 //    camera->std_camera->rotate(look_displacement.y, look_displacement.x);
 }
 

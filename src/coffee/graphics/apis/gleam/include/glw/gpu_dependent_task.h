@@ -21,15 +21,15 @@ struct gpu_dependent_task : rq::dependent_task<Dependency, Out, Moveable>
     {
         if(rq::dependent_task<Dependency, Out, Moveable>::cancelled())
             return true;
-        using glw
-            = std::conditional_t<gl::core::enabled, gl::core::v33, gl::es::v30>;
+        using glw =
+            std::conditional_t<gl::core::enabled, gl::core::v33, gl::es::v30>;
         return !glw::is_sync(fence);
     }
 
     bool gpu_ready()
     {
-        using glw
-            = std::conditional_t<gl::core::enabled, gl::core::v33, gl::es::v30>;
+        using glw =
+            std::conditional_t<gl::core::enabled, gl::core::v33, gl::es::v30>;
         using namespace std::chrono_literals;
 
         if(rq::detail::clock::now() <= next_check)

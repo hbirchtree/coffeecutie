@@ -13,9 +13,13 @@
 #include <coffee/comp_app/fps_counter.h>
 #include <coffee/core/coffee_args.h>
 #include <coffee/graphics/apis/gleam/rhi_emulation.h>
+#include <platforms/sysinfo.h>
 
 #if defined(FEATURE_ENABLE_ASIO)
 #include <coffee/asio/net_profiling.h>
+#endif
+#if defined(FEATURE_ENABLE_DiscordLatte)
+#include <discord/discord_system.h>
 #endif
 
 using namespace Coffee;
@@ -34,6 +38,15 @@ i32 blam_main()
             "Blam! Graphics", "A prototype for a Blam! engine");
         Coffee::BaseArgParser::GetBase(options);
         options.positional_help("map name or directory");
+        options.add_options("networking")
+            //
+            ("server",
+             "Server to connect to on startup",
+             cxxopts::value<std::string>())
+            //
+            ("listen",
+             "Interface to start a server on",
+             cxxopts::value<std::string>());
         auto& args = GetInitArgs();
         arguments  = options.parse(args.size(), args.data());
         if(BaseArgParser::PerformDefaults(options, args) >= 0)
@@ -65,11 +78,11 @@ i32 blam_main()
     auto& glConfig        = loader.config<comp_app::GLConfig>();
     glConfig.swapInterval = 1;
     if constexpr(
-        compile_info::debug_mode && !compile_info::platform::is_emscripten)
+        compile_info::debug_mode || compile_info::platform::is_emscripten)
     {
-        // glConfig.profile |= comp_app::GLConfig::Debug;
-        //        glConfig.version.major = 3;
-        //        glConfig.version.minor = 2;
+        glConfig.profile |= comp_app::GLConfig::Debug;
+        // glConfig.version.major = 3;
+        // glConfig.version.minor = 2;
     }
 #endif
 
@@ -82,20 +95,20 @@ i32 blam_main()
     comp_app::AppContainer<BlamData<halo_version>>::addTo(
         e,
         [arguments](
-            EntityContainer&        e,
-            BlamData<halo_version>& data,
+            EntityContainer& e,
+            BlamData<halo_version>& /*data*/,
             time_point const&) {
             ProfContext _(__FUNCTION__);
 
             auto& gfx        = e.register_subsystem_inplace<gfx::system>();
             auto  load_error = gfx.load(/*{
-               .api_version = 0x300,
-               .api_type = gfx::api_type_t::es,
-           }*/
-                                       // gfx::emulation::webgl::desktop()
-                                       // gfx::emulation::qcom::adreno_320()
-                                       // gfx::emulation::arm::mali_g710()
-                                       // gfx::emulation::amd::rx560_pro()
+                 .api_version = 0x450,
+                 .api_type    = gfx::api_type_t::core,
+            }*/ // gfx::emulation::webgl::desktop()
+              // gfx::emulation::qcom::adreno_320()
+              // gfx::emulation::arm::mali_g710()
+              // gfx::emulation::amd::rx560_pro()
+              // gfx::emulation::webgl::desktop()
             );
 
             if(load_error)
@@ -103,6 +116,7 @@ i32 blam_main()
                 cWarning(
                     "Failed to initialize gfx::api: {0}",
                     magic_enum::enum_name(load_error.value()));
+                return;
             }
 
             gfx.collect_info(*e.service<comp_app::AppInfo>());
@@ -125,6 +139,8 @@ i32 blam_main()
             e.register_component_inplace<SubModel>();
             e.register_component_inplace<BspReference>();
             e.register_component_inplace<ObjectSpawn>();
+            e.register_component_inplace<NetworkInfo>();
+            e.register_component_inplace<PlayerInfo>();
             e.register_component_inplace<MultiplayerSpawn>();
             e.register_component_inplace<ShaderData>();
             e.register_component_inplace<MeshTrackingData>();
@@ -137,7 +153,39 @@ i32 blam_main()
             e.register_subsystem_inplace<GameEventBus>();
             e.register_subsystem_inplace<BlamFiles<halo_version>>();
 
-            install_imgui_widgets(e, [&e](Url const& map) {});
+#if defined(FEATURE_ENABLE_DiscordLatte)
+            auto& discord = e.register_subsystem_inplace<discord::Subsystem>(
+                rq::runtime_queue::CreateNewThreadQueue("Online")
+                    .assume_value(),
+                discord::DiscordOptions("1194446879027646576"));
+            discord.start();
+
+            discord.on_started<bool>([](discord::Subsystem& discord) {
+                discord.game().put(discord::DiscordGameDelegate::Builder(
+                    "Blam!",
+                    "Gaming",
+                    Url("https://assetsio.reedpopcdn.com/"
+                        "digitalfoundry-2021-halo-combat-evolved-season-7-"
+                        "master-chief-collection-1622735120728.jpg?width=1600&"
+                        "height=900&fit=crop&quality=100&format=png&enable="
+                        "upscale&auto=webp")));
+                discord.presence().put({
+                    .partyId = "16420",
+                    .curPlayers = 1,
+                    .maxPlayers = 16,
+                    .spectate = {
+                        .secret = "",
+                    },
+                    .join = {
+                        .secret = "poopy",
+                    },
+                });
+                discord.presence().putState("Campaign");
+                return false;
+            });
+#endif
+
+            install_imgui_widgets(e, [](Url const&) {});
             auto& params = e.register_subsystem_inplace<RenderingParameters>();
             params.mipmap_bias = 0;
             e.register_subsystem_inplace<LoadingStatus>();
@@ -200,9 +248,13 @@ i32 blam_main()
                     android::intent().extra("map").value_or("beavercreek.map"),
                     RSCA::AssetFile);
                 map_dir = "."_asset;
+#elif defined(COFFEE_EMSCRIPTEN)
+                map_filename             = MkUrl(
+                    ::emscripten::args::query_params()["map"], RSCA::AssetFile);
+                map_dir = "."_asset;
 #else
-                map_filename             = "b30.map"_asset;
-                map_dir                  = "."_asset;
+                map_filename = "b30.map"_asset;
+                map_dir      = "."_asset;
 #endif
             } else if(arguments.unmatched().size() >= 2)
             {
@@ -233,29 +285,47 @@ i32 blam_main()
            BlamData<halo_version>&,
            time_point const&,
            duration const& t) {
-            auto& camera = e.subsystem_cast<BlamCamera>();
+            auto& camera_     = e.subsystem_cast<BlamCamera>();
+            auto  controllers = e.service<comp_app::ControllerInput>();
 
-            /* Update camera position */
-            camera.std_camera->tick(t);
-            if(e.service<comp_app::ControllerInput>())
-                camera.controller_camera(
-                    e.service<comp_app::ControllerInput>()->state(0), t);
-            using namespace typing::vectors::scene;
-            camera.camera.aspect
-                = e.service<comp_app::Windowing>()->size().aspect();
-            camera.camera.zVals = {1500.f, 0.001f};
+            for(auto i : range<u32>(4))
+            {
+                auto& camera = camera_.player(i);
+                /* Mouse/keyboard only applies to player 1 */
+                if(i == 0)
+                    camera.camera_->tick(t);
+                if(controllers)
+                {
+                    auto prev     = camera.active;
+                    camera.active = i >= controllers->count() ? i == 0 : true;
+                    if(prev != camera.active)
+                        cDebug("Player {} -> {}", i, camera.active);
+                }
+                if(!camera.active)
+                    continue;
+                if(controllers)
+                    controller_camera_update(
+                        camera.camera_,
+                        camera.controller_opts,
+                        controllers->state(i),
+                        t);
+                using namespace typing::vectors::scene;
+                // camera.camera.aspect
+                //     = e.service<comp_app::Windowing>()->size().aspect();
+                camera.camera.zVals = {1500.f, 0.001f};
 
-            Matf4 view_matrix = glm::translate(
-                glm::scale(glm::identity<glm::mat4>(), glm::vec3(1))
-                    * glm::mat4_cast(camera.camera.rotation),
-                camera.camera.position);
+                Matf4 view_matrix = glm::translate(
+                    glm::scale(glm::identity<glm::mat4>(), glm::vec3(1))
+                        * glm::mat4_cast(camera.camera.rotation),
+                    camera.camera.position);
 
-            camera.camera_matrix       = GenPerspective(camera.camera);
-            camera.camera_matrix[2][2] = 0.f;
-            camera.camera_matrix[2][3] = -1.f;
-            camera.camera_matrix[3][2] = 0.001f;
-            camera.camera_matrix       = camera.camera_matrix * view_matrix;
-            camera.rotation_matrix     = glm::mat3_cast(camera.camera.rotation);
+                camera.matrix       = GenPerspective(camera.camera);
+                camera.matrix[2][2] = 0.f;
+                camera.matrix[2][3] = -1.f;
+                camera.matrix[3][2] = 0.001f;
+                camera.matrix       = camera.matrix * view_matrix;
+                camera.rotation     = glm::mat3_cast(camera.camera.rotation);
+            }
         },
         [](EntityContainer&, BlamData<halo_version>&, time_point const&) {
 

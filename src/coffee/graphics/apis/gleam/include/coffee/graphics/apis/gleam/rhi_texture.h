@@ -123,6 +123,9 @@ struct texture_t : std::enable_shared_from_this<texture_t>
         group::texture_parameter_name      channel,
         std::optional<textures::swizzle_t> value)
     {
+        if(!m_features.swizzle)
+            return;
+
         if(!value.has_value())
             return;
 #if GLEAM_MAX_VERSION >= 0x450

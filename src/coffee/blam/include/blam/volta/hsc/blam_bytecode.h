@@ -140,8 +140,13 @@ constexpr opcode_iterator_end_t opcode_iterator_end;
 
 template<typename BC>
 struct opcode_iterator
-    : std::iterator<std::forward_iterator_tag, opcode_layout<BC>>
 {
+    using iterator_category = std::forward_iterator_tag;
+    using difference_type   = ptrdiff_t;
+    using pointer           = opcode_layout<BC>*;
+    using reference         = opcode_layout<BC>&;
+    using value_type        = opcode_layout<BC>;
+
     opcode_iterator(semantic::mem_chunk<u8 const>&& script_base);
     opcode_iterator(opcode_iterator_end_t) :
         m_script(nullptr), m_data(), m_offset(0), m_is_end(true)
@@ -561,6 +566,24 @@ struct bytecode_pointer
         opcode_handler_t cmd, pre{}, post{};
     };
 
+    context_t              context;
+    opcode_layout_t const* base;
+    opcode_layout_t const* current;
+    ptr_type               current_ip;
+    u32                    current_params;
+    ptr_type               script_start, script_end;
+
+    std::deque<u32> param_counts;
+    /*!< Param counts for incomplete groups */
+    std::deque<ptr_type> link_register;
+    /*!< Return addresses, for calling procedures */
+
+    std::vector<opcode_layout_t> value_stack;
+    /*!< Values for consumption by operations */
+    std::vector<ptr_type> value_ptr;
+
+    std::mt19937 random_gen = std::mt19937(std::random_device()());
+
     static bytecode_ptr start_from(
         script_environment const& env,
         opcode_layout_t const*    base,
@@ -616,21 +639,10 @@ struct bytecode_pointer
         return out;
     }
 
-    context_t              context;
-    opcode_layout_t const* base;
-    opcode_layout_t const* current;
-    ptr_type               current_ip;
-    u32                    current_params;
-    ptr_type               script_start, script_end;
-
-    std::deque<u32> param_counts;
-    /*!< Param counts for incomplete groups */
-    std::deque<ptr_type> link_register;
-    /*!< Return addresses, for calling procedures */
-
-    std::vector<opcode_layout_t> value_stack;
-    /*!< Values for consumption by operations */
-    std::vector<ptr_type> value_ptr;
+    void reseed(u32 seed)
+    {
+        random_gen.seed(seed);
+    }
 
     inline std::optional<opcode_layout_t const*> op_at(u16 ip)
     {
@@ -803,6 +815,10 @@ struct bytecode_pointer
             return context.global_by_ptr(from.data_ptr).value()->real;
         case expression_t::script_ref:
         case expression_t::param_ref:
+            /* TODO: Requires implementation */
+            break;
+        case expression_t::group:
+            /* Shouldn't happen? */
             break;
         }
         __builtin_unreachable();
@@ -818,6 +834,10 @@ struct bytecode_pointer
             return context.global_by_ptr(from.data_ptr).value()->long_;
         case expression_t::script_ref:
         case expression_t::param_ref:
+            /* TODO: Requires implementation */
+            break;
+        case expression_t::group:
+            /* Shouldn't happen? */
             break;
         }
         __builtin_unreachable();
@@ -833,6 +853,10 @@ struct bytecode_pointer
             return context.global_by_ptr(from.data_ptr).value()->shorts[0];
         case expression_t::script_ref:
         case expression_t::param_ref:
+            /* TODO: Requires implementation */
+            break;
+        case expression_t::group:
+            /* Shouldn't happen? */
             break;
         }
         __builtin_unreachable();
@@ -846,7 +870,7 @@ struct bytecode_pointer
             current_ip = current->next_op.ip;
         update_opcode();
     }
-    NO_DISCARD inline bool update_opcode()
+    inline bool update_opcode()
     {
         auto new_op = op_at(current_ip);
 
@@ -893,7 +917,7 @@ struct bytecode_pointer
         update_opcode();
     }
 
-    NO_DISCARD inline bool restore_state(script_state_t& state)
+    inline bool restore_state(script_state_t& state)
     {
         link_register  = std::move(state.link_register);
         current_ip     = state.ip;

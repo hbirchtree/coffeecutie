@@ -365,14 +365,14 @@ struct opcode_layout
             switch(param_type)
             {
             case type_t::short_:
-            case type_t::long_: {
+            case type_t::long_:
                 cpy.long_ = op(cpy.long_, other.long_);
                 break;
-            }
-            case type_t::real_: {
+            case type_t::real_:
                 cpy.real = op(cpy.real, other.long_);
                 break;
-            }
+            default:
+                break;
             }
             break;
         }
@@ -380,17 +380,19 @@ struct opcode_layout
             switch(param_type)
             {
             case type_t::short_:
-            case type_t::long_: {
+            case type_t::long_:
                 cpy.long_ = op(cpy.long_, other.real);
                 break;
-            }
-            case type_t::real_: {
+            case type_t::real_:
                 cpy.real = op(cpy.real, other.real);
                 break;
-            }
+            default:
+                break;
             }
             break;
         }
+        default:
+            Throw(mismatch_param_type("non-number passed to operator"));
         }
 
         return cpy;

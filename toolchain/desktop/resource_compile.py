@@ -12,6 +12,80 @@ from hashlib import sha256
 
 PROGRAMS = {}
 
+DEFAULT_TEX_VARIANTS = {
+    'astc': ['rgba'],
+    'bc1': ['rgb'],
+    'bc2': ['rgba'],
+    'bc3': ['rgba'],
+    'bc4': ['r'],
+    'bc5': ['rg', 'ra'],
+    'bc7': ['rgba'],
+    'etc1': ['rgb'],
+    'etc2': ['rgba', 'rgb', 'rg', 'r', 'ra'],
+    'png': ['rgba', 'rgb', 'rg', 'r', 'ra'],
+    'pvrtc1': ['rgba'],
+    'raw': ['rgba', 'rgb', 'rg', 'r', 'ra'],
+}
+
+DEFAULT_TEX_MATRIX = {
+    'Android': [
+        'astc', # Mobile only
+        'bc1', # Only Tegra seems to support BCn
+        'bc2', # ...
+        'bc3', # ...
+        'bc4', # ...
+        'bc5', # ...
+        'bc6', # ...
+        'bc7', # ... but it supports it GOOD!
+        'etc1', # For old PowerVR/Mali chips
+        'etc2',
+        'pvrtc1', # PowerVR only
+        'raw',
+    ],
+    'Darwin': ['bc1', 'bc2', 'bc3', 'raw'], # booo
+    'Emscripten': [
+        'astc',
+        'bc1',
+        'bc2',
+        'bc3',
+        'etc1',
+        'etc2',
+        'raw',
+    ],
+    'Linux': [
+        'astc', # For Mali
+        'bc1',
+        'bc2',
+        'bc3',
+        'bc4',
+        'bc5',
+        'bc6',
+        'bc7',
+        'etc2',
+        'pvrtc1', # For PowerVR
+        'raw',
+    ],
+    'Windows': [
+        'bc1',
+        'bc2',
+        'bc3',
+        'bc4',
+        'bc5',
+        'bc6',
+        'bc7',
+        'etc2',
+        'raw',
+    ]
+}
+
+DEFAULT_SHADER_MATRIX = {
+    'Android': ['spv', 'es:', 'core:460'], # core:460 for Shield
+    'Darwin': ['core:410'],
+    'Emscripten': ['es:300'],
+    # Linux, omitted because it supports all
+    'Windows': ['spv', 'core:'],
+}
+
 
 def needs_update(output: str, dependencies: list):
     if not exists(output):
@@ -63,8 +137,11 @@ def compile_shaders(
     variants = values['variants']
     assemblies = values['assemblies']
     opt_level = '--O0'
-    if 'matrix' in values and target in values['matrix']:
-        allowed_variants = [ x for x in values['matrix'][target] ]
+    matrix = DEFAULT_SHADER_MATRIX
+    if 'matrix' in values:
+        matrix = values['matrix']
+    if target in matrix: # values['matrix']
+        allowed_variants = [ x for x in matrix[target] ]
         variants = [ x
             for x in values['variants'] if len([ v for v in allowed_variants if x.startswith(v) ]) > 0
         ]
@@ -133,11 +210,11 @@ def encode_textures(
         target: str,
         build_mode: str,
         extra_dependencies: list):
-    variants = values['variants']
-    if 'matrix' in values and target in values['matrix']:
+    variants = DEFAULT_TEX_VARIANTS # values['variants']
+    if 'matrix' in values and target in DEFAULT_TEX_MATRIX: # values['matrix']
         to_remove = []
         for v in variants:
-            if v not in values['matrix'][target]:
+            if v not in DEFAULT_TEX_MATRIX[target]:
                 to_remove.append(v)
         for v in to_remove:
             del variants[v]

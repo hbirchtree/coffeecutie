@@ -127,6 +127,7 @@ struct bl_string_var
     template<typename Dummy = void>
     requires(Size != 4) inline std::string_view str() const
     {
+        /* TODO: Enforce max length of the string here */
         return std::string_view(data.data());
     }
 

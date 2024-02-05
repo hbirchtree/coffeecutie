@@ -18,7 +18,7 @@ enum class tag_class_t : u32
     actr = 0x61637472, // rtca 1633907826 Actor
     actv = 0x61637476, // vtca 1633907830 Actor variant
     ant  = 0x616e7421, // !tna 1634628641 Antenna
-    antr = 0x616e7472, // rtna 1634628722 Animation trigger
+    antr = 0x616e7472, // rtna 1634628722 Animation graph
     bipd = 0x62697064, // dpib 1651077220 Biped
     bitm = 0x6269746d, // mtib 1651078253 Bitmap
     coll = 0x636f6c6c, // lloc 1668246636 Collision mesh

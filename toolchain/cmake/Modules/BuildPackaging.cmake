@@ -31,6 +31,7 @@ function(COFFEE_APPLICATION)
       PACKAGE_PREFIX
       # Defines entire package name
       PACKAGE_NAME
+      ICON_ASSET
   )
   set(multiOpts
       # Application permissions, translated per platform
@@ -66,6 +67,8 @@ function(COFFEE_APPLICATION)
   set_default(
     APP_PERMISSIONS OPENGL AUDIO ENVIRONMENT_SENSORS NETWORK_CONNECT JOYSTICK
   )
+  set_default(
+    APP_ICON_ASSET "${COFFEE_DESKTOP_DIRECTORY}/common/icon_squircle.svg")
 
   # These define and create LICENSE_FILE and APPLICATION_INFO_FILE
   coffee_gen_licenseinfo("${APP_TARGET}" "${APP_BUNDLE_LICENSES}")
@@ -75,7 +78,7 @@ function(COFFEE_APPLICATION)
 
   set(SOURCES_MOD "${APPLICATION_INFO_FILE};${LICENSE_FILE};${APP_SOURCES}")
 
-  set(ICON_ASSET "${COFFEE_DESKTOP_DIRECTORY}/common/icon_squircle.svg")
+  set(ICON_ASSET "${APP_ICON_ASSET}")
 
   if(ANDROID)
     androidapk_package(
@@ -122,7 +125,7 @@ function(COFFEE_APPLICATION)
       TARGET ${APP_TARGET}
       SOURCES ${SOURCES_MOD}
       RESOURCES ${APP_RESOURCES}
-      ICON ${ICON_TARGET}
+      ICON ${ICON_ASSET}
     )
   elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
     add_executable(${APP_TARGET} ${SOURCES_MOD})
@@ -153,7 +156,7 @@ Comment=${APP_TITLE}
 Icon=coffee-${APP_TARGET}
 Categories=Game;
 Terminal=false
-Exec=${APP_TARGET} %s
+Exec=${APP_TARGET} %u
 StartupNotify=true
 StartupWMClass=${APP_TARGET}
 "

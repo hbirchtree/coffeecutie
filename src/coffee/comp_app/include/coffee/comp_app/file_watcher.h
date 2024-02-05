@@ -23,7 +23,7 @@ class FileWatcher : public compo::SubsystemBase
     struct WatcherData
     {
         std::promise<Url>                promise;
-        std::optional<compo::time_point> deadline;
+        std::optional<compo::time_point> deadline{};
     };
     std::map<Url, WatcherData> m_pending;
 };

@@ -13,14 +13,20 @@
 
 #include <coffee/core/debug/formatting.h>
 
+#include <glw/extensions/ARB_depth_buffer_float.h>
+#include <glw/extensions/ARB_color_buffer_float.h>
 #include <glw/extensions/ARB_shader_draw_parameters.h>
+#include <glw/extensions/EXT_color_buffer_float.h>
+#include <glw/extensions/EXT_color_buffer_half_float.h>
 #include <glw/extensions/EXT_discard_framebuffer.h>
 #include <glw/extensions/KHR_debug.h>
+#include <glw/extensions/KHR_parallel_shader_compile.h>
 #include <glw/extensions/NV_shading_rate_image.h>
 #include <glw/extensions/OES_rgb8_rgba8.h>
 #include <glw/extensions/OES_vertex_array_object.h>
 
 #include <glw/texture_formats.h>
+#include <glw/texture_formats_desc.h>
 
 #if defined(FEATURE_ENABLE_CEAGL)
 #include <CEAGL/eagl.h>
@@ -247,7 +253,7 @@ void texture_t::alloc(size_type const& size, bool create_storage)
             cmd::bind_texture(convert::to(m_type), 0);
         } else
         {
-            auto                  target = convert::to(m_type);
+            auto        target = convert::to(m_type);
             null_span<> null_data;
             std::function<void(size_3d<i32> const&, i32)> create_level;
 
@@ -427,18 +433,21 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
 
     if(api_type == api_type_t::core)
     {
-        out.buffer.mapping      = true;
-        out.buffer.pbo          = true;
-        out.buffer.ubo          = true;
-        out.draw.instancing     = true;
-        out.draw.vertex_offset  = true;
-        out.texture.max_level   = true;
-        out.texture.tex.gl.rgtc = true;
+        out.buffer.mapping                       = true;
+        out.buffer.pbo                           = true;
+        out.buffer.ubo                           = true;
+        out.draw.instancing                      = true;
+        out.draw.vertex_offset                   = true;
+        out.rendertarget.framebuffer_texture     = true;
+        out.texture.max_level                    = true;
+        out.texture.tex.gl.rgtc                  = true;
+        out.rendertarget.color_buffer_float      = true;
+        out.rendertarget.color_buffer_half_float = true;
 
         out.texture.cube_array = api_version >= 0x400;
 
-        out.buffer.barrier                = api_version >= 0x420;
-        out.draw.indirect                 = api_version >= 0x420;
+        out.buffer.barrier = api_version >= 0x420;
+        // out.draw.indirect                 = api_version >= 0x420;
         out.draw.base_instance            = api_version >= 0x420;
         out.texture.image_texture         = api_version >= 0x420;
         out.texture.internal_format_query = api_version >= 0x420;
@@ -446,9 +455,9 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
         out.texture.tex.gl.bptc           = api_version >= 0x420;
         out.vertex.layout_binding         = api_version >= 0x420;
 
-        out.buffer.ssbo                        = api_version >= 0x430;
-        out.debug.debug                        = api_version >= 0x430;
-        out.draw.multi_indirect                = api_version >= 0x430;
+        out.buffer.ssbo = api_version >= 0x430;
+        out.debug.debug = api_version >= 0x430;
+        // out.draw.multi_indirect                = api_version >= 0x430;
         out.program.compute                    = api_version >= 0x430;
         out.program.uniform_location           = api_version >= 0x430;
         out.rendertarget.framebuffer_parameter = api_version >= 0x430;
@@ -458,9 +467,9 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
         out.texture.views                      = api_version >= 0x430;
         out.vertex.format                      = api_version >= 0x430;
 
-        out.buffer.persistence = api_version >= 0x440;
-        out.buffer.storage     = api_version >= 0x440;
-        out.texture.multibind  = api_version >= 0x440;
+        // out.buffer.persistence = api_version >= 0x440;
+        out.buffer.storage    = api_version >= 0x440;
+        out.texture.multibind = api_version >= 0x440;
 
         auto dsa_mode        = api_version >= 0x450;
         out.buffer.dsa       = dsa_mode;
@@ -475,8 +484,44 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
 
         out.draw.arb.shader_draw_parameters
             = supports_extension(extensions, arb::shader_draw_parameters::name);
+        out.program.khr.parallel_shader_compile = supports_extension(
+            extensions, khr::parallel_shader_compile::name);
+    } else if(platform_api == api_type_t::webgl)
+    {
+        out.texture.swizzle = false;
+
+        out.buffer.mapping                = true; /* Emulated, but still */
+        out.buffer.pbo                    = true;
+        out.buffer.ubo                    = true;
+        out.draw.instancing               = true;
+        out.rendertarget.clearbuffer      = true;
+        out.rendertarget.readdraw_buffers = true;
+        out.texture.internal_format_query = true;
+        out.texture.max_level             = true;
+        out.texture.samplers              = true;
+        out.texture.texture_3d            = true;
+        out.texture.tex_layer_query       = true;
+        out.texture.tex.gl.etc2           = true;
+        out.vertex.attribute_binding      = true;
+        out.vertex.vertex_arrays          = true;
+
+        out.rendertarget.color_buffer_half_float = supports_extension(
+            extensions, ext::color_buffer_half_float::name);
+        out.rendertarget.color_buffer_float
+            = supports_extension(extensions, ext::color_buffer_float::name);
+        out.program.khr.parallel_shader_compile = supports_extension(
+            extensions, khr::parallel_shader_compile::name);
+        out.debug.webgl.unmasked_vendors
+            = supports_extension(extensions, "WEBGL_debug_renderer_info");
+        out.debug.webgl.debug_shaders
+            = supports_extension(extensions, "WEBGL_debug_shaders");
     } else if(api_type == api_type_t::es)
     {
+        out.rendertarget.color_buffer_half_float = supports_extension(
+            extensions, ext::color_buffer_half_float::name);
+        out.rendertarget.color_buffer_float = supports_extension(
+            extensions, ext::color_buffer_half_float::name);
+
         out.buffer.mapping                = api_version >= 0x300;
         out.buffer.pbo                    = api_version >= 0x300;
         out.buffer.ubo                    = api_version >= 0x300;
@@ -524,7 +569,15 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
             = supports_extension(extensions, oes::vertex_array_object::name);
         out.rendertarget.ext.discard_framebuffer
             = supports_extension(extensions, ext::discard_framebuffer::name);
+        out.program.khr.parallel_shader_compile = supports_extension(
+            extensions, khr::parallel_shader_compile::name);
     }
+
+    // out.rendertarget.depth_16f
+    //     = supports_render_format(out, typing::pixels::PixFmt::Depth16F);
+    out.rendertarget.depth_32f
+        = supports_render_format(out, typing::pixels::PixFmt::Depth32F) || supports_extension(extensions, arb::depth_buffer_float::name);
+
     out.debug.khr.debug = supports_extension(extensions, khr::debug::name);
 
     out.rendertarget.nv.shading_rate_image
@@ -741,9 +794,17 @@ tuple<u32, u32> api::shaderlang_version()
 
 tuple<string, string> api::device()
 {
-    auto vendor = cmd::get_string(group::string_name::vendor);
-    auto device = cmd::get_string(group::string_name::renderer);
-    return {vendor, device};
+    if(m_features.debug.webgl.unmasked_vendors)
+    {
+        auto vendor = cmd::get_string(static_cast<group::string_name>(0x9245));
+        auto device = cmd::get_string(static_cast<group::string_name>(0x9246));
+        return {vendor, device};
+    } else
+    {
+        auto vendor = cmd::get_string(group::string_name::vendor);
+        auto device = cmd::get_string(group::string_name::renderer);
+        return {vendor, device};
+    }
 }
 
 optional<string> api::device_driver()
@@ -816,6 +877,17 @@ void api::collect_info(comp_app::interfaces::AppInfo& appInfo)
     fmts = {};
     appInfo.add("gl:compressedFormats", formats_list);
     appInfo.add("gl:limits", m_limits.serialize());
+    if constexpr(gleam::platform_api == api_type_t::webgl)
+    {
+        Coffee::Logging::cDebug(
+            "WebGL support summary:\nDriver: {}\nDevice: {} {}\n - Compressed "
+            "formats: {}\nLimits: {}",
+            device_driver().value_or("Unknown"),
+            std::get<0>(device()),
+            std::get<1>(device()),
+            formats_list,
+            m_limits.serialize());
+    }
 }
 
 optional<error> api::load(load_options_t options)
@@ -859,6 +931,7 @@ optional<error> api::load(load_options_t options)
         },
         .buffer = {
             .emulated_mapbuffer = true,
+            .disable_immutable_buffers = true,
         },
         .bugs = {
             .adreno_3xx = false,
@@ -896,7 +969,8 @@ optional<error> api::load(load_options_t options)
 
     {
         auto [vendor, renderer] = device();
-        if(vendor.starts_with("Qualcomm") && renderer.starts_with("Adreno (TM) 3"))
+        if(vendor.starts_with("Qualcomm")
+           && renderer.starts_with("Adreno (TM) 3"))
             m_workarounds.bugs.adreno_3xx = true;
     }
 
@@ -975,7 +1049,7 @@ optional<error> api::load(load_options_t options)
 
     if constexpr(gleam::platform_api == api_type_t::webgl)
     {
-        m_workarounds.buffer.slow_mapbuffer = true;
+        // m_workarounds.buffer.slow_mapbuffer = true;
     }
 
     //    cmd::enable(group::enable_cap::cull_face);
@@ -1019,6 +1093,26 @@ bool api::supports_extension(
 bool api::supports_extension(string const& ext)
 {
     return m_extensions.contains(ext);
+}
+
+bool api::supports_render_format(features const& features, PixDesc const& fmt)
+{
+    if(!features.texture.internal_format_query)
+        return false;
+
+#if GLEAM_MAX_VERSION >= 0x420
+    i32 supported = 0;
+    auto [internal_fmt, _, __]
+        = convert::to<group::internal_format>(fmt, features.texture);
+    cmd::get_internalformativ(
+        group::texture_target::renderbuffer,
+        internal_fmt,
+        group::internal_format_prop::framebuffer_renderable,
+        semantic::SpanOne(supported));
+    return supported == GL_TRUE;
+#else
+    return false;
+#endif
 }
 
 } // namespace gleam

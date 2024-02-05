@@ -2,7 +2,7 @@
 
 #include <coffee/components/types.h>
 
-#include <map>
+#include <unordered_map>
 #include <vector>
 
 namespace compo::alloc {
@@ -15,7 +15,7 @@ struct VectorBaseContainer : ComponentContainer<ComponentType>
     using typename ComponentContainer<ComponentType>::type;
 
     using vector_type = std::vector<AllocationType>;
-    using map_type    = std::map<u64, size_t>;
+    using map_type    = std::unordered_map<u64, size_t>;
     using value_type  = AllocationType;
 
     map_type    m_mapping;

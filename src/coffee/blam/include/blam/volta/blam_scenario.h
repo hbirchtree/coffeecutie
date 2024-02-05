@@ -55,16 +55,41 @@ enum class ai_state : i16
 
 using scn_chunk = byte_t[100];
 
+enum class object_type : u16
+{
+    biped,
+    vehicle,
+    weapon,
+    equipment,
+    garbage,
+    projectile,
+    scenery,
+    machine,
+    control,
+    light_fixture,
+    placeholder,
+    sound_scenery,
+};
+
+enum class object_flags : u16
+{
+    no_shadow                  = 0x1,
+    transparent_self_occlusion = 0x2,
+    bright = 0x4, /* "Brighter than it should be", as in unshaded? */
+    not_pathfinding_obstacle = 0x8,
+};
+
 struct object
 {
-    u32                               flags;
+    object_type                       type;
+    object_flags                      flags;
     f32                               bound_radius;
     Vecf3                             bound_offset;
-    Vecf3                             unknown_offset;
+    Vecf3                             origin_offset;
     f32                               acceleration_scale;
     u32                               padding_;
     tagref_typed_t<tag_class_t::mod2> model;
-    tagref_typed_t<tag_class_t::antr> anim_trigger;
+    tagref_typed_t<tag_class_t::antr> anim_graph;
     u32                               padding2[10];
     tagref_typed_t<tag_class_t::coll> collider;
     tagref_typed_t<tag_class_t::pphy> physics;
@@ -845,7 +870,7 @@ struct scenario
 
     struct editor_t /* 256-byte block */
     {
-        i32                 editor_scenario_size;
+        i32                 scenario_size;
         u32                 unknown_2;
         reflexive_t<byte_t> comments;
         u32                 padding2[59];
@@ -918,8 +943,10 @@ struct scenario
         magic_data_t const& magic) const
     {
         reflexive_t<hsc::opcode_layout<bytecode_t>> data{
-            .count = static_cast<u32>((script.script_bytecode_size - sizeof(hsc::script_ref<bytecode_t>)) / sizeof(hsc::opcode_layout
-            <bytecode_t>)),
+            .count = static_cast<u32>(
+                (script.script_bytecode_size
+                 - sizeof(hsc::script_ref<bytecode_t>))
+                / sizeof(hsc::opcode_layout<bytecode_t>)),
             .offset = script.unknown_9.offset + 36,
         };
         return data.data(magic).value();

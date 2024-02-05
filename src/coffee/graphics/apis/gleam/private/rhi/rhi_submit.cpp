@@ -1,6 +1,13 @@
 #include <coffee/graphics/apis/gleam/rhi_submit.h>
 
+#include <magic_enum.hpp>
+
 namespace gleam::detail {
+
+std::string_view draw_error_to_string(error e)
+{
+    return magic_enum::enum_name(e);
+}
 
 std::size_t element_size(const draw_command::data_t& data)
 {
@@ -324,7 +331,7 @@ std::optional<error> evaluate_draw_state(
         {
             if(d.elements.count > limits.draws.element_count
                /*|| d.elements.offset > 1024 * 1024*/)
-                return error::draw_unsupported_call;
+                return error::draw_too_many_elements;
             /* We can't check if we exceed the max index vertex */
         }
     } else
@@ -334,7 +341,7 @@ std::optional<error> evaluate_draw_state(
             return error::draw_no_arrays;
         for(auto const& d : data)
             if(d.arrays.count > 1024 * 1024 || d.arrays.offset > 1024 * 1024)
-                return error::draw_unsupported_call;
+                return error::draw_too_many_vertices;
     }
 
     if(call.instanced)

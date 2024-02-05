@@ -52,6 +52,7 @@ def generate_header(includes, lines):
     includes.append('tuple')
     includes.append('string_view')
     includes.append('vector')
+    includes.append('peripherals/constants.h')
     includes.append('peripherals/libc/types.h')
     includes.append('peripherals/concepts/span.h')
     includes.append('peripherals/concepts/vector.h')

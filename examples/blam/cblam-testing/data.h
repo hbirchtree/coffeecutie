@@ -21,31 +21,50 @@ template<typename Version>
 struct BlamData
 {
     using type = BlamData<Version>;
-
-    blam::map_container<Version> map_container;
 };
 
 struct BlamCamera : compo::SubsystemBase
 {
     using type = BlamCamera;
 
-    BlamCamera() :
-        std_camera(std::make_shared<std_camera_t>(&camera, &camera_opts)),
-        controller_camera(std_camera, &controller_opts)
+    BlamCamera()
     {
+        viewports[0].active = true;
     }
 
-    camera_t                      camera;
-    Matf4                         camera_matrix{};
-    Matf4                         rotation_matrix{};
-    StandardCameraOpts            camera_opts;
-    std::shared_ptr<std_camera_t> std_camera;
+    struct viewport_t
+    {
+        viewport_t() :
+            camera_(std::make_shared<std_camera_t>(&camera, &camera_opts))
+        {
+        }
+        viewport_t(const viewport_t&) = delete;
 
-    f32 wireframe_distance{100.f};
+        StandardCameraOpts            camera_opts;
+        camera_t                      camera;
+        std::shared_ptr<std_camera_t> camera_;
+        Matf4                         matrix{};
+        Matf4                         rotation{};
+        ControllerOpts                controller_opts;
+        bool                          active{false};
+    };
+    std::array<viewport_t, 4> viewports;
+    libc_types::u32           focused_player{0};
 
-    ControllerOpts controller_opts;
-    ControllerCamera<std::shared_ptr<std_camera_t>, ControllerOpts*>
-        controller_camera;
+    viewport_t& player(libc_types::u32 idx = 0)
+    {
+        if(idx > 3)
+            Throw(implementation_error("player idx > 3 does not exist"));
+        return viewports[idx];
+    }
+
+    libc_types::u32 num_players() const
+    {
+        libc_types::u32 sum = 0;
+        for(auto const& viewport : viewports)
+            sum += viewport.active ? 1 : 0;
+        return sum;
+    }
 };
 
 struct BlamResources : compo::SubsystemBase
@@ -56,12 +75,11 @@ struct BlamResources : compo::SubsystemBase
 
     std::shared_ptr<gfx::buffer_t>       bsp_buf;
     std::shared_ptr<gfx::buffer_t>       bsp_index;
-    std::shared_ptr<gfx::vertex_array_t> bsp_attr;
     std::shared_ptr<gfx::buffer_t>       bsp_light_buf;
+    std::shared_ptr<gfx::vertex_array_t> bsp_attr;
 
     std::shared_ptr<gfx::program_t> bsp_pipeline;
     std::shared_ptr<gfx::program_t> model_pipeline;
-    std::shared_ptr<gfx::program_t> senv_micro_pipeline;
     std::shared_ptr<gfx::program_t> wireframe_pipeline;
 
     std::shared_ptr<gfx::buffer_t>       model_buf;
@@ -103,7 +121,7 @@ struct RenderingParameters : compo::SubsystemBase
     libc_types::u32 mipmap_bias{0};
 
     bool render_scenery{true};
-    bool render_ui{true};
+    bool render_ui{false};
     bool debug_clear{true};
 
     bool debug_portals{false};
@@ -125,6 +143,7 @@ struct GameEvent
     enum EventType
     {
         None,
+        MapLoadByName,
         MapLoadStart,
         MapListing,
         MapDataLoad,
@@ -132,17 +151,25 @@ struct GameEvent
         MapChanged,
 
         ServerConnect,
+        ServerConnected,
         ServerDisconnect,
     };
     EventType type{None};
+};
+
+struct MapLoadByName
+{
+    static constexpr auto event_type = GameEvent::MapLoadByName;
+
+    blam::bl_string map_name;
 };
 
 struct MapLoadEvent
 {
     static constexpr auto event_type = GameEvent::MapLoadStart;
 
-    std::optional<platform::url::Url> directory;
-    std::optional<platform::url::Url> file;
+    std::optional<platform::url::Url> directory{};
+    std::optional<platform::url::Url> file{};
 };
 
 struct MapListingEvent
@@ -167,8 +194,10 @@ struct MapLoadFinishedEvent
 {
     static constexpr auto event_type = GameEvent::MapLoadFinished;
 
-    blam::map_container<V> container;
-    semantic::BytesConst   bitmap_file;
+    blam::map_container<V>* container;
+    semantic::BytesConst    bitmap_file;
+    std::string             map_name{};
+    std::string             map_title{};
 };
 
 template<typename V>
@@ -189,9 +218,18 @@ struct ServerConnectEvent
     {
         Peer,
         Server,
+        Listen,
     };
     ConnectType type{Server};
     std::string remote;
+};
+
+struct ServerConnectedEvent
+{
+    static constexpr auto event_type = GameEvent::ServerConnected;
+
+    std::string     remote;
+    libc_types::u32 seed{0}; /* RNG seed, to keep systems in sync */
 };
 
 struct ServerDisconnectEvent

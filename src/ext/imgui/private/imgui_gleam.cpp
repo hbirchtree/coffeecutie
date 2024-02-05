@@ -6,6 +6,7 @@
 #include <peripherals/typing/vectors/vector_types.h>
 
 #include <glw/texture_formats.h>
+#include <glw/texture_formats_desc.h>
 
 #include <coffee/core/CDebug>
 
@@ -184,7 +185,7 @@ void ImGuiSystem::submit_draws(Proxy& e)
                     gfx::blend_state{});
                 if(ec)
                 {
-                    auto [error, message] = ec.value();
+                    // auto [error, message] = ec.value();
 //                    Throw(undefined_behavior(message));
                 }
             }

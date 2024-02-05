@@ -13,10 +13,10 @@
 void install_imgui_widgets(
     compo::EntityContainer& e, std::function<void(Url const&)>&& map_select)
 {
-    auto& files = e.subsystem_cast<BlamFiles<halo_version>>();
+    // auto& files = e.subsystem_cast<BlamFiles<halo_version>>();
 
     auto& imgui = e.register_subsystem_inplace<imgui::ImGuiSystem>(1024);
-    auto& bsp   = e.register_subsystem_inplace<BlamBspWidget<halo_version>>();
+    e.register_subsystem_inplace<BlamBspWidget<halo_version>>();
     e.register_subsystem_inplace<BlamDebugUi>();
     auto& textures
         = e.register_subsystem_inplace<BlamTextureBrowser<halo_version>>();

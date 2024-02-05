@@ -2,6 +2,9 @@
 
 #include <coffee/graphics/apis/gleam/rhi_submit.h>
 #include <coffee/graphics/apis/gleam/rhi_system.h>
+#include <coffee/graphics/apis/gleam/rhi_urls.h>
+#include <glw/texture_formats.h>
+#include <glw/texture_formats_desc.h>
 #include <peripherals/stl/iterator_slice.h>
 #include <peripherals/stl/tuple_hash.h>
 
@@ -150,6 +153,8 @@ struct MeshRenderer : compo::RestrictedSubsystem<
     std::array<Pass, Pass_Count> m_bsp;
     std::array<Pass, Pass_Count> m_model;
 
+    const bool supports_splitscreen = !compile_info::platform::is_emscripten;
+
     MeshRenderer(
         gfx::api*             api,
         BlamResources&        resources,
@@ -192,7 +197,7 @@ struct MeshRenderer : compo::RestrictedSubsystem<
 
     size_t align_for_gpu_padding(size_t size) const
     {
-        u32 padding        = m_api->limits().buffers.ubo_alignment;
+        u32 padding = m_api->limits().buffers.ubo_alignment;
         if((size % padding) == 0)
             return size;
         u32 mask           = padding - 1;
@@ -294,7 +299,7 @@ struct MeshRenderer : compo::RestrictedSubsystem<
 #endif
     }
 
-    auto get_view_state()
+    auto get_view_state(u32 player_idx)
     {
         using typing::vector_types::Vecd2;
         using typing::vector_types::Veci4;
@@ -311,33 +316,63 @@ struct MeshRenderer : compo::RestrictedSubsystem<
                     .reversed = true,
                 }};
 
+        auto view = Veci4{
+            0,
+            0,
+            m_resources.offscreen_size.x,
+            m_resources.offscreen_size.y,
+        };
+
+        switch(m_camera.num_players())
+        {
+        case 1:
+            view.y = m_resources.offscreen_size.y;
+            view.z = m_resources.offscreen_size.x;
+            view.w = m_resources.offscreen_size.y;
+            break;
+        case 2:
+            view.y = (m_resources.offscreen_size.y / 2) * (player_idx + 1);
+            view.z = m_resources.offscreen_size.x;
+            view.w = m_resources.offscreen_size.y / 2;
+            break;
+        case 3:
+        case 4:
+            view.x = (m_resources.offscreen_size.x / 2) * (player_idx % 2);
+            view.y = (m_resources.offscreen_size.y / 2) * (player_idx / 2 + 1);
+            view.z = m_resources.offscreen_size.x / 2;
+            view.w = m_resources.offscreen_size.y / 2;
+            break;
+        }
+        view.y = m_resources.offscreen_size.y - view.y;
+
         return gfx::view_state{
-            .view  = Veci4{
-                0, 0,
-                m_resources.offscreen_size.x,
-                m_resources.offscreen_size.y,
-            },
+            .view  = view,
             .depth = depth,
         };
     }
 
     template<typename... Args>
-    void render_pass(Proxy&, f32 t, Pass const& pass, Args&&... extra)
+    void render_pass(Proxy&, u32 idx, f32 t, Pass const& pass, Args&&... extra)
     {
         using namespace typing::vector_types;
 
+        if(!supports_splitscreen && idx != 0)
+            return;
+
         auto _ = m_api->debug().scope(pass.name);
+
+        auto& player = m_camera.player(m_camera.focused_player);
 
         auto vertex_u = gfx::make_uniform_list(
             typing::graphics::ShaderStage::Vertex,
             gfx::uniform_pair{
                 {"camera"sv, 1},
-                semantic::SpanOne<const Matf4>(m_camera.camera_matrix)});
+                semantic::SpanOne<const Matf4>(player.matrix)});
         auto fragment_u = gfx::make_uniform_list(
             typing::graphics::ShaderStage::Fragment,
             gfx::uniform_pair{
                 {"camera_position", 21},
-                semantic::SpanOne<const Vecf3>(m_camera.camera.position),
+                semantic::SpanOne<const Vecf3>(player.camera.position),
             },
             gfx::uniform_pair{
                 {"time", 22},
@@ -368,7 +403,7 @@ struct MeshRenderer : compo::RestrictedSubsystem<
 
         for(auto const& draw : pass.draws)
         {
-            m_api->submit(
+            auto res = m_api->submit(
                 {
                     .program       = pass.command.program,
                     .vertices      = pass.command.vertices,
@@ -379,30 +414,38 @@ struct MeshRenderer : compo::RestrictedSubsystem<
                 vertex_u,
                 fragment_u,
                 buffers,
-                get_view_state(),
+                get_view_state(idx),
                 samplers,
                 std::forward<Args&&>(extra)...);
+            if(res)
+                cFatal("submit error: {}", std::get<1>(*res));
         }
     }
 
     template<typename... Args>
-    void render_bsp_pass(Proxy&, f32 t, Pass const& pass, Args&&... extra)
+    void render_bsp_pass(
+        Proxy&, u32 idx, f32 t, Pass const& pass, Args&&... extra)
     {
         using namespace typing::vector_types;
 
+        if(!supports_splitscreen && idx != 0)
+            return;
+
         auto _ = m_api->debug().scope(pass.name);
+
+        auto& player = m_camera.player(idx);
 
         /* Step 1: Set up shared uniform state + buffers */
         auto vertex_u = gfx::make_uniform_list(
             typing::graphics::ShaderStage::Vertex,
             gfx::uniform_pair{
                 {"camera"sv, 1},
-                semantic::SpanOne<const Matf4>(m_camera.camera_matrix)});
+                semantic::SpanOne<const Matf4>(player.matrix)});
         auto fragment_u = gfx::make_uniform_list(
             typing::graphics::ShaderStage::Fragment,
             gfx::uniform_pair{
                 {"camera_position", 21},
-                semantic::SpanOne<const Vecf3>(m_camera.camera.position),
+                semantic::SpanOne<const Vecf3>(player.camera.position),
             },
             gfx::uniform_pair{
                 {"time", 22},
@@ -429,7 +472,7 @@ struct MeshRenderer : compo::RestrictedSubsystem<
         for(auto const& draw : pass.draws)
         {
             /* Step 3: DRAW */
-            m_api->submit(
+            auto res = m_api->submit(
                 {
                     .program       = pass.command.program,
                     .vertices      = pass.command.vertices,
@@ -440,12 +483,14 @@ struct MeshRenderer : compo::RestrictedSubsystem<
                 vertex_u,
                 fragment_u,
                 buffers,
-                get_view_state(),
+                get_view_state(idx),
                 gfx::cull_state{
                     .front_face = true,
                 },
                 samplers,
                 std::forward<Args&&>(extra)...);
+            if(res)
+                cFatal("submit error: {}", std::get<1>(*res));
         }
     }
 
@@ -498,9 +543,9 @@ struct MeshRenderer : compo::RestrictedSubsystem<
                 gfx::uniform_pair{
                     {"camera"sv, 0},
                     semantic::SpanOne<const Matf4>(
-                        m_camera.camera_matrix),
+                        m_camera.player(m_camera.focused_player).matrix),
                 }),
-            get_view_state());
+            get_view_state(0));
     }
 
     void start_restricted(Proxy& p, time_point const& time)
@@ -532,6 +577,7 @@ struct MeshRenderer : compo::RestrictedSubsystem<
         {
             render_bsp_pass(
                 p,
+                m_camera.focused_player,
                 t,
                 pass,
                 gfx::cull_state{.front_face = true},
@@ -540,12 +586,25 @@ struct MeshRenderer : compo::RestrictedSubsystem<
                     .mask       = 0x1,
                     .reference  = 0x1,
                 });
+            for(auto i : stl_types::range<u32>(m_camera.num_players() - 1))
+                render_bsp_pass(
+                    p,
+                    i + 1,
+                    t,
+                    pass,
+                    gfx::cull_state{.front_face = true},
+                    gfx::stencil_state{
+                        .depth_pass = gfx::stencil_state::operation_t::write,
+                        .mask       = 0x1,
+                        .reference  = 0x1,
+                    });
         }
 
         for(auto const& pass :
             stl_types::slice_num(m_model, Pass_LastOpaque + 1))
             render_pass(
                 p,
+                m_camera.focused_player,
                 t,
                 pass,
                 cull_state,
@@ -563,6 +622,7 @@ struct MeshRenderer : compo::RestrictedSubsystem<
             };
             render_bsp_pass(
                 p,
+                m_camera.focused_player,
                 t,
                 m_bsp[Pass_Sky],
                 cull_state,
@@ -571,6 +631,7 @@ struct MeshRenderer : compo::RestrictedSubsystem<
                 gfx::blend_state{});
             render_pass(
                 p,
+                m_camera.focused_player,
                 t,
                 m_model[Pass_Sky],
                 cull_state,
@@ -583,24 +644,39 @@ struct MeshRenderer : compo::RestrictedSubsystem<
 
         render_pass(
             p,
+            m_camera.focused_player,
             t,
             m_model[Pass_Additive],
             gfx::blend_state{.additive = true},
             nowrite);
         render_pass(
             p,
+            m_camera.focused_player,
             t,
             m_model[Pass_Multiply],
             gfx::blend_state{.multiply = true},
             nowrite);
-        render_pass(p, t, m_model[Pass_Glass], gfx::blend_state{}, nowrite);
+        render_pass(
+            p,
+            m_camera.focused_player,
+            t,
+            m_model[Pass_Glass],
+            gfx::blend_state{},
+            nowrite);
         render_bsp_pass(
             p,
+            m_camera.focused_player,
             t,
             m_bsp[Pass_Additive],
             gfx::blend_state{.additive = true},
             nowrite);
-        render_bsp_pass(p, t, m_bsp[Pass_Glass], gfx::blend_state{}, nowrite);
+        render_bsp_pass(
+            p,
+            m_camera.focused_player,
+            t,
+            m_bsp[Pass_Glass],
+            gfx::blend_state{},
+            nowrite);
 
         //        render_bsp_pass(p, m_bsp[Pass_Wireframe]);
 
@@ -1113,6 +1189,8 @@ void LoadingScreen::end_restricted(Proxy& e, const time_point& time)
 
 void LoadingScreen::load_resources(gleam::system& api)
 {
+    using namespace gleam::literals;
+
     constexpr std::string_view vertex_shader   = R"(#version 100
 precision highp float;
 attribute vec2 pos;
@@ -1172,7 +1250,8 @@ void main()
     if(auto res = loading_program->compile(); res.has_error())
         cWarning("Error compiling loader shader: {}", res.error());
 
-    auto tex = ktx::load_from("spinner.0.etc2"_rsc.data());
+    auto tex = ktx::load_from(
+        "spinner.0.{}"_texture.with(api.feature_info()).data());
     if(tex.has_error())
     {
         cWarning("Failed to load image: {}", tex.error());
@@ -1181,9 +1260,7 @@ void main()
     ktx::texture_t spinner = std::move(tex.value());
 
     loading_tex = api.alloc_texture(
-        gfx::textures::d2,
-        CompFmt(PixFmt::ETC2, typing::pixels::PixFlg::RG),
-        3);
+        gfx::textures::d2, gl::tex::desc_of(spinner.format), 3);
     loading_tex->alloc(size_3d<u32>{512, 256, 1});
     i32 mip_idx = 0;
     spinner.mips.resize(1);
@@ -1198,14 +1275,13 @@ void main()
 
 void alloc_renderer(EntityContainer& container)
 {
-    auto& renderer
-        = container.register_subsystem_inplace<MeshRenderer<halo_version>>(
-            &container.subsystem_cast<gfx::system>(),
-            std::ref(container.subsystem_cast<BlamResources>()),
-            std::ref(container.subsystem_cast<BlamCamera>()),
-            std::ref(container.subsystem_cast<ShaderCache<halo_version>>()),
-            std::ref(container.subsystem_cast<BitmapCache<halo_version>>()),
-            std::ref(container.subsystem_cast<BSPCache<halo_version>>()));
+    container.register_subsystem_inplace<MeshRenderer<halo_version>>(
+        &container.subsystem_cast<gfx::system>(),
+        std::ref(container.subsystem_cast<BlamResources>()),
+        std::ref(container.subsystem_cast<BlamCamera>()),
+        std::ref(container.subsystem_cast<ShaderCache<halo_version>>()),
+        std::ref(container.subsystem_cast<BitmapCache<halo_version>>()),
+        std::ref(container.subsystem_cast<BSPCache<halo_version>>()));
 
     container.register_subsystem_inplace<ScreenClear>();
     container.register_subsystem_inplace<LoadingScreen>();

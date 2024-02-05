@@ -7,80 +7,37 @@
 namespace compo {
 
 template<typename T, bool Reversed>
-struct service_query
+struct service_query : std::vector<T*>
 {
-    using subsystem_iterator = typename std::conditional<
-        Reversed,
-        typename decltype(EntityContainer::subsystems)::const_reverse_iterator,
-        typename decltype(EntityContainer::subsystems)::const_iterator>::type;
+    using subsystem_iterator =
+        typename decltype(EntityContainer::subsystems)::const_iterator;
     using subsystem_ref =
         typename decltype(EntityContainer::subsystems)::const_reference;
     using service_predicate = std::function<bool(subsystem_ref)>;
 
-    struct begin_iterator_t
-    {
-    };
-    struct end_iterator_t
-    {
-    };
-
-    service_query(EntityContainer& c, begin_iterator_t) :
+    service_query(EntityContainer& c) :
         pred([](subsystem_ref e) { return C_DCAST<T>(e.second.get()); }),
         m_container(&c)
     {
-        initialize_iterator();
-    }
+        std::for_each(c.subsystems.begin(), c.subsystems.end(), [this](auto& sub) {
+            if(pred(sub))
+                this->push_back(C_DCAST<T>(sub.second.get()));
+        });
+        const auto comparator = [](const T* s1_, const T* s2_) {
+            auto const& s1 = dynamic_cast<SubsystemBase const*>(s1_);
+            auto const& s2 = dynamic_cast<SubsystemBase const*>(s2_);
+            if(Reversed)
+                return s1->priority > s2->priority;
+            else
+                return s1->priority < s2->priority;
 
-    service_query(EntityContainer& c, end_iterator_t) :
-        pred([](subsystem_ref e) { return C_DCAST<T>(e.second.get()); }),
-        m_container(&c)
-    {
-        it = end_iterator();
-    }
-
-    service_query& operator++()
-    {
-        it = std::find_if(++it, end_iterator(), pred);
-        return *this;
-    }
-
-    bool operator==(service_query const& other) const
-    {
-        return other.it == it;
-    }
-
-    T& operator*() const
-    {
-        if(it == end_iterator())
-            Throw(std::out_of_range("bad iterator"));
-
-        return *C_DCAST<T>(it->second.get());
+        };
+        std::sort(this->begin(), this->end(), comparator);
     }
 
   private:
-    auto begin_iterator() const
-    {
-        if constexpr(Reversed)
-            return m_container->subsystems.rbegin();
-        else
-            return m_container->subsystems.begin();
-    }
-    auto end_iterator() const
-    {
-        if constexpr(Reversed)
-            return m_container->subsystems.rend();
-        else
-            return m_container->subsystems.end();
-    }
-
-    void initialize_iterator()
-    {
-        it = std::find_if(begin_iterator(), end_iterator(), pred);
-    }
-
     service_predicate const pred;
     EntityContainer const*  m_container;
-    subsystem_iterator      it;
 };
 
 } // namespace compo

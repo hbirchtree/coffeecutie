@@ -39,8 +39,8 @@ struct FontCache
     virtual FontItem predict_impl(blam::tagref_t const& font_tag)
     {
         blam::font const* font = get_id(font_tag);
-        auto              name = font_tag.to_name().to_string(magic);
-        auto              data = font->pixel_data().data(magic);
+        // auto              name = font_tag.to_name().to_string(magic);
+        // auto              data = font->pixel_data().data(magic);
         return FontItem{
             .font        = font,
             .atlas_layer = 0,
@@ -124,6 +124,8 @@ struct UIElementCache
             magic_enum::enum_name(ui_el->widget_type));
         UIElementItem out{
             .ui_element = ui_el,
+            .children = {},
+            .background = {},
         };
         if(ui_el->background.valid())
             out.background
@@ -141,6 +143,8 @@ struct UIElementCache
             }
             break;
         }
+        default:
+            break;
         }
         return out;
     }

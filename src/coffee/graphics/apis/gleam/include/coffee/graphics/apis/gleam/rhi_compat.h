@@ -120,7 +120,7 @@ using texture_list = declreturntype(make_texture_list<>);
 namespace gleam::detail {
 
 inline bool apply_command_modifier(
-    program_t const&      program,
+    program_t&      program,
     shader_bookkeeping_t& bookkeeping,
     compat::texture_list& textures)
 {
@@ -168,7 +168,7 @@ inline bool apply_command_modifier(
 }
 
 inline void apply_command_modifier_per_call(
-    program_t const&      program,
+    program_t&      program,
     shader_bookkeeping_t& bookkeeping,
     compat::texture_list& textures,
     u32                   base_instance = 0,

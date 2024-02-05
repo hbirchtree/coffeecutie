@@ -190,6 +190,8 @@ inline typename bytecode_pointer<BC>::result_t bytecode_pointer<BC>::evaluate(
                 case type_t::short_:
                     time = deref_i16(*timeout);
                     break;
+                default:
+                    Throw(mismatch_param_type("non-number passed to sleep"));
                 }
 
             if(script)
@@ -321,6 +323,8 @@ inline typename bytecode_pointer<BC>::result_t bytecode_pointer<BC>::evaluate(
             case BC::div_:
                 out = left / right;
                 break;
+            default:
+                break;
             }
 
             break;
@@ -348,6 +352,8 @@ inline typename bytecode_pointer<BC>::result_t bytecode_pointer<BC>::evaluate(
             case BC::max_:
                 result.set(std::max(left, right));
                 break;
+            default:
+                break;
             }
 
             out = get_as<BC>(result, type_t::real_, op.ret_type);
@@ -357,22 +363,20 @@ inline typename bytecode_pointer<BC>::result_t bytecode_pointer<BC>::evaluate(
             auto min = param(type_t::short_, 1).to_u16();
             auto max = param(type_t::short_).to_u16();
 
+            std::uniform_int_distribution<i16> dist(min, max);
+
             out = opcode_layout_t::typed_(type_t::short_);
-            out.set(min);
-
-            /* TODO: Add random */
-
+            out.set(dist(random_gen));
             break;
         }
         case BC::real_random_range: {
             auto min = param(type_t::real_, 1).to_real();
             auto max = param(type_t::real_).to_real();
 
+            std::uniform_real_distribution<f32> dist(min, max);
+
             out = opcode_layout_t::typed_(type_t::real_);
-            out.set(min);
-
-            /* TODO: Add random */
-
+            out.set(dist(random_gen));
             break;
         }
         default: {

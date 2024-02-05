@@ -67,17 +67,12 @@
             "astc": ["rgba"],
             "etc2": ["rgba", "ra"],
             "bc7": ["rgba"],
+            "bc5": ["rg", "ra"],
             "bc3": ["rgba"],
             "pvrtc1": ["rgba"],
             "etc1": ["rgba"],
             "png": ["rgba", "ra"],
             "raw": ["rgba", "ra"]
-        },
-        "matrix": {
-            "Android": ["astc", "bc3", "etc1", "etc2", "pvrtc1", "raw"],
-            "Darwin": ["bc1", "bc3", "png", "raw"],
-            "Linux": ["bc3", "bc7", "etc2", "png", "raw"],
-            "Emscripten": ["bc3", "etc2"]
         }
     }
 }

@@ -8,7 +8,7 @@ layout(location = 4) in vec3 tangent;
 
 layout(binding = 0, std140) uniform MatrixStore
 {
-    mat4 transform[256];
+    mat4 transform[128];
 } matrices;
 
 layout(location = 1) uniform mat4 camera;

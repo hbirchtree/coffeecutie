@@ -187,7 +187,7 @@ struct BlamScript
         ImGui::End();
     }
 
-    void render_tabs(Proxy& p)
+    void render_tabs(Proxy& /*p*/)
     {
         if(ImGui::BeginTabItem("Console"))
         {

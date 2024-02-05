@@ -556,7 +556,7 @@ namespace amd {
 inline auto rx560_pro()
 {
     return api::load_options_t{
-        .api_version = 410,
+        .api_version = 0x410,
         .api_type = api_type_t::core,
         // clang-format off
         .api_extensions = std::set<std::string>{

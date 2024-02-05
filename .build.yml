@@ -24,7 +24,7 @@ script_location: toolchain/ci
 template_location: toolchain/cmake/Templates
 toolchain:
   source: hbirchtree/coffeecutie-automation-tools
-  version: v2.1.0
+  version: v2.1.1
   emsdk:
     version: 3.1.40
   android:

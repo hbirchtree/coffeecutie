@@ -32,6 +32,9 @@ struct GLConfig : Config<GLConfig>
         Debug    = 0x4,
         Robust   = 0x8,
 
+        PreferHighPerf = 0x10,
+        PreferLowPerf  = 0x20,
+
 #if defined(FEATURE_ENABLE_GLAD_Core)
         Default = Core,
 #elif defined(FEATURE_ENABLE_GLAD_ES)
@@ -41,6 +44,7 @@ struct GLConfig : Config<GLConfig>
 #endif
 
         ProfileMask = Core | Embedded,
+        PerfMask = PreferHighPerf | PreferLowPerf,
     };
 
     PixFmt framebufferFmt = PixFmt::RGBA8;

@@ -141,7 +141,11 @@ void setup_container(detail::EntityContainer& container)
         return;
 
     using namespace Coffee;
-    DProfContext _("Bundle::Cleanup");
+    DProfContext _("Bundle::Setup");
+
+#if defined(COFFEE_EMSCRIPTEN)
+    emscripten_set_main_loop_expected_blockers(1);
+#endif
 
     app_error appec;
     auto      services = container.services_with<AppLoadableService>(
@@ -193,10 +197,10 @@ bool loop_container(detail::EntityContainer& container)
                         = container.services_with<AppLoadableService>();
                     for(auto& loadable : services)
                     {
-                        if(!loadable.is_loaded())
+                        if(!loadable->is_loaded())
                         {
                             app_error ec;
-                            loadable.do_load(container, ec);
+                            loadable->do_load(container, ec);
                         }
                     }
                 });
@@ -218,9 +222,9 @@ void cleanup_container(detail::EntityContainer& container)
         Components::reverse_query);
     for(auto& service : services)
     {
-        if(service.is_loaded())
+        if(service->is_loaded())
             continue;
-        service.do_unload(container, appec);
+        service->do_unload(container, appec);
     }
 
     loop_main_queue = nullptr;
@@ -479,7 +483,11 @@ void addDefaults(
     appInfo.add("graphics:library", "OpenGL");
 
     /* Selection of (E)GL context */
-#if defined(FEATURE_ENABLE_SDL2Components)
+#if defined(COFFEE_EMSCRIPTEN) && 0
+    loader.registerAll<emscripten::GLServices>(container, ec);
+    C_ERROR_CHECK(ec);
+    appInfo.add("gl:context", "Emscripten WebGL");
+#elif defined(FEATURE_ENABLE_SDL2Components)
     loader.registerAll<sdl2::GLServices>(container, ec);
     appInfo.add("gl:context", "SDL2");
 #elif defined(FEATURE_ENABLE_EGLComponent)

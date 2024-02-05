@@ -154,7 +154,9 @@ function(GEN_GLEAM_TARGET GLVERSION SUFFIX)
     target_link_libraries(GLeamCommon_${SUFFIX} PUBLIC "-framework OpenGL")
   elseif(EMSCRIPTEN)
     target_link_options(
-      GLeamCommon_${SUFFIX} PUBLIC -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2
+      GLeamCommon_${SUFFIX} PUBLIC
+      -sMIN_WEBGL_VERSION=2
+      -sMAX_WEBGL_VERSION=2
       -sFULL_ES3
     )
   elseif(${GLVERSION} MATCHES "_ESDynamic")

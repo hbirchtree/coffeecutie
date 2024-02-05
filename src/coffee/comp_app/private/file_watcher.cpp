@@ -7,8 +7,7 @@ namespace comp_app {
 
 constexpr auto needs_await = compile_info::platform::is_emscripten;
 
-void FileWatcher::start_frame(
-    compo::ContainerProxy&, const compo::time_point& t)
+void FileWatcher::start_frame(compo::ContainerProxy&, const compo::time_point&)
 {
     std::vector<Url> finished;
     for(auto& [file, info] : m_pending)

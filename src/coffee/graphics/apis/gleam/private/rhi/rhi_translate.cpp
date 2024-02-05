@@ -82,9 +82,11 @@ requires std::is_same_v<T, group::sized_internal_format> || std::
             {P::Depth32F,
              {f::depth_component32f, b::float_, p::depth_component}},
             {P::Depth24Stencil8,
-             {f::depth24_stencil8, b::unsigned_byte, p::depth_stencil}},
+             {f::depth24_stencil8, b::unsigned_int_24_8, p::depth_stencil}},
             {P::Depth32FStencil8,
-             {f::depth32f_stencil8, b::unsigned_byte, p::depth_stencil}},
+             {f::depth32f_stencil8,
+              b::float_32_unsigned_int_24_8_rev,
+              p::depth_stencil}},
 #endif
         }};
 
@@ -163,11 +165,12 @@ requires std::is_same_v<T, group::sized_internal_format> || std::
         switch(fmt.cmpflg)
         {
         case M::BC1: {
-//            if(feval(fmt.pixflg & F::sRGB))
-//            {
-//                return {
-//                    f::compressed_srgb_s3tc_dxt1_ext, b::unsigned_byte, p::rgb};
-//            }
+            //            if(feval(fmt.pixflg & F::sRGB))
+            //            {
+            //                return {
+            //                    f::compressed_srgb_s3tc_dxt1_ext,
+            //                    b::unsigned_byte, p::rgb};
+            //            }
             switch(fmt.comp)
             {
             case C::RGB:

@@ -3,10 +3,87 @@
 #include <magic_enum.hpp>
 
 #include <coffee/graphics/apis/gleam/rhi_texture.h>
+#include <coffee/graphics/apis/gleam/rhi_urls.h>
+#include <platforms/file.h>
 
 #include <glw/texture_formats.h>
+#include <glw/texture_formats_desc.h>
 
 namespace gleam {
+
+Coffee::Resource literals::detail::TextureUrl::with(
+    features const& features, semantic::RSCA storage) const
+{
+    using Resource = Coffee::Resource;
+
+    /* TODO: Use fmt::format here */
+    auto source_exists
+        = [this, storage](const char* suffix) -> std::optional<Resource> {
+        auto url
+            = platform::url::Path(path).removeExt().addExtension(suffix).url(
+                storage);
+        if(platform::file::exists(url).has_value())
+            return Resource(url);
+        return std::nullopt;
+    };
+
+    auto const& tex = features.texture.tex;
+
+#if defined(GL_COMPRESSED_RGBA_BPTC_UNORM)
+    if(tex.gl.bptc || tex.ext.bptc)
+    {
+        if(auto out = source_exists("bc6"))
+            return std::move(*out);
+        if(auto out = source_exists("bc7"))
+            return std::move(*out);
+    }
+#endif
+#if defined(GL_COMPRESSED_RGBA_ASTC_8x8_KHR)
+    if(tex.gl.astc || tex.khr.astc)
+    {
+        if(auto out = source_exists("astc"))
+            return std::move(*out);
+    }
+#endif
+#if defined(GL_COMPRESSED_RED_RGTC1)
+    if(tex.gl.rgtc || tex.ext.rgtc)
+    {
+        if(auto out = source_exists("bc4"))
+            return std::move(*out);
+        if(auto out = source_exists("bc5"))
+            return std::move(*out);
+    }
+#endif
+#if defined(GL_COMPRESSED_R11_EAC)
+    if(tex.gl.etc2)
+    {
+        if(auto out = source_exists("etc2"))
+            return std::move(*out);
+    }
+#endif
+#if defined(GL_COMPRESSED_RGB_S3TC_DXT1_EXT)
+    if(tex.ext.s3tc)
+    {
+        if(auto out = source_exists("bc1"))
+            return std::move(*out);
+        if(auto out = source_exists("bc2"))
+            return std::move(*out);
+        if(auto out = source_exists("bc3"))
+            return std::move(*out);
+    }
+#endif
+#if defined(GL_ETC1_RGB8_OES)
+    if(tex.oes.etc1)
+    {
+        if(auto out = source_exists("etc1"))
+            return std::move(*out);
+    }
+#endif
+    if(auto out = source_exists("raw"))
+        return std::move(*out);
+    else
+        Throw(undefined_behavior("compatible texture format not found"));
+}
 
 gl::tex::texture_format_t const& texture_t::format_description() const
 {
@@ -35,9 +112,13 @@ std::vector<std::string> enumerate_compressed_formats(
     {
         using fmt_t = group::internal_format;
 
-        std::array<fmt_t, 20> internal_formats = {{
+        std::array<fmt_t, 22> internal_formats = {{
             fmt_t::compressed_rgba_astc_4x4_khr,
+            fmt_t::compressed_rgba_astc_5x5_khr,
+            fmt_t::compressed_rgba_astc_6x6_khr,
             fmt_t::compressed_rgba_astc_8x8_khr,
+            fmt_t::compressed_rgba_astc_10x10_khr,
+            fmt_t::compressed_rgba_astc_12x12_khr,
 
             fmt_t::compressed_rgb_s3tc_dxt1_ext,
             fmt_t::compressed_rgba_s3tc_dxt1_ext,
@@ -112,7 +193,10 @@ std::vector<std::string> enumerate_compressed_formats(
             auto             tex_fmt = static_cast<group::internal_format>(fmt);
             std::string_view name    = magic_enum::enum_name(tex_fmt);
             if(name.empty())
+            {
+                format_strings.push_back(stl_types::str::fmt::pointerify(fmt));
                 continue;
+            }
             format_strings.push_back(std::string(name.begin(), name.end()));
         }
 

@@ -178,12 +178,18 @@ void DiscordService::initialize(DiscordOptions const& options)
 
         if(delegate.joinGame)
             delegate.joinGame(secret);
+        else
+            Coffee::cVerbose(
+                8, DISCORD_TAG, "Join game request received, but no handler");
     };
     handlers.spectateGame = [](const char* secret) {
         auto& delegate = GetService().delegate();
 
         if(delegate.spectate)
             delegate.spectate(secret);
+        else
+            Coffee::cVerbose(
+                8, DISCORD_TAG, "Spectate request received, but no handler");
     };
     handlers.joinRequest = [](DiscordUser const* request) {
         PlayerInfo info
@@ -193,6 +199,9 @@ void DiscordService::initialize(DiscordOptions const& options)
 
         if(delegate.joinRequest)
             GetService().delegate().joinRequest(std::move(info));
+        else
+            Coffee::cVerbose(
+                8, DISCORD_TAG, "Join request received, but no handler");
     };
 
     m_delegate->joinReply = [&](PlayerInfo&&                       playerInfo,

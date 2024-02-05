@@ -32,6 +32,12 @@ enum class program_property_arb : u32
 #ifdef GL_ATTACHED_SHADERS
     attached_shaders = GL_ATTACHED_SHADERS,
 #endif
+#ifdef GL_COMPLETION_STATUS_ARB
+    completion_status_arb = GL_COMPLETION_STATUS_ARB,
+#endif
+#ifdef GL_COMPLETION_STATUS_KHR
+    completion_status_khr = GL_COMPLETION_STATUS_KHR,
+#endif
 #ifdef GL_COMPUTE_WORK_GROUP_SIZE
     compute_work_group_size = GL_COMPUTE_WORK_GROUP_SIZE,
 #endif
