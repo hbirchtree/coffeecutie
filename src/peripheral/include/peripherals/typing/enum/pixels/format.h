@@ -128,6 +128,7 @@ enum class PixFmt : u8
     /* Special data */
     //    Stencil,         /*  8-bit integer, not a real format */
     Depth16,         /* 16-bit unsigned short */
+    Depth24,         /* 24-bit unsigned int */
     Depth24Stencil8, /* 32-bit data,           24-bit floating-point, 8-bit
                         integer */
     Depth16F,

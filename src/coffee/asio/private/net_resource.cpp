@@ -67,6 +67,9 @@ void Resource::initRsc(const Url& url)
     }
 #endif
 
+#if defined(USE_EMSCRIPTEN_HTTP)
+    // Nothing to do here!
+#else
     {
         DProfContext b(DTEXT(NETRSC_TAG "Connecting to host"));
 #if defined(ASIO_USE_SSL)
@@ -85,6 +88,7 @@ void Resource::initRsc(const Url& url)
         }
         C_ERROR_CHECK_TYPED(m_error, net_error)
     }
+#endif
 
     if(!connected())
     {
@@ -110,6 +114,9 @@ std::optional<asio::error_code> Resource::close()
         ssl.release();
     } else
 #endif
+#if defined(USE_EMSCRIPTEN_HTTP)
+        emscripten_async_wget2_abort(m_handle);
+#else
     {
         if(!normal)
             return std::nullopt;
@@ -117,12 +124,15 @@ std::optional<asio::error_code> Resource::close()
         ec = normal->disconnect();
         normal.release();
     }
+#endif
 
     return ec ? std::make_optional(ec) : std::nullopt;
 }
 
-Resource::Resource(std::shared_ptr<Coffee::ASIO::Service> ctxt, const Url& url) :
-    m_resource(url), m_ctxt(ctxt), m_access(url.netflags)
+Resource::Resource(
+    std::shared_ptr<Coffee::ASIO::Service> ctxt, const Url& url) :
+    m_resource(url),
+    m_ctxt(ctxt), m_access(url.netflags)
 {
     using namespace http::header::to_string;
     using namespace http::header;
@@ -234,6 +244,42 @@ std::optional<asio::error_code> Resource::push(const const_chunk_u8& data)
     return push(meth, data);
 }
 
+#if defined(USE_EMSCRIPTEN_HTTP)
+std::optional<asio::error_code> Resource::push(
+    http::method_t method, const_chunk_u8 const& data)
+{
+    std::string resource, param;
+    if(auto idx = m_request.header.resource.find('?'); idx == std::string::npos)
+    {
+        resource = m_request.header.resource.substr(0, idx);
+        param    = m_request.header.resource.substr(idx + 1);
+    } else
+        resource = m_request.header.resource;
+    auto url = fmt::format(
+        "https://{}:{}/{}", m_request.host, m_request.port, resource);
+    auto method_s = http::header::to_string::method(method);
+
+    m_handle = emscripten_async_wget2_data(
+        url.c_str(),
+        method_s,
+        param.c_str(),
+        this,
+        true,
+        [](unsigned, void* self_, void* buffer, unsigned buffer_size) {
+            Resource* self               = static_cast<Resource*>(self_);
+            self->m_response.header.code = 200;
+            self->m_response.payload.resize(buffer_size);
+            memcpy(self->m_response.payload.data(), buffer, buffer_size);
+        },
+        [](unsigned, void* self_, int code, const char* message) {
+
+        },
+        [](unsigned, void* /*self_*/, int /*received*/, int /*total*/) {});
+
+    if(m_handle < 0)
+        return asio::error_code::request_failed;
+}
+#else
 std::optional<asio::error_code> Resource::readResponseHeader(
     net_buffer& buffer, libc_types::szptr& consumed)
 {
@@ -243,7 +289,7 @@ std::optional<asio::error_code> Resource::readResponseHeader(
     if(secure())
     {
         DProfContext __(NETRSC_TAG "Read response");
-        auto         socketError = ssl->flush();
+        auto socketError = ssl->flush();
 
         if(socketError)
             cWarning(NETRSC_TAG "asio error: {0}", socketError.message());
@@ -294,7 +340,7 @@ std::optional<asio::error_code> Resource::readResponsePayload(
     using namespace http;
 
     asio::error_code ec;
-    auto&            response_fields = m_response.header.standard_fields;
+    auto& response_fields = m_response.header.standard_fields;
     auto content_len_it = response_fields.find(header_field::content_length);
 
     if(content_len_it == response_fields.end())
@@ -302,7 +348,7 @@ std::optional<asio::error_code> Resource::readResponsePayload(
 
     {
         DProfContext __(NETRSC_TAG "Reading payload");
-        auto         content_len = cast_string<u64>(content_len_it->second);
+        auto content_len = cast_string<u64>(content_len_it->second);
 
         cVerbose(12, NETRSC_TAG "Reading {0} chunk_u8...", content_len);
 
@@ -392,7 +438,7 @@ std::optional<asio::error_code> Resource::push(
     if(ec)
         return ec;
 
-    szptr      consumed = 0;
+    szptr consumed = 0;
     std::vector<u8> recv_buf;
     if(should_expect)
     {
@@ -486,6 +532,7 @@ std::optional<asio::error_code> Resource::push(
         return std::nullopt;
     return ec;
 }
+#endif
 
 std::optional<std::string> Resource::mimeType() const
 {
@@ -499,7 +546,7 @@ std::optional<std::string> Resource::mimeType() const
     return it->second;
 }
 
-u32 Resource::responseCode() const
+libc_types::u32 Resource::responseCode() const
 {
     return m_response.header.code;
 }

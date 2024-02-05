@@ -1,6 +1,8 @@
 #pragma once
 
 #include <algorithm>
+#include <unordered_map>
+
 #include <coffee/components/types.h>
 #include <coffee/core/printing/log_interface.h>
 #include <peripherals/stl/quick_container.h>

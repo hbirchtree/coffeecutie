@@ -192,6 +192,8 @@ inline bool apply_command_modifier(
     [[maybe_unused]] buffer_list&                       buffer_info,
     [[maybe_unused]] std::optional<std::pair<u32, u32>> span = {})
 {
+    if(!program.m_features.buffer_binding)
+        return false;
 #if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
     for(auto& buffer_def : buffer_info)
     {

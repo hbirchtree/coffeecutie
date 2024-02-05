@@ -80,7 +80,7 @@
                 "asio",
                 "flatbuffers",
                 { "name": "flatbuffers", "host": true },
-                { "name": "gamenetworkingsockets", "platform": "!emscripten" }
+                { "name": "gamenetworkingsockets", "platform": "!emscripten & !(android & arm32)" }
             ]
         },
         "openssl": {

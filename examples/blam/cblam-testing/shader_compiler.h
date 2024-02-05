@@ -39,6 +39,9 @@ static void create_shaders(
         std::get<0>(version),
         std::get<1>(version));
 
+    if(variant == "es200")
+        variant = "es100";
+
     if(variant.empty())
         Throw(std::runtime_error("no shader variant selected, good night"));
     else

@@ -818,6 +818,19 @@ detail::thread_id runtime_queue::thread_id() const
     return m_thread_id;
 }
 
+size_t runtime_queue::task_count()
+{
+    detail::unique_lock<detail::recursive_mutex> _(m_tasks_lock);
+    size_t out = 0;
+    for(auto const& task : m_tasks)
+        if(task.alive)
+            out++;
+    for(auto const& task : m_dependent_tasks)
+        if(task.alive)
+            out++;
+    return out;
+}
+
 u64 runtime_queue::enqueue(runtime_task&& task)
 {
     detail::unique_lock<detail::recursive_mutex> _(m_tasks_lock);

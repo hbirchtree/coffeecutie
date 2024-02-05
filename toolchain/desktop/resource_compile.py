@@ -6,7 +6,7 @@ from argparse import ArgumentParser
 from glob import glob
 from os import makedirs
 from os.path import dirname, getmtime, exists
-from shutil import which
+from shutil import copyfile, which
 from hashlib import sha256
 
 
@@ -85,6 +85,8 @@ DEFAULT_SHADER_MATRIX = {
     # Linux, omitted because it supports all
     'Windows': ['spv', 'core:'],
 }
+
+running_processes = []
 
 
 def needs_update(output: str, dependencies: list):
@@ -285,6 +287,18 @@ def encode_textures(
         _process_file(**file, codecs=codecs, resolutions=resolutions)
 
 
+def copy_files(
+        values: dict,
+        cache_directory: str,
+        root_directory: str,
+        out_directory: str,
+        target: str,
+        build_mode: str,
+        extra_dependencies: list):
+    for file in values:
+        copyfile(f'{root_directory}/{file}', f'{out_directory}/{file}')
+
+
 def process_resources(definition: dict, extra_dependencies: list, **kwargs):
     for key in definition:
         if key == 'shaders':
@@ -295,6 +309,10 @@ def process_resources(definition: dict, extra_dependencies: list, **kwargs):
             encode_textures(definition[key],
                             extra_dependencies=extra_dependencies + [PROGRAMS['TextureCompressor']],
                             **kwargs)
+        if key == 'copy':
+            copy_files(definition[key],
+                       extra_dependencies=extra_dependencies,
+                       **kwargs)
 
 
 if __name__ == '__main__':

@@ -648,7 +648,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             BlamCamera* camera;
             p.subsystem(camera);
 
-            auto&       player     = camera->player(player_info.idx);
+            auto&       player     = camera->player(0);
             auto const& sync       = payload.value<CameraSync>();
             player.camera.position = sync.position;
             player.camera.rotation = sync.rotation;

@@ -10,6 +10,7 @@
 #include <peripherals/typing/geometry/point.h>
 #include <peripherals/typing/geometry/size.h>
 #include <peripherals/typing/pixels/rgba.h>
+#include <platforms/profiling/jsonprofile.h>
 
 #include "app_error.h"
 
@@ -493,6 +494,34 @@ struct NetworkStatProvider
 struct MemoryStatProvider
 {
     virtual libc_types::u32 resident() = 0;
+};
+
+struct GPUStatProvider
+{
+    /* Memory usage */
+    virtual std::optional<libc_types::u32> mem_resident() = 0;
+    virtual std::optional<libc_types::u32> mem_total()    = 0;
+
+    /* Processor usage */
+    virtual std::optional<libc_types::u8> usage() = 0;
+
+    /* Extensible, vendor-specific info */
+    virtual std::map<std::string_view, libc_types::u16> stats_numeric()
+    {
+        return {};
+    }
+    virtual std::map<std::string_view, std::string> stats_strings()
+    {
+        return {};
+    }
+    struct stats_desc_t
+    {
+        platform::profiling::MetricVariant type;
+    };
+    virtual std::map<std::string_view, stats_desc_t> stats_description()
+    {
+        return {};
+    }
 };
 
 struct BatteryProvider

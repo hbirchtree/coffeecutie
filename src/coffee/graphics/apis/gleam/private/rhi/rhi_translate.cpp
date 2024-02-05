@@ -39,6 +39,11 @@ requires std::is_same_v<T, group::sized_internal_format> || std::
             {P::RG8, {f::rg8, b::unsigned_byte, p::rg}},
             {P::RG16F, {f::rg16f, b::half_float, p::rg}},
             {P::RG32F, {f::rg32f, b::float_, p::rg}},
+#else
+            {P::R8,
+             {static_cast<f>(0x1909),
+              b::unsigned_byte,
+              static_cast<p>(0x1909)}},
 #endif
 
     /* RGB */
@@ -76,6 +81,8 @@ requires std::is_same_v<T, group::sized_internal_format> || std::
             /* Special formats */
             {P::Depth16,
              {f::depth_component16, b::unsigned_short, p::depth_component}},
+            {P::Depth24,
+             {f::depth_component24, b::unsigned_int, p::depth_component}},
 //        {P::Depth16F, {f::depth_component, b::half_float,
 //        p::depth_component}},
 #if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300

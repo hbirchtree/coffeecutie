@@ -83,7 +83,7 @@ inline optional<tuple<error, std::string_view>> api::submit(
     using namespace std::string_view_literals;
 
     auto const& call          = command.call;
-    auto const& data          = command.data;
+    auto        data          = command.data;
     auto        program       = command.program.lock();
     auto        render_target = command.render_target.expired()
                                     ? default_rendertarget()
@@ -105,7 +105,7 @@ inline optional<tuple<error, std::string_view>> api::submit(
         {
             program->m_error_state      = true;
             [[maybe_unused]] auto error = std::get<0>(res.error());
-            debug().message(error);
+            debug().message(error, group::debug_severity::high);
             usage().draw.failed_draws++;
             return std::make_tuple(
                 error::async_shader_compile_failed, "program linking failed");
@@ -242,15 +242,17 @@ inline optional<tuple<error, std::string_view>> api::submit(
                 vertex_program, attrib.second, attrib.first);
     }
 
+    /* Validate the state of the draw calls to see if there is anything that the
+     * implementation will *definitely* fail on */
     if constexpr(compile_info::debug_mode)
     {
         auto log = detail::program_log(program->m_handle);
         if(auto error = detail::evaluate_draw_state(m_limits, command);
            error.has_value())
         {
-            usage().draw.failed_draws++;
-            return std::make_tuple(
-                *error, detail::draw_error_to_string(*error));
+            // usage().draw.failed_draws++;
+            // return std::make_tuple(
+            //     *error, detail::draw_error_to_string(*error));
         }
     }
 
@@ -374,15 +376,16 @@ inline optional<tuple<error, std::string_view>> api::submit(
     for(auto const& draw : data)
     {
         if(call.mode == drawing::primitive::triangle)
-            m_usage.draw.triangles = (draw.arrays.count + draw.elements.count)
-                                     * draw.instances.count;
+            m_usage.draw.triangles += (draw.arrays.count + draw.elements.count)
+                                      * draw.instances.count;
         else if(call.mode == drawing::primitive::triangle_strip)
             m_usage.draw.triangle_strips
-                = (draw.arrays.count + draw.elements.count)
-                  * draw.instances.count;
+                += (draw.arrays.count + draw.elements.count)
+                   * draw.instances.count;
         else
-            m_usage.draw.other_prims = (draw.arrays.count + draw.elements.count)
-                                       * draw.instances.count;
+            m_usage.draw.other_prims
+                += (draw.arrays.count + draw.elements.count)
+                   * draw.instances.count;
     }
 
 #if GLEAM_MAX_VERSION_ES != 0x200

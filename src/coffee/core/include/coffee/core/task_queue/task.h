@@ -580,6 +580,8 @@ class runtime_queue
     std::string_view  name();
     detail::thread_id thread_id() const;
 
+    size_t task_count();
+
     /*!
      * \brief Create a new thread context, do nothing else.
      * \return

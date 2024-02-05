@@ -108,9 +108,23 @@ inline bool is_hyperthreaded()
 } // namespace proc
 
 namespace memory {
+#if defined(COFFEE_LINUX) || defined(COFFEE_ANDROID)
+constexpr bool has_meminfo = true;
 
-// using linux_::stats;
-// using linux_::virtual_stats;
+using linux_::resident;
+using linux_::total;
+#else
+constexpr bool has_meminfo = false;
+
+auto resident()
+{
+    return 0u;
+}
+auto total()
+{
+    return 0u;
+}
+#endif
 
 }
 

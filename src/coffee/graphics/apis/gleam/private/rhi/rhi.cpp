@@ -13,8 +13,8 @@
 
 #include <coffee/core/debug/formatting.h>
 
-#include <glw/extensions/ARB_depth_buffer_float.h>
 #include <glw/extensions/ARB_color_buffer_float.h>
+#include <glw/extensions/ARB_depth_buffer_float.h>
 #include <glw/extensions/ARB_shader_draw_parameters.h>
 #include <glw/extensions/EXT_color_buffer_float.h>
 #include <glw/extensions/EXT_color_buffer_half_float.h>
@@ -22,6 +22,7 @@
 #include <glw/extensions/KHR_debug.h>
 #include <glw/extensions/KHR_parallel_shader_compile.h>
 #include <glw/extensions/NV_shading_rate_image.h>
+#include <glw/extensions/OES_depth24.h>
 #include <glw/extensions/OES_rgb8_rgba8.h>
 #include <glw/extensions/OES_vertex_array_object.h>
 
@@ -443,6 +444,8 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
         out.texture.tex.gl.rgtc                  = true;
         out.rendertarget.color_buffer_float      = true;
         out.rendertarget.color_buffer_half_float = true;
+        out.rendertarget.depth24_stencil8        = true;
+        out.rendertarget.depth_16f               = true;
 
         out.texture.cube_array = api_version >= 0x400;
 
@@ -521,16 +524,22 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
             extensions, ext::color_buffer_half_float::name);
         out.rendertarget.color_buffer_float = supports_extension(
             extensions, ext::color_buffer_half_float::name);
+        out.rendertarget.depth24
+            = api_version >= 0x300
+              || supports_extension(extensions, oes::depth24::name);
 
         out.buffer.mapping                = api_version >= 0x300;
         out.buffer.pbo                    = api_version >= 0x300;
         out.buffer.ubo                    = api_version >= 0x300;
         out.draw.instancing               = api_version >= 0x300;
+        out.program.buffer_binding        = api_version >= 0x300;
         out.rendertarget.clearbuffer      = api_version >= 0x300;
+        out.rendertarget.depth24_stencil8 = api_version >= 0x300;
         out.rendertarget.readdraw_buffers = api_version >= 0x300;
         out.texture.internal_format_query = api_version >= 0x300;
         out.texture.max_level             = api_version >= 0x300;
         out.texture.samplers              = api_version >= 0x300;
+        out.texture.swizzle               = api_version >= 0x300;
         out.texture.texture_3d            = api_version >= 0x300;
         out.texture.tex_layer_query       = api_version >= 0x300;
         out.texture.tex.gl.etc2           = api_version >= 0x300;
@@ -576,9 +585,14 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
     // out.rendertarget.depth_16f
     //     = supports_render_format(out, typing::pixels::PixFmt::Depth16F);
     out.rendertarget.depth_32f
-        = supports_render_format(out, typing::pixels::PixFmt::Depth32F) || supports_extension(extensions, arb::depth_buffer_float::name);
+        = supports_render_format(out, typing::pixels::PixFmt::Depth32F)
+          || supports_extension(extensions, arb::depth_buffer_float::name);
 
     out.debug.khr.debug = supports_extension(extensions, khr::debug::name);
+
+    /* KHR_debug doesn't seem to behave right on these */
+    if(api_type == api_type_t::es && api_version == 0x200)
+        out.debug.khr.debug = false;
 
     out.rendertarget.nv.shading_rate_image
         = supports_extension(extensions, nv::shading_rate_image::name);
@@ -855,6 +869,8 @@ void api::collect_info(comp_app::interfaces::AppInfo& appInfo)
     if(auto driver = device_driver())
         appInfo.add("gl:driver", driver.value());
 
+    appInfo.add("gl:versionString", cmd::get_string(string_name::version));
+
     auto        exts = query_native_extensions();
     std::string exts_list;
     for(auto const& ext : exts)
@@ -899,8 +915,7 @@ optional<error> api::load(load_options_t options)
         auto supported = query_native_extensions();
         auto requested = *options.api_extensions;
         for(auto const& ext : requested)
-            if(supported.contains(ext))
-                m_extensions.insert(ext);
+            m_extensions.insert(ext);
     } else
         m_extensions = query_native_extensions();
 
@@ -945,8 +960,12 @@ optional<error> api::load(load_options_t options)
     m_workarounds = options.api_workarounds.value_or(default_workarounds);
 
     if(options.api_features)
-        m_features = *options.api_features;
-    else
+    {
+        /* Make sure we are able to debug even when emulating */
+        auto debug       = native_features.debug;
+        m_features       = *options.api_features;
+        m_features.debug = debug;
+    } else
         m_features = native_features;
 
     if(options.limits)
@@ -1095,7 +1114,8 @@ bool api::supports_extension(string const& ext)
     return m_extensions.contains(ext);
 }
 
-bool api::supports_render_format(features const& features, PixDesc const& fmt)
+bool api::supports_render_format(
+    features const& features, [[maybe_unused]] PixDesc const& fmt)
 {
     if(!features.texture.internal_format_query)
         return false;

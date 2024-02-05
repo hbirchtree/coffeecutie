@@ -78,11 +78,14 @@ struct api_limits
         using prop = group::get_prop;
 
         buffers = {};
-        draws = {
-            .element_count        = get_limit(prop::max_elements_indices),
-            .element_index        = get_limit(prop::max_element_index),
-            .element_vertex_count = get_limit(prop::max_elements_vertices),
-        };
+        if(m_features.draw.instancing)
+            draws = {
+                .element_index = get_limit(prop::max_element_index),
+            };
+        else
+            draws = {
+                .element_index = std::numeric_limits<libc_types::i32>::max(),
+            };
         shaders = {
             .vertex_uniform_vectors
             = get_limit(prop::max_vertex_uniform_vectors),
@@ -196,7 +199,7 @@ struct api_limits
             textures.d2_max_layers,
             textures.cube_size
             //
-            );
+        );
     }
 
     struct buffer_limits_t
@@ -217,9 +220,9 @@ struct api_limits
     } buffers;
     struct draw_limits_t
     {
-        u32 element_count;
+        u32 element_count{std::numeric_limits<i32>::max()};
         u32 element_index{0};
-        u32 element_vertex_count;
+        u32 element_vertex_count{std::numeric_limits<i32>::max()};
 
         u32 instance_count{0};
         u32 instance_offset{0};

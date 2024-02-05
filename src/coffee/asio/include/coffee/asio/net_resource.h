@@ -1,9 +1,26 @@
 #pragma once
 
-#if defined(FEATURE_ENABLE_ASIO)
-#include <coffee/asio/http.h>
+#if defined(USE_EMSCRIPTEN_HTTP)
+namespace asio {
+namespace error
+{
+enum basic_errors
+{
+    none,
+    invalid_argument,
+};
+}
+enum error_code
+{
+    none,
+    request_failed,
+};
+
+}
+#else
 #include <coffee/asio/tcp_socket.h>
 #endif
+#include <coffee/asio/http.h>
 
 #include <coffee/core/url.h>
 #include <coffee/interfaces/byte_provider.h>
@@ -39,11 +56,15 @@ struct Resource
 
   private:
     Url                                    m_resource;
+#if defined(USE_EMSCRIPTEN_HTTP)
+    int m_handle{-1};
+#else
     std::shared_ptr<Coffee::ASIO::Service> m_ctxt;
 #if defined(ASIO_USE_SSL)
     std::unique_ptr<net::tcp::ssl_socket> ssl;
 #endif
     std::unique_ptr<net::tcp::raw_socket> normal;
+#endif
 
     http::request_t  m_request;
     http::response_t m_response;
@@ -55,9 +76,11 @@ struct Resource
     void                            initRsc(Url const& url);
     std::optional<asio::error_code> close();
 
+#if !defined(USE_EMSCRIPTEN_HTTP)
     std::optional<asio::error_code> readResponseHeader(
         net_buffer& buffer, libc_types::szptr& consumed);
     std::optional<asio::error_code> readResponsePayload(net_buffer& buffer);
+#endif
 
   public:
     Resource(std::shared_ptr<Coffee::ASIO::Service> ctxt, Url const& url);

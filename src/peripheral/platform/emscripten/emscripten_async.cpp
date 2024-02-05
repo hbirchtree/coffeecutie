@@ -62,9 +62,7 @@ static std::optional<posix::mem_mapping_t> mmap_download(const char* hash)
 
 std::future<posix::mem_mapping_t> mmap_async(Url const& file)
 {
-    // auto* pdata = new promise_data_t;
-    // pdata->url = file.internUrl.c_str();
-    auto hash = std::string(crypt(file.internUrl.c_str(), "aa"));
+    auto hash = std::to_string(std::hash<std::string>()(file.internUrl));
 
     fprintf(
         stdout,

@@ -13,6 +13,7 @@ FrameCounter::FrameCounter()
         auto num_seconds = std::stoi(*interval);
         close_time = compo::clock::now() + std::chrono::seconds(num_seconds);
     }
+    get() = 0;
 }
 
 void FrameCounter::start_frame(ContainerProxy& p, const time_point &current)

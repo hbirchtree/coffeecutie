@@ -77,8 +77,7 @@ i32 blam_main()
 #if defined(SELECT_API_OPENGL)
     auto& glConfig        = loader.config<comp_app::GLConfig>();
     glConfig.swapInterval = 1;
-    if constexpr(
-        compile_info::debug_mode || compile_info::platform::is_emscripten)
+    if constexpr(compile_info::debug_mode || true)
     {
         glConfig.profile |= comp_app::GLConfig::Debug;
         // glConfig.version.major = 3;
@@ -101,14 +100,12 @@ i32 blam_main()
             ProfContext _(__FUNCTION__);
 
             auto& gfx        = e.register_subsystem_inplace<gfx::system>();
-            auto  load_error = gfx.load(/*{
-                 .api_version = 0x450,
-                 .api_type    = gfx::api_type_t::core,
-            }*/ // gfx::emulation::webgl::desktop()
-              // gfx::emulation::qcom::adreno_320()
-              // gfx::emulation::arm::mali_g710()
-              // gfx::emulation::amd::rx560_pro()
-              // gfx::emulation::webgl::desktop()
+            auto  load_error = gfx.load(/*gfx::emulation::webgl::desktop()*/
+                                       // gfx::emulation::qcom::adreno_320()
+                                       // gfx::emulation::arm::mali_g710()
+                                       // gfx::emulation::amd::rx560_pro()
+                                       // gfx::emulation::webgl::desktop()
+                                       // gfx::emulation::img::powervr_sgx530_bbb()
             );
 
             if(load_error)
@@ -280,6 +277,23 @@ i32 blam_main()
             if(map_filename.valid())
                 load.file = map_filename;
             e.subsystem_cast<GameEventBus>().inject(event, &load);
+            if(arguments.count("listen"))
+            {
+                event.type = GameEvent::ServerConnect;
+                ServerConnectEvent connect{
+                    .type   = ServerConnectEvent::Listen,
+                    .remote = arguments["listen"].as<std::string>(),
+                };
+                e.subsystem_cast<GameEventBus>().inject(event, &connect);
+            } else if(arguments.count("server"))
+            {
+                event.type = GameEvent::ServerConnect;
+                ServerConnectEvent connect{
+                    .type   = ServerConnectEvent::Server,
+                    .remote = arguments["server"].as<std::string>(),
+                };
+                e.subsystem_cast<GameEventBus>().inject(event, &connect);
+            }
         },
         [](EntityContainer& e,
            BlamData<halo_version>&,

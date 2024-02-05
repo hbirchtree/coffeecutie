@@ -266,6 +266,10 @@ struct MeshRenderer : compo::RestrictedSubsystem<
                 .template get_bucket<gfx::compat::texture_2da_t>(
                     PixDesc(PixFmt::RGBA4))
                 .sampler});
+
+        if(m_api->limits().textures.texture_units <= 8)
+            return;
+
         samplers.push_back(gleam::sampler_definition_t{
             typing::graphics::ShaderStage::Fragment,
             {"source_rgba8"sv, 8},
@@ -417,8 +421,8 @@ struct MeshRenderer : compo::RestrictedSubsystem<
                 get_view_state(idx),
                 samplers,
                 std::forward<Args&&>(extra)...);
-            if(res)
-                cFatal("submit error: {}", std::get<1>(*res));
+            // if(res)
+            //     cFatal("submit error: {}", std::get<1>(*res));
         }
     }
 
@@ -489,8 +493,8 @@ struct MeshRenderer : compo::RestrictedSubsystem<
                 },
                 samplers,
                 std::forward<Args&&>(extra)...);
-            if(res)
-                cFatal("submit error: {}", std::get<1>(*res));
+            // if(res)
+            //     cFatal("submit error: {}", std::get<1>(*res));
         }
     }
 
@@ -561,7 +565,8 @@ struct MeshRenderer : compo::RestrictedSubsystem<
 
         update_materials(p, time);
 
-        m_resources.material_store->unmap();
+        if(m_api->feature_info().program.buffer_binding)
+            m_resources.material_store->unmap();
 
         RenderingParameters const* rendering_props;
         p.subsystem(rendering_props);
@@ -716,6 +721,9 @@ struct MeshRenderer : compo::RestrictedSubsystem<
             wf.draws[0].push_back(bsp.draw.data.front());
         }
 
+        if(!m_api->feature_info().program.buffer_binding)
+            return;
+
         /* Allocate the material instances from the material pool */
         for(Pass& pass : m_bsp)
         {
@@ -798,6 +806,9 @@ struct MeshRenderer : compo::RestrictedSubsystem<
                 }
         }
 
+        if(!m_api->feature_info().program.buffer_binding)
+            return;
+
         size_t matrix_ptr = 0;
         for(Pass& pass : m_model)
         {
@@ -846,6 +857,9 @@ struct MeshRenderer : compo::RestrictedSubsystem<
 
     void update_materials(Proxy& p, time_point const& time)
     {
+        if(!m_api->feature_info().program.buffer_binding)
+            return;
+
         for(Pass& pass : m_bsp)
         {
             pass.material_mapping
@@ -1151,9 +1165,14 @@ void LoadingScreen::end_restricted(Proxy& e, const time_point& time)
 
     auto _ = api->debug().scope();
 
+    auto screen_aspect
+        = e.service<comp_app::GraphicsFramebuffer>()->size().aspect();
+
     Matf4 transform = glm::translate(
-        glm::scale(glm::identity<Matf4>(), glm::vec3(0.2f)),
-        glm::vec3(4, -5, 0));
+        // glm::scale(glm::identity<Matf4>(), glm::vec3(0.2f)),
+        glm::scale(
+            glm::identity<Matf4>(), glm::vec3(0.2f / screen_aspect, 0.2f, 1)),
+        glm::vec3(1 / (0.2f / screen_aspect) - 1, -5, 0));
 
     f32 timef = std::chrono::duration_cast<stl_types::Chrono::seconds_float>(
                     time.time_since_epoch())
@@ -1162,7 +1181,7 @@ void LoadingScreen::end_restricted(Proxy& e, const time_point& time)
     f32 start = timef;
     f32 end   = std::fmod(timef + 0.2f, 1.f);
 
-    api->submit(gfx::draw_command{
+    auto res = api->submit(gfx::draw_command{
         .program = loading_program,
         .vertices = screen_clear->quad_vao,
         .call = {
@@ -1171,11 +1190,11 @@ void LoadingScreen::end_restricted(Proxy& e, const time_point& time)
         },
         .data = {{ .arrays = {.count = 4} }},
     },
-    gfx::make_sampler_list(gfx::sampler_definition_t{
-        typing::graphics::ShaderStage::Fragment,
-        {"source"sv},
-        loading_sampler,
-    }),
+    // gfx::make_sampler_list(gfx::sampler_definition_t{
+    //     typing::graphics::ShaderStage::Fragment,
+    //     {"source"sv},
+    //     loading_sampler,
+    // }),
     gfx::make_uniform_list(
         typing::graphics::ShaderStage::Vertex,
         gfx::uniform_pair{{"transform"sv}, semantic::SpanOne(transform)}),
@@ -1185,13 +1204,21 @@ void LoadingScreen::end_restricted(Proxy& e, const time_point& time)
         gfx::uniform_pair{{"range_end"sv}, semantic::SpanOne(end)}),
     gfx::blend_state{}
     );
+    if(res)
+    {
+        auto [err, msg] = *res;
+        cWarning(
+            "Failed to draw loading screen: {}: {}",
+            gleam::detail::draw_error_to_string(err),
+            msg);
+    }
 }
 
 void LoadingScreen::load_resources(gleam::system& api)
 {
     using namespace gleam::literals;
 
-    constexpr std::string_view vertex_shader   = R"(#version 100
+    constexpr std::string_view vertex_shader = R"(#version 100
 precision highp float;
 attribute vec2 pos;
 attribute vec2 tex;
@@ -1203,40 +1230,60 @@ void main()
     gl_Position = transform * vec4(pos.x, pos.y, 0.3, 1.0);
 }
 )";
+    //     constexpr std::string_view fragment_shader = R"(#version 100
+    // precision highp float;
+    // precision highp sampler2D;
+    // varying vec2 in_tex;
+    // uniform sampler2D source;
+    // uniform float range_start;
+    // uniform float range_end;
+
+    // float check_texel(in vec2 coord, in float alpha)
+    // {
+    //     vec2 color = texture2D(source, coord).xy;
+    //     if(color.x < 0.9)
+    //         alpha = 0.0;
+    //     else if(range_start < range_end && color.y > range_start && color.y <
+    //     range_end) {} else if(range_start > range_end && (color.y >
+    //     range_start || color.y < range_end)) {} else
+    //         alpha = 0.0;
+    //     return alpha;
+    // }
+
+    // void main()
+    // {
+    //     float alpha = 1.0;
+    //     // Do multiple surrounding samples to make the edges smoother
+    //     const float x_offset = 0.002;
+    //     alpha = check_texel(in_tex + vec2(-x_offset, 0     ), alpha);
+    //     alpha = check_texel(in_tex + vec2( x_offset, 0     ), alpha);
+    //     const float y_offset = 0.005;
+    //     alpha = check_texel(in_tex + vec2( 0, -y_offset), alpha);
+    //     alpha = check_texel(in_tex + vec2( 0,  y_offset), alpha);
+    //     vec2 color = texture2D(source, in_tex).xy;
+    //     gl_FragColor = vec4(vec3(color.x), alpha);
+    // }
+    // )";
+
     constexpr std::string_view fragment_shader = R"(#version 100
 precision highp float;
-precision highp sampler2D;
-varying vec2 in_tex;
-uniform sampler2D source;
-uniform float range_start;
-uniform float range_end;
 
-float check_texel(in vec2 coord, in float alpha)
-{
-    vec2 color = texture2D(source, coord).xy;
-    if(color.x < 0.9)
-        alpha = 0.0;
-    else if(range_start < range_end && color.y > range_start && color.y < range_end) {}
-    else if(range_start > range_end && (color.y > range_start || color.y < range_end)) {}
-    else
-        alpha = 0.0;
-    return alpha;
-}
+varying vec2 in_tex;
+uniform float range_start;
 
 void main()
 {
-    float alpha = 1.0;
-    // Do multiple surrounding samples to make the edges smoother
-    const float x_offset = 0.002;
-    alpha = check_texel(in_tex + vec2(-x_offset, 0     ), alpha);
-    alpha = check_texel(in_tex + vec2( x_offset, 0     ), alpha);
-    const float y_offset = 0.005;
-    alpha = check_texel(in_tex + vec2( 0, -y_offset), alpha);
-    alpha = check_texel(in_tex + vec2( 0,  y_offset), alpha);
-    vec2 color = texture2D(source, in_tex).xy;
-    gl_FragColor = vec4(vec3(color.x), alpha);
-}
-)";
+    float dist_from_center = length(in_tex * 1.3 - 0.65);
+    if(dist_from_center > 0.6)
+        discard;
+    highp float alpha = sin(abs(dist_from_center) * 10.0 + 3.34) * 1.4 - 0.4;
+    vec2 p1 = in_tex * 1.3 - 0.65;
+    float p2_rad = range_start * 31.4;
+    vec2 p2 = vec2(sin(p2_rad), cos(p2_rad));
+    alpha = clamp(alpha, 0.0, 1.0) * (length(p2 - p1) / 4.0);
+    alpha = pow(alpha * 2.5, 4.0);
+    gl_FragColor = vec4(vec3(1.0), alpha);
+})";
 
     loading_program = api.alloc_program();
     loading_program->add(
@@ -1250,27 +1297,27 @@ void main()
     if(auto res = loading_program->compile(); res.has_error())
         cWarning("Error compiling loader shader: {}", res.error());
 
-    auto tex = ktx::load_from(
-        "spinner.0.{}"_texture.with(api.feature_info()).data());
-    if(tex.has_error())
-    {
-        cWarning("Failed to load image: {}", tex.error());
-        return;
-    }
-    ktx::texture_t spinner = std::move(tex.value());
+    // auto tex = ktx::load_from(
+    //     "spinner.0.{}"_texture.with(api.feature_info()).data());
+    // if(tex.has_error())
+    // {
+    //     cWarning("Failed to load image: {}", tex.error());
+    //     return;
+    // }
+    // ktx::texture_t spinner = std::move(tex.value());
 
-    loading_tex = api.alloc_texture(
-        gfx::textures::d2, gl::tex::desc_of(spinner.format), 3);
-    loading_tex->alloc(size_3d<u32>{512, 256, 1});
-    i32 mip_idx = 0;
-    spinner.mips.resize(1);
-    for(auto const& mip : spinner.mips)
-        loading_tex->upload(mip.data, Veci2{}, Veci2{mip.size}, mip_idx++);
+    // loading_tex = api.alloc_texture(
+    //     gfx::textures::d2, gl::tex::desc_of(spinner.format), 3);
+    // loading_tex->alloc(size_3d<u32>{512, 256, 1});
+    // i32 mip_idx = 0;
+    // spinner.mips.resize(1);
+    // for(auto const& mip : spinner.mips)
+    //     loading_tex->upload(mip.data, Veci2{}, Veci2{mip.size}, mip_idx++);
 
-    loading_sampler = loading_tex->sampler();
-    loading_sampler->alloc();
-    loading_sampler->set_filtering(
-        typing::Filtering::Linear, typing::Filtering::Linear);
+    // loading_sampler = loading_tex->sampler();
+    // loading_sampler->alloc();
+    // loading_sampler->set_filtering(
+    //     typing::Filtering::Linear, typing::Filtering::Linear);
 }
 
 void alloc_renderer(EntityContainer& container)

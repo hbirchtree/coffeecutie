@@ -540,16 +540,16 @@ void addDefaults(
         C_ERROR_CHECK(ec);
     }
 
-    loader.registerAll<detail::subsystem_list<
-#if defined(FEATURE_ENABLE_EmscriptenComponents)
-        emscripten::BatteryProvider,
-#else
-        comp_app::SysBattery,
-#endif
-        comp_app::SysCPUTemp,
-        comp_app::SysGPUTemp,
-        comp_app::SysCPUClock>>(container, ec);
-    C_ERROR_CHECK(ec);
+//     loader.registerAll<detail::subsystem_list<
+// #if defined(FEATURE_ENABLE_EmscriptenComponents)
+//         emscripten::BatteryProvider,
+// #else
+//         comp_app::SysBattery,
+// #endif
+//         comp_app::SysCPUTemp,
+//         comp_app::SysGPUTemp,
+//         comp_app::SysCPUClock>>(container, ec);
+//     C_ERROR_CHECK(ec);
 
     return;
 

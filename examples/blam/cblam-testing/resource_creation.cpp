@@ -111,7 +111,12 @@ void create_resources(compo::EntityContainer& e)
     resources.material_store->alloc();
     resources.material_store->commit(memory_budget::material_buffer);
 
-    resources.world_store = api.alloc_buffer(gfx::buffers::constants, access);
+    if(api.feature_info().buffer.ubo)
+    {
+        resources.world_store
+            = api.alloc_buffer(gfx::buffers::constants, access);
+    } else
+        resources.world_store = api.alloc_buffer(gfx::buffers::vertex, access);
     resources.world_store->alloc();
     resources.world_store->commit(sizeof(materials::world_data));
 
@@ -285,6 +290,7 @@ void create_resources(compo::EntityContainer& e)
     }
 
     //    if constexpr(compile_info::platform::is_android)
+    if(api.api_version() != std::make_tuple(2u, 0u))
     {
         resources.offscreen = api.alloc_rendertarget();
         resources.color     = api.alloc_texture(
@@ -297,9 +303,10 @@ void create_resources(compo::EntityContainer& e)
         resources.depth = api.alloc_texture(
             gfx::textures::d2,
             PixDesc(
-                api.feature_info().rendertarget.depth_32f
-                    ? PixFmt::Depth32F
-                    : PixFmt::Depth24Stencil8),
+                api.feature_info().rendertarget.depth_32f ? PixFmt::Depth32F
+                : api.feature_info().rendertarget.depth24_stencil8
+                    ? PixFmt::Depth24Stencil8
+                    : PixFmt::Depth16),
             1);
         resources.offscreen->alloc();
         auto const& size = resources.offscreen_size;
@@ -310,7 +317,8 @@ void create_resources(compo::EntityContainer& e)
 
         resources.offscreen->attach(attachment::color, *resources.color, 0);
         resources.offscreen->attach(
-            api.feature_info().rendertarget.depth_32f
+            (api.feature_info().rendertarget.depth_32f
+             || !api.feature_info().rendertarget.depth24_stencil8)
                 ? attachment::depth
                 : attachment::depth_stencil,
             *resources.depth,
@@ -322,8 +330,8 @@ void create_resources(compo::EntityContainer& e)
             gfx::textures::swizzle_t::green,
             gfx::textures::swizzle_t::blue,
             gfx::textures::swizzle_t::one);
-    }
-    // resources.offscreen = api.default_rendertarget();
+    } else
+        resources.offscreen = api.default_rendertarget();
 }
 
 static void create_shader_program(
@@ -480,6 +488,29 @@ static void create_standard_shaders(gfx::api& api, BlamResources& resources)
     create_shaders(api, std::move(shaders));
 }
 
+static void create_legacy_shaders(gfx::api& api, BlamResources& resources)
+{
+    using namespace std::string_view_literals;
+    using platform::url::constructors::MkUrl;
+
+    resources.debug_lines_pipeline = api.alloc_program();
+    resources.model_pipeline       = api.alloc_program();
+    resources.wireframe_pipeline   = api.alloc_program();
+
+    resources.bsp_pipeline = api.alloc_program();
+    resources.bsp_pipeline->add(
+        gfx::program_t::stage_t::Vertex,
+        api.alloc_shader("map_legacy.vert"_rsc.data()));
+    resources.bsp_pipeline->add(
+        gfx::program_t::stage_t::Fragment,
+        api.alloc_shader("map_legacy.frag"_rsc.data()));
+    auto res = resources.bsp_pipeline->compile();
+    if(res.has_error())
+    {
+        cWarning("Failed to compile BSP shader: {}", std::get<0>(res.error()));
+    }
+}
+
 void create_shaders(compo::EntityContainer& e)
 {
     gfx::api&      gfx       = e.subsystem_cast<gfx::system>();
@@ -514,7 +545,10 @@ void create_shaders(compo::EntityContainer& e)
         return;
     }
 
-    create_standard_shaders(gfx, resources);
+    if(gfx.feature_info().buffer.ubo)
+        create_standard_shaders(gfx, resources);
+    else
+        create_legacy_shaders(gfx, resources);
 }
 
 void set_resource_labels(EntityContainer& e)

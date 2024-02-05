@@ -66,16 +66,17 @@ static void init_map(
     load_ui_items(e, changed);
 
     // For debugging: go through all the bitmaps
-    for(blam::tag_t const& tag : blam::tag_index_view(files.container))
-    {
-        if(tag.matches(blam::tag_class_t::bitm) && true)
+    if constexpr(!compile_info::platform::is_32bit)
+        for(blam::tag_t const& tag : blam::tag_index_view(files.container))
         {
-            cDebug(
-                "Loading bitmap {0}",
-                tag.to_name().to_string(files.container.magic));
-            bitmaps.predict(tag.as_ref(), 0);
+            if(tag.matches(blam::tag_class_t::bitm) && true)
+            {
+                cDebug(
+                    "Loading bitmap {0}",
+                    tag.to_name().to_string(files.container.magic));
+                bitmaps.predict(tag.as_ref(), 0);
+            }
         }
-    }
 
     create_camera(
         e,
@@ -92,7 +93,16 @@ static void init_map(
         bitmaps.allocate_storage();
     }
 
-    loading_status.loading = false;
+    /* Depending on when we're done loading, stop the spinner */
+    auto& api = e.subsystem_cast<gleam::system>();
+    if(auto tex_queue = api.queue<gleam::system::queues::texture_decode>())
+    {
+        [[maybe_unused]] auto res = rq::runtime_queue::QueueImmediate(
+            tex_queue, rq::detail::duration(), [load = &loading_status] {
+                load->loading = false;
+            });
+    } else
+        loading_status.loading = false;
 }
 
 static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)

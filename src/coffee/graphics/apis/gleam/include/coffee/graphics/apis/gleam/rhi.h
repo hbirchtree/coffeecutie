@@ -312,6 +312,11 @@ struct api
         optional<gleam::workarounds> api_workarounds{};
         optional<api_limits>         limits{};
         optional<size_t>             indirect_buffer_size{};
+        optional<size_2d<u32>>       resolution{};
+
+        optional<tuple<std::string_view, std::string_view>> device_info{};
+        optional<std::string_view>                          version_string{};
+        optional<std::string_view> glsl_version_string{};
     };
 
     static const load_options_t default_options;
@@ -365,8 +370,9 @@ struct api
   private:
     static bool supports_extension(
         std::set<string> const& extensions, string const& ext);
-    bool supports_extension(string const& ext);
-    static bool supports_render_format(features const& features, PixDesc const& fmt);
+    bool        supports_extension(string const& ext);
+    static bool supports_render_format(
+        features const& features, PixDesc const& fmt);
 
     std::shared_ptr<rendertarget_type> m_framebuffer;
     std::unique_ptr<debug_api>         m_debug;

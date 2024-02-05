@@ -264,7 +264,7 @@ STATICINLINE void PutRuntimeInfo(json::ObjectBuilder& target)
         //        virtmem.put("total", SysInfo::SwapTotal());
         //        virtmem.put("available", SysInfo::SwapAvailable());
 
-        //        memory.put("bank", SysInfo::MemTotal())
+        // memory.put("bank", platform::info::memory::);
 
         target.put("memory", memory.eject());
     }

@@ -367,7 +367,7 @@ void preload_player_bipeds(EntityContainer& e, MapChangedEvent<Version>& data)
     ModelCache<Version>* model_cache;
     e.subsystem(model_cache);
 
-    auto bipeds[2]
+    typename decltype(tag_index)::iterator bipeds[2]
         = {tag_index.find("characters\\cyborg_mp\\cyborg_mp"),
            tag_index.find("characters\\cyborg\\cyborg")};
     for(u32 i = 0; i < 2; ++i)

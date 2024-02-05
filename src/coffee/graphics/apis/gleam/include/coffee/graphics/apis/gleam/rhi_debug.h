@@ -1,8 +1,9 @@
 #pragma once
 
 #include "rhi_features.h"
-#include "rhi_translate.h"
+#include "rhi_versioning.h"
 
+#include <glw/enums/DebugSeverity.h>
 #include <glw/enums/ObjectIdentifier.h>
 #include <glw/extensions/KHR_debug.h>
 
@@ -26,7 +27,9 @@ struct null_api
         return nullptr;
     }
 
-    inline void message(std::string_view const&)
+    inline void message(
+        std::string_view const&,
+        group::debug_severity = group::debug_severity::dont_care)
     {
     }
 
@@ -93,7 +96,9 @@ struct api
         return std::make_unique<debug::scope>(std::ref(ext), name);
     }
 
-    inline void message(std::string_view const& msg)
+    inline void message(
+        std::string_view const& msg,
+        group::debug_severity   severity = group::debug_severity::notification)
     {
 #if GLEAM_MAX_VERSION >= 0x430 || GLEAM_MAX_VERSION_ES >= 0x320
         if(ext.debug)
@@ -102,7 +107,7 @@ struct api
                 group::debug_source::application,
                 group::debug_type::performance,
                 0,
-                group::debug_severity::notification,
+                severity,
                 msg.size(),
                 msg);
             return;
@@ -115,7 +120,7 @@ struct api
                 group::debug_source::application,
                 group::debug_type::performance,
                 0,
-                group::debug_severity::notification,
+                severity,
                 msg.size(),
                 msg);
             return;

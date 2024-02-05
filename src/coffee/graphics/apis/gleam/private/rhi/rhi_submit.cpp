@@ -50,9 +50,9 @@ void create_draw(
 }
 
 void indirect_draw(
-    const draw_command::call_spec_t& call,
-    const draw_command::data_t&      data,
-    circular_buffer_t&               buffer)
+    [[maybe_unused]] const draw_command::call_spec_t& call,
+    [[maybe_unused]] const draw_command::data_t&      data,
+    [[maybe_unused]] circular_buffer_t&               buffer)
 {
 #if GLEAM_MAX_VERSION >= 0x400 || GLEAM_MAX_VERSION_ES >= 0x310
     indirect_command_buffer cmd{};
@@ -75,9 +75,9 @@ void indirect_draw(
 }
 
 void multi_indirect_draw(
-    draw_command::call_spec_t const&    call,
-    decltype(draw_command::data) const& data,
-    circular_buffer_t&                  buffer)
+    [[maybe_unused]] draw_command::call_spec_t const&    call,
+    [[maybe_unused]] decltype(draw_command::data) const& data,
+    [[maybe_unused]] circular_buffer_t&                  buffer)
 {
 #if GLEAM_MAX_VERSION >= 0x430
     std::vector<indirect_command_buffer> cmds;
@@ -329,8 +329,7 @@ std::optional<error> evaluate_draw_state(
             return error::draw_no_elements;
         for(auto const& d : data)
         {
-            if(d.elements.count > limits.draws.element_count
-               /*|| d.elements.offset > 1024 * 1024*/)
+            if(d.elements.count > limits.draws.element_count)
                 return error::draw_too_many_elements;
             /* We can't check if we exceed the max index vertex */
         }

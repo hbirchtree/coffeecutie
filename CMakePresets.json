@@ -120,6 +120,7 @@
                 "API": "32",
                 "ARCHITECTURE": "arm64",
                 "HOST_TOOLS_BINARY_DIR": "${sourceDir}/multi_build/host-x64-linux-native/bin",
+                "HOST_TOOLS_DIR": "${sourceDir}/multi_build/host-x64-linux-native/vcpkg_installed/x64-linux/tools",
                 "NDK_VERSION_": "26.0.10792818",
                 "NDK_VERSION": "25.2.9519653",
                 "NINJA": "$penv{NINJA}"
@@ -277,18 +278,6 @@
             }
         },
         {
-            "name": "android-arm-neon-29",
-            "displayName": "Android 10 ARMv7+NEON",
-            "inherits": ["vcpkg-base-android"],
-            "cacheVariables": {
-                "VCPKG_DEP_INFO_OVERRIDE_VARS": "android;arm;arm32;arm_neon"
-            },
-            "environment": {
-                "API": "29",
-                "ARCHITECTURE": "arm-neon"
-            }
-        },
-        {
             "name": "android-arm64-25",
             "displayName": "Android 7 ARM64",
             "inherits": ["vcpkg-base-android"],
@@ -309,6 +298,18 @@
                 "API": "19",
                 "ARCHITECTURE": "arm-neon",
                 "NDK_VERSION": "25.2.9519653"
+            }
+        },
+        {
+            "name": "android-arm-neon-29",
+            "displayName": "Android 10 ARMv7+NEON",
+            "inherits": ["vcpkg-base-android"],
+            "cacheVariables": {
+                "VCPKG_DEP_INFO_OVERRIDE_VARS": "android;arm;arm32;arm_neon"
+            },
+            "environment": {
+                "API": "29",
+                "ARCHITECTURE": "arm-neon"
             }
         },
         {
@@ -353,6 +354,7 @@
             "cacheVariables": {
                 "BUILD_DISCORD_RPC": "ON",
                 "BUILD_GL_SOFTWARE_BCN": "ON",
+                "BUILD_GL_SOFTWARE_PVRTC": "ON",
                 "GENERATE_APPIMAGE": "ON",
                 "GENERATE_FLATPAK": "ON",
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "desktop;linux;wayland;x11;x64;x86_64"
@@ -587,6 +589,30 @@
                 "lhs": "${hostSystemName}",
                 "rhs": "Darwin"
             }
+        },
+        {
+            "name": "android-arm64-25-rel",
+            "configuration": "Release",
+            "configurePreset": "android-arm64-25",
+            "inherits": "base-linux"
+        },
+        {
+            "name": "android-arm64-25-dbg",
+            "configuration": "Debug",
+            "configurePreset": "android-arm64-25",
+            "inherits": "base-linux"
+        },
+        {
+            "name": "android-arm-neon-29-rel",
+            "configuration": "Release",
+            "configurePreset": "android-arm-neon-29",
+            "inherits": "base-linux"
+        },
+        {
+            "name": "android-arm-neon-29-dbg",
+            "configuration": "Debug",
+            "configurePreset": "android-arm-neon-29",
+            "inherits": "base-linux"
         },
         {
             "name": "android-arm64-30-gl-rel",

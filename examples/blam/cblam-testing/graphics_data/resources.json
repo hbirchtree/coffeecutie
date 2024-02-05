@@ -74,5 +74,9 @@
             "png": ["rgba", "ra"],
             "raw": ["rgba", "ra"]
         }
-    }
+    },
+    "copy": [
+        "map_legacy.vert",
+        "map_legacy.frag"
+    ]
 }

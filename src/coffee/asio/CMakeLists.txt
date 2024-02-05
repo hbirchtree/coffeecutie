@@ -1,26 +1,29 @@
-option(BUILD_OPENSSL "Build ASIO with OpenSSL support" ON)
+set(LIBS)
+if(NOT EMSCRIPTEN)
+    option(BUILD_OPENSSL "Build ASIO with OpenSSL support" ON)
 
-# OpenSSL used for ASIO networking
-if(BUILD_OPENSSL)
-  set(OPENSSL_ROOT_DIR "${OpenSSL_DIR}")
-  set(ENV{OPENSSL_ROOT_DIR} "${OpenSSL_DIR}")
+    # OpenSSL used for ASIO networking
+    if(BUILD_OPENSSL)
+      set(OPENSSL_ROOT_DIR "${OpenSSL_DIR}")
+      set(ENV{OPENSSL_ROOT_DIR} "${OpenSSL_DIR}")
 
-  find_package(OpenSSL REQUIRED)
-endif()
+      find_package(OpenSSL REQUIRED)
+    endif()
 
-set(LIBS OpenSSL::SSL)
-if(NOT WIN32
- AND NOT MINGW
- AND NOT MSYS
- AND NOT EMSCRIPTEN
-)
-list(APPEND LIBS dl)
-endif()
+    set(LIBS OpenSSL::SSL)
+    if(NOT WIN32
+     AND NOT MINGW
+     AND NOT MSYS
+     AND NOT EMSCRIPTEN
+    )
+        list(APPEND LIBS dl)
+    endif()
 
-find_package(Threads QUIET)
+    find_package(Threads QUIET)
 
-if(TARGET Threads::Threads AND NOT ANDROID AND NOT WIN32)
-  set(LIBS ${LIBS} Threads::Threads)
+    if(TARGET Threads::Threads AND NOT ANDROID AND NOT WIN32)
+      set(LIBS ${LIBS} Threads::Threads)
+    endif()
 endif()
 
 coffee_library(
@@ -31,4 +34,9 @@ coffee_library(
   HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
 
-target_compile_definitions(ASIO PUBLIC -DASIO_STANDALONE -DASIO_USE_SSL)
+
+if(NOT EMSCRIPTEN)
+    target_compile_definitions(ASIO PUBLIC -DASIO_STANDALONE -DASIO_USE_SSL)
+else()
+    target_compile_definitions(ASIO PUBLIC -DUSE_EMSCRIPTEN_HTTP)
+endif()

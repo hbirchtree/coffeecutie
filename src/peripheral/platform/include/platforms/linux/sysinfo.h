@@ -12,7 +12,6 @@
 #include <sys/resource.h>
 #include <sys/sysinfo.h>
 #include <sys/types.h>
-#include <thread>
 #include <unistd.h>
 
 #include "sysinfo_cpumap.h"
@@ -312,6 +311,22 @@ inline u32 frequency(bool current = false, u32 cpu = 0, u32 /*node*/ = 0)
 namespace platform::info::memory::linux_ {
 namespace detail {
 using namespace proc::linux_::detail;
+}
+
+inline libc_types::u64 total()
+{
+    struct sysinfo info;
+    if(sysinfo(&info) != -1)
+        return info.totalram;
+    return 0;
+}
+
+inline libc_types::u64 resident()
+{
+    struct rusage usage;
+    if(getrusage(RUSAGE_SELF, &usage) != -1)
+        return usage.ru_idrss + usage.ru_ixrss + usage.ru_isrss;
+    return 0;
 }
 
 } // namespace platform::info::memory::linux_

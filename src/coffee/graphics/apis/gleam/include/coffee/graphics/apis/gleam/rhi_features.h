@@ -78,7 +78,7 @@ struct features
 
         struct
         {
-            bool shader_draw_parameters;
+            bool shader_draw_parameters{false};
         } arb;
     };
     struct programs
@@ -88,6 +88,9 @@ struct features
         bool uniform_location{false};
         bool compute{false};
         bool spirv{false};
+
+        bool buffer_binding{true};
+
         struct
         {
             bool parallel_shader_compile{false};
@@ -111,6 +114,8 @@ struct features
         bool color_buffer_float{false};
         bool color_buffer_half_float{false};
         bool depth_16f{false};
+        bool depth24{false};
+        bool depth24_stencil8{false};
         bool depth_32f{false};
 
         struct
