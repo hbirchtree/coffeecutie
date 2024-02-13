@@ -505,14 +505,16 @@
             }
         },
         {
-            "name": "raspberry-arm-buildroot-linux-gnueabihf-vc",
+            "name": "raspberry-armv6-buildroot-linux-gnueabihf-vc",
             "displayName": "Raspberry Pi ARMv7 OpenGL ES 2.0 (DispManX)",
             "inherits": ["vcpkg-base-linux-egl-es20"],
             "cacheVariables": {
                 "BUILD_DISPMANX": "ON",
+                "BUILD_EGL_STATIC": "ON",
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "arm;arm32;linux;raspberry;videocore"
             },
             "environment": {
+                "ARCHITECTURE": "armv6-buildroot-linux-gnueabihf",
                 "PLATFORM": "raspberry"
             }
         },
@@ -744,6 +746,18 @@
             "name": "native-linux-dbg",
             "configuration": "Debug",
             "configurePreset": "native-linux",
+            "inherits": "base-linux"
+        },
+        {
+            "name": "raspberry-armv6-buildroot-linux-gnueabihf-vc-rel",
+            "configuration": "Release",
+            "configurePreset": "raspberry-armv6-buildroot-linux-gnueabihf-vc",
+            "inherits": "base-linux"
+        },
+        {
+            "name": "raspberry-armv6-buildroot-linux-gnueabihf-vc-dbg",
+            "configuration": "Debug",
+            "configurePreset": "raspberry-armv6-buildroot-linux-gnueabihf-vc",
             "inherits": "base-linux"
         },
         {

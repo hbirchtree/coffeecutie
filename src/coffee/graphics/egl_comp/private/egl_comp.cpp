@@ -14,7 +14,7 @@
 #include <CEAGL/eagl.h>
 #elif defined(EGL_USE_DYNAMIC)
 #include <glad/egl.h>
-#elif defined(EGL_USE_LINKED)
+#elif defined(EGL_USE_LINKED) || defined(EGL_USE_STATIC)
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 #endif

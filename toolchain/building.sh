@@ -92,6 +92,33 @@ function host_tools_build()
     GLSLANG_PROGRAM=${TOOLS_DIR}/glslang/glslangValidator
 
     echo "::endgroup::"
+
+    echo "::group::Downloading code tools"
+
+    mkdir -p ${BASE_DIR}/multi_build/compilers/bin
+    pushd ${BASE_DIR}/multi_build/compilers/bin
+
+    TOOL_SUFFIX=
+    CLANG_TOOLS_VER=17
+    case ${HOST_TOOLCHAIN_TRIPLET} in
+    "x64-linux-native")
+        TOOL_SUFFIX=linux-amd64
+        ;;
+    "x64-osx")
+        TOOL_SUFFIX=macosx-amd64
+        ;;
+    esac
+    for TOOL in format tidy; do
+        [[ -f clang-${TOOL} ]] && continue
+        wget \
+            "https://github.com/muttleyxd/clang-tools-static-binaries/releases/download/master-f7f02c1d/clang-${TOOL}-${CLANG_TOOLS_VER}_${TOOL_SUFFIX}" \
+            -O clang-${TOOL}
+        chmod +x clang-${TOOL}
+    done
+
+    popd
+
+    echo "::endgroup::"
 }
 
 function toolchain_registry()
@@ -178,7 +205,11 @@ function native_build()
         toolchain_download "${TOOLCHAIN_DOWNLOAD}" .manifest && cat compiler.manifest
 
         umask 022
-        tar xf compiler.tar.xz --no-same-owner --no-same-permissions
+        tar x \
+            --exclude=*/sysroot/dev \
+            --no-same-owner \
+            --no-same-permissions \
+            --file=compiler.tar.xz
         chmod -R u+w $(realpath .)
         popd
 

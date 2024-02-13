@@ -9,7 +9,7 @@
 
 #include <coffee/core/debug/logging.h>
 
-#if !defined(COFFEE_DISABLE_PROFILER)
+#if PERIPHERAL_PROFILER_ENABLED
 #include <coffee/core/profiler/profiling-export.h>
 #include <platforms/profiling.h>
 #endif

@@ -42,6 +42,7 @@ struct MessageBase
     enum Type : u32
     {
         None,
+
         /* Control */
         GameJoin,
         PlayerJoin,

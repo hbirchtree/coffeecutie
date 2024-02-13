@@ -25,7 +25,9 @@ BraceWrapping:
 BreakBeforeBraces: Custom
 BreakBeforeTernaryOperators: 'true'
 BreakBeforeConceptDeclarations: 'true'
-BreakConstructorInitializers: AfterColon
+BreakConstructorInitializers: BeforeComma
+BreakInheritanceList: BeforeComma
+BreakTemplateDeclarations: Yes
 ColumnLimit: '80'
 FixNamespaceComments: 'true'
 IndentWidth: '4'
@@ -34,6 +36,8 @@ KeepEmptyLinesAtTheStartOfBlocks: 'false'
 Language: Cpp
 NamespaceIndentation: None
 PointerAlignment: Left
+RequiresExpressionIndentation: OuterScope
+SeparateDefinitionBlocks: Always
 SortIncludes: 'true'
 SortUsingDeclarations: 'true'
 SpaceAfterTemplateKeyword: 'false'

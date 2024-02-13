@@ -165,10 +165,11 @@ function(GEN_GLEAM_TARGET GLVERSION SUFFIX)
     if(ANDROID AND NOT BUILD_GLES_20)
       # On Android, GLES 3.x is used through a different library
       target_link_libraries(GLeamCommon_${SUFFIX} PUBLIC GLESv3)
+    elseif(BUILD_GLES_20_STATIC)
+      find_library(GLESV2_LIB GLESv2_static)
+      target_link_libraries(GLeamCommon_${SUFFIX} PUBLIC ${GLESV2_LIB})
     else()
       find_library(GLESV2_LIB GLESv2)
-
-      # Elsewhere, just use GLESv2
       target_link_libraries(GLeamCommon_${SUFFIX} PUBLIC ${GLESV2_LIB})
     endif()
   endif()

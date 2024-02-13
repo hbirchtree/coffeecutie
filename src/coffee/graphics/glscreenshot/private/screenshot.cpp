@@ -53,6 +53,11 @@ std::future<ScreenshotProvider::dump_t> ScreenshotProvider::pixels()
         auto                        size_ = size();
         std::vector<libc_types::u8> data(size_.area() * 4);
 
+        Coffee::cDebug("Capturing {}x{} screenshot, alloc'ing {} bytes",
+            size_.w,
+            size_.h,
+            data.size());
+
         // First, stash away the current framebuffer binding
         i32 currentBinding = 0;
         glw::get_integerv(

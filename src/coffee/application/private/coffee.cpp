@@ -114,7 +114,7 @@ int MainSetup(MainWithArgs mainfun, int argc, char** argv, u32 flags)
 #endif
 
 #ifndef COFFEE_CUSTOM_EXIT_HANDLING
-#if MODE_DEBUG
+#if PERIPHERAL_PROFILER_ENABLED
     platform::profiling::PContext::ProfilerStore()->disable();
 #endif
     exit(stat);
@@ -581,7 +581,9 @@ cxxopts::Options& GetBase(cxxopts::Options& parser)
         //
         ("licenses", "Print license information and exit")
         //
+#if PERIPHERAL_PROFILER_ENABLED
         ("deep-profile", "Enable deep profiling")
+#endif
         //
         ("json", "Log output as JSON")
         //
@@ -612,7 +614,7 @@ int PerformDefaults(cxxopts::Options& parser, std::vector<const char*>& args)
             PrintLicenseInfo();
             return 0;
         }
-#if MODE_DEBUG
+#if PERIPHERAL_PROFILER_ENABLED
         else if(sw.key() == "deep-profile" && sw.as<bool>())
         {
             auto profilerState = State::GetProfilerStore();

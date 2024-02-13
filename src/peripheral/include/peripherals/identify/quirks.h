@@ -195,21 +195,6 @@
 
 /*
  *
- * Profiler switches
- *
- */
-
-/* Disable profiler in release mode */
-#if MODE_RELEASE
-#define COFFEE_DISABLE_PROFILER
-#endif
-
-#if defined(COFFEE_GEKKO) || defined(COFFEE_EMSCRIPTEN)
-#define COFFEE_DISABLE_PROFILER
-#endif
-
-/*
- *
  * Filesystem switches
  *
  */
@@ -286,7 +271,6 @@
 
 #if defined(COFFEE_GEKKO)
 #define COFFEE_STUBBED_TIMING
-#define COFFEE_DISABLE_PROFILER
 #endif
 
 /*

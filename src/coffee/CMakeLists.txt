@@ -74,6 +74,10 @@ if(BUILD_COMPONENT_APP)
       add_subdirectory(graphics/glscreenshot)
       target_link_libraries(GraphicsBundle INTERFACE GLScreenshot_${GLIMPL})
     endif()
+
+    if(BUILD_PVRSCOPE)
+        target_link_libraries(GraphicsBundle INTERFACE PVRComponents)
+    endif()
   endif()
 
   if(BUILD_ANATIVE)

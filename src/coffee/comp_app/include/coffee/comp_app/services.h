@@ -506,7 +506,7 @@ struct GPUStatProvider
     virtual std::optional<libc_types::u8> usage() = 0;
 
     /* Extensible, vendor-specific info */
-    virtual std::map<std::string_view, libc_types::u16> stats_numeric()
+    virtual std::map<std::string_view, libc_types::f32> stats_numeric()
     {
         return {};
     }
@@ -517,6 +517,7 @@ struct GPUStatProvider
     struct stats_desc_t
     {
         platform::profiling::MetricVariant type;
+        bool is_percentage{false};
     };
     virtual std::map<std::string_view, stats_desc_t> stats_description()
     {
@@ -666,8 +667,6 @@ struct AppService : detail::SubsystemBase
     static InternalType& register_service(
         detail::EntityContainer& container, Args... args)
     {
-        //        using tag_type = AppServiceTraits<ExposedType>;
-
         auto& subsys
             = container.register_subsystem_inplace<ExposedType, InternalType>(
                 std::forward<Args>(args)...);
@@ -736,6 +735,7 @@ using CPUClockProvider    = detail::tag_t<interfaces::CPUClockProvider>;
 using CPUTempProvider     = detail::tag_t<interfaces::CPUTempProvider>;
 using DisplayInfo         = detail::tag_t<interfaces::DisplayInfo>;
 using GPUTempProvider     = detail::tag_t<interfaces::GPUTempProvider>;
+using GPUStatProvider     = detail::tag_t<interfaces::GPUStatProvider>;
 using GraphicsBinding     = detail::tag_t<interfaces::GraphicsBinding>;
 using GraphicsContext     = detail::tag_t<interfaces::GraphicsContext>;
 using GraphicsFramebuffer = detail::tag_t<interfaces::GraphicsFramebuffer>;

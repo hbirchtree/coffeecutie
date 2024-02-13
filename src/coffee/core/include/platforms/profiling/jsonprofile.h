@@ -39,7 +39,7 @@ extern void CaptureMetrics(
 
 template<typename T>
 FORCEDINLINE void CaptureMetrics(
-    cstring                   name,
+    std::string_view          name,
     MetricVariant             variant,
     T const&                  value,
     std::chrono::microseconds ts,

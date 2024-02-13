@@ -73,6 +73,10 @@
 #include <coffee/dispmanx/dispmanx_comp.h>
 #endif
 
+#if defined(FEATURE_ENABLE_PVRComponents)
+#include <pvr/pvr_components.h>
+#endif
+
 #if defined(FEATURE_ENABLE_GLScreenshot_ES2Dynamic)   \
     || defined(FEATURE_ENABLE_GLScreenshot_ESDynamic) \
     || defined(FEATURE_ENABLE_GLScreenshot_ES)        \
@@ -98,6 +102,8 @@ using Coffee::Logging::cVerbose;
 namespace comp_app {
 
 namespace {
+
+constexpr bool enable_screenshots = true;
 
 [[maybe_unused]] void printConfig(AppLoader& loader)
 {
@@ -421,11 +427,19 @@ void addDefaults(
 
     auto& appInfo = *container.service<AppInfo>();
 
-    if constexpr(compile_info::debug_mode && compile_info::profiler::enabled)
+    if constexpr(/*compile_info::debug_mode && compile_info::profiler::enabled*/
+                 true)
     {
+        Coffee::cDebug("PerformanceMonitor service enabled");
         loader.registerAll<type_safety::type_list_t<PerformanceMonitor>>(
             container, ec);
         C_ERROR_CHECK(ec);
+    } else
+    {
+        Coffee::cDebug(
+            "PerformanceMonitor service disabled: debug_mode={} profiler={}",
+            compile_info::debug_mode,
+            compile_info::profiler::enabled);
     }
 
     /* Selection of window/event manager */
@@ -524,7 +538,7 @@ void addDefaults(
     C_ERROR_CHECK(ec);
 #endif
 
-    if constexpr(compile_info::debug_mode)
+    if constexpr(enable_screenshots)
     {
         /* TODO: Conditionally load based on availability */
         loader.registerAll<detail::subsystem_list<
@@ -540,40 +554,49 @@ void addDefaults(
         C_ERROR_CHECK(ec);
     }
 
-    //     loader.registerAll<detail::subsystem_list<
-    // #if defined(FEATURE_ENABLE_EmscriptenComponents)
-    //         emscripten::BatteryProvider,
-    // #else
-    //         comp_app::SysBattery,
-    // #endif
-    //         comp_app::SysCPUTemp,
-    //         comp_app::SysGPUTemp,
-    //         comp_app::SysCPUClock>>(container, ec);
-    //     C_ERROR_CHECK(ec);
+#if defined(FEATURE_ENABLE_PVRComponents) || defined(FEATURE_ENABLE_EmscriptenComponents)
+    loader.registerAll<detail::subsystem_list<
+#if defined(FEATURE_ENABLE_EmscriptenComponents)
+        emscripten::BatteryProvider,
+#else
+    // comp_app::SysBattery,
+#endif
+#if defined(FEATURE_ENABLE_PVRComponents)
+        pvr::PVRGPUStats //,
+#endif
+        // comp_app::SysCPUTemp,
+        // comp_app::SysCPUClock
+        >>(container, ec);
+    C_ERROR_CHECK(ec);
+#endif
 
-    return;
-
-    if(auto dinfo = container.service<DisplayInfo>())
-        for(auto i : stl_types::Range<>(dinfo->count()))
-        {
-            auto idx = std::to_string(i);
-            appInfo.add(
-                "display:size:" + idx,
-                std::to_string(
-                    static_cast<int>(std::round(dinfo->diagonal(i)))));
-            appInfo.add(
-                "display:dpi:" + idx,
-                std::to_string(static_cast<int>(std::round(dinfo->dpi(i)))));
-            auto res = dinfo->size(i);
-            appInfo.add(
-                "display:resolution:" + idx,
-                std::to_string(res.w) + "x" + std::to_string(res.h));
-        }
-    if(auto winfo = container.service<Windowing>())
-        if(auto size = winfo->size(); size.w != 0)
-            appInfo.add(
-                "window:size",
-                std::to_string(size.w) + "x" + std::to_string(size.h));
+    rq::runtime_queue::QueueImmediate(
+        rq::runtime_queue::GetCurrentQueue().value(),
+        std::chrono::seconds(0),
+        [&container, &appInfo]() {
+            if(auto dinfo = container.service<DisplayInfo>())
+                for(auto i : stl_types::Range<>(dinfo->count()))
+                {
+                    auto idx = std::to_string(i);
+                    appInfo.add(
+                        "display:size:" + idx,
+                        std::to_string(
+                            static_cast<int>(std::round(dinfo->diagonal(i)))));
+                    appInfo.add(
+                        "display:dpi:" + idx,
+                        std::to_string(
+                            static_cast<int>(std::round(dinfo->dpi(i)))));
+                    auto res = dinfo->size(i);
+                    appInfo.add(
+                        "display:resolution:" + idx,
+                        std::to_string(res.w) + "x" + std::to_string(res.h));
+                }
+            if(auto winfo = container.service<Windowing>())
+                if(auto size = winfo->size(); size.w != 0)
+                    appInfo.add(
+                        "window:size",
+                        std::to_string(size.w) + "x" + std::to_string(size.h));
+        });
 }
 
 } // namespace comp_app
@@ -583,9 +606,11 @@ void addDefaults(
 
 namespace comp_app {
 
-void PerformanceMonitor::start_restricted(proxy_type& p, time_point const& time)
+void PerformanceMonitor::start_restricted(proxy_type& p, time_point const&)
 {
     using namespace platform::profiling;
+
+    auto time = compo::clock::now();
 
     auto timestamp = std::chrono::duration_cast<std::chrono::microseconds>(
         time.time_since_epoch());
@@ -611,6 +636,7 @@ void PerformanceMonitor::start_restricted(proxy_type& p, time_point const& time)
     auto mem      = p.service<MemoryStatProvider>();
     auto battery  = p.service<BatteryProvider>();
     auto network  = p.service<NetworkStatProvider>();
+    auto gpustats = p.service<GPUStatProvider>();
 
     if(clock)
         for(auto i : Range<u32>(clock->threads()))
@@ -680,9 +706,16 @@ void PerformanceMonitor::start_restricted(proxy_type& p, time_point const& time)
             timestamp);
         network->reset_counters();
     }
+
+    if(gpustats)
+    {
+        for(auto const& stat : gpustats->stats_numeric())
+            json::CaptureMetrics(
+                stat.first, MetricVariant::Value, stat.second, timestamp);
+    }
 }
 
-void PerformanceMonitor::end_restricted(proxy_type &p, const time_point &time)
+void PerformanceMonitor::end_restricted(proxy_type& p, const time_point& time)
 {
     capture_screenshot(p, time);
 }
@@ -694,14 +727,16 @@ void PerformanceMonitor::capture_screenshot(
     using namespace Coffee::resource_literals;
 
     auto timestamp = std::chrono::duration_cast<std::chrono::microseconds>(
-        time.time_since_epoch());
+        compo::clock::now().time_since_epoch());
 
     /* Disable screenshots on Emscripten,
      * there's better ways to debug framebuffers there */
-    if constexpr(
-        compile_info::debug_mode && !compile_info::platform::is_emscripten)
+    if constexpr(enable_screenshots && !compile_info::platform::is_emscripten)
         do
         {
+            using dump_t = interfaces::ScreenshotProvider::dump_t;
+            using namespace Coffee;
+
             auto screenshot = p.service<ScreenshotProvider>();
 
             if(!screenshot || time > m_nextScreenshot)
@@ -715,6 +750,8 @@ void PerformanceMonitor::capture_screenshot(
             /* If we're still waiting for the previous one, don't proceed */
             if(!pixels.valid())
                 break;
+
+            cDebug("Capturing screenshot...");
 
             /* If not, set up JPG encoding + export to file and profiling */
             auto encode = [](dump_t* dump) {
@@ -783,8 +820,7 @@ void PerformanceMonitor::load(AppLoadableService::entity_container&, app_error&)
 {
     m_nextScreenshot = m_prevFrame
         = platform::profiling::Profiler::clock::now();
-    if constexpr(
-        compile_info::debug_mode && !compile_info::platform::is_emscripten)
+    if constexpr(enable_screenshots && !compile_info::platform::is_emscripten)
         m_worker_queue
             = rq::runtime_queue::CreateNewThreadQueue("Profiling worker")
                   .assume_value();

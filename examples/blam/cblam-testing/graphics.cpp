@@ -103,6 +103,7 @@ i32 blam_main()
             auto  load_error = gfx.load(/*gfx::emulation::webgl::desktop()*/
                                        // gfx::emulation::qcom::adreno_320()
                                        // gfx::emulation::arm::mali_g710()
+                                       // gfx::emulation::arm::mali_400mp()
                                        // gfx::emulation::amd::rx560_pro()
                                        // gfx::emulation::webgl::desktop()
                                        // gfx::emulation::img::powervr_sgx530_bbb()
@@ -227,7 +228,7 @@ i32 blam_main()
             alloc_renderer(e);
             alloc_occluder(e);
             alloc_ui_system(e);
-            alloc_scripting(e);
+            // alloc_scripting(e);
             alloc_networking(e);
             setup_load_eventhandlers(e);
 

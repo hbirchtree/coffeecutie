@@ -1161,7 +1161,7 @@ void LoadingScreen::end_restricted(Proxy& e, const time_point& time)
     if(!loading_program)
         load_resources(*api);
 
-    if(status->progress < 0)
+    if(status->progress < 0 || true)
         return;
 
     auto _ = api->debug().scope();

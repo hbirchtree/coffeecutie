@@ -15,10 +15,10 @@ namespace profiling {
 using namespace ::libc_types;
 using namespace ::stl_types;
 
-#if defined(COFFEE_DISABLE_PROFILER)
-using profiler_compile_opts = ::profiler::options::compile_default;
-#else
+#if PERIPHERAL_PROFILER_ENABLED
 using profiler_compile_opts = ::profiler::options::compile<true, true>;
+#else
+using profiler_compile_opts = ::profiler::options::compile_default;
 #endif
 
 using PClock     = std::chrono::high_resolution_clock;
@@ -183,7 +183,7 @@ struct ExtraDataImpl
     }
 };
 
-#if MODE_DEBUG && !defined(COFFEE_DISABLE_PROFILER)
+#if PERIPHERAL_PROFILER_ENABLED
 struct SimpleProfilerImpl
 {
     STATICINLINE void PushContext(

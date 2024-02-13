@@ -74,12 +74,12 @@ comp_app::size_2d_t Windowing::size() const
     return comp_app::size_2d_t::from_values<comp_app::size_2d_t>(w, h);
 }
 
-comp_app::detail::WindowState Windowing::state() const
+comp_app::window_flags_t Windowing::state() const
 {
-    return comp_app::detail::WindowState::FullScreen;
+    return comp_app::window_flags_t::fullscreen;
 }
 
-void Windowing::setState(comp_app::detail::WindowState)
+void Windowing::setState(comp_app::window_flags_t)
 {
 }
 

@@ -509,10 +509,10 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
         out.vertex.attribute_binding      = true;
         out.vertex.vertex_arrays          = true;
 
-        out.rendertarget.color_buffer_half_float = supports_extension(
-            extensions, ext::color_buffer_half_float::name);
-        out.rendertarget.color_buffer_float
-            = supports_extension(extensions, ext::color_buffer_float::name);
+        // out.rendertarget.color_buffer_half_float = supports_extension(
+        //     extensions, ext::color_buffer_half_float::name);
+        // out.rendertarget.color_buffer_float
+        //     = supports_extension(extensions, ext::color_buffer_float::name);
         out.program.khr.parallel_shader_compile = supports_extension(
             extensions, khr::parallel_shader_compile::name);
         out.debug.webgl.unmasked_vendors

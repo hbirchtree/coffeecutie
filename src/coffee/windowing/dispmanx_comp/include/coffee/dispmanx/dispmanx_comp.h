@@ -14,9 +14,9 @@ struct Windowing
   public:
     void load(entity_container &e, comp_app::app_error &ec);
 
-    comp_app::size_2d_t size() const;
-    comp_app::detail::WindowState state() const;
-    void setState(comp_app::detail::WindowState state);
+    comp_app::size_2d_t size() const final;
+    comp_app::window_flags_t state() const final;
+    void setState(comp_app::window_flags_t state) final;
   private:
     libc_types::u32 m_displayId{DISPMANX_ID_HDMI};
 

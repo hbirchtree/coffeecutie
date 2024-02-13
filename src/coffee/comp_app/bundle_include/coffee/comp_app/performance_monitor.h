@@ -19,7 +19,8 @@ struct PerformanceMonitor : AppService<PerformanceMonitor>, AppLoadableService
         MemoryStatProvider,
         BatteryProvider,
         NetworkStatProvider,
-        ScreenshotProvider>;
+        ScreenshotProvider,
+        GPUStatProvider>;
     using proxy_type = detail::restricted::proxy_t<PerformanceMonitor>;
 
     time_point m_nextTime{};

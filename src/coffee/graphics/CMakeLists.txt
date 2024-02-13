@@ -1,5 +1,6 @@
 option(BUILD_OPENGL "Target OpenGL API" ON)
 option(BUILD_GRAPHICS_COMMON "Build common graphics library" ON)
+option(BUILD_PVRSCOPE "Build support for PVRScope" OFF)
 
 option(BUILD_GX "Target GX API for Gekko" OFF)
 
@@ -10,6 +11,9 @@ if(BUILD_OPENGL)
 
   if(BUILD_GLEAM)
     add_subdirectory(apis/gleam)
+  endif()
+  if(BUILD_PVRSCOPE)
+    add_subdirectory(profiling/pvr)
   endif()
 endif()
 
