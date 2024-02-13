@@ -499,6 +499,7 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
         out.draw.instancing               = true;
         out.rendertarget.clearbuffer      = true;
         out.rendertarget.readdraw_buffers = true;
+        out.rendertarget.depth24          = true;
         out.texture.internal_format_query = true;
         out.texture.max_level             = true;
         out.texture.samplers              = true;

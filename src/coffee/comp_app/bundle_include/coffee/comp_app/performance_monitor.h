@@ -32,6 +32,8 @@ struct PerformanceMonitor : AppService<PerformanceMonitor>, AppLoadableService
     void load(entity_container& e, app_error& ec);
     void unload(entity_container& e, app_error& ec);
 
+    void capture_screenshot(proxy_type& p, time_point const& time);
+
     rq::runtime_queue* m_worker_queue{nullptr};
 };
 

@@ -92,6 +92,9 @@ inline optional<tuple<error, std::string_view>> api::submit(
     if(data.empty())
         return std::nullopt;
 
+    if(!program)
+        return std::make_tuple(error::no_program, "program is null");
+
     if(program->m_async_waiting)
     {
         if(program->m_error_state)

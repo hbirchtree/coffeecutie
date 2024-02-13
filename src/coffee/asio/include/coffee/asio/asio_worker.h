@@ -4,9 +4,9 @@
 #include <coffee/core/internal_state.h>
 #include <coffee/core/task_queue/task.h>
 
-namespace Coffee {
-namespace ASIO {
+namespace Coffee::ASIO {
 
+#if !defined(USE_EMSCRIPTEN_HTTP)
 static const constexpr cstring context_name = "asioContext";
 
 struct Worker : State::GlobalState
@@ -20,8 +20,8 @@ struct Worker : State::GlobalState
 
 STATICINLINE std::shared_ptr<Worker> GenWorker()
 {
-    auto worker = std::dynamic_pointer_cast<Worker>(
-                                    State::PeekState(context_name));
+    auto worker
+        = std::dynamic_pointer_cast<Worker>(State::PeekState(context_name));
     if(worker)
         return worker;
 
@@ -43,6 +43,24 @@ STATICINLINE std::shared_ptr<ASIO::Service> GetContext()
 
     return worker->context;
 }
+#else
+struct Worker
+{
+    int context{0};
 
-} // namespace ASIO
-} // namespace Coffee
+    void stop() {}
+};
+
+STATICINLINE Worker* GenWorker()
+{
+    static Worker worker{};
+    return &worker;
+}
+
+STATICINLINE int GetContext()
+{
+    return 0;
+}
+#endif
+
+} // namespace Coffee::ASIO

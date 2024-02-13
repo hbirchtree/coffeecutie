@@ -338,29 +338,29 @@ void ExitRoutine()
         profilerStore->disable();
 
     /* Verify if we should export profiler data */
+    if(auto flag = env::var("COFFEE_NO_PROFILER_EXPORT");
+       flag.has_value() && flag.value() == "1")
+        return;
+
     {
-        if(auto flag = env::var("COFFEE_NO_PROFILER_EXPORT");
-           flag.has_value() && flag.value() == "1")
-        {
-            auto log_name = Path(path::executable().value()).fileBasename();
+        auto log_name = Path(path::executable().value()).fileBasename();
 
-            if constexpr(
-                compile_info::platform::is_android
-                || compile_info::platform::is_ios)
-                log_name = Path("chrome");
+        if constexpr(
+            compile_info::platform::is_android
+            || compile_info::platform::is_ios)
+            log_name = Path("chrome");
 
-            auto log_url = url::constructors::MkUrl("", RSCA::TemporaryFile);
+        auto log_url = url::constructors::MkUrl("", RSCA::TemporaryFile);
 
-            auto log_url2
-                = log_url
-                  + Path(log_name.internUrl + "-chrome").addExtension("json");
+        auto log_url2
+            = log_url
+              + Path(log_name.internUrl + "-chrome").addExtension("json");
 
-            std::string target_chrome;
-            Profiling::ExportChromeTracerData(target_chrome);
-            Profiling::ExportStringToFile(target_chrome + " ", log_url2);
+        std::string target_chrome;
+        Profiling::ExportChromeTracerData(target_chrome);
+        Profiling::ExportStringToFile(target_chrome + " ", log_url2);
 
-            cVerbose(6, "Saved profiler data to: {0}", path::canon(log_url2));
-        }
+        cVerbose(6, "Saved profiler data to: {0}", path::canon(log_url2));
     }
 }
 

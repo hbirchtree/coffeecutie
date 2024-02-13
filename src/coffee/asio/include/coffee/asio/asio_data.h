@@ -1,8 +1,10 @@
 #pragma once
 
+#if !defined(USE_EMSCRIPTEN_HTTP)
 #include <asio.hpp>
 #if defined(ASIO_USE_SSL)
 #include <asio/ssl.hpp>
+#endif
 #endif
 
 #include <peripherals/libc/types.h>
@@ -10,6 +12,7 @@
 
 namespace Coffee::ASIO {
 
+#if !defined(USE_EMSCRIPTEN_HTTP)
 struct Service
 {
     Service() :
@@ -51,12 +54,17 @@ struct Service
 };
 
 extern std::shared_ptr<ASIO::Service> global_service;
+#endif
 
-STATICINLINE std::shared_ptr<ASIO::Service> InitService()
+STATICINLINE auto InitService()
 {
+#if defined(USE_EMSCRIPTEN_HTTP)
+    return 0;
+#else
     if(!global_service)
         global_service = std::make_shared<ASIO::Service>();
     return global_service;
+#endif
 }
 
 } // namespace Coffee::ASIO

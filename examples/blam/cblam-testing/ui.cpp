@@ -334,10 +334,11 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
 
 void alloc_ui_system(compo::EntityContainer& e)
 {
-    e.register_subsystem_inplace<UIRenderer>(
-        std::ref(e.subsystem_cast<gfx::system>()),
-        std::ref(e.subsystem_cast<UIElementCache<halo_version>>()),
-        std::ref(e.subsystem_cast<BitmapCache<halo_version>>()));
+    if(!e.subsystem_cast<gfx::system>().workarounds().bugs.adreno_3xx)
+            e.register_subsystem_inplace<UIRenderer>(
+                std::ref(e.subsystem_cast<gfx::system>()),
+                std::ref(e.subsystem_cast<UIElementCache<halo_version>>()),
+                std::ref(e.subsystem_cast<BitmapCache<halo_version>>()));
     e.register_component_inplace<UIElement>();
 }
 

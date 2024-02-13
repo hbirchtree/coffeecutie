@@ -540,16 +540,16 @@ void addDefaults(
         C_ERROR_CHECK(ec);
     }
 
-//     loader.registerAll<detail::subsystem_list<
-// #if defined(FEATURE_ENABLE_EmscriptenComponents)
-//         emscripten::BatteryProvider,
-// #else
-//         comp_app::SysBattery,
-// #endif
-//         comp_app::SysCPUTemp,
-//         comp_app::SysGPUTemp,
-//         comp_app::SysCPUClock>>(container, ec);
-//     C_ERROR_CHECK(ec);
+    //     loader.registerAll<detail::subsystem_list<
+    // #if defined(FEATURE_ENABLE_EmscriptenComponents)
+    //         emscripten::BatteryProvider,
+    // #else
+    //         comp_app::SysBattery,
+    // #endif
+    //         comp_app::SysCPUTemp,
+    //         comp_app::SysGPUTemp,
+    //         comp_app::SysCPUClock>>(container, ec);
+    //     C_ERROR_CHECK(ec);
 
     return;
 
@@ -682,7 +682,13 @@ void PerformanceMonitor::start_restricted(proxy_type& p, time_point const& time)
     }
 }
 
-void PerformanceMonitor::end_restricted(proxy_type& p, time_point const& time)
+void PerformanceMonitor::end_restricted(proxy_type &p, const time_point &time)
+{
+    capture_screenshot(p, time);
+}
+
+void PerformanceMonitor::capture_screenshot(
+    proxy_type& p, time_point const& time)
 {
     using namespace platform::profiling;
     using namespace Coffee::resource_literals;
@@ -702,9 +708,6 @@ void PerformanceMonitor::end_restricted(proxy_type& p, time_point const& time)
                 break;
 
             screenshot->set_worker(m_worker_queue);
-
-            using dump_t = interfaces::ScreenshotProvider::dump_t;
-            using namespace Coffee;
 
             m_nextScreenshot = time + std::chrono::seconds(10);
             auto pixels      = screenshot->pixels();

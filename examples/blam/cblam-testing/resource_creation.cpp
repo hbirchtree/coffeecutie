@@ -306,7 +306,8 @@ void create_resources(compo::EntityContainer& e)
                 api.feature_info().rendertarget.depth_32f ? PixFmt::Depth32F
                 : api.feature_info().rendertarget.depth24_stencil8
                     ? PixFmt::Depth24Stencil8
-                    : PixFmt::Depth16),
+                : api.feature_info().rendertarget.depth24 ? PixFmt::Depth24
+                                                          : PixFmt::Depth16),
             1);
         resources.offscreen->alloc();
         auto const& size = resources.offscreen_size;
@@ -324,6 +325,10 @@ void create_resources(compo::EntityContainer& e)
             *resources.depth,
             0);
         resources.offscreen->resize({0, 0, size.x, size.y});
+        cDebug(
+            "Created offscreen buffer with: color={} depth={}",
+            magic_enum::enum_name(resources.color->m_format.pixfmt),
+            magic_enum::enum_name(resources.depth->m_format.pixfmt));
 
         resources.color->set_swizzle(
             gfx::textures::swizzle_t::red,
@@ -493,9 +498,9 @@ static void create_legacy_shaders(gfx::api& api, BlamResources& resources)
     using namespace std::string_view_literals;
     using platform::url::constructors::MkUrl;
 
-    resources.debug_lines_pipeline = api.alloc_program();
-    resources.model_pipeline       = api.alloc_program();
-    resources.wireframe_pipeline   = api.alloc_program();
+    // resources.debug_lines_pipeline = api.alloc_program();
+    // resources.model_pipeline       = api.alloc_program();
+    // resources.wireframe_pipeline   = api.alloc_program();
 
     resources.bsp_pipeline = api.alloc_program();
     resources.bsp_pipeline->add(
@@ -560,9 +565,12 @@ void set_resource_labels(EntityContainer& e)
     BlamResources&   resources = e.subsystem_cast<BlamResources>();
 
     debug.annotate(*resources.bsp_pipeline, "map_basic");
-    debug.annotate(*resources.model_pipeline, "scenery");
-    debug.annotate(*resources.debug_lines_pipeline, "debug_lines");
-    debug.annotate(*resources.wireframe_pipeline, "wireframe");
+    if(resources.model_pipeline)
+        debug.annotate(*resources.model_pipeline, "scenery");
+    if(resources.debug_lines_pipeline)
+        debug.annotate(*resources.debug_lines_pipeline, "debug_lines");
+    if(resources.wireframe_pipeline)
+        debug.annotate(*resources.wireframe_pipeline, "wireframe");
 
     debug.annotate(*resources.bsp_attr, "bsp_vao");
     debug.annotate(*resources.bsp_buf, "bsp_vertex_buf");

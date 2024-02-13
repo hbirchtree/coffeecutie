@@ -2,9 +2,9 @@
 
 #include <coffee/core/CProfiling>
 
-namespace Coffee {
-namespace ASIO {
+namespace Coffee::ASIO {
 
+#if !defined(USE_EMSCRIPTEN_HTTP)
 std::shared_ptr<ASIO::Service> global_service;
 
 void Worker::stop()
@@ -32,6 +32,6 @@ Coffee::ASIO::Worker::~Worker()
 {
     stop();
 }
+#endif
 
 } // namespace ASIO
-} // namespace Coffee

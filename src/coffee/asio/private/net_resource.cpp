@@ -67,9 +67,7 @@ void Resource::initRsc(const Url& url)
     }
 #endif
 
-#if defined(USE_EMSCRIPTEN_HTTP)
-    // Nothing to do here!
-#else
+#if !defined(USE_EMSCRIPTEN_HTTP)
     {
         DProfContext b(DTEXT(NETRSC_TAG "Connecting to host"));
 #if defined(ASIO_USE_SSL)
@@ -115,7 +113,7 @@ std::optional<asio::error_code> Resource::close()
     } else
 #endif
 #if defined(USE_EMSCRIPTEN_HTTP)
-        emscripten_async_wget2_abort(m_handle);
+    emscripten_fetch_close(m_fetch);
 #else
     {
         if(!normal)
@@ -130,9 +128,17 @@ std::optional<asio::error_code> Resource::close()
 }
 
 Resource::Resource(
-    std::shared_ptr<Coffee::ASIO::Service> ctxt, const Url& url) :
-    m_resource(url),
-    m_ctxt(ctxt), m_access(url.netflags)
+#if defined(USE_EMSCRIPTEN_HTTP)
+    int,
+#else
+    std::shared_ptr<Coffee::ASIO::Service> ctxt,
+#endif
+    const Url& url)
+    : m_resource(url)
+#if !defined(USE_EMSCRIPTEN_HTTP)
+    , m_ctxt(ctxt)
+#endif
+    , m_access(url.netflags)
 {
     using namespace http::header::to_string;
     using namespace http::header;
@@ -245,10 +251,36 @@ std::optional<asio::error_code> Resource::push(const const_chunk_u8& data)
 }
 
 #if defined(USE_EMSCRIPTEN_HTTP)
+void emscripten_push_success(emscripten_fetch_t* fetch)
+{
+    cDebug(
+        "Request finished: {}: code={}: {}",
+        fetch->url,
+        fetch->status,
+        fetch->statusText);
+}
+
+void emscripten_push_error(emscripten_fetch_t* fetch)
+{
+    cWarning(
+        "Error in emscripten_fetch: code={}: {}",
+        fetch->status,
+        fetch->statusText);
+}
+
+void emscripten_push_statechange(emscripten_fetch_t* fetch)
+{
+    cDebug("emscripten_fetch: url={}, state={}", fetch->url, fetch->readyState);
+}
+
 std::optional<asio::error_code> Resource::push(
     http::method_t method, const_chunk_u8 const& data)
 {
     std::string resource, param;
+    /* We have to copy the body if it exists, otherwwise it might go out of
+     * scope outside */
+    m_request.payload.insert(
+        m_request.payload.begin(), data.begin(), data.end());
     if(auto idx = m_request.header.resource.find('?'); idx == std::string::npos)
     {
         resource = m_request.header.resource.substr(0, idx);
@@ -259,25 +291,40 @@ std::optional<asio::error_code> Resource::push(
         "https://{}:{}/{}", m_request.host, m_request.port, resource);
     auto method_s = http::header::to_string::method(method);
 
-    m_handle = emscripten_async_wget2_data(
-        url.c_str(),
-        method_s,
-        param.c_str(),
-        this,
-        true,
-        [](unsigned, void* self_, void* buffer, unsigned buffer_size) {
-            Resource* self               = static_cast<Resource*>(self_);
-            self->m_response.header.code = 200;
-            self->m_response.payload.resize(buffer_size);
-            memcpy(self->m_response.payload.data(), buffer, buffer_size);
-        },
-        [](unsigned, void* self_, int code, const char* message) {
+    std::vector<const char*> headers;
+    for(auto const& field : m_request.header.fields)
+    {
+        headers.push_back(field.first.c_str());
+        headers.push_back(field.second.c_str());
+    }
+    for(auto const& field : m_request.header.standard_fields)
+    {
+        headers.push_back(http::header::to_string::field(field.first));
+        headers.push_back(field.second.c_str());
+    }
+    headers.push_back(nullptr);
 
-        },
-        [](unsigned, void* /*self_*/, int /*received*/, int /*total*/) {});
+    emscripten_fetch_attr_t attr;
+    emscripten_fetch_attr_init(&attr);
+    attr.attributes = EMSCRIPTEN_FETCH_LOAD_TO_MEMORY;
+    strcpy(attr.requestMethod, method_s);
+    attr.requestHeaders = headers.data();
+    attr.userData       = this;
+    if(!m_request.payload.empty())
+    {
+        attr.requestData
+            = reinterpret_cast<const char*>(m_request.payload.data());
+        attr.requestDataSize = m_request.payload.size();
+    }
+    attr.onsuccess          = emscripten_push_success;
+    attr.onerror            = emscripten_push_error;
+    attr.onreadystatechange = emscripten_push_statechange;
 
-    if(m_handle < 0)
+    m_fetch = emscripten_fetch(&attr, url.c_str());
+
+    if(!m_fetch)
         return asio::error_code::request_failed;
+    return std::nullopt;
 }
 #else
 std::optional<asio::error_code> Resource::readResponseHeader(

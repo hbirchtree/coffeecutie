@@ -116,11 +116,11 @@ using linux_::total;
 #else
 constexpr bool has_meminfo = false;
 
-auto resident()
+inline auto resident()
 {
     return 0u;
 }
-auto total()
+inline auto total()
 {
     return 0u;
 }

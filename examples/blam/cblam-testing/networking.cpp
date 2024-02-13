@@ -13,8 +13,10 @@
 
 #include <fmt_extensions/url_types.h>
 
-using NetworkingManifest = compo::
-    SubsystemManifest<empty_list_t, type_list_t<BlamCamera>, empty_list_t>;
+using NetworkingManifest = compo::SubsystemManifest<
+    empty_list_t,
+    type_list_t<BlamCamera>,
+    type_list_t<comp_app::ScreenshotProvider>>;
 
 /* Lane 0 should be used for most common packets */
 constexpr u32 FRAME_UPDATE_LANE = 0;
@@ -49,6 +51,9 @@ struct MessageBase
         /* Replication */
         CameraSync,
         EntitySpawn,
+
+        /* Debug */
+        Screenshot,
     } type{None};
     u32 request{};
     enum Flags : u32
@@ -125,12 +130,20 @@ struct GameEventWrapper
     T         data;
 };
 
-struct CameraSync
+struct alignas(8) CameraSync
 {
     static constexpr auto message_type = MessageBase::CameraSync;
 
     Vecf4 position;
     Quatf rotation;
+    u32   target_player{0xFFFF};
+};
+
+struct alignas(8) Screenshot
+{
+    static constexpr auto message_type = MessageBase::Screenshot;
+
+    PixFmt format{PixFmt::None};
 };
 
 struct EntityTag
@@ -155,7 +168,7 @@ struct EntitySpawn
  */
 static_assert(sizeof(Message<GameJoin>) == 52);
 static_assert(sizeof(Message<PlayerJoin>) == 48);
-static_assert(sizeof(Message<CameraSync>) == 48);
+static_assert(sizeof(Message<CameraSync>) == 56);
 static_assert(sizeof(Message<u32>) == 20);
 static_assert(sizeof(Message<u64>) == 24);
 
@@ -637,18 +650,19 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             cDebug("Player joined: {}", player_join.player_name.str());
             auto ref = p.underlying().create_entity(
                 compo::EntityRecipe{{compo::type_hash_v<PlayerInfo>()}, 0x0});
-            m_connections[connection].player_info = ref.ref<PlayerInfo>();
-            auto& info                            = m_connections[connection];
+            player_info.player_info = ref.ref<PlayerInfo>();
 
-            (*info.player_info).name   = player_join.player_name.str();
-            (*info.player_info).remote = client_name(connection);
+            auto& info      = (*player_info.player_info);
+            info.name       = player_join.player_name.str();
+            info.remote     = client_name(connection);
+            info.player_idx = player_info.idx;
             break;
         }
         case MessageBase::CameraSync: {
             BlamCamera* camera;
             p.subsystem(camera);
 
-            auto&       player     = camera->player(0);
+            auto&       player     = camera->player(/*player_info.idx*/ 0);
             auto const& sync       = payload.value<CameraSync>();
             player.camera.position = sync.position;
             player.camera.rotation = sync.rotation;

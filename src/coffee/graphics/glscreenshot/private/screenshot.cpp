@@ -1,5 +1,6 @@
 #include <glscreenshot/screenshot.h>
 
+#include <coffee/core/debug/formatting.h>
 #include <coffee/core/CProfiling>
 #include <coffee/core/task_queue/task.h>
 #include <glw/glw.h>
@@ -42,9 +43,13 @@ std::future<ScreenshotProvider::dump_t> ScreenshotProvider::pixels()
 
     Coffee::DProfContext _("glscreenshot::ScreenshotProvider::pixels");
 
-    const bool use_pbo = true;
+    GLint major_ver{2};
+#if GLEAM_MAX_VERSION >= 0x100 || GLEAM_MAX_VERSION_ES >= 0x300
+    glw::get_integerv(get_prop::major_version, semantic::SpanOne(major_ver));
+#endif
+    const bool use_pbo = major_ver >= 3;
 
-    auto read_pixels = [this] {
+    auto read_pixels = [this, use_pbo] {
         auto                        size_ = size();
         std::vector<libc_types::u8> data(size_.area() * 4);
 

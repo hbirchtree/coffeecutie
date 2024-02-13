@@ -10,13 +10,29 @@ enum basic_errors
     invalid_argument,
 };
 }
-enum error_code
+struct error_code
 {
-    none,
-    request_failed,
+    enum code
+    {
+        none,
+        request_failed,
+    };
+
+    error_code(code = none) {}
+
+    operator code() const
+    {
+        return none;
+    }
+    const char* message() const
+    {
+        return "";
+    }
 };
 
 }
+
+#include <emscripten/fetch.h>
 #else
 #include <coffee/asio/tcp_socket.h>
 #endif
@@ -57,7 +73,7 @@ struct Resource
   private:
     Url                                    m_resource;
 #if defined(USE_EMSCRIPTEN_HTTP)
-    int m_handle{-1};
+    emscripten_fetch_t* m_fetch{nullptr};
 #else
     std::shared_ptr<Coffee::ASIO::Service> m_ctxt;
 #if defined(ASIO_USE_SSL)
@@ -83,7 +99,13 @@ struct Resource
 #endif
 
   public:
-    Resource(std::shared_ptr<Coffee::ASIO::Service> ctxt, Url const& url);
+    Resource(
+#if defined(USE_EMSCRIPTEN_HTTP)
+        int,
+#else
+        std::shared_ptr<Coffee::ASIO::Service> ctxt,
+#endif
+        Url const& url);
     ~Resource();
 
     C_MOVE_CONSTRUCTOR(Resource);

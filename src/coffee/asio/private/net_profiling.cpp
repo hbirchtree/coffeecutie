@@ -3,6 +3,7 @@
 #include <coffee/asio/asio_worker.h>
 #include <coffee/asio/net_resource.h>
 #include <coffee/core/CFiles>
+#include <coffee/core/CProfiling>
 #include <peripherals/libc/signals.h>
 #include <peripherals/stl/string/hex.h>
 #include <peripherals/stl/string_ops.h>

@@ -963,15 +963,13 @@ void ScreenClear::end_restricted(Proxy& e, const time_point&)
     auto& resources   = e.subsystem<BlamResources>();
     auto& postprocess = e.subsystem<PostProcessParameters>();
 
-    if(api.default_rendertarget() == resources.offscreen)
-        return;
-
     auto _ = api.debug().scope();
 
     if(!quad_program)
-    {
         load_resources(api, e.subsystem<BlamResources>());
-    }
+
+    if(api.default_rendertarget() == resources.offscreen)
+        return;
 
     f32 display_scale = postprocess.scale;
 
@@ -1140,8 +1138,11 @@ void main()
     if(auto res = quad_program->compile(); res.has_error())
         cDebug("Error compiling quad shader: {0}", res.error());
 
-    offscreen_sampler = resources.color->sampler();
-    offscreen_sampler->alloc();
+    if(resources.color)
+    {
+        offscreen_sampler = resources.color->sampler();
+        offscreen_sampler->alloc();
+    }
 }
 
 void LoadingScreen::start_restricted(Proxy&, const time_point&)
@@ -1217,6 +1218,8 @@ void LoadingScreen::end_restricted(Proxy& e, const time_point& time)
 void LoadingScreen::load_resources(gleam::system& api)
 {
     using namespace gleam::literals;
+
+    ProfContext _;
 
     constexpr std::string_view vertex_shader = R"(#version 100
 precision highp float;

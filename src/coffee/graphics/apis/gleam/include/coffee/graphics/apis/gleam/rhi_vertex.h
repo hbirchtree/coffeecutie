@@ -441,8 +441,7 @@ struct vertex_array_t
                     detail::vertex_setup_attribute(attribute);
             }
 
-            if(!m_features.vertex_offset)
-                m_buffers.insert({binding, buffer});
+            m_buffers.insert({binding, buffer});
         }
         if(!m_features.dsa)
         {

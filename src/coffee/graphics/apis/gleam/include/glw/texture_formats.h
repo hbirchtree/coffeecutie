@@ -21,16 +21,16 @@ using namespace std::string_view_literals;
 constexpr texture_format_t texture_formats[] = {
 #include "texture_formats.inl"
 };
-constexpr size_t num_texture_formats =
-    sizeof(texture_formats) / sizeof(texture_format_t);
+constexpr size_t num_texture_formats
+    = sizeof(texture_formats) / sizeof(texture_format_t);
 
 #undef COMPRESSED_FORMAT_TYPE
 #undef RAW_FORMAT_TYPE
 
 } // namespace detail
 
-using texture_format_span =
-    gsl::span<const texture_format_t, detail::num_texture_formats>;
+using texture_format_span
+    = gsl::span<const texture_format_t, detail::num_texture_formats>;
 
 inline constexpr texture_format_span texture_formats_view()
 {
@@ -50,7 +50,8 @@ inline constexpr texture_format_t const& format_of(format_t fmt)
     for(auto const& def : texture_formats_view())
         if(def.type == fmt)
             return def;
-    throw std::out_of_range("format not found");
+    throw std::out_of_range(
+        "format not found: " + std::to_string(static_cast<u32>(fmt)));
 }
 
 inline constexpr texture_format_t const& format_of(vk_format_t fmt)
@@ -58,7 +59,8 @@ inline constexpr texture_format_t const& format_of(vk_format_t fmt)
     for(auto const& def : texture_formats_view())
         if(def.vk_type == fmt)
             return def;
-    throw std::out_of_range("format not found");
+    throw std::out_of_range(
+        "format not found" + std::to_string(static_cast<u32>(fmt)));
 }
 
 using typing::pixels::PixDesc;

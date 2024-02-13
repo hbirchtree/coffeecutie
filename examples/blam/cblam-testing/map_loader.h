@@ -21,7 +21,7 @@ using Coffee::cDebug;
 
 using BlamMapBrowserManifest = compo::SubsystemManifest<
     type_list_t<PlayerInfo>,
-    type_list_t<GameEventBus, NetworkState>,
+    type_list_t<GameEventBus, NetworkState, BlamCamera>,
     empty_list_t>;
 
 struct BlamMapBrowser
@@ -154,8 +154,16 @@ struct BlamMapBrowser
                             "State: %.*s",
                             static_cast<int>(state.size()),
                             state.data());
+                    ImGui::Columns(2);
+                    BlamCamera& camera = e.subsystem<BlamCamera>();
                     if(auto local_name = net_state->local_address)
+                    {
                         ImGui::Text(" - Server (%s)", local_name->c_str());
+                        ImGui::NextColumn();
+                        if(ImGui::Button("Focus"))
+                            camera.focused_player = 0;
+                        ImGui::NextColumn();
+                    }
                     for(auto const& player : e.select<PlayerInfo>())
                     {
                         auto const& pinfo
@@ -164,7 +172,11 @@ struct BlamMapBrowser
                             " - %s (%s)",
                             pinfo.name.c_str(),
                             pinfo.remote.c_str());
+                        ImGui::NextColumn();
+                        if(ImGui::Button("Focus"))
+                            camera.focused_player = pinfo.player_idx;
                     }
+                    ImGui::Columns();
                     ImGui::EndTabItem();
                 }
                 if(m_error)
