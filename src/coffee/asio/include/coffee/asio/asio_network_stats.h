@@ -7,12 +7,13 @@ namespace Coffee {
 namespace ASIO {
 
 struct NetStats
-    : comp_app::interfaces::NetworkStatProvider,
-      comp_app::AppService<NetStats, comp_app::NetworkStatProvider>
+    : comp_app::interfaces::NetworkStatProvider
+    , comp_app::AppService<NetStats, comp_app::NetworkStatProvider>
 {
     using type = NetStats;
 
-    NetStats(Service& service) : source(service.statistics)
+    NetStats(Service& service)
+        : source(service.statistics)
     {
     }
 
@@ -24,18 +25,21 @@ struct NetStats
             return stats->received;
         return 0;
     }
+
     virtual libc_types::u32 transmitted() const final
     {
         if(auto stats = source.lock(); stats)
             return stats->transmitted;
         return 0;
     }
+
     virtual libc_types::u32 connections() const final
     {
         if(auto stats = source.lock(); stats)
             return stats->sockets_created;
         return 0;
     }
+
     void reset_counters()
     {
         if(auto stats = source.lock(); stats)

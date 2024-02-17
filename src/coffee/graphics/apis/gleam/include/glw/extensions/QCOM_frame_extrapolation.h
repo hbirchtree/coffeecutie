@@ -4,6 +4,7 @@
 namespace gl::qcom::frame_extrapolation {
 namespace values {
 } // namespace values
+
 /*!
  * \brief Part of GL_QCOM_frame_extrapolation
  * \param src1 GLuint

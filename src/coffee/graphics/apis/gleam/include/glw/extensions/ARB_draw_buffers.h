@@ -21,17 +21,20 @@ constexpr u32 draw_buffer13    = 0x8832;
 constexpr u32 draw_buffer14    = 0x8833;
 constexpr u32 draw_buffer15    = 0x8834;
 } // namespace values
+
 template<class span_const_draw_buffer_mode>
-requires(concepts::span<span_const_draw_buffer_mode>&& std::is_same_v<
-         std::decay_t<typename span_const_draw_buffer_mode::value_type>,
-         std::decay_t<group::draw_buffer_mode>>)
-    /*!
-     * \brief Part of GL_ARB_draw_buffers
-     * \param n GLsizei
-     * \param bufs const GLenum *
-     * \return void
-     */
-    STATICINLINE void draw_buffers(span_const_draw_buffer_mode const& bufs)
+requires(
+    concepts::span<span_const_draw_buffer_mode> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_draw_buffer_mode::value_type>,
+        std::decay_t<group::draw_buffer_mode>>)
+/*!
+ * \brief Part of GL_ARB_draw_buffers
+ * \param n GLsizei
+ * \param bufs const GLenum *
+ * \return void
+ */
+STATICINLINE void draw_buffers(span_const_draw_buffer_mode const& bufs)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

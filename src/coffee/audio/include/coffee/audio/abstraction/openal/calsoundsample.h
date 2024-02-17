@@ -3,41 +3,42 @@
 
 #include "copenal_common.h"
 
-namespace Coffee{
-namespace CAudio{
-namespace COpenAL{
+namespace Coffee {
+namespace CAudio {
+namespace COpenAL {
 
-class CALSoundSample : public CSoundSample<CALSource,CALBuffer>
+class CALSoundSample : public CSoundSample<CALSource, CALBuffer>
 {
-    CSoundDevice<CALSource,CALBuffer>* m_dev;
-    CSoundFormat* m_fmt;
-    CSoundBuffer<CALSource,CALBuffer>* m_buffer;
-    u64 m_pts;
-    u64 m_samples;
+    CSoundDevice<CALSource, CALBuffer>* m_dev;
+    CSoundFormat*                       m_fmt;
+    CSoundBuffer<CALSource, CALBuffer>* m_buffer;
+    u64                                 m_pts;
+    u64                                 m_samples;
 
     CSoundProperty const* m_properties;
 
-public:
-    CALSoundSample(CSoundDevice<CALSource,CALBuffer>& dev,
-                   CSoundBuffer<CALSource,CALBuffer>& buf,
-                   CSoundFormat& fmt);
+  public:
+    CALSoundSample(
+        CSoundDevice<CALSource, CALBuffer>& dev,
+        CSoundBuffer<CALSource, CALBuffer>& buf,
+        CSoundFormat&                       fmt);
     ~CALSoundSample();
 
-    const CSoundDevice<CALSource,CALBuffer>& device();
+    const CSoundDevice<CALSource, CALBuffer>& device();
 
-    CSoundBuffer<CALSource,CALBuffer>& buffer();
-    CSoundFormat& format();
-    u64 samples() const;
+    CSoundBuffer<CALSource, CALBuffer>& buffer();
+    CSoundFormat&                       format();
+    u64                                 samples() const;
 
-    u64 pts() const;
+    u64  pts() const;
     void setPts(const u64& pts);
 
-    const CSoundProperty *properties();
-    void assignProperties(const CSoundProperty *props);
+    const CSoundProperty* properties();
+    void                  assignProperties(const CSoundProperty* props);
 };
 
-}
-}
-}
+} // namespace COpenAL
+} // namespace CAudio
+} // namespace Coffee
 
 #endif

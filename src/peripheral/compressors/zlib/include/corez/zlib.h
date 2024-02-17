@@ -13,8 +13,8 @@ using semantic::concepts::stream_writer;
 
 struct options_t
 {
-    szptr                chunk_size{1_MB};
-    int                  level{5};
+    szptr chunk_size{1_MB};
+    int   level{5};
 };
 
 struct stream_codec
@@ -24,13 +24,13 @@ struct stream_codec
 
     static std::optional<error_t> compress(
         semantic::Span<const libc_types::u8> const& input,
-        stream_writer&&                   receiver,
-        options_t&&                       options = options_t());
+        stream_writer&&                             receiver,
+        options_t&&                                 options = options_t());
 
     static std::optional<error_t> decompress(
         semantic::Span<const libc_types::u8> const& input,
-        stream_writer&&                   receiver,
-        options_t&&                       options = {});
+        stream_writer&&                             receiver,
+        options_t&&                                 options = {});
 };
 
 using codec = semantic::codec_stream_adapter<stream_codec>;

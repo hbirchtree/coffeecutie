@@ -24,26 +24,26 @@ class User
 {
   public:
     virtual ~User();
-    virtual u64     identifier()  = 0;
+    virtual u64         identifier()  = 0;
     virtual std::string displayName() = 0;
-    virtual Url     image()       = 0;
+    virtual Url         image()       = 0;
 };
 
 class Achievement
 {
   public:
     virtual ~Achievement();
-    virtual u64     identifier()  = 0;
+    virtual u64         identifier()  = 0;
     virtual std::string displayName() = 0;
-    virtual Url     image()       = 0;
+    virtual Url         image()       = 0;
 };
 
 class Friend
 {
   public:
     virtual ~Friend();
-    virtual std::shared_ptr<User>  getUnderlyingUser() = 0;
-    virtual FriendStatus state()             = 0;
+    virtual std::shared_ptr<User> getUnderlyingUser() = 0;
+    virtual FriendStatus          state()             = 0;
 };
 
 class Party
@@ -60,19 +60,20 @@ class Party
 
     virtual std::string secret() = 0;
 
-    virtual bool    maySpectate()    = 0;
+    virtual bool        maySpectate()    = 0;
     virtual std::string spectateSecret() = 0;
 };
 
 struct PartyDesc
 {
     std::string partyId;
-    i32     curPlayers, maxPlayers;
+    i32         curPlayers, maxPlayers;
 
     struct
     {
         std::string secret;
     } spectate;
+
     struct
     {
         std::string secret;
@@ -86,7 +87,8 @@ class AchievementDelegate
 
     virtual ~AchievementDelegate();
 
-    virtual void notifyAchievement(std::shared_ptr<Achievement> const& achievment) = 0;
+    virtual void notifyAchievement(
+        std::shared_ptr<Achievement> const& achievment) = 0;
 
     virtual AchievementContainer getAchievements() = 0;
 
@@ -98,10 +100,11 @@ class FriendDelegate
   public:
     using PartyContainer  = void;
     using FriendContainer = std::vector<Friend>;
+
     struct FriendQuery
     {
         FriendStatus state;
-        std::string      name;
+        std::string  name;
     };
 
     virtual ~FriendDelegate();
@@ -133,14 +136,20 @@ class GameDelegate
         Builder()
         {
         }
-        Builder(std::string const& name, std::string const& activity, Url const& img) :
-            gameName(name), activity(activity), gameImage(img)
+
+        Builder(
+            std::string const& name,
+            std::string const& activity,
+            Url const&         img)
+            : gameName(name)
+            , activity(activity)
+            , gameImage(img)
         {
         }
 
         std::string gameName;
         std::string activity;
-        Url     gameImage;
+        Url         gameImage;
     };
 
     virtual ~GameDelegate();

@@ -23,7 +23,7 @@ i32 coffee_main(i32, cstring_w*)
 #endif
 
     auto& entities = comp_app::createContainer();
-    auto& loader = comp_app::AppLoader::register_service(entities);
+    auto& loader   = comp_app::AppLoader::register_service(entities);
 
     comp_app::configureDefaults(loader);
 
@@ -38,16 +38,14 @@ i32 coffee_main(i32, cstring_w*)
 
     auto& input = *entities.service<comp_app::BasicEventBus<CIEvent>>();
 
-//    input.addEventHandler(input.default_prio, EHandle<Event>::MkHandler(WindowResize<>()));
+    //    input.addEventHandler(input.default_prio,
+    //    EHandle<Event>::MkHandler(WindowResize<>()));
     input.addEventHandler(1024, ExitOn<OnKey<Input::CK_Escape>>([&entities]() {
-        entities.service<comp_app::Windowing>()->close();
-    }));
+                              entities.service<comp_app::Windowing>()->close();
+                          }));
 
     comp_app::AppContainer<RendererState>::addTo(
-        entities,
-        SetupRendering,
-        RendererLoop,
-        RendererCleanup);
+        entities, SetupRendering, RendererLoop, RendererCleanup);
 
     return comp_app::ExecLoop<comp_app::BundleData>::exec(entities);
 }

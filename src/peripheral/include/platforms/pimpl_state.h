@@ -12,6 +12,7 @@ struct PContext;
 struct ThreadState;
 
 } // namespace profiling
+
 namespace detail {
 
 struct GlobalState
@@ -29,8 +30,7 @@ using peek_state_fn = std::function<global_state_ptr const&(std::string_view)>;
 
 using profiler_enabled_fn = bool (*)();
 using profiler_store_fn = std::shared_ptr<platform::profiling::PContext> (*)();
-using thread_store_fn =
-    std::shared_ptr<platform::profiling::ThreadState> (*)();
+using thread_store_fn = std::shared_ptr<platform::profiling::ThreadState> (*)();
 
 using app_data_fn = std::shared_ptr<platform::info::AppData> (*)();
 
@@ -44,6 +44,7 @@ struct state_pimpl
     {
         return stl_types::UqLock(state.access);
     }
+
     FORCEDINLINE stl_types::UqLock LockState(libc_types::cstring state)
     {
         return m_LockState(state);

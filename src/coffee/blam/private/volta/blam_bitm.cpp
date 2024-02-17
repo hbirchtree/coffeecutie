@@ -95,8 +95,8 @@ semantic::Span<const libc_types::u8> image_t::data(
 
     if(!compressed())
     {
-        auto const& format
-            = gl::tex::format_of(typing::pixels::PixDesc(to_pixfmt()));
+        auto const& format =
+            gl::tex::format_of(typing::pixels::PixDesc(to_pixfmt()));
 
         u32 size       = format.data_size(mipsize);
         u32 mip_offset = 0;

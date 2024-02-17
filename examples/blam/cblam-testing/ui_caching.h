@@ -9,15 +9,16 @@ using libc_types::u8;
 
 template<typename V>
 struct FontCache
-    : DataCache<FontItem, blam::font const*, blam::tagref_t const&>,
-      compo::SubsystemBase
+    : DataCache<FontItem, blam::font const*, blam::tagref_t const&>
+    , compo::SubsystemBase
 {
     using type = FontCache<V>;
 
-    FontCache(gfx::api* allocator) :
-        font_textures(std::make_shared<gfx::compat::texture_2da_t>(
-            allocator, PixDesc(PixFmt::R8), 1)),
-        font_sampler(font_textures->sampler()), api(allocator)
+    FontCache(gfx::api* allocator)
+        : font_textures(std::make_shared<gfx::compat::texture_2da_t>(
+              allocator, PixDesc(PixFmt::R8), 1))
+        , font_sampler(font_textures->sampler())
+        , api(allocator)
     {
     }
 
@@ -97,13 +98,14 @@ struct FontCache
 
 template<typename V>
 struct UIElementCache
-    : DataCache<UIElementItem, blam::ui_element const*, blam::tagref_t const&>,
-      compo::SubsystemBase
+    : DataCache<UIElementItem, blam::ui_element const*, blam::tagref_t const&>
+    , compo::SubsystemBase
 {
     using type = UIElementCache<V>;
 
-    UIElementCache(BitmapCache<V>& bitm_cache, FontCache<V>& font_cache) :
-        bitm_cache(bitm_cache), font_cache(font_cache)
+    UIElementCache(BitmapCache<V>& bitm_cache, FontCache<V>& font_cache)
+        : bitm_cache(bitm_cache)
+        , font_cache(font_cache)
     {
     }
 
@@ -124,12 +126,12 @@ struct UIElementCache
             magic_enum::enum_name(ui_el->widget_type));
         UIElementItem out{
             .ui_element = ui_el,
-            .children = {},
+            .children   = {},
             .background = {},
         };
         if(ui_el->background.valid())
-            out.background
-                = bitm_cache.predict(ui_el->background.to_plain(), 0);
+            out.background =
+                bitm_cache.predict(ui_el->background.to_plain(), 0);
         switch(ui_el->widget_type)
         {
         case widget_type::column_list:
@@ -160,8 +162,8 @@ struct UIElementCache
     std::vector<generation_idx_t> explore(
         blam::tagref_t const& widget_collection)
     {
-        auto collection_
-            = index.template data<blam::ui_item_collection>(widget_collection);
+        auto collection_ =
+            index.template data<blam::ui_item_collection>(widget_collection);
         if(!collection_.has_value())
             return {};
         blam::ui_item_collection const* collection = collection_.value();

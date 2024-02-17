@@ -37,6 +37,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         Vecf2 position;
         Vecf2 tex_coord;
     };
+
     struct instance_vertex_t
     {
         Vecf4                        color;
@@ -44,6 +45,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         typing::vector_types::Vecui4 texture_source{};
         u32                          padding[4] = {};
     };
+
     struct atlas_intermediate_t
     {
         Vecf2 atlas_offset;
@@ -54,9 +56,10 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
     UIRenderer(
         gfx::api&                     api,
         UIElementCache<halo_version>& ui_cache,
-        BitmapCache<halo_version>&    bitm_cache) :
-        api(api),
-        ui_cache(ui_cache), bitm_cache(bitm_cache)
+        BitmapCache<halo_version>&    bitm_cache)
+        : api(api)
+        , ui_cache(ui_cache)
+        , bitm_cache(bitm_cache)
     {
         using namespace std::string_view_literals;
 
@@ -102,6 +105,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         std::vector<instance_vertex_t>& instance_data;
         blam::vec4i16                   box;
     };
+
     struct layout_data_t
     {
         Vecf2 offset;
@@ -124,8 +128,8 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         auto local_origin = Vecf2(bounds.y, bounds.x);
         // Now calculate the global screen position,
         // depending on the parent-provided box on screen
-        auto global_origin
-            = Vecf2(data.box.x, data.box.y) + layout.offset + local_origin;
+        auto global_origin =
+            Vecf2(data.box.x, data.box.y) + layout.offset + local_origin;
 
         auto const& min = global_origin;
         auto        max = global_origin + dimensions;
@@ -187,8 +191,8 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                 .box           = {min.x, min.y, max.x, max.y},
             };
 
-            auto children
-                = el.ui_element->child_widgets.data(bitm_cache.magic).value();
+            auto children =
+                el.ui_element->child_widgets.data(bitm_cache.magic).value();
             u32 i = 0;
             for(auto const& child : el.children)
             {
@@ -197,8 +201,8 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                     child,
                     child_data,
                     layout_data_t{
-                        .offset
-                        = Vecf2(meta.horizontal_offset, meta.vertical_offset),
+                        .offset =
+                            Vecf2(meta.horizontal_offset, meta.vertical_offset),
                     });
                 i++;
             }
@@ -231,9 +235,9 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
          * This is what most of the widgets are aimed at
          */
         f32  aspect = 1.f / fb->size().aspect();
-        auto screen_scale
-            = glm::scale(Matf3(1), Vecf2{aspect / 320.f, -.5f / 240.f})
-              * glm::translate(Matf3(1), Vecf2{-320.f * aspect, -240.f});
+        auto screen_scale =
+            glm::scale(Matf3(1), Vecf2{aspect / 320.f, -.5f / 240.f}) *
+            glm::translate(Matf3(1), Vecf2{-320.f * aspect, -240.f});
         /* Used for anything that docks to any of the corners/sides
          * TODO: Correct scale for aspect ratio
          */
@@ -265,80 +269,87 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         instance_vertices->commit(
             Bytes::ofContainer(instance_vertex_data).view);
 
-        api.submit(gfx::draw_command{
-            .program = ui_painter,
-            .vertices = array,
-            .call = {
-                .instanced = false,
-                .mode = gfx::drawing::primitive::triangle,
-            },
-            .data = {
-                {
-                    .arrays = {
-                        .count = static_cast<u32>(
-                            instance_vertex_data.size() * 6),
+        api.submit(
+            gfx::draw_command{
+                .program  = ui_painter,
+                .vertices = array,
+                .call =
+                    {
+                        .instanced = false,
+                        .mode      = gfx::drawing::primitive::triangle,
                     },
-                    // .instances = {
-                    //     .count = static_cast<u32>(
-                    //         instance_vertex_data.size()),
-                    // },
-                },
+                .data =
+                    {
+                        {
+                            .arrays =
+                                {
+                                    .count = static_cast<u32>(
+                                        instance_vertex_data.size() * 6),
+                                },
+                            // .instances = {
+                            //     .count = static_cast<u32>(
+                            //         instance_vertex_data.size()),
+                            // },
+                        },
+                    },
             },
-        },
-        gfx::make_uniform_list(typing::graphics::ShaderStage::Vertex,
-            gfx::uniform_pair{{"screen_scale"sv, 0}, semantic::SpanOne(screen_scale)}),
-        gfx::make_sampler_list(gleam::sampler_definition_t{
-            typing::graphics::ShaderStage::Fragment,
-            {"source_bc1"sv, 0},
-            bitm_cache
-                .template get_bucket<gfx::compat::texture_2da_t>(
-                    CompFmt(PixFmt::BCn, CompFlags::BC1))
-                .sampler},
+            gfx::make_uniform_list(
+                typing::graphics::ShaderStage::Vertex,
+                gfx::uniform_pair{
+                    {"screen_scale"sv, 0}, semantic::SpanOne(screen_scale)}),
+            gfx::make_sampler_list(
                 gleam::sampler_definition_t{
-            typing::graphics::ShaderStage::Fragment,
-            {"source_bc2"sv, 1},
-            bitm_cache
-                .template get_bucket<gfx::compat::texture_2da_t>(
-                    CompFmt(PixFmt::BCn, CompFlags::BC2))
-                .sampler},
-            gleam::sampler_definition_t{
-            typing::graphics::ShaderStage::Fragment,
-            {"source_bc3"sv, 2},
-            bitm_cache
-                .template get_bucket<gfx::compat::texture_2da_t>(
-                    CompFmt(PixFmt::BCn, CompFlags::BC3))
-                .sampler},
-            gleam::sampler_definition_t{
-            typing::graphics::ShaderStage::Fragment,
-            {"source_rgba4"sv, 3},
-            bitm_cache
-                .template get_bucket<gfx::compat::texture_2da_t>(
-                    PixDesc(PixFmt::RGBA4))
-                .sampler},
-            gleam::sampler_definition_t{
-            typing::graphics::ShaderStage::Fragment,
-            {"source_rgba8"sv, 4},
-            bitm_cache
-                .template get_bucket<gfx::compat::texture_2da_t>(
-                    PixDesc(PixFmt::RGBA8))
-                .sampler}),
-        gfx::make_buffer_list(gfx::buffer_definition_t{
-            .stage = typing::graphics::ShaderStage::Fragment,
-            .key = {"InstanceData"sv, 0},
-            .buffer = instance_vertices->slice(0),
-            .stride = 0,
-        }),
-        gfx::blend_state{ .additive = false });
+                    typing::graphics::ShaderStage::Fragment,
+                    {"source_bc1"sv, 0},
+                    bitm_cache
+                        .template get_bucket<gfx::compat::texture_2da_t>(
+                            CompFmt(PixFmt::BCn, CompFlags::BC1))
+                        .sampler},
+                gleam::sampler_definition_t{
+                    typing::graphics::ShaderStage::Fragment,
+                    {"source_bc2"sv, 1},
+                    bitm_cache
+                        .template get_bucket<gfx::compat::texture_2da_t>(
+                            CompFmt(PixFmt::BCn, CompFlags::BC2))
+                        .sampler},
+                gleam::sampler_definition_t{
+                    typing::graphics::ShaderStage::Fragment,
+                    {"source_bc3"sv, 2},
+                    bitm_cache
+                        .template get_bucket<gfx::compat::texture_2da_t>(
+                            CompFmt(PixFmt::BCn, CompFlags::BC3))
+                        .sampler},
+                gleam::sampler_definition_t{
+                    typing::graphics::ShaderStage::Fragment,
+                    {"source_rgba4"sv, 3},
+                    bitm_cache
+                        .template get_bucket<gfx::compat::texture_2da_t>(
+                            PixDesc(PixFmt::RGBA4))
+                        .sampler},
+                gleam::sampler_definition_t{
+                    typing::graphics::ShaderStage::Fragment,
+                    {"source_rgba8"sv, 4},
+                    bitm_cache
+                        .template get_bucket<gfx::compat::texture_2da_t>(
+                            PixDesc(PixFmt::RGBA8))
+                        .sampler}),
+            gfx::make_buffer_list(gfx::buffer_definition_t{
+                .stage  = typing::graphics::ShaderStage::Fragment,
+                .key    = {"InstanceData"sv, 0},
+                .buffer = instance_vertices->slice(0),
+                .stride = 0,
+            }),
+            gfx::blend_state{.additive = false});
     }
 };
 
 void alloc_ui_system(compo::EntityContainer& e)
 {
     if(!e.subsystem_cast<gfx::system>().workarounds().bugs.adreno_3xx)
-            e.register_subsystem_inplace<UIRenderer>(
-                std::ref(e.subsystem_cast<gfx::system>()),
-                std::ref(e.subsystem_cast<UIElementCache<halo_version>>()),
-                std::ref(e.subsystem_cast<BitmapCache<halo_version>>()));
+        e.register_subsystem_inplace<UIRenderer>(
+            std::ref(e.subsystem_cast<gfx::system>()),
+            std::ref(e.subsystem_cast<UIElementCache<halo_version>>()),
+            std::ref(e.subsystem_cast<BitmapCache<halo_version>>()));
     e.register_component_inplace<UIElement>();
 }
 

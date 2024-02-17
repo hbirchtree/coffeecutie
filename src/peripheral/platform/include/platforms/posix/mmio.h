@@ -22,6 +22,7 @@ struct mem_mapping_t
         return view;
     }
 };
+
 struct mapping_params_t
 {
     RSCA  access{RSCA::ReadOnly};

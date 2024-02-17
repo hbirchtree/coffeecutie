@@ -32,7 +32,7 @@ namespace stl_types {
 
 using namespace type_safety;
 
-using u8string  = tiny_utf8::utf8_string;
+using u8string = tiny_utf8::utf8_string;
 
 template<typename T, class Deleter, typename... Args>
 inline std::unique_ptr<T, Deleter> make_unique_with_destructor(Args... a)
@@ -47,7 +47,7 @@ inline std::unique_ptr<T, Deleter> make_unique_with_destructor(Args... a)
  */
 
 template<typename T, typename... Items>
-requires (std::is_same_v<T, Items> && ...)
+requires(std::is_same_v<T, Items> && ...)
 inline constexpr auto make_array(Items&&... items)
 {
     return std::array<T, sizeof...(Items)>{{std::move(items)...}};

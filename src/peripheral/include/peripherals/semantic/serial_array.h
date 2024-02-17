@@ -13,7 +13,9 @@ struct SerialArray
     using size_type       = libc_types::szptr;
     using difference_type = libc_types::ptroff;
 
-    SerialArray() : m_data(nullptr), m_size(0)
+    SerialArray()
+        : m_data(nullptr)
+        , m_size(0)
     {
     }
 
@@ -31,10 +33,15 @@ struct SerialArray
 
     struct iterator : stl_types::Iterator<stl_types::ForwardIteratorTag, T>
     {
-        iterator(SerialArray<T>* base) : m_base(base), m_idx(0)
+        iterator(SerialArray<T>* base)
+            : m_base(base)
+            , m_idx(0)
         {
         }
-        iterator() : m_base(nullptr), m_idx(npos)
+
+        iterator()
+            : m_base(nullptr)
+            , m_idx(npos)
         {
         }
 
@@ -50,6 +57,7 @@ struct SerialArray
         {
             return m_idx == other.m_idx;
         }
+
         bool operator!=(iterator const& other) const
         {
             return m_idx != other.m_idx;

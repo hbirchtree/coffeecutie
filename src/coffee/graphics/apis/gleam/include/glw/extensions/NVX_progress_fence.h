@@ -4,23 +4,26 @@
 namespace gl::nvx::progress_fence {
 namespace values {
 } // namespace values
+
 template<class span_const_u32, class span_const_u64>
-requires(concepts::span<span_const_u32>&& std::is_same_v<
-         std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>&& concepts::span<span_const_u64>&&
-                                          std::is_same_v<
-                 std::decay_t<typename span_const_u64::value_type>,
-                 std::decay_t<u64>>)
-    /*!
-     * \brief Part of GL_NVX_progress_fence
-     * \param fenceObjectCount GLsizei
-     * \param semaphoreArray const GLuint *
-     * \param fenceValueArray const GLuint64 *
-     * \return void
-     */
-    STATICINLINE void client_wait_semaphoreui64(
-        span_const_u32 const& semaphoreArray,
-        span_const_u64 const& fenceValueArray)
+requires(
+    concepts::span<span_const_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_u32::value_type>,
+        std::decay_t<u32>> &&
+    concepts::span<span_const_u64> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_u64::value_type>,
+        std::decay_t<u64>>)
+/*!
+ * \brief Part of GL_NVX_progress_fence
+ * \param fenceObjectCount GLsizei
+ * \param semaphoreArray const GLuint *
+ * \param fenceValueArray const GLuint64 *
+ * \return void
+ */
+STATICINLINE void client_wait_semaphoreui64(
+    span_const_u32 const& semaphoreArray, span_const_u64 const& fenceValueArray)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -56,24 +59,27 @@ STATICINLINE GLuint create_progress_fence()
 }
 
 template<class span_const_u32, class span_const_u64>
-requires(concepts::span<span_const_u32>&& std::is_same_v<
-         std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>&& concepts::span<span_const_u64>&&
-                                          std::is_same_v<
-                 std::decay_t<typename span_const_u64::value_type>,
-                 std::decay_t<u64>>)
-    /*!
-     * \brief Part of GL_NVX_progress_fence
-     * \param signalGpu GLuint
-     * \param fenceObjectCount GLsizei
-     * \param semaphoreArray const GLuint *
-     * \param fenceValueArray const GLuint64 *
-     * \return void
-     */
-    STATICINLINE void signal_semaphoreui64(
-        u32                   signalGpu,
-        span_const_u32 const& semaphoreArray,
-        span_const_u64 const& fenceValueArray)
+requires(
+    concepts::span<span_const_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_u32::value_type>,
+        std::decay_t<u32>> &&
+    concepts::span<span_const_u64> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_u64::value_type>,
+        std::decay_t<u64>>)
+/*!
+ * \brief Part of GL_NVX_progress_fence
+ * \param signalGpu GLuint
+ * \param fenceObjectCount GLsizei
+ * \param semaphoreArray const GLuint *
+ * \param fenceValueArray const GLuint64 *
+ * \return void
+ */
+STATICINLINE void signal_semaphoreui64(
+    u32                   signalGpu,
+    span_const_u32 const& semaphoreArray,
+    span_const_u64 const& fenceValueArray)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -93,24 +99,27 @@ requires(concepts::span<span_const_u32>&& std::is_same_v<
 }
 
 template<class span_const_u32, class span_const_u64>
-requires(concepts::span<span_const_u32>&& std::is_same_v<
-         std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>&& concepts::span<span_const_u64>&&
-                                          std::is_same_v<
-                 std::decay_t<typename span_const_u64::value_type>,
-                 std::decay_t<u64>>)
-    /*!
-     * \brief Part of GL_NVX_progress_fence
-     * \param waitGpu GLuint
-     * \param fenceObjectCount GLsizei
-     * \param semaphoreArray const GLuint *
-     * \param fenceValueArray const GLuint64 *
-     * \return void
-     */
-    STATICINLINE void wait_semaphoreui64(
-        u32                   waitGpu,
-        span_const_u32 const& semaphoreArray,
-        span_const_u64 const& fenceValueArray)
+requires(
+    concepts::span<span_const_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_u32::value_type>,
+        std::decay_t<u32>> &&
+    concepts::span<span_const_u64> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_u64::value_type>,
+        std::decay_t<u64>>)
+/*!
+ * \brief Part of GL_NVX_progress_fence
+ * \param waitGpu GLuint
+ * \param fenceObjectCount GLsizei
+ * \param semaphoreArray const GLuint *
+ * \param fenceValueArray const GLuint64 *
+ * \return void
+ */
+STATICINLINE void wait_semaphoreui64(
+    u32                   waitGpu,
+    span_const_u32 const& semaphoreArray,
+    span_const_u64 const& fenceValueArray)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

@@ -70,9 +70,11 @@ inline auto powervr_sgx530_bbb()
         },
         // clang-format on
         .resolution = size_2d<u32>{848, 480},
-        .device_info = std::make_tuple("Imagination Technologies", "PowerVR SGX 530"),
+        .device_info =
+            std::make_tuple("Imagination Technologies", "PowerVR SGX 530"),
         .version_string = "OpenGL ES 2.0 build 1.14@3699939 (MAIN)",
-        .glsl_version_string = "OpenGL ES GLSL ES 1.00 build 1.14@3699939 (MAIN)",
+        .glsl_version_string =
+            "OpenGL ES GLSL ES 1.00 build 1.14@3699939 (MAIN)",
     };
 }
 
@@ -133,8 +135,9 @@ inline auto powervr_sgx530_n900()
         },
         // clang-format on
         .resolution = size_2d<u32>{848, 480},
-        .device_info = std::make_tuple("Imagination Technologies", "PowerVR SGX 530"),
-        .version_string = "OpenGL ES 2.0",
+        .device_info =
+            std::make_tuple("Imagination Technologies", "PowerVR SGX 530"),
+        .version_string      = "OpenGL ES 2.0",
         .glsl_version_string = "OpenGL ES GLSL ES 1.00",
     };
 }
@@ -145,7 +148,7 @@ inline auto mali_400mp()
 {
     return api::load_options_t{
         .api_version = 0x200,
-        .api_type = api_type_t::es,
+        .api_type    = api_type_t::es,
         // clang-format off
         .api_extensions = std::set<std::string>{
             "GL_ARM_rgba8",
@@ -175,7 +178,7 @@ inline auto mesa_mali_g610()
 {
     return api::load_options_t{
         .api_version = 0x310,
-        .api_type = api_type_t::es,
+        .api_type    = api_type_t::es,
         // clang-format off
         .api_extensions = std::set<std::string>{
             "GL_ANGLE_pack_reverse_row_order",
@@ -338,7 +341,7 @@ inline auto mali_g710()
 {
     return api::load_options_t{
         .api_version = 0x320,
-        .api_type = api_type_t::es,
+        .api_type    = api_type_t::es,
         // clang-format off
         .api_extensions = std::set<std::string>{
             "GL_ANDROID_extension_pack_es31a",
@@ -448,38 +451,43 @@ inline auto mali_g710()
             "GL_OVR_multiview_multisampled_render_to_texture",
         },
         // clang-format on
-        .limits = api_limits{
-            .buffers = {
-                .ssbo_size = 2147483647,
-                .ubo_size = 65536,
+        .limits =
+            api_limits{
+                .buffers =
+                    {
+                        .ssbo_size = 2147483647,
+                        .ubo_size  = 65536,
 
-                .ssbo_vertex = 0,
-                .ssbo_fragment = 35,
-                .ssbo_compute = 35,
+                        .ssbo_vertex   = 0,
+                        .ssbo_fragment = 35,
+                        .ssbo_compute  = 35,
 
-                .ubo_vertex = 36,
-                .ubo_fragment = 36,
-                .ubo_compute = 36,
-                .ubo_alignment = 16,
-                .ssbo_alignment = 16,
+                        .ubo_vertex     = 36,
+                        .ubo_fragment   = 36,
+                        .ubo_compute    = 36,
+                        .ubo_alignment  = 16,
+                        .ssbo_alignment = 16,
+                    },
+                .draws =
+                    {
+                        .element_index   = 2147483647,
+                        .instance_count  = 2147483647,
+                        .instance_offset = 2147483647,
+                    },
+                .shaders =
+                    {
+                        .vertex_uniform_vectors   = 4096,
+                        .fragment_uniform_vectors = 4096,
+                    },
+                .textures =
+                    {
+                        .texture_units = 384,
+                        .d2_size       = 16384,
+                        .d3_size       = 16384,
+                        .d2_max_layers = 4096,
+                        .cube_size     = 16384,
+                    },
             },
-            .draws = {
-                .element_index = 2147483647,
-                .instance_count = 2147483647,
-                .instance_offset = 2147483647,
-            },
-            .shaders = {
-                .vertex_uniform_vectors = 4096,
-                .fragment_uniform_vectors = 4096,
-            },
-            .textures = {
-                .texture_units = 384,
-                .d2_size = 16384,
-                .d3_size = 16384,
-                .d2_max_layers = 4096,
-                .cube_size = 16384,
-            },
-        },
         .resolution = size_2d<u32>{2892, 1440},
     };
 }
@@ -490,7 +498,7 @@ inline auto adreno_320()
 {
     return api::load_options_t{
         .api_version = 0x300,
-        .api_type = api_type_t::es,
+        .api_type    = api_type_t::es,
         // clang-format off
         .api_extensions = std::set<std::string>{
             "GL_AMD_compressed_ATC_texture",
@@ -543,11 +551,12 @@ inline auto adreno_320()
         .resolution = size_2d<u32>{1920, 1200},
     };
 }
+
 inline auto adreno_540()
 {
     return api::load_options_t{
         .api_version = 0x320,
-        .api_type = api_type_t::es,
+        .api_type    = api_type_t::es,
         // clang-format off
         .api_extensions = std::set<std::string>{
             "GL_AMD_compressed_ATC_texture",
@@ -638,11 +647,12 @@ inline auto adreno_540()
         .resolution = size_2d<u32>{2824, 1440},
     };
 }
+
 inline auto adreno_620()
 {
     return api::load_options_t{
         .api_version = 0x320,
-        .api_type = api_type_t::es,
+        .api_type    = api_type_t::es,
         // clang-format off
         .api_extensions = std::set<std::string>{
             "GL_AMD_compressed_ATC_texture",
@@ -756,7 +766,7 @@ inline auto mobile()
 {
     return api::load_options_t{
         .api_version = 0x300,
-        .api_type = api_type_t::es,
+        .api_type    = api_type_t::es,
         // clang-format off
         .api_extensions = std::set<std::string>{
             "EXT_color_buffer_float",
@@ -770,11 +780,12 @@ inline auto mobile()
         // clang-format on
     };
 }
+
 inline auto desktop()
 {
     return api::load_options_t{
         .api_version = 0x300,
-        .api_type = api_type_t::es,
+        .api_type    = api_type_t::es,
         // clang-format off
         .api_extensions = std::set<std::string>{
             "EXT_color_buffer_float",
@@ -795,11 +806,12 @@ inline auto desktop()
         // clang-format on
     };
 }
+
 inline auto desktop_macos()
 {
     return api::load_options_t{
         .api_version = 0x300,
-        .api_type = api_type_t::es,
+        .api_type    = api_type_t::es,
         // clang-format off
         .api_extensions = std::set<std::string>{
             "EXT_color_buffer_float",
@@ -824,7 +836,7 @@ inline auto rx560_pro()
 {
     return api::load_options_t{
         .api_version = 0x410,
-        .api_type = api_type_t::core,
+        .api_type    = api_type_t::core,
         // clang-format off
         .api_extensions = std::set<std::string>{
             "GL_APPLE_client_storage",

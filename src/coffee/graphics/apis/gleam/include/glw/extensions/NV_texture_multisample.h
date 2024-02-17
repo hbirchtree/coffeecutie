@@ -6,26 +6,27 @@ namespace values {
 constexpr u32 texture_coverage_samples = 0x9045;
 constexpr u32 texture_color_samples    = 0x9046;
 } // namespace values
+
 template<class size_2_i32>
 requires(concepts::size_2d<size_2_i32, i32>)
-    /*!
-     * \brief Part of GL_NV_texture_multisample
-     * \param target GLenum
-     * \param coverageSamples GLsizei
-     * \param colorSamples GLsizei
-     * \param internalFormat GLint
-     * \param width GLsizei
-     * \param height GLsizei
-     * \param fixedSampleLocations GLboolean
-     * \return void
-     */
-    STATICINLINE void tex_image_2d_multisample_coverage(
-        group::texture_target target,
-        i32                   coverageSamples,
-        i32                   colorSamples,
-        i32                   internalFormat,
-        size_2_i32 const&     width,
-        bool                  fixedSampleLocations)
+/*!
+ * \brief Part of GL_NV_texture_multisample
+ * \param target GLenum
+ * \param coverageSamples GLsizei
+ * \param colorSamples GLsizei
+ * \param internalFormat GLint
+ * \param width GLsizei
+ * \param height GLsizei
+ * \param fixedSampleLocations GLboolean
+ * \return void
+ */
+STATICINLINE void tex_image_2d_multisample_coverage(
+    group::texture_target target,
+    i32                   coverageSamples,
+    i32                   colorSamples,
+    i32                   internalFormat,
+    size_2_i32 const&     width,
+    bool                  fixedSampleLocations)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -45,25 +46,25 @@ requires(concepts::size_2d<size_2_i32, i32>)
 
 template<class size_3_i32>
 requires(concepts::size_2d<size_3_i32, i32>)
-    /*!
-     * \brief Part of GL_NV_texture_multisample
-     * \param target GLenum
-     * \param coverageSamples GLsizei
-     * \param colorSamples GLsizei
-     * \param internalFormat GLint
-     * \param width GLsizei
-     * \param height GLsizei
-     * \param depth GLsizei
-     * \param fixedSampleLocations GLboolean
-     * \return void
-     */
-    STATICINLINE void tex_image_3d_multisample_coverage(
-        group::texture_target target,
-        i32                   coverageSamples,
-        i32                   colorSamples,
-        i32                   internalFormat,
-        size_3_i32 const&     width,
-        bool                  fixedSampleLocations)
+/*!
+ * \brief Part of GL_NV_texture_multisample
+ * \param target GLenum
+ * \param coverageSamples GLsizei
+ * \param colorSamples GLsizei
+ * \param internalFormat GLint
+ * \param width GLsizei
+ * \param height GLsizei
+ * \param depth GLsizei
+ * \param fixedSampleLocations GLboolean
+ * \return void
+ */
+STATICINLINE void tex_image_3d_multisample_coverage(
+    group::texture_target target,
+    i32                   coverageSamples,
+    i32                   colorSamples,
+    i32                   internalFormat,
+    size_3_i32 const&     width,
+    bool                  fixedSampleLocations)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -84,26 +85,26 @@ requires(concepts::size_2d<size_3_i32, i32>)
 
 template<class size_2_i32>
 requires(concepts::size_2d<size_2_i32, i32>)
-    /*!
-     * \brief Part of GL_NV_texture_multisample
-     * \param texture GLuint
-     * \param target GLenum
-     * \param coverageSamples GLsizei
-     * \param colorSamples GLsizei
-     * \param internalFormat GLint
-     * \param width GLsizei
-     * \param height GLsizei
-     * \param fixedSampleLocations GLboolean
-     * \return void
-     */
-    STATICINLINE void texture_image_2d_multisample_coverage(
-        u32                   texture,
-        group::texture_target target,
-        i32                   coverageSamples,
-        i32                   colorSamples,
-        i32                   internalFormat,
-        size_2_i32 const&     width,
-        bool                  fixedSampleLocations)
+/*!
+ * \brief Part of GL_NV_texture_multisample
+ * \param texture GLuint
+ * \param target GLenum
+ * \param coverageSamples GLsizei
+ * \param colorSamples GLsizei
+ * \param internalFormat GLint
+ * \param width GLsizei
+ * \param height GLsizei
+ * \param fixedSampleLocations GLboolean
+ * \return void
+ */
+STATICINLINE void texture_image_2d_multisample_coverage(
+    u32                   texture,
+    group::texture_target target,
+    i32                   coverageSamples,
+    i32                   colorSamples,
+    i32                   internalFormat,
+    size_2_i32 const&     width,
+    bool                  fixedSampleLocations)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -129,24 +130,24 @@ requires(concepts::size_2d<size_2_i32, i32>)
 
 template<class size_2_i32>
 requires(concepts::size_2d<size_2_i32, i32>)
-    /*!
-     * \brief Part of GL_NV_texture_multisample
-     * \param texture GLuint
-     * \param target GLenum
-     * \param samples GLsizei
-     * \param internalFormat GLint
-     * \param width GLsizei
-     * \param height GLsizei
-     * \param fixedSampleLocations GLboolean
-     * \return void
-     */
-    STATICINLINE void texture_image_2d_multisample(
-        u32                   texture,
-        group::texture_target target,
-        i32                   samples,
-        i32                   internalFormat,
-        size_2_i32 const&     width,
-        bool                  fixedSampleLocations)
+/*!
+ * \brief Part of GL_NV_texture_multisample
+ * \param texture GLuint
+ * \param target GLenum
+ * \param samples GLsizei
+ * \param internalFormat GLint
+ * \param width GLsizei
+ * \param height GLsizei
+ * \param fixedSampleLocations GLboolean
+ * \return void
+ */
+STATICINLINE void texture_image_2d_multisample(
+    u32                   texture,
+    group::texture_target target,
+    i32                   samples,
+    i32                   internalFormat,
+    size_2_i32 const&     width,
+    bool                  fixedSampleLocations)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -171,27 +172,27 @@ requires(concepts::size_2d<size_2_i32, i32>)
 
 template<class size_3_i32>
 requires(concepts::size_2d<size_3_i32, i32>)
-    /*!
-     * \brief Part of GL_NV_texture_multisample
-     * \param texture GLuint
-     * \param target GLenum
-     * \param coverageSamples GLsizei
-     * \param colorSamples GLsizei
-     * \param internalFormat GLint
-     * \param width GLsizei
-     * \param height GLsizei
-     * \param depth GLsizei
-     * \param fixedSampleLocations GLboolean
-     * \return void
-     */
-    STATICINLINE void texture_image_3d_multisample_coverage(
-        u32                   texture,
-        group::texture_target target,
-        i32                   coverageSamples,
-        i32                   colorSamples,
-        i32                   internalFormat,
-        size_3_i32 const&     width,
-        bool                  fixedSampleLocations)
+/*!
+ * \brief Part of GL_NV_texture_multisample
+ * \param texture GLuint
+ * \param target GLenum
+ * \param coverageSamples GLsizei
+ * \param colorSamples GLsizei
+ * \param internalFormat GLint
+ * \param width GLsizei
+ * \param height GLsizei
+ * \param depth GLsizei
+ * \param fixedSampleLocations GLboolean
+ * \return void
+ */
+STATICINLINE void texture_image_3d_multisample_coverage(
+    u32                   texture,
+    group::texture_target target,
+    i32                   coverageSamples,
+    i32                   colorSamples,
+    i32                   internalFormat,
+    size_3_i32 const&     width,
+    bool                  fixedSampleLocations)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -218,25 +219,25 @@ requires(concepts::size_2d<size_3_i32, i32>)
 
 template<class size_3_i32>
 requires(concepts::size_2d<size_3_i32, i32>)
-    /*!
-     * \brief Part of GL_NV_texture_multisample
-     * \param texture GLuint
-     * \param target GLenum
-     * \param samples GLsizei
-     * \param internalFormat GLint
-     * \param width GLsizei
-     * \param height GLsizei
-     * \param depth GLsizei
-     * \param fixedSampleLocations GLboolean
-     * \return void
-     */
-    STATICINLINE void texture_image_3d_multisample(
-        u32                   texture,
-        group::texture_target target,
-        i32                   samples,
-        i32                   internalFormat,
-        size_3_i32 const&     width,
-        bool                  fixedSampleLocations)
+/*!
+ * \brief Part of GL_NV_texture_multisample
+ * \param texture GLuint
+ * \param target GLenum
+ * \param samples GLsizei
+ * \param internalFormat GLint
+ * \param width GLsizei
+ * \param height GLsizei
+ * \param depth GLsizei
+ * \param fixedSampleLocations GLboolean
+ * \return void
+ */
+STATICINLINE void texture_image_3d_multisample(
+    u32                   texture,
+    group::texture_target target,
+    i32                   samples,
+    i32                   internalFormat,
+    size_3_i32 const&     width,
+    bool                  fixedSampleLocations)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

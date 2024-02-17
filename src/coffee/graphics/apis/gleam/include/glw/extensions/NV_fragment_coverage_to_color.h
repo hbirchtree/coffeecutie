@@ -6,6 +6,7 @@ namespace values {
 constexpr u32 fragment_coverage_to_color = 0x92DD;
 constexpr u32 fragment_coverage_color    = 0x92DE;
 } // namespace values
+
 /*!
  * \brief Part of GL_NV_fragment_coverage_to_color
  * \param color GLuint

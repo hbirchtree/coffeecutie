@@ -2,8 +2,10 @@
 
 #ifdef GL_KHR_no_error
 #include "../enums/ContextFlagMask.h"
+
 namespace gl::khr::no_error {
 using gl::group::context_flag_mask;
+
 namespace values {
 } // namespace values
 } // namespace gl::khr::no_error

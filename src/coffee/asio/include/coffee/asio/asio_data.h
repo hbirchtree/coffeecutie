@@ -15,10 +15,14 @@ namespace Coffee::ASIO {
 #if !defined(USE_EMSCRIPTEN_HTTP)
 struct Service
 {
-    Service() :
-        service(), resolver(service), resolver_udp(service),
+    Service()
+        : service()
+        , resolver(service)
+        , resolver_udp(service)
+        ,
 #if defined(ASIO_USE_SSL)
-        sslctxt(asio::ssl::context::sslv23),
+        sslctxt(asio::ssl::context::sslv23)
+        ,
 #endif
         statistics(std::make_shared<stats>())
     {

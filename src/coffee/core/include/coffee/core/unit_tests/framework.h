@@ -28,9 +28,12 @@ struct Test
         Coffee::cstring t,
         Coffee::cstring d = nullptr,
         bool            o = false,
-        bool            r = true) :
-        test(f),
-        title(t), description(d), optional(o), required_sequence(r)
+        bool            r = true)
+        : test(f)
+        , title(t)
+        , description(d)
+        , optional(o)
+        , required_sequence(r)
     {
     }
 

@@ -52,6 +52,7 @@ struct settings_visitor
     {
         return m_dirname;
     }
+
     Path fileBasename()
     {
         return m_basename;

@@ -67,8 +67,8 @@ comp_app::size_2d_t Windowing::size() const
 
 comp_app::window_flags_t Windowing::state() const
 {
-    return comp_app::window_flags_t::fullscreen
-           | comp_app::window_flags_t::focused;
+    return comp_app::window_flags_t::fullscreen |
+           comp_app::window_flags_t::focused;
 }
 
 void Windowing::setState(comp_app::window_flags_t /*state*/)
@@ -87,11 +87,13 @@ libc_types::u32 ControllerInput::count() const
 {
     return m_cache.size();
 }
+
 ControllerInput::controller_map ControllerInput::state(
     libc_types::u32 idx) const
 {
     return m_cache.at(idx);
 }
+
 comp_app::text_type_t ControllerInput::name(libc_types::u32 /*idx*/) const
 {
     return "Generic Controller";
@@ -154,8 +156,8 @@ void AndroidEventBus::load(entity_container& e, comp_app::app_error&)
                          ->config<comp_app::TouchConfig>();
 
     m_inputBus = m_container->service<comp_app::BasicEventBus<CIEvent>>();
-    m_appBus
-        = m_container->service<comp_app::BasicEventBus<comp_app::AppEvent>>();
+    m_appBus =
+        m_container->service<comp_app::BasicEventBus<comp_app::AppEvent>>();
 }
 
 void AndroidEventBus::handleMouseEvent(AInputEvent* event)
@@ -200,8 +202,8 @@ void AndroidEventBus::handleMouseEvent(AInputEvent* event)
                 if(current)
                     mouse->m_buttons |= map.second;
                 else
-                    mouse->m_buttons = mouse->m_buttons
-                                       & (MouseButton::AllButtons ^ map.second);
+                    mouse->m_buttons = mouse->m_buttons &
+                                       (MouseButton::AllButtons ^ map.second);
 
                 CIEvent event;
                 event.type = CIEvent::MouseButton;
@@ -356,18 +358,14 @@ bool AndroidEventBus::handleGamepadEvent(AInputEvent* event)
 
         std::tie(axes.t_l, axes.t_r) = trigger_values(event);
 
-        buttons.p_down
-            = AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_HAT_Y, 0)
-              > .5f;
-        buttons.p_up
-            = AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_HAT_Y, 0)
-              < -.5f;
-        buttons.p_left
-            = AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_HAT_X, 0)
-              < -.5f;
-        buttons.p_right
-            = AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_HAT_X, 0)
-              > .5f;
+        buttons.p_down =
+            AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_HAT_Y, 0) > .5f;
+        buttons.p_up = AMotionEvent_getAxisValue(
+                           event, AMOTION_EVENT_AXIS_HAT_Y, 0) < -.5f;
+        buttons.p_left = AMotionEvent_getAxisValue(
+                             event, AMOTION_EVENT_AXIS_HAT_X, 0) < -.5f;
+        buttons.p_right =
+            AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_HAT_X, 0) > .5f;
         return true;
     }
     default:
@@ -501,21 +499,21 @@ void AndroidEventBus::handleMotionEvent(AInputEvent* event)
     i32                  source   = AInputEvent_getSource(event);
     [[maybe_unused]] i32 deviceId = AInputEvent_getDeviceId(event);
 
-    const bool mouseMapping
-        = m_touchConfig->options & comp_app::TouchConfig::TouchToMouse;
+    const bool mouseMapping =
+        m_touchConfig->options & comp_app::TouchConfig::TouchToMouse;
 
     if(feval<i32>(source, AINPUT_SOURCE_DPAD))
     {
-        [[maybe_unused]] float x
-            = AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_HAT_X, 0);
-        [[maybe_unused]] float y
-            = AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_HAT_Y, 0);
+        [[maybe_unused]] float x =
+            AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_HAT_X, 0);
+        [[maybe_unused]] float y =
+            AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_HAT_Y, 0);
     } else if(feval<i32>(source, AINPUT_SOURCE_JOYSTICK))
     {
-        [[maybe_unused]] float x
-            = AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_X, 0);
-        [[maybe_unused]] float y
-            = AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_Y, 0);
+        [[maybe_unused]] float x =
+            AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_X, 0);
+        [[maybe_unused]] float y =
+            AMotionEvent_getAxisValue(event, AMOTION_EVENT_AXIS_Y, 0);
     } else if(feval<i32>(source, AINPUT_SOURCE_TOUCHSCREEN))
     {
         [[maybe_unused]] i32 edgeFlags = AMotionEvent_getEdgeFlags(event);
@@ -567,8 +565,8 @@ bool AndroidEventBus::filterTouchEvent(AInputEvent* event)
 
     CIEvent out;
 
-    const bool mouseMapping
-        = m_touchConfig->options & comp_app::TouchConfig::TouchToMouse;
+    const bool mouseMapping =
+        m_touchConfig->options & comp_app::TouchConfig::TouchToMouse;
 
     if(m_pinchDetector->Detect(event) != GESTURE_STATE_NONE)
     {
@@ -661,9 +659,9 @@ void AndroidEventBus::handleWindowEvent(android_app* app, libc_types::i32 event)
         using DEvent            = Coffee::Display::Event;
         using DisplayBus        = comp_app::BasicEventBus<DEvent>;
         DisplayBus* display_bus = m_container->service<DisplayBus>();
-        Coffee::Display::ResizeEvent resize
-            = {ANativeWindow_getWidth(app->window),
-               ANativeWindow_getHeight(app->window)};
+        Coffee::Display::ResizeEvent resize = {
+            ANativeWindow_getWidth(app->window),
+            ANativeWindow_getHeight(app->window)};
         auto event = DEvent::Create(0, DEvent::Resize);
         display_bus->inject(event, &resize);
         break;

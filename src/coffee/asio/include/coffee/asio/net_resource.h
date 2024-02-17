@@ -2,14 +2,14 @@
 
 #if defined(USE_EMSCRIPTEN_HTTP)
 namespace asio {
-namespace error
-{
+namespace error {
 enum basic_errors
 {
     none,
     invalid_argument,
 };
 }
+
 struct error_code
 {
     enum code
@@ -18,19 +18,22 @@ struct error_code
         request_failed,
     };
 
-    error_code(code = none) {}
+    error_code(code = none)
+    {
+    }
 
     operator code() const
     {
         return none;
     }
+
     const char* message() const
     {
         return "";
     }
 };
 
-}
+} // namespace asio
 
 #include <emscripten/fetch.h>
 #else
@@ -71,7 +74,7 @@ struct Resource
     using net_buffer = std::vector<libc_types::u8>;
 
   private:
-    Url                                    m_resource;
+    Url m_resource;
 #if defined(USE_EMSCRIPTEN_HTTP)
     emscripten_fetch_t* m_fetch{nullptr};
 #else
@@ -116,8 +119,9 @@ struct Resource
 
     Url resource() const;
 
-    bool              isRequestReady() const;
-    bool              isResponseReady() const;
+    bool isRequestReady() const;
+    bool isResponseReady() const;
+
     FORCEDINLINE bool valid() const
     {
         return isResponseReady();

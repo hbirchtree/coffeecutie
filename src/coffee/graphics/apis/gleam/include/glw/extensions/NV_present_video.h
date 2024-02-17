@@ -10,19 +10,22 @@ constexpr u32 num_fill_streams = 0x8E29;
 constexpr u32 present_time     = 0x8E2A;
 constexpr u32 present_duration = 0x8E2B;
 } // namespace values
+
 template<class span_GLint64EXT>
-requires(concepts::span<span_GLint64EXT>&& std::is_same_v<
-         std::decay_t<typename span_GLint64EXT::value_type>,
-         std::decay_t<GLint64EXT>>)
-    /*!
-     * \brief Part of GL_NV_present_video
-     * \param video_slot GLuint
-     * \param pname GLenum
-     * \param params GLint64EXT *
-     * \return void
-     */
-    STATICINLINE
-    void get_videoi64v(u32 video_slot, GLenum pname, span_GLint64EXT params)
+requires(
+    concepts::span<span_GLint64EXT> &&
+    std::is_same_v<
+        std::decay_t<typename span_GLint64EXT::value_type>,
+        std::decay_t<GLint64EXT>>)
+/*!
+ * \brief Part of GL_NV_present_video
+ * \param video_slot GLuint
+ * \param pname GLenum
+ * \param params GLint64EXT *
+ * \return void
+ */
+STATICINLINE void get_videoi64v(
+    u32 video_slot, GLenum pname, span_GLint64EXT params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -37,17 +40,18 @@ requires(concepts::span<span_GLint64EXT>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(concepts::span<span_i32>&& std::is_same_v<
-         std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>)
-    /*!
-     * \brief Part of GL_NV_present_video
-     * \param video_slot GLuint
-     * \param pname GLenum
-     * \param params GLint *
-     * \return void
-     */
-    STATICINLINE void get_videoiv(u32 video_slot, GLenum pname, span_i32 params)
+requires(
+    concepts::span<span_i32> && std::is_same_v<
+                                    std::decay_t<typename span_i32::value_type>,
+                                    std::decay_t<i32>>)
+/*!
+ * \brief Part of GL_NV_present_video
+ * \param video_slot GLuint
+ * \param pname GLenum
+ * \param params GLint *
+ * \return void
+ */
+STATICINLINE void get_videoiv(u32 video_slot, GLenum pname, span_i32 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -62,18 +66,20 @@ requires(concepts::span<span_i32>&& std::is_same_v<
 }
 
 template<class span_GLuint64EXT>
-requires(concepts::span<span_GLuint64EXT>&& std::is_same_v<
-         std::decay_t<typename span_GLuint64EXT::value_type>,
-         std::decay_t<GLuint64EXT>>)
-    /*!
-     * \brief Part of GL_NV_present_video
-     * \param video_slot GLuint
-     * \param pname GLenum
-     * \param params GLuint64EXT *
-     * \return void
-     */
-    STATICINLINE
-    void get_videoui64v(u32 video_slot, GLenum pname, span_GLuint64EXT params)
+requires(
+    concepts::span<span_GLuint64EXT> &&
+    std::is_same_v<
+        std::decay_t<typename span_GLuint64EXT::value_type>,
+        std::decay_t<GLuint64EXT>>)
+/*!
+ * \brief Part of GL_NV_present_video
+ * \param video_slot GLuint
+ * \param pname GLenum
+ * \param params GLuint64EXT *
+ * \return void
+ */
+STATICINLINE void get_videoui64v(
+    u32 video_slot, GLenum pname, span_GLuint64EXT params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -89,18 +95,18 @@ requires(concepts::span<span_GLuint64EXT>&& std::is_same_v<
 }
 
 template<class span_u32>
-requires(concepts::span<span_u32>&& std::is_same_v<
-         std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>)
-    /*!
-     * \brief Part of GL_NV_present_video
-     * \param video_slot GLuint
-     * \param pname GLenum
-     * \param params GLuint *
-     * \return void
-     */
-    STATICINLINE
-    void get_videouiv(u32 video_slot, GLenum pname, span_u32 params)
+requires(
+    concepts::span<span_u32> && std::is_same_v<
+                                    std::decay_t<typename span_u32::value_type>,
+                                    std::decay_t<u32>>)
+/*!
+ * \brief Part of GL_NV_present_video
+ * \param video_slot GLuint
+ * \param pname GLenum
+ * \param params GLuint *
+ * \return void
+ */
+STATICINLINE void get_videouiv(u32 video_slot, GLenum pname, span_u32 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

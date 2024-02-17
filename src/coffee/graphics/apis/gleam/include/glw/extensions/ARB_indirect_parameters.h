@@ -6,6 +6,7 @@ namespace values {
 constexpr u32 parameter_buffer         = 0x80EE;
 constexpr u32 parameter_buffer_binding = 0x80EF;
 } // namespace values
+
 /*!
  * \brief Part of GL_ARB_indirect_parameters
  * \param mode GLenum

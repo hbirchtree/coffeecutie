@@ -2,29 +2,35 @@
 
 #ifdef GL_EXT_multiview_draw_buffers
 #include "../enums/GetPName.h"
+
 namespace gl::ext::multiview_draw_buffers {
 using gl::group::get_prop;
+
 namespace values {
 constexpr u32 color_attachment      = 0x90F0;
 constexpr u32 multiview             = 0x90F1;
 constexpr u32 max_multiview_buffers = 0x90F2;
 } // namespace values
+
 template<class span_const_GLenum, class span_const_i32>
-requires(concepts::span<span_const_GLenum>&& std::is_same_v<
-         std::decay_t<typename span_const_GLenum::value_type>,
-         std::decay_t<GLenum>>&& concepts::span<span_const_i32>&&
-                                             std::is_same_v<
-                 std::decay_t<typename span_const_i32::value_type>,
-                 std::decay_t<i32>>)
-    /*!
-     * \brief Part of GL_EXT_multiview_draw_buffers
-     * \param n GLint
-     * \param location const GLenum *
-     * \param indices const GLint *
-     * \return void
-     */
-    STATICINLINE void draw_buffers_indexed(
-        span_const_GLenum const& location, span_const_i32 const& indices)
+requires(
+    concepts::span<span_const_GLenum> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLenum::value_type>,
+        std::decay_t<GLenum>> &&
+    concepts::span<span_const_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_i32::value_type>,
+        std::decay_t<i32>>)
+/*!
+ * \brief Part of GL_EXT_multiview_draw_buffers
+ * \param n GLint
+ * \param location const GLenum *
+ * \param indices const GLint *
+ * \return void
+ */
+STATICINLINE void draw_buffers_indexed(
+    span_const_GLenum const& location, span_const_i32 const& indices)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -41,18 +47,19 @@ requires(concepts::span<span_const_GLenum>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(concepts::span<span_i32>&& std::is_same_v<
-         std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>)
-    /*!
-     * \brief Part of GL_EXT_multiview_draw_buffers
-     * \param target GLenum
-     * \param index GLuint
-     * \param data GLint *
-     * \return void
-     */
-    STATICINLINE
-    void get_integeri_v(group::get_prop target, u32 index, span_i32 data)
+requires(
+    concepts::span<span_i32> && std::is_same_v<
+                                    std::decay_t<typename span_i32::value_type>,
+                                    std::decay_t<i32>>)
+/*!
+ * \brief Part of GL_EXT_multiview_draw_buffers
+ * \param target GLenum
+ * \param index GLuint
+ * \param data GLint *
+ * \return void
+ */
+STATICINLINE void get_integeri_v(
+    group::get_prop target, u32 index, span_i32 data)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

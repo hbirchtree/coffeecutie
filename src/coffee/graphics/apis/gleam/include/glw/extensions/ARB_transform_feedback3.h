@@ -6,6 +6,7 @@ namespace values {
 constexpr u32 max_transform_feedback_buffers = 0x8E70;
 constexpr u32 max_vertex_streams             = 0x8E71;
 } // namespace values
+
 /*!
  * \brief Part of GL_ARB_transform_feedback3
  * \param target GLenum
@@ -62,22 +63,23 @@ STATICINLINE void end_query_indexed(group::query_target target, u32 index)
 }
 
 template<class span_i32>
-requires(concepts::span<span_i32>&& std::is_same_v<
-         std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>)
-    /*!
-     * \brief Part of GL_ARB_transform_feedback3
-     * \param target GLenum
-     * \param index GLuint
-     * \param pname GLenum
-     * \param params GLint *
-     * \return void
-     */
-    STATICINLINE void get_query_indexediv(
-        group::query_target         target,
-        u32                         index,
-        group::query_parameter_name pname,
-        span_i32                    params)
+requires(
+    concepts::span<span_i32> && std::is_same_v<
+                                    std::decay_t<typename span_i32::value_type>,
+                                    std::decay_t<i32>>)
+/*!
+ * \brief Part of GL_ARB_transform_feedback3
+ * \param target GLenum
+ * \param index GLuint
+ * \param pname GLenum
+ * \param params GLint *
+ * \return void
+ */
+STATICINLINE void get_query_indexediv(
+    group::query_target         target,
+    u32                         index,
+    group::query_parameter_name pname,
+    span_i32                    params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

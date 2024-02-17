@@ -4,12 +4,15 @@
 #include "../enums/BlendingFactor.h"
 #include "../enums/GetPName.h"
 #include "../enums/TextureEnvParameter.h"
+
 namespace gl::arb::blend_func_extended {
 using gl::group::blending_factor;
 using gl::group::get_prop;
 using gl::group::texture_env_parameter;
+
 namespace values {
 } // namespace values
+
 /*!
  * \brief Part of GL_ARB_blend_func_extended
  * \param program GLuint

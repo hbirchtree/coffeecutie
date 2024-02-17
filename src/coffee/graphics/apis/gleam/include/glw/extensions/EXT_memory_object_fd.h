@@ -2,10 +2,13 @@
 
 #ifdef GL_EXT_memory_object_fd
 #include "../enums/ExternalHandleType.h"
+
 namespace gl::ext::memory_object_fd {
 using gl::group::external_handle_type;
+
 namespace values {
 } // namespace values
+
 /*!
  * \brief Part of GL_EXT_memory_object_fd
  * \param memory GLuint

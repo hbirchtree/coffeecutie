@@ -4,10 +4,12 @@
 #include "../enums/FramebufferAttachmentParameterName.h"
 #include "../enums/PrimitiveType.h"
 #include "../enums/ProgramTarget.h"
+
 namespace gl::nv::geometry_program4 {
 using gl::group::framebuffer_attachment_parameter_name;
 using gl::group::primitive_type;
 using gl::group::program_target;
+
 namespace values {
 constexpr u32 program_point_size_ext                   = 0x8642;
 constexpr u32 max_program_output_vertices              = 0x8C27;
@@ -19,6 +21,7 @@ constexpr u32 geometry_vertices_out_ext                = 0x8DDA;
 constexpr u32 geometry_input_type_ext                  = 0x8DDB;
 constexpr u32 geometry_output_type_ext                 = 0x8DDC;
 } // namespace values
+
 /*!
  * \brief Part of GL_NV_geometry_program4
  * \param target GLenum

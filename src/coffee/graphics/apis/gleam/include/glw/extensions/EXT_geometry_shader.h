@@ -4,10 +4,12 @@
 #include "../enums/FramebufferAttachmentParameterName.h"
 #include "../enums/PrimitiveType.h"
 #include "../enums/UseProgramStageMask.h"
+
 namespace gl::ext::geometry_shader {
 using gl::group::framebuffer_attachment_parameter_name;
 using gl::group::primitive_type;
 using gl::group::use_program_stage_mask;
+
 namespace values {
 constexpr u32 layer_provoking_vertex                   = 0x825E;
 constexpr u32 undefined_vertex                         = 0x8260;
@@ -37,6 +39,7 @@ constexpr u32 referenced_by_geometry_shader            = 0x9309;
 constexpr u32 framebuffer_default_layers               = 0x9312;
 constexpr u32 max_framebuffer_layers                   = 0x9317;
 } // namespace values
+
 /*!
  * \brief Part of GL_EXT_geometry_shader
  * \param target GLenum

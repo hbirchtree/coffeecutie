@@ -11,6 +11,7 @@ constexpr u32 tessellation_factor         = 0x9005;
 constexpr u32 discrete                    = 0x9006;
 constexpr u32 continuous                  = 0x9007;
 } // namespace values
+
 /*!
  * \brief Part of GL_AMD_vertex_shader_tessellator
  * \param factor GLfloat

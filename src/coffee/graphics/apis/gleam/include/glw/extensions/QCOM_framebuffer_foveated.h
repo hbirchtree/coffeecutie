@@ -2,10 +2,13 @@
 
 #ifdef GL_QCOM_framebuffer_foveated
 #include "../enums/FoveationConfigBitQCOM.h"
+
 namespace gl::qcom::framebuffer_foveated {
 using gl::group::foveation_config_bit_qcom;
+
 namespace values {
 } // namespace values
+
 /*!
  * \brief Part of GL_QCOM_framebuffer_foveated
  * \param framebuffer GLuint

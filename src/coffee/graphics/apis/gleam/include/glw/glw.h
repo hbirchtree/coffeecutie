@@ -73,6 +73,7 @@ using highest = Version<1, 0>;
 #endif
 using lowest = Version<1, 0>;
 } // namespace core
+
 namespace es {
 constexpr bool enabled =
 #ifdef GL_ES_VERSION_2_0

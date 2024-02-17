@@ -2,8 +2,10 @@
 
 #ifdef GL_ARB_texture_cube_map_array
 #include "../enums/TextureTarget.h"
+
 namespace gl::arb::texture_cube_map_array {
 using gl::group::texture_target;
+
 namespace values {
 constexpr u32 texture_binding_cube_map_array      = 0x900A;
 constexpr u32 sampler_cube_map_array              = 0x900C;

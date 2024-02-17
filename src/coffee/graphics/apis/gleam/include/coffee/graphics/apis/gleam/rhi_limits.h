@@ -14,6 +14,7 @@ struct tex
     {
         u32 cube, d2, d2_array, d3;
     } size;
+
     struct
     {
     } fmt;
@@ -28,12 +29,14 @@ struct hw_limits
         return SpanOne<i32>(value);
     }
 
-    hw_limits(features& feat) : m_features(feat)
+    hw_limits(features& feat)
+        : m_features(feat)
     {
     }
 
     template<typename T>
-    requires std::is_same_v<T, limits::tex> limits::tex limits_of()
+    requires std::is_same_v<T, limits::tex>
+    limits::tex limits_of()
     {
         using get = group::get_prop;
 
@@ -87,10 +90,10 @@ struct api_limits
                 .element_index = std::numeric_limits<libc_types::i32>::max(),
             };
         shaders = {
-            .vertex_uniform_vectors
-            = get_limit(prop::max_vertex_uniform_vectors),
-            .fragment_uniform_vectors
-            = get_limit(prop::max_fragment_uniform_vectors),
+            .vertex_uniform_vectors =
+                get_limit(prop::max_vertex_uniform_vectors),
+            .fragment_uniform_vectors =
+                get_limit(prop::max_fragment_uniform_vectors),
         };
         textures = {
             .texture_units = get_limit(prop::max_combined_texture_image_units),
@@ -103,24 +106,24 @@ struct api_limits
                 .ubo_size     = get_limit(prop::max_uniform_block_size),
                 .ubo_vertex   = get_limit(prop::max_vertex_uniform_blocks),
                 .ubo_fragment = get_limit(prop::max_fragment_uniform_blocks),
-                .ubo_alignment
-                = get_limit(prop::uniform_buffer_offset_alignment),
+                .ubo_alignment =
+                    get_limit(prop::uniform_buffer_offset_alignment),
             };
         }
         if(m_features.buffer.ssbo)
         {
             buffers.ssbo_size = std::numeric_limits<i32>::max();
-            buffers.ssbo_vertex
-                = get_limit(prop::max_vertex_shader_storage_blocks);
-            buffers.ssbo_fragment
-                = get_limit(prop::max_fragment_shader_storage_blocks);
-            buffers.ssbo_alignment
-                = get_limit(prop::shader_storage_buffer_offset_alignment);
+            buffers.ssbo_vertex =
+                get_limit(prop::max_vertex_shader_storage_blocks);
+            buffers.ssbo_fragment =
+                get_limit(prop::max_fragment_shader_storage_blocks);
+            buffers.ssbo_alignment =
+                get_limit(prop::shader_storage_buffer_offset_alignment);
         }
         if(m_features.program.compute)
         {
-            buffers.ssbo_compute
-                = get_limit(prop::max_compute_shader_storage_blocks);
+            buffers.ssbo_compute =
+                get_limit(prop::max_compute_shader_storage_blocks);
             buffers.ubo_compute = get_limit(prop::max_compute_uniform_blocks);
         }
         if(m_features.draw.instancing)
@@ -218,6 +221,7 @@ struct api_limits
         u32 ubo_alignment{0};
         u32 ssbo_alignment{0};
     } buffers;
+
     struct draw_limits_t
     {
         u32 element_count{std::numeric_limits<i32>::max()};
@@ -227,11 +231,13 @@ struct api_limits
         u32 instance_count{0};
         u32 instance_offset{0};
     } draws;
+
     struct shader_limits_t
     {
         u32 vertex_uniform_vectors{0};
         u32 fragment_uniform_vectors{0};
     } shaders;
+
     struct texture_limits_t
     {
         u32 texture_units{};

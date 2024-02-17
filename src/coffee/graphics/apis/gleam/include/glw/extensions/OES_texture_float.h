@@ -20,6 +20,7 @@
 #include "../enums/VertexPointerType.h"
 #include "../enums/VertexWeightPointerTypeEXT.h"
 #include "../enums/WeightPointerTypeARB.h"
+
 namespace gl::oes::texture_float {
 using gl::group::attribute_type;
 using gl::group::binormal_pointer_type_ext;
@@ -40,6 +41,7 @@ using gl::group::vertex_attrib_type;
 using gl::group::vertex_pointer_type;
 using gl::group::vertex_weight_pointer_type_ext;
 using gl::group::weight_pointer_type_arb;
+
 namespace values {
 } // namespace values
 } // namespace gl::oes::texture_float

@@ -2,8 +2,10 @@
 
 #ifdef GL_ARB_seamless_cube_map
 #include "../enums/EnableCap.h"
+
 namespace gl::arb::seamless_cube_map {
 using gl::group::enable_cap;
+
 namespace values {
 } // namespace values
 } // namespace gl::arb::seamless_cube_map

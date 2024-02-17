@@ -18,8 +18,9 @@ struct EGLDataDeleter
 
 } // namespace detail
 
-struct DisplayHandle : comp_app::AppService<DisplayHandle>,
-                       comp_app::AppLoadableService
+struct DisplayHandle
+    : comp_app::AppService<DisplayHandle>
+    , comp_app::AppLoadableService
 {
     DisplayHandle()
     {
@@ -36,9 +37,10 @@ struct DisplayHandle : comp_app::AppService<DisplayHandle>,
     libc_types::i32 m_major{}, m_minor{};
 };
 
-struct GraphicsContext : comp_app::interfaces::GraphicsContext,
-                         comp_app::AppService<GraphicsContext>,
-                         comp_app::AppLoadableService
+struct GraphicsContext
+    : comp_app::interfaces::GraphicsContext
+    , comp_app::AppService<GraphicsContext>
+    , comp_app::AppLoadableService
 {
     using type = GraphicsContext;
 
@@ -62,9 +64,9 @@ struct GraphicsContext : comp_app::interfaces::GraphicsContext,
 };
 
 struct GraphicsFramebuffer
-    : comp_app::interfaces::GraphicsFramebuffer,
-      comp_app::AppService<GraphicsFramebuffer, comp_app::GraphicsFramebuffer>,
-      comp_app::AppLoadableService
+    : comp_app::interfaces::GraphicsFramebuffer
+    , comp_app::AppService<GraphicsFramebuffer, comp_app::GraphicsFramebuffer>
+    , comp_app::AppLoadableService
 {
     GraphicsFramebuffer()
     {
@@ -83,9 +85,10 @@ struct GraphicsFramebuffer
     entity_container* m_container;
 };
 
-struct GraphicsSwapControl : comp_app::interfaces::GraphicsSwapControl,
-                             comp_app::AppService<GraphicsSwapControl>,
-                             comp_app::AppLoadableService
+struct GraphicsSwapControl
+    : comp_app::interfaces::GraphicsSwapControl
+    , comp_app::AppService<GraphicsSwapControl>
+    , comp_app::AppLoadableService
 {
     virtual void load(entity_container& p, comp_app::app_error&) final;
 
@@ -95,9 +98,10 @@ struct GraphicsSwapControl : comp_app::interfaces::GraphicsSwapControl,
     entity_container* m_container;
 };
 
-struct Windowing : comp_app::interfaces::StaticWindowing,
-                   comp_app::AppService<Windowing, comp_app::Windowing>,
-                   comp_app::AppLoadableService
+struct Windowing
+    : comp_app::interfaces::StaticWindowing
+    , comp_app::AppService<Windowing, comp_app::Windowing>
+    , comp_app::AppLoadableService
 {
     void load(entity_container& e, comp_app::app_error& ec);
 

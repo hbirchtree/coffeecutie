@@ -44,7 +44,7 @@ struct GLConfig : Config<GLConfig>
 #endif
 
         ProfileMask = Core | Embedded,
-        PerfMask = PreferHighPerf | PreferLowPerf,
+        PerfMask    = PreferHighPerf | PreferLowPerf,
     };
 
     PixFmt framebufferFmt = PixFmt::RGBA8;

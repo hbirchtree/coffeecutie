@@ -14,7 +14,9 @@ struct Compressor : Compressor_def
 {
     struct Opts
     {
-        Opts() : chunk_size(1_MB), level(5)
+        Opts()
+            : chunk_size(1_MB)
+            , level(5)
         {
         }
 

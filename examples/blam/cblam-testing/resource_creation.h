@@ -9,7 +9,8 @@
 
 using namespace libc_types::size_literals;
 
-constexpr bool lowspec_hardware = compile_info::platform::is_32bit && !compile_info::platform::is_emscripten;
+constexpr bool lowspec_hardware =
+    compile_info::platform::is_32bit && !compile_info::platform::is_emscripten;
 
 struct legacy_memory_budget
 {
@@ -21,9 +22,9 @@ struct legacy_memory_budget
     static constexpr auto material_buffer = 5_MB;
     static constexpr auto debug_buffer    = 5_MB;
 
-    static constexpr auto grand_total = bsp_buffer + bsp_elements + mesh_buffer
-                                        + mesh_elements + matrix_buffer
-                                        + material_buffer;
+    static constexpr auto grand_total = bsp_buffer + bsp_elements +
+                                        mesh_buffer + mesh_elements +
+                                        matrix_buffer + material_buffer;
 };
 
 struct modern_memory_budget
@@ -36,15 +37,13 @@ struct modern_memory_budget
     static constexpr auto material_buffer = 16_MB;
     static constexpr auto debug_buffer    = 8_MB;
 
-    static constexpr auto grand_total = bsp_buffer + bsp_elements
-                                        + mesh_buffer + mesh_elements
-                                        + matrix_buffer + material_buffer;
+    static constexpr auto grand_total = bsp_buffer + bsp_elements +
+                                        mesh_buffer + mesh_elements +
+                                        matrix_buffer + material_buffer;
 };
 
-using memory_budget = std::conditional_t<
-    lowspec_hardware,
-    legacy_memory_budget,
-    modern_memory_budget>;
+using memory_budget = std::
+    conditional_t<lowspec_hardware, legacy_memory_budget, modern_memory_budget>;
 
 void create_resources(compo::EntityContainer& e);
 void create_shaders(compo::EntityContainer& e);

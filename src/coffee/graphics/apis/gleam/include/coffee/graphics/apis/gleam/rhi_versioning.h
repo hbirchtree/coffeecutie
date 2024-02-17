@@ -84,12 +84,12 @@ constexpr api_type_t platform_api =
 #elif GLEAM_MAX_VERSION != 0
     api_type_t::core;
 #else
-    api_type_t::es;
+        api_type_t::es;
 #endif
 
 constexpr auto platform_version = cmd::version{};
 
-using hnd = semantic::
-    generic_handle_t<libc_types::u32, semantic::handle_modes::no_op>;
+using hnd =
+    semantic::generic_handle_t<libc_types::u32, semantic::handle_modes::no_op>;
 
 } // namespace gleam

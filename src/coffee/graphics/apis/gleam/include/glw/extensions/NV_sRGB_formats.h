@@ -3,9 +3,11 @@
 #ifdef GL_NV_sRGB_formats
 #include "../enums/InternalFormat.h"
 #include "../enums/SizedInternalFormat.h"
+
 namespace gl::nv::srgb_formats {
 using gl::group::internal_format;
 using gl::group::sized_internal_format;
+
 namespace values {
 constexpr u32 etc1_srgb8         = 0x88EE;
 constexpr u32 sluminance_alpha   = 0x8C44;

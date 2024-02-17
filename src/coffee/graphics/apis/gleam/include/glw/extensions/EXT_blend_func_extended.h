@@ -2,8 +2,10 @@
 
 #ifdef GL_EXT_blend_func_extended
 #include "../enums/TextureEnvParameter.h"
+
 namespace gl::ext::blend_func_extended {
 using gl::group::texture_env_parameter;
+
 namespace values {
 constexpr u32 src_alpha_saturate           = 0x0308;
 constexpr u32 src1_color                   = 0x88F9;
@@ -12,6 +14,7 @@ constexpr u32 one_minus_src1_alpha         = 0x88FB;
 constexpr u32 max_dual_source_draw_buffers = 0x88FC;
 constexpr u32 location_index               = 0x930F;
 } // namespace values
+
 /*!
  * \brief Part of GL_EXT_blend_func_extended
  * \param program GLuint

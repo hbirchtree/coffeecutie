@@ -4,6 +4,7 @@
 namespace gl::arb::copy_image {
 namespace values {
 } // namespace values
+
 /*!
  * \brief Part of GL_ARB_copy_image
  * \param srcName GLuint

@@ -8,6 +8,7 @@ constexpr u32 replace_value         = 0x874B;
 constexpr u32 stencil_op_value      = 0x874C;
 constexpr u32 stencil_back_op_value = 0x874D;
 } // namespace values
+
 /*!
  * \brief Part of GL_AMD_stencil_operation_extended
  * \param face GLenum

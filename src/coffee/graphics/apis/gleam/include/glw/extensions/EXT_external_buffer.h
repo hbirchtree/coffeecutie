@@ -4,6 +4,7 @@
 namespace gl::ext::external_buffer {
 namespace values {
 } // namespace values
+
 /*!
  * \brief Part of GL_EXT_external_buffer
  * \param target GLenum

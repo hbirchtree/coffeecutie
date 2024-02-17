@@ -7,6 +7,7 @@ constexpr u32 index_material           = 0x81B8;
 constexpr u32 index_material_parameter = 0x81B9;
 constexpr u32 index_material_face      = 0x81BA;
 } // namespace values
+
 /*!
  * \brief Part of GL_EXT_index_material
  * \param face GLenum

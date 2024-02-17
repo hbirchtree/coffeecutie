@@ -8,6 +8,7 @@
 #include "../enums/PrimitiveType.h"
 #include "../enums/StencilFunction.h"
 #include "../enums/UseProgramStageMask.h"
+
 namespace gl::ext::tessellation_shader {
 using gl::group::alpha_function;
 using gl::group::depth_function;
@@ -16,6 +17,7 @@ using gl::group::index_function_ext;
 using gl::group::primitive_type;
 using gl::group::stencil_function;
 using gl::group::use_program_stage_mask;
+
 namespace values {
 constexpr u32 primitive_restart_for_patches_supported         = 0x8221;
 constexpr u32 max_tess_control_input_components               = 0x886C;
@@ -57,6 +59,7 @@ constexpr u32 is_per_patch                                    = 0x92E7;
 constexpr u32 referenced_by_tess_control_shader               = 0x9307;
 constexpr u32 referenced_by_tess_evaluation_shader            = 0x9308;
 } // namespace values
+
 /*!
  * \brief Part of GL_EXT_tessellation_shader
  * \param pname GLenum

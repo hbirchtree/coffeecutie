@@ -175,8 +175,8 @@ struct BlamBspWidget
                     ImGui::SliderFloat(
                         "Exposure", &postprocess->exposure, -10.f, 10.f);
                     if(ImGui::Checkbox("Doom mode", &postprocess->doom_mode))
-                        postprocess->scale
-                            = postprocess->doom_mode ? 0.25f : 1.f;
+                        postprocess->scale =
+                            postprocess->doom_mode ? 0.25f : 1.f;
                     if(ImGui::Button("Reload shaders from disk"))
                     {
                         create_shaders(e.underlying());
@@ -189,6 +189,7 @@ struct BlamBspWidget
         }
         ImGui::End();
     }
+
     void end_restricted(Proxy&, time_point const&)
     {
     }

@@ -100,6 +100,7 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
             // model.visible = true;
         }
     }
+
     void end_restricted(Proxy&, time_point const&)
     {
     }

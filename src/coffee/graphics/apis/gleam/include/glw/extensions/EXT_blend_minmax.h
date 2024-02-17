@@ -3,9 +3,11 @@
 #ifdef GL_EXT_blend_minmax
 #include "../enums/BlendEquationModeEXT.h"
 #include "../enums/GetPName.h"
+
 namespace gl::ext::blend_minmax {
 using gl::group::blend_equation_mode_ext;
 using gl::group::get_prop;
+
 namespace values {
 } // namespace values
 #if defined(GL_VERSION_1_0)

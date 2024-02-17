@@ -27,11 +27,13 @@ struct RenderTarget : Coffee::RHI::GraphicsAPI::RenderTarget
     {
         clear(depth);
     }
+
     FORCEDINLINE void clear(u32, Vecf4 const& color, f32 depth)
     {
         clear(0, color);
         clear(depth);
     }
+
     FORCEDINLINE void clear(
         u32, Vecf4 const& color, f32 depth, C_UNUSED(i32 stencil))
     {
@@ -50,8 +52,8 @@ struct VertexBuffer : Coffee::RHI::GraphicsAPI::VertexBuffer
 {
     using parent_type = Coffee::RHI::GraphicsAPI::VertexBuffer;
 
-    VertexBuffer(semantic::RSCA access, libc_types::szptr size) :
-        parent_type(access, size)
+    VertexBuffer(semantic::RSCA access, libc_types::szptr size)
+        : parent_type(access, size)
     {
     }
 
@@ -70,6 +72,7 @@ struct VertexBuffer : Coffee::RHI::GraphicsAPI::VertexBuffer
         this->data =
             semantic::Bytes::From(const_cast<u8*>(data.data), data.size);
     }
+
     FORCEDINLINE void commit(szptr size, c_cptr data = nullptr)
     {
         commit(semantic::BytesConst::FromBytes(data, size));
@@ -97,10 +100,12 @@ struct VertexDescriptor : Coffee::RHI::GraphicsAPI::VertexDescriptor
     {
         buffers[i] = &buf;
     }
+
     void addAttribute(VertexAttrib const& attr)
     {
         attribs.push_back(attr);
     }
+
     void setIndexBuffer(ElementBuffer* buf)
     {
         indexBuffer = buf;
@@ -113,8 +118,9 @@ struct VertexDescriptor : Coffee::RHI::GraphicsAPI::VertexDescriptor
 
 struct Shader : Coffee::RHI::GraphicsAPI::Shader
 {
-    Shader(typing::graphics::ShaderStage stage, cstring variant) :
-        stage(stage), variant(variant)
+    Shader(typing::graphics::ShaderStage stage, cstring variant)
+        : stage(stage)
+        , variant(variant)
     {
     }
 
@@ -143,7 +149,8 @@ struct Pipeline : Coffee::RHI::GraphicsAPI::Pipeline
 
     Shader& storeShader(Shader&& shader)
     {
-        stored_shaders.emplace_back(std::make_unique<Shader>(std::move(shader)));
+        stored_shaders.emplace_back(
+            std::make_unique<Shader>(std::move(shader)));
         return *stored_shaders.back();
     }
 

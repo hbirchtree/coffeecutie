@@ -45,4 +45,4 @@ FORCEDINLINE std::basic_string<CharT> propercase(
     return out;
 }
 
-}
+} // namespace stl_types::str::fmt

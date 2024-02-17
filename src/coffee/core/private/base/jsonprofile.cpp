@@ -2,9 +2,9 @@
 
 #include <coffee/core/base_state.h>
 #include <coffee/core/coffee.h>
+#include <peripherals/stl/string/hex.h>
 #include <peripherals/stl/string_casting.h>
 #include <peripherals/stl/string_ops.h>
-#include <peripherals/stl/string/hex.h>
 #include <platforms/environment.h>
 #include <platforms/file.h>
 
@@ -71,7 +71,7 @@ struct ProfileWriter : GlobalState
         if(auto disable = platform::env::var("COFFEE_DISABLE_PROFILER");
            disable.has_value() && disable.value() == "1")
             disable_frequent = true;
-//        disable_frequent = true;
+        //        disable_frequent = true;
     }
 
     declreturntype(platform::file::open_file)::value_type logfile;
@@ -258,8 +258,8 @@ extern void CaptureMetrics(
         R"({{"ts":{2},"ph":"m","i":{3},"id":{0},"v":"{1}"}},
 )";
 
-    auto out = Coffee::Strings::fmt(
-        metric_format, data.id, value, ts.count(), index);
+    auto out =
+        Coffee::Strings::fmt(metric_format, data.id, value, ts.count(), index);
 
     profiler.write(BytesConst::ofContainer(out));
 }

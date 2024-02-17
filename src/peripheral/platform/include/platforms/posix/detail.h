@@ -26,7 +26,7 @@ namespace platform::file::emscripten {
 void track_file_open(int fd, semantic::RSCA access);
 void notify_file_close(int fd);
 
-}
+} // namespace platform::file::emscripten
 
 namespace platform::file::posix {
 
@@ -39,10 +39,10 @@ FORCEDINLINE int openmode(RSCA access)
                : (access & (RSCA::ReadOnly | RSCA::Executable)) != RSCA::None
                    ? O_RDONLY
                : feval(access, RSCA::WriteOnly) ? O_WRONLY
-                                                : 0)
-              | (feval(access, RSCA::Discard) ? O_TRUNC : 0)
-              | (feval(access, RSCA::Append) ? O_APPEND : 0)
-              | (feval(access, RSCA::NewFile) ? O_CREAT : 0)
+                                                : 0) |
+              (feval(access, RSCA::Discard) ? O_TRUNC : 0) |
+              (feval(access, RSCA::Append) ? O_APPEND : 0) |
+              (feval(access, RSCA::NewFile) ? O_CREAT : 0)
 #if defined(O_TMPFILE)
               | (feval(access, RSCA::TempFile) ? O_TMPFILE : 0)
 #endif
@@ -53,10 +53,11 @@ FORCEDINLINE int openmode(RSCA access)
 #if !defined(COFFEE_MINGW64)
 FORCEDINLINE int protection(RSCA access)
 {
-    return (feval(access, RSCA::ReadOnly) ? PROT_READ : 0)
-           | (feval(access, RSCA::WriteOnly) ? PROT_WRITE : 0)
-           | (feval(access, RSCA::Executable) ? PROT_EXEC : 0);
+    return (feval(access, RSCA::ReadOnly) ? PROT_READ : 0) |
+           (feval(access, RSCA::WriteOnly) ? PROT_WRITE : 0) |
+           (feval(access, RSCA::Executable) ? PROT_EXEC : 0);
 }
+
 FORCEDINLINE int mapping(RSCA access)
 {
     return (feval(access, RSCA::Persistent) ? MAP_SHARED : MAP_PRIVATE)
@@ -122,6 +123,7 @@ STATICINLINE constexpr libc_types::u32 permission_to_native(
            ((p & execute) ? 01 : 0);
     // clang-format on
 }
+
 FORCEDINLINE int permissions_to_native(permissions_t const& perms)
 {
     using namespace permission_t;
@@ -129,9 +131,9 @@ FORCEDINLINE int permissions_to_native(permissions_t const& perms)
         0700 == (permission_to_native(read | write | execute) << 6),
         "permission combination wrong");
 
-    return permission_to_native(perms.owner) << 6
-           | permission_to_native(perms.group) << 3
-           | permission_to_native(perms.other);
+    return permission_to_native(perms.owner) << 6 |
+           permission_to_native(perms.group) << 3 |
+           permission_to_native(perms.other);
 }
 
 FORCEDINLINE auto align_offset(szptr offset)

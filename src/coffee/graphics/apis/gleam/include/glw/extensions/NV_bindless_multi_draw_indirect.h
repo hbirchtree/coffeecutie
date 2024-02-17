@@ -4,6 +4,7 @@
 namespace gl::nv::bindless_multi_draw_indirect {
 namespace values {
 } // namespace values
+
 /*!
  * \brief Part of GL_NV_bindless_multi_draw_indirect
  * \param mode GLenum

@@ -7,6 +7,7 @@ constexpr u32 point_sprite        = 0x8861;
 constexpr u32 coord_replace       = 0x8862;
 constexpr u32 point_sprite_r_mode = 0x8863;
 } // namespace values
+
 /*!
  * \brief Part of GL_NV_point_sprite
  * \param pname GLenum
@@ -26,17 +27,19 @@ STATICINLINE void point_parameter(
 }
 
 template<class span_const_i32>
-requires(concepts::span<span_const_i32>&& std::is_same_v<
-         std::decay_t<typename span_const_i32::value_type>,
-         std::decay_t<i32>>)
-    /*!
-     * \brief Part of GL_NV_point_sprite
-     * \param pname GLenum
-     * \param params const GLint *
-     * \return void
-     */
-    STATICINLINE void point_parameter(
-        group::point_parameter_name_arb pname, span_const_i32 const& params)
+requires(
+    concepts::span<span_const_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_i32::value_type>,
+        std::decay_t<i32>>)
+/*!
+ * \brief Part of GL_NV_point_sprite
+ * \param pname GLenum
+ * \param params const GLint *
+ * \return void
+ */
+STATICINLINE void point_parameter(
+    group::point_parameter_name_arb pname, span_const_i32 const& params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

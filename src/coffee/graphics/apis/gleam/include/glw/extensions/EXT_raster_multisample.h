@@ -10,6 +10,7 @@ constexpr u32 raster_fixed_sample_locations     = 0x932A;
 constexpr u32 multisample_rasterization_allowed = 0x932B;
 constexpr u32 effective_raster_samples          = 0x932C;
 } // namespace values
+
 /*!
  * \brief Part of GL_EXT_raster_multisample
  * \param samples GLuint

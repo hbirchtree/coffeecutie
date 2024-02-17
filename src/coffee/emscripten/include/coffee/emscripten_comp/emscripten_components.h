@@ -6,8 +6,8 @@
 namespace emscripten {
 
 struct GLSwapControl
-    : comp_app::interfaces::GraphicsSwapControl,
-      comp_app::AppService<GLSwapControl, comp_app::GraphicsSwapControl>
+    : comp_app::interfaces::GraphicsSwapControl
+    , comp_app::AppService<GLSwapControl, comp_app::GraphicsSwapControl>
 {
     GLSwapControl()
     {
@@ -19,9 +19,9 @@ struct GLSwapControl
 };
 
 struct GLFramebuffer
-    : comp_app::interfaces::GraphicsFramebuffer,
-      comp_app::AppService<GLFramebuffer, comp_app::GraphicsFramebuffer>,
-      comp_app::AppLoadableService
+    : comp_app::interfaces::GraphicsFramebuffer
+    , comp_app::AppService<GLFramebuffer, comp_app::GraphicsFramebuffer>
+    , comp_app::AppLoadableService
 {
     GLFramebuffer()
     {
@@ -39,9 +39,10 @@ struct GLFramebuffer
     entity_container* m_container;
 };
 
-struct GLContext : comp_app::interfaces::GraphicsContext,
-                   comp_app::AppService<GLContext, comp_app::GraphicsContext>,
-                   comp_app::AppLoadableService
+struct GLContext
+    : comp_app::interfaces::GraphicsContext
+    , comp_app::AppService<GLContext, comp_app::GraphicsContext>
+    , comp_app::AppLoadableService
 {
     GLContext()
     {
@@ -55,8 +56,8 @@ struct GLContext : comp_app::interfaces::GraphicsContext,
 };
 
 struct ControllerInput
-    : comp_app::interfaces::ControllerInput,
-      comp_app::AppService<ControllerInput, comp_app::ControllerInput>
+    : comp_app::interfaces::ControllerInput
+    , comp_app::AppService<ControllerInput, comp_app::ControllerInput>
 {
     virtual ~ControllerInput() = default;
 
@@ -74,6 +75,7 @@ struct ControllerInput
         std::string    name;
         controller_map state;
     };
+
     std::map<libc_types::u32, state_t> m_controllers;
 
     libc_types::i16 m_deadzone;
@@ -81,8 +83,8 @@ struct ControllerInput
 };
 
 struct BatteryProvider
-    : comp_app::interfaces::BatteryProvider,
-      comp_app::AppService<BatteryProvider, comp_app::BatteryProvider>
+    : comp_app::interfaces::BatteryProvider
+    , comp_app::AppService<BatteryProvider, comp_app::BatteryProvider>
 {
     virtual ~BatteryProvider() = default;
 
@@ -91,7 +93,7 @@ struct BatteryProvider
 };
 
 using Services = comp_app::subsystem_list<ControllerInput, BatteryProvider>;
-using GLServices
-    = comp_app::subsystem_list<GLSwapControl, GLFramebuffer, GLContext>;
+using GLServices =
+    comp_app::subsystem_list<GLSwapControl, GLFramebuffer, GLContext>;
 
 } // namespace emscripten

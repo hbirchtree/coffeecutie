@@ -14,19 +14,21 @@ constexpr u32 int_sampler_renderbuffer                = 0x8E57;
 constexpr u32 unsigned_int_sampler_renderbuffer       = 0x8E58;
 constexpr u32 max_sample_mask_words                   = 0x8E59;
 } // namespace values
+
 template<class span_f32>
-requires(concepts::span<span_f32>&& std::is_same_v<
-         std::decay_t<typename span_f32::value_type>,
-         std::decay_t<f32>>)
-    /*!
-     * \brief Part of GL_NV_explicit_multisample
-     * \param pname GLenum
-     * \param index GLuint
-     * \param val GLfloat *
-     * \return void
-     */
-    STATICINLINE void get_multisamplefv(
-        group::get_multisample_prop_nv pname, u32 index, span_f32 val)
+requires(
+    concepts::span<span_f32> && std::is_same_v<
+                                    std::decay_t<typename span_f32::value_type>,
+                                    std::decay_t<f32>>)
+/*!
+ * \brief Part of GL_NV_explicit_multisample
+ * \param pname GLenum
+ * \param index GLuint
+ * \param val GLfloat *
+ * \return void
+ */
+STATICINLINE void get_multisamplefv(
+    group::get_multisample_prop_nv pname, u32 index, span_f32 val)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

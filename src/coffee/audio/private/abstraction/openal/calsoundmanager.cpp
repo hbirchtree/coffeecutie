@@ -2,16 +2,16 @@
 
 #include <coffee/core/CProfiling>
 
-#include <coffee/audio/openal/copenal.h>
-#include <coffee/audio/abstraction/openal/calsounddeviceidentifier.h>
 #include <coffee/audio/abstraction/openal/calsounddevice.h>
+#include <coffee/audio/abstraction/openal/calsounddeviceidentifier.h>
 #include <coffee/audio/abstraction/openal/calsoundformat.h>
+#include <coffee/audio/openal/copenal.h>
 
 #include <coffee/core/CDebug>
 
-namespace Coffee{
-namespace CAudio{
-namespace COpenAL{
+namespace Coffee {
+namespace CAudio {
+namespace COpenAL {
 
 CALSoundManager::CALSoundManager()
 {
@@ -25,15 +25,15 @@ CALSoundManager::CALSoundManager()
     szptr i = 0;
     for(cstring dev : odevices)
     {
-        if(libc::str::cmp(odevices[i],def_str))
+        if(libc::str::cmp(odevices[i], def_str))
             d_idx = i;
-        v_odevices.push_back(CALSoundDeviceIdentifier(i,dev));
+        v_odevices.push_back(CALSoundDeviceIdentifier(i, dev));
         i++;
     }
     i = 0;
     for(cstring dev : idevices)
     {
-        v_idevices.push_back(CALSoundDeviceIdentifier(i,dev));
+        v_idevices.push_back(CALSoundDeviceIdentifier(i, dev));
         i++;
     }
 }
@@ -42,7 +42,7 @@ CALSoundManager::~CALSoundManager()
 {
 }
 
-CSoundDeviceIdentifier &CALSoundManager::defaultSoundDevice()
+CSoundDeviceIdentifier& CALSoundManager::defaultSoundDevice()
 {
     if(odevices.size() < 1)
         Throw(undefined_behavior("No sound device found"));
@@ -60,17 +60,18 @@ u32 CALSoundManager::numberSoundInputDevices()
     return idevices.size();
 }
 
-CSoundDeviceIdentifier &CALSoundManager::soundDevice(const szptr &devEnum)
+CSoundDeviceIdentifier& CALSoundManager::soundDevice(const szptr& devEnum)
 {
     return v_odevices[devEnum];
 }
 
-CSoundDeviceIdentifier &CALSoundManager::soundInputDevice(const szptr &devEnum)
+CSoundDeviceIdentifier& CALSoundManager::soundInputDevice(const szptr& devEnum)
 {
     return v_idevices[devEnum];
 }
 
-CSoundDevice<CALSource,CALBuffer>* CALSoundManager::createDevice(const CSoundDeviceIdentifier &id)
+CSoundDevice<CALSource, CALBuffer>* CALSoundManager::createDevice(
+    const CSoundDeviceIdentifier& id)
 {
     CALSoundDevice* dev = new CALSoundDevice(id);
     if(!dev->is_loaded())
@@ -78,17 +79,16 @@ CSoundDevice<CALSource,CALBuffer>* CALSoundManager::createDevice(const CSoundDev
     return dev;
 }
 
-CSoundDevice<CALSource, CALBuffer> *CALSoundManager::createInputDevice(
-        const CSoundDeviceIdentifier &p_id,
-        const CSoundDeviceIdentifier &id)
+CSoundDevice<CALSource, CALBuffer>* CALSoundManager::createInputDevice(
+    const CSoundDeviceIdentifier& p_id, const CSoundDeviceIdentifier& id)
 {
     CALSoundFormat fmt;
     fmt.setBitDepth(16);
     fmt.setChannels(1);
     fmt.setSamplerate(44100);
-    return new CALSoundDevice(p_id,id,fmt);
+    return new CALSoundDevice(p_id, id, fmt);
 }
 
-}
-}
-}
+} // namespace COpenAL
+} // namespace CAudio
+} // namespace Coffee

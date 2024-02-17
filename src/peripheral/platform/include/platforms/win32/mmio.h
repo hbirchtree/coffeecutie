@@ -19,8 +19,8 @@ struct mem_mapping_t
         resource,
     };
 
-    void* file{nullptr};
-    void* mapping{nullptr};
+    void*          file{nullptr};
+    void*          mapping{nullptr};
     span_type      view;
     semantic::RSCA access;
     mapping_source source{mapping_source::file};

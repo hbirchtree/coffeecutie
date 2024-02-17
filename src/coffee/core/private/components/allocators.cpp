@@ -6,9 +6,9 @@ namespace detail {
 
 static void assign_reachables(
     std::vector<bool>& matrix,
-    size_t        size,
-    node_id       source_node,
-    node_id       current_node)
+    size_t             size,
+    node_id            source_node,
+    node_id            current_node)
 {
     for(auto i : stl_types::Range<>(size))
         if(matrix[size * current_node + i] && !matrix[size * source_node + i])

@@ -52,14 +52,18 @@ struct all_subsystems_in
 {
     struct match_single
     {
-        match_single(SubsystemBase* sub, bool& match) : sub(sub), match(match)
+        match_single(SubsystemBase* sub, bool& match)
+            : sub(sub)
+            , match(match)
         {
         }
+
         template<typename T>
         void operator()()
         {
             match = match || C_DCAST<T>(sub);
         }
+
         SubsystemBase* sub;
         bool&          match;
     };
@@ -76,28 +80,25 @@ struct all_subsystems_in
 } // namespace matchers
 
 template<class T>
-concept is_matcher
-    = std::is_same_v<decltype(T::match(std::declval<SubsystemBase>())), bool>;
+concept is_matcher =
+    std::is_same_v<decltype(T::match(std::declval<SubsystemBase>())), bool>;
 
 template<typename BaseType>
 using service_sort_predicate = std::function<bool(BaseType*, BaseType*)>;
 
 template<class T>
-concept has_priority = requires(T& a)
-{
-    std::is_integral_v<decltype(a.priority)>;
-};
+concept has_priority =
+    requires(T& a) { std::is_integral_v<decltype(a.priority)>; };
 
-namespace sorter
-{
+namespace sorter {
 
-    template<class BaseType, class CompType>
-    requires has_priority<CompType>
-    constexpr bool (*priority_ranked)(BaseType*, BaseType*)
-        = [](BaseType* left, BaseType* right) {
-              return dynamic_cast<CompType*>(left)->priority
-                     < dynamic_cast<CompType*>(right)->priority;
-          };
+template<class BaseType, class CompType>
+requires has_priority<CompType>
+constexpr bool (*priority_ranked)(BaseType*, BaseType*) =
+    [](BaseType* left, BaseType* right) {
+        return dynamic_cast<CompType*>(left)->priority <
+               dynamic_cast<CompType*>(right)->priority;
+    };
 
 } // namespace sorter
 
@@ -113,7 +114,9 @@ struct EntityContainer : stl_types::non_copy
     template<typename T, bool Reversed>
     friend struct service_query;
 
-    EntityContainer() : entity_counter(0), debug_flags(0)
+    EntityContainer()
+        : entity_counter(0)
+        , debug_flags(0)
     {
         time_offset = clock::now() - clock::time_point();
     }
@@ -124,15 +127,16 @@ struct EntityContainer : stl_types::non_copy
         using size_type        = szptr;
         using entity_predicate = std::function<bool(Entity const&)>;
 
-        entity_query(EntityContainer& c, u64 tags) :
-            pred([=](Entity const& e) { return (e.tags & tags) == tags; }),
-            m_container(&c)
+        entity_query(EntityContainer& c, u64 tags)
+            : pred([=](Entity const& e) { return (e.tags & tags) == tags; })
+            , m_container(&c)
         {
             initialize_iterator();
         }
 
-        entity_query(EntityContainer& c, entity_predicate&& predicate) :
-            pred(std::move(predicate)), m_container(&c)
+        entity_query(EntityContainer& c, entity_predicate&& predicate)
+            : pred(std::move(predicate))
+            , m_container(&c)
         {
             initialize_iterator();
         }
@@ -145,8 +149,9 @@ struct EntityContainer : stl_types::non_copy
                 c, [&](Entity const& e) { return comp.contains_entity(e.id); });
         }
 
-        entity_query(EntityContainer& c) :
-            m_container(&c), it(m_container->entities.end())
+        entity_query(EntityContainer& c)
+            : m_container(&c)
+            , it(m_container->entities.end())
         {
         }
 
@@ -256,7 +261,7 @@ struct EntityContainer : stl_types::non_copy
         typename AllocType = typename OutputType::type,
         typename... Args>
     requires std::is_convertible_v<AllocType*, typename OutputType::type*>
-        AllocType& register_subsystem_inplace(Args... args)
+    AllocType& register_subsystem_inplace(Args... args)
     {
         register_subsystem<OutputType>(
             std::make_unique<AllocType>(std::forward<Args>(args)...));
@@ -278,6 +283,7 @@ struct EntityContainer : stl_types::non_copy
     {
         container(type_id).register_entity(entity_id);
     }
+
     template<typename T>
     inline void add_component(u64 entity_id)
     {
@@ -472,10 +478,11 @@ struct EntityContainer : stl_types::non_copy
     u64                 entity_counter; /*!< For enumerating entities */
     std::vector<Entity> entities;
 
-    std::unordered_map<type_hash, std::unique_ptr<ComponentContainerBase>> components;
-    std::unordered_map<type_hash, std::unique_ptr<SubsystemBase>>          subsystems;
-    std::vector<std::unique_ptr<EntityVisitorBase>>              visitors;
-    std::unordered_map<type_hash, SubsystemBase*>                          services;
+    std::unordered_map<type_hash, std::unique_ptr<ComponentContainerBase>>
+                                                                  components;
+    std::unordered_map<type_hash, std::unique_ptr<SubsystemBase>> subsystems;
+    std::vector<std::unique_ptr<EntityVisitorBase>>               visitors;
+    std::unordered_map<type_hash, SubsystemBase*>                 services;
 
     clock::duration time_offset;
 

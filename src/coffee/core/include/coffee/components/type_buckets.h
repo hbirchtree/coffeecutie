@@ -11,4 +11,4 @@ struct node_association
     size_t tag_type; /*!< Hash code of the tag that associates them */
 };
 
-}
+} // namespace compo::timedivide

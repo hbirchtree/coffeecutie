@@ -44,9 +44,9 @@ static FILE* in  = stdin;
 
 template<input_type Input, typename T = char>
 requires(Input == input_type::string && std::is_same_v<T, char>)
-    //
-    FORCEDINLINE std::basic_string<T> get(
-        libc_types::szptr size, FILE* strm = io_handles::in)
+//
+FORCEDINLINE std::basic_string<T> get(
+    libc_types::szptr size, FILE* strm = io_handles::in)
 {
     std::basic_string<T> out;
     out.resize(size);
@@ -56,8 +56,8 @@ requires(Input == input_type::string && std::is_same_v<T, char>)
 
 template<input_type Input, typename T = char>
 requires(Input == input_type::character && std::is_same_v<T, char>)
-    //
-    FORCEDINLINE char get(output_fd strm = io_handles::in)
+//
+FORCEDINLINE char get(output_fd strm = io_handles::in)
 {
     return C_FCAST<char>(fgetc(strm));
 }
@@ -67,20 +67,17 @@ template<
     input_type Input = input_type::string,
     typename T       = char>
 requires(Input == input_type::string && std::is_same_v<T, char>)
-    //
-    FORCEDINLINE void put(output_fd strm, libc_types::cstring output)
+//
+FORCEDINLINE void put(output_fd strm, libc_types::cstring output)
 {
     fputs(output, strm);
     if constexpr(Mode == flush_mode::instant)
         fflush(strm);
 }
 
-template<
-    flush_mode Mode,
-    input_type Input,
-    typename T = char>
+template<flush_mode Mode, input_type Input, typename T = char>
 requires(Input == input_type::character && std::is_same_v<T, char>)
-    //
+//
 FORCEDINLINE void put(output_fd strm, char output)
 {
     fputc(output, strm);
@@ -120,6 +117,7 @@ FORCEDINLINE bool interactive()
     return false;
 #endif
 }
+
 FORCEDINLINE void wait()
 {
     io::get<input_type::character>();

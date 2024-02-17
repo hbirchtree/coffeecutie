@@ -20,8 +20,8 @@ struct WindowResize
 {
     using event_type = ResizeEvent;
 
-    WindowResize(std::function<void(u32, u32)>&& action) :
-        m_action(std::move(action))
+    WindowResize(std::function<void(u32, u32)>&& action)
+        : m_action(std::move(action))
     {
     }
 
@@ -52,7 +52,8 @@ struct ExitOn
         Input::BaseEvent<CIEvent::QuitSign>,
         CIKeyEvent>;
 
-    ExitOn(std::function<void()>&& action) : m_action(action)
+    ExitOn(std::function<void()>&& action)
+        : m_action(action)
     {
     }
 
@@ -66,8 +67,8 @@ struct ExitOn
     }
 
     template<typename Event_ = Event>
-    requires(!std::is_same_v<Event, OnQuit>) void operator()(
-        CIEvent const&, CIKeyEvent const* ev)
+    requires(!std::is_same_v<Event, OnQuit>)
+    void operator()(CIEvent const&, CIKeyEvent const* ev)
     {
         if(ev->key != Event::key)
             return;
@@ -94,10 +95,9 @@ STATICINLINE bool check_key(CIKeyEvent const& keyEvent)
 {
     constexpr auto mods = K::modifiers;
 
-    return (keyEvent.mod
-            & (CIKeyEvent::PressedModifier | CIKeyEvent::RepeatedModifier))
-               == 0
-           && keyEvent.key == K::key && (keyEvent.mod & mods) == mods;
+    return (keyEvent.mod & (CIKeyEvent::PressedModifier |
+                            CIKeyEvent::RepeatedModifier)) == 0 &&
+           keyEvent.key == K::key && (keyEvent.mod & mods) == mods;
 }
 
 template<
@@ -126,9 +126,9 @@ struct FullscreenOn
     using event_type = CIKeyEvent;
 
     FullscreenOn(
-        std::function<void(bool)>&& action, std::function<bool()>&& getter) :
-        m_action(std::move(action)),
-        m_getter(std::move(getter))
+        std::function<void(bool)>&& action, std::function<bool()>&& getter)
+        : m_action(std::move(action))
+        , m_getter(std::move(getter))
     {
     }
 

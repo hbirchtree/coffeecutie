@@ -2,14 +2,17 @@
 
 #ifdef GL_NV_gpu_multicast
 #include "../enums/BufferStorageMask.h"
+
 namespace gl::nv::gpu_multicast {
 using gl::group::buffer_storage_mask;
+
 namespace values {
 constexpr u32 multicast_gpus                         = 0x92BA;
 constexpr u32 per_gpu_storage                        = 0x9548;
 constexpr u32 multicast_programmable_sample_location = 0x9549;
 constexpr u32 render_gpu_mask                        = 0x9558;
 } // namespace values
+
 /*!
  * \brief Part of GL_NV_gpu_multicast
 
@@ -79,21 +82,21 @@ STATICINLINE void multicast_blit_framebuffer(
 
 template<class span_const_void>
 requires(concepts::span<span_const_void>)
-    /*!
-     * \brief Part of GL_NV_gpu_multicast
-     * \param gpuMask GLbitfield
-     * \param buffer GLuint
-     * \param offset GLintptr
-     * \param size GLsizeiptr
-     * \param data const void *
-     * \return void
-     */
-    STATICINLINE void multicast_buffer_sub_data(
-        GLbitfield             gpuMask,
-        u32                    buffer,
-        GLintptr               offset,
-        GLsizeiptr             size,
-        span_const_void const& data)
+/*!
+ * \brief Part of GL_NV_gpu_multicast
+ * \param gpuMask GLbitfield
+ * \param buffer GLuint
+ * \param offset GLintptr
+ * \param size GLsizeiptr
+ * \param data const void *
+ * \return void
+ */
+STATICINLINE void multicast_buffer_sub_data(
+    GLbitfield             gpuMask,
+    u32                    buffer,
+    GLintptr               offset,
+    GLsizeiptr             size,
+    span_const_void const& data)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -217,20 +220,22 @@ STATICINLINE void multicast_copy_image_sub_data(
 }
 
 template<class span_const_f32>
-requires(concepts::span<span_const_f32>&& std::is_same_v<
-         std::decay_t<typename span_const_f32::value_type>,
-         std::decay_t<f32>>)
-    /*!
-     * \brief Part of GL_NV_gpu_multicast
-     * \param gpu GLuint
-     * \param framebuffer GLuint
-     * \param start GLuint
-     * \param count GLsizei
-     * \param v const GLfloat *
-     * \return void
-     */
-    STATICINLINE void multicast_framebuffer_sample_locationsfv(
-        u32 gpu, u32 framebuffer, u32 start, i32 count, span_const_f32 const& v)
+requires(
+    concepts::span<span_const_f32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_f32::value_type>,
+        std::decay_t<f32>>)
+/*!
+ * \brief Part of GL_NV_gpu_multicast
+ * \param gpu GLuint
+ * \param framebuffer GLuint
+ * \param start GLuint
+ * \param count GLsizei
+ * \param v const GLfloat *
+ * \return void
+ */
+STATICINLINE void multicast_framebuffer_sample_locationsfv(
+    u32 gpu, u32 framebuffer, u32 start, i32 count, span_const_f32 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -252,19 +257,20 @@ requires(concepts::span<span_const_f32>&& std::is_same_v<
 }
 
 template<class span_i64>
-requires(concepts::span<span_i64>&& std::is_same_v<
-         std::decay_t<typename span_i64::value_type>,
-         std::decay_t<i64>>)
-    /*!
-     * \brief Part of GL_NV_gpu_multicast
-     * \param gpu GLuint
-     * \param id GLuint
-     * \param pname GLenum
-     * \param params GLint64 *
-     * \return void
-     */
-    STATICINLINE void multicast_get_query_objecti64v(
-        u32 gpu, u32 id, GLenum pname, span_i64 params)
+requires(
+    concepts::span<span_i64> && std::is_same_v<
+                                    std::decay_t<typename span_i64::value_type>,
+                                    std::decay_t<i64>>)
+/*!
+ * \brief Part of GL_NV_gpu_multicast
+ * \param gpu GLuint
+ * \param id GLuint
+ * \param pname GLenum
+ * \param params GLint64 *
+ * \return void
+ */
+STATICINLINE void multicast_get_query_objecti64v(
+    u32 gpu, u32 id, GLenum pname, span_i64 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -280,19 +286,20 @@ requires(concepts::span<span_i64>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(concepts::span<span_i32>&& std::is_same_v<
-         std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>)
-    /*!
-     * \brief Part of GL_NV_gpu_multicast
-     * \param gpu GLuint
-     * \param id GLuint
-     * \param pname GLenum
-     * \param params GLint *
-     * \return void
-     */
-    STATICINLINE void multicast_get_query_objectiv(
-        u32 gpu, u32 id, GLenum pname, span_i32 params)
+requires(
+    concepts::span<span_i32> && std::is_same_v<
+                                    std::decay_t<typename span_i32::value_type>,
+                                    std::decay_t<i32>>)
+/*!
+ * \brief Part of GL_NV_gpu_multicast
+ * \param gpu GLuint
+ * \param id GLuint
+ * \param pname GLenum
+ * \param params GLint *
+ * \return void
+ */
+STATICINLINE void multicast_get_query_objectiv(
+    u32 gpu, u32 id, GLenum pname, span_i32 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -308,19 +315,20 @@ requires(concepts::span<span_i32>&& std::is_same_v<
 }
 
 template<class span_u64>
-requires(concepts::span<span_u64>&& std::is_same_v<
-         std::decay_t<typename span_u64::value_type>,
-         std::decay_t<u64>>)
-    /*!
-     * \brief Part of GL_NV_gpu_multicast
-     * \param gpu GLuint
-     * \param id GLuint
-     * \param pname GLenum
-     * \param params GLuint64 *
-     * \return void
-     */
-    STATICINLINE void multicast_get_query_objectui64v(
-        u32 gpu, u32 id, GLenum pname, span_u64 params)
+requires(
+    concepts::span<span_u64> && std::is_same_v<
+                                    std::decay_t<typename span_u64::value_type>,
+                                    std::decay_t<u64>>)
+/*!
+ * \brief Part of GL_NV_gpu_multicast
+ * \param gpu GLuint
+ * \param id GLuint
+ * \param pname GLenum
+ * \param params GLuint64 *
+ * \return void
+ */
+STATICINLINE void multicast_get_query_objectui64v(
+    u32 gpu, u32 id, GLenum pname, span_u64 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -336,19 +344,20 @@ requires(concepts::span<span_u64>&& std::is_same_v<
 }
 
 template<class span_u32>
-requires(concepts::span<span_u32>&& std::is_same_v<
-         std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>)
-    /*!
-     * \brief Part of GL_NV_gpu_multicast
-     * \param gpu GLuint
-     * \param id GLuint
-     * \param pname GLenum
-     * \param params GLuint *
-     * \return void
-     */
-    STATICINLINE void multicast_get_query_objectuiv(
-        u32 gpu, u32 id, GLenum pname, span_u32 params)
+requires(
+    concepts::span<span_u32> && std::is_same_v<
+                                    std::decay_t<typename span_u32::value_type>,
+                                    std::decay_t<u32>>)
+/*!
+ * \brief Part of GL_NV_gpu_multicast
+ * \param gpu GLuint
+ * \param id GLuint
+ * \param pname GLenum
+ * \param params GLuint *
+ * \return void
+ */
+STATICINLINE void multicast_get_query_objectuiv(
+    u32 gpu, u32 id, GLenum pname, span_u32 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

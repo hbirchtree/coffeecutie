@@ -12,8 +12,8 @@
 #include <coffee/core/debug/formatting.h>
 
 using Coffee::cDebug;
-using Coffee::cWarning;
 using Coffee::cFatal;
+using Coffee::cWarning;
 using Coffee::ProfContext;
 
 using libc_types::f32;
@@ -41,8 +41,8 @@ using typing::vector_types::Veci3;
 using typing::vector_types::Vecui2;
 using typing::vector_types::Vecui3;
 
-using bitm_format_hash
-    = std::tuple<blam::bitm::type_t, PixFmt, PixCmp, BitFmt, CompFlags>;
+using bitm_format_hash =
+    std::tuple<blam::bitm::type_t, PixFmt, PixCmp, BitFmt, CompFlags>;
 
 struct BSPItem
 {
@@ -53,17 +53,20 @@ struct BSPItem
         generation_idx_t            light_bitm;
         generation_idx_t            shader;
     };
+
     struct Group
     {
         blam::bsp::lightmap const* group{nullptr};
         std::vector<Mesh>          meshes{};
     };
+
     struct Subcluster
     {
         blam::bsp::subcluster const* cluster{nullptr};
         Span<u32 const>              indices;
         u32                          debug_color_idx{0};
     };
+
     struct Cluster
     {
         blam::bsp::cluster const*                     cluster{nullptr};
@@ -114,6 +117,7 @@ struct ModelItem
         gleam::draw_command::data_t draw;
         generation_idx_t            shader;
     };
+
     struct LOD
     {
         blam::mod2::geometry_header<V> const* header{nullptr};
@@ -141,6 +145,7 @@ struct BitmapItem
 {
     blam::bitm::header_t const* header{nullptr};
     blam::tag_t const*          tag{nullptr};
+
     struct
     {
         blam::bitm::image_t const* mip{nullptr};
@@ -152,6 +157,7 @@ struct BitmapItem
         Vecf2 scale{};
         f32   bias{0.f};
     } image;
+
     struct
     {
         u32 base{0};
@@ -184,6 +190,7 @@ struct ShaderItem
         generation_idx_t detail_bitm;
         generation_idx_t reflection_bitm;
     };
+
     struct senv_t
     {
         generation_idx_t base_bitm;
@@ -197,23 +204,27 @@ struct ShaderItem
 
         generation_idx_t reflection_bitm;
     };
+
     struct schi_t
     {
         std::array<generation_idx_t, 4> maps;
         std::array<generation_idx_t, 4> layers;
     };
+
     struct scex_t
     {
         std::array<generation_idx_t, 4> maps;
         std::array<generation_idx_t, 4> layers;
         generation_idx_t                lens_flare;
     };
+
     struct swat_t
     {
         generation_idx_t base;
         generation_idx_t reflection;
         generation_idx_t bump;
     };
+
     struct sotr_t
     {
         std::array<generation_idx_t, 4> maps;
@@ -234,9 +245,11 @@ struct ShaderItem
         struct
         {
         } smet;
+
         struct
         {
         } sgla;
+
         struct
         {
         } spla;

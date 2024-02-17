@@ -6,8 +6,8 @@
 #include <peripherals/stl/type_list.h>
 #include <peripherals/stl/type_safety.h>
 
-#include <stdexcept>
 #include <map>
+#include <stdexcept>
 
 using cache_id_t = libc_types::u64;
 using type_safety::empty_list_t;
@@ -32,8 +32,8 @@ struct data_cache_error : std::runtime_error
 template<typename T, typename IdType, typename... IType>
 struct DataCache
 {
-    DataCache() = default;
-    DataCache(DataCache&&) = default;
+    DataCache()                 = default;
+    DataCache(DataCache&&)      = default;
     DataCache(const DataCache&) = delete;
 
     static constexpr cache_id_t invalid_id = 0;
@@ -58,7 +58,7 @@ struct DataCache
 
         if(!item.valid())
         {
-//            Throw(data_cache_error("prediction failed"));
+            //            Throw(data_cache_error("prediction failed"));
             return {invalid_id, 0};
         }
 
@@ -75,6 +75,7 @@ struct DataCache
 
         return m_cache.find(id.i);
     }
+
     auto end()
     {
         return m_cache.end();
@@ -97,7 +98,8 @@ struct DataCache
 
     virtual T      predict_impl(IType... param) = 0;
     virtual IdType get_id(IType... args)        = 0;
-    virtual void   evict_impl()
+
+    virtual void evict_impl()
     {
     }
 };

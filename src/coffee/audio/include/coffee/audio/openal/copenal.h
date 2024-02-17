@@ -294,7 +294,7 @@ struct CALSource
     Vecf3   velocity;  /*!< Source velocity*/
     Vecf3   direction; /*!< Source direction vector*/
     CALhnd* handle;    /*!< AL handle*/
-    u16  state;     /*!< Source state*/
+    u16     state;     /*!< Source state*/
 };
 
 extern CALVersion context_version(CALContext* ctxt);
@@ -505,6 +505,7 @@ extern cstring context_device_default();
 
 } // namespace COpenAL
 } // namespace CAudio
+
 namespace Strings {
 
 extern std::string to_string(CAudio::COpenAL::CALBuffer const& buf);

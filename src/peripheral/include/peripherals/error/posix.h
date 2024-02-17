@@ -57,8 +57,8 @@ inline std::string_view error_to_string(int err)
 
 struct posix_runtime_error : std::runtime_error
 {
-    posix_runtime_error(int error) :
-        std::runtime_error([error]() {
+    posix_runtime_error(int error)
+        : std::runtime_error([error]() {
             auto err_msg = error_to_string(error);
             return std::string(err_msg.begin(), err_msg.end());
         }())

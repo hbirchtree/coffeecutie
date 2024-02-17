@@ -24,8 +24,7 @@ void TouchOverlay::start_restricted(Proxy& proxy, const time_point&)
         controller = gfx->alloc_texture(
             gfx::textures::d2,
             typing::pixels::CompFmt(
-                comp_app::PixFmt::ETC2,
-                typing::pixels::PixFlg::RGBA),
+                comp_app::PixFmt::ETC2, typing::pixels::PixFlg::RGBA),
             1);
 
         atlas_storage = std::move(tex.value());
@@ -45,8 +44,8 @@ void TouchOverlay::start_restricted(Proxy& proxy, const time_point&)
             typing::Filtering::Linear, typing::Filtering::Linear);
     }
 
-    comp_app::interfaces::GraphicsFramebuffer* framebuffer
-        = proxy.service<comp_app::GraphicsFramebuffer>();
+    comp_app::interfaces::GraphicsFramebuffer* framebuffer =
+        proxy.service<comp_app::GraphicsFramebuffer>();
     f32 half_screen   = controller_size(proxy);
     f32 screen_height = framebuffer->size().h;
     f32 look_stick_x  = framebuffer->size().w - half_screen;
@@ -70,8 +69,9 @@ void TouchOverlay::end_restricted(Proxy& proxy, const time_point&)
     BlamCamera* camera;
     proxy.subsystem(camera);
 
-    camera->player(0).camera_->move(move_displacement.y, -move_displacement.x, 0);
-//    camera->std_camera->rotate(look_displacement.y, look_displacement.x);
+    camera->player(0).camera_->move(
+        move_displacement.y, -move_displacement.x, 0);
+    //    camera->std_camera->rotate(look_displacement.y, look_displacement.x);
 }
 
 void TouchOverlay::draw_stick(
@@ -91,21 +91,23 @@ void TouchOverlay::draw_stick(
         .sampler      = controller_sampler,
     });
     screen->extra_quads.push_back({
-        .position = Vecf2{
-            half_screen / 2.f - stick_size / 2.f,
-            half_screen / 2.f - stick_size / 2.f,
-        } + origin + stick_offset,
+        .position =
+            Vecf2{
+                half_screen / 2.f - stick_size / 2.f,
+                half_screen / 2.f - stick_size / 2.f,
+            } +
+            origin + stick_offset,
         .size         = Vecf2{stick_size, stick_size},
         .atlas_offset = Vecf2{0.55f, 0.03f},
         .atlas_scale  = Vecf2{0.23f, 0.23f},
         .sampler      = controller_sampler,
-        });
+    });
 }
 
 f32 TouchOverlay::controller_size(Proxy& proxy) const
 {
-    comp_app::interfaces::GraphicsFramebuffer* framebuffer
-        = proxy.service<comp_app::GraphicsFramebuffer>();
+    comp_app::interfaces::GraphicsFramebuffer* framebuffer =
+        proxy.service<comp_app::GraphicsFramebuffer>();
     return glm::min(framebuffer->size().h / 2.f, framebuffer->size().w / 2.f);
 }
 
@@ -137,10 +139,10 @@ void TouchOverlay::operator()(CIEvent& ev, CIMouseMoveEvent* event)
     }
     if(auto xf = point_in(pos, look_transform); xf.has_value())
     {
-//        ev.type           = CIEvent::NoneType;
+        //        ev.type           = CIEvent::NoneType;
         look_displacement = xf.value() * 2.f - 1.f;
-//        cDebug("Look displacement: {0}", look_displacement);
-//        return;
+        //        cDebug("Look displacement: {0}", look_displacement);
+        //        return;
     }
 }
 
@@ -156,8 +158,7 @@ void create_touch_overlay(compo::EntityContainer& container)
 
     container.register_subsystem_inplace<TouchOverlay>();
 
-    auto eventhandler
-        = container.service<comp_app::BasicEventBus<CIEvent>>();
+    auto eventhandler = container.service<comp_app::BasicEventBus<CIEvent>>();
 
     auto& overlay = container.subsystem_cast<TouchOverlay>();
     eventhandler->addEventFunction<CIMouseMoveEvent>(

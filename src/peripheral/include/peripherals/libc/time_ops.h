@@ -37,8 +37,8 @@ FORCEDINLINE std::basic_string<CharT> time_to_str(
 
 template<
     typename CharT,
-    typename std::enable_if<
-        std::is_same<CharT, wchar_t>::value>::type* = nullptr>
+    typename std::enable_if<std::is_same<CharT, wchar_t>::value>::type* =
+        nullptr>
 FORCEDINLINE std::basic_string<CharT> time_to_str(
     std::time_t const& tim, const CharT* fmt)
 {

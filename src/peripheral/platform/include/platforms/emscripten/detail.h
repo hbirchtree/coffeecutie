@@ -6,10 +6,10 @@ namespace platform::file::emscripten::detail {
 
 struct emscripten_fd_t
 {
-    semantic::RSCA       storage_class{RSCA::None};
-    std::string          db;
-    std::string          file_name;
-    posix::posix_fd_t    fd;
+    semantic::RSCA    storage_class{RSCA::None};
+    std::string       db;
+    std::string       file_name;
+    posix::posix_fd_t fd;
 
     operator posix::posix_fd_t&()
     {

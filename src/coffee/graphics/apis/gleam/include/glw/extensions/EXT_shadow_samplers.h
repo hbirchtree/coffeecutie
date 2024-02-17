@@ -2,8 +2,10 @@
 
 #ifdef GL_EXT_shadow_samplers
 #include "../enums/AttributeType.h"
+
 namespace gl::ext::shadow_samplers {
 using gl::group::attribute_type;
+
 namespace values {
 constexpr u32 texture_compare_mode   = 0x884C;
 constexpr u32 texture_compare_func   = 0x884D;

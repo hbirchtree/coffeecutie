@@ -6,12 +6,14 @@
 #include "../enums/SizedInternalFormat.h"
 #include "../enums/TextureEnvMode.h"
 #include "../enums/TextureTarget.h"
+
 namespace gl::ext::texture {
 using gl::group::error_code;
 using gl::group::internal_format;
 using gl::group::sized_internal_format;
 using gl::group::texture_env_mode;
 using gl::group::texture_target;
+
 namespace values {
 constexpr u32 intensity              = 0x8049;
 constexpr u32 texture_red_size       = 0x805C;

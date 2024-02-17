@@ -3,12 +3,15 @@
 #ifdef GL_ARB_provoking_vertex
 #include "../enums/GetPName.h"
 #include "../enums/VertexProvokingMode.h"
+
 namespace gl::arb::provoking_vertex {
 using gl::group::get_prop;
 using gl::group::vertex_provoking_mode;
+
 namespace values {
 constexpr u32 quads_follow_provoking_vertex_convention = 0x8E4C;
 } // namespace values
+
 /*!
  * \brief Part of GL_ARB_provoking_vertex
  * \param mode GLenum

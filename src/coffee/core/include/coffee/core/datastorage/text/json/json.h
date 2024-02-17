@@ -7,7 +7,8 @@
 #include <string_view>
 
 #define RAPIDJSON_ASSERT(cond) \
-    if(!(cond)) Throw(undefined_behavior("assert failed: " C_STR(cond)));
+    if(!(cond))                \
+        Throw(undefined_behavior("assert failed: " C_STR(cond)));
 
 #include <rapidjson/document.h>
 #include <rapidjson/prettywriter.h>
@@ -46,6 +47,7 @@ STATICINLINE Document Read(semantic::BytesConst const& data)
     doc.Parse(data.as<const char>().data);
     return doc;
 }
+
 STATICINLINE std::string Serialize(Document const& doc)
 {
     WriteBuf buf;
@@ -59,32 +61,33 @@ STATICINLINE std::string Serialize(Document const& doc)
 namespace detail {
 
 template<typename T>
-requires(!std::is_pointer_v<T> && !std::is_class_v<T>) FORCEDINLINE json::Value
-    wrap_value(T value, Document::AllocatorType&)
+requires(!std::is_pointer_v<T> && !std::is_class_v<T>)
+FORCEDINLINE json::Value wrap_value(T value, Document::AllocatorType&)
 {
     return json::Value(value);
 }
 
 template<typename T>
 requires(std::is_same_v<T, std::string> || std::is_same_v<T, std::string_view>)
-    FORCEDINLINE json::Value
-    wrap_value(T const& value, Document::AllocatorType& alloc)
+FORCEDINLINE json::Value wrap_value(
+    T const& value, Document::AllocatorType& alloc)
 {
     return json::Value(
         value.data(), C_FCAST<libc_types::u32>(value.size()), alloc);
 }
 
 template<typename T>
-requires(std::is_same_v<T, const char*>) FORCEDINLINE json::Value
-    wrap_value(std::string_view value, Document::AllocatorType& alloc)
+requires(std::is_same_v<T, const char*>)
+FORCEDINLINE json::Value wrap_value(
+    std::string_view value, Document::AllocatorType& alloc)
 {
     return json::Value(
         value.data(), C_FCAST<libc_types::u32>(value.size()), alloc);
 }
 
 template<typename T>
-requires(std::is_same_v<T, Object>) FORCEDINLINE json::Value
-    wrap_value(T&& value, Document::AllocatorType& alloc)
+requires(std::is_same_v<T, Object>)
+FORCEDINLINE json::Value wrap_value(T&& value, Document::AllocatorType& alloc)
 {
     return json::Value(value, alloc);
 }
@@ -102,12 +105,14 @@ FORCEDINLINE void set_member<Value>(
 {
     obj.AddMember(field, std::move(value), alloc);
 }
+
 template<>
 FORCEDINLINE void set_member<Object>(
     Object& obj, Value&& field, Object&& value, Document::AllocatorType& alloc)
 {
     obj.AddMember(field, std::move(value), alloc);
 }
+
 template<>
 FORCEDINLINE void set_member<Array>(
     Object& obj, Value&& field, Array&& value, Document::AllocatorType& alloc)
@@ -119,7 +124,8 @@ FORCEDINLINE void set_member<Array>(
 
 struct ObjectBuilder
 {
-    ObjectBuilder(Document::AllocatorType& allocator) : m_alloc(allocator)
+    ObjectBuilder(Document::AllocatorType& allocator)
+        : m_alloc(allocator)
     {
     }
 
@@ -156,7 +162,8 @@ struct ObjectBuilder
 
 struct ArrayBuilder
 {
-    ArrayBuilder(Document::AllocatorType& allocator) : m_alloc(allocator)
+    ArrayBuilder(Document::AllocatorType& allocator)
+        : m_alloc(allocator)
     {
     }
 

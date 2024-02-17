@@ -46,6 +46,7 @@ inline bool iequals(string const& v1, string const& v2)
     }
     return true;
 }
+
 inline string trim(string const& value_)
 {
     string value = value_;
@@ -194,8 +195,11 @@ struct header_traits
 
 struct header_t
 {
-    header_t() :
-        resource("/"), code(0), version(version_t::v10), method(method_t::get)
+    header_t()
+        : resource("/")
+        , code(0)
+        , version(version_t::v10)
+        , method(method_t::get)
     {
     }
 
@@ -494,9 +498,8 @@ namespace serialize {
 template<typename Traits = header_traits>
 inline string request_line(header_t const& header)
 {
-    return to_string::method(header.method) + string(" ") + header.resource
-           + " " + to_string::version(header.version)
-           + Traits::header_separator;
+    return to_string::method(header.method) + string(" ") + header.resource +
+           " " + to_string::version(header.version) + Traits::header_separator;
 }
 
 /*!
@@ -508,9 +511,9 @@ inline string request_line(header_t const& header)
 template<typename Traits = header_traits>
 inline string response_line(header_t const& header)
 {
-    return to_string::version(header.version) + string(" ")
-           + cast_pod(header.code) + " " + header.message
-           + Traits::header_separator;
+    return to_string::version(header.version) + string(" ") +
+           cast_pod(header.code) + " " + header.message +
+           Traits::header_separator;
 }
 
 template<typename Traits = header_traits>
@@ -677,8 +680,8 @@ inline std::pair<string, string> field(string const& line)
     return {key, util::strings::trim(std::move(value))};
 }
 
-using optional_field
-    = std::pair<std::pair<header_field, string>, std::pair<string, string>>;
+using optional_field =
+    std::pair<std::pair<header_field, string>, std::pair<string, string>>;
 
 inline optional_field field_classify(string const& line)
 {
@@ -711,12 +714,15 @@ struct field_iterator
         }
     };
 
-    field_iterator() : m_pos(string::npos)
+    field_iterator()
+        : m_pos(string::npos)
     {
     }
 
-    field_iterator(string const& value, string::value_type sep) :
-        m_value(" " + value), m_pos(0), m_separator(sep)
+    field_iterator(string const& value, string::value_type sep)
+        : m_value(" " + value)
+        , m_pos(0)
+        , m_separator(sep)
     {
     }
 
@@ -786,8 +792,8 @@ inline request_t& create_request(request_t& origin)
     auto cont_type = standard_headers.find(header_field::content_type);
     if(cont_type == standard_headers.end() && origin.payload.size())
     {
-        standard_headers[header_field::content_type]
-            = to_string::content_type(content_type::octet_stream);
+        standard_headers[header_field::content_type] =
+            to_string::content_type(content_type::octet_stream);
     }
 
     return origin;
@@ -832,8 +838,10 @@ inline string& add_query(string& resource, string query, string value)
 
 struct path_iterator
 {
-    path_iterator(string const& resource) :
-        m_pos(0), m_resource(resource), m_query_start(m_resource.find('?'))
+    path_iterator(string const& resource)
+        : m_pos(0)
+        , m_resource(resource)
+        , m_query_start(m_resource.find('?'))
     {
         if(m_resource.substr(0, 1) != "/")
             m_resource = "/" + m_resource;
@@ -871,8 +879,9 @@ struct path_iterator
 
 struct query_iterator
 {
-    query_iterator(string const& resource) :
-        m_pos(string::npos), m_resource(resource)
+    query_iterator(string const& resource)
+        : m_pos(string::npos)
+        , m_resource(resource)
     {
         m_pos = m_resource.find("?");
     }
@@ -1091,8 +1100,11 @@ struct part_iterator
     using part = std::pair<header_t, payload_t>;
     static constexpr cstring multipart_terminator = "--";
 
-    part_iterator(string bound, payload_t& payload) :
-        m_boundary(bound), m_payload(payload), m_pos(0), m_ended(false)
+    part_iterator(string bound, payload_t& payload)
+        : m_boundary(bound)
+        , m_payload(payload)
+        , m_pos(0)
+        , m_ended(false)
     {
         ++(*this);
     }
@@ -1172,8 +1184,8 @@ struct part_iterator
 
         auto first_char = header_strm.peek();
 
-        if(first_char == http::line_separator[0]
-           || first_char == http::line_separator[1])
+        if(first_char == http::line_separator[0] ||
+           first_char == http::line_separator[1])
         {
             string discard;
             std::getline(header_strm, discard);
@@ -1188,8 +1200,8 @@ struct part_iterator
         part_payload.insert(
             part_payload.begin(),
             m_payload.begin() + C_FCAST<off_t>(m_pos + header_len),
-            m_payload.begin()
-                + C_FCAST<off_t>(m_pos + header_len + payload_len));
+            m_payload.begin() +
+                C_FCAST<off_t>(m_pos + header_len + payload_len));
 
         return {header, part_payload};
     }
@@ -1208,9 +1220,10 @@ struct parser
 
     part_iterator m_sentinel;
 
-    parser(string boundary, payload_t&& payload) :
-        m_boundary(boundary), m_payload(std::move(payload)),
-        m_sentinel(part_iterator::sentinel(m_payload))
+    parser(string boundary, payload_t&& payload)
+        : m_boundary(boundary)
+        , m_payload(std::move(payload))
+        , m_sentinel(part_iterator::sentinel(m_payload))
     {
     }
 
@@ -1228,7 +1241,8 @@ struct parser
 
 struct builder
 {
-    builder(cstring terminator) : m_terminator(terminator)
+    builder(cstring terminator)
+        : m_terminator(terminator)
     {
     }
 
@@ -1256,6 +1270,7 @@ struct builder
         m_data.insert(m_data.end(), data.begin(), data.end());
         m_data += line_separator;
     }
+
     void finalize()
     {
         m_data += "--";
@@ -1273,8 +1288,8 @@ struct builder
     string content_type() const
     {
         return header::to_string::content_type(
-                   http::content_type::multipart_form)
-               + string("; boundary=") + m_terminator;
+                   http::content_type::multipart_form) +
+               string("; boundary=") + m_terminator;
     }
 
     plain_string m_terminator;

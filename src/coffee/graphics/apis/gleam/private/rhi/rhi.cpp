@@ -92,8 +92,8 @@ void texture_t::alloc(size_type const& size, bool create_storage)
         if(!sw_decoded)
         {
             auto const& sw = m_features.software_decoded;
-            if(m_format.pixfmt == P::BCn
-               && stl_types::any_of(m_format.cmpflg, C::BC1, C::BC2, C::BC3))
+            if(m_format.pixfmt == P::BCn &&
+               stl_types::any_of(m_format.cmpflg, C::BC1, C::BC2, C::BC3))
                 sw_decoded = sw.ext.s3tc;
             if(m_format.pixfmt == P::ASTC)
                 sw_decoded = sw.gl.astc || sw.khr.astc;
@@ -109,15 +109,14 @@ void texture_t::alloc(size_type const& size, bool create_storage)
     if(create_storage)
     {
         [[maybe_unused]] auto glsize = size.convert<i32>();
-        auto is_compressed           = format_description().is_compressed()
-                             && !requires_software_decode();
-        [[maybe_unused]] auto is_immutable
-            = feval(m_flags, textures::property::immutable);
+        auto                  is_compressed =
+            format_description().is_compressed() && !requires_software_decode();
+        [[maybe_unused]] auto is_immutable =
+            feval(m_flags, textures::property::immutable);
 
         auto alloc_format = software_decode_format().value_or(m_format);
-        [[maybe_unused]] auto [sized_fmt, _, __]
-            = convert::to<group::sized_internal_format>(
-                alloc_format, m_features);
+        [[maybe_unused]] auto [sized_fmt, _, __] =
+            convert::to<group::sized_internal_format>(alloc_format, m_features);
 
         using textures::type;
 
@@ -160,18 +159,18 @@ void texture_t::alloc(size_type const& size, bool create_storage)
 #endif
             if(is_compressed)
         {
-            auto [ifmt, type, layout]
-                = convert::to<group::internal_format>(m_format, m_features);
+            auto [ifmt, type, layout] =
+                convert::to<group::internal_format>(m_format, m_features);
             auto signed_size = size.convert<i32>();
             if(m_type == type::cube_array)
                 signed_size.d *= 6;
             cmd::bind_texture(convert::to(m_type), m_handle);
             for(auto i : stl_types::Range<>(m_mipmaps))
             {
-                auto alloc_size
-                    = gl::tex::format_of(m_format).data_size(
-                          size_2d<i32>{signed_size.w, signed_size.h})
-                      * signed_size.d;
+                auto alloc_size =
+                    gl::tex::format_of(m_format).data_size(
+                        size_2d<i32>{signed_size.w, signed_size.h}) *
+                    signed_size.d;
 #if defined(COFFEE_EMSCRIPTEN)
                 std::vector<libc_types::u8> black(alloc_size, 0);
 #endif
@@ -188,7 +187,7 @@ void texture_t::alloc(size_type const& size, bool create_storage)
                         semantic::SpanOver<libc_types::u8>(
                             black.begin(), black.end())
 #else
-                        null_span<> { alloc_size }
+                        null_span<>{alloc_size}
 #endif
                     );
                     break;
@@ -205,7 +204,7 @@ void texture_t::alloc(size_type const& size, bool create_storage)
                         semantic::SpanOver<libc_types::u8>(
                             black.begin(), black.end())
 #else
-                        null_span<> { alloc_size }
+                        null_span<>{alloc_size}
 #endif
                     );
                     break;
@@ -262,8 +261,8 @@ void texture_t::alloc(size_type const& size, bool create_storage)
             {
             case type::d2:
                 create_level = [&](size_3d<i32> const& s, i32 i) {
-                    auto [old_fmt, ptype, pfmt]
-                        = convert::to<group::internal_format>(
+                    auto [old_fmt, ptype, pfmt] =
+                        convert::to<group::internal_format>(
                             alloc_format, m_features);
                     cmd::tex_image_2d(
                         target,
@@ -276,13 +275,13 @@ void texture_t::alloc(size_type const& size, bool create_storage)
                         null_data);
                 };
                 break;
-#if GLEAM_MAX_VERSION >= 0x150 || GLEAM_MAX_VERSION_ES >= 0x300 \
-    || defined(GL_OES_texture_3D)
+#if GLEAM_MAX_VERSION >= 0x150 || GLEAM_MAX_VERSION_ES >= 0x300 || \
+    defined(GL_OES_texture_3D)
             case type::d2_array:
             case type::d3:
                 create_level = [&](size_3d<i32> const& s, i32 i) {
-                    auto [old_fmt, ptype, pfmt]
-                        = convert::to<group::internal_format>(
+                    auto [old_fmt, ptype, pfmt] =
+                        convert::to<group::internal_format>(
                             alloc_format, m_features);
 #if GLEAM_MAX_VERSION >= 0x150 || GLEAM_MAX_VERSION_ES >= 0x300
                     using internal_format_t = i32;
@@ -325,8 +324,8 @@ void texture_t::alloc(size_type const& size, bool create_storage)
 #if GLEAM_MAX_VERSION >= 0x400 || GLEAM_MAX_VERSION_ES >= 0x320
             case type::cube_array:
                 create_level = [&](size_3d<i32> const& s, i32 i) {
-                    auto [old_fmt, ptype, pfmt]
-                        = convert::to<group::internal_format>(
+                    auto [old_fmt, ptype, pfmt] =
+                        convert::to<group::internal_format>(
                             alloc_format, m_features);
                     cmd::tex_image_3d(
                         target,
@@ -485,10 +484,10 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
         out.draw.shader_base_instance = api_version >= 0x460;
         out.program.spirv             = api_version >= 0x460;
 
-        out.draw.arb.shader_draw_parameters
-            = supports_extension(extensions, arb::shader_draw_parameters::name);
-        out.program.khr.parallel_shader_compile = supports_extension(
-            extensions, khr::parallel_shader_compile::name);
+        out.draw.arb.shader_draw_parameters =
+            supports_extension(extensions, arb::shader_draw_parameters::name);
+        out.program.khr.parallel_shader_compile =
+            supports_extension(extensions, khr::parallel_shader_compile::name);
     } else if(platform_api == api_type_t::webgl)
     {
         out.texture.swizzle = false;
@@ -513,21 +512,21 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
         //     extensions, ext::color_buffer_half_float::name);
         // out.rendertarget.color_buffer_float
         //     = supports_extension(extensions, ext::color_buffer_float::name);
-        out.program.khr.parallel_shader_compile = supports_extension(
-            extensions, khr::parallel_shader_compile::name);
-        out.debug.webgl.unmasked_vendors
-            = supports_extension(extensions, "WEBGL_debug_renderer_info");
-        out.debug.webgl.debug_shaders
-            = supports_extension(extensions, "WEBGL_debug_shaders");
+        out.program.khr.parallel_shader_compile =
+            supports_extension(extensions, khr::parallel_shader_compile::name);
+        out.debug.webgl.unmasked_vendors =
+            supports_extension(extensions, "WEBGL_debug_renderer_info");
+        out.debug.webgl.debug_shaders =
+            supports_extension(extensions, "WEBGL_debug_shaders");
     } else if(api_type == api_type_t::es)
     {
-        out.rendertarget.color_buffer_half_float = supports_extension(
-            extensions, ext::color_buffer_half_float::name);
-        out.rendertarget.color_buffer_float = supports_extension(
-            extensions, ext::color_buffer_half_float::name);
-        out.rendertarget.depth24
-            = api_version >= 0x300
-              || supports_extension(extensions, oes::depth24::name);
+        out.rendertarget.color_buffer_half_float =
+            supports_extension(extensions, ext::color_buffer_half_float::name);
+        out.rendertarget.color_buffer_float =
+            supports_extension(extensions, ext::color_buffer_half_float::name);
+        out.rendertarget.depth24 =
+            api_version >= 0x300 ||
+            supports_extension(extensions, oes::depth24::name);
 
         out.buffer.mapping                = api_version >= 0x300;
         out.buffer.pbo                    = api_version >= 0x300;
@@ -568,26 +567,26 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
         out.vertex.vertex_offset = out.draw.vertex_offset;
 
 #if defined(GL_OES_mapbuffer)
-        out.buffer.oes.mapbuffer
-            = supports_extension(extensions, oes::mapbuffer::name);
+        out.buffer.oes.mapbuffer =
+            supports_extension(extensions, oes::mapbuffer::name);
 #endif
-        out.query.disjoint_timer_query
-            = supports_extension(extensions, ext::disjoint_timer_query::name);
-        out.texture.oes.texture_3d
-            = supports_extension(extensions, oes::texture_3d::name);
-        out.vertex.oes.vertex_arrays
-            = supports_extension(extensions, oes::vertex_array_object::name);
-        out.rendertarget.ext.discard_framebuffer
-            = supports_extension(extensions, ext::discard_framebuffer::name);
-        out.program.khr.parallel_shader_compile = supports_extension(
-            extensions, khr::parallel_shader_compile::name);
+        out.query.disjoint_timer_query =
+            supports_extension(extensions, ext::disjoint_timer_query::name);
+        out.texture.oes.texture_3d =
+            supports_extension(extensions, oes::texture_3d::name);
+        out.vertex.oes.vertex_arrays =
+            supports_extension(extensions, oes::vertex_array_object::name);
+        out.rendertarget.ext.discard_framebuffer =
+            supports_extension(extensions, ext::discard_framebuffer::name);
+        out.program.khr.parallel_shader_compile =
+            supports_extension(extensions, khr::parallel_shader_compile::name);
     }
 
     // out.rendertarget.depth_16f
     //     = supports_render_format(out, typing::pixels::PixFmt::Depth16F);
-    out.rendertarget.depth_32f
-        = supports_render_format(out, typing::pixels::PixFmt::Depth32F)
-          || supports_extension(extensions, arb::depth_buffer_float::name);
+    out.rendertarget.depth_32f =
+        supports_render_format(out, typing::pixels::PixFmt::Depth32F) ||
+        supports_extension(extensions, arb::depth_buffer_float::name);
 
     out.debug.khr.debug = supports_extension(extensions, khr::debug::name);
 
@@ -595,50 +594,50 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
     if(api_type == api_type_t::es && api_version == 0x200)
         out.debug.khr.debug = false;
 
-    out.rendertarget.nv.shading_rate_image
-        = supports_extension(extensions, nv::shading_rate_image::name);
+    out.rendertarget.nv.shading_rate_image =
+        supports_extension(extensions, nv::shading_rate_image::name);
 
-    out.texture.arb.texture_view
-        = supports_extension(extensions, arb::texture_view::name);
-    out.texture.ext.texture_view
-        = supports_extension(extensions, ext::texture_view::name);
-    out.texture.oes.texture_view
-        = supports_extension(extensions, oes::texture_view::name);
+    out.texture.arb.texture_view =
+        supports_extension(extensions, arb::texture_view::name);
+    out.texture.ext.texture_view =
+        supports_extension(extensions, ext::texture_view::name);
+    out.texture.oes.texture_view =
+        supports_extension(extensions, oes::texture_view::name);
 
-    out.texture.ext.texture_anisotropic
-        = supports_extension(extensions, ext::texture_filter_anisotropic::name);
+    out.texture.ext.texture_anisotropic =
+        supports_extension(extensions, ext::texture_filter_anisotropic::name);
 
-    out.texture.tex.arb.bptc
-        = supports_extension(extensions, arb::texture_compression_bptc::name);
-    out.texture.tex.arb.rgtc
-        = supports_extension(extensions, arb::texture_compression_rgtc::name);
-    out.texture.tex.ext.bptc
-        = supports_extension(extensions, ext::texture_compression_bptc::name);
-    out.texture.tex.ext.rgtc
-        = supports_extension(extensions, ext::texture_compression_rgtc::name);
-    out.texture.tex.ext.s3tc
-        = supports_extension(extensions, ext::texture_compression_s3tc::name)
-          || supports_extension(extensions, "WEBGL_compressed_texture_s3tc");
+    out.texture.tex.arb.bptc =
+        supports_extension(extensions, arb::texture_compression_bptc::name);
+    out.texture.tex.arb.rgtc =
+        supports_extension(extensions, arb::texture_compression_rgtc::name);
+    out.texture.tex.ext.bptc =
+        supports_extension(extensions, ext::texture_compression_bptc::name);
+    out.texture.tex.ext.rgtc =
+        supports_extension(extensions, ext::texture_compression_rgtc::name);
+    out.texture.tex.ext.s3tc =
+        supports_extension(extensions, ext::texture_compression_s3tc::name) ||
+        supports_extension(extensions, "WEBGL_compressed_texture_s3tc");
 
-    out.texture.tex.oes.etc1
-        = supports_extension(
-              extensions, oes::compressed_etc1_rgb8_texture::name)
-          || supports_extension(extensions, "WEBGL_compressed_texture_etc");
-    out.texture.tex.oes.rgba8
-        = supports_extension(extensions, oes::rgb8_rgba8::name);
+    out.texture.tex.oes.etc1 =
+        supports_extension(
+            extensions, oes::compressed_etc1_rgb8_texture::name) ||
+        supports_extension(extensions, "WEBGL_compressed_texture_etc");
+    out.texture.tex.oes.rgba8 =
+        supports_extension(extensions, oes::rgb8_rgba8::name);
 
-    out.texture.tex.khr.astc = supports_extension(
-        extensions, khr::texture_compression_astc_ldr::name);
-    out.texture.tex.khr.astc_hdr = supports_extension(
-        extensions, khr::texture_compression_astc_hdr::name);
+    out.texture.tex.khr.astc =
+        supports_extension(extensions, khr::texture_compression_astc_ldr::name);
+    out.texture.tex.khr.astc_hdr =
+        supports_extension(extensions, khr::texture_compression_astc_hdr::name);
 
-    out.texture.tex.img.pvrtc
-        = supports_extension(extensions, img::texture_compression_pvrtc::name);
-    out.texture.tex.img.pvrtc2
-        = supports_extension(extensions, img::texture_compression_pvrtc2::name);
+    out.texture.tex.img.pvrtc =
+        supports_extension(extensions, img::texture_compression_pvrtc::name);
+    out.texture.tex.img.pvrtc2 =
+        supports_extension(extensions, img::texture_compression_pvrtc2::name);
 
-    out.texture.bindless_handles
-        = supports_extension(extensions, arb::bindless_texture::name);
+    out.texture.bindless_handles =
+        supports_extension(extensions, arb::bindless_texture::name);
 
     return {out, api_type, api_version};
 }
@@ -780,8 +779,8 @@ static auto shaderlang_regex()
 
 string api::shaderlang_name()
 {
-    auto version
-        = cmd::get_string(group::string_name::shading_language_version);
+    auto version =
+        cmd::get_string(group::string_name::shading_language_version);
     std::vector<std::string> elements;
     if(!stl_types::regex::match(shaderlang_regex(), version, elements))
         return "Unknown GLSL";
@@ -798,8 +797,8 @@ api_type_t api::shaderlang_type()
 tuple<u32, u32> api::shaderlang_version()
 {
     using stl_types::cast_string;
-    auto version
-        = cmd::get_string(group::string_name::shading_language_version);
+    auto version =
+        cmd::get_string(group::string_name::shading_language_version);
     std::vector<std::string> elements;
     if(!stl_types::regex::match(shaderlang_regex(), version, elements))
         return {0, 0};
@@ -923,8 +922,8 @@ optional<error> api::load(load_options_t options)
     m_features.debug.khr.debug = supports_extension(gl::khr::debug::name);
     [[maybe_unused]] auto _    = debug().scope(__PRETTY_FUNCTION__);
 
-    auto [native_features, native_api, native_version]
-        = query_native_api_features(m_extensions, options);
+    auto [native_features, native_api, native_version] =
+        query_native_api_features(m_extensions, options);
 
     if(options.api_version)
         m_api_version = *options.api_version;
@@ -937,7 +936,7 @@ optional<error> api::load(load_options_t options)
         m_api_type = native_api;
 
     gleam::workarounds default_workarounds = {
-    // clang-format off
+        // clang-format off
         .draw = {
             .emulated_instance_id   = true,
             .emulated_base_instance = true,
@@ -952,7 +951,7 @@ optional<error> api::load(load_options_t options)
         .bugs = {
             .adreno_3xx = false,
         },
-    // clang-format on
+        // clang-format on
     };
 
     /* TODO: Implement shader preprocessing to make InstanceID and BaseInstance
@@ -989,8 +988,8 @@ optional<error> api::load(load_options_t options)
 
     {
         auto [vendor, renderer] = device();
-        if(vendor.starts_with("Qualcomm")
-           && renderer.starts_with("Adreno (TM) 3"))
+        if(vendor.starts_with("Qualcomm") &&
+           renderer.starts_with("Adreno (TM) 3"))
             m_workarounds.bugs.adreno_3xx = true;
     }
 
@@ -1011,8 +1010,8 @@ optional<error> api::load(load_options_t options)
         }
 
 #if GLEAM_MAX_VERSION_ES != 0x200
-        if(compiled_api == api_type_t::core
-           || (compiled_api == api_type_t::es && m_api_version >= 0x300))
+        if(compiled_api == api_type_t::core ||
+           (compiled_api == api_type_t::es && m_api_version >= 0x300))
         {
             /* Some modern implementations might not like use of VAO 0 */
             u32 hnd{};
@@ -1086,8 +1085,8 @@ optional<error> api::load(load_options_t options)
     if(m_features.draw.indirect)
     {
         using semantic::RSCA;
-        auto buffer
-            = alloc_buffer(buffers::draw, RSCA::ReadWrite | RSCA::Streaming);
+        auto buffer =
+            alloc_buffer(buffers::draw, RSCA::ReadWrite | RSCA::Streaming);
         buffer->alloc();
         buffer->commit(options.indirect_buffer_size.value_or(16 * 1024));
         m_indirect_buffer = std::make_unique<circular_buffer_t>(
@@ -1123,8 +1122,8 @@ bool api::supports_render_format(
 
 #if GLEAM_MAX_VERSION >= 0x420
     i32 supported = 0;
-    auto [internal_fmt, _, __]
-        = convert::to<group::internal_format>(fmt, features.texture);
+    auto [internal_fmt, _, __] =
+        convert::to<group::internal_format>(fmt, features.texture);
     cmd::get_internalformativ(
         group::texture_target::renderbuffer,
         internal_fmt,

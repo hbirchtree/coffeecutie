@@ -39,6 +39,7 @@ struct rng
         using i32_lim = std::numeric_limits<i32>;
         return rand<i32>(i32_lim::min(), i32_lim::max());
     }
+
     u32 urand()
     {
         using u32_lim = std::numeric_limits<u32>;

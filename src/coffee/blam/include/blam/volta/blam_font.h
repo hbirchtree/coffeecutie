@@ -17,6 +17,7 @@ struct alignas(32) font
     {
         i16 index{}; /* Probably -1 for most?*/
     };
+
     struct alignas(4) character_t
     {
         u16        character;
@@ -27,8 +28,8 @@ struct alignas(32) font
         u16        scancode;
         u32        pixel_offset;
 
-        static constexpr u16 no_scancode
-            = static_cast<u16>(static_cast<i16>(-1));
+        static constexpr u16 no_scancode =
+            static_cast<u16>(static_cast<i16>(-1));
     };
 
     font_flags_t flags;
@@ -61,8 +62,9 @@ struct alignas(32) font
         return p;
     }
 
-    using character_pair_t
-        = std::optional<std::tuple<character_t const*, Span<const char>>>;
+    using character_pair_t =
+        std::optional<std::tuple<character_t const*, Span<const char>>>;
+
     character_pair_t character(u16 c, magic_data_t const& magic) const
     {
         character_t const* selection{nullptr};
@@ -80,8 +82,8 @@ struct alignas(32) font
         }
         if(!selection)
             return std::nullopt;
-        auto data_size = std::max<u16>(selection->bitmap_width, 0u)
-                         * std::max<u16>(selection->bitmap_height, 0u);
+        auto data_size = std::max<u16>(selection->bitmap_width, 0u) *
+                         std::max<u16>(selection->bitmap_height, 0u);
         auto data = pixel_data(selection->pixel_offset, data_size).data(magic);
         if(!data.has_value())
             return std::nullopt;

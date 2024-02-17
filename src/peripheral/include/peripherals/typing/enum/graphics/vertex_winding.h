@@ -10,4 +10,4 @@ enum class VertexWinding
 };
 
 }
-}
+} // namespace typing

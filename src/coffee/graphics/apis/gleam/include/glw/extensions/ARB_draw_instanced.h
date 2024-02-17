@@ -4,6 +4,7 @@
 namespace gl::arb::draw_instanced {
 namespace values {
 } // namespace values
+
 /*!
  * \brief Part of GL_ARB_draw_instanced
  * \param mode GLenum

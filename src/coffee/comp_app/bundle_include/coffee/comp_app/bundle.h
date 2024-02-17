@@ -20,8 +20,8 @@ extern void addDefaults(
     AppLoader&                            loader,
     app_error&                            ec);
 
-inline void addDefaults(AppLoadableService::entity_container& container,
-                        app_error& ec)
+inline void addDefaults(
+    AppLoadableService::entity_container& container, app_error& ec)
 {
     addDefaults(container, *container.service<AppLoader>(), ec);
 }
@@ -39,8 +39,8 @@ void emscripten_loop();
 struct BundleData
 {
 #if defined(COFFEE_EMSCRIPTEN)
-    static constexpr void(*EmscriptenLoop)() = emscripten_loop;
+    static constexpr void (*EmscriptenLoop)() = emscripten_loop;
 #endif
 };
 
-}
+} // namespace comp_app

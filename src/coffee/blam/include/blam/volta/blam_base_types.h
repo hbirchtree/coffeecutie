@@ -51,10 +51,10 @@ struct bounding_box
 
         auto origin_diff = point - o;
         auto extent_diff = e - point;
-        bool within_origin
-            = origin_diff.x < 0 && origin_diff.y < 0 && origin_diff.z < 0;
-        bool within_extents
-            = extent_diff.x > 0 && extent_diff.y > 0 && extent_diff.z > 0;
+        bool within_origin =
+            origin_diff.x < 0 && origin_diff.y < 0 && origin_diff.z < 0;
+        bool within_extents =
+            extent_diff.x > 0 && extent_diff.y > 0 && extent_diff.z > 0;
         return within_origin && within_extents;
     }
 
@@ -66,6 +66,7 @@ struct bounding_box
         };
     }
 };
+
 static_assert(sizeof(bounding_box) == 24, "bounding_box must be 24 bytes");
 
 /*!
@@ -74,8 +75,8 @@ static_assert(sizeof(bounding_box) == 24, "bounding_box must be 24 bytes");
  */
 enum class maptype_t : i32
 {
-    singleplayer
-    = 0,             /*!< A single-player map, typically with cutscenes and AI*/
+    singleplayer =
+        0,           /*!< A single-player map, typically with cutscenes and AI*/
     multiplayer = 1, /*!< A multi-player map, typically with up to 16 players*/
     ui          = 2, /*!< A UI map, used only in the main menu*/
 };
@@ -114,7 +115,8 @@ struct bl_string_var
     std::array<char, Size> data{};
 
     template<typename Dummy = void>
-    requires(Size == 4) inline std::string str() const
+    requires(Size == 4)
+    inline std::string str() const
     {
         if(data.at(0) == 0)
             return {};
@@ -125,21 +127,24 @@ struct bl_string_var
     }
 
     template<typename Dummy = void>
-    requires(Size != 4) inline std::string_view str() const
+    requires(Size != 4)
+    inline std::string_view str() const
     {
         /* TODO: Enforce max length of the string here */
         return std::string_view(data.data());
     }
 
     template<typename Dummy = void>
-    requires(Size == 4) explicit operator u32() const
+    requires(Size == 4)
+    explicit operator u32() const
     {
         u32 const* idata = C_RCAST<u32 const*>(data.data());
         return *idata;
     }
 
     template<typename Dummy = void>
-    requires(Size != 4) inline operator std::string_view() const
+    requires(Size != 4)
+    inline operator std::string_view() const
     {
         return str();
     }

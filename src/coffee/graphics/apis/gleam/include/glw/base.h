@@ -121,24 +121,23 @@ struct Version
 };
 
 template<class Current, class Required>
-concept MinimumVersion = Current::major >= Required::major &&
-                         (Current::major > Required::major ||
-                          Current::minor >= Required::minor);
+concept MinimumVersion =
+    Current::major >= Required::major &&
+    (Current::major > Required::major || Current::minor >= Required::minor);
 
 template<class Current, class Maximum>
-concept MaximumVersion = Current::major < Maximum::major ||
-                         (Current::major == Maximum::major &&
-                          Current::minor <= Maximum::minor);
+concept MaximumVersion =
+    Current::major < Maximum::major ||
+    (Current::major == Maximum::major && Current::minor <= Maximum::minor);
 
-namespace detail
+namespace detail {
+
+inline std::string error_to_hex(auto error)
 {
+    return stl_types::str::fmt::pointerify(error);
+}
 
-    inline std::string error_to_hex(auto error)
-    {
-        return stl_types::str::fmt::pointerify(error);
-    }
-
-    void error_check(std::string_view cmd_name);
+void error_check(std::string_view cmd_name);
 
 } // namespace detail
 } // namespace gl

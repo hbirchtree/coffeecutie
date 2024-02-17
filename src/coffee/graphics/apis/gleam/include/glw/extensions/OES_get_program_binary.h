@@ -7,19 +7,20 @@ constexpr u32 program_binary_length      = 0x8741;
 constexpr u32 num_program_binary_formats = 0x87FE;
 constexpr u32 program_binary_formats     = 0x87FF;
 } // namespace values
+
 template<class span_void>
 requires(concepts::span<span_void>)
-    /*!
-     * \brief Part of GL_OES_get_program_binary
-     * \param program GLuint
-     * \param bufSize GLsizei
-     * \param length GLsizei *
-     * \param binaryFormat GLenum *
-     * \param binary void *
-     * \return void
-     */
-    STATICINLINE void get_program_binary(
-        u32 program, i32& length, GLenum& binaryFormat, span_void binary)
+/*!
+ * \brief Part of GL_OES_get_program_binary
+ * \param program GLuint
+ * \param bufSize GLsizei
+ * \param length GLsizei *
+ * \param binaryFormat GLenum *
+ * \param binary void *
+ * \return void
+ */
+STATICINLINE void get_program_binary(
+    u32 program, i32& length, GLenum& binaryFormat, span_void binary)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -42,19 +43,16 @@ requires(concepts::span<span_void>)
 
 template<class span_const_void>
 requires(concepts::span<span_const_void>)
-    /*!
-     * \brief Part of GL_OES_get_program_binary
-     * \param program GLuint
-     * \param binaryFormat GLenum
-     * \param binary const void *
-     * \param length GLint
-     * \return void
-     */
-    STATICINLINE void program_binary(
-        u32                    program,
-        GLenum                 binaryFormat,
-        span_const_void const& binary,
-        i32                    length)
+/*!
+ * \brief Part of GL_OES_get_program_binary
+ * \param program GLuint
+ * \param binaryFormat GLenum
+ * \param binary const void *
+ * \param length GLint
+ * \return void
+ */
+STATICINLINE void program_binary(
+    u32 program, GLenum binaryFormat, span_const_void const& binary, i32 length)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

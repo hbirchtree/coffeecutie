@@ -52,8 +52,8 @@ struct permissions_t
     permission_t::permission_t owner{}, group{}, other{};
 };
 
-static constexpr permissions_t default_permissions
-    = {permission_t::all, permission_t::all, permission_t::none};
+static constexpr permissions_t default_permissions = {
+    permission_t::all, permission_t::all, permission_t::none};
 
 struct file_info_t
 {
@@ -85,7 +85,7 @@ struct create_params_t
 
 struct file_entry_t
 {
-    mode_t            mode;
+    mode_t      mode;
     std::string name;
 };
 

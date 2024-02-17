@@ -4,6 +4,7 @@
 namespace gl::nvx::conditional_render {
 namespace values {
 } // namespace values
+
 /*!
  * \brief Part of GL_NVX_conditional_render
  * \param id GLuint

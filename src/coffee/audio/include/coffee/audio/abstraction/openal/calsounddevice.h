@@ -3,13 +3,13 @@
 
 #include "copenal_common.h"
 
-namespace Coffee{
-namespace CAudio{
-namespace COpenAL{
+namespace Coffee {
+namespace CAudio {
+namespace COpenAL {
 
 struct _cal_devdata;
 
-class CALSoundDevice : public CSoundDevice<CALSource,CALBuffer>
+class CALSoundDevice : public CSoundDevice<CALSource, CALBuffer>
 {
     friend class CALSoundManager;
 
@@ -17,28 +17,29 @@ class CALSoundDevice : public CSoundDevice<CALSource,CALBuffer>
 
     bool is_loaded();
 
-public:
-    CALSoundDevice(const CSoundDeviceIdentifier &dev);
-    CALSoundDevice(const CSoundDeviceIdentifier &card,
-                   const CSoundDeviceIdentifier &capdev,
-                   const CSoundFormat &fmt);
+  public:
+    CALSoundDevice(const CSoundDeviceIdentifier& dev);
+    CALSoundDevice(
+        const CSoundDeviceIdentifier& card,
+        const CSoundDeviceIdentifier& capdev,
+        const CSoundFormat&           fmt);
     ~CALSoundDevice();
 
-    CSoundMixer<CALSource,CALBuffer> &mixer();
-    CSoundFormat &outputFormat();
-    bool isCaptureDevice();
-    CSoundStream<CALSource,CALBuffer> &captureStreamer();
+    CSoundMixer<CALSource, CALBuffer>&  mixer();
+    CSoundFormat&                       outputFormat();
+    bool                                isCaptureDevice();
+    CSoundStream<CALSource, CALBuffer>& captureStreamer();
 
     CALContext* alContext();
 
-    CSoundBuffer<CALSource,CALBuffer> &genBuffer();
-    CSoundSample<CALSource,CALBuffer> &genSample(CSoundBuffer<CALSource, CALBuffer> &buf,
-                            CSoundFormat &fmt);
-    CSoundStream<CALSource, CALBuffer> &genStream(CSoundFormat &fmt);
+    CSoundBuffer<CALSource, CALBuffer>& genBuffer();
+    CSoundSample<CALSource, CALBuffer>& genSample(
+        CSoundBuffer<CALSource, CALBuffer>& buf, CSoundFormat& fmt);
+    CSoundStream<CALSource, CALBuffer>& genStream(CSoundFormat& fmt);
 };
 
-}
-}
-}
+} // namespace COpenAL
+} // namespace CAudio
+} // namespace Coffee
 
 #endif

@@ -11,19 +11,25 @@ namespace typing::pixels {
 
 struct CompFmt
 {
-    constexpr CompFmt() :
-        base_fmt(PixFmt::None), c_flags(CompFlags::CompressionNone),
-        p_flags(PixFlg::None)
+    constexpr CompFmt()
+        : base_fmt(PixFmt::None)
+        , c_flags(CompFlags::CompressionNone)
+        , p_flags(PixFlg::None)
     {
     }
-    constexpr CompFmt(PixFmt base, CompFlags cf = CompFlags::CompressionNone) :
-        base_fmt(base), c_flags(cf), p_flags(PixFlg::None)
+
+    constexpr CompFmt(PixFmt base, CompFlags cf = CompFlags::CompressionNone)
+        : base_fmt(base)
+        , c_flags(cf)
+        , p_flags(PixFlg::None)
     {
     }
+
     constexpr CompFmt(
-        PixFmt base, PixFlg flg, CompFlags cf = CompFlags::CompressionNone) :
-        base_fmt(base),
-        c_flags(cf), p_flags(flg)
+        PixFmt base, PixFlg flg, CompFlags cf = CompFlags::CompressionNone)
+        : base_fmt(base)
+        , c_flags(cf)
+        , p_flags(flg)
     {
     }
 
@@ -36,8 +42,8 @@ namespace convert {
 
 template<
     typename ToType,
-    typename std::enable_if<
-        std::is_same<ToType, PixFlg>::value>::type* = nullptr>
+    typename std::enable_if<std::is_same<ToType, PixFlg>::value>::type* =
+        nullptr>
 FORCEDINLINE constexpr PixFlg to(PixCmp component)
 {
     switch(component)
@@ -64,8 +70,8 @@ FORCEDINLINE constexpr PixFlg to(PixCmp component)
 
 template<
     typename ToType,
-    typename std::enable_if<
-        std::is_same<ToType, BitFmt>::value>::type* = nullptr>
+    typename std::enable_if<std::is_same<ToType, BitFmt>::value>::type* =
+        nullptr>
 FORCEDINLINE constexpr BitFmt to(PixFmt fmt)
 {
     using P = PixFmt;
@@ -160,8 +166,8 @@ FORCEDINLINE constexpr BitFmt to(PixFmt fmt)
  */
 template<
     typename ToType,
-    typename std::enable_if<
-        std::is_same<ToType, PixFlg>::value>::type* = nullptr>
+    typename std::enable_if<std::is_same<ToType, PixFlg>::value>::type* =
+        nullptr>
 FORCEDINLINE constexpr PixFlg to(PixFmt fmt)
 {
     using F = PixFmt;
@@ -257,8 +263,8 @@ FORCEDINLINE constexpr PixFlg to(PixFmt fmt)
 
 template<
     typename ToType,
-    typename std::enable_if<
-        std::is_same<ToType, PixCmp>::value>::type* = nullptr>
+    typename std::enable_if<std::is_same<ToType, PixCmp>::value>::type* =
+        nullptr>
 FORCEDINLINE constexpr PixCmp to(PixFmt fmt)
 {
     using C = PixCmp;
@@ -346,8 +352,8 @@ FORCEDINLINE constexpr PixCmp to(PixFmt fmt)
 }
 
 template<typename ToType>
-requires std::is_same_v<ToType, PixCmp> FORCEDINLINE constexpr PixCmp to(
-    CompFmt fmt)
+requires std::is_same_v<ToType, PixCmp>
+FORCEDINLINE constexpr PixCmp to(CompFmt fmt)
 {
     switch(fmt.base_fmt)
     {
@@ -408,8 +414,8 @@ enum format_property
 
 template<format_property Prop>
 requires(Prop == supports_srgb)
-    //
-    FORCEDINLINE constexpr bool get(PixFmt f)
+//
+FORCEDINLINE constexpr bool get(PixFmt f)
 {
     switch(f)
     {
@@ -423,8 +429,8 @@ requires(Prop == supports_srgb)
 
 template<format_property Prop>
 requires(Prop == pixel_size)
-    //
-    FORCEDINLINE constexpr szptr get(BitFmt fmt, PixCmp comp, szptr pixels)
+//
+FORCEDINLINE constexpr szptr get(BitFmt fmt, PixCmp comp, szptr pixels)
 {
     using B = BitFmt;
 
@@ -530,10 +536,12 @@ struct layout_t
     {
         return {v, v, v, v, 0, 0};
     }
+
     static layout_t rgba(u8 v, u8 a)
     {
         return {v, v, v, a, 0, 0};
     }
+
     static layout_t ds(u8 depth, u8 stencil)
     {
         return {0, 0, 0, 0, depth, stencil};
@@ -542,8 +550,8 @@ struct layout_t
 
 template<format_property Prop>
 requires(Prop == layout)
-    //
-    FORCEDINLINE constexpr layout_t get(PixFmt fmt)
+//
+FORCEDINLINE constexpr layout_t get(PixFmt fmt)
 {
     using F = PixFmt;
 
@@ -625,39 +633,53 @@ requires(Prop == layout)
 
 struct PixDesc
 {
-    PixDesc() :
-        pixfmt(PixFmt::None), cmpflg(CompFlags::CompressionNone),
-        pixflg(PixFlg::None), bfmt(BitFmt::Byte), comp(PixCmp::None)
+    PixDesc()
+        : pixfmt(PixFmt::None)
+        , cmpflg(CompFlags::CompressionNone)
+        , pixflg(PixFlg::None)
+        , bfmt(BitFmt::Byte)
+        , comp(PixCmp::None)
     {
     }
 
-    PixDesc(PixFmt pixfmt) :
-        pixfmt(pixfmt), cmpflg(CompFlags::CompressionNone),
-        pixflg(PixFlg::None), bfmt(convert::to<BitFmt>(pixfmt)),
-        comp(convert::to<PixCmp>(pixfmt))
+    PixDesc(PixFmt pixfmt)
+        : pixfmt(pixfmt)
+        , cmpflg(CompFlags::CompressionNone)
+        , pixflg(PixFlg::None)
+        , bfmt(convert::to<BitFmt>(pixfmt))
+        , comp(convert::to<PixCmp>(pixfmt))
     {
     }
 
-    PixDesc(PixFmt pixfmt, BitFmt bitfmt, PixCmp comp) :
-        pixfmt(pixfmt), cmpflg(CompFlags::CompressionNone),
-        pixflg(PixFlg::None), bfmt(bitfmt), comp(comp)
+    PixDesc(PixFmt pixfmt, BitFmt bitfmt, PixCmp comp)
+        : pixfmt(pixfmt)
+        , cmpflg(CompFlags::CompressionNone)
+        , pixflg(PixFlg::None)
+        , bfmt(bitfmt)
+        , comp(comp)
     {
     }
 
-    PixDesc(BitFmt bitfmt, PixCmp comp) :
-        pixfmt(PixFmt::None), cmpflg(CompFlags::CompressionNone),
-        pixflg(PixFlg::None), bfmt(bitfmt), comp(comp)
+    PixDesc(BitFmt bitfmt, PixCmp comp)
+        : pixfmt(PixFmt::None)
+        , cmpflg(CompFlags::CompressionNone)
+        , pixflg(PixFlg::None)
+        , bfmt(bitfmt)
+        , comp(comp)
     {
     }
 
-    PixDesc(CompFmt cf) :
-        c(cf), bfmt(BitFmt::Byte), comp(convert::to<PixCmp>(c))
+    PixDesc(CompFmt cf)
+        : c(cf)
+        , bfmt(BitFmt::Byte)
+        , comp(convert::to<PixCmp>(c))
     {
     }
 
     union
     {
         CompFmt c;
+
         struct
         {
             PixFmt    pixfmt;

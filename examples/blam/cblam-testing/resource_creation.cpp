@@ -23,8 +23,8 @@ void create_resources(compo::EntityContainer& e)
         using namespace Coffee::Display::EventHandlers;
         using namespace Coffee;
 
-        auto eventhandler
-            = e.service<comp_app::BasicEventBus<Input::CIEvent>>();
+        auto eventhandler =
+            e.service<comp_app::BasicEventBus<Input::CIEvent>>();
 
         eventhandler->addEventHandler(
             1024,
@@ -54,8 +54,8 @@ void create_resources(compo::EntityContainer& e)
     gfx::api&      api       = e.subsystem_cast<gfx::system>();
     BlamResources& resources = e.register_subsystem_inplace<BlamResources>();
 
-    resources.background_worker
-        = rq::runtime_queue::CreateNewThreadQueue("Background Worker").value();
+    resources.background_worker =
+        rq::runtime_queue::CreateNewThreadQueue("Background Worker").value();
 
     e.register_subsystem_inplace<PostProcessParameters>();
 
@@ -81,30 +81,30 @@ void create_resources(compo::EntityContainer& e)
     resources.model_index->alloc();
     resources.model_index->commit(memory_budget::mesh_elements);
 
-    resources.model_matrix_store
-        = api.alloc_buffer(gfx::buffers::constants, access);
+    resources.model_matrix_store =
+        api.alloc_buffer(gfx::buffers::constants, access);
     if(api.feature_info().buffer.ssbo && false)
     {
         //        resources.model_matrix_store
         //            = api.alloc_buffer(gfx::buffers::shader_writable, access);
-        resources.material_store
-            = api.alloc_buffer(gfx::buffers::shader_writable, access);
-        resources.transparent_store
-            = api.alloc_buffer(gfx::buffers::shader_writable, access);
+        resources.material_store =
+            api.alloc_buffer(gfx::buffers::shader_writable, access);
+        resources.transparent_store =
+            api.alloc_buffer(gfx::buffers::shader_writable, access);
     } else if(api.feature_info().buffer.ubo)
     {
-        resources.material_store
-            = api.alloc_buffer(gfx::buffers::constants, access);
-        resources.transparent_store
-            = api.alloc_buffer(gfx::buffers::constants, access);
+        resources.material_store =
+            api.alloc_buffer(gfx::buffers::constants, access);
+        resources.transparent_store =
+            api.alloc_buffer(gfx::buffers::constants, access);
     } else
     {
-        resources.model_matrix_store
-            = api.alloc_buffer(gfx::buffers::vertex, access);
-        resources.material_store
-            = api.alloc_buffer(gfx::buffers::vertex, access);
-        resources.transparent_store
-            = api.alloc_buffer(gfx::buffers::vertex, access);
+        resources.model_matrix_store =
+            api.alloc_buffer(gfx::buffers::vertex, access);
+        resources.material_store =
+            api.alloc_buffer(gfx::buffers::vertex, access);
+        resources.transparent_store =
+            api.alloc_buffer(gfx::buffers::vertex, access);
     }
     resources.model_matrix_store->alloc();
     resources.model_matrix_store->commit(memory_budget::matrix_buffer);
@@ -113,8 +113,8 @@ void create_resources(compo::EntityContainer& e)
 
     if(api.feature_info().buffer.ubo)
     {
-        resources.world_store
-            = api.alloc_buffer(gfx::buffers::constants, access);
+        resources.world_store =
+            api.alloc_buffer(gfx::buffers::constants, access);
     } else
         resources.world_store = api.alloc_buffer(gfx::buffers::vertex, access);
     resources.world_store->alloc();
@@ -203,8 +203,8 @@ void create_resources(compo::EntityContainer& e)
     resources.debug_lines = api.alloc_buffer(gfx::buffers::vertex, access);
     resources.debug_lines->alloc();
     resources.debug_lines->commit(memory_budget::debug_buffer / 2);
-    resources.debug_line_colors
-        = api.alloc_buffer(gfx::buffers::vertex, access);
+    resources.debug_line_colors =
+        api.alloc_buffer(gfx::buffers::vertex, access);
     resources.debug_line_colors->alloc();
     resources.debug_line_colors->commit(memory_budget::debug_buffer / 2);
 
@@ -236,34 +236,38 @@ void create_resources(compo::EntityContainer& e)
         auto& y     = y_.get<DebugDraw>();
         auto& z     = z_.get<DebugDraw>();
         x.color_ptr = 0;
-        x.data = gfx::draw_command::data_t{
-            .arrays = {
-                .count = 2,
-                .offset = 0,
-            },
+        x.data      = gfx::draw_command::data_t{
+                 .arrays =
+                     {
+                         .count  = 2,
+                         .offset = 0,
+                },
         };
         y.color_ptr = 1;
-        y.data = gfx::draw_command::data_t{
-            .arrays = {
-                .count = 2,
-                .offset = 2,
-            },
+        y.data      = gfx::draw_command::data_t{
+                 .arrays =
+                     {
+                         .count  = 2,
+                         .offset = 2,
+                },
         };
         z.color_ptr = 2;
-        z.data = gfx::draw_command::data_t{
-            .arrays = {
-                .count = 2,
-                .offset = 4,
-            },
+        z.data      = gfx::draw_command::data_t{
+                 .arrays =
+                     {
+                         .count  = 2,
+                         .offset = 4,
+                },
         };
 
         auto& camera     = e.create_entity(debug_draw).get<DebugDraw>();
         camera.color_ptr = 3;
-        camera.data = gfx::draw_command::data_t{
-            .arrays = {
-                .count = 6,
-                .offset = 6,
-            },
+        camera.data      = gfx::draw_command::data_t{
+                 .arrays =
+                     {
+                         .count  = 6,
+                         .offset = 6,
+                },
         };
         col[3] = Vecf3{1, 0, 1};
     }
@@ -273,6 +277,7 @@ void create_resources(compo::EntityContainer& e)
         {
             Vecf3 pos;
         };
+
         auto& debug_attr = resources.debug_attr;
         debug_attr       = api.alloc_vertex_array();
         debug_attr->alloc();
@@ -280,8 +285,8 @@ void create_resources(compo::EntityContainer& e)
         auto color_vtx = gfx::vertex_attribute::from_member(&debug_vertex::pos);
         color_vtx.index     = 1;
         color_vtx.buffer.id = 1;
-        color_vtx.value.flags
-            = gfx::vertex_attribute::attribute_flags::instanced;
+        color_vtx.value.flags =
+            gfx::vertex_attribute::attribute_flags::instanced;
         debug_attr->add(color_vtx);
         debug_attr->set_buffer(gfx::buffers::vertex, resources.debug_lines, 0);
         debug_attr->set_buffer(
@@ -318,8 +323,8 @@ void create_resources(compo::EntityContainer& e)
 
         resources.offscreen->attach(attachment::color, *resources.color, 0);
         resources.offscreen->attach(
-            (api.feature_info().rendertarget.depth_32f
-             || !api.feature_info().rendertarget.depth24_stencil8)
+            (api.feature_info().rendertarget.depth_32f ||
+             !api.feature_info().rendertarget.depth24_stencil8)
                 ? attachment::depth
                 : attachment::depth_stencil,
             *resources.depth,
@@ -527,9 +532,9 @@ void create_shaders(compo::EntityContainer& e)
     auto const& bugs     = gfx.workarounds().bugs;
 
     const bool use_spv = features.program.spirv;
-    const bool use_uber
-        = features.texture.cube_array /*&& features.buffer.ssbo*/
-          && !lowspec_hardware && !bugs.adreno_3xx;
+    const bool use_uber =
+        features.texture.cube_array /*&& features.buffer.ssbo*/
+        && !lowspec_hardware && !bugs.adreno_3xx;
     const bool use_uber_lite = features.buffer.ubo && !bugs.adreno_3xx;
 
     if(use_spv && false)

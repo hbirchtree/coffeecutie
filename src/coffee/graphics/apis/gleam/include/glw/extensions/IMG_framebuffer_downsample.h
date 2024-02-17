@@ -2,13 +2,16 @@
 
 #ifdef GL_IMG_framebuffer_downsample
 #include "../enums/FramebufferAttachmentParameterName.h"
+
 namespace gl::img::framebuffer_downsample {
 using gl::group::framebuffer_attachment_parameter_name;
+
 namespace values {
 constexpr u32 framebuffer_incomplete_multisample_and_downsample = 0x913C;
 constexpr u32 num_downsample_scales                             = 0x913D;
 constexpr u32 downsample_scales                                 = 0x913E;
 } // namespace values
+
 /*!
  * \brief Part of GL_IMG_framebuffer_downsample
  * \param target GLenum

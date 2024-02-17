@@ -103,7 +103,7 @@ inline void foreach_cpuinfo(stl_types::Function<bool(
     if(auto lines = file::libc::read_lines("/proc/cpuinfo"_sys);
        lines.has_value())
     {
-        auto             it      = lines.value();
+        auto        it      = lines.value();
         std::string proc_id = "0";
         std::string phys_id = "0";
         do
@@ -149,6 +149,7 @@ inline u32 node_count()
 {
     return 1;
 }
+
 inline u32 cpu_count()
 {
     using url::Path;
@@ -156,14 +157,15 @@ inline u32 cpu_count()
     std::set<std::string> die_ids;
     for(auto const& id : detail::online_cores())
     {
-        if(auto die_id
-           = detail::read_cpu(id, Path{"topology/physical_package_id"});
+        if(auto die_id =
+               detail::read_cpu(id, Path{"topology/physical_package_id"});
            die_id.has_value())
             die_ids.insert(die_id.value().data());
     }
 
     return die_ids.size();
 }
+
 inline u32 core_count(u32 cpu = 0, [[maybe_unused]] u32 /*node*/ = 0)
 {
     using url::Path;
@@ -172,8 +174,8 @@ inline u32 core_count(u32 cpu = 0, [[maybe_unused]] u32 /*node*/ = 0)
     std::set<std::string> core_ids;
     for(auto const& id : detail::online_cores())
     {
-        if(auto die_id
-           = detail::read_cpu(id, Path{"topology/physical_package_id"});
+        if(auto die_id =
+               detail::read_cpu(id, Path{"topology/physical_package_id"});
            die_id.has_value())
         {
             auto die_id_ = die_id.value();
@@ -189,16 +191,17 @@ inline u32 core_count(u32 cpu = 0, [[maybe_unused]] u32 /*node*/ = 0)
 
     return core_ids.size();
 }
+
 inline u32 thread_count(u32 cpu = 0, [[maybe_unused]] u32 /*node*/ = 0)
 {
     using url::Path;
 
-    std::string             selected_cpu = std::to_string(cpu);
+    std::string                  selected_cpu = std::to_string(cpu);
     std::vector<libc_types::u16> thread_ids;
     for(auto const& id : detail::online_cores())
     {
-        if(auto die_id
-           = detail::read_cpu(id, Path{"topology/physical_package_id"});
+        if(auto die_id =
+               detail::read_cpu(id, Path{"topology/physical_package_id"});
            die_id.has_value())
         {
             auto die_id_ = die_id.value();
@@ -267,8 +270,8 @@ inline topological_map<u32> topo_frequency()
     topological_map<u32> freqs;
     for(auto const& id : detail::online_cores())
     {
-        auto die_id
-            = detail::read_cpu(id, Path{"topology/physical_package_id"});
+        auto die_id =
+            detail::read_cpu(id, Path{"topology/physical_package_id"});
         auto core_id   = detail::read_cpu(id, Path{"topology/core_id"});
         auto frequency = detail::read_cpu(id, Path{"cpufreq/cpuinfo_max_freq"});
 
@@ -278,8 +281,8 @@ inline topological_map<u32> topo_frequency()
         auto die_id_ = libc::str::from_string<i32>(
             (die_id && die_id.value() != "-1" ? die_id.value() : "0"s).data());
         auto core_id_ = libc::str::from_string<u32>(core_id.value().data());
-        freqs[die_id_][core_id_]
-            = libc::str::from_string<u32>(frequency.value().data());
+        freqs[die_id_][core_id_] =
+            libc::str::from_string<u32>(frequency.value().data());
     }
 
     return freqs;
@@ -292,11 +295,11 @@ inline u32 frequency(bool current = false, u32 cpu = 0, u32 /*node*/ = 0)
     auto freq_path = current ? "scaling_cur_freq" : "cpuinfo_max_freq";
     for(auto const& id : detail::online_cores())
     {
-        auto cpu_id
-            = detail::read_cpu(id, Path{"topology/physical_package_id"});
+        auto cpu_id =
+            detail::read_cpu(id, Path{"topology/physical_package_id"});
 
-        if(cpu_id.has_error()
-           || (cpu_id.value() != select_id && cpu_id.value() != "-1"))
+        if(cpu_id.has_error() ||
+           (cpu_id.value() != select_id && cpu_id.value() != "-1"))
             continue;
         auto freq = detail::read_cpu(id, Path{"cpufreq"} / freq_path);
         if(freq.has_error())
@@ -402,8 +405,8 @@ inline std::optional<std::pair<std::string, std::string>> device()
         vendor = content.value();
     if(vendor == "LENOVO")
     {
-        if(auto content
-           = detail::read_sysfs(url::Path{dmi_root} / "product_version"))
+        if(auto content =
+               detail::read_sysfs(url::Path{dmi_root} / "product_version"))
             product = content.value();
     } else if(
         auto content = detail::read_sysfs(url::Path{dmi_root} / "product_name"))
@@ -468,11 +471,11 @@ inline std::optional<std::pair<std::string, std::string>> chassis()
 {
     using namespace url::constructors;
     std::string vendor, model = "Chassis";
-    if(auto content
-       = detail::read_sysfs(url::Path{dmi_root} / "chassis_vendor"))
+    if(auto content =
+           detail::read_sysfs(url::Path{dmi_root} / "chassis_vendor"))
         vendor = content.value();
-    if(auto content
-       = detail::read_sysfs(url::Path{dmi_root} / "chassis_version"))
+    if(auto content =
+           detail::read_sysfs(url::Path{dmi_root} / "chassis_version"))
         model = content.value();
     if(model == "Not Available")
         model = {};
@@ -487,8 +490,8 @@ inline DeviceType variant()
     using namespace url::constructors;
     if(auto type = detail::read_sysfs("/sys/class/dmi/id/chassis_type"_sys))
     {
-        auto itype
-            = libc::str::from_string<libc_types::u32>(type.value().data());
+        auto itype =
+            libc::str::from_string<libc_types::u32>(type.value().data());
         switch(itype)
         {
         case 0x1:

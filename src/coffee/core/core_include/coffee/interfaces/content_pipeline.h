@@ -39,8 +39,8 @@ struct FileProcessor
      * \param files
      * \return
      */
-    virtual void process(std::vector<vfs::desc>& files, TerminalCursor& cursor)
-        = 0;
+    virtual void process(
+        std::vector<vfs::desc>& files, TerminalCursor& cursor) = 0;
 
     virtual void setInternalState(
         std::shared_ptr<State::InternalState>                 state,
@@ -62,9 +62,8 @@ struct FileProcessor
 
     virtual Url cacheTransform(Path const& f)
     {
-        return cacheBaseDir
-               + Path(
-                   stl_types::str::replace::str<char>(f.internUrl, "/", "_"));
+        return cacheBaseDir +
+               Path(stl_types::str::replace::str<char>(f.internUrl, "/", "_"));
     }
 
     virtual bool isCached(Path const& file)
@@ -79,8 +78,8 @@ struct FileProcessor
             return it->second;
         else
         {
-            auto out
-                = cachedFiles.insert({file, Resource(cacheTransform(file))});
+            auto out =
+                cachedFiles.insert({file, Resource(cacheTransform(file))});
             return C_OCAST<semantic::Bytes>(out.first->second);
         }
     }

@@ -11,7 +11,8 @@ using stream_writer = std::function<void(semantic::Span<char>&&)>;
 template<typename T, typename InType = libc_types::u8>
 concept is_compressor = std::is_same_v<
     typename declreturntype(T::compress),
-    std::optional<typename T::error_t>> && requires(T)
+    std::optional<typename T::error_t>>&&
+requires(T)
 {
     {T::compress(
         std::declval<semantic::Span<const InType> const&>(),
@@ -22,7 +23,8 @@ concept is_compressor = std::is_same_v<
 template<typename T, typename OutType = char>
 concept is_decompressor = std::is_same_v<
     typename declreturntype(T::decompress),
-    std::optional<typename T::error_t>> && requires(T)
+    std::optional<typename T::error_t>>&&
+requires(T)
 {
     {T::decompress(
         std::declval<semantic::Span<const libc_types::u8> const&>(),
@@ -38,7 +40,8 @@ concept is_codec = is_compressor<T> && is_decompressor<T>;
 template<typename T, typename InType = libc_types::u8>
 concept is_stream_compressor = std::is_same_v<
     typename declreturntype(T::compress),
-    std::optional<typename T::error_t>> && requires(T)
+    std::optional<typename T::error_t>>&&
+requires(T)
 {
     {T::compress(
         std::declval<semantic::Span<const InType> const&>(),
@@ -49,7 +52,8 @@ concept is_stream_compressor = std::is_same_v<
 template<typename T>
 concept is_stream_decompressor = std::is_same_v<
     typename declreturntype(T::decompress),
-    std::optional<typename T::error_t>> && requires(T)
+    std::optional<typename T::error_t>>&&
+requires(T)
 {
     {T::decompress(
         std::declval<semantic::Span<const libc_types::u8> const&>(),
@@ -80,8 +84,8 @@ struct codec_stream_adapter
     {
         return Codec::compress(
             input,
-            [out
-             = std::back_insert_iterator(output)](semantic::Span<char>&& data) {
+            [out = std::back_insert_iterator(output)](
+                semantic::Span<char>&& data) {
                 std::copy(data.begin(), data.end(), out);
             },
             std::move(options));

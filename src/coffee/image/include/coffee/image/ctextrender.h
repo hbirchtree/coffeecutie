@@ -1,8 +1,8 @@
 #pragma once
 
 #include "cimage.h"
-#include <peripherals/semantic/chunk.h>
 #include <peripherals/libc/types.h>
+#include <peripherals/semantic/chunk.h>
 
 namespace Coffee {
 namespace TrueType {
@@ -21,6 +21,7 @@ struct FontRendererDef
 };
 
 } // namespace TrueType
+
 namespace StbTruetype {
 struct StbFontRenderer : TrueType::FontRendererDef
 {

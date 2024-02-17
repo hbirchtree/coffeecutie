@@ -22,8 +22,8 @@
 
 namespace compile_info {
 
-using std::string_view;
 using libc_types::u32;
+using std::string_view;
 
 struct compiler_version_t
 {
@@ -73,6 +73,7 @@ constexpr u32 min_target =
 #endif
     ;
 } // namespace macos
+
 namespace ios {
 constexpr u32 target =
 #if defined(__IPHONE_OS_VERSION_MAX_ALLOWED)
@@ -139,7 +140,7 @@ constexpr u32 minor =
 #endif
     ;
 
-}
+} // namespace glibc
 
 namespace libcpp {
 
@@ -151,9 +152,9 @@ constexpr u32 version =
 #endif
     ;
 
-}
+} // namespace libcpp
 
-}
+} // namespace linux_
 
 namespace compiler {
 
@@ -384,7 +385,6 @@ constexpr endianness endian =
 #error Could not identify endianness
 #endif
 
-
 } // namespace platform
 
 namespace printing {
@@ -403,7 +403,7 @@ constexpr bool enabled =
 // #else
 #define PERIPHERAL_PROFILER_ENABLED 1
     true
-// #endif
+    // #endif
     ;
 
 namespace gpu {

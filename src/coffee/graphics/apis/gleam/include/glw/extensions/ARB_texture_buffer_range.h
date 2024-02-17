@@ -2,12 +2,15 @@
 
 #ifdef GL_ARB_texture_buffer_range
 #include "../enums/GetPName.h"
+
 namespace gl::arb::texture_buffer_range {
 using gl::group::get_prop;
+
 namespace values {
 constexpr u32 texture_buffer_offset = 0x919D;
 constexpr u32 texture_buffer_size   = 0x919E;
 } // namespace values
+
 /*!
  * \brief Part of GL_ARB_texture_buffer_range
  * \param target GLenum

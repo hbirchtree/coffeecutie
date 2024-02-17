@@ -16,8 +16,7 @@ FORCEDINLINE void logInterface(Args&&... args)
 }
 
 template<typename... Arg>
-FORCEDINLINE void cOutputPrint(
-    fmt::format_string<Arg...> fmt, Arg&&... args)
+FORCEDINLINE void cOutputPrint(fmt::format_string<Arg...> fmt, Arg&&... args)
 {
     logInterface(
         libc::io::io_handles::out,
@@ -42,8 +41,7 @@ FORCEDINLINE void cOutputPrintNoNL(
 }
 
 template<typename... Arg>
-FORCEDINLINE void cBasicPrint(
-    fmt::format_string<Arg...> fmt, Arg&&... args)
+FORCEDINLINE void cBasicPrint(fmt::format_string<Arg...> fmt, Arg&&... args)
 {
     logInterface(
         Logging::default_stream,
@@ -55,8 +53,7 @@ FORCEDINLINE void cBasicPrint(
 }
 
 template<typename... Arg>
-FORCEDINLINE void cBasicPrintNoNL(
-    fmt::format_string<Arg...> fmt, Arg&&... args)
+FORCEDINLINE void cBasicPrintNoNL(fmt::format_string<Arg...> fmt, Arg&&... args)
 {
     logInterface(
         Logging::default_stream,

@@ -3,11 +3,14 @@
 #ifdef GL_QCOM_motion_estimation
 #include "../enums/FoveationConfigBitQCOM.h"
 #include "../enums/GetPName.h"
+
 namespace gl::qcom::motion_estimation {
 using gl::group::foveation_config_bit_qcom;
 using gl::group::get_prop;
+
 namespace values {
 } // namespace values
+
 /*!
  * \brief Part of GL_QCOM_motion_estimation
  * \param ref GLuint

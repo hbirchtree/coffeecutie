@@ -25,8 +25,8 @@ struct map_container
         rq::runtime_queue*                           queue,
         semantic::BytesConst const&                  map,
         Ver                                          ver,
-        std::function<void(std::string_view, i16)>&& progress_cb
-        = null_progress)
+        std::function<void(std::string_view, i16)>&& progress_cb =
+            null_progress)
     {
         auto task = rq::dependent_task<void, result_type>::CreateSource(
             [map = map.view, ver, progress = std::move(progress_cb)]() mutable {
@@ -57,8 +57,8 @@ struct map_container
 
         progress("Reading map header", 0);
 
-        file_header_t const* header
-            = file_header_t::from_data(map, ver).value();
+        file_header_t const* header =
+            file_header_t::from_data(map, ver).value();
 
         if(header->version != version_t::xbox)
         {
@@ -86,8 +86,8 @@ struct map_container
 
         progress("Copying file header to memory", 15);
         /* Time to decompress! */
-        decompressed
-            = semantic::mem_chunk<char>::withSize(sizeof(file_header_t));
+        decompressed =
+            semantic::mem_chunk<char>::withSize(sizeof(file_header_t));
         header->copy_to(decompressed.as<file_header_t>()[0]);
         auto map_data = std::move(decompressed.allocation);
         map_data.reserve(header->decomp_len);
@@ -154,12 +154,16 @@ class tag_index_view
     using span_type = semantic::Span<const tag_t>;
     using iterator  = span_type::iterator;
 
-    tag_index_view() : m_idx(nullptr), m_file(nullptr)
+    tag_index_view()
+        : m_idx(nullptr)
+        , m_file(nullptr)
     {
     }
 
-    tag_index_view(map_container<Ver> const& map) :
-        m_idx(map.tags), m_file(map.map), m_magic(map.magic)
+    tag_index_view(map_container<Ver> const& map)
+        : m_idx(map.tags)
+        , m_file(map.map)
+        , m_magic(map.magic)
     {
     }
 
@@ -167,10 +171,12 @@ class tag_index_view
     {
         return m_file;
     }
+
     tag_t const* tags() const
     {
         return m_idx;
     }
+
     span_type span() const
     {
         if(!m_idx)
@@ -182,6 +188,7 @@ class tag_index_view
     {
         return span().begin();
     }
+
     iterator end() const
     {
         return span().end();

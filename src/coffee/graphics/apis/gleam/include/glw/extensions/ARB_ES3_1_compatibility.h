@@ -5,13 +5,16 @@
 #include "../enums/DrawBufferMode.h"
 #include "../enums/ReadBufferMode.h"
 #include "../enums/TriangleFace.h"
+
 namespace gl::arb::es3_1_compatibility {
 using gl::group::color_buffer;
 using gl::group::draw_buffer_mode;
 using gl::group::read_buffer_mode;
 using gl::group::triangle_face;
+
 namespace values {
 } // namespace values
+
 /*!
  * \brief Part of GL_ARB_ES3_1_compatibility
  * \param barriers GLbitfield

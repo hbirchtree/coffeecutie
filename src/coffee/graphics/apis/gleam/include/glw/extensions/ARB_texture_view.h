@@ -9,6 +9,7 @@ constexpr u32 texture_view_min_layer   = 0x82DD;
 constexpr u32 texture_view_num_layers  = 0x82DE;
 constexpr u32 texture_immutable_levels = 0x82DF;
 } // namespace values
+
 /*!
  * \brief Part of GL_ARB_texture_view
  * \param texture GLuint

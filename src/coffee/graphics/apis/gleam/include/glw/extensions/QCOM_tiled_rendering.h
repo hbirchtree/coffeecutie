@@ -2,10 +2,13 @@
 
 #ifdef GL_QCOM_tiled_rendering
 #include "../enums/BufferBitQCOM.h"
+
 namespace gl::qcom::tiled_rendering {
 using gl::group::buffer_bit_qcom;
+
 namespace values {
 } // namespace values
+
 /*!
  * \brief Part of GL_QCOM_tiled_rendering
  * \param preserveMask GLbitfield
@@ -24,20 +27,20 @@ STATICINLINE void end_tiling(group::buffer_bit_qcom preserveMask)
 
 template<class size_2_u32, class vec_2_u32>
 requires(
-    concepts::vector<vec_2_u32, u32, 2>&& concepts::size_2d<size_2_u32, u32>)
-    /*!
-     * \brief Part of GL_QCOM_tiled_rendering
-     * \param x GLuint
-     * \param y GLuint
-     * \param width GLuint
-     * \param height GLuint
-     * \param preserveMask GLbitfield
-     * \return void
-     */
-    STATICINLINE void start_tiling(
-        vec_2_u32 const&       x,
-        size_2_u32 const&      width,
-        group::buffer_bit_qcom preserveMask)
+    concepts::vector<vec_2_u32, u32, 2> && concepts::size_2d<size_2_u32, u32>)
+/*!
+ * \brief Part of GL_QCOM_tiled_rendering
+ * \param x GLuint
+ * \param y GLuint
+ * \param width GLuint
+ * \param height GLuint
+ * \param preserveMask GLbitfield
+ * \return void
+ */
+STATICINLINE void start_tiling(
+    vec_2_u32 const&       x,
+    size_2_u32 const&      width,
+    group::buffer_bit_qcom preserveMask)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

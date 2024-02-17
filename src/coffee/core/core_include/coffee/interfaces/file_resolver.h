@@ -102,12 +102,13 @@ struct BytesResolver
     template<typename UResolver, typename RResolver>
     static BytesResolver Create(UResolver const& ur, RResolver const& rr)
     {
-        return {[rr, ur](Url const& url) {
-                    return rr.resolveResource(ur.resolve(url));
-                },
-                [rr, ur](Url const& url, std::string const& ext) {
-                    return rr.resolveResource(ur.multiplexResolve(url, ext));
-                }};
+        return {
+            [rr, ur](Url const& url) {
+                return rr.resolveResource(ur.resolve(url));
+            },
+            [rr, ur](Url const& url, std::string const& ext) {
+                return rr.resolveResource(ur.multiplexResolve(url, ext));
+            }};
     }
 };
 

@@ -2,10 +2,13 @@
 
 #ifdef GL_EXT_semaphore_fd
 #include "../enums/ExternalHandleType.h"
+
 namespace gl::ext::semaphore_fd {
 using gl::group::external_handle_type;
+
 namespace values {
 } // namespace values
+
 /*!
  * \brief Part of GL_EXT_semaphore_fd
  * \param semaphore GLuint

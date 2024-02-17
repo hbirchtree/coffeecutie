@@ -19,6 +19,7 @@ constexpr u32 hsl_saturation = 0x92AE;
 constexpr u32 hsl_color      = 0x92AF;
 constexpr u32 hsl_luminosity = 0x92B0;
 } // namespace values
+
 /*!
  * \brief Part of GL_KHR_blend_equation_advanced
 

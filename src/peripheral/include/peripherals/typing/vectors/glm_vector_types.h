@@ -24,17 +24,17 @@ using tvector = glm::vec<N, T>;
 template<typename T, size_t N>
 using tmatrix = glm::mat<N, N, T>;
 
-}
+} // namespace typing::vectors
 
 namespace typing::vector_types {
 
-using libc_types::i8;
 using libc_types::i16;
 using libc_types::i32;
+using libc_types::i8;
 
-using libc_types::u8;
 using libc_types::u16;
 using libc_types::u32;
+using libc_types::u8;
 
 using libc_types::f32;
 using libc_types::f64;
@@ -81,4 +81,4 @@ static_assert(sizeof(Vecf4) == 16);
 static_assert(sizeof(Matf2) == 16);
 static_assert(sizeof(Matf3) == 36);
 static_assert(sizeof(Matf4) == 64);
-}
+} // namespace typing::vector_types

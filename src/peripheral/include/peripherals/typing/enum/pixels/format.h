@@ -242,24 +242,28 @@ struct r11g11b10f
 {
     u32 d;
 };
+
 static_assert(sizeof(r11g11b10f) == 4, "Invalid size");
 
 struct r10g10b10a2
 {
     u32 d;
 };
+
 static_assert(sizeof(r10g10b10a2) == 4, "Invalid size");
 
 union r4g4b4a4
 {
     u16 d;
 };
+
 static_assert(sizeof(r4g4b4a4) == 2, "Invalid size");
 
 union r5g6b5
 {
     u16 d;
 };
+
 static_assert(sizeof(r5g6b5) == 2, "Invalid size");
 
 using f11 = r11g11b10f;

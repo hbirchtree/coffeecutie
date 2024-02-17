@@ -30,10 +30,13 @@ struct PtrCommon
 {
     T* ptr;
 
-    PtrCommon() : ptr(nullptr)
+    PtrCommon()
+        : ptr(nullptr)
     {
     }
-    PtrCommon(T* ptr) : ptr(ptr)
+
+    PtrCommon(T* ptr)
+        : ptr(ptr)
     {
     }
 
@@ -48,6 +51,7 @@ struct PtrCommon
     {
         ptr = nullptr;
     }
+
     FORCEDINLINE void reset()
     {
         release();
@@ -158,6 +162,6 @@ FORCEDINLINE void free(Ptr<T>& ptr)
     ptr = nullptr;
 }
 
-}
+} // namespace ptr_ops
 
 } // namespace semantic

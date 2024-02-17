@@ -2,8 +2,10 @@
 
 #ifdef GL_QCOM_binning_control
 #include "../enums/HintTarget.h"
+
 namespace gl::qcom::binning_control {
 using gl::group::hint_target;
+
 namespace values {
 constexpr u32 cpu_optimized                = 0x8FB1;
 constexpr u32 gpu_optimized                = 0x8FB2;

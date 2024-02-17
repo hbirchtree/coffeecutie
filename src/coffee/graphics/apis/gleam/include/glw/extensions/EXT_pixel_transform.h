@@ -3,9 +3,11 @@
 #ifdef GL_EXT_pixel_transform
 #include "../enums/PixelTransformPNameEXT.h"
 #include "../enums/PixelTransformTargetEXT.h"
+
 namespace gl::ext::pixel_transform {
 using gl::group::pixel_transform_prop_ext;
 using gl::group::pixel_transform_target_ext;
+
 namespace values {
 constexpr u32 cubic                              = 0x8334;
 constexpr u32 average                            = 0x8335;
@@ -13,19 +15,21 @@ constexpr u32 pixel_transform_2d_stack_depth     = 0x8336;
 constexpr u32 max_pixel_transform_2d_stack_depth = 0x8337;
 constexpr u32 pixel_transform_2d_matrix          = 0x8338;
 } // namespace values
+
 template<class span_f32>
-requires(concepts::span<span_f32>&& std::is_same_v<
-         std::decay_t<typename span_f32::value_type>,
-         std::decay_t<f32>>)
-    /*!
-     * \brief Part of GL_EXT_pixel_transform
-     * \param target GLenum
-     * \param pname GLenum
-     * \param params GLfloat *
-     * \return void
-     */
-    STATICINLINE void get_pixel_transform_parameter(
-        GLenum target, GLenum pname, span_f32 params)
+requires(
+    concepts::span<span_f32> && std::is_same_v<
+                                    std::decay_t<typename span_f32::value_type>,
+                                    std::decay_t<f32>>)
+/*!
+ * \brief Part of GL_EXT_pixel_transform
+ * \param target GLenum
+ * \param pname GLenum
+ * \param params GLfloat *
+ * \return void
+ */
+STATICINLINE void get_pixel_transform_parameter(
+    GLenum target, GLenum pname, span_f32 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -40,18 +44,19 @@ requires(concepts::span<span_f32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(concepts::span<span_i32>&& std::is_same_v<
-         std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>)
-    /*!
-     * \brief Part of GL_EXT_pixel_transform
-     * \param target GLenum
-     * \param pname GLenum
-     * \param params GLint *
-     * \return void
-     */
-    STATICINLINE void get_pixel_transform_parameter(
-        GLenum target, GLenum pname, span_i32 params)
+requires(
+    concepts::span<span_i32> && std::is_same_v<
+                                    std::decay_t<typename span_i32::value_type>,
+                                    std::decay_t<i32>>)
+/*!
+ * \brief Part of GL_EXT_pixel_transform
+ * \param target GLenum
+ * \param pname GLenum
+ * \param params GLint *
+ * \return void
+ */
+STATICINLINE void get_pixel_transform_parameter(
+    GLenum target, GLenum pname, span_i32 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -88,20 +93,22 @@ STATICINLINE void pixel_transform_parameter(
 }
 
 template<class span_const_f32>
-requires(concepts::span<span_const_f32>&& std::is_same_v<
-         std::decay_t<typename span_const_f32::value_type>,
-         std::decay_t<f32>>)
-    /*!
-     * \brief Part of GL_EXT_pixel_transform
-     * \param target GLenum
-     * \param pname GLenum
-     * \param params const GLfloat *
-     * \return void
-     */
-    STATICINLINE void pixel_transform_parameter(
-        group::pixel_transform_target_ext target,
-        group::pixel_transform_prop_ext   pname,
-        span_const_f32 const&             params)
+requires(
+    concepts::span<span_const_f32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_f32::value_type>,
+        std::decay_t<f32>>)
+/*!
+ * \brief Part of GL_EXT_pixel_transform
+ * \param target GLenum
+ * \param pname GLenum
+ * \param params const GLfloat *
+ * \return void
+ */
+STATICINLINE void pixel_transform_parameter(
+    group::pixel_transform_target_ext target,
+    group::pixel_transform_prop_ext   pname,
+    span_const_f32 const&             params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -139,20 +146,22 @@ STATICINLINE void pixel_transform_parameter(
 }
 
 template<class span_const_i32>
-requires(concepts::span<span_const_i32>&& std::is_same_v<
-         std::decay_t<typename span_const_i32::value_type>,
-         std::decay_t<i32>>)
-    /*!
-     * \brief Part of GL_EXT_pixel_transform
-     * \param target GLenum
-     * \param pname GLenum
-     * \param params const GLint *
-     * \return void
-     */
-    STATICINLINE void pixel_transform_parameter(
-        group::pixel_transform_target_ext target,
-        group::pixel_transform_prop_ext   pname,
-        span_const_i32 const&             params)
+requires(
+    concepts::span<span_const_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_i32::value_type>,
+        std::decay_t<i32>>)
+/*!
+ * \brief Part of GL_EXT_pixel_transform
+ * \param target GLenum
+ * \param pname GLenum
+ * \param params const GLint *
+ * \return void
+ */
+STATICINLINE void pixel_transform_parameter(
+    group::pixel_transform_target_ext target,
+    group::pixel_transform_prop_ext   pname,
+    span_const_i32 const&             params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

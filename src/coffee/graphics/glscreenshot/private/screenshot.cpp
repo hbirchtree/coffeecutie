@@ -1,7 +1,7 @@
 #include <glscreenshot/screenshot.h>
 
-#include <coffee/core/debug/formatting.h>
 #include <coffee/core/CProfiling>
+#include <coffee/core/debug/formatting.h>
 #include <coffee/core/task_queue/task.h>
 #include <glw/glw.h>
 #include <glw/gpu_dependent_task.h>
@@ -22,8 +22,8 @@ using glw = std::conditional<
 #endif
     >::type;
 
-ScreenshotProvider::ScreenshotProvider() :
-    m_main_queue(rq::runtime_queue::GetCurrentQueue().assume_value())
+ScreenshotProvider::ScreenshotProvider()
+    : m_main_queue(rq::runtime_queue::GetCurrentQueue().assume_value())
 {
 }
 
@@ -53,7 +53,8 @@ std::future<ScreenshotProvider::dump_t> ScreenshotProvider::pixels()
         auto                        size_ = size();
         std::vector<libc_types::u8> data(size_.area() * 4);
 
-        Coffee::cDebug("Capturing {}x{} screenshot, alloc'ing {} bytes",
+        Coffee::cDebug(
+            "Capturing {}x{} screenshot, alloc'ing {} bytes",
             size_.w,
             size_.h,
             data.size());
@@ -148,11 +149,11 @@ std::future<ScreenshotProvider::dump_t> ScreenshotProvider::pixels()
             glw::bind_buffer(pixel_pack_buffer, 0);
             return gpu_buffer(reinterpret_cast<u8 const*>(ptr), size);
         };
-        auto copy_buffer
-            = [dump = std::move(dump)](gpu_buffer* buffer) mutable {
-                  std::copy(buffer->begin(), buffer->end(), dump.data.begin());
-                  return dump;
-              };
+        auto copy_buffer = [dump =
+                                std::move(dump)](gpu_buffer* buffer) mutable {
+            std::copy(buffer->begin(), buffer->end(), dump.data.begin());
+            return dump;
+        };
         auto unmap_buffer = [this](dump_t* dump) {
             glw::bind_buffer(pixel_pack_buffer, m_pbo);
             glw::unmap_buffer(pixel_pack_buffer);

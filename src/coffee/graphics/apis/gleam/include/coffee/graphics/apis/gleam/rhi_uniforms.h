@@ -17,6 +17,7 @@ struct uniform_location_undefined : std::runtime_error
 {
     using std::runtime_error::runtime_error;
 };
+
 struct unknown_shader_stage : std::runtime_error
 {
     using std::runtime_error::runtime_error;
@@ -53,10 +54,10 @@ inline i32 get_program_uniform_location(
         auto stageprogram = program.m_stages.find(stage);
         if(stageprogram == program.m_stages.end())
             Throw(unknown_shader_stage(
-                "stage not defined in program: "
-                + std::to_string(C_CAST<int>(stage))));
-        ulocation = cmd::get_uniform_location(
-            stageprogram->second->m_handle, key.name);
+                "stage not defined in program: " +
+                std::to_string(C_CAST<int>(stage))));
+        ulocation =
+            cmd::get_uniform_location(stageprogram->second->m_handle, key.name);
     } else
         ulocation = cmd::get_uniform_location(program.m_handle, key.name);
 
@@ -80,8 +81,8 @@ inline i32 get_program_buffer_location(
     if(key.location != invalid_uniform)
         return key.location;
     Throw(uniform_location_undefined(
-        "buffer location must be specified: "
-        + std::string(key.name.begin(), key.name.end())));
+        "buffer location must be specified: " +
+        std::string(key.name.begin(), key.name.end())));
 }
 
 template<typename T, int Num>
@@ -133,11 +134,11 @@ inline bool apply_single_uniform(
 
 template<typename T>
 requires(std::is_floating_point_v<T> || std::is_integral_v<T>)
-    //
-    inline bool apply_single_uniform(
-        program_t&                    program,
-        typing::graphics::ShaderStage stage,
-        uniform_pair<const T> const&  uniform)
+//
+inline bool apply_single_uniform(
+    program_t&                    program,
+    typing::graphics::ShaderStage stage,
+    uniform_pair<const T> const&  uniform)
 {
     auto [key, data] = std::tie(uniform.key, uniform.data);
     auto ulocation   = get_program_uniform_location(program, stage, key);
@@ -225,8 +226,8 @@ inline bool apply_command_modifier(
                     blk_idx,
                     group::uniform_block_prop::uniform_block_data_size,
                     semantic::SpanOne(blk_size));
-                program.m_buffer_locations[std::string(buffer_def.key.name)]
-                    = {blk_idx, blk_size};
+                program.m_buffer_locations[std::string(buffer_def.key.name)] = {
+                    blk_idx, blk_size};
             } else
                 std::tie(blk_idx, blk_size) = it->second;
             if(blk_idx == std::numeric_limits<u32>::max())
@@ -314,8 +315,8 @@ inline bool apply_command_modifier(
 {
     if(samplers.empty())
         return true;
-    [[maybe_unused]] auto const& features
-        = std::get<2>(samplers.at(0))->m_source.lock()->m_features;
+    [[maybe_unused]] auto const& features =
+        std::get<2>(samplers.at(0))->m_source.lock()->m_features;
 
 #if GLEAM_MAX_VERSION >= 0x450
     if(features.dsa && false)
@@ -391,8 +392,8 @@ inline bool apply_command_modifier(
     shader_bookkeeping_t& bookkeeping,
     texture_list&         textures)
 {
-    [[maybe_unused]] auto const& features
-        = std::get<2>(textures.at(0)).m_features;
+    [[maybe_unused]] auto const& features =
+        std::get<2>(textures.at(0)).m_features;
     if(textures.empty())
         return true;
 

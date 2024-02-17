@@ -13,13 +13,13 @@ namespace stl_types {
 #if USE_BOOST_OUTCOME == 1
 template<typename T, typename E>
 using result = boost::outcome_v2::std_checked<T, E>;
-using boost::outcome_v2::success;
 using boost::outcome_v2::failure;
+using boost::outcome_v2::success;
 #else
 template<typename T, typename E>
 using result = outcome_v2::checked<T, E>;
-using outcome_v2::success;
 using outcome_v2::failure;
+using outcome_v2::success;
 #endif
 
 template<typename T, typename E>
@@ -29,6 +29,7 @@ inline T value_or(result<T, E>&& res, T&& v)
         return res.value();
     return v;
 }
+
 template<typename T, typename E>
 inline T value_or(result<T, E>&& res, T const& v)
 {
@@ -37,4 +38,4 @@ inline T value_or(result<T, E>&& res, T const& v)
     return v;
 }
 
-}
+} // namespace stl_types

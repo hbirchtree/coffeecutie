@@ -4,6 +4,7 @@
 namespace gl::ext::base_instance {
 namespace values {
 } // namespace values
+
 /*!
  * \brief Part of GL_EXT_base_instance
  * \param mode GLenum

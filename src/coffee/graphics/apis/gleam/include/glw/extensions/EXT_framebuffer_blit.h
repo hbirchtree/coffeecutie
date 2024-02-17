@@ -8,6 +8,7 @@ constexpr u32 read_framebuffer         = 0x8CA8;
 constexpr u32 draw_framebuffer         = 0x8CA9;
 constexpr u32 read_framebuffer_binding = 0x8CAA;
 } // namespace values
+
 /*!
  * \brief Part of GL_EXT_framebuffer_blit
  * \param srcX0 GLint

@@ -12,10 +12,12 @@ struct tquaternion : tvector<T, 4>
     using tvector<T, 4>::tvector;
 
     FORCEDINLINE
-    tquaternion() : tvector<T, 4>()
+    tquaternion()
+        : tvector<T, 4>()
     {
         (*this)[3] = T(1);
     }
+
     FORCEDINLINE
     tquaternion(T w, T x, T y, T z)
     {
@@ -24,6 +26,7 @@ struct tquaternion : tvector<T, 4>
         (*this)[2] = z;
         (*this)[3] = w;
     }
+
     /*!
      * \brief Converts from euler angles
      * \param euler
@@ -71,16 +74,19 @@ struct tquaternion : tvector<T, 4>
     {
         return (*this)[3];
     }
+
     FORCEDINLINE
     T& x()
     {
         return (*this)[0];
     }
+
     FORCEDINLINE
     T& y()
     {
         return (*this)[1];
     }
+
     FORCEDINLINE
     T& z()
     {
@@ -92,16 +98,19 @@ struct tquaternion : tvector<T, 4>
     {
         return (*this)[3];
     }
+
     FORCEDINLINE
     const T& x() const
     {
         return (*this)[0];
     }
+
     FORCEDINLINE
     const T& y() const
     {
         return (*this)[1];
     }
+
     FORCEDINLINE
     const T& z() const
     {

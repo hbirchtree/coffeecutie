@@ -12,9 +12,10 @@ using BlamTextureBrowserManifest = compo::SubsystemManifest<
     empty_list_t>;
 
 template<typename V>
-struct BlamTextureBrowser : compo::RestrictedSubsystem<
-                                BlamTextureBrowser<V>,
-                                BlamTextureBrowserManifest<V>>
+struct BlamTextureBrowser
+    : compo::RestrictedSubsystem<
+          BlamTextureBrowser<V>,
+          BlamTextureBrowserManifest<V>>
 {
     using type  = BlamTextureBrowser<V>;
     using Proxy = compo::proxy_of<BlamTextureBrowserManifest<V>>;
@@ -51,6 +52,7 @@ struct BlamTextureBrowser : compo::RestrictedSubsystem<
         }
         ImGui::End();
     }
+
     void end_restricted(Proxy&, time_point const&)
     {
     }
@@ -69,16 +71,18 @@ struct BlamTextureBrowser : compo::RestrictedSubsystem<
         gleam::texture_t& bucket = *buckit->second.surface;
 
         auto view_params = gleam::textures::view_params{
-                .layer = {
-                    .min_ = static_cast<i32>(m_selected.image.layer),
+            .layer =
+                {
+                    .min_  = static_cast<i32>(m_selected.image.layer),
                     .count = 1,
                 },
-                .mip = {
-                    .min_ = 0,
+            .mip =
+                {
+                    .min_  = 0,
                     .count = 1,
                 },
-                .format = bucket.m_format,
-            };
+            .format = bucket.m_format,
+        };
         if(m_view)
             bucket.view(
                 gleam::textures::d2,
@@ -100,11 +104,11 @@ struct BlamTextureBrowser : compo::RestrictedSubsystem<
 
         BitmapCache<V>& bitmap_cache   = e.template subsystem<BitmapCache<V>>();
         blam::bitm::image_t const* img = m_selected.image.mip;
-        blam::magic_data_t         magic
-            = (m_selected.tag->storage == blam::image_storage_t::internal
-               && m_map->map->version == blam::version_t::custom_edition)
-                  ? m_map->magic
-                  : bitmap_cache.bitm_magic;
+        blam::magic_data_t         magic =
+            (m_selected.tag->storage == blam::image_storage_t::internal &&
+             m_map->map->version == blam::version_t::custom_edition)
+                        ? m_map->magic
+                        : bitmap_cache.bitm_magic;
 
         m_view->m_format = m_selected.image.fmt;
         m_view->alloc(
@@ -122,6 +126,7 @@ struct BlamTextureBrowser : compo::RestrictedSubsystem<
         } tex_handle = {
             .hnd = m_view->m_handle,
         };
+
         ImGui::Text(
             "Tag: %s",
             m_selected.tag->to_name().to_string(m_map->magic).data());
@@ -131,8 +136,8 @@ struct BlamTextureBrowser : compo::RestrictedSubsystem<
             "Size: %ix%i",
             m_selected.image.mip->isize.x,
             m_selected.image.mip->isize.y);
-        auto aspect_ratio = static_cast<f32>(m_selected.image.mip->isize.x)
-                            / m_selected.image.mip->isize.y;
+        auto aspect_ratio = static_cast<f32>(m_selected.image.mip->isize.x) /
+                            m_selected.image.mip->isize.y;
         auto uv1 = m_selected.image.offset;
         auto uv2 = uv1 + m_selected.image.scale;
         if(!m_view->m_features.image_copy)
@@ -155,8 +160,8 @@ struct BlamTextureBrowser : compo::RestrictedSubsystem<
                 auto item_name = item.second.tag->name.to_string(m_map->magic);
                 if(item_name.empty())
                     continue;
-                if(ImGui::Selectable(item_name.data())
-                   && m_selected.tag != item.second.tag)
+                if(ImGui::Selectable(item_name.data()) &&
+                   m_selected.tag != item.second.tag)
                 {
                     m_selected = item.second;
                     m_updated  = true;

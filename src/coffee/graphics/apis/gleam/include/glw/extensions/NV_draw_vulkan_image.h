@@ -4,6 +4,7 @@
 namespace gl::nv::draw_vulkan_image {
 namespace values {
 } // namespace values
+
 /*!
  * \brief Part of GL_NV_draw_vulkan_image
  * \param vkImage GLuint64

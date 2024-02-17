@@ -39,39 +39,40 @@ Coffee::GpuInfo::GpuQueryInterface GetQuery()
     if(!GL::GetString(GL_VERSION))
         return {};
 
-    return {[]() {
-                auto device = Debug::Renderer();
+    return {
+        []() {
+            auto device = Debug::Renderer();
 
-                return SWVersionInfo(device.firmware, 1, 0);
-            },
-            []() { return C_FCAST<u32>(1); },
-            [](u32) { return Debug::Renderer(); },
-            [](u32) {
-                MemStat out = {};
+            return SWVersionInfo(device.firmware, 1, 0);
+        },
+        []() { return C_FCAST<u32>(1); },
+        [](u32) { return Debug::Renderer(); },
+        [](u32) {
+            MemStat out = {};
 
-                if(HasExtension("GL_NVX_gpu_memory_info"))
-                {
-                    i32 total, dedic, freem;
+            if(HasExtension("GL_NVX_gpu_memory_info"))
+            {
+                i32 total, dedic, freem;
 
-                    gl::vlow::IntegerGetv(
-                        GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX, &total);
-                    gl::vlow::IntegerGetv(
-                        GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, &freem);
-                    gl::vlow::IntegerGetv(
-                        GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX, &dedic);
+                gl::vlow::IntegerGetv(
+                    GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX, &total);
+                gl::vlow::IntegerGetv(
+                    GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, &freem);
+                gl::vlow::IntegerGetv(
+                    GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX, &dedic);
 
-                    out.free  = C_FCAST<u32>(freem);
-                    out.total = C_FCAST<u32>(total);
-                    out.used  = C_FCAST<u32>(total - freem);
-                }
-                return out;
-            },
-            nullptr,
-            nullptr,
-            nullptr,
-            nullptr,
-            nullptr,
-            nullptr};
+                out.free  = C_FCAST<u32>(freem);
+                out.total = C_FCAST<u32>(total);
+                out.used  = C_FCAST<u32>(total - freem);
+            }
+            return out;
+        },
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr};
 }
 
 GpuQueryFunction* GetGpuQuery()

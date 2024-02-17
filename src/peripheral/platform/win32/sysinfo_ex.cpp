@@ -22,8 +22,8 @@ std::optional<std::string> wine_version()
         HMODULE hntdll = GetModuleHandle("ntdll.dll");
         if(!hntdll)
             return {};
-        pwine_get_version
-            = (WINE_GET_VERSION_FPTR)GetProcAddress(hntdll, "wine_get_version");
+        pwine_get_version =
+            (WINE_GET_VERSION_FPTR)GetProcAddress(hntdll, "wine_get_version");
         if(!pwine_get_version)
             return {};
     }
@@ -104,16 +104,16 @@ std::string kernel_version()
 std::optional<std::string> version()
 {
     if(auto release_id = registry_string(
-        HKEY_LOCAL_MACHINE,
-        "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
-        "ReleaseId",
-        128))
+           HKEY_LOCAL_MACHINE,
+           "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
+           "ReleaseId",
+           128))
         return release_id;
     if(auto ver_ = registry_string(
-        HKEY_LOCAL_MACHINE,
-        "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
-        "ProductName",
-        128))
+           HKEY_LOCAL_MACHINE,
+           "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
+           "ProductName",
+           128))
     {
         using namespace std::string_literals;
         auto ver = *ver_;

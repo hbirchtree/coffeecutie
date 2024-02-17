@@ -34,6 +34,7 @@ extern void SetCurrentApp(platform::info::AppData const& app);
 extern platform::info::AppData const& GetCurrentApp();
 
 C_DEPRECATED_S("use GetCurrentApp()")
+
 FORCEDINLINE platform::info::AppData const& ApplicationData()
 {
     return GetCurrentApp();

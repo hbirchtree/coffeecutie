@@ -160,8 +160,8 @@ inline group::copy_image_sub_data_target to(textures::type type)
 
 template<typename T = group::buffer_target_arb>
 requires(std::is_same_v<T, group::buffer_target_arb>)
-    //
-    inline group::buffer_target_arb to(buffers::type type)
+//
+inline group::buffer_target_arb to(buffers::type type)
 {
     auto it = std::find_if(
         mappings::buf_type.begin(),
@@ -175,8 +175,8 @@ requires(std::is_same_v<T, group::buffer_target_arb>)
 
 template<typename T>
 requires(std::is_same_v<T, group::buffer_storage_target>)
-    //
-    inline group::buffer_storage_target to(buffers::type type)
+//
+inline group::buffer_storage_target to(buffers::type type)
 {
     auto it = std::find_if(
         mappings::buf_storage_type.begin(),
@@ -188,8 +188,8 @@ requires(std::is_same_v<T, group::buffer_storage_target>)
     return it->second;
 }
 
-#if GLEAM_MAX_VERSION >= 0x150 || GLEAM_MAX_VERSION_ES >= 0x300 \
-    || defined(GL_EXT_disjoint_timer_query)
+#if GLEAM_MAX_VERSION >= 0x150 || GLEAM_MAX_VERSION_ES >= 0x300 || \
+    defined(GL_EXT_disjoint_timer_query)
 inline group::query_target to(queries::type type)
 {
     auto it = std::find_if(
@@ -250,6 +250,7 @@ requires std::is_same_v<T, group::sized_internal_format> || std::
         //
 std::tuple<T, group::pixel_type, group::pixel_format> to(
     PixDesc const& fmt, [[maybe_unused]] features::textures const& features);
+
 // clang-format on
 
 template<typename T = group::framebuffer_attachment>
@@ -279,8 +280,8 @@ inline group::framebuffer_attachment to(
 }
 
 template<typename T>
-requires std::is_same_v<T, group::read_buffer_mode> || std::
-    is_same_v<T, group::color_buffer>
+requires std::is_same_v<T, group::read_buffer_mode> ||
+         std::is_same_v<T, group::color_buffer>
 inline T to(render_targets::attachment attachment, u32 i)
 {
     using mode = T;
@@ -301,8 +302,9 @@ inline T to(render_targets::attachment attachment, u32 i)
 template<typename T = group::buffer_usage_arb>
 requires stl_types::
     is_any_of<T, group::buffer_usage_arb, group::vertex_buffer_object_usage>
-inline T to(
-    [[maybe_unused]] features::buffers const& features, semantic::RSCA flags)
+    inline T to(
+        [[maybe_unused]] features::buffers const& features,
+        semantic::RSCA                            flags)
 {
     using enum_helpers::feval;
     using semantic::RSCA;
@@ -365,8 +367,8 @@ inline group::buffer_storage_mask to(semantic::RSCA flags)
 }
 #endif
 
-#if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x310 \
-    || defined(GL_OES_mapbuffer)
+#if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x310 || \
+    defined(GL_OES_mapbuffer)
 template<typename T>
 requires std::is_same_v<T, group::buffer_access_arb>
 inline group::buffer_access_arb to(
@@ -394,11 +396,11 @@ inline group::buffer_access_arb to(
 
 #if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
 template<typename T>
-requires(std::is_same_v<T, group::map_buffer_access_mask>) inline group::
-    map_buffer_access_mask
-    to([[maybe_unused]] features::buffers const& features,
-       semantic::RSCA                            flags,
-       bool                                      whole_buffer)
+requires(std::is_same_v<T, group::map_buffer_access_mask>)
+inline group::map_buffer_access_mask to(
+    [[maybe_unused]] features::buffers const& features,
+    semantic::RSCA                            flags,
+    bool                                      whole_buffer)
 {
     using enum_helpers::feval;
     using semantic::RSCA;
@@ -409,8 +411,8 @@ requires(std::is_same_v<T, group::map_buffer_access_mask>) inline group::
     if(feval(flags, RSCA::WriteOnly))
         out |= mask::map_write_bit;
 #if GLEAM_MAX_VERSION >= 0x440
-    if(feval(flags, RSCA::Persistent) && features.persistence
-       && features.storage)
+    if(feval(flags, RSCA::Persistent) && features.persistence &&
+       features.storage)
         out |= mask::map_persistent_bit | mask::map_coherent_bit;
 #endif
     if(feval(flags, RSCA::Discard))
@@ -481,9 +483,9 @@ inline T vertex_type_to(semantic::TypeEnum /*type*/)
 } // namespace detail
 
 template<typename T>
-requires std::is_same_v<T, group::vertex_attrib_int> || std::
-    is_same_v<T, group::vertex_attrib_pointer_type> || std::
-        is_same_v<T, group::vertex_attrib_type>
+requires std::is_same_v<T, group::vertex_attrib_int> ||
+         std::is_same_v<T, group::vertex_attrib_pointer_type> ||
+         std::is_same_v<T, group::vertex_attrib_type>
 inline T to(semantic::TypeEnum type)
 {
     using semantic::TypeEnum;

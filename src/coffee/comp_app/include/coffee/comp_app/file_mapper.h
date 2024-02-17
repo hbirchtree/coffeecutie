@@ -17,6 +17,7 @@ class FileMapper : public compo::SubsystemBase
 {
   public:
     using type = FileMapper;
+
     class Resource
     {
         friend class FileMapper;
@@ -24,6 +25,7 @@ class FileMapper : public compo::SubsystemBase
       public:
         ~Resource();
         operator semantic::BytesConst() const;
+
         template<typename T>
         explicit operator gsl::span<const T>() const
         {
@@ -50,11 +52,13 @@ class FileMapper : public compo::SubsystemBase
         {
             int handle{-1};
         } emscripten;
+
         struct
         {
             int fd{-1};
         } posix;
     };
+
     std::map<platform::url::Url, std::weak_ptr<Resource>> m_resources;
     std::map<platform::url::Url, ResourceCleanupData>     m_resource_cleaners;
 };

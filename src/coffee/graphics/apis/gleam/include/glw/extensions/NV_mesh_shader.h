@@ -2,8 +2,10 @@
 
 #ifdef GL_NV_mesh_shader
 #include "../enums/UseProgramStageMask.h"
+
 namespace gl::nv::mesh_shader {
 using gl::group::use_program_stage_mask;
+
 namespace values {
 constexpr u32 max_mesh_uniform_blocks                         = 0x8E60;
 constexpr u32 max_mesh_texture_image_units                    = 0x8E61;
@@ -52,6 +54,7 @@ constexpr u32 referenced_by_task_shader                       = 0x95A1;
 constexpr u32 max_mesh_work_group_invocations                 = 0x95A2;
 constexpr u32 max_task_work_group_invocations                 = 0x95A3;
 } // namespace values
+
 /*!
  * \brief Part of GL_NV_mesh_shader
  * \param first GLuint

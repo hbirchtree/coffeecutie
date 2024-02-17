@@ -8,6 +8,7 @@ constexpr u32 blend_src_rgb   = 0x80C9;
 constexpr u32 blend_dst_alpha = 0x80CA;
 constexpr u32 blend_src_alpha = 0x80CB;
 } // namespace values
+
 /*!
  * \brief Part of GL_EXT_blend_func_separate
  * \param sfactorRGB GLenum

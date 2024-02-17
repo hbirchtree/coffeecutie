@@ -49,4 +49,4 @@ enum Platform
     PlatformEmscripten = PlatformWeb | 0x1,
 };
 
-}
+} // namespace platform::info

@@ -4,13 +4,16 @@
 #include "../enums/InternalFormat.h"
 #include "../enums/PixelType.h"
 #include "../enums/SizedInternalFormat.h"
+
 namespace gl::nv::depth_buffer_float {
 using gl::group::internal_format;
 using gl::group::pixel_type;
 using gl::group::sized_internal_format;
+
 namespace values {
 constexpr u32 depth_buffer_float_mode = 0x8DAF;
 } // namespace values
+
 /*!
  * \brief Part of GL_NV_depth_buffer_float
  * \param depth GLdouble

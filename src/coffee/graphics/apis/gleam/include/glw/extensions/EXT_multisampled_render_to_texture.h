@@ -3,13 +3,16 @@
 #ifdef GL_EXT_multisampled_render_to_texture
 #include "../enums/FramebufferAttachmentParameterName.h"
 #include "../enums/RenderbufferParameterName.h"
+
 namespace gl::ext::multisampled_render_to_texture {
 using gl::group::framebuffer_attachment_parameter_name;
 using gl::group::renderbuffer_parameter_name;
+
 namespace values {
 constexpr u32 framebuffer_incomplete_multisample = 0x8D56;
 constexpr u32 max_samples                        = 0x8D57;
 } // namespace values
+
 /*!
  * \brief Part of GL_EXT_multisampled_render_to_texture
  * \param target GLenum
@@ -50,20 +53,20 @@ STATICINLINE void framebuffer_texture_2d_multisample(
 
 template<class size_2_i32>
 requires(concepts::size_2d<size_2_i32, i32>)
-    /*!
-     * \brief Part of GL_EXT_multisampled_render_to_texture
-     * \param target GLenum
-     * \param samples GLsizei
-     * \param internalformat GLenum
-     * \param width GLsizei
-     * \param height GLsizei
-     * \return void
-     */
-    STATICINLINE void renderbuffer_storage_multisample(
-        group::renderbuffer_target target,
-        i32                        samples,
-        group::internal_format     internalformat,
-        size_2_i32 const&          width)
+/*!
+ * \brief Part of GL_EXT_multisampled_render_to_texture
+ * \param target GLenum
+ * \param samples GLsizei
+ * \param internalformat GLenum
+ * \param width GLsizei
+ * \param height GLsizei
+ * \return void
+ */
+STATICINLINE void renderbuffer_storage_multisample(
+    group::renderbuffer_target target,
+    i32                        samples,
+    group::internal_format     internalformat,
+    size_2_i32 const&          width)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

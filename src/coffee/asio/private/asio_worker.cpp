@@ -34,4 +34,4 @@ Coffee::ASIO::Worker::~Worker()
 }
 #endif
 
-} // namespace ASIO
+} // namespace Coffee::ASIO

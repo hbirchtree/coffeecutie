@@ -2,11 +2,14 @@
 
 #ifdef GL_AMD_occlusion_query_event
 #include "../enums/OcclusionQueryEventMaskAMD.h"
+
 namespace gl::amd::occlusion_query_event {
 using gl::group::occlusion_query_event_mask_amd;
+
 namespace values {
 constexpr u32 occlusion_query_event_mask = 0x874F;
 } // namespace values
+
 /*!
  * \brief Part of GL_AMD_occlusion_query_event
  * \param target GLenum

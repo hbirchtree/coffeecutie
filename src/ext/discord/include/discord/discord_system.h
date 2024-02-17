@@ -12,8 +12,9 @@ struct Subsystem : compo::SubsystemBase
 {
     using type = Subsystem;
 
-    Subsystem(rq::runtime_queue* queue, DiscordOptions&& options) :
-        m_discordQueue(queue), m_options(std::move(options))
+    Subsystem(rq::runtime_queue* queue, DiscordOptions&& options)
+        : m_discordQueue(queue)
+        , m_options(std::move(options))
     {
         if(auto q = rq::runtime_queue::GetCurrentQueue(); q.has_value())
             m_mainQueue = q.value();
@@ -35,19 +36,20 @@ struct Subsystem : compo::SubsystemBase
             return;
         }
 
-        auto err
-            = rq::runtime_queue::QueueImmediate(m_discordQueue, 0ms, [this]() {
-                  m_service = CreateService(std::move(m_options), m_delegate);
+        auto err =
+            rq::runtime_queue::QueueImmediate(m_discordQueue, 0ms, [this]() {
+                m_service = CreateService(std::move(m_options), m_delegate);
 
-                  auto task = [service = m_service]() { service->poll(); };
-                  if(auto taskId = rq::runtime_queue::QueuePeriodic(
-                         m_discordQueue, std::chrono::milliseconds(100), task);
-                     taskId.has_value())
-                      m_taskId = taskId.value();
-              });
+                auto task = [service = m_service]() { service->poll(); };
+                if(auto taskId = rq::runtime_queue::QueuePeriodic(
+                       m_discordQueue, std::chrono::milliseconds(100), task);
+                   taskId.has_value())
+                    m_taskId = taskId.value();
+            });
         if(err.has_error())
             Throw(rq::runtime_queue_error("failed to start Discord task"));
     }
+
     void stop()
     {
         rq::runtime_queue::Block(m_taskId);

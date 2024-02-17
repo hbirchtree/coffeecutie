@@ -4,22 +4,21 @@
 namespace gl::ext::gpu_program_parameters {
 namespace values {
 } // namespace values
+
 template<class span_const_vec_4_f32>
 requires(
-    concepts::span<span_const_vec_4_f32>&&
-        concepts::vector<typename span_const_vec_4_f32::value_type, f32, 4>)
-    /*!
-     * \brief Part of GL_EXT_gpu_program_parameters
-     * \param target GLenum
-     * \param index GLuint
-     * \param count GLsizei
-     * \param params const GLfloat *
-     * \return void
-     */
-    STATICINLINE void program_env_parameters4fv(
-        group::program_target       target,
-        u32                         index,
-        span_const_vec_4_f32 const& params)
+    concepts::span<span_const_vec_4_f32> &&
+    concepts::vector<typename span_const_vec_4_f32::value_type, f32, 4>)
+/*!
+ * \brief Part of GL_EXT_gpu_program_parameters
+ * \param target GLenum
+ * \param index GLuint
+ * \param count GLsizei
+ * \param params const GLfloat *
+ * \return void
+ */
+STATICINLINE void program_env_parameters4fv(
+    group::program_target target, u32 index, span_const_vec_4_f32 const& params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -36,20 +35,18 @@ requires(
 
 template<class span_const_vec_4_f32>
 requires(
-    concepts::span<span_const_vec_4_f32>&&
-        concepts::vector<typename span_const_vec_4_f32::value_type, f32, 4>)
-    /*!
-     * \brief Part of GL_EXT_gpu_program_parameters
-     * \param target GLenum
-     * \param index GLuint
-     * \param count GLsizei
-     * \param params const GLfloat *
-     * \return void
-     */
-    STATICINLINE void program_local_parameters4fv(
-        group::program_target       target,
-        u32                         index,
-        span_const_vec_4_f32 const& params)
+    concepts::span<span_const_vec_4_f32> &&
+    concepts::vector<typename span_const_vec_4_f32::value_type, f32, 4>)
+/*!
+ * \brief Part of GL_EXT_gpu_program_parameters
+ * \param target GLenum
+ * \param index GLuint
+ * \param count GLsizei
+ * \param params const GLfloat *
+ * \return void
+ */
+STATICINLINE void program_local_parameters4fv(
+    group::program_target target, u32 index, span_const_vec_4_f32 const& params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

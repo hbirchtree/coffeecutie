@@ -194,9 +194,9 @@ void PrintAsciiTable(u64 const& time_accum, szptr suc)
 
 struct TemporaryState
 {
-    TemporaryState() :
-        m_state(State::GetInternalState()),
-        m_tstate(State::GetInternalThreadState())
+    TemporaryState()
+        : m_state(State::GetInternalState())
+        , m_tstate(State::GetInternalThreadState())
     {
         auto profiler    = State::PeekState("jsonProfiler");
         auto threadNames = State::PeekState("threadNames");

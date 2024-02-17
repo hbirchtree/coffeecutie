@@ -5,6 +5,7 @@ namespace gl::ext::instanced_arrays {
 namespace values {
 constexpr u32 vertex_attrib_array_divisor = 0x88FE;
 } // namespace values
+
 /*!
  * \brief Part of GL_EXT_instanced_arrays
  * \param mode GLenum

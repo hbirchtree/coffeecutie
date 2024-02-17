@@ -226,6 +226,7 @@ FORCEDINLINE bool cmp(const CharType* s1, const CharType* s2, Args... args)
 {
     return compare_ops::cmp<CompMode, CharType>(s1, s2, args...) == 0;
 }
+
 template<
     typename CompMode                                   = comp_default,
     typename CharType                                   = char,

@@ -6,17 +6,19 @@
 #include "data_cache.h"
 #include "materials.h"
 
-using ShaderManifest
-    = compo::SubsystemManifest<empty_list_t, empty_list_t, empty_list_t>;
+using ShaderManifest =
+    compo::SubsystemManifest<empty_list_t, empty_list_t, empty_list_t>;
 
 template<typename V>
-struct ShaderCache : DataCache<ShaderItem, u32, blam::tagref_t const&>,
-                     compo::RestrictedSubsystem<ShaderCache<V>, ShaderManifest>
+struct ShaderCache
+    : DataCache<ShaderItem, u32, blam::tagref_t const&>
+    , compo::RestrictedSubsystem<ShaderCache<V>, ShaderManifest>
 {
     using type  = ShaderCache<V>;
     using Proxy = compo::proxy_of<ShaderManifest>;
 
-    ShaderCache(BitmapCache<V>& bitmap_cache) : bitm_cache(bitmap_cache)
+    ShaderCache(BitmapCache<V>& bitmap_cache)
+        : bitm_cache(bitmap_cache)
     {
     }
 
@@ -73,29 +75,29 @@ struct ShaderCache : DataCache<ShaderItem, u32, blam::tagref_t const&>,
             auto const& shader_model = *extract_shader<shader_env>(it);
 
             out.senv.base_bitm = get_bitm_idx(shader_model.diffuse.base);
-            out.senv.primary_bitm
-                = get_bitm_idx(shader_model.diffuse.primary.map);
-            out.senv.secondary_bitm
-                = get_bitm_idx(shader_model.diffuse.secondary.map);
+            out.senv.primary_bitm =
+                get_bitm_idx(shader_model.diffuse.primary.map);
+            out.senv.secondary_bitm =
+                get_bitm_idx(shader_model.diffuse.secondary.map);
             out.senv.micro_bitm = get_bitm_idx(shader_model.diffuse.micro.map);
 
             //            out.senv.self_illum =
             //            get_bitm_idx(shader_model.self_illum.map.map);
             out.senv.bump = get_bitm_idx(shader_model.bump.map);
-            out.senv.reflection_bitm
-                = get_bitm_idx(shader_model.reflection.reflection);
+            out.senv.reflection_bitm =
+                get_bitm_idx(shader_model.reflection.reflection);
 
             break;
         }
         case tag_class_t::soso: {
-            blam::shader::shader_model const& shader_model
-                = *extract_shader<blam::shader::shader_model>(it);
+            blam::shader::shader_model const& shader_model =
+                *extract_shader<blam::shader::shader_model>(it);
 
             out.soso.base_bitm   = get_bitm_idx(shader_model.maps.base);
             out.soso.multi_bitm  = get_bitm_idx(shader_model.maps.multipurpose);
             out.soso.detail_bitm = get_bitm_idx(shader_model.maps.detail.map);
-            out.soso.reflection_bitm
-                = get_bitm_idx(shader_model.reflection.reflection);
+            out.soso.reflection_bitm =
+                get_bitm_idx(shader_model.reflection.reflection);
 
             break;
         }
@@ -121,8 +123,8 @@ struct ShaderCache : DataCache<ShaderItem, u32, blam::tagref_t const&>,
             break;
         }
         case tag_class_t::scex: {
-            auto const& shader_model
-                = *extract_shader<shader_chicago_extended<V>>(it);
+            auto const& shader_model =
+                *extract_shader<shader_chicago_extended<V>>(it);
 
             if(auto maps4 = shader_model.maps_4stage.data(magic);
                maps4.has_value())
@@ -142,16 +144,16 @@ struct ShaderCache : DataCache<ShaderItem, u32, blam::tagref_t const&>,
             break;
         }
         case tag_class_t::sgla: {
-            shader_glass const& shader_model
-                = *extract_shader<shader_glass>(it);
+            shader_glass const& shader_model =
+                *extract_shader<shader_glass>(it);
 
             out.color_bitm = get_bitm_idx(shader_model.diffuse.map.map);
 
             break;
         }
         case tag_class_t::swat: {
-            shader_water const& shader_model
-                = *extract_shader<shader_water>(it);
+            shader_water const& shader_model =
+                *extract_shader<shader_water>(it);
 
             out.swat.base       = get_bitm_idx(shader_model.base);
             out.swat.reflection = get_bitm_idx(shader_model.reflection_map);
@@ -174,8 +176,8 @@ struct ShaderCache : DataCache<ShaderItem, u32, blam::tagref_t const&>,
             break;
         }
         case tag_class_t::sotr: {
-            shader_transparent const& shader_model
-                = *extract_shader<shader_transparent>(it);
+            shader_transparent const& shader_model =
+                *extract_shader<shader_transparent>(it);
 
             if(auto maps = shader_model.maps.data(magic); maps.has_value())
             {
@@ -208,8 +210,8 @@ struct ShaderCache : DataCache<ShaderItem, u32, blam::tagref_t const&>,
         switch(shader.tag_class)
         {
         case tag_class_t::scex: {
-            shader_chicago_extended<V> const* info
-                = shader.header->as<blam::shader::shader_chicago_extended<V>>();
+            shader_chicago_extended<V> const* info =
+                shader.header->as<blam::shader::shader_chicago_extended<V>>();
 
             auto maps = info->maps_4stage.data(magic).value();
             for(auto i : range<>(4))
@@ -217,14 +219,14 @@ struct ShaderCache : DataCache<ShaderItem, u32, blam::tagref_t const&>,
                 auto id = shader.scex.maps.at(i);
                 if(!shader.schi.maps.at(i).valid())
                     continue;
-                BitmapItem const& bitm
-                    = *bitm_cache.assign_atlas_data(mat.maps[i], id);
+                BitmapItem const& bitm =
+                    *bitm_cache.assign_atlas_data(mat.maps[i], id);
                 chicago::map_t const& map = maps[i];
                 mat.maps[i].uv_scale      = map.map.uv_scale * base_map_scale;
                 mat.maps[i].bias          = bitm.image.bias;
 
-                u16 flags = static_cast<u8>(map.color_func)
-                            | (static_cast<u8>(map.alpha_func) << 4);
+                u16 flags = static_cast<u8>(map.color_func) |
+                            (static_cast<u8>(map.alpha_func) << 4);
                 mat.lightmap.meta1 |= flags << (i * 8);
             }
 
@@ -232,8 +234,8 @@ struct ShaderCache : DataCache<ShaderItem, u32, blam::tagref_t const&>,
             break;
         }
         case tag_class_t::schi: {
-            shader_chicago<V> const* info
-                = shader.header->as<blam::shader::shader_chicago<V>>();
+            shader_chicago<V> const* info =
+                shader.header->as<blam::shader::shader_chicago<V>>();
 
             auto maps = info->maps.data(magic).value();
             for(auto i : range<>(4))
@@ -241,14 +243,14 @@ struct ShaderCache : DataCache<ShaderItem, u32, blam::tagref_t const&>,
                 auto id = shader.schi.maps.at(i);
                 if(!shader.schi.maps.at(i).valid())
                     continue;
-                BitmapItem const& bitm
-                    = *bitm_cache.assign_atlas_data(mat.maps[i], id);
+                BitmapItem const& bitm =
+                    *bitm_cache.assign_atlas_data(mat.maps[i], id);
                 chicago::map_t const& map = maps[i];
                 mat.maps[i].uv_scale      = map.map.uv_scale * base_map_scale;
                 mat.maps[i].bias          = bitm.image.bias;
 
-                u16 flags = static_cast<u8>(map.color_func)
-                            | (static_cast<u8>(map.alpha_func) << 4);
+                u16 flags = static_cast<u8>(map.color_func) |
+                            (static_cast<u8>(map.alpha_func) << 4);
                 mat.lightmap.meta1 |= flags << (i * 8);
             }
 
@@ -256,8 +258,8 @@ struct ShaderCache : DataCache<ShaderItem, u32, blam::tagref_t const&>,
             break;
         }
         case tag_class_t::senv: {
-            shader_env const* info
-                = shader.header->as<blam::shader::shader_env>();
+            shader_env const* info =
+                shader.header->as<blam::shader::shader_env>();
 
             auto base = bitm_cache.assign_atlas_data(
                 mat.maps[0], shader.senv.base_bitm);
@@ -295,11 +297,11 @@ struct ShaderCache : DataCache<ShaderItem, u32, blam::tagref_t const&>,
 
             mat.material.flags |= (primary && secondary ? 1 : 0) << 9;
 
-            mat.lightmap.meta1
-                = bitm_cache.get_atlas_layer(shader.senv.self_illum);
+            mat.lightmap.meta1 =
+                bitm_cache.get_atlas_layer(shader.senv.self_illum);
 
-            auto* bump
-                = bitm_cache.assign_atlas_data(mat.maps[4], shader.senv.bump);
+            auto* bump =
+                bitm_cache.assign_atlas_data(mat.maps[4], shader.senv.bump);
             if(bump)
             {
                 mat.maps[4].uv_scale = Vecf2(info->bump.scale);
@@ -307,8 +309,8 @@ struct ShaderCache : DataCache<ShaderItem, u32, blam::tagref_t const&>,
             }
 
             mat.material.material = materials::id::senv;
-            mat.material.flags    = static_cast<u32>(info->flags)
-                                 | static_cast<u32>(info->shader_type) << 4;
+            mat.material.flags    = static_cast<u32>(info->flags) |
+                                 static_cast<u32>(info->shader_type) << 4;
             mat.material.inputs1[0] = info->reflection.lightmap_brightness;
             mat.material.inputs1[1] = info->specular.brightness;
 
@@ -321,8 +323,8 @@ struct ShaderCache : DataCache<ShaderItem, u32, blam::tagref_t const&>,
                 mat.material.inputs[1] = Vecf4(
                     info->specular.parallel_color,
                     reflection.parallel_brightness);
-                mat.lightmap.reflection
-                    = bitm_cache.get_atlas_layer(shader.senv.reflection_bitm);
+                mat.lightmap.reflection =
+                    bitm_cache.get_atlas_layer(shader.senv.reflection_bitm);
                 mat.material.flags |= 1 << 6; /* Flag for reflection */
                 mat.material.flags |= static_cast<u32>(reflection.type) << 7;
             }
@@ -366,8 +368,8 @@ struct ShaderCache : DataCache<ShaderItem, u32, blam::tagref_t const&>,
             mat.material.inputs1  = Vecf2{
                 glm::radians(info->ripple.anim_angle),
                 info->ripple.anim_velocity};
-            mat.material.inputs[0]
-                = Vecf4(info->parallel.tint_color, info->parallel.brightness);
+            mat.material.inputs[0] =
+                Vecf4(info->parallel.tint_color, info->parallel.brightness);
             mat.material.inputs[1] = Vecf4(
                 info->perpendicular.tint_color, info->perpendicular.brightness);
             break;
@@ -387,8 +389,8 @@ struct ShaderCache : DataCache<ShaderItem, u32, blam::tagref_t const&>,
             break;
         }
         case tag_class_t::sotr: {
-            shader_transparent const* info
-                = shader.header->as<shader_transparent>();
+            shader_transparent const* info =
+                shader.header->as<shader_transparent>();
             auto maps = info->maps.data(magic).value();
             //            auto stages = info->stages.data(magic).value();
             //            auto layers = info->layers.data(magic).value();
@@ -410,8 +412,8 @@ struct ShaderCache : DataCache<ShaderItem, u32, blam::tagref_t const&>,
             break;
         }
         case tag_class_t::soso: {
-            shader_model const* info
-                = shader.header->as<blam::shader::shader_model>();
+            shader_model const* info =
+                shader.header->as<blam::shader::shader_model>();
             bitm_cache.assign_atlas_data(mat.maps[0], shader.soso.base_bitm);
             mat.maps[0].uv_scale = base_map_scale;
             mat.maps[0].bias     = 2;
@@ -428,8 +430,8 @@ struct ShaderCache : DataCache<ShaderItem, u32, blam::tagref_t const&>,
                 mat.maps[2].bias     = detail->image.bias;
             }
 
-            mat.lightmap.reflection
-                = bitm_cache.get_atlas_layer(shader.soso.reflection_bitm);
+            mat.lightmap.reflection =
+                bitm_cache.get_atlas_layer(shader.soso.reflection_bitm);
             if(mat.lightmap.reflection != 0)
                 mat.material.flags |= 0x1;
 
@@ -452,8 +454,8 @@ struct ShaderCache : DataCache<ShaderItem, u32, blam::tagref_t const&>,
         using namespace blam::shader;
 
         ShaderItem const&         shader = find(shader_id)->second;
-        shader_transparent const* info
-            = shader.header->as<shader_transparent>();
+        shader_transparent const* info =
+            shader.header->as<shader_transparent>();
 
         auto stages = info->stages.data(magic).value();
         u32  i      = 0;
@@ -466,8 +468,8 @@ struct ShaderCache : DataCache<ShaderItem, u32, blam::tagref_t const&>,
         PropertyAnim,
         blam::shader::texture_property_anim,
         blam::shader::simple_tex_property_anim>
-        //
-        f32 tex_animation(PropertyAnim const& anim, f32 const& time)
+    //
+    f32 tex_animation(PropertyAnim const& anim, f32 const& time)
     {
         using namespace blam::shader;
         switch(anim.function)
@@ -488,8 +490,8 @@ struct ShaderCache : DataCache<ShaderItem, u32, blam::tagref_t const&>,
         Anim,
         blam::shader::texture_uv_rotation_animation,
         blam::shader::simple_texture_uv_animation>
-        //
-        Vecf2 uv_animation(Anim const& anim, f32 const& time)
+    //
+    Vecf2 uv_animation(Anim const& anim, f32 const& time)
     {
         return Vecf2{tex_animation(anim.u, time), tex_animation(anim.v, time)};
     }
@@ -539,15 +541,15 @@ struct ShaderCache : DataCache<ShaderItem, u32, blam::tagref_t const&>,
         switch(shader.tag_class)
         {
         case blam::tag_class_t::scex: {
-            shader_chicago_extended<V> const* info
-                = shader.header->as<blam::shader::shader_chicago_extended<V>>();
+            shader_chicago_extended<V> const* info =
+                shader.header->as<blam::shader::shader_chicago_extended<V>>();
             auto maps = info->maps_4stage.data(magic).value();
             populate_chicago_uv_anims(mat, maps, t);
             break;
         }
         case blam::tag_class_t::schi: {
-            shader_chicago<V> const* info
-                = shader.header->as<shader_chicago<V>>();
+            shader_chicago<V> const* info =
+                shader.header->as<shader_chicago<V>>();
             auto maps = info->maps.data(magic).value();
             populate_chicago_uv_anims(mat, maps, t);
             break;
@@ -570,6 +572,7 @@ struct ShaderCache : DataCache<ShaderItem, u32, blam::tagref_t const&>,
     void start_restricted(Proxy&, time_point const&)
     {
     }
+
     void end_restricted(Proxy&, time_point const&)
     {
     }

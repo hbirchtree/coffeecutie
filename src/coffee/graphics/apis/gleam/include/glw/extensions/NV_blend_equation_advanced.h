@@ -8,6 +8,7 @@
 #include "../enums/SpecialNumbers.h"
 #include "../enums/StencilOp.h"
 #include "../enums/TextureSwizzle.h"
+
 namespace gl::nv::blend_equation_advanced {
 using gl::group::blending_factor;
 using gl::group::fragment_shader_generic_source_ati;
@@ -16,6 +17,7 @@ using gl::group::path_fill_mode;
 using gl::group::special_numbers;
 using gl::group::stencil_op;
 using gl::group::texture_swizzle;
+
 namespace values {
 constexpr u32 xor                     = 0x1506;
 constexpr u32 red                     = 0x1903;
@@ -67,6 +69,7 @@ constexpr u32 plus_clamped_alpha      = 0x92B2;
 constexpr u32 minus_clamped           = 0x92B3;
 constexpr u32 invert_ovg              = 0x92B4;
 } // namespace values
+
 /*!
  * \brief Part of GL_NV_blend_equation_advanced
 

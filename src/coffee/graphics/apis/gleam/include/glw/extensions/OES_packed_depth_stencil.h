@@ -4,10 +4,12 @@
 #include "../enums/InternalFormat.h"
 #include "../enums/PixelType.h"
 #include "../enums/SizedInternalFormat.h"
+
 namespace gl::oes::packed_depth_stencil {
 using gl::group::internal_format;
 using gl::group::pixel_type;
 using gl::group::sized_internal_format;
+
 namespace values {
 } // namespace values
 } // namespace gl::oes::packed_depth_stencil

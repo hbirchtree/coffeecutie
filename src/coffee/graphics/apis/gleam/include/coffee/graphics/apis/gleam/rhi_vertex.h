@@ -78,9 +78,8 @@ inline std::tuple<semantic::TypeEnum, vattribute_flags, u32> vector_info_of()
 
 template<typename T>
 requires(std::is_floating_point_v<T> || std::is_integral_v<T>)
-    //
-    inline std::
-        tuple<semantic::TypeEnum, vattribute_flags, u32> vector_info_of()
+//
+inline std::tuple<semantic::TypeEnum, vattribute_flags, u32> vector_info_of()
 {
     auto [type, flags] = type_of<T>();
     return {type, flags, 1};
@@ -90,8 +89,8 @@ static_assert(std::is_floating_point_v<i32> || std::is_integral_v<i32>);
 static_assert(std::is_floating_point_v<u32> || std::is_integral_v<u32>);
 static_assert(std::is_floating_point_v<f32> || std::is_integral_v<f32>);
 static_assert(
-    !std::is_floating_point_v<
-        typing::pixels::f11> && !std::is_integral_v<typing::pixels::f11>);
+    !std::is_floating_point_v<typing::pixels::f11> &&
+    !std::is_integral_v<typing::pixels::f11>);
 
 template<typename T>
 requires std::is_same_v<T, typing::pixels::f11>
@@ -122,6 +121,7 @@ constexpr inline bool vertex_is_int_type(semantic::TypeEnum type)
 struct vertex_attribute_float_type
 {
 };
+
 struct vertex_attribute_int_type
 {
 };
@@ -133,10 +133,11 @@ static constexpr detail::vertex_attribute_int_type   vertex_int_type;
 
 struct vertex_attribute
 {
-    using attribute_flags
-        = semantic::concepts::graphics::buffers::attribute_flags;
+    using attribute_flags =
+        semantic::concepts::graphics::buffers::attribute_flags;
 
     u32 index{0};
+
     struct
     {
         u64                offset{0};
@@ -145,6 +146,7 @@ struct vertex_attribute
         semantic::TypeEnum type{semantic::TypeEnum::Scalar};
         attribute_flags    flags{attribute_flags::none};
     } value;
+
     struct
     {
         size_t offset{0};
@@ -157,24 +159,26 @@ struct vertex_attribute
         auto [type, flags, count] = detail::vector_info_of<V>();
         auto member_info          = stl_types::member_traits(member);
         return vertex_attribute{
-            .value = {
-                .offset = member_info.offset(),
-                .stride = sizeof(T),
-                .count  = count,
-                .type   = type,
-                .flags  = flags,
-            },
+            .value =
+                {
+                    .offset = member_info.offset(),
+                    .stride = sizeof(T),
+                    .count  = count,
+                    .type   = type,
+                    .flags  = flags,
+                },
             .buffer = {},
         };
     }
 
     template<typename T, typename V>
-    requires(!std::is_floating_point_v<V>) static inline auto from_member(
+    requires(!std::is_floating_point_v<V>)
+    static inline auto from_member(
         V T::*member, detail::vertex_attribute_float_type)
     {
         auto attr = from_member<T, V>(member);
-        attr.value.flags
-            = attribute_flags::packed | attribute_flags::normalized;
+        attr.value.flags =
+            attribute_flags::packed | attribute_flags::normalized;
         return attr;
     }
 
@@ -224,16 +228,17 @@ inline void vertex_setup_attribute(vertex_attribute const& attr, u32 offset = 0)
 
 } // namespace detail
 
-#if GLEAM_MAX_VERSION >= 0x150 || GLEAM_MAX_VERSION_ES >= 0x300 \
-    || defined(GL_OES_vertex_array_object)
+#if GLEAM_MAX_VERSION >= 0x150 || GLEAM_MAX_VERSION_ES >= 0x300 || \
+    defined(GL_OES_vertex_array_object)
 struct vertex_array_t
 {
-    static constexpr auto debug_identifier
-        = group::object_identifier::vertex_array;
+    static constexpr auto debug_identifier =
+        group::object_identifier::vertex_array;
     using attribute_type = vertex_attribute;
 
-    vertex_array_t(features::vertices& features, debug::api& debug) :
-        m_features(features), m_debug(debug)
+    vertex_array_t(features::vertices& features, debug::api& debug)
+        : m_features(features)
+        , m_debug(debug)
     {
     }
 
@@ -254,6 +259,7 @@ struct vertex_array_t
                 SpanOne<u32>(m_handle));
 #endif
     }
+
     void dealloc()
     {
 #if GLEAM_MAX_VERSION_ES != 0x200
@@ -272,6 +278,7 @@ struct vertex_array_t
     {
         m_attribute_names = std::move(attributes);
     }
+
     void force_attribute_names()
     {
         m_forced_attribute_names = true;
@@ -291,11 +298,11 @@ struct vertex_array_t
 #endif
         }
 
-        [[maybe_unused]] bool packed
-            = attribute.value.flags & vertex_attribute::attribute_flags::packed;
-        [[maybe_unused]] bool normalized
-            = attribute.value.flags
-              & vertex_attribute::attribute_flags::normalized;
+        [[maybe_unused]] bool packed =
+            attribute.value.flags & vertex_attribute::attribute_flags::packed;
+        [[maybe_unused]] bool normalized =
+            attribute.value.flags &
+            vertex_attribute::attribute_flags::normalized;
 
 #if GLEAM_MAX_VERSION >= 0x450
         if(m_features.dsa && m_features.format)
@@ -346,8 +353,8 @@ struct vertex_array_t
             cmd::vertex_attrib_divisor(
                 attribute.index,
                 static_cast<bool>(
-                    attribute.value.flags
-                    & vertex_attribute::attribute_flags::instanced));
+                    attribute.value.flags &
+                    vertex_attribute::attribute_flags::instanced));
 #endif
         }
 
@@ -367,8 +374,8 @@ struct vertex_array_t
 
     template<class T>
     requires(T::value == buffers::type::vertex)
-        //
-        void set_buffer(T, std::shared_ptr<buffer_t> buffer, u32 binding)
+    //
+    void set_buffer(T, std::shared_ptr<buffer_t> buffer, u32 binding)
     {
         [[maybe_unused]] auto _ = m_debug.scope(__PRETTY_FUNCTION__);
         if(!m_features.dsa)
@@ -387,12 +394,12 @@ struct vertex_array_t
             if(attribute.buffer.id != binding)
                 continue;
 
-            [[maybe_unused]] bool packed
-                = attribute.value.flags
-                  & vertex_attribute::attribute_flags::packed;
-            [[maybe_unused]] bool instanced
-                = attribute.value.flags
-                  & vertex_attribute::attribute_flags::instanced;
+            [[maybe_unused]] bool packed =
+                attribute.value.flags &
+                vertex_attribute::attribute_flags::packed;
+            [[maybe_unused]] bool instanced =
+                attribute.value.flags &
+                vertex_attribute::attribute_flags::instanced;
             packed = packed && detail::vertex_is_int_type(attribute.value.type);
 
 #if GLEAM_MAX_VERSION >= 0x450
@@ -459,8 +466,8 @@ struct vertex_array_t
 
     template<class T>
     requires(T::value == buffers::type::element)
-        //
-        void set_buffer(T, std::shared_ptr<buffer_t> buffer)
+    //
+    void set_buffer(T, std::shared_ptr<buffer_t> buffer)
     {
         if(!m_features.dsa)
         {
@@ -515,14 +522,15 @@ struct vertex_array_legacy_t
 {
     using attribute_type = vertex_attribute;
 
-    vertex_array_legacy_t(features::vertices& features, debug::api& /*debug*/) :
-        m_features(features)
+    vertex_array_legacy_t(features::vertices& features, debug::api& /*debug*/)
+        : m_features(features)
     {
     }
 
     void alloc()
     {
     }
+
     void dealloc()
     {
     }
@@ -534,16 +542,16 @@ struct vertex_array_legacy_t
 
     template<class T>
     requires(T::value == buffers::type::vertex)
-        //
-        void set_buffer(T, std::shared_ptr<buffer_t> buffer, u32 binding)
+    //
+    void set_buffer(T, std::shared_ptr<buffer_t> buffer, u32 binding)
     {
         m_buffers.insert({binding, buffer});
     }
 
     template<class T>
     requires(T::value == buffers::type::element)
-        //
-        void set_buffer(T, std::shared_ptr<buffer_t> buffer)
+    //
+    void set_buffer(T, std::shared_ptr<buffer_t> buffer)
     {
         m_element_buffer = buffer;
     }

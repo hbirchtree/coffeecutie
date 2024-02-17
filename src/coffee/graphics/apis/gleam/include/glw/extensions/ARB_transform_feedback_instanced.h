@@ -4,6 +4,7 @@
 namespace gl::arb::transform_feedback_instanced {
 namespace values {
 } // namespace values
+
 /*!
  * \brief Part of GL_ARB_transform_feedback_instanced
  * \param mode GLenum

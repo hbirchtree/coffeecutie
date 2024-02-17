@@ -5,6 +5,7 @@ namespace gl::ext::polygon_offset_clamp {
 namespace values {
 constexpr u32 polygon_offset_clamp = 0x8E1B;
 } // namespace values
+
 /*!
  * \brief Part of GL_EXT_polygon_offset_clamp
  * \param factor GLfloat

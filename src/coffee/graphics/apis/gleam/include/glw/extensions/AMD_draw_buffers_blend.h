@@ -4,6 +4,7 @@
 namespace gl::amd::draw_buffers_blend {
 namespace values {
 } // namespace values
+
 /*!
  * \brief Part of GL_AMD_draw_buffers_blend
  * \param buf GLuint

@@ -18,6 +18,7 @@ constexpr u32 texture_buffer_offset             = 0x919D;
 constexpr u32 texture_buffer_size               = 0x919E;
 constexpr u32 texture_buffer_offset_alignment   = 0x919F;
 } // namespace values
+
 /*!
  * \brief Part of GL_OES_texture_buffer
  * \param target GLenum

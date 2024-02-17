@@ -36,5 +36,5 @@ struct FileBase
 {
     typedef base_file_error<NestedError> file_error;
 };
-}
-}
+} // namespace file
+} // namespace platform

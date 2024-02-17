@@ -57,11 +57,13 @@ struct ui_element
     {
         // so much stuff...
     };
+
     struct data_input_t
     {
         function_t function;
         u32        unknown[8];
     };
+
     reflexive_t<data_input_t> data_inputs;
 
     struct event_handler_t
@@ -123,7 +125,9 @@ struct ui_element
         tagref_typed_t<tag_class_t::snd>  sound;
         bl_string                         script;
     };
+
     reflexive_t<event_handler_t> event_handlers;
+
     struct search_and_replace_t
     {
         bl_string query;
@@ -135,7 +139,9 @@ struct ui_element
             pid,
         } replacement;
     };
+
     u32 unknown_data[10];
+
     struct text_box_t
     {
         tagref_typed_t<tag_class_t::ustr> unicode_strings;
@@ -161,8 +167,10 @@ struct ui_element
         u32 unknown2[6];
         i16 unknown3;
     } text_box;
+
     /* Missing list items, conditional widgets, column list, spinner list */
     u32 padding[188];
+
     struct child_widget_t
     {
         tagref_typed_t<tag_class_t::DeLa> widget;
@@ -176,10 +184,12 @@ struct ui_element
         i16 horizontal_offset;
         u32 unknown[5];
     };
+
     reflexive_t<child_widget_t> child_widgets;
 };
 
 static_assert(offsetof(ui_element, child_widgets) == 992);
+
 // static_assert(sizeof(ui_element) == 1004);
 
 struct ui_item_collection
@@ -188,6 +198,7 @@ struct ui_item_collection
     {
         tagref_typed_t<tag_class_t::DeLa> definition;
     };
+
     reflexive_t<widget_definition_t> widget_definitions;
 };
 
@@ -200,6 +211,7 @@ struct multiplayer_scenarios
         bl_string                         directory_path;
         u32                               padding[4];
     };
+
     reflexive_t<map_t> maps;
 };
 

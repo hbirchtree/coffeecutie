@@ -3,9 +3,11 @@
 #ifdef GL_EXT_geometry_shader4
 #include "../enums/FramebufferAttachmentParameterName.h"
 #include "../enums/PrimitiveType.h"
+
 namespace gl::ext::geometry_shader4 {
 using gl::group::framebuffer_attachment_parameter_name;
 using gl::group::primitive_type;
+
 namespace values {
 constexpr u32 program_point_size                   = 0x8642;
 constexpr u32 max_varying_components               = 0x8B4B;
@@ -22,6 +24,7 @@ constexpr u32 max_geometry_uniform_components      = 0x8DDF;
 constexpr u32 max_geometry_output_vertices         = 0x8DE0;
 constexpr u32 max_geometry_total_output_components = 0x8DE1;
 } // namespace values
+
 /*!
  * \brief Part of GL_EXT_geometry_shader4
  * \param program GLuint

@@ -4,9 +4,10 @@
 
 namespace glad {
 
-struct Binding : comp_app::AppService<Binding, comp_app::GraphicsBinding>,
-                 comp_app::interfaces::GraphicsBinding,
-                 comp_app::AppLoadableService
+struct Binding
+    : comp_app::AppService<Binding, comp_app::GraphicsBinding>
+    , comp_app::interfaces::GraphicsBinding
+    , comp_app::AppLoadableService
 {
     Binding()
     {

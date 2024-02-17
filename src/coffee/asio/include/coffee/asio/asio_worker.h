@@ -20,8 +20,8 @@ struct Worker : State::GlobalState
 
 STATICINLINE std::shared_ptr<Worker> GenWorker()
 {
-    auto worker
-        = std::dynamic_pointer_cast<Worker>(State::PeekState(context_name));
+    auto worker =
+        std::dynamic_pointer_cast<Worker>(State::PeekState(context_name));
     if(worker)
         return worker;
 
@@ -48,7 +48,9 @@ struct Worker
 {
     int context{0};
 
-    void stop() {}
+    void stop()
+    {
+    }
 };
 
 STATICINLINE Worker* GenWorker()

@@ -148,10 +148,11 @@ GXAPI::API_CONTEXT GXAPI::GetLoadAPI(GXAPI::OPTS const&)
 
 void RenderTarget::clear(u32, const Vecf4& inColor)
 {
-    vec4_u8 newColor = {libc_types::convert_f32<u8>(inColor.r()),
-                        libc_types::convert_f32<u8>(inColor.g()),
-                        libc_types::convert_f32<u8>(inColor.b()),
-                        libc_types::convert_f32<u8>(inColor.a())};
+    vec4_u8 newColor = {
+        libc_types::convert_f32<u8>(inColor.r()),
+        libc_types::convert_f32<u8>(inColor.g()),
+        libc_types::convert_f32<u8>(inColor.b()),
+        libc_types::convert_f32<u8>(inColor.a())};
 
     if(newColor == color)
         return;
@@ -243,8 +244,7 @@ STATICINLINE u32 type_to_format(u32 attr, semantic::TypeEnum type, u32 size)
     case GX_VA_TEX4:
     case GX_VA_TEX5:
     case GX_VA_TEX6:
-    case GX_VA_TEX7:
-    {
+    case GX_VA_TEX7: {
         switch(type)
         {
         case T::UByte:
@@ -261,8 +261,7 @@ STATICINLINE u32 type_to_format(u32 attr, semantic::TypeEnum type, u32 size)
         break;
     }
     case GX_VA_CLR0:
-    case GX_VA_CLR1:
-    {
+    case GX_VA_CLR1: {
         switch(type)
         {
         case T::UByte:
@@ -313,21 +312,18 @@ void Pipeline::bind()
 {
     for(auto const& shader : shaders)
     {
-        std::string variant = shader.second->variant
-                ? shader.second->variant
-                : "nullptr";
+        std::string variant =
+            shader.second->variant ? shader.second->variant : "nullptr";
 
         switch(shader.second->stage)
         {
-        case typing::graphics::ShaderStage::Vertex:
-        {
+        case typing::graphics::ShaderStage::Vertex: {
             if(variant == "matrix_transform")
                 continue;
 
             break;
         }
-        case typing::graphics::ShaderStage::Fragment:
-        {
+        case typing::graphics::ShaderStage::Fragment: {
             if(variant == "vertex_color")
             {
                 GX_SetNumChans(1);
@@ -359,8 +355,7 @@ STATICINLINE u32 call_to_primitive(GXAPI::D_CALL const& call)
 
     switch(call.primitive())
     {
-    case Prim::Triangle:
-    {
+    case Prim::Triangle: {
         switch(call.primitiveMode())
         {
         case Cre::Explicit:
@@ -374,8 +369,7 @@ STATICINLINE u32 call_to_primitive(GXAPI::D_CALL const& call)
         }
         break;
     }
-    case Prim::Line:
-    {
+    case Prim::Line: {
         switch(call.primitiveMode())
         {
         case Cre::Explicit:
@@ -514,12 +508,10 @@ void GXAPI::Draw(
 
                 switch(index_to_attr(attr.m_idx))
                 {
-                case GX_VA_POS:
-                {
+                case GX_VA_POS: {
                     switch(attr.m_size)
                     {
-                    case 2:
-                    {
+                    case 2: {
                         switch(attr.m_type)
                         {
                         case T::Byte:
@@ -540,8 +532,7 @@ void GXAPI::Draw(
                         }
                         break;
                     }
-                    case 3:
-                    {
+                    case 3: {
                         switch(attr.m_type)
                         {
                         case T::Byte:
@@ -565,8 +556,7 @@ void GXAPI::Draw(
                     }
                     break;
                 }
-                case GX_VA_NRM:
-                {
+                case GX_VA_NRM: {
                     switch(attr.m_type)
                     {
                     case T::Byte:
@@ -583,17 +573,14 @@ void GXAPI::Draw(
                     break;
                 }
                 case GX_VA_CLR0:
-                case GX_VA_CLR1:
-                {
+                case GX_VA_CLR1: {
                     switch(attr.m_size)
                     {
-                    case 3:
-                    {
+                    case 3: {
                         GX_Color3u8(buf_u8[0], buf_u8[1], buf_u8[2]);
                         break;
                     }
-                    case 4:
-                    {
+                    case 4: {
                         GX_Color4u8(buf_u8[0], buf_u8[1], buf_u8[2], buf_u8[3]);
                         break;
                     }
@@ -608,12 +595,10 @@ void GXAPI::Draw(
                 case GX_VA_TEX4:
                 case GX_VA_TEX5:
                 case GX_VA_TEX6:
-                case GX_VA_TEX7:
-                {
+                case GX_VA_TEX7: {
                     switch(attr.m_size)
                     {
-                    case 1:
-                    {
+                    case 1: {
                         switch(attr.m_type)
                         {
                         case T::Byte:
@@ -634,8 +619,7 @@ void GXAPI::Draw(
                         }
                         break;
                     }
-                    case 2:
-                    {
+                    case 2: {
                         switch(attr.m_type)
                         {
                         case T::Byte:

@@ -32,6 +32,7 @@ struct texture_format_t
         u8               component_count;
         bool             srgb;
     };
+
     struct bit_layout_t
     {
         u8 r{0};
@@ -42,6 +43,7 @@ struct texture_format_t
         u8 depth{0};
         u8 stencil{0};
     };
+
     struct raw_format_t
     {
         bit_layout_t     bit_layout;
@@ -58,12 +60,14 @@ struct texture_format_t
     vk_format_t                  vk_type{static_cast<vk_format_t>(0)};
     std::optional<compression_t> compression{};
     std::optional<raw_format_t>  raw_format{};
+
     struct version_t
     {
         std::optional<u16> core;
         std::optional<u16> es;
         std::optional<u16> web;
     } version{};
+
     struct extensions_t
     {
         std::string_view core;

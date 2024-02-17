@@ -54,4 +54,4 @@ FORCEDINLINE StrType both_zero(StrType const& s)
     return left_zero(right_zero(s));
 }
 
-} // namespace trim
+} // namespace stl_types::str::trim

@@ -2,8 +2,10 @@
 
 #ifdef GL_EXT_blend_subtract
 #include "../enums/BlendEquationModeEXT.h"
+
 namespace gl::ext::blend_subtract {
 using gl::group::blend_equation_mode_ext;
+
 namespace values {
 } // namespace values
 } // namespace gl::ext::blend_subtract

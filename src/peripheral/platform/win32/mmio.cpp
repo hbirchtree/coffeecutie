@@ -77,7 +77,8 @@ result<mem_mapping_t, posix::posix_error> map(
         file_name.c_str(), open, share_mode, nullptr, create, 0x0, nullptr);
     if(fd == INVALID_HANDLE_VALUE)
     {
-        fprintf(stderr, "CreateFile: %s\n", platform::win32::last_error().c_str());
+        fprintf(
+            stderr, "CreateFile: %s\n", platform::win32::last_error().c_str());
         return posix::posix_error{ENOENT};
     }
 
@@ -87,7 +88,10 @@ result<mem_mapping_t, posix::posix_error> map(
         fd, nullptr, mapping_flags, size_hi, size_lo, nullptr);
     if(mapping == INVALID_HANDLE_VALUE)
     {
-        fprintf(stderr, "CreateFileMapping: %s\n", platform::win32::last_error().c_str());
+        fprintf(
+            stderr,
+            "CreateFileMapping: %s\n",
+            platform::win32::last_error().c_str());
         return posix::posix_error{EPERM};
     }
 
@@ -97,7 +101,10 @@ result<mem_mapping_t, posix::posix_error> map(
     {
         CloseHandle(fd);
         CloseHandle(mapping);
-        fprintf(stderr, "MapViewOfFile: %s\n", platform::win32::last_error().c_str());
+        fprintf(
+            stderr,
+            "MapViewOfFile: %s\n",
+            platform::win32::last_error().c_str());
         return posix::posix_error{EPERM};
     }
     return mem_mapping_t{

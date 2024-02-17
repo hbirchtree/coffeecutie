@@ -5,24 +5,27 @@
 #include "../enums/GetPName.h"
 #include "../enums/SemaphoreParameterName.h"
 #include "../enums/SpecialNumbers.h"
+
 namespace gl::ext::semaphore_win32 {
 using gl::group::external_handle_type;
 using gl::group::get_prop;
 using gl::group::semaphore_parameter_name;
 using gl::group::special_numbers;
+
 namespace values {
 } // namespace values
+
 template<class span_void>
 requires(concepts::span<span_void>)
-    /*!
-     * \brief Part of GL_EXT_semaphore_win32
-     * \param semaphore GLuint
-     * \param handleType GLenum
-     * \param handle void *
-     * \return void
-     */
-    STATICINLINE void import_semaphore_win32_handle(
-        u32 semaphore, group::external_handle_type handleType, span_void handle)
+/*!
+ * \brief Part of GL_EXT_semaphore_win32
+ * \param semaphore GLuint
+ * \param handleType GLenum
+ * \param handle void *
+ * \return void
+ */
+STATICINLINE void import_semaphore_win32_handle(
+    u32 semaphore, group::external_handle_type handleType, span_void handle)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -38,17 +41,17 @@ requires(concepts::span<span_void>)
 
 template<class span_const_void>
 requires(concepts::span<span_const_void>)
-    /*!
-     * \brief Part of GL_EXT_semaphore_win32
-     * \param semaphore GLuint
-     * \param handleType GLenum
-     * \param name const void *
-     * \return void
-     */
-    STATICINLINE void import_semaphore_win32_name(
-        u32                         semaphore,
-        group::external_handle_type handleType,
-        span_const_void const&      name)
+/*!
+ * \brief Part of GL_EXT_semaphore_win32
+ * \param semaphore GLuint
+ * \param handleType GLenum
+ * \param name const void *
+ * \return void
+ */
+STATICINLINE void import_semaphore_win32_name(
+    u32                         semaphore,
+    group::external_handle_type handleType,
+    span_const_void const&      name)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

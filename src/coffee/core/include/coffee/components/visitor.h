@@ -19,12 +19,9 @@ struct EntityVisitor : EntityVisitorBase
     using VisitorType  = EntityVisitor<CompList, SubsysList>;
     using Proxy        = ConstrainedProxy<CompList, SubsysList>;
 
-    EntityVisitor(u32 tag = 0, VisitorFlags flags = VisitorFlags::None) :
-        EntityVisitorBase(
-            collect_list<CompList>(),
-            collect_list<SubsysList>(),
-            tag,
-            flags)
+    EntityVisitor(u32 tag = 0, VisitorFlags flags = VisitorFlags::None)
+        : EntityVisitorBase(
+              collect_list<CompList>(), collect_list<SubsysList>(), tag, flags)
     {
     }
 
@@ -36,7 +33,7 @@ struct EntityVisitor : EntityVisitorBase
         return false;
     }
 
-protected:
+  protected:
     void set_current_entity(Proxy& proxy, u64 id)
     {
         proxy.current_entity = id;

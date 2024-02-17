@@ -15,10 +15,10 @@ T event(SDL_Event&)
     return {};
 }
 
-#define EVENT_TRANSLATE(type_)                     \
-    template<typename T>                           \
-    requires std::is_same_v<T, type_> type_ event( \
-        [[maybe_unused]] SDL_Event& ev)
+#define EVENT_TRANSLATE(type_)        \
+    template<typename T>              \
+    requires std::is_same_v<T, type_> \
+    type_ event([[maybe_unused]] SDL_Event& ev)
 
 EVENT_TRANSLATE(FocusEvent)
 {
@@ -97,8 +97,8 @@ EVENT_TRANSLATE(CIKeyEvent)
     key.mod |= ev.key.state == SDL_PRESSED ? CIKeyEvent::PressedModifier
                                            : CIKeyEvent::NoneModifier;
 
-    key.mod |= ev.key.repeat ? CIKeyEvent::RepeatedModifier
-                             : CIKeyEvent::NoneModifier;
+    key.mod |=
+        ev.key.repeat ? CIKeyEvent::RepeatedModifier : CIKeyEvent::NoneModifier;
 
     return key;
 }
@@ -162,8 +162,8 @@ EVENT_TRANSLATE(CIControllerAtomicUpdateEvent)
 {
     CIControllerAtomicUpdateEvent out;
 
-    if(ev.type == SDL_CONTROLLERDEVICEADDED
-       || ev.type == SDL_CONTROLLERDEVICEREMOVED)
+    if(ev.type == SDL_CONTROLLERDEVICEADDED ||
+       ev.type == SDL_CONTROLLERDEVICEREMOVED)
     {
         auto& device = ev.cdevice;
 

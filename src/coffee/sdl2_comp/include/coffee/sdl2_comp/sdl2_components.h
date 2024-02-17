@@ -12,7 +12,9 @@ namespace sdl2 {
 using comp_app::position_t;
 using comp_app::size_2d_t;
 
-struct Context : comp_app::AppService<Context>, comp_app::AppLoadableService
+struct Context
+    : comp_app::AppService<Context>
+    , comp_app::AppLoadableService
 {
     using readable_services = comp_app::detail::subsystem_list<
         comp_app::BasicEventBus<Coffee::Input::CIEvent>,
@@ -31,9 +33,10 @@ struct Context : comp_app::AppService<Context>, comp_app::AppLoadableService
     bool m_shouldClose = false;
 };
 
-struct Windowing : comp_app::interfaces::Windowing,
-                   comp_app::AppService<Windowing, comp_app::Windowing>,
-                   comp_app::AppLoadableService
+struct Windowing
+    : comp_app::interfaces::Windowing
+    , comp_app::AppService<Windowing, comp_app::Windowing>
+    , comp_app::AppLoadableService
 {
     using readable_services = comp_app::detail::subsystem_list<
         comp_app::EventBus<Coffee::Display::Event>>;
@@ -43,6 +46,7 @@ struct Windowing : comp_app::interfaces::Windowing,
     {
         priority = 513;
     }
+
     virtual ~Windowing();
 
     virtual void load(entity_container& c, comp_app::app_error& ec) final;
@@ -68,8 +72,8 @@ struct Windowing : comp_app::interfaces::Windowing,
 };
 
 struct NativeWindowInfo
-    : comp_app::interfaces::PtrNativeWindowInfo,
-      comp_app::AppService<NativeWindowInfo, comp_app::PtrNativeWindowInfo>
+    : comp_app::interfaces::PtrNativeWindowInfo
+    , comp_app::AppService<NativeWindowInfo, comp_app::PtrNativeWindowInfo>
 {
     NativeWindowInfo()
     {
@@ -77,9 +81,10 @@ struct NativeWindowInfo
     }
 };
 
-struct WindowInfo : comp_app::interfaces::WindowInfo,
-                    comp_app::AppService<WindowInfo, comp_app::WindowInfo>,
-                    comp_app::AppLoadableService
+struct WindowInfo
+    : comp_app::interfaces::WindowInfo
+    , comp_app::AppService<WindowInfo, comp_app::WindowInfo>
+    , comp_app::AppLoadableService
 {
     WindowInfo()
     {
@@ -94,8 +99,9 @@ struct WindowInfo : comp_app::interfaces::WindowInfo,
     entity_container* m_container = nullptr;
 };
 
-struct DisplayInfo : comp_app::interfaces::DisplayInfo,
-                     comp_app::AppService<DisplayInfo, comp_app::DisplayInfo>
+struct DisplayInfo
+    : comp_app::interfaces::DisplayInfo
+    , comp_app::AppService<DisplayInfo, comp_app::DisplayInfo>
 {
     DisplayInfo()
     {
@@ -111,9 +117,10 @@ struct DisplayInfo : comp_app::interfaces::DisplayInfo,
     virtual libc_types::f32     diagonal(libc_types::u32 i) const final;
 };
 
-struct GLContext : comp_app::interfaces::GraphicsContext,
-                   comp_app::AppService<GLContext, comp_app::GraphicsContext>,
-                   comp_app::AppLoadableService
+struct GLContext
+    : comp_app::interfaces::GraphicsContext
+    , comp_app::AppService<GLContext, comp_app::GraphicsContext>
+    , comp_app::AppLoadableService
 {
     GLContext()
     {
@@ -130,8 +137,8 @@ struct GLContext : comp_app::interfaces::GraphicsContext,
 };
 
 struct GLSwapControl
-    : comp_app::interfaces::GraphicsSwapControl,
-      comp_app::AppService<GLSwapControl, comp_app::GraphicsSwapControl>
+    : comp_app::interfaces::GraphicsSwapControl
+    , comp_app::AppService<GLSwapControl, comp_app::GraphicsSwapControl>
 {
     GLSwapControl()
     {
@@ -143,9 +150,9 @@ struct GLSwapControl
 };
 
 struct GLFramebuffer
-    : comp_app::interfaces::GraphicsFramebuffer,
-      comp_app::AppService<GLFramebuffer, comp_app::GraphicsFramebuffer>,
-      comp_app::AppLoadableService
+    : comp_app::interfaces::GraphicsFramebuffer
+    , comp_app::AppService<GLFramebuffer, comp_app::GraphicsFramebuffer>
+    , comp_app::AppLoadableService
 {
     GLFramebuffer()
     {
@@ -164,12 +171,12 @@ struct GLFramebuffer
 };
 
 struct ControllerInput
-    : comp_app::interfaces::ControllerInput,
-      comp_app::AppService<ControllerInput, comp_app::ControllerInput>,
-      comp_app::AppLoadableService
+    : comp_app::interfaces::ControllerInput
+    , comp_app::AppService<ControllerInput, comp_app::ControllerInput>
+    , comp_app::AppLoadableService
 {
-    using readable_services
-        = comp_app::subsystem_list<comp_app::EventBus<Coffee::Input::CIEvent>>;
+    using readable_services =
+        comp_app::subsystem_list<comp_app::EventBus<Coffee::Input::CIEvent>>;
     using proxy_type = comp_app::detail::restricted::proxy_t<ControllerInput>;
 
     ControllerInput()
@@ -196,11 +203,11 @@ struct ControllerInput
 };
 
 struct KeyboardInput
-    : comp_app::interfaces::BasicKeyboardInput,
-      comp_app::AppService<KeyboardInput, comp_app::KeyboardInput>
+    : comp_app::interfaces::BasicKeyboardInput
+    , comp_app::AppService<KeyboardInput, comp_app::KeyboardInput>
 {
-    using readable_services
-        = comp_app::subsystem_list<comp_app::EventBus<Coffee::Input::CIEvent>>;
+    using readable_services =
+        comp_app::subsystem_list<comp_app::EventBus<Coffee::Input::CIEvent>>;
     using proxy_type = comp_app::detail::restricted::proxy_t<KeyboardInput>;
 
     KeyboardInput()
@@ -214,12 +221,13 @@ struct KeyboardInput
     virtual void closeVirtual() const final;
 };
 
-struct MouseInput : comp_app::interfaces::MouseInput,
-                    comp_app::AppService<MouseInput, comp_app::MouseInput>,
-                    comp_app::AppLoadableService
+struct MouseInput
+    : comp_app::interfaces::MouseInput
+    , comp_app::AppService<MouseInput, comp_app::MouseInput>
+    , comp_app::AppLoadableService
 {
-    using readable_services
-        = comp_app::subsystem_list<comp_app::EventBus<Coffee::Input::CIEvent>>;
+    using readable_services =
+        comp_app::subsystem_list<comp_app::EventBus<Coffee::Input::CIEvent>>;
     using proxy_type = comp_app::detail::restricted::proxy_t<MouseInput>;
 
     MouseInput()
@@ -249,7 +257,7 @@ using Services = comp_app::subsystem_list<
     KeyboardInput,
     MouseInput>;
 
-using GLServices
-    = comp_app::subsystem_list<GLSwapControl, GLContext, GLFramebuffer>;
+using GLServices =
+    comp_app::subsystem_list<GLSwapControl, GLContext, GLFramebuffer>;
 
 } // namespace sdl2

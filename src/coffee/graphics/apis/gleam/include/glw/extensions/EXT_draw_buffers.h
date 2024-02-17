@@ -3,9 +3,11 @@
 #ifdef GL_EXT_draw_buffers
 #include "../enums/GetPName.h"
 #include "../enums/InvalidateFramebufferAttachment.h"
+
 namespace gl::ext::draw_buffers {
 using gl::group::get_prop;
 using gl::group::invalidate_framebuffer_attachment;
+
 namespace values {
 constexpr u32 max_draw_buffers = 0x8824;
 constexpr u32 draw_buffer0     = 0x8825;
@@ -25,17 +27,20 @@ constexpr u32 draw_buffer13    = 0x8832;
 constexpr u32 draw_buffer14    = 0x8833;
 constexpr u32 draw_buffer15    = 0x8834;
 } // namespace values
+
 template<class span_const_GLenum>
-requires(concepts::span<span_const_GLenum>&& std::is_same_v<
-         std::decay_t<typename span_const_GLenum::value_type>,
-         std::decay_t<GLenum>>)
-    /*!
-     * \brief Part of GL_EXT_draw_buffers
-     * \param n GLsizei
-     * \param bufs const GLenum *
-     * \return void
-     */
-    STATICINLINE void draw_buffers(span_const_GLenum const& bufs)
+requires(
+    concepts::span<span_const_GLenum> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLenum::value_type>,
+        std::decay_t<GLenum>>)
+/*!
+ * \brief Part of GL_EXT_draw_buffers
+ * \param n GLsizei
+ * \param bufs const GLenum *
+ * \return void
+ */
+STATICINLINE void draw_buffers(span_const_GLenum const& bufs)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

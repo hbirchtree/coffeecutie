@@ -2,8 +2,10 @@
 
 #ifdef GL_ARB_half_float_pixel
 #include "../enums/PixelType.h"
+
 namespace gl::arb::half_float_pixel {
 using gl::group::pixel_type;
+
 namespace values {
 } // namespace values
 } // namespace gl::arb::half_float_pixel

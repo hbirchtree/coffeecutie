@@ -36,17 +36,19 @@ struct null_api
     inline void annotate(u32, std::string_view const&)
     {
     }
+
     template<typename T>
     inline void annotate(T&, std::string_view const&)
     {
     }
 };
 
-#if GLEAM_MAX_VERSION >= 0x430 || GLEAM_MAX_VERSION_ES >= 0x320 \
-    || defined(GL_KHR_debug)
+#if GLEAM_MAX_VERSION >= 0x430 || GLEAM_MAX_VERSION_ES >= 0x320 || \
+    defined(GL_KHR_debug)
 struct scope
 {
-    scope(features::debugging debug, std::string_view const& name) : ext(debug)
+    scope(features::debugging debug, std::string_view const& name)
+        : ext(debug)
     {
 #if GLEAM_MAX_VERSION >= 0x430 || GLEAM_MAX_VERSION_ES >= 0x320
         if(ext.debug)
@@ -62,6 +64,7 @@ struct scope
                 group::debug_source::application, 0, name.size(), name);
 #endif
     }
+
     ~scope()
     {
 #if GLEAM_MAX_VERSION >= 0x430 || GLEAM_MAX_VERSION_ES >= 0x320
@@ -85,13 +88,14 @@ struct scope
 
 struct api
 {
-    api(features::debugging& debug) : ext(debug)
+    api(features::debugging& debug)
+        : ext(debug)
     {
     }
 
     inline auto scope(
-        std::string_view const& name
-        = stl_types::source_location().function_name())
+        std::string_view const& name =
+            stl_types::source_location().function_name())
     {
         return std::make_unique<debug::scope>(std::ref(ext), name);
     }

@@ -10,6 +10,7 @@
 #include "../enums/GetPName.h"
 #include "../enums/GetPointervPName.h"
 #include "../enums/ObjectIdentifier.h"
+
 namespace gl::khr::debug {
 using gl::group::context_flag_mask;
 using gl::group::debug_severity;
@@ -20,6 +21,7 @@ using gl::group::error_code;
 using gl::group::get_pointerv_prop;
 using gl::group::get_prop;
 using gl::group::object_identifier;
+
 namespace values {
 #if defined(GL_ES_VERSION_2_0)
 constexpr u32 stack_overflow = 0x0503;
@@ -100,14 +102,14 @@ constexpr u32 debug_output = 0x92E0;
 #if defined(GL_VERSION_1_0)
 template<class span_const_void>
 requires(concepts::span<span_const_void>)
-    /*!
-     * \brief Part of GL_KHR_debug
-     * \param callback GLDEBUGPROC
-     * \param userParam const void *
-     * \return void
-     */
-    STATICINLINE void debug_message_callback(
-        GLDEBUGPROC callback, span_const_void const& userParam)
+/*!
+ * \brief Part of GL_KHR_debug
+ * \param callback GLDEBUGPROC
+ * \param userParam const void *
+ * \return void
+ */
+STATICINLINE void debug_message_callback(
+    GLDEBUGPROC callback, span_const_void const& userParam)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -124,25 +126,27 @@ requires(concepts::span<span_const_void>)
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_const_u32>
-requires(concepts::span<span_const_u32>&& std::is_same_v<
-         std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>)
-    /*!
-     * \brief Part of GL_KHR_debug
-     * \param source GLenum
-     * \param type GLenum
-     * \param severity GLenum
-     * \param count GLsizei
-     * \param ids const GLuint *
-     * \param enabled GLboolean
-     * \return void
-     */
-    STATICINLINE void debug_message_control(
-        group::debug_source   source,
-        group::debug_type     type,
-        group::debug_severity severity,
-        span_const_u32 const& ids,
-        bool                  enabled)
+requires(
+    concepts::span<span_const_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_u32::value_type>,
+        std::decay_t<u32>>)
+/*!
+ * \brief Part of GL_KHR_debug
+ * \param source GLenum
+ * \param type GLenum
+ * \param severity GLenum
+ * \param count GLsizei
+ * \param ids const GLuint *
+ * \param enabled GLboolean
+ * \return void
+ */
+STATICINLINE void debug_message_control(
+    group::debug_source   source,
+    group::debug_type     type,
+    group::debug_severity severity,
+    span_const_u32 const& ids,
+    bool                  enabled)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -203,43 +207,50 @@ template<
     class span_debug_type,
     class span_i32,
     class span_u32>
-requires(concepts::span<span_debug_source>&&  std::is_same_v<
-         std::decay_t<typename span_debug_source::value_type>,
-         std::decay_t<group::debug_source>>&& concepts::span<span_debug_type>&&
-                                              std::is_same_v<
-                 std::decay_t<typename span_debug_type::value_type>,
-                 std::decay_t<group::debug_type>>&& concepts::span<span_u32>&&
-                                                    std::is_same_v<
-                     std::decay_t<typename span_u32::value_type>,
-                     std::decay_t<u32>>&& concepts::span<span_debug_severity>&&
-                                          std::is_same_v<
-                         std::decay_t<typename span_debug_severity::value_type>,
-                         std::decay_t<group::debug_severity>>&&
-                         concepts::span<span_i32>&& std::is_same_v<
-                             std::decay_t<typename span_i32::value_type>,
-                             std::decay_t<i32>>&& concepts::span<span_GLchar>&&
-                                                  std::is_same_v<
-                                 std::decay_t<typename span_GLchar::value_type>,
-                                 std::decay_t<GLchar>>)
-    /*!
-     * \brief Part of GL_KHR_debug
-     * \param count GLuint
-     * \param bufSize GLsizei
-     * \param sources GLenum *
-     * \param types GLenum *
-     * \param ids GLuint *
-     * \param severities GLenum *
-     * \param lengths GLsizei *
-     * \param messageLog GLchar *
-     * \return GLuint
-     */
-    STATICINLINE GLuint get_debug_message_log(
-        span_debug_source   sources,
-        span_debug_type     types,
-        span_u32            ids,
-        span_debug_severity severities,
-        span_i32            lengths,
-        span_GLchar         messageLog)
+requires(
+    concepts::span<span_debug_source> &&
+    std::is_same_v<
+        std::decay_t<typename span_debug_source::value_type>,
+        std::decay_t<group::debug_source>> &&
+    concepts::span<span_debug_type> &&
+    std::is_same_v<
+        std::decay_t<typename span_debug_type::value_type>,
+        std::decay_t<group::debug_type>> &&
+    concepts::span<span_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_u32::value_type>,
+        std::decay_t<u32>> &&
+    concepts::span<span_debug_severity> &&
+    std::is_same_v<
+        std::decay_t<typename span_debug_severity::value_type>,
+        std::decay_t<group::debug_severity>> &&
+    concepts::span<span_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_i32::value_type>,
+        std::decay_t<i32>> &&
+    concepts::span<span_GLchar> &&
+    std::is_same_v<
+        std::decay_t<typename span_GLchar::value_type>,
+        std::decay_t<GLchar>>)
+/*!
+ * \brief Part of GL_KHR_debug
+ * \param count GLuint
+ * \param bufSize GLsizei
+ * \param sources GLenum *
+ * \param types GLenum *
+ * \param ids GLuint *
+ * \param severities GLenum *
+ * \param lengths GLsizei *
+ * \param messageLog GLchar *
+ * \return GLuint
+ */
+STATICINLINE GLuint get_debug_message_log(
+    span_debug_source   sources,
+    span_debug_type     types,
+    span_u32            ids,
+    span_debug_severity severities,
+    span_i32            lengths,
+    span_GLchar         messageLog)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -263,23 +274,25 @@ requires(concepts::span<span_debug_source>&&  std::is_same_v<
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_GLchar>
-requires(concepts::span<span_GLchar>&& std::is_same_v<
-         std::decay_t<typename span_GLchar::value_type>,
-         std::decay_t<GLchar>>)
-    /*!
-     * \brief Part of GL_KHR_debug
-     * \param identifier GLenum
-     * \param name GLuint
-     * \param bufSize GLsizei
-     * \param length GLsizei *
-     * \param label GLchar *
-     * \return void
-     */
-    STATICINLINE void get_object_label(
-        group::object_identifier identifier,
-        u32                      name,
-        i32&                     length,
-        span_GLchar              label)
+requires(
+    concepts::span<span_GLchar> &&
+    std::is_same_v<
+        std::decay_t<typename span_GLchar::value_type>,
+        std::decay_t<GLchar>>)
+/*!
+ * \brief Part of GL_KHR_debug
+ * \param identifier GLenum
+ * \param name GLuint
+ * \param bufSize GLsizei
+ * \param length GLsizei *
+ * \param label GLchar *
+ * \return void
+ */
+STATICINLINE void get_object_label(
+    group::object_identifier identifier,
+    u32                      name,
+    i32&                     length,
+    span_GLchar              label)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -298,20 +311,21 @@ requires(concepts::span<span_GLchar>&& std::is_same_v<
 #endif
 #if defined(GL_VERSION_1_0)
 template<class span_GLchar, class span_const_void>
-requires(concepts::span<span_const_void>&& concepts::span<span_GLchar>&&
-                                           std::is_same_v<
-                 std::decay_t<typename span_GLchar::value_type>,
-                 std::decay_t<GLchar>>)
-    /*!
-     * \brief Part of GL_KHR_debug
-     * \param ptr const void *
-     * \param bufSize GLsizei
-     * \param length GLsizei *
-     * \param label GLchar *
-     * \return void
-     */
-    STATICINLINE void get_object_ptr_label(
-        span_const_void const& ptr, i32& length, span_GLchar label)
+requires(
+    concepts::span<span_const_void> && concepts::span<span_GLchar> &&
+    std::is_same_v<
+        std::decay_t<typename span_GLchar::value_type>,
+        std::decay_t<GLchar>>)
+/*!
+ * \brief Part of GL_KHR_debug
+ * \param ptr const void *
+ * \param bufSize GLsizei
+ * \param length GLsizei *
+ * \param label GLchar *
+ * \return void
+ */
+STATICINLINE void get_object_ptr_label(
+    span_const_void const& ptr, i32& length, span_GLchar label)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -330,14 +344,13 @@ requires(concepts::span<span_const_void>&& concepts::span<span_GLchar>&&
 #if defined(GL_VERSION_1_0)
 template<class span_void>
 requires(concepts::span<span_void>)
-    /*!
-     * \brief Part of GL_KHR_debug
-     * \param pname GLenum
-     * \param params void **
-     * \return void
-     */
-    STATICINLINE
-    void get_pointerv(group::get_pointerv_prop pname, span_void params)
+/*!
+ * \brief Part of GL_KHR_debug
+ * \param pname GLenum
+ * \param params void **
+ * \return void
+ */
+STATICINLINE void get_pointerv(group::get_pointerv_prop pname, span_void params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -379,15 +392,15 @@ STATICINLINE void object_label(
 #if defined(GL_VERSION_1_0)
 template<class span_const_void>
 requires(concepts::span<span_const_void>)
-    /*!
-     * \brief Part of GL_KHR_debug
-     * \param ptr const void *
-     * \param length GLsizei
-     * \param label const GLchar *
-     * \return void
-     */
-    STATICINLINE void object_ptr_label(
-        span_const_void const& ptr, i32 length, std::string_view const& label)
+/*!
+ * \brief Part of GL_KHR_debug
+ * \param ptr const void *
+ * \param length GLsizei
+ * \param label const GLchar *
+ * \return void
+ */
+STATICINLINE void object_ptr_label(
+    span_const_void const& ptr, i32 length, std::string_view const& label)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -448,14 +461,14 @@ STATICINLINE void push_debug_group(
 #if defined(GL_ES_VERSION_2_0)
 template<class span_const_void>
 requires(concepts::span<span_const_void>)
-    /*!
-     * \brief Part of GL_KHR_debug
-     * \param callback GLDEBUGPROCKHR
-     * \param userParam const void *
-     * \return void
-     */
-    STATICINLINE void debug_message_callback(
-        GLDEBUGPROCKHR callback, span_const_void const& userParam)
+/*!
+ * \brief Part of GL_KHR_debug
+ * \param callback GLDEBUGPROCKHR
+ * \param userParam const void *
+ * \return void
+ */
+STATICINLINE void debug_message_callback(
+    GLDEBUGPROCKHR callback, span_const_void const& userParam)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -472,26 +485,28 @@ requires(concepts::span<span_const_void>)
 #endif
 #if defined(GL_ES_VERSION_2_0)
 template<class span_const_u32>
-requires(concepts::span<span_const_u32>&& std::is_same_v<
-         std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>)
-    /*!
-     * \brief Part of GL_KHR_debug
-     * \param source GLenum
-     * \param type GLenum
-     * \param severity GLenum
-     * \param count GLsizei
-     * \param ids const GLuint *
-     * \param enabled GLboolean
-     * \return void
-     */
-    STATICINLINE void debug_message_control(
-        group::debug_source   source,
-        group::debug_type     type,
-        group::debug_severity severity,
-        i32                   count,
-        span_const_u32 const& ids,
-        bool                  enabled)
+requires(
+    concepts::span<span_const_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_u32::value_type>,
+        std::decay_t<u32>>)
+/*!
+ * \brief Part of GL_KHR_debug
+ * \param source GLenum
+ * \param type GLenum
+ * \param severity GLenum
+ * \param count GLsizei
+ * \param ids const GLuint *
+ * \param enabled GLboolean
+ * \return void
+ */
+STATICINLINE void debug_message_control(
+    group::debug_source   source,
+    group::debug_type     type,
+    group::debug_severity severity,
+    i32                   count,
+    span_const_u32 const& ids,
+    bool                  enabled)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -552,43 +567,50 @@ template<
     class span_debug_type,
     class span_i32,
     class span_u32>
-requires(concepts::span<span_debug_source>&&  std::is_same_v<
-         std::decay_t<typename span_debug_source::value_type>,
-         std::decay_t<group::debug_source>>&& concepts::span<span_debug_type>&&
-                                              std::is_same_v<
-                 std::decay_t<typename span_debug_type::value_type>,
-                 std::decay_t<group::debug_type>>&& concepts::span<span_u32>&&
-                                                    std::is_same_v<
-                     std::decay_t<typename span_u32::value_type>,
-                     std::decay_t<u32>>&& concepts::span<span_debug_severity>&&
-                                          std::is_same_v<
-                         std::decay_t<typename span_debug_severity::value_type>,
-                         std::decay_t<group::debug_severity>>&&
-                         concepts::span<span_i32>&& std::is_same_v<
-                             std::decay_t<typename span_i32::value_type>,
-                             std::decay_t<i32>>&& concepts::span<span_GLchar>&&
-                                                  std::is_same_v<
-                                 std::decay_t<typename span_GLchar::value_type>,
-                                 std::decay_t<GLchar>>)
-    /*!
-     * \brief Part of GL_KHR_debug
-     * \param count GLuint
-     * \param bufSize GLsizei
-     * \param sources GLenum *
-     * \param types GLenum *
-     * \param ids GLuint *
-     * \param severities GLenum *
-     * \param lengths GLsizei *
-     * \param messageLog GLchar *
-     * \return GLuint
-     */
-    STATICINLINE GLuint get_debug_message_log(
-        span_debug_source   sources,
-        span_debug_type     types,
-        span_u32            ids,
-        span_debug_severity severities,
-        span_i32            lengths,
-        span_GLchar         messageLog)
+requires(
+    concepts::span<span_debug_source> &&
+    std::is_same_v<
+        std::decay_t<typename span_debug_source::value_type>,
+        std::decay_t<group::debug_source>> &&
+    concepts::span<span_debug_type> &&
+    std::is_same_v<
+        std::decay_t<typename span_debug_type::value_type>,
+        std::decay_t<group::debug_type>> &&
+    concepts::span<span_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_u32::value_type>,
+        std::decay_t<u32>> &&
+    concepts::span<span_debug_severity> &&
+    std::is_same_v<
+        std::decay_t<typename span_debug_severity::value_type>,
+        std::decay_t<group::debug_severity>> &&
+    concepts::span<span_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_i32::value_type>,
+        std::decay_t<i32>> &&
+    concepts::span<span_GLchar> &&
+    std::is_same_v<
+        std::decay_t<typename span_GLchar::value_type>,
+        std::decay_t<GLchar>>)
+/*!
+ * \brief Part of GL_KHR_debug
+ * \param count GLuint
+ * \param bufSize GLsizei
+ * \param sources GLenum *
+ * \param types GLenum *
+ * \param ids GLuint *
+ * \param severities GLenum *
+ * \param lengths GLsizei *
+ * \param messageLog GLchar *
+ * \return GLuint
+ */
+STATICINLINE GLuint get_debug_message_log(
+    span_debug_source   sources,
+    span_debug_type     types,
+    span_u32            ids,
+    span_debug_severity severities,
+    span_i32            lengths,
+    span_GLchar         messageLog)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -612,23 +634,26 @@ requires(concepts::span<span_debug_source>&&  std::is_same_v<
 #endif
 #if defined(GL_ES_VERSION_2_0)
 template<class span_GLchar, class span_i32>
-requires(concepts::span<span_i32>&& std::is_same_v<
-         std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>&& concepts::span<span_GLchar>&&
-                                    std::is_same_v<
-                 std::decay_t<typename span_GLchar::value_type>,
-                 std::decay_t<GLchar>>)
-    /*!
-     * \brief Part of GL_KHR_debug
-     * \param identifier GLenum
-     * \param name GLuint
-     * \param bufSize GLsizei
-     * \param length GLsizei *
-     * \param label GLchar *
-     * \return void
-     */
-    STATICINLINE void get_object_label(
-        GLenum identifier, u32 name, span_i32 length, span_GLchar label)
+requires(
+    concepts::span<span_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_i32::value_type>,
+        std::decay_t<i32>> &&
+    concepts::span<span_GLchar> &&
+    std::is_same_v<
+        std::decay_t<typename span_GLchar::value_type>,
+        std::decay_t<GLchar>>)
+/*!
+ * \brief Part of GL_KHR_debug
+ * \param identifier GLenum
+ * \param name GLuint
+ * \param bufSize GLsizei
+ * \param length GLsizei *
+ * \param label GLchar *
+ * \return void
+ */
+STATICINLINE void get_object_label(
+    GLenum identifier, u32 name, span_i32 length, span_GLchar label)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -647,20 +672,21 @@ requires(concepts::span<span_i32>&& std::is_same_v<
 #endif
 #if defined(GL_ES_VERSION_2_0)
 template<class span_GLchar, class span_const_void>
-requires(concepts::span<span_const_void>&& concepts::span<span_GLchar>&&
-                                           std::is_same_v<
-                 std::decay_t<typename span_GLchar::value_type>,
-                 std::decay_t<GLchar>>)
-    /*!
-     * \brief Part of GL_KHR_debug
-     * \param ptr const void *
-     * \param bufSize GLsizei
-     * \param length GLsizei *
-     * \param label GLchar *
-     * \return void
-     */
-    STATICINLINE void get_object_ptr_label(
-        span_const_void const& ptr, i32& length, span_GLchar label)
+requires(
+    concepts::span<span_const_void> && concepts::span<span_GLchar> &&
+    std::is_same_v<
+        std::decay_t<typename span_GLchar::value_type>,
+        std::decay_t<GLchar>>)
+/*!
+ * \brief Part of GL_KHR_debug
+ * \param ptr const void *
+ * \param bufSize GLsizei
+ * \param length GLsizei *
+ * \param label GLchar *
+ * \return void
+ */
+STATICINLINE void get_object_ptr_label(
+    span_const_void const& ptr, i32& length, span_GLchar label)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -679,13 +705,13 @@ requires(concepts::span<span_const_void>&& concepts::span<span_GLchar>&&
 #if defined(GL_ES_VERSION_2_0)
 template<class span_void>
 requires(concepts::span<span_void>)
-    /*!
-     * \brief Part of GL_KHR_debug
-     * \param pname GLenum
-     * \param params void **
-     * \return void
-     */
-    STATICINLINE void get_pointerv(GLenum pname, span_void params)
+/*!
+ * \brief Part of GL_KHR_debug
+ * \param pname GLenum
+ * \param params void **
+ * \return void
+ */
+STATICINLINE void get_pointerv(GLenum pname, span_void params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -728,15 +754,15 @@ STATICINLINE void object_label(
 #if defined(GL_ES_VERSION_2_0)
 template<class span_const_void>
 requires(concepts::span<span_const_void>)
-    /*!
-     * \brief Part of GL_KHR_debug
-     * \param ptr const void *
-     * \param length GLsizei
-     * \param label const GLchar *
-     * \return void
-     */
-    STATICINLINE void object_ptr_label(
-        span_const_void const& ptr, i32 length, std::string_view const& label)
+/*!
+ * \brief Part of GL_KHR_debug
+ * \param ptr const void *
+ * \param length GLsizei
+ * \param label const GLchar *
+ * \return void
+ */
+STATICINLINE void object_ptr_label(
+    span_const_void const& ptr, i32 length, std::string_view const& label)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

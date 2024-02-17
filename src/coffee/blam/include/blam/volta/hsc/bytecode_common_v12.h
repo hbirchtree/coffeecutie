@@ -195,19 +195,24 @@ requires is_bytecode_variant<Bytecode>
 struct opcode_layout
 {
     u16 index;
+
     union
     {
         Bytecode opcode;
         type_t   param_type;
     };
+
     type_t       ret_type;
     expression_t exp_type;
+
     struct
     {
         u16 ip; /*!< Points to the last parameter for the function */
         u16 salt;
     } next_op;
+
     u32 data_ptr;
+
     union
     {
         f32                real;
@@ -245,6 +250,7 @@ struct opcode_layout
 
         return static_cast<bool>(bytes[0]);
     }
+
     inline i16 to_u16() const
     {
         verify_expression();
@@ -254,6 +260,7 @@ struct opcode_layout
 
         return shorts[0];
     }
+
     inline i32 to_u32() const
     {
         verify_expression();
@@ -263,6 +270,7 @@ struct opcode_layout
 
         return long_;
     }
+
     inline f32 to_real() const
     {
         verify_expression();
@@ -272,10 +280,12 @@ struct opcode_layout
 
         return real;
     }
+
     inline u32 to_ptr() const
     {
         return data_ptr;
     }
+
     inline std::string_view to_str(string_segment_ref const& string_seg) const
     {
         verify_expression();
@@ -294,19 +304,23 @@ struct opcode_layout
         long_    = 0;
         bytes[0] = v;
     }
+
     inline void set(i16 v)
     {
         shorts[0] = v;
         shorts[1] = 0;
     }
+
     inline void set(i32 v)
     {
         long_ = v;
     }
+
     inline void set(f32 v)
     {
         real = v;
     }
+
     inline void set_ptr(u32 ptr)
     {
         data_ptr = ptr;
@@ -345,6 +359,7 @@ struct opcode_layout
         out.set(0);
         return out;
     }
+
     static inline opcode_layout typed_(type_t rtype)
     {
         opcode_layout out = void_();

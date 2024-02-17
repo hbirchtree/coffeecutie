@@ -35,8 +35,8 @@ using libc_types::u8;
 namespace encode {
 template<typename TargetCharT, typename T>
 requires(!std::is_same_v<typename T::value_type, TargetCharT>)
-    //
-    FORCEDINLINE std::basic_string<TargetCharT> to(T const& from)
+//
+FORCEDINLINE std::basic_string<TargetCharT> to(T const& from)
 {
     // TODO: use proper conversions here, eg. iconv
     return std::basic_string<TargetCharT>(from.begin(), from.end());
@@ -73,18 +73,18 @@ FORCEDINLINE std::basic_string_view<CharType> encapsulate_view(
 
 template<typename CharType, class Container>
 requires std::is_same_v<CharType, typename Container::value_type>
-    //
-    FORCEDINLINE std::basic_string_view<CharType> encapsulate_view(
-        Container const& src)
+//
+FORCEDINLINE std::basic_string_view<CharType> encapsulate_view(
+    Container const& src)
 {
     return std::basic_string_view<CharType>(std::begin(src), std::end(src));
 }
 
 template<typename CharType, class Container>
 requires(!std::is_same_v<CharType, typename Container::value_type>)
-    //
-    FORCEDINLINE std::basic_string_view<CharType> encapsulate_view(
-        Container const& src)
+//
+FORCEDINLINE std::basic_string_view<CharType> encapsulate_view(
+    Container const& src)
 {
     auto adapter = semantic::mem_chunk<const CharType>::ofContainer(src).view;
     return std::basic_string_view<CharType>(adapter.data(), adapter.size());

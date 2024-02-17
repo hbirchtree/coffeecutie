@@ -21,23 +21,25 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
         workarounds       workarounds,
         usage&            usage,
         buffers::type     type,
-        semantic::RSCA    access) :
-        m_features(features),
-        m_workarounds(workarounds), m_usage(usage), m_type(type),
-        m_access(access)
+        semantic::RSCA    access)
+        : m_features(features)
+        , m_workarounds(workarounds)
+        , m_usage(usage)
+        , m_type(type)
+        , m_access(access)
     {
     }
 
     inline bool immutable()
     {
-        return (m_access & semantic::RSCA::Immutable) != semantic::RSCA::None
-               && !m_workarounds.buffer.disable_immutable_buffers;
+        return (m_access & semantic::RSCA::Immutable) != semantic::RSCA::None &&
+               !m_workarounds.buffer.disable_immutable_buffers;
     }
 
     inline bool slow_mapping_optimization()
     {
-        return m_type == buffers::type::constants
-               && m_workarounds.buffer.slow_mapbuffer;
+        return m_type == buffers::type::constants &&
+               m_workarounds.buffer.slow_mapbuffer;
     }
 
     inline bool no_mapping_optimization()
@@ -112,8 +114,8 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
         m_cached_size = data.size();
         if(no_mapping_optimization() || slow_mapping_optimization())
         {
-            auto bytes
-                = semantic::mem_chunk<const char>::ofContainer(data).view;
+            auto bytes =
+                semantic::mem_chunk<const char>::ofContainer(data).view;
             m_allocation.resize(bytes.size());
             std::copy(bytes.begin(), bytes.end(), m_allocation.begin());
             return;
@@ -328,8 +330,8 @@ struct buffer_t : std::enable_shared_from_this<buffer_t>
     {
         /* TODO: Cache the size, Emscripten is slow on this */
 
-        if(no_mapping_optimization() && slow_mapping_optimization()
-           && m_allocation.size())
+        if(no_mapping_optimization() && slow_mapping_optimization() &&
+           m_allocation.size())
             return m_allocation.size();
 
         if(m_cached_size.has_value())
@@ -387,22 +389,26 @@ struct buffer_slice_t
         auto parent = m_parent.lock();
         return parent->handle();
     }
+
     inline auto buffer()
     {
         auto parent = m_parent.lock();
         return parent->map_all<std::byte>().view.subspan(m_offset, m_size);
     }
+
     template<typename T>
     inline Span<T> buffer_cast()
     {
         auto slice = buffer();
         return mem_chunk<T>::ofContainer(slice).view;
     }
+
     inline auto unmap()
     {
         auto parent = m_parent.lock();
         return parent->unmap();
     }
+
     inline buffer_slice_t slice(
         size_t offset, std::optional<size_t> size = std::nullopt) const
     {
@@ -460,24 +466,32 @@ struct circular_buffer_t
     circular_buffer_t(
         debug::api&                 debug,
         std::shared_ptr<buffer_t>&& buffer,
-        u64                         timeout = 5000) :
-        m_debug(debug),
-        m_buffer(std::move(buffer)), m_buffer_size(m_buffer->size()),
-        m_timeout(timeout)
+        u64                         timeout = 5000)
+        : m_debug(debug)
+        , m_buffer(std::move(buffer))
+        , m_buffer_size(m_buffer->size())
+        , m_timeout(timeout)
     {
     }
+
     circular_buffer_t(circular_buffer_t&&) = default;
 
     struct fence_options
     {
-        fence_options(size_t start, size_t end) : start(start), ptr(end)
+        fence_options(size_t start, size_t end)
+            : start(start)
+            , ptr(end)
         {
         }
-        fence_options(fence_options&& other) :
-            start(other.start), ptr(other.ptr), used(other.used)
+
+        fence_options(fence_options&& other)
+            : start(other.start)
+            , ptr(other.ptr)
+            , used(other.used)
         {
             other.used = true;
         }
+
         ~fence_options()
         {
             if(!used)

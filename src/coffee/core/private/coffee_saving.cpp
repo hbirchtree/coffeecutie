@@ -15,11 +15,13 @@ SaveApi::~SaveApi()
 {
 }
 
-FilesystemApi::FilesystemApi() : m_app(GetCurrentApp())
+FilesystemApi::FilesystemApi()
+    : m_app(GetCurrentApp())
 {
 }
 
-FilesystemApi::FilesystemApi(const AppData& app) : m_app(app)
+FilesystemApi::FilesystemApi(const AppData& app)
+    : m_app(app)
 {
 }
 
@@ -134,7 +136,7 @@ std::future<szptr> FilesystemApi::restore(
         return out.get_future();
     }
 
-//    semantic::chunk_ops::MemCpy(C_OCAST<semantic::Bytes>(rsc), data);
+    //    semantic::chunk_ops::MemCpy(C_OCAST<semantic::Bytes>(rsc), data);
 
     out.set_value(rsc.data_ro.size());
     return out.get_future();

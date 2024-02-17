@@ -4,12 +4,15 @@
 #include "../enums/GetPName.h"
 #include "../enums/VertexArrayPName.h"
 #include "../enums/VertexAttribPropertyARB.h"
+
 namespace gl::arb::vertex_attrib_binding {
 using gl::group::get_prop;
 using gl::group::vertex_array_prop;
 using gl::group::vertex_attrib_property_arb;
+
 namespace values {
 } // namespace values
+
 /*!
  * \brief Part of GL_ARB_vertex_attrib_binding
  * \param bindingindex GLuint

@@ -25,10 +25,9 @@ inline void predicate_if_type(
 }
 
 template<typename Type, typename Other>
-requires (!std::is_same_v<Type, Other>)
+requires(!std::is_same_v<Type, Other>)
 //
-inline void predicate_if_type(
-    std::function<void(Type&)> const&, Other&)
+inline void predicate_if_type(std::function<void(Type&)> const&, Other&)
 {
     // NO-OP
 }

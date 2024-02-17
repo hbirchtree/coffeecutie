@@ -30,7 +30,7 @@ FORCEDINLINE result<mem_chunk<char>, int> read(
         else
             size = size_.value();
     }
-    auto  out  = mem_chunk<char>::withSize(size);
+    auto out = mem_chunk<char>::withSize(size);
     if(offset != 0)
     {
         if(fseek(file, offset, SEEK_SET) != 0)
@@ -45,9 +45,11 @@ FORCEDINLINE result<mem_chunk<char>, int> read(
 
 struct line_iterator
 {
-    line_iterator(file_t&& fd) : fd(std::make_shared<file_t>(std::move(fd)))
+    line_iterator(file_t&& fd)
+        : fd(std::make_shared<file_t>(std::move(fd)))
     {
     }
+
     line_iterator()
     {
     }
@@ -57,6 +59,7 @@ struct line_iterator
         advance();
         return *this;
     }
+
     inline line_iterator operator++(int) const
     {
         auto cpy = *this;
@@ -92,7 +95,7 @@ struct line_iterator
     }
 
     std::shared_ptr<file_t> fd;
-    std::string        current_line;
+    std::string             current_line;
 };
 
 FORCEDINLINE result<line_iterator, int> read_lines(Url const& file)

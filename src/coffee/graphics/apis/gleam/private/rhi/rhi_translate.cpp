@@ -7,11 +7,10 @@
 namespace gleam::convert {
 
 template<typename T>
-requires std::is_same_v<T, group::sized_internal_format> || std::
-    is_same_v<T, group::internal_format>
-        std::tuple<T, group::pixel_type, group::pixel_format> to(
-            PixDesc const&                             fmt,
-            [[maybe_unused]] features::textures const& features)
+requires std::is_same_v<T, group::sized_internal_format> ||
+         std::is_same_v<T, group::internal_format>
+std::tuple<T, group::pixel_type, group::pixel_format> to(
+    PixDesc const& fmt, [[maybe_unused]] features::textures const& features)
 {
     using ::enum_helpers::feval;
 
@@ -30,8 +29,8 @@ requires std::is_same_v<T, group::sized_internal_format> || std::
         return fmt_;
     }
 
-    constexpr std::array<std::pair<P, std::tuple<f, b, p>>, 23> direct_mapping
-        = {{
+    constexpr std::array<std::pair<P, std::tuple<f, b, p>>, 23> direct_mapping =
+        {{
 #if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
             {P::R8, {f::r8, b::unsigned_byte, p::red}},
             {P::R16F, {f::r16f, b::half_float, p::red}},
@@ -261,8 +260,8 @@ requires std::is_same_v<T, group::sized_internal_format> || std::
     auto fmt_name = compile_info::debug_mode ? magic_enum::enum_name(fmt.pixfmt)
                                              : std::string_view();
     Throw(undefined_behavior(
-        "unhandled pixel format: "
-        + std::string(fmt_name.begin(), fmt_name.end())));
+        "unhandled pixel format: " +
+        std::string(fmt_name.begin(), fmt_name.end())));
 }
 
 template std::

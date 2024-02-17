@@ -54,13 +54,14 @@ struct pipe_pair
 
 [[nodiscard]] FORCEDINLINE std::optional<posix_error> pipe(pipe_pair& pipe_fd)
 {
-    pipe_fd = { .read = -1, .write = -1 };
+    pipe_fd = {.read = -1, .write = -1};
     if(::pipe(reinterpret_cast<int*>(&pipe_fd)) == -1)
         return get_error();
     return std::nullopt;
 }
 
-[[nodiscard]] FORCEDINLINE std::optional<posix_error> replace_fd(fd_t target, fd_t source)
+[[nodiscard]] FORCEDINLINE std::optional<posix_error> replace_fd(
+    fd_t target, fd_t source)
 {
     if(::dup2(target, source) == -1)
         return get_error();
@@ -68,6 +69,7 @@ struct pipe_pair
 }
 
 } // namespace fd
+
 namespace proc {
 
 enum class fork_process
@@ -125,7 +127,7 @@ FORCEDINLINE bool is_exited(pid_t target, int* exitCode)
 #endif
 
 FORCEDINLINE void execv(
-    std::string const&       program,
+    std::string const&              program,
     posix_ec&                       ec,
     std::vector<const char*> const& args = {})
 {
@@ -134,8 +136,8 @@ FORCEDINLINE void execv(
 }
 
 FORCEDINLINE void execv(
-    std::string const&                    program,
-    posix_ec&                                    ec,
+    std::string const&              program,
+    posix_ec&                       ec,
     std::vector<std::string> const& args = {})
 {
     std::vector<const char*> arg_list = {};
@@ -143,9 +145,7 @@ FORCEDINLINE void execv(
         args.begin(),
         args.end(),
         std::back_inserter(arg_list),
-        [](std::string const& arg) {
-            return const_cast<char*>(arg.c_str());
-        });
+        [](std::string const& arg) { return const_cast<char*>(arg.c_str()); });
     arg_list.push_back(nullptr);
 
     proc::execv(program, ec, arg_list);
@@ -168,9 +168,9 @@ enum class spawn_mode
 template<typename ArgType>
 struct exec_info
 {
-    std::string         program;
+    std::string          program;
     std::vector<ArgType> args;
-    platform::url::Url         working_dir;
+    platform::url::Url   working_dir;
 };
 
 struct spawn_info

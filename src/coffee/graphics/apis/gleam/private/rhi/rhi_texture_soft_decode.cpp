@@ -38,21 +38,22 @@ bool texture_t::requires_software_decode()
     if(m_format.pixfmt == PixFmt::BCn)
     {
         const auto s3tc_support = m_features.tex.ext.s3tc;
-        const auto rgtc_support = m_features.tex.gl.rgtc
-                                  || m_features.tex.arb.rgtc
-                                  || m_features.tex.ext.rgtc;
-        const auto bptc_support = m_features.tex.gl.bptc
-                                  || m_features.tex.arb.bptc
-                                  || m_features.tex.ext.bptc;
+        const auto rgtc_support = m_features.tex.gl.rgtc ||
+                                  m_features.tex.arb.rgtc ||
+                                  m_features.tex.ext.rgtc;
+        const auto bptc_support = m_features.tex.gl.bptc ||
+                                  m_features.tex.arb.bptc ||
+                                  m_features.tex.ext.bptc;
 #if defined(GLEAM_ENABLE_SOFTWARE_BCN)
-        if(stl_types::any_of(m_format.cmpflg, Comp::BC1, Comp::BC2, Comp::BC3)
-           && !s3tc_support)
+        if(stl_types::any_of(
+               m_format.cmpflg, Comp::BC1, Comp::BC2, Comp::BC3) &&
+           !s3tc_support)
             return true;
-        if(stl_types::any_of(m_format.cmpflg, Comp::BC4, Comp::BC5)
-           && !rgtc_support)
+        if(stl_types::any_of(m_format.cmpflg, Comp::BC4, Comp::BC5) &&
+           !rgtc_support)
             return true;
-        if(stl_types::any_of(m_format.cmpflg, Comp::BC6H, Comp::BC7)
-           && !bptc_support)
+        if(stl_types::any_of(m_format.cmpflg, Comp::BC6H, Comp::BC7) &&
+           !bptc_support)
             return true;
 #else
         Throw(texture_decode_not_available("BCn" NOT_SUPPORTED));
@@ -70,8 +71,8 @@ bool texture_t::requires_software_decode()
         Throw(texture_decode_not_available("PVRTC" NOT_SUPPORTED));
 #endif
 
-    if(m_format.pixfmt == PixFmt::ASTC && !m_features.tex.gl.astc
-       && !m_features.tex.khr.astc)
+    if(m_format.pixfmt == PixFmt::ASTC && !m_features.tex.gl.astc &&
+       !m_features.tex.khr.astc)
         Throw(texture_decode_not_available("ASTC" NOT_SUPPORTED));
     if(m_format.pixfmt == PixFmt::ETC2 && !m_features.tex.gl.etc2)
         Throw(texture_decode_not_available("ETC2" NOT_SUPPORTED));

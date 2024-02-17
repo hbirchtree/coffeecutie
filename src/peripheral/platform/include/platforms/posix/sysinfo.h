@@ -30,4 +30,4 @@ inline std::string architecture()
     return data.machine;
 }
 
-}
+} // namespace platform::info::os::posix

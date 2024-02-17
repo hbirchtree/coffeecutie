@@ -39,9 +39,9 @@
 #include <coffee/x11/x11_comp.h>
 #endif
 
-#if defined(FEATURE_ENABLE_GLADComponent_Dynamic)      \
-    || defined(FEATURE_ENABLE_GLADComponent_ESDynamic) \
-    || defined(FEATURE_ENABLE_GLADComponent_ES2Dynamic)
+#if defined(FEATURE_ENABLE_GLADComponent_Dynamic) ||   \
+    defined(FEATURE_ENABLE_GLADComponent_ESDynamic) || \
+    defined(FEATURE_ENABLE_GLADComponent_ES2Dynamic)
 #include <coffee/glad/glad_comp.h>
 #endif
 
@@ -77,23 +77,23 @@
 #include <pvr/pvr_components.h>
 #endif
 
-#if defined(FEATURE_ENABLE_GLScreenshot_ES2Dynamic)   \
-    || defined(FEATURE_ENABLE_GLScreenshot_ESDynamic) \
-    || defined(FEATURE_ENABLE_GLScreenshot_ES)        \
-    || defined(FEATURE_ENABLE_GLScreenshot_Dynamic)
+#if defined(FEATURE_ENABLE_GLScreenshot_ES2Dynamic) || \
+    defined(FEATURE_ENABLE_GLScreenshot_ESDynamic) ||  \
+    defined(FEATURE_ENABLE_GLScreenshot_ES) ||         \
+    defined(FEATURE_ENABLE_GLScreenshot_Dynamic)
 #include <glscreenshot/screenshot.h>
 #endif
 
-#if defined(FEATURE_ENABLE_GLKitComponent) \
-    || defined(FEATURE_ENABLE_ANativeComponent) || defined(COFFEE_EMSCRIPTEN)
+#if defined(FEATURE_ENABLE_GLKitComponent) || \
+    defined(FEATURE_ENABLE_ANativeComponent) || defined(COFFEE_EMSCRIPTEN)
 #define USES_LINKED_GL 1
 #endif
 
-#if defined(FEATURE_ENABLE_GLADComponent_Dynamic)       \
-    || defined(FEATURE_ENABLE_GLADComponent_ESDynamic)  \
-    || defined(FEATURE_ENABLE_GLADComponent_ES2Dynamic) \
-    || defined(FEATURE_ENABLE_EGLComponent)             \
-    || defined(FEATURE_ENABLE_SDL2Components) || USES_LINKED_GL
+#if defined(FEATURE_ENABLE_GLADComponent_Dynamic) ||    \
+    defined(FEATURE_ENABLE_GLADComponent_ESDynamic) ||  \
+    defined(FEATURE_ENABLE_GLADComponent_ES2Dynamic) || \
+    defined(FEATURE_ENABLE_EGLComponent) ||             \
+    defined(FEATURE_ENABLE_SDL2Components) || USES_LINKED_GL
 #define USES_GL 1
 #endif
 
@@ -199,8 +199,8 @@ bool loop_container(detail::EntityContainer& container)
 
             C_UNUSED(auto res) = rq::runtime_queue::QueuePeriodic(
                 loop_main_queue, 500ms, [&container]() {
-                    auto services
-                        = container.services_with<AppLoadableService>();
+                    auto services =
+                        container.services_with<AppLoadableService>();
                     for(auto& loadable : services)
                     {
                         if(!loadable->is_loaded())
@@ -224,8 +224,8 @@ void cleanup_container(detail::EntityContainer& container)
     DProfContext _("Bundle::Cleanup");
 
     app_error appec;
-    auto      services = container.services_with<AppLoadableService>(
-        Components::reverse_query);
+    auto      services =
+        container.services_with<AppLoadableService>(Components::reverse_query);
     for(auto& service : services)
     {
         if(service->is_loaded())
@@ -245,7 +245,9 @@ void setup_and_loop_container(detail::EntityContainer& container)
     loop_container(container);
 }
 
-struct DefaultAppInfo : interfaces::AppInfo, AppService<DefaultAppInfo, AppInfo>
+struct DefaultAppInfo
+    : interfaces::AppInfo
+    , AppService<DefaultAppInfo, AppInfo>
 {
     virtual void        add(text_type key, text_type value) final;
     virtual text_type_t get(text_type key) final;
@@ -290,8 +292,8 @@ detail::EntityContainer& createContainer()
     container = std::make_shared<detail::EntityContainer>();
 
     if constexpr(
-        compile_info::platform::is_unix
-        && !compile_info::platform::is_emscripten)
+        compile_info::platform::is_unix &&
+        !compile_info::platform::is_emscripten)
     {
         auto handler = [](int) {
             if(!container)
@@ -325,15 +327,15 @@ void configureDefaults(AppLoader& loader)
     glConfig.framebufferFmt = PixFmt::RGBA8;
     glConfig.depthFmt       = PixFmt::Depth24Stencil8;
 
-#if defined(FEATURE_ENABLE_GLeamCommon_ES2) \
-    || defined(FEATURE_ENABLE_GLeamCommon_ES2Dynamic)
+#if defined(FEATURE_ENABLE_GLeamCommon_ES2) || \
+    defined(FEATURE_ENABLE_GLeamCommon_ES2Dynamic)
     glConfig.framebufferFmt = PixFmt::RGB565;
     glConfig.depthFmt       = PixFmt::Depth24Stencil8;
     glConfig.profile        = GLConfig::Embedded;
     glConfig.version.major  = 2;
     glConfig.version.minor  = 0;
-#elif defined(FEATURE_ENABLE_GLeamCommon_ES) \
-    || defined(FEATURE_ENABLE_GLeamCommon_ESDynamic)
+#elif defined(FEATURE_ENABLE_GLeamCommon_ES) || \
+    defined(FEATURE_ENABLE_GLeamCommon_ESDynamic)
     glConfig.framebufferFmt = PixFmt::RGB565;
     glConfig.profile        = GLConfig::Embedded;
     glConfig.version.major  = 3;
@@ -349,10 +351,9 @@ void configureDefaults(AppLoader& loader)
      * We *can* enable sRGB on desktop, and on Android
      * On iOS we don't have as much control over the colorspace used
      */
-    if(compile_info::platform::is_android
-       || (compile_info::platform::is_linux && !compile_info::platform::is_iot)
-       || compile_info::platform::is_macos
-       || compile_info::platform::is_windows)
+    if(compile_info::platform::is_android ||
+       (compile_info::platform::is_linux && !compile_info::platform::is_iot) ||
+       compile_info::platform::is_macos || compile_info::platform::is_windows)
         glConfig.framebufferFmt = PixFmt::SRGB8;
 
 #if defined(FEATURE_ENABLE_X11Component)
@@ -367,9 +368,8 @@ void configureDefaults(AppLoader& loader)
 
     window.title = Coffee::State::GetAppData()->application_name;
     window.size  = {1280, 720};
-    if(compile_info::platform::is_macos || compile_info::platform::is_ios
-       || compile_info::platform::is_android
-       || compile_info::platform::is_windows)
+    if(compile_info::platform::is_macos || compile_info::platform::is_ios ||
+       compile_info::platform::is_android || compile_info::platform::is_windows)
         window.flags |= window_flags_t::high_dpi;
 }
 
@@ -399,8 +399,8 @@ void addDefaults(
     loader.loadAll<subsystem_list<anative::AndroidEventBus>>(container, ec);
 #endif
 
-    BasicEventBus<AppEvent>* app_bus
-        = container.service<BasicEventBus<AppEvent>>();
+    BasicEventBus<AppEvent>* app_bus =
+        container.service<BasicEventBus<AppEvent>>();
     app_bus->addEventFunction<LifecycleEvent>(
         2048, [&container](AppEvent&, LifecycleEvent* event) {
             switch(event->lifecycle_type)
@@ -516,9 +516,9 @@ void addDefaults(
     /* Selection of GL binding */
 #if GLEAM_USE_LINKED
     appInfo.add("gl:loader", "Linked");
-#elif defined(FEATURE_ENABLE_GLADComponent_Dynamic)    \
-    || defined(FEATURE_ENABLE_GLADComponent_ESDynamic) \
-    || defined(FEATURE_ENABLE_GLADComponent_ES2Dynamic)
+#elif defined(FEATURE_ENABLE_GLADComponent_Dynamic) || \
+    defined(FEATURE_ENABLE_GLADComponent_ESDynamic) || \
+    defined(FEATURE_ENABLE_GLADComponent_ES2Dynamic)
     loader.registerAll<glad::Services>(container, ec);
     C_ERROR_CHECK(ec);
     appInfo.add("gl:loader", "GLAD");
@@ -543,10 +543,10 @@ void addDefaults(
         /* TODO: Conditionally load based on availability */
         loader.registerAll<detail::subsystem_list<
             comp_app::SysMemoryStats
-#if defined(FEATURE_ENABLE_GLScreenshot_ES2Dynamic)   \
-    || defined(FEATURE_ENABLE_GLScreenshot_Dynamic)   \
-    || defined(FEATURE_ENABLE_GLScreenshot_ESDynamic) \
-    || defined(FEATURE_ENABLE_GLScreenshot_ES)
+#if defined(FEATURE_ENABLE_GLScreenshot_ES2Dynamic) || \
+    defined(FEATURE_ENABLE_GLScreenshot_Dynamic) ||    \
+    defined(FEATURE_ENABLE_GLScreenshot_ESDynamic) ||  \
+    defined(FEATURE_ENABLE_GLScreenshot_ES)
             ,
             glscreenshot::ScreenshotProvider
 #endif
@@ -554,7 +554,8 @@ void addDefaults(
         C_ERROR_CHECK(ec);
     }
 
-#if defined(FEATURE_ENABLE_PVRComponents) || defined(FEATURE_ENABLE_EmscriptenComponents)
+#if defined(FEATURE_ENABLE_PVRComponents) || \
+    defined(FEATURE_ENABLE_EmscriptenComponents)
     loader.registerAll<detail::subsystem_list<
 #if defined(FEATURE_ENABLE_EmscriptenComponents)
         emscripten::BatteryProvider,
@@ -620,8 +621,8 @@ void PerformanceMonitor::start_restricted(proxy_type& p, time_point const&)
         MetricVariant::Value,
         std::chrono::duration_cast<stl_types::Chrono::seconds_float>(
             time - m_prevFrame)
-                .count()
-            * 1000.f,
+                .count() *
+            1000.f,
         timestamp);
     m_prevFrame = time;
 
@@ -771,8 +772,8 @@ void PerformanceMonitor::capture_screenshot(
             };
             auto export_file = [](semantic::Bytes const* data) {
                 auto screenshot_file = "screenshot.jpg"_tmpfile;
-                screenshot_file.data_ro
-                    = semantic::BytesConst::ofBytes(data->data, data->size);
+                screenshot_file.data_ro =
+                    semantic::BytesConst::ofBytes(data->data, data->size);
                 FileCommit(
                     screenshot_file,
                     RSCA::WriteOnly | RSCA::Discard | RSCA::NewFile);
@@ -786,16 +787,16 @@ void PerformanceMonitor::capture_screenshot(
                     timestamp);
             };
 
-            auto encoder
-                = rq::dependent_task<dump_t, semantic::Bytes>::CreateProcessor(
+            auto encoder =
+                rq::dependent_task<dump_t, semantic::Bytes>::CreateProcessor(
                     std::move(pixels), std::move(encode));
-            auto encoder_future
-                = std::shared_future(encoder->output.get_future());
-            auto file_exporter
-                = rq::dependent_task<semantic::Bytes, void>::CreateSink(
+            auto encoder_future =
+                std::shared_future(encoder->output.get_future());
+            auto file_exporter =
+                rq::dependent_task<semantic::Bytes, void>::CreateSink(
                     encoder_future, std::move(export_file));
-            auto profile_exporter
-                = rq::dependent_task<semantic::Bytes, void>::CreateSink(
+            auto profile_exporter =
+                rq::dependent_task<semantic::Bytes, void>::CreateSink(
                     encoder_future, std::move(export_profile));
 
             /* JPG encoding + file export is put off-thread */
@@ -818,12 +819,12 @@ void PerformanceMonitor::capture_screenshot(
 
 void PerformanceMonitor::load(AppLoadableService::entity_container&, app_error&)
 {
-    m_nextScreenshot = m_prevFrame
-        = platform::profiling::Profiler::clock::now();
+    m_nextScreenshot = m_prevFrame =
+        platform::profiling::Profiler::clock::now();
     if constexpr(enable_screenshots && !compile_info::platform::is_emscripten)
-        m_worker_queue
-            = rq::runtime_queue::CreateNewThreadQueue("Profiling worker")
-                  .assume_value();
+        m_worker_queue =
+            rq::runtime_queue::CreateNewThreadQueue("Profiling worker")
+                .assume_value();
 }
 
 void PerformanceMonitor::unload(

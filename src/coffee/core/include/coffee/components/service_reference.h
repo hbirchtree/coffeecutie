@@ -7,7 +7,8 @@ namespace compo {
 template<typename Service>
 struct ServiceRef
 {
-    ServiceRef(EntityContainer* container) : m_container(container)
+    ServiceRef(EntityContainer* container)
+        : m_container(container)
     {
     }
 
@@ -23,7 +24,7 @@ struct ServiceRef
         return *ptr;
     }
 
-    operator typename Service::type*()
+    operator typename Service::type *()
     {
         return lock();
     }

@@ -1,12 +1,12 @@
 #ifdef GL_VERSION_1_3
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<1, 3>>)
-    /*!
-     * \brief Wraps around glActiveTexture. Introduced in GL core 1.3
-     * \param texture GLenum
-     * \return void
-     */
-    STATICINLINE void active_texture(group::texture_unit texture)
+/*!
+ * \brief Wraps around glActiveTexture. Introduced in GL core 1.3
+ * \param texture GLenum
+ * \return void
+ */
+STATICINLINE void active_texture(group::texture_unit texture)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -19,25 +19,25 @@ requires(MinimumVersion<Current, Version<1, 3>>)
 
 template<class span_const_void>
 requires(
-    MinimumVersion<Current, Version<1, 3>>&& concepts::span<span_const_void>)
-    /*!
-     * \brief Wraps around glCompressedTexImage1D. Introduced in GL core 1.3
-     * \param target GLenum
-     * \param level GLint
-     * \param internalformat GLenum
-     * \param width GLsizei
-     * \param border GLint
-     * \param imageSize GLsizei
-     * \param data const void *
-     * \return void
-     */
-    STATICINLINE void compressed_tex_image_1d(
-        group::texture_target  target,
-        i32                    level,
-        group::internal_format internalformat,
-        i32                    width,
-        i32                    border,
-        span_const_void const& data)
+    MinimumVersion<Current, Version<1, 3>> && concepts::span<span_const_void>)
+/*!
+ * \brief Wraps around glCompressedTexImage1D. Introduced in GL core 1.3
+ * \param target GLenum
+ * \param level GLint
+ * \param internalformat GLenum
+ * \param width GLsizei
+ * \param border GLint
+ * \param imageSize GLsizei
+ * \param data const void *
+ * \return void
+ */
+STATICINLINE void compressed_tex_image_1d(
+    group::texture_target  target,
+    i32                    level,
+    group::internal_format internalformat,
+    i32                    width,
+    i32                    border,
+    span_const_void const& data)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -58,27 +58,27 @@ requires(
 
 template<class size_2_i32, class span_const_void>
 requires(
-    MinimumVersion<Current, Version<1, 3>>&&
-        concepts::size_2d<size_2_i32, i32>&& concepts::span<span_const_void>)
-    /*!
-     * \brief Wraps around glCompressedTexImage2D. Introduced in GL core 1.3
-     * \param target GLenum
-     * \param level GLint
-     * \param internalformat GLenum
-     * \param width GLsizei
-     * \param height GLsizei
-     * \param border GLint
-     * \param imageSize GLsizei
-     * \param data const void *
-     * \return void
-     */
-    STATICINLINE void compressed_tex_image_2d(
-        group::texture_target  target,
-        i32                    level,
-        group::internal_format internalformat,
-        size_2_i32 const&      width,
-        i32                    border,
-        span_const_void const& data)
+    MinimumVersion<Current, Version<1, 3>> &&
+    concepts::size_2d<size_2_i32, i32> && concepts::span<span_const_void>)
+/*!
+ * \brief Wraps around glCompressedTexImage2D. Introduced in GL core 1.3
+ * \param target GLenum
+ * \param level GLint
+ * \param internalformat GLenum
+ * \param width GLsizei
+ * \param height GLsizei
+ * \param border GLint
+ * \param imageSize GLsizei
+ * \param data const void *
+ * \return void
+ */
+STATICINLINE void compressed_tex_image_2d(
+    group::texture_target  target,
+    i32                    level,
+    group::internal_format internalformat,
+    size_2_i32 const&      width,
+    i32                    border,
+    span_const_void const& data)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -100,28 +100,28 @@ requires(
 
 template<class size_3_i32, class span_const_void>
 requires(
-    MinimumVersion<Current, Version<1, 3>>&&
-        concepts::size_2d<size_3_i32, i32>&& concepts::span<span_const_void>)
-    /*!
-     * \brief Wraps around glCompressedTexImage3D. Introduced in GL core 1.3
-     * \param target GLenum
-     * \param level GLint
-     * \param internalformat GLenum
-     * \param width GLsizei
-     * \param height GLsizei
-     * \param depth GLsizei
-     * \param border GLint
-     * \param imageSize GLsizei
-     * \param data const void *
-     * \return void
-     */
-    STATICINLINE void compressed_tex_image_3d(
-        group::texture_target  target,
-        i32                    level,
-        group::internal_format internalformat,
-        size_3_i32 const&      width,
-        i32                    border,
-        span_const_void const& data)
+    MinimumVersion<Current, Version<1, 3>> &&
+    concepts::size_2d<size_3_i32, i32> && concepts::span<span_const_void>)
+/*!
+ * \brief Wraps around glCompressedTexImage3D. Introduced in GL core 1.3
+ * \param target GLenum
+ * \param level GLint
+ * \param internalformat GLenum
+ * \param width GLsizei
+ * \param height GLsizei
+ * \param depth GLsizei
+ * \param border GLint
+ * \param imageSize GLsizei
+ * \param data const void *
+ * \return void
+ */
+STATICINLINE void compressed_tex_image_3d(
+    group::texture_target  target,
+    i32                    level,
+    group::internal_format internalformat,
+    size_3_i32 const&      width,
+    i32                    border,
+    span_const_void const& data)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -144,25 +144,25 @@ requires(
 
 template<class span_const_void>
 requires(
-    MinimumVersion<Current, Version<1, 3>>&& concepts::span<span_const_void>)
-    /*!
-     * \brief Wraps around glCompressedTexSubImage1D. Introduced in GL core 1.3
-     * \param target GLenum
-     * \param level GLint
-     * \param xoffset GLint
-     * \param width GLsizei
-     * \param format GLenum
-     * \param imageSize GLsizei
-     * \param data const void *
-     * \return void
-     */
-    STATICINLINE void compressed_tex_sub_image_1d(
-        group::texture_target  target,
-        i32                    level,
-        i32                    xoffset,
-        i32                    width,
-        group::internal_format format,
-        span_const_void const& data)
+    MinimumVersion<Current, Version<1, 3>> && concepts::span<span_const_void>)
+/*!
+ * \brief Wraps around glCompressedTexSubImage1D. Introduced in GL core 1.3
+ * \param target GLenum
+ * \param level GLint
+ * \param xoffset GLint
+ * \param width GLsizei
+ * \param format GLenum
+ * \param imageSize GLsizei
+ * \param data const void *
+ * \return void
+ */
+STATICINLINE void compressed_tex_sub_image_1d(
+    group::texture_target  target,
+    i32                    level,
+    i32                    xoffset,
+    i32                    width,
+    group::internal_format format,
+    span_const_void const& data)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -182,30 +182,30 @@ requires(
 }
 
 template<class size_2_i32, class span_const_void, class vec_2_i32>
-requires(MinimumVersion<Current, Version<1, 3>>&&
-                     concepts::vector<vec_2_i32, i32, 2>&&
-                     concepts::size_2d<size_2_i32, i32>&&
-                     concepts::span<span_const_void>)
-    /*!
-     * \brief Wraps around glCompressedTexSubImage2D. Introduced in GL core 1.3
-     * \param target GLenum
-     * \param level GLint
-     * \param xoffset GLint
-     * \param yoffset GLint
-     * \param width GLsizei
-     * \param height GLsizei
-     * \param format GLenum
-     * \param imageSize GLsizei
-     * \param data const void *
-     * \return void
-     */
-    STATICINLINE void compressed_tex_sub_image_2d(
-        group::texture_target  target,
-        i32                    level,
-        vec_2_i32 const&       xoffset,
-        size_2_i32 const&      width,
-        group::internal_format format,
-        span_const_void const& data)
+requires(
+    MinimumVersion<Current, Version<1, 3>> &&
+    concepts::vector<vec_2_i32, i32, 2> && concepts::size_2d<size_2_i32, i32> &&
+    concepts::span<span_const_void>)
+/*!
+ * \brief Wraps around glCompressedTexSubImage2D. Introduced in GL core 1.3
+ * \param target GLenum
+ * \param level GLint
+ * \param xoffset GLint
+ * \param yoffset GLint
+ * \param width GLsizei
+ * \param height GLsizei
+ * \param format GLenum
+ * \param imageSize GLsizei
+ * \param data const void *
+ * \return void
+ */
+STATICINLINE void compressed_tex_sub_image_2d(
+    group::texture_target  target,
+    i32                    level,
+    vec_2_i32 const&       xoffset,
+    size_2_i32 const&      width,
+    group::internal_format format,
+    span_const_void const& data)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -227,32 +227,32 @@ requires(MinimumVersion<Current, Version<1, 3>>&&
 }
 
 template<class size_3_i32, class span_const_void, class vec_3_i32>
-requires(MinimumVersion<Current, Version<1, 3>>&&
-                     concepts::vector<vec_3_i32, i32, 3>&&
-                     concepts::size_2d<size_3_i32, i32>&&
-                     concepts::span<span_const_void>)
-    /*!
-     * \brief Wraps around glCompressedTexSubImage3D. Introduced in GL core 1.3
-     * \param target GLenum
-     * \param level GLint
-     * \param xoffset GLint
-     * \param yoffset GLint
-     * \param zoffset GLint
-     * \param width GLsizei
-     * \param height GLsizei
-     * \param depth GLsizei
-     * \param format GLenum
-     * \param imageSize GLsizei
-     * \param data const void *
-     * \return void
-     */
-    STATICINLINE void compressed_tex_sub_image_3d(
-        group::texture_target  target,
-        i32                    level,
-        vec_3_i32 const&       xoffset,
-        size_3_i32 const&      width,
-        group::internal_format format,
-        span_const_void const& data)
+requires(
+    MinimumVersion<Current, Version<1, 3>> &&
+    concepts::vector<vec_3_i32, i32, 3> && concepts::size_2d<size_3_i32, i32> &&
+    concepts::span<span_const_void>)
+/*!
+ * \brief Wraps around glCompressedTexSubImage3D. Introduced in GL core 1.3
+ * \param target GLenum
+ * \param level GLint
+ * \param xoffset GLint
+ * \param yoffset GLint
+ * \param zoffset GLint
+ * \param width GLsizei
+ * \param height GLsizei
+ * \param depth GLsizei
+ * \param format GLenum
+ * \param imageSize GLsizei
+ * \param data const void *
+ * \return void
+ */
+STATICINLINE void compressed_tex_sub_image_3d(
+    group::texture_target  target,
+    i32                    level,
+    vec_3_i32 const&       xoffset,
+    size_3_i32 const&      width,
+    group::internal_format format,
+    span_const_void const& data)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -276,16 +276,16 @@ requires(MinimumVersion<Current, Version<1, 3>>&&
 }
 
 template<class span_void>
-requires(MinimumVersion<Current, Version<1, 3>>&& concepts::span<span_void>)
-    /*!
-     * \brief Wraps around glGetCompressedTexImage. Introduced in GL core 1.3
-     * \param target GLenum
-     * \param level GLint
-     * \param img void *
-     * \return void
-     */
-    STATICINLINE void get_compressed_tex_image(
-        group::texture_target target, i32 level, span_void img)
+requires(MinimumVersion<Current, Version<1, 3>> && concepts::span<span_void>)
+/*!
+ * \brief Wraps around glGetCompressedTexImage. Introduced in GL core 1.3
+ * \param target GLenum
+ * \param level GLint
+ * \param img void *
+ * \return void
+ */
+STATICINLINE void get_compressed_tex_image(
+    group::texture_target target, i32 level, span_void img)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -301,13 +301,13 @@ requires(MinimumVersion<Current, Version<1, 3>>&& concepts::span<span_void>)
 
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<1, 3>>)
-    /*!
-     * \brief Wraps around glSampleCoverage. Introduced in GL core 1.3
-     * \param value GLfloat
-     * \param invert GLboolean
-     * \return void
-     */
-    STATICINLINE void sample_coverage(f32 value, bool invert)
+/*!
+ * \brief Wraps around glSampleCoverage. Introduced in GL core 1.3
+ * \param value GLfloat
+ * \param invert GLboolean
+ * \return void
+ */
+STATICINLINE void sample_coverage(f32 value, bool invert)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

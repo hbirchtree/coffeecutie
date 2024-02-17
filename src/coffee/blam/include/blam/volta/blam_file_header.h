@@ -40,6 +40,7 @@ struct alignas(4) file_header_t
         }
         return name;
     }
+
     /*!
      * \brief Validate and get the file header from a base pointer, mostly
      * validation

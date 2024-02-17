@@ -10,11 +10,11 @@ template<typename T, size_t Size>
 struct tmatrix
 {
     using value_type = T;
-    using col_type = tvector<T, Size>;
+    using col_type   = tvector<T, Size>;
 
     static constexpr size_t col_size = Size;
     static constexpr size_t row_size = Size;
-    static constexpr size_t  size = Size * Size;
+    static constexpr size_t size     = Size * Size;
 
     tvector<T, Size> d[Size];
 
@@ -29,6 +29,7 @@ struct tmatrix
             for(size_t x = 0; x < Size; x++)
                 (*this)[x][y] = c;
     }
+
     /*!
      * \brief Generate an identity matrix
      */
@@ -42,6 +43,7 @@ struct tmatrix
                 else
                     (*this)[x][y] = T(0);
     }
+
     FORCEDINLINE
     tmatrix(const tmatrix<T, Size + 1>& matrix)
     {
@@ -49,6 +51,7 @@ struct tmatrix
             for(size_t x = 0; x < Size; x++)
                 (*this)[x][y] = matrix[x][y];
     }
+
     FORCEDINLINE
     tmatrix(const tmatrix<T, Size>& matrix)
     {
@@ -56,8 +59,10 @@ struct tmatrix
             for(size_t x = 0; x < Size; x++)
                 (*this)[x][y] = matrix[x][y];
     }
+
     FORCEDINLINE
-    tmatrix(const tmatrix<T, Size - 1>& matrix) : tmatrix()
+    tmatrix(const tmatrix<T, Size - 1>& matrix)
+        : tmatrix()
     {
         for(size_t y = 0; y < Size - 1; y++)
             for(size_t x = 0; x < Size - 1; x++)
@@ -73,6 +78,7 @@ struct tmatrix
     {
         return d[i];
     }
+
     FORCEDINLINE const tvector<T, Size>& operator[](size_t i) const
     {
         return d[i];
@@ -86,6 +92,7 @@ struct tmatrix
                     return false;
         return true;
     }
+
     FORCEDINLINE tmatrix<T, Size>& operator=(const tmatrix<T, Size>& matrix)
     {
         for(size_t y = 0; y < Size; y++)
@@ -93,28 +100,33 @@ struct tmatrix
                 (*this)[x][y] = matrix[x][y];
         return *this;
     }
+
     FORCEDINLINE void operator+=(const tmatrix<T, Size>& matrix)
     {
         for(size_t y = 0; y < Size; y++)
             for(size_t x = 0; x < Size; x++)
                 (*this)[x][y] += matrix[x][y];
     }
+
     FORCEDINLINE void operator-=(const tmatrix<T, Size>& matrix)
     {
         for(size_t y = 0; y < Size; y++)
             for(size_t x = 0; x < Size; x++)
                 (*this)[x][y] -= matrix[x][y];
     }
+
     FORCEDINLINE void operator*=(const tmatrix<T, Size>& matrix)
     {
         *this = (*this) * matrix;
     }
+
     FORCEDINLINE void operator*=(const T& val)
     {
         for(size_t y = 0; y < Size; y++)
             for(size_t x = 0; x < Size; x++)
                 (*this)[x][y] *= val;
     }
+
     FORCEDINLINE void operator/=(const T& val)
     {
         for(size_t y = 0; y < Size; y++)

@@ -10,4 +10,4 @@ inline std::string_view libc_version()
     return gnu_get_libc_version();
 }
 
-}
+} // namespace platform::info::os::glibc

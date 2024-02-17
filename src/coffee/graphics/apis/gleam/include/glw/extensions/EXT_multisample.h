@@ -4,10 +4,12 @@
 #include "../enums/AttribMask.h"
 #include "../enums/SamplePatternEXT.h"
 #include "../enums/SamplePatternSGIS.h"
+
 namespace gl::ext::multisample {
 using gl::group::attrib_mask;
 using gl::group::sample_pattern_ext;
 using gl::group::sample_pattern_sgis;
+
 namespace values {
 constexpr u32 multisample          = 0x809D;
 constexpr u32 sample_alpha_to_mask = 0x809E;
@@ -19,6 +21,7 @@ constexpr u32 sample_mask_value    = 0x80AA;
 constexpr u32 sample_mask_invert   = 0x80AB;
 constexpr u32 sample_pattern       = 0x80AC;
 } // namespace values
+
 /*!
  * \brief Part of GL_EXT_multisample
  * \param value GLclampf

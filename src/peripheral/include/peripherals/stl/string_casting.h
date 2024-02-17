@@ -28,14 +28,15 @@ template<typename T>
 requires(
     (std::is_integral<T>::value || std::is_floating_point<T>::value) &&
     !std::is_same_v<T, bool>)
-    //
-    std::string cast_pod(T v)
+//
+std::string cast_pod(T v)
 {
     return std::to_string(v);
 }
 
 template<typename T>
-requires std::is_same_v<T, bool> std::string cast_pod(T v)
+requires std::is_same_v<T, bool>
+std::string cast_pod(T v)
 {
     return v ? "true" : "false";
 }

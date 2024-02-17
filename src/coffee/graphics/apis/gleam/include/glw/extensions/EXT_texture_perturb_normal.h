@@ -2,11 +2,14 @@
 
 #ifdef GL_EXT_texture_perturb_normal
 #include "../enums/TextureNormalModeEXT.h"
+
 namespace gl::ext::texture_perturb_normal {
 using gl::group::texture_normal_mode_ext;
+
 namespace values {
 constexpr u32 texture_normal = 0x85AF;
 } // namespace values
+
 /*!
  * \brief Part of GL_EXT_texture_perturb_normal
  * \param mode GLenum

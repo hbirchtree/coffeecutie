@@ -19,4 +19,4 @@ std::string_view enum_to_string(semantic::debug::Type type)
     return magic_enum::enum_name(type);
 }
 
-}
+} // namespace semantic::detail

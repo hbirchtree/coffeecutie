@@ -28,16 +28,17 @@ struct texture_2da_t : texture_array_base_t
         api*               api_,
         PixDesc const&     fmt,
         u32                mips,
-        textures::property properties = textures::property::none) :
-        texture_array_base_t(
-            api_->feature_info().texture,
-            api_->queue<api::queues::texture_decode>(),
-            api_->debug(),
-            textures::type::d2_array,
-            fmt,
-            mips,
-            properties),
-        m_api(api_), m_compat_active(!m_features.texture_3d)
+        textures::property properties = textures::property::none)
+        : texture_array_base_t(
+              api_->feature_info().texture,
+              api_->queue<api::queues::texture_decode>(),
+              api_->debug(),
+              textures::type::d2_array,
+              fmt,
+              mips,
+              properties)
+        , m_api(api_)
+        , m_compat_active(!m_features.texture_3d)
     {
         if(m_compat_active)
             m_type = textures::type::d2;
@@ -104,9 +105,9 @@ using texture_definition_t = std::tuple<
     std::shared_ptr<sampler_t>>;
 
 template<typename... Textures>
-requires(std::is_same_v<Textures, texture_definition_t>&&...)
-    //
-    inline auto make_texture_list(Textures&&... defs)
+requires(std::is_same_v<Textures, texture_definition_t> && ...)
+//
+inline auto make_texture_list(Textures&&... defs)
 {
     std::vector<texture_definition_t> definitions;
     (definitions.emplace_back(std::move(defs)), ...);
@@ -120,7 +121,7 @@ using texture_list = declreturntype(make_texture_list<>);
 namespace gleam::detail {
 
 inline bool apply_command_modifier(
-    program_t&      program,
+    program_t&            program,
     shader_bookkeeping_t& bookkeeping,
     compat::texture_list& textures)
 {
@@ -168,7 +169,7 @@ inline bool apply_command_modifier(
 }
 
 inline void apply_command_modifier_per_call(
-    program_t&      program,
+    program_t&            program,
     shader_bookkeeping_t& bookkeeping,
     compat::texture_list& textures,
     u32                   base_instance = 0,

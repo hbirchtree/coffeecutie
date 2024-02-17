@@ -22,7 +22,7 @@
 namespace Coffee {
 
 COFFEE_APP_FUNC void SetPlatformState();
-COFFEE_APP_FUNC i32 ApplicationMain();
+COFFEE_APP_FUNC i32  ApplicationMain();
 
 COFFEE_APP_FUNC int MainSetup(
     MainWithArgs mainfun, int argc, char** argv, u32 flags = 0);
@@ -61,9 +61,9 @@ COFFEE_APP_FUNC int MainSetup(
 #elif defined(COFFEE_SDL_MAIN)
 
 // Wraps it with a custom name defined above
-#define COFFEE_APPLICATION_MAIN(mainfun)        \
-    extern "C" int main(int argv, char** argc)  \
-    {                                           \
+#define COFFEE_APPLICATION_MAIN(mainfun)               \
+    extern "C" int main(int argv, char** argc)         \
+    {                                                  \
         return Coffee::MainSetup(mainfun, argv, argc); \
     }
 
@@ -95,33 +95,33 @@ COFFEE_APP_FUNC int MainSetup(
 #else
 
 // Plain old main() function
-#define COFFEE_APPLICATION_MAIN(mainfun)        \
-    int main(int argv, char** argc)             \
-    {                                           \
+#define COFFEE_APPLICATION_MAIN(mainfun)               \
+    int main(int argv, char** argc)                    \
+    {                                                  \
         return Coffee::MainSetup(mainfun, argv, argc); \
     }
 
-#define COFFEE_APPLICATION_MAIN_CUSTOM_ARG(mainfun)  \
-    int main(int argv, char** argc)                  \
-    {                                                \
+#define COFFEE_APPLICATION_MAIN_CUSTOM_ARG(mainfun)         \
+    int main(int argv, char** argc)                         \
+    {                                                       \
         return Coffee::MainSetup(mainfun, argv, argc, 0x1); \
     }
 
-#define COFFEE_APPLICATION_MAIN_CUSTOM(mainfun, flags) \
-    int main(int argv, char** argc)                    \
-    {                                                  \
+#define COFFEE_APPLICATION_MAIN_CUSTOM(mainfun, flags)        \
+    int main(int argv, char** argc)                           \
+    {                                                         \
         return Coffee::MainSetup(mainfun, argv, argc, flags); \
     }
 
-#define COFFEE_SIMPLE_MAIN(mainfun)                       \
-    namespace {                                           \
-    int simplified_main(int, char**)                      \
-    {                                                     \
-        return mainfun(0, nullptr);                       \
-    }                                                     \
-    }                                                     \
-    int main(int argv, char** argc)                       \
-    {                                                     \
+#define COFFEE_SIMPLE_MAIN(mainfun)                              \
+    namespace {                                                  \
+    int simplified_main(int, char**)                             \
+    {                                                            \
+        return mainfun(0, nullptr);                              \
+    }                                                            \
+    }                                                            \
+    int main(int argv, char** argc)                              \
+    {                                                            \
         return Coffee::MainSetup(::simplified_main, argv, argc); \
     }
 

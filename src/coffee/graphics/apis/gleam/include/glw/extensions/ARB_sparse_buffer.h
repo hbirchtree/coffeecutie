@@ -2,11 +2,14 @@
 
 #ifdef GL_ARB_sparse_buffer
 #include "../enums/BufferStorageMask.h"
+
 namespace gl::arb::sparse_buffer {
 using gl::group::buffer_storage_mask;
+
 namespace values {
 constexpr u32 sparse_buffer_page_size = 0x82F8;
 } // namespace values
+
 /*!
  * \brief Part of GL_ARB_sparse_buffer
  * \param target GLenum

@@ -88,7 +88,8 @@ struct StandardCamera
     {
         using event_type = CIKeyEvent;
 
-        KeyboardInput(std::weak_ptr<StandardCamera> cam) : m_container(cam)
+        KeyboardInput(std::weak_ptr<StandardCamera> cam)
+            : m_container(cam)
         {
         }
 
@@ -107,9 +108,9 @@ struct StandardCamera
 
         MouseInput(
             std::shared_ptr<StandardCamera> cam,
-            u32 button = CIMouseButtonEvent::LeftButton) :
-            m_button(button),
-            m_container(cam)
+            u32 button = CIMouseButtonEvent::LeftButton)
+            : m_button(button)
+            , m_container(cam)
         {
         }
 
@@ -128,8 +129,9 @@ struct StandardCamera
 
     using Reg = std::map<u16, u16>;
 
-    StandardCamera(CameraPtr cam, CameraOptsPtr opts) :
-        m_opts(opts), m_camera(cam)
+    StandardCamera(CameraPtr cam, CameraOptsPtr opts)
+        : m_opts(opts)
+        , m_camera(cam)
     {
     }
 
@@ -146,12 +148,13 @@ struct StandardCamera
         m_camera->position += right * cached.right * movement_speed * accel;
         m_camera->position += up * cached.up * movement_speed * accel;
     }
+
     inline void rotate(f32 pitch, f32 yaw)
     {
         auto& rotation = m_camera->rotation;
         rotation       = glm::normalize(
-            rotation * glm::quat(cached.right * yaw * -1.f)
-            * glm::quat(cached.up * pitch * -1.f));
+            rotation * glm::quat(cached.right * yaw * -1.f) *
+            glm::quat(cached.up * pitch * -1.f));
     }
 
     void tick(std::chrono::system_clock::duration const& t)
@@ -232,6 +235,7 @@ struct ControllerOpts
         {
             f32 x, y;
         } move;
+
         struct
         {
             f32 x, y;
@@ -261,11 +265,12 @@ void controller_camera_update(
 {
     using stl_types::Chrono::to_float;
 
-    const auto filter
-        = [](i16 raw, f32 sens) { return convert_i16_f(raw) * sens; };
+    const auto filter = [](i16 raw, f32 sens) {
+        return convert_i16_f(raw) * sens;
+    };
 
-    const auto acceleration
-        = 1.f + convert_i16_f(state.axes.e.t_l) * opt.curve * to_float(t);
+    const auto acceleration =
+        1.f + convert_i16_f(state.axes.e.t_l) * opt.curve * to_float(t);
     camera->move(
         filter(state.axes.e.l_y, opt.sens.move.y) * -1.f,
         filter(state.axes.e.l_x, opt.sens.move.x) * -1.f,
@@ -279,8 +284,9 @@ void controller_camera_update(
 template<typename CameraPtr, typename OptsPtr>
 struct ControllerCamera
 {
-    ControllerCamera(CameraPtr cam, OptsPtr options) :
-        m_camera(cam), m_opts(options)
+    ControllerCamera(CameraPtr cam, OptsPtr options)
+        : m_camera(cam)
+        , m_opts(options)
     {
     }
 

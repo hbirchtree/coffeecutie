@@ -5,19 +5,22 @@ namespace gl::amd::sample_positions {
 namespace values {
 constexpr u32 subsample_distance = 0x883F;
 } // namespace values
+
 template<class span_const_f32>
-requires(concepts::span<span_const_f32>&& std::is_same_v<
-         std::decay_t<typename span_const_f32::value_type>,
-         std::decay_t<f32>>)
-    /*!
-     * \brief Part of GL_AMD_sample_positions
-     * \param pname GLenum
-     * \param index GLuint
-     * \param val const GLfloat *
-     * \return void
-     */
-    STATICINLINE
-    void set_multisamplefv(GLenum pname, u32 index, span_const_f32 const& val)
+requires(
+    concepts::span<span_const_f32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_f32::value_type>,
+        std::decay_t<f32>>)
+/*!
+ * \brief Part of GL_AMD_sample_positions
+ * \param pname GLenum
+ * \param index GLuint
+ * \param val const GLfloat *
+ * \return void
+ */
+STATICINLINE void set_multisamplefv(
+    GLenum pname, u32 index, span_const_f32 const& val)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

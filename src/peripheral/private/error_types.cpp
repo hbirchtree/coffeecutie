@@ -135,7 +135,7 @@ namespace win32 {
 
 std::string error_to_string(libc_types::u32 err)
 {
-    LPSTR msgBuf = nullptr;
+    LPSTR  msgBuf = nullptr;
     size_t size   = FormatMessageA(
         FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
             FORMAT_MESSAGE_IGNORE_INSERTS,

@@ -26,7 +26,8 @@ struct ThreadId_t
 #endif
     using Hash = libc_types::u64;
 
-    FORCEDINLINE ThreadId_t() :
+    FORCEDINLINE ThreadId_t()
+        :
 #if defined(COFFEE_NO_THREADLIB)
         m_id(CurrentThread::get_id())
 #else
@@ -34,7 +35,9 @@ struct ThreadId_t
 #endif
     {
     }
-    FORCEDINLINE ThreadId_t(thread_id_t const& tid) : m_id(tid)
+
+    FORCEDINLINE ThreadId_t(thread_id_t const& tid)
+        : m_id(tid)
     {
     }
 
@@ -48,6 +51,7 @@ struct ThreadId_t
     {
         return m_id == thd.m_id;
     }
+
     FORCEDINLINE Hash hash() const
     {
 #if defined(COFFEE_GEKKO)

@@ -5,11 +5,13 @@
 #include "../enums/SamplerParameterF.h"
 #include "../enums/SamplerParameterI.h"
 #include "../enums/TextureParameterName.h"
+
 namespace gl::arm::texture_unnormalized_coordinates {
 using gl::group::get_texture_parameter;
 using gl::group::sampler_parameter_f;
 using gl::group::sampler_parameter_i;
 using gl::group::texture_parameter_name;
+
 namespace values {
 } // namespace values
 } // namespace gl::arm::texture_unnormalized_coordinates

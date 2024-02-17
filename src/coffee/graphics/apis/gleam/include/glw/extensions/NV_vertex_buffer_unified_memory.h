@@ -29,6 +29,7 @@ constexpr u32 draw_indirect_unified         = 0x8F40;
 constexpr u32 draw_indirect_address         = 0x8F41;
 constexpr u32 draw_indirect_length          = 0x8F42;
 } // namespace values
+
 /*!
  * \brief Part of GL_NV_vertex_buffer_unified_memory
  * \param pname GLenum
@@ -101,18 +102,20 @@ STATICINLINE void fog_coord_format(GLenum type, i32 stride)
 }
 
 template<class span_GLuint64EXT>
-requires(concepts::span<span_GLuint64EXT>&& std::is_same_v<
-         std::decay_t<typename span_GLuint64EXT::value_type>,
-         std::decay_t<GLuint64EXT>>)
-    /*!
-     * \brief Part of GL_NV_vertex_buffer_unified_memory
-     * \param value GLenum
-     * \param index GLuint
-     * \param result GLuint64EXT *
-     * \return void
-     */
-    STATICINLINE
-    void get_integerui64i_v(GLenum value, u32 index, span_GLuint64EXT result)
+requires(
+    concepts::span<span_GLuint64EXT> &&
+    std::is_same_v<
+        std::decay_t<typename span_GLuint64EXT::value_type>,
+        std::decay_t<GLuint64EXT>>)
+/*!
+ * \brief Part of GL_NV_vertex_buffer_unified_memory
+ * \param value GLenum
+ * \param index GLuint
+ * \param result GLuint64EXT *
+ * \return void
+ */
+STATICINLINE void get_integerui64i_v(
+    GLenum value, u32 index, span_GLuint64EXT result)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

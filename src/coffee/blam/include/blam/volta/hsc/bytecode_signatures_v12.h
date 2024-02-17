@@ -25,8 +25,8 @@ struct sig_t
 {
     static constexpr type_t return_type = RType;
     static constexpr auto   parameters  = std::make_tuple(Params...);
-    static constexpr size_t num_parameters
-        = std::tuple_size<decltype(parameters)>::value;
+    static constexpr size_t num_parameters =
+        std::tuple_size<decltype(parameters)>::value;
 
     static inline sig_v value = {return_type, num_parameters};
 

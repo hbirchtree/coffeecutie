@@ -4,23 +4,24 @@
 namespace gl::ext::clear_texture {
 namespace values {
 } // namespace values
+
 template<class span_const_void>
 requires(concepts::span<span_const_void>)
-    /*!
-     * \brief Part of GL_EXT_clear_texture
-     * \param texture GLuint
-     * \param level GLint
-     * \param format GLenum
-     * \param type GLenum
-     * \param data const void *
-     * \return void
-     */
-    STATICINLINE void clear_tex_image(
-        u32                    texture,
-        i32                    level,
-        group::pixel_format    format,
-        group::pixel_type      type,
-        span_const_void const& data)
+/*!
+ * \brief Part of GL_EXT_clear_texture
+ * \param texture GLuint
+ * \param level GLint
+ * \param format GLenum
+ * \param type GLenum
+ * \param data const void *
+ * \return void
+ */
+STATICINLINE void clear_tex_image(
+    u32                    texture,
+    i32                    level,
+    group::pixel_format    format,
+    group::pixel_type      type,
+    span_const_void const& data)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -43,31 +44,31 @@ requires(concepts::span<span_const_void>)
 
 template<class size_3_i32, class span_const_void, class vec_3_i32>
 requires(
-    concepts::vector<vec_3_i32, i32, 3>&& concepts::size_2d<size_3_i32, i32>&&
-                                          concepts::span<span_const_void>)
-    /*!
-     * \brief Part of GL_EXT_clear_texture
-     * \param texture GLuint
-     * \param level GLint
-     * \param xoffset GLint
-     * \param yoffset GLint
-     * \param zoffset GLint
-     * \param width GLsizei
-     * \param height GLsizei
-     * \param depth GLsizei
-     * \param format GLenum
-     * \param type GLenum
-     * \param data const void *
-     * \return void
-     */
-    STATICINLINE void clear_tex_sub_image(
-        u32                    texture,
-        i32                    level,
-        vec_3_i32 const&       xoffset,
-        size_3_i32 const&      width,
-        group::pixel_format    format,
-        group::pixel_type      type,
-        span_const_void const& data)
+    concepts::vector<vec_3_i32, i32, 3> && concepts::size_2d<size_3_i32, i32> &&
+    concepts::span<span_const_void>)
+/*!
+ * \brief Part of GL_EXT_clear_texture
+ * \param texture GLuint
+ * \param level GLint
+ * \param xoffset GLint
+ * \param yoffset GLint
+ * \param zoffset GLint
+ * \param width GLsizei
+ * \param height GLsizei
+ * \param depth GLsizei
+ * \param format GLenum
+ * \param type GLenum
+ * \param data const void *
+ * \return void
+ */
+STATICINLINE void clear_tex_sub_image(
+    u32                    texture,
+    i32                    level,
+    vec_3_i32 const&       xoffset,
+    size_3_i32 const&      width,
+    group::pixel_format    format,
+    group::pixel_type      type,
+    span_const_void const& data)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

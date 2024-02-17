@@ -92,8 +92,8 @@ static void NearestNeighborResize(
             auto src_y = y * pixel_ratio_h;
 
             auto&       outPix = out[(y * outSize.w + x) * sizeof(PixType)];
-            auto const& srcPix
-                = src[(src_y * srcSize.w + src_x) * sizeof(PixType)];
+            auto const& srcPix =
+                src[(src_y * srcSize.w + src_x) * sizeof(PixType)];
 
             outPix = srcPix;
         }
@@ -210,10 +210,7 @@ bool LoadData(
         auto src           = target->data_owner.view;
         target->data_owner = semantic::mem_chunk<libc_types::u8>::withSize(
             target->size.area() * target->bpp * sizeof(PixType));
-        std::copy(
-            src.begin(),
-            src.end(),
-            target->data_owner.view.begin());
+        std::copy(src.begin(), src.end(), target->data_owner.view.begin());
         target->data = reinterpret_cast<PixType*>(target->data_owner.data);
         return true;
     }
@@ -306,16 +303,19 @@ bool LoadData(
 {
     return stb_templates::LoadData(target, src, ec, comp);
 }
+
 bool LoadData(
     image<f32>* target, BytesConst const& src, stb_error& ec, PixCmp comp)
 {
     return stb_templates::LoadData(target, src, ec, comp);
 }
+
 image<u8> Resize(
     image<u8> const& img, const Size& target, int channels, ImageHint hint)
 {
     return stb_templates::Resize(img, target, channels, hint);
 }
+
 image<f32> Resize(image<f32> const& img, const Size& target, int channels)
 {
     return stb_templates::Resize(img, target, channels, ImageHint::Undefined);

@@ -19,9 +19,9 @@ auto query(std::string const& query, std::wstring const& property)
 
 template<typename T>
 requires std::is_same_v<T, libc_types::u32>
-    //
-    std::optional<libc_types::u32> query(
-        std::string const& query, std::wstring const& property)
+//
+std::optional<libc_types::u32> query(
+    std::string const& query, std::wstring const& property)
 {
     if(auto v = detail::query(query, property))
         return std::stoi(v.value());
@@ -29,4 +29,4 @@ requires std::is_same_v<T, libc_types::u32>
         return std::nullopt;
 }
 
-} // namespace platform::win32::wmi
+} // namespace platform::info::wmi

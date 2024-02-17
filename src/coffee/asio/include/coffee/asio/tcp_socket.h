@@ -90,10 +90,10 @@ struct socket_base
 {
     using socket_type = SocketType;
 
-    socket_base(net::context& service) :
-        m_resolver(service.resolver),
-        m_socket(detail::construct_socket<socket_type>(service)),
-        m_stats(service.statistics.get())
+    socket_base(net::context& service)
+        : m_resolver(service.resolver)
+        , m_socket(detail::construct_socket<socket_type>(service))
+        , m_stats(service.statistics.get())
     {
     }
 
@@ -206,8 +206,10 @@ struct raw_socket : socket_base<socket_types::raw>
 
 struct server
 {
-    server(net::context& service, host_t const& host, service_t const& port) :
-        m_host(host), m_port(port), m_resolver(service.resolver)
+    server(net::context& service, host_t const& host, service_t const& port)
+        : m_host(host)
+        , m_port(port)
+        , m_resolver(service.resolver)
     {
     }
 
@@ -251,9 +253,11 @@ struct socket_base
 {
     using socket_type = SocketType;
 
-    socket_base(net::context& service) :
-        m_service(service.service), m_resolver(service.resolver_udp),
-        m_socket(service.service), m_stats(service.statistics.get())
+    socket_base(net::context& service)
+        : m_service(service.service)
+        , m_resolver(service.resolver_udp)
+        , m_socket(service.service)
+        , m_stats(service.statistics.get())
     {
     }
 
@@ -288,8 +292,8 @@ struct socket_base
     template<typename T>
     asio::error_code connect_broadcast(T port, protocol proto = protocol::v4)
     {
-        asio::error_code ec = connect(
-            asio::ip::address_v4::broadcast().to_string(), port, proto);
+        asio::error_code ec =
+            connect(asio::ip::address_v4::broadcast().to_string(), port, proto);
         VALIDATE();
         m_socket.set_option(asio::socket_base::broadcast(true), ec);
         m_socket.set_option(asio::socket_base::reuse_address(true), ec);

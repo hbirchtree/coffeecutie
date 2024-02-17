@@ -18,10 +18,10 @@ void install_imgui_widgets(
     auto& imgui = e.register_subsystem_inplace<imgui::ImGuiSystem>(1024);
     e.register_subsystem_inplace<BlamBspWidget<halo_version>>();
     e.register_subsystem_inplace<BlamDebugUi>();
-    auto& textures
-        = e.register_subsystem_inplace<BlamTextureBrowser<halo_version>>();
-    auto& map_browser
-        = e.register_subsystem_inplace<BlamMapBrowser>(std::move(map_select));
+    auto& textures =
+        e.register_subsystem_inplace<BlamTextureBrowser<halo_version>>();
+    auto& map_browser =
+        e.register_subsystem_inplace<BlamMapBrowser>(std::move(map_select));
     e.register_subsystem_inplace<InputDebugWidget>();
 
     comp_app::app_error ec;
@@ -32,9 +32,8 @@ void install_imgui_widgets(
         0, [map_browser = &map_browser](GameEvent&, MapListingEvent* listing) {
             map_browser->m_maps = listing->maps;
         });
-    gbus.addEventFunction<MapLoadEvent>(0, [&](auto&, auto*) {
-        textures.m_map = nullptr;
-    });
+    gbus.addEventFunction<MapLoadEvent>(
+        0, [&](auto&, auto*) { textures.m_map = nullptr; });
     gbus.addEventFunction<MapChangedEvent<halo_version>>(
         0, [&](auto&, MapChangedEvent<halo_version>* changed) {
             textures.m_map = &changed->container;
@@ -42,11 +41,12 @@ void install_imgui_widgets(
 
     if(false)
     {
-        auto frame_ui = e.create_entity({
-            .components = {
+        auto frame_ui                      = e.create_entity({
+                                 .components =
+                {
                     typeid(imgui::ImGuiWidget).hash_code(),
                 },
-            });
+        });
         frame_ui.get<imgui::ImGuiWidget>() = imgui::widgets::StatsMenu();
     }
 }

@@ -206,21 +206,26 @@ inline texture_format_t const& format_of(PixDesc const& desc)
     case P::Depth24: {
         static texture_format_t d24 = {
             .type = gl::group::internal_format::depth_component24,
-            .raw_format = texture_format_t::raw_format_t{
-                .bit_layout      = {.depth = 24, },
-                .type            = texture_type_t::unsigned_int,
-                .format          = texture_layout_t::depth_component,
-                .pixel_size      = 3,
-                .component_count = 1,
-                .component_size  = 3,
-                .srgb            = false,
-                .floating_point  = false,
-            },
-            .version = {
-                .core = 0x140,
-                .es = 0x300,
-                .web = 0x200,
-            },
+            .raw_format =
+                texture_format_t::raw_format_t{
+                    .bit_layout =
+                        {
+                            .depth = 24,
+                        },
+                    .type            = texture_type_t::unsigned_int,
+                    .format          = texture_layout_t::depth_component,
+                    .pixel_size      = 3,
+                    .component_count = 1,
+                    .component_size  = 3,
+                    .srgb            = false,
+                    .floating_point  = false,
+                },
+            .version =
+                {
+                    .core = 0x140,
+                    .es   = 0x300,
+                    .web  = 0x200,
+                },
         };
         return d24;
     }
@@ -234,8 +239,8 @@ inline texture_format_t const& format_of(PixDesc const& desc)
         break;
     }
     throw std::out_of_range(
-        "format not found: "
-        + std::to_string(static_cast<uint32_t>(desc.pixfmt)));
+        "format not found: " +
+        std::to_string(static_cast<uint32_t>(desc.pixfmt)));
 }
 
 inline PixDesc desc_of(texture_format_t const& fmt)
@@ -287,8 +292,8 @@ inline PixDesc desc_of(texture_format_t const& fmt)
         return CompFmt(PixFmt::BCn, CompFlags::BC5);
 #endif
 
-#if defined(GL_COMPRESSED_RGBA_BPTC_UNORM) \
-    || defined(GL_COMPRESSED_RGBA_BPTC_UNORM_ARB)
+#if defined(GL_COMPRESSED_RGBA_BPTC_UNORM) || \
+    defined(GL_COMPRESSED_RGBA_BPTC_UNORM_ARB)
     case format_t::compressed_rgb_bptc_signed_float:
         return CompFmt(
             PixFmt::BCn,
@@ -400,8 +405,8 @@ inline PixDesc desc_of(texture_format_t const& fmt)
         break;
     }
     throw std::out_of_range(
-        "description not found: "
-        + std::to_string(static_cast<uint32_t>(fmt.type)));
+        "description not found: " +
+        std::to_string(static_cast<uint32_t>(fmt.type)));
 }
 
 } // namespace gl::tex

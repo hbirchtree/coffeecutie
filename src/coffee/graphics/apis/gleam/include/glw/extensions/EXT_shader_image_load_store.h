@@ -2,8 +2,10 @@
 
 #ifdef GL_EXT_shader_image_load_store
 #include "../enums/MemoryBarrierMask.h"
+
 namespace gl::ext::shader_image_load_store {
 using gl::group::memory_barrier_mask;
+
 namespace values {
 constexpr u32 max_image_units                               = 0x8F38;
 constexpr u32 max_combined_image_units_and_fragment_outputs = 0x8F39;
@@ -48,6 +50,7 @@ constexpr u32 unsigned_int_image_2d_multisample_array       = 0x906C;
 constexpr u32 max_image_samples                             = 0x906D;
 constexpr u32 image_binding_format                          = 0x906E;
 } // namespace values
+
 /*!
  * \brief Part of GL_EXT_shader_image_load_store
  * \param index GLuint

@@ -8,6 +8,7 @@ constexpr u32 subpixel_precision_bias_x_bits   = 0x9347;
 constexpr u32 subpixel_precision_bias_y_bits   = 0x9348;
 constexpr u32 max_subpixel_precision_bias_bits = 0x9349;
 } // namespace values
+
 /*!
  * \brief Part of GL_NV_conservative_raster
  * \param xbits GLuint

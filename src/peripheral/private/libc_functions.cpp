@@ -18,5 +18,5 @@ void register_atexit(exit_handler hnd)
 #endif
 }
 
-}
-}
+} // namespace signal
+} // namespace libc

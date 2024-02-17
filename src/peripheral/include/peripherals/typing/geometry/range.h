@@ -15,19 +15,26 @@ template<
     >
 union range
 {
-    range() : near_(0.1), far_(10)
-    {
-    }
-    range(T vnear, T vfar) : near_(vnear), far_(vfar)
+    range()
+        : near_(0.1)
+        , far_(10)
     {
     }
 
-    struct {
+    range(T vnear, T vfar)
+        : near_(vnear)
+        , far_(vfar)
+    {
+    }
+
+    struct
+    {
         T near_;
         T far_;
     };
+
     T data[2];
 };
 
-}
-}
+} // namespace geometry
+} // namespace typing

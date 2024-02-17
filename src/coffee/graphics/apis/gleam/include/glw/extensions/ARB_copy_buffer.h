@@ -4,12 +4,15 @@
 #include "../enums/BufferStorageTarget.h"
 #include "../enums/BufferTargetARB.h"
 #include "../enums/CopyBufferSubDataTarget.h"
+
 namespace gl::arb::copy_buffer {
 using gl::group::buffer_storage_target;
 using gl::group::buffer_target_arb;
 using gl::group::copy_buffer_sub_data_target;
+
 namespace values {
 } // namespace values
+
 /*!
  * \brief Part of GL_ARB_copy_buffer
  * \param readTarget GLenum

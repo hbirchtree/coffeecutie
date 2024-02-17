@@ -113,7 +113,7 @@ std::optional<asio::error_code> Resource::close()
     } else
 #endif
 #if defined(USE_EMSCRIPTEN_HTTP)
-    emscripten_fetch_close(m_fetch);
+        emscripten_fetch_close(m_fetch);
 #else
     {
         if(!normal)
@@ -312,8 +312,8 @@ std::optional<asio::error_code> Resource::push(
     attr.userData       = this;
     if(!m_request.payload.empty())
     {
-        attr.requestData
-            = reinterpret_cast<const char*>(m_request.payload.data());
+        attr.requestData =
+            reinterpret_cast<const char*>(m_request.payload.data());
         attr.requestDataSize = m_request.payload.size();
     }
     attr.onsuccess          = emscripten_push_success;
@@ -336,7 +336,7 @@ std::optional<asio::error_code> Resource::readResponseHeader(
     if(secure())
     {
         DProfContext __(NETRSC_TAG "Read response");
-        auto socketError = ssl->flush();
+        auto         socketError = ssl->flush();
 
         if(socketError)
             cWarning(NETRSC_TAG "asio error: {0}", socketError.message());
@@ -387,7 +387,7 @@ std::optional<asio::error_code> Resource::readResponsePayload(
     using namespace http;
 
     asio::error_code ec;
-    auto& response_fields = m_response.header.standard_fields;
+    auto&            response_fields = m_response.header.standard_fields;
     auto content_len_it = response_fields.find(header_field::content_length);
 
     if(content_len_it == response_fields.end())
@@ -395,7 +395,7 @@ std::optional<asio::error_code> Resource::readResponsePayload(
 
     {
         DProfContext __(NETRSC_TAG "Reading payload");
-        auto content_len = cast_string<u64>(content_len_it->second);
+        auto         content_len = cast_string<u64>(content_len_it->second);
 
         cVerbose(12, NETRSC_TAG "Reading {0} chunk_u8...", content_len);
 
@@ -410,8 +410,8 @@ std::optional<asio::error_code> Resource::readResponsePayload(
             return asio::error_code();
         }
 
-        if(auto view
-           = chunk_u8::ofContainer(m_response.payload).at(buffer.size()))
+        if(auto view =
+               chunk_u8::ofContainer(m_response.payload).at(buffer.size()))
         {
 #if defined(ASIO_USE_SSL)
             if(secure())
@@ -452,17 +452,17 @@ std::optional<asio::error_code> Resource::push(
     asio::error_code ec;
 
     bool has_payload = data.size > 0;
-    bool should_expect
-        = m_request.header.version != version_t::v10 && has_payload;
+    bool should_expect =
+        m_request.header.version != version_t::v10 && has_payload;
 
     /* We do this to allow GET/POST/PUT/UPDATE/whatever */
     m_request.header.method = method;
 
     /* Most services require a MIME-type with the request */
-    if(has_payload
-       && st_fields.find(header_field::content_type) == st_fields.end())
-        st_fields[header_field::content_type]
-            = header::to_string::content_type(content_type::octet_stream);
+    if(has_payload &&
+       st_fields.find(header_field::content_type) == st_fields.end())
+        st_fields[header_field::content_type] =
+            header::to_string::content_type(content_type::octet_stream);
 
     if(st_fields.find(header_field::expect) == st_fields.end() && should_expect)
         st_fields[header_field::expect] = "100-continue";
@@ -485,7 +485,7 @@ std::optional<asio::error_code> Resource::push(
     if(ec)
         return ec;
 
-    szptr consumed = 0;
+    szptr           consumed = 0;
     std::vector<u8> recv_buf;
     if(should_expect)
     {
@@ -566,8 +566,8 @@ std::optional<asio::error_code> Resource::push(
            loc != response_fields.end())
         {
             if(auto conn = response_fields.find(header_field::connection);
-               conn != response_fields.end()
-               && util::strings::iequals(conn->second, "close"))
+               conn != response_fields.end() &&
+               util::strings::iequals(conn->second, "close"))
                 close();
             initRsc(MkUrl(loc->second, m_access));
             return push(method, data);

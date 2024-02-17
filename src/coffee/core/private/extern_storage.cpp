@@ -3,9 +3,9 @@
 #include <coffee/core/CDebug>
 #include <coffee/core/debug/logging.h>
 #include <coffee/core/printing/log_interface.h>
+#include <cxxopts.hpp>
 #include <platforms/environment.h>
 #include <platforms/profiling/jsonprofile.h>
-#include <cxxopts.hpp>
 
 #include <coffee/core/debug/logging.h>
 
@@ -21,13 +21,15 @@ namespace State {
 
 struct InternalState
 {
-    using StateStorage
-        = std::map<std::string_view, std::shared_ptr<State::GlobalState>>;
+    using StateStorage =
+        std::map<std::string_view, std::shared_ptr<State::GlobalState>>;
 
-    InternalState() :
-        current_app(std::make_shared<platform::info::AppData>()),
+    InternalState()
+        : current_app(std::make_shared<platform::info::AppData>())
+        ,
 #if PERIPHERAL_PROFILER_ENABLED
-        profiler_store(std::make_shared<profiling::PContext>()),
+        profiler_store(std::make_shared<profiling::PContext>())
+        ,
 #endif
         bits()
     {
@@ -57,7 +59,8 @@ struct InternalState
 
     struct internal_bits_t
     {
-        internal_bits_t() : printing_verbosity(0)
+        internal_bits_t()
+            : printing_verbosity(0)
         {
         }
 
@@ -74,9 +77,9 @@ struct InternalState
 struct InternalThreadState
 {
 #if PERIPHERAL_PROFILER_ENABLED
-    InternalThreadState() :
-        current_thread_id(),
-        profiler_data(std::make_shared<profiling::ThreadState>())
+    InternalThreadState()
+        : current_thread_id()
+        , profiler_data(std::make_shared<profiling::ThreadState>())
     {
         using RuntimeProperties = profiling::Profiler::runtime_options;
         auto runtimeProps       = std::make_unique<RuntimeProperties>();
@@ -87,8 +90,8 @@ struct InternalThreadState
 
         std::lock_guard _(State::internal_state->profiler_store->access);
 
-        auto& globalState
-            = State::internal_state->profiler_store->thread_states;
+        auto& globalState =
+            State::internal_state->profiler_store->thread_states;
 
         globalState[current_thread_id.hash()] = profiler_data;
 
@@ -100,8 +103,8 @@ struct InternalThreadState
     {
         using RuntimeOptions = profiling::Profiler::runtime_options;
 
-        RuntimeOptions* internal_state
-            = C_DCAST<RuntimeOptions>(profiler_data->internal_state.get());
+        RuntimeOptions* internal_state =
+            C_DCAST<RuntimeOptions>(profiler_data->internal_state.get());
 
         if(internal_state)
             internal_state->context.reset();
@@ -272,8 +275,8 @@ std::shared_ptr<GlobalState> SwapState(
 {
     C_PTR_CHECK(ISTATE);
 
-    std::shared_ptr<GlobalState> current
-        = std::move(ISTATE->pointer_storage[key]);
+    std::shared_ptr<GlobalState> current =
+        std::move(ISTATE->pointer_storage[key]);
     ISTATE->pointer_storage[key] = std::move(ptr);
     return current;
 }
@@ -377,9 +380,9 @@ std::optional<std::string> ResourcePrefix(bool /*fallback*/)
  * Pointer to main() function to be used
  * This storage is for non-standard platforms
  */
-//#if defined(COFFEE_CUSTOM_MAIN)
-// Coffee::MainWithArgs coffee_main_function_ptr = nullptr;
-//#endif
+// #if defined(COFFEE_CUSTOM_MAIN)
+//  Coffee::MainWithArgs coffee_main_function_ptr = nullptr;
+// #endif
 
 #if defined(COFFEE_APPLE_MOBILE)
 void* uikit_appdelegate = nullptr;

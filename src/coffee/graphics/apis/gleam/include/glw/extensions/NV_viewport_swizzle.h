@@ -16,6 +16,7 @@ constexpr u32 viewport_swizzle_y          = 0x9359;
 constexpr u32 viewport_swizzle_z          = 0x935A;
 constexpr u32 viewport_swizzle_w          = 0x935B;
 } // namespace values
+
 /*!
  * \brief Part of GL_NV_viewport_swizzle
  * \param index GLuint

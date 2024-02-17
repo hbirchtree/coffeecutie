@@ -7,13 +7,16 @@ namespace zstd {
 
 struct resource_free
 {
-    resource_free(std::function<void()>&& f) : m_free(std::move(f))
+    resource_free(std::function<void()>&& f)
+        : m_free(std::move(f))
     {
     }
+
     ~resource_free()
     {
         m_free();
     }
+
     std::function<void()> m_free;
 };
 
@@ -81,7 +84,7 @@ std::optional<stream_codec::error_t> stream_codec::decompress(
 
 std::optional<codec::error_t> codec::compress(
     const semantic::Span<const libc_types::u8>& input,
-    std::vector<char>&                  output,
+    std::vector<char>&                          output,
     options_t&&                                 options)
 {
     output.resize(ZSTD_compressBound(input.size_bytes()));
@@ -104,11 +107,11 @@ std::optional<codec::error_t> codec::compress(
 
 std::optional<codec::error_t> codec::decompress(
     const semantic::Span<const libc_types::u8>& input,
-    std::vector<char>&                  output,
+    std::vector<char>&                          output,
     options_t&&                                 options)
 {
-    auto to_decompress
-        = ZSTD_getFrameContentSize(input.data(), input.size_bytes());
+    auto to_decompress =
+        ZSTD_getFrameContentSize(input.data(), input.size_bytes());
     if(ZSTD_isError(to_decompress))
         return std::make_optional(1);
     to_decompress += to_decompress >> 3;

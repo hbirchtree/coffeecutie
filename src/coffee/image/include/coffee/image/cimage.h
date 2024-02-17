@@ -12,9 +12,9 @@ namespace Coffee {
 namespace IMG {
 
 using namespace typing::pixels;
-using typing::PixCmp;
 using semantic::Bytes;
 using semantic::BytesConst;
+using typing::PixCmp;
 
 /*!
  * \brief For the cases when you need to store an image descriptor
@@ -22,7 +22,8 @@ using semantic::BytesConst;
  */
 struct serial_image
 {
-    serial_image() : size()
+    serial_image()
+        : size()
     {
         v2.format  = {};
         v2.bit_fmt = BitFmt::Byte;
@@ -61,12 +62,14 @@ struct serial_image
             BitFmt    bit_fmt;
             u8        pad_;
         } v1;
+
         struct
         {
             CompFmt format;
             BitFmt  bit_fmt;
             u8      pad_;
         } v2;
+
         struct
         {
             u32 v1;
@@ -88,9 +91,9 @@ struct serial_image
 namespace stb {
 
 using namespace typing::pixels;
-using typing::PixCmp;
 using semantic::Bytes;
 using semantic::BytesConst;
+using typing::PixCmp;
 
 enum class ImageHint : u16
 {
@@ -165,9 +168,9 @@ struct image
         gsl::span<T>&& data, Size const& size, int bpp = 4)
     {
         image<PixType> img;
-        img.data       = C_RCAST<PixType*>(data.data());
-        img.size       = size;
-        img.bpp        = bpp;
+        img.data = C_RCAST<PixType*>(data.data());
+        img.size = size;
+        img.bpp  = bpp;
 
         return img;
     }
@@ -205,7 +208,7 @@ struct image
         };
         out.data = out.data_owner.data;
         out.size = size;
-        out.bpp = bpp;
+        out.bpp  = bpp;
         return out;
     }
 };
@@ -225,7 +228,7 @@ extern bool LoadData(
     stb_error&        ec,
     PixCmp            comp = PixCmp::RGBA);
 extern bool LoadData(
-    image<f32>*    target,
+    image<f32>*       target,
     BytesConst const& src,
     stb_error&        ec,
     PixCmp            comp = PixCmp::RGBA);

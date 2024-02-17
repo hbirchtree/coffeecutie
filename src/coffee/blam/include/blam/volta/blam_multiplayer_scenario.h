@@ -31,4 +31,4 @@ struct multiplayer_scenario
     reflexive_t<level_ref, V> unknown_data;
 };
 
-}
+} // namespace blam

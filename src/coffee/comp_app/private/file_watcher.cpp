@@ -12,8 +12,8 @@ void FileWatcher::start_frame(compo::ContainerProxy&, const compo::time_point&)
     std::vector<Url> finished;
     for(auto& [file, info] : m_pending)
     {
-        auto expired = !info.deadline.has_value()
-                       || compo::clock::now() > info.deadline.value();
+        auto expired = !info.deadline.has_value() ||
+                       compo::clock::now() > info.deadline.value();
         auto exists = platform::file::exists(file);
         if(!exists.has_value() && needs_await && !expired)
             continue;

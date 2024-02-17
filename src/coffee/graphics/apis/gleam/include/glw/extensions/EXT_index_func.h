@@ -7,6 +7,7 @@ constexpr u32 index_test      = 0x81B5;
 constexpr u32 index_test_func = 0x81B6;
 constexpr u32 index_test_ref  = 0x81B7;
 } // namespace values
+
 /*!
  * \brief Part of GL_EXT_index_func
  * \param func GLenum

@@ -4,6 +4,7 @@
 namespace gl::ext::debug_marker {
 namespace values {
 } // namespace values
+
 /*!
  * \brief Part of GL_EXT_debug_marker
  * \param length GLsizei

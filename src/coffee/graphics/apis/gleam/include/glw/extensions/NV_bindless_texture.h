@@ -4,6 +4,7 @@
 namespace gl::nv::bindless_texture {
 namespace values {
 } // namespace values
+
 /*!
  * \brief Part of GL_NV_bindless_texture
  * \param texture GLuint
@@ -205,19 +206,21 @@ STATICINLINE void program_uniform_handle(u32 program, i32 location, u64 value)
 }
 
 template<class span_const_u64>
-requires(concepts::span<span_const_u64>&& std::is_same_v<
-         std::decay_t<typename span_const_u64::value_type>,
-         std::decay_t<u64>>)
-    /*!
-     * \brief Part of GL_NV_bindless_texture
-     * \param program GLuint
-     * \param location GLint
-     * \param count GLsizei
-     * \param values const GLuint64 *
-     * \return void
-     */
-    STATICINLINE void program_uniform_handle(
-        u32 program, i32 location, span_const_u64 const& values)
+requires(
+    concepts::span<span_const_u64> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_u64::value_type>,
+        std::decay_t<u64>>)
+/*!
+ * \brief Part of GL_NV_bindless_texture
+ * \param program GLuint
+ * \param location GLint
+ * \param count GLsizei
+ * \param values const GLuint64 *
+ * \return void
+ */
+STATICINLINE void program_uniform_handle(
+    u32 program, i32 location, span_const_u64 const& values)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -256,17 +259,19 @@ STATICINLINE void uniform_handle(i32 location, u64 value)
 }
 
 template<class span_const_u64>
-requires(concepts::span<span_const_u64>&& std::is_same_v<
-         std::decay_t<typename span_const_u64::value_type>,
-         std::decay_t<u64>>)
-    /*!
-     * \brief Part of GL_NV_bindless_texture
-     * \param location GLint
-     * \param count GLsizei
-     * \param value const GLuint64 *
-     * \return void
-     */
-    STATICINLINE void uniform_handle(i32 location, span_const_u64 const& value)
+requires(
+    concepts::span<span_const_u64> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_u64::value_type>,
+        std::decay_t<u64>>)
+/*!
+ * \brief Part of GL_NV_bindless_texture
+ * \param location GLint
+ * \param count GLsizei
+ * \param value const GLuint64 *
+ * \return void
+ */
+STATICINLINE void uniform_handle(i32 location, span_const_u64 const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

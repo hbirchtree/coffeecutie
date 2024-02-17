@@ -32,8 +32,8 @@ i32 blam_main()
 {
     cxxopts::ParseResult arguments;
     if constexpr(
-        !compile_info::platform::is_android
-        && !compile_info::platform::is_emscripten)
+        !compile_info::platform::is_android &&
+        !compile_info::platform::is_emscripten)
     {
         cxxopts::Options options(
             "Blam! Graphics", "A prototype for a Blam! engine");
@@ -68,8 +68,8 @@ i32 blam_main()
     auto& loader = comp_app::configureDefaults(e);
 
     auto& window = loader.config<comp_app::WindowConfig>();
-    window.flags = comp_app::window_flags_t::windowed
-                   | comp_app::window_flags_t::resizable;
+    window.flags = comp_app::window_flags_t::windowed |
+                   comp_app::window_flags_t::resizable;
     if constexpr(compile_info::platform::is_emscripten)
         window.flags = comp_app::window_flags_t::resizable;
     auto& touch = loader.config<comp_app::TouchConfig>();
@@ -100,15 +100,16 @@ i32 blam_main()
             time_point const&) {
             ProfContext _(__FUNCTION__);
 
-            auto& gfx        = e.register_subsystem_inplace<gfx::system>();
-            auto  load_error = gfx.load(/*gfx::emulation::webgl::desktop()*/
-                                       // gfx::emulation::qcom::adreno_320()
-                                       // gfx::emulation::arm::mali_g710()
-                                       // gfx::emulation::arm::mali_400mp()
-                                       // gfx::emulation::amd::rx560_pro()
-                                       // gfx::emulation::webgl::desktop()
-                                       // gfx::emulation::img::powervr_sgx530_bbb()
-            );
+            auto& gfx = e.register_subsystem_inplace<gfx::system>();
+            auto  load_error =
+                gfx.load(/*gfx::emulation::webgl::desktop()*/
+                         // gfx::emulation::qcom::adreno_320()
+                         // gfx::emulation::arm::mali_g710()
+                         // gfx::emulation::arm::mali_400mp()
+                         // gfx::emulation::amd::rx560_pro()
+                         // gfx::emulation::webgl::desktop()
+                         // gfx::emulation::img::powervr_sgx530_bbb()
+                );
 
             if(load_error)
             {
@@ -165,20 +166,22 @@ i32 blam_main()
                     "Blam!",
                     "Gaming",
                     "https://assetsio.reedpopcdn.com/"
-                        "digitalfoundry-2021-halo-combat-evolved-season-7-"
-                        "master-chief-collection-1622735120728.jpg?width=1600&"
-                        "height=900&fit=crop&quality=100&format=png&enable="
-                        "upscale&auto=webp"_https));
+                    "digitalfoundry-2021-halo-combat-evolved-season-7-"
+                    "master-chief-collection-1622735120728.jpg?width=1600&"
+                    "height=900&fit=crop&quality=100&format=png&enable="
+                    "upscale&auto=webp"_https));
                 discord.presence().put({
-                    .partyId = "16420",
+                    .partyId    = "16420",
                     .curPlayers = 1,
                     .maxPlayers = 16,
-                    .spectate = {
-                        .secret = "",
-                    },
-                    .join = {
-                        .secret = "poopy",
-                    },
+                    .spectate =
+                        {
+                            .secret = "",
+                        },
+                    .join =
+                        {
+                            .secret = "poopy",
+                        },
                 });
                 discord.presence().putState("Campaign");
                 return false;
@@ -191,19 +194,18 @@ i32 blam_main()
             e.register_subsystem_inplace<LoadingStatus>();
 
             {
-                auto& bitm_cache
-                    = e.register_subsystem_inplace<BitmapCache<halo_version>>(
+                auto& bitm_cache =
+                    e.register_subsystem_inplace<BitmapCache<halo_version>>(
                         &gfx, &params);
-                auto& shader_cache
-                    = e.register_subsystem_inplace<ShaderCache<halo_version>>(
+                auto& shader_cache =
+                    e.register_subsystem_inplace<ShaderCache<halo_version>>(
                         std::ref(bitm_cache));
                 e.register_subsystem_inplace<ModelCache<halo_version>>(
                     std::ref(bitm_cache), std::ref(shader_cache), &gfx);
                 e.register_subsystem_inplace<BSPCache<halo_version>>(
                     std::ref(bitm_cache), std::ref(shader_cache));
-                auto& font_cache
-                    = e.register_subsystem_inplace<FontCache<halo_version>>(
-                        &gfx);
+                auto& font_cache =
+                    e.register_subsystem_inplace<FontCache<halo_version>>(&gfx);
                 e.register_subsystem_inplace<UIElementCache<halo_version>>(
                     std::ref(bitm_cache), std::ref(font_cache));
             }
@@ -216,8 +218,8 @@ i32 blam_main()
             {
 #if defined(COFFEE_ANDROID)
                 using android::app_info;
-                const bool use_touch = app_info().device_type()
-                                       == app_info::device_type_t::phone;
+                const bool use_touch =
+                    app_info().device_type() == app_info::device_type_t::phone;
 #else
                 constexpr bool use_touch = false;
 #endif
@@ -240,8 +242,8 @@ i32 blam_main()
             Url map_dir;
 
             if constexpr(
-                compile_info::platform::is_android
-                || compile_info::platform::is_emscripten)
+                compile_info::platform::is_android ||
+                compile_info::platform::is_emscripten)
             {
 #if defined(COFFEE_ANDROID)
                 map_filename = MkUrl(
@@ -249,7 +251,7 @@ i32 blam_main()
                     RSCA::AssetFile);
                 map_dir = "."_asset;
 #elif defined(COFFEE_EMSCRIPTEN)
-                map_filename             = MkUrl(
+                map_filename = MkUrl(
                     ::emscripten::args::query_params()["map"], RSCA::AssetFile);
                 map_dir = "."_asset;
 #else
@@ -258,15 +260,15 @@ i32 blam_main()
 #endif
             } else if(arguments.unmatched().size() >= 2)
             {
-                auto url
-                    = MkUrl(arguments.unmatched().back(), RSCA::SystemFile);
+                auto url =
+                    MkUrl(arguments.unmatched().back(), RSCA::SystemFile);
                 if(auto info = platform::file::file_info(url);
-                   info.has_value()
-                   && info.value().mode == platform::file::mode_t::file)
+                   info.has_value() &&
+                   info.value().mode == platform::file::mode_t::file)
                 {
                     map_filename = url;
-                    map_dir
-                        = map_filename.path().dirname().url(RSCA::SystemFile);
+                    map_dir =
+                        map_filename.path().dirname().url(RSCA::SystemFile);
                 } else
                     map_dir = url;
             } else
@@ -332,8 +334,8 @@ i32 blam_main()
                 camera.camera.zVals = {1500.f, 0.001f};
 
                 Matf4 view_matrix = glm::translate(
-                    glm::scale(glm::identity<glm::mat4>(), glm::vec3(1))
-                        * glm::mat4_cast(camera.camera.rotation),
+                    glm::scale(glm::identity<glm::mat4>(), glm::vec3(1)) *
+                        glm::mat4_cast(camera.camera.rotation),
                     camera.camera.position);
 
                 camera.matrix       = GenPerspective(camera.camera);

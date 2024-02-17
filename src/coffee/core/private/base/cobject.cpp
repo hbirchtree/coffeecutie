@@ -4,11 +4,13 @@
 
 namespace Coffee {
 
-CObject::CObject() : m_parent(nullptr)
+CObject::CObject()
+    : m_parent(nullptr)
 {
 }
 
-CObject::CObject(CObject* parent) : CObject()
+CObject::CObject(CObject* parent)
+    : CObject()
 {
     m_parent = parent;
     if(parent)

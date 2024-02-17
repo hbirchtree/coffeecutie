@@ -19,6 +19,7 @@ struct MainStorage
         MainWithArgs with_args;
         MainNoArgs   no_args;
     };
+
     bool           is_no_args;
     libc_types::u8 _padding;
 };
@@ -34,6 +35,7 @@ struct MainCapture
     {
         CaptureMainFunction(mainfun);
     }
+
     MainCapture(MainNoArgs mainfun)
     {
         CaptureMainFunction(mainfun);

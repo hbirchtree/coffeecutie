@@ -3,22 +3,27 @@
 #ifdef GL_NV_fence
 #include "../enums/FenceConditionNV.h"
 #include "../enums/FenceParameterNameNV.h"
+
 namespace gl::nv::fence {
 using gl::group::fence_condition_nv;
 using gl::group::fence_parameter_name_nv;
+
 namespace values {
 } // namespace values
+
 template<class span_const_u32>
-requires(concepts::span<span_const_u32>&& std::is_same_v<
-         std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>)
-    /*!
-     * \brief Part of GL_NV_fence
-     * \param n GLsizei
-     * \param fences const GLuint *
-     * \return void
-     */
-    STATICINLINE void delete_fences(span_const_u32 const& fences)
+requires(
+    concepts::span<span_const_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_u32::value_type>,
+        std::decay_t<u32>>)
+/*!
+ * \brief Part of GL_NV_fence
+ * \param n GLsizei
+ * \param fences const GLuint *
+ * \return void
+ */
+STATICINLINE void delete_fences(span_const_u32 const& fences)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -49,16 +54,17 @@ STATICINLINE void finish_fence(u32 fence)
 }
 
 template<class span_u32>
-requires(concepts::span<span_u32>&& std::is_same_v<
-         std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>)
-    /*!
-     * \brief Part of GL_NV_fence
-     * \param n GLsizei
-     * \param fences GLuint *
-     * \return void
-     */
-    STATICINLINE void gen_fences(span_u32 fences)
+requires(
+    concepts::span<span_u32> && std::is_same_v<
+                                    std::decay_t<typename span_u32::value_type>,
+                                    std::decay_t<u32>>)
+/*!
+ * \brief Part of GL_NV_fence
+ * \param n GLsizei
+ * \param fences GLuint *
+ * \return void
+ */
+STATICINLINE void gen_fences(span_u32 fences)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -72,18 +78,19 @@ requires(concepts::span<span_u32>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(concepts::span<span_i32>&& std::is_same_v<
-         std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>)
-    /*!
-     * \brief Part of GL_NV_fence
-     * \param fence GLuint
-     * \param pname GLenum
-     * \param params GLint *
-     * \return void
-     */
-    STATICINLINE void get_fenceiv(
-        u32 fence, group::fence_parameter_name_nv pname, span_i32 params)
+requires(
+    concepts::span<span_i32> && std::is_same_v<
+                                    std::decay_t<typename span_i32::value_type>,
+                                    std::decay_t<i32>>)
+/*!
+ * \brief Part of GL_NV_fence
+ * \param fence GLuint
+ * \param pname GLenum
+ * \param params GLint *
+ * \return void
+ */
+STATICINLINE void get_fenceiv(
+    u32 fence, group::fence_parameter_name_nv pname, span_i32 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

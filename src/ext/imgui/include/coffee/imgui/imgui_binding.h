@@ -16,6 +16,7 @@ namespace gfx {
 using namespace gleam;
 
 }
+
 namespace detail {
 
 using namespace Coffee::Components;
@@ -33,12 +34,14 @@ struct ImGuiWidget
 };
 
 struct ImGuiData;
+
 struct ImGuiDataDeleter
 {
     void operator()(ImGuiData* p);
 };
 
 struct ImGuiGraphicsData;
+
 struct ImGuiGraphicsDataDeleter
 {
     void operator()(ImGuiGraphicsData* p);
@@ -55,8 +58,9 @@ using ImGuiManifest = SubsystemManifest<
         comp_app::Windowing,
         comp_app::BasicEventBus<Coffee::Input::CIEvent>>>;
 
-struct ImGuiSystem : RestrictedSubsystem<ImGuiSystem, ImGuiManifest>,
-                     comp_app::AppLoadableService
+struct ImGuiSystem
+    : RestrictedSubsystem<ImGuiSystem, ImGuiManifest>
+    , comp_app::AppLoadableService
 {
     ImGuiSystem(u32 priority = default_prio);
 
@@ -66,6 +70,7 @@ struct ImGuiSystem : RestrictedSubsystem<ImGuiSystem, ImGuiManifest>,
     {
         return *this;
     }
+
     virtual ImGuiSystem& get() final
     {
         return *this;

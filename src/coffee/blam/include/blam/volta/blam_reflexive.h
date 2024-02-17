@@ -28,14 +28,16 @@ struct alignas(4) reflexive_t
     using span_type  = typename chunk_type::span_type;
 
     u32 count; /*!< Number of elements */
+
     union
     {
         u32 offset; /*!< Offset to data within file (this will only refer to
                        data within the map file)*/
+
         struct
         {
-            using pad_type
-                = std::conditional_t<std::is_same_v<V, xbox_t>, u16, u32>;
+            using pad_type =
+                std::conditional_t<std::is_same_v<V, xbox_t>, u16, u32>;
             u16      overlapping;
             pad_type padding;
         } pad; /*!< Little hack to let us use the same class
@@ -61,11 +63,11 @@ struct alignas(4) reflexive_t
         if((offset - magic.magic_offset) > magic.max_size)
             return stl_types::failure("reflexive pointer out of bounds"sv);
 
-        span_type chunk = chunk_type::of(
-                              C_RCAST<T const*>(
-                                  magic.base_ptr + offset - magic.magic_offset),
-                              count)
-                              .view;
+        span_type chunk =
+            chunk_type::of(
+                C_RCAST<T const*>(magic.base_ptr + offset - magic.magic_offset),
+                count)
+                .view;
         return stl_types::success(chunk);
     }
 

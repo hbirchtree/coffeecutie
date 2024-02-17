@@ -19,19 +19,25 @@ struct rgba_untyped
  */
 union rgba_t
 {
-    rgba_t() : i(0)
+    rgba_t()
+        : i(0)
     {
     }
+
     rgba_t(
         libc_types::u8 r,
         libc_types::u8 g,
         libc_types::u8 b,
-        libc_types::u8 a = 255) :
-        r(r), g(g), b(b), a(a)
+        libc_types::u8 a = 255)
+        : r(r)
+        , g(g)
+        , b(b)
+        , a(a)
     {
     }
 
     libc_types::u32 i;
+
     struct
     {
         libc_types::u8 r, g, b, a;
@@ -41,6 +47,7 @@ union rgba_t
 union rgb_t
 {
     libc_types::u24 i;
+
     struct
     {
         libc_types::u8 r, g, b;

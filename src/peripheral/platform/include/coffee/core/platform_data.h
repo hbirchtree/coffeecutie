@@ -1,7 +1,7 @@
 #pragma once
 
-#include <peripherals/identify/compiler/function_export.h>
 #include <peripherals/constants.h>
+#include <peripherals/identify/compiler/function_export.h>
 #include <peripherals/libc/types.h>
 #include <peripherals/stl/types.h>
 
@@ -10,7 +10,6 @@ namespace info {
 
 using namespace ::libc_types;
 using namespace ::stl_types;
-
 
 union SafeArea
 {
@@ -21,21 +20,22 @@ union SafeArea
         f32 right;
         f32 bottom;
     };
+
     scalar data[4];
 };
 
 /* High-level properties of the system */
 
-//extern std::string system_name();
+// extern std::string system_name();
 
 namespace device::display {
 
-//extern scalar   dpi();
-//extern SafeArea safe_area();
+// extern scalar   dpi();
+// extern SafeArea safe_area();
 
-} // namespace display
+} // namespace device::display
 
-//extern Platform platform_variant();
+// extern Platform platform_variant();
 
 } // namespace info
 } // namespace platform
@@ -49,12 +49,12 @@ extern const libc_types::cstring engine_version;
 
 } // namespace compile_info
 
-//namespace Coffee {
+// namespace Coffee {
 
-//COFFEE_APP_CLASS struct PlatformData
+// COFFEE_APP_CLASS struct PlatformData
 //{
-//    using DeviceType = platform::info::DeviceType;
-//    using Platform   = platform::info::Platform;
+//     using DeviceType = platform::info::DeviceType;
+//     using Platform   = platform::info::Platform;
 
 //    C_DEPRECATED_S("use platform::info::device::variant()")
 //    STATICINLINE DeviceType DeviceVariant()

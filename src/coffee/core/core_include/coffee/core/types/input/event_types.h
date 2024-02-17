@@ -57,6 +57,7 @@ struct CIEvent
 
         Sensor,
     };
+
     u32       ts   = 0;        /*!< Event timestamp*/
     EventType type = NoneType; /*!< Event type*/
 
@@ -135,12 +136,15 @@ struct CITextEvent : BaseEvent<CIEvent::TextInput>
  */
 struct CIMouseMoveEvent : BaseEvent<CIEvent::MouseMove>
 {
-    CIMouseMoveEvent(Vecf2 o = {}, Vecf2 d = {}) : origin(o), delta(d)
+    CIMouseMoveEvent(Vecf2 o = {}, Vecf2 d = {})
+        : origin(o)
+        , delta(d)
     {
     }
 
     Vecf2 origin; /*!< Absolute position*/
     Vecf2 delta;  /*!< Relative movement since last poll*/
+
     union
     {
         u8   btn = 0; /*!< Button held down while moved*/
@@ -163,6 +167,7 @@ struct CIMouseButtonEvent : BaseEvent<CIEvent::MouseButton>
         DoubleClick = 0x1,
         Pressed     = 0x2,
     };
+
     enum MouseButton : u8
     {
         NoneBtn = 0x0,
@@ -188,7 +193,9 @@ struct CIMouseButtonEvent : BaseEvent<CIEvent::MouseButton>
  */
 struct CIScrollEvent : BaseEvent<CIEvent::Scroll>
 {
-    CIScrollEvent(Vecf2 delta = {}, u8 mod = 0) : delta(delta), mod(mod)
+    CIScrollEvent(Vecf2 delta = {}, u8 mod = 0)
+        : delta(delta)
+        , mod(mod)
     {
     }
 
@@ -293,8 +300,10 @@ struct CIControllerAtomicUpdateEvent : BaseEvent<CIEvent::ControllerUpdate>
             bool connected : 1;
             bool remapped : 1;
         };
+
         u32 spacer;
     };
+
     u32 pad1;
 };
 
@@ -311,11 +320,14 @@ struct CIControllerState
             i16 t_l; /*!< Left trigger */
             i16 t_r; /*!< Right trigger */
         } e;
+
         i16 d[6];
     } axes;
+
     union
     {
         u16 d;
+
         struct
         {
             /* Buttons on right */
@@ -344,6 +356,7 @@ struct CIControllerState
             bool p_right : 1;
         } e;
     } buttons;
+
     u16 pad;
 };
 
@@ -355,12 +368,14 @@ struct CIHapticEvent : BaseEvent<CIEvent::Haptic>
     union
     {
         u64 data = 0;
+
         struct
         {
             f32 strength;
             u32 duration : 24;
             u8  index;
         } rumble_input;
+
         struct
         {
             u8     index;
@@ -387,11 +402,13 @@ struct CIDropEvent : BaseEvent<CIEvent::Drop>
     union
     {
         void* data = 0;
+
         struct
         {
             cstring text;
         } text_data;
     };
+
     PACKEDSTRUCT({
         u32 size : 24; /*!< Size of data*/
         u8  type;      /*!< Event type*/
@@ -407,6 +424,7 @@ struct CIDropEvent : BaseEvent<CIEvent::Drop>
 struct CISensorEvent : BaseEvent<CIEvent::Sensor>
 {
     u64 id; /*!< Enumeration ID*/
+
     union
     {
         struct
@@ -416,6 +434,7 @@ struct CISensorEvent : BaseEvent<CIEvent::Sensor>
             i16 z;
             i16 w;
         } sivec;
+
         struct
         {
             u16 x;
@@ -423,6 +442,7 @@ struct CISensorEvent : BaseEvent<CIEvent::Sensor>
             u16 z;
             u16 w;
         } suvec;
+
         u64 lvalue; /*!< Integer value for input*/
         f64 dvalue; /*!< Floating-point value for input*/
     };
@@ -434,7 +454,9 @@ struct CITouchTapEvent : BaseEvent<CIEvent::TouchTap>
     {
         Pressed = 0x1,
     };
+
     Vecf2 pos;
+
     union
     {
         struct
@@ -443,6 +465,7 @@ struct CITouchTapEvent : BaseEvent<CIEvent::TouchTap>
             u16  finger : 15;
             bool pressed : 1;
         };
+
         u32 evdata;
     };
 };
@@ -451,6 +474,7 @@ struct CITouchMotionEvent : BaseEvent<CIEvent::TouchMotion>
 {
     Vecf2 origin;
     Vecf2 delta;
+
     union
     {
         struct
@@ -459,6 +483,7 @@ struct CITouchMotionEvent : BaseEvent<CIEvent::TouchMotion>
             u16  finger : 15;
             bool hover : 1;
         };
+
         u32 evdata;
     };
 };
@@ -468,6 +493,7 @@ struct CIMTouchMotionEvent : BaseEvent<CIEvent::MultiTouch>
     Vecf2 origin;
     Vecf2 translation;
     Vecf2 velocity;
+
     union
     {
         struct
@@ -476,6 +502,7 @@ struct CIMTouchMotionEvent : BaseEvent<CIEvent::MultiTouch>
             i16 angle;
             i16 dist;
         };
+
         u64 evdata;
     };
 };
@@ -483,6 +510,7 @@ struct CIMTouchMotionEvent : BaseEvent<CIEvent::MultiTouch>
 struct CIGestureEvent : BaseEvent<CIEvent::Gesture>
 {
     Vecf2 origin;
+
     union
     {
         struct
@@ -491,6 +519,7 @@ struct CIGestureEvent : BaseEvent<CIEvent::Gesture>
             u16 error;
             u16 fingers;
         };
+
         u64 evdata;
     };
 };

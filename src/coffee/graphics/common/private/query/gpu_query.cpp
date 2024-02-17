@@ -17,6 +17,7 @@ struct _GpuQueryDef
     {
         return SWVersionInfo("Generic", 1, 0);
     }
+
     static gpucount_t GetNumGpus()
     {
         return 0;
@@ -26,30 +27,37 @@ struct _GpuQueryDef
     {
         return HWDeviceInfo("Generic", "0x0");
     }
+
     static MemStatus MemoryInfo(gpucount_t)
     {
         return {};
     }
+
     static u64 ProcMemoryUse(gpucount_t, proc_t)
     {
         return 0;
     }
+
     static TempRange GetTemperature(gpucount_t)
     {
         return {};
     }
+
     static ClockRange GetClock(gpucount_t, Clock)
     {
         return {};
     }
+
     static PMode GetPowerMode(gpucount_t)
     {
         return {};
     }
+
     static UsageMeter GetUsage(gpucount_t)
     {
         return {};
     }
+
     static TransferStatus GetPcieTransfer(gpucount_t)
     {
         return {};
@@ -60,11 +68,12 @@ bool LoadDefaultGpuQuery(GpuQueryInterface& loc, gpu_query_error& ec)
 {
     using namespace platform::ld;
 
-    Vector<cstring> libs = {"CoffeeNVIDIAQuery",
-                            "CoffeeAMDQuery",
-                            "CoffeeIntelQuery",
-                            "CoffeeLibDRMQuery",
-                            "CoffeeOpenGLQuery"};
+    Vector<cstring> libs = {
+        "CoffeeNVIDIAQuery",
+        "CoffeeAMDQuery",
+        "CoffeeIntelQuery",
+        "CoffeeLibDRMQuery",
+        "CoffeeOpenGLQuery"};
     for(cstring mf : libs)
     {
         FunctionLoader::error_type loader_ec;
@@ -124,16 +133,17 @@ GpuQueryInterface GetDefault()
 {
     using namespace Coffee::GpuInfo;
 
-    return {_GpuQueryDef::GetDriver,
-            _GpuQueryDef::GetNumGpus,
-            _GpuQueryDef::GpuModel,
-            _GpuQueryDef::MemoryInfo,
-            _GpuQueryDef::ProcMemoryUse,
-            _GpuQueryDef::GetTemperature,
-            _GpuQueryDef::GetClock,
-            _GpuQueryDef::GetPowerMode,
-            _GpuQueryDef::GetUsage,
-            _GpuQueryDef::GetPcieTransfer};
+    return {
+        _GpuQueryDef::GetDriver,
+        _GpuQueryDef::GetNumGpus,
+        _GpuQueryDef::GpuModel,
+        _GpuQueryDef::MemoryInfo,
+        _GpuQueryDef::ProcMemoryUse,
+        _GpuQueryDef::GetTemperature,
+        _GpuQueryDef::GetClock,
+        _GpuQueryDef::GetPowerMode,
+        _GpuQueryDef::GetUsage,
+        _GpuQueryDef::GetPcieTransfer};
 }
 
 } // namespace GpuInfo

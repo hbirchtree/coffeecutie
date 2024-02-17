@@ -16,8 +16,8 @@ constexpr bool bypass_conditions = true;
 
 inline bool is_number(type_t t)
 {
-    return t == type_t::short_ || t == type_t::long_ || t == type_t::real_
-           || t == type_t::number;
+    return t == type_t::short_ || t == type_t::long_ || t == type_t::real_ ||
+           t == type_t::number;
 }
 
 inline bool is_any(type_t t)
@@ -148,8 +148,12 @@ struct opcode_iterator
     using value_type        = opcode_layout<BC>;
 
     opcode_iterator(semantic::mem_chunk<u8 const>&& script_base);
-    opcode_iterator(opcode_iterator_end_t) :
-        m_script(nullptr), m_data(), m_offset(0), m_is_end(true)
+
+    opcode_iterator(opcode_iterator_end_t)
+        : m_script(nullptr)
+        , m_data()
+        , m_offset(0)
+        , m_is_end(true)
     {
     }
 
@@ -158,8 +162,8 @@ struct opcode_iterator
         auto code      = *m_data.at(m_offset);
         auto separator = terminator;
 #if !defined(COFFEE_WIN32)
-        auto loc
-            = ::memmem(code.data, code.size, &separator, sizeof(separator));
+        auto loc =
+            ::memmem(code.data, code.size, &separator, sizeof(separator));
 #else
         void const* loc = nullptr;
 #endif
@@ -180,8 +184,8 @@ struct opcode_iterator
 
     inline bool operator==(opcode_iterator const& other) const
     {
-        return (m_is_end && m_is_end == other.m_is_end)
-               || m_offset == other.m_offset;
+        return (m_is_end && m_is_end == other.m_is_end) ||
+               m_offset == other.m_offset;
     }
 
     inline bool operator!=(opcode_iterator const& other) const
@@ -191,8 +195,8 @@ struct opcode_iterator
 
     inline opcode_layout<BC> const& operator*() const
     {
-        auto out
-            = (*m_data.at(m_offset)).template as<opcode_layout<BC> const>();
+        auto out =
+            (*m_data.at(m_offset)).template as<opcode_layout<BC> const>();
         if(!out)
             Throw(undefined_behavior("invalid iterator"));
 
@@ -231,10 +235,11 @@ struct script_ref : stl_types::non_copy
 
 template<typename BC>
 inline opcode_iterator<BC>::opcode_iterator(
-    semantic::mem_chunk<u8 const>&& script_base) :
-    m_script(C_RCAST<script_ref<BC> const*>(script_base.data)),
-    m_data(*script_base.at(sizeof(script_ref<BC>))), m_offset(0),
-    m_is_end(false)
+    semantic::mem_chunk<u8 const>&& script_base)
+    : m_script(C_RCAST<script_ref<BC> const*>(script_base.data))
+    , m_data(*script_base.at(sizeof(script_ref<BC>)))
+    , m_offset(0)
+    , m_is_end(false)
 {
 }
 
@@ -280,12 +285,15 @@ enum class script_status
 
 struct global_value
 {
-    global_value(global const* desc) : desc(desc), type(desc->type)
+    global_value(global const* desc)
+        : desc(desc)
+        , type(desc->type)
     {
         long_ = 0;
     }
 
     global const* desc;
+
     union
     {
         f32                real;
@@ -294,6 +302,7 @@ struct global_value
         std::array<i16, 2> shorts;
         std::array<u8, 4>  bytes;
     };
+
     type_t type;
 
     template<typename BC>
@@ -349,7 +358,8 @@ struct script_context
 
     struct script_state
     {
-        script_state(function_declaration const* func) : function(func)
+        script_state(function_declaration const* func)
+            : function(func)
         {
             switch(func->schedule)
             {
@@ -380,15 +390,17 @@ struct script_context
 
         inline bool is_ready() const
         {
-            return status == script_status::ready
-                   || status == script_status::running;
+            return status == script_status::ready ||
+                   status == script_status::running;
         }
+
         inline bool is_inactive() const
         {
-            return status == script_status::sleeping
-                   || status == script_status::dormant
-                   || status == script_status::finished;
+            return status == script_status::sleeping ||
+                   status == script_status::dormant ||
+                   status == script_status::finished;
         }
+
         inline std::string_view name() const
         {
             return function->name.str();
@@ -506,6 +518,7 @@ struct bytecode_pointer
             out.next_op.salt      = terminator;
             return out;
         }
+
         static result_t return_(opcode_layout_t const& out = {})
         {
             return {
@@ -514,6 +527,7 @@ struct bytecode_pointer
                 .state  = eval::running,
             };
         }
+
         static result_t sleep_timeout(u32 time)
         {
             return {
@@ -525,6 +539,7 @@ struct bytecode_pointer
                  std::chrono::seconds(time),
                  0}};
         }
+
         static result_t sleep_condition(u16 expr, u16 tick = 1, u32 timeout = 0)
         {
             return {
@@ -537,6 +552,7 @@ struct bytecode_pointer
                  std::chrono::seconds(timeout),
                  tick}};
         }
+
         static result_t branch_to(u16 addr)
         {
             return {
@@ -558,8 +574,8 @@ struct bytecode_pointer
         }
     };
 
-    using opcode_handler_t
-        = std::function<result_t(bytecode_ptr&, opcode_layout_t const&)>;
+    using opcode_handler_t =
+        std::function<result_t(bytecode_ptr&, opcode_layout_t const&)>;
 
     struct opcode_handlers
     {
@@ -656,6 +672,7 @@ struct bytecode_pointer
     {
         return opcode_signature(*current).num_params;
     }
+
     inline opcode_layout_t const& param(type_t type, ptr_type i = 0) const
     {
         ptr_type first_param = current_ip + 1;
@@ -680,6 +697,7 @@ struct bytecode_pointer
 
         return *out;
     }
+
     inline ptr_type param_addr(ptr_type i = 0) const
     {
         ptr_type first_param = current_ip + 1;
@@ -690,6 +708,7 @@ struct bytecode_pointer
 
         return value_ptr.at(value_ptr.size() - i - 1);
     }
+
     inline type_t param_type(ptr_type i = 0) const
     {
         ptr_type first_param = current_ip + 1;
@@ -728,8 +747,9 @@ struct bytecode_pointer
 
         u32 start_param = value_stack.size();
 
-        std::function<bool()> condition
-            = [&]() { return (value_stack.size() - start_param) < num; };
+        std::function<bool()> condition = [&]() {
+            return (value_stack.size() - start_param) < num;
+        };
 
         if(num == variable_length_params || num == unknown_opcode_signature)
         {
@@ -791,14 +811,15 @@ struct bytecode_pointer
                 param_types.append(" ");
             }
             std::string signature;
-            ((((signature += opname) += " ") += ret_type) += ": ")
-                += param_types;
+            ((((signature += opname) += " ") += ret_type) += ": ") +=
+                param_types;
             Throw(missing_signature(signature));
         }
 
         return_();
         return result_t::return_({}).end_at(last_op);
     }
+
     inline void pop_params(ptr_type num)
     {
         value_stack.erase(value_stack.end() - num, value_stack.end());
@@ -870,6 +891,7 @@ struct bytecode_pointer
             current_ip = current->next_op.ip;
         update_opcode();
     }
+
     inline bool update_opcode()
     {
         auto new_op = op_at(current_ip);
@@ -880,10 +902,12 @@ struct bytecode_pointer
         current = new_op.value();
         return true;
     }
+
     inline bool finished() const
     {
         return current_ip == terminator;
     }
+
     inline void call(u16 ip)
     {
         /* Function table points to the last opcode of a function, followd
@@ -891,6 +915,7 @@ struct bytecode_pointer
          * start of the function */
         jump(op_at(ip + 2).value()->next_op.ip + 1);
     }
+
     inline void jump(opcode_layout_t const& opcode)
     {
         auto end = &opcode;
@@ -900,6 +925,7 @@ struct bytecode_pointer
 
         jump(C_FCAST<ptr_type>(end - base));
     }
+
     inline void jump(ptr_type ip)
     {
         link_register.push_back(current_ip);
@@ -908,6 +934,7 @@ struct bytecode_pointer
         current_params = 0;
         update_opcode();
     }
+
     inline void return_()
     {
         current_ip = link_register.back();
@@ -929,6 +956,7 @@ struct bytecode_pointer
         current_params = state.current_params;
         return update_opcode();
     }
+
     inline void stash_state(script_state_t& state)
     {
         state.link_register  = std::move(link_register);
@@ -1019,8 +1047,8 @@ struct bytecode_pointer
             case sleep_condition::expression: {
                 restore_state(state);
                 jump(condition.expression);
-                auto result
-                    = *evaluate(*op_at(condition.expression).value(), handler);
+                auto result =
+                    *evaluate(*op_at(condition.expression).value(), handler);
 
                 if(condition.condition == sleep_condition::expression_timer)
                 {
@@ -1088,29 +1116,29 @@ struct bytecode_pointer
                 state.condition = result.condition;
                 break;
             } else if(
-                state.function->schedule == script_type_t::startup
-                && current_ip == terminator)
+                state.function->schedule == script_type_t::startup &&
+                current_ip == terminator)
             {
                 state.status = script_status::finished;
                 break;
             } else if(
-                state.function->schedule == script_type_t::dormant
-                && current_ip == terminator)
+                state.function->schedule == script_type_t::dormant &&
+                current_ip == terminator)
             {
                 state.status = script_status::sleeping;
                 current_ip   = state.script_start;
                 update_opcode();
                 break;
             } else if(
-                state.function->schedule == script_type_t::continuous
-                && current_ip == terminator)
+                state.function->schedule == script_type_t::continuous &&
+                current_ip == terminator)
             {
                 current_ip = state.script_start;
                 update_opcode();
                 break;
             } else if(
-                run_state == eval::running && current_ip == terminator
-                && !link_register.empty())
+                run_state == eval::running && current_ip == terminator &&
+                !link_register.empty())
             {
                 return_();
                 advance();
@@ -1159,8 +1187,8 @@ namespace Strings {
 template<
     typename BC,
     typename std::enable_if<
-        std::is_same<BC, blam::hsc::bc::v1>::value
-        || std::is_same<BC, blam::hsc::bc::v2>::value>::type* = nullptr>
+        std::is_same<BC, blam::hsc::bc::v1>::value ||
+        std::is_same<BC, blam::hsc::bc::v2>::value>::type* = nullptr>
 inline std::string to_string(BC opc)
 {
     return blam::hsc::to_string(opc);
@@ -1215,8 +1243,8 @@ inline std::string to_string(blam::hsc::opcode_layout<BC> const& op)
             out = std::to_string(op.to_u32());
             break;
         default:
-            out = std::to_string(op.template get<i32>()) + "/"
-                  + std::to_string(op.to_ptr());
+            out = std::to_string(op.template get<i32>()) + "/" +
+                  std::to_string(op.to_ptr());
             break;
         }
 

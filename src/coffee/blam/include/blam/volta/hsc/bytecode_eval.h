@@ -108,11 +108,11 @@ inline typename bytecode_pointer<BC>::result_t bytecode_pointer<BC>::evaluate(
             break;
         }
         case BC::set_: {
-            auto global_
-                = context.global_by_ptr(param(type_t::any, 1).data_ptr).value();
+            auto global_ =
+                context.global_by_ptr(param(type_t::any, 1).data_ptr).value();
 
-            auto convert
-                = get_as<BC>(param(param_type()), param_type(), global_->type);
+            auto convert =
+                get_as<BC>(param(param_type()), param_type(), global_->type);
             global_->set(*evaluate(convert, handler));
 
             break;
@@ -260,8 +260,8 @@ inline typename bytecode_pointer<BC>::result_t bytecode_pointer<BC>::evaluate(
             auto left  = *evaluate(param(type_t::any, 1), handler);
             auto right = *evaluate(param(type_t::any, 0), handler);
 
-            if(left.ret_type != right.ret_type
-               && !(is_number(left.ret_type) && is_number(right.ret_type)))
+            if(left.ret_type != right.ret_type &&
+               !(is_number(left.ret_type) && is_number(right.ret_type)))
             {
                 std::string mismatch;
                 mismatch.append(magic_enum::enum_name(left.ret_type));
@@ -337,10 +337,10 @@ inline typename bytecode_pointer<BC>::result_t bytecode_pointer<BC>::evaluate(
             if(!is_number(left_.ret_type) || !is_number(right_.ret_type))
                 Throw(script_error("invalid input to comparison"));
 
-            auto left
-                = get_as<BC>(left_, left_.ret_type, type_t::real_).to_real();
-            auto right
-                = get_as<BC>(right_, right_.ret_type, type_t::real_).to_real();
+            auto left =
+                get_as<BC>(left_, left_.ret_type, type_t::real_).to_real();
+            auto right =
+                get_as<BC>(right_, right_.ret_type, type_t::real_).to_real();
 
             opcode_layout_t result = opcode_layout_t::typed_(type_t::real_);
 
@@ -392,8 +392,8 @@ inline typename bytecode_pointer<BC>::result_t bytecode_pointer<BC>::evaluate(
             handler.cmd(*this, op);
 
         auto pcount = param_count(op);
-        if(pcount == variable_length_params
-           || pcount == unknown_opcode_signature)
+        if(pcount == variable_length_params ||
+           pcount == unknown_opcode_signature)
             pop_params(op_params);
         else
             pop_params(pcount);

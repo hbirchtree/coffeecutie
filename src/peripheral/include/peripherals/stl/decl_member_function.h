@@ -62,6 +62,7 @@ struct mem_function_traits
     mem_function_traits(R (T::*)(Args...) const)
     {
     }
+
     mem_function_traits(R (T::*)(Args...))
     {
     }
@@ -70,7 +71,8 @@ struct mem_function_traits
 template<class T, typename V>
 struct member_traits
 {
-    constexpr member_traits(V T::*member) : member(member)
+    constexpr member_traits(V T::*member)
+        : member(member)
     {
     }
 
@@ -92,7 +94,8 @@ struct member_traits
 } // namespace stl_types
 
 #if __cplusplus >= 201703L
-#define declmemtype(fun) decltype(stl_types::mem_function_traits(fun))::result_type
+#define declmemtype(fun) \
+    decltype(stl_types::mem_function_traits(fun))::result_type
 #define declmemtype2(T, fun) \
     decltype(std::apply(&T::fun, std::declval<mem_args_tuple<T>>()))
 #else

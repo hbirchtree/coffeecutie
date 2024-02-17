@@ -22,11 +22,13 @@ struct texture_t
 {
     gl::tex::texture_format_t format{};
     u32                       levels{};
+
     struct mipmap_t
     {
         semantic::Span<const char>   data;
         typing::vector_types::Vecui3 size;
     };
+
     std::vector<mipmap_t> mips;
 
     std::unique_ptr<ktxTexture, ktxDeleter> texture;

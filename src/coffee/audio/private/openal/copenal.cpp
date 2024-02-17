@@ -1,11 +1,11 @@
 #include <coffee/audio/openal/copenal.h>
 
-#include <peripherals/stl/types.h>
-#include <peripherals/semantic/chunk.h>
 #include <coffee/core/types/map.h>
+#include <peripherals/semantic/chunk.h>
 #include <peripherals/stl/string_casting.h>
 #include <peripherals/stl/string_ops.h>
 #include <peripherals/stl/thread_types.h>
+#include <peripherals/stl/types.h>
 
 #include <coffee/strings/libc_types.h>
 
@@ -67,24 +67,34 @@ constexpr _cbasic_static_map<CSourceProperty, ALenum, 20> al_source_prop_map = {
     {CSourceProperty::BuffersProcessed, AL_BUFFERS_PROCESSED},
 };
 
-CALContext::CALContext() :
-    context(nullptr), device(nullptr), callback(nullptr), context_thread()
+CALContext::CALContext()
+    : context(nullptr)
+    , device(nullptr)
+    , callback(nullptr)
+    , context_thread()
 {
 }
 
-CALListener::CALListener() :
-    orientation_forward(0, 0, 0), orientation_up(0, 0, 0), position(0, 0, 0),
-    velocity(0, 0, 0), gain(0)
+CALListener::CALListener()
+    : orientation_forward(0, 0, 0)
+    , orientation_up(0, 0, 0)
+    , position(0, 0, 0)
+    , velocity(0, 0, 0)
+    , gain(0)
 {
 }
 
-CALSource::CALSource() :
-    position(0, 0, 0), velocity(0, 0, 0), direction(0, 0, 0), handle(nullptr),
-    state(AL_STOPPED)
+CALSource::CALSource()
+    : position(0, 0, 0)
+    , velocity(0, 0, 0)
+    , direction(0, 0, 0)
+    , handle(nullptr)
+    , state(AL_STOPPED)
 {
 }
 
-CALBuffer::CALBuffer() : handle(nullptr)
+CALBuffer::CALBuffer()
+    : handle(nullptr)
 {
 }
 
@@ -92,6 +102,7 @@ ALenum _al_get_model(const CDistanceModel& m)
 {
     return AL_DISTANCE_MODEL + C_CAST<i32>(m);
 }
+
 ALuint _al_get_handle(const CALBuffer* b)
 {
     if(b && b->handle)
@@ -99,6 +110,7 @@ ALuint _al_get_handle(const CALBuffer* b)
     else
         return 0;
 }
+
 ALuint _al_get_handle(const CALSource* b)
 {
     if(b && b->handle)
@@ -106,6 +118,7 @@ ALuint _al_get_handle(const CALSource* b)
     else
         return 0;
 }
+
 void _al_check_rsc(const CALBuffer* b)
 {
     if(!b || !b->handle)
@@ -114,6 +127,7 @@ void _al_check_rsc(const CALBuffer* b)
     if(alIsBuffer(hnd) != AL_TRUE)
         cWarning("Buffer handle not valid: {0}");
 }
+
 void _al_check_rsc(const CALSource* b)
 {
     if(!b || !b->handle)
@@ -600,13 +614,15 @@ namespace Strings {
 std::string to_string(CAudio::COpenAL::CALBuffer const& buf)
 {
     return "CALBuffer(" + str::print::pointerify(buf.handle) + "," +
-           ((buf.handle) ? cast_pod(buf.handle->handle) : std::string("0x0")) + ")";
+           ((buf.handle) ? cast_pod(buf.handle->handle) : std::string("0x0")) +
+           ")";
 }
 
 std::string to_string(CAudio::COpenAL::CALSource const& src)
 {
     return "CALSource(" + str::print::pointerify(src.handle) + "," +
-           ((src.handle) ? cast_pod(src.handle->handle) : std::string("0x0")) + ")";
+           ((src.handle) ? cast_pod(src.handle->handle) : std::string("0x0")) +
+           ")";
 }
 } // namespace Strings
 } // namespace Coffee

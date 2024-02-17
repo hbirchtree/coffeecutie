@@ -36,7 +36,9 @@ STATICINLINE void ClearPresence(DiscordRichPresence& p)
     p.instance    = 0;
 }
 
-struct DiscordService : online::Service, Coffee::State::GlobalState
+struct DiscordService
+    : online::Service
+    , Coffee::State::GlobalState
 {
     DiscordRichPresence m_cachedPresence;
     DiscordOptions      m_options;
@@ -51,12 +53,14 @@ struct DiscordService : online::Service, Coffee::State::GlobalState
 
     virtual ~DiscordService();
 
-    virtual std::shared_ptr<online::GameDelegate>        getGame();
-    virtual std::shared_ptr<online::PresenceDelegate>    getPresence();
+    virtual std::shared_ptr<online::GameDelegate>     getGame();
+    virtual std::shared_ptr<online::PresenceDelegate> getPresence();
+
     virtual std::shared_ptr<online::AchievementDelegate> getAchievements()
     {
         return {};
     }
+
     virtual std::shared_ptr<online::FriendDelegate> getFriends()
     {
         return {};
@@ -77,16 +81,16 @@ static PlayerInfo InfoFromDiscordUser(DiscordUser const* user, u32 imgSize)
     platform::url::Url avatarUrl = net::MkUrl(
         (strlen(user->avatar) > 0)
             ? fmt::format(
-                DISCORD_EP "/avatars/{0}/{1}.{2}?size={3}",
-                user->userId,
-                user->avatar,
-                "jpg",
-                imgSize)
+                  DISCORD_EP "/avatars/{0}/{1}.{2}?size={3}",
+                  user->userId,
+                  user->avatar,
+                  "jpg",
+                  imgSize)
             : fmt::format(
-                DISCORD_EP "/embed/avatars/{0}.{1}?size={2}",
-                discriminator % 5,
-                "png",
-                imgSize));
+                  DISCORD_EP "/embed/avatars/{0}.{1}?size={2}",
+                  discriminator % 5,
+                  "png",
+                  imgSize));
 
     PlayerInfo info;
     info.avatarUrl = avatarUrl;
@@ -129,8 +133,9 @@ std::shared_ptr<online::Service> CreateService(
     return discordService;
 }
 
-DiscordService::DiscordService(std::shared_ptr<DiscordDelegate> delegate) :
-    m_options(""), m_delegate(delegate)
+DiscordService::DiscordService(std::shared_ptr<DiscordDelegate> delegate)
+    : m_options("")
+    , m_delegate(delegate)
 {
 }
 
@@ -147,8 +152,8 @@ void DiscordService::initialize(DiscordOptions const& options)
     DiscordEventHandlers handlers = {};
 
     handlers.ready = [](DiscordUser const* user) {
-        PlayerInfo info
-            = InfoFromDiscordUser(user, GetService().m_options.imgSize);
+        PlayerInfo info =
+            InfoFromDiscordUser(user, GetService().m_options.imgSize);
 
         auto& delegate = GetService().delegate();
 
@@ -192,8 +197,8 @@ void DiscordService::initialize(DiscordOptions const& options)
                 8, DISCORD_TAG, "Spectate request received, but no handler");
     };
     handlers.joinRequest = [](DiscordUser const* request) {
-        PlayerInfo info
-            = InfoFromDiscordUser(request, GetService().m_options.imgSize);
+        PlayerInfo info =
+            InfoFromDiscordUser(request, GetService().m_options.imgSize);
 
         auto& delegate = GetService().delegate();
 
@@ -213,11 +218,11 @@ void DiscordService::initialize(DiscordOptions const& options)
 
     ClearPresence(m_cachedPresence);
 
-    m_cachedPresence.startTimestamp
-        = std::chrono::seconds(std::time(nullptr)).count();
+    m_cachedPresence.startTimestamp =
+        std::chrono::seconds(std::time(nullptr)).count();
 
-    presence
-        = std::make_shared<DiscordPresenceDelegate>(options, &m_cachedPresence);
+    presence =
+        std::make_shared<DiscordPresenceDelegate>(options, &m_cachedPresence);
     game = std::make_shared<DiscordGameDelegate>(options, &m_cachedPresence);
 }
 
@@ -244,8 +249,8 @@ void DiscordService::poll()
 }
 
 DiscordGameDelegate::DiscordGameDelegate(
-    const DiscordOptions& /*options*/, DiscordRichPresence* presence) :
-    m_presence(presence)
+    const DiscordOptions& /*options*/, DiscordRichPresence* presence)
+    : m_presence(presence)
 {
 }
 
@@ -269,8 +274,8 @@ void DiscordGameDelegate::put(DiscordGameDelegate::ExtraInfo&& gameInfo)
 }
 
 DiscordPresenceDelegate::DiscordPresenceDelegate(
-    const DiscordOptions& /*options*/, DiscordRichPresence* presence) :
-    m_presence(presence)
+    const DiscordOptions& /*options*/, DiscordRichPresence* presence)
+    : m_presence(presence)
 {
     static_assert(DISCORD_REPLY_NO == ReplyNo, "bad enum");
     static_assert(DISCORD_REPLY_YES == ReplyYes, "bad enum");

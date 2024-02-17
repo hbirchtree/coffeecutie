@@ -2,10 +2,10 @@
 #include <peripherals/stl/types.h>
 
 #if defined(COFFEE_GEKKO)
-#include <peripherals/libc/types.h>
 #include <gccore.h>
+#include <peripherals/libc/types.h>
 
-namespace Coffee{
+namespace Coffee {
 
 static void* gekko_run_thread(void* fun)
 {
@@ -19,9 +19,8 @@ static void* gekko_run_thread(void* fun)
 Thread::Thread(std::function<void()> f)
 {
     m_threadLambda = f;
-    LWP_CreateThread(&m_threadHandle,
-                     gekko_run_thread, &m_threadLambda,
-                     NULL, 0, 64);
+    LWP_CreateThread(
+        &m_threadHandle, gekko_run_thread, &m_threadLambda, NULL, 0, 64);
 }
 
 Thread::Thread()
@@ -44,7 +43,7 @@ Thread::id Thread::get_id()
     return (id)m_threadHandle;
 }
 
-namespace CurrentThread{
+namespace CurrentThread {
 
 void yield()
 {
@@ -56,7 +55,7 @@ Thread::id get_id()
     return (Thread::id)LWP_GetSelf();
 }
 
-}
+} // namespace CurrentThread
 
 Mutex::Mutex()
 {
@@ -120,7 +119,7 @@ CondVar::~CondVar()
 
 void CondVar::wait(UqLock& lock)
 {
-    m_waiters ++;
+    m_waiters++;
     do
     {
         LWP_ThreadSleep(m_syncQueue);
@@ -136,18 +135,19 @@ void CondVar::wait(UqLock& lock)
 
         LWP_YieldThread();
     } while(true);
-    m_waiters --;
+    m_waiters--;
 }
 
 cv_status CondVar::wait_limited(long wait_ns)
 {
     cv_status reason = cv_status::timeout;
-    auto start = std::chrono::system_clock::now();
+    auto      start  = std::chrono::system_clock::now();
 
-    m_waiters ++;
+    m_waiters++;
 
     while(std::chrono::duration_cast<std::chrono::nanoseconds>(
-              std::chrono::system_clock::now() - start).count() < wait_ns)
+              std::chrono::system_clock::now() - start)
+              .count() < wait_ns)
     {
         LWP_YieldThread();
         unsigned int numSignals = m_signals.load();
@@ -163,14 +163,14 @@ cv_status CondVar::wait_limited(long wait_ns)
         }
     }
 
-    m_waiters --;
+    m_waiters--;
 
     return reason;
 }
 
 void CondVar::notify_one()
 {
-    m_signals ++;
+    m_signals++;
     LWP_ThreadSignal(m_syncQueue);
 }
 
@@ -192,7 +192,6 @@ void CondVar::notify_all()
     LWP_ThreadBroadcast(m_syncQueue);
 }
 
-}
+} // namespace Coffee
 
 #endif
-

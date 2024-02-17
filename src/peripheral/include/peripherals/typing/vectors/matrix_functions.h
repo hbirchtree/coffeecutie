@@ -65,8 +65,8 @@ FORCEDINLINE tmatrix<T, 4> GenPerspective(
     matrix[1][1] = T(1) / (thalffov);
     matrix[2][2] = -(zfield.far_ + zfield.near_) / (zfield.far_ - zfield.near_);
     matrix[2][3] = T(-1);
-    matrix[3][2]
-        = (T(-2) * zfield.far_ * zfield.near_) / (zfield.far_ - zfield.near_);
+    matrix[3][2] =
+        (T(-2) * zfield.far_ * zfield.near_) / (zfield.far_ - zfield.near_);
 
     return matrix;
 #else
@@ -106,8 +106,8 @@ FORCEDINLINE void GenUserClipSpaceScale(
     const tmatrix<T, 4>& perspective,
     tvector<T, 4>&       corner)
 {
-    corner = tvector<T, 4>(
-        signbit(clipPlane.x()), signbit(clipPlane.y()), 1.f, 1.f);
+    corner =
+        tvector<T, 4>(signbit(clipPlane.x()), signbit(clipPlane.y()), 1.f, 1.f);
 
     corner = corner * inverse(perspective);
 }

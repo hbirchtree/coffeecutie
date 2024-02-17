@@ -5,13 +5,13 @@
 #include <coffee/core/CFiles>
 #include <coffee/core/CProfiling>
 #include <coffee/core/base/renderer/eventapplication.h>
-#include <peripherals/stl/types.h>
 #include <coffee/image/cimage.h>
 #include <coffee/interfaces/full_launcher.h>
 #include <coffee/strings/libc_types.h>
 #include <coffee/strings/vector_types.h>
 #include <coffee/windowing/renderer/renderer.h>
 #include <peripherals/stl/string_ops.h>
+#include <peripherals/stl/types.h>
 
 #include <coffee/core/CDebug>
 
@@ -145,8 +145,8 @@ void inspect_model(blam::map_container const& map, blam::tag_t const& tag)
                 mesh.data.index_segment(*map.tags).data(vertex_magic);
             cDebug("Mesh!");
 
-            std::string out_name = output_name + str::convert::to_string(i) + "_" +
-                               str::convert::to_string(j) + ".obj";
+            std::string out_name = output_name + str::convert::to_string(i) +
+                                   "_" + str::convert::to_string(j) + ".obj";
 
             auto out = fopen(out_name.c_str(), "w+");
 
@@ -402,8 +402,8 @@ void examine_map(Resource&& mapfile, T version)
 
     struct mem_map
     {
-        ptroff  start;
-        szptr   size;
+        ptroff      start;
+        szptr       size;
         std::string type;
         std::string label;
     };
@@ -546,8 +546,8 @@ void examine_map(Resource&& mapfile, T version)
                    opcode.ret_type == blam::hsc::type_t::branch_val)
                     fprintf(dism_file, "\n");
 
-                if(opcode.ret_type == type_t::branch_val &&
-                   opcode.to_ptr() && opcode.to_ptr() < string_seg.data.size)
+                if(opcode.ret_type == type_t::branch_val && opcode.to_ptr() &&
+                   opcode.to_ptr() < string_seg.data.size)
                 {
                     auto ename = magic_enum::enum_name(opcode.opcode);
                     auto sname =
@@ -570,9 +570,9 @@ void examine_map(Resource&& mapfile, T version)
                     (opcode.exp_type == expression_t::group ||
                      opcode.ret_type == type_t::branch_val)
                         ? Strings::to_string(opcode.opcode)
-                        : (opcode.exp_type == expression_t::expression)
-                              ? Strings::to_string(opcode.param_type)
-                              : Strings::to_string(opcode.exp_type),
+                    : (opcode.exp_type == expression_t::expression)
+                        ? Strings::to_string(opcode.param_type)
+                        : Strings::to_string(opcode.exp_type),
                     opcode.data_ptr,
                     opcode.bytes[0],
                     opcode.bytes[1],
@@ -936,7 +936,8 @@ void examine_map(Resource&& mapfile, T version)
                 for(auto const& sub_string : data.sub_strings.data(map.magic))
                 {
                     auto str = sub_string.str(map.magic);
-                    cDebug("Sub string: {0}", std::string(str.begin(), str.end()));
+                    cDebug(
+                        "Sub string: {0}", std::string(str.begin(), str.end()));
                 }
                 cDebug("Data found");
             }
@@ -1002,7 +1003,8 @@ void examine_map(Resource&& mapfile, T version)
 
                 auto str = data.text.str(map.magic);
                 cDebug(
-                    "Hud message data: {0}", std::string(str.begin(), str.end()));
+                    "Hud message data: {0}",
+                    std::string(str.begin(), str.end()));
             }
         }
 

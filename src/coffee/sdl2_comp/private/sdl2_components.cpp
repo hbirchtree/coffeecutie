@@ -136,8 +136,8 @@ void Context::load(entity_container& c, comp_app::app_error&)
         SDL_version ver;
         SDL_GetVersion(&ver);
 
-        auto verString = cast_pod(ver.major) + "." + cast_pod(ver.minor) + "."
-                         + cast_pod(ver.patch);
+        auto verString = cast_pod(ver.major) + "." + cast_pod(ver.minor) + "." +
+                         cast_pod(ver.patch);
 
         info->add("sdl2:version", verString);
     }
@@ -251,8 +251,8 @@ void Windowing::start_restricted(proxy_type& p, time_point const&)
 {
     using namespace Coffee::Display;
 
-    auto displayBus
-        = get_container(p).service<comp_app::BasicEventBus<Event>>();
+    auto displayBus =
+        get_container(p).service<comp_app::BasicEventBus<Event>>();
     if(!displayBus)
         Throw(implementation_error("display bus not available!"));
     Event displayEv;
@@ -472,8 +472,8 @@ void GLContext::setupAttributes(entity_container& c)
 
         if(glConfig.profile & GLConfig::Robust)
             contextFlags |= SDL_GL_CONTEXT_ROBUST_ACCESS_FLAG;
-        if((glConfig.profile & GLConfig::Debug)
-           && !compile_info::platform::is_emscripten)
+        if((glConfig.profile & GLConfig::Debug) &&
+           !compile_info::platform::is_emscripten)
             contextFlags |= SDL_GL_CONTEXT_DEBUG_FLAG;
 
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, contextFlags);
@@ -505,9 +505,10 @@ struct try_create_context
     try_create_context(
         SDL_Window*                 window,
         SDL_GLContext*              context,
-        comp_app::GLConfig::Profile profile) :
-        window(window),
-        context(context), profile(profile)
+        comp_app::GLConfig::Profile profile)
+        : window(window)
+        , context(context)
+        , profile(profile)
     {
     }
 
@@ -570,8 +571,8 @@ void GLContext::load(entity_container& c, comp_app::app_error& ec)
         compile_info::platform::is_emscripten ? 1 : glConfig.swapInterval);
 
     {
-        auto& bindConf
-            = comp_app::AppLoader::config<comp_app::GraphicsBindingConfig>(c);
+        auto& bindConf =
+            comp_app::AppLoader::config<comp_app::GraphicsBindingConfig>(c);
         bindConf.loader = SDL_GL_GetProcAddress;
     }
 
@@ -679,8 +680,8 @@ void ControllerInput::start_restricted(proxy_type& p, time_point const&)
 {
     using namespace Coffee::Input;
 
-    auto inputBus
-        = get_container(p).service<comp_app::BasicEventBus<CIEvent>>();
+    auto inputBus =
+        get_container(p).service<comp_app::BasicEventBus<CIEvent>>();
     CIEvent inputEv;
 
     SDL_Event event;
@@ -775,15 +776,15 @@ ControllerInput::controller_map ControllerInput::state(
         out.buttons.e.x   = BTN(controller, SDL_CONTROLLER_BUTTON_X);
         out.buttons.e.y   = BTN(controller, SDL_CONTROLLER_BUTTON_Y);
         out.buttons.e.b_l = BTN(controller, SDL_CONTROLLER_BUTTON_LEFTSHOULDER);
-        out.buttons.e.b_r
-            = BTN(controller, SDL_CONTROLLER_BUTTON_RIGHTSHOULDER);
+        out.buttons.e.b_r =
+            BTN(controller, SDL_CONTROLLER_BUTTON_RIGHTSHOULDER);
         out.buttons.e.s_l  = BTN(controller, SDL_CONTROLLER_BUTTON_LEFTSTICK);
         out.buttons.e.s_r  = BTN(controller, SDL_CONTROLLER_BUTTON_RIGHTSTICK);
         out.buttons.e.p_up = BTN(controller, SDL_CONTROLLER_BUTTON_DPAD_UP);
         out.buttons.e.p_down = BTN(controller, SDL_CONTROLLER_BUTTON_DPAD_DOWN);
         out.buttons.e.p_left = BTN(controller, SDL_CONTROLLER_BUTTON_DPAD_LEFT);
-        out.buttons.e.p_right
-            = BTN(controller, SDL_CONTROLLER_BUTTON_DPAD_RIGHT);
+        out.buttons.e.p_right =
+            BTN(controller, SDL_CONTROLLER_BUTTON_DPAD_RIGHT);
         out.buttons.e.back  = BTN(controller, SDL_CONTROLLER_BUTTON_BACK);
         out.buttons.e.start = BTN(controller, SDL_CONTROLLER_BUTTON_START);
         out.buttons.e.guide = BTN(controller, SDL_CONTROLLER_BUTTON_GUIDE);
@@ -811,8 +812,8 @@ comp_app::text_type_t ControllerInput::name(libc_types::u32 idx) const
 
     if constexpr(!compile_info::platform::is_emscripten)
     {
-        auto name
-            = SDL_GameControllerName(C_RCAST<SDL_GameController*>(it->second));
+        auto name =
+            SDL_GameControllerName(C_RCAST<SDL_GameController*>(it->second));
 
         return name ? name : std::string();
     } else
@@ -873,8 +874,8 @@ void KeyboardInput::start_restricted(proxy_type& p, time_point const&)
     CIEvent   inputEv;
     SDL_Event event;
 
-    auto inputBus
-        = get_container(p).service<comp_app::BasicEventBus<CIEvent>>();
+    auto inputBus =
+        get_container(p).service<comp_app::BasicEventBus<CIEvent>>();
 
     while(SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_KEYDOWN, SDL_KEYUP))
     {

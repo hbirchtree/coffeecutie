@@ -9,13 +9,12 @@ using InputDebugManifest = compo::SubsystemManifest<
     compo::type_list_t<
         comp_app::ControllerInput,
         comp_app::KeyboardInput,
-        comp_app::MouseInput>
-    >;
+        comp_app::MouseInput>>;
 
 struct InputDebugWidget
     : compo::RestrictedSubsystem<InputDebugWidget, InputDebugManifest>
 {
-    using type = InputDebugWidget;
+    using type  = InputDebugWidget;
     using Proxy = compo::proxy_of<InputDebugManifest>;
 
     InputDebugWidget()
@@ -35,8 +34,8 @@ struct InputDebugWidget
 
     void start_restricted(Proxy& e, time_point const&)
     {
-        using libc_types::i16;
         using libc_types::f32;
+        using libc_types::i16;
 
         auto* controllers = e.service<comp_app::ControllerInput>();
 
@@ -45,11 +44,11 @@ struct InputDebugWidget
             if(!controllers || controllers->count() < 1)
                 break;
 
-            auto controller = controllers->state(0);
-            auto const& btns = controller.buttons.e;
+            auto        controller = controllers->state(0);
+            auto const& btns       = controller.buttons.e;
 
-            constexpr f32 axis_scale = std::numeric_limits<i16>::max();
-            std::array<f32, 6> axes = {{
+            constexpr f32      axis_scale = std::numeric_limits<i16>::max();
+            std::array<f32, 6> axes       = {{
                 controller.axes.e.l_x / axis_scale,
                 controller.axes.e.l_y / axis_scale,
                 controller.axes.e.r_x / axis_scale,

@@ -7,12 +7,18 @@ namespace compo {
 template<typename ContainerType, typename ComponentType>
 struct ComponentRef
 {
-    ComponentRef() : m_id(0), m_ref(nullptr)
+    ComponentRef()
+        : m_id(0)
+        , m_ref(nullptr)
     {
     }
-    ComponentRef(u64 id, ContainerType* container) : m_id(id), m_ref(container)
+
+    ComponentRef(u64 id, ContainerType* container)
+        : m_id(id)
+        , m_ref(container)
     {
     }
+
     ComponentRef(ComponentRef&&)      = default;
     ComponentRef(ComponentRef const&) = default;
 
@@ -33,8 +39,10 @@ struct EntityRef
     EntityRef()
     {
     }
-    EntityRef(u64 source, ContainerType* container) :
-        m_id(source), container(container)
+
+    EntityRef(u64 source, ContainerType* container)
+        : m_id(source)
+        , container(container)
     {
     }
 

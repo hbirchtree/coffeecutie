@@ -18,6 +18,7 @@ constexpr u32 coverage_modulation_table             = 0x9331;
 constexpr u32 coverage_modulation                   = 0x9332;
 constexpr u32 coverage_modulation_table_size        = 0x9333;
 } // namespace values
+
 /*!
  * \brief Part of GL_NV_framebuffer_mixed_samples
  * \param components GLenum
@@ -35,16 +36,18 @@ STATICINLINE void coverage_modulation(GLenum components)
 }
 
 template<class span_const_f32>
-requires(concepts::span<span_const_f32>&& std::is_same_v<
-         std::decay_t<typename span_const_f32::value_type>,
-         std::decay_t<f32>>)
-    /*!
-     * \brief Part of GL_NV_framebuffer_mixed_samples
-     * \param n GLsizei
-     * \param v const GLfloat *
-     * \return void
-     */
-    STATICINLINE void coverage_modulation_table(span_const_f32 const& v)
+requires(
+    concepts::span<span_const_f32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_f32::value_type>,
+        std::decay_t<f32>>)
+/*!
+ * \brief Part of GL_NV_framebuffer_mixed_samples
+ * \param n GLsizei
+ * \param v const GLfloat *
+ * \return void
+ */
+STATICINLINE void coverage_modulation_table(span_const_f32 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -58,16 +61,17 @@ requires(concepts::span<span_const_f32>&& std::is_same_v<
 }
 
 template<class span_f32>
-requires(concepts::span<span_f32>&& std::is_same_v<
-         std::decay_t<typename span_f32::value_type>,
-         std::decay_t<f32>>)
-    /*!
-     * \brief Part of GL_NV_framebuffer_mixed_samples
-     * \param bufSize GLsizei
-     * \param v GLfloat *
-     * \return void
-     */
-    STATICINLINE void get_coverage_modulation_table(i32 bufSize, span_f32 v)
+requires(
+    concepts::span<span_f32> && std::is_same_v<
+                                    std::decay_t<typename span_f32::value_type>,
+                                    std::decay_t<f32>>)
+/*!
+ * \brief Part of GL_NV_framebuffer_mixed_samples
+ * \param bufSize GLsizei
+ * \param v GLfloat *
+ * \return void
+ */
+STATICINLINE void get_coverage_modulation_table(i32 bufSize, span_f32 v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

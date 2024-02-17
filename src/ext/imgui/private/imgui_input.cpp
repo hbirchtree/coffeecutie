@@ -231,8 +231,8 @@ void ImGuiSystem::setup_inputs(Proxy& e)
                 break;
             }
 
-            bool pressed
-                = static_cast<bool>(mouse->mod & CIMouseButtonEvent::Pressed);
+            bool pressed =
+                static_cast<bool>(mouse->mod & CIMouseButtonEvent::Pressed);
             //            bool double_press = static_cast<bool>(
             //                mouse->mod & CIMouseButtonEvent::DoubleClick);
 

@@ -93,8 +93,8 @@ FORCEDINLINE result<dynamic_lib, dl_error> load(
 }
 
 template<typename ReturnType, typename... Args>
-FORCEDINLINE result<std::function<ReturnType(Args...)>, dl_error>
-             symbol_from(dynamic_lib& lib, std::string const& symbol)
+FORCEDINLINE result<std::function<ReturnType(Args...)>, dl_error> symbol_from(
+    dynamic_lib& lib, std::string const& symbol)
 {
     using function_type = std::function<ReturnType(Args...)>;
     using pointer_type  = ReturnType (*)(Args...);

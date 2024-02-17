@@ -16,7 +16,6 @@
 
 #endif
 
-
 namespace typing::vector_types {
 
 #if defined(USE_HOMEGROWN_VECTORS)
@@ -90,4 +89,3 @@ using Matd4_3 = tmnmatrix<f64, 4, 3>;
 #endif
 
 } // namespace typing::vector_types
-

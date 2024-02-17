@@ -17,9 +17,10 @@ class DragDetector;
 
 namespace anative {
 
-struct Windowing : comp_app::interfaces::StaticWindowing,
-                   comp_app::AppService<Windowing, comp_app::Windowing>,
-                   comp_app::AppLoadableService
+struct Windowing
+    : comp_app::interfaces::StaticWindowing
+    , comp_app::AppService<Windowing, comp_app::Windowing>
+    , comp_app::AppLoadableService
 {
     Windowing()
     {
@@ -28,7 +29,7 @@ struct Windowing : comp_app::interfaces::StaticWindowing,
 
     virtual void load(entity_container& e, comp_app::app_error& ec) override;
 
-    virtual comp_app::size_2d_t           size() const override;
+    virtual comp_app::size_2d_t      size() const override;
     virtual comp_app::window_flags_t state() const override;
     virtual void setState(comp_app::window_flags_t /*state*/) override;
 
@@ -36,12 +37,13 @@ struct Windowing : comp_app::interfaces::StaticWindowing,
 };
 
 struct ControllerInput
-    : comp_app::interfaces::ControllerInput,
-      comp_app::AppService<ControllerInput, comp_app::ControllerInput>
+    : comp_app::interfaces::ControllerInput
+    , comp_app::AppService<ControllerInput, comp_app::ControllerInput>
 {
     using type = ControllerInput;
 
-    ControllerInput() : m_cache(1)
+    ControllerInput()
+        : m_cache(1)
     {
     }
 
@@ -54,28 +56,30 @@ struct ControllerInput
 };
 
 struct KeyboardInput
-    : comp_app::interfaces::BasicKeyboardInput,
-      comp_app::AppService<KeyboardInput, comp_app::KeyboardInput>
+    : comp_app::interfaces::BasicKeyboardInput
+    , comp_app::AppService<KeyboardInput, comp_app::KeyboardInput>
 {
     void openVirtual() const;
     void closeVirtual() const;
 };
 
-struct MouseInput : comp_app::interfaces::MouseInput,
-                    comp_app::AppService<MouseInput, comp_app::MouseInput>
+struct MouseInput
+    : comp_app::interfaces::MouseInput
+    , comp_app::AppService<MouseInput, comp_app::MouseInput>
 {
-    bool mouseGrabbed() const;
-    void setMouseGrab(bool enabled);
+    bool                 mouseGrabbed() const;
+    void                 setMouseGrab(bool enabled);
     comp_app::position_t position() const;
-    void warp(const comp_app::position_t &newPos);
-    MouseButton buttons() const;
+    void                 warp(const comp_app::position_t& newPos);
+    MouseButton          buttons() const;
 
     comp_app::position_t m_position{};
-    MouseButton m_buttons{MouseButton::NoneBtn};
+    MouseButton          m_buttons{MouseButton::NoneBtn};
 };
 
-struct AndroidEventBus : comp_app::AppService<AndroidEventBus>,
-                         comp_app::AppLoadableService
+struct AndroidEventBus
+    : comp_app::AppService<AndroidEventBus>
+    , comp_app::AppLoadableService
 {
     virtual void load(entity_container& e, comp_app::app_error&) override;
 
@@ -97,9 +101,9 @@ struct AndroidEventBus : comp_app::AppService<AndroidEventBus>,
     ndk_helper::PinchDetector*     m_pinchDetector;
     ndk_helper::DragDetector*      m_dragDetector;
 
-    comp_app::TouchConfig* m_touchConfig;
+    comp_app::TouchConfig*                           m_touchConfig;
     comp_app::BasicEventBus<Coffee::Input::CIEvent>* m_inputBus;
-    comp_app::BasicEventBus<comp_app::AppEvent>* m_appBus;
+    comp_app::BasicEventBus<comp_app::AppEvent>*     m_appBus;
 
     std::optional<Coffee::Input::CIMouseButtonEvent> m_tapButtonEvent;
 };

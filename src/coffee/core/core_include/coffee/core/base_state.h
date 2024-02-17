@@ -22,6 +22,7 @@ namespace State {
 using GlobalState = platform::detail::GlobalState;
 
 extern stl_types::UqLock LockState(std::string_view key);
+
 inline stl_types::UqLock LockState(GlobalState& state)
 {
     return stl_types::UqLock(state.access);

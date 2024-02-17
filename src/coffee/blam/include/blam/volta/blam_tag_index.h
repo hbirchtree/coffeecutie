@@ -14,6 +14,7 @@ struct bitmap_atlas_view;
 struct header_t;
 
 } // namespace bitm
+
 namespace scn {
 template<typename V>
 requires is_game_version<V>
@@ -38,14 +39,17 @@ struct alignas(4) tag_t
         std::array<bl_tag, 3> tagclass; /*!< Strings which identify its class*/
         std::array<tag_class_t, 3> tagclass_e; /*!< enum-ified tagclass value */
     };
+
     u32        tag_id;
     string_ref name;
     u32        offset; /*!< A byte offset to associated data*/
+
     union
     {
         u32             unknown;
         image_storage_t storage; /*!< Only applies to custom_edition */
     };
+
     i32 padding;
 
     inline bool matches(tag_class_t other) const
@@ -124,8 +128,8 @@ template<typename V>
  */
 struct alignas(4) tag_index_t : stl_types::non_copy
 {
-    using vertex_array
-        = reflexive_t<vert::mod2_vertex<vert::uncompressed>, xbox_t>;
+    using vertex_array =
+        reflexive_t<vert::mod2_vertex<vert::uncompressed>, xbox_t>;
     using index_array = reflexive_t<vert::idx_t, xbox_t>;
 
     i32          index_magic;    /*!< Number used to adjust indexes*/
@@ -134,11 +138,13 @@ struct alignas(4) tag_index_t : stl_types::non_copy
     u32          tag_count;      /*!< Number of tags*/
     vertex_array vertex_objects; /*!< Number of vertex objects*/
     index_array  index_objects;  /*!< Number of index objects*/
+
     union
     {
         bl_tag xbox_tag_sentinel;
         u32    raw_model_data_size;
     };
+
     bl_tag pc_tag_sentinel; /*!< Says "tags" */
 
     inline magic_data_t get_magic(

@@ -21,8 +21,8 @@ ImGuiWidget StatsMenu()
                 duration const& delta) mutable {
                 m_values.resize(50);
 
-                const auto delta_ms
-                    = duration_cast<seconds_float>(delta).count();
+                const auto delta_ms =
+                    duration_cast<seconds_float>(delta).count();
 
                 ImGui::BeginMainMenuBar();
                 ImGui::Columns(4);

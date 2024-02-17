@@ -8,13 +8,12 @@
 #include "calsoundmixer.h"
 #include "calsoundstream.h"
 
-namespace Coffee{
-namespace CAudio{
-namespace COpenAL{
+namespace Coffee {
+namespace CAudio {
+namespace COpenAL {
 
-
 }
-}
-}
+} // namespace CAudio
+} // namespace Coffee
 
 #endif

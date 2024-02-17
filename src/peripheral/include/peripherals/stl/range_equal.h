@@ -8,7 +8,7 @@ namespace stl_types {
 template<class ContainerA, class ContainerB>
 requires std::
     is_same_v<typename ContainerA::value_type, typename ContainerB::value_type>
-inline bool equal(ContainerA const& c1, ContainerB const& c2)
+    inline bool equal(ContainerA const& c1, ContainerB const& c2)
 {
     if(std::size(c1) != std::size(c2))
         return false;

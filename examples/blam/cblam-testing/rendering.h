@@ -19,10 +19,7 @@ using MeshRendererManifest = compo::SubsystemManifest<
 
 using ScreenClearManifest = compo::SubsystemManifest<
     empty_list_t,
-    type_list_t<
-        gfx::system,
-        BlamResources,
-        PostProcessParameters>,
+    type_list_t<gfx::system, BlamResources, PostProcessParameters>,
     type_list_t<comp_app::GraphicsFramebuffer>>;
 
 struct ScreenClear

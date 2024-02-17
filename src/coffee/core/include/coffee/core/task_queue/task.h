@@ -43,11 +43,9 @@ inline void on_thread_created()
 
 template<typename R, typename... Args>
 requires std::is_same_v<R, void>
-    //
-    STATICINLINE void set_promise_value(
-        std::promise<void>&           out,
-        std::function<void(Args...)>& fun,
-        Args... args)
+//
+STATICINLINE void set_promise_value(
+    std::promise<void>& out, std::function<void(Args...)>& fun, Args... args)
 {
     fun(args...);
     out.set_value();
@@ -55,9 +53,9 @@ requires std::is_same_v<R, void>
 
 template<typename R, typename... Args>
 requires(!std::is_same_v<R, void>)
-    //
-    STATICINLINE void set_promise_value(
-        std::promise<R>& out, std::function<R(Args...)>& fun, Args... args)
+//
+STATICINLINE void set_promise_value(
+    std::promise<R>& out, std::function<R(Args...)>& fun, Args... args)
 {
     out.set_value(fun(args...));
 }
@@ -69,8 +67,8 @@ using libc_types::u64;
 
 struct runtime_queue_error : std::runtime_error
 {
-    runtime_queue_error(std::string_view error) :
-        std::runtime_error(std::string(error.begin(), error.end()))
+    runtime_queue_error(std::string_view error)
+        : std::runtime_error(std::string(error.begin(), error.end()))
     {
     }
 };
@@ -143,9 +141,9 @@ struct runtime_task
         auto            handle = result.get_future();
         return {
             runtime_task{
-                .task
-                = [fun    = std::move(fun),
-                   result = std::move(result)] { result.set_value(fun()); },
+                .task  = [fun = std::move(fun),
+                         result =
+                             std::move(result)] { result.set_value(fun()); },
                 .time  = scheduled_time,
                 .flags = Flags,
             },
@@ -185,10 +183,12 @@ struct dependent_task_invoker
 {
     virtual ~dependent_task_invoker();
     virtual bool ready() = 0;
+
     virtual bool cancelled()
     {
         return false;
     }
+
     virtual void execute() = 0;
 };
 
@@ -281,10 +281,11 @@ struct dependent_task : public dependent_task_invoker
     }
 
     template<typename Dummy = void>
-    requires(!std::is_same_v<Dependency, void>) void operator()()
+    requires(!std::is_same_v<Dependency, void>)
+    void operator()()
     {
-        std::conditional_t<Moveable, Dependency, Dependency const&> input
-            = dependency->get();
+        std::conditional_t<Moveable, Dependency, Dependency const&> input =
+            dependency->get();
         detail::set_promise_value<Out, Dep*>(output, task, &input);
     }
 
@@ -319,6 +320,7 @@ class runtime_queue
         {
             shutdown_flag.store(false);
         }
+
         ~QueueContext()
         {
             if(auto error = runtime_queue::TerminateThreads())
@@ -500,6 +502,7 @@ class runtime_queue
     struct await_task_t
     {
     };
+
     static constexpr await_task_t await_task{};
 
     template<typename... Args>
@@ -520,6 +523,7 @@ class runtime_queue
     {
         runtime_task task;
         u64          index;
+
         union
         {
             struct
@@ -547,6 +551,7 @@ class runtime_queue
     {
         return Block(detail::current_thread_id(), taskId);
     }
+
     static std::optional<RuntimeQueueError> Block(
         detail::thread_id targetThread, u64 taskId);
 
@@ -554,6 +559,7 @@ class runtime_queue
     {
         return Unblock(detail::current_thread_id(), taskId);
     }
+
     static std::optional<RuntimeQueueError> Unblock(
         detail::thread_id targetThread, u64 taskId);
 
@@ -561,6 +567,7 @@ class runtime_queue
     {
         return CancelTask(detail::current_thread_id(), taskId);
     }
+
     static std::optional<RuntimeQueueError> CancelTask(
         detail::thread_id targetThread, u64 taskId);
 
@@ -610,18 +617,18 @@ class runtime_queue
         using namespace std::chrono_literals;
 
         auto                         queue = GetCurrentQueue().value();
-        std::function<void(Args...)> out
-            = [queue, func = std::move(func), await](Args... args) {
-                  std::function<void()> task = [func, args...]() mutable {
-                      func(std::forward<Args>(args)...);
-                  };
-                  auto res = QueueImmediate(queue, 0ms, std::move(task));
-                  if(res.has_error())
-                      throw rq::runtime_queue_error(
-                          "failed to bind function to thread");
-                  if(await)
-                      AwaitTask(queue->thread_id(), res.value());
-              };
+        std::function<void(Args...)> out =
+            [queue, func = std::move(func), await](Args... args) {
+                std::function<void()> task = [func, args...]() mutable {
+                    func(std::forward<Args>(args)...);
+                };
+                auto res = QueueImmediate(queue, 0ms, std::move(task));
+                if(res.has_error())
+                    throw rq::runtime_queue_error(
+                        "failed to bind function to thread");
+                if(await)
+                    AwaitTask(queue->thread_id(), res.value());
+            };
         return out;
     }
 
@@ -640,7 +647,8 @@ class runtime_queue
 
 struct scoped_task
 {
-    scoped_task() : m_id(0)
+    scoped_task()
+        : m_id(0)
     {
     }
 
@@ -668,8 +676,9 @@ struct scoped_task
         m_thread_id = tid;
     }
 
-    scoped_task(scoped_task&& other) :
-        m_id(other.m_id), m_thread_id(other.m_thread_id)
+    scoped_task(scoped_task&& other)
+        : m_id(other.m_id)
+        , m_thread_id(other.m_thread_id)
     {
         other.m_id = 0;
     }
@@ -697,6 +706,7 @@ struct scoped_task
     {
         return m_id;
     }
+
     detail::thread_id threadId() const
     {
         return m_thread_id;

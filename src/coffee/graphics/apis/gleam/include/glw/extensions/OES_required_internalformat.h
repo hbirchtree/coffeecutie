@@ -3,9 +3,11 @@
 #ifdef GL_OES_required_internalformat
 #include "../enums/InternalFormat.h"
 #include "../enums/SizedInternalFormat.h"
+
 namespace gl::oes::required_internalformat {
 using gl::group::internal_format;
 using gl::group::sized_internal_format;
+
 namespace values {
 } // namespace values
 } // namespace gl::oes::required_internalformat

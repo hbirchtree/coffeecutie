@@ -14,8 +14,8 @@ void load_scenario_bsp(
 
     auto&                 magic     = data.container.magic;
     BSPCache<Version>&    bsp_cache = e.subsystem_cast<BSPCache<Version>>();
-    ShaderCache<Version>& shader_cache
-        = e.subsystem_cast<ShaderCache<Version>>();
+    ShaderCache<Version>& shader_cache =
+        e.subsystem_cast<ShaderCache<Version>>();
     BlamResources& gpu = e.subsystem_cast<BlamResources>();
 
     {
@@ -54,8 +54,8 @@ void load_scenario_bsp(
             origin + Vecf3{0, 0, second.z},
         }};
 
-        auto vertices
-            = bsp_cache.portal_buffer.subspan(bsp_cache.portal_ptr, 10);
+        auto vertices =
+            bsp_cache.portal_buffer.subspan(bsp_cache.portal_ptr, 10);
         std::copy(points.begin(), points.end(), vertices.begin());
         bsp_cache.portal_color_buffer[bsp_cache.portal_color_ptr] = Vecf3(1);
 
@@ -64,11 +64,11 @@ void load_scenario_bsp(
         DebugDraw&     draw   = trig.get<DebugDraw>();
 
         volume.trigger_volume = &trigger;
-        draw.data
-            = {.arrays = {
-                   .count  = 10,
-                   .offset = bsp_cache.portal_ptr,
-               }};
+        draw.data             = {
+                        .arrays = {
+                            .count  = 10,
+                            .offset = bsp_cache.portal_ptr,
+            }};
         draw.color_ptr = bsp_cache.portal_color_ptr;
         bsp_cache.portal_ptr += 10;
         bsp_cache.portal_color_ptr++;
@@ -120,8 +120,8 @@ void load_scenario_bsp(
                 bsp_ref.draw.data.push_back(mesh.draw);
 
                 ShaderData&       shader_ = mesh_ent.get<ShaderData>();
-                ShaderItem const& shader_it
-                    = shader_cache.find(mesh.shader)->second;
+                ShaderItem const& shader_it =
+                    shader_cache.find(mesh.shader)->second;
                 shader_.shader     = shader_it.header;
                 shader_.shader_tag = shader_it.tag;
                 shader_.shader_id  = mesh.shader;
@@ -195,8 +195,8 @@ void load_objects(
         if(!instance_tag->valid())
             continue;
 
-        blam::scn::object const* instance_obj
-            = instance_tag->template data<blam::scn::object>(magic).value();
+        blam::scn::object const* instance_obj =
+            instance_tag->template data<blam::scn::object>(magic).value();
 
         auto model_it = index.find(instance_obj[0].model.to_plain());
 
@@ -224,8 +224,8 @@ void load_objects(
 
         for(auto const& model_ : mesh_data.models)
         {
-            ModelItem<Version> const& modelit
-                = model_cache.find(model_)->second;
+            ModelItem<Version> const& modelit =
+                model_cache.find(model_)->second;
 
             for(auto const& sub : modelit.mesh.sub)
             {
@@ -240,8 +240,8 @@ void load_objects(
                 submod_.initialize<Version>(model_, sub);
 
                 ShaderData&       shader_ = submod.get<ShaderData>();
-                ShaderItem const& shader_it
-                    = shader_cache.find(sub.shader)->second;
+                ShaderItem const& shader_it =
+                    shader_cache.find(sub.shader)->second;
                 shader_.initialize(shader_it, submod_);
 
                 submod_.current_pass = shader_.get_render_pass(shader_cache);
@@ -292,10 +292,10 @@ void load_multiplayer_equipment(
         if(item_coll_tag == index.end())
             continue;
 
-        blam::scn::item_collection const& item_coll
-            = (*item_coll_tag)
-                  .template data<blam::scn::item_collection>(magic)
-                  .value()[0];
+        blam::scn::item_collection const& item_coll =
+            (*item_coll_tag)
+                .template data<blam::scn::item_collection>(magic)
+                .value()[0];
 
         auto perms = item_coll.items.data(magic).value();
         for(blam::scn::item_permutation const& item_perm : perms)
@@ -304,10 +304,10 @@ void load_multiplayer_equipment(
             {
             case blam::tag_class_t::weap:
             case blam::tag_class_t::eqip: {
-                blam::scn::item const& item
-                    = (*index.find(item_perm.item))
-                          .template data<blam::scn::item>(magic)
-                          .value()[0];
+                blam::scn::item const& item =
+                    (*index.find(item_perm.item))
+                        .template data<blam::scn::item>(magic)
+                        .value()[0];
 
                 auto              set    = e.create_entity(equip);
                 Model&            model_ = set.get<Model>();
@@ -328,8 +328,8 @@ void load_multiplayer_equipment(
 
                 for(auto const& model : models.models)
                 {
-                    ModelItem<Version> const& modelit
-                        = model_cache.find(model)->second;
+                    ModelItem<Version> const& modelit =
+                        model_cache.find(model)->second;
                     model_.model = model;
 
                     for(auto const& sub : modelit.mesh.sub)
@@ -343,12 +343,12 @@ void load_multiplayer_equipment(
                         submod_.initialize<Version>(model, sub);
 
                         ShaderData&       shader_ = submod.get<ShaderData>();
-                        ShaderItem const& shader_it
-                            = shader_cache.find(sub.shader)->second;
+                        ShaderItem const& shader_it =
+                            shader_cache.find(sub.shader)->second;
                         shader_.initialize(shader_it, submod_);
 
-                        submod_.current_pass
-                            = shader_.get_render_pass(shader_cache);
+                        submod_.current_pass =
+                            shader_.get_render_pass(shader_cache);
                     }
                 }
                 break;
@@ -367,16 +367,16 @@ void preload_player_bipeds(EntityContainer& e, MapChangedEvent<Version>& data)
     ModelCache<Version>* model_cache;
     e.subsystem(model_cache);
 
-    typename decltype(tag_index)::iterator bipeds[2]
-        = {tag_index.find("characters\\cyborg_mp\\cyborg_mp"),
-           tag_index.find("characters\\cyborg\\cyborg")};
+    typename decltype(tag_index)::iterator bipeds[2] = {
+        tag_index.find("characters\\cyborg_mp\\cyborg_mp"),
+        tag_index.find("characters\\cyborg\\cyborg")};
     for(u32 i = 0; i < 2; ++i)
     {
         auto it = bipeds[i];
         if(it == tag_index.end())
             continue;
-        blam::scn::biped const* biped
-            = (*it).template data<blam::scn::biped>(data.container.magic);
+        blam::scn::biped const* biped =
+            (*it).template data<blam::scn::biped>(data.container.magic);
         model_cache->predict_regions(biped->model);
     }
 }
@@ -464,27 +464,27 @@ void load_scenario_scenery(EntityContainer& e, MapChangedEvent<Version>& data)
     auto   skybox_ent = e.create_entity(skybox_base);
     Model& skybox_mod = skybox_ent.get<Model>();
 
-    Span<materials::world_data> world_data
-        = gpu.world_store->map<materials::world_data>(0);
+    Span<materials::world_data> world_data =
+        gpu.world_store->map<materials::world_data>(0);
 
     auto skyboxes = data.scenario->info.skyboxes.data(magic).value();
     for(auto const& skybox : skyboxes)
     {
         auto                     skybox_tag = &(*index.find(skybox));
-        blam::scn::skybox const& skybox_
-            = skybox_tag->template data<blam::scn::skybox>(magic).value()[0];
+        blam::scn::skybox const& skybox_ =
+            skybox_tag->template data<blam::scn::skybox>(magic).value()[0];
 
-        Span<const blam::scn::skybox::light> lights
-            = skybox_.lights.data(magic).value();
+        Span<const blam::scn::skybox::light> lights =
+            skybox_.lights.data(magic).value();
 
         for([[maybe_unused]] auto const& light : lights)
         {
             cDebug("Light: {0}", light.marker_name.str());
-            Vecf3 rotation
-                = glm::mat3_cast(
-                      glm::quat(Vecf3{0, 0, light.radiosity.direction.x})
-                      * glm::quat(Vecf3{0, light.radiosity.direction.y, 0}))
-                  * Vecf3{0, 0, 1};
+            Vecf3 rotation =
+                glm::mat3_cast(
+                    glm::quat(Vecf3{0, 0, light.radiosity.direction.x}) *
+                    glm::quat(Vecf3{0, light.radiosity.direction.y, 0})) *
+                Vecf3{0, 0, 1};
             world_data[0].lighting[0].light_direction = Vecf4{
                 rotation,
                 light.radiosity.test_distance,
@@ -497,14 +497,14 @@ void load_scenario_scenery(EntityContainer& e, MapChangedEvent<Version>& data)
             // interior or exterior in the world
         }
 
-        world_data[0].fog.indoor_color
-            = Vecf4(skybox_.indoor_fog.color, skybox_.indoor_fog.density);
-        world_data[0].fog.indoor_ambient
-            = Vecf4(skybox_.indoor_ambient.color, skybox_.indoor_ambient.power);
-        world_data[0].fog.outdoor_color
-            = Vecf4(skybox_.outdoor_fog.color, skybox_.outdoor_fog.density);
-        world_data[0].fog.outdoor_ambient = Vecf4(
-            skybox_.outdoor_ambient.color, skybox_.outdoor_ambient.power);
+        world_data[0].fog.indoor_color =
+            Vecf4(skybox_.indoor_fog.color, skybox_.indoor_fog.density);
+        world_data[0].fog.indoor_ambient =
+            Vecf4(skybox_.indoor_ambient.color, skybox_.indoor_ambient.power);
+        world_data[0].fog.outdoor_color =
+            Vecf4(skybox_.outdoor_fog.color, skybox_.outdoor_fog.density);
+        world_data[0].fog.outdoor_ambient =
+            Vecf4(skybox_.outdoor_ambient.color, skybox_.outdoor_ambient.power);
 
         world_data[0].fog.distances = Vecf4(
             skybox_.indoor_fog.start_distance,
@@ -544,8 +544,8 @@ void load_scenario_scenery(EntityContainer& e, MapChangedEvent<Version>& data)
                 submodel.initialize<Version>(part_id, region);
 
                 ShaderData&       shader_ = submod.get<ShaderData>();
-                ShaderItem const& shader_it
-                    = shader_cache.find(region.shader)->second;
+                ShaderItem const& shader_it =
+                    shader_cache.find(region.shader)->second;
                 shader_.initialize(shader_it, submodel);
 
                 submodel.current_pass = Pass_Sky;

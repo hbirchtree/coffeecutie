@@ -3,11 +3,14 @@
 #ifdef GL_INTEL_map_texture
 #include "../enums/MapTextureFormatINTEL.h"
 #include "../enums/TextureParameterName.h"
+
 namespace gl::intel::map_texture {
 using gl::group::map_texture_format_intel;
 using gl::group::texture_parameter_name;
+
 namespace values {
 } // namespace values
+
 /*!
  * \brief Part of GL_INTEL_map_texture
  * \param texture GLuint

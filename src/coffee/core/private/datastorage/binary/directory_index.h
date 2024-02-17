@@ -110,8 +110,8 @@ static u32 VirtPartitionChildren(
     {
         auto& node = set.outNodes.back();
         node.flags = flags;
-        node.node.len_info.prefix
-            = CharInsert(prefix, node.node.prefix, MaxPrefixLength);
+        node.node.len_info.prefix =
+            CharInsert(prefix, node.node.prefix, MaxPrefixLength);
     }
 
     /* In this case, we have reached the bottom of the children tree,
@@ -149,10 +149,10 @@ static u32 VirtPartitionChildren(
     auto left_head  = left_slice.end() - 1;
     auto right_head = right_slice.begin();
 
-    u32 left_idx
-        = VirtPartitionChildren(set, left_slice, VirtGetPrefix(set, left_head));
-    u32 right_idx = VirtPartitionChildren(
-        set, right_slice, VirtGetPrefix(set, right_head));
+    u32 left_idx =
+        VirtPartitionChildren(set, left_slice, VirtGetPrefix(set, left_head));
+    u32 right_idx =
+        VirtPartitionChildren(set, right_slice, VirtGetPrefix(set, right_head));
 
     auto& node      = set.outNodes.at(parentIdx);
     node.node.left  = left_idx;
@@ -191,8 +191,8 @@ static u32 VirtRecurseChildren(
     }
 
     /* We need to perform partitioning on this node */
-    part_slice childrenRange = semantic::SpanOver<const Path>(
-        childrenRef.begin(), childrenRef.end());
+    part_slice childrenRange =
+        semantic::SpanOver<const Path>(childrenRef.begin(), childrenRef.end());
     return VirtPartitionChildren(
         set, childrenRange, src, currentNode.node.flags);
 }
@@ -244,17 +244,17 @@ static void GenPrefixNodes(
         {
             node.node.node.left  = node_t::sentinel_value;
             node.node.node.right = node_t::sentinel_value;
-            node.node.flags
-                = node_base_t::prefix_carry | node_base_t::prefix_directory;
-            node.node.node.len_info.prefix = CharInsert(
-                remaining_suffix, node.node.node.prefix, prefix_len);
+            node.node.flags =
+                node_base_t::prefix_carry | node_base_t::prefix_directory;
+            node.node.node.len_info.prefix =
+                CharInsert(remaining_suffix, node.node.node.prefix, prefix_len);
         } else
         {
             node.node.leaf.set_mask();
-            node.node.leaf.fileIdx         = 0;
-            node.node.flags                = node_base_t::prefix_carry;
-            node.node.node.len_info.prefix = CharInsert(
-                remaining_suffix, node.node.leaf.prefix, prefix_len);
+            node.node.leaf.fileIdx = 0;
+            node.node.flags        = node_base_t::prefix_carry;
+            node.node.node.len_info.prefix =
+                CharInsert(remaining_suffix, node.node.leaf.prefix, prefix_len);
         }
 
         parent.children.push_back(Path(append_prefix + remaining_suffix));
@@ -274,8 +274,8 @@ static void GenPrefixNodes(
     new_node.node.node.left  = node_t::sentinel_value;
     new_node.node.node.right = node_t::sentinel_value;
     new_node.node.flags      = node_base_t::prefix_carry;
-    new_node.node.node.len_info.prefix
-        = CharInsert(cut_prefix, new_node.node.node.prefix, MaxPrefixLength);
+    new_node.node.node.len_info.prefix =
+        CharInsert(cut_prefix, new_node.node.node.prefix, MaxPrefixLength);
 
     new_node_parent.children.push_back(Path(new_parent));
 
@@ -393,8 +393,8 @@ static directory_index_t Generate(Span<const file_t> const& files)
     /* This part is only used as the root of the tree,
      *  and is never included in paths. */
     auto& rootStem = stems[Path(".")];
-    rootStem.node.node.len_info.prefix
-        = CharInsert(".", rootStem.node.node.prefix, MaxPrefixLength);
+    rootStem.node.node.len_info.prefix =
+        CharInsert(".", rootStem.node.node.prefix, MaxPrefixLength);
 
     Profiler::DeepPushContext(VIRTFS_API "Creating directory stems");
 
@@ -476,8 +476,8 @@ static directory_index_t Generate(Span<const file_t> const& files)
         PrintDirIndex(outNodes);
     }
 
-    auto indexSize
-        = sizeof(index_t) + outNodes.size() * sizeof(dir_data_t::node_base_t);
+    auto indexSize =
+        sizeof(index_t) + outNodes.size() * sizeof(dir_data_t::node_base_t);
 
     index_t outIndex;
 
@@ -547,10 +547,10 @@ static u32 GetFirstSelected(
         return idx;
     else if(num_matches == 1)
     {
-        auto valid_left
-            = node.node.left.valid() && cache_idx.node_match.at(node.node.left);
-        auto valid_right = node.node.right.valid()
-                           && cache_idx.node_match.at(node.node.right);
+        auto valid_left =
+            node.node.left.valid() && cache_idx.node_match.at(node.node.left);
+        auto valid_right =
+            node.node.right.valid() && cache_idx.node_match.at(node.node.right);
 
         return valid_left ? GetFirstSelected(cache_idx, nodes, node.node.left)
                : valid_right
@@ -569,8 +569,8 @@ stl_types::result<directory_data_t::result_t, error> SearchFile(
     using node_base_t = directory_data_t::node_base_t;
     using result_t    = directory_data_t::result_t;
 
-    auto search
-        = index_common::FindIndex(vfs, index_t::index_type::directory_tree);
+    auto search =
+        index_common::FindIndex(vfs, index_t::index_type::directory_tree);
 
     if(search.has_error())
         return error::no_indexing;
@@ -597,8 +597,9 @@ stl_types::result<directory_data_t::result_t, error> SearchFile(
         while(currentNode)
         {
             /* Exact match */
-            if(currentPrefix + currentNode->longest_match(prefix, currentPrefix)
-               == prefixLen)
+            if(currentPrefix +
+                   currentNode->longest_match(prefix, currentPrefix) ==
+               prefixLen)
                 return result_t{{}, {currentNode, index}, strat};
 
             /* Can't go further with leaf node */
@@ -624,12 +625,11 @@ stl_types::result<directory_data_t::result_t, error> SearchFile(
             }
 
             /* First look for longest match within each tree */
-            auto left_match
-                = left_node ? left_node->longest_match(prefix, currentPrefix)
-                            : 0;
-            auto right_match
-                = right_node ? right_node->longest_match(prefix, currentPrefix)
-                             : 0;
+            auto left_match =
+                left_node ? left_node->longest_match(prefix, currentPrefix) : 0;
+            auto right_match =
+                right_node ? right_node->longest_match(prefix, currentPrefix)
+                           : 0;
 
             if(left_match > right_match)
             {
@@ -655,21 +655,20 @@ stl_types::result<directory_data_t::result_t, error> SearchFile(
             auto left_lex_order = libc::str::cmp_enum(
                 left_node->node.prefix,
                 &prefix[currentPrefix],
-                (std::min<
-                    u32>)(prefix.size() - currentPrefix, left_node->prefix_length()));
+                (std::min<u32>)(prefix.size() - currentPrefix,
+                                left_node->prefix_length()));
             auto right_lex_order = libc::str::cmp_enum(
                 right_node->node.prefix,
                 &prefix[currentPrefix],
-                (std::min<
-                    u32>)(prefix.size() - currentPrefix, right_node->prefix_length()));
+                (std::min<u32>)(prefix.size() - currentPrefix,
+                                right_node->prefix_length()));
 
             /* Look for ordering if there is no prefix match */
-            auto left_order = left_node
-                                  ? (feval(left_lex_order & lex_order::aequal))
-                                  : false;
-            auto right_order
-                = right_node ? (feval(right_lex_order & lex_order::bequal))
-                             : false;
+            auto left_order =
+                left_node ? (feval(left_lex_order & lex_order::aequal)) : false;
+            auto right_order =
+                right_node ? (feval(right_lex_order & lex_order::bequal))
+                           : false;
 
             if(left_order)
             {
@@ -707,8 +706,8 @@ stl_types::result<directory_data_t::result_t, error> SearchFile(
             if(currentNode->is_leaf())
             {
                 auto match_len = node_data.second;
-                match_len
-                    += currentNode->longest_match(prefix, node_data.second);
+                match_len +=
+                    currentNode->longest_match(prefix, node_data.second);
 
                 if(match_len >= prefixLen)
                     cache_index.node_match.at(node_data.first) = 1;
@@ -717,8 +716,8 @@ stl_types::result<directory_data_t::result_t, error> SearchFile(
             }
 
             auto match_len = node_data.second;
-            auto prefix_match
-                = currentNode->longest_match(prefix, node_data.second);
+            auto prefix_match =
+                currentNode->longest_match(prefix, node_data.second);
 
             match_len += currentNode->flags & node_base_t::prefix_directory
                              ? prefix_match + 1

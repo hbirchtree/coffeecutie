@@ -92,6 +92,7 @@ FORCEDINLINE void sleepMicros(u64 mic)
 {
     CurrentThread::sleep_for(Chrono::microseconds(mic));
 }
+
 /*!
  * \brief Sleep for mll milliseconds
  * \param mll

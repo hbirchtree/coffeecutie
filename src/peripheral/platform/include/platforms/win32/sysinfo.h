@@ -96,10 +96,25 @@ namespace proc::win32 {
 
 using libc_types::u32;
 
-inline libc_types::u32 node_count() { return 1; }
-inline libc_types::u32 cpu_count() { return 1; }
-inline libc_types::u32 core_count(u32 cpu = 0, u32 /*node*/ = 0) { return 1; }
-inline libc_types::u32 thread_count(u32 cpu = 0, u32 /*node*/ = 0) { return 1; }
+inline libc_types::u32 node_count()
+{
+    return 1;
+}
+
+inline libc_types::u32 cpu_count()
+{
+    return 1;
+}
+
+inline libc_types::u32 core_count(u32 cpu = 0, u32 /*node*/ = 0)
+{
+    return 1;
+}
+
+inline libc_types::u32 thread_count(u32 cpu = 0, u32 /*node*/ = 0)
+{
+    return 1;
+}
 
 inline std::optional<std::pair<std::string, std::string>> model(
     u32 /*cpu*/ = 0, u32 /*node*/ = 0)

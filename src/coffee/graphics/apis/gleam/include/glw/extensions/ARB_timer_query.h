@@ -4,25 +4,29 @@
 #include "../enums/GetPName.h"
 #include "../enums/QueryCounterTarget.h"
 #include "../enums/QueryTarget.h"
+
 namespace gl::arb::timer_query {
 using gl::group::get_prop;
 using gl::group::query_counter_target;
 using gl::group::query_target;
+
 namespace values {
 } // namespace values
+
 template<class span_i64>
-requires(concepts::span<span_i64>&& std::is_same_v<
-         std::decay_t<typename span_i64::value_type>,
-         std::decay_t<i64>>)
-    /*!
-     * \brief Part of GL_ARB_timer_query
-     * \param id GLuint
-     * \param pname GLenum
-     * \param params GLint64 *
-     * \return void
-     */
-    STATICINLINE void get_query_objecti64v(
-        u32 id, group::query_object_parameter_name pname, span_i64 params)
+requires(
+    concepts::span<span_i64> && std::is_same_v<
+                                    std::decay_t<typename span_i64::value_type>,
+                                    std::decay_t<i64>>)
+/*!
+ * \brief Part of GL_ARB_timer_query
+ * \param id GLuint
+ * \param pname GLenum
+ * \param params GLint64 *
+ * \return void
+ */
+STATICINLINE void get_query_objecti64v(
+    u32 id, group::query_object_parameter_name pname, span_i64 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -37,18 +41,19 @@ requires(concepts::span<span_i64>&& std::is_same_v<
 }
 
 template<class span_u64>
-requires(concepts::span<span_u64>&& std::is_same_v<
-         std::decay_t<typename span_u64::value_type>,
-         std::decay_t<u64>>)
-    /*!
-     * \brief Part of GL_ARB_timer_query
-     * \param id GLuint
-     * \param pname GLenum
-     * \param params GLuint64 *
-     * \return void
-     */
-    STATICINLINE void get_query_objectui64v(
-        u32 id, group::query_object_parameter_name pname, span_u64 params)
+requires(
+    concepts::span<span_u64> && std::is_same_v<
+                                    std::decay_t<typename span_u64::value_type>,
+                                    std::decay_t<u64>>)
+/*!
+ * \brief Part of GL_ARB_timer_query
+ * \param id GLuint
+ * \param pname GLenum
+ * \param params GLuint64 *
+ * \return void
+ */
+STATICINLINE void get_query_objectui64v(
+    u32 id, group::query_object_parameter_name pname, span_u64 params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

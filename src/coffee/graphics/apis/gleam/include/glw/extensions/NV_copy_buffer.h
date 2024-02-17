@@ -6,6 +6,7 @@ namespace values {
 constexpr u32 copy_read_buffer  = 0x8F36;
 constexpr u32 copy_write_buffer = 0x8F37;
 } // namespace values
+
 /*!
  * \brief Part of GL_NV_copy_buffer
  * \param readTarget GLenum

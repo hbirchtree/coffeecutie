@@ -42,4 +42,4 @@ FORCEDINLINE std::basic_string<T> right(
         s_copy.insert(s_copy.end(), len - s_copy.size(), ch);
     return s_copy;
 }
-} // namespace pad
+} // namespace stl_types::str::pad

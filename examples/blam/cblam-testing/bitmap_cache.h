@@ -5,16 +5,16 @@
 #include "data_cache.h"
 #include "graphics_api.h"
 
-using BitmapManifest
-    = compo::SubsystemManifest<empty_list_t, empty_list_t, empty_list_t>;
+using BitmapManifest =
+    compo::SubsystemManifest<empty_list_t, empty_list_t, empty_list_t>;
 
-using libc_types::u8;
 using compo::time_point;
+using libc_types::u8;
 
 template<typename V>
 struct BitmapCache
-    : DataCache<BitmapItem, std::tuple<u32, i16>, blam::tagref_t const&, i16>,
-      compo::RestrictedSubsystem<BitmapCache<V>, BitmapManifest>
+    : DataCache<BitmapItem, std::tuple<u32, i16>, blam::tagref_t const&, i16>
+    , compo::RestrictedSubsystem<BitmapCache<V>, BitmapManifest>
 {
     using type  = BitmapCache<V>;
     using Proxy = compo::proxy_of<BitmapManifest>;
@@ -37,10 +37,9 @@ struct BitmapCache
         }
     };
 
-    BitmapCache(
-        gfx::api*                   allocator,
-        RenderingParameters const* params) :
-        allocator(allocator), params(params)
+    BitmapCache(gfx::api* allocator, RenderingParameters const* params)
+        : allocator(allocator)
+        , params(params)
     {
     }
 
@@ -49,17 +48,17 @@ struct BitmapCache
         blam::magic_data_t const&     bitmap_magic)
     {
         index = blam::tag_index_view(map);
-        bitm_header
-            = blam::bitm::bitmap_atlas_view::from_data(bitmap_magic.data());
+        bitm_header =
+            blam::bitm::bitmap_atlas_view::from_data(bitmap_magic.data());
         magic = map.magic;
-        bitm_magic
-            = map.map->version == blam::version_t::xbox ? magic : bitmap_magic;
+        bitm_magic =
+            map.map->version == blam::version_t::xbox ? magic : bitmap_magic;
         bitm_magic.magic_offset = 0;
         evict_all();
     }
 
     blam::tag_index_view<V>    index;
-    gfx::api*                   allocator;
+    gfx::api*                  allocator;
     RenderingParameters const* params;
 
     blam::magic_data_t            magic;
@@ -159,9 +158,9 @@ struct BitmapCache
                          //: 0;
 
         Veci2 pool_offset = Veci2(img.image.offset[0], img.image.offset[1]);
-        Veci2 tex_offset
-            = {(pool_offset[0] >> mipmap) - mip_pad,
-               (pool_offset[1] >> mipmap) - mip_pad};
+        Veci2 tex_offset  = {
+            (pool_offset[0] >> mipmap) - mip_pad,
+            (pool_offset[1] >> mipmap) - mip_pad};
 
         (tex_offset[0] >>= 2) <<= 2;
         (tex_offset[1] >>= 2) <<= 2;
@@ -171,8 +170,8 @@ struct BitmapCache
 #if GLEAM_MAX_VERSION >= 0x400 || GLEAM_MAX_VERSION >= 0x320
         if(bucket.type == blam::bitm::type_t::tex_cube)
         {
-            gfx::texture_cube_array_t& texture
-                = bucket.template texture_as<gfx::texture_cube_array_t>();
+            gfx::texture_cube_array_t& texture =
+                bucket.template texture_as<gfx::texture_cube_array_t>();
             auto img_data  = img.image.mip->data(magic, mipmap);
             auto face_size = img_data.size_bytes() / 6;
             std::array<semantic::Span<const u8>, 6> faces = {{
@@ -191,8 +190,8 @@ struct BitmapCache
         } else
 #endif
         {
-            gfx::compat::texture_2da_t& texture
-                = bucket.template texture_as<gfx::compat::texture_2da_t>();
+            gfx::compat::texture_2da_t& texture =
+                bucket.template texture_as<gfx::compat::texture_2da_t>();
 
             texture.upload(
                 img.image.mip->data(magic, mipmap),
@@ -210,8 +209,8 @@ struct BitmapCache
     {
         auto _ = allocator->debug().scope(img.tag->to_name().to_string(magic));
 
-        auto& bucket
-            = get_bucket<BucketType>(img.image.fmt, img.image.mip->type);
+        auto& bucket =
+            get_bucket<BucketType>(img.image.fmt, img.image.mip->type);
 
         C_UNUSED(auto name) = img.tag->to_name().to_string(magic);
 
@@ -241,6 +240,7 @@ struct BitmapCache
     void allocate_storage()
     {
         using size_bucket = std::tuple<u32, u32>;
+
         struct pool_size
         {
             u32   num    = 0;
@@ -306,15 +306,15 @@ struct BitmapCache
                 BitmapItem* img    = &m_cache.find(id)->second;
                 auto        imsize = img->image.mip->isize;
 
-                if(params->mipmap_bias > 0
-                   && img->image.mip->mipmaps > params->mipmap_bias)
+                if(params->mipmap_bias > 0 &&
+                   img->image.mip->mipmaps > params->mipmap_bias)
                 {
                     imsize >>= params->mipmap_bias;
                     img->mipmaps.base = params->mipmap_bias;
-                    img->mipmaps.last
-                        = params->mipmap_bias
-                          + std::min<i32>(
-                              5, img->image.mip->mipmaps - params->mipmap_bias);
+                    img->mipmaps.last =
+                        params->mipmap_bias +
+                        std::min<i32>(
+                            5, img->image.mip->mipmaps - params->mipmap_bias);
                 } else
                 {
                     img->mipmaps.base = 0;
@@ -373,8 +373,8 @@ struct BitmapCache
             auto& props  = bucket.second;
             auto& pool   = fmt_count[bucket.first];
             i32   layers = C_CAST<i32>(pool.layers);
-            auto  size
-                = size_3d<i32>{pool.max.x, pool.max.y, layers}.convert<u32>();
+            auto  size =
+                size_3d<i32>{pool.max.x, pool.max.y, layers}.convert<u32>();
             props.surface->alloc(size);
 
             auto [type, fmt, _, __, comp] = bucket.first;
@@ -428,8 +428,8 @@ struct BitmapCache
 
         blam::tag_t const* bitm_tag = &(*it);
 
-        auto [bitm_ptr, curr_magic]
-            = bitm_tag->image(magic, bitm_header).value();
+        auto [bitm_ptr, curr_magic] =
+            bitm_tag->image(magic, bitm_header).value();
 
         if(!bitm_ptr)
             Throw(undefined_behavior("failed to get bitmap header"));
@@ -488,8 +488,8 @@ struct BitmapCache
             switch(im[0].type)
             {
             case blam::bitm::type_t::tex_2d: {
-                auto& bucket = get_bucket<gfx::compat::texture_2da_t>(
-                    fmt, img.mip->type);
+                auto& bucket =
+                    get_bucket<gfx::compat::texture_2da_t>(fmt, img.mip->type);
                 img.layer = bucket.ptr++;
                 break;
             }
@@ -497,8 +497,8 @@ struct BitmapCache
             case blam::bitm::type_t::tex_cube: {
                 if(!allocator->feature_info().texture.cube_array)
                     return {};
-                auto& bucket
-                    = get_bucket<gfx::texture_cube_array_t>(fmt, img.mip->type);
+                auto& bucket =
+                    get_bucket<gfx::texture_cube_array_t>(fmt, img.mip->type);
                 img.layer = bucket.ptr++;
                 break;
             }
@@ -515,6 +515,7 @@ struct BitmapCache
 
         return out;
     }
+
     virtual void evict_impl() override
     {
         for(auto& bucket : tex_buckets)
@@ -525,6 +526,7 @@ struct BitmapCache
 
         tex_buckets.clear();
     }
+
     virtual std::tuple<u32, i16> get_id(
         blam::tagref_t const& tag, i16 idx) override
     {
@@ -608,6 +610,7 @@ struct BitmapCache
     void start_restricted(Proxy&, time_point const&)
     {
     }
+
     void end_restricted(Proxy&, time_point const&)
     {
     }

@@ -3,8 +3,8 @@ extern "C" {
 #include <libavformat/avformat.h>
 }
 
-#include <peripherals/stl/types.h>
 #include <peripherals/libc/types.h>
+#include <peripherals/stl/types.h>
 
 namespace av {
 
@@ -16,4 +16,4 @@ const char* init_codec()
     return avcodec_license();
 }
 
-}
+} // namespace av

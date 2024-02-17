@@ -41,21 +41,23 @@ requires(
         std::is_same_v<HandleMode, handle_modes::no_op>
     )
 )
-    // clang-format on
-    struct generic_handle_t : non_copy
+// clang-format on
+struct generic_handle_t : non_copy
 {
-    static constexpr bool exceptions_mode
-        = std::is_same<handle_modes::exception_on_destruct, HandleMode>::value;
+    static constexpr bool exceptions_mode =
+        std::is_same<handle_modes::exception_on_destruct, HandleMode>::value;
 
     using handle_type = hnd_type;
 
     using borrow = generic_handle_t<hnd_type, handle_modes::no_op>;
 
-    generic_handle_t() : hnd(InvalidValue)
+    generic_handle_t()
+        : hnd(InvalidValue)
     {
     }
 
-    explicit generic_handle_t(hnd_type handle) : hnd(handle)
+    explicit generic_handle_t(hnd_type handle)
+        : hnd(handle)
     {
     }
 

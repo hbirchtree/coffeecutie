@@ -28,10 +28,10 @@ std::future<std::shared_ptr<FileMapper::Resource>> FileMapper::fetch(
 
 #if defined(COFFEE_EMSCRIPTEN)
     /* Only use wget if the file is not local */
-    const bool is_remote
-        = compile_info::platform::is_emscripten
-          && !platform::file::exists(src).has_value()
-          && enum_helpers::feval(src.flags, semantic::RSCA::AssetFile);
+    const bool is_remote =
+        compile_info::platform::is_emscripten &&
+        !platform::file::exists(src).has_value() &&
+        enum_helpers::feval(src.flags, semantic::RSCA::AssetFile);
 
     if(is_remote)
     {

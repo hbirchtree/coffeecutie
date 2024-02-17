@@ -5,6 +5,7 @@ namespace gl::ext::x11_sync_object {
 namespace values {
 constexpr u32 sync_x11_fence = 0x90E1;
 } // namespace values
+
 /*!
  * \brief Part of GL_EXT_x11_sync_object
  * \param external_sync_type GLenum

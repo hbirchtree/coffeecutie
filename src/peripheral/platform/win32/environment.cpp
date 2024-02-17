@@ -84,7 +84,8 @@ Url WindowsEnvFun::CurrentDir()
     out.resize(out.size() - 1);
 
     out = str::replace::str(out, L"\\", L"/");
-    return url::constructors::MkUrl(str::encode::to<char>(out), RSCA::SystemFile);
+    return url::constructors::MkUrl(
+        str::encode::to<char>(out), RSCA::SystemFile);
 }
 
 Url WindowsEnvFun::GetUserData(cstring org, cstring app)
@@ -104,6 +105,6 @@ Url WindowsEnvFun::GetUserData(cstring org, cstring app)
     out = str::replace::str(out, "\\", "/");
     return url::constructors::MkUrl(out, RSCA::SystemFile);
 }
-} // namespace Windows
-} // namespace Environment
-} // namespace Coffee
+} // namespace win32
+} // namespace env
+} // namespace platform

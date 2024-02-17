@@ -82,6 +82,7 @@ struct Windowing
     {
         setState(window_flags_t::fullscreen_window);
     }
+
     virtual void fullscreenExclusive()
     {
         setState(window_flags_t::fullscreen);
@@ -101,20 +102,25 @@ struct StaticWindowing : Windowing
     virtual void show() final
     {
     }
+
     virtual void close()
     {
         m_notifiedClose = true;
     }
+
     virtual void resize(size_2d_t const&) final
     {
     }
+
     virtual position_t position() const final
     {
         return {};
     }
+
     virtual void move(position_t const&) final
     {
     }
+
     virtual bool notifiedClose() const
     {
         return m_notifiedClose;
@@ -134,9 +140,8 @@ struct Dialogs
     virtual void error(text_type title, text_type message) = 0;
 
     virtual void confirm(
-        text_type title, text_type message, confirm_callback&& callback)
-        = 0;
-    virtual void prompt(text_type title, prompt_callback&& callback) = 0;
+        text_type title, text_type message, confirm_callback&& callback) = 0;
+    virtual void prompt(text_type title, prompt_callback&& callback)     = 0;
 };
 
 struct DisplayInfo
@@ -156,10 +161,12 @@ struct SingleDisplayInfo : DisplayInfo
     {
         return 1;
     }
+
     virtual libc_types::u32 currentDisplay() const final
     {
         return 0;
     }
+
     virtual size_2d_t size(libc_types::u32) const final
     {
         return virtualSize();
@@ -202,6 +209,7 @@ struct EventBus
     {
         process(ev, data);
     }
+
     virtual void process(EventType& ev, libc_types::c_ptr data) = 0;
 };
 
@@ -262,6 +270,7 @@ struct BasicEventBus : EventBus<EventType>
     {
         return e1.prio < e2.prio;
     }
+
     void sort_handlers()
     {
         std::sort(m_handlers.begin(), m_handlers.end(), handler_sorter);
@@ -305,15 +314,18 @@ struct BasicKeyboardInput : KeyboardInput
 
     struct EventHandler
     {
-        EventHandler(register_type& registr) : m_register(registr)
+        EventHandler(register_type& registr)
+            : m_register(registr)
         {
         }
+
         using event_type = Coffee::Input::CIKeyEvent;
 
         void operator()(Coffee::Input::CIEvent const&, event_type const* ev)
         {
             m_register[ev->key] = ev->mod;
         }
+
         register_type& m_register;
     };
 
@@ -378,19 +390,24 @@ struct GraphicsFramebuffer
     {
         return 1;
     }
+
     virtual size_2d_t size() const = 0;
-    virtual PixFmt    format() const
+
+    virtual PixFmt format() const
     {
         return PixFmt::None;
     }
+
     virtual PixFmt depthFormat() const
     {
         return PixFmt::None;
     }
+
     virtual PixFmt stencilFormat() const
     {
         return PixFmt::None;
     }
+
     virtual void swapBuffers(app_error& ec) = 0;
 };
 
@@ -452,6 +469,7 @@ struct TempProvider
     {
         return Presence::Absent;
     }
+
     virtual libc_types::f32 value(DeviceClass = DeviceClass::Default)
     {
         return 0.f;
@@ -510,15 +528,18 @@ struct GPUStatProvider
     {
         return {};
     }
+
     virtual std::map<std::string_view, std::string> stats_strings()
     {
         return {};
     }
+
     struct stats_desc_t
     {
         platform::profiling::MetricVariant type;
-        bool is_percentage{false};
+        bool                               is_percentage{false};
     };
+
     virtual std::map<std::string_view, stats_desc_t> stats_description()
     {
         return {};
@@ -579,6 +600,7 @@ struct Config : detail::SubsystemBase
     {
         return *C_CAST<ExposedConfig const*>(this);
     }
+
     virtual ExposedConfig& get() final
     {
         return *C_CAST<ExposedConfig*>(this);
@@ -590,8 +612,8 @@ struct WindowConfig : Config<WindowConfig>
     text_type_t    title;
     size_2d_t      size;
     position_t     position;
-    window_flags_t flags = window_flags_t::resizable | window_flags_t::windowed
-                           | window_flags_t::visible;
+    window_flags_t flags = window_flags_t::resizable |
+                           window_flags_t::windowed | window_flags_t::visible;
 };
 
 struct ControllerConfig : Config<ControllerConfig>
@@ -618,6 +640,7 @@ struct TouchConfig : Config<TouchConfig>
 
     Options options = Gestures;
 };
+
 C_FLAGS(TouchConfig::Options, libc_types::u32);
 
 struct GraphicsBindingConfig : Config<GraphicsBindingConfig>
@@ -650,6 +673,7 @@ struct AppService : detail::SubsystemBase
         detail::restricted::start_frame(
             C_OCAST<exposed_type&>(*this), c.underlying(), t);
     }
+
     virtual void end_frame(
         detail::ContainerProxy& c, detail::time_point const& t)
     {
@@ -667,8 +691,8 @@ struct AppService : detail::SubsystemBase
     static InternalType& register_service(
         detail::EntityContainer& container, Args... args)
     {
-        auto& subsys
-            = container.register_subsystem_inplace<ExposedType, InternalType>(
+        auto& subsys =
+            container.register_subsystem_inplace<ExposedType, InternalType>(
                 std::forward<Args>(args)...);
 
         container.register_subsystem_services<ExposedType>(&subsys);
@@ -697,6 +721,7 @@ struct AppLoadableService
         m_state = ec ? Error : Initialized;
         return static_cast<bool>(ec);
     }
+
     bool do_unload(entity_container& e, app_error& ec)
     {
         unload(e, ec);
@@ -719,6 +744,7 @@ struct AppLoadableService
     {
         (void)e, (void)ec;
     }
+
     virtual void unload(entity_container& e, app_error& ec)
     {
         (void)e, (void)ec;
@@ -753,16 +779,17 @@ using Windowing           = detail::tag_t<interfaces::Windowing>;
 
 template<typename EType>
 struct EventBus
-    : interfaces::EventBus<EType>,
-      AppService<EventBus<EType>, detail::tag_t<interfaces::EventBus<EType>>>
+    : interfaces::EventBus<EType>
+    , AppService<EventBus<EType>, detail::tag_t<interfaces::EventBus<EType>>>
 {
 };
 
 template<typename EType>
-struct BasicEventBus : interfaces::BasicEventBus<EType>,
-                       AppService<
-                           BasicEventBus<EType>,
-                           detail::tag_t<interfaces::BasicEventBus<EType>>>
+struct BasicEventBus
+    : interfaces::BasicEventBus<EType>
+    , AppService<
+          BasicEventBus<EType>,
+          detail::tag_t<interfaces::BasicEventBus<EType>>>
 {
     //    using services = detail::subsystem_list<
     //        BasicEventBus<EType>,
@@ -777,8 +804,9 @@ struct BasicEventBus : interfaces::BasicEventBus<EType>,
     }
 };
 
-struct PtrNativeWindowInfoService : interfaces::PtrNativeWindowInfo,
-                                    AppService<PtrNativeWindowInfoService>
+struct PtrNativeWindowInfoService
+    : interfaces::PtrNativeWindowInfo
+    , AppService<PtrNativeWindowInfoService>
 {
     PtrNativeWindowInfoService()
     {

@@ -139,22 +139,22 @@ static void SetStyle()
     style.Colors[ImGuiCol_FrameBgHovered] = ImVec4(1.00f, 1.00f, 1.00f, 0.10f);
     style.Colors[ImGuiCol_FrameBgActive]  = ImVec4(1.00f, 1.00f, 1.00f, 0.05f);
     style.Colors[ImGuiCol_TitleBg]        = ImVec4(0.00f, 0.00f, 0.00f, 0.99f);
-    style.Colors[ImGuiCol_TitleBgCollapsed]
-        = ImVec4(0.00f, 0.00f, 0.00f, 1.00f);
+    style.Colors[ImGuiCol_TitleBgCollapsed] =
+        ImVec4(0.00f, 0.00f, 0.00f, 1.00f);
     style.Colors[ImGuiCol_TitleBgActive] = ImVec4(0.00f, 0.00f, 0.00f, 0.99f);
     style.Colors[ImGuiCol_MenuBarBg]     = ImVec4(0.00f, 0.00f, 0.00f, 0.98f);
     style.Colors[ImGuiCol_ScrollbarBg]   = ImVec4(1.00f, 1.00f, 1.00f, 0.00f);
     style.Colors[ImGuiCol_ScrollbarGrab] = ImVec4(1.00f, 1.00f, 1.00f, 0.10f);
-    style.Colors[ImGuiCol_ScrollbarGrabHovered]
-        = ImVec4(1.00f, 1.00f, 1.00f, 0.20f);
-    style.Colors[ImGuiCol_ScrollbarGrabActive]
-        = ImVec4(1.00f, 1.00f, 1.00f, 0.05f);
+    style.Colors[ImGuiCol_ScrollbarGrabHovered] =
+        ImVec4(1.00f, 1.00f, 1.00f, 0.20f);
+    style.Colors[ImGuiCol_ScrollbarGrabActive] =
+        ImVec4(1.00f, 1.00f, 1.00f, 0.05f);
     //    style.Colors[ImGuiCol_ComboBg]    =
     //    ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
     style.Colors[ImGuiCol_CheckMark]  = ImVec4(1.00f, 1.00f, 1.00f, 0.70f);
     style.Colors[ImGuiCol_SliderGrab] = ImVec4(0.00f, 0.00f, 0.00f, 1.00f);
-    style.Colors[ImGuiCol_SliderGrabActive]
-        = ImVec4(0.00f, 0.00f, 0.00f, 1.00f);
+    style.Colors[ImGuiCol_SliderGrabActive] =
+        ImVec4(0.00f, 0.00f, 0.00f, 1.00f);
     style.Colors[ImGuiCol_Button]        = ImVec4(1.00f, 1.00f, 1.00f, 0.10f);
     style.Colors[ImGuiCol_ButtonHovered] = ImVec4(1.00f, 1.00f, 1.00f, 0.20f);
     style.Colors[ImGuiCol_ButtonActive]  = ImVec4(1.00f, 1.00f, 1.00f, 0.00f);
@@ -167,24 +167,24 @@ static void SetStyle()
     //    style.Colors[ImGuiCol_ColumnActive]  = ImVec4(1.00f, 1.00f, 1.00f,
     //    0.00f);
     style.Colors[ImGuiCol_ResizeGrip] = ImVec4(1.00f, 1.00f, 1.00f, 0.05f);
-    style.Colors[ImGuiCol_ResizeGripHovered]
-        = ImVec4(1.00f, 1.00f, 1.00f, 0.10f);
-    style.Colors[ImGuiCol_ResizeGripActive]
-        = ImVec4(1.00f, 1.00f, 1.00f, 0.00f);
+    style.Colors[ImGuiCol_ResizeGripHovered] =
+        ImVec4(1.00f, 1.00f, 1.00f, 0.10f);
+    style.Colors[ImGuiCol_ResizeGripActive] =
+        ImVec4(1.00f, 1.00f, 1.00f, 0.00f);
     //    style.Colors[ImGuiCol_CloseButton] = ImVec4(1.00f, 1.00f, 1.00f,
     //    0.20f); style.Colors[ImGuiCol_CloseButtonHovered] =
     //        ImVec4(1.00f, 1.00f, 1.00f, 0.30f);
     //    style.Colors[ImGuiCol_CloseButtonActive] =
     //        ImVec4(1.00f, 1.00f, 1.00f, 0.20f);
     style.Colors[ImGuiCol_PlotLines] = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
-    style.Colors[ImGuiCol_PlotLinesHovered]
-        = ImVec4(1.00f, 1.00f, 1.00f, 0.00f);
+    style.Colors[ImGuiCol_PlotLinesHovered] =
+        ImVec4(1.00f, 1.00f, 1.00f, 0.00f);
     style.Colors[ImGuiCol_PlotHistogram] = ImVec4(1.00f, 1.00f, 1.00f, 0.70f);
-    style.Colors[ImGuiCol_PlotHistogramHovered]
-        = ImVec4(1.00f, 1.00f, 1.00f, 0.80f);
+    style.Colors[ImGuiCol_PlotHistogramHovered] =
+        ImVec4(1.00f, 1.00f, 1.00f, 0.80f);
     style.Colors[ImGuiCol_TextSelectedBg] = ImVec4(0.00f, 0.00f, 0.00f, 1.00f);
-    style.Colors[ImGuiCol_ModalWindowDimBg]
-        = ImVec4(0.00f, 0.00f, 0.00f, 0.80f);
+    style.Colors[ImGuiCol_ModalWindowDimBg] =
+        ImVec4(0.00f, 0.00f, 0.00f, 0.80f);
 
     for(auto i : Range<>(ImGuiCol_COUNT))
     {
@@ -358,9 +358,8 @@ void ImGuiSystem::start_restricted(Proxy& p, time_point const& t)
     {
         using namespace std::chrono_literals;
         save_imgui_ini();
-        m_nextIniSaveTime = t
-                            + std::chrono::seconds(
-                                static_cast<int>(ImGui::GetIO().IniSavingRate));
+        m_nextIniSaveTime = t + std::chrono::seconds(static_cast<int>(
+                                    ImGui::GetIO().IniSavingRate));
     }
 }
 

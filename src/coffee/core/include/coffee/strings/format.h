@@ -16,4 +16,4 @@ auto fmt(::fmt::format_string<Args...> fmt, Args&&... args)
     return ::fmt::format(fmt, std::forward<Args&&>(args)...);
 }
 
-}
+} // namespace Coffee::Strings

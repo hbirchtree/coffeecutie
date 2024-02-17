@@ -14,4 +14,4 @@ FORCEDINLINE std::basic_string<CharType> indent(
     return out;
 }
 
-}
+} // namespace stl_types::str::fmt

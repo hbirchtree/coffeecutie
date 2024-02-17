@@ -3,9 +3,11 @@
 #ifdef GL_ARB_texture_float
 #include "../enums/InternalFormat.h"
 #include "../enums/SizedInternalFormat.h"
+
 namespace gl::arb::texture_float {
 using gl::group::internal_format;
 using gl::group::sized_internal_format;
+
 namespace values {
 constexpr u32 alpha32f               = 0x8816;
 constexpr u32 intensity32f           = 0x8817;

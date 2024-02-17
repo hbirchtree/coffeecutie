@@ -2,8 +2,10 @@
 
 #ifdef GL_ARB_multisample
 #include "../enums/AttribMask.h"
+
 namespace gl::arb::multisample {
 using gl::group::attrib_mask;
+
 namespace values {
 constexpr u32 multisample              = 0x809D;
 constexpr u32 sample_alpha_to_coverage = 0x809E;
@@ -14,6 +16,7 @@ constexpr u32 samples                  = 0x80A9;
 constexpr u32 sample_coverage_value    = 0x80AA;
 constexpr u32 sample_coverage_invert   = 0x80AB;
 } // namespace values
+
 /*!
  * \brief Part of GL_ARB_multisample
  * \param value GLfloat

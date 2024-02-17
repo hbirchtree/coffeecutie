@@ -35,10 +35,8 @@ bool LoadVorbis(AudioSample* smp, Bytes const& src)
     smp->container = audio_data::of(
         smp->data, smp->samples * smp->fmt.channels * smp->fmt.samplerate);
 
-    audio_data::SetDestr(smp->container, [](audio_data& data)
-    {
-        ::free(data.data);
-    });
+    audio_data::SetDestr(
+        smp->container, [](audio_data& data) { ::free(data.data); });
 
     smp->fmt.bitdepth = smp->samples / smp->fmt.samplerate * smp->fmt.channels;
     return true;
@@ -46,7 +44,10 @@ bool LoadVorbis(AudioSample* smp, Bytes const& src)
 
 } // namespace Stb
 
-AudioFormat::AudioFormat() : samplerate(0), channels(0), bitdepth(0)
+AudioFormat::AudioFormat()
+    : samplerate(0)
+    , channels(0)
+    , bitdepth(0)
 {
 }
 

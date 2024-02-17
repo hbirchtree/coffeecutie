@@ -18,9 +18,10 @@ using system_manifest = compo::SubsystemManifest<
         comp_app::BasicEventBus<Coffee::Display::Event>,
         comp_app::GraphicsFramebuffer>>;
 
-class system : public compo::RestrictedSubsystem<system, system_manifest>,
-               public gleam::api,
-               public comp_app::AppLoadableService
+class system
+    : public compo::RestrictedSubsystem<system, system_manifest>
+    , public gleam::api
+    , public comp_app::AppLoadableService
 {
     using reset_status = gleam::context::api::reset_status;
 
@@ -28,15 +29,16 @@ class system : public compo::RestrictedSubsystem<system, system_manifest>,
     using type = system;
     using gleam::api::load;
 
-    system() : context_checker{context_robustness()}
+    system()
+        : context_checker{context_robustness()}
     {
         priority = 900;
     }
 
     void load_context_checker()
     {
-        context_notifies = context_checker.reset_strategy()
-                           == gleam::context::api::strategy::lose_on_reset;
+        context_notifies = context_checker.reset_strategy() ==
+                           gleam::context::api::strategy::lose_on_reset;
     }
 
     void start_restricted(Proxy& e, time_point const& ts)
@@ -73,11 +75,12 @@ class system : public compo::RestrictedSubsystem<system, system_manifest>,
                 usage.texture.texture_uploads,
                 0
                 //
-                );
+            );
             m_next_stats = ts + 1s;
         }
         this->usage() = {};
     }
+
     void end_restricted(Proxy&, time_point const&)
     {
     }

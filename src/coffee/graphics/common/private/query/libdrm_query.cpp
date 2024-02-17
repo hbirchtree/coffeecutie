@@ -1,7 +1,7 @@
-#include <coffee/graphics/common/query/gpu_query.h>
-#include <coffee/core/types/cdef/infotypes.h>
-#include <coffee/core/CFiles>
 #include <coffee/core/CDebug>
+#include <coffee/core/CFiles>
+#include <coffee/core/types/cdef/infotypes.h>
+#include <coffee/graphics/common/query/gpu_query.h>
 #include <peripherals/stl/string_casting.h>
 
 #include <drm.h>
@@ -12,12 +12,11 @@
 
 extern "C" {
 
-//uint64_t get_nouveau_property(int fd);
-
+// uint64_t get_nouveau_property(int fd);
 }
 
-namespace Coffee{
-namespace GpuInfo{
+namespace Coffee {
+namespace GpuInfo {
 
 int device(gpucount_t i)
 {
@@ -35,10 +34,11 @@ gpucount_t GetNumGpus()
     gpucount_t num = 0;
 
     DirFun::DirList files;
-    DirFun::Ls(MkUrl("/dev/dri",
-                     ResourceAccess::SpecifyStorage
-                     |ResourceAccess::SystemFile),
-               files);
+    DirFun::Ls(
+        MkUrl(
+            "/dev/dri",
+            ResourceAccess::SpecifyStorage | ResourceAccess::SystemFile),
+        files);
     for(DirFun::DirItem_t const& e : files)
         if(e.name.substr(0, 4) == "card")
             num++;
@@ -50,14 +50,13 @@ HWDeviceInfo GetModel(gpucount_t i)
     int dev = device(i);
 
     drmVersionPtr ver = drmGetVersion(dev);
-    drmDevicePtr dev_ptr;
+    drmDevicePtr  dev_ptr;
     drmGetDevice(dev, &dev_ptr);
 
-    std::string dev_id =
-            cStringFormat(
-                "{0}:{1}",
-                StrUtil::pointerify(dev_ptr->deviceinfo.pci->vendor_id),
-                StrUtil::pointerify(dev_ptr->deviceinfo.pci->device_id));
+    std::string dev_id = cStringFormat(
+        "{0}:{1}",
+        StrUtil::pointerify(dev_ptr->deviceinfo.pci->vendor_id),
+        StrUtil::pointerify(dev_ptr->deviceinfo.pci->device_id));
 
     auto h = HWDeviceInfo(ver->desc, dev_id, ver->name);
     drmFreeVersion(ver);
@@ -70,27 +69,27 @@ GpuQueryInterface GetDRM()
 {
     return {
         GetDriver,
-                GetNumGpus,
-                GetModel,
-                nullptr,
-                nullptr,
-                nullptr,
-                nullptr,
-                nullptr,
-                nullptr,
-                nullptr,
+        GetNumGpus,
+        GetModel,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
     };
 }
 
-}
-}
+} // namespace GpuInfo
+} // namespace Coffee
 
 extern "C" GpuQueryFunction* GetGpuQuery();
 
 GpuQueryFunction* GetGpuQuery()
 {
     if(drmAvailable() && Coffee::GpuInfo::GetNumGpus())
-        return new GpuQueryFunction{ Coffee::GpuInfo::GetDRM };
+        return new GpuQueryFunction{Coffee::GpuInfo::GetDRM};
 
     return nullptr;
 }

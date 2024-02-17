@@ -46,12 +46,13 @@ struct ScopedJNI
     JNIEnv* jniEnvironment;
     JavaVM* javaVm;
 
-    ScopedJNI(JavaVM* jvm) : javaVm(jvm)
+    ScopedJNI(JavaVM* jvm)
+        : javaVm(jvm)
     {
         jni_error_code ec;
 
-        auto envcode
-            = javaVm->GetEnv(C_RCAST<void**>(&jniEnvironment), JNI_VERSION_1_6);
+        auto envcode =
+            javaVm->GetEnv(C_RCAST<void**>(&jniEnvironment), JNI_VERSION_1_6);
 
         switch(envcode)
         {
@@ -145,8 +146,9 @@ struct network_stats
 
     struct result_t
     {
-        result_t(libc_types::u64 rx = 0, libc_types::u64 tx = 0) :
-            rx(rx), tx(tx)
+        result_t(libc_types::u64 rx = 0, libc_types::u64 tx = 0)
+            : rx(rx)
+            , tx(tx)
         {
         }
 
@@ -206,6 +208,7 @@ struct display_info
         hlg          = 0x4,
         hdr10_plus   = 0x8,
     };
+
     enum rotation_t
     {
         portrait_0,
@@ -213,17 +216,18 @@ struct display_info
         portrait_180,
         landscape_270,
     };
+
     struct insets_t
     {
         f32 top, bottom, left, right;
     };
 
     hdr_mode_t hdr_modes();
-    bool     is_low_latency();
-    bool     is_wide_gamut();
+    bool       is_low_latency();
+    bool       is_wide_gamut();
 
     std::optional<insets_t> safe_insets();
-    rotation_t rotation();
+    rotation_t              rotation();
 
     f32 dpi();
     f32 refresh_rate();

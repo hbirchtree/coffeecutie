@@ -8,6 +8,7 @@ semantic::Span<const data_descriptor_t> files_listing()
 {
     return {};
 }
+
 semantic::Span<const libc_types::u8> files_data()
 {
     return {};

@@ -9,7 +9,9 @@ class runtime_queue;
 
 namespace comp_app {
 
-struct PerformanceMonitor : AppService<PerformanceMonitor>, AppLoadableService
+struct PerformanceMonitor
+    : AppService<PerformanceMonitor>
+    , AppLoadableService
 {
     using readable_services = detail::subsystem_list<
         PerformanceMonitor,

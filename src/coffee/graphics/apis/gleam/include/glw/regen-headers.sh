@@ -2,8 +2,8 @@
 
 set -eu
 
-CLANG_FORMAT=${CLANG_FORMAT:-clang-format}
 ROOT_DIR=$(git rev-parse --show-toplevel)
+CLANG_FORMAT=${CLANG_FORMAT:-${ROOT_DIR}/multi_build/compilers/bin/clang-format}
 
 cd $(dirname $0)
 

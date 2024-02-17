@@ -50,8 +50,8 @@ template<
     typename RegexOpts                                 = regex_opts<>,
     typename std::enable_if<RegexOpts::capture>::type* = nullptr>
 bool match(
-    typename RegexTraits::regex_type const&    pattern,
-    typename RegexTraits::string_type const&   input,
+    typename RegexTraits::regex_type const&         pattern,
+    typename RegexTraits::string_type const&        input,
     std::vector<typename RegexTraits::string_type>& output)
 {
     std::match_results<typename RegexTraits::string_type::const_iterator> match;

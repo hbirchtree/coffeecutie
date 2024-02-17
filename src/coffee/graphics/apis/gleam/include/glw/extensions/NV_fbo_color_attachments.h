@@ -4,10 +4,12 @@
 #include "../enums/DrawBufferMode.h"
 #include "../enums/GetPName.h"
 #include "../enums/InvalidateFramebufferAttachment.h"
+
 namespace gl::nv::fbo_color_attachments {
 using gl::group::draw_buffer_mode;
 using gl::group::get_prop;
 using gl::group::invalidate_framebuffer_attachment;
+
 namespace values {
 } // namespace values
 } // namespace gl::nv::fbo_color_attachments

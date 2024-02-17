@@ -4,12 +4,15 @@
 #include "../enums/PixelType.h"
 #include "../enums/VertexAttribPointerType.h"
 #include "../enums/VertexAttribType.h"
+
 namespace gl::arb::vertex_type_2_10_10_10_rev {
 using gl::group::pixel_type;
 using gl::group::vertex_attrib_pointer_type;
 using gl::group::vertex_attrib_type;
+
 namespace values {
 } // namespace values
+
 /*!
  * \brief Part of GL_ARB_vertex_type_2_10_10_10_rev
  * \param index GLuint
@@ -34,22 +37,24 @@ STATICINLINE void vertex_attrib_p1ui(
 }
 
 template<class span_const_u32>
-requires(concepts::span<span_const_u32>&& std::is_same_v<
-         std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>)
-    /*!
-     * \brief Part of GL_ARB_vertex_type_2_10_10_10_rev
-     * \param index GLuint
-     * \param type GLenum
-     * \param normalized GLboolean
-     * \param value const GLuint *
-     * \return void
-     */
-    STATICINLINE void vertex_attrib_p1uiv(
-        u32                               index,
-        group::vertex_attrib_pointer_type type,
-        bool                              normalized,
-        span_const_u32 const&             value)
+requires(
+    concepts::span<span_const_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_u32::value_type>,
+        std::decay_t<u32>>)
+/*!
+ * \brief Part of GL_ARB_vertex_type_2_10_10_10_rev
+ * \param index GLuint
+ * \param type GLenum
+ * \param normalized GLboolean
+ * \param value const GLuint *
+ * \return void
+ */
+STATICINLINE void vertex_attrib_p1uiv(
+    u32                               index,
+    group::vertex_attrib_pointer_type type,
+    bool                              normalized,
+    span_const_u32 const&             value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -89,21 +94,21 @@ STATICINLINE void vertex_attrib_p2ui(
 
 template<class span_const_vec_2_u32>
 requires(
-    concepts::span<span_const_vec_2_u32>&&
-        concepts::vector<typename span_const_vec_2_u32::value_type, u32, 2>)
-    /*!
-     * \brief Part of GL_ARB_vertex_type_2_10_10_10_rev
-     * \param index GLuint
-     * \param type GLenum
-     * \param normalized GLboolean
-     * \param value const GLuint *
-     * \return void
-     */
-    STATICINLINE void vertex_attrib_p2uiv(
-        u32                               index,
-        group::vertex_attrib_pointer_type type,
-        bool                              normalized,
-        span_const_vec_2_u32 const&       value)
+    concepts::span<span_const_vec_2_u32> &&
+    concepts::vector<typename span_const_vec_2_u32::value_type, u32, 2>)
+/*!
+ * \brief Part of GL_ARB_vertex_type_2_10_10_10_rev
+ * \param index GLuint
+ * \param type GLenum
+ * \param normalized GLboolean
+ * \param value const GLuint *
+ * \return void
+ */
+STATICINLINE void vertex_attrib_p2uiv(
+    u32                               index,
+    group::vertex_attrib_pointer_type type,
+    bool                              normalized,
+    span_const_vec_2_u32 const&       value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -143,21 +148,21 @@ STATICINLINE void vertex_attrib_p3ui(
 
 template<class span_const_vec_3_u32>
 requires(
-    concepts::span<span_const_vec_3_u32>&&
-        concepts::vector<typename span_const_vec_3_u32::value_type, u32, 3>)
-    /*!
-     * \brief Part of GL_ARB_vertex_type_2_10_10_10_rev
-     * \param index GLuint
-     * \param type GLenum
-     * \param normalized GLboolean
-     * \param value const GLuint *
-     * \return void
-     */
-    STATICINLINE void vertex_attrib_p3uiv(
-        u32                               index,
-        group::vertex_attrib_pointer_type type,
-        bool                              normalized,
-        span_const_vec_3_u32 const&       value)
+    concepts::span<span_const_vec_3_u32> &&
+    concepts::vector<typename span_const_vec_3_u32::value_type, u32, 3>)
+/*!
+ * \brief Part of GL_ARB_vertex_type_2_10_10_10_rev
+ * \param index GLuint
+ * \param type GLenum
+ * \param normalized GLboolean
+ * \param value const GLuint *
+ * \return void
+ */
+STATICINLINE void vertex_attrib_p3uiv(
+    u32                               index,
+    group::vertex_attrib_pointer_type type,
+    bool                              normalized,
+    span_const_vec_3_u32 const&       value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -197,21 +202,21 @@ STATICINLINE void vertex_attrib_p4ui(
 
 template<class span_const_vec_4_u32>
 requires(
-    concepts::span<span_const_vec_4_u32>&&
-        concepts::vector<typename span_const_vec_4_u32::value_type, u32, 4>)
-    /*!
-     * \brief Part of GL_ARB_vertex_type_2_10_10_10_rev
-     * \param index GLuint
-     * \param type GLenum
-     * \param normalized GLboolean
-     * \param value const GLuint *
-     * \return void
-     */
-    STATICINLINE void vertex_attrib_p4uiv(
-        u32                               index,
-        group::vertex_attrib_pointer_type type,
-        bool                              normalized,
-        span_const_vec_4_u32 const&       value)
+    concepts::span<span_const_vec_4_u32> &&
+    concepts::vector<typename span_const_vec_4_u32::value_type, u32, 4>)
+/*!
+ * \brief Part of GL_ARB_vertex_type_2_10_10_10_rev
+ * \param index GLuint
+ * \param type GLenum
+ * \param normalized GLboolean
+ * \param value const GLuint *
+ * \return void
+ */
+STATICINLINE void vertex_attrib_p4uiv(
+    u32                               index,
+    group::vertex_attrib_pointer_type type,
+    bool                              normalized,
+    span_const_vec_4_u32 const&       value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

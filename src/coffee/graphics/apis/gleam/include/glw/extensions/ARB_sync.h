@@ -7,6 +7,7 @@
 #include "../enums/SyncObjectMask.h"
 #include "../enums/SyncParameterName.h"
 #include "../enums/SyncStatus.h"
+
 namespace gl::arb::sync {
 using gl::group::get_prop;
 using gl::group::special_numbers;
@@ -14,11 +15,13 @@ using gl::group::sync_condition;
 using gl::group::sync_object_mask;
 using gl::group::sync_parameter_name;
 using gl::group::sync_status;
+
 namespace values {
 constexpr u32 sync_fence = 0x9116;
 constexpr u32 unsignaled = 0x9118;
 constexpr u32 signaled   = 0x9119;
 } // namespace values
+
 /*!
  * \brief Part of GL_ARB_sync
  * \param sync GLsync
@@ -76,16 +79,17 @@ fence_sync(group::sync_condition condition, group::sync_behavior_flags flags)
 }
 
 template<class span_i64>
-requires(concepts::span<span_i64>&& std::is_same_v<
-         std::decay_t<typename span_i64::value_type>,
-         std::decay_t<i64>>)
-    /*!
-     * \brief Part of GL_ARB_sync
-     * \param pname GLenum
-     * \param data GLint64 *
-     * \return void
-     */
-    STATICINLINE void get_integer64v(group::get_prop pname, span_i64 data)
+requires(
+    concepts::span<span_i64> && std::is_same_v<
+                                    std::decay_t<typename span_i64::value_type>,
+                                    std::decay_t<i64>>)
+/*!
+ * \brief Part of GL_ARB_sync
+ * \param pname GLenum
+ * \param data GLint64 *
+ * \return void
+ */
+STATICINLINE void get_integer64v(group::get_prop pname, span_i64 data)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -99,23 +103,21 @@ requires(concepts::span<span_i64>&& std::is_same_v<
 }
 
 template<class span_i32>
-requires(concepts::span<span_i32>&& std::is_same_v<
-         std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>)
-    /*!
-     * \brief Part of GL_ARB_sync
-     * \param sync GLsync
-     * \param pname GLenum
-     * \param count GLsizei
-     * \param length GLsizei *
-     * \param values GLint *
-     * \return void
-     */
-    STATICINLINE void get_synciv(
-        GLsync                     sync,
-        group::sync_parameter_name pname,
-        i32&                       length,
-        span_i32                   values)
+requires(
+    concepts::span<span_i32> && std::is_same_v<
+                                    std::decay_t<typename span_i32::value_type>,
+                                    std::decay_t<i32>>)
+/*!
+ * \brief Part of GL_ARB_sync
+ * \param sync GLsync
+ * \param pname GLenum
+ * \param count GLsizei
+ * \param length GLsizei *
+ * \param values GLint *
+ * \return void
+ */
+STATICINLINE void get_synciv(
+    GLsync sync, group::sync_parameter_name pname, i32& length, span_i32 values)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

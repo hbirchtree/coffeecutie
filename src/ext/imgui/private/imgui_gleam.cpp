@@ -127,42 +127,48 @@ void ImGuiSystem::submit_draws(Proxy& e)
     for(auto n : stl_types::Range<int>(draw_data->CmdListsCount))
     {
         auto cmd_list = draw_data->CmdLists[n];
-        auto scope_name
-            = std::string(IM_API "Command list ") + cmd_list->_OwnerName;
-        [[maybe_unused]] auto _
-            = api.debug().scope(std::string_view(scope_name.c_str()));
+        auto scope_name =
+            std::string(IM_API "Command list ") + cmd_list->_OwnerName;
+        [[maybe_unused]] auto _ =
+            api.debug().scope(std::string_view(scope_name.c_str()));
 
         //        data.vertices->commit(to_bytes(cmd_list->VtxBuffer));
         //        data.elements->commit(to_bytes(cmd_list->IdxBuffer));
 
         for(auto const& cmd : cmd_list->CmdBuffer)
         {
-            [[maybe_unused]] auto _
-                = api.debug().scope(IM_API "Command buffer");
+            [[maybe_unused]] auto _ =
+                api.debug().scope(IM_API "Command buffer");
+
             union
             {
                 ImTextureID ptr;
                 u32         hnd;
-            } tex_handle                 = {.ptr = cmd.TextureId};
+            } tex_handle = {.ptr = cmd.TextureId};
+
             data.shell_texture->m_handle = tex_handle.hnd;
             if(cmd.UserCallback)
                 cmd.UserCallback(cmd_list, &cmd);
             else
             {
                 gleam::draw_command draw = {
-                        .program  = data.pipeline,
-                        .vertices = data.vao,
-                        .call = { .indexed = true, },
-                        .data = {{ .elements = {
-                            .count  = cmd.ElemCount,
-                            .offset = cmd.IdxOffset * sizeof(ImDrawIdx),
-                            .vertex_offset = cmd.VtxOffset,
-                            .type =
-                                sizeof(ImDrawIdx) == 2
-                                    ? semantic::TypeEnum::UShort
-                                    : semantic::TypeEnum::UInt,
-                        }}},
-                    };
+                    .program  = data.pipeline,
+                    .vertices = data.vao,
+                    .call =
+                        {
+                            .indexed = true,
+                        },
+                    .data =
+                        {{.elements =
+                              {
+                                  .count  = cmd.ElemCount,
+                                  .offset = cmd.IdxOffset * sizeof(ImDrawIdx),
+                                  .vertex_offset = cmd.VtxOffset,
+                                  .type          = sizeof(ImDrawIdx) == 2
+                                                       ? semantic::TypeEnum::UShort
+                                                       : semantic::TypeEnum::UInt,
+                              }}},
+                };
 
                 auto ec = api.submit(
                     draw,
@@ -186,7 +192,7 @@ void ImGuiSystem::submit_draws(Proxy& e)
                 if(ec)
                 {
                     // auto [error, message] = ec.value();
-//                    Throw(undefined_behavior(message));
+                    //                    Throw(undefined_behavior(message));
                 }
             }
             data.shell_texture->m_handle.release();
@@ -236,21 +242,21 @@ void ImGuiSystem::setup_graphics_data(Proxy& e)
         "	gl_Position = ProjMtx * vec4(Position.xy,0,1);\n"
         "}\n");
 
-    const std::string vertex_shader_100
-        = "#version 100\n"
-          "precision mediump float;\n"
-          "uniform mat4 ProjMtx;\n"
-          "attribute vec2 Position;\n"
-          "attribute vec2 UV;\n"
-          "attribute vec4 Color;\n"
-          "varying vec2 Frag_UV;\n"
-          "varying vec4 Frag_Color;\n"
-          "void main()\n"
-          "{\n"
-          "	Frag_UV = UV;\n"
-          "	Frag_Color = Color;\n"
-          "	gl_Position = ProjMtx * vec4(Position.xy,0,1);\n"
-          "}\n";
+    const std::string vertex_shader_100 =
+        "#version 100\n"
+        "precision mediump float;\n"
+        "uniform mat4 ProjMtx;\n"
+        "attribute vec2 Position;\n"
+        "attribute vec2 UV;\n"
+        "attribute vec4 Color;\n"
+        "varying vec2 Frag_UV;\n"
+        "varying vec4 Frag_Color;\n"
+        "void main()\n"
+        "{\n"
+        "	Frag_UV = UV;\n"
+        "	Frag_Color = Color;\n"
+        "	gl_Position = ProjMtx * vec4(Position.xy,0,1);\n"
+        "}\n";
 
     const std::string fragment_shader = fmt::format(
         "{}{}",
@@ -272,17 +278,17 @@ void ImGuiSystem::setup_graphics_data(Proxy& e)
         "	OutColor = Frag_Color * texture( Texture, Frag_UV.st);\n"
         "}\n");
 
-    const std::string fragment_shader_100
-        = "#version 100\n"
-          "precision mediump float;\n"
-          "precision mediump sampler2D;\n"
-          "uniform sampler2D Texture;\n"
-          "varying vec2 Frag_UV;\n"
-          "varying vec4 Frag_Color;\n"
-          "void main()\n"
-          "{\n"
-          "	gl_FragColor = Frag_Color * texture2D( Texture, Frag_UV.st);\n"
-          "}\n";
+    const std::string fragment_shader_100 =
+        "#version 100\n"
+        "precision mediump float;\n"
+        "precision mediump sampler2D;\n"
+        "uniform sampler2D Texture;\n"
+        "varying vec2 Frag_UV;\n"
+        "varying vec4 Frag_Color;\n"
+        "void main()\n"
+        "{\n"
+        "	gl_FragColor = Frag_Color * texture2D( Texture, Frag_UV.st);\n"
+        "}\n";
 
     m_gfx_data = std::unique_ptr<ImGuiGraphicsData, ImGuiGraphicsDataDeleter>(
         new ImGuiGraphicsData);
@@ -291,8 +297,8 @@ void ImGuiSystem::setup_graphics_data(Proxy& e)
 
     [[maybe_unused]] auto a = api.debug().scope(IM_API "Creating device data");
 
-    auto needs_v100 = api.api_version() == std::make_tuple(2, 0)
-                      && api.api_type() == gleam::api_type_t::es;
+    auto needs_v100 = api.api_version() == std::make_tuple(2, 0) &&
+                      api.api_type() == gleam::api_type_t::es;
 
     do
     {
@@ -319,12 +325,14 @@ void ImGuiSystem::setup_graphics_data(Proxy& e)
     do
     {
         using semantic::RSCA;
+
         struct ImVertexProxy
         {
             Vecf2                           position;
             Vecf2                           uv;
             typing::vectors::tvector<u8, 4> color;
         };
+
         DProfContext _(IM_API "Creating vertex array object");
         auto&        a = data.vao;
 
@@ -363,8 +371,8 @@ void ImGuiSystem::setup_graphics_data(Proxy& e)
 
     {
         DProfContext          _(IM_API "Creating font atlas");
-        [[maybe_unused]] auto __
-            = api.debug().scope(IM_API "Create font atlas");
+        [[maybe_unused]] auto __ =
+            api.debug().scope(IM_API "Create font atlas");
 
         // Build texture atlas
         ImGuiIO&       io = ImGui::GetIO();
@@ -406,6 +414,7 @@ void ImGuiSystem::setup_graphics_data(Proxy& e)
         } tex_handle = {
             .handle = data.font_atlas->m_handle,
         };
+
         io.Fonts->SetTexID(tex_handle.ptr);
 
         data.shell_texture = api.alloc_texture(

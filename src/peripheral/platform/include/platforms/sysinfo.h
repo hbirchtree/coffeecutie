@@ -61,14 +61,17 @@ inline libc_types::u32 core_count(libc_types::u32 = 0)
 {
     return 1;
 }
+
 inline libc_types::u32 cpu_count(libc_types::u32 = 0)
 {
     return 1;
 }
+
 inline libc_types::u32 node_count()
 {
     return 1;
 }
+
 inline libc_types::u32 thread_count(libc_types::u32 = 0)
 {
     return std::thread::hardware_concurrency();
@@ -93,6 +96,7 @@ inline u32 frequency(u32 = 0, u32 = 0)
 {
     return 0;
 }
+
 inline std::optional<std::pair<std::string, std::string>> model(
     u32 = 0, u32 = 0)
 {
@@ -120,13 +124,14 @@ inline auto resident()
 {
     return 0u;
 }
+
 inline auto total()
 {
     return 0u;
 }
 #endif
 
-}
+} // namespace memory
 
 namespace os {
 
@@ -150,10 +155,12 @@ inline std::string kernel()
 {
     return {};
 }
+
 inline std::string kernel_version()
 {
     return {};
 }
+
 inline std::string architecture()
 {
     return {};
@@ -185,6 +192,7 @@ inline std::optional<std::string> name()
 {
     return {};
 }
+
 inline std::optional<std::string> version()
 {
     return {};
@@ -299,8 +307,8 @@ using apple::variant;
 inline DeviceType variant()
 {
     if constexpr(
-        compile_info::platform::is_android || compile_info::platform::is_ios
-        || compile_info::platform::is_maemo)
+        compile_info::platform::is_android || compile_info::platform::is_ios ||
+        compile_info::platform::is_maemo)
         return DevicePhone;
 
     /* TODO: Add better identification for Emscripten */

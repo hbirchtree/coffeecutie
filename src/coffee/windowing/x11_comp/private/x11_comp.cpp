@@ -145,8 +145,8 @@ void Windowing::close()
 comp_app::size_2d_t Windowing::size() const
 {
     typing::geometry::size_2d<unsigned int> out;
-    int x, y;
-    unsigned int border, depth;
+    int                                     x, y;
+    unsigned int                            border, depth;
 
     Window ret_window = C_RCAST<Window>(m_window);
 

@@ -58,7 +58,7 @@ using c_ptr  = void*;
 #if !defined(COFFEE_RASPBERRYPI)
 using ThrdCnt = u64;
 #else
-using ThrdCnt               = uint32;
+using ThrdCnt = uint32;
 #endif
 using MemUnit = u64;
 
@@ -67,10 +67,10 @@ constexpr u32 Unit_MB = 1024 * 1024;
 constexpr u32 Unit_GB = 1024 * 1024 * 1024;
 constexpr u64 Unit_TB = 1024ULL * 1024ULL * 1024ULL * 1024ULL;
 
-#define GEN_SIZE_LITERAL(unit)                                               \
+#define GEN_SIZE_LITERAL(unit)                                           \
     constexpr inline u64 operator"" _##unit##B(unsigned long long int v) \
-    {                                                                        \
-        return v * Unit_##unit##B;                                           \
+    {                                                                    \
+        return v * Unit_##unit##B;                                       \
     }
 
 namespace size_literals {

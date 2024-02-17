@@ -49,24 +49,29 @@ struct features
         {
             bool mapbuffer{false};
         } oes;
+
         struct
         {
             bool invalidate{false};
         } arb;
     };
+
     struct debugging
     {
         bool debug{false};
+
         struct
         {
             bool debug{false};
         } khr;
+
         struct
         {
             bool unmasked_vendors{false};
             bool debug_shaders{false};
         } webgl;
     };
+
     struct drawing
     {
         bool instancing{false};
@@ -81,6 +86,7 @@ struct features
             bool shader_draw_parameters{false};
         } arb;
     };
+
     struct programs
     {
         bool dsa{false};
@@ -96,11 +102,13 @@ struct features
             bool parallel_shader_compile{false};
         } khr;
     };
+
     struct queries
     {
         bool disjoint_timer_query{false};
         bool dsa{false};
     };
+
     struct rendertargets
     {
         bool clearbuffer{true};
@@ -122,11 +130,13 @@ struct features
         {
             bool discard_framebuffer{false};
         } ext;
+
         struct
         {
             bool shading_rate_image{false};
         } nv;
     };
+
     struct textures
     {
         bool anisotropy{false};
@@ -153,31 +163,37 @@ struct features
                 bool astc{false};
                 bool astc_hdr{false};
             } khr;
+
             struct
             {
                 bool rgtc{false};
                 bool bptc{false};
             } arb;
+
             struct
             {
                 bool s3tc{false};
                 bool rgtc{false};
                 bool bptc{false};
             } ext;
+
             struct
             {
                 bool s3tc{false};
             } angle;
+
             struct
             {
                 bool pvrtc{false};
                 bool pvrtc2{false};
             } img;
+
             struct
             {
                 bool etc1{false};
                 bool rgba8{false};
             } oes;
+
             struct
             {
                 bool etc2{false};
@@ -186,22 +202,27 @@ struct features
                 bool astc{false};
             } gl;
         } tex;
+
         texture_support_t software_decoded{};
+
         struct
         {
             bool texture_view{false};
         } arb;
+
         struct
         {
             bool texture_view{false};
             bool texture_anisotropic{false};
         } ext;
+
         struct
         {
             bool texture_view{false};
             bool texture_3d{false};
         } oes;
     };
+
     struct vertices
     {
         bool attribute_binding{true};
@@ -210,6 +231,7 @@ struct features
         bool layout_binding{false};
         bool vertex_arrays{true};
         bool vertex_offset{true};
+
         struct
         {
             bool vertex_arrays{false};
@@ -236,12 +258,14 @@ struct workarounds
         bool force_vertex_attrib_names{false};
         bool advance_ubos_by_baseinstance{false};
     } draw;
+
     struct
     {
         bool emulated_mapbuffer{false};
         bool slow_mapbuffer{false};
         bool disable_immutable_buffers{false};
     } buffer;
+
     struct
     {
         bool adreno_3xx; /*!< Adreno 3xx drivers seemingly
@@ -267,6 +291,7 @@ struct usage
 
         u32 failed_draws{0};
     } draw;
+
     struct
     {
         u32 uploads{0};
@@ -274,10 +299,12 @@ struct usage
         u64 upload_data{0};
         u64 mapped_data{0};
     } buffers;
+
     struct
     {
         u32 texture_uploads{0};
     } texture;
+
     struct
     {
         u32 buffers{0};

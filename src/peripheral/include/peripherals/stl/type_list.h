@@ -66,9 +66,11 @@ struct list_inspector
     template<class UnaryOperator>
     struct for_each
     {
-        for_each(UnaryOperator&& op) : op(std::move(op))
+        for_each(UnaryOperator&& op)
+            : op(std::move(op))
         {
         }
+
         void operator()()
         {
             (op.template operator()<Types>(), ...);
@@ -80,9 +82,11 @@ struct list_inspector
     template<class UnaryOperator>
     struct for_each_rev
     {
-        for_each_rev(UnaryOperator&& op) : op(std::move(op))
+        for_each_rev(UnaryOperator&& op)
+            : op(std::move(op))
         {
         }
+
         void operator()()
         {
             int dummy;
@@ -105,9 +109,11 @@ struct list_inspector
 
 struct collect_operator
 {
-    collect_operator(std::vector<size_t>& hashes) : hashes(hashes)
+    collect_operator(std::vector<size_t>& hashes)
+        : hashes(hashes)
     {
     }
+
     template<typename T>
     void operator()()
     {

@@ -24,8 +24,7 @@ class Notifications
   public:
     virtual void persistent(NotificationInfo&&) = 0;
     virtual void temporary(
-        NotificationInfo&&, std::chrono::system_clock::duration)
-        = 0;
+        NotificationInfo&&, std::chrono::system_clock::duration) = 0;
 };
 
 } // namespace Coffee

@@ -9,7 +9,7 @@ namespace semantic::detail {
 std::string_view enum_to_string(semantic::debug::Component component);
 std::string_view enum_to_string(semantic::debug::Severity severity);
 std::string_view enum_to_string(semantic::debug::Type type);
-}
+} // namespace semantic::detail
 
 template<>
 struct fmt::formatter<semantic::debug::Component>

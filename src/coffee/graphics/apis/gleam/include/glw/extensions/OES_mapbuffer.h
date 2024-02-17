@@ -2,26 +2,29 @@
 
 #ifdef GL_OES_mapbuffer
 #include "../enums/BufferAccessARB.h"
+
 namespace gl::oes::mapbuffer {
 using gl::group::buffer_access_arb;
+
 namespace values {
 constexpr u32 buffer_access      = 0x88BB;
 constexpr u32 buffer_mapped      = 0x88BC;
 constexpr u32 buffer_map_pointer = 0x88BD;
 } // namespace values
+
 template<class span_void>
 requires(concepts::span<span_void>)
-    /*!
-     * \brief Part of GL_OES_mapbuffer
-     * \param target GLenum
-     * \param pname GLenum
-     * \param params void **
-     * \return void
-     */
-    STATICINLINE void get_buffer_pointerv(
-        group::buffer_target_arb       target,
-        group::buffer_pointer_name_arb pname,
-        span_void                      params)
+/*!
+ * \brief Part of GL_OES_mapbuffer
+ * \param target GLenum
+ * \param pname GLenum
+ * \param params void **
+ * \return void
+ */
+STATICINLINE void get_buffer_pointerv(
+    group::buffer_target_arb       target,
+    group::buffer_pointer_name_arb pname,
+    span_void                      params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

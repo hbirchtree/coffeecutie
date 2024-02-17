@@ -33,10 +33,12 @@ struct version
         } else
             return false;
     }
+
     inline bool operator<(const version<T>& v) const
     {
         return !((*this) >= v);
     }
+
     inline bool operator<=(const version<T>& v) const
     {
         if(this->major < v.major)
@@ -56,10 +58,12 @@ struct version
         } else
             return false;
     }
+
     inline bool operator>(const version<T>& v) const
     {
         return !((*this) <= v);
     }
+
     inline bool operator==(const version<T>& v) const
     {
         return this->major == v.major && this->minor == v.minor &&

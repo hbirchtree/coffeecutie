@@ -14,14 +14,17 @@ namespace detail {
 
 struct scoped_offset
 {
-    scoped_offset(posix_fd_t const& file, ptroff offset) : file(file)
+    scoped_offset(posix_fd_t const& file, ptroff offset)
+        : file(file)
     {
         detail::lseek_(file, offset, SEEK_SET);
     }
+
     ~scoped_offset()
     {
         detail::lseek_(file, 0, SEEK_SET);
     }
+
     posix_fd_t const& file;
 };
 

@@ -7,6 +7,7 @@
 
 namespace platform::file::android {
 using libc_types::szptr;
+
 namespace detail {
 
 using stl_types::failure;
@@ -21,8 +22,8 @@ struct android_fd_t
 
 FORCEDINLINE bool is_asset(Url const& file, RSCA access)
 {
-    return (access & RSCA::AccessMask) == RSCA::ReadOnly
-           && (file.flags & RSCA::AssetFile) == RSCA::AssetFile;
+    return (access & RSCA::AccessMask) == RSCA::ReadOnly &&
+           (file.flags & RSCA::AssetFile) == RSCA::AssetFile;
 }
 
 FORCEDINLINE bool is_asset(android_fd_t const& fd)

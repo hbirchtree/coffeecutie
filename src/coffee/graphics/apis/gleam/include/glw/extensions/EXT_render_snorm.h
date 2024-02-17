@@ -17,6 +17,7 @@
 #include "../enums/VertexAttribType.h"
 #include "../enums/VertexPointerType.h"
 #include "../enums/WeightPointerTypeARB.h"
+
 namespace gl::ext::render_snorm {
 using gl::group::binormal_pointer_type_ext;
 using gl::group::color_pointer_type;
@@ -34,6 +35,7 @@ using gl::group::vertex_attrib_pointer_type;
 using gl::group::vertex_attrib_type;
 using gl::group::vertex_pointer_type;
 using gl::group::weight_pointer_type_arb;
+
 namespace values {
 } // namespace values
 } // namespace gl::ext::render_snorm

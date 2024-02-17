@@ -2,8 +2,10 @@
 
 #ifdef GL_KHR_shader_subgroup
 #include "../enums/SubgroupSupportedFeatures.h"
+
 namespace gl::khr::shader_subgroup {
 using gl::group::subgroup_supported_features;
+
 namespace values {
 constexpr u32 subgroup_size               = 0x9532;
 constexpr u32 subgroup_supported_stages   = 0x9533;

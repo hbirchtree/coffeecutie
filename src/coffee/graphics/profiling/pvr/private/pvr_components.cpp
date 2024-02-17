@@ -117,8 +117,8 @@ void PVRGPUStats::dump_stats(libc_types::u32 group)
             }
             m_cached_readings[m_counters[i].pszName] = counter_reading_t{
                 .value = m_reading.pfValueBuf[reading_i++],
-                .is_percentage
-                = static_cast<bool>(m_counters[i].nBoolPercentage),
+                .is_percentage =
+                    static_cast<bool>(m_counters[i].nBoolPercentage),
             };
         }
     }

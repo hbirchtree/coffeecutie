@@ -19,6 +19,7 @@ constexpr u32 separate_attribs                              = 0x8C8D;
 constexpr u32 transform_feedback_buffer                     = 0x8C8E;
 constexpr u32 transform_feedback_buffer_binding             = 0x8C8F;
 } // namespace values
+
 /*!
  * \brief Part of GL_EXT_transform_feedback
  * \param primitiveMode GLenum
@@ -132,27 +133,29 @@ STATICINLINE void end_transform_feedback()
 }
 
 template<class span_GLchar>
-requires(concepts::span<span_GLchar>&& std::is_same_v<
-         std::decay_t<typename span_GLchar::value_type>,
-         std::decay_t<GLchar>>)
-    /*!
-     * \brief Part of GL_EXT_transform_feedback
-     * \param program GLuint
-     * \param index GLuint
-     * \param bufSize GLsizei
-     * \param length GLsizei *
-     * \param size GLsizei *
-     * \param type GLenum *
-     * \param name GLchar *
-     * \return void
-     */
-    STATICINLINE void get_transform_feedback_varying(
-        u32         program,
-        u32         index,
-        i32&        length,
-        i32&        size,
-        GLenum&     type,
-        span_GLchar name)
+requires(
+    concepts::span<span_GLchar> &&
+    std::is_same_v<
+        std::decay_t<typename span_GLchar::value_type>,
+        std::decay_t<GLchar>>)
+/*!
+ * \brief Part of GL_EXT_transform_feedback
+ * \param program GLuint
+ * \param index GLuint
+ * \param bufSize GLsizei
+ * \param length GLsizei *
+ * \param size GLsizei *
+ * \param type GLenum *
+ * \param name GLchar *
+ * \return void
+ */
+STATICINLINE void get_transform_feedback_varying(
+    u32         program,
+    u32         index,
+    i32&        length,
+    i32&        size,
+    GLenum&     type,
+    span_GLchar name)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

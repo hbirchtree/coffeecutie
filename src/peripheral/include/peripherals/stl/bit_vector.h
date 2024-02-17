@@ -8,4 +8,4 @@ namespace stl_types {
  * But it might be removed someday. */
 using bit_vector = std::vector<bool>;
 
-}
+} // namespace stl_types

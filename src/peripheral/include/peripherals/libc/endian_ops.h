@@ -44,24 +44,28 @@ using u32_net  = conversion_param<u32, net_order>;
             Param>::type* = nullptr>
 
 ENDIAN_TEMPLATE(u16, host_order)
+
 FORCEDINLINE typename Param::type to(typename Param::type v)
 {
     return ntohs(v);
 }
 
 ENDIAN_TEMPLATE(u16, net_order)
+
 FORCEDINLINE typename Param::type to(typename Param::type v)
 {
     return htons(v);
 }
 
 ENDIAN_TEMPLATE(u32, host_order)
+
 FORCEDINLINE typename Param::type to(typename Param::type v)
 {
     return ntohl(v);
 }
 
 ENDIAN_TEMPLATE(u32, net_order)
+
 FORCEDINLINE typename Param::type to(typename Param::type v)
 {
     return htonl(v);

@@ -2,10 +2,13 @@
 
 #ifdef GL_ARB_texture_storage
 #include "../enums/GetTextureParameter.h"
+
 namespace gl::arb::texture_storage {
 using gl::group::get_texture_parameter;
+
 namespace values {
 } // namespace values
+
 /*!
  * \brief Part of GL_ARB_texture_storage
  * \param target GLenum
@@ -35,20 +38,20 @@ STATICINLINE void tex_storage_1d(
 
 template<class size_2_i32>
 requires(concepts::size_2d<size_2_i32, i32>)
-    /*!
-     * \brief Part of GL_ARB_texture_storage
-     * \param target GLenum
-     * \param levels GLsizei
-     * \param internalformat GLenum
-     * \param width GLsizei
-     * \param height GLsizei
-     * \return void
-     */
-    STATICINLINE void tex_storage_2d(
-        group::texture_target        target,
-        i32                          levels,
-        group::sized_internal_format internalformat,
-        size_2_i32 const&            width)
+/*!
+ * \brief Part of GL_ARB_texture_storage
+ * \param target GLenum
+ * \param levels GLsizei
+ * \param internalformat GLenum
+ * \param width GLsizei
+ * \param height GLsizei
+ * \return void
+ */
+STATICINLINE void tex_storage_2d(
+    group::texture_target        target,
+    i32                          levels,
+    group::sized_internal_format internalformat,
+    size_2_i32 const&            width)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -66,21 +69,21 @@ requires(concepts::size_2d<size_2_i32, i32>)
 
 template<class size_3_i32>
 requires(concepts::size_2d<size_3_i32, i32>)
-    /*!
-     * \brief Part of GL_ARB_texture_storage
-     * \param target GLenum
-     * \param levels GLsizei
-     * \param internalformat GLenum
-     * \param width GLsizei
-     * \param height GLsizei
-     * \param depth GLsizei
-     * \return void
-     */
-    STATICINLINE void tex_storage_3d(
-        group::texture_target        target,
-        i32                          levels,
-        group::sized_internal_format internalformat,
-        size_3_i32 const&            width)
+/*!
+ * \brief Part of GL_ARB_texture_storage
+ * \param target GLenum
+ * \param levels GLsizei
+ * \param internalformat GLenum
+ * \param width GLsizei
+ * \param height GLsizei
+ * \param depth GLsizei
+ * \return void
+ */
+STATICINLINE void tex_storage_3d(
+    group::texture_target        target,
+    i32                          levels,
+    group::sized_internal_format internalformat,
+    size_3_i32 const&            width)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

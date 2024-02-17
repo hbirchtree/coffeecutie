@@ -1,20 +1,21 @@
 #include <coffee/audio/abstraction/openal/calsoundtrack.h>
 #include <coffee/core/CDebug>
 
-namespace Coffee{
-namespace CAudio{
-namespace COpenAL{
+namespace Coffee {
+namespace CAudio {
+namespace COpenAL {
 
-static inline void applyListenerProperties(CALSource* src, const CListenerProperty* props)
+static inline void applyListenerProperties(
+    CALSource* src, const CListenerProperty* props)
 {
-
 }
 
-static inline void applySourceProperties(CALSource* src, const CSoundProperty* props)
+static inline void applySourceProperties(
+    CALSource* src, const CSoundProperty* props)
 {
     using P = CSoundProperty;
 
-    for(u32 i=0;i<P::ActiveProperty_Num;i++)
+    for(u32 i = 0; i < P::ActiveProperty_Num; i++)
     {
         u32 attr = 1 << i;
         i32 b;
@@ -31,11 +32,11 @@ static inline void applySourceProperties(CALSource* src, const CSoundProperty* p
     }
 }
 
-CALSoundTrack::CALSoundTrack(CSoundDevice<CALSource,CALBuffer>& dev):
-    CSoundTrack(&dev),
-    m_dev(&dev),
-    m_defaultProp(nullptr),
-    m_listenProp(nullptr)
+CALSoundTrack::CALSoundTrack(CSoundDevice<CALSource, CALBuffer>& dev)
+    : CSoundTrack(&dev)
+    , m_dev(&dev)
+    , m_defaultProp(nullptr)
+    , m_listenProp(nullptr)
 {
     m_source = new CALSource;
     alAlloc(m_source);
@@ -47,17 +48,17 @@ CALSoundTrack::~CALSoundTrack()
     delete m_source;
 }
 
-const CSoundDevice<CALSource, CALBuffer> &CALSoundTrack::device()
+const CSoundDevice<CALSource, CALBuffer>& CALSoundTrack::device()
 {
     return *m_dev;
 }
 
-void CALSoundTrack::queueSample(CSoundSample<CALSource, CALBuffer> &sample)
+void CALSoundTrack::queueSample(CSoundSample<CALSource, CALBuffer>& sample)
 {
     _csample_data f;
-    f.buf = sample.buffer().object();
+    f.buf   = sample.buffer().object();
     f.b_pts = sample.pts();
-    f.prop = sample.properties();
+    f.prop  = sample.properties();
 
     m_samples.push_back(f);
 }
@@ -79,8 +80,8 @@ void CALSoundTrack::updateTrack(u64 ts)
             if(smp.prop)
                 applySourceProperties(m_source, smp.prop);
             cVerbose(3, "Inputs: {0}, {1}", *m_source, *smp.buf);
-            source_queue_buffers(m_source,1,&smp.buf);
-            source_set_state(m_source,CALPlaybackState::Playing);
+            source_queue_buffers(m_source, 1, &smp.buf);
+            source_set_state(m_source, CALPlaybackState::Playing);
             removal.push_back(&smp);
         }
     }
@@ -88,21 +89,21 @@ void CALSoundTrack::updateTrack(u64 ts)
         m_samples.remove(*r);
 }
 
-CALSource *CALSoundTrack::object()
+CALSource* CALSoundTrack::object()
 {
     return m_source;
 }
 
-void CALSoundTrack::assignProperties(const CSoundProperty *props)
+void CALSoundTrack::assignProperties(const CSoundProperty* props)
 {
     m_defaultProp = props;
 }
 
-void CALSoundTrack::assignProperties(const CListenerProperty *props)
+void CALSoundTrack::assignProperties(const CListenerProperty* props)
 {
     m_listenProp = props;
 }
 
-}
-}
-}
+} // namespace COpenAL
+} // namespace CAudio
+} // namespace Coffee

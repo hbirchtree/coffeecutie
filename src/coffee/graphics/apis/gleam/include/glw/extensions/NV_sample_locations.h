@@ -12,23 +12,26 @@ constexpr u32 programmable_sample_location              = 0x9341;
 constexpr u32 framebuffer_programmable_sample_locations = 0x9342;
 constexpr u32 framebuffer_sample_location_pixel_grid    = 0x9343;
 } // namespace values
+
 template<class span_const_f32>
-requires(concepts::span<span_const_f32>&& std::is_same_v<
-         std::decay_t<typename span_const_f32::value_type>,
-         std::decay_t<f32>>)
-    /*!
-     * \brief Part of GL_NV_sample_locations
-     * \param target GLenum
-     * \param start GLuint
-     * \param count GLsizei
-     * \param v const GLfloat *
-     * \return void
-     */
-    STATICINLINE void framebuffer_sample_locationsfv(
-        group::framebuffer_target target,
-        u32                       start,
-        i32                       count,
-        span_const_f32 const&     v)
+requires(
+    concepts::span<span_const_f32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_f32::value_type>,
+        std::decay_t<f32>>)
+/*!
+ * \brief Part of GL_NV_sample_locations
+ * \param target GLenum
+ * \param start GLuint
+ * \param count GLsizei
+ * \param v const GLfloat *
+ * \return void
+ */
+STATICINLINE void framebuffer_sample_locationsfv(
+    group::framebuffer_target target,
+    u32                       start,
+    i32                       count,
+    span_const_f32 const&     v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -44,19 +47,21 @@ requires(concepts::span<span_const_f32>&& std::is_same_v<
 }
 
 template<class span_const_f32>
-requires(concepts::span<span_const_f32>&& std::is_same_v<
-         std::decay_t<typename span_const_f32::value_type>,
-         std::decay_t<f32>>)
-    /*!
-     * \brief Part of GL_NV_sample_locations
-     * \param framebuffer GLuint
-     * \param start GLuint
-     * \param count GLsizei
-     * \param v const GLfloat *
-     * \return void
-     */
-    STATICINLINE void named_framebuffer_sample_locationsfv(
-        u32 framebuffer, u32 start, i32 count, span_const_f32 const& v)
+requires(
+    concepts::span<span_const_f32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_f32::value_type>,
+        std::decay_t<f32>>)
+/*!
+ * \brief Part of GL_NV_sample_locations
+ * \param framebuffer GLuint
+ * \param start GLuint
+ * \param count GLsizei
+ * \param v const GLfloat *
+ * \return void
+ */
+STATICINLINE void named_framebuffer_sample_locationsfv(
+    u32 framebuffer, u32 start, i32 count, span_const_f32 const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

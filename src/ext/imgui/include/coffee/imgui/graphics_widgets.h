@@ -35,11 +35,11 @@ inline RendererViewer GetRendererViewer()
 
         ImGui::Begin("Renderer info");
 
-        std::string       api_name;
+        std::string   api_name;
         SWVersionInfo api_version;
         HWDeviceInfo  renderer_info;
         SWVersionInfo driver_info;
-        std::string       sl_lang_name;
+        std::string   sl_lang_name;
         SWVersionInfo sl_lang_version;
 
         api_name = GFX::GetAPIName(d);

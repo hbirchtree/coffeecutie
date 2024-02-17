@@ -2,8 +2,10 @@
 
 #ifdef GL_ARB_depth_clamp
 #include "../enums/EnableCap.h"
+
 namespace gl::arb::depth_clamp {
 using gl::group::enable_cap;
+
 namespace values {
 } // namespace values
 } // namespace gl::arb::depth_clamp

@@ -17,10 +17,10 @@ Coffee::Resource literals::detail::TextureUrl::with(
     using Resource = Coffee::Resource;
 
     /* TODO: Use fmt::format here */
-    auto source_exists
-        = [this, storage](const char* suffix) -> std::optional<Resource> {
-        auto url
-            = platform::url::Path(path).removeExt().addExtension(suffix).url(
+    auto source_exists =
+        [this, storage](const char* suffix) -> std::optional<Resource> {
+        auto url =
+            platform::url::Path(path).removeExt().addExtension(suffix).url(
                 storage);
         if(platform::file::exists(url).has_value())
             return Resource(url);
@@ -154,11 +154,11 @@ std::vector<std::string> enumerate_compressed_formats(
         }
 
         features::textures::texture_support_t& sw = features.software_decoded;
-        sw.gl.rgtc = sw.arb.rgtc = sw.ext.rgtc
-            = is_sw(fmt_t::compressed_red_rgtc1);
+        sw.gl.rgtc = sw.arb.rgtc = sw.ext.rgtc =
+            is_sw(fmt_t::compressed_red_rgtc1);
         sw.gl.etc2 = is_sw(fmt_t::compressed_rgba8_etc2_eac);
-        sw.gl.bptc = sw.arb.bptc = sw.ext.bptc
-            = is_sw(fmt_t::compressed_rgba_bptc_unorm);
+        sw.gl.bptc = sw.arb.bptc = sw.ext.bptc =
+            is_sw(fmt_t::compressed_rgba_bptc_unorm);
         sw.gl.astc = sw.khr.astc = is_sw(fmt_t::compressed_rgba_astc_4x4_khr);
 
         sw.ext.s3tc = is_sw(fmt_t::compressed_rgb_s3tc_dxt1_ext);

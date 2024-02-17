@@ -29,6 +29,7 @@ struct leaf
         none                  = 0x0,
         contains_double_sided = 0x1,
     };
+
     flags_t flags;
     u16     reference_count;
     u16     first_bsp_2d_reference;
@@ -51,6 +52,7 @@ struct surface
 {
     u16 plane;
     u16 first_edge;
+
     enum flags_t : u16
     {
         none      = 0x0,
@@ -59,6 +61,7 @@ struct surface
         climbable = 0x4,
         breakable = 0x8,
     };
+
     flags_t flags;
     u16     breakable_surface;
     i16     material;
@@ -185,6 +188,7 @@ struct material
     Vecf4                           plane;
     i32                             breakable_surface;
     u32                             padding1;
+
     union
     {
         struct
@@ -201,9 +205,11 @@ struct material
             u32                         padding4[3];
             reflexive_t<byte_t, xbox_t> compressed_vertices;
         } pc;
+
         struct
         {
         } xbox;
+
         struct
         {
             u32                              pad[3];
@@ -224,6 +230,7 @@ struct material
             u32                              vertex_data_offset;
             u32                              unkown_zero3;
         } old;
+
         u32 all[22];
     };
 
@@ -296,7 +303,7 @@ struct material
     //        return base;
     //    }
 
-//    C_DEPRECATED_S("not how you get indices")
+    //    C_DEPRECATED_S("not how you get indices")
     inline reflexive_t<vert::face> indices(header const& head) const;
 };
 
@@ -372,6 +379,7 @@ struct leaf
     u16 surface_reference_index;
     i16 something;
 };
+
 static_assert(sizeof(leaf) == 16);
 
 struct leaf_surface
@@ -379,6 +387,7 @@ struct leaf_surface
     u32 surface;
     i32 node; /* May be -1, indicating no node association? */
 };
+
 static_assert(sizeof(leaf_surface) == 8);
 
 struct alignas(4) lightmap
@@ -388,6 +397,7 @@ struct alignas(4) lightmap
     u32                   unknown[4];
     reflexive_t<material> materials;
 };
+
 static_assert(sizeof(lightmap) == 32);
 
 struct lens_flare_marker
@@ -412,11 +422,13 @@ struct weather_polyhedra
         Vecf3 center;
         f32   radius;
     } sphere;
+
     struct plane
     {
         Vecf3 plane;
         f32   d;
     };
+
     reflexive_t<plane> planes;
 };
 
@@ -465,6 +477,7 @@ struct leaf_map_leaf
         u16                node_index;
         reflexive_t<Vecf2> vertices;
     };
+
     reflexive_t<face> faces;
     reflexive_t<u16>  portal_indices;
 };
@@ -529,6 +542,7 @@ struct header
         return surfaces;
     }
 };
+
 static_assert(offsetof(header, collision_materials) == 164);
 static_assert(offsetof(header, leaves) == 224);
 static_assert(offsetof(header, surfaces) == 248);
@@ -545,8 +559,8 @@ inline reflexive_t<vert::face> material::indices(header const& head) const
     //    };
     return {
         .count  = surfaces.offset,
-        .offset = static_cast<u32>(surfaces.count * sizeof(vert::face))
-                  + head.surfaces.offset,
+        .offset = static_cast<u32>(surfaces.count * sizeof(vert::face)) +
+                  head.surfaces.offset,
     };
 }
 

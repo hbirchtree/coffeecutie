@@ -6,9 +6,9 @@
 namespace glscreenshot {
 
 struct ScreenshotProvider
-    : comp_app::interfaces::ScreenshotProvider,
-      comp_app::AppService<ScreenshotProvider, comp_app::ScreenshotProvider>,
-      std::enable_shared_from_this<ScreenshotProvider>
+    : comp_app::interfaces::ScreenshotProvider
+    , comp_app::AppService<ScreenshotProvider, comp_app::ScreenshotProvider>
+    , std::enable_shared_from_this<ScreenshotProvider>
 {
     using type = ScreenshotProvider;
 

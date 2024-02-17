@@ -48,16 +48,22 @@ struct texture_t : std::enable_shared_from_this<texture_t>
         textures::type            type,
         PixDesc const&            data,
         u32                       mipmaps,
-        textures::property        properties) :
-        m_features(features),
-        m_debug(debug), m_decoder_queue(decoder_queue), m_format(data),
-        m_type(type), m_mipmaps(mipmaps), m_flags(properties)
+        textures::property        properties)
+        : m_features(features)
+        , m_debug(debug)
+        , m_decoder_queue(decoder_queue)
+        , m_format(data)
+        , m_type(type)
+        , m_mipmaps(mipmaps)
+        , m_flags(properties)
     {
     }
+
     virtual ~texture_t() = default;
 
     virtual void alloc(size_type const& size, bool create_storage = true);
-    inline void  dealloc()
+
+    inline void dealloc()
     {
         cmd::delete_textures(SpanOne<u32>(m_handle));
         m_handle.release();
@@ -77,11 +83,11 @@ struct texture_t : std::enable_shared_from_this<texture_t>
 
     std::future<std::vector<char>> software_decode(
         semantic::Span<const char>&& data, size_3d<i32> size, i32 mipmap);
+
     template<class Data, class SizeT>
     requires(SizeT::length() == 3)
-        //
-        inline auto software_decode_cast(
-            Data&& data, SizeT const& size, i32 mipmap)
+    //
+    inline auto software_decode_cast(Data&& data, SizeT const& size, i32 mipmap)
     {
         return software_decode(
             semantic::mem_chunk<const char>::ofBytes(data.data(), data.size())
@@ -89,11 +95,11 @@ struct texture_t : std::enable_shared_from_this<texture_t>
             size_3d<i32>{size[0], size[1], size[2]},
             mipmap);
     }
+
     template<class Data, class SizeT>
     requires(SizeT::length() == 2)
-        //
-        inline auto software_decode_cast(
-            Data&& data, SizeT const& size, i32 mipmap)
+    //
+    inline auto software_decode_cast(Data&& data, SizeT const& size, i32 mipmap)
     {
         return software_decode(
             semantic::mem_chunk<const char>::ofBytes(data.data(), data.size())
@@ -106,10 +112,12 @@ struct texture_t : std::enable_shared_from_this<texture_t>
     {
         return false;
     }
+
     std::optional<PixDesc> software_decode_format()
     {
         return std::nullopt;
     }
+
     template<class Data, class SizeT>
     inline auto software_decode_cast(Data&&, SizeT const&, i32)
     {
@@ -175,8 +183,10 @@ struct texture_t : std::enable_shared_from_this<texture_t>
 
 struct sampler_t
 {
-    sampler_t(std::shared_ptr<texture_t> const& source) :
-        m_source(source), m_features(source->m_features), m_type(source->m_type)
+    sampler_t(std::shared_ptr<texture_t> const& source)
+        : m_source(source)
+        , m_features(source->m_features)
+        , m_type(source->m_type)
     {
     }
 
@@ -308,8 +318,8 @@ struct texture_2d_t : texture_t
     {
         auto [ifmt1, type, layout] = convert::to<group::internal_format>(
             software_decode_format().value_or(m_format), m_features);
-        auto is_compressed = format_description().is_compressed()
-                             && !requires_software_decode();
+        auto is_compressed =
+            format_description().is_compressed() && !requires_software_decode();
 
 #if GLEAM_MAX_VERSION >= 0x450
         if(m_features.dsa && is_compressed)
@@ -396,8 +406,8 @@ struct texture_2da_t : texture_t
     {
         auto [ifmt1, type, layout] = convert::to<group::internal_format>(
             software_decode_format().value_or(m_format), m_features);
-        auto is_compressed = format_description().is_compressed()
-                             && !requires_software_decode();
+        auto is_compressed =
+            format_description().is_compressed() && !requires_software_decode();
 
 #if GLEAM_MAX_VERSION >= 0x450
         if(m_features.dsa && is_compressed)
@@ -538,8 +548,8 @@ struct texture_cube_array_t : texture_t
     {
         auto [ifmt1, type, layout] = convert::to<group::internal_format>(
             software_decode_format().value_or(m_format), m_features);
-        auto is_compressed = format_description().is_compressed()
-                             && !requires_software_decode();
+        auto is_compressed =
+            format_description().is_compressed() && !requires_software_decode();
         VectorT offset_mul = offset;
         offset_mul[2]      = offset_mul[2] * 6;
         for(auto const& face : data)
@@ -688,9 +698,9 @@ inline void make_copied_view(
 
 } // namespace detail
 
-#if GLEAM_MAX_VERSION_ES != 0x200                                  \
-    && (GLEAM_MAX_VERSION >= 0x430 || defined(GL_EXT_texture_view) \
-        || defined(GL_OES_texture_view))
+#if GLEAM_MAX_VERSION_ES != 0x200 &&                               \
+    (GLEAM_MAX_VERSION >= 0x430 || defined(GL_EXT_texture_view) || \
+     defined(GL_OES_texture_view))
 template<
     class TypeT,
     class OutputType = typename std::conditional_t<
@@ -763,11 +773,11 @@ inline auto make_texture_view(
     {
         auto fmt = origin.software_decode_format().value_or(origin.m_format);
         auto uninitialized = out->m_handle == 0u;
-        auto mismatched    = fmt.pixfmt != out->m_format.pixfmt
-                          || fmt.bfmt != out->m_format.bfmt
-                          || fmt.cmpflg != out->m_format.cmpflg
-                          || origin.m_tex_size.w != out->m_tex_size.w
-                          || origin.m_tex_size.h != out->m_tex_size.h;
+        auto mismatched    = fmt.pixfmt != out->m_format.pixfmt ||
+                          fmt.bfmt != out->m_format.bfmt ||
+                          fmt.cmpflg != out->m_format.cmpflg ||
+                          origin.m_tex_size.w != out->m_tex_size.w ||
+                          origin.m_tex_size.h != out->m_tex_size.h;
 
         if(uninitialized || mismatched)
         {

@@ -49,6 +49,7 @@ union alignas(4) indirect_command_buffer
         i32 baseVertex;
         u32 baseInstance;
     } elements;
+
     struct arrays_indirect_t
     {
         u32 count;
@@ -143,28 +144,28 @@ inline optional<tuple<error, std::string_view>> api::submit(
             modifiers...);
         return result;
     }() && m_workarounds.draw.advance_ubos_by_baseinstance;
-    const bool uses_vertex_offset
-        = call.indexed && stl_types::any_of(data, [](auto const& d) {
-              return d.elements.vertex_offset > 0;
-          });
-    if(m_api_type == api_type_t::es && uses_baseinstance
-       && !m_workarounds.draw.emulated_base_instance)
+    const bool uses_vertex_offset =
+        call.indexed && stl_types::any_of(data, [](auto const& d) {
+            return d.elements.vertex_offset > 0;
+        });
+    if(m_api_type == api_type_t::es && uses_baseinstance &&
+       !m_workarounds.draw.emulated_base_instance)
     {
         usage().draw.failed_draws++;
         return std::make_tuple(
             error::no_implementation_for_draw_call,
             "baseinstance not enabled in GL ES"sv);
     }
-    if(m_api_type == api_type_t::es && m_api_version == 0x200 && call.instanced
-       && !m_workarounds.draw.emulated_instance_id)
+    if(m_api_type == api_type_t::es && m_api_version == 0x200 &&
+       call.instanced && !m_workarounds.draw.emulated_instance_id)
     {
         usage().draw.failed_draws++;
         return std::make_tuple(
             error::no_implementation_for_draw_call,
             "instancing not enabled in GL ES 2.0"sv);
     }
-    if(m_api_type == api_type_t::es && m_api_version <= 0x300
-       && uses_vertex_offset && !m_workarounds.draw.emulated_vertex_offset)
+    if(m_api_type == api_type_t::es && m_api_version <= 0x300 &&
+       uses_vertex_offset && !m_workarounds.draw.emulated_vertex_offset)
     {
         usage().draw.failed_draws++;
         return std::make_tuple(
@@ -193,9 +194,9 @@ inline optional<tuple<error, std::string_view>> api::submit(
         cmd::bind_vertex_array(vao->m_handle);
     } else if(m_features.vertex.vertex_arrays)
     {
-        while(!m_features.vertex.layout_binding
-              || m_workarounds.draw.force_vertex_attrib_names
-              || vao->m_forced_attribute_names)
+        while(!m_features.vertex.layout_binding ||
+              m_workarounds.draw.force_vertex_attrib_names ||
+              vao->m_forced_attribute_names)
         {
             if(program->m_attribute_names == vao->m_attribute_names)
                 break;
@@ -236,10 +237,10 @@ inline optional<tuple<error, std::string_view>> api::submit(
     cmd::use_program(program->m_handle);
 
     {
-        u32 vertex_program
-            = m_features.program.separable_programs
-                  ? program->m_stages.at(program_t::stage_t::Vertex)->m_handle
-                  : program->m_handle;
+        u32 vertex_program =
+            m_features.program.separable_programs
+                ? program->m_stages.at(program_t::stage_t::Vertex)->m_handle
+                : program->m_handle;
         for(auto const& attrib : vao->m_attribute_names)
             cmd::bind_attrib_location(
                 vertex_program, attrib.second, attrib.first);
@@ -264,8 +265,8 @@ inline optional<tuple<error, std::string_view>> api::submit(
 
     std::function<void()> apply_instance_id = []() {};
     std::function<draw_command::data_t(draw_command::data_t const&)>
-        apply_base_instance
-        = [](draw_command::data_t const& d) -> draw_command::data_t {
+        apply_base_instance =
+            [](draw_command::data_t const& d) -> draw_command::data_t {
         return d;
     };
     std::function<void(u32)>      apply_vertex_offset = [](u32) {};
@@ -292,8 +293,8 @@ inline optional<tuple<error, std::string_view>> api::submit(
                 *program, bookkeeping, instanceUniform);
         };
     }
-    if((m_workarounds.draw.emulated_base_instance || uses_ubo_advancing)
-       && uses_baseinstance)
+    if((m_workarounds.draw.emulated_base_instance || uses_ubo_advancing) &&
+       uses_baseinstance)
     {
         if constexpr(compile_info::debug_mode)
         {
@@ -355,23 +356,23 @@ inline optional<tuple<error, std::string_view>> api::submit(
     }
 
     const bool indirect_supported //= false;
-        = m_features.draw.indirect
-          && (m_api_type == api_type_t::core ? m_api_version >= 0x430
-                                             : m_api_version >= 0x310);
-    const bool has_uniform_element_type
-        = call.indexed && stl_types::all_of(data, [&data](auto const& d) {
-              return d.elements.type == data.at(0).elements.type;
-          });
+        = m_features.draw.indirect &&
+          (m_api_type == api_type_t::core ? m_api_version >= 0x430
+                                          : m_api_version >= 0x310);
+    const bool has_uniform_element_type =
+        call.indexed && stl_types::all_of(data, [&data](auto const& d) {
+            return d.elements.type == data.at(0).elements.type;
+        });
     const bool multi_indirect_supported //= false;
-        = !uses_ubo_advancing && m_features.draw.multi_indirect
-          && (m_api_type == api_type_t::core ? m_api_version >= 0x430 : false);
-    const bool legacy_draw_only
-        = m_api_type == api_type_t::es && m_api_version == 0x200;
+        = !uses_ubo_advancing && m_features.draw.multi_indirect &&
+          (m_api_type == api_type_t::core ? m_api_version >= 0x430 : false);
+    const bool legacy_draw_only =
+        m_api_type == api_type_t::es && m_api_version == 0x200;
 
     if constexpr(compile_info::debug_mode)
     {
-        if(multi_indirect_supported && call.indexed
-           && !has_uniform_element_type)
+        if(multi_indirect_supported && call.indexed &&
+           !has_uniform_element_type)
             debug().message(
                 "varying element types prevents use of MultiDrawIndirect"sv);
     }
@@ -379,16 +380,17 @@ inline optional<tuple<error, std::string_view>> api::submit(
     for(auto const& draw : data)
     {
         if(call.mode == drawing::primitive::triangle)
-            m_usage.draw.triangles += (draw.arrays.count + draw.elements.count)
-                                      * draw.instances.count;
+            m_usage.draw.triangles +=
+                (draw.arrays.count + draw.elements.count) *
+                draw.instances.count;
         else if(call.mode == drawing::primitive::triangle_strip)
-            m_usage.draw.triangle_strips
-                += (draw.arrays.count + draw.elements.count)
-                   * draw.instances.count;
+            m_usage.draw.triangle_strips +=
+                (draw.arrays.count + draw.elements.count) *
+                draw.instances.count;
         else
-            m_usage.draw.other_prims
-                += (draw.arrays.count + draw.elements.count)
-                   * draw.instances.count;
+            m_usage.draw.other_prims +=
+                (draw.arrays.count + draw.elements.count) *
+                draw.instances.count;
     }
 
 #if GLEAM_MAX_VERSION_ES != 0x200
@@ -432,8 +434,8 @@ inline optional<tuple<error, std::string_view>> api::submit(
         using stl_types::range;
         for(auto d : data)
         {
-            [[maybe_unused]] auto _
-                = debug().scope("legacy_draw::base_instance");
+            [[maybe_unused]] auto _ =
+                debug().scope("legacy_draw::base_instance");
             auto       num_instances    = std::max(d.instances.count, 1u);
             auto const base_sampler_idx = bookkeeping.sampler_idx;
             d                           = apply_base_instance(d);
@@ -450,8 +452,8 @@ inline optional<tuple<error, std::string_view>> api::submit(
                 }
             for([[maybe_unused]] auto i : range<u32>(num_instances))
             {
-                [[maybe_unused]] auto _
-                    = debug().scope("legacy_draw::instance");
+                [[maybe_unused]] auto _ =
+                    debug().scope("legacy_draw::instance");
                 (detail::apply_command_modifier_per_call(
                      *program,
                      bookkeeping,

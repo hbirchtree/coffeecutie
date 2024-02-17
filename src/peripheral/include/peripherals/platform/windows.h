@@ -34,7 +34,7 @@ inline HANDLE u64_to_handle(libc_types::u64 hnd)
 {
     return C_RCAST<HANDLE>(hnd);
 }
-    
+
 namespace detail {
 inline void closeHandle(libc_types::u64 hnd)
 {
@@ -44,11 +44,12 @@ inline void closeHandle(libc_types::u64 hnd)
 } // namespace detail
 } // namespace win32
 
-struct win_handle : semantic::generic_handle_t<
-    libc_types::u64,
-    semantic::handle_modes::auto_close,
-    win32::invalid_handle_value,
-    win32::detail::closeHandle>
+struct win_handle
+    : semantic::generic_handle_t<
+          libc_types::u64,
+          semantic::handle_modes::auto_close,
+          win32::invalid_handle_value,
+          win32::detail::closeHandle>
 {
     using semantic::generic_handle_t<
         libc_types::u64,

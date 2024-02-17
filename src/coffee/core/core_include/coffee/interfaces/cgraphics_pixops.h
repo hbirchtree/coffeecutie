@@ -4,9 +4,9 @@
 
 #include <coffee/core/CMath>
 
+#include <coffee/core/types/size.h>
 #include <peripherals/typing/enum/pixels/format.h>
 #include <peripherals/typing/enum/pixels/format_transform.h>
-#include <coffee/core/types/size.h>
 
 #include <peripherals/stl/any_of.h>
 

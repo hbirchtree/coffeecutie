@@ -47,8 +47,8 @@ std::map<std::string, std::string> query_params()
         auto split = param.find('=');
         if(split == std::string::npos)
             continue;
-        out[std::string(param.substr(0, split))]
-            = std::string(param.substr(split + 1));
+        out[std::string(param.substr(0, split))] =
+            std::string(param.substr(split + 1));
     }
     return out;
 }

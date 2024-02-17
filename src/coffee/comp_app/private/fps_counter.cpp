@@ -1,8 +1,8 @@
 #include <coffee/comp_app/fps_counter.h>
 
-#include <coffee/core/debug/formatting.h>
-#include <coffee/components/proxy.h>
 #include <coffee/comp_app/services.h>
+#include <coffee/components/proxy.h>
+#include <coffee/core/debug/formatting.h>
 
 namespace comp_app {
 
@@ -16,7 +16,7 @@ FrameCounter::FrameCounter()
     get() = 0;
 }
 
-void FrameCounter::start_frame(ContainerProxy& p, const time_point &current)
+void FrameCounter::start_frame(ContainerProxy& p, const time_point& current)
 {
     get()++;
 
@@ -34,4 +34,4 @@ void FrameCounter::start_frame(ContainerProxy& p, const time_point &current)
     }
 }
 
-}
+} // namespace comp_app

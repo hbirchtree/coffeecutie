@@ -28,7 +28,8 @@ struct camera : camera_base<T>
 template<typename T>
 struct camera_ortho : camera_base<T>
 {
-    FORCEDINLINE camera_ortho() : orthoview(T(0), T(0), T(1), T(1))
+    FORCEDINLINE camera_ortho()
+        : orthoview(T(0), T(0), T(1), T(1))
     {
     }
 

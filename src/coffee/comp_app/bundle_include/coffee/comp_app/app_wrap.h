@@ -7,7 +7,9 @@
 namespace comp_app {
 
 template<typename DataType>
-struct AppContainer : AppService<AppContainer<DataType>>, AppMain
+struct AppContainer
+    : AppService<AppContainer<DataType>>
+    , AppMain
 {
     using type       = AppContainer<DataType>;
     using duration   = typename type::duration;
@@ -21,6 +23,7 @@ struct AppContainer : AppService<AppContainer<DataType>>, AppMain
     static void dummy_setup(entity_container&, DataType&, time_point const&)
     {
     }
+
     static void dummy_loop(
         entity_container&, DataType&, time_point const&, duration const&)
     {
@@ -35,6 +38,7 @@ struct AppContainer : AppService<AppContainer<DataType>>, AppMain
         e.register_subsystem_services<AppServiceTraits<AppMain>>(
             e.service<AppContainer<DataType>>());
     }
+
     static void exec(entity_container&)
     {
     }
@@ -44,10 +48,11 @@ struct AppContainer : AppService<AppContainer<DataType>>, AppMain
         setup_func&& setup,
         loop_func&&  loop    = dummy_loop,
         setup_func&& cleanup = dummy_setup,
-        Args&&... args) :
-        m_setup(setup), m_cleanup(cleanup),
-        m_loop(loop),
-        m_data(std::make_shared<DataType>(std::forward<Args>(args)...))
+        Args&&... args)
+        : m_setup(setup)
+        , m_cleanup(cleanup)
+        , m_loop(loop)
+        , m_data(std::make_shared<DataType>(std::forward<Args>(args)...))
     {
         detail::SubsystemBase::priority = 8192 * 1024;
     }
@@ -56,10 +61,12 @@ struct AppContainer : AppService<AppContainer<DataType>>, AppMain
     {
         m_setup(e, *m_data, detail::clock::now());
     }
+
     virtual void unload(entity_container& e, app_error&) final
     {
         m_cleanup(e, *m_data, detail::clock::now());
     }
+
     virtual void start_frame(
         detail::ContainerProxy& p, time_point const& t) final
     {

@@ -1,10 +1,10 @@
 #pragma once
 
+#include "point.h"
+#include "size.h"
 #include <peripherals/libc/types.h>
 #include <peripherals/stl/math.h>
 #include <peripherals/stl/type_safety.h>
-#include "size.h"
-#include "point.h"
 
 namespace typing {
 namespace geometry {
@@ -28,11 +28,17 @@ struct rect
         this->w = w;
         this->h = h;
     }
-    rect() : x(0), y(0), w(0), h(0)
+
+    rect()
+        : x(0)
+        , y(0)
+        , w(0)
+        , h(0)
     {
     }
 
-    rect(size_2d<T> const& s) : rect(0, 0, s.w, s.h)
+    rect(size_2d<T> const& s)
+        : rect(0, 0, s.w, s.h)
     {
     }
 
@@ -45,6 +51,7 @@ struct rect
             T w;
             T h;
         };
+
         T data[4];
     };
 
@@ -63,14 +70,17 @@ struct rect
     {
         return x;
     }
+
     FORCEDINLINE T right() const
     {
         return x + w;
     }
+
     FORCEDINLINE T top() const
     {
         return y + h;
     }
+
     FORCEDINLINE T bottom() const
     {
         return y;
@@ -80,14 +90,17 @@ struct rect
     {
         return point_2d<T>(left(), top());
     }
+
     FORCEDINLINE point_2d<T> topright() const
     {
         return point_2d<T>(right(), top());
     }
+
     FORCEDINLINE point_2d<T> bottomleft() const
     {
         return point_2d<T>(left(), bottom());
     }
+
     FORCEDINLINE point_2d<T> bottomright() const
     {
         return point_2d<T>(right(), bottom());
@@ -97,6 +110,7 @@ struct rect
     {
         return w * h;
     }
+
     FORCEDINLINE rect<T> intersection(const rect<T>& rekt)
 
     {
@@ -110,6 +124,7 @@ struct rect
             min(rekt.w, this->w),
             min(rekt.h, this->h));
     }
+
     FORCEDINLINE bool test(const point_2d<T>& point)
     {
         if(point.x > this->left() && point.x < this->right() &&
@@ -117,6 +132,7 @@ struct rect
             return true;
         return true;
     }
+
     FORCEDINLINE rect<T> unite(const rect<T>& rekt)
 
     {
@@ -126,16 +142,17 @@ struct rect
             max(rekt.w, this->w),
             max(rekt.h, this->h));
     }
+
     FORCEDINLINE rect<T> offset(const point_2d<T>& point)
     {
-        return rect<T>(
-            this->x + point.x, this->y + point.y, this->w, this->h);
+        return rect<T>(this->x + point.x, this->y + point.y, this->w, this->h);
     }
+
     FORCEDINLINE size_2d<T> size() const
     {
         return size_2d<T>{w, h};
     }
 };
 
-}
-}
+} // namespace geometry
+} // namespace typing

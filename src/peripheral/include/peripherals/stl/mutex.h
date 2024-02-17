@@ -50,10 +50,12 @@ enum class cv_status
 template<typename MutexType = Mutex>
 struct BaseLock
 {
-    BaseLock(MutexType& m) : m_mutex(m)
+    BaseLock(MutexType& m)
+        : m_mutex(m)
     {
         m_mutex.lock();
     }
+
     ~BaseLock()
     {
         m_mutex.unlock();
@@ -71,17 +73,26 @@ struct UqLock
     UqLock()
     {
     }
-    UqLock(Mutex& m) : m_mutex(&m), m_hasLock(true)
+
+    UqLock(Mutex& m)
+        : m_mutex(&m)
+        , m_hasLock(true)
     {
         m_mutex->try_lock();
     }
-    UqLock(Mutex& m, std::try_to_lock_t) : m_mutex(&m)
+
+    UqLock(Mutex& m, std::try_to_lock_t)
+        : m_mutex(&m)
     {
         m_hasLock = m_mutex->try_lock() == 0;
     }
-    UqLock(Mutex& m, std::defer_lock_t) : m_mutex(&m), m_hasLock(false)
+
+    UqLock(Mutex& m, std::defer_lock_t)
+        : m_mutex(&m)
+        , m_hasLock(false)
     {
     }
+
     ~UqLock()
     {
         m_mutex->unlock();
@@ -148,4 +159,4 @@ using CondVar   = std::condition_variable;
 using cv_status = std::cv_status;
 #endif
 
-}
+} // namespace stl_types

@@ -10,6 +10,7 @@
 #include "../enums/StencilOp.h"
 #include "../enums/TextureEnvMode.h"
 #include "../enums/TextureSwizzle.h"
+
 namespace gl::oes::draw_buffers_indexed {
 using gl::group::blend_equation_mode_ext;
 using gl::group::blending_factor;
@@ -20,8 +21,10 @@ using gl::group::special_numbers;
 using gl::group::stencil_op;
 using gl::group::texture_env_mode;
 using gl::group::texture_swizzle;
+
 namespace values {
 } // namespace values
+
 /*!
  * \brief Part of GL_OES_draw_buffers_indexed
  * \param buf GLuint

@@ -22,6 +22,7 @@
 #include "../enums/PixelTransferParameter.h"
 #include "../enums/SeparableTarget.h"
 #include "../enums/SeparableTargetEXT.h"
+
 namespace gl::arb::imaging {
 using gl::group::blend_equation_mode_ext;
 using gl::group::blending_factor;
@@ -44,6 +45,7 @@ using gl::group::minmax_target_ext;
 using gl::group::pixel_transfer_parameter;
 using gl::group::separable_target;
 using gl::group::separable_target_ext;
+
 namespace values {
 #if defined(GL_VERSION_1_0)
 constexpr u32 color_matrix = 0x80B1;
@@ -61,17 +63,18 @@ constexpr u32 constant_border = 0x8151;
 constexpr u32 replicate_border = 0x8153;
 #endif
 } // namespace values
+
 template<class vec_4_f32>
 requires(concepts::vector<vec_4_f32, f32, 4>)
-    /*!
-     * \brief Part of GL_ARB_imaging
-     * \param red GLfloat
-     * \param green GLfloat
-     * \param blue GLfloat
-     * \param alpha GLfloat
-     * \return void
-     */
-    STATICINLINE void blend_color(vec_4_f32 const& red)
+/*!
+ * \brief Part of GL_ARB_imaging
+ * \param red GLfloat
+ * \param green GLfloat
+ * \param blue GLfloat
+ * \param alpha GLfloat
+ * \return void
+ */
+STATICINLINE void blend_color(vec_4_f32 const& red)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

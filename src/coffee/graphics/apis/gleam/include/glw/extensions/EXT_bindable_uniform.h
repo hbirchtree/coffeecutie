@@ -10,6 +10,7 @@ constexpr u32 max_bindable_uniform_size      = 0x8DED;
 constexpr u32 uniform_buffer                 = 0x8DEE;
 constexpr u32 uniform_buffer_binding         = 0x8DEF;
 } // namespace values
+
 /*!
  * \brief Part of GL_EXT_bindable_uniform
  * \param program GLuint

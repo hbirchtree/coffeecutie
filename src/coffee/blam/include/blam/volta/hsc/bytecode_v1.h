@@ -337,34 +337,34 @@ enum class v1 : libc_types::i16
     sound_cache_flush,
     sound_cache_dump_to_file,
 
-//    debug_memory,
-//    debug_memory_by_file,
-//    debug_memory_for_file,
-//    debug_tags,
+    //    debug_memory,
+    //    debug_memory_by_file,
+    //    debug_memory_for_file,
+    //    debug_tags,
 
-//    profile_reset,
-//    profile_dump,
-//    profile_activate,
-//    profile_deactivate,
-//    profile_graph_toggle,
+    //    profile_reset,
+    //    profile_dump,
+    //    profile_activate,
+    //    profile_deactivate,
+    //    profile_graph_toggle,
 
-//    debug_pvs,
+    //    debug_pvs,
 
-//    radiosity_start,
-//    radiosity_save,
-//    radiosity_debug_point,
+    //    radiosity_start,
+    //    radiosity_save,
+    //    radiosity_debug_point,
 
-    ai                   = 283,
+    ai = 283,
     ai_dialogue_triggers,
     ai_grenades,
     ai_lines,
 
     /* Unconfirmed */
-//    ai_debug_sound_point_set,
-//    ai_debug_vocalize,
-//    ai_debug_teleport_to,
-//    ai_debug_speak,
-//    ai_debug_speak_list,
+    //    ai_debug_sound_point_set,
+    //    ai_debug_vocalize,
+    //    ai_debug_teleport_to,
+    //    ai_debug_speak,
+    //    ai_debug_speak_list,
 
     fade_in = 292,
     fade_out,
@@ -373,7 +373,7 @@ enum class v1 : libc_types::i16
     cinematic_stop,
     cinematic_skip_start_internal,
     cinematic_skip_stop_internal,
-//    cinematic_abort,
+    //    cinematic_abort,
     cinematic_show_letterbox,
     cinematic_set_title,
     cinematic_set_title_delayed,
@@ -646,4 +646,4 @@ enum class v1 : libc_types::i16
     max_opcode = 550,
 };
 
-} // namespace blam
+} // namespace blam::hsc::bc

@@ -50,7 +50,7 @@ FORCEDINLINE std::basic_string_view<CharType> as_view(
 
 template<typename CharType, typename T>
 requires std::is_same_v<T, std::basic_string<CharType>>
-    FORCEDINLINE std::basic_string_view<CharType> as_view(T const& in)
+FORCEDINLINE std::basic_string_view<CharType> as_view(T const& in)
 {
     return std::basic_string_view<CharType>(in.data(), in.size());
 }

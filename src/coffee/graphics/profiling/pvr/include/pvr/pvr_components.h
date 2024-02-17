@@ -10,9 +10,9 @@ struct SPVRScopeCounterDef;
 namespace pvr {
 
 struct PVRGPUStats
-    : comp_app::interfaces::GPUStatProvider,
-      comp_app::AppService<PVRGPUStats, comp_app::GPUStatProvider>,
-      comp_app::AppLoadableService
+    : comp_app::interfaces::GPUStatProvider
+    , comp_app::AppService<PVRGPUStats, comp_app::GPUStatProvider>
+    , comp_app::AppLoadableService
 {
     void start_frame(compo::ContainerProxy&, const compo::time_point& time);
 
@@ -30,21 +30,23 @@ struct PVRGPUStats
   private:
     void dump_stats(libc_types::u32 group);
 
-    SPVRScopeImplData*                   m_context{nullptr};
-    SPVRScopeCounterDef*                 m_counters{nullptr};
-    unsigned int                         m_num_counters{0};
-    SPVRScopeCounterReading              m_reading = {
-        .pfValueBuf = nullptr,
-        .nValueCnt = 0,
+    SPVRScopeImplData*      m_context{nullptr};
+    SPVRScopeCounterDef*    m_counters{nullptr};
+    unsigned int            m_num_counters{0};
+    SPVRScopeCounterReading m_reading = {
+        .pfValueBuf          = nullptr,
+        .nValueCnt           = 0,
         .nReadingActiveGroup = 0,
     };
+
     struct counter_reading_t
     {
         libc_types::f32 value;
-        bool is_percentage{false};
+        bool            is_percentage{false};
     };
+
     std::map<std::string, counter_reading_t> m_cached_readings;
-    compo::time_point m_next_dump{};
+    compo::time_point                        m_next_dump{};
 };
 
 } // namespace pvr

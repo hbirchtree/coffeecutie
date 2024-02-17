@@ -2,10 +2,13 @@
 
 #ifdef GL_NV_read_buffer
 #include "../enums/GetPName.h"
+
 namespace gl::nv::read_buffer {
 using gl::group::get_prop;
+
 namespace values {
 } // namespace values
+
 /*!
  * \brief Part of GL_NV_read_buffer
  * \param mode GLenum

@@ -39,7 +39,8 @@ struct ThreadState
 
 struct PContext
 {
-    PContext() : start_time(PClock::now())
+    PContext()
+        : start_time(PClock::now())
     {
         flags.enabled      = false;
         flags.deep_enabled = false;
@@ -63,6 +64,7 @@ struct PContext
         flags.enabled      = true;
         flags.deep_enabled = true;
     }
+
     void disable()
     {
         Lock _(access);
@@ -86,14 +88,15 @@ template<typename Context, typename Clock, typename Types>
 struct RuntimeProperties : ThreadInternalState
 {
     using ThisType = RuntimeProperties<Context, Clock, Types>;
-    using PFunc
-        = void (*)(Context& ctxt, typename Types::datapoint const& data);
+    using PFunc =
+        void (*)(Context& ctxt, typename Types::datapoint const& data);
 
     static ThisType& get_properties()
     {
         return *C_DCAST<ThisType>(
             PContext::ProfilerTStore()->internal_state.get());
     }
+
     static bool enabled()
     {
         if(!state || !state->ProfilerEnabled())
@@ -106,6 +109,7 @@ struct RuntimeProperties : ThreadInternalState
 
         return context->flags.enabled;
     }
+
     static bool deep_enabled()
     {
         if(!enabled())
@@ -126,6 +130,7 @@ struct RuntimeProperties : ThreadInternalState
     {
         PContext::ProfilerTStore()->context_stack.push_back(frame);
     }
+
     std::string_view pop_stack()
     {
         auto& thread_store = *PContext::ProfilerTStore();
@@ -191,10 +196,12 @@ struct SimpleProfilerImpl
     {
         Profiler::app::push(name);
     }
+
     STATICINLINE void PopContext()
     {
         Profiler::app::pop();
     }
+
     STATICINLINE void Profile(
         std::string_view name, DataPoint::Attr = DataPoint::AttrNone)
     {
@@ -206,10 +213,12 @@ struct SimpleProfilerImpl
     {
         Profiler::lib::push(name);
     }
+
     STATICINLINE void DeepPopContext()
     {
         Profiler::lib::pop();
     }
+
     STATICINLINE void DeepProfile(
         std::string_view name, DataPoint::Attr = DataPoint::AttrNone)
     {
@@ -217,26 +226,31 @@ struct SimpleProfilerImpl
     }
 
     C_DEPRECATED_S("Doesn't do anything")
+
     STATICINLINE void InitProfiler()
     {
     }
 
     C_DEPRECATED_S("use State::GetProfilerStore()")
+
     STATICINLINE void DisableProfiler()
     {
     }
 
     C_DEPRECATED_S("use State::GetProfilerStore()->flags instead")
+
     STATICINLINE void SetDeepProfileMode(bool)
     {
     }
 
     C_DEPRECATED_S("use ExtraData::Add() instead")
+
     STATICINLINE void AddExtraData(std::string const&, std::string_view const&)
     {
     }
 
     C_DEPRECATED_S("use ExtraData::Get() instead")
+
     STATICINLINE PExtraData* ExtraInfo()
     {
         return &Context().extra_data;
@@ -327,6 +341,7 @@ struct ProfilerContext
     {
         SimpleProfilerImpl::PushContext(name, at);
     }
+
     FORCEDINLINE ~ProfilerContext()
     {
         SimpleProfilerImpl::PopContext();
@@ -354,9 +369,10 @@ struct GpuProfilerContext
     FORCEDINLINE GpuProfilerContext(
         std::shared_ptr<QueryType> query,
         std::string_view name = stl_types::source_location().function_name(),
-        ThreadId::Hash   gpu_thread = 0x8085) :
-        m_thread(gpu_thread),
-        m_name(name), m_query(query)
+        ThreadId::Hash   gpu_thread = 0x8085)
+        : m_thread(gpu_thread)
+        , m_name(name)
+        , m_query(query)
     {
         if constexpr(!compile_info::profiler::gpu::enabled)
             return;
@@ -365,6 +381,7 @@ struct GpuProfilerContext
         m_query->begin();
         push_event(m_name);
     }
+
     FORCEDINLINE ~GpuProfilerContext()
     {
         if constexpr(!compile_info::profiler::gpu::enabled)
@@ -382,10 +399,10 @@ struct GpuProfilerContext
         auto props = Profiler::runtime_options::get_properties();
 
         Profiler::datapoint event;
-        event.flags.type
-            = offset ? Profiler::datapoint::Pop : Profiler::datapoint::Push;
-        event.ts
-            = (m_start + std::chrono::nanoseconds(offset)).time_since_epoch();
+        event.flags.type =
+            offset ? Profiler::datapoint::Pop : Profiler::datapoint::Push;
+        event.ts =
+            (m_start + std::chrono::nanoseconds(offset)).time_since_epoch();
         event.name      = name;
         event.tid       = m_thread;
         event.component = COFFEE_COMPONENT_NAME;

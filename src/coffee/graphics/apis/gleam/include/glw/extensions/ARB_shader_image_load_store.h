@@ -4,10 +4,12 @@
 #include "../enums/AttributeType.h"
 #include "../enums/InternalFormatPName.h"
 #include "../enums/MemoryBarrierMask.h"
+
 namespace gl::arb::shader_image_load_store {
 using gl::group::attribute_type;
 using gl::group::internal_format_prop;
 using gl::group::memory_barrier_mask;
+
 namespace values {
 constexpr u32 max_image_units                               = 0x8F38;
 constexpr u32 max_combined_image_units_and_fragment_outputs = 0x8F39;
@@ -27,6 +29,7 @@ constexpr u32 max_geometry_image_uniforms                   = 0x90CD;
 constexpr u32 max_fragment_image_uniforms                   = 0x90CE;
 constexpr u32 max_combined_image_uniforms                   = 0x90CF;
 } // namespace values
+
 /*!
  * \brief Part of GL_ARB_shader_image_load_store
  * \param unit GLuint

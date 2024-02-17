@@ -18,7 +18,6 @@ enum class TexType
 
 namespace texture_composition {
 
-
 enum TextureType_t
 {
     /* Bitshifting offsets */

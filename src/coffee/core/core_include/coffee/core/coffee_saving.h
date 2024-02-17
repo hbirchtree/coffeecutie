@@ -37,8 +37,7 @@ struct SaveApi
      * size \param slot If applicable, which data slot
      */
     virtual std::future<size_t> restore(
-        semantic::Bytes&& data, slot_count_t slot = 0)
-        = 0;
+        semantic::Bytes&& data, slot_count_t slot = 0) = 0;
     /*!
      * \brief Save memory to storage
      * \param data_ptr Source data pointer
@@ -46,8 +45,7 @@ struct SaveApi
      * \param slot If applicable, which data slot
      */
     virtual std::future<size_t> save(
-        semantic::Bytes const& data, slot_count_t slot = 0)
-        = 0;
+        semantic::Bytes const& data, slot_count_t slot = 0) = 0;
 };
 
 struct FilesystemApi : SaveApi

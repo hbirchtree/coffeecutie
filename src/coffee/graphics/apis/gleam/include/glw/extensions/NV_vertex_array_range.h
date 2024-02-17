@@ -9,6 +9,7 @@ constexpr u32 vertex_array_range_valid       = 0x851F;
 constexpr u32 max_vertex_array_range_element = 0x8520;
 constexpr u32 vertex_array_range_pointer     = 0x8521;
 } // namespace values
+
 /*!
  * \brief Part of GL_NV_vertex_array_range
 
@@ -27,14 +28,13 @@ STATICINLINE void flush_vertex_array_range()
 
 template<class span_const_void>
 requires(concepts::span<span_const_void>)
-    /*!
-     * \brief Part of GL_NV_vertex_array_range
-     * \param length GLsizei
-     * \param pointer const void *
-     * \return void
-     */
-    STATICINLINE
-    void vertex_array_range(i32 length, span_const_void const& pointer)
+/*!
+ * \brief Part of GL_NV_vertex_array_range
+ * \param length GLsizei
+ * \param pointer const void *
+ * \return void
+ */
+STATICINLINE void vertex_array_range(i32 length, span_const_void const& pointer)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

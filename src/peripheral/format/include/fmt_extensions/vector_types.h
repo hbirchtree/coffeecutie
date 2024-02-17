@@ -1,8 +1,8 @@
 #pragma once
 
 #include <fmt/format.h>
-#include <peripherals/typing/vectors/vector_types.h>
 #include <peripherals/typing/geometry/size.h>
+#include <peripherals/typing/vectors/vector_types.h>
 
 template<>
 struct fmt::formatter<glm::quat>
@@ -115,8 +115,7 @@ struct fmt::formatter<typing::geometry::size_2d<T>>
     template<typename FormatCtx>
     auto format(typing::geometry::size_2d<T> const& p, FormatCtx& ctx)
     {
-        return fmt::format_to(
-            ctx.out(), "size2({}, {})", p.w, p.h);
+        return fmt::format_to(ctx.out(), "size2({}, {})", p.w, p.h);
     }
 };
 
@@ -132,7 +131,6 @@ struct fmt::formatter<typing::geometry::size_3d<T>>
     template<typename FormatCtx>
     auto format(typing::geometry::size_3d<T> const& p, FormatCtx& ctx)
     {
-        return fmt::format_to(
-            ctx.out(), "size3({}, {}, {})", p.w, p.h, p.d);
+        return fmt::format_to(ctx.out(), "size3({}, {}, {})", p.w, p.h, p.d);
     }
 };

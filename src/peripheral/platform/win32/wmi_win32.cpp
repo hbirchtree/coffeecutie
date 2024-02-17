@@ -34,7 +34,7 @@ auto string_to_bstr(std::string const& str)
     return SysAllocStringByteLen(str.data(), str.size());
 }
 
-}
+} // namespace
 
 int InitCOMInterface()
 {
@@ -106,15 +106,15 @@ int InitCOMInterface()
     // the current user and obtain pointer pSvc
     // to make IWbemServices calls.4
     auto wmi_namespace = string_to_bstr("ROOT\\CIMV2");
-    hres = pLoc->ConnectServer(
+    hres               = pLoc->ConnectServer(
         wmi_namespace, // Object path of WMI namespace
-        nullptr,                 // User name. NULL = current user
-        nullptr,                 // User password. NULL = current
-        0,                       // Locale. NULL indicates current
-        0,                       // Security flags.
-        0,                       // Authority (for example, Kerberos)
-        0,                       // Context object
-        &pSvc                    // pointer to IWbemServices proxy
+        nullptr,       // User name. NULL = current user
+        nullptr,       // User password. NULL = current
+        0,             // Locale. NULL indicates current
+        0,             // Security flags.
+        0,             // Authority (for example, Kerberos)
+        0,             // Context object
+        &pSvc          // pointer to IWbemServices proxy
     );
     SysFreeString(wmi_namespace);
 
@@ -135,10 +135,10 @@ int InitCOMInterface()
         pSvc,                        // Indicates the proxy to set
         RPC_C_AUTHN_WINNT,           // RPC_C_AUTHN_xxx
         RPC_C_AUTHZ_NONE,            // RPC_C_AUTHZ_xxx
-        nullptr,                        // Server principal name
+        nullptr,                     // Server principal name
         RPC_C_AUTHN_LEVEL_CALL,      // RPC_C_AUTHN_LEVEL_xxx
         RPC_C_IMP_LEVEL_IMPERSONATE, // RPC_C_IMP_LEVEL_xxx
-        nullptr,                        // client identity
+        nullptr,                     // client identity
         EOAC_NONE                    // proxy capabilities
     );
 
@@ -168,10 +168,10 @@ bool WMI_Query(const char* query, const wchar_t* property, std::string& target)
     HRESULT hres;
     auto    pSvc = m_wmi_data->service;
 
-    IEnumWbemClassObject* pEnumerator = NULL;
-    auto query_language = string_to_bstr("WQL");
-    auto query_ = string_to_bstr(query);
-    hres                              = pSvc->ExecQuery(
+    IEnumWbemClassObject* pEnumerator    = NULL;
+    auto                  query_language = string_to_bstr("WQL");
+    auto                  query_         = string_to_bstr(query);
+    hres                                 = pSvc->ExecQuery(
         query_language,
         query_,
         WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,

@@ -10,6 +10,7 @@ namespace blam::vert {
 struct compressed
 {
 };
+
 struct uncompressed
 {
 };
@@ -69,8 +70,8 @@ struct alignas(4) mod2_vertex
     using weight_value_type   = std::
         conditional_t<is_compressed, compressed_weights, uncompressed_weights>;
 
-    static constexpr size_t padding_size
-        = std::is_same_v<V, uncompressed> ? 12 : 2;
+    static constexpr size_t padding_size =
+        std::is_same_v<V, uncompressed> ? 12 : 2;
 
     Vecf3          position;
     normal_type<V> normal;

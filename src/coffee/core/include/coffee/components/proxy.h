@@ -56,8 +56,9 @@ struct ContainerProxy : stl_types::non_copy
     u64              current_entity;
     EntityContainer& m_container;
 
-    ContainerProxy(EntityContainer& container) :
-        current_entity(0), m_container(container)
+    ContainerProxy(EntityContainer& container)
+        : current_entity(0)
+        , m_container(container)
     {
     }
 };
@@ -72,7 +73,8 @@ struct ConstrainedProxy : ContainerProxy
     using subsystem_list = SubsystemList;
     using service_list   = ServiceList;
 
-    ConstrainedProxy(EntityContainer& container) : ContainerProxy(container)
+    ConstrainedProxy(EntityContainer& container)
+        : ContainerProxy(container)
     {
     }
 
@@ -83,28 +85,28 @@ struct ConstrainedProxy : ContainerProxy
 
     template<is_component_tag ComponentType>
     requires type_in_list_v<ComponentType, ComponentList>
-        FORCEDINLINE quick_container<EntityContainer::entity_query> select()
+    FORCEDINLINE quick_container<EntityContainer::entity_query> select()
     {
         return ContainerProxy::select<ComponentType>();
     }
 
     template<is_component_tag ComponentType>
     requires type_in_list_v<ComponentType, ComponentList>
-        FORCEDINLINE typename ComponentType::value_type* get(u64 id)
+    FORCEDINLINE typename ComponentType::value_type* get(u64 id)
     {
         return m_container.get<ComponentType>(id);
     }
 
     template<is_component_tag ComponentType>
     requires type_in_list_v<ComponentType, ComponentList>
-        FORCEDINLINE typename ComponentType::value_type const* get(u64 id) const
+    FORCEDINLINE typename ComponentType::value_type const* get(u64 id) const
     {
         return m_container.get<ComponentType>(id);
     }
 
     template<is_component_tag ComponentType>
     requires type_in_list_v<ComponentType, ComponentList>
-        FORCEDINLINE typename ComponentType::value_type& get()
+    FORCEDINLINE typename ComponentType::value_type& get()
     {
         auto v = get<ComponentType>(current_entity);
 
@@ -117,7 +119,7 @@ struct ConstrainedProxy : ContainerProxy
 
     template<is_component_tag ComponentType>
     requires type_in_list_v<ComponentType, ComponentList>
-        FORCEDINLINE typename ComponentType::value_type const& get() const
+    FORCEDINLINE typename ComponentType::value_type const& get() const
     {
         auto v = get<ComponentType>(current_entity);
 
@@ -130,30 +132,30 @@ struct ConstrainedProxy : ContainerProxy
 
     template<is_tag_type SubsystemType>
     requires type_in_list_v<SubsystemType, SubsystemList>
-        FORCEDINLINE typename SubsystemType::type& subsystem()
+    FORCEDINLINE typename SubsystemType::type& subsystem()
     {
         return m_container.subsystem_cast<SubsystemType>();
     }
 
     template<is_tag_type SubsystemType>
     requires type_in_list_v<SubsystemType, SubsystemList>
-        //
-        FORCEDINLINE void subsystem(SubsystemType*& target)
+    //
+    FORCEDINLINE void subsystem(SubsystemType*& target)
     {
         target = &m_container.subsystem_cast<SubsystemType>();
     }
 
     template<is_tag_type SubsystemType>
     requires type_in_list_v<SubsystemType, SubsystemList>
-        //
-        FORCEDINLINE void subsystem(SubsystemType const*& target)
+    //
+    FORCEDINLINE void subsystem(SubsystemType const*& target)
     {
         target = &m_container.subsystem_cast<SubsystemType>();
     }
 
     template<is_tag_type Service>
     requires type_in_list_v<Service, ServiceList>
-        FORCEDINLINE typename Service::type* service()
+    FORCEDINLINE typename Service::type* service()
     {
         return m_container.service<Service>();
     }

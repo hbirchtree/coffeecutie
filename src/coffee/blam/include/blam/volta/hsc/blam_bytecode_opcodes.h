@@ -3,8 +3,8 @@
 #include "bytecode_v1.h"
 #include "bytecode_v2.h"
 
-#include <peripherals/stl/any_of.h>
 #include <blam/volta/blam_base_types.h>
+#include <peripherals/stl/any_of.h>
 
 namespace blam::hsc {
 

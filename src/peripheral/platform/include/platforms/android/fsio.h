@@ -37,7 +37,7 @@ FORCEDINLINE result<file_info_t, posix::posix_error> file_info(Url const& file)
 
 template<typename T>
 requires(std::is_same_v<T, Url> || std::is_same_v<T, detail::android_fd_t>)
-    FORCEDINLINE result<mode_t, posix::posix_error> exists(T const& file)
+FORCEDINLINE result<mode_t, posix::posix_error> exists(T const& file)
 {
     if(auto info = file_info(file); info.has_error())
         return posix::posix_error{info.error()};
@@ -47,7 +47,7 @@ requires(std::is_same_v<T, Url> || std::is_same_v<T, detail::android_fd_t>)
 
 template<typename T>
 requires(std::is_same_v<T, Url> || std::is_same_v<T, detail::android_fd_t>)
-    FORCEDINLINE result<szptr, posix::posix_error> size(T const& file)
+FORCEDINLINE result<szptr, posix::posix_error> size(T const& file)
 {
     if(auto info = file_info(file); info.has_error())
         return failure(posix::posix_error{info.error()});
@@ -70,7 +70,7 @@ FORCEDINLINE result<std::vector<file_entry_t>, posix::posix_error> list(
         earlier_error = result.error();
 
     auto       dir_name = *dir;
-    AAssetDir* adir      = AAssetManager_openDir(
+    AAssetDir* adir     = AAssetManager_openDir(
         ::android::activity_manager().asset_manager(), dir_name.c_str());
     if(!adir)
     {

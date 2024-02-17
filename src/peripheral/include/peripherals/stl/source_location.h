@@ -16,15 +16,27 @@ struct source_location
     source_location(
         std::string_view file     = __builtin_FILE(),
         int              line     = __builtin_LINE(),
-        std::string_view function = __builtin_FUNCTION()) :
-        m_file(file),
-        m_line(line), m_function(function)
+        std::string_view function = __builtin_FUNCTION())
+        : m_file(file)
+        , m_line(line)
+        , m_function(function)
     {
     }
 
-    std::string_view file_name() const { return m_file; }
-    int line() const { return m_line; }
-    std::string_view function_name() const { return m_function; }
+    std::string_view file_name() const
+    {
+        return m_file;
+    }
+
+    int line() const
+    {
+        return m_line;
+    }
+
+    std::string_view function_name() const
+    {
+        return m_function;
+    }
 
     std::string_view m_file;
     int              m_line;

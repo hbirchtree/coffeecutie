@@ -14,7 +14,6 @@
 #include <peripherals/stl/string/replace.h>
 #include <peripherals/stl/string_casting.h>
 #include <peripherals/stl/string_ops.h>
-#include <peripherals/stl/range.h>
 #include <platforms/environment.h>
 #include <platforms/file.h>
 #include <platforms/sysinfo.h>
@@ -135,8 +134,8 @@ STATICINLINE void PutRuntimeInfo(json::ObjectBuilder& target)
         {
             build.put(
                 "libcVersion",
-                cast_pod(compile_info::linux_::glibc::major) + "."
-                    + cast_pod(compile_info::linux_::glibc::minor));
+                cast_pod(compile_info::linux_::glibc::major) + "." +
+                    cast_pod(compile_info::linux_::glibc::minor));
         } else if constexpr(compile_info::linux_::libcpp::version != 0)
         {
             build.put(
@@ -195,10 +194,10 @@ STATICINLINE void PutRuntimeInfo(json::ObjectBuilder& target)
     {
         json::ObjectBuilder device(target.allocator());
 
-        auto deviceName
-            = platform::info::device::device().value_or(unknown_pair);
-        auto motherboard
-            = platform::info::device::motherboard().value_or(unknown_pair);
+        auto deviceName =
+            platform::info::device::device().value_or(unknown_pair);
+        auto motherboard =
+            platform::info::device::motherboard().value_or(unknown_pair);
         auto chassis = platform::info::device::chassis().value_or(unknown_pair);
 
         device.put("name", deviceName.first + " " + deviceName.second)
@@ -346,15 +345,14 @@ void ExitRoutine()
         auto log_name = Path(path::executable().value()).fileBasename();
 
         if constexpr(
-            compile_info::platform::is_android
-            || compile_info::platform::is_ios)
+            compile_info::platform::is_android ||
+            compile_info::platform::is_ios)
             log_name = Path("chrome");
 
         auto log_url = url::constructors::MkUrl("", RSCA::TemporaryFile);
 
-        auto log_url2
-            = log_url
-              + Path(log_name.internUrl + "-chrome").addExtension("json");
+        auto log_url2 =
+            log_url + Path(log_name.internUrl + "-chrome").addExtension("json");
 
         std::string target_chrome;
         Profiling::ExportChromeTracerData(target_chrome);

@@ -54,27 +54,30 @@ struct shader_t
     template<typename CharType>
     shader_t(
         semantic::mem_chunk<CharType> const& data,
-        constants_t const&                   constants = {}) :
-        shader_t(data.view, constants)
+        constants_t const&                   constants = {})
+        : shader_t(data.view, constants)
     {
     }
 
     template<class span_data>
-    requires semantic::concepts::Span<span_data> shader_t(
-        span_data const& data, constants_t const& constants = {}) :
-        m_data(reinterpret_cast<const char*>(data.data()), data.size()),
-        m_constants(constants)
+    requires semantic::concepts::Span<span_data>
+    shader_t(span_data const& data, constants_t const& constants = {})
+        : m_data(reinterpret_cast<const char*>(data.data()), data.size())
+        , m_constants(constants)
     {
     }
 
     template<class span_data>
-    requires semantic::concepts::Span<span_data> shader_t(
+    requires semantic::concepts::Span<span_data>
+    shader_t(
         span_data const&   data,
         shader_format_t    format,
         constants_t const& constants  = {},
-        std::string_view   entrypoint = detail::default_entrypoint) :
-        m_data(reinterpret_cast<const char*>(data.data()), data.size()),
-        m_constants(constants), m_entrypoint(entrypoint), m_format(format)
+        std::string_view   entrypoint = detail::default_entrypoint)
+        : m_data(reinterpret_cast<const char*>(data.data()), data.size())
+        , m_constants(constants)
+        , m_entrypoint(entrypoint)
+        , m_format(format)
     {
     }
 
@@ -95,8 +98,9 @@ struct program_t
     using compile_error_t = std::tuple<std::string>;
     using compile_log_t = std::tuple<std::string /* log text*/, int /* ??? */>;
 
-    program_t(features::programs features, debug::api& debug) :
-        m_features(features), m_debug(debug)
+    program_t(features::programs features, debug::api& debug)
+        : m_features(features)
+        , m_debug(debug)
     {
     }
 
@@ -182,8 +186,8 @@ struct program_t
 
             for(auto const& [stage, shader] : m_stages)
             {
-                shader->m_handle = cmd::create_shader(
-                    convert::to<group::shader_type>(stage));
+                shader->m_handle =
+                    cmd::create_shader(convert::to<group::shader_type>(stage));
                 cmd::shader_binary(
                     semantic::SpanOne<u32>(shader->m_handle),
                     group::shader_binary_format::spir_v,

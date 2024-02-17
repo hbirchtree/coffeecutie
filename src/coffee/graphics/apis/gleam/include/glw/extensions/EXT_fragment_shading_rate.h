@@ -5,13 +5,16 @@
 #include "../enums/GetPName.h"
 #include "../enums/ShadingRate.h"
 #include "../enums/ShadingRateCombinerOp.h"
+
 namespace gl::ext::fragment_shading_rate {
 using gl::group::framebuffer_attachment;
 using gl::group::get_prop;
 using gl::group::shading_rate;
 using gl::group::shading_rate_combiner_op;
+
 namespace values {
 } // namespace values
+
 /*!
  * \brief Part of GL_EXT_fragment_shading_rate
  * \param target GLenum
@@ -54,19 +57,21 @@ STATICINLINE void framebuffer_shading_rate(
 }
 
 template<class span_shading_rate>
-requires(concepts::span<span_shading_rate>&& std::is_same_v<
-         std::decay_t<typename span_shading_rate::value_type>,
-         std::decay_t<group::shading_rate>>)
-    /*!
-     * \brief Part of GL_EXT_fragment_shading_rate
-     * \param samples GLsizei
-     * \param maxCount GLsizei
-     * \param count GLsizei *
-     * \param shadingRates GLenum *
-     * \return void
-     */
-    STATICINLINE void get_fragment_shading_rates(
-        i32 samples, i32& count, span_shading_rate shadingRates)
+requires(
+    concepts::span<span_shading_rate> &&
+    std::is_same_v<
+        std::decay_t<typename span_shading_rate::value_type>,
+        std::decay_t<group::shading_rate>>)
+/*!
+ * \brief Part of GL_EXT_fragment_shading_rate
+ * \param samples GLsizei
+ * \param maxCount GLsizei
+ * \param count GLsizei *
+ * \param shadingRates GLenum *
+ * \return void
+ */
+STATICINLINE void get_fragment_shading_rates(
+    i32 samples, i32& count, span_shading_rate shadingRates)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

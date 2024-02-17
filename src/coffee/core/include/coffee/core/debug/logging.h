@@ -21,12 +21,12 @@ namespace detail {
 
 template<typename Dummy = void>
 requires compile_info::platform::is_android
-    //
-    void
-    log(libc::io::output_fd,
-        UNUSED_PARAM(std::string_view, tag),
-        UNUSED_PARAM(std::string_view, formatted),
-        UNUSED_PARAM(semantic::debug::Severity, severity))
+//
+void log(
+    libc::io::output_fd,
+    UNUSED_PARAM(std::string_view, tag),
+    UNUSED_PARAM(std::string_view, formatted),
+    UNUSED_PARAM(semantic::debug::Severity, severity))
 {
 #if defined(COFFEE_ANDROID)
     using S  = semantic::debug::Severity;
@@ -54,12 +54,12 @@ requires compile_info::platform::is_android
 
 template<typename Dummy = void>
 requires compile_info::platform::is_emscripten
-    //
-    void
-    log(libc::io::output_fd,
-        std::string_view,
-        UNUSED_PARAM(std::string_view, formatted),
-        UNUSED_PARAM(semantic::debug::Severity, severity))
+//
+void log(
+    libc::io::output_fd,
+    std::string_view,
+    UNUSED_PARAM(std::string_view, formatted),
+    UNUSED_PARAM(semantic::debug::Severity, severity))
 {
 #if defined(COFFEE_EMSCRIPTEN)
     using S  = semantic::debug::Severity;
@@ -83,14 +83,15 @@ requires compile_info::platform::is_emscripten
 }
 
 template<typename Dummy = void>
-requires compile_info::platform::is_windows void log(
+requires compile_info::platform::is_windows
+void log(
     libc::io::output_fd stream,
     std::string_view,
     UNUSED_PARAM(std::string_view, formatted),
     semantic::debug::Severity)
 {
-    auto formatted_w
-        = std::basic_string<wchar_t>(formatted.begin(), formatted.end());
+    auto formatted_w =
+        std::basic_string<wchar_t>(formatted.begin(), formatted.end());
 #if !defined(COFFEE_MINGW64)
     if(platform::env::var("VisualStudioVersion").has_value())
 #if defined(COFFEE_WINDOWS)
@@ -105,16 +106,16 @@ requires compile_info::platform::is_windows void log(
 
 template<typename Dummy = void>
 requires(
-    (compile_info::platform::is_ios || compile_info::platform::is_linux
-     || compile_info::platform::is_macos)
-    && !compile_info::platform::is_android
-    && !compile_info::platform::is_emscripten)
-    //
-    void log(
-        libc::io::output_fd stream,
-        std::string_view,
-        std::string_view formatted,
-        semantic::debug::Severity)
+    (compile_info::platform::is_ios || compile_info::platform::is_linux ||
+     compile_info::platform::is_macos) &&
+    !compile_info::platform::is_android &&
+    !compile_info::platform::is_emscripten)
+//
+void log(
+    libc::io::output_fd stream,
+    std::string_view,
+    std::string_view formatted,
+    semantic::debug::Severity)
 {
     if constexpr(compile_info::platform::is_ios)
         stream = libc::io::io_handles::out;
@@ -161,14 +162,14 @@ enum print_flags
 
 template<typename Dummy = void>
 requires(!compile_info::lowfat_mode)
-    //
-    void log(
-        libc::io::output_fd       stream,
-        std::string_view          tag,
-        std::string_view          message,
-        semantic::debug::Severity severity = semantic::debug::Severity::Debug,
-        u32                       level    = 0,
-        u32                       flags    = print_context | print_newline)
+//
+void log(
+    libc::io::output_fd       stream,
+    std::string_view          tag,
+    std::string_view          message,
+    semantic::debug::Severity severity = semantic::debug::Severity::Debug,
+    u32                       level    = 0,
+    u32                       flags    = print_context | print_newline)
 {
     if(PrintingVerbosityLevel() < level)
         return;
@@ -181,17 +182,16 @@ requires(!compile_info::lowfat_mode)
 
     std::string output;
 
-    bool has_context
-        = (flags & print_context) && !compile_info::printing::is_simple;
+    bool has_context =
+        (flags & print_context) && !compile_info::printing::is_simple;
     bool has_newline = flags & print_newline;
 
     output.reserve(
-        message.size()
-        + (has_context
-               ? (detail::context_len + 1 + (!tag.empty() ? 1 + tag.size() : 0)
-                  + 2)
-               : 0)
-        + (has_newline ? 1 : 0));
+        message.size() +
+        (has_context ? (detail::context_len + 1 +
+                        (!tag.empty() ? 1 + tag.size() : 0) + 2)
+                     : 0) +
+        (has_newline ? 1 : 0));
 
     if(has_context)
     {
@@ -210,14 +210,14 @@ requires(!compile_info::lowfat_mode)
 
 template<typename Dummy = void>
 requires(compile_info::lowfat_mode)
-    //
-    void log(
-        libc::io::output_fd stream,
-        cstring             tag,
-        std::string const&  message,
-        semantic::debug::Severity,
-        u32,
-        u32 flags)
+//
+void log(
+    libc::io::output_fd stream,
+    cstring             tag,
+    std::string const&  message,
+    semantic::debug::Severity,
+    u32,
+    u32 flags)
 {
     fprintf(
         stream,

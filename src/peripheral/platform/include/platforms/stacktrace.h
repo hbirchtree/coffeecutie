@@ -9,8 +9,8 @@
 #include <typeinfo>
 #include <utility>
 
-#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_ANDROID) \
-    || defined(COFFEE_BEAGLEBONE)
+#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_ANDROID) || \
+    defined(COFFEE_BEAGLEBONE)
 // Nothing...
 #elif defined(COFFEE_APPLE) || defined(COFFEE_NO_LIB_BACKTRACE)
 #define BOOST_STACKTRACE_USE_LIBC_BACKTRACE_FUNCTION
@@ -20,10 +20,10 @@
 
 #include <boost/stacktrace.hpp>
 
-//#include "base/stacktrace.h"
-//#include "posix/stacktrace.h"
-//#include "linux/stacktrace.h"
-//#include "win32/stacktrace.h"
+// #include "base/stacktrace.h"
+// #include "posix/stacktrace.h"
+// #include "linux/stacktrace.h"
+// #include "win32/stacktrace.h"
 
 namespace platform::stacktrace {
 

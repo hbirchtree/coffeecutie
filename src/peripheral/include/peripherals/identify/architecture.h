@@ -54,7 +54,8 @@
 #endif
 
 /* Nobody will use this */
-#elif defined(__powerpc__) || defined(__POWERPC__) || defined(__PPC64__) || defined(__PPC__)
+#elif defined(__powerpc__) || defined(__POWERPC__) || defined(__PPC64__) || \
+    defined(__PPC__)
 
 #define COFFEE_ARCH_POWERPC
 

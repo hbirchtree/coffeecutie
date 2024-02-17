@@ -4,6 +4,7 @@
 namespace gl::ext::win32_keyed_mutex {
 namespace values {
 } // namespace values
+
 /*!
  * \brief Part of GL_EXT_win32_keyed_mutex
  * \param memory GLuint

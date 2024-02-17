@@ -26,14 +26,17 @@ struct VectorBaseContainer : ComponentContainer<ComponentType>
         m_mapping.insert({id, m_data.size()});
         m_data.push_back(typename vector_type::value_type());
     }
+
     virtual void unregister_entity(u64 id) override
     {
         m_mapping.erase(id);
     }
+
     virtual void prealloc(szptr count) override
     {
         m_data.reserve(m_data.size() + count);
     }
+
     virtual bool contains_entity(u64 id) const override
     {
         return m_mapping.find(id) != m_mapping.end();
@@ -43,6 +46,7 @@ struct VectorBaseContainer : ComponentContainer<ComponentType>
     {
         return m_data;
     }
+
     virtual vector_type const& get_storage() const
     {
         return m_data;
@@ -68,4 +72,4 @@ struct VectorContainer : VectorBaseContainer<ComponentType, AllocationType>
     }
 };
 
-} // namespace alloc
+} // namespace compo::alloc

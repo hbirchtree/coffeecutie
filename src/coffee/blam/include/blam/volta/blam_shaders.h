@@ -258,6 +258,7 @@ enum class map_flags : u16
     u_clamp         = 0x4,
     v_clamp         = 0x8,
 };
+
 struct map_t
 {
     u32       padding_1[10];
@@ -551,6 +552,7 @@ struct alignas(4) shader_env : radiosity_properties /* aka senv */
         none       = 0x0,
         unfiltered = 0x1,
     };
+
     struct illumination_props : color_animation
     {
         u32 padding_[6];
@@ -614,31 +616,31 @@ struct alignas(4) shader_env : radiosity_properties /* aka senv */
 
 static_assert(offsetof(shader_env, lens_flare) == 44);
 static_assert(
-    offsetof(shader_env, diffuse) + offsetof(shader_env::diffuse_map_t, base)
-    == 136);
+    offsetof(shader_env, diffuse) + offsetof(shader_env::diffuse_map_t, base) ==
+    136);
 static_assert(offsetof(shader_env, scrolling) == 336);
 static_assert(offsetof(shader_env, self_illum) == 384);
 static_assert(
-    offsetof(shader_env, self_illum)
-        + offsetof(shader_env::self_illumination_t, primary)
-    == 412);
+    offsetof(shader_env, self_illum) +
+        offsetof(shader_env::self_illumination_t, primary) ==
+    412);
 static_assert(
-    offsetof(shader_env, self_illum)
-        + offsetof(shader_env::self_illumination_t, map)
-    == 592);
+    offsetof(shader_env, self_illum) +
+        offsetof(shader_env::self_illumination_t, map) ==
+    592);
 static_assert(
-    offsetof(shader_env, specular)
-        + offsetof(shader_env::specular_t, perpendicular_color)
-    == 680);
+    offsetof(shader_env, specular) +
+        offsetof(shader_env::specular_t, perpendicular_color) ==
+    680);
 static_assert(offsetof(shader_env, reflection) == 720);
 static_assert(
-    offsetof(shader_env, reflection)
-        + offsetof(shader_env::reflection_t, perpendicular_brightness)
-    == 756);
+    offsetof(shader_env, reflection) +
+        offsetof(shader_env::reflection_t, perpendicular_brightness) ==
+    756);
 static_assert(
-    offsetof(shader_env, reflection)
-        + offsetof(shader_env::reflection_t, reflection)
-    == 804);
+    offsetof(shader_env, reflection) +
+        offsetof(shader_env::reflection_t, reflection) ==
+    804);
 
 struct alignas(4) shader_model : radiosity_properties /* aka soso */
 {
@@ -870,6 +872,7 @@ struct transparent_stage
     };
 
     inputs_t color_inputs;
+
     struct
     {
         color_output          ab;
@@ -882,6 +885,7 @@ struct transparent_stage
     } color_outputs;
 
     inputs_t alpha_inputs;
+
     struct
     {
         color_output         ab;
@@ -906,6 +910,7 @@ struct alignas(32) shader_transparent : radiosity_properties /* aka sotr */
         u_clamped  = 0x2,
         v_clamped  = 0x4,
     };
+
     struct map_t
     {
         map_flags_t                   flags;
@@ -971,6 +976,7 @@ struct alignas(32) shader_transparent : radiosity_properties /* aka sotr */
         bias_minus_half,
         expand_normal,
     };
+
     template<typename InputT>
     struct color_mapping
     {
@@ -1025,7 +1031,7 @@ struct alignas(32) shader_transparent : radiosity_properties /* aka sotr */
          */
     };
 
-    reflexive_t<map_t> maps;
+    reflexive_t<map_t>   maps;
     reflexive_t<stage_t> stages;
 };
 

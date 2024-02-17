@@ -3,9 +3,11 @@
 #ifdef GL_EXT_texture_storage
 #include "../enums/InternalFormat.h"
 #include "../enums/SizedInternalFormat.h"
+
 namespace gl::ext::texture_storage {
 using gl::group::internal_format;
 using gl::group::sized_internal_format;
+
 namespace values {
 constexpr u32 alpha32f                 = 0x8816;
 constexpr u32 luminance32f             = 0x8818;
@@ -16,6 +18,7 @@ constexpr u32 luminance_alpha16f       = 0x881F;
 constexpr u32 texture_immutable_format = 0x912F;
 constexpr u32 bgra8                    = 0x93A1;
 } // namespace values
+
 /*!
  * \brief Part of GL_EXT_texture_storage
  * \param target GLenum
@@ -45,20 +48,20 @@ STATICINLINE void tex_storage_1d(
 
 template<class size_2_i32>
 requires(concepts::size_2d<size_2_i32, i32>)
-    /*!
-     * \brief Part of GL_EXT_texture_storage
-     * \param target GLenum
-     * \param levels GLsizei
-     * \param internalformat GLenum
-     * \param width GLsizei
-     * \param height GLsizei
-     * \return void
-     */
-    STATICINLINE void tex_storage_2d(
-        group::texture_target        target,
-        i32                          levels,
-        group::sized_internal_format internalformat,
-        size_2_i32 const&            width)
+/*!
+ * \brief Part of GL_EXT_texture_storage
+ * \param target GLenum
+ * \param levels GLsizei
+ * \param internalformat GLenum
+ * \param width GLsizei
+ * \param height GLsizei
+ * \return void
+ */
+STATICINLINE void tex_storage_2d(
+    group::texture_target        target,
+    i32                          levels,
+    group::sized_internal_format internalformat,
+    size_2_i32 const&            width)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -76,21 +79,21 @@ requires(concepts::size_2d<size_2_i32, i32>)
 
 template<class size_3_i32>
 requires(concepts::size_2d<size_3_i32, i32>)
-    /*!
-     * \brief Part of GL_EXT_texture_storage
-     * \param target GLenum
-     * \param levels GLsizei
-     * \param internalformat GLenum
-     * \param width GLsizei
-     * \param height GLsizei
-     * \param depth GLsizei
-     * \return void
-     */
-    STATICINLINE void tex_storage_3d(
-        group::texture_target        target,
-        i32                          levels,
-        group::sized_internal_format internalformat,
-        size_3_i32 const&            width)
+/*!
+ * \brief Part of GL_EXT_texture_storage
+ * \param target GLenum
+ * \param levels GLsizei
+ * \param internalformat GLenum
+ * \param width GLsizei
+ * \param height GLsizei
+ * \param depth GLsizei
+ * \return void
+ */
+STATICINLINE void tex_storage_3d(
+    group::texture_target        target,
+    i32                          levels,
+    group::sized_internal_format internalformat,
+    size_3_i32 const&            width)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -140,22 +143,22 @@ STATICINLINE void texture_storage_1d(
 
 template<class size_2_i32>
 requires(concepts::size_2d<size_2_i32, i32>)
-    /*!
-     * \brief Part of GL_EXT_texture_storage
-     * \param texture GLuint
-     * \param target GLenum
-     * \param levels GLsizei
-     * \param internalformat GLenum
-     * \param width GLsizei
-     * \param height GLsizei
-     * \return void
-     */
-    STATICINLINE void texture_storage_2d(
-        u32                          texture,
-        GLenum                       target,
-        i32                          levels,
-        group::sized_internal_format internalformat,
-        size_2_i32 const&            width)
+/*!
+ * \brief Part of GL_EXT_texture_storage
+ * \param texture GLuint
+ * \param target GLenum
+ * \param levels GLsizei
+ * \param internalformat GLenum
+ * \param width GLsizei
+ * \param height GLsizei
+ * \return void
+ */
+STATICINLINE void texture_storage_2d(
+    u32                          texture,
+    GLenum                       target,
+    i32                          levels,
+    group::sized_internal_format internalformat,
+    size_2_i32 const&            width)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -179,23 +182,23 @@ requires(concepts::size_2d<size_2_i32, i32>)
 
 template<class size_3_i32>
 requires(concepts::size_2d<size_3_i32, i32>)
-    /*!
-     * \brief Part of GL_EXT_texture_storage
-     * \param texture GLuint
-     * \param target GLenum
-     * \param levels GLsizei
-     * \param internalformat GLenum
-     * \param width GLsizei
-     * \param height GLsizei
-     * \param depth GLsizei
-     * \return void
-     */
-    STATICINLINE void texture_storage_3d(
-        u32                          texture,
-        GLenum                       target,
-        i32                          levels,
-        group::sized_internal_format internalformat,
-        size_3_i32 const&            width)
+/*!
+ * \brief Part of GL_EXT_texture_storage
+ * \param texture GLuint
+ * \param target GLenum
+ * \param levels GLsizei
+ * \param internalformat GLenum
+ * \param width GLsizei
+ * \param height GLsizei
+ * \param depth GLsizei
+ * \return void
+ */
+STATICINLINE void texture_storage_3d(
+    u32                          texture,
+    GLenum                       target,
+    i32                          levels,
+    group::sized_internal_format internalformat,
+    size_3_i32 const&            width)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

@@ -4,13 +4,16 @@
 #include "../enums/BufferStorageTarget.h"
 #include "../enums/BufferTargetARB.h"
 #include "../enums/CopyBufferSubDataTarget.h"
+
 namespace gl::arb::draw_indirect {
 using gl::group::buffer_storage_target;
 using gl::group::buffer_target_arb;
 using gl::group::copy_buffer_sub_data_target;
+
 namespace values {
 constexpr u32 draw_indirect_buffer_binding = 0x8F43;
 } // namespace values
+
 /*!
  * \brief Part of GL_ARB_draw_indirect
  * \param mode GLenum

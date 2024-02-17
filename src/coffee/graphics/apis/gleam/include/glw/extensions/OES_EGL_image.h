@@ -4,6 +4,7 @@
 namespace gl::oes::egl_image {
 namespace values {
 } // namespace values
+
 /*!
  * \brief Part of GL_OES_EGL_image
  * \param target GLenum

@@ -7,7 +7,7 @@ using namespace Coffee;
 int32 CoffeeImGui_main(int32, cstring_w*)
 {
     CResources::FileResourcePrefix("CoffeeImGui/");
-    
+
     cDebug("Hello World!");
 
     return 0;

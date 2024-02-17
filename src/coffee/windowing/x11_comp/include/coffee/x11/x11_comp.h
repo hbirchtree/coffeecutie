@@ -4,16 +4,18 @@
 
 namespace x11 {
 
-using comp_app::detail::WindowState;
 using comp_app::position_t;
 using comp_app::size_2d_t;
+using comp_app::detail::WindowState;
 
 struct X11Config : comp_app::Config<X11Config>
 {
     bool hildon = false;
 };
 
-struct Windowing : comp_app::Windowing, comp_app::AppLoadableService
+struct Windowing
+    : comp_app::Windowing
+    , comp_app::AppLoadableService
 {
     using type = Windowing;
 
@@ -42,12 +44,14 @@ struct Windowing : comp_app::Windowing, comp_app::AppLoadableService
     virtual bool notifiedClose() const final;
 };
 
-struct WindowInfo : comp_app::WindowInfo, comp_app::AppLoadableService
+struct WindowInfo
+    : comp_app::WindowInfo
+    , comp_app::AppLoadableService
 {
     virtual void load(entity_container& e, comp_app::app_error& ec) final;
 
     virtual comp_app::text_type_t name() const final;
-    virtual void                setName(comp_app::text_type newName) final;
+    virtual void                  setName(comp_app::text_type newName) final;
 
     entity_container* m_container;
 };

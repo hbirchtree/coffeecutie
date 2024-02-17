@@ -43,8 +43,8 @@ struct api
     using rendertarget_type = rendertarget_t;
     using program_type      = program_t;
     using vertex_type =
-#if GLEAM_MAX_VERSION >= 0x150 || GLEAM_MAX_VERSION_ES >= 0x300 \
-    || defined(GL_OES_vertex_array_object)
+#if GLEAM_MAX_VERSION >= 0x150 || GLEAM_MAX_VERSION_ES >= 0x300 || \
+    defined(GL_OES_vertex_array_object)
         vertex_array_t;
 #else
         vertex_array_legacy_t;
@@ -80,12 +80,14 @@ struct api
     {
         return std::make_shared<shader_t>(std::ref(data), constants);
     }
+
     template<typename T>
     inline auto alloc_shader(
         T&& data, shader_t::constants_t const& constants = {})
     {
         return std::make_shared<shader_t>(std::move(data), constants);
     }
+
     template<typename T>
     inline auto alloc_shader(
         programs::shader_format_t    fmt,
@@ -114,8 +116,8 @@ struct api
                 decltype(d3),
                 decltype(cube_array)>,
             "invalid texture type");
-        [[maybe_unused]] const auto no_3d_textures
-            = m_api_version == 0x200 && m_api_type == api_type_t::es;
+        [[maybe_unused]] const auto no_3d_textures =
+            m_api_version == 0x200 && m_api_type == api_type_t::es;
         [[maybe_unused]] const auto no_cube_arrays = false;
 
         if constexpr(T::value == textures::type::d2)
@@ -190,7 +192,7 @@ struct api
         Query<ext_disjoint_timer::query_t> &&
 #endif
         Query<null_query_t>
-    inline auto alloc_query([[maybe_unused]] T type)
+        inline auto alloc_query([[maybe_unused]] T type)
     {
         if constexpr(T::value == queries::type::fragments)
         {
@@ -262,8 +264,8 @@ struct api
 
     inline auto& debug()
     {
-#if GLEAM_MAX_VERSION >= 0x430 || GLEAM_MAX_VERSION_ES >= 0x320 \
-    || defined(GL_KHR_debug)
+#if GLEAM_MAX_VERSION >= 0x430 || GLEAM_MAX_VERSION_ES >= 0x320 || \
+    defined(GL_KHR_debug)
         if(!m_debug)
             m_debug = std::make_unique<debug::api>(std::ref(m_features.debug));
         return *m_debug;
@@ -303,6 +305,7 @@ struct api
         draw_command const& command, UList&&... uniforms);
 
     using extensions_set = std::set<string>;
+
     struct load_options_t
     {
         optional<u32>                api_version;
@@ -355,6 +358,7 @@ struct api
         main,
         texture_decode,
     };
+
     template<queues Q>
     auto& queue()
     {
@@ -364,8 +368,8 @@ struct api
             return m_main_queue;
     }
 
-    using debug_api
-        = std::conditional_t<debug::api_available, debug::api, debug::null_api>;
+    using debug_api =
+        std::conditional_t<debug::api_available, debug::api, debug::null_api>;
 
   private:
     static bool supports_extension(
@@ -408,8 +412,8 @@ inline void test_buffer()
 {
     using semantic::RSCA;
     api  ap;
-    auto a
-        = ap.alloc_buffer(buffers::vertex, RSCA::ReadWrite | RSCA::Persistent);
+    auto a =
+        ap.alloc_buffer(buffers::vertex, RSCA::ReadWrite | RSCA::Persistent);
 }
 
 inline void test_query()

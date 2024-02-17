@@ -10,6 +10,7 @@ constexpr u32 clip_depth_mode     = 0x935D;
 constexpr u32 negative_one_to_one = 0x935E;
 constexpr u32 zero_to_one         = 0x935F;
 } // namespace values
+
 /*!
  * \brief Part of GL_EXT_clip_control
  * \param origin GLenum

@@ -50,10 +50,7 @@ struct TagType
 };
 
 template<class T>
-concept is_tag_type = requires(T& v)
-{
-    typename T::type;
-};
+concept is_tag_type = requires(T& v) { typename T::type; };
 
 enum class VisitorFlags : u32
 {
@@ -98,16 +95,18 @@ struct EntityVisitorBase : stl_types::non_copy
         type_hashes&& components,
         type_hashes&& subsystems,
         u32           tags  = 0,
-        VisitorFlags  flags = VisitorFlags::None) :
-        components(std::move(components)),
-        subsystems(std::move(subsystems)), flags(flags), tags(tags)
+        VisitorFlags  flags = VisitorFlags::None)
+        : components(std::move(components))
+        , subsystems(std::move(subsystems))
+        , flags(flags)
+        , tags(tags)
     {
     }
 
     virtual ~EntityVisitorBase();
 
-    virtual bool dispatch(EntityContainer& container, const time_point& current)
-        = 0;
+    virtual bool dispatch(
+        EntityContainer& container, const time_point& current) = 0;
 };
 
 template<class T>
@@ -115,11 +114,8 @@ concept is_subsystem = true;
 // concept is_subsystem = std::is_convertible_v<T&, SubsystemBase&>;
 
 template<class T>
-concept is_component
-    = std::is_convertible_v<T&, ComponentContainerBase&> && requires(T v)
-{
-    typename T::value_type;
-};
+concept is_component = std::is_convertible_v<T&, ComponentContainerBase&> &&
+                       requires(T v) { typename T::value_type; };
 
 template<class T>
 concept is_visitor = std::is_convertible_v<T&, EntityVisitorBase&>;
@@ -168,14 +164,17 @@ struct SubsystemBase
 
     virtual ~SubsystemBase();
 
-    SubsystemBase() : priority(default_prio)
+    SubsystemBase()
+        : priority(default_prio)
     {
     }
+
     SubsystemBase(SubsystemBase const&) = delete;
 
     virtual void start_frame(ContainerProxy&, time_point const&)
     {
     }
+
     virtual void end_frame(ContainerProxy&, time_point const&)
     {
     }
@@ -201,6 +200,7 @@ struct Subsystem : SubsystemBase
     {
         Throw(implementation_error("unimplemented getter"));
     }
+
     virtual type& get()
     {
         Throw(implementation_error("unimplemented getter"));
@@ -218,6 +218,7 @@ struct ValueSubsystem : Subsystem<T>
     {
         return m_value;
     }
+
     virtual value_type& get() override
     {
         return m_value;

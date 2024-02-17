@@ -9,25 +9,26 @@ constexpr u32 sampler_2d_multisample_array              = 0x910B;
 constexpr u32 int_sampler_2d_multisample_array          = 0x910C;
 constexpr u32 unsigned_int_sampler_2d_multisample_array = 0x910D;
 } // namespace values
+
 template<class size_3_i32>
 requires(concepts::size_2d<size_3_i32, i32>)
-    /*!
-     * \brief Part of GL_OES_texture_storage_multisample_2d_array
-     * \param target GLenum
-     * \param samples GLsizei
-     * \param internalformat GLenum
-     * \param width GLsizei
-     * \param height GLsizei
-     * \param depth GLsizei
-     * \param fixedsamplelocations GLboolean
-     * \return void
-     */
-    STATICINLINE void tex_storage_3d_multisample(
-        group::texture_target        target,
-        i32                          samples,
-        group::sized_internal_format internalformat,
-        size_3_i32 const&            width,
-        bool                         fixedsamplelocations)
+/*!
+ * \brief Part of GL_OES_texture_storage_multisample_2d_array
+ * \param target GLenum
+ * \param samples GLsizei
+ * \param internalformat GLenum
+ * \param width GLsizei
+ * \param height GLsizei
+ * \param depth GLsizei
+ * \param fixedsamplelocations GLboolean
+ * \return void
+ */
+STATICINLINE void tex_storage_3d_multisample(
+    group::texture_target        target,
+    i32                          samples,
+    group::sized_internal_format internalformat,
+    size_3_i32 const&            width,
+    bool                         fixedsamplelocations)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

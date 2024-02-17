@@ -5,8 +5,8 @@
 #define MAGIC_ENUM_RANGE_MAX 0x599
 #include <peripherals/stl/magic_enum.hpp>
 
-#include <peripherals/stl/string/hex.h>
 #include <coffee/core/debug/formatting.h>
+#include <peripherals/stl/string/hex.h>
 
 namespace gl::detail {
 
@@ -14,7 +14,8 @@ void error_check(std::string_view cmd_name)
 {
     using gl::group::error_code;
 
-    if constexpr(compile_info::debug_mode && !compile_info::platform::is_emscripten)
+    if constexpr(
+        compile_info::debug_mode && !compile_info::platform::is_emscripten)
     {
         if(auto error = static_cast<error_code>(glGetError());
            error != error_code::no_error)

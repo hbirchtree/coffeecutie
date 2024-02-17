@@ -12,6 +12,7 @@
 #include "../enums/ObjectIdentifier.h"
 #include "../enums/RenderbufferTarget.h"
 #include "../enums/TextureTarget.h"
+
 namespace gl::arb::internalformat_query2 {
 using gl::group::buffer_storage_target;
 using gl::group::buffer_target_arb;
@@ -24,6 +25,7 @@ using gl::group::internal_format_prop;
 using gl::group::object_identifier;
 using gl::group::renderbuffer_target;
 using gl::group::texture_target;
+
 namespace values {
 constexpr u32 max_combined_dimensions    = 0x8282;
 constexpr u32 depth_components           = 0x8284;
@@ -79,24 +81,26 @@ constexpr u32 view_class_astc_10x10_rgba = 0x9393;
 constexpr u32 view_class_astc_12x10_rgba = 0x9394;
 constexpr u32 view_class_astc_12x12_rgba = 0x9395;
 } // namespace values
+
 template<class span_i64>
-requires(concepts::span<span_i64>&& std::is_same_v<
-         std::decay_t<typename span_i64::value_type>,
-         std::decay_t<i64>>)
-    /*!
-     * \brief Part of GL_ARB_internalformat_query2
-     * \param target GLenum
-     * \param internalformat GLenum
-     * \param pname GLenum
-     * \param count GLsizei
-     * \param params GLint64 *
-     * \return void
-     */
-    STATICINLINE void get_internalformati64v(
-        group::texture_target       target,
-        group::internal_format      internalformat,
-        group::internal_format_prop pname,
-        span_i64                    params)
+requires(
+    concepts::span<span_i64> && std::is_same_v<
+                                    std::decay_t<typename span_i64::value_type>,
+                                    std::decay_t<i64>>)
+/*!
+ * \brief Part of GL_ARB_internalformat_query2
+ * \param target GLenum
+ * \param internalformat GLenum
+ * \param pname GLenum
+ * \param count GLsizei
+ * \param params GLint64 *
+ * \return void
+ */
+STATICINLINE void get_internalformati64v(
+    group::texture_target       target,
+    group::internal_format      internalformat,
+    group::internal_format_prop pname,
+    span_i64                    params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

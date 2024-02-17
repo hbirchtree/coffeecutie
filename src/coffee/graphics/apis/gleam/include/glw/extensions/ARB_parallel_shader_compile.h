@@ -2,11 +2,14 @@
 
 #ifdef GL_ARB_parallel_shader_compile
 #include "../enums/ProgramPropertyARB.h"
+
 namespace gl::arb::parallel_shader_compile {
 using gl::group::program_property_arb;
+
 namespace values {
 constexpr u32 max_shader_compiler_threads = 0x91B0;
 } // namespace values
+
 /*!
  * \brief Part of GL_ARB_parallel_shader_compile
  * \param count GLuint

@@ -3,9 +3,11 @@
 #ifdef GL_EXT_texture_snorm
 #include "../enums/InternalFormat.h"
 #include "../enums/SizedInternalFormat.h"
+
 namespace gl::ext::texture_snorm {
 using gl::group::internal_format;
 using gl::group::sized_internal_format;
+
 namespace values {
 constexpr u32 red_snorm                 = 0x8F90;
 constexpr u32 rg_snorm                  = 0x8F91;

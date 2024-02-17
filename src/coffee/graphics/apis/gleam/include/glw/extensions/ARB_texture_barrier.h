@@ -4,6 +4,7 @@
 namespace gl::arb::texture_barrier {
 namespace values {
 } // namespace values
+
 /*!
  * \brief Part of GL_ARB_texture_barrier
 

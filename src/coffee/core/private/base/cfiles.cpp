@@ -26,18 +26,18 @@ void Resource::RscData_deleter::operator()(Resource::ResourceData* data)
     delete data;
 }
 
-Resource::Resource(std::string_view rsrc, RSCA acc) :
-    Resource(
-        MkUrl(std::string(rsrc.begin(), rsrc.end()), acc & RSCA::StorageMask))
+Resource::Resource(std::string_view rsrc, RSCA acc)
+    : Resource(
+          MkUrl(std::string(rsrc.begin(), rsrc.end()), acc & RSCA::StorageMask))
 {
 }
 
-Resource::Resource(const Url& url) :
-    m_resource(*url),
-    m_platform_data(
-        stl_types::
-            make_unique_with_destructor<ResourceData, RscData_deleter>()),
-    flags(Undefined)
+Resource::Resource(const Url& url)
+    : m_resource(*url)
+    , m_platform_data(
+          stl_types::
+              make_unique_with_destructor<ResourceData, RscData_deleter>())
+    , flags(Undefined)
 {
     m_platform_data->m_url = url;
 
@@ -170,8 +170,8 @@ bool FileUnmap(Resource& resc)
         return false;
     }
 
-    if(auto res
-       = platform::file::unmap(std::move(resc.m_platform_data->m_mapping));
+    if(auto res =
+           platform::file::unmap(std::move(resc.m_platform_data->m_mapping));
        res.has_value())
     {
         Profiler::DeepProfile(CFILES_TAG "Unmapping failed");
@@ -227,8 +227,8 @@ bool FilePull(Resource& resc)
 
     auto& data = resc.m_platform_data->m_resourceBuffer;
 
-    if(auto fd
-       = platform::file::open_file(resc.m_platform_data->m_url, RSCA::ReadOnly);
+    if(auto fd = platform::file::open_file(
+           resc.m_platform_data->m_url, RSCA::ReadOnly);
        fd.has_error())
     {
         Profiler::DeepProfile(CFILES_TAG "File not found");
@@ -270,8 +270,8 @@ bool FileMkdir(Url const& dirname, bool recursive)
 {
     Profiler::DeepProfile(CFILES_TAG "Directory creation");
 
-    if(auto res
-       = platform::file::create_directory(dirname, {.recursive = recursive});
+    if(auto res =
+           platform::file::create_directory(dirname, {.recursive = recursive});
        res.has_value())
     {
         Profiler::DeepProfile(CFILES_TAG "Directory creation failed");
@@ -283,9 +283,9 @@ bool FileMkdir(Url const& dirname, bool recursive)
 namespace Strings {
 std::string to_string(Resource const& r)
 {
-    return std::string("rsc(")
-           + stl_types::str::fmt::pointerify(r.data_ro.data()) + "+"
-           + std::to_string(r.data_ro.size()) + ")";
+    return std::string("rsc(") +
+           stl_types::str::fmt::pointerify(r.data_ro.data()) + "+" +
+           std::to_string(r.data_ro.size()) + ")";
 }
 } // namespace Strings
 } // namespace Coffee

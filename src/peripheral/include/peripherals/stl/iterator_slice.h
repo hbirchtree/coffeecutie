@@ -18,17 +18,18 @@ struct slice
     iterator m_begin;
     iterator m_end;
 
-    slice(iterator const& begin, iterator const& end) :
-        m_begin(begin), m_end(end)
+    slice(iterator const& begin, iterator const& end)
+        : m_begin(begin)
+        , m_end(end)
     {
     }
 
     explicit slice(
         container_value_type& container,
         difference_type       offset = 0,
-        difference_type       num    = 0) :
-        m_begin(container.begin() + offset),
-        m_end(container.begin() + offset + num)
+        difference_type       num    = 0)
+        : m_begin(container.begin() + offset)
+        , m_end(container.begin() + offset + num)
     {
     }
 
@@ -49,7 +50,7 @@ struct slice
 };
 
 template<typename ContainerType>
-requires (!std::is_const_v<ContainerType>)
+requires(!std::is_const_v<ContainerType>)
 static inline auto slice_num(
     ContainerType& c, typename ContainerType::difference_type num)
 {
@@ -66,4 +67,4 @@ static inline auto slice_num(
     return slice<ContainerType>(std::cbegin(c), std::cbegin(c) + num);
 }
 
-}
+} // namespace stl_types

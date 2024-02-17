@@ -141,20 +141,17 @@ std::optional<std::string> GetWineVersion()
 }
 
 std::optional<std::string> GetRegistryString(
-    HKEY key, libc_types::cstring subKey, libc_types::cstring valueKey, std::string::size_type size)
+    HKEY                   key,
+    libc_types::cstring    subKey,
+    libc_types::cstring    valueKey,
+    std::string::size_type size)
 {
     std::string value;
     value.resize(size);
     DWORD valueLen = value.size();
 
-    auto  stat    = RegGetValueA(
-        key,
-        subKey,
-        valueKey,
-        RRF_RT_REG_SZ,
-        nullptr,
-        &value[0],
-        &valueLen);
+    auto stat = RegGetValueA(
+        key, subKey, valueKey, RRF_RT_REG_SZ, nullptr, &value[0], &valueLen);
 
     if(stat != 0)
         return {};
@@ -323,7 +320,8 @@ std::string WindowsSysInfo::GetSystemVersion()
     GetVersionEx(&a);
 #endif
 
-    std::string out = cast_pod(a.dwMajorVersion) + "." + cast_pod(a.dwMinorVersion);
+    std::string out =
+        cast_pod(a.dwMajorVersion) + "." + cast_pod(a.dwMinorVersion);
 
     if(auto version = env::win32::GetRegistryString(
            HKEY_LOCAL_MACHINE,

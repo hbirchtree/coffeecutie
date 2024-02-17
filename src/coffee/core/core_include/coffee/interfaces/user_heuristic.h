@@ -1,6 +1,6 @@
 #pragma once
 
-namespace Coffee{
+namespace Coffee {
 
 /*!
  * Follows the concepts of:
@@ -10,8 +10,8 @@ namespace Coffee{
  */
 class UserHeuristic
 {
-public:
+  public:
     virtual Hash userId() = 0;
 };
 
-}
+} // namespace Coffee

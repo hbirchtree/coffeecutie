@@ -24,8 +24,8 @@ static void create_shaders(
     if(api.api_type() == gfx::api_type_t::core)
     {
         /* Lower version to known versions */
-        if(version == std::make_tuple(4u, 4u)
-           || version == std::make_tuple(4u, 5u))
+        if(version == std::make_tuple(4u, 4u) ||
+           version == std::make_tuple(4u, 5u))
             version = std::make_tuple(4u, 3u);
         else if(version == std::make_tuple(4u, 2u))
             version = std::make_tuple(4u, 1u);

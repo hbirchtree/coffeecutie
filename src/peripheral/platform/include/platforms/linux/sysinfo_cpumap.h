@@ -1,8 +1,8 @@
 #pragma once
 
 #include <optional>
-#include <string>
 #include <stdint.h>
+#include <string>
 
 namespace platform::info::proc::linux_::detail {
 

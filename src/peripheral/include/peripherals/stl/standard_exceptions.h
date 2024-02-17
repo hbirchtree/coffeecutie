@@ -29,8 +29,9 @@ struct releasemode_error : public std::logic_error
 struct undefined_behavior : public std::logic_error
 {
     using std::logic_error::logic_error;
-    undefined_behavior(std::string_view err) :
-        std::logic_error(std::string(err.begin(), err.end()))
+
+    undefined_behavior(std::string_view err)
+        : std::logic_error(std::string(err.begin(), err.end()))
     {
     }
 };

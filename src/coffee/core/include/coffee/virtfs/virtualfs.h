@@ -168,10 +168,12 @@ struct directory_data_t
     template<typename T>
     struct child_t
     {
-        child_t(T v = node_t::sentinel_value) : value(v)
+        child_t(T v = node_t::sentinel_value)
+            : value(v)
         {
         }
-        child_t(child_t const&) = default;
+
+        child_t(child_t const&)            = default;
         child_t& operator=(child_t const&) = default;
 
         T value;
@@ -180,6 +182,7 @@ struct directory_data_t
         {
             return value;
         }
+
         operator T&()
         {
             return value;
@@ -193,8 +196,8 @@ struct directory_data_t
 
     struct node_t
     {
-        static const constexpr index_type sentinel_value
-            = std::numeric_limits<index_type>::max();
+        static const constexpr index_type sentinel_value =
+            std::numeric_limits<index_type>::max();
 
         char                prefix[MaxPrefixLength];
         child_t<index_type> left;
@@ -203,6 +206,7 @@ struct directory_data_t
         union
         {
             u64 _info;
+
             struct
             {
                 u8 prefix : 6; /*!< prefix string length */
@@ -222,7 +226,8 @@ struct directory_data_t
 
     struct leaf_t
     {
-        leaf_t() : mask()
+        leaf_t()
+            : mask()
         {
         }
 
@@ -235,6 +240,7 @@ struct directory_data_t
         union
         {
             u64 _info;
+
             struct
             {
                 u8 prefix : 6; /*!< prefix string length */
@@ -249,7 +255,8 @@ struct directory_data_t
 
     struct node_base_t
     {
-        node_base_t() : flags(0)
+        node_base_t()
+            : flags(0)
         {
             node.left  = {};
             node.right = {};
@@ -259,6 +266,7 @@ struct directory_data_t
 
         u32 flags;
         u32 _pad;
+
         union
         {
             node_t node;
@@ -285,8 +293,8 @@ struct directory_data_t
             std::string_view const& other, szptr offset = 0) const
         {
             auto node_prefix = prefix();
-            auto comparison
-                = (std::min)(other.size() - offset, prefix_length());
+            auto comparison =
+                (std::min)(other.size() - offset, prefix_length());
 
             return libc::str::longest_prefix(
                 node_prefix.substr(0, comparison),
@@ -303,12 +311,15 @@ struct directory_data_t
 
     struct node_container_t
     {
-        node_container_t() : node(nullptr), index(nullptr)
+        node_container_t()
+            : node(nullptr)
+            , index(nullptr)
         {
         }
 
-        node_container_t(node_base_t const* node, index_t const* index) :
-            node(node), index(index)
+        node_container_t(node_base_t const* node, index_t const* index)
+            : node(node)
+            , index(index)
         {
         }
 
@@ -359,8 +370,8 @@ struct index_t : stl_types::non_copy
     const void* data() const
     {
         static_assert(
-            sizeof(directory_data_t::node_t)
-                == sizeof(directory_data_t::leaf_t),
+            sizeof(directory_data_t::node_t) ==
+                sizeof(directory_data_t::leaf_t),
             "Mismatching node and leaf size");
 
         return &this[1];
@@ -368,8 +379,8 @@ struct index_t : stl_types::non_copy
 
     const index_t* next() const
     {
-        auto base
-            = mem_chunk<const u8>::ofBytes(this, next_index + sizeof(index_t));
+        auto base =
+            mem_chunk<const u8>::ofBytes(this, next_index + sizeof(index_t));
         return (*base.at(next_index)).as<const index_t>().data;
     }
 
@@ -460,7 +471,8 @@ struct fs_t
      * \return
      */
     template<typename T>
-    static stl_types::result<const fs_t*, error> open(semantic::Span<T> const& src)
+    static stl_types::result<const fs_t*, error> open(
+        semantic::Span<T> const& src)
     {
         static_assert(
             MagicLength == MagicLength_Encoded * sizeof(u32),
@@ -486,8 +498,8 @@ struct fs_t
         {
 #if !defined(COFFEE_NO_ENDIAN_OPS)
             /* It's nice to specify if the endian is wrong here */
-            if(magic[0] == endian::to<endian::u32_net>(fileMagic[0])
-               && magic[1] == endian::to<endian::u32_net>(fileMagic[1]))
+            if(magic[0] == endian::to<endian::u32_net>(fileMagic[0]) &&
+               magic[1] == endian::to<endian::u32_net>(fileMagic[1]))
                 return error::endian_mismatch;
             else
 #endif
@@ -574,8 +586,8 @@ struct fs_t
 
     template<
         LookupMethod Method = LookupMethod::linear_search,
-        typename std::enable_if<
-            Method == LookupMethod::linear_search>::type* = nullptr>
+        typename std::enable_if<Method == LookupMethod::linear_search>::type* =
+            nullptr>
     /*!
      * \brief Given a VFS, get the handle to a file with the name `name'. This
      * performs a linear search through the VFS, which becomes slow on larger
@@ -596,8 +608,8 @@ struct fs_t
 
     template<
         LookupMethod Method,
-        typename std::enable_if<
-            Method == LookupMethod::binary_tree>::type* = nullptr>
+        typename std::enable_if<Method == LookupMethod::binary_tree>::type* =
+            nullptr>
     /*!
      * \brief GetFile, but using a binary tree to lookup the file.
      * This has a better worst-case performance than
@@ -707,11 +719,15 @@ struct vfs_linear_iterator
     /*!
      * \brief constructor for end-iterator
      */
-    vfs_linear_iterator() : m_idx(npos), m_file(nullptr)
+    vfs_linear_iterator()
+        : m_idx(npos)
+        , m_file(nullptr)
     {
     }
 
-    vfs_linear_iterator(fs_t const* vfs, szptr idx) : m_vfs(vfs), m_idx(idx)
+    vfs_linear_iterator(fs_t const* vfs, szptr idx)
+        : m_vfs(vfs)
+        , m_idx(idx)
     {
         m_file = vfs ? fs_t::GetFile(vfs, idx).value() : nullptr;
         if(!m_vfs)
@@ -774,14 +790,15 @@ struct vfs_linear_iterator
 
     difference_type operator-(vfs_linear_iterator& other)
     {
-        return C_FCAST<difference_type>(m_idx)
-               - C_FCAST<difference_type>(other.m_idx);
+        return C_FCAST<difference_type>(m_idx) -
+               C_FCAST<difference_type>(other.m_idx);
     }
 
     bool operator!=(vfs_linear_iterator const& other) const
     {
         return other.m_idx != m_idx;
     }
+
     bool operator==(vfs_linear_iterator const& other) const
     {
         return other.m_idx == m_idx;
@@ -846,9 +863,9 @@ struct view
                 return false;
             else
             {
-                return file.name().substr(0, path.internUrl.size())
-                           == path.internUrl
-                       && file.name().at(path.internUrl.size()) == '.';
+                return file.name().substr(0, path.internUrl.size()) ==
+                           path.internUrl &&
+                       file.name().at(path.internUrl.size()) == '.';
             }
         });
     }
@@ -868,13 +885,17 @@ struct view
  */
 struct desc
 {
-    desc(std::string_view fname, Span_u8&& data, u32 flags = 0) :
-        filename(fname), data(std::move(data)), flags(flags)
+    desc(std::string_view fname, Span_u8&& data, u32 flags = 0)
+        : filename(fname)
+        , data(std::move(data))
+        , flags(flags)
     {
     }
 
-    desc(Path const& fname, Span_u8&& data, u32 flags = 0) :
-        filename(fname.internUrl), data(std::move(data)), flags(flags)
+    desc(Path const& fname, Span_u8&& data, u32 flags = 0)
+        : filename(fname.internUrl)
+        , data(std::move(data))
+        , flags(flags)
     {
     }
 

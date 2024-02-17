@@ -11,4 +11,4 @@ struct GestureRecognizers
     using TapRecog = stl_types::Function<void()>;
 };
 
-}
+} // namespace uikit

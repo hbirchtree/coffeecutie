@@ -12,6 +12,7 @@ enum class v1 : libc_types::i16;
 enum class v2 : libc_types::i16;
 
 } // namespace hsc::bc
+
 namespace hsc {
 
 template<typename BC>
@@ -26,6 +27,7 @@ struct xbox_version_t
 
     static constexpr auto version_v = version_t::xbox;
 };
+
 struct pc_version_t
 {
     using bytecode_type      = hsc::bc::v2;
@@ -33,6 +35,7 @@ struct pc_version_t
 
     static constexpr auto version_v = version_t::pc;
 };
+
 struct custom_version_t
 {
     using bytecode_type      = hsc::bc::v2;
@@ -40,6 +43,7 @@ struct custom_version_t
 
     static constexpr auto version_v = version_t::custom_edition;
 };
+
 struct mcc_version_t
 {
     using bytecode_type      = hsc::bc::v2;

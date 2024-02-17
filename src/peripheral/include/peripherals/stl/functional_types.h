@@ -1,7 +1,7 @@
 #pragma once
 
-#include "types.h"
 #include "decl_member_function.h"
+#include "types.h"
 
 #include <functional>
 #include <peripherals/libc/types.h>
@@ -18,6 +18,7 @@ struct WkPtrUnwrap
     {
         lock = ptr.lock();
     }
+
     WkPtrUnwrap(std::weak_ptr<T>& ptr)
     {
         lock = ptr.lock();
@@ -148,9 +149,7 @@ void call(RType (*fun)(Args...), Args... args)
 } // namespace quiet_exception
 
 template<typename EType, typename... Args>
-inline void wrap_exception(
-    Function<void(EType const&)> exHandler,
-    Args... args)
+inline void wrap_exception(Function<void(EType const&)> exHandler, Args... args)
 {
     try
     {

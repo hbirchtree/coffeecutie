@@ -63,13 +63,15 @@ struct LifecycleEvent
 struct InputModeEvent
 {
     static constexpr auto event_type = AppEvent::InputModeSwitch;
+
     enum Type
     {
         Desktop,
         Gamepad,
         Touch,
     };
+
     Type mode{Desktop};
 };
 
-}
+} // namespace comp_app

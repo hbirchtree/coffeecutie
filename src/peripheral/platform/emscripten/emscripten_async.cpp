@@ -52,8 +52,8 @@ static std::optional<posix::mem_mapping_t> mmap_download(const char* hash)
 {
     auto tmpfile = url::constructors::MkUrl(hash);
     auto size    = posix::size(tmpfile);
-    auto mapping
-        = posix::map(tmpfile, posix::mapping_params_t{.size = size.value()});
+    auto mapping =
+        posix::map(tmpfile, posix::mapping_params_t{.size = size.value()});
     if(mapping.has_value())
         return mapping.value();
     else

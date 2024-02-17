@@ -6,6 +6,7 @@ namespace values {
 constexpr u32 depth_bounds_test = 0x8890;
 constexpr u32 depth_bounds      = 0x8891;
 } // namespace values
+
 /*!
  * \brief Part of GL_EXT_depth_bounds_test
  * \param zmin GLclampd

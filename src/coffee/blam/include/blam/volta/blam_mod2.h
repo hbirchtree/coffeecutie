@@ -191,9 +191,11 @@ struct part
     u32 pad2;
 
     vert::vertex_type_t vertex_type;
+
     union
     {
         reflexive_t<vert::compressed> vertices;
+
         struct
         {
             u32 vert_count;
@@ -256,8 +258,8 @@ requires is_game_version<Variant>
  */
 struct part_wrap_header
 {
-    static constexpr size_t padding_size
-        = std::is_same_v<Variant, grbx_t> ? 28 : 0;
+    static constexpr size_t padding_size =
+        std::is_same_v<Variant, grbx_t> ? 28 : 0;
 
     part data;
     u8   unknown_2[padding_size];

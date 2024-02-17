@@ -70,9 +70,10 @@ struct all_selector
     STATICINLINE bool match(Container& c, u64 id)
     {
         return single_selector<T>::match(c, id) &&
-                std::conditional<sizeof...(Types) >= 1,
-                lazy_all<Types...>,
-                true_selector>::type::type::match(c, id);
+               std::conditional<
+                   sizeof...(Types) >= 1,
+                   lazy_all<Types...>,
+                   true_selector>::type::type::match(c, id);
     }
 };
 
@@ -95,6 +96,6 @@ using all = detail::all_selector<T, Types...>;
 template<class T>
 using only = detail::single_selector<T>;
 
-}
+} // namespace selector
 
 } // namespace compo

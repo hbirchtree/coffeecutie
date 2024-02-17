@@ -4,12 +4,15 @@
 #include "../enums/EnableCap.h"
 #include "../enums/GetPName.h"
 #include "../enums/ShadingRateQCOM.h"
+
 namespace gl::qcom::shading_rate {
 using gl::group::enable_cap;
 using gl::group::get_prop;
 using gl::group::shading_rate_qcom;
+
 namespace values {
 } // namespace values
+
 /*!
  * \brief Part of GL_QCOM_shading_rate
  * \param rate GLenum

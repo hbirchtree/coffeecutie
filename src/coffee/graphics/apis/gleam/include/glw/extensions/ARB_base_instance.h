@@ -4,6 +4,7 @@
 namespace gl::arb::base_instance {
 namespace values {
 } // namespace values
+
 /*!
  * \brief Part of GL_ARB_base_instance
  * \param mode GLenum

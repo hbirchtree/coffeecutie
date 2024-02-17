@@ -35,8 +35,14 @@ struct boundingbox
             this->d = d;
         }
     }
-    boundingbox(T x, T y, T z, T w, T h, T d) :
-        x(x), y(y), z(z), w(w), h(h), d(d)
+
+    boundingbox(T x, T y, T z, T w, T h, T d)
+        : x(x)
+        , y(y)
+        , z(z)
+        , w(w)
+        , h(h)
+        , d(d)
     {
     }
 
@@ -47,27 +53,32 @@ struct boundingbox
     {
         return x;
     }
+
     T x2() const
     {
         return x + w;
     }
+
     T y1() const
     {
         return y;
     }
+
     T y2() const
     {
         return y + h;
     }
+
     T z1() const
     {
         return z;
     }
+
     T z2() const
     {
         return z + d;
     }
 };
 
-}
-}
+} // namespace geometry
+} // namespace typing

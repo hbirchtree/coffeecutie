@@ -36,9 +36,11 @@ inline auto sysctl_by_name(const char* name)
 }
 
 } // namespace apple
+
 namespace os::apple {
 
 }
+
 namespace proc::apple {
 using libc_types::u32;
 using libc_types::u64;
@@ -59,6 +61,7 @@ inline u32 node_count()
 {
     return 1;
 }
+
 inline u32 cpu_count()
 {
     return info::apple::sysctl_by_name<u64>("hw.packages");
@@ -79,6 +82,7 @@ inline u32 frequency(
 }
 
 } // namespace proc::apple
+
 namespace device::apple {
 
 DeviceType variant();
@@ -90,6 +94,7 @@ inline std::optional<std::pair<std::string, std::string>> device()
 }
 
 } // namespace device::apple
+
 namespace display::apple {
 
 libc_types::f32 dpi();

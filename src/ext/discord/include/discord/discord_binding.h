@@ -15,21 +15,30 @@ using libc_types::u32;
 
 struct DiscordOptions
 {
-    DiscordOptions(std::string const& appId) : appId(appId), imgSize(0)
+    DiscordOptions(std::string const& appId)
+        : appId(appId)
+        , imgSize(0)
     {
     }
-    DiscordOptions(std::string const& appId, std::string const& steamId) :
-        appId(appId), steamId(steamId), imgSize(128)
+
+    DiscordOptions(std::string const& appId, std::string const& steamId)
+        : appId(appId)
+        , steamId(steamId)
+        , imgSize(128)
     {
     }
-    DiscordOptions(std::string const& appId, libc_types::u32 imSize) :
-        appId(appId), imgSize(imSize)
+
+    DiscordOptions(std::string const& appId, libc_types::u32 imSize)
+        : appId(appId)
+        , imgSize(imSize)
     {
     }
+
     DiscordOptions(
-        std::string const& appId, std::string const& steamId, u32 imgSize) :
-        appId(appId),
-        steamId(steamId), imgSize(imgSize)
+        std::string const& appId, std::string const& steamId, u32 imgSize)
+        : appId(appId)
+        , steamId(steamId)
+        , imgSize(imgSize)
     {
     }
 

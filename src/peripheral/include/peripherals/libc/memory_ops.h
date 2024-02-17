@@ -100,6 +100,7 @@ FORCEDINLINE szptr align(szptr alignment, szptr off)
 }
 
 } // namespace align
+
 namespace mem {
 
 FORCEDINLINE libc_types::u32 page_size()
@@ -114,5 +115,5 @@ FORCEDINLINE libc_types::u32 page_size()
 #endif
 }
 
-}
+} // namespace mem
 } // namespace libc

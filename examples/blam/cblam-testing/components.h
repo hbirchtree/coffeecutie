@@ -103,13 +103,14 @@ struct SubModel
 
 template<typename SpawnType>
 requires(!std::is_same_v<SpawnType, blam::scn::multiplayer_equipment>)
-    //
-    static Quatf spawn_rotation_to_quat(SpawnType const* spawn)
+//
+static Quatf spawn_rotation_to_quat(SpawnType const* spawn)
 {
-    return Quatf(Vecf3(0, 0, 1) * spawn->rot.x)
-           * Quatf(Vecf3(0, 1, 0) * spawn->rot.y)
-           * Quatf(Vecf3(1, 0, 0) * -spawn->rot.z);
+    return Quatf(Vecf3(0, 0, 1) * spawn->rot.x) *
+           Quatf(Vecf3(0, 1, 0) * spawn->rot.y) *
+           Quatf(Vecf3(1, 0, 0) * -spawn->rot.z);
 }
+
 template<typename SpawnType>
 requires std::is_same_v<SpawnType, blam::scn::multiplayer_equipment>
 //
@@ -142,10 +143,11 @@ struct Model
         rotation = spawn_rotation_to_quat(spawn);
         update_matrix();
     }
+
     void update_matrix()
     {
-        transform
-            = glm::translate(Matf4(1), position) * glm::mat4_cast(rotation);
+        transform =
+            glm::translate(Matf4(1), position) * glm::mat4_cast(rotation);
     }
 };
 
@@ -200,8 +202,8 @@ struct ShaderData
         using namespace enum_helpers;
         using namespace blam::shader;
 
-        [[maybe_unused]] auto name
-            = shader_tag->to_name().to_string(cache.magic);
+        [[maybe_unused]] auto name =
+            shader_tag->to_name().to_string(cache.magic);
 
         switch(shader_tag->tagclass_e[0])
         {
@@ -220,10 +222,10 @@ struct ShaderData
             auto                     maps   = info->maps.data(cache.magic);
             auto                     layers = info->layers.data(cache.magic);
 
-            auto is_multiplied = info->transparent.blend_function
-                                 == chicago::framebuffer_blending::multiply;
-            auto is_add = info->transparent.blend_function
-                          == chicago::framebuffer_blending::add;
+            auto is_multiplied = info->transparent.blend_function ==
+                                 chicago::framebuffer_blending::multiply;
+            auto is_add = info->transparent.blend_function ==
+                          chicago::framebuffer_blending::add;
             //            auto is_alpha = info->transparent.blend_function
             //                            ==
             //                            chicago::framebuffer_blending::alpha_blend;
@@ -235,16 +237,16 @@ struct ShaderData
             return Pass_Glass;
         }
         case tc::scex: {
-            shader_chicago_extended<V> const* info
-                = shader_data<shader_chicago_extended<V>>();
+            shader_chicago_extended<V> const* info =
+                shader_data<shader_chicago_extended<V>>();
             auto maps_2 = info->maps_2stage.data(cache.magic);
             auto maps_4 = info->maps_4stage.data(cache.magic);
             auto layers = info->layers.data(cache.magic);
 
-            auto is_multiplied = info->transparent.blend_function
-                                 == chicago::framebuffer_blending::multiply;
-            auto is_add = info->transparent.blend_function
-                          == chicago::framebuffer_blending::add;
+            auto is_multiplied = info->transparent.blend_function ==
+                                 chicago::framebuffer_blending::multiply;
+            auto is_add = info->transparent.blend_function ==
+                          chicago::framebuffer_blending::add;
             //            auto is_alpha = info->transparent.blend_function
             //                            ==
             //                            chicago::framebuffer_blending::alpha_blend;

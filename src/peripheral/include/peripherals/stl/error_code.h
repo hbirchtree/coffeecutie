@@ -102,9 +102,9 @@ struct nested_domain_error_code : error_code
         assign(0, m_category);
     }
 
-    FORCEDINLINE nested_domain_error_code(nested_domain_error_code&& other) :
-        m_category(std::move(other.m_category)),
-        m_internalError(std::move(other.m_internalError))
+    FORCEDINLINE nested_domain_error_code(nested_domain_error_code&& other)
+        : m_category(std::move(other.m_category))
+        , m_internalError(std::move(other.m_internalError))
     {
         error_message = std::move(other.error_message);
     }
@@ -206,4 +206,4 @@ struct nested_empty_error_code
     using nested_error_type = NestedError;
 };
 
-}
+} // namespace stl_types

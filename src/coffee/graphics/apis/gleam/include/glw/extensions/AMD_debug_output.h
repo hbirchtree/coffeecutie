@@ -2,8 +2,10 @@
 
 #ifdef GL_AMD_debug_output
 #include "../enums/DebugSeverity.h"
+
 namespace gl::amd::debug_output {
 using gl::group::debug_severity;
+
 namespace values {
 constexpr u32 max_debug_message_length          = 0x9143;
 constexpr u32 max_debug_logged_messages         = 0x9144;
@@ -17,16 +19,17 @@ constexpr u32 debug_category_shader_compiler    = 0x914E;
 constexpr u32 debug_category_application        = 0x914F;
 constexpr u32 debug_category_other              = 0x9150;
 } // namespace values
+
 template<class span_void>
 requires(concepts::span<span_void>)
-    /*!
-     * \brief Part of GL_AMD_debug_output
-     * \param callback GLDEBUGPROCAMD
-     * \param userParam void *
-     * \return void
-     */
-    STATICINLINE
-    void debug_message_callback(GLDEBUGPROCAMD callback, span_void userParam)
+/*!
+ * \brief Part of GL_AMD_debug_output
+ * \param callback GLDEBUGPROCAMD
+ * \param userParam void *
+ * \return void
+ */
+STATICINLINE void debug_message_callback(
+    GLDEBUGPROCAMD callback, span_void userParam)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -40,23 +43,25 @@ requires(concepts::span<span_void>)
 }
 
 template<class span_const_u32>
-requires(concepts::span<span_const_u32>&& std::is_same_v<
-         std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>)
-    /*!
-     * \brief Part of GL_AMD_debug_output
-     * \param category GLenum
-     * \param severity GLenum
-     * \param count GLsizei
-     * \param ids const GLuint *
-     * \param enabled GLboolean
-     * \return void
-     */
-    STATICINLINE void debug_message_enable(
-        GLenum                category,
-        group::debug_severity severity,
-        span_const_u32 const& ids,
-        bool                  enabled)
+requires(
+    concepts::span<span_const_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_u32::value_type>,
+        std::decay_t<u32>>)
+/*!
+ * \brief Part of GL_AMD_debug_output
+ * \param category GLenum
+ * \param severity GLenum
+ * \param count GLsizei
+ * \param ids const GLuint *
+ * \param enabled GLboolean
+ * \return void
+ */
+STATICINLINE void debug_message_enable(
+    GLenum                category,
+    group::debug_severity severity,
+    span_const_u32 const& ids,
+    bool                  enabled)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -103,38 +108,44 @@ template<
     class span_debug_severity,
     class span_i32,
     class span_u32>
-requires(concepts::span<span_GLenum>&& std::is_same_v<
-         std::decay_t<typename span_GLenum::value_type>,
-         std::decay_t<GLenum>>&& concepts::span<span_debug_severity>&&
-                                       std::is_same_v<
-                 std::decay_t<typename span_debug_severity::value_type>,
-                 std::decay_t<group::debug_severity>>&&
-                 concepts::span<span_u32>&&   std::is_same_v<
-                     std::decay_t<typename span_u32::value_type>,
-                     std::decay_t<u32>>&& concepts::span<span_i32>&&
-                                              std::is_same_v<
-                         std::decay_t<typename span_i32::value_type>,
-                         std::decay_t<i32>>&& concepts::span<span_GLchar>&&
-                                              std::is_same_v<
-                             std::decay_t<typename span_GLchar::value_type>,
-                             std::decay_t<GLchar>>)
-    /*!
-     * \brief Part of GL_AMD_debug_output
-     * \param count GLuint
-     * \param bufSize GLsizei
-     * \param categories GLenum *
-     * \param severities GLenum *
-     * \param ids GLuint *
-     * \param lengths GLsizei *
-     * \param message GLchar *
-     * \return GLuint
-     */
-    STATICINLINE GLuint get_debug_message_log(
-        span_GLenum         categories,
-        span_debug_severity severities,
-        span_u32            ids,
-        span_i32            lengths,
-        span_GLchar         message)
+requires(
+    concepts::span<span_GLenum> &&
+    std::is_same_v<
+        std::decay_t<typename span_GLenum::value_type>,
+        std::decay_t<GLenum>> &&
+    concepts::span<span_debug_severity> &&
+    std::is_same_v<
+        std::decay_t<typename span_debug_severity::value_type>,
+        std::decay_t<group::debug_severity>> &&
+    concepts::span<span_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_u32::value_type>,
+        std::decay_t<u32>> &&
+    concepts::span<span_i32> &&
+    std::is_same_v<
+        std::decay_t<typename span_i32::value_type>,
+        std::decay_t<i32>> &&
+    concepts::span<span_GLchar> &&
+    std::is_same_v<
+        std::decay_t<typename span_GLchar::value_type>,
+        std::decay_t<GLchar>>)
+/*!
+ * \brief Part of GL_AMD_debug_output
+ * \param count GLuint
+ * \param bufSize GLsizei
+ * \param categories GLenum *
+ * \param severities GLenum *
+ * \param ids GLuint *
+ * \param lengths GLsizei *
+ * \param message GLchar *
+ * \return GLuint
+ */
+STATICINLINE GLuint get_debug_message_log(
+    span_GLenum         categories,
+    span_debug_severity severities,
+    span_u32            ids,
+    span_i32            lengths,
+    span_GLchar         message)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

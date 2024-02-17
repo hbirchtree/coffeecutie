@@ -57,8 +57,9 @@ inline void query_dealloc(
 #if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
 struct query_t
 {
-    query_t(features::queries& features, queries::type type) :
-        m_features(features), m_type(type)
+    query_t(features::queries& features, queries::type type)
+        : m_features(features)
+        , m_type(type)
     {
     }
 
@@ -66,6 +67,7 @@ struct query_t
     {
         detail::query_alloc(m_type, m_handle, m_features);
     }
+
     inline void dealloc()
     {
         detail::query_dealloc(m_handle, m_features);
@@ -91,6 +93,7 @@ struct query_t
             SpanOne(result));
         return result;
     }
+
     inline std::optional<i64> result() const
     {
         u32 available = 0;
@@ -113,8 +116,8 @@ struct query_t
 #if GLEAM_MAX_VERSION >= 0x300 || defined(GL_EXT_disjoint_timer_query)
 struct timestamp_query
 {
-    timestamp_query(features::queries& features, queries::type) :
-        m_features(features)
+    timestamp_query(features::queries& features, queries::type)
+        : m_features(features)
     {
     }
 
@@ -122,6 +125,7 @@ struct timestamp_query
     {
         detail::query_alloc(queries::type::timestamp, m_handle, m_features);
     }
+
     inline void dealloc()
     {
         detail::query_dealloc(m_handle, m_features);
@@ -179,6 +183,7 @@ struct null_query_t
     inline void stop() {}
     inline i64 resultSync() const { return 0; }
     inline std::optional<i64> result() const { return std::nullopt; }
+
     // clang-format on
 };
 
@@ -190,7 +195,8 @@ using namespace ::gl::ext::disjoint_timer_query;
 
 struct query_t
 {
-    query_t(features::queries&, queries::type type) : m_type(type)
+    query_t(features::queries&, queries::type type)
+        : m_type(type)
     {
     }
 
@@ -198,6 +204,7 @@ struct query_t
     {
         detail::gen_queries(SpanOne<u32>(m_handle));
     }
+
     inline void dealloc()
     {
         detail::delete_queries(SpanOne<u32>(m_handle));
@@ -208,6 +215,7 @@ struct query_t
     {
         detail::begin_query(convert::to(m_type), m_handle);
     }
+
     inline void stop()
     {
         detail::end_query(convert::to(m_type));
@@ -223,6 +231,7 @@ struct query_t
             SpanOne(result));
         return result;
     }
+
     inline std::optional<i64> result() const
     {
         i32 available = 0;

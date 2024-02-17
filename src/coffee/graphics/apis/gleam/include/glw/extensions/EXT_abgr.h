@@ -2,8 +2,10 @@
 
 #ifdef GL_EXT_abgr
 #include "../enums/PixelFormat.h"
+
 namespace gl::ext::abgr {
 using gl::group::pixel_format;
+
 namespace values {
 } // namespace values
 } // namespace gl::ext::abgr

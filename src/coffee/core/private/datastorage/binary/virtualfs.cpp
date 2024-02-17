@@ -22,7 +22,8 @@ using stl_types::range;
 
 namespace vfs {
 
-Resource::Resource(const fs_t* base, const Url& url) : filesystem(base)
+Resource::Resource(const fs_t* base, const Url& url)
+    : filesystem(base)
 {
     if(auto src = fs_t::GetFile(base, url.internUrl.c_str()); src.has_error())
         file = nullptr;
@@ -147,9 +148,7 @@ stl_types::result<std::vector<libc_types::byte_t>, error> generate(
             }
         };
         stl_types::parallel_for_each(
-            range<>(filenames.size()),
-            std::move(worker),
-            settings.workers);
+            range<>(filenames.size()), std::move(worker), settings.workers);
     }
 
     std::vector<libc_types::u8> output;
@@ -176,8 +175,8 @@ stl_types::result<std::vector<libc_types::byte_t>, error> generate(
             }
 
             /* We want to align data to 8-byte boundaries */
-            data_size
-                = libc::align::align<libc::align::dir_forward>(8, data_size);
+            data_size =
+                libc::align::align<libc::align::dir_forward>(8, data_size);
 
             file.offset = data_size;
             file.rsize  = filenames[i].data.size();
@@ -270,11 +269,11 @@ stl_types::result<std::vector<libc_types::byte_t>, error> generate(
         {
             struct index_t outIndex;
             outIndex.kind = index_t::index_type::file_extension;
-            outIndex.next_index
-                = sizeof(index) + index.second.size() * sizeof(index.second[0]);
+            outIndex.next_index =
+                sizeof(index) + index.second.size() * sizeof(index.second[0]);
 
-            auto extensionData
-                = Bytes::ofBytes(outIndex.extension.ext, MaxExtensionLength);
+            auto extensionData =
+                Bytes::ofBytes(outIndex.extension.ext, MaxExtensionLength);
 
             MemClear(extensionData);
 
@@ -285,8 +284,8 @@ stl_types::result<std::vector<libc_types::byte_t>, error> generate(
             auto start = output.size();
 
             output.resize(
-                output.size() + sizeof(index)
-                + index.second.size() * sizeof(index.second[0]));
+                output.size() + sizeof(index) +
+                index.second.size() * sizeof(index.second[0]));
 
             MemCpy(
                 Bytes::ofBytes(outIndex),
@@ -366,7 +365,7 @@ stl_types::result<mem_chunk<const u8>, error> fs_t::GetData(
             ec = fsError::CompressionUnsupported;
             return {};
 #else
-            DProfContext _(VIRTFS_API "Decompressing file");
+            DProfContext    _(VIRTFS_API "Decompressing file");
             mem_chunk<char> writable;
             writable.resize(file->rsize);
 

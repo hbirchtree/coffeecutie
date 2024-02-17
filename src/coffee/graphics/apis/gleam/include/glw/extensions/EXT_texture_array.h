@@ -3,9 +3,11 @@
 #ifdef GL_EXT_texture_array
 #include "../enums/FramebufferAttachmentParameterName.h"
 #include "../enums/TextureTarget.h"
+
 namespace gl::ext::texture_array {
 using gl::group::framebuffer_attachment_parameter_name;
 using gl::group::texture_target;
+
 namespace values {
 constexpr u32 compare_ref_depth_to_texture = 0x884E;
 constexpr u32 max_array_texture_layers     = 0x88FF;
@@ -14,6 +16,7 @@ constexpr u32 texture_2d_array             = 0x8C1A;
 constexpr u32 texture_binding_1d_array     = 0x8C1C;
 constexpr u32 texture_binding_2d_array     = 0x8C1D;
 } // namespace values
+
 /*!
  * \brief Part of GL_EXT_texture_array
  * \param target GLenum

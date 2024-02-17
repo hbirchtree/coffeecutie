@@ -1,7 +1,7 @@
 #pragma once
 
-#include <peripherals/identify/quirks.h>
 #include <peripherals/identify/compiler/debug_break.h>
+#include <peripherals/identify/quirks.h>
 
 #include <limits>
 #include <stdint.h>
@@ -130,14 +130,14 @@ using remove_cvref_t = typename remove_cvref<T>::type;
 #if !defined(COFFEE_WINDOWS)
 
 template<typename D, typename T>
-concept is_narrowing_integer_v = std::is_integral_v<D> &&
-    std::is_integral_v<T> &&
+concept is_narrowing_integer_v =
+    std::is_integral_v<D> && std::is_integral_v<T> &&
     (std::numeric_limits<T>::max() > std::numeric_limits<D>::max() ||
      std::numeric_limits<T>::min() < std::numeric_limits<D>::min());
 
 template<typename D, typename T>
-concept is_widening_integer_v = std::is_integral_v<D> &&
-    std::is_integral_v<T> &&
+concept is_widening_integer_v =
+    std::is_integral_v<D> && std::is_integral_v<T> &&
     (std::numeric_limits<T>::max() <= std::numeric_limits<D>::max() &&
      std::numeric_limits<T>::min() >= std::numeric_limits<D>::min());
 
@@ -236,20 +236,20 @@ concept is_pointer_to_integer_cast =
 
 template<typename D, typename T>
 requires(is_pointer_to_integer_cast<D, T>)
-    /*!
-     * \brief For converting pointer to integer type.
-     * \param from
-     * \return
-     */
-    static inline D C_FCAST(T from)
+/*!
+ * \brief For converting pointer to integer type.
+ * \param from
+ * \return
+ */
+static inline D C_FCAST(T from)
 {
     return reinterpret_cast<D>(from);
 }
 
 template<typename D, typename T>
-requires(std::is_floating_point<D>::value&& std::is_floating_point<T>::value)
-    //
-    static inline D C_FCAST(T from)
+requires(std::is_floating_point<D>::value && std::is_floating_point<T>::value)
+//
+static inline D C_FCAST(T from)
 {
     return static_cast<D>(from);
 }
@@ -268,13 +268,13 @@ static inline constexpr D C_CAST(T from)
 
 template<typename D, typename T>
 requires(std::is_class_v<T> && !std::is_same_v<T, D>)
-    /*!
-     * \brief For coercing a class/struct into another type,
-     *  such as with `operator T()`
-     * \param from
-     * \return
-     */
-    static inline constexpr D C_OCAST(T& from)
+/*!
+ * \brief For coercing a class/struct into another type,
+ *  such as with `operator T()`
+ * \param from
+ * \return
+ */
+static inline constexpr D C_OCAST(T& from)
 {
     return static_cast<D>(from);
 }
@@ -290,6 +290,7 @@ static inline D* C_DCAST(T* from)
 {
     return dynamic_cast<D*>(from);
 }
+
 template<typename D, typename T>
 /*!
  * \brief For discarding const-qualifier. Not recommended.
@@ -300,6 +301,7 @@ static inline constexpr D C_CCAST(T from)
 {
     return const_cast<D>(from);
 }
+
 template<
     typename D,
     typename T,

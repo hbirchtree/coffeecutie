@@ -6,6 +6,7 @@ namespace values {
 constexpr u32 array_element_lock_first = 0x81A8;
 constexpr u32 array_element_lock_count = 0x81A9;
 } // namespace values
+
 /*!
  * \brief Part of GL_EXT_compiled_vertex_array
  * \param first GLint

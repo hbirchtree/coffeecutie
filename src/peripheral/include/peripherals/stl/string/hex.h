@@ -36,6 +36,7 @@ FORCEDINLINE std::basic_string<CharType> pointerify(libc_types::u64 const& ptr)
 {
     return "0x" + hexify(ptr);
 }
+
 template<
     typename T,
     typename CharType                                               = char,

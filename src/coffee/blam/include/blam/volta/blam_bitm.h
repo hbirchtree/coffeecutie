@@ -115,6 +115,7 @@ struct bitmap_atlas_t
         return magic_data_t(
             {bitm.base_ptr + loc.offset, bitm.max_size - loc.offset}, 0);
     }
+
     inline reflexive_t<header_t> get_block(u32 bitm_idx = 0) const
     {
         auto const& loc = locators()[bitm_idx];
@@ -278,6 +279,7 @@ struct image_t
     {
         return enum_helpers::feval(flags & flags_t::compressed);
     }
+
     inline bool shared() const
     {
         return enum_helpers::feval(flags & flags_t::shared);

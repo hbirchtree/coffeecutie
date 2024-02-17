@@ -4,26 +4,27 @@
 namespace gl::ext::copy_texture {
 namespace values {
 } // namespace values
+
 template<class vec_2_i32>
 requires(concepts::vector<vec_2_i32, i32, 2>)
-    /*!
-     * \brief Part of GL_EXT_copy_texture
-     * \param target GLenum
-     * \param level GLint
-     * \param internalformat GLenum
-     * \param x GLint
-     * \param y GLint
-     * \param width GLsizei
-     * \param border GLint
-     * \return void
-     */
-    STATICINLINE void copy_tex_image_1d(
-        group::texture_target  target,
-        i32                    level,
-        group::internal_format internalformat,
-        vec_2_i32 const&       x,
-        i32                    width,
-        i32                    border)
+/*!
+ * \brief Part of GL_EXT_copy_texture
+ * \param target GLenum
+ * \param level GLint
+ * \param internalformat GLenum
+ * \param x GLint
+ * \param y GLint
+ * \param width GLsizei
+ * \param border GLint
+ * \return void
+ */
+STATICINLINE void copy_tex_image_1d(
+    group::texture_target  target,
+    i32                    level,
+    group::internal_format internalformat,
+    vec_2_i32 const&       x,
+    i32                    width,
+    i32                    border)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -43,26 +44,26 @@ requires(concepts::vector<vec_2_i32, i32, 2>)
 
 template<class size_2_i32, class vec_2_i32>
 requires(
-    concepts::vector<vec_2_i32, i32, 2>&& concepts::size_2d<size_2_i32, i32>)
-    /*!
-     * \brief Part of GL_EXT_copy_texture
-     * \param target GLenum
-     * \param level GLint
-     * \param internalformat GLenum
-     * \param x GLint
-     * \param y GLint
-     * \param width GLsizei
-     * \param height GLsizei
-     * \param border GLint
-     * \return void
-     */
-    STATICINLINE void copy_tex_image_2d(
-        group::texture_target  target,
-        i32                    level,
-        group::internal_format internalformat,
-        vec_2_i32 const&       x,
-        size_2_i32 const&      width,
-        i32                    border)
+    concepts::vector<vec_2_i32, i32, 2> && concepts::size_2d<size_2_i32, i32>)
+/*!
+ * \brief Part of GL_EXT_copy_texture
+ * \param target GLenum
+ * \param level GLint
+ * \param internalformat GLenum
+ * \param x GLint
+ * \param y GLint
+ * \param width GLsizei
+ * \param height GLsizei
+ * \param border GLint
+ * \return void
+ */
+STATICINLINE void copy_tex_image_2d(
+    group::texture_target  target,
+    i32                    level,
+    group::internal_format internalformat,
+    vec_2_i32 const&       x,
+    size_2_i32 const&      width,
+    i32                    border)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -83,22 +84,22 @@ requires(
 
 template<class vec_2_i32>
 requires(concepts::vector<vec_2_i32, i32, 2>)
-    /*!
-     * \brief Part of GL_EXT_copy_texture
-     * \param target GLenum
-     * \param level GLint
-     * \param xoffset GLint
-     * \param x GLint
-     * \param y GLint
-     * \param width GLsizei
-     * \return void
-     */
-    STATICINLINE void copy_tex_sub_image_1d(
-        group::texture_target target,
-        i32                   level,
-        i32                   xoffset,
-        vec_2_i32 const&      x,
-        i32                   width)
+/*!
+ * \brief Part of GL_EXT_copy_texture
+ * \param target GLenum
+ * \param level GLint
+ * \param xoffset GLint
+ * \param x GLint
+ * \param y GLint
+ * \param width GLsizei
+ * \return void
+ */
+STATICINLINE void copy_tex_sub_image_1d(
+    group::texture_target target,
+    i32                   level,
+    i32                   xoffset,
+    vec_2_i32 const&      x,
+    i32                   width)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -112,25 +113,25 @@ requires(concepts::vector<vec_2_i32, i32, 2>)
 
 template<class size_2_i32, class vec_2_i32>
 requires(
-    concepts::vector<vec_2_i32, i32, 2>&& concepts::size_2d<size_2_i32, i32>)
-    /*!
-     * \brief Part of GL_EXT_copy_texture
-     * \param target GLenum
-     * \param level GLint
-     * \param xoffset GLint
-     * \param yoffset GLint
-     * \param x GLint
-     * \param y GLint
-     * \param width GLsizei
-     * \param height GLsizei
-     * \return void
-     */
-    STATICINLINE void copy_tex_sub_image_2d(
-        group::texture_target target,
-        i32                   level,
-        vec_2_i32 const&      xoffset,
-        vec_2_i32 const&      x,
-        size_2_i32 const&     width)
+    concepts::vector<vec_2_i32, i32, 2> && concepts::size_2d<size_2_i32, i32>)
+/*!
+ * \brief Part of GL_EXT_copy_texture
+ * \param target GLenum
+ * \param level GLint
+ * \param xoffset GLint
+ * \param yoffset GLint
+ * \param x GLint
+ * \param y GLint
+ * \param width GLsizei
+ * \param height GLsizei
+ * \return void
+ */
+STATICINLINE void copy_tex_sub_image_2d(
+    group::texture_target target,
+    i32                   level,
+    vec_2_i32 const&      xoffset,
+    vec_2_i32 const&      x,
+    size_2_i32 const&     width)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -151,27 +152,27 @@ requires(
 
 template<class size_2_i32, class vec_2_i32, class vec_3_i32>
 requires(
-    concepts::vector<vec_3_i32, i32, 3>&& concepts::vector<vec_2_i32, i32, 2>&&
-                                          concepts::size_2d<size_2_i32, i32>)
-    /*!
-     * \brief Part of GL_EXT_copy_texture
-     * \param target GLenum
-     * \param level GLint
-     * \param xoffset GLint
-     * \param yoffset GLint
-     * \param zoffset GLint
-     * \param x GLint
-     * \param y GLint
-     * \param width GLsizei
-     * \param height GLsizei
-     * \return void
-     */
-    STATICINLINE void copy_tex_sub_image_3d(
-        group::texture_target target,
-        i32                   level,
-        vec_3_i32 const&      xoffset,
-        vec_2_i32 const&      x,
-        size_2_i32 const&     width)
+    concepts::vector<vec_3_i32, i32, 3> &&
+    concepts::vector<vec_2_i32, i32, 2> && concepts::size_2d<size_2_i32, i32>)
+/*!
+ * \brief Part of GL_EXT_copy_texture
+ * \param target GLenum
+ * \param level GLint
+ * \param xoffset GLint
+ * \param yoffset GLint
+ * \param zoffset GLint
+ * \param x GLint
+ * \param y GLint
+ * \param width GLsizei
+ * \param height GLsizei
+ * \return void
+ */
+STATICINLINE void copy_tex_sub_image_3d(
+    group::texture_target target,
+    i32                   level,
+    vec_3_i32 const&      xoffset,
+    vec_2_i32 const&      x,
+    size_2_i32 const&     width)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

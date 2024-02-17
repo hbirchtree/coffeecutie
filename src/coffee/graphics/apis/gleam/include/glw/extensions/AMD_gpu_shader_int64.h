@@ -3,9 +3,11 @@
 #ifdef GL_AMD_gpu_shader_int64
 #include "../enums/AttributeType.h"
 #include "../enums/VertexAttribPointerType.h"
+
 namespace gl::amd::gpu_shader_int64 {
 using gl::group::attribute_type;
 using gl::group::vertex_attrib_pointer_type;
+
 namespace values {
 constexpr u32 int8_nv                = 0x8FE0;
 constexpr u32 int8_vec2_nv           = 0x8FE1;
@@ -34,19 +36,22 @@ constexpr u32 float16_vec2_nv        = 0x8FF9;
 constexpr u32 float16_vec3_nv        = 0x8FFA;
 constexpr u32 float16_vec4_nv        = 0x8FFB;
 } // namespace values
+
 template<class span_GLint64EXT>
-requires(concepts::span<span_GLint64EXT>&& std::is_same_v<
-         std::decay_t<typename span_GLint64EXT::value_type>,
-         std::decay_t<GLint64EXT>>)
-    /*!
-     * \brief Part of GL_AMD_gpu_shader_int64
-     * \param program GLuint
-     * \param location GLint
-     * \param params GLint64EXT *
-     * \return void
-     */
-    STATICINLINE
-    void get_uniformi64v_nv(u32 program, i32 location, span_GLint64EXT params)
+requires(
+    concepts::span<span_GLint64EXT> &&
+    std::is_same_v<
+        std::decay_t<typename span_GLint64EXT::value_type>,
+        std::decay_t<GLint64EXT>>)
+/*!
+ * \brief Part of GL_AMD_gpu_shader_int64
+ * \param program GLuint
+ * \param location GLint
+ * \param params GLint64EXT *
+ * \return void
+ */
+STATICINLINE void get_uniformi64v_nv(
+    u32 program, i32 location, span_GLint64EXT params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -66,18 +71,20 @@ requires(concepts::span<span_GLint64EXT>&& std::is_same_v<
 }
 
 template<class span_GLuint64EXT>
-requires(concepts::span<span_GLuint64EXT>&& std::is_same_v<
-         std::decay_t<typename span_GLuint64EXT::value_type>,
-         std::decay_t<GLuint64EXT>>)
-    /*!
-     * \brief Part of GL_AMD_gpu_shader_int64
-     * \param program GLuint
-     * \param location GLint
-     * \param params GLuint64EXT *
-     * \return void
-     */
-    STATICINLINE
-    void get_uniformui64v_nv(u32 program, i32 location, span_GLuint64EXT params)
+requires(
+    concepts::span<span_GLuint64EXT> &&
+    std::is_same_v<
+        std::decay_t<typename span_GLuint64EXT::value_type>,
+        std::decay_t<GLuint64EXT>>)
+/*!
+ * \brief Part of GL_AMD_gpu_shader_int64
+ * \param program GLuint
+ * \param location GLint
+ * \param params GLuint64EXT *
+ * \return void
+ */
+STATICINLINE void get_uniformui64v_nv(
+    u32 program, i32 location, span_GLuint64EXT params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -115,17 +122,19 @@ STATICINLINE void uniform(i32 location, GLint64EXT x)
 }
 
 template<class span_const_GLint64EXT>
-requires(concepts::span<span_const_GLint64EXT>&& std::is_same_v<
-         std::decay_t<typename span_const_GLint64EXT::value_type>,
-         std::decay_t<GLint64EXT>>)
-    /*!
-     * \brief Part of GL_AMD_gpu_shader_int64
-     * \param location GLint
-     * \param count GLsizei
-     * \param value const GLint64EXT *
-     * \return void
-     */
-    STATICINLINE void uniform(i32 location, span_const_GLint64EXT const& value)
+requires(
+    concepts::span<span_const_GLint64EXT> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLint64EXT::value_type>,
+        std::decay_t<GLint64EXT>>)
+/*!
+ * \brief Part of GL_AMD_gpu_shader_int64
+ * \param location GLint
+ * \param count GLsizei
+ * \param value const GLint64EXT *
+ * \return void
+ */
+STATICINLINE void uniform(i32 location, span_const_GLint64EXT const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -157,17 +166,19 @@ STATICINLINE void uniform(i32 location, GLuint64EXT x)
 }
 
 template<class span_const_GLuint64EXT>
-requires(concepts::span<span_const_GLuint64EXT>&& std::is_same_v<
-         std::decay_t<typename span_const_GLuint64EXT::value_type>,
-         std::decay_t<GLuint64EXT>>)
-    /*!
-     * \brief Part of GL_AMD_gpu_shader_int64
-     * \param location GLint
-     * \param count GLsizei
-     * \param value const GLuint64EXT *
-     * \return void
-     */
-    STATICINLINE void uniform(i32 location, span_const_GLuint64EXT const& value)
+requires(
+    concepts::span<span_const_GLuint64EXT> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLuint64EXT::value_type>,
+        std::decay_t<GLuint64EXT>>)
+/*!
+ * \brief Part of GL_AMD_gpu_shader_int64
+ * \param location GLint
+ * \param count GLsizei
+ * \param value const GLuint64EXT *
+ * \return void
+ */
+STATICINLINE void uniform(i32 location, span_const_GLuint64EXT const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -183,14 +194,14 @@ requires(concepts::span<span_const_GLuint64EXT>&& std::is_same_v<
 
 template<class vec_2_GLint64EXT>
 requires(concepts::vector<vec_2_GLint64EXT, GLint64EXT, 2>)
-    /*!
-     * \brief Part of GL_AMD_gpu_shader_int64
-     * \param location GLint
-     * \param x GLint64EXT
-     * \param y GLint64EXT
-     * \return void
-     */
-    STATICINLINE void uniform(i32 location, vec_2_GLint64EXT const& x)
+/*!
+ * \brief Part of GL_AMD_gpu_shader_int64
+ * \param location GLint
+ * \param x GLint64EXT
+ * \param y GLint64EXT
+ * \return void
+ */
+STATICINLINE void uniform(i32 location, vec_2_GLint64EXT const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -203,17 +214,18 @@ requires(concepts::vector<vec_2_GLint64EXT, GLint64EXT, 2>)
 
 template<class span_const_vec_2_GLint64EXT>
 requires(
-    concepts::span<span_const_vec_2_GLint64EXT>&& concepts::
+    concepts::span<span_const_vec_2_GLint64EXT> &&
+    concepts::
         vector<typename span_const_vec_2_GLint64EXT::value_type, GLint64EXT, 2>)
-    /*!
-     * \brief Part of GL_AMD_gpu_shader_int64
-     * \param location GLint
-     * \param count GLsizei
-     * \param value const GLint64EXT *
-     * \return void
-     */
-    STATICINLINE
-    void uniform(i32 location, span_const_vec_2_GLint64EXT const& value)
+/*!
+ * \brief Part of GL_AMD_gpu_shader_int64
+ * \param location GLint
+ * \param count GLsizei
+ * \param value const GLint64EXT *
+ * \return void
+ */
+STATICINLINE void uniform(
+    i32 location, span_const_vec_2_GLint64EXT const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -229,14 +241,14 @@ requires(
 
 template<class vec_2_GLuint64EXT>
 requires(concepts::vector<vec_2_GLuint64EXT, GLuint64EXT, 2>)
-    /*!
-     * \brief Part of GL_AMD_gpu_shader_int64
-     * \param location GLint
-     * \param x GLuint64EXT
-     * \param y GLuint64EXT
-     * \return void
-     */
-    STATICINLINE void uniform(i32 location, vec_2_GLuint64EXT const& x)
+/*!
+ * \brief Part of GL_AMD_gpu_shader_int64
+ * \param location GLint
+ * \param x GLuint64EXT
+ * \param y GLuint64EXT
+ * \return void
+ */
+STATICINLINE void uniform(i32 location, vec_2_GLuint64EXT const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -248,19 +260,21 @@ requires(concepts::vector<vec_2_GLuint64EXT, GLuint64EXT, 2>)
 }
 
 template<class span_const_vec_2_GLuint64EXT>
-requires(concepts::span<span_const_vec_2_GLuint64EXT>&& concepts::vector<
-         typename span_const_vec_2_GLuint64EXT::value_type,
-         GLuint64EXT,
-         2>)
-    /*!
-     * \brief Part of GL_AMD_gpu_shader_int64
-     * \param location GLint
-     * \param count GLsizei
-     * \param value const GLuint64EXT *
-     * \return void
-     */
-    STATICINLINE
-    void uniform(i32 location, span_const_vec_2_GLuint64EXT const& value)
+requires(
+    concepts::span<span_const_vec_2_GLuint64EXT> &&
+    concepts::vector<
+        typename span_const_vec_2_GLuint64EXT::value_type,
+        GLuint64EXT,
+        2>)
+/*!
+ * \brief Part of GL_AMD_gpu_shader_int64
+ * \param location GLint
+ * \param count GLsizei
+ * \param value const GLuint64EXT *
+ * \return void
+ */
+STATICINLINE void uniform(
+    i32 location, span_const_vec_2_GLuint64EXT const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -276,15 +290,15 @@ requires(concepts::span<span_const_vec_2_GLuint64EXT>&& concepts::vector<
 
 template<class vec_3_GLint64EXT>
 requires(concepts::vector<vec_3_GLint64EXT, GLint64EXT, 3>)
-    /*!
-     * \brief Part of GL_AMD_gpu_shader_int64
-     * \param location GLint
-     * \param x GLint64EXT
-     * \param y GLint64EXT
-     * \param z GLint64EXT
-     * \return void
-     */
-    STATICINLINE void uniform(i32 location, vec_3_GLint64EXT const& x)
+/*!
+ * \brief Part of GL_AMD_gpu_shader_int64
+ * \param location GLint
+ * \param x GLint64EXT
+ * \param y GLint64EXT
+ * \param z GLint64EXT
+ * \return void
+ */
+STATICINLINE void uniform(i32 location, vec_3_GLint64EXT const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -297,17 +311,18 @@ requires(concepts::vector<vec_3_GLint64EXT, GLint64EXT, 3>)
 
 template<class span_const_vec_3_GLint64EXT>
 requires(
-    concepts::span<span_const_vec_3_GLint64EXT>&& concepts::
+    concepts::span<span_const_vec_3_GLint64EXT> &&
+    concepts::
         vector<typename span_const_vec_3_GLint64EXT::value_type, GLint64EXT, 3>)
-    /*!
-     * \brief Part of GL_AMD_gpu_shader_int64
-     * \param location GLint
-     * \param count GLsizei
-     * \param value const GLint64EXT *
-     * \return void
-     */
-    STATICINLINE
-    void uniform(i32 location, span_const_vec_3_GLint64EXT const& value)
+/*!
+ * \brief Part of GL_AMD_gpu_shader_int64
+ * \param location GLint
+ * \param count GLsizei
+ * \param value const GLint64EXT *
+ * \return void
+ */
+STATICINLINE void uniform(
+    i32 location, span_const_vec_3_GLint64EXT const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -323,15 +338,15 @@ requires(
 
 template<class vec_3_GLuint64EXT>
 requires(concepts::vector<vec_3_GLuint64EXT, GLuint64EXT, 3>)
-    /*!
-     * \brief Part of GL_AMD_gpu_shader_int64
-     * \param location GLint
-     * \param x GLuint64EXT
-     * \param y GLuint64EXT
-     * \param z GLuint64EXT
-     * \return void
-     */
-    STATICINLINE void uniform(i32 location, vec_3_GLuint64EXT const& x)
+/*!
+ * \brief Part of GL_AMD_gpu_shader_int64
+ * \param location GLint
+ * \param x GLuint64EXT
+ * \param y GLuint64EXT
+ * \param z GLuint64EXT
+ * \return void
+ */
+STATICINLINE void uniform(i32 location, vec_3_GLuint64EXT const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -343,19 +358,21 @@ requires(concepts::vector<vec_3_GLuint64EXT, GLuint64EXT, 3>)
 }
 
 template<class span_const_vec_3_GLuint64EXT>
-requires(concepts::span<span_const_vec_3_GLuint64EXT>&& concepts::vector<
-         typename span_const_vec_3_GLuint64EXT::value_type,
-         GLuint64EXT,
-         3>)
-    /*!
-     * \brief Part of GL_AMD_gpu_shader_int64
-     * \param location GLint
-     * \param count GLsizei
-     * \param value const GLuint64EXT *
-     * \return void
-     */
-    STATICINLINE
-    void uniform(i32 location, span_const_vec_3_GLuint64EXT const& value)
+requires(
+    concepts::span<span_const_vec_3_GLuint64EXT> &&
+    concepts::vector<
+        typename span_const_vec_3_GLuint64EXT::value_type,
+        GLuint64EXT,
+        3>)
+/*!
+ * \brief Part of GL_AMD_gpu_shader_int64
+ * \param location GLint
+ * \param count GLsizei
+ * \param value const GLuint64EXT *
+ * \return void
+ */
+STATICINLINE void uniform(
+    i32 location, span_const_vec_3_GLuint64EXT const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -371,16 +388,16 @@ requires(concepts::span<span_const_vec_3_GLuint64EXT>&& concepts::vector<
 
 template<class vec_4_GLint64EXT>
 requires(concepts::vector<vec_4_GLint64EXT, GLint64EXT, 4>)
-    /*!
-     * \brief Part of GL_AMD_gpu_shader_int64
-     * \param location GLint
-     * \param x GLint64EXT
-     * \param y GLint64EXT
-     * \param z GLint64EXT
-     * \param w GLint64EXT
-     * \return void
-     */
-    STATICINLINE void uniform(i32 location, vec_4_GLint64EXT const& x)
+/*!
+ * \brief Part of GL_AMD_gpu_shader_int64
+ * \param location GLint
+ * \param x GLint64EXT
+ * \param y GLint64EXT
+ * \param z GLint64EXT
+ * \param w GLint64EXT
+ * \return void
+ */
+STATICINLINE void uniform(i32 location, vec_4_GLint64EXT const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -393,17 +410,18 @@ requires(concepts::vector<vec_4_GLint64EXT, GLint64EXT, 4>)
 
 template<class span_const_vec_4_GLint64EXT>
 requires(
-    concepts::span<span_const_vec_4_GLint64EXT>&& concepts::
+    concepts::span<span_const_vec_4_GLint64EXT> &&
+    concepts::
         vector<typename span_const_vec_4_GLint64EXT::value_type, GLint64EXT, 4>)
-    /*!
-     * \brief Part of GL_AMD_gpu_shader_int64
-     * \param location GLint
-     * \param count GLsizei
-     * \param value const GLint64EXT *
-     * \return void
-     */
-    STATICINLINE
-    void uniform(i32 location, span_const_vec_4_GLint64EXT const& value)
+/*!
+ * \brief Part of GL_AMD_gpu_shader_int64
+ * \param location GLint
+ * \param count GLsizei
+ * \param value const GLint64EXT *
+ * \return void
+ */
+STATICINLINE void uniform(
+    i32 location, span_const_vec_4_GLint64EXT const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -419,16 +437,16 @@ requires(
 
 template<class vec_4_GLuint64EXT>
 requires(concepts::vector<vec_4_GLuint64EXT, GLuint64EXT, 4>)
-    /*!
-     * \brief Part of GL_AMD_gpu_shader_int64
-     * \param location GLint
-     * \param x GLuint64EXT
-     * \param y GLuint64EXT
-     * \param z GLuint64EXT
-     * \param w GLuint64EXT
-     * \return void
-     */
-    STATICINLINE void uniform(i32 location, vec_4_GLuint64EXT const& x)
+/*!
+ * \brief Part of GL_AMD_gpu_shader_int64
+ * \param location GLint
+ * \param x GLuint64EXT
+ * \param y GLuint64EXT
+ * \param z GLuint64EXT
+ * \param w GLuint64EXT
+ * \return void
+ */
+STATICINLINE void uniform(i32 location, vec_4_GLuint64EXT const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -440,19 +458,21 @@ requires(concepts::vector<vec_4_GLuint64EXT, GLuint64EXT, 4>)
 }
 
 template<class span_const_vec_4_GLuint64EXT>
-requires(concepts::span<span_const_vec_4_GLuint64EXT>&& concepts::vector<
-         typename span_const_vec_4_GLuint64EXT::value_type,
-         GLuint64EXT,
-         4>)
-    /*!
-     * \brief Part of GL_AMD_gpu_shader_int64
-     * \param location GLint
-     * \param count GLsizei
-     * \param value const GLuint64EXT *
-     * \return void
-     */
-    STATICINLINE
-    void uniform(i32 location, span_const_vec_4_GLuint64EXT const& value)
+requires(
+    concepts::span<span_const_vec_4_GLuint64EXT> &&
+    concepts::vector<
+        typename span_const_vec_4_GLuint64EXT::value_type,
+        GLuint64EXT,
+        4>)
+/*!
+ * \brief Part of GL_AMD_gpu_shader_int64
+ * \param location GLint
+ * \param count GLsizei
+ * \param value const GLuint64EXT *
+ * \return void
+ */
+STATICINLINE void uniform(
+    i32 location, span_const_vec_4_GLuint64EXT const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -490,19 +510,21 @@ STATICINLINE void program_uniform(u32 program, i32 location, GLint64EXT x)
 }
 
 template<class span_const_GLint64EXT>
-requires(concepts::span<span_const_GLint64EXT>&& std::is_same_v<
-         std::decay_t<typename span_const_GLint64EXT::value_type>,
-         std::decay_t<GLint64EXT>>)
-    /*!
-     * \brief Part of GL_AMD_gpu_shader_int64
-     * \param program GLuint
-     * \param location GLint
-     * \param count GLsizei
-     * \param value const GLint64EXT *
-     * \return void
-     */
-    STATICINLINE void program_uniform(
-        u32 program, i32 location, span_const_GLint64EXT const& value)
+requires(
+    concepts::span<span_const_GLint64EXT> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLint64EXT::value_type>,
+        std::decay_t<GLint64EXT>>)
+/*!
+ * \brief Part of GL_AMD_gpu_shader_int64
+ * \param program GLuint
+ * \param location GLint
+ * \param count GLsizei
+ * \param value const GLint64EXT *
+ * \return void
+ */
+STATICINLINE void program_uniform(
+    u32 program, i32 location, span_const_GLint64EXT const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -546,19 +568,21 @@ STATICINLINE void program_uniform(u32 program, i32 location, GLuint64EXT x)
 }
 
 template<class span_const_GLuint64EXT>
-requires(concepts::span<span_const_GLuint64EXT>&& std::is_same_v<
-         std::decay_t<typename span_const_GLuint64EXT::value_type>,
-         std::decay_t<GLuint64EXT>>)
-    /*!
-     * \brief Part of GL_AMD_gpu_shader_int64
-     * \param program GLuint
-     * \param location GLint
-     * \param count GLsizei
-     * \param value const GLuint64EXT *
-     * \return void
-     */
-    STATICINLINE void program_uniform(
-        u32 program, i32 location, span_const_GLuint64EXT const& value)
+requires(
+    concepts::span<span_const_GLuint64EXT> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLuint64EXT::value_type>,
+        std::decay_t<GLuint64EXT>>)
+/*!
+ * \brief Part of GL_AMD_gpu_shader_int64
+ * \param program GLuint
+ * \param location GLint
+ * \param count GLsizei
+ * \param value const GLuint64EXT *
+ * \return void
+ */
+STATICINLINE void program_uniform(
+    u32 program, i32 location, span_const_GLuint64EXT const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -580,16 +604,16 @@ requires(concepts::span<span_const_GLuint64EXT>&& std::is_same_v<
 
 template<class vec_2_GLint64EXT>
 requires(concepts::vector<vec_2_GLint64EXT, GLint64EXT, 2>)
-    /*!
-     * \brief Part of GL_AMD_gpu_shader_int64
-     * \param program GLuint
-     * \param location GLint
-     * \param x GLint64EXT
-     * \param y GLint64EXT
-     * \return void
-     */
-    STATICINLINE
-    void program_uniform(u32 program, i32 location, vec_2_GLint64EXT const& x)
+/*!
+ * \brief Part of GL_AMD_gpu_shader_int64
+ * \param program GLuint
+ * \param location GLint
+ * \param x GLint64EXT
+ * \param y GLint64EXT
+ * \return void
+ */
+STATICINLINE void program_uniform(
+    u32 program, i32 location, vec_2_GLint64EXT const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -607,18 +631,19 @@ requires(concepts::vector<vec_2_GLint64EXT, GLint64EXT, 2>)
 
 template<class span_const_vec_2_GLint64EXT>
 requires(
-    concepts::span<span_const_vec_2_GLint64EXT>&& concepts::
+    concepts::span<span_const_vec_2_GLint64EXT> &&
+    concepts::
         vector<typename span_const_vec_2_GLint64EXT::value_type, GLint64EXT, 2>)
-    /*!
-     * \brief Part of GL_AMD_gpu_shader_int64
-     * \param program GLuint
-     * \param location GLint
-     * \param count GLsizei
-     * \param value const GLint64EXT *
-     * \return void
-     */
-    STATICINLINE void program_uniform(
-        u32 program, i32 location, span_const_vec_2_GLint64EXT const& value)
+/*!
+ * \brief Part of GL_AMD_gpu_shader_int64
+ * \param program GLuint
+ * \param location GLint
+ * \param count GLsizei
+ * \param value const GLint64EXT *
+ * \return void
+ */
+STATICINLINE void program_uniform(
+    u32 program, i32 location, span_const_vec_2_GLint64EXT const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -640,16 +665,16 @@ requires(
 
 template<class vec_2_GLuint64EXT>
 requires(concepts::vector<vec_2_GLuint64EXT, GLuint64EXT, 2>)
-    /*!
-     * \brief Part of GL_AMD_gpu_shader_int64
-     * \param program GLuint
-     * \param location GLint
-     * \param x GLuint64EXT
-     * \param y GLuint64EXT
-     * \return void
-     */
-    STATICINLINE
-    void program_uniform(u32 program, i32 location, vec_2_GLuint64EXT const& x)
+/*!
+ * \brief Part of GL_AMD_gpu_shader_int64
+ * \param program GLuint
+ * \param location GLint
+ * \param x GLuint64EXT
+ * \param y GLuint64EXT
+ * \return void
+ */
+STATICINLINE void program_uniform(
+    u32 program, i32 location, vec_2_GLuint64EXT const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -666,20 +691,22 @@ requires(concepts::vector<vec_2_GLuint64EXT, GLuint64EXT, 2>)
 }
 
 template<class span_const_vec_2_GLuint64EXT>
-requires(concepts::span<span_const_vec_2_GLuint64EXT>&& concepts::vector<
-         typename span_const_vec_2_GLuint64EXT::value_type,
-         GLuint64EXT,
-         2>)
-    /*!
-     * \brief Part of GL_AMD_gpu_shader_int64
-     * \param program GLuint
-     * \param location GLint
-     * \param count GLsizei
-     * \param value const GLuint64EXT *
-     * \return void
-     */
-    STATICINLINE void program_uniform(
-        u32 program, i32 location, span_const_vec_2_GLuint64EXT const& value)
+requires(
+    concepts::span<span_const_vec_2_GLuint64EXT> &&
+    concepts::vector<
+        typename span_const_vec_2_GLuint64EXT::value_type,
+        GLuint64EXT,
+        2>)
+/*!
+ * \brief Part of GL_AMD_gpu_shader_int64
+ * \param program GLuint
+ * \param location GLint
+ * \param count GLsizei
+ * \param value const GLuint64EXT *
+ * \return void
+ */
+STATICINLINE void program_uniform(
+    u32 program, i32 location, span_const_vec_2_GLuint64EXT const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -701,17 +728,17 @@ requires(concepts::span<span_const_vec_2_GLuint64EXT>&& concepts::vector<
 
 template<class vec_3_GLint64EXT>
 requires(concepts::vector<vec_3_GLint64EXT, GLint64EXT, 3>)
-    /*!
-     * \brief Part of GL_AMD_gpu_shader_int64
-     * \param program GLuint
-     * \param location GLint
-     * \param x GLint64EXT
-     * \param y GLint64EXT
-     * \param z GLint64EXT
-     * \return void
-     */
-    STATICINLINE
-    void program_uniform(u32 program, i32 location, vec_3_GLint64EXT const& x)
+/*!
+ * \brief Part of GL_AMD_gpu_shader_int64
+ * \param program GLuint
+ * \param location GLint
+ * \param x GLint64EXT
+ * \param y GLint64EXT
+ * \param z GLint64EXT
+ * \return void
+ */
+STATICINLINE void program_uniform(
+    u32 program, i32 location, vec_3_GLint64EXT const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -729,18 +756,19 @@ requires(concepts::vector<vec_3_GLint64EXT, GLint64EXT, 3>)
 
 template<class span_const_vec_3_GLint64EXT>
 requires(
-    concepts::span<span_const_vec_3_GLint64EXT>&& concepts::
+    concepts::span<span_const_vec_3_GLint64EXT> &&
+    concepts::
         vector<typename span_const_vec_3_GLint64EXT::value_type, GLint64EXT, 3>)
-    /*!
-     * \brief Part of GL_AMD_gpu_shader_int64
-     * \param program GLuint
-     * \param location GLint
-     * \param count GLsizei
-     * \param value const GLint64EXT *
-     * \return void
-     */
-    STATICINLINE void program_uniform(
-        u32 program, i32 location, span_const_vec_3_GLint64EXT const& value)
+/*!
+ * \brief Part of GL_AMD_gpu_shader_int64
+ * \param program GLuint
+ * \param location GLint
+ * \param count GLsizei
+ * \param value const GLint64EXT *
+ * \return void
+ */
+STATICINLINE void program_uniform(
+    u32 program, i32 location, span_const_vec_3_GLint64EXT const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -762,17 +790,17 @@ requires(
 
 template<class vec_3_GLuint64EXT>
 requires(concepts::vector<vec_3_GLuint64EXT, GLuint64EXT, 3>)
-    /*!
-     * \brief Part of GL_AMD_gpu_shader_int64
-     * \param program GLuint
-     * \param location GLint
-     * \param x GLuint64EXT
-     * \param y GLuint64EXT
-     * \param z GLuint64EXT
-     * \return void
-     */
-    STATICINLINE
-    void program_uniform(u32 program, i32 location, vec_3_GLuint64EXT const& x)
+/*!
+ * \brief Part of GL_AMD_gpu_shader_int64
+ * \param program GLuint
+ * \param location GLint
+ * \param x GLuint64EXT
+ * \param y GLuint64EXT
+ * \param z GLuint64EXT
+ * \return void
+ */
+STATICINLINE void program_uniform(
+    u32 program, i32 location, vec_3_GLuint64EXT const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -789,20 +817,22 @@ requires(concepts::vector<vec_3_GLuint64EXT, GLuint64EXT, 3>)
 }
 
 template<class span_const_vec_3_GLuint64EXT>
-requires(concepts::span<span_const_vec_3_GLuint64EXT>&& concepts::vector<
-         typename span_const_vec_3_GLuint64EXT::value_type,
-         GLuint64EXT,
-         3>)
-    /*!
-     * \brief Part of GL_AMD_gpu_shader_int64
-     * \param program GLuint
-     * \param location GLint
-     * \param count GLsizei
-     * \param value const GLuint64EXT *
-     * \return void
-     */
-    STATICINLINE void program_uniform(
-        u32 program, i32 location, span_const_vec_3_GLuint64EXT const& value)
+requires(
+    concepts::span<span_const_vec_3_GLuint64EXT> &&
+    concepts::vector<
+        typename span_const_vec_3_GLuint64EXT::value_type,
+        GLuint64EXT,
+        3>)
+/*!
+ * \brief Part of GL_AMD_gpu_shader_int64
+ * \param program GLuint
+ * \param location GLint
+ * \param count GLsizei
+ * \param value const GLuint64EXT *
+ * \return void
+ */
+STATICINLINE void program_uniform(
+    u32 program, i32 location, span_const_vec_3_GLuint64EXT const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -824,18 +854,18 @@ requires(concepts::span<span_const_vec_3_GLuint64EXT>&& concepts::vector<
 
 template<class vec_4_GLint64EXT>
 requires(concepts::vector<vec_4_GLint64EXT, GLint64EXT, 4>)
-    /*!
-     * \brief Part of GL_AMD_gpu_shader_int64
-     * \param program GLuint
-     * \param location GLint
-     * \param x GLint64EXT
-     * \param y GLint64EXT
-     * \param z GLint64EXT
-     * \param w GLint64EXT
-     * \return void
-     */
-    STATICINLINE
-    void program_uniform(u32 program, i32 location, vec_4_GLint64EXT const& x)
+/*!
+ * \brief Part of GL_AMD_gpu_shader_int64
+ * \param program GLuint
+ * \param location GLint
+ * \param x GLint64EXT
+ * \param y GLint64EXT
+ * \param z GLint64EXT
+ * \param w GLint64EXT
+ * \return void
+ */
+STATICINLINE void program_uniform(
+    u32 program, i32 location, vec_4_GLint64EXT const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -853,18 +883,19 @@ requires(concepts::vector<vec_4_GLint64EXT, GLint64EXT, 4>)
 
 template<class span_const_vec_4_GLint64EXT>
 requires(
-    concepts::span<span_const_vec_4_GLint64EXT>&& concepts::
+    concepts::span<span_const_vec_4_GLint64EXT> &&
+    concepts::
         vector<typename span_const_vec_4_GLint64EXT::value_type, GLint64EXT, 4>)
-    /*!
-     * \brief Part of GL_AMD_gpu_shader_int64
-     * \param program GLuint
-     * \param location GLint
-     * \param count GLsizei
-     * \param value const GLint64EXT *
-     * \return void
-     */
-    STATICINLINE void program_uniform(
-        u32 program, i32 location, span_const_vec_4_GLint64EXT const& value)
+/*!
+ * \brief Part of GL_AMD_gpu_shader_int64
+ * \param program GLuint
+ * \param location GLint
+ * \param count GLsizei
+ * \param value const GLint64EXT *
+ * \return void
+ */
+STATICINLINE void program_uniform(
+    u32 program, i32 location, span_const_vec_4_GLint64EXT const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -886,18 +917,18 @@ requires(
 
 template<class vec_4_GLuint64EXT>
 requires(concepts::vector<vec_4_GLuint64EXT, GLuint64EXT, 4>)
-    /*!
-     * \brief Part of GL_AMD_gpu_shader_int64
-     * \param program GLuint
-     * \param location GLint
-     * \param x GLuint64EXT
-     * \param y GLuint64EXT
-     * \param z GLuint64EXT
-     * \param w GLuint64EXT
-     * \return void
-     */
-    STATICINLINE
-    void program_uniform(u32 program, i32 location, vec_4_GLuint64EXT const& x)
+/*!
+ * \brief Part of GL_AMD_gpu_shader_int64
+ * \param program GLuint
+ * \param location GLint
+ * \param x GLuint64EXT
+ * \param y GLuint64EXT
+ * \param z GLuint64EXT
+ * \param w GLuint64EXT
+ * \return void
+ */
+STATICINLINE void program_uniform(
+    u32 program, i32 location, vec_4_GLuint64EXT const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -914,20 +945,22 @@ requires(concepts::vector<vec_4_GLuint64EXT, GLuint64EXT, 4>)
 }
 
 template<class span_const_vec_4_GLuint64EXT>
-requires(concepts::span<span_const_vec_4_GLuint64EXT>&& concepts::vector<
-         typename span_const_vec_4_GLuint64EXT::value_type,
-         GLuint64EXT,
-         4>)
-    /*!
-     * \brief Part of GL_AMD_gpu_shader_int64
-     * \param program GLuint
-     * \param location GLint
-     * \param count GLsizei
-     * \param value const GLuint64EXT *
-     * \return void
-     */
-    STATICINLINE void program_uniform(
-        u32 program, i32 location, span_const_vec_4_GLuint64EXT const& value)
+requires(
+    concepts::span<span_const_vec_4_GLuint64EXT> &&
+    concepts::vector<
+        typename span_const_vec_4_GLuint64EXT::value_type,
+        GLuint64EXT,
+        4>)
+/*!
+ * \brief Part of GL_AMD_gpu_shader_int64
+ * \param program GLuint
+ * \param location GLint
+ * \param count GLsizei
+ * \param value const GLuint64EXT *
+ * \return void
+ */
+STATICINLINE void program_uniform(
+    u32 program, i32 location, span_const_vec_4_GLuint64EXT const& value)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

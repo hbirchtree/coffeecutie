@@ -171,10 +171,11 @@ UsageMeter GetUsage(gpucount_t i)
     r = nvmlDeviceGetDecoderUtilization(dev, &encoder, &sampling);
     error_print(r);
 
-    return {C_CAST<uint8>(util.memory),
-            C_CAST<uint8>(util.gpu),
-            C_CAST<uint8>(decoder),
-            C_CAST<uint8>(encoder)};
+    return {
+        C_CAST<uint8>(util.memory),
+        C_CAST<uint8>(util.gpu),
+        C_CAST<uint8>(decoder),
+        C_CAST<uint8>(encoder)};
 }
 
 TransferStatus GetPcieTransfer(gpucount_t i)

@@ -65,7 +65,7 @@ enum class RSCA : libc_types::u32
     NoDereference = 0x200000, /*!< When handling a Url, operate on the link, not
                                  the file it refers to. Default behavior is to
                                  follow links. */
-    Sparse = 0x400000, /*!< Paged storage */
+    Sparse = 0x400000,        /*!< Paged storage */
 
     /* Masks */
     LockingMask = ExclusiveLocking | SharedLocking,

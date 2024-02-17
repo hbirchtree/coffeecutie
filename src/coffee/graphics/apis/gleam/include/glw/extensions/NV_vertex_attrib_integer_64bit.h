@@ -3,24 +3,29 @@
 #ifdef GL_NV_vertex_attrib_integer_64bit
 #include "../enums/AttributeType.h"
 #include "../enums/VertexAttribPointerType.h"
+
 namespace gl::nv::vertex_attrib_integer_64bit {
 using gl::group::attribute_type;
 using gl::group::vertex_attrib_pointer_type;
+
 namespace values {
 } // namespace values
+
 template<class span_GLint64EXT>
-requires(concepts::span<span_GLint64EXT>&& std::is_same_v<
-         std::decay_t<typename span_GLint64EXT::value_type>,
-         std::decay_t<GLint64EXT>>)
-    /*!
-     * \brief Part of GL_NV_vertex_attrib_integer_64bit
-     * \param index GLuint
-     * \param pname GLenum
-     * \param params GLint64EXT *
-     * \return void
-     */
-    STATICINLINE void get_vertex_attrib_li64v(
-        u32 index, group::vertex_attrib_enum pname, span_GLint64EXT params)
+requires(
+    concepts::span<span_GLint64EXT> &&
+    std::is_same_v<
+        std::decay_t<typename span_GLint64EXT::value_type>,
+        std::decay_t<GLint64EXT>>)
+/*!
+ * \brief Part of GL_NV_vertex_attrib_integer_64bit
+ * \param index GLuint
+ * \param pname GLenum
+ * \param params GLint64EXT *
+ * \return void
+ */
+STATICINLINE void get_vertex_attrib_li64v(
+    u32 index, group::vertex_attrib_enum pname, span_GLint64EXT params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -35,18 +40,20 @@ requires(concepts::span<span_GLint64EXT>&& std::is_same_v<
 }
 
 template<class span_GLuint64EXT>
-requires(concepts::span<span_GLuint64EXT>&& std::is_same_v<
-         std::decay_t<typename span_GLuint64EXT::value_type>,
-         std::decay_t<GLuint64EXT>>)
-    /*!
-     * \brief Part of GL_NV_vertex_attrib_integer_64bit
-     * \param index GLuint
-     * \param pname GLenum
-     * \param params GLuint64EXT *
-     * \return void
-     */
-    STATICINLINE void get_vertex_attrib_lui64v(
-        u32 index, group::vertex_attrib_enum pname, span_GLuint64EXT params)
+requires(
+    concepts::span<span_GLuint64EXT> &&
+    std::is_same_v<
+        std::decay_t<typename span_GLuint64EXT::value_type>,
+        std::decay_t<GLuint64EXT>>)
+/*!
+ * \brief Part of GL_NV_vertex_attrib_integer_64bit
+ * \param index GLuint
+ * \param pname GLenum
+ * \param params GLuint64EXT *
+ * \return void
+ */
+STATICINLINE void get_vertex_attrib_lui64v(
+    u32 index, group::vertex_attrib_enum pname, span_GLuint64EXT params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -79,17 +86,19 @@ STATICINLINE void vertex_attrib_l1i64(u32 index, GLint64EXT x)
 }
 
 template<class span_const_GLint64EXT>
-requires(concepts::span<span_const_GLint64EXT>&& std::is_same_v<
-         std::decay_t<typename span_const_GLint64EXT::value_type>,
-         std::decay_t<GLint64EXT>>)
-    /*!
-     * \brief Part of GL_NV_vertex_attrib_integer_64bit
-     * \param index GLuint
-     * \param v const GLint64EXT *
-     * \return void
-     */
-    STATICINLINE
-    void vertex_attrib_l1i64v(u32 index, span_const_GLint64EXT const& v)
+requires(
+    concepts::span<span_const_GLint64EXT> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLint64EXT::value_type>,
+        std::decay_t<GLint64EXT>>)
+/*!
+ * \brief Part of GL_NV_vertex_attrib_integer_64bit
+ * \param index GLuint
+ * \param v const GLint64EXT *
+ * \return void
+ */
+STATICINLINE void vertex_attrib_l1i64v(
+    u32 index, span_const_GLint64EXT const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -119,17 +128,19 @@ STATICINLINE void vertex_attrib_l1ui64(u32 index, GLuint64EXT x)
 }
 
 template<class span_const_GLuint64EXT>
-requires(concepts::span<span_const_GLuint64EXT>&& std::is_same_v<
-         std::decay_t<typename span_const_GLuint64EXT::value_type>,
-         std::decay_t<GLuint64EXT>>)
-    /*!
-     * \brief Part of GL_NV_vertex_attrib_integer_64bit
-     * \param index GLuint
-     * \param v const GLuint64EXT *
-     * \return void
-     */
-    STATICINLINE
-    void vertex_attrib_l1ui64v(u32 index, span_const_GLuint64EXT const& v)
+requires(
+    concepts::span<span_const_GLuint64EXT> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_GLuint64EXT::value_type>,
+        std::decay_t<GLuint64EXT>>)
+/*!
+ * \brief Part of GL_NV_vertex_attrib_integer_64bit
+ * \param index GLuint
+ * \param v const GLuint64EXT *
+ * \return void
+ */
+STATICINLINE void vertex_attrib_l1ui64v(
+    u32 index, span_const_GLuint64EXT const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -143,14 +154,14 @@ requires(concepts::span<span_const_GLuint64EXT>&& std::is_same_v<
 
 template<class vec_2_GLint64EXT>
 requires(concepts::vector<vec_2_GLint64EXT, GLint64EXT, 2>)
-    /*!
-     * \brief Part of GL_NV_vertex_attrib_integer_64bit
-     * \param index GLuint
-     * \param x GLint64EXT
-     * \param y GLint64EXT
-     * \return void
-     */
-    STATICINLINE void vertex_attrib_l2i64(u32 index, vec_2_GLint64EXT const& x)
+/*!
+ * \brief Part of GL_NV_vertex_attrib_integer_64bit
+ * \param index GLuint
+ * \param x GLint64EXT
+ * \param y GLint64EXT
+ * \return void
+ */
+STATICINLINE void vertex_attrib_l2i64(u32 index, vec_2_GLint64EXT const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -163,16 +174,17 @@ requires(concepts::vector<vec_2_GLint64EXT, GLint64EXT, 2>)
 
 template<class span_const_vec_2_GLint64EXT>
 requires(
-    concepts::span<span_const_vec_2_GLint64EXT>&& concepts::
+    concepts::span<span_const_vec_2_GLint64EXT> &&
+    concepts::
         vector<typename span_const_vec_2_GLint64EXT::value_type, GLint64EXT, 2>)
-    /*!
-     * \brief Part of GL_NV_vertex_attrib_integer_64bit
-     * \param index GLuint
-     * \param v const GLint64EXT *
-     * \return void
-     */
-    STATICINLINE
-    void vertex_attrib_l2i64v(u32 index, span_const_vec_2_GLint64EXT const& v)
+/*!
+ * \brief Part of GL_NV_vertex_attrib_integer_64bit
+ * \param index GLuint
+ * \param v const GLint64EXT *
+ * \return void
+ */
+STATICINLINE void vertex_attrib_l2i64v(
+    u32 index, span_const_vec_2_GLint64EXT const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -186,15 +198,14 @@ requires(
 
 template<class vec_2_GLuint64EXT>
 requires(concepts::vector<vec_2_GLuint64EXT, GLuint64EXT, 2>)
-    /*!
-     * \brief Part of GL_NV_vertex_attrib_integer_64bit
-     * \param index GLuint
-     * \param x GLuint64EXT
-     * \param y GLuint64EXT
-     * \return void
-     */
-    STATICINLINE
-    void vertex_attrib_l2ui64(u32 index, vec_2_GLuint64EXT const& x)
+/*!
+ * \brief Part of GL_NV_vertex_attrib_integer_64bit
+ * \param index GLuint
+ * \param x GLuint64EXT
+ * \param y GLuint64EXT
+ * \return void
+ */
+STATICINLINE void vertex_attrib_l2ui64(u32 index, vec_2_GLuint64EXT const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -206,18 +217,20 @@ requires(concepts::vector<vec_2_GLuint64EXT, GLuint64EXT, 2>)
 }
 
 template<class span_const_vec_2_GLuint64EXT>
-requires(concepts::span<span_const_vec_2_GLuint64EXT>&& concepts::vector<
-         typename span_const_vec_2_GLuint64EXT::value_type,
-         GLuint64EXT,
-         2>)
-    /*!
-     * \brief Part of GL_NV_vertex_attrib_integer_64bit
-     * \param index GLuint
-     * \param v const GLuint64EXT *
-     * \return void
-     */
-    STATICINLINE
-    void vertex_attrib_l2ui64v(u32 index, span_const_vec_2_GLuint64EXT const& v)
+requires(
+    concepts::span<span_const_vec_2_GLuint64EXT> &&
+    concepts::vector<
+        typename span_const_vec_2_GLuint64EXT::value_type,
+        GLuint64EXT,
+        2>)
+/*!
+ * \brief Part of GL_NV_vertex_attrib_integer_64bit
+ * \param index GLuint
+ * \param v const GLuint64EXT *
+ * \return void
+ */
+STATICINLINE void vertex_attrib_l2ui64v(
+    u32 index, span_const_vec_2_GLuint64EXT const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -231,15 +244,15 @@ requires(concepts::span<span_const_vec_2_GLuint64EXT>&& concepts::vector<
 
 template<class vec_3_GLint64EXT>
 requires(concepts::vector<vec_3_GLint64EXT, GLint64EXT, 3>)
-    /*!
-     * \brief Part of GL_NV_vertex_attrib_integer_64bit
-     * \param index GLuint
-     * \param x GLint64EXT
-     * \param y GLint64EXT
-     * \param z GLint64EXT
-     * \return void
-     */
-    STATICINLINE void vertex_attrib_l3i64(u32 index, vec_3_GLint64EXT const& x)
+/*!
+ * \brief Part of GL_NV_vertex_attrib_integer_64bit
+ * \param index GLuint
+ * \param x GLint64EXT
+ * \param y GLint64EXT
+ * \param z GLint64EXT
+ * \return void
+ */
+STATICINLINE void vertex_attrib_l3i64(u32 index, vec_3_GLint64EXT const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -252,16 +265,17 @@ requires(concepts::vector<vec_3_GLint64EXT, GLint64EXT, 3>)
 
 template<class span_const_vec_3_GLint64EXT>
 requires(
-    concepts::span<span_const_vec_3_GLint64EXT>&& concepts::
+    concepts::span<span_const_vec_3_GLint64EXT> &&
+    concepts::
         vector<typename span_const_vec_3_GLint64EXT::value_type, GLint64EXT, 3>)
-    /*!
-     * \brief Part of GL_NV_vertex_attrib_integer_64bit
-     * \param index GLuint
-     * \param v const GLint64EXT *
-     * \return void
-     */
-    STATICINLINE
-    void vertex_attrib_l3i64v(u32 index, span_const_vec_3_GLint64EXT const& v)
+/*!
+ * \brief Part of GL_NV_vertex_attrib_integer_64bit
+ * \param index GLuint
+ * \param v const GLint64EXT *
+ * \return void
+ */
+STATICINLINE void vertex_attrib_l3i64v(
+    u32 index, span_const_vec_3_GLint64EXT const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -275,16 +289,15 @@ requires(
 
 template<class vec_3_GLuint64EXT>
 requires(concepts::vector<vec_3_GLuint64EXT, GLuint64EXT, 3>)
-    /*!
-     * \brief Part of GL_NV_vertex_attrib_integer_64bit
-     * \param index GLuint
-     * \param x GLuint64EXT
-     * \param y GLuint64EXT
-     * \param z GLuint64EXT
-     * \return void
-     */
-    STATICINLINE
-    void vertex_attrib_l3ui64(u32 index, vec_3_GLuint64EXT const& x)
+/*!
+ * \brief Part of GL_NV_vertex_attrib_integer_64bit
+ * \param index GLuint
+ * \param x GLuint64EXT
+ * \param y GLuint64EXT
+ * \param z GLuint64EXT
+ * \return void
+ */
+STATICINLINE void vertex_attrib_l3ui64(u32 index, vec_3_GLuint64EXT const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -296,18 +309,20 @@ requires(concepts::vector<vec_3_GLuint64EXT, GLuint64EXT, 3>)
 }
 
 template<class span_const_vec_3_GLuint64EXT>
-requires(concepts::span<span_const_vec_3_GLuint64EXT>&& concepts::vector<
-         typename span_const_vec_3_GLuint64EXT::value_type,
-         GLuint64EXT,
-         3>)
-    /*!
-     * \brief Part of GL_NV_vertex_attrib_integer_64bit
-     * \param index GLuint
-     * \param v const GLuint64EXT *
-     * \return void
-     */
-    STATICINLINE
-    void vertex_attrib_l3ui64v(u32 index, span_const_vec_3_GLuint64EXT const& v)
+requires(
+    concepts::span<span_const_vec_3_GLuint64EXT> &&
+    concepts::vector<
+        typename span_const_vec_3_GLuint64EXT::value_type,
+        GLuint64EXT,
+        3>)
+/*!
+ * \brief Part of GL_NV_vertex_attrib_integer_64bit
+ * \param index GLuint
+ * \param v const GLuint64EXT *
+ * \return void
+ */
+STATICINLINE void vertex_attrib_l3ui64v(
+    u32 index, span_const_vec_3_GLuint64EXT const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -321,16 +336,16 @@ requires(concepts::span<span_const_vec_3_GLuint64EXT>&& concepts::vector<
 
 template<class vec_4_GLint64EXT>
 requires(concepts::vector<vec_4_GLint64EXT, GLint64EXT, 4>)
-    /*!
-     * \brief Part of GL_NV_vertex_attrib_integer_64bit
-     * \param index GLuint
-     * \param x GLint64EXT
-     * \param y GLint64EXT
-     * \param z GLint64EXT
-     * \param w GLint64EXT
-     * \return void
-     */
-    STATICINLINE void vertex_attrib_l4i64(u32 index, vec_4_GLint64EXT const& x)
+/*!
+ * \brief Part of GL_NV_vertex_attrib_integer_64bit
+ * \param index GLuint
+ * \param x GLint64EXT
+ * \param y GLint64EXT
+ * \param z GLint64EXT
+ * \param w GLint64EXT
+ * \return void
+ */
+STATICINLINE void vertex_attrib_l4i64(u32 index, vec_4_GLint64EXT const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -343,16 +358,17 @@ requires(concepts::vector<vec_4_GLint64EXT, GLint64EXT, 4>)
 
 template<class span_const_vec_4_GLint64EXT>
 requires(
-    concepts::span<span_const_vec_4_GLint64EXT>&& concepts::
+    concepts::span<span_const_vec_4_GLint64EXT> &&
+    concepts::
         vector<typename span_const_vec_4_GLint64EXT::value_type, GLint64EXT, 4>)
-    /*!
-     * \brief Part of GL_NV_vertex_attrib_integer_64bit
-     * \param index GLuint
-     * \param v const GLint64EXT *
-     * \return void
-     */
-    STATICINLINE
-    void vertex_attrib_l4i64v(u32 index, span_const_vec_4_GLint64EXT const& v)
+/*!
+ * \brief Part of GL_NV_vertex_attrib_integer_64bit
+ * \param index GLuint
+ * \param v const GLint64EXT *
+ * \return void
+ */
+STATICINLINE void vertex_attrib_l4i64v(
+    u32 index, span_const_vec_4_GLint64EXT const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -366,17 +382,16 @@ requires(
 
 template<class vec_4_GLuint64EXT>
 requires(concepts::vector<vec_4_GLuint64EXT, GLuint64EXT, 4>)
-    /*!
-     * \brief Part of GL_NV_vertex_attrib_integer_64bit
-     * \param index GLuint
-     * \param x GLuint64EXT
-     * \param y GLuint64EXT
-     * \param z GLuint64EXT
-     * \param w GLuint64EXT
-     * \return void
-     */
-    STATICINLINE
-    void vertex_attrib_l4ui64(u32 index, vec_4_GLuint64EXT const& x)
+/*!
+ * \brief Part of GL_NV_vertex_attrib_integer_64bit
+ * \param index GLuint
+ * \param x GLuint64EXT
+ * \param y GLuint64EXT
+ * \param z GLuint64EXT
+ * \param w GLuint64EXT
+ * \return void
+ */
+STATICINLINE void vertex_attrib_l4ui64(u32 index, vec_4_GLuint64EXT const& x)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -388,18 +403,20 @@ requires(concepts::vector<vec_4_GLuint64EXT, GLuint64EXT, 4>)
 }
 
 template<class span_const_vec_4_GLuint64EXT>
-requires(concepts::span<span_const_vec_4_GLuint64EXT>&& concepts::vector<
-         typename span_const_vec_4_GLuint64EXT::value_type,
-         GLuint64EXT,
-         4>)
-    /*!
-     * \brief Part of GL_NV_vertex_attrib_integer_64bit
-     * \param index GLuint
-     * \param v const GLuint64EXT *
-     * \return void
-     */
-    STATICINLINE
-    void vertex_attrib_l4ui64v(u32 index, span_const_vec_4_GLuint64EXT const& v)
+requires(
+    concepts::span<span_const_vec_4_GLuint64EXT> &&
+    concepts::vector<
+        typename span_const_vec_4_GLuint64EXT::value_type,
+        GLuint64EXT,
+        4>)
+/*!
+ * \brief Part of GL_NV_vertex_attrib_integer_64bit
+ * \param index GLuint
+ * \param v const GLuint64EXT *
+ * \return void
+ */
+STATICINLINE void vertex_attrib_l4ui64v(
+    u32 index, span_const_vec_4_GLuint64EXT const& v)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

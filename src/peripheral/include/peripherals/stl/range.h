@@ -1,7 +1,7 @@
 #pragma once
 
-#include <peripherals/stl/type_safety.h>
 #include "iterator.h"
+#include <peripherals/stl/type_safety.h>
 
 namespace stl_types {
 
@@ -20,12 +20,17 @@ struct range
     {
         using difference_type = intptr_t;
 
-        iterator(T end) : m_idx(end), m_end(end), m_stride(0)
+        iterator(T end)
+            : m_idx(end)
+            , m_end(end)
+            , m_stride(0)
         {
         }
 
-        iterator(T start, T end, T stride) :
-            m_idx(start), m_end(end), m_stride(stride)
+        iterator(T start, T end, T stride)
+            : m_idx(start)
+            , m_end(end)
+            , m_stride(stride)
         {
             bool correct     = (!range_param::reversed) && start > end;
             bool correct_rev = range_param::reversed && start > end;
@@ -40,7 +45,7 @@ struct range
 
             if(m_idx >= m_end)
             {
-                m_idx = m_end;
+                m_idx    = m_end;
                 m_stride = 0;
             }
 
@@ -94,7 +99,9 @@ struct range
 
     using value_type = T;
 
-    range(T len, T stride = 1) : m_len(len), m_stride(stride)
+    range(T len, T stride = 1)
+        : m_len(len)
+        , m_stride(stride)
     {
     }
 
@@ -119,4 +126,4 @@ using Range = range<T>;
 template<typename T = size_t>
 using range_rev = range<T, range_reversed>;
 
-}
+} // namespace stl_types

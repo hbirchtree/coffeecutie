@@ -45,9 +45,10 @@ inline void assign_map(MapType& map, BitmapItem const* bitm)
 } // namespace detail
 
 template<typename Version>
-struct MeshRenderer : compo::RestrictedSubsystem<
-                          MeshRenderer<Version>,
-                          MeshRendererManifest<Version>>
+struct MeshRenderer
+    : compo::RestrictedSubsystem<
+          MeshRenderer<Version>,
+          MeshRendererManifest<Version>>
 {
     using type        = MeshRenderer;
     using Proxy       = compo::proxy_of<MeshRendererManifest<Version>>;
@@ -128,15 +129,17 @@ struct MeshRenderer : compo::RestrictedSubsystem<
                     total += draw.instances.count;
             return total * sizeof(materials::shader_data);
         }
+
         inline size_t required_matrix_storage() const
         {
-            return (required_storage() / sizeof(materials::shader_data))
-                   * sizeof(Matf4);
+            return (required_storage() / sizeof(materials::shader_data)) *
+                   sizeof(Matf4);
         }
+
         inline size_t required_transparent_storage() const
         {
-            return (required_storage() / sizeof(materials::shader_data))
-                   * sizeof(materials::transparent_data);
+            return (required_storage() / sizeof(materials::shader_data)) *
+                   sizeof(materials::transparent_data);
         }
     };
 
@@ -161,10 +164,13 @@ struct MeshRenderer : compo::RestrictedSubsystem<
         BlamCamera&           camera,
         ShaderCache<Version>& shader_cache,
         BitmapCache<Version>& bitm_cache,
-        BSPCache<Version>&    bsp_cache) :
-        m_api(api),
-        m_resources(resources), m_camera(camera), shader_cache(shader_cache),
-        bitm_cache(bitm_cache), bsp_cache(bsp_cache)
+        BSPCache<Version>&    bsp_cache)
+        : m_api(api)
+        , m_resources(resources)
+        , m_camera(camera)
+        , shader_cache(shader_cache)
+        , bitm_cache(bitm_cache)
+        , bsp_cache(bsp_cache)
     {
         this->priority = 3072;
 
@@ -185,6 +191,7 @@ struct MeshRenderer : compo::RestrictedSubsystem<
                 "MOD::{}", magic_enum::enum_name(static_cast<Passes>(i++)));
         }
     }
+
     BSPItem const* get_bsp(generation_idx_t bsp)
     {
         if(!bsp.valid())
@@ -526,20 +533,22 @@ struct MeshRenderer : compo::RestrictedSubsystem<
             groups.push_back(draw.data);
             groups.back().instances.offset = draw.color_ptr;
             if(ent.tags & ObjectTriggerVolume)
-                colors[draw.color_ptr]
-                    = draw.selected ? Vecf3{0, 1, 0} : Vecf3{1};
+                colors[draw.color_ptr] =
+                    draw.selected ? Vecf3{0, 1, 0} : Vecf3{1};
         }
 
         m_resources.debug_line_colors->unmap();
 
-        m_api->submit({
-                .program = m_resources.debug_lines_pipeline,
-                .vertices = m_resources.debug_attr,
+        m_api->submit(
+            {
+                .program       = m_resources.debug_lines_pipeline,
+                .vertices      = m_resources.debug_attr,
                 .render_target = m_resources.offscreen,
-                .call = gfx::draw_command::call_spec_t{
-                    .indexed = false,
-                    .mode = gfx::drawing::primitive::line_strip,
-                },
+                .call =
+                    gfx::draw_command::call_spec_t{
+                        .indexed = false,
+                        .mode    = gfx::drawing::primitive::line_strip,
+                    },
                 .data = groups,
             },
             gfx::make_uniform_list(
@@ -728,11 +737,11 @@ struct MeshRenderer : compo::RestrictedSubsystem<
         for(Pass& pass : m_bsp)
         {
             auto material_size = align_for_gpu_padding(pass.required_storage());
-            pass.material_buffer = m_resources.material_store->slice(
-                materials_ptr, material_size);
-            pass.material_mapping
-                = pass.material_buffer
-                      .template buffer_cast<materials::shader_data>();
+            pass.material_buffer =
+                m_resources.material_store->slice(materials_ptr, material_size);
+            pass.material_mapping =
+                pass.material_buffer
+                    .template buffer_cast<materials::shader_data>();
             materials_ptr += material_size;
         }
 
@@ -777,9 +786,8 @@ struct MeshRenderer : compo::RestrictedSubsystem<
             auto              parent = p.template ref<Proxy>(model.parent);
             Model&            mod    = parent.template get<Model>();
 
-            if(!mod.visible
-               || (!rendering_params->render_scenery
-                   && (ent.tags & ObjectSkybox) == 0))
+            if(!mod.visible || (!rendering_params->render_scenery &&
+                                (ent.tags & ObjectSkybox) == 0))
             {
                 track.model_id = {};
                 continue;
@@ -813,39 +821,39 @@ struct MeshRenderer : compo::RestrictedSubsystem<
         for(Pass& pass : m_model)
         {
             auto material_size = align_for_gpu_padding(pass.required_storage());
-            auto matrix_size
-                = align_for_gpu_padding(pass.required_matrix_storage());
-            pass.material_buffer = m_resources.material_store->slice(
-                materials_ptr, material_size);
-            pass.matrix_buffer = m_resources.model_matrix_store->slice(
-                matrix_ptr, matrix_size);
-            pass.material_mapping
-                = pass.material_buffer
-                      .template buffer_cast<materials::shader_data>();
-            pass.matrix_mapping
-                = pass.matrix_buffer.template buffer_cast<Matf4>();
+            auto matrix_size =
+                align_for_gpu_padding(pass.required_matrix_storage());
+            pass.material_buffer =
+                m_resources.material_store->slice(materials_ptr, material_size);
+            pass.matrix_buffer =
+                m_resources.model_matrix_store->slice(matrix_ptr, matrix_size);
+            pass.material_mapping =
+                pass.material_buffer
+                    .template buffer_cast<materials::shader_data>();
+            pass.matrix_mapping =
+                pass.matrix_buffer.template buffer_cast<Matf4>();
             matrix_ptr += matrix_size;
             materials_ptr += material_size;
         }
 
         for(auto& ent : p.select(ObjectMod2))
         {
-            if(!rendering_params->render_scenery
-               && (ent.tags & ObjectSkybox) == 0)
+            if(!rendering_params->render_scenery &&
+               (ent.tags & ObjectSkybox) == 0)
                 continue;
             auto            ref    = p.template ref<Proxy>(ent);
             SubModel const& smodel = ref.template get<SubModel>();
-            Model const&    model
-                = p.template ref<Proxy>(smodel.parent).template get<Model>();
-            MeshTrackingData const& track
-                = ref.template get<MeshTrackingData>();
+            Model const&    model =
+                p.template ref<Proxy>(smodel.parent).template get<Model>();
+            MeshTrackingData const& track =
+                ref.template get<MeshTrackingData>();
 
             if(!track.model_id.enabled)
                 continue;
 
             Pass&              pass = m_model[smodel.current_pass];
-            draw_data_t const& draw
-                = pass.draws[track.model_id.bucket].at(track.model_id.draw);
+            draw_data_t const& draw =
+                pass.draws[track.model_id.bucket].at(track.model_id.draw);
             auto instance_id = draw.instances.offset + track.model_id.instance;
             pass.matrix_mapping[instance_id] = model.transform;
             populate_mod2_material(
@@ -862,15 +870,15 @@ struct MeshRenderer : compo::RestrictedSubsystem<
 
         for(Pass& pass : m_bsp)
         {
-            pass.material_mapping
-                = pass.material_buffer
-                      .template buffer_cast<materials::shader_data>();
+            pass.material_mapping =
+                pass.material_buffer
+                    .template buffer_cast<materials::shader_data>();
         }
         for(Pass& pass : m_model)
         {
-            pass.material_mapping
-                = pass.material_buffer
-                      .template buffer_cast<materials::shader_data>();
+            pass.material_mapping =
+                pass.material_buffer
+                    .template buffer_cast<materials::shader_data>();
         }
 
         RenderingParameters* rendering_params;
@@ -881,8 +889,8 @@ struct MeshRenderer : compo::RestrictedSubsystem<
 
         for(auto& ent : p.select(ObjectMod2))
         {
-            if(!rendering_params->render_scenery
-               && (ent.tags & ObjectSkybox) == 0)
+            if(!rendering_params->render_scenery &&
+               (ent.tags & ObjectSkybox) == 0)
                 continue;
             auto              ref    = p.template ref<Proxy>(ent);
             SubModel&         smodel = ref.template get<SubModel>();
@@ -1010,8 +1018,8 @@ void ScreenClear::end_restricted(Proxy& e, const time_point&)
                 std::move(params_f));
     // clang-format on
 
-    comp_app::interfaces::GraphicsFramebuffer* framebuffer
-        = e.service<comp_app::GraphicsFramebuffer>();
+    comp_app::interfaces::GraphicsFramebuffer* framebuffer =
+        e.service<comp_app::GraphicsFramebuffer>();
 
     Vecf2 item_scale{2.f / framebuffer->size().w, 2.f / framebuffer->size().h};
     f32   one = 1.f;
@@ -1065,6 +1073,7 @@ void ScreenClear::load_resources(gleam::system& api, BlamResources& resources)
 {
     using vecb4 = typing::vectors::tvector<libc_types::i8, 4>;
     using vecb2 = typing::vectors::tvector<libc_types::i8, 2>;
+
     struct vertex_t
     {
         vecb2 pos;
@@ -1166,8 +1175,8 @@ void LoadingScreen::end_restricted(Proxy& e, const time_point& time)
 
     auto _ = api->debug().scope();
 
-    auto screen_aspect
-        = e.service<comp_app::GraphicsFramebuffer>()->size().aspect();
+    auto screen_aspect =
+        e.service<comp_app::GraphicsFramebuffer>()->size().aspect();
 
     Matf4 transform = glm::translate(
         // glm::scale(glm::identity<Matf4>(), glm::vec3(0.2f)),
@@ -1182,29 +1191,30 @@ void LoadingScreen::end_restricted(Proxy& e, const time_point& time)
     f32 start = timef;
     f32 end   = std::fmod(timef + 0.2f, 1.f);
 
-    auto res = api->submit(gfx::draw_command{
-        .program = loading_program,
-        .vertices = screen_clear->quad_vao,
-        .call = {
-            .indexed = false,
-            .mode = gfx::drawing::primitive::triangle_fan,
+    auto res = api->submit(
+        gfx::draw_command{
+            .program  = loading_program,
+            .vertices = screen_clear->quad_vao,
+            .call =
+                {
+                    .indexed = false,
+                    .mode    = gfx::drawing::primitive::triangle_fan,
+                },
+            .data = {{.arrays = {.count = 4}}},
         },
-        .data = {{ .arrays = {.count = 4} }},
-    },
-    // gfx::make_sampler_list(gfx::sampler_definition_t{
-    //     typing::graphics::ShaderStage::Fragment,
-    //     {"source"sv},
-    //     loading_sampler,
-    // }),
-    gfx::make_uniform_list(
-        typing::graphics::ShaderStage::Vertex,
-        gfx::uniform_pair{{"transform"sv}, semantic::SpanOne(transform)}),
-    gfx::make_uniform_list(
-        typing::graphics::ShaderStage::Fragment,
-        gfx::uniform_pair{{"range_start"sv}, semantic::SpanOne(start)},
-        gfx::uniform_pair{{"range_end"sv}, semantic::SpanOne(end)}),
-    gfx::blend_state{}
-    );
+        // gfx::make_sampler_list(gfx::sampler_definition_t{
+        //     typing::graphics::ShaderStage::Fragment,
+        //     {"source"sv},
+        //     loading_sampler,
+        // }),
+        gfx::make_uniform_list(
+            typing::graphics::ShaderStage::Vertex,
+            gfx::uniform_pair{{"transform"sv}, semantic::SpanOne(transform)}),
+        gfx::make_uniform_list(
+            typing::graphics::ShaderStage::Fragment,
+            gfx::uniform_pair{{"range_start"sv}, semantic::SpanOne(start)},
+            gfx::uniform_pair{{"range_end"sv}, semantic::SpanOne(end)}),
+        gfx::blend_state{});
     if(res)
     {
         auto [err, msg] = *res;

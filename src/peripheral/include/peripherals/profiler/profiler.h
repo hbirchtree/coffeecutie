@@ -7,7 +7,7 @@
 // Requires #define PROFILER_CUSTOM_THREAD_NS ...
 #define PROFILER_CUSTOM_THREADLIB
 
-//#define PROFILER_STD_TYPES
+// #define PROFILER_STD_TYPES
 
 #if !defined(PROFILER_STD_TYPES)
 #include <peripherals/libc/types.h>
@@ -45,9 +45,9 @@ using u32     = ::uint32_t;
 #endif
 
 template<typename T>
-using ptr                   = std::shared_ptr<T>;
-using clock                 = std::chrono::steady_clock;
-using thread                = std::thread;
+using ptr    = std::shared_ptr<T>;
+using clock  = std::chrono::steady_clock;
+using thread = std::thread;
 
 using thread_id             = ::stl_types::ThreadId::Hash;
 using thread_id_constructor = ::stl_types::ThreadId;

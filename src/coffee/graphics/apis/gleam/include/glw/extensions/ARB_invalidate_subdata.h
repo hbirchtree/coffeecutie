@@ -4,6 +4,7 @@
 namespace gl::arb::invalidate_subdata {
 namespace values {
 } // namespace values
+
 /*!
  * \brief Part of GL_ARB_invalidate_subdata
  * \param buffer GLuint
@@ -51,21 +52,21 @@ STATICINLINE void invalidate_buffer_sub_data(
 
 template<class span_const_invalidate_framebuffer_attachment>
 requires(
-    concepts::span<span_const_invalidate_framebuffer_attachment>&&
-        std::is_same_v<
-            std::decay_t<typename span_const_invalidate_framebuffer_attachment::
-                             value_type>,
-            std::decay_t<group::invalidate_framebuffer_attachment>>)
-    /*!
-     * \brief Part of GL_ARB_invalidate_subdata
-     * \param target GLenum
-     * \param numAttachments GLsizei
-     * \param attachments const GLenum *
-     * \return void
-     */
-    STATICINLINE void invalidate_framebuffer(
-        group::framebuffer_target                           target,
-        span_const_invalidate_framebuffer_attachment const& attachments)
+    concepts::span<span_const_invalidate_framebuffer_attachment> &&
+    std::is_same_v<
+        std::decay_t<
+            typename span_const_invalidate_framebuffer_attachment::value_type>,
+        std::decay_t<group::invalidate_framebuffer_attachment>>)
+/*!
+ * \brief Part of GL_ARB_invalidate_subdata
+ * \param target GLenum
+ * \param numAttachments GLsizei
+ * \param attachments const GLenum *
+ * \return void
+ */
+STATICINLINE void invalidate_framebuffer(
+    group::framebuffer_target                           target,
+    span_const_invalidate_framebuffer_attachment const& attachments)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -85,29 +86,28 @@ template<
     class span_const_invalidate_framebuffer_attachment,
     class vec_2_i32>
 requires(
-    concepts::span<span_const_invalidate_framebuffer_attachment>&&
-        std::is_same_v<
-            std::decay_t<typename span_const_invalidate_framebuffer_attachment::
-                             value_type>,
-            std::decay_t<group::invalidate_framebuffer_attachment>>&&
-                concepts::vector<vec_2_i32, i32, 2>&&
-                concepts::size_2d<size_2_i32, i32>)
-    /*!
-     * \brief Part of GL_ARB_invalidate_subdata
-     * \param target GLenum
-     * \param numAttachments GLsizei
-     * \param attachments const GLenum *
-     * \param x GLint
-     * \param y GLint
-     * \param width GLsizei
-     * \param height GLsizei
-     * \return void
-     */
-    STATICINLINE void invalidate_sub_framebuffer(
-        group::framebuffer_target                           target,
-        span_const_invalidate_framebuffer_attachment const& attachments,
-        vec_2_i32 const&                                    x,
-        size_2_i32 const&                                   width)
+    concepts::span<span_const_invalidate_framebuffer_attachment> &&
+    std::is_same_v<
+        std::decay_t<
+            typename span_const_invalidate_framebuffer_attachment::value_type>,
+        std::decay_t<group::invalidate_framebuffer_attachment>> &&
+    concepts::vector<vec_2_i32, i32, 2> && concepts::size_2d<size_2_i32, i32>)
+/*!
+ * \brief Part of GL_ARB_invalidate_subdata
+ * \param target GLenum
+ * \param numAttachments GLsizei
+ * \param attachments const GLenum *
+ * \param x GLint
+ * \param y GLint
+ * \param width GLsizei
+ * \param height GLsizei
+ * \return void
+ */
+STATICINLINE void invalidate_sub_framebuffer(
+    group::framebuffer_target                           target,
+    span_const_invalidate_framebuffer_attachment const& attachments,
+    vec_2_i32 const&                                    x,
+    size_2_i32 const&                                   width)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -150,24 +150,21 @@ STATICINLINE void invalidate_tex_image(u32 texture, i32 level)
 
 template<class size_3_i32, class vec_3_i32>
 requires(
-    concepts::vector<vec_3_i32, i32, 3>&& concepts::size_2d<size_3_i32, i32>)
-    /*!
-     * \brief Part of GL_ARB_invalidate_subdata
-     * \param texture GLuint
-     * \param level GLint
-     * \param xoffset GLint
-     * \param yoffset GLint
-     * \param zoffset GLint
-     * \param width GLsizei
-     * \param height GLsizei
-     * \param depth GLsizei
-     * \return void
-     */
-    STATICINLINE void invalidate_tex_sub_image(
-        u32               texture,
-        i32               level,
-        vec_3_i32 const&  xoffset,
-        size_3_i32 const& width)
+    concepts::vector<vec_3_i32, i32, 3> && concepts::size_2d<size_3_i32, i32>)
+/*!
+ * \brief Part of GL_ARB_invalidate_subdata
+ * \param texture GLuint
+ * \param level GLint
+ * \param xoffset GLint
+ * \param yoffset GLint
+ * \param zoffset GLint
+ * \param width GLsizei
+ * \param height GLsizei
+ * \param depth GLsizei
+ * \return void
+ */
+STATICINLINE void invalidate_tex_sub_image(
+    u32 texture, i32 level, vec_3_i32 const& xoffset, size_3_i32 const& width)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

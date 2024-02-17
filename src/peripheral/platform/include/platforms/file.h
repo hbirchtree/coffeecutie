@@ -2,7 +2,7 @@
 
 #include <peripherals/identify/system.h>
 
-#if defined(COFFEE_LINUX) || defined(COFFEE_ANDROID) || \
+#if defined(COFFEE_LINUX) || defined(COFFEE_ANDROID) ||    \
     defined(COFFEE_APPLE) || defined(COFFEE_EMSCRIPTEN) || \
     defined(COFFEE_MINGW64)
 #define USE_POSIX_API 1
@@ -50,13 +50,13 @@ using android::write;
 using android::map;
 using android::unmap;
 
-using posix::create;
-using posix::create_directory;
 using android::exists;
 using android::file_info;
-using posix::remove;
 using android::size;
 using android::truncate;
+using posix::create;
+using posix::create_directory;
+using posix::remove;
 
 using android::list;
 

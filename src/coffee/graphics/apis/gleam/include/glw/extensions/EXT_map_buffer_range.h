@@ -3,11 +3,14 @@
 #ifdef GL_EXT_map_buffer_range
 #include "../enums/BufferStorageMask.h"
 #include "../enums/MapBufferAccessMask.h"
+
 namespace gl::ext::map_buffer_range {
 using gl::group::buffer_storage_mask;
 using gl::group::map_buffer_access_mask;
+
 namespace values {
 } // namespace values
+
 /*!
  * \brief Part of GL_EXT_map_buffer_range
  * \param target GLenum

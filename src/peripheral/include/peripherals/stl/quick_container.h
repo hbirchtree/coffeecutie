@@ -9,9 +9,9 @@ struct quick_container
 {
     quick_container(
         std::function<IteratorType()>&& begin_con,
-        std::function<IteratorType()>&& end_con) :
-        m_begin(begin_con),
-        m_end(end_con)
+        std::function<IteratorType()>&& end_con)
+        : m_begin(begin_con)
+        , m_end(end_con)
     {
     }
 
@@ -30,4 +30,4 @@ struct quick_container
     std::function<IteratorType()> m_end;
 };
 
-}
+} // namespace stl_types

@@ -12,6 +12,7 @@
 #include "../enums/ShaderType.h"
 #include "../enums/StencilFunction.h"
 #include "../enums/UniformBlockPName.h"
+
 namespace gl::arb::tessellation_shader {
 using gl::group::alpha_function;
 using gl::group::depth_function;
@@ -24,6 +25,7 @@ using gl::group::primitive_type;
 using gl::group::shader_type;
 using gl::group::stencil_function;
 using gl::group::uniform_block_prop;
+
 namespace values {
 constexpr u32 max_tess_control_input_components               = 0x886C;
 constexpr u32 max_tess_evaluation_input_components            = 0x886D;
@@ -48,18 +50,21 @@ constexpr u32 max_tess_patch_components                       = 0x8E84;
 constexpr u32 max_tess_control_total_output_components        = 0x8E85;
 constexpr u32 max_tess_evaluation_output_components           = 0x8E86;
 } // namespace values
+
 template<class span_const_f32>
-requires(concepts::span<span_const_f32>&& std::is_same_v<
-         std::decay_t<typename span_const_f32::value_type>,
-         std::decay_t<f32>>)
-    /*!
-     * \brief Part of GL_ARB_tessellation_shader
-     * \param pname GLenum
-     * \param values const GLfloat *
-     * \return void
-     */
-    STATICINLINE void patch_parameter(
-        group::patch_parameter_name pname, span_const_f32 const& values)
+requires(
+    concepts::span<span_const_f32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_f32::value_type>,
+        std::decay_t<f32>>)
+/*!
+ * \brief Part of GL_ARB_tessellation_shader
+ * \param pname GLenum
+ * \param values const GLfloat *
+ * \return void
+ */
+STATICINLINE void patch_parameter(
+    group::patch_parameter_name pname, span_const_f32 const& values)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

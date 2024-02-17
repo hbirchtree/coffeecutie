@@ -8,7 +8,9 @@ namespace graphics {
 template<typename T>
 union field
 {
-    field(T n = T(), T f = T()) : near_(n), far_(f)
+    field(T n = T(), T f = T())
+        : near_(n)
+        , far_(f)
     {
     }
 
@@ -16,6 +18,7 @@ union field
     {
         T near_, far_;
     };
+
     T data[2];
 
     T range() const

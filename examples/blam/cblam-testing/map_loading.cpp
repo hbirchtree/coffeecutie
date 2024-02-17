@@ -20,13 +20,13 @@ using semantic::RSCA;
 
 static void filter_maps(std::vector<platform::file::file_entry_t>& files)
 {
-    auto remove_it
-        = std::remove_if(files.begin(), files.end(), [](auto const& file) {
-              Path filepath(file.name.data());
-              if(filepath.extension() != "map")
-                  return true;
-              return file.name.find("bitmaps") != std::string::npos;
-          });
+    auto remove_it =
+        std::remove_if(files.begin(), files.end(), [](auto const& file) {
+            Path filepath(file.name.data());
+            if(filepath.extension() != "map")
+                return true;
+            return file.name.find("bitmaps") != std::string::npos;
+        });
     files.erase(remove_it, files.end());
 }
 
@@ -127,8 +127,8 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
         // data.map_directory = map_dir.url(RSCA::SystemFile);
     }
 
-    listing.bitmap_file = (listing.directory.path() / "bitmaps.map")
-                              .url(listing.directory.flags);
+    listing.bitmap_file =
+        (listing.directory.path() / "bitmaps.map").url(listing.directory.flags);
 
     if(auto maps_ = platform::file::list(listing.directory); maps_.has_error())
     {
@@ -175,12 +175,12 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
         LoadingStatus& loading   = e.subsystem_cast<LoadingStatus>();
         auto&          files     = e.subsystem_cast<BlamFiles<halo_version>>();
 
-        std::function<void(std::string_view, i16)> progress_cb
-            = [&loading](std::string_view status, i16 progress) {
-                  loading.status   = std::string(status.begin(), status.end());
-                  loading.progress = progress;
-                  cDebug("Map loading status: {}%: {}", progress, status);
-              };
+        std::function<void(std::string_view, i16)> progress_cb =
+            [&loading](std::string_view status, i16 progress) {
+                loading.status   = std::string(status.begin(), status.end());
+                loading.progress = progress;
+                cDebug("Map loading status: {}%: {}", progress, status);
+            };
         files.map_file = *data;
         auto map_data  = blam::map_container<halo_version>::from_bytes_async(
             resources.background_worker,

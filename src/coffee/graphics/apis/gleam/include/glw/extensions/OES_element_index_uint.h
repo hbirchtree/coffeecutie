@@ -16,6 +16,7 @@
 #include "../enums/VertexAttribPointerType.h"
 #include "../enums/VertexAttribType.h"
 #include "../enums/WeightPointerTypeARB.h"
+
 namespace gl::oes::element_index_uint {
 using gl::group::attribute_type;
 using gl::group::color_pointer_type;
@@ -32,6 +33,7 @@ using gl::group::vertex_attrib_int;
 using gl::group::vertex_attrib_pointer_type;
 using gl::group::vertex_attrib_type;
 using gl::group::weight_pointer_type_arb;
+
 namespace values {
 } // namespace values
 } // namespace gl::oes::element_index_uint

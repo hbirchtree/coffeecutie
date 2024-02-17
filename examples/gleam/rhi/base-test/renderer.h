@@ -16,9 +16,9 @@
 #include <peripherals/typing/vectors/transform.h>
 #include <peripherals/typing/vectors/vector_types.h>
 
-//#if defined(FEATURE_ENABLE_G)
+// #if defined(FEATURE_ENABLE_G)
 #include <coffee/graphics/apis/CGLeam>
-//#endif
+// #endif
 
 #include <coffee/components/entity_selectors.h>
 
@@ -44,7 +44,7 @@
 
 #include <coffee/core/CDebug>
 
-//#define USE_NULL_RENDERER
+// #define USE_NULL_RENDERER
 
 using namespace Coffee;
 using namespace Display;
@@ -91,9 +91,9 @@ struct MatrixContainer : compo::alloc::VectorBaseContainer<matrix_tag>
         m_matrices.push_back({});
         m_matrices.push_back({});
 
-        *this->m_data.rbegin()
-            = {&m_matrices.at(m_matrices.size() - 1),
-               &m_matrices.at(m_matrices.size() - 2)};
+        *this->m_data.rbegin() = {
+            &m_matrices.at(m_matrices.size() - 1),
+            &m_matrices.at(m_matrices.size() - 2)};
     }
 
     virtual value_type* get(u64 id)
@@ -105,9 +105,9 @@ struct MatrixContainer : compo::alloc::VectorBaseContainer<matrix_tag>
 
         auto& out = m_data.at((*it).second);
 
-        out
-            = {&m_matrices.at((*it).second * 2),
-               &m_matrices.at((*it).second * 2 + 1)};
+        out = {
+            &m_matrices.at((*it).second * 2),
+            &m_matrices.at((*it).second * 2 + 1)};
 
         return &out;
     }
@@ -151,8 +151,9 @@ class TimeSystem : public Components::SubsystemBase
     using type         = TimeSystem;
     using system_clock = compo::clock;
 
-    TimeSystem(system_clock::time_point const& start) :
-        start_time(start), prev_time(start)
+    TimeSystem(system_clock::time_point const& start)
+        : start_time(start)
+        , prev_time(start)
     {
     }
 
@@ -160,6 +161,7 @@ class TimeSystem : public Components::SubsystemBase
     {
         return start_time;
     }
+
     auto get_current() const
     {
         return current_time;
@@ -194,9 +196,10 @@ struct RuntimeStateSystem : Components::SubsystemBase
     RuntimeState state;
 };
 
-class TransformVisitor : public Components::EntityVisitor<
-                             Components::TypeList<TransformPair, matrix_tag>,
-                             Components::TypeList<CameraContainer>>
+class TransformVisitor
+    : public Components::EntityVisitor<
+          Components::TypeList<TransformPair, matrix_tag>,
+          Components::TypeList<CameraContainer>>
 {
   public:
     TransformVisitor()
@@ -217,8 +220,8 @@ class TransformVisitor : public Components::EntityVisitor<
 
         auto& object_matrix = c.get<TransformPair>().second;
 
-        auto output_matrix = camera.projection
-                             * GenTransform<f32>(camera_source) * object_matrix;
+        auto output_matrix = camera.projection *
+                             GenTransform<f32>(camera_source) * object_matrix;
 
         auto& mats = c.get<matrix_tag>();
 
@@ -226,8 +229,8 @@ class TransformVisitor : public Components::EntityVisitor<
 
         camera_source.position.x += camera.eye_distance * 2;
 
-        *mats.second = camera.projection * GenTransform<f32>(camera_source)
-                       * object_matrix;
+        *mats.second = camera.projection * GenTransform<f32>(camera_source) *
+                       object_matrix;
 
         camera_source.position.x -= camera.eye_distance;
 
@@ -235,12 +238,14 @@ class TransformVisitor : public Components::EntityVisitor<
     }
 };
 
-class FloorVisitor : public Components::EntityVisitor<
-                         Components::TypeList<TransformPair>,
-                         Components::TypeList<TimeSystem>>
+class FloorVisitor
+    : public Components::EntityVisitor<
+          Components::TypeList<TransformPair>,
+          Components::TypeList<TimeSystem>>
 {
   public:
-    FloorVisitor() : VisitorType(FloorTag)
+    FloorVisitor()
+        : VisitorType(FloorTag)
     {
     }
 
@@ -265,12 +270,14 @@ class FloorVisitor : public Components::EntityVisitor<
     }
 };
 
-class BaseItemVisitor : public Components::EntityVisitor<
-                            Components::TypeList<TransformPair>,
-                            Components::TypeList<TimeSystem>>
+class BaseItemVisitor
+    : public Components::EntityVisitor<
+          Components::TypeList<TransformPair>,
+          Components::TypeList<TimeSystem>>
 {
   public:
-    BaseItemVisitor() : VisitorType(BaseItemTag)
+    BaseItemVisitor()
+        : VisitorType(BaseItemTag)
     {
     }
 
@@ -384,19 +391,19 @@ void SetupRendering(
         "Extensions: {1}",
         d.gfx.query_native_version(),
         d.gfx.query_native_extensions());
-    auto err
-        = d.gfx.load(/*{
-   .api_version    = 0x200,
-   .api_type = gleam::api_type_t::es,
+    auto err =
+        d.gfx.load(/*{
+ .api_version    = 0x200,
+ .api_type = gleam::api_type_t::es,
 //        .api_extensions = gleam::api::extensions_set{
 //            "GL_EXT_discard_framebuffer",
 //            "GL_OES_rgb8_rgba8",
 //            "GL_OES_vertex_array_object",
 //        },
-   .api_workarounds = gleam::workarounds{
-       .draw = {
-           .emulated_instance_id = true,
-       },
+ .api_workarounds = gleam::workarounds{
+     .draw = {
+         .emulated_instance_id = true,
+     },
 }}*/);
     if(err.has_value())
     {
@@ -427,8 +434,8 @@ void SetupRendering(
         ProfContext _("Vertex data upload");
 
         auto array_vao = d.g_data.vao = d.gfx.alloc_vertex_array();
-        auto array_buf                = d.g_data.array
-            = d.gfx.alloc_buffer(gleam::buffers::vertex, RSCA::ReadOnly);
+        auto array_buf                = d.g_data.array =
+            d.gfx.alloc_buffer(gleam::buffers::vertex, RSCA::ReadOnly);
         array_vao->alloc();
         array_vao->add({
             .index = 0,
@@ -504,8 +511,8 @@ void SetupRendering(
             typing::pixels::BitFmt::UByte,
             typing::PixCmp::RGBA);
 
-        auto texture = d.g_data.tex
-            = std::make_shared<gleam::compat::texture_2da_t>(&d.gfx, fmt, 1);
+        auto texture = d.g_data.tex =
+            std::make_shared<gleam::compat::texture_2da_t>(&d.gfx, fmt, 1);
         texture->set_usage_hint(
             gleam::compat::texture_usage_hint_t::per_instance);
         //        if(d.gfx.api_version() == std::make_tuple(2u, 0u))
@@ -544,16 +551,15 @@ void SetupRendering(
             "http://i.imgur.com/nQdOmCJ.png"_http);
         auto img_decode = IMG::create_decoder(
             img_download->output.get_future(), typing::PixCmp::RGBA);
-        auto img_upload
-            = rq::dependent_task<stb::image_rw, void>::CreateSink(
-                img_decode->output.get_future(),
-                [texture = d.g_data.tex](stb::image_rw* img) {
-                    auto isize = img->size.convert<i32>();
-                    texture->upload(
-                        img->data_owner.view,
-                        Veci3{512, 512, 1},
-                        size_3d<i32>{isize.w, isize.h, 1});
-                });
+        auto img_upload = rq::dependent_task<stb::image_rw, void>::CreateSink(
+            img_decode->output.get_future(),
+            [texture = d.g_data.tex](stb::image_rw* img) {
+                auto isize = img->size.convert<i32>();
+                texture->upload(
+                    img->data_owner.view,
+                    Veci3{512, 512, 1},
+                    size_3d<i32>{isize.w, isize.h, 1});
+            });
 
         rq::runtime_queue::Queue(std::move(img_upload)).assume_value();
         rq::runtime_queue::Queue(d.online_queue, std::move(img_decode))
@@ -574,8 +580,8 @@ void SetupRendering(
                     return system.playerInfo().avatarUrl;
                 }));
         auto decoded_img = IMG::create_decoder(img_data->output.get_future());
-        auto upload_img
-            = rq::dependent_task<stb::image_rw, void>::CreateProcessor(
+        auto upload_img =
+            rq::dependent_task<stb::image_rw, void>::CreateProcessor(
                 decoded_img->output.get_future(), [&d](stb::image_rw* img) {
                     ProfContext _("Uploading image to GPU");
                     auto        imsize = img->size.convert<i32>();
@@ -696,25 +702,25 @@ void RendererLoop(
         //        d.gfx.default_rendertarget()->discard();
         d.gfx.default_rendertarget()->clear(Vecf4{.5f, 0.f, .5f, 1.f}, 1.f, 0);
 
-        auto const& xf = e.container_cast<matrix_tag>().m_matrices;
-        auto err = d.gfx.submit(
+        auto const& xf  = e.container_cast<matrix_tag>().m_matrices;
+        auto        err = d.gfx.submit(
             {
-                .program  = g.program,
-                .vertices = g.vao,
-                .call =
+                       .program  = g.program,
+                       .vertices = g.vao,
+                       .call =
                     {
-                        .instanced = true,
+                               .instanced = true,
                     },
-                .data =
+                       .data =
                     {
                         {
-                            .arrays =
+                                   .arrays =
                                 {
-                                    .count = 6,
+                                           .count = 6,
                                 },
-                            .instances =
+                                   .instances =
                                 {
-                                    .count = 4,
+                                           .count = 4,
                                 },
                         },
                     },
@@ -722,15 +728,14 @@ void RendererLoop(
             gleam::make_uniform_list(
                 ShaderStage::Vertex,
                 gleam::uniform_pair{
-                    {"transform"sv},
-                    semantic::mem_chunk<const Matf4>::ofContainer(xf).view
-                }),
-            gleam::compat::make_texture_list(gleam::compat::texture_definition_t{
-                ShaderStage::Fragment,
-                gleam::uniform_key{{"texdata"sv}},
-                g.tex,
-                g.sampler
-            }));
+                           {"transform"sv},
+                    semantic::mem_chunk<const Matf4>::ofContainer(xf).view}),
+            gleam::compat::make_texture_list(
+                gleam::compat::texture_definition_t{
+                    ShaderStage::Fragment,
+                    gleam::uniform_key{{"texdata"sv}},
+                    g.tex,
+                    g.sampler}));
         if(err.has_value())
         {
             auto [code, msg] = *err;
@@ -760,12 +765,11 @@ void RendererCleanup(
     Profiler::PushContext("Saving time");
     cDebug("Saving time: {0}", state.time_base);
 
-    state.time_base
-        = std::chrono::duration_cast<std::chrono::milliseconds>(
-              (entities.subsystem_cast<TimeSystem>().get_start()
-               + entities.subsystem_cast<TimeSystem>().get_current())
-                  .time_since_epoch())
-              .count();
+    state.time_base = std::chrono::duration_cast<std::chrono::milliseconds>(
+                          (entities.subsystem_cast<TimeSystem>().get_start() +
+                           entities.subsystem_cast<TimeSystem>().get_current())
+                              .time_since_epoch())
+                          .count();
 
     state.camera = entities.subsystem_cast<CameraContainer>().camera_source;
     d.saving->save(semantic::Bytes::ofBytes(state));

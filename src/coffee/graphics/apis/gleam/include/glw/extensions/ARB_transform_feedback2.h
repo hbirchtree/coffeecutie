@@ -3,14 +3,17 @@
 #ifdef GL_ARB_transform_feedback2
 #include "../enums/BindTransformFeedbackTarget.h"
 #include "../enums/ObjectIdentifier.h"
+
 namespace gl::arb::transform_feedback2 {
 using gl::group::bind_transform_feedback_target;
 using gl::group::object_identifier;
+
 namespace values {
 constexpr u32 transform_feedback_buffer_paused = 0x8E23;
 constexpr u32 transform_feedback_buffer_active = 0x8E24;
 constexpr u32 transform_feedback_binding       = 0x8E25;
 } // namespace values
+
 /*!
  * \brief Part of GL_ARB_transform_feedback2
  * \param target GLenum
@@ -30,16 +33,18 @@ STATICINLINE void bind_transform_feedback(
 }
 
 template<class span_const_u32>
-requires(concepts::span<span_const_u32>&& std::is_same_v<
-         std::decay_t<typename span_const_u32::value_type>,
-         std::decay_t<u32>>)
-    /*!
-     * \brief Part of GL_ARB_transform_feedback2
-     * \param n GLsizei
-     * \param ids const GLuint *
-     * \return void
-     */
-    STATICINLINE void delete_transform_feedbacks(span_const_u32 const& ids)
+requires(
+    concepts::span<span_const_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_u32::value_type>,
+        std::decay_t<u32>>)
+/*!
+ * \brief Part of GL_ARB_transform_feedback2
+ * \param n GLsizei
+ * \param ids const GLuint *
+ * \return void
+ */
+STATICINLINE void delete_transform_feedbacks(span_const_u32 const& ids)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -70,16 +75,17 @@ STATICINLINE void draw_transform_feedback(group::primitive_type mode, u32 id)
 }
 
 template<class span_u32>
-requires(concepts::span<span_u32>&& std::is_same_v<
-         std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>)
-    /*!
-     * \brief Part of GL_ARB_transform_feedback2
-     * \param n GLsizei
-     * \param ids GLuint *
-     * \return void
-     */
-    STATICINLINE void gen_transform_feedbacks(span_u32 ids)
+requires(
+    concepts::span<span_u32> && std::is_same_v<
+                                    std::decay_t<typename span_u32::value_type>,
+                                    std::decay_t<u32>>)
+/*!
+ * \brief Part of GL_ARB_transform_feedback2
+ * \param n GLsizei
+ * \param ids GLuint *
+ * \return void
+ */
+STATICINLINE void gen_transform_feedbacks(span_u32 ids)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

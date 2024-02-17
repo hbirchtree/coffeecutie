@@ -5,6 +5,7 @@ namespace gl::ext::primitive_bounding_box {
 namespace values {
 constexpr u32 primitive_bounding_box = 0x92BE;
 } // namespace values
+
 /*!
  * \brief Part of GL_EXT_primitive_bounding_box
  * \param minX GLfloat

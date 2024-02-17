@@ -7,8 +7,8 @@
 
 namespace gleam::context {
 
-#if(GLEAM_MAX_VERSION >= 0x450 || GLEAM_MAX_VERSION_ES >= 0x320) \
-    && defined(GL_KHR_robustness)
+#if(GLEAM_MAX_VERSION >= 0x450 || GLEAM_MAX_VERSION_ES >= 0x320) && \
+    defined(GL_KHR_robustness)
 struct api
 {
     enum class strategy
@@ -51,14 +51,17 @@ struct api
         no_notification,
     };
     using reset_status = gl::group::graphics_reset_status;
+
     constexpr bool reset_state_supported() const
     {
         return false;
     }
+
     auto reset_strategy() const
     {
         return strategy::no_notification;
     }
+
     auto context_state() const
     {
         return reset_status::no_error;

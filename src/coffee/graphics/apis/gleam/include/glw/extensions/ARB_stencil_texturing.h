@@ -2,8 +2,10 @@
 
 #ifdef GL_ARB_stencil_texturing
 #include "../enums/TextureParameterName.h"
+
 namespace gl::arb::stencil_texturing {
 using gl::group::texture_parameter_name;
+
 namespace values {
 } // namespace values
 } // namespace gl::arb::stencil_texturing

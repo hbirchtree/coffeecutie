@@ -21,7 +21,13 @@ semantic::Bytes encrypt(semantic::Bytes const& data)
     EVP_PKEY* pkey = nullptr;
 
     if(!EVP_SealInit(
-           context, cipher, &encrypt_key, &encrypt_key_length, iv.data, &pkey, 1))
+           context,
+           cipher,
+           &encrypt_key,
+           &encrypt_key_length,
+           iv.data,
+           &pkey,
+           1))
     {
         EVP_PKEY_free(pkey);
         EVP_CIPHER_CTX_free(context);

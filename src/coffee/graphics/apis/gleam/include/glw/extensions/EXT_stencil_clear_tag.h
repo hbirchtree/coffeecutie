@@ -6,6 +6,7 @@ namespace values {
 constexpr u32 stencil_tag_bits        = 0x88F2;
 constexpr u32 stencil_clear_tag_value = 0x88F3;
 } // namespace values
+
 /*!
  * \brief Part of GL_EXT_stencil_clear_tag
  * \param stencilTagBits GLsizei

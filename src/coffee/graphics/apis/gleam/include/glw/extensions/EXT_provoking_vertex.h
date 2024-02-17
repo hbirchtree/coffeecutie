@@ -8,6 +8,7 @@ constexpr u32 first_vertex_convention                  = 0x8E4D;
 constexpr u32 last_vertex_convention                   = 0x8E4E;
 constexpr u32 provoking_vertex                         = 0x8E4F;
 } // namespace values
+
 /*!
  * \brief Part of GL_EXT_provoking_vertex
  * \param mode GLenum

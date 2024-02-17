@@ -3,9 +3,11 @@
 #ifdef GL_OES_geometry_shader
 #include "../enums/FramebufferAttachmentParameterName.h"
 #include "../enums/UseProgramStageMask.h"
+
 namespace gl::oes::geometry_shader {
 using gl::group::framebuffer_attachment_parameter_name;
 using gl::group::use_program_stage_mask;
+
 namespace values {
 constexpr u32 lines_adjacency                          = 0x000A;
 constexpr u32 line_strip_adjacency                     = 0x000B;
@@ -39,6 +41,7 @@ constexpr u32 referenced_by_geometry_shader            = 0x9309;
 constexpr u32 framebuffer_default_layers               = 0x9312;
 constexpr u32 max_framebuffer_layers                   = 0x9317;
 } // namespace values
+
 /*!
  * \brief Part of GL_OES_geometry_shader
  * \param target GLenum

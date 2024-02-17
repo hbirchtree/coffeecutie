@@ -9,6 +9,7 @@ constexpr u32 texture_binding_buffer            = 0x8C2C;
 constexpr u32 texture_buffer_data_store_binding = 0x8C2D;
 constexpr u32 texture_buffer_format             = 0x8C2E;
 } // namespace values
+
 /*!
  * \brief Part of GL_EXT_texture_buffer_object
  * \param target GLenum

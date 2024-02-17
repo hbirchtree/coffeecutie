@@ -45,6 +45,7 @@ enum Alignment
 
     AlignCenter = 0x12,
 };
+
 C_FLAGS(Alignment, int);
 
 } // namespace typing

@@ -49,8 +49,8 @@ libc_types::u32 SysCPUClock::threads()
 {
     libc_types::u32 out;
     for(auto cpu : stl_types::range(platform::info::proc::cpu_count()))
-        out += C_FCAST<libc_types::u32>(
-            platform::info::proc::thread_count(cpu));
+        out +=
+            C_FCAST<libc_types::u32>(platform::info::proc::thread_count(cpu));
     return out;
 }
 

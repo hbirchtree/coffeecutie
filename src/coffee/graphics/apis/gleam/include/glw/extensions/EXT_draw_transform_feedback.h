@@ -4,6 +4,7 @@
 namespace gl::ext::draw_transform_feedback {
 namespace values {
 } // namespace values
+
 /*!
  * \brief Part of GL_EXT_draw_transform_feedback
  * \param mode GLenum

@@ -16,9 +16,11 @@ struct base_point
     base_point()
     {
     }
+
     base_point(i32, i32)
     {
     }
+
     base_point(i32, i32, i32)
     {
     }
@@ -32,12 +34,15 @@ template<
     >
 struct point_2d : base_point
 {
-    using value_type = T;
+    using value_type                 = T;
     static constexpr size_t row_size = 2;
 
-    point_2d(T x, T y) : x(x), y(y)
+    point_2d(T x, T y)
+        : x(x)
+        , y(y)
     {
     }
+
     point_2d()
     {
     }
@@ -68,13 +73,20 @@ template<
     >
 struct point_3d : base_point
 {
-    using value_type = T;
+    using value_type                 = T;
     static constexpr size_t row_size = 3;
 
-    point_3d(T x, T y, T z) : x(x), y(y), z(z)
+    point_3d(T x, T y, T z)
+        : x(x)
+        , y(y)
+        , z(z)
     {
     }
-    point_3d() : x(0), y(0), z(0)
+
+    point_3d()
+        : x(0)
+        , y(0)
+        , z(0)
     {
     }
 
@@ -87,6 +99,5 @@ struct point_3d : base_point
     T x, y, z;
 };
 
-
-}
-}
+} // namespace geometry
+} // namespace typing

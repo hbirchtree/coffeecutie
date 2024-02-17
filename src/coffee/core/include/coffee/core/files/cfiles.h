@@ -160,8 +160,7 @@ C_DEPRECATED FORCEDINLINE bool FileCommit(
 {
     return FileCommit(
         resc,
-        acc
-            | (append ? RSCA::NewFile | RSCA::WriteOnly | RSCA::Append
+        acc | (append ? RSCA::NewFile | RSCA::WriteOnly | RSCA::Append
                       : RSCA::None));
 }
 

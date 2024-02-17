@@ -6,8 +6,8 @@
  *
  */
 
-#if defined(COFFEE_GLES20_MODE) || \
-    defined(COFFEE_RASPBERRYPI) || defined(COFFEE_MAEMO)
+#if defined(COFFEE_GLES20_MODE) || defined(COFFEE_RASPBERRYPI) || \
+    defined(COFFEE_MAEMO)
 #define COFFEE_ONLY_GLES20
 #endif
 

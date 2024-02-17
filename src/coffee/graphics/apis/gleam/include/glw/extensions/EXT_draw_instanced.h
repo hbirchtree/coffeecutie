@@ -4,6 +4,7 @@
 namespace gl::ext::draw_instanced {
 namespace values {
 } // namespace values
+
 /*!
  * \brief Part of GL_EXT_draw_instanced
  * \param mode GLenum

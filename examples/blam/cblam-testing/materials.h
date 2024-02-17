@@ -111,40 +111,47 @@ struct alignas(16) transparent_data
     stage_t stages[5];
     u32     padding;
 
-    STATICINLINE stage_t
-    from_blam([[maybe_unused]] blam::shader::shader_transparent::stage_t const& stage)
+    STATICINLINE stage_t from_blam(
+        [[maybe_unused]] blam::shader::shader_transparent::stage_t const& stage)
     {
-
         return {
-//            .color_a_input   = static_cast<input_t>(stage.color.a_input),
-//            .color_a_mapping = stage.color.a_mapping,
-//            .color_b_input   = static_cast<input_t>(stage.color.b_input),
-//            .color_b_mapping = stage.color.b_mapping,
-//            .color_c_input   = static_cast<input_t>(stage.color.c_input),
-//            .color_c_mapping = stage.color.c_mapping,
-//            .color_d_input   = static_cast<input_t>(stage.color.d_input),
-//            .color_d_mapping = stage.color.d_mapping,
+            //            .color_a_input   =
+            //            static_cast<input_t>(stage.color.a_input),
+            //            .color_a_mapping = stage.color.a_mapping,
+            //            .color_b_input   =
+            //            static_cast<input_t>(stage.color.b_input),
+            //            .color_b_mapping = stage.color.b_mapping,
+            //            .color_c_input   =
+            //            static_cast<input_t>(stage.color.c_input),
+            //            .color_c_mapping = stage.color.c_mapping,
+            //            .color_d_input   =
+            //            static_cast<input_t>(stage.color.d_input),
+            //            .color_d_mapping = stage.color.d_mapping,
 
-//            .alpha_a_input   = static_cast<input_t>(stage.alpha.a_input),
-//            .alpha_a_mapping = stage.alpha.a_mapping,
-//            .alpha_b_input   = static_cast<input_t>(stage.alpha.b_input),
-//            .alpha_b_mapping = stage.alpha.b_mapping,
-//            .alpha_c_input   = static_cast<input_t>(stage.alpha.c_input),
-//            .alpha_c_mapping = stage.alpha.c_mapping,
-//            .alpha_d_input   = static_cast<input_t>(stage.alpha.d_input),
-//            .alpha_d_mapping = stage.alpha.d_mapping,
+            //            .alpha_a_input   =
+            //            static_cast<input_t>(stage.alpha.a_input),
+            //            .alpha_a_mapping = stage.alpha.a_mapping,
+            //            .alpha_b_input   =
+            //            static_cast<input_t>(stage.alpha.b_input),
+            //            .alpha_b_mapping = stage.alpha.b_mapping,
+            //            .alpha_c_input   =
+            //            static_cast<input_t>(stage.alpha.c_input),
+            //            .alpha_c_mapping = stage.alpha.c_mapping,
+            //            .alpha_d_input   =
+            //            static_cast<input_t>(stage.alpha.d_input),
+            //            .alpha_d_mapping = stage.alpha.d_mapping,
 
-//            .color_ab_output     = stage.color.ab_output,
-//            .color_ab_out_func   = stage.color.ab_out_func,
-//            .color_cd_output     = stage.color.cd_output,
-//            .color_cd_out_func   = stage.color.cd_out_func,
-//            .color_ab_cd_mux_sum = stage.color.ab_cd_mux_sum,
-//            .color_output_map    = stage.color.output_map,
+            //            .color_ab_output     = stage.color.ab_output,
+            //            .color_ab_out_func   = stage.color.ab_out_func,
+            //            .color_cd_output     = stage.color.cd_output,
+            //            .color_cd_out_func   = stage.color.cd_out_func,
+            //            .color_ab_cd_mux_sum = stage.color.ab_cd_mux_sum,
+            //            .color_output_map    = stage.color.output_map,
 
-//            .alpha_ab_output     = stage.alpha.ab_output,
-//            .alpha_cd_output     = stage.alpha.cd_output,
-//            .alpha_ab_cd_mux_sum = stage.alpha.ab_cd_mux_sum,
-//            .alpha_output_map    = stage.alpha.output_map,
+            //            .alpha_ab_output     = stage.alpha.ab_output,
+            //            .alpha_cd_output     = stage.alpha.cd_output,
+            //            .alpha_ab_cd_mux_sum = stage.alpha.ab_cd_mux_sum,
+            //            .alpha_output_map    = stage.alpha.output_map,
         };
     }
 };

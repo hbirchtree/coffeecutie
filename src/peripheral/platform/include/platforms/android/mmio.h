@@ -29,17 +29,18 @@ FORCEDINLINE result<detail::android_mapping_t, posix::posix_error> map(
          * on the filesystem */
         if(!asset)
             break;
-        auto const_mapping
-            = semantic::mem_chunk<const char>::ofBytes(
-                  AAsset_getBuffer(asset), AAsset_getLength64(asset))
-                  .view;
+        auto const_mapping =
+            semantic::mem_chunk<const char>::ofBytes(
+                AAsset_getBuffer(asset), AAsset_getLength64(asset))
+                .view;
         auto unsafe_mapping = semantic::mem_chunk<char>::of(
             const_cast<char*>(const_mapping.data()), const_mapping.size());
         return detail::android_mapping_t{
-            .mapping = {
-                .view = unsafe_mapping.view,
-                .access = RSCA::ReadOnly,
-            },
+            .mapping =
+                {
+                    .view   = unsafe_mapping.view,
+                    .access = RSCA::ReadOnly,
+                },
             .asset = asset,
         };
     }

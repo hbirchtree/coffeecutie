@@ -13,6 +13,7 @@ namespace gleam {
 struct sampler_t;
 
 constexpr libc_types::i32 invalid_uniform = -1;
+
 struct uniform_key
 {
     std::string_view name;
@@ -23,7 +24,7 @@ struct depth_state
 {
     using depth_range = std::optional<typing::vector_types::Vecd2>;
     depth_range range{};
-    bool reversed{false};
+    bool        reversed{false};
 };
 
 struct depth_extended_state
@@ -33,11 +34,11 @@ struct depth_extended_state
 
 struct view_state
 {
-    using rect        = std::optional<typing::vector_types::Veci4>;
+    using rect = std::optional<typing::vector_types::Veci4>;
 
-    bool        indexed{false};
-    rect        view{};
-    rect        scissor{};
+    bool                       indexed{false};
+    rect                       view{};
+    rect                       scissor{};
     std::optional<depth_state> depth{std::nullopt};
 };
 
@@ -79,14 +80,16 @@ struct stencil_state
 
     libc_types::u8 mask{0xFF};
     libc_types::u8 reference{0x0};
-    condition_t condition{condition_t::always};
+    condition_t    condition{condition_t::always};
 };
 
 template<typename UType>
 struct uniform_pair
 {
     template<typename SpanType>
-    uniform_pair(uniform_key&& key, SpanType&& data) : key(key), data(data)
+    uniform_pair(uniform_key&& key, SpanType&& data)
+        : key(key)
+        , data(data)
     {
     }
 
@@ -123,9 +126,9 @@ struct buffer_definition_t
 };
 
 template<typename... Buffers>
-requires(std::is_same_v<Buffers, buffer_definition_t>&&...)
-    //
-    inline auto make_buffer_list(Buffers&&... defs)
+requires(std::is_same_v<Buffers, buffer_definition_t> && ...)
+//
+inline auto make_buffer_list(Buffers&&... defs)
 {
     std::vector<buffer_definition_t> definitions;
     (definitions.emplace_back(std::move(defs)), ...);
@@ -146,13 +149,13 @@ struct raw_texture_t
     features::textures const& m_features;
 };
 
-using raw_texture_definition_t
-    = std::tuple<typing::graphics::ShaderStage, uniform_key, raw_texture_t>;
+using raw_texture_definition_t =
+    std::tuple<typing::graphics::ShaderStage, uniform_key, raw_texture_t>;
 
 template<typename... Samplers>
-requires(std::is_same_v<Samplers, sampler_definition_t>&&...)
-    //
-    inline auto make_sampler_list(Samplers&&... defs)
+requires(std::is_same_v<Samplers, sampler_definition_t> && ...)
+//
+inline auto make_sampler_list(Samplers&&... defs)
 {
     std::vector<sampler_definition_t> definitions;
     (definitions.emplace_back(std::move(defs)), ...);
@@ -162,9 +165,9 @@ requires(std::is_same_v<Samplers, sampler_definition_t>&&...)
 using sampler_list = declreturntype(make_sampler_list<>);
 
 template<typename... Textures>
-requires(std::is_same_v<Textures, raw_texture_definition_t>&&...)
-    //
-    inline auto make_texture_list(Textures&&... defs)
+requires(std::is_same_v<Textures, raw_texture_definition_t> && ...)
+//
+inline auto make_texture_list(Textures&&... defs)
 {
     std::vector<raw_texture_definition_t> definitions;
     (definitions.emplace_back(std::move(defs)), ...);
@@ -191,6 +194,7 @@ struct draw_command
     std::weak_ptr<program_t>      program;
     std::weak_ptr<vertex_type>    vertices;
     std::weak_ptr<rendertarget_t> render_target{};
+
     struct call_spec_t
     {
         bool indexed{false};
@@ -198,26 +202,30 @@ struct draw_command
 
         drawing::primitive mode{drawing::primitive::triangle};
     } call;
+
     struct data_t
     {
         struct
         {
-            u32 count{0}; /*!< Count of vertices */
+            u32 count{0};  /*!< Count of vertices */
             u32 offset{0}; /*!< Offset in vertices */
         } arrays{};
+
         struct
         {
-            u32 count{0}; /*!< Count of elements */
-            u64 offset{0}; /*!< Offset in bytes */
+            u32 count{0};         /*!< Count of elements */
+            u64 offset{0};        /*!< Offset in bytes */
             u64 vertex_offset{0}; /*!< Offset in vertices */
 
             semantic::TypeEnum type{semantic::TypeEnum::UInt};
         } elements{};
+
         struct
         {
             u32 count{1}, offset{0};
         } instances{};
     };
+
     std::vector<data_t>       data;
     std::shared_ptr<buffer_t> data_indirect{};
 

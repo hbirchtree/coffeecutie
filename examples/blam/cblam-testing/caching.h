@@ -38,16 +38,17 @@ using semantic::Span;
 
 using compo::time_point;
 
-using ModelManifest
-    = compo::SubsystemManifest<empty_list_t, empty_list_t, empty_list_t>;
+using ModelManifest =
+    compo::SubsystemManifest<empty_list_t, empty_list_t, empty_list_t>;
 
 template<typename V>
-struct ModelCache : DataCache<
-                        ModelItem<V>,
-                        std::tuple<u32, blam::mod2::mod2_lod>,
-                        blam::tagref_t const&,
-                        blam::mod2::mod2_lod>,
-                    compo::RestrictedSubsystem<ModelCache<V>, ModelManifest>
+struct ModelCache
+    : DataCache<
+          ModelItem<V>,
+          std::tuple<u32, blam::mod2::mod2_lod>,
+          blam::tagref_t const&,
+          blam::mod2::mod2_lod>
+    , compo::RestrictedSubsystem<ModelCache<V>, ModelManifest>
 {
     using type    = ModelCache<V>;
     using Variant = typename std::conditional_t<
@@ -59,9 +60,10 @@ struct ModelCache : DataCache<
     ModelCache(
         BitmapCache<V>& bitm_cache,
         ShaderCache<V>& shader_cache,
-        gfx_api*        allocator) :
-        bitm_cache(bitm_cache),
-        shader_cache(shader_cache), allocator(allocator)
+        gfx_api*        allocator)
+        : bitm_cache(bitm_cache)
+        , shader_cache(shader_cache)
+        , allocator(allocator)
     {
     }
 
@@ -97,8 +99,8 @@ struct ModelCache : DataCache<
         if(header_it == index.end())
             return nullptr;
 
-        auto header
-            = (*header_it).template data<blam::mod2::header<V>>(magic).value();
+        auto header =
+            (*header_it).template data<blam::mod2::header<V>>(magic).value();
 
         return &header[0];
     }
@@ -107,6 +109,7 @@ struct ModelCache : DataCache<
     {
         return model.vertex_segment(*tags, magic).data(vertex_magic);
     }
+
     inline auto index_data(blam::mod2::part const& model)
     {
         return model.index_segment(*tags).data(vertex_magic);
@@ -186,11 +189,11 @@ struct ModelCache : DataCache<
                     .type          = semantic::TypeEnum::UShort,
                 };
                 draw_data.draw.instances.count = 1;
-                draw_data.shader
-                    = shader_cache.predict(shaders[part->shader_idx].ref);
+                draw_data.shader =
+                    shader_cache.predict(shaders[part->shader_idx].ref);
 
-                auto vert_dest
-                    = (*vert_buffer.at(vert_ptr)).template as<vertex_type>();
+                auto vert_dest =
+                    (*vert_buffer.at(vert_ptr)).template as<vertex_type>();
                 auto element_dest = (*element_buffer.at(element_ptr))
                                         .template as<element_type>();
 
@@ -214,6 +217,7 @@ struct ModelCache : DataCache<
         vert_ptr    = 0;
         element_ptr = 0;
     }
+
     virtual std::tuple<u32, blam::mod2::mod2_lod> get_id(
         blam::tagref_t const& tag, blam::mod2::mod2_lod lod) override
     {
@@ -251,25 +255,27 @@ struct ModelCache : DataCache<
     void start_restricted(Proxy&, time_point const&)
     {
     }
+
     void end_restricted(Proxy&, time_point const&)
     {
     }
 };
 
-using BSPManifest
-    = compo::SubsystemManifest<empty_list_t, empty_list_t, empty_list_t>;
+using BSPManifest =
+    compo::SubsystemManifest<empty_list_t, empty_list_t, empty_list_t>;
 
 template<typename V>
 struct BSPCache
-    : DataCache<BSPItem, blam::bsp::info const*, blam::bsp::info const&>,
-      compo::RestrictedSubsystem<BSPCache<V>, BSPManifest>
+    : DataCache<BSPItem, blam::bsp::info const*, blam::bsp::info const&>
+    , compo::RestrictedSubsystem<BSPCache<V>, BSPManifest>
 {
     using type  = BSPCache<V>;
     using Proxy = compo::proxy_of<BSPManifest>;
 
-    BSPCache(BitmapCache<V>& bitm_cache, ShaderCache<V>& shader_cache) :
-        version(V::version_v), bitm_cache(bitm_cache),
-        shader_cache(shader_cache)
+    BSPCache(BitmapCache<V>& bitm_cache, ShaderCache<V>& shader_cache)
+        : version(V::version_v)
+        , bitm_cache(bitm_cache)
+        , shader_cache(shader_cache)
     {
     }
 
@@ -321,8 +327,8 @@ struct BSPCache
 
         //        auto shader = section.shaders.data(bsp_magic);
 
-        Span<blam::bsp::cluster_portal const> portals
-            = section.cluster_portals.data(bsp_magic).value();
+        Span<blam::bsp::cluster_portal const> portals =
+            section.cluster_portals.data(bsp_magic).value();
 
         //        for(auto const& portal : portals)
         //        {
@@ -375,10 +381,11 @@ struct BSPCache
                     portal_buffer.begin() + portal_ptr);
                 portal_color_buffer[portal_color_ptr] = Vecf3(0, 1, 0);
                 out.portals.push_back({
-                    .arrays = {
-                        .count  = static_cast<u32>(8),
-                        .offset = static_cast<u32>(portal_ptr),
-                    },
+                    .arrays =
+                        {
+                            .count  = static_cast<u32>(8),
+                            .offset = static_cast<u32>(portal_ptr),
+                        },
                 });
                 it.sub.push_back(BSPItem::Subcluster{
                     .cluster = &sub,
@@ -455,8 +462,8 @@ struct BSPCache
             lightmap_refs;
         for(auto const& lightmap : lightmaps)
         {
-            auto light_bitm
-                = bitm_cache.predict(section.lightmap_, lightmap.lightmap_idx);
+            auto light_bitm =
+                bitm_cache.predict(section.lightmap_, lightmap.lightmap_idx);
 
             auto materials = lightmap.materials.data(bsp_magic).value();
             out.groups.emplace_back();
@@ -465,14 +472,14 @@ struct BSPCache
             for(blam::bsp::material const& mat : materials)
             {
                 auto shader    = shader_cache.predict(mat.shader.to_plain());
-                auto vertex_id = lightmap.lightmap_idx
-                                 | (static_cast<u64>(mat.shader.tag_id) << 32);
+                auto vertex_id = lightmap.lightmap_idx |
+                                 (static_cast<u64>(mat.shader.tag_id) << 32);
                 auto vertices       = mat.vertices().data(bsp_magic).value();
                 auto light_vertices = mat.light_verts().data(bsp_magic).value();
 
                 vertex_ranges[vertex_id] = {vert_ptr, vertices.size()};
-                index_ranges[vertex_id]
-                    = {mat.surfaces.count, mat.surfaces.offset};
+                index_ranges[vertex_id]  = {
+                    mat.surfaces.count, mat.surfaces.offset};
                 lightmap_refs[vertex_id] = {light_bitm, shader};
 
                 std::copy(
@@ -492,16 +499,18 @@ struct BSPCache
                 group.meshes.emplace_back();
                 auto& mesh = group.meshes.back();
                 mesh.mesh  = &mat;
-                mesh.draw = {
-                    .elements = {
-                        .count         = static_cast<u32>(indices.size() * 3),
-                        .offset        = element_ptr * sizeof(blam::vert::face),
-                        .vertex_offset = vert_ptr / mat.vertex_size(),
-                        .type          = semantic::TypeEnum::UShort,
-                    },
-                    .instances = {
-                        .count = 1,
-                    },
+                mesh.draw  = {
+                     .elements =
+                        {
+                             .count  = static_cast<u32>(indices.size() * 3),
+                             .offset = element_ptr * sizeof(blam::vert::face),
+                             .vertex_offset = vert_ptr / mat.vertex_size(),
+                             .type          = semantic::TypeEnum::UShort,
+                        },
+                     .instances =
+                        {
+                             .count = 1,
+                        },
                 };
                 mesh.shader     = shader_cache.predict(mat.shader);
                 mesh.light_bitm = light_bitm;
@@ -663,6 +672,7 @@ struct BSPCache
 
         return out;
     }
+
     virtual blam::bsp::info const* get_id(blam::bsp::info const& bsp) override
     {
         return &bsp;
@@ -671,6 +681,7 @@ struct BSPCache
     void start_restricted(Proxy&, time_point const&)
     {
     }
+
     void end_restricted(Proxy&, time_point const&)
     {
     }

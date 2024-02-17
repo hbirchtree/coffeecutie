@@ -9,7 +9,10 @@ namespace scene {
 template<typename T>
 struct transform
 {
-    FORCEDINLINE transform() : rotation(), position(0), scale(1.0)
+    FORCEDINLINE transform()
+        : rotation()
+        , position(0)
+        , scale(1.0)
     {
     }
 

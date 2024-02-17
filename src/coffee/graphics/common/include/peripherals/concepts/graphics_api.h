@@ -3,8 +3,8 @@
 #include <concepts>
 #include <peripherals/concepts/span.h>
 #include <peripherals/concepts/vector.h>
-#include <peripherals/semantic/enum/rsca.h>
 #include <peripherals/semantic/chunk.h>
+#include <peripherals/semantic/enum/rsca.h>
 #include <peripherals/stl/functional_types.h>
 #include <peripherals/typing/enum/graphics/buffer_types.h>
 #include <peripherals/typing/enum/graphics/shader_stage.h>
@@ -196,10 +196,12 @@ struct view_params
     {
         i32 min_ = 0, count = -1;
     } layer;
+
     struct
     {
         i32 min_ = 0, count = -1;
     } mip;
+
     typing::pixels::PixDesc format;
 };
 
@@ -279,211 +281,370 @@ enum class shader_format_t
 }
 
 template<class T>
-concept Texture = requires(T v)
-{
-    {v.alloc(std::declval<typing::geometry::size_3d<u32>>())};
-    {v.dealloc()};
+concept Texture =
+    requires(T v) {
+        {
+            v.alloc(std::declval<typing::geometry::size_3d<u32>>())
+        };
+        {
+            v.dealloc()
+        };
 
-    {v.upload(
-        std::declval<gsl::span<int, gsl::dynamic_extent>>(),
-        std::declval<typing::vector_types::Vecui2>(),
-        std::declval<typing::geometry::size_3d<u32>>(),
-        0)};
-    {v.size()};
+        {
+            v.upload(
+                std::declval<gsl::span<int, gsl::dynamic_extent>>(),
+                std::declval<typing::vector_types::Vecui2>(),
+                std::declval<typing::geometry::size_3d<u32>>(),
+                0)
+        };
+        {
+            v.size()
+        };
 
-    {v.view(
-        textures::d2,
-        std::declval<textures::view_params>())};
-}
-&&
+        {
+            v.view(textures::d2, std::declval<textures::view_params>())
+        };
+    } &&
     //    (Size2D<stl_types::mem_function_traits(&T::size)::result_type, u32>/*
     //    || Size3D<declmemtype2(T, size), u32>*/);
     true;
 
 template<class T>
-concept Sampler = requires(T v)
-{
-    {v.alloc()};
-    {v.dealloc()};
+concept Sampler = requires(T v) {
+    {
+        v.alloc()
+    };
+    {
+        v.dealloc()
+    };
 
     /* Changing properties */
-    {v.set(textures::sample_properties::anisotropic, f32())};
-    {v.set(
-        textures::sample_properties::edge_policy,
-        0,
-        typing::WrapPolicy::Clamp)};
-    {v.set(
-        textures::sample_properties::compare_mode,
-        textures::compare_mode::texture)};
-    {v.set(
-        textures::sample_properties::filtering,
-        textures::filter_distance::min_,
-        typing::Filtering::Linear)};
+    {
+        v.set(textures::sample_properties::anisotropic, f32())
+    };
+    {
+        v.set(
+            textures::sample_properties::edge_policy,
+            0,
+            typing::WrapPolicy::Clamp)
+    };
+    {
+        v.set(
+            textures::sample_properties::compare_mode,
+            textures::compare_mode::texture)
+    };
+    {
+        v.set(
+            textures::sample_properties::filtering,
+            textures::filter_distance::min_,
+            typing::Filtering::Linear)
+    };
 
     /* For shader pipeline */
-    {v.handle()};
+    {
+        v.handle()
+    };
 };
 
 template<class T>
-concept BufferSlice = requires(T v)
-{
-    {v.handle()};
-    {v.buffer()};
+concept BufferSlice = requires(T v) {
+    {
+        v.handle()
+    };
+    {
+        v.buffer()
+    };
     std::is_same_v<decltype(v.slice(0)), T>;
 };
 
 template<class T, class BufferSliceT>
-concept Buffer = BufferSlice<BufferSliceT> && requires(T v)
-{
-    {v.alloc()};
-    {v.dealloc()};
+concept Buffer = BufferSlice<BufferSliceT> && requires(T v) {
+    {
+        v.alloc()
+    };
+    {
+        v.dealloc()
+    };
 
     /* Population */
-    {v.commit(100ULL)};
-    {v.commit(std::declval<gsl::span<libc_types::i32, gsl::dynamic_extent>>())};
-    {v.commit(std::declval<gsl::span<libc_types::f32, gsl::dynamic_extent>>())};
+    {
+        v.commit(100ULL)
+    };
+    {
+        v.commit(
+            std::declval<gsl::span<libc_types::i32, gsl::dynamic_extent>>())
+    };
+    {
+        v.commit(
+            std::declval<gsl::span<libc_types::f32, gsl::dynamic_extent>>())
+    };
 
     /* Memory ops */
-    {v.map(0ULL, 10ULL)};
-    {v.unmap(nullptr)};
-    {v.setState(buffers::property::pixel_pack, 1)};
-    {v.size()};
+    {
+        v.map(0ULL, 10ULL)
+    };
+    {
+        v.unmap(nullptr)
+    };
+    {
+        v.setState(buffers::property::pixel_pack, 1)
+    };
+    {
+        v.size()
+    };
 
     /* For shader pipeline */
-    {v.handle()}; /* Full buffer */
+    {
+        v.handle()
+    }; /* Full buffer */
     std::is_same_v<decltype(v.slice(0)), BufferSliceT>;
 };
 
 template<class T>
-concept Query = requires(T v)
-{
-    {v.start()};
-    {v.stop()};
+concept Query = requires(T v) {
+    {
+        v.start()
+    };
+    {
+        v.stop()
+    };
 
-    {v.resultSync()};
-    {v.result()};
+    {
+        v.resultSync()
+    };
+    {
+        v.result()
+    };
 };
 
 template<class T, class ShaderT>
-concept Pipeline = requires(T v)
-{
-    {v.alloc()};
-    {v.dealloc()};
+concept Pipeline = requires(T v) {
+    {
+        v.alloc()
+    };
+    {
+        v.dealloc()
+    };
 
-    {v.attach(
-        std::declval<std::shared_ptr<ShaderT>>(),
-        typing::graphics::ShaderStage::Vertex)};
-    {v.compile()};
+    {
+        v.attach(
+            std::declval<std::shared_ptr<ShaderT>>(),
+            typing::graphics::ShaderStage::Vertex)
+    };
+    {
+        v.compile()
+    };
 };
 
 template<class T>
-concept Shader = requires(T v)
-{
-    {v.compile(
-        typing::graphics::ShaderStage::Vertex,
-        std::declval<semantic::mem_chunk<char>>())};
+concept Shader = requires(T v) {
+    {
+        v.compile(
+            typing::graphics::ShaderStage::Vertex,
+            std::declval<semantic::mem_chunk<char>>())
+    };
 };
 
 template<class T, class TextureT>
-concept RenderTarget = requires(T v)
-{
-    {v.alloc()};
-    {v.dealloc()};
+concept RenderTarget = requires(T v) {
+    {
+        v.alloc()
+    };
+    {
+        v.dealloc()
+    };
 
-    {v.attach(
-        render_targets::attachment::color, *std::declval<TextureT*>(), 0, 0)};
-    {v.copy(
-        *std::declval<T*>(),
-        std::declval<typing::geometry::rect<u32>>(),
-        std::declval<typing::vector_types::tvec2<u32>>(),
-        render_targets::attachment::color,
-        render_targets::attachment::color,
-        0,
-        0,
-        0)};
-    {v.resize(std::declval<typing::geometry::rect<i32>>(), 0)};
-    {v.size()};
+    {
+        v.attach(
+            render_targets::attachment::color, *std::declval<TextureT*>(), 0, 0)
+    };
+    {
+        v.copy(
+            *std::declval<T*>(),
+            std::declval<typing::geometry::rect<u32>>(),
+            std::declval<typing::vector_types::tvec2<u32>>(),
+            render_targets::attachment::color,
+            render_targets::attachment::color,
+            0,
+            0,
+            0)
+    };
+    {
+        v.resize(std::declval<typing::geometry::rect<i32>>(), 0)
+    };
+    {
+        v.size()
+    };
 
-    {v.clear(std::declval<typing::vector_types::Vecf4>(), 0)};
-    {v.clear(f64())};
-    {v.clear(i32())};
-    {v.clear(std::declval<typing::vector_types::Vecf4>(), f64(), i32(), 0)};
+    {
+        v.clear(std::declval<typing::vector_types::Vecf4>(), 0)
+    };
+    {
+        v.clear(f64())
+    };
+    {
+        v.clear(i32())
+    };
+    {
+        v.clear(std::declval<typing::vector_types::Vecf4>(), f64(), i32(), 0)
+    };
 };
 
 template<class T>
-concept VertexAttribute = requires(T v)
-{
-    {v.index};
+concept VertexAttribute = requires(T v) {
+    {
+        v.index
+    };
 
     /* Value properties */
-    {v.value.type};
-    {v.value.count};
-    {v.value.size};
-    {v.value.flags};
-    {v.value.stride};
-    {v.value.offset};
+    {
+        v.value.type
+    };
+    {
+        v.value.count
+    };
+    {
+        v.value.size
+    };
+    {
+        v.value.flags
+    };
+    {
+        v.value.stride
+    };
+    {
+        v.value.offset
+    };
 
     /* Buffer properties */
-    {v.buffer.id};
-    {v.buffer.offset};
+    {
+        v.buffer.id
+    };
+    {
+        v.buffer.offset
+    };
 };
 
 template<class T, class BufferT>
-concept VertexArray = requires(T v)
-{
-    {v.alloc()};
-    {v.dealloc()};
+concept VertexArray = requires(T v) {
+    {
+        v.alloc()
+    };
+    {
+        v.dealloc()
+    };
 
-    {v.add(std::declval<typename T::attribute_type>())};
-    {v.set_buffer(buffers::vertex, std::shared_ptr<BufferT>(), 0)};
-    {v.set_buffer(buffers::element, std::shared_ptr<BufferT>())};
+    {
+        v.add(std::declval<typename T::attribute_type>())
+    };
+    {
+        v.set_buffer(buffers::vertex, std::shared_ptr<BufferT>(), 0)
+    };
+    {
+        v.set_buffer(buffers::element, std::shared_ptr<BufferT>())
+    };
 };
 
 template<class T>
-concept DrawCommand = requires(T v)
-{
-    {v.call.indexed};
-    {v.call.instanced};
-    {v.call.mode};
-    {v.data.elements.count};
-    {v.data.elements.offset};
-    {v.data.elements.type};
-    {v.data.arrays.count};
-    {v.data.arrays.offset};
-    {v.data.instances.count};
-    {v.data.instances.offset};
+concept DrawCommand = requires(T v) {
+    {
+        v.call.indexed
+    };
+    {
+        v.call.instanced
+    };
+    {
+        v.call.mode
+    };
+    {
+        v.data.elements.count
+    };
+    {
+        v.data.elements.offset
+    };
+    {
+        v.data.elements.type
+    };
+    {
+        v.data.arrays.count
+    };
+    {
+        v.data.arrays.offset
+    };
+    {
+        v.data.instances.count
+    };
+    {
+        v.data.instances.offset
+    };
 
-    {v.conditional_query};
-    {v.vertices};
-    {v.uniforms};
-    {v.buffers};
-    {v.samplers};
+    {
+        v.conditional_query
+    };
+    {
+        v.vertices
+    };
+    {
+        v.uniforms
+    };
+    {
+        v.buffers
+    };
+    {
+        v.samplers
+    };
 };
 
 template<class T>
-concept RenderPass = DrawCommand<typename T::command_type> && requires(T v)
-{
-    {v.commands};
-    {v.pipeline};
+concept RenderPass = DrawCommand<typename T::command_type> && requires(T v) {
+    {
+        v.commands
+    };
+    {
+        v.pipeline
+    };
 
-    {v.framebuffer};
+    {
+        v.framebuffer
+    };
 
-    {v.state.blend};
-    {v.state.depth};
-    {v.state.pixel};
-    {v.state.raster};
-    {v.state.stencil};
-    {v.state.view};
+    {
+        v.state.blend
+    };
+    {
+        v.state.depth
+    };
+    {
+        v.state.pixel
+    };
+    {
+        v.state.raster
+    };
+    {
+        v.state.stencil
+    };
+    {
+        v.state.view
+    };
 };
 
 template<class T>
-concept PipelineInfo = requires(T v)
-{
-    {v.uniforms};
-    {v.samplers};
-    {v.buffers};
-    {v.inputs};
-    {v.outputs};
+concept PipelineInfo = requires(T v) {
+    {
+        v.uniforms
+    };
+    {
+        v.samplers
+    };
+    {
+        v.buffers
+    };
+    {
+        v.inputs
+    };
+    {
+        v.outputs
+    };
 };
 
 template<class T>
@@ -503,89 +664,129 @@ concept DebugDrawer = true;
 
 template<class T, class APIT>
 concept DebugTools = PipelineDump<typename T::pipeline_dump_type> &&
-    FramebufferDump<
-        typename T::render_dump_type,
-        typename APIT::texture_type,
-        typename APIT::sampler_type> &&
-    DebugScope<typename T::debug_scope_type> &&
-    PerfScope<typename T::perf_scope_type> &&
-    DebugDrawer<typename T::debug_draw_type> && requires(T v)
-{
-    {v.enable()};
-    {v.scope()};
-    {v.perf_scope()};
+                     FramebufferDump<
+                         typename T::render_dump_type,
+                         typename APIT::texture_type,
+                         typename APIT::sampler_type> &&
+                     DebugScope<typename T::debug_scope_type> &&
+                     PerfScope<typename T::perf_scope_type> &&
+                     DebugDrawer<typename T::debug_draw_type> && requires(T v) {
+                         {
+                             v.enable()
+                         };
+                         {
+                             v.scope()
+                         };
+                         {
+                             v.perf_scope()
+                         };
+                     };
+
+template<class T>
+concept InfoTools = requires(T v) {
+    {
+        v.max_of()
+    };
 };
 
 template<class T>
-concept InfoTools = requires(T v)
-{
-    {v.max_of()};
+concept Queue = requires(T v) {
+    {
+        v.queue(std::declval<std::function<void()>>())
+    };
 };
 
 template<class T>
-concept Queue = requires(T v)
-{
-    {v.queue(std::declval<std::function<void()>>())};
-};
-
-template<class T>
-concept FixedPipeline = Texture<typename T::texture_type> &&
+concept FixedPipeline =
+    Texture<typename T::texture_type> &&
     Buffer<typename T::buffer_type, typename T::buffer_slice_type> &&
     Shader<typename T::shader_type> &&
     Pipeline<typename T::program_type, typename T::shader_type> &&
     RenderTarget<typename T::render_target_type, typename T::texture_type> &&
-    requires(T v)
-{
-    {v.alloc_buffer(buffers::vertex, semantic::RSCA::None)};
-    {v.alloc_program()};
-    {v.alloc_rendertarget()};
-    {v.alloc_shader()};
-    {v.alloc_texture(
-        textures::type::d2_array,
-        typing::pixels::PixDesc(),
-        1,
-        textures::property::none)};
-    {v.alloc_vertex_array()};
+    requires(T v) {
+        {
+            v.alloc_buffer(buffers::vertex, semantic::RSCA::None)
+        };
+        {
+            v.alloc_program()
+        };
+        {
+            v.alloc_rendertarget()
+        };
+        {
+            v.alloc_shader()
+        };
+        {
+            v.alloc_texture(
+                textures::type::d2_array,
+                typing::pixels::PixDesc(),
+                1,
+                textures::property::none)
+        };
+        {
+            v.alloc_vertex_array()
+        };
 
-    {v.api_name()};
-    {v.api_version()};
-};
+        {
+            v.api_name()
+        };
+        {
+            v.api_version()
+        };
+    };
 
 template<class T>
 concept API = FixedPipeline<T> && Sampler<typename T::sampler_type> &&
-    Query<typename T::query_type> &&
-    DrawCommand<typename T::draw_command_type> &&
-    DebugTools<typename T::debug_type, T> && Queue<typename T::queue_type> &&
-    requires(T v)
-{
-    {v.alloc_query()};
+              Query<typename T::query_type> &&
+              DrawCommand<typename T::draw_command_type> &&
+              DebugTools<typename T::debug_type, T> &&
+              Queue<typename T::queue_type> && requires(T v) {
+                  {
+                      v.alloc_query()
+                  };
 
-    {v.debug()};
+                  {
+                      v.debug()
+                  };
 
-    {v.submit(std::declval<typename T::optimized_pass_type>())};
-    {v.submit(std::declval<typename T::render_pass_type>())};
+                  {
+                      v.submit(std::declval<typename T::optimized_pass_type>())
+                  };
+                  {
+                      v.submit(std::declval<typename T::render_pass_type>())
+                  };
 
-    {v.shaderlang_name()};
-    {v.shaderlang_version()};
-    {v.device()};
-    {v.device_driver()};
+                  {
+                      v.shaderlang_name()
+                  };
+                  {
+                      v.shaderlang_version()
+                  };
+                  {
+                      v.device()
+                  };
+                  {
+                      v.device_driver()
+                  };
 
-    {v.default_rendertarget()};
-};
+                  {
+                      v.default_rendertarget()
+                  };
+              };
 
-namespace detail
-{
+namespace detail {
 
-    template<typename T>
-    concept is_uniform_pair = true
-        /*std::is_same_v<decltype(typename T::first_type().name), std::string_view> &&
-        std::is_same_v<decltype(typename T::first_type().location), libc_types::i32> &&
-        semantic::concepts::Span<typename T::second_type>*/;
+template<typename T>
+concept is_uniform_pair = true
+    /*std::is_same_v<decltype(typename T::first_type().name), std::string_view>
+    && std::is_same_v<decltype(typename T::first_type().location),
+    libc_types::i32> && semantic::concepts::Span<typename T::second_type>*/
+    ;
 
-    template<typename S, typename... U>
-    concept is_uniform_stage =
-        (std::is_same_v<S, typing::graphics::ShaderStage> &&
-         (is_uniform_pair<U> && ...));
+template<typename S, typename... U>
+concept is_uniform_stage =
+    (std::is_same_v<S, typing::graphics::ShaderStage> &&
+     (is_uniform_pair<U> && ...));
 
 } // namespace detail
 

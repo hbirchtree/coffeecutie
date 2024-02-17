@@ -2,8 +2,10 @@
 
 #ifdef GL_INTEL_performance_query
 #include "../enums/PerformanceQueryCapsMaskINTEL.h"
+
 namespace gl::intel::performance_query {
 using gl::group::performance_query_caps_mask_intel;
+
 namespace values {
 constexpr u32 perfquery_donot_flush             = 0x83F9;
 constexpr u32 perfquery_flush                   = 0x83FA;
@@ -24,6 +26,7 @@ constexpr u32 perfquery_counter_name_length_max = 0x94FE;
 constexpr u32 perfquery_counter_desc_length_max = 0x94FF;
 constexpr u32 perfquery_gpa_extended_counters   = 0x9500;
 } // namespace values
+
 /*!
  * \brief Part of GL_INTEL_performance_query
  * \param queryHandle GLuint
@@ -41,16 +44,17 @@ STATICINLINE void begin_perf_query(u32 queryHandle)
 }
 
 template<class span_u32>
-requires(concepts::span<span_u32>&& std::is_same_v<
-         std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>)
-    /*!
-     * \brief Part of GL_INTEL_performance_query
-     * \param queryId GLuint
-     * \param queryHandle GLuint *
-     * \return void
-     */
-    STATICINLINE void create_perf_query(u32 queryId, span_u32 queryHandle)
+requires(
+    concepts::span<span_u32> && std::is_same_v<
+                                    std::decay_t<typename span_u32::value_type>,
+                                    std::decay_t<u32>>)
+/*!
+ * \brief Part of GL_INTEL_performance_query
+ * \param queryId GLuint
+ * \param queryHandle GLuint *
+ * \return void
+ */
+STATICINLINE void create_perf_query(u32 queryId, span_u32 queryHandle)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -97,15 +101,16 @@ STATICINLINE void end_perf_query(u32 queryHandle)
 }
 
 template<class span_u32>
-requires(concepts::span<span_u32>&& std::is_same_v<
-         std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>)
-    /*!
-     * \brief Part of GL_INTEL_performance_query
-     * \param queryId GLuint *
-     * \return void
-     */
-    STATICINLINE void get_first_perf_query_id(span_u32 queryId)
+requires(
+    concepts::span<span_u32> && std::is_same_v<
+                                    std::decay_t<typename span_u32::value_type>,
+                                    std::decay_t<u32>>)
+/*!
+ * \brief Part of GL_INTEL_performance_query
+ * \param queryId GLuint *
+ * \return void
+ */
+STATICINLINE void get_first_perf_query_id(span_u32 queryId)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -118,16 +123,17 @@ requires(concepts::span<span_u32>&& std::is_same_v<
 }
 
 template<class span_u32>
-requires(concepts::span<span_u32>&& std::is_same_v<
-         std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>)
-    /*!
-     * \brief Part of GL_INTEL_performance_query
-     * \param queryId GLuint
-     * \param nextQueryId GLuint *
-     * \return void
-     */
-    STATICINLINE void get_next_perf_query_id(u32 queryId, span_u32 nextQueryId)
+requires(
+    concepts::span<span_u32> && std::is_same_v<
+                                    std::decay_t<typename span_u32::value_type>,
+                                    std::decay_t<u32>>)
+/*!
+ * \brief Part of GL_INTEL_performance_query
+ * \param queryId GLuint
+ * \param nextQueryId GLuint *
+ * \return void
+ */
+STATICINLINE void get_next_perf_query_id(u32 queryId, span_u32 nextQueryId)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -142,40 +148,44 @@ requires(concepts::span<span_u32>&& std::is_same_v<
 }
 
 template<class span_GLchar, class span_u32, class span_u64>
-requires(concepts::span<span_GLchar>&& std::is_same_v<
-         std::decay_t<typename span_GLchar::value_type>,
-         std::decay_t<GLchar>>&& concepts::span<span_u32>&&
-                                       std::is_same_v<
-                 std::decay_t<typename span_u32::value_type>,
-                 std::decay_t<u32>>&& concepts::span<span_u64>&&
-                                       std::is_same_v<
-                     std::decay_t<typename span_u64::value_type>,
-                     std::decay_t<u64>>)
-    /*!
-     * \brief Part of GL_INTEL_performance_query
-     * \param queryId GLuint
-     * \param counterId GLuint
-     * \param counterNameLength GLuint
-     * \param counterName GLchar *
-     * \param counterDescLength GLuint
-     * \param counterDesc GLchar *
-     * \param counterOffset GLuint *
-     * \param counterDataSize GLuint *
-     * \param counterTypeEnum GLuint *
-     * \param counterDataTypeEnum GLuint *
-     * \param rawCounterMaxValue GLuint64 *
-     * \return void
-     */
-    STATICINLINE void get_perf_counter_info(
-        u32         queryId,
-        u32         counterId,
-        span_GLchar counterName,
-        span_GLchar counterDesc,
-        span_u32    counterOffset,
-        span_u32    counterDataSize,
-        span_u32    counterTypeEnum,
-        span_u32    counterDataTypeEnum,
-        span_u64    rawCounterMaxValue)
+requires(
+    concepts::span<span_GLchar> &&
+    std::is_same_v<
+        std::decay_t<typename span_GLchar::value_type>,
+        std::decay_t<GLchar>> &&
+    concepts::span<span_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_u32::value_type>,
+        std::decay_t<u32>> &&
+    concepts::span<span_u64> &&
+    std::is_same_v<
+        std::decay_t<typename span_u64::value_type>,
+        std::decay_t<u64>>)
+/*!
+ * \brief Part of GL_INTEL_performance_query
+ * \param queryId GLuint
+ * \param counterId GLuint
+ * \param counterNameLength GLuint
+ * \param counterName GLchar *
+ * \param counterDescLength GLuint
+ * \param counterDesc GLchar *
+ * \param counterOffset GLuint *
+ * \param counterDataSize GLuint *
+ * \param counterTypeEnum GLuint *
+ * \param counterDataTypeEnum GLuint *
+ * \param rawCounterMaxValue GLuint64 *
+ * \return void
+ */
+STATICINLINE void get_perf_counter_info(
+    u32         queryId,
+    u32         counterId,
+    span_GLchar counterName,
+    span_GLchar counterDesc,
+    span_u32    counterOffset,
+    span_u32    counterDataSize,
+    span_u32    counterTypeEnum,
+    span_u32    counterDataTypeEnum,
+    span_u64    rawCounterMaxValue)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -207,24 +217,26 @@ requires(concepts::span<span_GLchar>&& std::is_same_v<
 }
 
 template<class span_u32, class span_void>
-requires(concepts::span<span_void>&& concepts::span<span_u32>&& std::is_same_v<
-         std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>)
-    /*!
-     * \brief Part of GL_INTEL_performance_query
-     * \param queryHandle GLuint
-     * \param flags GLuint
-     * \param dataSize GLsizei
-     * \param data void *
-     * \param bytesWritten GLuint *
-     * \return void
-     */
-    STATICINLINE void get_perf_query_data(
-        u32       queryHandle,
-        u32       flags,
-        i32       dataSize,
-        span_void data,
-        span_u32  bytesWritten)
+requires(
+    concepts::span<span_void> && concepts::span<span_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_u32::value_type>,
+        std::decay_t<u32>>)
+/*!
+ * \brief Part of GL_INTEL_performance_query
+ * \param queryHandle GLuint
+ * \param flags GLuint
+ * \param dataSize GLsizei
+ * \param data void *
+ * \param bytesWritten GLuint *
+ * \return void
+ */
+STATICINLINE void get_perf_query_data(
+    u32       queryHandle,
+    u32       flags,
+    i32       dataSize,
+    span_void data,
+    span_u32  bytesWritten)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -242,16 +254,17 @@ requires(concepts::span<span_void>&& concepts::span<span_u32>&& std::is_same_v<
 }
 
 template<class span_u32>
-requires(concepts::span<span_u32>&& std::is_same_v<
-         std::decay_t<typename span_u32::value_type>,
-         std::decay_t<u32>>)
-    /*!
-     * \brief Part of GL_INTEL_performance_query
-     * \param queryName GLchar *
-     * \param queryId GLuint *
-     * \return void
-     */
-    STATICINLINE void get_perf_query_id_by_name(span_u32 queryId)
+requires(
+    concepts::span<span_u32> && std::is_same_v<
+                                    std::decay_t<typename span_u32::value_type>,
+                                    std::decay_t<u32>>)
+/*!
+ * \brief Part of GL_INTEL_performance_query
+ * \param queryName GLchar *
+ * \param queryId GLuint *
+ * \return void
+ */
+STATICINLINE void get_perf_query_id_by_name(span_u32 queryId)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -264,30 +277,33 @@ requires(concepts::span<span_u32>&& std::is_same_v<
 }
 
 template<class span_GLchar, class span_u32>
-requires(concepts::span<span_GLchar>&& std::is_same_v<
-         std::decay_t<typename span_GLchar::value_type>,
-         std::decay_t<GLchar>>&& concepts::span<span_u32>&&
-                                       std::is_same_v<
-                 std::decay_t<typename span_u32::value_type>,
-                 std::decay_t<u32>>)
-    /*!
-     * \brief Part of GL_INTEL_performance_query
-     * \param queryId GLuint
-     * \param queryNameLength GLuint
-     * \param queryName GLchar *
-     * \param dataSize GLuint *
-     * \param noCounters GLuint *
-     * \param noInstances GLuint *
-     * \param capsMask GLuint *
-     * \return void
-     */
-    STATICINLINE void get_perf_query_info(
-        u32         queryId,
-        span_GLchar queryName,
-        span_u32    dataSize,
-        span_u32    noCounters,
-        span_u32    noInstances,
-        span_u32    capsMask)
+requires(
+    concepts::span<span_GLchar> &&
+    std::is_same_v<
+        std::decay_t<typename span_GLchar::value_type>,
+        std::decay_t<GLchar>> &&
+    concepts::span<span_u32> &&
+    std::is_same_v<
+        std::decay_t<typename span_u32::value_type>,
+        std::decay_t<u32>>)
+/*!
+ * \brief Part of GL_INTEL_performance_query
+ * \param queryId GLuint
+ * \param queryNameLength GLuint
+ * \param queryName GLchar *
+ * \param dataSize GLuint *
+ * \param noCounters GLuint *
+ * \param noInstances GLuint *
+ * \param capsMask GLuint *
+ * \return void
+ */
+STATICINLINE void get_perf_query_info(
+    u32         queryId,
+    span_GLchar queryName,
+    span_u32    dataSize,
+    span_u32    noCounters,
+    span_u32    noInstances,
+    span_u32    capsMask)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

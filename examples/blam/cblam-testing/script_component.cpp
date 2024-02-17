@@ -8,8 +8,8 @@
 #include <coffee/imgui/imgui_binding.h>
 #include <peripherals/stl/type_list.h>
 
-#include "selected_version.h"
 #include "data.h"
+#include "selected_version.h"
 
 using libc_types::f32;
 using libc_types::u32;
@@ -20,8 +20,8 @@ using Coffee::cDebug;
 
 using namespace std::chrono_literals;
 
-using BlamScriptManifest = compo::
-    SubsystemManifest<empty_list_t, empty_list_t, empty_list_t>;
+using BlamScriptManifest =
+    compo::SubsystemManifest<empty_list_t, empty_list_t, empty_list_t>;
 
 template<typename Ver>
 struct BlamScript
@@ -158,12 +158,12 @@ struct BlamScript
         m_script = script_types::bytecode_ptr::start_from(
             m_env, &scenario->bytecode(map.magic)[0]);
 
-        typename script_types::opcode_handler hnd
-            = [](typename script_types::bytecode_ptr&,
-                 typename script_types::layout_t const&) {
-                  return script_types::result_t::return_(
-                      script_types::layout_t::void_());
-              };
+        typename script_types::opcode_handler hnd =
+            [](typename script_types::bytecode_ptr&,
+               typename script_types::layout_t const&) {
+                return script_types::result_t::return_(
+                    script_types::layout_t::void_());
+            };
 
         m_script.init_globals(m_env.globals, m_strings, {hnd});
     }
@@ -336,16 +336,16 @@ struct BlamScript
         switch(curr.opcode)
         {
         case op::print_: {
-            auto output = std::string(
-                m_strings.at(ptr.param(t::string_).to_ptr()).str());
+            auto output =
+                std::string(m_strings.at(ptr.param(t::string_).to_ptr()).str());
             log_line("print: " + output);
             cDebug("Debug output: {0}", output);
             break;
         }
         case op::inspect: {
             auto inspect_target = ptr.param(t::any);
-            auto output
-                = layout_to_string(inspect_target, inspect_target.ret_type);
+            auto output =
+                layout_to_string(inspect_target, inspect_target.ret_type);
 
             std::string_view name;
             if(inspect_target.to_ptr() != 0)

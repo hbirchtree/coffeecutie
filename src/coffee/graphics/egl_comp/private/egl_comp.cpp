@@ -224,7 +224,7 @@ static stl_types::result<EGLConfig, std::string> eglTryConfig(
 
 #if defined(EGL_VERSION_1_5) && defined(EGL_EXT_pixel_format_float)
     if(gl::tex::format_of(config.framebufferFmt).raw_format->floating_point &&
-        extensions.contains("EGL_EXT_pixel_format_float"))
+       extensions.contains("EGL_EXT_pixel_format_float"))
     {
         surfaceConfig.push_back(
             {EGL_COLOR_COMPONENT_TYPE_EXT, EGL_COLOR_COMPONENT_TYPE_FLOAT_EXT});
@@ -341,8 +341,8 @@ void GraphicsContext::load(entity_container& e, comp_app::app_error& ec)
 #if defined(EGL_VERSION_1_5)
         if(handle.m_major > 1 || (handle.m_major == 1 && handle.m_minor >= 5))
         {
-            auto client_extensions
-                = eglQueryString(EGL_NO_DISPLAY, EGL_EXTENSIONS);
+            auto client_extensions =
+                eglQueryString(EGL_NO_DISPLAY, EGL_EXTENSIONS);
             extension_list = spliterator(client_extensions, ' ');
             while(extension_list != spliterator())
             {
@@ -403,8 +403,8 @@ void GraphicsContext::load(entity_container& e, comp_app::app_error& ec)
         }
         attribs   = create_context_attribs(config, handle, extensions);
         configPtr = reinterpret_cast<EGLint const*>(attribs.data());
-        m_context
-            = eglCreateContext(display, m_config, EGL_NO_CONTEXT, configPtr);
+        m_context =
+            eglCreateContext(display, m_config, EGL_NO_CONTEXT, configPtr);
     }
 
     if(!m_context)
@@ -460,9 +460,9 @@ void GraphicsFramebuffer::load(entity_container& e, comp_app::app_error& ec)
     std::vector<std::pair<EGLint, EGLint>> attribs;
 
 #if defined(EGL_VERSION_1_5)
-    if((config.framebufferFmt == PixFmt::SRGB8A8
-        || config.framebufferFmt == PixFmt::SRGB8)
-       && (handle.m_major > 1 || (handle.m_major == 1 && handle.m_minor >= 5)))
+    if((config.framebufferFmt == PixFmt::SRGB8A8 ||
+        config.framebufferFmt == PixFmt::SRGB8) &&
+       (handle.m_major > 1 || (handle.m_major == 1 && handle.m_minor >= 5)))
         attribs.push_back({EGL_GL_COLORSPACE, EGL_GL_COLORSPACE_SRGB});
 #endif
 

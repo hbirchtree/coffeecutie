@@ -73,10 +73,11 @@ using namespace jnipp_operators;
 using namespace platform::url;
 using re = jnipp::return_type;
 
-intent::intent() : m_intent({{}, {}})
+intent::intent()
+    : m_intent({{}, {}})
 {
-    auto activity
-        = "android.app.NativeActivity"_jclass(coffee_app->activity->clazz);
+    auto activity =
+        "android.app.NativeActivity"_jclass(coffee_app->activity->clazz);
     auto Intent = "android.content.Intent"_jclass;
 
     auto getIntent = "getIntent"_jmethod.ret("android.content.Intent");
@@ -134,9 +135,9 @@ std::set<std::string> intent::categories()
     if(!categories)
         return {};
 
-    auto categorySet   = Set(categories);
-    auto categoryArray = jnipp::java::array_type_unwrapper<re::object_>(
-        categorySet[toArray]());
+    auto categorySet = Set(categories);
+    auto categoryArray =
+        jnipp::java::array_type_unwrapper<re::object_>(categorySet[toArray]());
 
     std::set<std::string> outCategories;
 
@@ -161,8 +162,8 @@ std::map<std::string, std::string> intent::extras()
     auto getStringExtra = "getStringExtra"_jmethod.ret("java.lang.String")
                               .arg<std::string>("java.lang.String");
     auto keySet = "keySet"_jmethod.ret("java.util.Set");
-    auto setArray
-        = "toArray"_jmethod.ret<re::object_array_>("java.lang.Object");
+    auto setArray =
+        "toArray"_jmethod.ret<re::object_array_>("java.lang.Object");
 
     auto extrasRef = m_intent[getExtras]();
 
@@ -186,8 +187,8 @@ std::map<std::string, std::string> intent::extras()
                 continue;
             }
 
-            std::string value
-                = jnipp::java::type_unwrapper<std::string>(extraVal);
+            std::string value =
+                jnipp::java::type_unwrapper<std::string>(extraVal);
             out[key_s] = value;
         }
     }
@@ -195,9 +196,9 @@ std::map<std::string, std::string> intent::extras()
     return out;
 }
 
-std::optional<std::string> intent::extra(const std::string &key)
+std::optional<std::string> intent::extra(const std::string& key)
 {
-    auto extras_ = extras();
+    auto extras_  = extras();
     auto value_it = extras_.find(key);
     if(value_it == extras_.end())
         return std::nullopt;
@@ -250,8 +251,8 @@ Url app_info::cache_path()
 
 Url app_info::external_data_path()
 {
-    auto def_path
-        = Path{coffee_app->activity->externalDataPath}.url(RSCA::SystemFile);
+    auto def_path =
+        Path{coffee_app->activity->externalDataPath}.url(RSCA::SystemFile);
 
     if(sdk_version() >= 21)
         return def_path;
@@ -329,9 +330,9 @@ std::optional<network_stats::result_t> network_stats::query(network_class net)
                             .ret("android.app.usage.NetworkStats");
 
     auto NetworkStats = "android.app.usage.NetworkStats"_jclass;
-    auto getNextBucket
-        = "getNextBucket"_jmethod.arg("android.app.usage.NetworkStats$Bucket")
-              .ret<re::bool_>();
+    auto getNextBucket =
+        "getNextBucket"_jmethod.arg("android.app.usage.NetworkStats$Bucket")
+            .ret<re::bool_>();
     auto hasNextBucket = "hasNextBucket"_jmethod.ret<re::bool_>();
 
     auto Bucket          = "android.app.usage.NetworkStats$Bucket"_jclass;
@@ -368,8 +369,7 @@ std::optional<network_stats::result_t> network_stats::query(network_class net)
     return out;
 }
 
-std::optional<activity_manager::memory_info> activity_manager::
-    get_mem_info()
+std::optional<activity_manager::memory_info> activity_manager::get_mem_info()
 {
     auto Activity      = "android.app.ActivityManager"_jclass;
     auto MemoryInfo    = "android.app.ActivityManager$MemoryInfo"_jclass;
@@ -396,14 +396,13 @@ std::optional<activity_manager::memory_info> activity_manager::
     };
 }
 
-std::optional<activity_manager::config_info> activity_manager::
-    get_config_info()
+std::optional<activity_manager::config_info> activity_manager::get_config_info()
 {
     auto Activity   = "android.app.ActivityManager"_jclass;
     auto ConfigInfo = "android.app.ActivityManager$ConfigurationInfo"_jclass;
 
-    auto getDeviceConfigurationInfo
-        = "getDeviceConfigurationInfo"_jmethod.arg(ConfigInfo);
+    auto getDeviceConfigurationInfo =
+        "getDeviceConfigurationInfo"_jmethod.arg(ConfigInfo);
 
     return {};
 }
@@ -453,8 +452,8 @@ std::vector<std::string> cpu_abis()
 
 static auto getDisplay()
 {
-    auto activityObject
-        = "android.app.NativeActivity"_jclass(coffee_app->activity->clazz);
+    auto activityObject =
+        "android.app.NativeActivity"_jclass(coffee_app->activity->clazz);
     auto getDisplay = "getDisplay"_jmethod.ret("android.view.Display");
 
     return "android.view.Display"_jclass(activityObject[getDisplay]());
@@ -483,8 +482,8 @@ display_info::hdr_mode_t display_info::hdr_modes()
     };
 
     auto HdrCapabilities = "android.view.Display$HdrCapabilities"_jclass;
-    auto getSupportedHdrTypes
-        = "getSupportedHdrTypes"_jmethod.ret<re::int_array_>();
+    auto getSupportedHdrTypes =
+        "getSupportedHdrTypes"_jmethod.ret<re::int_array_>();
 
     auto hdrCapabilities = HdrCapabilities(display[getHdrCapabilities]());
     auto hdrTypes        = hdrCapabilities[getSupportedHdrTypes]();
@@ -511,8 +510,8 @@ bool display_info::is_low_latency()
         return false;
 
     auto display = getDisplay();
-    auto isMinimalPostProcessingSupported
-        = "isMinimalPostProcessingSupported"_jmethod.ret<re::bool_>();
+    auto isMinimalPostProcessingSupported =
+        "isMinimalPostProcessingSupported"_jmethod.ret<re::bool_>();
 
     return display[isMinimalPostProcessingSupported]();
 }
@@ -568,16 +567,16 @@ display_info::rotation_t display_info::rotation()
 
 f32 display_info::dpi()
 {
-    auto activityObject
-        = "android.app.NativeActivity"_jclass(coffee_app->activity->clazz);
+    auto activityObject =
+        "android.app.NativeActivity"_jclass(coffee_app->activity->clazz);
 
     auto Resources      = "android.content.res.Resources"_jclass;
     auto DisplayMetrics = "android.util.DisplayMetrics"_jclass;
 
-    auto getResources
-        = "getResources"_jmethod.ret("android.content.res.Resources");
-    auto getDisplayMetrics
-        = "getDisplayMetrics"_jmethod.ret("android.util.DisplayMetrics");
+    auto getResources =
+        "getResources"_jmethod.ret("android.content.res.Resources");
+    auto getDisplayMetrics =
+        "getDisplayMetrics"_jmethod.ret("android.util.DisplayMetrics");
 
     auto resourceObject = Resources(activityObject[getResources]());
     auto displayMetrics = DisplayMetrics(resourceObject[getDisplayMetrics]());
@@ -830,8 +829,8 @@ STATICINLINE void StartEventProcessing(android_app* state)
 
         struct android_poll_source* source = nullptr;
 
-        while((ident = ALooper_pollAll(0, nullptr, &events, (void**)&source))
-              >= 0)
+        while((ident = ALooper_pollAll(0, nullptr, &events, (void**)&source)) >=
+              0)
         {
             if(source != nullptr)
                 source->process(state, source);
@@ -840,8 +839,8 @@ STATICINLINE void StartEventProcessing(android_app* state)
                 break;
         }
 
-        bool active = state->activityState == APP_CMD_START
-                      || state->activityState == APP_CMD_RESUME;
+        bool active = state->activityState == APP_CMD_START ||
+                      state->activityState == APP_CMD_RESUME;
 
         if(window_initialized && active)
         {

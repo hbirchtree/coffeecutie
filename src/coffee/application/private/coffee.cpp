@@ -91,8 +91,8 @@ int MainSetup(MainWithArgs mainfun, int argc, char** argv, u32 flags)
     cDebug("Entering MainSetup() at {0}", str::print::pointerify(MainSetup));
 #endif
 
-#if defined(COFFEE_WINDOWS) && !defined(COFFEE_WINDOWS_UWP) \
-    && !defined(__MINGW64__)
+#if defined(COFFEE_WINDOWS) && !defined(COFFEE_WINDOWS_UWP) && \
+    !defined(__MINGW64__)
 #if MODE_RELEASE
     ShowWindow(GetConsoleWindow(), SW_HIDE);
 #else
@@ -248,8 +248,8 @@ static void CoffeeInit_Internal(u32)
         PrintArchitectureInfo();
     }
 
-    State::GetBuildInfo().default_window_name
-        = GetCurrentApp().application_name;
+    State::GetBuildInfo().default_window_name =
+        GetCurrentApp().application_name;
 }
 
 void SetPlatformState()
@@ -257,9 +257,8 @@ void SetPlatformState()
     /* Initialize state management in ::platform namespace */
     auto& platState = platform::state;
 
-    platState->m_LockState
-        = static_cast<stl_types::UqLock (*)(std::string_view)>(
-            State::LockState);
+    platState->m_LockState =
+        static_cast<stl_types::UqLock (*)(std::string_view)>(State::LockState);
     platState->SwapState = State::SwapState;
     platState->PeekState = State::PeekState;
 
@@ -382,8 +381,8 @@ i32 CoffeeMain(MainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
     i32 result = -1;
 
     if constexpr(
-        compile_info::platform::is_emscripten
-        || compile_info::platform::is_gekko)
+        compile_info::platform::is_emscripten ||
+        compile_info::platform::is_gekko)
         try
         {
             result = mainfun(argc, argv);
@@ -580,9 +579,9 @@ cxxopts::Options& GetBase(cxxopts::Options& parser)
         ("q,quiet", "Disable log output")
         //
         ("licenses", "Print license information and exit")
-        //
+    //
 #if PERIPHERAL_PROFILER_ENABLED
-        ("deep-profile", "Enable deep profiling")
+            ("deep-profile", "Enable deep profiling")
 #endif
         //
         ("json", "Log output as JSON")

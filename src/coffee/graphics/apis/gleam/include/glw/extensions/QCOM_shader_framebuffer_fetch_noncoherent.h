@@ -3,11 +3,14 @@
 #ifdef GL_QCOM_shader_framebuffer_fetch_noncoherent
 #include "../enums/EnableCap.h"
 #include "../enums/GetPName.h"
+
 namespace gl::qcom::shader_framebuffer_fetch_noncoherent {
 using gl::group::enable_cap;
 using gl::group::get_prop;
+
 namespace values {
 } // namespace values
+
 /*!
  * \brief Part of GL_QCOM_shader_framebuffer_fetch_noncoherent
 

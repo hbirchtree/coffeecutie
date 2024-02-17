@@ -2,8 +2,8 @@
 
 #include <coffee/components/components.h>
 #include <coffee/core/libc_types.h>
-#include <peripherals/stl/types.h>
 #include <coffee/core/types/display/event.h>
+#include <peripherals/stl/types.h>
 
 #include "services.h"
 
@@ -31,8 +31,9 @@ struct AppLoader : AppService<AppLoader>
 
     struct service_register
     {
-        service_register(detail::EntityContainer& e, app_error& ec) :
-            e(e), ec(ec)
+        service_register(detail::EntityContainer& e, app_error& ec)
+            : e(e)
+            , ec(ec)
         {
         }
 
@@ -55,14 +56,17 @@ struct AppLoader : AppService<AppLoader>
 
     struct service_loader
     {
-        service_loader(detail::EntityContainer& e, app_error& ec) : e(e), ec(ec)
+        service_loader(detail::EntityContainer& e, app_error& ec)
+            : e(e)
+            , ec(ec)
         {
         }
+
         template<detail::is_subsystem T>
         void operator()()
         {
-            auto ptr
-                = C_DCAST<AppLoadableService>(e.service<typename T::type>());
+            auto ptr =
+                C_DCAST<AppLoadableService>(e.service<typename T::type>());
 
             if(ptr)
                 ptr->do_load(e, ec);
@@ -76,10 +80,12 @@ struct AppLoader : AppService<AppLoader>
 
     struct service_unloader
     {
-        service_unloader(detail::EntityContainer& e, app_error& ec) :
-            e(e), ec(ec)
+        service_unloader(detail::EntityContainer& e, app_error& ec)
+            : e(e)
+            , ec(ec)
         {
         }
+
         template<typename T>
         void operator()()
         {
@@ -143,9 +149,11 @@ struct AppLoader : AppService<AppLoader>
 
     struct config_adder
     {
-        config_adder(AppLoader& ldr) : ldr(ldr)
+        config_adder(AppLoader& ldr)
+            : ldr(ldr)
         {
         }
+
         template<typename T>
         void operator()()
         {
@@ -182,7 +190,7 @@ struct AppLoader : AppService<AppLoader>
     }
 
     std::vector<std::unique_ptr<detail::SubsystemBase>> m_configStore;
-    std::map<detail::type_hash, detail::SubsystemBase*>  m_configs;
+    std::map<detail::type_hash, detail::SubsystemBase*> m_configs;
 
     template<class Config>
     static Config& config(detail::EntityContainer& container)

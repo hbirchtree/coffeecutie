@@ -18,12 +18,17 @@ struct spliterator
     using string_type = std::basic_string_view<CharType>;
     using sep_type    = CharType;
 
-    spliterator() : source(), sep(sep_type()), idx(string_type::npos)
+    spliterator()
+        : source()
+        , sep(sep_type())
+        , idx(string_type::npos)
     {
     }
 
-    spliterator(string_type const& source, sep_type sep) :
-        source(source), sep(sep), idx(0)
+    spliterator(string_type const& source, sep_type sep)
+        : source(source)
+        , sep(sep)
+        , idx(0)
     {
     }
 
@@ -99,4 +104,4 @@ FORCEDINLINE quick_container<spliterator<CharType>> str(
         []() { return spliterator<CharType>(); });
 }
 
-}
+} // namespace stl_types::str::split

@@ -94,9 +94,9 @@
 #include "posix_quirks.h"
 
 /* General configuration changers */
-//#define COFFEE_LINUX_LIGHTWEIGHT_WM
-//#define COFFEE_GLES20_MODE
-//#define COFFEE_LOWFAT
+// #define COFFEE_LINUX_LIGHTWEIGHT_WM
+// #define COFFEE_GLES20_MODE
+// #define COFFEE_LOWFAT
 
 /*
  *
@@ -164,9 +164,9 @@
 #elif defined(COFFEE_APPLE_MOBILE) || defined(COFFEE_ANDROID)
 #define COFFEE_CUSTOM_MAIN
 #define COFFEE_CUSTOM_EXIT_HANDLING
-//#if defined(COFFEE_ANDROID)
-//#define COFFEE_CUSTOM_STACKTRACE
-//#endif
+// #if defined(COFFEE_ANDROID)
+// #define COFFEE_CUSTOM_STACKTRACE
+// #endif
 #endif
 
 /*
@@ -205,7 +205,7 @@
 #endif
 
 #if defined(COFFEE_ANDROID)
-//#define COFFEE_DYNAMIC_TEMPFILES
+// #define COFFEE_DYNAMIC_TEMPFILES
 #endif
 
 /*

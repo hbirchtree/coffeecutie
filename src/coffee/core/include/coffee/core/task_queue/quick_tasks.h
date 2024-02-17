@@ -30,8 +30,8 @@ enum class LerpType
 
 template<
     typename PodType = f32,
-    typename std::enable_if<
-        std::is_floating_point<PodType>::value>::type* = nullptr>
+    typename std::enable_if<std::is_floating_point<PodType>::value>::type* =
+        nullptr>
 struct Lerp
 {
     STATICINLINE PodType Linear(PodType v, PodType target, PodType t)
@@ -52,20 +52,20 @@ struct Lerp
     STATICINLINE PodType Bounce(PodType v, PodType target, PodType t)
     {
         constexpr auto pi = stl_types::math::pi;
-        f64 t_ = C_CAST<f64>(t);
+        f64            t_ = C_CAST<f64>(t);
 
         /* TODO: Remove double conversions here */
 
-        PodType scale
-            = std::max(
-                  C_CAST<PodType>(
-                      std::cos(1.6 * t_) * std::cos(t_ * 0.9)
-                      * std::sin(17.2 * t_ + pi * 0.5)),
-                  0.f)
-              + std::max(
-                  C_CAST<f32>(
-                      std::cos(1.6 * t_) * std::sin(17.0 * t_ + pi * 1.5)),
-                  0.f);
+        PodType scale =
+            std::max(
+                C_CAST<PodType>(
+                    std::cos(1.6 * t_) * std::cos(t_ * 0.9) *
+                    std::sin(17.2 * t_ + pi * 0.5)),
+                0.f) +
+            std::max(
+                C_CAST<f32>(
+                    std::cos(1.6 * t_) * std::sin(17.0 * t_ + pi * 1.5)),
+                0.f);
 
         return v + (target - v) * (1.0f - scale);
     }
@@ -131,9 +131,9 @@ FORCEDINLINE rq::runtime_task GenLerpTask(
     std::shared_ptr<stl_types::Mutex> lock     = nullptr)
 {
     /* Why are we here? */
-    if(((store->source.size() != store->targets.size())
-        && (store->source.size() != store->values.size()))
-       || store->source.size() == 0)
+    if(((store->source.size() != store->targets.size()) &&
+        (store->source.size() != store->values.size())) ||
+       store->source.size() == 0)
         return {};
 
     /* Initialize state for interpolation */
@@ -157,8 +157,8 @@ FORCEDINLINE rq::runtime_task GenLerpTask(
 
             /* Calculate a difference, we don't care much
              *  about interruptions, as long as the deadline is met */
-            store->time += std::chrono::duration<bigscalar>(diff).count()
-                           * store->timescale;
+            store->time += std::chrono::duration<bigscalar>(diff).count() *
+                           store->timescale;
             store->delta = now - store->start_time;
 
             /* Make some temporaries, make for easier debugging */

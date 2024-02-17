@@ -8,6 +8,7 @@ constexpr u32 query_no_wait           = 0x8E14;
 constexpr u32 query_by_region_wait    = 0x8E15;
 constexpr u32 query_by_region_no_wait = 0x8E16;
 } // namespace values
+
 /*!
  * \brief Part of GL_NV_conditional_render
  * \param id GLuint

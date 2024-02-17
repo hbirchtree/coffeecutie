@@ -2,10 +2,13 @@
 
 #ifdef GL_QCOM_alpha_test
 #include "../enums/GetPName.h"
+
 namespace gl::qcom::alpha_test {
 using gl::group::get_prop;
+
 namespace values {
 } // namespace values
+
 /*!
  * \brief Part of GL_QCOM_alpha_test
  * \param func GLenum

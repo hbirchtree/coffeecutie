@@ -46,6 +46,7 @@ struct BlamDebugUi
 
         //        ImGui::ShowDemoWindow();
     }
+
     void end_restricted(Proxy&, time_point const&)
     {
     }
@@ -55,10 +56,9 @@ struct BlamDebugUi
         using namespace std::chrono_literals;
 
         const auto delta = time - last_time;
-        const auto delta_f
-            = std::chrono::duration_cast<stl_types::Chrono::seconds_float>(
-                  delta)
-                  .count();
+        const auto delta_f =
+            std::chrono::duration_cast<stl_types::Chrono::seconds_float>(delta)
+                .count();
         frametimes.push_back(delta_f);
 
         if(frametimes.size() > 300)
@@ -76,7 +76,7 @@ struct BlamDebugUi
 
         ImVec4 perf_color;
 
-// clang-format off
+        // clang-format off
         if(delta > 66ms)
             perf_color = {1,   0,   0, 1};
         else if(delta > 33ms)
@@ -87,7 +87,7 @@ struct BlamDebugUi
             perf_color = {0.5, 1,   0, 1};
         else
             perf_color = {0,   1,   0, 1};
-// clang-format on
+        // clang-format on
 
         ImGui::TextColored(perf_color, "ms=%f", delta_f);
         last_time = time;

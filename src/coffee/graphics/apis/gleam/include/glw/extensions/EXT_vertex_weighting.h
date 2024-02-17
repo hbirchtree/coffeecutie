@@ -3,9 +3,11 @@
 #ifdef GL_EXT_vertex_weighting
 #include "../enums/GetPName.h"
 #include "../enums/MatrixMode.h"
+
 namespace gl::ext::vertex_weighting {
 using gl::group::get_prop;
 using gl::group::matrix_mode;
+
 namespace values {
 constexpr u32 modelview1_stack_depth      = 0x8502;
 constexpr u32 modelview1_matrix           = 0x8506;
@@ -18,21 +20,22 @@ constexpr u32 vertex_weight_array_type    = 0x850E;
 constexpr u32 vertex_weight_array_stride  = 0x850F;
 constexpr u32 vertex_weight_array_pointer = 0x8510;
 } // namespace values
+
 template<class span_const_void>
 requires(concepts::span<span_const_void>)
-    /*!
-     * \brief Part of GL_EXT_vertex_weighting
-     * \param size GLint
-     * \param type GLenum
-     * \param stride GLsizei
-     * \param pointer const void *
-     * \return void
-     */
-    STATICINLINE void vertex_weight_pointer(
-        i32                                   size,
-        group::vertex_weight_pointer_type_ext type,
-        i32                                   stride,
-        span_const_void const&                pointer)
+/*!
+ * \brief Part of GL_EXT_vertex_weighting
+ * \param size GLint
+ * \param type GLenum
+ * \param stride GLsizei
+ * \param pointer const void *
+ * \return void
+ */
+STATICINLINE void vertex_weight_pointer(
+    i32                                   size,
+    group::vertex_weight_pointer_type_ext type,
+    i32                                   stride,
+    span_const_void const&                pointer)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -65,15 +68,17 @@ STATICINLINE void vertex_weightf(f32 weight)
 }
 
 template<class span_const_f32>
-requires(concepts::span<span_const_f32>&& std::is_same_v<
-         std::decay_t<typename span_const_f32::value_type>,
-         std::decay_t<f32>>)
-    /*!
-     * \brief Part of GL_EXT_vertex_weighting
-     * \param weight const GLfloat *
-     * \return void
-     */
-    STATICINLINE void vertex_weightfv(span_const_f32 const& weight)
+requires(
+    concepts::span<span_const_f32> &&
+    std::is_same_v<
+        std::decay_t<typename span_const_f32::value_type>,
+        std::decay_t<f32>>)
+/*!
+ * \brief Part of GL_EXT_vertex_weighting
+ * \param weight const GLfloat *
+ * \return void
+ */
+STATICINLINE void vertex_weightfv(span_const_f32 const& weight)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

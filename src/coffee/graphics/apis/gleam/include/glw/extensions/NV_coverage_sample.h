@@ -2,8 +2,10 @@
 
 #ifdef GL_NV_coverage_sample
 #include "../enums/ClearBufferMask.h"
+
 namespace gl::nv::coverage_sample {
 using gl::group::clear_buffer_mask;
+
 namespace values {
 constexpr u32 coverage_component      = 0x8ED0;
 constexpr u32 coverage_component4     = 0x8ED1;
@@ -14,6 +16,7 @@ constexpr u32 coverage_all_fragments  = 0x8ED5;
 constexpr u32 coverage_edge_fragments = 0x8ED6;
 constexpr u32 coverage_automatic      = 0x8ED7;
 } // namespace values
+
 /*!
  * \brief Part of GL_NV_coverage_sample
  * \param mask GLboolean

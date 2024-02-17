@@ -4,6 +4,7 @@
 namespace gl::ext::multi_draw_indirect {
 namespace values {
 } // namespace values
+
 /*!
  * \brief Part of GL_EXT_multi_draw_indirect
  * \param mode GLenum

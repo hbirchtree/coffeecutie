@@ -40,13 +40,13 @@ void GLFramebuffer::load(entity_container& c, comp_app::app_error&)
 
 void GLFramebuffer::swapBuffers(comp_app::app_error& ec)
 {
-// clang-format off
+    // clang-format off
     EM_ASM(
         const parent = document.querySelector('#canvas').closest('body, div, span');
         document.querySelector("#canvas").width = parent.width;
         document.querySelector("#canvas").height = parent.height;
     );
-// clang-format on
+    // clang-format on
     if(emscripten_has_asyncify())
         emscripten_sleep(0);
     else
@@ -84,17 +84,17 @@ void GLContext::load(entity_container& c, comp_app::app_error& ec)
 
     if((glConfig.profile & comp_app::GLConfig::PerfMask) != 0)
     {
-        context_attributes.powerPreference
-            = (glConfig.profile & comp_app::GLConfig::PreferHighPerf)
-                  ? EM_WEBGL_POWER_PREFERENCE_HIGH_PERFORMANCE
-                  : EM_WEBGL_POWER_PREFERENCE_LOW_POWER;
-        if(context_attributes.powerPreference
-           == EM_WEBGL_POWER_PREFERENCE_HIGH_PERFORMANCE)
+        context_attributes.powerPreference =
+            (glConfig.profile & comp_app::GLConfig::PreferHighPerf)
+                ? EM_WEBGL_POWER_PREFERENCE_HIGH_PERFORMANCE
+                : EM_WEBGL_POWER_PREFERENCE_LOW_POWER;
+        if(context_attributes.powerPreference ==
+           EM_WEBGL_POWER_PREFERENCE_HIGH_PERFORMANCE)
             context_attributes.failIfMajorPerformanceCaveat = EM_TRUE;
     }
 
-    context_handle
-        = emscripten_webgl_create_context("#canvas", &context_attributes);
+    context_handle =
+        emscripten_webgl_create_context("#canvas", &context_attributes);
 
     if(context_handle < 0)
     {
@@ -121,8 +121,8 @@ void GLContext::load(entity_container& c, comp_app::app_error& ec)
             return 0;
         }));
 
-    auto& bindConf
-        = comp_app::AppLoader::config<comp_app::GraphicsBindingConfig>(c);
+    auto& bindConf =
+        comp_app::AppLoader::config<comp_app::GraphicsBindingConfig>(c);
     bindConf.loader = emscripten_webgl_get_proc_address;
 
     if((glConfig.profile & comp_app::GLConfig::Debug) != 0)
@@ -147,8 +147,8 @@ void ControllerInput::start_frame(
     using libc_types::f32;
     using libc_types::i16;
 
-    auto& config = comp_app::AppLoader::config<comp_app::ControllerConfig>(
-        c.underlying());
+    auto& config =
+        comp_app::AppLoader::config<comp_app::ControllerConfig>(c.underlying());
     constexpr auto max_val  = std::numeric_limits<i16>::max();
     auto           dead_val = max_val - config.deadzone;
 
@@ -162,6 +162,7 @@ libc_types::u32 ControllerInput::count() const
 {
     return C_CAST<libc_types::u32>(emscripten_get_num_gamepads());
 }
+
 ControllerInput::controller_map ControllerInput::state(
     libc_types::u32 idx) const
 {
@@ -227,6 +228,7 @@ ControllerInput::controller_map ControllerInput::state(
 
     return out;
 }
+
 comp_app::text_type_t ControllerInput::name(libc_types::u32 idx) const
 {
     return {};

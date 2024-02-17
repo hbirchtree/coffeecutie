@@ -35,8 +35,8 @@ void create_draw(
         buffer->elements = {
             .count         = data.elements.count,
             .instanceCount = data.instances.count,
-            .first
-            = static_cast<u32>(data.elements.offset / element_size(data)),
+            .first =
+                static_cast<u32>(data.elements.offset / element_size(data)),
             .baseVertex   = static_cast<i32>(data.elements.vertex_offset),
             .baseInstance = data.instances.offset,
         };
@@ -87,8 +87,8 @@ void multi_indirect_draw(
         create_draw(call, d, &cmds.at(i++));
     });
 
-    auto commands
-        = semantic::SpanOver<indirect_command_buffer>(cmds.begin(), cmds.end());
+    auto commands =
+        semantic::SpanOver<indirect_command_buffer>(cmds.begin(), cmds.end());
     // auto fence = buffer.push(buffer.move_fences(commands), commands);
     uintptr_t fence_start = 0;
 
@@ -126,17 +126,16 @@ std::optional<std::tuple<error, std::string_view>> direct_draw(
     shader_bookkeeping_t&            bookkeeping,
     const workarounds&               workarounds)
 {
-    [[maybe_unused]] const auto base_instance
-        = data.instances.offset != 0
-          && !workarounds.draw.emulated_base_instance;
-    const auto instanced = call.instanced || data.instances.offset > 0
-                           || (call.indexed && data.elements.vertex_offset > 0);
+    [[maybe_unused]] const auto base_instance =
+        data.instances.offset != 0 && !workarounds.draw.emulated_base_instance;
+    const auto instanced = call.instanced || data.instances.offset > 0 ||
+                           (call.indexed && data.elements.vertex_offset > 0);
 
     if(call.indexed)
     {
-        [[maybe_unused]] const auto base_vertex
-            = data.elements.vertex_offset != 0
-              && !workarounds.draw.emulated_vertex_offset;
+        [[maybe_unused]] const auto base_vertex =
+            data.elements.vertex_offset != 0 &&
+            !workarounds.draw.emulated_vertex_offset;
         if(instanced)
         {
             bookkeeping.baseInstance = data.instances.offset;
@@ -275,10 +274,10 @@ void compute_ubo_instance(
     {
         if(buffer.stride == 0)
             continue;
-        smallest_stride
-            = std::min<u32>(static_cast<u32>(buffer.stride), smallest_stride);
-        biggest_stride
-            = std::max<u32>(static_cast<u32>(buffer.stride), biggest_stride);
+        smallest_stride =
+            std::min<u32>(static_cast<u32>(buffer.stride), smallest_stride);
+        biggest_stride =
+            std::max<u32>(static_cast<u32>(buffer.stride), biggest_stride);
     }
 
     u32 skip = ubo_alignment / smallest_stride;
@@ -346,8 +345,8 @@ std::optional<error> evaluate_draw_state(
     if(call.instanced)
     {
         for(auto const& d : data)
-            if(d.instances.count > limits.draws.instance_count
-               || d.instances.offset > limits.draws.instance_offset)
+            if(d.instances.count > limits.draws.instance_count ||
+               d.instances.offset > limits.draws.instance_offset)
                 return error::draw_unsupported_call;
     }
 

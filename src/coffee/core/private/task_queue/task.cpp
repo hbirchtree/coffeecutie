@@ -62,12 +62,12 @@ static std::optional<RQE> VerifyTask(runtime_task const& t)
     if(enum_helpers::feval(
            t.flags, task_flags::single_shot | task_flags::periodic))
         return RQE::InvalidTaskFlags;
-    if(enum_helpers::feval(t.flags, task_flags::single_shot)
-       && enum_helpers::feval(t.flags, task_flags::periodic))
+    if(enum_helpers::feval(t.flags, task_flags::single_shot) &&
+       enum_helpers::feval(t.flags, task_flags::periodic))
         return RQE::InvalidTaskFlags;
-    if(enum_helpers::feval(t.flags, task_flags::single_shot)
-       && !enum_helpers::feval(t.flags, task_flags::immediate)
-       && t.time < detail::clock::now())
+    if(enum_helpers::feval(t.flags, task_flags::single_shot) &&
+       !enum_helpers::feval(t.flags, task_flags::immediate) &&
+       t.time < detail::clock::now())
         return RQE::ExpiredTaskDeadline;
     return std::nullopt;
 }
@@ -102,8 +102,8 @@ static void NotifyThread(
     auto threadFlags = context->queue_flags.find(threadId);
     auto queueRef    = context->queues.find(threadId);
 
-    if(threadFlags == context->queue_flags.end()
-       || queueRef == context->queues.end())
+    if(threadFlags == context->queue_flags.end() ||
+       queueRef == context->queues.end())
         return;
 
     C_PTR_CHECK(threadFlags->second);
@@ -233,8 +233,8 @@ detail::result<runtime_queue*, RuntimeQueueVerboseError> runtime_queue::
 {
     using namespace std::chrono_literals;
 
-    constexpr auto thread_timeout
-        = compile_info::platform::is_emscripten ? 200ms : 10ms;
+    constexpr auto thread_timeout =
+        compile_info::platform::is_emscripten ? 200ms : 10ms;
 
     C_PTR_CHECK(context);
 
@@ -570,8 +570,8 @@ std::optional<RuntimeQueueError> runtime_queue::AwaitTask(
             return RQE::IncompatibleTaskAwait;
 
         /* Do not await a past event */
-        if(!enum_helpers::feval(task->flags, task_flags::immediate)
-           && detail::clock::now() > task->time)
+        if(!enum_helpers::feval(task->flags, task_flags::immediate) &&
+           detail::clock::now() > task->time)
         {
             return RQE::ExpiredTaskDeadline;
         }
@@ -821,7 +821,7 @@ detail::thread_id runtime_queue::thread_id() const
 size_t runtime_queue::task_count()
 {
     detail::unique_lock<detail::recursive_mutex> _(m_tasks_lock);
-    size_t out = 0;
+    size_t                                       out = 0;
     for(auto const& task : m_tasks)
         if(task.alive)
             out++;

@@ -10,6 +10,7 @@
 #include "../enums/PixelTexGenModeSGIX.h"
 #include "../enums/SizedInternalFormat.h"
 #include "../enums/TextureSwizzle.h"
+
 namespace gl::amd::interleaved_elements {
 using gl::group::combiner_component_usage_nv;
 using gl::group::combiner_portion_nv;
@@ -20,10 +21,12 @@ using gl::group::pixel_format;
 using gl::group::pixel_tex_gen_mode_sgix;
 using gl::group::sized_internal_format;
 using gl::group::texture_swizzle;
+
 namespace values {
 constexpr u32 vertex_element_swizzle = 0x91A4;
 constexpr u32 vertex_id_swizzle      = 0x91A5;
 } // namespace values
+
 /*!
  * \brief Part of GL_AMD_interleaved_elements
  * \param index GLuint

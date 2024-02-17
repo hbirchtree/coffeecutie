@@ -4,12 +4,15 @@
 #include "../enums/FramebufferParameterName.h"
 #include "../enums/GetFramebufferParameter.h"
 #include "../enums/GetPName.h"
+
 namespace gl::arb::framebuffer_no_attachments {
 using gl::group::framebuffer_parameter_name;
 using gl::group::get_framebuffer_parameter;
 using gl::group::get_prop;
+
 namespace values {
 } // namespace values
+
 /*!
  * \brief Part of GL_ARB_framebuffer_no_attachments
  * \param target GLenum
@@ -33,20 +36,21 @@ STATICINLINE void framebuffer_parameter(
 }
 
 template<class span_i32>
-requires(concepts::span<span_i32>&& std::is_same_v<
-         std::decay_t<typename span_i32::value_type>,
-         std::decay_t<i32>>)
-    /*!
-     * \brief Part of GL_ARB_framebuffer_no_attachments
-     * \param target GLenum
-     * \param pname GLenum
-     * \param params GLint *
-     * \return void
-     */
-    STATICINLINE void get_framebuffer_parameter(
-        group::framebuffer_target        target,
-        group::get_framebuffer_parameter pname,
-        span_i32                         params)
+requires(
+    concepts::span<span_i32> && std::is_same_v<
+                                    std::decay_t<typename span_i32::value_type>,
+                                    std::decay_t<i32>>)
+/*!
+ * \brief Part of GL_ARB_framebuffer_no_attachments
+ * \param target GLenum
+ * \param pname GLenum
+ * \param params GLint *
+ * \return void
+ */
+STATICINLINE void get_framebuffer_parameter(
+    group::framebuffer_target        target,
+    group::get_framebuffer_parameter pname,
+    span_i32                         params)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)

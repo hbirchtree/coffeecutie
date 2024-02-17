@@ -36,6 +36,7 @@ union local_actor_type
     {
         return data;
     }
+
     inline bool valid() const
     {
         return data != -1;
@@ -140,6 +141,7 @@ struct alignas(4) object_spawn
         on_normal = 0x4,
         on_hard   = 0x8,
     };
+
     enum bsp_flags_t : u16
     {
         none = 0x0,
@@ -158,21 +160,25 @@ struct alignas(4) object_spawn
 struct biped_spawn : object_spawn
 {
     u32 padding[9];
+
     enum biped_flags_t : u16
     {
         none = 0x0,
         dead = 0x1,
     };
+
     f32           vitality;
     biped_flags_t biped_flags;
     u32           padding2[10];
 };
+
 static_assert(sizeof(biped_spawn) == 120);
 
 struct vehicle_spawn : object_spawn
 {
     u32 unknown_[21];
 };
+
 static_assert(sizeof(vehicle_spawn) == 120);
 
 struct equip_spawn : object_spawn
@@ -184,21 +190,25 @@ struct equip_spawn : object_spawn
         obsolete          = 0x2, /* Unused? */
         does_accelerate   = 0x4, /* Not affected by explosions */
     };
+
     equip_flags_t equip_flags;
     u16           padding;
 };
+
 static_assert(sizeof(equip_spawn) == 40);
 
 struct scenery_spawn : object_spawn
 {
     u32 unknown_[9];
 };
+
 static_assert(sizeof(scenery_spawn) == 72);
 
 struct weapon_spawn : object_spawn
 {
     u32 unknown_[14];
 };
+
 static_assert(sizeof(weapon_spawn) == 92);
 
 enum class machine_spawn_flags : u16
@@ -228,6 +238,7 @@ struct device_machine_spawn : object_spawn
 
     u32 padding[5];
 };
+
 static_assert(sizeof(device_machine_spawn) == 64);
 
 struct light_fixture_spawn : object_spawn
@@ -242,6 +253,7 @@ struct light_fixture_spawn : object_spawn
 
     u32 padding[5];
 };
+
 static_assert(offsetof(light_fixture_spawn, power_group) == 36);
 static_assert(sizeof(light_fixture_spawn) == 88);
 
@@ -509,6 +521,7 @@ struct actor
     actor_ex_flags_t extra_flags;
     u32              padding[3];
     actor_type_t     type;
+
     struct perception_t /* perception */
     {
         f32     max_vision_dist;
@@ -524,18 +537,23 @@ struct actor
         f32     combat_perception_time;
         f32     guard_perception_time;
     } perception;
+
     struct movement_t
     {
     } movement;
+
     struct looking_t
     {
     } looking;
+
     struct unopposable_t
     {
     } unopposable;
+
     struct panic_t
     {
     } panic;
+
     struct defensive_t
     {
     } defensive;
@@ -728,11 +746,13 @@ struct skybox
     {
         bl_tag global_func;
     };
+
     struct animation
     {
         i16 anim_idx;
         u32 period;
     };
+
     struct light
     {
         enum class light_flags : u32
@@ -765,6 +785,7 @@ struct skybox
         Vecf3 color;
         f32   power;
     };
+
     struct fog_opts
     {
         Vecf3 color;
@@ -811,6 +832,7 @@ struct control : object_spawn
 {
     u32 padding[7];
 };
+
 static_assert(sizeof(control) == 64);
 
 struct light_fixture
@@ -944,13 +966,14 @@ struct scenario
     {
         reflexive_t<hsc::opcode_layout<bytecode_t>> data{
             .count = static_cast<u32>(
-                (script.script_bytecode_size
-                 - sizeof(hsc::script_ref<bytecode_t>))
-                / sizeof(hsc::opcode_layout<bytecode_t>)),
+                (script.script_bytecode_size -
+                 sizeof(hsc::script_ref<bytecode_t>)) /
+                sizeof(hsc::opcode_layout<bytecode_t>)),
             .offset = script.unknown_9.offset + 36,
         };
         return data.data(magic).value();
     }
+
     inline result<string_segment_ref, error_msg> string_segment(
         magic_data_t const& magic) const
     {
@@ -964,6 +987,7 @@ struct scenario
             };
         }
     }
+
     inline Span<hsc::function_declaration const> function_table(
         magic_data_t const& magic) const
     {

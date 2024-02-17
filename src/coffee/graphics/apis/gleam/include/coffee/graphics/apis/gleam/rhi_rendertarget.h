@@ -63,14 +63,14 @@ struct rendertarget_currency
 
 struct rendertarget_t
 {
-    static constexpr auto debug_identifier
-        = group::object_identifier::framebuffer;
+    static constexpr auto debug_identifier =
+        group::object_identifier::framebuffer;
 
     rendertarget_t(
         features::rendertargets const& features,
-        rendertarget_currency&         currency) :
-        m_features(features),
-        m_currency(&currency)
+        rendertarget_currency&         currency)
+        : m_features(features)
+        , m_currency(&currency)
     {
     }
 
@@ -373,9 +373,9 @@ struct rendertarget_t
             cmd::clear_stencil(stencil);
             cmd::clear_color(color);
             cmd::clear(
-                clear_buffer_mask::color_buffer_bit
-                | clear_buffer_mask::depth_buffer_bit
-                | clear_buffer_mask::stencil_buffer_bit);
+                clear_buffer_mask::color_buffer_bit |
+                clear_buffer_mask::depth_buffer_bit |
+                clear_buffer_mask::stencil_buffer_bit);
         }
     }
 
@@ -412,8 +412,8 @@ struct rendertarget_t
     }
 
     group::framebuffer_target internal_collapse_target(
-        group::framebuffer_target target
-        = group::framebuffer_target::framebuffer)
+        group::framebuffer_target target =
+            group::framebuffer_target::framebuffer)
     {
         if(m_features.readdraw_buffers)
             return target;
@@ -423,22 +423,22 @@ struct rendertarget_t
 };
 
 inline void detail::rendertarget_copy(
-    [[maybe_unused]] features::rendertargets&   /*features*/,
-    rendertarget_t&                             /*source*/,
-    rendertarget_t&                             /*dest*/,
-    typing::geometry::rect<u32>                 /*srcRect*/,
-    Vecui2                                      /*dstCoord*/,
+    [[maybe_unused]] features::rendertargets& /*features*/,
+    rendertarget_t& /*source*/,
+    rendertarget_t& /*dest*/,
+    typing::geometry::rect<u32> /*srcRect*/,
+    Vecui2 /*dstCoord*/,
     [[maybe_unused]] render_targets::attachment /*srcAttachment*/,
-    render_targets::attachment                  /*dstAttachment*/,
-    u32                                         /*level*/,
-    [[maybe_unused]] u32                        /*srci*/,
-    u32                                         /*dsti*/)
+    render_targets::attachment /*dstAttachment*/,
+    u32 /*level*/,
+    [[maybe_unused]] u32 /*srci*/,
+    u32 /*dsti*/)
 {
     //    using param = group::framebuffer_attachment_parameter_name;
 
     //    i32 dstTexture = 0;
     //    i32 dstTarget  = 0;
-    //#if GLEAM_MAX_VERSION >= 0x450
+    // #if GLEAM_MAX_VERSION >= 0x450
     //    if(features.dsa)
     //    {
     //        cmd::get_named_framebuffer_attachment_parameter(
@@ -461,7 +461,7 @@ inline void detail::rendertarget_copy(
     //            srcRect.bottomleft().toVector<i32>(),
     //            srcRect.size().convert<i32>());
     //    } else
-    //#endif
+    // #endif
     //    {
     //        cmd::bind_framebuffer(
     //            group::framebuffer_target::framebuffer, dest.m_handle);
@@ -477,12 +477,12 @@ inline void detail::rendertarget_copy(
     //            SpanOne(dstTarget));
     //        cmd::bind_framebuffer(
     //            group::framebuffer_target::framebuffer, source.m_handle);
-    //#if GLEAM_MAX_VERSION >= 0x200 || GLEAM_MAX_VERSION_ES >= 0x300
+    // #if GLEAM_MAX_VERSION >= 0x200 || GLEAM_MAX_VERSION_ES >= 0x300
     //        if(features.readdraw_buffers)
     //            cmd::read_buffer(
     //                convert::to<group::read_buffer_mode>(srcAttachment,
     //                srci));
-    //#endif
+    // #endif
     //        group::texture_target texTarget
     //            = dstTarget == 0 ? group::texture_target::texture_2d
     //                             :

@@ -48,6 +48,7 @@ struct AudioFormat
         u32 samplerate; /*!< Samplerate, typically 44.1kHz*/
         u32 frequency;
     };
+
     u32 channels; /*!< Audio channels, typically 2 or 4*/
     u32 bitdepth;
 };

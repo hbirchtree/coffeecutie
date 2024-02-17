@@ -34,24 +34,29 @@ struct MemStatus
 {
     u64 total, used, free;
 };
+
 struct PciStatus
 {
     u8 generation, curr_gen;
     u8 linkWidth, curr_linkWidth;
 };
+
 struct TempRange
 {
     scalar current;
     scalar max;
 };
+
 struct ClockRange
 {
     u32 current, min, max;
 };
+
 struct UsageMeter
 {
     u8 mem, gpu, decoder, encoder;
 };
+
 struct TransferStatus
 {
     u32 rx, tx;
@@ -113,8 +118,9 @@ class GpuView
     GpuQueryInterface& m_interface;
 
   public:
-    GpuView(gpucount_t i, GpuQueryInterface& interface) :
-        m_gpu(i), m_interface(interface)
+    GpuView(gpucount_t i, GpuQueryInterface& interface)
+        : m_gpu(i)
+        , m_interface(interface)
     {
     }
 
@@ -159,8 +165,9 @@ class GpuQueryView
         gpucount_t    m_gpu;
         GpuQueryView* m_view;
 
-        GpuQueryIterator(GpuQueryView& view, gpucount_t i) :
-            m_gpu(i), m_view(&view)
+        GpuQueryIterator(GpuQueryView& view, gpucount_t i)
+            : m_gpu(i)
+            , m_view(&view)
         {
         }
 
@@ -169,6 +176,7 @@ class GpuQueryView
         {
             return m_gpu != other.m_gpu;
         }
+
         bool operator==(GpuQueryIterator const& other)
         {
             return !(m_gpu != other.m_gpu);
@@ -188,7 +196,8 @@ class GpuQueryView
 
     using iterator = GpuQueryIterator;
 
-    GpuQueryView(GpuQueryInterface& interface) : m_interface(interface)
+    GpuQueryView(GpuQueryInterface& interface)
+        : m_interface(interface)
     {
     }
 
@@ -196,6 +205,7 @@ class GpuQueryView
     {
         return iterator(*this, 0);
     }
+
     iterator end()
     {
         return iterator(*this, m_interface.GetNumGpus());

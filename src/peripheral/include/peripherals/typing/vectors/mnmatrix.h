@@ -8,11 +8,11 @@ template<typename T, size_t MSize, size_t NSize>
 struct tmnmatrix
 {
     using value_type = T;
-    using col_type = tvector<T, NSize>;
+    using col_type   = tvector<T, NSize>;
 
-    static constexpr size_t   size_m = MSize;
-    static constexpr size_t   size_n = NSize;
-    static constexpr size_t   size   = MSize * NSize;
+    static constexpr size_t size_m = MSize;
+    static constexpr size_t size_n = NSize;
+    static constexpr size_t size   = MSize * NSize;
 
     col_type d[MSize];
 
@@ -22,6 +22,7 @@ struct tmnmatrix
             for(size_t x = 0; x < MSize; x++)
                 (*this)[x][y] = c;
     }
+
     tmnmatrix()
     {
         for(size_t y = 0; y < NSize; y++)

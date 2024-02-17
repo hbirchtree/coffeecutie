@@ -4,6 +4,7 @@
 namespace gl::nv::draw_texture {
 namespace values {
 } // namespace values
+
 /*!
  * \brief Part of GL_NV_draw_texture
  * \param texture GLuint

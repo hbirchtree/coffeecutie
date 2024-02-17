@@ -4,6 +4,7 @@
 namespace gl::oes::copy_image {
 namespace values {
 } // namespace values
+
 /*!
  * \brief Part of GL_OES_copy_image
  * \param srcName GLuint

@@ -10,12 +10,16 @@ using namespace libc_types;
 using namespace type_safety;
 
 template<typename T>
-requires std::is_trivial<T>::value struct size_2d
+requires std::is_trivial<T>::value
+struct size_2d
 {
-    using value_type = T;
+    using value_type                 = T;
     static constexpr size_t row_size = 2;
 
-    static constexpr size_t length() { return 2; }
+    static constexpr size_t length()
+    {
+        return 2;
+    }
 
     template<typename Self, typename U>
     STATICINLINE Self from_values(U w, U h)
@@ -56,6 +60,7 @@ requires std::is_trivial<T>::value struct size_2d
     {
         return size_2d<T>(this->w / d, this->h / d);
     }
+
     inline size_2d<T> operator*(const T& d)
     {
         return size_2d<T>(this->w * d, this->h * d);
@@ -66,6 +71,7 @@ requires std::is_trivial<T>::value struct size_2d
         (*this) = (*this) / d;
         return *this;
     }
+
     inline size_2d<T>& operator*=(const T& d)
     {
         (*this) = (*this) * d;
@@ -100,12 +106,16 @@ requires std::is_trivial<T>::value struct size_2d
 };
 
 template<typename T>
-requires std::is_trivial<T>::value struct size_3d
+requires std::is_trivial<T>::value
+struct size_3d
 {
-    using value_type = T;
+    using value_type                 = T;
     static constexpr size_t row_size = 3;
 
-    static constexpr size_t length() { return 2; }
+    static constexpr size_t length()
+    {
+        return 2;
+    }
 
     template<typename U>
     inline size_3d<U> convert() const

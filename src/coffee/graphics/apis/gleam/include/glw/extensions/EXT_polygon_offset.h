@@ -2,12 +2,15 @@
 
 #ifdef GL_EXT_polygon_offset
 #include "../enums/GetPName.h"
+
 namespace gl::ext::polygon_offset {
 using gl::group::get_prop;
+
 namespace values {
 constexpr u32 polygon_offset        = 0x8037;
 constexpr u32 polygon_offset_factor = 0x8038;
 } // namespace values
+
 /*!
  * \brief Part of GL_EXT_polygon_offset
  * \param factor GLfloat

@@ -9,9 +9,8 @@
 #include <functional>
 #include <future>
 
-#if defined(COFFEE_ANDROID)                   \
-    && (defined(COFFEE_NO_PTHREAD_GETNAME_NP) \
-        || defined(COFFEE_NO_PTHREAD_SETNAME_NP))
+#if defined(COFFEE_ANDROID) && (defined(COFFEE_NO_PTHREAD_GETNAME_NP) || \
+                                defined(COFFEE_NO_PTHREAD_SETNAME_NP))
 #include <sys/prctl.h>
 #endif
 
@@ -27,6 +26,7 @@ struct Future
 
     RType retval;
 };
+
 template<>
 struct Future<void>
 {
@@ -53,19 +53,24 @@ struct Thread
     using id = libc_types::u32;
 
     Thread(std::function<void()> f);
+
     template<
         typename TFun,
-        typename std::enable_if<std::is_pointer<TFun>::value, bool>::
-            type* = nullptr,
+        typename std::enable_if<std::is_pointer<TFun>::value, bool>::type* =
+            nullptr,
         typename... Args>
-    Thread(TFun fptr, Args... args) : Thread([&]() { fptr(args...); })
+    Thread(TFun fptr, Args... args)
+        : Thread([&]() { fptr(args...); })
     {
     }
+
     Thread();
+
     static inline libc_types::i32 hardware_concurrency()
     {
         return 1;
     }
+
     void detach();
     void join();
     id   get_id();
@@ -89,14 +94,15 @@ STATICINLINE void sleep_for(const std::chrono::duration<Rep, Period>& dura)
 {
 #if defined(COFFEE_GEKKO)
     struct timespec sleepyTime;
-    sleepyTime.tv_sec
-        = std::chrono::duration_cast<std::chrono::seconds>(dura).count();
-    sleepyTime.tv_nsec
-        = std::chrono::duration_cast<std::chrono::nanoseconds>(dura).count()
-          % 1000000000;
+    sleepyTime.tv_sec =
+        std::chrono::duration_cast<std::chrono::seconds>(dura).count();
+    sleepyTime.tv_nsec =
+        std::chrono::duration_cast<std::chrono::nanoseconds>(dura).count() %
+        1000000000;
     nanosleep(&sleepyTime, nullptr);
 #endif
 }
+
 template<typename Clock, typename Duration>
 STATICINLINE void sleep_until(
     const std::chrono::time_point<Clock, Duration>& abs_time)
