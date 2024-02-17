@@ -10,6 +10,7 @@
 #include "ui.h"
 #include "ui_caching.h"
 
+#include <coffee/asio/net_resource.h>
 #include <coffee/comp_app/fps_counter.h>
 #include <coffee/core/coffee_args.h>
 #include <coffee/graphics/apis/gleam/rhi_emulation.h>
@@ -152,6 +153,7 @@ i32 blam_main()
             e.register_subsystem_inplace<BlamFiles<halo_version>>();
 
 #if defined(FEATURE_ENABLE_DiscordLatte)
+            using namespace net::url_literals;
             auto& discord = e.register_subsystem_inplace<discord::Subsystem>(
                 rq::runtime_queue::CreateNewThreadQueue("Online")
                     .assume_value(),
@@ -162,11 +164,11 @@ i32 blam_main()
                 discord.game().put(discord::DiscordGameDelegate::Builder(
                     "Blam!",
                     "Gaming",
-                    Url("https://assetsio.reedpopcdn.com/"
+                    "https://assetsio.reedpopcdn.com/"
                         "digitalfoundry-2021-halo-combat-evolved-season-7-"
                         "master-chief-collection-1622735120728.jpg?width=1600&"
                         "height=900&fit=crop&quality=100&format=png&enable="
-                        "upscale&auto=webp")));
+                        "upscale&auto=webp"_https));
                 discord.presence().put({
                     .partyId = "16420",
                     .curPlayers = 1,
