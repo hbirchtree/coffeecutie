@@ -3,7 +3,6 @@
         "./toolchain/vcpkg/ports/bullet2",
         "./toolchain/vcpkg/ports/discord-rpc",
         "./toolchain/vcpkg/ports/gamenetworkingsockets",
-        "./toolchain/vcpkg/ports/pvrscope",
         "./toolchain/vcpkg/ports/sdl2",
         "./toolchain/vcpkg/ports/stb"
     ],
@@ -23,12 +22,13 @@
         {
             "kind": "git",
             "repository": "https://github.com/hbirchtree/vcpkg-graphics",
-            "baseline": "9bd49b4d34a3808c21a02159584658268b63b829",
+            "baseline": "4ff0b3000cb04cc1866eca764cd9464c212ce476",
             "packages": [
                 "bc7enc",
                 "bcdec",
                 "etc2comp",
                 "ktx",
+                "pvrscope",
                 "pvrtcdec",
                 "shaderc",
                 "spirv-tools"
