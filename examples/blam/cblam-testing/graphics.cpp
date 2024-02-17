@@ -318,8 +318,8 @@ i32 blam_main()
                     if(prev != camera.active)
                         cDebug("Player {} -> {}", i, camera.active);
                 }
-                if(!camera.active)
-                    continue;
+                // if(!camera.active)
+                //     continue;
                 if(controllers)
                     controller_camera_update(
                         camera.camera_,

@@ -56,7 +56,9 @@ struct MessageBase
         /* Debug */
         Screenshot,
     } type{None};
+
     u32 request{};
+
     enum Flags : u32
     {
         NoFlags   = 0x0,
@@ -65,6 +67,7 @@ struct MessageBase
         Replicate = 0x4,
         Enforce   = 0x8,
     } flags{NoFlags};
+
     u32 num_values{1};
 
     template<typename T>
@@ -79,7 +82,9 @@ C_FLAGS(MessageBase::Flags, u32)
 template<typename T>
 struct Message : MessageBase
 {
-    Message(T&& data) : MessageBase{T::message_type}, data(std::move(data))
+    Message(T&& data)
+        : MessageBase{T::message_type}
+        , data(std::move(data))
     {
     }
 
@@ -134,6 +139,7 @@ struct GameEventWrapper
 struct alignas(8) CameraSync
 {
     static constexpr auto message_type = MessageBase::CameraSync;
+    static constexpr u32  self_id      = 0xFFFF;
 
     Vecf4 position;
     Quatf rotation;
@@ -173,6 +179,17 @@ static_assert(sizeof(Message<CameraSync>) == 56);
 static_assert(sizeof(Message<u32>) == 20);
 static_assert(sizeof(Message<u64>) == 24);
 
+bool is_client_network_event(GameEvent& event)
+{
+    switch(event.type)
+    {
+    case GameEvent::ServerCameraControl:
+        return true;
+    default:
+        return false;
+    }
+}
+
 } // namespace
 
 struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
@@ -185,10 +202,14 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     {
         if(event.type != T::event_type)
             return false;
-        send_all(Message<GameEventWrapper<T>>({
+        auto message = Message<GameEventWrapper<T>>({
             .event = event,
             .data  = *static_cast<T const*>(data),
-        }));
+        });
+        if(m_socket)
+            send_all(std::move(message));
+        else
+            send_single(m_connection, std::move(message));
         return true;
     }
 
@@ -201,8 +222,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         });
     }
 
-    Networking(GameEventBus& game_bus, NetworkState& net_state) :
-        m_game_bus(game_bus), m_net_state(net_state)
+    Networking(GameEventBus& game_bus, NetworkState& net_state)
+        : m_game_bus(game_bus)
+        , m_net_state(net_state)
     {
         network_instance = this;
 
@@ -241,10 +263,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             });
         m_game_bus.addEventData(
             {0, [this](GameEvent& event, const void* data) {
-                 if(!m_socket)
+                 if(!m_socket && !is_client_network_event(event))
                      return;
-                 if(forward_game_event<MapLoadByName>(event, data))
-                     return;
+                 forward_game_event<MapLoadByName>(event, data);
              }});
         m_game_bus.addEventFunction<MapLoadFinishedEvent<halo_version>>(
             0,
@@ -295,8 +316,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         auto config = create_callbacks();
         config.emplace_back();
         config.back().SetInt32(k_ESteamNetworkingConfig_SymmetricConnect, 1);
-        m_socket
-            = m_impl->CreateListenSocketP2P(0, config.size(), config.data());
+        m_socket =
+            m_impl->CreateListenSocketP2P(0, config.size(), config.data());
         m_poll_group = m_impl->CreatePollGroup();
     }
 
@@ -322,8 +343,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             return;
         }
         auto config = create_callbacks();
-        m_connection
-            = m_impl->ConnectByIPAddress(server, config.size(), config.data());
+        m_connection =
+            m_impl->ConnectByIPAddress(server, config.size(), config.data());
         if(m_connection == k_HSteamNetConnection_Invalid)
         {
             cWarning("Failed to set up connection to: {}", remote);
@@ -362,8 +383,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             m_net_state.server_state = NetworkState::ServerState::Error;
             return;
         }
-        m_socket = m_impl->CreateListenSocketIP(
-            server, config.size(), config.data());
+        m_socket =
+            m_impl->CreateListenSocketIP(server, config.size(), config.data());
         if(m_socket == k_HSteamListenSocket_Invalid)
         {
             cWarning("Failed to start listening on {}", local);
@@ -454,8 +475,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 info->m_hConn,
                 0,
                 nullptr,
-                info->m_info.m_eState
-                    == k_ESteamNetworkingConnectionState_ClosedByPeer);
+                info->m_info.m_eState ==
+                    k_ESteamNetworkingConnectionState_ClosedByPeer);
             break;
         }
         default:
@@ -487,8 +508,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 info->m_hConn,
                 0,
                 nullptr,
-                info->m_info.m_eState
-                    == k_ESteamNetworkingConnectionState_ClosedByPeer);
+                info->m_info.m_eState ==
+                    k_ESteamNetworkingConnectionState_ClosedByPeer);
             m_connection = {};
             break;
         }
@@ -520,15 +541,15 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         if(m_connections.empty() || multi.empty())
             return;
 
-        auto const payload_size
-            = sizeof(MessageBase) + multi.size() * sizeof(T);
+        auto const payload_size =
+            sizeof(MessageBase) + multi.size() * sizeof(T);
         char* payload_buf = new char[payload_size];
 
         auto* header       = reinterpret_cast<MessageBase*>(payload_buf);
         *header            = *static_cast<MessageBase*>(&data);
         header->num_values = multi.size();
-        header->flags
-            |= multi.size() > 1 ? MessageBase::Multiple : MessageBase::NoFlags;
+        header->flags |=
+            multi.size() > 1 ? MessageBase::Multiple : MessageBase::NoFlags;
 
         auto* values = reinterpret_cast<T*>(payload_buf + sizeof(MessageBase));
         memcpy(values, multi.data(), multi.size_bytes());
@@ -588,8 +609,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     m_poll_group, &message, 1);
                 if(num_msgs < 1)
                     break;
-                auto const& payload
-                    = *reinterpret_cast<MessageBase const*>(message->GetData());
+                auto const& payload =
+                    *reinterpret_cast<MessageBase const*>(message->GetData());
                 server_receive_payload(p, message->m_conn, payload);
                 cDebug(
                     "Received {} bytes from {}",
@@ -619,8 +640,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     m_connection, &message, 1);
                 if(num_msgs < 1)
                     break;
-                auto const& payload
-                    = *reinterpret_cast<MessageBase const*>(message->GetData());
+                auto const& payload =
+                    *reinterpret_cast<MessageBase const*>(message->GetData());
                 client_receive_payload(p, payload);
                 message->Release();
             }
@@ -663,8 +684,10 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             BlamCamera* camera;
             p.subsystem(camera);
 
-            auto&       player     = camera->player(/*player_info.idx*/ 0);
-            auto const& sync       = payload.value<CameraSync>();
+            auto const& sync   = payload.value<CameraSync>();
+            auto&       player = camera->player(
+                sync.target_player == CameraSync::self_id ? player_info.idx
+                                                          : sync.target_player);
             player.camera.position = sync.position;
             player.camera.rotation = sync.rotation;
             break;

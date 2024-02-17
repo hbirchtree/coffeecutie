@@ -27,7 +27,7 @@ BreakBeforeTernaryOperators: 'true'
 BreakBeforeConceptDeclarations: 'true'
 BreakConstructorInitializers: BeforeComma
 BreakInheritanceList: BeforeComma
-BreakTemplateDeclarations: Yes
+# BreakTemplateDeclarations: Yes
 ColumnLimit: '80'
 FixNamespaceComments: 'true'
 IndentWidth: '4'

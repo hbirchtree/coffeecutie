@@ -18,7 +18,7 @@ source $BASE_DIR/toolchain/building.sh
 function all_source_files()
 {
     local SRC_BASE_DIR=$(dirname "${0}")
-    find "${SRC_BASE_DIR}"/src/coffee "${SRC_BASE_DIR}"/src/include -regex '.*\.\(cpp\|h\)' -type f $@      
+    find "${SRC_BASE_DIR}/src" "${SRC_BASE_DIR}/examples" -regex '.*\.\(cpp\|h\)' -type f $@
 }
 
 case $1 in
@@ -115,12 +115,8 @@ ios-build|xcode-build)
     "${TC_DIR}"/buildinfo.py ${@:2}
 ;;
 "format")
-    CLANG_FORMAT=$(CLANG_FORMAT:-clang-format)
-    if [ -z "$2" ]; then
-        all_source_files
-    else
-        all_source_files -exec $CLANG_FORMAT -style=file "$2" {} \;
-    fi
+    CLANG_FORMAT=${CLANG_FORMAT:-${BASE_DIR}/multi_build/compilers/bin/clang-format}
+    all_source_files -exec $CLANG_FORMAT -i -style=file {} \;
 ;;
 "type-guards")
     for f in $(all_source_files); do

@@ -34,10 +34,11 @@ struct BlamCamera : compo::SubsystemBase
 
     struct viewport_t
     {
-        viewport_t() :
-            camera_(std::make_shared<std_camera_t>(&camera, &camera_opts))
+        viewport_t()
+            : camera_(std::make_shared<std_camera_t>(&camera, &camera_opts))
         {
         }
+
         viewport_t(const viewport_t&) = delete;
 
         StandardCameraOpts            camera_opts;
@@ -48,6 +49,7 @@ struct BlamCamera : compo::SubsystemBase
         ControllerOpts                controller_opts;
         bool                          active{false};
     };
+
     std::array<viewport_t, 4> viewports;
     libc_types::u32           focused_player{0};
 
@@ -152,8 +154,10 @@ struct GameEvent
 
         ServerConnect,
         ServerConnected,
+        ServerCameraControl,
         ServerDisconnect,
     };
+
     EventType type{None};
 };
 
@@ -220,6 +224,7 @@ struct ServerConnectEvent
         Server,
         Listen,
     };
+
     ConnectType type{Server};
     std::string remote;
 };
@@ -230,6 +235,19 @@ struct ServerConnectedEvent
 
     std::string     remote;
     libc_types::u32 seed{0}; /* RNG seed, to keep systems in sync */
+};
+
+struct ServerCameraControl
+{
+    static constexpr auto event_type = GameEvent::ServerCameraControl;
+
+    enum RequestType
+    {
+        None,
+        RequestCameraFocus,
+    } request{None};
+
+    libc_types::u32 target_player{0xFFFF};
 };
 
 struct ServerDisconnectEvent

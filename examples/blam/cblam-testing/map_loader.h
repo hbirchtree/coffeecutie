@@ -30,8 +30,8 @@ struct BlamMapBrowser
     using type  = BlamMapBrowser;
     using Proxy = compo::proxy_of<BlamMapBrowserManifest>;
 
-    BlamMapBrowser(std::function<void(Url const&)>&& map_selected) :
-        m_map_selected(std::move(map_selected))
+    BlamMapBrowser(std::function<void(Url const&)>&& map_selected)
+        : m_map_selected(std::move(map_selected))
     {
         priority       = 2048;
         remote_address = "127.0.0.1:16420";
@@ -116,8 +116,8 @@ struct BlamMapBrowser
                         gbus.inject(ev, &connect);
                     }
                     ImGui::Columns();
-                    if(auto state
-                       = magic_enum::enum_name(net_state->client_state);
+                    if(auto state =
+                           magic_enum::enum_name(net_state->client_state);
                        state.size())
                         ImGui::Text(
                             "State: %.*s",
@@ -125,6 +125,15 @@ struct BlamMapBrowser
                             state.data());
                     if(auto remote = net_state->remote_address)
                         ImGui::Text("Connected to %s", remote->c_str());
+                    if(ImGui::Button("Look at me!"))
+                    {
+                        auto&               gbus = e.subsystem<GameEventBus>();
+                        GameEvent           ev;
+                        ServerCameraControl control{
+                            .request = ServerCameraControl::RequestCameraFocus,
+                        };
+                        gbus.inject(ev, &control);
+                    }
                     ImGui::EndTabItem();
                 }
                 if(ImGui::BeginTabItem("Server"))
@@ -147,8 +156,8 @@ struct BlamMapBrowser
                         gbus.inject(ev, &connect);
                     }
                     ImGui::Columns();
-                    if(auto state
-                       = magic_enum::enum_name(net_state->server_state);
+                    if(auto state =
+                           magic_enum::enum_name(net_state->server_state);
                        state.size())
                         ImGui::Text(
                             "State: %.*s",
@@ -166,8 +175,8 @@ struct BlamMapBrowser
                     }
                     for(auto const& player : e.select<PlayerInfo>())
                     {
-                        auto const& pinfo
-                            = e.ref<Proxy>(player.id).get<PlayerInfo>();
+                        auto const& pinfo =
+                            e.ref<Proxy>(player.id).get<PlayerInfo>();
                         ImGui::Text(
                             " - %s (%s)",
                             pinfo.name.c_str(),
@@ -194,6 +203,7 @@ struct BlamMapBrowser
         }
         ImGui::End();
     }
+
     void end_restricted(Proxy&, time_point const&)
     {
     }
@@ -212,6 +222,7 @@ struct BlamMapBrowser
         else
             m_info = info.value();
     }
+
     void display_property(std::string name, std::string value)
     {
         ImGui::Text("%s", name.c_str());
@@ -219,6 +230,7 @@ struct BlamMapBrowser
         ImGui::Text("%s", value.c_str());
         ImGui::NextColumn();
     }
+
     void display_property(std::string name, std::string_view value)
     {
         ImGui::Text("%s", name.c_str());
