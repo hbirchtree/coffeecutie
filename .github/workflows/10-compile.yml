@@ -83,7 +83,7 @@ jobs:
         BUILD_DIR=source/multi_build/${NORMALIZED_NAME}
         OUT_FILE=$(pwd)/${NORMALIZED_NAME}.tar.xz
         cd ${BUILD_DIR}
-        tar -Jcvf ${OUT_FILE} $(ls bin lib/*.so* packaged)
+        tar -Jcvf ${OUT_FILE} $(find . -maxdepth 2 -name bin -o -name packaged -o -name *.so*)
     - name: Uploading artifacts
       uses: actions/upload-artifact@v2
       with:
