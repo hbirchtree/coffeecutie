@@ -62,6 +62,9 @@ jobs:
         java-version: '17'
     - name: Installing build-essential
       run: sudo apt install build-essential inkscape flatpak nasm squashfs-tools
+    - name: Installing MinGW-W64 tools
+      if: matrix.variant == 'desktop:x86_64-windows-gnu:win32'
+      run: sudo apt install mingw-w64-tools mingw-w64-x86-64-dev
     - name: Building host tools
       run: source/cb build host-x64-linux-native
       env:
@@ -70,6 +73,9 @@ jobs:
       run: source/cb build ${{matrix.variant}}
       env:
         VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
+    - name: Copying over winpthread for MinGW-W64
+      if: matrix.variant == 'desktop:x86_64-windows-gnu:win32'
+      run: cp /usr/x86_64-w64-mingw32/lib/libwinpthread-1.dll source/multi_build/desktop-x86_64-windows-gnu-win32/bin
     - name: Generate artifacts
       run: |
         NORMALIZED_NAME=${{matrix.variant}}
@@ -77,7 +83,7 @@ jobs:
         BUILD_DIR=source/multi_build/${NORMALIZED_NAME}
         OUT_FILE=$(pwd)/${NORMALIZED_NAME}.tar.xz
         cd ${BUILD_DIR}
-        tar -Jcvf ${OUT_FILE} bin lib/*.so* packaged
+        tar -Jcvf ${OUT_FILE} $(ls bin lib/*.so* packaged)
     - name: Uploading artifacts
       uses: actions/upload-artifact@v2
       with:
