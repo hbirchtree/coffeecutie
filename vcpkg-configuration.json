@@ -38,7 +38,7 @@
         {
             "kind": "git",
             "repository": "https://github.com/hbirchtree/vcpkg-appimage",
-            "baseline": "3fc5ca2dc6a69dab0ac6906b23c823b1c81984c3",
+            "baseline": "864719a8bd62d0e2ac0d3e6335fbe3ee991a76a2",
             "packages": [
                 "appimage-runtime",
                 "squashfuse"
