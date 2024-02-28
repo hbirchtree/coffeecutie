@@ -25,15 +25,23 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        variant:
-        - android:arm64:30-gl
-        - android:arm64:32
-        - beaglebone:arm-buildroot-linux-gnueabihf:ti-sgx
-        - desktop:aarch64-buildroot-linux-gnu:multi
-        - desktop:arm-buildroot-linux-gnueabihf:sdl2
-        - desktop:x86_64-buildroot-linux-gnu:multi
-        - desktop:x86_64-windows-gnu:win32
-        - web:wasm32-emscripten:webgl2
+        include:
+        - variant: android:arm64:30-gl
+          artifact: android-arm64-30-gl
+        - variant: android:arm64:32
+          artifact: android-arm64-32
+        - variant: beaglebone:arm-buildroot-linux-gnueabihf:ti-sgx
+          artifact: beaglebone-arm-buildroot-linux-gnueabihf-ti-sgx
+        - variant: desktop:aarch64-buildroot-linux-gnu:multi
+          artifact: desktop-aarch64-buildroot-linux-gnu-multi
+        - variant: desktop:arm-buildroot-linux-gnueabihf:sdl2
+          artifact: desktop-arm-buildroot-linux-gnueabihf-sdl2
+        - variant: desktop:x86_64-buildroot-linux-gnu:multi
+          artifact: desktop-x86_64-buildroot-linux-gnu-multi
+        - variant: desktop:x86_64-windows-gnu:win32
+          artifact: desktop-x86_64-windows-gnu-win32
+        - variant: web:wasm32-emscripten:webgl2
+          artifact: web-wasm32-emscripten-webgl2
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
@@ -69,10 +77,10 @@ jobs:
         BUILD_DIR=source/multi_build/${NORMALIZED_NAME}
         OUT_FILE=$(pwd)/${NORMALIZED_NAME}.tar.xz
         cd ${BUILD_DIR}
-        tar -Jcvf ${NORMALIZED_NAME}.tar.xz ${BUILD_DIR}/bin ${BUILD_DIR}/packaged
+        tar -Jcvf ${OUT_FILE} bin lib/*.so* packaged
     - name: Uploading artifacts
       uses: actions/upload-artifact@v2
       with:
-        name: ${{matrix.variant | replace(":", "-")}}
+        name: ${{matrix.artifact}}
         path: '*.tar.xz'
         if-no-files-found: error
