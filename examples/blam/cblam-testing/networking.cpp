@@ -15,7 +15,7 @@
 
 using NetworkingManifest = compo::SubsystemManifest<
     empty_list_t,
-    type_list_t<BlamCamera>,
+    type_list_t<BlamCamera, NetworkState>,
     type_list_t<comp_app::ScreenshotProvider>>;
 
 /* Lane 0 should be used for most common packets */
@@ -46,6 +46,7 @@ struct MessageBase
         /* Control */
         GameJoin,
         PlayerJoin,
+        PlayerJoinConfirm,
         GameEvent,
         GameLeave,
 
@@ -127,6 +128,13 @@ struct PlayerJoin
     blam::bl_string player_name;
 };
 
+struct PlayerJoinConfirm
+{
+    static constexpr auto message_type = MessageBase::PlayerJoinConfirm;
+
+    u32 player_idx{0};
+};
+
 template<typename T>
 struct GameEventWrapper
 {
@@ -179,7 +187,7 @@ static_assert(sizeof(Message<CameraSync>) == 56);
 static_assert(sizeof(Message<u32>) == 20);
 static_assert(sizeof(Message<u64>) == 24);
 
-bool is_client_network_event(GameEvent& event)
+bool is_client_network_event(GameEvent const& event)
 {
     switch(event.type)
     {
@@ -222,9 +230,11 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         });
     }
 
-    Networking(GameEventBus& game_bus, NetworkState& net_state)
+    Networking(
+        GameEventBus& game_bus, NetworkState& net_state, BlamCamera& camera)
         : m_game_bus(game_bus)
         , m_net_state(net_state)
+        , m_camera(camera)
     {
         network_instance = this;
 
@@ -261,11 +271,38 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     return;
                 auto map_name = (*load->file).path().fileBasename().removeExt();
             });
+        m_game_bus.addEventFunction<ServerCameraControl>(
+            0, [this](GameEvent&, ServerCameraControl* cam) {
+                if(!m_socket)
+                    return;
+                m_camera.focused_player =
+                    cam->target_player == 0xFFFF ? 0 : cam->target_player;
+                cDebug("Setting camera to {}", cam->target_player);
+            });
         m_game_bus.addEventData(
             {0, [this](GameEvent& event, const void* data) {
-                 if(!m_socket && !is_client_network_event(event))
+                 /* Each function will check the type of the event,
+                  * only the matching one will send
+                  */
+                 if(m_socket)
+                 {
+                     cDebug(
+                         "Distributing {} event",
+                         magic_enum::enum_name(event.type));
+                     forward_game_event<MapLoadByName>(event, data);
                      return;
-                 forward_game_event<MapLoadByName>(event, data);
+                 } else if(is_client_network_event(event))
+                 {
+                     cDebug(
+                         "Forwarding {} event",
+                         magic_enum::enum_name(event.type));
+                     forward_game_event<ServerCameraControl>(event, data);
+                 } else
+                 {
+                     cDebug(
+                         "Not forwarding {} event",
+                         magic_enum::enum_name(event.type));
+                 }
              }});
         m_game_bus.addEventFunction<MapLoadFinishedEvent<halo_version>>(
             0,
@@ -470,6 +507,15 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 "peer={} disconnected ({})",
                 info->m_hConn,
                 client_name(info->m_hConn));
+            if(auto it = m_connections.find(info->m_hConn);
+               it != m_connections.end())
+            {
+                auto& player = it->second.player_info;
+                player.m_ref->remove_entity_if(
+                    [&player](compo::Entity const& e) {
+                        return player.m_id == e.id;
+                    });
+            }
             m_connections.erase(info->m_hConn);
             m_impl->CloseConnection(
                 info->m_hConn,
@@ -612,23 +658,19 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 auto const& payload =
                     *reinterpret_cast<MessageBase const*>(message->GetData());
                 server_receive_payload(p, message->m_conn, payload);
-                cDebug(
-                    "Received {} bytes from {}",
-                    message->GetSize(),
-                    message->GetConnection());
                 message->Release();
             }
 
-            // BlamCamera* camera;
-            // p.subsystem(camera);
+            BlamCamera* camera;
+            p.subsystem(camera);
 
-            // const auto player = camera->player(1);
-            // send_all(
-            //     Message<CameraSync>({
-            //         .position = Vecf4(player.camera.position, 0),
-            //         .rotation = player.camera.rotation,
-            //     }),
-            //     k_nSteamNetworkingSend_UnreliableNoDelay);
+            const auto& player = camera->player(0);
+            send_all(
+                Message<CameraSync>({
+                    .position = Vecf4(player.camera.position, 0),
+                    .rotation = player.camera.rotation,
+                }),
+                k_nSteamNetworkingSend_UnreliableNoDelay);
         }
         if(m_connection)
         {
@@ -678,6 +720,24 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             info.name       = player_join.player_name.str();
             info.remote     = client_name(connection);
             info.player_idx = player_info.idx;
+
+            send_single(
+                connection,
+                Message<PlayerJoinConfirm>({
+                    .player_idx = player_info.idx,
+                }));
+            break;
+        }
+        case MessageBase::GameEvent: {
+            auto const& event  = payload.value<GameEventWrapper<char>>();
+            GameEvent   event_ = event.event;
+            cDebug(
+                "Received {} from client {}",
+                magic_enum::enum_name(event_.type),
+                connection);
+            if(!is_client_network_event(event_))
+                break;
+            m_game_bus.inject(event_, const_cast<char*>(&event.data));
             break;
         }
         case MessageBase::CameraSync: {
@@ -693,6 +753,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             break;
         }
         default:
+            cDebug("Unrecognized event: {}", payload.type);
             break;
         }
     }
@@ -740,9 +801,19 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 }));
             break;
         }
+        case MessageBase::PlayerJoinConfirm: {
+            auto const& confirm   = payload.value<PlayerJoinConfirm>();
+            auto&       net_state = p.subsystem<NetworkState>();
+
+            net_state.remote_player_idx = confirm.player_idx;
+            cDebug("Received join confirmation");
+            break;
+        }
         case MessageBase::GameEvent: {
             auto const& event  = payload.value<GameEventWrapper<char>>();
             GameEvent   event_ = event.event;
+            cDebug(
+                "Received GameEvent: {}", magic_enum::enum_name(event_.type));
             m_game_bus.inject(event_, const_cast<char*>(&event.data));
             break;
         }
@@ -797,6 +868,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
 
     GameEventBus&            m_game_bus;
     NetworkState&            m_net_state;
+    BlamCamera&              m_camera;
     ISteamNetworkingSockets* m_impl{nullptr};
     ISteamNetworkingUtils*   m_utils{nullptr};
     SteamNetworkingIdentity  m_identity;
@@ -830,6 +902,7 @@ void alloc_networking(compo::EntityContainer& e)
 #if defined(USE_NETWORKING)
     e.register_subsystem_inplace<Networking>(
         std::ref(e.subsystem_cast<GameEventBus>()),
-        std::ref(e.subsystem_cast<NetworkState>()));
+        std::ref(e.subsystem_cast<NetworkState>()),
+        std::ref(e.subsystem_cast<BlamCamera>()));
 #endif
 }

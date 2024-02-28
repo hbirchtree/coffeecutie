@@ -2,11 +2,11 @@
 
 #include <peripherals/identify/identify.h>
 
+#include <cstddef>
+#include <typeinfo>
 #include <type_traits>
 #include <utility>
 #include <vector>
-
-#include <stdint.h>
 
 namespace type_safety {
 namespace type_list {

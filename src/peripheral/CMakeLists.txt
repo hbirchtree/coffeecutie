@@ -12,6 +12,20 @@ coffee_library(
 
 gen_version_header(PeripheralLib)
 
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+    target_compile_definitions(PeripheralLib PUBLIC
+        -DCOFFEE_BUILD_MODE=0
+    )
+elseif("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
+    target_compile_definitions(PeripheralLib PUBLIC
+        -DCOFFEE_BUILD_MODE=1
+    )
+else()
+    target_compile_definitions(PeripheralLib PUBLIC
+        -DCOFFEE_BUILD_MODE=2
+    )
+endif()
+
 #target_precompile_headers(
 #  PeripheralLib
 #  PUBLIC

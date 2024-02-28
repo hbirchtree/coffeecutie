@@ -24,6 +24,8 @@ struct NetworkState : compo::SubsystemBase
     std::optional<std::string> error;
     std::optional<std::string> local_address;
     std::optional<std::string> remote_address;
+
+    std::optional<libc_types::u32> remote_player_idx;
 };
 
 void alloc_networking(compo::EntityContainer& e);

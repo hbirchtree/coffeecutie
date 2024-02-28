@@ -653,21 +653,19 @@ STATICINLINE void GetExtras()
 
     {
         /* Intent extras */
-
         intent appIntent;
 
         cDebug("Intent summary:");
 
         cDebug("App URI: {0}", appIntent.data());
 
-        auto extras = appIntent.extras();
+        static std::vector<std::string> stringStorage;
+        static auto                     extras = appIntent.extras();
 
-        for(auto e : extras)
+        for(auto const& e : extras)
         {
-            if(e.first.substr(0, 7) != "COFFEE_")
-                continue;
-
-            platform::env::set_var(e.first, e.second);
+            if(e.first.substr(0, 7) == "COFFEE_")
+                platform::env::set_var(e.first, e.second);
             cDebug("{0} = {1}", e.first, e.second);
         }
 
@@ -707,13 +705,27 @@ STATICINLINE void InitializeState(struct android_app* state)
 
         if(event == APP_CMD_INIT_WINDOW)
         {
-            auto& entrypoints = Coffee::main_functions;
-            if(entrypoints.is_no_args)
-                MainSetup(entrypoints.no_args, 0, nullptr);
-            else
-                MainSetup(entrypoints.with_args, 0, nullptr);
+            static std::vector<std::string> stringStorage;
+            std::vector<char*> args;
+            stringStorage.push_back("lib");
 
             auto extras = android::intent().extras();
+            for(auto& e : extras)
+                if(!std::isupper(e.first.at(0), std::locale()))
+                {
+                    stringStorage.push_back(fmt::format("--{}", e.first));
+                    stringStorage.push_back(e.second);
+                }
+            for(auto& arg : stringStorage)
+                args.push_back(arg.data());
+            cDebug("Starting CoffeeMain with: {}", args);
+
+            auto& entrypoints = Coffee::main_functions;
+            if(entrypoints.is_no_args)
+                MainSetup(entrypoints.no_args, args.size(), args.data());
+            else
+                MainSetup(entrypoints.with_args, args.size(), args.data());
+
             if(auto it = extras.find("COFFEE_VERBOSITY"); it != extras.end())
                 Coffee::SetPrintingVerbosity(cast_string<u8>(it->second));
             else

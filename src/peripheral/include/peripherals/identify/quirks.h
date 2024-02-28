@@ -93,26 +93,13 @@
 #include "cpp_quirks.h"
 #include "posix_quirks.h"
 
-/* General configuration changers */
-// #define COFFEE_LINUX_LIGHTWEIGHT_WM
-// #define COFFEE_GLES20_MODE
-// #define COFFEE_LOWFAT
-
-/*
- *
- * Minor prohibiting flags
- *
- */
-
-#define COFFEE_SLAP_LOWMEM
-
 /*
  *
  * Build properties
  *
  */
 
-#if !defined(NDEBUG)
+#if !defined(NDEBUG) || COFFEE_BUILD_MODE == 0 || COFFEE_BUILD_MODE == 1
 #define MODE_DEBUG 1
 #define MODE_RELEASE 0
 

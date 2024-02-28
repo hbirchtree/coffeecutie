@@ -3,6 +3,7 @@
 #include <blam/volta/blam_stl.h>
 #include <coffee/comp_app/services.h>
 #include <coffee/core/input/standard_input_handlers.h>
+#include <peripherals/identify/compiler/unreachable.h>
 #include <peripherals/semantic/chunk.h>
 #include <peripherals/typing/vectors/camera.h>
 #include <peripherals/typing/vectors/vector_types.h>

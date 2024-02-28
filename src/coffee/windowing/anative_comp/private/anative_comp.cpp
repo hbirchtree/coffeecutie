@@ -91,7 +91,10 @@ libc_types::u32 ControllerInput::count() const
 ControllerInput::controller_map ControllerInput::state(
     libc_types::u32 idx) const
 {
-    return m_cache.at(idx);
+    if(idx < m_cache.size())
+        return m_cache.at(idx);
+    else
+        return {};
 }
 
 comp_app::text_type_t ControllerInput::name(libc_types::u32 /*idx*/) const

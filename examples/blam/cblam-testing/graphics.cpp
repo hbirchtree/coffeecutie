@@ -31,9 +31,7 @@ void install_imgui_widgets(
 i32 blam_main()
 {
     cxxopts::ParseResult arguments;
-    if constexpr(
-        !compile_info::platform::is_android &&
-        !compile_info::platform::is_emscripten)
+    if constexpr(!compile_info::platform::is_emscripten)
     {
         cxxopts::Options options(
             "Blam! Graphics", "A prototype for a Blam! engine");
@@ -47,7 +45,12 @@ i32 blam_main()
             //
             ("listen",
              "Interface to start a server on",
-             cxxopts::value<std::string>());
+             cxxopts::value<std::string>())
+            //
+#if defined(COFFEE_CUSTOM_EXIT_HANDLING)
+            ("map", "Which map file to load", cxxopts::value<std::string>())
+#endif
+            ;
         auto& args = GetInitArgs();
         arguments  = options.parse(args.size(), args.data());
         if(BaseArgParser::PerformDefaults(options, args) >= 0)
@@ -56,6 +59,9 @@ i32 blam_main()
     cDebug("Unmatched args:");
     for(auto const& arg : arguments.unmatched())
         cDebug(" - {}", arg);
+    cDebug("Matched args:");
+    for(auto const& arg : arguments.arguments())
+        cDebug(" - {}={}", arg.key(), arg.value());
 
     rq::runtime_queue::CreateNewQueue("Blam Graphics!").assume_value();
 #if defined(FEATURE_ENABLE_ASIO)

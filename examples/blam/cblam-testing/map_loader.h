@@ -127,11 +127,16 @@ struct BlamMapBrowser
                         ImGui::Text("Connected to %s", remote->c_str());
                     if(ImGui::Button("Look at me!"))
                     {
-                        auto&               gbus = e.subsystem<GameEventBus>();
-                        GameEvent           ev;
+                        auto& gbus = e.subsystem<GameEventBus>();
+                        auto& net  = e.subsystem<NetworkState>();
+
+                        GameEvent           ev{GameEvent::ServerCameraControl};
                         ServerCameraControl control{
                             .request = ServerCameraControl::RequestCameraFocus,
+                            .target_player =
+                                net.remote_player_idx.value_or(0xFFFF),
                         };
+                        cDebug("Grabbing the server camera's attention");
                         gbus.inject(ev, &control);
                     }
                     ImGui::EndTabItem();
@@ -184,6 +189,7 @@ struct BlamMapBrowser
                         ImGui::NextColumn();
                         if(ImGui::Button("Focus"))
                             camera.focused_player = pinfo.player_idx;
+                        ImGui::NextColumn();
                     }
                     ImGui::Columns();
                     ImGui::EndTabItem();
