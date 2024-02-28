@@ -53,7 +53,7 @@ jobs:
         distribution: 'adopt'
         java-version: '17'
     - name: Installing build-essential
-      run: sudo apt install build-essential inkscape flatpak nasm
+      run: sudo apt install build-essential inkscape flatpak nasm squashfs-tools
     - name: Building host tools
       run: source/cb build host-x64-linux-native
       env:
@@ -63,9 +63,13 @@ jobs:
       env:
         VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
     - name: Generate artifacts
-      run: source/cb package ${{matrix.variant}}
+      run: |
+        NORMALIZED_NAME=${{matrix.variant}}
+        NORMALIZED_NAME=${NORMALIZED_NAME//:/-}
+        BUILD_DIR=source/multi_build/${NORMALIZED_NAME}
+        tar -Jcvf ${NORMALIZED_NAME}.tar.xz ${BUILD_DIR}/bin ${BUILD_DIR}/packaged
     - name: Uploading artifacts
       uses: actions/upload-artifact@v2
       with:
         name: ${{matrix.variant}}
-        path: '*.tar.bz2'
+        path: '*.tar.xz'

@@ -387,6 +387,7 @@
             "inherits": ["vcpkg-base-linux-es20"],
             "cacheVariables": {
                 "BUILD_EGL": "OFF",
+                "GENERATE_FLATPAK": "ON",
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "arm;arm32;linux;wayland;x11"
             },
             "environment": {

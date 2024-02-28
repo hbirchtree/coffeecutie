@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 case $(uname) in
 Linux)
     HOST_TOOLCHAIN_TRIPLET=-linux-native

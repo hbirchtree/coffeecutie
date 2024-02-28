@@ -54,7 +54,10 @@ macro(
   set(FLATPAK_EXEC_WM "${TARGET}")
   set(FLATPAK_ARCH "x86_64")
 
-  if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "(i386|i686)-linux-gnu")
+  if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "x86_64")
+    set(FLATPAK_ARCH "x86_64")
+  elseif("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "(i386|i686)-linux-gnu" OR
+        "${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86")
     set(FLATPAK_ARCH "i386")
   elseif("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "(aarch64|armv8)")
     set(FLATPAK_ARCH "aarch64")
