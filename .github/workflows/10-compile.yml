@@ -64,7 +64,7 @@ jobs:
       run: sudo apt install build-essential inkscape flatpak nasm squashfs-tools
     - name: Installing MinGW-W64 tools
       if: matrix.variant == 'desktop:x86_64-windows-gnu:win32'
-      run: sudo apt install mingw-w64-tools mingw-w64-x86-64-dev
+      run: sudo apt install mingw-w64-tools mingw-w64-x86-64-dev mingw-w64
     - name: Building host tools
       run: source/cb build host-x64-linux-native
       env:
