@@ -45,9 +45,9 @@ jobs:
     - name: Export GitHub Actions cache environment variables
       uses: actions/github-script@v6
       with:
-      script: |
-        core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
-        core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+        script: |
+          core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+          core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
     - uses: actions/setup-java@v3
       with:
         distribution: 'adopt'
@@ -56,6 +56,10 @@ jobs:
       run: sudo apt install build-essential inkscape flatpak
     - name: Building project
       run: source/cb build ${{matrix.variant}}
+      env:
+        VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
+    - name: Generate artifacts
+      run: source/cb package ${{matrix.variant}}
     - name: Uploading artifacts
       uses: actions/upload-artifact@v2
       with:
