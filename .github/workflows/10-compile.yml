@@ -46,6 +46,8 @@ jobs:
       with:
         distribution: 'adopt'
         java-version: '17'
+    - name: Installing build-essential
+      run: apt install build-essential
     - name: Building project
       run: source/cb build ${{matrix.variant}}
     - name: Uploading artifacts
