@@ -188,6 +188,7 @@
             "environment": {
                 "EMSDK": "${sourceDir}/multi_build/compilers/emsdk/",
                 "HOST_TOOLS_BINARY_DIR": "${sourceDir}/multi_build/host-x64-linux-native/bin",
+                "HOST_TOOLS_DIR": "${sourceDir}/multi_build/host-x64-linux-native/vcpkg_installed/x64-linux/tools",
                 "NINJA": "$penv{NINJA}"
             }
         },
@@ -318,7 +319,6 @@
             "inherits": ["vcpkg-base-linux-egl-es20"],
             "cacheVariables": {
                 "APPIMAGE_RUNTIME_BINARY": "${sourceDir}/multi_build/${presetName}/vcpkg_installed/$env{PLATFORM}-$env{TOOLCHAIN_PREFIX}/bin/runtime",
-                "GENERATE_FLATPAK": "ON",
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "beaglebone;sgx;arm;arm32;linux"
             },
             "environment": {

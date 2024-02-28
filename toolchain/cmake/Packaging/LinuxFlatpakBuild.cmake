@@ -54,14 +54,14 @@ macro(
   set(FLATPAK_EXEC_WM "${TARGET}")
   set(FLATPAK_ARCH "x86_64")
 
-  if("${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "i386-linux-gnu"
-     OR "${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "i686-linux-gnu"
-  )
+  if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "(i386|i686)-linux-gnu")
     set(FLATPAK_ARCH "i386")
-  elseif("${CMAKE_LIBRARY_ARCHITECTURE}" MATCHES "aarch64")
+  elseif("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "(aarch64|armv8)")
     set(FLATPAK_ARCH "aarch64")
-  elseif("${CMAKE_LIBRARY_ARCHITECTURE}" MATCHES "arm")
+  elseif("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "arm")
     set(FLATPAK_ARCH "arm")
+  else()
+    message(FATAL_ERROR "Flatpak architecture not defined: ${CMAKE_SYSTEM_PROCESSOR}")
   endif()
 
   set(FLATPAK_BASE_DIR "${FLATPAK_DEPLOY_DIRECTORY}/${FLATPAK_PKG_NAME}")
@@ -162,7 +162,7 @@ macro(
   add_custom_command(
     TARGET ${TARGET}.flatpak
     POST_BUILD
-    COMMAND ${FLATPAK_PROGRAM} build-bundle "${FLATPAK_BUNDLE_REPO}"
+    COMMAND ${FLATPAK_PROGRAM} build-bundle --arch ${FLATPAK_ARCH} "${FLATPAK_BUNDLE_REPO}"
             "${FLATPAK_BUNDLE_DIR}" "${FLATPAK_PKG_NAME}"
   )
 
