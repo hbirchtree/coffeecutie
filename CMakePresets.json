@@ -578,6 +578,8 @@
                 "rhs": "Linux"
             },
             "cacheVariables": {
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_COMPILER": "g++",
                 "CMAKE_C_FLAGS": "-march=native",
                 "CMAKE_CXX_FLAGS": "-march=native",
                 "CMAKE_MAKE_PROGRAM": "$env{NINJA}"
