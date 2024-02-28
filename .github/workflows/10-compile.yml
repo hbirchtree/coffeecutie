@@ -47,7 +47,7 @@ jobs:
         distribution: 'adopt'
         java-version: '17'
     - name: Installing build-essential
-      run: sudo apt install build-essential libfuse3-dev
+      run: sudo apt install build-essential inkscape
     - name: Building project
       run: source/cb build ${{matrix.variant}}
     - name: Uploading artifacts
