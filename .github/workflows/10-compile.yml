@@ -46,17 +46,17 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
     - uses: lukka/get-cmake@latest
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
         submodules: true
         path: source
     - name: Export GitHub Actions cache environment variables
-      uses: actions/github-script@v6
+      uses: actions/github-script@v7
       with:
         script: |
           core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
           core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
-    - uses: actions/setup-java@v3
+    - uses: actions/setup-java@v4
       with:
         distribution: 'adopt'
         java-version: '17'
@@ -85,7 +85,7 @@ jobs:
         cd ${BUILD_DIR}
         tar -Jcvf ${OUT_FILE} $(find . -maxdepth 2 -name bin -o -name packaged -o -name *.so*)
     - name: Uploading artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: ${{matrix.artifact}}
         path: '*.tar.xz'
