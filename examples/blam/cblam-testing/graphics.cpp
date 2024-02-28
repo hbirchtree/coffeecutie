@@ -10,13 +10,13 @@
 #include "ui.h"
 #include "ui_caching.h"
 
-#include <coffee/asio/net_resource.h>
 #include <coffee/comp_app/fps_counter.h>
 #include <coffee/core/coffee_args.h>
 #include <coffee/graphics/apis/gleam/rhi_emulation.h>
 #include <platforms/sysinfo.h>
 
 #if defined(FEATURE_ENABLE_ASIO)
+#include <coffee/asio/net_resource.h>
 #include <coffee/asio/net_profiling.h>
 #endif
 #if defined(FEATURE_ENABLE_DiscordLatte)

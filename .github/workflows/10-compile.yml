@@ -67,9 +67,12 @@ jobs:
         NORMALIZED_NAME=${{matrix.variant}}
         NORMALIZED_NAME=${NORMALIZED_NAME//:/-}
         BUILD_DIR=source/multi_build/${NORMALIZED_NAME}
+        OUT_FILE=$(pwd)/${NORMALIZED_NAME}.tar.xz
+        cd ${BUILD_DIR}
         tar -Jcvf ${NORMALIZED_NAME}.tar.xz ${BUILD_DIR}/bin ${BUILD_DIR}/packaged
     - name: Uploading artifacts
       uses: actions/upload-artifact@v2
       with:
-        name: ${{matrix.variant}}
+        name: ${{matrix.variant | replace(":", "-")}}
         path: '*.tar.xz'
+        if-no-files-found: error
