@@ -1,0 +1,21 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index b6441ae..b069d13 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -91,7 +91,6 @@ foreach(source
+     "include/status-code/error.hpp"
+     "include/status-code/errored_status_code.hpp"
+     "include/status-code/generic_code.hpp"
+-    "include/status-code/getaddrinfo_code.hpp"
+     "include/status-code/http_status_code.hpp"
+     "include/status-code/iostream_support.hpp"
+     "include/status-code/nt_code.hpp"
+@@ -140,7 +139,7 @@ install(EXPORT status-codeExports
+   DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/status-code"
+ )
+ 
+-if(NOT PROJECT_IS_DEPENDENCY)
++if(FALSE)
+   include(FindPythonInterp)
+   # Make preprocessed edition of this library target
+   if(NOT PYTHONINTERP_FOUND)

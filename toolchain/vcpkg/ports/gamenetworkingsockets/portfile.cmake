@@ -7,6 +7,8 @@ vcpkg_from_github(
     PATCHES
         fix-depend-protobuf.patch
         fix-android-support.patch
+        skip-openssl-version-check.patch
+        fix-mingw-compat.patch
 )
 
 set(CRYPTO_BACKEND OpenSSL)

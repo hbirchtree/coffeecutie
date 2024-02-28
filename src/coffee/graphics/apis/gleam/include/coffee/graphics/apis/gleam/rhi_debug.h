@@ -43,8 +43,8 @@ struct null_api
     }
 };
 
-#if GLEAM_MAX_VERSION >= 0x430 || GLEAM_MAX_VERSION_ES >= 0x320 || \
-    defined(GL_KHR_debug)
+#if (GLEAM_MAX_VERSION >= 0x430 || GLEAM_MAX_VERSION_ES >= 0x320 || \
+    defined(GL_KHR_debug)) && !defined(COFFEE_MINGW32)
 struct scope
 {
     scope(features::debugging debug, std::string_view const& name)
@@ -132,6 +132,27 @@ struct api
 #endif
     }
 
+    static inline void debug_func(
+        GLenum        source,
+        GLenum        type,
+        GLuint        id,
+        GLenum        severity,
+        GLsizei       length,
+        const GLchar* message,
+        const void*   userParam)
+    {
+        using namespace group;
+        auto self = reinterpret_cast<const api*>(userParam);
+
+        for(auto const& callback : self->m_debugFunc)
+            callback(
+                static_cast<debug_source>(source),
+                static_cast<debug_type>(type),
+                id,
+                static_cast<debug_severity>(severity),
+                std::string_view(message, length));
+    }
+
     inline void enable()
     {
         auto _ = scope(__PRETTY_FUNCTION__);
@@ -140,25 +161,7 @@ struct api
         {
             cmd::enable(group::enable_cap::debug_output_synchronous);
             cmd::debug_message_callback(
-                [](GLenum        source,
-                   GLenum        type,
-                   GLuint        id,
-                   GLenum        severity,
-                   GLsizei       length,
-                   const GLchar* message,
-                   const void*   userParam) {
-                    using namespace group;
-                    auto self = reinterpret_cast<const api*>(userParam);
-
-                    for(auto const& callback : self->m_debugFunc)
-                        callback(
-                            static_cast<debug_source>(source),
-                            static_cast<debug_type>(type),
-                            id,
-                            static_cast<debug_severity>(severity),
-                            std::string_view(message, length));
-                },
-                semantic::Span<const api>(this, 1));
+                debug_func, semantic::Span<const api>(this, 1));
             cmd::debug_message_control(
                 group::debug_source::dont_care,
                 group::debug_type::dont_care,
@@ -173,24 +176,7 @@ struct api
         {
             cmd::enable(group::enable_cap::debug_output_synchronous);
             gl::khr::debug::debug_message_callback(
-                [](GLenum        source,
-                   GLenum        type,
-                   GLuint        id,
-                   GLenum        severity,
-                   GLsizei       length,
-                   const GLchar* message,
-                   const void*   userParam) {
-                    using namespace group;
-                    auto self = reinterpret_cast<const api*>(userParam);
-
-                    for(auto const& callback : self->m_debugFunc)
-                        callback(
-                            static_cast<debug_source>(source),
-                            static_cast<debug_type>(type),
-                            id,
-                            static_cast<debug_severity>(severity),
-                            std::string_view(message, length));
-                },
+                debug_func,
                 semantic::Span<const api>(this, 1));
             return;
         }
@@ -255,8 +241,10 @@ struct api
     features::debugging&        ext;
 };
 
+#define GLEAM_RHI_REAL_DEBUG_ENABLED 1
 constexpr bool api_available = true;
 #else
+#define GLEAM_RHI_REAL_DEBUG_ENABLED 0
 constexpr bool api_available = false;
 using api                    = null_api;
 #endif

@@ -29,7 +29,10 @@ jobs:
         - android:arm64:30-gl
         - android:arm64:32
         - beaglebone:arm-buildroot-linux-gnueabihf:ti-sgx
+        - desktop:aarch64-buildroot-linux-gnu:multi
+        - desktop:arm-buildroot-linux-gnueabihf:sdl2
         - desktop:x86_64-buildroot-linux-gnu:multi
+        - desktop:x86_64-windows-gnu:win32
         - web:wasm32-emscripten:webgl2
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

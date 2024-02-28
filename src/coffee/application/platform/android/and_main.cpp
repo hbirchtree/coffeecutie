@@ -314,6 +314,43 @@ app_info::device_type_t app_info::device_type() const
     }
 }
 
+std::vector<std::string> app_info::system_features() const
+{
+    using jnipp::java::array_type_unwrapper;
+    using jnipp::java::type_unwrapper;
+
+    std::vector<std::string> features;
+
+    auto Context        = "android.content.Context"_jclass;
+    auto PackageManager = "android.content.pm.PackageManager"_jclass;
+    auto FeatureInfo    = "android.content.pm.FeatureInfo"_jclass;
+
+    auto getPackageManager =
+        "getPackageManager"_jmethod.ret("android.content.pm.PackageManager");
+    auto getSystemAvailableFeatures =
+        "getSystemAvailableFeatures"_jmethod
+            .ret<jnipp::return_type::object_array_>(
+                "android.content.pm.FeatureInfo");
+    auto name = "name"_jfield.as("java.lang.String");
+
+    auto packageManager = PackageManager(
+        Context(coffee_app->activity->clazz)[getPackageManager]());
+    auto systemFeatures = array_type_unwrapper<re::object_>(
+        packageManager[getSystemAvailableFeatures]());
+
+    for(auto feature_ : *systemFeatures)
+    {
+        auto feature = FeatureInfo(feature_);
+        auto name_ = *feature[name];
+        if(!jnipp::java::objects::not_null(name_))
+            continue;
+        features.push_back(type_unwrapper<std::string>(name_));
+    }
+    std::sort(features.begin(), features.end());
+
+    return features;
+}
+
 std::optional<network_stats::result_t> network_stats::query(network_class net)
 {
     if(coffee_app->activity->sdkVersion < 23)
@@ -706,7 +743,7 @@ STATICINLINE void InitializeState(struct android_app* state)
         if(event == APP_CMD_INIT_WINDOW)
         {
             static std::vector<std::string> stringStorage;
-            std::vector<char*> args;
+            std::vector<char*>              args;
             stringStorage.push_back("lib");
 
             auto extras = android::intent().extras();

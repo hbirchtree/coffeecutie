@@ -208,6 +208,25 @@ STATICINLINE SystemPaths& GetSystemPaths()
     /* assetDir is supposed to be empty, as it refers to a virtual filesystem */
     /* We might want to toggle it based on running in UWP or something... */
 
+    const auto path_to_mingw = [](Url const& url) -> Url {
+        if(url.internUrl.size() > 3 && url.internUrl.substr(1, 2) == ":\\")
+        {
+            auto path = url.internUrl;
+            auto i = path.find('\\');
+            while(i != std::string::npos)
+            {
+                path.replace(i, 1, "/");
+                i = path.find('\\');
+            }
+            return MkSysUrl(path);
+        } else
+            return url;
+    };
+    paths.assetDir = path_to_mingw(paths.assetDir);
+    paths.tempDir = path_to_mingw(paths.tempDir);
+    paths.configDir = path_to_mingw(paths.configDir);
+    paths.cacheDir = path_to_mingw(paths.cacheDir);
+
 #if VER_PRODUCTBUILD >= 17025 && defined(COFFEE_WINDOWS_UWP)
 #error ERROR ERROR TIME TO IMPLEMENT PROPER UWP ASSET STORAGE M8
 #endif
@@ -325,11 +344,13 @@ std::string Url::operator*() const
         derefPath = str::replace::str<char>(derefPath, "//", "/");
         if(feval(flags, RSCA::NoDereference))
             return derefPath;
+#if !defined(COFFEE_MINGW64)
         if(auto path =
                path::dereference(MkUrl(derefPath.c_str(), RSCA::SystemFile));
            path.has_error())
             return derefPath;
         else
+#endif
             return path.value().internUrl;
 #else
         derefPath = str::replace::str<char>(derefPath, "\\", "/");

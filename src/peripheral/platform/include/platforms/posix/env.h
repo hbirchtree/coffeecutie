@@ -19,7 +19,8 @@ using posix_error = int;
 FORCEDINLINE std::optional<std::string> var(std::string const& var)
 {
 #if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_APPLE) || \
-    defined(COFFEE_ANDROID) || defined(COFFEE_MINGW64)
+    defined(COFFEE_ANDROID) || defined(COFFEE_MINGW64) ||  \
+    defined(COFFEE_MINGW32)
     if(auto out = ::getenv(var.c_str()))
 #else
     if(auto out = ::secure_getenv(var.c_str()))
@@ -31,7 +32,7 @@ FORCEDINLINE std::optional<std::string> var(std::string const& var)
 FORCEDINLINE std::optional<posix_error> set_var(
     std::string const& var, std::optional<std::string> const& val)
 {
-#if !defined(COFFEE_MINGW64)
+#if !defined(COFFEE_MINGW64) && !defined(COFFEE_MINGW32)
     if(val.has_value())
     {
         if(::setenv(var.c_str(), val.value().c_str(), 1))

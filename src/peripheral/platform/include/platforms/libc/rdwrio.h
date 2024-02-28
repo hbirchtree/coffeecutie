@@ -9,7 +9,7 @@
 namespace platform::file::libc {
 using url::Url;
 
-#if !defined(COFFEE_MINGW64)
+#if !defined(COFFEE_MINGW64) && !defined(COFFEE_MINGW32)
 namespace detail {
 
 FORCEDINLINE bool requires_delimiters(std::string const& filename)

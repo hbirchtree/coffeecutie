@@ -15,7 +15,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#if !defined(COFFEE_MINGW64)
+#if !defined(COFFEE_MINGW64) && !defined(COFFEE_MINGW32)
 #include <sys/mman.h>
 #endif
 
@@ -50,7 +50,7 @@ FORCEDINLINE int openmode(RSCA access)
     return out;
 }
 
-#if !defined(COFFEE_MINGW64)
+#if !defined(COFFEE_MINGW64) && !defined(COFFEE_MINGW32)
 FORCEDINLINE int protection(RSCA access)
 {
     return (feval(access, RSCA::ReadOnly) ? PROT_READ : 0) |
@@ -79,7 +79,7 @@ FORCEDINLINE mode_t mode_from_native(::mode_t mode)
     if(S_ISCHR(mode)) return mode_t::character;
     if(S_ISBLK(mode)) return mode_t::block;
     if(S_ISFIFO(mode)) return mode_t::fifo;
-#if !defined(COFFEE_MINGW64)
+#if !defined(COFFEE_MINGW64) && !defined(COFFEE_MINGW32)
     if(S_ISLNK(mode)) return mode_t::link;
     if(S_ISSOCK(mode)) return mode_t::socket;
 #endif
@@ -87,7 +87,7 @@ FORCEDINLINE mode_t mode_from_native(::mode_t mode)
     // clang-format on
 }
 
-#if !defined(COFFEE_MINGW64)
+#if !defined(COFFEE_MINGW64) && !defined(COFFEE_MINGW32)
 FORCEDINLINE mode_t dirmode_from_native(int mode)
 {
     switch(mode)
@@ -163,10 +163,10 @@ FORCEDINLINE auto posix_failure()
 #if defined(COFFEE_LINUX)
 constexpr auto lseek_ = ::lseek64;
 constexpr auto mmap_  = ::mmap64;
-#elif !defined(COFFEE_MINGW64)
+#elif !defined(COFFEE_MINGW64) && !defined(COFFEE_MINGW32)
 constexpr auto lseek_ = ::lseek;
 constexpr auto mmap_  = ::mmap;
-#elif defined(COFFEE_MINGW64)
+#elif defined(COFFEE_MINGW64) || defined(COFFEE_MINGW32)
 constexpr auto lseek_ = ::lseek64;
 #endif
 

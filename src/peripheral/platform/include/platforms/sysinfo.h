@@ -21,7 +21,7 @@
 #include "emscripten/sysinfo.h"
 #elif defined(COFFEE_MACOS) || defined(COFFEE_IOS)
 #include "osx/sysinfo.h"
-#elif defined(COFFEE_WIN32)
+#elif defined(COFFEE_WINDOWS)
 #include "win32/sysinfo.h"
 #else
 #include <thread>
@@ -54,6 +54,13 @@ using apple::core_count;
 using apple::cpu_count;
 using apple::node_count;
 using apple::thread_count;
+
+#elif defined(COFFEE_WINDOWS)
+
+using win32::core_count;
+using win32::cpu_count;
+using win32::node_count;
+using win32::thread_count;
 
 #else
 
@@ -89,6 +96,11 @@ using linux_::model;
 using apple::frequency;
 using apple::model;
 
+#elif defined(COFFEE_WINDOWS)
+
+using win32::frequency;
+using win32::model;
+
 #else
 constexpr bool has_cpuinfo = false;
 
@@ -117,6 +129,11 @@ constexpr bool has_meminfo = true;
 
 using linux_::resident;
 using linux_::total;
+#elif defined(COFFEE_WINDOWS)
+constexpr bool has_meminfo = true;
+
+using win32::resident;
+using win32::total;
 #else
 constexpr bool has_meminfo = false;
 
@@ -145,7 +162,7 @@ using emscripten::architecture;
 using emscripten::kernel;
 using emscripten::kernel_version;
 
-#elif defined(COFFEE_WIN32)
+#elif defined(COFFEE_WINDOWS)
 using win32::architecture;
 using win32::kernel;
 using win32::kernel_version;
@@ -179,12 +196,13 @@ using linux_::version;
 using emscripten::name;
 using emscripten::version;
 
-#elif defined(COFFEE_WIN32)
+#elif defined(COFFEE_WINDOWS) || defined(COFFEE_MINGW64)
 using win32::name;
 using win32::version;
 
 using win32::is_wow64;
 using win32::wine_version;
+using win32::wine_host_system;
 
 #else
 
@@ -254,7 +272,7 @@ using android::device;
 using emscripten::device;
 #elif defined(COFFEE_LINUX)
 using linux_::device;
-#elif defined(COFFEE_WIN32)
+#elif defined(COFFEE_WINDOWS)
 using win32::device;
 #elif defined(COFFEE_MACOS)
 using apple::device;
@@ -269,7 +287,7 @@ inline std::optional<std::pair<std::string, std::string>> device()
 using android::motherboard;
 #elif defined(COFFEE_LINUX)
 using linux_::motherboard;
-#elif defined(COFFEE_WIN32)
+#elif defined(COFFEE_WINDOWS)
 using win32::motherboard;
 #else
 inline std::optional<std::pair<std::string, std::string>> motherboard()
@@ -282,7 +300,7 @@ inline std::optional<std::pair<std::string, std::string>> motherboard()
 using android::chassis;
 #elif defined(COFFEE_LINUX)
 using linux_::chassis;
-#elif defined(COFFEE_WIN32)
+#elif defined(COFFEE_WINDOWS)
 using win32::chassis;
 #else
 inline std::optional<std::pair<std::string, std::string>> chassis()
@@ -302,6 +320,9 @@ using linux_::variant;
 
 #elif defined(COFFEE_APPLE)
 using apple::variant;
+
+#elif defined(COFFEE_WINDOWS)
+using win32::variant;
 
 #else
 inline DeviceType variant()
@@ -343,7 +364,7 @@ using info::display::apple::dpi;
 namespace traits {
 
 constexpr bool virtualfs =
-#if defined(COFFEE_ANDROID) || defined(COFFEE_WIN32)
+#if defined(COFFEE_ANDROID) || defined(COFFEE_WINDOWS)
     true;
 #else
     false;

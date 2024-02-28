@@ -590,13 +590,12 @@ void addDefaults(
                     auto res = dinfo->size(i);
                     appInfo.add(
                         "display:resolution:" + idx,
-                        std::to_string(res.w) + "x" + std::to_string(res.h));
+                        fmt::format("{}x{}", res.w, res.h));
                 }
             if(auto winfo = container.service<Windowing>())
                 if(auto size = winfo->size(); size.w != 0)
                     appInfo.add(
-                        "window:size",
-                        std::to_string(size.w) + "x" + std::to_string(size.h));
+                        "window:size", fmt::format("{}x{}", size.w, size.h));
         });
 }
 
@@ -740,7 +739,7 @@ void PerformanceMonitor::capture_screenshot(
 
             auto screenshot = p.service<ScreenshotProvider>();
 
-            if(!screenshot || time > m_nextScreenshot)
+            if(!screenshot || time < m_nextScreenshot)
                 break;
 
             screenshot->set_worker(m_worker_queue);

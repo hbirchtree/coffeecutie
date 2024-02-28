@@ -38,16 +38,12 @@
 #include <peripherals/posix/process.h>
 #endif
 
-#if defined(COFFEE_WINDOWS) && !defined(__MINGW64__)
-#if !defined(COFFEE_WINDOWS_UWP)
-extern bool WMI_Query(
-    const char* query, const wchar_t* property, std::string& target);
-#endif
-extern int InitCOMInterface();
-#endif
-
 #if defined(COFFEE_GEKKO)
 #include <coffee/gexxo/gexxo_api.h>
+#endif
+
+#if defined(COFFEE_WINDOWS)
+extern int InitCOMInterface();
 #endif
 
 using namespace ::platform;
@@ -91,14 +87,13 @@ int MainSetup(MainWithArgs mainfun, int argc, char** argv, u32 flags)
     cDebug("Entering MainSetup() at {0}", str::print::pointerify(MainSetup));
 #endif
 
-#if defined(COFFEE_WINDOWS) && !defined(COFFEE_WINDOWS_UWP) && \
-    !defined(__MINGW64__)
-#if MODE_RELEASE
-    ShowWindow(GetConsoleWindow(), SW_HIDE);
-#else
-    if(platform::Env::GetVar("VisualStudioVersion").size())
-        ShowWindow(GetConsoleWindow(), SW_HIDE);
-#endif
+#if defined(COFFEE_WINDOWS) && !defined(COFFEE_WINDOWS_UWP)
+// #if MODE_RELEASE
+//     ShowWindow(GetConsoleWindow(), SW_HIDE);
+// #else
+//     if(platform::Env::GetVar("VisualStudioVersion").size())
+//         ShowWindow(GetConsoleWindow(), SW_HIDE);
+// #endif
     InitCOMInterface();
 #elif defined(COFFEE_WINDOWS_UWP)
     InitCOMInterface();
@@ -503,7 +498,7 @@ void InstallDefaultSigHandlers()
     if constexpr(compile_info::platform::is_android)
         return;
 
-#if !defined(COFFEE_CUSTOM_STACKTRACE) && !defined(COFFEE_SUPPORTS_BREAKPOINT)
+#if !defined(COFFEE_CUSTOM_STACKTRACE) && defined(COFFEE_SUPPORTS_BREAKPOINT)
     std::set_terminate([]() {
         if(auto frames = platform::stacktrace::exception_frames();
            frames.has_value())

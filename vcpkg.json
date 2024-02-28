@@ -16,7 +16,6 @@
         { "name": "outcome", "platform": "!android & !bare & !emscripten & !(arm & linux) & !(x64 & linux) & !windows" },
         { "name": "pvrtcdec", "platform": "android | emscripten | (linux & x64)" },
         "rapidjson",
-        { "name": "sqlite3", "platform": "!bare" },
         "stb",
         "tinyxml2",
         "tinyutf8",
@@ -50,7 +49,7 @@
                 { "name": "sdl2", "platform": "linux & arm & wayland & !x11", "default-features": false, "features": ["wayland"] },
                 { "name": "sdl2", "platform": "linux & arm & wayland & x11", "default-features": false, "features": ["wayland", "x11"] },
                 { "name": "sdl2", "platform": "linux & arm & raspberry", "default-features": false, "features": [] },
-                { "name": "sdl2", "platform": "osx | windows"},
+                { "name": "sdl2", "platform": "osx | windows | mingw"},
                 { "name": "pvrscope", "platform": "linux & arm & beaglebone" }
             ]
         },

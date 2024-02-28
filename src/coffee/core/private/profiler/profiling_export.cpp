@@ -25,7 +25,7 @@
 
 #if defined(COFFEE_WINDOWS)
 #include <peripherals/platform/windows.h>
-#if !defined(COFFEE_MINGW64)
+#if !defined(COFFEE_MINGW64) && !defined(COFFEE_MINGW32)
 #include <VersionHelpers.h>
 #endif
 #endif
@@ -105,7 +105,8 @@ STATICINLINE void PutRuntimeInfo(json::ObjectBuilder& target)
             .put(
                 "windowsWdk",
                 stl_types::str::fmt::hexify(compile_info::windows::wdk))
-#if defined(COFFEE_WINDOWS) && !defined(COFFEE_MINGW64)
+#if defined(COFFEE_WINDOWS) && !defined(COFFEE_MINGW64) && \
+    !defined(COFFEE_MINGW32)
             .put("windowsServer", IsWindowsServer() ? true : false)
 #endif
             ;
@@ -171,13 +172,27 @@ STATICINLINE void PutRuntimeInfo(json::ObjectBuilder& target)
     if(auto version = platform::info::os::version(); version)
         runtime.put("distroVersion", *version);
 
+#if defined(COFFEE_WINDOWS)
+    if(auto system = platform::info::os::wine_host_system())
+    {
+        auto [kernel, version] = system.value();
+        runtime.put("underlyingKernel", kernel);
+        runtime.put("underlyingKernelVersion", version);
+    }
+#endif
 #if defined(COFFEE_ANDROID)
-    //    AndroidForeignCommand cmd;
-    //    cmd.type = Android_QueryAPI;
-    //    CoffeeForeignSignalHandleNA(
-    //        CoffeeForeign_RequestPlatformData, &cmd, nullptr, nullptr);
-
     runtime.put("androidLevel", cast_pod(android::app_info().sdk_version()));
+
+    std::vector<std::string> systemFeatures =
+        android::app_info().system_features();
+    std::string systemFeaturesString;
+    for(auto const& feature : systemFeatures)
+    {
+        systemFeaturesString.append(feature + " ");
+    }
+    if(systemFeaturesString.back() == ' ')
+        systemFeaturesString.resize(systemFeaturesString.size() - 1);
+    runtime.put("androidFeatures", systemFeaturesString);
 #endif
 
     {
@@ -262,9 +277,9 @@ STATICINLINE void PutRuntimeInfo(json::ObjectBuilder& target)
         //        runtime.put("virtual", virtmem.eject());
         //        virtmem.put("total", SysInfo::SwapTotal());
         //        virtmem.put("available", SysInfo::SwapAvailable());
-
-        // memory.put("bank", platform::info::memory::);
-
+        memory.put("total", platform::info::memory::total());
+        if(auto resident = platform::info::memory::resident(); resident != 0)
+            memory.put("resident", resident);
         target.put("memory", memory.eject());
     }
 }

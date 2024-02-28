@@ -22,10 +22,10 @@ inline std::optional<std::pair<std::string, std::string>> device()
 {
     return std::pair<std::string, std::string>{
         info::wmi::query<std::string>(
-            "SELECT Vendor FROM CIM_Product", L"Vendor")
+            L"SELECT Vendor FROM CIM_Product", L"Vendor")
             .value_or("Generic"),
         info::wmi::query<std::string>(
-            "SELECT Version FROM CIM_Product", L"Version")
+            L"SELECT Version FROM CIM_Product", L"Version")
             .value_or("Device"),
     };
 }
@@ -40,9 +40,10 @@ inline std::optional<std::pair<std::string, std::string>> motherboard()
 {
     return std::pair<std::string, std::string>{
         info::wmi::query<std::string>(
-            "SELECT Manufacturer FROM CIM_Card", L"Manufacturer")
+            L"SELECT Manufacturer FROM Win32_BaseBoard", L"Manufacturer")
             .value_or("Generic"),
-        info::wmi::query<std::string>("SELECT Model FROM CIM_Card", L"Model")
+        info::wmi::query<std::string>(
+            L"SELECT Product FROM Win32_BaseBoard", L"Product")
             .value_or("Motherboard"),
     };
 }
@@ -51,10 +52,10 @@ inline std::optional<std::pair<std::string, std::string>> chassis()
 {
     return std::pair<std::string, std::string>{
         info::wmi::query<std::string>(
-            "SELECT Manufacturer FROM CIM_PhysicalFrame", L"Manufacturer")
+            L"SELECT Manufacturer FROM CIM_PhysicalFrame", L"Manufacturer")
             .value_or("Generic"),
         info::wmi::query<std::string>(
-            "SELECT Model FROM CIM_PhysicalFrame", L"Model")
+            L"SELECT Product FROM CIM_PhysicalFrame", L"Product")
             .value_or("Device"),
     };
 }
@@ -62,7 +63,18 @@ inline std::optional<std::pair<std::string, std::string>> chassis()
 inline DeviceType variant()
 {
     /* TODO: Look it up in CIM_Chassis -> TypeDescriptions */
-    return DeviceType::DeviceDesktop;
+    auto type =
+        info::wmi::query<libc_types::u32>(
+            L"SELECT PCSystemType FROM Win32_ComputerSystem", L"PCSystemType")
+            .value_or(1);
+    switch(type)
+    {
+    case 2:
+    case 6:
+        return DeviceType::DeviceLaptop;
+    default:
+        return DeviceType::DeviceDesktop;
+    }
 }
 
 } // namespace device::win32
@@ -90,6 +102,8 @@ bool is_wow64();
 
 std::optional<std::string> wine_version();
 
+std::optional<std::pair<std::string, std::string>> wine_host_system();
+
 } // namespace os::win32
 
 namespace proc::win32 {
@@ -103,17 +117,25 @@ inline libc_types::u32 node_count()
 
 inline libc_types::u32 cpu_count()
 {
-    return 1;
+    return info::wmi::query<u32>(
+               L"SELECT NumberOfProcessors FROM Win32_ComputerSystem",
+               L"NumberOfProcessors")
+        .value_or(1);
 }
 
 inline libc_types::u32 core_count(u32 cpu = 0, u32 /*node*/ = 0)
 {
-    return 1;
+    return info::wmi::query<u32>(
+               L"SELECT NumberOfCores FROM Win32_Processor", L"NumberOfCores")
+        .value_or(1);
 }
 
 inline libc_types::u32 thread_count(u32 cpu = 0, u32 /*node*/ = 0)
 {
-    return 1;
+    return info::wmi::query<u32>(
+               L"SELECT NumberOfLogicalProcessors FROM Win32_Processor",
+               L"NumberOfLogicalProcessors")
+        .value_or(1);
 }
 
 inline std::optional<std::pair<std::string, std::string>> model(
@@ -121,16 +143,39 @@ inline std::optional<std::pair<std::string, std::string>> model(
 {
     return std::pair<std::string, std::string>{
         info::wmi::query<std::string>(
-            "SELECT Manufacturer FROM CIM_Processor", L"Name")
+            L"SELECT Manufacturer FROM Win32_Processor", L"Manufacturer")
             .value_or("Generic"),
         info::wmi::query<std::string>(
-            "SELECT Model FROM CIM_Processor", L"SystemName")
+            L"SELECT Name FROM Win32_Processor", L"Name")
             .value_or("Processor"),
     };
 }
 
-u32 frequency(bool current = false, u32 cpu = 0, u32 /*node*/ = 0);
+inline u32 frequency(bool current = false, u32 cpu = 0, u32 /*node*/ = 0)
+{
+    return info::wmi::query<u32>(
+               L"SELECT MaxClockSpeed FROM Win32_Processor", L"MaxClockSpeed")
+               .value_or(0) *
+           1000;
+}
 
 } // namespace proc::win32
+
+namespace memory::win32 {
+
+inline libc_types::u64 total()
+{
+    return info::wmi::query<libc_types::u64>(
+               L"SELECT TotalPhysicalMemory FROM Win32_ComputerSystem",
+               L"TotalPhysicalMemory")
+               .value_or(0u);
+}
+
+inline libc_types::u64 resident()
+{
+    return 0;
+}
+
+} // namespace memory::win32
 
 } // namespace platform::info

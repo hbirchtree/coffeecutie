@@ -175,6 +175,11 @@ if(WIN32 OR MINGW)
             win32/sysinfo_ex.cpp
             win32/wmi_win32.cpp
   )
+  # target_link_libraries(
+  #   PeripheralPlatform
+  #   PUBLIC
+
+  # )
   if(WIN_UWP)
     target_sources(PeripheralPlatform PRIVATE win32/wmi_uwp.cpp)
   else()

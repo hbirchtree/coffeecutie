@@ -4,7 +4,7 @@
 
 #if defined(COFFEE_LINUX) || defined(COFFEE_ANDROID) ||    \
     defined(COFFEE_APPLE) || defined(COFFEE_EMSCRIPTEN) || \
-    defined(COFFEE_MINGW64)
+    defined(COFFEE_MINGW64) || defined(COFFEE_MINGW32)
 #define USE_POSIX_API 1
 #endif
 
@@ -18,7 +18,8 @@
 #include "emscripten/mmio.h"
 #endif
 
-#if defined(COFFEE_MINGW64)
+#if defined(COFFEE_MINGW64) || defined(COFFEE_MINGW32)
+#include "cpp/fsio.h"
 #include "posix/fsio.h"
 #include "posix/rdwrio.h"
 #include "win32/fsio.h"
@@ -61,7 +62,7 @@ using posix::remove;
 using android::list;
 
 using common::posix::error_message;
-#elif defined(COFFEE_MINGW64)
+#elif defined(COFFEE_MINGW64) || defined(COFFEE_MINGW32)
 #define PLATFORM_FILE_SUPPORTS_FS 1
 #define PLATFORM_FILE_SUPPORTS_LIST 1
 #define PLATFORM_FILE_SUPPORTS_MAPPING 1
@@ -73,8 +74,8 @@ using posix::write;
 using win32::map;
 using win32::unmap;
 
-using posix::create;
-using posix::create_directory;
+using cpp::create;
+using cpp::create_directory;
 using posix::exists;
 using posix::file_info;
 using posix::remove;
@@ -118,7 +119,7 @@ using libc::write;
 using libc::open_file;
 #endif
 
-#if !defined(COFFEE_MINGW64)
+#if !defined(COFFEE_MINGW64) && !defined(COFFEE_MINGW32)
 using libc::read_lines;
 #endif
 
@@ -149,7 +150,7 @@ using file::posix::path::base;
 using file::posix::path::dir;
 
 using file::posix::path::current_dir;
-#if defined(COFFEE_MINGW64)
+#if defined(COFFEE_MINGW64) || defined(COFFEE_MINGW32)
 using file::win32::path::app_dir;
 using file::win32::path::executable;
 #else

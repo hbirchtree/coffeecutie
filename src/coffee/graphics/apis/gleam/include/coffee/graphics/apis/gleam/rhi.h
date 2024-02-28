@@ -264,8 +264,7 @@ struct api
 
     inline auto& debug()
     {
-#if GLEAM_MAX_VERSION >= 0x430 || GLEAM_MAX_VERSION_ES >= 0x320 || \
-    defined(GL_KHR_debug)
+#if GLEAM_RHI_REAL_DEBUG_ENABLED
         if(!m_debug)
             m_debug = std::make_unique<debug::api>(std::ref(m_features.debug));
         return *m_debug;

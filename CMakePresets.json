@@ -406,20 +406,53 @@
             },
             "cacheVariables": {
                 "CMAKE_BUILD_WITH_INSTALL_RPATH": "ON",
-                "CMAKE_C_COMPILER": "$env{TOOLCHAIN_PREFIX}-gcc-posix",
-                "CMAKE_CXX_COMPILER": "$env{TOOLCHAIN_PREFIX}-g++-posix",
-                "CMAKE_C_FLAGS": "-D__MINGW64__ -D_WIN32_WINNT=0x0602",
-                "CMAKE_CXX_FLAGS": "-D__MINGW64__ -D_WIN32_WINNT=0x0602",
+                "CMAKE_C_COMPILER": "x86_64-w64-mingw32-gcc-posix",
+                "CMAKE_C_FLAGS": "-D_WIN32_WINNT=0x0602 -Wa,-mbig-obj",
+                "CMAKE_CXX_COMPILER": "x86_64-w64-mingw32-g++-posix",
+                "CMAKE_CXX_FLAGS": "-D_WIN32_WINNT=0x0602 -Wa,-mbig-obj",
                 "CMAKE_MAKE_PROGRAM": "$env{NINJA}",
                 "CMAKE_SYSTEM_NAME": "Windows",
                 "MINGW": "1",
                 "MINGW64": "1",
+                "VCPKG_DEP_INFO_OVERRIDE_VARS": "x64;mingw;windows",
                 "VCPKG_MANIFEST_NO_DEFAULT_FEATURES": "ON",
                 "VCPKG_MANIFEST_FEATURES": "blam;gleam;headful;network;openssl",
-                "VCPKG_TARGET_TRIPLET": "x64-mingw-static"
+                "VCPKG_TARGET_TRIPLET": "x64-mingw-posix-static"
             },
             "environment": {
-                "TOOLCHAIN_PREFIX": "x86_64-w64-mingw32",
+                "HOST_TOOLS_BINARY_DIR": "${sourceDir}/multi_build/host-x64-linux-native/bin",
+                "HOST_TOOLS_DIR": "${sourceDir}/multi_build/host-x64-linux-native/vcpkg_installed/x64-linux/tools",
+                "NINJA": "$penv{NINJA}"
+            }
+        },
+        {
+            "name": "desktop-i686-windows-gnu-win32",
+            "displayName": "Windows x86 (SDL2/Win32)",
+            "inherits": ["vcpkg-base"],
+            "generator": "Ninja",
+            "condition": {
+                "lhs": "${hostSystemName}",
+                "type": "equals",
+                "rhs": "Linux"
+            },
+            "cacheVariables": {
+                "CMAKE_BUILD_WITH_INSTALL_RPATH": "ON",
+                "CMAKE_C_COMPILER": "i686-w64-mingw32-gcc-posix",
+                "CMAKE_C_FLAGS": "-D_WIN32_WINNT=0x0602 -Wa,-mbig-obj",
+                "CMAKE_CXX_COMPILER": "i686-w64-mingw32-g++-posix",
+                "CMAKE_CXX_FLAGS": "-D_WIN32_WINNT=0x0602 -Wa,-mbig-obj",
+                "CMAKE_MAKE_PROGRAM": "$env{NINJA}",
+                "CMAKE_SYSTEM_NAME": "Windows",
+                "MINGW": "1",
+                "MINGW64": "1",
+                "VCPKG_DEP_INFO_OVERRIDE_VARS": "x86;mingw;windows",
+                "VCPKG_MANIFEST_NO_DEFAULT_FEATURES": "ON",
+                "VCPKG_MANIFEST_FEATURES": "blam;gleam;headful;network;openssl",
+                "VCPKG_TARGET_TRIPLET": "x86-mingw-posix-static"
+            },
+            "environment": {
+                "HOST_TOOLS_BINARY_DIR": "${sourceDir}/multi_build/host-x64-linux-native/bin",
+                "HOST_TOOLS_DIR": "${sourceDir}/multi_build/host-x64-linux-native/vcpkg_installed/x64-linux/tools",
                 "NINJA": "$penv{NINJA}"
             }
         },
@@ -704,6 +737,12 @@
             "name": "desktop-x86_64-windows-gnu-win32-dbg",
             "configuration": "Debug",
             "configurePreset": "desktop-x86_64-windows-gnu-win32",
+            "inherits": "base-linux"
+        },
+        {
+            "name": "desktop-i686-windows-gnu-win32-dbg",
+            "configuration": "Debug",
+            "configurePreset": "desktop-i686-windows-gnu-win32",
             "inherits": "base-linux"
         },
         {

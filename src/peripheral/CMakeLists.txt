@@ -73,6 +73,12 @@ if(MINGW)
   target_compile_definitions(
     PeripheralLib PUBLIC -DCOFFEE_WINDOWS_COMPRESSION_AVAILABLE=1
   )
+  target_compile_options(
+    PeripheralLib PUBLIC -Wa,-mbig-obj
+  )
+  target_link_options(
+    PeripheralLib PUBLIC -Wa,-mbig-obj -static-libgcc -static-libstdc++
+  )
 elseif(WIN_UWP)
   target_link_libraries(PeripheralLib PUBLIC OneCore cabinet)
   target_compile_definitions(
@@ -205,7 +211,7 @@ endif()
 #
 #
 
-if(UNIX OR EMSCRIPTEN)
+if((UNIX OR EMSCRIPTEN) AND NOT MINGW)
     target_compile_definitions(PeripheralLib PUBLIC -DCOFFEE_SUPPORTS_BREAKPOINT)
 endif()
 
@@ -225,6 +231,6 @@ endif()
 if(BUILD_COMPRESS_ZSTD)
     add_subdirectory(compressors/zstd)
 endif()
-if(WIN32)
-  add_subdirectory(compressors/cab)
-endif()
+# if(WIN32)
+#   add_subdirectory(compressors/cab)
+# endif()

@@ -43,6 +43,9 @@
 #if defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__) || \
     defined(__MINGW32__) || defined(WIN32) || defined(WINUWP)
 #define C_SYSTEM_STRING "Windows"
+#if defined(__MINGW32__)
+#define COFFEE_MINGW32
+#endif
 #if defined(WINUWP)
 #define COFFEE_WINDOWS_UWP
 #else

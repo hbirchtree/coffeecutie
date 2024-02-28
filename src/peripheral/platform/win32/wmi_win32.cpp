@@ -1,7 +1,7 @@
 #define _WIN32_DCOM
 
 #undef _WIN32_WINNT
-#define _WIN32_WINNT 0x0600
+#define _WIN32_WINNT 0x0602
 
 #include <iostream>
 #include <string>
@@ -27,15 +27,6 @@ struct WMIData
 
 static WMIData* m_wmi_data = nullptr;
 
-namespace {
-
-auto string_to_bstr(std::string const& str)
-{
-    return SysAllocStringByteLen(str.data(), str.size());
-}
-
-} // namespace
-
 int InitCOMInterface()
 {
     if(m_wmi_data)
@@ -46,7 +37,7 @@ int InitCOMInterface()
     // Step 1: --------------------------------------------------
     // Initialize COM. ------------------------------------------
 
-    hres = CoInitializeEx(0, COINIT_MULTITHREADED);
+    hres = CoInitializeEx(0, COINIT_APARTMENTTHREADED);
     if(FAILED(hres))
     {
         cout << "Failed to initialize COM library. Error code = 0x" << hex
@@ -105,18 +96,18 @@ int InitCOMInterface()
     // Connect to the root\cimv2 namespace with
     // the current user and obtain pointer pSvc
     // to make IWbemServices calls.4
-    auto wmi_namespace = string_to_bstr("ROOT\\CIMV2");
-    hres               = pLoc->ConnectServer(
-        wmi_namespace, // Object path of WMI namespace
-        nullptr,       // User name. NULL = current user
-        nullptr,       // User password. NULL = current
-        0,             // Locale. NULL indicates current
-        0,             // Security flags.
-        0,             // Authority (for example, Kerberos)
-        0,             // Context object
-        &pSvc          // pointer to IWbemServices proxy
+    // auto wmi_namespace = string_to_bstr("ROOT\\CIMV2");
+    hres = pLoc->ConnectServer(
+        _bstr_t(L"ROOT\\CIMV2"), // Object path of WMI namespace
+        nullptr,                 // User name. NULL = current user
+        nullptr,                 // User password. NULL = current
+        0,                       // Locale. NULL indicates current
+        0,                       // Security flags.
+        0,                       // Authority (for example, Kerberos)
+        0,                       // Context object
+        &pSvc                    // pointer to IWbemServices proxy
     );
-    SysFreeString(wmi_namespace);
+    // SysFreeString(wmi_namespace);
 
     if(FAILED(hres))
     {
@@ -160,7 +151,8 @@ int InitCOMInterface()
     return 0;
 }
 
-bool WMI_Query(const char* query, const wchar_t* property, std::string& target)
+bool WMI_Query(
+    const wchar_t* query, const wchar_t* property, std::string& target)
 {
     if(InitCOMInterface() != 0)
         return false;
@@ -168,23 +160,18 @@ bool WMI_Query(const char* query, const wchar_t* property, std::string& target)
     HRESULT hres;
     auto    pSvc = m_wmi_data->service;
 
-    IEnumWbemClassObject* pEnumerator    = NULL;
-    auto                  query_language = string_to_bstr("WQL");
-    auto                  query_         = string_to_bstr(query);
-    hres                                 = pSvc->ExecQuery(
-        query_language,
-        query_,
+    IEnumWbemClassObject* pEnumerator = NULL;
+    hres                              = pSvc->ExecQuery(
+        _bstr_t(L"WQL"),
+        _bstr_t(query),
         WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
         NULL,
         &pEnumerator);
-    SysFreeString(query_language);
-    SysFreeString(query_);
 
     if(FAILED(hres))
     {
-        cout << "Query failed,"
-             << " error code = 0x" << hex << hres << endl;
-        return 1; // Program has failed.
+        cout << "Query failed, error code = 0x" << hex << hres << endl;
+        return false; // Program has failed.
     }
 
     // Step 7: -------------------------------------------------
@@ -213,25 +200,41 @@ bool WMI_Query(const char* query, const wchar_t* property, std::string& target)
         case VT_BSTR: {
             std::wstring output_w = vtProp.bstrVal;
             target = std::string(output_w.begin(), output_w.end());
-            break;
+            VariantClear(&vtProp);
+            pclsObj->Release();
+            return true;
+        }
+        case VT_I4: {
+            target = std::to_string(vtProp.lVal);
+            VariantClear(&vtProp);
+            pclsObj->Release();
+            return true;
         }
         default:
+            fprintf(stderr, "Unhandled WMI variant: %i\n", vtProp.vt);
             break;
         }
         VariantClear(&vtProp);
 
         pclsObj->Release();
     }
-    return 0;
+    return false;
 }
 
 std::optional<std::string> platform::info::wmi::detail::query(
-    std::string const& query, std::wstring const& property)
+    std::wstring const& query, std::wstring const& property)
 {
     if(InitCOMInterface() != 0)
+    {
+        cout << "Failed to init COM interface for queries\n";
         return std::nullopt;
+    }
     std::string out;
     if(!WMI_Query(query.c_str(), property.c_str(), out))
+    {
+        cout << "COM query failed: " << std::string(query.begin(), query.end())
+             << "\n";
         return std::nullopt;
+    }
     return out;
 }

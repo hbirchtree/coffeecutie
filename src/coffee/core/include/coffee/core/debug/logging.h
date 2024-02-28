@@ -92,7 +92,7 @@ void log(
 {
     auto formatted_w =
         std::basic_string<wchar_t>(formatted.begin(), formatted.end());
-#if !defined(COFFEE_MINGW64)
+#if !defined(COFFEE_MINGW64) && !defined(COFFEE_MINGW32)
     if(platform::env::var("VisualStudioVersion").has_value())
 #if defined(COFFEE_WINDOWS)
         OutputDebugStringW(formatted_w.c_str());

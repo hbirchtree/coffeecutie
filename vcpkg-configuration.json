@@ -4,6 +4,7 @@
         "./toolchain/vcpkg/ports/discord-rpc",
         "./toolchain/vcpkg/ports/gamenetworkingsockets",
         "./toolchain/vcpkg/ports/sdl2",
+        "./toolchain/vcpkg/ports/status-code",
         "./toolchain/vcpkg/ports/stb"
     ],
     "overlay-triplets": [

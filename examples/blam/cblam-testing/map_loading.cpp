@@ -88,6 +88,7 @@ static void init_map(
         auto map_name = files.container.map->full_mapname();
         window_config->setName(fmt::format("Blam! : {0}", map_name));
     }
+    if constexpr(!compile_info::platform::is_32bit)
     {
         ProfContext _("Texture allocation");
         bitmaps.allocate_storage();

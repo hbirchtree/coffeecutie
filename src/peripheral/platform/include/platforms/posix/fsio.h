@@ -7,7 +7,7 @@
 #if defined(COFFEE_MACOS)
 #include <libproc.h>
 #endif
-#if defined(COFFEE_MINGW64)
+#if defined(COFFEE_MINGW64) || defined(COFFEE_MINGW32)
 #include <filesystem>
 #endif
 
@@ -86,7 +86,7 @@ FORCEDINLINE result<std::vector<file_entry_t>, posix_error> list(Url const& dir)
            name == "." || name == "..")
             continue;
         result.push_back(file_entry_t {
-#if defined(COFFEE_MINGW64)
+#if defined(COFFEE_MINGW64) || defined(COFFEE_MINGW32)
             .mode = mode_t::file,
 #else
             .mode = detail::dirmode_from_native(direntry->d_type),
@@ -129,7 +129,7 @@ FORCEDINLINE std::optional<posix_error> create_directory(
                 resolved.substr(0, C_FCAST<szptr>(it - resolved.begin()));
             if(current_path == resolved || current_path.empty())
                 break;
-#if defined(COFFEE_MINGW64)
+#if defined(COFFEE_MINGW64) || defined(COFFEE_MINGW32)
             if(auto status = mkdir(current_path.c_str()); status != 0)
 #else
             if(auto status = mkdir(current_path.c_str(), perm); status != 0)
@@ -138,7 +138,7 @@ FORCEDINLINE std::optional<posix_error> create_directory(
             it = std::find(it, resolved.end(), '/');
         }
     }
-#if defined(COFFEE_MINGW64)
+#if defined(COFFEE_MINGW64) || defined(COFFEE_MINGW32)
     if(auto status = mkdir(resolved.c_str()); status != 0)
 #else
     if(auto status = mkdir(resolved.c_str(), perm); status != 0)
@@ -193,7 +193,7 @@ FORCEDINLINE std::optional<posix_error> truncate(posix_fd_t const& file)
 FORCEDINLINE std::optional<posix_error> link(
     Url const& source, Url const& destination, create_params_t const& = {})
 {
-#if defined(COFFEE_MINGW64)
+#if defined(COFFEE_MINGW64) || defined(COFFEE_MINGW32)
     return EPERM;
 #else
     auto src_resolved = *source;
@@ -217,7 +217,7 @@ FORCEDINLINE std::optional<posix_error> change_dir(Url const& path)
 
 FORCEDINLINE result<Url, posix_error> canon(Url const& path)
 {
-#if defined(COFFEE_MINGW64)
+#if defined(COFFEE_MINGW64) || defined(COFFEE_MINGW32)
     auto            rel = std::filesystem::path(*path);
     std::error_code ec;
     auto            abs = std::filesystem::absolute(rel, ec);
@@ -256,7 +256,7 @@ FORCEDINLINE result<Url, posix_error> base(Url const& path)
 
 FORCEDINLINE result<Url, posix_error> dereference(Url const& path)
 {
-#if defined(COFFEE_MINGW64)
+#if defined(COFFEE_MINGW64) || defined(COFFEE_MINGW32)
     return path;
 #else
     auto        unresolved = path.internUrl.c_str();
@@ -271,7 +271,7 @@ FORCEDINLINE result<Url, posix_error> dereference(Url const& path)
 #endif
 }
 
-#if !defined(COFFEE_MINGW64)
+#if !defined(COFFEE_MINGW64) && !defined(COFFEE_MINGW32)
 FORCEDINLINE result<Url, posix_error> executable()
 {
     using namespace url::constructors;

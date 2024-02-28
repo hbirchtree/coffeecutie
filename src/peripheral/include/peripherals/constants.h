@@ -95,14 +95,14 @@ constexpr u32 min_target =
 namespace windows {
 
 constexpr u32 target =
-#if defined(COFFEE_WINDOWS) && !defined(COFFEE_MINGW64)
+#if defined(COFFEE_WINDOWS)
     WINVER
 #else
     0
 #endif
     ;
 constexpr u32 wdk =
-#if defined(COFFEE_WINDOWS) && !defined(COFFEE_MINGW64)
+#if defined(COFFEE_WINDOWS)
     WDK_NTDDI_VERSION
 #else
     0
@@ -163,7 +163,7 @@ constexpr string_view version_str = C_STR(C_COMPILER_VER_MAJ) "." C_STR(
     C_COMPILER_VER_MIN) "." C_STR(C_COMPILER_VER_REV);
 
 constexpr compiler_version_t version = {
-#if defined(COFFEE_WINDOWS)
+#if defined(_MSC_VER)
     C_COMPILER_VER_MAJ / 10000000,
     C_COMPILER_VER_MAJ / 100000 - (C_COMPILER_VER_MAJ / 10000000) * 100,
     C_COMPILER_VER_MAJ / 1000 - (C_COMPILER_VER_MAJ / 100000) * 100

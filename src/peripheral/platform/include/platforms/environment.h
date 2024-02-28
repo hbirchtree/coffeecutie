@@ -2,7 +2,7 @@
 
 #if defined(COFFEE_LINUX) || defined(COFFEE_ANDROID) ||    \
     defined(COFFEE_APPLE) || defined(COFFEE_EMSCRIPTEN) || \
-    defined(COFFEE_MINGW64)
+    defined(COFFEE_MINGW64) || defined(COFFEE_MINGW32)
 #define USE_POSIX_API 1
 #endif
 
