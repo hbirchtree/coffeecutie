@@ -554,20 +554,13 @@ void addDefaults(
         C_ERROR_CHECK(ec);
     }
 
-#if defined(FEATURE_ENABLE_PVRComponents) || \
-    defined(FEATURE_ENABLE_EmscriptenComponents)
-    loader.registerAll<detail::subsystem_list<
 #if defined(FEATURE_ENABLE_EmscriptenComponents)
-        emscripten::BatteryProvider,
-#else
-    // comp_app::SysBattery,
+    loader.registerAll<detail::subsystem_list<emscripten::BatteryProvider>>(
+        container, ec);
+    C_ERROR_CHECK(ec);
 #endif
 #if defined(FEATURE_ENABLE_PVRComponents)
-        pvr::PVRGPUStats //,
-#endif
-        // comp_app::SysCPUTemp,
-        // comp_app::SysCPUClock
-        >>(container, ec);
+    loader.registerAll<detail::subsystem_list<pvr::PVRGPUStats>>(container, ec);
     C_ERROR_CHECK(ec);
 #endif
 

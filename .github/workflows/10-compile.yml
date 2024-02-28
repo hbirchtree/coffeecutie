@@ -53,7 +53,11 @@ jobs:
         distribution: 'adopt'
         java-version: '17'
     - name: Installing build-essential
-      run: sudo apt install build-essential inkscape flatpak
+      run: sudo apt install build-essential inkscape flatpak nasm
+    - name: Building host tools
+      run: source/cb build host-x64-linux-native
+      env:
+        VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
     - name: Building project
       run: source/cb build ${{matrix.variant}}
       env:
@@ -65,6 +69,3 @@ jobs:
       with:
         name: ${{matrix.variant}}
         path: '*.tar.bz2'
-    - name: Uploading assets
-      if: startsWith(github.ref, 'refs/tags/')
-      run: source/cb push-asset tar.bz2
