@@ -79,7 +79,7 @@ function host_tools_build()
     pushd ${BASE_DIR}
 
     export NINJA=$(which ninja)
-    export VCPKG_ROOT=$(dirname $(readlink $(which vcpkg)))
+    export VCPKG_ROOT=$(dirname $(readlink -f $(which vcpkg)))
     cmake_debug --preset host-${HOST_TOOLCHAIN_TRIPLET}
     cmake_debug --build --preset host-${HOST_TOOLCHAIN_TRIPLET}-rel
 
