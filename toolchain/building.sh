@@ -220,7 +220,7 @@ function native_build()
 
     export PATH=$PATH:$TOOLCHAIN_ROOT/bin
 
-    export VCPKG_ROOT=$(dirname $(readlink $(which vcpkg)))
+    export VCPKG_ROOT=$(dirname $(readlink -f $(which vcpkg)))
 
     TARGET_SPEC=""
     if [ -n "${TARGET}" ]; then
@@ -233,7 +233,7 @@ function native_build()
     echo "::info::Set up for ${TOOLCHAIN_PREFIX} (${TOOLCHAIN_ROOT})"
 
     export NINJA=$(which ninja)
-    export VCPKG_ROOT=$(dirname $(readlink $(which vcpkg)))
+    export VCPKG_ROOT=$(dirname $(readlink -f $(which vcpkg)))
 
     pushd $BASE_DIR
 
@@ -327,7 +327,7 @@ function emscripten_build()
     echo "::group::Configuring project"
     echo "::info::Set up for ${TOOLCHAIN_PREFIX} (${TOOLCHAIN_ROOT})"
     export NINJA=$(which ninja)
-    export VCPKG_ROOT=$(dirname $(readlink $(which vcpkg)))
+    export VCPKG_ROOT=$(dirname $(readlink -f $(which vcpkg)))
     cmake --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}
     echo "::endgroup::"
 
@@ -420,7 +420,7 @@ function android_build()
 
     export NINJA=$(which ninja)
     export ANDROID_SDK=${ANDROID_SDK}
-    export VCPKG_ROOT=$(dirname $(readlink $(which vcpkg)))
+    export VCPKG_ROOT=$(dirname $(readlink -f $(which vcpkg)))
     cmake --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}
     echo "::endgroup::"
 
@@ -458,7 +458,7 @@ function mingw_build()
 
     echo " * Selected platform ${PLATFORM}:${ARCHITECTURE}:${SYSROOT}"
 
-    export VCPKG_ROOT=$(dirname $(readlink $(which vcpkg)))
+    export VCPKG_ROOT=$(dirname $(readlink -f $(which vcpkg)))
 
     TARGET_SPEC=""
     if [ -n "${TARGET}" ]; then
