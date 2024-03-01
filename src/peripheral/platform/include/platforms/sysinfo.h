@@ -201,8 +201,8 @@ using win32::name;
 using win32::version;
 
 using win32::is_wow64;
-using win32::wine_version;
 using win32::wine_host_system;
+using win32::wine_version;
 
 #else
 

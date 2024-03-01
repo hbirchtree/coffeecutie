@@ -3,8 +3,8 @@
 #include <peripherals/identify/identify.h>
 
 #include <cstddef>
-#include <typeinfo>
 #include <type_traits>
+#include <typeinfo>
 #include <utility>
 #include <vector>
 

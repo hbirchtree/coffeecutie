@@ -52,9 +52,9 @@ macro(
 
   set(LINESHIFT "\r\n")
 
-  if(MINGW64)
-    set(LINESHIFT "\n\n\n")
-  endif()
+  # if(MINGW64)
+  #   set(LINESHIFT "\r\n")
+  # endif()
 
   set(RESC_NUM "0")
 

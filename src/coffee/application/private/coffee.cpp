@@ -88,12 +88,12 @@ int MainSetup(MainWithArgs mainfun, int argc, char** argv, u32 flags)
 #endif
 
 #if defined(COFFEE_WINDOWS) && !defined(COFFEE_WINDOWS_UWP)
-// #if MODE_RELEASE
-//     ShowWindow(GetConsoleWindow(), SW_HIDE);
-// #else
-//     if(platform::Env::GetVar("VisualStudioVersion").size())
-//         ShowWindow(GetConsoleWindow(), SW_HIDE);
-// #endif
+    // #if MODE_RELEASE
+    //     ShowWindow(GetConsoleWindow(), SW_HIDE);
+    // #else
+    //     if(platform::Env::GetVar("VisualStudioVersion").size())
+    //         ShowWindow(GetConsoleWindow(), SW_HIDE);
+    // #endif
     InitCOMInterface();
 #elif defined(COFFEE_WINDOWS_UWP)
     InitCOMInterface();

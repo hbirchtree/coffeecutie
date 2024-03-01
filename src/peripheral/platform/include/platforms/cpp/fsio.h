@@ -9,7 +9,7 @@ namespace platform::file::cpp {
 FORCEDINLINE std::optional<posix::posix_error> create_directory(
     Url const& file, create_params_t const& params)
 {
-    auto resolved = *file;
+    auto            resolved = *file;
     std::error_code ec;
     if(!std::filesystem::create_directories(resolved, ec))
         return ENOENT;
@@ -29,4 +29,4 @@ FORCEDINLINE std::optional<posix::posix_error> create(
     }
 }
 
-}
+} // namespace platform::file::cpp

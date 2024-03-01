@@ -16,8 +16,8 @@
 #include <platforms/sysinfo.h>
 
 #if defined(FEATURE_ENABLE_ASIO)
-#include <coffee/asio/net_resource.h>
 #include <coffee/asio/net_profiling.h>
+#include <coffee/asio/net_resource.h>
 #endif
 #if defined(FEATURE_ENABLE_DiscordLatte)
 #include <discord/discord_system.h>
@@ -46,9 +46,9 @@ i32 blam_main()
             ("listen",
              "Interface to start a server on",
              cxxopts::value<std::string>())
-            //
+        //
 #if defined(COFFEE_CUSTOM_EXIT_HANDLING)
-            ("map", "Which map file to load", cxxopts::value<std::string>())
+                ("map", "Which map file to load", cxxopts::value<std::string>())
 #endif
             ;
         auto& args = GetInitArgs();

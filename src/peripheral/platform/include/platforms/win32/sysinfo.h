@@ -168,7 +168,7 @@ inline libc_types::u64 total()
     return info::wmi::query<libc_types::u64>(
                L"SELECT TotalPhysicalMemory FROM Win32_ComputerSystem",
                L"TotalPhysicalMemory")
-               .value_or(0u);
+        .value_or(0u);
 }
 
 inline libc_types::u64 resident()

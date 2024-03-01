@@ -43,8 +43,9 @@ struct null_api
     }
 };
 
-#if (GLEAM_MAX_VERSION >= 0x430 || GLEAM_MAX_VERSION_ES >= 0x320 || \
-    defined(GL_KHR_debug)) && !defined(COFFEE_MINGW32)
+#if(GLEAM_MAX_VERSION >= 0x430 || GLEAM_MAX_VERSION_ES >= 0x320 || \
+    defined(GL_KHR_debug)) &&                                      \
+    !defined(COFFEE_MINGW32)
 struct scope
 {
     scope(features::debugging debug, std::string_view const& name)
@@ -176,8 +177,7 @@ struct api
         {
             cmd::enable(group::enable_cap::debug_output_synchronous);
             gl::khr::debug::debug_message_callback(
-                debug_func,
-                semantic::Span<const api>(this, 1));
+                debug_func, semantic::Span<const api>(this, 1));
             return;
         }
 #endif

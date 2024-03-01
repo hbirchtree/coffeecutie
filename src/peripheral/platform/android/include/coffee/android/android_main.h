@@ -116,7 +116,6 @@ struct app_info
     platform::url::Url                external_data_path();
     std::optional<platform::url::Url> obb_path();
 
-
     std::optional<::jnipp::java::object> get_service(
         std::string const& service);
 
@@ -134,7 +133,7 @@ struct app_info
         vr_headset,
     };
 
-    device_type_t device_type() const;
+    device_type_t            device_type() const;
     std::vector<std::string> system_features() const;
 };
 

@@ -43,6 +43,8 @@ beaglebone-build|desktop-build|generic-build|raspberry-build)
     fi
     if [ $1 = "desktop-build" ] && [ "$(uname)" = "Darwin" ]; then
         xcode_build ${@:2}
+    elif [[ $2 == *"mingw32"* ]]; then
+        mingw_build ${@:2}
     else
         native_build ${@:2}
     fi

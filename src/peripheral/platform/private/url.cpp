@@ -212,7 +212,7 @@ STATICINLINE SystemPaths& GetSystemPaths()
         if(url.internUrl.size() > 3 && url.internUrl.substr(1, 2) == ":\\")
         {
             auto path = url.internUrl;
-            auto i = path.find('\\');
+            auto i    = path.find('\\');
             while(i != std::string::npos)
             {
                 path.replace(i, 1, "/");
@@ -222,10 +222,10 @@ STATICINLINE SystemPaths& GetSystemPaths()
         } else
             return url;
     };
-    paths.assetDir = path_to_mingw(paths.assetDir);
-    paths.tempDir = path_to_mingw(paths.tempDir);
+    paths.assetDir  = path_to_mingw(paths.assetDir);
+    paths.tempDir   = path_to_mingw(paths.tempDir);
     paths.configDir = path_to_mingw(paths.configDir);
-    paths.cacheDir = path_to_mingw(paths.cacheDir);
+    paths.cacheDir  = path_to_mingw(paths.cacheDir);
 
 #if VER_PRODUCTBUILD >= 17025 && defined(COFFEE_WINDOWS_UWP)
 #error ERROR ERROR TIME TO IMPLEMENT PROPER UWP ASSET STORAGE M8

@@ -341,7 +341,7 @@ std::vector<std::string> app_info::system_features() const
     for(auto feature_ : *systemFeatures)
     {
         auto feature = FeatureInfo(feature_);
-        auto name_ = *feature[name];
+        auto name_   = *feature[name];
         if(!jnipp::java::objects::not_null(name_))
             continue;
         features.push_back(type_unwrapper<std::string>(name_));
