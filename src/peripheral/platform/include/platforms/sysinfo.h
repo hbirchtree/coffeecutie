@@ -104,7 +104,7 @@ using win32::model;
 #else
 constexpr bool has_cpuinfo = false;
 
-inline u32 frequency(bool, u32 = 0, u32 = 0)
+inline u32 frequency(bool = false, u32 = 0, u32 = 0)
 {
     return 0;
 }
