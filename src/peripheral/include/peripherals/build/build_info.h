@@ -9,9 +9,10 @@
 #define C_CONSTRUCT_BUILD_STRING(ver, datetime) ver "." datetime
 
 #include <peripherals/libc/types.h>
+#include <string_view>
 
 namespace compile_info {
 
-extern const libc_types::cstring engine_version;
+extern const std::string_view engine_version;
 
 } // namespace compile_info

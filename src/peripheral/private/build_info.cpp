@@ -8,6 +8,6 @@
 
 namespace compile_info {
 
-const libc_types::cstring engine_version = MODULE_VERSION;
+const std::string_view engine_version = MODULE_VERSION;
 
 } // namespace compile_info

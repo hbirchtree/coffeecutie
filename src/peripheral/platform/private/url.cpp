@@ -19,18 +19,6 @@
 #if defined(COFFEE_ANDROID)
 #include <coffee/android/android_main.h>
 
-#elif defined(COFFEE_WINDOWS_UWP)
-#pragma comment(lib, "windowsapp")
-
-#include <ntverp.h>
-
-#include <winrt/Windows.ApplicationModel.h>
-#include <winrt/Windows.Storage.h>
-
-using namespace winrt;
-
-using WPkg = ::Windows::ApplicationModel::Package;
-
 #elif defined(COFFEE_APPLE)
 #include <CoreFoundation/CFBundle.h>
 #include <CoreFoundation/CFString.h>
@@ -194,16 +182,6 @@ STATICINLINE SystemPaths& GetSystemPaths()
     paths.cacheDir        = MkUrl(cache_dir.c_str(), RSCA::SystemFile) +
                      Path{GetCurrentApp()->organization_name} +
                      Path{GetCurrentApp()->application_name};
-
-#if defined(COFFEE_WINDOWS_UWP)
-    auto pkg     = ::Windows::ApplicationModel::Package::Current();
-    auto appdata = pkg.InstalledLocation().Path();
-
-    std::string bs =
-        StrUtil::convertformat<char, wchar_t>(std::wstring(appdata.data()));
-
-    paths.assetDir = MkUrl(bs.c_str(), RSCA::SystemFile);
-#endif
 
     /* assetDir is supposed to be empty, as it refers to a virtual filesystem */
     /* We might want to toggle it based on running in UWP or something... */

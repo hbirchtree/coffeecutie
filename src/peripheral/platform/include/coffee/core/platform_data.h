@@ -34,6 +34,6 @@ namespace compile_info {
 /*!
  * \brief The underlying engine version
  */
-extern const libc_types::cstring engine_version;
+extern const std::string_view engine_version;
 
 } // namespace compile_info
