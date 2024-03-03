@@ -49,6 +49,9 @@ beaglebone-build|desktop-build|generic-build|raspberry-build)
         native_build ${@:2}
     fi
 ;;
+"host-build")
+    host_tools_build
+;;
 "web-build")
     if [ -z "$2" ] || [ "$2" = "list" ] || [ "$2" = "help" ]; then
         echo "No target specified"
