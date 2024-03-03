@@ -85,3 +85,11 @@ jobs:
           !source/multi_build/${{matrix.artifact}}/lib/*.a
           source/multi_build/${{matrix.artifact}}/packaged
         if-no-files-found: error
+    - name: Generating GitHub Pages examples
+      if: matrix.variant == 'web:wasm32-emscripten:webgl2'
+      run: |
+        chmod -R 0755 source/multi_build/web-wasm32-emscripten-webgl2/bin
+        tar zcvf github-pages.tar.gz source/multi_build/web-wasm32-emscripten-webgl2/bin/
+    - name: Uploading GitHub Pages examples
+      if: matrix.variant == 'web:wasm32-emscripten:webgl2'
+      uses: actions/upload-pages-artifact@latest
