@@ -26,6 +26,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
+        - variant: android:arm-neon:19
+          artifact: android-arm-neon:19
         - variant: android:arm64:30-gl
           artifact: android-arm64-30-gl
         - variant: android:arm64:32
