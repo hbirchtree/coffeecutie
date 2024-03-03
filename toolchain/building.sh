@@ -491,6 +491,8 @@ function mingw_build()
     echo "::group::Configuring project"
     echo "::info::Set up for ${TOOLCHAIN_PREFIX} (system)"
 
+    pushd ${BASE_DIR}
+
     cmake --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}
 #    cmake_debug \
 #        -GNinja \
@@ -512,4 +514,5 @@ function mingw_build()
     echo "::group::Building project"
     cmake --build --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}-dbg
     echo "::endgroup::"
+    popd
 }
