@@ -48,6 +48,13 @@ function(EMSCRIPTEN_PACKAGE)
       WORKING_DIRECTORY ${BUNDLE_DIR}
     )
   endif()
+  add_custom_command(
+    TARGET ${EM_TARGET}
+    COMMAND ${CMAKE_COMMAND}
+        -E copy
+        ${COFFEE_DESKTOP_DIRECTORY}/emscripten/coi-serviceworker.min.js
+        ${BUNDLE_DIR}/coi-serviceworker.min.js
+  )
 
   install(DIRECTORY ${BUNDLE_DIR} DESTINATION bin)
 endfunction()

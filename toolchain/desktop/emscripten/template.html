@@ -1,9 +1,11 @@
-
-<html lang="en-us"><head>
-    <meta charset="utf-8">
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Emscripten</title>
-    <style>
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+  <meta name="generator" content=
+  "HTML Tidy for HTML5 for Linux version 5.6.0">
+  <meta charset="utf-8">
+  <title>Emscripten</title>
+  <style>
       html {
         height: 100%;
       }
@@ -111,32 +113,26 @@
         font-family: 'Lucida Console', Monaco, monospace;
         outline: none;
       }
-    </style>
-  <body>
-    
-
-    <span style="" id="status_banner">
-        <div class="spinner" id="spinner" style=""></div>
-        <div class="emscripten" id="status">Connecting...</div>
-    <span id="controls">
-  <span><input type="checkbox" id="resize">Resize canvas</span>
-  <span><input type="checkbox" id="pointerLock" checked="">Lock/hide mouse pointer &nbsp;&nbsp;&nbsp;</span>
-  <span><input type="button" value="Fullscreen" onclick="Module.requestFullscreen(document.getElementById('pointerLock').checked, 
-                                                                            document.getElementById('resize').checked)">
-  </span>
-</span></span>
-
-
-
-    <div class="emscripten">
-      <progress value="0" max="1" id="progress" hidden=""></progress>
-    </div>
-
-    
-    <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" style="cursor: default;"></canvas>
-    
-
-    <script type='text/javascript'>
+  </style>
+  <script src="coi-serviceworker.min.js"></script>
+</head>
+<body>
+  <div class="spinner" id="spinner" style=""></div>
+  <div class="emscripten" id="status">
+    <span style="" id="status_banner">Connecting...</span>
+  </div><span style=""><span id="controls"><span><input type=
+  "checkbox" id="resize">Resize canvas</span> <span><input type=
+  "checkbox" id="pointerLock" checked>Lock/hide mouse pointer
+  &nbsp;&nbsp;&nbsp;</span> <span><input type="button" value=
+  "Fullscreen" onclick=
+  "Module.requestFullscreen(document.getElementById('pointerLock').checked, document.getElementById('resize').checked)">
+  </span></span></span>
+  <div class="emscripten">
+    <progress value="0" max="1" id="progress" hidden=""></progress>
+  </div>
+  <canvas class="emscripten" id="canvas" oncontextmenu=
+  "event.preventDefault()" style="cursor: default;"></canvas>
+  <script type='text/javascript'>
       var statusElement = document.getElementById('status');
       var statusBar = document.querySelector('#status_banner');
       var progressElement = document.getElementById('progress');
@@ -238,6 +234,7 @@
       };
       new ResizeObserver(resizeCanvas).observe(canvasParent);
       setTimeout(resizeCanvas, 1000);
-    </script>
-    {{{ SCRIPT }}}
-</body></html>
+  </script>
+  {{{ SCRIPT }}}
+</body>
+</html>
