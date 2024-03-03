@@ -536,7 +536,7 @@ struct ShaderCache
 
         ShaderItem const& shader = find(shader_id)->second;
 
-        f32 t = stl_types::Chrono::to_float(time) / 10.f;
+        f32 t = stl_types::Chrono::to_f32(time) / 10.f;
 
         switch(shader.tag_class)
         {

@@ -288,10 +288,11 @@ inline topological_map<u32> topo_frequency()
     return freqs;
 }
 
-inline u32 frequency(bool current = false, u32 cpu = 0, u32 /*node*/ = 0)
+inline u32 frequency(bool current = false, u32 cpu = 0, u32 core = 0)
 {
     using url::Path;
     auto select_id = std::to_string(cpu);
+    auto select_core = std::to_string(core);
     auto freq_path = current ? "scaling_cur_freq" : "cpuinfo_max_freq";
     for(auto const& id : detail::online_cores())
     {
@@ -300,6 +301,10 @@ inline u32 frequency(bool current = false, u32 cpu = 0, u32 /*node*/ = 0)
 
         if(cpu_id.has_error() ||
            (cpu_id.value() != select_id && cpu_id.value() != "-1"))
+            continue;
+        auto core_id = detail::read_cpu(id, Path{"topology/core_id"});
+        if(core_id.has_error() ||
+            core_id.value() != select_core && core_id.value() != "-1")
             continue;
         auto freq = detail::read_cpu(id, Path{"cpufreq"} / freq_path);
         if(freq.has_error())
@@ -327,7 +332,7 @@ inline libc_types::u64 total()
 inline libc_types::u64 resident()
 {
     struct rusage usage;
-    if(getrusage(RUSAGE_SELF, &usage) != -1)
+    if(getrusage(RUSAGE_SELF, &usage) == 0)
         return usage.ru_idrss + usage.ru_ixrss + usage.ru_isrss;
     return 0;
 }

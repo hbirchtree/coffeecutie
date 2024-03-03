@@ -8,7 +8,7 @@ using compo::time_point;
 using libc_types::f32;
 using libc_types::szptr;
 using std::chrono::duration_cast;
-using stl_types::Chrono::seconds_float;
+using stl_types::Chrono::seconds_f32;
 
 ImGuiWidget StatsMenu()
 {
@@ -22,7 +22,7 @@ ImGuiWidget StatsMenu()
                 m_values.resize(50);
 
                 const auto delta_ms =
-                    duration_cast<seconds_float>(delta).count();
+                    duration_cast<seconds_f32>(delta).count();
 
                 ImGui::BeginMainMenuBar();
                 ImGui::Columns(4);

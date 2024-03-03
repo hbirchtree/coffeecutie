@@ -50,7 +50,8 @@
                 { "name": "sdl2", "platform": "linux & arm & wayland & x11", "default-features": false, "features": ["wayland", "x11"] },
                 { "name": "sdl2", "platform": "linux & arm & raspberry", "default-features": false, "features": [] },
                 { "name": "sdl2", "platform": "osx | windows | mingw"},
-                { "name": "pvrscope", "platform": "linux & arm & beaglebone" }
+                { "name": "pvrscope", "platform": "linux & arm & beaglebone" },
+                { "name": "nvidia-gdk", "platform": "linux & x64" }
             ]
         },
         "gleam": {

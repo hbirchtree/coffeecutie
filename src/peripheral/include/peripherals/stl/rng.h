@@ -46,9 +46,9 @@ struct rng
         return rand<u32>(u32_lim::min(), u32_lim::min());
     }
 
-    scalar frand()
+    f32 frand()
     {
-        return rand<scalar>(0.0, 1.0);
+        return rand<f32>(0.0, 1.0);
     }
 
     void seed(rng_t seed)

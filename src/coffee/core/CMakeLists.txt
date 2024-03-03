@@ -3,8 +3,6 @@ find_package(tinyxml2 CONFIG REQUIRED)
 
 add_library(CoreCommon INTERFACE)
 
-set(CPPCODEC_INCLUDE_DIR ${COFFEE_EXT_LIBRARY_DIR}/cppcodec)
-
 target_include_directories(
   CoreCommon
   INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/interface_include>
@@ -169,12 +167,9 @@ if(LOWFAT_BUILD)
   target_compile_definitions(CoreCommon INTERFACE -DCOFFEE_LOWFAT)
 endif()
 
-add_library(CppCodec INTERFACE)
-add_library(RapidJSON INTERFACE)
 add_library(Core INTERFACE)
 
 add_export(Core "")
-add_export(RapidJSON "")
 add_export(CoreCommon "")
 
 target_link_libraries(

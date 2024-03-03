@@ -45,13 +45,14 @@ libc_types::u16 SysBattery::percentage() const
     Throw(unimplemented_path(""));
 }
 
-libc_types::u32 SysCPUClock::threads()
+libc_types::u32 SysCPUClock::cpus()
 {
-    libc_types::u32 out;
-    for(auto cpu : stl_types::range(platform::info::proc::cpu_count()))
-        out +=
-            C_FCAST<libc_types::u32>(platform::info::proc::thread_count(cpu));
-    return out;
+    return platform::info::proc::cpu_count();
+}
+
+libc_types::u32 SysCPUClock::cores(libc_types::u32 cpu)
+{
+    return platform::info::proc::core_count(cpu);
 }
 
 SysCPUClock::Governor SysCPUClock::governor(libc_types::u32)
@@ -59,9 +60,9 @@ SysCPUClock::Governor SysCPUClock::governor(libc_types::u32)
     return Governor::Ondemand;
 }
 
-libc_types::f64 SysCPUClock::frequency(libc_types::u32 i)
+libc_types::f64 SysCPUClock::frequency(libc_types::u32 i, libc_types::u32 core)
 {
-    return platform::info::proc::frequency(true, i);
+    return platform::info::proc::frequency(true, i, core);
 }
 
 } // namespace comp_app

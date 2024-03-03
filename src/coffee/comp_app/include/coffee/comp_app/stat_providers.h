@@ -39,9 +39,11 @@ struct SysCPUClock
     : interfaces::CPUClockProvider
     , AppService<SysCPUClock, CPUClockProvider>
 {
-    virtual libc_types::u32 threads() final;
+    virtual libc_types::u32 cpus() final;
+    virtual libc_types::u32 cores(libc_types::u32 cpu) final;
     virtual Governor        governor(libc_types::u32) final;
-    virtual libc_types::f64 frequency(libc_types::u32) final;
+    virtual libc_types::f64 frequency(
+        libc_types::u32 cpu, libc_types::u32 core) final;
 };
 
 } // namespace comp_app

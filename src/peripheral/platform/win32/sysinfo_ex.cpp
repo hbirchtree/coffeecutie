@@ -37,15 +37,19 @@ std::string architecture()
     GetNativeSystemInfo(&info);
     if(info.wProcessorArchitecture & PROCESSOR_ARCHITECTURE_IA32_ON_WIN64)
         return "x86/amd64";
+#if defined(PROCESSOR_ARCHITECTURE_IA32_ON_ARM64)
     if(info.wProcessorArchitecture & PROCESSOR_ARCHITECTURE_IA32_ON_ARM64)
         return "x86/arm64";
+#endif
     GetSystemInfo(&info);
     if(info.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64)
         return "amd64";
     if(info.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM)
         return "arm";
+#if defined(PROCESSOR_ARCHITECTURE_ARM64)
     if(info.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM64)
         return "arm64";
+#endif
     if(info.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_INTEL)
         return "x86";
     return fmt::format("unknown({})", info.wProcessorArchitecture);

@@ -412,7 +412,7 @@ i32 CoffeeMain(MainWithArgs mainfun, i32 argc, cstring_w* argv, u32 flags)
         if(!silent_init)
             cDebug(
                 "Execution time: {0}",
-                std::chrono::duration_cast<stl_types::Chrono::seconds_double>(
+                std::chrono::duration_cast<stl_types::Chrono::seconds_f32>(
                     std::chrono::high_resolution_clock::now() - start_time)
                     .count());
     }

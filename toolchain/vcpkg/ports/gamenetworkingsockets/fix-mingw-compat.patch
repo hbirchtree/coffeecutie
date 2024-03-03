@@ -11,3 +11,16 @@ index 393eb7e..42dd5e8 100644
  		if(USE_CRYPTO STREQUAL "BCrypt")
  			target_link_libraries(${GNS_TARGET} PUBLIC bcrypt)
  		endif()
+diff --git a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_lowlevel.cpp b/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_lowlevel.cpp
+index 6a4697e..b624ed7 100644
+--- a/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_lowlevel.cpp
++++ b/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_lowlevel.cpp
+@@ -1643,7 +1643,7 @@ static SOCKET OpenUDPSocketBoundToSockAddr( const void *pSockaddr, size_t len, S
+ 				// WARNING: interface index should be in network byte order for IPPROTO_IP
+ 				const DWORD value = htonl(nBindInterface);
+ 				const int length = sizeof(value);
+-				const auto error = setsockopt( sock , IPPROTO_IP, IP_UNICAST_IF, reinterpret_cast<const char*>(&value), length);
++				const auto error = setsockopt( sock , IPPROTO_IP, 50, reinterpret_cast<const char*>(&value), length);
+ 				if (ERROR_SUCCESS != error)
+ 				{
+ 					V_sprintf_safe( errMsg, "sockopt(IP_PROTO_IP, IP_UNICAST_IF, %d) failed with error code 0x%08X.", nBindInterface, GetLastSocketError() );

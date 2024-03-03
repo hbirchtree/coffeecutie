@@ -9,8 +9,8 @@
 namespace stl_types {
 namespace Chrono {
 
-using seconds_float  = std::chrono::duration<libc_types::scalar>;
-using seconds_double = std::chrono::duration<libc_types::bigscalar>;
+using seconds_f32  = std::chrono::duration<libc_types::f32>;
+using seconds_f64 = std::chrono::duration<libc_types::f64>;
 
 using Clock = std::chrono::steady_clock;
 
@@ -41,16 +41,16 @@ inline libc_types::u64 to_unix(Clock::time_point ts)
 }
 
 template<typename Clock, typename Rep>
-inline libc_types::f32 to_float(std::chrono::time_point<Clock, Rep> const& dur)
+inline libc_types::f32 to_f32(std::chrono::time_point<Clock, Rep> const& dur)
 {
-    return std::chrono::duration_cast<seconds_float>(dur.time_since_epoch())
+    return std::chrono::duration_cast<seconds_f32>(dur.time_since_epoch())
         .count();
 }
 
 template<typename Rep, typename Ratio>
-inline libc_types::f32 to_float(std::chrono::duration<Rep, Ratio> const& dur)
+inline libc_types::f32 to_f32(std::chrono::duration<Rep, Ratio> const& dur)
 {
-    return std::chrono::duration_cast<seconds_float>(dur).count();
+    return std::chrono::duration_cast<seconds_f32>(dur).count();
 }
 
 } // namespace Chrono

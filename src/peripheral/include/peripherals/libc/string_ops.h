@@ -457,9 +457,9 @@ STRTOI_ALL()
     STRTOFB_FUNCTION(itype, wcs##converter, wchar_t)
 
 #define STRTOF_ALL()                \
-    STRTOF_FUNCTION(scalar, tof)    \
-    STRTOF_FUNCTION(bigscalar, tod) \
-    STRTOF_FUNCTION(lscalar, told)
+    STRTOF_FUNCTION(f32, tof)    \
+    STRTOF_FUNCTION(f64, tod) \
+    STRTOF_FUNCTION(f80, told)
 
 STRTOF_ALL()
 

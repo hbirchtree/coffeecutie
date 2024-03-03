@@ -20,31 +20,21 @@ using u16 = uint16_t;
 using u32 = uint32_t;
 using u64 = uint64_t;
 
-using hscalar   = i16;
-using scalar    = float;       /*!< Low-precision float value*/
-using bigscalar = double;      /*!< High-precision float value*/
-using lscalar   = long double; /* Whoops... How did this get here? */
+// using scalar    = float;       /*!< Low-precision float value*/
+// using bigscalar = double;      /*!< High-precision float value*/
+// using lscalar   = long double; /* Whoops... How did this get here? */
 
-using f16 = hscalar;
-using f32 = scalar;
-using f64 = bigscalar;
-using f80 = lscalar;
+using f16 = i16;
+using f32 = float;
+using f64 = double;
+using f80 = long double;
 
 using byte_t  = u8;     /*!< System byte*/
 using ubyte_t = byte_t; /*!< System byte*/
 using sbyte_t = i8;     /*!< System unsigned byte*/
 
-/* For wstring */
-using wbyte_t = wchar_t;
-
-using ushort = u16;
-
 using cstring    = const char*;    /*!< Typical C-string*/
 using cstring_w  = char*;          /*!< Writable C-string*/
-using cwstring   = const wchar_t*; /*!< Wide C-string*/
-using cwstring_w = wchar_t*;       /*!< Wide, writable C-string*/
-using u8string   = const uint8_t*; /*!< UTF-8 string */
-using u8string_w = uint8_t*;       /*!< Writable UTF-8 string */
 
 using szptr  = size_t;   /*!< Usable as offset into data, or size of data */
 using ptroff = intptr_t; /*!< Signed offset into data */
@@ -54,13 +44,6 @@ using uintptr = uintptr_t;
 
 using c_cptr = const void*;
 using c_ptr  = void*;
-
-#if !defined(COFFEE_RASPBERRYPI)
-using ThrdCnt = u64;
-#else
-using ThrdCnt = uint32;
-#endif
-using MemUnit = u64;
 
 constexpr u16 Unit_kB = 1024;
 constexpr u32 Unit_MB = 1024 * 1024;
@@ -82,22 +65,20 @@ GEN_SIZE_LITERAL(T)
 
 } // namespace size_literals
 
-#define GEN_TIME_LITERAL(unit, div)                                            \
-    constexpr inline bigscalar operator"" _##unit##s(unsigned long long int v) \
-    {                                                                          \
-        return bigscalar(v) / div;                                             \
+#define GEN_TIME_LITERAL(unit, div)                                      \
+    constexpr inline f64 operator"" _##unit##s(unsigned long long int v) \
+    {                                                                    \
+        return f64(v) / div;                                             \
     }
 
 GEN_TIME_LITERAL(m, 1000)
 GEN_TIME_LITERAL(u, 1000000)
 
-PACKEDSTRUCT(uint24 { u32 d : 24; });
-
-using u24 = uint24;
+PACKEDSTRUCT(u24 { u32 d : 24; });
 
 FORCEDINLINE f32 convert_i16_f(i16 v)
 {
-    return static_cast<scalar>(v) / std::numeric_limits<i16>::max();
+    return static_cast<f32>(v) / std::numeric_limits<i16>::max();
 }
 
 template<typename T>

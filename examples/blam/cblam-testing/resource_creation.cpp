@@ -229,47 +229,19 @@ void create_resources(compo::EntityContainer& e)
         debug_draw.components = {
             compo::type_hash_v<DebugDraw>(),
         };
-        auto  x_    = e.create_entity(debug_draw);
-        auto  y_    = e.create_entity(debug_draw);
-        auto  z_    = e.create_entity(debug_draw);
-        auto& x     = x_.get<DebugDraw>();
-        auto& y     = y_.get<DebugDraw>();
-        auto& z     = z_.get<DebugDraw>();
-        x.color_ptr = 0;
-        x.data      = gfx::draw_command::data_t{
-                 .arrays =
-                     {
-                         .count  = 2,
-                         .offset = 0,
-                },
-        };
-        y.color_ptr = 1;
-        y.data      = gfx::draw_command::data_t{
-                 .arrays =
-                     {
-                         .count  = 2,
-                         .offset = 2,
-                },
-        };
-        z.color_ptr = 2;
-        z.data      = gfx::draw_command::data_t{
-                 .arrays =
-                     {
-                         .count  = 2,
-                         .offset = 4,
-                },
-        };
-
-        auto& camera     = e.create_entity(debug_draw).get<DebugDraw>();
-        camera.color_ptr = 3;
-        camera.data      = gfx::draw_command::data_t{
-                 .arrays =
-                     {
-                         .count  = 6,
-                         .offset = 6,
-                },
-        };
-        col[3] = Vecf3{1, 0, 1};
+        for(auto i : range<u32>(6))
+        {
+            auto  x_    = e.create_entity(debug_draw);
+            auto& x     = x_.get<DebugDraw>();
+            x.color_ptr = i;
+            x.data      = gfx::draw_command::data_t{
+                     .arrays =
+                         {
+                             .count  = 2,
+                             .offset = 2 * i,
+                    },
+            };
+        }
     }
 
     {

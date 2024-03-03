@@ -102,7 +102,9 @@ constexpr u32 target =
 #endif
     ;
 constexpr u32 wdk =
-#if defined(COFFEE_WINDOWS)
+#if defined(COFFEE_MINGW64) || defined(COFFEE_MINGW32)
+    NTDDI_VERSION
+#elif defined(COFFEE_WINDOWS)
     WDK_NTDDI_VERSION
 #else
     0

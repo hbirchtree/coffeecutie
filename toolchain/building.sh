@@ -57,7 +57,7 @@ function identify_target()
     [[ "${ARCHITECTURE}" = *"linux"* ]] && IS_LINUX=1 || IS_LINUX=0
     [[ "${ARCHITECTURE}" = *"windows"* ]] && IS_WINDOWS=1 || IS_WINDOWS=0
     [[ "${ARCHITECTURE}" = *"osx"* ]] && IS_MACOS=1 || IS_MACOS=0
-    if [[ "${ARCHITECTURE}" = *"linux"* ]] || [[ "${ARCHITECTURE}" = *"powerpc"* ]]; then
+    if [[ "${ARCHITECTURE}" = *"linux"* ]] || [[ "${ARCHITECTURE}" = *"powerpc"* ]] || [[ "${ARCHITECTURE}" = *"mingw32"* ]]; then
         IS_DOWNLOADABLE=1
     else
         IS_DOWNLOADABLE=0
@@ -439,41 +439,59 @@ function mingw_build()
     identify_target $1
     TOOLCHAIN_DOWNLOAD="${PLATFORM}-${ARCHITECTURE}_${SYSROOT}"
 
-    mkdir -p $BASE_DIR/multi_build/$TOOLCHAIN_DOWNLOAD
-    pushd $BASE_DIR/multi_build/$TOOLCHAIN_DOWNLOAD
+    TOOLCHAIN_VER=$($SELF build-info toolchain version)
+    if [[ -z "$TOOLCHAIN_VER" ]]; then
+        echo \
+    "No compiler version found in .build.yml, add one with:
+    toolchain:
+        source: <repo>
+        version: <version>
 
-    case $ARCHITECTURE in
-    "x64-mingw")
-        export ARCHITECTURE=x64-mingw-static
-        export TOOLCHAIN_PREFIX=x86_64-w64-mingw32
-    ;;
-    "x64-windows")
-        echo "Not yet :("
-        return 1
-    ;;
-    *)
-        return 1
-    ;;
-    esac
+    Example:
+    toolchain:
+        source: hbirchtree/coffeecutie-automation-tools
+        version: v1.0.18"
+        exit 1
+    fi
+
+    DEFAULT_ROOT="${BASE_DIR}/multi_build/compilers/mingw/${ARCHITECTURE}/${TOOLCHAIN_VER}"
+    export TOOLCHAIN_PREFIX="${ARCHITECTURE}"
+
+    export TOOLCHAIN_ROOT="${TOOLCHAIN_ROOT:-$DEFAULT_ROOT}"
+
+    echo " * Doing MinGW build"
+
+    if [[ "$DEFAULT_ROOT" = "$TOOLCHAIN_ROOT" ]] && [[ ! -d "${TOOLCHAIN_ROOT}" ]] && [[ $IS_DOWNLOADABLE = "1" ]]; then
+        echo "::group::Getting compiler"
+        TOOLCHAIN_REPO=$($SELF build-info toolchain source)
+        mkdir -p ${TOOLCHAIN_ROOT}
+        pushd ${TOOLCHAIN_ROOT}
+
+        toolchain_download "windows-${ARCHITECTURE}_posix" .compiler
+        toolchain_download "windows-${ARCHITECTURE}_posix" .manifest && cat compiler.manifest
+
+        umask 022
+        tar x \
+            --exclude=*/sysroot/dev \
+            --no-same-owner \
+            --no-same-permissions \
+            --file=compiler.tar.xz
+        chmod -R u+w $(realpath .)
+        popd
+
+        echo "::endgroup::"
+    fi
+
+    mkdir -p $BASE_DIR/multi_build/${PLATFORM}-${ARCHITECTURE}-${SYSROOT}
 
     echo " * Selected platform ${PLATFORM}:${ARCHITECTURE}:${SYSROOT}"
 
     export VCPKG_ROOT=$(dirname $(readlink -f $(which vcpkg)))
 
-    TARGET_SPEC=""
-    if [ -n "${TARGET}" ]; then
-        TARGET_SPEC="--target ${TARGET}"
-    fi
-
-    if [ "${ENTER_ENV:-0}" = "1" ]; then
-        exec $SHELL
-        return
-    fi
-
     echo "::group::Configuring project"
     echo "::info::Set up for ${TOOLCHAIN_PREFIX} (system)"
 
-    cmake --build --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}-dbg ${TARGET_SPEC}
+    cmake --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}
 #    cmake_debug \
 #        -GNinja \
 #        -C${PRELOAD_FILE} \
@@ -492,9 +510,6 @@ function mingw_build()
     echo "::endgroup::"
 
     echo "::group::Building project"
-    cmake --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}
+    cmake --build --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}-dbg
     echo "::endgroup::"
-
-    popd
-
 }

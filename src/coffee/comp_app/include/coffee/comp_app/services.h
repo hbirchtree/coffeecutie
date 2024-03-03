@@ -433,10 +433,11 @@ struct ClockProvider
         Performance,
     };
 
-    virtual libc_types::u32 threads() = 0;
-
+    virtual libc_types::u32 cpus()                     = 0;
+    virtual libc_types::u32 cores(libc_types::u32 cpu) = 0;
     virtual Governor        governor(libc_types::u32)  = 0;
-    virtual libc_types::f64 frequency(libc_types::u32) = 0;
+    virtual libc_types::f64 frequency(
+        libc_types::u32 cpu, libc_types::u32 core) = 0;
 };
 
 struct CPUClockProvider : ClockProvider<CPUClockProvider>
@@ -536,8 +537,9 @@ struct GPUStatProvider
 
     struct stats_desc_t
     {
-        platform::profiling::MetricVariant type;
-        bool                               is_percentage{false};
+        platform::profiling::MetricVariant type{
+            platform::profiling::MetricVariant::Value};
+        bool is_percentage{false};
     };
 
     virtual std::map<std::string_view, stats_desc_t> stats_description()

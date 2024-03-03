@@ -25,20 +25,6 @@ using namespace ::stl_types;
 
 namespace platform {
 
-// using namespace Coffee;
-
-#if defined(COFFEE_LINUX) || defined(COFFEE_ANDROID)
-// namespace env {
-// namespace Linux {
-// extern std::string          get_kern_name();
-// extern std::string          get_kern_arch();
-// extern std::string          get_kern_ver();
-// extern lsb_data         get_lsb_release();
-// extern info::DeviceType get_device_variant();
-// } // namespace Linux
-// } // namespace env
-#endif
-
 #if defined(COFFEE_WINDOWS)
 namespace env {
 namespace win32 {

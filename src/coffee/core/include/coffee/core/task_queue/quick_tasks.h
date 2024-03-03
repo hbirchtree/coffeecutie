@@ -108,7 +108,7 @@ struct LerpStore
 
 template<
     typename PrimitiveType,
-    PrimitiveType (*Func)(PrimitiveType, PrimitiveType, scalar)
+    PrimitiveType (*Func)(PrimitiveType, PrimitiveType, f32)
 
     >
 /*!
@@ -157,7 +157,7 @@ FORCEDINLINE rq::runtime_task GenLerpTask(
 
             /* Calculate a difference, we don't care much
              *  about interruptions, as long as the deadline is met */
-            store->time += std::chrono::duration<bigscalar>(diff).count() *
+            store->time += std::chrono::duration<f64>(diff).count() *
                            store->timescale;
             store->delta = now - store->start_time;
 

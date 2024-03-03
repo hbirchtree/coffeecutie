@@ -73,6 +73,10 @@
 #include <coffee/dispmanx/dispmanx_comp.h>
 #endif
 
+#if defined(FEATURE_ENABLE_NVMLComponents)
+#include <nvml_comp/nvml_comp.h>
+#endif
+
 #if defined(FEATURE_ENABLE_PVRComponents)
 #include <pvr/pvr_components.h>
 #endif
@@ -542,7 +546,8 @@ void addDefaults(
     {
         /* TODO: Conditionally load based on availability */
         loader.registerAll<detail::subsystem_list<
-            comp_app::SysMemoryStats
+            comp_app::SysMemoryStats,
+            comp_app::SysCPUClock
 #if defined(FEATURE_ENABLE_GLScreenshot_ES2Dynamic) || \
     defined(FEATURE_ENABLE_GLScreenshot_Dynamic) ||    \
     defined(FEATURE_ENABLE_GLScreenshot_ESDynamic) ||  \
@@ -562,6 +567,9 @@ void addDefaults(
 #if defined(FEATURE_ENABLE_PVRComponents)
     loader.registerAll<detail::subsystem_list<pvr::PVRGPUStats>>(container, ec);
     C_ERROR_CHECK(ec);
+#endif
+#if defined(FEATURE_ENABLE_NVMLComponents)
+    nvml_comp::try_load_nvml(container);
 #endif
 
     rq::runtime_queue::QueueImmediate(
@@ -611,7 +619,7 @@ void PerformanceMonitor::start_restricted(proxy_type& p, time_point const&)
     json::CaptureMetrics(
         "Frametime",
         MetricVariant::Value,
-        std::chrono::duration_cast<stl_types::Chrono::seconds_float>(
+        std::chrono::duration_cast<stl_types::Chrono::seconds_f32>(
             time - m_prevFrame)
                 .count() *
             1000.f,
@@ -632,14 +640,20 @@ void PerformanceMonitor::start_restricted(proxy_type& p, time_point const&)
     auto gpustats = p.service<GPUStatProvider>();
 
     if(clock)
-        for(auto i : Range<u32>(clock->threads()))
+    {
+        u32 metric_i = 0;
+        for(auto i : Range<u32>(clock->cpus()))
         {
-            json::CaptureMetrics(
-                "CPU frequency",
-                MetricVariant::Value,
-                C_FCAST<f32>(clock->frequency(i)),
-                timestamp,
-                i);
+            for(auto j : range<u32>(clock->cores(i)))
+            {
+                json::CaptureMetrics(
+                    "CPU frequency",
+                    MetricVariant::Value,
+                    C_FCAST<f32>(clock->frequency(i, j)),
+                    timestamp,
+                    metric_i);
+                metric_i++;
+            }
             json::CaptureMetrics(
                 "CPU governor",
                 MetricVariant::Value,
@@ -647,6 +661,7 @@ void PerformanceMonitor::start_restricted(proxy_type& p, time_point const&)
                 timestamp,
                 i);
         }
+    }
 
     if(cpu_temp)
         json::CaptureMetrics(
@@ -702,6 +717,15 @@ void PerformanceMonitor::start_restricted(proxy_type& p, time_point const&)
 
     if(gpustats)
     {
+        if(auto resident = gpustats->mem_resident())
+            json::CaptureMetrics(
+                "GPU memory usage", MetricVariant::Value, *resident, timestamp);
+        if(auto total = gpustats->mem_total())
+            json::CaptureMetrics(
+                "GPU memory total", MetricVariant::Value, *total, timestamp);
+        if(auto usage = gpustats->usage())
+            json::CaptureMetrics(
+                "GPU usage", MetricVariant::Value, *usage, timestamp);
         for(auto const& stat : gpustats->stats_numeric())
             json::CaptureMetrics(
                 stat.first, MetricVariant::Value, stat.second, timestamp);

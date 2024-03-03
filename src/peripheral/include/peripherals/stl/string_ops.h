@@ -4,11 +4,6 @@
 
 #include <algorithm>
 #include <cctype>
-#include <inttypes.h>
-
-#ifdef COFFEE_USE_IOSTREAMS
-#include <iomanip>
-#endif
 
 #include <peripherals/libc/types.h>
 #include <peripherals/semantic/chunk.h>
@@ -16,16 +11,16 @@
 
 namespace stl_types::str {
 
-using libc_types::bigscalar;
 using libc_types::byte_t;
 using libc_types::c_cptr;
 using libc_types::cstring;
+using libc_types::f32;
+using libc_types::f64;
+using libc_types::f80;
 using libc_types::i16;
 using libc_types::i32;
 using libc_types::i64;
 using libc_types::i8;
-using libc_types::lscalar;
-using libc_types::scalar;
 using libc_types::szptr;
 using libc_types::u16;
 using libc_types::u32;

@@ -583,7 +583,7 @@ struct MeshRenderer
         if(rendering_props->debug_clear)
             m_resources.offscreen->clear(Vecf4(0, 0, 0, 1));
 
-        f32 t = stl_types::Chrono::to_float(time);
+        f32 t = stl_types::Chrono::to_f32(time);
 
         gfx::cull_state cull_state{.front_face = true};
 
@@ -1184,7 +1184,7 @@ void LoadingScreen::end_restricted(Proxy& e, const time_point& time)
             glm::identity<Matf4>(), glm::vec3(0.2f / screen_aspect, 0.2f, 1)),
         glm::vec3(1 / (0.2f / screen_aspect) - 1, -5, 0));
 
-    f32 timef = std::chrono::duration_cast<stl_types::Chrono::seconds_float>(
+    f32 timef = std::chrono::duration_cast<stl_types::Chrono::seconds_f32>(
                     time.time_since_epoch())
                     .count();
     timef     = std::fmod(timef, 10.f) / 10.f;

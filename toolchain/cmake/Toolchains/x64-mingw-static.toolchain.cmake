@@ -2,8 +2,10 @@ set(CMAKE_SYSTEM_NAME Windows)
 set(CMAKE_SYSTEM_PROCESSOR x86_64)
 set(CMAKE_CROSSCOMPILING ON)
 
-set(CMAKE_C_COMPILER x86_64-w64-mingw32-gcc-posix)
-set(CMAKE_CXX_COMPILER x86_64-w64-mingw32-g++-posix)
+include(${CMAKE_CURRENT_LIST_DIR}/common/toolchain-prefix.cmake)
+
+set(CMAKE_C_COMPILER "${TOOLCHAIN_ROOT}/bin/${TOOLCHAIN_TOOL}gcc")
+set(CMAKE_CXX_COMPILER "${TOOLCHAIN_ROOT}/bin/${TOOLCHAIN_TOOL}g++")
 
 add_compile_definitions(
   -D__MINGW64__
@@ -16,3 +18,5 @@ add_link_options(
   -Wa,-mbig-obj
 )
 set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -Wa,-mbig-obj")
+
+include(${CMAKE_CURRENT_LIST_DIR}/common/configure-paths.cmake)

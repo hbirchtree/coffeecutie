@@ -173,7 +173,7 @@ struct StandardCamera
         if(has_key(CK_LCtrl))
             acceleration = m_opts->accel.fast;
 
-        acceleration *= stl_types::Chrono::to_float(t);
+        acceleration *= stl_types::Chrono::to_f32(t);
 
         for(auto const& [key, mod] : m_reg)
         {
@@ -263,22 +263,22 @@ void controller_camera_update(
     CIControllerState const&                   state,
     std::chrono::system_clock::duration const& t)
 {
-    using stl_types::Chrono::to_float;
+    using stl_types::Chrono::to_f32;
 
     const auto filter = [](i16 raw, f32 sens) {
         return convert_i16_f(raw) * sens;
     };
 
     const auto acceleration =
-        1.f + convert_i16_f(state.axes.e.t_l) * opt.curve * to_float(t);
+        1.f + convert_i16_f(state.axes.e.t_l) * opt.curve * to_f32(t);
     camera->move(
         filter(state.axes.e.l_y, opt.sens.move.y) * -1.f,
         filter(state.axes.e.l_x, opt.sens.move.x) * -1.f,
         0.f,
         acceleration);
     camera->rotate(
-        filter(state.axes.e.r_x, opt.sens.look.x) * to_float(t) * -1.f,
-        filter(state.axes.e.r_y, opt.sens.look.y) * to_float(t) * -1.f);
+        filter(state.axes.e.r_x, opt.sens.look.x) * to_f32(t) * -1.f,
+        filter(state.axes.e.r_y, opt.sens.look.y) * to_f32(t) * -1.f);
 }
 
 template<typename CameraPtr, typename OptsPtr>

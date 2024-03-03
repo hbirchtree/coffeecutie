@@ -57,7 +57,7 @@ struct BlamDebugUi
 
         const auto delta = time - last_time;
         const auto delta_f =
-            std::chrono::duration_cast<stl_types::Chrono::seconds_float>(delta)
+            std::chrono::duration_cast<stl_types::Chrono::seconds_f32>(delta)
                 .count();
         frametimes.push_back(delta_f);
 

@@ -37,7 +37,7 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         //     BspReference& bsp_ref = ref.template get<BspReference>();
         // }
 
-        return;
+        // return;
 
         Span<Vecf3> portal_colors = resources->debug_line_colors->map<Vecf3>(0);
         Span<Vecf3> portal_pos    = resources->debug_lines->map<Vecf3>(72, 72);
@@ -48,6 +48,9 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         portal_pos[3] = camera_pos + Vecf3{0, 5, 5};
         portal_pos[4] = camera_pos;
         portal_pos[5] = camera_pos + Vecf3{5, 5, 0};
+
+        for(auto i : range<u32>(3))
+            portal_colors[3 + i] = Vecf3{1, 0, 1};
 
         resources->debug_lines->unmap();
 
@@ -72,11 +75,6 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
                 bsp_ref.visible       = true;
                 auto const& sub       = bsp.clusters.at(cluster_).sub.at(sub_);
                 portal_colors[sub.debug_color_idx] = Vecf3(0, 1, 0);
-                //                cDebug(
-                //                    "Bounding box: {}+{} -> {}",
-                //                    bounds.origin,
-                //                    bounds.extents,
-                //                    camera->camera.position);
             } else
             {
                 bsp_ref.visible = false;
