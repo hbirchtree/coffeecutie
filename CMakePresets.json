@@ -635,13 +635,13 @@
         {
             "name": "android-arm-neon-19-rel",
             "configuration": "Release",
-            "configurePreset": "android-arm-neon-29",
+            "configurePreset": "android-arm-neon-19",
             "inherits": "base-linux"
         },
         {
             "name": "android-arm-neon-19-dbg",
             "configuration": "Debug",
-            "configurePreset": "android-arm-neon-29",
+            "configurePreset": "android-arm-neon-19",
             "inherits": "base-linux"
         },
         {
