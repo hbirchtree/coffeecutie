@@ -62,6 +62,11 @@ jobs:
         java-version: '17'
     - name: Installing build-essential
       run: sudo apt install build-essential inkscape flatpak nasm squashfs-tools
+    - name: Host tools cache
+      uses: actions/cache@v4
+      with:
+        path: source/multi_build/host-x64-linux-native
+        key: ${{ runner.os }}-${{ hashFiles('source/tools') }}
     - name: Building host tools
       run: source/cb host-build
       env:
