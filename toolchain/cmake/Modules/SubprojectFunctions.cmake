@@ -77,22 +77,7 @@ macro(INIT_SUBPROJECT)
     option(BUILD_UBSAN "Build with undefined behavior sanitizer" OFF)
   endif()
 
-  option(BUILD_CPP17 "Build as C++17 code" OFF)
-
-  # Enable coverage when requested
-  if(BUILD_COVERAGE)
-    include(CodeCoverage)
-    append_coverage_compiler_flags()
-  endif()
-
   if(BUILD_TESTS)
-    if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE)
-      option(VALGRIND_MASSIF OFF)
-      option(VALGRIND_MEMCHECK OFF)
-      option(VALGRIND_CALLGRIND OFF)
-      option(VALGRIND_CACHEGRIND OFF)
-    endif()
-
     include(CTest)
     enable_testing()
   endif()
@@ -133,8 +118,6 @@ macro(INIT_SUBPROJECT)
         CACHE STRING ""
     )
   endif()
-
-  include(WindowsPlatformDetect)
 
   # ############################################################################
   # Packaging options

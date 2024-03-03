@@ -1,6 +1,5 @@
 # CTest functions
 
-include(ValgrindTest)
 include(BuildPackaging)
 
 # ##############################################################################
@@ -111,25 +110,6 @@ function(COFFEE_TEST)
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       COMMAND $<TARGET_FILE:${TEST_TITLE}> -vvvvvvvvvvvvvv
     )
-  endif()
-
-  # Valgrind checks, for deep run-level checking
-  if(VALGRIND_MASSIF)
-    valgrind_test("massif" "--stacks=yes" "${TEST_TITLE}")
-  endif()
-  if(VALGRIND_MEMCHECK)
-    valgrind_test("memcheck" "" "${TEST_TITLE}")
-  endif()
-  if(VALGRIND_CALLGRIND)
-    valgrind_test("callgrind" "" "${TEST_TITLE}")
-  endif()
-  if(VALGRIND_CACHEGRIND)
-    valgrind_test("cachegrind" "" "${TEST_TITLE}")
-  endif()
-
-  # When generating coverage data, we need to add the targets here
-  if(BUILD_COVERAGE)
-    setup_target_for_coverage("${TEST_TITLE}.Coverage" "${TEST_TITLE}" coverage)
   endif()
 endfunction()
 

@@ -8,11 +8,7 @@ if(BUILD_ASSET_TOOLS)
 endif()
 if(${CMAKE_SYSTEM} STREQUAL Linux
    OR (APPLE AND NOT IOS)
-   OR WIN32
 )
   add_subdirectory(crash-recovery)
 endif()
 
-# add_subdirectory ( system-info )
-
-# if(TARGET ASIO) add_subdirectory ( natty-puncher ) endif()

@@ -27,15 +27,3 @@ if(NOT DEFINED COFFEE_BUILD_STRING)
   )
 endif()
 
-# ##############################################################################
-# Disabling dynamic linking on unsupported platforms
-# ##############################################################################
-
-if((APPLE AND IOS)
-   OR GAMECUBE
-   OR WIN32
-)
-  set(NO_DYNAMIC_LINKING ON)
-else()
-  set(NO_DYNAMIC_LINKING OFF)
-endif()

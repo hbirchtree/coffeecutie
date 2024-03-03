@@ -5,11 +5,7 @@
 include(CheckIPOSupported)
 
 macro(TARGET_ENABLE_CXX11 TARGET)
-  if(BUILD_CPP17)
-    set_property(TARGET ${TARGET} PROPERTY CXX_STANDARD 17)
-  else()
-    set_property(TARGET ${TARGET} PROPERTY CXX_STANDARD 20)
-  endif()
+  set_property(TARGET ${TARGET} PROPERTY CXX_STANDARD 20)
   set_property(TARGET ${TARGET} PROPERTY CXX_STANDARD_REQUIRED ON)
 endmacro()
 

@@ -1,5 +1,4 @@
 option(BUILD_ASIO "Build with ASIO networking" ON)
-option(BUILD_AUDIO "Build with audio support" OFF)
 option(BUILD_BLAM "Build Blam! data readers" ON)
 option(BUILD_MEDIA "Build with media decode/encode support" OFF)
 option(BUILD_SDL2 "Build with SDL2 graphics backend" ON)
@@ -133,10 +132,6 @@ endif()
 
 if(BUILD_BLAM)
   add_subdirectory(blam)
-endif()
-
-if(BUILD_AUDIO)
-  add_subdirectory(audio)
 endif()
 
 if(BUILD_MEDIA)
