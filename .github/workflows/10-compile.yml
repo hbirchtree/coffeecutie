@@ -38,8 +38,8 @@ jobs:
           artifact: desktop-arm-buildroot-linux-gnueabihf-sdl2
         - variant: desktop:x86_64-buildroot-linux-gnu:multi
           artifact: desktop-x86_64-buildroot-linux-gnu-multi
-        - variant: desktop:x86_64-windows-gnu:win32
-          artifact: desktop-x86_64-windows-gnu-win32
+        - variant: desktop:x86_64-w64-mingw32:win32
+          artifact: desktop-x86_64-w64-mingw32-win32
         - variant: web:wasm32-emscripten:webgl2
           artifact: web-wasm32-emscripten-webgl2
     env:
