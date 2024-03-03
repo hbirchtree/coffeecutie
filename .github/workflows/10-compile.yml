@@ -38,8 +38,8 @@ jobs:
           artifact: desktop-arm-buildroot-linux-gnueabihf-sdl2
         - variant: desktop:x86_64-buildroot-linux-gnu:multi
           artifact: desktop-x86_64-buildroot-linux-gnu-multi
-        - variant: desktop:x86_64-w64-mingw32:win32
-          artifact: desktop-x86_64-w64-mingw32-win32
+        - variant: desktop:x86_64-w64-mingw32:posix
+          artifact: desktop-x86_64-w64-mingw32-posix
         - variant: web:wasm32-emscripten:webgl2
           artifact: web-wasm32-emscripten-webgl2
     env:
@@ -66,7 +66,7 @@ jobs:
       if: matrix.variant == 'desktop:x86_64-windows-gnu:win32'
       run: sudo apt install mingw-w64-tools mingw-w64-x86-64-dev mingw-w64
     - name: Building host tools
-      run: source/cb build host-x64-linux-native
+      run: source/cb build host:x64-linux:native
       env:
         VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
     - name: Building project
