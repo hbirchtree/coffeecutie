@@ -96,6 +96,8 @@ jobs:
       run: |
         chmod -R 0755 source/multi_build/web-wasm32-emscripten-webgl2/bin
         tar zcvf github-pages.tar.gz source/multi_build/web-wasm32-emscripten-webgl2/bin/
+        mkdir -p _site/examples/
+        cp -r source/multi_build/web-wasm32-emscripten-webgl2/bin/ _site/examples/
     - name: Uploading GitHub Pages examples
       if: matrix.variant == 'web:wasm32-emscripten:webgl2'
       uses: actions/upload-pages-artifact@v3
