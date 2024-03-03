@@ -96,8 +96,21 @@ jobs:
       run: |
         chmod -R 0755 source/multi_build/web-wasm32-emscripten-webgl2/bin
         tar zcvf github-pages.tar.gz source/multi_build/web-wasm32-emscripten-webgl2/bin/
-        mkdir -p _site/examples/
-        cp -r source/multi_build/web-wasm32-emscripten-webgl2/bin/ _site/examples/
+        mkdir -p _site/
+        cp -r source/multi_build/web-wasm32-emscripten-webgl2/bin/ _site/
     - name: Uploading GitHub Pages examples
       if: matrix.variant == 'web:wasm32-emscripten:webgl2'
       uses: actions/upload-pages-artifact@v3
+  Deploy:
+    needs: Linux
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+    - name: Deploy examples to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
