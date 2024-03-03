@@ -3,7 +3,6 @@
         "./toolchain/vcpkg/ports/bullet2",
         "./toolchain/vcpkg/ports/discord-rpc",
         "./toolchain/vcpkg/ports/gamenetworkingsockets",
-        "./toolchain/vcpkg/ports/nvidia-gdk",
         "./toolchain/vcpkg/ports/sdl2",
         "./toolchain/vcpkg/ports/status-code",
         "./toolchain/vcpkg/ports/stb"
@@ -24,12 +23,13 @@
         {
             "kind": "git",
             "repository": "https://github.com/hbirchtree/vcpkg-graphics",
-            "baseline": "4ff0b3000cb04cc1866eca764cd9464c212ce476",
+            "baseline": "74e9143475dd1c6be09d0bc80a2831e1947a4d77",
             "packages": [
                 "bc7enc",
                 "bcdec",
                 "etc2comp",
                 "ktx",
+                "nvidia-gdk",
                 "pvrscope",
                 "pvrtcdec",
                 "shaderc",
