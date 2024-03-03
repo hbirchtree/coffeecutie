@@ -67,6 +67,12 @@ jobs:
       with:
         path: source/multi_build/host-x64-linux-native
         key: host-tools-${{ runner.os }}-${{ hashFiles('source/tools') }}
+    - name: Emscripten SDK cache
+      if: matrix.variant == 'web:wasm32-emscripten:webgl2'
+      uses: actions/cache@v4
+      with:
+        path: source/multi_build/compilers/emsdk
+        key: emsdk-${{ runner.os }}-${{ hashFiles('toolchain/building.sh') }}
     - name: Building host tools
       run: source/cb host-build
       env:
