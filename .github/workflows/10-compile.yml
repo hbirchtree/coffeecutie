@@ -102,6 +102,7 @@ jobs:
       if: matrix.variant == 'web:wasm32-emscripten:webgl2'
       uses: actions/upload-pages-artifact@v3
   Deploy:
+    if: ${{ always() }}
     needs: Linux
     permissions:
       pages: write
