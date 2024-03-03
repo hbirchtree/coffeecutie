@@ -98,4 +98,4 @@ jobs:
         tar zcvf github-pages.tar.gz source/multi_build/web-wasm32-emscripten-webgl2/bin/
     - name: Uploading GitHub Pages examples
       if: matrix.variant == 'web:wasm32-emscripten:webgl2'
-      uses: actions/upload-pages-artifact@latest
+      uses: actions/upload-pages-artifact@v3
