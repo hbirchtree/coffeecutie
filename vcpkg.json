@@ -12,7 +12,7 @@
         { "name": "ktx", "features": ["vulkan"], "platform": "!bare" },
         "magic-enum",
         "ms-gsl",
-        { "name": "outcome", "platform": "!android & !bare & !emscripten & !(arm & linux) & !(x64 & linux) & !windows" },
+        { "name": "outcome", "platform": "!android & !emscripten & !(arm & linux) & !(x64 & linux) & !windows" },
         { "name": "pvrtcdec", "platform": "android | emscripten | (linux & x64)" },
         "rapidjson",
         "stb",

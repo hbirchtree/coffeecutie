@@ -5,8 +5,6 @@ set(CMAKE_CROSSCOMPILING 1)
 set(CMAKE_EXECUTABLE_SUFFIX "elf")
 
 set(GAMECUBE ON CACHE BOOL "")
-add_definitions(
-    )
 
 include(${CMAKE_CURRENT_LIST_DIR}/common/toolchain-prefix.cmake)
 

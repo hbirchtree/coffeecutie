@@ -187,7 +187,7 @@ function native_build()
     export TOOLCHAIN_PREFIX="${ARCHITECTURE}"
 
     if [[ "${PLATFORM}-${ARCHITECTURE}" = "console-powerpc-eabi"* ]]; then
-        TOOLCHAIN_DOWNLOAD="console-powerpc-eabi"
+        TOOLCHAIN_DOWNLOAD="gamecube-powerpc-eabi"
         DEFAULT_ROOT="${BASE_DIR}/multi_build/compilers/${TOOLCHAIN_DOWNLOAD}/${TOOLCHAIN_VER}"
         export TOOLCHAIN_PREFIX="powerpc-eabi"
     fi
@@ -196,6 +196,7 @@ function native_build()
 
     echo " * Selected platform ${PLATFORM}:${ARCHITECTURE}:${SYSROOT}"
 
+    echo "${DEFAULT_ROOT} ${TOOLCHAIN_ROOT} ${IS_DOWNLOADABLE}"
     if [[ "$DEFAULT_ROOT" = "$TOOLCHAIN_ROOT" ]] && [[ ! -d "${TOOLCHAIN_ROOT}" ]] && [[ $IS_DOWNLOADABLE = "1" ]]; then
         echo "::group::Getting compiler"
         TOOLCHAIN_REPO=$($SELF build-info toolchain source)
@@ -265,8 +266,9 @@ function native_build()
 #            -DVCPKG_TARGET_TRIPLET=${TOOLCHAIN_PREFIX} \
 #            -DHOST_TOOLS_BINARY_DIR=$HOST_TOOLS_BINARY_DIR \
 #            ${BASE_DIR} ${@:2}
-    elif [[ $ARCHITECTURE = *"-cube" ]] || [[ $ARCHITECTURE = *"-wii" ]]; then
-        cmake --preset ${PLATFORM}-${ARCHITECTURE}
+    elif [[ $SYSROOT = "cube" ]] || [[ $SYSROOT = "wii" ]]; then
+        echo "::info::Using PowerPC presets"
+        cmake --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}
     fi
     echo "::endgroup::"
 

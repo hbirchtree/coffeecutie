@@ -154,7 +154,7 @@
                 "CMAKE_SYSTEM_NAME": "Baremetal",
                 "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/toolchain/cmake/Toolchains/$env{TOOLCHAIN_PREFIX}-$env{VARIANT}.toolchain.cmake",
                 "VCPKG_MANIFEST_NO_DEFAULT_FEATURES": "ON",
-                "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports-gamecube/outcome;${sourceDir}/toolchain/vcpkg/ports-gamecube/status-code;${sourceDir}/toolchain/vcpkg/ports-gamecube/zstd",
+                "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports-gamecube/outcome;${sourceDir}/toolchain/vcpkg/ports-gamecube/status-code;${sourceDir}/toolchain/vcpkg/ports-gamecube/zstd;${sourceDir}/toolchain/vcpkg/ports-gamecube/openexr",
                 "VCPKG_TARGET_TRIPLET": "$env{ARCHITECTURE}-$env{VARIANT}"
             },
             "environment": {
@@ -162,9 +162,9 @@
                 "HOST_TOOLS_BINARY_DIR": "${sourceDir}/multi_build/host-x64-linux-native/bin",
                 "PLATFORM": "console",
                 "TOOLCHAIN_PREFIX": "$env{ARCHITECTURE}",
-                "TOOLCHAIN_ROOT": "${sourceDir}/multi_build/compilers/$env{PLATFORM}-$env{ARCHITECTURE}/$env{TOOLCHAIN_VERSION}",
+                "TOOLCHAIN_ROOT": "${sourceDir}/multi_build/compilers/gamecube-$env{ARCHITECTURE}/$env{TOOLCHAIN_VERSION}",
                 "TOOLCHAIN_SYSROOT": "$env{TOOLCHAIN_ROOT}/$env{TOOLCHAIN_PREFIX}/sysroot",
-                "TOOLCHAIN_VERSION": "v2.1.0"
+                "TOOLCHAIN_VERSION": "v2.1.1"
             }
         },
         {
