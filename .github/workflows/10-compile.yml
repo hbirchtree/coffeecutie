@@ -90,7 +90,7 @@ jobs:
       env:
         VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
     - name: Building project
-      run: BUILD_ARCH=${{ matrix.mode }} source/cb build ${{matrix.variant}}
+      run: BUILD_TYPE=${{ matrix.mode }} source/cb build ${{matrix.variant}}
       env:
         VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
     - name: Uploading artifacts
