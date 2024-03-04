@@ -62,7 +62,7 @@ function identify_target()
     else
         IS_DOWNLOADABLE=0
     fi
-    if [[ $BUILD_TYPE = "rel" ]]; then
+    if [[ ${BUILD_TYPE:-} = "rel" ]]; then
         BUILD_TYPE=Release
     else
         BUILD_TYPE=Debug
