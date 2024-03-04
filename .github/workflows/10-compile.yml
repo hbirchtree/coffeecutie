@@ -55,6 +55,7 @@ jobs:
           mode: rel
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    name: ${{ matrix.variant }} ${{ matrix.mode }}
     steps:
     - uses: lukka/get-cmake@latest
     - uses: actions/checkout@v4
