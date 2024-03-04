@@ -28,22 +28,31 @@ jobs:
         include:
         - variant: android:arm-neon:19
           artifact: android-arm-neon-19
+          mode: dbg
         - variant: android:arm64:30-gl
           artifact: android-arm64-30-gl
+          mode: dbg
         - variant: android:arm64:32
           artifact: android-arm64-32
+          mode: dbg
         - variant: beaglebone:arm-buildroot-linux-gnueabihf:ti-sgx
           artifact: beaglebone-arm-buildroot-linux-gnueabihf-ti-sgx
+          mode: dbg
         - variant: desktop:aarch64-buildroot-linux-gnu:multi
           artifact: desktop-aarch64-buildroot-linux-gnu-multi
+          mode: dbg
         - variant: desktop:arm-buildroot-linux-gnueabihf:sdl2
           artifact: desktop-arm-buildroot-linux-gnueabihf-sdl2
+          mode: dbg
         - variant: desktop:x86_64-buildroot-linux-gnu:multi
           artifact: desktop-x86_64-buildroot-linux-gnu-multi
+          mode: dbg
         - variant: desktop:x86_64-w64-mingw32:posix
           artifact: desktop-x86_64-w64-mingw32-posix
+          mode: dbg
         - variant: web:wasm32-emscripten:webgl2
           artifact: web-wasm32-emscripten-webgl2
+          mode: rel
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
@@ -80,7 +89,7 @@ jobs:
       env:
         VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
     - name: Building project
-      run: source/cb build ${{matrix.variant}}
+      run: BUILD_ARCH=${{ matrix.mode }} source/cb build ${{matrix.variant}}
       env:
         VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
     - name: Uploading artifacts

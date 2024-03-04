@@ -275,7 +275,7 @@ function native_build()
     echo "::group::Building project"
     cmake \
         --build \
-        --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}-dbg \
+        --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}-${BUILD_TYPE:-dbg} \
         ${TARGET_SPEC}
     echo "::endgroup::"
 
@@ -334,7 +334,7 @@ function emscripten_build()
     echo "::endgroup::"
 
     echo "::group::Building project"
-    cmake --build --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}-dbg ${TARGET_SPEC}
+    cmake --build --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}-${BUILD_TYPE:-dbg} ${TARGET_SPEC}
     echo "::endgroup::"
 
     popd
@@ -427,7 +427,7 @@ function android_build()
     echo "::endgroup::"
 
     echo "::group::Building project"
-    cmake --build --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}-dbg ${TARGET_SPEC}
+    cmake --build --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}-${BUILD_TYPE:-dbg} ${TARGET_SPEC}
     echo "::endgroup::"
 
     popd
@@ -514,7 +514,7 @@ function mingw_build()
     echo "::endgroup::"
 
     echo "::group::Building project"
-    cmake --build --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}-dbg
+    cmake --build --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}-${BUILD_TYPE:-dbg}
     echo "::endgroup::"
     popd
 }

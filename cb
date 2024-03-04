@@ -143,6 +143,7 @@ echo "Available tools:
 
 Build tools:
     build               - Builds targets on the format <platform>:<arch>:<sysroot>
+                          Additionally, specify BUILD_ARCH=(dbg|rel) to build in debug or release mode
                           Available targets:"
 
 cmake -S ${BASE_DIR} --list-presets | grep '\-' \
