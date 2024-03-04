@@ -259,7 +259,7 @@ i32 blam_main()
 #elif defined(COFFEE_EMSCRIPTEN)
                 map_filename = MkUrl(
                     ::emscripten::args::query_params()["map"], RSCA::AssetFile);
-                map_dir = "."_asset;
+                map_dir = map_filename.path().dirname().url(map_filename.flags);
 #else
                 map_filename = "b30.map"_asset;
                 map_dir      = "."_asset;

@@ -117,16 +117,24 @@
   <script src="coi-serviceworker.min.js"></script>
 </head>
 <body>
-  <div class="spinner" id="spinner" style=""></div>
-  <div class="emscripten" id="status">
-    <span style="" id="status_banner">Connecting...</span>
-  </div><span style=""><span id="controls"><span><input type=
-  "checkbox" id="resize">Resize canvas</span> <span><input type=
-  "checkbox" id="pointerLock" checked>Lock/hide mouse pointer
-  &nbsp;&nbsp;&nbsp;</span> <span><input type="button" value=
-  "Fullscreen" onclick=
-  "Module.requestFullscreen(document.getElementById('pointerLock').checked, document.getElementById('resize').checked)">
-  </span></span></span>
+  <span id="status_banner">
+    <div class="spinner" id="spinner" style=""></div>
+    <div class="emscripten" id="status">
+      <span style="" id="status_banner">Connecting...</span>
+    </div>
+    <span id="controls">
+      <span>
+        <input type="checkbox" id="resize">Resize canvas
+      </span>
+      <span>
+        <input type="checkbox" id="pointerLock" checked>Lock/hide mouse pointer
+    &bsp;&nbsp;&nbsp;
+      </span>
+      <span style="margin-left: 1em;">
+        <input type="button" value="Fullscreen" onclik="Module.requestFullscreen(document.getElementById('pointerLock').checked, do  cumen.getElementById('resize').checked)">
+      </span>
+    </span>
+  </span>
   <div class="emscripten">
     <progress value="0" max="1" id="progress" hidden=""></progress>
   </div>

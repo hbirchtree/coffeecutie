@@ -12,6 +12,8 @@
 #include <coffee/components/entity_container.h>
 #include <coffee/core/debug/formatting.h>
 
+#include <fmt_extensions/url_types.h>
+
 using Coffee::cDebug;
 using Coffee::Resource;
 using platform::url::Path;
@@ -120,7 +122,7 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
     } else if(load.file)
     {
         using namespace platform::url::constructors;
-        auto map_dir      = (*load.file).path().dirname();
+        auto map_dir = (*load.file).path().dirname();
         listing.directory = map_dir.url(load.file->flags);
         // data.bitmap_file = std::make_unique<Resource>(
         //     (map_dir / "bitmaps.map").url(map_file->flags));
@@ -155,6 +157,8 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
 
     if(!load.file)
         return;
+
+    cDebug("map={}, bitmap={}", load.file, listing.bitmap_file);
 
     ProfContext _;
 

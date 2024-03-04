@@ -37,7 +37,7 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         //     BspReference& bsp_ref = ref.template get<BspReference>();
         // }
 
-        // return;
+        return;
 
         Span<Vecf3> portal_colors = resources->debug_line_colors->map<Vecf3>(0);
         Span<Vecf3> portal_pos    = resources->debug_lines->map<Vecf3>(72, 72);
