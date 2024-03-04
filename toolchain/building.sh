@@ -62,6 +62,11 @@ function identify_target()
     else
         IS_DOWNLOADABLE=0
     fi
+    if [[ $BUILD_TYPE = "rel" ]]; then
+        BUILD_TYPE=Release
+    else
+        BUILD_TYPE=Debug
+    fi
 }
 
 function cmake_debug()
@@ -275,7 +280,7 @@ function native_build()
     echo "::group::Building project"
     cmake \
         --build \
-        --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}-${BUILD_TYPE:-dbg} \
+        --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}-dbg \
         ${TARGET_SPEC}
     echo "::endgroup::"
 
@@ -334,7 +339,7 @@ function emscripten_build()
     echo "::endgroup::"
 
     echo "::group::Building project"
-    cmake --build --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}-${BUILD_TYPE:-dbg} ${TARGET_SPEC}
+    cmake --build --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}-dbg ${TARGET_SPEC}
     echo "::endgroup::"
 
     popd
@@ -427,7 +432,7 @@ function android_build()
     echo "::endgroup::"
 
     echo "::group::Building project"
-    cmake --build --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}-${BUILD_TYPE:-dbg} ${TARGET_SPEC}
+    cmake --build --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}-dbg ${TARGET_SPEC}
     echo "::endgroup::"
 
     popd
@@ -514,7 +519,7 @@ function mingw_build()
     echo "::endgroup::"
 
     echo "::group::Building project"
-    cmake --build --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}-${BUILD_TYPE:-dbg}
+    cmake --build --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}-dbg
     echo "::endgroup::"
     popd
 }
