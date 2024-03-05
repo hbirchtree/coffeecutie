@@ -121,6 +121,9 @@ jobs:
         - variant: desktop:universal-darwin:macos
           artifact: desktop-universal-darwin-macos
           mode: dbg
+        - variant: ios:x86_64-darwin:simulator
+          artifact: ios-x86_64-darwin-simulator
+          mode: dbg
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     name: ${{ matrix.variant }}
