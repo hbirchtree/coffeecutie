@@ -362,6 +362,8 @@ function xcode_build()
         TARGET_SPEC="--target ${TARGET}"
     fi
 
+    pushd $BASE_DIR
+
     export NINJA=$(which ninja)
     echo "::group::Configuring project"
     cmake --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}
@@ -370,6 +372,8 @@ function xcode_build()
     echo "::group::Building project"
     cmake --build --preset ${PLATFORM}-${ARCHITECTURE}-${SYSROOT}-dbg ${TARGET_SPEC}
     echo "::endgroup::"
+
+    popd
 }
 
 function android_build()
