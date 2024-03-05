@@ -146,15 +146,13 @@ jobs:
       run: BUILD_TYPE=${{ matrix.mode }} source/cb build ${{matrix.variant}}
       env:
         VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
+    - name: Creating archive of artifacts
+      run: tar cvf apps.tar source/multi_build/${{matrix.artifact}}/bin
     - name: Uploading artifacts
       uses: actions/upload-artifact@v4
       with:
         name: ${{matrix.artifact}}
-        path: |
-          source/multi_build/${{matrix.artifact}}/bin
-          source/multi_build/${{matrix.artifact}}/lib
-          !source/multi_build/${{matrix.artifact}}/lib/*.a
-          source/multi_build/${{matrix.artifact}}/packaged
+        path: apps.tar
         if-no-files-found: error
   Deploy:
     if: ${{ always() }}
