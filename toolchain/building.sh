@@ -100,6 +100,9 @@ function host_tools_build()
 
     echo "::endgroup::"
 
+    if [[ ${GITHUB_ACTIONS:-false} = "true" ]]; then
+        return
+    fi
     echo "::group::Downloading code tools"
 
     mkdir -p ${BASE_DIR}/multi_build/compilers/bin
