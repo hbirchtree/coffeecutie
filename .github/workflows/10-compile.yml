@@ -69,6 +69,7 @@ jobs:
           core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
           core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
     - uses: actions/setup-java@v4
+      if: startsWith(matrix.variant, 'android:')
       with:
         distribution: 'adopt'
         java-version: '17'
@@ -113,6 +114,57 @@ jobs:
     - name: Uploading GitHub Pages examples
       if: matrix.variant == 'web:wasm32-emscripten:webgl2'
       uses: actions/upload-pages-artifact@v3
+  macOS:
+    runs-on: macos-latest
+    needs: Release
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - variant: desktop:x86_64-darwin:macos
+          artifact: desktop-x86_64-darwin-macos
+          mode: dbg
+        - variant: desktop:universal-darwin:macos
+          artifact: desktop-universal-darwin-macos
+          mode: dbg
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    name: ${{ matrix.variant }}
+    steps:
+    - uses: lukka/get-cmake@latest
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
+        path: source
+    - name: Export GitHub Actions cache environment variables
+      uses: actions/github-script@v7
+      with:
+        script: |
+          core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+          core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+    - name: Host tools cache
+      uses: actions/cache@v4
+      with:
+        path: source/multi_build/host-x64-linux-native
+        key: host-tools-${{ runner.os }}-${{ hashFiles('source/tools') }}
+    - name: Building host tools
+      run: source/cb host-build
+      env:
+        VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
+    - name: Building project
+      run: BUILD_TYPE=${{ matrix.mode }} source/cb build ${{matrix.variant}}
+      env:
+        VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
+    - name: Uploading artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{matrix.artifact}}
+        path: |
+          source/multi_build/${{matrix.artifact}}/bin
+          source/multi_build/${{matrix.artifact}}/lib
+          !source/multi_build/${{matrix.artifact}}/lib/*.a
+          source/multi_build/${{matrix.artifact}}/packaged
+        if-no-files-found: error
   Deploy:
     if: ${{ always() }}
     needs: Linux
