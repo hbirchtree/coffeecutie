@@ -71,6 +71,7 @@
                 "rhs": "Darwin"
             },
             "cacheVariables": {
+                "CMAKE_MAKE_PROGRAM": "$env{NINJA}",
                 "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/toolchain/cmake/Toolchains/all-ios.toolchain.cmake",
                 "VCPKG_TARGET_TRIPLET": "$env{ARCHITECTURE}"
             },
