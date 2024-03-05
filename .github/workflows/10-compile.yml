@@ -142,11 +142,8 @@ jobs:
         script: |
           core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
           core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
-    - name: Host tools cache
-      uses: actions/cache@v4
-      with:
-        path: source/multi_build/host-x64-linux-native
-        key: host-tools-${{ runner.os }}-${{ hashFiles('source/tools') }}
+    - name: Installing Inkscape
+      run: brew install --cask inkscape
     - name: Building host tools
       run: source/cb host-build
       env:
