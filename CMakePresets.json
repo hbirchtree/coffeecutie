@@ -154,7 +154,8 @@
                 "CMAKE_SYSTEM_NAME": "Baremetal",
                 "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/toolchain/cmake/Toolchains/$env{TOOLCHAIN_PREFIX}-$env{VARIANT}.toolchain.cmake",
                 "VCPKG_MANIFEST_NO_DEFAULT_FEATURES": "ON",
-                "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports-gamecube/outcome;${sourceDir}/toolchain/vcpkg/ports-gamecube/status-code;${sourceDir}/toolchain/vcpkg/ports-gamecube/zstd;${sourceDir}/toolchain/vcpkg/ports-gamecube/openexr",
+                "VCPKG_MANIFEST_FEATURES": "headful;image",
+                "VCPKG_OVERLAY_PORTS": "${sourceDir}/toolchain/vcpkg/ports-gamecube/outcome;${sourceDir}/toolchain/vcpkg/ports-gamecube/status-code;${sourceDir}/toolchain/vcpkg/ports-gamecube/zstd;${sourceDir}/toolchain/vcpkg/ports-gamecube/openexr;${sourceDir}/toolchain/vcpkg/ports-gamecube/sdl2",
                 "VCPKG_TARGET_TRIPLET": "$env{ARCHITECTURE}-$env{VARIANT}"
             },
             "environment": {
