@@ -142,7 +142,7 @@ jobs:
     - name: Installing Inkscape
       run: brew install --cask inkscape
     - name: Building host tools
-      id: steps.buildTools
+      id: buildTools
       run: source/cb host-build
       env:
         VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
