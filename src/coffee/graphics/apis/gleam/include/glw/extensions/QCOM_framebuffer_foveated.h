@@ -19,11 +19,12 @@ namespace values {
  * \return void
  */
 STATICINLINE void framebuffer_foveation_config(
-    u32  framebuffer,
-    u32  numLayers,
-    u32  focalPointsPerLayer,
-    u32  requestedFeatures,
-    u32& providedFeatures)
+    u32         framebuffer,
+    u32         numLayers,
+    u32         focalPointsPerLayer,
+    u32         requestedFeatures,
+    u32&        providedFeatures,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -41,7 +42,7 @@ STATICINLINE void framebuffer_foveation_config(
         focalPointsPerLayer,
         requestedFeatures,
         &providedFeatures);
-    detail::error_check("FramebufferFoveationConfigQCOM"sv);
+    detail::error_check("FramebufferFoveationConfigQCOM"sv, check_errors);
 }
 
 /*!
@@ -57,14 +58,15 @@ STATICINLINE void framebuffer_foveation_config(
  * \return void
  */
 STATICINLINE void framebuffer_foveation_parameter(
-    u32 framebuffer,
-    u32 layer,
-    u32 focalPoint,
-    f32 focalX,
-    f32 focalY,
-    f32 gainX,
-    f32 gainY,
-    f32 foveaArea)
+    u32         framebuffer,
+    u32         layer,
+    u32         focalPoint,
+    f32         focalX,
+    f32         focalY,
+    f32         gainX,
+    f32         gainY,
+    f32         foveaArea,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -85,7 +87,7 @@ STATICINLINE void framebuffer_foveation_parameter(
         gainX,
         gainY,
         foveaArea);
-    detail::error_check("FramebufferFoveationParametersQCOM"sv);
+    detail::error_check("FramebufferFoveationParametersQCOM"sv, check_errors);
 }
 
 } // namespace gl::qcom::framebuffer_foveated

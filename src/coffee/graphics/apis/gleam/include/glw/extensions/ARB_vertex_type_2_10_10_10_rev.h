@@ -25,7 +25,8 @@ STATICINLINE void vertex_attrib_p1ui(
     u32                               index,
     group::vertex_attrib_pointer_type type,
     bool                              normalized,
-    u32                               value)
+    u32                               value,
+    error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -33,7 +34,7 @@ STATICINLINE void vertex_attrib_p1ui(
         GLW_FPTR_CHECK(VertexAttribP1ui)
     }
     glVertexAttribP1ui(index, static_cast<GLenum>(type), normalized, value);
-    detail::error_check("VertexAttribP1ui"sv);
+    detail::error_check("VertexAttribP1ui"sv, check_errors);
 }
 
 template<class span_const_u32>
@@ -54,7 +55,8 @@ STATICINLINE void vertex_attrib_p1uiv(
     u32                               index,
     group::vertex_attrib_pointer_type type,
     bool                              normalized,
-    span_const_u32 const&             value)
+    span_const_u32 const&             value,
+    error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -66,7 +68,7 @@ STATICINLINE void vertex_attrib_p1uiv(
         static_cast<GLenum>(type),
         normalized,
         reinterpret_cast<const GLuint*>(value.data()));
-    detail::error_check("VertexAttribP1uiv"sv);
+    detail::error_check("VertexAttribP1uiv"sv, check_errors);
 }
 
 /*!
@@ -81,7 +83,8 @@ STATICINLINE void vertex_attrib_p2ui(
     u32                               index,
     group::vertex_attrib_pointer_type type,
     bool                              normalized,
-    u32                               value)
+    u32                               value,
+    error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -89,7 +92,7 @@ STATICINLINE void vertex_attrib_p2ui(
         GLW_FPTR_CHECK(VertexAttribP2ui)
     }
     glVertexAttribP2ui(index, static_cast<GLenum>(type), normalized, value);
-    detail::error_check("VertexAttribP2ui"sv);
+    detail::error_check("VertexAttribP2ui"sv, check_errors);
 }
 
 template<class span_const_vec_2_u32>
@@ -108,7 +111,8 @@ STATICINLINE void vertex_attrib_p2uiv(
     u32                               index,
     group::vertex_attrib_pointer_type type,
     bool                              normalized,
-    span_const_vec_2_u32 const&       value)
+    span_const_vec_2_u32 const&       value,
+    error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -120,7 +124,7 @@ STATICINLINE void vertex_attrib_p2uiv(
         static_cast<GLenum>(type),
         normalized,
         reinterpret_cast<const GLuint*>(value.data()));
-    detail::error_check("VertexAttribP2uiv"sv);
+    detail::error_check("VertexAttribP2uiv"sv, check_errors);
 }
 
 /*!
@@ -135,7 +139,8 @@ STATICINLINE void vertex_attrib_p3ui(
     u32                               index,
     group::vertex_attrib_pointer_type type,
     bool                              normalized,
-    u32                               value)
+    u32                               value,
+    error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -143,7 +148,7 @@ STATICINLINE void vertex_attrib_p3ui(
         GLW_FPTR_CHECK(VertexAttribP3ui)
     }
     glVertexAttribP3ui(index, static_cast<GLenum>(type), normalized, value);
-    detail::error_check("VertexAttribP3ui"sv);
+    detail::error_check("VertexAttribP3ui"sv, check_errors);
 }
 
 template<class span_const_vec_3_u32>
@@ -162,7 +167,8 @@ STATICINLINE void vertex_attrib_p3uiv(
     u32                               index,
     group::vertex_attrib_pointer_type type,
     bool                              normalized,
-    span_const_vec_3_u32 const&       value)
+    span_const_vec_3_u32 const&       value,
+    error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -174,7 +180,7 @@ STATICINLINE void vertex_attrib_p3uiv(
         static_cast<GLenum>(type),
         normalized,
         reinterpret_cast<const GLuint*>(value.data()));
-    detail::error_check("VertexAttribP3uiv"sv);
+    detail::error_check("VertexAttribP3uiv"sv, check_errors);
 }
 
 /*!
@@ -189,7 +195,8 @@ STATICINLINE void vertex_attrib_p4ui(
     u32                               index,
     group::vertex_attrib_pointer_type type,
     bool                              normalized,
-    u32                               value)
+    u32                               value,
+    error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -197,7 +204,7 @@ STATICINLINE void vertex_attrib_p4ui(
         GLW_FPTR_CHECK(VertexAttribP4ui)
     }
     glVertexAttribP4ui(index, static_cast<GLenum>(type), normalized, value);
-    detail::error_check("VertexAttribP4ui"sv);
+    detail::error_check("VertexAttribP4ui"sv, check_errors);
 }
 
 template<class span_const_vec_4_u32>
@@ -216,7 +223,8 @@ STATICINLINE void vertex_attrib_p4uiv(
     u32                               index,
     group::vertex_attrib_pointer_type type,
     bool                              normalized,
-    span_const_vec_4_u32 const&       value)
+    span_const_vec_4_u32 const&       value,
+    error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -228,7 +236,7 @@ STATICINLINE void vertex_attrib_p4uiv(
         static_cast<GLenum>(type),
         normalized,
         reinterpret_cast<const GLuint*>(value.data()));
-    detail::error_check("VertexAttribP4uiv"sv);
+    detail::error_check("VertexAttribP4uiv"sv, check_errors);
 }
 
 } // namespace gl::arb::vertex_type_2_10_10_10_rev

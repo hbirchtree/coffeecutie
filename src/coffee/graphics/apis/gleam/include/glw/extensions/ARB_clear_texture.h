@@ -25,7 +25,8 @@ STATICINLINE void clear_tex_image(
     i32                    level,
     group::pixel_format    format,
     group::pixel_type      type,
-    span_const_void const& data)
+    span_const_void const& data,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -43,7 +44,7 @@ STATICINLINE void clear_tex_image(
         static_cast<GLenum>(format),
         static_cast<GLenum>(type),
         data.size() ? reinterpret_cast<const void*>(data.data()) : nullptr);
-    detail::error_check("ClearTexImage"sv);
+    detail::error_check("ClearTexImage"sv, check_errors);
 }
 
 template<class size_3_i32, class span_const_void, class vec_3_i32>
@@ -72,7 +73,8 @@ STATICINLINE void clear_tex_sub_image(
     size_3_i32 const&      width,
     group::pixel_format    format,
     group::pixel_type      type,
-    span_const_void const& data)
+    span_const_void const& data,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -96,7 +98,7 @@ STATICINLINE void clear_tex_sub_image(
         static_cast<GLenum>(format),
         static_cast<GLenum>(type),
         data.size() ? reinterpret_cast<const void*>(data.data()) : nullptr);
-    detail::error_check("ClearTexSubImage"sv);
+    detail::error_check("ClearTexSubImage"sv, check_errors);
 }
 
 } // namespace gl::arb::clear_texture

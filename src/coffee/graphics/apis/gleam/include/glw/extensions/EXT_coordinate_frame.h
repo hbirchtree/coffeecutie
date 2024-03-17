@@ -26,7 +26,8 @@ constexpr u32 map2_binormal          = 0x8447;
  * \param bz GLbyte
  * \return void
  */
-STATICINLINE void binormal3b(i8 bx, i8 by, i8 bz)
+STATICINLINE void binormal3b(
+    i8 bx, i8 by, i8 bz, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -34,7 +35,7 @@ STATICINLINE void binormal3b(i8 bx, i8 by, i8 bz)
         GLW_FPTR_CHECK(Binormal3bEXT)
     }
     glBinormal3bEXT(bx, by, bz);
-    detail::error_check("Binormal3bEXT"sv);
+    detail::error_check("Binormal3bEXT"sv, check_errors);
 }
 
 template<class span_const_i8>
@@ -48,7 +49,8 @@ requires(
  * \param v const GLbyte *
  * \return void
  */
-STATICINLINE void binormal3bv(span_const_i8 const& v)
+STATICINLINE void binormal3bv(
+    span_const_i8 const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -57,7 +59,7 @@ STATICINLINE void binormal3bv(span_const_i8 const& v)
     }
     glBinormal3bvEXT(
         v.size() ? reinterpret_cast<const GLbyte*>(v.data()) : nullptr);
-    detail::error_check("Binormal3bvEXT"sv);
+    detail::error_check("Binormal3bvEXT"sv, check_errors);
 }
 
 /*!
@@ -67,7 +69,8 @@ STATICINLINE void binormal3bv(span_const_i8 const& v)
  * \param bz GLdouble
  * \return void
  */
-STATICINLINE void binormal3d(f64 bx, f64 by, f64 bz)
+STATICINLINE void binormal3d(
+    f64 bx, f64 by, f64 bz, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -75,7 +78,7 @@ STATICINLINE void binormal3d(f64 bx, f64 by, f64 bz)
         GLW_FPTR_CHECK(Binormal3dEXT)
     }
     glBinormal3dEXT(bx, by, bz);
-    detail::error_check("Binormal3dEXT"sv);
+    detail::error_check("Binormal3dEXT"sv, check_errors);
 }
 
 template<class span_const_vec_3_f64>
@@ -87,7 +90,8 @@ requires(
  * \param v const GLdouble *
  * \return void
  */
-STATICINLINE void binormal3dv(span_const_vec_3_f64 const& v)
+STATICINLINE void binormal3dv(
+    span_const_vec_3_f64 const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -95,7 +99,7 @@ STATICINLINE void binormal3dv(span_const_vec_3_f64 const& v)
         GLW_FPTR_CHECK(Binormal3dvEXT)
     }
     glBinormal3dvEXT(reinterpret_cast<const GLdouble*>(v.data()));
-    detail::error_check("Binormal3dvEXT"sv);
+    detail::error_check("Binormal3dvEXT"sv, check_errors);
 }
 
 /*!
@@ -105,7 +109,8 @@ STATICINLINE void binormal3dv(span_const_vec_3_f64 const& v)
  * \param bz GLfloat
  * \return void
  */
-STATICINLINE void binormal3f(f32 bx, f32 by, f32 bz)
+STATICINLINE void binormal3f(
+    f32 bx, f32 by, f32 bz, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -113,7 +118,7 @@ STATICINLINE void binormal3f(f32 bx, f32 by, f32 bz)
         GLW_FPTR_CHECK(Binormal3fEXT)
     }
     glBinormal3fEXT(bx, by, bz);
-    detail::error_check("Binormal3fEXT"sv);
+    detail::error_check("Binormal3fEXT"sv, check_errors);
 }
 
 template<class span_const_vec_3_f32>
@@ -125,7 +130,8 @@ requires(
  * \param v const GLfloat *
  * \return void
  */
-STATICINLINE void binormal3fv(span_const_vec_3_f32 const& v)
+STATICINLINE void binormal3fv(
+    span_const_vec_3_f32 const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -133,7 +139,7 @@ STATICINLINE void binormal3fv(span_const_vec_3_f32 const& v)
         GLW_FPTR_CHECK(Binormal3fvEXT)
     }
     glBinormal3fvEXT(reinterpret_cast<const GLfloat*>(v.data()));
-    detail::error_check("Binormal3fvEXT"sv);
+    detail::error_check("Binormal3fvEXT"sv, check_errors);
 }
 
 /*!
@@ -143,7 +149,8 @@ STATICINLINE void binormal3fv(span_const_vec_3_f32 const& v)
  * \param bz GLint
  * \return void
  */
-STATICINLINE void binormal3i(i32 bx, i32 by, i32 bz)
+STATICINLINE void binormal3i(
+    i32 bx, i32 by, i32 bz, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -151,7 +158,7 @@ STATICINLINE void binormal3i(i32 bx, i32 by, i32 bz)
         GLW_FPTR_CHECK(Binormal3iEXT)
     }
     glBinormal3iEXT(bx, by, bz);
-    detail::error_check("Binormal3iEXT"sv);
+    detail::error_check("Binormal3iEXT"sv, check_errors);
 }
 
 template<class span_const_vec_3_i32>
@@ -163,7 +170,8 @@ requires(
  * \param v const GLint *
  * \return void
  */
-STATICINLINE void binormal3iv(span_const_vec_3_i32 const& v)
+STATICINLINE void binormal3iv(
+    span_const_vec_3_i32 const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -171,7 +179,7 @@ STATICINLINE void binormal3iv(span_const_vec_3_i32 const& v)
         GLW_FPTR_CHECK(Binormal3ivEXT)
     }
     glBinormal3ivEXT(reinterpret_cast<const GLint*>(v.data()));
-    detail::error_check("Binormal3ivEXT"sv);
+    detail::error_check("Binormal3ivEXT"sv, check_errors);
 }
 
 /*!
@@ -181,7 +189,8 @@ STATICINLINE void binormal3iv(span_const_vec_3_i32 const& v)
  * \param bz GLshort
  * \return void
  */
-STATICINLINE void binormal3s(i16 bx, i16 by, i16 bz)
+STATICINLINE void binormal3s(
+    i16 bx, i16 by, i16 bz, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -189,7 +198,7 @@ STATICINLINE void binormal3s(i16 bx, i16 by, i16 bz)
         GLW_FPTR_CHECK(Binormal3sEXT)
     }
     glBinormal3sEXT(bx, by, bz);
-    detail::error_check("Binormal3sEXT"sv);
+    detail::error_check("Binormal3sEXT"sv, check_errors);
 }
 
 template<class span_const_vec_3_i16>
@@ -201,7 +210,8 @@ requires(
  * \param v const GLshort *
  * \return void
  */
-STATICINLINE void binormal3sv(span_const_vec_3_i16 const& v)
+STATICINLINE void binormal3sv(
+    span_const_vec_3_i16 const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -209,7 +219,7 @@ STATICINLINE void binormal3sv(span_const_vec_3_i16 const& v)
         GLW_FPTR_CHECK(Binormal3svEXT)
     }
     glBinormal3svEXT(reinterpret_cast<const GLshort*>(v.data()));
-    detail::error_check("Binormal3svEXT"sv);
+    detail::error_check("Binormal3svEXT"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -224,7 +234,8 @@ requires(concepts::span<span_const_void>)
 STATICINLINE void binormal_pointer(
     group::binormal_pointer_type_ext type,
     i32                              stride,
-    span_const_void const&           pointer)
+    span_const_void const&           pointer,
+    error_check                      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -236,7 +247,7 @@ STATICINLINE void binormal_pointer(
         stride,
         pointer.size() ? reinterpret_cast<const void*>(pointer.data())
                        : nullptr);
-    detail::error_check("BinormalPointerEXT"sv);
+    detail::error_check("BinormalPointerEXT"sv, check_errors);
 }
 
 /*!
@@ -246,7 +257,8 @@ STATICINLINE void binormal_pointer(
  * \param tz GLbyte
  * \return void
  */
-STATICINLINE void tangent3b(i8 tx, i8 ty, i8 tz)
+STATICINLINE void tangent3b(
+    i8 tx, i8 ty, i8 tz, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -254,7 +266,7 @@ STATICINLINE void tangent3b(i8 tx, i8 ty, i8 tz)
         GLW_FPTR_CHECK(Tangent3bEXT)
     }
     glTangent3bEXT(tx, ty, tz);
-    detail::error_check("Tangent3bEXT"sv);
+    detail::error_check("Tangent3bEXT"sv, check_errors);
 }
 
 template<class span_const_i8>
@@ -268,7 +280,8 @@ requires(
  * \param v const GLbyte *
  * \return void
  */
-STATICINLINE void tangent3bv(span_const_i8 const& v)
+STATICINLINE void tangent3bv(
+    span_const_i8 const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -277,7 +290,7 @@ STATICINLINE void tangent3bv(span_const_i8 const& v)
     }
     glTangent3bvEXT(
         v.size() ? reinterpret_cast<const GLbyte*>(v.data()) : nullptr);
-    detail::error_check("Tangent3bvEXT"sv);
+    detail::error_check("Tangent3bvEXT"sv, check_errors);
 }
 
 /*!
@@ -287,7 +300,8 @@ STATICINLINE void tangent3bv(span_const_i8 const& v)
  * \param tz GLdouble
  * \return void
  */
-STATICINLINE void tangent3d(f64 tx, f64 ty, f64 tz)
+STATICINLINE void tangent3d(
+    f64 tx, f64 ty, f64 tz, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -295,7 +309,7 @@ STATICINLINE void tangent3d(f64 tx, f64 ty, f64 tz)
         GLW_FPTR_CHECK(Tangent3dEXT)
     }
     glTangent3dEXT(tx, ty, tz);
-    detail::error_check("Tangent3dEXT"sv);
+    detail::error_check("Tangent3dEXT"sv, check_errors);
 }
 
 template<class span_const_vec_3_f64>
@@ -307,7 +321,8 @@ requires(
  * \param v const GLdouble *
  * \return void
  */
-STATICINLINE void tangent3dv(span_const_vec_3_f64 const& v)
+STATICINLINE void tangent3dv(
+    span_const_vec_3_f64 const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -315,7 +330,7 @@ STATICINLINE void tangent3dv(span_const_vec_3_f64 const& v)
         GLW_FPTR_CHECK(Tangent3dvEXT)
     }
     glTangent3dvEXT(reinterpret_cast<const GLdouble*>(v.data()));
-    detail::error_check("Tangent3dvEXT"sv);
+    detail::error_check("Tangent3dvEXT"sv, check_errors);
 }
 
 /*!
@@ -325,7 +340,8 @@ STATICINLINE void tangent3dv(span_const_vec_3_f64 const& v)
  * \param tz GLfloat
  * \return void
  */
-STATICINLINE void tangent3f(f32 tx, f32 ty, f32 tz)
+STATICINLINE void tangent3f(
+    f32 tx, f32 ty, f32 tz, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -333,7 +349,7 @@ STATICINLINE void tangent3f(f32 tx, f32 ty, f32 tz)
         GLW_FPTR_CHECK(Tangent3fEXT)
     }
     glTangent3fEXT(tx, ty, tz);
-    detail::error_check("Tangent3fEXT"sv);
+    detail::error_check("Tangent3fEXT"sv, check_errors);
 }
 
 template<class span_const_vec_3_f32>
@@ -345,7 +361,8 @@ requires(
  * \param v const GLfloat *
  * \return void
  */
-STATICINLINE void tangent3fv(span_const_vec_3_f32 const& v)
+STATICINLINE void tangent3fv(
+    span_const_vec_3_f32 const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -353,7 +370,7 @@ STATICINLINE void tangent3fv(span_const_vec_3_f32 const& v)
         GLW_FPTR_CHECK(Tangent3fvEXT)
     }
     glTangent3fvEXT(reinterpret_cast<const GLfloat*>(v.data()));
-    detail::error_check("Tangent3fvEXT"sv);
+    detail::error_check("Tangent3fvEXT"sv, check_errors);
 }
 
 /*!
@@ -363,7 +380,8 @@ STATICINLINE void tangent3fv(span_const_vec_3_f32 const& v)
  * \param tz GLint
  * \return void
  */
-STATICINLINE void tangent3i(i32 tx, i32 ty, i32 tz)
+STATICINLINE void tangent3i(
+    i32 tx, i32 ty, i32 tz, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -371,7 +389,7 @@ STATICINLINE void tangent3i(i32 tx, i32 ty, i32 tz)
         GLW_FPTR_CHECK(Tangent3iEXT)
     }
     glTangent3iEXT(tx, ty, tz);
-    detail::error_check("Tangent3iEXT"sv);
+    detail::error_check("Tangent3iEXT"sv, check_errors);
 }
 
 template<class span_const_vec_3_i32>
@@ -383,7 +401,8 @@ requires(
  * \param v const GLint *
  * \return void
  */
-STATICINLINE void tangent3iv(span_const_vec_3_i32 const& v)
+STATICINLINE void tangent3iv(
+    span_const_vec_3_i32 const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -391,7 +410,7 @@ STATICINLINE void tangent3iv(span_const_vec_3_i32 const& v)
         GLW_FPTR_CHECK(Tangent3ivEXT)
     }
     glTangent3ivEXT(reinterpret_cast<const GLint*>(v.data()));
-    detail::error_check("Tangent3ivEXT"sv);
+    detail::error_check("Tangent3ivEXT"sv, check_errors);
 }
 
 /*!
@@ -401,7 +420,8 @@ STATICINLINE void tangent3iv(span_const_vec_3_i32 const& v)
  * \param tz GLshort
  * \return void
  */
-STATICINLINE void tangent3s(i16 tx, i16 ty, i16 tz)
+STATICINLINE void tangent3s(
+    i16 tx, i16 ty, i16 tz, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -409,7 +429,7 @@ STATICINLINE void tangent3s(i16 tx, i16 ty, i16 tz)
         GLW_FPTR_CHECK(Tangent3sEXT)
     }
     glTangent3sEXT(tx, ty, tz);
-    detail::error_check("Tangent3sEXT"sv);
+    detail::error_check("Tangent3sEXT"sv, check_errors);
 }
 
 template<class span_const_vec_3_i16>
@@ -421,7 +441,8 @@ requires(
  * \param v const GLshort *
  * \return void
  */
-STATICINLINE void tangent3sv(span_const_vec_3_i16 const& v)
+STATICINLINE void tangent3sv(
+    span_const_vec_3_i16 const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -429,7 +450,7 @@ STATICINLINE void tangent3sv(span_const_vec_3_i16 const& v)
         GLW_FPTR_CHECK(Tangent3svEXT)
     }
     glTangent3svEXT(reinterpret_cast<const GLshort*>(v.data()));
-    detail::error_check("Tangent3svEXT"sv);
+    detail::error_check("Tangent3svEXT"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -444,7 +465,8 @@ requires(concepts::span<span_const_void>)
 STATICINLINE void tangent_pointer(
     group::tangent_pointer_type_ext type,
     i32                             stride,
-    span_const_void const&          pointer)
+    span_const_void const&          pointer,
+    error_check                     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -456,7 +478,7 @@ STATICINLINE void tangent_pointer(
         stride,
         pointer.size() ? reinterpret_cast<const void*>(pointer.data())
                        : nullptr);
-    detail::error_check("TangentPointerEXT"sv);
+    detail::error_check("TangentPointerEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::coordinate_frame

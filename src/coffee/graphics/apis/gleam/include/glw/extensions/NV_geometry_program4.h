@@ -34,7 +34,8 @@ STATICINLINE void framebuffer_texture_ext(
     group::framebuffer_target     target,
     group::framebuffer_attachment attachment,
     u32                           texture,
-    i32                           level)
+    i32                           level,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -51,7 +52,7 @@ STATICINLINE void framebuffer_texture_ext(
         static_cast<GLenum>(attachment),
         texture,
         level);
-    detail::error_check("FramebufferTextureEXT"sv);
+    detail::error_check("FramebufferTextureEXT"sv, check_errors);
 }
 
 /*!
@@ -68,7 +69,8 @@ STATICINLINE void framebuffer_texture_face_ext(
     group::framebuffer_attachment attachment,
     u32                           texture,
     i32                           level,
-    group::texture_target         face)
+    group::texture_target         face,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -86,7 +88,7 @@ STATICINLINE void framebuffer_texture_face_ext(
         texture,
         level,
         static_cast<GLenum>(face));
-    detail::error_check("FramebufferTextureFaceEXT"sv);
+    detail::error_check("FramebufferTextureFaceEXT"sv, check_errors);
 }
 
 /*!
@@ -103,7 +105,8 @@ STATICINLINE void framebuffer_texture_layer_ext(
     group::framebuffer_attachment attachment,
     u32                           texture,
     i32                           level,
-    i32                           layer)
+    i32                           layer,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -121,7 +124,7 @@ STATICINLINE void framebuffer_texture_layer_ext(
         texture,
         level,
         layer);
-    detail::error_check("FramebufferTextureLayerEXT"sv);
+    detail::error_check("FramebufferTextureLayerEXT"sv, check_errors);
 }
 
 /*!
@@ -130,7 +133,10 @@ STATICINLINE void framebuffer_texture_layer_ext(
  * \param limit GLint
  * \return void
  */
-STATICINLINE void program_vertex_limit(group::program_target target, i32 limit)
+STATICINLINE void program_vertex_limit(
+    group::program_target target,
+    i32                   limit,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -138,7 +144,7 @@ STATICINLINE void program_vertex_limit(group::program_target target, i32 limit)
         GLW_FPTR_CHECK(ProgramVertexLimitNV)
     }
     glProgramVertexLimitNV(static_cast<GLenum>(target), limit);
-    detail::error_check("ProgramVertexLimitNV"sv);
+    detail::error_check("ProgramVertexLimitNV"sv, check_errors);
 }
 
 } // namespace gl::nv::geometry_program4

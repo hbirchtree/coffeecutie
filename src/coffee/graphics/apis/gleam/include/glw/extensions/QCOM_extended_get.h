@@ -24,7 +24,8 @@ requires(concepts::span<span_void>)
  * \param params void **
  * \return void
  */
-STATICINLINE void ext_get_buffer_pointerv(GLenum target, span_void params)
+STATICINLINE void ext_get_buffer_pointerv(
+    GLenum target, span_void params, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -34,7 +35,7 @@ STATICINLINE void ext_get_buffer_pointerv(GLenum target, span_void params)
     glExtGetBufferPointervQCOM(
         target,
         params.size() ? reinterpret_cast<void**>(params.data()) : nullptr);
-    detail::error_check("ExtGetBufferPointervQCOM"sv);
+    detail::error_check("ExtGetBufferPointervQCOM"sv, check_errors);
 }
 
 template<class span_u32>
@@ -50,7 +51,10 @@ requires(
  * \return void
  */
 STATICINLINE void ext_get_buffers(
-    span_u32 buffers, i32 maxBuffers, i32& numBuffers)
+    span_u32    buffers,
+    i32         maxBuffers,
+    i32&        numBuffers,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -61,7 +65,7 @@ STATICINLINE void ext_get_buffers(
         buffers.size() ? reinterpret_cast<GLuint*>(buffers.data()) : nullptr,
         maxBuffers,
         &numBuffers);
-    detail::error_check("ExtGetBuffersQCOM"sv);
+    detail::error_check("ExtGetBuffersQCOM"sv, check_errors);
 }
 
 template<class span_u32>
@@ -77,7 +81,10 @@ requires(
  * \return void
  */
 STATICINLINE void ext_get_framebuffers(
-    span_u32 framebuffers, i32 maxFramebuffers, i32& numFramebuffers)
+    span_u32    framebuffers,
+    i32         maxFramebuffers,
+    i32&        numFramebuffers,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -89,7 +96,7 @@ STATICINLINE void ext_get_framebuffers(
                             : nullptr,
         maxFramebuffers,
         &numFramebuffers);
-    detail::error_check("ExtGetFramebuffersQCOM"sv);
+    detail::error_check("ExtGetFramebuffersQCOM"sv, check_errors);
 }
 
 template<class span_u32>
@@ -105,7 +112,10 @@ requires(
  * \return void
  */
 STATICINLINE void ext_get_renderbuffers(
-    span_u32 renderbuffers, i32 maxRenderbuffers, i32& numRenderbuffers)
+    span_u32    renderbuffers,
+    i32         maxRenderbuffers,
+    i32&        numRenderbuffers,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -117,7 +127,7 @@ STATICINLINE void ext_get_renderbuffers(
                              : nullptr,
         maxRenderbuffers,
         &numRenderbuffers);
-    detail::error_check("ExtGetRenderbuffersQCOM"sv);
+    detail::error_check("ExtGetRenderbuffersQCOM"sv, check_errors);
 }
 
 template<class span_i32>
@@ -135,7 +145,12 @@ requires(
  * \return void
  */
 STATICINLINE void ext_get_tex_level_parameter(
-    u32 texture, GLenum face, i32 level, GLenum pname, span_i32 params)
+    u32         texture,
+    GLenum      face,
+    i32         level,
+    GLenum      pname,
+    span_i32    params,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -153,7 +168,7 @@ STATICINLINE void ext_get_tex_level_parameter(
         level,
         pname,
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("ExtGetTexLevelParameterivQCOM"sv);
+    detail::error_check("ExtGetTexLevelParameterivQCOM"sv, check_errors);
 }
 
 template<class size_3_i32, class span_void, class vec_3_i32>
@@ -182,7 +197,8 @@ STATICINLINE void ext_get_tex_sub_image(
     size_3_i32 const&   width,
     group::pixel_format format,
     group::pixel_type   type,
-    span_void           texels)
+    span_void           texels,
+    error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -201,7 +217,7 @@ STATICINLINE void ext_get_tex_sub_image(
         static_cast<GLenum>(format),
         static_cast<GLenum>(type),
         texels.size() ? reinterpret_cast<void*>(texels.data()) : nullptr);
-    detail::error_check("ExtGetTexSubImageQCOM"sv);
+    detail::error_check("ExtGetTexSubImageQCOM"sv, check_errors);
 }
 
 template<class span_i32, class span_u32>
@@ -222,7 +238,10 @@ requires(
  * \return void
  */
 STATICINLINE void ext_get_textures(
-    span_u32 textures, i32 maxTextures, span_i32 numTextures)
+    span_u32    textures,
+    i32         maxTextures,
+    span_i32    numTextures,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -234,7 +253,7 @@ STATICINLINE void ext_get_textures(
         maxTextures,
         numTextures.size() ? reinterpret_cast<GLint*>(numTextures.data())
                            : nullptr);
-    detail::error_check("ExtGetTexturesQCOM"sv);
+    detail::error_check("ExtGetTexturesQCOM"sv, check_errors);
 }
 
 /*!
@@ -245,7 +264,10 @@ STATICINLINE void ext_get_textures(
  * \return void
  */
 STATICINLINE void ext_tex_object_state_overridei(
-    GLenum target, GLenum pname, i32 param)
+    GLenum      target,
+    GLenum      pname,
+    i32         param,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -253,7 +275,7 @@ STATICINLINE void ext_tex_object_state_overridei(
         GLW_FPTR_CHECK(ExtTexObjectStateOverrideiQCOM)
     }
     glExtTexObjectStateOverrideiQCOM(target, pname, param);
-    detail::error_check("ExtTexObjectStateOverrideiQCOM"sv);
+    detail::error_check("ExtTexObjectStateOverrideiQCOM"sv, check_errors);
 }
 
 } // namespace gl::qcom::extended_get

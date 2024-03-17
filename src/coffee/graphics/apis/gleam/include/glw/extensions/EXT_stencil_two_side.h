@@ -12,7 +12,8 @@ constexpr u32 active_stencil_face   = 0x8911;
  * \param face GLenum
  * \return void
  */
-STATICINLINE void active_stencil_face(group::triangle_face face)
+STATICINLINE void active_stencil_face(
+    group::triangle_face face, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -20,7 +21,7 @@ STATICINLINE void active_stencil_face(group::triangle_face face)
         GLW_FPTR_CHECK(ActiveStencilFaceEXT)
     }
     glActiveStencilFaceEXT(static_cast<GLenum>(face));
-    detail::error_check("ActiveStencilFaceEXT"sv);
+    detail::error_check("ActiveStencilFaceEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::stencil_two_side

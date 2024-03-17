@@ -21,7 +21,8 @@ requires(concepts::vector<vec_3_i8, i8, 3>)
  * \param blue GLbyte
  * \return void
  */
-STATICINLINE void secondary_color3b(vec_3_i8 const& red)
+STATICINLINE void secondary_color3b(
+    vec_3_i8 const& red, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -29,7 +30,7 @@ STATICINLINE void secondary_color3b(vec_3_i8 const& red)
         GLW_FPTR_CHECK(SecondaryColor3bEXT)
     }
     glSecondaryColor3bEXT(red[0], red[1], red[2]);
-    detail::error_check("SecondaryColor3bEXT"sv);
+    detail::error_check("SecondaryColor3bEXT"sv, check_errors);
 }
 
 template<class span_const_i8>
@@ -43,7 +44,8 @@ requires(
  * \param v const GLbyte *
  * \return void
  */
-STATICINLINE void secondary_color3bv(span_const_i8 const& v)
+STATICINLINE void secondary_color3bv(
+    span_const_i8 const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -52,7 +54,7 @@ STATICINLINE void secondary_color3bv(span_const_i8 const& v)
     }
     glSecondaryColor3bvEXT(
         v.size() ? reinterpret_cast<const GLbyte*>(v.data()) : nullptr);
-    detail::error_check("SecondaryColor3bvEXT"sv);
+    detail::error_check("SecondaryColor3bvEXT"sv, check_errors);
 }
 
 template<class vec_3_f64>
@@ -64,7 +66,8 @@ requires(concepts::vector<vec_3_f64, f64, 3>)
  * \param blue GLdouble
  * \return void
  */
-STATICINLINE void secondary_color3d(vec_3_f64 const& red)
+STATICINLINE void secondary_color3d(
+    vec_3_f64 const& red, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -72,7 +75,7 @@ STATICINLINE void secondary_color3d(vec_3_f64 const& red)
         GLW_FPTR_CHECK(SecondaryColor3dEXT)
     }
     glSecondaryColor3dEXT(red[0], red[1], red[2]);
-    detail::error_check("SecondaryColor3dEXT"sv);
+    detail::error_check("SecondaryColor3dEXT"sv, check_errors);
 }
 
 template<class span_const_vec_3_f64>
@@ -84,7 +87,8 @@ requires(
  * \param v const GLdouble *
  * \return void
  */
-STATICINLINE void secondary_color3dv(span_const_vec_3_f64 const& v)
+STATICINLINE void secondary_color3dv(
+    span_const_vec_3_f64 const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -92,7 +96,7 @@ STATICINLINE void secondary_color3dv(span_const_vec_3_f64 const& v)
         GLW_FPTR_CHECK(SecondaryColor3dvEXT)
     }
     glSecondaryColor3dvEXT(reinterpret_cast<const GLdouble*>(v.data()));
-    detail::error_check("SecondaryColor3dvEXT"sv);
+    detail::error_check("SecondaryColor3dvEXT"sv, check_errors);
 }
 
 template<class vec_3_f32>
@@ -104,7 +108,8 @@ requires(concepts::vector<vec_3_f32, f32, 3>)
  * \param blue GLfloat
  * \return void
  */
-STATICINLINE void secondary_color3f(vec_3_f32 const& red)
+STATICINLINE void secondary_color3f(
+    vec_3_f32 const& red, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -112,7 +117,7 @@ STATICINLINE void secondary_color3f(vec_3_f32 const& red)
         GLW_FPTR_CHECK(SecondaryColor3fEXT)
     }
     glSecondaryColor3fEXT(red[0], red[1], red[2]);
-    detail::error_check("SecondaryColor3fEXT"sv);
+    detail::error_check("SecondaryColor3fEXT"sv, check_errors);
 }
 
 template<class span_const_vec_3_f32>
@@ -124,7 +129,8 @@ requires(
  * \param v const GLfloat *
  * \return void
  */
-STATICINLINE void secondary_color3fv(span_const_vec_3_f32 const& v)
+STATICINLINE void secondary_color3fv(
+    span_const_vec_3_f32 const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -132,7 +138,7 @@ STATICINLINE void secondary_color3fv(span_const_vec_3_f32 const& v)
         GLW_FPTR_CHECK(SecondaryColor3fvEXT)
     }
     glSecondaryColor3fvEXT(reinterpret_cast<const GLfloat*>(v.data()));
-    detail::error_check("SecondaryColor3fvEXT"sv);
+    detail::error_check("SecondaryColor3fvEXT"sv, check_errors);
 }
 
 template<class vec_3_i32>
@@ -144,7 +150,8 @@ requires(concepts::vector<vec_3_i32, i32, 3>)
  * \param blue GLint
  * \return void
  */
-STATICINLINE void secondary_color3i(vec_3_i32 const& red)
+STATICINLINE void secondary_color3i(
+    vec_3_i32 const& red, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -152,7 +159,7 @@ STATICINLINE void secondary_color3i(vec_3_i32 const& red)
         GLW_FPTR_CHECK(SecondaryColor3iEXT)
     }
     glSecondaryColor3iEXT(red[0], red[1], red[2]);
-    detail::error_check("SecondaryColor3iEXT"sv);
+    detail::error_check("SecondaryColor3iEXT"sv, check_errors);
 }
 
 template<class span_const_vec_3_i32>
@@ -164,7 +171,8 @@ requires(
  * \param v const GLint *
  * \return void
  */
-STATICINLINE void secondary_color3iv(span_const_vec_3_i32 const& v)
+STATICINLINE void secondary_color3iv(
+    span_const_vec_3_i32 const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -172,7 +180,7 @@ STATICINLINE void secondary_color3iv(span_const_vec_3_i32 const& v)
         GLW_FPTR_CHECK(SecondaryColor3ivEXT)
     }
     glSecondaryColor3ivEXT(reinterpret_cast<const GLint*>(v.data()));
-    detail::error_check("SecondaryColor3ivEXT"sv);
+    detail::error_check("SecondaryColor3ivEXT"sv, check_errors);
 }
 
 template<class vec_3_i16>
@@ -184,7 +192,8 @@ requires(concepts::vector<vec_3_i16, i16, 3>)
  * \param blue GLshort
  * \return void
  */
-STATICINLINE void secondary_color3s(vec_3_i16 const& red)
+STATICINLINE void secondary_color3s(
+    vec_3_i16 const& red, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -192,7 +201,7 @@ STATICINLINE void secondary_color3s(vec_3_i16 const& red)
         GLW_FPTR_CHECK(SecondaryColor3sEXT)
     }
     glSecondaryColor3sEXT(red[0], red[1], red[2]);
-    detail::error_check("SecondaryColor3sEXT"sv);
+    detail::error_check("SecondaryColor3sEXT"sv, check_errors);
 }
 
 template<class span_const_vec_3_i16>
@@ -204,7 +213,8 @@ requires(
  * \param v const GLshort *
  * \return void
  */
-STATICINLINE void secondary_color3sv(span_const_vec_3_i16 const& v)
+STATICINLINE void secondary_color3sv(
+    span_const_vec_3_i16 const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -212,7 +222,7 @@ STATICINLINE void secondary_color3sv(span_const_vec_3_i16 const& v)
         GLW_FPTR_CHECK(SecondaryColor3svEXT)
     }
     glSecondaryColor3svEXT(reinterpret_cast<const GLshort*>(v.data()));
-    detail::error_check("SecondaryColor3svEXT"sv);
+    detail::error_check("SecondaryColor3svEXT"sv, check_errors);
 }
 
 template<class vec_3_u8>
@@ -224,7 +234,8 @@ requires(concepts::vector<vec_3_u8, u8, 3>)
  * \param blue GLubyte
  * \return void
  */
-STATICINLINE void secondary_color3ub(vec_3_u8 const& red)
+STATICINLINE void secondary_color3ub(
+    vec_3_u8 const& red, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -232,7 +243,7 @@ STATICINLINE void secondary_color3ub(vec_3_u8 const& red)
         GLW_FPTR_CHECK(SecondaryColor3ubEXT)
     }
     glSecondaryColor3ubEXT(red[0], red[1], red[2]);
-    detail::error_check("SecondaryColor3ubEXT"sv);
+    detail::error_check("SecondaryColor3ubEXT"sv, check_errors);
 }
 
 template<class span_const_u8>
@@ -246,7 +257,8 @@ requires(
  * \param v const GLubyte *
  * \return void
  */
-STATICINLINE void secondary_color3ubv(span_const_u8 const& v)
+STATICINLINE void secondary_color3ubv(
+    span_const_u8 const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -255,7 +267,7 @@ STATICINLINE void secondary_color3ubv(span_const_u8 const& v)
     }
     glSecondaryColor3ubvEXT(
         v.size() ? reinterpret_cast<const GLubyte*>(v.data()) : nullptr);
-    detail::error_check("SecondaryColor3ubvEXT"sv);
+    detail::error_check("SecondaryColor3ubvEXT"sv, check_errors);
 }
 
 template<class vec_3_u32>
@@ -267,7 +279,8 @@ requires(concepts::vector<vec_3_u32, u32, 3>)
  * \param blue GLuint
  * \return void
  */
-STATICINLINE void secondary_color3ui(vec_3_u32 const& red)
+STATICINLINE void secondary_color3ui(
+    vec_3_u32 const& red, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -275,7 +288,7 @@ STATICINLINE void secondary_color3ui(vec_3_u32 const& red)
         GLW_FPTR_CHECK(SecondaryColor3uiEXT)
     }
     glSecondaryColor3uiEXT(red[0], red[1], red[2]);
-    detail::error_check("SecondaryColor3uiEXT"sv);
+    detail::error_check("SecondaryColor3uiEXT"sv, check_errors);
 }
 
 template<class span_const_vec_3_u32>
@@ -287,7 +300,8 @@ requires(
  * \param v const GLuint *
  * \return void
  */
-STATICINLINE void secondary_color3uiv(span_const_vec_3_u32 const& v)
+STATICINLINE void secondary_color3uiv(
+    span_const_vec_3_u32 const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -295,7 +309,7 @@ STATICINLINE void secondary_color3uiv(span_const_vec_3_u32 const& v)
         GLW_FPTR_CHECK(SecondaryColor3uivEXT)
     }
     glSecondaryColor3uivEXT(reinterpret_cast<const GLuint*>(v.data()));
-    detail::error_check("SecondaryColor3uivEXT"sv);
+    detail::error_check("SecondaryColor3uivEXT"sv, check_errors);
 }
 
 template<class vec_3_u16>
@@ -307,7 +321,8 @@ requires(concepts::vector<vec_3_u16, u16, 3>)
  * \param blue GLushort
  * \return void
  */
-STATICINLINE void secondary_color3us(vec_3_u16 const& red)
+STATICINLINE void secondary_color3us(
+    vec_3_u16 const& red, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -315,7 +330,7 @@ STATICINLINE void secondary_color3us(vec_3_u16 const& red)
         GLW_FPTR_CHECK(SecondaryColor3usEXT)
     }
     glSecondaryColor3usEXT(red[0], red[1], red[2]);
-    detail::error_check("SecondaryColor3usEXT"sv);
+    detail::error_check("SecondaryColor3usEXT"sv, check_errors);
 }
 
 template<class span_const_vec_3_u16>
@@ -327,7 +342,8 @@ requires(
  * \param v const GLushort *
  * \return void
  */
-STATICINLINE void secondary_color3usv(span_const_vec_3_u16 const& v)
+STATICINLINE void secondary_color3usv(
+    span_const_vec_3_u16 const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -335,7 +351,7 @@ STATICINLINE void secondary_color3usv(span_const_vec_3_u16 const& v)
         GLW_FPTR_CHECK(SecondaryColor3usvEXT)
     }
     glSecondaryColor3usvEXT(reinterpret_cast<const GLushort*>(v.data()));
-    detail::error_check("SecondaryColor3usvEXT"sv);
+    detail::error_check("SecondaryColor3usvEXT"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -352,7 +368,8 @@ STATICINLINE void secondary_color_pointer(
     i32                       size,
     group::color_pointer_type type,
     i32                       stride,
-    span_const_void const&    pointer)
+    span_const_void const&    pointer,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -365,7 +382,7 @@ STATICINLINE void secondary_color_pointer(
         stride,
         pointer.size() ? reinterpret_cast<const void*>(pointer.data())
                        : nullptr);
-    detail::error_check("SecondaryColorPointerEXT"sv);
+    detail::error_check("SecondaryColorPointerEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::secondary_color

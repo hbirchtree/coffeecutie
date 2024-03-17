@@ -14,7 +14,9 @@ namespace values {
  * \param preserveMask GLbitfield
  * \return void
  */
-STATICINLINE void end_tiling(group::buffer_bit_qcom preserveMask)
+STATICINLINE void end_tiling(
+    group::buffer_bit_qcom preserveMask,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -22,7 +24,7 @@ STATICINLINE void end_tiling(group::buffer_bit_qcom preserveMask)
         GLW_FPTR_CHECK(EndTilingQCOM)
     }
     glEndTilingQCOM(static_cast<GLenum>(preserveMask));
-    detail::error_check("EndTilingQCOM"sv);
+    detail::error_check("EndTilingQCOM"sv, check_errors);
 }
 
 template<class size_2_u32, class vec_2_u32>
@@ -40,7 +42,8 @@ requires(
 STATICINLINE void start_tiling(
     vec_2_u32 const&       x,
     size_2_u32 const&      width,
-    group::buffer_bit_qcom preserveMask)
+    group::buffer_bit_qcom preserveMask,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -49,7 +52,7 @@ STATICINLINE void start_tiling(
     }
     glStartTilingQCOM(
         x[0], x[1], width[0], width[1], static_cast<GLenum>(preserveMask));
-    detail::error_check("StartTilingQCOM"sv);
+    detail::error_check("StartTilingQCOM"sv, check_errors);
 }
 
 } // namespace gl::qcom::tiled_rendering

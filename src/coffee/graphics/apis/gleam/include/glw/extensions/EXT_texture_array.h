@@ -31,7 +31,8 @@ STATICINLINE void framebuffer_texture_layer(
     group::framebuffer_attachment attachment,
     u32                           texture,
     i32                           level,
-    i32                           layer)
+    i32                           layer,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -49,7 +50,7 @@ STATICINLINE void framebuffer_texture_layer(
         texture,
         level,
         layer);
-    detail::error_check("FramebufferTextureLayerEXT"sv);
+    detail::error_check("FramebufferTextureLayerEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::texture_array

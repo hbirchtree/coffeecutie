@@ -12,7 +12,8 @@ constexpr u32 primitive_restart_index = 0x8559;
  * \param index GLuint
  * \return void
  */
-STATICINLINE void primitive_restart_index(u32 index)
+STATICINLINE void primitive_restart_index(
+    u32 index, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -20,7 +21,7 @@ STATICINLINE void primitive_restart_index(u32 index)
         GLW_FPTR_CHECK(PrimitiveRestartIndexNV)
     }
     glPrimitiveRestartIndexNV(index);
-    detail::error_check("PrimitiveRestartIndexNV"sv);
+    detail::error_check("PrimitiveRestartIndexNV"sv, check_errors);
 }
 
 /*!
@@ -28,7 +29,7 @@ STATICINLINE void primitive_restart_index(u32 index)
 
  * \return void
  */
-STATICINLINE void primitive_restart()
+STATICINLINE void primitive_restart(error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -36,7 +37,7 @@ STATICINLINE void primitive_restart()
         GLW_FPTR_CHECK(PrimitiveRestartNV)
     }
     glPrimitiveRestartNV();
-    detail::error_check("PrimitiveRestartNV"sv);
+    detail::error_check("PrimitiveRestartNV"sv, check_errors);
 }
 
 } // namespace gl::nv::primitive_restart

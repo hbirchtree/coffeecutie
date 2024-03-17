@@ -11,7 +11,8 @@ constexpr u32 fragment_shader_discards_samples = 0x8A52;
 
  * \return void
  */
-STATICINLINE void framebuffer_fetch_barrier()
+STATICINLINE void framebuffer_fetch_barrier(
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -19,7 +20,7 @@ STATICINLINE void framebuffer_fetch_barrier()
         GLW_FPTR_CHECK(FramebufferFetchBarrierEXT)
     }
     glFramebufferFetchBarrierEXT();
-    detail::error_check("FramebufferFetchBarrierEXT"sv);
+    detail::error_check("FramebufferFetchBarrierEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::shader_framebuffer_fetch_non_coherent

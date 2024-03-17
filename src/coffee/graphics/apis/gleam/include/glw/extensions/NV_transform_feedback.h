@@ -41,7 +41,10 @@ constexpr u32 layer                                         = 0x8DAA;
  * \param name const GLchar *
  * \return void
  */
-STATICINLINE void active_varying(u32 program, std::string_view const& name)
+STATICINLINE void active_varying(
+    u32                     program,
+    std::string_view const& name,
+    error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -54,7 +57,7 @@ STATICINLINE void active_varying(u32 program, std::string_view const& name)
 #endif
     }
     glActiveVaryingNV(program, name.data());
-    detail::error_check("ActiveVaryingNV"sv);
+    detail::error_check("ActiveVaryingNV"sv, check_errors);
 }
 
 /*!
@@ -62,7 +65,9 @@ STATICINLINE void active_varying(u32 program, std::string_view const& name)
  * \param primitiveMode GLenum
  * \return void
  */
-STATICINLINE void begin_transform_feedback(group::primitive_type primitiveMode)
+STATICINLINE void begin_transform_feedback(
+    group::primitive_type primitiveMode,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -70,7 +75,7 @@ STATICINLINE void begin_transform_feedback(group::primitive_type primitiveMode)
         GLW_FPTR_CHECK(BeginTransformFeedbackNV)
     }
     glBeginTransformFeedbackNV(static_cast<GLenum>(primitiveMode));
-    detail::error_check("BeginTransformFeedbackNV"sv);
+    detail::error_check("BeginTransformFeedbackNV"sv, check_errors);
 }
 
 /*!
@@ -81,7 +86,10 @@ STATICINLINE void begin_transform_feedback(group::primitive_type primitiveMode)
  * \return void
  */
 STATICINLINE void bind_buffer_base(
-    group::buffer_target_arb target, u32 index, u32 buffer)
+    group::buffer_target_arb target,
+    u32                      index,
+    u32                      buffer,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -94,7 +102,7 @@ STATICINLINE void bind_buffer_base(
 #endif
     }
     glBindBufferBaseNV(static_cast<GLenum>(target), index, buffer);
-    detail::error_check("BindBufferBaseNV"sv);
+    detail::error_check("BindBufferBaseNV"sv, check_errors);
 }
 
 /*!
@@ -106,7 +114,11 @@ STATICINLINE void bind_buffer_base(
  * \return void
  */
 STATICINLINE void bind_buffer_offset(
-    group::buffer_target_arb target, u32 index, u32 buffer, GLintptr offset)
+    group::buffer_target_arb target,
+    u32                      index,
+    u32                      buffer,
+    GLintptr                 offset,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -119,7 +131,7 @@ STATICINLINE void bind_buffer_offset(
 #endif
     }
     glBindBufferOffsetNV(static_cast<GLenum>(target), index, buffer, offset);
-    detail::error_check("BindBufferOffsetNV"sv);
+    detail::error_check("BindBufferOffsetNV"sv, check_errors);
 }
 
 /*!
@@ -136,7 +148,8 @@ STATICINLINE void bind_buffer_range(
     u32                      index,
     u32                      buffer,
     GLintptr                 offset,
-    GLsizeiptr               size)
+    GLsizeiptr               size,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -150,7 +163,7 @@ STATICINLINE void bind_buffer_range(
     }
     glBindBufferRangeNV(
         static_cast<GLenum>(target), index, buffer, offset, size);
-    detail::error_check("BindBufferRangeNV"sv);
+    detail::error_check("BindBufferRangeNV"sv, check_errors);
 }
 
 /*!
@@ -158,7 +171,8 @@ STATICINLINE void bind_buffer_range(
 
  * \return void
  */
-STATICINLINE void end_transform_feedback()
+STATICINLINE void end_transform_feedback(
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -166,7 +180,7 @@ STATICINLINE void end_transform_feedback()
         GLW_FPTR_CHECK(EndTransformFeedbackNV)
     }
     glEndTransformFeedbackNV();
-    detail::error_check("EndTransformFeedbackNV"sv);
+    detail::error_check("EndTransformFeedbackNV"sv, check_errors);
 }
 
 template<class span_GLchar>
@@ -192,7 +206,8 @@ STATICINLINE void get_active_varying(
     i32&        length,
     i32&        size,
     GLenum&     type,
-    span_GLchar name)
+    span_GLchar name,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -206,7 +221,7 @@ STATICINLINE void get_active_varying(
     }
     glGetActiveVaryingNV(
         program, index, name.size(), &length, &size, &type, name.data());
-    detail::error_check("GetActiveVaryingNV"sv);
+    detail::error_check("GetActiveVaryingNV"sv, check_errors);
 }
 
 /*!
@@ -217,7 +232,10 @@ STATICINLINE void get_active_varying(
  * \return void
  */
 STATICINLINE void get_transform_feedback_varying(
-    u32 program, u32 index, i32& location)
+    u32         program,
+    u32         index,
+    i32&        location,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -230,7 +248,7 @@ STATICINLINE void get_transform_feedback_varying(
 #endif
     }
     glGetTransformFeedbackVaryingNV(program, index, &location);
-    detail::error_check("GetTransformFeedbackVaryingNV"sv);
+    detail::error_check("GetTransformFeedbackVaryingNV"sv, check_errors);
 }
 
 /*!
@@ -239,8 +257,10 @@ STATICINLINE void get_transform_feedback_varying(
  * \param name const GLchar *
  * \return GLint
  */
-STATICINLINE GLint
-get_varying_location(u32 program, std::string_view const& name)
+STATICINLINE GLint get_varying_location(
+    u32                     program,
+    std::string_view const& name,
+    error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -253,7 +273,7 @@ get_varying_location(u32 program, std::string_view const& name)
 #endif
     }
     auto out = glGetVaryingLocationNV(program, name.data());
-    detail::error_check("GetVaryingLocationNV"sv);
+    detail::error_check("GetVaryingLocationNV"sv, check_errors);
     return out;
 }
 
@@ -271,7 +291,10 @@ requires(
  * \return void
  */
 STATICINLINE void transform_feedback_attribs(
-    i32 count, span_const_i32 const& attribs, GLenum bufferMode)
+    i32                   count,
+    span_const_i32 const& attribs,
+    GLenum                bufferMode,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -283,7 +306,7 @@ STATICINLINE void transform_feedback_attribs(
         attribs.size() ? reinterpret_cast<const GLint*>(attribs.data())
                        : nullptr,
         bufferMode);
-    detail::error_check("TransformFeedbackAttribsNV"sv);
+    detail::error_check("TransformFeedbackAttribsNV"sv, check_errors);
 }
 
 template<class span_const_i32>
@@ -303,7 +326,8 @@ requires(
 STATICINLINE void transform_feedback_varyings(
     u32                                   program,
     span_const_i32 const&                 locations,
-    group::transform_feedback_buffer_mode bufferMode)
+    group::transform_feedback_buffer_mode bufferMode,
+    error_check                           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -321,7 +345,7 @@ STATICINLINE void transform_feedback_varyings(
         locations.size() ? reinterpret_cast<const GLint*>(locations.data())
                          : nullptr,
         static_cast<GLenum>(bufferMode));
-    detail::error_check("TransformFeedbackVaryingsNV"sv);
+    detail::error_check("TransformFeedbackVaryingsNV"sv, check_errors);
 }
 
 template<class span_const_i32>
@@ -342,7 +366,8 @@ requires(
 STATICINLINE void transform_feedback_stream_attribs(
     span_const_i32 const& attribs,
     span_const_i32 const& bufstreams,
-    GLenum                bufferMode)
+    GLenum                bufferMode,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -357,7 +382,7 @@ STATICINLINE void transform_feedback_stream_attribs(
         bufstreams.size() ? reinterpret_cast<const GLint*>(bufstreams.data())
                           : nullptr,
         bufferMode);
-    detail::error_check("TransformFeedbackStreamAttribsNV"sv);
+    detail::error_check("TransformFeedbackStreamAttribsNV"sv, check_errors);
 }
 
 } // namespace gl::nv::transform_feedback

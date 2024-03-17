@@ -15,7 +15,11 @@ constexpr u32 vertex_attrib_array_divisor = 0x88FE;
  * \return void
  */
 STATICINLINE void draw_arrays_instanced(
-    group::primitive_type mode, i32 start, i32 count, i32 primcount)
+    group::primitive_type mode,
+    i32                   start,
+    i32                   count,
+    i32                   primcount,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -24,7 +28,7 @@ STATICINLINE void draw_arrays_instanced(
     }
     glDrawArraysInstancedEXT(
         static_cast<GLenum>(mode), start, count, primcount);
-    detail::error_check("DrawArraysInstancedEXT"sv);
+    detail::error_check("DrawArraysInstancedEXT"sv, check_errors);
 }
 
 /*!
@@ -41,7 +45,8 @@ STATICINLINE void draw_elements_instanced(
     i32                       count,
     group::draw_elements_type type,
     intptr_t                  indices,
-    i32                       primcount)
+    i32                       primcount,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -54,7 +59,7 @@ STATICINLINE void draw_elements_instanced(
         static_cast<GLenum>(type),
         reinterpret_cast<const void*>(indices),
         primcount);
-    detail::error_check("DrawElementsInstancedEXT"sv);
+    detail::error_check("DrawElementsInstancedEXT"sv, check_errors);
 }
 
 /*!
@@ -63,7 +68,8 @@ STATICINLINE void draw_elements_instanced(
  * \param divisor GLuint
  * \return void
  */
-STATICINLINE void vertex_attrib_divisor(u32 index, u32 divisor)
+STATICINLINE void vertex_attrib_divisor(
+    u32 index, u32 divisor, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -71,7 +77,7 @@ STATICINLINE void vertex_attrib_divisor(u32 index, u32 divisor)
         GLW_FPTR_CHECK(VertexAttribDivisorEXT)
     }
     glVertexAttribDivisorEXT(index, divisor);
-    detail::error_check("VertexAttribDivisorEXT"sv);
+    detail::error_check("VertexAttribDivisorEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::instanced_arrays

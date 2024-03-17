@@ -767,7 +767,8 @@ inline auto make_texture_view(
             params.layer.min_,
             params.layer.count,
             params.mip.min_,
-            params.mip.count);
+            params.mip.count,
+            gl::error_check::on);
         detail::make_immutable_view(origin, std::move(arguments));
     } else if(origin.m_features.image_copy)
     {

@@ -25,7 +25,7 @@ constexpr u32 hsl_luminosity = 0x92B0;
 
  * \return void
  */
-STATICINLINE void blend_barrier()
+STATICINLINE void blend_barrier(error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -33,7 +33,7 @@ STATICINLINE void blend_barrier()
         GLW_FPTR_CHECK(BlendBarrierKHR)
     }
     glBlendBarrierKHR();
-    detail::error_check("BlendBarrierKHR"sv);
+    detail::error_check("BlendBarrierKHR"sv, check_errors);
 }
 
 } // namespace gl::khr::blend_equation_advanced

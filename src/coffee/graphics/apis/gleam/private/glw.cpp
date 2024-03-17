@@ -10,9 +10,16 @@
 
 namespace gl::detail {
 
-void error_check(std::string_view cmd_name)
+void error_check(std::string_view cmd_name, enum error_check check_errors)
 {
     using gl::group::error_code;
+
+    if(check_errors == error_check::off)
+    {
+        while(auto error = glGetError())
+            if(error == GL_NO_ERROR)
+                return;
+    }
 
     if constexpr(
         compile_info::debug_mode && !compile_info::platform::is_emscripten)

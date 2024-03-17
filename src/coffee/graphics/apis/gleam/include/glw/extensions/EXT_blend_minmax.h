@@ -16,7 +16,9 @@ namespace values {
  * \param mode GLenum
  * \return void
  */
-STATICINLINE void blend_equation(group::blend_equation_mode_ext mode)
+STATICINLINE void blend_equation(
+    group::blend_equation_mode_ext mode,
+    error_check                    check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -24,7 +26,7 @@ STATICINLINE void blend_equation(group::blend_equation_mode_ext mode)
         GLW_FPTR_CHECK(BlendEquationEXT)
     }
     glBlendEquationEXT(static_cast<GLenum>(mode));
-    detail::error_check("BlendEquationEXT"sv);
+    detail::error_check("BlendEquationEXT"sv, check_errors);
 }
 
 #endif

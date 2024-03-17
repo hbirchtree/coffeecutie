@@ -22,7 +22,8 @@ constexpr u32 context_robust_access       = 0x90F3;
 
  * \return GraphicsResetStatus
  */
-STATICINLINE group::graphics_reset_status get_graphics_reset_status()
+STATICINLINE group::graphics_reset_status get_graphics_reset_status(
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -30,7 +31,7 @@ STATICINLINE group::graphics_reset_status get_graphics_reset_status()
         GLW_FPTR_CHECK(GetGraphicsResetStatusEXT)
     }
     auto out = glGetGraphicsResetStatusEXT();
-    detail::error_check("GetGraphicsResetStatusEXT"sv);
+    detail::error_check("GetGraphicsResetStatusEXT"sv, check_errors);
     return static_cast<group::graphics_reset_status>(out);
 }
 
@@ -48,7 +49,11 @@ requires(
  * \return void
  */
 STATICINLINE void getn_uniformfv(
-    u32 program, i32 location, i32 bufSize, span_f32 params)
+    u32         program,
+    i32         location,
+    i32         bufSize,
+    span_f32    params,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -65,7 +70,7 @@ STATICINLINE void getn_uniformfv(
         location,
         bufSize,
         params.size() ? reinterpret_cast<GLfloat*>(params.data()) : nullptr);
-    detail::error_check("GetnUniformfvEXT"sv);
+    detail::error_check("GetnUniformfvEXT"sv, check_errors);
 }
 
 template<class span_i32>
@@ -82,7 +87,11 @@ requires(
  * \return void
  */
 STATICINLINE void getn_uniformiv(
-    u32 program, i32 location, i32 bufSize, span_i32 params)
+    u32         program,
+    i32         location,
+    i32         bufSize,
+    span_i32    params,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -99,7 +108,7 @@ STATICINLINE void getn_uniformiv(
         location,
         bufSize,
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetnUniformivEXT"sv);
+    detail::error_check("GetnUniformivEXT"sv, check_errors);
 }
 
 template<class size_2_i32, class span_void, class vec_2_i32>
@@ -123,7 +132,8 @@ STATICINLINE void readn_pixels(
     size_2_i32 const&   width,
     group::pixel_format format,
     group::pixel_type   type,
-    span_void           data)
+    span_void           data,
+    error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -139,7 +149,7 @@ STATICINLINE void readn_pixels(
         static_cast<GLenum>(type),
         data.size() * sizeof(typename std::decay_t<span_void>::value_type),
         data.size() ? reinterpret_cast<void*>(data.data()) : nullptr);
-    detail::error_check("ReadnPixelsEXT"sv);
+    detail::error_check("ReadnPixelsEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::robustness

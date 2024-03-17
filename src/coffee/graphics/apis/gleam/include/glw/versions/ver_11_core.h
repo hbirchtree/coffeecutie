@@ -7,7 +7,10 @@ requires(MinimumVersion<Current, Version<1, 1>>)
  * \param texture GLuint
  * \return void
  */
-STATICINLINE void bind_texture(group::texture_target target, u32 texture)
+STATICINLINE void bind_texture(
+    group::texture_target target,
+    u32                   texture,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -20,7 +23,7 @@ STATICINLINE void bind_texture(group::texture_target target, u32 texture)
 #endif
     }
     glBindTexture(static_cast<GLenum>(target), texture);
-    detail::error_check("BindTexture"sv);
+    detail::error_check("BindTexture"sv, check_errors);
 }
 
 template<class vec_2_i32>
@@ -44,7 +47,8 @@ STATICINLINE void copy_tex_image_1d(
     group::internal_format internalformat,
     vec_2_i32 const&       x,
     i32                    width,
-    i32                    border)
+    i32                    border,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -59,7 +63,7 @@ STATICINLINE void copy_tex_image_1d(
         x[1],
         width,
         border);
-    detail::error_check("CopyTexImage1D"sv);
+    detail::error_check("CopyTexImage1D"sv, check_errors);
 }
 
 template<class size_2_i32, class vec_2_i32>
@@ -84,7 +88,8 @@ STATICINLINE void copy_tex_image_2d(
     group::internal_format internalformat,
     vec_2_i32 const&       x,
     size_2_i32 const&      width,
-    i32                    border)
+    i32                    border,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -100,7 +105,7 @@ STATICINLINE void copy_tex_image_2d(
         width[0],
         width[1],
         border);
-    detail::error_check("CopyTexImage2D"sv);
+    detail::error_check("CopyTexImage2D"sv, check_errors);
 }
 
 template<class vec_2_i32>
@@ -122,7 +127,8 @@ STATICINLINE void copy_tex_sub_image_1d(
     i32                   level,
     i32                   xoffset,
     vec_2_i32 const&      x,
-    i32                   width)
+    i32                   width,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -131,7 +137,7 @@ STATICINLINE void copy_tex_sub_image_1d(
     }
     glCopyTexSubImage1D(
         static_cast<GLenum>(target), level, xoffset, x[0], x[1], width);
-    detail::error_check("CopyTexSubImage1D"sv);
+    detail::error_check("CopyTexSubImage1D"sv, check_errors);
 }
 
 template<class size_2_i32, class vec_2_i32>
@@ -155,7 +161,8 @@ STATICINLINE void copy_tex_sub_image_2d(
     i32                   level,
     vec_2_i32 const&      xoffset,
     vec_2_i32 const&      x,
-    size_2_i32 const&     width)
+    size_2_i32 const&     width,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -171,7 +178,7 @@ STATICINLINE void copy_tex_sub_image_2d(
         x[1],
         width[0],
         width[1]);
-    detail::error_check("CopyTexSubImage2D"sv);
+    detail::error_check("CopyTexSubImage2D"sv, check_errors);
 }
 
 template<class span_const_u32>
@@ -186,7 +193,8 @@ requires(
  * \param textures const GLuint *
  * \return void
  */
-STATICINLINE void delete_textures(span_const_u32 const& textures)
+STATICINLINE void delete_textures(
+    span_const_u32 const& textures, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -197,7 +205,7 @@ STATICINLINE void delete_textures(span_const_u32 const& textures)
         textures.size(),
         textures.size() ? reinterpret_cast<const GLuint*>(textures.data())
                         : nullptr);
-    detail::error_check("DeleteTextures"sv);
+    detail::error_check("DeleteTextures"sv, check_errors);
 }
 
 template<typename Dummy = void>
@@ -209,7 +217,11 @@ requires(MinimumVersion<Current, Version<1, 1>>)
  * \param count GLsizei
  * \return void
  */
-STATICINLINE void draw_arrays(group::primitive_type mode, i32 first, i32 count)
+STATICINLINE void draw_arrays(
+    group::primitive_type mode,
+    i32                   first,
+    i32                   count,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -217,7 +229,7 @@ STATICINLINE void draw_arrays(group::primitive_type mode, i32 first, i32 count)
         GLW_FPTR_CHECK(DrawArrays)
     }
     glDrawArrays(static_cast<GLenum>(mode), first, count);
-    detail::error_check("DrawArrays"sv);
+    detail::error_check("DrawArrays"sv, check_errors);
 }
 
 template<typename Dummy = void>
@@ -234,7 +246,8 @@ STATICINLINE void draw_elements(
     group::primitive_type     mode,
     i32                       count,
     group::draw_elements_type type,
-    intptr_t                  indices)
+    intptr_t                  indices,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -246,7 +259,7 @@ STATICINLINE void draw_elements(
         count,
         static_cast<GLenum>(type),
         reinterpret_cast<const void*>(indices));
-    detail::error_check("DrawElements"sv);
+    detail::error_check("DrawElements"sv, check_errors);
 }
 
 template<class span_u32>
@@ -261,7 +274,8 @@ requires(
  * \param textures GLuint *
  * \return void
  */
-STATICINLINE void gen_textures(span_u32 textures)
+STATICINLINE void gen_textures(
+    span_u32 textures, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -271,7 +285,7 @@ STATICINLINE void gen_textures(span_u32 textures)
     glGenTextures(
         textures.size(),
         textures.size() ? reinterpret_cast<GLuint*>(textures.data()) : nullptr);
-    detail::error_check("GenTextures"sv);
+    detail::error_check("GenTextures"sv, check_errors);
 }
 
 template<typename Dummy = void>
@@ -281,7 +295,8 @@ requires(MinimumVersion<Current, Version<1, 1>>)
  * \param texture GLuint
  * \return Boolean
  */
-STATICINLINE bool is_texture(u32 texture)
+STATICINLINE bool is_texture(
+    u32 texture, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -294,7 +309,7 @@ STATICINLINE bool is_texture(u32 texture)
 #endif
     }
     auto out = glIsTexture(texture);
-    detail::error_check("IsTexture"sv);
+    detail::error_check("IsTexture"sv, check_errors);
     return out == GL_TRUE ? true : false;
 }
 
@@ -306,7 +321,8 @@ requires(MinimumVersion<Current, Version<1, 1>>)
  * \param units GLfloat
  * \return void
  */
-STATICINLINE void polygon_offset(f32 factor, f32 units)
+STATICINLINE void polygon_offset(
+    f32 factor, f32 units, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -314,7 +330,7 @@ STATICINLINE void polygon_offset(f32 factor, f32 units)
         GLW_FPTR_CHECK(PolygonOffset)
     }
     glPolygonOffset(factor, units);
-    detail::error_check("PolygonOffset"sv);
+    detail::error_check("PolygonOffset"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -338,7 +354,8 @@ STATICINLINE void tex_sub_image_1d(
     i32                    width,
     group::pixel_format    format,
     group::pixel_type      type,
-    span_const_void const& pixels)
+    span_const_void const& pixels,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -353,7 +370,7 @@ STATICINLINE void tex_sub_image_1d(
         static_cast<GLenum>(format),
         static_cast<GLenum>(type),
         pixels.size() ? reinterpret_cast<const void*>(pixels.data()) : nullptr);
-    detail::error_check("TexSubImage1D"sv);
+    detail::error_check("TexSubImage1D"sv, check_errors);
 }
 
 template<class size_2_i32, class span_const_void, class vec_2_i32>
@@ -381,7 +398,8 @@ STATICINLINE void tex_sub_image_2d(
     size_2_i32 const&      width,
     group::pixel_format    format,
     group::pixel_type      type,
-    span_const_void const& pixels)
+    span_const_void const& pixels,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -398,7 +416,7 @@ STATICINLINE void tex_sub_image_2d(
         static_cast<GLenum>(format),
         static_cast<GLenum>(type),
         pixels.size() ? reinterpret_cast<const void*>(pixels.data()) : nullptr);
-    detail::error_check("TexSubImage2D"sv);
+    detail::error_check("TexSubImage2D"sv, check_errors);
 }
 
 #endif // GL_VERSION_1_1

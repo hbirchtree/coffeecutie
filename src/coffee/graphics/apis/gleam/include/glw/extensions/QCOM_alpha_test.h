@@ -15,7 +15,8 @@ namespace values {
  * \param ref GLclampf
  * \return void
  */
-STATICINLINE void alpha_func(GLenum func, GLclampf ref)
+STATICINLINE void alpha_func(
+    GLenum func, GLclampf ref, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -23,7 +24,7 @@ STATICINLINE void alpha_func(GLenum func, GLclampf ref)
         GLW_FPTR_CHECK(AlphaFuncQCOM)
     }
     glAlphaFuncQCOM(func, ref);
-    detail::error_check("AlphaFuncQCOM"sv);
+    detail::error_check("AlphaFuncQCOM"sv, check_errors);
 }
 
 } // namespace gl::qcom::alpha_test

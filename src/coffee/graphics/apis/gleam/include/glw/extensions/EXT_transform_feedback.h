@@ -25,7 +25,9 @@ constexpr u32 transform_feedback_buffer_binding             = 0x8C8F;
  * \param primitiveMode GLenum
  * \return void
  */
-STATICINLINE void begin_transform_feedback(group::primitive_type primitiveMode)
+STATICINLINE void begin_transform_feedback(
+    group::primitive_type primitiveMode,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -33,7 +35,7 @@ STATICINLINE void begin_transform_feedback(group::primitive_type primitiveMode)
         GLW_FPTR_CHECK(BeginTransformFeedbackEXT)
     }
     glBeginTransformFeedbackEXT(static_cast<GLenum>(primitiveMode));
-    detail::error_check("BeginTransformFeedbackEXT"sv);
+    detail::error_check("BeginTransformFeedbackEXT"sv, check_errors);
 }
 
 /*!
@@ -44,7 +46,10 @@ STATICINLINE void begin_transform_feedback(group::primitive_type primitiveMode)
  * \return void
  */
 STATICINLINE void bind_buffer_base(
-    group::buffer_target_arb target, u32 index, u32 buffer)
+    group::buffer_target_arb target,
+    u32                      index,
+    u32                      buffer,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -57,7 +62,7 @@ STATICINLINE void bind_buffer_base(
 #endif
     }
     glBindBufferBaseEXT(static_cast<GLenum>(target), index, buffer);
-    detail::error_check("BindBufferBaseEXT"sv);
+    detail::error_check("BindBufferBaseEXT"sv, check_errors);
 }
 
 /*!
@@ -69,7 +74,11 @@ STATICINLINE void bind_buffer_base(
  * \return void
  */
 STATICINLINE void bind_buffer_offset(
-    group::buffer_target_arb target, u32 index, u32 buffer, GLintptr offset)
+    group::buffer_target_arb target,
+    u32                      index,
+    u32                      buffer,
+    GLintptr                 offset,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -82,7 +91,7 @@ STATICINLINE void bind_buffer_offset(
 #endif
     }
     glBindBufferOffsetEXT(static_cast<GLenum>(target), index, buffer, offset);
-    detail::error_check("BindBufferOffsetEXT"sv);
+    detail::error_check("BindBufferOffsetEXT"sv, check_errors);
 }
 
 /*!
@@ -99,7 +108,8 @@ STATICINLINE void bind_buffer_range(
     u32                      index,
     u32                      buffer,
     GLintptr                 offset,
-    GLsizeiptr               size)
+    GLsizeiptr               size,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -113,7 +123,7 @@ STATICINLINE void bind_buffer_range(
     }
     glBindBufferRangeEXT(
         static_cast<GLenum>(target), index, buffer, offset, size);
-    detail::error_check("BindBufferRangeEXT"sv);
+    detail::error_check("BindBufferRangeEXT"sv, check_errors);
 }
 
 /*!
@@ -121,7 +131,8 @@ STATICINLINE void bind_buffer_range(
 
  * \return void
  */
-STATICINLINE void end_transform_feedback()
+STATICINLINE void end_transform_feedback(
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -129,7 +140,7 @@ STATICINLINE void end_transform_feedback()
         GLW_FPTR_CHECK(EndTransformFeedbackEXT)
     }
     glEndTransformFeedbackEXT();
-    detail::error_check("EndTransformFeedbackEXT"sv);
+    detail::error_check("EndTransformFeedbackEXT"sv, check_errors);
 }
 
 template<class span_GLchar>
@@ -155,7 +166,8 @@ STATICINLINE void get_transform_feedback_varying(
     i32&        length,
     i32&        size,
     GLenum&     type,
-    span_GLchar name)
+    span_GLchar name,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -169,7 +181,7 @@ STATICINLINE void get_transform_feedback_varying(
     }
     glGetTransformFeedbackVaryingEXT(
         program, index, name.size(), &length, &size, &type, name.data());
-    detail::error_check("GetTransformFeedbackVaryingEXT"sv);
+    detail::error_check("GetTransformFeedbackVaryingEXT"sv, check_errors);
 }
 
 /*!
@@ -183,7 +195,8 @@ STATICINLINE void get_transform_feedback_varying(
 STATICINLINE void transform_feedback_varyings(
     u32                                   program,
     std::vector<std::string_view>         varyings,
-    group::transform_feedback_buffer_mode bufferMode)
+    group::transform_feedback_buffer_mode bufferMode,
+    error_check                           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -202,7 +215,7 @@ STATICINLINE void transform_feedback_varyings(
         varyings_cstr.size(),
         varyings_cstr.data(),
         static_cast<GLenum>(bufferMode));
-    detail::error_check("TransformFeedbackVaryingsEXT"sv);
+    detail::error_check("TransformFeedbackVaryingsEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::transform_feedback

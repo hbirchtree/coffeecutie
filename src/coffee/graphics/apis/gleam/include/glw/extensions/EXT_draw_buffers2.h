@@ -14,7 +14,13 @@ namespace values {
  * \param a GLboolean
  * \return void
  */
-STATICINLINE void color_mask_indexed(u32 index, bool r, bool g, bool b, bool a)
+STATICINLINE void color_mask_indexed(
+    u32         index,
+    bool        r,
+    bool        g,
+    bool        b,
+    bool        a,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -22,7 +28,7 @@ STATICINLINE void color_mask_indexed(u32 index, bool r, bool g, bool b, bool a)
         GLW_FPTR_CHECK(ColorMaskIndexedEXT)
     }
     glColorMaskIndexedEXT(index, r, g, b, a);
-    detail::error_check("ColorMaskIndexedEXT"sv);
+    detail::error_check("ColorMaskIndexedEXT"sv, check_errors);
 }
 
 /*!
@@ -31,7 +37,10 @@ STATICINLINE void color_mask_indexed(u32 index, bool r, bool g, bool b, bool a)
  * \param index GLuint
  * \return void
  */
-STATICINLINE void disable_indexed(group::enable_cap target, u32 index)
+STATICINLINE void disable_indexed(
+    group::enable_cap target,
+    u32               index,
+    error_check       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -39,7 +48,7 @@ STATICINLINE void disable_indexed(group::enable_cap target, u32 index)
         GLW_FPTR_CHECK(DisableIndexedEXT)
     }
     glDisableIndexedEXT(static_cast<GLenum>(target), index);
-    detail::error_check("DisableIndexedEXT"sv);
+    detail::error_check("DisableIndexedEXT"sv, check_errors);
 }
 
 /*!
@@ -48,7 +57,10 @@ STATICINLINE void disable_indexed(group::enable_cap target, u32 index)
  * \param index GLuint
  * \return void
  */
-STATICINLINE void enable_indexed(group::enable_cap target, u32 index)
+STATICINLINE void enable_indexed(
+    group::enable_cap target,
+    u32               index,
+    error_check       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -56,7 +68,7 @@ STATICINLINE void enable_indexed(group::enable_cap target, u32 index)
         GLW_FPTR_CHECK(EnableIndexedEXT)
     }
     glEnableIndexedEXT(static_cast<GLenum>(target), index);
-    detail::error_check("EnableIndexedEXT"sv);
+    detail::error_check("EnableIndexedEXT"sv, check_errors);
 }
 
 template<class span_bool>
@@ -73,7 +85,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_boolean_indexedv(
-    group::buffer_target_arb target, u32 index, span_bool data)
+    group::buffer_target_arb target,
+    u32                      index,
+    span_bool                data,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -84,7 +99,7 @@ STATICINLINE void get_boolean_indexedv(
         static_cast<GLenum>(target),
         index,
         data.size() ? reinterpret_cast<GLboolean*>(data.data()) : nullptr);
-    detail::error_check("GetBooleanIndexedvEXT"sv);
+    detail::error_check("GetBooleanIndexedvEXT"sv, check_errors);
 }
 
 template<class span_i32>
@@ -100,7 +115,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_integer_indexedv(
-    group::get_prop target, u32 index, span_i32 data)
+    group::get_prop target,
+    u32             index,
+    span_i32        data,
+    error_check     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -111,7 +129,7 @@ STATICINLINE void get_integer_indexedv(
         static_cast<GLenum>(target),
         index,
         data.size() ? reinterpret_cast<GLint*>(data.data()) : nullptr);
-    detail::error_check("GetIntegerIndexedvEXT"sv);
+    detail::error_check("GetIntegerIndexedvEXT"sv, check_errors);
 }
 
 /*!
@@ -120,7 +138,10 @@ STATICINLINE void get_integer_indexedv(
  * \param index GLuint
  * \return Boolean
  */
-STATICINLINE bool is_enabled_indexed(group::enable_cap target, u32 index)
+STATICINLINE bool is_enabled_indexed(
+    group::enable_cap target,
+    u32               index,
+    error_check       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -128,7 +149,7 @@ STATICINLINE bool is_enabled_indexed(group::enable_cap target, u32 index)
         GLW_FPTR_CHECK(IsEnabledIndexedEXT)
     }
     auto out = glIsEnabledIndexedEXT(static_cast<GLenum>(target), index);
-    detail::error_check("IsEnabledIndexedEXT"sv);
+    detail::error_check("IsEnabledIndexedEXT"sv, check_errors);
     return out == GL_TRUE ? true : false;
 }
 

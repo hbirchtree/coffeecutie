@@ -22,7 +22,8 @@ requires(
 STATICINLINE void combiner_stage_parameter(
     group::combiner_stage_nv     stage,
     group::combiner_parameter_nv pname,
-    span_const_f32 const&        params)
+    span_const_f32 const&        params,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -34,7 +35,7 @@ STATICINLINE void combiner_stage_parameter(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<const GLfloat*>(params.data())
                       : nullptr);
-    detail::error_check("CombinerStageParameterfvNV"sv);
+    detail::error_check("CombinerStageParameterfvNV"sv, check_errors);
 }
 
 template<class span_f32>
@@ -52,7 +53,8 @@ requires(
 STATICINLINE void get_combiner_stage_parameter(
     group::combiner_stage_nv     stage,
     group::combiner_parameter_nv pname,
-    span_f32                     params)
+    span_f32                     params,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -63,7 +65,7 @@ STATICINLINE void get_combiner_stage_parameter(
         static_cast<GLenum>(stage),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLfloat*>(params.data()) : nullptr);
-    detail::error_check("GetCombinerStageParameterfvNV"sv);
+    detail::error_check("GetCombinerStageParameterfvNV"sv, check_errors);
 }
 
 } // namespace gl::nv::register_combiners2

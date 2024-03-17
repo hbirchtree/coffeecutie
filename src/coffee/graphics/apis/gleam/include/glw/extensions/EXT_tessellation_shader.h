@@ -66,7 +66,10 @@ constexpr u32 referenced_by_tess_evaluation_shader            = 0x9308;
  * \param value GLint
  * \return void
  */
-STATICINLINE void patch_parameter(group::patch_parameter_name pname, i32 value)
+STATICINLINE void patch_parameter(
+    group::patch_parameter_name pname,
+    i32                         value,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -74,7 +77,7 @@ STATICINLINE void patch_parameter(group::patch_parameter_name pname, i32 value)
         GLW_FPTR_CHECK(PatchParameteriEXT)
     }
     glPatchParameteriEXT(static_cast<GLenum>(pname), value);
-    detail::error_check("PatchParameteriEXT"sv);
+    detail::error_check("PatchParameteriEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::tessellation_shader

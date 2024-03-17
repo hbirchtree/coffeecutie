@@ -66,7 +66,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_vertex_attrib_ldv(
-    u32 index, group::vertex_attrib_enum pname, span_f64 params)
+    u32                       index,
+    group::vertex_attrib_enum pname,
+    span_f64                  params,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -77,7 +80,7 @@ STATICINLINE void get_vertex_attrib_ldv(
         index,
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLdouble*>(params.data()) : nullptr);
-    detail::error_check("GetVertexAttribLdvEXT"sv);
+    detail::error_check("GetVertexAttribLdvEXT"sv, check_errors);
 }
 
 /*!
@@ -86,7 +89,8 @@ STATICINLINE void get_vertex_attrib_ldv(
  * \param x GLdouble
  * \return void
  */
-STATICINLINE void vertex_attrib_l1d(u32 index, f64 x)
+STATICINLINE void vertex_attrib_l1d(
+    u32 index, f64 x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -94,7 +98,7 @@ STATICINLINE void vertex_attrib_l1d(u32 index, f64 x)
         GLW_FPTR_CHECK(VertexAttribL1dEXT)
     }
     glVertexAttribL1dEXT(index, x);
-    detail::error_check("VertexAttribL1dEXT"sv);
+    detail::error_check("VertexAttribL1dEXT"sv, check_errors);
 }
 
 template<class span_const_f64>
@@ -109,7 +113,10 @@ requires(
  * \param v const GLdouble *
  * \return void
  */
-STATICINLINE void vertex_attrib_l1dv(u32 index, span_const_f64 const& v)
+STATICINLINE void vertex_attrib_l1dv(
+    u32                   index,
+    span_const_f64 const& v,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -117,7 +124,7 @@ STATICINLINE void vertex_attrib_l1dv(u32 index, span_const_f64 const& v)
         GLW_FPTR_CHECK(VertexAttribL1dvEXT)
     }
     glVertexAttribL1dvEXT(index, reinterpret_cast<const GLdouble*>(v.data()));
-    detail::error_check("VertexAttribL1dvEXT"sv);
+    detail::error_check("VertexAttribL1dvEXT"sv, check_errors);
 }
 
 template<class vec_2_f64>
@@ -129,7 +136,8 @@ requires(concepts::vector<vec_2_f64, f64, 2>)
  * \param y GLdouble
  * \return void
  */
-STATICINLINE void vertex_attrib_l2d(u32 index, vec_2_f64 const& x)
+STATICINLINE void vertex_attrib_l2d(
+    u32 index, vec_2_f64 const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -137,7 +145,7 @@ STATICINLINE void vertex_attrib_l2d(u32 index, vec_2_f64 const& x)
         GLW_FPTR_CHECK(VertexAttribL2dEXT)
     }
     glVertexAttribL2dEXT(index, x[0], x[1]);
-    detail::error_check("VertexAttribL2dEXT"sv);
+    detail::error_check("VertexAttribL2dEXT"sv, check_errors);
 }
 
 template<class span_const_vec_2_f64>
@@ -150,7 +158,10 @@ requires(
  * \param v const GLdouble *
  * \return void
  */
-STATICINLINE void vertex_attrib_l2dv(u32 index, span_const_vec_2_f64 const& v)
+STATICINLINE void vertex_attrib_l2dv(
+    u32                         index,
+    span_const_vec_2_f64 const& v,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -158,7 +169,7 @@ STATICINLINE void vertex_attrib_l2dv(u32 index, span_const_vec_2_f64 const& v)
         GLW_FPTR_CHECK(VertexAttribL2dvEXT)
     }
     glVertexAttribL2dvEXT(index, reinterpret_cast<const GLdouble*>(v.data()));
-    detail::error_check("VertexAttribL2dvEXT"sv);
+    detail::error_check("VertexAttribL2dvEXT"sv, check_errors);
 }
 
 template<class vec_3_f64>
@@ -171,7 +182,8 @@ requires(concepts::vector<vec_3_f64, f64, 3>)
  * \param z GLdouble
  * \return void
  */
-STATICINLINE void vertex_attrib_l3d(u32 index, vec_3_f64 const& x)
+STATICINLINE void vertex_attrib_l3d(
+    u32 index, vec_3_f64 const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -179,7 +191,7 @@ STATICINLINE void vertex_attrib_l3d(u32 index, vec_3_f64 const& x)
         GLW_FPTR_CHECK(VertexAttribL3dEXT)
     }
     glVertexAttribL3dEXT(index, x[0], x[1], x[2]);
-    detail::error_check("VertexAttribL3dEXT"sv);
+    detail::error_check("VertexAttribL3dEXT"sv, check_errors);
 }
 
 template<class span_const_vec_3_f64>
@@ -192,7 +204,10 @@ requires(
  * \param v const GLdouble *
  * \return void
  */
-STATICINLINE void vertex_attrib_l3dv(u32 index, span_const_vec_3_f64 const& v)
+STATICINLINE void vertex_attrib_l3dv(
+    u32                         index,
+    span_const_vec_3_f64 const& v,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -200,7 +215,7 @@ STATICINLINE void vertex_attrib_l3dv(u32 index, span_const_vec_3_f64 const& v)
         GLW_FPTR_CHECK(VertexAttribL3dvEXT)
     }
     glVertexAttribL3dvEXT(index, reinterpret_cast<const GLdouble*>(v.data()));
-    detail::error_check("VertexAttribL3dvEXT"sv);
+    detail::error_check("VertexAttribL3dvEXT"sv, check_errors);
 }
 
 template<class vec_4_f64>
@@ -214,7 +229,8 @@ requires(concepts::vector<vec_4_f64, f64, 4>)
  * \param w GLdouble
  * \return void
  */
-STATICINLINE void vertex_attrib_l4d(u32 index, vec_4_f64 const& x)
+STATICINLINE void vertex_attrib_l4d(
+    u32 index, vec_4_f64 const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -222,7 +238,7 @@ STATICINLINE void vertex_attrib_l4d(u32 index, vec_4_f64 const& x)
         GLW_FPTR_CHECK(VertexAttribL4dEXT)
     }
     glVertexAttribL4dEXT(index, x[0], x[1], x[2], x[3]);
-    detail::error_check("VertexAttribL4dEXT"sv);
+    detail::error_check("VertexAttribL4dEXT"sv, check_errors);
 }
 
 template<class span_const_vec_4_f64>
@@ -235,7 +251,10 @@ requires(
  * \param v const GLdouble *
  * \return void
  */
-STATICINLINE void vertex_attrib_l4dv(u32 index, span_const_vec_4_f64 const& v)
+STATICINLINE void vertex_attrib_l4dv(
+    u32                         index,
+    span_const_vec_4_f64 const& v,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -243,7 +262,7 @@ STATICINLINE void vertex_attrib_l4dv(u32 index, span_const_vec_4_f64 const& v)
         GLW_FPTR_CHECK(VertexAttribL4dvEXT)
     }
     glVertexAttribL4dvEXT(index, reinterpret_cast<const GLdouble*>(v.data()));
-    detail::error_check("VertexAttribL4dvEXT"sv);
+    detail::error_check("VertexAttribL4dvEXT"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -261,7 +280,8 @@ STATICINLINE void vertex_attrib_l_pointer(
     u32                       index,
     group::vertex_attrib_long type,
     i32                       stride,
-    span_const_void const&    pointer)
+    span_const_void const&    pointer,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -276,7 +296,7 @@ STATICINLINE void vertex_attrib_l_pointer(
         stride,
         pointer.size() ? reinterpret_cast<const void*>(pointer.data())
                        : nullptr);
-    detail::error_check("VertexAttribLPointerEXT"sv);
+    detail::error_check("VertexAttribLPointerEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::vertex_attrib_64bit

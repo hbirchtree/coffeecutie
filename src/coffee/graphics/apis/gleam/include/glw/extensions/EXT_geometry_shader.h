@@ -52,7 +52,8 @@ STATICINLINE void framebuffer_texture(
     group::framebuffer_target     target,
     group::framebuffer_attachment attachment,
     u32                           texture,
-    i32                           level)
+    i32                           level,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -69,7 +70,7 @@ STATICINLINE void framebuffer_texture(
         static_cast<GLenum>(attachment),
         texture,
         level);
-    detail::error_check("FramebufferTextureEXT"sv);
+    detail::error_check("FramebufferTextureEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::geometry_shader

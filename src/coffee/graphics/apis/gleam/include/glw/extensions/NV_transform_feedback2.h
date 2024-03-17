@@ -16,7 +16,9 @@ constexpr u32 transform_feedback_binding       = 0x8E25;
  * \return void
  */
 STATICINLINE void bind_transform_feedback(
-    group::buffer_target_arb target, u32 id)
+    group::buffer_target_arb target,
+    u32                      id,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -24,7 +26,7 @@ STATICINLINE void bind_transform_feedback(
         GLW_FPTR_CHECK(BindTransformFeedbackNV)
     }
     glBindTransformFeedbackNV(static_cast<GLenum>(target), id);
-    detail::error_check("BindTransformFeedbackNV"sv);
+    detail::error_check("BindTransformFeedbackNV"sv, check_errors);
 }
 
 template<class span_const_u32>
@@ -39,7 +41,8 @@ requires(
  * \param ids const GLuint *
  * \return void
  */
-STATICINLINE void delete_transform_feedbacks(span_const_u32 const& ids)
+STATICINLINE void delete_transform_feedbacks(
+    span_const_u32 const& ids, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -49,7 +52,7 @@ STATICINLINE void delete_transform_feedbacks(span_const_u32 const& ids)
     glDeleteTransformFeedbacksNV(
         ids.size(),
         ids.size() ? reinterpret_cast<const GLuint*>(ids.data()) : nullptr);
-    detail::error_check("DeleteTransformFeedbacksNV"sv);
+    detail::error_check("DeleteTransformFeedbacksNV"sv, check_errors);
 }
 
 /*!
@@ -58,7 +61,10 @@ STATICINLINE void delete_transform_feedbacks(span_const_u32 const& ids)
  * \param id GLuint
  * \return void
  */
-STATICINLINE void draw_transform_feedback(group::primitive_type mode, u32 id)
+STATICINLINE void draw_transform_feedback(
+    group::primitive_type mode,
+    u32                   id,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -66,7 +72,7 @@ STATICINLINE void draw_transform_feedback(group::primitive_type mode, u32 id)
         GLW_FPTR_CHECK(DrawTransformFeedbackNV)
     }
     glDrawTransformFeedbackNV(static_cast<GLenum>(mode), id);
-    detail::error_check("DrawTransformFeedbackNV"sv);
+    detail::error_check("DrawTransformFeedbackNV"sv, check_errors);
 }
 
 template<class span_u32>
@@ -80,7 +86,8 @@ requires(
  * \param ids GLuint *
  * \return void
  */
-STATICINLINE void gen_transform_feedbacks(span_u32 ids)
+STATICINLINE void gen_transform_feedbacks(
+    span_u32 ids, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -90,7 +97,7 @@ STATICINLINE void gen_transform_feedbacks(span_u32 ids)
     glGenTransformFeedbacksNV(
         ids.size(),
         ids.size() ? reinterpret_cast<GLuint*>(ids.data()) : nullptr);
-    detail::error_check("GenTransformFeedbacksNV"sv);
+    detail::error_check("GenTransformFeedbacksNV"sv, check_errors);
 }
 
 /*!
@@ -98,7 +105,8 @@ STATICINLINE void gen_transform_feedbacks(span_u32 ids)
  * \param id GLuint
  * \return Boolean
  */
-STATICINLINE bool is_transform_feedback(u32 id)
+STATICINLINE bool is_transform_feedback(
+    u32 id, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -106,7 +114,7 @@ STATICINLINE bool is_transform_feedback(u32 id)
         GLW_FPTR_CHECK(IsTransformFeedbackNV)
     }
     auto out = glIsTransformFeedbackNV(id);
-    detail::error_check("IsTransformFeedbackNV"sv);
+    detail::error_check("IsTransformFeedbackNV"sv, check_errors);
     return out == GL_TRUE ? true : false;
 }
 
@@ -115,7 +123,8 @@ STATICINLINE bool is_transform_feedback(u32 id)
 
  * \return void
  */
-STATICINLINE void pause_transform_feedback()
+STATICINLINE void pause_transform_feedback(
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -123,7 +132,7 @@ STATICINLINE void pause_transform_feedback()
         GLW_FPTR_CHECK(PauseTransformFeedbackNV)
     }
     glPauseTransformFeedbackNV();
-    detail::error_check("PauseTransformFeedbackNV"sv);
+    detail::error_check("PauseTransformFeedbackNV"sv, check_errors);
 }
 
 /*!
@@ -131,7 +140,8 @@ STATICINLINE void pause_transform_feedback()
 
  * \return void
  */
-STATICINLINE void resume_transform_feedback()
+STATICINLINE void resume_transform_feedback(
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -139,7 +149,7 @@ STATICINLINE void resume_transform_feedback()
         GLW_FPTR_CHECK(ResumeTransformFeedbackNV)
     }
     glResumeTransformFeedbackNV();
-    detail::error_check("ResumeTransformFeedbackNV"sv);
+    detail::error_check("ResumeTransformFeedbackNV"sv, check_errors);
 }
 
 } // namespace gl::nv::transform_feedback2

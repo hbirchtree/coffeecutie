@@ -34,7 +34,9 @@ requires(
  * \param bufs const GLenum *
  * \return void
  */
-STATICINLINE void draw_buffers(span_const_draw_buffer_mode const& bufs)
+STATICINLINE void draw_buffers(
+    span_const_draw_buffer_mode const& bufs,
+    error_check                        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -44,7 +46,7 @@ STATICINLINE void draw_buffers(span_const_draw_buffer_mode const& bufs)
     glDrawBuffersARB(
         bufs.size(),
         bufs.size() ? reinterpret_cast<const GLenum*>(bufs.data()) : nullptr);
-    detail::error_check("DrawBuffersARB"sv);
+    detail::error_check("DrawBuffersARB"sv, check_errors);
 }
 
 } // namespace gl::arb::draw_buffers

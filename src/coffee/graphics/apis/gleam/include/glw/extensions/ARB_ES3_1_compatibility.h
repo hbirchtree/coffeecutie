@@ -20,7 +20,9 @@ namespace values {
  * \param barriers GLbitfield
  * \return void
  */
-STATICINLINE void memory_barrier_by_region(group::memory_barrier_mask barriers)
+STATICINLINE void memory_barrier_by_region(
+    group::memory_barrier_mask barriers,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -28,7 +30,7 @@ STATICINLINE void memory_barrier_by_region(group::memory_barrier_mask barriers)
         GLW_FPTR_CHECK(MemoryBarrierByRegion)
     }
     glMemoryBarrierByRegion(static_cast<GLenum>(barriers));
-    detail::error_check("MemoryBarrierByRegion"sv);
+    detail::error_check("MemoryBarrierByRegion"sv, check_errors);
 }
 
 } // namespace gl::arb::es3_1_compatibility

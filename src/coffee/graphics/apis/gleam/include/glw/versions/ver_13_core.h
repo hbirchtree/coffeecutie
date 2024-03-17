@@ -6,7 +6,8 @@ requires(MinimumVersion<Current, Version<1, 3>>)
  * \param texture GLenum
  * \return void
  */
-STATICINLINE void active_texture(group::texture_unit texture)
+STATICINLINE void active_texture(
+    group::texture_unit texture, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -14,7 +15,7 @@ STATICINLINE void active_texture(group::texture_unit texture)
         GLW_FPTR_CHECK(ActiveTexture)
     }
     glActiveTexture(static_cast<GLenum>(texture));
-    detail::error_check("ActiveTexture"sv);
+    detail::error_check("ActiveTexture"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -37,7 +38,8 @@ STATICINLINE void compressed_tex_image_1d(
     group::internal_format internalformat,
     i32                    width,
     i32                    border,
-    span_const_void const& data)
+    span_const_void const& data,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -53,7 +55,7 @@ STATICINLINE void compressed_tex_image_1d(
         data.size() *
             sizeof(typename std::decay_t<span_const_void const&>::value_type),
         data.size() ? reinterpret_cast<const void*>(data.data()) : nullptr);
-    detail::error_check("CompressedTexImage1D"sv);
+    detail::error_check("CompressedTexImage1D"sv, check_errors);
 }
 
 template<class size_2_i32, class span_const_void>
@@ -78,7 +80,8 @@ STATICINLINE void compressed_tex_image_2d(
     group::internal_format internalformat,
     size_2_i32 const&      width,
     i32                    border,
-    span_const_void const& data)
+    span_const_void const& data,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -95,7 +98,7 @@ STATICINLINE void compressed_tex_image_2d(
         data.size() *
             sizeof(typename std::decay_t<span_const_void const&>::value_type),
         data.size() ? reinterpret_cast<const void*>(data.data()) : nullptr);
-    detail::error_check("CompressedTexImage2D"sv);
+    detail::error_check("CompressedTexImage2D"sv, check_errors);
 }
 
 template<class size_3_i32, class span_const_void>
@@ -121,7 +124,8 @@ STATICINLINE void compressed_tex_image_3d(
     group::internal_format internalformat,
     size_3_i32 const&      width,
     i32                    border,
-    span_const_void const& data)
+    span_const_void const& data,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -139,7 +143,7 @@ STATICINLINE void compressed_tex_image_3d(
         data.size() *
             sizeof(typename std::decay_t<span_const_void const&>::value_type),
         data.size() ? reinterpret_cast<const void*>(data.data()) : nullptr);
-    detail::error_check("CompressedTexImage3D"sv);
+    detail::error_check("CompressedTexImage3D"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -162,7 +166,8 @@ STATICINLINE void compressed_tex_sub_image_1d(
     i32                    xoffset,
     i32                    width,
     group::internal_format format,
-    span_const_void const& data)
+    span_const_void const& data,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -178,7 +183,7 @@ STATICINLINE void compressed_tex_sub_image_1d(
         data.size() *
             sizeof(typename std::decay_t<span_const_void const&>::value_type),
         data.size() ? reinterpret_cast<const void*>(data.data()) : nullptr);
-    detail::error_check("CompressedTexSubImage1D"sv);
+    detail::error_check("CompressedTexSubImage1D"sv, check_errors);
 }
 
 template<class size_2_i32, class span_const_void, class vec_2_i32>
@@ -205,7 +210,8 @@ STATICINLINE void compressed_tex_sub_image_2d(
     vec_2_i32 const&       xoffset,
     size_2_i32 const&      width,
     group::internal_format format,
-    span_const_void const& data)
+    span_const_void const& data,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -223,7 +229,7 @@ STATICINLINE void compressed_tex_sub_image_2d(
         data.size() *
             sizeof(typename std::decay_t<span_const_void const&>::value_type),
         data.size() ? reinterpret_cast<const void*>(data.data()) : nullptr);
-    detail::error_check("CompressedTexSubImage2D"sv);
+    detail::error_check("CompressedTexSubImage2D"sv, check_errors);
 }
 
 template<class size_3_i32, class span_const_void, class vec_3_i32>
@@ -252,7 +258,8 @@ STATICINLINE void compressed_tex_sub_image_3d(
     vec_3_i32 const&       xoffset,
     size_3_i32 const&      width,
     group::internal_format format,
-    span_const_void const& data)
+    span_const_void const& data,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -272,7 +279,7 @@ STATICINLINE void compressed_tex_sub_image_3d(
         data.size() *
             sizeof(typename std::decay_t<span_const_void const&>::value_type),
         data.size() ? reinterpret_cast<const void*>(data.data()) : nullptr);
-    detail::error_check("CompressedTexSubImage3D"sv);
+    detail::error_check("CompressedTexSubImage3D"sv, check_errors);
 }
 
 template<class span_void>
@@ -285,7 +292,10 @@ requires(MinimumVersion<Current, Version<1, 3>> && concepts::span<span_void>)
  * \return void
  */
 STATICINLINE void get_compressed_tex_image(
-    group::texture_target target, i32 level, span_void img)
+    group::texture_target target,
+    i32                   level,
+    span_void             img,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -296,7 +306,7 @@ STATICINLINE void get_compressed_tex_image(
         static_cast<GLenum>(target),
         level,
         img.size() ? reinterpret_cast<void*>(img.data()) : nullptr);
-    detail::error_check("GetCompressedTexImage"sv);
+    detail::error_check("GetCompressedTexImage"sv, check_errors);
 }
 
 template<typename Dummy = void>
@@ -307,7 +317,8 @@ requires(MinimumVersion<Current, Version<1, 3>>)
  * \param invert GLboolean
  * \return void
  */
-STATICINLINE void sample_coverage(f32 value, bool invert)
+STATICINLINE void sample_coverage(
+    f32 value, bool invert, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -315,7 +326,7 @@ STATICINLINE void sample_coverage(f32 value, bool invert)
         GLW_FPTR_CHECK(SampleCoverage)
     }
     glSampleCoverage(value, invert);
-    detail::error_check("SampleCoverage"sv);
+    detail::error_check("SampleCoverage"sv, check_errors);
 }
 
 #endif // GL_VERSION_1_3

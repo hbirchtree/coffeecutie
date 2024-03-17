@@ -16,7 +16,9 @@ constexpr u32 query_by_region_no_wait = 0x8E16;
  * \return void
  */
 STATICINLINE void begin_conditional_render(
-    u32 id, group::conditional_render_mode mode)
+    u32                            id,
+    group::conditional_render_mode mode,
+    error_check                    check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -24,7 +26,7 @@ STATICINLINE void begin_conditional_render(
         GLW_FPTR_CHECK(BeginConditionalRenderNV)
     }
     glBeginConditionalRenderNV(id, static_cast<GLenum>(mode));
-    detail::error_check("BeginConditionalRenderNV"sv);
+    detail::error_check("BeginConditionalRenderNV"sv, check_errors);
 }
 
 /*!
@@ -32,7 +34,8 @@ STATICINLINE void begin_conditional_render(
 
  * \return void
  */
-STATICINLINE void end_conditional_render()
+STATICINLINE void end_conditional_render(
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -40,7 +43,7 @@ STATICINLINE void end_conditional_render()
         GLW_FPTR_CHECK(EndConditionalRenderNV)
     }
     glEndConditionalRenderNV();
-    detail::error_check("EndConditionalRenderNV"sv);
+    detail::error_check("EndConditionalRenderNV"sv, check_errors);
 }
 
 } // namespace gl::nv::conditional_render

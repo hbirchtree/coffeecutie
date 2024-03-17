@@ -38,7 +38,8 @@ STATICINLINE void get_active_subroutine_name(
     group::shader_type shadertype,
     u32                index,
     i32&               length,
-    span_GLchar        name)
+    span_GLchar        name,
+    error_check        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -57,7 +58,7 @@ STATICINLINE void get_active_subroutine_name(
         name.size(),
         &length,
         name.data());
-    detail::error_check("GetActiveSubroutineName"sv);
+    detail::error_check("GetActiveSubroutineName"sv, check_errors);
 }
 
 template<class span_GLchar>
@@ -81,7 +82,8 @@ STATICINLINE void get_active_subroutine_uniform_name(
     group::shader_type shadertype,
     u32                index,
     i32&               length,
-    span_GLchar        name)
+    span_GLchar        name,
+    error_check        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -100,7 +102,7 @@ STATICINLINE void get_active_subroutine_uniform_name(
         name.size(),
         &length,
         name.data());
-    detail::error_check("GetActiveSubroutineUniformName"sv);
+    detail::error_check("GetActiveSubroutineUniformName"sv, check_errors);
 }
 
 template<class span_i32>
@@ -122,7 +124,8 @@ STATICINLINE void get_active_subroutine_uniformiv(
     group::shader_type               shadertype,
     u32                              index,
     group::subroutine_parameter_name pname,
-    span_i32                         values)
+    span_i32                         values,
+    error_check                      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -140,7 +143,7 @@ STATICINLINE void get_active_subroutine_uniformiv(
         index,
         static_cast<GLenum>(pname),
         values.size() ? reinterpret_cast<GLint*>(values.data()) : nullptr);
-    detail::error_check("GetActiveSubroutineUniformiv"sv);
+    detail::error_check("GetActiveSubroutineUniformiv"sv, check_errors);
 }
 
 /*!
@@ -155,7 +158,8 @@ STATICINLINE void get_program_stageiv(
     u32                       program,
     group::shader_type        shadertype,
     group::program_stage_prop pname,
-    i32&                      values)
+    i32&                      values,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -172,7 +176,7 @@ STATICINLINE void get_program_stageiv(
         static_cast<GLenum>(shadertype),
         static_cast<GLenum>(pname),
         &values);
-    detail::error_check("GetProgramStageiv"sv);
+    detail::error_check("GetProgramStageiv"sv, check_errors);
 }
 
 /*!
@@ -183,7 +187,10 @@ STATICINLINE void get_program_stageiv(
  * \return GLuint
  */
 STATICINLINE GLuint get_subroutine_index(
-    u32 program, group::shader_type shadertype, std::string_view const& name)
+    u32                     program,
+    group::shader_type      shadertype,
+    std::string_view const& name,
+    error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -197,7 +204,7 @@ STATICINLINE GLuint get_subroutine_index(
     }
     auto out = glGetSubroutineIndex(
         program, static_cast<GLenum>(shadertype), name.data());
-    detail::error_check("GetSubroutineIndex"sv);
+    detail::error_check("GetSubroutineIndex"sv, check_errors);
     return out;
 }
 
@@ -209,7 +216,10 @@ STATICINLINE GLuint get_subroutine_index(
  * \return GLint
  */
 STATICINLINE GLint get_subroutine_uniform_location(
-    u32 program, group::shader_type shadertype, std::string_view const& name)
+    u32                     program,
+    group::shader_type      shadertype,
+    std::string_view const& name,
+    error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -223,7 +233,7 @@ STATICINLINE GLint get_subroutine_uniform_location(
     }
     auto out = glGetSubroutineUniformLocation(
         program, static_cast<GLenum>(shadertype), name.data());
-    detail::error_check("GetSubroutineUniformLocation"sv);
+    detail::error_check("GetSubroutineUniformLocation"sv, check_errors);
     return out;
 }
 
@@ -235,7 +245,10 @@ STATICINLINE GLint get_subroutine_uniform_location(
  * \return void
  */
 STATICINLINE void get_uniform_subroutineuiv(
-    group::shader_type shadertype, i32 location, u32& params)
+    group::shader_type shadertype,
+    i32                location,
+    u32&               params,
+    error_check        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -244,7 +257,7 @@ STATICINLINE void get_uniform_subroutineuiv(
     }
     glGetUniformSubroutineuiv(
         static_cast<GLenum>(shadertype), location, &params);
-    detail::error_check("GetUniformSubroutineuiv"sv);
+    detail::error_check("GetUniformSubroutineuiv"sv, check_errors);
 }
 
 template<class span_const_u32>
@@ -261,7 +274,9 @@ requires(
  * \return void
  */
 STATICINLINE void uniform_subroutines(
-    group::shader_type shadertype, span_const_u32 const& indices)
+    group::shader_type    shadertype,
+    span_const_u32 const& indices,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -273,7 +288,7 @@ STATICINLINE void uniform_subroutines(
         indices.size(),
         indices.size() ? reinterpret_cast<const GLuint*>(indices.data())
                        : nullptr);
-    detail::error_check("UniformSubroutinesuiv"sv);
+    detail::error_check("UniformSubroutinesuiv"sv, check_errors);
 }
 
 } // namespace gl::arb::shader_subroutine

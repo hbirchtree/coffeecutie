@@ -31,7 +31,8 @@ STATICINLINE void named_renderbuffer_storage_multisample_advanced(
     i32                    samples,
     i32                    storageSamples,
     group::internal_format internalformat,
-    size_2_i32 const&      width)
+    size_2_i32 const&      width,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -50,7 +51,8 @@ STATICINLINE void named_renderbuffer_storage_multisample_advanced(
         static_cast<GLenum>(internalformat),
         width[0],
         width[1]);
-    detail::error_check("NamedRenderbufferStorageMultisampleAdvancedAMD"sv);
+    detail::error_check(
+        "NamedRenderbufferStorageMultisampleAdvancedAMD"sv, check_errors);
 }
 
 template<class size_2_i32>
@@ -70,7 +72,8 @@ STATICINLINE void renderbuffer_storage_multisample_advanced(
     i32                        samples,
     i32                        storageSamples,
     group::internal_format     internalformat,
-    size_2_i32 const&          width)
+    size_2_i32 const&          width,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -84,7 +87,8 @@ STATICINLINE void renderbuffer_storage_multisample_advanced(
         static_cast<GLenum>(internalformat),
         width[0],
         width[1]);
-    detail::error_check("RenderbufferStorageMultisampleAdvancedAMD"sv);
+    detail::error_check(
+        "RenderbufferStorageMultisampleAdvancedAMD"sv, check_errors);
 }
 
 } // namespace gl::amd::framebuffer_multisample_advanced

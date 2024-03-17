@@ -54,7 +54,8 @@ STATICINLINE void framebuffer_texture(
     group::framebuffer_target     target,
     group::framebuffer_attachment attachment,
     u32                           texture,
-    i32                           level)
+    i32                           level,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -71,7 +72,7 @@ STATICINLINE void framebuffer_texture(
         static_cast<GLenum>(attachment),
         texture,
         level);
-    detail::error_check("FramebufferTextureOES"sv);
+    detail::error_check("FramebufferTextureOES"sv, check_errors);
 }
 
 } // namespace gl::oes::geometry_shader

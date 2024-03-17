@@ -19,7 +19,10 @@ namespace values {
  * \return void
  */
 STATICINLINE void flush_mapped_buffer_range(
-    group::buffer_target_arb target, GLintptr offset, GLsizeiptr length)
+    group::buffer_target_arb target,
+    GLintptr                 offset,
+    GLsizeiptr               length,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -27,7 +30,7 @@ STATICINLINE void flush_mapped_buffer_range(
         GLW_FPTR_CHECK(FlushMappedBufferRange)
     }
     glFlushMappedBufferRange(static_cast<GLenum>(target), offset, length);
-    detail::error_check("FlushMappedBufferRange"sv);
+    detail::error_check("FlushMappedBufferRange"sv, check_errors);
 }
 
 /*!
@@ -42,7 +45,8 @@ STATICINLINE void* map_buffer_range(
     group::buffer_target_arb      target,
     GLintptr                      offset,
     GLsizeiptr                    length,
-    group::map_buffer_access_mask access)
+    group::map_buffer_access_mask access,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -54,7 +58,7 @@ STATICINLINE void* map_buffer_range(
         offset,
         length,
         static_cast<GLenum>(access));
-    detail::error_check("MapBufferRange"sv);
+    detail::error_check("MapBufferRange"sv, check_errors);
     return out;
 }
 

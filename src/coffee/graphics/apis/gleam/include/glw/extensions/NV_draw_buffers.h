@@ -40,7 +40,8 @@ requires(
  * \param bufs const GLenum *
  * \return void
  */
-STATICINLINE void draw_buffers(span_const_GLenum const& bufs)
+STATICINLINE void draw_buffers(
+    span_const_GLenum const& bufs, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -50,7 +51,7 @@ STATICINLINE void draw_buffers(span_const_GLenum const& bufs)
     glDrawBuffersNV(
         bufs.size(),
         bufs.size() ? reinterpret_cast<const GLenum*>(bufs.data()) : nullptr);
-    detail::error_check("DrawBuffersNV"sv);
+    detail::error_check("DrawBuffersNV"sv, check_errors);
 }
 
 } // namespace gl::nv::draw_buffers

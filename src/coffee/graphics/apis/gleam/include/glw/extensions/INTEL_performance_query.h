@@ -32,7 +32,8 @@ constexpr u32 perfquery_gpa_extended_counters   = 0x9500;
  * \param queryHandle GLuint
  * \return void
  */
-STATICINLINE void begin_perf_query(u32 queryHandle)
+STATICINLINE void begin_perf_query(
+    u32 queryHandle, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -40,7 +41,7 @@ STATICINLINE void begin_perf_query(u32 queryHandle)
         GLW_FPTR_CHECK(BeginPerfQueryINTEL)
     }
     glBeginPerfQueryINTEL(queryHandle);
-    detail::error_check("BeginPerfQueryINTEL"sv);
+    detail::error_check("BeginPerfQueryINTEL"sv, check_errors);
 }
 
 template<class span_u32>
@@ -54,7 +55,10 @@ requires(
  * \param queryHandle GLuint *
  * \return void
  */
-STATICINLINE void create_perf_query(u32 queryId, span_u32 queryHandle)
+STATICINLINE void create_perf_query(
+    u32         queryId,
+    span_u32    queryHandle,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -65,7 +69,7 @@ STATICINLINE void create_perf_query(u32 queryId, span_u32 queryHandle)
         queryId,
         queryHandle.size() ? reinterpret_cast<GLuint*>(queryHandle.data())
                            : nullptr);
-    detail::error_check("CreatePerfQueryINTEL"sv);
+    detail::error_check("CreatePerfQueryINTEL"sv, check_errors);
 }
 
 /*!
@@ -73,7 +77,8 @@ STATICINLINE void create_perf_query(u32 queryId, span_u32 queryHandle)
  * \param queryHandle GLuint
  * \return void
  */
-STATICINLINE void delete_perf_query(u32 queryHandle)
+STATICINLINE void delete_perf_query(
+    u32 queryHandle, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -81,7 +86,7 @@ STATICINLINE void delete_perf_query(u32 queryHandle)
         GLW_FPTR_CHECK(DeletePerfQueryINTEL)
     }
     glDeletePerfQueryINTEL(queryHandle);
-    detail::error_check("DeletePerfQueryINTEL"sv);
+    detail::error_check("DeletePerfQueryINTEL"sv, check_errors);
 }
 
 /*!
@@ -89,7 +94,8 @@ STATICINLINE void delete_perf_query(u32 queryHandle)
  * \param queryHandle GLuint
  * \return void
  */
-STATICINLINE void end_perf_query(u32 queryHandle)
+STATICINLINE void end_perf_query(
+    u32 queryHandle, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -97,7 +103,7 @@ STATICINLINE void end_perf_query(u32 queryHandle)
         GLW_FPTR_CHECK(EndPerfQueryINTEL)
     }
     glEndPerfQueryINTEL(queryHandle);
-    detail::error_check("EndPerfQueryINTEL"sv);
+    detail::error_check("EndPerfQueryINTEL"sv, check_errors);
 }
 
 template<class span_u32>
@@ -110,7 +116,8 @@ requires(
  * \param queryId GLuint *
  * \return void
  */
-STATICINLINE void get_first_perf_query_id(span_u32 queryId)
+STATICINLINE void get_first_perf_query_id(
+    span_u32 queryId, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -119,7 +126,7 @@ STATICINLINE void get_first_perf_query_id(span_u32 queryId)
     }
     glGetFirstPerfQueryIdINTEL(
         queryId.size() ? reinterpret_cast<GLuint*>(queryId.data()) : nullptr);
-    detail::error_check("GetFirstPerfQueryIdINTEL"sv);
+    detail::error_check("GetFirstPerfQueryIdINTEL"sv, check_errors);
 }
 
 template<class span_u32>
@@ -133,7 +140,10 @@ requires(
  * \param nextQueryId GLuint *
  * \return void
  */
-STATICINLINE void get_next_perf_query_id(u32 queryId, span_u32 nextQueryId)
+STATICINLINE void get_next_perf_query_id(
+    u32         queryId,
+    span_u32    nextQueryId,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -144,7 +154,7 @@ STATICINLINE void get_next_perf_query_id(u32 queryId, span_u32 nextQueryId)
         queryId,
         nextQueryId.size() ? reinterpret_cast<GLuint*>(nextQueryId.data())
                            : nullptr);
-    detail::error_check("GetNextPerfQueryIdINTEL"sv);
+    detail::error_check("GetNextPerfQueryIdINTEL"sv, check_errors);
 }
 
 template<class span_GLchar, class span_u32, class span_u64>
@@ -185,7 +195,8 @@ STATICINLINE void get_perf_counter_info(
     span_u32    counterDataSize,
     span_u32    counterTypeEnum,
     span_u32    counterDataTypeEnum,
-    span_u64    rawCounterMaxValue)
+    span_u64    rawCounterMaxValue,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -213,7 +224,7 @@ STATICINLINE void get_perf_counter_info(
         rawCounterMaxValue.size()
             ? reinterpret_cast<GLuint64*>(rawCounterMaxValue.data())
             : nullptr);
-    detail::error_check("GetPerfCounterInfoINTEL"sv);
+    detail::error_check("GetPerfCounterInfoINTEL"sv, check_errors);
 }
 
 template<class span_u32, class span_void>
@@ -232,11 +243,12 @@ requires(
  * \return void
  */
 STATICINLINE void get_perf_query_data(
-    u32       queryHandle,
-    u32       flags,
-    i32       dataSize,
-    span_void data,
-    span_u32  bytesWritten)
+    u32         queryHandle,
+    u32         flags,
+    i32         dataSize,
+    span_void   data,
+    span_u32    bytesWritten,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -250,7 +262,7 @@ STATICINLINE void get_perf_query_data(
         data.size() ? reinterpret_cast<void*>(data.data()) : nullptr,
         bytesWritten.size() ? reinterpret_cast<GLuint*>(bytesWritten.data())
                             : nullptr);
-    detail::error_check("GetPerfQueryDataINTEL"sv);
+    detail::error_check("GetPerfQueryDataINTEL"sv, check_errors);
 }
 
 template<class span_u32>
@@ -264,7 +276,8 @@ requires(
  * \param queryId GLuint *
  * \return void
  */
-STATICINLINE void get_perf_query_id_by_name(span_u32 queryId)
+STATICINLINE void get_perf_query_id_by_name(
+    span_u32 queryId, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -273,7 +286,7 @@ STATICINLINE void get_perf_query_id_by_name(span_u32 queryId)
     }
     glGetPerfQueryIdByNameINTEL(
         queryId.size() ? reinterpret_cast<GLuint*>(queryId.data()) : nullptr);
-    detail::error_check("GetPerfQueryIdByNameINTEL"sv);
+    detail::error_check("GetPerfQueryIdByNameINTEL"sv, check_errors);
 }
 
 template<class span_GLchar, class span_u32>
@@ -303,7 +316,8 @@ STATICINLINE void get_perf_query_info(
     span_u32    dataSize,
     span_u32    noCounters,
     span_u32    noInstances,
-    span_u32    capsMask)
+    span_u32    capsMask,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -320,7 +334,7 @@ STATICINLINE void get_perf_query_info(
         noInstances.size() ? reinterpret_cast<GLuint*>(noInstances.data())
                            : nullptr,
         capsMask.size() ? reinterpret_cast<GLuint*>(capsMask.data()) : nullptr);
-    detail::error_check("GetPerfQueryInfoINTEL"sv);
+    detail::error_check("GetPerfQueryInfoINTEL"sv, check_errors);
 }
 
 } // namespace gl::intel::performance_query

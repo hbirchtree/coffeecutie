@@ -31,7 +31,8 @@ STATICINLINE void tex_storage_1d(
     group::texture_target        target,
     i32                          levels,
     group::sized_internal_format internalformat,
-    i32                          width)
+    i32                          width,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -43,7 +44,7 @@ STATICINLINE void tex_storage_1d(
         levels,
         static_cast<GLenum>(internalformat),
         width);
-    detail::error_check("TexStorage1DEXT"sv);
+    detail::error_check("TexStorage1DEXT"sv, check_errors);
 }
 
 template<class size_2_i32>
@@ -61,7 +62,8 @@ STATICINLINE void tex_storage_2d(
     group::texture_target        target,
     i32                          levels,
     group::sized_internal_format internalformat,
-    size_2_i32 const&            width)
+    size_2_i32 const&            width,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -74,7 +76,7 @@ STATICINLINE void tex_storage_2d(
         static_cast<GLenum>(internalformat),
         width[0],
         width[1]);
-    detail::error_check("TexStorage2DEXT"sv);
+    detail::error_check("TexStorage2DEXT"sv, check_errors);
 }
 
 template<class size_3_i32>
@@ -93,7 +95,8 @@ STATICINLINE void tex_storage_3d(
     group::texture_target        target,
     i32                          levels,
     group::sized_internal_format internalformat,
-    size_3_i32 const&            width)
+    size_3_i32 const&            width,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -107,7 +110,7 @@ STATICINLINE void tex_storage_3d(
         width[0],
         width[1],
         width[2]);
-    detail::error_check("TexStorage3DEXT"sv);
+    detail::error_check("TexStorage3DEXT"sv, check_errors);
 }
 
 /*!
@@ -124,7 +127,8 @@ STATICINLINE void texture_storage_1d(
     GLenum                       target,
     i32                          levels,
     group::sized_internal_format internalformat,
-    i32                          width)
+    i32                          width,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -138,7 +142,7 @@ STATICINLINE void texture_storage_1d(
     }
     glTextureStorage1DEXT(
         texture, target, levels, static_cast<GLenum>(internalformat), width);
-    detail::error_check("TextureStorage1DEXT"sv);
+    detail::error_check("TextureStorage1DEXT"sv, check_errors);
 }
 
 template<class size_2_i32>
@@ -158,7 +162,8 @@ STATICINLINE void texture_storage_2d(
     GLenum                       target,
     i32                          levels,
     group::sized_internal_format internalformat,
-    size_2_i32 const&            width)
+    size_2_i32 const&            width,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -177,7 +182,7 @@ STATICINLINE void texture_storage_2d(
         static_cast<GLenum>(internalformat),
         width[0],
         width[1]);
-    detail::error_check("TextureStorage2DEXT"sv);
+    detail::error_check("TextureStorage2DEXT"sv, check_errors);
 }
 
 template<class size_3_i32>
@@ -198,7 +203,8 @@ STATICINLINE void texture_storage_3d(
     GLenum                       target,
     i32                          levels,
     group::sized_internal_format internalformat,
-    size_3_i32 const&            width)
+    size_3_i32 const&            width,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -218,7 +224,7 @@ STATICINLINE void texture_storage_3d(
         width[0],
         width[1],
         width[2]);
-    detail::error_check("TextureStorage3DEXT"sv);
+    detail::error_check("TextureStorage3DEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::texture_storage

@@ -33,7 +33,10 @@ constexpr u32 max_geometry_total_output_components = 0x8DE1;
  * \return void
  */
 STATICINLINE void program_parameter(
-    u32 program, group::program_parameter_prop pname, i32 value)
+    u32                           program,
+    group::program_parameter_prop pname,
+    i32                           value,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -46,7 +49,7 @@ STATICINLINE void program_parameter(
 #endif
     }
     glProgramParameteriEXT(program, static_cast<GLenum>(pname), value);
-    detail::error_check("ProgramParameteriEXT"sv);
+    detail::error_check("ProgramParameteriEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::geometry_shader4

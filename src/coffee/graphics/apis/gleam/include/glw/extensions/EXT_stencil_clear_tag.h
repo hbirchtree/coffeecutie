@@ -13,7 +13,10 @@ constexpr u32 stencil_clear_tag_value = 0x88F3;
  * \param stencilClearTag GLuint
  * \return void
  */
-STATICINLINE void stencil_clear_tag(i32 stencilTagBits, u32 stencilClearTag)
+STATICINLINE void stencil_clear_tag(
+    i32         stencilTagBits,
+    u32         stencilClearTag,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -21,7 +24,7 @@ STATICINLINE void stencil_clear_tag(i32 stencilTagBits, u32 stencilClearTag)
         GLW_FPTR_CHECK(StencilClearTagEXT)
     }
     glStencilClearTagEXT(stencilTagBits, stencilClearTag);
-    detail::error_check("StencilClearTagEXT"sv);
+    detail::error_check("StencilClearTagEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::stencil_clear_tag

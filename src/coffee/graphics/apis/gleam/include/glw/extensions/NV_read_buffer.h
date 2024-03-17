@@ -14,7 +14,8 @@ namespace values {
  * \param mode GLenum
  * \return void
  */
-STATICINLINE void read_buffer(GLenum mode)
+STATICINLINE void read_buffer(
+    GLenum mode, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -22,7 +23,7 @@ STATICINLINE void read_buffer(GLenum mode)
         GLW_FPTR_CHECK(ReadBufferNV)
     }
     glReadBufferNV(mode);
-    detail::error_check("ReadBufferNV"sv);
+    detail::error_check("ReadBufferNV"sv, check_errors);
 }
 
 } // namespace gl::nv::read_buffer

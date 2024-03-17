@@ -25,7 +25,8 @@ STATICINLINE void draw_range_elements(
     u32                       end,
     i32                       count,
     group::draw_elements_type type,
-    span_const_void const&    indices)
+    span_const_void const&    indices,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -40,7 +41,7 @@ STATICINLINE void draw_range_elements(
         static_cast<GLenum>(type),
         indices.size() ? reinterpret_cast<const void*>(indices.data())
                        : nullptr);
-    detail::error_check("DrawRangeElementsEXT"sv);
+    detail::error_check("DrawRangeElementsEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::draw_range_elements

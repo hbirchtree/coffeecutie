@@ -38,7 +38,8 @@ STATICINLINE void compressed_tex_image_3d(
     group::internal_format internalformat,
     size_3_i32 const&      width,
     i32                    border,
-    span_const_void const& data)
+    span_const_void const& data,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -56,7 +57,7 @@ STATICINLINE void compressed_tex_image_3d(
         data.size() *
             sizeof(typename std::decay_t<span_const_void const&>::value_type),
         data.size() ? reinterpret_cast<const void*>(data.data()) : nullptr);
-    detail::error_check("CompressedTexImage3DOES"sv);
+    detail::error_check("CompressedTexImage3DOES"sv, check_errors);
 }
 
 template<class size_3_i32, class span_const_void, class vec_3_i32>
@@ -84,7 +85,8 @@ STATICINLINE void compressed_tex_sub_image_3d(
     vec_3_i32 const&       xoffset,
     size_3_i32 const&      width,
     group::internal_format format,
-    span_const_void const& data)
+    span_const_void const& data,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -104,7 +106,7 @@ STATICINLINE void compressed_tex_sub_image_3d(
         data.size() *
             sizeof(typename std::decay_t<span_const_void const&>::value_type),
         data.size() ? reinterpret_cast<const void*>(data.data()) : nullptr);
-    detail::error_check("CompressedTexSubImage3DOES"sv);
+    detail::error_check("CompressedTexSubImage3DOES"sv, check_errors);
 }
 
 template<class size_2_i32, class vec_2_i32, class vec_3_i32>
@@ -129,7 +131,8 @@ STATICINLINE void copy_tex_sub_image_3d(
     i32               level,
     vec_3_i32 const&  xoffset,
     vec_2_i32 const&  x,
-    size_2_i32 const& width)
+    size_2_i32 const& width,
+    error_check       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -146,7 +149,7 @@ STATICINLINE void copy_tex_sub_image_3d(
         x[1],
         width[0],
         width[1]);
-    detail::error_check("CopyTexSubImage3DOES"sv);
+    detail::error_check("CopyTexSubImage3DOES"sv, check_errors);
 }
 
 /*!
@@ -165,7 +168,8 @@ STATICINLINE void framebuffer_texture_3d(
     group::texture_target         textarget,
     u32                           texture,
     i32                           level,
-    i32                           zoffset)
+    i32                           zoffset,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -184,7 +188,7 @@ STATICINLINE void framebuffer_texture_3d(
         texture,
         level,
         zoffset);
-    detail::error_check("FramebufferTexture3DOES"sv);
+    detail::error_check("FramebufferTexture3DOES"sv, check_errors);
 }
 
 template<class size_3_i32, class span_const_void>
@@ -211,7 +215,8 @@ STATICINLINE void tex_image_3d(
     i32                    border,
     group::pixel_format    format,
     group::pixel_type      type,
-    span_const_void const& pixels)
+    span_const_void const& pixels,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -229,7 +234,7 @@ STATICINLINE void tex_image_3d(
         static_cast<GLenum>(format),
         static_cast<GLenum>(type),
         pixels.size() ? reinterpret_cast<const void*>(pixels.data()) : nullptr);
-    detail::error_check("TexImage3DOES"sv);
+    detail::error_check("TexImage3DOES"sv, check_errors);
 }
 
 template<class size_3_i32, class span_const_void, class vec_3_i32>
@@ -258,7 +263,8 @@ STATICINLINE void tex_sub_image_3d(
     size_3_i32 const&      width,
     group::pixel_format    format,
     group::pixel_type      type,
-    span_const_void const& pixels)
+    span_const_void const& pixels,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -277,7 +283,7 @@ STATICINLINE void tex_sub_image_3d(
         static_cast<GLenum>(format),
         static_cast<GLenum>(type),
         pixels.size() ? reinterpret_cast<const void*>(pixels.data()) : nullptr);
-    detail::error_check("TexSubImage3DOES"sv);
+    detail::error_check("TexSubImage3DOES"sv, check_errors);
 }
 
 } // namespace gl::oes::texture_3d

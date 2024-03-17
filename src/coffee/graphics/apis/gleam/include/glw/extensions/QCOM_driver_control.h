@@ -10,7 +10,8 @@ namespace values {
  * \param driverControl GLuint
  * \return void
  */
-STATICINLINE void disable_driver_control(u32 driverControl)
+STATICINLINE void disable_driver_control(
+    u32 driverControl, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -18,7 +19,7 @@ STATICINLINE void disable_driver_control(u32 driverControl)
         GLW_FPTR_CHECK(DisableDriverControlQCOM)
     }
     glDisableDriverControlQCOM(driverControl);
-    detail::error_check("DisableDriverControlQCOM"sv);
+    detail::error_check("DisableDriverControlQCOM"sv, check_errors);
 }
 
 /*!
@@ -26,7 +27,8 @@ STATICINLINE void disable_driver_control(u32 driverControl)
  * \param driverControl GLuint
  * \return void
  */
-STATICINLINE void enable_driver_control(u32 driverControl)
+STATICINLINE void enable_driver_control(
+    u32 driverControl, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -34,7 +36,7 @@ STATICINLINE void enable_driver_control(u32 driverControl)
         GLW_FPTR_CHECK(EnableDriverControlQCOM)
     }
     glEnableDriverControlQCOM(driverControl);
-    detail::error_check("EnableDriverControlQCOM"sv);
+    detail::error_check("EnableDriverControlQCOM"sv, check_errors);
 }
 
 template<class span_GLchar, class span_i32>
@@ -56,7 +58,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_driver_control_string(
-    u32 driverControl, span_i32 length, span_GLchar driverControlString)
+    u32         driverControl,
+    span_i32    length,
+    span_GLchar driverControlString,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -68,7 +73,7 @@ STATICINLINE void get_driver_control_string(
         driverControlString.size(),
         length.size() ? reinterpret_cast<GLsizei*>(length.data()) : nullptr,
         driverControlString.data());
-    detail::error_check("GetDriverControlStringQCOM"sv);
+    detail::error_check("GetDriverControlStringQCOM"sv, check_errors);
 }
 
 template<class span_i32, class span_u32>
@@ -88,7 +93,10 @@ requires(
  * \param driverControls GLuint *
  * \return void
  */
-STATICINLINE void get_driver_controls(span_i32 num, span_u32 driverControls)
+STATICINLINE void get_driver_controls(
+    span_i32    num,
+    span_u32    driverControls,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -100,7 +108,7 @@ STATICINLINE void get_driver_controls(span_i32 num, span_u32 driverControls)
         driverControls.size(),
         driverControls.size() ? reinterpret_cast<GLuint*>(driverControls.data())
                               : nullptr);
-    detail::error_check("GetDriverControlsQCOM"sv);
+    detail::error_check("GetDriverControlsQCOM"sv, check_errors);
 }
 
 } // namespace gl::qcom::driver_control

@@ -26,7 +26,8 @@ STATICINLINE void renderbuffer_storage_multisample(
     group::renderbuffer_target target,
     i32                        samples,
     group::internal_format     internalformat,
-    size_2_i32 const&          width)
+    size_2_i32 const&          width,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -39,7 +40,7 @@ STATICINLINE void renderbuffer_storage_multisample(
         static_cast<GLenum>(internalformat),
         width[0],
         width[1]);
-    detail::error_check("RenderbufferStorageMultisampleNV"sv);
+    detail::error_check("RenderbufferStorageMultisampleNV"sv, check_errors);
 }
 
 } // namespace gl::nv::framebuffer_multisample

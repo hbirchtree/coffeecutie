@@ -15,7 +15,8 @@ namespace values {
  * \param sampler GLuint
  * \return void
  */
-STATICINLINE void bind_sampler(u32 unit, u32 sampler)
+STATICINLINE void bind_sampler(
+    u32 unit, u32 sampler, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -28,7 +29,7 @@ STATICINLINE void bind_sampler(u32 unit, u32 sampler)
 #endif
     }
     glBindSampler(unit, sampler);
-    detail::error_check("BindSampler"sv);
+    detail::error_check("BindSampler"sv, check_errors);
 }
 
 template<class span_const_u32>
@@ -43,7 +44,8 @@ requires(
  * \param samplers const GLuint *
  * \return void
  */
-STATICINLINE void delete_samplers(span_const_u32 const& samplers)
+STATICINLINE void delete_samplers(
+    span_const_u32 const& samplers, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -54,7 +56,7 @@ STATICINLINE void delete_samplers(span_const_u32 const& samplers)
         samplers.size(),
         samplers.size() ? reinterpret_cast<const GLuint*>(samplers.data())
                         : nullptr);
-    detail::error_check("DeleteSamplers"sv);
+    detail::error_check("DeleteSamplers"sv, check_errors);
 }
 
 template<class span_u32>
@@ -68,7 +70,8 @@ requires(
  * \param samplers GLuint *
  * \return void
  */
-STATICINLINE void gen_samplers(span_u32 samplers)
+STATICINLINE void gen_samplers(
+    span_u32 samplers, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -78,7 +81,7 @@ STATICINLINE void gen_samplers(span_u32 samplers)
     glGenSamplers(
         samplers.size(),
         samplers.size() ? reinterpret_cast<GLuint*>(samplers.data()) : nullptr);
-    detail::error_check("GenSamplers"sv);
+    detail::error_check("GenSamplers"sv, check_errors);
 }
 
 template<class span_i32>
@@ -94,7 +97,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_sampler_parameter_iiv(
-    u32 sampler, group::sampler_parameter_i pname, span_i32 params)
+    u32                        sampler,
+    group::sampler_parameter_i pname,
+    span_i32                   params,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -110,7 +116,7 @@ STATICINLINE void get_sampler_parameter_iiv(
         sampler,
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetSamplerParameterIiv"sv);
+    detail::error_check("GetSamplerParameterIiv"sv, check_errors);
 }
 
 template<class span_u32>
@@ -126,7 +132,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_sampler_parameter_iuiv(
-    u32 sampler, group::sampler_parameter_i pname, span_u32 params)
+    u32                        sampler,
+    group::sampler_parameter_i pname,
+    span_u32                   params,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -142,7 +151,7 @@ STATICINLINE void get_sampler_parameter_iuiv(
         sampler,
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLuint*>(params.data()) : nullptr);
-    detail::error_check("GetSamplerParameterIuiv"sv);
+    detail::error_check("GetSamplerParameterIuiv"sv, check_errors);
 }
 
 template<class span_f32>
@@ -158,7 +167,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_sampler_parameter(
-    u32 sampler, group::sampler_parameter_f pname, span_f32 params)
+    u32                        sampler,
+    group::sampler_parameter_f pname,
+    span_f32                   params,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -174,7 +186,7 @@ STATICINLINE void get_sampler_parameter(
         sampler,
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLfloat*>(params.data()) : nullptr);
-    detail::error_check("GetSamplerParameterfv"sv);
+    detail::error_check("GetSamplerParameterfv"sv, check_errors);
 }
 
 template<class span_i32>
@@ -190,7 +202,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_sampler_parameter(
-    u32 sampler, group::sampler_parameter_i pname, span_i32 params)
+    u32                        sampler,
+    group::sampler_parameter_i pname,
+    span_i32                   params,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -206,7 +221,7 @@ STATICINLINE void get_sampler_parameter(
         sampler,
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetSamplerParameteriv"sv);
+    detail::error_check("GetSamplerParameteriv"sv, check_errors);
 }
 
 /*!
@@ -214,7 +229,8 @@ STATICINLINE void get_sampler_parameter(
  * \param sampler GLuint
  * \return Boolean
  */
-STATICINLINE bool is_sampler(u32 sampler)
+STATICINLINE bool is_sampler(
+    u32 sampler, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -227,7 +243,7 @@ STATICINLINE bool is_sampler(u32 sampler)
 #endif
     }
     auto out = glIsSampler(sampler);
-    detail::error_check("IsSampler"sv);
+    detail::error_check("IsSampler"sv, check_errors);
     return out == GL_TRUE ? true : false;
 }
 
@@ -245,7 +261,10 @@ requires(
  * \return void
  */
 STATICINLINE void sampler_parameter_iiv(
-    u32 sampler, group::sampler_parameter_i pname, span_const_i32 const& param)
+    u32                        sampler,
+    group::sampler_parameter_i pname,
+    span_const_i32 const&      param,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -261,7 +280,7 @@ STATICINLINE void sampler_parameter_iiv(
         sampler,
         static_cast<GLenum>(pname),
         param.size() ? reinterpret_cast<const GLint*>(param.data()) : nullptr);
-    detail::error_check("SamplerParameterIiv"sv);
+    detail::error_check("SamplerParameterIiv"sv, check_errors);
 }
 
 template<class span_const_u32>
@@ -278,7 +297,10 @@ requires(
  * \return void
  */
 STATICINLINE void sampler_parameter_iuiv(
-    u32 sampler, group::sampler_parameter_i pname, span_const_u32 const& param)
+    u32                        sampler,
+    group::sampler_parameter_i pname,
+    span_const_u32 const&      param,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -294,7 +316,7 @@ STATICINLINE void sampler_parameter_iuiv(
         sampler,
         static_cast<GLenum>(pname),
         param.size() ? reinterpret_cast<const GLuint*>(param.data()) : nullptr);
-    detail::error_check("SamplerParameterIuiv"sv);
+    detail::error_check("SamplerParameterIuiv"sv, check_errors);
 }
 
 /*!
@@ -305,7 +327,10 @@ STATICINLINE void sampler_parameter_iuiv(
  * \return void
  */
 STATICINLINE void sampler_parameter(
-    u32 sampler, group::sampler_parameter_f pname, f32 param)
+    u32                        sampler,
+    group::sampler_parameter_f pname,
+    f32                        param,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -318,7 +343,7 @@ STATICINLINE void sampler_parameter(
 #endif
     }
     glSamplerParameterf(sampler, static_cast<GLenum>(pname), param);
-    detail::error_check("SamplerParameterf"sv);
+    detail::error_check("SamplerParameterf"sv, check_errors);
 }
 
 template<class span_const_f32>
@@ -335,7 +360,10 @@ requires(
  * \return void
  */
 STATICINLINE void sampler_parameter(
-    u32 sampler, group::sampler_parameter_f pname, span_const_f32 const& param)
+    u32                        sampler,
+    group::sampler_parameter_f pname,
+    span_const_f32 const&      param,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -352,7 +380,7 @@ STATICINLINE void sampler_parameter(
         static_cast<GLenum>(pname),
         param.size() ? reinterpret_cast<const GLfloat*>(param.data())
                      : nullptr);
-    detail::error_check("SamplerParameterfv"sv);
+    detail::error_check("SamplerParameterfv"sv, check_errors);
 }
 
 /*!
@@ -363,7 +391,10 @@ STATICINLINE void sampler_parameter(
  * \return void
  */
 STATICINLINE void sampler_parameter(
-    u32 sampler, group::sampler_parameter_i pname, i32 param)
+    u32                        sampler,
+    group::sampler_parameter_i pname,
+    i32                        param,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -376,7 +407,7 @@ STATICINLINE void sampler_parameter(
 #endif
     }
     glSamplerParameteri(sampler, static_cast<GLenum>(pname), param);
-    detail::error_check("SamplerParameteri"sv);
+    detail::error_check("SamplerParameteri"sv, check_errors);
 }
 
 template<class span_const_i32>
@@ -393,7 +424,10 @@ requires(
  * \return void
  */
 STATICINLINE void sampler_parameter(
-    u32 sampler, group::sampler_parameter_i pname, span_const_i32 const& param)
+    u32                        sampler,
+    group::sampler_parameter_i pname,
+    span_const_i32 const&      param,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -409,7 +443,7 @@ STATICINLINE void sampler_parameter(
         sampler,
         static_cast<GLenum>(pname),
         param.size() ? reinterpret_cast<const GLint*>(param.data()) : nullptr);
-    detail::error_check("SamplerParameteriv"sv);
+    detail::error_check("SamplerParameteriv"sv, check_errors);
 }
 
 } // namespace gl::arb::sampler_objects

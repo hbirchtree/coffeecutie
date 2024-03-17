@@ -23,7 +23,10 @@ constexpr u32 max_detached_buffers        = 0x95AD;
  * \return void
  */
 STATICINLINE void buffer_attach_memory(
-    group::buffer_target_arb target, u32 memory, u64 offset)
+    group::buffer_target_arb target,
+    u32                      memory,
+    u64                      offset,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -31,7 +34,7 @@ STATICINLINE void buffer_attach_memory(
         GLW_FPTR_CHECK(BufferAttachMemoryNV)
     }
     glBufferAttachMemoryNV(static_cast<GLenum>(target), memory, offset);
-    detail::error_check("BufferAttachMemoryNV"sv);
+    detail::error_check("BufferAttachMemoryNV"sv, check_errors);
 }
 
 template<class span_u32>
@@ -49,7 +52,12 @@ requires(
  * \return void
  */
 STATICINLINE void get_memory_object_detached_resourcesuiv(
-    u32 memory, GLenum pname, i32 first, i32 count, span_u32 params)
+    u32         memory,
+    GLenum      pname,
+    i32         first,
+    i32         count,
+    span_u32    params,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -62,7 +70,8 @@ STATICINLINE void get_memory_object_detached_resourcesuiv(
         first,
         count,
         params.size() ? reinterpret_cast<GLuint*>(params.data()) : nullptr);
-    detail::error_check("GetMemoryObjectDetachedResourcesuivNV"sv);
+    detail::error_check(
+        "GetMemoryObjectDetachedResourcesuivNV"sv, check_errors);
 }
 
 /*!
@@ -71,7 +80,8 @@ STATICINLINE void get_memory_object_detached_resourcesuiv(
  * \param pname GLenum
  * \return void
  */
-STATICINLINE void reset_memory_object_parameter(u32 memory, GLenum pname)
+STATICINLINE void reset_memory_object_parameter(
+    u32 memory, GLenum pname, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -79,7 +89,7 @@ STATICINLINE void reset_memory_object_parameter(u32 memory, GLenum pname)
         GLW_FPTR_CHECK(ResetMemoryObjectParameterNV)
     }
     glResetMemoryObjectParameterNV(memory, pname);
-    detail::error_check("ResetMemoryObjectParameterNV"sv);
+    detail::error_check("ResetMemoryObjectParameterNV"sv, check_errors);
 }
 
 /*!
@@ -90,7 +100,10 @@ STATICINLINE void reset_memory_object_parameter(u32 memory, GLenum pname)
  * \return void
  */
 STATICINLINE void tex_attach_memory(
-    group::texture_target target, u32 memory, u64 offset)
+    group::texture_target target,
+    u32                   memory,
+    u64                   offset,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -98,7 +111,7 @@ STATICINLINE void tex_attach_memory(
         GLW_FPTR_CHECK(TexAttachMemoryNV)
     }
     glTexAttachMemoryNV(static_cast<GLenum>(target), memory, offset);
-    detail::error_check("TexAttachMemoryNV"sv);
+    detail::error_check("TexAttachMemoryNV"sv, check_errors);
 }
 
 /*!
@@ -108,7 +121,11 @@ STATICINLINE void tex_attach_memory(
  * \param offset GLuint64
  * \return void
  */
-STATICINLINE void named_buffer_attach_memory(u32 buffer, u32 memory, u64 offset)
+STATICINLINE void named_buffer_attach_memory(
+    u32         buffer,
+    u32         memory,
+    u64         offset,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -121,7 +138,7 @@ STATICINLINE void named_buffer_attach_memory(u32 buffer, u32 memory, u64 offset)
 #endif
     }
     glNamedBufferAttachMemoryNV(buffer, memory, offset);
-    detail::error_check("NamedBufferAttachMemoryNV"sv);
+    detail::error_check("NamedBufferAttachMemoryNV"sv, check_errors);
 }
 
 /*!
@@ -131,7 +148,11 @@ STATICINLINE void named_buffer_attach_memory(u32 buffer, u32 memory, u64 offset)
  * \param offset GLuint64
  * \return void
  */
-STATICINLINE void texture_attach_memory(u32 texture, u32 memory, u64 offset)
+STATICINLINE void texture_attach_memory(
+    u32         texture,
+    u32         memory,
+    u64         offset,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -144,7 +165,7 @@ STATICINLINE void texture_attach_memory(u32 texture, u32 memory, u64 offset)
 #endif
     }
     glTextureAttachMemoryNV(texture, memory, offset);
-    detail::error_check("TextureAttachMemoryNV"sv);
+    detail::error_check("TextureAttachMemoryNV"sv, check_errors);
 }
 
 } // namespace gl::nv::memory_attachment

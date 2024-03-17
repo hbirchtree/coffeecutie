@@ -21,17 +21,18 @@ namespace values {
  * \return void
  */
 STATICINLINE void draw_texture(
-    u32 texture,
-    u32 sampler,
-    f32 x0,
-    f32 y0,
-    f32 x1,
-    f32 y1,
-    f32 z,
-    f32 s0,
-    f32 t0,
-    f32 s1,
-    f32 t1)
+    u32         texture,
+    u32         sampler,
+    f32         x0,
+    f32         y0,
+    f32         x1,
+    f32         y1,
+    f32         z,
+    f32         s0,
+    f32         t0,
+    f32         s1,
+    f32         t1,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -49,7 +50,7 @@ STATICINLINE void draw_texture(
 #endif
     }
     glDrawTextureNV(texture, sampler, x0, y0, x1, y1, z, s0, t0, s1, t1);
-    detail::error_check("DrawTextureNV"sv);
+    detail::error_check("DrawTextureNV"sv, check_errors);
 }
 
 } // namespace gl::nv::draw_texture

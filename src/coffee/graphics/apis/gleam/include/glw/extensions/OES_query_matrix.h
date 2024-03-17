@@ -21,7 +21,10 @@ requires(
  * \param exponent GLint *
  * \return GLbitfield
  */
-STATICINLINE GLbitfield query_matrixx(span_GLfixed mantissa, span_i32 exponent)
+STATICINLINE GLbitfield query_matrixx(
+    span_GLfixed mantissa,
+    span_i32     exponent,
+    error_check  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -31,7 +34,7 @@ STATICINLINE GLbitfield query_matrixx(span_GLfixed mantissa, span_i32 exponent)
     auto out = glQueryMatrixxOES(
         mantissa.size() ? reinterpret_cast<GLfixed*>(mantissa.data()) : nullptr,
         exponent.size() ? reinterpret_cast<GLint*>(exponent.data()) : nullptr);
-    detail::error_check("QueryMatrixxOES"sv);
+    detail::error_check("QueryMatrixxOES"sv, check_errors);
     return out;
 }
 

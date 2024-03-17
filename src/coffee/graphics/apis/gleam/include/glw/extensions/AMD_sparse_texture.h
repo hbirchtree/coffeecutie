@@ -35,7 +35,8 @@ STATICINLINE void tex_storage_sparse(
     group::sized_internal_format    internalFormat,
     size_3_i32 const&               width,
     i32                             layers,
-    group::texture_storage_mask_amd flags)
+    group::texture_storage_mask_amd flags,
+    error_check                     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -50,7 +51,7 @@ STATICINLINE void tex_storage_sparse(
         width[2],
         layers,
         static_cast<GLenum>(flags));
-    detail::error_check("TexStorageSparseAMD"sv);
+    detail::error_check("TexStorageSparseAMD"sv, check_errors);
 }
 
 template<class size_3_i32>
@@ -73,7 +74,8 @@ STATICINLINE void texture_storage_sparse(
     group::sized_internal_format    internalFormat,
     size_3_i32 const&               width,
     i32                             layers,
-    group::texture_storage_mask_amd flags)
+    group::texture_storage_mask_amd flags,
+    error_check                     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -94,7 +96,7 @@ STATICINLINE void texture_storage_sparse(
         width[2],
         layers,
         static_cast<GLenum>(flags));
-    detail::error_check("TextureStorageSparseAMD"sv);
+    detail::error_check("TextureStorageSparseAMD"sv, check_errors);
 }
 
 } // namespace gl::amd::sparse_texture

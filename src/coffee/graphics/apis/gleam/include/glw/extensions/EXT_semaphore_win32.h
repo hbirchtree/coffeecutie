@@ -25,7 +25,10 @@ requires(concepts::span<span_void>)
  * \return void
  */
 STATICINLINE void import_semaphore_win32_handle(
-    u32 semaphore, group::external_handle_type handleType, span_void handle)
+    u32                         semaphore,
+    group::external_handle_type handleType,
+    span_void                   handle,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -36,7 +39,7 @@ STATICINLINE void import_semaphore_win32_handle(
         semaphore,
         static_cast<GLenum>(handleType),
         handle.size() ? reinterpret_cast<void*>(handle.data()) : nullptr);
-    detail::error_check("ImportSemaphoreWin32HandleEXT"sv);
+    detail::error_check("ImportSemaphoreWin32HandleEXT"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -51,7 +54,8 @@ requires(concepts::span<span_const_void>)
 STATICINLINE void import_semaphore_win32_name(
     u32                         semaphore,
     group::external_handle_type handleType,
-    span_const_void const&      name)
+    span_const_void const&      name,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -62,7 +66,7 @@ STATICINLINE void import_semaphore_win32_name(
         semaphore,
         static_cast<GLenum>(handleType),
         name.size() ? reinterpret_cast<const void*>(name.data()) : nullptr);
-    detail::error_check("ImportSemaphoreWin32NameEXT"sv);
+    detail::error_check("ImportSemaphoreWin32NameEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::semaphore_win32

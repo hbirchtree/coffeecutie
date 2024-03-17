@@ -20,7 +20,8 @@ constexpr u32 framebuffer_sample_location_pixel_grid    = 0x9343;
 
  * \return void
  */
-STATICINLINE void evaluate_depth_values()
+STATICINLINE void evaluate_depth_values(
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -28,7 +29,7 @@ STATICINLINE void evaluate_depth_values()
         GLW_FPTR_CHECK(EvaluateDepthValuesARB)
     }
     glEvaluateDepthValuesARB();
-    detail::error_check("EvaluateDepthValuesARB"sv);
+    detail::error_check("EvaluateDepthValuesARB"sv, check_errors);
 }
 
 template<class span_const_f32>
@@ -49,7 +50,8 @@ STATICINLINE void framebuffer_sample_locationsfv(
     group::framebuffer_target target,
     u32                       start,
     i32                       count,
-    span_const_f32 const&     v)
+    span_const_f32 const&     v,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -61,7 +63,7 @@ STATICINLINE void framebuffer_sample_locationsfv(
         start,
         count,
         v.size() ? reinterpret_cast<const GLfloat*>(v.data()) : nullptr);
-    detail::error_check("FramebufferSampleLocationsfvARB"sv);
+    detail::error_check("FramebufferSampleLocationsfvARB"sv, check_errors);
 }
 
 template<class span_const_f32>
@@ -79,7 +81,11 @@ requires(
  * \return void
  */
 STATICINLINE void named_framebuffer_sample_locationsfv(
-    u32 framebuffer, u32 start, i32 count, span_const_f32 const& v)
+    u32                   framebuffer,
+    u32                   start,
+    i32                   count,
+    span_const_f32 const& v,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -96,7 +102,7 @@ STATICINLINE void named_framebuffer_sample_locationsfv(
         start,
         count,
         v.size() ? reinterpret_cast<const GLfloat*>(v.data()) : nullptr);
-    detail::error_check("NamedFramebufferSampleLocationsfvARB"sv);
+    detail::error_check("NamedFramebufferSampleLocationsfvARB"sv, check_errors);
 }
 
 } // namespace gl::arb::sample_locations

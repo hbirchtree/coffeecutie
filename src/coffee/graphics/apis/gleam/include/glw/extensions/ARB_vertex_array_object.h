@@ -14,7 +14,8 @@ namespace values {
  * \param array GLuint
  * \return void
  */
-STATICINLINE void bind_vertex_array(u32 array)
+STATICINLINE void bind_vertex_array(
+    u32 array, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -27,7 +28,7 @@ STATICINLINE void bind_vertex_array(u32 array)
 #endif
     }
     glBindVertexArray(array);
-    detail::error_check("BindVertexArray"sv);
+    detail::error_check("BindVertexArray"sv, check_errors);
 }
 
 template<class span_const_u32>
@@ -42,7 +43,8 @@ requires(
  * \param arrays const GLuint *
  * \return void
  */
-STATICINLINE void delete_vertex_arrays(span_const_u32 const& arrays)
+STATICINLINE void delete_vertex_arrays(
+    span_const_u32 const& arrays, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -53,7 +55,7 @@ STATICINLINE void delete_vertex_arrays(span_const_u32 const& arrays)
         arrays.size(),
         arrays.size() ? reinterpret_cast<const GLuint*>(arrays.data())
                       : nullptr);
-    detail::error_check("DeleteVertexArrays"sv);
+    detail::error_check("DeleteVertexArrays"sv, check_errors);
 }
 
 template<class span_u32>
@@ -67,7 +69,8 @@ requires(
  * \param arrays GLuint *
  * \return void
  */
-STATICINLINE void gen_vertex_arrays(span_u32 arrays)
+STATICINLINE void gen_vertex_arrays(
+    span_u32 arrays, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -77,7 +80,7 @@ STATICINLINE void gen_vertex_arrays(span_u32 arrays)
     glGenVertexArrays(
         arrays.size(),
         arrays.size() ? reinterpret_cast<GLuint*>(arrays.data()) : nullptr);
-    detail::error_check("GenVertexArrays"sv);
+    detail::error_check("GenVertexArrays"sv, check_errors);
 }
 
 /*!
@@ -85,7 +88,8 @@ STATICINLINE void gen_vertex_arrays(span_u32 arrays)
  * \param array GLuint
  * \return Boolean
  */
-STATICINLINE bool is_vertex_array(u32 array)
+STATICINLINE bool is_vertex_array(
+    u32 array, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -98,7 +102,7 @@ STATICINLINE bool is_vertex_array(u32 array)
 #endif
     }
     auto out = glIsVertexArray(array);
-    detail::error_check("IsVertexArray"sv);
+    detail::error_check("IsVertexArray"sv, check_errors);
     return out == GL_TRUE ? true : false;
 }
 

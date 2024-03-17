@@ -58,7 +58,7 @@ struct api_limits
     static u32 get_limit(group::get_prop prop)
     {
         i32 limit{0};
-        cmd::get_integerv(prop, SpanOne(limit));
+        cmd::get_integerv(prop, SpanOne(limit), gl::error_check::off);
         if(limit == -1)
             limit = std::numeric_limits<i32>::max();
         return static_cast<u32>(limit);
@@ -138,6 +138,8 @@ struct api_limits
         }
     }
 
+    std::string get_all_limits() const;
+
     std::string serialize() const
     {
         return fmt::format(
@@ -173,7 +175,8 @@ struct api_limits
                     "\"d3_size\":{},"
                     "\"d2_max_layers\":{},"
                     "\"cube_size\":{}"
-                "}}"
+                "}},"
+                "\"all\": {}"
             "}}",
             // clang-format on
             buffers.ssbo_size,
@@ -200,8 +203,9 @@ struct api_limits
             textures.d2_size,
             textures.d3_size,
             textures.d2_max_layers,
-            textures.cube_size
+            textures.cube_size,
             //
+            get_all_limits()
         );
     }
 

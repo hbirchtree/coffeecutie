@@ -39,7 +39,8 @@ STATICINLINE void get_internalformat_sampleiv(
     group::internal_format      internalformat,
     i32                         samples,
     group::internal_format_prop pname,
-    span_i32                    params)
+    span_i32                    params,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -53,7 +54,7 @@ STATICINLINE void get_internalformat_sampleiv(
         static_cast<GLenum>(pname),
         params.size(),
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetInternalformatSampleivNV"sv);
+    detail::error_check("GetInternalformatSampleivNV"sv, check_errors);
 }
 
 } // namespace gl::nv::internalformat_sample_query

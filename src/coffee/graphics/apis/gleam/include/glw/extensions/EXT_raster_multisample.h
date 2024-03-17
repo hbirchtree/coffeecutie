@@ -17,7 +17,10 @@ constexpr u32 effective_raster_samples          = 0x932C;
  * \param fixedsamplelocations GLboolean
  * \return void
  */
-STATICINLINE void raster_samples(u32 samples, bool fixedsamplelocations)
+STATICINLINE void raster_samples(
+    u32         samples,
+    bool        fixedsamplelocations,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -25,7 +28,7 @@ STATICINLINE void raster_samples(u32 samples, bool fixedsamplelocations)
         GLW_FPTR_CHECK(RasterSamplesEXT)
     }
     glRasterSamplesEXT(samples, fixedsamplelocations);
-    detail::error_check("RasterSamplesEXT"sv);
+    detail::error_check("RasterSamplesEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::raster_multisample

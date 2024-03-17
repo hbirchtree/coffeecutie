@@ -20,7 +20,10 @@ requires(concepts::span<span_const_void>)
  * \return void
  */
 STATICINLINE void color_pointerv(
-    i32 size, group::vertex_pointer_type type, span_const_void const& pointer)
+    i32                        size,
+    group::vertex_pointer_type type,
+    span_const_void const&     pointer,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -32,7 +35,7 @@ STATICINLINE void color_pointerv(
         static_cast<GLenum>(type),
         pointer.size() ? reinterpret_cast<const void**>(pointer.data())
                        : nullptr);
-    detail::error_check("ColorPointervINTEL"sv);
+    detail::error_check("ColorPointervINTEL"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -44,7 +47,9 @@ requires(concepts::span<span_const_void>)
  * \return void
  */
 STATICINLINE void normal_pointerv(
-    group::normal_pointer_type type, span_const_void const& pointer)
+    group::normal_pointer_type type,
+    span_const_void const&     pointer,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -55,7 +60,7 @@ STATICINLINE void normal_pointerv(
         static_cast<GLenum>(type),
         pointer.size() ? reinterpret_cast<const void**>(pointer.data())
                        : nullptr);
-    detail::error_check("NormalPointervINTEL"sv);
+    detail::error_check("NormalPointervINTEL"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -68,7 +73,10 @@ requires(concepts::span<span_const_void>)
  * \return void
  */
 STATICINLINE void tex_coord_pointerv(
-    i32 size, group::vertex_pointer_type type, span_const_void const& pointer)
+    i32                        size,
+    group::vertex_pointer_type type,
+    span_const_void const&     pointer,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -80,7 +88,7 @@ STATICINLINE void tex_coord_pointerv(
         static_cast<GLenum>(type),
         pointer.size() ? reinterpret_cast<const void**>(pointer.data())
                        : nullptr);
-    detail::error_check("TexCoordPointervINTEL"sv);
+    detail::error_check("TexCoordPointervINTEL"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -93,7 +101,10 @@ requires(concepts::span<span_const_void>)
  * \return void
  */
 STATICINLINE void vertex_pointerv(
-    i32 size, group::vertex_pointer_type type, span_const_void const& pointer)
+    i32                        size,
+    group::vertex_pointer_type type,
+    span_const_void const&     pointer,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -105,7 +116,7 @@ STATICINLINE void vertex_pointerv(
         static_cast<GLenum>(type),
         pointer.size() ? reinterpret_cast<const void**>(pointer.data())
                        : nullptr);
-    detail::error_check("VertexPointervINTEL"sv);
+    detail::error_check("VertexPointervINTEL"sv, check_errors);
 }
 
 } // namespace gl::intel::parallel_arrays

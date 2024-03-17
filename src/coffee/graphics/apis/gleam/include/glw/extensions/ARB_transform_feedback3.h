@@ -15,7 +15,10 @@ constexpr u32 max_vertex_streams             = 0x8E71;
  * \return void
  */
 STATICINLINE void begin_query_indexed(
-    group::query_target target, u32 index, u32 id)
+    group::query_target target,
+    u32                 index,
+    u32                 id,
+    error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -23,7 +26,7 @@ STATICINLINE void begin_query_indexed(
         GLW_FPTR_CHECK(BeginQueryIndexed)
     }
     glBeginQueryIndexed(static_cast<GLenum>(target), index, id);
-    detail::error_check("BeginQueryIndexed"sv);
+    detail::error_check("BeginQueryIndexed"sv, check_errors);
 }
 
 /*!
@@ -34,7 +37,10 @@ STATICINLINE void begin_query_indexed(
  * \return void
  */
 STATICINLINE void draw_transform_feedback_stream(
-    group::primitive_type mode, u32 id, u32 stream)
+    group::primitive_type mode,
+    u32                   id,
+    u32                   stream,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -42,7 +48,7 @@ STATICINLINE void draw_transform_feedback_stream(
         GLW_FPTR_CHECK(DrawTransformFeedbackStream)
     }
     glDrawTransformFeedbackStream(static_cast<GLenum>(mode), id, stream);
-    detail::error_check("DrawTransformFeedbackStream"sv);
+    detail::error_check("DrawTransformFeedbackStream"sv, check_errors);
 }
 
 /*!
@@ -51,7 +57,10 @@ STATICINLINE void draw_transform_feedback_stream(
  * \param index GLuint
  * \return void
  */
-STATICINLINE void end_query_indexed(group::query_target target, u32 index)
+STATICINLINE void end_query_indexed(
+    group::query_target target,
+    u32                 index,
+    error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -59,7 +68,7 @@ STATICINLINE void end_query_indexed(group::query_target target, u32 index)
         GLW_FPTR_CHECK(EndQueryIndexed)
     }
     glEndQueryIndexed(static_cast<GLenum>(target), index);
-    detail::error_check("EndQueryIndexed"sv);
+    detail::error_check("EndQueryIndexed"sv, check_errors);
 }
 
 template<class span_i32>
@@ -79,7 +88,8 @@ STATICINLINE void get_query_indexediv(
     group::query_target         target,
     u32                         index,
     group::query_parameter_name pname,
-    span_i32                    params)
+    span_i32                    params,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -91,7 +101,7 @@ STATICINLINE void get_query_indexediv(
         index,
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetQueryIndexediv"sv);
+    detail::error_check("GetQueryIndexediv"sv, check_errors);
 }
 
 } // namespace gl::arb::transform_feedback3

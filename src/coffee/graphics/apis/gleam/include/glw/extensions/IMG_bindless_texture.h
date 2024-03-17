@@ -10,7 +10,8 @@ namespace values {
  * \param texture GLuint
  * \return GLuint64
  */
-STATICINLINE GLuint64 get_texture_handle(u32 texture)
+STATICINLINE GLuint64
+get_texture_handle(u32 texture, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -23,7 +24,7 @@ STATICINLINE GLuint64 get_texture_handle(u32 texture)
 #endif
     }
     auto out = glGetTextureHandleIMG(texture);
-    detail::error_check("GetTextureHandleIMG"sv);
+    detail::error_check("GetTextureHandleIMG"sv, check_errors);
     return out;
 }
 
@@ -33,7 +34,8 @@ STATICINLINE GLuint64 get_texture_handle(u32 texture)
  * \param sampler GLuint
  * \return GLuint64
  */
-STATICINLINE GLuint64 get_texture_sampler_handle(u32 texture, u32 sampler)
+STATICINLINE GLuint64 get_texture_sampler_handle(
+    u32 texture, u32 sampler, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -51,7 +53,7 @@ STATICINLINE GLuint64 get_texture_sampler_handle(u32 texture, u32 sampler)
 #endif
     }
     auto out = glGetTextureSamplerHandleIMG(texture, sampler);
-    detail::error_check("GetTextureSamplerHandleIMG"sv);
+    detail::error_check("GetTextureSamplerHandleIMG"sv, check_errors);
     return out;
 }
 
@@ -62,7 +64,11 @@ STATICINLINE GLuint64 get_texture_sampler_handle(u32 texture, u32 sampler)
  * \param value GLuint64
  * \return void
  */
-STATICINLINE void program_uniform_handle(u32 program, i32 location, u64 value)
+STATICINLINE void program_uniform_handle(
+    u32         program,
+    i32         location,
+    u64         value,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -75,7 +81,7 @@ STATICINLINE void program_uniform_handle(u32 program, i32 location, u64 value)
 #endif
     }
     glProgramUniformHandleui64IMG(program, location, value);
-    detail::error_check("ProgramUniformHandleui64IMG"sv);
+    detail::error_check("ProgramUniformHandleui64IMG"sv, check_errors);
 }
 
 template<class span_const_u64>
@@ -93,7 +99,10 @@ requires(
  * \return void
  */
 STATICINLINE void program_uniform_handle(
-    u32 program, i32 location, span_const_u64 const& values)
+    u32                   program,
+    i32                   location,
+    span_const_u64 const& values,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -111,7 +120,7 @@ STATICINLINE void program_uniform_handle(
         values.size(),
         values.size() ? reinterpret_cast<const GLuint64*>(values.data())
                       : nullptr);
-    detail::error_check("ProgramUniformHandleui64vIMG"sv);
+    detail::error_check("ProgramUniformHandleui64vIMG"sv, check_errors);
 }
 
 /*!
@@ -120,7 +129,8 @@ STATICINLINE void program_uniform_handle(
  * \param value GLuint64
  * \return void
  */
-STATICINLINE void uniform_handle(i32 location, u64 value)
+STATICINLINE void uniform_handle(
+    i32 location, u64 value, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -128,7 +138,7 @@ STATICINLINE void uniform_handle(i32 location, u64 value)
         GLW_FPTR_CHECK(UniformHandleui64IMG)
     }
     glUniformHandleui64IMG(location, value);
-    detail::error_check("UniformHandleui64IMG"sv);
+    detail::error_check("UniformHandleui64IMG"sv, check_errors);
 }
 
 template<class span_const_u64>
@@ -144,7 +154,10 @@ requires(
  * \param value const GLuint64 *
  * \return void
  */
-STATICINLINE void uniform_handle(i32 location, span_const_u64 const& value)
+STATICINLINE void uniform_handle(
+    i32                   location,
+    span_const_u64 const& value,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -156,7 +169,7 @@ STATICINLINE void uniform_handle(i32 location, span_const_u64 const& value)
         value.size(),
         value.size() ? reinterpret_cast<const GLuint64*>(value.data())
                      : nullptr);
-    detail::error_check("UniformHandleui64vIMG"sv);
+    detail::error_check("UniformHandleui64vIMG"sv, check_errors);
 }
 
 } // namespace gl::img::bindless_texture

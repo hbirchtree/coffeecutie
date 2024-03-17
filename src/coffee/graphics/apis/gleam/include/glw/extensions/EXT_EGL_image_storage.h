@@ -19,7 +19,10 @@ requires(
  * \return void
  */
 STATICINLINE void egl_image_target_tex_storage(
-    GLenum target, GLeglImageOES image, span_const_i32 const& attrib_list)
+    GLenum                target,
+    GLeglImageOES         image,
+    span_const_i32 const& attrib_list,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -31,7 +34,7 @@ STATICINLINE void egl_image_target_tex_storage(
         image,
         attrib_list.size() ? reinterpret_cast<const GLint*>(attrib_list.data())
                            : nullptr);
-    detail::error_check("EGLImageTargetTexStorageEXT"sv);
+    detail::error_check("EGLImageTargetTexStorageEXT"sv, check_errors);
 }
 
 template<class span_const_i32>
@@ -48,7 +51,10 @@ requires(
  * \return void
  */
 STATICINLINE void egl_image_target_texture_storage(
-    u32 texture, GLeglImageOES image, span_const_i32 const& attrib_list)
+    u32                   texture,
+    GLeglImageOES         image,
+    span_const_i32 const& attrib_list,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -65,7 +71,7 @@ STATICINLINE void egl_image_target_texture_storage(
         image,
         attrib_list.size() ? reinterpret_cast<const GLint*>(attrib_list.data())
                            : nullptr);
-    detail::error_check("EGLImageTargetTextureStorageEXT"sv);
+    detail::error_check("EGLImageTargetTextureStorageEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::egl_image_storage

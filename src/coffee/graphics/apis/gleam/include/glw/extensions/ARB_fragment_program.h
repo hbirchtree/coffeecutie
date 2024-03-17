@@ -94,7 +94,10 @@ constexpr u32 matrix31                            = 0x88DF;
  * \param program GLuint
  * \return void
  */
-STATICINLINE void bind_program(group::program_target target, u32 program)
+STATICINLINE void bind_program(
+    group::program_target target,
+    u32                   program,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -107,7 +110,7 @@ STATICINLINE void bind_program(group::program_target target, u32 program)
 #endif
     }
     glBindProgramARB(static_cast<GLenum>(target), program);
-    detail::error_check("BindProgramARB"sv);
+    detail::error_check("BindProgramARB"sv, check_errors);
 }
 
 template<class span_const_u32>
@@ -122,7 +125,8 @@ requires(
  * \param programs const GLuint *
  * \return void
  */
-STATICINLINE void delete_programs(span_const_u32 const& programs)
+STATICINLINE void delete_programs(
+    span_const_u32 const& programs, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -133,7 +137,7 @@ STATICINLINE void delete_programs(span_const_u32 const& programs)
         programs.size(),
         programs.size() ? reinterpret_cast<const GLuint*>(programs.data())
                         : nullptr);
-    detail::error_check("DeleteProgramsARB"sv);
+    detail::error_check("DeleteProgramsARB"sv, check_errors);
 }
 
 template<class span_u32>
@@ -147,7 +151,8 @@ requires(
  * \param programs GLuint *
  * \return void
  */
-STATICINLINE void gen_programs(span_u32 programs)
+STATICINLINE void gen_programs(
+    span_u32 programs, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -157,7 +162,7 @@ STATICINLINE void gen_programs(span_u32 programs)
     glGenProgramsARB(
         programs.size(),
         programs.size() ? reinterpret_cast<GLuint*>(programs.data()) : nullptr);
-    detail::error_check("GenProgramsARB"sv);
+    detail::error_check("GenProgramsARB"sv, check_errors);
 }
 
 template<class span_f64>
@@ -173,7 +178,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_program_env_parameter(
-    group::program_target target, u32 index, span_f64 params)
+    group::program_target target,
+    u32                   index,
+    span_f64              params,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -184,7 +192,7 @@ STATICINLINE void get_program_env_parameter(
         static_cast<GLenum>(target),
         index,
         params.size() ? reinterpret_cast<GLdouble*>(params.data()) : nullptr);
-    detail::error_check("GetProgramEnvParameterdvARB"sv);
+    detail::error_check("GetProgramEnvParameterdvARB"sv, check_errors);
 }
 
 template<class span_f32>
@@ -200,7 +208,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_program_env_parameter(
-    group::program_target target, u32 index, span_f32 params)
+    group::program_target target,
+    u32                   index,
+    span_f32              params,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -211,7 +222,7 @@ STATICINLINE void get_program_env_parameter(
         static_cast<GLenum>(target),
         index,
         params.size() ? reinterpret_cast<GLfloat*>(params.data()) : nullptr);
-    detail::error_check("GetProgramEnvParameterfvARB"sv);
+    detail::error_check("GetProgramEnvParameterfvARB"sv, check_errors);
 }
 
 template<class span_f64>
@@ -227,7 +238,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_program_local_parameter(
-    group::program_target target, u32 index, span_f64 params)
+    group::program_target target,
+    u32                   index,
+    span_f64              params,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -238,7 +252,7 @@ STATICINLINE void get_program_local_parameter(
         static_cast<GLenum>(target),
         index,
         params.size() ? reinterpret_cast<GLdouble*>(params.data()) : nullptr);
-    detail::error_check("GetProgramLocalParameterdvARB"sv);
+    detail::error_check("GetProgramLocalParameterdvARB"sv, check_errors);
 }
 
 template<class span_f32>
@@ -254,7 +268,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_program_local_parameter(
-    group::program_target target, u32 index, span_f32 params)
+    group::program_target target,
+    u32                   index,
+    span_f32              params,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -265,7 +282,7 @@ STATICINLINE void get_program_local_parameter(
         static_cast<GLenum>(target),
         index,
         params.size() ? reinterpret_cast<GLfloat*>(params.data()) : nullptr);
-    detail::error_check("GetProgramLocalParameterfvARB"sv);
+    detail::error_check("GetProgramLocalParameterfvARB"sv, check_errors);
 }
 
 template<class span_void>
@@ -280,7 +297,8 @@ requires(concepts::span<span_void>)
 STATICINLINE void get_program_string(
     group::program_target          target,
     group::program_string_property pname,
-    span_void                      string)
+    span_void                      string,
+    error_check                    check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -291,7 +309,7 @@ STATICINLINE void get_program_string(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
         string.size() ? reinterpret_cast<void*>(string.data()) : nullptr);
-    detail::error_check("GetProgramStringARB"sv);
+    detail::error_check("GetProgramStringARB"sv, check_errors);
 }
 
 /*!
@@ -304,7 +322,8 @@ STATICINLINE void get_program_string(
 STATICINLINE void get_programiv(
     group::program_target       target,
     group::program_property_arb pname,
-    i32&                        params)
+    i32&                        params,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -313,7 +332,7 @@ STATICINLINE void get_programiv(
     }
     glGetProgramivARB(
         static_cast<GLenum>(target), static_cast<GLenum>(pname), &params);
-    detail::error_check("GetProgramivARB"sv);
+    detail::error_check("GetProgramivARB"sv, check_errors);
 }
 
 /*!
@@ -321,7 +340,8 @@ STATICINLINE void get_programiv(
  * \param program GLuint
  * \return Boolean
  */
-STATICINLINE bool is_program(u32 program)
+STATICINLINE bool is_program(
+    u32 program, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -334,7 +354,7 @@ STATICINLINE bool is_program(u32 program)
 #endif
     }
     auto out = glIsProgramARB(program);
-    detail::error_check("IsProgramARB"sv);
+    detail::error_check("IsProgramARB"sv, check_errors);
     return out == GL_TRUE ? true : false;
 }
 
@@ -351,7 +371,10 @@ requires(concepts::vector<vec_4_f64, f64, 4>)
  * \return void
  */
 STATICINLINE void program_env_parameter4d(
-    group::program_target target, u32 index, vec_4_f64 const& x)
+    group::program_target target,
+    u32                   index,
+    vec_4_f64 const&      x,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -360,7 +383,7 @@ STATICINLINE void program_env_parameter4d(
     }
     glProgramEnvParameter4dARB(
         static_cast<GLenum>(target), index, x[0], x[1], x[2], x[3]);
-    detail::error_check("ProgramEnvParameter4dARB"sv);
+    detail::error_check("ProgramEnvParameter4dARB"sv, check_errors);
 }
 
 template<class span_const_vec_4_f64>
@@ -375,7 +398,10 @@ requires(
  * \return void
  */
 STATICINLINE void program_env_parameter4dv(
-    group::program_target target, u32 index, span_const_vec_4_f64 const& params)
+    group::program_target       target,
+    u32                         index,
+    span_const_vec_4_f64 const& params,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -386,7 +412,7 @@ STATICINLINE void program_env_parameter4dv(
         static_cast<GLenum>(target),
         index,
         reinterpret_cast<const GLdouble*>(params.data()));
-    detail::error_check("ProgramEnvParameter4dvARB"sv);
+    detail::error_check("ProgramEnvParameter4dvARB"sv, check_errors);
 }
 
 template<class vec_4_f32>
@@ -402,7 +428,10 @@ requires(concepts::vector<vec_4_f32, f32, 4>)
  * \return void
  */
 STATICINLINE void program_env_parameter4f(
-    group::program_target target, u32 index, vec_4_f32 const& x)
+    group::program_target target,
+    u32                   index,
+    vec_4_f32 const&      x,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -411,7 +440,7 @@ STATICINLINE void program_env_parameter4f(
     }
     glProgramEnvParameter4fARB(
         static_cast<GLenum>(target), index, x[0], x[1], x[2], x[3]);
-    detail::error_check("ProgramEnvParameter4fARB"sv);
+    detail::error_check("ProgramEnvParameter4fARB"sv, check_errors);
 }
 
 template<class span_const_vec_4_f32>
@@ -426,7 +455,10 @@ requires(
  * \return void
  */
 STATICINLINE void program_env_parameter4fv(
-    group::program_target target, u32 index, span_const_vec_4_f32 const& params)
+    group::program_target       target,
+    u32                         index,
+    span_const_vec_4_f32 const& params,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -437,7 +469,7 @@ STATICINLINE void program_env_parameter4fv(
         static_cast<GLenum>(target),
         index,
         reinterpret_cast<const GLfloat*>(params.data()));
-    detail::error_check("ProgramEnvParameter4fvARB"sv);
+    detail::error_check("ProgramEnvParameter4fvARB"sv, check_errors);
 }
 
 template<class vec_4_f64>
@@ -453,7 +485,10 @@ requires(concepts::vector<vec_4_f64, f64, 4>)
  * \return void
  */
 STATICINLINE void program_local_parameter4d(
-    group::program_target target, u32 index, vec_4_f64 const& x)
+    group::program_target target,
+    u32                   index,
+    vec_4_f64 const&      x,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -462,7 +497,7 @@ STATICINLINE void program_local_parameter4d(
     }
     glProgramLocalParameter4dARB(
         static_cast<GLenum>(target), index, x[0], x[1], x[2], x[3]);
-    detail::error_check("ProgramLocalParameter4dARB"sv);
+    detail::error_check("ProgramLocalParameter4dARB"sv, check_errors);
 }
 
 template<class span_const_vec_4_f64>
@@ -477,7 +512,10 @@ requires(
  * \return void
  */
 STATICINLINE void program_local_parameter4dv(
-    group::program_target target, u32 index, span_const_vec_4_f64 const& params)
+    group::program_target       target,
+    u32                         index,
+    span_const_vec_4_f64 const& params,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -488,7 +526,7 @@ STATICINLINE void program_local_parameter4dv(
         static_cast<GLenum>(target),
         index,
         reinterpret_cast<const GLdouble*>(params.data()));
-    detail::error_check("ProgramLocalParameter4dvARB"sv);
+    detail::error_check("ProgramLocalParameter4dvARB"sv, check_errors);
 }
 
 template<class vec_4_f32>
@@ -504,7 +542,10 @@ requires(concepts::vector<vec_4_f32, f32, 4>)
  * \return void
  */
 STATICINLINE void program_local_parameter4f(
-    group::program_target target, u32 index, vec_4_f32 const& x)
+    group::program_target target,
+    u32                   index,
+    vec_4_f32 const&      x,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -513,7 +554,7 @@ STATICINLINE void program_local_parameter4f(
     }
     glProgramLocalParameter4fARB(
         static_cast<GLenum>(target), index, x[0], x[1], x[2], x[3]);
-    detail::error_check("ProgramLocalParameter4fARB"sv);
+    detail::error_check("ProgramLocalParameter4fARB"sv, check_errors);
 }
 
 template<class span_const_vec_4_f32>
@@ -528,7 +569,10 @@ requires(
  * \return void
  */
 STATICINLINE void program_local_parameter4fv(
-    group::program_target target, u32 index, span_const_vec_4_f32 const& params)
+    group::program_target       target,
+    u32                         index,
+    span_const_vec_4_f32 const& params,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -539,7 +583,7 @@ STATICINLINE void program_local_parameter4fv(
         static_cast<GLenum>(target),
         index,
         reinterpret_cast<const GLfloat*>(params.data()));
-    detail::error_check("ProgramLocalParameter4fvARB"sv);
+    detail::error_check("ProgramLocalParameter4fvARB"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -555,7 +599,8 @@ requires(concepts::span<span_const_void>)
 STATICINLINE void program_string(
     group::program_target  target,
     group::program_format  format,
-    span_const_void const& string)
+    span_const_void const& string,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -568,7 +613,7 @@ STATICINLINE void program_string(
         string.size() *
             sizeof(typename std::decay_t<span_const_void const&>::value_type),
         string.size() ? reinterpret_cast<const void*>(string.data()) : nullptr);
-    detail::error_check("ProgramStringARB"sv);
+    detail::error_check("ProgramStringARB"sv, check_errors);
 }
 
 } // namespace gl::arb::fragment_program

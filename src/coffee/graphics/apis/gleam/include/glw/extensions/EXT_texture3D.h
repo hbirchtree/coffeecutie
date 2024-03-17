@@ -43,7 +43,8 @@ STATICINLINE void tex_image_3d(
     i32                    border,
     group::pixel_format    format,
     group::pixel_type      type,
-    span_const_void const& pixels)
+    span_const_void const& pixels,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -61,7 +62,7 @@ STATICINLINE void tex_image_3d(
         static_cast<GLenum>(format),
         static_cast<GLenum>(type),
         pixels.size() ? reinterpret_cast<const void*>(pixels.data()) : nullptr);
-    detail::error_check("TexImage3DEXT"sv);
+    detail::error_check("TexImage3DEXT"sv, check_errors);
 }
 
 template<class size_3_i32, class span_const_void, class vec_3_i32>
@@ -90,7 +91,8 @@ STATICINLINE void tex_sub_image_3d(
     size_3_i32 const&      width,
     group::pixel_format    format,
     group::pixel_type      type,
-    span_const_void const& pixels)
+    span_const_void const& pixels,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -109,7 +111,7 @@ STATICINLINE void tex_sub_image_3d(
         static_cast<GLenum>(format),
         static_cast<GLenum>(type),
         pixels.size() ? reinterpret_cast<const void*>(pixels.data()) : nullptr);
-    detail::error_check("TexSubImage3DEXT"sv);
+    detail::error_check("TexSubImage3DEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::texture3d

@@ -38,7 +38,8 @@ STATICINLINE void get_program_interfaceiv(
     u32                           program,
     group::program_interface      programInterface,
     group::program_interface_prop pname,
-    span_i32                      params)
+    span_i32                      params,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -55,7 +56,7 @@ STATICINLINE void get_program_interfaceiv(
         static_cast<GLenum>(programInterface),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetProgramInterfaceiv"sv);
+    detail::error_check("GetProgramInterfaceiv"sv, check_errors);
 }
 
 /*!
@@ -68,7 +69,8 @@ STATICINLINE void get_program_interfaceiv(
 STATICINLINE GLuint get_program_resource_index(
     u32                      program,
     group::program_interface programInterface,
-    std::string_view const&  name)
+    std::string_view const&  name,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -82,7 +84,7 @@ STATICINLINE GLuint get_program_resource_index(
     }
     auto out = glGetProgramResourceIndex(
         program, static_cast<GLenum>(programInterface), name.data());
-    detail::error_check("GetProgramResourceIndex"sv);
+    detail::error_check("GetProgramResourceIndex"sv, check_errors);
     return out;
 }
 
@@ -96,7 +98,8 @@ STATICINLINE GLuint get_program_resource_index(
 STATICINLINE GLint get_program_resource_location(
     u32                      program,
     group::program_interface programInterface,
-    std::string_view const&  name)
+    std::string_view const&  name,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -110,7 +113,7 @@ STATICINLINE GLint get_program_resource_location(
     }
     auto out = glGetProgramResourceLocation(
         program, static_cast<GLenum>(programInterface), name.data());
-    detail::error_check("GetProgramResourceLocation"sv);
+    detail::error_check("GetProgramResourceLocation"sv, check_errors);
     return out;
 }
 
@@ -124,7 +127,8 @@ STATICINLINE GLint get_program_resource_location(
 STATICINLINE GLint get_program_resource_location_index(
     u32                      program,
     group::program_interface programInterface,
-    std::string_view const&  name)
+    std::string_view const&  name,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -138,7 +142,7 @@ STATICINLINE GLint get_program_resource_location_index(
     }
     auto out = glGetProgramResourceLocationIndex(
         program, static_cast<GLenum>(programInterface), name.data());
-    detail::error_check("GetProgramResourceLocationIndex"sv);
+    detail::error_check("GetProgramResourceLocationIndex"sv, check_errors);
     return out;
 }
 
@@ -163,7 +167,8 @@ STATICINLINE void get_program_resource_name(
     group::program_interface programInterface,
     u32                      index,
     i32&                     length,
-    span_GLchar              name)
+    span_GLchar              name,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -182,7 +187,7 @@ STATICINLINE void get_program_resource_name(
         name.size(),
         &length,
         name.data());
-    detail::error_check("GetProgramResourceName"sv);
+    detail::error_check("GetProgramResourceName"sv, check_errors);
 }
 
 template<class span_const_program_resource_property, class span_i32>
@@ -213,7 +218,8 @@ STATICINLINE void get_program_resourceiv(
     u32                                         index,
     span_const_program_resource_property const& props,
     i32&                                        length,
-    span_i32                                    params)
+    span_i32                                    params,
+    error_check                                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -234,7 +240,7 @@ STATICINLINE void get_program_resourceiv(
         params.size(),
         &length,
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetProgramResourceiv"sv);
+    detail::error_check("GetProgramResourceiv"sv, check_errors);
 }
 
 } // namespace gl::arb::program_interface_query

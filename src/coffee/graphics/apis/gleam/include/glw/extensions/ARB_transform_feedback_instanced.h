@@ -13,7 +13,10 @@ namespace values {
  * \return void
  */
 STATICINLINE void draw_transform_feedback_instanced(
-    group::primitive_type mode, u32 id, i32 instancecount)
+    group::primitive_type mode,
+    u32                   id,
+    i32                   instancecount,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -22,7 +25,7 @@ STATICINLINE void draw_transform_feedback_instanced(
     }
     glDrawTransformFeedbackInstanced(
         static_cast<GLenum>(mode), id, instancecount);
-    detail::error_check("DrawTransformFeedbackInstanced"sv);
+    detail::error_check("DrawTransformFeedbackInstanced"sv, check_errors);
 }
 
 /*!
@@ -34,7 +37,11 @@ STATICINLINE void draw_transform_feedback_instanced(
  * \return void
  */
 STATICINLINE void draw_transform_feedback_stream_instanced(
-    group::primitive_type mode, u32 id, u32 stream, i32 instancecount)
+    group::primitive_type mode,
+    u32                   id,
+    u32                   stream,
+    i32                   instancecount,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -43,7 +50,7 @@ STATICINLINE void draw_transform_feedback_stream_instanced(
     }
     glDrawTransformFeedbackStreamInstanced(
         static_cast<GLenum>(mode), id, stream, instancecount);
-    detail::error_check("DrawTransformFeedbackStreamInstanced"sv);
+    detail::error_check("DrawTransformFeedbackStreamInstanced"sv, check_errors);
 }
 
 } // namespace gl::arb::transform_feedback_instanced

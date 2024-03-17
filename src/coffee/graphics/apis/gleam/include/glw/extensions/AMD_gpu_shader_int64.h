@@ -51,7 +51,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_uniformi64v_nv(
-    u32 program, i32 location, span_GLint64EXT params)
+    u32             program,
+    i32             location,
+    span_GLint64EXT params,
+    error_check     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -67,7 +70,7 @@ STATICINLINE void get_uniformi64v_nv(
         program,
         location,
         params.size() ? reinterpret_cast<GLint64EXT*>(params.data()) : nullptr);
-    detail::error_check("GetUniformi64vNV"sv);
+    detail::error_check("GetUniformi64vNV"sv, check_errors);
 }
 
 template<class span_GLuint64EXT>
@@ -84,7 +87,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_uniformui64v_nv(
-    u32 program, i32 location, span_GLuint64EXT params)
+    u32              program,
+    i32              location,
+    span_GLuint64EXT params,
+    error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -101,7 +107,7 @@ STATICINLINE void get_uniformui64v_nv(
         location,
         params.size() ? reinterpret_cast<GLuint64EXT*>(params.data())
                       : nullptr);
-    detail::error_check("GetUniformui64vNV"sv);
+    detail::error_check("GetUniformui64vNV"sv, check_errors);
 }
 
 /*!
@@ -110,7 +116,8 @@ STATICINLINE void get_uniformui64v_nv(
  * \param x GLint64EXT
  * \return void
  */
-STATICINLINE void uniform(i32 location, GLint64EXT x)
+STATICINLINE void uniform(
+    i32 location, GLint64EXT x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -118,7 +125,7 @@ STATICINLINE void uniform(i32 location, GLint64EXT x)
         GLW_FPTR_CHECK(Uniform1i64NV)
     }
     glUniform1i64NV(location, x);
-    detail::error_check("Uniform1i64NV"sv);
+    detail::error_check("Uniform1i64NV"sv, check_errors);
 }
 
 template<class span_const_GLint64EXT>
@@ -134,7 +141,10 @@ requires(
  * \param value const GLint64EXT *
  * \return void
  */
-STATICINLINE void uniform(i32 location, span_const_GLint64EXT const& value)
+STATICINLINE void uniform(
+    i32                          location,
+    span_const_GLint64EXT const& value,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -145,7 +155,7 @@ STATICINLINE void uniform(i32 location, span_const_GLint64EXT const& value)
         location,
         value.size(),
         reinterpret_cast<const GLint64EXT*>(value.data()));
-    detail::error_check("Uniform1i64vNV"sv);
+    detail::error_check("Uniform1i64vNV"sv, check_errors);
 }
 
 /*!
@@ -154,7 +164,8 @@ STATICINLINE void uniform(i32 location, span_const_GLint64EXT const& value)
  * \param x GLuint64EXT
  * \return void
  */
-STATICINLINE void uniform(i32 location, GLuint64EXT x)
+STATICINLINE void uniform(
+    i32 location, GLuint64EXT x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -162,7 +173,7 @@ STATICINLINE void uniform(i32 location, GLuint64EXT x)
         GLW_FPTR_CHECK(Uniform1ui64NV)
     }
     glUniform1ui64NV(location, x);
-    detail::error_check("Uniform1ui64NV"sv);
+    detail::error_check("Uniform1ui64NV"sv, check_errors);
 }
 
 template<class span_const_GLuint64EXT>
@@ -178,7 +189,10 @@ requires(
  * \param value const GLuint64EXT *
  * \return void
  */
-STATICINLINE void uniform(i32 location, span_const_GLuint64EXT const& value)
+STATICINLINE void uniform(
+    i32                           location,
+    span_const_GLuint64EXT const& value,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -189,7 +203,7 @@ STATICINLINE void uniform(i32 location, span_const_GLuint64EXT const& value)
         location,
         value.size(),
         reinterpret_cast<const GLuint64EXT*>(value.data()));
-    detail::error_check("Uniform1ui64vNV"sv);
+    detail::error_check("Uniform1ui64vNV"sv, check_errors);
 }
 
 template<class vec_2_GLint64EXT>
@@ -201,7 +215,10 @@ requires(concepts::vector<vec_2_GLint64EXT, GLint64EXT, 2>)
  * \param y GLint64EXT
  * \return void
  */
-STATICINLINE void uniform(i32 location, vec_2_GLint64EXT const& x)
+STATICINLINE void uniform(
+    i32                     location,
+    vec_2_GLint64EXT const& x,
+    error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -209,7 +226,7 @@ STATICINLINE void uniform(i32 location, vec_2_GLint64EXT const& x)
         GLW_FPTR_CHECK(Uniform2i64NV)
     }
     glUniform2i64NV(location, x[0], x[1]);
-    detail::error_check("Uniform2i64NV"sv);
+    detail::error_check("Uniform2i64NV"sv, check_errors);
 }
 
 template<class span_const_vec_2_GLint64EXT>
@@ -225,7 +242,9 @@ requires(
  * \return void
  */
 STATICINLINE void uniform(
-    i32 location, span_const_vec_2_GLint64EXT const& value)
+    i32                                location,
+    span_const_vec_2_GLint64EXT const& value,
+    error_check                        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -236,7 +255,7 @@ STATICINLINE void uniform(
         location,
         value.size(),
         reinterpret_cast<const GLint64EXT*>(value.data()));
-    detail::error_check("Uniform2i64vNV"sv);
+    detail::error_check("Uniform2i64vNV"sv, check_errors);
 }
 
 template<class vec_2_GLuint64EXT>
@@ -248,7 +267,10 @@ requires(concepts::vector<vec_2_GLuint64EXT, GLuint64EXT, 2>)
  * \param y GLuint64EXT
  * \return void
  */
-STATICINLINE void uniform(i32 location, vec_2_GLuint64EXT const& x)
+STATICINLINE void uniform(
+    i32                      location,
+    vec_2_GLuint64EXT const& x,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -256,7 +278,7 @@ STATICINLINE void uniform(i32 location, vec_2_GLuint64EXT const& x)
         GLW_FPTR_CHECK(Uniform2ui64NV)
     }
     glUniform2ui64NV(location, x[0], x[1]);
-    detail::error_check("Uniform2ui64NV"sv);
+    detail::error_check("Uniform2ui64NV"sv, check_errors);
 }
 
 template<class span_const_vec_2_GLuint64EXT>
@@ -274,7 +296,9 @@ requires(
  * \return void
  */
 STATICINLINE void uniform(
-    i32 location, span_const_vec_2_GLuint64EXT const& value)
+    i32                                 location,
+    span_const_vec_2_GLuint64EXT const& value,
+    error_check                         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -285,7 +309,7 @@ STATICINLINE void uniform(
         location,
         value.size(),
         reinterpret_cast<const GLuint64EXT*>(value.data()));
-    detail::error_check("Uniform2ui64vNV"sv);
+    detail::error_check("Uniform2ui64vNV"sv, check_errors);
 }
 
 template<class vec_3_GLint64EXT>
@@ -298,7 +322,10 @@ requires(concepts::vector<vec_3_GLint64EXT, GLint64EXT, 3>)
  * \param z GLint64EXT
  * \return void
  */
-STATICINLINE void uniform(i32 location, vec_3_GLint64EXT const& x)
+STATICINLINE void uniform(
+    i32                     location,
+    vec_3_GLint64EXT const& x,
+    error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -306,7 +333,7 @@ STATICINLINE void uniform(i32 location, vec_3_GLint64EXT const& x)
         GLW_FPTR_CHECK(Uniform3i64NV)
     }
     glUniform3i64NV(location, x[0], x[1], x[2]);
-    detail::error_check("Uniform3i64NV"sv);
+    detail::error_check("Uniform3i64NV"sv, check_errors);
 }
 
 template<class span_const_vec_3_GLint64EXT>
@@ -322,7 +349,9 @@ requires(
  * \return void
  */
 STATICINLINE void uniform(
-    i32 location, span_const_vec_3_GLint64EXT const& value)
+    i32                                location,
+    span_const_vec_3_GLint64EXT const& value,
+    error_check                        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -333,7 +362,7 @@ STATICINLINE void uniform(
         location,
         value.size(),
         reinterpret_cast<const GLint64EXT*>(value.data()));
-    detail::error_check("Uniform3i64vNV"sv);
+    detail::error_check("Uniform3i64vNV"sv, check_errors);
 }
 
 template<class vec_3_GLuint64EXT>
@@ -346,7 +375,10 @@ requires(concepts::vector<vec_3_GLuint64EXT, GLuint64EXT, 3>)
  * \param z GLuint64EXT
  * \return void
  */
-STATICINLINE void uniform(i32 location, vec_3_GLuint64EXT const& x)
+STATICINLINE void uniform(
+    i32                      location,
+    vec_3_GLuint64EXT const& x,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -354,7 +386,7 @@ STATICINLINE void uniform(i32 location, vec_3_GLuint64EXT const& x)
         GLW_FPTR_CHECK(Uniform3ui64NV)
     }
     glUniform3ui64NV(location, x[0], x[1], x[2]);
-    detail::error_check("Uniform3ui64NV"sv);
+    detail::error_check("Uniform3ui64NV"sv, check_errors);
 }
 
 template<class span_const_vec_3_GLuint64EXT>
@@ -372,7 +404,9 @@ requires(
  * \return void
  */
 STATICINLINE void uniform(
-    i32 location, span_const_vec_3_GLuint64EXT const& value)
+    i32                                 location,
+    span_const_vec_3_GLuint64EXT const& value,
+    error_check                         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -383,7 +417,7 @@ STATICINLINE void uniform(
         location,
         value.size(),
         reinterpret_cast<const GLuint64EXT*>(value.data()));
-    detail::error_check("Uniform3ui64vNV"sv);
+    detail::error_check("Uniform3ui64vNV"sv, check_errors);
 }
 
 template<class vec_4_GLint64EXT>
@@ -397,7 +431,10 @@ requires(concepts::vector<vec_4_GLint64EXT, GLint64EXT, 4>)
  * \param w GLint64EXT
  * \return void
  */
-STATICINLINE void uniform(i32 location, vec_4_GLint64EXT const& x)
+STATICINLINE void uniform(
+    i32                     location,
+    vec_4_GLint64EXT const& x,
+    error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -405,7 +442,7 @@ STATICINLINE void uniform(i32 location, vec_4_GLint64EXT const& x)
         GLW_FPTR_CHECK(Uniform4i64NV)
     }
     glUniform4i64NV(location, x[0], x[1], x[2], x[3]);
-    detail::error_check("Uniform4i64NV"sv);
+    detail::error_check("Uniform4i64NV"sv, check_errors);
 }
 
 template<class span_const_vec_4_GLint64EXT>
@@ -421,7 +458,9 @@ requires(
  * \return void
  */
 STATICINLINE void uniform(
-    i32 location, span_const_vec_4_GLint64EXT const& value)
+    i32                                location,
+    span_const_vec_4_GLint64EXT const& value,
+    error_check                        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -432,7 +471,7 @@ STATICINLINE void uniform(
         location,
         value.size(),
         reinterpret_cast<const GLint64EXT*>(value.data()));
-    detail::error_check("Uniform4i64vNV"sv);
+    detail::error_check("Uniform4i64vNV"sv, check_errors);
 }
 
 template<class vec_4_GLuint64EXT>
@@ -446,7 +485,10 @@ requires(concepts::vector<vec_4_GLuint64EXT, GLuint64EXT, 4>)
  * \param w GLuint64EXT
  * \return void
  */
-STATICINLINE void uniform(i32 location, vec_4_GLuint64EXT const& x)
+STATICINLINE void uniform(
+    i32                      location,
+    vec_4_GLuint64EXT const& x,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -454,7 +496,7 @@ STATICINLINE void uniform(i32 location, vec_4_GLuint64EXT const& x)
         GLW_FPTR_CHECK(Uniform4ui64NV)
     }
     glUniform4ui64NV(location, x[0], x[1], x[2], x[3]);
-    detail::error_check("Uniform4ui64NV"sv);
+    detail::error_check("Uniform4ui64NV"sv, check_errors);
 }
 
 template<class span_const_vec_4_GLuint64EXT>
@@ -472,7 +514,9 @@ requires(
  * \return void
  */
 STATICINLINE void uniform(
-    i32 location, span_const_vec_4_GLuint64EXT const& value)
+    i32                                 location,
+    span_const_vec_4_GLuint64EXT const& value,
+    error_check                         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -483,7 +527,7 @@ STATICINLINE void uniform(
         location,
         value.size(),
         reinterpret_cast<const GLuint64EXT*>(value.data()));
-    detail::error_check("Uniform4ui64vNV"sv);
+    detail::error_check("Uniform4ui64vNV"sv, check_errors);
 }
 
 /*!
@@ -493,7 +537,11 @@ STATICINLINE void uniform(
  * \param x GLint64EXT
  * \return void
  */
-STATICINLINE void program_uniform(u32 program, i32 location, GLint64EXT x)
+STATICINLINE void program_uniform(
+    u32         program,
+    i32         location,
+    GLint64EXT  x,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -506,7 +554,7 @@ STATICINLINE void program_uniform(u32 program, i32 location, GLint64EXT x)
 #endif
     }
     glProgramUniform1i64NV(program, location, x);
-    detail::error_check("ProgramUniform1i64NV"sv);
+    detail::error_check("ProgramUniform1i64NV"sv, check_errors);
 }
 
 template<class span_const_GLint64EXT>
@@ -524,7 +572,10 @@ requires(
  * \return void
  */
 STATICINLINE void program_uniform(
-    u32 program, i32 location, span_const_GLint64EXT const& value)
+    u32                          program,
+    i32                          location,
+    span_const_GLint64EXT const& value,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -541,7 +592,7 @@ STATICINLINE void program_uniform(
         location,
         value.size(),
         reinterpret_cast<const GLint64EXT*>(value.data()));
-    detail::error_check("ProgramUniform1i64vNV"sv);
+    detail::error_check("ProgramUniform1i64vNV"sv, check_errors);
 }
 
 /*!
@@ -551,7 +602,11 @@ STATICINLINE void program_uniform(
  * \param x GLuint64EXT
  * \return void
  */
-STATICINLINE void program_uniform(u32 program, i32 location, GLuint64EXT x)
+STATICINLINE void program_uniform(
+    u32         program,
+    i32         location,
+    GLuint64EXT x,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -564,7 +619,7 @@ STATICINLINE void program_uniform(u32 program, i32 location, GLuint64EXT x)
 #endif
     }
     glProgramUniform1ui64NV(program, location, x);
-    detail::error_check("ProgramUniform1ui64NV"sv);
+    detail::error_check("ProgramUniform1ui64NV"sv, check_errors);
 }
 
 template<class span_const_GLuint64EXT>
@@ -582,7 +637,10 @@ requires(
  * \return void
  */
 STATICINLINE void program_uniform(
-    u32 program, i32 location, span_const_GLuint64EXT const& value)
+    u32                           program,
+    i32                           location,
+    span_const_GLuint64EXT const& value,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -599,7 +657,7 @@ STATICINLINE void program_uniform(
         location,
         value.size(),
         reinterpret_cast<const GLuint64EXT*>(value.data()));
-    detail::error_check("ProgramUniform1ui64vNV"sv);
+    detail::error_check("ProgramUniform1ui64vNV"sv, check_errors);
 }
 
 template<class vec_2_GLint64EXT>
@@ -613,7 +671,10 @@ requires(concepts::vector<vec_2_GLint64EXT, GLint64EXT, 2>)
  * \return void
  */
 STATICINLINE void program_uniform(
-    u32 program, i32 location, vec_2_GLint64EXT const& x)
+    u32                     program,
+    i32                     location,
+    vec_2_GLint64EXT const& x,
+    error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -626,7 +687,7 @@ STATICINLINE void program_uniform(
 #endif
     }
     glProgramUniform2i64NV(program, location, x[0], x[1]);
-    detail::error_check("ProgramUniform2i64NV"sv);
+    detail::error_check("ProgramUniform2i64NV"sv, check_errors);
 }
 
 template<class span_const_vec_2_GLint64EXT>
@@ -643,7 +704,10 @@ requires(
  * \return void
  */
 STATICINLINE void program_uniform(
-    u32 program, i32 location, span_const_vec_2_GLint64EXT const& value)
+    u32                                program,
+    i32                                location,
+    span_const_vec_2_GLint64EXT const& value,
+    error_check                        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -660,7 +724,7 @@ STATICINLINE void program_uniform(
         location,
         value.size(),
         reinterpret_cast<const GLint64EXT*>(value.data()));
-    detail::error_check("ProgramUniform2i64vNV"sv);
+    detail::error_check("ProgramUniform2i64vNV"sv, check_errors);
 }
 
 template<class vec_2_GLuint64EXT>
@@ -674,7 +738,10 @@ requires(concepts::vector<vec_2_GLuint64EXT, GLuint64EXT, 2>)
  * \return void
  */
 STATICINLINE void program_uniform(
-    u32 program, i32 location, vec_2_GLuint64EXT const& x)
+    u32                      program,
+    i32                      location,
+    vec_2_GLuint64EXT const& x,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -687,7 +754,7 @@ STATICINLINE void program_uniform(
 #endif
     }
     glProgramUniform2ui64NV(program, location, x[0], x[1]);
-    detail::error_check("ProgramUniform2ui64NV"sv);
+    detail::error_check("ProgramUniform2ui64NV"sv, check_errors);
 }
 
 template<class span_const_vec_2_GLuint64EXT>
@@ -706,7 +773,10 @@ requires(
  * \return void
  */
 STATICINLINE void program_uniform(
-    u32 program, i32 location, span_const_vec_2_GLuint64EXT const& value)
+    u32                                 program,
+    i32                                 location,
+    span_const_vec_2_GLuint64EXT const& value,
+    error_check                         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -723,7 +793,7 @@ STATICINLINE void program_uniform(
         location,
         value.size(),
         reinterpret_cast<const GLuint64EXT*>(value.data()));
-    detail::error_check("ProgramUniform2ui64vNV"sv);
+    detail::error_check("ProgramUniform2ui64vNV"sv, check_errors);
 }
 
 template<class vec_3_GLint64EXT>
@@ -738,7 +808,10 @@ requires(concepts::vector<vec_3_GLint64EXT, GLint64EXT, 3>)
  * \return void
  */
 STATICINLINE void program_uniform(
-    u32 program, i32 location, vec_3_GLint64EXT const& x)
+    u32                     program,
+    i32                     location,
+    vec_3_GLint64EXT const& x,
+    error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -751,7 +824,7 @@ STATICINLINE void program_uniform(
 #endif
     }
     glProgramUniform3i64NV(program, location, x[0], x[1], x[2]);
-    detail::error_check("ProgramUniform3i64NV"sv);
+    detail::error_check("ProgramUniform3i64NV"sv, check_errors);
 }
 
 template<class span_const_vec_3_GLint64EXT>
@@ -768,7 +841,10 @@ requires(
  * \return void
  */
 STATICINLINE void program_uniform(
-    u32 program, i32 location, span_const_vec_3_GLint64EXT const& value)
+    u32                                program,
+    i32                                location,
+    span_const_vec_3_GLint64EXT const& value,
+    error_check                        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -785,7 +861,7 @@ STATICINLINE void program_uniform(
         location,
         value.size(),
         reinterpret_cast<const GLint64EXT*>(value.data()));
-    detail::error_check("ProgramUniform3i64vNV"sv);
+    detail::error_check("ProgramUniform3i64vNV"sv, check_errors);
 }
 
 template<class vec_3_GLuint64EXT>
@@ -800,7 +876,10 @@ requires(concepts::vector<vec_3_GLuint64EXT, GLuint64EXT, 3>)
  * \return void
  */
 STATICINLINE void program_uniform(
-    u32 program, i32 location, vec_3_GLuint64EXT const& x)
+    u32                      program,
+    i32                      location,
+    vec_3_GLuint64EXT const& x,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -813,7 +892,7 @@ STATICINLINE void program_uniform(
 #endif
     }
     glProgramUniform3ui64NV(program, location, x[0], x[1], x[2]);
-    detail::error_check("ProgramUniform3ui64NV"sv);
+    detail::error_check("ProgramUniform3ui64NV"sv, check_errors);
 }
 
 template<class span_const_vec_3_GLuint64EXT>
@@ -832,7 +911,10 @@ requires(
  * \return void
  */
 STATICINLINE void program_uniform(
-    u32 program, i32 location, span_const_vec_3_GLuint64EXT const& value)
+    u32                                 program,
+    i32                                 location,
+    span_const_vec_3_GLuint64EXT const& value,
+    error_check                         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -849,7 +931,7 @@ STATICINLINE void program_uniform(
         location,
         value.size(),
         reinterpret_cast<const GLuint64EXT*>(value.data()));
-    detail::error_check("ProgramUniform3ui64vNV"sv);
+    detail::error_check("ProgramUniform3ui64vNV"sv, check_errors);
 }
 
 template<class vec_4_GLint64EXT>
@@ -865,7 +947,10 @@ requires(concepts::vector<vec_4_GLint64EXT, GLint64EXT, 4>)
  * \return void
  */
 STATICINLINE void program_uniform(
-    u32 program, i32 location, vec_4_GLint64EXT const& x)
+    u32                     program,
+    i32                     location,
+    vec_4_GLint64EXT const& x,
+    error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -878,7 +963,7 @@ STATICINLINE void program_uniform(
 #endif
     }
     glProgramUniform4i64NV(program, location, x[0], x[1], x[2], x[3]);
-    detail::error_check("ProgramUniform4i64NV"sv);
+    detail::error_check("ProgramUniform4i64NV"sv, check_errors);
 }
 
 template<class span_const_vec_4_GLint64EXT>
@@ -895,7 +980,10 @@ requires(
  * \return void
  */
 STATICINLINE void program_uniform(
-    u32 program, i32 location, span_const_vec_4_GLint64EXT const& value)
+    u32                                program,
+    i32                                location,
+    span_const_vec_4_GLint64EXT const& value,
+    error_check                        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -912,7 +1000,7 @@ STATICINLINE void program_uniform(
         location,
         value.size(),
         reinterpret_cast<const GLint64EXT*>(value.data()));
-    detail::error_check("ProgramUniform4i64vNV"sv);
+    detail::error_check("ProgramUniform4i64vNV"sv, check_errors);
 }
 
 template<class vec_4_GLuint64EXT>
@@ -928,7 +1016,10 @@ requires(concepts::vector<vec_4_GLuint64EXT, GLuint64EXT, 4>)
  * \return void
  */
 STATICINLINE void program_uniform(
-    u32 program, i32 location, vec_4_GLuint64EXT const& x)
+    u32                      program,
+    i32                      location,
+    vec_4_GLuint64EXT const& x,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -941,7 +1032,7 @@ STATICINLINE void program_uniform(
 #endif
     }
     glProgramUniform4ui64NV(program, location, x[0], x[1], x[2], x[3]);
-    detail::error_check("ProgramUniform4ui64NV"sv);
+    detail::error_check("ProgramUniform4ui64NV"sv, check_errors);
 }
 
 template<class span_const_vec_4_GLuint64EXT>
@@ -960,7 +1051,10 @@ requires(
  * \return void
  */
 STATICINLINE void program_uniform(
-    u32 program, i32 location, span_const_vec_4_GLuint64EXT const& value)
+    u32                                 program,
+    i32                                 location,
+    span_const_vec_4_GLuint64EXT const& value,
+    error_check                         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -977,7 +1071,7 @@ STATICINLINE void program_uniform(
         location,
         value.size(),
         reinterpret_cast<const GLuint64EXT*>(value.data()));
-    detail::error_check("ProgramUniform4ui64vNV"sv);
+    detail::error_check("ProgramUniform4ui64vNV"sv, check_errors);
 }
 
 } // namespace gl::amd::gpu_shader_int64

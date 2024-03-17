@@ -130,6 +130,12 @@ concept MaximumVersion =
     Current::major < Maximum::major ||
     (Current::major == Maximum::major && Current::minor <= Maximum::minor);
 
+enum class error_check
+{
+    on,
+    off,
+};
+
 namespace detail {
 
 inline std::string error_to_hex(auto error)
@@ -137,7 +143,7 @@ inline std::string error_to_hex(auto error)
     return stl_types::str::fmt::pointerify(error);
 }
 
-void error_check(std::string_view cmd_name);
+void error_check(std::string_view cmd_name, enum error_check check_errors);
 
 } // namespace detail
 } // namespace gl

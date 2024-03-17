@@ -12,7 +12,10 @@ constexpr u32 fixed = 0x140C;
  * \param ref GLfixed
  * \return void
  */
-STATICINLINE void alpha_funcx(group::alpha_function func, GLfixed ref)
+STATICINLINE void alpha_funcx(
+    group::alpha_function func,
+    GLfixed               ref,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -20,7 +23,7 @@ STATICINLINE void alpha_funcx(group::alpha_function func, GLfixed ref)
         GLW_FPTR_CHECK(AlphaFuncxOES)
     }
     glAlphaFuncxOES(static_cast<GLenum>(func), ref);
-    detail::error_check("AlphaFuncxOES"sv);
+    detail::error_check("AlphaFuncxOES"sv, check_errors);
 }
 
 template<class vec_4_GLfixed>
@@ -33,7 +36,8 @@ requires(concepts::vector<vec_4_GLfixed, GLfixed, 4>)
  * \param alpha GLfixed
  * \return void
  */
-STATICINLINE void clear_colorx(vec_4_GLfixed const& red)
+STATICINLINE void clear_colorx(
+    vec_4_GLfixed const& red, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -41,7 +45,7 @@ STATICINLINE void clear_colorx(vec_4_GLfixed const& red)
         GLW_FPTR_CHECK(ClearColorxOES)
     }
     glClearColorxOES(red[0], red[1], red[2], red[3]);
-    detail::error_check("ClearColorxOES"sv);
+    detail::error_check("ClearColorxOES"sv, check_errors);
 }
 
 /*!
@@ -49,7 +53,8 @@ STATICINLINE void clear_colorx(vec_4_GLfixed const& red)
  * \param depth GLfixed
  * \return void
  */
-STATICINLINE void clear_depthx(GLfixed depth)
+STATICINLINE void clear_depthx(
+    GLfixed depth, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -57,7 +62,7 @@ STATICINLINE void clear_depthx(GLfixed depth)
         GLW_FPTR_CHECK(ClearDepthxOES)
     }
     glClearDepthxOES(depth);
-    detail::error_check("ClearDepthxOES"sv);
+    detail::error_check("ClearDepthxOES"sv, check_errors);
 }
 
 template<class span_const_GLfixed>
@@ -73,7 +78,9 @@ requires(
  * \return void
  */
 STATICINLINE void clip_planex(
-    group::clip_plane_name plane, span_const_GLfixed const& equation)
+    group::clip_plane_name    plane,
+    span_const_GLfixed const& equation,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -84,7 +91,7 @@ STATICINLINE void clip_planex(
         static_cast<GLenum>(plane),
         equation.size() ? reinterpret_cast<const GLfixed*>(equation.data())
                         : nullptr);
-    detail::error_check("ClipPlanexOES"sv);
+    detail::error_check("ClipPlanexOES"sv, check_errors);
 }
 
 template<class vec_4_GLfixed>
@@ -97,7 +104,8 @@ requires(concepts::vector<vec_4_GLfixed, GLfixed, 4>)
  * \param alpha GLfixed
  * \return void
  */
-STATICINLINE void color4x(vec_4_GLfixed const& red)
+STATICINLINE void color4x(
+    vec_4_GLfixed const& red, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -105,7 +113,7 @@ STATICINLINE void color4x(vec_4_GLfixed const& red)
         GLW_FPTR_CHECK(Color4xOES)
     }
     glColor4xOES(red[0], red[1], red[2], red[3]);
-    detail::error_check("Color4xOES"sv);
+    detail::error_check("Color4xOES"sv, check_errors);
 }
 
 /*!
@@ -114,7 +122,8 @@ STATICINLINE void color4x(vec_4_GLfixed const& red)
  * \param f GLfixed
  * \return void
  */
-STATICINLINE void depth_rangex(GLfixed n, GLfixed f)
+STATICINLINE void depth_rangex(
+    GLfixed n, GLfixed f, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -122,7 +131,7 @@ STATICINLINE void depth_rangex(GLfixed n, GLfixed f)
         GLW_FPTR_CHECK(DepthRangexOES)
     }
     glDepthRangexOES(n, f);
-    detail::error_check("DepthRangexOES"sv);
+    detail::error_check("DepthRangexOES"sv, check_errors);
 }
 
 /*!
@@ -131,7 +140,10 @@ STATICINLINE void depth_rangex(GLfixed n, GLfixed f)
  * \param param GLfixed
  * \return void
  */
-STATICINLINE void fogx(group::fog_prop pname, GLfixed param)
+STATICINLINE void fogx(
+    group::fog_prop pname,
+    GLfixed         param,
+    error_check     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -139,7 +151,7 @@ STATICINLINE void fogx(group::fog_prop pname, GLfixed param)
         GLW_FPTR_CHECK(FogxOES)
     }
     glFogxOES(static_cast<GLenum>(pname), param);
-    detail::error_check("FogxOES"sv);
+    detail::error_check("FogxOES"sv, check_errors);
 }
 
 template<class span_const_GLfixed>
@@ -154,7 +166,10 @@ requires(
  * \param param const GLfixed *
  * \return void
  */
-STATICINLINE void fogxv(group::fog_prop pname, span_const_GLfixed const& param)
+STATICINLINE void fogxv(
+    group::fog_prop           pname,
+    span_const_GLfixed const& param,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -165,7 +180,7 @@ STATICINLINE void fogxv(group::fog_prop pname, span_const_GLfixed const& param)
         static_cast<GLenum>(pname),
         param.size() ? reinterpret_cast<const GLfixed*>(param.data())
                      : nullptr);
-    detail::error_check("FogxvOES"sv);
+    detail::error_check("FogxvOES"sv, check_errors);
 }
 
 /*!
@@ -179,7 +194,13 @@ STATICINLINE void fogxv(group::fog_prop pname, span_const_GLfixed const& param)
  * \return void
  */
 STATICINLINE void frustumx(
-    GLfixed l, GLfixed r, GLfixed b, GLfixed t, GLfixed n, GLfixed f)
+    GLfixed     l,
+    GLfixed     r,
+    GLfixed     b,
+    GLfixed     t,
+    GLfixed     n,
+    GLfixed     f,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -187,7 +208,7 @@ STATICINLINE void frustumx(
         GLW_FPTR_CHECK(FrustumxOES)
     }
     glFrustumxOES(l, r, b, t, n, f);
-    detail::error_check("FrustumxOES"sv);
+    detail::error_check("FrustumxOES"sv, check_errors);
 }
 
 template<class span_GLfixed>
@@ -203,7 +224,9 @@ requires(
  * \return void
  */
 STATICINLINE void get_clip_planex(
-    group::clip_plane_name plane, span_GLfixed equation)
+    group::clip_plane_name plane,
+    span_GLfixed           equation,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -214,7 +237,7 @@ STATICINLINE void get_clip_planex(
         static_cast<GLenum>(plane),
         equation.size() ? reinterpret_cast<GLfixed*>(equation.data())
                         : nullptr);
-    detail::error_check("GetClipPlanexOES"sv);
+    detail::error_check("GetClipPlanexOES"sv, check_errors);
 }
 
 template<class span_GLfixed>
@@ -229,7 +252,10 @@ requires(
  * \param params GLfixed *
  * \return void
  */
-STATICINLINE void get_fixedv(group::get_prop pname, span_GLfixed params)
+STATICINLINE void get_fixedv(
+    group::get_prop pname,
+    span_GLfixed    params,
+    error_check     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -239,7 +265,7 @@ STATICINLINE void get_fixedv(group::get_prop pname, span_GLfixed params)
     glGetFixedvOES(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLfixed*>(params.data()) : nullptr);
-    detail::error_check("GetFixedvOES"sv);
+    detail::error_check("GetFixedvOES"sv, check_errors);
 }
 
 template<class span_GLfixed>
@@ -258,7 +284,8 @@ requires(
 STATICINLINE void get_tex_envxv(
     group::texture_env_target    target,
     group::texture_env_parameter pname,
-    span_GLfixed                 params)
+    span_GLfixed                 params,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -269,7 +296,7 @@ STATICINLINE void get_tex_envxv(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLfixed*>(params.data()) : nullptr);
-    detail::error_check("GetTexEnvxvOES"sv);
+    detail::error_check("GetTexEnvxvOES"sv, check_errors);
 }
 
 template<class span_GLfixed>
@@ -288,7 +315,8 @@ requires(
 STATICINLINE void get_tex_parameterxv(
     group::texture_target        target,
     group::get_texture_parameter pname,
-    span_GLfixed                 params)
+    span_GLfixed                 params,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -299,7 +327,7 @@ STATICINLINE void get_tex_parameterxv(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLfixed*>(params.data()) : nullptr);
-    detail::error_check("GetTexParameterxvOES"sv);
+    detail::error_check("GetTexParameterxvOES"sv, check_errors);
 }
 
 /*!
@@ -309,7 +337,9 @@ STATICINLINE void get_tex_parameterxv(
  * \return void
  */
 STATICINLINE void light_modelx(
-    group::light_model_parameter pname, GLfixed param)
+    group::light_model_parameter pname,
+    GLfixed                      param,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -317,7 +347,7 @@ STATICINLINE void light_modelx(
         GLW_FPTR_CHECK(LightModelxOES)
     }
     glLightModelxOES(static_cast<GLenum>(pname), param);
-    detail::error_check("LightModelxOES"sv);
+    detail::error_check("LightModelxOES"sv, check_errors);
 }
 
 template<class span_const_GLfixed>
@@ -333,7 +363,9 @@ requires(
  * \return void
  */
 STATICINLINE void light_modelxv(
-    group::light_model_parameter pname, span_const_GLfixed const& param)
+    group::light_model_parameter pname,
+    span_const_GLfixed const&    param,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -344,7 +376,7 @@ STATICINLINE void light_modelxv(
         static_cast<GLenum>(pname),
         param.size() ? reinterpret_cast<const GLfixed*>(param.data())
                      : nullptr);
-    detail::error_check("LightModelxvOES"sv);
+    detail::error_check("LightModelxvOES"sv, check_errors);
 }
 
 /*!
@@ -355,7 +387,10 @@ STATICINLINE void light_modelxv(
  * \return void
  */
 STATICINLINE void lightx(
-    group::light_name light, group::light_parameter pname, GLfixed param)
+    group::light_name      light,
+    group::light_parameter pname,
+    GLfixed                param,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -363,7 +398,7 @@ STATICINLINE void lightx(
         GLW_FPTR_CHECK(LightxOES)
     }
     glLightxOES(static_cast<GLenum>(light), static_cast<GLenum>(pname), param);
-    detail::error_check("LightxOES"sv);
+    detail::error_check("LightxOES"sv, check_errors);
 }
 
 template<class span_const_GLfixed>
@@ -382,7 +417,8 @@ requires(
 STATICINLINE void lightxv(
     group::light_name         light,
     group::light_parameter    pname,
-    span_const_GLfixed const& params)
+    span_const_GLfixed const& params,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -394,7 +430,7 @@ STATICINLINE void lightxv(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<const GLfixed*>(params.data())
                       : nullptr);
-    detail::error_check("LightxvOES"sv);
+    detail::error_check("LightxvOES"sv, check_errors);
 }
 
 /*!
@@ -402,7 +438,8 @@ STATICINLINE void lightxv(
  * \param width GLfixed
  * \return void
  */
-STATICINLINE void line_widthx(GLfixed width)
+STATICINLINE void line_widthx(
+    GLfixed width, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -410,7 +447,7 @@ STATICINLINE void line_widthx(GLfixed width)
         GLW_FPTR_CHECK(LineWidthxOES)
     }
     glLineWidthxOES(width);
-    detail::error_check("LineWidthxOES"sv);
+    detail::error_check("LineWidthxOES"sv, check_errors);
 }
 
 template<class span_const_GLfixed>
@@ -424,7 +461,8 @@ requires(
  * \param m const GLfixed *
  * \return void
  */
-STATICINLINE void load_matrixx(span_const_GLfixed const& m)
+STATICINLINE void load_matrixx(
+    span_const_GLfixed const& m, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -433,7 +471,7 @@ STATICINLINE void load_matrixx(span_const_GLfixed const& m)
     }
     glLoadMatrixxOES(
         m.size() ? reinterpret_cast<const GLfixed*>(m.data()) : nullptr);
-    detail::error_check("LoadMatrixxOES"sv);
+    detail::error_check("LoadMatrixxOES"sv, check_errors);
 }
 
 /*!
@@ -444,7 +482,10 @@ STATICINLINE void load_matrixx(span_const_GLfixed const& m)
  * \return void
  */
 STATICINLINE void materialx(
-    group::triangle_face face, group::material_parameter pname, GLfixed param)
+    group::triangle_face      face,
+    group::material_parameter pname,
+    GLfixed                   param,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -453,7 +494,7 @@ STATICINLINE void materialx(
     }
     glMaterialxOES(
         static_cast<GLenum>(face), static_cast<GLenum>(pname), param);
-    detail::error_check("MaterialxOES"sv);
+    detail::error_check("MaterialxOES"sv, check_errors);
 }
 
 template<class span_const_GLfixed>
@@ -472,7 +513,8 @@ requires(
 STATICINLINE void materialxv(
     group::triangle_face      face,
     group::material_parameter pname,
-    span_const_GLfixed const& param)
+    span_const_GLfixed const& param,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -484,7 +526,7 @@ STATICINLINE void materialxv(
         static_cast<GLenum>(pname),
         param.size() ? reinterpret_cast<const GLfixed*>(param.data())
                      : nullptr);
-    detail::error_check("MaterialxvOES"sv);
+    detail::error_check("MaterialxvOES"sv, check_errors);
 }
 
 template<class span_const_GLfixed>
@@ -498,7 +540,8 @@ requires(
  * \param m const GLfixed *
  * \return void
  */
-STATICINLINE void mult_matrixx(span_const_GLfixed const& m)
+STATICINLINE void mult_matrixx(
+    span_const_GLfixed const& m, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -507,7 +550,7 @@ STATICINLINE void mult_matrixx(span_const_GLfixed const& m)
     }
     glMultMatrixxOES(
         m.size() ? reinterpret_cast<const GLfixed*>(m.data()) : nullptr);
-    detail::error_check("MultMatrixxOES"sv);
+    detail::error_check("MultMatrixxOES"sv, check_errors);
 }
 
 /*!
@@ -520,7 +563,12 @@ STATICINLINE void mult_matrixx(span_const_GLfixed const& m)
  * \return void
  */
 STATICINLINE void multi_tex_coord4x(
-    group::texture_unit texture, GLfixed s, GLfixed t, GLfixed r, GLfixed q)
+    group::texture_unit texture,
+    GLfixed             s,
+    GLfixed             t,
+    GLfixed             r,
+    GLfixed             q,
+    error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -528,7 +576,7 @@ STATICINLINE void multi_tex_coord4x(
         GLW_FPTR_CHECK(MultiTexCoord4xOES)
     }
     glMultiTexCoord4xOES(static_cast<GLenum>(texture), s, t, r, q);
-    detail::error_check("MultiTexCoord4xOES"sv);
+    detail::error_check("MultiTexCoord4xOES"sv, check_errors);
 }
 
 /*!
@@ -538,7 +586,11 @@ STATICINLINE void multi_tex_coord4x(
  * \param nz GLfixed
  * \return void
  */
-STATICINLINE void normal3x(GLfixed nx, GLfixed ny, GLfixed nz)
+STATICINLINE void normal3x(
+    GLfixed     nx,
+    GLfixed     ny,
+    GLfixed     nz,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -546,7 +598,7 @@ STATICINLINE void normal3x(GLfixed nx, GLfixed ny, GLfixed nz)
         GLW_FPTR_CHECK(Normal3xOES)
     }
     glNormal3xOES(nx, ny, nz);
-    detail::error_check("Normal3xOES"sv);
+    detail::error_check("Normal3xOES"sv, check_errors);
 }
 
 /*!
@@ -560,7 +612,13 @@ STATICINLINE void normal3x(GLfixed nx, GLfixed ny, GLfixed nz)
  * \return void
  */
 STATICINLINE void orthox(
-    GLfixed l, GLfixed r, GLfixed b, GLfixed t, GLfixed n, GLfixed f)
+    GLfixed     l,
+    GLfixed     r,
+    GLfixed     b,
+    GLfixed     t,
+    GLfixed     n,
+    GLfixed     f,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -568,7 +626,7 @@ STATICINLINE void orthox(
         GLW_FPTR_CHECK(OrthoxOES)
     }
     glOrthoxOES(l, r, b, t, n, f);
-    detail::error_check("OrthoxOES"sv);
+    detail::error_check("OrthoxOES"sv, check_errors);
 }
 
 template<class span_const_GLfixed>
@@ -584,7 +642,9 @@ requires(
  * \return void
  */
 STATICINLINE void point_parameterxv(
-    group::point_parameter_name_arb pname, span_const_GLfixed const& params)
+    group::point_parameter_name_arb pname,
+    span_const_GLfixed const&       params,
+    error_check                     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -595,7 +655,7 @@ STATICINLINE void point_parameterxv(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<const GLfixed*>(params.data())
                       : nullptr);
-    detail::error_check("PointParameterxvOES"sv);
+    detail::error_check("PointParameterxvOES"sv, check_errors);
 }
 
 /*!
@@ -603,7 +663,8 @@ STATICINLINE void point_parameterxv(
  * \param size GLfixed
  * \return void
  */
-STATICINLINE void point_sizex(GLfixed size)
+STATICINLINE void point_sizex(
+    GLfixed size, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -611,7 +672,7 @@ STATICINLINE void point_sizex(GLfixed size)
         GLW_FPTR_CHECK(PointSizexOES)
     }
     glPointSizexOES(size);
-    detail::error_check("PointSizexOES"sv);
+    detail::error_check("PointSizexOES"sv, check_errors);
 }
 
 /*!
@@ -620,7 +681,8 @@ STATICINLINE void point_sizex(GLfixed size)
  * \param units GLfixed
  * \return void
  */
-STATICINLINE void polygon_offsetx(GLfixed factor, GLfixed units)
+STATICINLINE void polygon_offsetx(
+    GLfixed factor, GLfixed units, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -628,7 +690,7 @@ STATICINLINE void polygon_offsetx(GLfixed factor, GLfixed units)
         GLW_FPTR_CHECK(PolygonOffsetxOES)
     }
     glPolygonOffsetxOES(factor, units);
-    detail::error_check("PolygonOffsetxOES"sv);
+    detail::error_check("PolygonOffsetxOES"sv, check_errors);
 }
 
 template<class vec_3_GLfixed>
@@ -641,7 +703,10 @@ requires(concepts::vector<vec_3_GLfixed, GLfixed, 3>)
  * \param z GLfixed
  * \return void
  */
-STATICINLINE void rotatex(GLfixed angle, vec_3_GLfixed const& x)
+STATICINLINE void rotatex(
+    GLfixed              angle,
+    vec_3_GLfixed const& x,
+    error_check          check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -649,7 +714,7 @@ STATICINLINE void rotatex(GLfixed angle, vec_3_GLfixed const& x)
         GLW_FPTR_CHECK(RotatexOES)
     }
     glRotatexOES(angle, x[0], x[1], x[2]);
-    detail::error_check("RotatexOES"sv);
+    detail::error_check("RotatexOES"sv, check_errors);
 }
 
 template<class vec_3_GLfixed>
@@ -661,7 +726,8 @@ requires(concepts::vector<vec_3_GLfixed, GLfixed, 3>)
  * \param z GLfixed
  * \return void
  */
-STATICINLINE void scalex(vec_3_GLfixed const& x)
+STATICINLINE void scalex(
+    vec_3_GLfixed const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -669,7 +735,7 @@ STATICINLINE void scalex(vec_3_GLfixed const& x)
         GLW_FPTR_CHECK(ScalexOES)
     }
     glScalexOES(x[0], x[1], x[2]);
-    detail::error_check("ScalexOES"sv);
+    detail::error_check("ScalexOES"sv, check_errors);
 }
 
 /*!
@@ -682,7 +748,8 @@ STATICINLINE void scalex(vec_3_GLfixed const& x)
 STATICINLINE void tex_envx(
     group::texture_env_target    target,
     group::texture_env_parameter pname,
-    GLfixed                      param)
+    GLfixed                      param,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -691,7 +758,7 @@ STATICINLINE void tex_envx(
     }
     glTexEnvxOES(
         static_cast<GLenum>(target), static_cast<GLenum>(pname), param);
-    detail::error_check("TexEnvxOES"sv);
+    detail::error_check("TexEnvxOES"sv, check_errors);
 }
 
 template<class span_const_GLfixed>
@@ -710,7 +777,8 @@ requires(
 STATICINLINE void tex_envxv(
     group::texture_env_target    target,
     group::texture_env_parameter pname,
-    span_const_GLfixed const&    params)
+    span_const_GLfixed const&    params,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -722,7 +790,7 @@ STATICINLINE void tex_envxv(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<const GLfixed*>(params.data())
                       : nullptr);
-    detail::error_check("TexEnvxvOES"sv);
+    detail::error_check("TexEnvxvOES"sv, check_errors);
 }
 
 /*!
@@ -735,7 +803,8 @@ STATICINLINE void tex_envxv(
 STATICINLINE void tex_parameterx(
     group::texture_target        target,
     group::get_texture_parameter pname,
-    GLfixed                      param)
+    GLfixed                      param,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -744,7 +813,7 @@ STATICINLINE void tex_parameterx(
     }
     glTexParameterxOES(
         static_cast<GLenum>(target), static_cast<GLenum>(pname), param);
-    detail::error_check("TexParameterxOES"sv);
+    detail::error_check("TexParameterxOES"sv, check_errors);
 }
 
 template<class span_const_GLfixed>
@@ -763,7 +832,8 @@ requires(
 STATICINLINE void tex_parameterxv(
     group::texture_target        target,
     group::get_texture_parameter pname,
-    span_const_GLfixed const&    params)
+    span_const_GLfixed const&    params,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -775,7 +845,7 @@ STATICINLINE void tex_parameterxv(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<const GLfixed*>(params.data())
                       : nullptr);
-    detail::error_check("TexParameterxvOES"sv);
+    detail::error_check("TexParameterxvOES"sv, check_errors);
 }
 
 template<class vec_3_GLfixed>
@@ -787,7 +857,8 @@ requires(concepts::vector<vec_3_GLfixed, GLfixed, 3>)
  * \param z GLfixed
  * \return void
  */
-STATICINLINE void translatex(vec_3_GLfixed const& x)
+STATICINLINE void translatex(
+    vec_3_GLfixed const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -795,7 +866,7 @@ STATICINLINE void translatex(vec_3_GLfixed const& x)
         GLW_FPTR_CHECK(TranslatexOES)
     }
     glTranslatexOES(x[0], x[1], x[2]);
-    detail::error_check("TranslatexOES"sv);
+    detail::error_check("TranslatexOES"sv, check_errors);
 }
 
 #if defined(GL_VERSION_1_0)
@@ -813,7 +884,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_lightxv(
-    group::light_name light, group::light_parameter pname, span_GLfixed params)
+    group::light_name      light,
+    group::light_parameter pname,
+    span_GLfixed           params,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -824,7 +898,7 @@ STATICINLINE void get_lightxv(
         static_cast<GLenum>(light),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLfixed*>(params.data()) : nullptr);
-    detail::error_check("GetLightxvOES"sv);
+    detail::error_check("GetLightxvOES"sv, check_errors);
 }
 
 #endif
@@ -845,7 +919,8 @@ requires(
 STATICINLINE void get_materialxv(
     group::triangle_face      face,
     group::material_parameter pname,
-    span_GLfixed              params)
+    span_GLfixed              params,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -856,7 +931,7 @@ STATICINLINE void get_materialxv(
         static_cast<GLenum>(face),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLfixed*>(params.data()) : nullptr);
-    detail::error_check("GetMaterialxvOES"sv);
+    detail::error_check("GetMaterialxvOES"sv, check_errors);
 }
 
 #endif
@@ -868,7 +943,9 @@ STATICINLINE void get_materialxv(
  * \return void
  */
 STATICINLINE void point_parameterx(
-    group::point_parameter_name_arb pname, GLfixed param)
+    group::point_parameter_name_arb pname,
+    GLfixed                         param,
+    error_check                     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -876,7 +953,7 @@ STATICINLINE void point_parameterx(
         GLW_FPTR_CHECK(PointParameterxOES)
     }
     glPointParameterxOES(static_cast<GLenum>(pname), param);
-    detail::error_check("PointParameterxOES"sv);
+    detail::error_check("PointParameterxOES"sv, check_errors);
 }
 
 #endif
@@ -887,7 +964,8 @@ STATICINLINE void point_parameterx(
  * \param invert GLboolean
  * \return void
  */
-STATICINLINE void sample_coveragex(GLclampx value, bool invert)
+STATICINLINE void sample_coveragex(
+    GLclampx value, bool invert, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -895,7 +973,7 @@ STATICINLINE void sample_coveragex(GLclampx value, bool invert)
         GLW_FPTR_CHECK(SampleCoveragexOES)
     }
     glSampleCoveragexOES(value, invert);
-    detail::error_check("SampleCoveragexOES"sv);
+    detail::error_check("SampleCoveragexOES"sv, check_errors);
 }
 
 #endif
@@ -906,7 +984,8 @@ STATICINLINE void sample_coveragex(GLclampx value, bool invert)
  * \param value GLfixed
  * \return void
  */
-STATICINLINE void accumx(GLenum op, GLfixed value)
+STATICINLINE void accumx(
+    GLenum op, GLfixed value, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -914,7 +993,7 @@ STATICINLINE void accumx(GLenum op, GLfixed value)
         GLW_FPTR_CHECK(AccumxOES)
     }
     glAccumxOES(op, value);
-    detail::error_check("AccumxOES"sv);
+    detail::error_check("AccumxOES"sv, check_errors);
 }
 
 #endif
@@ -942,7 +1021,8 @@ STATICINLINE void bitmapx(
     GLfixed              yorig,
     GLfixed              xmove,
     GLfixed              ymove,
-    span_const_u8 const& bitmap)
+    span_const_u8 const& bitmap,
+    error_check          check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -958,7 +1038,7 @@ STATICINLINE void bitmapx(
         ymove,
         bitmap.size() ? reinterpret_cast<const GLubyte*>(bitmap.data())
                       : nullptr);
-    detail::error_check("BitmapxOES"sv);
+    detail::error_check("BitmapxOES"sv, check_errors);
 }
 
 #endif
@@ -973,7 +1053,8 @@ requires(concepts::vector<vec_4_GLfixed, GLfixed, 4>)
  * \param alpha GLfixed
  * \return void
  */
-STATICINLINE void blend_colorx(vec_4_GLfixed const& red)
+STATICINLINE void blend_colorx(
+    vec_4_GLfixed const& red, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -981,7 +1062,7 @@ STATICINLINE void blend_colorx(vec_4_GLfixed const& red)
         GLW_FPTR_CHECK(BlendColorxOES)
     }
     glBlendColorxOES(red[0], red[1], red[2], red[3]);
-    detail::error_check("BlendColorxOES"sv);
+    detail::error_check("BlendColorxOES"sv, check_errors);
 }
 
 #endif
@@ -996,7 +1077,8 @@ requires(concepts::vector<vec_4_GLfixed, GLfixed, 4>)
  * \param alpha GLfixed
  * \return void
  */
-STATICINLINE void clear_accumx(vec_4_GLfixed const& red)
+STATICINLINE void clear_accumx(
+    vec_4_GLfixed const& red, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1004,7 +1086,7 @@ STATICINLINE void clear_accumx(vec_4_GLfixed const& red)
         GLW_FPTR_CHECK(ClearAccumxOES)
     }
     glClearAccumxOES(red[0], red[1], red[2], red[3]);
-    detail::error_check("ClearAccumxOES"sv);
+    detail::error_check("ClearAccumxOES"sv, check_errors);
 }
 
 #endif
@@ -1018,7 +1100,8 @@ requires(concepts::vector<vec_3_GLfixed, GLfixed, 3>)
  * \param blue GLfixed
  * \return void
  */
-STATICINLINE void color3x(vec_3_GLfixed const& red)
+STATICINLINE void color3x(
+    vec_3_GLfixed const& red, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1026,7 +1109,7 @@ STATICINLINE void color3x(vec_3_GLfixed const& red)
         GLW_FPTR_CHECK(Color3xOES)
     }
     glColor3xOES(red[0], red[1], red[2]);
-    detail::error_check("Color3xOES"sv);
+    detail::error_check("Color3xOES"sv, check_errors);
 }
 
 #endif
@@ -1042,7 +1125,9 @@ requires(
  * \param components const GLfixed *
  * \return void
  */
-STATICINLINE void color3xv(span_const_GLfixed const& components)
+STATICINLINE void color3xv(
+    span_const_GLfixed const& components,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1052,7 +1137,7 @@ STATICINLINE void color3xv(span_const_GLfixed const& components)
     glColor3xvOES(
         components.size() ? reinterpret_cast<const GLfixed*>(components.data())
                           : nullptr);
-    detail::error_check("Color3xvOES"sv);
+    detail::error_check("Color3xvOES"sv, check_errors);
 }
 
 #endif
@@ -1068,7 +1153,9 @@ requires(
  * \param components const GLfixed *
  * \return void
  */
-STATICINLINE void color4xv(span_const_GLfixed const& components)
+STATICINLINE void color4xv(
+    span_const_GLfixed const& components,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1078,7 +1165,7 @@ STATICINLINE void color4xv(span_const_GLfixed const& components)
     glColor4xvOES(
         components.size() ? reinterpret_cast<const GLfixed*>(components.data())
                           : nullptr);
-    detail::error_check("Color4xvOES"sv);
+    detail::error_check("Color4xvOES"sv, check_errors);
 }
 
 #endif
@@ -1093,7 +1180,8 @@ STATICINLINE void color4xv(span_const_GLfixed const& components)
 STATICINLINE void convolution_parameterx(
     group::convolution_target_ext target,
     group::convolution_parameter  pname,
-    GLfixed                       param)
+    GLfixed                       param,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1102,7 +1190,7 @@ STATICINLINE void convolution_parameterx(
     }
     glConvolutionParameterxOES(
         static_cast<GLenum>(target), static_cast<GLenum>(pname), param);
-    detail::error_check("ConvolutionParameterxOES"sv);
+    detail::error_check("ConvolutionParameterxOES"sv, check_errors);
 }
 
 #endif
@@ -1123,7 +1211,8 @@ requires(
 STATICINLINE void convolution_parameterxv(
     group::convolution_target_ext target,
     group::convolution_parameter  pname,
-    span_const_GLfixed const&     params)
+    span_const_GLfixed const&     params,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1135,7 +1224,7 @@ STATICINLINE void convolution_parameterxv(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<const GLfixed*>(params.data())
                       : nullptr);
-    detail::error_check("ConvolutionParameterxvOES"sv);
+    detail::error_check("ConvolutionParameterxvOES"sv, check_errors);
 }
 
 #endif
@@ -1145,7 +1234,8 @@ STATICINLINE void convolution_parameterxv(
  * \param u GLfixed
  * \return void
  */
-STATICINLINE void eval_coord1x(GLfixed u)
+STATICINLINE void eval_coord1x(
+    GLfixed u, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1153,7 +1243,7 @@ STATICINLINE void eval_coord1x(GLfixed u)
         GLW_FPTR_CHECK(EvalCoord1xOES)
     }
     glEvalCoord1xOES(u);
-    detail::error_check("EvalCoord1xOES"sv);
+    detail::error_check("EvalCoord1xOES"sv, check_errors);
 }
 
 #endif
@@ -1169,7 +1259,9 @@ requires(
  * \param coords const GLfixed *
  * \return void
  */
-STATICINLINE void eval_coord1xv(span_const_GLfixed const& coords)
+STATICINLINE void eval_coord1xv(
+    span_const_GLfixed const& coords,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1179,7 +1271,7 @@ STATICINLINE void eval_coord1xv(span_const_GLfixed const& coords)
     glEvalCoord1xvOES(
         coords.size() ? reinterpret_cast<const GLfixed*>(coords.data())
                       : nullptr);
-    detail::error_check("EvalCoord1xvOES"sv);
+    detail::error_check("EvalCoord1xvOES"sv, check_errors);
 }
 
 #endif
@@ -1190,7 +1282,8 @@ STATICINLINE void eval_coord1xv(span_const_GLfixed const& coords)
  * \param v GLfixed
  * \return void
  */
-STATICINLINE void eval_coord2x(GLfixed u, GLfixed v)
+STATICINLINE void eval_coord2x(
+    GLfixed u, GLfixed v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1198,7 +1291,7 @@ STATICINLINE void eval_coord2x(GLfixed u, GLfixed v)
         GLW_FPTR_CHECK(EvalCoord2xOES)
     }
     glEvalCoord2xOES(u, v);
-    detail::error_check("EvalCoord2xOES"sv);
+    detail::error_check("EvalCoord2xOES"sv, check_errors);
 }
 
 #endif
@@ -1214,7 +1307,9 @@ requires(
  * \param coords const GLfixed *
  * \return void
  */
-STATICINLINE void eval_coord2xv(span_const_GLfixed const& coords)
+STATICINLINE void eval_coord2xv(
+    span_const_GLfixed const& coords,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1224,7 +1319,7 @@ STATICINLINE void eval_coord2xv(span_const_GLfixed const& coords)
     glEvalCoord2xvOES(
         coords.size() ? reinterpret_cast<const GLfixed*>(coords.data())
                       : nullptr);
-    detail::error_check("EvalCoord2xvOES"sv);
+    detail::error_check("EvalCoord2xvOES"sv, check_errors);
 }
 
 #endif
@@ -1243,7 +1338,9 @@ requires(
  * \return void
  */
 STATICINLINE void feedback_bufferx(
-    GLenum type, span_const_GLfixed const& buffer)
+    GLenum                    type,
+    span_const_GLfixed const& buffer,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1255,7 +1352,7 @@ STATICINLINE void feedback_bufferx(
         type,
         buffer.size() ? reinterpret_cast<const GLfixed*>(buffer.data())
                       : nullptr);
-    detail::error_check("FeedbackBufferxOES"sv);
+    detail::error_check("FeedbackBufferxOES"sv, check_errors);
 }
 
 #endif
@@ -1274,7 +1371,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_convolution_parameterxv(
-    GLenum target, GLenum pname, span_GLfixed params)
+    GLenum       target,
+    GLenum       pname,
+    span_GLfixed params,
+    error_check  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1285,7 +1385,7 @@ STATICINLINE void get_convolution_parameterxv(
         target,
         pname,
         params.size() ? reinterpret_cast<GLfixed*>(params.data()) : nullptr);
-    detail::error_check("GetConvolutionParameterxvOES"sv);
+    detail::error_check("GetConvolutionParameterxvOES"sv, check_errors);
 }
 
 #endif
@@ -1306,7 +1406,8 @@ requires(
 STATICINLINE void get_histogram_parameterxv(
     group::histogram_target_ext             target,
     group::get_histogram_parameter_prop_ext pname,
-    span_GLfixed                            params)
+    span_GLfixed                            params,
+    error_check                             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1317,7 +1418,7 @@ STATICINLINE void get_histogram_parameterxv(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLfixed*>(params.data()) : nullptr);
-    detail::error_check("GetHistogramParameterxvOES"sv);
+    detail::error_check("GetHistogramParameterxvOES"sv, check_errors);
 }
 
 #endif
@@ -1336,7 +1437,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_lightx(
-    group::light_name light, group::light_parameter pname, span_GLfixed params)
+    group::light_name      light,
+    group::light_parameter pname,
+    span_GLfixed           params,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1347,7 +1451,7 @@ STATICINLINE void get_lightx(
         static_cast<GLenum>(light),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLfixed*>(params.data()) : nullptr);
-    detail::error_check("GetLightxOES"sv);
+    detail::error_check("GetLightxOES"sv, check_errors);
 }
 
 #endif
@@ -1366,7 +1470,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_mapxv(
-    group::map_target target, group::get_map_query query, span_GLfixed v)
+    group::map_target    target,
+    group::get_map_query query,
+    span_GLfixed         v,
+    error_check          check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1377,7 +1484,7 @@ STATICINLINE void get_mapxv(
         static_cast<GLenum>(target),
         static_cast<GLenum>(query),
         v.size() ? reinterpret_cast<GLfixed*>(v.data()) : nullptr);
-    detail::error_check("GetMapxvOES"sv);
+    detail::error_check("GetMapxvOES"sv, check_errors);
 }
 
 #endif
@@ -1390,7 +1497,10 @@ STATICINLINE void get_mapxv(
  * \return void
  */
 STATICINLINE void get_materialx(
-    group::triangle_face face, group::material_parameter pname, GLfixed param)
+    group::triangle_face      face,
+    group::material_parameter pname,
+    GLfixed                   param,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1399,7 +1509,7 @@ STATICINLINE void get_materialx(
     }
     glGetMaterialxOES(
         static_cast<GLenum>(face), static_cast<GLenum>(pname), param);
-    detail::error_check("GetMaterialxOES"sv);
+    detail::error_check("GetMaterialxOES"sv, check_errors);
 }
 
 #endif
@@ -1417,7 +1527,10 @@ requires(
  * \param values GLfixed *
  * \return void
  */
-STATICINLINE void get_pixel_mapxv(group::pixel_map map, span_GLfixed values)
+STATICINLINE void get_pixel_mapxv(
+    group::pixel_map map,
+    span_GLfixed     values,
+    error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1428,7 +1541,7 @@ STATICINLINE void get_pixel_mapxv(group::pixel_map map, span_GLfixed values)
         static_cast<GLenum>(map),
         values.size(),
         values.size() ? reinterpret_cast<GLfixed*>(values.data()) : nullptr);
-    detail::error_check("GetPixelMapxv"sv);
+    detail::error_check("GetPixelMapxv"sv, check_errors);
 }
 
 #endif
@@ -1449,7 +1562,8 @@ requires(
 STATICINLINE void get_tex_genxv(
     group::texture_coord_name    coord,
     group::texture_gen_parameter pname,
-    span_GLfixed                 params)
+    span_GLfixed                 params,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1460,7 +1574,7 @@ STATICINLINE void get_tex_genxv(
         static_cast<GLenum>(coord),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLfixed*>(params.data()) : nullptr);
-    detail::error_check("GetTexGenxvOES"sv);
+    detail::error_check("GetTexGenxvOES"sv, check_errors);
 }
 
 #endif
@@ -1483,7 +1597,8 @@ STATICINLINE void get_tex_level_parameterxv(
     group::texture_target        target,
     i32                          level,
     group::get_texture_parameter pname,
-    span_GLfixed                 params)
+    span_GLfixed                 params,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1495,7 +1610,7 @@ STATICINLINE void get_tex_level_parameterxv(
         level,
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLfixed*>(params.data()) : nullptr);
-    detail::error_check("GetTexLevelParameterxvOES"sv);
+    detail::error_check("GetTexLevelParameterxvOES"sv, check_errors);
 }
 
 #endif
@@ -1505,7 +1620,8 @@ STATICINLINE void get_tex_level_parameterxv(
  * \param component GLfixed
  * \return void
  */
-STATICINLINE void indexx(GLfixed component)
+STATICINLINE void indexx(
+    GLfixed component, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1513,7 +1629,7 @@ STATICINLINE void indexx(GLfixed component)
         GLW_FPTR_CHECK(IndexxOES)
     }
     glIndexxOES(component);
-    detail::error_check("IndexxOES"sv);
+    detail::error_check("IndexxOES"sv, check_errors);
 }
 
 #endif
@@ -1529,7 +1645,9 @@ requires(
  * \param component const GLfixed *
  * \return void
  */
-STATICINLINE void indexxv(span_const_GLfixed const& component)
+STATICINLINE void indexxv(
+    span_const_GLfixed const& component,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1539,7 +1657,7 @@ STATICINLINE void indexxv(span_const_GLfixed const& component)
     glIndexxvOES(
         component.size() ? reinterpret_cast<const GLfixed*>(component.data())
                          : nullptr);
-    detail::error_check("IndexxvOES"sv);
+    detail::error_check("IndexxvOES"sv, check_errors);
 }
 
 #endif
@@ -1555,7 +1673,8 @@ requires(
  * \param m const GLfixed *
  * \return void
  */
-STATICINLINE void load_transpose_matrixx(span_const_GLfixed const& m)
+STATICINLINE void load_transpose_matrixx(
+    span_const_GLfixed const& m, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1564,7 +1683,7 @@ STATICINLINE void load_transpose_matrixx(span_const_GLfixed const& m)
     }
     glLoadTransposeMatrixxOES(
         m.size() ? reinterpret_cast<const GLfixed*>(m.data()) : nullptr);
-    detail::error_check("LoadTransposeMatrixxOES"sv);
+    detail::error_check("LoadTransposeMatrixxOES"sv, check_errors);
 }
 
 #endif
@@ -1585,7 +1704,8 @@ STATICINLINE void map1x(
     GLfixed           u2,
     i32               stride,
     i32               order,
-    GLfixed           points)
+    GLfixed           points,
+    error_check       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1593,7 +1713,7 @@ STATICINLINE void map1x(
         GLW_FPTR_CHECK(Map1xOES)
     }
     glMap1xOES(static_cast<GLenum>(target), u1, u2, stride, order, points);
-    detail::error_check("Map1xOES"sv);
+    detail::error_check("Map1xOES"sv, check_errors);
 }
 
 #endif
@@ -1622,7 +1742,8 @@ STATICINLINE void map2x(
     GLfixed           v2,
     i32               vstride,
     i32               vorder,
-    GLfixed           points)
+    GLfixed           points,
+    error_check       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1640,7 +1761,7 @@ STATICINLINE void map2x(
         vstride,
         vorder,
         points);
-    detail::error_check("Map2xOES"sv);
+    detail::error_check("Map2xOES"sv, check_errors);
 }
 
 #endif
@@ -1652,7 +1773,8 @@ STATICINLINE void map2x(
  * \param u2 GLfixed
  * \return void
  */
-STATICINLINE void map_grid1x(i32 n, GLfixed u1, GLfixed u2)
+STATICINLINE void map_grid1x(
+    i32 n, GLfixed u1, GLfixed u2, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1660,7 +1782,7 @@ STATICINLINE void map_grid1x(i32 n, GLfixed u1, GLfixed u2)
         GLW_FPTR_CHECK(MapGrid1xOES)
     }
     glMapGrid1xOES(n, u1, u2);
-    detail::error_check("MapGrid1xOES"sv);
+    detail::error_check("MapGrid1xOES"sv, check_errors);
 }
 
 #endif
@@ -1675,7 +1797,12 @@ STATICINLINE void map_grid1x(i32 n, GLfixed u1, GLfixed u2)
  * \return void
  */
 STATICINLINE void map_grid2x(
-    i32 n, GLfixed u1, GLfixed u2, GLfixed v1, GLfixed v2)
+    i32         n,
+    GLfixed     u1,
+    GLfixed     u2,
+    GLfixed     v1,
+    GLfixed     v2,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1683,7 +1810,7 @@ STATICINLINE void map_grid2x(
         GLW_FPTR_CHECK(MapGrid2xOES)
     }
     glMapGrid2xOES(n, u1, u2, v1, v2);
-    detail::error_check("MapGrid2xOES"sv);
+    detail::error_check("MapGrid2xOES"sv, check_errors);
 }
 
 #endif
@@ -1699,7 +1826,8 @@ requires(
  * \param m const GLfixed *
  * \return void
  */
-STATICINLINE void mult_transpose_matrixx(span_const_GLfixed const& m)
+STATICINLINE void mult_transpose_matrixx(
+    span_const_GLfixed const& m, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1708,7 +1836,7 @@ STATICINLINE void mult_transpose_matrixx(span_const_GLfixed const& m)
     }
     glMultTransposeMatrixxOES(
         m.size() ? reinterpret_cast<const GLfixed*>(m.data()) : nullptr);
-    detail::error_check("MultTransposeMatrixxOES"sv);
+    detail::error_check("MultTransposeMatrixxOES"sv, check_errors);
 }
 
 #endif
@@ -1719,7 +1847,10 @@ STATICINLINE void mult_transpose_matrixx(span_const_GLfixed const& m)
  * \param s GLfixed
  * \return void
  */
-STATICINLINE void multi_tex_coord1x(group::texture_unit texture, GLfixed s)
+STATICINLINE void multi_tex_coord1x(
+    group::texture_unit texture,
+    GLfixed             s,
+    error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1727,7 +1858,7 @@ STATICINLINE void multi_tex_coord1x(group::texture_unit texture, GLfixed s)
         GLW_FPTR_CHECK(MultiTexCoord1xOES)
     }
     glMultiTexCoord1xOES(static_cast<GLenum>(texture), s);
-    detail::error_check("MultiTexCoord1xOES"sv);
+    detail::error_check("MultiTexCoord1xOES"sv, check_errors);
 }
 
 #endif
@@ -1745,7 +1876,9 @@ requires(
  * \return void
  */
 STATICINLINE void multi_tex_coord1xv(
-    group::texture_unit texture, span_const_GLfixed const& coords)
+    group::texture_unit       texture,
+    span_const_GLfixed const& coords,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1756,7 +1889,7 @@ STATICINLINE void multi_tex_coord1xv(
         static_cast<GLenum>(texture),
         coords.size() ? reinterpret_cast<const GLfixed*>(coords.data())
                       : nullptr);
-    detail::error_check("MultiTexCoord1xvOES"sv);
+    detail::error_check("MultiTexCoord1xvOES"sv, check_errors);
 }
 
 #endif
@@ -1769,7 +1902,10 @@ STATICINLINE void multi_tex_coord1xv(
  * \return void
  */
 STATICINLINE void multi_tex_coord2x(
-    group::texture_unit texture, GLfixed s, GLfixed t)
+    group::texture_unit texture,
+    GLfixed             s,
+    GLfixed             t,
+    error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1777,7 +1913,7 @@ STATICINLINE void multi_tex_coord2x(
         GLW_FPTR_CHECK(MultiTexCoord2xOES)
     }
     glMultiTexCoord2xOES(static_cast<GLenum>(texture), s, t);
-    detail::error_check("MultiTexCoord2xOES"sv);
+    detail::error_check("MultiTexCoord2xOES"sv, check_errors);
 }
 
 #endif
@@ -1795,7 +1931,9 @@ requires(
  * \return void
  */
 STATICINLINE void multi_tex_coord2xv(
-    group::texture_unit texture, span_const_GLfixed const& coords)
+    group::texture_unit       texture,
+    span_const_GLfixed const& coords,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1806,7 +1944,7 @@ STATICINLINE void multi_tex_coord2xv(
         static_cast<GLenum>(texture),
         coords.size() ? reinterpret_cast<const GLfixed*>(coords.data())
                       : nullptr);
-    detail::error_check("MultiTexCoord2xvOES"sv);
+    detail::error_check("MultiTexCoord2xvOES"sv, check_errors);
 }
 
 #endif
@@ -1820,7 +1958,11 @@ STATICINLINE void multi_tex_coord2xv(
  * \return void
  */
 STATICINLINE void multi_tex_coord3x(
-    group::texture_unit texture, GLfixed s, GLfixed t, GLfixed r)
+    group::texture_unit texture,
+    GLfixed             s,
+    GLfixed             t,
+    GLfixed             r,
+    error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1828,7 +1970,7 @@ STATICINLINE void multi_tex_coord3x(
         GLW_FPTR_CHECK(MultiTexCoord3xOES)
     }
     glMultiTexCoord3xOES(static_cast<GLenum>(texture), s, t, r);
-    detail::error_check("MultiTexCoord3xOES"sv);
+    detail::error_check("MultiTexCoord3xOES"sv, check_errors);
 }
 
 #endif
@@ -1846,7 +1988,9 @@ requires(
  * \return void
  */
 STATICINLINE void multi_tex_coord3xv(
-    group::texture_unit texture, span_const_GLfixed const& coords)
+    group::texture_unit       texture,
+    span_const_GLfixed const& coords,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1857,7 +2001,7 @@ STATICINLINE void multi_tex_coord3xv(
         static_cast<GLenum>(texture),
         coords.size() ? reinterpret_cast<const GLfixed*>(coords.data())
                       : nullptr);
-    detail::error_check("MultiTexCoord3xvOES"sv);
+    detail::error_check("MultiTexCoord3xvOES"sv, check_errors);
 }
 
 #endif
@@ -1875,7 +2019,9 @@ requires(
  * \return void
  */
 STATICINLINE void multi_tex_coord4xv(
-    group::texture_unit texture, span_const_GLfixed const& coords)
+    group::texture_unit       texture,
+    span_const_GLfixed const& coords,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1886,7 +2032,7 @@ STATICINLINE void multi_tex_coord4xv(
         static_cast<GLenum>(texture),
         coords.size() ? reinterpret_cast<const GLfixed*>(coords.data())
                       : nullptr);
-    detail::error_check("MultiTexCoord4xvOES"sv);
+    detail::error_check("MultiTexCoord4xvOES"sv, check_errors);
 }
 
 #endif
@@ -1902,7 +2048,9 @@ requires(
  * \param coords const GLfixed *
  * \return void
  */
-STATICINLINE void normal3xv(span_const_GLfixed const& coords)
+STATICINLINE void normal3xv(
+    span_const_GLfixed const& coords,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1912,7 +2060,7 @@ STATICINLINE void normal3xv(span_const_GLfixed const& coords)
     glNormal3xvOES(
         coords.size() ? reinterpret_cast<const GLfixed*>(coords.data())
                       : nullptr);
-    detail::error_check("Normal3xvOES"sv);
+    detail::error_check("Normal3xvOES"sv, check_errors);
 }
 
 #endif
@@ -1922,7 +2070,8 @@ STATICINLINE void normal3xv(span_const_GLfixed const& coords)
  * \param token GLfixed
  * \return void
  */
-STATICINLINE void pass_throughx(GLfixed token)
+STATICINLINE void pass_throughx(
+    GLfixed token, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1930,7 +2079,7 @@ STATICINLINE void pass_throughx(GLfixed token)
         GLW_FPTR_CHECK(PassThroughxOES)
     }
     glPassThroughxOES(token);
-    detail::error_check("PassThroughxOES"sv);
+    detail::error_check("PassThroughxOES"sv, check_errors);
 }
 
 #endif
@@ -1949,7 +2098,9 @@ requires(
  * \return void
  */
 STATICINLINE void pixel_mapx(
-    group::pixel_map map, span_const_GLfixed const& values)
+    group::pixel_map          map,
+    span_const_GLfixed const& values,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1961,7 +2112,7 @@ STATICINLINE void pixel_mapx(
         values.size(),
         values.size() ? reinterpret_cast<const GLfixed*>(values.data())
                       : nullptr);
-    detail::error_check("PixelMapx"sv);
+    detail::error_check("PixelMapx"sv, check_errors);
 }
 
 #endif
@@ -1973,7 +2124,9 @@ STATICINLINE void pixel_mapx(
  * \return void
  */
 STATICINLINE void pixel_storex(
-    group::pixel_store_parameter pname, GLfixed param)
+    group::pixel_store_parameter pname,
+    GLfixed                      param,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1981,7 +2134,7 @@ STATICINLINE void pixel_storex(
         GLW_FPTR_CHECK(PixelStorex)
     }
     glPixelStorex(static_cast<GLenum>(pname), param);
-    detail::error_check("PixelStorex"sv);
+    detail::error_check("PixelStorex"sv, check_errors);
 }
 
 #endif
@@ -1993,7 +2146,9 @@ STATICINLINE void pixel_storex(
  * \return void
  */
 STATICINLINE void pixel_transferx(
-    group::pixel_transfer_parameter pname, GLfixed param)
+    group::pixel_transfer_parameter pname,
+    GLfixed                         param,
+    error_check                     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2001,7 +2156,7 @@ STATICINLINE void pixel_transferx(
         GLW_FPTR_CHECK(PixelTransferxOES)
     }
     glPixelTransferxOES(static_cast<GLenum>(pname), param);
-    detail::error_check("PixelTransferxOES"sv);
+    detail::error_check("PixelTransferxOES"sv, check_errors);
 }
 
 #endif
@@ -2012,7 +2167,10 @@ STATICINLINE void pixel_transferx(
  * \param yfactor GLfixed
  * \return void
  */
-STATICINLINE void pixel_zoomx(GLfixed xfactor, GLfixed yfactor)
+STATICINLINE void pixel_zoomx(
+    GLfixed     xfactor,
+    GLfixed     yfactor,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2020,7 +2178,7 @@ STATICINLINE void pixel_zoomx(GLfixed xfactor, GLfixed yfactor)
         GLW_FPTR_CHECK(PixelZoomxOES)
     }
     glPixelZoomxOES(xfactor, yfactor);
-    detail::error_check("PixelZoomxOES"sv);
+    detail::error_check("PixelZoomxOES"sv, check_errors);
 }
 
 #endif
@@ -2043,7 +2201,9 @@ requires(
  * \return void
  */
 STATICINLINE void prioritize_texturesx(
-    span_const_u32 const& textures, span_const_GLfixed const& priorities)
+    span_const_u32 const&     textures,
+    span_const_GLfixed const& priorities,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2056,7 +2216,7 @@ STATICINLINE void prioritize_texturesx(
                         : nullptr,
         priorities.size() ? reinterpret_cast<const GLfixed*>(priorities.data())
                           : nullptr);
-    detail::error_check("PrioritizeTexturesxOES"sv);
+    detail::error_check("PrioritizeTexturesxOES"sv, check_errors);
 }
 
 #endif
@@ -2069,7 +2229,8 @@ requires(concepts::vector<vec_2_GLfixed, GLfixed, 2>)
  * \param y GLfixed
  * \return void
  */
-STATICINLINE void raster_pos2x(vec_2_GLfixed const& x)
+STATICINLINE void raster_pos2x(
+    vec_2_GLfixed const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2077,7 +2238,7 @@ STATICINLINE void raster_pos2x(vec_2_GLfixed const& x)
         GLW_FPTR_CHECK(RasterPos2xOES)
     }
     glRasterPos2xOES(x[0], x[1]);
-    detail::error_check("RasterPos2xOES"sv);
+    detail::error_check("RasterPos2xOES"sv, check_errors);
 }
 
 #endif
@@ -2093,7 +2254,9 @@ requires(
  * \param coords const GLfixed *
  * \return void
  */
-STATICINLINE void raster_pos2xv(span_const_GLfixed const& coords)
+STATICINLINE void raster_pos2xv(
+    span_const_GLfixed const& coords,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2103,7 +2266,7 @@ STATICINLINE void raster_pos2xv(span_const_GLfixed const& coords)
     glRasterPos2xvOES(
         coords.size() ? reinterpret_cast<const GLfixed*>(coords.data())
                       : nullptr);
-    detail::error_check("RasterPos2xvOES"sv);
+    detail::error_check("RasterPos2xvOES"sv, check_errors);
 }
 
 #endif
@@ -2117,7 +2280,8 @@ requires(concepts::vector<vec_3_GLfixed, GLfixed, 3>)
  * \param z GLfixed
  * \return void
  */
-STATICINLINE void raster_pos3x(vec_3_GLfixed const& x)
+STATICINLINE void raster_pos3x(
+    vec_3_GLfixed const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2125,7 +2289,7 @@ STATICINLINE void raster_pos3x(vec_3_GLfixed const& x)
         GLW_FPTR_CHECK(RasterPos3xOES)
     }
     glRasterPos3xOES(x[0], x[1], x[2]);
-    detail::error_check("RasterPos3xOES"sv);
+    detail::error_check("RasterPos3xOES"sv, check_errors);
 }
 
 #endif
@@ -2141,7 +2305,9 @@ requires(
  * \param coords const GLfixed *
  * \return void
  */
-STATICINLINE void raster_pos3xv(span_const_GLfixed const& coords)
+STATICINLINE void raster_pos3xv(
+    span_const_GLfixed const& coords,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2151,7 +2317,7 @@ STATICINLINE void raster_pos3xv(span_const_GLfixed const& coords)
     glRasterPos3xvOES(
         coords.size() ? reinterpret_cast<const GLfixed*>(coords.data())
                       : nullptr);
-    detail::error_check("RasterPos3xvOES"sv);
+    detail::error_check("RasterPos3xvOES"sv, check_errors);
 }
 
 #endif
@@ -2166,7 +2332,8 @@ requires(concepts::vector<vec_4_GLfixed, GLfixed, 4>)
  * \param w GLfixed
  * \return void
  */
-STATICINLINE void raster_pos4x(vec_4_GLfixed const& x)
+STATICINLINE void raster_pos4x(
+    vec_4_GLfixed const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2174,7 +2341,7 @@ STATICINLINE void raster_pos4x(vec_4_GLfixed const& x)
         GLW_FPTR_CHECK(RasterPos4xOES)
     }
     glRasterPos4xOES(x[0], x[1], x[2], x[3]);
-    detail::error_check("RasterPos4xOES"sv);
+    detail::error_check("RasterPos4xOES"sv, check_errors);
 }
 
 #endif
@@ -2190,7 +2357,9 @@ requires(
  * \param coords const GLfixed *
  * \return void
  */
-STATICINLINE void raster_pos4xv(span_const_GLfixed const& coords)
+STATICINLINE void raster_pos4xv(
+    span_const_GLfixed const& coords,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2200,7 +2369,7 @@ STATICINLINE void raster_pos4xv(span_const_GLfixed const& coords)
     glRasterPos4xvOES(
         coords.size() ? reinterpret_cast<const GLfixed*>(coords.data())
                       : nullptr);
-    detail::error_check("RasterPos4xvOES"sv);
+    detail::error_check("RasterPos4xvOES"sv, check_errors);
 }
 
 #endif
@@ -2213,7 +2382,12 @@ STATICINLINE void raster_pos4xv(span_const_GLfixed const& coords)
  * \param y2 GLfixed
  * \return void
  */
-STATICINLINE void rectx(GLfixed x1, GLfixed y1, GLfixed x2, GLfixed y2)
+STATICINLINE void rectx(
+    GLfixed     x1,
+    GLfixed     y1,
+    GLfixed     x2,
+    GLfixed     y2,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2221,7 +2395,7 @@ STATICINLINE void rectx(GLfixed x1, GLfixed y1, GLfixed x2, GLfixed y2)
         GLW_FPTR_CHECK(RectxOES)
     }
     glRectxOES(x1, y1, x2, y2);
-    detail::error_check("RectxOES"sv);
+    detail::error_check("RectxOES"sv, check_errors);
 }
 
 #endif
@@ -2239,7 +2413,9 @@ requires(
  * \return void
  */
 STATICINLINE void rectxv(
-    span_const_GLfixed const& v1, span_const_GLfixed const& v2)
+    span_const_GLfixed const& v1,
+    span_const_GLfixed const& v2,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2249,7 +2425,7 @@ STATICINLINE void rectxv(
     glRectxvOES(
         v1.size() ? reinterpret_cast<const GLfixed*>(v1.data()) : nullptr,
         v2.size() ? reinterpret_cast<const GLfixed*>(v2.data()) : nullptr);
-    detail::error_check("RectxvOES"sv);
+    detail::error_check("RectxvOES"sv, check_errors);
 }
 
 #endif
@@ -2259,7 +2435,8 @@ STATICINLINE void rectxv(
  * \param s GLfixed
  * \return void
  */
-STATICINLINE void tex_coord1x(GLfixed s)
+STATICINLINE void tex_coord1x(
+    GLfixed s, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2267,7 +2444,7 @@ STATICINLINE void tex_coord1x(GLfixed s)
         GLW_FPTR_CHECK(TexCoord1xOES)
     }
     glTexCoord1xOES(s);
-    detail::error_check("TexCoord1xOES"sv);
+    detail::error_check("TexCoord1xOES"sv, check_errors);
 }
 
 #endif
@@ -2283,7 +2460,9 @@ requires(
  * \param coords const GLfixed *
  * \return void
  */
-STATICINLINE void tex_coord1xv(span_const_GLfixed const& coords)
+STATICINLINE void tex_coord1xv(
+    span_const_GLfixed const& coords,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2293,7 +2472,7 @@ STATICINLINE void tex_coord1xv(span_const_GLfixed const& coords)
     glTexCoord1xvOES(
         coords.size() ? reinterpret_cast<const GLfixed*>(coords.data())
                       : nullptr);
-    detail::error_check("TexCoord1xvOES"sv);
+    detail::error_check("TexCoord1xvOES"sv, check_errors);
 }
 
 #endif
@@ -2304,7 +2483,8 @@ STATICINLINE void tex_coord1xv(span_const_GLfixed const& coords)
  * \param t GLfixed
  * \return void
  */
-STATICINLINE void tex_coord2x(GLfixed s, GLfixed t)
+STATICINLINE void tex_coord2x(
+    GLfixed s, GLfixed t, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2312,7 +2492,7 @@ STATICINLINE void tex_coord2x(GLfixed s, GLfixed t)
         GLW_FPTR_CHECK(TexCoord2xOES)
     }
     glTexCoord2xOES(s, t);
-    detail::error_check("TexCoord2xOES"sv);
+    detail::error_check("TexCoord2xOES"sv, check_errors);
 }
 
 #endif
@@ -2328,7 +2508,9 @@ requires(
  * \param coords const GLfixed *
  * \return void
  */
-STATICINLINE void tex_coord2xv(span_const_GLfixed const& coords)
+STATICINLINE void tex_coord2xv(
+    span_const_GLfixed const& coords,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2338,7 +2520,7 @@ STATICINLINE void tex_coord2xv(span_const_GLfixed const& coords)
     glTexCoord2xvOES(
         coords.size() ? reinterpret_cast<const GLfixed*>(coords.data())
                       : nullptr);
-    detail::error_check("TexCoord2xvOES"sv);
+    detail::error_check("TexCoord2xvOES"sv, check_errors);
 }
 
 #endif
@@ -2350,7 +2532,8 @@ STATICINLINE void tex_coord2xv(span_const_GLfixed const& coords)
  * \param r GLfixed
  * \return void
  */
-STATICINLINE void tex_coord3x(GLfixed s, GLfixed t, GLfixed r)
+STATICINLINE void tex_coord3x(
+    GLfixed s, GLfixed t, GLfixed r, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2358,7 +2541,7 @@ STATICINLINE void tex_coord3x(GLfixed s, GLfixed t, GLfixed r)
         GLW_FPTR_CHECK(TexCoord3xOES)
     }
     glTexCoord3xOES(s, t, r);
-    detail::error_check("TexCoord3xOES"sv);
+    detail::error_check("TexCoord3xOES"sv, check_errors);
 }
 
 #endif
@@ -2374,7 +2557,9 @@ requires(
  * \param coords const GLfixed *
  * \return void
  */
-STATICINLINE void tex_coord3xv(span_const_GLfixed const& coords)
+STATICINLINE void tex_coord3xv(
+    span_const_GLfixed const& coords,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2384,7 +2569,7 @@ STATICINLINE void tex_coord3xv(span_const_GLfixed const& coords)
     glTexCoord3xvOES(
         coords.size() ? reinterpret_cast<const GLfixed*>(coords.data())
                       : nullptr);
-    detail::error_check("TexCoord3xvOES"sv);
+    detail::error_check("TexCoord3xvOES"sv, check_errors);
 }
 
 #endif
@@ -2397,7 +2582,12 @@ STATICINLINE void tex_coord3xv(span_const_GLfixed const& coords)
  * \param q GLfixed
  * \return void
  */
-STATICINLINE void tex_coord4x(GLfixed s, GLfixed t, GLfixed r, GLfixed q)
+STATICINLINE void tex_coord4x(
+    GLfixed     s,
+    GLfixed     t,
+    GLfixed     r,
+    GLfixed     q,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2405,7 +2595,7 @@ STATICINLINE void tex_coord4x(GLfixed s, GLfixed t, GLfixed r, GLfixed q)
         GLW_FPTR_CHECK(TexCoord4xOES)
     }
     glTexCoord4xOES(s, t, r, q);
-    detail::error_check("TexCoord4xOES"sv);
+    detail::error_check("TexCoord4xOES"sv, check_errors);
 }
 
 #endif
@@ -2421,7 +2611,9 @@ requires(
  * \param coords const GLfixed *
  * \return void
  */
-STATICINLINE void tex_coord4xv(span_const_GLfixed const& coords)
+STATICINLINE void tex_coord4xv(
+    span_const_GLfixed const& coords,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2431,7 +2623,7 @@ STATICINLINE void tex_coord4xv(span_const_GLfixed const& coords)
     glTexCoord4xvOES(
         coords.size() ? reinterpret_cast<const GLfixed*>(coords.data())
                       : nullptr);
-    detail::error_check("TexCoord4xvOES"sv);
+    detail::error_check("TexCoord4xvOES"sv, check_errors);
 }
 
 #endif
@@ -2446,7 +2638,8 @@ STATICINLINE void tex_coord4xv(span_const_GLfixed const& coords)
 STATICINLINE void tex_genx(
     group::texture_coord_name    coord,
     group::texture_gen_parameter pname,
-    GLfixed                      param)
+    GLfixed                      param,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2454,7 +2647,7 @@ STATICINLINE void tex_genx(
         GLW_FPTR_CHECK(TexGenxOES)
     }
     glTexGenxOES(static_cast<GLenum>(coord), static_cast<GLenum>(pname), param);
-    detail::error_check("TexGenxOES"sv);
+    detail::error_check("TexGenxOES"sv, check_errors);
 }
 
 #endif
@@ -2475,7 +2668,8 @@ requires(
 STATICINLINE void tex_genxv(
     group::texture_coord_name    coord,
     group::texture_gen_parameter pname,
-    span_const_GLfixed const&    params)
+    span_const_GLfixed const&    params,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2487,7 +2681,7 @@ STATICINLINE void tex_genxv(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<const GLfixed*>(params.data())
                       : nullptr);
-    detail::error_check("TexGenxvOES"sv);
+    detail::error_check("TexGenxvOES"sv, check_errors);
 }
 
 #endif
@@ -2497,7 +2691,8 @@ STATICINLINE void tex_genxv(
  * \param x GLfixed
  * \return void
  */
-STATICINLINE void vertex2x(GLfixed x)
+STATICINLINE void vertex2x(
+    GLfixed x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2505,7 +2700,7 @@ STATICINLINE void vertex2x(GLfixed x)
         GLW_FPTR_CHECK(Vertex2xOES)
     }
     glVertex2xOES(x);
-    detail::error_check("Vertex2xOES"sv);
+    detail::error_check("Vertex2xOES"sv, check_errors);
 }
 
 #endif
@@ -2521,7 +2716,9 @@ requires(
  * \param coords const GLfixed *
  * \return void
  */
-STATICINLINE void vertex2xv(span_const_GLfixed const& coords)
+STATICINLINE void vertex2xv(
+    span_const_GLfixed const& coords,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2531,7 +2728,7 @@ STATICINLINE void vertex2xv(span_const_GLfixed const& coords)
     glVertex2xvOES(
         coords.size() ? reinterpret_cast<const GLfixed*>(coords.data())
                       : nullptr);
-    detail::error_check("Vertex2xvOES"sv);
+    detail::error_check("Vertex2xvOES"sv, check_errors);
 }
 
 #endif
@@ -2544,7 +2741,8 @@ requires(concepts::vector<vec_2_GLfixed, GLfixed, 2>)
  * \param y GLfixed
  * \return void
  */
-STATICINLINE void vertex3x(vec_2_GLfixed const& x)
+STATICINLINE void vertex3x(
+    vec_2_GLfixed const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2552,7 +2750,7 @@ STATICINLINE void vertex3x(vec_2_GLfixed const& x)
         GLW_FPTR_CHECK(Vertex3xOES)
     }
     glVertex3xOES(x[0], x[1]);
-    detail::error_check("Vertex3xOES"sv);
+    detail::error_check("Vertex3xOES"sv, check_errors);
 }
 
 #endif
@@ -2568,7 +2766,9 @@ requires(
  * \param coords const GLfixed *
  * \return void
  */
-STATICINLINE void vertex3xv(span_const_GLfixed const& coords)
+STATICINLINE void vertex3xv(
+    span_const_GLfixed const& coords,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2578,7 +2778,7 @@ STATICINLINE void vertex3xv(span_const_GLfixed const& coords)
     glVertex3xvOES(
         coords.size() ? reinterpret_cast<const GLfixed*>(coords.data())
                       : nullptr);
-    detail::error_check("Vertex3xvOES"sv);
+    detail::error_check("Vertex3xvOES"sv, check_errors);
 }
 
 #endif
@@ -2592,7 +2792,8 @@ requires(concepts::vector<vec_3_GLfixed, GLfixed, 3>)
  * \param z GLfixed
  * \return void
  */
-STATICINLINE void vertex4x(vec_3_GLfixed const& x)
+STATICINLINE void vertex4x(
+    vec_3_GLfixed const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2600,7 +2801,7 @@ STATICINLINE void vertex4x(vec_3_GLfixed const& x)
         GLW_FPTR_CHECK(Vertex4xOES)
     }
     glVertex4xOES(x[0], x[1], x[2]);
-    detail::error_check("Vertex4xOES"sv);
+    detail::error_check("Vertex4xOES"sv, check_errors);
 }
 
 #endif
@@ -2616,7 +2817,9 @@ requires(
  * \param coords const GLfixed *
  * \return void
  */
-STATICINLINE void vertex4xv(span_const_GLfixed const& coords)
+STATICINLINE void vertex4xv(
+    span_const_GLfixed const& coords,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2626,7 +2829,7 @@ STATICINLINE void vertex4xv(span_const_GLfixed const& coords)
     glVertex4xvOES(
         coords.size() ? reinterpret_cast<const GLfixed*>(coords.data())
                       : nullptr);
-    detail::error_check("Vertex4xvOES"sv);
+    detail::error_check("Vertex4xvOES"sv, check_errors);
 }
 
 #endif

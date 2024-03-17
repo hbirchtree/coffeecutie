@@ -35,7 +35,10 @@ constexpr u32 max_compute_image_uniforms     = 0x91BD;
  * \return void
  */
 STATICINLINE void dispatch_compute(
-    u32 num_groups_x, u32 num_groups_y, u32 num_groups_z)
+    u32         num_groups_x,
+    u32         num_groups_y,
+    u32         num_groups_z,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -43,7 +46,7 @@ STATICINLINE void dispatch_compute(
         GLW_FPTR_CHECK(DispatchCompute)
     }
     glDispatchCompute(num_groups_x, num_groups_y, num_groups_z);
-    detail::error_check("DispatchCompute"sv);
+    detail::error_check("DispatchCompute"sv, check_errors);
 }
 
 /*!
@@ -51,7 +54,8 @@ STATICINLINE void dispatch_compute(
  * \param indirect GLintptr
  * \return void
  */
-STATICINLINE void dispatch_compute_indirect(GLintptr indirect)
+STATICINLINE void dispatch_compute_indirect(
+    GLintptr indirect, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -59,7 +63,7 @@ STATICINLINE void dispatch_compute_indirect(GLintptr indirect)
         GLW_FPTR_CHECK(DispatchComputeIndirect)
     }
     glDispatchComputeIndirect(indirect);
-    detail::error_check("DispatchComputeIndirect"sv);
+    detail::error_check("DispatchComputeIndirect"sv, check_errors);
 }
 
 } // namespace gl::arb::compute_shader

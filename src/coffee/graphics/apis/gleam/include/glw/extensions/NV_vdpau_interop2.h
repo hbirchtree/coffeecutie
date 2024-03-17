@@ -25,7 +25,8 @@ vdpau_register_video_surface_with_picture_structure(
     span_const_void const& vdpSurface,
     GLenum                 target,
     span_const_u32 const&  textureNames,
-    bool                   isFrameStructure)
+    bool                   isFrameStructure,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -41,7 +42,8 @@ vdpau_register_video_surface_with_picture_structure(
             ? reinterpret_cast<const GLuint*>(textureNames.data())
             : nullptr,
         isFrameStructure);
-    detail::error_check("VDPAURegisterVideoSurfaceWithPictureStructureNV"sv);
+    detail::error_check(
+        "VDPAURegisterVideoSurfaceWithPictureStructureNV"sv, check_errors);
     return out;
 }
 

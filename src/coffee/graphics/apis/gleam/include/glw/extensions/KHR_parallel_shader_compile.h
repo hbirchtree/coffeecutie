@@ -15,7 +15,8 @@ constexpr u32 max_shader_compiler_threads = 0x91B0;
  * \param count GLuint
  * \return void
  */
-STATICINLINE void max_shader_compiler_threads(u32 count)
+STATICINLINE void max_shader_compiler_threads(
+    u32 count, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -23,7 +24,7 @@ STATICINLINE void max_shader_compiler_threads(u32 count)
         GLW_FPTR_CHECK(MaxShaderCompilerThreadsKHR)
     }
     glMaxShaderCompilerThreadsKHR(count);
-    detail::error_check("MaxShaderCompilerThreadsKHR"sv);
+    detail::error_check("MaxShaderCompilerThreadsKHR"sv, check_errors);
 }
 
 } // namespace gl::khr::parallel_shader_compile

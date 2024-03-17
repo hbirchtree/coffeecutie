@@ -28,7 +28,10 @@ constexpr u32 max_shader_storage_block_size                 = 0x90DE;
  * \return void
  */
 STATICINLINE void shader_storage_block_binding(
-    u32 program, u32 storageBlockIndex, u32 storageBlockBinding)
+    u32         program,
+    u32         storageBlockIndex,
+    u32         storageBlockBinding,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -42,7 +45,7 @@ STATICINLINE void shader_storage_block_binding(
     }
     glShaderStorageBlockBinding(
         program, storageBlockIndex, storageBlockBinding);
-    detail::error_check("ShaderStorageBlockBinding"sv);
+    detail::error_check("ShaderStorageBlockBinding"sv, check_errors);
 }
 
 } // namespace gl::arb::shader_storage_buffer_object

@@ -22,7 +22,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_buffer_parameterui64v(
-    group::buffer_target_arb target, GLenum pname, span_GLuint64EXT params)
+    group::buffer_target_arb target,
+    GLenum                   pname,
+    span_GLuint64EXT         params,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -34,7 +37,7 @@ STATICINLINE void get_buffer_parameterui64v(
         pname,
         params.size() ? reinterpret_cast<GLuint64EXT*>(params.data())
                       : nullptr);
-    detail::error_check("GetBufferParameterui64vNV"sv);
+    detail::error_check("GetBufferParameterui64vNV"sv, check_errors);
 }
 
 template<class span_GLuint64EXT>
@@ -49,7 +52,10 @@ requires(
  * \param result GLuint64EXT *
  * \return void
  */
-STATICINLINE void get_integerui64v(GLenum value, span_GLuint64EXT result)
+STATICINLINE void get_integerui64v(
+    GLenum           value,
+    span_GLuint64EXT result,
+    error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -60,7 +66,7 @@ STATICINLINE void get_integerui64v(GLenum value, span_GLuint64EXT result)
         value,
         result.size() ? reinterpret_cast<GLuint64EXT*>(result.data())
                       : nullptr);
-    detail::error_check("GetIntegerui64vNV"sv);
+    detail::error_check("GetIntegerui64vNV"sv, check_errors);
 }
 
 template<class span_GLuint64EXT>
@@ -77,7 +83,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_named_buffer_parameterui64v(
-    u32 buffer, group::buffer_prop_arb pname, span_GLuint64EXT params)
+    u32                    buffer,
+    group::buffer_prop_arb pname,
+    span_GLuint64EXT       params,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -94,7 +103,7 @@ STATICINLINE void get_named_buffer_parameterui64v(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLuint64EXT*>(params.data())
                       : nullptr);
-    detail::error_check("GetNamedBufferParameterui64vNV"sv);
+    detail::error_check("GetNamedBufferParameterui64vNV"sv, check_errors);
 }
 
 template<class span_GLuint64EXT>
@@ -111,7 +120,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_uniformui64v(
-    u32 program, i32 location, span_GLuint64EXT params)
+    u32              program,
+    i32              location,
+    span_GLuint64EXT params,
+    error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -128,7 +140,7 @@ STATICINLINE void get_uniformui64v(
         location,
         params.size() ? reinterpret_cast<GLuint64EXT*>(params.data())
                       : nullptr);
-    detail::error_check("GetUniformui64vNV"sv);
+    detail::error_check("GetUniformui64vNV"sv, check_errors);
 }
 
 /*!
@@ -136,7 +148,8 @@ STATICINLINE void get_uniformui64v(
  * \param target GLenum
  * \return Boolean
  */
-STATICINLINE bool is_buffer_resident(GLenum target)
+STATICINLINE bool is_buffer_resident(
+    GLenum target, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -144,7 +157,7 @@ STATICINLINE bool is_buffer_resident(GLenum target)
         GLW_FPTR_CHECK(IsBufferResidentNV)
     }
     auto out = glIsBufferResidentNV(target);
-    detail::error_check("IsBufferResidentNV"sv);
+    detail::error_check("IsBufferResidentNV"sv, check_errors);
     return out == GL_TRUE ? true : false;
 }
 
@@ -153,7 +166,8 @@ STATICINLINE bool is_buffer_resident(GLenum target)
  * \param buffer GLuint
  * \return Boolean
  */
-STATICINLINE bool is_named_buffer_resident(u32 buffer)
+STATICINLINE bool is_named_buffer_resident(
+    u32 buffer, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -166,7 +180,7 @@ STATICINLINE bool is_named_buffer_resident(u32 buffer)
 #endif
     }
     auto out = glIsNamedBufferResidentNV(buffer);
-    detail::error_check("IsNamedBufferResidentNV"sv);
+    detail::error_check("IsNamedBufferResidentNV"sv, check_errors);
     return out == GL_TRUE ? true : false;
 }
 
@@ -175,7 +189,8 @@ STATICINLINE bool is_named_buffer_resident(u32 buffer)
  * \param target GLenum
  * \return void
  */
-STATICINLINE void make_buffer_non_resident(GLenum target)
+STATICINLINE void make_buffer_non_resident(
+    GLenum target, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -183,7 +198,7 @@ STATICINLINE void make_buffer_non_resident(GLenum target)
         GLW_FPTR_CHECK(MakeBufferNonResidentNV)
     }
     glMakeBufferNonResidentNV(target);
-    detail::error_check("MakeBufferNonResidentNV"sv);
+    detail::error_check("MakeBufferNonResidentNV"sv, check_errors);
 }
 
 /*!
@@ -192,7 +207,8 @@ STATICINLINE void make_buffer_non_resident(GLenum target)
  * \param access GLenum
  * \return void
  */
-STATICINLINE void make_buffer_resident(GLenum target, GLenum access)
+STATICINLINE void make_buffer_resident(
+    GLenum target, GLenum access, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -200,7 +216,7 @@ STATICINLINE void make_buffer_resident(GLenum target, GLenum access)
         GLW_FPTR_CHECK(MakeBufferResidentNV)
     }
     glMakeBufferResidentNV(target, access);
-    detail::error_check("MakeBufferResidentNV"sv);
+    detail::error_check("MakeBufferResidentNV"sv, check_errors);
 }
 
 /*!
@@ -208,7 +224,8 @@ STATICINLINE void make_buffer_resident(GLenum target, GLenum access)
  * \param buffer GLuint
  * \return void
  */
-STATICINLINE void make_named_buffer_non_resident(u32 buffer)
+STATICINLINE void make_named_buffer_non_resident(
+    u32 buffer, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -221,7 +238,7 @@ STATICINLINE void make_named_buffer_non_resident(u32 buffer)
 #endif
     }
     glMakeNamedBufferNonResidentNV(buffer);
-    detail::error_check("MakeNamedBufferNonResidentNV"sv);
+    detail::error_check("MakeNamedBufferNonResidentNV"sv, check_errors);
 }
 
 /*!
@@ -230,7 +247,8 @@ STATICINLINE void make_named_buffer_non_resident(u32 buffer)
  * \param access GLenum
  * \return void
  */
-STATICINLINE void make_named_buffer_resident(u32 buffer, GLenum access)
+STATICINLINE void make_named_buffer_resident(
+    u32 buffer, GLenum access, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -243,7 +261,7 @@ STATICINLINE void make_named_buffer_resident(u32 buffer, GLenum access)
 #endif
     }
     glMakeNamedBufferResidentNV(buffer, access);
-    detail::error_check("MakeNamedBufferResidentNV"sv);
+    detail::error_check("MakeNamedBufferResidentNV"sv, check_errors);
 }
 
 /*!
@@ -253,7 +271,11 @@ STATICINLINE void make_named_buffer_resident(u32 buffer, GLenum access)
  * \param value GLuint64EXT
  * \return void
  */
-STATICINLINE void program_uniform(u32 program, i32 location, GLuint64EXT value)
+STATICINLINE void program_uniform(
+    u32         program,
+    i32         location,
+    GLuint64EXT value,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -266,7 +288,7 @@ STATICINLINE void program_uniform(u32 program, i32 location, GLuint64EXT value)
 #endif
     }
     glProgramUniformui64NV(program, location, value);
-    detail::error_check("ProgramUniformui64NV"sv);
+    detail::error_check("ProgramUniformui64NV"sv, check_errors);
 }
 
 template<class span_const_GLuint64EXT>
@@ -284,7 +306,10 @@ requires(
  * \return void
  */
 STATICINLINE void program_uniform(
-    u32 program, i32 location, span_const_GLuint64EXT const& value)
+    u32                           program,
+    i32                           location,
+    span_const_GLuint64EXT const& value,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -302,7 +327,7 @@ STATICINLINE void program_uniform(
         value.size(),
         value.size() ? reinterpret_cast<const GLuint64EXT*>(value.data())
                      : nullptr);
-    detail::error_check("ProgramUniformui64vNV"sv);
+    detail::error_check("ProgramUniformui64vNV"sv, check_errors);
 }
 
 /*!
@@ -311,7 +336,8 @@ STATICINLINE void program_uniform(
  * \param value GLuint64EXT
  * \return void
  */
-STATICINLINE void uniform(i32 location, GLuint64EXT value)
+STATICINLINE void uniform(
+    i32 location, GLuint64EXT value, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -319,7 +345,7 @@ STATICINLINE void uniform(i32 location, GLuint64EXT value)
         GLW_FPTR_CHECK(Uniformui64NV)
     }
     glUniformui64NV(location, value);
-    detail::error_check("Uniformui64NV"sv);
+    detail::error_check("Uniformui64NV"sv, check_errors);
 }
 
 template<class span_const_GLuint64EXT>
@@ -336,7 +362,10 @@ requires(
  * \return void
  */
 STATICINLINE void uniform(
-    i32 location, i32 count, span_const_GLuint64EXT const& value)
+    i32                           location,
+    i32                           count,
+    span_const_GLuint64EXT const& value,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -348,7 +377,7 @@ STATICINLINE void uniform(
         count,
         value.size() ? reinterpret_cast<const GLuint64EXT*>(value.data())
                      : nullptr);
-    detail::error_check("Uniformui64vNV"sv);
+    detail::error_check("Uniformui64vNV"sv, check_errors);
 }
 
 } // namespace gl::nv::shader_buffer_load

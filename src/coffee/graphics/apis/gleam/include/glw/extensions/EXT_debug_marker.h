@@ -12,7 +12,9 @@ namespace values {
  * \return void
  */
 STATICINLINE void insert_event_marker(
-    i32 length, std::string_view const& marker)
+    i32                     length,
+    std::string_view const& marker,
+    error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -20,7 +22,7 @@ STATICINLINE void insert_event_marker(
         GLW_FPTR_CHECK(InsertEventMarkerEXT)
     }
     glInsertEventMarkerEXT(length, marker.data());
-    detail::error_check("InsertEventMarkerEXT"sv);
+    detail::error_check("InsertEventMarkerEXT"sv, check_errors);
 }
 
 /*!
@@ -28,7 +30,7 @@ STATICINLINE void insert_event_marker(
 
  * \return void
  */
-STATICINLINE void pop_group_marker()
+STATICINLINE void pop_group_marker(error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -36,7 +38,7 @@ STATICINLINE void pop_group_marker()
         GLW_FPTR_CHECK(PopGroupMarkerEXT)
     }
     glPopGroupMarkerEXT();
-    detail::error_check("PopGroupMarkerEXT"sv);
+    detail::error_check("PopGroupMarkerEXT"sv, check_errors);
 }
 
 /*!
@@ -45,7 +47,10 @@ STATICINLINE void pop_group_marker()
  * \param marker const GLchar *
  * \return void
  */
-STATICINLINE void push_group_marker(i32 length, std::string_view const& marker)
+STATICINLINE void push_group_marker(
+    i32                     length,
+    std::string_view const& marker,
+    error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -53,7 +58,7 @@ STATICINLINE void push_group_marker(i32 length, std::string_view const& marker)
         GLW_FPTR_CHECK(PushGroupMarkerEXT)
     }
     glPushGroupMarkerEXT(length, marker.data());
-    detail::error_check("PushGroupMarkerEXT"sv);
+    detail::error_check("PushGroupMarkerEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::debug_marker

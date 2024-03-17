@@ -23,7 +23,10 @@ requires(
  * \param names const GLuint *
  * \return void
  */
-STATICINLINE void delete_names(GLenum identifier, span_const_u32 const& names)
+STATICINLINE void delete_names(
+    GLenum                identifier,
+    span_const_u32 const& names,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -34,7 +37,7 @@ STATICINLINE void delete_names(GLenum identifier, span_const_u32 const& names)
         identifier,
         names.size(),
         names.size() ? reinterpret_cast<const GLuint*>(names.data()) : nullptr);
-    detail::error_check("DeleteNamesAMD"sv);
+    detail::error_check("DeleteNamesAMD"sv, check_errors);
 }
 
 template<class span_u32>
@@ -49,7 +52,10 @@ requires(
  * \param names GLuint *
  * \return void
  */
-STATICINLINE void gen_names(GLenum identifier, span_u32 names)
+STATICINLINE void gen_names(
+    GLenum      identifier,
+    span_u32    names,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -60,7 +66,7 @@ STATICINLINE void gen_names(GLenum identifier, span_u32 names)
         identifier,
         names.size(),
         names.size() ? reinterpret_cast<GLuint*>(names.data()) : nullptr);
-    detail::error_check("GenNamesAMD"sv);
+    detail::error_check("GenNamesAMD"sv, check_errors);
 }
 
 /*!
@@ -69,7 +75,8 @@ STATICINLINE void gen_names(GLenum identifier, span_u32 names)
  * \param name GLuint
  * \return Boolean
  */
-STATICINLINE bool is_name(GLenum identifier, u32 name)
+STATICINLINE bool is_name(
+    GLenum identifier, u32 name, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -77,7 +84,7 @@ STATICINLINE bool is_name(GLenum identifier, u32 name)
         GLW_FPTR_CHECK(IsNameAMD)
     }
     auto out = glIsNameAMD(identifier, name);
-    detail::error_check("IsNameAMD"sv);
+    detail::error_check("IsNameAMD"sv, check_errors);
     return out == GL_TRUE ? true : false;
 }
 

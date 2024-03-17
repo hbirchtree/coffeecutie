@@ -27,7 +27,8 @@ STATICINLINE void get_internalformativ(
     group::texture_target       target,
     group::internal_format      internalformat,
     group::internal_format_prop pname,
-    span_i32                    params)
+    span_i32                    params,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -40,7 +41,7 @@ STATICINLINE void get_internalformativ(
         static_cast<GLenum>(pname),
         params.size(),
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetInternalformativ"sv);
+    detail::error_check("GetInternalformativ"sv, check_errors);
 }
 
 } // namespace gl::arb::internalformat_query

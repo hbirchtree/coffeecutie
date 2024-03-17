@@ -102,7 +102,8 @@ constexpr u32 fragment_input                   = 0x936D;
  * \param srcPath GLuint
  * \return void
  */
-STATICINLINE void copy_path(u32 resultPath, u32 srcPath)
+STATICINLINE void copy_path(
+    u32 resultPath, u32 srcPath, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -110,7 +111,7 @@ STATICINLINE void copy_path(u32 resultPath, u32 srcPath)
         GLW_FPTR_CHECK(CopyPathNV)
     }
     glCopyPathNV(resultPath, srcPath);
-    detail::error_check("CopyPathNV"sv);
+    detail::error_check("CopyPathNV"sv, check_errors);
 }
 
 template<class span_const_f32, class span_const_void>
@@ -137,7 +138,8 @@ STATICINLINE void cover_fill_path_instanced(
     u32                        pathBase,
     group::path_cover_mode     coverMode,
     group::path_transform_type transformType,
-    span_const_f32 const&      transformValues)
+    span_const_f32 const&      transformValues,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -154,7 +156,7 @@ STATICINLINE void cover_fill_path_instanced(
         transformValues.size()
             ? reinterpret_cast<const GLfloat*>(transformValues.data())
             : nullptr);
-    detail::error_check("CoverFillPathInstancedNV"sv);
+    detail::error_check("CoverFillPathInstancedNV"sv, check_errors);
 }
 
 /*!
@@ -163,7 +165,10 @@ STATICINLINE void cover_fill_path_instanced(
  * \param coverMode GLenum
  * \return void
  */
-STATICINLINE void cover_fill_path(u32 path, group::path_cover_mode coverMode)
+STATICINLINE void cover_fill_path(
+    u32                    path,
+    group::path_cover_mode coverMode,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -171,7 +176,7 @@ STATICINLINE void cover_fill_path(u32 path, group::path_cover_mode coverMode)
         GLW_FPTR_CHECK(CoverFillPathNV)
     }
     glCoverFillPathNV(path, static_cast<GLenum>(coverMode));
-    detail::error_check("CoverFillPathNV"sv);
+    detail::error_check("CoverFillPathNV"sv, check_errors);
 }
 
 template<class span_const_f32, class span_const_void>
@@ -198,7 +203,8 @@ STATICINLINE void cover_stroke_path_instanced(
     u32                        pathBase,
     group::path_cover_mode     coverMode,
     group::path_transform_type transformType,
-    span_const_f32 const&      transformValues)
+    span_const_f32 const&      transformValues,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -215,7 +221,7 @@ STATICINLINE void cover_stroke_path_instanced(
         transformValues.size()
             ? reinterpret_cast<const GLfloat*>(transformValues.data())
             : nullptr);
-    detail::error_check("CoverStrokePathInstancedNV"sv);
+    detail::error_check("CoverStrokePathInstancedNV"sv, check_errors);
 }
 
 /*!
@@ -224,7 +230,10 @@ STATICINLINE void cover_stroke_path_instanced(
  * \param coverMode GLenum
  * \return void
  */
-STATICINLINE void cover_stroke_path(u32 path, group::path_cover_mode coverMode)
+STATICINLINE void cover_stroke_path(
+    u32                    path,
+    group::path_cover_mode coverMode,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -232,7 +241,7 @@ STATICINLINE void cover_stroke_path(u32 path, group::path_cover_mode coverMode)
         GLW_FPTR_CHECK(CoverStrokePathNV)
     }
     glCoverStrokePathNV(path, static_cast<GLenum>(coverMode));
-    detail::error_check("CoverStrokePathNV"sv);
+    detail::error_check("CoverStrokePathNV"sv, check_errors);
 }
 
 /*!
@@ -241,7 +250,8 @@ STATICINLINE void cover_stroke_path(u32 path, group::path_cover_mode coverMode)
  * \param range GLsizei
  * \return void
  */
-STATICINLINE void delete_paths(u32 path, i32 range)
+STATICINLINE void delete_paths(
+    u32 path, i32 range, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -249,7 +259,7 @@ STATICINLINE void delete_paths(u32 path, i32 range)
         GLW_FPTR_CHECK(DeletePathsNV)
     }
     glDeletePathsNV(path, range);
-    detail::error_check("DeletePathsNV"sv);
+    detail::error_check("DeletePathsNV"sv, check_errors);
 }
 
 /*!
@@ -257,7 +267,8 @@ STATICINLINE void delete_paths(u32 path, i32 range)
  * \param range GLsizei
  * \return Path
  */
-STATICINLINE GLuint gen_paths(i32 range)
+STATICINLINE GLuint
+gen_paths(i32 range, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -265,7 +276,7 @@ STATICINLINE GLuint gen_paths(i32 range)
         GLW_FPTR_CHECK(GenPathsNV)
     }
     auto out = glGenPathsNV(range);
-    detail::error_check("GenPathsNV"sv);
+    detail::error_check("GenPathsNV"sv, check_errors);
     return out;
 }
 
@@ -280,7 +291,8 @@ requires(
  * \param commands GLubyte *
  * \return void
  */
-STATICINLINE void get_path_commands(u32 path, span_u8 commands)
+STATICINLINE void get_path_commands(
+    u32 path, span_u8 commands, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -291,7 +303,7 @@ STATICINLINE void get_path_commands(u32 path, span_u8 commands)
         path,
         commands.size() ? reinterpret_cast<GLubyte*>(commands.data())
                         : nullptr);
-    detail::error_check("GetPathCommandsNV"sv);
+    detail::error_check("GetPathCommandsNV"sv, check_errors);
 }
 
 template<class span_f32>
@@ -305,7 +317,8 @@ requires(
  * \param coords GLfloat *
  * \return void
  */
-STATICINLINE void get_path_coords(u32 path, span_f32 coords)
+STATICINLINE void get_path_coords(
+    u32 path, span_f32 coords, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -315,7 +328,7 @@ STATICINLINE void get_path_coords(u32 path, span_f32 coords)
     glGetPathCoordsNV(
         path,
         coords.size() ? reinterpret_cast<GLfloat*>(coords.data()) : nullptr);
-    detail::error_check("GetPathCoordsNV"sv);
+    detail::error_check("GetPathCoordsNV"sv, check_errors);
 }
 
 template<class span_f32>
@@ -329,7 +342,8 @@ requires(
  * \param dashArray GLfloat *
  * \return void
  */
-STATICINLINE void get_path_dash_array(u32 path, span_f32 dashArray)
+STATICINLINE void get_path_dash_array(
+    u32 path, span_f32 dashArray, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -340,7 +354,7 @@ STATICINLINE void get_path_dash_array(u32 path, span_f32 dashArray)
         path,
         dashArray.size() ? reinterpret_cast<GLfloat*>(dashArray.data())
                          : nullptr);
-    detail::error_check("GetPathDashArrayNV"sv);
+    detail::error_check("GetPathDashArrayNV"sv, check_errors);
 }
 
 /*!
@@ -350,8 +364,11 @@ STATICINLINE void get_path_dash_array(u32 path, span_f32 dashArray)
  * \param numSegments GLsizei
  * \return GLfloat
  */
-STATICINLINE GLfloat
-get_path_length(u32 path, i32 startSegment, i32 numSegments)
+STATICINLINE GLfloat get_path_length(
+    u32         path,
+    i32         startSegment,
+    i32         numSegments,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -359,7 +376,7 @@ get_path_length(u32 path, i32 startSegment, i32 numSegments)
         GLW_FPTR_CHECK(GetPathLengthNV)
     }
     auto out = glGetPathLengthNV(path, startSegment, numSegments);
-    detail::error_check("GetPathLengthNV"sv);
+    detail::error_check("GetPathLengthNV"sv, check_errors);
     return out;
 }
 
@@ -382,7 +399,8 @@ STATICINLINE void get_path_metric_range(
     u32                     firstPathName,
     i32                     numPaths,
     i32                     stride,
-    span_f32                metrics)
+    span_f32                metrics,
+    error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -395,7 +413,7 @@ STATICINLINE void get_path_metric_range(
         numPaths,
         stride,
         metrics.size() ? reinterpret_cast<GLfloat*>(metrics.data()) : nullptr);
-    detail::error_check("GetPathMetricRangeNV"sv);
+    detail::error_check("GetPathMetricRangeNV"sv, check_errors);
 }
 
 template<class span_const_void, class span_f32>
@@ -422,7 +440,8 @@ STATICINLINE void get_path_metrics(
     span_const_void const&   paths,
     u32                      pathBase,
     i32                      stride,
-    span_f32                 metrics)
+    span_f32                 metrics,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -437,7 +456,7 @@ STATICINLINE void get_path_metrics(
         pathBase,
         stride,
         metrics.size() ? reinterpret_cast<GLfloat*>(metrics.data()) : nullptr);
-    detail::error_check("GetPathMetricsNV"sv);
+    detail::error_check("GetPathMetricsNV"sv, check_errors);
 }
 
 template<class span_f32>
@@ -453,7 +472,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_path_parameter(
-    u32 path, group::path_parameter pname, span_f32 value)
+    u32                   path,
+    group::path_parameter pname,
+    span_f32              value,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -464,7 +486,7 @@ STATICINLINE void get_path_parameter(
         path,
         static_cast<GLenum>(pname),
         value.size() ? reinterpret_cast<GLfloat*>(value.data()) : nullptr);
-    detail::error_check("GetPathParameterfvNV"sv);
+    detail::error_check("GetPathParameterfvNV"sv, check_errors);
 }
 
 template<class span_i32>
@@ -480,7 +502,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_path_parameter(
-    u32 path, group::path_parameter pname, span_i32 value)
+    u32                   path,
+    group::path_parameter pname,
+    span_i32              value,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -491,7 +516,7 @@ STATICINLINE void get_path_parameter(
         path,
         static_cast<GLenum>(pname),
         value.size() ? reinterpret_cast<GLint*>(value.data()) : nullptr);
-    detail::error_check("GetPathParameterivNV"sv);
+    detail::error_check("GetPathParameterivNV"sv, check_errors);
 }
 
 template<class span_const_void, class span_f32>
@@ -522,7 +547,8 @@ STATICINLINE void get_path_spacing(
     f32                        advanceScale,
     f32                        kerningScale,
     group::path_transform_type transformType,
-    span_f32                   returnedSpacing)
+    span_f32                   returnedSpacing,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -541,7 +567,7 @@ STATICINLINE void get_path_spacing(
         returnedSpacing.size()
             ? reinterpret_cast<GLfloat*>(returnedSpacing.data())
             : nullptr);
-    detail::error_check("GetPathSpacingNV"sv);
+    detail::error_check("GetPathSpacingNV"sv, check_errors);
 }
 
 /*!
@@ -553,7 +579,11 @@ STATICINLINE void get_path_spacing(
  * \return void
  */
 STATICINLINE void interpolate_paths(
-    u32 resultPath, u32 pathA, u32 pathB, f32 weight)
+    u32         resultPath,
+    u32         pathA,
+    u32         pathB,
+    f32         weight,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -561,7 +591,7 @@ STATICINLINE void interpolate_paths(
         GLW_FPTR_CHECK(InterpolatePathsNV)
     }
     glInterpolatePathsNV(resultPath, pathA, pathB, weight);
-    detail::error_check("InterpolatePathsNV"sv);
+    detail::error_check("InterpolatePathsNV"sv, check_errors);
 }
 
 /*!
@@ -569,7 +599,7 @@ STATICINLINE void interpolate_paths(
  * \param path GLuint
  * \return Boolean
  */
-STATICINLINE bool is_path(u32 path)
+STATICINLINE bool is_path(u32 path, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -577,7 +607,7 @@ STATICINLINE bool is_path(u32 path)
         GLW_FPTR_CHECK(IsPathNV)
     }
     auto out = glIsPathNV(path);
-    detail::error_check("IsPathNV"sv);
+    detail::error_check("IsPathNV"sv, check_errors);
     return out == GL_TRUE ? true : false;
 }
 
@@ -591,7 +621,11 @@ requires(concepts::vector<vec_2_f32, f32, 2>)
  * \param y GLfloat
  * \return Boolean
  */
-STATICINLINE bool is_point_in_fill_path(u32 path, u32 mask, vec_2_f32 const& x)
+STATICINLINE bool is_point_in_fill_path(
+    u32              path,
+    u32              mask,
+    vec_2_f32 const& x,
+    error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -599,7 +633,7 @@ STATICINLINE bool is_point_in_fill_path(u32 path, u32 mask, vec_2_f32 const& x)
         GLW_FPTR_CHECK(IsPointInFillPathNV)
     }
     auto out = glIsPointInFillPathNV(path, mask, x[0], x[1]);
-    detail::error_check("IsPointInFillPathNV"sv);
+    detail::error_check("IsPointInFillPathNV"sv, check_errors);
     return out == GL_TRUE ? true : false;
 }
 
@@ -612,7 +646,8 @@ requires(concepts::vector<vec_2_f32, f32, 2>)
  * \param y GLfloat
  * \return Boolean
  */
-STATICINLINE bool is_point_in_stroke_path(u32 path, vec_2_f32 const& x)
+STATICINLINE bool is_point_in_stroke_path(
+    u32 path, vec_2_f32 const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -620,7 +655,7 @@ STATICINLINE bool is_point_in_stroke_path(u32 path, vec_2_f32 const& x)
         GLW_FPTR_CHECK(IsPointInStrokePathNV)
     }
     auto out = glIsPointInStrokePathNV(path, x[0], x[1]);
-    detail::error_check("IsPointInStrokePathNV"sv);
+    detail::error_check("IsPointInStrokePathNV"sv, check_errors);
     return out == GL_TRUE ? true : false;
 }
 
@@ -646,7 +681,8 @@ STATICINLINE void path_commands(
     span_const_u8 const&   commands,
     i32                    numCoords,
     group::path_coord_type coordType,
-    span_const_void const& coords)
+    span_const_void const& coords,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -661,7 +697,7 @@ STATICINLINE void path_commands(
         numCoords,
         static_cast<GLenum>(coordType),
         coords.size() ? reinterpret_cast<const void*>(coords.data()) : nullptr);
-    detail::error_check("PathCommandsNV"sv);
+    detail::error_check("PathCommandsNV"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -678,7 +714,8 @@ STATICINLINE void path_coords(
     u32                    path,
     i32                    numCoords,
     group::path_coord_type coordType,
-    span_const_void const& coords)
+    span_const_void const& coords,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -690,7 +727,7 @@ STATICINLINE void path_coords(
         numCoords,
         static_cast<GLenum>(coordType),
         coords.size() ? reinterpret_cast<const void*>(coords.data()) : nullptr);
-    detail::error_check("PathCoordsNV"sv);
+    detail::error_check("PathCoordsNV"sv, check_errors);
 }
 
 /*!
@@ -698,7 +735,8 @@ STATICINLINE void path_coords(
  * \param func GLenum
  * \return void
  */
-STATICINLINE void path_cover_depth_func(group::depth_function func)
+STATICINLINE void path_cover_depth_func(
+    group::depth_function func, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -706,7 +744,7 @@ STATICINLINE void path_cover_depth_func(group::depth_function func)
         GLW_FPTR_CHECK(PathCoverDepthFuncNV)
     }
     glPathCoverDepthFuncNV(static_cast<GLenum>(func));
-    detail::error_check("PathCoverDepthFuncNV"sv);
+    detail::error_check("PathCoverDepthFuncNV"sv, check_errors);
 }
 
 template<class span_const_f32>
@@ -722,7 +760,10 @@ requires(
  * \param dashArray const GLfloat *
  * \return void
  */
-STATICINLINE void path_dash_array(u32 path, span_const_f32 const& dashArray)
+STATICINLINE void path_dash_array(
+    u32                   path,
+    span_const_f32 const& dashArray,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -734,7 +775,7 @@ STATICINLINE void path_dash_array(u32 path, span_const_f32 const& dashArray)
         dashArray.size(),
         dashArray.size() ? reinterpret_cast<const GLfloat*>(dashArray.data())
                          : nullptr);
-    detail::error_check("PathDashArrayNV"sv);
+    detail::error_check("PathDashArrayNV"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -761,7 +802,8 @@ STATICINLINE void path_glyph_range(
     i32                               numGlyphs,
     group::path_handle_missing_glyphs handleMissingGlyphs,
     u32                               pathParameterTemplate,
-    f32                               emScale)
+    f32                               emScale,
+    error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -779,7 +821,7 @@ STATICINLINE void path_glyph_range(
         static_cast<GLenum>(handleMissingGlyphs),
         pathParameterTemplate,
         emScale);
-    detail::error_check("PathGlyphRangeNV"sv);
+    detail::error_check("PathGlyphRangeNV"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -808,7 +850,8 @@ STATICINLINE void path_glyphs(
     span_const_void const&            charcodes,
     group::path_handle_missing_glyphs handleMissingGlyphs,
     u32                               pathParameterTemplate,
-    f32                               emScale)
+    f32                               emScale,
+    error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -828,7 +871,7 @@ STATICINLINE void path_glyphs(
         static_cast<GLenum>(handleMissingGlyphs),
         pathParameterTemplate,
         emScale);
-    detail::error_check("PathGlyphsNV"sv);
+    detail::error_check("PathGlyphsNV"sv, check_errors);
 }
 
 /*!
@@ -839,7 +882,10 @@ STATICINLINE void path_glyphs(
  * \return void
  */
 STATICINLINE void path_parameter(
-    u32 path, group::path_parameter pname, f32 value)
+    u32                   path,
+    group::path_parameter pname,
+    f32                   value,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -847,7 +893,7 @@ STATICINLINE void path_parameter(
         GLW_FPTR_CHECK(PathParameterfNV)
     }
     glPathParameterfNV(path, static_cast<GLenum>(pname), value);
-    detail::error_check("PathParameterfNV"sv);
+    detail::error_check("PathParameterfNV"sv, check_errors);
 }
 
 template<class span_const_f32>
@@ -864,7 +910,10 @@ requires(
  * \return void
  */
 STATICINLINE void path_parameter(
-    u32 path, group::path_parameter pname, span_const_f32 const& value)
+    u32                   path,
+    group::path_parameter pname,
+    span_const_f32 const& value,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -876,7 +925,7 @@ STATICINLINE void path_parameter(
         static_cast<GLenum>(pname),
         value.size() ? reinterpret_cast<const GLfloat*>(value.data())
                      : nullptr);
-    detail::error_check("PathParameterfvNV"sv);
+    detail::error_check("PathParameterfvNV"sv, check_errors);
 }
 
 /*!
@@ -887,7 +936,10 @@ STATICINLINE void path_parameter(
  * \return void
  */
 STATICINLINE void path_parameter(
-    u32 path, group::path_parameter pname, i32 value)
+    u32                   path,
+    group::path_parameter pname,
+    i32                   value,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -895,7 +947,7 @@ STATICINLINE void path_parameter(
         GLW_FPTR_CHECK(PathParameteriNV)
     }
     glPathParameteriNV(path, static_cast<GLenum>(pname), value);
-    detail::error_check("PathParameteriNV"sv);
+    detail::error_check("PathParameteriNV"sv, check_errors);
 }
 
 template<class span_const_i32>
@@ -912,7 +964,10 @@ requires(
  * \return void
  */
 STATICINLINE void path_parameter(
-    u32 path, group::path_parameter pname, span_const_i32 const& value)
+    u32                   path,
+    group::path_parameter pname,
+    span_const_i32 const& value,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -923,7 +978,7 @@ STATICINLINE void path_parameter(
         path,
         static_cast<GLenum>(pname),
         value.size() ? reinterpret_cast<const GLint*>(value.data()) : nullptr);
-    detail::error_check("PathParameterivNV"sv);
+    detail::error_check("PathParameterivNV"sv, check_errors);
 }
 
 /*!
@@ -932,7 +987,8 @@ STATICINLINE void path_parameter(
  * \param units GLfloat
  * \return void
  */
-STATICINLINE void path_stencil_depth_offset(f32 factor, f32 units)
+STATICINLINE void path_stencil_depth_offset(
+    f32 factor, f32 units, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -940,7 +996,7 @@ STATICINLINE void path_stencil_depth_offset(f32 factor, f32 units)
         GLW_FPTR_CHECK(PathStencilDepthOffsetNV)
     }
     glPathStencilDepthOffsetNV(factor, units);
-    detail::error_check("PathStencilDepthOffsetNV"sv);
+    detail::error_check("PathStencilDepthOffsetNV"sv, check_errors);
 }
 
 /*!
@@ -951,7 +1007,10 @@ STATICINLINE void path_stencil_depth_offset(f32 factor, f32 units)
  * \return void
  */
 STATICINLINE void path_stencil_func(
-    group::stencil_function func, i32 ref, u32 mask)
+    group::stencil_function func,
+    i32                     ref,
+    u32                     mask,
+    error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -959,7 +1018,7 @@ STATICINLINE void path_stencil_func(
         GLW_FPTR_CHECK(PathStencilFuncNV)
     }
     glPathStencilFuncNV(static_cast<GLenum>(func), ref, mask);
-    detail::error_check("PathStencilFuncNV"sv);
+    detail::error_check("PathStencilFuncNV"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -975,7 +1034,8 @@ requires(concepts::span<span_const_void>)
 STATICINLINE void path_string(
     u32                       path,
     group::path_string_format format,
-    span_const_void const&    pathString)
+    span_const_void const&    pathString,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -989,7 +1049,7 @@ STATICINLINE void path_string(
             sizeof(typename std::decay_t<span_const_void const&>::value_type),
         pathString.size() ? reinterpret_cast<const void*>(pathString.data())
                           : nullptr);
-    detail::error_check("PathStringNV"sv);
+    detail::error_check("PathStringNV"sv, check_errors);
 }
 
 template<class span_const_u8, class span_const_void>
@@ -1018,7 +1078,8 @@ STATICINLINE void path_sub_commands(
     span_const_u8 const&   commands,
     i32                    numCoords,
     group::path_coord_type coordType,
-    span_const_void const& coords)
+    span_const_void const& coords,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1035,7 +1096,7 @@ STATICINLINE void path_sub_commands(
         numCoords,
         static_cast<GLenum>(coordType),
         coords.size() ? reinterpret_cast<const void*>(coords.data()) : nullptr);
-    detail::error_check("PathSubCommandsNV"sv);
+    detail::error_check("PathSubCommandsNV"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -1054,7 +1115,8 @@ STATICINLINE void path_sub_coords(
     i32                    coordStart,
     i32                    numCoords,
     group::path_coord_type coordType,
-    span_const_void const& coords)
+    span_const_void const& coords,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1067,7 +1129,7 @@ STATICINLINE void path_sub_coords(
         numCoords,
         static_cast<GLenum>(coordType),
         coords.size() ? reinterpret_cast<const void*>(coords.data()) : nullptr);
-    detail::error_check("PathSubCoordsNV"sv);
+    detail::error_check("PathSubCoordsNV"sv, check_errors);
 }
 
 template<class vec_2_f32>
@@ -1091,7 +1153,8 @@ STATICINLINE bool point_along_path(
     f32              distance,
     vec_2_f32 const& x,
     f32&             tangentX,
-    f32&             tangentY)
+    f32&             tangentY,
+    error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1107,7 +1170,7 @@ STATICINLINE bool point_along_path(
         x[1],
         &tangentX,
         &tangentY);
-    detail::error_check("PointAlongPathNV"sv);
+    detail::error_check("PointAlongPathNV"sv, check_errors);
     return out == GL_TRUE ? true : false;
 }
 
@@ -1137,7 +1200,8 @@ STATICINLINE void stencil_fill_path_instanced(
     group::path_fill_mode      fillMode,
     u32                        mask,
     group::path_transform_type transformType,
-    span_const_f32 const&      transformValues)
+    span_const_f32 const&      transformValues,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1155,7 +1219,7 @@ STATICINLINE void stencil_fill_path_instanced(
         transformValues.size()
             ? reinterpret_cast<const GLfloat*>(transformValues.data())
             : nullptr);
-    detail::error_check("StencilFillPathInstancedNV"sv);
+    detail::error_check("StencilFillPathInstancedNV"sv, check_errors);
 }
 
 /*!
@@ -1166,7 +1230,10 @@ STATICINLINE void stencil_fill_path_instanced(
  * \return void
  */
 STATICINLINE void stencil_fill_path(
-    u32 path, group::path_fill_mode fillMode, u32 mask)
+    u32                   path,
+    group::path_fill_mode fillMode,
+    u32                   mask,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1174,7 +1241,7 @@ STATICINLINE void stencil_fill_path(
         GLW_FPTR_CHECK(StencilFillPathNV)
     }
     glStencilFillPathNV(path, static_cast<GLenum>(fillMode), mask);
-    detail::error_check("StencilFillPathNV"sv);
+    detail::error_check("StencilFillPathNV"sv, check_errors);
 }
 
 template<class span_const_f32, class span_const_void>
@@ -1203,7 +1270,8 @@ STATICINLINE void stencil_stroke_path_instanced(
     i32                        reference,
     u32                        mask,
     group::path_transform_type transformType,
-    span_const_f32 const&      transformValues)
+    span_const_f32 const&      transformValues,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1221,7 +1289,7 @@ STATICINLINE void stencil_stroke_path_instanced(
         transformValues.size()
             ? reinterpret_cast<const GLfloat*>(transformValues.data())
             : nullptr);
-    detail::error_check("StencilStrokePathInstancedNV"sv);
+    detail::error_check("StencilStrokePathInstancedNV"sv, check_errors);
 }
 
 /*!
@@ -1231,7 +1299,11 @@ STATICINLINE void stencil_stroke_path_instanced(
  * \param mask GLuint
  * \return void
  */
-STATICINLINE void stencil_stroke_path(u32 path, i32 reference, u32 mask)
+STATICINLINE void stencil_stroke_path(
+    u32         path,
+    i32         reference,
+    u32         mask,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1239,7 +1311,7 @@ STATICINLINE void stencil_stroke_path(u32 path, i32 reference, u32 mask)
         GLW_FPTR_CHECK(StencilStrokePathNV)
     }
     glStencilStrokePathNV(path, reference, mask);
-    detail::error_check("StencilStrokePathNV"sv);
+    detail::error_check("StencilStrokePathNV"sv, check_errors);
 }
 
 template<class span_const_f32>
@@ -1260,7 +1332,8 @@ STATICINLINE void transform_path(
     u32                        resultPath,
     u32                        srcPath,
     group::path_transform_type transformType,
-    span_const_f32 const&      transformValues)
+    span_const_f32 const&      transformValues,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1274,7 +1347,7 @@ STATICINLINE void transform_path(
         transformValues.size()
             ? reinterpret_cast<const GLfloat*>(transformValues.data())
             : nullptr);
-    detail::error_check("TransformPathNV"sv);
+    detail::error_check("TransformPathNV"sv, check_errors);
 }
 
 template<class span_const_f32, class span_const_u32>
@@ -1296,7 +1369,10 @@ requires(
  * \return void
  */
 STATICINLINE void weight_paths(
-    u32 resultPath, span_const_u32 const& paths, span_const_f32 const& weights)
+    u32                   resultPath,
+    span_const_u32 const& paths,
+    span_const_f32 const& weights,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1309,7 +1385,7 @@ STATICINLINE void weight_paths(
         paths.size() ? reinterpret_cast<const GLuint*>(paths.data()) : nullptr,
         weights.size() ? reinterpret_cast<const GLfloat*>(weights.data())
                        : nullptr);
-    detail::error_check("WeightPathsNV"sv);
+    detail::error_check("WeightPathsNV"sv, check_errors);
 }
 
 template<class span_const_mat_3x2_f32>
@@ -1323,7 +1399,9 @@ requires(
  * \return void
  */
 STATICINLINE void matrix_load3x2f(
-    GLenum matrixMode, span_const_mat_3x2_f32 const& m)
+    GLenum                        matrixMode,
+    span_const_mat_3x2_f32 const& m,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1331,7 +1409,7 @@ STATICINLINE void matrix_load3x2f(
         GLW_FPTR_CHECK(MatrixLoad3x2fNV)
     }
     glMatrixLoad3x2fNV(matrixMode, reinterpret_cast<const GLfloat*>(m.data()));
-    detail::error_check("MatrixLoad3x2fNV"sv);
+    detail::error_check("MatrixLoad3x2fNV"sv, check_errors);
 }
 
 template<class span_const_mat_3x3_f32>
@@ -1345,7 +1423,9 @@ requires(
  * \return void
  */
 STATICINLINE void matrix_load3x3f(
-    GLenum matrixMode, span_const_mat_3x3_f32 const& m)
+    GLenum                        matrixMode,
+    span_const_mat_3x3_f32 const& m,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1353,7 +1433,7 @@ STATICINLINE void matrix_load3x3f(
         GLW_FPTR_CHECK(MatrixLoad3x3fNV)
     }
     glMatrixLoad3x3fNV(matrixMode, reinterpret_cast<const GLfloat*>(m.data()));
-    detail::error_check("MatrixLoad3x3fNV"sv);
+    detail::error_check("MatrixLoad3x3fNV"sv, check_errors);
 }
 
 template<class span_const_mat_3x3_f32>
@@ -1367,7 +1447,9 @@ requires(
  * \return void
  */
 STATICINLINE void matrix_load_transpose3x3f(
-    GLenum matrixMode, span_const_mat_3x3_f32 const& m)
+    GLenum                        matrixMode,
+    span_const_mat_3x3_f32 const& m,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1376,7 +1458,7 @@ STATICINLINE void matrix_load_transpose3x3f(
     }
     glMatrixLoadTranspose3x3fNV(
         matrixMode, reinterpret_cast<const GLfloat*>(m.data()));
-    detail::error_check("MatrixLoadTranspose3x3fNV"sv);
+    detail::error_check("MatrixLoadTranspose3x3fNV"sv, check_errors);
 }
 
 template<class span_const_mat_3x2_f32>
@@ -1390,7 +1472,9 @@ requires(
  * \return void
  */
 STATICINLINE void matrix_mult3x2f(
-    GLenum matrixMode, span_const_mat_3x2_f32 const& m)
+    GLenum                        matrixMode,
+    span_const_mat_3x2_f32 const& m,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1398,7 +1482,7 @@ STATICINLINE void matrix_mult3x2f(
         GLW_FPTR_CHECK(MatrixMult3x2fNV)
     }
     glMatrixMult3x2fNV(matrixMode, reinterpret_cast<const GLfloat*>(m.data()));
-    detail::error_check("MatrixMult3x2fNV"sv);
+    detail::error_check("MatrixMult3x2fNV"sv, check_errors);
 }
 
 template<class span_const_mat_3x3_f32>
@@ -1412,7 +1496,9 @@ requires(
  * \return void
  */
 STATICINLINE void matrix_mult3x3f(
-    GLenum matrixMode, span_const_mat_3x3_f32 const& m)
+    GLenum                        matrixMode,
+    span_const_mat_3x3_f32 const& m,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1420,7 +1506,7 @@ STATICINLINE void matrix_mult3x3f(
         GLW_FPTR_CHECK(MatrixMult3x3fNV)
     }
     glMatrixMult3x3fNV(matrixMode, reinterpret_cast<const GLfloat*>(m.data()));
-    detail::error_check("MatrixMult3x3fNV"sv);
+    detail::error_check("MatrixMult3x3fNV"sv, check_errors);
 }
 
 template<class span_const_mat_3x3_f32>
@@ -1434,7 +1520,9 @@ requires(
  * \return void
  */
 STATICINLINE void matrix_mult_transpose3x3f(
-    GLenum matrixMode, span_const_mat_3x3_f32 const& m)
+    GLenum                        matrixMode,
+    span_const_mat_3x3_f32 const& m,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1443,7 +1531,7 @@ STATICINLINE void matrix_mult_transpose3x3f(
     }
     glMatrixMultTranspose3x3fNV(
         matrixMode, reinterpret_cast<const GLfloat*>(m.data()));
-    detail::error_check("MatrixMultTranspose3x3fNV"sv);
+    detail::error_check("MatrixMultTranspose3x3fNV"sv, check_errors);
 }
 
 template<class span_const_void, class span_u32>
@@ -1468,7 +1556,8 @@ STATICINLINE GLenum path_glyph_index_range(
     group::path_font_style fontStyle,
     u32                    pathParameterTemplate,
     f32                    emScale,
-    span_u32               baseAndCount)
+    span_u32               baseAndCount,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1484,7 +1573,7 @@ STATICINLINE GLenum path_glyph_index_range(
         emScale,
         baseAndCount.size() ? reinterpret_cast<GLuint*>(baseAndCount.data())
                             : nullptr);
-    detail::error_check("PathGlyphIndexRangeNV"sv);
+    detail::error_check("PathGlyphIndexRangeNV"sv, check_errors);
     return out;
 }
 
@@ -1516,7 +1605,8 @@ STATICINLINE void stencil_then_cover_fill_path_instanced(
     u32                    mask,
     GLenum                 coverMode,
     GLenum                 transformType,
-    span_const_f32 const&  transformValues)
+    span_const_f32 const&  transformValues,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1535,7 +1625,7 @@ STATICINLINE void stencil_then_cover_fill_path_instanced(
         transformValues.size()
             ? reinterpret_cast<const GLfloat*>(transformValues.data())
             : nullptr);
-    detail::error_check("StencilThenCoverFillPathInstancedNV"sv);
+    detail::error_check("StencilThenCoverFillPathInstancedNV"sv, check_errors);
 }
 
 /*!
@@ -1547,7 +1637,11 @@ STATICINLINE void stencil_then_cover_fill_path_instanced(
  * \return void
  */
 STATICINLINE void stencil_then_cover_fill_path(
-    u32 path, GLenum fillMode, u32 mask, GLenum coverMode)
+    u32         path,
+    GLenum      fillMode,
+    u32         mask,
+    GLenum      coverMode,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1555,7 +1649,7 @@ STATICINLINE void stencil_then_cover_fill_path(
         GLW_FPTR_CHECK(StencilThenCoverFillPathNV)
     }
     glStencilThenCoverFillPathNV(path, fillMode, mask, coverMode);
-    detail::error_check("StencilThenCoverFillPathNV"sv);
+    detail::error_check("StencilThenCoverFillPathNV"sv, check_errors);
 }
 
 template<class span_const_f32, class span_const_void>
@@ -1586,7 +1680,8 @@ STATICINLINE void stencil_then_cover_stroke_path_instanced(
     u32                    mask,
     GLenum                 coverMode,
     GLenum                 transformType,
-    span_const_f32 const&  transformValues)
+    span_const_f32 const&  transformValues,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1605,7 +1700,8 @@ STATICINLINE void stencil_then_cover_stroke_path_instanced(
         transformValues.size()
             ? reinterpret_cast<const GLfloat*>(transformValues.data())
             : nullptr);
-    detail::error_check("StencilThenCoverStrokePathInstancedNV"sv);
+    detail::error_check(
+        "StencilThenCoverStrokePathInstancedNV"sv, check_errors);
 }
 
 /*!
@@ -1617,7 +1713,11 @@ STATICINLINE void stencil_then_cover_stroke_path_instanced(
  * \return void
  */
 STATICINLINE void stencil_then_cover_stroke_path(
-    u32 path, i32 reference, u32 mask, GLenum coverMode)
+    u32         path,
+    i32         reference,
+    u32         mask,
+    GLenum      coverMode,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1625,7 +1725,7 @@ STATICINLINE void stencil_then_cover_stroke_path(
         GLW_FPTR_CHECK(StencilThenCoverStrokePathNV)
     }
     glStencilThenCoverStrokePathNV(path, reference, mask, coverMode);
-    detail::error_check("StencilThenCoverStrokePathNV"sv);
+    detail::error_check("StencilThenCoverStrokePathNV"sv, check_errors);
 }
 
 template<class span_const_GLenum, class span_f32>
@@ -1657,7 +1757,8 @@ STATICINLINE void get_program_resourcefv(
     i32                      propCount,
     span_const_GLenum const& props,
     i32&                     length,
-    span_f32                 params)
+    span_f32                 params,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1678,7 +1779,7 @@ STATICINLINE void get_program_resourcefv(
         params.size(),
         &length,
         params.size() ? reinterpret_cast<GLfloat*>(params.data()) : nullptr);
-    detail::error_check("GetProgramResourcefvNV"sv);
+    detail::error_check("GetProgramResourcefvNV"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -1703,7 +1804,8 @@ STATICINLINE GLenum path_glyph_index_array(
     u32                    firstGlyphIndex,
     i32                    numGlyphs,
     u32                    pathParameterTemplate,
-    f32                    emScale)
+    f32                    emScale,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1720,7 +1822,7 @@ STATICINLINE GLenum path_glyph_index_array(
         numGlyphs,
         pathParameterTemplate,
         emScale);
-    detail::error_check("PathGlyphIndexArrayNV"sv);
+    detail::error_check("PathGlyphIndexArrayNV"sv, check_errors);
     return out;
 }
 
@@ -1748,7 +1850,8 @@ STATICINLINE GLenum path_memory_glyph_index_array(
     u32                    firstGlyphIndex,
     i32                    numGlyphs,
     u32                    pathParameterTemplate,
-    f32                    emScale)
+    f32                    emScale,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1766,7 +1869,7 @@ STATICINLINE GLenum path_memory_glyph_index_array(
         numGlyphs,
         pathParameterTemplate,
         emScale);
-    detail::error_check("PathMemoryGlyphIndexArrayNV"sv);
+    detail::error_check("PathMemoryGlyphIndexArrayNV"sv, check_errors);
     return out;
 }
 
@@ -1790,7 +1893,8 @@ STATICINLINE void program_path_fragment_input_gen(
     i32                   location,
     GLenum                genMode,
     i32                   components,
-    span_const_f32 const& coeffs)
+    span_const_f32 const& coeffs,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1809,7 +1913,7 @@ STATICINLINE void program_path_fragment_input_gen(
         components,
         coeffs.size() ? reinterpret_cast<const GLfloat*>(coeffs.data())
                       : nullptr);
-    detail::error_check("ProgramPathFragmentInputGenNV"sv);
+    detail::error_check("ProgramPathFragmentInputGenNV"sv, check_errors);
 }
 
 /*!
@@ -1830,7 +1934,8 @@ STATICINLINE void matrix_frustum_ext(
     f64                bottom,
     f64                top,
     f64                zNear,
-    f64                zFar)
+    f64                zFar,
+    error_check        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1839,7 +1944,7 @@ STATICINLINE void matrix_frustum_ext(
     }
     glMatrixFrustumEXT(
         static_cast<GLenum>(mode), left, right, bottom, top, zNear, zFar);
-    detail::error_check("MatrixFrustumEXT"sv);
+    detail::error_check("MatrixFrustumEXT"sv, check_errors);
 }
 
 /*!
@@ -1847,7 +1952,8 @@ STATICINLINE void matrix_frustum_ext(
  * \param mode GLenum
  * \return void
  */
-STATICINLINE void matrix_load_identity_ext(group::matrix_mode mode)
+STATICINLINE void matrix_load_identity_ext(
+    group::matrix_mode mode, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1855,7 +1961,7 @@ STATICINLINE void matrix_load_identity_ext(group::matrix_mode mode)
         GLW_FPTR_CHECK(MatrixLoadIdentityEXT)
     }
     glMatrixLoadIdentityEXT(static_cast<GLenum>(mode));
-    detail::error_check("MatrixLoadIdentityEXT"sv);
+    detail::error_check("MatrixLoadIdentityEXT"sv, check_errors);
 }
 
 template<class span_const_f64>
@@ -1871,7 +1977,9 @@ requires(
  * \return void
  */
 STATICINLINE void matrix_load_transposed_ext(
-    group::matrix_mode mode, span_const_f64 const& m)
+    group::matrix_mode    mode,
+    span_const_f64 const& m,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1881,7 +1989,7 @@ STATICINLINE void matrix_load_transposed_ext(
     glMatrixLoadTransposedEXT(
         static_cast<GLenum>(mode),
         m.size() ? reinterpret_cast<const GLdouble*>(m.data()) : nullptr);
-    detail::error_check("MatrixLoadTransposedEXT"sv);
+    detail::error_check("MatrixLoadTransposedEXT"sv, check_errors);
 }
 
 template<class span_const_f32>
@@ -1897,7 +2005,9 @@ requires(
  * \return void
  */
 STATICINLINE void matrix_load_transposef_ext(
-    group::matrix_mode mode, span_const_f32 const& m)
+    group::matrix_mode    mode,
+    span_const_f32 const& m,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1907,7 +2017,7 @@ STATICINLINE void matrix_load_transposef_ext(
     glMatrixLoadTransposefEXT(
         static_cast<GLenum>(mode),
         m.size() ? reinterpret_cast<const GLfloat*>(m.data()) : nullptr);
-    detail::error_check("MatrixLoadTransposefEXT"sv);
+    detail::error_check("MatrixLoadTransposefEXT"sv, check_errors);
 }
 
 template<class span_const_f64>
@@ -1923,7 +2033,9 @@ requires(
  * \return void
  */
 STATICINLINE void matrix_loadd_ext(
-    group::matrix_mode mode, span_const_f64 const& m)
+    group::matrix_mode    mode,
+    span_const_f64 const& m,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1933,7 +2045,7 @@ STATICINLINE void matrix_loadd_ext(
     glMatrixLoaddEXT(
         static_cast<GLenum>(mode),
         m.size() ? reinterpret_cast<const GLdouble*>(m.data()) : nullptr);
-    detail::error_check("MatrixLoaddEXT"sv);
+    detail::error_check("MatrixLoaddEXT"sv, check_errors);
 }
 
 template<class span_const_f32>
@@ -1949,7 +2061,9 @@ requires(
  * \return void
  */
 STATICINLINE void matrix_loadf_ext(
-    group::matrix_mode mode, span_const_f32 const& m)
+    group::matrix_mode    mode,
+    span_const_f32 const& m,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1959,7 +2073,7 @@ STATICINLINE void matrix_loadf_ext(
     glMatrixLoadfEXT(
         static_cast<GLenum>(mode),
         m.size() ? reinterpret_cast<const GLfloat*>(m.data()) : nullptr);
-    detail::error_check("MatrixLoadfEXT"sv);
+    detail::error_check("MatrixLoadfEXT"sv, check_errors);
 }
 
 template<class span_const_f64>
@@ -1975,7 +2089,9 @@ requires(
  * \return void
  */
 STATICINLINE void matrix_mult_transposed_ext(
-    group::matrix_mode mode, span_const_f64 const& m)
+    group::matrix_mode    mode,
+    span_const_f64 const& m,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1985,7 +2101,7 @@ STATICINLINE void matrix_mult_transposed_ext(
     glMatrixMultTransposedEXT(
         static_cast<GLenum>(mode),
         m.size() ? reinterpret_cast<const GLdouble*>(m.data()) : nullptr);
-    detail::error_check("MatrixMultTransposedEXT"sv);
+    detail::error_check("MatrixMultTransposedEXT"sv, check_errors);
 }
 
 template<class span_const_f32>
@@ -2001,7 +2117,9 @@ requires(
  * \return void
  */
 STATICINLINE void matrix_mult_transposef_ext(
-    group::matrix_mode mode, span_const_f32 const& m)
+    group::matrix_mode    mode,
+    span_const_f32 const& m,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2011,7 +2129,7 @@ STATICINLINE void matrix_mult_transposef_ext(
     glMatrixMultTransposefEXT(
         static_cast<GLenum>(mode),
         m.size() ? reinterpret_cast<const GLfloat*>(m.data()) : nullptr);
-    detail::error_check("MatrixMultTransposefEXT"sv);
+    detail::error_check("MatrixMultTransposefEXT"sv, check_errors);
 }
 
 template<class span_const_f64>
@@ -2027,7 +2145,9 @@ requires(
  * \return void
  */
 STATICINLINE void matrix_multd_ext(
-    group::matrix_mode mode, span_const_f64 const& m)
+    group::matrix_mode    mode,
+    span_const_f64 const& m,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2037,7 +2157,7 @@ STATICINLINE void matrix_multd_ext(
     glMatrixMultdEXT(
         static_cast<GLenum>(mode),
         m.size() ? reinterpret_cast<const GLdouble*>(m.data()) : nullptr);
-    detail::error_check("MatrixMultdEXT"sv);
+    detail::error_check("MatrixMultdEXT"sv, check_errors);
 }
 
 template<class span_const_f32>
@@ -2053,7 +2173,9 @@ requires(
  * \return void
  */
 STATICINLINE void matrix_multf_ext(
-    group::matrix_mode mode, span_const_f32 const& m)
+    group::matrix_mode    mode,
+    span_const_f32 const& m,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2063,7 +2185,7 @@ STATICINLINE void matrix_multf_ext(
     glMatrixMultfEXT(
         static_cast<GLenum>(mode),
         m.size() ? reinterpret_cast<const GLfloat*>(m.data()) : nullptr);
-    detail::error_check("MatrixMultfEXT"sv);
+    detail::error_check("MatrixMultfEXT"sv, check_errors);
 }
 
 /*!
@@ -2084,7 +2206,8 @@ STATICINLINE void matrix_ortho_ext(
     f64                bottom,
     f64                top,
     f64                zNear,
-    f64                zFar)
+    f64                zFar,
+    error_check        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2093,7 +2216,7 @@ STATICINLINE void matrix_ortho_ext(
     }
     glMatrixOrthoEXT(
         static_cast<GLenum>(mode), left, right, bottom, top, zNear, zFar);
-    detail::error_check("MatrixOrthoEXT"sv);
+    detail::error_check("MatrixOrthoEXT"sv, check_errors);
 }
 
 /*!
@@ -2101,7 +2224,8 @@ STATICINLINE void matrix_ortho_ext(
  * \param mode GLenum
  * \return void
  */
-STATICINLINE void matrix_pop_ext(group::matrix_mode mode)
+STATICINLINE void matrix_pop_ext(
+    group::matrix_mode mode, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2109,7 +2233,7 @@ STATICINLINE void matrix_pop_ext(group::matrix_mode mode)
         GLW_FPTR_CHECK(MatrixPopEXT)
     }
     glMatrixPopEXT(static_cast<GLenum>(mode));
-    detail::error_check("MatrixPopEXT"sv);
+    detail::error_check("MatrixPopEXT"sv, check_errors);
 }
 
 /*!
@@ -2117,7 +2241,8 @@ STATICINLINE void matrix_pop_ext(group::matrix_mode mode)
  * \param mode GLenum
  * \return void
  */
-STATICINLINE void matrix_push_ext(group::matrix_mode mode)
+STATICINLINE void matrix_push_ext(
+    group::matrix_mode mode, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2125,7 +2250,7 @@ STATICINLINE void matrix_push_ext(group::matrix_mode mode)
         GLW_FPTR_CHECK(MatrixPushEXT)
     }
     glMatrixPushEXT(static_cast<GLenum>(mode));
-    detail::error_check("MatrixPushEXT"sv);
+    detail::error_check("MatrixPushEXT"sv, check_errors);
 }
 
 template<class vec_3_f64>
@@ -2140,7 +2265,10 @@ requires(concepts::vector<vec_3_f64, f64, 3>)
  * \return void
  */
 STATICINLINE void matrix_rotated_ext(
-    group::matrix_mode mode, f64 angle, vec_3_f64 const& x)
+    group::matrix_mode mode,
+    f64                angle,
+    vec_3_f64 const&   x,
+    error_check        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2148,7 +2276,7 @@ STATICINLINE void matrix_rotated_ext(
         GLW_FPTR_CHECK(MatrixRotatedEXT)
     }
     glMatrixRotatedEXT(static_cast<GLenum>(mode), angle, x[0], x[1], x[2]);
-    detail::error_check("MatrixRotatedEXT"sv);
+    detail::error_check("MatrixRotatedEXT"sv, check_errors);
 }
 
 template<class vec_3_f32>
@@ -2163,7 +2291,10 @@ requires(concepts::vector<vec_3_f32, f32, 3>)
  * \return void
  */
 STATICINLINE void matrix_rotatef_ext(
-    group::matrix_mode mode, f32 angle, vec_3_f32 const& x)
+    group::matrix_mode mode,
+    f32                angle,
+    vec_3_f32 const&   x,
+    error_check        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2171,7 +2302,7 @@ STATICINLINE void matrix_rotatef_ext(
         GLW_FPTR_CHECK(MatrixRotatefEXT)
     }
     glMatrixRotatefEXT(static_cast<GLenum>(mode), angle, x[0], x[1], x[2]);
-    detail::error_check("MatrixRotatefEXT"sv);
+    detail::error_check("MatrixRotatefEXT"sv, check_errors);
 }
 
 template<class vec_3_f64>
@@ -2184,7 +2315,10 @@ requires(concepts::vector<vec_3_f64, f64, 3>)
  * \param z GLdouble
  * \return void
  */
-STATICINLINE void matrix_scaled_ext(group::matrix_mode mode, vec_3_f64 const& x)
+STATICINLINE void matrix_scaled_ext(
+    group::matrix_mode mode,
+    vec_3_f64 const&   x,
+    error_check        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2192,7 +2326,7 @@ STATICINLINE void matrix_scaled_ext(group::matrix_mode mode, vec_3_f64 const& x)
         GLW_FPTR_CHECK(MatrixScaledEXT)
     }
     glMatrixScaledEXT(static_cast<GLenum>(mode), x[0], x[1], x[2]);
-    detail::error_check("MatrixScaledEXT"sv);
+    detail::error_check("MatrixScaledEXT"sv, check_errors);
 }
 
 template<class vec_3_f32>
@@ -2205,7 +2339,10 @@ requires(concepts::vector<vec_3_f32, f32, 3>)
  * \param z GLfloat
  * \return void
  */
-STATICINLINE void matrix_scalef_ext(group::matrix_mode mode, vec_3_f32 const& x)
+STATICINLINE void matrix_scalef_ext(
+    group::matrix_mode mode,
+    vec_3_f32 const&   x,
+    error_check        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2213,7 +2350,7 @@ STATICINLINE void matrix_scalef_ext(group::matrix_mode mode, vec_3_f32 const& x)
         GLW_FPTR_CHECK(MatrixScalefEXT)
     }
     glMatrixScalefEXT(static_cast<GLenum>(mode), x[0], x[1], x[2]);
-    detail::error_check("MatrixScalefEXT"sv);
+    detail::error_check("MatrixScalefEXT"sv, check_errors);
 }
 
 template<class vec_3_f64>
@@ -2227,7 +2364,9 @@ requires(concepts::vector<vec_3_f64, f64, 3>)
  * \return void
  */
 STATICINLINE void matrix_translated_ext(
-    group::matrix_mode mode, vec_3_f64 const& x)
+    group::matrix_mode mode,
+    vec_3_f64 const&   x,
+    error_check        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2235,7 +2374,7 @@ STATICINLINE void matrix_translated_ext(
         GLW_FPTR_CHECK(MatrixTranslatedEXT)
     }
     glMatrixTranslatedEXT(static_cast<GLenum>(mode), x[0], x[1], x[2]);
-    detail::error_check("MatrixTranslatedEXT"sv);
+    detail::error_check("MatrixTranslatedEXT"sv, check_errors);
 }
 
 template<class vec_3_f32>
@@ -2249,7 +2388,9 @@ requires(concepts::vector<vec_3_f32, f32, 3>)
  * \return void
  */
 STATICINLINE void matrix_translatef_ext(
-    group::matrix_mode mode, vec_3_f32 const& x)
+    group::matrix_mode mode,
+    vec_3_f32 const&   x,
+    error_check        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2257,7 +2398,7 @@ STATICINLINE void matrix_translatef_ext(
         GLW_FPTR_CHECK(MatrixTranslatefEXT)
     }
     glMatrixTranslatefEXT(static_cast<GLenum>(mode), x[0], x[1], x[2]);
-    detail::error_check("MatrixTranslatefEXT"sv);
+    detail::error_check("MatrixTranslatefEXT"sv, check_errors);
 }
 
 } // namespace gl::nv::path_rendering

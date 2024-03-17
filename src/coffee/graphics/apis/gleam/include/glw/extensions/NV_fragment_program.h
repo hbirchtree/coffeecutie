@@ -30,7 +30,11 @@ requires(
  * \return void
  */
 STATICINLINE void get_program_named_parameter(
-    u32 id, i32 len, span_const_u8 const& name, span_f64 params)
+    u32                  id,
+    i32                  len,
+    span_const_u8 const& name,
+    span_f64             params,
+    error_check          check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -42,7 +46,7 @@ STATICINLINE void get_program_named_parameter(
         len,
         name.size() ? reinterpret_cast<const GLubyte*>(name.data()) : nullptr,
         params.size() ? reinterpret_cast<GLdouble*>(params.data()) : nullptr);
-    detail::error_check("GetProgramNamedParameterdvNV"sv);
+    detail::error_check("GetProgramNamedParameterdvNV"sv, check_errors);
 }
 
 template<class span_const_u8, class span_f32>
@@ -64,7 +68,11 @@ requires(
  * \return void
  */
 STATICINLINE void get_program_named_parameter(
-    u32 id, i32 len, span_const_u8 const& name, span_f32 params)
+    u32                  id,
+    i32                  len,
+    span_const_u8 const& name,
+    span_f32             params,
+    error_check          check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -76,7 +84,7 @@ STATICINLINE void get_program_named_parameter(
         len,
         name.size() ? reinterpret_cast<const GLubyte*>(name.data()) : nullptr,
         params.size() ? reinterpret_cast<GLfloat*>(params.data()) : nullptr);
-    detail::error_check("GetProgramNamedParameterfvNV"sv);
+    detail::error_check("GetProgramNamedParameterfvNV"sv, check_errors);
 }
 
 template<class span_const_vec_4_u8, class vec_4_f64>
@@ -96,7 +104,11 @@ requires(
  * \return void
  */
 STATICINLINE void program_named_parameter4d(
-    u32 id, i32 len, span_const_vec_4_u8 const& name, vec_4_f64 const& x)
+    u32                        id,
+    i32                        len,
+    span_const_vec_4_u8 const& name,
+    vec_4_f64 const&           x,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -111,7 +123,7 @@ STATICINLINE void program_named_parameter4d(
         x[1],
         x[2],
         x[3]);
-    detail::error_check("ProgramNamedParameter4dNV"sv);
+    detail::error_check("ProgramNamedParameter4dNV"sv, check_errors);
 }
 
 template<class span_const_vec_4_f64, class span_const_vec_4_u8>
@@ -132,7 +144,8 @@ STATICINLINE void program_named_parameter4dv(
     u32                         id,
     i32                         len,
     span_const_vec_4_u8 const&  name,
-    span_const_vec_4_f64 const& v)
+    span_const_vec_4_f64 const& v,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -144,7 +157,7 @@ STATICINLINE void program_named_parameter4dv(
         len,
         reinterpret_cast<const GLubyte*>(name.data()),
         reinterpret_cast<const GLdouble*>(v.data()));
-    detail::error_check("ProgramNamedParameter4dvNV"sv);
+    detail::error_check("ProgramNamedParameter4dvNV"sv, check_errors);
 }
 
 template<class span_const_vec_4_u8, class vec_4_f32>
@@ -164,7 +177,11 @@ requires(
  * \return void
  */
 STATICINLINE void program_named_parameter4f(
-    u32 id, i32 len, span_const_vec_4_u8 const& name, vec_4_f32 const& x)
+    u32                        id,
+    i32                        len,
+    span_const_vec_4_u8 const& name,
+    vec_4_f32 const&           x,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -179,7 +196,7 @@ STATICINLINE void program_named_parameter4f(
         x[1],
         x[2],
         x[3]);
-    detail::error_check("ProgramNamedParameter4fNV"sv);
+    detail::error_check("ProgramNamedParameter4fNV"sv, check_errors);
 }
 
 template<class span_const_vec_4_f32, class span_const_vec_4_u8>
@@ -200,7 +217,8 @@ STATICINLINE void program_named_parameter4fv(
     u32                         id,
     i32                         len,
     span_const_vec_4_u8 const&  name,
-    span_const_vec_4_f32 const& v)
+    span_const_vec_4_f32 const& v,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -212,7 +230,7 @@ STATICINLINE void program_named_parameter4fv(
         len,
         reinterpret_cast<const GLubyte*>(name.data()),
         reinterpret_cast<const GLfloat*>(v.data()));
-    detail::error_check("ProgramNamedParameter4fvNV"sv);
+    detail::error_check("ProgramNamedParameter4fvNV"sv, check_errors);
 }
 
 } // namespace gl::nv::fragment_program

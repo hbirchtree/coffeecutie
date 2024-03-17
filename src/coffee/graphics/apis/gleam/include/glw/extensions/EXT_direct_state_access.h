@@ -26,7 +26,8 @@ STATICINLINE void matrix_frustum(
     f64                bottom,
     f64                top,
     f64                zNear,
-    f64                zFar)
+    f64                zFar,
+    error_check        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -35,7 +36,7 @@ STATICINLINE void matrix_frustum(
     }
     glMatrixFrustumEXT(
         static_cast<GLenum>(mode), left, right, bottom, top, zNear, zFar);
-    detail::error_check("MatrixFrustumEXT"sv);
+    detail::error_check("MatrixFrustumEXT"sv, check_errors);
 }
 
 /*!
@@ -43,7 +44,8 @@ STATICINLINE void matrix_frustum(
  * \param mode GLenum
  * \return void
  */
-STATICINLINE void matrix_load_identity(group::matrix_mode mode)
+STATICINLINE void matrix_load_identity(
+    group::matrix_mode mode, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -51,7 +53,7 @@ STATICINLINE void matrix_load_identity(group::matrix_mode mode)
         GLW_FPTR_CHECK(MatrixLoadIdentityEXT)
     }
     glMatrixLoadIdentityEXT(static_cast<GLenum>(mode));
-    detail::error_check("MatrixLoadIdentityEXT"sv);
+    detail::error_check("MatrixLoadIdentityEXT"sv, check_errors);
 }
 
 template<class span_const_f64>
@@ -66,7 +68,10 @@ requires(
  * \param m const GLdouble *
  * \return void
  */
-STATICINLINE void matrix_loadd(group::matrix_mode mode, span_const_f64 const& m)
+STATICINLINE void matrix_loadd(
+    group::matrix_mode    mode,
+    span_const_f64 const& m,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -76,7 +81,7 @@ STATICINLINE void matrix_loadd(group::matrix_mode mode, span_const_f64 const& m)
     glMatrixLoaddEXT(
         static_cast<GLenum>(mode),
         m.size() ? reinterpret_cast<const GLdouble*>(m.data()) : nullptr);
-    detail::error_check("MatrixLoaddEXT"sv);
+    detail::error_check("MatrixLoaddEXT"sv, check_errors);
 }
 
 template<class span_const_f32>
@@ -91,7 +96,10 @@ requires(
  * \param m const GLfloat *
  * \return void
  */
-STATICINLINE void matrix_loadf(group::matrix_mode mode, span_const_f32 const& m)
+STATICINLINE void matrix_loadf(
+    group::matrix_mode    mode,
+    span_const_f32 const& m,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -101,7 +109,7 @@ STATICINLINE void matrix_loadf(group::matrix_mode mode, span_const_f32 const& m)
     glMatrixLoadfEXT(
         static_cast<GLenum>(mode),
         m.size() ? reinterpret_cast<const GLfloat*>(m.data()) : nullptr);
-    detail::error_check("MatrixLoadfEXT"sv);
+    detail::error_check("MatrixLoadfEXT"sv, check_errors);
 }
 
 template<class span_const_f64>
@@ -116,7 +124,10 @@ requires(
  * \param m const GLdouble *
  * \return void
  */
-STATICINLINE void matrix_multd(group::matrix_mode mode, span_const_f64 const& m)
+STATICINLINE void matrix_multd(
+    group::matrix_mode    mode,
+    span_const_f64 const& m,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -126,7 +137,7 @@ STATICINLINE void matrix_multd(group::matrix_mode mode, span_const_f64 const& m)
     glMatrixMultdEXT(
         static_cast<GLenum>(mode),
         m.size() ? reinterpret_cast<const GLdouble*>(m.data()) : nullptr);
-    detail::error_check("MatrixMultdEXT"sv);
+    detail::error_check("MatrixMultdEXT"sv, check_errors);
 }
 
 template<class span_const_f32>
@@ -141,7 +152,10 @@ requires(
  * \param m const GLfloat *
  * \return void
  */
-STATICINLINE void matrix_multf(group::matrix_mode mode, span_const_f32 const& m)
+STATICINLINE void matrix_multf(
+    group::matrix_mode    mode,
+    span_const_f32 const& m,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -151,7 +165,7 @@ STATICINLINE void matrix_multf(group::matrix_mode mode, span_const_f32 const& m)
     glMatrixMultfEXT(
         static_cast<GLenum>(mode),
         m.size() ? reinterpret_cast<const GLfloat*>(m.data()) : nullptr);
-    detail::error_check("MatrixMultfEXT"sv);
+    detail::error_check("MatrixMultfEXT"sv, check_errors);
 }
 
 /*!
@@ -172,7 +186,8 @@ STATICINLINE void matrix_ortho(
     f64                bottom,
     f64                top,
     f64                zNear,
-    f64                zFar)
+    f64                zFar,
+    error_check        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -181,7 +196,7 @@ STATICINLINE void matrix_ortho(
     }
     glMatrixOrthoEXT(
         static_cast<GLenum>(mode), left, right, bottom, top, zNear, zFar);
-    detail::error_check("MatrixOrthoEXT"sv);
+    detail::error_check("MatrixOrthoEXT"sv, check_errors);
 }
 
 /*!
@@ -189,7 +204,8 @@ STATICINLINE void matrix_ortho(
  * \param mode GLenum
  * \return void
  */
-STATICINLINE void matrix_pop(group::matrix_mode mode)
+STATICINLINE void matrix_pop(
+    group::matrix_mode mode, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -197,7 +213,7 @@ STATICINLINE void matrix_pop(group::matrix_mode mode)
         GLW_FPTR_CHECK(MatrixPopEXT)
     }
     glMatrixPopEXT(static_cast<GLenum>(mode));
-    detail::error_check("MatrixPopEXT"sv);
+    detail::error_check("MatrixPopEXT"sv, check_errors);
 }
 
 /*!
@@ -205,7 +221,8 @@ STATICINLINE void matrix_pop(group::matrix_mode mode)
  * \param mode GLenum
  * \return void
  */
-STATICINLINE void matrix_push(group::matrix_mode mode)
+STATICINLINE void matrix_push(
+    group::matrix_mode mode, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -213,7 +230,7 @@ STATICINLINE void matrix_push(group::matrix_mode mode)
         GLW_FPTR_CHECK(MatrixPushEXT)
     }
     glMatrixPushEXT(static_cast<GLenum>(mode));
-    detail::error_check("MatrixPushEXT"sv);
+    detail::error_check("MatrixPushEXT"sv, check_errors);
 }
 
 template<class vec_3_f64>
@@ -228,7 +245,10 @@ requires(concepts::vector<vec_3_f64, f64, 3>)
  * \return void
  */
 STATICINLINE void matrix_rotated(
-    group::matrix_mode mode, f64 angle, vec_3_f64 const& x)
+    group::matrix_mode mode,
+    f64                angle,
+    vec_3_f64 const&   x,
+    error_check        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -236,7 +256,7 @@ STATICINLINE void matrix_rotated(
         GLW_FPTR_CHECK(MatrixRotatedEXT)
     }
     glMatrixRotatedEXT(static_cast<GLenum>(mode), angle, x[0], x[1], x[2]);
-    detail::error_check("MatrixRotatedEXT"sv);
+    detail::error_check("MatrixRotatedEXT"sv, check_errors);
 }
 
 template<class vec_3_f32>
@@ -251,7 +271,10 @@ requires(concepts::vector<vec_3_f32, f32, 3>)
  * \return void
  */
 STATICINLINE void matrix_rotatef(
-    group::matrix_mode mode, f32 angle, vec_3_f32 const& x)
+    group::matrix_mode mode,
+    f32                angle,
+    vec_3_f32 const&   x,
+    error_check        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -259,7 +282,7 @@ STATICINLINE void matrix_rotatef(
         GLW_FPTR_CHECK(MatrixRotatefEXT)
     }
     glMatrixRotatefEXT(static_cast<GLenum>(mode), angle, x[0], x[1], x[2]);
-    detail::error_check("MatrixRotatefEXT"sv);
+    detail::error_check("MatrixRotatefEXT"sv, check_errors);
 }
 
 template<class vec_3_f64>
@@ -272,7 +295,10 @@ requires(concepts::vector<vec_3_f64, f64, 3>)
  * \param z GLdouble
  * \return void
  */
-STATICINLINE void matrix_scaled(group::matrix_mode mode, vec_3_f64 const& x)
+STATICINLINE void matrix_scaled(
+    group::matrix_mode mode,
+    vec_3_f64 const&   x,
+    error_check        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -280,7 +306,7 @@ STATICINLINE void matrix_scaled(group::matrix_mode mode, vec_3_f64 const& x)
         GLW_FPTR_CHECK(MatrixScaledEXT)
     }
     glMatrixScaledEXT(static_cast<GLenum>(mode), x[0], x[1], x[2]);
-    detail::error_check("MatrixScaledEXT"sv);
+    detail::error_check("MatrixScaledEXT"sv, check_errors);
 }
 
 template<class vec_3_f32>
@@ -293,7 +319,10 @@ requires(concepts::vector<vec_3_f32, f32, 3>)
  * \param z GLfloat
  * \return void
  */
-STATICINLINE void matrix_scalef(group::matrix_mode mode, vec_3_f32 const& x)
+STATICINLINE void matrix_scalef(
+    group::matrix_mode mode,
+    vec_3_f32 const&   x,
+    error_check        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -301,7 +330,7 @@ STATICINLINE void matrix_scalef(group::matrix_mode mode, vec_3_f32 const& x)
         GLW_FPTR_CHECK(MatrixScalefEXT)
     }
     glMatrixScalefEXT(static_cast<GLenum>(mode), x[0], x[1], x[2]);
-    detail::error_check("MatrixScalefEXT"sv);
+    detail::error_check("MatrixScalefEXT"sv, check_errors);
 }
 
 template<class vec_3_f64>
@@ -314,7 +343,10 @@ requires(concepts::vector<vec_3_f64, f64, 3>)
  * \param z GLdouble
  * \return void
  */
-STATICINLINE void matrix_translated(group::matrix_mode mode, vec_3_f64 const& x)
+STATICINLINE void matrix_translated(
+    group::matrix_mode mode,
+    vec_3_f64 const&   x,
+    error_check        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -322,7 +354,7 @@ STATICINLINE void matrix_translated(group::matrix_mode mode, vec_3_f64 const& x)
         GLW_FPTR_CHECK(MatrixTranslatedEXT)
     }
     glMatrixTranslatedEXT(static_cast<GLenum>(mode), x[0], x[1], x[2]);
-    detail::error_check("MatrixTranslatedEXT"sv);
+    detail::error_check("MatrixTranslatedEXT"sv, check_errors);
 }
 
 template<class vec_3_f32>
@@ -335,7 +367,10 @@ requires(concepts::vector<vec_3_f32, f32, 3>)
  * \param z GLfloat
  * \return void
  */
-STATICINLINE void matrix_translatef(group::matrix_mode mode, vec_3_f32 const& x)
+STATICINLINE void matrix_translatef(
+    group::matrix_mode mode,
+    vec_3_f32 const&   x,
+    error_check        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -343,7 +378,7 @@ STATICINLINE void matrix_translatef(group::matrix_mode mode, vec_3_f32 const& x)
         GLW_FPTR_CHECK(MatrixTranslatefEXT)
     }
     glMatrixTranslatefEXT(static_cast<GLenum>(mode), x[0], x[1], x[2]);
-    detail::error_check("MatrixTranslatefEXT"sv);
+    detail::error_check("MatrixTranslatefEXT"sv, check_errors);
 }
 
 /*!
@@ -351,7 +386,8 @@ STATICINLINE void matrix_translatef(group::matrix_mode mode, vec_3_f32 const& x)
  * \param mask GLbitfield
  * \return void
  */
-STATICINLINE void client_attrib_default(group::client_attrib_mask mask)
+STATICINLINE void client_attrib_default(
+    group::client_attrib_mask mask, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -359,7 +395,7 @@ STATICINLINE void client_attrib_default(group::client_attrib_mask mask)
         GLW_FPTR_CHECK(ClientAttribDefaultEXT)
     }
     glClientAttribDefaultEXT(static_cast<GLenum>(mask));
-    detail::error_check("ClientAttribDefaultEXT"sv);
+    detail::error_check("ClientAttribDefaultEXT"sv, check_errors);
 }
 
 /*!
@@ -367,7 +403,8 @@ STATICINLINE void client_attrib_default(group::client_attrib_mask mask)
  * \param mask GLbitfield
  * \return void
  */
-STATICINLINE void push_client_attrib_default(group::client_attrib_mask mask)
+STATICINLINE void push_client_attrib_default(
+    group::client_attrib_mask mask, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -375,7 +412,7 @@ STATICINLINE void push_client_attrib_default(group::client_attrib_mask mask)
         GLW_FPTR_CHECK(PushClientAttribDefaultEXT)
     }
     glPushClientAttribDefaultEXT(static_cast<GLenum>(mask));
-    detail::error_check("PushClientAttribDefaultEXT"sv);
+    detail::error_check("PushClientAttribDefaultEXT"sv, check_errors);
 }
 
 template<class vec_2_i32>
@@ -399,7 +436,8 @@ STATICINLINE void copy_texture_image_1d(
     group::internal_format internalformat,
     vec_2_i32 const&       x,
     i32                    width,
-    i32                    border)
+    i32                    border,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -420,7 +458,7 @@ STATICINLINE void copy_texture_image_1d(
         x[1],
         width,
         border);
-    detail::error_check("CopyTextureImage1DEXT"sv);
+    detail::error_check("CopyTextureImage1DEXT"sv, check_errors);
 }
 
 template<class size_2_i32, class vec_2_i32>
@@ -446,7 +484,8 @@ STATICINLINE void copy_texture_image_2d(
     group::internal_format internalformat,
     vec_2_i32 const&       x,
     size_2_i32 const&      width,
-    i32                    border)
+    i32                    border,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -468,7 +507,7 @@ STATICINLINE void copy_texture_image_2d(
         width[0],
         width[1],
         border);
-    detail::error_check("CopyTextureImage2DEXT"sv);
+    detail::error_check("CopyTextureImage2DEXT"sv, check_errors);
 }
 
 template<class vec_2_i32>
@@ -490,7 +529,8 @@ STATICINLINE void copy_texture_sub_image_1d(
     i32                   level,
     i32                   xoffset,
     vec_2_i32 const&      x,
-    i32                   width)
+    i32                   width,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -510,7 +550,7 @@ STATICINLINE void copy_texture_sub_image_1d(
         x[0],
         x[1],
         width);
-    detail::error_check("CopyTextureSubImage1DEXT"sv);
+    detail::error_check("CopyTextureSubImage1DEXT"sv, check_errors);
 }
 
 template<class size_2_i32, class vec_2_i32>
@@ -535,7 +575,8 @@ STATICINLINE void copy_texture_sub_image_2d(
     i32                   level,
     vec_2_i32 const&      xoffset,
     vec_2_i32 const&      x,
-    size_2_i32 const&     width)
+    size_2_i32 const&     width,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -557,7 +598,7 @@ STATICINLINE void copy_texture_sub_image_2d(
         x[1],
         width[0],
         width[1]);
-    detail::error_check("CopyTextureSubImage2DEXT"sv);
+    detail::error_check("CopyTextureSubImage2DEXT"sv, check_errors);
 }
 
 template<class span_void>
@@ -578,7 +619,8 @@ STATICINLINE void get_texture_image(
     i32                   level,
     group::pixel_format   format,
     group::pixel_type     type,
-    span_void             pixels)
+    span_void             pixels,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -597,7 +639,7 @@ STATICINLINE void get_texture_image(
         static_cast<GLenum>(format),
         static_cast<GLenum>(type),
         pixels.size() ? reinterpret_cast<void*>(pixels.data()) : nullptr);
-    detail::error_check("GetTextureImageEXT"sv);
+    detail::error_check("GetTextureImageEXT"sv, check_errors);
 }
 
 template<class span_f32>
@@ -619,7 +661,8 @@ STATICINLINE void get_texture_level_parameter(
     group::texture_target        target,
     i32                          level,
     group::get_texture_parameter pname,
-    span_f32                     params)
+    span_f32                     params,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -637,7 +680,7 @@ STATICINLINE void get_texture_level_parameter(
         level,
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLfloat*>(params.data()) : nullptr);
-    detail::error_check("GetTextureLevelParameterfvEXT"sv);
+    detail::error_check("GetTextureLevelParameterfvEXT"sv, check_errors);
 }
 
 template<class span_i32>
@@ -659,7 +702,8 @@ STATICINLINE void get_texture_level_parameter(
     group::texture_target        target,
     i32                          level,
     group::get_texture_parameter pname,
-    span_i32                     params)
+    span_i32                     params,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -677,7 +721,7 @@ STATICINLINE void get_texture_level_parameter(
         level,
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetTextureLevelParameterivEXT"sv);
+    detail::error_check("GetTextureLevelParameterivEXT"sv, check_errors);
 }
 
 template<class span_f32>
@@ -697,7 +741,8 @@ STATICINLINE void get_texture_parameter(
     u32                          texture,
     group::texture_target        target,
     group::get_texture_parameter pname,
-    span_f32                     params)
+    span_f32                     params,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -714,7 +759,7 @@ STATICINLINE void get_texture_parameter(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLfloat*>(params.data()) : nullptr);
-    detail::error_check("GetTextureParameterfvEXT"sv);
+    detail::error_check("GetTextureParameterfvEXT"sv, check_errors);
 }
 
 template<class span_i32>
@@ -734,7 +779,8 @@ STATICINLINE void get_texture_parameter(
     u32                          texture,
     group::texture_target        target,
     group::get_texture_parameter pname,
-    span_i32                     params)
+    span_i32                     params,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -751,7 +797,7 @@ STATICINLINE void get_texture_parameter(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetTextureParameterivEXT"sv);
+    detail::error_check("GetTextureParameterivEXT"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -778,7 +824,8 @@ STATICINLINE void texture_image_1d(
     i32                    border,
     group::pixel_format    format,
     group::pixel_type      type,
-    span_const_void const& pixels)
+    span_const_void const& pixels,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -800,7 +847,7 @@ STATICINLINE void texture_image_1d(
         static_cast<GLenum>(format),
         static_cast<GLenum>(type),
         pixels.size() ? reinterpret_cast<const void*>(pixels.data()) : nullptr);
-    detail::error_check("TextureImage1DEXT"sv);
+    detail::error_check("TextureImage1DEXT"sv, check_errors);
 }
 
 template<class size_2_i32, class span_const_void>
@@ -828,7 +875,8 @@ STATICINLINE void texture_image_2d(
     i32                    border,
     group::pixel_format    format,
     group::pixel_type      type,
-    span_const_void const& pixels)
+    span_const_void const& pixels,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -851,7 +899,7 @@ STATICINLINE void texture_image_2d(
         static_cast<GLenum>(format),
         static_cast<GLenum>(type),
         pixels.size() ? reinterpret_cast<const void*>(pixels.data()) : nullptr);
-    detail::error_check("TextureImage2DEXT"sv);
+    detail::error_check("TextureImage2DEXT"sv, check_errors);
 }
 
 /*!
@@ -866,7 +914,8 @@ STATICINLINE void texture_parameter(
     u32                           texture,
     group::texture_target         target,
     group::texture_parameter_name pname,
-    f32                           param)
+    f32                           param,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -883,7 +932,7 @@ STATICINLINE void texture_parameter(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
         param);
-    detail::error_check("TextureParameterfEXT"sv);
+    detail::error_check("TextureParameterfEXT"sv, check_errors);
 }
 
 template<class span_const_f32>
@@ -904,7 +953,8 @@ STATICINLINE void texture_parameter(
     u32                           texture,
     group::texture_target         target,
     group::texture_parameter_name pname,
-    span_const_f32 const&         params)
+    span_const_f32 const&         params,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -922,7 +972,7 @@ STATICINLINE void texture_parameter(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<const GLfloat*>(params.data())
                       : nullptr);
-    detail::error_check("TextureParameterfvEXT"sv);
+    detail::error_check("TextureParameterfvEXT"sv, check_errors);
 }
 
 /*!
@@ -937,7 +987,8 @@ STATICINLINE void texture_parameter(
     u32                           texture,
     group::texture_target         target,
     group::texture_parameter_name pname,
-    i32                           param)
+    i32                           param,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -954,7 +1005,7 @@ STATICINLINE void texture_parameter(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
         param);
-    detail::error_check("TextureParameteriEXT"sv);
+    detail::error_check("TextureParameteriEXT"sv, check_errors);
 }
 
 template<class span_const_i32>
@@ -975,7 +1026,8 @@ STATICINLINE void texture_parameter(
     u32                           texture,
     group::texture_target         target,
     group::texture_parameter_name pname,
-    span_const_i32 const&         params)
+    span_const_i32 const&         params,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -993,7 +1045,7 @@ STATICINLINE void texture_parameter(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<const GLint*>(params.data())
                       : nullptr);
-    detail::error_check("TextureParameterivEXT"sv);
+    detail::error_check("TextureParameterivEXT"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -1018,7 +1070,8 @@ STATICINLINE void texture_sub_image_1d(
     i32                    width,
     group::pixel_format    format,
     group::pixel_type      type,
-    span_const_void const& pixels)
+    span_const_void const& pixels,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1039,7 +1092,7 @@ STATICINLINE void texture_sub_image_1d(
         static_cast<GLenum>(format),
         static_cast<GLenum>(type),
         pixels.size() ? reinterpret_cast<const void*>(pixels.data()) : nullptr);
-    detail::error_check("TextureSubImage1DEXT"sv);
+    detail::error_check("TextureSubImage1DEXT"sv, check_errors);
 }
 
 template<class size_2_i32, class span_const_void, class vec_2_i32>
@@ -1068,7 +1121,8 @@ STATICINLINE void texture_sub_image_2d(
     size_2_i32 const&      width,
     group::pixel_format    format,
     group::pixel_type      type,
-    span_const_void const& pixels)
+    span_const_void const& pixels,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1091,7 +1145,7 @@ STATICINLINE void texture_sub_image_2d(
         static_cast<GLenum>(format),
         static_cast<GLenum>(type),
         pixels.size() ? reinterpret_cast<const void*>(pixels.data()) : nullptr);
-    detail::error_check("TextureSubImage2DEXT"sv);
+    detail::error_check("TextureSubImage2DEXT"sv, check_errors);
 }
 
 template<class size_2_i32, class vec_2_i32, class vec_3_i32>
@@ -1118,7 +1172,8 @@ STATICINLINE void copy_texture_sub_image_3d(
     i32                   level,
     vec_3_i32 const&      xoffset,
     vec_2_i32 const&      x,
-    size_2_i32 const&     width)
+    size_2_i32 const&     width,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1141,7 +1196,7 @@ STATICINLINE void copy_texture_sub_image_3d(
         x[1],
         width[0],
         width[1]);
-    detail::error_check("CopyTextureSubImage3DEXT"sv);
+    detail::error_check("CopyTextureSubImage3DEXT"sv, check_errors);
 }
 
 template<class size_3_i32, class span_const_void>
@@ -1170,7 +1225,8 @@ STATICINLINE void texture_image_3d(
     i32                    border,
     group::pixel_format    format,
     group::pixel_type      type,
-    span_const_void const& pixels)
+    span_const_void const& pixels,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1194,7 +1250,7 @@ STATICINLINE void texture_image_3d(
         static_cast<GLenum>(format),
         static_cast<GLenum>(type),
         pixels.size() ? reinterpret_cast<const void*>(pixels.data()) : nullptr);
-    detail::error_check("TextureImage3DEXT"sv);
+    detail::error_check("TextureImage3DEXT"sv, check_errors);
 }
 
 template<class size_3_i32, class span_const_void, class vec_3_i32>
@@ -1225,7 +1281,8 @@ STATICINLINE void texture_sub_image_3d(
     size_3_i32 const&      width,
     group::pixel_format    format,
     group::pixel_type      type,
-    span_const_void const& pixels)
+    span_const_void const& pixels,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1250,7 +1307,7 @@ STATICINLINE void texture_sub_image_3d(
         static_cast<GLenum>(format),
         static_cast<GLenum>(type),
         pixels.size() ? reinterpret_cast<const void*>(pixels.data()) : nullptr);
-    detail::error_check("TextureSubImage3DEXT"sv);
+    detail::error_check("TextureSubImage3DEXT"sv, check_errors);
 }
 
 /*!
@@ -1261,7 +1318,10 @@ STATICINLINE void texture_sub_image_3d(
  * \return void
  */
 STATICINLINE void bind_multi_texture(
-    group::texture_unit texunit, group::texture_target target, u32 texture)
+    group::texture_unit   texunit,
+    group::texture_target target,
+    u32                   texture,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1275,7 +1335,7 @@ STATICINLINE void bind_multi_texture(
     }
     glBindMultiTextureEXT(
         static_cast<GLenum>(texunit), static_cast<GLenum>(target), texture);
-    detail::error_check("BindMultiTextureEXT"sv);
+    detail::error_check("BindMultiTextureEXT"sv, check_errors);
 }
 
 template<class vec_2_i32>
@@ -1299,7 +1359,8 @@ STATICINLINE void copy_multi_tex_image_1d(
     group::internal_format internalformat,
     vec_2_i32 const&       x,
     i32                    width,
-    i32                    border)
+    i32                    border,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1315,7 +1376,7 @@ STATICINLINE void copy_multi_tex_image_1d(
         x[1],
         width,
         border);
-    detail::error_check("CopyMultiTexImage1DEXT"sv);
+    detail::error_check("CopyMultiTexImage1DEXT"sv, check_errors);
 }
 
 template<class size_2_i32, class vec_2_i32>
@@ -1341,7 +1402,8 @@ STATICINLINE void copy_multi_tex_image_2d(
     group::internal_format internalformat,
     vec_2_i32 const&       x,
     size_2_i32 const&      width,
-    i32                    border)
+    i32                    border,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1358,7 +1420,7 @@ STATICINLINE void copy_multi_tex_image_2d(
         width[0],
         width[1],
         border);
-    detail::error_check("CopyMultiTexImage2DEXT"sv);
+    detail::error_check("CopyMultiTexImage2DEXT"sv, check_errors);
 }
 
 template<class vec_2_i32>
@@ -1380,7 +1442,8 @@ STATICINLINE void copy_multi_tex_sub_image_1d(
     i32                   level,
     i32                   xoffset,
     vec_2_i32 const&      x,
-    i32                   width)
+    i32                   width,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1395,7 +1458,7 @@ STATICINLINE void copy_multi_tex_sub_image_1d(
         x[0],
         x[1],
         width);
-    detail::error_check("CopyMultiTexSubImage1DEXT"sv);
+    detail::error_check("CopyMultiTexSubImage1DEXT"sv, check_errors);
 }
 
 template<class size_2_i32, class vec_2_i32>
@@ -1420,7 +1483,8 @@ STATICINLINE void copy_multi_tex_sub_image_2d(
     i32                   level,
     vec_2_i32 const&      xoffset,
     vec_2_i32 const&      x,
-    size_2_i32 const&     width)
+    size_2_i32 const&     width,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1437,7 +1501,7 @@ STATICINLINE void copy_multi_tex_sub_image_2d(
         x[1],
         width[0],
         width[1]);
-    detail::error_check("CopyMultiTexSubImage2DEXT"sv);
+    detail::error_check("CopyMultiTexSubImage2DEXT"sv, check_errors);
 }
 
 template<class size_2_i32, class vec_2_i32, class vec_3_i32>
@@ -1464,7 +1528,8 @@ STATICINLINE void copy_multi_tex_sub_image_3d(
     i32                   level,
     vec_3_i32 const&      xoffset,
     vec_2_i32 const&      x,
-    size_2_i32 const&     width)
+    size_2_i32 const&     width,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1482,7 +1547,7 @@ STATICINLINE void copy_multi_tex_sub_image_3d(
         x[1],
         width[0],
         width[1]);
-    detail::error_check("CopyMultiTexSubImage3DEXT"sv);
+    detail::error_check("CopyMultiTexSubImage3DEXT"sv, check_errors);
 }
 
 template<class span_f32>
@@ -1502,7 +1567,8 @@ STATICINLINE void get_multi_tex_envfv(
     group::texture_unit          texunit,
     group::texture_env_target    target,
     group::texture_env_parameter pname,
-    span_f32                     params)
+    span_f32                     params,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1514,7 +1580,7 @@ STATICINLINE void get_multi_tex_envfv(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLfloat*>(params.data()) : nullptr);
-    detail::error_check("GetMultiTexEnvfvEXT"sv);
+    detail::error_check("GetMultiTexEnvfvEXT"sv, check_errors);
 }
 
 template<class span_i32>
@@ -1534,7 +1600,8 @@ STATICINLINE void get_multi_tex_enviv(
     group::texture_unit          texunit,
     group::texture_env_target    target,
     group::texture_env_parameter pname,
-    span_i32                     params)
+    span_i32                     params,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1546,7 +1613,7 @@ STATICINLINE void get_multi_tex_enviv(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetMultiTexEnvivEXT"sv);
+    detail::error_check("GetMultiTexEnvivEXT"sv, check_errors);
 }
 
 template<class span_f64>
@@ -1566,7 +1633,8 @@ STATICINLINE void get_multi_tex_gendv(
     group::texture_unit          texunit,
     group::texture_coord_name    coord,
     group::texture_gen_parameter pname,
-    span_f64                     params)
+    span_f64                     params,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1578,7 +1646,7 @@ STATICINLINE void get_multi_tex_gendv(
         static_cast<GLenum>(coord),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLdouble*>(params.data()) : nullptr);
-    detail::error_check("GetMultiTexGendvEXT"sv);
+    detail::error_check("GetMultiTexGendvEXT"sv, check_errors);
 }
 
 template<class span_f32>
@@ -1598,7 +1666,8 @@ STATICINLINE void get_multi_tex_genfv(
     group::texture_unit          texunit,
     group::texture_coord_name    coord,
     group::texture_gen_parameter pname,
-    span_f32                     params)
+    span_f32                     params,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1610,7 +1679,7 @@ STATICINLINE void get_multi_tex_genfv(
         static_cast<GLenum>(coord),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLfloat*>(params.data()) : nullptr);
-    detail::error_check("GetMultiTexGenfvEXT"sv);
+    detail::error_check("GetMultiTexGenfvEXT"sv, check_errors);
 }
 
 template<class span_i32>
@@ -1630,7 +1699,8 @@ STATICINLINE void get_multi_tex_geniv(
     group::texture_unit          texunit,
     group::texture_coord_name    coord,
     group::texture_gen_parameter pname,
-    span_i32                     params)
+    span_i32                     params,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1642,7 +1712,7 @@ STATICINLINE void get_multi_tex_geniv(
         static_cast<GLenum>(coord),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetMultiTexGenivEXT"sv);
+    detail::error_check("GetMultiTexGenivEXT"sv, check_errors);
 }
 
 template<class span_void>
@@ -1663,7 +1733,8 @@ STATICINLINE void get_multi_tex_image(
     i32                   level,
     group::pixel_format   format,
     group::pixel_type     type,
-    span_void             pixels)
+    span_void             pixels,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1677,7 +1748,7 @@ STATICINLINE void get_multi_tex_image(
         static_cast<GLenum>(format),
         static_cast<GLenum>(type),
         pixels.size() ? reinterpret_cast<void*>(pixels.data()) : nullptr);
-    detail::error_check("GetMultiTexImageEXT"sv);
+    detail::error_check("GetMultiTexImageEXT"sv, check_errors);
 }
 
 template<class span_f32>
@@ -1699,7 +1770,8 @@ STATICINLINE void get_multi_tex_level_parameter(
     group::texture_target        target,
     i32                          level,
     group::get_texture_parameter pname,
-    span_f32                     params)
+    span_f32                     params,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1712,7 +1784,7 @@ STATICINLINE void get_multi_tex_level_parameter(
         level,
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLfloat*>(params.data()) : nullptr);
-    detail::error_check("GetMultiTexLevelParameterfvEXT"sv);
+    detail::error_check("GetMultiTexLevelParameterfvEXT"sv, check_errors);
 }
 
 template<class span_i32>
@@ -1734,7 +1806,8 @@ STATICINLINE void get_multi_tex_level_parameter(
     group::texture_target        target,
     i32                          level,
     group::get_texture_parameter pname,
-    span_i32                     params)
+    span_i32                     params,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1747,7 +1820,7 @@ STATICINLINE void get_multi_tex_level_parameter(
         level,
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetMultiTexLevelParameterivEXT"sv);
+    detail::error_check("GetMultiTexLevelParameterivEXT"sv, check_errors);
 }
 
 template<class span_f32>
@@ -1767,7 +1840,8 @@ STATICINLINE void get_multi_tex_parameter(
     group::texture_unit          texunit,
     group::texture_target        target,
     group::get_texture_parameter pname,
-    span_f32                     params)
+    span_f32                     params,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1779,7 +1853,7 @@ STATICINLINE void get_multi_tex_parameter(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLfloat*>(params.data()) : nullptr);
-    detail::error_check("GetMultiTexParameterfvEXT"sv);
+    detail::error_check("GetMultiTexParameterfvEXT"sv, check_errors);
 }
 
 template<class span_i32>
@@ -1799,7 +1873,8 @@ STATICINLINE void get_multi_tex_parameter(
     group::texture_unit          texunit,
     group::texture_target        target,
     group::get_texture_parameter pname,
-    span_i32                     params)
+    span_i32                     params,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1811,7 +1886,7 @@ STATICINLINE void get_multi_tex_parameter(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetMultiTexParameterivEXT"sv);
+    detail::error_check("GetMultiTexParameterivEXT"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -1830,7 +1905,8 @@ STATICINLINE void multi_tex_coord_pointer(
     i32                           size,
     group::tex_coord_pointer_type type,
     i32                           stride,
-    span_const_void const&        pointer)
+    span_const_void const&        pointer,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1844,7 +1920,7 @@ STATICINLINE void multi_tex_coord_pointer(
         stride,
         pointer.size() ? reinterpret_cast<const void*>(pointer.data())
                        : nullptr);
-    detail::error_check("MultiTexCoordPointerEXT"sv);
+    detail::error_check("MultiTexCoordPointerEXT"sv, check_errors);
 }
 
 /*!
@@ -1859,7 +1935,8 @@ STATICINLINE void multi_tex_envf(
     group::texture_unit          texunit,
     group::texture_env_target    target,
     group::texture_env_parameter pname,
-    f32                          param)
+    f32                          param,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1871,7 +1948,7 @@ STATICINLINE void multi_tex_envf(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
         param);
-    detail::error_check("MultiTexEnvfEXT"sv);
+    detail::error_check("MultiTexEnvfEXT"sv, check_errors);
 }
 
 template<class span_const_f32>
@@ -1892,7 +1969,8 @@ STATICINLINE void multi_tex_envfv(
     group::texture_unit          texunit,
     group::texture_env_target    target,
     group::texture_env_parameter pname,
-    span_const_f32 const&        params)
+    span_const_f32 const&        params,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1905,7 +1983,7 @@ STATICINLINE void multi_tex_envfv(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<const GLfloat*>(params.data())
                       : nullptr);
-    detail::error_check("MultiTexEnvfvEXT"sv);
+    detail::error_check("MultiTexEnvfvEXT"sv, check_errors);
 }
 
 /*!
@@ -1920,7 +1998,8 @@ STATICINLINE void multi_tex_envi(
     group::texture_unit          texunit,
     group::texture_env_target    target,
     group::texture_env_parameter pname,
-    i32                          param)
+    i32                          param,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1932,7 +2011,7 @@ STATICINLINE void multi_tex_envi(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
         param);
-    detail::error_check("MultiTexEnviEXT"sv);
+    detail::error_check("MultiTexEnviEXT"sv, check_errors);
 }
 
 template<class span_const_i32>
@@ -1953,7 +2032,8 @@ STATICINLINE void multi_tex_enviv(
     group::texture_unit          texunit,
     group::texture_env_target    target,
     group::texture_env_parameter pname,
-    span_const_i32 const&        params)
+    span_const_i32 const&        params,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1966,7 +2046,7 @@ STATICINLINE void multi_tex_enviv(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<const GLint*>(params.data())
                       : nullptr);
-    detail::error_check("MultiTexEnvivEXT"sv);
+    detail::error_check("MultiTexEnvivEXT"sv, check_errors);
 }
 
 /*!
@@ -1981,7 +2061,8 @@ STATICINLINE void multi_tex_gend(
     group::texture_unit          texunit,
     group::texture_coord_name    coord,
     group::texture_gen_parameter pname,
-    f64                          param)
+    f64                          param,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1993,7 +2074,7 @@ STATICINLINE void multi_tex_gend(
         static_cast<GLenum>(coord),
         static_cast<GLenum>(pname),
         param);
-    detail::error_check("MultiTexGendEXT"sv);
+    detail::error_check("MultiTexGendEXT"sv, check_errors);
 }
 
 template<class span_const_f64>
@@ -2014,7 +2095,8 @@ STATICINLINE void multi_tex_gendv(
     group::texture_unit          texunit,
     group::texture_coord_name    coord,
     group::texture_gen_parameter pname,
-    span_const_f64 const&        params)
+    span_const_f64 const&        params,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2027,7 +2109,7 @@ STATICINLINE void multi_tex_gendv(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<const GLdouble*>(params.data())
                       : nullptr);
-    detail::error_check("MultiTexGendvEXT"sv);
+    detail::error_check("MultiTexGendvEXT"sv, check_errors);
 }
 
 /*!
@@ -2042,7 +2124,8 @@ STATICINLINE void multi_tex_genf(
     group::texture_unit          texunit,
     group::texture_coord_name    coord,
     group::texture_gen_parameter pname,
-    f32                          param)
+    f32                          param,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2054,7 +2137,7 @@ STATICINLINE void multi_tex_genf(
         static_cast<GLenum>(coord),
         static_cast<GLenum>(pname),
         param);
-    detail::error_check("MultiTexGenfEXT"sv);
+    detail::error_check("MultiTexGenfEXT"sv, check_errors);
 }
 
 template<class span_const_f32>
@@ -2075,7 +2158,8 @@ STATICINLINE void multi_tex_genfv(
     group::texture_unit          texunit,
     group::texture_coord_name    coord,
     group::texture_gen_parameter pname,
-    span_const_f32 const&        params)
+    span_const_f32 const&        params,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2088,7 +2172,7 @@ STATICINLINE void multi_tex_genfv(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<const GLfloat*>(params.data())
                       : nullptr);
-    detail::error_check("MultiTexGenfvEXT"sv);
+    detail::error_check("MultiTexGenfvEXT"sv, check_errors);
 }
 
 /*!
@@ -2103,7 +2187,8 @@ STATICINLINE void multi_tex_geni(
     group::texture_unit          texunit,
     group::texture_coord_name    coord,
     group::texture_gen_parameter pname,
-    i32                          param)
+    i32                          param,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2115,7 +2200,7 @@ STATICINLINE void multi_tex_geni(
         static_cast<GLenum>(coord),
         static_cast<GLenum>(pname),
         param);
-    detail::error_check("MultiTexGeniEXT"sv);
+    detail::error_check("MultiTexGeniEXT"sv, check_errors);
 }
 
 template<class span_const_i32>
@@ -2136,7 +2221,8 @@ STATICINLINE void multi_tex_geniv(
     group::texture_unit          texunit,
     group::texture_coord_name    coord,
     group::texture_gen_parameter pname,
-    span_const_i32 const&        params)
+    span_const_i32 const&        params,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2149,7 +2235,7 @@ STATICINLINE void multi_tex_geniv(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<const GLint*>(params.data())
                       : nullptr);
-    detail::error_check("MultiTexGenivEXT"sv);
+    detail::error_check("MultiTexGenivEXT"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -2176,7 +2262,8 @@ STATICINLINE void multi_tex_image_1d(
     i32                    border,
     group::pixel_format    format,
     group::pixel_type      type,
-    span_const_void const& pixels)
+    span_const_void const& pixels,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2193,7 +2280,7 @@ STATICINLINE void multi_tex_image_1d(
         static_cast<GLenum>(format),
         static_cast<GLenum>(type),
         pixels.size() ? reinterpret_cast<const void*>(pixels.data()) : nullptr);
-    detail::error_check("MultiTexImage1DEXT"sv);
+    detail::error_check("MultiTexImage1DEXT"sv, check_errors);
 }
 
 template<class size_2_i32, class span_const_void>
@@ -2221,7 +2308,8 @@ STATICINLINE void multi_tex_image_2d(
     i32                    border,
     group::pixel_format    format,
     group::pixel_type      type,
-    span_const_void const& pixels)
+    span_const_void const& pixels,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2239,7 +2327,7 @@ STATICINLINE void multi_tex_image_2d(
         static_cast<GLenum>(format),
         static_cast<GLenum>(type),
         pixels.size() ? reinterpret_cast<const void*>(pixels.data()) : nullptr);
-    detail::error_check("MultiTexImage2DEXT"sv);
+    detail::error_check("MultiTexImage2DEXT"sv, check_errors);
 }
 
 template<class size_3_i32, class span_const_void>
@@ -2268,7 +2356,8 @@ STATICINLINE void multi_tex_image_3d(
     i32                    border,
     group::pixel_format    format,
     group::pixel_type      type,
-    span_const_void const& pixels)
+    span_const_void const& pixels,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2287,7 +2376,7 @@ STATICINLINE void multi_tex_image_3d(
         static_cast<GLenum>(format),
         static_cast<GLenum>(type),
         pixels.size() ? reinterpret_cast<const void*>(pixels.data()) : nullptr);
-    detail::error_check("MultiTexImage3DEXT"sv);
+    detail::error_check("MultiTexImage3DEXT"sv, check_errors);
 }
 
 /*!
@@ -2302,7 +2391,8 @@ STATICINLINE void multi_tex_parameter(
     group::texture_unit           texunit,
     group::texture_target         target,
     group::texture_parameter_name pname,
-    f32                           param)
+    f32                           param,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2314,7 +2404,7 @@ STATICINLINE void multi_tex_parameter(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
         param);
-    detail::error_check("MultiTexParameterfEXT"sv);
+    detail::error_check("MultiTexParameterfEXT"sv, check_errors);
 }
 
 template<class span_const_f32>
@@ -2335,7 +2425,8 @@ STATICINLINE void multi_tex_parameter(
     group::texture_unit           texunit,
     group::texture_target         target,
     group::texture_parameter_name pname,
-    span_const_f32 const&         params)
+    span_const_f32 const&         params,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2348,7 +2439,7 @@ STATICINLINE void multi_tex_parameter(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<const GLfloat*>(params.data())
                       : nullptr);
-    detail::error_check("MultiTexParameterfvEXT"sv);
+    detail::error_check("MultiTexParameterfvEXT"sv, check_errors);
 }
 
 /*!
@@ -2363,7 +2454,8 @@ STATICINLINE void multi_tex_parameter(
     group::texture_unit           texunit,
     group::texture_target         target,
     group::texture_parameter_name pname,
-    i32                           param)
+    i32                           param,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2375,7 +2467,7 @@ STATICINLINE void multi_tex_parameter(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
         param);
-    detail::error_check("MultiTexParameteriEXT"sv);
+    detail::error_check("MultiTexParameteriEXT"sv, check_errors);
 }
 
 template<class span_const_i32>
@@ -2396,7 +2488,8 @@ STATICINLINE void multi_tex_parameter(
     group::texture_unit           texunit,
     group::texture_target         target,
     group::texture_parameter_name pname,
-    span_const_i32 const&         params)
+    span_const_i32 const&         params,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2409,7 +2502,7 @@ STATICINLINE void multi_tex_parameter(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<const GLint*>(params.data())
                       : nullptr);
-    detail::error_check("MultiTexParameterivEXT"sv);
+    detail::error_check("MultiTexParameterivEXT"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -2434,7 +2527,8 @@ STATICINLINE void multi_tex_sub_image_1d(
     i32                    width,
     group::pixel_format    format,
     group::pixel_type      type,
-    span_const_void const& pixels)
+    span_const_void const& pixels,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2450,7 +2544,7 @@ STATICINLINE void multi_tex_sub_image_1d(
         static_cast<GLenum>(format),
         static_cast<GLenum>(type),
         pixels.size() ? reinterpret_cast<const void*>(pixels.data()) : nullptr);
-    detail::error_check("MultiTexSubImage1DEXT"sv);
+    detail::error_check("MultiTexSubImage1DEXT"sv, check_errors);
 }
 
 template<class size_2_i32, class span_const_void, class vec_2_i32>
@@ -2479,7 +2573,8 @@ STATICINLINE void multi_tex_sub_image_2d(
     size_2_i32 const&      width,
     group::pixel_format    format,
     group::pixel_type      type,
-    span_const_void const& pixels)
+    span_const_void const& pixels,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2497,7 +2592,7 @@ STATICINLINE void multi_tex_sub_image_2d(
         static_cast<GLenum>(format),
         static_cast<GLenum>(type),
         pixels.size() ? reinterpret_cast<const void*>(pixels.data()) : nullptr);
-    detail::error_check("MultiTexSubImage2DEXT"sv);
+    detail::error_check("MultiTexSubImage2DEXT"sv, check_errors);
 }
 
 template<class size_3_i32, class span_const_void, class vec_3_i32>
@@ -2528,7 +2623,8 @@ STATICINLINE void multi_tex_sub_image_3d(
     size_3_i32 const&      width,
     group::pixel_format    format,
     group::pixel_type      type,
-    span_const_void const& pixels)
+    span_const_void const& pixels,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2548,7 +2644,7 @@ STATICINLINE void multi_tex_sub_image_3d(
         static_cast<GLenum>(format),
         static_cast<GLenum>(type),
         pixels.size() ? reinterpret_cast<const void*>(pixels.data()) : nullptr);
-    detail::error_check("MultiTexSubImage3DEXT"sv);
+    detail::error_check("MultiTexSubImage3DEXT"sv, check_errors);
 }
 
 /*!
@@ -2558,7 +2654,9 @@ STATICINLINE void multi_tex_sub_image_3d(
  * \return void
  */
 STATICINLINE void disable_client_state_indexed(
-    group::enable_cap array, u32 index)
+    group::enable_cap array,
+    u32               index,
+    error_check       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2566,7 +2664,7 @@ STATICINLINE void disable_client_state_indexed(
         GLW_FPTR_CHECK(DisableClientStateIndexedEXT)
     }
     glDisableClientStateIndexedEXT(static_cast<GLenum>(array), index);
-    detail::error_check("DisableClientStateIndexedEXT"sv);
+    detail::error_check("DisableClientStateIndexedEXT"sv, check_errors);
 }
 
 /*!
@@ -2576,7 +2674,9 @@ STATICINLINE void disable_client_state_indexed(
  * \return void
  */
 STATICINLINE void enable_client_state_indexed(
-    group::enable_cap array, u32 index)
+    group::enable_cap array,
+    u32               index,
+    error_check       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2584,7 +2684,7 @@ STATICINLINE void enable_client_state_indexed(
         GLW_FPTR_CHECK(EnableClientStateIndexedEXT)
     }
     glEnableClientStateIndexedEXT(static_cast<GLenum>(array), index);
-    detail::error_check("EnableClientStateIndexedEXT"sv);
+    detail::error_check("EnableClientStateIndexedEXT"sv, check_errors);
 }
 
 template<class span_f64>
@@ -2600,7 +2700,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_double_indexedv(
-    group::get_prop target, u32 index, span_f64 data)
+    group::get_prop target,
+    u32             index,
+    span_f64        data,
+    error_check     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2611,7 +2714,7 @@ STATICINLINE void get_double_indexedv(
         static_cast<GLenum>(target),
         index,
         data.size() ? reinterpret_cast<GLdouble*>(data.data()) : nullptr);
-    detail::error_check("GetDoubleIndexedvEXT"sv);
+    detail::error_check("GetDoubleIndexedvEXT"sv, check_errors);
 }
 
 template<class span_f32>
@@ -2627,7 +2730,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_float_indexedv(
-    group::get_prop target, u32 index, span_f32 data)
+    group::get_prop target,
+    u32             index,
+    span_f32        data,
+    error_check     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2638,7 +2744,7 @@ STATICINLINE void get_float_indexedv(
         static_cast<GLenum>(target),
         index,
         data.size() ? reinterpret_cast<GLfloat*>(data.data()) : nullptr);
-    detail::error_check("GetFloatIndexedvEXT"sv);
+    detail::error_check("GetFloatIndexedvEXT"sv, check_errors);
 }
 
 template<class span_void>
@@ -2650,7 +2756,11 @@ requires(concepts::span<span_void>)
  * \param data void **
  * \return void
  */
-STATICINLINE void get_pointer_indexedv(GLenum target, u32 index, span_void data)
+STATICINLINE void get_pointer_indexedv(
+    GLenum      target,
+    u32         index,
+    span_void   data,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2661,7 +2771,7 @@ STATICINLINE void get_pointer_indexedv(GLenum target, u32 index, span_void data)
         target,
         index,
         data.size() ? reinterpret_cast<void**>(data.data()) : nullptr);
-    detail::error_check("GetPointerIndexedvEXT"sv);
+    detail::error_check("GetPointerIndexedvEXT"sv, check_errors);
 }
 
 /*!
@@ -2670,7 +2780,10 @@ STATICINLINE void get_pointer_indexedv(GLenum target, u32 index, span_void data)
  * \param index GLuint
  * \return void
  */
-STATICINLINE void disable_indexed(group::enable_cap target, u32 index)
+STATICINLINE void disable_indexed(
+    group::enable_cap target,
+    u32               index,
+    error_check       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2678,7 +2791,7 @@ STATICINLINE void disable_indexed(group::enable_cap target, u32 index)
         GLW_FPTR_CHECK(DisableIndexedEXT)
     }
     glDisableIndexedEXT(static_cast<GLenum>(target), index);
-    detail::error_check("DisableIndexedEXT"sv);
+    detail::error_check("DisableIndexedEXT"sv, check_errors);
 }
 
 /*!
@@ -2687,7 +2800,10 @@ STATICINLINE void disable_indexed(group::enable_cap target, u32 index)
  * \param index GLuint
  * \return void
  */
-STATICINLINE void enable_indexed(group::enable_cap target, u32 index)
+STATICINLINE void enable_indexed(
+    group::enable_cap target,
+    u32               index,
+    error_check       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2695,7 +2811,7 @@ STATICINLINE void enable_indexed(group::enable_cap target, u32 index)
         GLW_FPTR_CHECK(EnableIndexedEXT)
     }
     glEnableIndexedEXT(static_cast<GLenum>(target), index);
-    detail::error_check("EnableIndexedEXT"sv);
+    detail::error_check("EnableIndexedEXT"sv, check_errors);
 }
 
 template<class span_bool>
@@ -2712,7 +2828,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_boolean_indexedv(
-    group::buffer_target_arb target, u32 index, span_bool data)
+    group::buffer_target_arb target,
+    u32                      index,
+    span_bool                data,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2723,7 +2842,7 @@ STATICINLINE void get_boolean_indexedv(
         static_cast<GLenum>(target),
         index,
         data.size() ? reinterpret_cast<GLboolean*>(data.data()) : nullptr);
-    detail::error_check("GetBooleanIndexedvEXT"sv);
+    detail::error_check("GetBooleanIndexedvEXT"sv, check_errors);
 }
 
 template<class span_i32>
@@ -2739,7 +2858,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_integer_indexedv(
-    group::get_prop target, u32 index, span_i32 data)
+    group::get_prop target,
+    u32             index,
+    span_i32        data,
+    error_check     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2750,7 +2872,7 @@ STATICINLINE void get_integer_indexedv(
         static_cast<GLenum>(target),
         index,
         data.size() ? reinterpret_cast<GLint*>(data.data()) : nullptr);
-    detail::error_check("GetIntegerIndexedvEXT"sv);
+    detail::error_check("GetIntegerIndexedvEXT"sv, check_errors);
 }
 
 /*!
@@ -2759,7 +2881,10 @@ STATICINLINE void get_integer_indexedv(
  * \param index GLuint
  * \return Boolean
  */
-STATICINLINE bool is_enabled_indexed(group::enable_cap target, u32 index)
+STATICINLINE bool is_enabled_indexed(
+    group::enable_cap target,
+    u32               index,
+    error_check       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2767,7 +2892,7 @@ STATICINLINE bool is_enabled_indexed(group::enable_cap target, u32 index)
         GLW_FPTR_CHECK(IsEnabledIndexedEXT)
     }
     auto out = glIsEnabledIndexedEXT(static_cast<GLenum>(target), index);
-    detail::error_check("IsEnabledIndexedEXT"sv);
+    detail::error_check("IsEnabledIndexedEXT"sv, check_errors);
     return out == GL_TRUE ? true : false;
 }
 
@@ -2792,7 +2917,8 @@ STATICINLINE void compressed_texture_image_1d(
     group::internal_format internalformat,
     i32                    width,
     i32                    border,
-    span_const_void const& bits)
+    span_const_void const& bits,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2814,7 +2940,7 @@ STATICINLINE void compressed_texture_image_1d(
         bits.size() *
             sizeof(typename std::decay_t<span_const_void const&>::value_type),
         bits.size() ? reinterpret_cast<const void*>(bits.data()) : nullptr);
-    detail::error_check("CompressedTextureImage1DEXT"sv);
+    detail::error_check("CompressedTextureImage1DEXT"sv, check_errors);
 }
 
 template<class size_2_i32, class span_const_void>
@@ -2839,7 +2965,8 @@ STATICINLINE void compressed_texture_image_2d(
     group::internal_format internalformat,
     size_2_i32 const&      width,
     i32                    border,
-    span_const_void const& bits)
+    span_const_void const& bits,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2862,7 +2989,7 @@ STATICINLINE void compressed_texture_image_2d(
         bits.size() *
             sizeof(typename std::decay_t<span_const_void const&>::value_type),
         bits.size() ? reinterpret_cast<const void*>(bits.data()) : nullptr);
-    detail::error_check("CompressedTextureImage2DEXT"sv);
+    detail::error_check("CompressedTextureImage2DEXT"sv, check_errors);
 }
 
 template<class size_3_i32, class span_const_void>
@@ -2888,7 +3015,8 @@ STATICINLINE void compressed_texture_image_3d(
     group::internal_format internalformat,
     size_3_i32 const&      width,
     i32                    border,
-    span_const_void const& bits)
+    span_const_void const& bits,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2912,7 +3040,7 @@ STATICINLINE void compressed_texture_image_3d(
         bits.size() *
             sizeof(typename std::decay_t<span_const_void const&>::value_type),
         bits.size() ? reinterpret_cast<const void*>(bits.data()) : nullptr);
-    detail::error_check("CompressedTextureImage3DEXT"sv);
+    detail::error_check("CompressedTextureImage3DEXT"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -2936,7 +3064,8 @@ STATICINLINE void compressed_texture_sub_image_1d(
     i32                    xoffset,
     i32                    width,
     group::internal_format format,
-    span_const_void const& bits)
+    span_const_void const& bits,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -2958,7 +3087,7 @@ STATICINLINE void compressed_texture_sub_image_1d(
         bits.size() *
             sizeof(typename std::decay_t<span_const_void const&>::value_type),
         bits.size() ? reinterpret_cast<const void*>(bits.data()) : nullptr);
-    detail::error_check("CompressedTextureSubImage1DEXT"sv);
+    detail::error_check("CompressedTextureSubImage1DEXT"sv, check_errors);
 }
 
 template<class size_2_i32, class span_const_void, class vec_2_i32>
@@ -2986,7 +3115,8 @@ STATICINLINE void compressed_texture_sub_image_2d(
     vec_2_i32 const&       xoffset,
     size_2_i32 const&      width,
     group::internal_format format,
-    span_const_void const& bits)
+    span_const_void const& bits,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -3010,7 +3140,7 @@ STATICINLINE void compressed_texture_sub_image_2d(
         bits.size() *
             sizeof(typename std::decay_t<span_const_void const&>::value_type),
         bits.size() ? reinterpret_cast<const void*>(bits.data()) : nullptr);
-    detail::error_check("CompressedTextureSubImage2DEXT"sv);
+    detail::error_check("CompressedTextureSubImage2DEXT"sv, check_errors);
 }
 
 template<class size_3_i32, class span_const_void, class vec_3_i32>
@@ -3040,7 +3170,8 @@ STATICINLINE void compressed_texture_sub_image_3d(
     vec_3_i32 const&       xoffset,
     size_3_i32 const&      width,
     group::internal_format format,
-    span_const_void const& bits)
+    span_const_void const& bits,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -3066,7 +3197,7 @@ STATICINLINE void compressed_texture_sub_image_3d(
         bits.size() *
             sizeof(typename std::decay_t<span_const_void const&>::value_type),
         bits.size() ? reinterpret_cast<const void*>(bits.data()) : nullptr);
-    detail::error_check("CompressedTextureSubImage3DEXT"sv);
+    detail::error_check("CompressedTextureSubImage3DEXT"sv, check_errors);
 }
 
 template<class span_void>
@@ -3080,7 +3211,11 @@ requires(concepts::span<span_void>)
  * \return void
  */
 STATICINLINE void get_compressed_texture_image(
-    u32 texture, group::texture_target target, i32 lod, span_void img)
+    u32                   texture,
+    group::texture_target target,
+    i32                   lod,
+    span_void             img,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -3097,7 +3232,7 @@ STATICINLINE void get_compressed_texture_image(
         static_cast<GLenum>(target),
         lod,
         img.size() ? reinterpret_cast<void*>(img.data()) : nullptr);
-    detail::error_check("GetCompressedTextureImageEXT"sv);
+    detail::error_check("GetCompressedTextureImageEXT"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -3121,7 +3256,8 @@ STATICINLINE void compressed_multi_tex_image_1d(
     group::internal_format internalformat,
     i32                    width,
     i32                    border,
-    span_const_void const& bits)
+    span_const_void const& bits,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -3138,7 +3274,7 @@ STATICINLINE void compressed_multi_tex_image_1d(
         bits.size() *
             sizeof(typename std::decay_t<span_const_void const&>::value_type),
         bits.size() ? reinterpret_cast<const void*>(bits.data()) : nullptr);
-    detail::error_check("CompressedMultiTexImage1DEXT"sv);
+    detail::error_check("CompressedMultiTexImage1DEXT"sv, check_errors);
 }
 
 template<class size_2_i32, class span_const_void>
@@ -3163,7 +3299,8 @@ STATICINLINE void compressed_multi_tex_image_2d(
     group::internal_format internalformat,
     size_2_i32 const&      width,
     i32                    border,
-    span_const_void const& bits)
+    span_const_void const& bits,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -3181,7 +3318,7 @@ STATICINLINE void compressed_multi_tex_image_2d(
         bits.size() *
             sizeof(typename std::decay_t<span_const_void const&>::value_type),
         bits.size() ? reinterpret_cast<const void*>(bits.data()) : nullptr);
-    detail::error_check("CompressedMultiTexImage2DEXT"sv);
+    detail::error_check("CompressedMultiTexImage2DEXT"sv, check_errors);
 }
 
 template<class size_3_i32, class span_const_void>
@@ -3207,7 +3344,8 @@ STATICINLINE void compressed_multi_tex_image_3d(
     group::internal_format internalformat,
     size_3_i32 const&      width,
     i32                    border,
-    span_const_void const& bits)
+    span_const_void const& bits,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -3226,7 +3364,7 @@ STATICINLINE void compressed_multi_tex_image_3d(
         bits.size() *
             sizeof(typename std::decay_t<span_const_void const&>::value_type),
         bits.size() ? reinterpret_cast<const void*>(bits.data()) : nullptr);
-    detail::error_check("CompressedMultiTexImage3DEXT"sv);
+    detail::error_check("CompressedMultiTexImage3DEXT"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -3250,7 +3388,8 @@ STATICINLINE void compressed_multi_tex_sub_image_1d(
     i32                    xoffset,
     i32                    width,
     group::internal_format format,
-    span_const_void const& bits)
+    span_const_void const& bits,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -3267,7 +3406,7 @@ STATICINLINE void compressed_multi_tex_sub_image_1d(
         bits.size() *
             sizeof(typename std::decay_t<span_const_void const&>::value_type),
         bits.size() ? reinterpret_cast<const void*>(bits.data()) : nullptr);
-    detail::error_check("CompressedMultiTexSubImage1DEXT"sv);
+    detail::error_check("CompressedMultiTexSubImage1DEXT"sv, check_errors);
 }
 
 template<class size_2_i32, class span_const_void, class vec_2_i32>
@@ -3295,7 +3434,8 @@ STATICINLINE void compressed_multi_tex_sub_image_2d(
     vec_2_i32 const&       xoffset,
     size_2_i32 const&      width,
     group::internal_format format,
-    span_const_void const& bits)
+    span_const_void const& bits,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -3314,7 +3454,7 @@ STATICINLINE void compressed_multi_tex_sub_image_2d(
         bits.size() *
             sizeof(typename std::decay_t<span_const_void const&>::value_type),
         bits.size() ? reinterpret_cast<const void*>(bits.data()) : nullptr);
-    detail::error_check("CompressedMultiTexSubImage2DEXT"sv);
+    detail::error_check("CompressedMultiTexSubImage2DEXT"sv, check_errors);
 }
 
 template<class size_3_i32, class span_const_void, class vec_3_i32>
@@ -3344,7 +3484,8 @@ STATICINLINE void compressed_multi_tex_sub_image_3d(
     vec_3_i32 const&       xoffset,
     size_3_i32 const&      width,
     group::internal_format format,
-    span_const_void const& bits)
+    span_const_void const& bits,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -3365,7 +3506,7 @@ STATICINLINE void compressed_multi_tex_sub_image_3d(
         bits.size() *
             sizeof(typename std::decay_t<span_const_void const&>::value_type),
         bits.size() ? reinterpret_cast<const void*>(bits.data()) : nullptr);
-    detail::error_check("CompressedMultiTexSubImage3DEXT"sv);
+    detail::error_check("CompressedMultiTexSubImage3DEXT"sv, check_errors);
 }
 
 template<class span_void>
@@ -3382,7 +3523,8 @@ STATICINLINE void get_compressed_multi_tex_image(
     group::texture_unit   texunit,
     group::texture_target target,
     i32                   lod,
-    span_void             img)
+    span_void             img,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -3394,7 +3536,7 @@ STATICINLINE void get_compressed_multi_tex_image(
         static_cast<GLenum>(target),
         lod,
         img.size() ? reinterpret_cast<void*>(img.data()) : nullptr);
-    detail::error_check("GetCompressedMultiTexImageEXT"sv);
+    detail::error_check("GetCompressedMultiTexImageEXT"sv, check_errors);
 }
 
 template<class span_const_f64>
@@ -3410,7 +3552,9 @@ requires(
  * \return void
  */
 STATICINLINE void matrix_load_transposed(
-    group::matrix_mode mode, span_const_f64 const& m)
+    group::matrix_mode    mode,
+    span_const_f64 const& m,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -3420,7 +3564,7 @@ STATICINLINE void matrix_load_transposed(
     glMatrixLoadTransposedEXT(
         static_cast<GLenum>(mode),
         m.size() ? reinterpret_cast<const GLdouble*>(m.data()) : nullptr);
-    detail::error_check("MatrixLoadTransposedEXT"sv);
+    detail::error_check("MatrixLoadTransposedEXT"sv, check_errors);
 }
 
 template<class span_const_f32>
@@ -3436,7 +3580,9 @@ requires(
  * \return void
  */
 STATICINLINE void matrix_load_transposef(
-    group::matrix_mode mode, span_const_f32 const& m)
+    group::matrix_mode    mode,
+    span_const_f32 const& m,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -3446,7 +3592,7 @@ STATICINLINE void matrix_load_transposef(
     glMatrixLoadTransposefEXT(
         static_cast<GLenum>(mode),
         m.size() ? reinterpret_cast<const GLfloat*>(m.data()) : nullptr);
-    detail::error_check("MatrixLoadTransposefEXT"sv);
+    detail::error_check("MatrixLoadTransposefEXT"sv, check_errors);
 }
 
 template<class span_const_f64>
@@ -3462,7 +3608,9 @@ requires(
  * \return void
  */
 STATICINLINE void matrix_mult_transposed(
-    group::matrix_mode mode, span_const_f64 const& m)
+    group::matrix_mode    mode,
+    span_const_f64 const& m,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -3472,7 +3620,7 @@ STATICINLINE void matrix_mult_transposed(
     glMatrixMultTransposedEXT(
         static_cast<GLenum>(mode),
         m.size() ? reinterpret_cast<const GLdouble*>(m.data()) : nullptr);
-    detail::error_check("MatrixMultTransposedEXT"sv);
+    detail::error_check("MatrixMultTransposedEXT"sv, check_errors);
 }
 
 template<class span_const_f32>
@@ -3488,7 +3636,9 @@ requires(
  * \return void
  */
 STATICINLINE void matrix_mult_transposef(
-    group::matrix_mode mode, span_const_f32 const& m)
+    group::matrix_mode    mode,
+    span_const_f32 const& m,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -3498,7 +3648,7 @@ STATICINLINE void matrix_mult_transposef(
     glMatrixMultTransposefEXT(
         static_cast<GLenum>(mode),
         m.size() ? reinterpret_cast<const GLfloat*>(m.data()) : nullptr);
-    detail::error_check("MatrixMultTransposefEXT"sv);
+    detail::error_check("MatrixMultTransposefEXT"sv, check_errors);
 }
 
 template<class span_i32>
@@ -3514,7 +3664,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_named_buffer_parameter(
-    u32 buffer, group::buffer_prop_arb pname, span_i32 params)
+    u32                    buffer,
+    group::buffer_prop_arb pname,
+    span_i32               params,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -3530,7 +3683,7 @@ STATICINLINE void get_named_buffer_parameter(
         buffer,
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetNamedBufferParameterivEXT"sv);
+    detail::error_check("GetNamedBufferParameterivEXT"sv, check_errors);
 }
 
 template<class span_void>
@@ -3543,7 +3696,10 @@ requires(concepts::span<span_void>)
  * \return void
  */
 STATICINLINE void get_named_buffer_pointerv(
-    u32 buffer, group::buffer_pointer_name_arb pname, span_void params)
+    u32                            buffer,
+    group::buffer_pointer_name_arb pname,
+    span_void                      params,
+    error_check                    check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -3559,7 +3715,7 @@ STATICINLINE void get_named_buffer_pointerv(
         buffer,
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<void**>(params.data()) : nullptr);
-    detail::error_check("GetNamedBufferPointervEXT"sv);
+    detail::error_check("GetNamedBufferPointervEXT"sv, check_errors);
 }
 
 template<class span_void>
@@ -3573,7 +3729,11 @@ requires(concepts::span<span_void>)
  * \return void
  */
 STATICINLINE void get_named_buffer_sub_data(
-    u32 buffer, GLintptr offset, GLsizeiptr size, span_void data)
+    u32         buffer,
+    GLintptr    offset,
+    GLsizeiptr  size,
+    span_void   data,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -3590,7 +3750,7 @@ STATICINLINE void get_named_buffer_sub_data(
         offset,
         size,
         data.size() ? reinterpret_cast<void*>(data.data()) : nullptr);
-    detail::error_check("GetNamedBufferSubDataEXT"sv);
+    detail::error_check("GetNamedBufferSubDataEXT"sv, check_errors);
 }
 
 /*!
@@ -3599,7 +3759,10 @@ STATICINLINE void get_named_buffer_sub_data(
  * \param access GLenum
  * \return void *
  */
-STATICINLINE void* map_named_buffer(u32 buffer, group::buffer_access_arb access)
+STATICINLINE void* map_named_buffer(
+    u32                      buffer,
+    group::buffer_access_arb access,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -3612,7 +3775,7 @@ STATICINLINE void* map_named_buffer(u32 buffer, group::buffer_access_arb access)
 #endif
     }
     auto out = glMapNamedBufferEXT(buffer, static_cast<GLenum>(access));
-    detail::error_check("MapNamedBufferEXT"sv);
+    detail::error_check("MapNamedBufferEXT"sv, check_errors);
     return out;
 }
 
@@ -3630,7 +3793,8 @@ STATICINLINE void named_buffer_data(
     u32                               buffer,
     GLsizeiptr                        size,
     span_const_void const&            data,
-    group::vertex_buffer_object_usage usage)
+    group::vertex_buffer_object_usage usage,
+    error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -3647,7 +3811,7 @@ STATICINLINE void named_buffer_data(
         size,
         data.size() ? reinterpret_cast<const void*>(data.data()) : nullptr,
         static_cast<GLenum>(usage));
-    detail::error_check("NamedBufferDataEXT"sv);
+    detail::error_check("NamedBufferDataEXT"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -3661,7 +3825,11 @@ requires(concepts::span<span_const_void>)
  * \return void
  */
 STATICINLINE void named_buffer_sub_data(
-    u32 buffer, GLintptr offset, GLsizeiptr size, span_const_void const& data)
+    u32                    buffer,
+    GLintptr               offset,
+    GLsizeiptr             size,
+    span_const_void const& data,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -3678,7 +3846,7 @@ STATICINLINE void named_buffer_sub_data(
         offset,
         size,
         data.size() ? reinterpret_cast<const void*>(data.data()) : nullptr);
-    detail::error_check("NamedBufferSubDataEXT"sv);
+    detail::error_check("NamedBufferSubDataEXT"sv, check_errors);
 }
 
 /*!
@@ -3686,7 +3854,8 @@ STATICINLINE void named_buffer_sub_data(
  * \param buffer GLuint
  * \return Boolean
  */
-STATICINLINE bool unmap_named_buffer(u32 buffer)
+STATICINLINE bool unmap_named_buffer(
+    u32 buffer, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -3699,7 +3868,7 @@ STATICINLINE bool unmap_named_buffer(u32 buffer)
 #endif
     }
     auto out = glUnmapNamedBufferEXT(buffer);
-    detail::error_check("UnmapNamedBufferEXT"sv);
+    detail::error_check("UnmapNamedBufferEXT"sv, check_errors);
     return out == GL_TRUE ? true : false;
 }
 
@@ -3710,7 +3879,11 @@ STATICINLINE bool unmap_named_buffer(u32 buffer)
  * \param v0 GLfloat
  * \return void
  */
-STATICINLINE void program_uniform(u32 program, i32 location, f32 v0)
+STATICINLINE void program_uniform(
+    u32         program,
+    i32         location,
+    f32         v0,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -3723,7 +3896,7 @@ STATICINLINE void program_uniform(u32 program, i32 location, f32 v0)
 #endif
     }
     glProgramUniform1fEXT(program, location, v0);
-    detail::error_check("ProgramUniform1fEXT"sv);
+    detail::error_check("ProgramUniform1fEXT"sv, check_errors);
 }
 
 template<class span_const_f32>
@@ -3741,7 +3914,10 @@ requires(
  * \return void
  */
 STATICINLINE void program_uniform(
-    u32 program, i32 location, span_const_f32 const& value)
+    u32                   program,
+    i32                   location,
+    span_const_f32 const& value,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -3758,7 +3934,7 @@ STATICINLINE void program_uniform(
         location,
         value.size(),
         reinterpret_cast<const GLfloat*>(value.data()));
-    detail::error_check("ProgramUniform1fvEXT"sv);
+    detail::error_check("ProgramUniform1fvEXT"sv, check_errors);
 }
 
 /*!
@@ -3768,7 +3944,11 @@ STATICINLINE void program_uniform(
  * \param v0 GLint
  * \return void
  */
-STATICINLINE void program_uniform(u32 program, i32 location, i32 v0)
+STATICINLINE void program_uniform(
+    u32         program,
+    i32         location,
+    i32         v0,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -3781,7 +3961,7 @@ STATICINLINE void program_uniform(u32 program, i32 location, i32 v0)
 #endif
     }
     glProgramUniform1iEXT(program, location, v0);
-    detail::error_check("ProgramUniform1iEXT"sv);
+    detail::error_check("ProgramUniform1iEXT"sv, check_errors);
 }
 
 template<class span_const_i32>
@@ -3799,7 +3979,10 @@ requires(
  * \return void
  */
 STATICINLINE void program_uniform(
-    u32 program, i32 location, span_const_i32 const& value)
+    u32                   program,
+    i32                   location,
+    span_const_i32 const& value,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -3816,7 +3999,7 @@ STATICINLINE void program_uniform(
         location,
         value.size(),
         reinterpret_cast<const GLint*>(value.data()));
-    detail::error_check("ProgramUniform1ivEXT"sv);
+    detail::error_check("ProgramUniform1ivEXT"sv, check_errors);
 }
 
 template<class vec_2_f32>
@@ -3830,7 +4013,10 @@ requires(concepts::vector<vec_2_f32, f32, 2>)
  * \return void
  */
 STATICINLINE void program_uniform(
-    u32 program, i32 location, vec_2_f32 const& v0)
+    u32              program,
+    i32              location,
+    vec_2_f32 const& v0,
+    error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -3843,7 +4029,7 @@ STATICINLINE void program_uniform(
 #endif
     }
     glProgramUniform2fEXT(program, location, v0[0], v0[1]);
-    detail::error_check("ProgramUniform2fEXT"sv);
+    detail::error_check("ProgramUniform2fEXT"sv, check_errors);
 }
 
 template<class span_const_vec_2_f32>
@@ -3859,7 +4045,10 @@ requires(
  * \return void
  */
 STATICINLINE void program_uniform(
-    u32 program, i32 location, span_const_vec_2_f32 const& value)
+    u32                         program,
+    i32                         location,
+    span_const_vec_2_f32 const& value,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -3876,7 +4065,7 @@ STATICINLINE void program_uniform(
         location,
         value.size(),
         reinterpret_cast<const GLfloat*>(value.data()));
-    detail::error_check("ProgramUniform2fvEXT"sv);
+    detail::error_check("ProgramUniform2fvEXT"sv, check_errors);
 }
 
 template<class vec_2_i32>
@@ -3890,7 +4079,10 @@ requires(concepts::vector<vec_2_i32, i32, 2>)
  * \return void
  */
 STATICINLINE void program_uniform(
-    u32 program, i32 location, vec_2_i32 const& v0)
+    u32              program,
+    i32              location,
+    vec_2_i32 const& v0,
+    error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -3903,7 +4095,7 @@ STATICINLINE void program_uniform(
 #endif
     }
     glProgramUniform2iEXT(program, location, v0[0], v0[1]);
-    detail::error_check("ProgramUniform2iEXT"sv);
+    detail::error_check("ProgramUniform2iEXT"sv, check_errors);
 }
 
 template<class span_const_vec_2_i32>
@@ -3919,7 +4111,10 @@ requires(
  * \return void
  */
 STATICINLINE void program_uniform(
-    u32 program, i32 location, span_const_vec_2_i32 const& value)
+    u32                         program,
+    i32                         location,
+    span_const_vec_2_i32 const& value,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -3936,7 +4131,7 @@ STATICINLINE void program_uniform(
         location,
         value.size(),
         reinterpret_cast<const GLint*>(value.data()));
-    detail::error_check("ProgramUniform2ivEXT"sv);
+    detail::error_check("ProgramUniform2ivEXT"sv, check_errors);
 }
 
 template<class vec_3_f32>
@@ -3951,7 +4146,10 @@ requires(concepts::vector<vec_3_f32, f32, 3>)
  * \return void
  */
 STATICINLINE void program_uniform(
-    u32 program, i32 location, vec_3_f32 const& v0)
+    u32              program,
+    i32              location,
+    vec_3_f32 const& v0,
+    error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -3964,7 +4162,7 @@ STATICINLINE void program_uniform(
 #endif
     }
     glProgramUniform3fEXT(program, location, v0[0], v0[1], v0[2]);
-    detail::error_check("ProgramUniform3fEXT"sv);
+    detail::error_check("ProgramUniform3fEXT"sv, check_errors);
 }
 
 template<class span_const_vec_3_f32>
@@ -3980,7 +4178,10 @@ requires(
  * \return void
  */
 STATICINLINE void program_uniform(
-    u32 program, i32 location, span_const_vec_3_f32 const& value)
+    u32                         program,
+    i32                         location,
+    span_const_vec_3_f32 const& value,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -3997,7 +4198,7 @@ STATICINLINE void program_uniform(
         location,
         value.size(),
         reinterpret_cast<const GLfloat*>(value.data()));
-    detail::error_check("ProgramUniform3fvEXT"sv);
+    detail::error_check("ProgramUniform3fvEXT"sv, check_errors);
 }
 
 template<class vec_3_i32>
@@ -4012,7 +4213,10 @@ requires(concepts::vector<vec_3_i32, i32, 3>)
  * \return void
  */
 STATICINLINE void program_uniform(
-    u32 program, i32 location, vec_3_i32 const& v0)
+    u32              program,
+    i32              location,
+    vec_3_i32 const& v0,
+    error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -4025,7 +4229,7 @@ STATICINLINE void program_uniform(
 #endif
     }
     glProgramUniform3iEXT(program, location, v0[0], v0[1], v0[2]);
-    detail::error_check("ProgramUniform3iEXT"sv);
+    detail::error_check("ProgramUniform3iEXT"sv, check_errors);
 }
 
 template<class span_const_vec_3_i32>
@@ -4041,7 +4245,10 @@ requires(
  * \return void
  */
 STATICINLINE void program_uniform(
-    u32 program, i32 location, span_const_vec_3_i32 const& value)
+    u32                         program,
+    i32                         location,
+    span_const_vec_3_i32 const& value,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -4058,7 +4265,7 @@ STATICINLINE void program_uniform(
         location,
         value.size(),
         reinterpret_cast<const GLint*>(value.data()));
-    detail::error_check("ProgramUniform3ivEXT"sv);
+    detail::error_check("ProgramUniform3ivEXT"sv, check_errors);
 }
 
 template<class vec_4_f32>
@@ -4074,7 +4281,10 @@ requires(concepts::vector<vec_4_f32, f32, 4>)
  * \return void
  */
 STATICINLINE void program_uniform(
-    u32 program, i32 location, vec_4_f32 const& v0)
+    u32              program,
+    i32              location,
+    vec_4_f32 const& v0,
+    error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -4087,7 +4297,7 @@ STATICINLINE void program_uniform(
 #endif
     }
     glProgramUniform4fEXT(program, location, v0[0], v0[1], v0[2], v0[3]);
-    detail::error_check("ProgramUniform4fEXT"sv);
+    detail::error_check("ProgramUniform4fEXT"sv, check_errors);
 }
 
 template<class span_const_vec_4_f32>
@@ -4103,7 +4313,10 @@ requires(
  * \return void
  */
 STATICINLINE void program_uniform(
-    u32 program, i32 location, span_const_vec_4_f32 const& value)
+    u32                         program,
+    i32                         location,
+    span_const_vec_4_f32 const& value,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -4120,7 +4333,7 @@ STATICINLINE void program_uniform(
         location,
         value.size(),
         reinterpret_cast<const GLfloat*>(value.data()));
-    detail::error_check("ProgramUniform4fvEXT"sv);
+    detail::error_check("ProgramUniform4fvEXT"sv, check_errors);
 }
 
 template<class vec_4_i32>
@@ -4136,7 +4349,10 @@ requires(concepts::vector<vec_4_i32, i32, 4>)
  * \return void
  */
 STATICINLINE void program_uniform(
-    u32 program, i32 location, vec_4_i32 const& v0)
+    u32              program,
+    i32              location,
+    vec_4_i32 const& v0,
+    error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -4149,7 +4365,7 @@ STATICINLINE void program_uniform(
 #endif
     }
     glProgramUniform4iEXT(program, location, v0[0], v0[1], v0[2], v0[3]);
-    detail::error_check("ProgramUniform4iEXT"sv);
+    detail::error_check("ProgramUniform4iEXT"sv, check_errors);
 }
 
 template<class span_const_vec_4_i32>
@@ -4165,7 +4381,10 @@ requires(
  * \return void
  */
 STATICINLINE void program_uniform(
-    u32 program, i32 location, span_const_vec_4_i32 const& value)
+    u32                         program,
+    i32                         location,
+    span_const_vec_4_i32 const& value,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -4182,7 +4401,7 @@ STATICINLINE void program_uniform(
         location,
         value.size(),
         reinterpret_cast<const GLint*>(value.data()));
-    detail::error_check("ProgramUniform4ivEXT"sv);
+    detail::error_check("ProgramUniform4ivEXT"sv, check_errors);
 }
 
 template<class span_const_mat_2x2_f32>
@@ -4202,7 +4421,8 @@ STATICINLINE void program_uniform(
     u32                           program,
     i32                           location,
     bool                          transpose,
-    span_const_mat_2x2_f32 const& value)
+    span_const_mat_2x2_f32 const& value,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -4220,7 +4440,7 @@ STATICINLINE void program_uniform(
         value.size(),
         transpose,
         reinterpret_cast<const GLfloat*>(value.data()));
-    detail::error_check("ProgramUniformMatrix2fvEXT"sv);
+    detail::error_check("ProgramUniformMatrix2fvEXT"sv, check_errors);
 }
 
 template<class span_const_mat_3x3_f32>
@@ -4240,7 +4460,8 @@ STATICINLINE void program_uniform(
     u32                           program,
     i32                           location,
     bool                          transpose,
-    span_const_mat_3x3_f32 const& value)
+    span_const_mat_3x3_f32 const& value,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -4258,7 +4479,7 @@ STATICINLINE void program_uniform(
         value.size(),
         transpose,
         reinterpret_cast<const GLfloat*>(value.data()));
-    detail::error_check("ProgramUniformMatrix3fvEXT"sv);
+    detail::error_check("ProgramUniformMatrix3fvEXT"sv, check_errors);
 }
 
 template<class span_const_mat_4x4_f32>
@@ -4278,7 +4499,8 @@ STATICINLINE void program_uniform(
     u32                           program,
     i32                           location,
     bool                          transpose,
-    span_const_mat_4x4_f32 const& value)
+    span_const_mat_4x4_f32 const& value,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -4296,7 +4518,7 @@ STATICINLINE void program_uniform(
         value.size(),
         transpose,
         reinterpret_cast<const GLfloat*>(value.data()));
-    detail::error_check("ProgramUniformMatrix4fvEXT"sv);
+    detail::error_check("ProgramUniformMatrix4fvEXT"sv, check_errors);
 }
 
 template<class span_const_mat_2x3_f32>
@@ -4316,7 +4538,8 @@ STATICINLINE void program_uniform(
     u32                           program,
     i32                           location,
     bool                          transpose,
-    span_const_mat_2x3_f32 const& value)
+    span_const_mat_2x3_f32 const& value,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -4334,7 +4557,7 @@ STATICINLINE void program_uniform(
         value.size(),
         transpose,
         reinterpret_cast<const GLfloat*>(value.data()));
-    detail::error_check("ProgramUniformMatrix2x3fvEXT"sv);
+    detail::error_check("ProgramUniformMatrix2x3fvEXT"sv, check_errors);
 }
 
 template<class span_const_mat_2x4_f32>
@@ -4354,7 +4577,8 @@ STATICINLINE void program_uniform(
     u32                           program,
     i32                           location,
     bool                          transpose,
-    span_const_mat_2x4_f32 const& value)
+    span_const_mat_2x4_f32 const& value,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -4372,7 +4596,7 @@ STATICINLINE void program_uniform(
         value.size(),
         transpose,
         reinterpret_cast<const GLfloat*>(value.data()));
-    detail::error_check("ProgramUniformMatrix2x4fvEXT"sv);
+    detail::error_check("ProgramUniformMatrix2x4fvEXT"sv, check_errors);
 }
 
 template<class span_const_mat_3x2_f32>
@@ -4392,7 +4616,8 @@ STATICINLINE void program_uniform(
     u32                           program,
     i32                           location,
     bool                          transpose,
-    span_const_mat_3x2_f32 const& value)
+    span_const_mat_3x2_f32 const& value,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -4410,7 +4635,7 @@ STATICINLINE void program_uniform(
         value.size(),
         transpose,
         reinterpret_cast<const GLfloat*>(value.data()));
-    detail::error_check("ProgramUniformMatrix3x2fvEXT"sv);
+    detail::error_check("ProgramUniformMatrix3x2fvEXT"sv, check_errors);
 }
 
 template<class span_const_mat_3x4_f32>
@@ -4430,7 +4655,8 @@ STATICINLINE void program_uniform(
     u32                           program,
     i32                           location,
     bool                          transpose,
-    span_const_mat_3x4_f32 const& value)
+    span_const_mat_3x4_f32 const& value,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -4448,7 +4674,7 @@ STATICINLINE void program_uniform(
         value.size(),
         transpose,
         reinterpret_cast<const GLfloat*>(value.data()));
-    detail::error_check("ProgramUniformMatrix3x4fvEXT"sv);
+    detail::error_check("ProgramUniformMatrix3x4fvEXT"sv, check_errors);
 }
 
 template<class span_const_mat_4x2_f32>
@@ -4468,7 +4694,8 @@ STATICINLINE void program_uniform(
     u32                           program,
     i32                           location,
     bool                          transpose,
-    span_const_mat_4x2_f32 const& value)
+    span_const_mat_4x2_f32 const& value,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -4486,7 +4713,7 @@ STATICINLINE void program_uniform(
         value.size(),
         transpose,
         reinterpret_cast<const GLfloat*>(value.data()));
-    detail::error_check("ProgramUniformMatrix4x2fvEXT"sv);
+    detail::error_check("ProgramUniformMatrix4x2fvEXT"sv, check_errors);
 }
 
 template<class span_const_mat_4x3_f32>
@@ -4506,7 +4733,8 @@ STATICINLINE void program_uniform(
     u32                           program,
     i32                           location,
     bool                          transpose,
-    span_const_mat_4x3_f32 const& value)
+    span_const_mat_4x3_f32 const& value,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -4524,7 +4752,7 @@ STATICINLINE void program_uniform(
         value.size(),
         transpose,
         reinterpret_cast<const GLfloat*>(value.data()));
-    detail::error_check("ProgramUniformMatrix4x3fvEXT"sv);
+    detail::error_check("ProgramUniformMatrix4x3fvEXT"sv, check_errors);
 }
 
 /*!
@@ -4539,7 +4767,8 @@ STATICINLINE void multi_tex_buffer(
     group::texture_unit    texunit,
     group::texture_target  target,
     group::internal_format internalformat,
-    u32                    buffer)
+    u32                    buffer,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -4556,7 +4785,7 @@ STATICINLINE void multi_tex_buffer(
         static_cast<GLenum>(target),
         static_cast<GLenum>(internalformat),
         buffer);
-    detail::error_check("MultiTexBufferEXT"sv);
+    detail::error_check("MultiTexBufferEXT"sv, check_errors);
 }
 
 /*!
@@ -4571,7 +4800,8 @@ STATICINLINE void texture_buffer(
     u32                          texture,
     group::texture_target        target,
     group::sized_internal_format internalformat,
-    u32                          buffer)
+    u32                          buffer,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -4593,7 +4823,7 @@ STATICINLINE void texture_buffer(
         static_cast<GLenum>(target),
         static_cast<GLenum>(internalformat),
         buffer);
-    detail::error_check("TextureBufferEXT"sv);
+    detail::error_check("TextureBufferEXT"sv, check_errors);
 }
 
 template<class span_i32>
@@ -4613,7 +4843,8 @@ STATICINLINE void get_multi_tex_parameter_iiv(
     group::texture_unit          texunit,
     group::texture_target        target,
     group::get_texture_parameter pname,
-    span_i32                     params)
+    span_i32                     params,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -4625,7 +4856,7 @@ STATICINLINE void get_multi_tex_parameter_iiv(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetMultiTexParameterIivEXT"sv);
+    detail::error_check("GetMultiTexParameterIivEXT"sv, check_errors);
 }
 
 template<class span_u32>
@@ -4645,7 +4876,8 @@ STATICINLINE void get_multi_tex_parameter_iuiv(
     group::texture_unit          texunit,
     group::texture_target        target,
     group::get_texture_parameter pname,
-    span_u32                     params)
+    span_u32                     params,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -4657,7 +4889,7 @@ STATICINLINE void get_multi_tex_parameter_iuiv(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLuint*>(params.data()) : nullptr);
-    detail::error_check("GetMultiTexParameterIuivEXT"sv);
+    detail::error_check("GetMultiTexParameterIuivEXT"sv, check_errors);
 }
 
 template<class span_i32>
@@ -4677,7 +4909,8 @@ STATICINLINE void get_texture_parameter_iiv(
     u32                          texture,
     group::texture_target        target,
     group::get_texture_parameter pname,
-    span_i32                     params)
+    span_i32                     params,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -4694,7 +4927,7 @@ STATICINLINE void get_texture_parameter_iiv(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetTextureParameterIivEXT"sv);
+    detail::error_check("GetTextureParameterIivEXT"sv, check_errors);
 }
 
 template<class span_u32>
@@ -4714,7 +4947,8 @@ STATICINLINE void get_texture_parameter_iuiv(
     u32                          texture,
     group::texture_target        target,
     group::get_texture_parameter pname,
-    span_u32                     params)
+    span_u32                     params,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -4731,7 +4965,7 @@ STATICINLINE void get_texture_parameter_iuiv(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLuint*>(params.data()) : nullptr);
-    detail::error_check("GetTextureParameterIuivEXT"sv);
+    detail::error_check("GetTextureParameterIuivEXT"sv, check_errors);
 }
 
 template<class span_const_i32>
@@ -4752,7 +4986,8 @@ STATICINLINE void multi_tex_parameter_iiv(
     group::texture_unit           texunit,
     group::texture_target         target,
     group::texture_parameter_name pname,
-    span_const_i32 const&         params)
+    span_const_i32 const&         params,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -4765,7 +5000,7 @@ STATICINLINE void multi_tex_parameter_iiv(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<const GLint*>(params.data())
                       : nullptr);
-    detail::error_check("MultiTexParameterIivEXT"sv);
+    detail::error_check("MultiTexParameterIivEXT"sv, check_errors);
 }
 
 template<class span_const_u32>
@@ -4786,7 +5021,8 @@ STATICINLINE void multi_tex_parameter_iuiv(
     group::texture_unit           texunit,
     group::texture_target         target,
     group::texture_parameter_name pname,
-    span_const_u32 const&         params)
+    span_const_u32 const&         params,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -4799,7 +5035,7 @@ STATICINLINE void multi_tex_parameter_iuiv(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<const GLuint*>(params.data())
                       : nullptr);
-    detail::error_check("MultiTexParameterIuivEXT"sv);
+    detail::error_check("MultiTexParameterIuivEXT"sv, check_errors);
 }
 
 template<class span_const_i32>
@@ -4820,7 +5056,8 @@ STATICINLINE void texture_parameter_iiv(
     u32                           texture,
     group::texture_target         target,
     group::texture_parameter_name pname,
-    span_const_i32 const&         params)
+    span_const_i32 const&         params,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -4838,7 +5075,7 @@ STATICINLINE void texture_parameter_iiv(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<const GLint*>(params.data())
                       : nullptr);
-    detail::error_check("TextureParameterIivEXT"sv);
+    detail::error_check("TextureParameterIivEXT"sv, check_errors);
 }
 
 template<class span_const_u32>
@@ -4859,7 +5096,8 @@ STATICINLINE void texture_parameter_iuiv(
     u32                           texture,
     group::texture_target         target,
     group::texture_parameter_name pname,
-    span_const_u32 const&         params)
+    span_const_u32 const&         params,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -4877,7 +5115,7 @@ STATICINLINE void texture_parameter_iuiv(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<const GLuint*>(params.data())
                       : nullptr);
-    detail::error_check("TextureParameterIuivEXT"sv);
+    detail::error_check("TextureParameterIuivEXT"sv, check_errors);
 }
 
 /*!
@@ -4887,7 +5125,11 @@ STATICINLINE void texture_parameter_iuiv(
  * \param v0 GLuint
  * \return void
  */
-STATICINLINE void program_uniform(u32 program, i32 location, u32 v0)
+STATICINLINE void program_uniform(
+    u32         program,
+    i32         location,
+    u32         v0,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -4900,7 +5142,7 @@ STATICINLINE void program_uniform(u32 program, i32 location, u32 v0)
 #endif
     }
     glProgramUniform1uiEXT(program, location, v0);
-    detail::error_check("ProgramUniform1uiEXT"sv);
+    detail::error_check("ProgramUniform1uiEXT"sv, check_errors);
 }
 
 template<class span_const_u32>
@@ -4918,7 +5160,10 @@ requires(
  * \return void
  */
 STATICINLINE void program_uniform(
-    u32 program, i32 location, span_const_u32 const& value)
+    u32                   program,
+    i32                   location,
+    span_const_u32 const& value,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -4935,7 +5180,7 @@ STATICINLINE void program_uniform(
         location,
         value.size(),
         reinterpret_cast<const GLuint*>(value.data()));
-    detail::error_check("ProgramUniform1uivEXT"sv);
+    detail::error_check("ProgramUniform1uivEXT"sv, check_errors);
 }
 
 template<class vec_2_u32>
@@ -4949,7 +5194,10 @@ requires(concepts::vector<vec_2_u32, u32, 2>)
  * \return void
  */
 STATICINLINE void program_uniform(
-    u32 program, i32 location, vec_2_u32 const& v0)
+    u32              program,
+    i32              location,
+    vec_2_u32 const& v0,
+    error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -4962,7 +5210,7 @@ STATICINLINE void program_uniform(
 #endif
     }
     glProgramUniform2uiEXT(program, location, v0[0], v0[1]);
-    detail::error_check("ProgramUniform2uiEXT"sv);
+    detail::error_check("ProgramUniform2uiEXT"sv, check_errors);
 }
 
 template<class span_const_vec_2_u32>
@@ -4978,7 +5226,10 @@ requires(
  * \return void
  */
 STATICINLINE void program_uniform(
-    u32 program, i32 location, span_const_vec_2_u32 const& value)
+    u32                         program,
+    i32                         location,
+    span_const_vec_2_u32 const& value,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -4995,7 +5246,7 @@ STATICINLINE void program_uniform(
         location,
         value.size(),
         reinterpret_cast<const GLuint*>(value.data()));
-    detail::error_check("ProgramUniform2uivEXT"sv);
+    detail::error_check("ProgramUniform2uivEXT"sv, check_errors);
 }
 
 template<class vec_3_u32>
@@ -5010,7 +5261,10 @@ requires(concepts::vector<vec_3_u32, u32, 3>)
  * \return void
  */
 STATICINLINE void program_uniform(
-    u32 program, i32 location, vec_3_u32 const& v0)
+    u32              program,
+    i32              location,
+    vec_3_u32 const& v0,
+    error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -5023,7 +5277,7 @@ STATICINLINE void program_uniform(
 #endif
     }
     glProgramUniform3uiEXT(program, location, v0[0], v0[1], v0[2]);
-    detail::error_check("ProgramUniform3uiEXT"sv);
+    detail::error_check("ProgramUniform3uiEXT"sv, check_errors);
 }
 
 template<class span_const_vec_3_u32>
@@ -5039,7 +5293,10 @@ requires(
  * \return void
  */
 STATICINLINE void program_uniform(
-    u32 program, i32 location, span_const_vec_3_u32 const& value)
+    u32                         program,
+    i32                         location,
+    span_const_vec_3_u32 const& value,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -5056,7 +5313,7 @@ STATICINLINE void program_uniform(
         location,
         value.size(),
         reinterpret_cast<const GLuint*>(value.data()));
-    detail::error_check("ProgramUniform3uivEXT"sv);
+    detail::error_check("ProgramUniform3uivEXT"sv, check_errors);
 }
 
 template<class vec_4_u32>
@@ -5072,7 +5329,10 @@ requires(concepts::vector<vec_4_u32, u32, 4>)
  * \return void
  */
 STATICINLINE void program_uniform(
-    u32 program, i32 location, vec_4_u32 const& v0)
+    u32              program,
+    i32              location,
+    vec_4_u32 const& v0,
+    error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -5085,7 +5345,7 @@ STATICINLINE void program_uniform(
 #endif
     }
     glProgramUniform4uiEXT(program, location, v0[0], v0[1], v0[2], v0[3]);
-    detail::error_check("ProgramUniform4uiEXT"sv);
+    detail::error_check("ProgramUniform4uiEXT"sv, check_errors);
 }
 
 template<class span_const_vec_4_u32>
@@ -5101,7 +5361,10 @@ requires(
  * \return void
  */
 STATICINLINE void program_uniform(
-    u32 program, i32 location, span_const_vec_4_u32 const& value)
+    u32                         program,
+    i32                         location,
+    span_const_vec_4_u32 const& value,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -5118,7 +5381,7 @@ STATICINLINE void program_uniform(
         location,
         value.size(),
         reinterpret_cast<const GLuint*>(value.data()));
-    detail::error_check("ProgramUniform4uivEXT"sv);
+    detail::error_check("ProgramUniform4uivEXT"sv, check_errors);
 }
 
 template<class span_const_vec_4_f32>
@@ -5138,7 +5401,8 @@ STATICINLINE void named_program_local_parameters4fv(
     u32                         program,
     group::program_target       target,
     u32                         index,
-    span_const_vec_4_f32 const& params)
+    span_const_vec_4_f32 const& params,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -5156,7 +5420,7 @@ STATICINLINE void named_program_local_parameters4fv(
         index,
         params.size(),
         reinterpret_cast<const GLfloat*>(params.data()));
-    detail::error_check("NamedProgramLocalParameters4fvEXT"sv);
+    detail::error_check("NamedProgramLocalParameters4fvEXT"sv, check_errors);
 }
 
 template<class span_i32>
@@ -5173,7 +5437,11 @@ requires(
  * \return void
  */
 STATICINLINE void get_named_program_local_parameter_iiv(
-    u32 program, group::program_target target, u32 index, span_i32 params)
+    u32                   program,
+    group::program_target target,
+    u32                   index,
+    span_i32              params,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -5190,7 +5458,7 @@ STATICINLINE void get_named_program_local_parameter_iiv(
         static_cast<GLenum>(target),
         index,
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetNamedProgramLocalParameterIivEXT"sv);
+    detail::error_check("GetNamedProgramLocalParameterIivEXT"sv, check_errors);
 }
 
 template<class span_u32>
@@ -5207,7 +5475,11 @@ requires(
  * \return void
  */
 STATICINLINE void get_named_program_local_parameter_iuiv(
-    u32 program, group::program_target target, u32 index, span_u32 params)
+    u32                   program,
+    group::program_target target,
+    u32                   index,
+    span_u32              params,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -5224,7 +5496,7 @@ STATICINLINE void get_named_program_local_parameter_iuiv(
         static_cast<GLenum>(target),
         index,
         params.size() ? reinterpret_cast<GLuint*>(params.data()) : nullptr);
-    detail::error_check("GetNamedProgramLocalParameterIuivEXT"sv);
+    detail::error_check("GetNamedProgramLocalParameterIuivEXT"sv, check_errors);
 }
 
 template<class vec_4_i32>
@@ -5241,7 +5513,11 @@ requires(concepts::vector<vec_4_i32, i32, 4>)
  * \return void
  */
 STATICINLINE void named_program_local_parameter_i4i(
-    u32 program, group::program_target target, u32 index, vec_4_i32 const& x)
+    u32                   program,
+    group::program_target target,
+    u32                   index,
+    vec_4_i32 const&      x,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -5255,7 +5531,7 @@ STATICINLINE void named_program_local_parameter_i4i(
     }
     glNamedProgramLocalParameterI4iEXT(
         program, static_cast<GLenum>(target), index, x[0], x[1], x[2], x[3]);
-    detail::error_check("NamedProgramLocalParameterI4iEXT"sv);
+    detail::error_check("NamedProgramLocalParameterI4iEXT"sv, check_errors);
 }
 
 template<class span_const_vec_4_i32>
@@ -5274,7 +5550,8 @@ STATICINLINE void named_program_local_parameter_i4iv(
     u32                         program,
     group::program_target       target,
     u32                         index,
-    span_const_vec_4_i32 const& params)
+    span_const_vec_4_i32 const& params,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -5291,7 +5568,7 @@ STATICINLINE void named_program_local_parameter_i4iv(
         static_cast<GLenum>(target),
         index,
         reinterpret_cast<const GLint*>(params.data()));
-    detail::error_check("NamedProgramLocalParameterI4ivEXT"sv);
+    detail::error_check("NamedProgramLocalParameterI4ivEXT"sv, check_errors);
 }
 
 template<class vec_4_u32>
@@ -5308,7 +5585,11 @@ requires(concepts::vector<vec_4_u32, u32, 4>)
  * \return void
  */
 STATICINLINE void named_program_local_parameter_i4ui(
-    u32 program, group::program_target target, u32 index, vec_4_u32 const& x)
+    u32                   program,
+    group::program_target target,
+    u32                   index,
+    vec_4_u32 const&      x,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -5322,7 +5603,7 @@ STATICINLINE void named_program_local_parameter_i4ui(
     }
     glNamedProgramLocalParameterI4uiEXT(
         program, static_cast<GLenum>(target), index, x[0], x[1], x[2], x[3]);
-    detail::error_check("NamedProgramLocalParameterI4uiEXT"sv);
+    detail::error_check("NamedProgramLocalParameterI4uiEXT"sv, check_errors);
 }
 
 template<class span_const_vec_4_u32>
@@ -5341,7 +5622,8 @@ STATICINLINE void named_program_local_parameter_i4uiv(
     u32                         program,
     group::program_target       target,
     u32                         index,
-    span_const_vec_4_u32 const& params)
+    span_const_vec_4_u32 const& params,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -5358,7 +5640,7 @@ STATICINLINE void named_program_local_parameter_i4uiv(
         static_cast<GLenum>(target),
         index,
         reinterpret_cast<const GLuint*>(params.data()));
-    detail::error_check("NamedProgramLocalParameterI4uivEXT"sv);
+    detail::error_check("NamedProgramLocalParameterI4uivEXT"sv, check_errors);
 }
 
 template<class span_const_vec_4_i32>
@@ -5378,7 +5660,8 @@ STATICINLINE void named_program_local_parameters_i4iv(
     u32                         program,
     group::program_target       target,
     u32                         index,
-    span_const_vec_4_i32 const& params)
+    span_const_vec_4_i32 const& params,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -5396,7 +5679,7 @@ STATICINLINE void named_program_local_parameters_i4iv(
         index,
         params.size(),
         reinterpret_cast<const GLint*>(params.data()));
-    detail::error_check("NamedProgramLocalParametersI4ivEXT"sv);
+    detail::error_check("NamedProgramLocalParametersI4ivEXT"sv, check_errors);
 }
 
 template<class span_const_vec_4_u32>
@@ -5416,7 +5699,8 @@ STATICINLINE void named_program_local_parameters_i4uiv(
     u32                         program,
     group::program_target       target,
     u32                         index,
-    span_const_vec_4_u32 const& params)
+    span_const_vec_4_u32 const& params,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -5434,7 +5718,7 @@ STATICINLINE void named_program_local_parameters_i4uiv(
         index,
         params.size(),
         reinterpret_cast<const GLuint*>(params.data()));
-    detail::error_check("NamedProgramLocalParametersI4uivEXT"sv);
+    detail::error_check("NamedProgramLocalParametersI4uivEXT"sv, check_errors);
 }
 
 /*!
@@ -5443,7 +5727,10 @@ STATICINLINE void named_program_local_parameters_i4uiv(
  * \param index GLuint
  * \return void
  */
-STATICINLINE void disable_client_statei(group::enable_cap array, u32 index)
+STATICINLINE void disable_client_statei(
+    group::enable_cap array,
+    u32               index,
+    error_check       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -5451,7 +5738,7 @@ STATICINLINE void disable_client_statei(group::enable_cap array, u32 index)
         GLW_FPTR_CHECK(DisableClientStateiEXT)
     }
     glDisableClientStateiEXT(static_cast<GLenum>(array), index);
-    detail::error_check("DisableClientStateiEXT"sv);
+    detail::error_check("DisableClientStateiEXT"sv, check_errors);
 }
 
 /*!
@@ -5460,7 +5747,10 @@ STATICINLINE void disable_client_statei(group::enable_cap array, u32 index)
  * \param index GLuint
  * \return void
  */
-STATICINLINE void enable_client_statei(group::enable_cap array, u32 index)
+STATICINLINE void enable_client_statei(
+    group::enable_cap array,
+    u32               index,
+    error_check       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -5468,7 +5758,7 @@ STATICINLINE void enable_client_statei(group::enable_cap array, u32 index)
         GLW_FPTR_CHECK(EnableClientStateiEXT)
     }
     glEnableClientStateiEXT(static_cast<GLenum>(array), index);
-    detail::error_check("EnableClientStateiEXT"sv);
+    detail::error_check("EnableClientStateiEXT"sv, check_errors);
 }
 
 template<class span_f64>
@@ -5484,7 +5774,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_doublei_v(
-    group::get_prop pname, u32 index, span_f64 params)
+    group::get_prop pname,
+    u32             index,
+    span_f64        params,
+    error_check     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -5495,7 +5788,7 @@ STATICINLINE void get_doublei_v(
         static_cast<GLenum>(pname),
         index,
         params.size() ? reinterpret_cast<GLdouble*>(params.data()) : nullptr);
-    detail::error_check("GetDoublei_vEXT"sv);
+    detail::error_check("GetDoublei_vEXT"sv, check_errors);
 }
 
 template<class span_f32>
@@ -5511,7 +5804,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_floati_v(
-    group::get_prop pname, u32 index, span_f32 params)
+    group::get_prop pname,
+    u32             index,
+    span_f32        params,
+    error_check     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -5522,7 +5818,7 @@ STATICINLINE void get_floati_v(
         static_cast<GLenum>(pname),
         index,
         params.size() ? reinterpret_cast<GLfloat*>(params.data()) : nullptr);
-    detail::error_check("GetFloati_vEXT"sv);
+    detail::error_check("GetFloati_vEXT"sv, check_errors);
 }
 
 template<class span_void>
@@ -5534,7 +5830,11 @@ requires(concepts::span<span_void>)
  * \param params void **
  * \return void
  */
-STATICINLINE void get_pointeri_v(GLenum pname, u32 index, span_void params)
+STATICINLINE void get_pointeri_v(
+    GLenum      pname,
+    u32         index,
+    span_void   params,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -5545,7 +5845,7 @@ STATICINLINE void get_pointeri_v(GLenum pname, u32 index, span_void params)
         pname,
         index,
         params.size() ? reinterpret_cast<void**>(params.data()) : nullptr);
-    detail::error_check("GetPointeri_vEXT"sv);
+    detail::error_check("GetPointeri_vEXT"sv, check_errors);
 }
 
 template<class span_f64>
@@ -5562,7 +5862,11 @@ requires(
  * \return void
  */
 STATICINLINE void get_named_program_local_parameter(
-    u32 program, group::program_target target, u32 index, span_f64 params)
+    u32                   program,
+    group::program_target target,
+    u32                   index,
+    span_f64              params,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -5579,7 +5883,7 @@ STATICINLINE void get_named_program_local_parameter(
         static_cast<GLenum>(target),
         index,
         params.size() ? reinterpret_cast<GLdouble*>(params.data()) : nullptr);
-    detail::error_check("GetNamedProgramLocalParameterdvEXT"sv);
+    detail::error_check("GetNamedProgramLocalParameterdvEXT"sv, check_errors);
 }
 
 template<class span_f32>
@@ -5596,7 +5900,11 @@ requires(
  * \return void
  */
 STATICINLINE void get_named_program_local_parameter(
-    u32 program, group::program_target target, u32 index, span_f32 params)
+    u32                   program,
+    group::program_target target,
+    u32                   index,
+    span_f32              params,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -5613,7 +5921,7 @@ STATICINLINE void get_named_program_local_parameter(
         static_cast<GLenum>(target),
         index,
         params.size() ? reinterpret_cast<GLfloat*>(params.data()) : nullptr);
-    detail::error_check("GetNamedProgramLocalParameterfvEXT"sv);
+    detail::error_check("GetNamedProgramLocalParameterfvEXT"sv, check_errors);
 }
 
 template<class span_void>
@@ -5630,7 +5938,8 @@ STATICINLINE void get_named_program_string(
     u32                            program,
     group::program_target          target,
     group::program_string_property pname,
-    span_void                      string)
+    span_void                      string,
+    error_check                    check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -5647,7 +5956,7 @@ STATICINLINE void get_named_program_string(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
         string.size() ? reinterpret_cast<void*>(string.data()) : nullptr);
-    detail::error_check("GetNamedProgramStringEXT"sv);
+    detail::error_check("GetNamedProgramStringEXT"sv, check_errors);
 }
 
 /*!
@@ -5662,7 +5971,8 @@ STATICINLINE void get_named_programiv(
     u32                         program,
     group::program_target       target,
     group::program_property_arb pname,
-    i32&                        params)
+    i32&                        params,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -5679,7 +5989,7 @@ STATICINLINE void get_named_programiv(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
         &params);
-    detail::error_check("GetNamedProgramivEXT"sv);
+    detail::error_check("GetNamedProgramivEXT"sv, check_errors);
 }
 
 template<class vec_4_f64>
@@ -5696,7 +6006,11 @@ requires(concepts::vector<vec_4_f64, f64, 4>)
  * \return void
  */
 STATICINLINE void named_program_local_parameter4d(
-    u32 program, group::program_target target, u32 index, vec_4_f64 const& x)
+    u32                   program,
+    group::program_target target,
+    u32                   index,
+    vec_4_f64 const&      x,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -5710,7 +6024,7 @@ STATICINLINE void named_program_local_parameter4d(
     }
     glNamedProgramLocalParameter4dEXT(
         program, static_cast<GLenum>(target), index, x[0], x[1], x[2], x[3]);
-    detail::error_check("NamedProgramLocalParameter4dEXT"sv);
+    detail::error_check("NamedProgramLocalParameter4dEXT"sv, check_errors);
 }
 
 template<class span_const_vec_4_f64>
@@ -5729,7 +6043,8 @@ STATICINLINE void named_program_local_parameter4dv(
     u32                         program,
     group::program_target       target,
     u32                         index,
-    span_const_vec_4_f64 const& params)
+    span_const_vec_4_f64 const& params,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -5746,7 +6061,7 @@ STATICINLINE void named_program_local_parameter4dv(
         static_cast<GLenum>(target),
         index,
         reinterpret_cast<const GLdouble*>(params.data()));
-    detail::error_check("NamedProgramLocalParameter4dvEXT"sv);
+    detail::error_check("NamedProgramLocalParameter4dvEXT"sv, check_errors);
 }
 
 template<class vec_4_f32>
@@ -5763,7 +6078,11 @@ requires(concepts::vector<vec_4_f32, f32, 4>)
  * \return void
  */
 STATICINLINE void named_program_local_parameter4f(
-    u32 program, group::program_target target, u32 index, vec_4_f32 const& x)
+    u32                   program,
+    group::program_target target,
+    u32                   index,
+    vec_4_f32 const&      x,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -5777,7 +6096,7 @@ STATICINLINE void named_program_local_parameter4f(
     }
     glNamedProgramLocalParameter4fEXT(
         program, static_cast<GLenum>(target), index, x[0], x[1], x[2], x[3]);
-    detail::error_check("NamedProgramLocalParameter4fEXT"sv);
+    detail::error_check("NamedProgramLocalParameter4fEXT"sv, check_errors);
 }
 
 template<class span_const_vec_4_f32>
@@ -5796,7 +6115,8 @@ STATICINLINE void named_program_local_parameter4fv(
     u32                         program,
     group::program_target       target,
     u32                         index,
-    span_const_vec_4_f32 const& params)
+    span_const_vec_4_f32 const& params,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -5813,7 +6133,7 @@ STATICINLINE void named_program_local_parameter4fv(
         static_cast<GLenum>(target),
         index,
         reinterpret_cast<const GLfloat*>(params.data()));
-    detail::error_check("NamedProgramLocalParameter4fvEXT"sv);
+    detail::error_check("NamedProgramLocalParameter4fvEXT"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -5831,7 +6151,8 @@ STATICINLINE void named_program_string(
     u32                    program,
     group::program_target  target,
     group::program_format  format,
-    span_const_void const& string)
+    span_const_void const& string,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -5850,7 +6171,7 @@ STATICINLINE void named_program_string(
         string.size() *
             sizeof(typename std::decay_t<span_const_void const&>::value_type),
         string.size() ? reinterpret_cast<const void*>(string.data()) : nullptr);
-    detail::error_check("NamedProgramStringEXT"sv);
+    detail::error_check("NamedProgramStringEXT"sv, check_errors);
 }
 
 template<class span_i32>
@@ -5866,7 +6187,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_named_renderbuffer_parameter(
-    u32 renderbuffer, group::renderbuffer_parameter_name pname, span_i32 params)
+    u32                                renderbuffer,
+    group::renderbuffer_parameter_name pname,
+    span_i32                           params,
+    error_check                        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -5882,7 +6206,7 @@ STATICINLINE void get_named_renderbuffer_parameter(
         renderbuffer,
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetNamedRenderbufferParameterivEXT"sv);
+    detail::error_check("GetNamedRenderbufferParameterivEXT"sv, check_errors);
 }
 
 template<class size_2_i32>
@@ -5898,7 +6222,8 @@ requires(concepts::size_2d<size_2_i32, i32>)
 STATICINLINE void named_renderbuffer_storage(
     u32                    renderbuffer,
     group::internal_format internalformat,
-    size_2_i32 const&      width)
+    size_2_i32 const&      width,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -5912,7 +6237,7 @@ STATICINLINE void named_renderbuffer_storage(
     }
     glNamedRenderbufferStorageEXT(
         renderbuffer, static_cast<GLenum>(internalformat), width[0], width[1]);
-    detail::error_check("NamedRenderbufferStorageEXT"sv);
+    detail::error_check("NamedRenderbufferStorageEXT"sv, check_errors);
 }
 
 template<class size_2_i32>
@@ -5930,7 +6255,8 @@ STATICINLINE void named_renderbuffer_storage_multisample(
     u32                    renderbuffer,
     i32                    samples,
     group::internal_format internalformat,
-    size_2_i32 const&      width)
+    size_2_i32 const&      width,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -5948,7 +6274,8 @@ STATICINLINE void named_renderbuffer_storage_multisample(
         static_cast<GLenum>(internalformat),
         width[0],
         width[1]);
-    detail::error_check("NamedRenderbufferStorageMultisampleEXT"sv);
+    detail::error_check(
+        "NamedRenderbufferStorageMultisampleEXT"sv, check_errors);
 }
 
 template<class size_2_i32>
@@ -5968,7 +6295,8 @@ STATICINLINE void named_renderbuffer_storage_multisample_coverage(
     i32                    coverageSamples,
     i32                    colorSamples,
     group::internal_format internalformat,
-    size_2_i32 const&      width)
+    size_2_i32 const&      width,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -5987,7 +6315,8 @@ STATICINLINE void named_renderbuffer_storage_multisample_coverage(
         static_cast<GLenum>(internalformat),
         width[0],
         width[1]);
-    detail::error_check("NamedRenderbufferStorageMultisampleCoverageEXT"sv);
+    detail::error_check(
+        "NamedRenderbufferStorageMultisampleCoverageEXT"sv, check_errors);
 }
 
 /*!
@@ -5997,7 +6326,9 @@ STATICINLINE void named_renderbuffer_storage_multisample_coverage(
  * \return FramebufferStatus
  */
 STATICINLINE group::framebuffer_status check_named_framebuffer_status(
-    u32 framebuffer, group::framebuffer_target target)
+    u32                       framebuffer,
+    group::framebuffer_target target,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -6011,7 +6342,7 @@ STATICINLINE group::framebuffer_status check_named_framebuffer_status(
     }
     auto out = glCheckNamedFramebufferStatusEXT(
         framebuffer, static_cast<GLenum>(target));
-    detail::error_check("CheckNamedFramebufferStatusEXT"sv);
+    detail::error_check("CheckNamedFramebufferStatusEXT"sv, check_errors);
     return static_cast<group::framebuffer_status>(out);
 }
 
@@ -6032,7 +6363,8 @@ STATICINLINE void get_named_framebuffer_attachment_parameter(
     u32                                          framebuffer,
     group::framebuffer_attachment                attachment,
     group::framebuffer_attachment_parameter_name pname,
-    span_i32                                     params)
+    span_i32                                     params,
+    error_check                                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -6049,7 +6381,8 @@ STATICINLINE void get_named_framebuffer_attachment_parameter(
         static_cast<GLenum>(attachment),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetNamedFramebufferAttachmentParameterivEXT"sv);
+    detail::error_check(
+        "GetNamedFramebufferAttachmentParameterivEXT"sv, check_errors);
 }
 
 /*!
@@ -6064,7 +6397,8 @@ STATICINLINE void named_framebuffer_renderbuffer(
     u32                           framebuffer,
     group::framebuffer_attachment attachment,
     group::renderbuffer_target    renderbuffertarget,
-    u32                           renderbuffer)
+    u32                           renderbuffer,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -6086,7 +6420,7 @@ STATICINLINE void named_framebuffer_renderbuffer(
         static_cast<GLenum>(attachment),
         static_cast<GLenum>(renderbuffertarget),
         renderbuffer);
-    detail::error_check("NamedFramebufferRenderbufferEXT"sv);
+    detail::error_check("NamedFramebufferRenderbufferEXT"sv, check_errors);
 }
 
 /*!
@@ -6103,7 +6437,8 @@ STATICINLINE void named_framebuffer_texture_1d(
     group::framebuffer_attachment attachment,
     group::texture_target         textarget,
     u32                           texture,
-    i32                           level)
+    i32                           level,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -6126,7 +6461,7 @@ STATICINLINE void named_framebuffer_texture_1d(
         static_cast<GLenum>(textarget),
         texture,
         level);
-    detail::error_check("NamedFramebufferTexture1DEXT"sv);
+    detail::error_check("NamedFramebufferTexture1DEXT"sv, check_errors);
 }
 
 /*!
@@ -6143,7 +6478,8 @@ STATICINLINE void named_framebuffer_texture_2d(
     group::framebuffer_attachment attachment,
     group::texture_target         textarget,
     u32                           texture,
-    i32                           level)
+    i32                           level,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -6166,7 +6502,7 @@ STATICINLINE void named_framebuffer_texture_2d(
         static_cast<GLenum>(textarget),
         texture,
         level);
-    detail::error_check("NamedFramebufferTexture2DEXT"sv);
+    detail::error_check("NamedFramebufferTexture2DEXT"sv, check_errors);
 }
 
 /*!
@@ -6185,7 +6521,8 @@ STATICINLINE void named_framebuffer_texture_3d(
     group::texture_target         textarget,
     u32                           texture,
     i32                           level,
-    i32                           zoffset)
+    i32                           zoffset,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -6209,7 +6546,7 @@ STATICINLINE void named_framebuffer_texture_3d(
         texture,
         level,
         zoffset);
-    detail::error_check("NamedFramebufferTexture3DEXT"sv);
+    detail::error_check("NamedFramebufferTexture3DEXT"sv, check_errors);
 }
 
 /*!
@@ -6219,7 +6556,9 @@ STATICINLINE void named_framebuffer_texture_3d(
  * \return void
  */
 STATICINLINE void generate_multi_tex_mipmap(
-    group::texture_unit texunit, group::texture_target target)
+    group::texture_unit   texunit,
+    group::texture_target target,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -6228,7 +6567,7 @@ STATICINLINE void generate_multi_tex_mipmap(
     }
     glGenerateMultiTexMipmapEXT(
         static_cast<GLenum>(texunit), static_cast<GLenum>(target));
-    detail::error_check("GenerateMultiTexMipmapEXT"sv);
+    detail::error_check("GenerateMultiTexMipmapEXT"sv, check_errors);
 }
 
 /*!
@@ -6238,7 +6577,9 @@ STATICINLINE void generate_multi_tex_mipmap(
  * \return void
  */
 STATICINLINE void generate_texture_mipmap(
-    u32 texture, group::texture_target target)
+    u32                   texture,
+    group::texture_target target,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -6251,7 +6592,7 @@ STATICINLINE void generate_texture_mipmap(
 #endif
     }
     glGenerateTextureMipmapEXT(texture, static_cast<GLenum>(target));
-    detail::error_check("GenerateTextureMipmapEXT"sv);
+    detail::error_check("GenerateTextureMipmapEXT"sv, check_errors);
 }
 
 /*!
@@ -6261,7 +6602,9 @@ STATICINLINE void generate_texture_mipmap(
  * \return void
  */
 STATICINLINE void framebuffer_draw_buffer(
-    u32 framebuffer, group::draw_buffer_mode mode)
+    u32                     framebuffer,
+    group::draw_buffer_mode mode,
+    error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -6274,7 +6617,7 @@ STATICINLINE void framebuffer_draw_buffer(
 #endif
     }
     glFramebufferDrawBufferEXT(framebuffer, static_cast<GLenum>(mode));
-    detail::error_check("FramebufferDrawBufferEXT"sv);
+    detail::error_check("FramebufferDrawBufferEXT"sv, check_errors);
 }
 
 template<class span_const_draw_buffer_mode>
@@ -6291,7 +6634,9 @@ requires(
  * \return void
  */
 STATICINLINE void framebuffer_draw_buffers(
-    u32 framebuffer, span_const_draw_buffer_mode const& bufs)
+    u32                                framebuffer,
+    span_const_draw_buffer_mode const& bufs,
+    error_check                        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -6307,7 +6652,7 @@ STATICINLINE void framebuffer_draw_buffers(
         framebuffer,
         bufs.size(),
         bufs.size() ? reinterpret_cast<const GLenum*>(bufs.data()) : nullptr);
-    detail::error_check("FramebufferDrawBuffersEXT"sv);
+    detail::error_check("FramebufferDrawBuffersEXT"sv, check_errors);
 }
 
 /*!
@@ -6317,7 +6662,9 @@ STATICINLINE void framebuffer_draw_buffers(
  * \return void
  */
 STATICINLINE void framebuffer_read_buffer(
-    u32 framebuffer, group::read_buffer_mode mode)
+    u32                     framebuffer,
+    group::read_buffer_mode mode,
+    error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -6330,7 +6677,7 @@ STATICINLINE void framebuffer_read_buffer(
 #endif
     }
     glFramebufferReadBufferEXT(framebuffer, static_cast<GLenum>(mode));
-    detail::error_check("FramebufferReadBufferEXT"sv);
+    detail::error_check("FramebufferReadBufferEXT"sv, check_errors);
 }
 
 template<class span_i32>
@@ -6346,7 +6693,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_framebuffer_parameter(
-    u32 framebuffer, group::get_framebuffer_parameter pname, span_i32 params)
+    u32                              framebuffer,
+    group::get_framebuffer_parameter pname,
+    span_i32                         params,
+    error_check                      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -6362,7 +6712,7 @@ STATICINLINE void get_framebuffer_parameter(
         framebuffer,
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetFramebufferParameterivEXT"sv);
+    detail::error_check("GetFramebufferParameterivEXT"sv, check_errors);
 }
 
 /*!
@@ -6375,11 +6725,12 @@ STATICINLINE void get_framebuffer_parameter(
  * \return void
  */
 STATICINLINE void named_copy_buffer_sub_data(
-    u32        readBuffer,
-    u32        writeBuffer,
-    GLintptr   readOffset,
-    GLintptr   writeOffset,
-    GLsizeiptr size)
+    u32         readBuffer,
+    u32         writeBuffer,
+    GLintptr    readOffset,
+    GLintptr    writeOffset,
+    GLsizeiptr  size,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -6388,7 +6739,7 @@ STATICINLINE void named_copy_buffer_sub_data(
     }
     glNamedCopyBufferSubDataEXT(
         readBuffer, writeBuffer, readOffset, writeOffset, size);
-    detail::error_check("NamedCopyBufferSubDataEXT"sv);
+    detail::error_check("NamedCopyBufferSubDataEXT"sv, check_errors);
 }
 
 /*!
@@ -6403,7 +6754,8 @@ STATICINLINE void named_framebuffer_texture(
     u32                           framebuffer,
     group::framebuffer_attachment attachment,
     u32                           texture,
-    i32                           level)
+    i32                           level,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -6422,7 +6774,7 @@ STATICINLINE void named_framebuffer_texture(
     }
     glNamedFramebufferTextureEXT(
         framebuffer, static_cast<GLenum>(attachment), texture, level);
-    detail::error_check("NamedFramebufferTextureEXT"sv);
+    detail::error_check("NamedFramebufferTextureEXT"sv, check_errors);
 }
 
 /*!
@@ -6439,7 +6791,8 @@ STATICINLINE void named_framebuffer_texture_face(
     group::framebuffer_attachment attachment,
     u32                           texture,
     i32                           level,
-    group::texture_target         face)
+    group::texture_target         face,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -6462,7 +6815,7 @@ STATICINLINE void named_framebuffer_texture_face(
         texture,
         level,
         static_cast<GLenum>(face));
-    detail::error_check("NamedFramebufferTextureFaceEXT"sv);
+    detail::error_check("NamedFramebufferTextureFaceEXT"sv, check_errors);
 }
 
 /*!
@@ -6479,7 +6832,8 @@ STATICINLINE void named_framebuffer_texture_layer(
     group::framebuffer_attachment attachment,
     u32                           texture,
     i32                           level,
-    i32                           layer)
+    i32                           layer,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -6498,7 +6852,7 @@ STATICINLINE void named_framebuffer_texture_layer(
     }
     glNamedFramebufferTextureLayerEXT(
         framebuffer, static_cast<GLenum>(attachment), texture, level, layer);
-    detail::error_check("NamedFramebufferTextureLayerEXT"sv);
+    detail::error_check("NamedFramebufferTextureLayerEXT"sv, check_errors);
 }
 
 /*!
@@ -6509,7 +6863,10 @@ STATICINLINE void named_framebuffer_texture_layer(
  * \return void
  */
 STATICINLINE void multi_tex_renderbuffer(
-    group::texture_unit texunit, group::texture_target target, u32 renderbuffer)
+    group::texture_unit   texunit,
+    group::texture_target target,
+    u32                   renderbuffer,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -6525,7 +6882,7 @@ STATICINLINE void multi_tex_renderbuffer(
         static_cast<GLenum>(texunit),
         static_cast<GLenum>(target),
         renderbuffer);
-    detail::error_check("MultiTexRenderbufferEXT"sv);
+    detail::error_check("MultiTexRenderbufferEXT"sv, check_errors);
 }
 
 /*!
@@ -6536,7 +6893,10 @@ STATICINLINE void multi_tex_renderbuffer(
  * \return void
  */
 STATICINLINE void texture_renderbuffer(
-    u32 texture, group::texture_target target, u32 renderbuffer)
+    u32                   texture,
+    group::texture_target target,
+    u32                   renderbuffer,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -6555,7 +6915,7 @@ STATICINLINE void texture_renderbuffer(
     }
     glTextureRenderbufferEXT(
         texture, static_cast<GLenum>(target), renderbuffer);
-    detail::error_check("TextureRenderbufferEXT"sv);
+    detail::error_check("TextureRenderbufferEXT"sv, check_errors);
 }
 
 /*!
@@ -6574,7 +6934,8 @@ STATICINLINE void vertex_array_color_offset(
     i32                       size,
     group::color_pointer_type type,
     i32                       stride,
-    GLintptr                  offset)
+    GLintptr                  offset,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -6593,7 +6954,7 @@ STATICINLINE void vertex_array_color_offset(
     }
     glVertexArrayColorOffsetEXT(
         vaobj, buffer, size, static_cast<GLenum>(type), stride, offset);
-    detail::error_check("VertexArrayColorOffsetEXT"sv);
+    detail::error_check("VertexArrayColorOffsetEXT"sv, check_errors);
 }
 
 /*!
@@ -6605,7 +6966,11 @@ STATICINLINE void vertex_array_color_offset(
  * \return void
  */
 STATICINLINE void vertex_array_edge_flag_offset(
-    u32 vaobj, u32 buffer, i32 stride, GLintptr offset)
+    u32         vaobj,
+    u32         buffer,
+    i32         stride,
+    GLintptr    offset,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -6623,7 +6988,7 @@ STATICINLINE void vertex_array_edge_flag_offset(
 #endif
     }
     glVertexArrayEdgeFlagOffsetEXT(vaobj, buffer, stride, offset);
-    detail::error_check("VertexArrayEdgeFlagOffsetEXT"sv);
+    detail::error_check("VertexArrayEdgeFlagOffsetEXT"sv, check_errors);
 }
 
 /*!
@@ -6640,7 +7005,8 @@ STATICINLINE void vertex_array_fog_coord_offset(
     u32                                buffer,
     group::fog_coordinate_pointer_type type,
     i32                                stride,
-    GLintptr                           offset)
+    GLintptr                           offset,
+    error_check                        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -6659,7 +7025,7 @@ STATICINLINE void vertex_array_fog_coord_offset(
     }
     glVertexArrayFogCoordOffsetEXT(
         vaobj, buffer, static_cast<GLenum>(type), stride, offset);
-    detail::error_check("VertexArrayFogCoordOffsetEXT"sv);
+    detail::error_check("VertexArrayFogCoordOffsetEXT"sv, check_errors);
 }
 
 /*!
@@ -6676,7 +7042,8 @@ STATICINLINE void vertex_array_index_offset(
     u32                       buffer,
     group::index_pointer_type type,
     i32                       stride,
-    GLintptr                  offset)
+    GLintptr                  offset,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -6695,7 +7062,7 @@ STATICINLINE void vertex_array_index_offset(
     }
     glVertexArrayIndexOffsetEXT(
         vaobj, buffer, static_cast<GLenum>(type), stride, offset);
-    detail::error_check("VertexArrayIndexOffsetEXT"sv);
+    detail::error_check("VertexArrayIndexOffsetEXT"sv, check_errors);
 }
 
 /*!
@@ -6716,7 +7083,8 @@ STATICINLINE void vertex_array_multi_tex_coord_offset(
     i32                           size,
     group::tex_coord_pointer_type type,
     i32                           stride,
-    GLintptr                      offset)
+    GLintptr                      offset,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -6741,7 +7109,7 @@ STATICINLINE void vertex_array_multi_tex_coord_offset(
         static_cast<GLenum>(type),
         stride,
         offset);
-    detail::error_check("VertexArrayMultiTexCoordOffsetEXT"sv);
+    detail::error_check("VertexArrayMultiTexCoordOffsetEXT"sv, check_errors);
 }
 
 /*!
@@ -6758,7 +7126,8 @@ STATICINLINE void vertex_array_normal_offset(
     u32                        buffer,
     group::normal_pointer_type type,
     i32                        stride,
-    GLintptr                   offset)
+    GLintptr                   offset,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -6777,7 +7146,7 @@ STATICINLINE void vertex_array_normal_offset(
     }
     glVertexArrayNormalOffsetEXT(
         vaobj, buffer, static_cast<GLenum>(type), stride, offset);
-    detail::error_check("VertexArrayNormalOffsetEXT"sv);
+    detail::error_check("VertexArrayNormalOffsetEXT"sv, check_errors);
 }
 
 /*!
@@ -6796,7 +7165,8 @@ STATICINLINE void vertex_array_secondary_color_offset(
     i32                       size,
     group::color_pointer_type type,
     i32                       stride,
-    GLintptr                  offset)
+    GLintptr                  offset,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -6815,7 +7185,7 @@ STATICINLINE void vertex_array_secondary_color_offset(
     }
     glVertexArraySecondaryColorOffsetEXT(
         vaobj, buffer, size, static_cast<GLenum>(type), stride, offset);
-    detail::error_check("VertexArraySecondaryColorOffsetEXT"sv);
+    detail::error_check("VertexArraySecondaryColorOffsetEXT"sv, check_errors);
 }
 
 /*!
@@ -6834,7 +7204,8 @@ STATICINLINE void vertex_array_tex_coord_offset(
     i32                           size,
     group::tex_coord_pointer_type type,
     i32                           stride,
-    GLintptr                      offset)
+    GLintptr                      offset,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -6853,7 +7224,7 @@ STATICINLINE void vertex_array_tex_coord_offset(
     }
     glVertexArrayTexCoordOffsetEXT(
         vaobj, buffer, size, static_cast<GLenum>(type), stride, offset);
-    detail::error_check("VertexArrayTexCoordOffsetEXT"sv);
+    detail::error_check("VertexArrayTexCoordOffsetEXT"sv, check_errors);
 }
 
 /*!
@@ -6874,7 +7245,8 @@ STATICINLINE void vertex_array_vertex_attrib_i_offset(
     i32                       size,
     group::vertex_attrib_type type,
     i32                       stride,
-    GLintptr                  offset)
+    GLintptr                  offset,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -6893,7 +7265,7 @@ STATICINLINE void vertex_array_vertex_attrib_i_offset(
     }
     glVertexArrayVertexAttribIOffsetEXT(
         vaobj, buffer, index, size, static_cast<GLenum>(type), stride, offset);
-    detail::error_check("VertexArrayVertexAttribIOffsetEXT"sv);
+    detail::error_check("VertexArrayVertexAttribIOffsetEXT"sv, check_errors);
 }
 
 /*!
@@ -6916,7 +7288,8 @@ STATICINLINE void vertex_array_vertex_attrib_offset(
     group::vertex_attrib_pointer_type type,
     bool                              normalized,
     i32                               stride,
-    GLintptr                          offset)
+    GLintptr                          offset,
+    error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -6942,7 +7315,7 @@ STATICINLINE void vertex_array_vertex_attrib_offset(
         normalized,
         stride,
         offset);
-    detail::error_check("VertexArrayVertexAttribOffsetEXT"sv);
+    detail::error_check("VertexArrayVertexAttribOffsetEXT"sv, check_errors);
 }
 
 /*!
@@ -6961,7 +7334,8 @@ STATICINLINE void vertex_array_vertex_offset(
     i32                        size,
     group::vertex_pointer_type type,
     i32                        stride,
-    GLintptr                   offset)
+    GLintptr                   offset,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -6980,7 +7354,7 @@ STATICINLINE void vertex_array_vertex_offset(
     }
     glVertexArrayVertexOffsetEXT(
         vaobj, buffer, size, static_cast<GLenum>(type), stride, offset);
-    detail::error_check("VertexArrayVertexOffsetEXT"sv);
+    detail::error_check("VertexArrayVertexOffsetEXT"sv, check_errors);
 }
 
 /*!
@@ -6989,7 +7363,10 @@ STATICINLINE void vertex_array_vertex_offset(
  * \param array GLenum
  * \return void
  */
-STATICINLINE void disable_vertex_array(u32 vaobj, group::enable_cap array)
+STATICINLINE void disable_vertex_array(
+    u32               vaobj,
+    group::enable_cap array,
+    error_check       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -7002,7 +7379,7 @@ STATICINLINE void disable_vertex_array(u32 vaobj, group::enable_cap array)
 #endif
     }
     glDisableVertexArrayEXT(vaobj, static_cast<GLenum>(array));
-    detail::error_check("DisableVertexArrayEXT"sv);
+    detail::error_check("DisableVertexArrayEXT"sv, check_errors);
 }
 
 /*!
@@ -7011,7 +7388,10 @@ STATICINLINE void disable_vertex_array(u32 vaobj, group::enable_cap array)
  * \param array GLenum
  * \return void
  */
-STATICINLINE void enable_vertex_array(u32 vaobj, group::enable_cap array)
+STATICINLINE void enable_vertex_array(
+    u32               vaobj,
+    group::enable_cap array,
+    error_check       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -7024,7 +7404,7 @@ STATICINLINE void enable_vertex_array(u32 vaobj, group::enable_cap array)
 #endif
     }
     glEnableVertexArrayEXT(vaobj, static_cast<GLenum>(array));
-    detail::error_check("EnableVertexArrayEXT"sv);
+    detail::error_check("EnableVertexArrayEXT"sv, check_errors);
 }
 
 /*!
@@ -7033,7 +7413,8 @@ STATICINLINE void enable_vertex_array(u32 vaobj, group::enable_cap array)
  * \param index GLuint
  * \return void
  */
-STATICINLINE void disable_vertex_array_attrib(u32 vaobj, u32 index)
+STATICINLINE void disable_vertex_array_attrib(
+    u32 vaobj, u32 index, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -7046,7 +7427,7 @@ STATICINLINE void disable_vertex_array_attrib(u32 vaobj, u32 index)
 #endif
     }
     glDisableVertexArrayAttribEXT(vaobj, index);
-    detail::error_check("DisableVertexArrayAttribEXT"sv);
+    detail::error_check("DisableVertexArrayAttribEXT"sv, check_errors);
 }
 
 /*!
@@ -7055,7 +7436,8 @@ STATICINLINE void disable_vertex_array_attrib(u32 vaobj, u32 index)
  * \param index GLuint
  * \return void
  */
-STATICINLINE void enable_vertex_array_attrib(u32 vaobj, u32 index)
+STATICINLINE void enable_vertex_array_attrib(
+    u32 vaobj, u32 index, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -7068,7 +7450,7 @@ STATICINLINE void enable_vertex_array_attrib(u32 vaobj, u32 index)
 #endif
     }
     glEnableVertexArrayAttribEXT(vaobj, index);
-    detail::error_check("EnableVertexArrayAttribEXT"sv);
+    detail::error_check("EnableVertexArrayAttribEXT"sv, check_errors);
 }
 
 template<class span_i32>
@@ -7085,7 +7467,11 @@ requires(
  * \return void
  */
 STATICINLINE void get_vertex_array_integeri_v(
-    u32 vaobj, u32 index, group::vertex_array_prop pname, span_i32 param)
+    u32                      vaobj,
+    u32                      index,
+    group::vertex_array_prop pname,
+    span_i32                 param,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -7102,7 +7488,7 @@ STATICINLINE void get_vertex_array_integeri_v(
         index,
         static_cast<GLenum>(pname),
         param.size() ? reinterpret_cast<GLint*>(param.data()) : nullptr);
-    detail::error_check("GetVertexArrayIntegeri_vEXT"sv);
+    detail::error_check("GetVertexArrayIntegeri_vEXT"sv, check_errors);
 }
 
 template<class span_i32>
@@ -7118,7 +7504,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_vertex_array_integerv(
-    u32 vaobj, group::vertex_array_prop pname, span_i32 param)
+    u32                      vaobj,
+    group::vertex_array_prop pname,
+    span_i32                 param,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -7134,7 +7523,7 @@ STATICINLINE void get_vertex_array_integerv(
         vaobj,
         static_cast<GLenum>(pname),
         param.size() ? reinterpret_cast<GLint*>(param.data()) : nullptr);
-    detail::error_check("GetVertexArrayIntegervEXT"sv);
+    detail::error_check("GetVertexArrayIntegervEXT"sv, check_errors);
 }
 
 template<class span_void>
@@ -7148,7 +7537,11 @@ requires(concepts::span<span_void>)
  * \return void
  */
 STATICINLINE void get_vertex_array_pointeri_v(
-    u32 vaobj, u32 index, group::vertex_array_prop pname, span_void param)
+    u32                      vaobj,
+    u32                      index,
+    group::vertex_array_prop pname,
+    span_void                param,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -7165,7 +7558,7 @@ STATICINLINE void get_vertex_array_pointeri_v(
         index,
         static_cast<GLenum>(pname),
         param.size() ? reinterpret_cast<void**>(param.data()) : nullptr);
-    detail::error_check("GetVertexArrayPointeri_vEXT"sv);
+    detail::error_check("GetVertexArrayPointeri_vEXT"sv, check_errors);
 }
 
 template<class span_void>
@@ -7178,7 +7571,10 @@ requires(concepts::span<span_void>)
  * \return void
  */
 STATICINLINE void get_vertex_array_pointerv(
-    u32 vaobj, group::vertex_array_prop pname, span_void param)
+    u32                      vaobj,
+    group::vertex_array_prop pname,
+    span_void                param,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -7194,7 +7590,7 @@ STATICINLINE void get_vertex_array_pointerv(
         vaobj,
         static_cast<GLenum>(pname),
         param.size() ? reinterpret_cast<void**>(param.data()) : nullptr);
-    detail::error_check("GetVertexArrayPointervEXT"sv);
+    detail::error_check("GetVertexArrayPointervEXT"sv, check_errors);
 }
 
 /*!
@@ -7205,7 +7601,10 @@ STATICINLINE void get_vertex_array_pointerv(
  * \return void
  */
 STATICINLINE void flush_mapped_named_buffer_range(
-    u32 buffer, GLintptr offset, GLsizeiptr length)
+    u32         buffer,
+    GLintptr    offset,
+    GLsizeiptr  length,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -7218,7 +7617,7 @@ STATICINLINE void flush_mapped_named_buffer_range(
 #endif
     }
     glFlushMappedNamedBufferRangeEXT(buffer, offset, length);
-    detail::error_check("FlushMappedNamedBufferRangeEXT"sv);
+    detail::error_check("FlushMappedNamedBufferRangeEXT"sv, check_errors);
 }
 
 /*!
@@ -7233,7 +7632,8 @@ STATICINLINE void* map_named_buffer_range(
     u32                           buffer,
     GLintptr                      offset,
     GLsizeiptr                    length,
-    group::map_buffer_access_mask access)
+    group::map_buffer_access_mask access,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -7247,7 +7647,7 @@ STATICINLINE void* map_named_buffer_range(
     }
     auto out = glMapNamedBufferRangeEXT(
         buffer, offset, length, static_cast<GLenum>(access));
-    detail::error_check("MapNamedBufferRangeEXT"sv);
+    detail::error_check("MapNamedBufferRangeEXT"sv, check_errors);
     return out;
 }
 
@@ -7262,7 +7662,10 @@ requires(concepts::span<span_const_void>)
  * \return void
  */
 STATICINLINE void named_buffer_storage(
-    u32 buffer, span_const_void const& data, group::buffer_storage_mask flags)
+    u32                        buffer,
+    span_const_void const&     data,
+    group::buffer_storage_mask flags,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -7280,7 +7683,7 @@ STATICINLINE void named_buffer_storage(
             sizeof(typename std::decay_t<span_const_void const&>::value_type),
         data.size() ? reinterpret_cast<const void*>(data.data()) : nullptr,
         static_cast<GLenum>(flags));
-    detail::error_check("NamedBufferStorageEXT"sv);
+    detail::error_check("NamedBufferStorageEXT"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -7299,7 +7702,8 @@ STATICINLINE void clear_named_buffer_data(
     group::sized_internal_format internalformat,
     group::pixel_format          format,
     group::pixel_type            type,
-    span_const_void const&       data)
+    span_const_void const&       data,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -7317,7 +7721,7 @@ STATICINLINE void clear_named_buffer_data(
         static_cast<GLenum>(format),
         static_cast<GLenum>(type),
         data.size() ? reinterpret_cast<const void*>(data.data()) : nullptr);
-    detail::error_check("ClearNamedBufferDataEXT"sv);
+    detail::error_check("ClearNamedBufferDataEXT"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -7340,7 +7744,8 @@ STATICINLINE void clear_named_buffer_sub_data(
     GLsizeiptr                   size,
     group::pixel_format          format,
     group::pixel_type            type,
-    span_const_void const&       data)
+    span_const_void const&       data,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -7360,7 +7765,7 @@ STATICINLINE void clear_named_buffer_sub_data(
         static_cast<GLenum>(format),
         static_cast<GLenum>(type),
         data.size() ? reinterpret_cast<const void*>(data.data()) : nullptr);
-    detail::error_check("ClearNamedBufferSubDataEXT"sv);
+    detail::error_check("ClearNamedBufferSubDataEXT"sv, check_errors);
 }
 
 template<class span_i32>
@@ -7376,7 +7781,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_named_framebuffer_parameter(
-    u32 framebuffer, group::get_framebuffer_parameter pname, span_i32 params)
+    u32                              framebuffer,
+    group::get_framebuffer_parameter pname,
+    span_i32                         params,
+    error_check                      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -7392,7 +7800,7 @@ STATICINLINE void get_named_framebuffer_parameter(
         framebuffer,
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetNamedFramebufferParameterivEXT"sv);
+    detail::error_check("GetNamedFramebufferParameterivEXT"sv, check_errors);
 }
 
 /*!
@@ -7403,7 +7811,10 @@ STATICINLINE void get_named_framebuffer_parameter(
  * \return void
  */
 STATICINLINE void named_framebuffer_parameter(
-    u32 framebuffer, group::framebuffer_parameter_name pname, i32 param)
+    u32                               framebuffer,
+    group::framebuffer_parameter_name pname,
+    i32                               param,
+    error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -7417,7 +7828,7 @@ STATICINLINE void named_framebuffer_parameter(
     }
     glNamedFramebufferParameteriEXT(
         framebuffer, static_cast<GLenum>(pname), param);
-    detail::error_check("NamedFramebufferParameteriEXT"sv);
+    detail::error_check("NamedFramebufferParameteriEXT"sv, check_errors);
 }
 
 /*!
@@ -7427,7 +7838,11 @@ STATICINLINE void named_framebuffer_parameter(
  * \param x GLdouble
  * \return void
  */
-STATICINLINE void program_uniform(u32 program, i32 location, f64 x)
+STATICINLINE void program_uniform(
+    u32         program,
+    i32         location,
+    f64         x,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -7440,7 +7855,7 @@ STATICINLINE void program_uniform(u32 program, i32 location, f64 x)
 #endif
     }
     glProgramUniform1dEXT(program, location, x);
-    detail::error_check("ProgramUniform1dEXT"sv);
+    detail::error_check("ProgramUniform1dEXT"sv, check_errors);
 }
 
 template<class span_const_f64>
@@ -7458,7 +7873,10 @@ requires(
  * \return void
  */
 STATICINLINE void program_uniform(
-    u32 program, i32 location, span_const_f64 const& value)
+    u32                   program,
+    i32                   location,
+    span_const_f64 const& value,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -7475,7 +7893,7 @@ STATICINLINE void program_uniform(
         location,
         value.size(),
         reinterpret_cast<const GLdouble*>(value.data()));
-    detail::error_check("ProgramUniform1dvEXT"sv);
+    detail::error_check("ProgramUniform1dvEXT"sv, check_errors);
 }
 
 template<class vec_2_f64>
@@ -7488,7 +7906,11 @@ requires(concepts::vector<vec_2_f64, f64, 2>)
  * \param y GLdouble
  * \return void
  */
-STATICINLINE void program_uniform(u32 program, i32 location, vec_2_f64 const& x)
+STATICINLINE void program_uniform(
+    u32              program,
+    i32              location,
+    vec_2_f64 const& x,
+    error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -7501,7 +7923,7 @@ STATICINLINE void program_uniform(u32 program, i32 location, vec_2_f64 const& x)
 #endif
     }
     glProgramUniform2dEXT(program, location, x[0], x[1]);
-    detail::error_check("ProgramUniform2dEXT"sv);
+    detail::error_check("ProgramUniform2dEXT"sv, check_errors);
 }
 
 template<class span_const_vec_2_f64>
@@ -7517,7 +7939,10 @@ requires(
  * \return void
  */
 STATICINLINE void program_uniform(
-    u32 program, i32 location, span_const_vec_2_f64 const& value)
+    u32                         program,
+    i32                         location,
+    span_const_vec_2_f64 const& value,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -7534,7 +7959,7 @@ STATICINLINE void program_uniform(
         location,
         value.size(),
         reinterpret_cast<const GLdouble*>(value.data()));
-    detail::error_check("ProgramUniform2dvEXT"sv);
+    detail::error_check("ProgramUniform2dvEXT"sv, check_errors);
 }
 
 template<class vec_3_f64>
@@ -7548,7 +7973,11 @@ requires(concepts::vector<vec_3_f64, f64, 3>)
  * \param z GLdouble
  * \return void
  */
-STATICINLINE void program_uniform(u32 program, i32 location, vec_3_f64 const& x)
+STATICINLINE void program_uniform(
+    u32              program,
+    i32              location,
+    vec_3_f64 const& x,
+    error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -7561,7 +7990,7 @@ STATICINLINE void program_uniform(u32 program, i32 location, vec_3_f64 const& x)
 #endif
     }
     glProgramUniform3dEXT(program, location, x[0], x[1], x[2]);
-    detail::error_check("ProgramUniform3dEXT"sv);
+    detail::error_check("ProgramUniform3dEXT"sv, check_errors);
 }
 
 template<class span_const_vec_3_f64>
@@ -7577,7 +8006,10 @@ requires(
  * \return void
  */
 STATICINLINE void program_uniform(
-    u32 program, i32 location, span_const_vec_3_f64 const& value)
+    u32                         program,
+    i32                         location,
+    span_const_vec_3_f64 const& value,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -7594,7 +8026,7 @@ STATICINLINE void program_uniform(
         location,
         value.size(),
         reinterpret_cast<const GLdouble*>(value.data()));
-    detail::error_check("ProgramUniform3dvEXT"sv);
+    detail::error_check("ProgramUniform3dvEXT"sv, check_errors);
 }
 
 template<class vec_4_f64>
@@ -7609,7 +8041,11 @@ requires(concepts::vector<vec_4_f64, f64, 4>)
  * \param w GLdouble
  * \return void
  */
-STATICINLINE void program_uniform(u32 program, i32 location, vec_4_f64 const& x)
+STATICINLINE void program_uniform(
+    u32              program,
+    i32              location,
+    vec_4_f64 const& x,
+    error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -7622,7 +8058,7 @@ STATICINLINE void program_uniform(u32 program, i32 location, vec_4_f64 const& x)
 #endif
     }
     glProgramUniform4dEXT(program, location, x[0], x[1], x[2], x[3]);
-    detail::error_check("ProgramUniform4dEXT"sv);
+    detail::error_check("ProgramUniform4dEXT"sv, check_errors);
 }
 
 template<class span_const_vec_4_f64>
@@ -7638,7 +8074,10 @@ requires(
  * \return void
  */
 STATICINLINE void program_uniform(
-    u32 program, i32 location, span_const_vec_4_f64 const& value)
+    u32                         program,
+    i32                         location,
+    span_const_vec_4_f64 const& value,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -7655,7 +8094,7 @@ STATICINLINE void program_uniform(
         location,
         value.size(),
         reinterpret_cast<const GLdouble*>(value.data()));
-    detail::error_check("ProgramUniform4dvEXT"sv);
+    detail::error_check("ProgramUniform4dvEXT"sv, check_errors);
 }
 
 template<class span_const_mat_2x2_f64>
@@ -7675,7 +8114,8 @@ STATICINLINE void program_uniform(
     u32                           program,
     i32                           location,
     bool                          transpose,
-    span_const_mat_2x2_f64 const& value)
+    span_const_mat_2x2_f64 const& value,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -7693,7 +8133,7 @@ STATICINLINE void program_uniform(
         value.size(),
         transpose,
         reinterpret_cast<const GLdouble*>(value.data()));
-    detail::error_check("ProgramUniformMatrix2dvEXT"sv);
+    detail::error_check("ProgramUniformMatrix2dvEXT"sv, check_errors);
 }
 
 template<class span_const_mat_2x3_f64>
@@ -7713,7 +8153,8 @@ STATICINLINE void program_uniform(
     u32                           program,
     i32                           location,
     bool                          transpose,
-    span_const_mat_2x3_f64 const& value)
+    span_const_mat_2x3_f64 const& value,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -7731,7 +8172,7 @@ STATICINLINE void program_uniform(
         value.size(),
         transpose,
         reinterpret_cast<const GLdouble*>(value.data()));
-    detail::error_check("ProgramUniformMatrix2x3dvEXT"sv);
+    detail::error_check("ProgramUniformMatrix2x3dvEXT"sv, check_errors);
 }
 
 template<class span_const_mat_2x4_f64>
@@ -7751,7 +8192,8 @@ STATICINLINE void program_uniform(
     u32                           program,
     i32                           location,
     bool                          transpose,
-    span_const_mat_2x4_f64 const& value)
+    span_const_mat_2x4_f64 const& value,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -7769,7 +8211,7 @@ STATICINLINE void program_uniform(
         value.size(),
         transpose,
         reinterpret_cast<const GLdouble*>(value.data()));
-    detail::error_check("ProgramUniformMatrix2x4dvEXT"sv);
+    detail::error_check("ProgramUniformMatrix2x4dvEXT"sv, check_errors);
 }
 
 template<class span_const_mat_3x3_f64>
@@ -7789,7 +8231,8 @@ STATICINLINE void program_uniform(
     u32                           program,
     i32                           location,
     bool                          transpose,
-    span_const_mat_3x3_f64 const& value)
+    span_const_mat_3x3_f64 const& value,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -7807,7 +8250,7 @@ STATICINLINE void program_uniform(
         value.size(),
         transpose,
         reinterpret_cast<const GLdouble*>(value.data()));
-    detail::error_check("ProgramUniformMatrix3dvEXT"sv);
+    detail::error_check("ProgramUniformMatrix3dvEXT"sv, check_errors);
 }
 
 template<class span_const_mat_3x2_f64>
@@ -7827,7 +8270,8 @@ STATICINLINE void program_uniform(
     u32                           program,
     i32                           location,
     bool                          transpose,
-    span_const_mat_3x2_f64 const& value)
+    span_const_mat_3x2_f64 const& value,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -7845,7 +8289,7 @@ STATICINLINE void program_uniform(
         value.size(),
         transpose,
         reinterpret_cast<const GLdouble*>(value.data()));
-    detail::error_check("ProgramUniformMatrix3x2dvEXT"sv);
+    detail::error_check("ProgramUniformMatrix3x2dvEXT"sv, check_errors);
 }
 
 template<class span_const_mat_3x4_f64>
@@ -7865,7 +8309,8 @@ STATICINLINE void program_uniform(
     u32                           program,
     i32                           location,
     bool                          transpose,
-    span_const_mat_3x4_f64 const& value)
+    span_const_mat_3x4_f64 const& value,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -7883,7 +8328,7 @@ STATICINLINE void program_uniform(
         value.size(),
         transpose,
         reinterpret_cast<const GLdouble*>(value.data()));
-    detail::error_check("ProgramUniformMatrix3x4dvEXT"sv);
+    detail::error_check("ProgramUniformMatrix3x4dvEXT"sv, check_errors);
 }
 
 template<class span_const_mat_4x4_f64>
@@ -7903,7 +8348,8 @@ STATICINLINE void program_uniform(
     u32                           program,
     i32                           location,
     bool                          transpose,
-    span_const_mat_4x4_f64 const& value)
+    span_const_mat_4x4_f64 const& value,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -7921,7 +8367,7 @@ STATICINLINE void program_uniform(
         value.size(),
         transpose,
         reinterpret_cast<const GLdouble*>(value.data()));
-    detail::error_check("ProgramUniformMatrix4dvEXT"sv);
+    detail::error_check("ProgramUniformMatrix4dvEXT"sv, check_errors);
 }
 
 template<class span_const_mat_4x2_f64>
@@ -7941,7 +8387,8 @@ STATICINLINE void program_uniform(
     u32                           program,
     i32                           location,
     bool                          transpose,
-    span_const_mat_4x2_f64 const& value)
+    span_const_mat_4x2_f64 const& value,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -7959,7 +8406,7 @@ STATICINLINE void program_uniform(
         value.size(),
         transpose,
         reinterpret_cast<const GLdouble*>(value.data()));
-    detail::error_check("ProgramUniformMatrix4x2dvEXT"sv);
+    detail::error_check("ProgramUniformMatrix4x2dvEXT"sv, check_errors);
 }
 
 template<class span_const_mat_4x3_f64>
@@ -7979,7 +8426,8 @@ STATICINLINE void program_uniform(
     u32                           program,
     i32                           location,
     bool                          transpose,
-    span_const_mat_4x3_f64 const& value)
+    span_const_mat_4x3_f64 const& value,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -7997,7 +8445,7 @@ STATICINLINE void program_uniform(
         value.size(),
         transpose,
         reinterpret_cast<const GLdouble*>(value.data()));
-    detail::error_check("ProgramUniformMatrix4x3dvEXT"sv);
+    detail::error_check("ProgramUniformMatrix4x3dvEXT"sv, check_errors);
 }
 
 /*!
@@ -8016,7 +8464,8 @@ STATICINLINE void texture_buffer_range(
     group::sized_internal_format internalformat,
     u32                          buffer,
     GLintptr                     offset,
-    GLsizeiptr                   size)
+    GLsizeiptr                   size,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -8040,7 +8489,7 @@ STATICINLINE void texture_buffer_range(
         buffer,
         offset,
         size);
-    detail::error_check("TextureBufferRangeEXT"sv);
+    detail::error_check("TextureBufferRangeEXT"sv, check_errors);
 }
 
 /*!
@@ -8057,7 +8506,8 @@ STATICINLINE void texture_storage_1d(
     GLenum                       target,
     i32                          levels,
     group::sized_internal_format internalformat,
-    i32                          width)
+    i32                          width,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -8071,7 +8521,7 @@ STATICINLINE void texture_storage_1d(
     }
     glTextureStorage1DEXT(
         texture, target, levels, static_cast<GLenum>(internalformat), width);
-    detail::error_check("TextureStorage1DEXT"sv);
+    detail::error_check("TextureStorage1DEXT"sv, check_errors);
 }
 
 template<class size_2_i32>
@@ -8091,7 +8541,8 @@ STATICINLINE void texture_storage_2d(
     GLenum                       target,
     i32                          levels,
     group::sized_internal_format internalformat,
-    size_2_i32 const&            width)
+    size_2_i32 const&            width,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -8110,7 +8561,7 @@ STATICINLINE void texture_storage_2d(
         static_cast<GLenum>(internalformat),
         width[0],
         width[1]);
-    detail::error_check("TextureStorage2DEXT"sv);
+    detail::error_check("TextureStorage2DEXT"sv, check_errors);
 }
 
 template<class size_3_i32>
@@ -8131,7 +8582,8 @@ STATICINLINE void texture_storage_3d(
     GLenum                       target,
     i32                          levels,
     group::sized_internal_format internalformat,
-    size_3_i32 const&            width)
+    size_3_i32 const&            width,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -8151,7 +8603,7 @@ STATICINLINE void texture_storage_3d(
         width[0],
         width[1],
         width[2]);
-    detail::error_check("TextureStorage3DEXT"sv);
+    detail::error_check("TextureStorage3DEXT"sv, check_errors);
 }
 
 template<class size_2_i32>
@@ -8173,7 +8625,8 @@ STATICINLINE void texture_storage_2d_multisample(
     i32                          samples,
     group::sized_internal_format internalformat,
     size_2_i32 const&            width,
-    bool                         fixedsamplelocations)
+    bool                         fixedsamplelocations,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -8193,7 +8646,7 @@ STATICINLINE void texture_storage_2d_multisample(
         width[0],
         width[1],
         fixedsamplelocations);
-    detail::error_check("TextureStorage2DMultisampleEXT"sv);
+    detail::error_check("TextureStorage2DMultisampleEXT"sv, check_errors);
 }
 
 template<class size_3_i32>
@@ -8216,7 +8669,8 @@ STATICINLINE void texture_storage_3d_multisample(
     i32                          samples,
     group::sized_internal_format internalformat,
     size_3_i32 const&            width,
-    bool                         fixedsamplelocations)
+    bool                         fixedsamplelocations,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -8237,7 +8691,7 @@ STATICINLINE void texture_storage_3d_multisample(
         width[1],
         width[2],
         fixedsamplelocations);
-    detail::error_check("TextureStorage3DMultisampleEXT"sv);
+    detail::error_check("TextureStorage3DMultisampleEXT"sv, check_errors);
 }
 
 /*!
@@ -8250,7 +8704,12 @@ STATICINLINE void texture_storage_3d_multisample(
  * \return void
  */
 STATICINLINE void vertex_array_bind_vertex_buffer(
-    u32 vaobj, u32 bindingindex, u32 buffer, GLintptr offset, i32 stride)
+    u32         vaobj,
+    u32         bindingindex,
+    u32         buffer,
+    GLintptr    offset,
+    i32         stride,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -8269,7 +8728,7 @@ STATICINLINE void vertex_array_bind_vertex_buffer(
     }
     glVertexArrayBindVertexBufferEXT(
         vaobj, bindingindex, buffer, offset, stride);
-    detail::error_check("VertexArrayBindVertexBufferEXT"sv);
+    detail::error_check("VertexArrayBindVertexBufferEXT"sv, check_errors);
 }
 
 /*!
@@ -8280,7 +8739,10 @@ STATICINLINE void vertex_array_bind_vertex_buffer(
  * \return void
  */
 STATICINLINE void vertex_array_vertex_attrib_binding(
-    u32 vaobj, u32 attribindex, u32 bindingindex)
+    u32         vaobj,
+    u32         attribindex,
+    u32         bindingindex,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -8293,7 +8755,7 @@ STATICINLINE void vertex_array_vertex_attrib_binding(
 #endif
     }
     glVertexArrayVertexAttribBindingEXT(vaobj, attribindex, bindingindex);
-    detail::error_check("VertexArrayVertexAttribBindingEXT"sv);
+    detail::error_check("VertexArrayVertexAttribBindingEXT"sv, check_errors);
 }
 
 /*!
@@ -8312,7 +8774,8 @@ STATICINLINE void vertex_array_vertex_attrib_format(
     i32                       size,
     group::vertex_attrib_type type,
     bool                      normalized,
-    u32                       relativeoffset)
+    u32                       relativeoffset,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -8331,7 +8794,7 @@ STATICINLINE void vertex_array_vertex_attrib_format(
         static_cast<GLenum>(type),
         normalized,
         relativeoffset);
-    detail::error_check("VertexArrayVertexAttribFormatEXT"sv);
+    detail::error_check("VertexArrayVertexAttribFormatEXT"sv, check_errors);
 }
 
 /*!
@@ -8348,7 +8811,8 @@ STATICINLINE void vertex_array_vertex_attrib_i_format(
     u32                      attribindex,
     i32                      size,
     group::vertex_attrib_int type,
-    u32                      relativeoffset)
+    u32                      relativeoffset,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -8362,7 +8826,7 @@ STATICINLINE void vertex_array_vertex_attrib_i_format(
     }
     glVertexArrayVertexAttribIFormatEXT(
         vaobj, attribindex, size, static_cast<GLenum>(type), relativeoffset);
-    detail::error_check("VertexArrayVertexAttribIFormatEXT"sv);
+    detail::error_check("VertexArrayVertexAttribIFormatEXT"sv, check_errors);
 }
 
 /*!
@@ -8379,7 +8843,8 @@ STATICINLINE void vertex_array_vertex_attrib_l_format(
     u32                       attribindex,
     i32                       size,
     group::vertex_attrib_long type,
-    u32                       relativeoffset)
+    u32                       relativeoffset,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -8393,7 +8858,7 @@ STATICINLINE void vertex_array_vertex_attrib_l_format(
     }
     glVertexArrayVertexAttribLFormatEXT(
         vaobj, attribindex, size, static_cast<GLenum>(type), relativeoffset);
-    detail::error_check("VertexArrayVertexAttribLFormatEXT"sv);
+    detail::error_check("VertexArrayVertexAttribLFormatEXT"sv, check_errors);
 }
 
 /*!
@@ -8404,7 +8869,10 @@ STATICINLINE void vertex_array_vertex_attrib_l_format(
  * \return void
  */
 STATICINLINE void vertex_array_vertex_binding_divisor(
-    u32 vaobj, u32 bindingindex, u32 divisor)
+    u32         vaobj,
+    u32         bindingindex,
+    u32         divisor,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -8417,7 +8885,7 @@ STATICINLINE void vertex_array_vertex_binding_divisor(
 #endif
     }
     glVertexArrayVertexBindingDivisorEXT(vaobj, bindingindex, divisor);
-    detail::error_check("VertexArrayVertexBindingDivisorEXT"sv);
+    detail::error_check("VertexArrayVertexBindingDivisorEXT"sv, check_errors);
 }
 
 /*!
@@ -8438,7 +8906,8 @@ STATICINLINE void vertex_array_vertex_attrib_l_offset(
     i32                       size,
     group::vertex_attrib_long type,
     i32                       stride,
-    GLintptr                  offset)
+    GLintptr                  offset,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -8457,7 +8926,7 @@ STATICINLINE void vertex_array_vertex_attrib_l_offset(
     }
     glVertexArrayVertexAttribLOffsetEXT(
         vaobj, buffer, index, size, static_cast<GLenum>(type), stride, offset);
-    detail::error_check("VertexArrayVertexAttribLOffsetEXT"sv);
+    detail::error_check("VertexArrayVertexAttribLOffsetEXT"sv, check_errors);
 }
 
 template<class size_3_i32, class vec_3_i32>
@@ -8481,7 +8950,8 @@ STATICINLINE void texture_page_commitment(
     i32               level,
     vec_3_i32 const&  xoffset,
     size_3_i32 const& width,
-    bool              commit)
+    bool              commit,
+    error_check       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -8503,7 +8973,7 @@ STATICINLINE void texture_page_commitment(
         width[1],
         width[2],
         commit);
-    detail::error_check("TexturePageCommitmentEXT"sv);
+    detail::error_check("TexturePageCommitmentEXT"sv, check_errors);
 }
 
 /*!
@@ -8514,7 +8984,10 @@ STATICINLINE void texture_page_commitment(
  * \return void
  */
 STATICINLINE void vertex_array_vertex_attrib_divisor(
-    u32 vaobj, u32 index, u32 divisor)
+    u32         vaobj,
+    u32         index,
+    u32         divisor,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -8527,7 +9000,7 @@ STATICINLINE void vertex_array_vertex_attrib_divisor(
 #endif
     }
     glVertexArrayVertexAttribDivisorEXT(vaobj, index, divisor);
-    detail::error_check("VertexArrayVertexAttribDivisorEXT"sv);
+    detail::error_check("VertexArrayVertexAttribDivisorEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::direct_state_access

@@ -22,7 +22,10 @@ requires(
  * \return void
  */
 STATICINLINE void uniform(
-    i32 location, bool transpose, span_const_mat_2x3_f32 const& value)
+    i32                           location,
+    bool                          transpose,
+    span_const_mat_2x3_f32 const& value,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -34,7 +37,7 @@ STATICINLINE void uniform(
         value.size(),
         transpose,
         reinterpret_cast<const GLfloat*>(value.data()));
-    detail::error_check("UniformMatrix2x3fvNV"sv);
+    detail::error_check("UniformMatrix2x3fvNV"sv, check_errors);
 }
 
 template<class span_const_mat_2x4_f32>
@@ -50,7 +53,10 @@ requires(
  * \return void
  */
 STATICINLINE void uniform(
-    i32 location, bool transpose, span_const_mat_2x4_f32 const& value)
+    i32                           location,
+    bool                          transpose,
+    span_const_mat_2x4_f32 const& value,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -62,7 +68,7 @@ STATICINLINE void uniform(
         value.size(),
         transpose,
         reinterpret_cast<const GLfloat*>(value.data()));
-    detail::error_check("UniformMatrix2x4fvNV"sv);
+    detail::error_check("UniformMatrix2x4fvNV"sv, check_errors);
 }
 
 template<class span_const_mat_3x2_f32>
@@ -78,7 +84,10 @@ requires(
  * \return void
  */
 STATICINLINE void uniform(
-    i32 location, bool transpose, span_const_mat_3x2_f32 const& value)
+    i32                           location,
+    bool                          transpose,
+    span_const_mat_3x2_f32 const& value,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -90,7 +99,7 @@ STATICINLINE void uniform(
         value.size(),
         transpose,
         reinterpret_cast<const GLfloat*>(value.data()));
-    detail::error_check("UniformMatrix3x2fvNV"sv);
+    detail::error_check("UniformMatrix3x2fvNV"sv, check_errors);
 }
 
 template<class span_const_mat_3x4_f32>
@@ -106,7 +115,10 @@ requires(
  * \return void
  */
 STATICINLINE void uniform(
-    i32 location, bool transpose, span_const_mat_3x4_f32 const& value)
+    i32                           location,
+    bool                          transpose,
+    span_const_mat_3x4_f32 const& value,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -118,7 +130,7 @@ STATICINLINE void uniform(
         value.size(),
         transpose,
         reinterpret_cast<const GLfloat*>(value.data()));
-    detail::error_check("UniformMatrix3x4fvNV"sv);
+    detail::error_check("UniformMatrix3x4fvNV"sv, check_errors);
 }
 
 template<class span_const_mat_4x2_f32>
@@ -134,7 +146,10 @@ requires(
  * \return void
  */
 STATICINLINE void uniform(
-    i32 location, bool transpose, span_const_mat_4x2_f32 const& value)
+    i32                           location,
+    bool                          transpose,
+    span_const_mat_4x2_f32 const& value,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -146,7 +161,7 @@ STATICINLINE void uniform(
         value.size(),
         transpose,
         reinterpret_cast<const GLfloat*>(value.data()));
-    detail::error_check("UniformMatrix4x2fvNV"sv);
+    detail::error_check("UniformMatrix4x2fvNV"sv, check_errors);
 }
 
 template<class span_const_mat_4x3_f32>
@@ -162,7 +177,10 @@ requires(
  * \return void
  */
 STATICINLINE void uniform(
-    i32 location, bool transpose, span_const_mat_4x3_f32 const& value)
+    i32                           location,
+    bool                          transpose,
+    span_const_mat_4x3_f32 const& value,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -174,7 +192,7 @@ STATICINLINE void uniform(
         value.size(),
         transpose,
         reinterpret_cast<const GLfloat*>(value.data()));
-    detail::error_check("UniformMatrix4x3fvNV"sv);
+    detail::error_check("UniformMatrix4x3fvNV"sv, check_errors);
 }
 
 } // namespace gl::nv::non_square_matrices

@@ -39,7 +39,9 @@ constexpr u32 max_rational_eval_order      = 0x86D7;
  * \return void
  */
 STATICINLINE void eval_maps(
-    group::eval_target_nv target, group::eval_maps_mode_nv mode)
+    group::eval_target_nv    target,
+    group::eval_maps_mode_nv mode,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -47,7 +49,7 @@ STATICINLINE void eval_maps(
         GLW_FPTR_CHECK(EvalMapsNV)
     }
     glEvalMapsNV(static_cast<GLenum>(target), static_cast<GLenum>(mode));
-    detail::error_check("EvalMapsNV"sv);
+    detail::error_check("EvalMapsNV"sv, check_errors);
 }
 
 template<class span_f32>
@@ -67,7 +69,8 @@ STATICINLINE void get_map_attrib_parameter(
     group::eval_target_nv          target,
     u32                            index,
     group::map_attrib_parameter_nv pname,
-    span_f32                       params)
+    span_f32                       params,
+    error_check                    check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -79,7 +82,7 @@ STATICINLINE void get_map_attrib_parameter(
         index,
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLfloat*>(params.data()) : nullptr);
-    detail::error_check("GetMapAttribParameterfvNV"sv);
+    detail::error_check("GetMapAttribParameterfvNV"sv, check_errors);
 }
 
 template<class span_i32>
@@ -99,7 +102,8 @@ STATICINLINE void get_map_attrib_parameter(
     group::eval_target_nv          target,
     u32                            index,
     group::map_attrib_parameter_nv pname,
-    span_i32                       params)
+    span_i32                       params,
+    error_check                    check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -111,7 +115,7 @@ STATICINLINE void get_map_attrib_parameter(
         index,
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetMapAttribParameterivNV"sv);
+    detail::error_check("GetMapAttribParameterivNV"sv, check_errors);
 }
 
 template<class span_void>
@@ -134,7 +138,8 @@ STATICINLINE void get_map_control_points(
     i32                   ustride,
     i32                   vstride,
     bool                  packed,
-    span_void             points)
+    span_void             points,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -149,7 +154,7 @@ STATICINLINE void get_map_control_points(
         vstride,
         packed,
         points.size() ? reinterpret_cast<void*>(points.data()) : nullptr);
-    detail::error_check("GetMapControlPointsNV"sv);
+    detail::error_check("GetMapControlPointsNV"sv, check_errors);
 }
 
 template<class span_f32>
@@ -167,7 +172,8 @@ requires(
 STATICINLINE void get_map_parameter(
     group::eval_target_nv   target,
     group::map_parameter_nv pname,
-    span_f32                params)
+    span_f32                params,
+    error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -178,7 +184,7 @@ STATICINLINE void get_map_parameter(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLfloat*>(params.data()) : nullptr);
-    detail::error_check("GetMapParameterfvNV"sv);
+    detail::error_check("GetMapParameterfvNV"sv, check_errors);
 }
 
 template<class span_i32>
@@ -196,7 +202,8 @@ requires(
 STATICINLINE void get_map_parameter(
     group::eval_target_nv   target,
     group::map_parameter_nv pname,
-    span_i32                params)
+    span_i32                params,
+    error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -207,7 +214,7 @@ STATICINLINE void get_map_parameter(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetMapParameterivNV"sv);
+    detail::error_check("GetMapParameterivNV"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -234,7 +241,8 @@ STATICINLINE void map_control_points(
     i32                    uorder,
     i32                    vorder,
     bool                   packed,
-    span_const_void const& points)
+    span_const_void const& points,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -251,7 +259,7 @@ STATICINLINE void map_control_points(
         vorder,
         packed,
         points.size() ? reinterpret_cast<const void*>(points.data()) : nullptr);
-    detail::error_check("MapControlPointsNV"sv);
+    detail::error_check("MapControlPointsNV"sv, check_errors);
 }
 
 template<class span_const_f32>
@@ -270,7 +278,8 @@ requires(
 STATICINLINE void map_parameter(
     group::eval_target_nv   target,
     group::map_parameter_nv pname,
-    span_const_f32 const&   params)
+    span_const_f32 const&   params,
+    error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -282,7 +291,7 @@ STATICINLINE void map_parameter(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<const GLfloat*>(params.data())
                       : nullptr);
-    detail::error_check("MapParameterfvNV"sv);
+    detail::error_check("MapParameterfvNV"sv, check_errors);
 }
 
 template<class span_const_i32>
@@ -301,7 +310,8 @@ requires(
 STATICINLINE void map_parameter(
     group::eval_target_nv   target,
     group::map_parameter_nv pname,
-    span_const_i32 const&   params)
+    span_const_i32 const&   params,
+    error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -313,7 +323,7 @@ STATICINLINE void map_parameter(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<const GLint*>(params.data())
                       : nullptr);
-    detail::error_check("MapParameterivNV"sv);
+    detail::error_check("MapParameterivNV"sv, check_errors);
 }
 
 } // namespace gl::nv::evaluators

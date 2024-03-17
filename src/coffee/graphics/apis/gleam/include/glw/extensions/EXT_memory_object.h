@@ -28,7 +28,11 @@ constexpr u32 linear_tiling    = 0x9585;
  * \return void
  */
 STATICINLINE void buffer_storage_mem(
-    group::buffer_target_arb target, GLsizeiptr size, u32 memory, u64 offset)
+    group::buffer_target_arb target,
+    GLsizeiptr               size,
+    u32                      memory,
+    u64                      offset,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -36,7 +40,7 @@ STATICINLINE void buffer_storage_mem(
         GLW_FPTR_CHECK(BufferStorageMemEXT)
     }
     glBufferStorageMemEXT(static_cast<GLenum>(target), size, memory, offset);
-    detail::error_check("BufferStorageMemEXT"sv);
+    detail::error_check("BufferStorageMemEXT"sv, check_errors);
 }
 
 template<class span_u32>
@@ -50,7 +54,8 @@ requires(
  * \param memoryObjects GLuint *
  * \return void
  */
-STATICINLINE void create_memory_objects(i32 n, span_u32 memoryObjects)
+STATICINLINE void create_memory_objects(
+    i32 n, span_u32 memoryObjects, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -61,7 +66,7 @@ STATICINLINE void create_memory_objects(i32 n, span_u32 memoryObjects)
         n,
         memoryObjects.size() ? reinterpret_cast<GLuint*>(memoryObjects.data())
                              : nullptr);
-    detail::error_check("CreateMemoryObjectsEXT"sv);
+    detail::error_check("CreateMemoryObjectsEXT"sv, check_errors);
 }
 
 template<class span_const_u32>
@@ -76,7 +81,9 @@ requires(
  * \param memoryObjects const GLuint *
  * \return void
  */
-STATICINLINE void delete_memory_objects(span_const_u32 const& memoryObjects)
+STATICINLINE void delete_memory_objects(
+    span_const_u32 const& memoryObjects,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -88,7 +95,7 @@ STATICINLINE void delete_memory_objects(span_const_u32 const& memoryObjects)
         memoryObjects.size()
             ? reinterpret_cast<const GLuint*>(memoryObjects.data())
             : nullptr);
-    detail::error_check("DeleteMemoryObjectsEXT"sv);
+    detail::error_check("DeleteMemoryObjectsEXT"sv, check_errors);
 }
 
 template<class span_i32>
@@ -106,7 +113,8 @@ requires(
 STATICINLINE void get_memory_object_parameter(
     u32                                 memoryObject,
     group::memory_object_parameter_name pname,
-    span_i32                            params)
+    span_i32                            params,
+    error_check                         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -117,7 +125,7 @@ STATICINLINE void get_memory_object_parameter(
         memoryObject,
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetMemoryObjectParameterivEXT"sv);
+    detail::error_check("GetMemoryObjectParameterivEXT"sv, check_errors);
 }
 
 template<class span_u8>
@@ -131,7 +139,10 @@ requires(
  * \param data GLubyte *
  * \return void
  */
-STATICINLINE void get_unsigned_bytev(group::get_prop pname, span_u8 data)
+STATICINLINE void get_unsigned_bytev(
+    group::get_prop pname,
+    span_u8         data,
+    error_check     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -141,7 +152,7 @@ STATICINLINE void get_unsigned_bytev(group::get_prop pname, span_u8 data)
     glGetUnsignedBytevEXT(
         static_cast<GLenum>(pname),
         data.size() ? reinterpret_cast<GLubyte*>(data.data()) : nullptr);
-    detail::error_check("GetUnsignedBytevEXT"sv);
+    detail::error_check("GetUnsignedBytevEXT"sv, check_errors);
 }
 
 template<class span_u8>
@@ -156,7 +167,11 @@ requires(
  * \param data GLubyte *
  * \return void
  */
-STATICINLINE void get_unsigned_bytei_v(GLenum target, u32 index, span_u8 data)
+STATICINLINE void get_unsigned_bytei_v(
+    GLenum      target,
+    u32         index,
+    span_u8     data,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -167,7 +182,7 @@ STATICINLINE void get_unsigned_bytei_v(GLenum target, u32 index, span_u8 data)
         target,
         index,
         data.size() ? reinterpret_cast<GLubyte*>(data.data()) : nullptr);
-    detail::error_check("GetUnsignedBytei_vEXT"sv);
+    detail::error_check("GetUnsignedBytei_vEXT"sv, check_errors);
 }
 
 /*!
@@ -175,7 +190,8 @@ STATICINLINE void get_unsigned_bytei_v(GLenum target, u32 index, span_u8 data)
  * \param memoryObject GLuint
  * \return Boolean
  */
-STATICINLINE bool is_memory_object(u32 memoryObject)
+STATICINLINE bool is_memory_object(
+    u32 memoryObject, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -183,7 +199,7 @@ STATICINLINE bool is_memory_object(u32 memoryObject)
         GLW_FPTR_CHECK(IsMemoryObjectEXT)
     }
     auto out = glIsMemoryObjectEXT(memoryObject);
-    detail::error_check("IsMemoryObjectEXT"sv);
+    detail::error_check("IsMemoryObjectEXT"sv, check_errors);
     return out == GL_TRUE ? true : false;
 }
 
@@ -203,7 +219,8 @@ requires(
 STATICINLINE void memory_object_parameter(
     u32                                 memoryObject,
     group::memory_object_parameter_name pname,
-    span_const_i32 const&               params)
+    span_const_i32 const&               params,
+    error_check                         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -215,7 +232,7 @@ STATICINLINE void memory_object_parameter(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<const GLint*>(params.data())
                       : nullptr);
-    detail::error_check("MemoryObjectParameterivEXT"sv);
+    detail::error_check("MemoryObjectParameterivEXT"sv, check_errors);
 }
 
 template<class size_2_i32>
@@ -237,7 +254,8 @@ STATICINLINE void tex_storage_mem_2d(
     group::sized_internal_format internalFormat,
     size_2_i32 const&            width,
     u32                          memory,
-    u64                          offset)
+    u64                          offset,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -252,7 +270,7 @@ STATICINLINE void tex_storage_mem_2d(
         width[1],
         memory,
         offset);
-    detail::error_check("TexStorageMem2DEXT"sv);
+    detail::error_check("TexStorageMem2DEXT"sv, check_errors);
 }
 
 template<class size_2_i32>
@@ -276,7 +294,8 @@ STATICINLINE void tex_storage_mem_2d_multisample(
     size_2_i32 const&            width,
     bool                         fixedSampleLocations,
     u32                          memory,
-    u64                          offset)
+    u64                          offset,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -292,7 +311,7 @@ STATICINLINE void tex_storage_mem_2d_multisample(
         fixedSampleLocations,
         memory,
         offset);
-    detail::error_check("TexStorageMem2DMultisampleEXT"sv);
+    detail::error_check("TexStorageMem2DMultisampleEXT"sv, check_errors);
 }
 
 template<class size_3_i32>
@@ -315,7 +334,8 @@ STATICINLINE void tex_storage_mem_3d(
     group::sized_internal_format internalFormat,
     size_3_i32 const&            width,
     u32                          memory,
-    u64                          offset)
+    u64                          offset,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -331,7 +351,7 @@ STATICINLINE void tex_storage_mem_3d(
         width[2],
         memory,
         offset);
-    detail::error_check("TexStorageMem3DEXT"sv);
+    detail::error_check("TexStorageMem3DEXT"sv, check_errors);
 }
 
 template<class size_3_i32>
@@ -356,7 +376,8 @@ STATICINLINE void tex_storage_mem_3d_multisample(
     size_3_i32 const&            width,
     bool                         fixedSampleLocations,
     u32                          memory,
-    u64                          offset)
+    u64                          offset,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -373,7 +394,7 @@ STATICINLINE void tex_storage_mem_3d_multisample(
         fixedSampleLocations,
         memory,
         offset);
-    detail::error_check("TexStorageMem3DMultisampleEXT"sv);
+    detail::error_check("TexStorageMem3DMultisampleEXT"sv, check_errors);
 }
 
 /*!
@@ -385,7 +406,11 @@ STATICINLINE void tex_storage_mem_3d_multisample(
  * \return void
  */
 STATICINLINE void named_buffer_storage_mem(
-    u32 buffer, GLsizeiptr size, u32 memory, u64 offset)
+    u32         buffer,
+    GLsizeiptr  size,
+    u32         memory,
+    u64         offset,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -398,7 +423,7 @@ STATICINLINE void named_buffer_storage_mem(
 #endif
     }
     glNamedBufferStorageMemEXT(buffer, size, memory, offset);
-    detail::error_check("NamedBufferStorageMemEXT"sv);
+    detail::error_check("NamedBufferStorageMemEXT"sv, check_errors);
 }
 
 template<class size_2_i32>
@@ -420,7 +445,8 @@ STATICINLINE void texture_storage_mem_2d(
     group::sized_internal_format internalFormat,
     size_2_i32 const&            width,
     u32                          memory,
-    u64                          offset)
+    u64                          offset,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -440,7 +466,7 @@ STATICINLINE void texture_storage_mem_2d(
         width[1],
         memory,
         offset);
-    detail::error_check("TextureStorageMem2DEXT"sv);
+    detail::error_check("TextureStorageMem2DEXT"sv, check_errors);
 }
 
 template<class size_2_i32>
@@ -464,7 +490,8 @@ STATICINLINE void texture_storage_mem_2d_multisample(
     size_2_i32 const&            width,
     bool                         fixedSampleLocations,
     u32                          memory,
-    u64                          offset)
+    u64                          offset,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -485,7 +512,7 @@ STATICINLINE void texture_storage_mem_2d_multisample(
         fixedSampleLocations,
         memory,
         offset);
-    detail::error_check("TextureStorageMem2DMultisampleEXT"sv);
+    detail::error_check("TextureStorageMem2DMultisampleEXT"sv, check_errors);
 }
 
 template<class size_3_i32>
@@ -508,7 +535,8 @@ STATICINLINE void texture_storage_mem_3d(
     group::sized_internal_format internalFormat,
     size_3_i32 const&            width,
     u32                          memory,
-    u64                          offset)
+    u64                          offset,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -529,7 +557,7 @@ STATICINLINE void texture_storage_mem_3d(
         width[2],
         memory,
         offset);
-    detail::error_check("TextureStorageMem3DEXT"sv);
+    detail::error_check("TextureStorageMem3DEXT"sv, check_errors);
 }
 
 template<class size_3_i32>
@@ -554,7 +582,8 @@ STATICINLINE void texture_storage_mem_3d_multisample(
     size_3_i32 const&            width,
     bool                         fixedSampleLocations,
     u32                          memory,
-    u64                          offset)
+    u64                          offset,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -576,7 +605,7 @@ STATICINLINE void texture_storage_mem_3d_multisample(
         fixedSampleLocations,
         memory,
         offset);
-    detail::error_check("TextureStorageMem3DMultisampleEXT"sv);
+    detail::error_check("TextureStorageMem3DMultisampleEXT"sv, check_errors);
 }
 
 #if defined(GL_VERSION_1_0)
@@ -596,7 +625,8 @@ STATICINLINE void tex_storage_mem_1d(
     group::sized_internal_format internalFormat,
     i32                          width,
     u32                          memory,
-    u64                          offset)
+    u64                          offset,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -610,7 +640,7 @@ STATICINLINE void tex_storage_mem_1d(
         width,
         memory,
         offset);
-    detail::error_check("TexStorageMem1DEXT"sv);
+    detail::error_check("TexStorageMem1DEXT"sv, check_errors);
 }
 
 #endif
@@ -631,7 +661,8 @@ STATICINLINE void texture_storage_mem_1d(
     group::sized_internal_format internalFormat,
     i32                          width,
     u32                          memory,
-    u64                          offset)
+    u64                          offset,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -650,7 +681,7 @@ STATICINLINE void texture_storage_mem_1d(
         width,
         memory,
         offset);
-    detail::error_check("TextureStorageMem1DEXT"sv);
+    detail::error_check("TextureStorageMem1DEXT"sv, check_errors);
 }
 
 #endif

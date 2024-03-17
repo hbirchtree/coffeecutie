@@ -20,7 +20,8 @@ constexpr u32 matrix_index_array_pointer     = 0x8849;
  * \param index GLint
  * \return void
  */
-STATICINLINE void current_palette_matrix(i32 index)
+STATICINLINE void current_palette_matrix(
+    i32 index, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -28,7 +29,7 @@ STATICINLINE void current_palette_matrix(i32 index)
         GLW_FPTR_CHECK(CurrentPaletteMatrixARB)
     }
     glCurrentPaletteMatrixARB(index);
-    detail::error_check("CurrentPaletteMatrixARB"sv);
+    detail::error_check("CurrentPaletteMatrixARB"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -45,7 +46,8 @@ STATICINLINE void matrix_index_pointer(
     i32                                  size,
     group::matrix_index_pointer_type_arb type,
     i32                                  stride,
-    span_const_void const&               pointer)
+    span_const_void const&               pointer,
+    error_check                          check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -58,7 +60,7 @@ STATICINLINE void matrix_index_pointer(
         stride,
         pointer.size() ? reinterpret_cast<const void*>(pointer.data())
                        : nullptr);
-    detail::error_check("MatrixIndexPointerARB"sv);
+    detail::error_check("MatrixIndexPointerARB"sv, check_errors);
 }
 
 template<class span_const_u8>
@@ -73,7 +75,8 @@ requires(
  * \param indices const GLubyte *
  * \return void
  */
-STATICINLINE void matrix_indexubv(span_const_u8 const& indices)
+STATICINLINE void matrix_indexubv(
+    span_const_u8 const& indices, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -84,7 +87,7 @@ STATICINLINE void matrix_indexubv(span_const_u8 const& indices)
         indices.size(),
         indices.size() ? reinterpret_cast<const GLubyte*>(indices.data())
                        : nullptr);
-    detail::error_check("MatrixIndexubvARB"sv);
+    detail::error_check("MatrixIndexubvARB"sv, check_errors);
 }
 
 template<class span_const_u32>
@@ -99,7 +102,8 @@ requires(
  * \param indices const GLuint *
  * \return void
  */
-STATICINLINE void matrix_indexuiv(span_const_u32 const& indices)
+STATICINLINE void matrix_indexuiv(
+    span_const_u32 const& indices, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -110,7 +114,7 @@ STATICINLINE void matrix_indexuiv(span_const_u32 const& indices)
         indices.size(),
         indices.size() ? reinterpret_cast<const GLuint*>(indices.data())
                        : nullptr);
-    detail::error_check("MatrixIndexuivARB"sv);
+    detail::error_check("MatrixIndexuivARB"sv, check_errors);
 }
 
 template<class span_const_u16>
@@ -125,7 +129,8 @@ requires(
  * \param indices const GLushort *
  * \return void
  */
-STATICINLINE void matrix_indexusv(span_const_u16 const& indices)
+STATICINLINE void matrix_indexusv(
+    span_const_u16 const& indices, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -136,7 +141,7 @@ STATICINLINE void matrix_indexusv(span_const_u16 const& indices)
         indices.size(),
         indices.size() ? reinterpret_cast<const GLushort*>(indices.data())
                        : nullptr);
-    detail::error_check("MatrixIndexusvARB"sv);
+    detail::error_check("MatrixIndexusvARB"sv, check_errors);
 }
 
 } // namespace gl::arb::matrix_palette

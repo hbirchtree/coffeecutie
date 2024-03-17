@@ -1,4 +1,5 @@
-#include "peripherals/stl/magic_enum.hpp"
+#include <magic_enum.hpp>
+
 #include <coffee/graphics/apis/gleam/rhi.h>
 
 #include <glw/enums/FrontFaceDirection.h>
@@ -26,6 +27,7 @@
 #include <glw/extensions/OES_rgb8_rgba8.h>
 #include <glw/extensions/OES_vertex_array_object.h>
 
+#include <glw/enums/limits.h>
 #include <glw/texture_formats.h>
 #include <glw/texture_formats_desc.h>
 
@@ -317,7 +319,8 @@ void texture_t::alloc(size_type const& size, bool create_storage)
                         0,
                         pfmt,
                         ptype,
-                        null_data);
+                        null_data,
+                        gl::error_check::on);
                 };
                 break;
 #endif
@@ -893,6 +896,44 @@ void api::collect_info(comp_app::interfaces::AppInfo& appInfo)
     fmts = {};
     appInfo.add("gl:compressedFormats", formats_list);
     appInfo.add("gl:limits", m_limits.serialize());
+#if defined(GL_NUM_SHADER_BINARY_FORMATS)
+    {
+        i32 num_formats{0};
+        cmd::get_integerv(
+            group::get_prop::num_shader_binary_formats, SpanOne(num_formats));
+        std::vector<i32> formats(num_formats);
+        cmd::get_integerv(
+            group::get_prop::shader_binary_formats,
+            semantic::SpanOver(formats));
+        std::string shader_binary_list;
+        for(auto fmt : formats)
+        {
+            if(!shader_binary_list.empty())
+                shader_binary_list.push_back(' ');
+            shader_binary_list.append(stl_types::str::fmt::pointerify(fmt));
+        }
+        appInfo.add("gl:shaderFormats", shader_binary_list);
+    }
+#endif
+#if defined(GL_NUM_PROGRAM_BINARY_FORMATS)
+    {
+        i32 num_formats{0};
+        cmd::get_integerv(
+            group::get_prop::num_program_binary_formats, SpanOne(num_formats));
+        std::vector<i32> formats(num_formats);
+        cmd::get_integerv(
+            group::get_prop::program_binary_formats,
+            semantic::SpanOver(formats));
+        std::string program_binary_list;
+        for(auto fmt : formats)
+        {
+            if(!program_binary_list.empty())
+                program_binary_list.push_back(' ');
+            program_binary_list.append(stl_types::str::fmt::pointerify(fmt));
+        }
+        appInfo.add("gl:programFormats", program_binary_list);
+    }
+#endif
     if constexpr(gleam::platform_api == api_type_t::webgl)
     {
         Coffee::Logging::cDebug(
@@ -1133,6 +1174,46 @@ bool api::supports_render_format(
 #else
     return false;
 #endif
+}
+
+std::string api_limits::get_all_limits() const
+{
+    // Enumerate all GL_MAX_ properties from GetPName
+    std::array<i32, 4> values;
+    constexpr i32      no_value  = -0xFFFFFF;
+    const auto         to_string = [](std::array<i32, 4> const& values) {
+        u32 num_values = 1;
+        for(auto i : stl_types::range<u32>(4))
+            if(values.at(i) != no_value)
+                num_values = i + 1;
+        if(num_values == 1)
+            return std::to_string(values.at(0));
+        std::string out = "[";
+        for(auto i : stl_types::range<u32>(4))
+        {
+            if(values.at(i) == no_value)
+                break;
+            if(i != 0)
+                out += ",";
+            out += std::to_string(values.at(i));
+        }
+        out += "]";
+        return out;
+    };
+    std::string out = "{";
+    for(auto [property, name] : gl::limits::properties())
+    {
+        values = {{no_value, no_value, no_value, no_value}};
+        cmd::get_integerv(
+            property, semantic::SpanOver(values), gl::error_check::off);
+        if(values[0] == no_value)
+            continue;
+        out.append(fmt::format("\"{}\":{},", name, to_string(values)));
+    }
+    if(out.back() == ',')
+        out.erase(out.end() - 1);
+    out += "}";
+    return out;
 }
 
 } // namespace gleam

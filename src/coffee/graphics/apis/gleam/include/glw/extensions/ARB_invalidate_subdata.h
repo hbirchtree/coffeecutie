@@ -10,7 +10,8 @@ namespace values {
  * \param buffer GLuint
  * \return void
  */
-STATICINLINE void invalidate_buffer_data(u32 buffer)
+STATICINLINE void invalidate_buffer_data(
+    u32 buffer, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -23,7 +24,7 @@ STATICINLINE void invalidate_buffer_data(u32 buffer)
 #endif
     }
     glInvalidateBufferData(buffer);
-    detail::error_check("InvalidateBufferData"sv);
+    detail::error_check("InvalidateBufferData"sv, check_errors);
 }
 
 /*!
@@ -34,7 +35,10 @@ STATICINLINE void invalidate_buffer_data(u32 buffer)
  * \return void
  */
 STATICINLINE void invalidate_buffer_sub_data(
-    u32 buffer, GLintptr offset, GLsizeiptr length)
+    u32         buffer,
+    GLintptr    offset,
+    GLsizeiptr  length,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -47,7 +51,7 @@ STATICINLINE void invalidate_buffer_sub_data(
 #endif
     }
     glInvalidateBufferSubData(buffer, offset, length);
-    detail::error_check("InvalidateBufferSubData"sv);
+    detail::error_check("InvalidateBufferSubData"sv, check_errors);
 }
 
 template<class span_const_invalidate_framebuffer_attachment>
@@ -66,7 +70,8 @@ requires(
  */
 STATICINLINE void invalidate_framebuffer(
     group::framebuffer_target                           target,
-    span_const_invalidate_framebuffer_attachment const& attachments)
+    span_const_invalidate_framebuffer_attachment const& attachments,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -78,7 +83,7 @@ STATICINLINE void invalidate_framebuffer(
         attachments.size(),
         attachments.size() ? reinterpret_cast<const GLenum*>(attachments.data())
                            : nullptr);
-    detail::error_check("InvalidateFramebuffer"sv);
+    detail::error_check("InvalidateFramebuffer"sv, check_errors);
 }
 
 template<
@@ -107,7 +112,8 @@ STATICINLINE void invalidate_sub_framebuffer(
     group::framebuffer_target                           target,
     span_const_invalidate_framebuffer_attachment const& attachments,
     vec_2_i32 const&                                    x,
-    size_2_i32 const&                                   width)
+    size_2_i32 const&                                   width,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -123,7 +129,7 @@ STATICINLINE void invalidate_sub_framebuffer(
         x[1],
         width[0],
         width[1]);
-    detail::error_check("InvalidateSubFramebuffer"sv);
+    detail::error_check("InvalidateSubFramebuffer"sv, check_errors);
 }
 
 /*!
@@ -132,7 +138,8 @@ STATICINLINE void invalidate_sub_framebuffer(
  * \param level GLint
  * \return void
  */
-STATICINLINE void invalidate_tex_image(u32 texture, i32 level)
+STATICINLINE void invalidate_tex_image(
+    u32 texture, i32 level, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -145,7 +152,7 @@ STATICINLINE void invalidate_tex_image(u32 texture, i32 level)
 #endif
     }
     glInvalidateTexImage(texture, level);
-    detail::error_check("InvalidateTexImage"sv);
+    detail::error_check("InvalidateTexImage"sv, check_errors);
 }
 
 template<class size_3_i32, class vec_3_i32>
@@ -164,7 +171,11 @@ requires(
  * \return void
  */
 STATICINLINE void invalidate_tex_sub_image(
-    u32 texture, i32 level, vec_3_i32 const& xoffset, size_3_i32 const& width)
+    u32               texture,
+    i32               level,
+    vec_3_i32 const&  xoffset,
+    size_3_i32 const& width,
+    error_check       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -185,7 +196,7 @@ STATICINLINE void invalidate_tex_sub_image(
         width[0],
         width[1],
         width[2]);
-    detail::error_check("InvalidateTexSubImage"sv);
+    detail::error_check("InvalidateTexSubImage"sv, check_errors);
 }
 
 } // namespace gl::arb::invalidate_subdata

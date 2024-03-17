@@ -31,7 +31,8 @@ STATICINLINE void framebuffer_sample_locationsfv(
     group::framebuffer_target target,
     u32                       start,
     i32                       count,
-    span_const_f32 const&     v)
+    span_const_f32 const&     v,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -43,7 +44,7 @@ STATICINLINE void framebuffer_sample_locationsfv(
         start,
         count,
         v.size() ? reinterpret_cast<const GLfloat*>(v.data()) : nullptr);
-    detail::error_check("FramebufferSampleLocationsfvNV"sv);
+    detail::error_check("FramebufferSampleLocationsfvNV"sv, check_errors);
 }
 
 template<class span_const_f32>
@@ -61,7 +62,11 @@ requires(
  * \return void
  */
 STATICINLINE void named_framebuffer_sample_locationsfv(
-    u32 framebuffer, u32 start, i32 count, span_const_f32 const& v)
+    u32                   framebuffer,
+    u32                   start,
+    i32                   count,
+    span_const_f32 const& v,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -78,7 +83,7 @@ STATICINLINE void named_framebuffer_sample_locationsfv(
         start,
         count,
         v.size() ? reinterpret_cast<const GLfloat*>(v.data()) : nullptr);
-    detail::error_check("NamedFramebufferSampleLocationsfvNV"sv);
+    detail::error_check("NamedFramebufferSampleLocationsfvNV"sv, check_errors);
 }
 
 /*!
@@ -86,7 +91,8 @@ STATICINLINE void named_framebuffer_sample_locationsfv(
 
  * \return void
  */
-STATICINLINE void resolve_depth_values()
+STATICINLINE void resolve_depth_values(
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -94,7 +100,7 @@ STATICINLINE void resolve_depth_values()
         GLW_FPTR_CHECK(ResolveDepthValuesNV)
     }
     glResolveDepthValuesNV();
-    detail::error_check("ResolveDepthValuesNV"sv);
+    detail::error_check("ResolveDepthValuesNV"sv, check_errors);
 }
 
 } // namespace gl::nv::sample_locations

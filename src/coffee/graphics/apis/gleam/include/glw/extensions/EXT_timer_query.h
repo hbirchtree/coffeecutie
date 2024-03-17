@@ -19,7 +19,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_query_objecti64v(
-    u32 id, group::query_object_parameter_name pname, span_i64 params)
+    u32                                id,
+    group::query_object_parameter_name pname,
+    span_i64                           params,
+    error_check                        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -30,7 +33,7 @@ STATICINLINE void get_query_objecti64v(
         id,
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint64*>(params.data()) : nullptr);
-    detail::error_check("GetQueryObjecti64vEXT"sv);
+    detail::error_check("GetQueryObjecti64vEXT"sv, check_errors);
 }
 
 template<class span_u64>
@@ -46,7 +49,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_query_objectui64v(
-    u32 id, group::query_object_parameter_name pname, span_u64 params)
+    u32                                id,
+    group::query_object_parameter_name pname,
+    span_u64                           params,
+    error_check                        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -57,7 +63,7 @@ STATICINLINE void get_query_objectui64v(
         id,
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLuint64*>(params.data()) : nullptr);
-    detail::error_check("GetQueryObjectui64vEXT"sv);
+    detail::error_check("GetQueryObjectui64vEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::timer_query

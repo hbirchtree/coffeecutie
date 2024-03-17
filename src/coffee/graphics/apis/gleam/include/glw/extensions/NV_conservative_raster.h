@@ -15,7 +15,8 @@ constexpr u32 max_subpixel_precision_bias_bits = 0x9349;
  * \param ybits GLuint
  * \return void
  */
-STATICINLINE void subpixel_precision_bias(u32 xbits, u32 ybits)
+STATICINLINE void subpixel_precision_bias(
+    u32 xbits, u32 ybits, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -23,7 +24,7 @@ STATICINLINE void subpixel_precision_bias(u32 xbits, u32 ybits)
         GLW_FPTR_CHECK(SubpixelPrecisionBiasNV)
     }
     glSubpixelPrecisionBiasNV(xbits, ybits);
-    detail::error_check("SubpixelPrecisionBiasNV"sv);
+    detail::error_check("SubpixelPrecisionBiasNV"sv, check_errors);
 }
 
 } // namespace gl::nv::conservative_raster

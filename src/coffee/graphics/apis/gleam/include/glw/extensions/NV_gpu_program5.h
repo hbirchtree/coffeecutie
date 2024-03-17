@@ -26,7 +26,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_program_subroutine_parameter(
-    GLenum target, u32 index, span_u32 param)
+    GLenum      target,
+    u32         index,
+    span_u32    param,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -37,7 +40,7 @@ STATICINLINE void get_program_subroutine_parameter(
         target,
         index,
         param.size() ? reinterpret_cast<GLuint*>(param.data()) : nullptr);
-    detail::error_check("GetProgramSubroutineParameteruivNV"sv);
+    detail::error_check("GetProgramSubroutineParameteruivNV"sv, check_errors);
 }
 
 template<class span_const_u32>
@@ -54,7 +57,9 @@ requires(
  * \return void
  */
 STATICINLINE void program_subroutine_parameters(
-    GLenum target, span_const_u32 const& params)
+    GLenum                target,
+    span_const_u32 const& params,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -66,7 +71,7 @@ STATICINLINE void program_subroutine_parameters(
         params.size(),
         params.size() ? reinterpret_cast<const GLuint*>(params.data())
                       : nullptr);
-    detail::error_check("ProgramSubroutineParametersuivNV"sv);
+    detail::error_check("ProgramSubroutineParametersuivNV"sv, check_errors);
 }
 
 } // namespace gl::nv::gpu_program5

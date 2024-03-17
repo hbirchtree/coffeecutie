@@ -23,7 +23,8 @@ requires(concepts::vector<vec_4_f32, f32, 4>)
  * \param alpha GLfloat
  * \return void
  */
-STATICINLINE void blend_color(vec_4_f32 const& red)
+STATICINLINE void blend_color(
+    vec_4_f32 const& red, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -31,7 +32,7 @@ STATICINLINE void blend_color(vec_4_f32 const& red)
         GLW_FPTR_CHECK(BlendColorEXT)
     }
     glBlendColorEXT(red[0], red[1], red[2], red[3]);
-    detail::error_check("BlendColorEXT"sv);
+    detail::error_check("BlendColorEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::blend_color

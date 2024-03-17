@@ -17,7 +17,8 @@ constexpr u32 zero_to_one         = 0x935F;
  * \param depth GLenum
  * \return void
  */
-STATICINLINE void clip_control(GLenum origin, GLenum depth)
+STATICINLINE void clip_control(
+    GLenum origin, GLenum depth, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -25,7 +26,7 @@ STATICINLINE void clip_control(GLenum origin, GLenum depth)
         GLW_FPTR_CHECK(ClipControlEXT)
     }
     glClipControlEXT(origin, depth);
-    detail::error_check("ClipControlEXT"sv);
+    detail::error_check("ClipControlEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::clip_control

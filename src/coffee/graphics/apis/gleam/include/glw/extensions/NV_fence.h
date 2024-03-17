@@ -23,7 +23,8 @@ requires(
  * \param fences const GLuint *
  * \return void
  */
-STATICINLINE void delete_fences(span_const_u32 const& fences)
+STATICINLINE void delete_fences(
+    span_const_u32 const& fences, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -34,7 +35,7 @@ STATICINLINE void delete_fences(span_const_u32 const& fences)
         fences.size(),
         fences.size() ? reinterpret_cast<const GLuint*>(fences.data())
                       : nullptr);
-    detail::error_check("DeleteFencesNV"sv);
+    detail::error_check("DeleteFencesNV"sv, check_errors);
 }
 
 /*!
@@ -42,7 +43,8 @@ STATICINLINE void delete_fences(span_const_u32 const& fences)
  * \param fence GLuint
  * \return void
  */
-STATICINLINE void finish_fence(u32 fence)
+STATICINLINE void finish_fence(
+    u32 fence, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -50,7 +52,7 @@ STATICINLINE void finish_fence(u32 fence)
         GLW_FPTR_CHECK(FinishFenceNV)
     }
     glFinishFenceNV(fence);
-    detail::error_check("FinishFenceNV"sv);
+    detail::error_check("FinishFenceNV"sv, check_errors);
 }
 
 template<class span_u32>
@@ -64,7 +66,8 @@ requires(
  * \param fences GLuint *
  * \return void
  */
-STATICINLINE void gen_fences(span_u32 fences)
+STATICINLINE void gen_fences(
+    span_u32 fences, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -74,7 +77,7 @@ STATICINLINE void gen_fences(span_u32 fences)
     glGenFencesNV(
         fences.size(),
         fences.size() ? reinterpret_cast<GLuint*>(fences.data()) : nullptr);
-    detail::error_check("GenFencesNV"sv);
+    detail::error_check("GenFencesNV"sv, check_errors);
 }
 
 template<class span_i32>
@@ -90,7 +93,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_fenceiv(
-    u32 fence, group::fence_parameter_name_nv pname, span_i32 params)
+    u32                            fence,
+    group::fence_parameter_name_nv pname,
+    span_i32                       params,
+    error_check                    check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -101,7 +107,7 @@ STATICINLINE void get_fenceiv(
         fence,
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetFenceivNV"sv);
+    detail::error_check("GetFenceivNV"sv, check_errors);
 }
 
 /*!
@@ -109,7 +115,8 @@ STATICINLINE void get_fenceiv(
  * \param fence GLuint
  * \return Boolean
  */
-STATICINLINE bool is_fence(u32 fence)
+STATICINLINE bool is_fence(
+    u32 fence, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -117,7 +124,7 @@ STATICINLINE bool is_fence(u32 fence)
         GLW_FPTR_CHECK(IsFenceNV)
     }
     auto out = glIsFenceNV(fence);
-    detail::error_check("IsFenceNV"sv);
+    detail::error_check("IsFenceNV"sv, check_errors);
     return out == GL_TRUE ? true : false;
 }
 
@@ -127,7 +134,10 @@ STATICINLINE bool is_fence(u32 fence)
  * \param condition GLenum
  * \return void
  */
-STATICINLINE void set_fence(u32 fence, group::fence_condition_nv condition)
+STATICINLINE void set_fence(
+    u32                       fence,
+    group::fence_condition_nv condition,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -135,7 +145,7 @@ STATICINLINE void set_fence(u32 fence, group::fence_condition_nv condition)
         GLW_FPTR_CHECK(SetFenceNV)
     }
     glSetFenceNV(fence, static_cast<GLenum>(condition));
-    detail::error_check("SetFenceNV"sv);
+    detail::error_check("SetFenceNV"sv, check_errors);
 }
 
 /*!
@@ -143,7 +153,8 @@ STATICINLINE void set_fence(u32 fence, group::fence_condition_nv condition)
  * \param fence GLuint
  * \return Boolean
  */
-STATICINLINE bool test_fence(u32 fence)
+STATICINLINE bool test_fence(
+    u32 fence, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -151,7 +162,7 @@ STATICINLINE bool test_fence(u32 fence)
         GLW_FPTR_CHECK(TestFenceNV)
     }
     auto out = glTestFenceNV(fence);
-    detail::error_check("TestFenceNV"sv);
+    detail::error_check("TestFenceNV"sv, check_errors);
     return out == GL_TRUE ? true : false;
 }
 

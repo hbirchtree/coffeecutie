@@ -30,7 +30,8 @@ STATICINLINE void framebuffer_sample_positionsfv(
     group::framebuffer_target target,
     u32                       numsamples,
     u32                       pixelindex,
-    span_const_f32 const&     values)
+    span_const_f32 const&     values,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -43,7 +44,7 @@ STATICINLINE void framebuffer_sample_positionsfv(
         pixelindex,
         values.size() ? reinterpret_cast<const GLfloat*>(values.data())
                       : nullptr);
-    detail::error_check("FramebufferSamplePositionsfvAMD"sv);
+    detail::error_check("FramebufferSamplePositionsfvAMD"sv, check_errors);
 }
 
 template<class span_f32>
@@ -67,7 +68,8 @@ STATICINLINE void get_framebuffer_parameter(
     u32                                          numsamples,
     u32                                          pixelindex,
     i32                                          size,
-    span_f32                                     values)
+    span_f32                                     values,
+    error_check                                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -81,7 +83,7 @@ STATICINLINE void get_framebuffer_parameter(
         pixelindex,
         size,
         values.size() ? reinterpret_cast<GLfloat*>(values.data()) : nullptr);
-    detail::error_check("GetFramebufferParameterfvAMD"sv);
+    detail::error_check("GetFramebufferParameterfvAMD"sv, check_errors);
 }
 
 template<class span_f32>
@@ -100,12 +102,13 @@ requires(
  * \return void
  */
 STATICINLINE void get_named_framebuffer_parameter(
-    u32      framebuffer,
-    GLenum   pname,
-    u32      numsamples,
-    u32      pixelindex,
-    i32      size,
-    span_f32 values)
+    u32         framebuffer,
+    GLenum      pname,
+    u32         numsamples,
+    u32         pixelindex,
+    i32         size,
+    span_f32    values,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -124,7 +127,7 @@ STATICINLINE void get_named_framebuffer_parameter(
         pixelindex,
         size,
         values.size() ? reinterpret_cast<GLfloat*>(values.data()) : nullptr);
-    detail::error_check("GetNamedFramebufferParameterfvAMD"sv);
+    detail::error_check("GetNamedFramebufferParameterfvAMD"sv, check_errors);
 }
 
 template<class span_const_f32>
@@ -145,7 +148,8 @@ STATICINLINE void named_framebuffer_sample_positionsfv(
     u32                   framebuffer,
     u32                   numsamples,
     u32                   pixelindex,
-    span_const_f32 const& values)
+    span_const_f32 const& values,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -163,7 +167,7 @@ STATICINLINE void named_framebuffer_sample_positionsfv(
         pixelindex,
         values.size() ? reinterpret_cast<const GLfloat*>(values.data())
                       : nullptr);
-    detail::error_check("NamedFramebufferSamplePositionsfvAMD"sv);
+    detail::error_check("NamedFramebufferSamplePositionsfvAMD"sv, check_errors);
 }
 
 } // namespace gl::amd::framebuffer_sample_positions

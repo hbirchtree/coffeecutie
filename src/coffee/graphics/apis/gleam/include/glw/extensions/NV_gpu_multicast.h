@@ -18,7 +18,7 @@ constexpr u32 render_gpu_mask                        = 0x9558;
 
  * \return void
  */
-STATICINLINE void multicast_barrier()
+STATICINLINE void multicast_barrier(error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -26,7 +26,7 @@ STATICINLINE void multicast_barrier()
         GLW_FPTR_CHECK(MulticastBarrierNV)
     }
     glMulticastBarrierNV();
-    detail::error_check("MulticastBarrierNV"sv);
+    detail::error_check("MulticastBarrierNV"sv, check_errors);
 }
 
 /*!
@@ -57,7 +57,8 @@ STATICINLINE void multicast_blit_framebuffer(
     i32                      dstX1,
     i32                      dstY1,
     group::clear_buffer_mask mask,
-    GLenum                   filter)
+    GLenum                   filter,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -77,7 +78,7 @@ STATICINLINE void multicast_blit_framebuffer(
         dstY1,
         static_cast<GLenum>(mask),
         filter);
-    detail::error_check("MulticastBlitFramebufferNV"sv);
+    detail::error_check("MulticastBlitFramebufferNV"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -96,7 +97,8 @@ STATICINLINE void multicast_buffer_sub_data(
     u32                    buffer,
     GLintptr               offset,
     GLsizeiptr             size,
-    span_const_void const& data)
+    span_const_void const& data,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -114,7 +116,7 @@ STATICINLINE void multicast_buffer_sub_data(
         offset,
         size,
         data.size() ? reinterpret_cast<const void*>(data.data()) : nullptr);
-    detail::error_check("MulticastBufferSubDataNV"sv);
+    detail::error_check("MulticastBufferSubDataNV"sv, check_errors);
 }
 
 /*!
@@ -129,13 +131,14 @@ STATICINLINE void multicast_buffer_sub_data(
  * \return void
  */
 STATICINLINE void multicast_copy_buffer_sub_data(
-    u32        readGpu,
-    GLbitfield writeGpuMask,
-    u32        readBuffer,
-    u32        writeBuffer,
-    GLintptr   readOffset,
-    GLintptr   writeOffset,
-    GLsizeiptr size)
+    u32         readGpu,
+    GLbitfield  writeGpuMask,
+    u32         readBuffer,
+    u32         writeBuffer,
+    GLintptr    readOffset,
+    GLintptr    writeOffset,
+    GLsizeiptr  size,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -150,7 +153,7 @@ STATICINLINE void multicast_copy_buffer_sub_data(
         readOffset,
         writeOffset,
         size);
-    detail::error_check("MulticastCopyBufferSubDataNV"sv);
+    detail::error_check("MulticastCopyBufferSubDataNV"sv, check_errors);
 }
 
 /*!
@@ -175,23 +178,24 @@ STATICINLINE void multicast_copy_buffer_sub_data(
  * \return void
  */
 STATICINLINE void multicast_copy_image_sub_data(
-    u32        srcGpu,
-    GLbitfield dstGpuMask,
-    u32        srcName,
-    GLenum     srcTarget,
-    i32        srcLevel,
-    i32        srcX,
-    i32        srcY,
-    i32        srcZ,
-    u32        dstName,
-    GLenum     dstTarget,
-    i32        dstLevel,
-    i32        dstX,
-    i32        dstY,
-    i32        dstZ,
-    i32        srcWidth,
-    i32        srcHeight,
-    i32        srcDepth)
+    u32         srcGpu,
+    GLbitfield  dstGpuMask,
+    u32         srcName,
+    GLenum      srcTarget,
+    i32         srcLevel,
+    i32         srcX,
+    i32         srcY,
+    i32         srcZ,
+    u32         dstName,
+    GLenum      dstTarget,
+    i32         dstLevel,
+    i32         dstX,
+    i32         dstY,
+    i32         dstZ,
+    i32         srcWidth,
+    i32         srcHeight,
+    i32         srcDepth,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -216,7 +220,7 @@ STATICINLINE void multicast_copy_image_sub_data(
         srcWidth,
         srcHeight,
         srcDepth);
-    detail::error_check("MulticastCopyImageSubDataNV"sv);
+    detail::error_check("MulticastCopyImageSubDataNV"sv, check_errors);
 }
 
 template<class span_const_f32>
@@ -235,7 +239,12 @@ requires(
  * \return void
  */
 STATICINLINE void multicast_framebuffer_sample_locationsfv(
-    u32 gpu, u32 framebuffer, u32 start, i32 count, span_const_f32 const& v)
+    u32                   gpu,
+    u32                   framebuffer,
+    u32                   start,
+    i32                   count,
+    span_const_f32 const& v,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -253,7 +262,8 @@ STATICINLINE void multicast_framebuffer_sample_locationsfv(
         start,
         count,
         v.size() ? reinterpret_cast<const GLfloat*>(v.data()) : nullptr);
-    detail::error_check("MulticastFramebufferSampleLocationsfvNV"sv);
+    detail::error_check(
+        "MulticastFramebufferSampleLocationsfvNV"sv, check_errors);
 }
 
 template<class span_i64>
@@ -270,7 +280,11 @@ requires(
  * \return void
  */
 STATICINLINE void multicast_get_query_objecti64v(
-    u32 gpu, u32 id, GLenum pname, span_i64 params)
+    u32         gpu,
+    u32         id,
+    GLenum      pname,
+    span_i64    params,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -282,7 +296,7 @@ STATICINLINE void multicast_get_query_objecti64v(
         id,
         pname,
         params.size() ? reinterpret_cast<GLint64*>(params.data()) : nullptr);
-    detail::error_check("MulticastGetQueryObjecti64vNV"sv);
+    detail::error_check("MulticastGetQueryObjecti64vNV"sv, check_errors);
 }
 
 template<class span_i32>
@@ -299,7 +313,11 @@ requires(
  * \return void
  */
 STATICINLINE void multicast_get_query_objectiv(
-    u32 gpu, u32 id, GLenum pname, span_i32 params)
+    u32         gpu,
+    u32         id,
+    GLenum      pname,
+    span_i32    params,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -311,7 +329,7 @@ STATICINLINE void multicast_get_query_objectiv(
         id,
         pname,
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("MulticastGetQueryObjectivNV"sv);
+    detail::error_check("MulticastGetQueryObjectivNV"sv, check_errors);
 }
 
 template<class span_u64>
@@ -328,7 +346,11 @@ requires(
  * \return void
  */
 STATICINLINE void multicast_get_query_objectui64v(
-    u32 gpu, u32 id, GLenum pname, span_u64 params)
+    u32         gpu,
+    u32         id,
+    GLenum      pname,
+    span_u64    params,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -340,7 +362,7 @@ STATICINLINE void multicast_get_query_objectui64v(
         id,
         pname,
         params.size() ? reinterpret_cast<GLuint64*>(params.data()) : nullptr);
-    detail::error_check("MulticastGetQueryObjectui64vNV"sv);
+    detail::error_check("MulticastGetQueryObjectui64vNV"sv, check_errors);
 }
 
 template<class span_u32>
@@ -357,7 +379,11 @@ requires(
  * \return void
  */
 STATICINLINE void multicast_get_query_objectuiv(
-    u32 gpu, u32 id, GLenum pname, span_u32 params)
+    u32         gpu,
+    u32         id,
+    GLenum      pname,
+    span_u32    params,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -369,7 +395,7 @@ STATICINLINE void multicast_get_query_objectuiv(
         id,
         pname,
         params.size() ? reinterpret_cast<GLuint*>(params.data()) : nullptr);
-    detail::error_check("MulticastGetQueryObjectuivNV"sv);
+    detail::error_check("MulticastGetQueryObjectuivNV"sv, check_errors);
 }
 
 /*!
@@ -378,7 +404,10 @@ STATICINLINE void multicast_get_query_objectuiv(
  * \param waitGpuMask GLbitfield
  * \return void
  */
-STATICINLINE void multicast_wait_sync(u32 signalGpu, GLbitfield waitGpuMask)
+STATICINLINE void multicast_wait_sync(
+    u32         signalGpu,
+    GLbitfield  waitGpuMask,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -386,7 +415,7 @@ STATICINLINE void multicast_wait_sync(u32 signalGpu, GLbitfield waitGpuMask)
         GLW_FPTR_CHECK(MulticastWaitSyncNV)
     }
     glMulticastWaitSyncNV(signalGpu, waitGpuMask);
-    detail::error_check("MulticastWaitSyncNV"sv);
+    detail::error_check("MulticastWaitSyncNV"sv, check_errors);
 }
 
 /*!
@@ -394,7 +423,8 @@ STATICINLINE void multicast_wait_sync(u32 signalGpu, GLbitfield waitGpuMask)
  * \param mask GLbitfield
  * \return void
  */
-STATICINLINE void render_gpu_mask(GLbitfield mask)
+STATICINLINE void render_gpu_mask(
+    GLbitfield mask, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -402,7 +432,7 @@ STATICINLINE void render_gpu_mask(GLbitfield mask)
         GLW_FPTR_CHECK(RenderGpuMaskNV)
     }
     glRenderGpuMaskNV(mask);
-    detail::error_check("RenderGpuMaskNV"sv);
+    detail::error_check("RenderGpuMaskNV"sv, check_errors);
 }
 
 } // namespace gl::nv::gpu_multicast

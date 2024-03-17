@@ -15,7 +15,8 @@ constexpr u32 blend_equation_alpha = 0x883D;
  */
 STATICINLINE void blend_equation_separate(
     group::blend_equation_mode_ext modeRGB,
-    group::blend_equation_mode_ext modeAlpha)
+    group::blend_equation_mode_ext modeAlpha,
+    error_check                    check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -24,7 +25,7 @@ STATICINLINE void blend_equation_separate(
     }
     glBlendEquationSeparateEXT(
         static_cast<GLenum>(modeRGB), static_cast<GLenum>(modeAlpha));
-    detail::error_check("BlendEquationSeparateEXT"sv);
+    detail::error_check("BlendEquationSeparateEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::blend_equation_separate

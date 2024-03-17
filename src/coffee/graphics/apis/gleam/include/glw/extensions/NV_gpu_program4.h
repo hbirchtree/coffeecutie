@@ -26,7 +26,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_program_env_parameter_iiv(
-    group::program_target target, u32 index, span_i32 params)
+    group::program_target target,
+    u32                   index,
+    span_i32              params,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -37,7 +40,7 @@ STATICINLINE void get_program_env_parameter_iiv(
         static_cast<GLenum>(target),
         index,
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetProgramEnvParameterIivNV"sv);
+    detail::error_check("GetProgramEnvParameterIivNV"sv, check_errors);
 }
 
 template<class span_u32>
@@ -53,7 +56,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_program_env_parameter_iuiv(
-    group::program_target target, u32 index, span_u32 params)
+    group::program_target target,
+    u32                   index,
+    span_u32              params,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -64,7 +70,7 @@ STATICINLINE void get_program_env_parameter_iuiv(
         static_cast<GLenum>(target),
         index,
         params.size() ? reinterpret_cast<GLuint*>(params.data()) : nullptr);
-    detail::error_check("GetProgramEnvParameterIuivNV"sv);
+    detail::error_check("GetProgramEnvParameterIuivNV"sv, check_errors);
 }
 
 template<class span_i32>
@@ -80,7 +86,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_program_local_parameter_iiv(
-    group::program_target target, u32 index, span_i32 params)
+    group::program_target target,
+    u32                   index,
+    span_i32              params,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -91,7 +100,7 @@ STATICINLINE void get_program_local_parameter_iiv(
         static_cast<GLenum>(target),
         index,
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetProgramLocalParameterIivNV"sv);
+    detail::error_check("GetProgramLocalParameterIivNV"sv, check_errors);
 }
 
 template<class span_u32>
@@ -107,7 +116,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_program_local_parameter_iuiv(
-    group::program_target target, u32 index, span_u32 params)
+    group::program_target target,
+    u32                   index,
+    span_u32              params,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -118,7 +130,7 @@ STATICINLINE void get_program_local_parameter_iuiv(
         static_cast<GLenum>(target),
         index,
         params.size() ? reinterpret_cast<GLuint*>(params.data()) : nullptr);
-    detail::error_check("GetProgramLocalParameterIuivNV"sv);
+    detail::error_check("GetProgramLocalParameterIuivNV"sv, check_errors);
 }
 
 template<class vec_4_i32>
@@ -134,7 +146,10 @@ requires(concepts::vector<vec_4_i32, i32, 4>)
  * \return void
  */
 STATICINLINE void program_env_parameter_i4i(
-    group::program_target target, u32 index, vec_4_i32 const& x)
+    group::program_target target,
+    u32                   index,
+    vec_4_i32 const&      x,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -143,7 +158,7 @@ STATICINLINE void program_env_parameter_i4i(
     }
     glProgramEnvParameterI4iNV(
         static_cast<GLenum>(target), index, x[0], x[1], x[2], x[3]);
-    detail::error_check("ProgramEnvParameterI4iNV"sv);
+    detail::error_check("ProgramEnvParameterI4iNV"sv, check_errors);
 }
 
 template<class span_const_vec_4_i32>
@@ -158,7 +173,10 @@ requires(
  * \return void
  */
 STATICINLINE void program_env_parameter_i4iv(
-    group::program_target target, u32 index, span_const_vec_4_i32 const& params)
+    group::program_target       target,
+    u32                         index,
+    span_const_vec_4_i32 const& params,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -169,7 +187,7 @@ STATICINLINE void program_env_parameter_i4iv(
         static_cast<GLenum>(target),
         index,
         reinterpret_cast<const GLint*>(params.data()));
-    detail::error_check("ProgramEnvParameterI4ivNV"sv);
+    detail::error_check("ProgramEnvParameterI4ivNV"sv, check_errors);
 }
 
 template<class vec_4_u32>
@@ -185,7 +203,10 @@ requires(concepts::vector<vec_4_u32, u32, 4>)
  * \return void
  */
 STATICINLINE void program_env_parameter_i4ui(
-    group::program_target target, u32 index, vec_4_u32 const& x)
+    group::program_target target,
+    u32                   index,
+    vec_4_u32 const&      x,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -194,7 +215,7 @@ STATICINLINE void program_env_parameter_i4ui(
     }
     glProgramEnvParameterI4uiNV(
         static_cast<GLenum>(target), index, x[0], x[1], x[2], x[3]);
-    detail::error_check("ProgramEnvParameterI4uiNV"sv);
+    detail::error_check("ProgramEnvParameterI4uiNV"sv, check_errors);
 }
 
 template<class span_const_vec_4_u32>
@@ -209,7 +230,10 @@ requires(
  * \return void
  */
 STATICINLINE void program_env_parameter_i4uiv(
-    group::program_target target, u32 index, span_const_vec_4_u32 const& params)
+    group::program_target       target,
+    u32                         index,
+    span_const_vec_4_u32 const& params,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -220,7 +244,7 @@ STATICINLINE void program_env_parameter_i4uiv(
         static_cast<GLenum>(target),
         index,
         reinterpret_cast<const GLuint*>(params.data()));
-    detail::error_check("ProgramEnvParameterI4uivNV"sv);
+    detail::error_check("ProgramEnvParameterI4uivNV"sv, check_errors);
 }
 
 template<class span_const_vec_4_i32>
@@ -236,7 +260,10 @@ requires(
  * \return void
  */
 STATICINLINE void program_env_parameters_i4iv(
-    group::program_target target, u32 index, span_const_vec_4_i32 const& params)
+    group::program_target       target,
+    u32                         index,
+    span_const_vec_4_i32 const& params,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -248,7 +275,7 @@ STATICINLINE void program_env_parameters_i4iv(
         index,
         params.size(),
         reinterpret_cast<const GLint*>(params.data()));
-    detail::error_check("ProgramEnvParametersI4ivNV"sv);
+    detail::error_check("ProgramEnvParametersI4ivNV"sv, check_errors);
 }
 
 template<class span_const_vec_4_u32>
@@ -264,7 +291,10 @@ requires(
  * \return void
  */
 STATICINLINE void program_env_parameters_i4uiv(
-    group::program_target target, u32 index, span_const_vec_4_u32 const& params)
+    group::program_target       target,
+    u32                         index,
+    span_const_vec_4_u32 const& params,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -276,7 +306,7 @@ STATICINLINE void program_env_parameters_i4uiv(
         index,
         params.size(),
         reinterpret_cast<const GLuint*>(params.data()));
-    detail::error_check("ProgramEnvParametersI4uivNV"sv);
+    detail::error_check("ProgramEnvParametersI4uivNV"sv, check_errors);
 }
 
 template<class vec_4_i32>
@@ -292,7 +322,10 @@ requires(concepts::vector<vec_4_i32, i32, 4>)
  * \return void
  */
 STATICINLINE void program_local_parameter_i4i(
-    group::program_target target, u32 index, vec_4_i32 const& x)
+    group::program_target target,
+    u32                   index,
+    vec_4_i32 const&      x,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -301,7 +334,7 @@ STATICINLINE void program_local_parameter_i4i(
     }
     glProgramLocalParameterI4iNV(
         static_cast<GLenum>(target), index, x[0], x[1], x[2], x[3]);
-    detail::error_check("ProgramLocalParameterI4iNV"sv);
+    detail::error_check("ProgramLocalParameterI4iNV"sv, check_errors);
 }
 
 template<class span_const_vec_4_i32>
@@ -316,7 +349,10 @@ requires(
  * \return void
  */
 STATICINLINE void program_local_parameter_i4iv(
-    group::program_target target, u32 index, span_const_vec_4_i32 const& params)
+    group::program_target       target,
+    u32                         index,
+    span_const_vec_4_i32 const& params,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -327,7 +363,7 @@ STATICINLINE void program_local_parameter_i4iv(
         static_cast<GLenum>(target),
         index,
         reinterpret_cast<const GLint*>(params.data()));
-    detail::error_check("ProgramLocalParameterI4ivNV"sv);
+    detail::error_check("ProgramLocalParameterI4ivNV"sv, check_errors);
 }
 
 template<class vec_4_u32>
@@ -343,7 +379,10 @@ requires(concepts::vector<vec_4_u32, u32, 4>)
  * \return void
  */
 STATICINLINE void program_local_parameter_i4ui(
-    group::program_target target, u32 index, vec_4_u32 const& x)
+    group::program_target target,
+    u32                   index,
+    vec_4_u32 const&      x,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -352,7 +391,7 @@ STATICINLINE void program_local_parameter_i4ui(
     }
     glProgramLocalParameterI4uiNV(
         static_cast<GLenum>(target), index, x[0], x[1], x[2], x[3]);
-    detail::error_check("ProgramLocalParameterI4uiNV"sv);
+    detail::error_check("ProgramLocalParameterI4uiNV"sv, check_errors);
 }
 
 template<class span_const_vec_4_u32>
@@ -367,7 +406,10 @@ requires(
  * \return void
  */
 STATICINLINE void program_local_parameter_i4uiv(
-    group::program_target target, u32 index, span_const_vec_4_u32 const& params)
+    group::program_target       target,
+    u32                         index,
+    span_const_vec_4_u32 const& params,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -378,7 +420,7 @@ STATICINLINE void program_local_parameter_i4uiv(
         static_cast<GLenum>(target),
         index,
         reinterpret_cast<const GLuint*>(params.data()));
-    detail::error_check("ProgramLocalParameterI4uivNV"sv);
+    detail::error_check("ProgramLocalParameterI4uivNV"sv, check_errors);
 }
 
 template<class span_const_vec_4_i32>
@@ -394,7 +436,10 @@ requires(
  * \return void
  */
 STATICINLINE void program_local_parameters_i4iv(
-    group::program_target target, u32 index, span_const_vec_4_i32 const& params)
+    group::program_target       target,
+    u32                         index,
+    span_const_vec_4_i32 const& params,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -406,7 +451,7 @@ STATICINLINE void program_local_parameters_i4iv(
         index,
         params.size(),
         reinterpret_cast<const GLint*>(params.data()));
-    detail::error_check("ProgramLocalParametersI4ivNV"sv);
+    detail::error_check("ProgramLocalParametersI4ivNV"sv, check_errors);
 }
 
 template<class span_const_vec_4_u32>
@@ -422,7 +467,10 @@ requires(
  * \return void
  */
 STATICINLINE void program_local_parameters_i4uiv(
-    group::program_target target, u32 index, span_const_vec_4_u32 const& params)
+    group::program_target       target,
+    u32                         index,
+    span_const_vec_4_u32 const& params,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -434,7 +482,7 @@ STATICINLINE void program_local_parameters_i4uiv(
         index,
         params.size(),
         reinterpret_cast<const GLuint*>(params.data()));
-    detail::error_check("ProgramLocalParametersI4uivNV"sv);
+    detail::error_check("ProgramLocalParametersI4uivNV"sv, check_errors);
 }
 
 } // namespace gl::nv::gpu_program4

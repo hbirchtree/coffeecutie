@@ -23,7 +23,10 @@ constexpr u32 gpu_disjoint           = 0x8FBB;
  * \param id GLuint
  * \return void
  */
-STATICINLINE void begin_query(group::query_target target, u32 id)
+STATICINLINE void begin_query(
+    group::query_target target,
+    u32                 id,
+    error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -31,7 +34,7 @@ STATICINLINE void begin_query(group::query_target target, u32 id)
         GLW_FPTR_CHECK(BeginQueryEXT)
     }
     glBeginQueryEXT(static_cast<GLenum>(target), id);
-    detail::error_check("BeginQueryEXT"sv);
+    detail::error_check("BeginQueryEXT"sv, check_errors);
 }
 
 template<class span_const_u32>
@@ -46,7 +49,8 @@ requires(
  * \param ids const GLuint *
  * \return void
  */
-STATICINLINE void delete_queries(span_const_u32 const& ids)
+STATICINLINE void delete_queries(
+    span_const_u32 const& ids, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -56,7 +60,7 @@ STATICINLINE void delete_queries(span_const_u32 const& ids)
     glDeleteQueriesEXT(
         ids.size(),
         ids.size() ? reinterpret_cast<const GLuint*>(ids.data()) : nullptr);
-    detail::error_check("DeleteQueriesEXT"sv);
+    detail::error_check("DeleteQueriesEXT"sv, check_errors);
 }
 
 /*!
@@ -64,7 +68,8 @@ STATICINLINE void delete_queries(span_const_u32 const& ids)
  * \param target GLenum
  * \return void
  */
-STATICINLINE void end_query(group::query_target target)
+STATICINLINE void end_query(
+    group::query_target target, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -72,7 +77,7 @@ STATICINLINE void end_query(group::query_target target)
         GLW_FPTR_CHECK(EndQueryEXT)
     }
     glEndQueryEXT(static_cast<GLenum>(target));
-    detail::error_check("EndQueryEXT"sv);
+    detail::error_check("EndQueryEXT"sv, check_errors);
 }
 
 template<class span_u32>
@@ -86,7 +91,8 @@ requires(
  * \param ids GLuint *
  * \return void
  */
-STATICINLINE void gen_queries(span_u32 ids)
+STATICINLINE void gen_queries(
+    span_u32 ids, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -96,7 +102,7 @@ STATICINLINE void gen_queries(span_u32 ids)
     glGenQueriesEXT(
         ids.size(),
         ids.size() ? reinterpret_cast<GLuint*>(ids.data()) : nullptr);
-    detail::error_check("GenQueriesEXT"sv);
+    detail::error_check("GenQueriesEXT"sv, check_errors);
 }
 
 template<class span_i64>
@@ -110,7 +116,10 @@ requires(
  * \param data GLint64 *
  * \return void
  */
-STATICINLINE void get_integer64v(group::get_prop pname, span_i64 data)
+STATICINLINE void get_integer64v(
+    group::get_prop pname,
+    span_i64        data,
+    error_check     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -120,7 +129,7 @@ STATICINLINE void get_integer64v(group::get_prop pname, span_i64 data)
     glGetInteger64vEXT(
         static_cast<GLenum>(pname),
         data.size() ? reinterpret_cast<GLint64*>(data.data()) : nullptr);
-    detail::error_check("GetInteger64vEXT"sv);
+    detail::error_check("GetInteger64vEXT"sv, check_errors);
 }
 
 template<class span_i64>
@@ -136,7 +145,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_query_objecti64v(
-    u32 id, group::query_object_parameter_name pname, span_i64 params)
+    u32                                id,
+    group::query_object_parameter_name pname,
+    span_i64                           params,
+    error_check                        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -147,7 +159,7 @@ STATICINLINE void get_query_objecti64v(
         id,
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint64*>(params.data()) : nullptr);
-    detail::error_check("GetQueryObjecti64vEXT"sv);
+    detail::error_check("GetQueryObjecti64vEXT"sv, check_errors);
 }
 
 template<class span_i32>
@@ -163,7 +175,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_query_objectiv(
-    u32 id, group::query_object_parameter_name pname, span_i32 params)
+    u32                                id,
+    group::query_object_parameter_name pname,
+    span_i32                           params,
+    error_check                        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -174,7 +189,7 @@ STATICINLINE void get_query_objectiv(
         id,
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetQueryObjectivEXT"sv);
+    detail::error_check("GetQueryObjectivEXT"sv, check_errors);
 }
 
 template<class span_u64>
@@ -190,7 +205,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_query_objectui64v(
-    u32 id, group::query_object_parameter_name pname, span_u64 params)
+    u32                                id,
+    group::query_object_parameter_name pname,
+    span_u64                           params,
+    error_check                        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -201,7 +219,7 @@ STATICINLINE void get_query_objectui64v(
         id,
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLuint64*>(params.data()) : nullptr);
-    detail::error_check("GetQueryObjectui64vEXT"sv);
+    detail::error_check("GetQueryObjectui64vEXT"sv, check_errors);
 }
 
 template<class span_u32>
@@ -217,7 +235,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_query_objectuiv(
-    u32 id, group::query_object_parameter_name pname, span_u32 params)
+    u32                                id,
+    group::query_object_parameter_name pname,
+    span_u32                           params,
+    error_check                        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -228,7 +249,7 @@ STATICINLINE void get_query_objectuiv(
         id,
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLuint*>(params.data()) : nullptr);
-    detail::error_check("GetQueryObjectuivEXT"sv);
+    detail::error_check("GetQueryObjectuivEXT"sv, check_errors);
 }
 
 template<class span_i32>
@@ -246,7 +267,8 @@ requires(
 STATICINLINE void get_queryiv(
     group::query_target         target,
     group::query_parameter_name pname,
-    span_i32                    params)
+    span_i32                    params,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -257,7 +279,7 @@ STATICINLINE void get_queryiv(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetQueryivEXT"sv);
+    detail::error_check("GetQueryivEXT"sv, check_errors);
 }
 
 /*!
@@ -265,7 +287,7 @@ STATICINLINE void get_queryiv(
  * \param id GLuint
  * \return Boolean
  */
-STATICINLINE bool is_query(u32 id)
+STATICINLINE bool is_query(u32 id, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -273,7 +295,7 @@ STATICINLINE bool is_query(u32 id)
         GLW_FPTR_CHECK(IsQueryEXT)
     }
     auto out = glIsQueryEXT(id);
-    detail::error_check("IsQueryEXT"sv);
+    detail::error_check("IsQueryEXT"sv, check_errors);
     return out == GL_TRUE ? true : false;
 }
 
@@ -283,7 +305,10 @@ STATICINLINE bool is_query(u32 id)
  * \param target GLenum
  * \return void
  */
-STATICINLINE void query_counter(u32 id, group::query_counter_target target)
+STATICINLINE void query_counter(
+    u32                         id,
+    group::query_counter_target target,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -291,7 +316,7 @@ STATICINLINE void query_counter(u32 id, group::query_counter_target target)
         GLW_FPTR_CHECK(QueryCounterEXT)
     }
     glQueryCounterEXT(id, static_cast<GLenum>(target));
-    detail::error_check("QueryCounterEXT"sv);
+    detail::error_check("QueryCounterEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::disjoint_timer_query

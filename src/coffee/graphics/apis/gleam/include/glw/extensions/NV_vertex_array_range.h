@@ -15,7 +15,8 @@ constexpr u32 vertex_array_range_pointer     = 0x8521;
 
  * \return void
  */
-STATICINLINE void flush_vertex_array_range()
+STATICINLINE void flush_vertex_array_range(
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -23,7 +24,7 @@ STATICINLINE void flush_vertex_array_range()
         GLW_FPTR_CHECK(FlushVertexArrayRangeNV)
     }
     glFlushVertexArrayRangeNV();
-    detail::error_check("FlushVertexArrayRangeNV"sv);
+    detail::error_check("FlushVertexArrayRangeNV"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -34,7 +35,10 @@ requires(concepts::span<span_const_void>)
  * \param pointer const void *
  * \return void
  */
-STATICINLINE void vertex_array_range(i32 length, span_const_void const& pointer)
+STATICINLINE void vertex_array_range(
+    i32                    length,
+    span_const_void const& pointer,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -45,7 +49,7 @@ STATICINLINE void vertex_array_range(i32 length, span_const_void const& pointer)
         length,
         pointer.size() ? reinterpret_cast<const void*>(pointer.data())
                        : nullptr);
-    detail::error_check("VertexArrayRangeNV"sv);
+    detail::error_check("VertexArrayRangeNV"sv, check_errors);
 }
 
 } // namespace gl::nv::vertex_array_range

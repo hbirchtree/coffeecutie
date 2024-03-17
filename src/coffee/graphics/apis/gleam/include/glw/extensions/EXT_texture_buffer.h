@@ -29,7 +29,8 @@ constexpr u32 texture_buffer_offset_alignment   = 0x919F;
 STATICINLINE void tex_buffer(
     group::texture_target        target,
     group::sized_internal_format internalformat,
-    u32                          buffer)
+    u32                          buffer,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -45,7 +46,7 @@ STATICINLINE void tex_buffer(
         static_cast<GLenum>(target),
         static_cast<GLenum>(internalformat),
         buffer);
-    detail::error_check("TexBufferEXT"sv);
+    detail::error_check("TexBufferEXT"sv, check_errors);
 }
 
 /*!
@@ -62,7 +63,8 @@ STATICINLINE void tex_buffer_range(
     group::sized_internal_format internalformat,
     u32                          buffer,
     GLintptr                     offset,
-    GLsizeiptr                   size)
+    GLsizeiptr                   size,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -80,7 +82,7 @@ STATICINLINE void tex_buffer_range(
         buffer,
         offset,
         size);
-    detail::error_check("TexBufferRangeEXT"sv);
+    detail::error_check("TexBufferRangeEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::texture_buffer

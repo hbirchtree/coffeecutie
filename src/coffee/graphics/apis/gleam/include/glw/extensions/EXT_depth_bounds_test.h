@@ -13,7 +13,8 @@ constexpr u32 depth_bounds      = 0x8891;
  * \param zmax GLclampd
  * \return void
  */
-STATICINLINE void depth_bounds(GLclampd zmin, GLclampd zmax)
+STATICINLINE void depth_bounds(
+    GLclampd zmin, GLclampd zmax, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -21,7 +22,7 @@ STATICINLINE void depth_bounds(GLclampd zmin, GLclampd zmax)
         GLW_FPTR_CHECK(DepthBoundsEXT)
     }
     glDepthBoundsEXT(zmin, zmax);
-    detail::error_check("DepthBoundsEXT"sv);
+    detail::error_check("DepthBoundsEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::depth_bounds_test

@@ -14,7 +14,7 @@ constexpr u32 write_discard      = 0x88BE;
 
  * \return void
  */
-STATICINLINE void vdpau_fini()
+STATICINLINE void vdpau_fini(error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -22,7 +22,7 @@ STATICINLINE void vdpau_fini()
         GLW_FPTR_CHECK(VDPAUFiniNV)
     }
     glVDPAUFiniNV();
-    detail::error_check("VDPAUFiniNV"sv);
+    detail::error_check("VDPAUFiniNV"sv, check_errors);
 }
 
 template<class span_i32>
@@ -40,7 +40,11 @@ requires(
  * \return void
  */
 STATICINLINE void vdpau_get_surfaceiv(
-    GLvdpauSurfaceNV surface, GLenum pname, span_i32 length, span_i32 values)
+    GLvdpauSurfaceNV surface,
+    GLenum           pname,
+    span_i32         length,
+    span_i32         values,
+    error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -53,7 +57,7 @@ STATICINLINE void vdpau_get_surfaceiv(
         values.size(),
         length.size() ? reinterpret_cast<GLsizei*>(length.data()) : nullptr,
         values.size() ? reinterpret_cast<GLint*>(values.data()) : nullptr);
-    detail::error_check("VDPAUGetSurfaceivNV"sv);
+    detail::error_check("VDPAUGetSurfaceivNV"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -65,7 +69,9 @@ requires(concepts::span<span_const_void>)
  * \return void
  */
 STATICINLINE void vdpau_init(
-    span_const_void const& vdpDevice, span_const_void const& getProcAddress)
+    span_const_void const& vdpDevice,
+    span_const_void const& getProcAddress,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -78,7 +84,7 @@ STATICINLINE void vdpau_init(
         getProcAddress.size()
             ? reinterpret_cast<const void*>(getProcAddress.data())
             : nullptr);
-    detail::error_check("VDPAUInitNV"sv);
+    detail::error_check("VDPAUInitNV"sv, check_errors);
 }
 
 /*!
@@ -86,7 +92,8 @@ STATICINLINE void vdpau_init(
  * \param surface GLvdpauSurfaceNV
  * \return Boolean
  */
-STATICINLINE bool vdpau_is_surface(GLvdpauSurfaceNV surface)
+STATICINLINE bool vdpau_is_surface(
+    GLvdpauSurfaceNV surface, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -94,7 +101,7 @@ STATICINLINE bool vdpau_is_surface(GLvdpauSurfaceNV surface)
         GLW_FPTR_CHECK(VDPAUIsSurfaceNV)
     }
     auto out = glVDPAUIsSurfaceNV(surface);
-    detail::error_check("VDPAUIsSurfaceNV"sv);
+    detail::error_check("VDPAUIsSurfaceNV"sv, check_errors);
     return out == GL_TRUE ? true : false;
 }
 
@@ -111,7 +118,8 @@ requires(
  * \return void
  */
 STATICINLINE void vdpau_map_surfaces(
-    span_const_GLvdpauSurfaceNV const& surfaces)
+    span_const_GLvdpauSurfaceNV const& surfaces,
+    error_check                        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -123,7 +131,7 @@ STATICINLINE void vdpau_map_surfaces(
         surfaces.size()
             ? reinterpret_cast<const GLvdpauSurfaceNV*>(surfaces.data())
             : nullptr);
-    detail::error_check("VDPAUMapSurfacesNV"sv);
+    detail::error_check("VDPAUMapSurfacesNV"sv, check_errors);
 }
 
 template<class span_const_u32, class span_const_void>
@@ -143,7 +151,8 @@ requires(
 STATICINLINE GLvdpauSurfaceNV vdpau_register_output_surface(
     span_const_void const& vdpSurface,
     GLenum                 target,
-    span_const_u32 const&  textureNames)
+    span_const_u32 const&  textureNames,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -158,7 +167,7 @@ STATICINLINE GLvdpauSurfaceNV vdpau_register_output_surface(
         textureNames.size()
             ? reinterpret_cast<const GLuint*>(textureNames.data())
             : nullptr);
-    detail::error_check("VDPAURegisterOutputSurfaceNV"sv);
+    detail::error_check("VDPAURegisterOutputSurfaceNV"sv, check_errors);
     return out;
 }
 
@@ -179,7 +188,8 @@ requires(
 STATICINLINE GLvdpauSurfaceNV vdpau_register_video_surface(
     span_const_void const& vdpSurface,
     GLenum                 target,
-    span_const_u32 const&  textureNames)
+    span_const_u32 const&  textureNames,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -194,7 +204,7 @@ STATICINLINE GLvdpauSurfaceNV vdpau_register_video_surface(
         textureNames.size()
             ? reinterpret_cast<const GLuint*>(textureNames.data())
             : nullptr);
-    detail::error_check("VDPAURegisterVideoSurfaceNV"sv);
+    detail::error_check("VDPAURegisterVideoSurfaceNV"sv, check_errors);
     return out;
 }
 
@@ -204,7 +214,10 @@ STATICINLINE GLvdpauSurfaceNV vdpau_register_video_surface(
  * \param access GLenum
  * \return void
  */
-STATICINLINE void vdpau_surface_access(GLvdpauSurfaceNV surface, GLenum access)
+STATICINLINE void vdpau_surface_access(
+    GLvdpauSurfaceNV surface,
+    GLenum           access,
+    error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -212,7 +225,7 @@ STATICINLINE void vdpau_surface_access(GLvdpauSurfaceNV surface, GLenum access)
         GLW_FPTR_CHECK(VDPAUSurfaceAccessNV)
     }
     glVDPAUSurfaceAccessNV(surface, access);
-    detail::error_check("VDPAUSurfaceAccessNV"sv);
+    detail::error_check("VDPAUSurfaceAccessNV"sv, check_errors);
 }
 
 template<class span_const_GLvdpauSurfaceNV>
@@ -228,7 +241,8 @@ requires(
  * \return void
  */
 STATICINLINE void vdpau_unmap_surfaces(
-    span_const_GLvdpauSurfaceNV const& surfaces)
+    span_const_GLvdpauSurfaceNV const& surfaces,
+    error_check                        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -240,7 +254,7 @@ STATICINLINE void vdpau_unmap_surfaces(
         surfaces.size()
             ? reinterpret_cast<const GLvdpauSurfaceNV*>(surfaces.data())
             : nullptr);
-    detail::error_check("VDPAUUnmapSurfacesNV"sv);
+    detail::error_check("VDPAUUnmapSurfacesNV"sv, check_errors);
 }
 
 /*!
@@ -248,7 +262,8 @@ STATICINLINE void vdpau_unmap_surfaces(
  * \param surface GLvdpauSurfaceNV
  * \return void
  */
-STATICINLINE void vdpau_unregister_surface(GLvdpauSurfaceNV surface)
+STATICINLINE void vdpau_unregister_surface(
+    GLvdpauSurfaceNV surface, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -256,7 +271,7 @@ STATICINLINE void vdpau_unregister_surface(GLvdpauSurfaceNV surface)
         GLW_FPTR_CHECK(VDPAUUnregisterSurfaceNV)
     }
     glVDPAUUnregisterSurfaceNV(surface);
-    detail::error_check("VDPAUUnregisterSurfaceNV"sv);
+    detail::error_check("VDPAUUnregisterSurfaceNV"sv, check_errors);
 }
 
 } // namespace gl::nv::vdpau_interop

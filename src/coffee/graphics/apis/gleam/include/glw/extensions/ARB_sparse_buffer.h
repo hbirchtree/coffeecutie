@@ -19,7 +19,11 @@ constexpr u32 sparse_buffer_page_size = 0x82F8;
  * \return void
  */
 STATICINLINE void buffer_page_commitment(
-    GLenum target, GLintptr offset, GLsizeiptr size, bool commit)
+    GLenum      target,
+    GLintptr    offset,
+    GLsizeiptr  size,
+    bool        commit,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -27,7 +31,7 @@ STATICINLINE void buffer_page_commitment(
         GLW_FPTR_CHECK(BufferPageCommitmentARB)
     }
     glBufferPageCommitmentARB(target, offset, size, commit);
-    detail::error_check("BufferPageCommitmentARB"sv);
+    detail::error_check("BufferPageCommitmentARB"sv, check_errors);
 }
 
 /*!
@@ -39,7 +43,11 @@ STATICINLINE void buffer_page_commitment(
  * \return void
  */
 STATICINLINE void named_buffer_page_commitment_ext(
-    u32 buffer, GLintptr offset, GLsizeiptr size, bool commit)
+    u32         buffer,
+    GLintptr    offset,
+    GLsizeiptr  size,
+    bool        commit,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -52,7 +60,7 @@ STATICINLINE void named_buffer_page_commitment_ext(
 #endif
     }
     glNamedBufferPageCommitmentEXT(buffer, offset, size, commit);
-    detail::error_check("NamedBufferPageCommitmentEXT"sv);
+    detail::error_check("NamedBufferPageCommitmentEXT"sv, check_errors);
 }
 
 /*!
@@ -64,7 +72,11 @@ STATICINLINE void named_buffer_page_commitment_ext(
  * \return void
  */
 STATICINLINE void named_buffer_page_commitment(
-    u32 buffer, GLintptr offset, GLsizeiptr size, bool commit)
+    u32         buffer,
+    GLintptr    offset,
+    GLsizeiptr  size,
+    bool        commit,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -77,7 +89,7 @@ STATICINLINE void named_buffer_page_commitment(
 #endif
     }
     glNamedBufferPageCommitmentARB(buffer, offset, size, commit);
-    detail::error_check("NamedBufferPageCommitmentARB"sv);
+    detail::error_check("NamedBufferPageCommitmentARB"sv, check_errors);
 }
 
 } // namespace gl::arb::sparse_buffer

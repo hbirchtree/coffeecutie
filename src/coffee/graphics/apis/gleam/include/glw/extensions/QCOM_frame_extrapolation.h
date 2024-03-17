@@ -14,7 +14,11 @@ namespace values {
  * \return void
  */
 STATICINLINE void extrapolate_tex_2d(
-    u32 src1, u32 src2, u32 output, f32 scaleFactor)
+    u32         src1,
+    u32         src2,
+    u32         output,
+    f32         scaleFactor,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -22,7 +26,7 @@ STATICINLINE void extrapolate_tex_2d(
         GLW_FPTR_CHECK(ExtrapolateTex2DQCOM)
     }
     glExtrapolateTex2DQCOM(src1, src2, output, scaleFactor);
-    detail::error_check("ExtrapolateTex2DQCOM"sv);
+    detail::error_check("ExtrapolateTex2DQCOM"sv, check_errors);
 }
 
 } // namespace gl::qcom::frame_extrapolation

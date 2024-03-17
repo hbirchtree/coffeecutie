@@ -34,7 +34,8 @@ STATICINLINE void tex_storage_attribs_2d(
     i32                          levels,
     group::sized_internal_format internalformat,
     size_2_i32 const&            width,
-    span_const_i32 const&        attrib_list)
+    span_const_i32 const&        attrib_list,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -49,7 +50,7 @@ STATICINLINE void tex_storage_attribs_2d(
         width[1],
         attrib_list.size() ? reinterpret_cast<const GLint*>(attrib_list.data())
                            : nullptr);
-    detail::error_check("TexStorageAttribs2DEXT"sv);
+    detail::error_check("TexStorageAttribs2DEXT"sv, check_errors);
 }
 
 template<class size_3_i32, class span_const_i32>
@@ -74,7 +75,8 @@ STATICINLINE void tex_storage_attribs_3d(
     i32                          levels,
     group::sized_internal_format internalformat,
     size_3_i32 const&            width,
-    span_const_i32 const&        attrib_list)
+    span_const_i32 const&        attrib_list,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -90,7 +92,7 @@ STATICINLINE void tex_storage_attribs_3d(
         width[2],
         attrib_list.size() ? reinterpret_cast<const GLint*>(attrib_list.data())
                            : nullptr);
-    detail::error_check("TexStorageAttribs3DEXT"sv);
+    detail::error_check("TexStorageAttribs3DEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::texture_storage_compression

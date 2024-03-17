@@ -36,7 +36,8 @@ constexpr u32 edge_flag_array_stride     = 0x808C;
  * \param i GLint
  * \return void
  */
-STATICINLINE void array_element(i32 i)
+STATICINLINE void array_element(
+    i32 i, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -44,7 +45,7 @@ STATICINLINE void array_element(i32 i)
         GLW_FPTR_CHECK(ArrayElementEXT)
     }
     glArrayElementEXT(i);
-    detail::error_check("ArrayElementEXT"sv);
+    detail::error_check("ArrayElementEXT"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -63,7 +64,8 @@ STATICINLINE void color_pointer(
     group::color_pointer_type type,
     i32                       stride,
     i32                       count,
-    span_const_void const&    pointer)
+    span_const_void const&    pointer,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -77,7 +79,7 @@ STATICINLINE void color_pointer(
         count,
         pointer.size() ? reinterpret_cast<const void*>(pointer.data())
                        : nullptr);
-    detail::error_check("ColorPointerEXT"sv);
+    detail::error_check("ColorPointerEXT"sv, check_errors);
 }
 
 /*!
@@ -87,7 +89,11 @@ STATICINLINE void color_pointer(
  * \param count GLsizei
  * \return void
  */
-STATICINLINE void draw_arrays(group::primitive_type mode, i32 first, i32 count)
+STATICINLINE void draw_arrays(
+    group::primitive_type mode,
+    i32                   first,
+    i32                   count,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -95,7 +101,7 @@ STATICINLINE void draw_arrays(group::primitive_type mode, i32 first, i32 count)
         GLW_FPTR_CHECK(DrawArraysEXT)
     }
     glDrawArraysEXT(static_cast<GLenum>(mode), first, count);
-    detail::error_check("DrawArraysEXT"sv);
+    detail::error_check("DrawArraysEXT"sv, check_errors);
 }
 
 template<class span_const_bool>
@@ -112,7 +118,10 @@ requires(
  * \return void
  */
 STATICINLINE void edge_flag_pointer(
-    i32 stride, i32 count, span_const_bool const& pointer)
+    i32                    stride,
+    i32                    count,
+    span_const_bool const& pointer,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -124,7 +133,7 @@ STATICINLINE void edge_flag_pointer(
         count,
         pointer.size() ? reinterpret_cast<const GLboolean*>(pointer.data())
                        : nullptr);
-    detail::error_check("EdgeFlagPointerEXT"sv);
+    detail::error_check("EdgeFlagPointerEXT"sv, check_errors);
 }
 
 template<class span_void>
@@ -135,7 +144,10 @@ requires(concepts::span<span_void>)
  * \param params void **
  * \return void
  */
-STATICINLINE void get_pointerv(group::get_pointerv_prop pname, span_void params)
+STATICINLINE void get_pointerv(
+    group::get_pointerv_prop pname,
+    span_void                params,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -145,7 +157,7 @@ STATICINLINE void get_pointerv(group::get_pointerv_prop pname, span_void params)
     glGetPointervEXT(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<void**>(params.data()) : nullptr);
-    detail::error_check("GetPointervEXT"sv);
+    detail::error_check("GetPointervEXT"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -162,7 +174,8 @@ STATICINLINE void index_pointer(
     group::index_pointer_type type,
     i32                       stride,
     i32                       count,
-    span_const_void const&    pointer)
+    span_const_void const&    pointer,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -175,7 +188,7 @@ STATICINLINE void index_pointer(
         count,
         pointer.size() ? reinterpret_cast<const void*>(pointer.data())
                        : nullptr);
-    detail::error_check("IndexPointerEXT"sv);
+    detail::error_check("IndexPointerEXT"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -192,7 +205,8 @@ STATICINLINE void normal_pointer(
     group::normal_pointer_type type,
     i32                        stride,
     i32                        count,
-    span_const_void const&     pointer)
+    span_const_void const&     pointer,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -205,7 +219,7 @@ STATICINLINE void normal_pointer(
         count,
         pointer.size() ? reinterpret_cast<const void*>(pointer.data())
                        : nullptr);
-    detail::error_check("NormalPointerEXT"sv);
+    detail::error_check("NormalPointerEXT"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -224,7 +238,8 @@ STATICINLINE void tex_coord_pointer(
     group::tex_coord_pointer_type type,
     i32                           stride,
     i32                           count,
-    span_const_void const&        pointer)
+    span_const_void const&        pointer,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -238,7 +253,7 @@ STATICINLINE void tex_coord_pointer(
         count,
         pointer.size() ? reinterpret_cast<const void*>(pointer.data())
                        : nullptr);
-    detail::error_check("TexCoordPointerEXT"sv);
+    detail::error_check("TexCoordPointerEXT"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -257,7 +272,8 @@ STATICINLINE void vertex_pointer(
     group::vertex_pointer_type type,
     i32                        stride,
     i32                        count,
-    span_const_void const&     pointer)
+    span_const_void const&     pointer,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -271,7 +287,7 @@ STATICINLINE void vertex_pointer(
         count,
         pointer.size() ? reinterpret_cast<const void*>(pointer.data())
                        : nullptr);
-    detail::error_check("VertexPointerEXT"sv);
+    detail::error_check("VertexPointerEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::vertex_array

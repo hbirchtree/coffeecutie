@@ -19,7 +19,11 @@ constexpr u32 occlusion_query_event_mask = 0x874F;
  * \return void
  */
 STATICINLINE void query_object_parameter(
-    group::query_target target, u32 id, GLenum pname, u32 param)
+    group::query_target target,
+    u32                 id,
+    GLenum              pname,
+    u32                 param,
+    error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -27,7 +31,7 @@ STATICINLINE void query_object_parameter(
         GLW_FPTR_CHECK(QueryObjectParameteruiAMD)
     }
     glQueryObjectParameteruiAMD(static_cast<GLenum>(target), id, pname, param);
-    detail::error_check("QueryObjectParameteruiAMD"sv);
+    detail::error_check("QueryObjectParameteruiAMD"sv, check_errors);
 }
 
 } // namespace gl::amd::occlusion_query_event

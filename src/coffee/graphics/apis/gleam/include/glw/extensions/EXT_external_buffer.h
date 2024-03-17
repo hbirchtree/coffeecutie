@@ -19,7 +19,8 @@ STATICINLINE void buffer_storage_external(
     GLintptr                   offset,
     GLsizeiptr                 size,
     GLeglClientBufferEXT       clientBuffer,
-    group::buffer_storage_mask flags)
+    group::buffer_storage_mask flags,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -28,7 +29,7 @@ STATICINLINE void buffer_storage_external(
     }
     glBufferStorageExternalEXT(
         target, offset, size, clientBuffer, static_cast<GLenum>(flags));
-    detail::error_check("BufferStorageExternalEXT"sv);
+    detail::error_check("BufferStorageExternalEXT"sv, check_errors);
 }
 
 /*!
@@ -45,7 +46,8 @@ STATICINLINE void named_buffer_storage_external(
     GLintptr                   offset,
     GLsizeiptr                 size,
     GLeglClientBufferEXT       clientBuffer,
-    group::buffer_storage_mask flags)
+    group::buffer_storage_mask flags,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -59,7 +61,7 @@ STATICINLINE void named_buffer_storage_external(
     }
     glNamedBufferStorageExternalEXT(
         buffer, offset, size, clientBuffer, static_cast<GLenum>(flags));
-    detail::error_check("NamedBufferStorageExternalEXT"sv);
+    detail::error_check("NamedBufferStorageExternalEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::external_buffer

@@ -25,7 +25,9 @@ requires(
  * \param semaphores const GLuint *
  * \return void
  */
-STATICINLINE void delete_semaphores(span_const_u32 const& semaphores)
+STATICINLINE void delete_semaphores(
+    span_const_u32 const& semaphores,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -36,7 +38,7 @@ STATICINLINE void delete_semaphores(span_const_u32 const& semaphores)
         semaphores.size(),
         semaphores.size() ? reinterpret_cast<const GLuint*>(semaphores.data())
                           : nullptr);
-    detail::error_check("DeleteSemaphoresEXT"sv);
+    detail::error_check("DeleteSemaphoresEXT"sv, check_errors);
 }
 
 template<class span_u32>
@@ -50,7 +52,8 @@ requires(
  * \param semaphores GLuint *
  * \return void
  */
-STATICINLINE void gen_semaphores(span_u32 semaphores)
+STATICINLINE void gen_semaphores(
+    span_u32 semaphores, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -61,7 +64,7 @@ STATICINLINE void gen_semaphores(span_u32 semaphores)
         semaphores.size(),
         semaphores.size() ? reinterpret_cast<GLuint*>(semaphores.data())
                           : nullptr);
-    detail::error_check("GenSemaphoresEXT"sv);
+    detail::error_check("GenSemaphoresEXT"sv, check_errors);
 }
 
 template<class span_u64>
@@ -77,7 +80,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_semaphore_parameterui64v(
-    u32 semaphore, group::semaphore_parameter_name pname, span_u64 params)
+    u32                             semaphore,
+    group::semaphore_parameter_name pname,
+    span_u64                        params,
+    error_check                     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -88,7 +94,7 @@ STATICINLINE void get_semaphore_parameterui64v(
         semaphore,
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLuint64*>(params.data()) : nullptr);
-    detail::error_check("GetSemaphoreParameterui64vEXT"sv);
+    detail::error_check("GetSemaphoreParameterui64vEXT"sv, check_errors);
 }
 
 template<class span_u8>
@@ -102,7 +108,10 @@ requires(
  * \param data GLubyte *
  * \return void
  */
-STATICINLINE void get_unsigned_bytev(group::get_prop pname, span_u8 data)
+STATICINLINE void get_unsigned_bytev(
+    group::get_prop pname,
+    span_u8         data,
+    error_check     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -112,7 +121,7 @@ STATICINLINE void get_unsigned_bytev(group::get_prop pname, span_u8 data)
     glGetUnsignedBytevEXT(
         static_cast<GLenum>(pname),
         data.size() ? reinterpret_cast<GLubyte*>(data.data()) : nullptr);
-    detail::error_check("GetUnsignedBytevEXT"sv);
+    detail::error_check("GetUnsignedBytevEXT"sv, check_errors);
 }
 
 template<class span_u8>
@@ -127,7 +136,11 @@ requires(
  * \param data GLubyte *
  * \return void
  */
-STATICINLINE void get_unsigned_bytei_v(GLenum target, u32 index, span_u8 data)
+STATICINLINE void get_unsigned_bytei_v(
+    GLenum      target,
+    u32         index,
+    span_u8     data,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -138,7 +151,7 @@ STATICINLINE void get_unsigned_bytei_v(GLenum target, u32 index, span_u8 data)
         target,
         index,
         data.size() ? reinterpret_cast<GLubyte*>(data.data()) : nullptr);
-    detail::error_check("GetUnsignedBytei_vEXT"sv);
+    detail::error_check("GetUnsignedBytei_vEXT"sv, check_errors);
 }
 
 /*!
@@ -146,7 +159,8 @@ STATICINLINE void get_unsigned_bytei_v(GLenum target, u32 index, span_u8 data)
  * \param semaphore GLuint
  * \return Boolean
  */
-STATICINLINE bool is_semaphore(u32 semaphore)
+STATICINLINE bool is_semaphore(
+    u32 semaphore, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -154,7 +168,7 @@ STATICINLINE bool is_semaphore(u32 semaphore)
         GLW_FPTR_CHECK(IsSemaphoreEXT)
     }
     auto out = glIsSemaphoreEXT(semaphore);
-    detail::error_check("IsSemaphoreEXT"sv);
+    detail::error_check("IsSemaphoreEXT"sv, check_errors);
     return out == GL_TRUE ? true : false;
 }
 
@@ -174,7 +188,8 @@ requires(
 STATICINLINE void semaphore_parameterui64v(
     u32                             semaphore,
     group::semaphore_parameter_name pname,
-    span_const_u64 const&           params)
+    span_const_u64 const&           params,
+    error_check                     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -186,7 +201,7 @@ STATICINLINE void semaphore_parameterui64v(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<const GLuint64*>(params.data())
                       : nullptr);
-    detail::error_check("SemaphoreParameterui64vEXT"sv);
+    detail::error_check("SemaphoreParameterui64vEXT"sv, check_errors);
 }
 
 template<class span_const_texture_layout, class span_const_u32>
@@ -215,7 +230,8 @@ STATICINLINE void signal_semaphore(
     span_const_u32 const&            buffers,
     u32                              numTextureBarriers,
     span_const_u32 const&            textures,
-    span_const_texture_layout const& dstLayouts)
+    span_const_texture_layout const& dstLayouts,
+    error_check                      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -232,7 +248,7 @@ STATICINLINE void signal_semaphore(
                         : nullptr,
         dstLayouts.size() ? reinterpret_cast<const GLenum*>(dstLayouts.data())
                           : nullptr);
-    detail::error_check("SignalSemaphoreEXT"sv);
+    detail::error_check("SignalSemaphoreEXT"sv, check_errors);
 }
 
 template<class span_const_texture_layout, class span_const_u32>
@@ -261,7 +277,8 @@ STATICINLINE void wait_semaphore(
     span_const_u32 const&            buffers,
     u32                              numTextureBarriers,
     span_const_u32 const&            textures,
-    span_const_texture_layout const& srcLayouts)
+    span_const_texture_layout const& srcLayouts,
+    error_check                      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -278,7 +295,7 @@ STATICINLINE void wait_semaphore(
                         : nullptr,
         srcLayouts.size() ? reinterpret_cast<const GLenum*>(srcLayouts.data())
                           : nullptr);
-    detail::error_check("WaitSemaphoreEXT"sv);
+    detail::error_check("WaitSemaphoreEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::semaphore

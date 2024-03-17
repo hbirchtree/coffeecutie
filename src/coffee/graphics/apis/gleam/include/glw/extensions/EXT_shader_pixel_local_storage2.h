@@ -23,7 +23,9 @@ requires(
  * \return void
  */
 STATICINLINE void clear_pixel_local_storageui(
-    i32 offset, span_const_u32 const& values)
+    i32                   offset,
+    span_const_u32 const& values,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -35,7 +37,7 @@ STATICINLINE void clear_pixel_local_storageui(
         values.size(),
         values.size() ? reinterpret_cast<const GLuint*>(values.data())
                       : nullptr);
-    detail::error_check("ClearPixelLocalStorageuiEXT"sv);
+    detail::error_check("ClearPixelLocalStorageuiEXT"sv, check_errors);
 }
 
 /*!
@@ -44,7 +46,8 @@ STATICINLINE void clear_pixel_local_storageui(
  * \param size GLsizei
  * \return void
  */
-STATICINLINE void framebuffer_pixel_local_storage_size(u32 target, i32 size)
+STATICINLINE void framebuffer_pixel_local_storage_size(
+    u32 target, i32 size, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -52,7 +55,7 @@ STATICINLINE void framebuffer_pixel_local_storage_size(u32 target, i32 size)
         GLW_FPTR_CHECK(FramebufferPixelLocalStorageSizeEXT)
     }
     glFramebufferPixelLocalStorageSizeEXT(target, size);
-    detail::error_check("FramebufferPixelLocalStorageSizeEXT"sv);
+    detail::error_check("FramebufferPixelLocalStorageSizeEXT"sv, check_errors);
 }
 
 /*!
@@ -60,7 +63,8 @@ STATICINLINE void framebuffer_pixel_local_storage_size(u32 target, i32 size)
  * \param target GLuint
  * \return GLsizei
  */
-STATICINLINE GLsizei get_framebuffer_pixel_local_storage_size(u32 target)
+STATICINLINE GLsizei get_framebuffer_pixel_local_storage_size(
+    u32 target, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -68,7 +72,8 @@ STATICINLINE GLsizei get_framebuffer_pixel_local_storage_size(u32 target)
         GLW_FPTR_CHECK(GetFramebufferPixelLocalStorageSizeEXT)
     }
     auto out = glGetFramebufferPixelLocalStorageSizeEXT(target);
-    detail::error_check("GetFramebufferPixelLocalStorageSizeEXT"sv);
+    detail::error_check(
+        "GetFramebufferPixelLocalStorageSizeEXT"sv, check_errors);
     return out;
 }
 

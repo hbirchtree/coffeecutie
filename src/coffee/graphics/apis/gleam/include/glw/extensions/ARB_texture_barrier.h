@@ -10,7 +10,7 @@ namespace values {
 
  * \return void
  */
-STATICINLINE void texture_barrier()
+STATICINLINE void texture_barrier(error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -18,7 +18,7 @@ STATICINLINE void texture_barrier()
         GLW_FPTR_CHECK(TextureBarrier)
     }
     glTextureBarrier();
-    detail::error_check("TextureBarrier"sv);
+    detail::error_check("TextureBarrier"sv, check_errors);
 }
 
 } // namespace gl::arb::texture_barrier

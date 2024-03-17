@@ -27,7 +27,8 @@ STATICINLINE void specialize_shader(
     std::string_view const& pEntryPoint,
     u32                     numSpecializationConstants,
     span_const_u32 const&   pConstantIndex,
-    span_const_u32 const&   pConstantValue)
+    span_const_u32 const&   pConstantValue,
+    error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -49,7 +50,7 @@ STATICINLINE void specialize_shader(
         pConstantValue.size()
             ? reinterpret_cast<const GLuint*>(pConstantValue.data())
             : nullptr);
-    detail::error_check("SpecializeShaderARB"sv);
+    detail::error_check("SpecializeShaderARB"sv, check_errors);
 }
 
 } // namespace gl::arb::gl_spirv

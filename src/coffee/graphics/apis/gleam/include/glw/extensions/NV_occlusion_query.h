@@ -16,7 +16,8 @@ constexpr u32 current_occlusion_query_id = 0x8865;
  * \param id GLuint
  * \return void
  */
-STATICINLINE void begin_occlusion_query(u32 id)
+STATICINLINE void begin_occlusion_query(
+    u32 id, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -24,7 +25,7 @@ STATICINLINE void begin_occlusion_query(u32 id)
         GLW_FPTR_CHECK(BeginOcclusionQueryNV)
     }
     glBeginOcclusionQueryNV(id);
-    detail::error_check("BeginOcclusionQueryNV"sv);
+    detail::error_check("BeginOcclusionQueryNV"sv, check_errors);
 }
 
 template<class span_const_u32>
@@ -39,7 +40,8 @@ requires(
  * \param ids const GLuint *
  * \return void
  */
-STATICINLINE void delete_occlusion_queries(span_const_u32 const& ids)
+STATICINLINE void delete_occlusion_queries(
+    span_const_u32 const& ids, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -49,7 +51,7 @@ STATICINLINE void delete_occlusion_queries(span_const_u32 const& ids)
     glDeleteOcclusionQueriesNV(
         ids.size(),
         ids.size() ? reinterpret_cast<const GLuint*>(ids.data()) : nullptr);
-    detail::error_check("DeleteOcclusionQueriesNV"sv);
+    detail::error_check("DeleteOcclusionQueriesNV"sv, check_errors);
 }
 
 /*!
@@ -57,7 +59,8 @@ STATICINLINE void delete_occlusion_queries(span_const_u32 const& ids)
 
  * \return void
  */
-STATICINLINE void end_occlusion_query()
+STATICINLINE void end_occlusion_query(
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -65,7 +68,7 @@ STATICINLINE void end_occlusion_query()
         GLW_FPTR_CHECK(EndOcclusionQueryNV)
     }
     glEndOcclusionQueryNV();
-    detail::error_check("EndOcclusionQueryNV"sv);
+    detail::error_check("EndOcclusionQueryNV"sv, check_errors);
 }
 
 template<class span_u32>
@@ -79,7 +82,8 @@ requires(
  * \param ids GLuint *
  * \return void
  */
-STATICINLINE void gen_occlusion_queries(span_u32 ids)
+STATICINLINE void gen_occlusion_queries(
+    span_u32 ids, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -89,7 +93,7 @@ STATICINLINE void gen_occlusion_queries(span_u32 ids)
     glGenOcclusionQueriesNV(
         ids.size(),
         ids.size() ? reinterpret_cast<GLuint*>(ids.data()) : nullptr);
-    detail::error_check("GenOcclusionQueriesNV"sv);
+    detail::error_check("GenOcclusionQueriesNV"sv, check_errors);
 }
 
 template<class span_i32>
@@ -105,7 +109,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_occlusion_queryiv(
-    u32 id, group::occlusion_query_parameter_name_nv pname, span_i32 params)
+    u32                                      id,
+    group::occlusion_query_parameter_name_nv pname,
+    span_i32                                 params,
+    error_check                              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -116,7 +123,7 @@ STATICINLINE void get_occlusion_queryiv(
         id,
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetOcclusionQueryivNV"sv);
+    detail::error_check("GetOcclusionQueryivNV"sv, check_errors);
 }
 
 template<class span_u32>
@@ -132,7 +139,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_occlusion_queryuiv(
-    u32 id, group::occlusion_query_parameter_name_nv pname, span_u32 params)
+    u32                                      id,
+    group::occlusion_query_parameter_name_nv pname,
+    span_u32                                 params,
+    error_check                              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -143,7 +153,7 @@ STATICINLINE void get_occlusion_queryuiv(
         id,
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLuint*>(params.data()) : nullptr);
-    detail::error_check("GetOcclusionQueryuivNV"sv);
+    detail::error_check("GetOcclusionQueryuivNV"sv, check_errors);
 }
 
 /*!
@@ -151,7 +161,8 @@ STATICINLINE void get_occlusion_queryuiv(
  * \param id GLuint
  * \return Boolean
  */
-STATICINLINE bool is_occlusion_query(u32 id)
+STATICINLINE bool is_occlusion_query(
+    u32 id, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -159,7 +170,7 @@ STATICINLINE bool is_occlusion_query(u32 id)
         GLW_FPTR_CHECK(IsOcclusionQueryNV)
     }
     auto out = glIsOcclusionQueryNV(id);
-    detail::error_check("IsOcclusionQueryNV"sv);
+    detail::error_check("IsOcclusionQueryNV"sv, check_errors);
     return out == GL_TRUE ? true : false;
 }
 

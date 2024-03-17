@@ -13,7 +13,8 @@ STATICINLINE void blend_func_separate(
     group::blending_factor sfactorRGB,
     group::blending_factor dfactorRGB,
     group::blending_factor sfactorAlpha,
-    group::blending_factor dfactorAlpha)
+    group::blending_factor dfactorAlpha,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -25,7 +26,7 @@ STATICINLINE void blend_func_separate(
         static_cast<GLenum>(dfactorRGB),
         static_cast<GLenum>(sfactorAlpha),
         static_cast<GLenum>(dfactorAlpha));
-    detail::error_check("BlendFuncSeparate"sv);
+    detail::error_check("BlendFuncSeparate"sv, check_errors);
 }
 
 template<class span_const_i32>
@@ -43,7 +44,10 @@ requires(
  * \return void
  */
 STATICINLINE void multi_draw_arrays(
-    group::primitive_type mode, span_const_i32 first, span_const_i32 count)
+    group::primitive_type mode,
+    span_const_i32        first,
+    span_const_i32        count,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -54,7 +58,7 @@ STATICINLINE void multi_draw_arrays(
     detail::assert_equal(first.size(), drawcount);
     detail::assert_equal(count.size(), drawcount);
     glMultiDrawArrays(static_cast<GLenum>(mode), first.data(), count.data());
-    detail::error_check("MultiDrawArrays"sv);
+    detail::error_check("MultiDrawArrays"sv, check_errors);
 }
 
 template<class span_const_i32>
@@ -76,7 +80,8 @@ STATICINLINE void multi_draw_elements(
     group::primitive_type     mode,
     span_const_i32            count,
     group::draw_elements_type type,
-    intptr_t                  indices)
+    intptr_t                  indices,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -90,7 +95,7 @@ STATICINLINE void multi_draw_elements(
         count.data(),
         static_cast<GLenum>(type),
         reinterpret_cast<const void*>(indices));
-    detail::error_check("MultiDrawElements"sv);
+    detail::error_check("MultiDrawElements"sv, check_errors);
 }
 
 template<typename Dummy = void>
@@ -102,7 +107,9 @@ requires(MinimumVersion<Current, Version<1, 4>>)
  * \return void
  */
 STATICINLINE void point_parameter(
-    group::point_parameter_name_arb pname, f32 param)
+    group::point_parameter_name_arb pname,
+    f32                             param,
+    error_check                     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -110,7 +117,7 @@ STATICINLINE void point_parameter(
         GLW_FPTR_CHECK(PointParameterf)
     }
     glPointParameterf(static_cast<GLenum>(pname), param);
-    detail::error_check("PointParameterf"sv);
+    detail::error_check("PointParameterf"sv, check_errors);
 }
 
 template<class span_const_f32>
@@ -126,7 +133,9 @@ requires(
  * \return void
  */
 STATICINLINE void point_parameter(
-    group::point_parameter_name_arb pname, span_const_f32 const& params)
+    group::point_parameter_name_arb pname,
+    span_const_f32 const&           params,
+    error_check                     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -137,7 +146,7 @@ STATICINLINE void point_parameter(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<const GLfloat*>(params.data())
                       : nullptr);
-    detail::error_check("PointParameterfv"sv);
+    detail::error_check("PointParameterfv"sv, check_errors);
 }
 
 template<typename Dummy = void>
@@ -149,7 +158,9 @@ requires(MinimumVersion<Current, Version<1, 4>>)
  * \return void
  */
 STATICINLINE void point_parameter(
-    group::point_parameter_name_arb pname, i32 param)
+    group::point_parameter_name_arb pname,
+    i32                             param,
+    error_check                     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -157,7 +168,7 @@ STATICINLINE void point_parameter(
         GLW_FPTR_CHECK(PointParameteri)
     }
     glPointParameteri(static_cast<GLenum>(pname), param);
-    detail::error_check("PointParameteri"sv);
+    detail::error_check("PointParameteri"sv, check_errors);
 }
 
 template<class span_const_i32>
@@ -173,7 +184,9 @@ requires(
  * \return void
  */
 STATICINLINE void point_parameter(
-    group::point_parameter_name_arb pname, span_const_i32 const& params)
+    group::point_parameter_name_arb pname,
+    span_const_i32 const&           params,
+    error_check                     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -184,7 +197,7 @@ STATICINLINE void point_parameter(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<const GLint*>(params.data())
                       : nullptr);
-    detail::error_check("PointParameteriv"sv);
+    detail::error_check("PointParameteriv"sv, check_errors);
 }
 
 template<class vec_4_f32>
@@ -199,7 +212,8 @@ requires(
  * \param alpha GLfloat
  * \return void
  */
-STATICINLINE void blend_color(vec_4_f32 const& red)
+STATICINLINE void blend_color(
+    vec_4_f32 const& red, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -207,7 +221,7 @@ STATICINLINE void blend_color(vec_4_f32 const& red)
         GLW_FPTR_CHECK(BlendColor)
     }
     glBlendColor(red[0], red[1], red[2], red[3]);
-    detail::error_check("BlendColor"sv);
+    detail::error_check("BlendColor"sv, check_errors);
 }
 
 template<typename Dummy = void>
@@ -217,7 +231,9 @@ requires(MinimumVersion<Current, Version<1, 4>>)
  * \param mode GLenum
  * \return void
  */
-STATICINLINE void blend_equation(group::blend_equation_mode_ext mode)
+STATICINLINE void blend_equation(
+    group::blend_equation_mode_ext mode,
+    error_check                    check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -225,7 +241,7 @@ STATICINLINE void blend_equation(group::blend_equation_mode_ext mode)
         GLW_FPTR_CHECK(BlendEquation)
     }
     glBlendEquation(static_cast<GLenum>(mode));
-    detail::error_check("BlendEquation"sv);
+    detail::error_check("BlendEquation"sv, check_errors);
 }
 
 #endif // GL_VERSION_1_4

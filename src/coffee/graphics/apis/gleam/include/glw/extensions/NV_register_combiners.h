@@ -69,7 +69,8 @@ STATICINLINE void combiner_input(
     group::combiner_variable_nv        variable,
     group::combiner_register_nv        input,
     group::combiner_mapping_nv         mapping,
-    group::combiner_component_usage_nv componentUsage)
+    group::combiner_component_usage_nv componentUsage,
+    error_check                        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -83,7 +84,7 @@ STATICINLINE void combiner_input(
         static_cast<GLenum>(input),
         static_cast<GLenum>(mapping),
         static_cast<GLenum>(componentUsage));
-    detail::error_check("CombinerInputNV"sv);
+    detail::error_check("CombinerInputNV"sv, check_errors);
 }
 
 /*!
@@ -110,7 +111,8 @@ STATICINLINE void combiner_output(
     group::combiner_bias_nv     bias,
     bool                        abDotProduct,
     bool                        cdDotProduct,
-    bool                        muxSum)
+    bool                        muxSum,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -128,7 +130,7 @@ STATICINLINE void combiner_output(
         abDotProduct,
         cdDotProduct,
         muxSum);
-    detail::error_check("CombinerOutputNV"sv);
+    detail::error_check("CombinerOutputNV"sv, check_errors);
 }
 
 /*!
@@ -138,7 +140,9 @@ STATICINLINE void combiner_output(
  * \return void
  */
 STATICINLINE void combiner_parameter(
-    group::combiner_parameter_nv pname, f32 param)
+    group::combiner_parameter_nv pname,
+    f32                          param,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -146,7 +150,7 @@ STATICINLINE void combiner_parameter(
         GLW_FPTR_CHECK(CombinerParameterfNV)
     }
     glCombinerParameterfNV(static_cast<GLenum>(pname), param);
-    detail::error_check("CombinerParameterfNV"sv);
+    detail::error_check("CombinerParameterfNV"sv, check_errors);
 }
 
 template<class span_const_f32>
@@ -162,7 +166,9 @@ requires(
  * \return void
  */
 STATICINLINE void combiner_parameter(
-    group::combiner_parameter_nv pname, span_const_f32 const& params)
+    group::combiner_parameter_nv pname,
+    span_const_f32 const&        params,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -173,7 +179,7 @@ STATICINLINE void combiner_parameter(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<const GLfloat*>(params.data())
                       : nullptr);
-    detail::error_check("CombinerParameterfvNV"sv);
+    detail::error_check("CombinerParameterfvNV"sv, check_errors);
 }
 
 /*!
@@ -183,7 +189,9 @@ STATICINLINE void combiner_parameter(
  * \return void
  */
 STATICINLINE void combiner_parameter(
-    group::combiner_parameter_nv pname, i32 param)
+    group::combiner_parameter_nv pname,
+    i32                          param,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -191,7 +199,7 @@ STATICINLINE void combiner_parameter(
         GLW_FPTR_CHECK(CombinerParameteriNV)
     }
     glCombinerParameteriNV(static_cast<GLenum>(pname), param);
-    detail::error_check("CombinerParameteriNV"sv);
+    detail::error_check("CombinerParameteriNV"sv, check_errors);
 }
 
 template<class span_const_i32>
@@ -207,7 +215,9 @@ requires(
  * \return void
  */
 STATICINLINE void combiner_parameter(
-    group::combiner_parameter_nv pname, span_const_i32 const& params)
+    group::combiner_parameter_nv pname,
+    span_const_i32 const&        params,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -218,7 +228,7 @@ STATICINLINE void combiner_parameter(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<const GLint*>(params.data())
                       : nullptr);
-    detail::error_check("CombinerParameterivNV"sv);
+    detail::error_check("CombinerParameterivNV"sv, check_errors);
 }
 
 /*!
@@ -233,7 +243,8 @@ STATICINLINE void final_combiner_input(
     group::combiner_variable_nv        variable,
     group::combiner_register_nv        input,
     group::combiner_mapping_nv         mapping,
-    group::combiner_component_usage_nv componentUsage)
+    group::combiner_component_usage_nv componentUsage,
+    error_check                        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -245,7 +256,7 @@ STATICINLINE void final_combiner_input(
         static_cast<GLenum>(input),
         static_cast<GLenum>(mapping),
         static_cast<GLenum>(componentUsage));
-    detail::error_check("FinalCombinerInputNV"sv);
+    detail::error_check("FinalCombinerInputNV"sv, check_errors);
 }
 
 template<class span_f32>
@@ -267,7 +278,8 @@ STATICINLINE void get_combiner_input_parameter(
     group::combiner_portion_nv   portion,
     group::combiner_variable_nv  variable,
     group::combiner_parameter_nv pname,
-    span_f32                     params)
+    span_f32                     params,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -280,7 +292,7 @@ STATICINLINE void get_combiner_input_parameter(
         static_cast<GLenum>(variable),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLfloat*>(params.data()) : nullptr);
-    detail::error_check("GetCombinerInputParameterfvNV"sv);
+    detail::error_check("GetCombinerInputParameterfvNV"sv, check_errors);
 }
 
 template<class span_i32>
@@ -302,7 +314,8 @@ STATICINLINE void get_combiner_input_parameter(
     group::combiner_portion_nv   portion,
     group::combiner_variable_nv  variable,
     group::combiner_parameter_nv pname,
-    span_i32                     params)
+    span_i32                     params,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -315,7 +328,7 @@ STATICINLINE void get_combiner_input_parameter(
         static_cast<GLenum>(variable),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetCombinerInputParameterivNV"sv);
+    detail::error_check("GetCombinerInputParameterivNV"sv, check_errors);
 }
 
 template<class span_f32>
@@ -335,7 +348,8 @@ STATICINLINE void get_combiner_output_parameter(
     group::combiner_stage_nv     stage,
     group::combiner_portion_nv   portion,
     group::combiner_parameter_nv pname,
-    span_f32                     params)
+    span_f32                     params,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -347,7 +361,7 @@ STATICINLINE void get_combiner_output_parameter(
         static_cast<GLenum>(portion),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLfloat*>(params.data()) : nullptr);
-    detail::error_check("GetCombinerOutputParameterfvNV"sv);
+    detail::error_check("GetCombinerOutputParameterfvNV"sv, check_errors);
 }
 
 template<class span_i32>
@@ -367,7 +381,8 @@ STATICINLINE void get_combiner_output_parameter(
     group::combiner_stage_nv     stage,
     group::combiner_portion_nv   portion,
     group::combiner_parameter_nv pname,
-    span_i32                     params)
+    span_i32                     params,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -379,7 +394,7 @@ STATICINLINE void get_combiner_output_parameter(
         static_cast<GLenum>(portion),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetCombinerOutputParameterivNV"sv);
+    detail::error_check("GetCombinerOutputParameterivNV"sv, check_errors);
 }
 
 template<class span_f32>
@@ -397,7 +412,8 @@ requires(
 STATICINLINE void get_final_combiner_input_parameter(
     group::combiner_variable_nv  variable,
     group::combiner_parameter_nv pname,
-    span_f32                     params)
+    span_f32                     params,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -408,7 +424,7 @@ STATICINLINE void get_final_combiner_input_parameter(
         static_cast<GLenum>(variable),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLfloat*>(params.data()) : nullptr);
-    detail::error_check("GetFinalCombinerInputParameterfvNV"sv);
+    detail::error_check("GetFinalCombinerInputParameterfvNV"sv, check_errors);
 }
 
 template<class span_i32>
@@ -426,7 +442,8 @@ requires(
 STATICINLINE void get_final_combiner_input_parameter(
     group::combiner_variable_nv  variable,
     group::combiner_parameter_nv pname,
-    span_i32                     params)
+    span_i32                     params,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -437,7 +454,7 @@ STATICINLINE void get_final_combiner_input_parameter(
         static_cast<GLenum>(variable),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetFinalCombinerInputParameterivNV"sv);
+    detail::error_check("GetFinalCombinerInputParameterivNV"sv, check_errors);
 }
 
 } // namespace gl::nv::register_combiners

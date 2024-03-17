@@ -14,7 +14,8 @@ constexpr u32 alpha_to_coverage_dither_disable = 0x934F;
  * \param mode GLenum
  * \return void
  */
-STATICINLINE void alpha_to_coverage_dither_control(GLenum mode)
+STATICINLINE void alpha_to_coverage_dither_control(
+    GLenum mode, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -22,7 +23,7 @@ STATICINLINE void alpha_to_coverage_dither_control(GLenum mode)
         GLW_FPTR_CHECK(AlphaToCoverageDitherControlNV)
     }
     glAlphaToCoverageDitherControlNV(mode);
-    detail::error_check("AlphaToCoverageDitherControlNV"sv);
+    detail::error_check("AlphaToCoverageDitherControlNV"sv, check_errors);
 }
 
 } // namespace gl::nv::alpha_to_coverage_dither_control

@@ -34,7 +34,11 @@ requires(
  * \return void
  */
 STATICINLINE void get_object_label(
-    GLenum type, u32 object, i32& length, span_GLchar label)
+    GLenum      type,
+    u32         object,
+    i32&        length,
+    span_GLchar label,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -42,7 +46,7 @@ STATICINLINE void get_object_label(
         GLW_FPTR_CHECK(GetObjectLabelEXT)
     }
     glGetObjectLabelEXT(type, object, label.size(), &length, label.data());
-    detail::error_check("GetObjectLabelEXT"sv);
+    detail::error_check("GetObjectLabelEXT"sv, check_errors);
 }
 
 /*!
@@ -54,7 +58,11 @@ STATICINLINE void get_object_label(
  * \return void
  */
 STATICINLINE void label_object(
-    GLenum type, u32 object, i32 length, std::string_view const& label)
+    GLenum                  type,
+    u32                     object,
+    i32                     length,
+    std::string_view const& label,
+    error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -62,7 +70,7 @@ STATICINLINE void label_object(
         GLW_FPTR_CHECK(LabelObjectEXT)
     }
     glLabelObjectEXT(type, object, length, label.data());
-    detail::error_check("LabelObjectEXT"sv);
+    detail::error_check("LabelObjectEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::debug_label

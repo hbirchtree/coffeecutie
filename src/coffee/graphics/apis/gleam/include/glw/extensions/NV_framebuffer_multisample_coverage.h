@@ -28,7 +28,8 @@ STATICINLINE void renderbuffer_storage_multisample_coverage(
     i32                        coverageSamples,
     i32                        colorSamples,
     group::internal_format     internalformat,
-    size_2_i32 const&          width)
+    size_2_i32 const&          width,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -42,7 +43,8 @@ STATICINLINE void renderbuffer_storage_multisample_coverage(
         static_cast<GLenum>(internalformat),
         width[0],
         width[1]);
-    detail::error_check("RenderbufferStorageMultisampleCoverageNV"sv);
+    detail::error_check(
+        "RenderbufferStorageMultisampleCoverageNV"sv, check_errors);
 }
 
 } // namespace gl::nv::framebuffer_multisample_coverage

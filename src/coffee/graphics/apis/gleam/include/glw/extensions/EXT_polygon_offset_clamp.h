@@ -13,7 +13,11 @@ constexpr u32 polygon_offset_clamp = 0x8E1B;
  * \param clamp GLfloat
  * \return void
  */
-STATICINLINE void polygon_offset_clamp(f32 factor, f32 units, f32 clamp)
+STATICINLINE void polygon_offset_clamp(
+    f32         factor,
+    f32         units,
+    f32         clamp,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -21,7 +25,7 @@ STATICINLINE void polygon_offset_clamp(f32 factor, f32 units, f32 clamp)
         GLW_FPTR_CHECK(PolygonOffsetClampEXT)
     }
     glPolygonOffsetClampEXT(factor, units, clamp);
-    detail::error_check("PolygonOffsetClampEXT"sv);
+    detail::error_check("PolygonOffsetClampEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::polygon_offset_clamp

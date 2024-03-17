@@ -29,7 +29,9 @@ requires(concepts::span<span_void>)
  * \return void
  */
 STATICINLINE void debug_message_callback(
-    GLDEBUGPROCAMD callback, span_void userParam)
+    GLDEBUGPROCAMD callback,
+    span_void      userParam,
+    error_check    check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -39,7 +41,7 @@ STATICINLINE void debug_message_callback(
     glDebugMessageCallbackAMD(
         callback,
         userParam.size() ? reinterpret_cast<void*>(userParam.data()) : nullptr);
-    detail::error_check("DebugMessageCallbackAMD"sv);
+    detail::error_check("DebugMessageCallbackAMD"sv, check_errors);
 }
 
 template<class span_const_u32>
@@ -61,7 +63,8 @@ STATICINLINE void debug_message_enable(
     GLenum                category,
     group::debug_severity severity,
     span_const_u32 const& ids,
-    bool                  enabled)
+    bool                  enabled,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -74,7 +77,7 @@ STATICINLINE void debug_message_enable(
         ids.size(),
         ids.size() ? reinterpret_cast<const GLuint*>(ids.data()) : nullptr,
         enabled);
-    detail::error_check("DebugMessageEnableAMD"sv);
+    detail::error_check("DebugMessageEnableAMD"sv, check_errors);
 }
 
 /*!
@@ -90,7 +93,8 @@ STATICINLINE void debug_message_insert(
     GLenum                  category,
     group::debug_severity   severity,
     u32                     id,
-    std::string_view const& buf)
+    std::string_view const& buf,
+    error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -99,7 +103,7 @@ STATICINLINE void debug_message_insert(
     }
     glDebugMessageInsertAMD(
         category, static_cast<GLenum>(severity), id, buf.size(), buf.data());
-    detail::error_check("DebugMessageInsertAMD"sv);
+    detail::error_check("DebugMessageInsertAMD"sv, check_errors);
 }
 
 template<
@@ -145,7 +149,8 @@ STATICINLINE GLuint get_debug_message_log(
     span_debug_severity severities,
     span_u32            ids,
     span_i32            lengths,
-    span_GLchar         message)
+    span_GLchar         message,
+    error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -162,7 +167,7 @@ STATICINLINE GLuint get_debug_message_log(
         ids.size() ? reinterpret_cast<GLuint*>(ids.data()) : nullptr,
         lengths.size() ? reinterpret_cast<GLsizei*>(lengths.data()) : nullptr,
         message.data());
-    detail::error_check("GetDebugMessageLogAMD"sv);
+    detail::error_check("GetDebugMessageLogAMD"sv, check_errors);
     return out;
 }
 

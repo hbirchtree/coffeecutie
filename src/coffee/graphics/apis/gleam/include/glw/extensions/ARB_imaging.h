@@ -74,7 +74,8 @@ requires(concepts::vector<vec_4_f32, f32, 4>)
  * \param alpha GLfloat
  * \return void
  */
-STATICINLINE void blend_color(vec_4_f32 const& red)
+STATICINLINE void blend_color(
+    vec_4_f32 const& red, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -82,7 +83,7 @@ STATICINLINE void blend_color(vec_4_f32 const& red)
         GLW_FPTR_CHECK(BlendColor)
     }
     glBlendColor(red[0], red[1], red[2], red[3]);
-    detail::error_check("BlendColor"sv);
+    detail::error_check("BlendColor"sv, check_errors);
 }
 
 /*!
@@ -90,7 +91,9 @@ STATICINLINE void blend_color(vec_4_f32 const& red)
  * \param mode GLenum
  * \return void
  */
-STATICINLINE void blend_equation(group::blend_equation_mode_ext mode)
+STATICINLINE void blend_equation(
+    group::blend_equation_mode_ext mode,
+    error_check                    check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -98,7 +101,7 @@ STATICINLINE void blend_equation(group::blend_equation_mode_ext mode)
         GLW_FPTR_CHECK(BlendEquation)
     }
     glBlendEquation(static_cast<GLenum>(mode));
-    detail::error_check("BlendEquation"sv);
+    detail::error_check("BlendEquation"sv, check_errors);
 }
 
 } // namespace gl::arb::imaging

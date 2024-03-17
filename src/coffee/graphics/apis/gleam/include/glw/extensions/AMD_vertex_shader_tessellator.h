@@ -17,7 +17,8 @@ constexpr u32 continuous                  = 0x9007;
  * \param factor GLfloat
  * \return void
  */
-STATICINLINE void tessellation_factor(f32 factor)
+STATICINLINE void tessellation_factor(
+    f32 factor, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -25,7 +26,7 @@ STATICINLINE void tessellation_factor(f32 factor)
         GLW_FPTR_CHECK(TessellationFactorAMD)
     }
     glTessellationFactorAMD(factor);
-    detail::error_check("TessellationFactorAMD"sv);
+    detail::error_check("TessellationFactorAMD"sv, check_errors);
 }
 
 /*!
@@ -33,7 +34,8 @@ STATICINLINE void tessellation_factor(f32 factor)
  * \param mode GLenum
  * \return void
  */
-STATICINLINE void tessellation_mode(GLenum mode)
+STATICINLINE void tessellation_mode(
+    GLenum mode, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -41,7 +43,7 @@ STATICINLINE void tessellation_mode(GLenum mode)
         GLW_FPTR_CHECK(TessellationModeAMD)
     }
     glTessellationModeAMD(mode);
-    detail::error_check("TessellationModeAMD"sv);
+    detail::error_check("TessellationModeAMD"sv, check_errors);
 }
 
 } // namespace gl::amd::vertex_shader_tessellator

@@ -31,7 +31,9 @@ requires(concepts::span<span_const_void>)
  * \return void
  */
 STATICINLINE void debug_message_callback(
-    GLDEBUGPROCARB callback, span_const_void const& userParam)
+    GLDEBUGPROCARB         callback,
+    span_const_void const& userParam,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -42,7 +44,7 @@ STATICINLINE void debug_message_callback(
         callback,
         userParam.size() ? reinterpret_cast<const void*>(userParam.data())
                          : nullptr);
-    detail::error_check("DebugMessageCallbackARB"sv);
+    detail::error_check("DebugMessageCallbackARB"sv, check_errors);
 }
 
 template<class span_const_u32>
@@ -66,7 +68,8 @@ STATICINLINE void debug_message_control(
     group::debug_type     type,
     group::debug_severity severity,
     span_const_u32 const& ids,
-    bool                  enabled)
+    bool                  enabled,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -80,7 +83,7 @@ STATICINLINE void debug_message_control(
         ids.size(),
         ids.size() ? reinterpret_cast<const GLuint*>(ids.data()) : nullptr,
         enabled);
-    detail::error_check("DebugMessageControlARB"sv);
+    detail::error_check("DebugMessageControlARB"sv, check_errors);
 }
 
 /*!
@@ -98,7 +101,8 @@ STATICINLINE void debug_message_insert(
     group::debug_type       type,
     u32                     id,
     group::debug_severity   severity,
-    std::string_view const& buf)
+    std::string_view const& buf,
+    error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -112,7 +116,7 @@ STATICINLINE void debug_message_insert(
         static_cast<GLenum>(severity),
         buf.size(),
         buf.data());
-    detail::error_check("DebugMessageInsertARB"sv);
+    detail::error_check("DebugMessageInsertARB"sv, check_errors);
 }
 
 template<
@@ -165,7 +169,8 @@ STATICINLINE GLuint get_debug_message_log(
     span_u32            ids,
     span_debug_severity severities,
     span_i32            lengths,
-    span_GLchar         messageLog)
+    span_GLchar         messageLog,
+    error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -182,7 +187,7 @@ STATICINLINE GLuint get_debug_message_log(
                           : nullptr,
         lengths.size() ? reinterpret_cast<GLsizei*>(lengths.data()) : nullptr,
         messageLog.data());
-    detail::error_check("GetDebugMessageLogARB"sv);
+    detail::error_check("GetDebugMessageLogARB"sv, check_errors);
     return out;
 }
 

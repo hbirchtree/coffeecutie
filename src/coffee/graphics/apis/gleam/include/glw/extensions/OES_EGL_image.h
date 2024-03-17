@@ -12,7 +12,9 @@ namespace values {
  * \return void
  */
 STATICINLINE void egl_image_target_renderbuffer_storage(
-    GLenum target, GLeglImageOES image)
+    GLenum        target,
+    GLeglImageOES image,
+    error_check   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -20,7 +22,7 @@ STATICINLINE void egl_image_target_renderbuffer_storage(
         GLW_FPTR_CHECK(EGLImageTargetRenderbufferStorageOES)
     }
     glEGLImageTargetRenderbufferStorageOES(target, image);
-    detail::error_check("EGLImageTargetRenderbufferStorageOES"sv);
+    detail::error_check("EGLImageTargetRenderbufferStorageOES"sv, check_errors);
 }
 
 /*!
@@ -30,7 +32,9 @@ STATICINLINE void egl_image_target_renderbuffer_storage(
  * \return void
  */
 STATICINLINE void egl_image_target_texture_2d(
-    GLenum target, GLeglImageOES image)
+    GLenum        target,
+    GLeglImageOES image,
+    error_check   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -38,7 +42,7 @@ STATICINLINE void egl_image_target_texture_2d(
         GLW_FPTR_CHECK(EGLImageTargetTexture2DOES)
     }
     glEGLImageTargetTexture2DOES(target, image);
-    detail::error_check("EGLImageTargetTexture2DOES"sv);
+    detail::error_check("EGLImageTargetTexture2DOES"sv, check_errors);
 }
 
 } // namespace gl::oes::egl_image

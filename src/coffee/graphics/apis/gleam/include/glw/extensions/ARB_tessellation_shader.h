@@ -64,7 +64,9 @@ requires(
  * \return void
  */
 STATICINLINE void patch_parameter(
-    group::patch_parameter_name pname, span_const_f32 const& values)
+    group::patch_parameter_name pname,
+    span_const_f32 const&       values,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -75,7 +77,7 @@ STATICINLINE void patch_parameter(
         static_cast<GLenum>(pname),
         values.size() ? reinterpret_cast<const GLfloat*>(values.data())
                       : nullptr);
-    detail::error_check("PatchParameterfv"sv);
+    detail::error_check("PatchParameterfv"sv, check_errors);
 }
 
 /*!
@@ -84,7 +86,10 @@ STATICINLINE void patch_parameter(
  * \param value GLint
  * \return void
  */
-STATICINLINE void patch_parameter(group::patch_parameter_name pname, i32 value)
+STATICINLINE void patch_parameter(
+    group::patch_parameter_name pname,
+    i32                         value,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -92,7 +97,7 @@ STATICINLINE void patch_parameter(group::patch_parameter_name pname, i32 value)
         GLW_FPTR_CHECK(PatchParameteri)
     }
     glPatchParameteri(static_cast<GLenum>(pname), value);
-    detail::error_check("PatchParameteri"sv);
+    detail::error_check("PatchParameteri"sv, check_errors);
 }
 
 } // namespace gl::arb::tessellation_shader

@@ -30,7 +30,9 @@ requires(
  * \return void
  */
 STATICINLINE void draw_buffers_indexed(
-    span_const_GLenum const& location, span_const_i32 const& indices)
+    span_const_GLenum const& location,
+    span_const_i32 const&    indices,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -43,7 +45,7 @@ STATICINLINE void draw_buffers_indexed(
                         : nullptr,
         indices.size() ? reinterpret_cast<const GLint*>(indices.data())
                        : nullptr);
-    detail::error_check("DrawBuffersIndexedEXT"sv);
+    detail::error_check("DrawBuffersIndexedEXT"sv, check_errors);
 }
 
 template<class span_i32>
@@ -59,7 +61,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_integeri_v(
-    group::get_prop target, u32 index, span_i32 data)
+    group::get_prop target,
+    u32             index,
+    span_i32        data,
+    error_check     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -70,7 +75,7 @@ STATICINLINE void get_integeri_v(
         static_cast<GLenum>(target),
         index,
         data.size() ? reinterpret_cast<GLint*>(data.data()) : nullptr);
-    detail::error_check("GetIntegeri_vEXT"sv);
+    detail::error_check("GetIntegeri_vEXT"sv, check_errors);
 }
 
 /*!
@@ -79,7 +84,10 @@ STATICINLINE void get_integeri_v(
  * \param index GLint
  * \return void
  */
-STATICINLINE void read_buffer_indexed(group::read_buffer_mode src, i32 index)
+STATICINLINE void read_buffer_indexed(
+    group::read_buffer_mode src,
+    i32                     index,
+    error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -87,7 +95,7 @@ STATICINLINE void read_buffer_indexed(group::read_buffer_mode src, i32 index)
         GLW_FPTR_CHECK(ReadBufferIndexedEXT)
     }
     glReadBufferIndexedEXT(static_cast<GLenum>(src), index);
-    detail::error_check("ReadBufferIndexedEXT"sv);
+    detail::error_check("ReadBufferIndexedEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::multiview_draw_buffers

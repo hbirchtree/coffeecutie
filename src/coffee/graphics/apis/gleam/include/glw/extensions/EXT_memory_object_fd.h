@@ -18,7 +18,11 @@ namespace values {
  * \return void
  */
 STATICINLINE void import_memory_fd(
-    u32 memory, u64 size, group::external_handle_type handleType, i32 fd)
+    u32                         memory,
+    u64                         size,
+    group::external_handle_type handleType,
+    i32                         fd,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -26,7 +30,7 @@ STATICINLINE void import_memory_fd(
         GLW_FPTR_CHECK(ImportMemoryFdEXT)
     }
     glImportMemoryFdEXT(memory, size, static_cast<GLenum>(handleType), fd);
-    detail::error_check("ImportMemoryFdEXT"sv);
+    detail::error_check("ImportMemoryFdEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::memory_object_fd

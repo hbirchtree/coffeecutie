@@ -26,7 +26,8 @@ namespace values {
  * \param d GLfloat
  * \return void
  */
-STATICINLINE void clear_depthf(f32 d)
+STATICINLINE void clear_depthf(
+    f32 d, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -34,7 +35,7 @@ STATICINLINE void clear_depthf(f32 d)
         GLW_FPTR_CHECK(ClearDepthf)
     }
     glClearDepthf(d);
-    detail::error_check("ClearDepthf"sv);
+    detail::error_check("ClearDepthf"sv, check_errors);
 }
 
 /*!
@@ -43,7 +44,8 @@ STATICINLINE void clear_depthf(f32 d)
  * \param f GLfloat
  * \return void
  */
-STATICINLINE void depth_rangef(f32 n, f32 f)
+STATICINLINE void depth_rangef(
+    f32 n, f32 f, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -51,7 +53,7 @@ STATICINLINE void depth_rangef(f32 n, f32 f)
         GLW_FPTR_CHECK(DepthRangef)
     }
     glDepthRangef(n, f);
-    detail::error_check("DepthRangef"sv);
+    detail::error_check("DepthRangef"sv, check_errors);
 }
 
 template<class span_i32>
@@ -71,7 +73,8 @@ STATICINLINE void get_shader_precision_format(
     group::shader_type    shadertype,
     group::precision_type precisiontype,
     span_i32              range,
-    i32&                  precision)
+    i32&                  precision,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -83,7 +86,7 @@ STATICINLINE void get_shader_precision_format(
         static_cast<GLenum>(precisiontype),
         range.size() ? reinterpret_cast<GLint*>(range.data()) : nullptr,
         &precision);
-    detail::error_check("GetShaderPrecisionFormat"sv);
+    detail::error_check("GetShaderPrecisionFormat"sv, check_errors);
 }
 
 /*!
@@ -91,7 +94,8 @@ STATICINLINE void get_shader_precision_format(
 
  * \return void
  */
-STATICINLINE void release_shader_compiler()
+STATICINLINE void release_shader_compiler(
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -99,7 +103,7 @@ STATICINLINE void release_shader_compiler()
         GLW_FPTR_CHECK(ReleaseShaderCompiler)
     }
     glReleaseShaderCompiler();
-    detail::error_check("ReleaseShaderCompiler"sv);
+    detail::error_check("ReleaseShaderCompiler"sv, check_errors);
 }
 
 template<class span_const_u32, class span_const_void>
@@ -122,7 +126,8 @@ STATICINLINE void shader_binary(
     span_const_u32 const&       shaders,
     group::shader_binary_format binaryFormat,
     span_const_void const&      binary,
-    i32                         length)
+    i32                         length,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -136,7 +141,7 @@ STATICINLINE void shader_binary(
         static_cast<GLenum>(binaryFormat),
         binary.size() ? reinterpret_cast<const void*>(binary.data()) : nullptr,
         length);
-    detail::error_check("ShaderBinary"sv);
+    detail::error_check("ShaderBinary"sv, check_errors);
 }
 
 } // namespace gl::arb::es2_compatibility

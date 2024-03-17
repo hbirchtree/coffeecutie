@@ -27,14 +27,15 @@ constexpr u32 framebuffer_incomplete_foveation        = 0x8BFF;
  * \return void
  */
 STATICINLINE void texture_foveation_parameter(
-    u32 texture,
-    u32 layer,
-    u32 focalPoint,
-    f32 focalX,
-    f32 focalY,
-    f32 gainX,
-    f32 gainY,
-    f32 foveaArea)
+    u32         texture,
+    u32         layer,
+    u32         focalPoint,
+    f32         focalX,
+    f32         focalY,
+    f32         gainX,
+    f32         gainY,
+    f32         foveaArea,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -48,7 +49,7 @@ STATICINLINE void texture_foveation_parameter(
     }
     glTextureFoveationParametersQCOM(
         texture, layer, focalPoint, focalX, focalY, gainX, gainY, foveaArea);
-    detail::error_check("TextureFoveationParametersQCOM"sv);
+    detail::error_check("TextureFoveationParametersQCOM"sv, check_errors);
 }
 
 } // namespace gl::qcom::texture_foveated

@@ -75,7 +75,7 @@ constexpr u32 invert_ovg              = 0x92B4;
 
  * \return void
  */
-STATICINLINE void blend_barrier()
+STATICINLINE void blend_barrier(error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -83,7 +83,7 @@ STATICINLINE void blend_barrier()
         GLW_FPTR_CHECK(BlendBarrierNV)
     }
     glBlendBarrierNV();
-    detail::error_check("BlendBarrierNV"sv);
+    detail::error_check("BlendBarrierNV"sv, check_errors);
 }
 
 /*!
@@ -92,7 +92,8 @@ STATICINLINE void blend_barrier()
  * \param value GLint
  * \return void
  */
-STATICINLINE void blend_parameter(GLenum pname, i32 value)
+STATICINLINE void blend_parameter(
+    GLenum pname, i32 value, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -100,7 +101,7 @@ STATICINLINE void blend_parameter(GLenum pname, i32 value)
         GLW_FPTR_CHECK(BlendParameteriNV)
     }
     glBlendParameteriNV(pname, value);
-    detail::error_check("BlendParameteriNV"sv);
+    detail::error_check("BlendParameteriNV"sv, check_errors);
 }
 
 } // namespace gl::nv::blend_equation_advanced

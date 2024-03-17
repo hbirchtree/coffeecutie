@@ -21,7 +21,12 @@ namespace values {
  * \return void *
  */
 STATICINLINE void* map_texture_2d(
-    u32 texture, i32 level, GLbitfield access, i32& stride, GLenum& layout)
+    u32         texture,
+    i32         level,
+    GLbitfield  access,
+    i32&        stride,
+    GLenum&     layout,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -34,7 +39,7 @@ STATICINLINE void* map_texture_2d(
 #endif
     }
     auto out = glMapTexture2DINTEL(texture, level, access, &stride, &layout);
-    detail::error_check("MapTexture2DINTEL"sv);
+    detail::error_check("MapTexture2DINTEL"sv, check_errors);
     return out;
 }
 
@@ -43,7 +48,8 @@ STATICINLINE void* map_texture_2d(
  * \param texture GLuint
  * \return void
  */
-STATICINLINE void sync_texture(u32 texture)
+STATICINLINE void sync_texture(
+    u32 texture, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -56,7 +62,7 @@ STATICINLINE void sync_texture(u32 texture)
 #endif
     }
     glSyncTextureINTEL(texture);
-    detail::error_check("SyncTextureINTEL"sv);
+    detail::error_check("SyncTextureINTEL"sv, check_errors);
 }
 
 /*!
@@ -65,7 +71,8 @@ STATICINLINE void sync_texture(u32 texture)
  * \param level GLint
  * \return void
  */
-STATICINLINE void unmap_texture_2d(u32 texture, i32 level)
+STATICINLINE void unmap_texture_2d(
+    u32 texture, i32 level, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -78,7 +85,7 @@ STATICINLINE void unmap_texture_2d(u32 texture, i32 level)
 #endif
     }
     glUnmapTexture2DINTEL(texture, level);
-    detail::error_check("UnmapTexture2DINTEL"sv);
+    detail::error_check("UnmapTexture2DINTEL"sv, check_errors);
 }
 
 } // namespace gl::intel::map_texture

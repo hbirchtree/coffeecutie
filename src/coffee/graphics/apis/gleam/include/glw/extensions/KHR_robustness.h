@@ -48,7 +48,8 @@ constexpr u32 context_robust_access = 0x90F3;
 
  * \return GraphicsResetStatus
  */
-STATICINLINE group::graphics_reset_status get_graphics_reset_status()
+STATICINLINE group::graphics_reset_status get_graphics_reset_status(
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -56,7 +57,7 @@ STATICINLINE group::graphics_reset_status get_graphics_reset_status()
         GLW_FPTR_CHECK(GetGraphicsResetStatus)
     }
     auto out = glGetGraphicsResetStatus();
-    detail::error_check("GetGraphicsResetStatus"sv);
+    detail::error_check("GetGraphicsResetStatus"sv, check_errors);
     return static_cast<group::graphics_reset_status>(out);
 }
 
@@ -76,7 +77,11 @@ requires(
  * \return void
  */
 STATICINLINE void getn_uniformfv(
-    u32 program, i32 location, i32 bufSize, span_f32 params)
+    u32         program,
+    i32         location,
+    i32         bufSize,
+    span_f32    params,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -93,7 +98,7 @@ STATICINLINE void getn_uniformfv(
         location,
         bufSize,
         params.size() ? reinterpret_cast<GLfloat*>(params.data()) : nullptr);
-    detail::error_check("GetnUniformfv"sv);
+    detail::error_check("GetnUniformfv"sv, check_errors);
 }
 
 #endif
@@ -112,7 +117,11 @@ requires(
  * \return void
  */
 STATICINLINE void getn_uniformiv(
-    u32 program, i32 location, i32 bufSize, span_i32 params)
+    u32         program,
+    i32         location,
+    i32         bufSize,
+    span_i32    params,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -129,7 +138,7 @@ STATICINLINE void getn_uniformiv(
         location,
         bufSize,
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetnUniformiv"sv);
+    detail::error_check("GetnUniformiv"sv, check_errors);
 }
 
 #endif
@@ -148,7 +157,11 @@ requires(
  * \return void
  */
 STATICINLINE void getn_uniformuiv(
-    u32 program, i32 location, i32 bufSize, span_u32 params)
+    u32         program,
+    i32         location,
+    i32         bufSize,
+    span_u32    params,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -165,7 +178,7 @@ STATICINLINE void getn_uniformuiv(
         location,
         bufSize,
         params.size() ? reinterpret_cast<GLuint*>(params.data()) : nullptr);
-    detail::error_check("GetnUniformuiv"sv);
+    detail::error_check("GetnUniformuiv"sv, check_errors);
 }
 
 #endif
@@ -191,7 +204,8 @@ STATICINLINE void readn_pixels(
     size_2_i32 const&   width,
     group::pixel_format format,
     group::pixel_type   type,
-    span_void           data)
+    span_void           data,
+    error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -207,7 +221,7 @@ STATICINLINE void readn_pixels(
         static_cast<GLenum>(type),
         data.size() * sizeof(typename std::decay_t<span_void>::value_type),
         data.size() ? reinterpret_cast<void*>(data.data()) : nullptr);
-    detail::error_check("ReadnPixels"sv);
+    detail::error_check("ReadnPixels"sv, check_errors);
 }
 
 #endif
@@ -217,7 +231,8 @@ STATICINLINE void readn_pixels(
 
  * \return GraphicsResetStatus
  */
-STATICINLINE group::graphics_reset_status get_graphics_reset_status()
+STATICINLINE group::graphics_reset_status get_graphics_reset_status(
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -225,7 +240,7 @@ STATICINLINE group::graphics_reset_status get_graphics_reset_status()
         GLW_FPTR_CHECK(GetGraphicsResetStatusKHR)
     }
     auto out = glGetGraphicsResetStatusKHR();
-    detail::error_check("GetGraphicsResetStatusKHR"sv);
+    detail::error_check("GetGraphicsResetStatusKHR"sv, check_errors);
     return static_cast<group::graphics_reset_status>(out);
 }
 
@@ -245,7 +260,11 @@ requires(
  * \return void
  */
 STATICINLINE void getn_uniformfv(
-    u32 program, i32 location, i32 bufSize, span_f32 params)
+    u32         program,
+    i32         location,
+    i32         bufSize,
+    span_f32    params,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -262,7 +281,7 @@ STATICINLINE void getn_uniformfv(
         location,
         bufSize,
         params.size() ? reinterpret_cast<GLfloat*>(params.data()) : nullptr);
-    detail::error_check("GetnUniformfvKHR"sv);
+    detail::error_check("GetnUniformfvKHR"sv, check_errors);
 }
 
 #endif
@@ -281,7 +300,11 @@ requires(
  * \return void
  */
 STATICINLINE void getn_uniformiv(
-    u32 program, i32 location, i32 bufSize, span_i32 params)
+    u32         program,
+    i32         location,
+    i32         bufSize,
+    span_i32    params,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -298,7 +321,7 @@ STATICINLINE void getn_uniformiv(
         location,
         bufSize,
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetnUniformivKHR"sv);
+    detail::error_check("GetnUniformivKHR"sv, check_errors);
 }
 
 #endif
@@ -317,7 +340,11 @@ requires(
  * \return void
  */
 STATICINLINE void getn_uniformuiv(
-    u32 program, i32 location, i32 bufSize, span_u32 params)
+    u32         program,
+    i32         location,
+    i32         bufSize,
+    span_u32    params,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -334,7 +361,7 @@ STATICINLINE void getn_uniformuiv(
         location,
         bufSize,
         params.size() ? reinterpret_cast<GLuint*>(params.data()) : nullptr);
-    detail::error_check("GetnUniformuivKHR"sv);
+    detail::error_check("GetnUniformuivKHR"sv, check_errors);
 }
 
 #endif
@@ -360,7 +387,8 @@ STATICINLINE void readn_pixels(
     size_2_i32 const&   width,
     group::pixel_format format,
     group::pixel_type   type,
-    span_void           data)
+    span_void           data,
+    error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -376,7 +404,7 @@ STATICINLINE void readn_pixels(
         static_cast<GLenum>(type),
         data.size() * sizeof(typename std::decay_t<span_void>::value_type),
         data.size() ? reinterpret_cast<void*>(data.data()) : nullptr);
-    detail::error_check("ReadnPixelsKHR"sv);
+    detail::error_check("ReadnPixelsKHR"sv, check_errors);
 }
 
 #endif

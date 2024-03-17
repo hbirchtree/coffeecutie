@@ -17,7 +17,9 @@ constexpr u32 quads_follow_provoking_vertex_convention = 0x8E4C;
  * \param mode GLenum
  * \return void
  */
-STATICINLINE void provoking_vertex(group::vertex_provoking_mode mode)
+STATICINLINE void provoking_vertex(
+    group::vertex_provoking_mode mode,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -25,7 +27,7 @@ STATICINLINE void provoking_vertex(group::vertex_provoking_mode mode)
         GLW_FPTR_CHECK(ProvokingVertex)
     }
     glProvokingVertex(static_cast<GLenum>(mode));
-    detail::error_check("ProvokingVertex"sv);
+    detail::error_check("ProvokingVertex"sv, check_errors);
 }
 
 } // namespace gl::arb::provoking_vertex

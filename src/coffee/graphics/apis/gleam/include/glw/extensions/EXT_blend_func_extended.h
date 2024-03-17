@@ -23,7 +23,10 @@ constexpr u32 location_index               = 0x930F;
  * \return void
  */
 STATICINLINE void bind_frag_data_location(
-    u32 program, u32 color, std::string_view const& name)
+    u32                     program,
+    u32                     color,
+    std::string_view const& name,
+    error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -36,7 +39,7 @@ STATICINLINE void bind_frag_data_location(
 #endif
     }
     glBindFragDataLocationEXT(program, color, name.data());
-    detail::error_check("BindFragDataLocationEXT"sv);
+    detail::error_check("BindFragDataLocationEXT"sv, check_errors);
 }
 
 /*!
@@ -48,7 +51,11 @@ STATICINLINE void bind_frag_data_location(
  * \return void
  */
 STATICINLINE void bind_frag_data_location_indexed(
-    u32 program, u32 colorNumber, u32 index, std::string_view const& name)
+    u32                     program,
+    u32                     colorNumber,
+    u32                     index,
+    std::string_view const& name,
+    error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -61,7 +68,7 @@ STATICINLINE void bind_frag_data_location_indexed(
 #endif
     }
     glBindFragDataLocationIndexedEXT(program, colorNumber, index, name.data());
-    detail::error_check("BindFragDataLocationIndexedEXT"sv);
+    detail::error_check("BindFragDataLocationIndexedEXT"sv, check_errors);
 }
 
 /*!
@@ -70,8 +77,10 @@ STATICINLINE void bind_frag_data_location_indexed(
  * \param name const GLchar *
  * \return GLint
  */
-STATICINLINE GLint
-get_frag_data_index(u32 program, std::string_view const& name)
+STATICINLINE GLint get_frag_data_index(
+    u32                     program,
+    std::string_view const& name,
+    error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -84,7 +93,7 @@ get_frag_data_index(u32 program, std::string_view const& name)
 #endif
     }
     auto out = glGetFragDataIndexEXT(program, name.data());
-    detail::error_check("GetFragDataIndexEXT"sv);
+    detail::error_check("GetFragDataIndexEXT"sv, check_errors);
     return out;
 }
 
@@ -98,7 +107,8 @@ get_frag_data_index(u32 program, std::string_view const& name)
 STATICINLINE GLint get_program_resource_location_index(
     u32                      program,
     group::program_interface programInterface,
-    std::string_view const&  name)
+    std::string_view const&  name,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -112,7 +122,7 @@ STATICINLINE GLint get_program_resource_location_index(
     }
     auto out = glGetProgramResourceLocationIndexEXT(
         program, static_cast<GLenum>(programInterface), name.data());
-    detail::error_check("GetProgramResourceLocationIndexEXT"sv);
+    detail::error_check("GetProgramResourceLocationIndexEXT"sv, check_errors);
     return out;
 }
 

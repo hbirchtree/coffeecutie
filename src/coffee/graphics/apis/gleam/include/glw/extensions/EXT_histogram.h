@@ -37,7 +37,8 @@ STATICINLINE void get_histogram(
     bool                        reset,
     group::pixel_format         format,
     group::pixel_type           type,
-    span_void                   values)
+    span_void                   values,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -50,7 +51,7 @@ STATICINLINE void get_histogram(
         static_cast<GLenum>(format),
         static_cast<GLenum>(type),
         values.size() ? reinterpret_cast<void*>(values.data()) : nullptr);
-    detail::error_check("GetHistogramEXT"sv);
+    detail::error_check("GetHistogramEXT"sv, check_errors);
 }
 
 template<class span_f32>
@@ -68,7 +69,8 @@ requires(
 STATICINLINE void get_histogram_parameter(
     group::histogram_target_ext             target,
     group::get_histogram_parameter_prop_ext pname,
-    span_f32                                params)
+    span_f32                                params,
+    error_check                             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -79,7 +81,7 @@ STATICINLINE void get_histogram_parameter(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLfloat*>(params.data()) : nullptr);
-    detail::error_check("GetHistogramParameterfvEXT"sv);
+    detail::error_check("GetHistogramParameterfvEXT"sv, check_errors);
 }
 
 template<class span_i32>
@@ -97,7 +99,8 @@ requires(
 STATICINLINE void get_histogram_parameter(
     group::histogram_target_ext             target,
     group::get_histogram_parameter_prop_ext pname,
-    span_i32                                params)
+    span_i32                                params,
+    error_check                             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -108,7 +111,7 @@ STATICINLINE void get_histogram_parameter(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetHistogramParameterivEXT"sv);
+    detail::error_check("GetHistogramParameterivEXT"sv, check_errors);
 }
 
 template<class span_void>
@@ -127,7 +130,8 @@ STATICINLINE void get_minmax(
     bool                     reset,
     group::pixel_format      format,
     group::pixel_type        type,
-    span_void                values)
+    span_void                values,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -140,7 +144,7 @@ STATICINLINE void get_minmax(
         static_cast<GLenum>(format),
         static_cast<GLenum>(type),
         values.size() ? reinterpret_cast<void*>(values.data()) : nullptr);
-    detail::error_check("GetMinmaxEXT"sv);
+    detail::error_check("GetMinmaxEXT"sv, check_errors);
 }
 
 template<class span_f32>
@@ -158,7 +162,8 @@ requires(
 STATICINLINE void get_minmax_parameter(
     group::minmax_target_ext             target,
     group::get_minmax_parameter_prop_ext pname,
-    span_f32                             params)
+    span_f32                             params,
+    error_check                          check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -169,7 +174,7 @@ STATICINLINE void get_minmax_parameter(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLfloat*>(params.data()) : nullptr);
-    detail::error_check("GetMinmaxParameterfvEXT"sv);
+    detail::error_check("GetMinmaxParameterfvEXT"sv, check_errors);
 }
 
 template<class span_i32>
@@ -187,7 +192,8 @@ requires(
 STATICINLINE void get_minmax_parameter(
     group::minmax_target_ext             target,
     group::get_minmax_parameter_prop_ext pname,
-    span_i32                             params)
+    span_i32                             params,
+    error_check                          check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -198,7 +204,7 @@ STATICINLINE void get_minmax_parameter(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetMinmaxParameterivEXT"sv);
+    detail::error_check("GetMinmaxParameterivEXT"sv, check_errors);
 }
 
 /*!
@@ -213,7 +219,8 @@ STATICINLINE void histogram(
     group::histogram_target_ext target,
     i32                         width,
     group::internal_format      internalformat,
-    bool                        sink)
+    bool                        sink,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -225,7 +232,7 @@ STATICINLINE void histogram(
         width,
         static_cast<GLenum>(internalformat),
         sink);
-    detail::error_check("HistogramEXT"sv);
+    detail::error_check("HistogramEXT"sv, check_errors);
 }
 
 /*!
@@ -238,7 +245,8 @@ STATICINLINE void histogram(
 STATICINLINE void minmax(
     group::minmax_target_ext target,
     group::internal_format   internalformat,
-    bool                     sink)
+    bool                     sink,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -247,7 +255,7 @@ STATICINLINE void minmax(
     }
     glMinmaxEXT(
         static_cast<GLenum>(target), static_cast<GLenum>(internalformat), sink);
-    detail::error_check("MinmaxEXT"sv);
+    detail::error_check("MinmaxEXT"sv, check_errors);
 }
 
 /*!
@@ -255,7 +263,9 @@ STATICINLINE void minmax(
  * \param target GLenum
  * \return void
  */
-STATICINLINE void reset_histogram(group::histogram_target_ext target)
+STATICINLINE void reset_histogram(
+    group::histogram_target_ext target,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -263,7 +273,7 @@ STATICINLINE void reset_histogram(group::histogram_target_ext target)
         GLW_FPTR_CHECK(ResetHistogramEXT)
     }
     glResetHistogramEXT(static_cast<GLenum>(target));
-    detail::error_check("ResetHistogramEXT"sv);
+    detail::error_check("ResetHistogramEXT"sv, check_errors);
 }
 
 /*!
@@ -271,7 +281,8 @@ STATICINLINE void reset_histogram(group::histogram_target_ext target)
  * \param target GLenum
  * \return void
  */
-STATICINLINE void reset_minmax(group::minmax_target_ext target)
+STATICINLINE void reset_minmax(
+    group::minmax_target_ext target, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -279,7 +290,7 @@ STATICINLINE void reset_minmax(group::minmax_target_ext target)
         GLW_FPTR_CHECK(ResetMinmaxEXT)
     }
     glResetMinmaxEXT(static_cast<GLenum>(target));
-    detail::error_check("ResetMinmaxEXT"sv);
+    detail::error_check("ResetMinmaxEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::histogram

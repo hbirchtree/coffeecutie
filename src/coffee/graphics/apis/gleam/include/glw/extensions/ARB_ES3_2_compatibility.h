@@ -21,14 +21,15 @@ constexpr u32 multisample_line_width_granularity = 0x9382;
  * \return void
  */
 STATICINLINE void primitive_bounding_box(
-    f32 minX,
-    f32 minY,
-    f32 minZ,
-    f32 minW,
-    f32 maxX,
-    f32 maxY,
-    f32 maxZ,
-    f32 maxW)
+    f32         minX,
+    f32         minY,
+    f32         minZ,
+    f32         minW,
+    f32         maxX,
+    f32         maxY,
+    f32         maxZ,
+    f32         maxW,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -36,7 +37,7 @@ STATICINLINE void primitive_bounding_box(
         GLW_FPTR_CHECK(PrimitiveBoundingBoxARB)
     }
     glPrimitiveBoundingBoxARB(minX, minY, minZ, minW, maxX, maxY, maxZ, maxW);
-    detail::error_check("PrimitiveBoundingBoxARB"sv);
+    detail::error_check("PrimitiveBoundingBoxARB"sv, check_errors);
 }
 
 } // namespace gl::arb::es3_2_compatibility

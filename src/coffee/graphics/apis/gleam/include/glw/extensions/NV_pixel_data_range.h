@@ -19,7 +19,8 @@ constexpr u32 read_pixel_data_range_pointer  = 0x887D;
  * \return void
  */
 STATICINLINE void flush_pixel_data_range(
-    group::pixel_data_range_target_nv target)
+    group::pixel_data_range_target_nv target,
+    error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -27,7 +28,7 @@ STATICINLINE void flush_pixel_data_range(
         GLW_FPTR_CHECK(FlushPixelDataRangeNV)
     }
     glFlushPixelDataRangeNV(static_cast<GLenum>(target));
-    detail::error_check("FlushPixelDataRangeNV"sv);
+    detail::error_check("FlushPixelDataRangeNV"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -40,7 +41,9 @@ requires(concepts::span<span_const_void>)
  * \return void
  */
 STATICINLINE void pixel_data_range(
-    group::pixel_data_range_target_nv target, span_const_void const& pointer)
+    group::pixel_data_range_target_nv target,
+    span_const_void const&            pointer,
+    error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -53,7 +56,7 @@ STATICINLINE void pixel_data_range(
             sizeof(typename std::decay_t<span_const_void const&>::value_type),
         pointer.size() ? reinterpret_cast<const void*>(pointer.data())
                        : nullptr);
-    detail::error_check("PixelDataRangeNV"sv);
+    detail::error_check("PixelDataRangeNV"sv, check_errors);
 }
 
 } // namespace gl::nv::pixel_data_range

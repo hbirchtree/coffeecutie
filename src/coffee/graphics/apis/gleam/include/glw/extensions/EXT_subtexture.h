@@ -25,7 +25,8 @@ STATICINLINE void tex_sub_image_1d(
     i32                    width,
     group::pixel_format    format,
     group::pixel_type      type,
-    span_const_void const& pixels)
+    span_const_void const& pixels,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -40,7 +41,7 @@ STATICINLINE void tex_sub_image_1d(
         static_cast<GLenum>(format),
         static_cast<GLenum>(type),
         pixels.size() ? reinterpret_cast<const void*>(pixels.data()) : nullptr);
-    detail::error_check("TexSubImage1DEXT"sv);
+    detail::error_check("TexSubImage1DEXT"sv, check_errors);
 }
 
 template<class size_2_i32, class span_const_void, class vec_2_i32>
@@ -67,7 +68,8 @@ STATICINLINE void tex_sub_image_2d(
     size_2_i32 const&      width,
     group::pixel_format    format,
     group::pixel_type      type,
-    span_const_void const& pixels)
+    span_const_void const& pixels,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -84,7 +86,7 @@ STATICINLINE void tex_sub_image_2d(
         static_cast<GLenum>(format),
         static_cast<GLenum>(type),
         pixels.size() ? reinterpret_cast<const void*>(pixels.data()) : nullptr);
-    detail::error_check("TexSubImage2DEXT"sv);
+    detail::error_check("TexSubImage2DEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::subtexture

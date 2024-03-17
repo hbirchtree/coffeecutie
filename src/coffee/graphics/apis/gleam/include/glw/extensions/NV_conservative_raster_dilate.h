@@ -14,7 +14,8 @@ constexpr u32 conservative_raster_dilate_granularity = 0x937B;
  * \param value GLfloat
  * \return void
  */
-STATICINLINE void conservative_raster_parameter(GLenum pname, f32 value)
+STATICINLINE void conservative_raster_parameter(
+    GLenum pname, f32 value, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -22,7 +23,7 @@ STATICINLINE void conservative_raster_parameter(GLenum pname, f32 value)
         GLW_FPTR_CHECK(ConservativeRasterParameterfNV)
     }
     glConservativeRasterParameterfNV(pname, value);
-    detail::error_check("ConservativeRasterParameterfNV"sv);
+    detail::error_check("ConservativeRasterParameterfNV"sv, check_errors);
 }
 
 } // namespace gl::nv::conservative_raster_dilate

@@ -21,7 +21,8 @@ STATICINLINE void blend_func_separate(
     group::blending_factor sfactorRGB,
     group::blending_factor dfactorRGB,
     group::blending_factor sfactorAlpha,
-    group::blending_factor dfactorAlpha)
+    group::blending_factor dfactorAlpha,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -33,7 +34,7 @@ STATICINLINE void blend_func_separate(
         static_cast<GLenum>(dfactorRGB),
         static_cast<GLenum>(sfactorAlpha),
         static_cast<GLenum>(dfactorAlpha));
-    detail::error_check("BlendFuncSeparateEXT"sv);
+    detail::error_check("BlendFuncSeparateEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::blend_func_separate

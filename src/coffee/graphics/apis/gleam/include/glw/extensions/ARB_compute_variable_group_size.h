@@ -20,12 +20,13 @@ constexpr u32 max_compute_variable_group_size        = 0x9345;
  * \return void
  */
 STATICINLINE void dispatch_compute_group_size(
-    u32 num_groups_x,
-    u32 num_groups_y,
-    u32 num_groups_z,
-    u32 group_size_x,
-    u32 group_size_y,
-    u32 group_size_z)
+    u32         num_groups_x,
+    u32         num_groups_y,
+    u32         num_groups_z,
+    u32         group_size_x,
+    u32         group_size_y,
+    u32         group_size_z,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -39,7 +40,7 @@ STATICINLINE void dispatch_compute_group_size(
         group_size_x,
         group_size_y,
         group_size_z);
-    detail::error_check("DispatchComputeGroupSizeARB"sv);
+    detail::error_check("DispatchComputeGroupSizeARB"sv, check_errors);
 }
 
 } // namespace gl::arb::compute_variable_group_size

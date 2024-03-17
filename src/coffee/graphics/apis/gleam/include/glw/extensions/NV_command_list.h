@@ -14,7 +14,8 @@ namespace values {
  * \param list GLuint
  * \return void
  */
-STATICINLINE void call_command_list(u32 list)
+STATICINLINE void call_command_list(
+    u32 list, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -22,7 +23,7 @@ STATICINLINE void call_command_list(u32 list)
         GLW_FPTR_CHECK(CallCommandListNV)
     }
     glCallCommandListNV(list);
-    detail::error_check("CallCommandListNV"sv);
+    detail::error_check("CallCommandListNV"sv, check_errors);
 }
 
 /*!
@@ -31,7 +32,8 @@ STATICINLINE void call_command_list(u32 list)
  * \param segments GLuint
  * \return void
  */
-STATICINLINE void command_list_segments(u32 list, u32 segments)
+STATICINLINE void command_list_segments(
+    u32 list, u32 segments, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -39,7 +41,7 @@ STATICINLINE void command_list_segments(u32 list, u32 segments)
         GLW_FPTR_CHECK(CommandListSegmentsNV)
     }
     glCommandListSegmentsNV(list, segments);
-    detail::error_check("CommandListSegmentsNV"sv);
+    detail::error_check("CommandListSegmentsNV"sv, check_errors);
 }
 
 /*!
@@ -47,7 +49,8 @@ STATICINLINE void command_list_segments(u32 list, u32 segments)
  * \param list GLuint
  * \return void
  */
-STATICINLINE void compile_command_list(u32 list)
+STATICINLINE void compile_command_list(
+    u32 list, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -55,7 +58,7 @@ STATICINLINE void compile_command_list(u32 list)
         GLW_FPTR_CHECK(CompileCommandListNV)
     }
     glCompileCommandListNV(list);
-    detail::error_check("CompileCommandListNV"sv);
+    detail::error_check("CompileCommandListNV"sv, check_errors);
 }
 
 template<class span_u32>
@@ -69,7 +72,8 @@ requires(
  * \param lists GLuint *
  * \return void
  */
-STATICINLINE void create_command_lists(span_u32 lists)
+STATICINLINE void create_command_lists(
+    span_u32 lists, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -79,7 +83,7 @@ STATICINLINE void create_command_lists(span_u32 lists)
     glCreateCommandListsNV(
         lists.size(),
         lists.size() ? reinterpret_cast<GLuint*>(lists.data()) : nullptr);
-    detail::error_check("CreateCommandListsNV"sv);
+    detail::error_check("CreateCommandListsNV"sv, check_errors);
 }
 
 template<class span_u32>
@@ -93,7 +97,8 @@ requires(
  * \param states GLuint *
  * \return void
  */
-STATICINLINE void create_states(span_u32 states)
+STATICINLINE void create_states(
+    span_u32 states, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -103,7 +108,7 @@ STATICINLINE void create_states(span_u32 states)
     glCreateStatesNV(
         states.size(),
         states.size() ? reinterpret_cast<GLuint*>(states.data()) : nullptr);
-    detail::error_check("CreateStatesNV"sv);
+    detail::error_check("CreateStatesNV"sv, check_errors);
 }
 
 template<class span_const_u32>
@@ -118,7 +123,8 @@ requires(
  * \param lists const GLuint *
  * \return void
  */
-STATICINLINE void delete_command_lists(span_const_u32 const& lists)
+STATICINLINE void delete_command_lists(
+    span_const_u32 const& lists, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -128,7 +134,7 @@ STATICINLINE void delete_command_lists(span_const_u32 const& lists)
     glDeleteCommandListsNV(
         lists.size(),
         lists.size() ? reinterpret_cast<const GLuint*>(lists.data()) : nullptr);
-    detail::error_check("DeleteCommandListsNV"sv);
+    detail::error_check("DeleteCommandListsNV"sv, check_errors);
 }
 
 template<class span_const_u32>
@@ -143,7 +149,8 @@ requires(
  * \param states const GLuint *
  * \return void
  */
-STATICINLINE void delete_states(span_const_u32 const& states)
+STATICINLINE void delete_states(
+    span_const_u32 const& states, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -154,7 +161,7 @@ STATICINLINE void delete_states(span_const_u32 const& states)
         states.size(),
         states.size() ? reinterpret_cast<const GLuint*>(states.data())
                       : nullptr);
-    detail::error_check("DeleteStatesNV"sv);
+    detail::error_check("DeleteStatesNV"sv, check_errors);
 }
 
 template<class span_const_i32, class span_const_u64>
@@ -179,7 +186,8 @@ STATICINLINE void draw_commands_address(
     GLenum                primitiveMode,
     span_const_u64 const& indirects,
     span_const_i32 const& sizes,
-    u32                   count)
+    u32                   count,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -192,7 +200,7 @@ STATICINLINE void draw_commands_address(
                          : nullptr,
         sizes.size() ? reinterpret_cast<const GLsizei*>(sizes.data()) : nullptr,
         count);
-    detail::error_check("DrawCommandsAddressNV"sv);
+    detail::error_check("DrawCommandsAddressNV"sv, check_errors);
 }
 
 template<class span_const_GLintptr, class span_const_i32>
@@ -219,7 +227,8 @@ STATICINLINE void draw_commands(
     u32                        buffer,
     span_const_GLintptr const& indirects,
     span_const_i32 const&      sizes,
-    u32                        count)
+    u32                        count,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -238,7 +247,7 @@ STATICINLINE void draw_commands(
                          : nullptr,
         sizes.size() ? reinterpret_cast<const GLsizei*>(sizes.data()) : nullptr,
         count);
-    detail::error_check("DrawCommandsNV"sv);
+    detail::error_check("DrawCommandsNV"sv, check_errors);
 }
 
 template<class span_const_i32, class span_const_u32, class span_const_u64>
@@ -269,7 +278,8 @@ STATICINLINE void draw_commands_states_address(
     span_const_i32 const& sizes,
     span_const_u32 const& states,
     span_const_u32 const& fbos,
-    u32                   count)
+    u32                   count,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -284,7 +294,7 @@ STATICINLINE void draw_commands_states_address(
                       : nullptr,
         fbos.size() ? reinterpret_cast<const GLuint*>(fbos.data()) : nullptr,
         count);
-    detail::error_check("DrawCommandsStatesAddressNV"sv);
+    detail::error_check("DrawCommandsStatesAddressNV"sv, check_errors);
 }
 
 template<class span_const_GLintptr, class span_const_i32, class span_const_u32>
@@ -317,7 +327,8 @@ STATICINLINE void draw_commands_states(
     span_const_i32 const&      sizes,
     span_const_u32 const&      states,
     span_const_u32 const&      fbos,
-    u32                        count)
+    u32                        count,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -338,7 +349,7 @@ STATICINLINE void draw_commands_states(
                       : nullptr,
         fbos.size() ? reinterpret_cast<const GLuint*>(fbos.data()) : nullptr,
         count);
-    detail::error_check("DrawCommandsStatesNV"sv);
+    detail::error_check("DrawCommandsStatesNV"sv, check_errors);
 }
 
 /*!
@@ -347,8 +358,10 @@ STATICINLINE void draw_commands_states(
  * \param size GLuint
  * \return GLuint
  */
-STATICINLINE GLuint
-get_command_header(group::command_opcodes_nv tokenID, u32 size)
+STATICINLINE GLuint get_command_header(
+    group::command_opcodes_nv tokenID,
+    u32                       size,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -356,7 +369,7 @@ get_command_header(group::command_opcodes_nv tokenID, u32 size)
         GLW_FPTR_CHECK(GetCommandHeaderNV)
     }
     auto out = glGetCommandHeaderNV(static_cast<GLenum>(tokenID), size);
-    detail::error_check("GetCommandHeaderNV"sv);
+    detail::error_check("GetCommandHeaderNV"sv, check_errors);
     return out;
 }
 
@@ -365,7 +378,8 @@ get_command_header(group::command_opcodes_nv tokenID, u32 size)
  * \param shadertype GLenum
  * \return GLushort
  */
-STATICINLINE GLushort get_stage_index(group::shader_type shadertype)
+STATICINLINE GLushort get_stage_index(
+    group::shader_type shadertype, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -373,7 +387,7 @@ STATICINLINE GLushort get_stage_index(group::shader_type shadertype)
         GLW_FPTR_CHECK(GetStageIndexNV)
     }
     auto out = glGetStageIndexNV(static_cast<GLenum>(shadertype));
-    detail::error_check("GetStageIndexNV"sv);
+    detail::error_check("GetStageIndexNV"sv, check_errors);
     return out;
 }
 
@@ -382,7 +396,8 @@ STATICINLINE GLushort get_stage_index(group::shader_type shadertype)
  * \param list GLuint
  * \return Boolean
  */
-STATICINLINE bool is_command_list(u32 list)
+STATICINLINE bool is_command_list(
+    u32 list, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -390,7 +405,7 @@ STATICINLINE bool is_command_list(u32 list)
         GLW_FPTR_CHECK(IsCommandListNV)
     }
     auto out = glIsCommandListNV(list);
-    detail::error_check("IsCommandListNV"sv);
+    detail::error_check("IsCommandListNV"sv, check_errors);
     return out == GL_TRUE ? true : false;
 }
 
@@ -399,7 +414,8 @@ STATICINLINE bool is_command_list(u32 list)
  * \param state GLuint
  * \return Boolean
  */
-STATICINLINE bool is_state(u32 state)
+STATICINLINE bool is_state(
+    u32 state, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -407,7 +423,7 @@ STATICINLINE bool is_state(u32 state)
         GLW_FPTR_CHECK(IsStateNV)
     }
     auto out = glIsStateNV(state);
-    detail::error_check("IsStateNV"sv);
+    detail::error_check("IsStateNV"sv, check_errors);
     return out == GL_TRUE ? true : false;
 }
 
@@ -439,7 +455,8 @@ STATICINLINE void list_draw_commands_states_client(
     span_const_i32 const&  sizes,
     span_const_u32 const&  states,
     span_const_u32 const&  fbos,
-    u32                    count)
+    u32                    count,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -456,7 +473,7 @@ STATICINLINE void list_draw_commands_states_client(
                       : nullptr,
         fbos.size() ? reinterpret_cast<const GLuint*>(fbos.data()) : nullptr,
         count);
-    detail::error_check("ListDrawCommandsStatesClientNV"sv);
+    detail::error_check("ListDrawCommandsStatesClientNV"sv, check_errors);
 }
 
 /*!
@@ -465,7 +482,8 @@ STATICINLINE void list_draw_commands_states_client(
  * \param mode GLenum
  * \return void
  */
-STATICINLINE void state_capture(u32 state, GLenum mode)
+STATICINLINE void state_capture(
+    u32 state, GLenum mode, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -473,7 +491,7 @@ STATICINLINE void state_capture(u32 state, GLenum mode)
         GLW_FPTR_CHECK(StateCaptureNV)
     }
     glStateCaptureNV(state, mode);
-    detail::error_check("StateCaptureNV"sv);
+    detail::error_check("StateCaptureNV"sv, check_errors);
 }
 
 } // namespace gl::nv::command_list

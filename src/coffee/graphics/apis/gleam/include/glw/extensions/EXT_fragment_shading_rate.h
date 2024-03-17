@@ -33,7 +33,8 @@ STATICINLINE void framebuffer_shading_rate(
     i32                           baseLayer,
     i32                           numLayers,
     i32                           texelWidth,
-    i32                           texelHeight)
+    i32                           texelHeight,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -53,7 +54,7 @@ STATICINLINE void framebuffer_shading_rate(
         numLayers,
         texelWidth,
         texelHeight);
-    detail::error_check("FramebufferShadingRateEXT"sv);
+    detail::error_check("FramebufferShadingRateEXT"sv, check_errors);
 }
 
 template<class span_shading_rate>
@@ -71,7 +72,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_fragment_shading_rates(
-    i32 samples, i32& count, span_shading_rate shadingRates)
+    i32               samples,
+    i32&              count,
+    span_shading_rate shadingRates,
+    error_check       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -84,7 +88,7 @@ STATICINLINE void get_fragment_shading_rates(
         &count,
         shadingRates.size() ? reinterpret_cast<GLenum*>(shadingRates.data())
                             : nullptr);
-    detail::error_check("GetFragmentShadingRatesEXT"sv);
+    detail::error_check("GetFragmentShadingRatesEXT"sv, check_errors);
 }
 
 /*!
@@ -92,7 +96,8 @@ STATICINLINE void get_fragment_shading_rates(
  * \param rate GLenum
  * \return void
  */
-STATICINLINE void shading_rate(group::shading_rate rate)
+STATICINLINE void shading_rate(
+    group::shading_rate rate, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -100,7 +105,7 @@ STATICINLINE void shading_rate(group::shading_rate rate)
         GLW_FPTR_CHECK(ShadingRateEXT)
     }
     glShadingRateEXT(static_cast<GLenum>(rate));
-    detail::error_check("ShadingRateEXT"sv);
+    detail::error_check("ShadingRateEXT"sv, check_errors);
 }
 
 /*!
@@ -111,7 +116,8 @@ STATICINLINE void shading_rate(group::shading_rate rate)
  */
 STATICINLINE void shading_rate_combiner_ops(
     group::shading_rate_combiner_op combinerOp0,
-    group::shading_rate_combiner_op combinerOp1)
+    group::shading_rate_combiner_op combinerOp1,
+    error_check                     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -120,7 +126,7 @@ STATICINLINE void shading_rate_combiner_ops(
     }
     glShadingRateCombinerOpsEXT(
         static_cast<GLenum>(combinerOp0), static_cast<GLenum>(combinerOp1));
-    detail::error_check("ShadingRateCombinerOpsEXT"sv);
+    detail::error_check("ShadingRateCombinerOpsEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::fragment_shading_rate

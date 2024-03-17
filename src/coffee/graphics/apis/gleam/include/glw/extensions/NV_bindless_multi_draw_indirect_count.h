@@ -21,7 +21,8 @@ STATICINLINE void multi_draw_arrays_indirect_bindless_count(
     i32                   drawCount,
     i32                   maxDrawCount,
     i32                   stride,
-    i32                   vertexBufferCount)
+    i32                   vertexBufferCount,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -35,7 +36,8 @@ STATICINLINE void multi_draw_arrays_indirect_bindless_count(
         maxDrawCount,
         stride,
         vertexBufferCount);
-    detail::error_check("MultiDrawArraysIndirectBindlessCountNV"sv);
+    detail::error_check(
+        "MultiDrawArraysIndirectBindlessCountNV"sv, check_errors);
 }
 
 /*!
@@ -56,7 +58,8 @@ STATICINLINE void multi_draw_elements_indirect_bindless_count(
     i32                       drawCount,
     i32                       maxDrawCount,
     i32                       stride,
-    i32                       vertexBufferCount)
+    i32                       vertexBufferCount,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -71,7 +74,8 @@ STATICINLINE void multi_draw_elements_indirect_bindless_count(
         maxDrawCount,
         stride,
         vertexBufferCount);
-    detail::error_check("MultiDrawElementsIndirectBindlessCountNV"sv);
+    detail::error_check(
+        "MultiDrawElementsIndirectBindlessCountNV"sv, check_errors);
 }
 
 } // namespace gl::nv::bindless_multi_draw_indirect_count

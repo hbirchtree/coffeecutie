@@ -31,7 +31,8 @@ constexpr u32 shading_rate_sample_order_sample_major   = 0x95B0;
  * \param texture GLuint
  * \return void
  */
-STATICINLINE void bind_shading_rate_image(u32 texture)
+STATICINLINE void bind_shading_rate_image(
+    u32 texture, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -44,7 +45,7 @@ STATICINLINE void bind_shading_rate_image(u32 texture)
 #endif
     }
     glBindShadingRateImageNV(texture);
-    detail::error_check("BindShadingRateImageNV"sv);
+    detail::error_check("BindShadingRateImageNV"sv, check_errors);
 }
 
 /*!
@@ -55,7 +56,10 @@ STATICINLINE void bind_shading_rate_image(u32 texture)
  * \return void
  */
 STATICINLINE void get_shading_rate_image_palette(
-    u32 viewport, u32 entry, GLenum& rate)
+    u32         viewport,
+    u32         entry,
+    GLenum&     rate,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -63,7 +67,7 @@ STATICINLINE void get_shading_rate_image_palette(
         GLW_FPTR_CHECK(GetShadingRateImagePaletteNV)
     }
     glGetShadingRateImagePaletteNV(viewport, entry, &rate);
-    detail::error_check("GetShadingRateImagePaletteNV"sv);
+    detail::error_check("GetShadingRateImagePaletteNV"sv, check_errors);
 }
 
 template<class span_i32>
@@ -80,7 +84,11 @@ requires(
  * \return void
  */
 STATICINLINE void get_shading_rate_sample_locationiv(
-    GLenum rate, u32 samples, u32 index, span_i32 location)
+    GLenum      rate,
+    u32         samples,
+    u32         index,
+    span_i32    location,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -92,7 +100,7 @@ STATICINLINE void get_shading_rate_sample_locationiv(
         samples,
         index,
         location.size() ? reinterpret_cast<GLint*>(location.data()) : nullptr);
-    detail::error_check("GetShadingRateSampleLocationivNV"sv);
+    detail::error_check("GetShadingRateSampleLocationivNV"sv, check_errors);
 }
 
 /*!
@@ -100,7 +108,8 @@ STATICINLINE void get_shading_rate_sample_locationiv(
  * \param synchronize GLboolean
  * \return void
  */
-STATICINLINE void shading_rate_image_barrier(bool synchronize)
+STATICINLINE void shading_rate_image_barrier(
+    bool synchronize, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -108,7 +117,7 @@ STATICINLINE void shading_rate_image_barrier(bool synchronize)
         GLW_FPTR_CHECK(ShadingRateImageBarrierNV)
     }
     glShadingRateImageBarrierNV(synchronize);
-    detail::error_check("ShadingRateImageBarrierNV"sv);
+    detail::error_check("ShadingRateImageBarrierNV"sv, check_errors);
 }
 
 template<class span_const_GLenum>
@@ -126,7 +135,10 @@ requires(
  * \return void
  */
 STATICINLINE void shading_rate_image_palette(
-    u32 viewport, u32 first, span_const_GLenum const& rates)
+    u32                      viewport,
+    u32                      first,
+    span_const_GLenum const& rates,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -138,7 +150,7 @@ STATICINLINE void shading_rate_image_palette(
         first,
         rates.size(),
         rates.size() ? reinterpret_cast<const GLenum*>(rates.data()) : nullptr);
-    detail::error_check("ShadingRateImagePaletteNV"sv);
+    detail::error_check("ShadingRateImagePaletteNV"sv, check_errors);
 }
 
 /*!
@@ -146,7 +158,8 @@ STATICINLINE void shading_rate_image_palette(
  * \param order GLenum
  * \return void
  */
-STATICINLINE void shading_rate_sample_order(GLenum order)
+STATICINLINE void shading_rate_sample_order(
+    GLenum order, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -154,7 +167,7 @@ STATICINLINE void shading_rate_sample_order(GLenum order)
         GLW_FPTR_CHECK(ShadingRateSampleOrderNV)
     }
     glShadingRateSampleOrderNV(order);
-    detail::error_check("ShadingRateSampleOrderNV"sv);
+    detail::error_check("ShadingRateSampleOrderNV"sv, check_errors);
 }
 
 template<class span_const_i32>
@@ -171,7 +184,10 @@ requires(
  * \return void
  */
 STATICINLINE void shading_rate_sample_order_custom(
-    GLenum rate, u32 samples, span_const_i32 const& locations)
+    GLenum                rate,
+    u32                   samples,
+    span_const_i32 const& locations,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -183,7 +199,7 @@ STATICINLINE void shading_rate_sample_order_custom(
         samples,
         locations.size() ? reinterpret_cast<const GLint*>(locations.data())
                          : nullptr);
-    detail::error_check("ShadingRateSampleOrderCustomNV"sv);
+    detail::error_check("ShadingRateSampleOrderCustomNV"sv, check_errors);
 }
 
 } // namespace gl::nv::shading_rate_image

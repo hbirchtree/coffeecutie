@@ -23,7 +23,8 @@ namespace values {
 STATICINLINE void framebuffer_parameter(
     group::framebuffer_target         target,
     group::framebuffer_parameter_name pname,
-    i32                               param)
+    i32                               param,
+    error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -32,7 +33,7 @@ STATICINLINE void framebuffer_parameter(
     }
     glFramebufferParameteri(
         static_cast<GLenum>(target), static_cast<GLenum>(pname), param);
-    detail::error_check("FramebufferParameteri"sv);
+    detail::error_check("FramebufferParameteri"sv, check_errors);
 }
 
 template<class span_i32>
@@ -50,7 +51,8 @@ requires(
 STATICINLINE void get_framebuffer_parameter(
     group::framebuffer_target        target,
     group::get_framebuffer_parameter pname,
-    span_i32                         params)
+    span_i32                         params,
+    error_check                      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -61,7 +63,7 @@ STATICINLINE void get_framebuffer_parameter(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetFramebufferParameteriv"sv);
+    detail::error_check("GetFramebufferParameteriv"sv, check_errors);
 }
 
 } // namespace gl::arb::framebuffer_no_attachments

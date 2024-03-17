@@ -27,7 +27,8 @@ STATICINLINE void ext_get_program_binary_source(
     u32                program,
     group::shader_type shadertype,
     span_GLchar        source,
-    span_i32           length)
+    span_i32           length,
+    error_check        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -44,7 +45,7 @@ STATICINLINE void ext_get_program_binary_source(
         static_cast<GLenum>(shadertype),
         source.data(),
         length.size() ? reinterpret_cast<GLint*>(length.data()) : nullptr);
-    detail::error_check("ExtGetProgramBinarySourceQCOM"sv);
+    detail::error_check("ExtGetProgramBinarySourceQCOM"sv, check_errors);
 }
 
 template<class span_u32>
@@ -60,7 +61,10 @@ requires(
  * \return void
  */
 STATICINLINE void ext_get_programs(
-    span_u32 programs, i32 maxPrograms, i32& numPrograms)
+    span_u32    programs,
+    i32         maxPrograms,
+    i32&        numPrograms,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -71,7 +75,7 @@ STATICINLINE void ext_get_programs(
         programs.size() ? reinterpret_cast<GLuint*>(programs.data()) : nullptr,
         maxPrograms,
         &numPrograms);
-    detail::error_check("ExtGetProgramsQCOM"sv);
+    detail::error_check("ExtGetProgramsQCOM"sv, check_errors);
 }
 
 template<class span_u32>
@@ -87,7 +91,10 @@ requires(
  * \return void
  */
 STATICINLINE void ext_get_shaders(
-    span_u32 shaders, i32 maxShaders, i32& numShaders)
+    span_u32    shaders,
+    i32         maxShaders,
+    i32&        numShaders,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -98,7 +105,7 @@ STATICINLINE void ext_get_shaders(
         shaders.size() ? reinterpret_cast<GLuint*>(shaders.data()) : nullptr,
         maxShaders,
         &numShaders);
-    detail::error_check("ExtGetShadersQCOM"sv);
+    detail::error_check("ExtGetShadersQCOM"sv, check_errors);
 }
 
 /*!
@@ -106,7 +113,8 @@ STATICINLINE void ext_get_shaders(
  * \param program GLuint
  * \return Boolean
  */
-STATICINLINE bool ext_is_program_binary(u32 program)
+STATICINLINE bool ext_is_program_binary(
+    u32 program, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -119,7 +127,7 @@ STATICINLINE bool ext_is_program_binary(u32 program)
 #endif
     }
     auto out = glExtIsProgramBinaryQCOM(program);
-    detail::error_check("ExtIsProgramBinaryQCOM"sv);
+    detail::error_check("ExtIsProgramBinaryQCOM"sv, check_errors);
     return out == GL_TRUE ? true : false;
 }
 

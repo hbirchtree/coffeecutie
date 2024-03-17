@@ -13,7 +13,8 @@ requires(
 STATICINLINE void buffer_storage(
     group::buffer_storage_target target,
     span_const_void const&       data,
-    group::buffer_storage_mask   flags)
+    group::buffer_storage_mask   flags,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -26,7 +27,7 @@ STATICINLINE void buffer_storage(
             sizeof(typename std::decay_t<span_const_void const&>::value_type),
         data.size() ? reinterpret_cast<const void*>(data.data()) : nullptr,
         static_cast<GLenum>(flags));
-    detail::error_check("BufferStorage"sv);
+    detail::error_check("BufferStorage"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -46,7 +47,8 @@ STATICINLINE void clear_tex_image(
     i32                    level,
     group::pixel_format    format,
     group::pixel_type      type,
-    span_const_void const& data)
+    span_const_void const& data,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -64,7 +66,7 @@ STATICINLINE void clear_tex_image(
         static_cast<GLenum>(format),
         static_cast<GLenum>(type),
         data.size() ? reinterpret_cast<const void*>(data.data()) : nullptr);
-    detail::error_check("ClearTexImage"sv);
+    detail::error_check("ClearTexImage"sv, check_errors);
 }
 
 template<class size_3_i32, class span_const_void, class vec_3_i32>
@@ -94,7 +96,8 @@ STATICINLINE void clear_tex_sub_image(
     size_3_i32 const&      width,
     group::pixel_format    format,
     group::pixel_type      type,
-    span_const_void const& data)
+    span_const_void const& data,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -118,7 +121,7 @@ STATICINLINE void clear_tex_sub_image(
         static_cast<GLenum>(format),
         static_cast<GLenum>(type),
         data.size() ? reinterpret_cast<const void*>(data.data()) : nullptr);
-    detail::error_check("ClearTexSubImage"sv);
+    detail::error_check("ClearTexSubImage"sv, check_errors);
 }
 
 template<class span_const_u32>
@@ -136,7 +139,10 @@ requires(
  * \return void
  */
 STATICINLINE void bind_buffers_base(
-    group::buffer_target_arb target, u32 first, span_const_u32 const& buffers)
+    group::buffer_target_arb target,
+    u32                      first,
+    span_const_u32 const&    buffers,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -149,7 +155,7 @@ STATICINLINE void bind_buffers_base(
         buffers.size(),
         buffers.size() ? reinterpret_cast<const GLuint*>(buffers.data())
                        : nullptr);
-    detail::error_check("BindBuffersBase"sv);
+    detail::error_check("BindBuffersBase"sv, check_errors);
 }
 
 template<
@@ -184,7 +190,8 @@ STATICINLINE void bind_buffers_range(
     u32                          first,
     span_const_u32 const&        buffers,
     span_const_GLintptr const&   offsets,
-    span_const_GLsizeiptr const& sizes)
+    span_const_GLsizeiptr const& sizes,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -201,7 +208,7 @@ STATICINLINE void bind_buffers_range(
                        : nullptr,
         sizes.size() ? reinterpret_cast<const GLsizeiptr*>(sizes.data())
                      : nullptr);
-    detail::error_check("BindBuffersRange"sv);
+    detail::error_check("BindBuffersRange"sv, check_errors);
 }
 
 template<class span_const_u32>
@@ -217,7 +224,10 @@ requires(
  * \param textures const GLuint *
  * \return void
  */
-STATICINLINE void bind_image_textures(u32 first, span_const_u32 const& textures)
+STATICINLINE void bind_image_textures(
+    u32                   first,
+    span_const_u32 const& textures,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -229,7 +239,7 @@ STATICINLINE void bind_image_textures(u32 first, span_const_u32 const& textures)
         textures.size(),
         textures.size() ? reinterpret_cast<const GLuint*>(textures.data())
                         : nullptr);
-    detail::error_check("BindImageTextures"sv);
+    detail::error_check("BindImageTextures"sv, check_errors);
 }
 
 template<class span_const_u32>
@@ -245,7 +255,10 @@ requires(
  * \param samplers const GLuint *
  * \return void
  */
-STATICINLINE void bind_samplers(u32 first, span_const_u32 const& samplers)
+STATICINLINE void bind_samplers(
+    u32                   first,
+    span_const_u32 const& samplers,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -257,7 +270,7 @@ STATICINLINE void bind_samplers(u32 first, span_const_u32 const& samplers)
         samplers.size(),
         samplers.size() ? reinterpret_cast<const GLuint*>(samplers.data())
                         : nullptr);
-    detail::error_check("BindSamplers"sv);
+    detail::error_check("BindSamplers"sv, check_errors);
 }
 
 template<class span_const_u32>
@@ -273,7 +286,10 @@ requires(
  * \param textures const GLuint *
  * \return void
  */
-STATICINLINE void bind_textures(u32 first, span_const_u32 const& textures)
+STATICINLINE void bind_textures(
+    u32                   first,
+    span_const_u32 const& textures,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -285,7 +301,7 @@ STATICINLINE void bind_textures(u32 first, span_const_u32 const& textures)
         textures.size(),
         textures.size() ? reinterpret_cast<const GLuint*>(textures.data())
                         : nullptr);
-    detail::error_check("BindTextures"sv);
+    detail::error_check("BindTextures"sv, check_errors);
 }
 
 template<class span_const_GLintptr, class span_const_i32, class span_const_u32>
@@ -315,7 +331,8 @@ STATICINLINE void bind_vertex_buffers(
     u32                        first,
     span_const_u32 const&      buffers,
     span_const_GLintptr const& offsets,
-    span_const_i32 const&      strides)
+    span_const_i32 const&      strides,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -331,7 +348,7 @@ STATICINLINE void bind_vertex_buffers(
                        : nullptr,
         strides.size() ? reinterpret_cast<const GLsizei*>(strides.data())
                        : nullptr);
-    detail::error_check("BindVertexBuffers"sv);
+    detail::error_check("BindVertexBuffers"sv, check_errors);
 }
 
 #endif // GL_VERSION_4_4

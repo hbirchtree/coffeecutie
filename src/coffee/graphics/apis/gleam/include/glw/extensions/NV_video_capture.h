@@ -39,7 +39,8 @@ constexpr u32 video_capture_surface_origin          = 0x903C;
  * \param video_capture_slot GLuint
  * \return void
  */
-STATICINLINE void begin_video_capture(u32 video_capture_slot)
+STATICINLINE void begin_video_capture(
+    u32 video_capture_slot, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -47,7 +48,7 @@ STATICINLINE void begin_video_capture(u32 video_capture_slot)
         GLW_FPTR_CHECK(BeginVideoCaptureNV)
     }
     glBeginVideoCaptureNV(video_capture_slot);
-    detail::error_check("BeginVideoCaptureNV"sv);
+    detail::error_check("BeginVideoCaptureNV"sv, check_errors);
 }
 
 /*!
@@ -59,7 +60,11 @@ STATICINLINE void begin_video_capture(u32 video_capture_slot)
  * \return void
  */
 STATICINLINE void bind_video_capture_stream_buffer(
-    u32 video_capture_slot, u32 stream, GLenum frame_region, GLintptrARB offset)
+    u32         video_capture_slot,
+    u32         stream,
+    GLenum      frame_region,
+    GLintptrARB offset,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -68,7 +73,7 @@ STATICINLINE void bind_video_capture_stream_buffer(
     }
     glBindVideoCaptureStreamBufferNV(
         video_capture_slot, stream, frame_region, offset);
-    detail::error_check("BindVideoCaptureStreamBufferNV"sv);
+    detail::error_check("BindVideoCaptureStreamBufferNV"sv, check_errors);
 }
 
 /*!
@@ -81,11 +86,12 @@ STATICINLINE void bind_video_capture_stream_buffer(
  * \return void
  */
 STATICINLINE void bind_video_capture_stream_texture(
-    u32    video_capture_slot,
-    u32    stream,
-    GLenum frame_region,
-    GLenum target,
-    u32    texture)
+    u32         video_capture_slot,
+    u32         stream,
+    GLenum      frame_region,
+    GLenum      target,
+    u32         texture,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -99,7 +105,7 @@ STATICINLINE void bind_video_capture_stream_texture(
     }
     glBindVideoCaptureStreamTextureNV(
         video_capture_slot, stream, frame_region, target, texture);
-    detail::error_check("BindVideoCaptureStreamTextureNV"sv);
+    detail::error_check("BindVideoCaptureStreamTextureNV"sv, check_errors);
 }
 
 /*!
@@ -107,7 +113,8 @@ STATICINLINE void bind_video_capture_stream_texture(
  * \param video_capture_slot GLuint
  * \return void
  */
-STATICINLINE void end_video_capture(u32 video_capture_slot)
+STATICINLINE void end_video_capture(
+    u32 video_capture_slot, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -115,7 +122,7 @@ STATICINLINE void end_video_capture(u32 video_capture_slot)
         GLW_FPTR_CHECK(EndVideoCaptureNV)
     }
     glEndVideoCaptureNV(video_capture_slot);
-    detail::error_check("EndVideoCaptureNV"sv);
+    detail::error_check("EndVideoCaptureNV"sv, check_errors);
 }
 
 template<class span_f64>
@@ -132,7 +139,11 @@ requires(
  * \return void
  */
 STATICINLINE void get_video_capture_streamdv(
-    u32 video_capture_slot, u32 stream, GLenum pname, span_f64 params)
+    u32         video_capture_slot,
+    u32         stream,
+    GLenum      pname,
+    span_f64    params,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -144,7 +155,7 @@ STATICINLINE void get_video_capture_streamdv(
         stream,
         pname,
         params.size() ? reinterpret_cast<GLdouble*>(params.data()) : nullptr);
-    detail::error_check("GetVideoCaptureStreamdvNV"sv);
+    detail::error_check("GetVideoCaptureStreamdvNV"sv, check_errors);
 }
 
 template<class span_f32>
@@ -161,7 +172,11 @@ requires(
  * \return void
  */
 STATICINLINE void get_video_capture_streamfv(
-    u32 video_capture_slot, u32 stream, GLenum pname, span_f32 params)
+    u32         video_capture_slot,
+    u32         stream,
+    GLenum      pname,
+    span_f32    params,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -173,7 +188,7 @@ STATICINLINE void get_video_capture_streamfv(
         stream,
         pname,
         params.size() ? reinterpret_cast<GLfloat*>(params.data()) : nullptr);
-    detail::error_check("GetVideoCaptureStreamfvNV"sv);
+    detail::error_check("GetVideoCaptureStreamfvNV"sv, check_errors);
 }
 
 template<class span_i32>
@@ -190,7 +205,11 @@ requires(
  * \return void
  */
 STATICINLINE void get_video_capture_streamiv(
-    u32 video_capture_slot, u32 stream, GLenum pname, span_i32 params)
+    u32         video_capture_slot,
+    u32         stream,
+    GLenum      pname,
+    span_i32    params,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -202,7 +221,7 @@ STATICINLINE void get_video_capture_streamiv(
         stream,
         pname,
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetVideoCaptureStreamivNV"sv);
+    detail::error_check("GetVideoCaptureStreamivNV"sv, check_errors);
 }
 
 template<class span_i32>
@@ -218,7 +237,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_video_captureiv(
-    u32 video_capture_slot, GLenum pname, span_i32 params)
+    u32         video_capture_slot,
+    GLenum      pname,
+    span_i32    params,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -229,7 +251,7 @@ STATICINLINE void get_video_captureiv(
         video_capture_slot,
         pname,
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetVideoCaptureivNV"sv);
+    detail::error_check("GetVideoCaptureivNV"sv, check_errors);
 }
 
 template<class span_GLuint64EXT, class span_u32>
@@ -252,7 +274,8 @@ requires(
 STATICINLINE GLenum video_capture(
     u32              video_capture_slot,
     span_u32         sequence_num,
-    span_GLuint64EXT capture_time)
+    span_GLuint64EXT capture_time,
+    error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -266,7 +289,7 @@ STATICINLINE GLenum video_capture(
         capture_time.size()
             ? reinterpret_cast<GLuint64EXT*>(capture_time.data())
             : nullptr);
-    detail::error_check("VideoCaptureNV"sv);
+    detail::error_check("VideoCaptureNV"sv, check_errors);
     return out;
 }
 
@@ -288,7 +311,8 @@ STATICINLINE void video_capture_stream_parameter(
     u32                   video_capture_slot,
     u32                   stream,
     GLenum                pname,
-    span_const_f64 const& params)
+    span_const_f64 const& params,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -301,7 +325,7 @@ STATICINLINE void video_capture_stream_parameter(
         pname,
         params.size() ? reinterpret_cast<const GLdouble*>(params.data())
                       : nullptr);
-    detail::error_check("VideoCaptureStreamParameterdvNV"sv);
+    detail::error_check("VideoCaptureStreamParameterdvNV"sv, check_errors);
 }
 
 template<class span_const_f32>
@@ -322,7 +346,8 @@ STATICINLINE void video_capture_stream_parameter(
     u32                   video_capture_slot,
     u32                   stream,
     GLenum                pname,
-    span_const_f32 const& params)
+    span_const_f32 const& params,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -335,7 +360,7 @@ STATICINLINE void video_capture_stream_parameter(
         pname,
         params.size() ? reinterpret_cast<const GLfloat*>(params.data())
                       : nullptr);
-    detail::error_check("VideoCaptureStreamParameterfvNV"sv);
+    detail::error_check("VideoCaptureStreamParameterfvNV"sv, check_errors);
 }
 
 template<class span_const_i32>
@@ -356,7 +381,8 @@ STATICINLINE void video_capture_stream_parameter(
     u32                   video_capture_slot,
     u32                   stream,
     GLenum                pname,
-    span_const_i32 const& params)
+    span_const_i32 const& params,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -369,7 +395,7 @@ STATICINLINE void video_capture_stream_parameter(
         pname,
         params.size() ? reinterpret_cast<const GLint*>(params.data())
                       : nullptr);
-    detail::error_check("VideoCaptureStreamParameterivNV"sv);
+    detail::error_check("VideoCaptureStreamParameterivNV"sv, check_errors);
 }
 
 } // namespace gl::nv::video_capture

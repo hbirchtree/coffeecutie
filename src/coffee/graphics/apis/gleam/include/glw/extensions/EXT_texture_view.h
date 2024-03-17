@@ -30,7 +30,8 @@ STATICINLINE void texture_view(
     u32                          minlevel,
     u32                          numlevels,
     u32                          minlayer,
-    u32                          numlayers)
+    u32                          numlayers,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -51,7 +52,7 @@ STATICINLINE void texture_view(
         numlevels,
         minlayer,
         numlayers);
-    detail::error_check("TextureViewEXT"sv);
+    detail::error_check("TextureViewEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::texture_view

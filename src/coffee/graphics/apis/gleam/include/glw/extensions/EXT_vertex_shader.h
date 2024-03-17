@@ -87,7 +87,8 @@ constexpr u32 local_constant_datatype                     = 0x87ED;
 
  * \return void
  */
-STATICINLINE void begin_vertex_shader()
+STATICINLINE void begin_vertex_shader(
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -95,7 +96,7 @@ STATICINLINE void begin_vertex_shader()
         GLW_FPTR_CHECK(BeginVertexShaderEXT)
     }
     glBeginVertexShaderEXT();
-    detail::error_check("BeginVertexShaderEXT"sv);
+    detail::error_check("BeginVertexShaderEXT"sv, check_errors);
 }
 
 /*!
@@ -104,8 +105,10 @@ STATICINLINE void begin_vertex_shader()
  * \param value GLenum
  * \return GLuint
  */
-STATICINLINE GLuint
-bind_light_parameter(group::light_name light, group::light_parameter value)
+STATICINLINE GLuint bind_light_parameter(
+    group::light_name      light,
+    group::light_parameter value,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -114,7 +117,7 @@ bind_light_parameter(group::light_name light, group::light_parameter value)
     }
     auto out = glBindLightParameterEXT(
         static_cast<GLenum>(light), static_cast<GLenum>(value));
-    detail::error_check("BindLightParameterEXT"sv);
+    detail::error_check("BindLightParameterEXT"sv, check_errors);
     return out;
 }
 
@@ -125,7 +128,9 @@ bind_light_parameter(group::light_name light, group::light_parameter value)
  * \return GLuint
  */
 STATICINLINE GLuint bind_material_parameter(
-    group::triangle_face face, group::material_parameter value)
+    group::triangle_face      face,
+    group::material_parameter value,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -134,7 +139,7 @@ STATICINLINE GLuint bind_material_parameter(
     }
     auto out = glBindMaterialParameterEXT(
         static_cast<GLenum>(face), static_cast<GLenum>(value));
-    detail::error_check("BindMaterialParameterEXT"sv);
+    detail::error_check("BindMaterialParameterEXT"sv, check_errors);
     return out;
 }
 
@@ -143,7 +148,9 @@ STATICINLINE GLuint bind_material_parameter(
  * \param value GLenum
  * \return GLuint
  */
-STATICINLINE GLuint bind_parameter(group::vertex_shader_parameter_ext value)
+STATICINLINE GLuint bind_parameter(
+    group::vertex_shader_parameter_ext value,
+    error_check                        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -151,7 +158,7 @@ STATICINLINE GLuint bind_parameter(group::vertex_shader_parameter_ext value)
         GLW_FPTR_CHECK(BindParameterEXT)
     }
     auto out = glBindParameterEXT(static_cast<GLenum>(value));
-    detail::error_check("BindParameterEXT"sv);
+    detail::error_check("BindParameterEXT"sv, check_errors);
     return out;
 }
 
@@ -165,7 +172,8 @@ STATICINLINE GLuint bind_parameter(group::vertex_shader_parameter_ext value)
 STATICINLINE GLuint bind_tex_gen_parameter(
     group::texture_unit          unit,
     group::texture_coord_name    coord,
-    group::texture_gen_parameter value)
+    group::texture_gen_parameter value,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -176,7 +184,7 @@ STATICINLINE GLuint bind_tex_gen_parameter(
         static_cast<GLenum>(unit),
         static_cast<GLenum>(coord),
         static_cast<GLenum>(value));
-    detail::error_check("BindTexGenParameterEXT"sv);
+    detail::error_check("BindTexGenParameterEXT"sv, check_errors);
     return out;
 }
 
@@ -187,7 +195,9 @@ STATICINLINE GLuint bind_tex_gen_parameter(
  * \return GLuint
  */
 STATICINLINE GLuint bind_texture_unit_parameter(
-    group::texture_unit unit, group::vertex_shader_texture_unit_parameter value)
+    group::texture_unit                         unit,
+    group::vertex_shader_texture_unit_parameter value,
+    error_check                                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -196,7 +206,7 @@ STATICINLINE GLuint bind_texture_unit_parameter(
     }
     auto out = glBindTextureUnitParameterEXT(
         static_cast<GLenum>(unit), static_cast<GLenum>(value));
-    detail::error_check("BindTextureUnitParameterEXT"sv);
+    detail::error_check("BindTextureUnitParameterEXT"sv, check_errors);
     return out;
 }
 
@@ -205,7 +215,8 @@ STATICINLINE GLuint bind_texture_unit_parameter(
  * \param id GLuint
  * \return void
  */
-STATICINLINE void bind_vertex_shader(u32 id)
+STATICINLINE void bind_vertex_shader(
+    u32 id, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -213,7 +224,7 @@ STATICINLINE void bind_vertex_shader(u32 id)
         GLW_FPTR_CHECK(BindVertexShaderEXT)
     }
     glBindVertexShaderEXT(id);
-    detail::error_check("BindVertexShaderEXT"sv);
+    detail::error_check("BindVertexShaderEXT"sv, check_errors);
 }
 
 /*!
@@ -221,7 +232,8 @@ STATICINLINE void bind_vertex_shader(u32 id)
  * \param id GLuint
  * \return void
  */
-STATICINLINE void delete_vertex_shader(u32 id)
+STATICINLINE void delete_vertex_shader(
+    u32 id, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -229,7 +241,7 @@ STATICINLINE void delete_vertex_shader(u32 id)
         GLW_FPTR_CHECK(DeleteVertexShaderEXT)
     }
     glDeleteVertexShaderEXT(id);
-    detail::error_check("DeleteVertexShaderEXT"sv);
+    detail::error_check("DeleteVertexShaderEXT"sv, check_errors);
 }
 
 /*!
@@ -237,7 +249,8 @@ STATICINLINE void delete_vertex_shader(u32 id)
  * \param id GLuint
  * \return void
  */
-STATICINLINE void disable_variant_client_state(u32 id)
+STATICINLINE void disable_variant_client_state(
+    u32 id, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -245,7 +258,7 @@ STATICINLINE void disable_variant_client_state(u32 id)
         GLW_FPTR_CHECK(DisableVariantClientStateEXT)
     }
     glDisableVariantClientStateEXT(id);
-    detail::error_check("DisableVariantClientStateEXT"sv);
+    detail::error_check("DisableVariantClientStateEXT"sv, check_errors);
 }
 
 /*!
@@ -253,7 +266,8 @@ STATICINLINE void disable_variant_client_state(u32 id)
  * \param id GLuint
  * \return void
  */
-STATICINLINE void enable_variant_client_state(u32 id)
+STATICINLINE void enable_variant_client_state(
+    u32 id, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -261,7 +275,7 @@ STATICINLINE void enable_variant_client_state(u32 id)
         GLW_FPTR_CHECK(EnableVariantClientStateEXT)
     }
     glEnableVariantClientStateEXT(id);
-    detail::error_check("EnableVariantClientStateEXT"sv);
+    detail::error_check("EnableVariantClientStateEXT"sv, check_errors);
 }
 
 /*!
@@ -269,7 +283,7 @@ STATICINLINE void enable_variant_client_state(u32 id)
 
  * \return void
  */
-STATICINLINE void end_vertex_shader()
+STATICINLINE void end_vertex_shader(error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -277,7 +291,7 @@ STATICINLINE void end_vertex_shader()
         GLW_FPTR_CHECK(EndVertexShaderEXT)
     }
     glEndVertexShaderEXT();
-    detail::error_check("EndVertexShaderEXT"sv);
+    detail::error_check("EndVertexShaderEXT"sv, check_errors);
 }
 
 /*!
@@ -287,7 +301,8 @@ STATICINLINE void end_vertex_shader()
  * \param num GLuint
  * \return void
  */
-STATICINLINE void extract_component(u32 res, u32 src, u32 num)
+STATICINLINE void extract_component(
+    u32 res, u32 src, u32 num, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -295,7 +310,7 @@ STATICINLINE void extract_component(u32 res, u32 src, u32 num)
         GLW_FPTR_CHECK(ExtractComponentEXT)
     }
     glExtractComponentEXT(res, src, num);
-    detail::error_check("ExtractComponentEXT"sv);
+    detail::error_check("ExtractComponentEXT"sv, check_errors);
 }
 
 /*!
@@ -310,7 +325,8 @@ STATICINLINE GLuint gen_symbols(
     group::data_type_ext                  datatype,
     group::vertex_shader_storage_type_ext storagetype,
     group::parameter_range_ext            range,
-    u32                                   components)
+    u32                                   components,
+    error_check                           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -322,7 +338,7 @@ STATICINLINE GLuint gen_symbols(
         static_cast<GLenum>(storagetype),
         static_cast<GLenum>(range),
         components);
-    detail::error_check("GenSymbolsEXT"sv);
+    detail::error_check("GenSymbolsEXT"sv, check_errors);
     return out;
 }
 
@@ -331,7 +347,8 @@ STATICINLINE GLuint gen_symbols(
  * \param range GLuint
  * \return GLuint
  */
-STATICINLINE GLuint gen_vertex_shaders(u32 range)
+STATICINLINE GLuint
+gen_vertex_shaders(u32 range, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -339,7 +356,7 @@ STATICINLINE GLuint gen_vertex_shaders(u32 range)
         GLW_FPTR_CHECK(GenVertexShadersEXT)
     }
     auto out = glGenVertexShadersEXT(range);
-    detail::error_check("GenVertexShadersEXT"sv);
+    detail::error_check("GenVertexShadersEXT"sv, check_errors);
     return out;
 }
 
@@ -357,7 +374,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_invariant_booleanv(
-    u32 id, group::get_variant_value_ext value, span_bool data)
+    u32                          id,
+    group::get_variant_value_ext value,
+    span_bool                    data,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -368,7 +388,7 @@ STATICINLINE void get_invariant_booleanv(
         id,
         static_cast<GLenum>(value),
         data.size() ? reinterpret_cast<GLboolean*>(data.data()) : nullptr);
-    detail::error_check("GetInvariantBooleanvEXT"sv);
+    detail::error_check("GetInvariantBooleanvEXT"sv, check_errors);
 }
 
 template<class span_f32>
@@ -384,7 +404,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_invariant_floatv(
-    u32 id, group::get_variant_value_ext value, span_f32 data)
+    u32                          id,
+    group::get_variant_value_ext value,
+    span_f32                     data,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -395,7 +418,7 @@ STATICINLINE void get_invariant_floatv(
         id,
         static_cast<GLenum>(value),
         data.size() ? reinterpret_cast<GLfloat*>(data.data()) : nullptr);
-    detail::error_check("GetInvariantFloatvEXT"sv);
+    detail::error_check("GetInvariantFloatvEXT"sv, check_errors);
 }
 
 template<class span_i32>
@@ -411,7 +434,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_invariant_integerv(
-    u32 id, group::get_variant_value_ext value, span_i32 data)
+    u32                          id,
+    group::get_variant_value_ext value,
+    span_i32                     data,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -422,7 +448,7 @@ STATICINLINE void get_invariant_integerv(
         id,
         static_cast<GLenum>(value),
         data.size() ? reinterpret_cast<GLint*>(data.data()) : nullptr);
-    detail::error_check("GetInvariantIntegervEXT"sv);
+    detail::error_check("GetInvariantIntegervEXT"sv, check_errors);
 }
 
 template<class span_bool>
@@ -439,7 +465,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_local_constant_booleanv(
-    u32 id, group::get_variant_value_ext value, span_bool data)
+    u32                          id,
+    group::get_variant_value_ext value,
+    span_bool                    data,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -450,7 +479,7 @@ STATICINLINE void get_local_constant_booleanv(
         id,
         static_cast<GLenum>(value),
         data.size() ? reinterpret_cast<GLboolean*>(data.data()) : nullptr);
-    detail::error_check("GetLocalConstantBooleanvEXT"sv);
+    detail::error_check("GetLocalConstantBooleanvEXT"sv, check_errors);
 }
 
 template<class span_f32>
@@ -466,7 +495,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_local_constant_floatv(
-    u32 id, group::get_variant_value_ext value, span_f32 data)
+    u32                          id,
+    group::get_variant_value_ext value,
+    span_f32                     data,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -477,7 +509,7 @@ STATICINLINE void get_local_constant_floatv(
         id,
         static_cast<GLenum>(value),
         data.size() ? reinterpret_cast<GLfloat*>(data.data()) : nullptr);
-    detail::error_check("GetLocalConstantFloatvEXT"sv);
+    detail::error_check("GetLocalConstantFloatvEXT"sv, check_errors);
 }
 
 template<class span_i32>
@@ -493,7 +525,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_local_constant_integerv(
-    u32 id, group::get_variant_value_ext value, span_i32 data)
+    u32                          id,
+    group::get_variant_value_ext value,
+    span_i32                     data,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -504,7 +539,7 @@ STATICINLINE void get_local_constant_integerv(
         id,
         static_cast<GLenum>(value),
         data.size() ? reinterpret_cast<GLint*>(data.data()) : nullptr);
-    detail::error_check("GetLocalConstantIntegervEXT"sv);
+    detail::error_check("GetLocalConstantIntegervEXT"sv, check_errors);
 }
 
 template<class span_bool>
@@ -521,7 +556,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_variant_booleanv(
-    u32 id, group::get_variant_value_ext value, span_bool data)
+    u32                          id,
+    group::get_variant_value_ext value,
+    span_bool                    data,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -532,7 +570,7 @@ STATICINLINE void get_variant_booleanv(
         id,
         static_cast<GLenum>(value),
         data.size() ? reinterpret_cast<GLboolean*>(data.data()) : nullptr);
-    detail::error_check("GetVariantBooleanvEXT"sv);
+    detail::error_check("GetVariantBooleanvEXT"sv, check_errors);
 }
 
 template<class span_f32>
@@ -548,7 +586,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_variant_floatv(
-    u32 id, group::get_variant_value_ext value, span_f32 data)
+    u32                          id,
+    group::get_variant_value_ext value,
+    span_f32                     data,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -559,7 +600,7 @@ STATICINLINE void get_variant_floatv(
         id,
         static_cast<GLenum>(value),
         data.size() ? reinterpret_cast<GLfloat*>(data.data()) : nullptr);
-    detail::error_check("GetVariantFloatvEXT"sv);
+    detail::error_check("GetVariantFloatvEXT"sv, check_errors);
 }
 
 template<class span_i32>
@@ -575,7 +616,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_variant_integerv(
-    u32 id, group::get_variant_value_ext value, span_i32 data)
+    u32                          id,
+    group::get_variant_value_ext value,
+    span_i32                     data,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -586,7 +630,7 @@ STATICINLINE void get_variant_integerv(
         id,
         static_cast<GLenum>(value),
         data.size() ? reinterpret_cast<GLint*>(data.data()) : nullptr);
-    detail::error_check("GetVariantIntegervEXT"sv);
+    detail::error_check("GetVariantIntegervEXT"sv, check_errors);
 }
 
 template<class span_void>
@@ -599,7 +643,10 @@ requires(concepts::span<span_void>)
  * \return void
  */
 STATICINLINE void get_variant_pointerv(
-    u32 id, group::get_variant_value_ext value, span_void data)
+    u32                          id,
+    group::get_variant_value_ext value,
+    span_void                    data,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -610,7 +657,7 @@ STATICINLINE void get_variant_pointerv(
         id,
         static_cast<GLenum>(value),
         data.size() ? reinterpret_cast<void**>(data.data()) : nullptr);
-    detail::error_check("GetVariantPointervEXT"sv);
+    detail::error_check("GetVariantPointervEXT"sv, check_errors);
 }
 
 /*!
@@ -620,7 +667,8 @@ STATICINLINE void get_variant_pointerv(
  * \param num GLuint
  * \return void
  */
-STATICINLINE void insert_component(u32 res, u32 src, u32 num)
+STATICINLINE void insert_component(
+    u32 res, u32 src, u32 num, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -628,7 +676,7 @@ STATICINLINE void insert_component(u32 res, u32 src, u32 num)
         GLW_FPTR_CHECK(InsertComponentEXT)
     }
     glInsertComponentEXT(res, src, num);
-    detail::error_check("InsertComponentEXT"sv);
+    detail::error_check("InsertComponentEXT"sv, check_errors);
 }
 
 /*!
@@ -637,7 +685,10 @@ STATICINLINE void insert_component(u32 res, u32 src, u32 num)
  * \param cap GLenum
  * \return Boolean
  */
-STATICINLINE bool is_variant_enabled(u32 id, group::variant_cap_ext cap)
+STATICINLINE bool is_variant_enabled(
+    u32                    id,
+    group::variant_cap_ext cap,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -645,7 +696,7 @@ STATICINLINE bool is_variant_enabled(u32 id, group::variant_cap_ext cap)
         GLW_FPTR_CHECK(IsVariantEnabledEXT)
     }
     auto out = glIsVariantEnabledEXT(id, static_cast<GLenum>(cap));
-    detail::error_check("IsVariantEnabledEXT"sv);
+    detail::error_check("IsVariantEnabledEXT"sv, check_errors);
     return out == GL_TRUE ? true : false;
 }
 
@@ -659,7 +710,10 @@ requires(concepts::span<span_const_void>)
  * \return void
  */
 STATICINLINE void set_invariant(
-    u32 id, group::scalar_type type, span_const_void const& addr)
+    u32                    id,
+    group::scalar_type     type,
+    span_const_void const& addr,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -670,7 +724,7 @@ STATICINLINE void set_invariant(
         id,
         static_cast<GLenum>(type),
         addr.size() ? reinterpret_cast<const void*>(addr.data()) : nullptr);
-    detail::error_check("SetInvariantEXT"sv);
+    detail::error_check("SetInvariantEXT"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -683,7 +737,10 @@ requires(concepts::span<span_const_void>)
  * \return void
  */
 STATICINLINE void set_local_constant(
-    u32 id, group::scalar_type type, span_const_void const& addr)
+    u32                    id,
+    group::scalar_type     type,
+    span_const_void const& addr,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -694,7 +751,7 @@ STATICINLINE void set_local_constant(
         id,
         static_cast<GLenum>(type),
         addr.size() ? reinterpret_cast<const void*>(addr.data()) : nullptr);
-    detail::error_check("SetLocalConstantEXT"sv);
+    detail::error_check("SetLocalConstantEXT"sv, check_errors);
 }
 
 /*!
@@ -704,7 +761,11 @@ STATICINLINE void set_local_constant(
  * \param arg1 GLuint
  * \return void
  */
-STATICINLINE void shader_op1(group::vertex_shader_op_ext op, u32 res, u32 arg1)
+STATICINLINE void shader_op1(
+    group::vertex_shader_op_ext op,
+    u32                         res,
+    u32                         arg1,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -712,7 +773,7 @@ STATICINLINE void shader_op1(group::vertex_shader_op_ext op, u32 res, u32 arg1)
         GLW_FPTR_CHECK(ShaderOp1EXT)
     }
     glShaderOp1EXT(static_cast<GLenum>(op), res, arg1);
-    detail::error_check("ShaderOp1EXT"sv);
+    detail::error_check("ShaderOp1EXT"sv, check_errors);
 }
 
 /*!
@@ -724,7 +785,11 @@ STATICINLINE void shader_op1(group::vertex_shader_op_ext op, u32 res, u32 arg1)
  * \return void
  */
 STATICINLINE void shader_op2(
-    group::vertex_shader_op_ext op, u32 res, u32 arg1, u32 arg2)
+    group::vertex_shader_op_ext op,
+    u32                         res,
+    u32                         arg1,
+    u32                         arg2,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -732,7 +797,7 @@ STATICINLINE void shader_op2(
         GLW_FPTR_CHECK(ShaderOp2EXT)
     }
     glShaderOp2EXT(static_cast<GLenum>(op), res, arg1, arg2);
-    detail::error_check("ShaderOp2EXT"sv);
+    detail::error_check("ShaderOp2EXT"sv, check_errors);
 }
 
 /*!
@@ -745,7 +810,12 @@ STATICINLINE void shader_op2(
  * \return void
  */
 STATICINLINE void shader_op3(
-    group::vertex_shader_op_ext op, u32 res, u32 arg1, u32 arg2, u32 arg3)
+    group::vertex_shader_op_ext op,
+    u32                         res,
+    u32                         arg1,
+    u32                         arg2,
+    u32                         arg3,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -753,7 +823,7 @@ STATICINLINE void shader_op3(
         GLW_FPTR_CHECK(ShaderOp3EXT)
     }
     glShaderOp3EXT(static_cast<GLenum>(op), res, arg1, arg2, arg3);
-    detail::error_check("ShaderOp3EXT"sv);
+    detail::error_check("ShaderOp3EXT"sv, check_errors);
 }
 
 /*!
@@ -772,7 +842,8 @@ STATICINLINE void swizzle(
     group::vertex_shader_coord_out_ext outX,
     group::vertex_shader_coord_out_ext outY,
     group::vertex_shader_coord_out_ext outZ,
-    group::vertex_shader_coord_out_ext outW)
+    group::vertex_shader_coord_out_ext outW,
+    error_check                        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -786,7 +857,7 @@ STATICINLINE void swizzle(
         static_cast<GLenum>(outY),
         static_cast<GLenum>(outZ),
         static_cast<GLenum>(outW));
-    detail::error_check("SwizzleEXT"sv);
+    detail::error_check("SwizzleEXT"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -800,7 +871,11 @@ requires(concepts::span<span_const_void>)
  * \return void
  */
 STATICINLINE void variant_pointer(
-    u32 id, group::scalar_type type, u32 stride, span_const_void const& addr)
+    u32                    id,
+    group::scalar_type     type,
+    u32                    stride,
+    span_const_void const& addr,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -812,7 +887,7 @@ STATICINLINE void variant_pointer(
         static_cast<GLenum>(type),
         stride,
         addr.size() ? reinterpret_cast<const void*>(addr.data()) : nullptr);
-    detail::error_check("VariantPointerEXT"sv);
+    detail::error_check("VariantPointerEXT"sv, check_errors);
 }
 
 template<class span_const_i8>
@@ -827,7 +902,10 @@ requires(
  * \param addr const GLbyte *
  * \return void
  */
-STATICINLINE void variantbv(u32 id, span_const_i8 const& addr)
+STATICINLINE void variantbv(
+    u32                  id,
+    span_const_i8 const& addr,
+    error_check          check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -837,7 +915,7 @@ STATICINLINE void variantbv(u32 id, span_const_i8 const& addr)
     glVariantbvEXT(
         id,
         addr.size() ? reinterpret_cast<const GLbyte*>(addr.data()) : nullptr);
-    detail::error_check("VariantbvEXT"sv);
+    detail::error_check("VariantbvEXT"sv, check_errors);
 }
 
 template<class span_const_f64>
@@ -852,7 +930,10 @@ requires(
  * \param addr const GLdouble *
  * \return void
  */
-STATICINLINE void variantdv(u32 id, span_const_f64 const& addr)
+STATICINLINE void variantdv(
+    u32                   id,
+    span_const_f64 const& addr,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -862,7 +943,7 @@ STATICINLINE void variantdv(u32 id, span_const_f64 const& addr)
     glVariantdvEXT(
         id,
         addr.size() ? reinterpret_cast<const GLdouble*>(addr.data()) : nullptr);
-    detail::error_check("VariantdvEXT"sv);
+    detail::error_check("VariantdvEXT"sv, check_errors);
 }
 
 template<class span_const_f32>
@@ -877,7 +958,10 @@ requires(
  * \param addr const GLfloat *
  * \return void
  */
-STATICINLINE void variantfv(u32 id, span_const_f32 const& addr)
+STATICINLINE void variantfv(
+    u32                   id,
+    span_const_f32 const& addr,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -887,7 +971,7 @@ STATICINLINE void variantfv(u32 id, span_const_f32 const& addr)
     glVariantfvEXT(
         id,
         addr.size() ? reinterpret_cast<const GLfloat*>(addr.data()) : nullptr);
-    detail::error_check("VariantfvEXT"sv);
+    detail::error_check("VariantfvEXT"sv, check_errors);
 }
 
 template<class span_const_i32>
@@ -902,7 +986,10 @@ requires(
  * \param addr const GLint *
  * \return void
  */
-STATICINLINE void variantiv(u32 id, span_const_i32 const& addr)
+STATICINLINE void variantiv(
+    u32                   id,
+    span_const_i32 const& addr,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -912,7 +999,7 @@ STATICINLINE void variantiv(u32 id, span_const_i32 const& addr)
     glVariantivEXT(
         id,
         addr.size() ? reinterpret_cast<const GLint*>(addr.data()) : nullptr);
-    detail::error_check("VariantivEXT"sv);
+    detail::error_check("VariantivEXT"sv, check_errors);
 }
 
 template<class span_const_i16>
@@ -927,7 +1014,10 @@ requires(
  * \param addr const GLshort *
  * \return void
  */
-STATICINLINE void variantsv(u32 id, span_const_i16 const& addr)
+STATICINLINE void variantsv(
+    u32                   id,
+    span_const_i16 const& addr,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -937,7 +1027,7 @@ STATICINLINE void variantsv(u32 id, span_const_i16 const& addr)
     glVariantsvEXT(
         id,
         addr.size() ? reinterpret_cast<const GLshort*>(addr.data()) : nullptr);
-    detail::error_check("VariantsvEXT"sv);
+    detail::error_check("VariantsvEXT"sv, check_errors);
 }
 
 template<class span_const_u8>
@@ -952,7 +1042,10 @@ requires(
  * \param addr const GLubyte *
  * \return void
  */
-STATICINLINE void variantubv(u32 id, span_const_u8 const& addr)
+STATICINLINE void variantubv(
+    u32                  id,
+    span_const_u8 const& addr,
+    error_check          check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -962,7 +1055,7 @@ STATICINLINE void variantubv(u32 id, span_const_u8 const& addr)
     glVariantubvEXT(
         id,
         addr.size() ? reinterpret_cast<const GLubyte*>(addr.data()) : nullptr);
-    detail::error_check("VariantubvEXT"sv);
+    detail::error_check("VariantubvEXT"sv, check_errors);
 }
 
 template<class span_const_u32>
@@ -977,7 +1070,10 @@ requires(
  * \param addr const GLuint *
  * \return void
  */
-STATICINLINE void variantuiv(u32 id, span_const_u32 const& addr)
+STATICINLINE void variantuiv(
+    u32                   id,
+    span_const_u32 const& addr,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -987,7 +1083,7 @@ STATICINLINE void variantuiv(u32 id, span_const_u32 const& addr)
     glVariantuivEXT(
         id,
         addr.size() ? reinterpret_cast<const GLuint*>(addr.data()) : nullptr);
-    detail::error_check("VariantuivEXT"sv);
+    detail::error_check("VariantuivEXT"sv, check_errors);
 }
 
 template<class span_const_u16>
@@ -1002,7 +1098,10 @@ requires(
  * \param addr const GLushort *
  * \return void
  */
-STATICINLINE void variantusv(u32 id, span_const_u16 const& addr)
+STATICINLINE void variantusv(
+    u32                   id,
+    span_const_u16 const& addr,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1012,7 +1111,7 @@ STATICINLINE void variantusv(u32 id, span_const_u16 const& addr)
     glVariantusvEXT(
         id,
         addr.size() ? reinterpret_cast<const GLushort*>(addr.data()) : nullptr);
-    detail::error_check("VariantusvEXT"sv);
+    detail::error_check("VariantusvEXT"sv, check_errors);
 }
 
 /*!
@@ -1031,7 +1130,8 @@ STATICINLINE void write_mask(
     group::vertex_shader_write_mask_ext outX,
     group::vertex_shader_write_mask_ext outY,
     group::vertex_shader_write_mask_ext outZ,
-    group::vertex_shader_write_mask_ext outW)
+    group::vertex_shader_write_mask_ext outW,
+    error_check                         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1045,7 +1145,7 @@ STATICINLINE void write_mask(
         static_cast<GLenum>(outY),
         static_cast<GLenum>(outZ),
         static_cast<GLenum>(outW));
-    detail::error_check("WriteMaskEXT"sv);
+    detail::error_check("WriteMaskEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::vertex_shader

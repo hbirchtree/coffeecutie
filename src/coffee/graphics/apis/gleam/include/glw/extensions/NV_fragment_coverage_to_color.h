@@ -12,7 +12,8 @@ constexpr u32 fragment_coverage_color    = 0x92DE;
  * \param color GLuint
  * \return void
  */
-STATICINLINE void fragment_coverage_color(u32 color)
+STATICINLINE void fragment_coverage_color(
+    u32 color, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -20,7 +21,7 @@ STATICINLINE void fragment_coverage_color(u32 color)
         GLW_FPTR_CHECK(FragmentCoverageColorNV)
     }
     glFragmentCoverageColorNV(color);
-    detail::error_check("FragmentCoverageColorNV"sv);
+    detail::error_check("FragmentCoverageColorNV"sv, check_errors);
 }
 
 } // namespace gl::nv::fragment_coverage_to_color

@@ -18,7 +18,9 @@ namespace values {
  * \return void
  */
 STATICINLINE void point_parameter(
-    group::point_parameter_name_arb pname, f32 param)
+    group::point_parameter_name_arb pname,
+    f32                             param,
+    error_check                     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -26,7 +28,7 @@ STATICINLINE void point_parameter(
         GLW_FPTR_CHECK(PointParameterfEXT)
     }
     glPointParameterfEXT(static_cast<GLenum>(pname), param);
-    detail::error_check("PointParameterfEXT"sv);
+    detail::error_check("PointParameterfEXT"sv, check_errors);
 }
 
 template<class span_const_f32>
@@ -42,7 +44,9 @@ requires(
  * \return void
  */
 STATICINLINE void point_parameter(
-    group::point_parameter_name_arb pname, span_const_f32 const& params)
+    group::point_parameter_name_arb pname,
+    span_const_f32 const&           params,
+    error_check                     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -53,7 +57,7 @@ STATICINLINE void point_parameter(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<const GLfloat*>(params.data())
                       : nullptr);
-    detail::error_check("PointParameterfvEXT"sv);
+    detail::error_check("PointParameterfvEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::point_parameters

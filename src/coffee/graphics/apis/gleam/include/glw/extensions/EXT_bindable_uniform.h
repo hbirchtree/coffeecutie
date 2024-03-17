@@ -17,7 +17,8 @@ constexpr u32 uniform_buffer_binding         = 0x8DEF;
  * \param location GLint
  * \return GLint
  */
-STATICINLINE GLint get_uniform_buffer_size(u32 program, i32 location)
+STATICINLINE GLint get_uniform_buffer_size(
+    u32 program, i32 location, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -30,7 +31,7 @@ STATICINLINE GLint get_uniform_buffer_size(u32 program, i32 location)
 #endif
     }
     auto out = glGetUniformBufferSizeEXT(program, location);
-    detail::error_check("GetUniformBufferSizeEXT"sv);
+    detail::error_check("GetUniformBufferSizeEXT"sv, check_errors);
     return out;
 }
 
@@ -40,7 +41,8 @@ STATICINLINE GLint get_uniform_buffer_size(u32 program, i32 location)
  * \param location GLint
  * \return BufferOffset
  */
-STATICINLINE GLintptr get_uniform_offset(u32 program, i32 location)
+STATICINLINE GLintptr get_uniform_offset(
+    u32 program, i32 location, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -53,7 +55,7 @@ STATICINLINE GLintptr get_uniform_offset(u32 program, i32 location)
 #endif
     }
     auto out = glGetUniformOffsetEXT(program, location);
-    detail::error_check("GetUniformOffsetEXT"sv);
+    detail::error_check("GetUniformOffsetEXT"sv, check_errors);
     return out;
 }
 
@@ -64,7 +66,11 @@ STATICINLINE GLintptr get_uniform_offset(u32 program, i32 location)
  * \param buffer GLuint
  * \return void
  */
-STATICINLINE void uniform_buffer(u32 program, i32 location, u32 buffer)
+STATICINLINE void uniform_buffer(
+    u32         program,
+    i32         location,
+    u32         buffer,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -82,7 +88,7 @@ STATICINLINE void uniform_buffer(u32 program, i32 location, u32 buffer)
 #endif
     }
     glUniformBufferEXT(program, location, buffer);
-    detail::error_check("UniformBufferEXT"sv);
+    detail::error_check("UniformBufferEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::bindable_uniform

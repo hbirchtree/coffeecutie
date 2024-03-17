@@ -24,7 +24,8 @@ constexpr u32 coverage_modulation_table_size        = 0x9333;
  * \param components GLenum
  * \return void
  */
-STATICINLINE void coverage_modulation(GLenum components)
+STATICINLINE void coverage_modulation(
+    GLenum components, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -32,7 +33,7 @@ STATICINLINE void coverage_modulation(GLenum components)
         GLW_FPTR_CHECK(CoverageModulationNV)
     }
     glCoverageModulationNV(components);
-    detail::error_check("CoverageModulationNV"sv);
+    detail::error_check("CoverageModulationNV"sv, check_errors);
 }
 
 template<class span_const_f32>
@@ -47,7 +48,8 @@ requires(
  * \param v const GLfloat *
  * \return void
  */
-STATICINLINE void coverage_modulation_table(span_const_f32 const& v)
+STATICINLINE void coverage_modulation_table(
+    span_const_f32 const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -57,7 +59,7 @@ STATICINLINE void coverage_modulation_table(span_const_f32 const& v)
     glCoverageModulationTableNV(
         v.size(),
         v.size() ? reinterpret_cast<const GLfloat*>(v.data()) : nullptr);
-    detail::error_check("CoverageModulationTableNV"sv);
+    detail::error_check("CoverageModulationTableNV"sv, check_errors);
 }
 
 template<class span_f32>
@@ -71,7 +73,8 @@ requires(
  * \param v GLfloat *
  * \return void
  */
-STATICINLINE void get_coverage_modulation_table(i32 bufSize, span_f32 v)
+STATICINLINE void get_coverage_modulation_table(
+    i32 bufSize, span_f32 v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -80,7 +83,7 @@ STATICINLINE void get_coverage_modulation_table(i32 bufSize, span_f32 v)
     }
     glGetCoverageModulationTableNV(
         bufSize, v.size() ? reinterpret_cast<GLfloat*>(v.data()) : nullptr);
-    detail::error_check("GetCoverageModulationTableNV"sv);
+    detail::error_check("GetCoverageModulationTableNV"sv, check_errors);
 }
 
 /*!
@@ -89,7 +92,10 @@ STATICINLINE void get_coverage_modulation_table(i32 bufSize, span_f32 v)
  * \param fixedsamplelocations GLboolean
  * \return void
  */
-STATICINLINE void raster_samples_ext(u32 samples, bool fixedsamplelocations)
+STATICINLINE void raster_samples_ext(
+    u32         samples,
+    bool        fixedsamplelocations,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -97,7 +103,7 @@ STATICINLINE void raster_samples_ext(u32 samples, bool fixedsamplelocations)
         GLW_FPTR_CHECK(RasterSamplesEXT)
     }
     glRasterSamplesEXT(samples, fixedsamplelocations);
-    detail::error_check("RasterSamplesEXT"sv);
+    detail::error_check("RasterSamplesEXT"sv, check_errors);
 }
 
 } // namespace gl::nv::framebuffer_mixed_samples

@@ -10,7 +10,8 @@ namespace values {
  * \param id GLuint
  * \return void
  */
-STATICINLINE void begin_conditional_render(u32 id)
+STATICINLINE void begin_conditional_render(
+    u32 id, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -18,7 +19,7 @@ STATICINLINE void begin_conditional_render(u32 id)
         GLW_FPTR_CHECK(BeginConditionalRenderNVX)
     }
     glBeginConditionalRenderNVX(id);
-    detail::error_check("BeginConditionalRenderNVX"sv);
+    detail::error_check("BeginConditionalRenderNVX"sv, check_errors);
 }
 
 /*!
@@ -26,7 +27,8 @@ STATICINLINE void begin_conditional_render(u32 id)
 
  * \return void
  */
-STATICINLINE void end_conditional_render()
+STATICINLINE void end_conditional_render(
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -34,7 +36,7 @@ STATICINLINE void end_conditional_render()
         GLW_FPTR_CHECK(EndConditionalRenderNVX)
     }
     glEndConditionalRenderNVX();
-    detail::error_check("EndConditionalRenderNVX"sv);
+    detail::error_check("EndConditionalRenderNVX"sv, check_errors);
 }
 
 } // namespace gl::nvx::conditional_render

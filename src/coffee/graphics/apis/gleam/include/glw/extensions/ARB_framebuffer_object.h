@@ -59,7 +59,9 @@ constexpr u32 max_samples          = 0x8D57;
  * \return void
  */
 STATICINLINE void bind_framebuffer(
-    group::framebuffer_target target, u32 framebuffer)
+    group::framebuffer_target target,
+    u32                       framebuffer,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -72,7 +74,7 @@ STATICINLINE void bind_framebuffer(
 #endif
     }
     glBindFramebuffer(static_cast<GLenum>(target), framebuffer);
-    detail::error_check("BindFramebuffer"sv);
+    detail::error_check("BindFramebuffer"sv, check_errors);
 }
 
 /*!
@@ -82,7 +84,9 @@ STATICINLINE void bind_framebuffer(
  * \return void
  */
 STATICINLINE void bind_renderbuffer(
-    group::renderbuffer_target target, u32 renderbuffer)
+    group::renderbuffer_target target,
+    u32                        renderbuffer,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -95,7 +99,7 @@ STATICINLINE void bind_renderbuffer(
 #endif
     }
     glBindRenderbuffer(static_cast<GLenum>(target), renderbuffer);
-    detail::error_check("BindRenderbuffer"sv);
+    detail::error_check("BindRenderbuffer"sv, check_errors);
 }
 
 /*!
@@ -122,7 +126,8 @@ STATICINLINE void blit_framebuffer(
     i32                            dstX1,
     i32                            dstY1,
     group::clear_buffer_mask       mask,
-    group::blit_framebuffer_filter filter)
+    group::blit_framebuffer_filter filter,
+    error_check                    check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -140,7 +145,7 @@ STATICINLINE void blit_framebuffer(
         dstY1,
         static_cast<GLenum>(mask),
         static_cast<GLenum>(filter));
-    detail::error_check("BlitFramebuffer"sv);
+    detail::error_check("BlitFramebuffer"sv, check_errors);
 }
 
 /*!
@@ -149,7 +154,8 @@ STATICINLINE void blit_framebuffer(
  * \return FramebufferStatus
  */
 STATICINLINE group::framebuffer_status check_framebuffer_status(
-    group::framebuffer_target target)
+    group::framebuffer_target target,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -157,7 +163,7 @@ STATICINLINE group::framebuffer_status check_framebuffer_status(
         GLW_FPTR_CHECK(CheckFramebufferStatus)
     }
     auto out = glCheckFramebufferStatus(static_cast<GLenum>(target));
-    detail::error_check("CheckFramebufferStatus"sv);
+    detail::error_check("CheckFramebufferStatus"sv, check_errors);
     return static_cast<group::framebuffer_status>(out);
 }
 
@@ -173,7 +179,9 @@ requires(
  * \param framebuffers const GLuint *
  * \return void
  */
-STATICINLINE void delete_framebuffers(span_const_u32 const& framebuffers)
+STATICINLINE void delete_framebuffers(
+    span_const_u32 const& framebuffers,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -185,7 +193,7 @@ STATICINLINE void delete_framebuffers(span_const_u32 const& framebuffers)
         framebuffers.size()
             ? reinterpret_cast<const GLuint*>(framebuffers.data())
             : nullptr);
-    detail::error_check("DeleteFramebuffers"sv);
+    detail::error_check("DeleteFramebuffers"sv, check_errors);
 }
 
 template<class span_const_u32>
@@ -200,7 +208,9 @@ requires(
  * \param renderbuffers const GLuint *
  * \return void
  */
-STATICINLINE void delete_renderbuffers(span_const_u32 const& renderbuffers)
+STATICINLINE void delete_renderbuffers(
+    span_const_u32 const& renderbuffers,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -212,7 +222,7 @@ STATICINLINE void delete_renderbuffers(span_const_u32 const& renderbuffers)
         renderbuffers.size()
             ? reinterpret_cast<const GLuint*>(renderbuffers.data())
             : nullptr);
-    detail::error_check("DeleteRenderbuffers"sv);
+    detail::error_check("DeleteRenderbuffers"sv, check_errors);
 }
 
 /*!
@@ -227,7 +237,8 @@ STATICINLINE void framebuffer_renderbuffer(
     group::framebuffer_target     target,
     group::framebuffer_attachment attachment,
     group::renderbuffer_target    renderbuffertarget,
-    u32                           renderbuffer)
+    u32                           renderbuffer,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -244,7 +255,7 @@ STATICINLINE void framebuffer_renderbuffer(
         static_cast<GLenum>(attachment),
         static_cast<GLenum>(renderbuffertarget),
         renderbuffer);
-    detail::error_check("FramebufferRenderbuffer"sv);
+    detail::error_check("FramebufferRenderbuffer"sv, check_errors);
 }
 
 /*!
@@ -261,7 +272,8 @@ STATICINLINE void framebuffer_texture_1d(
     group::framebuffer_attachment attachment,
     group::texture_target         textarget,
     u32                           texture,
-    i32                           level)
+    i32                           level,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -279,7 +291,7 @@ STATICINLINE void framebuffer_texture_1d(
         static_cast<GLenum>(textarget),
         texture,
         level);
-    detail::error_check("FramebufferTexture1D"sv);
+    detail::error_check("FramebufferTexture1D"sv, check_errors);
 }
 
 /*!
@@ -296,7 +308,8 @@ STATICINLINE void framebuffer_texture_2d(
     group::framebuffer_attachment attachment,
     group::texture_target         textarget,
     u32                           texture,
-    i32                           level)
+    i32                           level,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -314,7 +327,7 @@ STATICINLINE void framebuffer_texture_2d(
         static_cast<GLenum>(textarget),
         texture,
         level);
-    detail::error_check("FramebufferTexture2D"sv);
+    detail::error_check("FramebufferTexture2D"sv, check_errors);
 }
 
 /*!
@@ -333,7 +346,8 @@ STATICINLINE void framebuffer_texture_3d(
     group::texture_target         textarget,
     u32                           texture,
     i32                           level,
-    i32                           zoffset)
+    i32                           zoffset,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -352,7 +366,7 @@ STATICINLINE void framebuffer_texture_3d(
         texture,
         level,
         zoffset);
-    detail::error_check("FramebufferTexture3D"sv);
+    detail::error_check("FramebufferTexture3D"sv, check_errors);
 }
 
 /*!
@@ -369,7 +383,8 @@ STATICINLINE void framebuffer_texture_layer(
     group::framebuffer_attachment attachment,
     u32                           texture,
     i32                           level,
-    i32                           layer)
+    i32                           layer,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -387,7 +402,7 @@ STATICINLINE void framebuffer_texture_layer(
         texture,
         level,
         layer);
-    detail::error_check("FramebufferTextureLayer"sv);
+    detail::error_check("FramebufferTextureLayer"sv, check_errors);
 }
 
 template<class span_u32>
@@ -401,7 +416,8 @@ requires(
  * \param framebuffers GLuint *
  * \return void
  */
-STATICINLINE void gen_framebuffers(span_u32 framebuffers)
+STATICINLINE void gen_framebuffers(
+    span_u32 framebuffers, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -412,7 +428,7 @@ STATICINLINE void gen_framebuffers(span_u32 framebuffers)
         framebuffers.size(),
         framebuffers.size() ? reinterpret_cast<GLuint*>(framebuffers.data())
                             : nullptr);
-    detail::error_check("GenFramebuffers"sv);
+    detail::error_check("GenFramebuffers"sv, check_errors);
 }
 
 template<class span_u32>
@@ -426,7 +442,8 @@ requires(
  * \param renderbuffers GLuint *
  * \return void
  */
-STATICINLINE void gen_renderbuffers(span_u32 renderbuffers)
+STATICINLINE void gen_renderbuffers(
+    span_u32 renderbuffers, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -437,7 +454,7 @@ STATICINLINE void gen_renderbuffers(span_u32 renderbuffers)
         renderbuffers.size(),
         renderbuffers.size() ? reinterpret_cast<GLuint*>(renderbuffers.data())
                              : nullptr);
-    detail::error_check("GenRenderbuffers"sv);
+    detail::error_check("GenRenderbuffers"sv, check_errors);
 }
 
 /*!
@@ -445,7 +462,8 @@ STATICINLINE void gen_renderbuffers(span_u32 renderbuffers)
  * \param target GLenum
  * \return void
  */
-STATICINLINE void generate_mipmap(group::texture_target target)
+STATICINLINE void generate_mipmap(
+    group::texture_target target, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -453,7 +471,7 @@ STATICINLINE void generate_mipmap(group::texture_target target)
         GLW_FPTR_CHECK(GenerateMipmap)
     }
     glGenerateMipmap(static_cast<GLenum>(target));
-    detail::error_check("GenerateMipmap"sv);
+    detail::error_check("GenerateMipmap"sv, check_errors);
 }
 
 template<class span_i32>
@@ -473,7 +491,8 @@ STATICINLINE void get_framebuffer_attachment_parameter(
     group::framebuffer_target                    target,
     group::framebuffer_attachment                attachment,
     group::framebuffer_attachment_parameter_name pname,
-    span_i32                                     params)
+    span_i32                                     params,
+    error_check                                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -485,7 +504,7 @@ STATICINLINE void get_framebuffer_attachment_parameter(
         static_cast<GLenum>(attachment),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetFramebufferAttachmentParameteriv"sv);
+    detail::error_check("GetFramebufferAttachmentParameteriv"sv, check_errors);
 }
 
 template<class span_i32>
@@ -503,7 +522,8 @@ requires(
 STATICINLINE void get_renderbuffer_parameter(
     group::renderbuffer_target         target,
     group::renderbuffer_parameter_name pname,
-    span_i32                           params)
+    span_i32                           params,
+    error_check                        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -514,7 +534,7 @@ STATICINLINE void get_renderbuffer_parameter(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetRenderbufferParameteriv"sv);
+    detail::error_check("GetRenderbufferParameteriv"sv, check_errors);
 }
 
 /*!
@@ -522,7 +542,8 @@ STATICINLINE void get_renderbuffer_parameter(
  * \param framebuffer GLuint
  * \return Boolean
  */
-STATICINLINE bool is_framebuffer(u32 framebuffer)
+STATICINLINE bool is_framebuffer(
+    u32 framebuffer, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -535,7 +556,7 @@ STATICINLINE bool is_framebuffer(u32 framebuffer)
 #endif
     }
     auto out = glIsFramebuffer(framebuffer);
-    detail::error_check("IsFramebuffer"sv);
+    detail::error_check("IsFramebuffer"sv, check_errors);
     return out == GL_TRUE ? true : false;
 }
 
@@ -544,7 +565,8 @@ STATICINLINE bool is_framebuffer(u32 framebuffer)
  * \param renderbuffer GLuint
  * \return Boolean
  */
-STATICINLINE bool is_renderbuffer(u32 renderbuffer)
+STATICINLINE bool is_renderbuffer(
+    u32 renderbuffer, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -557,7 +579,7 @@ STATICINLINE bool is_renderbuffer(u32 renderbuffer)
 #endif
     }
     auto out = glIsRenderbuffer(renderbuffer);
-    detail::error_check("IsRenderbuffer"sv);
+    detail::error_check("IsRenderbuffer"sv, check_errors);
     return out == GL_TRUE ? true : false;
 }
 
@@ -574,7 +596,8 @@ requires(concepts::size_2d<size_2_i32, i32>)
 STATICINLINE void renderbuffer_storage(
     group::renderbuffer_target target,
     group::internal_format     internalformat,
-    size_2_i32 const&          width)
+    size_2_i32 const&          width,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -586,7 +609,7 @@ STATICINLINE void renderbuffer_storage(
         static_cast<GLenum>(internalformat),
         width[0],
         width[1]);
-    detail::error_check("RenderbufferStorage"sv);
+    detail::error_check("RenderbufferStorage"sv, check_errors);
 }
 
 template<class size_2_i32>
@@ -604,7 +627,8 @@ STATICINLINE void renderbuffer_storage_multisample(
     group::renderbuffer_target target,
     i32                        samples,
     group::internal_format     internalformat,
-    size_2_i32 const&          width)
+    size_2_i32 const&          width,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -617,7 +641,7 @@ STATICINLINE void renderbuffer_storage_multisample(
         static_cast<GLenum>(internalformat),
         width[0],
         width[1]);
-    detail::error_check("RenderbufferStorageMultisample"sv);
+    detail::error_check("RenderbufferStorageMultisample"sv, check_errors);
 }
 
 } // namespace gl::arb::framebuffer_object

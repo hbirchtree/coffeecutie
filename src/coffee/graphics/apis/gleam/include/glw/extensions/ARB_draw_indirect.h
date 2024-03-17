@@ -21,7 +21,9 @@ constexpr u32 draw_indirect_buffer_binding = 0x8F43;
  * \return void
  */
 STATICINLINE void draw_arrays_indirect(
-    group::primitive_type mode, intptr_t indirect)
+    group::primitive_type mode,
+    intptr_t              indirect,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -30,7 +32,7 @@ STATICINLINE void draw_arrays_indirect(
     }
     glDrawArraysIndirect(
         static_cast<GLenum>(mode), reinterpret_cast<const void*>(indirect));
-    detail::error_check("DrawArraysIndirect"sv);
+    detail::error_check("DrawArraysIndirect"sv, check_errors);
 }
 
 /*!
@@ -43,7 +45,8 @@ STATICINLINE void draw_arrays_indirect(
 STATICINLINE void draw_elements_indirect(
     group::primitive_type     mode,
     group::draw_elements_type type,
-    intptr_t                  indirect)
+    intptr_t                  indirect,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -54,7 +57,7 @@ STATICINLINE void draw_elements_indirect(
         static_cast<GLenum>(mode),
         static_cast<GLenum>(type),
         reinterpret_cast<const void*>(indirect));
-    detail::error_check("DrawElementsIndirect"sv);
+    detail::error_check("DrawElementsIndirect"sv, check_errors);
 }
 
 } // namespace gl::arb::draw_indirect

@@ -16,7 +16,10 @@ constexpr u32 samples_passed         = 0x8914;
  * \param id GLuint
  * \return void
  */
-STATICINLINE void begin_query(group::query_target target, u32 id)
+STATICINLINE void begin_query(
+    group::query_target target,
+    u32                 id,
+    error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -24,7 +27,7 @@ STATICINLINE void begin_query(group::query_target target, u32 id)
         GLW_FPTR_CHECK(BeginQueryARB)
     }
     glBeginQueryARB(static_cast<GLenum>(target), id);
-    detail::error_check("BeginQueryARB"sv);
+    detail::error_check("BeginQueryARB"sv, check_errors);
 }
 
 template<class span_const_u32>
@@ -39,7 +42,8 @@ requires(
  * \param ids const GLuint *
  * \return void
  */
-STATICINLINE void delete_queries(span_const_u32 const& ids)
+STATICINLINE void delete_queries(
+    span_const_u32 const& ids, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -49,7 +53,7 @@ STATICINLINE void delete_queries(span_const_u32 const& ids)
     glDeleteQueriesARB(
         ids.size(),
         ids.size() ? reinterpret_cast<const GLuint*>(ids.data()) : nullptr);
-    detail::error_check("DeleteQueriesARB"sv);
+    detail::error_check("DeleteQueriesARB"sv, check_errors);
 }
 
 /*!
@@ -57,7 +61,8 @@ STATICINLINE void delete_queries(span_const_u32 const& ids)
  * \param target GLenum
  * \return void
  */
-STATICINLINE void end_query(group::query_target target)
+STATICINLINE void end_query(
+    group::query_target target, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -65,7 +70,7 @@ STATICINLINE void end_query(group::query_target target)
         GLW_FPTR_CHECK(EndQueryARB)
     }
     glEndQueryARB(static_cast<GLenum>(target));
-    detail::error_check("EndQueryARB"sv);
+    detail::error_check("EndQueryARB"sv, check_errors);
 }
 
 template<class span_u32>
@@ -79,7 +84,8 @@ requires(
  * \param ids GLuint *
  * \return void
  */
-STATICINLINE void gen_queries(span_u32 ids)
+STATICINLINE void gen_queries(
+    span_u32 ids, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -89,7 +95,7 @@ STATICINLINE void gen_queries(span_u32 ids)
     glGenQueriesARB(
         ids.size(),
         ids.size() ? reinterpret_cast<GLuint*>(ids.data()) : nullptr);
-    detail::error_check("GenQueriesARB"sv);
+    detail::error_check("GenQueriesARB"sv, check_errors);
 }
 
 template<class span_i32>
@@ -105,7 +111,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_query_objectiv(
-    u32 id, group::query_object_parameter_name pname, span_i32 params)
+    u32                                id,
+    group::query_object_parameter_name pname,
+    span_i32                           params,
+    error_check                        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -116,7 +125,7 @@ STATICINLINE void get_query_objectiv(
         id,
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetQueryObjectivARB"sv);
+    detail::error_check("GetQueryObjectivARB"sv, check_errors);
 }
 
 template<class span_u32>
@@ -132,7 +141,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_query_objectuiv(
-    u32 id, group::query_object_parameter_name pname, span_u32 params)
+    u32                                id,
+    group::query_object_parameter_name pname,
+    span_u32                           params,
+    error_check                        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -143,7 +155,7 @@ STATICINLINE void get_query_objectuiv(
         id,
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLuint*>(params.data()) : nullptr);
-    detail::error_check("GetQueryObjectuivARB"sv);
+    detail::error_check("GetQueryObjectuivARB"sv, check_errors);
 }
 
 template<class span_i32>
@@ -161,7 +173,8 @@ requires(
 STATICINLINE void get_queryiv(
     group::query_target         target,
     group::query_parameter_name pname,
-    span_i32                    params)
+    span_i32                    params,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -172,7 +185,7 @@ STATICINLINE void get_queryiv(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetQueryivARB"sv);
+    detail::error_check("GetQueryivARB"sv, check_errors);
 }
 
 /*!
@@ -180,7 +193,7 @@ STATICINLINE void get_queryiv(
  * \param id GLuint
  * \return Boolean
  */
-STATICINLINE bool is_query(u32 id)
+STATICINLINE bool is_query(u32 id, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -188,7 +201,7 @@ STATICINLINE bool is_query(u32 id)
         GLW_FPTR_CHECK(IsQueryARB)
     }
     auto out = glIsQueryARB(id);
-    detail::error_check("IsQueryARB"sv);
+    detail::error_check("IsQueryARB"sv, check_errors);
     return out == GL_TRUE ? true : false;
 }
 

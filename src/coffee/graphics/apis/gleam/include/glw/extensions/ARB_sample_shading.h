@@ -12,7 +12,8 @@ constexpr u32 min_sample_shading_value = 0x8C37;
  * \param value GLfloat
  * \return void
  */
-STATICINLINE void min_sample_shading(f32 value)
+STATICINLINE void min_sample_shading(
+    f32 value, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -20,7 +21,7 @@ STATICINLINE void min_sample_shading(f32 value)
         GLW_FPTR_CHECK(MinSampleShadingARB)
     }
     glMinSampleShadingARB(value);
-    detail::error_check("MinSampleShadingARB"sv);
+    detail::error_check("MinSampleShadingARB"sv, check_errors);
 }
 
 } // namespace gl::arb::sample_shading

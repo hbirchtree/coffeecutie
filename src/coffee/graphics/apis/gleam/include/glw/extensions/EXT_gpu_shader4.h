@@ -44,7 +44,10 @@ constexpr u32 unsigned_int_sampler_buffer   = 0x8DD8;
  * \return void
  */
 STATICINLINE void bind_frag_data_location(
-    u32 program, u32 color, std::string_view const& name)
+    u32                     program,
+    u32                     color,
+    std::string_view const& name,
+    error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -57,7 +60,7 @@ STATICINLINE void bind_frag_data_location(
 #endif
     }
     glBindFragDataLocationEXT(program, color, name.data());
-    detail::error_check("BindFragDataLocationEXT"sv);
+    detail::error_check("BindFragDataLocationEXT"sv, check_errors);
 }
 
 /*!
@@ -66,8 +69,10 @@ STATICINLINE void bind_frag_data_location(
  * \param name const GLchar *
  * \return GLint
  */
-STATICINLINE GLint
-get_frag_data_location(u32 program, std::string_view const& name)
+STATICINLINE GLint get_frag_data_location(
+    u32                     program,
+    std::string_view const& name,
+    error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -80,7 +85,7 @@ get_frag_data_location(u32 program, std::string_view const& name)
 #endif
     }
     auto out = glGetFragDataLocationEXT(program, name.data());
-    detail::error_check("GetFragDataLocationEXT"sv);
+    detail::error_check("GetFragDataLocationEXT"sv, check_errors);
     return out;
 }
 
@@ -96,7 +101,11 @@ requires(
  * \param params GLuint *
  * \return void
  */
-STATICINLINE void get_uniformuiv(u32 program, i32 location, span_u32 params)
+STATICINLINE void get_uniformuiv(
+    u32         program,
+    i32         location,
+    span_u32    params,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -112,7 +121,7 @@ STATICINLINE void get_uniformuiv(u32 program, i32 location, span_u32 params)
         program,
         location,
         params.size() ? reinterpret_cast<GLuint*>(params.data()) : nullptr);
-    detail::error_check("GetUniformuivEXT"sv);
+    detail::error_check("GetUniformuivEXT"sv, check_errors);
 }
 
 /*!
@@ -121,7 +130,8 @@ STATICINLINE void get_uniformuiv(u32 program, i32 location, span_u32 params)
  * \param v0 GLuint
  * \return void
  */
-STATICINLINE void uniform(i32 location, u32 v0)
+STATICINLINE void uniform(
+    i32 location, u32 v0, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -129,7 +139,7 @@ STATICINLINE void uniform(i32 location, u32 v0)
         GLW_FPTR_CHECK(Uniform1uiEXT)
     }
     glUniform1uiEXT(location, v0);
-    detail::error_check("Uniform1uiEXT"sv);
+    detail::error_check("Uniform1uiEXT"sv, check_errors);
 }
 
 template<class span_const_u32>
@@ -145,7 +155,10 @@ requires(
  * \param value const GLuint *
  * \return void
  */
-STATICINLINE void uniform(i32 location, span_const_u32 const& value)
+STATICINLINE void uniform(
+    i32                   location,
+    span_const_u32 const& value,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -154,7 +167,7 @@ STATICINLINE void uniform(i32 location, span_const_u32 const& value)
     }
     glUniform1uivEXT(
         location, value.size(), reinterpret_cast<const GLuint*>(value.data()));
-    detail::error_check("Uniform1uivEXT"sv);
+    detail::error_check("Uniform1uivEXT"sv, check_errors);
 }
 
 template<class vec_2_u32>
@@ -166,7 +179,10 @@ requires(concepts::vector<vec_2_u32, u32, 2>)
  * \param v1 GLuint
  * \return void
  */
-STATICINLINE void uniform(i32 location, vec_2_u32 const& v0)
+STATICINLINE void uniform(
+    i32              location,
+    vec_2_u32 const& v0,
+    error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -174,7 +190,7 @@ STATICINLINE void uniform(i32 location, vec_2_u32 const& v0)
         GLW_FPTR_CHECK(Uniform2uiEXT)
     }
     glUniform2uiEXT(location, v0[0], v0[1]);
-    detail::error_check("Uniform2uiEXT"sv);
+    detail::error_check("Uniform2uiEXT"sv, check_errors);
 }
 
 template<class span_const_vec_2_u32>
@@ -188,7 +204,10 @@ requires(
  * \param value const GLuint *
  * \return void
  */
-STATICINLINE void uniform(i32 location, span_const_vec_2_u32 const& value)
+STATICINLINE void uniform(
+    i32                         location,
+    span_const_vec_2_u32 const& value,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -197,7 +216,7 @@ STATICINLINE void uniform(i32 location, span_const_vec_2_u32 const& value)
     }
     glUniform2uivEXT(
         location, value.size(), reinterpret_cast<const GLuint*>(value.data()));
-    detail::error_check("Uniform2uivEXT"sv);
+    detail::error_check("Uniform2uivEXT"sv, check_errors);
 }
 
 template<class vec_3_u32>
@@ -210,7 +229,10 @@ requires(concepts::vector<vec_3_u32, u32, 3>)
  * \param v2 GLuint
  * \return void
  */
-STATICINLINE void uniform(i32 location, vec_3_u32 const& v0)
+STATICINLINE void uniform(
+    i32              location,
+    vec_3_u32 const& v0,
+    error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -218,7 +240,7 @@ STATICINLINE void uniform(i32 location, vec_3_u32 const& v0)
         GLW_FPTR_CHECK(Uniform3uiEXT)
     }
     glUniform3uiEXT(location, v0[0], v0[1], v0[2]);
-    detail::error_check("Uniform3uiEXT"sv);
+    detail::error_check("Uniform3uiEXT"sv, check_errors);
 }
 
 template<class span_const_vec_3_u32>
@@ -232,7 +254,10 @@ requires(
  * \param value const GLuint *
  * \return void
  */
-STATICINLINE void uniform(i32 location, span_const_vec_3_u32 const& value)
+STATICINLINE void uniform(
+    i32                         location,
+    span_const_vec_3_u32 const& value,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -241,7 +266,7 @@ STATICINLINE void uniform(i32 location, span_const_vec_3_u32 const& value)
     }
     glUniform3uivEXT(
         location, value.size(), reinterpret_cast<const GLuint*>(value.data()));
-    detail::error_check("Uniform3uivEXT"sv);
+    detail::error_check("Uniform3uivEXT"sv, check_errors);
 }
 
 template<class vec_4_u32>
@@ -255,7 +280,10 @@ requires(concepts::vector<vec_4_u32, u32, 4>)
  * \param v3 GLuint
  * \return void
  */
-STATICINLINE void uniform(i32 location, vec_4_u32 const& v0)
+STATICINLINE void uniform(
+    i32              location,
+    vec_4_u32 const& v0,
+    error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -263,7 +291,7 @@ STATICINLINE void uniform(i32 location, vec_4_u32 const& v0)
         GLW_FPTR_CHECK(Uniform4uiEXT)
     }
     glUniform4uiEXT(location, v0[0], v0[1], v0[2], v0[3]);
-    detail::error_check("Uniform4uiEXT"sv);
+    detail::error_check("Uniform4uiEXT"sv, check_errors);
 }
 
 template<class span_const_vec_4_u32>
@@ -277,7 +305,10 @@ requires(
  * \param value const GLuint *
  * \return void
  */
-STATICINLINE void uniform(i32 location, span_const_vec_4_u32 const& value)
+STATICINLINE void uniform(
+    i32                         location,
+    span_const_vec_4_u32 const& value,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -286,7 +317,7 @@ STATICINLINE void uniform(i32 location, span_const_vec_4_u32 const& value)
     }
     glUniform4uivEXT(
         location, value.size(), reinterpret_cast<const GLuint*>(value.data()));
-    detail::error_check("Uniform4uivEXT"sv);
+    detail::error_check("Uniform4uivEXT"sv, check_errors);
 }
 
 /*!
@@ -297,7 +328,10 @@ STATICINLINE void uniform(i32 location, span_const_vec_4_u32 const& value)
  * \return void
  */
 STATICINLINE void get_vertex_attrib_iiv(
-    u32 index, group::vertex_attrib_enum pname, i32& params)
+    u32                       index,
+    group::vertex_attrib_enum pname,
+    i32&                      params,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -305,7 +339,7 @@ STATICINLINE void get_vertex_attrib_iiv(
         GLW_FPTR_CHECK(GetVertexAttribIivEXT)
     }
     glGetVertexAttribIivEXT(index, static_cast<GLenum>(pname), &params);
-    detail::error_check("GetVertexAttribIivEXT"sv);
+    detail::error_check("GetVertexAttribIivEXT"sv, check_errors);
 }
 
 /*!
@@ -316,7 +350,10 @@ STATICINLINE void get_vertex_attrib_iiv(
  * \return void
  */
 STATICINLINE void get_vertex_attrib_iuiv(
-    u32 index, group::vertex_attrib_enum pname, u32& params)
+    u32                       index,
+    group::vertex_attrib_enum pname,
+    u32&                      params,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -324,7 +361,7 @@ STATICINLINE void get_vertex_attrib_iuiv(
         GLW_FPTR_CHECK(GetVertexAttribIuivEXT)
     }
     glGetVertexAttribIuivEXT(index, static_cast<GLenum>(pname), &params);
-    detail::error_check("GetVertexAttribIuivEXT"sv);
+    detail::error_check("GetVertexAttribIuivEXT"sv, check_errors);
 }
 
 /*!
@@ -333,7 +370,8 @@ STATICINLINE void get_vertex_attrib_iuiv(
  * \param x GLint
  * \return void
  */
-STATICINLINE void vertex_attrib_i1i(u32 index, i32 x)
+STATICINLINE void vertex_attrib_i1i(
+    u32 index, i32 x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -341,7 +379,7 @@ STATICINLINE void vertex_attrib_i1i(u32 index, i32 x)
         GLW_FPTR_CHECK(VertexAttribI1iEXT)
     }
     glVertexAttribI1iEXT(index, x);
-    detail::error_check("VertexAttribI1iEXT"sv);
+    detail::error_check("VertexAttribI1iEXT"sv, check_errors);
 }
 
 template<class span_const_i32>
@@ -356,7 +394,10 @@ requires(
  * \param v const GLint *
  * \return void
  */
-STATICINLINE void vertex_attrib_i1iv(u32 index, span_const_i32 const& v)
+STATICINLINE void vertex_attrib_i1iv(
+    u32                   index,
+    span_const_i32 const& v,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -364,7 +405,7 @@ STATICINLINE void vertex_attrib_i1iv(u32 index, span_const_i32 const& v)
         GLW_FPTR_CHECK(VertexAttribI1ivEXT)
     }
     glVertexAttribI1ivEXT(index, reinterpret_cast<const GLint*>(v.data()));
-    detail::error_check("VertexAttribI1ivEXT"sv);
+    detail::error_check("VertexAttribI1ivEXT"sv, check_errors);
 }
 
 /*!
@@ -373,7 +414,8 @@ STATICINLINE void vertex_attrib_i1iv(u32 index, span_const_i32 const& v)
  * \param x GLuint
  * \return void
  */
-STATICINLINE void vertex_attrib_i1ui(u32 index, u32 x)
+STATICINLINE void vertex_attrib_i1ui(
+    u32 index, u32 x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -381,7 +423,7 @@ STATICINLINE void vertex_attrib_i1ui(u32 index, u32 x)
         GLW_FPTR_CHECK(VertexAttribI1uiEXT)
     }
     glVertexAttribI1uiEXT(index, x);
-    detail::error_check("VertexAttribI1uiEXT"sv);
+    detail::error_check("VertexAttribI1uiEXT"sv, check_errors);
 }
 
 template<class span_const_u32>
@@ -396,7 +438,10 @@ requires(
  * \param v const GLuint *
  * \return void
  */
-STATICINLINE void vertex_attrib_i1uiv(u32 index, span_const_u32 const& v)
+STATICINLINE void vertex_attrib_i1uiv(
+    u32                   index,
+    span_const_u32 const& v,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -404,7 +449,7 @@ STATICINLINE void vertex_attrib_i1uiv(u32 index, span_const_u32 const& v)
         GLW_FPTR_CHECK(VertexAttribI1uivEXT)
     }
     glVertexAttribI1uivEXT(index, reinterpret_cast<const GLuint*>(v.data()));
-    detail::error_check("VertexAttribI1uivEXT"sv);
+    detail::error_check("VertexAttribI1uivEXT"sv, check_errors);
 }
 
 template<class vec_2_i32>
@@ -416,7 +461,8 @@ requires(concepts::vector<vec_2_i32, i32, 2>)
  * \param y GLint
  * \return void
  */
-STATICINLINE void vertex_attrib_i2i(u32 index, vec_2_i32 const& x)
+STATICINLINE void vertex_attrib_i2i(
+    u32 index, vec_2_i32 const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -424,7 +470,7 @@ STATICINLINE void vertex_attrib_i2i(u32 index, vec_2_i32 const& x)
         GLW_FPTR_CHECK(VertexAttribI2iEXT)
     }
     glVertexAttribI2iEXT(index, x[0], x[1]);
-    detail::error_check("VertexAttribI2iEXT"sv);
+    detail::error_check("VertexAttribI2iEXT"sv, check_errors);
 }
 
 template<class span_const_vec_2_i32>
@@ -437,7 +483,10 @@ requires(
  * \param v const GLint *
  * \return void
  */
-STATICINLINE void vertex_attrib_i2iv(u32 index, span_const_vec_2_i32 const& v)
+STATICINLINE void vertex_attrib_i2iv(
+    u32                         index,
+    span_const_vec_2_i32 const& v,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -445,7 +494,7 @@ STATICINLINE void vertex_attrib_i2iv(u32 index, span_const_vec_2_i32 const& v)
         GLW_FPTR_CHECK(VertexAttribI2ivEXT)
     }
     glVertexAttribI2ivEXT(index, reinterpret_cast<const GLint*>(v.data()));
-    detail::error_check("VertexAttribI2ivEXT"sv);
+    detail::error_check("VertexAttribI2ivEXT"sv, check_errors);
 }
 
 template<class vec_2_u32>
@@ -457,7 +506,8 @@ requires(concepts::vector<vec_2_u32, u32, 2>)
  * \param y GLuint
  * \return void
  */
-STATICINLINE void vertex_attrib_i2ui(u32 index, vec_2_u32 const& x)
+STATICINLINE void vertex_attrib_i2ui(
+    u32 index, vec_2_u32 const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -465,7 +515,7 @@ STATICINLINE void vertex_attrib_i2ui(u32 index, vec_2_u32 const& x)
         GLW_FPTR_CHECK(VertexAttribI2uiEXT)
     }
     glVertexAttribI2uiEXT(index, x[0], x[1]);
-    detail::error_check("VertexAttribI2uiEXT"sv);
+    detail::error_check("VertexAttribI2uiEXT"sv, check_errors);
 }
 
 template<class span_const_vec_2_u32>
@@ -478,7 +528,10 @@ requires(
  * \param v const GLuint *
  * \return void
  */
-STATICINLINE void vertex_attrib_i2uiv(u32 index, span_const_vec_2_u32 const& v)
+STATICINLINE void vertex_attrib_i2uiv(
+    u32                         index,
+    span_const_vec_2_u32 const& v,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -486,7 +539,7 @@ STATICINLINE void vertex_attrib_i2uiv(u32 index, span_const_vec_2_u32 const& v)
         GLW_FPTR_CHECK(VertexAttribI2uivEXT)
     }
     glVertexAttribI2uivEXT(index, reinterpret_cast<const GLuint*>(v.data()));
-    detail::error_check("VertexAttribI2uivEXT"sv);
+    detail::error_check("VertexAttribI2uivEXT"sv, check_errors);
 }
 
 template<class vec_3_i32>
@@ -499,7 +552,8 @@ requires(concepts::vector<vec_3_i32, i32, 3>)
  * \param z GLint
  * \return void
  */
-STATICINLINE void vertex_attrib_i3i(u32 index, vec_3_i32 const& x)
+STATICINLINE void vertex_attrib_i3i(
+    u32 index, vec_3_i32 const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -507,7 +561,7 @@ STATICINLINE void vertex_attrib_i3i(u32 index, vec_3_i32 const& x)
         GLW_FPTR_CHECK(VertexAttribI3iEXT)
     }
     glVertexAttribI3iEXT(index, x[0], x[1], x[2]);
-    detail::error_check("VertexAttribI3iEXT"sv);
+    detail::error_check("VertexAttribI3iEXT"sv, check_errors);
 }
 
 template<class span_const_vec_3_i32>
@@ -520,7 +574,10 @@ requires(
  * \param v const GLint *
  * \return void
  */
-STATICINLINE void vertex_attrib_i3iv(u32 index, span_const_vec_3_i32 const& v)
+STATICINLINE void vertex_attrib_i3iv(
+    u32                         index,
+    span_const_vec_3_i32 const& v,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -528,7 +585,7 @@ STATICINLINE void vertex_attrib_i3iv(u32 index, span_const_vec_3_i32 const& v)
         GLW_FPTR_CHECK(VertexAttribI3ivEXT)
     }
     glVertexAttribI3ivEXT(index, reinterpret_cast<const GLint*>(v.data()));
-    detail::error_check("VertexAttribI3ivEXT"sv);
+    detail::error_check("VertexAttribI3ivEXT"sv, check_errors);
 }
 
 template<class vec_3_u32>
@@ -541,7 +598,8 @@ requires(concepts::vector<vec_3_u32, u32, 3>)
  * \param z GLuint
  * \return void
  */
-STATICINLINE void vertex_attrib_i3ui(u32 index, vec_3_u32 const& x)
+STATICINLINE void vertex_attrib_i3ui(
+    u32 index, vec_3_u32 const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -549,7 +607,7 @@ STATICINLINE void vertex_attrib_i3ui(u32 index, vec_3_u32 const& x)
         GLW_FPTR_CHECK(VertexAttribI3uiEXT)
     }
     glVertexAttribI3uiEXT(index, x[0], x[1], x[2]);
-    detail::error_check("VertexAttribI3uiEXT"sv);
+    detail::error_check("VertexAttribI3uiEXT"sv, check_errors);
 }
 
 template<class span_const_vec_3_u32>
@@ -562,7 +620,10 @@ requires(
  * \param v const GLuint *
  * \return void
  */
-STATICINLINE void vertex_attrib_i3uiv(u32 index, span_const_vec_3_u32 const& v)
+STATICINLINE void vertex_attrib_i3uiv(
+    u32                         index,
+    span_const_vec_3_u32 const& v,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -570,7 +631,7 @@ STATICINLINE void vertex_attrib_i3uiv(u32 index, span_const_vec_3_u32 const& v)
         GLW_FPTR_CHECK(VertexAttribI3uivEXT)
     }
     glVertexAttribI3uivEXT(index, reinterpret_cast<const GLuint*>(v.data()));
-    detail::error_check("VertexAttribI3uivEXT"sv);
+    detail::error_check("VertexAttribI3uivEXT"sv, check_errors);
 }
 
 template<class span_const_i8>
@@ -585,7 +646,10 @@ requires(
  * \param v const GLbyte *
  * \return void
  */
-STATICINLINE void vertex_attrib_i4bv(u32 index, span_const_i8 const& v)
+STATICINLINE void vertex_attrib_i4bv(
+    u32                  index,
+    span_const_i8 const& v,
+    error_check          check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -594,7 +658,7 @@ STATICINLINE void vertex_attrib_i4bv(u32 index, span_const_i8 const& v)
     }
     glVertexAttribI4bvEXT(
         index, v.size() ? reinterpret_cast<const GLbyte*>(v.data()) : nullptr);
-    detail::error_check("VertexAttribI4bvEXT"sv);
+    detail::error_check("VertexAttribI4bvEXT"sv, check_errors);
 }
 
 template<class vec_4_i32>
@@ -608,7 +672,8 @@ requires(concepts::vector<vec_4_i32, i32, 4>)
  * \param w GLint
  * \return void
  */
-STATICINLINE void vertex_attrib_i4i(u32 index, vec_4_i32 const& x)
+STATICINLINE void vertex_attrib_i4i(
+    u32 index, vec_4_i32 const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -616,7 +681,7 @@ STATICINLINE void vertex_attrib_i4i(u32 index, vec_4_i32 const& x)
         GLW_FPTR_CHECK(VertexAttribI4iEXT)
     }
     glVertexAttribI4iEXT(index, x[0], x[1], x[2], x[3]);
-    detail::error_check("VertexAttribI4iEXT"sv);
+    detail::error_check("VertexAttribI4iEXT"sv, check_errors);
 }
 
 template<class span_const_vec_4_i32>
@@ -629,7 +694,10 @@ requires(
  * \param v const GLint *
  * \return void
  */
-STATICINLINE void vertex_attrib_i4iv(u32 index, span_const_vec_4_i32 const& v)
+STATICINLINE void vertex_attrib_i4iv(
+    u32                         index,
+    span_const_vec_4_i32 const& v,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -637,7 +705,7 @@ STATICINLINE void vertex_attrib_i4iv(u32 index, span_const_vec_4_i32 const& v)
         GLW_FPTR_CHECK(VertexAttribI4ivEXT)
     }
     glVertexAttribI4ivEXT(index, reinterpret_cast<const GLint*>(v.data()));
-    detail::error_check("VertexAttribI4ivEXT"sv);
+    detail::error_check("VertexAttribI4ivEXT"sv, check_errors);
 }
 
 template<class span_const_vec_4_i16>
@@ -650,7 +718,10 @@ requires(
  * \param v const GLshort *
  * \return void
  */
-STATICINLINE void vertex_attrib_i4sv(u32 index, span_const_vec_4_i16 const& v)
+STATICINLINE void vertex_attrib_i4sv(
+    u32                         index,
+    span_const_vec_4_i16 const& v,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -658,7 +729,7 @@ STATICINLINE void vertex_attrib_i4sv(u32 index, span_const_vec_4_i16 const& v)
         GLW_FPTR_CHECK(VertexAttribI4svEXT)
     }
     glVertexAttribI4svEXT(index, reinterpret_cast<const GLshort*>(v.data()));
-    detail::error_check("VertexAttribI4svEXT"sv);
+    detail::error_check("VertexAttribI4svEXT"sv, check_errors);
 }
 
 template<class span_const_u8>
@@ -673,7 +744,10 @@ requires(
  * \param v const GLubyte *
  * \return void
  */
-STATICINLINE void vertex_attrib_i4ubv(u32 index, span_const_u8 const& v)
+STATICINLINE void vertex_attrib_i4ubv(
+    u32                  index,
+    span_const_u8 const& v,
+    error_check          check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -682,7 +756,7 @@ STATICINLINE void vertex_attrib_i4ubv(u32 index, span_const_u8 const& v)
     }
     glVertexAttribI4ubvEXT(
         index, v.size() ? reinterpret_cast<const GLubyte*>(v.data()) : nullptr);
-    detail::error_check("VertexAttribI4ubvEXT"sv);
+    detail::error_check("VertexAttribI4ubvEXT"sv, check_errors);
 }
 
 template<class vec_4_u32>
@@ -696,7 +770,8 @@ requires(concepts::vector<vec_4_u32, u32, 4>)
  * \param w GLuint
  * \return void
  */
-STATICINLINE void vertex_attrib_i4ui(u32 index, vec_4_u32 const& x)
+STATICINLINE void vertex_attrib_i4ui(
+    u32 index, vec_4_u32 const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -704,7 +779,7 @@ STATICINLINE void vertex_attrib_i4ui(u32 index, vec_4_u32 const& x)
         GLW_FPTR_CHECK(VertexAttribI4uiEXT)
     }
     glVertexAttribI4uiEXT(index, x[0], x[1], x[2], x[3]);
-    detail::error_check("VertexAttribI4uiEXT"sv);
+    detail::error_check("VertexAttribI4uiEXT"sv, check_errors);
 }
 
 template<class span_const_vec_4_u32>
@@ -717,7 +792,10 @@ requires(
  * \param v const GLuint *
  * \return void
  */
-STATICINLINE void vertex_attrib_i4uiv(u32 index, span_const_vec_4_u32 const& v)
+STATICINLINE void vertex_attrib_i4uiv(
+    u32                         index,
+    span_const_vec_4_u32 const& v,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -725,7 +803,7 @@ STATICINLINE void vertex_attrib_i4uiv(u32 index, span_const_vec_4_u32 const& v)
         GLW_FPTR_CHECK(VertexAttribI4uivEXT)
     }
     glVertexAttribI4uivEXT(index, reinterpret_cast<const GLuint*>(v.data()));
-    detail::error_check("VertexAttribI4uivEXT"sv);
+    detail::error_check("VertexAttribI4uivEXT"sv, check_errors);
 }
 
 template<class span_const_vec_4_u16>
@@ -738,7 +816,10 @@ requires(
  * \param v const GLushort *
  * \return void
  */
-STATICINLINE void vertex_attrib_i4usv(u32 index, span_const_vec_4_u16 const& v)
+STATICINLINE void vertex_attrib_i4usv(
+    u32                         index,
+    span_const_vec_4_u16 const& v,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -746,7 +827,7 @@ STATICINLINE void vertex_attrib_i4usv(u32 index, span_const_vec_4_u16 const& v)
         GLW_FPTR_CHECK(VertexAttribI4usvEXT)
     }
     glVertexAttribI4usvEXT(index, reinterpret_cast<const GLushort*>(v.data()));
-    detail::error_check("VertexAttribI4usvEXT"sv);
+    detail::error_check("VertexAttribI4usvEXT"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -765,7 +846,8 @@ STATICINLINE void vertex_attrib_i_pointer(
     i32                      size,
     group::vertex_attrib_int type,
     i32                      stride,
-    span_const_void const&   pointer)
+    span_const_void const&   pointer,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -779,7 +861,7 @@ STATICINLINE void vertex_attrib_i_pointer(
         stride,
         pointer.size() ? reinterpret_cast<const void*>(pointer.data())
                        : nullptr);
-    detail::error_check("VertexAttribIPointerEXT"sv);
+    detail::error_check("VertexAttribIPointerEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::gpu_shader4

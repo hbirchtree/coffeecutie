@@ -28,7 +28,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_multisamplefv(
-    group::get_multisample_prop_nv pname, u32 index, span_f32 val)
+    group::get_multisample_prop_nv pname,
+    u32                            index,
+    span_f32                       val,
+    error_check                    check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -39,7 +42,7 @@ STATICINLINE void get_multisamplefv(
         static_cast<GLenum>(pname),
         index,
         val.size() ? reinterpret_cast<GLfloat*>(val.data()) : nullptr);
-    detail::error_check("GetMultisamplefvNV"sv);
+    detail::error_check("GetMultisamplefvNV"sv, check_errors);
 }
 
 /*!
@@ -48,7 +51,10 @@ STATICINLINE void get_multisamplefv(
  * \param mask GLbitfield
  * \return void
  */
-STATICINLINE void sample_mask_indexed(u32 index, group::sample_mask_nv mask)
+STATICINLINE void sample_mask_indexed(
+    u32                   index,
+    group::sample_mask_nv mask,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -56,7 +62,7 @@ STATICINLINE void sample_mask_indexed(u32 index, group::sample_mask_nv mask)
         GLW_FPTR_CHECK(SampleMaskIndexedNV)
     }
     glSampleMaskIndexedNV(index, static_cast<GLenum>(mask));
-    detail::error_check("SampleMaskIndexedNV"sv);
+    detail::error_check("SampleMaskIndexedNV"sv, check_errors);
 }
 
 /*!
@@ -66,7 +72,9 @@ STATICINLINE void sample_mask_indexed(u32 index, group::sample_mask_nv mask)
  * \return void
  */
 STATICINLINE void tex_renderbuffer(
-    group::texture_target target, u32 renderbuffer)
+    group::texture_target target,
+    u32                   renderbuffer,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -79,7 +87,7 @@ STATICINLINE void tex_renderbuffer(
 #endif
     }
     glTexRenderbufferNV(static_cast<GLenum>(target), renderbuffer);
-    detail::error_check("TexRenderbufferNV"sv);
+    detail::error_check("TexRenderbufferNV"sv, check_errors);
 }
 
 } // namespace gl::nv::explicit_multisample

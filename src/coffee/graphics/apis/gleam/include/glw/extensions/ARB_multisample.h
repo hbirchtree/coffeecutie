@@ -23,7 +23,8 @@ constexpr u32 sample_coverage_invert   = 0x80AB;
  * \param invert GLboolean
  * \return void
  */
-STATICINLINE void sample_coverage(f32 value, bool invert)
+STATICINLINE void sample_coverage(
+    f32 value, bool invert, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -31,7 +32,7 @@ STATICINLINE void sample_coverage(f32 value, bool invert)
         GLW_FPTR_CHECK(SampleCoverageARB)
     }
     glSampleCoverageARB(value, invert);
-    detail::error_check("SampleCoverageARB"sv);
+    detail::error_check("SampleCoverageARB"sv, check_errors);
 }
 
 } // namespace gl::arb::multisample

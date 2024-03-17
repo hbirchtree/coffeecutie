@@ -100,7 +100,8 @@ STATICINLINE void get_internalformati64v(
     group::texture_target       target,
     group::internal_format      internalformat,
     group::internal_format_prop pname,
-    span_i64                    params)
+    span_i64                    params,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -113,7 +114,7 @@ STATICINLINE void get_internalformati64v(
         static_cast<GLenum>(pname),
         params.size(),
         params.size() ? reinterpret_cast<GLint64*>(params.data()) : nullptr);
-    detail::error_check("GetInternalformati64v"sv);
+    detail::error_check("GetInternalformati64v"sv, check_errors);
 }
 
 } // namespace gl::arb::internalformat_query2

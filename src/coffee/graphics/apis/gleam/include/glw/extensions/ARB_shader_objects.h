@@ -29,7 +29,10 @@ constexpr u32 object_shader_source_length      = 0x8B88;
  * \param obj GLhandleARB
  * \return void
  */
-STATICINLINE void attach_object(GLhandleARB containerObj, GLhandleARB obj)
+STATICINLINE void attach_object(
+    GLhandleARB containerObj,
+    GLhandleARB obj,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -37,7 +40,7 @@ STATICINLINE void attach_object(GLhandleARB containerObj, GLhandleARB obj)
         GLW_FPTR_CHECK(AttachObjectARB)
     }
     glAttachObjectARB(containerObj, obj);
-    detail::error_check("AttachObjectARB"sv);
+    detail::error_check("AttachObjectARB"sv, check_errors);
 }
 
 /*!
@@ -45,7 +48,8 @@ STATICINLINE void attach_object(GLhandleARB containerObj, GLhandleARB obj)
  * \param shaderObj GLhandleARB
  * \return void
  */
-STATICINLINE void compile_shader(GLhandleARB shaderObj)
+STATICINLINE void compile_shader(
+    GLhandleARB shaderObj, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -53,7 +57,7 @@ STATICINLINE void compile_shader(GLhandleARB shaderObj)
         GLW_FPTR_CHECK(CompileShaderARB)
     }
     glCompileShaderARB(shaderObj);
-    detail::error_check("CompileShaderARB"sv);
+    detail::error_check("CompileShaderARB"sv, check_errors);
 }
 
 /*!
@@ -61,7 +65,8 @@ STATICINLINE void compile_shader(GLhandleARB shaderObj)
 
  * \return handleARB
  */
-STATICINLINE GLhandleARB create_program_object()
+STATICINLINE GLhandleARB
+create_program_object(error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -69,7 +74,7 @@ STATICINLINE GLhandleARB create_program_object()
         GLW_FPTR_CHECK(CreateProgramObjectARB)
     }
     auto out = glCreateProgramObjectARB();
-    detail::error_check("CreateProgramObjectARB"sv);
+    detail::error_check("CreateProgramObjectARB"sv, check_errors);
     return out;
 }
 
@@ -78,7 +83,8 @@ STATICINLINE GLhandleARB create_program_object()
  * \param shaderType GLenum
  * \return handleARB
  */
-STATICINLINE GLhandleARB create_shader_object(group::shader_type shaderType)
+STATICINLINE GLhandleARB create_shader_object(
+    group::shader_type shaderType, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -86,7 +92,7 @@ STATICINLINE GLhandleARB create_shader_object(group::shader_type shaderType)
         GLW_FPTR_CHECK(CreateShaderObjectARB)
     }
     auto out = glCreateShaderObjectARB(static_cast<GLenum>(shaderType));
-    detail::error_check("CreateShaderObjectARB"sv);
+    detail::error_check("CreateShaderObjectARB"sv, check_errors);
     return out;
 }
 
@@ -95,7 +101,8 @@ STATICINLINE GLhandleARB create_shader_object(group::shader_type shaderType)
  * \param obj GLhandleARB
  * \return void
  */
-STATICINLINE void delete_object(GLhandleARB obj)
+STATICINLINE void delete_object(
+    GLhandleARB obj, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -103,7 +110,7 @@ STATICINLINE void delete_object(GLhandleARB obj)
         GLW_FPTR_CHECK(DeleteObjectARB)
     }
     glDeleteObjectARB(obj);
-    detail::error_check("DeleteObjectARB"sv);
+    detail::error_check("DeleteObjectARB"sv, check_errors);
 }
 
 /*!
@@ -113,7 +120,9 @@ STATICINLINE void delete_object(GLhandleARB obj)
  * \return void
  */
 STATICINLINE void detach_object(
-    GLhandleARB containerObj, GLhandleARB attachedObj)
+    GLhandleARB containerObj,
+    GLhandleARB attachedObj,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -121,7 +130,7 @@ STATICINLINE void detach_object(
         GLW_FPTR_CHECK(DetachObjectARB)
     }
     glDetachObjectARB(containerObj, attachedObj);
-    detail::error_check("DetachObjectARB"sv);
+    detail::error_check("DetachObjectARB"sv, check_errors);
 }
 
 template<class span_GLcharARB>
@@ -147,7 +156,8 @@ STATICINLINE void get_active_uniform(
     i32&           length,
     i32&           size,
     GLenum&        type,
-    span_GLcharARB name)
+    span_GLcharARB name,
+    error_check    check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -162,7 +172,7 @@ STATICINLINE void get_active_uniform(
         &size,
         &type,
         name.size() ? reinterpret_cast<GLcharARB*>(name.data()) : nullptr);
-    detail::error_check("GetActiveUniformARB"sv);
+    detail::error_check("GetActiveUniformARB"sv, check_errors);
 }
 
 template<class span_GLhandleARB>
@@ -180,7 +190,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_attached_objects(
-    GLhandleARB containerObj, i32& count, span_GLhandleARB obj)
+    GLhandleARB      containerObj,
+    i32&             count,
+    span_GLhandleARB obj,
+    error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -192,7 +205,7 @@ STATICINLINE void get_attached_objects(
         obj.size(),
         &count,
         obj.size() ? reinterpret_cast<GLhandleARB*>(obj.data()) : nullptr);
-    detail::error_check("GetAttachedObjectsARB"sv);
+    detail::error_check("GetAttachedObjectsARB"sv, check_errors);
 }
 
 /*!
@@ -200,7 +213,8 @@ STATICINLINE void get_attached_objects(
  * \param pname GLenum
  * \return handleARB
  */
-STATICINLINE GLhandleARB get_handle(group::container_type pname)
+STATICINLINE GLhandleARB get_handle(
+    group::container_type pname, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -208,7 +222,7 @@ STATICINLINE GLhandleARB get_handle(group::container_type pname)
         GLW_FPTR_CHECK(GetHandleARB)
     }
     auto out = glGetHandleARB(static_cast<GLenum>(pname));
-    detail::error_check("GetHandleARB"sv);
+    detail::error_check("GetHandleARB"sv, check_errors);
     return out;
 }
 
@@ -227,7 +241,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_info_log(
-    GLhandleARB obj, i32& length, span_GLcharARB infoLog)
+    GLhandleARB    obj,
+    i32&           length,
+    span_GLcharARB infoLog,
+    error_check    check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -240,7 +257,7 @@ STATICINLINE void get_info_log(
         &length,
         infoLog.size() ? reinterpret_cast<GLcharARB*>(infoLog.data())
                        : nullptr);
-    detail::error_check("GetInfoLogARB"sv);
+    detail::error_check("GetInfoLogARB"sv, check_errors);
 }
 
 template<class span_f32>
@@ -256,7 +273,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_object_parameter(
-    GLhandleARB obj, GLenum pname, span_f32 params)
+    GLhandleARB obj,
+    GLenum      pname,
+    span_f32    params,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -267,7 +287,7 @@ STATICINLINE void get_object_parameter(
         obj,
         pname,
         params.size() ? reinterpret_cast<GLfloat*>(params.data()) : nullptr);
-    detail::error_check("GetObjectParameterfvARB"sv);
+    detail::error_check("GetObjectParameterfvARB"sv, check_errors);
 }
 
 template<class span_i32>
@@ -283,7 +303,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_object_parameter(
-    GLhandleARB obj, GLenum pname, span_i32 params)
+    GLhandleARB obj,
+    GLenum      pname,
+    span_i32    params,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -294,7 +317,7 @@ STATICINLINE void get_object_parameter(
         obj,
         pname,
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetObjectParameterivARB"sv);
+    detail::error_check("GetObjectParameterivARB"sv, check_errors);
 }
 
 template<class span_GLcharARB>
@@ -312,7 +335,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_shader_source(
-    GLhandleARB obj, i32& length, span_GLcharARB source)
+    GLhandleARB    obj,
+    i32&           length,
+    span_GLcharARB source,
+    error_check    check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -324,7 +350,7 @@ STATICINLINE void get_shader_source(
         source.size(),
         &length,
         source.size() ? reinterpret_cast<GLcharARB*>(source.data()) : nullptr);
-    detail::error_check("GetShaderSourceARB"sv);
+    detail::error_check("GetShaderSourceARB"sv, check_errors);
 }
 
 template<class span_const_GLcharARB>
@@ -339,8 +365,10 @@ requires(
  * \param name const GLcharARB *
  * \return GLint
  */
-STATICINLINE GLint
-get_uniform_location(GLhandleARB programObj, span_const_GLcharARB const& name)
+STATICINLINE GLint get_uniform_location(
+    GLhandleARB                 programObj,
+    span_const_GLcharARB const& name,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -351,7 +379,7 @@ get_uniform_location(GLhandleARB programObj, span_const_GLcharARB const& name)
         programObj,
         name.size() ? reinterpret_cast<const GLcharARB*>(name.data())
                     : nullptr);
-    detail::error_check("GetUniformLocationARB"sv);
+    detail::error_check("GetUniformLocationARB"sv, check_errors);
     return out;
 }
 
@@ -368,7 +396,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_uniformfv(
-    GLhandleARB programObj, i32 location, span_f32 params)
+    GLhandleARB programObj,
+    i32         location,
+    span_f32    params,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -379,7 +410,7 @@ STATICINLINE void get_uniformfv(
         programObj,
         location,
         params.size() ? reinterpret_cast<GLfloat*>(params.data()) : nullptr);
-    detail::error_check("GetUniformfvARB"sv);
+    detail::error_check("GetUniformfvARB"sv, check_errors);
 }
 
 template<class span_i32>
@@ -395,7 +426,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_uniformiv(
-    GLhandleARB programObj, i32 location, span_i32 params)
+    GLhandleARB programObj,
+    i32         location,
+    span_i32    params,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -406,7 +440,7 @@ STATICINLINE void get_uniformiv(
         programObj,
         location,
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetUniformivARB"sv);
+    detail::error_check("GetUniformivARB"sv, check_errors);
 }
 
 /*!
@@ -414,7 +448,8 @@ STATICINLINE void get_uniformiv(
  * \param programObj GLhandleARB
  * \return void
  */
-STATICINLINE void link_program(GLhandleARB programObj)
+STATICINLINE void link_program(
+    GLhandleARB programObj, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -422,7 +457,7 @@ STATICINLINE void link_program(GLhandleARB programObj)
         GLW_FPTR_CHECK(LinkProgramARB)
     }
     glLinkProgramARB(programObj);
-    detail::error_check("LinkProgramARB"sv);
+    detail::error_check("LinkProgramARB"sv, check_errors);
 }
 
 template<class span_const_GLcharARB, class span_const_i32>
@@ -446,7 +481,8 @@ requires(
 STATICINLINE void shader_source(
     GLhandleARB                 shaderObj,
     span_const_GLcharARB const& string,
-    span_const_i32 const&       length)
+    span_const_i32 const&       length,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -460,7 +496,7 @@ STATICINLINE void shader_source(
                       : nullptr,
         length.size() ? reinterpret_cast<const GLint*>(length.data())
                       : nullptr);
-    detail::error_check("ShaderSourceARB"sv);
+    detail::error_check("ShaderSourceARB"sv, check_errors);
 }
 
 /*!
@@ -469,7 +505,8 @@ STATICINLINE void shader_source(
  * \param v0 GLfloat
  * \return void
  */
-STATICINLINE void uniform(i32 location, f32 v0)
+STATICINLINE void uniform(
+    i32 location, f32 v0, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -477,7 +514,7 @@ STATICINLINE void uniform(i32 location, f32 v0)
         GLW_FPTR_CHECK(Uniform1fARB)
     }
     glUniform1fARB(location, v0);
-    detail::error_check("Uniform1fARB"sv);
+    detail::error_check("Uniform1fARB"sv, check_errors);
 }
 
 template<class span_const_f32>
@@ -493,7 +530,10 @@ requires(
  * \param value const GLfloat *
  * \return void
  */
-STATICINLINE void uniform(i32 location, span_const_f32 const& value)
+STATICINLINE void uniform(
+    i32                   location,
+    span_const_f32 const& value,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -502,7 +542,7 @@ STATICINLINE void uniform(i32 location, span_const_f32 const& value)
     }
     glUniform1fvARB(
         location, value.size(), reinterpret_cast<const GLfloat*>(value.data()));
-    detail::error_check("Uniform1fvARB"sv);
+    detail::error_check("Uniform1fvARB"sv, check_errors);
 }
 
 /*!
@@ -511,7 +551,8 @@ STATICINLINE void uniform(i32 location, span_const_f32 const& value)
  * \param v0 GLint
  * \return void
  */
-STATICINLINE void uniform(i32 location, i32 v0)
+STATICINLINE void uniform(
+    i32 location, i32 v0, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -519,7 +560,7 @@ STATICINLINE void uniform(i32 location, i32 v0)
         GLW_FPTR_CHECK(Uniform1iARB)
     }
     glUniform1iARB(location, v0);
-    detail::error_check("Uniform1iARB"sv);
+    detail::error_check("Uniform1iARB"sv, check_errors);
 }
 
 template<class span_const_i32>
@@ -535,7 +576,10 @@ requires(
  * \param value const GLint *
  * \return void
  */
-STATICINLINE void uniform(i32 location, span_const_i32 const& value)
+STATICINLINE void uniform(
+    i32                   location,
+    span_const_i32 const& value,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -544,7 +588,7 @@ STATICINLINE void uniform(i32 location, span_const_i32 const& value)
     }
     glUniform1ivARB(
         location, value.size(), reinterpret_cast<const GLint*>(value.data()));
-    detail::error_check("Uniform1ivARB"sv);
+    detail::error_check("Uniform1ivARB"sv, check_errors);
 }
 
 template<class vec_2_f32>
@@ -556,7 +600,10 @@ requires(concepts::vector<vec_2_f32, f32, 2>)
  * \param v1 GLfloat
  * \return void
  */
-STATICINLINE void uniform(i32 location, vec_2_f32 const& v0)
+STATICINLINE void uniform(
+    i32              location,
+    vec_2_f32 const& v0,
+    error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -564,7 +611,7 @@ STATICINLINE void uniform(i32 location, vec_2_f32 const& v0)
         GLW_FPTR_CHECK(Uniform2fARB)
     }
     glUniform2fARB(location, v0[0], v0[1]);
-    detail::error_check("Uniform2fARB"sv);
+    detail::error_check("Uniform2fARB"sv, check_errors);
 }
 
 template<class span_const_vec_2_f32>
@@ -578,7 +625,10 @@ requires(
  * \param value const GLfloat *
  * \return void
  */
-STATICINLINE void uniform(i32 location, span_const_vec_2_f32 const& value)
+STATICINLINE void uniform(
+    i32                         location,
+    span_const_vec_2_f32 const& value,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -587,7 +637,7 @@ STATICINLINE void uniform(i32 location, span_const_vec_2_f32 const& value)
     }
     glUniform2fvARB(
         location, value.size(), reinterpret_cast<const GLfloat*>(value.data()));
-    detail::error_check("Uniform2fvARB"sv);
+    detail::error_check("Uniform2fvARB"sv, check_errors);
 }
 
 template<class vec_2_i32>
@@ -599,7 +649,10 @@ requires(concepts::vector<vec_2_i32, i32, 2>)
  * \param v1 GLint
  * \return void
  */
-STATICINLINE void uniform(i32 location, vec_2_i32 const& v0)
+STATICINLINE void uniform(
+    i32              location,
+    vec_2_i32 const& v0,
+    error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -607,7 +660,7 @@ STATICINLINE void uniform(i32 location, vec_2_i32 const& v0)
         GLW_FPTR_CHECK(Uniform2iARB)
     }
     glUniform2iARB(location, v0[0], v0[1]);
-    detail::error_check("Uniform2iARB"sv);
+    detail::error_check("Uniform2iARB"sv, check_errors);
 }
 
 template<class span_const_vec_2_i32>
@@ -621,7 +674,10 @@ requires(
  * \param value const GLint *
  * \return void
  */
-STATICINLINE void uniform(i32 location, span_const_vec_2_i32 const& value)
+STATICINLINE void uniform(
+    i32                         location,
+    span_const_vec_2_i32 const& value,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -630,7 +686,7 @@ STATICINLINE void uniform(i32 location, span_const_vec_2_i32 const& value)
     }
     glUniform2ivARB(
         location, value.size(), reinterpret_cast<const GLint*>(value.data()));
-    detail::error_check("Uniform2ivARB"sv);
+    detail::error_check("Uniform2ivARB"sv, check_errors);
 }
 
 template<class vec_3_f32>
@@ -643,7 +699,10 @@ requires(concepts::vector<vec_3_f32, f32, 3>)
  * \param v2 GLfloat
  * \return void
  */
-STATICINLINE void uniform(i32 location, vec_3_f32 const& v0)
+STATICINLINE void uniform(
+    i32              location,
+    vec_3_f32 const& v0,
+    error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -651,7 +710,7 @@ STATICINLINE void uniform(i32 location, vec_3_f32 const& v0)
         GLW_FPTR_CHECK(Uniform3fARB)
     }
     glUniform3fARB(location, v0[0], v0[1], v0[2]);
-    detail::error_check("Uniform3fARB"sv);
+    detail::error_check("Uniform3fARB"sv, check_errors);
 }
 
 template<class span_const_vec_3_f32>
@@ -665,7 +724,10 @@ requires(
  * \param value const GLfloat *
  * \return void
  */
-STATICINLINE void uniform(i32 location, span_const_vec_3_f32 const& value)
+STATICINLINE void uniform(
+    i32                         location,
+    span_const_vec_3_f32 const& value,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -674,7 +736,7 @@ STATICINLINE void uniform(i32 location, span_const_vec_3_f32 const& value)
     }
     glUniform3fvARB(
         location, value.size(), reinterpret_cast<const GLfloat*>(value.data()));
-    detail::error_check("Uniform3fvARB"sv);
+    detail::error_check("Uniform3fvARB"sv, check_errors);
 }
 
 template<class vec_3_i32>
@@ -687,7 +749,10 @@ requires(concepts::vector<vec_3_i32, i32, 3>)
  * \param v2 GLint
  * \return void
  */
-STATICINLINE void uniform(i32 location, vec_3_i32 const& v0)
+STATICINLINE void uniform(
+    i32              location,
+    vec_3_i32 const& v0,
+    error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -695,7 +760,7 @@ STATICINLINE void uniform(i32 location, vec_3_i32 const& v0)
         GLW_FPTR_CHECK(Uniform3iARB)
     }
     glUniform3iARB(location, v0[0], v0[1], v0[2]);
-    detail::error_check("Uniform3iARB"sv);
+    detail::error_check("Uniform3iARB"sv, check_errors);
 }
 
 template<class span_const_vec_3_i32>
@@ -709,7 +774,10 @@ requires(
  * \param value const GLint *
  * \return void
  */
-STATICINLINE void uniform(i32 location, span_const_vec_3_i32 const& value)
+STATICINLINE void uniform(
+    i32                         location,
+    span_const_vec_3_i32 const& value,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -718,7 +786,7 @@ STATICINLINE void uniform(i32 location, span_const_vec_3_i32 const& value)
     }
     glUniform3ivARB(
         location, value.size(), reinterpret_cast<const GLint*>(value.data()));
-    detail::error_check("Uniform3ivARB"sv);
+    detail::error_check("Uniform3ivARB"sv, check_errors);
 }
 
 template<class vec_4_f32>
@@ -732,7 +800,10 @@ requires(concepts::vector<vec_4_f32, f32, 4>)
  * \param v3 GLfloat
  * \return void
  */
-STATICINLINE void uniform(i32 location, vec_4_f32 const& v0)
+STATICINLINE void uniform(
+    i32              location,
+    vec_4_f32 const& v0,
+    error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -740,7 +811,7 @@ STATICINLINE void uniform(i32 location, vec_4_f32 const& v0)
         GLW_FPTR_CHECK(Uniform4fARB)
     }
     glUniform4fARB(location, v0[0], v0[1], v0[2], v0[3]);
-    detail::error_check("Uniform4fARB"sv);
+    detail::error_check("Uniform4fARB"sv, check_errors);
 }
 
 template<class span_const_vec_4_f32>
@@ -754,7 +825,10 @@ requires(
  * \param value const GLfloat *
  * \return void
  */
-STATICINLINE void uniform(i32 location, span_const_vec_4_f32 const& value)
+STATICINLINE void uniform(
+    i32                         location,
+    span_const_vec_4_f32 const& value,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -763,7 +837,7 @@ STATICINLINE void uniform(i32 location, span_const_vec_4_f32 const& value)
     }
     glUniform4fvARB(
         location, value.size(), reinterpret_cast<const GLfloat*>(value.data()));
-    detail::error_check("Uniform4fvARB"sv);
+    detail::error_check("Uniform4fvARB"sv, check_errors);
 }
 
 template<class vec_4_i32>
@@ -777,7 +851,10 @@ requires(concepts::vector<vec_4_i32, i32, 4>)
  * \param v3 GLint
  * \return void
  */
-STATICINLINE void uniform(i32 location, vec_4_i32 const& v0)
+STATICINLINE void uniform(
+    i32              location,
+    vec_4_i32 const& v0,
+    error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -785,7 +862,7 @@ STATICINLINE void uniform(i32 location, vec_4_i32 const& v0)
         GLW_FPTR_CHECK(Uniform4iARB)
     }
     glUniform4iARB(location, v0[0], v0[1], v0[2], v0[3]);
-    detail::error_check("Uniform4iARB"sv);
+    detail::error_check("Uniform4iARB"sv, check_errors);
 }
 
 template<class span_const_vec_4_i32>
@@ -799,7 +876,10 @@ requires(
  * \param value const GLint *
  * \return void
  */
-STATICINLINE void uniform(i32 location, span_const_vec_4_i32 const& value)
+STATICINLINE void uniform(
+    i32                         location,
+    span_const_vec_4_i32 const& value,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -808,7 +888,7 @@ STATICINLINE void uniform(i32 location, span_const_vec_4_i32 const& value)
     }
     glUniform4ivARB(
         location, value.size(), reinterpret_cast<const GLint*>(value.data()));
-    detail::error_check("Uniform4ivARB"sv);
+    detail::error_check("Uniform4ivARB"sv, check_errors);
 }
 
 template<class span_const_mat_2x2_f32>
@@ -824,7 +904,10 @@ requires(
  * \return void
  */
 STATICINLINE void uniform(
-    i32 location, bool transpose, span_const_mat_2x2_f32 const& value)
+    i32                           location,
+    bool                          transpose,
+    span_const_mat_2x2_f32 const& value,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -836,7 +919,7 @@ STATICINLINE void uniform(
         value.size(),
         transpose,
         reinterpret_cast<const GLfloat*>(value.data()));
-    detail::error_check("UniformMatrix2fvARB"sv);
+    detail::error_check("UniformMatrix2fvARB"sv, check_errors);
 }
 
 template<class span_const_mat_3x3_f32>
@@ -852,7 +935,10 @@ requires(
  * \return void
  */
 STATICINLINE void uniform(
-    i32 location, bool transpose, span_const_mat_3x3_f32 const& value)
+    i32                           location,
+    bool                          transpose,
+    span_const_mat_3x3_f32 const& value,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -864,7 +950,7 @@ STATICINLINE void uniform(
         value.size(),
         transpose,
         reinterpret_cast<const GLfloat*>(value.data()));
-    detail::error_check("UniformMatrix3fvARB"sv);
+    detail::error_check("UniformMatrix3fvARB"sv, check_errors);
 }
 
 template<class span_const_mat_4x4_f32>
@@ -880,7 +966,10 @@ requires(
  * \return void
  */
 STATICINLINE void uniform(
-    i32 location, bool transpose, span_const_mat_4x4_f32 const& value)
+    i32                           location,
+    bool                          transpose,
+    span_const_mat_4x4_f32 const& value,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -892,7 +981,7 @@ STATICINLINE void uniform(
         value.size(),
         transpose,
         reinterpret_cast<const GLfloat*>(value.data()));
-    detail::error_check("UniformMatrix4fvARB"sv);
+    detail::error_check("UniformMatrix4fvARB"sv, check_errors);
 }
 
 /*!
@@ -900,7 +989,8 @@ STATICINLINE void uniform(
  * \param programObj GLhandleARB
  * \return void
  */
-STATICINLINE void use_program_object(GLhandleARB programObj)
+STATICINLINE void use_program_object(
+    GLhandleARB programObj, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -908,7 +998,7 @@ STATICINLINE void use_program_object(GLhandleARB programObj)
         GLW_FPTR_CHECK(UseProgramObjectARB)
     }
     glUseProgramObjectARB(programObj);
-    detail::error_check("UseProgramObjectARB"sv);
+    detail::error_check("UseProgramObjectARB"sv, check_errors);
 }
 
 /*!
@@ -916,7 +1006,8 @@ STATICINLINE void use_program_object(GLhandleARB programObj)
  * \param programObj GLhandleARB
  * \return void
  */
-STATICINLINE void validate_program(GLhandleARB programObj)
+STATICINLINE void validate_program(
+    GLhandleARB programObj, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -924,7 +1015,7 @@ STATICINLINE void validate_program(GLhandleARB programObj)
         GLW_FPTR_CHECK(ValidateProgramARB)
     }
     glValidateProgramARB(programObj);
-    detail::error_check("ValidateProgramARB"sv);
+    detail::error_check("ValidateProgramARB"sv, check_errors);
 }
 
 } // namespace gl::arb::shader_objects

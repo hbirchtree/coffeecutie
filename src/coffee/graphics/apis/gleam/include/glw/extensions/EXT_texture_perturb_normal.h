@@ -15,7 +15,9 @@ constexpr u32 texture_normal = 0x85AF;
  * \param mode GLenum
  * \return void
  */
-STATICINLINE void texture_normal(group::texture_normal_mode_ext mode)
+STATICINLINE void texture_normal(
+    group::texture_normal_mode_ext mode,
+    error_check                    check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -23,7 +25,7 @@ STATICINLINE void texture_normal(group::texture_normal_mode_ext mode)
         GLW_FPTR_CHECK(TextureNormalEXT)
     }
     glTextureNormalEXT(static_cast<GLenum>(mode));
-    detail::error_check("TextureNormalEXT"sv);
+    detail::error_check("TextureNormalEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::texture_perturb_normal

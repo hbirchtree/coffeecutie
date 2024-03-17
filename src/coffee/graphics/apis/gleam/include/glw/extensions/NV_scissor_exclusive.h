@@ -21,7 +21,10 @@ requires(
  * \return void
  */
 STATICINLINE void scissor_exclusive_arrayv(
-    u32 first, i32 count, span_const_i32 const& v)
+    u32                   first,
+    i32                   count,
+    span_const_i32 const& v,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -32,7 +35,7 @@ STATICINLINE void scissor_exclusive_arrayv(
         first,
         count,
         v.size() ? reinterpret_cast<const GLint*>(v.data()) : nullptr);
-    detail::error_check("ScissorExclusiveArrayvNV"sv);
+    detail::error_check("ScissorExclusiveArrayvNV"sv, check_errors);
 }
 
 template<class size_2_i32, class vec_2_i32>
@@ -46,7 +49,10 @@ requires(
  * \param height GLsizei
  * \return void
  */
-STATICINLINE void scissor_exclusive(vec_2_i32 const& x, size_2_i32 const& width)
+STATICINLINE void scissor_exclusive(
+    vec_2_i32 const&  x,
+    size_2_i32 const& width,
+    error_check       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -54,7 +60,7 @@ STATICINLINE void scissor_exclusive(vec_2_i32 const& x, size_2_i32 const& width)
         GLW_FPTR_CHECK(ScissorExclusiveNV)
     }
     glScissorExclusiveNV(x[0], x[1], width[0], width[1]);
-    detail::error_check("ScissorExclusiveNV"sv);
+    detail::error_check("ScissorExclusiveNV"sv, check_errors);
 }
 
 } // namespace gl::nv::scissor_exclusive

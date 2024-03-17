@@ -22,7 +22,9 @@ constexpr u32 texture_material_parameter = 0x8352;
  * \param mode GLenum
  * \return void
  */
-STATICINLINE void apply_texture(group::light_texture_mode_ext mode)
+STATICINLINE void apply_texture(
+    group::light_texture_mode_ext mode,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -30,7 +32,7 @@ STATICINLINE void apply_texture(group::light_texture_mode_ext mode)
         GLW_FPTR_CHECK(ApplyTextureEXT)
     }
     glApplyTextureEXT(static_cast<GLenum>(mode));
-    detail::error_check("ApplyTextureEXT"sv);
+    detail::error_check("ApplyTextureEXT"sv, check_errors);
 }
 
 /*!
@@ -38,7 +40,9 @@ STATICINLINE void apply_texture(group::light_texture_mode_ext mode)
  * \param pname GLenum
  * \return void
  */
-STATICINLINE void texture_light(group::light_texture_prop_ext pname)
+STATICINLINE void texture_light(
+    group::light_texture_prop_ext pname,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -46,7 +50,7 @@ STATICINLINE void texture_light(group::light_texture_prop_ext pname)
         GLW_FPTR_CHECK(TextureLightEXT)
     }
     glTextureLightEXT(static_cast<GLenum>(pname));
-    detail::error_check("TextureLightEXT"sv);
+    detail::error_check("TextureLightEXT"sv, check_errors);
 }
 
 /*!
@@ -56,7 +60,9 @@ STATICINLINE void texture_light(group::light_texture_prop_ext pname)
  * \return void
  */
 STATICINLINE void texture_material(
-    group::triangle_face face, group::material_parameter mode)
+    group::triangle_face      face,
+    group::material_parameter mode,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -64,7 +70,7 @@ STATICINLINE void texture_material(
         GLW_FPTR_CHECK(TextureMaterialEXT)
     }
     glTextureMaterialEXT(static_cast<GLenum>(face), static_cast<GLenum>(mode));
-    detail::error_check("TextureMaterialEXT"sv);
+    detail::error_check("TextureMaterialEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::light_texture

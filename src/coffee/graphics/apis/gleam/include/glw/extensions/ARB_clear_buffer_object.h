@@ -21,7 +21,8 @@ STATICINLINE void clear_buffer_data(
     group::sized_internal_format internalformat,
     group::pixel_format          format,
     group::pixel_type            type,
-    span_const_void const&       data)
+    span_const_void const&       data,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -34,7 +35,7 @@ STATICINLINE void clear_buffer_data(
         static_cast<GLenum>(format),
         static_cast<GLenum>(type),
         data.size() ? reinterpret_cast<const void*>(data.data()) : nullptr);
-    detail::error_check("ClearBufferData"sv);
+    detail::error_check("ClearBufferData"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -57,7 +58,8 @@ STATICINLINE void clear_buffer_sub_data(
     GLsizeiptr                   size,
     group::pixel_format          format,
     group::pixel_type            type,
-    span_const_void const&       data)
+    span_const_void const&       data,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -72,7 +74,7 @@ STATICINLINE void clear_buffer_sub_data(
         static_cast<GLenum>(format),
         static_cast<GLenum>(type),
         data.size() ? reinterpret_cast<const void*>(data.data()) : nullptr);
-    detail::error_check("ClearBufferSubData"sv);
+    detail::error_check("ClearBufferSubData"sv, check_errors);
 }
 
 } // namespace gl::arb::clear_buffer_object

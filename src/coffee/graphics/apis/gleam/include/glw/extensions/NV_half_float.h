@@ -18,7 +18,8 @@ requires(concepts::vector<vec_3_GLhalfNV, GLhalfNV, 3>)
  * \param blue GLhalfNV
  * \return void
  */
-STATICINLINE void color3h(vec_3_GLhalfNV const& red)
+STATICINLINE void color3h(
+    vec_3_GLhalfNV const& red, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -26,7 +27,7 @@ STATICINLINE void color3h(vec_3_GLhalfNV const& red)
         GLW_FPTR_CHECK(Color3hNV)
     }
     glColor3hNV(red[0], red[1], red[2]);
-    detail::error_check("Color3hNV"sv);
+    detail::error_check("Color3hNV"sv, check_errors);
 }
 
 template<class span_const_GLhalfNV>
@@ -40,7 +41,8 @@ requires(
  * \param v const GLhalfNV *
  * \return void
  */
-STATICINLINE void color3hv(span_const_GLhalfNV const& v)
+STATICINLINE void color3hv(
+    span_const_GLhalfNV const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -49,7 +51,7 @@ STATICINLINE void color3hv(span_const_GLhalfNV const& v)
     }
     glColor3hvNV(
         v.size() ? reinterpret_cast<const GLhalfNV*>(v.data()) : nullptr);
-    detail::error_check("Color3hvNV"sv);
+    detail::error_check("Color3hvNV"sv, check_errors);
 }
 
 template<class vec_4_GLhalfNV>
@@ -62,7 +64,8 @@ requires(concepts::vector<vec_4_GLhalfNV, GLhalfNV, 4>)
  * \param alpha GLhalfNV
  * \return void
  */
-STATICINLINE void color4h(vec_4_GLhalfNV const& red)
+STATICINLINE void color4h(
+    vec_4_GLhalfNV const& red, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -70,7 +73,7 @@ STATICINLINE void color4h(vec_4_GLhalfNV const& red)
         GLW_FPTR_CHECK(Color4hNV)
     }
     glColor4hNV(red[0], red[1], red[2], red[3]);
-    detail::error_check("Color4hNV"sv);
+    detail::error_check("Color4hNV"sv, check_errors);
 }
 
 template<class span_const_GLhalfNV>
@@ -84,7 +87,8 @@ requires(
  * \param v const GLhalfNV *
  * \return void
  */
-STATICINLINE void color4hv(span_const_GLhalfNV const& v)
+STATICINLINE void color4hv(
+    span_const_GLhalfNV const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -93,7 +97,7 @@ STATICINLINE void color4hv(span_const_GLhalfNV const& v)
     }
     glColor4hvNV(
         v.size() ? reinterpret_cast<const GLhalfNV*>(v.data()) : nullptr);
-    detail::error_check("Color4hvNV"sv);
+    detail::error_check("Color4hvNV"sv, check_errors);
 }
 
 /*!
@@ -101,7 +105,8 @@ STATICINLINE void color4hv(span_const_GLhalfNV const& v)
  * \param fog GLhalfNV
  * \return void
  */
-STATICINLINE void fog_coordh(GLhalfNV fog)
+STATICINLINE void fog_coordh(
+    GLhalfNV fog, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -109,7 +114,7 @@ STATICINLINE void fog_coordh(GLhalfNV fog)
         GLW_FPTR_CHECK(FogCoordhNV)
     }
     glFogCoordhNV(fog);
-    detail::error_check("FogCoordhNV"sv);
+    detail::error_check("FogCoordhNV"sv, check_errors);
 }
 
 template<class span_const_GLhalfNV>
@@ -123,7 +128,8 @@ requires(
  * \param fog const GLhalfNV *
  * \return void
  */
-STATICINLINE void fog_coordhv(span_const_GLhalfNV const& fog)
+STATICINLINE void fog_coordhv(
+    span_const_GLhalfNV const& fog, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -132,7 +138,7 @@ STATICINLINE void fog_coordhv(span_const_GLhalfNV const& fog)
     }
     glFogCoordhvNV(
         fog.size() ? reinterpret_cast<const GLhalfNV*>(fog.data()) : nullptr);
-    detail::error_check("FogCoordhvNV"sv);
+    detail::error_check("FogCoordhvNV"sv, check_errors);
 }
 
 /*!
@@ -141,7 +147,10 @@ STATICINLINE void fog_coordhv(span_const_GLhalfNV const& fog)
  * \param s GLhalfNV
  * \return void
  */
-STATICINLINE void multi_tex_coord1h(group::texture_unit target, GLhalfNV s)
+STATICINLINE void multi_tex_coord1h(
+    group::texture_unit target,
+    GLhalfNV            s,
+    error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -149,7 +158,7 @@ STATICINLINE void multi_tex_coord1h(group::texture_unit target, GLhalfNV s)
         GLW_FPTR_CHECK(MultiTexCoord1hNV)
     }
     glMultiTexCoord1hNV(static_cast<GLenum>(target), s);
-    detail::error_check("MultiTexCoord1hNV"sv);
+    detail::error_check("MultiTexCoord1hNV"sv, check_errors);
 }
 
 template<class span_const_GLhalfNV>
@@ -165,7 +174,9 @@ requires(
  * \return void
  */
 STATICINLINE void multi_tex_coord1hv(
-    group::texture_unit target, span_const_GLhalfNV const& v)
+    group::texture_unit        target,
+    span_const_GLhalfNV const& v,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -175,7 +186,7 @@ STATICINLINE void multi_tex_coord1hv(
     glMultiTexCoord1hvNV(
         static_cast<GLenum>(target),
         v.size() ? reinterpret_cast<const GLhalfNV*>(v.data()) : nullptr);
-    detail::error_check("MultiTexCoord1hvNV"sv);
+    detail::error_check("MultiTexCoord1hvNV"sv, check_errors);
 }
 
 /*!
@@ -186,7 +197,10 @@ STATICINLINE void multi_tex_coord1hv(
  * \return void
  */
 STATICINLINE void multi_tex_coord2h(
-    group::texture_unit target, GLhalfNV s, GLhalfNV t)
+    group::texture_unit target,
+    GLhalfNV            s,
+    GLhalfNV            t,
+    error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -194,7 +208,7 @@ STATICINLINE void multi_tex_coord2h(
         GLW_FPTR_CHECK(MultiTexCoord2hNV)
     }
     glMultiTexCoord2hNV(static_cast<GLenum>(target), s, t);
-    detail::error_check("MultiTexCoord2hNV"sv);
+    detail::error_check("MultiTexCoord2hNV"sv, check_errors);
 }
 
 template<class span_const_GLhalfNV>
@@ -210,7 +224,9 @@ requires(
  * \return void
  */
 STATICINLINE void multi_tex_coord2hv(
-    group::texture_unit target, span_const_GLhalfNV const& v)
+    group::texture_unit        target,
+    span_const_GLhalfNV const& v,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -220,7 +236,7 @@ STATICINLINE void multi_tex_coord2hv(
     glMultiTexCoord2hvNV(
         static_cast<GLenum>(target),
         v.size() ? reinterpret_cast<const GLhalfNV*>(v.data()) : nullptr);
-    detail::error_check("MultiTexCoord2hvNV"sv);
+    detail::error_check("MultiTexCoord2hvNV"sv, check_errors);
 }
 
 /*!
@@ -232,7 +248,11 @@ STATICINLINE void multi_tex_coord2hv(
  * \return void
  */
 STATICINLINE void multi_tex_coord3h(
-    group::texture_unit target, GLhalfNV s, GLhalfNV t, GLhalfNV r)
+    group::texture_unit target,
+    GLhalfNV            s,
+    GLhalfNV            t,
+    GLhalfNV            r,
+    error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -240,7 +260,7 @@ STATICINLINE void multi_tex_coord3h(
         GLW_FPTR_CHECK(MultiTexCoord3hNV)
     }
     glMultiTexCoord3hNV(static_cast<GLenum>(target), s, t, r);
-    detail::error_check("MultiTexCoord3hNV"sv);
+    detail::error_check("MultiTexCoord3hNV"sv, check_errors);
 }
 
 template<class span_const_GLhalfNV>
@@ -256,7 +276,9 @@ requires(
  * \return void
  */
 STATICINLINE void multi_tex_coord3hv(
-    group::texture_unit target, span_const_GLhalfNV const& v)
+    group::texture_unit        target,
+    span_const_GLhalfNV const& v,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -266,7 +288,7 @@ STATICINLINE void multi_tex_coord3hv(
     glMultiTexCoord3hvNV(
         static_cast<GLenum>(target),
         v.size() ? reinterpret_cast<const GLhalfNV*>(v.data()) : nullptr);
-    detail::error_check("MultiTexCoord3hvNV"sv);
+    detail::error_check("MultiTexCoord3hvNV"sv, check_errors);
 }
 
 /*!
@@ -279,7 +301,12 @@ STATICINLINE void multi_tex_coord3hv(
  * \return void
  */
 STATICINLINE void multi_tex_coord4h(
-    group::texture_unit target, GLhalfNV s, GLhalfNV t, GLhalfNV r, GLhalfNV q)
+    group::texture_unit target,
+    GLhalfNV            s,
+    GLhalfNV            t,
+    GLhalfNV            r,
+    GLhalfNV            q,
+    error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -287,7 +314,7 @@ STATICINLINE void multi_tex_coord4h(
         GLW_FPTR_CHECK(MultiTexCoord4hNV)
     }
     glMultiTexCoord4hNV(static_cast<GLenum>(target), s, t, r, q);
-    detail::error_check("MultiTexCoord4hNV"sv);
+    detail::error_check("MultiTexCoord4hNV"sv, check_errors);
 }
 
 template<class span_const_GLhalfNV>
@@ -303,7 +330,9 @@ requires(
  * \return void
  */
 STATICINLINE void multi_tex_coord4hv(
-    group::texture_unit target, span_const_GLhalfNV const& v)
+    group::texture_unit        target,
+    span_const_GLhalfNV const& v,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -313,7 +342,7 @@ STATICINLINE void multi_tex_coord4hv(
     glMultiTexCoord4hvNV(
         static_cast<GLenum>(target),
         v.size() ? reinterpret_cast<const GLhalfNV*>(v.data()) : nullptr);
-    detail::error_check("MultiTexCoord4hvNV"sv);
+    detail::error_check("MultiTexCoord4hvNV"sv, check_errors);
 }
 
 /*!
@@ -323,7 +352,11 @@ STATICINLINE void multi_tex_coord4hv(
  * \param nz GLhalfNV
  * \return void
  */
-STATICINLINE void normal3h(GLhalfNV nx, GLhalfNV ny, GLhalfNV nz)
+STATICINLINE void normal3h(
+    GLhalfNV    nx,
+    GLhalfNV    ny,
+    GLhalfNV    nz,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -331,7 +364,7 @@ STATICINLINE void normal3h(GLhalfNV nx, GLhalfNV ny, GLhalfNV nz)
         GLW_FPTR_CHECK(Normal3hNV)
     }
     glNormal3hNV(nx, ny, nz);
-    detail::error_check("Normal3hNV"sv);
+    detail::error_check("Normal3hNV"sv, check_errors);
 }
 
 template<class span_const_GLhalfNV>
@@ -345,7 +378,8 @@ requires(
  * \param v const GLhalfNV *
  * \return void
  */
-STATICINLINE void normal3hv(span_const_GLhalfNV const& v)
+STATICINLINE void normal3hv(
+    span_const_GLhalfNV const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -354,7 +388,7 @@ STATICINLINE void normal3hv(span_const_GLhalfNV const& v)
     }
     glNormal3hvNV(
         v.size() ? reinterpret_cast<const GLhalfNV*>(v.data()) : nullptr);
-    detail::error_check("Normal3hvNV"sv);
+    detail::error_check("Normal3hvNV"sv, check_errors);
 }
 
 template<class vec_3_GLhalfNV>
@@ -366,7 +400,8 @@ requires(concepts::vector<vec_3_GLhalfNV, GLhalfNV, 3>)
  * \param blue GLhalfNV
  * \return void
  */
-STATICINLINE void secondary_color3h(vec_3_GLhalfNV const& red)
+STATICINLINE void secondary_color3h(
+    vec_3_GLhalfNV const& red, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -374,7 +409,7 @@ STATICINLINE void secondary_color3h(vec_3_GLhalfNV const& red)
         GLW_FPTR_CHECK(SecondaryColor3hNV)
     }
     glSecondaryColor3hNV(red[0], red[1], red[2]);
-    detail::error_check("SecondaryColor3hNV"sv);
+    detail::error_check("SecondaryColor3hNV"sv, check_errors);
 }
 
 template<class span_const_GLhalfNV>
@@ -388,7 +423,8 @@ requires(
  * \param v const GLhalfNV *
  * \return void
  */
-STATICINLINE void secondary_color3hv(span_const_GLhalfNV const& v)
+STATICINLINE void secondary_color3hv(
+    span_const_GLhalfNV const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -397,7 +433,7 @@ STATICINLINE void secondary_color3hv(span_const_GLhalfNV const& v)
     }
     glSecondaryColor3hvNV(
         v.size() ? reinterpret_cast<const GLhalfNV*>(v.data()) : nullptr);
-    detail::error_check("SecondaryColor3hvNV"sv);
+    detail::error_check("SecondaryColor3hvNV"sv, check_errors);
 }
 
 /*!
@@ -405,7 +441,8 @@ STATICINLINE void secondary_color3hv(span_const_GLhalfNV const& v)
  * \param s GLhalfNV
  * \return void
  */
-STATICINLINE void tex_coord1h(GLhalfNV s)
+STATICINLINE void tex_coord1h(
+    GLhalfNV s, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -413,7 +450,7 @@ STATICINLINE void tex_coord1h(GLhalfNV s)
         GLW_FPTR_CHECK(TexCoord1hNV)
     }
     glTexCoord1hNV(s);
-    detail::error_check("TexCoord1hNV"sv);
+    detail::error_check("TexCoord1hNV"sv, check_errors);
 }
 
 template<class span_const_GLhalfNV>
@@ -427,7 +464,8 @@ requires(
  * \param v const GLhalfNV *
  * \return void
  */
-STATICINLINE void tex_coord1hv(span_const_GLhalfNV const& v)
+STATICINLINE void tex_coord1hv(
+    span_const_GLhalfNV const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -436,7 +474,7 @@ STATICINLINE void tex_coord1hv(span_const_GLhalfNV const& v)
     }
     glTexCoord1hvNV(
         v.size() ? reinterpret_cast<const GLhalfNV*>(v.data()) : nullptr);
-    detail::error_check("TexCoord1hvNV"sv);
+    detail::error_check("TexCoord1hvNV"sv, check_errors);
 }
 
 /*!
@@ -445,7 +483,8 @@ STATICINLINE void tex_coord1hv(span_const_GLhalfNV const& v)
  * \param t GLhalfNV
  * \return void
  */
-STATICINLINE void tex_coord2h(GLhalfNV s, GLhalfNV t)
+STATICINLINE void tex_coord2h(
+    GLhalfNV s, GLhalfNV t, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -453,7 +492,7 @@ STATICINLINE void tex_coord2h(GLhalfNV s, GLhalfNV t)
         GLW_FPTR_CHECK(TexCoord2hNV)
     }
     glTexCoord2hNV(s, t);
-    detail::error_check("TexCoord2hNV"sv);
+    detail::error_check("TexCoord2hNV"sv, check_errors);
 }
 
 template<class span_const_GLhalfNV>
@@ -467,7 +506,8 @@ requires(
  * \param v const GLhalfNV *
  * \return void
  */
-STATICINLINE void tex_coord2hv(span_const_GLhalfNV const& v)
+STATICINLINE void tex_coord2hv(
+    span_const_GLhalfNV const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -476,7 +516,7 @@ STATICINLINE void tex_coord2hv(span_const_GLhalfNV const& v)
     }
     glTexCoord2hvNV(
         v.size() ? reinterpret_cast<const GLhalfNV*>(v.data()) : nullptr);
-    detail::error_check("TexCoord2hvNV"sv);
+    detail::error_check("TexCoord2hvNV"sv, check_errors);
 }
 
 /*!
@@ -486,7 +526,11 @@ STATICINLINE void tex_coord2hv(span_const_GLhalfNV const& v)
  * \param r GLhalfNV
  * \return void
  */
-STATICINLINE void tex_coord3h(GLhalfNV s, GLhalfNV t, GLhalfNV r)
+STATICINLINE void tex_coord3h(
+    GLhalfNV    s,
+    GLhalfNV    t,
+    GLhalfNV    r,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -494,7 +538,7 @@ STATICINLINE void tex_coord3h(GLhalfNV s, GLhalfNV t, GLhalfNV r)
         GLW_FPTR_CHECK(TexCoord3hNV)
     }
     glTexCoord3hNV(s, t, r);
-    detail::error_check("TexCoord3hNV"sv);
+    detail::error_check("TexCoord3hNV"sv, check_errors);
 }
 
 template<class span_const_GLhalfNV>
@@ -508,7 +552,8 @@ requires(
  * \param v const GLhalfNV *
  * \return void
  */
-STATICINLINE void tex_coord3hv(span_const_GLhalfNV const& v)
+STATICINLINE void tex_coord3hv(
+    span_const_GLhalfNV const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -517,7 +562,7 @@ STATICINLINE void tex_coord3hv(span_const_GLhalfNV const& v)
     }
     glTexCoord3hvNV(
         v.size() ? reinterpret_cast<const GLhalfNV*>(v.data()) : nullptr);
-    detail::error_check("TexCoord3hvNV"sv);
+    detail::error_check("TexCoord3hvNV"sv, check_errors);
 }
 
 /*!
@@ -528,7 +573,12 @@ STATICINLINE void tex_coord3hv(span_const_GLhalfNV const& v)
  * \param q GLhalfNV
  * \return void
  */
-STATICINLINE void tex_coord4h(GLhalfNV s, GLhalfNV t, GLhalfNV r, GLhalfNV q)
+STATICINLINE void tex_coord4h(
+    GLhalfNV    s,
+    GLhalfNV    t,
+    GLhalfNV    r,
+    GLhalfNV    q,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -536,7 +586,7 @@ STATICINLINE void tex_coord4h(GLhalfNV s, GLhalfNV t, GLhalfNV r, GLhalfNV q)
         GLW_FPTR_CHECK(TexCoord4hNV)
     }
     glTexCoord4hNV(s, t, r, q);
-    detail::error_check("TexCoord4hNV"sv);
+    detail::error_check("TexCoord4hNV"sv, check_errors);
 }
 
 template<class span_const_GLhalfNV>
@@ -550,7 +600,8 @@ requires(
  * \param v const GLhalfNV *
  * \return void
  */
-STATICINLINE void tex_coord4hv(span_const_GLhalfNV const& v)
+STATICINLINE void tex_coord4hv(
+    span_const_GLhalfNV const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -559,7 +610,7 @@ STATICINLINE void tex_coord4hv(span_const_GLhalfNV const& v)
     }
     glTexCoord4hvNV(
         v.size() ? reinterpret_cast<const GLhalfNV*>(v.data()) : nullptr);
-    detail::error_check("TexCoord4hvNV"sv);
+    detail::error_check("TexCoord4hvNV"sv, check_errors);
 }
 
 template<class vec_2_GLhalfNV>
@@ -570,7 +621,8 @@ requires(concepts::vector<vec_2_GLhalfNV, GLhalfNV, 2>)
  * \param y GLhalfNV
  * \return void
  */
-STATICINLINE void vertex2h(vec_2_GLhalfNV const& x)
+STATICINLINE void vertex2h(
+    vec_2_GLhalfNV const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -578,7 +630,7 @@ STATICINLINE void vertex2h(vec_2_GLhalfNV const& x)
         GLW_FPTR_CHECK(Vertex2hNV)
     }
     glVertex2hNV(x[0], x[1]);
-    detail::error_check("Vertex2hNV"sv);
+    detail::error_check("Vertex2hNV"sv, check_errors);
 }
 
 template<class span_const_GLhalfNV>
@@ -592,7 +644,8 @@ requires(
  * \param v const GLhalfNV *
  * \return void
  */
-STATICINLINE void vertex2hv(span_const_GLhalfNV const& v)
+STATICINLINE void vertex2hv(
+    span_const_GLhalfNV const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -601,7 +654,7 @@ STATICINLINE void vertex2hv(span_const_GLhalfNV const& v)
     }
     glVertex2hvNV(
         v.size() ? reinterpret_cast<const GLhalfNV*>(v.data()) : nullptr);
-    detail::error_check("Vertex2hvNV"sv);
+    detail::error_check("Vertex2hvNV"sv, check_errors);
 }
 
 template<class vec_3_GLhalfNV>
@@ -613,7 +666,8 @@ requires(concepts::vector<vec_3_GLhalfNV, GLhalfNV, 3>)
  * \param z GLhalfNV
  * \return void
  */
-STATICINLINE void vertex3h(vec_3_GLhalfNV const& x)
+STATICINLINE void vertex3h(
+    vec_3_GLhalfNV const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -621,7 +675,7 @@ STATICINLINE void vertex3h(vec_3_GLhalfNV const& x)
         GLW_FPTR_CHECK(Vertex3hNV)
     }
     glVertex3hNV(x[0], x[1], x[2]);
-    detail::error_check("Vertex3hNV"sv);
+    detail::error_check("Vertex3hNV"sv, check_errors);
 }
 
 template<class span_const_GLhalfNV>
@@ -635,7 +689,8 @@ requires(
  * \param v const GLhalfNV *
  * \return void
  */
-STATICINLINE void vertex3hv(span_const_GLhalfNV const& v)
+STATICINLINE void vertex3hv(
+    span_const_GLhalfNV const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -644,7 +699,7 @@ STATICINLINE void vertex3hv(span_const_GLhalfNV const& v)
     }
     glVertex3hvNV(
         v.size() ? reinterpret_cast<const GLhalfNV*>(v.data()) : nullptr);
-    detail::error_check("Vertex3hvNV"sv);
+    detail::error_check("Vertex3hvNV"sv, check_errors);
 }
 
 template<class vec_4_GLhalfNV>
@@ -657,7 +712,8 @@ requires(concepts::vector<vec_4_GLhalfNV, GLhalfNV, 4>)
  * \param w GLhalfNV
  * \return void
  */
-STATICINLINE void vertex4h(vec_4_GLhalfNV const& x)
+STATICINLINE void vertex4h(
+    vec_4_GLhalfNV const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -665,7 +721,7 @@ STATICINLINE void vertex4h(vec_4_GLhalfNV const& x)
         GLW_FPTR_CHECK(Vertex4hNV)
     }
     glVertex4hNV(x[0], x[1], x[2], x[3]);
-    detail::error_check("Vertex4hNV"sv);
+    detail::error_check("Vertex4hNV"sv, check_errors);
 }
 
 template<class span_const_GLhalfNV>
@@ -679,7 +735,8 @@ requires(
  * \param v const GLhalfNV *
  * \return void
  */
-STATICINLINE void vertex4hv(span_const_GLhalfNV const& v)
+STATICINLINE void vertex4hv(
+    span_const_GLhalfNV const& v, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -688,7 +745,7 @@ STATICINLINE void vertex4hv(span_const_GLhalfNV const& v)
     }
     glVertex4hvNV(
         v.size() ? reinterpret_cast<const GLhalfNV*>(v.data()) : nullptr);
-    detail::error_check("Vertex4hvNV"sv);
+    detail::error_check("Vertex4hvNV"sv, check_errors);
 }
 
 /*!
@@ -697,7 +754,8 @@ STATICINLINE void vertex4hv(span_const_GLhalfNV const& v)
  * \param x GLhalfNV
  * \return void
  */
-STATICINLINE void vertex_attrib1h(u32 index, GLhalfNV x)
+STATICINLINE void vertex_attrib1h(
+    u32 index, GLhalfNV x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -705,7 +763,7 @@ STATICINLINE void vertex_attrib1h(u32 index, GLhalfNV x)
         GLW_FPTR_CHECK(VertexAttrib1hNV)
     }
     glVertexAttrib1hNV(index, x);
-    detail::error_check("VertexAttrib1hNV"sv);
+    detail::error_check("VertexAttrib1hNV"sv, check_errors);
 }
 
 template<class span_const_GLhalfNV>
@@ -720,7 +778,10 @@ requires(
  * \param v const GLhalfNV *
  * \return void
  */
-STATICINLINE void vertex_attrib1hv(u32 index, span_const_GLhalfNV const& v)
+STATICINLINE void vertex_attrib1hv(
+    u32                        index,
+    span_const_GLhalfNV const& v,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -730,7 +791,7 @@ STATICINLINE void vertex_attrib1hv(u32 index, span_const_GLhalfNV const& v)
     glVertexAttrib1hvNV(
         index,
         v.size() ? reinterpret_cast<const GLhalfNV*>(v.data()) : nullptr);
-    detail::error_check("VertexAttrib1hvNV"sv);
+    detail::error_check("VertexAttrib1hvNV"sv, check_errors);
 }
 
 template<class vec_2_GLhalfNV>
@@ -742,7 +803,10 @@ requires(concepts::vector<vec_2_GLhalfNV, GLhalfNV, 2>)
  * \param y GLhalfNV
  * \return void
  */
-STATICINLINE void vertex_attrib2h(u32 index, vec_2_GLhalfNV const& x)
+STATICINLINE void vertex_attrib2h(
+    u32                   index,
+    vec_2_GLhalfNV const& x,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -750,7 +814,7 @@ STATICINLINE void vertex_attrib2h(u32 index, vec_2_GLhalfNV const& x)
         GLW_FPTR_CHECK(VertexAttrib2hNV)
     }
     glVertexAttrib2hNV(index, x[0], x[1]);
-    detail::error_check("VertexAttrib2hNV"sv);
+    detail::error_check("VertexAttrib2hNV"sv, check_errors);
 }
 
 template<class span_const_GLhalfNV>
@@ -765,7 +829,10 @@ requires(
  * \param v const GLhalfNV *
  * \return void
  */
-STATICINLINE void vertex_attrib2hv(u32 index, span_const_GLhalfNV const& v)
+STATICINLINE void vertex_attrib2hv(
+    u32                        index,
+    span_const_GLhalfNV const& v,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -775,7 +842,7 @@ STATICINLINE void vertex_attrib2hv(u32 index, span_const_GLhalfNV const& v)
     glVertexAttrib2hvNV(
         index,
         v.size() ? reinterpret_cast<const GLhalfNV*>(v.data()) : nullptr);
-    detail::error_check("VertexAttrib2hvNV"sv);
+    detail::error_check("VertexAttrib2hvNV"sv, check_errors);
 }
 
 template<class vec_3_GLhalfNV>
@@ -788,7 +855,10 @@ requires(concepts::vector<vec_3_GLhalfNV, GLhalfNV, 3>)
  * \param z GLhalfNV
  * \return void
  */
-STATICINLINE void vertex_attrib3h(u32 index, vec_3_GLhalfNV const& x)
+STATICINLINE void vertex_attrib3h(
+    u32                   index,
+    vec_3_GLhalfNV const& x,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -796,7 +866,7 @@ STATICINLINE void vertex_attrib3h(u32 index, vec_3_GLhalfNV const& x)
         GLW_FPTR_CHECK(VertexAttrib3hNV)
     }
     glVertexAttrib3hNV(index, x[0], x[1], x[2]);
-    detail::error_check("VertexAttrib3hNV"sv);
+    detail::error_check("VertexAttrib3hNV"sv, check_errors);
 }
 
 template<class span_const_GLhalfNV>
@@ -811,7 +881,10 @@ requires(
  * \param v const GLhalfNV *
  * \return void
  */
-STATICINLINE void vertex_attrib3hv(u32 index, span_const_GLhalfNV const& v)
+STATICINLINE void vertex_attrib3hv(
+    u32                        index,
+    span_const_GLhalfNV const& v,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -821,7 +894,7 @@ STATICINLINE void vertex_attrib3hv(u32 index, span_const_GLhalfNV const& v)
     glVertexAttrib3hvNV(
         index,
         v.size() ? reinterpret_cast<const GLhalfNV*>(v.data()) : nullptr);
-    detail::error_check("VertexAttrib3hvNV"sv);
+    detail::error_check("VertexAttrib3hvNV"sv, check_errors);
 }
 
 template<class vec_4_GLhalfNV>
@@ -835,7 +908,10 @@ requires(concepts::vector<vec_4_GLhalfNV, GLhalfNV, 4>)
  * \param w GLhalfNV
  * \return void
  */
-STATICINLINE void vertex_attrib4h(u32 index, vec_4_GLhalfNV const& x)
+STATICINLINE void vertex_attrib4h(
+    u32                   index,
+    vec_4_GLhalfNV const& x,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -843,7 +919,7 @@ STATICINLINE void vertex_attrib4h(u32 index, vec_4_GLhalfNV const& x)
         GLW_FPTR_CHECK(VertexAttrib4hNV)
     }
     glVertexAttrib4hNV(index, x[0], x[1], x[2], x[3]);
-    detail::error_check("VertexAttrib4hNV"sv);
+    detail::error_check("VertexAttrib4hNV"sv, check_errors);
 }
 
 template<class span_const_GLhalfNV>
@@ -858,7 +934,10 @@ requires(
  * \param v const GLhalfNV *
  * \return void
  */
-STATICINLINE void vertex_attrib4hv(u32 index, span_const_GLhalfNV const& v)
+STATICINLINE void vertex_attrib4hv(
+    u32                        index,
+    span_const_GLhalfNV const& v,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -868,7 +947,7 @@ STATICINLINE void vertex_attrib4hv(u32 index, span_const_GLhalfNV const& v)
     glVertexAttrib4hvNV(
         index,
         v.size() ? reinterpret_cast<const GLhalfNV*>(v.data()) : nullptr);
-    detail::error_check("VertexAttrib4hvNV"sv);
+    detail::error_check("VertexAttrib4hvNV"sv, check_errors);
 }
 
 template<class span_const_GLhalfNV>
@@ -884,7 +963,10 @@ requires(
  * \param v const GLhalfNV *
  * \return void
  */
-STATICINLINE void vertex_attribs1hv(u32 index, span_const_GLhalfNV const& v)
+STATICINLINE void vertex_attribs1hv(
+    u32                        index,
+    span_const_GLhalfNV const& v,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -895,7 +977,7 @@ STATICINLINE void vertex_attribs1hv(u32 index, span_const_GLhalfNV const& v)
         index,
         v.size(),
         v.size() ? reinterpret_cast<const GLhalfNV*>(v.data()) : nullptr);
-    detail::error_check("VertexAttribs1hvNV"sv);
+    detail::error_check("VertexAttribs1hvNV"sv, check_errors);
 }
 
 template<class span_const_GLhalfNV>
@@ -911,7 +993,10 @@ requires(
  * \param v const GLhalfNV *
  * \return void
  */
-STATICINLINE void vertex_attribs2hv(u32 index, span_const_GLhalfNV const& v)
+STATICINLINE void vertex_attribs2hv(
+    u32                        index,
+    span_const_GLhalfNV const& v,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -922,7 +1007,7 @@ STATICINLINE void vertex_attribs2hv(u32 index, span_const_GLhalfNV const& v)
         index,
         v.size(),
         v.size() ? reinterpret_cast<const GLhalfNV*>(v.data()) : nullptr);
-    detail::error_check("VertexAttribs2hvNV"sv);
+    detail::error_check("VertexAttribs2hvNV"sv, check_errors);
 }
 
 template<class span_const_GLhalfNV>
@@ -938,7 +1023,10 @@ requires(
  * \param v const GLhalfNV *
  * \return void
  */
-STATICINLINE void vertex_attribs3hv(u32 index, span_const_GLhalfNV const& v)
+STATICINLINE void vertex_attribs3hv(
+    u32                        index,
+    span_const_GLhalfNV const& v,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -949,7 +1037,7 @@ STATICINLINE void vertex_attribs3hv(u32 index, span_const_GLhalfNV const& v)
         index,
         v.size(),
         v.size() ? reinterpret_cast<const GLhalfNV*>(v.data()) : nullptr);
-    detail::error_check("VertexAttribs3hvNV"sv);
+    detail::error_check("VertexAttribs3hvNV"sv, check_errors);
 }
 
 template<class span_const_GLhalfNV>
@@ -965,7 +1053,10 @@ requires(
  * \param v const GLhalfNV *
  * \return void
  */
-STATICINLINE void vertex_attribs4hv(u32 index, span_const_GLhalfNV const& v)
+STATICINLINE void vertex_attribs4hv(
+    u32                        index,
+    span_const_GLhalfNV const& v,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -976,7 +1067,7 @@ STATICINLINE void vertex_attribs4hv(u32 index, span_const_GLhalfNV const& v)
         index,
         v.size(),
         v.size() ? reinterpret_cast<const GLhalfNV*>(v.data()) : nullptr);
-    detail::error_check("VertexAttribs4hvNV"sv);
+    detail::error_check("VertexAttribs4hvNV"sv, check_errors);
 }
 
 /*!
@@ -984,7 +1075,8 @@ STATICINLINE void vertex_attribs4hv(u32 index, span_const_GLhalfNV const& v)
  * \param weight GLhalfNV
  * \return void
  */
-STATICINLINE void vertex_weighth(GLhalfNV weight)
+STATICINLINE void vertex_weighth(
+    GLhalfNV weight, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -992,7 +1084,7 @@ STATICINLINE void vertex_weighth(GLhalfNV weight)
         GLW_FPTR_CHECK(VertexWeighthNV)
     }
     glVertexWeighthNV(weight);
-    detail::error_check("VertexWeighthNV"sv);
+    detail::error_check("VertexWeighthNV"sv, check_errors);
 }
 
 template<class span_const_GLhalfNV>
@@ -1006,7 +1098,9 @@ requires(
  * \param weight const GLhalfNV *
  * \return void
  */
-STATICINLINE void vertex_weighthv(span_const_GLhalfNV const& weight)
+STATICINLINE void vertex_weighthv(
+    span_const_GLhalfNV const& weight,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -1016,7 +1110,7 @@ STATICINLINE void vertex_weighthv(span_const_GLhalfNV const& weight)
     glVertexWeighthvNV(
         weight.size() ? reinterpret_cast<const GLhalfNV*>(weight.data())
                       : nullptr);
-    detail::error_check("VertexWeighthvNV"sv);
+    detail::error_check("VertexWeighthvNV"sv, check_errors);
 }
 
 } // namespace gl::nv::half_float

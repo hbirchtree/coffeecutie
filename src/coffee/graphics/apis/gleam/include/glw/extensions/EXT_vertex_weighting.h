@@ -35,7 +35,8 @@ STATICINLINE void vertex_weight_pointer(
     i32                                   size,
     group::vertex_weight_pointer_type_ext type,
     i32                                   stride,
-    span_const_void const&                pointer)
+    span_const_void const&                pointer,
+    error_check                           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -48,7 +49,7 @@ STATICINLINE void vertex_weight_pointer(
         stride,
         pointer.size() ? reinterpret_cast<const void*>(pointer.data())
                        : nullptr);
-    detail::error_check("VertexWeightPointerEXT"sv);
+    detail::error_check("VertexWeightPointerEXT"sv, check_errors);
 }
 
 /*!
@@ -56,7 +57,8 @@ STATICINLINE void vertex_weight_pointer(
  * \param weight GLfloat
  * \return void
  */
-STATICINLINE void vertex_weightf(f32 weight)
+STATICINLINE void vertex_weightf(
+    f32 weight, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -64,7 +66,7 @@ STATICINLINE void vertex_weightf(f32 weight)
         GLW_FPTR_CHECK(VertexWeightfEXT)
     }
     glVertexWeightfEXT(weight);
-    detail::error_check("VertexWeightfEXT"sv);
+    detail::error_check("VertexWeightfEXT"sv, check_errors);
 }
 
 template<class span_const_f32>
@@ -78,7 +80,8 @@ requires(
  * \param weight const GLfloat *
  * \return void
  */
-STATICINLINE void vertex_weightfv(span_const_f32 const& weight)
+STATICINLINE void vertex_weightfv(
+    span_const_f32 const& weight, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -88,7 +91,7 @@ STATICINLINE void vertex_weightfv(span_const_f32 const& weight)
     glVertexWeightfvEXT(
         weight.size() ? reinterpret_cast<const GLfloat*>(weight.data())
                       : nullptr);
-    detail::error_check("VertexWeightfvEXT"sv);
+    detail::error_check("VertexWeightfvEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::vertex_weighting

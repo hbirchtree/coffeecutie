@@ -28,7 +28,10 @@ requires(
  * \return void
  */
 STATICINLINE void depth_range_arrayv(
-    u32 first, i32 count, span_const_f64 const& v)
+    u32                   first,
+    i32                   count,
+    span_const_f64 const& v,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -39,7 +42,7 @@ STATICINLINE void depth_range_arrayv(
         first,
         count,
         v.size() ? reinterpret_cast<const GLdouble*>(v.data()) : nullptr);
-    detail::error_check("DepthRangeArrayv"sv);
+    detail::error_check("DepthRangeArrayv"sv, check_errors);
 }
 
 /*!
@@ -49,7 +52,8 @@ STATICINLINE void depth_range_arrayv(
  * \param f GLdouble
  * \return void
  */
-STATICINLINE void depth_range_indexed(u32 index, f64 n, f64 f)
+STATICINLINE void depth_range_indexed(
+    u32 index, f64 n, f64 f, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -57,7 +61,7 @@ STATICINLINE void depth_range_indexed(u32 index, f64 n, f64 f)
         GLW_FPTR_CHECK(DepthRangeIndexed)
     }
     glDepthRangeIndexed(index, n, f);
-    detail::error_check("DepthRangeIndexed"sv);
+    detail::error_check("DepthRangeIndexed"sv, check_errors);
 }
 
 template<class span_f64>
@@ -73,7 +77,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_doublei_v(
-    group::get_prop target, u32 index, span_f64 data)
+    group::get_prop target,
+    u32             index,
+    span_f64        data,
+    error_check     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -84,7 +91,7 @@ STATICINLINE void get_doublei_v(
         static_cast<GLenum>(target),
         index,
         data.size() ? reinterpret_cast<GLdouble*>(data.data()) : nullptr);
-    detail::error_check("GetDoublei_v"sv);
+    detail::error_check("GetDoublei_v"sv, check_errors);
 }
 
 template<class span_f32>
@@ -99,7 +106,11 @@ requires(
  * \param data GLfloat *
  * \return void
  */
-STATICINLINE void get_floati_v(group::get_prop target, u32 index, span_f32 data)
+STATICINLINE void get_floati_v(
+    group::get_prop target,
+    u32             index,
+    span_f32        data,
+    error_check     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -110,7 +121,7 @@ STATICINLINE void get_floati_v(group::get_prop target, u32 index, span_f32 data)
         static_cast<GLenum>(target),
         index,
         data.size() ? reinterpret_cast<GLfloat*>(data.data()) : nullptr);
-    detail::error_check("GetFloati_v"sv);
+    detail::error_check("GetFloati_v"sv, check_errors);
 }
 
 template<class span_const_i32>
@@ -126,7 +137,11 @@ requires(
  * \param v const GLint *
  * \return void
  */
-STATICINLINE void scissor_arrayv(u32 first, i32 count, span_const_i32 const& v)
+STATICINLINE void scissor_arrayv(
+    u32                   first,
+    i32                   count,
+    span_const_i32 const& v,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -137,7 +152,7 @@ STATICINLINE void scissor_arrayv(u32 first, i32 count, span_const_i32 const& v)
         first,
         count,
         v.size() ? reinterpret_cast<const GLint*>(v.data()) : nullptr);
-    detail::error_check("ScissorArrayv"sv);
+    detail::error_check("ScissorArrayv"sv, check_errors);
 }
 
 template<class size_2_i32>
@@ -152,7 +167,11 @@ requires(concepts::size_2d<size_2_i32, i32>)
  * \return void
  */
 STATICINLINE void scissor_indexed(
-    u32 index, i32 left, i32 bottom, size_2_i32 const& width)
+    u32               index,
+    i32               left,
+    i32               bottom,
+    size_2_i32 const& width,
+    error_check       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -160,7 +179,7 @@ STATICINLINE void scissor_indexed(
         GLW_FPTR_CHECK(ScissorIndexed)
     }
     glScissorIndexed(index, left, bottom, width[0], width[1]);
-    detail::error_check("ScissorIndexed"sv);
+    detail::error_check("ScissorIndexed"sv, check_errors);
 }
 
 template<class span_const_i32>
@@ -175,7 +194,10 @@ requires(
  * \param v const GLint *
  * \return void
  */
-STATICINLINE void scissor_indexedv(u32 index, span_const_i32 const& v)
+STATICINLINE void scissor_indexedv(
+    u32                   index,
+    span_const_i32 const& v,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -184,7 +206,7 @@ STATICINLINE void scissor_indexedv(u32 index, span_const_i32 const& v)
     }
     glScissorIndexedv(
         index, v.size() ? reinterpret_cast<const GLint*>(v.data()) : nullptr);
-    detail::error_check("ScissorIndexedv"sv);
+    detail::error_check("ScissorIndexedv"sv, check_errors);
 }
 
 template<class span_const_f32>
@@ -200,7 +222,11 @@ requires(
  * \param v const GLfloat *
  * \return void
  */
-STATICINLINE void viewport_arrayv(u32 first, i32 count, span_const_f32 const& v)
+STATICINLINE void viewport_arrayv(
+    u32                   first,
+    i32                   count,
+    span_const_f32 const& v,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -211,7 +237,7 @@ STATICINLINE void viewport_arrayv(u32 first, i32 count, span_const_f32 const& v)
         first,
         count,
         v.size() ? reinterpret_cast<const GLfloat*>(v.data()) : nullptr);
-    detail::error_check("ViewportArrayv"sv);
+    detail::error_check("ViewportArrayv"sv, check_errors);
 }
 
 template<class size_2_f32, class vec_2_f32>
@@ -227,7 +253,10 @@ requires(
  * \return void
  */
 STATICINLINE void viewport_indexedf(
-    u32 index, vec_2_f32 const& x, size_2_f32 const& w)
+    u32               index,
+    vec_2_f32 const&  x,
+    size_2_f32 const& w,
+    error_check       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -235,7 +264,7 @@ STATICINLINE void viewport_indexedf(
         GLW_FPTR_CHECK(ViewportIndexedf)
     }
     glViewportIndexedf(index, x[0], x[1], w[0], w[1]);
-    detail::error_check("ViewportIndexedf"sv);
+    detail::error_check("ViewportIndexedf"sv, check_errors);
 }
 
 template<class span_const_f32>
@@ -250,7 +279,10 @@ requires(
  * \param v const GLfloat *
  * \return void
  */
-STATICINLINE void viewport_indexedfv(u32 index, span_const_f32 const& v)
+STATICINLINE void viewport_indexedfv(
+    u32                   index,
+    span_const_f32 const& v,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -259,7 +291,7 @@ STATICINLINE void viewport_indexedfv(u32 index, span_const_f32 const& v)
     }
     glViewportIndexedfv(
         index, v.size() ? reinterpret_cast<const GLfloat*>(v.data()) : nullptr);
-    detail::error_check("ViewportIndexedfv"sv);
+    detail::error_check("ViewportIndexedfv"sv, check_errors);
 }
 
 template<class span_const_f64>
@@ -276,7 +308,10 @@ requires(
  * \return void
  */
 STATICINLINE void depth_range_arraydv_nv(
-    u32 first, i32 count, span_const_f64 const& v)
+    u32                   first,
+    i32                   count,
+    span_const_f64 const& v,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -287,7 +322,7 @@ STATICINLINE void depth_range_arraydv_nv(
         first,
         count,
         v.size() ? reinterpret_cast<const GLdouble*>(v.data()) : nullptr);
-    detail::error_check("DepthRangeArraydvNV"sv);
+    detail::error_check("DepthRangeArraydvNV"sv, check_errors);
 }
 
 /*!
@@ -297,7 +332,8 @@ STATICINLINE void depth_range_arraydv_nv(
  * \param f GLdouble
  * \return void
  */
-STATICINLINE void depth_range_indexedd_nv(u32 index, f64 n, f64 f)
+STATICINLINE void depth_range_indexedd_nv(
+    u32 index, f64 n, f64 f, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -305,7 +341,7 @@ STATICINLINE void depth_range_indexedd_nv(u32 index, f64 n, f64 f)
         GLW_FPTR_CHECK(DepthRangeIndexeddNV)
     }
     glDepthRangeIndexeddNV(index, n, f);
-    detail::error_check("DepthRangeIndexeddNV"sv);
+    detail::error_check("DepthRangeIndexeddNV"sv, check_errors);
 }
 
 } // namespace gl::arb::viewport_array

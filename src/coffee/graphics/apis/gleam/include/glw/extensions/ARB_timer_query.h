@@ -26,7 +26,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_query_objecti64v(
-    u32 id, group::query_object_parameter_name pname, span_i64 params)
+    u32                                id,
+    group::query_object_parameter_name pname,
+    span_i64                           params,
+    error_check                        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -37,7 +40,7 @@ STATICINLINE void get_query_objecti64v(
         id,
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint64*>(params.data()) : nullptr);
-    detail::error_check("GetQueryObjecti64v"sv);
+    detail::error_check("GetQueryObjecti64v"sv, check_errors);
 }
 
 template<class span_u64>
@@ -53,7 +56,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_query_objectui64v(
-    u32 id, group::query_object_parameter_name pname, span_u64 params)
+    u32                                id,
+    group::query_object_parameter_name pname,
+    span_u64                           params,
+    error_check                        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -64,7 +70,7 @@ STATICINLINE void get_query_objectui64v(
         id,
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLuint64*>(params.data()) : nullptr);
-    detail::error_check("GetQueryObjectui64v"sv);
+    detail::error_check("GetQueryObjectui64v"sv, check_errors);
 }
 
 /*!
@@ -73,7 +79,10 @@ STATICINLINE void get_query_objectui64v(
  * \param target GLenum
  * \return void
  */
-STATICINLINE void query_counter(u32 id, group::query_counter_target target)
+STATICINLINE void query_counter(
+    u32                         id,
+    group::query_counter_target target,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -81,7 +90,7 @@ STATICINLINE void query_counter(u32 id, group::query_counter_target target)
         GLW_FPTR_CHECK(QueryCounter)
     }
     glQueryCounter(id, static_cast<GLenum>(target));
-    detail::error_check("QueryCounter"sv);
+    detail::error_check("QueryCounter"sv, check_errors);
 }
 
 } // namespace gl::arb::timer_query

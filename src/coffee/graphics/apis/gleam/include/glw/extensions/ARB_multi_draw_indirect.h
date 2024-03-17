@@ -14,7 +14,11 @@ namespace values {
  * \return void
  */
 STATICINLINE void multi_draw_arrays_indirect(
-    group::primitive_type mode, intptr_t indirect, i32 drawcount, i32 stride)
+    group::primitive_type mode,
+    intptr_t              indirect,
+    i32                   drawcount,
+    i32                   stride,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -26,7 +30,7 @@ STATICINLINE void multi_draw_arrays_indirect(
         reinterpret_cast<const void*>(indirect),
         drawcount,
         stride);
-    detail::error_check("MultiDrawArraysIndirect"sv);
+    detail::error_check("MultiDrawArraysIndirect"sv, check_errors);
 }
 
 /*!
@@ -43,7 +47,8 @@ STATICINLINE void multi_draw_elements_indirect(
     group::draw_elements_type type,
     intptr_t                  indirect,
     i32                       drawcount,
-    i32                       stride)
+    i32                       stride,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -56,7 +61,7 @@ STATICINLINE void multi_draw_elements_indirect(
         reinterpret_cast<const void*>(indirect),
         drawcount,
         stride);
-    detail::error_check("MultiDrawElementsIndirect"sv);
+    detail::error_check("MultiDrawElementsIndirect"sv, check_errors);
 }
 
 } // namespace gl::arb::multi_draw_indirect

@@ -15,7 +15,10 @@ constexpr u32 stencil_back_op_value = 0x874D;
  * \param value GLuint
  * \return void
  */
-STATICINLINE void stencil_op_value(group::triangle_face face, u32 value)
+STATICINLINE void stencil_op_value(
+    group::triangle_face face,
+    u32                  value,
+    error_check          check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -23,7 +26,7 @@ STATICINLINE void stencil_op_value(group::triangle_face face, u32 value)
         GLW_FPTR_CHECK(StencilOpValueAMD)
     }
     glStencilOpValueAMD(static_cast<GLenum>(face), value);
-    detail::error_check("StencilOpValueAMD"sv);
+    detail::error_check("StencilOpValueAMD"sv, check_errors);
 }
 
 } // namespace gl::amd::stencil_operation_extended

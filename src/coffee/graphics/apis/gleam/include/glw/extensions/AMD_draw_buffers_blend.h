@@ -12,7 +12,9 @@ namespace values {
  * \return void
  */
 STATICINLINE void blend_equation_indexed(
-    u32 buf, group::blend_equation_mode_ext mode)
+    u32                            buf,
+    group::blend_equation_mode_ext mode,
+    error_check                    check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -20,7 +22,7 @@ STATICINLINE void blend_equation_indexed(
         GLW_FPTR_CHECK(BlendEquationIndexedAMD)
     }
     glBlendEquationIndexedAMD(buf, static_cast<GLenum>(mode));
-    detail::error_check("BlendEquationIndexedAMD"sv);
+    detail::error_check("BlendEquationIndexedAMD"sv, check_errors);
 }
 
 /*!
@@ -33,7 +35,8 @@ STATICINLINE void blend_equation_indexed(
 STATICINLINE void blend_equation_separate_indexed(
     u32                            buf,
     group::blend_equation_mode_ext modeRGB,
-    group::blend_equation_mode_ext modeAlpha)
+    group::blend_equation_mode_ext modeAlpha,
+    error_check                    check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -42,7 +45,7 @@ STATICINLINE void blend_equation_separate_indexed(
     }
     glBlendEquationSeparateIndexedAMD(
         buf, static_cast<GLenum>(modeRGB), static_cast<GLenum>(modeAlpha));
-    detail::error_check("BlendEquationSeparateIndexedAMD"sv);
+    detail::error_check("BlendEquationSeparateIndexedAMD"sv, check_errors);
 }
 
 /*!
@@ -52,7 +55,8 @@ STATICINLINE void blend_equation_separate_indexed(
  * \param dst GLenum
  * \return void
  */
-STATICINLINE void blend_func_indexed(u32 buf, GLenum src, GLenum dst)
+STATICINLINE void blend_func_indexed(
+    u32 buf, GLenum src, GLenum dst, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -60,7 +64,7 @@ STATICINLINE void blend_func_indexed(u32 buf, GLenum src, GLenum dst)
         GLW_FPTR_CHECK(BlendFuncIndexedAMD)
     }
     glBlendFuncIndexedAMD(buf, src, dst);
-    detail::error_check("BlendFuncIndexedAMD"sv);
+    detail::error_check("BlendFuncIndexedAMD"sv, check_errors);
 }
 
 /*!
@@ -77,7 +81,8 @@ STATICINLINE void blend_func_separate_indexed(
     group::blending_factor srcRGB,
     group::blending_factor dstRGB,
     group::blending_factor srcAlpha,
-    group::blending_factor dstAlpha)
+    group::blending_factor dstAlpha,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -90,7 +95,7 @@ STATICINLINE void blend_func_separate_indexed(
         static_cast<GLenum>(dstRGB),
         static_cast<GLenum>(srcAlpha),
         static_cast<GLenum>(dstAlpha));
-    detail::error_check("BlendFuncSeparateIndexedAMD"sv);
+    detail::error_check("BlendFuncSeparateIndexedAMD"sv, check_errors);
 }
 
 } // namespace gl::amd::draw_buffers_blend

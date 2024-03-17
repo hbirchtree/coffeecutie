@@ -69,7 +69,8 @@ STATICINLINE void bind_image_texture(
     bool                     layered,
     i32                      layer,
     group::buffer_access_arb access,
-    i32                      format)
+    i32                      format,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -89,7 +90,7 @@ STATICINLINE void bind_image_texture(
         layer,
         static_cast<GLenum>(access),
         format);
-    detail::error_check("BindImageTextureEXT"sv);
+    detail::error_check("BindImageTextureEXT"sv, check_errors);
 }
 
 /*!
@@ -97,7 +98,9 @@ STATICINLINE void bind_image_texture(
  * \param barriers GLbitfield
  * \return void
  */
-STATICINLINE void memory_barrier(group::memory_barrier_mask barriers)
+STATICINLINE void memory_barrier(
+    group::memory_barrier_mask barriers,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -105,7 +108,7 @@ STATICINLINE void memory_barrier(group::memory_barrier_mask barriers)
         GLW_FPTR_CHECK(MemoryBarrierEXT)
     }
     glMemoryBarrierEXT(static_cast<GLenum>(barriers));
-    detail::error_check("MemoryBarrierEXT"sv);
+    detail::error_check("MemoryBarrierEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::shader_image_load_store

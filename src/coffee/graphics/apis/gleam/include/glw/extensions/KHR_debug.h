@@ -109,7 +109,9 @@ requires(concepts::span<span_const_void>)
  * \return void
  */
 STATICINLINE void debug_message_callback(
-    GLDEBUGPROC callback, span_const_void const& userParam)
+    GLDEBUGPROC            callback,
+    span_const_void const& userParam,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -120,7 +122,7 @@ STATICINLINE void debug_message_callback(
         callback,
         userParam.size() ? reinterpret_cast<const void*>(userParam.data())
                          : nullptr);
-    detail::error_check("DebugMessageCallback"sv);
+    detail::error_check("DebugMessageCallback"sv, check_errors);
 }
 
 #endif
@@ -146,7 +148,8 @@ STATICINLINE void debug_message_control(
     group::debug_type     type,
     group::debug_severity severity,
     span_const_u32 const& ids,
-    bool                  enabled)
+    bool                  enabled,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -160,7 +163,7 @@ STATICINLINE void debug_message_control(
         ids.size(),
         ids.size() ? reinterpret_cast<const GLuint*>(ids.data()) : nullptr,
         enabled);
-    detail::error_check("DebugMessageControl"sv);
+    detail::error_check("DebugMessageControl"sv, check_errors);
 }
 
 #endif
@@ -181,7 +184,8 @@ STATICINLINE void debug_message_insert(
     u32                     id,
     group::debug_severity   severity,
     i32                     length,
-    std::string_view const& buf)
+    std::string_view const& buf,
+    error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -195,7 +199,7 @@ STATICINLINE void debug_message_insert(
         static_cast<GLenum>(severity),
         length,
         buf.data());
-    detail::error_check("DebugMessageInsert"sv);
+    detail::error_check("DebugMessageInsert"sv, check_errors);
 }
 
 #endif
@@ -250,7 +254,8 @@ STATICINLINE GLuint get_debug_message_log(
     span_u32            ids,
     span_debug_severity severities,
     span_i32            lengths,
-    span_GLchar         messageLog)
+    span_GLchar         messageLog,
+    error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -267,7 +272,7 @@ STATICINLINE GLuint get_debug_message_log(
                           : nullptr,
         lengths.size() ? reinterpret_cast<GLsizei*>(lengths.data()) : nullptr,
         messageLog.data());
-    detail::error_check("GetDebugMessageLog"sv);
+    detail::error_check("GetDebugMessageLog"sv, check_errors);
     return out;
 }
 
@@ -292,7 +297,8 @@ STATICINLINE void get_object_label(
     group::object_identifier identifier,
     u32                      name,
     i32&                     length,
-    span_GLchar              label)
+    span_GLchar              label,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -305,7 +311,7 @@ STATICINLINE void get_object_label(
         label.size(),
         &length,
         label.data());
-    detail::error_check("GetObjectLabel"sv);
+    detail::error_check("GetObjectLabel"sv, check_errors);
 }
 
 #endif
@@ -325,7 +331,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_object_ptr_label(
-    span_const_void const& ptr, i32& length, span_GLchar label)
+    span_const_void const& ptr,
+    i32&                   length,
+    span_GLchar            label,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -337,7 +346,7 @@ STATICINLINE void get_object_ptr_label(
         label.size(),
         &length,
         label.data());
-    detail::error_check("GetObjectPtrLabel"sv);
+    detail::error_check("GetObjectPtrLabel"sv, check_errors);
 }
 
 #endif
@@ -350,7 +359,10 @@ requires(concepts::span<span_void>)
  * \param params void **
  * \return void
  */
-STATICINLINE void get_pointerv(group::get_pointerv_prop pname, span_void params)
+STATICINLINE void get_pointerv(
+    group::get_pointerv_prop pname,
+    span_void                params,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -360,7 +372,7 @@ STATICINLINE void get_pointerv(group::get_pointerv_prop pname, span_void params)
     glGetPointerv(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<void**>(params.data()) : nullptr);
-    detail::error_check("GetPointerv"sv);
+    detail::error_check("GetPointerv"sv, check_errors);
 }
 
 #endif
@@ -377,7 +389,8 @@ STATICINLINE void object_label(
     group::object_identifier identifier,
     u32                      name,
     i32                      length,
-    std::string_view const&  label)
+    std::string_view const&  label,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -385,7 +398,7 @@ STATICINLINE void object_label(
         GLW_FPTR_CHECK(ObjectLabel)
     }
     glObjectLabel(static_cast<GLenum>(identifier), name, length, label.data());
-    detail::error_check("ObjectLabel"sv);
+    detail::error_check("ObjectLabel"sv, check_errors);
 }
 
 #endif
@@ -400,7 +413,10 @@ requires(concepts::span<span_const_void>)
  * \return void
  */
 STATICINLINE void object_ptr_label(
-    span_const_void const& ptr, i32 length, std::string_view const& label)
+    span_const_void const&  ptr,
+    i32                     length,
+    std::string_view const& label,
+    error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -411,7 +427,7 @@ STATICINLINE void object_ptr_label(
         ptr.size() ? reinterpret_cast<const void*>(ptr.data()) : nullptr,
         length,
         label.data());
-    detail::error_check("ObjectPtrLabel"sv);
+    detail::error_check("ObjectPtrLabel"sv, check_errors);
 }
 
 #endif
@@ -421,7 +437,7 @@ STATICINLINE void object_ptr_label(
 
  * \return void
  */
-STATICINLINE void pop_debug_group()
+STATICINLINE void pop_debug_group(error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -429,7 +445,7 @@ STATICINLINE void pop_debug_group()
         GLW_FPTR_CHECK(PopDebugGroup)
     }
     glPopDebugGroup();
-    detail::error_check("PopDebugGroup"sv);
+    detail::error_check("PopDebugGroup"sv, check_errors);
 }
 
 #endif
@@ -446,7 +462,8 @@ STATICINLINE void push_debug_group(
     group::debug_source     source,
     u32                     id,
     i32                     length,
-    std::string_view const& message)
+    std::string_view const& message,
+    error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -454,7 +471,7 @@ STATICINLINE void push_debug_group(
         GLW_FPTR_CHECK(PushDebugGroup)
     }
     glPushDebugGroup(static_cast<GLenum>(source), id, length, message.data());
-    detail::error_check("PushDebugGroup"sv);
+    detail::error_check("PushDebugGroup"sv, check_errors);
 }
 
 #endif
@@ -468,7 +485,9 @@ requires(concepts::span<span_const_void>)
  * \return void
  */
 STATICINLINE void debug_message_callback(
-    GLDEBUGPROCKHR callback, span_const_void const& userParam)
+    GLDEBUGPROCKHR         callback,
+    span_const_void const& userParam,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -479,7 +498,7 @@ STATICINLINE void debug_message_callback(
         callback,
         userParam.size() ? reinterpret_cast<const void*>(userParam.data())
                          : nullptr);
-    detail::error_check("DebugMessageCallbackKHR"sv);
+    detail::error_check("DebugMessageCallbackKHR"sv, check_errors);
 }
 
 #endif
@@ -506,7 +525,8 @@ STATICINLINE void debug_message_control(
     group::debug_severity severity,
     i32                   count,
     span_const_u32 const& ids,
-    bool                  enabled)
+    bool                  enabled,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -520,7 +540,7 @@ STATICINLINE void debug_message_control(
         count,
         ids.size() ? reinterpret_cast<const GLuint*>(ids.data()) : nullptr,
         enabled);
-    detail::error_check("DebugMessageControlKHR"sv);
+    detail::error_check("DebugMessageControlKHR"sv, check_errors);
 }
 
 #endif
@@ -541,7 +561,8 @@ STATICINLINE void debug_message_insert(
     u32                     id,
     group::debug_severity   severity,
     i32                     length,
-    std::string_view const& buf)
+    std::string_view const& buf,
+    error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -555,7 +576,7 @@ STATICINLINE void debug_message_insert(
         static_cast<GLenum>(severity),
         length,
         buf.data());
-    detail::error_check("DebugMessageInsertKHR"sv);
+    detail::error_check("DebugMessageInsertKHR"sv, check_errors);
 }
 
 #endif
@@ -610,7 +631,8 @@ STATICINLINE GLuint get_debug_message_log(
     span_u32            ids,
     span_debug_severity severities,
     span_i32            lengths,
-    span_GLchar         messageLog)
+    span_GLchar         messageLog,
+    error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -627,7 +649,7 @@ STATICINLINE GLuint get_debug_message_log(
                           : nullptr,
         lengths.size() ? reinterpret_cast<GLsizei*>(lengths.data()) : nullptr,
         messageLog.data());
-    detail::error_check("GetDebugMessageLogKHR"sv);
+    detail::error_check("GetDebugMessageLogKHR"sv, check_errors);
     return out;
 }
 
@@ -653,7 +675,11 @@ requires(
  * \return void
  */
 STATICINLINE void get_object_label(
-    GLenum identifier, u32 name, span_i32 length, span_GLchar label)
+    GLenum      identifier,
+    u32         name,
+    span_i32    length,
+    span_GLchar label,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -666,7 +692,7 @@ STATICINLINE void get_object_label(
         label.size(),
         length.size() ? reinterpret_cast<GLsizei*>(length.data()) : nullptr,
         label.data());
-    detail::error_check("GetObjectLabelKHR"sv);
+    detail::error_check("GetObjectLabelKHR"sv, check_errors);
 }
 
 #endif
@@ -686,7 +712,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_object_ptr_label(
-    span_const_void const& ptr, i32& length, span_GLchar label)
+    span_const_void const& ptr,
+    i32&                   length,
+    span_GLchar            label,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -698,7 +727,7 @@ STATICINLINE void get_object_ptr_label(
         label.size(),
         &length,
         label.data());
-    detail::error_check("GetObjectPtrLabelKHR"sv);
+    detail::error_check("GetObjectPtrLabelKHR"sv, check_errors);
 }
 
 #endif
@@ -711,7 +740,8 @@ requires(concepts::span<span_void>)
  * \param params void **
  * \return void
  */
-STATICINLINE void get_pointerv(GLenum pname, span_void params)
+STATICINLINE void get_pointerv(
+    GLenum pname, span_void params, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -721,7 +751,7 @@ STATICINLINE void get_pointerv(GLenum pname, span_void params)
     glGetPointervKHR(
         pname,
         params.size() ? reinterpret_cast<void**>(params.data()) : nullptr);
-    detail::error_check("GetPointervKHR"sv);
+    detail::error_check("GetPointervKHR"sv, check_errors);
 }
 
 #endif
@@ -738,7 +768,8 @@ STATICINLINE void object_label(
     group::object_identifier identifier,
     u32                      name,
     i32                      length,
-    std::string_view const&  label)
+    std::string_view const&  label,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -747,7 +778,7 @@ STATICINLINE void object_label(
     }
     glObjectLabelKHR(
         static_cast<GLenum>(identifier), name, length, label.data());
-    detail::error_check("ObjectLabelKHR"sv);
+    detail::error_check("ObjectLabelKHR"sv, check_errors);
 }
 
 #endif
@@ -762,7 +793,10 @@ requires(concepts::span<span_const_void>)
  * \return void
  */
 STATICINLINE void object_ptr_label(
-    span_const_void const& ptr, i32 length, std::string_view const& label)
+    span_const_void const&  ptr,
+    i32                     length,
+    std::string_view const& label,
+    error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -773,7 +807,7 @@ STATICINLINE void object_ptr_label(
         ptr.size() ? reinterpret_cast<const void*>(ptr.data()) : nullptr,
         length,
         label.data());
-    detail::error_check("ObjectPtrLabelKHR"sv);
+    detail::error_check("ObjectPtrLabelKHR"sv, check_errors);
 }
 
 #endif
@@ -783,7 +817,7 @@ STATICINLINE void object_ptr_label(
 
  * \return void
  */
-STATICINLINE void pop_debug_group()
+STATICINLINE void pop_debug_group(error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -791,7 +825,7 @@ STATICINLINE void pop_debug_group()
         GLW_FPTR_CHECK(PopDebugGroupKHR)
     }
     glPopDebugGroupKHR();
-    detail::error_check("PopDebugGroupKHR"sv);
+    detail::error_check("PopDebugGroupKHR"sv, check_errors);
 }
 
 #endif
@@ -808,7 +842,8 @@ STATICINLINE void push_debug_group(
     group::debug_source     source,
     u32                     id,
     i32                     length,
-    std::string_view const& message)
+    std::string_view const& message,
+    error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -817,7 +852,7 @@ STATICINLINE void push_debug_group(
     }
     glPushDebugGroupKHR(
         static_cast<GLenum>(source), id, length, message.data());
-    detail::error_check("PushDebugGroupKHR"sv);
+    detail::error_check("PushDebugGroupKHR"sv, check_errors);
 }
 
 #endif

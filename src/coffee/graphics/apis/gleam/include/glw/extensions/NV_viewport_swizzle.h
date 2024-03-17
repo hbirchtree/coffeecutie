@@ -27,11 +27,12 @@ constexpr u32 viewport_swizzle_w          = 0x935B;
  * \return void
  */
 STATICINLINE void viewport_swizzle(
-    u32    index,
-    GLenum swizzlex,
-    GLenum swizzley,
-    GLenum swizzlez,
-    GLenum swizzlew)
+    u32         index,
+    GLenum      swizzlex,
+    GLenum      swizzley,
+    GLenum      swizzlez,
+    GLenum      swizzlew,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -39,7 +40,7 @@ STATICINLINE void viewport_swizzle(
         GLW_FPTR_CHECK(ViewportSwizzleNV)
     }
     glViewportSwizzleNV(index, swizzlex, swizzley, swizzlez, swizzlew);
-    detail::error_check("ViewportSwizzleNV"sv);
+    detail::error_check("ViewportSwizzleNV"sv, check_errors);
 }
 
 } // namespace gl::nv::viewport_swizzle

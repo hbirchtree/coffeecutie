@@ -35,7 +35,8 @@ namespace values {
 STATICINLINE void blend_equation_separatei(
     u32                            buf,
     group::blend_equation_mode_ext modeRGB,
-    group::blend_equation_mode_ext modeAlpha)
+    group::blend_equation_mode_ext modeAlpha,
+    error_check                    check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -44,7 +45,7 @@ STATICINLINE void blend_equation_separatei(
     }
     glBlendEquationSeparateiEXT(
         buf, static_cast<GLenum>(modeRGB), static_cast<GLenum>(modeAlpha));
-    detail::error_check("BlendEquationSeparateiEXT"sv);
+    detail::error_check("BlendEquationSeparateiEXT"sv, check_errors);
 }
 
 /*!
@@ -53,7 +54,10 @@ STATICINLINE void blend_equation_separatei(
  * \param mode GLenum
  * \return void
  */
-STATICINLINE void blend_equationi(u32 buf, group::blend_equation_mode_ext mode)
+STATICINLINE void blend_equationi(
+    u32                            buf,
+    group::blend_equation_mode_ext mode,
+    error_check                    check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -61,7 +65,7 @@ STATICINLINE void blend_equationi(u32 buf, group::blend_equation_mode_ext mode)
         GLW_FPTR_CHECK(BlendEquationiEXT)
     }
     glBlendEquationiEXT(buf, static_cast<GLenum>(mode));
-    detail::error_check("BlendEquationiEXT"sv);
+    detail::error_check("BlendEquationiEXT"sv, check_errors);
 }
 
 /*!
@@ -78,7 +82,8 @@ STATICINLINE void blend_func_separatei(
     group::blending_factor srcRGB,
     group::blending_factor dstRGB,
     group::blending_factor srcAlpha,
-    group::blending_factor dstAlpha)
+    group::blending_factor dstAlpha,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -91,7 +96,7 @@ STATICINLINE void blend_func_separatei(
         static_cast<GLenum>(dstRGB),
         static_cast<GLenum>(srcAlpha),
         static_cast<GLenum>(dstAlpha));
-    detail::error_check("BlendFuncSeparateiEXT"sv);
+    detail::error_check("BlendFuncSeparateiEXT"sv, check_errors);
 }
 
 /*!
@@ -102,7 +107,10 @@ STATICINLINE void blend_func_separatei(
  * \return void
  */
 STATICINLINE void blend_funci(
-    u32 buf, group::blending_factor src, group::blending_factor dst)
+    u32                    buf,
+    group::blending_factor src,
+    group::blending_factor dst,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -110,7 +118,7 @@ STATICINLINE void blend_funci(
         GLW_FPTR_CHECK(BlendFunciEXT)
     }
     glBlendFunciEXT(buf, static_cast<GLenum>(src), static_cast<GLenum>(dst));
-    detail::error_check("BlendFunciEXT"sv);
+    detail::error_check("BlendFunciEXT"sv, check_errors);
 }
 
 /*!
@@ -122,7 +130,13 @@ STATICINLINE void blend_funci(
  * \param a GLboolean
  * \return void
  */
-STATICINLINE void color_maski(u32 index, bool r, bool g, bool b, bool a)
+STATICINLINE void color_maski(
+    u32         index,
+    bool        r,
+    bool        g,
+    bool        b,
+    bool        a,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -130,7 +144,7 @@ STATICINLINE void color_maski(u32 index, bool r, bool g, bool b, bool a)
         GLW_FPTR_CHECK(ColorMaskiEXT)
     }
     glColorMaskiEXT(index, r, g, b, a);
-    detail::error_check("ColorMaskiEXT"sv);
+    detail::error_check("ColorMaskiEXT"sv, check_errors);
 }
 
 /*!
@@ -139,7 +153,10 @@ STATICINLINE void color_maski(u32 index, bool r, bool g, bool b, bool a)
  * \param index GLuint
  * \return void
  */
-STATICINLINE void disablei(group::enable_cap target, u32 index)
+STATICINLINE void disablei(
+    group::enable_cap target,
+    u32               index,
+    error_check       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -147,7 +164,7 @@ STATICINLINE void disablei(group::enable_cap target, u32 index)
         GLW_FPTR_CHECK(DisableiEXT)
     }
     glDisableiEXT(static_cast<GLenum>(target), index);
-    detail::error_check("DisableiEXT"sv);
+    detail::error_check("DisableiEXT"sv, check_errors);
 }
 
 /*!
@@ -156,7 +173,10 @@ STATICINLINE void disablei(group::enable_cap target, u32 index)
  * \param index GLuint
  * \return void
  */
-STATICINLINE void enablei(group::enable_cap target, u32 index)
+STATICINLINE void enablei(
+    group::enable_cap target,
+    u32               index,
+    error_check       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -164,7 +184,7 @@ STATICINLINE void enablei(group::enable_cap target, u32 index)
         GLW_FPTR_CHECK(EnableiEXT)
     }
     glEnableiEXT(static_cast<GLenum>(target), index);
-    detail::error_check("EnableiEXT"sv);
+    detail::error_check("EnableiEXT"sv, check_errors);
 }
 
 /*!
@@ -173,7 +193,10 @@ STATICINLINE void enablei(group::enable_cap target, u32 index)
  * \param index GLuint
  * \return Boolean
  */
-STATICINLINE bool is_enabledi(group::enable_cap target, u32 index)
+STATICINLINE bool is_enabledi(
+    group::enable_cap target,
+    u32               index,
+    error_check       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -181,7 +204,7 @@ STATICINLINE bool is_enabledi(group::enable_cap target, u32 index)
         GLW_FPTR_CHECK(IsEnablediEXT)
     }
     auto out = glIsEnablediEXT(static_cast<GLenum>(target), index);
-    detail::error_check("IsEnablediEXT"sv);
+    detail::error_check("IsEnablediEXT"sv, check_errors);
     return out == GL_TRUE ? true : false;
 }
 

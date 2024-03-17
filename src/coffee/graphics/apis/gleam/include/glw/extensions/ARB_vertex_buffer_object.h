@@ -43,7 +43,10 @@ constexpr u32 dynamic_copy                         = 0x88EA;
  * \param buffer GLuint
  * \return void
  */
-STATICINLINE void bind_buffer(group::buffer_target_arb target, u32 buffer)
+STATICINLINE void bind_buffer(
+    group::buffer_target_arb target,
+    u32                      buffer,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -56,7 +59,7 @@ STATICINLINE void bind_buffer(group::buffer_target_arb target, u32 buffer)
 #endif
     }
     glBindBufferARB(static_cast<GLenum>(target), buffer);
-    detail::error_check("BindBufferARB"sv);
+    detail::error_check("BindBufferARB"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -72,7 +75,8 @@ requires(concepts::span<span_const_void>)
 STATICINLINE void buffer_data(
     group::buffer_target_arb target,
     span_const_void const&   data,
-    group::buffer_usage_arb  usage)
+    group::buffer_usage_arb  usage,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -85,7 +89,7 @@ STATICINLINE void buffer_data(
             sizeof(typename std::decay_t<span_const_void const&>::value_type),
         data.size() ? reinterpret_cast<const void*>(data.data()) : nullptr,
         static_cast<GLenum>(usage));
-    detail::error_check("BufferDataARB"sv);
+    detail::error_check("BufferDataARB"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -101,7 +105,8 @@ requires(concepts::span<span_const_void>)
 STATICINLINE void buffer_sub_data(
     group::buffer_target_arb target,
     GLintptrARB              offset,
-    span_const_void const&   data)
+    span_const_void const&   data,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -114,7 +119,7 @@ STATICINLINE void buffer_sub_data(
         data.size() *
             sizeof(typename std::decay_t<span_const_void const&>::value_type),
         data.size() ? reinterpret_cast<const void*>(data.data()) : nullptr);
-    detail::error_check("BufferSubDataARB"sv);
+    detail::error_check("BufferSubDataARB"sv, check_errors);
 }
 
 template<class span_const_u32>
@@ -129,7 +134,8 @@ requires(
  * \param buffers const GLuint *
  * \return void
  */
-STATICINLINE void delete_buffers(span_const_u32 const& buffers)
+STATICINLINE void delete_buffers(
+    span_const_u32 const& buffers, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -140,7 +146,7 @@ STATICINLINE void delete_buffers(span_const_u32 const& buffers)
         buffers.size(),
         buffers.size() ? reinterpret_cast<const GLuint*>(buffers.data())
                        : nullptr);
-    detail::error_check("DeleteBuffersARB"sv);
+    detail::error_check("DeleteBuffersARB"sv, check_errors);
 }
 
 template<class span_u32>
@@ -154,7 +160,8 @@ requires(
  * \param buffers GLuint *
  * \return void
  */
-STATICINLINE void gen_buffers(span_u32 buffers)
+STATICINLINE void gen_buffers(
+    span_u32 buffers, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -164,7 +171,7 @@ STATICINLINE void gen_buffers(span_u32 buffers)
     glGenBuffersARB(
         buffers.size(),
         buffers.size() ? reinterpret_cast<GLuint*>(buffers.data()) : nullptr);
-    detail::error_check("GenBuffersARB"sv);
+    detail::error_check("GenBuffersARB"sv, check_errors);
 }
 
 template<class span_i32>
@@ -182,7 +189,8 @@ requires(
 STATICINLINE void get_buffer_parameter(
     group::buffer_target_arb target,
     group::buffer_prop_arb   pname,
-    span_i32                 params)
+    span_i32                 params,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -193,7 +201,7 @@ STATICINLINE void get_buffer_parameter(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetBufferParameterivARB"sv);
+    detail::error_check("GetBufferParameterivARB"sv, check_errors);
 }
 
 template<class span_void>
@@ -208,7 +216,8 @@ requires(concepts::span<span_void>)
 STATICINLINE void get_buffer_pointerv(
     group::buffer_target_arb       target,
     group::buffer_pointer_name_arb pname,
-    span_void                      params)
+    span_void                      params,
+    error_check                    check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -219,7 +228,7 @@ STATICINLINE void get_buffer_pointerv(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<void**>(params.data()) : nullptr);
-    detail::error_check("GetBufferPointervARB"sv);
+    detail::error_check("GetBufferPointervARB"sv, check_errors);
 }
 
 template<class span_void>
@@ -233,7 +242,10 @@ requires(concepts::span<span_void>)
  * \return void
  */
 STATICINLINE void get_buffer_sub_data(
-    group::buffer_target_arb target, GLintptrARB offset, span_void data)
+    group::buffer_target_arb target,
+    GLintptrARB              offset,
+    span_void                data,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -245,7 +257,7 @@ STATICINLINE void get_buffer_sub_data(
         offset,
         data.size() * sizeof(typename std::decay_t<span_void>::value_type),
         data.size() ? reinterpret_cast<void*>(data.data()) : nullptr);
-    detail::error_check("GetBufferSubDataARB"sv);
+    detail::error_check("GetBufferSubDataARB"sv, check_errors);
 }
 
 /*!
@@ -253,7 +265,8 @@ STATICINLINE void get_buffer_sub_data(
  * \param buffer GLuint
  * \return Boolean
  */
-STATICINLINE bool is_buffer(u32 buffer)
+STATICINLINE bool is_buffer(
+    u32 buffer, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -266,7 +279,7 @@ STATICINLINE bool is_buffer(u32 buffer)
 #endif
     }
     auto out = glIsBufferARB(buffer);
-    detail::error_check("IsBufferARB"sv);
+    detail::error_check("IsBufferARB"sv, check_errors);
     return out == GL_TRUE ? true : false;
 }
 
@@ -277,7 +290,9 @@ STATICINLINE bool is_buffer(u32 buffer)
  * \return void *
  */
 STATICINLINE void* map_buffer(
-    group::buffer_target_arb target, group::buffer_access_arb access)
+    group::buffer_target_arb target,
+    group::buffer_access_arb access,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -286,7 +301,7 @@ STATICINLINE void* map_buffer(
     }
     auto out = glMapBufferARB(
         static_cast<GLenum>(target), static_cast<GLenum>(access));
-    detail::error_check("MapBufferARB"sv);
+    detail::error_check("MapBufferARB"sv, check_errors);
     return out;
 }
 
@@ -295,7 +310,8 @@ STATICINLINE void* map_buffer(
  * \param target GLenum
  * \return Boolean
  */
-STATICINLINE bool unmap_buffer(group::buffer_target_arb target)
+STATICINLINE bool unmap_buffer(
+    group::buffer_target_arb target, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -303,7 +319,7 @@ STATICINLINE bool unmap_buffer(group::buffer_target_arb target)
         GLW_FPTR_CHECK(UnmapBufferARB)
     }
     auto out = glUnmapBufferARB(static_cast<GLenum>(target));
-    detail::error_check("UnmapBufferARB"sv);
+    detail::error_check("UnmapBufferARB"sv, check_errors);
     return out == GL_TRUE ? true : false;
 }
 

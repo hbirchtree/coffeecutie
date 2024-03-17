@@ -16,7 +16,8 @@ namespace values {
 
  * \return void
  */
-STATICINLINE void framebuffer_fetch_barrier()
+STATICINLINE void framebuffer_fetch_barrier(
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -24,7 +25,7 @@ STATICINLINE void framebuffer_fetch_barrier()
         GLW_FPTR_CHECK(FramebufferFetchBarrierQCOM)
     }
     glFramebufferFetchBarrierQCOM();
-    detail::error_check("FramebufferFetchBarrierQCOM"sv);
+    detail::error_check("FramebufferFetchBarrierQCOM"sv, check_errors);
 }
 
 } // namespace gl::qcom::shader_framebuffer_fetch_noncoherent

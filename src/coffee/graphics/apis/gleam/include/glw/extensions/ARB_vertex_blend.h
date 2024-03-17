@@ -52,7 +52,8 @@ constexpr u32 modelview31          = 0x873F;
  * \param count GLint
  * \return void
  */
-STATICINLINE void vertex_blend(i32 count)
+STATICINLINE void vertex_blend(
+    i32 count, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -60,7 +61,7 @@ STATICINLINE void vertex_blend(i32 count)
         GLW_FPTR_CHECK(VertexBlendARB)
     }
     glVertexBlendARB(count);
-    detail::error_check("VertexBlendARB"sv);
+    detail::error_check("VertexBlendARB"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -77,7 +78,8 @@ STATICINLINE void weight_pointer(
     i32                            size,
     group::weight_pointer_type_arb type,
     i32                            stride,
-    span_const_void const&         pointer)
+    span_const_void const&         pointer,
+    error_check                    check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -90,7 +92,7 @@ STATICINLINE void weight_pointer(
         stride,
         pointer.size() ? reinterpret_cast<const void*>(pointer.data())
                        : nullptr);
-    detail::error_check("WeightPointerARB"sv);
+    detail::error_check("WeightPointerARB"sv, check_errors);
 }
 
 template<class span_const_i8>
@@ -105,7 +107,8 @@ requires(
  * \param weights const GLbyte *
  * \return void
  */
-STATICINLINE void weightbv(span_const_i8 const& weights)
+STATICINLINE void weightbv(
+    span_const_i8 const& weights, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -116,7 +119,7 @@ STATICINLINE void weightbv(span_const_i8 const& weights)
         weights.size(),
         weights.size() ? reinterpret_cast<const GLbyte*>(weights.data())
                        : nullptr);
-    detail::error_check("WeightbvARB"sv);
+    detail::error_check("WeightbvARB"sv, check_errors);
 }
 
 template<class span_const_f64>
@@ -131,7 +134,8 @@ requires(
  * \param weights const GLdouble *
  * \return void
  */
-STATICINLINE void weightdv(span_const_f64 const& weights)
+STATICINLINE void weightdv(
+    span_const_f64 const& weights, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -142,7 +146,7 @@ STATICINLINE void weightdv(span_const_f64 const& weights)
         weights.size(),
         weights.size() ? reinterpret_cast<const GLdouble*>(weights.data())
                        : nullptr);
-    detail::error_check("WeightdvARB"sv);
+    detail::error_check("WeightdvARB"sv, check_errors);
 }
 
 template<class span_const_f32>
@@ -157,7 +161,8 @@ requires(
  * \param weights const GLfloat *
  * \return void
  */
-STATICINLINE void weightfv(span_const_f32 const& weights)
+STATICINLINE void weightfv(
+    span_const_f32 const& weights, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -168,7 +173,7 @@ STATICINLINE void weightfv(span_const_f32 const& weights)
         weights.size(),
         weights.size() ? reinterpret_cast<const GLfloat*>(weights.data())
                        : nullptr);
-    detail::error_check("WeightfvARB"sv);
+    detail::error_check("WeightfvARB"sv, check_errors);
 }
 
 template<class span_const_i32>
@@ -183,7 +188,8 @@ requires(
  * \param weights const GLint *
  * \return void
  */
-STATICINLINE void weightiv(span_const_i32 const& weights)
+STATICINLINE void weightiv(
+    span_const_i32 const& weights, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -194,7 +200,7 @@ STATICINLINE void weightiv(span_const_i32 const& weights)
         weights.size(),
         weights.size() ? reinterpret_cast<const GLint*>(weights.data())
                        : nullptr);
-    detail::error_check("WeightivARB"sv);
+    detail::error_check("WeightivARB"sv, check_errors);
 }
 
 template<class span_const_i16>
@@ -209,7 +215,8 @@ requires(
  * \param weights const GLshort *
  * \return void
  */
-STATICINLINE void weightsv(span_const_i16 const& weights)
+STATICINLINE void weightsv(
+    span_const_i16 const& weights, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -220,7 +227,7 @@ STATICINLINE void weightsv(span_const_i16 const& weights)
         weights.size(),
         weights.size() ? reinterpret_cast<const GLshort*>(weights.data())
                        : nullptr);
-    detail::error_check("WeightsvARB"sv);
+    detail::error_check("WeightsvARB"sv, check_errors);
 }
 
 template<class span_const_u8>
@@ -235,7 +242,8 @@ requires(
  * \param weights const GLubyte *
  * \return void
  */
-STATICINLINE void weightubv(span_const_u8 const& weights)
+STATICINLINE void weightubv(
+    span_const_u8 const& weights, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -246,7 +254,7 @@ STATICINLINE void weightubv(span_const_u8 const& weights)
         weights.size(),
         weights.size() ? reinterpret_cast<const GLubyte*>(weights.data())
                        : nullptr);
-    detail::error_check("WeightubvARB"sv);
+    detail::error_check("WeightubvARB"sv, check_errors);
 }
 
 template<class span_const_u32>
@@ -261,7 +269,8 @@ requires(
  * \param weights const GLuint *
  * \return void
  */
-STATICINLINE void weightuiv(span_const_u32 const& weights)
+STATICINLINE void weightuiv(
+    span_const_u32 const& weights, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -272,7 +281,7 @@ STATICINLINE void weightuiv(span_const_u32 const& weights)
         weights.size(),
         weights.size() ? reinterpret_cast<const GLuint*>(weights.data())
                        : nullptr);
-    detail::error_check("WeightuivARB"sv);
+    detail::error_check("WeightuivARB"sv, check_errors);
 }
 
 template<class span_const_u16>
@@ -287,7 +296,8 @@ requires(
  * \param weights const GLushort *
  * \return void
  */
-STATICINLINE void weightusv(span_const_u16 const& weights)
+STATICINLINE void weightusv(
+    span_const_u16 const& weights, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -298,7 +308,7 @@ STATICINLINE void weightusv(span_const_u16 const& weights)
         weights.size(),
         weights.size() ? reinterpret_cast<const GLushort*>(weights.data())
                        : nullptr);
-    detail::error_check("WeightusvARB"sv);
+    detail::error_check("WeightusvARB"sv, check_errors);
 }
 
 } // namespace gl::arb::vertex_blend

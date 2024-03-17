@@ -20,7 +20,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_sampler_parameter_iiv(
-    u32 sampler, group::sampler_parameter_i pname, span_i32 params)
+    u32                        sampler,
+    group::sampler_parameter_i pname,
+    span_i32                   params,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -36,7 +39,7 @@ STATICINLINE void get_sampler_parameter_iiv(
         sampler,
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetSamplerParameterIivEXT"sv);
+    detail::error_check("GetSamplerParameterIivEXT"sv, check_errors);
 }
 
 template<class span_u32>
@@ -52,7 +55,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_sampler_parameter_iuiv(
-    u32 sampler, group::sampler_parameter_i pname, span_u32 params)
+    u32                        sampler,
+    group::sampler_parameter_i pname,
+    span_u32                   params,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -68,7 +74,7 @@ STATICINLINE void get_sampler_parameter_iuiv(
         sampler,
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLuint*>(params.data()) : nullptr);
-    detail::error_check("GetSamplerParameterIuivEXT"sv);
+    detail::error_check("GetSamplerParameterIuivEXT"sv, check_errors);
 }
 
 template<class span_i32>
@@ -86,7 +92,8 @@ requires(
 STATICINLINE void get_tex_parameter_iiv(
     group::texture_target        target,
     group::get_texture_parameter pname,
-    span_i32                     params)
+    span_i32                     params,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -97,7 +104,7 @@ STATICINLINE void get_tex_parameter_iiv(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetTexParameterIivEXT"sv);
+    detail::error_check("GetTexParameterIivEXT"sv, check_errors);
 }
 
 template<class span_u32>
@@ -115,7 +122,8 @@ requires(
 STATICINLINE void get_tex_parameter_iuiv(
     group::texture_target        target,
     group::get_texture_parameter pname,
-    span_u32                     params)
+    span_u32                     params,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -126,7 +134,7 @@ STATICINLINE void get_tex_parameter_iuiv(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLuint*>(params.data()) : nullptr);
-    detail::error_check("GetTexParameterIuivEXT"sv);
+    detail::error_check("GetTexParameterIuivEXT"sv, check_errors);
 }
 
 template<class span_const_i32>
@@ -143,7 +151,10 @@ requires(
  * \return void
  */
 STATICINLINE void sampler_parameter_iiv(
-    u32 sampler, group::sampler_parameter_i pname, span_const_i32 const& param)
+    u32                        sampler,
+    group::sampler_parameter_i pname,
+    span_const_i32 const&      param,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -159,7 +170,7 @@ STATICINLINE void sampler_parameter_iiv(
         sampler,
         static_cast<GLenum>(pname),
         param.size() ? reinterpret_cast<const GLint*>(param.data()) : nullptr);
-    detail::error_check("SamplerParameterIivEXT"sv);
+    detail::error_check("SamplerParameterIivEXT"sv, check_errors);
 }
 
 template<class span_const_u32>
@@ -176,7 +187,10 @@ requires(
  * \return void
  */
 STATICINLINE void sampler_parameter_iuiv(
-    u32 sampler, group::sampler_parameter_i pname, span_const_u32 const& param)
+    u32                        sampler,
+    group::sampler_parameter_i pname,
+    span_const_u32 const&      param,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -192,7 +206,7 @@ STATICINLINE void sampler_parameter_iuiv(
         sampler,
         static_cast<GLenum>(pname),
         param.size() ? reinterpret_cast<const GLuint*>(param.data()) : nullptr);
-    detail::error_check("SamplerParameterIuivEXT"sv);
+    detail::error_check("SamplerParameterIuivEXT"sv, check_errors);
 }
 
 template<class span_const_i32>
@@ -211,7 +225,8 @@ requires(
 STATICINLINE void tex_parameter_iiv(
     group::texture_target         target,
     group::texture_parameter_name pname,
-    span_const_i32 const&         params)
+    span_const_i32 const&         params,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -223,7 +238,7 @@ STATICINLINE void tex_parameter_iiv(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<const GLint*>(params.data())
                       : nullptr);
-    detail::error_check("TexParameterIivEXT"sv);
+    detail::error_check("TexParameterIivEXT"sv, check_errors);
 }
 
 template<class span_const_u32>
@@ -242,7 +257,8 @@ requires(
 STATICINLINE void tex_parameter_iuiv(
     group::texture_target         target,
     group::texture_parameter_name pname,
-    span_const_u32 const&         params)
+    span_const_u32 const&         params,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -254,7 +270,7 @@ STATICINLINE void tex_parameter_iuiv(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<const GLuint*>(params.data())
                       : nullptr);
-    detail::error_check("TexParameterIuivEXT"sv);
+    detail::error_check("TexParameterIuivEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::texture_border_clamp

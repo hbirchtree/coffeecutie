@@ -17,7 +17,8 @@ requires(
  * \param tagIds const GLint *
  * \return void
  */
-STATICINLINE void delete_query_resource_tag(span_const_i32 const& tagIds)
+STATICINLINE void delete_query_resource_tag(
+    span_const_i32 const& tagIds, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -28,7 +29,7 @@ STATICINLINE void delete_query_resource_tag(span_const_i32 const& tagIds)
         tagIds.size(),
         tagIds.size() ? reinterpret_cast<const GLint*>(tagIds.data())
                       : nullptr);
-    detail::error_check("DeleteQueryResourceTagNV"sv);
+    detail::error_check("DeleteQueryResourceTagNV"sv, check_errors);
 }
 
 template<class span_i32>
@@ -42,7 +43,8 @@ requires(
  * \param tagIds GLint *
  * \return void
  */
-STATICINLINE void gen_query_resource_tag(span_i32 tagIds)
+STATICINLINE void gen_query_resource_tag(
+    span_i32 tagIds, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -52,7 +54,7 @@ STATICINLINE void gen_query_resource_tag(span_i32 tagIds)
     glGenQueryResourceTagNV(
         tagIds.size(),
         tagIds.size() ? reinterpret_cast<GLint*>(tagIds.data()) : nullptr);
-    detail::error_check("GenQueryResourceTagNV"sv);
+    detail::error_check("GenQueryResourceTagNV"sv, check_errors);
 }
 
 /*!
@@ -62,7 +64,9 @@ STATICINLINE void gen_query_resource_tag(span_i32 tagIds)
  * \return void
  */
 STATICINLINE void query_resource_tag(
-    i32 tagId, std::string_view const& tagString)
+    i32                     tagId,
+    std::string_view const& tagString,
+    error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -70,7 +74,7 @@ STATICINLINE void query_resource_tag(
         GLW_FPTR_CHECK(QueryResourceTagNV)
     }
     glQueryResourceTagNV(tagId, tagString.data());
-    detail::error_check("QueryResourceTagNV"sv);
+    detail::error_check("QueryResourceTagNV"sv, check_errors);
 }
 
 } // namespace gl::nv::query_resource_tag

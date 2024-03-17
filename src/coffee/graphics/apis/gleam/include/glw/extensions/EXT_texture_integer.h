@@ -32,7 +32,8 @@ requires(concepts::vector<vec_4_i32, i32, 4>)
  * \param alpha GLint
  * \return void
  */
-STATICINLINE void clear_color_ii(vec_4_i32 const& red)
+STATICINLINE void clear_color_ii(
+    vec_4_i32 const& red, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -40,7 +41,7 @@ STATICINLINE void clear_color_ii(vec_4_i32 const& red)
         GLW_FPTR_CHECK(ClearColorIiEXT)
     }
     glClearColorIiEXT(red[0], red[1], red[2], red[3]);
-    detail::error_check("ClearColorIiEXT"sv);
+    detail::error_check("ClearColorIiEXT"sv, check_errors);
 }
 
 template<class vec_4_u32>
@@ -53,7 +54,8 @@ requires(concepts::vector<vec_4_u32, u32, 4>)
  * \param alpha GLuint
  * \return void
  */
-STATICINLINE void clear_color_iui(vec_4_u32 const& red)
+STATICINLINE void clear_color_iui(
+    vec_4_u32 const& red, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -61,7 +63,7 @@ STATICINLINE void clear_color_iui(vec_4_u32 const& red)
         GLW_FPTR_CHECK(ClearColorIuiEXT)
     }
     glClearColorIuiEXT(red[0], red[1], red[2], red[3]);
-    detail::error_check("ClearColorIuiEXT"sv);
+    detail::error_check("ClearColorIuiEXT"sv, check_errors);
 }
 
 template<class span_i32>
@@ -79,7 +81,8 @@ requires(
 STATICINLINE void get_tex_parameter_iiv(
     group::texture_target        target,
     group::get_texture_parameter pname,
-    span_i32                     params)
+    span_i32                     params,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -90,7 +93,7 @@ STATICINLINE void get_tex_parameter_iiv(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetTexParameterIivEXT"sv);
+    detail::error_check("GetTexParameterIivEXT"sv, check_errors);
 }
 
 template<class span_u32>
@@ -108,7 +111,8 @@ requires(
 STATICINLINE void get_tex_parameter_iuiv(
     group::texture_target        target,
     group::get_texture_parameter pname,
-    span_u32                     params)
+    span_u32                     params,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -119,7 +123,7 @@ STATICINLINE void get_tex_parameter_iuiv(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLuint*>(params.data()) : nullptr);
-    detail::error_check("GetTexParameterIuivEXT"sv);
+    detail::error_check("GetTexParameterIuivEXT"sv, check_errors);
 }
 
 template<class span_const_i32>
@@ -138,7 +142,8 @@ requires(
 STATICINLINE void tex_parameter_iiv(
     group::texture_target         target,
     group::texture_parameter_name pname,
-    span_const_i32 const&         params)
+    span_const_i32 const&         params,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -150,7 +155,7 @@ STATICINLINE void tex_parameter_iiv(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<const GLint*>(params.data())
                       : nullptr);
-    detail::error_check("TexParameterIivEXT"sv);
+    detail::error_check("TexParameterIivEXT"sv, check_errors);
 }
 
 template<class span_const_u32>
@@ -169,7 +174,8 @@ requires(
 STATICINLINE void tex_parameter_iuiv(
     group::texture_target         target,
     group::texture_parameter_name pname,
-    span_const_u32 const&         params)
+    span_const_u32 const&         params,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -181,7 +187,7 @@ STATICINLINE void tex_parameter_iuiv(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<const GLuint*>(params.data())
                       : nullptr);
-    detail::error_check("TexParameterIuivEXT"sv);
+    detail::error_check("TexParameterIuivEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::texture_integer

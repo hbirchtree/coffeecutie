@@ -28,7 +28,8 @@ STATICINLINE void tex_storage_3d_multisample(
     i32                          samples,
     group::sized_internal_format internalformat,
     size_3_i32 const&            width,
-    bool                         fixedsamplelocations)
+    bool                         fixedsamplelocations,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -43,7 +44,7 @@ STATICINLINE void tex_storage_3d_multisample(
         width[1],
         width[2],
         fixedsamplelocations);
-    detail::error_check("TexStorage3DMultisampleOES"sv);
+    detail::error_check("TexStorage3DMultisampleOES"sv, check_errors);
 }
 
 } // namespace gl::oes::texture_storage_multisample_2d_array

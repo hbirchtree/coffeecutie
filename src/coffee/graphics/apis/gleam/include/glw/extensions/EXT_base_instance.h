@@ -19,7 +19,8 @@ STATICINLINE void draw_arrays_instanced_base_instance(
     i32                   first,
     i32                   count,
     i32                   instancecount,
-    u32                   baseinstance)
+    u32                   baseinstance,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -28,7 +29,7 @@ STATICINLINE void draw_arrays_instanced_base_instance(
     }
     glDrawArraysInstancedBaseInstanceEXT(
         static_cast<GLenum>(mode), first, count, instancecount, baseinstance);
-    detail::error_check("DrawArraysInstancedBaseInstanceEXT"sv);
+    detail::error_check("DrawArraysInstancedBaseInstanceEXT"sv, check_errors);
 }
 
 /*!
@@ -47,7 +48,8 @@ STATICINLINE void draw_elements_instanced_base_instance(
     group::draw_elements_type type,
     intptr_t                  indices,
     i32                       instancecount,
-    u32                       baseinstance)
+    u32                       baseinstance,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -61,7 +63,7 @@ STATICINLINE void draw_elements_instanced_base_instance(
         reinterpret_cast<const void*>(indices),
         instancecount,
         baseinstance);
-    detail::error_check("DrawElementsInstancedBaseInstanceEXT"sv);
+    detail::error_check("DrawElementsInstancedBaseInstanceEXT"sv, check_errors);
 }
 
 /*!
@@ -82,7 +84,8 @@ STATICINLINE void draw_elements_instanced_base_vertex_base_instance(
     intptr_t                  indices,
     i32                       instancecount,
     i32                       basevertex,
-    u32                       baseinstance)
+    u32                       baseinstance,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -97,7 +100,8 @@ STATICINLINE void draw_elements_instanced_base_vertex_base_instance(
         instancecount,
         basevertex,
         baseinstance);
-    detail::error_check("DrawElementsInstancedBaseVertexBaseInstanceEXT"sv);
+    detail::error_check(
+        "DrawElementsInstancedBaseVertexBaseInstanceEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::base_instance

@@ -53,7 +53,11 @@ requires(
  * \param params GLdouble *
  * \return void
  */
-STATICINLINE void get_uniformdv(u32 program, i32 location, span_f64 params)
+STATICINLINE void get_uniformdv(
+    u32         program,
+    i32         location,
+    span_f64    params,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -69,7 +73,7 @@ STATICINLINE void get_uniformdv(u32 program, i32 location, span_f64 params)
         program,
         location,
         params.size() ? reinterpret_cast<GLdouble*>(params.data()) : nullptr);
-    detail::error_check("GetUniformdv"sv);
+    detail::error_check("GetUniformdv"sv, check_errors);
 }
 
 /*!
@@ -78,7 +82,8 @@ STATICINLINE void get_uniformdv(u32 program, i32 location, span_f64 params)
  * \param x GLdouble
  * \return void
  */
-STATICINLINE void uniform(i32 location, f64 x)
+STATICINLINE void uniform(
+    i32 location, f64 x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -86,7 +91,7 @@ STATICINLINE void uniform(i32 location, f64 x)
         GLW_FPTR_CHECK(Uniform1d)
     }
     glUniform1d(location, x);
-    detail::error_check("Uniform1d"sv);
+    detail::error_check("Uniform1d"sv, check_errors);
 }
 
 template<class span_const_f64>
@@ -102,7 +107,10 @@ requires(
  * \param value const GLdouble *
  * \return void
  */
-STATICINLINE void uniform(i32 location, span_const_f64 const& value)
+STATICINLINE void uniform(
+    i32                   location,
+    span_const_f64 const& value,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -113,7 +121,7 @@ STATICINLINE void uniform(i32 location, span_const_f64 const& value)
         location,
         value.size(),
         reinterpret_cast<const GLdouble*>(value.data()));
-    detail::error_check("Uniform1dv"sv);
+    detail::error_check("Uniform1dv"sv, check_errors);
 }
 
 template<class vec_2_f64>
@@ -125,7 +133,10 @@ requires(concepts::vector<vec_2_f64, f64, 2>)
  * \param y GLdouble
  * \return void
  */
-STATICINLINE void uniform(i32 location, vec_2_f64 const& x)
+STATICINLINE void uniform(
+    i32              location,
+    vec_2_f64 const& x,
+    error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -133,7 +144,7 @@ STATICINLINE void uniform(i32 location, vec_2_f64 const& x)
         GLW_FPTR_CHECK(Uniform2d)
     }
     glUniform2d(location, x[0], x[1]);
-    detail::error_check("Uniform2d"sv);
+    detail::error_check("Uniform2d"sv, check_errors);
 }
 
 template<class span_const_vec_2_f64>
@@ -147,7 +158,10 @@ requires(
  * \param value const GLdouble *
  * \return void
  */
-STATICINLINE void uniform(i32 location, span_const_vec_2_f64 const& value)
+STATICINLINE void uniform(
+    i32                         location,
+    span_const_vec_2_f64 const& value,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -158,7 +172,7 @@ STATICINLINE void uniform(i32 location, span_const_vec_2_f64 const& value)
         location,
         value.size(),
         reinterpret_cast<const GLdouble*>(value.data()));
-    detail::error_check("Uniform2dv"sv);
+    detail::error_check("Uniform2dv"sv, check_errors);
 }
 
 template<class vec_3_f64>
@@ -171,7 +185,10 @@ requires(concepts::vector<vec_3_f64, f64, 3>)
  * \param z GLdouble
  * \return void
  */
-STATICINLINE void uniform(i32 location, vec_3_f64 const& x)
+STATICINLINE void uniform(
+    i32              location,
+    vec_3_f64 const& x,
+    error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -179,7 +196,7 @@ STATICINLINE void uniform(i32 location, vec_3_f64 const& x)
         GLW_FPTR_CHECK(Uniform3d)
     }
     glUniform3d(location, x[0], x[1], x[2]);
-    detail::error_check("Uniform3d"sv);
+    detail::error_check("Uniform3d"sv, check_errors);
 }
 
 template<class span_const_vec_3_f64>
@@ -193,7 +210,10 @@ requires(
  * \param value const GLdouble *
  * \return void
  */
-STATICINLINE void uniform(i32 location, span_const_vec_3_f64 const& value)
+STATICINLINE void uniform(
+    i32                         location,
+    span_const_vec_3_f64 const& value,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -204,7 +224,7 @@ STATICINLINE void uniform(i32 location, span_const_vec_3_f64 const& value)
         location,
         value.size(),
         reinterpret_cast<const GLdouble*>(value.data()));
-    detail::error_check("Uniform3dv"sv);
+    detail::error_check("Uniform3dv"sv, check_errors);
 }
 
 template<class vec_4_f64>
@@ -218,7 +238,10 @@ requires(concepts::vector<vec_4_f64, f64, 4>)
  * \param w GLdouble
  * \return void
  */
-STATICINLINE void uniform(i32 location, vec_4_f64 const& x)
+STATICINLINE void uniform(
+    i32              location,
+    vec_4_f64 const& x,
+    error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -226,7 +249,7 @@ STATICINLINE void uniform(i32 location, vec_4_f64 const& x)
         GLW_FPTR_CHECK(Uniform4d)
     }
     glUniform4d(location, x[0], x[1], x[2], x[3]);
-    detail::error_check("Uniform4d"sv);
+    detail::error_check("Uniform4d"sv, check_errors);
 }
 
 template<class span_const_vec_4_f64>
@@ -240,7 +263,10 @@ requires(
  * \param value const GLdouble *
  * \return void
  */
-STATICINLINE void uniform(i32 location, span_const_vec_4_f64 const& value)
+STATICINLINE void uniform(
+    i32                         location,
+    span_const_vec_4_f64 const& value,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -251,7 +277,7 @@ STATICINLINE void uniform(i32 location, span_const_vec_4_f64 const& value)
         location,
         value.size(),
         reinterpret_cast<const GLdouble*>(value.data()));
-    detail::error_check("Uniform4dv"sv);
+    detail::error_check("Uniform4dv"sv, check_errors);
 }
 
 template<class span_const_mat_2x2_f64>
@@ -267,7 +293,10 @@ requires(
  * \return void
  */
 STATICINLINE void uniform(
-    i32 location, bool transpose, span_const_mat_2x2_f64 const& value)
+    i32                           location,
+    bool                          transpose,
+    span_const_mat_2x2_f64 const& value,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -279,7 +308,7 @@ STATICINLINE void uniform(
         value.size(),
         transpose,
         reinterpret_cast<const GLdouble*>(value.data()));
-    detail::error_check("UniformMatrix2dv"sv);
+    detail::error_check("UniformMatrix2dv"sv, check_errors);
 }
 
 template<class span_const_mat_2x3_f64>
@@ -295,7 +324,10 @@ requires(
  * \return void
  */
 STATICINLINE void uniform(
-    i32 location, bool transpose, span_const_mat_2x3_f64 const& value)
+    i32                           location,
+    bool                          transpose,
+    span_const_mat_2x3_f64 const& value,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -307,7 +339,7 @@ STATICINLINE void uniform(
         value.size(),
         transpose,
         reinterpret_cast<const GLdouble*>(value.data()));
-    detail::error_check("UniformMatrix2x3dv"sv);
+    detail::error_check("UniformMatrix2x3dv"sv, check_errors);
 }
 
 template<class span_const_mat_2x4_f64>
@@ -323,7 +355,10 @@ requires(
  * \return void
  */
 STATICINLINE void uniform(
-    i32 location, bool transpose, span_const_mat_2x4_f64 const& value)
+    i32                           location,
+    bool                          transpose,
+    span_const_mat_2x4_f64 const& value,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -335,7 +370,7 @@ STATICINLINE void uniform(
         value.size(),
         transpose,
         reinterpret_cast<const GLdouble*>(value.data()));
-    detail::error_check("UniformMatrix2x4dv"sv);
+    detail::error_check("UniformMatrix2x4dv"sv, check_errors);
 }
 
 template<class span_const_mat_3x3_f64>
@@ -351,7 +386,10 @@ requires(
  * \return void
  */
 STATICINLINE void uniform(
-    i32 location, bool transpose, span_const_mat_3x3_f64 const& value)
+    i32                           location,
+    bool                          transpose,
+    span_const_mat_3x3_f64 const& value,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -363,7 +401,7 @@ STATICINLINE void uniform(
         value.size(),
         transpose,
         reinterpret_cast<const GLdouble*>(value.data()));
-    detail::error_check("UniformMatrix3dv"sv);
+    detail::error_check("UniformMatrix3dv"sv, check_errors);
 }
 
 template<class span_const_mat_3x2_f64>
@@ -379,7 +417,10 @@ requires(
  * \return void
  */
 STATICINLINE void uniform(
-    i32 location, bool transpose, span_const_mat_3x2_f64 const& value)
+    i32                           location,
+    bool                          transpose,
+    span_const_mat_3x2_f64 const& value,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -391,7 +432,7 @@ STATICINLINE void uniform(
         value.size(),
         transpose,
         reinterpret_cast<const GLdouble*>(value.data()));
-    detail::error_check("UniformMatrix3x2dv"sv);
+    detail::error_check("UniformMatrix3x2dv"sv, check_errors);
 }
 
 template<class span_const_mat_3x4_f64>
@@ -407,7 +448,10 @@ requires(
  * \return void
  */
 STATICINLINE void uniform(
-    i32 location, bool transpose, span_const_mat_3x4_f64 const& value)
+    i32                           location,
+    bool                          transpose,
+    span_const_mat_3x4_f64 const& value,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -419,7 +463,7 @@ STATICINLINE void uniform(
         value.size(),
         transpose,
         reinterpret_cast<const GLdouble*>(value.data()));
-    detail::error_check("UniformMatrix3x4dv"sv);
+    detail::error_check("UniformMatrix3x4dv"sv, check_errors);
 }
 
 template<class span_const_mat_4x4_f64>
@@ -435,7 +479,10 @@ requires(
  * \return void
  */
 STATICINLINE void uniform(
-    i32 location, bool transpose, span_const_mat_4x4_f64 const& value)
+    i32                           location,
+    bool                          transpose,
+    span_const_mat_4x4_f64 const& value,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -447,7 +494,7 @@ STATICINLINE void uniform(
         value.size(),
         transpose,
         reinterpret_cast<const GLdouble*>(value.data()));
-    detail::error_check("UniformMatrix4dv"sv);
+    detail::error_check("UniformMatrix4dv"sv, check_errors);
 }
 
 template<class span_const_mat_4x2_f64>
@@ -463,7 +510,10 @@ requires(
  * \return void
  */
 STATICINLINE void uniform(
-    i32 location, bool transpose, span_const_mat_4x2_f64 const& value)
+    i32                           location,
+    bool                          transpose,
+    span_const_mat_4x2_f64 const& value,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -475,7 +525,7 @@ STATICINLINE void uniform(
         value.size(),
         transpose,
         reinterpret_cast<const GLdouble*>(value.data()));
-    detail::error_check("UniformMatrix4x2dv"sv);
+    detail::error_check("UniformMatrix4x2dv"sv, check_errors);
 }
 
 template<class span_const_mat_4x3_f64>
@@ -491,7 +541,10 @@ requires(
  * \return void
  */
 STATICINLINE void uniform(
-    i32 location, bool transpose, span_const_mat_4x3_f64 const& value)
+    i32                           location,
+    bool                          transpose,
+    span_const_mat_4x3_f64 const& value,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -503,7 +556,7 @@ STATICINLINE void uniform(
         value.size(),
         transpose,
         reinterpret_cast<const GLdouble*>(value.data()));
-    detail::error_check("UniformMatrix4x3dv"sv);
+    detail::error_check("UniformMatrix4x3dv"sv, check_errors);
 }
 
 } // namespace gl::arb::gpu_shader_fp64

@@ -21,7 +21,9 @@ constexpr u32 polygon_offset_line  = 0x2A02;
  * \return void
  */
 STATICINLINE void polygon_mode(
-    group::triangle_face face, group::polygon_mode mode)
+    group::triangle_face face,
+    group::polygon_mode  mode,
+    error_check          check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -29,7 +31,7 @@ STATICINLINE void polygon_mode(
         GLW_FPTR_CHECK(PolygonModeNV)
     }
     glPolygonModeNV(static_cast<GLenum>(face), static_cast<GLenum>(mode));
-    detail::error_check("PolygonModeNV"sv);
+    detail::error_check("PolygonModeNV"sv, check_errors);
 }
 
 } // namespace gl::nv::polygon_mode

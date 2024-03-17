@@ -21,7 +21,8 @@ STATICINLINE void buffer_page_commitment_mem(
     GLsizeiptr                   size,
     u32                          memory,
     u64                          memOffset,
-    bool                         commit)
+    bool                         commit,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -30,7 +31,7 @@ STATICINLINE void buffer_page_commitment_mem(
     }
     glBufferPageCommitmentMemNV(
         static_cast<GLenum>(target), offset, size, memory, memOffset, commit);
-    detail::error_check("BufferPageCommitmentMemNV"sv);
+    detail::error_check("BufferPageCommitmentMemNV"sv, check_errors);
 }
 
 template<class size_3_i32, class vec_3_i32>
@@ -60,7 +61,8 @@ STATICINLINE void tex_page_commitment_mem(
     size_3_i32 const&     width,
     u32                   memory,
     u64                   offset,
-    bool                  commit)
+    bool                  commit,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -80,7 +82,7 @@ STATICINLINE void tex_page_commitment_mem(
         memory,
         offset,
         commit);
-    detail::error_check("TexPageCommitmentMemNV"sv);
+    detail::error_check("TexPageCommitmentMemNV"sv, check_errors);
 }
 
 /*!
@@ -94,12 +96,13 @@ STATICINLINE void tex_page_commitment_mem(
  * \return void
  */
 STATICINLINE void named_buffer_page_commitment_mem(
-    u32        buffer,
-    GLintptr   offset,
-    GLsizeiptr size,
-    u32        memory,
-    u64        memOffset,
-    bool       commit)
+    u32         buffer,
+    GLintptr    offset,
+    GLsizeiptr  size,
+    u32         memory,
+    u64         memOffset,
+    bool        commit,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -113,7 +116,7 @@ STATICINLINE void named_buffer_page_commitment_mem(
     }
     glNamedBufferPageCommitmentMemNV(
         buffer, offset, size, memory, memOffset, commit);
-    detail::error_check("NamedBufferPageCommitmentMemNV"sv);
+    detail::error_check("NamedBufferPageCommitmentMemNV"sv, check_errors);
 }
 
 template<class size_3_i32, class vec_3_i32>
@@ -143,7 +146,8 @@ STATICINLINE void texture_page_commitment_mem(
     size_3_i32 const& width,
     u32               memory,
     u64               offset,
-    bool              commit)
+    bool              commit,
+    error_check       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -168,7 +172,7 @@ STATICINLINE void texture_page_commitment_mem(
         memory,
         offset,
         commit);
-    detail::error_check("TexturePageCommitmentMemNV"sv);
+    detail::error_check("TexturePageCommitmentMemNV"sv, check_errors);
 }
 
 } // namespace gl::nv::memory_object_sparse

@@ -21,17 +21,18 @@ namespace values {
  * \return void
  */
 STATICINLINE void draw_vk_image(
-    u64 vkImage,
-    u32 sampler,
-    f32 x0,
-    f32 y0,
-    f32 x1,
-    f32 y1,
-    f32 z,
-    f32 s0,
-    f32 t0,
-    f32 s1,
-    f32 t1)
+    u64         vkImage,
+    u32         sampler,
+    f32         x0,
+    f32         y0,
+    f32         x1,
+    f32         y1,
+    f32         z,
+    f32         s0,
+    f32         t0,
+    f32         s1,
+    f32         t1,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -44,7 +45,7 @@ STATICINLINE void draw_vk_image(
 #endif
     }
     glDrawVkImageNV(vkImage, sampler, x0, y0, x1, y1, z, s0, t0, s1, t1);
-    detail::error_check("DrawVkImageNV"sv);
+    detail::error_check("DrawVkImageNV"sv, check_errors);
 }
 
 /*!
@@ -52,7 +53,8 @@ STATICINLINE void draw_vk_image(
  * \param name const GLchar *
  * \return GLVULKANPROCNV
  */
-STATICINLINE GLVULKANPROCNV get_vk_proc_addr(std::string_view const& name)
+STATICINLINE GLVULKANPROCNV get_vk_proc_addr(
+    std::string_view const& name, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -60,7 +62,7 @@ STATICINLINE GLVULKANPROCNV get_vk_proc_addr(std::string_view const& name)
         GLW_FPTR_CHECK(GetVkProcAddrNV)
     }
     auto out = glGetVkProcAddrNV(name.data());
-    detail::error_check("GetVkProcAddrNV"sv);
+    detail::error_check("GetVkProcAddrNV"sv, check_errors);
     return out;
 }
 
@@ -69,7 +71,8 @@ STATICINLINE GLVULKANPROCNV get_vk_proc_addr(std::string_view const& name)
  * \param vkSemaphore GLuint64
  * \return void
  */
-STATICINLINE void wait_vk_semaphore(u64 vkSemaphore)
+STATICINLINE void wait_vk_semaphore(
+    u64 vkSemaphore, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -77,7 +80,7 @@ STATICINLINE void wait_vk_semaphore(u64 vkSemaphore)
         GLW_FPTR_CHECK(WaitVkSemaphoreNV)
     }
     glWaitVkSemaphoreNV(vkSemaphore);
-    detail::error_check("WaitVkSemaphoreNV"sv);
+    detail::error_check("WaitVkSemaphoreNV"sv, check_errors);
 }
 
 /*!
@@ -85,7 +88,8 @@ STATICINLINE void wait_vk_semaphore(u64 vkSemaphore)
  * \param vkSemaphore GLuint64
  * \return void
  */
-STATICINLINE void signal_vk_semaphore(u64 vkSemaphore)
+STATICINLINE void signal_vk_semaphore(
+    u64 vkSemaphore, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -93,7 +97,7 @@ STATICINLINE void signal_vk_semaphore(u64 vkSemaphore)
         GLW_FPTR_CHECK(SignalVkSemaphoreNV)
     }
     glSignalVkSemaphoreNV(vkSemaphore);
-    detail::error_check("SignalVkSemaphoreNV"sv);
+    detail::error_check("SignalVkSemaphoreNV"sv, check_errors);
 }
 
 /*!
@@ -101,7 +105,8 @@ STATICINLINE void signal_vk_semaphore(u64 vkSemaphore)
  * \param vkFence GLuint64
  * \return void
  */
-STATICINLINE void signal_vk_fence(u64 vkFence)
+STATICINLINE void signal_vk_fence(
+    u64 vkFence, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -109,7 +114,7 @@ STATICINLINE void signal_vk_fence(u64 vkFence)
         GLW_FPTR_CHECK(SignalVkFenceNV)
     }
     glSignalVkFenceNV(vkFence);
-    detail::error_check("SignalVkFenceNV"sv);
+    detail::error_check("SignalVkFenceNV"sv, check_errors);
 }
 
 } // namespace gl::nv::draw_vulkan_image

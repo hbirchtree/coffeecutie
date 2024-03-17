@@ -25,7 +25,8 @@ STATICINLINE void tex_buffer_range(
     group::sized_internal_format internalformat,
     u32                          buffer,
     GLintptr                     offset,
-    GLsizeiptr                   size)
+    GLsizeiptr                   size,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -43,7 +44,7 @@ STATICINLINE void tex_buffer_range(
         buffer,
         offset,
         size);
-    detail::error_check("TexBufferRange"sv);
+    detail::error_check("TexBufferRange"sv, check_errors);
 }
 
 } // namespace gl::arb::texture_buffer_range

@@ -19,7 +19,9 @@ constexpr u32 rgba_float_mode = 0x8820;
  * \return void
  */
 STATICINLINE void clamp_color(
-    group::clamp_color_target_arb target, group::clamp_color_mode_arb clamp)
+    group::clamp_color_target_arb target,
+    group::clamp_color_mode_arb   clamp,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -27,7 +29,7 @@ STATICINLINE void clamp_color(
         GLW_FPTR_CHECK(ClampColorARB)
     }
     glClampColorARB(static_cast<GLenum>(target), static_cast<GLenum>(clamp));
-    detail::error_check("ClampColorARB"sv);
+    detail::error_check("ClampColorARB"sv, check_errors);
 }
 
 } // namespace gl::arb::color_buffer_float

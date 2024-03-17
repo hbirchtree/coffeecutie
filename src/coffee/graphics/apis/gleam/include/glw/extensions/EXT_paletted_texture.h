@@ -30,7 +30,8 @@ STATICINLINE void color_table(
     i32                       width,
     group::pixel_format       format,
     group::pixel_type         type,
-    span_const_void const&    table)
+    span_const_void const&    table,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -44,7 +45,7 @@ STATICINLINE void color_table(
         static_cast<GLenum>(format),
         static_cast<GLenum>(type),
         table.size() ? reinterpret_cast<const void*>(table.data()) : nullptr);
-    detail::error_check("ColorTableEXT"sv);
+    detail::error_check("ColorTableEXT"sv, check_errors);
 }
 
 template<class span_void>
@@ -61,7 +62,8 @@ STATICINLINE void get_color_table(
     group::color_table_target target,
     group::pixel_format       format,
     group::pixel_type         type,
-    span_void                 data)
+    span_void                 data,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -73,7 +75,7 @@ STATICINLINE void get_color_table(
         static_cast<GLenum>(format),
         static_cast<GLenum>(type),
         data.size() ? reinterpret_cast<void*>(data.data()) : nullptr);
-    detail::error_check("GetColorTableEXT"sv);
+    detail::error_check("GetColorTableEXT"sv, check_errors);
 }
 
 template<class span_f32>
@@ -91,7 +93,8 @@ requires(
 STATICINLINE void get_color_table_parameter(
     group::color_table_target         target,
     group::color_table_parameter_prop pname,
-    span_f32                          params)
+    span_f32                          params,
+    error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -102,7 +105,7 @@ STATICINLINE void get_color_table_parameter(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLfloat*>(params.data()) : nullptr);
-    detail::error_check("GetColorTableParameterfvEXT"sv);
+    detail::error_check("GetColorTableParameterfvEXT"sv, check_errors);
 }
 
 template<class span_i32>
@@ -120,7 +123,8 @@ requires(
 STATICINLINE void get_color_table_parameter(
     group::color_table_target         target,
     group::color_table_parameter_prop pname,
-    span_i32                          params)
+    span_i32                          params,
+    error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -131,7 +135,7 @@ STATICINLINE void get_color_table_parameter(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetColorTableParameterivEXT"sv);
+    detail::error_check("GetColorTableParameterivEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::paletted_texture

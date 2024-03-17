@@ -15,7 +15,9 @@ constexpr u32 index_material_face      = 0x81BA;
  * \return void
  */
 STATICINLINE void index_material(
-    group::triangle_face face, group::index_material_parameter_ext mode)
+    group::triangle_face                face,
+    group::index_material_parameter_ext mode,
+    error_check                         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -23,7 +25,7 @@ STATICINLINE void index_material(
         GLW_FPTR_CHECK(IndexMaterialEXT)
     }
     glIndexMaterialEXT(static_cast<GLenum>(face), static_cast<GLenum>(mode));
-    detail::error_check("IndexMaterialEXT"sv);
+    detail::error_check("IndexMaterialEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::index_material

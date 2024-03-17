@@ -28,7 +28,8 @@ STATICINLINE void framebuffer_texture_2d_multisample(
     group::texture_target         textarget,
     u32                           texture,
     i32                           level,
-    i32                           samples)
+    i32                           samples,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -47,7 +48,7 @@ STATICINLINE void framebuffer_texture_2d_multisample(
         texture,
         level,
         samples);
-    detail::error_check("FramebufferTexture2DMultisampleIMG"sv);
+    detail::error_check("FramebufferTexture2DMultisampleIMG"sv, check_errors);
 }
 
 template<class size_2_i32>
@@ -65,7 +66,8 @@ STATICINLINE void renderbuffer_storage_multisample(
     group::renderbuffer_target target,
     i32                        samples,
     group::internal_format     internalformat,
-    size_2_i32 const&          width)
+    size_2_i32 const&          width,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -78,7 +80,7 @@ STATICINLINE void renderbuffer_storage_multisample(
         static_cast<GLenum>(internalformat),
         width[0],
         width[1]);
-    detail::error_check("RenderbufferStorageMultisampleIMG"sv);
+    detail::error_check("RenderbufferStorageMultisampleIMG"sv, check_errors);
 }
 
 } // namespace gl::img::multisampled_render_to_texture

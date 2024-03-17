@@ -27,7 +27,8 @@ requires(
  */
 STATICINLINE void discard_framebuffer(
     group::framebuffer_target                           target,
-    span_const_invalidate_framebuffer_attachment const& attachments)
+    span_const_invalidate_framebuffer_attachment const& attachments,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -39,7 +40,7 @@ STATICINLINE void discard_framebuffer(
         attachments.size(),
         attachments.size() ? reinterpret_cast<const GLenum*>(attachments.data())
                            : nullptr);
-    detail::error_check("DiscardFramebufferEXT"sv);
+    detail::error_check("DiscardFramebufferEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::discard_framebuffer

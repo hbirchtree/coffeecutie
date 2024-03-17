@@ -22,7 +22,8 @@ requires(
  * \param semaphores GLuint *
  * \return void
  */
-STATICINLINE void create_semaphores(span_u32 semaphores)
+STATICINLINE void create_semaphores(
+    span_u32 semaphores, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -33,7 +34,7 @@ STATICINLINE void create_semaphores(span_u32 semaphores)
         semaphores.size(),
         semaphores.size() ? reinterpret_cast<GLuint*>(semaphores.data())
                           : nullptr);
-    detail::error_check("CreateSemaphoresNV"sv);
+    detail::error_check("CreateSemaphoresNV"sv, check_errors);
 }
 
 template<class span_i32>
@@ -49,7 +50,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_semaphore_parameter(
-    u32 semaphore, group::semaphore_parameter_name pname, span_i32 params)
+    u32                             semaphore,
+    group::semaphore_parameter_name pname,
+    span_i32                        params,
+    error_check                     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -60,7 +64,7 @@ STATICINLINE void get_semaphore_parameter(
         semaphore,
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetSemaphoreParameterivNV"sv);
+    detail::error_check("GetSemaphoreParameterivNV"sv, check_errors);
 }
 
 template<class span_const_i32>
@@ -79,7 +83,8 @@ requires(
 STATICINLINE void semaphore_parameter(
     u32                             semaphore,
     group::semaphore_parameter_name pname,
-    span_const_i32 const&           params)
+    span_const_i32 const&           params,
+    error_check                     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -91,7 +96,7 @@ STATICINLINE void semaphore_parameter(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<const GLint*>(params.data())
                       : nullptr);
-    detail::error_check("SemaphoreParameterivNV"sv);
+    detail::error_check("SemaphoreParameterivNV"sv, check_errors);
 }
 
 } // namespace gl::nv::timeline_semaphore

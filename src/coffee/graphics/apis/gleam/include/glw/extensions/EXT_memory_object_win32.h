@@ -27,7 +27,8 @@ STATICINLINE void import_memory_win32_handle(
     u32                         memory,
     u64                         size,
     group::external_handle_type handleType,
-    span_void                   handle)
+    span_void                   handle,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -39,7 +40,7 @@ STATICINLINE void import_memory_win32_handle(
         size,
         static_cast<GLenum>(handleType),
         handle.size() ? reinterpret_cast<void*>(handle.data()) : nullptr);
-    detail::error_check("ImportMemoryWin32HandleEXT"sv);
+    detail::error_check("ImportMemoryWin32HandleEXT"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -56,7 +57,8 @@ STATICINLINE void import_memory_win32_name(
     u32                         memory,
     u64                         size,
     group::external_handle_type handleType,
-    span_const_void const&      name)
+    span_const_void const&      name,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -68,7 +70,7 @@ STATICINLINE void import_memory_win32_name(
         size,
         static_cast<GLenum>(handleType),
         name.size() ? reinterpret_cast<const void*>(name.data()) : nullptr);
-    detail::error_check("ImportMemoryWin32NameEXT"sv);
+    detail::error_check("ImportMemoryWin32NameEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::memory_object_win32

@@ -29,7 +29,8 @@ requires(concepts::span<span_const_void>)
 STATICINLINE void fog_coord_pointer(
     group::fog_pointer_type_ext type,
     i32                         stride,
-    span_const_void const&      pointer)
+    span_const_void const&      pointer,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -41,7 +42,7 @@ STATICINLINE void fog_coord_pointer(
         stride,
         pointer.size() ? reinterpret_cast<const void*>(pointer.data())
                        : nullptr);
-    detail::error_check("FogCoordPointerEXT"sv);
+    detail::error_check("FogCoordPointerEXT"sv, check_errors);
 }
 
 /*!
@@ -49,7 +50,8 @@ STATICINLINE void fog_coord_pointer(
  * \param coord GLdouble
  * \return void
  */
-STATICINLINE void fog_coordd(f64 coord)
+STATICINLINE void fog_coordd(
+    f64 coord, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -57,7 +59,7 @@ STATICINLINE void fog_coordd(f64 coord)
         GLW_FPTR_CHECK(FogCoorddEXT)
     }
     glFogCoorddEXT(coord);
-    detail::error_check("FogCoorddEXT"sv);
+    detail::error_check("FogCoorddEXT"sv, check_errors);
 }
 
 template<class span_const_f64>
@@ -71,7 +73,8 @@ requires(
  * \param coord const GLdouble *
  * \return void
  */
-STATICINLINE void fog_coorddv(span_const_f64 const& coord)
+STATICINLINE void fog_coorddv(
+    span_const_f64 const& coord, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -81,7 +84,7 @@ STATICINLINE void fog_coorddv(span_const_f64 const& coord)
     glFogCoorddvEXT(
         coord.size() ? reinterpret_cast<const GLdouble*>(coord.data())
                      : nullptr);
-    detail::error_check("FogCoorddvEXT"sv);
+    detail::error_check("FogCoorddvEXT"sv, check_errors);
 }
 
 /*!
@@ -89,7 +92,8 @@ STATICINLINE void fog_coorddv(span_const_f64 const& coord)
  * \param coord GLfloat
  * \return void
  */
-STATICINLINE void fog_coordf(f32 coord)
+STATICINLINE void fog_coordf(
+    f32 coord, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -97,7 +101,7 @@ STATICINLINE void fog_coordf(f32 coord)
         GLW_FPTR_CHECK(FogCoordfEXT)
     }
     glFogCoordfEXT(coord);
-    detail::error_check("FogCoordfEXT"sv);
+    detail::error_check("FogCoordfEXT"sv, check_errors);
 }
 
 template<class span_const_f32>
@@ -111,7 +115,8 @@ requires(
  * \param coord const GLfloat *
  * \return void
  */
-STATICINLINE void fog_coordfv(span_const_f32 const& coord)
+STATICINLINE void fog_coordfv(
+    span_const_f32 const& coord, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -121,7 +126,7 @@ STATICINLINE void fog_coordfv(span_const_f32 const& coord)
     glFogCoordfvEXT(
         coord.size() ? reinterpret_cast<const GLfloat*>(coord.data())
                      : nullptr);
-    detail::error_check("FogCoordfvEXT"sv);
+    detail::error_check("FogCoordfvEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::fog_coord

@@ -10,7 +10,8 @@ namespace values {
 
  * \return void
  */
-STATICINLINE void apply_framebuffer_attachment_cmaa()
+STATICINLINE void apply_framebuffer_attachment_cmaa(
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -18,7 +19,7 @@ STATICINLINE void apply_framebuffer_attachment_cmaa()
         GLW_FPTR_CHECK(ApplyFramebufferAttachmentCMAAINTEL)
     }
     glApplyFramebufferAttachmentCMAAINTEL();
-    detail::error_check("ApplyFramebufferAttachmentCMAAINTEL"sv);
+    detail::error_check("ApplyFramebufferAttachmentCMAAINTEL"sv, check_errors);
 }
 
 } // namespace gl::intel::framebuffer_cmaa

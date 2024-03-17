@@ -22,7 +22,8 @@ STATICINLINE void tex_storage_2d_multisample(
     i32                          samples,
     group::sized_internal_format internalformat,
     size_2_i32 const&            width,
-    bool                         fixedsamplelocations)
+    bool                         fixedsamplelocations,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -36,7 +37,7 @@ STATICINLINE void tex_storage_2d_multisample(
         width[0],
         width[1],
         fixedsamplelocations);
-    detail::error_check("TexStorage2DMultisample"sv);
+    detail::error_check("TexStorage2DMultisample"sv, check_errors);
 }
 
 template<class size_3_i32>
@@ -57,7 +58,8 @@ STATICINLINE void tex_storage_3d_multisample(
     i32                          samples,
     group::sized_internal_format internalformat,
     size_3_i32 const&            width,
-    bool                         fixedsamplelocations)
+    bool                         fixedsamplelocations,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -72,7 +74,7 @@ STATICINLINE void tex_storage_3d_multisample(
         width[1],
         width[2],
         fixedsamplelocations);
-    detail::error_check("TexStorage3DMultisample"sv);
+    detail::error_check("TexStorage3DMultisample"sv, check_errors);
 }
 
 } // namespace gl::arb::texture_storage_multisample

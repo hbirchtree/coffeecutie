@@ -25,7 +25,8 @@ requires(
 STATICINLINE void compile_shader_include(
     u32                           shader,
     std::vector<std::string_view> path,
-    span_const_i32 const&         length)
+    span_const_i32 const&         length,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -44,7 +45,7 @@ STATICINLINE void compile_shader_include(
         path_cstr.data(),
         length.size() ? reinterpret_cast<const GLint*>(length.data())
                       : nullptr);
-    detail::error_check("CompileShaderIncludeARB"sv);
+    detail::error_check("CompileShaderIncludeARB"sv, check_errors);
 }
 
 /*!
@@ -53,7 +54,8 @@ STATICINLINE void compile_shader_include(
  * \param name const GLchar *
  * \return void
  */
-STATICINLINE void delete_named_string(std::string_view const& name)
+STATICINLINE void delete_named_string(
+    std::string_view const& name, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -61,7 +63,7 @@ STATICINLINE void delete_named_string(std::string_view const& name)
         GLW_FPTR_CHECK(DeleteNamedStringARB)
     }
     glDeleteNamedStringARB(name.size(), name.data());
-    detail::error_check("DeleteNamedStringARB"sv);
+    detail::error_check("DeleteNamedStringARB"sv, check_errors);
 }
 
 template<class span_GLchar>
@@ -80,7 +82,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_named_string(
-    std::string_view const& name, i32& stringlen, span_GLchar string)
+    std::string_view const& name,
+    i32&                    stringlen,
+    span_GLchar             string,
+    error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -89,7 +94,7 @@ STATICINLINE void get_named_string(
     }
     glGetNamedStringARB(
         name.size(), name.data(), string.size(), &stringlen, string.data());
-    detail::error_check("GetNamedStringARB"sv);
+    detail::error_check("GetNamedStringARB"sv, check_errors);
 }
 
 template<class span_i32>
@@ -106,7 +111,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_named_stringiv(
-    std::string_view const& name, GLenum pname, span_i32 params)
+    std::string_view const& name,
+    GLenum                  pname,
+    span_i32                params,
+    error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -118,7 +126,7 @@ STATICINLINE void get_named_stringiv(
         name.data(),
         pname,
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetNamedStringivARB"sv);
+    detail::error_check("GetNamedStringivARB"sv, check_errors);
 }
 
 /*!
@@ -127,7 +135,8 @@ STATICINLINE void get_named_stringiv(
  * \param name const GLchar *
  * \return Boolean
  */
-STATICINLINE bool is_named_string(std::string_view const& name)
+STATICINLINE bool is_named_string(
+    std::string_view const& name, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -135,7 +144,7 @@ STATICINLINE bool is_named_string(std::string_view const& name)
         GLW_FPTR_CHECK(IsNamedStringARB)
     }
     auto out = glIsNamedStringARB(name.size(), name.data());
-    detail::error_check("IsNamedStringARB"sv);
+    detail::error_check("IsNamedStringARB"sv, check_errors);
     return out == GL_TRUE ? true : false;
 }
 
@@ -149,7 +158,10 @@ STATICINLINE bool is_named_string(std::string_view const& name)
  * \return void
  */
 STATICINLINE void named_string(
-    GLenum type, std::string_view const& name, std::string_view const& string)
+    GLenum                  type,
+    std::string_view const& name,
+    std::string_view const& string,
+    error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -158,7 +170,7 @@ STATICINLINE void named_string(
     }
     glNamedStringARB(
         type, name.size(), name.data(), string.size(), string.data());
-    detail::error_check("NamedStringARB"sv);
+    detail::error_check("NamedStringARB"sv, check_errors);
 }
 
 } // namespace gl::arb::shading_language_include

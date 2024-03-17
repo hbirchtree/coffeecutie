@@ -20,7 +20,10 @@ requires(
  * \return void
  */
 STATICINLINE void multi_draw_arrays(
-    group::primitive_type mode, span_const_i32 first, span_const_i32 count)
+    group::primitive_type mode,
+    span_const_i32        first,
+    span_const_i32        count,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -31,7 +34,7 @@ STATICINLINE void multi_draw_arrays(
     detail::assert_equal(first.size(), primcount);
     detail::assert_equal(count.size(), primcount);
     glMultiDrawArraysEXT(static_cast<GLenum>(mode), first.data(), count.data());
-    detail::error_check("MultiDrawArraysEXT"sv);
+    detail::error_check("MultiDrawArraysEXT"sv, check_errors);
 }
 
 template<class span_const_i32>
@@ -53,7 +56,8 @@ STATICINLINE void multi_draw_elements(
     group::primitive_type     mode,
     span_const_i32            count,
     group::draw_elements_type type,
-    intptr_t                  indices)
+    intptr_t                  indices,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -67,7 +71,7 @@ STATICINLINE void multi_draw_elements(
         count.data(),
         static_cast<GLenum>(type),
         reinterpret_cast<const void*>(indices));
-    detail::error_check("MultiDrawElementsEXT"sv);
+    detail::error_check("MultiDrawElementsEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::multi_draw_arrays

@@ -22,7 +22,8 @@ constexpr u32 coverage_automatic      = 0x8ED7;
  * \param mask GLboolean
  * \return void
  */
-STATICINLINE void coverage_mask(bool mask)
+STATICINLINE void coverage_mask(
+    bool mask, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -30,7 +31,7 @@ STATICINLINE void coverage_mask(bool mask)
         GLW_FPTR_CHECK(CoverageMaskNV)
     }
     glCoverageMaskNV(mask);
-    detail::error_check("CoverageMaskNV"sv);
+    detail::error_check("CoverageMaskNV"sv, check_errors);
 }
 
 /*!
@@ -38,7 +39,8 @@ STATICINLINE void coverage_mask(bool mask)
  * \param operation GLenum
  * \return void
  */
-STATICINLINE void coverage_operation(GLenum operation)
+STATICINLINE void coverage_operation(
+    GLenum operation, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -46,7 +48,7 @@ STATICINLINE void coverage_operation(GLenum operation)
         GLW_FPTR_CHECK(CoverageOperationNV)
     }
     glCoverageOperationNV(operation);
-    detail::error_check("CoverageOperationNV"sv);
+    detail::error_check("CoverageOperationNV"sv, check_errors);
 }
 
 } // namespace gl::nv::coverage_sample

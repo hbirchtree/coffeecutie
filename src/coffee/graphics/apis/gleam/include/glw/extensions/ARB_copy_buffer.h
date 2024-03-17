@@ -27,7 +27,8 @@ STATICINLINE void copy_buffer_sub_data(
     group::copy_buffer_sub_data_target writeTarget,
     GLintptr                           readOffset,
     GLintptr                           writeOffset,
-    GLsizeiptr                         size)
+    GLsizeiptr                         size,
+    error_check                        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -40,7 +41,7 @@ STATICINLINE void copy_buffer_sub_data(
         readOffset,
         writeOffset,
         size);
-    detail::error_check("CopyBufferSubData"sv);
+    detail::error_check("CopyBufferSubData"sv, check_errors);
 }
 
 } // namespace gl::arb::copy_buffer

@@ -22,7 +22,11 @@ namespace values {
  * \return void
  */
 STATICINLINE void bind_vertex_buffer(
-    u32 bindingindex, u32 buffer, GLintptr offset, i32 stride)
+    u32         bindingindex,
+    u32         buffer,
+    GLintptr    offset,
+    i32         stride,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -35,7 +39,7 @@ STATICINLINE void bind_vertex_buffer(
 #endif
     }
     glBindVertexBuffer(bindingindex, buffer, offset, stride);
-    detail::error_check("BindVertexBuffer"sv);
+    detail::error_check("BindVertexBuffer"sv, check_errors);
 }
 
 /*!
@@ -44,7 +48,10 @@ STATICINLINE void bind_vertex_buffer(
  * \param bindingindex GLuint
  * \return void
  */
-STATICINLINE void vertex_attrib_binding(u32 attribindex, u32 bindingindex)
+STATICINLINE void vertex_attrib_binding(
+    u32         attribindex,
+    u32         bindingindex,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -52,7 +59,7 @@ STATICINLINE void vertex_attrib_binding(u32 attribindex, u32 bindingindex)
         GLW_FPTR_CHECK(VertexAttribBinding)
     }
     glVertexAttribBinding(attribindex, bindingindex);
-    detail::error_check("VertexAttribBinding"sv);
+    detail::error_check("VertexAttribBinding"sv, check_errors);
 }
 
 /*!
@@ -69,7 +76,8 @@ STATICINLINE void vertex_attrib_format(
     i32                       size,
     group::vertex_attrib_type type,
     bool                      normalized,
-    u32                       relativeoffset)
+    u32                       relativeoffset,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -82,7 +90,7 @@ STATICINLINE void vertex_attrib_format(
         static_cast<GLenum>(type),
         normalized,
         relativeoffset);
-    detail::error_check("VertexAttribFormat"sv);
+    detail::error_check("VertexAttribFormat"sv, check_errors);
 }
 
 /*!
@@ -97,7 +105,8 @@ STATICINLINE void vertex_attrib_i_format(
     u32                      attribindex,
     i32                      size,
     group::vertex_attrib_int type,
-    u32                      relativeoffset)
+    u32                      relativeoffset,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -106,7 +115,7 @@ STATICINLINE void vertex_attrib_i_format(
     }
     glVertexAttribIFormat(
         attribindex, size, static_cast<GLenum>(type), relativeoffset);
-    detail::error_check("VertexAttribIFormat"sv);
+    detail::error_check("VertexAttribIFormat"sv, check_errors);
 }
 
 /*!
@@ -121,7 +130,8 @@ STATICINLINE void vertex_attrib_l_format(
     u32                       attribindex,
     i32                       size,
     group::vertex_attrib_long type,
-    u32                       relativeoffset)
+    u32                       relativeoffset,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -130,7 +140,7 @@ STATICINLINE void vertex_attrib_l_format(
     }
     glVertexAttribLFormat(
         attribindex, size, static_cast<GLenum>(type), relativeoffset);
-    detail::error_check("VertexAttribLFormat"sv);
+    detail::error_check("VertexAttribLFormat"sv, check_errors);
 }
 
 /*!
@@ -139,7 +149,8 @@ STATICINLINE void vertex_attrib_l_format(
  * \param divisor GLuint
  * \return void
  */
-STATICINLINE void vertex_binding_divisor(u32 bindingindex, u32 divisor)
+STATICINLINE void vertex_binding_divisor(
+    u32 bindingindex, u32 divisor, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -147,7 +158,7 @@ STATICINLINE void vertex_binding_divisor(u32 bindingindex, u32 divisor)
         GLW_FPTR_CHECK(VertexBindingDivisor)
     }
     glVertexBindingDivisor(bindingindex, divisor);
-    detail::error_check("VertexBindingDivisor"sv);
+    detail::error_check("VertexBindingDivisor"sv, check_errors);
 }
 
 } // namespace gl::arb::vertex_attrib_binding

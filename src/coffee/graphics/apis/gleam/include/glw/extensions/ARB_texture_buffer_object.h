@@ -20,7 +20,8 @@ constexpr u32 texture_buffer_format             = 0x8C2E;
 STATICINLINE void tex_buffer(
     group::texture_target        target,
     group::sized_internal_format internalformat,
-    u32                          buffer)
+    u32                          buffer,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -36,7 +37,7 @@ STATICINLINE void tex_buffer(
         static_cast<GLenum>(target),
         static_cast<GLenum>(internalformat),
         buffer);
-    detail::error_check("TexBufferARB"sv);
+    detail::error_check("TexBufferARB"sv, check_errors);
 }
 
 } // namespace gl::arb::texture_buffer_object

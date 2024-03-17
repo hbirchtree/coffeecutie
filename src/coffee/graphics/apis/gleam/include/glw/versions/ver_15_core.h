@@ -7,7 +7,10 @@ requires(MinimumVersion<Current, Version<1, 5>>)
  * \param id GLuint
  * \return void
  */
-STATICINLINE void begin_query(group::query_target target, u32 id)
+STATICINLINE void begin_query(
+    group::query_target target,
+    u32                 id,
+    error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -15,7 +18,7 @@ STATICINLINE void begin_query(group::query_target target, u32 id)
         GLW_FPTR_CHECK(BeginQuery)
     }
     glBeginQuery(static_cast<GLenum>(target), id);
-    detail::error_check("BeginQuery"sv);
+    detail::error_check("BeginQuery"sv, check_errors);
 }
 
 template<typename Dummy = void>
@@ -26,7 +29,10 @@ requires(MinimumVersion<Current, Version<1, 5>>)
  * \param buffer GLuint
  * \return void
  */
-STATICINLINE void bind_buffer(group::buffer_target_arb target, u32 buffer)
+STATICINLINE void bind_buffer(
+    group::buffer_target_arb target,
+    u32                      buffer,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -39,7 +45,7 @@ STATICINLINE void bind_buffer(group::buffer_target_arb target, u32 buffer)
 #endif
     }
     glBindBuffer(static_cast<GLenum>(target), buffer);
-    detail::error_check("BindBuffer"sv);
+    detail::error_check("BindBuffer"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -56,7 +62,8 @@ requires(
 STATICINLINE void buffer_data(
     group::buffer_target_arb target,
     span_const_void const&   data,
-    group::buffer_usage_arb  usage)
+    group::buffer_usage_arb  usage,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -69,7 +76,7 @@ STATICINLINE void buffer_data(
             sizeof(typename std::decay_t<span_const_void const&>::value_type),
         data.size() ? reinterpret_cast<const void*>(data.data()) : nullptr,
         static_cast<GLenum>(usage));
-    detail::error_check("BufferData"sv);
+    detail::error_check("BufferData"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -86,7 +93,8 @@ requires(
 STATICINLINE void buffer_sub_data(
     group::buffer_target_arb target,
     GLintptr                 offset,
-    span_const_void const&   data)
+    span_const_void const&   data,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -99,7 +107,7 @@ STATICINLINE void buffer_sub_data(
         data.size() *
             sizeof(typename std::decay_t<span_const_void const&>::value_type),
         data.size() ? reinterpret_cast<const void*>(data.data()) : nullptr);
-    detail::error_check("BufferSubData"sv);
+    detail::error_check("BufferSubData"sv, check_errors);
 }
 
 template<class span_const_u32>
@@ -114,7 +122,8 @@ requires(
  * \param buffers const GLuint *
  * \return void
  */
-STATICINLINE void delete_buffers(span_const_u32 const& buffers)
+STATICINLINE void delete_buffers(
+    span_const_u32 const& buffers, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -125,7 +134,7 @@ STATICINLINE void delete_buffers(span_const_u32 const& buffers)
         buffers.size(),
         buffers.size() ? reinterpret_cast<const GLuint*>(buffers.data())
                        : nullptr);
-    detail::error_check("DeleteBuffers"sv);
+    detail::error_check("DeleteBuffers"sv, check_errors);
 }
 
 template<class span_const_u32>
@@ -140,7 +149,8 @@ requires(
  * \param ids const GLuint *
  * \return void
  */
-STATICINLINE void delete_queries(span_const_u32 const& ids)
+STATICINLINE void delete_queries(
+    span_const_u32 const& ids, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -150,7 +160,7 @@ STATICINLINE void delete_queries(span_const_u32 const& ids)
     glDeleteQueries(
         ids.size(),
         ids.size() ? reinterpret_cast<const GLuint*>(ids.data()) : nullptr);
-    detail::error_check("DeleteQueries"sv);
+    detail::error_check("DeleteQueries"sv, check_errors);
 }
 
 template<typename Dummy = void>
@@ -160,7 +170,8 @@ requires(MinimumVersion<Current, Version<1, 5>>)
  * \param target GLenum
  * \return void
  */
-STATICINLINE void end_query(group::query_target target)
+STATICINLINE void end_query(
+    group::query_target target, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -168,7 +179,7 @@ STATICINLINE void end_query(group::query_target target)
         GLW_FPTR_CHECK(EndQuery)
     }
     glEndQuery(static_cast<GLenum>(target));
-    detail::error_check("EndQuery"sv);
+    detail::error_check("EndQuery"sv, check_errors);
 }
 
 template<class span_u32>
@@ -183,7 +194,8 @@ requires(
  * \param buffers GLuint *
  * \return void
  */
-STATICINLINE void gen_buffers(span_u32 buffers)
+STATICINLINE void gen_buffers(
+    span_u32 buffers, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -193,7 +205,7 @@ STATICINLINE void gen_buffers(span_u32 buffers)
     glGenBuffers(
         buffers.size(),
         buffers.size() ? reinterpret_cast<GLuint*>(buffers.data()) : nullptr);
-    detail::error_check("GenBuffers"sv);
+    detail::error_check("GenBuffers"sv, check_errors);
 }
 
 template<class span_u32>
@@ -208,7 +220,8 @@ requires(
  * \param ids GLuint *
  * \return void
  */
-STATICINLINE void gen_queries(span_u32 ids)
+STATICINLINE void gen_queries(
+    span_u32 ids, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -218,7 +231,7 @@ STATICINLINE void gen_queries(span_u32 ids)
     glGenQueries(
         ids.size(),
         ids.size() ? reinterpret_cast<GLuint*>(ids.data()) : nullptr);
-    detail::error_check("GenQueries"sv);
+    detail::error_check("GenQueries"sv, check_errors);
 }
 
 template<class span_i32>
@@ -237,7 +250,8 @@ requires(
 STATICINLINE void get_buffer_parameter(
     group::buffer_target_arb target,
     group::buffer_prop_arb   pname,
-    span_i32                 params)
+    span_i32                 params,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -248,7 +262,7 @@ STATICINLINE void get_buffer_parameter(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetBufferParameteriv"sv);
+    detail::error_check("GetBufferParameteriv"sv, check_errors);
 }
 
 template<class span_void>
@@ -263,7 +277,8 @@ requires(MinimumVersion<Current, Version<1, 5>> && concepts::span<span_void>)
 STATICINLINE void get_buffer_pointerv(
     group::buffer_target_arb       target,
     group::buffer_pointer_name_arb pname,
-    span_void                      params)
+    span_void                      params,
+    error_check                    check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -274,7 +289,7 @@ STATICINLINE void get_buffer_pointerv(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<void**>(params.data()) : nullptr);
-    detail::error_check("GetBufferPointerv"sv);
+    detail::error_check("GetBufferPointerv"sv, check_errors);
 }
 
 template<class span_void>
@@ -288,7 +303,10 @@ requires(MinimumVersion<Current, Version<1, 5>> && concepts::span<span_void>)
  * \return void
  */
 STATICINLINE void get_buffer_sub_data(
-    group::buffer_target_arb target, GLintptr offset, span_void data)
+    group::buffer_target_arb target,
+    GLintptr                 offset,
+    span_void                data,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -300,7 +318,7 @@ STATICINLINE void get_buffer_sub_data(
         offset,
         data.size() * sizeof(typename std::decay_t<span_void>::value_type),
         data.size() ? reinterpret_cast<void*>(data.data()) : nullptr);
-    detail::error_check("GetBufferSubData"sv);
+    detail::error_check("GetBufferSubData"sv, check_errors);
 }
 
 template<class span_i32>
@@ -317,7 +335,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_query_objectiv(
-    u32 id, group::query_object_parameter_name pname, span_i32 params)
+    u32                                id,
+    group::query_object_parameter_name pname,
+    span_i32                           params,
+    error_check                        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -328,7 +349,7 @@ STATICINLINE void get_query_objectiv(
         id,
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetQueryObjectiv"sv);
+    detail::error_check("GetQueryObjectiv"sv, check_errors);
 }
 
 template<class span_u32>
@@ -345,7 +366,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_query_objectuiv(
-    u32 id, group::query_object_parameter_name pname, span_u32 params)
+    u32                                id,
+    group::query_object_parameter_name pname,
+    span_u32                           params,
+    error_check                        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -356,7 +380,7 @@ STATICINLINE void get_query_objectuiv(
         id,
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLuint*>(params.data()) : nullptr);
-    detail::error_check("GetQueryObjectuiv"sv);
+    detail::error_check("GetQueryObjectuiv"sv, check_errors);
 }
 
 template<class span_i32>
@@ -375,7 +399,8 @@ requires(
 STATICINLINE void get_queryiv(
     group::query_target         target,
     group::query_parameter_name pname,
-    span_i32                    params)
+    span_i32                    params,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -386,7 +411,7 @@ STATICINLINE void get_queryiv(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetQueryiv"sv);
+    detail::error_check("GetQueryiv"sv, check_errors);
 }
 
 template<typename Dummy = void>
@@ -396,7 +421,8 @@ requires(MinimumVersion<Current, Version<1, 5>>)
  * \param buffer GLuint
  * \return Boolean
  */
-STATICINLINE bool is_buffer(u32 buffer)
+STATICINLINE bool is_buffer(
+    u32 buffer, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -409,7 +435,7 @@ STATICINLINE bool is_buffer(u32 buffer)
 #endif
     }
     auto out = glIsBuffer(buffer);
-    detail::error_check("IsBuffer"sv);
+    detail::error_check("IsBuffer"sv, check_errors);
     return out == GL_TRUE ? true : false;
 }
 
@@ -420,7 +446,7 @@ requires(MinimumVersion<Current, Version<1, 5>>)
  * \param id GLuint
  * \return Boolean
  */
-STATICINLINE bool is_query(u32 id)
+STATICINLINE bool is_query(u32 id, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -428,7 +454,7 @@ STATICINLINE bool is_query(u32 id)
         GLW_FPTR_CHECK(IsQuery)
     }
     auto out = glIsQuery(id);
-    detail::error_check("IsQuery"sv);
+    detail::error_check("IsQuery"sv, check_errors);
     return out == GL_TRUE ? true : false;
 }
 
@@ -441,7 +467,9 @@ requires(MinimumVersion<Current, Version<1, 5>>)
  * \return void *
  */
 STATICINLINE void* map_buffer(
-    group::buffer_target_arb target, group::buffer_access_arb access)
+    group::buffer_target_arb target,
+    group::buffer_access_arb access,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -450,7 +478,7 @@ STATICINLINE void* map_buffer(
     }
     auto out =
         glMapBuffer(static_cast<GLenum>(target), static_cast<GLenum>(access));
-    detail::error_check("MapBuffer"sv);
+    detail::error_check("MapBuffer"sv, check_errors);
     return out;
 }
 
@@ -461,7 +489,8 @@ requires(MinimumVersion<Current, Version<1, 5>>)
  * \param target GLenum
  * \return Boolean
  */
-STATICINLINE bool unmap_buffer(group::buffer_target_arb target)
+STATICINLINE bool unmap_buffer(
+    group::buffer_target_arb target, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -469,7 +498,7 @@ STATICINLINE bool unmap_buffer(group::buffer_target_arb target)
         GLW_FPTR_CHECK(UnmapBuffer)
     }
     auto out = glUnmapBuffer(static_cast<GLenum>(target));
-    detail::error_check("UnmapBuffer"sv);
+    detail::error_check("UnmapBuffer"sv, check_errors);
     return out == GL_TRUE ? true : false;
 }
 

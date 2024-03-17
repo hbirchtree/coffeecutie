@@ -11,7 +11,10 @@ namespace values {
  * \param id GLuint
  * \return void
  */
-STATICINLINE void draw_transform_feedback(group::primitive_type mode, u32 id)
+STATICINLINE void draw_transform_feedback(
+    group::primitive_type mode,
+    u32                   id,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -19,7 +22,7 @@ STATICINLINE void draw_transform_feedback(group::primitive_type mode, u32 id)
         GLW_FPTR_CHECK(DrawTransformFeedbackEXT)
     }
     glDrawTransformFeedbackEXT(static_cast<GLenum>(mode), id);
-    detail::error_check("DrawTransformFeedbackEXT"sv);
+    detail::error_check("DrawTransformFeedbackEXT"sv, check_errors);
 }
 
 /*!
@@ -30,7 +33,10 @@ STATICINLINE void draw_transform_feedback(group::primitive_type mode, u32 id)
  * \return void
  */
 STATICINLINE void draw_transform_feedback_instanced(
-    group::primitive_type mode, u32 id, i32 instancecount)
+    group::primitive_type mode,
+    u32                   id,
+    i32                   instancecount,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -39,7 +45,7 @@ STATICINLINE void draw_transform_feedback_instanced(
     }
     glDrawTransformFeedbackInstancedEXT(
         static_cast<GLenum>(mode), id, instancecount);
-    detail::error_check("DrawTransformFeedbackInstancedEXT"sv);
+    detail::error_check("DrawTransformFeedbackInstancedEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::draw_transform_feedback

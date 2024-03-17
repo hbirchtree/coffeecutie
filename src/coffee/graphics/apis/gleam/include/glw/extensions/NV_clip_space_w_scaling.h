@@ -15,7 +15,11 @@ constexpr u32 viewport_position_w_scale_y_coeff = 0x937E;
  * \param ycoeff GLfloat
  * \return void
  */
-STATICINLINE void viewport_position_w_scale(u32 index, f32 xcoeff, f32 ycoeff)
+STATICINLINE void viewport_position_w_scale(
+    u32         index,
+    f32         xcoeff,
+    f32         ycoeff,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -23,7 +27,7 @@ STATICINLINE void viewport_position_w_scale(u32 index, f32 xcoeff, f32 ycoeff)
         GLW_FPTR_CHECK(ViewportPositionWScaleNV)
     }
     glViewportPositionWScaleNV(index, xcoeff, ycoeff);
-    detail::error_check("ViewportPositionWScaleNV"sv);
+    detail::error_check("ViewportPositionWScaleNV"sv, check_errors);
 }
 
 } // namespace gl::nv::clip_space_w_scaling

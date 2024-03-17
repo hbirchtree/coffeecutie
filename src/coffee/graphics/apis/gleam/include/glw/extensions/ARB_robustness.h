@@ -23,7 +23,8 @@ constexpr u32 no_reset_notification       = 0x8261;
 
  * \return GraphicsResetStatus
  */
-STATICINLINE group::graphics_reset_status get_graphics_reset_status()
+STATICINLINE group::graphics_reset_status get_graphics_reset_status(
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -31,7 +32,7 @@ STATICINLINE group::graphics_reset_status get_graphics_reset_status()
         GLW_FPTR_CHECK(GetGraphicsResetStatusARB)
     }
     auto out = glGetGraphicsResetStatusARB();
-    detail::error_check("GetGraphicsResetStatusARB"sv);
+    detail::error_check("GetGraphicsResetStatusARB"sv, check_errors);
     return static_cast<group::graphics_reset_status>(out);
 }
 
@@ -46,7 +47,10 @@ requires(concepts::span<span_void>)
  * \return void
  */
 STATICINLINE void getn_compressed_tex_image(
-    group::texture_target target, i32 lod, span_void img)
+    group::texture_target target,
+    i32                   lod,
+    span_void             img,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -58,7 +62,7 @@ STATICINLINE void getn_compressed_tex_image(
         lod,
         img.size() * sizeof(typename std::decay_t<span_void>::value_type),
         img.size() ? reinterpret_cast<void*>(img.data()) : nullptr);
-    detail::error_check("GetnCompressedTexImageARB"sv);
+    detail::error_check("GetnCompressedTexImageARB"sv, check_errors);
 }
 
 template<class span_void>
@@ -78,7 +82,8 @@ STATICINLINE void getn_tex_image(
     i32                   level,
     group::pixel_format   format,
     group::pixel_type     type,
-    span_void             img)
+    span_void             img,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -92,7 +97,7 @@ STATICINLINE void getn_tex_image(
         static_cast<GLenum>(type),
         img.size() * sizeof(typename std::decay_t<span_void>::value_type),
         img.size() ? reinterpret_cast<void*>(img.data()) : nullptr);
-    detail::error_check("GetnTexImageARB"sv);
+    detail::error_check("GetnTexImageARB"sv, check_errors);
 }
 
 template<class span_f64>
@@ -109,7 +114,11 @@ requires(
  * \return void
  */
 STATICINLINE void getn_uniformdv(
-    u32 program, i32 location, i32 bufSize, span_f64 params)
+    u32         program,
+    i32         location,
+    i32         bufSize,
+    span_f64    params,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -126,7 +135,7 @@ STATICINLINE void getn_uniformdv(
         location,
         bufSize,
         params.size() ? reinterpret_cast<GLdouble*>(params.data()) : nullptr);
-    detail::error_check("GetnUniformdvARB"sv);
+    detail::error_check("GetnUniformdvARB"sv, check_errors);
 }
 
 template<class span_f32>
@@ -143,7 +152,11 @@ requires(
  * \return void
  */
 STATICINLINE void getn_uniformfv(
-    u32 program, i32 location, i32 bufSize, span_f32 params)
+    u32         program,
+    i32         location,
+    i32         bufSize,
+    span_f32    params,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -160,7 +173,7 @@ STATICINLINE void getn_uniformfv(
         location,
         bufSize,
         params.size() ? reinterpret_cast<GLfloat*>(params.data()) : nullptr);
-    detail::error_check("GetnUniformfvARB"sv);
+    detail::error_check("GetnUniformfvARB"sv, check_errors);
 }
 
 template<class span_i32>
@@ -177,7 +190,11 @@ requires(
  * \return void
  */
 STATICINLINE void getn_uniformiv(
-    u32 program, i32 location, i32 bufSize, span_i32 params)
+    u32         program,
+    i32         location,
+    i32         bufSize,
+    span_i32    params,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -194,7 +211,7 @@ STATICINLINE void getn_uniformiv(
         location,
         bufSize,
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetnUniformivARB"sv);
+    detail::error_check("GetnUniformivARB"sv, check_errors);
 }
 
 template<class span_u32>
@@ -211,7 +228,11 @@ requires(
  * \return void
  */
 STATICINLINE void getn_uniformuiv(
-    u32 program, i32 location, i32 bufSize, span_u32 params)
+    u32         program,
+    i32         location,
+    i32         bufSize,
+    span_u32    params,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -228,7 +249,7 @@ STATICINLINE void getn_uniformuiv(
         location,
         bufSize,
         params.size() ? reinterpret_cast<GLuint*>(params.data()) : nullptr);
-    detail::error_check("GetnUniformuivARB"sv);
+    detail::error_check("GetnUniformuivARB"sv, check_errors);
 }
 
 template<class size_2_i32, class span_void, class vec_2_i32>
@@ -252,7 +273,8 @@ STATICINLINE void readn_pixels(
     size_2_i32 const&   width,
     group::pixel_format format,
     group::pixel_type   type,
-    span_void           data)
+    span_void           data,
+    error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -268,7 +290,7 @@ STATICINLINE void readn_pixels(
         static_cast<GLenum>(type),
         data.size() * sizeof(typename std::decay_t<span_void>::value_type),
         data.size() ? reinterpret_cast<void*>(data.data()) : nullptr);
-    detail::error_check("ReadnPixelsARB"sv);
+    detail::error_check("ReadnPixelsARB"sv, check_errors);
 }
 
 } // namespace gl::arb::robustness

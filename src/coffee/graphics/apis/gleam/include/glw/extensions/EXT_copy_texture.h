@@ -24,7 +24,8 @@ STATICINLINE void copy_tex_image_1d(
     group::internal_format internalformat,
     vec_2_i32 const&       x,
     i32                    width,
-    i32                    border)
+    i32                    border,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -39,7 +40,7 @@ STATICINLINE void copy_tex_image_1d(
         x[1],
         width,
         border);
-    detail::error_check("CopyTexImage1DEXT"sv);
+    detail::error_check("CopyTexImage1DEXT"sv, check_errors);
 }
 
 template<class size_2_i32, class vec_2_i32>
@@ -63,7 +64,8 @@ STATICINLINE void copy_tex_image_2d(
     group::internal_format internalformat,
     vec_2_i32 const&       x,
     size_2_i32 const&      width,
-    i32                    border)
+    i32                    border,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -79,7 +81,7 @@ STATICINLINE void copy_tex_image_2d(
         width[0],
         width[1],
         border);
-    detail::error_check("CopyTexImage2DEXT"sv);
+    detail::error_check("CopyTexImage2DEXT"sv, check_errors);
 }
 
 template<class vec_2_i32>
@@ -99,7 +101,8 @@ STATICINLINE void copy_tex_sub_image_1d(
     i32                   level,
     i32                   xoffset,
     vec_2_i32 const&      x,
-    i32                   width)
+    i32                   width,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -108,7 +111,7 @@ STATICINLINE void copy_tex_sub_image_1d(
     }
     glCopyTexSubImage1DEXT(
         static_cast<GLenum>(target), level, xoffset, x[0], x[1], width);
-    detail::error_check("CopyTexSubImage1DEXT"sv);
+    detail::error_check("CopyTexSubImage1DEXT"sv, check_errors);
 }
 
 template<class size_2_i32, class vec_2_i32>
@@ -131,7 +134,8 @@ STATICINLINE void copy_tex_sub_image_2d(
     i32                   level,
     vec_2_i32 const&      xoffset,
     vec_2_i32 const&      x,
-    size_2_i32 const&     width)
+    size_2_i32 const&     width,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -147,7 +151,7 @@ STATICINLINE void copy_tex_sub_image_2d(
         x[1],
         width[0],
         width[1]);
-    detail::error_check("CopyTexSubImage2DEXT"sv);
+    detail::error_check("CopyTexSubImage2DEXT"sv, check_errors);
 }
 
 template<class size_2_i32, class vec_2_i32, class vec_3_i32>
@@ -172,7 +176,8 @@ STATICINLINE void copy_tex_sub_image_3d(
     i32                   level,
     vec_3_i32 const&      xoffset,
     vec_2_i32 const&      x,
-    size_2_i32 const&     width)
+    size_2_i32 const&     width,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -189,7 +194,7 @@ STATICINLINE void copy_tex_sub_image_3d(
         x[1],
         width[0],
         width[1]);
-    detail::error_check("CopyTexSubImage3DEXT"sv);
+    detail::error_check("CopyTexSubImage3DEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::copy_texture

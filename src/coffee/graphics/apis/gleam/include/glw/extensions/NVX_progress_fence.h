@@ -23,7 +23,9 @@ requires(
  * \return void
  */
 STATICINLINE void client_wait_semaphoreui64(
-    span_const_u32 const& semaphoreArray, span_const_u64 const& fenceValueArray)
+    span_const_u32 const& semaphoreArray,
+    span_const_u64 const& fenceValueArray,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -38,7 +40,7 @@ STATICINLINE void client_wait_semaphoreui64(
         fenceValueArray.size()
             ? reinterpret_cast<const GLuint64*>(fenceValueArray.data())
             : nullptr);
-    detail::error_check("ClientWaitSemaphoreui64NVX"sv);
+    detail::error_check("ClientWaitSemaphoreui64NVX"sv, check_errors);
 }
 
 /*!
@@ -46,7 +48,8 @@ STATICINLINE void client_wait_semaphoreui64(
 
  * \return GLuint
  */
-STATICINLINE GLuint create_progress_fence()
+STATICINLINE GLuint
+create_progress_fence(error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -54,7 +57,7 @@ STATICINLINE GLuint create_progress_fence()
         GLW_FPTR_CHECK(CreateProgressFenceNVX)
     }
     auto out = glCreateProgressFenceNVX();
-    detail::error_check("CreateProgressFenceNVX"sv);
+    detail::error_check("CreateProgressFenceNVX"sv, check_errors);
     return out;
 }
 
@@ -79,7 +82,8 @@ requires(
 STATICINLINE void signal_semaphoreui64(
     u32                   signalGpu,
     span_const_u32 const& semaphoreArray,
-    span_const_u64 const& fenceValueArray)
+    span_const_u64 const& fenceValueArray,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -95,7 +99,7 @@ STATICINLINE void signal_semaphoreui64(
         fenceValueArray.size()
             ? reinterpret_cast<const GLuint64*>(fenceValueArray.data())
             : nullptr);
-    detail::error_check("SignalSemaphoreui64NVX"sv);
+    detail::error_check("SignalSemaphoreui64NVX"sv, check_errors);
 }
 
 template<class span_const_u32, class span_const_u64>
@@ -119,7 +123,8 @@ requires(
 STATICINLINE void wait_semaphoreui64(
     u32                   waitGpu,
     span_const_u32 const& semaphoreArray,
-    span_const_u64 const& fenceValueArray)
+    span_const_u64 const& fenceValueArray,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -135,7 +140,7 @@ STATICINLINE void wait_semaphoreui64(
         fenceValueArray.size()
             ? reinterpret_cast<const GLuint64*>(fenceValueArray.data())
             : nullptr);
-    detail::error_check("WaitSemaphoreui64NVX"sv);
+    detail::error_check("WaitSemaphoreui64NVX"sv, check_errors);
 }
 
 } // namespace gl::nvx::progress_fence

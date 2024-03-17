@@ -39,7 +39,8 @@ STATICINLINE void copy_image_sub_data(
     i32                                dstZ,
     i32                                srcWidth,
     i32                                srcHeight,
-    i32                                srcDepth)
+    i32                                srcDepth,
+    error_check                        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -62,7 +63,7 @@ STATICINLINE void copy_image_sub_data(
         srcWidth,
         srcHeight,
         srcDepth);
-    detail::error_check("CopyImageSubDataEXT"sv);
+    detail::error_check("CopyImageSubDataEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::copy_image

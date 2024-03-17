@@ -30,7 +30,10 @@ constexpr u32 signaled   = 0x9119;
  * \return SyncStatus
  */
 STATICINLINE group::sync_status client_wait_sync(
-    GLsync sync, group::sync_object_mask flags, u64 timeout)
+    GLsync                  sync,
+    group::sync_object_mask flags,
+    u64                     timeout,
+    error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -38,7 +41,7 @@ STATICINLINE group::sync_status client_wait_sync(
         GLW_FPTR_CHECK(ClientWaitSync)
     }
     auto out = glClientWaitSync(sync, static_cast<GLenum>(flags), timeout);
-    detail::error_check("ClientWaitSync"sv);
+    detail::error_check("ClientWaitSync"sv, check_errors);
     return static_cast<group::sync_status>(out);
 }
 
@@ -47,7 +50,8 @@ STATICINLINE group::sync_status client_wait_sync(
  * \param sync GLsync
  * \return void
  */
-STATICINLINE void delete_sync(GLsync sync)
+STATICINLINE void delete_sync(
+    GLsync sync, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -55,7 +59,7 @@ STATICINLINE void delete_sync(GLsync sync)
         GLW_FPTR_CHECK(DeleteSync)
     }
     glDeleteSync(sync);
-    detail::error_check("DeleteSync"sv);
+    detail::error_check("DeleteSync"sv, check_errors);
 }
 
 /*!
@@ -64,8 +68,10 @@ STATICINLINE void delete_sync(GLsync sync)
  * \param flags GLbitfield
  * \return sync
  */
-STATICINLINE GLsync
-fence_sync(group::sync_condition condition, group::sync_behavior_flags flags)
+STATICINLINE GLsync fence_sync(
+    group::sync_condition      condition,
+    group::sync_behavior_flags flags,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -74,7 +80,7 @@ fence_sync(group::sync_condition condition, group::sync_behavior_flags flags)
     }
     auto out =
         glFenceSync(static_cast<GLenum>(condition), static_cast<GLenum>(flags));
-    detail::error_check("FenceSync"sv);
+    detail::error_check("FenceSync"sv, check_errors);
     return out;
 }
 
@@ -89,7 +95,10 @@ requires(
  * \param data GLint64 *
  * \return void
  */
-STATICINLINE void get_integer64v(group::get_prop pname, span_i64 data)
+STATICINLINE void get_integer64v(
+    group::get_prop pname,
+    span_i64        data,
+    error_check     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -99,7 +108,7 @@ STATICINLINE void get_integer64v(group::get_prop pname, span_i64 data)
     glGetInteger64v(
         static_cast<GLenum>(pname),
         data.size() ? reinterpret_cast<GLint64*>(data.data()) : nullptr);
-    detail::error_check("GetInteger64v"sv);
+    detail::error_check("GetInteger64v"sv, check_errors);
 }
 
 template<class span_i32>
@@ -117,7 +126,11 @@ requires(
  * \return void
  */
 STATICINLINE void get_synciv(
-    GLsync sync, group::sync_parameter_name pname, i32& length, span_i32 values)
+    GLsync                     sync,
+    group::sync_parameter_name pname,
+    i32&                       length,
+    span_i32                   values,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -130,7 +143,7 @@ STATICINLINE void get_synciv(
         values.size(),
         &length,
         values.size() ? reinterpret_cast<GLint*>(values.data()) : nullptr);
-    detail::error_check("GetSynciv"sv);
+    detail::error_check("GetSynciv"sv, check_errors);
 }
 
 /*!
@@ -138,7 +151,8 @@ STATICINLINE void get_synciv(
  * \param sync GLsync
  * \return Boolean
  */
-STATICINLINE bool is_sync(GLsync sync)
+STATICINLINE bool is_sync(
+    GLsync sync, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -146,7 +160,7 @@ STATICINLINE bool is_sync(GLsync sync)
         GLW_FPTR_CHECK(IsSync)
     }
     auto out = glIsSync(sync);
-    detail::error_check("IsSync"sv);
+    detail::error_check("IsSync"sv, check_errors);
     return out == GL_TRUE ? true : false;
 }
 
@@ -158,7 +172,10 @@ STATICINLINE bool is_sync(GLsync sync)
  * \return void
  */
 STATICINLINE void wait_sync(
-    GLsync sync, group::sync_behavior_flags flags, u64 timeout)
+    GLsync                     sync,
+    group::sync_behavior_flags flags,
+    u64                        timeout,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -166,7 +183,7 @@ STATICINLINE void wait_sync(
         GLW_FPTR_CHECK(WaitSync)
     }
     glWaitSync(sync, static_cast<GLenum>(flags), timeout);
-    detail::error_check("WaitSync"sv);
+    detail::error_check("WaitSync"sv, check_errors);
 }
 
 } // namespace gl::arb::sync

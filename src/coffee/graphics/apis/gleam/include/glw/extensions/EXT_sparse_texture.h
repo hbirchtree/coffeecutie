@@ -47,7 +47,8 @@ STATICINLINE void tex_page_commitment(
     i32               level,
     vec_3_i32 const&  xoffset,
     size_3_i32 const& width,
-    bool              commit)
+    bool              commit,
+    error_check       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -64,7 +65,7 @@ STATICINLINE void tex_page_commitment(
         width[1],
         width[2],
         commit);
-    detail::error_check("TexPageCommitmentEXT"sv);
+    detail::error_check("TexPageCommitmentEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::sparse_texture

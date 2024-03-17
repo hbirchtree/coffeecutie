@@ -21,7 +21,12 @@ namespace values {
  * \return GLuint64
  */
 STATICINLINE GLuint64 get_image_handle(
-    u32 texture, i32 level, bool layered, i32 layer, group::pixel_format format)
+    u32                 texture,
+    i32                 level,
+    bool                layered,
+    i32                 layer,
+    group::pixel_format format,
+    error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -35,7 +40,7 @@ STATICINLINE GLuint64 get_image_handle(
     }
     auto out = glGetImageHandleARB(
         texture, level, layered, layer, static_cast<GLenum>(format));
-    detail::error_check("GetImageHandleARB"sv);
+    detail::error_check("GetImageHandleARB"sv, check_errors);
     return out;
 }
 
@@ -44,7 +49,8 @@ STATICINLINE GLuint64 get_image_handle(
  * \param texture GLuint
  * \return GLuint64
  */
-STATICINLINE GLuint64 get_texture_handle(u32 texture)
+STATICINLINE GLuint64
+get_texture_handle(u32 texture, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -57,7 +63,7 @@ STATICINLINE GLuint64 get_texture_handle(u32 texture)
 #endif
     }
     auto out = glGetTextureHandleARB(texture);
-    detail::error_check("GetTextureHandleARB"sv);
+    detail::error_check("GetTextureHandleARB"sv, check_errors);
     return out;
 }
 
@@ -67,7 +73,8 @@ STATICINLINE GLuint64 get_texture_handle(u32 texture)
  * \param sampler GLuint
  * \return GLuint64
  */
-STATICINLINE GLuint64 get_texture_sampler_handle(u32 texture, u32 sampler)
+STATICINLINE GLuint64 get_texture_sampler_handle(
+    u32 texture, u32 sampler, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -85,7 +92,7 @@ STATICINLINE GLuint64 get_texture_sampler_handle(u32 texture, u32 sampler)
 #endif
     }
     auto out = glGetTextureSamplerHandleARB(texture, sampler);
-    detail::error_check("GetTextureSamplerHandleARB"sv);
+    detail::error_check("GetTextureSamplerHandleARB"sv, check_errors);
     return out;
 }
 
@@ -103,7 +110,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_vertex_attrib_lui64v(
-    u32 index, group::vertex_attrib_enum pname, span_GLuint64EXT params)
+    u32                       index,
+    group::vertex_attrib_enum pname,
+    span_GLuint64EXT          params,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -115,7 +125,7 @@ STATICINLINE void get_vertex_attrib_lui64v(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLuint64EXT*>(params.data())
                       : nullptr);
-    detail::error_check("GetVertexAttribLui64vARB"sv);
+    detail::error_check("GetVertexAttribLui64vARB"sv, check_errors);
 }
 
 /*!
@@ -123,7 +133,8 @@ STATICINLINE void get_vertex_attrib_lui64v(
  * \param handle GLuint64
  * \return Boolean
  */
-STATICINLINE bool is_image_handle_resident(u64 handle)
+STATICINLINE bool is_image_handle_resident(
+    u64 handle, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -131,7 +142,7 @@ STATICINLINE bool is_image_handle_resident(u64 handle)
         GLW_FPTR_CHECK(IsImageHandleResidentARB)
     }
     auto out = glIsImageHandleResidentARB(handle);
-    detail::error_check("IsImageHandleResidentARB"sv);
+    detail::error_check("IsImageHandleResidentARB"sv, check_errors);
     return out == GL_TRUE ? true : false;
 }
 
@@ -140,7 +151,8 @@ STATICINLINE bool is_image_handle_resident(u64 handle)
  * \param handle GLuint64
  * \return Boolean
  */
-STATICINLINE bool is_texture_handle_resident(u64 handle)
+STATICINLINE bool is_texture_handle_resident(
+    u64 handle, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -148,7 +160,7 @@ STATICINLINE bool is_texture_handle_resident(u64 handle)
         GLW_FPTR_CHECK(IsTextureHandleResidentARB)
     }
     auto out = glIsTextureHandleResidentARB(handle);
-    detail::error_check("IsTextureHandleResidentARB"sv);
+    detail::error_check("IsTextureHandleResidentARB"sv, check_errors);
     return out == GL_TRUE ? true : false;
 }
 
@@ -157,7 +169,8 @@ STATICINLINE bool is_texture_handle_resident(u64 handle)
  * \param handle GLuint64
  * \return void
  */
-STATICINLINE void make_image_handle_non_resident(u64 handle)
+STATICINLINE void make_image_handle_non_resident(
+    u64 handle, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -165,7 +178,7 @@ STATICINLINE void make_image_handle_non_resident(u64 handle)
         GLW_FPTR_CHECK(MakeImageHandleNonResidentARB)
     }
     glMakeImageHandleNonResidentARB(handle);
-    detail::error_check("MakeImageHandleNonResidentARB"sv);
+    detail::error_check("MakeImageHandleNonResidentARB"sv, check_errors);
 }
 
 /*!
@@ -174,7 +187,8 @@ STATICINLINE void make_image_handle_non_resident(u64 handle)
  * \param access GLenum
  * \return void
  */
-STATICINLINE void make_image_handle_resident(u64 handle, GLenum access)
+STATICINLINE void make_image_handle_resident(
+    u64 handle, GLenum access, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -182,7 +196,7 @@ STATICINLINE void make_image_handle_resident(u64 handle, GLenum access)
         GLW_FPTR_CHECK(MakeImageHandleResidentARB)
     }
     glMakeImageHandleResidentARB(handle, access);
-    detail::error_check("MakeImageHandleResidentARB"sv);
+    detail::error_check("MakeImageHandleResidentARB"sv, check_errors);
 }
 
 /*!
@@ -190,7 +204,8 @@ STATICINLINE void make_image_handle_resident(u64 handle, GLenum access)
  * \param handle GLuint64
  * \return void
  */
-STATICINLINE void make_texture_handle_non_resident(u64 handle)
+STATICINLINE void make_texture_handle_non_resident(
+    u64 handle, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -198,7 +213,7 @@ STATICINLINE void make_texture_handle_non_resident(u64 handle)
         GLW_FPTR_CHECK(MakeTextureHandleNonResidentARB)
     }
     glMakeTextureHandleNonResidentARB(handle);
-    detail::error_check("MakeTextureHandleNonResidentARB"sv);
+    detail::error_check("MakeTextureHandleNonResidentARB"sv, check_errors);
 }
 
 /*!
@@ -206,7 +221,8 @@ STATICINLINE void make_texture_handle_non_resident(u64 handle)
  * \param handle GLuint64
  * \return void
  */
-STATICINLINE void make_texture_handle_resident(u64 handle)
+STATICINLINE void make_texture_handle_resident(
+    u64 handle, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -214,7 +230,7 @@ STATICINLINE void make_texture_handle_resident(u64 handle)
         GLW_FPTR_CHECK(MakeTextureHandleResidentARB)
     }
     glMakeTextureHandleResidentARB(handle);
-    detail::error_check("MakeTextureHandleResidentARB"sv);
+    detail::error_check("MakeTextureHandleResidentARB"sv, check_errors);
 }
 
 /*!
@@ -224,7 +240,11 @@ STATICINLINE void make_texture_handle_resident(u64 handle)
  * \param value GLuint64
  * \return void
  */
-STATICINLINE void program_uniform_handle(u32 program, i32 location, u64 value)
+STATICINLINE void program_uniform_handle(
+    u32         program,
+    i32         location,
+    u64         value,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -237,7 +257,7 @@ STATICINLINE void program_uniform_handle(u32 program, i32 location, u64 value)
 #endif
     }
     glProgramUniformHandleui64ARB(program, location, value);
-    detail::error_check("ProgramUniformHandleui64ARB"sv);
+    detail::error_check("ProgramUniformHandleui64ARB"sv, check_errors);
 }
 
 template<class span_const_u64>
@@ -255,7 +275,10 @@ requires(
  * \return void
  */
 STATICINLINE void program_uniform_handle(
-    u32 program, i32 location, span_const_u64 const& values)
+    u32                   program,
+    i32                   location,
+    span_const_u64 const& values,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -273,7 +296,7 @@ STATICINLINE void program_uniform_handle(
         values.size(),
         values.size() ? reinterpret_cast<const GLuint64*>(values.data())
                       : nullptr);
-    detail::error_check("ProgramUniformHandleui64vARB"sv);
+    detail::error_check("ProgramUniformHandleui64vARB"sv, check_errors);
 }
 
 /*!
@@ -282,7 +305,8 @@ STATICINLINE void program_uniform_handle(
  * \param value GLuint64
  * \return void
  */
-STATICINLINE void uniform_handle(i32 location, u64 value)
+STATICINLINE void uniform_handle(
+    i32 location, u64 value, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -290,7 +314,7 @@ STATICINLINE void uniform_handle(i32 location, u64 value)
         GLW_FPTR_CHECK(UniformHandleui64ARB)
     }
     glUniformHandleui64ARB(location, value);
-    detail::error_check("UniformHandleui64ARB"sv);
+    detail::error_check("UniformHandleui64ARB"sv, check_errors);
 }
 
 template<class span_const_u64>
@@ -306,7 +330,10 @@ requires(
  * \param value const GLuint64 *
  * \return void
  */
-STATICINLINE void uniform_handle(i32 location, span_const_u64 const& value)
+STATICINLINE void uniform_handle(
+    i32                   location,
+    span_const_u64 const& value,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -318,7 +345,7 @@ STATICINLINE void uniform_handle(i32 location, span_const_u64 const& value)
         value.size(),
         value.size() ? reinterpret_cast<const GLuint64*>(value.data())
                      : nullptr);
-    detail::error_check("UniformHandleui64vARB"sv);
+    detail::error_check("UniformHandleui64vARB"sv, check_errors);
 }
 
 /*!
@@ -327,7 +354,8 @@ STATICINLINE void uniform_handle(i32 location, span_const_u64 const& value)
  * \param x GLuint64EXT
  * \return void
  */
-STATICINLINE void vertex_attrib_l1ui64(u32 index, GLuint64EXT x)
+STATICINLINE void vertex_attrib_l1ui64(
+    u32 index, GLuint64EXT x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -335,7 +363,7 @@ STATICINLINE void vertex_attrib_l1ui64(u32 index, GLuint64EXT x)
         GLW_FPTR_CHECK(VertexAttribL1ui64ARB)
     }
     glVertexAttribL1ui64ARB(index, x);
-    detail::error_check("VertexAttribL1ui64ARB"sv);
+    detail::error_check("VertexAttribL1ui64ARB"sv, check_errors);
 }
 
 template<class span_const_GLuint64EXT>
@@ -351,7 +379,9 @@ requires(
  * \return void
  */
 STATICINLINE void vertex_attrib_l1ui64v(
-    u32 index, span_const_GLuint64EXT const& v)
+    u32                           index,
+    span_const_GLuint64EXT const& v,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -360,7 +390,7 @@ STATICINLINE void vertex_attrib_l1ui64v(
     }
     glVertexAttribL1ui64vARB(
         index, reinterpret_cast<const GLuint64EXT*>(v.data()));
-    detail::error_check("VertexAttribL1ui64vARB"sv);
+    detail::error_check("VertexAttribL1ui64vARB"sv, check_errors);
 }
 
 } // namespace gl::arb::bindless_texture

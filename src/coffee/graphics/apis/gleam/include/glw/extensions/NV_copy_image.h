@@ -39,7 +39,8 @@ STATICINLINE void copy_image_sub_data(
     i32                                dstX,
     i32                                dstY,
     i32                                dstZ,
-    size_3_i32 const&                  width)
+    size_3_i32 const&                  width,
+    error_check                        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -62,7 +63,7 @@ STATICINLINE void copy_image_sub_data(
         width[0],
         width[1],
         width[2]);
-    detail::error_check("CopyImageSubDataNV"sv);
+    detail::error_check("CopyImageSubDataNV"sv, check_errors);
 }
 
 } // namespace gl::nv::copy_image

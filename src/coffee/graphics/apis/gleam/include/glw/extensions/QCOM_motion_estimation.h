@@ -18,7 +18,8 @@ namespace values {
  * \param output GLuint
  * \return void
  */
-STATICINLINE void tex_estimate_motion(u32 ref, u32 target, u32 output)
+STATICINLINE void tex_estimate_motion(
+    u32 ref, u32 target, u32 output, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -26,7 +27,7 @@ STATICINLINE void tex_estimate_motion(u32 ref, u32 target, u32 output)
         GLW_FPTR_CHECK(TexEstimateMotionQCOM)
     }
     glTexEstimateMotionQCOM(ref, target, output);
-    detail::error_check("TexEstimateMotionQCOM"sv);
+    detail::error_check("TexEstimateMotionQCOM"sv, check_errors);
 }
 
 /*!
@@ -38,7 +39,11 @@ STATICINLINE void tex_estimate_motion(u32 ref, u32 target, u32 output)
  * \return void
  */
 STATICINLINE void tex_estimate_motion_regions(
-    u32 ref, u32 target, u32 output, u32 mask)
+    u32         ref,
+    u32         target,
+    u32         output,
+    u32         mask,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -46,7 +51,7 @@ STATICINLINE void tex_estimate_motion_regions(
         GLW_FPTR_CHECK(TexEstimateMotionRegionsQCOM)
     }
     glTexEstimateMotionRegionsQCOM(ref, target, output, mask);
-    detail::error_check("TexEstimateMotionRegionsQCOM"sv);
+    detail::error_check("TexEstimateMotionRegionsQCOM"sv, check_errors);
 }
 
 } // namespace gl::qcom::motion_estimation

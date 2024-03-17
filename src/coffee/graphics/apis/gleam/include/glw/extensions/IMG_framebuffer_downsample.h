@@ -30,7 +30,8 @@ STATICINLINE void framebuffer_texture_2d_downsample(
     u32                           texture,
     i32                           level,
     i32                           xscale,
-    i32                           yscale)
+    i32                           yscale,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -50,7 +51,7 @@ STATICINLINE void framebuffer_texture_2d_downsample(
         level,
         xscale,
         yscale);
-    detail::error_check("FramebufferTexture2DDownsampleIMG"sv);
+    detail::error_check("FramebufferTexture2DDownsampleIMG"sv, check_errors);
 }
 
 /*!
@@ -71,7 +72,8 @@ STATICINLINE void framebuffer_texture_layer_downsample(
     i32                           level,
     i32                           layer,
     i32                           xscale,
-    i32                           yscale)
+    i32                           yscale,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -91,7 +93,7 @@ STATICINLINE void framebuffer_texture_layer_downsample(
         layer,
         xscale,
         yscale);
-    detail::error_check("FramebufferTextureLayerDownsampleIMG"sv);
+    detail::error_check("FramebufferTextureLayerDownsampleIMG"sv, check_errors);
 }
 
 } // namespace gl::img::framebuffer_downsample

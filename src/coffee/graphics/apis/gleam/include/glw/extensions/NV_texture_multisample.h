@@ -26,7 +26,8 @@ STATICINLINE void tex_image_2d_multisample_coverage(
     i32                   colorSamples,
     i32                   internalFormat,
     size_2_i32 const&     width,
-    bool                  fixedSampleLocations)
+    bool                  fixedSampleLocations,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -41,7 +42,7 @@ STATICINLINE void tex_image_2d_multisample_coverage(
         width[0],
         width[1],
         fixedSampleLocations);
-    detail::error_check("TexImage2DMultisampleCoverageNV"sv);
+    detail::error_check("TexImage2DMultisampleCoverageNV"sv, check_errors);
 }
 
 template<class size_3_i32>
@@ -64,7 +65,8 @@ STATICINLINE void tex_image_3d_multisample_coverage(
     i32                   colorSamples,
     i32                   internalFormat,
     size_3_i32 const&     width,
-    bool                  fixedSampleLocations)
+    bool                  fixedSampleLocations,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -80,7 +82,7 @@ STATICINLINE void tex_image_3d_multisample_coverage(
         width[1],
         width[2],
         fixedSampleLocations);
-    detail::error_check("TexImage3DMultisampleCoverageNV"sv);
+    detail::error_check("TexImage3DMultisampleCoverageNV"sv, check_errors);
 }
 
 template<class size_2_i32>
@@ -104,7 +106,8 @@ STATICINLINE void texture_image_2d_multisample_coverage(
     i32                   colorSamples,
     i32                   internalFormat,
     size_2_i32 const&     width,
-    bool                  fixedSampleLocations)
+    bool                  fixedSampleLocations,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -125,7 +128,7 @@ STATICINLINE void texture_image_2d_multisample_coverage(
         width[0],
         width[1],
         fixedSampleLocations);
-    detail::error_check("TextureImage2DMultisampleCoverageNV"sv);
+    detail::error_check("TextureImage2DMultisampleCoverageNV"sv, check_errors);
 }
 
 template<class size_2_i32>
@@ -147,7 +150,8 @@ STATICINLINE void texture_image_2d_multisample(
     i32                   samples,
     i32                   internalFormat,
     size_2_i32 const&     width,
-    bool                  fixedSampleLocations)
+    bool                  fixedSampleLocations,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -167,7 +171,7 @@ STATICINLINE void texture_image_2d_multisample(
         width[0],
         width[1],
         fixedSampleLocations);
-    detail::error_check("TextureImage2DMultisampleNV"sv);
+    detail::error_check("TextureImage2DMultisampleNV"sv, check_errors);
 }
 
 template<class size_3_i32>
@@ -192,7 +196,8 @@ STATICINLINE void texture_image_3d_multisample_coverage(
     i32                   colorSamples,
     i32                   internalFormat,
     size_3_i32 const&     width,
-    bool                  fixedSampleLocations)
+    bool                  fixedSampleLocations,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -214,7 +219,7 @@ STATICINLINE void texture_image_3d_multisample_coverage(
         width[1],
         width[2],
         fixedSampleLocations);
-    detail::error_check("TextureImage3DMultisampleCoverageNV"sv);
+    detail::error_check("TextureImage3DMultisampleCoverageNV"sv, check_errors);
 }
 
 template<class size_3_i32>
@@ -237,7 +242,8 @@ STATICINLINE void texture_image_3d_multisample(
     i32                   samples,
     i32                   internalFormat,
     size_3_i32 const&     width,
-    bool                  fixedSampleLocations)
+    bool                  fixedSampleLocations,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -258,7 +264,7 @@ STATICINLINE void texture_image_3d_multisample(
         width[1],
         width[2],
         fixedSampleLocations);
-    detail::error_check("TextureImage3DMultisampleNV"sv);
+    detail::error_check("TextureImage3DMultisampleNV"sv, check_errors);
 }
 
 } // namespace gl::nv::texture_multisample

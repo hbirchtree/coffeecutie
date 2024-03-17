@@ -49,7 +49,8 @@ STATICINLINE void get_active_atomic_counter_bufferiv(
     u32                               program,
     u32                               bufferIndex,
     group::atomic_counter_buffer_prop pname,
-    span_i32                          params)
+    span_i32                          params,
+    error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -66,7 +67,7 @@ STATICINLINE void get_active_atomic_counter_bufferiv(
         bufferIndex,
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetActiveAtomicCounterBufferiv"sv);
+    detail::error_check("GetActiveAtomicCounterBufferiv"sv, check_errors);
 }
 
 } // namespace gl::arb::shader_atomic_counters

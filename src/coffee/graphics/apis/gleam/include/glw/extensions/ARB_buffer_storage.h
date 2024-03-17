@@ -28,7 +28,8 @@ requires(concepts::span<span_const_void>)
 STATICINLINE void buffer_storage(
     group::buffer_storage_target target,
     span_const_void const&       data,
-    group::buffer_storage_mask   flags)
+    group::buffer_storage_mask   flags,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -41,7 +42,7 @@ STATICINLINE void buffer_storage(
             sizeof(typename std::decay_t<span_const_void const&>::value_type),
         data.size() ? reinterpret_cast<const void*>(data.data()) : nullptr,
         static_cast<GLenum>(flags));
-    detail::error_check("BufferStorage"sv);
+    detail::error_check("BufferStorage"sv, check_errors);
 }
 
 } // namespace gl::arb::buffer_storage

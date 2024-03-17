@@ -14,7 +14,8 @@ constexpr u32 conservative_raster_mode_pre_snap_triangles = 0x954F;
  * \param param GLint
  * \return void
  */
-STATICINLINE void conservative_raster_parameter(GLenum pname, i32 param)
+STATICINLINE void conservative_raster_parameter(
+    GLenum pname, i32 param, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -22,7 +23,7 @@ STATICINLINE void conservative_raster_parameter(GLenum pname, i32 param)
         GLW_FPTR_CHECK(ConservativeRasterParameteriNV)
     }
     glConservativeRasterParameteriNV(pname, param);
-    detail::error_check("ConservativeRasterParameteriNV"sv);
+    detail::error_check("ConservativeRasterParameteriNV"sv, check_errors);
 }
 
 } // namespace gl::nv::conservative_raster_pre_snap_triangles

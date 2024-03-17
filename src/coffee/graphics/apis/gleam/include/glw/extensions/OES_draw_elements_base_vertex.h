@@ -19,7 +19,8 @@ STATICINLINE void draw_elements_base_vertex(
     i32                       count,
     group::draw_elements_type type,
     intptr_t                  indices,
-    i32                       basevertex)
+    i32                       basevertex,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -32,7 +33,7 @@ STATICINLINE void draw_elements_base_vertex(
         static_cast<GLenum>(type),
         reinterpret_cast<const void*>(indices),
         basevertex);
-    detail::error_check("DrawElementsBaseVertexOES"sv);
+    detail::error_check("DrawElementsBaseVertexOES"sv, check_errors);
 }
 
 /*!
@@ -51,7 +52,8 @@ STATICINLINE void draw_elements_instanced_base_vertex(
     group::draw_elements_type type,
     intptr_t                  indices,
     i32                       instancecount,
-    i32                       basevertex)
+    i32                       basevertex,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -65,7 +67,7 @@ STATICINLINE void draw_elements_instanced_base_vertex(
         reinterpret_cast<const void*>(indices),
         instancecount,
         basevertex);
-    detail::error_check("DrawElementsInstancedBaseVertexOES"sv);
+    detail::error_check("DrawElementsInstancedBaseVertexOES"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -88,7 +90,8 @@ STATICINLINE void draw_range_elements_base_vertex(
     i32                       count,
     group::draw_elements_type type,
     span_const_void const&    indices,
-    i32                       basevertex)
+    i32                       basevertex,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -104,7 +107,7 @@ STATICINLINE void draw_range_elements_base_vertex(
         indices.size() ? reinterpret_cast<const void*>(indices.data())
                        : nullptr,
         basevertex);
-    detail::error_check("DrawRangeElementsBaseVertexOES"sv);
+    detail::error_check("DrawRangeElementsBaseVertexOES"sv, check_errors);
 }
 
 template<class span_const_i32>
@@ -128,7 +131,8 @@ STATICINLINE void multi_draw_elements_base_vertex_ext(
     span_const_i32            count,
     group::draw_elements_type type,
     intptr_t                  indices,
-    span_const_i32            basevertex)
+    span_const_i32            basevertex,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -144,7 +148,7 @@ STATICINLINE void multi_draw_elements_base_vertex_ext(
         static_cast<GLenum>(type),
         reinterpret_cast<const void*>(indices),
         basevertex.data());
-    detail::error_check("MultiDrawElementsBaseVertexEXT"sv);
+    detail::error_check("MultiDrawElementsBaseVertexEXT"sv, check_errors);
 }
 
 } // namespace gl::oes::draw_elements_base_vertex

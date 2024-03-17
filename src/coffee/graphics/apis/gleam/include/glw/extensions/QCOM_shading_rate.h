@@ -18,7 +18,8 @@ namespace values {
  * \param rate GLenum
  * \return void
  */
-STATICINLINE void shading_rate(group::shading_rate_qcom rate)
+STATICINLINE void shading_rate(
+    group::shading_rate_qcom rate, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -26,7 +27,7 @@ STATICINLINE void shading_rate(group::shading_rate_qcom rate)
         GLW_FPTR_CHECK(ShadingRateQCOM)
     }
     glShadingRateQCOM(static_cast<GLenum>(rate));
-    detail::error_check("ShadingRateQCOM"sv);
+    detail::error_check("ShadingRateQCOM"sv, check_errors);
 }
 
 } // namespace gl::qcom::shading_rate

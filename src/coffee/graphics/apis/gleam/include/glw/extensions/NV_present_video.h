@@ -25,7 +25,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_videoi64v(
-    u32 video_slot, GLenum pname, span_GLint64EXT params)
+    u32             video_slot,
+    GLenum          pname,
+    span_GLint64EXT params,
+    error_check     check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -36,7 +39,7 @@ STATICINLINE void get_videoi64v(
         video_slot,
         pname,
         params.size() ? reinterpret_cast<GLint64EXT*>(params.data()) : nullptr);
-    detail::error_check("GetVideoi64vNV"sv);
+    detail::error_check("GetVideoi64vNV"sv, check_errors);
 }
 
 template<class span_i32>
@@ -51,7 +54,11 @@ requires(
  * \param params GLint *
  * \return void
  */
-STATICINLINE void get_videoiv(u32 video_slot, GLenum pname, span_i32 params)
+STATICINLINE void get_videoiv(
+    u32         video_slot,
+    GLenum      pname,
+    span_i32    params,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -62,7 +69,7 @@ STATICINLINE void get_videoiv(u32 video_slot, GLenum pname, span_i32 params)
         video_slot,
         pname,
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetVideoivNV"sv);
+    detail::error_check("GetVideoivNV"sv, check_errors);
 }
 
 template<class span_GLuint64EXT>
@@ -79,7 +86,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_videoui64v(
-    u32 video_slot, GLenum pname, span_GLuint64EXT params)
+    u32              video_slot,
+    GLenum           pname,
+    span_GLuint64EXT params,
+    error_check      check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -91,7 +101,7 @@ STATICINLINE void get_videoui64v(
         pname,
         params.size() ? reinterpret_cast<GLuint64EXT*>(params.data())
                       : nullptr);
-    detail::error_check("GetVideoui64vNV"sv);
+    detail::error_check("GetVideoui64vNV"sv, check_errors);
 }
 
 template<class span_u32>
@@ -106,7 +116,11 @@ requires(
  * \param params GLuint *
  * \return void
  */
-STATICINLINE void get_videouiv(u32 video_slot, GLenum pname, span_u32 params)
+STATICINLINE void get_videouiv(
+    u32         video_slot,
+    GLenum      pname,
+    span_u32    params,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -117,7 +131,7 @@ STATICINLINE void get_videouiv(u32 video_slot, GLenum pname, span_u32 params)
         video_slot,
         pname,
         params.size() ? reinterpret_cast<GLuint*>(params.data()) : nullptr);
-    detail::error_check("GetVideouivNV"sv);
+    detail::error_check("GetVideouivNV"sv, check_errors);
 }
 
 /*!
@@ -150,7 +164,8 @@ STATICINLINE void present_frame_dual_fill(
     GLenum      target2,
     u32         fill2,
     GLenum      target3,
-    u32         fill3)
+    u32         fill3,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -171,7 +186,7 @@ STATICINLINE void present_frame_dual_fill(
         fill2,
         target3,
         fill3);
-    detail::error_check("PresentFrameDualFillNV"sv);
+    detail::error_check("PresentFrameDualFillNV"sv, check_errors);
 }
 
 /*!
@@ -200,7 +215,8 @@ STATICINLINE void present_frame_keyed(
     u32         key0,
     GLenum      target1,
     u32         fill1,
-    u32         key1)
+    u32         key1,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -219,7 +235,7 @@ STATICINLINE void present_frame_keyed(
         target1,
         fill1,
         key1);
-    detail::error_check("PresentFrameKeyedNV"sv);
+    detail::error_check("PresentFrameKeyedNV"sv, check_errors);
 }
 
 } // namespace gl::nv::present_video

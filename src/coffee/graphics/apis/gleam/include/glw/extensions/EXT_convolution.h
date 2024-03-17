@@ -39,7 +39,8 @@ STATICINLINE void convolution_filter_1d(
     i32                           width,
     group::pixel_format           format,
     group::pixel_type             type,
-    span_const_void const&        image)
+    span_const_void const&        image,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -53,7 +54,7 @@ STATICINLINE void convolution_filter_1d(
         static_cast<GLenum>(format),
         static_cast<GLenum>(type),
         image.size() ? reinterpret_cast<const void*>(image.data()) : nullptr);
-    detail::error_check("ConvolutionFilter1DEXT"sv);
+    detail::error_check("ConvolutionFilter1DEXT"sv, check_errors);
 }
 
 template<class size_2_i32, class span_const_void>
@@ -75,7 +76,8 @@ STATICINLINE void convolution_filter_2d(
     size_2_i32 const&             width,
     group::pixel_format           format,
     group::pixel_type             type,
-    span_const_void const&        image)
+    span_const_void const&        image,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -90,7 +92,7 @@ STATICINLINE void convolution_filter_2d(
         static_cast<GLenum>(format),
         static_cast<GLenum>(type),
         image.size() ? reinterpret_cast<const void*>(image.data()) : nullptr);
-    detail::error_check("ConvolutionFilter2DEXT"sv);
+    detail::error_check("ConvolutionFilter2DEXT"sv, check_errors);
 }
 
 /*!
@@ -103,7 +105,8 @@ STATICINLINE void convolution_filter_2d(
 STATICINLINE void convolution_parameter(
     group::convolution_target_ext target,
     group::convolution_parameter  pname,
-    f32                           params)
+    f32                           params,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -112,7 +115,7 @@ STATICINLINE void convolution_parameter(
     }
     glConvolutionParameterfEXT(
         static_cast<GLenum>(target), static_cast<GLenum>(pname), params);
-    detail::error_check("ConvolutionParameterfEXT"sv);
+    detail::error_check("ConvolutionParameterfEXT"sv, check_errors);
 }
 
 template<class span_const_f32>
@@ -131,7 +134,8 @@ requires(
 STATICINLINE void convolution_parameter(
     group::convolution_target_ext target,
     group::convolution_parameter  pname,
-    span_const_f32 const&         params)
+    span_const_f32 const&         params,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -143,7 +147,7 @@ STATICINLINE void convolution_parameter(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<const GLfloat*>(params.data())
                       : nullptr);
-    detail::error_check("ConvolutionParameterfvEXT"sv);
+    detail::error_check("ConvolutionParameterfvEXT"sv, check_errors);
 }
 
 /*!
@@ -156,7 +160,8 @@ STATICINLINE void convolution_parameter(
 STATICINLINE void convolution_parameter(
     group::convolution_target_ext target,
     group::convolution_parameter  pname,
-    i32                           params)
+    i32                           params,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -165,7 +170,7 @@ STATICINLINE void convolution_parameter(
     }
     glConvolutionParameteriEXT(
         static_cast<GLenum>(target), static_cast<GLenum>(pname), params);
-    detail::error_check("ConvolutionParameteriEXT"sv);
+    detail::error_check("ConvolutionParameteriEXT"sv, check_errors);
 }
 
 template<class span_const_i32>
@@ -184,7 +189,8 @@ requires(
 STATICINLINE void convolution_parameter(
     group::convolution_target_ext target,
     group::convolution_parameter  pname,
-    span_const_i32 const&         params)
+    span_const_i32 const&         params,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -196,7 +202,7 @@ STATICINLINE void convolution_parameter(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<const GLint*>(params.data())
                       : nullptr);
-    detail::error_check("ConvolutionParameterivEXT"sv);
+    detail::error_check("ConvolutionParameterivEXT"sv, check_errors);
 }
 
 template<class vec_2_i32>
@@ -214,7 +220,8 @@ STATICINLINE void copy_convolution_filter_1d(
     group::convolution_target_ext target,
     group::internal_format        internalformat,
     vec_2_i32 const&              x,
-    i32                           width)
+    i32                           width,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -227,7 +234,7 @@ STATICINLINE void copy_convolution_filter_1d(
         x[0],
         x[1],
         width);
-    detail::error_check("CopyConvolutionFilter1DEXT"sv);
+    detail::error_check("CopyConvolutionFilter1DEXT"sv, check_errors);
 }
 
 template<class size_2_i32, class vec_2_i32>
@@ -247,7 +254,8 @@ STATICINLINE void copy_convolution_filter_2d(
     group::convolution_target_ext target,
     group::internal_format        internalformat,
     vec_2_i32 const&              x,
-    size_2_i32 const&             width)
+    size_2_i32 const&             width,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -261,7 +269,7 @@ STATICINLINE void copy_convolution_filter_2d(
         x[1],
         width[0],
         width[1]);
-    detail::error_check("CopyConvolutionFilter2DEXT"sv);
+    detail::error_check("CopyConvolutionFilter2DEXT"sv, check_errors);
 }
 
 template<class span_void>
@@ -278,7 +286,8 @@ STATICINLINE void get_convolution_filter(
     group::convolution_target_ext target,
     group::pixel_format           format,
     group::pixel_type             type,
-    span_void                     image)
+    span_void                     image,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -290,7 +299,7 @@ STATICINLINE void get_convolution_filter(
         static_cast<GLenum>(format),
         static_cast<GLenum>(type),
         image.size() ? reinterpret_cast<void*>(image.data()) : nullptr);
-    detail::error_check("GetConvolutionFilterEXT"sv);
+    detail::error_check("GetConvolutionFilterEXT"sv, check_errors);
 }
 
 template<class span_f32>
@@ -308,7 +317,8 @@ requires(
 STATICINLINE void get_convolution_parameter(
     group::convolution_target_ext target,
     group::convolution_parameter  pname,
-    span_f32                      params)
+    span_f32                      params,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -319,7 +329,7 @@ STATICINLINE void get_convolution_parameter(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLfloat*>(params.data()) : nullptr);
-    detail::error_check("GetConvolutionParameterfvEXT"sv);
+    detail::error_check("GetConvolutionParameterfvEXT"sv, check_errors);
 }
 
 template<class span_i32>
@@ -337,7 +347,8 @@ requires(
 STATICINLINE void get_convolution_parameter(
     group::convolution_target_ext target,
     group::convolution_parameter  pname,
-    span_i32                      params)
+    span_i32                      params,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -348,7 +359,7 @@ STATICINLINE void get_convolution_parameter(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetConvolutionParameterivEXT"sv);
+    detail::error_check("GetConvolutionParameterivEXT"sv, check_errors);
 }
 
 template<class span_void>
@@ -369,7 +380,8 @@ STATICINLINE void get_separable_filter(
     group::pixel_type           type,
     span_void                   row,
     span_void                   column,
-    span_void                   span)
+    span_void                   span,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -383,7 +395,7 @@ STATICINLINE void get_separable_filter(
         row.size() ? reinterpret_cast<void*>(row.data()) : nullptr,
         column.size() ? reinterpret_cast<void*>(column.data()) : nullptr,
         span.size() ? reinterpret_cast<void*>(span.data()) : nullptr);
-    detail::error_check("GetSeparableFilterEXT"sv);
+    detail::error_check("GetSeparableFilterEXT"sv, check_errors);
 }
 
 template<class size_2_i32, class span_const_void>
@@ -407,7 +419,8 @@ STATICINLINE void separable_filter_2d(
     group::pixel_format         format,
     group::pixel_type           type,
     span_const_void const&      row,
-    span_const_void const&      column)
+    span_const_void const&      column,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -423,7 +436,7 @@ STATICINLINE void separable_filter_2d(
         static_cast<GLenum>(type),
         row.size() ? reinterpret_cast<const void*>(row.data()) : nullptr,
         column.size() ? reinterpret_cast<const void*>(column.data()) : nullptr);
-    detail::error_check("SeparableFilter2DEXT"sv);
+    detail::error_check("SeparableFilter2DEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::convolution

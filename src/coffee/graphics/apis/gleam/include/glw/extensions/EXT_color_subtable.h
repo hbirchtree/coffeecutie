@@ -23,7 +23,8 @@ STATICINLINE void color_sub_table(
     i32                       count,
     group::pixel_format       format,
     group::pixel_type         type,
-    span_const_void const&    data)
+    span_const_void const&    data,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -37,7 +38,7 @@ STATICINLINE void color_sub_table(
         static_cast<GLenum>(format),
         static_cast<GLenum>(type),
         data.size() ? reinterpret_cast<const void*>(data.data()) : nullptr);
-    detail::error_check("ColorSubTableEXT"sv);
+    detail::error_check("ColorSubTableEXT"sv, check_errors);
 }
 
 template<class vec_2_i32>
@@ -52,7 +53,11 @@ requires(concepts::vector<vec_2_i32, i32, 2>)
  * \return void
  */
 STATICINLINE void copy_color_sub_table(
-    group::color_table_target target, i32 start, vec_2_i32 const& x, i32 width)
+    group::color_table_target target,
+    i32                       start,
+    vec_2_i32 const&          x,
+    i32                       width,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -61,7 +66,7 @@ STATICINLINE void copy_color_sub_table(
     }
     glCopyColorSubTableEXT(
         static_cast<GLenum>(target), start, x[0], x[1], width);
-    detail::error_check("CopyColorSubTableEXT"sv);
+    detail::error_check("CopyColorSubTableEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::color_subtable

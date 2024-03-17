@@ -29,7 +29,8 @@ STATICINLINE void program_buffer_parameters_iiv(
     group::program_target target,
     u32                   bindingIndex,
     u32                   wordIndex,
-    span_const_i32 const& params)
+    span_const_i32 const& params,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -43,7 +44,7 @@ STATICINLINE void program_buffer_parameters_iiv(
         params.size(),
         params.size() ? reinterpret_cast<const GLint*>(params.data())
                       : nullptr);
-    detail::error_check("ProgramBufferParametersIivNV"sv);
+    detail::error_check("ProgramBufferParametersIivNV"sv, check_errors);
 }
 
 template<class span_const_u32>
@@ -65,7 +66,8 @@ STATICINLINE void program_buffer_parameters_iuiv(
     group::program_target target,
     u32                   bindingIndex,
     u32                   wordIndex,
-    span_const_u32 const& params)
+    span_const_u32 const& params,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -79,7 +81,7 @@ STATICINLINE void program_buffer_parameters_iuiv(
         params.size(),
         params.size() ? reinterpret_cast<const GLuint*>(params.data())
                       : nullptr);
-    detail::error_check("ProgramBufferParametersIuivNV"sv);
+    detail::error_check("ProgramBufferParametersIuivNV"sv, check_errors);
 }
 
 template<class span_const_f32>
@@ -101,7 +103,8 @@ STATICINLINE void program_buffer_parameter(
     group::program_target target,
     u32                   bindingIndex,
     u32                   wordIndex,
-    span_const_f32 const& params)
+    span_const_f32 const& params,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -115,7 +118,7 @@ STATICINLINE void program_buffer_parameter(
         params.size(),
         params.size() ? reinterpret_cast<const GLfloat*>(params.data())
                       : nullptr);
-    detail::error_check("ProgramBufferParametersfvNV"sv);
+    detail::error_check("ProgramBufferParametersfvNV"sv, check_errors);
 }
 
 } // namespace gl::nv::parameter_buffer_object

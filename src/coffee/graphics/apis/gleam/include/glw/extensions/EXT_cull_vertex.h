@@ -22,7 +22,9 @@ requires(
  * \return void
  */
 STATICINLINE void cull_parameter(
-    group::cull_parameter_ext pname, span_f64 params)
+    group::cull_parameter_ext pname,
+    span_f64                  params,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -32,7 +34,7 @@ STATICINLINE void cull_parameter(
     glCullParameterdvEXT(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLdouble*>(params.data()) : nullptr);
-    detail::error_check("CullParameterdvEXT"sv);
+    detail::error_check("CullParameterdvEXT"sv, check_errors);
 }
 
 template<class span_f32>
@@ -47,7 +49,9 @@ requires(
  * \return void
  */
 STATICINLINE void cull_parameter(
-    group::cull_parameter_ext pname, span_f32 params)
+    group::cull_parameter_ext pname,
+    span_f32                  params,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -57,7 +61,7 @@ STATICINLINE void cull_parameter(
     glCullParameterfvEXT(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLfloat*>(params.data()) : nullptr);
-    detail::error_check("CullParameterfvEXT"sv);
+    detail::error_check("CullParameterfvEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::cull_vertex

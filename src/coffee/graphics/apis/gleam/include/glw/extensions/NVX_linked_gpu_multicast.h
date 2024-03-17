@@ -48,7 +48,8 @@ STATICINLINE void lgpu_copy_image_sub_data(
     i32               dstX,
     i32               dstY,
     i32               dstZ,
-    size_3_i32 const& width)
+    size_3_i32 const& width,
+    error_check       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -73,7 +74,7 @@ STATICINLINE void lgpu_copy_image_sub_data(
         width[0],
         width[1],
         width[2]);
-    detail::error_check("LGPUCopyImageSubDataNVX"sv);
+    detail::error_check("LGPUCopyImageSubDataNVX"sv, check_errors);
 }
 
 /*!
@@ -81,7 +82,7 @@ STATICINLINE void lgpu_copy_image_sub_data(
 
  * \return void
  */
-STATICINLINE void lgpu_interlock()
+STATICINLINE void lgpu_interlock(error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -89,7 +90,7 @@ STATICINLINE void lgpu_interlock()
         GLW_FPTR_CHECK(LGPUInterlockNVX)
     }
     glLGPUInterlockNVX();
-    detail::error_check("LGPUInterlockNVX"sv);
+    detail::error_check("LGPUInterlockNVX"sv, check_errors);
 }
 
 template<class span_const_void>
@@ -108,7 +109,8 @@ STATICINLINE void lgpu_named_buffer_sub_data(
     u32                    buffer,
     GLintptr               offset,
     GLsizeiptr             size,
-    span_const_void const& data)
+    span_const_void const& data,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -126,7 +128,7 @@ STATICINLINE void lgpu_named_buffer_sub_data(
         offset,
         size,
         data.size() ? reinterpret_cast<const void*>(data.data()) : nullptr);
-    detail::error_check("LGPUNamedBufferSubDataNVX"sv);
+    detail::error_check("LGPUNamedBufferSubDataNVX"sv, check_errors);
 }
 
 } // namespace gl::nvx::linked_gpu_multicast

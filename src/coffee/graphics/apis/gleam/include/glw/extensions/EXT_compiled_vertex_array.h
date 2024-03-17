@@ -13,7 +13,8 @@ constexpr u32 array_element_lock_count = 0x81A9;
  * \param count GLsizei
  * \return void
  */
-STATICINLINE void lock_arrays(i32 first, i32 count)
+STATICINLINE void lock_arrays(
+    i32 first, i32 count, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -21,7 +22,7 @@ STATICINLINE void lock_arrays(i32 first, i32 count)
         GLW_FPTR_CHECK(LockArraysEXT)
     }
     glLockArraysEXT(first, count);
-    detail::error_check("LockArraysEXT"sv);
+    detail::error_check("LockArraysEXT"sv, check_errors);
 }
 
 /*!
@@ -29,7 +30,7 @@ STATICINLINE void lock_arrays(i32 first, i32 count)
 
  * \return void
  */
-STATICINLINE void unlock_arrays()
+STATICINLINE void unlock_arrays(error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -37,7 +38,7 @@ STATICINLINE void unlock_arrays()
         GLW_FPTR_CHECK(UnlockArraysEXT)
     }
     glUnlockArraysEXT();
-    detail::error_check("UnlockArraysEXT"sv);
+    detail::error_check("UnlockArraysEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::compiled_vertex_array

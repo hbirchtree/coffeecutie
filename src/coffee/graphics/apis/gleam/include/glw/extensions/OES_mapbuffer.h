@@ -24,7 +24,8 @@ requires(concepts::span<span_void>)
 STATICINLINE void get_buffer_pointerv(
     group::buffer_target_arb       target,
     group::buffer_pointer_name_arb pname,
-    span_void                      params)
+    span_void                      params,
+    error_check                    check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -35,7 +36,7 @@ STATICINLINE void get_buffer_pointerv(
         static_cast<GLenum>(target),
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<void**>(params.data()) : nullptr);
-    detail::error_check("GetBufferPointervOES"sv);
+    detail::error_check("GetBufferPointervOES"sv, check_errors);
 }
 
 /*!
@@ -45,7 +46,9 @@ STATICINLINE void get_buffer_pointerv(
  * \return void *
  */
 STATICINLINE void* map_buffer(
-    group::buffer_target_arb target, group::buffer_access_arb access)
+    group::buffer_target_arb target,
+    group::buffer_access_arb access,
+    error_check              check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -54,7 +57,7 @@ STATICINLINE void* map_buffer(
     }
     auto out = glMapBufferOES(
         static_cast<GLenum>(target), static_cast<GLenum>(access));
-    detail::error_check("MapBufferOES"sv);
+    detail::error_check("MapBufferOES"sv, check_errors);
     return out;
 }
 
@@ -63,7 +66,8 @@ STATICINLINE void* map_buffer(
  * \param target GLenum
  * \return Boolean
  */
-STATICINLINE bool unmap_buffer(group::buffer_target_arb target)
+STATICINLINE bool unmap_buffer(
+    group::buffer_target_arb target, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -71,7 +75,7 @@ STATICINLINE bool unmap_buffer(group::buffer_target_arb target)
         GLW_FPTR_CHECK(UnmapBufferOES)
     }
     auto out = glUnmapBufferOES(static_cast<GLenum>(target));
-    detail::error_check("UnmapBufferOES"sv);
+    detail::error_check("UnmapBufferOES"sv, check_errors);
     return out == GL_TRUE ? true : false;
 }
 

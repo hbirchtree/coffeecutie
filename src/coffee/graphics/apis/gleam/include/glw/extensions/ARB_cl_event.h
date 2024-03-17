@@ -27,7 +27,8 @@ requires(
 STATICINLINE GLsync create_sync_from_c_levent(
     span__cl_context const& context,
     span__cl_event const&   event,
-    GLbitfield              flags)
+    GLbitfield              flags,
+    error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -40,7 +41,7 @@ STATICINLINE GLsync create_sync_from_c_levent(
         event.size() ? reinterpret_cast<struct _cl_event*>(event.data())
                      : nullptr,
         flags);
-    detail::error_check("CreateSyncFromCLeventARB"sv);
+    detail::error_check("CreateSyncFromCLeventARB"sv, check_errors);
     return out;
 }
 

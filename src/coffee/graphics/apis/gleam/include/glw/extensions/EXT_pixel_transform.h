@@ -29,7 +29,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_pixel_transform_parameter(
-    GLenum target, GLenum pname, span_f32 params)
+    GLenum      target,
+    GLenum      pname,
+    span_f32    params,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -40,7 +43,7 @@ STATICINLINE void get_pixel_transform_parameter(
         target,
         pname,
         params.size() ? reinterpret_cast<GLfloat*>(params.data()) : nullptr);
-    detail::error_check("GetPixelTransformParameterfvEXT"sv);
+    detail::error_check("GetPixelTransformParameterfvEXT"sv, check_errors);
 }
 
 template<class span_i32>
@@ -56,7 +59,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_pixel_transform_parameter(
-    GLenum target, GLenum pname, span_i32 params)
+    GLenum      target,
+    GLenum      pname,
+    span_i32    params,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -67,7 +73,7 @@ STATICINLINE void get_pixel_transform_parameter(
         target,
         pname,
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetPixelTransformParameterivEXT"sv);
+    detail::error_check("GetPixelTransformParameterivEXT"sv, check_errors);
 }
 
 /*!
@@ -80,7 +86,8 @@ STATICINLINE void get_pixel_transform_parameter(
 STATICINLINE void pixel_transform_parameter(
     group::pixel_transform_target_ext target,
     group::pixel_transform_prop_ext   pname,
-    f32                               param)
+    f32                               param,
+    error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -89,7 +96,7 @@ STATICINLINE void pixel_transform_parameter(
     }
     glPixelTransformParameterfEXT(
         static_cast<GLenum>(target), static_cast<GLenum>(pname), param);
-    detail::error_check("PixelTransformParameterfEXT"sv);
+    detail::error_check("PixelTransformParameterfEXT"sv, check_errors);
 }
 
 template<class span_const_f32>
@@ -108,7 +115,8 @@ requires(
 STATICINLINE void pixel_transform_parameter(
     group::pixel_transform_target_ext target,
     group::pixel_transform_prop_ext   pname,
-    span_const_f32 const&             params)
+    span_const_f32 const&             params,
+    error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -120,7 +128,7 @@ STATICINLINE void pixel_transform_parameter(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<const GLfloat*>(params.data())
                       : nullptr);
-    detail::error_check("PixelTransformParameterfvEXT"sv);
+    detail::error_check("PixelTransformParameterfvEXT"sv, check_errors);
 }
 
 /*!
@@ -133,7 +141,8 @@ STATICINLINE void pixel_transform_parameter(
 STATICINLINE void pixel_transform_parameter(
     group::pixel_transform_target_ext target,
     group::pixel_transform_prop_ext   pname,
-    i32                               param)
+    i32                               param,
+    error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -142,7 +151,7 @@ STATICINLINE void pixel_transform_parameter(
     }
     glPixelTransformParameteriEXT(
         static_cast<GLenum>(target), static_cast<GLenum>(pname), param);
-    detail::error_check("PixelTransformParameteriEXT"sv);
+    detail::error_check("PixelTransformParameteriEXT"sv, check_errors);
 }
 
 template<class span_const_i32>
@@ -161,7 +170,8 @@ requires(
 STATICINLINE void pixel_transform_parameter(
     group::pixel_transform_target_ext target,
     group::pixel_transform_prop_ext   pname,
-    span_const_i32 const&             params)
+    span_const_i32 const&             params,
+    error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -173,7 +183,7 @@ STATICINLINE void pixel_transform_parameter(
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<const GLint*>(params.data())
                       : nullptr);
-    detail::error_check("PixelTransformParameterivEXT"sv);
+    detail::error_check("PixelTransformParameterivEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::pixel_transform

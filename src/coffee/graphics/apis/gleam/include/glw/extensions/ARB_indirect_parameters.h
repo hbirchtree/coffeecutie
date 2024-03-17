@@ -21,7 +21,8 @@ STATICINLINE void multi_draw_arrays_indirect_count(
     intptr_t              indirect,
     GLintptr              drawcount,
     i32                   maxdrawcount,
-    i32                   stride)
+    i32                   stride,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -34,7 +35,7 @@ STATICINLINE void multi_draw_arrays_indirect_count(
         drawcount,
         maxdrawcount,
         stride);
-    detail::error_check("MultiDrawArraysIndirectCountARB"sv);
+    detail::error_check("MultiDrawArraysIndirectCountARB"sv, check_errors);
 }
 
 /*!
@@ -53,7 +54,8 @@ STATICINLINE void multi_draw_elements_indirect_count(
     intptr_t                  indirect,
     GLintptr                  drawcount,
     i32                       maxdrawcount,
-    i32                       stride)
+    i32                       stride,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -67,7 +69,7 @@ STATICINLINE void multi_draw_elements_indirect_count(
         drawcount,
         maxdrawcount,
         stride);
-    detail::error_check("MultiDrawElementsIndirectCountARB"sv);
+    detail::error_check("MultiDrawElementsIndirectCountARB"sv, check_errors);
 }
 
 } // namespace gl::arb::indirect_parameters

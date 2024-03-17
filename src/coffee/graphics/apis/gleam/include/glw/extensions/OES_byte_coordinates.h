@@ -33,7 +33,10 @@ namespace values {
  * \param s GLbyte
  * \return void
  */
-STATICINLINE void multi_tex_coord1b(group::texture_unit texture, i8 s)
+STATICINLINE void multi_tex_coord1b(
+    group::texture_unit texture,
+    i8                  s,
+    error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -41,7 +44,7 @@ STATICINLINE void multi_tex_coord1b(group::texture_unit texture, i8 s)
         GLW_FPTR_CHECK(MultiTexCoord1bOES)
     }
     glMultiTexCoord1bOES(static_cast<GLenum>(texture), s);
-    detail::error_check("MultiTexCoord1bOES"sv);
+    detail::error_check("MultiTexCoord1bOES"sv, check_errors);
 }
 
 #endif
@@ -59,7 +62,9 @@ requires(
  * \return void
  */
 STATICINLINE void multi_tex_coord1bv(
-    group::texture_unit texture, span_const_i8 const& coords)
+    group::texture_unit  texture,
+    span_const_i8 const& coords,
+    error_check          check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -70,7 +75,7 @@ STATICINLINE void multi_tex_coord1bv(
         static_cast<GLenum>(texture),
         coords.size() ? reinterpret_cast<const GLbyte*>(coords.data())
                       : nullptr);
-    detail::error_check("MultiTexCoord1bvOES"sv);
+    detail::error_check("MultiTexCoord1bvOES"sv, check_errors);
 }
 
 #endif
@@ -82,7 +87,11 @@ STATICINLINE void multi_tex_coord1bv(
  * \param t GLbyte
  * \return void
  */
-STATICINLINE void multi_tex_coord2b(group::texture_unit texture, i8 s, i8 t)
+STATICINLINE void multi_tex_coord2b(
+    group::texture_unit texture,
+    i8                  s,
+    i8                  t,
+    error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -90,7 +99,7 @@ STATICINLINE void multi_tex_coord2b(group::texture_unit texture, i8 s, i8 t)
         GLW_FPTR_CHECK(MultiTexCoord2bOES)
     }
     glMultiTexCoord2bOES(static_cast<GLenum>(texture), s, t);
-    detail::error_check("MultiTexCoord2bOES"sv);
+    detail::error_check("MultiTexCoord2bOES"sv, check_errors);
 }
 
 #endif
@@ -108,7 +117,9 @@ requires(
  * \return void
  */
 STATICINLINE void multi_tex_coord2bv(
-    group::texture_unit texture, span_const_i8 const& coords)
+    group::texture_unit  texture,
+    span_const_i8 const& coords,
+    error_check          check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -119,7 +130,7 @@ STATICINLINE void multi_tex_coord2bv(
         static_cast<GLenum>(texture),
         coords.size() ? reinterpret_cast<const GLbyte*>(coords.data())
                       : nullptr);
-    detail::error_check("MultiTexCoord2bvOES"sv);
+    detail::error_check("MultiTexCoord2bvOES"sv, check_errors);
 }
 
 #endif
@@ -133,7 +144,11 @@ STATICINLINE void multi_tex_coord2bv(
  * \return void
  */
 STATICINLINE void multi_tex_coord3b(
-    group::texture_unit texture, i8 s, i8 t, i8 r)
+    group::texture_unit texture,
+    i8                  s,
+    i8                  t,
+    i8                  r,
+    error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -141,7 +156,7 @@ STATICINLINE void multi_tex_coord3b(
         GLW_FPTR_CHECK(MultiTexCoord3bOES)
     }
     glMultiTexCoord3bOES(static_cast<GLenum>(texture), s, t, r);
-    detail::error_check("MultiTexCoord3bOES"sv);
+    detail::error_check("MultiTexCoord3bOES"sv, check_errors);
 }
 
 #endif
@@ -159,7 +174,9 @@ requires(
  * \return void
  */
 STATICINLINE void multi_tex_coord3bv(
-    group::texture_unit texture, span_const_i8 const& coords)
+    group::texture_unit  texture,
+    span_const_i8 const& coords,
+    error_check          check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -170,7 +187,7 @@ STATICINLINE void multi_tex_coord3bv(
         static_cast<GLenum>(texture),
         coords.size() ? reinterpret_cast<const GLbyte*>(coords.data())
                       : nullptr);
-    detail::error_check("MultiTexCoord3bvOES"sv);
+    detail::error_check("MultiTexCoord3bvOES"sv, check_errors);
 }
 
 #endif
@@ -185,7 +202,12 @@ STATICINLINE void multi_tex_coord3bv(
  * \return void
  */
 STATICINLINE void multi_tex_coord4b(
-    group::texture_unit texture, i8 s, i8 t, i8 r, i8 q)
+    group::texture_unit texture,
+    i8                  s,
+    i8                  t,
+    i8                  r,
+    i8                  q,
+    error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -193,7 +215,7 @@ STATICINLINE void multi_tex_coord4b(
         GLW_FPTR_CHECK(MultiTexCoord4bOES)
     }
     glMultiTexCoord4bOES(static_cast<GLenum>(texture), s, t, r, q);
-    detail::error_check("MultiTexCoord4bOES"sv);
+    detail::error_check("MultiTexCoord4bOES"sv, check_errors);
 }
 
 #endif
@@ -211,7 +233,9 @@ requires(
  * \return void
  */
 STATICINLINE void multi_tex_coord4bv(
-    group::texture_unit texture, span_const_i8 const& coords)
+    group::texture_unit  texture,
+    span_const_i8 const& coords,
+    error_check          check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -222,7 +246,7 @@ STATICINLINE void multi_tex_coord4bv(
         static_cast<GLenum>(texture),
         coords.size() ? reinterpret_cast<const GLbyte*>(coords.data())
                       : nullptr);
-    detail::error_check("MultiTexCoord4bvOES"sv);
+    detail::error_check("MultiTexCoord4bvOES"sv, check_errors);
 }
 
 #endif
@@ -232,7 +256,7 @@ STATICINLINE void multi_tex_coord4bv(
  * \param s GLbyte
  * \return void
  */
-STATICINLINE void tex_coord1b(i8 s)
+STATICINLINE void tex_coord1b(i8 s, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -240,7 +264,7 @@ STATICINLINE void tex_coord1b(i8 s)
         GLW_FPTR_CHECK(TexCoord1bOES)
     }
     glTexCoord1bOES(s);
-    detail::error_check("TexCoord1bOES"sv);
+    detail::error_check("TexCoord1bOES"sv, check_errors);
 }
 
 #endif
@@ -256,7 +280,8 @@ requires(
  * \param coords const GLbyte *
  * \return void
  */
-STATICINLINE void tex_coord1bv(span_const_i8 const& coords)
+STATICINLINE void tex_coord1bv(
+    span_const_i8 const& coords, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -266,7 +291,7 @@ STATICINLINE void tex_coord1bv(span_const_i8 const& coords)
     glTexCoord1bvOES(
         coords.size() ? reinterpret_cast<const GLbyte*>(coords.data())
                       : nullptr);
-    detail::error_check("TexCoord1bvOES"sv);
+    detail::error_check("TexCoord1bvOES"sv, check_errors);
 }
 
 #endif
@@ -277,7 +302,8 @@ STATICINLINE void tex_coord1bv(span_const_i8 const& coords)
  * \param t GLbyte
  * \return void
  */
-STATICINLINE void tex_coord2b(i8 s, i8 t)
+STATICINLINE void tex_coord2b(
+    i8 s, i8 t, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -285,7 +311,7 @@ STATICINLINE void tex_coord2b(i8 s, i8 t)
         GLW_FPTR_CHECK(TexCoord2bOES)
     }
     glTexCoord2bOES(s, t);
-    detail::error_check("TexCoord2bOES"sv);
+    detail::error_check("TexCoord2bOES"sv, check_errors);
 }
 
 #endif
@@ -301,7 +327,8 @@ requires(
  * \param coords const GLbyte *
  * \return void
  */
-STATICINLINE void tex_coord2bv(span_const_i8 const& coords)
+STATICINLINE void tex_coord2bv(
+    span_const_i8 const& coords, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -311,7 +338,7 @@ STATICINLINE void tex_coord2bv(span_const_i8 const& coords)
     glTexCoord2bvOES(
         coords.size() ? reinterpret_cast<const GLbyte*>(coords.data())
                       : nullptr);
-    detail::error_check("TexCoord2bvOES"sv);
+    detail::error_check("TexCoord2bvOES"sv, check_errors);
 }
 
 #endif
@@ -323,7 +350,8 @@ STATICINLINE void tex_coord2bv(span_const_i8 const& coords)
  * \param r GLbyte
  * \return void
  */
-STATICINLINE void tex_coord3b(i8 s, i8 t, i8 r)
+STATICINLINE void tex_coord3b(
+    i8 s, i8 t, i8 r, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -331,7 +359,7 @@ STATICINLINE void tex_coord3b(i8 s, i8 t, i8 r)
         GLW_FPTR_CHECK(TexCoord3bOES)
     }
     glTexCoord3bOES(s, t, r);
-    detail::error_check("TexCoord3bOES"sv);
+    detail::error_check("TexCoord3bOES"sv, check_errors);
 }
 
 #endif
@@ -347,7 +375,8 @@ requires(
  * \param coords const GLbyte *
  * \return void
  */
-STATICINLINE void tex_coord3bv(span_const_i8 const& coords)
+STATICINLINE void tex_coord3bv(
+    span_const_i8 const& coords, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -357,7 +386,7 @@ STATICINLINE void tex_coord3bv(span_const_i8 const& coords)
     glTexCoord3bvOES(
         coords.size() ? reinterpret_cast<const GLbyte*>(coords.data())
                       : nullptr);
-    detail::error_check("TexCoord3bvOES"sv);
+    detail::error_check("TexCoord3bvOES"sv, check_errors);
 }
 
 #endif
@@ -370,7 +399,8 @@ STATICINLINE void tex_coord3bv(span_const_i8 const& coords)
  * \param q GLbyte
  * \return void
  */
-STATICINLINE void tex_coord4b(i8 s, i8 t, i8 r, i8 q)
+STATICINLINE void tex_coord4b(
+    i8 s, i8 t, i8 r, i8 q, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -378,7 +408,7 @@ STATICINLINE void tex_coord4b(i8 s, i8 t, i8 r, i8 q)
         GLW_FPTR_CHECK(TexCoord4bOES)
     }
     glTexCoord4bOES(s, t, r, q);
-    detail::error_check("TexCoord4bOES"sv);
+    detail::error_check("TexCoord4bOES"sv, check_errors);
 }
 
 #endif
@@ -394,7 +424,8 @@ requires(
  * \param coords const GLbyte *
  * \return void
  */
-STATICINLINE void tex_coord4bv(span_const_i8 const& coords)
+STATICINLINE void tex_coord4bv(
+    span_const_i8 const& coords, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -404,7 +435,7 @@ STATICINLINE void tex_coord4bv(span_const_i8 const& coords)
     glTexCoord4bvOES(
         coords.size() ? reinterpret_cast<const GLbyte*>(coords.data())
                       : nullptr);
-    detail::error_check("TexCoord4bvOES"sv);
+    detail::error_check("TexCoord4bvOES"sv, check_errors);
 }
 
 #endif
@@ -417,7 +448,8 @@ requires(concepts::vector<vec_2_i8, i8, 2>)
  * \param y GLbyte
  * \return void
  */
-STATICINLINE void vertex2b(vec_2_i8 const& x)
+STATICINLINE void vertex2b(
+    vec_2_i8 const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -425,7 +457,7 @@ STATICINLINE void vertex2b(vec_2_i8 const& x)
         GLW_FPTR_CHECK(Vertex2bOES)
     }
     glVertex2bOES(x[0], x[1]);
-    detail::error_check("Vertex2bOES"sv);
+    detail::error_check("Vertex2bOES"sv, check_errors);
 }
 
 #endif
@@ -441,7 +473,8 @@ requires(
  * \param coords const GLbyte *
  * \return void
  */
-STATICINLINE void vertex2bv(span_const_i8 const& coords)
+STATICINLINE void vertex2bv(
+    span_const_i8 const& coords, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -451,7 +484,7 @@ STATICINLINE void vertex2bv(span_const_i8 const& coords)
     glVertex2bvOES(
         coords.size() ? reinterpret_cast<const GLbyte*>(coords.data())
                       : nullptr);
-    detail::error_check("Vertex2bvOES"sv);
+    detail::error_check("Vertex2bvOES"sv, check_errors);
 }
 
 #endif
@@ -465,7 +498,8 @@ requires(concepts::vector<vec_3_i8, i8, 3>)
  * \param z GLbyte
  * \return void
  */
-STATICINLINE void vertex3b(vec_3_i8 const& x)
+STATICINLINE void vertex3b(
+    vec_3_i8 const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -473,7 +507,7 @@ STATICINLINE void vertex3b(vec_3_i8 const& x)
         GLW_FPTR_CHECK(Vertex3bOES)
     }
     glVertex3bOES(x[0], x[1], x[2]);
-    detail::error_check("Vertex3bOES"sv);
+    detail::error_check("Vertex3bOES"sv, check_errors);
 }
 
 #endif
@@ -489,7 +523,8 @@ requires(
  * \param coords const GLbyte *
  * \return void
  */
-STATICINLINE void vertex3bv(span_const_i8 const& coords)
+STATICINLINE void vertex3bv(
+    span_const_i8 const& coords, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -499,7 +534,7 @@ STATICINLINE void vertex3bv(span_const_i8 const& coords)
     glVertex3bvOES(
         coords.size() ? reinterpret_cast<const GLbyte*>(coords.data())
                       : nullptr);
-    detail::error_check("Vertex3bvOES"sv);
+    detail::error_check("Vertex3bvOES"sv, check_errors);
 }
 
 #endif
@@ -514,7 +549,8 @@ requires(concepts::vector<vec_4_i8, i8, 4>)
  * \param w GLbyte
  * \return void
  */
-STATICINLINE void vertex4b(vec_4_i8 const& x)
+STATICINLINE void vertex4b(
+    vec_4_i8 const& x, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -522,7 +558,7 @@ STATICINLINE void vertex4b(vec_4_i8 const& x)
         GLW_FPTR_CHECK(Vertex4bOES)
     }
     glVertex4bOES(x[0], x[1], x[2], x[3]);
-    detail::error_check("Vertex4bOES"sv);
+    detail::error_check("Vertex4bOES"sv, check_errors);
 }
 
 #endif
@@ -538,7 +574,8 @@ requires(
  * \param coords const GLbyte *
  * \return void
  */
-STATICINLINE void vertex4bv(span_const_i8 const& coords)
+STATICINLINE void vertex4bv(
+    span_const_i8 const& coords, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -548,7 +585,7 @@ STATICINLINE void vertex4bv(span_const_i8 const& coords)
     glVertex4bvOES(
         coords.size() ? reinterpret_cast<const GLbyte*>(coords.data())
                       : nullptr);
-    detail::error_check("Vertex4bvOES"sv);
+    detail::error_check("Vertex4bvOES"sv, check_errors);
 }
 
 #endif

@@ -25,7 +25,10 @@ requires(
  * \return void
  */
 STATICINLINE void window_rectangles(
-    GLenum mode, i32 count, span_const_i32 const& box)
+    GLenum                mode,
+    i32                   count,
+    span_const_i32 const& box,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -36,7 +39,7 @@ STATICINLINE void window_rectangles(
         mode,
         count,
         box.size() ? reinterpret_cast<const GLint*>(box.data()) : nullptr);
-    detail::error_check("WindowRectanglesEXT"sv);
+    detail::error_check("WindowRectanglesEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::window_rectangles

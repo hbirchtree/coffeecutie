@@ -24,7 +24,11 @@ requires(
  * \param buffer GLint *
  * \return GLint
  */
-STATICINLINE GLint query_resource(GLenum queryType, i32 tagId, span_i32 buffer)
+STATICINLINE GLint query_resource(
+    GLenum      queryType,
+    i32         tagId,
+    span_i32    buffer,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -36,7 +40,7 @@ STATICINLINE GLint query_resource(GLenum queryType, i32 tagId, span_i32 buffer)
         tagId,
         buffer.size(),
         buffer.size() ? reinterpret_cast<GLint*>(buffer.data()) : nullptr);
-    detail::error_check("QueryResourceNV"sv);
+    detail::error_check("QueryResourceNV"sv, check_errors);
     return out;
 }
 

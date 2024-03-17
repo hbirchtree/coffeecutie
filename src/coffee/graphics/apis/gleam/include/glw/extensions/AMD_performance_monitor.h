@@ -17,7 +17,8 @@ constexpr u32 perfmon_result           = 0x8BC6;
  * \param monitor GLuint
  * \return void
  */
-STATICINLINE void begin_perf_monitor(u32 monitor)
+STATICINLINE void begin_perf_monitor(
+    u32 monitor, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -25,7 +26,7 @@ STATICINLINE void begin_perf_monitor(u32 monitor)
         GLW_FPTR_CHECK(BeginPerfMonitorAMD)
     }
     glBeginPerfMonitorAMD(monitor);
-    detail::error_check("BeginPerfMonitorAMD"sv);
+    detail::error_check("BeginPerfMonitorAMD"sv, check_errors);
 }
 
 template<class span_u32>
@@ -39,7 +40,8 @@ requires(
  * \param monitors GLuint *
  * \return void
  */
-STATICINLINE void delete_perf_monitors(span_u32 monitors)
+STATICINLINE void delete_perf_monitors(
+    span_u32 monitors, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -49,7 +51,7 @@ STATICINLINE void delete_perf_monitors(span_u32 monitors)
     glDeletePerfMonitorsAMD(
         monitors.size(),
         monitors.size() ? reinterpret_cast<GLuint*>(monitors.data()) : nullptr);
-    detail::error_check("DeletePerfMonitorsAMD"sv);
+    detail::error_check("DeletePerfMonitorsAMD"sv, check_errors);
 }
 
 /*!
@@ -57,7 +59,8 @@ STATICINLINE void delete_perf_monitors(span_u32 monitors)
  * \param monitor GLuint
  * \return void
  */
-STATICINLINE void end_perf_monitor(u32 monitor)
+STATICINLINE void end_perf_monitor(
+    u32 monitor, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -65,7 +68,7 @@ STATICINLINE void end_perf_monitor(u32 monitor)
         GLW_FPTR_CHECK(EndPerfMonitorAMD)
     }
     glEndPerfMonitorAMD(monitor);
-    detail::error_check("EndPerfMonitorAMD"sv);
+    detail::error_check("EndPerfMonitorAMD"sv, check_errors);
 }
 
 template<class span_u32>
@@ -79,7 +82,8 @@ requires(
  * \param monitors GLuint *
  * \return void
  */
-STATICINLINE void gen_perf_monitors(span_u32 monitors)
+STATICINLINE void gen_perf_monitors(
+    span_u32 monitors, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -89,7 +93,7 @@ STATICINLINE void gen_perf_monitors(span_u32 monitors)
     glGenPerfMonitorsAMD(
         monitors.size(),
         monitors.size() ? reinterpret_cast<GLuint*>(monitors.data()) : nullptr);
-    detail::error_check("GenPerfMonitorsAMD"sv);
+    detail::error_check("GenPerfMonitorsAMD"sv, check_errors);
 }
 
 template<class span_u32>
@@ -107,7 +111,12 @@ requires(
  * \return void
  */
 STATICINLINE void get_perf_monitor_counter_data(
-    u32 monitor, GLenum pname, i32 dataSize, span_u32 data, i32& bytesWritten)
+    u32         monitor,
+    GLenum      pname,
+    i32         dataSize,
+    span_u32    data,
+    i32&        bytesWritten,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -120,7 +129,7 @@ STATICINLINE void get_perf_monitor_counter_data(
         dataSize,
         data.size() ? reinterpret_cast<GLuint*>(data.data()) : nullptr,
         &bytesWritten);
-    detail::error_check("GetPerfMonitorCounterDataAMD"sv);
+    detail::error_check("GetPerfMonitorCounterDataAMD"sv, check_errors);
 }
 
 template<class span_void>
@@ -134,7 +143,11 @@ requires(concepts::span<span_void>)
  * \return void
  */
 STATICINLINE void get_perf_monitor_counter_info(
-    u32 group, u32 counter, GLenum pname, span_void data)
+    u32         group,
+    u32         counter,
+    GLenum      pname,
+    span_void   data,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -146,7 +159,7 @@ STATICINLINE void get_perf_monitor_counter_info(
         counter,
         pname,
         data.size() ? reinterpret_cast<void*>(data.data()) : nullptr);
-    detail::error_check("GetPerfMonitorCounterInfoAMD"sv);
+    detail::error_check("GetPerfMonitorCounterInfoAMD"sv, check_errors);
 }
 
 template<class span_GLchar>
@@ -165,7 +178,11 @@ requires(
  * \return void
  */
 STATICINLINE void get_perf_monitor_counter_string(
-    u32 group, u32 counter, i32& length, span_GLchar counterString)
+    u32         group,
+    u32         counter,
+    i32&        length,
+    span_GLchar counterString,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -174,7 +191,7 @@ STATICINLINE void get_perf_monitor_counter_string(
     }
     glGetPerfMonitorCounterStringAMD(
         group, counter, counterString.size(), &length, counterString.data());
-    detail::error_check("GetPerfMonitorCounterStringAMD"sv);
+    detail::error_check("GetPerfMonitorCounterStringAMD"sv, check_errors);
 }
 
 template<class span_u32>
@@ -192,7 +209,11 @@ requires(
  * \return void
  */
 STATICINLINE void get_perf_monitor_counters(
-    u32 group, i32& numCounters, i32& maxActiveCounters, span_u32 counters)
+    u32         group,
+    i32&        numCounters,
+    i32&        maxActiveCounters,
+    span_u32    counters,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -205,7 +226,7 @@ STATICINLINE void get_perf_monitor_counters(
         &maxActiveCounters,
         counters.size(),
         counters.size() ? reinterpret_cast<GLuint*>(counters.data()) : nullptr);
-    detail::error_check("GetPerfMonitorCountersAMD"sv);
+    detail::error_check("GetPerfMonitorCountersAMD"sv, check_errors);
 }
 
 template<class span_GLchar>
@@ -223,7 +244,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_perf_monitor_group_string(
-    u32 group, i32& length, span_GLchar groupString)
+    u32         group,
+    i32&        length,
+    span_GLchar groupString,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -232,7 +256,7 @@ STATICINLINE void get_perf_monitor_group_string(
     }
     glGetPerfMonitorGroupStringAMD(
         group, groupString.size(), &length, groupString.data());
-    detail::error_check("GetPerfMonitorGroupStringAMD"sv);
+    detail::error_check("GetPerfMonitorGroupStringAMD"sv, check_errors);
 }
 
 template<class span_u32>
@@ -247,7 +271,8 @@ requires(
  * \param groups GLuint *
  * \return void
  */
-STATICINLINE void get_perf_monitor_groups(i32& numGroups, span_u32 groups)
+STATICINLINE void get_perf_monitor_groups(
+    i32& numGroups, span_u32 groups, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -258,7 +283,7 @@ STATICINLINE void get_perf_monitor_groups(i32& numGroups, span_u32 groups)
         &numGroups,
         groups.size(),
         groups.size() ? reinterpret_cast<GLuint*>(groups.data()) : nullptr);
-    detail::error_check("GetPerfMonitorGroupsAMD"sv);
+    detail::error_check("GetPerfMonitorGroupsAMD"sv, check_errors);
 }
 
 template<class span_u32>
@@ -276,7 +301,11 @@ requires(
  * \return void
  */
 STATICINLINE void select_perf_monitor_counters(
-    u32 monitor, bool enable, u32 group, span_u32 counterList)
+    u32         monitor,
+    bool        enable,
+    u32         group,
+    span_u32    counterList,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -290,7 +319,7 @@ STATICINLINE void select_perf_monitor_counters(
         counterList.size(),
         counterList.size() ? reinterpret_cast<GLuint*>(counterList.data())
                            : nullptr);
-    detail::error_check("SelectPerfMonitorCountersAMD"sv);
+    detail::error_check("SelectPerfMonitorCountersAMD"sv, check_errors);
 }
 
 } // namespace gl::amd::performance_monitor

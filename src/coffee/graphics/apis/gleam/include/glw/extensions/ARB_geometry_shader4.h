@@ -38,7 +38,8 @@ STATICINLINE void framebuffer_texture(
     group::framebuffer_target     target,
     group::framebuffer_attachment attachment,
     u32                           texture,
-    i32                           level)
+    i32                           level,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -55,7 +56,7 @@ STATICINLINE void framebuffer_texture(
         static_cast<GLenum>(attachment),
         texture,
         level);
-    detail::error_check("FramebufferTextureARB"sv);
+    detail::error_check("FramebufferTextureARB"sv, check_errors);
 }
 
 /*!
@@ -72,7 +73,8 @@ STATICINLINE void framebuffer_texture_face(
     group::framebuffer_attachment attachment,
     u32                           texture,
     i32                           level,
-    group::texture_target         face)
+    group::texture_target         face,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -90,7 +92,7 @@ STATICINLINE void framebuffer_texture_face(
         texture,
         level,
         static_cast<GLenum>(face));
-    detail::error_check("FramebufferTextureFaceARB"sv);
+    detail::error_check("FramebufferTextureFaceARB"sv, check_errors);
 }
 
 /*!
@@ -107,7 +109,8 @@ STATICINLINE void framebuffer_texture_layer(
     group::framebuffer_attachment attachment,
     u32                           texture,
     i32                           level,
-    i32                           layer)
+    i32                           layer,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -125,7 +128,7 @@ STATICINLINE void framebuffer_texture_layer(
         texture,
         level,
         layer);
-    detail::error_check("FramebufferTextureLayerARB"sv);
+    detail::error_check("FramebufferTextureLayerARB"sv, check_errors);
 }
 
 /*!
@@ -136,7 +139,10 @@ STATICINLINE void framebuffer_texture_layer(
  * \return void
  */
 STATICINLINE void program_parameter(
-    u32 program, group::program_parameter_prop pname, i32 value)
+    u32                           program,
+    group::program_parameter_prop pname,
+    i32                           value,
+    error_check                   check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -149,7 +155,7 @@ STATICINLINE void program_parameter(
 #endif
     }
     glProgramParameteriARB(program, static_cast<GLenum>(pname), value);
-    detail::error_check("ProgramParameteriARB"sv);
+    detail::error_check("ProgramParameteriARB"sv, check_errors);
 }
 
 } // namespace gl::arb::geometry_shader4

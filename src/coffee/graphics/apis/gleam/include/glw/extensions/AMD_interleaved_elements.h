@@ -34,7 +34,11 @@ constexpr u32 vertex_id_swizzle      = 0x91A5;
  * \param param GLint
  * \return void
  */
-STATICINLINE void vertex_attrib_parameter(u32 index, GLenum pname, i32 param)
+STATICINLINE void vertex_attrib_parameter(
+    u32         index,
+    GLenum      pname,
+    i32         param,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -42,7 +46,7 @@ STATICINLINE void vertex_attrib_parameter(u32 index, GLenum pname, i32 param)
         GLW_FPTR_CHECK(VertexAttribParameteriAMD)
     }
     glVertexAttribParameteriAMD(index, pname, param);
-    detail::error_check("VertexAttribParameteriAMD"sv);
+    detail::error_check("VertexAttribParameteriAMD"sv, check_errors);
 }
 
 } // namespace gl::amd::interleaved_elements

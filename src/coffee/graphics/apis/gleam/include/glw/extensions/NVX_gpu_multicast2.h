@@ -44,7 +44,8 @@ STATICINLINE GLuint async_copy_buffer_sub_data(
     GLintptr              writeOffset,
     GLsizeiptr            size,
     span_const_u32 const& signalSemaphoreArray,
-    span_const_u64 const& signalValueArray)
+    span_const_u64 const& signalValueArray,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -73,7 +74,7 @@ STATICINLINE GLuint async_copy_buffer_sub_data(
         signalValueArray.size()
             ? reinterpret_cast<const GLuint64*>(signalValueArray.data())
             : nullptr);
-    detail::error_check("AsyncCopyBufferSubDataNVX"sv);
+    detail::error_check("AsyncCopyBufferSubDataNVX"sv, check_errors);
     return out;
 }
 
@@ -135,7 +136,8 @@ STATICINLINE GLuint async_copy_image_sub_data(
     i32                   srcHeight,
     i32                   srcDepth,
     span_const_u32 const& signalSemaphoreArray,
-    span_const_u64 const& signalValueArray)
+    span_const_u64 const& signalValueArray,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -174,7 +176,7 @@ STATICINLINE GLuint async_copy_image_sub_data(
         signalValueArray.size()
             ? reinterpret_cast<const GLuint64*>(signalValueArray.data())
             : nullptr);
-    detail::error_check("AsyncCopyImageSubDataNVX"sv);
+    detail::error_check("AsyncCopyImageSubDataNVX"sv, check_errors);
     return out;
 }
 
@@ -193,7 +195,11 @@ requires(
  * \return void
  */
 STATICINLINE void multicast_scissor_arrayv(
-    u32 gpu, u32 first, i32 count, span_const_i32 const& v)
+    u32                   gpu,
+    u32                   first,
+    i32                   count,
+    span_const_i32 const& v,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -205,7 +211,7 @@ STATICINLINE void multicast_scissor_arrayv(
         first,
         count,
         v.size() ? reinterpret_cast<const GLint*>(v.data()) : nullptr);
-    detail::error_check("MulticastScissorArrayvNVX"sv);
+    detail::error_check("MulticastScissorArrayvNVX"sv, check_errors);
 }
 
 template<class span_const_f32>
@@ -223,7 +229,11 @@ requires(
  * \return void
  */
 STATICINLINE void multicast_viewport_arrayv(
-    u32 gpu, u32 first, i32 count, span_const_f32 const& v)
+    u32                   gpu,
+    u32                   first,
+    i32                   count,
+    span_const_f32 const& v,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -235,7 +245,7 @@ STATICINLINE void multicast_viewport_arrayv(
         first,
         count,
         v.size() ? reinterpret_cast<const GLfloat*>(v.data()) : nullptr);
-    detail::error_check("MulticastViewportArrayvNVX"sv);
+    detail::error_check("MulticastViewportArrayvNVX"sv, check_errors);
 }
 
 /*!
@@ -247,7 +257,11 @@ STATICINLINE void multicast_viewport_arrayv(
  * \return void
  */
 STATICINLINE void multicast_viewport_position_w_scale(
-    u32 gpu, u32 index, f32 xcoeff, f32 ycoeff)
+    u32         gpu,
+    u32         index,
+    f32         xcoeff,
+    f32         ycoeff,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -255,7 +269,7 @@ STATICINLINE void multicast_viewport_position_w_scale(
         GLW_FPTR_CHECK(MulticastViewportPositionWScaleNVX)
     }
     glMulticastViewportPositionWScaleNVX(gpu, index, xcoeff, ycoeff);
-    detail::error_check("MulticastViewportPositionWScaleNVX"sv);
+    detail::error_check("MulticastViewportPositionWScaleNVX"sv, check_errors);
 }
 
 /*!
@@ -263,7 +277,8 @@ STATICINLINE void multicast_viewport_position_w_scale(
  * \param mask GLbitfield
  * \return void
  */
-STATICINLINE void upload_gpu_mask(GLbitfield mask)
+STATICINLINE void upload_gpu_mask(
+    GLbitfield mask, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -271,7 +286,7 @@ STATICINLINE void upload_gpu_mask(GLbitfield mask)
         GLW_FPTR_CHECK(UploadGpuMaskNVX)
     }
     glUploadGpuMaskNVX(mask);
-    detail::error_check("UploadGpuMaskNVX"sv);
+    detail::error_check("UploadGpuMaskNVX"sv, check_errors);
 }
 
 } // namespace gl::nvx::gpu_multicast2

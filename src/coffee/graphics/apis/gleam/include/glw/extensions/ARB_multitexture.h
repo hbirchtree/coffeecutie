@@ -47,7 +47,8 @@ constexpr u32 max_texture_units     = 0x84E2;
  * \param texture GLenum
  * \return void
  */
-STATICINLINE void active_texture(group::texture_unit texture)
+STATICINLINE void active_texture(
+    group::texture_unit texture, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -55,7 +56,7 @@ STATICINLINE void active_texture(group::texture_unit texture)
         GLW_FPTR_CHECK(ActiveTextureARB)
     }
     glActiveTextureARB(static_cast<GLenum>(texture));
-    detail::error_check("ActiveTextureARB"sv);
+    detail::error_check("ActiveTextureARB"sv, check_errors);
 }
 
 /*!
@@ -63,7 +64,8 @@ STATICINLINE void active_texture(group::texture_unit texture)
  * \param texture GLenum
  * \return void
  */
-STATICINLINE void client_active_texture(group::texture_unit texture)
+STATICINLINE void client_active_texture(
+    group::texture_unit texture, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -71,7 +73,7 @@ STATICINLINE void client_active_texture(group::texture_unit texture)
         GLW_FPTR_CHECK(ClientActiveTextureARB)
     }
     glClientActiveTextureARB(static_cast<GLenum>(texture));
-    detail::error_check("ClientActiveTextureARB"sv);
+    detail::error_check("ClientActiveTextureARB"sv, check_errors);
 }
 
 /*!
@@ -80,7 +82,10 @@ STATICINLINE void client_active_texture(group::texture_unit texture)
  * \param s GLdouble
  * \return void
  */
-STATICINLINE void multi_tex_coord1d(group::texture_unit target, f64 s)
+STATICINLINE void multi_tex_coord1d(
+    group::texture_unit target,
+    f64                 s,
+    error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -88,7 +93,7 @@ STATICINLINE void multi_tex_coord1d(group::texture_unit target, f64 s)
         GLW_FPTR_CHECK(MultiTexCoord1dARB)
     }
     glMultiTexCoord1dARB(static_cast<GLenum>(target), s);
-    detail::error_check("MultiTexCoord1dARB"sv);
+    detail::error_check("MultiTexCoord1dARB"sv, check_errors);
 }
 
 template<class span_const_f64>
@@ -104,7 +109,9 @@ requires(
  * \return void
  */
 STATICINLINE void multi_tex_coord1dv(
-    group::texture_unit target, span_const_f64 const& v)
+    group::texture_unit   target,
+    span_const_f64 const& v,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -114,7 +121,7 @@ STATICINLINE void multi_tex_coord1dv(
     glMultiTexCoord1dvARB(
         static_cast<GLenum>(target),
         reinterpret_cast<const GLdouble*>(v.data()));
-    detail::error_check("MultiTexCoord1dvARB"sv);
+    detail::error_check("MultiTexCoord1dvARB"sv, check_errors);
 }
 
 /*!
@@ -123,7 +130,10 @@ STATICINLINE void multi_tex_coord1dv(
  * \param s GLfloat
  * \return void
  */
-STATICINLINE void multi_tex_coord1f(group::texture_unit target, f32 s)
+STATICINLINE void multi_tex_coord1f(
+    group::texture_unit target,
+    f32                 s,
+    error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -131,7 +141,7 @@ STATICINLINE void multi_tex_coord1f(group::texture_unit target, f32 s)
         GLW_FPTR_CHECK(MultiTexCoord1fARB)
     }
     glMultiTexCoord1fARB(static_cast<GLenum>(target), s);
-    detail::error_check("MultiTexCoord1fARB"sv);
+    detail::error_check("MultiTexCoord1fARB"sv, check_errors);
 }
 
 template<class span_const_f32>
@@ -147,7 +157,9 @@ requires(
  * \return void
  */
 STATICINLINE void multi_tex_coord1fv(
-    group::texture_unit target, span_const_f32 const& v)
+    group::texture_unit   target,
+    span_const_f32 const& v,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -157,7 +169,7 @@ STATICINLINE void multi_tex_coord1fv(
     glMultiTexCoord1fvARB(
         static_cast<GLenum>(target),
         reinterpret_cast<const GLfloat*>(v.data()));
-    detail::error_check("MultiTexCoord1fvARB"sv);
+    detail::error_check("MultiTexCoord1fvARB"sv, check_errors);
 }
 
 /*!
@@ -166,7 +178,10 @@ STATICINLINE void multi_tex_coord1fv(
  * \param s GLint
  * \return void
  */
-STATICINLINE void multi_tex_coord1i(group::texture_unit target, i32 s)
+STATICINLINE void multi_tex_coord1i(
+    group::texture_unit target,
+    i32                 s,
+    error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -174,7 +189,7 @@ STATICINLINE void multi_tex_coord1i(group::texture_unit target, i32 s)
         GLW_FPTR_CHECK(MultiTexCoord1iARB)
     }
     glMultiTexCoord1iARB(static_cast<GLenum>(target), s);
-    detail::error_check("MultiTexCoord1iARB"sv);
+    detail::error_check("MultiTexCoord1iARB"sv, check_errors);
 }
 
 template<class span_const_i32>
@@ -190,7 +205,9 @@ requires(
  * \return void
  */
 STATICINLINE void multi_tex_coord1iv(
-    group::texture_unit target, span_const_i32 const& v)
+    group::texture_unit   target,
+    span_const_i32 const& v,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -199,7 +216,7 @@ STATICINLINE void multi_tex_coord1iv(
     }
     glMultiTexCoord1ivARB(
         static_cast<GLenum>(target), reinterpret_cast<const GLint*>(v.data()));
-    detail::error_check("MultiTexCoord1ivARB"sv);
+    detail::error_check("MultiTexCoord1ivARB"sv, check_errors);
 }
 
 /*!
@@ -208,7 +225,10 @@ STATICINLINE void multi_tex_coord1iv(
  * \param s GLshort
  * \return void
  */
-STATICINLINE void multi_tex_coord1s(group::texture_unit target, i16 s)
+STATICINLINE void multi_tex_coord1s(
+    group::texture_unit target,
+    i16                 s,
+    error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -216,7 +236,7 @@ STATICINLINE void multi_tex_coord1s(group::texture_unit target, i16 s)
         GLW_FPTR_CHECK(MultiTexCoord1sARB)
     }
     glMultiTexCoord1sARB(static_cast<GLenum>(target), s);
-    detail::error_check("MultiTexCoord1sARB"sv);
+    detail::error_check("MultiTexCoord1sARB"sv, check_errors);
 }
 
 template<class span_const_i16>
@@ -232,7 +252,9 @@ requires(
  * \return void
  */
 STATICINLINE void multi_tex_coord1sv(
-    group::texture_unit target, span_const_i16 const& v)
+    group::texture_unit   target,
+    span_const_i16 const& v,
+    error_check           check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -242,7 +264,7 @@ STATICINLINE void multi_tex_coord1sv(
     glMultiTexCoord1svARB(
         static_cast<GLenum>(target),
         reinterpret_cast<const GLshort*>(v.data()));
-    detail::error_check("MultiTexCoord1svARB"sv);
+    detail::error_check("MultiTexCoord1svARB"sv, check_errors);
 }
 
 /*!
@@ -252,7 +274,11 @@ STATICINLINE void multi_tex_coord1sv(
  * \param t GLdouble
  * \return void
  */
-STATICINLINE void multi_tex_coord2d(group::texture_unit target, f64 s, f64 t)
+STATICINLINE void multi_tex_coord2d(
+    group::texture_unit target,
+    f64                 s,
+    f64                 t,
+    error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -260,7 +286,7 @@ STATICINLINE void multi_tex_coord2d(group::texture_unit target, f64 s, f64 t)
         GLW_FPTR_CHECK(MultiTexCoord2dARB)
     }
     glMultiTexCoord2dARB(static_cast<GLenum>(target), s, t);
-    detail::error_check("MultiTexCoord2dARB"sv);
+    detail::error_check("MultiTexCoord2dARB"sv, check_errors);
 }
 
 template<class span_const_vec_2_f64>
@@ -274,7 +300,9 @@ requires(
  * \return void
  */
 STATICINLINE void multi_tex_coord2dv(
-    group::texture_unit target, span_const_vec_2_f64 const& v)
+    group::texture_unit         target,
+    span_const_vec_2_f64 const& v,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -284,7 +312,7 @@ STATICINLINE void multi_tex_coord2dv(
     glMultiTexCoord2dvARB(
         static_cast<GLenum>(target),
         reinterpret_cast<const GLdouble*>(v.data()));
-    detail::error_check("MultiTexCoord2dvARB"sv);
+    detail::error_check("MultiTexCoord2dvARB"sv, check_errors);
 }
 
 /*!
@@ -294,7 +322,11 @@ STATICINLINE void multi_tex_coord2dv(
  * \param t GLfloat
  * \return void
  */
-STATICINLINE void multi_tex_coord2f(group::texture_unit target, f32 s, f32 t)
+STATICINLINE void multi_tex_coord2f(
+    group::texture_unit target,
+    f32                 s,
+    f32                 t,
+    error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -302,7 +334,7 @@ STATICINLINE void multi_tex_coord2f(group::texture_unit target, f32 s, f32 t)
         GLW_FPTR_CHECK(MultiTexCoord2fARB)
     }
     glMultiTexCoord2fARB(static_cast<GLenum>(target), s, t);
-    detail::error_check("MultiTexCoord2fARB"sv);
+    detail::error_check("MultiTexCoord2fARB"sv, check_errors);
 }
 
 template<class span_const_vec_2_f32>
@@ -316,7 +348,9 @@ requires(
  * \return void
  */
 STATICINLINE void multi_tex_coord2fv(
-    group::texture_unit target, span_const_vec_2_f32 const& v)
+    group::texture_unit         target,
+    span_const_vec_2_f32 const& v,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -326,7 +360,7 @@ STATICINLINE void multi_tex_coord2fv(
     glMultiTexCoord2fvARB(
         static_cast<GLenum>(target),
         reinterpret_cast<const GLfloat*>(v.data()));
-    detail::error_check("MultiTexCoord2fvARB"sv);
+    detail::error_check("MultiTexCoord2fvARB"sv, check_errors);
 }
 
 /*!
@@ -336,7 +370,11 @@ STATICINLINE void multi_tex_coord2fv(
  * \param t GLint
  * \return void
  */
-STATICINLINE void multi_tex_coord2i(group::texture_unit target, i32 s, i32 t)
+STATICINLINE void multi_tex_coord2i(
+    group::texture_unit target,
+    i32                 s,
+    i32                 t,
+    error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -344,7 +382,7 @@ STATICINLINE void multi_tex_coord2i(group::texture_unit target, i32 s, i32 t)
         GLW_FPTR_CHECK(MultiTexCoord2iARB)
     }
     glMultiTexCoord2iARB(static_cast<GLenum>(target), s, t);
-    detail::error_check("MultiTexCoord2iARB"sv);
+    detail::error_check("MultiTexCoord2iARB"sv, check_errors);
 }
 
 template<class span_const_vec_2_i32>
@@ -358,7 +396,9 @@ requires(
  * \return void
  */
 STATICINLINE void multi_tex_coord2iv(
-    group::texture_unit target, span_const_vec_2_i32 const& v)
+    group::texture_unit         target,
+    span_const_vec_2_i32 const& v,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -367,7 +407,7 @@ STATICINLINE void multi_tex_coord2iv(
     }
     glMultiTexCoord2ivARB(
         static_cast<GLenum>(target), reinterpret_cast<const GLint*>(v.data()));
-    detail::error_check("MultiTexCoord2ivARB"sv);
+    detail::error_check("MultiTexCoord2ivARB"sv, check_errors);
 }
 
 /*!
@@ -377,7 +417,11 @@ STATICINLINE void multi_tex_coord2iv(
  * \param t GLshort
  * \return void
  */
-STATICINLINE void multi_tex_coord2s(group::texture_unit target, i16 s, i16 t)
+STATICINLINE void multi_tex_coord2s(
+    group::texture_unit target,
+    i16                 s,
+    i16                 t,
+    error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -385,7 +429,7 @@ STATICINLINE void multi_tex_coord2s(group::texture_unit target, i16 s, i16 t)
         GLW_FPTR_CHECK(MultiTexCoord2sARB)
     }
     glMultiTexCoord2sARB(static_cast<GLenum>(target), s, t);
-    detail::error_check("MultiTexCoord2sARB"sv);
+    detail::error_check("MultiTexCoord2sARB"sv, check_errors);
 }
 
 template<class span_const_vec_2_i16>
@@ -399,7 +443,9 @@ requires(
  * \return void
  */
 STATICINLINE void multi_tex_coord2sv(
-    group::texture_unit target, span_const_vec_2_i16 const& v)
+    group::texture_unit         target,
+    span_const_vec_2_i16 const& v,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -409,7 +455,7 @@ STATICINLINE void multi_tex_coord2sv(
     glMultiTexCoord2svARB(
         static_cast<GLenum>(target),
         reinterpret_cast<const GLshort*>(v.data()));
-    detail::error_check("MultiTexCoord2svARB"sv);
+    detail::error_check("MultiTexCoord2svARB"sv, check_errors);
 }
 
 /*!
@@ -421,7 +467,11 @@ STATICINLINE void multi_tex_coord2sv(
  * \return void
  */
 STATICINLINE void multi_tex_coord3d(
-    group::texture_unit target, f64 s, f64 t, f64 r)
+    group::texture_unit target,
+    f64                 s,
+    f64                 t,
+    f64                 r,
+    error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -429,7 +479,7 @@ STATICINLINE void multi_tex_coord3d(
         GLW_FPTR_CHECK(MultiTexCoord3dARB)
     }
     glMultiTexCoord3dARB(static_cast<GLenum>(target), s, t, r);
-    detail::error_check("MultiTexCoord3dARB"sv);
+    detail::error_check("MultiTexCoord3dARB"sv, check_errors);
 }
 
 template<class span_const_vec_3_f64>
@@ -443,7 +493,9 @@ requires(
  * \return void
  */
 STATICINLINE void multi_tex_coord3dv(
-    group::texture_unit target, span_const_vec_3_f64 const& v)
+    group::texture_unit         target,
+    span_const_vec_3_f64 const& v,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -453,7 +505,7 @@ STATICINLINE void multi_tex_coord3dv(
     glMultiTexCoord3dvARB(
         static_cast<GLenum>(target),
         reinterpret_cast<const GLdouble*>(v.data()));
-    detail::error_check("MultiTexCoord3dvARB"sv);
+    detail::error_check("MultiTexCoord3dvARB"sv, check_errors);
 }
 
 /*!
@@ -465,7 +517,11 @@ STATICINLINE void multi_tex_coord3dv(
  * \return void
  */
 STATICINLINE void multi_tex_coord3f(
-    group::texture_unit target, f32 s, f32 t, f32 r)
+    group::texture_unit target,
+    f32                 s,
+    f32                 t,
+    f32                 r,
+    error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -473,7 +529,7 @@ STATICINLINE void multi_tex_coord3f(
         GLW_FPTR_CHECK(MultiTexCoord3fARB)
     }
     glMultiTexCoord3fARB(static_cast<GLenum>(target), s, t, r);
-    detail::error_check("MultiTexCoord3fARB"sv);
+    detail::error_check("MultiTexCoord3fARB"sv, check_errors);
 }
 
 template<class span_const_vec_3_f32>
@@ -487,7 +543,9 @@ requires(
  * \return void
  */
 STATICINLINE void multi_tex_coord3fv(
-    group::texture_unit target, span_const_vec_3_f32 const& v)
+    group::texture_unit         target,
+    span_const_vec_3_f32 const& v,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -497,7 +555,7 @@ STATICINLINE void multi_tex_coord3fv(
     glMultiTexCoord3fvARB(
         static_cast<GLenum>(target),
         reinterpret_cast<const GLfloat*>(v.data()));
-    detail::error_check("MultiTexCoord3fvARB"sv);
+    detail::error_check("MultiTexCoord3fvARB"sv, check_errors);
 }
 
 /*!
@@ -509,7 +567,11 @@ STATICINLINE void multi_tex_coord3fv(
  * \return void
  */
 STATICINLINE void multi_tex_coord3i(
-    group::texture_unit target, i32 s, i32 t, i32 r)
+    group::texture_unit target,
+    i32                 s,
+    i32                 t,
+    i32                 r,
+    error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -517,7 +579,7 @@ STATICINLINE void multi_tex_coord3i(
         GLW_FPTR_CHECK(MultiTexCoord3iARB)
     }
     glMultiTexCoord3iARB(static_cast<GLenum>(target), s, t, r);
-    detail::error_check("MultiTexCoord3iARB"sv);
+    detail::error_check("MultiTexCoord3iARB"sv, check_errors);
 }
 
 template<class span_const_vec_3_i32>
@@ -531,7 +593,9 @@ requires(
  * \return void
  */
 STATICINLINE void multi_tex_coord3iv(
-    group::texture_unit target, span_const_vec_3_i32 const& v)
+    group::texture_unit         target,
+    span_const_vec_3_i32 const& v,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -540,7 +604,7 @@ STATICINLINE void multi_tex_coord3iv(
     }
     glMultiTexCoord3ivARB(
         static_cast<GLenum>(target), reinterpret_cast<const GLint*>(v.data()));
-    detail::error_check("MultiTexCoord3ivARB"sv);
+    detail::error_check("MultiTexCoord3ivARB"sv, check_errors);
 }
 
 /*!
@@ -552,7 +616,11 @@ STATICINLINE void multi_tex_coord3iv(
  * \return void
  */
 STATICINLINE void multi_tex_coord3s(
-    group::texture_unit target, i16 s, i16 t, i16 r)
+    group::texture_unit target,
+    i16                 s,
+    i16                 t,
+    i16                 r,
+    error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -560,7 +628,7 @@ STATICINLINE void multi_tex_coord3s(
         GLW_FPTR_CHECK(MultiTexCoord3sARB)
     }
     glMultiTexCoord3sARB(static_cast<GLenum>(target), s, t, r);
-    detail::error_check("MultiTexCoord3sARB"sv);
+    detail::error_check("MultiTexCoord3sARB"sv, check_errors);
 }
 
 template<class span_const_vec_3_i16>
@@ -574,7 +642,9 @@ requires(
  * \return void
  */
 STATICINLINE void multi_tex_coord3sv(
-    group::texture_unit target, span_const_vec_3_i16 const& v)
+    group::texture_unit         target,
+    span_const_vec_3_i16 const& v,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -584,7 +654,7 @@ STATICINLINE void multi_tex_coord3sv(
     glMultiTexCoord3svARB(
         static_cast<GLenum>(target),
         reinterpret_cast<const GLshort*>(v.data()));
-    detail::error_check("MultiTexCoord3svARB"sv);
+    detail::error_check("MultiTexCoord3svARB"sv, check_errors);
 }
 
 /*!
@@ -597,7 +667,12 @@ STATICINLINE void multi_tex_coord3sv(
  * \return void
  */
 STATICINLINE void multi_tex_coord4d(
-    group::texture_unit target, f64 s, f64 t, f64 r, f64 q)
+    group::texture_unit target,
+    f64                 s,
+    f64                 t,
+    f64                 r,
+    f64                 q,
+    error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -605,7 +680,7 @@ STATICINLINE void multi_tex_coord4d(
         GLW_FPTR_CHECK(MultiTexCoord4dARB)
     }
     glMultiTexCoord4dARB(static_cast<GLenum>(target), s, t, r, q);
-    detail::error_check("MultiTexCoord4dARB"sv);
+    detail::error_check("MultiTexCoord4dARB"sv, check_errors);
 }
 
 template<class span_const_vec_4_f64>
@@ -619,7 +694,9 @@ requires(
  * \return void
  */
 STATICINLINE void multi_tex_coord4dv(
-    group::texture_unit target, span_const_vec_4_f64 const& v)
+    group::texture_unit         target,
+    span_const_vec_4_f64 const& v,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -629,7 +706,7 @@ STATICINLINE void multi_tex_coord4dv(
     glMultiTexCoord4dvARB(
         static_cast<GLenum>(target),
         reinterpret_cast<const GLdouble*>(v.data()));
-    detail::error_check("MultiTexCoord4dvARB"sv);
+    detail::error_check("MultiTexCoord4dvARB"sv, check_errors);
 }
 
 /*!
@@ -642,7 +719,12 @@ STATICINLINE void multi_tex_coord4dv(
  * \return void
  */
 STATICINLINE void multi_tex_coord4f(
-    group::texture_unit target, f32 s, f32 t, f32 r, f32 q)
+    group::texture_unit target,
+    f32                 s,
+    f32                 t,
+    f32                 r,
+    f32                 q,
+    error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -650,7 +732,7 @@ STATICINLINE void multi_tex_coord4f(
         GLW_FPTR_CHECK(MultiTexCoord4fARB)
     }
     glMultiTexCoord4fARB(static_cast<GLenum>(target), s, t, r, q);
-    detail::error_check("MultiTexCoord4fARB"sv);
+    detail::error_check("MultiTexCoord4fARB"sv, check_errors);
 }
 
 template<class span_const_vec_4_f32>
@@ -664,7 +746,9 @@ requires(
  * \return void
  */
 STATICINLINE void multi_tex_coord4fv(
-    group::texture_unit target, span_const_vec_4_f32 const& v)
+    group::texture_unit         target,
+    span_const_vec_4_f32 const& v,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -674,7 +758,7 @@ STATICINLINE void multi_tex_coord4fv(
     glMultiTexCoord4fvARB(
         static_cast<GLenum>(target),
         reinterpret_cast<const GLfloat*>(v.data()));
-    detail::error_check("MultiTexCoord4fvARB"sv);
+    detail::error_check("MultiTexCoord4fvARB"sv, check_errors);
 }
 
 /*!
@@ -687,7 +771,12 @@ STATICINLINE void multi_tex_coord4fv(
  * \return void
  */
 STATICINLINE void multi_tex_coord4i(
-    group::texture_unit target, i32 s, i32 t, i32 r, i32 q)
+    group::texture_unit target,
+    i32                 s,
+    i32                 t,
+    i32                 r,
+    i32                 q,
+    error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -695,7 +784,7 @@ STATICINLINE void multi_tex_coord4i(
         GLW_FPTR_CHECK(MultiTexCoord4iARB)
     }
     glMultiTexCoord4iARB(static_cast<GLenum>(target), s, t, r, q);
-    detail::error_check("MultiTexCoord4iARB"sv);
+    detail::error_check("MultiTexCoord4iARB"sv, check_errors);
 }
 
 template<class span_const_vec_4_i32>
@@ -709,7 +798,9 @@ requires(
  * \return void
  */
 STATICINLINE void multi_tex_coord4iv(
-    group::texture_unit target, span_const_vec_4_i32 const& v)
+    group::texture_unit         target,
+    span_const_vec_4_i32 const& v,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -718,7 +809,7 @@ STATICINLINE void multi_tex_coord4iv(
     }
     glMultiTexCoord4ivARB(
         static_cast<GLenum>(target), reinterpret_cast<const GLint*>(v.data()));
-    detail::error_check("MultiTexCoord4ivARB"sv);
+    detail::error_check("MultiTexCoord4ivARB"sv, check_errors);
 }
 
 /*!
@@ -731,7 +822,12 @@ STATICINLINE void multi_tex_coord4iv(
  * \return void
  */
 STATICINLINE void multi_tex_coord4s(
-    group::texture_unit target, i16 s, i16 t, i16 r, i16 q)
+    group::texture_unit target,
+    i16                 s,
+    i16                 t,
+    i16                 r,
+    i16                 q,
+    error_check         check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -739,7 +835,7 @@ STATICINLINE void multi_tex_coord4s(
         GLW_FPTR_CHECK(MultiTexCoord4sARB)
     }
     glMultiTexCoord4sARB(static_cast<GLenum>(target), s, t, r, q);
-    detail::error_check("MultiTexCoord4sARB"sv);
+    detail::error_check("MultiTexCoord4sARB"sv, check_errors);
 }
 
 template<class span_const_vec_4_i16>
@@ -753,7 +849,9 @@ requires(
  * \return void
  */
 STATICINLINE void multi_tex_coord4sv(
-    group::texture_unit target, span_const_vec_4_i16 const& v)
+    group::texture_unit         target,
+    span_const_vec_4_i16 const& v,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -763,7 +861,7 @@ STATICINLINE void multi_tex_coord4sv(
     glMultiTexCoord4svARB(
         static_cast<GLenum>(target),
         reinterpret_cast<const GLshort*>(v.data()));
-    detail::error_check("MultiTexCoord4svARB"sv);
+    detail::error_check("MultiTexCoord4svARB"sv, check_errors);
 }
 
 } // namespace gl::arb::multitexture

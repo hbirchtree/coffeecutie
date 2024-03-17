@@ -17,7 +17,8 @@ constexpr u32 polygon_offset_factor = 0x8038;
  * \param bias GLfloat
  * \return void
  */
-STATICINLINE void polygon_offset(f32 factor, f32 bias)
+STATICINLINE void polygon_offset(
+    f32 factor, f32 bias, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -25,7 +26,7 @@ STATICINLINE void polygon_offset(f32 factor, f32 bias)
         GLW_FPTR_CHECK(PolygonOffsetEXT)
     }
     glPolygonOffsetEXT(factor, bias);
-    detail::error_check("PolygonOffsetEXT"sv);
+    detail::error_check("PolygonOffsetEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::polygon_offset

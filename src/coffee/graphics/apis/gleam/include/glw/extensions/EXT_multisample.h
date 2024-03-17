@@ -28,7 +28,8 @@ constexpr u32 sample_pattern       = 0x80AC;
  * \param invert GLboolean
  * \return void
  */
-STATICINLINE void sample_mask(GLclampf value, bool invert)
+STATICINLINE void sample_mask(
+    GLclampf value, bool invert, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -36,7 +37,7 @@ STATICINLINE void sample_mask(GLclampf value, bool invert)
         GLW_FPTR_CHECK(SampleMaskEXT)
     }
     glSampleMaskEXT(value, invert);
-    detail::error_check("SampleMaskEXT"sv);
+    detail::error_check("SampleMaskEXT"sv, check_errors);
 }
 
 /*!
@@ -44,7 +45,9 @@ STATICINLINE void sample_mask(GLclampf value, bool invert)
  * \param pattern GLenum
  * \return void
  */
-STATICINLINE void sample_pattern(group::sample_pattern_ext pattern)
+STATICINLINE void sample_pattern(
+    group::sample_pattern_ext pattern,
+    error_check               check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -52,7 +55,7 @@ STATICINLINE void sample_pattern(group::sample_pattern_ext pattern)
         GLW_FPTR_CHECK(SamplePatternEXT)
     }
     glSamplePatternEXT(static_cast<GLenum>(pattern));
-    detail::error_check("SamplePatternEXT"sv);
+    detail::error_check("SamplePatternEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::multisample

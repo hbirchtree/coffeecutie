@@ -37,7 +37,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_multisamplefv(
-    group::get_multisample_prop_nv pname, u32 index, span_f32 val)
+    group::get_multisample_prop_nv pname,
+    u32                            index,
+    span_f32                       val,
+    error_check                    check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -48,7 +51,7 @@ STATICINLINE void get_multisamplefv(
         static_cast<GLenum>(pname),
         index,
         val.size() ? reinterpret_cast<GLfloat*>(val.data()) : nullptr);
-    detail::error_check("GetMultisamplefv"sv);
+    detail::error_check("GetMultisamplefv"sv, check_errors);
 }
 
 /*!
@@ -57,7 +60,8 @@ STATICINLINE void get_multisamplefv(
  * \param mask GLbitfield
  * \return void
  */
-STATICINLINE void sample_maski(u32 maskNumber, GLbitfield mask)
+STATICINLINE void sample_maski(
+    u32 maskNumber, GLbitfield mask, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -65,7 +69,7 @@ STATICINLINE void sample_maski(u32 maskNumber, GLbitfield mask)
         GLW_FPTR_CHECK(SampleMaski)
     }
     glSampleMaski(maskNumber, mask);
-    detail::error_check("SampleMaski"sv);
+    detail::error_check("SampleMaski"sv, check_errors);
 }
 
 template<class size_2_i32>
@@ -85,7 +89,8 @@ STATICINLINE void tex_image_2d_multisample(
     i32                    samples,
     group::internal_format internalformat,
     size_2_i32 const&      width,
-    bool                   fixedsamplelocations)
+    bool                   fixedsamplelocations,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -99,7 +104,7 @@ STATICINLINE void tex_image_2d_multisample(
         width[0],
         width[1],
         fixedsamplelocations);
-    detail::error_check("TexImage2DMultisample"sv);
+    detail::error_check("TexImage2DMultisample"sv, check_errors);
 }
 
 template<class size_3_i32>
@@ -120,7 +125,8 @@ STATICINLINE void tex_image_3d_multisample(
     i32                    samples,
     group::internal_format internalformat,
     size_3_i32 const&      width,
-    bool                   fixedsamplelocations)
+    bool                   fixedsamplelocations,
+    error_check            check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -135,7 +141,7 @@ STATICINLINE void tex_image_3d_multisample(
         width[1],
         width[2],
         fixedsamplelocations);
-    detail::error_check("TexImage3DMultisample"sv);
+    detail::error_check("TexImage3DMultisample"sv, check_errors);
 }
 
 } // namespace gl::arb::texture_multisample

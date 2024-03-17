@@ -18,7 +18,10 @@ requires(
  * \return void
  */
 STATICINLINE void program_env_parameters4fv(
-    group::program_target target, u32 index, span_const_vec_4_f32 const& params)
+    group::program_target       target,
+    u32                         index,
+    span_const_vec_4_f32 const& params,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -30,7 +33,7 @@ STATICINLINE void program_env_parameters4fv(
         index,
         params.size(),
         reinterpret_cast<const GLfloat*>(params.data()));
-    detail::error_check("ProgramEnvParameters4fvEXT"sv);
+    detail::error_check("ProgramEnvParameters4fvEXT"sv, check_errors);
 }
 
 template<class span_const_vec_4_f32>
@@ -46,7 +49,10 @@ requires(
  * \return void
  */
 STATICINLINE void program_local_parameters4fv(
-    group::program_target target, u32 index, span_const_vec_4_f32 const& params)
+    group::program_target       target,
+    u32                         index,
+    span_const_vec_4_f32 const& params,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -58,7 +64,7 @@ STATICINLINE void program_local_parameters4fv(
         index,
         params.size(),
         reinterpret_cast<const GLfloat*>(params.data()));
-    detail::error_check("ProgramLocalParameters4fvEXT"sv);
+    detail::error_check("ProgramLocalParameters4fvEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::gpu_program_parameters

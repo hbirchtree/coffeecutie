@@ -61,7 +61,8 @@ constexpr u32 max_task_work_group_invocations                 = 0x95A3;
  * \param count GLuint
  * \return void
  */
-STATICINLINE void draw_mesh_tasks(u32 first, u32 count)
+STATICINLINE void draw_mesh_tasks(
+    u32 first, u32 count, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -69,7 +70,7 @@ STATICINLINE void draw_mesh_tasks(u32 first, u32 count)
         GLW_FPTR_CHECK(DrawMeshTasksNV)
     }
     glDrawMeshTasksNV(first, count);
-    detail::error_check("DrawMeshTasksNV"sv);
+    detail::error_check("DrawMeshTasksNV"sv, check_errors);
 }
 
 /*!
@@ -77,7 +78,8 @@ STATICINLINE void draw_mesh_tasks(u32 first, u32 count)
  * \param indirect GLintptr
  * \return void
  */
-STATICINLINE void draw_mesh_tasks_indirect(GLintptr indirect)
+STATICINLINE void draw_mesh_tasks_indirect(
+    GLintptr indirect, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -85,7 +87,7 @@ STATICINLINE void draw_mesh_tasks_indirect(GLintptr indirect)
         GLW_FPTR_CHECK(DrawMeshTasksIndirectNV)
     }
     glDrawMeshTasksIndirectNV(indirect);
-    detail::error_check("DrawMeshTasksIndirectNV"sv);
+    detail::error_check("DrawMeshTasksIndirectNV"sv, check_errors);
 }
 
 /*!
@@ -96,7 +98,10 @@ STATICINLINE void draw_mesh_tasks_indirect(GLintptr indirect)
  * \return void
  */
 STATICINLINE void multi_draw_mesh_tasks_indirect(
-    GLintptr indirect, i32 drawcount, i32 stride)
+    GLintptr    indirect,
+    i32         drawcount,
+    i32         stride,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -104,7 +109,7 @@ STATICINLINE void multi_draw_mesh_tasks_indirect(
         GLW_FPTR_CHECK(MultiDrawMeshTasksIndirectNV)
     }
     glMultiDrawMeshTasksIndirectNV(indirect, drawcount, stride);
-    detail::error_check("MultiDrawMeshTasksIndirectNV"sv);
+    detail::error_check("MultiDrawMeshTasksIndirectNV"sv, check_errors);
 }
 
 /*!
@@ -116,7 +121,11 @@ STATICINLINE void multi_draw_mesh_tasks_indirect(
  * \return void
  */
 STATICINLINE void multi_draw_mesh_tasks_indirect_count(
-    GLintptr indirect, GLintptr drawcount, i32 maxdrawcount, i32 stride)
+    GLintptr    indirect,
+    GLintptr    drawcount,
+    i32         maxdrawcount,
+    i32         stride,
+    error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -125,7 +134,7 @@ STATICINLINE void multi_draw_mesh_tasks_indirect_count(
     }
     glMultiDrawMeshTasksIndirectCountNV(
         indirect, drawcount, maxdrawcount, stride);
-    detail::error_check("MultiDrawMeshTasksIndirectCountNV"sv);
+    detail::error_check("MultiDrawMeshTasksIndirectCountNV"sv, check_errors);
 }
 
 } // namespace gl::nv::mesh_shader

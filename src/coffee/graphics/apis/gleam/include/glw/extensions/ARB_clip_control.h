@@ -20,7 +20,9 @@ constexpr u32 clip_depth_mode = 0x935D;
  * \return void
  */
 STATICINLINE void clip_control(
-    group::clip_control_origin origin, group::clip_control_depth depth)
+    group::clip_control_origin origin,
+    group::clip_control_depth  depth,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -28,7 +30,7 @@ STATICINLINE void clip_control(
         GLW_FPTR_CHECK(ClipControl)
     }
     glClipControl(static_cast<GLenum>(origin), static_cast<GLenum>(depth));
-    detail::error_check("ClipControl"sv);
+    detail::error_check("ClipControl"sv, check_errors);
 }
 
 } // namespace gl::arb::clip_control

@@ -21,7 +21,8 @@ STATICINLINE void tex_storage_1d(
     group::texture_target        target,
     i32                          levels,
     group::sized_internal_format internalformat,
-    i32                          width)
+    i32                          width,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -33,7 +34,7 @@ STATICINLINE void tex_storage_1d(
         levels,
         static_cast<GLenum>(internalformat),
         width);
-    detail::error_check("TexStorage1D"sv);
+    detail::error_check("TexStorage1D"sv, check_errors);
 }
 
 template<class size_2_i32>
@@ -51,7 +52,8 @@ STATICINLINE void tex_storage_2d(
     group::texture_target        target,
     i32                          levels,
     group::sized_internal_format internalformat,
-    size_2_i32 const&            width)
+    size_2_i32 const&            width,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -64,7 +66,7 @@ STATICINLINE void tex_storage_2d(
         static_cast<GLenum>(internalformat),
         width[0],
         width[1]);
-    detail::error_check("TexStorage2D"sv);
+    detail::error_check("TexStorage2D"sv, check_errors);
 }
 
 template<class size_3_i32>
@@ -83,7 +85,8 @@ STATICINLINE void tex_storage_3d(
     group::texture_target        target,
     i32                          levels,
     group::sized_internal_format internalformat,
-    size_3_i32 const&            width)
+    size_3_i32 const&            width,
+    error_check                  check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -97,7 +100,7 @@ STATICINLINE void tex_storage_3d(
         width[0],
         width[1],
         width[2]);
-    detail::error_check("TexStorage3D"sv);
+    detail::error_check("TexStorage3D"sv, check_errors);
 }
 
 } // namespace gl::arb::texture_storage

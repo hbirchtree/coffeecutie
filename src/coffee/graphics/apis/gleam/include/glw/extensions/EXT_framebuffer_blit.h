@@ -33,7 +33,8 @@ STATICINLINE void blit_framebuffer(
     i32                            dstX1,
     i32                            dstY1,
     group::clear_buffer_mask       mask,
-    group::blit_framebuffer_filter filter)
+    group::blit_framebuffer_filter filter,
+    error_check                    check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -51,7 +52,7 @@ STATICINLINE void blit_framebuffer(
         dstY1,
         static_cast<GLenum>(mask),
         static_cast<GLenum>(filter));
-    detail::error_check("BlitFramebufferEXT"sv);
+    detail::error_check("BlitFramebufferEXT"sv, check_errors);
 }
 
 } // namespace gl::ext::framebuffer_blit

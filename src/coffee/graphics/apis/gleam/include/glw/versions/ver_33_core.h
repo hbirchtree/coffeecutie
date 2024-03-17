@@ -2,12 +2,19 @@
 template<typename Dummy = void>
 requires(MinimumVersion<Current, Version<3, 3>>)
 /*!
- * \brief Wraps around glBindFragDataLocationIndexed. Introduced in GL
- * core 3.3 \param program GLuint \param colorNumber GLuint \param index
- * GLuint \param name const GLchar * \return void
+ * \brief Wraps around glBindFragDataLocationIndexed. Introduced in GL core 3.3
+ * \param program GLuint
+ * \param colorNumber GLuint
+ * \param index GLuint
+ * \param name const GLchar *
+ * \return void
  */
 STATICINLINE void bind_frag_data_location_indexed(
-    u32 program, u32 colorNumber, u32 index, std::string_view const& name)
+    u32                     program,
+    u32                     colorNumber,
+    u32                     index,
+    std::string_view const& name,
+    error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -20,7 +27,7 @@ STATICINLINE void bind_frag_data_location_indexed(
 #endif
     }
     glBindFragDataLocationIndexed(program, colorNumber, index, name.data());
-    detail::error_check("BindFragDataLocationIndexed"sv);
+    detail::error_check("BindFragDataLocationIndexed"sv, check_errors);
 }
 
 template<typename Dummy = void>
@@ -31,8 +38,10 @@ requires(MinimumVersion<Current, Version<3, 3>>)
  * \param name const GLchar *
  * \return GLint
  */
-STATICINLINE GLint
-get_frag_data_index(u32 program, std::string_view const& name)
+STATICINLINE GLint get_frag_data_index(
+    u32                     program,
+    std::string_view const& name,
+    error_check             check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -45,7 +54,7 @@ get_frag_data_index(u32 program, std::string_view const& name)
 #endif
     }
     auto out = glGetFragDataIndex(program, name.data());
-    detail::error_check("GetFragDataIndex"sv);
+    detail::error_check("GetFragDataIndex"sv, check_errors);
     return out;
 }
 
@@ -57,7 +66,8 @@ requires(MinimumVersion<Current, Version<3, 3>>)
  * \param sampler GLuint
  * \return void
  */
-STATICINLINE void bind_sampler(u32 unit, u32 sampler)
+STATICINLINE void bind_sampler(
+    u32 unit, u32 sampler, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -70,7 +80,7 @@ STATICINLINE void bind_sampler(u32 unit, u32 sampler)
 #endif
     }
     glBindSampler(unit, sampler);
-    detail::error_check("BindSampler"sv);
+    detail::error_check("BindSampler"sv, check_errors);
 }
 
 template<class span_const_u32>
@@ -85,7 +95,8 @@ requires(
  * \param samplers const GLuint *
  * \return void
  */
-STATICINLINE void delete_samplers(span_const_u32 const& samplers)
+STATICINLINE void delete_samplers(
+    span_const_u32 const& samplers, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -96,7 +107,7 @@ STATICINLINE void delete_samplers(span_const_u32 const& samplers)
         samplers.size(),
         samplers.size() ? reinterpret_cast<const GLuint*>(samplers.data())
                         : nullptr);
-    detail::error_check("DeleteSamplers"sv);
+    detail::error_check("DeleteSamplers"sv, check_errors);
 }
 
 template<class span_u32>
@@ -111,7 +122,8 @@ requires(
  * \param samplers GLuint *
  * \return void
  */
-STATICINLINE void gen_samplers(span_u32 samplers)
+STATICINLINE void gen_samplers(
+    span_u32 samplers, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -121,7 +133,7 @@ STATICINLINE void gen_samplers(span_u32 samplers)
     glGenSamplers(
         samplers.size(),
         samplers.size() ? reinterpret_cast<GLuint*>(samplers.data()) : nullptr);
-    detail::error_check("GenSamplers"sv);
+    detail::error_check("GenSamplers"sv, check_errors);
 }
 
 template<class span_i32>
@@ -138,7 +150,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_sampler_parameter_iiv(
-    u32 sampler, group::sampler_parameter_i pname, span_i32 params)
+    u32                        sampler,
+    group::sampler_parameter_i pname,
+    span_i32                   params,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -154,7 +169,7 @@ STATICINLINE void get_sampler_parameter_iiv(
         sampler,
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetSamplerParameterIiv"sv);
+    detail::error_check("GetSamplerParameterIiv"sv, check_errors);
 }
 
 template<class span_u32>
@@ -171,7 +186,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_sampler_parameter_iuiv(
-    u32 sampler, group::sampler_parameter_i pname, span_u32 params)
+    u32                        sampler,
+    group::sampler_parameter_i pname,
+    span_u32                   params,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -187,7 +205,7 @@ STATICINLINE void get_sampler_parameter_iuiv(
         sampler,
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLuint*>(params.data()) : nullptr);
-    detail::error_check("GetSamplerParameterIuiv"sv);
+    detail::error_check("GetSamplerParameterIuiv"sv, check_errors);
 }
 
 template<class span_f32>
@@ -204,7 +222,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_sampler_parameter(
-    u32 sampler, group::sampler_parameter_f pname, span_f32 params)
+    u32                        sampler,
+    group::sampler_parameter_f pname,
+    span_f32                   params,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -220,7 +241,7 @@ STATICINLINE void get_sampler_parameter(
         sampler,
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLfloat*>(params.data()) : nullptr);
-    detail::error_check("GetSamplerParameterfv"sv);
+    detail::error_check("GetSamplerParameterfv"sv, check_errors);
 }
 
 template<class span_i32>
@@ -237,7 +258,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_sampler_parameter(
-    u32 sampler, group::sampler_parameter_i pname, span_i32 params)
+    u32                        sampler,
+    group::sampler_parameter_i pname,
+    span_i32                   params,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -253,7 +277,7 @@ STATICINLINE void get_sampler_parameter(
         sampler,
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint*>(params.data()) : nullptr);
-    detail::error_check("GetSamplerParameteriv"sv);
+    detail::error_check("GetSamplerParameteriv"sv, check_errors);
 }
 
 template<typename Dummy = void>
@@ -263,7 +287,8 @@ requires(MinimumVersion<Current, Version<3, 3>>)
  * \param sampler GLuint
  * \return Boolean
  */
-STATICINLINE bool is_sampler(u32 sampler)
+STATICINLINE bool is_sampler(
+    u32 sampler, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -276,7 +301,7 @@ STATICINLINE bool is_sampler(u32 sampler)
 #endif
     }
     auto out = glIsSampler(sampler);
-    detail::error_check("IsSampler"sv);
+    detail::error_check("IsSampler"sv, check_errors);
     return out == GL_TRUE ? true : false;
 }
 
@@ -294,7 +319,10 @@ requires(
  * \return void
  */
 STATICINLINE void sampler_parameter_iiv(
-    u32 sampler, group::sampler_parameter_i pname, span_const_i32 const& param)
+    u32                        sampler,
+    group::sampler_parameter_i pname,
+    span_const_i32 const&      param,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -310,7 +338,7 @@ STATICINLINE void sampler_parameter_iiv(
         sampler,
         static_cast<GLenum>(pname),
         param.size() ? reinterpret_cast<const GLint*>(param.data()) : nullptr);
-    detail::error_check("SamplerParameterIiv"sv);
+    detail::error_check("SamplerParameterIiv"sv, check_errors);
 }
 
 template<class span_const_u32>
@@ -327,7 +355,10 @@ requires(
  * \return void
  */
 STATICINLINE void sampler_parameter_iuiv(
-    u32 sampler, group::sampler_parameter_i pname, span_const_u32 const& param)
+    u32                        sampler,
+    group::sampler_parameter_i pname,
+    span_const_u32 const&      param,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -343,7 +374,7 @@ STATICINLINE void sampler_parameter_iuiv(
         sampler,
         static_cast<GLenum>(pname),
         param.size() ? reinterpret_cast<const GLuint*>(param.data()) : nullptr);
-    detail::error_check("SamplerParameterIuiv"sv);
+    detail::error_check("SamplerParameterIuiv"sv, check_errors);
 }
 
 template<typename Dummy = void>
@@ -356,7 +387,10 @@ requires(MinimumVersion<Current, Version<3, 3>>)
  * \return void
  */
 STATICINLINE void sampler_parameter(
-    u32 sampler, group::sampler_parameter_f pname, f32 param)
+    u32                        sampler,
+    group::sampler_parameter_f pname,
+    f32                        param,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -369,7 +403,7 @@ STATICINLINE void sampler_parameter(
 #endif
     }
     glSamplerParameterf(sampler, static_cast<GLenum>(pname), param);
-    detail::error_check("SamplerParameterf"sv);
+    detail::error_check("SamplerParameterf"sv, check_errors);
 }
 
 template<class span_const_f32>
@@ -386,7 +420,10 @@ requires(
  * \return void
  */
 STATICINLINE void sampler_parameter(
-    u32 sampler, group::sampler_parameter_f pname, span_const_f32 const& param)
+    u32                        sampler,
+    group::sampler_parameter_f pname,
+    span_const_f32 const&      param,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -403,7 +440,7 @@ STATICINLINE void sampler_parameter(
         static_cast<GLenum>(pname),
         param.size() ? reinterpret_cast<const GLfloat*>(param.data())
                      : nullptr);
-    detail::error_check("SamplerParameterfv"sv);
+    detail::error_check("SamplerParameterfv"sv, check_errors);
 }
 
 template<typename Dummy = void>
@@ -416,7 +453,10 @@ requires(MinimumVersion<Current, Version<3, 3>>)
  * \return void
  */
 STATICINLINE void sampler_parameter(
-    u32 sampler, group::sampler_parameter_i pname, i32 param)
+    u32                        sampler,
+    group::sampler_parameter_i pname,
+    i32                        param,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -429,7 +469,7 @@ STATICINLINE void sampler_parameter(
 #endif
     }
     glSamplerParameteri(sampler, static_cast<GLenum>(pname), param);
-    detail::error_check("SamplerParameteri"sv);
+    detail::error_check("SamplerParameteri"sv, check_errors);
 }
 
 template<class span_const_i32>
@@ -446,7 +486,10 @@ requires(
  * \return void
  */
 STATICINLINE void sampler_parameter(
-    u32 sampler, group::sampler_parameter_i pname, span_const_i32 const& param)
+    u32                        sampler,
+    group::sampler_parameter_i pname,
+    span_const_i32 const&      param,
+    error_check                check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -462,7 +505,7 @@ STATICINLINE void sampler_parameter(
         sampler,
         static_cast<GLenum>(pname),
         param.size() ? reinterpret_cast<const GLint*>(param.data()) : nullptr);
-    detail::error_check("SamplerParameteriv"sv);
+    detail::error_check("SamplerParameteriv"sv, check_errors);
 }
 
 template<class span_i64>
@@ -479,7 +522,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_query_objecti64v(
-    u32 id, group::query_object_parameter_name pname, span_i64 params)
+    u32                                id,
+    group::query_object_parameter_name pname,
+    span_i64                           params,
+    error_check                        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -490,7 +536,7 @@ STATICINLINE void get_query_objecti64v(
         id,
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLint64*>(params.data()) : nullptr);
-    detail::error_check("GetQueryObjecti64v"sv);
+    detail::error_check("GetQueryObjecti64v"sv, check_errors);
 }
 
 template<class span_u64>
@@ -507,7 +553,10 @@ requires(
  * \return void
  */
 STATICINLINE void get_query_objectui64v(
-    u32 id, group::query_object_parameter_name pname, span_u64 params)
+    u32                                id,
+    group::query_object_parameter_name pname,
+    span_u64                           params,
+    error_check                        check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -518,7 +567,7 @@ STATICINLINE void get_query_objectui64v(
         id,
         static_cast<GLenum>(pname),
         params.size() ? reinterpret_cast<GLuint64*>(params.data()) : nullptr);
-    detail::error_check("GetQueryObjectui64v"sv);
+    detail::error_check("GetQueryObjectui64v"sv, check_errors);
 }
 
 template<typename Dummy = void>
@@ -529,7 +578,10 @@ requires(MinimumVersion<Current, Version<3, 3>>)
  * \param target GLenum
  * \return void
  */
-STATICINLINE void query_counter(u32 id, group::query_counter_target target)
+STATICINLINE void query_counter(
+    u32                         id,
+    group::query_counter_target target,
+    error_check                 check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -537,7 +589,7 @@ STATICINLINE void query_counter(u32 id, group::query_counter_target target)
         GLW_FPTR_CHECK(QueryCounter)
     }
     glQueryCounter(id, static_cast<GLenum>(target));
-    detail::error_check("QueryCounter"sv);
+    detail::error_check("QueryCounter"sv, check_errors);
 }
 
 template<typename Dummy = void>
@@ -548,7 +600,8 @@ requires(MinimumVersion<Current, Version<3, 3>>)
  * \param divisor GLuint
  * \return void
  */
-STATICINLINE void vertex_attrib_divisor(u32 index, u32 divisor)
+STATICINLINE void vertex_attrib_divisor(
+    u32 index, u32 divisor, error_check check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -556,7 +609,7 @@ STATICINLINE void vertex_attrib_divisor(u32 index, u32 divisor)
         GLW_FPTR_CHECK(VertexAttribDivisor)
     }
     glVertexAttribDivisor(index, divisor);
-    detail::error_check("VertexAttribDivisor"sv);
+    detail::error_check("VertexAttribDivisor"sv, check_errors);
 }
 
 template<typename Dummy = void>
@@ -573,7 +626,8 @@ STATICINLINE void vertex_attrib_p1ui(
     u32                               index,
     group::vertex_attrib_pointer_type type,
     bool                              normalized,
-    u32                               value)
+    u32                               value,
+    error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -581,7 +635,7 @@ STATICINLINE void vertex_attrib_p1ui(
         GLW_FPTR_CHECK(VertexAttribP1ui)
     }
     glVertexAttribP1ui(index, static_cast<GLenum>(type), normalized, value);
-    detail::error_check("VertexAttribP1ui"sv);
+    detail::error_check("VertexAttribP1ui"sv, check_errors);
 }
 
 template<class span_const_u32>
@@ -602,7 +656,8 @@ STATICINLINE void vertex_attrib_p1uiv(
     u32                               index,
     group::vertex_attrib_pointer_type type,
     bool                              normalized,
-    span_const_u32 const&             value)
+    span_const_u32 const&             value,
+    error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -614,7 +669,7 @@ STATICINLINE void vertex_attrib_p1uiv(
         static_cast<GLenum>(type),
         normalized,
         reinterpret_cast<const GLuint*>(value.data()));
-    detail::error_check("VertexAttribP1uiv"sv);
+    detail::error_check("VertexAttribP1uiv"sv, check_errors);
 }
 
 template<typename Dummy = void>
@@ -631,7 +686,8 @@ STATICINLINE void vertex_attrib_p2ui(
     u32                               index,
     group::vertex_attrib_pointer_type type,
     bool                              normalized,
-    u32                               value)
+    u32                               value,
+    error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -639,7 +695,7 @@ STATICINLINE void vertex_attrib_p2ui(
         GLW_FPTR_CHECK(VertexAttribP2ui)
     }
     glVertexAttribP2ui(index, static_cast<GLenum>(type), normalized, value);
-    detail::error_check("VertexAttribP2ui"sv);
+    detail::error_check("VertexAttribP2ui"sv, check_errors);
 }
 
 template<class span_const_vec_2_u32>
@@ -659,7 +715,8 @@ STATICINLINE void vertex_attrib_p2uiv(
     u32                               index,
     group::vertex_attrib_pointer_type type,
     bool                              normalized,
-    span_const_vec_2_u32 const&       value)
+    span_const_vec_2_u32 const&       value,
+    error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -671,7 +728,7 @@ STATICINLINE void vertex_attrib_p2uiv(
         static_cast<GLenum>(type),
         normalized,
         reinterpret_cast<const GLuint*>(value.data()));
-    detail::error_check("VertexAttribP2uiv"sv);
+    detail::error_check("VertexAttribP2uiv"sv, check_errors);
 }
 
 template<typename Dummy = void>
@@ -688,7 +745,8 @@ STATICINLINE void vertex_attrib_p3ui(
     u32                               index,
     group::vertex_attrib_pointer_type type,
     bool                              normalized,
-    u32                               value)
+    u32                               value,
+    error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -696,7 +754,7 @@ STATICINLINE void vertex_attrib_p3ui(
         GLW_FPTR_CHECK(VertexAttribP3ui)
     }
     glVertexAttribP3ui(index, static_cast<GLenum>(type), normalized, value);
-    detail::error_check("VertexAttribP3ui"sv);
+    detail::error_check("VertexAttribP3ui"sv, check_errors);
 }
 
 template<class span_const_vec_3_u32>
@@ -716,7 +774,8 @@ STATICINLINE void vertex_attrib_p3uiv(
     u32                               index,
     group::vertex_attrib_pointer_type type,
     bool                              normalized,
-    span_const_vec_3_u32 const&       value)
+    span_const_vec_3_u32 const&       value,
+    error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -728,7 +787,7 @@ STATICINLINE void vertex_attrib_p3uiv(
         static_cast<GLenum>(type),
         normalized,
         reinterpret_cast<const GLuint*>(value.data()));
-    detail::error_check("VertexAttribP3uiv"sv);
+    detail::error_check("VertexAttribP3uiv"sv, check_errors);
 }
 
 template<typename Dummy = void>
@@ -745,7 +804,8 @@ STATICINLINE void vertex_attrib_p4ui(
     u32                               index,
     group::vertex_attrib_pointer_type type,
     bool                              normalized,
-    u32                               value)
+    u32                               value,
+    error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -753,7 +813,7 @@ STATICINLINE void vertex_attrib_p4ui(
         GLW_FPTR_CHECK(VertexAttribP4ui)
     }
     glVertexAttribP4ui(index, static_cast<GLenum>(type), normalized, value);
-    detail::error_check("VertexAttribP4ui"sv);
+    detail::error_check("VertexAttribP4ui"sv, check_errors);
 }
 
 template<class span_const_vec_4_u32>
@@ -773,7 +833,8 @@ STATICINLINE void vertex_attrib_p4uiv(
     u32                               index,
     group::vertex_attrib_pointer_type type,
     bool                              normalized,
-    span_const_vec_4_u32 const&       value)
+    span_const_vec_4_u32 const&       value,
+    error_check                       check_errors = error_check::on)
 {
     using namespace std::string_view_literals;
     if constexpr(compile_info::debug_mode)
@@ -785,7 +846,7 @@ STATICINLINE void vertex_attrib_p4uiv(
         static_cast<GLenum>(type),
         normalized,
         reinterpret_cast<const GLuint*>(value.data()));
-    detail::error_check("VertexAttribP4uiv"sv);
+    detail::error_check("VertexAttribP4uiv"sv, check_errors);
 }
 
 #endif // GL_VERSION_3_3
