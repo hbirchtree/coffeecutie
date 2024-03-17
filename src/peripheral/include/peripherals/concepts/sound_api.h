@@ -126,6 +126,7 @@ concept Listener = requires(T v) {
 struct DeviceHandle
 {
     std::optional<std::string> name;
+    bool enable_hrtf{true};
 };
 
 template<class T>

@@ -126,7 +126,6 @@ struct api
     std::string current_error();
 
     std::string              device();
-    std::vector<std::string> extensions();
 
     void collect_info(comp_app::interfaces::AppInfo& appInfo);
 
@@ -145,7 +144,9 @@ struct api
         return m_listener;
     }
 
-  private:
+  protected:
+    void resume_playback();
+
     ALCdevice*  m_device{nullptr};
     ALCcontext* m_context{nullptr};
 
@@ -158,7 +159,11 @@ struct system
 {
     using type = system;
 
-    void start_frame(compo::ContainerProxy &, const compo::time_point &);
+    void start_frame(compo::ContainerProxy& p, const compo::time_point &);
+
+private:
+    bool m_piggyback_input_event{compile_info::platform::is_emscripten};
+    bool m_input_listener_registered{false};
 };
 
 // static_assert(API<api>);

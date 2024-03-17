@@ -132,7 +132,7 @@ struct SoundCache
                     auto perms = pitch.permutations.data(magic).value();
                     for(auto const& perm : perms)
                     {
-                        auto data = perm.sample_data().data(sound_magic).value();
+                        // auto data = perm.sample_data().data(sound_magic).value();
                         cDebug("   - Perm: gain={}", perm.gain);
                     }
                 }
