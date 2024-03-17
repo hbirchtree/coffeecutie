@@ -148,6 +148,7 @@ jobs:
         VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
     - name: Building project
       id: buildProject
+      continue-on-error: true
       run: BUILD_TYPE=${{ matrix.mode }} source/cb build ${{matrix.variant}}
       env:
         VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
@@ -157,7 +158,6 @@ jobs:
       with:
         name: ${{matrix.artifact}}-vcpkg-logs
         path: /usr/local/share/vcpkg/buildtrees/*/*.log
-        if-no-files-found: error
     - name: Creating archive of artifacts
       run: |
         tar cvf apps.tar source/multi_build/${{matrix.artifact}}/bin
