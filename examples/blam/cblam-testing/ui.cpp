@@ -356,6 +356,9 @@ void alloc_ui_system(compo::EntityContainer& e)
 void load_ui_items(
     compo::EntityContainer& e, MapChangedEvent<halo_version>& data)
 {
+    if(std::is_same_v<halo_version, blam::custom_version_t>)
+        return;
+
     auto& fonts       = e.subsystem_cast<FontCache<halo_version>>();
     auto& ui_elements = e.subsystem_cast<UIElementCache<halo_version>>();
     // auto& ui_renderer = e.subsystem_cast<UIRenderer>();

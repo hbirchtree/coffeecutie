@@ -152,6 +152,7 @@ struct GameEvent
         MapDataLoad,
         MapLoadFinished,
         MapChanged,
+        MapResourcesReady,
 
         ServerConnect,
         ServerConnected,
@@ -184,6 +185,7 @@ struct MapListingEvent
     platform::url::Url              directory;
     std::vector<platform::url::Url> maps;
     platform::url::Url              bitmap_file;
+    platform::url::Url              sound_file;
 };
 
 struct MapDataLoadEvent
@@ -191,7 +193,6 @@ struct MapDataLoadEvent
     static constexpr auto event_type = GameEvent::MapDataLoad;
 
     semantic::BytesConst map;
-    semantic::BytesConst bitmap;
 };
 
 template<typename V>
@@ -200,7 +201,6 @@ struct MapLoadFinishedEvent
     static constexpr auto event_type = GameEvent::MapLoadFinished;
 
     blam::map_container<V>* container;
-    semantic::BytesConst    bitmap_file;
     std::string             map_name{};
     std::string             map_title{};
 };
@@ -211,8 +211,15 @@ struct MapChangedEvent
     static constexpr auto event_type = GameEvent::MapChanged;
 
     blam::map_container<V>&       container;
-    blam::magic_data_t            bitmap_magic;
     blam::scn::scenario<V> const* scenario{nullptr};
+};
+
+struct MapResourcesReady
+{
+    static constexpr auto event_type = GameEvent::MapResourcesReady;
+
+    std::optional<blam::magic_data_t> bitmap_file{};
+    std::optional<blam::magic_data_t> sound_file{};
 };
 
 struct ServerConnectEvent

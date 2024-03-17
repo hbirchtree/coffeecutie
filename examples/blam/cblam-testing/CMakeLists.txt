@@ -42,6 +42,7 @@ coffee_application(
   TARGET BlamGraphics
   TITLE "Blam Graphics"
   SOURCES
+        caching.cpp
         graphics.cpp
         map_loading.cpp
         networking.cpp
@@ -52,7 +53,7 @@ coffee_application(
         touch_overlay.cpp
         ui.cpp
         widgets.cpp
-  LIBRARIES Blam Core Image GLeamRHI ImGui
+  LIBRARIES Blam Core Image GLeamRHI ImGui OAF
   SCHEMES blam halo
   ICON_ASSET ${CMAKE_CURRENT_SOURCE_DIR}/icon_asset.svg
   RESOURCES "${CMAKE_CURRENT_BINARY_DIR}/assets"

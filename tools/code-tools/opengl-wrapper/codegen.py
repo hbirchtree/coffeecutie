@@ -607,6 +607,7 @@ def generate_function(command, usages: dict, version: tuple = None, override_nam
         lines, debug_lines, template_args,
         usages)
     param_string = [ translate_param(p) for p in params ]
+    param_string.append('error_check check_errors = error_check::on')
     param_string = ', '.join(param_string)
     input_string = ', '.join(inputs)
     if override_name is not None:
@@ -649,7 +650,7 @@ def generate_function(command, usages: dict, version: tuple = None, override_nam
     ret_statement = 'auto out = ' if return_type != 'void' else ''
     yield f'    {ret_statement}gl{func_name}({input_string});'
 
-    yield f'''    detail::error_check("{func_name}"sv);'''
+    yield f'''    detail::error_check("{func_name}"sv, check_errors);'''
 
     if ret_statement != '':
         yield f'    return {return_var};'

@@ -1,3 +1,5 @@
+#include <magic_enum.hpp>
+
 #include <coffee/components/components.h>
 #include <coffee/components/proxy.h>
 
@@ -10,15 +12,12 @@
 #include <peripherals/semantic/chunk.h>
 
 #include <coffee/image/image_coder_system.h>
-#include <peripherals/stl/magic_enum.hpp>
 #include <peripherals/typing/vectors/camera.h>
 #include <peripherals/typing/vectors/matrix_functions.h>
 #include <peripherals/typing/vectors/transform.h>
 #include <peripherals/typing/vectors/vector_types.h>
 
-// #if defined(FEATURE_ENABLE_G)
 #include <coffee/graphics/apis/CGLeam>
-// #endif
 
 #include <coffee/components/entity_selectors.h>
 
@@ -43,8 +42,6 @@
 #include <fmt_extensions/vector_types.h>
 
 #include <coffee/core/CDebug>
-
-// #define USE_NULL_RENDERER
 
 using namespace Coffee;
 using namespace Display;

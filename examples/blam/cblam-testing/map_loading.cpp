@@ -1,4 +1,5 @@
 #include "bitmap_cache.h"
+#include "blam_files.h"
 #include "caching.h"
 #include "components.h"
 #include "data.h"
@@ -40,6 +41,7 @@ static void init_map(
     auto& bsps           = e.subsystem_cast<BSPCache<halo_version>>();
     auto& models         = e.subsystem_cast<ModelCache<halo_version>>();
     auto& shaders        = e.subsystem_cast<ShaderCache<halo_version>>();
+    auto& sounds         = e.subsystem_cast<SoundCache<halo_version>>();
 
     u32 num = 0;
     for([[maybe_unused]] auto const& i : e.select(ObjectGC))
@@ -50,18 +52,19 @@ static void init_map(
 
     GameEvent                     event{GameEvent::MapChanged};
     MapChangedEvent<halo_version> changed{
-        .container    = files.container,
-        .bitmap_magic = blam::magic_data_t(finished.bitmap_file.view),
-        .scenario     = files.container.tags
+        .container = files.container,
+        // .bitmap_magic = blam::magic_data_t(finished.bitmap_file.view),
+        .scenario = files.container.tags
                         ->scenario(files.container.map, files.container.magic)
                         .value(),
     };
     e.subsystem_cast<GameEventBus>().inject(event, &changed);
 
-    bitmaps.load_from(changed.container, changed.bitmap_magic);
+    bitmaps.load_from(changed.container);
     bsps.load_from(changed.container);
     models.load_from(changed.container);
     shaders.load_from(changed.container);
+    sounds.load_from(changed.container);
 
     load_scenario_bsp(e, changed);
     load_scenario_scenery(e, changed);
@@ -69,16 +72,34 @@ static void init_map(
 
     // For debugging: go through all the bitmaps
     if constexpr(!compile_info::platform::is_32bit)
+    {
+        u32 num_snds{0}, num_bitms{0}, num_mod{0};
         for(blam::tag_t const& tag : blam::tag_index_view(files.container))
         {
-            if(tag.matches(blam::tag_class_t::bitm) && true)
+            if(tag.matches(blam::tag_class_t::bitm))
             {
-                cDebug(
-                    "Loading bitmap {0}",
-                    tag.to_name().to_string(files.container.magic));
-                bitmaps.predict(tag.as_ref(), 0);
+                // cDebug(
+                //     "Loading bitmap {0}",
+                //     tag.to_name().to_string(files.container.magic));
+                // bitmaps.predict(tag.as_ref(), 0);
+                num_bitms++;
+            }
+            if(tag.matches(blam::tag_class_t::snd))
+            {
+                num_snds++;
+            }
+            if(tag.matches(blam::tag_class_t::mod2))
+            {
+                num_mod++;
             }
         }
+
+        cDebug(
+            "Map tag summary: {} bitmaps, {} sounds, {} models",
+            num_bitms,
+            num_snds,
+            num_mod);
+    }
 
     create_camera(
         e,
@@ -90,7 +111,10 @@ static void init_map(
         auto map_name = files.container.map->full_mapname();
         window_config->setName(fmt::format("Blam! : {0}", map_name));
     }
-    if constexpr(!compile_info::platform::is_32bit)
+    // TODO: Move to MapResourcesReady handler
+    if(!compile_info::platform::is_32bit &&
+       (files.bitmap_file ||
+        files.container.map->version == blam::version_t::xbox))
     {
         ProfContext _("Texture allocation");
         bitmaps.allocate_storage();
@@ -122,7 +146,7 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
     } else if(load.file)
     {
         using namespace platform::url::constructors;
-        auto map_dir = (*load.file).path().dirname();
+        auto map_dir      = (*load.file).path().dirname();
         listing.directory = map_dir.url(load.file->flags);
         // data.bitmap_file = std::make_unique<Resource>(
         //     (map_dir / "bitmaps.map").url(map_file->flags));
@@ -132,6 +156,8 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
 
     listing.bitmap_file =
         (listing.directory.path() / "bitmaps.map").url(listing.directory.flags);
+    listing.sound_file =
+        (listing.directory.path() / "sounds.map").url(listing.directory.flags);
 
     if(auto maps_ = platform::file::list(listing.directory); maps_.has_error())
     {
@@ -165,16 +191,17 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
     using result_type = blam::map_container<halo_version>::result_type;
 
     LoadingStatus& loading = e.subsystem_cast<LoadingStatus>();
+    auto&          files   = e.subsystem_cast<BlamFiles<halo_version>>();
+
+    files.bitmap_file.reset();
+    files.sound_file.reset();
 
     loading.loading = true;
 
     auto& file_mapper = e.subsystem_cast<comp_app::FileMapper>();
 
-    auto bitmap_promise = file_mapper.fetch(listing.bitmap_file).share();
-
     using AsyncResource = comp_app::FileMapper::Resource;
-    auto map_loader     = [&e, bitmap_ = std::move(bitmap_promise)](
-                          std::shared_ptr<AsyncResource>* data) mutable {
+    auto map_loader     = [&e](std::shared_ptr<AsyncResource>* data) mutable {
         ProfContext    _("Launching map decode");
         BlamResources& resources = e.subsystem_cast<BlamResources>();
         LoadingStatus& loading   = e.subsystem_cast<LoadingStatus>();
@@ -196,9 +223,7 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
         [[maybe_unused]] auto res = rq::runtime_queue::Queue(
             resources.background_worker,
             rq::dependent_task<result_type, void>::CreateSink(
-                std::move(map_data),
-                [&e, &files, bitmap = std::move(bitmap_)](
-                    result_type* map) mutable {
+                std::move(map_data), [&e, &files](result_type* map) mutable {
                     ProfContext _("Notifying systems of new map");
                     if(map->has_error())
                     {
@@ -207,20 +232,19 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
                             magic_enum::enum_name(map->error()));
                         return;
                     }
-                    files.bitmap_file = bitmap.get();
-                    files.container   = std::move(map->value());
+                    // files.bitmap_file = bitmap.get();
+                    files.container = std::move(map->value());
 
                     auto&            gbus = e.subsystem_cast<GameEventBus>();
                     GameEvent        event{GameEvent::MapDataLoad};
                     MapDataLoadEvent loaded = {
-                        .map    = *files.map_file,
-                        .bitmap = *files.bitmap_file,
+                            .map = *files.map_file,
+                        // .bitmap = *files.bitmap_file,
                     };
                     gbus.inject(event, &loaded);
                     event.type = GameEvent::MapLoadFinished;
                     MapLoadFinishedEvent<halo_version> finished = {
-                        .container   = &files.container,
-                        .bitmap_file = *files.bitmap_file,
+                            .container = &files.container,
                     };
                     finished.map_name  = files.container.internal_name();
                     finished.map_title = files.container.name();
@@ -231,6 +255,41 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
     rq::runtime_queue::Queue(
         rq::dependent_task<std::shared_ptr<AsyncResource>, void>::CreateSink(
             file_mapper.fetch(*load.file), std::move(map_loader)))
+        .assume_value();
+
+    if(std::is_same_v<halo_version, blam::xbox_version_t>)
+        return;
+
+    rq::runtime_queue::Queue(
+        rq::dependent_task<std::shared_ptr<AsyncResource>, void>::CreateSink(
+            file_mapper.fetch(listing.bitmap_file),
+            [&e](std::shared_ptr<AsyncResource>* data) mutable {
+                auto& files       = e.subsystem_cast<BlamFiles<halo_version>>();
+                files.bitmap_file = std::move(*data);
+                GameEvent         event{GameEvent::MapResourcesReady};
+                MapResourcesReady ready = {
+                    .bitmap_file = blam::magic_data_t(
+                        static_cast<BytesConst>(*files.bitmap_file)),
+                };
+                auto& gbus = e.subsystem_cast<GameEventBus>();
+                gbus.inject(event, &ready);
+            }))
+        .assume_value();
+
+    rq::runtime_queue::Queue(
+        rq::dependent_task<std::shared_ptr<AsyncResource>, void>::CreateSink(
+            file_mapper.fetch(listing.sound_file),
+            [&e](std::shared_ptr<AsyncResource>* data) mutable {
+                auto& files      = e.subsystem_cast<BlamFiles<halo_version>>();
+                files.sound_file = std::move(*data);
+                GameEvent         event{GameEvent::MapResourcesReady};
+                MapResourcesReady ready = {
+                    .sound_file = blam::magic_data_t(
+                        static_cast<BytesConst>(*files.sound_file)),
+                };
+                auto& gbus = e.subsystem_cast<GameEventBus>();
+                gbus.inject(event, &ready);
+            }))
         .assume_value();
 }
 
@@ -252,4 +311,22 @@ void setup_load_eventhandlers(compo::EntityContainer& e)
                     cDebug("Starting MapFinished handler");
                     init_map(e, *finished);
                 })));
+
+    gbus.addEventFunction<MapResourcesReady>(
+        0, [&e](GameEvent&, MapResourcesReady* ready) {
+            cDebug("Map resources loaded");
+            auto& bitmaps = e.subsystem_cast<BitmapCache<halo_version>>();
+            auto& sounds  = e.subsystem_cast<SoundCache<halo_version>>();
+            if(ready->bitmap_file)
+                bitmaps.load_bitmaps_from(*ready->bitmap_file);
+            if(ready->sound_file)
+                sounds.load_sounds_from(*ready->sound_file);
+
+            auto& loading_status = e.subsystem_cast<LoadingStatus>();
+            if(!loading_status.loading)
+            {
+                if(ready->bitmap_file && !compile_info::platform::is_32bit)
+                    bitmaps.allocate_storage();
+            }
+        });
 }

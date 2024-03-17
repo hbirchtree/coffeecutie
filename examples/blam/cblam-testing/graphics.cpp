@@ -1,3 +1,4 @@
+#include "blam_files.h"
 #include "data.h"
 #include "map_loading.h"
 #include "networking.h"
@@ -10,9 +11,12 @@
 #include "ui.h"
 #include "ui_caching.h"
 
+#include <magic_enum.hpp>
+
 #include <coffee/comp_app/fps_counter.h>
 #include <coffee/core/coffee_args.h>
 #include <coffee/graphics/apis/gleam/rhi_emulation.h>
+#include <oaf/api.h>
 #include <platforms/sysinfo.h>
 
 #if defined(FEATURE_ENABLE_ASIO)
@@ -141,6 +145,15 @@ i32 blam_main()
             }
             cDebug("GL extensions: {0}", gfx.extensions());
 
+            auto& snd = e.register_subsystem_inplace<oaf::system>();
+            if(auto error = snd.load())
+            {
+                cWarning("Failed to load audio: {}", error.value());
+                return;
+            }
+
+            snd.collect_info(*e.service<comp_app::AppInfo>());
+
             e.register_component_inplace<Model>();
             e.register_component_inplace<SubModel>();
             e.register_component_inplace<BspReference>();
@@ -206,10 +219,14 @@ i32 blam_main()
                 auto& shader_cache =
                     e.register_subsystem_inplace<ShaderCache<halo_version>>(
                         std::ref(bitm_cache));
+                auto& sound_cache =
+                    e.register_subsystem_inplace<SoundCache<halo_version>>();
                 e.register_subsystem_inplace<ModelCache<halo_version>>(
                     std::ref(bitm_cache), std::ref(shader_cache), &gfx);
                 e.register_subsystem_inplace<BSPCache<halo_version>>(
-                    std::ref(bitm_cache), std::ref(shader_cache));
+                    std::ref(bitm_cache),
+                    std::ref(shader_cache),
+                    std::ref(sound_cache));
                 auto& font_cache =
                     e.register_subsystem_inplace<FontCache<halo_version>>(&gfx);
                 e.register_subsystem_inplace<UIElementCache<halo_version>>(
@@ -351,6 +368,12 @@ i32 blam_main()
                 camera.matrix       = camera.matrix * view_matrix;
                 camera.rotation     = glm::mat3_cast(camera.camera.rotation);
             }
+
+            auto& snd = e.subsystem_cast<oaf::system>();
+            snd.listener().set_property<oaf::listener_property::position>(
+                camera_.player().camera.position);
+            snd.listener().set_property<oaf::listener_property::orientation>(
+                glm::mat3_cast(camera_.player().camera.rotation));
         },
         [](EntityContainer&, BlamData<halo_version>&, time_point const&) {
 

@@ -17,7 +17,7 @@ requires(
     (std::is_same_v<T, Others> && ...) ||
     (std::is_convertible_v<Others, T> && ...))
 //
-inline bool any_of(T compare, Others... others)
+constexpr inline bool any_of(T compare, Others... others)
 {
     return ((compare == others) || ...);
 }

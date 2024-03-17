@@ -60,7 +60,8 @@ struct alignas(4) reflexive_t
         if(count == 0)
             return stl_types::success(span_type());
 
-        if((offset - magic.magic_offset) > magic.max_size)
+        auto computed_offset = offset - magic.magic_offset;
+        if(computed_offset > magic.max_size)
             return stl_types::failure("reflexive pointer out of bounds"sv);
 
         span_type chunk =

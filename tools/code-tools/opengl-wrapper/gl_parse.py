@@ -258,6 +258,8 @@ constexpr auto name = "{ext_name}";
     append_file(group_file, '''#pragma once
 ''')
 
+    limit_enums = []
+
     for enum in all_enums(registry):
         name, _, _ = enum
         enum_file = f'enums/{name}.h'
@@ -267,11 +269,37 @@ constexpr auto name = "{ext_name}";
 #include "common.h"
 
 namespace gl::group {''')
+        if name == 'GetPName':
+            for name, _, value in enum[1]:
+                if name.startswith('GL_MIN_') or name.startswith('GL_MAX_'):
+                    limit_enums.append(name)
         for line in generate_enum(enum, usages, compatibility_symbols):
             append_file(enum_file, line)
         
         append_file(enum_file, '\n} // namespace gl::group')
         append_file(group_file, f'#include "{enum_file}"')
+
+    limits_file = 'enums/limits.h'
+    clear_file(limits_file)
+    append_file(limits_file, '''#pragma once
+
+#include "GetPName.h"
+
+namespace gl::limits {
+
+inline std::vector<std::pair<group::get_prop, std::string_view>> properties()
+{
+    using p = group::get_prop;
+    return {''')
+    for value in limit_enums:
+        append_file(limits_file, f'''#if defined({value})
+        {{p::{snakeify_underscores(value)}, "{snakeify_underscores(value)}"}},
+#endif''')
+    append_file(limits_file, '''    };
+}
+
+} // namespace gl::limits
+''')
 
 if __name__ == '__main__':
     main()

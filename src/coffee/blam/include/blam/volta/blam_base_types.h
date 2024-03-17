@@ -41,9 +41,8 @@ using bl_rect = typing::geometry::rect<i16>;
  */
 struct bounding_box
 {
-    Vecf2 x_range;
-    Vecf2 y_range;
-    Vecf2 z_range;
+    Vecf3 p1;
+    Vecf3 p2;
 
     inline bool contains(Vecf3 const& point) const
     {
@@ -60,10 +59,7 @@ struct bounding_box
 
     std::pair<Vecf3, Vecf3> points() const
     {
-        return {
-            Vecf3(x_range.x, y_range.x, z_range.x),
-            Vecf3(x_range.y, y_range.y, z_range.y),
-        };
+        return {p1, p2};
     }
 };
 

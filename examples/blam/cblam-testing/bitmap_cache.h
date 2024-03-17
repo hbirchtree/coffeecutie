@@ -43,18 +43,25 @@ struct BitmapCache
     {
     }
 
-    inline void load_from(
-        blam::map_container<V> const& map,
-        blam::magic_data_t const&     bitmap_magic)
+    inline void load_from(blam::map_container<V> const& map)
     {
         index = blam::tag_index_view(map);
+        magic = map.magic;
+        if(map.map->version == blam::version_t::xbox)
+        {
+            bitm_magic              = map.magic;
+            bitm_magic.magic_offset = 0;
+        }
+        evict_all();
+    }
+
+    /*! Should not be called if we're parsing Xbox maps! */
+    inline void load_bitmaps_from(blam::magic_data_t const& bitmap_magic)
+    {
         bitm_header =
             blam::bitm::bitmap_atlas_view::from_data(bitmap_magic.data());
-        magic = map.magic;
-        bitm_magic =
-            map.map->version == blam::version_t::xbox ? magic : bitmap_magic;
+        bitm_magic              = bitmap_magic;
         bitm_magic.magic_offset = 0;
-        evict_all();
     }
 
     blam::tag_index_view<V>    index;
@@ -237,284 +244,10 @@ struct BitmapCache
             upload_mipmap<BucketType>(bucket, img, bmagic, 0);
     }
 
-    void allocate_storage()
-    {
-        using size_bucket = std::tuple<u32, u32>;
-
-        struct pool_size
-        {
-            u32   num    = 0;
-            u32   layers = 0;
-            Veci2 max    = {};
-
-            std::map<cache_id_t, size_bucket> images;
-        };
-
-        ProfContext _("Building texture atlases");
-
-        std::map<bitm_format_hash, pool_size> fmt_count;
-
-        /* Find final pool sizes */
-        for(auto& bitm : m_cache)
-        {
-            auto const& fmt  = bitm.second.image.fmt;
-            auto        hash = std::make_tuple(
-                bitm.second.image.mip->type,
-                fmt.pixfmt,
-                fmt.comp,
-                fmt.bfmt,
-                fmt.cmpflg);
-            auto& pool   = fmt_count[hash];
-            auto  imsize = bitm.second.image.mip->isize;
-            if(bitm.second.image.mip->mipmaps > params->mipmap_bias)
-                imsize >>= params->mipmap_bias;
-            //            auto&       surface =
-            //            tex_buckets[bitm.second.image.bucket].surface;
-
-            //            u32 mipmaps = surface->m_mipmaps;
-            u32 pad = 0;
-            //                = surface->m_format.pixfmt != PixFmt::RGB565 ? 4
-            //                << mipmaps : 0;
-
-            pool.num++;
-            pool.max.x = std::max<u32>(pool.max.x, imsize.x + pad);
-            pool.max.y = std::max<u32>(pool.max.y, imsize.y + pad);
-            pool.images.insert(
-                {bitm.first, std::make_tuple(imsize.x + pad, imsize.y + pad)});
-        }
-
-        /*
-         * Generate metadata for use in shaders, like layer, scale and offset
-         * This requires knowledge of the size of the pool and number of layers
-         * in array textures
-         */
-        for(auto& pool_ : fmt_count)
-        {
-            auto& pool = pool_.second;
-
-            Veci2 offset = {0, 0};
-
-            //            auto& surface = tex_buckets[pool_.first].surface;
-
-            u32 layer = 0;
-            //            u32 mipmaps = surface->m_mipmaps;
-            u32 max_pad = 0; // surface->m_format.pixfmt != PixFmt::RGB565 ? 4
-                             // << mipmaps : 0;
-
-            for(auto [id, fmt] : pool.images)
-            {
-                BitmapItem* img    = &m_cache.find(id)->second;
-                auto        imsize = img->image.mip->isize;
-
-                if(params->mipmap_bias > 0 &&
-                   img->image.mip->mipmaps > params->mipmap_bias)
-                {
-                    imsize >>= params->mipmap_bias;
-                    img->mipmaps.base = params->mipmap_bias;
-                    img->mipmaps.last =
-                        params->mipmap_bias +
-                        std::min<i32>(
-                            5, img->image.mip->mipmaps - params->mipmap_bias);
-                } else
-                {
-                    img->mipmaps.base = 0;
-                    img->mipmaps.last = img->image.mip->mipmaps;
-                }
-
-                if(img->header->type == blam::bitm::bitmap_type_t::cube)
-                {
-                    img->image.layer = layer++;
-                    continue;
-                }
-
-                imsize.x += max_pad;
-                imsize.y += max_pad;
-
-                auto img_offset = offset;
-                //                auto img_layer  = layer;
-
-                [[maybe_unused]] Veci2 slack = {
-                    pool.max.x - offset.x,
-                    pool.max.y - offset.y,
-                };
-
-                bool fits_width = (offset.x + imsize.x) <= pool.max.x;
-
-                if(fits_width)
-                {
-                    img_offset.x = offset.x;
-                    img_offset.y = offset.y /*- imsize.h*/;
-                    offset.x += imsize.x;
-                } else
-                {
-                    layer++;
-                    offset.x   = imsize.x;
-                    img_offset = {};
-                    //                    img_layer  = layer;
-                }
-
-                img->image.layer  = layer;
-                img->image.offset = {
-                    C_CAST<f32>(img_offset.x + max_pad / 2),
-                    C_CAST<f32>(img_offset.y + max_pad / 2),
-                };
-                img->image.scale = {
-                    C_CAST<f32>(imsize.x - max_pad),
-                    C_CAST<f32>(imsize.y - max_pad),
-                };
-            }
-
-            pool.layers = layer + 1;
-        }
-
-        /* Allocate the surfaces */
-        for(auto& bucket : tex_buckets)
-        {
-            auto& props  = bucket.second;
-            auto& pool   = fmt_count[bucket.first];
-            i32   layers = C_CAST<i32>(pool.layers);
-            auto  size =
-                size_3d<i32>{pool.max.x, pool.max.y, layers}.convert<u32>();
-            props.surface->alloc(size);
-
-            auto [type, fmt, _, __, comp] = bucket.first;
-            std::string bucket_name       = fmt::format(
-                "cache_{0}_{1}_{2}",
-                magic_enum::enum_name(type),
-                magic_enum::enum_name(fmt),
-                magic_enum::enum_name(comp));
-            allocator->debug().annotate(*props.surface, bucket_name.data());
-        }
-
-        /* Commit the textures */
-        for(auto& bitm : m_cache)
-            commit_bitmap<gfx::compat::texture_2da_t>(bitm.second);
-
-        for(auto& [_, pool] : fmt_count)
-            for(auto [image_id, fmt] : pool.images)
-            {
-                auto  image_it = m_cache.find(image_id);
-                auto* image    = &image_it->second;
-                image->image.offset[0] /= pool.max.x;
-                image->image.offset[1] /= pool.max.y;
-                image->image.scale[0] /= pool.max.x;
-                image->image.scale[1] /= pool.max.y;
-            }
-    }
+    void allocate_storage();
 
     virtual BitmapItem predict_impl(
-        blam::tagref_t const& bitmap, i16 idx) override
-    {
-        using namespace typing::pixels;
-
-        auto _ = allocator->debug().scope("BitmapCache");
-
-        using blam::tag_class_t;
-
-        if(idx == -1)
-            return {};
-
-        if(!bitmap.valid() || bitmap.tag_class != tag_class_t::bitm)
-            Throw(std::runtime_error("non-bitm tag passed to BitmapCache"));
-
-        auto it          = index.find(bitmap);
-        auto shader_name = bitmap.to_name().to_string(magic);
-
-        if(it == index.end())
-        {
-            cDebug("Failed to find bitmap: {0}", shader_name);
-            return {};
-        }
-
-        blam::tag_t const* bitm_tag = &(*it);
-
-        auto [bitm_ptr, curr_magic] =
-            bitm_tag->image(magic, bitm_header).value();
-
-        if(!bitm_ptr)
-            Throw(undefined_behavior("failed to get bitmap header"));
-
-        auto const& bitm = *bitm_ptr;
-
-        BitmapItem out;
-        out.header = &bitm;
-        out.tag    = bitm_tag;
-
-        auto sequences = bitm.sequences.data(curr_magic).value();
-        for(auto const& sequence : sequences)
-        {
-            //            if(sequence.name.str().empty())
-            continue;
-            cDebug(
-                "Sequence: {0} : {1} bitmaps",
-                sequence.name.str(),
-                sequence.bitmap_count);
-            for(auto const& sprite : sequence.sprites.data(curr_magic).value())
-            {
-                cDebug(
-                    " - Sprite {0}+{1}",
-                    sequence.first_bitmap,
-                    sprite.bitmap_index);
-            }
-        }
-
-        if(auto image_ = bitm.images.data(curr_magic); image_.has_value())
-        {
-            auto& im = image_.value();
-            if(static_cast<u16>(idx) >= im.size())
-                return {};
-
-            auto const& image = im[idx];
-
-            auto& img = out.image;
-            img.mip   = &image;
-            img.layer = 0;
-
-            PixDesc fmt;
-            if(image.compressed())
-            {
-                std::tie(fmt.pixfmt, fmt.cmpflg) = image.to_compressed_fmt();
-
-                fmt.comp = convert::to<PixCmp>(fmt.c);
-            } else
-            {
-                fmt.pixfmt                   = image.to_pixfmt();
-                std::tie(fmt.bfmt, fmt.comp) = image.to_fmt();
-            }
-
-            img.bucket = create_hash(fmt, img.mip->type);
-            img.fmt    = fmt;
-
-            switch(im[0].type)
-            {
-            case blam::bitm::type_t::tex_2d: {
-                auto& bucket =
-                    get_bucket<gfx::compat::texture_2da_t>(fmt, img.mip->type);
-                img.layer = bucket.ptr++;
-                break;
-            }
-#if GLEAM_MAX_VERSION >= 0x400 || GLEAM_MAX_VERSION >= 0x320
-            case blam::bitm::type_t::tex_cube: {
-                if(!allocator->feature_info().texture.cube_array)
-                    return {};
-                auto& bucket =
-                    get_bucket<gfx::texture_cube_array_t>(fmt, img.mip->type);
-                img.layer = bucket.ptr++;
-                break;
-            }
-#endif
-            default:
-                cDebug(
-                    "unimplemented texture type: {0}",
-                    magic_enum::enum_name(im[0].type));
-                return {};
-            }
-
-        } else
-            return {};
-
-        return out;
-    }
+        blam::tagref_t const& bitmap, i16 idx) override;
 
     virtual void evict_impl() override
     {

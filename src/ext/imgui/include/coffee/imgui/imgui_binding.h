@@ -65,6 +65,7 @@ struct ImGuiSystem
     ImGuiSystem(u32 priority = default_prio);
 
     using type = ImGuiSystem;
+    using Proxy = compo::proxy_of<ImGuiManifest>;
 
     virtual const ImGuiSystem& get() const final
     {
@@ -104,8 +105,6 @@ struct ImGuiSystem
     std::string m_configFilename;
     bool        m_iniLoaded{false};
 };
-
-static_assert(is_restricted_subsystem<ImGuiSystem>);
 
 } // namespace detail
 

@@ -444,9 +444,9 @@ struct pathfinding_edge
 
 struct background_sound_palette
 {
-    bl_string                        name;
-    tagref_typed_t<tag_class_t::snd> bg_sound;
-    bl_string                        scale_function;
+    bl_string                         name;
+    tagref_typed_t<tag_class_t::lsnd> bg_sound;
+    u32                               padding[17];
 };
 
 struct sound_environment_palette

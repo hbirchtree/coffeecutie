@@ -7,20 +7,22 @@
 namespace compo {
 
 template<typename T>
-concept is_restricted_subsystem = requires(T& v, typename T::Proxy& p) {
-    {
-        v.start_restricted(p, SubsystemBase::time_point())
-    };
-    {
-        v.end_restricted(p, SubsystemBase::time_point())
-    };
-};
-
-template<typename T>
 concept is_subsystem_manifest =
     type_safety::is_type_list<typename T::components> &&
     type_safety::is_type_list<typename T::subsystems> &&
     type_safety::is_type_list<typename T::services>;
+
+template<typename T, typename Manifest>
+concept is_restricted_subsystem =
+    is_subsystem_manifest<Manifest> &&
+    requires(T& v, typename compo::proxy_of<Manifest>& p) {
+        {
+            v.start_restricted(p, SubsystemBase::time_point())
+        };
+        {
+            v.end_restricted(p, SubsystemBase::time_point())
+        };
+    };
 
 template<typename ComponentList, typename SubsystemList, typename ServiceList>
 struct SubsystemManifest
@@ -31,6 +33,7 @@ struct SubsystemManifest
 };
 
 template<typename OuterType, is_subsystem_manifest Manifest>
+// requires is_restricted_subsystem<OuterType, Manifest>
 struct RestrictedSubsystem : SubsystemBase
 {
     using Proxy = ConstrainedProxy<

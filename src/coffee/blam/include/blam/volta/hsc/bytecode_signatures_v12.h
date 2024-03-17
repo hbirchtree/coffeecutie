@@ -111,8 +111,8 @@ inline typename Getter::return_type opcode_signature(
     case o::game_safe_to_save:
         return Getter::template get<sig_t<t::bool_, t::short_>>();
 
-    case o::game_skip_ticks:
-        return Getter::template get<sig_t<t::void_, t::short_>>();
+    // case o::game_skip_ticks:
+    //     return Getter::template get<sig_t<t::void_, t::short_>>();
 
     case o::game_difficulty_get:
         return Getter::template get<sig_t<t::game_difficulty>>();
@@ -404,7 +404,7 @@ inline typename Getter::return_type opcode_signature(
     case o::ai_retreat:
     case o::ai_follow_target_unit:
     case o::ai_follow_target_players:
-    case o::ai_follow_target_disable:
+    // case o::ai_follow_target_disable:
     case o::ai_try_to_fight_player:
     case o::ai_try_to_fight_nothing:
     case o::ai_maneuver_enable:
@@ -570,18 +570,18 @@ inline typename Getter::return_type opcode_signature(
         return Getter::template get<sig_t<t::void_>>();
     case o::player_action_test_back:
     case o::player_action_test_look_relative_left:
-    case o::player_action_test_look_relative_right:
+    // case o::player_action_test_look_relative_right:
     case o::player_action_test_look_relative_down:
     case o::player_action_test_look_relative_up:
         return Getter::template get<sig_t<t::bool_>>();
-    case o::player_action_test_move_relative_all_directions:
+    // case o::player_action_test_move_relative_all_directions:
     case o::player_action_test_look_relative_all_directions:
     case o::player_action_test_accept:
     case o::player_action_test_zoom:
     case o::player_action_test_grenade_trigger:
         return Getter::template get<sig_t<t::bool_, t::short_>>();
-    case o::player_camera_control:
-        return Getter::template get<sig_t<t::void_, t::bool_>>();
+    // case o::player_camera_control:
+    //     return Getter::template get<sig_t<t::void_, t::bool_>>();
 
     case o::player0_joystick_set_is_normal:
     case o::player0_look_pitch_is_inverted:
