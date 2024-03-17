@@ -85,9 +85,17 @@ jobs:
       env:
         VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
     - name: Building project
+      id: buildProject
+      continue-on-error: true
       run: BUILD_TYPE=${{ matrix.mode }} source/cb build ${{matrix.variant}}
       env:
         VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
+    - name: Upload vcpkg logs
+      if: steps.buildProject.outcome == 'failure'
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{matrix.artifact}}-vcpkg-logs
+        path: /usr/local/share/vcpkg/buildtrees/*/*.log
     - name: Uploading artifacts
       uses: actions/upload-artifact@v4
       with:
@@ -142,7 +150,6 @@ jobs:
     - name: Installing Inkscape
       run: brew install --cask inkscape
     - name: Building host tools
-      id: buildTools
       run: source/cb host-build
       env:
         VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
@@ -152,16 +159,8 @@ jobs:
       run: BUILD_TYPE=${{ matrix.mode }} source/cb build ${{matrix.variant}}
       env:
         VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
-    - name: Upload vcpkg logs
-      if: steps.buildProject.outcome == 'failure'
-      uses: actions/upload-artifact@v4
-      with:
-        name: ${{matrix.artifact}}-vcpkg-logs
-        path: /usr/local/share/vcpkg/buildtrees/*/*.log
     - name: Creating archive of artifacts
-      run: |
-        tar cvf apps.tar source/multi_build/${{matrix.artifact}}/bin
-        [[ -d source/multi_build/${{matrix.artifact}}/packaged ]] && tar uvf apps.tar source/multi_build/${{matrix.artifact}}/packaged
+      run: tar cvf apps.tar source/multi_build/${{matrix.artifact}}/bin
     - name: Uploading artifacts
       uses: actions/upload-artifact@v4
       with:
