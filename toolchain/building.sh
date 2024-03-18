@@ -501,6 +501,7 @@ function mingw_build()
     echo " * Selected platform ${PLATFORM}:${ARCHITECTURE}:${SYSROOT}"
 
     export VCPKG_ROOT=$(dirname $(readlink -f $(which vcpkg)))
+    export PATH=$PATH:${TOOLCHAIN_ROOT}/bin
 
     echo "::group::Configuring project"
     echo "::info::Set up for ${TOOLCHAIN_PREFIX} (system)"

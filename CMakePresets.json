@@ -439,7 +439,7 @@
                 "MINGW64": "1",
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "x64;mingw;windows",
                 "VCPKG_MANIFEST_NO_DEFAULT_FEATURES": "ON",
-                "VCPKG_MANIFEST_FEATURES": "blam;gleam;headful;network;openssl",
+                "VCPKG_MANIFEST_FEATURES": "audio;blam;gleam;headful;network;openssl",
                 "VCPKG_TARGET_TRIPLET": "x64-mingw-posix-static"
             },
             "environment": {
