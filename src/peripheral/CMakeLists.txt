@@ -79,11 +79,6 @@ if(MINGW)
   target_link_options(
     PeripheralLib PUBLIC -Wa,-mbig-obj -static-libgcc -static-libstdc++
   )
-elseif(WIN_UWP)
-  target_link_libraries(PeripheralLib PUBLIC OneCore cabinet)
-  target_compile_definitions(
-    PeripheralLib PUBLIC -DCOFFEE_WINDOWS_COMPRESSION_AVAILABLE=1
-  )
 elseif(WIN32)
   target_link_libraries(
     PeripheralLib

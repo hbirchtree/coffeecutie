@@ -17,10 +17,6 @@ option(
 option(BUILD_GL_SOFTWARE_BCN "Build software-decode for BCn using bcdec" OFF)
 option(BUILD_GL_SOFTWARE_PVRTC "Build software-decode for PVRTC" OFF)
 
-if(WIN32 AND WIN_UWP)
-  option(BUILD_ANGLE "Build on ANGLE as backend for OpenGL ES" ON)
-endif()
-
 if(BUILD_GL_SOFTWARE_BCN)
   find_package(BCDec REQUIRED)
 endif()
@@ -147,9 +143,6 @@ function(GEN_GLEAM_TARGET GLVERSION SUFFIX)
       PRIVATE
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/src/coffee/windowing/private/graphics/ceagl/include>
     )
-  elseif(BUILD_ANGLE AND ${GLVERSION} MATCHES "_ES")
-    find_package(ANGLE CONFIG REQUIRED)
-    target_link_libraries(GLeamCommon_${SUFFIX} PUBLIC AngleEGL AngleGLESv2)
   elseif(APPLE AND ${GLVERSION} MATCHES "_Dynamic")
     target_link_libraries(GLeamCommon_${SUFFIX} PUBLIC "-framework OpenGL")
   elseif(EMSCRIPTEN)
