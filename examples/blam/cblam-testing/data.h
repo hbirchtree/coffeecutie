@@ -139,6 +139,8 @@ struct LoadingStatus : compo::SubsystemBase
     std::string     status;
     libc_types::i16 progress;
     bool            loading{false};
+    bool            loaded_bitmaps{false};
+    bool            loaded_sounds{false};
 };
 
 struct GameEvent

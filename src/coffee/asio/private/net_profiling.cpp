@@ -29,7 +29,9 @@ void ProfilingExport()
     using http::header::classify_status;
     using namespace platform::url::constructors;
 
-    if constexpr(compile_info::lowfat_mode || compile_info::release_mode)
+    if constexpr(
+        compile_info::lowfat_mode ||
+        (compile_info::release_mode && !compile_info::platform::is_emscripten))
         return;
 
     cVerbose(10, "Checking for network profiling...");
@@ -38,12 +40,15 @@ void ProfilingExport()
     {
         cVerbose(10, "Network export starting");
 
-        State::SwapState("jsonProfiler", {});
+        if constexpr(!compile_info::platform::is_emscripten)
+        {
+            State::SwapState("jsonProfiler", {});
 
-        auto profilerState = State::GetProfilerStore();
+            auto profilerState = State::GetProfilerStore();
 
-        if(profilerState)
-            profilerState->disable();
+            if(profilerState)
+                profilerState->disable();
+        }
 
         auto worker = ASIO::GenWorker();
 
@@ -53,7 +58,7 @@ void ProfilingExport()
 
         auto reportBin = net::MkUrl(
             server.value(), HTTPAccess::DefaultPOST | HTTPAccess::NoVerify);
-        net::Resource reportBinRsc(ctxt, reportBin);
+        static net::Resource reportBinRsc(ctxt, reportBin);
 
         if(!reportBinRsc.connected())
         {

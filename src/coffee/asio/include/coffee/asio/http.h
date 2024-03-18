@@ -1,5 +1,6 @@
 #pragma once
 
+#include <peripherals/constants.h>
 #include <peripherals/libc/types.h>
 #include <peripherals/semantic/chunk.h>
 #include <peripherals/stl/string/trim.h>
@@ -781,7 +782,8 @@ inline request_t& create_request(request_t& origin)
     if(origin.port != 80 && origin.port != 443)
         host += ":" + cast_pod(origin.port);
 
-    standard_headers[header_field::host] = host;
+    if constexpr(!compile_info::platform::is_emscripten)
+        standard_headers[header_field::host] = host;
 
     if(origin.payload.size())
     {

@@ -67,4 +67,9 @@ char* platform()
     return platform_get_navigator_platform_internal();
 }
 
+bool is_mobile()
+{
+    return EM_ASM_INT({ return navigator.userAgentData.mobile ? 1 : 0;});
+}
+
 } // namespace platform::info::os::emscripten::detail

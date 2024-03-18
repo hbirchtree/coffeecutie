@@ -270,7 +270,18 @@ void emscripten_push_error(emscripten_fetch_t* fetch)
 
 void emscripten_push_statechange(emscripten_fetch_t* fetch)
 {
-    cDebug("emscripten_fetch: url={}, state={}", fetch->url, fetch->readyState);
+    const char* status = nullptr;
+    switch(fetch->readyState)
+    {
+    case 0: status = "unsent"; break;
+    case 1: status = "opened"; break;
+    case 2: status = "headers_received"; break;
+    case 3: status = "loading"; break;
+    case 4: status = "done"; break;
+    default:
+        return;
+    }
+    cDebug("emscripten_fetch: url={}, state={}", fetch->url, status);
 }
 
 std::optional<asio::error_code> Resource::push(

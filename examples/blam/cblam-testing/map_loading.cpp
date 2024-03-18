@@ -118,6 +118,11 @@ static void init_map(
     {
         ProfContext _("Texture allocation");
         bitmaps.allocate_storage();
+        loading_status.loaded_bitmaps = true;
+    }
+    if(files.sound_file)
+    {
+        sounds.process_sounds();
     }
 
     /* Depending on when we're done loading, stop the spinner */
@@ -196,7 +201,9 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
     files.bitmap_file.reset();
     files.sound_file.reset();
 
-    loading.loading = true;
+    loading.loading        = true;
+    loading.loaded_bitmaps = false;
+    loading.loaded_sounds  = false;
 
     auto& file_mapper = e.subsystem_cast<comp_app::FileMapper>();
 
@@ -317,16 +324,29 @@ void setup_load_eventhandlers(compo::EntityContainer& e)
             cDebug("Map resources loaded");
             auto& bitmaps = e.subsystem_cast<BitmapCache<halo_version>>();
             auto& sounds  = e.subsystem_cast<SoundCache<halo_version>>();
-            if(ready->bitmap_file)
-                bitmaps.load_bitmaps_from(*ready->bitmap_file);
-            if(ready->sound_file)
-                sounds.load_sounds_from(*ready->sound_file);
-
             auto& loading_status = e.subsystem_cast<LoadingStatus>();
+
+            if(ready->bitmap_file)
+            {
+                bitmaps.load_bitmaps_from(*ready->bitmap_file);
+                loading_status.loaded_bitmaps = true;
+            }
+            if(ready->sound_file)
+            {
+                sounds.load_sounds_from(*ready->sound_file);
+                loading_status.loaded_sounds = true;
+            }
+
             if(!loading_status.loading)
             {
                 if(ready->bitmap_file && !compile_info::platform::is_32bit)
+                {
                     bitmaps.allocate_storage();
+                }
+                if(ready->sound_file)
+                {
+                    sounds.process_sounds();
+                }
             }
         });
 }

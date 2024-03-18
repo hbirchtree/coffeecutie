@@ -194,6 +194,10 @@ STATICINLINE void PutRuntimeInfo(json::ObjectBuilder& target)
         systemFeaturesString.resize(systemFeaturesString.size() - 1);
     runtime.put("androidFeatures", systemFeaturesString);
 #endif
+#if defined(COFFEE_EMSCRIPTEN)
+    if(auto browser = platform::info::os::emscripten::browser_name())
+        runtime.put("browserAgent", *browser);
+#endif
 
     {
         json::ArrayBuilder args(target.allocator());

@@ -256,7 +256,7 @@ constexpr bool is_32bit =
     ;
 
 constexpr bool custom_exit =
-#if defined(COFFEE_CUSTOM_EXIT_HANDLING)
+#if defined(COFFEE_CUSTOM_EXIT_HANDLING) || defined(COFFEE_EMSCRIPTEN)
     true
 #else
     false

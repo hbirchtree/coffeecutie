@@ -253,6 +253,7 @@
                 "BUILD_HEADFUL": "OFF",
                 "BUILD_IMGUI": "OFF",
                 "BUILD_MEDIA": "OFF",
+                "BUILD_OPENAL": "OFF",
                 "BUILD_SDL2": "OFF",
                 "BUILD_TESTS": "OFF",
                 "BUILD_WITH_WERROR": "OFF",

@@ -1,12 +1,12 @@
 #pragma once
 
-#include <peripherals/identify/architecture.h>
-
 #include <emscripten.h>
+#include <peripherals/identify/architecture.h>
 #include <peripherals/libc/types.h>
 #include <peripherals/stl/string/split.h>
 #include <peripherals/stl/string/trim.h>
 #include <peripherals/stl/types.h>
+#include <platforms/base/device_variant.h>
 #include <string_view>
 
 namespace emscripten::args {
@@ -45,6 +45,7 @@ namespace detail {
 
 extern char* user_agent();
 extern char* platform();
+extern bool  is_mobile();
 
 } // namespace detail
 
@@ -100,6 +101,17 @@ inline std::optional<std::string> name()
     return std::nullopt;
 }
 
+inline std::optional<std::string> browser_name()
+{
+    if(auto ua_ = os::emscripten::detail::user_agent())
+    {
+        std::string ua(ua_);
+        ::free(ua_);
+        return ua;
+    }
+    return std::nullopt;
+}
+
 inline std::optional<std::string_view> version()
 {
     using namespace std::string_view_literals;
@@ -125,6 +137,14 @@ inline libc_types::f32 dpi()
 {
     return static_cast<libc_types::f32>(
         EM_ASM_DOUBLE({ return window['devicePixelRatio']; }));
+}
+
+inline DeviceType variant()
+{
+    if(info::os::emscripten::detail::is_mobile())
+        return DeviceType::DevicePhone;
+    else
+        return DeviceType::DeviceDesktop;
 }
 
 } // namespace platform::info::device::emscripten

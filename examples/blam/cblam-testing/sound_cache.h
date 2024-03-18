@@ -43,11 +43,17 @@ struct SoundCache
 {
     using type = SoundCache<V>;
 
+    SoundCache(oaf::api* api)
+        : api(api)
+    {
+    }
+
     inline void load_from(blam::map_container<V> const& map)
     {
-        index       = blam::tag_index_view<V>(map);
-        magic       = map.magic;
-        sound_magic = blam::magic_data_t();
+        index = blam::tag_index_view<V>(map);
+        magic = map.magic;
+        if(map.map->version == blam::version_t::xbox)
+            sound_magic = map.magic;
         evict_all();
     }
 
@@ -57,6 +63,7 @@ struct SoundCache
         this->sound_magic.magic_offset = 0;
     }
 
+    oaf::api*               api{nullptr};
     blam::tag_index_view<V> index;
     blam::magic_data_t      magic;
     blam::magic_data_t      sound_magic;
@@ -112,7 +119,24 @@ struct SoundCache
         {
         case blam::tag_class_t::lsnd:
             parse_loop_sound(out, *tag_it);
-            for(auto const& track : out.tracks)
+            break;
+        case blam::tag_class_t::snd:
+            out.sound = parse_simple_sound(tag);
+            break;
+        default:
+            break;
+        }
+
+        return out;
+    }
+
+    void process_sounds()
+    {
+        for(auto const& [key, sound] : m_cache)
+        {
+            if(!sound.looping_sound)
+                continue;
+            for(SoundItem::track_t const& track : sound.tracks)
             {
                 if(!track.sounds.contains(SoundItem::loop))
                     continue;
@@ -123,7 +147,7 @@ struct SoundCache
                         track.sounds.at(SoundItem::loop)->codec),
                     magic_enum::enum_name(
                         track.sounds.at(SoundItem::loop)->sample_rate));
-                auto sound = track.sounds.at(SoundItem::loop);
+                auto sound   = track.sounds.at(SoundItem::loop);
                 auto pitches = track.sounds.at(SoundItem::loop)
                                    ->pitch_ranges.data(magic)
                                    .value();
@@ -132,20 +156,16 @@ struct SoundCache
                     auto perms = pitch.permutations.data(magic).value();
                     for(auto const& perm : perms)
                     {
-                        // auto data = perm.sample_data().data(sound_magic).value();
-                        cDebug("   - Perm: gain={}", perm.gain);
+                        auto data =
+                            perm.sample_data().data(sound_magic).value();
+                        cDebug(
+                            "   - Perm: gain={}, ptr={}",
+                            perm.gain,
+                            static_cast<const void*>(data.data()));
                     }
                 }
             }
-            break;
-        case blam::tag_class_t::snd:
-            out.sound = parse_simple_sound(tag);
-            break;
-        default:
-            break;
         }
-
-        return out;
     }
 
     u32 get_id(blam::tagref_t const& tag)

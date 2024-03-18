@@ -324,6 +324,9 @@ using apple::variant;
 #elif defined(COFFEE_WINDOWS)
 using win32::variant;
 
+#elif defined(COFFEE_EMSCRIPTEN)
+using emscripten::variant;
+
 #else
 inline DeviceType variant()
 {

@@ -220,7 +220,8 @@ i32 blam_main()
                     e.register_subsystem_inplace<ShaderCache<halo_version>>(
                         std::ref(bitm_cache));
                 auto& sound_cache =
-                    e.register_subsystem_inplace<SoundCache<halo_version>>();
+                    e.register_subsystem_inplace<SoundCache<halo_version>>(
+                        &snd);
                 e.register_subsystem_inplace<ModelCache<halo_version>>(
                     std::ref(bitm_cache), std::ref(shader_cache), &gfx);
                 e.register_subsystem_inplace<BSPCache<halo_version>>(
@@ -322,6 +323,10 @@ i32 blam_main()
                 };
                 e.subsystem_cast<GameEventBus>().inject(event, &connect);
             }
+
+#if defined(COFFEE_EMSCRIPTEN) && defined(FEATURE_ENABLE_ASIO)
+            Net::ProfilingExport();
+#endif
         },
         [](EntityContainer& e,
            BlamData<halo_version>&,
