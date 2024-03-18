@@ -96,6 +96,9 @@ jobs:
       with:
         name: ${{matrix.artifact}}-vcpkg-logs
         path: /usr/local/share/vcpkg/buildtrees/*/*.log
+    - name: Build validation
+      if: steps.buildProject.outcome == 'failure'
+      run: false
     - name: Uploading artifacts
       uses: actions/upload-artifact@v4
       with:
@@ -155,7 +158,6 @@ jobs:
         VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
     - name: Building project
       id: buildProject
-      continue-on-error: true
       run: BUILD_TYPE=${{ matrix.mode }} source/cb build ${{matrix.variant}}
       env:
         VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
