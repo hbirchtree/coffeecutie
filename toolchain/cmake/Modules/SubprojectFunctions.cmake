@@ -37,6 +37,7 @@ macro(INIT_SUBPROJECT)
   # ############################################################################
 
   set(CMAKE_MODULE_PATH
+      ${CMAKE_SOURCE_DIR}/toolchain/cmake/Find
       ${CMAKE_SOURCE_DIR}/toolchain/cmake/Modules
       ${CMAKE_SOURCE_DIR}/toolchain/cmake/Packaging
   )

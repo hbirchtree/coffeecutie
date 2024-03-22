@@ -9,6 +9,7 @@
         "cxxopts",
         { "name": "fmt" },
         "glm",
+        "hash-library",
         { "name": "ktx", "features": ["vulkan"], "platform": "!bare" },
         "magic-enum",
         "ms-gsl",

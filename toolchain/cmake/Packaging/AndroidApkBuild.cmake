@@ -323,6 +323,7 @@ function(ANDROIDAPK_PACKAGE)
   # Install dependency libraries
   #
   foreach(lib ${DEPENDENCIES})
+    message("${AAPK_TARGET} - ${lib}")
     add_custom_command(
       TARGET "${AAPK_TARGET}.project"
       POST_BUILD

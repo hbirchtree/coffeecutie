@@ -42,9 +42,9 @@ export COFFEE_NO_PROFILER_EXPORT="1"
 CRASH="${APPDIR}/CrashRecovery"
 
 if [ -f "$GDB"  ]; then
-    $GDB --args "${APPDIR}/@APPIMAGE_EXEC@" ${APPDIR}/assets $@
+    $GDB --args "${APPDIR}/@APPIMAGE_EXEC@" "${APPDIR}/assets" $@
 elif [ -f "$CRASH" ] && [ -z "$NO_CRASHPAD" ]; then
-    "$CRASH" "${APPDIR}/@APPIMAGE_EXEC@" ${APPDIR}/assets $@
+    "$CRASH" "${APPDIR}/@APPIMAGE_EXEC@" "${APPDIR}/assets" $@
 else
-    "${APPDIR}/@APPIMAGE_EXEC@" ${APPDIR}/assets $@
+    "${APPDIR}/@APPIMAGE_EXEC@" "${APPDIR}/assets" $@
 fi

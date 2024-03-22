@@ -16,11 +16,6 @@ macro(
   # Locate necessary binary files
   set(BASE_LIBS)
   if(NOT MINGW64)
-    if(BUILD_ANGLE)
-      find_package(ANGLE REQUIRED)
-      list(APPEND BASE_LIBS AngleEGL AngleGLESv2)
-    endif()
-
     foreach(lib_target ${BASE_LIBS})
       get_target_property(lib ${lib_target} IMPORTED_LOCATION)
       get_filename_component(LIB_BASE "${lib}" NAME_WE)
@@ -52,12 +47,6 @@ macro(
 
   set(LINESHIFT "\r\n")
 
-  # if(MINGW64)
-  #   set(LINESHIFT "\r\n")
-  # endif()
-
-  set(RESC_NUM "0")
-
   # Clear resource descriptor to avoid dupes
   file(WRITE "${RESOURCE_DESCRIPTOR}" "")
   # Clear resource header
@@ -66,8 +55,6 @@ macro(
   file(WRITE "${RESOURCE_DESCRIPTOR}"
        "// Automatically generated resource file by Coffee ${LINESHIFT}"
   )
-
-  set(RESOURCE_FILES "")
 
   set(RESOURCES ${RESOURCES};${COFFEE_DESKTOP_DIRECTORY}/windows)
 
@@ -81,25 +68,23 @@ macro(
       # We get a lower-case version to compare with other filenames
       string(TOLOWER "${file_name}" file_name_lower)
 
-      if(NOT ("${file_name_lower}" STREQUAL "thumbs.db"))
-        # On Win32, package it into the .exe fil
-        # If there is a directory path, append a "_" for it to be correct This
-        # is disgusting.
-        if(file_dir)
-          set(file_dir "${file_dir}/")
-        endif()
-        # Set virtual filename
-        set(virt_fname "${file_dir}${file_name}")
-        string(REPLACE "_" "___" virt_fname "${virt_fname}")
-        string(REPLACE "/" "_" virt_fname "${virt_fname}")
-        string(REPLACE "\\" "_" virt_fname "${virt_fname}")
-        # Insert the file with directory path and filename into the .rc file
-        file(APPEND "${RESOURCE_DESCRIPTOR}"
-             "\"${virt_fname}\" CF_RES \"${file_full}\" ${LINESHIFT}"
-        )
+      if("${file_name_lower}" STREQUAL "thumbs.db")
+        continue()
       endif()
-      # Increment resource number, inserted into .rc file
-      math(EXPR RESC_NUM "${RESC_NUM} + 1")
+      # On Win32, package it into the .exe file
+      # If there is a directory path, append a "_" for it to be correct This
+      # is disgusting.
+      if(file_dir)
+        set(file_dir "${file_dir}/")
+      endif()
+      # Set virtual filename
+      set(virt_fname "${file_dir}${file_name}")
+      string(SHA256 RESC_HASH ${virt_fname})
+      # Insert the file with directory path and filename into the .rc file
+      file(APPEND "${RESOURCE_DESCRIPTOR}"
+           # "\"${virt_fname}\" CF_RES \"${file_full}\" ${LINESHIFT}"
+           "sha256/${RESC_HASH} CF_RES \"${file_full}\" ${LINESHIFT}"
+      )
     endforeach()
   endforeach()
 
@@ -123,32 +108,21 @@ macro(
     set(RESOURCE_DESCRIPTOR)
   endif()
 
-  set(FINAL_SOURCE_FILES ${SDL2_MAIN_C_FILE} ${SOURCES} ${MANIFEST_FILE}
-                         ${INCLUDED_LIBS}
-  )
-
-  if(NOT MINGW64)
-    list(APPEND FINAL_SOURCE_FILES ${RESOURCE_DESCRIPTOR}
-         ${WINDOWS_BASE_RESOURCE} ${RESOURCE_FILES}
-    )
-  endif()
-
   add_executable(
     ${TARGET}
-    ${OPTIONS} ${FINAL_SOURCE_FILES}
-    # ${SDL2_MAIN_C_FILE}
-    # ${SOURCES}
-    # ${WINDOWS_BASE_RESOURCE}
-    # ${RESOURCE_DESCRIPTOR}
-    # ${RESOURCE_HEADER}
-    # ${MANIFEST_FILE}
-    # ${INCLUDED_LIBS}
-    # ${RESOURCE_FILES}
+    ${OPTIONS}
+
+    ${SOURCES}
+    ${MANIFEST_FILE}
+    ${INCLUDED_LIBS}
+
+    ${RESOURCE_DESCRIPTOR}
+    ${WINDOWS_BASE_RESOURCE}
   )
 
-  set_target_properties(
-    ${TARGET} PROPERTIES VERSION ${COFFEE_BUILD_STRING} SOVERSION 1
-  )
+  # set_target_properties(
+  #   ${TARGET} PROPERTIES VERSION ${COFFEE_BUILD_STRING} SOVERSION 1
+  # )
   install(TARGETS ${TARGET} DESTINATION bin)
   install(FILES ${BUNDLE_LIBS} DESTINATION bin)
 endmacro()
