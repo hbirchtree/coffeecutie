@@ -591,13 +591,20 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
 
     using typing::pixels::PixFmt;
 
-    // out.rendertarget.depth_16f
-    //     = supports_render_format(out, typing::pixels::PixFmt::Depth16F);
     out.rendertarget.depth32f =
         out.rendertarget.depth32f ||
         supports_render_format(out, PixFmt::Depth32F) ||
         supports_extension(extensions, arb::depth_buffer_float::name);
 
+    /* Selection of preferred PixFmt for color/depth buffers
+     * For easier use by other code
+     * References:
+     * For Core OpenGL:
+     * https://www.khronos.org/opengl/wiki/Image_Format#Required_formats
+     * For WebGL:
+     * https://webgl2fundamentals.org/webgl/lessons/webgl-data-textures.html
+     * For ES, it's just guesswork :)
+     */
     if(out.rendertarget.depth32f)
         out.rendertarget.high_precision_depth_format = PixFmt::Depth32F;
     else if(out.rendertarget.depth32)
