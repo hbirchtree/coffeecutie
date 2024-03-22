@@ -38,6 +38,19 @@ add_custom_target (
 #    --build-mode ${CMAKE_BUILD_TYPE}
 )
 
+set(BUNDLED_LIBS)
+# OpenAL has to have shared linkage
+if(BUILD_OPENAL)
+    if(ANDROID)
+        find_package(OpenSL REQUIRED)
+    endif()
+    find_package(OpenAL CONFIG REQUIRED)
+    get_target_property(OPENAL_LIB OpenAL::OpenAL IMPORTED_LOCATION_DEBUG)
+    set(BUNDLED_LIBS
+        $<IF:$<CONFIG:Debug>,$<TARGET_PROPERTY:OpenAL::OpenAL,IMPORTED_LOCATION_DEBUG>,$<TARGET_PROPERTY:OpenAL::OpenAL,IMPORTED_LOCATION_RELEASE>>
+    )
+endif()
+
 coffee_application(
   TARGET BlamGraphics
   TITLE "Blam Graphics"
@@ -54,6 +67,7 @@ coffee_application(
         ui.cpp
         widgets.cpp
   LIBRARIES Blam Core Image GLeamRHI ImGui OAF
+  BUNDLE_LIBRARIES ${BUNDLED_LIBS}
   SCHEMES blam halo
   ICON_ASSET ${CMAKE_CURRENT_SOURCE_DIR}/icon_asset.svg
   RESOURCES "${CMAKE_CURRENT_BINARY_DIR}/assets"

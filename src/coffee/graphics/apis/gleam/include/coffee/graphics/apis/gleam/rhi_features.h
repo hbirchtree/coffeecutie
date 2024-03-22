@@ -1,6 +1,7 @@
 #pragma once
 
 #include <peripherals/libc/types.h>
+#include <peripherals/typing/enum/pixels/format.h>
 
 namespace gleam {
 
@@ -120,11 +121,22 @@ struct features
 
         /* Format support */
         bool color_buffer_float{false};
+        bool color_buffer_10bit{false}; // GL_RGB10_A2
         bool color_buffer_half_float{false};
-        bool depth_16f{false};
+        bool color_buffer_11f_11f_10f{false}; // GL_R11F_G11F_B10F
         bool depth24{false};
         bool depth24_stencil8{false};
-        bool depth_32f{false};
+        bool depth32{false};
+        bool depth32f{false};
+
+        /* Specify these for simple selection of rendertarget formats */
+        typing::pixels::PixFmt high_precision_color_format{};
+        typing::pixels::PixFmt med_precision_color_format{};
+        typing::pixels::PixFmt high_precision_single_format{};
+        typing::pixels::PixFmt high_precision_depth_format{};
+        typing::pixels::PixFmt low_precision_color_format{};
+        typing::pixels::PixFmt low_precision_single_format{};
+        typing::pixels::PixFmt low_precision_depth_format{};
 
         struct
         {

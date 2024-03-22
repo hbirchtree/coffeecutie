@@ -269,22 +269,14 @@ void create_resources(compo::EntityContainer& e)
     //    if constexpr(compile_info::platform::is_android)
     if(api.api_version() != std::make_tuple(2u, 0u))
     {
+        auto const& features = api.feature_info().rendertarget;
+
         resources.offscreen = api.alloc_rendertarget();
         resources.color     = api.alloc_texture(
-            gfx::textures::d2,
-            PixDesc(
-                api.feature_info().rendertarget.color_buffer_half_float
-                    ? PixFmt::RGB16F
-                    : PixFmt::RGB8),
-            1);
+            gfx::textures::d2, PixDesc(features.med_precision_color_format), 1);
         resources.depth = api.alloc_texture(
             gfx::textures::d2,
-            PixDesc(
-                api.feature_info().rendertarget.depth_32f ? PixFmt::Depth32F
-                : api.feature_info().rendertarget.depth24_stencil8
-                    ? PixFmt::Depth24Stencil8
-                : api.feature_info().rendertarget.depth24 ? PixFmt::Depth24
-                                                          : PixFmt::Depth16),
+            PixDesc(features.high_precision_depth_format),
             1);
         resources.offscreen->alloc();
         auto const& size = resources.offscreen_size;
@@ -294,13 +286,7 @@ void create_resources(compo::EntityContainer& e)
         using gfx::render_targets::attachment;
 
         resources.offscreen->attach(attachment::color, *resources.color, 0);
-        resources.offscreen->attach(
-            (api.feature_info().rendertarget.depth_32f ||
-             !api.feature_info().rendertarget.depth24_stencil8)
-                ? attachment::depth
-                : attachment::depth_stencil,
-            *resources.depth,
-            0);
+        resources.offscreen->attach(attachment::depth, *resources.depth, 0);
         resources.offscreen->resize({0, 0, size.x, size.y});
         cDebug(
             "Created offscreen buffer with: color={} depth={}",

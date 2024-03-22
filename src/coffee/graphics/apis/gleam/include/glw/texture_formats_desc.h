@@ -231,6 +231,8 @@ inline texture_format_t const& format_of(PixDesc const& desc)
     }
     case P::Depth24Stencil8:
         return format_of(format_t::depth24_stencil8);
+    case P::Depth32:
+        return format_of(format_t::depth_component32);
     case P::Depth32F:
         return format_of(format_t::depth_component32f);
     case P::Depth32FStencil8:

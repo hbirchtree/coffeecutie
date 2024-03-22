@@ -436,18 +436,21 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
 
     if(api_type == api_type_t::core)
     {
-        out.buffer.mapping                       = true;
-        out.buffer.pbo                           = true;
-        out.buffer.ubo                           = true;
-        out.draw.instancing                      = true;
-        out.draw.vertex_offset                   = true;
-        out.rendertarget.framebuffer_texture     = true;
-        out.texture.max_level                    = true;
-        out.texture.tex.gl.rgtc                  = true;
-        out.rendertarget.color_buffer_float      = true;
-        out.rendertarget.color_buffer_half_float = true;
-        out.rendertarget.depth24_stencil8        = true;
-        out.rendertarget.depth_16f               = true;
+        out.buffer.mapping                        = true;
+        out.buffer.pbo                            = true;
+        out.buffer.ubo                            = true;
+        out.draw.instancing                       = true;
+        out.draw.vertex_offset                    = true;
+        out.rendertarget.framebuffer_texture      = true;
+        out.texture.max_level                     = true;
+        out.texture.tex.gl.rgtc                   = true;
+        out.rendertarget.color_buffer_float       = true;
+        out.rendertarget.color_buffer_half_float  = true;
+        out.rendertarget.color_buffer_11f_11f_10f = true;
+        out.rendertarget.color_buffer_10bit       = true;
+        out.rendertarget.depth24_stencil8         = true;
+        out.rendertarget.depth24                  = true;
+        out.rendertarget.depth32f                 = true;
 
         out.texture.cube_array = api_version >= 0x400;
 
@@ -495,21 +498,22 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
     {
         out.texture.swizzle = false;
 
-        out.buffer.mapping                = true; /* Emulated, but still */
-        out.buffer.pbo                    = true;
-        out.buffer.ubo                    = true;
-        out.draw.instancing               = true;
-        out.rendertarget.clearbuffer      = true;
-        out.rendertarget.readdraw_buffers = true;
-        out.rendertarget.depth24          = true;
-        out.texture.internal_format_query = true;
-        out.texture.max_level             = true;
-        out.texture.samplers              = true;
-        out.texture.texture_3d            = true;
-        out.texture.tex_layer_query       = true;
-        out.texture.tex.gl.etc2           = true;
-        out.vertex.attribute_binding      = true;
-        out.vertex.vertex_arrays          = true;
+        out.buffer.mapping                  = true; /* Emulated, but still */
+        out.buffer.pbo                      = true;
+        out.buffer.ubo                      = true;
+        out.draw.instancing                 = true;
+        out.rendertarget.clearbuffer        = true;
+        out.rendertarget.color_buffer_10bit = true;
+        out.rendertarget.readdraw_buffers   = true;
+        out.rendertarget.depth24            = true;
+        out.texture.internal_format_query   = true;
+        out.texture.max_level               = true;
+        out.texture.samplers                = true;
+        out.texture.texture_3d              = true;
+        out.texture.tex_layer_query         = true;
+        out.texture.tex.gl.etc2             = true;
+        out.vertex.attribute_binding        = true;
+        out.vertex.vertex_arrays            = true;
 
         // out.rendertarget.color_buffer_half_float = supports_extension(
         //     extensions, ext::color_buffer_half_float::name);
@@ -585,11 +589,46 @@ tuple<features, api_type_t, u32> api::query_native_api_features(
             supports_extension(extensions, khr::parallel_shader_compile::name);
     }
 
+    using typing::pixels::PixFmt;
+
     // out.rendertarget.depth_16f
     //     = supports_render_format(out, typing::pixels::PixFmt::Depth16F);
-    out.rendertarget.depth_32f =
-        supports_render_format(out, typing::pixels::PixFmt::Depth32F) ||
+    out.rendertarget.depth32f =
+        out.rendertarget.depth32f ||
+        supports_render_format(out, PixFmt::Depth32F) ||
         supports_extension(extensions, arb::depth_buffer_float::name);
+
+    if(out.rendertarget.depth32f)
+        out.rendertarget.high_precision_depth_format = PixFmt::Depth32F;
+    else if(out.rendertarget.depth32)
+        out.rendertarget.high_precision_depth_format = PixFmt::Depth32;
+    else
+        out.rendertarget.high_precision_depth_format = PixFmt::Depth24;
+    out.rendertarget.low_precision_depth_format = PixFmt::Depth16;
+
+    if(out.rendertarget.color_buffer_float)
+    {
+        out.rendertarget.high_precision_color_format = PixFmt::RGB32F;
+        if(out.rendertarget.color_buffer_half_float)
+            out.rendertarget.med_precision_color_format = PixFmt::RGB16F;
+        else if(out.rendertarget.color_buffer_11f_11f_10f)
+            out.rendertarget.med_precision_color_format = PixFmt::R11G11B10F;
+        else
+            out.rendertarget.med_precision_color_format = PixFmt::RGB32F;
+    } else if(out.rendertarget.color_buffer_half_float)
+        out.rendertarget.high_precision_color_format =
+            out.rendertarget.med_precision_color_format = PixFmt::RGB16F;
+    else if(out.rendertarget.color_buffer_11f_11f_10f)
+        out.rendertarget.high_precision_color_format =
+            out.rendertarget.med_precision_color_format = PixFmt::R11G11B10F;
+    else if(out.rendertarget.color_buffer_10bit)
+        out.rendertarget.high_precision_color_format =
+            out.rendertarget.med_precision_color_format = PixFmt::RGB10A2;
+    else
+        out.rendertarget.high_precision_color_format =
+            out.rendertarget.med_precision_color_format = PixFmt::RGBA8;
+    out.rendertarget.low_precision_color_format =
+        api_type == api_type_t::es ? PixFmt::RGB565 : PixFmt::RGBA8;
 
     out.debug.khr.debug = supports_extension(extensions, khr::debug::name);
 

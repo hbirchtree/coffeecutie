@@ -67,7 +67,7 @@ using common::posix::error_message;
 #define PLATFORM_FILE_SUPPORTS_LIST 1
 #define PLATFORM_FILE_SUPPORTS_MAPPING 1
 
-using posix::open_file;
+using win32::open_file;
 using posix::read;
 using posix::write;
 
@@ -76,10 +76,10 @@ using win32::unmap;
 
 using cpp::create;
 using cpp::create_directory;
-using posix::exists;
-using posix::file_info;
+using win32::exists;
+using win32::file_info;
+using win32::size;
 using posix::remove;
-using posix::size;
 using posix::truncate;
 
 using posix::list;

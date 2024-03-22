@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../posix/detail.h"
+#include "detail.h"
 
 #include <gsl/span>
 #include <peripherals/semantic/enum/rsca.h>
@@ -24,6 +24,8 @@ struct mem_mapping_t
     span_type      view;
     semantic::RSCA access;
     mapping_source source{mapping_source::file};
+
+    HRSRC resource{};
 
     operator span_type() const
     {

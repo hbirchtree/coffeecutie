@@ -70,6 +70,9 @@ i32 blam_main()
     rq::runtime_queue::CreateNewQueue("Blam Graphics!").assume_value();
 #if defined(FEATURE_ENABLE_ASIO)
     C_UNUSED(auto _ = Net::RegisterProfiling());
+#if defined(COFFEE_EMSCRIPTEN)
+    platform::env::set_var("COFFEE_REPORT_URL", "https://reports.birchy.dev");
+#endif
 #endif
 
     comp_app::app_error app_ec;

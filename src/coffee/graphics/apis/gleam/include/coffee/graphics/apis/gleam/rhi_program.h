@@ -289,6 +289,11 @@ struct program_t
                     convert::to<group::shader_type>(stage_type));
 
                 i32 data_length = static_cast<i32>(stage_info->m_data.size());
+
+                if(stage_info->m_data.empty())
+                    return stl_types::failure(compile_error_t{
+                        "No data provided for one of the shaders"});
+
                 cmd::shader_source(
                     stage_info->m_handle,
                     {

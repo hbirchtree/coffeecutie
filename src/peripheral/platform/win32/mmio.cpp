@@ -69,6 +69,34 @@ std::pair<DWORD, DWORD> size_to_parts(szptr size)
 result<mem_mapping_t, posix::posix_error> map(
     Url const& file, mapping_params_t params)
 {
+    if(detail::is_resource(file, params.access))
+    {
+        fprintf(stderr, "Mapping %s\n", file.internUrl.c_str());
+        auto fd_ = open_file(file, params.access);
+        if(!fd_.has_value())
+        {
+            fprintf(stderr, " - Failed opening\n");
+            return posix::posix_error{EPERM};
+        }
+        auto fd       = std::move(fd_.value());
+        auto map_size = params.size;
+        if(map_size == 0)
+            map_size = detail::resource_length(fd);
+        auto data = detail::resource_data(fd);
+        if(!data.has_value())
+        {
+            fprintf(stderr, " - Failed mapping\n");
+            return posix::posix_error{ENOENT};
+        }
+        fprintf(stderr, " - Success\n");
+        return mem_mapping_t{
+            .view   = data.value().subspan(params.offset, map_size),
+            .access = params.access,
+            .resource = fd.resource,
+        };
+    }
+
+    fprintf(stderr, "Win32 mapping %s\n", file.internUrl.c_str());
     auto file_name            = *file;
     auto [open, create]       = access_to_win32(params.access);
     constexpr auto share_mode = FILE_SHARE_READ;
@@ -118,6 +146,9 @@ result<mem_mapping_t, posix::posix_error> map(
 
 std::optional<posix::posix_error> unmap(mem_mapping_t&& mapping)
 {
+    if(mapping.resource)
+        return std::nullopt;
+
     UnmapViewOfFile(mapping.view.data());
     CloseHandle(mapping.file);
     CloseHandle(mapping.mapping);

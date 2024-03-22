@@ -171,11 +171,13 @@ if(WIN32 OR MINGW)
   target_sources(
     PeripheralPlatform
     PRIVATE
+            win32/fsio.cpp
             win32/mmio.cpp
             win32/sysinfo_ex.cpp
             win32/wmi_win32.cpp
   )
-  target_sources(PeripheralPlatform PRIVATE win32/wmi_win32.cpp)
+  find_library(HASH_LIBRARY_LIB hash-library)
+  target_link_libraries(PeripheralPlatform PUBLIC ${HASH_LIBRARY_LIB})
 endif()
 
 #
