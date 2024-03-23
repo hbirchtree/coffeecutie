@@ -101,7 +101,7 @@ function(RWIMAGE_PACKAGE)
     COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:${RWI_TARGET}>"
             "${BIN_DIR}/${RWI_TARGET}"
     # Make space for the preloaded data
-    COMMAND sh -c "truncate -s 128M ${FINAL_FILE}"
+    COMMAND sh -c "truncate -s 512M ${FINAL_FILE}"
     # Extend it with 32M for writable storage + reserved for FS
     COMMAND sh -c "truncate -s +32M ${FINAL_FILE}"
     # Create the EXT2 filesystem in the file
@@ -113,7 +113,7 @@ function(RWIMAGE_PACKAGE)
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${BASE_DIR}/ ${MOUNT_DIR}/
     COMMAND ${CMAKE_COMMAND} -E make_directory ${MOUNT_DIR}/store
     # Set permissions
-    COMMAND chmod -R 0555 ${MOUNT_DIR}/bin ${MOUNT_DIR}/lib ${MOUNT_DIR}/assets
+    COMMAND chmod -R 0555 ${MOUNT_DIR}/bin ${MOUNT_DIR}/lib ${MOUNT_DIR}/assets ${MOUNT_DIR}/launch.sh ${MOUNT_DIR}/icon.svg
     COMMAND chmod -R 0777 ${MOUNT_DIR}/store
     COMMAND fusermount -u ${MOUNT_DIR}
   )

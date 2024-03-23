@@ -27,7 +27,4 @@ if(BUILD_LIBRARIES AND BUILD_BINARIES)
   endif()
 endif()
 
-# Add documentation directory, not built by default (increases build time)
-add_subdirectory(toolchain/docs-gen)
-
 end_project()

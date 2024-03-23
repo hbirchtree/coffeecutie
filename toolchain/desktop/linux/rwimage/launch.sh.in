@@ -21,6 +21,7 @@ fi
 
 # This is used by the application
 export RWIMAGE_DATA_DIR="${RWIMAGE_ROOT}/assets"
+export RWIMAGE_STORE_DIR="${RWIMAGE_ROOT}/store"
 
 # Set up environment
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:${RWIMAGE_ROOT}/lib"
@@ -30,10 +31,10 @@ export XDG_DATA_DIRS="$XDG_DATA_DIRS:${RWIMAGE_ROOT}/share"
 # Coffee-specific
 export COFFEE_NO_PROFILER_EXPORT="${COFFEE_NO_PROFILER_EXPORT:-1}"
 
-CRASH="${RWIMAGE_ROOT}/CrashRecovery"
+CRASH="${RWIMAGE_ROOT}/bin/CrashRecovery"
 # Executing application, we might as well destroy the current bash shell
 if [ -f "$CRASH" ]; then
-    exec "$CRASH" "${RWIMAGE_ROOT}/@RWI_TARGET@" $@
+    exec "$CRASH" "${RWIMAGE_ROOT}/bin/@RWI_TARGET@" "${RWIMAGE_ROOT}/assets" $@
 else
-    exec "${RWIMAGE_ROOT}/@RWI_TARGET@" $@
+    exec "${RWIMAGE_ROOT}/bin/@RWI_TARGET@" "${RWIMAGE_ROOT}/assets" $@
 fi
