@@ -196,6 +196,11 @@ inline texture_format_t const& format_of(PixDesc const& desc)
     case P::RGBA32I:
         return format_of(format_t::rgba32i);
 
+    case P::RGB10A2:
+        return format_of(format_t::rgb10_a2);
+    case P::RGB10A2UI:
+        return format_of(format_t::rgb10_a2ui);
+
     case P::SRGB8:
         return format_of(format_t::srgb8);
     case P::SRGB8A8:
@@ -231,8 +236,10 @@ inline texture_format_t const& format_of(PixDesc const& desc)
     }
     case P::Depth24Stencil8:
         return format_of(format_t::depth24_stencil8);
+#if defined(GL_DEPTH_COMPONENT32)
     case P::Depth32:
         return format_of(format_t::depth_component32);
+#endif
     case P::Depth32F:
         return format_of(format_t::depth_component32f);
     case P::Depth32FStencil8:

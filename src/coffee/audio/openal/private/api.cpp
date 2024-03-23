@@ -88,7 +88,7 @@ std::optional<std::string> api::load(DeviceHandle&& device)
     };
     const auto get_proc = [this]<typename T>(const char* name, T& proc) {
         auto proc_ptr = alcGetProcAddress(m_device, name);
-        proc = reinterpret_cast<T>(proc_ptr);
+        proc          = reinterpret_cast<T>(proc_ptr);
     };
 
     std::vector<ALCuint> attrs{};
@@ -134,6 +134,15 @@ std::optional<std::string> api::load(DeviceHandle&& device)
     if(!alcMakeContextCurrent(m_context))
         return current_error();
 
+    m_formats.float32    = alcIsExtensionPresent(m_device, "AL_EXT_float32");
+    m_formats.ima4_adpcm = alcIsExtensionPresent(m_device, "AL_EXT_IMA4");
+    m_formats.ms_adpcm   = alcIsExtensionPresent(m_device, "AL_SOFT_MSADPCM");
+
+    m_features.soft.block_alignment =
+        alcIsExtensionPresent(m_device, "AL_SOFT_block_alignment");
+    m_features.soft.spatialize =
+        alcIsExtensionPresent(m_device, "AL_SOFT_source_spatialize");
+
     return std::nullopt;
 }
 
@@ -144,7 +153,7 @@ std::string api::current_error()
 
 std::string api::device()
 {
-    auto name = alcGetString(m_device, ALC_DEVICE_SPECIFIER);
+    auto name     = alcGetString(m_device, ALC_DEVICE_SPECIFIER);
     auto ext_name = alcGetString(m_device, ALC_ALL_DEVICES_SPECIFIER);
     if(name)
         return fmt::format("{} ({})", name, ext_name ? ext_name : "no name");
@@ -162,8 +171,16 @@ void api::collect_info(comp_app::interfaces::AppInfo& appInfo)
     appInfo.add("al:api", "openal-soft");
 #endif
     appInfo.add("al:device", device());
+    std::string all_extensions;
     if(auto extensions = alcGetString(m_device, ALC_EXTENSIONS))
-        appInfo.add("al:extensions", extensions);
+        all_extensions.append(extensions);
+    if(auto extensions = alGetString(AL_EXTENSIONS))
+    {
+        if(!all_extensions.empty())
+            all_extensions.push_back(' ');
+        all_extensions.append(extensions);
+    }
+    appInfo.add("al:extensions", all_extensions);
     ALCint major, minor;
     alcGetIntegerv(m_device, ALC_MAJOR_VERSION, 1, &major);
     alcGetIntegerv(m_device, ALC_MINOR_VERSION, 1, &minor);

@@ -113,6 +113,22 @@ struct listener_t
     }
 };
 
+struct formats_t
+{
+    bool float32{false};
+    bool ima4_adpcm{false};
+    bool ms_adpcm{false};
+};
+
+struct features_t
+{
+    struct
+    {
+        bool block_alignment{false};
+        bool spatialize{false};
+    } soft;
+};
+
 struct api
 {
     using buffer_type   = buffer_t;
@@ -144,6 +160,11 @@ struct api
         return m_listener;
     }
 
+    auto const& formats()
+    {
+        return m_formats;
+    }
+
   protected:
     void resume_playback();
 
@@ -151,6 +172,8 @@ struct api
     ALCcontext* m_context{nullptr};
 
     listener_t m_listener;
+    formats_t m_formats{};
+    features_t m_features{};
 };
 
 struct system

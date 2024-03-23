@@ -21,6 +21,10 @@ struct mem_mapping_t
     {
         return view;
     }
+
+#if defined(COFFEE_EMSCRIPTEN)
+    void* fetch_fd{nullptr};
+#endif
 };
 
 struct mapping_params_t

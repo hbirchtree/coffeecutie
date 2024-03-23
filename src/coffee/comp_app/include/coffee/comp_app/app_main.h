@@ -28,7 +28,7 @@ struct ExecLoop
             Throw(std::move(r.error()));
 
 #if defined(COFFEE_EMSCRIPTEN)
-        emscripten_set_main_loop(BundleData::EmscriptenLoop, -1, 1);
+        emscripten_set_main_loop(BundleData::EmscriptenLoop, -1, EM_TRUE);
 #elif !defined(COFFEE_CUSTOM_EXIT_HANDLING)
         app_error appec;
 

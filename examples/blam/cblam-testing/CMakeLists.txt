@@ -40,7 +40,7 @@ add_custom_target (
 
 set(BUNDLED_LIBS)
 # OpenAL has to have shared linkage
-if(BUILD_OPENAL)
+if(BUILD_OPENAL AND NOT EMSCRIPTEN)
     if(ANDROID)
         find_package(OpenSL REQUIRED)
     endif()

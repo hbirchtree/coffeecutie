@@ -4,6 +4,7 @@
 #include <platforms/emscripten/rdwrio.h>
 
 #include <emscripten/emscripten.h>
+#include <emscripten/fetch.h>
 
 namespace platform::file::emscripten {
 
@@ -84,31 +85,82 @@ std::future<posix::mem_mapping_t> mmap_async(Url const& file)
               .url  = file.internUrl,
               .hash = std::move(hash),
     };
-    auto fut = data.promise.get_future();
-    emscripten_async_wget(
-        file.internUrl.c_str(),
-        data.hash.c_str(),
-        [](const char* hash) {
-            auto it = mmap_async_data.find(hash + 1);
-            if(it == mmap_async_data.end())
-            {
-                fprintf(stderr, "Failed to lookup data for %s\n", hash + 1);
-                return;
-            }
-            auto* pdata = &it->second;
-            fprintf(
-                stdout, "Received %s from %s\n", hash + 1, pdata->url.c_str());
-            if(auto mapping = mmap_download(hash); mapping.has_value())
-                pdata->promise.set_value(std::move(mapping.value()));
-            else
-                pdata->promise.set_value(posix::mem_mapping_t{});
-            mmap_async_data.erase(hash);
-        },
-        [](const char* hash) {
-            auto* pdata = &mmap_async_data[hash];
-            fprintf(stderr, "Failed to download: %s\n", pdata->url.c_str());
-            mmap_async_data.erase(hash);
+    auto                    fut = data.promise.get_future();
+    emscripten_fetch_attr_t attrs;
+    emscripten_fetch_attr_init(&attrs);
+    strncpy(attrs.requestMethod, "GET", 3);
+    attrs.attributes =
+        EMSCRIPTEN_FETCH_LOAD_TO_MEMORY | EMSCRIPTEN_FETCH_PERSIST_FILE;
+    attrs.userData  = data.hash.data();
+    attrs.onsuccess = [](emscripten_fetch_t* fetch) {
+        auto& data =
+            mmap_async_data[reinterpret_cast<const char*>(fetch->userData)];
+        data.promise.set_value(posix::mem_mapping_t{
+            .view = posix::mem_mapping_t::span_type(
+                const_cast<char*>(fetch->data), fetch->numBytes),
+            .access   = RSCA::ReadOnly,
+            .fetch_fd = fetch,
         });
+    };
+    attrs.onerror = [](emscripten_fetch_t* fetch) {
+        auto  key  = reinterpret_cast<const char*>(fetch->userData);
+        auto& data = mmap_async_data[key];
+        data.promise.set_value(posix::mem_mapping_t{.access = RSCA::None});
+        emscripten_fetch_close(fetch);
+        mmap_async_data.erase(key);
+    };
+    attrs.onreadystatechange = [](emscripten_fetch_t* fetch) {
+        const char* status = nullptr;
+        switch(fetch->readyState)
+        {
+        case 0:
+            status = "unsent";
+            break;
+        case 1:
+            status = "opened";
+            break;
+        case 2:
+            status = "headers_received";
+            break;
+        case 3:
+            status = "loading";
+            break;
+        case 4:
+            status = "done";
+            break;
+        default:
+            return;
+        }
+        fprintf(
+            stderr, "emscripten_fetch: url={}, state={}", fetch->url, status);
+    };
+    emscripten_fetch(&attrs, file.internUrl.c_str());
+
+    // emscripten_async_wget(
+    //     file.internUrl.c_str(),
+    //     data.hash.c_str(),
+    //     [](const char* hash) {
+    //         auto it = mmap_async_data.find(hash + 1);
+    //         if(it == mmap_async_data.end())
+    //         {
+    //             fprintf(stderr, "Failed to lookup data for %s\n", hash + 1);
+    //             return;
+    //         }
+    //         auto* pdata = &it->second;
+    //         fprintf(
+    //             stdout, "Received %s from %s\n", hash + 1,
+    //             pdata->url.c_str());
+    //         if(auto mapping = mmap_download(hash); mapping.has_value())
+    //             pdata->promise.set_value(std::move(mapping.value()));
+    //         else
+    //             pdata->promise.set_value(posix::mem_mapping_t{});
+    //         mmap_async_data.erase(hash);
+    //     },
+    //     [](const char* hash) {
+    //         auto* pdata = &mmap_async_data[hash];
+    //         fprintf(stderr, "Failed to download: %s\n", pdata->url.c_str());
+    //         mmap_async_data.erase(hash);
+    //     });
     return fut;
 }
 

@@ -590,6 +590,7 @@
             "displayName": "Wasm32 for Web + WebGL2 (SDL2)",
             "inherits": ["vcpkg-base-emscripten"],
             "cacheVariables": {
+                "BUILD_ASIO": "ON",
                 "VCPKG_DEP_INFO_OVERRIDE_VARS": "emscripten;wasm"
             }
         },

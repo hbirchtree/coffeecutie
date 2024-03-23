@@ -29,7 +29,7 @@ std::tuple<T, group::pixel_type, group::pixel_format> to(
         return fmt_;
     }
 
-    constexpr std::array<std::pair<P, std::tuple<f, b, p>>, 24> direct_mapping =
+    constexpr std::array<std::pair<P, std::tuple<f, b, p>>, 26> direct_mapping =
         {{
 #if GLEAM_MAX_VERSION >= 0x300 || GLEAM_MAX_VERSION_ES >= 0x300
             {P::R8, {f::r8, b::unsigned_byte, p::red}},
@@ -76,6 +76,8 @@ std::tuple<T, group::pixel_type, group::pixel_format> to(
             {P::RGBA16F, {f::rgba16f, b::float_, p::rgba}},
             {P::RGBA32F, {f::rgba32f, b::float_, p::rgba}},
 #endif
+            {P::RGB10A2, {f::rgb10_a2, b::unsigned_int_2_10_10_10_rev, p::rgba}},
+            {P::RGB10A2UI, {f::rgb10_a2ui, b::unsigned_int_2_10_10_10_rev, p::rgba}},
 
             /* Special formats */
             {P::Depth16,
