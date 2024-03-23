@@ -199,11 +199,13 @@
                 "rhs": "Linux"
             },
             "cacheVariables": {
-                "BUILD_ASIO": "OFF",
+                "BUILD_ASIO": "ON",
                 "BUILD_EMSCRIPTEN": "ON",
+                "BUILD_GL_SOFTWARE_BCN": "ON",
                 "BUILD_GLES": "ON",
                 "CMAKE_MAKE_PROGRAM": "$env{NINJA}",
                 "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "$env{EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake",
+                "VCPKG_DEP_INFO_OVERRIDE_VARS": "emscripten;wasm",
                 "VCPKG_TARGET_TRIPLET": "wasm32-emscripten"
             },
             "environment": {
@@ -588,11 +590,7 @@
         {
             "name": "web-wasm32-emscripten-webgl2",
             "displayName": "Wasm32 for Web + WebGL2 (SDL2)",
-            "inherits": ["vcpkg-base-emscripten"],
-            "cacheVariables": {
-                "BUILD_ASIO": "ON",
-                "VCPKG_DEP_INFO_OVERRIDE_VARS": "emscripten;wasm"
-            }
+            "inherits": ["vcpkg-base-emscripten"]
         },
         {
             "name": "host-x64-linux-native",

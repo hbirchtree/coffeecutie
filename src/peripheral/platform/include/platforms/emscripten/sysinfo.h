@@ -135,8 +135,7 @@ inline std::optional<std::pair<std::string, std::string>> device()
 
 inline libc_types::f32 dpi()
 {
-    return static_cast<libc_types::f32>(
-        EM_ASM_DOUBLE({ return window['devicePixelRatio']; }));
+    return emscripten_get_device_pixel_ratio();
 }
 
 inline DeviceType variant()

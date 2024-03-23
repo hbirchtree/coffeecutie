@@ -278,6 +278,10 @@ void create_resources(compo::EntityContainer& e)
             gfx::textures::d2,
             PixDesc(features.high_precision_depth_format),
             1);
+        cDebug(
+            "Creating offscreen buffer with: color={} depth={}",
+            magic_enum::enum_name(resources.color->m_format.pixfmt),
+            magic_enum::enum_name(resources.depth->m_format.pixfmt));
         resources.offscreen->alloc();
         auto const& size = resources.offscreen_size;
         resources.color->alloc(size_3d<i32>{size.x, size.y}.convert<u32>());
@@ -288,10 +292,6 @@ void create_resources(compo::EntityContainer& e)
         resources.offscreen->attach(attachment::color, *resources.color, 0);
         resources.offscreen->attach(attachment::depth, *resources.depth, 0);
         resources.offscreen->resize({0, 0, size.x, size.y});
-        cDebug(
-            "Created offscreen buffer with: color={} depth={}",
-            magic_enum::enum_name(resources.color->m_format.pixfmt),
-            magic_enum::enum_name(resources.depth->m_format.pixfmt));
 
         resources.color->set_swizzle(
             gfx::textures::swizzle_t::red,
