@@ -135,7 +135,8 @@ inline std::optional<std::pair<std::string, std::string>> device()
 
 inline libc_types::f32 dpi()
 {
-    return emscripten_get_device_pixel_ratio();
+    return 1.f;
+    // return emscripten_get_device_pixel_ratio();
 }
 
 inline DeviceType variant()

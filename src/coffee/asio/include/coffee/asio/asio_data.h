@@ -56,14 +56,16 @@ struct Service
 
     std::shared_ptr<stats> statistics;
 };
-
-extern std::shared_ptr<ASIO::Service> global_service;
+#else
+using Service = int;
 #endif
 
-STATICINLINE auto InitService()
+extern std::shared_ptr<ASIO::Service> global_service;
+
+STATICINLINE decltype(global_service) InitService()
 {
 #if defined(USE_EMSCRIPTEN_HTTP)
-    return 0;
+    return std::make_shared<Service>();
 #else
     if(!global_service)
         global_service = std::make_shared<ASIO::Service>();

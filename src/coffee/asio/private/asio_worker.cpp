@@ -4,7 +4,6 @@
 
 namespace Coffee::ASIO {
 
-#if !defined(USE_EMSCRIPTEN_HTTP)
 std::shared_ptr<ASIO::Service> global_service;
 
 void Worker::stop()
@@ -15,6 +14,7 @@ void Worker::stop()
 
     auto self = State::SwapState(context_name, {});
 
+#if !defined(USE_EMSCRIPTEN_HTTP)
     if(context)
     {
         DProfContext _("ASIO_Worker::Awaiting task");
@@ -26,12 +26,12 @@ void Worker::stop()
 
         context.reset();
     }
+#endif
 }
 
 Coffee::ASIO::Worker::~Worker()
 {
     stop();
 }
-#endif
 
 } // namespace Coffee::ASIO

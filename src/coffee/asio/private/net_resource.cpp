@@ -128,11 +128,7 @@ std::optional<asio::error_code> Resource::close()
 }
 
 Resource::Resource(
-#if defined(USE_EMSCRIPTEN_HTTP)
-    int,
-#else
     std::shared_ptr<Coffee::ASIO::Service> ctxt,
-#endif
     const Url& url)
     : m_resource(url)
 #if !defined(USE_EMSCRIPTEN_HTTP)

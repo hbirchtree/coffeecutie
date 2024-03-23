@@ -35,6 +35,7 @@ struct error_code
 
 } // namespace asio
 
+#include <coffee/asio/asio_data.h>
 #include <emscripten/fetch.h>
 #else
 #include <coffee/asio/tcp_socket.h>
@@ -102,13 +103,7 @@ struct Resource
 #endif
 
   public:
-    Resource(
-#if defined(USE_EMSCRIPTEN_HTTP)
-        int,
-#else
-        std::shared_ptr<Coffee::ASIO::Service> ctxt,
-#endif
-        Url const& url);
+    Resource(std::shared_ptr<Coffee::ASIO::Service> ctxt, Url const& url);
     ~Resource();
 
     C_MOVE_CONSTRUCTOR(Resource);

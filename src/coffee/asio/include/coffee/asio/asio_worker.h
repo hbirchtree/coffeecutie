@@ -6,7 +6,6 @@
 
 namespace Coffee::ASIO {
 
-#if !defined(USE_EMSCRIPTEN_HTTP)
 static const constexpr cstring context_name = "asioContext";
 
 struct Worker : State::GlobalState
@@ -43,26 +42,5 @@ STATICINLINE std::shared_ptr<ASIO::Service> GetContext()
 
     return worker->context;
 }
-#else
-struct Worker
-{
-    int context{0};
-
-    void stop()
-    {
-    }
-};
-
-STATICINLINE Worker* GenWorker()
-{
-    static Worker worker{};
-    return &worker;
-}
-
-STATICINLINE int GetContext()
-{
-    return 0;
-}
-#endif
 
 } // namespace Coffee::ASIO
