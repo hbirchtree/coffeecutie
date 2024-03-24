@@ -57,6 +57,7 @@ macro(
   )
 
   set(RESOURCES ${RESOURCES};${COFFEE_DESKTOP_DIRECTORY}/windows)
+  set(HAS_EXTRA_RESOURCES FALSE)
 
   foreach(durr ${RESOURCES})
     file(GLOB_RECURSE TMP ${durr}/*)
@@ -85,6 +86,7 @@ macro(
            # "\"${virt_fname}\" CF_RES \"${file_full}\" ${LINESHIFT}"
            "sha256/${RESC_HASH} CF_RES \"${file_full}\" ${LINESHIFT}"
       )
+      set(HAS_EXTRA_RESOURCES TRUE)
     endforeach()
   endforeach()
 
@@ -116,9 +118,11 @@ macro(
     ${MANIFEST_FILE}
     ${INCLUDED_LIBS}
 
-    ${RESOURCE_DESCRIPTOR}
     ${WINDOWS_BASE_RESOURCE}
   )
+  if(HAS_EXTRA_RESOURCES)
+    target_sources(${TARGET} PUBLIC ${RESOURCE_DESCRIPTOR})
+  endif()
 
   # set_target_properties(
   #   ${TARGET} PROPERTIES VERSION ${COFFEE_BUILD_STRING} SOVERSION 1
