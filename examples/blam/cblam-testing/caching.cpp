@@ -1139,7 +1139,7 @@ BitmapItem BitmapCache<V>::predict_impl(const blam::tagref_t& bitmap, i16 idx)
             img.layer = bucket.ptr++;
             break;
         }
-#if GLEAM_MAX_VERSION >= 0x400 || GLEAM_MAX_VERSION >= 0x320
+#if GLEAM_MAX_VERSION >= 0x400 || GLEAM_MAX_VERSION_ES >= 0x320
         case blam::bitm::type_t::tex_cube: {
             if(!allocator->feature_info().texture.cube_array)
                 return {};

@@ -562,7 +562,10 @@ namespace BaseArgParser {
 
 cxxopts::Options& GetBase(cxxopts::Options& parser)
 {
-    parser.positional_help("resource prefix")
+    parser
+#if !defined(COFFEE_WINDOWS) && !defined(COFFEE_APPLE)
+        .positional_help("resource prefix")
+#endif
         .add_options("engine")
         //
         ("h,help", "Print help and exit")

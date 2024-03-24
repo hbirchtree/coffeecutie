@@ -282,7 +282,10 @@ i32 blam_main()
                 map_filename = "b30.map"_asset;
                 map_dir      = "."_asset;
 #endif
-            } else if(arguments.unmatched().size() >= 2)
+            } else if(
+                arguments.unmatched().size() >= 2 ||
+                (compile_info::platform::is_windows &&
+                 arguments.unmatched().size() >= 1))
             {
                 auto url =
                     MkUrl(arguments.unmatched().back(), RSCA::SystemFile);
