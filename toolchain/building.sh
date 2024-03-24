@@ -73,7 +73,6 @@ function cmake_debug()
 {
     echo "About to execute:"
     echo cmake $@
-    echo $@ > cmake_params
     cmake $@
 }
 

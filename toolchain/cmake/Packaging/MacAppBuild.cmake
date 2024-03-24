@@ -107,7 +107,9 @@ macro(
       file(RELATIVE_PATH file_dir ${durr} ${file})
       get_filename_component(file_dir "${file_dir}" DIRECTORY)
       get_filename_component(file_name "${file_dir}" NAME)
-      if(NOT ("${file_name}" STREQUAL ".DS_Store"))
+      if(("${file_name}" STREQUAL ".DS_Store"))
+        continue()
+      endif()
         list(APPEND BUNDLE_FILES ${file})
         if(NOT IOS)
           set_source_files_properties(
@@ -119,7 +121,6 @@ macro(
             ${file} PROPERTIES MACOSX_PACKAGE_LOCATION "${file_dir}"
           )
         endif()
-      endif()
     endforeach()
   endforeach()
 

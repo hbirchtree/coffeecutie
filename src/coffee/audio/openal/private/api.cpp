@@ -181,6 +181,10 @@ void api::collect_info(comp_app::interfaces::AppInfo& appInfo)
         all_extensions.append(extensions);
     }
     appInfo.add("al:extensions", all_extensions);
+    if(auto vendor = alGetString(AL_VENDOR))
+        appInfo.add("al:vendor", vendor);
+    if(auto renderer = alGetString(AL_RENDERER))
+        appInfo.add("al:renderer", renderer);
     ALCint major, minor;
     alcGetIntegerv(m_device, ALC_MAJOR_VERSION, 1, &major);
     alcGetIntegerv(m_device, ALC_MINOR_VERSION, 1, &minor);

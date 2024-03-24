@@ -1,42 +1,5 @@
-# coffee_application ( TARGET BlamTesting TITLE "Blam Loader" SOURCES main.cpp
-# LIBRARIES Blam Core Image DropinRenderer GLeamRHI )
-
-find_program ( GLSLANG_PROGRAM glslangValidator )
-find_program ( INKSCAPE_PROGRAM inkscape
-    PATHS
-        /usr
-        /usr/local
-    PATH_SUFFIXES
-        bin
-    )
 find_package(GameNetworkingSockets CONFIG)
-
-add_custom_target (
-  BlamGraphics.Assets
-  COMMAND
-    ${CMAKE_SOURCE_DIR}/toolchain/desktop/resource_compile.py
-    #
-    --path ${CMAKE_CURRENT_SOURCE_DIR}/graphics_data
-    #
-    --output ${CMAKE_CURRENT_BINARY_DIR}/assets
-    #
-    --cache ${CMAKE_CURRENT_BINARY_DIR}/asset_cache
-    #
-    --program ShaderCooker=${HOST_TOOLS_BINARY_DIR}/ShaderCooker
-    #
-    --program Inkscape=${INKSCAPE_PROGRAM}
-    #
-    --program glslang=${GLSLANG_PROGRAM}
-    #
-    --program TextureCompressor=${HOST_TOOLS_BINARY_DIR}/TextureCompressor
-    #
-    --program glslang=${GLSLANG_PROGRAM}
-    #
-    --target ${CMAKE_SYSTEM_NAME}
-    #
-    --build-mode Release
-#    --build-mode ${CMAKE_BUILD_TYPE}
-)
+include(ResourcePackaging)
 
 set(BUNDLED_LIBS)
 # OpenAL has to have shared linkage
@@ -51,6 +14,10 @@ if(BUILD_OPENAL AND NOT EMSCRIPTEN)
     )
 endif()
 
+resource_dir_package(
+    TARGET BlamGraphics.assets
+    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/graphics_data
+)
 coffee_application(
   TARGET BlamGraphics
   TITLE "Blam Graphics"
@@ -72,7 +39,7 @@ coffee_application(
   ICON_ASSET ${CMAKE_CURRENT_SOURCE_DIR}/icon_asset.svg
   RESOURCES "${CMAKE_CURRENT_BINARY_DIR}/assets"
 )
-add_dependencies(BlamGraphics BlamGraphics.Assets)
+add_dependencies(BlamGraphics BlamGraphics.assets)
 
 #target_precompile_headers(
 #  BlamGraphics PRIVATE

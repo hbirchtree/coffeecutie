@@ -25,6 +25,13 @@ struct Format
     u32 frequency{44100};
     u16 channels{1};
     u16 bits{8};
+    enum format_t
+    {
+        pcm,
+        f32,
+        ima_adpcm,
+        ms_adpcm,
+    } format{pcm};
 };
 
 template<class T>
