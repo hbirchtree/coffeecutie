@@ -67,7 +67,7 @@ function(RESOURCE_DIR_PACKAGE)
         ${CMAKE_SOURCE_DIR}/toolchain/desktop/resource_compile.py ${ARG_LIST}
     )
 
-    if(WIN32)
+    if(WIN32 OR APPLE)
         # When we're using GLOB_RECURSE, we need the files to exist
         # before configuring the target
         execute_process(COMMAND
