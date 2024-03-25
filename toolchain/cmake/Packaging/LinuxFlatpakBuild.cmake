@@ -151,7 +151,7 @@ macro(
     add_custom_command(
       TARGET ${TARGET}.flatpak
       POST_BUILD
-      COMMAND strip "${FLATPAK_BINARY_DIR}/${TARGET}"
+      COMMAND ${CMAKE_STRIP} "${FLATPAK_BINARY_DIR}/${TARGET}"
     )
   endif()
 
