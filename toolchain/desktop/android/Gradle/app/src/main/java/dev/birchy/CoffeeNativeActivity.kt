@@ -15,7 +15,7 @@ class CoffeeNativeActivity : NativeActivity() {
     fun loadIfExists(libname: String) {
         try {
             System.loadLibrary(libname)
-        } catch(_: Exception) {}
+        } catch(_: UnsatisfiedLinkError) {}
     }
 
     fun libraryName(): String? {
