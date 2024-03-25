@@ -28,28 +28,28 @@ jobs:
         include:
         - variant: android:arm-neon:19
           artifact: android-arm-neon-19
-          mode: dbg
+          mode: rel
         - variant: android:arm64:30-gl
           artifact: android-arm64-30-gl
-          mode: dbg
+          mode: rel
         - variant: android:arm64:32
           artifact: android-arm64-32
-          mode: dbg
+          mode: rel
         - variant: beaglebone:arm-buildroot-linux-gnueabihf:ti-sgx
           artifact: beaglebone-arm-buildroot-linux-gnueabihf-ti-sgx
-          mode: dbg
+          mode: rel
         - variant: desktop:aarch64-buildroot-linux-gnu:multi
           artifact: desktop-aarch64-buildroot-linux-gnu-multi
-          mode: dbg
+          mode: rel
         - variant: desktop:arm-buildroot-linux-gnueabihf:sdl2
           artifact: desktop-arm-buildroot-linux-gnueabihf-sdl2
-          mode: dbg
+          mode: rel
         - variant: desktop:x86_64-buildroot-linux-gnu:multi
           artifact: desktop-x86_64-buildroot-linux-gnu-multi
-          mode: dbg
+          mode: rel
         - variant: desktop:x86_64-w64-mingw32:posix
           artifact: desktop-x86_64-w64-mingw32-posix
-          mode: dbg
+          mode: rel
         - variant: web:wasm32-emscripten:webgl2
           artifact: web-wasm32-emscripten-webgl2
           mode: rel
@@ -118,7 +118,7 @@ jobs:
         include:
         - variant: desktop:x86_64-darwin:macos
           artifact: desktop-x86_64-darwin-macos
-          mode: dbg
+          mode: rel
         - variant: desktop:universal-darwin:macos
           artifact: desktop-universal-darwin-macos
           mode: dbg

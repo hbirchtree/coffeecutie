@@ -1,3 +1,5 @@
+set(BLAM_HALO_VERSION "pc_version_t" CACHE STRING "")
+
 find_package(GameNetworkingSockets CONFIG)
 include(ResourcePackaging)
 
