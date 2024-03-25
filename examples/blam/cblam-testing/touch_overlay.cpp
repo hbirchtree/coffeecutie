@@ -13,6 +13,9 @@ void TouchOverlay::start_restricted(Proxy& proxy, const time_point&)
         gfx::system* gfx;
         proxy.subsystem(gfx);
 
+        if(!gfx->feature_info().texture.tex.gl.etc2)
+            return;
+
         auto tex = ktx::load_from("controller_atlas.0.etc2"_rsc.data());
 
         if(tex.has_error())

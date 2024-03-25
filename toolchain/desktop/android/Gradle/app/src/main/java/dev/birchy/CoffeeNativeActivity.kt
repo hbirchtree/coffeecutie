@@ -12,6 +12,12 @@ import android.view.WindowManager
 
 @Suppress("DEPRECATION")
 class CoffeeNativeActivity : NativeActivity() {
+    fun loadIfExists(libname: String) {
+        try {
+            System.loadLibrary(libname)
+        } catch(_: Exception) {}
+    }
+
     fun libraryName(): String? {
         return packageManager
                 .getActivityInfo(this.componentName, PackageManager.GET_META_DATA)
@@ -20,6 +26,7 @@ class CoffeeNativeActivity : NativeActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        loadIfExists("openal")
         try {
             super.onCreate(savedInstanceState);
         } catch (e: Exception)
