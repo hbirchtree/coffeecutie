@@ -111,12 +111,10 @@ jobs:
         if-no-files-found: error
     - name: Building project (Custom Edition build)
       if: startsWith(matrix.variant, 'web:')
-      continue-on-error: true
       run: |
-        pushd multi_build/web-wasm32-emscripten-webgl2/
+        pushd source/multi_build/web-wasm32-emscripten-webgl2/
         cmake ../.. -DBLAM_HALO_VERSION=custom_version_t
         ninja BlamGraphics
-        BUILD_TYPE=${{ matrix.mode }} source/cb build ${{matrix.variant}}
       env:
         VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
     - name: Uploading artifacts (Wasm Custom Edition build)
