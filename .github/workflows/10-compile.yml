@@ -165,6 +165,7 @@ jobs:
     - Linux
     - macOS
     permissions:
+      actions: read
       pages: write
       id-token: write
     environment:
