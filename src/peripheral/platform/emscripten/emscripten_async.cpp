@@ -132,7 +132,7 @@ std::future<posix::mem_mapping_t> mmap_async(Url const& file)
             return;
         }
         fprintf(
-            stderr, "emscripten_fetch: url={}, state={}", fetch->url, status);
+            stderr, "emscripten_fetch: url=%s, state=%s", fetch->url, status);
     };
     emscripten_fetch(&attrs, file.internUrl.c_str());
 

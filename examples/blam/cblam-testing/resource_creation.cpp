@@ -298,6 +298,20 @@ void create_resources(compo::EntityContainer& e)
             gfx::textures::swizzle_t::green,
             gfx::textures::swizzle_t::blue,
             gfx::textures::swizzle_t::one);
+
+        using Coffee::Display::Event;
+        using Coffee::Display::ResizeEvent;
+
+        e.service<comp_app::BasicEventBus<Event>>()
+            ->addEventFunction<ResizeEvent>(
+                0, [&resources](Event&, ResizeEvent* resize) {
+                    auto const& size = *resize;
+                    resources.offscreen->resize(
+                        typing::geometry::rect<i32>(0, 0, size.w, size.h));
+                    resources.color->alloc(size_3d<u32>{size.w, size.h});
+                    resources.depth->alloc(size_3d<u32>{size.w, size.h});
+                    resources.offscreen_size = Veci2(size.w, size.h);
+                });
     } else
         resources.offscreen = api.default_rendertarget();
 }
@@ -559,6 +573,7 @@ void create_camera(
     semantic::Span<const blam::scn::player_spawn> const& spawns)
 {
     BlamCamera& camera = e.subsystem_cast<BlamCamera>();
+    auto*       fb     = e.service<comp_app::Windowing>();
 
     for(auto& viewport : camera.viewports)
     {
@@ -569,9 +584,11 @@ void create_camera(
     if(spawns.empty())
         return;
 
+    cDebug("Initial aspect ratio: {}", fb->size().aspect());
+
     for(auto i : range<u32>(4))
     {
-        auto& location                      = spawns[0];
+        auto& location = i < spawns.size() ? spawns[i] : spawns[0];
         camera.viewports[i].camera.position = location.pos * Vecf3(-1);
         cDebug("Facing of player: {0}", location.rot);
         camera.viewports[i].camera.rotation = glm::normalize(glm::quat(Vecf3{
@@ -580,6 +597,7 @@ void create_camera(
             //                0,
             glm::pi<f32>() / 2.f,
         }));
+        camera.viewports[i].camera.aspect   = fb->size().aspect();
     }
 
     /* Move the camera to a player spawn location */

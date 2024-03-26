@@ -320,7 +320,7 @@ struct MeshRenderer
             .reversed = true,
         };
 
-        if constexpr(compile_info::platform::is_emscripten)
+        if(m_api->default_rendertarget() == m_resources.offscreen)
             return gfx::view_state{
                 .depth = gfx::depth_state{
                     .range    = depth.range,

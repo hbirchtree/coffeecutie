@@ -13,6 +13,7 @@
 #include <SDL.h>
 
 #if defined(COFFEE_EMSCRIPTEN)
+#include <emscripten.h>
 #include <emscripten/html5_webgl.h>
 #endif
 
@@ -34,6 +35,16 @@
 #endif
 
 namespace sdl2 {
+
+namespace {
+
+#if defined(COFFEE_EMSCRIPTEN)
+int canvas_width = 0, canvas_height = 0;
+#endif
+
+}
+
+using Coffee::Logging::cDebug;
 
 enum class wm_selection_t
 {
@@ -65,7 +76,7 @@ inline void print_current_config()
     SDL_GL_GetAttribute(SDL_GL_STENCIL_SIZE, &config.stencil);
     SDL_GL_GetAttribute(SDL_GL_FRAMEBUFFER_SRGB_CAPABLE, &config.srgb);
     SDL_GL_GetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, &config.profile);
-    Coffee::Logging::cDebug(
+    cDebug(
         "SDL config: red={0} green={1} blue={2}, alpha={3} "
         "depth={4} stencil={5} srgb={6} profile={7} version={8}.{9}",
         config.r,
@@ -283,9 +294,11 @@ void Windowing::start_restricted(proxy_type& p, time_point const&)
         case SDL_WINDOWEVENT_FOCUS_GAINED:
             EMIT_DEVENT(translate::event<FocusEvent>(event))
             break;
+#if !defined(COFFEE_EMSCRIPTEN)
         case SDL_WINDOWEVENT_RESIZED:
             EMIT_DEVENT(translate::event<ResizeEvent>(event))
             break;
+#endif
         case SDL_WINDOWEVENT_MOVED:
             EMIT_DEVENT(translate::event<MoveEvent>(event))
             break;
@@ -293,6 +306,17 @@ void Windowing::start_restricted(proxy_type& p, time_point const&)
             break;
         }
     }
+
+#if defined(COFFEE_EMSCRIPTEN)
+    int current_width = EM_ASM_INT({ return canvas.width; });
+    int current_height = EM_ASM_INT({ return canvas.height; });
+    if(canvas_width != current_width || canvas_height != current_height)
+    {
+        EMIT_DEVENT(ResizeEvent(current_width, current_height));
+        canvas_width = current_width;
+        canvas_height = current_height;
+    }
+#endif
 
 #undef EMIT_DEVENT
 }
@@ -311,7 +335,11 @@ void Windowing::close()
 comp_app::size_2d_t Windowing::size() const
 {
     size_2d_t out;
+#if defined(COFFEE_EMSCRIPTEN)
+    out = {canvas_width, canvas_height};
+#else
     SDL_GetWindowSize(m_window, &out.w, &out.h);
+#endif
     return out;
 }
 
@@ -625,8 +653,12 @@ void GLFramebuffer::swapBuffers(comp_app::app_error&)
 comp_app::size_2d_t GLFramebuffer::size() const
 {
     size_2d_t out;
+#if defined(COFFEE_EMSCRIPTEN)
+    out = {canvas_width, canvas_height};
+#else
     SDL_GL_GetDrawableSize(
         m_container->service<Windowing>()->m_window, &out.w, &out.h);
+#endif
     return out;
 }
 

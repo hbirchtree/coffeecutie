@@ -344,6 +344,8 @@ i32 blam_main()
                 /* Mouse/keyboard only applies to player 1 */
                 if(i == 0)
                     camera.camera_->tick(t);
+                if(i != 0 && compile_info::platform::is_emscripten)
+                    continue;
                 if(controllers)
                 {
                     auto prev     = camera.active;

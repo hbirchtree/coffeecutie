@@ -103,8 +103,8 @@ class system
 
         display_bus->addEventFunction<ResizeEvent>(
             0, [this](Event&, ResizeEvent* resize) {
-                if constexpr(compile_info::platform::is_emscripten)
-                    return;
+                // if constexpr(compile_info::platform::is_emscripten)
+                //     return;
                 auto new_size = resize->convert<i32>();
                 if(new_size.w == 0)
                     m_viewport_not_set = true;

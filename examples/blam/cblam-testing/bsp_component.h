@@ -17,6 +17,7 @@ using BlamBspWidgetManifest = compo::SubsystemManifest<
         ShaderCache<V>,
         BSPCache<V>,
         BlamCamera,
+        BlamResources,
         PostProcessParameters,
         RenderingParameters>,
     empty_list_t>;
@@ -136,9 +137,11 @@ struct BlamBspWidget
                 if(ImGui::BeginTabItem("Camera"))
                 {
                     BlamCamera*            camera;
+                    BlamResources*         resources;
                     PostProcessParameters* postprocess;
                     e.subsystem(postprocess);
                     e.subsystem(camera);
+                    e.subsystem(resources);
 
                     ImGui::Text("Camera properties");
                     if(ImGui::BeginCombo(
@@ -177,6 +180,10 @@ struct BlamBspWidget
                     if(ImGui::Checkbox("Doom mode", &postprocess->doom_mode))
                         postprocess->scale =
                             postprocess->doom_mode ? 0.25f : 1.f;
+                    ImGui::Text(
+                        "Offscreen size: %ix%i",
+                        resources->offscreen_size.x,
+                        resources->offscreen_size.y);
                     if(ImGui::Button("Reload shaders from disk"))
                     {
                         create_shaders(e.underlying());
