@@ -113,6 +113,7 @@ jobs:
       if: startsWith(matrix.variant, 'web:')
       run: |
         pushd source/multi_build/web-wasm32-emscripten-webgl2/
+        export EMSDK=${PWD}/source/multi_build/compilers/emsdk
         cmake ../.. -DBLAM_HALO_VERSION=custom_version_t
         ninja BlamGraphics
       env:
