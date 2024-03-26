@@ -319,6 +319,10 @@ std::vector<std::string> app_info::system_features() const
     using jnipp::java::array_type_unwrapper;
     using jnipp::java::type_unwrapper;
 
+    // There's something in this function incompatible with <21
+    if(coffee_app->activity->sdkVersion < 21)
+        return {};
+
     std::vector<std::string> features;
 
     auto Context        = "android.content.Context"_jclass;
