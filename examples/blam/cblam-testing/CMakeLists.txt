@@ -54,6 +54,10 @@ set_target_properties(
              EMSCRIPTEN_GROWABLE_MEMORY OFF
              EMSCRIPTEN_HEAP_SIZE 1024
 )
+target_compile_definitions(BlamGraphics
+    PUBLIC
+    -DBLAM_HALO_VERSION=${BLAM_HALO_VERSION}
+)
 
 if(TARGET ASIO)
   target_link_libraries(BlamGraphics PUBLIC ASIO)
