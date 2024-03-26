@@ -50,7 +50,6 @@ DEFAULT_TEX_MATRIX = {
         'bc3',
         'etc1',
         'etc2',
-        'raw',
     ],
     'Linux': [
         'astc', # For Mali
