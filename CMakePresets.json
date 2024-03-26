@@ -593,6 +593,14 @@
             "inherits": ["vcpkg-base-emscripten"]
         },
         {
+            "name": "web-wasm32-emscripten-webgl2-custom",
+            "displayName": "Wasm32 for Web + WebGL2 (SDL2)",
+            "inherits": ["vcpkg-base-emscripten"],
+            "cacheVariables": {
+                "BLAM_HALO_VERSION": "custom_version_t"
+            }
+        },
+        {
             "name": "host-x64-linux-native",
             "displayName": "Host tools for Linux x86_64",
             "inherits": ["host-tools"],
@@ -855,6 +863,12 @@
             "name": "web-wasm32-emscripten-webgl2-rel",
             "configuration": "Release",
             "configurePreset": "web-wasm32-emscripten-webgl2",
+            "inherits": "base-linux"
+        },
+        {
+            "name": "web-wasm32-emscripten-webgl2-custom-dbg",
+            "configuration": "Release",
+            "configurePreset": "web-wasm32-emscripten-webgl2-custom",
             "inherits": "base-linux"
         },
         {

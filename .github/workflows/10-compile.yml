@@ -53,6 +53,9 @@ jobs:
         - variant: web:wasm32-emscripten:webgl2
           artifact: web-wasm32-emscripten-webgl2
           mode: rel
+        - variant: web:wasm32-emscripten:webgl2-custom
+          artifact: web-wasm32-emscripten-webgl2-custom
+          mode: rel
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     name: ${{ matrix.variant }} ${{ matrix.mode }}
@@ -108,22 +111,6 @@ jobs:
           source/multi_build/${{matrix.artifact}}/lib
           !source/multi_build/${{matrix.artifact}}/lib/*.a
           source/multi_build/${{matrix.artifact}}/packaged
-        if-no-files-found: error
-    - name: Building project (Custom Edition build)
-      if: startsWith(matrix.variant, 'web:')
-      run: |
-        pushd source/multi_build/web-wasm32-emscripten-webgl2/
-        export EMSDK=${PWD}/source/multi_build/compilers/emsdk
-        cmake ../.. -DBLAM_HALO_VERSION=custom_version_t
-        ninja BlamGraphics
-      env:
-        VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
-    - name: Uploading artifacts (Wasm Custom Edition build)
-      if: startsWith(matrix.variant, 'web:')
-      uses: actions/upload-artifact@v4
-      with:
-        name: ${{matrix.artifact}}-custom-edition
-        path: source/multi_build/${{matrix.artifact}}/bin
         if-no-files-found: error
   macOS:
     runs-on: macos-latest
