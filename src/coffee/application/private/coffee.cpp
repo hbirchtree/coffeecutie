@@ -634,7 +634,9 @@ int PerformDefaults(cxxopts::Options& parser, std::vector<const char*>& args)
         Coffee::PrintingVerbosityLevel() -= results.count("quiet");
 
     /* For Windows, assume we can use embedded resources */
-    if constexpr(!compile_info::platform::is_windows)
+    if constexpr(
+        !compile_info::platform::is_windows &&
+        !compile_info::platform::is_macos)
         if(results.unmatched().size() >= 1)
             file::ResourcePrefix(results.unmatched().front());
 
