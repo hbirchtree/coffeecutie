@@ -107,7 +107,7 @@ namespace comp_app {
 
 namespace {
 
-constexpr bool enable_screenshots = true;
+constexpr bool enable_screenshots = !compile_info::platform::is_emscripten;
 
 [[maybe_unused]] void printConfig(AppLoader& loader)
 {
@@ -542,22 +542,25 @@ void addDefaults(
     C_ERROR_CHECK(ec);
 #endif
 
-    if constexpr(enable_screenshots)
+    if constexpr(compile_info::debug_mode)
     {
         /* TODO: Conditionally load based on availability */
         loader.registerAll<detail::subsystem_list<
             comp_app::SysMemoryStats,
-            comp_app::SysCPUClock
+            comp_app::SysCPUClock>>(container, ec);
+        C_ERROR_CHECK(ec);
+    }
 #if defined(FEATURE_ENABLE_GLScreenshot_ES2Dynamic) || \
     defined(FEATURE_ENABLE_GLScreenshot_Dynamic) ||    \
     defined(FEATURE_ENABLE_GLScreenshot_ESDynamic) ||  \
     defined(FEATURE_ENABLE_GLScreenshot_ES)
-            ,
-            glscreenshot::ScreenshotProvider
-#endif
-            >>(container, ec);
-        C_ERROR_CHECK(ec);
+    if constexpr(enable_screenshots)
+    {
+        loader.registerAll<
+            detail::subsystem_list<glscreenshot::ScreenshotProvider>>(
+            container, ec);
     }
+#endif
 
 #if defined(FEATURE_ENABLE_EmscriptenComponents)
     loader.registerAll<detail::subsystem_list<emscripten::BatteryProvider>>(
@@ -748,7 +751,7 @@ void PerformanceMonitor::capture_screenshot(
 
     /* Disable screenshots on Emscripten,
      * there's better ways to debug framebuffers there */
-    if constexpr(enable_screenshots && !compile_info::platform::is_emscripten)
+    if constexpr(enable_screenshots)
         do
         {
             using dump_t = interfaces::ScreenshotProvider::dump_t;
@@ -837,7 +840,7 @@ void PerformanceMonitor::load(AppLoadableService::entity_container&, app_error&)
 {
     m_nextScreenshot = m_prevFrame =
         platform::profiling::Profiler::clock::now();
-    if constexpr(enable_screenshots && !compile_info::platform::is_emscripten)
+    if constexpr(enable_screenshots)
         m_worker_queue =
             rq::runtime_queue::CreateNewThreadQueue("Profiling worker")
                 .assume_value();

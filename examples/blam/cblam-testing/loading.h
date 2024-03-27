@@ -74,6 +74,54 @@ void load_scenario_bsp(
         bsp_cache.portal_color_ptr++;
     }
 
+    EntityRecipe map_marker;
+    map_marker.components = {
+        type_hash_v<DebugDraw>(),
+    };
+    map_marker.tags = ObjectGC;
+
+    auto player_profiles =
+        scenario->mp.player_start_profiles.data(magic).value();
+    for(blam::scn::player_starting_profile const& profile : player_profiles)
+    {
+        cDebug(" - Profile: {}", profile.name);
+    }
+
+    // auto platoons =
+        // scenario->script.platoons.data(magic).value();
+    // for(blam::scn::ai::platoon const& platoon : platoons)
+    // {
+        // cDebug(" - Profile: {}", platoon.unknown[0]);
+    // }
+
+    auto spawns = scenario->mp.player_spawns.data(magic).value();
+    for(blam::scn::player_spawn const& spawn : spawns)
+    {
+        cDebug(" - Spawn: @{}", spawn.pos);
+        std::array<Vecf3, 6> points = {{
+            spawn.pos,
+            spawn.pos + Vecf3{0, 0, 1.f},
+            spawn.pos + Vecf3{-0.2f, 0, 1.1f},
+            spawn.pos + Vecf3{0, 0, 1.2f},
+            spawn.pos + Vecf3{0.2f, 0, 1.1f},
+            spawn.pos + Vecf3{0, 0, 1.f},
+        }};
+
+        auto vertices =
+            bsp_cache.portal_buffer.subspan(bsp_cache.portal_ptr, points.size());
+        std::copy(points.begin(), points.end(), vertices.begin());
+        bsp_cache.portal_color_buffer[bsp_cache.portal_color_ptr] =
+            Vecf3{0.5f, 1.f, 0};
+
+        auto marker = e.create_entity(map_marker);
+        auto& draw = marker.get<DebugDraw>();
+        draw.data = {
+            .arrays = {.count = points.size(), .offset = bsp_cache.portal_ptr},
+        };
+        draw.color_ptr = bsp_cache.portal_color_ptr++;
+        bsp_cache.portal_ptr += points.size();
+    }
+
     std::vector<generation_idx_t> bsp_meshes;
     if(auto bsps = scenario->bsp_info.data(magic); bsps.has_value())
     {

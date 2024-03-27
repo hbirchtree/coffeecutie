@@ -651,6 +651,11 @@ struct recording_ref
     u32        unk[2];
 };
 
+struct platoon
+{
+    u32 unknown[8];
+};
+
 } // namespace ai
 
 struct script_trigger

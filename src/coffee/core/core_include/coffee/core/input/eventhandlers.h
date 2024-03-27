@@ -61,6 +61,8 @@ struct ExitOn
     requires std::is_same_v<Event_, OnQuit>
     void operator()(CIEvent const& e, c_cptr)
     {
+        if constexpr(compile_info::platform::is_emscripten)
+            return;
         if(e.type != CIEvent::QuitSign)
             return;
         m_action();
@@ -70,6 +72,8 @@ struct ExitOn
     requires(!std::is_same_v<Event, OnQuit>)
     void operator()(CIEvent const&, CIKeyEvent const* ev)
     {
+        if constexpr(compile_info::platform::is_emscripten)
+            return;
         if(ev->key != Event::key)
             return;
         m_action();
