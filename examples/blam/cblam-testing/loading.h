@@ -48,13 +48,13 @@ void load_scenario_bsp(
                     {
                         .arrays =
                             {
-                                .count  = points.size(),
+                                .count  = static_cast<u32>(points.size()),
                                 .offset = bsp_cache.portal_ptr,
                             },
                     },
                 .color_ptr = bsp_cache.portal_color_ptr,
             };
-            bsp_cache.portal_ptr += points.size();
+            bsp_cache.portal_ptr += static_cast<u32>(points.size());
             bsp_cache.portal_color_ptr++;
             return draw;
         };
