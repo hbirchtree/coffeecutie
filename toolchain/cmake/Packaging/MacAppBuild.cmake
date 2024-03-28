@@ -179,7 +179,7 @@ macro(
         RESOURCE
         "${BUNDLE_FILES};${IOS_DEFAULT_STORYBOARD};${ICONS};${IMAGES};${ICON_ASSET_FILES}"
     )
-    if("${CMAKE_BUILD_TYPE}" MATCHES Deb)
+    if(NOT "${CMAKE_BUILD_TYPE}" MATCHES Deb)
         set_target_properties(
           ${TARGET}
           PROPERTIES
