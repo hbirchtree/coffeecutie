@@ -179,13 +179,14 @@ macro(
         RESOURCE
         "${BUNDLE_FILES};${IOS_DEFAULT_STORYBOARD};${ICONS};${IMAGES};${ICON_ASSET_FILES}"
     )
-    if(NOT "${CMAKE_BUILD_TYPE}" MATCHES Deb)
-        set_target_properties(
-          ${TARGET}
-          PROPERTIES
-            XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY ""
-        )
-    endif()
+    # If code signing ever becomes relevant, sure...
+    # if(NOT "${CMAKE_BUILD_TYPE}" MATCHES Deb)
+    #     set_target_properties(
+    #       ${TARGET}
+    #       PROPERTIES
+    #         XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY ""
+    #     )
+    # endif()
 
     # XCODE_PRODUCT_TYPE "com.apple.product-type.application"
   else()
