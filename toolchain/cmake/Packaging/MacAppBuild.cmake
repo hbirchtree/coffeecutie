@@ -170,7 +170,7 @@ macro(
       PROPERTIES
         MACOSX_BUNDLE YES
         MACOSX_BUNDLE_INFO_PLIST "${IOS_PLIST_FILE}"
-        XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "iPhone Developer"
+        XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY ""
         XCODE_ATTRIBUTE_PRODUCT_NAME "${TARGET}"
         XCODE_ATTRIBUTE_BUNDLE_IDENTIFIER "me.birchtree.${TARGET}.Debug"
         XCODE_ATTRIBUTE_TARGET_DEVICE_FAMILY "1,2"
@@ -179,6 +179,13 @@ macro(
         RESOURCE
         "${BUNDLE_FILES};${IOS_DEFAULT_STORYBOARD};${ICONS};${IMAGES};${ICON_ASSET_FILES}"
     )
+    if("${CMAKE_BUILD_TYPE}" MATCHES Deb)
+        set_target_properties(
+          ${TARGET}
+          PROPERTIES
+            XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY ""
+        )
+    endif()
 
     # XCODE_PRODUCT_TYPE "com.apple.product-type.application"
   else()
