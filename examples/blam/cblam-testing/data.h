@@ -12,6 +12,9 @@
 
 using namespace Coffee::StandardInput;
 
+constexpr libc_types::u32 reserved_debug_points = 24 + 16 * 7;
+constexpr libc_types::u32 reserved_debug_colors = 6 + 16;
+
 using libc_types::f32;
 using semantic::Span;
 using typing::vector_types::Matf4;
@@ -127,6 +130,7 @@ struct RenderingParameters : compo::SubsystemBase
     bool render_ui{false};
     bool debug_clear{true};
 
+    bool debug_markers{compile_info::debug_mode};
     bool debug_portals{false};
     bool debug_clusters{false};
     bool debug_triggers{false};

@@ -103,7 +103,7 @@ static void init_map(
 
     create_camera(
         e,
-        changed.scenario->mp.player_spawns.data(changed.container.magic)
+        changed.scenario->player_start.locations.data(changed.container.magic)
             .value());
 
     if(auto window_config = e.service<comp_app::WindowInfo>())

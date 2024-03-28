@@ -177,8 +177,8 @@ struct BSPCache
     {
         index    = blam::tag_index_view(map);
         magic    = map.magic;
-        vert_ptr = 0, element_ptr = 0, light_ptr = 0, portal_ptr = 24,
-        portal_color_ptr = 4;
+        vert_ptr = 0, element_ptr = 0, light_ptr = 0, portal_ptr = reserved_debug_points,
+        portal_color_ptr = 5;
         evict_all();
     }
 

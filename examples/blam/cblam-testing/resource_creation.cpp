@@ -242,6 +242,14 @@ void create_resources(compo::EntityContainer& e)
                     },
             };
         }
+
+        for(auto i : range<u32>(16))
+        {
+            auto  eyes     = e.create_entity(debug_draw);
+            auto& draw     = eyes.get<DebugDraw>();
+            draw.color_ptr = 6 + i;
+            draw.data      = {.arrays = {.count = 7, .offset = 24 + 7 * i}};
+        }
     }
 
     {
@@ -569,8 +577,8 @@ void set_resource_labels(EntityContainer& e)
 }
 
 void create_camera(
-    compo::EntityContainer&                              e,
-    semantic::Span<const blam::scn::player_spawn> const& spawns)
+    compo::EntityContainer&                                          e,
+    semantic::Span<const blam::scn::player_starting_location> const& spawns)
 {
     BlamCamera& camera = e.subsystem_cast<BlamCamera>();
     auto*       fb     = e.service<comp_app::Windowing>();

@@ -43,15 +43,23 @@ union local_actor_type
     }
 };
 
-enum class ai_state : i16
+enum class gamemode_t : u16
 {
-    unknown_1 = 0,
-    unknown_2 = 2,
-    unknown_3 = 6,
-    unknown_4 = 7,
-    unknown_5 = 9,
-    unknown_6 = 10,
-    unknown_7 = 11,
+    none,
+    ctf,
+    slayer,
+    oddball,
+    king_of_the_hill,
+    race,
+    terminator,
+    stub,
+    ignored1,
+    ignored2,
+    ignored3,
+    ignored4,
+    all_games,
+    all_except_ctf,
+    all_except_race_ctf,
 };
 
 using scn_chunk = byte_t[100];
@@ -293,12 +301,17 @@ struct sound_scenery
     u32   unk4[5];
 };
 
-struct player_spawn
+struct player_starting_location
 {
-    Vecf3 pos;
-    f32   rot;
-    f32   unknown2[9];
+    Vecf3      pos;
+    f32        rot;
+    u16        team_index;
+    u16        bsp_index;
+    gamemode_t types[4];
+    u32        padding[6];
 };
+
+static_assert(sizeof(player_starting_location) == 52);
 
 struct profile_placement
 {
@@ -345,25 +358,6 @@ struct item_collection
     u32                           spawn_time;
 };
 
-enum class equipment_gamemode_flags : u16
-{
-    none,
-    ctf,
-    slayer,
-    oddball,
-    king_of_the_hill,
-    race,
-    terminator,
-    stub,
-    ignored1,
-    ignored2,
-    ignored3,
-    ignored4,
-    all_games,
-    all_except_ctf,
-    all_except_race_ctf,
-};
-
 struct multiplayer_equipment
 {
     enum class equipment_flag : u32
@@ -374,10 +368,7 @@ struct multiplayer_equipment
 
     equipment_flag flags;
 
-    equipment_gamemode_flags type0;
-    equipment_gamemode_flags type1;
-    equipment_gamemode_flags type2;
-    equipment_gamemode_flags type3;
+    gamemode_t types[4];
 
     u32 team_idx;
     u32 spawn_time;
@@ -392,17 +383,23 @@ struct multiplayer_equipment
 
 struct player_starting_profile
 {
-    u32      unk1_offset;
-    byte_t   name[28];
-    u16      padding1;
-    u32      unk2_offset;
-    tagref_t weapon1;
-    u32      unk3;
-    tagref_t weapon2;
-    u32      unk4;
-    u32      unk5;
-    u32      padding2[5];
+    bl_string name;
+    f32       health_modifier;
+    f32       shield_modifier;
+    tagref_t  primary_weapon;
+    u16       rounds1_loaded;
+    u16       rounds1_total;
+    tagref_t  secondary_weapon;
+    u16       rounds2_loaded;
+    u16       rounds2_total;
+    u16       frag_grenades;
+    u16       plasma_nades;
+    u16       c_nades;
+    u16       d_nades;
+    u32       padding2[4];
 };
+
+static_assert(sizeof(player_starting_profile) == 104);
 
 struct device_group
 {
@@ -629,6 +626,17 @@ using actor_variant_ref = tagref_t;
 
 namespace ai {
 
+enum class state_t : i16
+{
+    unknown_1 = 0,
+    unknown_2 = 2,
+    unknown_3 = 6,
+    unknown_4 = 7,
+    unknown_5 = 9,
+    unknown_6 = 10,
+    unknown_7 = 11,
+};
+
 struct animation_ref
 {
     bl_string name;
@@ -653,7 +661,91 @@ struct recording_ref
 
 struct platoon
 {
-    u32 unknown[8];
+    bl_string name;
+
+    enum flags_t : u16
+    {
+        none,
+        flee_when_maneuvering          = 0x1,
+        say_advancing_when_maneuvering = 0x2,
+        start_in_defending_state       = 0x4,
+    } flags;
+
+    struct cause_t
+    {
+        i16 target;
+
+        enum event_t : u16
+        {
+            never,
+            under_75_str,
+            under_50_str,
+            under_25_str,
+            any_dead,
+            dead_25,
+            dead_50,
+            dead_75,
+            one_alive,
+            all_dead,
+        } event;
+    };
+
+    cause_t change_attacking_defending;
+    cause_t maneuver_when;
+
+    u32 padding[32];
+};
+
+struct firing_position
+{
+    Vecf3 position;
+    u16   unknown1;
+    u16   unknown_idx;
+    u32   unknown[2];
+};
+
+struct squad
+{
+    bl_string           name;
+    local_actor_type    actor_type;
+    u16                 platoon;
+    state_t             initial_state;
+    state_t             return_state;
+    u32                 unk1[11];
+    u32                 attacking;
+    u32                 attacking_search;
+    u32                 attacking_guard;
+    u32                 defending;
+    u32                 defending_search;
+    u32                 defending_guard;
+    u32                 pursuing;
+    u32                 unk2[3];
+    u16                 normal_diff_count;
+    u16                 insane_diff_count;
+    u32                 unk3[20];
+    reflexive_t<byte_t> start_locations;
+    u32                 unk4[3];
+};
+
+struct squad_spawn
+{
+    Vecf3      position;
+    f32        yaw;
+    u16        team_index;
+    u16        bsp_index;
+    gamemode_t types[4];
+};
+
+static_assert(sizeof(squad_spawn) == 28);
+
+struct encounter
+{
+    bl_string_var<16>            text;
+    u32                          unk[28];
+    reflexive_t<squad>           squads;
+    reflexive_t<platoon>         platoons;
+    reflexive_t<firing_position> firing_positions;
+    reflexive_t<squad_spawn>     start_locations;
 };
 
 } // namespace ai
@@ -673,54 +765,6 @@ struct references
     bl_string name;
     u32       unk[15];
 };
-
-namespace encounter {
-
-struct squad;
-struct squad_spawn;
-
-struct encounter
-{
-    bl_string_var<16>         text;
-    u32                       unk[28];
-    reflexive_t<squad>        squads;
-    reflexive_t<byte_t>       platoons;
-    reflexive_t<byte_t>       firing_positions;
-    reflexive_t<player_spawn> start_locations;
-};
-
-struct squad
-{
-    bl_string           name;
-    local_actor_type    actor_type;
-    u16                 platoon;
-    ai_state            initial_state;
-    ai_state            return_state;
-    u32                 unk1[11];
-    u32                 attacking;
-    u32                 attacking_search;
-    u32                 attacking_guard;
-    u32                 defending;
-    u32                 defending_search;
-    u32                 defending_guard;
-    u32                 pursuing;
-    u32                 unk2[3];
-    u16                 normal_diff_count;
-    u16                 insane_diff_count;
-    u32                 unk3[20];
-    reflexive_t<byte_t> start_locations;
-    u32                 unk4[3];
-};
-
-struct squad_spawn
-{
-    Vecf3 pos;
-    f32   yaw;
-    i16   unk2[5];
-    i16   CommandList;
-};
-
-} // namespace encounter
 
 struct decal
 {
@@ -852,6 +896,23 @@ struct light_fixture
     byte_t    unk3[40];
 };
 
+struct cutscene_flag
+{
+    u32       huh;
+    bl_string name;
+    Vecf3     position;
+    Vecf2     facing;
+    u32       padding[9];
+};
+
+struct cutscene_camera_position
+{
+    bl_string name;
+    Vecf3     position;
+    Vecf3     rotation;
+    f32       fov;
+};
+
 /*!
  * \brief A Blam! scenario descriptor
  */
@@ -920,30 +981,41 @@ struct scenario
         u32 padding3[21];
     } objects;
 
+    struct player_start_t
+    {
+        reflexive_t<player_starting_profile>  profiles;
+        reflexive_t<player_starting_location> locations;
+    } player_start;
+
+    reflexive_t<trigger_volume> trigger_volumes;
+    reflexive_t<scn_chunk>      recorded_animations;
+
     struct multiplayer_t /* 216-byte block */
     {
-        reflexive_t<player_starting_profile> player_start_profiles;
-        reflexive_t<player_spawn>            player_spawns;
-        reflexive_t<trigger_volume>          trigger_volumes;
-        reflexive_t<scn_chunk>               animation;
-        reflexive_t<multiplayer_flag>        flags;
-        reflexive_t<multiplayer_equipment>   equipment;
-        reflexive_t<starting_equip>          starting_equipment;
-        reflexive_t<bsp_trigger>             bsp_switch_triggers;
-        reflex_group<decal>                  decals;
-        reflexive_t<scn_chunk>               detail_obj_collision_ref;
-        u32                                  padding4[21];
-    } mp;
+        reflexive_t<multiplayer_flag>      flags;
+        reflexive_t<multiplayer_equipment> equipment;
+    } netgame;
 
-    struct script_t /* 340-byte block */
+    reflexive_t<starting_equip> starting_equipment;
+
+    reflexive_t<bsp_trigger> bsp_switch_triggers;
+    reflex_group<decal>      decals;
+    reflexive_t<scn_chunk>   detail_object_collection;
+    u32                      padding4[21];
+
+    struct ai_info_t /* 340-byte block */
     {
-        reflexive_t<actor_variant_ref>           actor_variant_refs;
-        reflexive_t<encounter::encounter>        encounters;
-        reflexive_t<scn_chunk>                   command_lists;
-        reflexive_t<scn_chunk>                   unknown_6;
-        reflexive_t<scn_chunk>                   starting_locations;
-        reflexive_t<scn_chunk>                   platoons;
-        reflexive_t<scn_chunk>                   ai_conversations;
+        reflexive_t<actor_variant_ref> actor_palette;
+        reflexive_t<ai::encounter>     encounters;
+        reflexive_t<scn_chunk>         command_lists;
+        reflexive_t<scn_chunk>         animation_references;
+        reflexive_t<scn_chunk>         script_references;
+        reflexive_t<scn_chunk>         recording_references;
+        reflexive_t<scn_chunk>         conversations;
+    } ai;
+
+    struct script_t
+    {
         u32                                      script_bytecode_size;
         u32                                      unknown_7;
         reflexive_t<hsc::script_ref<bytecode_t>> unknown_9;
@@ -952,19 +1024,24 @@ struct scenario
         reflexive_t<char>                        script_string_segment;
         reflexive_t<hsc::function_declaration>   scripts;
         reflexive_t<hsc::global>                 globals;
-        reflexive_t<ai::recording_ref>           ai_recording_refs;
-        reflexive_t<scn_chunk>                   unknown_8;
-        reflexive_t<scn_chunk>                   participants;
-        reflexive_t<scn_chunk>                   lines;
-        reflexive_t<script_trigger>              script_triggers;
-        reflexive_t<scn_chunk>                   cutscenes_verify;
-        reflexive_t<scn_chunk>                   cutscene_titles_verify;
-        reflexive_t<scn_chunk>                   source_files;
-        reflexive_t<scn_chunk>                   cutscene_flags;
-        reflexive_t<scn_chunk>                   cutscene_camera_poi;
-        reflexive_t<scn_chunk>                   cutscene_titles_;
-        u32                                      padding5[15];
+        reflexive_t<scn_chunk> references; /* references to what? */
+        reflexive_t<scn_chunk> unknown1;
+        reflexive_t<scn_chunk> unknown2;
+        reflexive_t<scn_chunk> unknown3;
     } script;
+
+    struct cutscene_t
+    {
+        reflexive_t<cutscene_flag>            flags;
+        reflexive_t<cutscene_camera_position> camera_points;
+        reflexive_t<scn_chunk>                titles;
+    } cutscene;
+
+    reflexive_t<scn_chunk> unknown7;
+    reflexive_t<scn_chunk> unknown8;
+    reflexive_t<scn_chunk> unknown9;
+    reflexive_t<scn_chunk> unknown10;
+    u32                    padding5[15];
 
     inline Span<hsc::opcode_layout<bytecode_t> const> bytecode(
         magic_data_t const& magic) const
@@ -1008,6 +1085,9 @@ struct scenario
 
     reflexive_t<bsp::info> bsp_info;
 };
+
+static_assert(sizeof(scenario<xbox_version_t>) == 1456);
+static_assert(sizeof(scenario<pc_version_t>) == 1456);
 
 template<typename V>
 requires is_game_version<V>

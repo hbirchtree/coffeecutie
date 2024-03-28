@@ -526,6 +526,8 @@ struct MeshRenderer
         }
         for(auto& ent : e.template select<DebugDraw>())
         {
+            if(!params->debug_markers)
+                continue;
             if(!params->debug_triggers && ent.tags & ObjectTriggerVolume)
                 continue;
             auto             ref  = e.template ref<Proxy>(ent);

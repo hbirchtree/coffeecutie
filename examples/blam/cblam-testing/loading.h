@@ -36,42 +36,54 @@ void load_scenario_bsp(
     };
     trigger_obj.tags = ObjectScriptObject | ObjectTriggerVolume | ObjectGC;
 
-    auto trigger_vols = scenario->mp.trigger_volumes.data(magic).value();
+    const auto create_debug_marker =
+        [&]<size_t N>(std::array<Vecf3, N> const& points, Vecf3 const& color) {
+            auto vertices = bsp_cache.portal_buffer.subspan(
+                bsp_cache.portal_ptr, points.size());
+            std::copy(points.begin(), points.end(), vertices.begin());
+            bsp_cache.portal_color_buffer[bsp_cache.portal_color_ptr] = color;
+
+            DebugDraw draw = {
+                .data =
+                    {
+                        .arrays =
+                            {
+                                .count  = points.size(),
+                                .offset = bsp_cache.portal_ptr,
+                            },
+                    },
+                .color_ptr = bsp_cache.portal_color_ptr,
+            };
+            bsp_cache.portal_ptr += points.size();
+            bsp_cache.portal_color_ptr++;
+            return draw;
+        };
+
+    auto trigger_vols = scenario->trigger_volumes.data(magic).value();
     for(blam::scn::trigger_volume const& trigger : trigger_vols)
     {
         auto [origin, second] = trigger.box.points();
-
-        std::array<Vecf3, 10> points = {{
-            origin,
-            origin + Vecf3{second.x, 0, 0},
-            origin + Vecf3{second.x, second.y, 0},
-            origin + Vecf3{0, second.y, 0},
-            origin,
-            origin + Vecf3{0, 0, second.z},
-            origin + Vecf3{second.x, 0, second.z},
-            origin + Vecf3{second.x, second.y, second.z},
-            origin + Vecf3{0, second.y, second.z},
-            origin + Vecf3{0, 0, second.z},
-        }};
-
-        auto vertices =
-            bsp_cache.portal_buffer.subspan(bsp_cache.portal_ptr, 10);
-        std::copy(points.begin(), points.end(), vertices.begin());
-        bsp_cache.portal_color_buffer[bsp_cache.portal_color_ptr] = Vecf3(1);
 
         auto           trig   = e.create_entity(trigger_obj);
         TriggerVolume& volume = trig.get<TriggerVolume>();
         DebugDraw&     draw   = trig.get<DebugDraw>();
 
+        draw = create_debug_marker(
+            std::array<Vecf3, 10>{{
+                origin,
+                origin + Vecf3{second.x, 0, 0},
+                origin + Vecf3{second.x, second.y, 0},
+                origin + Vecf3{0, second.y, 0},
+                origin,
+                origin + Vecf3{0, 0, second.z},
+                origin + Vecf3{second.x, 0, second.z},
+                origin + Vecf3{second.x, second.y, second.z},
+                origin + Vecf3{0, second.y, second.z},
+                origin + Vecf3{0, 0, second.z},
+            }},
+            Vecf3(1));
+
         volume.trigger_volume = &trigger;
-        draw.data             = {
-                        .arrays = {
-                            .count  = 10,
-                            .offset = bsp_cache.portal_ptr,
-            }};
-        draw.color_ptr = bsp_cache.portal_color_ptr;
-        bsp_cache.portal_ptr += 10;
-        bsp_cache.portal_color_ptr++;
     }
 
     EntityRecipe map_marker;
@@ -80,46 +92,140 @@ void load_scenario_bsp(
     };
     map_marker.tags = ObjectGC;
 
-    auto player_profiles =
-        scenario->mp.player_start_profiles.data(magic).value();
+    auto player_profiles = scenario->player_start.profiles.data(magic).value();
     for(blam::scn::player_starting_profile const& profile : player_profiles)
     {
-        cDebug(" - Profile: {}", profile.name);
+        cDebug(" - Profile: {}", profile.name.str());
     }
 
-    // auto platoons =
-        // scenario->script.platoons.data(magic).value();
+    // auto platoons = scenario->ai.platoons.data(magic).value();
     // for(blam::scn::ai::platoon const& platoon : platoons)
     // {
-        // cDebug(" - Profile: {}", platoon.unknown[0]);
+    //     cDebug(" - Platoon: {}", platoon.unknown[0]);
     // }
 
-    auto spawns = scenario->mp.player_spawns.data(magic).value();
-    for(blam::scn::player_spawn const& spawn : spawns)
+    auto encounters = scenario->ai.encounters.data(magic).value();
+    for(blam::scn::ai::encounter const& enc : encounters)
+    {
+        cDebug(" - Encounter: {}", enc.text.str());
+        auto platoons         = enc.platoons.data(magic).value();
+        auto firing_positions = enc.firing_positions.data(magic).value();
+        auto squads           = enc.squads.data(magic).value();
+        auto start_locs       = enc.start_locations.data(magic).value();
+        for(auto const& platoon : platoons)
+            cDebug("   - Platoon: {}", platoon.name.str());
+        for(auto const& firing_pos : firing_positions)
+        {
+            cDebug("   - Firing pos: {}", firing_pos.position);
+            auto  marker = e.create_entity(map_marker);
+            auto& draw   = marker.get<DebugDraw>();
+
+            draw = create_debug_marker(
+                std::array<Vecf3, 5>{{
+                    firing_pos.position + Vecf3{.1f, .1f, 0},
+                    firing_pos.position + Vecf3{-.1f, -.1f, 0},
+                    firing_pos.position + Vecf3{0, 0, 0},
+                    firing_pos.position + Vecf3{.1f, -.1f, 0},
+                    firing_pos.position + Vecf3{-.1f, .1f, 0},
+                }},
+                Vecf3{1.f, 0, 0});
+        }
+        for(auto const& loc : start_locs)
+        {
+            cDebug("   - Start location: {}", loc.position);
+            auto  marker = e.create_entity(map_marker);
+            auto& draw   = marker.get<DebugDraw>();
+
+            draw = create_debug_marker(
+                std::array<Vecf3, 5>{{
+                    loc.position + Vecf3{0, 0, .3f},
+                    loc.position + Vecf3{0, 0, 0},
+                    loc.position + Vecf3{.1f, .1f, .1f},
+                    loc.position + Vecf3{0, 0, 0},
+                    loc.position + Vecf3{-.1f, -.1f, .1f},
+                }},
+                Vecf3{0, 1.f, 0});
+        }
+        for(auto const& squad : squads)
+        {
+            cDebug("   - Squad: {}", squad.name.str());
+            // auto locations = squad.
+        }
+    }
+
+    auto mp_flags = scenario->netgame.flags.data(magic).value();
+    for(blam::scn::multiplayer_flag const& flag : mp_flags)
+    {
+        cDebug("MP flag: {}", flag.pos);
+        auto  marker = e.create_entity(map_marker);
+        auto& draw   = marker.get<DebugDraw>();
+
+        draw = create_debug_marker(
+            std::array<Vecf3, 5>{{
+                flag.pos,
+                flag.pos + Vecf3{0, 0, 1.f},
+                flag.pos + Vecf3{-0.1f, 0, 1.f},
+                flag.pos + Vecf3{-0.1f, 0, .9f},
+                flag.pos + Vecf3{0, 0, .9f},
+            }},
+            Vecf3{0, 0.5f, 0.5f});
+    }
+
+    auto spawns = scenario->player_start.locations.data(magic).value();
+    for(blam::scn::player_starting_location const& spawn : spawns)
     {
         cDebug(" - Spawn: @{}", spawn.pos);
-        std::array<Vecf3, 6> points = {{
-            spawn.pos,
-            spawn.pos + Vecf3{0, 0, 1.f},
-            spawn.pos + Vecf3{-0.2f, 0, 1.1f},
-            spawn.pos + Vecf3{0, 0, 1.2f},
-            spawn.pos + Vecf3{0.2f, 0, 1.1f},
-            spawn.pos + Vecf3{0, 0, 1.f},
-        }};
+        auto  marker = e.create_entity(map_marker);
+        auto& draw   = marker.get<DebugDraw>();
+        draw         = create_debug_marker(
+            std::array<Vecf3, 6>{{
+                spawn.pos,
+                spawn.pos + Vecf3{0, 0, 1.f},
+                spawn.pos + Vecf3{-0.2f, 0, 1.1f},
+                spawn.pos + Vecf3{0, 0, 1.2f},
+                spawn.pos + Vecf3{0.2f, 0, 1.1f},
+                spawn.pos + Vecf3{0, 0, 1.f},
+            }},
+            spawn.team_index == 0   ? Vecf3{1.f, 0, 0}
+                    : spawn.team_index == 1 ? Vecf3{0, 0, 1.f}
+                                            : Vecf3{0.5f, 1.f, 0});
+    }
 
-        auto vertices =
-            bsp_cache.portal_buffer.subspan(bsp_cache.portal_ptr, points.size());
-        std::copy(points.begin(), points.end(), vertices.begin());
-        bsp_cache.portal_color_buffer[bsp_cache.portal_color_ptr] =
-            Vecf3{0.5f, 1.f, 0};
+    auto cutscene_flags = scenario->cutscene.flags.data(magic).value();
+    for(blam::scn::cutscene_flag const& flag : cutscene_flags)
+    {
+        cDebug(" - Cutscene flag: {}", flag.position);
+        auto  marker = e.create_entity(map_marker);
+        auto& draw   = marker.get<DebugDraw>();
+        draw         = create_debug_marker(
+            std::array<Vecf3, 5>{{
+                flag.position,
+                flag.position + Vecf3{0.2f, 0, 0.2f},
+                flag.position + Vecf3{0, 0, 0.4f},
+                flag.position + Vecf3{-0.2f, 0, 0.2f},
+                flag.position,
+            }},
+            Vecf3{0.5f, 1.f, 0});
+    }
 
-        auto marker = e.create_entity(map_marker);
-        auto& draw = marker.get<DebugDraw>();
-        draw.data = {
-            .arrays = {.count = points.size(), .offset = bsp_cache.portal_ptr},
-        };
-        draw.color_ptr = bsp_cache.portal_color_ptr++;
-        bsp_cache.portal_ptr += points.size();
+    auto cutscene_cameras =
+        scenario->cutscene.camera_points.data(magic).value();
+    for(blam::scn::cutscene_camera_position const& cam : cutscene_cameras)
+    {
+        cDebug(" - Camera pos: {}", cam.position);
+        auto  marker = e.create_entity(map_marker);
+        auto& draw   = marker.get<DebugDraw>();
+        draw         = create_debug_marker(
+            std::array<Vecf3, 7>{{
+                cam.position,
+                cam.position + Vecf3{-.1f, .1f, -.1f},
+                cam.position + Vecf3{-.1f, -.1f, -.1f},
+                cam.position,
+                cam.position + Vecf3{-.1f, .1f, .1f},
+                cam.position + Vecf3{-.1f, -.1f, .1f},
+                cam.position,
+            }},
+            Vecf3{0.5f, 1.f, 0});
     }
 
     std::vector<generation_idx_t> bsp_meshes;
@@ -307,7 +413,7 @@ void load_multiplayer_equipment(
     blam::tag_index_view index(data.container);
     auto const&          magic = data.container.magic;
 
-    auto equipment = data.scenario->mp.equipment.data(magic);
+    auto equipment = data.scenario->netgame.equipment.data(magic);
 
     if(equipment.has_error())
         return;

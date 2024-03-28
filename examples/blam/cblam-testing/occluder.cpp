@@ -37,22 +37,49 @@ struct Occluder : compo::RestrictedSubsystem<Occluder<V>, OccluderManifest<V>>
         //     BspReference& bsp_ref = ref.template get<BspReference>();
         // }
 
-        return;
-
         Span<Vecf3> portal_colors = resources->debug_line_colors->map<Vecf3>(0);
-        Span<Vecf3> portal_pos    = resources->debug_lines->map<Vecf3>(72, 72);
+        Span<Vecf3> portal_pos    = resources->debug_lines->map<Vecf3>(
+            sizeof(Vecf3) * 6, sizeof(Vecf3) * (18 + 16 * 7));
 
-        portal_pos[0] = camera_pos;
-        portal_pos[1] = camera_pos + Vecf3{5, 0, 5};
-        portal_pos[2] = camera_pos;
-        portal_pos[3] = camera_pos + Vecf3{0, 5, 5};
-        portal_pos[4] = camera_pos;
-        portal_pos[5] = camera_pos + Vecf3{5, 5, 0};
+        // portal_pos[0] = camera_pos;
+        // portal_pos[1] = camera_pos + Vecf3{5, 0, 5};
+        // portal_pos[2] = camera_pos;
+        // portal_pos[3] = camera_pos + Vecf3{0, 5, 5};
+        // portal_pos[4] = camera_pos;
+        // portal_pos[5] = camera_pos + Vecf3{5, 5, 0};
 
-        for(auto i : range<u32>(3))
-            portal_colors[3 + i] = Vecf3{1, 0, 1};
+        // for(auto i : range<u32>(3))
+        //     portal_colors[3 + i] = Vecf3{1, 0, 1};
+
+        u32 player_i = 0;
+        for(auto const& player : camera->viewports)
+        {
+            auto pos = player.camera.position * Vecf3(-1);
+
+            if(camera->focused_player == player_i)
+                pos = Vecf3(0);
+
+            std::array<Vecf3, 7> points = {{
+                pos + Vecf3{-0.2f, 0, 0},
+                pos + Vecf3{-0.1f, 0, .1f},
+                pos + Vecf3{0.1f, 0, .1f},
+                pos + Vecf3{0.2f, 0, 0},
+                pos + Vecf3{0.1f, 0, -.1f},
+                pos + Vecf3{-0.1f, 0, -.1f},
+                pos + Vecf3{-0.2f, 0, 0},
+            }};
+
+            portal_colors[6 + player_i] = Vecf3{.5f, 0, 1.f};
+            std::copy(
+                points.begin(),
+                points.end(),
+                portal_pos.begin() + 18 + 7 * player_i++);
+        }
 
         resources->debug_lines->unmap();
+        resources->debug_line_colors->unmap();
+
+        return;
 
         BSPItem const* current_bsp{nullptr};
         u32            current_cluster{0};

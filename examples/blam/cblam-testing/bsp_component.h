@@ -108,6 +108,8 @@ struct BlamBspWidget
                         "Clear before draw", &rendering->debug_clear);
                     ImGui::Checkbox(
                         "Show clusters", &rendering->debug_clusters);
+                    ImGui::Checkbox(
+                        "Show debug markers", &rendering->debug_markers);
                     ImGui::Checkbox("Show portals", &rendering->debug_portals);
                     for(auto& region : m_bsps)
                     {
