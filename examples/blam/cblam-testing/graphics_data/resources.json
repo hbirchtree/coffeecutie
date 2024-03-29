@@ -77,6 +77,7 @@
     },
     "copy": [
         "map_legacy.vert",
-        "map_legacy.frag"
+        "map_legacy.frag",
+        "sounds/thefunny.ogg"
     ]
 }
