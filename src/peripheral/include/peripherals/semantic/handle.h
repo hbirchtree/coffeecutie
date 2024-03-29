@@ -2,6 +2,7 @@
 
 #include <peripherals/constants.h>
 #include <peripherals/libc/types.h>
+#include <peripherals/stl/standard_exceptions.h>
 #include <peripherals/stl/types.h>
 
 #include <utility>

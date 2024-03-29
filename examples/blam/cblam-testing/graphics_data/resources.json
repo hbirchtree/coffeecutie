@@ -1,22 +1,22 @@
 {
     "shaders": {
         "files": [
-            "debug_lines.vert",
-            "debug_lines.frag",
-            "map.vert",
-            "map.frag",
-            "map_senv.frag",
-            "map_senv_base.frag",
-            "map_uber.frag",
-            "map_uber_lite.frag",
-            "scenery.vert",
-            "scenery.frag",
-            "scenery_uber.frag",
-            "scenery_uber_lite.frag",
-            "ui.vert",
-            "ui.frag",
-            "white.frag",
-            "wireframe.frag"
+            "shaders/debug_lines.vert",
+            "shaders/debug_lines.frag",
+            "shaders/map.vert",
+            "shaders/map.frag",
+            "shaders/map_senv.frag",
+            "shaders/map_senv_base.frag",
+            "shaders/map_uber.frag",
+            "shaders/map_uber_lite.frag",
+            "shaders/scenery.vert",
+            "shaders/scenery.frag",
+            "shaders/scenery_uber.frag",
+            "shaders/scenery_uber_lite.frag",
+            "shaders/ui.vert",
+            "shaders/ui.frag",
+            "shaders/white.frag",
+            "shaders/wireframe.frag"
         ],
         "variants": [
             "core:330",
@@ -30,16 +30,19 @@
         "strip_assemblies": true,
         "optimization_level": "none",
         "assemblies": {
-            "debug_lines": [ "debug_lines.vert", "debug_lines.frag" ],
+            "debug_lines": [
+                "shaders/debug_lines.vert",
+                "shaders/debug_lines.frag"
+            ],
             "map_uber": [
-                "map.vert",
-                "map_uber.frag",
-                "white.frag",
-                "wireframe.frag"
+                "shaders/map.vert",
+                "shaders/map_uber.frag",
+                "shaders/white.frag",
+                "shaders/wireframe.frag"
             ],
             "scenery": [
-                "scenery.vert",
-                "scenery.frag"
+                "shaders/scenery.vert",
+                "shaders/scenery.frag"
             ]
         },
         "matrix": {
@@ -51,13 +54,13 @@
     "textures": {
         "files": [
             {
-                "source": "controller_atlas.svg",
+                "source": "textures/controller_atlas.svg",
                 "formats": ["rgba"],
                 "mipmap_range": [2048, 512],
                 "punchthrough_color": "0xFF00FF"
             },
             {
-                "source": "spinner.svg",
+                "source": "textures/spinner.svg",
                 "formats": ["ra"],
                 "mipmap_range": [512, 128],
                 "punchthrough_color": "0xFF00FF"
@@ -76,8 +79,14 @@
         }
     },
     "copy": [
-        "map_legacy.vert",
-        "map_legacy.frag",
-        "sounds/thefunny.ogg"
+        "shaders/map_legacy.vert",
+        "shaders/map_legacy.frag",
+        "sounds/thefunny.ogg",
+        "sounds/thefunny2.ogg"
+    ],
+    "out_dirs": [
+        "shaders",
+        "sounds",
+        "textures"
     ]
 }

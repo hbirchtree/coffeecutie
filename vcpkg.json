@@ -36,7 +36,7 @@
             "description": "Audio output support",
             "dependencies": [
                 { "name": "openal-soft", "platform": "linux | osx | windows | android" },
-                { "name": "libogg", "platform": "!emscripten" }
+                { "name": "libvorbis" }
             ]
         },
         "blam": { "description": "Blam! data support" },

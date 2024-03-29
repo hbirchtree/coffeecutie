@@ -1,7 +1,16 @@
+find_package(Vorbis CONFIG REQUIRED)
+
+coffee_library(
+    TARGET OggDecoder
+    SOURCES private/ogg_decode.cpp
+    LIBRARIES Core Vorbis::vorbisfile
+    HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+)
+
 coffee_library(
     TARGET OAF
     SOURCES private/api.cpp
-    LIBRARIES ComponentApp
+    LIBRARIES ComponentApp OggDecoder
     HEADER_DIRS $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     )
 

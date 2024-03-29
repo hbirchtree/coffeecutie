@@ -1,5 +1,7 @@
 #include <oaf/api.h>
 
+#include <oaf/api_system.h>
+
 #if __has_include(<AL/alext.h>)
 #include <AL/alext.h>
 #endif
@@ -25,6 +27,10 @@ constexpr u32 ALC_HRTF_DENIED_SOFT              = 0x0002;
 constexpr u32 ALC_HRTF_REQUIRED_SOFT            = 0x0003;
 constexpr u32 ALC_HRTF_HEADPHONES_DETECTED_SOFT = 0x0004;
 constexpr u32 ALC_HRTF_UNSUPPORTED_FORMAT_SOFT  = 0x0005;
+#endif
+#if !defined(AL_SOURCE_SPATIALIZE_SOFT)
+constexpr u32 AL_SOURCE_SPATIALIZE_SOFT = 0x1214;
+constexpr u32 AL_AUTO_SOFT              = 0x0002;
 #endif
 
 using GETSTRINGISOFT   = ALCchar* (*)(ALCdevice*, ALCenum, ALCsizei);
@@ -54,6 +60,28 @@ void alcDeviceResumeSOFT(ALCdevice* device)
 } // namespace
 
 using namespace Coffee::Logging;
+
+void detail::buffer_dealloc(ALuint buf)
+{
+    alDeleteBuffers(1, &buf);
+}
+
+void detail::source_dealloc(ALuint src)
+{
+    alDeleteSources(1, &src);
+}
+
+void source_t::spatialize_as(spatialize_t v)
+{
+    if(!m_features.soft.spatialize)
+        return;
+    alSourcei(
+        m_handle,
+        enum_to_al(source_property::spatialized),
+        v == spatialize_t::mono_only ? AL_AUTO_SOFT
+        : v == spatialize_t::never   ? AL_FALSE
+                                     : AL_TRUE);
+}
 
 std::string api::error_string(ALCenum err)
 {
@@ -163,42 +191,6 @@ std::string api::device()
         return "OpenAL device";
 }
 
-void api::collect_info(comp_app::interfaces::AppInfo& appInfo)
-{
-#if defined(COFFEE_EMSCRIPTEN)
-    appInfo.add("al:api", "Emscripten");
-#else
-    appInfo.add("al:api", "openal-soft");
-#endif
-    appInfo.add("al:device", device());
-    std::string all_extensions;
-    if(auto extensions = alcGetString(m_device, ALC_EXTENSIONS))
-        all_extensions.append(extensions);
-    if(auto extensions = alGetString(AL_EXTENSIONS))
-    {
-        if(!all_extensions.empty())
-            all_extensions.push_back(' ');
-        all_extensions.append(extensions);
-    }
-    appInfo.add("al:extensions", all_extensions);
-    if(auto vendor = alGetString(AL_VENDOR))
-        appInfo.add("al:vendor", vendor);
-    if(auto renderer = alGetString(AL_RENDERER))
-        appInfo.add("al:renderer", renderer);
-    ALCint major, minor;
-    alcGetIntegerv(m_device, ALC_MAJOR_VERSION, 1, &major);
-    alcGetIntegerv(m_device, ALC_MINOR_VERSION, 1, &minor);
-    appInfo.add("al:version", fmt::format("{}.{}", major, minor));
-
-    if constexpr(compile_info::platform::is_emscripten)
-    {
-        cDebug(
-            "OpenAL info dump:\nDevice: {}\nExtensions: {}",
-            device(),
-            alcGetString(m_device, ALC_EXTENSIONS));
-    }
-}
-
 void api::resume_playback()
 {
     if(deviceResumeSOFT)
@@ -231,11 +223,19 @@ ALenum enum_to_al(source_property prop)
         return AL_DIRECTION;
     case semantic::concepts::sound::source_property::orientation:
         return AL_ORIENTATION;
+    case semantic::concepts::sound::source_property::spatialized:
+        return AL_SOURCE_SPATIALIZE_SOFT;
     case semantic::concepts::sound::source_property::rolloff_factor:
+        return AL_ROLLOFF_FACTOR;
     case semantic::concepts::sound::source_property::reference_distance:
+        return AL_REFERENCE_DISTANCE;
     case semantic::concepts::sound::source_property::inner_cone_angle:
+        return AL_CONE_INNER_ANGLE;
     case semantic::concepts::sound::source_property::outer_cone_angle:
+        return AL_CONE_OUTER_ANGLE;
     case semantic::concepts::sound::source_property::outer_cone_gain:
+        return AL_CONE_OUTER_GAIN;
+    default:
         return AL_NONE;
     }
 }
@@ -262,6 +262,42 @@ void system::start_frame(compo::ContainerProxy& p, const compo::time_point&)
     if(auto err = current_error(); err != std::string())
     {
         cWarning("Audio system error: {}", err);
+    }
+}
+
+void system::collect_info(comp_app::interfaces::AppInfo& appInfo)
+{
+#if defined(COFFEE_EMSCRIPTEN)
+    appInfo.add("al:api", "Emscripten");
+#else
+    appInfo.add("al:api", "openal-soft");
+#endif
+    appInfo.add("al:device", device());
+    std::string all_extensions;
+    if(auto extensions = alcGetString(m_device, ALC_EXTENSIONS))
+        all_extensions.append(extensions);
+    if(auto extensions = alGetString(AL_EXTENSIONS))
+    {
+        if(!all_extensions.empty())
+            all_extensions.push_back(' ');
+        all_extensions.append(extensions);
+    }
+    appInfo.add("al:extensions", all_extensions);
+    if(auto vendor = alGetString(AL_VENDOR))
+        appInfo.add("al:vendor", vendor);
+    if(auto renderer = alGetString(AL_RENDERER))
+        appInfo.add("al:renderer", renderer);
+    ALCint major, minor;
+    alcGetIntegerv(m_device, ALC_MAJOR_VERSION, 1, &major);
+    alcGetIntegerv(m_device, ALC_MINOR_VERSION, 1, &minor);
+    appInfo.add("al:version", fmt::format("{}.{}", major, minor));
+
+    if constexpr(compile_info::platform::is_emscripten)
+    {
+        cDebug(
+            "OpenAL info dump:\nDevice: {}\nExtensions: {}",
+            device(),
+            alcGetString(m_device, ALC_EXTENSIONS));
     }
 }
 

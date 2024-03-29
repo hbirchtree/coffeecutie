@@ -56,10 +56,10 @@ static void create_shaders(
         }
 
         auto vertex_url = MkUrl(
-            fmt::format("{0}.{1}.vert", shader.vertex_file, variant),
+            fmt::format("shaders/{0}.{1}.vert", shader.vertex_file, variant),
             RSCA::AssetFile);
         auto fragment_url = MkUrl(
-            fmt::format("{0}.{1}.frag", shader.fragment_file, variant),
+            fmt::format("shaders/{0}.{1}.frag", shader.fragment_file, variant),
             RSCA::AssetFile);
 
         auto pipeline = shader.shader ? shader.shader : api.alloc_program();

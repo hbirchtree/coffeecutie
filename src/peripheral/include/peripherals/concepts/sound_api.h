@@ -13,8 +13,8 @@ namespace semantic::concepts::sound {
 using ::libc_types::f32;
 using ::libc_types::u16;
 using ::libc_types::u32;
-using ::typing::vector_types::Vecf3;
 using ::typing::vector_types::Matf3;
+using ::typing::vector_types::Vecf3;
 
 namespace placeholder {
 constexpr u32 num_samples = 0;
@@ -25,6 +25,7 @@ struct Format
     u32 frequency{44100};
     u16 channels{1};
     u16 bits{8};
+
     enum format_t
     {
         pcm,
@@ -38,6 +39,25 @@ template<class T>
 concept Buffer = requires(T v) {
     {
         v.upload(gsl::span<char>())
+    };
+};
+
+template<class T, class Buffer, class Source>
+concept Decoder = requires(T dec) {
+    // Allow decoding x ms of the data at x ms into the buffer, putting the data
+    // in a buffer
+    {
+        dec.decode(
+            gsl::span<char>(),
+            std::declval<std::chrono::system_clock::duration>(),
+            std::declval<std::chrono::system_clock::duration>(),
+            std::declval<Buffer&>())
+    };
+    {
+        std::is_same_v<decltype(dec.extension()), std::string_view>
+    };
+    {
+        std::is_same_v<decltype(dec.format()), Format::format_t>
     };
 };
 
@@ -71,6 +91,7 @@ enum class source_property
     // true/false
     looping,
     relative,
+    spatialized,
 
     // vec3
     position,
@@ -103,8 +124,8 @@ template<class T, class BufferT>
 concept Source = Buffer<BufferT> && requires(T v, BufferT buffer) {
     {
         v.template set_property<source_property::gain>(1.f),
-        v.template set_property<source_property::looping>(true),
-        v.template set_property<source_property::position>(Vecf3{})
+            v.template set_property<source_property::looping>(true),
+            v.template set_property<source_property::position>(Vecf3{})
     };
     {
         v.queue(buffer)
@@ -125,15 +146,15 @@ template<class T>
 concept Listener = requires(T v) {
     {
         v.template set_property<listener_property::gain>(1.f),
-        v.template set_property<listener_property::position>(Vecf3{}),
-        v.template set_property<listener_property::orientation>(Matf3{})
+            v.template set_property<listener_property::position>(Vecf3{}),
+            v.template set_property<listener_property::orientation>(Matf3{})
     };
 };
 
 struct DeviceHandle
 {
     std::optional<std::string> name;
-    bool enable_hrtf{true};
+    bool                       enable_hrtf{true};
 };
 
 template<class T>

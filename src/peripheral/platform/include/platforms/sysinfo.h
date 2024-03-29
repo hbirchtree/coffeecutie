@@ -129,6 +129,11 @@ constexpr bool has_meminfo = true;
 
 using linux_::resident;
 using linux_::total;
+#elif defined(COFFEE_EMSCRIPTEN)
+constexpr bool has_meminfo = true;
+
+using emscripten::resident;
+using emscripten::total;
 #elif defined(COFFEE_WINDOWS)
 constexpr bool has_meminfo = true;
 

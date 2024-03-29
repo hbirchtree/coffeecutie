@@ -1,9 +1,9 @@
 #pragma once
 
-#include <coffee/comp_app/services.h>
 #include <memory>
 #include <peripherals/concepts/sound_api.h>
 #include <peripherals/error/result.h>
+#include <peripherals/semantic/handle.h>
 
 #include <AL/al.h>
 #if __has_include(<AL/alext.h>)
@@ -22,7 +22,7 @@ static_assert(std::is_same_v<ALint, libc_types::i32>);
 namespace detail {
 
 void buffer_dealloc(ALuint buf);
-void source_dealloc(ALuint buf);
+void source_dealloc(ALuint src);
 
 } // namespace detail
 
@@ -77,20 +77,36 @@ struct format_t : Format
     }
 };
 
+struct features_t
+{
+    struct
+    {
+        bool block_alignment{false};
+        bool spatialize{false};
+    } soft;
+};
+
 struct buffer_t
 {
-    buffer_t()
+    buffer_t(formats_t const& formats)
+        : m_formats(formats)
     {
         alGenBuffers(1, &m_handle.hnd);
     }
 
     template<typename T>
-    void upload(gsl::span<T> const& data)
+    void upload(gsl::span<T> const& data, format_t const& fmt)
     {
-        // alBufferData(m_handle, );
+        alBufferData(
+            m_handle,
+            fmt.to_al(m_formats),
+            data.data(),
+            data.size(),
+            fmt.frequency);
     }
 
-    buffer_handle_t m_handle{};
+    buffer_handle_t  m_handle{};
+    formats_t const& m_formats;
 };
 
 using source_handle_t = semantic::generic_handle_t<
@@ -103,9 +119,11 @@ ALenum enum_to_al(source_property prop);
 
 struct source_t
 {
-    source_t()
+    source_t(features_t const& features)
+        : m_features(features)
     {
         alGenSources(1, &m_handle.hnd);
+        set_property<source_property::rolloff_factor>(1.5f);
     }
 
     template<source_property Prop>
@@ -129,7 +147,23 @@ struct source_t
         alSourcefv(m_handle, enum_to_al(Prop), &prop[0]);
     }
 
-    source_handle_t m_handle{};
+    void queue(buffer_t const& buf)
+    {
+        alSourceQueueBuffers(m_handle, 1, &buf.m_handle.hnd);
+        alSourcePlay(m_handle);
+    }
+
+    enum spatialize_t
+    {
+        always,
+        mono_only,
+        never,
+    };
+
+    void spatialize_as(spatialize_t v);
+
+    source_handle_t   m_handle{};
+    features_t const& m_features;
 };
 
 struct listener_t
@@ -162,15 +196,6 @@ struct listener_t
     }
 };
 
-struct features_t
-{
-    struct
-    {
-        bool block_alignment{false};
-        bool spatialize{false};
-    } soft;
-};
-
 struct api
 {
     using buffer_type   = buffer_t;
@@ -185,16 +210,14 @@ struct api
 
     std::string device();
 
-    void collect_info(comp_app::interfaces::AppInfo& appInfo);
-
     auto alloc_buffer()
     {
-        return std::make_shared<buffer_t>();
+        return std::make_shared<buffer_t>(m_formats);
     }
 
     auto alloc_source()
     {
-        return std::make_shared<source_t>();
+        return std::make_shared<source_t>(m_features);
     }
 
     auto& listener()
@@ -207,6 +230,18 @@ struct api
         return m_formats;
     }
 
+    enum distance_model_t : ALenum
+    {
+        linear      = AL_LINEAR_DISTANCE,
+        inverse     = AL_INVERSE_DISTANCE,
+        exponential = AL_EXPONENT_DISTANCE,
+    };
+
+    void set_distance_model(distance_model_t model, bool clamped = false)
+    {
+        alDistanceModel(model + (clamped ? 1 : 0));
+    }
+
   protected:
     void resume_playback();
 
@@ -216,19 +251,6 @@ struct api
     listener_t m_listener;
     formats_t  m_formats{};
     features_t m_features{};
-};
-
-struct system
-    : api
-    , compo::SubsystemBase
-{
-    using type = system;
-
-    void start_frame(compo::ContainerProxy& p, const compo::time_point&);
-
-  private:
-    bool m_piggyback_input_event{compile_info::platform::is_emscripten};
-    bool m_input_listener_registered{false};
 };
 
 // static_assert(API<api>);

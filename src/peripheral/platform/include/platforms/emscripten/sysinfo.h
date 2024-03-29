@@ -15,6 +15,20 @@ std::map<std::string, std::string> query_params();
 
 }
 
+namespace platform::info::memory::emscripten {
+
+inline libc_types::u64 resident()
+{
+    return 0u;
+}
+
+inline libc_types::u64 total()
+{
+    return EM_ASM_INT({ return navigator['deviceMemory']; }) * 1024;
+}
+
+} // namespace platform::info::memory::emscripten
+
 namespace platform::info::proc::emscripten {
 
 inline libc_types::u32 node_count()

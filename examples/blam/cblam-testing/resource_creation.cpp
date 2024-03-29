@@ -357,28 +357,28 @@ static void create_spv_shaders(gfx::api& api, BlamResources& resources)
 
     create_shader_program(
         api,
-        "debug_lines.spv"_rsc,
+        "shaders/debug_lines.spv"_rsc,
         "debug_lines_main"sv,
         "debug_lines_main"sv,
         resources.debug_lines_pipeline,
         "debug_lines");
     create_shader_program(
         api,
-        "scenery_uber.spv"_rsc,
+        "shaders/scenery_uber.spv"_rsc,
         "scenery_main"sv,
         "scenery_uber_main"sv,
         resources.model_pipeline,
         "scenery");
     create_shader_program(
         api,
-        "map_uber.spv"_rsc,
+        "shaders/map_uber.spv"_rsc,
         "map_main"sv,
         "map_uber_main"sv,
         resources.bsp_pipeline,
         "bsp");
     create_shader_program(
         api,
-        "map_uber.spv"_rsc,
+        "shaders/map_uber.spv"_rsc,
         "map_main"sv,
         "wireframe_main"sv,
         resources.wireframe_pipeline,
@@ -490,10 +490,10 @@ static void create_legacy_shaders(gfx::api& api, BlamResources& resources)
     resources.bsp_pipeline = api.alloc_program();
     resources.bsp_pipeline->add(
         gfx::program_t::stage_t::Vertex,
-        api.alloc_shader("map_legacy.vert"_rsc.data()));
+        api.alloc_shader("shaders/map_legacy.vert"_rsc.data()));
     resources.bsp_pipeline->add(
         gfx::program_t::stage_t::Fragment,
-        api.alloc_shader("map_legacy.frag"_rsc.data()));
+        api.alloc_shader("shaders/map_legacy.frag"_rsc.data()));
     auto res = resources.bsp_pipeline->compile();
     if(res.has_error())
     {

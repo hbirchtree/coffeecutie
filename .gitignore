@@ -40,7 +40,6 @@ CMakeFiles
 *.webm
 *.mkv
 #
-*.ogg
 *.flac
 *.mp3
 *.wav
