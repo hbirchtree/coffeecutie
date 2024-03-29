@@ -209,6 +209,10 @@ using win32::is_wow64;
 using win32::wine_host_system;
 using win32::wine_version;
 
+#elif defined(COFFEE_APPLE)
+using apple::name;
+using apple::version;
+
 #else
 
 inline std::optional<std::string> name()

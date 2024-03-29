@@ -39,6 +39,26 @@ inline auto sysctl_by_name(const char* name)
 
 namespace os::apple {
 
+inline std::optional<std::string> name()
+{
+#if TARGET_OS_OSX
+    return "macOS";
+#elif TARGET_OS_IOS
+    return "iOS";
+#else
+    return "Unknown";
+#endif
+}
+
+inline std::optional<std::string> version()
+{
+#if TARGET_OS_OSX
+    return info::apple::sysctl_by_name<std::string>("kern.osproductversion");
+#else
+    #error apple::version not defined
+#endif
+}
+
 }
 
 namespace proc::apple {
