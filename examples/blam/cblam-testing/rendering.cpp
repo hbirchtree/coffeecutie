@@ -1172,7 +1172,7 @@ void LoadingScreen::end_restricted(Proxy& e, const time_point& time)
     if(!loading_program)
         load_resources(*api);
 
-    if(status->progress < 0 || true)
+    if(status->progress < 0)
         return;
 
     auto _ = api->debug().scope();
@@ -1245,40 +1245,6 @@ void main()
     gl_Position = transform * vec4(pos.x, pos.y, 0.3, 1.0);
 }
 )";
-    //     constexpr std::string_view fragment_shader = R"(#version 100
-    // precision highp float;
-    // precision highp sampler2D;
-    // varying vec2 in_tex;
-    // uniform sampler2D source;
-    // uniform float range_start;
-    // uniform float range_end;
-
-    // float check_texel(in vec2 coord, in float alpha)
-    // {
-    //     vec2 color = texture2D(source, coord).xy;
-    //     if(color.x < 0.9)
-    //         alpha = 0.0;
-    //     else if(range_start < range_end && color.y > range_start && color.y <
-    //     range_end) {} else if(range_start > range_end && (color.y >
-    //     range_start || color.y < range_end)) {} else
-    //         alpha = 0.0;
-    //     return alpha;
-    // }
-
-    // void main()
-    // {
-    //     float alpha = 1.0;
-    //     // Do multiple surrounding samples to make the edges smoother
-    //     const float x_offset = 0.002;
-    //     alpha = check_texel(in_tex + vec2(-x_offset, 0     ), alpha);
-    //     alpha = check_texel(in_tex + vec2( x_offset, 0     ), alpha);
-    //     const float y_offset = 0.005;
-    //     alpha = check_texel(in_tex + vec2( 0, -y_offset), alpha);
-    //     alpha = check_texel(in_tex + vec2( 0,  y_offset), alpha);
-    //     vec2 color = texture2D(source, in_tex).xy;
-    //     gl_FragColor = vec4(vec3(color.x), alpha);
-    // }
-    // )";
 
     constexpr std::string_view fragment_shader = R"(#version 100
 precision highp float;
@@ -1311,28 +1277,6 @@ void main()
             semantic::mem_chunk<const char>::ofContainer(fragment_shader)));
     if(auto res = loading_program->compile(); res.has_error())
         cWarning("Error compiling loader shader: {}", res.error());
-
-    // auto tex = ktx::load_from(
-    //     "spinner.0.{}"_texture.with(api.feature_info()).data());
-    // if(tex.has_error())
-    // {
-    //     cWarning("Failed to load image: {}", tex.error());
-    //     return;
-    // }
-    // ktx::texture_t spinner = std::move(tex.value());
-
-    // loading_tex = api.alloc_texture(
-    //     gfx::textures::d2, gl::tex::desc_of(spinner.format), 3);
-    // loading_tex->alloc(size_3d<u32>{512, 256, 1});
-    // i32 mip_idx = 0;
-    // spinner.mips.resize(1);
-    // for(auto const& mip : spinner.mips)
-    //     loading_tex->upload(mip.data, Veci2{}, Veci2{mip.size}, mip_idx++);
-
-    // loading_sampler = loading_tex->sampler();
-    // loading_sampler->alloc();
-    // loading_sampler->set_filtering(
-    //     typing::Filtering::Linear, typing::Filtering::Linear);
 }
 
 void alloc_renderer(EntityContainer& container)

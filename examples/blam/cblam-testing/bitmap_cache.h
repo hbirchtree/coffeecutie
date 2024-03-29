@@ -271,9 +271,20 @@ struct BitmapCache
         return predict(array, idx);
     }
 
-    generation_idx_t resolve_all(blam::tagref_t const& array, i16 idx = 0)
+    std::vector<generation_idx_t> resolve_all(blam::tagref_t const& array)
     {
-        return predict(array, idx);
+        auto it = index.find(array);
+        if(it == index.end())
+            return {};
+        blam::tag_t const& tag     = *it;
+        auto               img_opt = tag.image(magic, bitm_header);
+        if(img_opt.has_error())
+            return {};
+        std::vector<generation_idx_t> out;
+        blam::bitm::header_t const*   img = img_opt.value().first;
+        for(auto i : range<u32>(img->images.count))
+            out.push_back(predict(array, i));
+        return out;
     }
 
     u32 type_mask(BitmapItem const& bitm)

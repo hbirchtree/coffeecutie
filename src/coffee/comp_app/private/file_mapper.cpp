@@ -58,6 +58,7 @@ std::future<std::shared_ptr<FileMapper::Resource>> FileMapper::fetch(
         std::promise<std::shared_ptr<Resource>> out;
         auto                                    fut = out.get_future();
         if(auto size = platform::file::size(src); size.has_value())
+        {
             if(auto mapping = platform::file::map(src, {.size = size.value()});
                mapping.has_value())
             {
@@ -65,6 +66,8 @@ std::future<std::shared_ptr<FileMapper::Resource>> FileMapper::fetch(
                 res->m_url     = src;
                 out.set_value(std::move(res));
             }
+        } else
+            out.set_value({});
         /* Promise breaks here if we failed to get the file */
         return fut;
     }

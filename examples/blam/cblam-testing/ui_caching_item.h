@@ -35,6 +35,7 @@ struct UIElementItem
     blam::ui_element const*       ui_element{nullptr};
     std::vector<generation_idx_t> children;
     generation_idx_t              background;
+    generation_idx_t              background_alt;
 
     bool valid() const
     {

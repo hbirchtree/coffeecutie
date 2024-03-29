@@ -1090,7 +1090,6 @@ BitmapItem BitmapCache<V>::predict_impl(const blam::tagref_t& bitmap, i16 idx)
     for(auto const& sequence : sequences)
     {
         //            if(sequence.name.str().empty())
-        continue;
         cDebug(
             "Sequence: {0} : {1} bitmaps",
             sequence.name.str(),

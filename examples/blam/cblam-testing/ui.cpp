@@ -25,7 +25,10 @@ struct UIElement
 using UIRendererManifest = compo::SubsystemManifest<
     type_list_t<UIElement>,
     type_list_t<gfx::system, RenderingParameters>,
-    type_list_t<comp_app::DisplayInfo, comp_app::GraphicsFramebuffer>>;
+    type_list_t<
+        comp_app::DisplayInfo,
+        comp_app::GraphicsFramebuffer,
+        comp_app::MouseInput>>;
 
 struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
 {
@@ -99,6 +102,9 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
     std::shared_ptr<gfx::buffer_t>       instance_vertices;
     std::shared_ptr<gfx::vertex_array_t> array;
 
+    Vecf2 screen_size;
+    Vecf2 mouse_pos;
+
     struct widget_data_t
     {
         std::vector<vertex_t>&          vertex_data;
@@ -110,6 +116,26 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
     {
         Vecf2 offset;
     };
+
+    Vecf2 window_to_ui(Vecf2 const& point)
+    {
+        // DO NOT TOUCH
+        // A LOT OF TRIAL AND ERROR WENT INTO THIS EQUATION!11!!
+        auto normalized = point / screen_size;
+        f32  aspect     = screen_size.x / screen_size.y;
+        auto x_offset   = (screen_size.x - 640) / (2.f * screen_size.x);
+        auto x_scale    = 1.f - x_offset * 2.f;
+        auto offset     = Vecf2(x_offset, 0);
+
+        auto offset_normalized = normalized - offset;
+        return offset_normalized * Vecf2(640 / x_scale, 480);
+    }
+
+    bool mouse_in_bounds(Vecf2 const& min, Vecf2 const& max)
+    {
+        return mouse_pos.x > min.x && mouse_pos.x < max.x &&
+               mouse_pos.y > min.y && mouse_pos.y < max.y;
+    }
 
     void process_widget(
         generation_idx_t const& item,
@@ -172,10 +198,19 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
             auto& inst = data.instance_data.back();
 
             atlas_intermediate_t tmp{};
-            bitm_cache.assign_atlas_data(tmp, el.background);
+
+            auto const& im =
+                mouse_in_bounds(min, max) && el.background_alt.valid()
+                    ? el.background_alt
+                    : el.background;
+
+            auto const* bitm = bitm_cache.assign_atlas_data(tmp, im);
+            auto const* img  = bitm->image.mip;
+            auto        imscale =
+                Vecf2(dimensions.x / img->isize.x, dimensions.y / img->isize.y);
             inst.tex_scale_offset = Vecf4(
-                tmp.atlas_scale.x,
-                tmp.atlas_scale.y,
+                tmp.atlas_scale.x * std::min(imscale.x, 1.f),
+                tmp.atlas_scale.y * std::min(imscale.y, 1.f),
                 tmp.atlas_offset.x,
                 tmp.atlas_offset.y);
             inst.texture_source.x = tmp.layer;
@@ -228,7 +263,8 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         if(!e.subsystem<RenderingParameters>().render_ui)
             return;
 
-        auto* fb = e.service<comp_app::GraphicsFramebuffer>();
+        auto* fb    = e.service<comp_app::GraphicsFramebuffer>();
+        screen_size = Vecf2(fb->size().w, fb->size().h);
 
         /* Used for anything centered on screen, in the typical 640x480
          * screenspace
@@ -236,16 +272,19 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
          */
         f32  aspect = 1.f / fb->size().aspect();
         auto screen_scale =
-            glm::scale(Matf3(1), Vecf2{aspect / 320.f, -.5f / 240.f}) *
-            glm::translate(Matf3(1), Vecf2{-320.f * aspect, -240.f});
-        /* Used for anything that docks to any of the corners/sides
-         * TODO: Correct scale for aspect ratio
-         */
-        // f32  full_screen_basis = (480.f * aspect) / 2.f;
-        // auto full_screen_scale = glm::translate(
-        //     glm::scale(
-        //         Matf3(1), Vecf2{aspect / full_screen_basis, 1.f / 240.f}),
-        //     Vecf2{-full_screen_basis, -240.f});
+            glm::scale(Matf3(1), Vecf2{aspect / 320.f * 1.33f, -1.f / 240.f}) *
+            glm::translate(Matf3(1), Vecf2{-320.f, -240.f});
+
+        // window_to_ui_xf =
+        //     glm::scale(Matf3(1), Vecf2{aspect / 320.f, -1.f / 240.f}) *
+        //     glm::translate(Matf3(1), Vecf2{-size.w / 2.f, -size.h / 2.f}) *
+        //     glm::scale(Matf3(1), Vecf2{.5f / size.w, .5f / size.h});
+
+        if(auto* mouse = e.service<comp_app::MouseInput>())
+        {
+            mouse_pos =
+                window_to_ui(Vecf2(mouse->position().x, mouse->position().y));
+        }
 
         std::vector<vertex_t>          vertex_data;
         std::vector<instance_vertex_t> instance_vertex_data;

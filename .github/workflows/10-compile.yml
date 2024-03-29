@@ -77,7 +77,9 @@ jobs:
         distribution: 'adopt'
         java-version: '17'
     - name: Installing build-essential
-      run: sudo apt install build-essential inkscape flatpak nasm squashfs-tools
+      run: |
+        sudo apt-get update
+        sudo apt install build-essential inkscape flatpak nasm squashfs-tools
     - name: Host tools cache
       uses: actions/cache@v4
       with:

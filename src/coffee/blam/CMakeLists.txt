@@ -6,5 +6,10 @@ coffee_library(
               $<INSTALL_INTERFACE:include>
 )
 
+target_compile_options(Blam PUBLIC
+    # We're doing some checks for the sizes of structs, so ignore the warnings...
+    $<$<COMPILE_LANGUAGE:CXX>:-Wno-invalid-offsetof>
+)
+
 #target_precompile_headers(Blam PUBLIC $<$<COMPILE_LANGUAGE:CXX>:blam/cblam.h>)
 target_link_libraries(Blam PRIVATE GraphicsDefines)

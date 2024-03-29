@@ -125,16 +125,20 @@ static void init_map(
         sounds.process_sounds();
     }
 
-    /* Depending on when we're done loading, stop the spinner */
-    auto& api = e.subsystem_cast<gleam::system>();
-    if(auto tex_queue = api.queue<gleam::system::queues::texture_decode>())
-    {
-        [[maybe_unused]] auto res = rq::runtime_queue::QueueImmediate(
-            tex_queue, rq::detail::duration(), [load = &loading_status] {
-                load->loading = false;
-            });
-    } else
+    /* With Xbox, we're done loading here */
+    if(files.container.map->version == blam::version_t::xbox)
         loading_status.loading = false;
+
+    /* Depending on when we're done loading, stop the spinner */
+    // auto& api = e.subsystem_cast<gleam::system>();
+    // if(auto tex_queue = api.queue<gleam::system::queues::texture_decode>())
+    // {
+    //     [[maybe_unused]] auto res = rq::runtime_queue::QueueImmediate(
+    //         tex_queue, rq::detail::duration(), [load = &loading_status] {
+    //             load->loading = false;
+    //         });
+    // } else
+    //     loading_status.loading = false;
 }
 
 static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
@@ -282,6 +286,9 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
                 gbus.inject(event, &ready);
             }))
         .assume_value();
+
+    if(std::is_same_v<halo_version, blam::mcc_version_t>)
+        return;
 
     rq::runtime_queue::Queue(
         rq::dependent_task<std::shared_ptr<AsyncResource>, void>::CreateSink(

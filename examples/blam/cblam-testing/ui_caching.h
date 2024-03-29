@@ -130,8 +130,13 @@ struct UIElementCache
             .background = {},
         };
         if(ui_el->background.valid())
-            out.background =
-                bitm_cache.predict(ui_el->background.to_plain(), 0);
+        {
+            auto all_bitms =
+                bitm_cache.resolve_all(ui_el->background.to_plain());
+            out.background = all_bitms.front();
+            if(all_bitms.size() > 1)
+                out.background_alt = all_bitms.at(1);
+        }
         switch(ui_el->widget_type)
         {
         case widget_type::column_list:
