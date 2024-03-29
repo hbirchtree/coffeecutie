@@ -33,6 +33,55 @@ static void filter_maps(std::vector<platform::file::file_entry_t>& files)
     files.erase(remove_it, files.end());
 }
 
+static void load_bitmaps(
+    compo::EntityContainer& e, std::optional<blam::magic_data_t> const& magic = std::nullopt)
+{
+    auto& api            = e.subsystem_cast<gleam::system>();
+    auto& loading_status = e.subsystem_cast<LoadingStatus>();
+    auto& bitmaps        = e.subsystem_cast<BitmapCache<halo_version>>();
+    auto& files          = e.subsystem_cast<BlamFiles<halo_version>>();
+    if constexpr(compile_info::platform::is_32bit)
+        return;
+    if(!files.bitmap_file)
+        return;
+    if(magic.has_value())
+        bitmaps.load_bitmaps_from(*magic);
+    if(loading_status.loaded_map == LoadingStatus::loaded &&
+       loading_status.loaded_bitmaps == LoadingStatus::none)
+    {
+        bitmaps.allocate_storage();
+        loading_status.loaded_bitmaps = LoadingStatus::in_progress;
+        if(auto tex_queue = api.queue<gleam::system::queues::texture_decode>())
+        {
+            [[maybe_unused]] auto res = rq::runtime_queue::QueueImmediate(
+                tex_queue, rq::detail::duration(), [load = &loading_status] {
+                    load->loaded_bitmaps = LoadingStatus::loaded;
+                    load->check_all_loaded();
+                });
+        } else
+        {
+            loading_status.loaded_bitmaps = LoadingStatus::loaded;
+            loading_status.check_all_loaded();
+        }
+    }
+}
+
+static void load_sounds(
+    compo::EntityContainer& e, std::optional<blam::magic_data_t> const& magic = std::nullopt)
+{
+    auto& files = e.subsystem_cast<BlamFiles<halo_version>>();
+    if(!files.sound_file)
+        return;
+    auto& sounds = e.subsystem_cast<SoundCache<halo_version>>();
+    if(magic.has_value())
+        sounds.load_sounds_from(*magic);
+    auto& loading_status = e.subsystem_cast<LoadingStatus>();
+    if(loading_status.loaded_map != LoadingStatus::loaded)
+        return;
+    sounds.process_sounds();
+    loading_status.loaded_sounds = LoadingStatus::loaded;
+}
+
 static void init_map(
     compo::EntityContainer& e, MapLoadFinishedEvent<halo_version>& finished)
 {
@@ -111,34 +160,23 @@ static void init_map(
         auto map_name = files.container.map->full_mapname();
         window_config->setName(fmt::format("Blam! : {0}", map_name));
     }
-    // TODO: Move to MapResourcesReady handler
-    if(!compile_info::platform::is_32bit &&
-       (files.bitmap_file ||
-        files.container.map->version == blam::version_t::xbox))
-    {
-        ProfContext _("Texture allocation");
-        bitmaps.allocate_storage();
-        loading_status.loaded_bitmaps = true;
-    }
-    if(files.sound_file)
-    {
-        sounds.process_sounds();
-    }
 
     /* With Xbox, we're done loading here */
     if(files.container.map->version == blam::version_t::xbox)
-        loading_status.loading = false;
+    {
+        loading_status.loaded_bitmaps = LoadingStatus::loaded;
+        loading_status.loaded_sounds  = LoadingStatus::loaded;
+    }
+    /* MCC doesn't have a sounds file? Or maybe it's elsewhere */
+    if(files.container.map->version == blam::version_t::mcc)
+    {
+        loading_status.loaded_sounds = LoadingStatus::loaded;
+    }
+    loading_status.loaded_map = LoadingStatus::loaded;
+    loading_status.check_all_loaded();
 
-    /* Depending on when we're done loading, stop the spinner */
-    // auto& api = e.subsystem_cast<gleam::system>();
-    // if(auto tex_queue = api.queue<gleam::system::queues::texture_decode>())
-    // {
-    //     [[maybe_unused]] auto res = rq::runtime_queue::QueueImmediate(
-    //         tex_queue, rq::detail::duration(), [load = &loading_status] {
-    //             load->loading = false;
-    //         });
-    // } else
-    //     loading_status.loading = false;
+    load_bitmaps(e);
+    load_sounds(e);
 }
 
 static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
@@ -206,8 +244,9 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
     files.sound_file.reset();
 
     loading.loading        = true;
-    loading.loaded_bitmaps = false;
-    loading.loaded_sounds  = false;
+    loading.loaded_map     = LoadingStatus::none;
+    loading.loaded_bitmaps = LoadingStatus::none;
+    loading.loaded_sounds  = LoadingStatus::none;
 
     auto& file_mapper = e.subsystem_cast<comp_app::FileMapper>();
 
@@ -329,31 +368,7 @@ void setup_load_eventhandlers(compo::EntityContainer& e)
     gbus.addEventFunction<MapResourcesReady>(
         0, [&e](GameEvent&, MapResourcesReady* ready) {
             cDebug("Map resources loaded");
-            auto& bitmaps = e.subsystem_cast<BitmapCache<halo_version>>();
-            auto& sounds  = e.subsystem_cast<SoundCache<halo_version>>();
-            auto& loading_status = e.subsystem_cast<LoadingStatus>();
-
-            if(ready->bitmap_file)
-            {
-                bitmaps.load_bitmaps_from(*ready->bitmap_file);
-                loading_status.loaded_bitmaps = true;
-            }
-            if(ready->sound_file)
-            {
-                sounds.load_sounds_from(*ready->sound_file);
-                loading_status.loaded_sounds = true;
-            }
-
-            if(!loading_status.loading)
-            {
-                if(ready->bitmap_file && !compile_info::platform::is_32bit)
-                {
-                    bitmaps.allocate_storage();
-                }
-                if(ready->sound_file)
-                {
-                    sounds.process_sounds();
-                }
-            }
+            load_bitmaps(e, ready->bitmap_file);
+            load_sounds(e, ready->sound_file);
         });
 }

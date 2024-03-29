@@ -140,11 +140,26 @@ struct LoadingStatus : compo::SubsystemBase
 {
     using type = LoadingStatus;
 
+    enum loading_t
+    {
+        none,
+        in_progress,
+        loaded,
+    };
+
     std::string     status;
     libc_types::i16 progress;
     bool            loading{false};
-    bool            loaded_bitmaps{false};
-    bool            loaded_sounds{false};
+    loading_t       loaded_map{none};
+    loading_t       loaded_bitmaps{none};
+    loading_t       loaded_sounds{none};
+
+    void check_all_loaded()
+    {
+        if(loaded_map == loaded && loaded_bitmaps == loaded &&
+           loaded_sounds == loaded)
+            loading = false;
+    }
 };
 
 struct GameEvent
