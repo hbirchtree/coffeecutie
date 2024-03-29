@@ -335,6 +335,10 @@ if __name__ == '__main__':
             root_dir = dirname(resource_def)
             root_dir = '.' if root_dir == '' else root_dir
             definitions = json.load(open(resource_def))
+            # Create pre-requisite directories if needed
+            if 'out_dirs' in definitions:
+                for directory in definitions['out_dirs']:
+                    makedirs(f'{args.output}/{directory}', exist_ok=True)
             # Add files and tools to dependencies
             process_resources(
                 definitions,

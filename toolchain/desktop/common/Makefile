@@ -25,6 +25,9 @@ icon_squircle_%.png: icon_squircle.svg
 		--export-filename=$@ \
 		--export-width=$* \
 		--export-height=$*
+
+favicon.ico: icon_squircle_512.png
+	convert -background transparent icon_squircle_512.png -define icon:auto-resize=16,24,32,48,64,96,128 favicon.ico
 	
 clean:
 	rm -rf work/

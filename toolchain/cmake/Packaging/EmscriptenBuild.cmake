@@ -55,6 +55,20 @@ function(EMSCRIPTEN_PACKAGE)
         ${COFFEE_DESKTOP_DIRECTORY}/emscripten/coi-serviceworker.min.js
         ${BUNDLE_DIR}/coi-serviceworker.min.js
   )
+  add_custom_command(
+    TARGET ${EM_TARGET}
+    COMMAND ${CMAKE_COMMAND}
+        -E copy
+        ${COFFEE_DESKTOP_DIRECTORY}/common/favicon.ico
+        ${BUNDLE_DIR}/favicon.ico
+  )
+  add_custom_command(
+    TARGET ${EM_TARGET}
+    COMMAND ${CMAKE_COMMAND}
+        -E copy
+        ${COFFEE_DESKTOP_DIRECTORY}/common/favicon.ico
+        ${BUNDLE_DIR}/..
+  )
 
   install(DIRECTORY ${BUNDLE_DIR} DESTINATION bin)
 endfunction()
