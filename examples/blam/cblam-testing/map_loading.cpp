@@ -34,7 +34,8 @@ static void filter_maps(std::vector<platform::file::file_entry_t>& files)
 }
 
 static void load_bitmaps(
-    compo::EntityContainer& e, std::optional<blam::magic_data_t> const& magic = std::nullopt)
+    compo::EntityContainer&                  e,
+    std::optional<blam::magic_data_t> const& magic = std::nullopt)
 {
     auto& api            = e.subsystem_cast<gleam::system>();
     auto& loading_status = e.subsystem_cast<LoadingStatus>();
@@ -67,7 +68,8 @@ static void load_bitmaps(
 }
 
 static void load_sounds(
-    compo::EntityContainer& e, std::optional<blam::magic_data_t> const& magic = std::nullopt)
+    compo::EntityContainer&                  e,
+    std::optional<blam::magic_data_t> const& magic = std::nullopt)
 {
     auto& files = e.subsystem_cast<BlamFiles<halo_version>>();
     if(!files.sound_file)
@@ -123,6 +125,7 @@ static void init_map(
     if constexpr(!compile_info::platform::is_32bit)
     {
         u32 num_snds{0}, num_bitms{0}, num_mod{0};
+        cDebug("Tags:");
         for(blam::tag_t const& tag : blam::tag_index_view(files.container))
         {
             if(tag.matches(blam::tag_class_t::bitm))
@@ -141,6 +144,11 @@ static void init_map(
             {
                 num_mod++;
             }
+            cDebug(
+                " - {}:{}: {}",
+                tag.tagclass[0].str(),
+                stl_types::str::fmt::hexify(tag.tag_id),
+                tag.to_name().to_string(files.container.magic));
         }
 
         cDebug(

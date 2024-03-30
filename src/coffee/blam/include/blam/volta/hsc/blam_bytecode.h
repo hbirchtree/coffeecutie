@@ -1161,7 +1161,7 @@ struct bytecode_pointer
 
         update_sleepers(delta, handler);
     }
-}; // namespace hsc
+};
 
 template<typename Bytecode>
 struct types
@@ -1176,6 +1176,17 @@ struct types
     static inline auto signature(layout_t const& opc)
     {
         return hsc::opcode_signature<Bytecode>(opc);
+    }
+};
+struct disassembler_t
+{
+    template<typename Bytecode>
+    static gsl::span<const opcode_layout<Bytecode>> opcodes_of(
+        bytecode_pointer<Bytecode>& pointer,
+        function_declaration const&       func)
+    {
+        auto base = pointer.base + func.index;
+        return gsl::span(base, 10);
     }
 };
 

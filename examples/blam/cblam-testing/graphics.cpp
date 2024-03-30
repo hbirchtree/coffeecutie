@@ -257,7 +257,7 @@ i32 blam_main()
             alloc_renderer(e);
             alloc_occluder(e);
             alloc_ui_system(e);
-            // alloc_scripting(e);
+            alloc_scripting(e);
             alloc_networking(e);
             setup_load_eventhandlers(e);
 

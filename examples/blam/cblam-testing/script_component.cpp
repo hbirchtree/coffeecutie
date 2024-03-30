@@ -83,13 +83,16 @@ struct BlamScript
         ImGui::NextColumn();
     }
 
-    static void display_script(blam::hsc::function_declaration const& decl)
+    void display_script(blam::hsc::function_declaration const& decl)
     {
         ImGui::Text("%s", decl.name.str().data());
         ImGui::NextColumn();
         ImGui::Text("%s", enum_to_string(decl.schedule).c_str());
         ImGui::NextColumn();
         ImGui::Text("%04x", decl.index);
+        ImGui::NextColumn();
+        if(ImGui::Button("Disassemble"))
+            m_current_disasm = &decl;
         ImGui::NextColumn();
     }
 
@@ -154,6 +157,14 @@ struct BlamScript
             .scripts = scenario->function_table(map.magic),
             .globals = globals.value(),
         };
+
+        // m_current_disasm = &m_env.scripts.front();
+        // for(blam::hsc::opcode_layout<typename Ver::bytecode_type> const&
+        //         op : blam::hsc::disassembler_t::opcodes_of(
+        //             m_script, *m_current_disasm))
+        // {
+        //     cDebug("{}", op.index);
+        // }
 
         m_script = script_types::bytecode_ptr::start_from(
             m_env, &scenario->bytecode(map.magic)[0]);
@@ -252,7 +263,7 @@ struct BlamScript
 
         if(ImGui::BeginTabItem("Scripts"))
         {
-            ImGui::Columns(3);
+            ImGui::Columns(4);
 
             ImGui::Text("Name");
             ImGui::NextColumn();
@@ -260,10 +271,11 @@ struct BlamScript
             ImGui::NextColumn();
             ImGui::Text("Entrypoint");
             ImGui::NextColumn();
+            ImGui::NextColumn();
 
             ImGui::Columns();
             ImGui::BeginChild("scripts_list");
-            ImGui::Columns(3);
+            ImGui::Columns(4);
             for(auto const& script : m_env.scripts)
                 display_script(script);
 
@@ -318,8 +330,8 @@ struct BlamScript
             ImGui::Columns();
 
             ImGui::BeginChild("disasm");
-            ImGui::Columns(3);
-            // TODO: List entire script + mark current IP
+            ImGui::Columns();
+            // Print something
             ImGui::Columns();
             ImGui::EndChild();
             ImGui::EndTabItem();
