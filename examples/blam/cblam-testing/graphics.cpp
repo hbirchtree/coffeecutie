@@ -335,7 +335,7 @@ i32 blam_main()
                 static auto               buf = snd.alloc_buffer();
                 static auto               src = snd.alloc_source();
 
-                // decoder.decode("sounds/thefunny2.ogg"_rsc.data(), {}, {}, *buf);
+                decoder.decode("sounds/thefunny2.ogg"_rsc.data(), {}, {}, *buf);
                 src->set_property<oaf::source_property::looping>(true);
                 // src->set_property<oaf::source_property::max_distance>(20.f);
                 src->set_property<oaf::source_property::rolloff_factor>(1.5f);
@@ -345,8 +345,7 @@ i32 blam_main()
             }
 
 #if defined(COFFEE_EMSCRIPTEN) && defined(FEATURE_ENABLE_ASIO)
-            platform::env::set_var(
-                "COFFEE_REPORT_URL", "https://reports.birchy.dev");
+            platform::env::set_var("COFFEE_REPORT_URL", EMBEDDED_REPORT_URL);
             Net::ProfilingExport();
 #endif
         },

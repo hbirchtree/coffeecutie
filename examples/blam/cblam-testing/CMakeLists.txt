@@ -1,4 +1,5 @@
 set(BLAM_HALO_VERSION "pc_version_t" CACHE STRING "")
+set(BLAMG_EMBEDDED_REPORT_URL "" CACHE STRING "")
 
 find_package(GameNetworkingSockets CONFIG)
 include(ResourcePackaging)
@@ -57,6 +58,7 @@ set_target_properties(
 target_compile_definitions(BlamGraphics
     PUBLIC
     -DBLAM_HALO_VERSION=${BLAM_HALO_VERSION}
+    -DEMBEDDED_REPORT_URL="\"${BLAMG_EMBEDDED_REPORT_URL}\""
 )
 
 if(TARGET ASIO)
