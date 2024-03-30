@@ -158,7 +158,10 @@ struct LoadingStatus : compo::SubsystemBase
     {
         if(loaded_map == loaded && loaded_bitmaps == loaded &&
            loaded_sounds == loaded)
+        {
             loading = false;
+            progress = -1;
+        }
     }
 };
 

@@ -86,6 +86,8 @@ enum class function_group_t : u16
 
 enum class type_t : i16
 {
+    op = 247,
+
     unevaluated = -4,
     number      = -3,
     any         = -2,

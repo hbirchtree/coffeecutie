@@ -108,7 +108,7 @@ struct map_container
         progress("Reading tag index", 100);
         auto const* tags_index = &tag_index_t<Ver>::from_header(header);
 
-        progress("Complete!", -1);
+        progress("Complete!", 100);
 
         return map_container{
             .map          = header,

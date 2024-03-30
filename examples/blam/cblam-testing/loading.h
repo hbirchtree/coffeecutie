@@ -666,6 +666,9 @@ void load_scenario_scenery(EntityContainer& e, MapChangedEvent<Version>& data)
             skybox_.outdoor_fog.start_distance,
             skybox_.outdoor_fog.opaque_distance);
 
+        if(skybox_.outdoor_fog.opaque_distance < 1)
+            world_data[0].fog.distances.w = 1000.f;
+
         skybox_mod.tag       = skybox_tag;
         skybox_mod.transform = glm::identity<Matf4>();
 

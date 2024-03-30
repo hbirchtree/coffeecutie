@@ -255,8 +255,11 @@ void ImGuiSystem::load(entity_container& e, comp_app::app_error&)
         .assume_value();
 
     /* io is statically allocated, this is safe */
-    //    e.service<comp_app::BasicEventBus<CIEvent>>()->addEventData(
-    //        {100, ImGui_InputHandle});
+    e.service<comp_app::BasicEventBus<CIEvent>>()
+        ->addEventFunction<CIScrollEvent>(
+            0, [this](CIEvent&, CIScrollEvent* event) {
+                m_im_data->scroll = event->delta.y;
+            });
 
     SetStyle();
 

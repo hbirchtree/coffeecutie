@@ -246,14 +246,10 @@ inline opcode_iterator<BC>::opcode_iterator(
 template<typename T>
 inline std::string to_string(T val)
 {
-#if USE_MAGIC_ENUM
     auto out = magic_enum::enum_name(val);
     if(!out.size())
         return "[invalid(" + std::to_string(C_CAST<i16>(val)) + ")]";
     return std::string(out) + "(" + std::to_string(C_CAST<i16>(val)) + ")";
-#else
-    return std::to_string(C_CAST<i16>(val));
-#endif
 }
 
 template<typename BC>
@@ -1178,12 +1174,12 @@ struct types
         return hsc::opcode_signature<Bytecode>(opc);
     }
 };
+
 struct disassembler_t
 {
     template<typename Bytecode>
     static gsl::span<const opcode_layout<Bytecode>> opcodes_of(
-        bytecode_pointer<Bytecode>& pointer,
-        function_declaration const&       func)
+        bytecode_pointer<Bytecode>& pointer, function_declaration const& func)
     {
         auto base = pointer.base + func.index;
         return gsl::span(base, 10);
@@ -1236,8 +1232,19 @@ inline std::string to_string(blam::hsc::opcode_layout<BC> const& op)
     using namespace blam::hsc;
     std::string out = {};
 
+    if(!stl_types::any_of(
+           op.exp_type,
+           expression_t::expression,
+           expression_t::global_ref,
+           expression_t::group,
+           expression_t::param_ref,
+           expression_t::script_ref))
+        return "(invalid)";
+
     if(op.exp_type == expression_t::global_ref)
         out = "global@" + std::to_string(op.data_ptr);
+    else if(op.exp_type == expression_t::group)
+        out = to_string(op.opcode);
     else
         switch(op.param_type)
         {

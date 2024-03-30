@@ -252,6 +252,7 @@ static void open_map(compo::EntityContainer& e, MapLoadEvent const& load)
     files.sound_file.reset();
 
     loading.loading        = true;
+    loading.progress       = 0;
     loading.loaded_map     = LoadingStatus::none;
     loading.loaded_bitmaps = LoadingStatus::none;
     loading.loaded_sounds  = LoadingStatus::none;

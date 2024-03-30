@@ -228,6 +228,16 @@ struct BlamScript
                             },
                     });
             }
+            for(blam::hsc::opcode_layout<typename Ver::bytecode_type> const&
+                    opcode : m_scenario->bytecode(m_magic))
+            {
+                using namespace Coffee::Strings;
+
+                if(!opcode.valid())
+                    break;
+
+                ImGui::Text("%s", to_string(opcode).c_str());
+            }
             ImGui::EndTabItem();
         }
 
